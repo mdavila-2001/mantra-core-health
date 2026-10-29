@@ -48,9 +48,12 @@
     <app-practitioner-profile-view
       [perfil]="perfil"
       [esPropio]="true"
+      [pestanaInicial]="pestanaPedida"
       [fotoSubiendo]="fotoSubiendo()"
       [errorDeFoto]="errorDeFoto()"
       [fotoRecien]="fotoRecien()"
+      [descargandoRespaldo]="descargandoRespaldo()"
+      (respaldoADescargar)="descargarRespaldo($event)"
       (trayectoriaCambio)="recargar()"
       (fotoElegida)="subirFoto($event)"
       (credencialARetirar)="retirarCredencial($event)"

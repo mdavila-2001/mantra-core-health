@@ -6,7 +6,7 @@ import { API_BASE_URL, apiUrl } from '../api';
 import type { PatientSpendingResponseDto } from './patient-spending.dto';
 
 /**
- * Los gastos de salud del paciente (P43 — sólo en el backend simulado).
+ * Los gastos de salud del paciente (P44).
  *
  * Una sola lectura: `GET /patient-spending/me?from=&to=`. El titular sale del
  * token; lo único que viaja en la URL es el rango de fechas.

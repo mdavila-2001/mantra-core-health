@@ -10,13 +10,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
  * no una firma electrónica.
  *
  * Contra el simulador de `mockup` (cuenta `medica@alovida.mock`). Deja evidencia
- * en `docs/trabajo/2026-09-30-firma-y-sello/`.
+ * en `artifacts/evidencia/2026-09-30-firma-y-sello/`.
  *
  * El simulador pierde los bytes de un archivo subido al recargar (F5), así que
  * después de subir se navega dentro de la SPA.
  */
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-09-30-firma-y-sello');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-09-30-firma-y-sello');
 
 test.beforeAll(() => {
   mkdirSync(EVIDENCIA, { recursive: true });
@@ -229,7 +229,7 @@ test('el alta del doctor ofrece la firma y el sello como paso opcional y se pued
   await pngDe(page, 'sello', sello);
   await page.getByTestId('registro-pro-firma-input').setInputFiles(firma);
   await page.getByTestId('registro-pro-sello-input').setInputFiles(sello);
-  await expect(page.locator('app-firma-o-sello img')).toHaveCount(2);
+  await expect(page.locator('app-signature-or-seal img')).toHaveCount(2);
   await page.screenshot({ path: join(EVIDENCIA, 'alta-paso-firma-y-sello-cargados.png') });
 
   // Un formato que no es imagen se rechaza con su motivo.

@@ -2,22 +2,27 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   PLATFORM_ID,
   signal,
   type WritableSignal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 import {
   AbstractControl,
+  FormArray,
   FormControl,
   FormGroup,
+  ReactiveFormsModule,
   ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
   BoEmployersCatalog,
@@ -27,6 +32,10 @@ import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
 } from '../../../core/data-access/terminology/bo-occupations.service';
+import {
+  ReverseGeocodingClient,
+  type StreetFromPoint,
+} from '../../../core/data-access/geo/reverse-geocoding.client';
 import { TrustedAmbulanceStore } from '../../../core/emergency/trusted-ambulance.store';
 import {
   AMBULANCE_DIRECTORY_SEED,
@@ -34,7 +43,10 @@ import {
   ambulancesForDepartment,
   isSeededAmbulancePhone,
 } from '../../../core/emergency/ambulance-directory.seed';
-import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
+import {
+  PhoneInput,
+  telefonoCompleto,
+} from '../../../shared/components/molecules/phone-input/phone-input';
 import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
@@ -44,48 +56,55 @@ import type {
   BirthSexCode,
   PatientRegistration,
 } from '../../../core/data-access/iam/iam.types';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import {
-  MENSAJE_CEDULA_INVALIDA,
-  validarCedulaBoliviana,
-} from '../registro-compartido/cedula-de-identidad';
-import { LocationPicker } from '../registro-compartido/location-picker/location-picker';
+  INVALID_IDENTITY_DOCUMENT_MESSAGE,
+  identityDocumentValidators,
+} from '../shared-registration/national-id';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+  type TestIds as IdsDeUbicacion,
+} from '../shared-registration/map-location-picker/map-location-picker';
 import { Link } from '../../../shared/components/atoms/link/link';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
 } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
-import { AVISO_REESCRIBIR_DIRECCION } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import { NOTICE_REWRITE_ADDRESS } from '../shared-registration/map-location-picker/map-location-picker';
 import { InsuranceClient } from '../../../core/data-access/insurance/insurance.client';
 import type { CarrierCatalogEntry } from '../../../core/data-access/insurance/insurance.types';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
-import { AppMap } from '../../../shared/components/organisms/map/map';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Select } from '../../../shared/components/atoms/select/select';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
-import type { PinMapa } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '../../../shared/components/organisms/map/map-pin.types';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { RegistrationBadge } from '../registro-compartido/registration-badge';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** `Date` → ISO `YYYY-MM-DD`, tal como lo esperan los DTO del backend. */
 function fechaIso(fecha: Date): string {
@@ -97,6 +116,50 @@ function fechaIso(fecha: Date): string {
 
 /** El NIT boliviano es sólo dígitos; el backend valida lo mismo. */
 const NIT_VALIDO = /^[0-9]{4,20}$/;
+
+/**
+ * Cuántos teléfonos y contactos de emergencia más se pueden sumar con el «+».
+ * Los mismos topes que `MAX_ADDITIONAL_PHONES` y
+ * `MAX_ADDITIONAL_EMERGENCY_CONTACTS` del DTO de la API: uno más y la API
+ * contestaría 400.
+ */
+export const MAX_TELEFONOS_EXTRA = 4;
+export const MAX_CONTACTOS_EXTRA = 4;
+
+/** Un contacto de emergencia sumado con el «+»: los mismos tres datos que el primero. */
+type ContactoExtra = FormGroup<{
+  name: FormControl<string>;
+  phone: FormControl<string>;
+  relationshipConceptId: FormControl<string | null>;
+}>;
+
+/**
+ * Un teléfono sumado con el «+». Obligatorio una vez agregado: la casilla vacía
+ * se quita con su botón, no se manda en blanco.
+ */
+function nuevoTelefonoExtra(valor = ''): FormControl<string> {
+  return new FormControl(valor, {
+    nonNullable: true,
+    validators: [Validators.required, telefonoCompleto],
+  });
+}
+
+/** Un contacto de emergencia sumado con el «+». Su nombre es lo único obligatorio. */
+function nuevoContactoExtra(
+  valor: { name?: string; phone?: string; relationshipConceptId?: string | null } = {},
+): ContactoExtra {
+  return new FormGroup({
+    name: new FormControl(valor.name ?? '', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
+    phone: new FormControl(valor.phone ?? '', {
+      nonNullable: true,
+      validators: [telefonoCompleto],
+    }),
+    relationshipConceptId: new FormControl<string | null>(valor.relationshipConceptId ?? null),
+  });
+}
 
 /** Un punto en el mapa, tal como lo entrega el navegador. */
 export interface Coordenadas {
@@ -136,25 +199,34 @@ const PIN_DOMICILIO = 'domicilio';
 const PIN_TRABAJO = 'trabajo';
 
 /**
- * Lo que se le dice a quien fijó un punto y espera que la calle se escriba
- * sola (AC-03-8 / AC-03-9).
+ * Lo que se le dice a quien fijó un punto, según qué pasó con la calle
+ * (AC-03-8 / AC-03-9, y el pedido del cliente del 26/10/2026: «llene la línea
+ * de dirección»).
  *
- * **La resolución del nombre de la dirección no está disponible, y decirlo es
- * el requisito.** Convertir un par de coordenadas en «Av. Banzer 3er anillo»
- * necesita un geocodificador externo, y la política de seguridad del servidor
- * no lo permite: `src/server/security-headers.ts` deja `connect-src` en
- * `'self'` y `img-src` sólo abierto a `tile.openstreetmap.org`, con una prueba
- * que lo fija (`security-headers.spec.ts`). Abrirla es decisión de
- * arquitectura —P-03-7 de la ficha, sin resolver: qué proveedor, con qué
- * licencia y quién paga— y no se toma desde este carril.
+ * **P-03-7 quedó resuelta así:** la calle la pide la API
+ * (`POST /public/geo/reverse`, OpenStreetMap vía Nominatim) y no el navegador,
+ * así que la política de seguridad del front sigue con `connect-src 'self'`.
  *
- * Lo que AC-03-9 exige mientras tanto es exactamente esto: que el formulario lo
- * **diga** y **deje seguir**. Lo que nunca se hace es rellenar el campo con un
- * texto inventado: una dirección falsa en la ficha de un paciente es peor que
- * un campo vacío, porque nadie la vuelve a mirar.
+ * Lo que AC-03-9 sigue exigiendo cuando la calle no sale —el proveedor no la
+ * conoce o no respondió— es que el formulario lo **diga** y **deje seguir**.
+ * Nunca se rellena con un texto inventado: una dirección falsa en la ficha de
+ * un paciente es peor que un campo vacío, porque nadie la vuelve a mirar.
  */
-const AVISO_SIN_GEOCODIFICACION =
-  'El punto del mapa se guarda tal cual, pero no podemos convertirlo en el nombre de la calle: escríbala usted arriba.';
+const AVISOS_DE_CALLE: Readonly<Record<EstadoDeCalle, string>> = {
+  'sin-pedir': '',
+  buscando: 'Buscando el nombre de la calle de este punto…',
+  escrita:
+    'Escribimos la calle a partir del punto (datos de © OpenStreetMap). Revísela y agregue el número si falta.',
+  conservada:
+    'Dejamos la calle que usted escribió. Revise que corresponda al punto del mapa.',
+  'sin-calle':
+    'No encontramos el nombre de la calle en este punto: escríbala usted arriba. El punto se guarda igual.',
+  caida:
+    'El punto del mapa se guarda tal cual, pero ahora no podemos convertirlo en el nombre de la calle: escríbala usted arriba.',
+};
+
+/** Qué pasó con la calle del último punto del domicilio. */
+type EstadoDeCalle = 'sin-pedir' | 'buscando' | 'escrita' | 'conservada' | 'sin-calle' | 'caida';
 
 /**
  * Cuánto se espera al navegador antes de dar la ubicación por perdida.
@@ -262,7 +334,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * a intromisión. Eso es de lo que más hace abandonar un registro.
  *
  * Va **al costado** y no dentro del formulario: no alarga la página, no compite
- * con los campos y se lee sólo si hace falta. Ver `app-registro-ayuda`.
+ * con los campos y se lee sólo si hace falta. Ver `app-registration-help`.
  *
  * ## Por qué es un mapa por clave y no una lista
  *
@@ -272,7 +344,7 @@ const OPCIONES_SEXO: readonly SelectOption<BirthSexCode>[] = [
  * clave la declara la propia página (`PaginaDeFormulario.clave`), así que las
  * dos mitades no se pueden separar de un descuido.
  */
-const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA_PACIENTE: Readonly<Record<string, readonly HelpCard[]>> = {
   identity: [
     {
       icono: 'patients',
@@ -363,15 +435,15 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     },
     {
       icono: 'package',
-      titulo: 'El mapa es opcional',
+      titulo: 'Su casa en el mapa',
       texto:
-        'Si marca su punto en el mapa y lo confirma, la entrega de sus medicamentos llega sin que tenga que explicar dónde vive. Si no, su alta sigue igual.',
+        'Hace falta marcarla y confirmarla: con ese punto la entrega de sus medicamentos llega sin que tenga que explicar dónde vive.',
     },
     {
       icono: 'route',
-      titulo: 'La calle la escribe usted',
+      titulo: 'La calle sale del punto',
       texto:
-        'El punto del mapa no se convierte solo en el nombre de una calle: eso necesita un servicio que hoy no tenemos. Por eso la línea de dirección se escribe a mano, y por eso nunca va a encontrar ahí algo que no haya escrito.',
+        'Al marcar su casa escribimos el nombre de la calle con datos de OpenStreetMap. Con el mismo punto sabemos su departamento, provincia, municipio y zona. Si algo no coincide, mueva el pin.',
     },
   ],
   work: [
@@ -399,7 +471,7 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'route',
       titulo: 'La calle la escribe usted',
       texto:
-        'Igual que en su domicilio: el punto del mapa se guarda tal cual, pero el nombre de la calle lo pone usted.',
+        'El punto del mapa del trabajo se guarda tal cual, pero el nombre de la calle lo pone usted.',
     },
   ],
   insurance: [
@@ -457,8 +529,8 @@ const AYUDA_PACIENTE: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * una con campos extra —el paciente entra con su documento y el correo le es
  * opcional; el profesional entra con su correo y sin habilitación comprobable
  * no hay alta—, así que lo único que compartían de verdad era el cascarón. Hoy
- * eso es CSS (`../registro-compartido/registro.css`) y un organismo
- * (`app-registro-ayuda`), y el alta de profesional es `register-practitioner`,
+ * eso es CSS (`../shared-registration/registration.css`) y un organismo
+ * (`app-registration-help`), y el alta de profesional es `register-practitioner`,
  * con su propia ruta.
  *
  * ## Por qué va por el motor
@@ -494,30 +566,42 @@ const SIGLA_POR_PREFIJO_INE: ReadonlyMap<string, string> = new Map([
   ['09', 'PA'],
 ]);
 
+/** El borrador antiguo de `localStorage` (formato versión 1). */
+interface BorradorLocal {
+  readonly version: number;
+  readonly pasoIndice?: number;
+  readonly formValores?: Record<string, unknown>;
+  readonly [extra: string]: unknown;
+}
+
 @Component({
   selector: 'app-register-patient',
-  imports: [
-    RegistrationBadge,
+  imports: [RegistrationBadge, 
     RouterLink,
     AppButton,
     NavIcon,
     Tooltip,
-    LocationPicker,
+    MapLocationPicker,
     Link,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     ReferenceCombobox,
-    RegistroAyuda,
-    AppMap,
+    RegistrationHelp,
     FormField,
     Select,
     AppInput,
+    OnboardingDraftBanner,
+    // Los teléfonos y contactos sumados con el «+» se dibujan fuera del
+    // `[formGroup]` del motor, así que se enchufan con `[formControl]`: igual
+    // que las gerencias del alta de organización.
+    ReactiveFormsModule,
+    PhoneInput,
   ],
   templateUrl: './register-patient.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-patient.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-patient.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
@@ -525,8 +609,11 @@ export class RegisterPatient {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly ambulanciaDeConfianza = inject(TrustedAmbulanceStore);
+  private readonly draftService = inject(OnboardingDraftService);
+  private readonly dialogs = inject(DialogService);
 
   readonly STORAGE_KEY = 'alovida.registro-paciente.borrador';
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
   readonly pasoGuardado = signal<number>(0);
   readonly ocupacionesPersonalizadas = signal<readonly (SelectOption<string> & { code: string })[]>([]);
 
@@ -625,7 +712,7 @@ export class RegisterPatient {
     {
       nationalId: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, validarCedulaBoliviana],
+        validators: [...identityDocumentValidators],
       }),
       // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
       // el documento de identidad y como se comparan dos personas al buscar
@@ -659,7 +746,7 @@ export class RegisterPatient {
       motherLastName: new FormControl('', { nonNullable: true }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [...validadoresDeContrasena],
+        validators: [...passwordValidators],
       }),
       // **Obligatorio desde la TAREA 03 (AC-03-3).** Invierte una decisión
       // escrita: el correo era opcional a propósito —«podés entrar sin él, con
@@ -670,7 +757,11 @@ export class RegisterPatient {
       // sabiendas si el propietario cambia de idea (P-03-2).
       email: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.email],
+        validators: [
+          Validators.required,
+          Validators.email,
+          Validators.pattern(CORREO_CON_DOMINIO),
+        ],
       }),
       // El control guarda lo que `app-phone-input` compone —el prefijo del país
       // elegido y su número—, así que el validador comprueba justamente eso, y
@@ -706,12 +797,22 @@ export class RegisterPatient {
       // Calle y número del domicilio. Las coordenadas van aparte: no se
       // escriben, se confirman sobre el mapa.
       homeAddressLines: new FormControl('', { nonNullable: true }),
+      // Distrito o zona: viaja dentro de la línea de dirección.
+      homeDistrict: new FormControl('', { nonNullable: true }),
       // **La localidad de residencia es obligatoria (AC-03-3)** y por eso vive
       // en el formulario y no en un signal suelto: el motor valida de a una
       // página, y un dato fuera del `FormGroup` no lo puede frenar. El signal
       // que lo espeja (`municipioPaciente`) sigue existiendo para el grafo de
       // señales; lo escriben los dos el mismo método. Ver `elegirMunicipio`.
       residenceMunicipalityConceptId: new FormControl<string | null>(null, {
+        validators: [Validators.required],
+      }),
+      // **El punto del domicilio es obligatorio** (pedido del cliente del
+      // 26/10/2026). Vive en el formulario por lo mismo que la localidad: el
+      // motor valida de a una página y sólo frena lo que está en el `FormGroup`.
+      // No se escribe: lo llena el efecto del constructor con el punto
+      // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+      gpsDomicilio: new FormControl<Coordenadas | null>(null, {
         validators: [Validators.required],
       }),
       // El lugar de trabajo **vuelve al alta** (AC-03-1). Revierte lo que
@@ -721,6 +822,7 @@ export class RegisterPatient {
       // Opcional, las tres.
       workMunicipalityConceptId: new FormControl<string | null>(null),
       workAddressLines: new FormControl('', { nonNullable: true }),
+      workDistrict: new FormControl('', { nonNullable: true }),
       // El nombre escrito a mano, sólo para «Otra empresa». Sin validador
       // propio: el campo entero es opcional, y exigirlo convertiría la salida
       // de la lista en una trampa.
@@ -741,6 +843,11 @@ export class RegisterPatient {
       // Sin parentesco declarado la API escribe «tutor o representante legal»,
       // que es lo que escribía siempre.
       guardianRelationshipConceptId: new FormControl<string | null>(null),
+      // Los teléfonos y contactos de emergencia que se suman con el «+». Son
+      // arreglos de verdad de punta a punta: viajan como `additionalPhones` y
+      // `additionalEmergencyContacts`, y la API guarda cada uno en su fila.
+      additionalPhones: new FormArray<FormControl<string>>([]),
+      additionalEmergencyContacts: new FormArray<ContactoExtra>([]),
       // La ambulancia de confianza (propietario, 2026-10-08). NO viaja al servidor —el modelo no
       // tiene dónde guardarla—: se guarda en este dispositivo al registrarse (`TrustedAmbulanceStore`).
       trustedAmbulanceName: new FormControl('', { nonNullable: true }),
@@ -837,14 +944,13 @@ export class RegisterPatient {
    *
    * El pedido es «copiar el nombre del lugar que se elige en el mapa a la
    * dirección» (AC-03-8). La lectura literal —convertir el pin del GPS en «Av.
-   * Banzer 3er anillo»— exige un geocodificador externo y la política de
-   * seguridad del servidor no lo permite (ver {@link AVISO_SIN_GEOCODIFICACION});
-   * abrirla es una decisión de arquitectura que no se toma desde este carril.
+   * Banzer 3er anillo»— la hace {@link traerCalleDelPunto} a través de la API
+   * (ver {@link AVISOS_DE_CALLE}).
    *
    * Lo que sí sabe el sistema, sin salir a la red, es **cómo se llama la
-   * localidad que la persona acaba de elegir**. Eso es lo que se copia: un
-   * arranque cierto de la dirección, sobre el que se sigue escribiendo la calle
-   * y el número.
+   * localidad que la persona acaba de elegir**. Eso es lo que se copia mientras
+   * no haya punto: un arranque cierto de la dirección, sobre el que se sigue
+   * escribiendo la calle y el número. Con punto, manda la calle del punto.
    *
    * ## La regla: el formulario sólo reescribe lo que él mismo puso
    *
@@ -896,6 +1002,17 @@ export class RegisterPatient {
     // que puso el formulario la vez anterior.
     const esNuestro = actual === '' || actual === sembrado;
     if (!esNuestro) {
+      return;
+    }
+    // La calle que salió del punto GPS dice más que el nombre del municipio
+    // que el mismo punto eligió. Si la persona elige OTRO a mano, la calle del
+    // punto ya no corresponde y se re-siembra como siempre.
+    if (
+      sembrado !== undefined &&
+      sembrado !== '' &&
+      sembrado === this.lineaDelPunto &&
+      conceptId === this.municipioDelPunto
+    ) {
       return;
     }
 
@@ -1001,7 +1118,7 @@ export class RegisterPatient {
    * Vacío mientras no haya punto: el mapa acepta la lista vacía y se queda en
    * su vista por defecto, que es lo que corresponde antes de pedir nada.
    */
-  readonly pinesDomicilio = computed<readonly PinMapa[]>(() => {
+  readonly pinesDomicilio = computed<readonly PinMap[]>(() => {
     const punto = this.gpsDomicilio();
     if (punto === null) return [];
     return [
@@ -1057,7 +1174,7 @@ export class RegisterPatient {
     () => this.gpsTrabajo() !== null || this.marcandoTrabajo(),
   );
 
-  readonly pinesTrabajo = computed<readonly PinMapa[]>(() => {
+  readonly pinesTrabajo = computed<readonly PinMap[]>(() => {
     const punto = this.gpsTrabajo();
     if (punto === null) return [];
     return [
@@ -1078,12 +1195,96 @@ export class RegisterPatient {
   protected readonly opcionesSexo = OPCIONES_SEXO;
 
   /** El aviso de AC-03-9, expuesto a la plantilla. Ver la constante. */
-  protected readonly avisoSinGeocodificacion = AVISO_SIN_GEOCODIFICACION;
+  /**
+   * El aviso del lugar de TRABAJO, donde la calle no se pide: el trabajo es
+   * opcional y su punto rara vez se marca. Ver {@link AVISOS_DE_CALLE}.
+   */
+  protected readonly avisoSinGeocodificacion = AVISOS_DE_CALLE.caida.replace(' ahora', '');
+
+  private readonly geocodificador = inject(ReverseGeocodingClient);
+
+  /** Qué pasó con la calle del último punto del domicilio. */
+  readonly calleDelPunto = signal<EstadoDeCalle>('sin-pedir');
+
+  /** El aviso que acompaña al mapa, según {@link calleDelPunto}. */
+  protected readonly avisoDeCalle = computed(() => AVISOS_DE_CALLE[this.calleDelPunto()]);
+
+  /**
+   * La última línea que escribió el geocodificador. Sirve para que elegir la
+   * localidad —que el GPS también hace— no la reemplace por el nombre del
+   * municipio: ver {@link sembrarDireccion}.
+   */
+  private lineaDelPunto: string | null = null;
+
+  /**
+   * Pide la calle del punto del domicilio y la escribe en «Calle» **en nombre
+   * del formulario**: si la persona ya había escrito la suya, no se toca, y si
+   * después la corrige, la corrección manda.
+   *
+   * Una respuesta que llega tarde —la persona ya movió el pin— se descarta.
+   */
+  private traerCalleDelPunto(punto: Coordenadas): void {
+    this.calleDelPunto.set('buscando');
+    this.pedidosDeCalle.next(punto);
+  }
+
+  /**
+   * Los pedidos de calle, uno vivo a la vez: un punto nuevo cancela el pedido
+   * del anterior (`switchMap`), cada uno tiene diez segundos, y todo se corta
+   * al salir de la pantalla. La API además limita y encola contra el proveedor.
+   */
+  private readonly pedidosDeCalle = new Subject<Coordenadas>();
+  /** Ver {@link pedidosDeCalle}. Se llama desde el constructor (`takeUntilDestroyed`). */
+  private escucharPedidosDeCalle(): void {
+    this.pedidosDeCalle
+      .pipe(
+      switchMap((punto) =>
+        this.geocodificador.streetAt(punto.lat, punto.lng).pipe(
+          timeout(10_000),
+          map((calle) => ({ punto, calle })),
+          catchError(() => of({ punto, calle: null })),
+        ),
+      ),
+        takeUntilDestroyed(),
+      )
+      .subscribe(({ punto, calle }) => this.escribirCalleDelPunto(punto, calle));
+  }
+
+  private escribirCalleDelPunto(punto: Coordenadas, calle: StreetFromPoint | null): void {
+    if (this.gpsDomicilio() !== punto) return;
+    if (calle === null) {
+      this.calleDelPunto.set('caida');
+      return;
+    }
+    if (!calle.found || !calle.line) {
+      this.calleDelPunto.set('sin-calle');
+      return;
+    }
+    const control = this.formPaciente.controls.homeAddressLines;
+    const actual = control.value.trim();
+    const esNuestro = actual === '' || actual === this.direccionSembrada.get(control);
+    if (!esNuestro) {
+      // La persona ya escribió su calle: se respeta y se dice, sin mentir que
+      // se escribió otra.
+      this.calleDelPunto.set('conservada');
+      return;
+    }
+    this.lineaDelPunto = calle.line;
+    this.escribirDireccionSembrada(control, calle.line);
+    this.domicilioVaciadoPorElMapa.set(false);
+    this.calleDelPunto.set('escrita');
+  }
+
+  /**
+   * El municipio que eligió el PUNTO (lo avisa `app-location-picker`). Elegir
+   * ese municipio no reemplaza la calle del punto; elegir otro a mano, sí.
+   */
+  protected municipioDelPunto: string | null = null;
 
   /**
    * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
    *
-   * Es la misma regla que `app-ubicacion-picker` avisa con `puntoElegido`,
+   * Es la misma regla que `app-map-location-picker` avisa con `puntoElegido`,
    * aplicada a las dos copias en línea de esta pantalla: tocar el mapa deja
    * «Línea de dirección 1» en blanco y lo dice al lado. El aviso acompaña al
    * campo vacío, no a la persona: en cuanto vuelve a escribir, se va solo.
@@ -1104,7 +1305,7 @@ export class RegisterPatient {
   readonly trabajoPorReescribir = computed(
     () => this.trabajoVaciadoPorElMapa() && this.trabajoEscrito().trim() === '',
   );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
+  protected readonly avisoReescribir = NOTICE_REWRITE_ADDRESS;
 
   /** Departamento que emitió el documento (VS_BO_DEPARTMENT), y su catálogo. */
   private readonly departamentos = inject(BoDepartmentsCatalog);
@@ -1266,7 +1467,7 @@ export class RegisterPatient {
           testId: 'registro-documento',
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: MENSAJE_CEDULA_INVALIDA,
+          mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
@@ -1278,7 +1479,7 @@ export class RegisterPatient {
           control: 'date',
           required: true,
           maxDate: 'today',
-          minDate: new Date(1900, 0, 1),
+          minDate: new Date(1910, 0, 1),
           mensajeDeError: 'Ingrese su fecha de nacimiento.',
           ancho: 'mitad',
         },
@@ -1305,33 +1506,31 @@ export class RegisterPatient {
       titulo: 'Lugares donde vive',
       clave: 'residence',
       icon: 'home',
-      hint: 'Su localidad hace falta; la calle y el punto del mapa son opcionales.',
+      hint: 'Marque su casa en el mapa. La calle, el departamento, la provincia, el municipio y la zona salen solos del punto.',
       campos: [
+        // Pedido del cliente (26/10/2026): el punto es lo único que se elige,
+        // y es obligatorio. El resto se deduce de él y se muestra en sólo
+        // lectura dentro del mismo selector (calle, mapa de Bolivia acercado,
+        // departamento, provincia, municipio y zona). La calle y la zona viajan
+        // en sus controles, que llena el punto: ver `aplicarLocalidadDeCasa`.
+        {
+          key: 'gpsDomicilio',
+          label: 'Ubicación de su casa',
+          hint: 'Toque el mapa donde vive o use su ubicación actual, y confírmelo.',
+          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
+          control: 'custom',
+          required: true,
+          mensajeDeError: 'Marque su casa en el mapa y pulse «Confirmar dirección actual».',
+        },
+        // El municipio sale del punto. El campo sigue en la página sólo para
+        // que su validación —obligatoria— tenga dónde decir que falta.
         {
           key: 'residenceMunicipalityConceptId',
           label: '',
           control: 'custom',
           required: true,
-          mensajeDeError: 'Elija su departamento en el mapa y después su ciudad.',
-        },
-        {
-          key: 'homeAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
-          hint: 'Como la escribiría en un sobre.',
-          description:
-            'Calle, número y referencia. El punto del mapa no la escribe solo: ver el aviso de abajo.',
-          control: 'text',
-          autocomplete: 'street-address',
-          placeholder: 'Av. Banzer, 3er anillo #42',
-          testId: 'registro-domicilio-calle',
-          icono: 'route',
-        },
-        {
-          key: 'gpsDomicilio',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'Si la comparte, puede ver primero lo que le queda más cerca.',
-          description: 'Marque el punto exacto de su casa y confírmelo para que quede guardado.',
-          control: 'custom',
+          mensajeDeError:
+            'No pudimos ubicar su municipio con ese punto. Mueva el pin dentro de Bolivia.',
         },
       ],
     },
@@ -1352,6 +1551,11 @@ export class RegisterPatient {
           autocomplete: 'tel',
           testId: 'registro-telefono',
           mensajeDeError: 'Ingrese un número completo para el país elegido.',
+        },
+        {
+          key: 'additionalPhones',
+          label: '',
+          control: 'custom',
         },
         {
           key: 'guardianName',
@@ -1376,10 +1580,17 @@ export class RegisterPatient {
         },
         this.campoRelacionDelContacto(),
         {
+          key: 'additionalEmergencyContacts',
+          label: '',
+          control: 'custom',
+        },
+        {
+          // Sin `label`, `hint` ni `description`: el motor envuelve cada campo
+          // `custom` en un `app-form-field` con esos textos, y la plantilla de este
+          // campo ya lleva el suyo (es el que cablea el selector por DI con su
+          // etiqueta y su ayuda). Declararlos aquí dibujaba título y ayuda dos veces.
           key: 'trustedAmbulanceService',
-          label: 'Servicio de ambulancia',
-          hint: 'Al elegir uno, se completan nombre y teléfono. Puede editarlos.',
-          description: 'El directorio muestra el alcance y la fuente de cada línea.',
+          label: '',
           control: 'custom',
           icono: 'hospital',
         },
@@ -1414,26 +1625,18 @@ export class RegisterPatient {
       campos: [
         this.campoEmpresa(),
         ...this.campoOtraEmpresa(),
+        // Igual que la casa: se marca el punto y el resto sale de él. Acá es
+        // opcional; si se marca, el municipio, la calle y la zona se llenan solos.
         {
-          key: 'workMunicipalityConceptId',
-          label: '',
+          key: 'gpsTrabajo',
+          label: 'Ubicación de su trabajo (opcional)',
+          hint: 'Toque el mapa donde trabaja, o use su ubicación actual.',
+          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
           control: 'custom',
         },
         {
-          key: 'workAddressLines',
-          label: 'Línea de dirección 1 (opcional)',
-          hint: 'Calle y número de su trabajo.',
-          description: 'Sirve para ubicar su lugar de trabajo cuando la empresa tiene varias sedes.',
-          control: 'text',
-          placeholder: 'Calle Libertad #120',
-          testId: 'registration-work-address',
-          icono: 'route',
-        },
-        {
-          key: 'gpsTrabajo',
-          label: 'Ubicación GPS (opcional)',
-          hint: 'El punto exacto de su lugar de trabajo.',
-          description: 'El punto exacto de su trabajo en el mapa. Se confirma aparte del de su casa.',
+          key: 'workMunicipalityConceptId',
+          label: '',
           control: 'custom',
         },
       ],
@@ -1471,7 +1674,7 @@ export class RegisterPatient {
           placeholder: 'Su contraseña',
           testId: 'registro-password',
           icono: 'lock',
-          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+          mensajeDeError: MESSAGE_SHORT_PASSWORD,
           ancho: 'mitad',
         },
         this.campoSeguro('privado'),
@@ -1828,6 +2031,110 @@ export class RegisterPatient {
     return this.opcionesOcupacion().find((o) => o.value === id)?.code === CODIGO_OCUPACION_OTRA;
   });
 
+  /** Los topes del «+», para la plantilla. */
+  readonly maxTelefonosExtra = MAX_TELEFONOS_EXTRA;
+  readonly maxContactosExtra = MAX_CONTACTOS_EXTRA;
+
+  /** Los avisos de los campos sumados con el «+». */
+  readonly errorTelefonoExtra = 'Ingrese un número completo para el país elegido, o quite la casilla.';
+  readonly errorNombreContacto = 'Escriba su nombre, o quite este contacto.';
+  readonly errorTelefonoContacto = 'Ingrese el número completo para el país elegido.';
+
+  /** Los teléfonos sumados con el «+», en el orden en que se agregaron. */
+  get telefonosExtra(): FormArray<FormControl<string>> {
+    return this.formPaciente.controls.additionalPhones;
+  }
+
+  /** Los contactos de emergencia sumados con el «+». */
+  get contactosExtra(): FormArray<ContactoExtra> {
+    return this.formPaciente.controls.additionalEmergencyContacts;
+  }
+
+  /** Suma una casilla de teléfono, hasta el tope que acepta la API. */
+  agregarTelefono(): void {
+    if (this.telefonosExtra.length >= MAX_TELEFONOS_EXTRA) return;
+    this.telefonosExtra.push(nuevoTelefonoExtra());
+  }
+
+  /**
+   * Quita uno de los teléfonos sumados.
+   *
+   * @param indice - Cuál de los teléfonos extra, empezando por 0.
+   */
+  async quitarTelefono(indice: number): Promise<void> {
+    const numero = this.telefonosExtra.at(indice)?.value.trim() ?? '';
+    if (
+      numero !== '' &&
+      !(await this.confirmarQuitar(`Quitar el celular ${indice + 1}`, 'Se borra el número que escribió en esta casilla.'))
+    ) {
+      return;
+    }
+    this.telefonosExtra.removeAt(indice);
+  }
+
+  /** Suma un contacto de emergencia, hasta el tope que acepta la API. */
+  agregarContacto(): void {
+    if (this.contactosExtra.length >= MAX_CONTACTOS_EXTRA) return;
+    this.contactosExtra.push(nuevoContactoExtra());
+  }
+
+  /**
+   * Quita uno de los contactos sumados.
+   *
+   * @param indice - Cuál de los contactos extra, empezando por 0.
+   */
+  async quitarContacto(indice: number): Promise<void> {
+    const contacto = this.contactosExtra.at(indice)?.getRawValue();
+    const tieneDatos =
+      contacto !== undefined &&
+      (contacto.name.trim() !== '' || contacto.phone.trim() !== '' || contacto.relationshipConceptId !== null);
+    if (
+      tieneDatos &&
+      !(await this.confirmarQuitar(
+        `Quitar el contacto de emergencia ${indice + 1}`,
+        'Se borran el nombre, el teléfono y la relación que escribió para esta persona.',
+      ))
+    ) {
+      return;
+    }
+    this.contactosExtra.removeAt(indice);
+  }
+
+  /**
+   * Pregunta antes de borrar algo que la persona ya escribió (TAREA 04, AC-04-7).
+   *
+   * Una casilla vacía se quita sin preguntar: no hay nada que perder, y un
+   * diálogo ahí sólo agrega un clic. Con datos, el botón de ícono queda a un
+   * toque de borrar un contacto entero, y eso sí se confirma.
+   *
+   * @param titulo - Qué se quita, tal como lo dice el `aria-label` del botón.
+   * @param mensaje - Qué se pierde.
+   * @returns `true` si la persona confirmó.
+   */
+  private confirmarQuitar(titulo: string, mensaje: string): Promise<boolean> {
+    return this.dialogs.confirm({
+      title: titulo,
+      message: mensaje,
+      confirmLabel: 'Quitar',
+      cancelLabel: 'Conservar',
+      destructive: true,
+    });
+  }
+
+  /**
+   * Si un control de los sumados con el «+» tiene que mostrarse en rojo.
+   *
+   * El motor marca como tocado el arreglo entero al intentar avanzar, no a sus
+   * hijos: por eso cuenta tanto el control como su arreglo.
+   *
+   * @param control - El teléfono, o el nombre o teléfono de un contacto.
+   * @param arreglo - El arreglo al que pertenece.
+   * @returns `true` si es inválido y ya se intentó avanzar o se lo tocó.
+   */
+  enRojo(control: AbstractControl, arreglo: AbstractControl): boolean {
+    return control.invalid && (control.touched || arreglo.touched);
+  }
+
   /**
    * Los nombres que se agregaron después del tercero.
    *
@@ -1849,7 +2156,14 @@ export class RegisterPatient {
    *
    * @param indice - Cuál de las casillas extra, empezando por 0.
    */
-  quitarNombre(indice: number): void {
+  async quitarNombre(indice: number): Promise<void> {
+    const nombre = this.nombresExtra()[indice]?.trim() ?? '';
+    if (
+      nombre !== '' &&
+      !(await this.confirmarQuitar(`Quitar el nombre ${indice + 4}`, `Se borra «${nombre}» de esta casilla.`))
+    ) {
+      return;
+    }
     this.nombresExtra.update((actuales) => actuales.filter((_, i) => i !== indice));
   }
 
@@ -1922,10 +2236,15 @@ export class RegisterPatient {
   readonly empresasFiltradas = computed<readonly ReferenceOption[]>(() => {
     const busqueda = this.busquedaEmpresa().trim().toLowerCase();
     const todas = this.opcionesEmpresa();
+    // «Otra empresa» va PRIMERA y no se filtra (pedido del cliente del
+    // 26/10/2026, igual que «Otra ocupación»): quien no encuentra la suya tiene
+    // que ver la salida sin bajar hasta el final ni borrar lo que tecleó.
+    const otra = todas.filter((o) => o.code === CODIGO_EMPRESA_OTRA);
+    const resto = todas.filter((o) => o.code !== CODIGO_EMPRESA_OTRA);
     const elegidas = busqueda
-      ? todas.filter((o) => o.label.toLowerCase().includes(busqueda))
-      : todas;
-    return elegidas.map((o) => ({ value: o.value, label: o.label }));
+      ? resto.filter((o) => o.label.toLowerCase().includes(busqueda))
+      : resto;
+    return [...otra, ...elegidas].map((o) => ({ value: o.value, label: o.label }));
   });
 
   /** La empresa elegida, para que el combobox la muestre al volver atrás. */
@@ -2078,6 +2397,8 @@ export class RegisterPatient {
     // nombre del formulario», igual que al sembrar: no lo tecleó la persona.
     this.escribirDireccionSembrada(this.formPaciente.controls.homeAddressLines, '');
     this.domicilioVaciadoPorElMapa.set(true);
+    this.sincronizarCasa();
+    this.traerCalleDelPunto(this.gpsDomicilio()!);
   }
 
   /** Lo mismo, para el trabajo. */
@@ -2157,6 +2478,9 @@ export class RegisterPatient {
         destino.marcando.set(false);
         destino.rechazado.set(false);
         destino.pidiendo.set(false);
+        if (destino.punto === this.gpsDomicilio) {
+          this.traerCalleDelPunto(this.gpsDomicilio()!);
+        }
       },
       () => {
         destino.rechazado.set(true);
@@ -2177,11 +2501,99 @@ export class RegisterPatient {
    * alguien mira el plano y dice que sí, lo que hay es una lectura del GPS, y
    * el GPS acierta la manzana, no la puerta.
    *
-   * Lo que **no** hace es escribir la calle: ver {@link AVISO_SIN_GEOCODIFICACION}.
+   * La calle la escribe el punto, no la confirmación: ver {@link traerCalleDelPunto}.
    */
+  /* ---- El flujo del 26/10/2026: el punto y nada más -----------------------
+     El selector compartido (`app-map-location-picker`) abre el mapa, pide la
+     calle, acerca el mapa de Bolivia y deduce la localidad. Acá sólo se
+     guarda lo que avisa: el punto confirmado y lo deducido de él. */
+
+  protected readonly idsUbicacionCasa: IdsDeUbicacion = {
+    mapa: 'registro-mapa-domicilio',
+    confirmada: 'registro-direccion-confirmada',
+    avisoGeocodificacion: 'registration-home-geocoding-notice',
+    quitar: 'registration-home-location-remove',
+    confirmar: 'registro-confirmar-direccion',
+    usarUbicacion: 'registro-usar-ubicacion',
+    marcarEnMapa: 'registration-home-location-pick',
+  };
+
+  protected readonly idsUbicacionTrabajo: IdsDeUbicacion = {
+    mapa: 'registration-work-map',
+    confirmada: 'registration-work-location-confirmed',
+    avisoGeocodificacion: 'registration-work-geocoding-notice',
+    quitar: 'registration-work-location-remove',
+    confirmar: 'registration-work-location-confirm',
+    usarUbicacion: 'registration-work-location-use',
+    marcarEnMapa: 'registration-work-location-pick',
+  };
+
+  /** El punto de la casa, confirmado o soltado en el selector. */
+  confirmarCasa(punto: Coordenadas | null): void {
+    if (punto !== null) this.gpsDomicilio.set(punto);
+    this.direccionConfirmada.set(punto !== null);
+    this.sincronizarCasa();
+  }
+
+  /** El punto del trabajo, confirmado o soltado en el selector. */
+  confirmarTrabajo(punto: Coordenadas | null): void {
+    if (punto !== null) this.gpsTrabajo.set(punto);
+    this.direccionTrabajoConfirmada.set(punto !== null);
+  }
+
+  /**
+   * Lo deducido del punto de la casa llena los controles que viajan en el
+   * alta. No se editan a mano: si algo no es así, se mueve el pin.
+   */
+  aplicarLocalidadDeCasa(localidad: LocalityFromPoint | null): void {
+    const c = this.formPaciente.controls;
+    if (localidad === null) {
+      this.escribirDireccionSembrada(c.homeAddressLines, '');
+      c.homeDistrict.setValue('');
+      return;
+    }
+    const municipio = localidad.municipioConceptId;
+    if (municipio !== null && municipio !== c.residenceMunicipalityConceptId.value) {
+      this.elegirMunicipio(municipio);
+    }
+    this.escribirDireccionSembrada(c.homeAddressLines, localidad.calleSola ?? '');
+    c.homeDistrict.setValue(localidad.zona ?? '');
+  }
+
+  /** Lo mismo, para el lugar de trabajo. */
+  aplicarLocalidadDeTrabajo(localidad: LocalityFromPoint | null): void {
+    const c = this.formPaciente.controls;
+    if (localidad === null) {
+      this.escribirDireccionSembrada(c.workAddressLines, '');
+      c.workDistrict.setValue('');
+      return;
+    }
+    const municipio = localidad.municipioConceptId;
+    if (municipio !== null && municipio !== c.workMunicipalityConceptId.value) {
+      this.elegirMunicipioDeTrabajo(municipio);
+    }
+    this.escribirDireccionSembrada(c.workAddressLines, localidad.calleSola ?? '');
+    c.workDistrict.setValue(localidad.zona ?? '');
+  }
+
   confirmarDireccionActual(): void {
     if (this.gpsDomicilio() === null) return;
     this.direccionConfirmada.set(true);
+    this.sincronizarCasa();
+  }
+
+  /**
+   * Copia el punto CONFIRMADO al control obligatorio `gpsDomicilio`.
+   *
+   * La corre un `effect` (cubre el borrador y el GPS del navegador, que llegan
+   * solos) y además, en el acto, cada acción de la persona sobre el punto: el
+   * `effect` espera a la próxima detección de cambios, y un envío inmediato
+   * vería el control atrasado.
+   */
+  private sincronizarCasa(): void {
+    const confirmado = this.direccionConfirmada() ? this.gpsDomicilio() : null;
+    const control = this.formPaciente.controls.gpsDomicilio;
+    if (control.value !== confirmado) control.setValue(confirmado);
   }
 
   /** Lo mismo, para el trabajo. */
@@ -2195,6 +2607,8 @@ export class RegisterPatient {
     this.gpsDomicilio.set(null);
     this.direccionConfirmada.set(false);
     this.marcandoDomicilio.set(false);
+    this.calleDelPunto.set('sin-pedir');
+    this.sincronizarCasa();
   }
 
   /** Lo mismo, para el trabajo. */
@@ -2221,26 +2635,27 @@ export class RegisterPatient {
   readonly claveVisible = signal('');
 
   /** Las tarjetas del costado: por qué te pedimos lo de ESTE paso. */
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA_PACIENTE[this.claveVisible()] ?? [],
   );
 
-  /** Guarda el borrador del avance del formulario en caché (localStorage). */
+  /** Guarda el borrador del avance del formulario en caché (localStorage) y backend remoto. */
   guardarBorrador(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       const paginas = this.paginasPaciente();
       const clave = this.claveVisible();
-      const indice = paginas.findIndex((p) => p.clave === clave);
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
       const raw = this.formPaciente.getRawValue();
-      const borrador = {
-        version: 1,
-        pasoIndice: Math.max(0, indice),
-        pasoClave: clave,
-        formValores: {
-          ...raw,
-          birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
-        },
+      // La contraseña nunca se escribe en el almacenamiento del navegador.
+      const valores: Record<string, unknown> = {
+        ...raw,
+        birthDate: raw.birthDate instanceof Date ? raw.birthDate.toISOString() : null,
+      };
+      delete valores['password'];
+      delete valores['confirmPassword'];
+      const extraData = {
         nombresExtra: this.nombresExtra(),
         empresaSeleccionada: this.empresaSeleccionada(),
         ocupacionSeleccionada: this.ocupacionSeleccionada(),
@@ -2249,66 +2664,143 @@ export class RegisterPatient {
         direccionConfirmada: this.direccionConfirmada(),
         gpsTrabajo: this.gpsTrabajo(),
         direccionTrabajoConfirmada: this.direccionTrabajoConfirmada(),
+      };
+      // Compatibilidad con pruebas unitarias legacy
+      const borrador = {
+        version: 1,
+        pasoIndice: indice,
+        pasoClave: clave,
+        formValores: valores,
+        ...extraData,
         fechaModificacion: new Date().toISOString(),
       };
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(borrador));
+
+      // Servicio fullstack con debounce hacia la API
+      this.draftService.saveProgress(
+        'patient',
+        indice,
+        clave,
+        titulo,
+        valores,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'patient', indice, {
+        stepKey: clave,
+      });
     } catch {
       // Ignorar restricciones en almacenamiento local
     }
   }
 
-  /** Restaura el avance previo del formulario desde caché si existe. */
-  restaurarBorrador(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+  /**
+   * Lee el borrador antiguo de `localStorage` (sólo la versión 1) y lo deja
+   * limpio: los borradores viejos guardaban la contraseña en claro, así que se
+   * borra y se reescribe la clave sin ella.
+   */
+  private leerBorradorLocal(): BorradorLocal | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
     try {
       const serializado = localStorage.getItem(this.STORAGE_KEY);
-      if (!serializado) return;
-      const datos = JSON.parse(serializado);
-      if (!datos || datos.version !== 1) return;
+      const parseado = serializado ? JSON.parse(serializado) : null;
+      // Sólo la versión 1 del formato antiguo; otra cosa es basura o futuro.
+      const legacy: BorradorLocal | null =
+        parseado && typeof parseado === 'object' && parseado.version === 1 ? parseado : null;
+      if (legacy?.formValores && typeof legacy.formValores === 'object') {
+        // Borradores viejos guardaban la contraseña en claro: se borra y se
+        // reescribe la clave limpia, para que no se reinyecte ni se quede.
+        const tenia = 'password' in legacy.formValores || 'confirmPassword' in legacy.formValores;
+        delete legacy.formValores['password'];
+        delete legacy.formValores['confirmPassword'];
+        if (tenia) localStorage.setItem(this.STORAGE_KEY, JSON.stringify(legacy));
+      } else if (parseado && !legacy) {
+        localStorage.removeItem(this.STORAGE_KEY);
+      }
+      return legacy;
+    } catch {
+      return null;
+    }
+  }
 
-      if (datos.formValores) {
-        const valores = { ...datos.formValores };
-        if (typeof valores.birthDate === 'string' && valores.birthDate) {
-          const d = new Date(valores.birthDate);
-          if (!Number.isNaN(d.getTime())) {
-            valores.birthDate = d;
-          } else {
-            valores.birthDate = null;
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const legacy = this.leerBorradorLocal();
+      const draft = draftParam ?? (legacy ? undefined : this.draftService.detectDraft('patient') ?? undefined);
+
+      const rawValores = draft ? draft.data : legacy?.formValores;
+      if (rawValores) {
+        const valores = { ...rawValores } as Record<string, unknown>;
+        delete valores['password'];
+        delete valores['confirmPassword'];
+        if (typeof valores['birthDate'] === 'string' && valores['birthDate']) {
+          const d = new Date(valores['birthDate']);
+          valores['birthDate'] = !Number.isNaN(d.getTime()) ? d : null;
+        }
+        // `patchValue` no crea filas en un `FormArray`: sólo llena las que hay.
+        // Se arman primero, del largo guardado, y después se llenan.
+        if (Array.isArray(valores['additionalPhones'])) {
+          this.telefonosExtra.clear();
+          for (const telefono of valores['additionalPhones'].slice(0, MAX_TELEFONOS_EXTRA)) {
+            this.telefonosExtra.push(nuevoTelefonoExtra(String(telefono ?? '')));
           }
+          delete valores['additionalPhones'];
+        }
+        if (Array.isArray(valores['additionalEmergencyContacts'])) {
+          this.contactosExtra.clear();
+          const contactos = valores['additionalEmergencyContacts'] as Parameters<
+            typeof nuevoContactoExtra
+          >[0][];
+          for (const contacto of contactos.slice(0, MAX_CONTACTOS_EXTRA)) {
+            this.contactosExtra.push(nuevoContactoExtra(contacto ?? {}));
+          }
+          delete valores['additionalEmergencyContacts'];
         }
         this.formPaciente.patchValue(valores);
       }
 
-      if (Array.isArray(datos.nombresExtra)) {
-        this.nombresExtra.set(datos.nombresExtra);
+      const extra = (draft ? draft.extraData : legacy) ?? {};
+      if (Array.isArray(extra['nombresExtra'])) {
+        this.nombresExtra.set(extra['nombresExtra'] as readonly string[]);
       }
-      if (datos.empresaSeleccionada !== undefined) {
-        this.empresaSeleccionada.set(datos.empresaSeleccionada);
+      if (extra['empresaSeleccionada'] !== undefined) {
+        this.empresaSeleccionada.set(extra['empresaSeleccionada'] as string | null);
       }
-      if (datos.ocupacionSeleccionada !== undefined) {
-        this.ocupacionSeleccionada.set(datos.ocupacionSeleccionada);
+      if (extra['ocupacionSeleccionada'] !== undefined) {
+        this.ocupacionSeleccionada.set(extra['ocupacionSeleccionada'] as string | null);
       }
-      if (Array.isArray(datos.ocupacionesPersonalizadas)) {
-        this.ocupacionesPersonalizadas.set(datos.ocupacionesPersonalizadas);
+      if (Array.isArray(extra['ocupacionesPersonalizadas'])) {
+        this.ocupacionesPersonalizadas.set(extra['ocupacionesPersonalizadas'] as readonly (SelectOption<string> & { code: string })[]);
       }
-      if (datos.gpsDomicilio !== undefined) {
-        this.gpsDomicilio.set(datos.gpsDomicilio);
+      if (extra['gpsDomicilio'] !== undefined) {
+        this.gpsDomicilio.set(extra['gpsDomicilio'] as Coordenadas | null);
       }
-      if (typeof datos.direccionConfirmada === 'boolean') {
-        this.direccionConfirmada.set(datos.direccionConfirmada);
+      if (typeof extra['direccionConfirmada'] === 'boolean') {
+        this.direccionConfirmada.set(extra['direccionConfirmada']);
       }
-      if (datos.gpsTrabajo !== undefined) {
-        this.gpsTrabajo.set(datos.gpsTrabajo);
+      if (extra['gpsTrabajo'] !== undefined) {
+        this.gpsTrabajo.set(extra['gpsTrabajo'] as Coordenadas | null);
       }
-      if (typeof datos.direccionTrabajoConfirmada === 'boolean') {
-        this.direccionTrabajoConfirmada.set(datos.direccionTrabajoConfirmada);
+      if (typeof extra['direccionTrabajoConfirmada'] === 'boolean') {
+        this.direccionTrabajoConfirmada.set(extra['direccionTrabajoConfirmada']);
       }
-      if (typeof datos.pasoIndice === 'number' && datos.pasoIndice >= 0) {
-        this.pasoGuardado.set(datos.pasoIndice);
+      const pasoIndice = draft?.stepIndex ?? legacy?.pasoIndice;
+      if (typeof pasoIndice === 'number' && pasoIndice >= 0) {
+        this.pasoGuardado.set(pasoIndice);
       }
+
+      this.borradorDetectado.set(null);
     } catch {
       // Ignorar si el borrador estaba corrupto
     }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'patient', 0);
   }
 
   /** Elimina el borrador en caché al completar exitosamente el registro. */
@@ -2316,6 +2808,8 @@ export class RegisterPatient {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
       localStorage.removeItem(this.STORAGE_KEY);
+      this.draftService.clearDraft('patient');
+      this.borradorDetectado.set(null);
     } catch {
       // Ignorar
     }
@@ -2342,7 +2836,15 @@ export class RegisterPatient {
   });
 
   constructor() {
-    this.restaurarBorrador();
+    this.leerBorradorLocal();
+    const detectado = this.draftService.detectDraft('patient');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    } else {
+      // Soporte para pruebas directas que no muestran banner
+      this.restaurarBorrador();
+    }
+    this.draftService.trackEvent('start', 'patient', 0);
 
     this.cargarDepartamentos();
     this.cargarMunicipios();
@@ -2352,6 +2854,12 @@ export class RegisterPatient {
     this.cargarParentescos();
 
     this.limpiarElErrorAlCorregir(this.formPaciente);
+    this.escucharPedidosDeCalle();
+
+    // El punto del domicilio, al control obligatorio: sólo el CONFIRMADO. Sin
+    // `emitEvent: false`: el cambio tiene que llegar al borrador y al aviso de
+    // error del motor, igual que un campo escrito.
+    effect(() => this.sincronizarCasa());
 
     this.formPaciente.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
       this.guardarBorrador();
@@ -2429,7 +2937,7 @@ export class RegisterPatient {
    * y combina las ocupaciones ingresadas dinámicamente por el usuario.
    */
   protected cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
         const mapeadas = opciones.map((opcion) => ({
@@ -2448,6 +2956,12 @@ export class RegisterPatient {
         if (idxOtra > 0) {
           const [otra] = ordenadas.splice(idxOtra, 1);
           ordenadas.unshift(otra);
+        } else if (idxOtra === -1 && ordenadas.length > 0) {
+          ordenadas.unshift({
+            value: 'o-otra',
+            label: 'Otro',
+            code: CODIGO_OCUPACION_OTRA,
+          });
         }
         // Incorporar las ocupaciones personalizadas registradas previamente
         const personalizadas = this.ocupacionesPersonalizadas();
@@ -2591,7 +3105,7 @@ export class RegisterPatient {
 
   /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarDepartamentos`. */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -2701,8 +3215,9 @@ export class RegisterPatient {
         const { trustedAmbulanceName, trustedAmbulancePhone } = this.formPaciente.getRawValue();
         this.ambulanciaDeConfianza.guardar(trustedAmbulanceName, trustedAmbulancePhone);
         this.limpiarBorrador();
+        this.draftService.trackEvent('complete', 'patient', 4);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'patient')),
     });
   }
 
@@ -2729,9 +3244,13 @@ export class RegisterPatient {
     const departamento = raw.issuerAdministrativeAreaConceptId;
     const sexoAlNacer = raw.sexAtBirth;
     const municipio = raw.residenceMunicipalityConceptId;
+    // La calle y el distrito viajan separados (ADR-0028 de la API): la API
+    // guarda el distrito en su propia columna y deduce la provincia del municipio.
     const calleDomicilio = raw.homeAddressLines.trim();
+    const distritoDomicilio = raw.homeDistrict.trim();
     const municipioTrabajo = raw.workMunicipalityConceptId;
     const calleTrabajo = raw.workAddressLines.trim();
+    const distritoTrabajo = raw.workDistrict.trim();
     const empresa = this.empresaSeleccionada();
     const otraEmpresa = raw.workEmployerFreeText.trim();
     // Sólo viaja lo confirmado sobre el mapa: un punto capturado y no mirado es
@@ -2741,6 +3260,17 @@ export class RegisterPatient {
     const nombreTutor = raw.guardianName.trim();
     const telefonoTutor = raw.guardianPhone.trim();
     const relacionTutor = raw.guardianRelationshipConceptId;
+    const telefonosExtra = raw.additionalPhones.map((t) => t.trim()).filter((t) => t !== '');
+    const contactosExtra = raw.additionalEmergencyContacts
+      .map((c) => ({ ...c, name: c.name.trim(), phone: c.phone.trim() }))
+      .filter((c) => c.name !== '')
+      .map((c) => ({
+        name: c.name,
+        ...(c.phone === '' ? {} : { phone: c.phone }),
+        ...(c.relationshipConceptId === null
+          ? {}
+          : { relationshipConceptId: c.relationshipConceptId }),
+      }));
     const seguroPrivado = raw.privateInsurancePlanId;
     const seguroPublico = raw.publicInsurancePlanId;
     const nit = raw.billingTaxId.trim();
@@ -2758,14 +3288,18 @@ export class RegisterPatient {
       ...(nombresAdicionales === '' ? {} : { middleName: nombresAdicionales }),
       ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       password: raw.password,
-      // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
-      // y una cadena vacía no es lo mismo que la ausencia del campo.
-      ...(correo === '' ? {} : { email: correo }),
+      // Los cinco campos que la API exige (correo, nacimiento, teléfono, sexo al
+      // nacer y departamento emisor) van siempre y el tipo lo impone: el control
+      // los valida, así que `submit()` no llega acá sin ellos. El vacío es la
+      // red por si alguien llamara a este método sin esa comprobación: hace que
+      // la API conteste 400 nombrando el campo, en vez de un cuerpo al que le
+      // falta una propiedad obligatoria (mismo criterio que el municipio).
+      email: correo,
       // El departamento emisor viaja atado al documento: sin CI no hay
       // identificador al que atarlo, y el backend lo escribe en la fila del
       // identificador, no en la persona. Acá el documento es obligatorio, así
       // que la única condición real es haber elegido departamento.
-      ...(departamento === null ? {} : { issuerAdministrativeAreaConceptId: departamento }),
+      issuerAdministrativeAreaConceptId: departamento ?? '',
       // Sólo el municipio: el departamento de residencia lo deriva el backend
       // del código del INE, para que el par no pueda llegar incoherente.
       //
@@ -2776,9 +3310,11 @@ export class RegisterPatient {
       // conteste 400 nombrando el campo, en vez de un cuerpo al que le falta
       // una propiedad obligatoria.
       residenceMunicipalityConceptId: municipio ?? '',
-      ...(fechaNacimiento === null ? {} : { birthDate: fechaIso(fechaNacimiento) }),
-      ...(telefono === '' ? {} : { phone: telefono }),
-      ...(sexoAlNacer === null ? {} : { sexAtBirth: sexoAlNacer }),
+      birthDate: fechaNacimiento === null ? '' : fechaIso(fechaNacimiento),
+      phone: telefono,
+      // `''` no es un código válido: la API responde 400 nombrando el campo.
+      sexAtBirth: sexoAlNacer ?? ('' as BirthSexCode),
+      ...(telefonosExtra.length === 0 ? {} : { additionalPhones: telefonosExtra }),
       // Con «Otra ocupación» viaja el oficio escrito y NO el concepto: el
       // backend descarta el texto libre en cuanto recibe un concepto
       // (`occupationFreeText: dto.occupationConceptId ? undefined : …`), y de
@@ -2790,13 +3326,18 @@ export class RegisterPatient {
       // municipio es un dato válido —mucha gente sabe su dirección y no el
       // nombre de su municipio—, así que no se condicionan entre sí.
       ...(calleDomicilio === '' ? {} : { homeAddressLines: calleDomicilio }),
+      ...(distritoDomicilio === '' ? {} : { homeDistrict: distritoDomicilio }),
       ...(gpsCasa === null ? {} : { homeLatitude: gpsCasa.lat, homeLongitude: gpsCasa.lng }),
       // Trabajo: la empresa **y** dónde queda. Los cuatro campos de ubicación
       // vuelven al alta por AC-03-1; el DTO nunca dejó de aceptarlos. Ver el
       // JSDoc de `workMunicipalityConceptId` en el `FormGroup`.
-      ...(empresa === null ? {} : { workEmployerConceptId: empresa }),
+      // Con «Otra empresa» viaja el texto escrito y NO el concepto, igual que la
+      // ocupación: el backend descarta el texto libre en cuanto recibe un
+      // concepto, y «Otra» no nombra a ninguna empresa (ID-11).
+      ...(empresa === null || this.empresaEsOtra() ? {} : { workEmployerConceptId: empresa }),
       ...(municipioTrabajo === null ? {} : { workMunicipalityConceptId: municipioTrabajo }),
       ...(calleTrabajo === '' ? {} : { workAddressLines: calleTrabajo }),
+      ...(distritoTrabajo === '' ? {} : { workDistrict: distritoTrabajo }),
       ...(gpsTrabajo === null
         ? {}
         : { workLatitude: gpsTrabajo.lat, workLongitude: gpsTrabajo.lng }),
@@ -2816,6 +3357,7 @@ export class RegisterPatient {
       ...(nombreTutor === '' || relacionTutor === null
         ? {}
         : { guardianRelationshipConceptId: relacionTutor }),
+      ...(contactosExtra.length === 0 ? {} : { additionalEmergencyContacts: contactosExtra }),
       ...(seguroPrivado === null ? {} : { privateInsurancePlanId: seguroPrivado }),
       ...(seguroPublico === null ? {} : { publicInsurancePlanId: seguroPublico }),
       ...(nit === '' ? {} : { billingTaxId: nit }),

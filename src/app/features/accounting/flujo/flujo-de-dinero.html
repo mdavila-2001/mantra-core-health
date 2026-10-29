@@ -204,7 +204,7 @@
   <app-row-actions
     [actions]="accionesDeCobro(fila)"
     [fila]="'Factura ' + fila.numero"
-    (actionSelected)="accionDeCobro(fila, $event)"
+    (actionSelected)="chargeAction(fila, $event)"
   />
 </ng-template>
 

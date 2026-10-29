@@ -21,10 +21,7 @@ import type {
   OwnPatientProfile,
   OwnPatientProfileChanges,
 } from '../../../../core/data-access/profiles/profiles.types';
-import {
-  BoMunicipalitiesCatalog,
-  type RamaDepartamento,
-} from '../../../../core/data-access/terminology/bo-municipalities.service';
+import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
 import {
   BoOccupationsCatalog,
   CODIGO_OCUPACION_OTRA,
@@ -47,29 +44,26 @@ import { Card } from '../../../../shared/components/molecules/card/card';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
-import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
-import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { PESTANA, PESTANAS_DEL_PERFIL } from '../pestanas-del-perfil';
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
+import { confirmedLocality } from '../../../auth/shared-registration/point-locality';
+import { TAB, PROFILE_TABS } from '../profile-tabs';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import {
   PhoneInput,
   telefonoCompleto,
 } from '../../../../shared/components/molecules/phone-input/phone-input';
 import {
-  nacionalDelNumero,
-  paisDelNumero,
-} from '../../../../shared/components/molecules/phone-input/phone-input.paises';
+  numberNational,
+  numberCountry,
+} from '../../../../shared/components/molecules/phone-input/phone-input.countries';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { TreeSelect } from '../../../../shared/components/organisms/tree-select/tree-select';
-import type { TreeSelectGroup } from '../../../../shared/components/organisms/tree-select/tree-select.types';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 
 /** A dónde se vuelve al cancelar o al terminar. */
@@ -78,26 +72,29 @@ const MI_PERFIL = '/my-account';
 /** El rótulo con el que se agrupan los avisos de esta pantalla. */
 const AMBITO = 'Mi perfil';
 
+/** Lo que se dice mientras falta el punto del domicilio, que es obligatorio. */
+const MENSAJE_SIN_PUNTO = 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».';
+
 /**
  * En qué pestaña se ve cada campo del `PATCH` que la plantilla ancla con
  * `errorDelServidor`. Un campo que no figura acá no tiene dónde pintarse, así
  * que su mensaje va entero en el aviso.
  */
 const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
-  name: PESTANA.personales,
-  middleName: PESTANA.personales,
-  lastName: PESTANA.personales,
-  motherLastName: PESTANA.personales,
-  birthDate: PESTANA.personales,
-  sexAtBirth: PESTANA.personales,
-  occupationConceptId: PESTANA.personales,
-  occupationFreeText: PESTANA.personales,
-  phone: PESTANA.contacto,
-  residenceMunicipalityConceptId: PESTANA.contacto,
-  homeAddressLines: PESTANA.contacto,
-  workAddressLines: PESTANA.contacto,
-  taxId: PESTANA.facturacion,
-  taxHolderName: PESTANA.facturacion,
+  name: TAB.personales,
+  middleName: TAB.personales,
+  lastName: TAB.personales,
+  motherLastName: TAB.personales,
+  birthDate: TAB.personales,
+  sexAtBirth: TAB.personales,
+  occupationConceptId: TAB.personales,
+  occupationFreeText: TAB.personales,
+  phone: TAB.contacto,
+  residenceMunicipalityConceptId: TAB.contacto,
+  homeAddressLines: TAB.contacto,
+  workAddressLines: TAB.contacto,
+  taxId: TAB.facturacion,
+  taxHolderName: TAB.facturacion,
 };
 
 /** «a», «a y b», «a, b y c». */
@@ -161,10 +158,8 @@ function mismoDia(una: Date, otra: Date): boolean {
 @Component({
   selector: 'app-patient-profile-edit',
   imports: [
-    Alert,
-    AnnounceOnAppear,
     ReferenceCombobox,
-    UbicacionPicker,
+    MapLocationPicker,
     AppButton,
     BackLink,
     Card,
@@ -181,7 +176,6 @@ function mismoDia(una: Date, otra: Date): boolean {
     Tab,
     Tabs,
     Tooltip,
-    TreeSelect,
     ViewStateHost,
   ],
   templateUrl: './patient-profile-edit.html',
@@ -190,7 +184,22 @@ function mismoDia(una: Date, otra: Date): boolean {
 })
 export class PatientProfileEdit {
   private readonly profiles = inject(ProfilesClient);
-  private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+
+  /* -- ID-22: el departamento que emitió el documento se corrige ----------
+     El número no (es el usuario de acceso y tiene su circuito). */
+  protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  protected readonly departamentoEmisor = signal<string | null>(null);
+
+  private cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) =>
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        ),
+      error: () => this.opcionesDepartamento.set([]),
+    });
+  }
   private readonly ocupaciones = inject(BoOccupationsCatalog);
   private readonly toasts = inject(ToastService);
   private readonly navigation = inject(NavigationService);
@@ -238,8 +247,8 @@ export class PatientProfileEdit {
    * el lápiz abre el formulario en la pestaña que se estaba mirando, y al
    * guardar o cancelar la ficha vuelve a esa misma.
    */
-  readonly pestana = model<number>(PESTANA.personales);
-  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  readonly pestana = model<number>(TAB.personales);
+  protected readonly pestanas = PROFILE_TABS;
 
   protected readonly perfil = signal<ViewState<OwnPatientProfile>>(loading());
 
@@ -272,6 +281,10 @@ export class PatientProfileEdit {
   protected readonly ocupacionConceptId = signal<string | null>(null);
   protected readonly ocupacionTextoLibre = signal('');
 
+  /**
+   * El municipio de residencia. Ya no se elige de un árbol: sale del punto del
+   * domicilio (pedido del cliente del 26/10/2026), ver `volcarDomicilio`.
+   */
   protected readonly municipio = signal<string | null>(null);
 
   /**
@@ -279,9 +292,8 @@ export class PatientProfileEdit {
    *
    * Los tres se podían declarar al registrarse y esta pantalla no los ofrecía:
    * la ficha los mostraba y no había forma de corregirlos. Van como texto porque
-   * eso es lo que guarda el modelo — una dirección boliviana real («Av.
-   * Prolongación Beni #5100, esq. 6to anillo») no entra en un catálogo. El
-   * municipio sigue saliendo del árbol, aparte.
+   * eso es lo que guarda el modelo. Las dos direcciones ya no se escriben: salen
+   * del punto de su mapa (26/10/2026).
    */
   protected readonly nit = signal('');
   protected readonly razonSocial = signal('');
@@ -302,6 +314,9 @@ export class PatientProfileEdit {
   protected readonly correo = signal('');
   protected readonly domicilio = signal('');
   protected readonly direccionTrabajo = signal('');
+  /** El distrito o zona de cada dirección, que el mapa deduce del punto. */
+  protected readonly distritoDomicilio = signal('');
+  protected readonly distritoTrabajo = signal('');
 
   /**
    * El punto en el mapa de cada dirección — lo que el alta ya preguntaba y el
@@ -309,51 +324,90 @@ export class PatientProfileEdit {
    *
    * Es el patrón de una app de pedidos, y a propósito: se pide la ubicación al
    * navegador o se marca el pin a mano sobre el mapa, y se confirma mirándolo.
-   * El mismo bloque que usa el registro (`app-ubicacion-picker`), no una copia:
-   * la dirección se escribe igual en los dos lados y ninguno adivina la calle a
-   * partir del punto —eso necesita un geocodificador que la política de
-   * seguridad del servidor no permite—.
+   * El mismo bloque que usa el registro (`app-map-location-picker`), no una copia.
+   * Desde el 26/10/2026 el punto es lo único que se marca: la calle la trae la
+   * API desde el punto, y el municipio sale del contorno donde cae.
    *
    * `undefined` es «no lo toqué» y `null` es «lo quité»: son dos cosas
    * distintas al armar el cuerpo del PATCH, y confundirlas borraría la
    * ubicación de quien sólo vino a cambiar el teléfono.
    */
-  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
-
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Un toque sobre el mapa deja el campo en blanco —el punto nuevo ya no es
-   * la calle que estaba escrita— y lo dice al lado del campo. El aviso
-   * acompaña al campo vacío, no a la persona: en cuanto vuelve a escribir, se
-   * va solo.
-   */
-  private readonly domicilioVaciadoPorElMapa = signal(false);
-  private readonly trabajoVaciadoPorElMapa = signal(false);
-  protected readonly domicilioPorReescribir = computed(
-    () => this.domicilioVaciadoPorElMapa() && this.domicilio().trim() === '',
-  );
-  protected readonly trabajoPorReescribir = computed(
-    () => this.trabajoVaciadoPorElMapa() && this.direccionTrabajo().trim() === '',
-  );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
-
-  /** Tocaron el mapa del domicilio: la dirección escrita ya no vale (D-06). */
-  protected vaciarDomicilioPorElMapa(): void {
-    this.domicilio.set('');
-    this.domicilioVaciadoPorElMapa.set(true);
-  }
-
-  /** Lo mismo, para el trabajo. */
-  protected vaciarTrabajoPorElMapa(): void {
-    this.direccionTrabajo.set('');
-    this.trabajoVaciadoPorElMapa.set(true);
-  }
+  protected readonly gpsDomicilio = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsTrabajo = signal<Coordinates | null | undefined>(undefined);
 
   /** El punto guardado que el selector muestra al abrir. */
-  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
-  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsDomicilioGuardado = signal<Coordinates | null>(null);
+  protected readonly gpsTrabajoGuardado = signal<Coordinates | null>(null);
+
+  /**
+   * El punto del domicilio que vale ahora: el que la persona confirmó, o el
+   * guardado si no tocó el mapa. **Es obligatorio** (26/10/2026): sin él no se
+   * guarda. Uno guardado no se pide volver a confirmarlo.
+   */
+  protected readonly sinPuntoDeDomicilio = computed(() => {
+    const elegido = this.gpsDomicilio();
+    return (elegido === undefined ? this.gpsDomicilioGuardado() : elegido) === null;
+  });
+  protected readonly mensajeSinPunto = MENSAJE_SIN_PUNTO;
+
+  /**
+   * Lo último que cada mapa dedujo de su punto, confirmado o no: la calle suele
+   * llegar antes de que la persona confirme, y al confirmar se vuelca.
+   */
+  private readonly localidadDomicilio = signal<LocalityFromPoint | null>(null);
+  private readonly localidadTrabajo = signal<LocalityFromPoint | null>(null);
+
+  protected confirmarGpsDomicilio(punto: Coordinates | null): void {
+    this.gpsDomicilio.set(punto);
+    this.volcarDomicilio();
+  }
+
+  protected confirmarGpsTrabajo(punto: Coordinates | null): void {
+    this.gpsTrabajo.set(punto);
+    this.volcarTrabajo();
+  }
+
+  protected aplicarLocalidadDomicilio(localidad: LocalityFromPoint | null): void {
+    this.localidadDomicilio.set(localidad);
+    this.volcarDomicilio();
+  }
+
+  protected aplicarLocalidadTrabajo(localidad: LocalityFromPoint | null): void {
+    this.localidadTrabajo.set(localidad);
+    this.volcarTrabajo();
+  }
+
+  /**
+   * El domicilio y el municipio, sacados del punto confirmado.
+   *
+   * Sin tocar el mapa (`undefined`) queda lo guardado: abrir la ficha no
+   * reescribe la dirección con la del geocodificador. Un punto quitado o movido
+   * sin confirmar deja el domicilio vacío —describía otro lugar—, y sin calle
+   * en el mapa la calle queda vacía y la zona va a su propio campo: nunca una
+   * calle inventada. El municipio no se
+   * vacía nunca: el contrato no admite borrarlo (ver `cambiosContra`).
+   */
+  private volcarDomicilio(): void {
+    const punto = this.gpsDomicilio();
+    if (punto === undefined) return;
+    const localidad = confirmedLocality(this.localidadDomicilio(), punto);
+    if (punto !== null && localidad === null) return;
+    // Sólo calle y número: el distrito viaja aparte (`homeDistrict`), y con la
+    // línea entera quedaba dos veces —en `lines` y en `district_text`—.
+    this.domicilio.set(localidad?.calleSola ?? '');
+    this.distritoDomicilio.set(localidad?.zona ?? '');
+    if (localidad?.municipioConceptId) this.municipio.set(localidad.municipioConceptId);
+  }
+
+  /** Lo mismo para el trabajo, que no guarda municipio. */
+  private volcarTrabajo(): void {
+    const punto = this.gpsTrabajo();
+    if (punto === undefined) return;
+    const localidad = confirmedLocality(this.localidadTrabajo(), punto);
+    if (punto !== null && localidad === null) return;
+    this.direccionTrabajo.set(localidad?.calleSola ?? '');
+    this.distritoTrabajo.set(localidad?.zona ?? '');
+  }
 
   /**
    * Los identificadores de prueba de cada mapa.
@@ -362,7 +416,7 @@ export class PatientProfileEdit {
    * prefijo porque los que ya existen no son uniformes, y renombrarlos rompería
    * recorridos que hoy funcionan.
    */
-  protected readonly idsGpsDomicilio: IdsDePrueba = {
+  protected readonly idsGpsDomicilio: TestIds = {
     mapa: 'perfil-domicilio-mapa',
     confirmada: 'perfil-domicilio-confirmada',
     avisoGeocodificacion: 'perfil-domicilio-aviso-geo',
@@ -372,7 +426,7 @@ export class PatientProfileEdit {
     marcarEnMapa: 'perfil-domicilio-marcar',
   };
 
-  protected readonly idsGpsTrabajo: IdsDePrueba = {
+  protected readonly idsGpsTrabajo: TestIds = {
     mapa: 'perfil-trabajo-mapa',
     confirmada: 'perfil-trabajo-confirmada',
     avisoGeocodificacion: 'perfil-trabajo-aviso-geo',
@@ -399,13 +453,6 @@ export class PatientProfileEdit {
   protected readonly telefono = signal('');
 
   protected readonly guardando = signal(false);
-
-  /* -- Catálogo de municipios ---------------------------------------------- */
-
-  protected readonly arbolMunicipios = signal<readonly TreeSelectGroup<string>[]>([]);
-
-  /** El catálogo no se pudo leer: se lo dice, no se deja un selector mudo. */
-  protected readonly catalogoMunicipiosCaido = signal(false);
 
   /* -- Catálogo de ocupaciones --------------------------------------------- */
 
@@ -465,7 +512,7 @@ export class PatientProfileEdit {
     }
   }
 
-  /** Ver `catalogoMunicipiosCaido`: mismo criterio y mismo aviso con reintento. */
+  /** El catálogo no se pudo leer: se lo dice, no se deja un selector mudo. */
   protected readonly catalogoOcupacionesCaido = signal(false);
 
   protected readonly hintOcupacion = HINT_OCUPACION;
@@ -498,7 +545,8 @@ export class PatientProfileEdit {
       !this.nombreVacio() &&
       !this.apellidoVacio() &&
       !this.telefonoMalEscrito() &&
-      !this.sexoVacio(),
+      !this.sexoVacio() &&
+      !this.sinPuntoDeDomicilio(),
   );
 
   /* -- Constantes de la plantilla ------------------------------------------ */
@@ -515,7 +563,7 @@ export class PatientProfileEdit {
       .subscribe((valor) => this.espejarTelefono(valor));
 
     this.cargar();
-    this.cargarMunicipios();
+    this.cargarDepartamentos();
     this.cargarOcupaciones();
   }
 
@@ -558,19 +606,20 @@ export class PatientProfileEdit {
     this.ocupacionTextoLibre.set(perfil.occupationFreeText ?? '');
     this.seleccionarOtroParaTextoLibre();
     this.municipio.set(perfil.residenceMunicipalityConceptId ?? null);
+    this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
     this.nit.set(perfil.taxId ?? '');
     this.razonSocial.set(perfil.taxHolderName ?? '');
     this.correo.set(perfil.email ?? '');
     this.domicilio.set(perfil.homeAddress?.lines ?? '');
     this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+    this.distritoDomicilio.set(perfil.homeAddress?.district ?? '');
+    this.distritoTrabajo.set(perfil.workAddress?.district ?? '');
     this.gpsDomicilioGuardado.set(puntoDe(perfil.homeAddress));
     this.gpsTrabajoGuardado.set(puntoDe(perfil.workAddress));
     // Se reinician las intenciones: lo que la persona tocó en una visita
     // anterior no puede seguir contando como cambio pendiente al releer.
     this.gpsDomicilio.set(undefined);
     this.gpsTrabajo.set(undefined);
-    this.domicilioVaciadoPorElMapa.set(false);
-    this.trabajoVaciadoPorElMapa.set(false);
 
     // Sin `emitEvent`: sembrar no es teclear, y el control ya queda validado.
     // El espejo se actualiza a mano, que es lo que ese evento haría. Se siembra
@@ -581,41 +630,9 @@ export class PatientProfileEdit {
   }
 
   /**
-   * Trae el árbol de municipios, para «dónde vivís».
-   *
-   * Un fallo no rompe la pantalla: el domicilio es un campo opcional y el resto
-   * de los datos se sigue pudiendo corregir. El bloque dice qué pasó y ofrece
-   * reintentar, que es lo que el alta ya hacía.
-   */
-  protected cargarMunicipios(): void {
-    this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.arbolMunicipios.set(ramas.map((rama) => this.aGrupo(rama)));
-      },
-      error: () => {
-        this.arbolMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
-      },
-    });
-  }
-
-  /**
-   * Reintenta la lectura del catálogo.
-   *
-   * Olvida lo cacheado antes de pedir: la lectura se comparte con
-   * `shareReplay`, que guarda también el error, así que sin esto «Reintentar»
-   * repetiría el mismo fallo sin llegar a tocar la red.
-   */
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
-  }
-
-  /**
    * Trae el catálogo de ocupaciones, para «¿en qué trabajás?».
    *
-   * Mismo criterio que los municipios ante un fallo: el campo es opcional, así
+   * Un fallo no rompe la pantalla: el campo es opcional, así
    * que la pantalla sigue en pie y el bloque dice qué pasó con su «Reintentar».
    *
    * Bajo SSR el catálogo devuelve la lista vacía sin tocar la red —no hay API a
@@ -623,7 +640,7 @@ export class PatientProfileEdit {
    * desplegable se dibuja con su marcador y se llena al hidratar.
    */
   protected cargarOcupaciones(): void {
-    this.ocupaciones.listar().subscribe({
+    this.ocupaciones.list().subscribe({
       next: (opciones) => {
         this.catalogoOcupacionesCaido.set(false);
         this.opcionesOcupacion.set(
@@ -642,9 +659,15 @@ export class PatientProfileEdit {
     });
   }
 
-  /** Reintenta la lectura del catálogo de ocupaciones. Ver `reintentarMunicipios`. */
+  /**
+   * Reintenta la lectura del catálogo de ocupaciones.
+   *
+   * Olvida lo cacheado antes de pedir: la lectura se comparte con
+   * `shareReplay`, que guarda también el error, así que sin esto «Reintentar»
+   * repetiría el mismo fallo sin llegar a tocar la red.
+   */
   protected reintentarOcupaciones(): void {
-    this.ocupaciones.olvidar();
+    this.ocupaciones.forget();
     this.cargarOcupaciones();
   }
 
@@ -657,16 +680,6 @@ export class PatientProfileEdit {
     if (otra !== undefined) {
       this.ocupacionConceptId.set(otra.value);
     }
-  }
-
-  private aGrupo(rama: RamaDepartamento): TreeSelectGroup<string> {
-    return {
-      label: rama.nombre,
-      items: rama.municipios.map((municipio) => ({
-        value: municipio.conceptId,
-        label: municipio.nombre,
-      })),
-    };
   }
 
   /**
@@ -747,7 +760,7 @@ export class PatientProfileEdit {
       if (!pestanas.includes(this.pestana())) {
         this.pestana.set(pestanas[0]);
       }
-      const donde = LISTA.format(pestanas.map((indice) => `«${PESTANAS_DEL_PERFIL[indice]}»`));
+      const donde = LISTA.format(pestanas.map((indice) => `«${PROFILE_TABS[indice]}»`));
       this.toasts.error(
         [`Revise los campos marcados en ${donde} y vuelva a guardar.`, ...sinLugar].join(' '),
         AMBITO,
@@ -786,11 +799,11 @@ export class PatientProfileEdit {
    * «Sin especificar»: el backend los borra con `''` y lo declara en su
    * contrato.
    *
-   * TODO(API): la fecha de nacimiento, el sexo al nacer y el municipio **no se
-   * pueden borrar**. Sus validadores son `@IsISO8601`, `@IsIn` y `@IsUUID`, y
-   * ninguno admite la cadena vacía: un valor declarado se puede cambiar por
-   * otro, no quitar. Mientras siga así, dejarlos en blanco no manda nada en vez
-   * de provocar un `400` que la persona leería como un fallo del producto.
+   * La fecha de nacimiento, el sexo al nacer y el municipio **no se pueden
+   * borrar**: sus validadores son `@IsISO8601`, `@IsIn` y `@IsUUID`, y ninguno
+   * admite la cadena vacía. Un valor declarado se cambia por otro, no se
+   * quita, así que dejarlos en blanco no manda nada en vez de provocar un
+   * `400` que la persona leería como un fallo del producto.
    */
   /**
    * Qué pestaña tiene un campo que impide guardar, cuando no es la abierta.
@@ -803,13 +816,16 @@ export class PatientProfileEdit {
   protected readonly pendienteEnOtraPestana = computed<string | null>(() => {
     const abierta = this.pestana();
     if (
-      abierta !== PESTANA.personales &&
+      abierta !== TAB.personales &&
       (this.nombreVacio() || this.apellidoVacio() || this.sexoVacio())
     ) {
-      return `Falta completar «${PESTANAS_DEL_PERFIL[PESTANA.personales]}».`;
+      return `Falta completar «${PROFILE_TABS[TAB.personales]}».`;
     }
-    if (abierta !== PESTANA.contacto && this.telefonoMalEscrito()) {
-      return `Revise el teléfono en «${PESTANAS_DEL_PERFIL[PESTANA.contacto]}».`;
+    if (abierta !== TAB.contacto && this.telefonoMalEscrito()) {
+      return `Revise el teléfono en «${PROFILE_TABS[TAB.contacto]}».`;
+    }
+    if (abierta !== TAB.contacto && this.sinPuntoDeDomicilio()) {
+      return `Marque su casa en el mapa de «${PROFILE_TABS[TAB.contacto]}».`;
     }
     return null;
   });
@@ -918,6 +934,11 @@ export class PatientProfileEdit {
       cambios.sexAtBirth = sexo;
     }
 
+    const departamento = this.departamentoEmisor();
+    if (departamento !== null && departamento !== original.issuerAdministrativeAreaConceptId) {
+      cambios.issuerAdministrativeAreaConceptId = departamento;
+    }
+
     const municipio = this.municipio();
     if (municipio !== null && municipio !== original.residenceMunicipalityConceptId) {
       cambios.residenceMunicipalityConceptId = municipio;
@@ -941,6 +962,14 @@ export class PatientProfileEdit {
     const trabajo = textoCambiado(this.direccionTrabajo(), original.workAddress?.lines);
     if (trabajo !== undefined) {
       cambios.workAddressLines = trabajo;
+    }
+    const distritoCasa = textoCambiado(this.distritoDomicilio(), original.homeAddress?.district);
+    if (distritoCasa !== undefined) {
+      cambios.homeDistrict = distritoCasa;
+    }
+    const distritoTrabajo = textoCambiado(this.distritoTrabajo(), original.workAddress?.district);
+    if (distritoTrabajo !== undefined) {
+      cambios.workDistrict = distritoTrabajo;
     }
 
     // El punto de cada dirección, con la misma regla de tres estados que el
@@ -1022,8 +1051,8 @@ function telefonoCanonico(guardado: string | undefined): string {
   if (!/[0-9]/.test(crudo)) {
     return '';
   }
-  const pais = paisDelNumero(crudo);
-  return `${pais.prefijo} ${nacionalDelNumero(crudo, pais)}`;
+  const pais = numberCountry(crudo);
+  return `${pais.prefijo} ${numberNational(crudo, pais)}`;
 }
 
 /**
@@ -1046,7 +1075,7 @@ function textoCambiado(actual: string, guardado: string | undefined): string | u
  */
 function puntoDe(
   direccion: { latitude?: number; longitude?: number } | undefined,
-): Coordenadas | null {
+): Coordinates | null {
   if (direccion?.latitude === undefined || direccion.longitude === undefined) {
     return null;
   }
@@ -1062,7 +1091,7 @@ function puntoDe(
  */
 function coordenadasCambiadas(
   cual: 'home' | 'work',
-  intencion: Coordenadas | null | undefined,
+  intencion: Coordinates | null | undefined,
 ): Record<string, number | null> {
   if (intencion === undefined) return {};
   if (intencion === null) {

@@ -1,4 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
@@ -26,6 +28,18 @@ import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
  *   CORR_RUTA=/notifications  una sola ruta (opcional)
  *   CORR_USUARIO=paciente     cuenta del simulador (default `medica`)
  *   E2E_BASE_URL              default http://localhost:4200
+ *   CORR_EVIDENCE_DESTINATION carpeta de salida (default
+ *                             artifacts/evidencia/correcciones/lane-<N>, ignorada por git)
+ *
+ * ## Qué deja, además de la matriz
+ *
+ * `MANIFIESTO.json` (`MANIFIESTO-antes.json` en la línea base): una entrada por
+ * celda con los veredictos por columna, los errores de consola, el tamaño y el
+ * SHA-256 de la foto, más el **commit** del árbol medido, los archivos
+ * versionados con cambios sin confirmar y el commit del **build servido** (el
+ * sello que la maqueta guarda en `sessionStorage`). Es lo que
+ * `scripts/check-correcciones.mjs` compara contra el código del carril: sin
+ * commit no hay forma de saber si una foto describe la pantalla de hoy.
  */
 
 const LANE = process.env['CORR_LANE'] ?? '';
@@ -38,7 +52,7 @@ const ROUTE_KEY =
 
 const BASE_DESTINATION = process.env['CORR_EVIDENCE_DESTINATION']
   ? resolve(process.env['CORR_EVIDENCE_DESTINATION'])
-  : join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+  : join('artifacts', 'evidencia', 'correcciones', `lane-${LANE}`);
 // Las dos pasadas de usuario deben conservar matrices y fotos independientes.
 const DESTINO = USUARIO === 'medica' ? BASE_DESTINATION : join(BASE_DESTINATION, USUARIO);
 const FOTOS = join(DESTINO, 'fotos', FASE);
@@ -53,7 +67,6 @@ interface Ruta {
   readonly accion?:
     | 'crear-consultorio'
     | 'editar-perfil-consultorio'
-    | 'panel-consultorio'
     | 'practitioner-practice-tab'
     | 'practitioner-credentials-tab';
   /**
@@ -81,7 +94,7 @@ const HOLGURA_MAX_PX = 2;
 const ANCHO_MIN = 0.85;
 const FOTO_MIN_BYTES = 8 * 1024;
 
-async function crearAdjuntoDeMuestra(page: Page): Promise<Buffer> {
+async function createSampleAttachment(page: Page): Promise<Buffer> {
   const base64 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 1000;
@@ -284,6 +297,74 @@ async function medir(page: Page): Promise<Medicion> {
   });
 }
 
+interface RowResult {
+  /** La fila tal como queda en `MATRIZ-visual.md`. */
+  readonly row: string;
+  readonly ok: boolean;
+  /** Regla de fondo que se aplicó a la celda en oscuro; `null` si no se midió el fondo. */
+  readonly requiresWhiteBackground: boolean | null;
+  readonly parts: {
+    readonly background: string;
+    readonly centering: string;
+    readonly width: string;
+    readonly scroll: string;
+    readonly console: string;
+  };
+}
+
+interface ManifestCell {
+  readonly route: string;
+  readonly name: string;
+  readonly viewport: string;
+  readonly theme: string;
+  readonly expected: string;
+  readonly loaded: boolean;
+  readonly ok: boolean;
+  readonly requiresWhiteBackground: boolean | null;
+  readonly parts: RowResult['parts'];
+  readonly row: string;
+  readonly consoleErrors: readonly string[];
+  readonly photo: string;
+  readonly photoBytes: number;
+  readonly photoSha256: string;
+}
+
+function git(...args: string[]): string {
+  try {
+    // Sin `.trim()`: `git status --porcelain` empieza con « M » y el espacio es una columna.
+    return execFileSync('git', args, { encoding: 'utf8' });
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * El commit con el que se compiló la maqueta que se está midiendo.
+ *
+ * `MockStore` guarda en `sessionStorage` su sello `{ build, filas }`, y `build`
+ * es `buildInfo.commit`. Leerlo es la única forma de saber desde el navegador
+ * qué código sirve el puerto: un `dist/` viejo se ve igual que uno nuevo.
+ */
+async function readServedBuilds(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const builds = new Set<string>();
+    for (const almacen of [sessionStorage, localStorage]) {
+      for (let i = 0; i < almacen.length; i += 1) {
+        try {
+          const valor: unknown = JSON.parse(almacen.getItem(almacen.key(i) ?? '') ?? 'null');
+          if (valor && typeof valor === 'object' && 'build' in valor) {
+            const build = (valor as { build: unknown }).build;
+            if (typeof build === 'string' && /^[0-9a-f]{7,40}$/.test(build)) builds.add(build);
+          }
+        } catch {
+          // Un valor que no es JSON no es un sello.
+        }
+      }
+    }
+    return [...builds];
+  });
+}
+
 function fila(
   ruta: string,
   vp: string,
@@ -292,25 +373,32 @@ function fila(
   consola: number,
   foto: string,
   esperado: Ruta['esperado'],
-): { texto: string; ok: boolean } {
+): RowResult {
   if (esperado === 'no-encontrado') {
     // Se borró a propósito: lo que se comprueba es que ya no está.
     const borrada = !m.cargo;
+    const fondoBorrada = borrada ? 'BORRADA (esperado)' : 'FAIL (todavía carga)';
     return {
-      texto: `| \`${ruta}\` | ${vp} | ${tema} | ${borrada ? 'BORRADA (esperado)' : 'FAIL (todavía carga)'} | — | — | — | — | \`${foto}\` |`,
+      row: `| \`${ruta}\` | ${vp} | ${tema} | ${fondoBorrada} | — | — | — | — | \`${foto}\` |`,
       ok: borrada,
+      requiresWhiteBackground: null,
+      parts: { background: fondoBorrada, centering: '—', width: '—', scroll: '—', console: '—' },
     };
   }
   if (esperado === 'redirige') {
     return {
-      texto: `| \`${ruta}\` | ${vp} | ${tema} | REDIRIGE (esperado) | — | — | — | PASS | \`${foto}\` |`,
+      row: `| \`${ruta}\` | ${vp} | ${tema} | REDIRIGE (esperado) | — | — | — | PASS | \`${foto}\` |`,
       ok: true,
+      requiresWhiteBackground: null,
+      parts: { background: 'REDIRIGE (esperado)', centering: '—', width: '—', scroll: '—', console: 'PASS' },
     };
   }
   if (!m.cargo) {
     return {
-      texto: `| \`${ruta}\` | ${vp} | ${tema} | SIN CARGAR | | | | | \`${foto}\` |`,
+      row: `| \`${ruta}\` | ${vp} | ${tema} | SIN CARGAR | | | | | \`${foto}\` |`,
       ok: false,
+      requiresWhiteBackground: null,
+      parts: { background: 'SIN CARGAR', centering: '', width: '', scroll: '', console: '' },
     };
   }
   // Blanco es blanco **y sin imagen encima**: el degradado de `fondo-vista.svg`
@@ -344,7 +432,12 @@ function fila(
   const scroll = m.scrollHorizontal ? 'FAIL' : 'PASS';
   const cons = consola === 0 ? 'PASS' : `FAIL (${consola})`;
   const texto = `| \`${ruta}\` | ${vp} | ${tema} | ${fondo} | ${centrado} | ${ancho} | ${scroll} | ${cons} | \`${foto}\` |`;
-  return { texto, ok: ![fondo, centrado, ancho, scroll, cons].some((x) => x.startsWith('FAIL')) };
+  return {
+    row: texto,
+    ok: ![fondo, centrado, ancho, scroll, cons].some((x) => x.startsWith('FAIL')),
+    requiresWhiteBackground: exigeFondoBlanco,
+    parts: { background: fondo, centering: centrado, width: ancho, scroll, console: cons },
+  };
 }
 
 /**
@@ -353,7 +446,7 @@ function fila(
  * de producto ni una fixture de datos. El estado vacío se obtiene marcando
  * toda la bandeja como leída y entrando a «Sin leer».
  */
-async function prepararEstadoNotificaciones(page: Page, ruta: string): Promise<void> {
+async function prepareNotificationState(page: Page, ruta: string): Promise<void> {
   const url = new URL(ruta, BASE);
   if (url.pathname !== '/notification-center') return;
 
@@ -378,9 +471,11 @@ async function prepararEstadoNotificaciones(page: Page, ruta: string): Promise<v
   if (escenario === 'unread') {
     await pestanas.nth(1).click();
     await esperarBandejaLista();
-    // El simulador de la evidencia devuelve cuatro avisos sin leer. Esperar
-    // esa respuesta evita fotografiar el esqueleto o una lista transitoria.
-    await expect(titulos).toHaveCount(4);
+    // El simulador devuelve a la médica cinco avisos sin leer (`notif-med-1`, `-2`,
+    // `-3`, `-6` y `-7` en `notifications.handlers.ts`; el séptimo entró después de
+    // que esta espera dijera cuatro). Esperar esa respuesta evita fotografiar el
+    // esqueleto o una lista transitoria. Si el fixture cambia, cambia este número.
+    await expect(titulos).toHaveCount(5);
     return;
   }
 
@@ -391,7 +486,7 @@ async function prepararEstadoNotificaciones(page: Page, ruta: string): Promise<v
     await expect(marcarTodas).toHaveCount(0);
     await pestanas.nth(1).click();
     await expect(page.locator('.view-state-host__loading')).toHaveCount(0);
-    await expect(page.getByText('No hay notificaciones sin leer.')).toBeVisible();
+    await expect(page.getByText('No tiene notificaciones sin leer')).toBeVisible();
     await expect(page.locator('app-empty-state')).toBeVisible();
     return;
   }
@@ -406,6 +501,8 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
     test.setTimeout(20 * 60_000);
     mkdirSync(FOTOS, { recursive: true });
     const filas: string[] = [];
+    const cells: ManifestCell[] = [];
+    const servedBuilds = new Set<string>();
     const errores: string[] = [];
     let rojos = 0;
 
@@ -468,7 +565,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           await activePage.setViewportSize({ width: vp.width, height: vp.height });
           await activePage.goto(`${BASE}${ruta}`, { waitUntil: 'domcontentloaded' });
           await esperarAQueSeAsiente(activePage);
-          await prepararEstadoNotificaciones(activePage, ruta);
+          await prepareNotificationState(activePage, ruta);
           // La preferencia del menú se restaura después de hidratar. Esperar a
           // que el ancho fijo del menú coincida con el espacio reservado por
           // el marco evita capturas con contenido debajo de la barra lateral.
@@ -588,26 +685,6 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
               ).toHaveAttribute('aria-selected', 'true');
             }
           }
-          if (routeEntry?.accion === 'panel-consultorio') {
-            const accesos = activePage.getByTestId('panel-accesos');
-            await accesos.scrollIntoViewIfNeeded();
-            await activePage
-              .getByTestId('panel-zona')
-              .filter({ hasText: 'Administración' })
-              .click();
-            const zonaAbierta = activePage.getByTestId('panel-zona-abierta');
-            await zonaAbierta.scrollIntoViewIfNeeded();
-            const accesoConsultorio = activePage
-              .getByTestId('panel-acceso')
-              .filter({ hasText: 'Mi consultorio propio' });
-            if (FASE === 'antes') {
-              await expect(accesoConsultorio).toHaveCount(0);
-            } else {
-              await expect(accesoConsultorio).toBeVisible();
-              await accesoConsultorio.scrollIntoViewIfNeeded();
-            }
-            await activePage.waitForTimeout(400);
-          }
           if (ruta.includes('with-file=1')) {
             await activePage.getByRole('button', { name: 'Agregar matrícula' }).click();
             const input = activePage.getByTestId('matricula-archivo');
@@ -615,7 +692,7 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             await input.setInputFiles({
               name: 'matricula.png',
               mimeType: 'image/png',
-              buffer: await crearAdjuntoDeMuestra(activePage),
+              buffer: await createSampleAttachment(activePage),
             });
             await expect(activePage.getByText('matricula.png')).toBeVisible();
             const preview = activePage.locator('app-file-preview img');
@@ -625,6 +702,21 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
           const foto = join(FOTOS, `${nombre}-${vp.nombre}-${tema}.png`);
           // La medición y la foto usan el viewport declarado
           // (375/768/1440), igual al que usaría una persona.
+          // El celeste del fondo (REQ-08-002) late un instante después de que el
+          // puntero actúa —un clic en una pestaña basta— y vuelve a 0 en reposo. Medir
+          // dentro de ese pulso daba «fondo no blanco» según el momento exacto del
+          // clic, no según la pantalla. Se mide en reposo: si pasados 6 s el velo sigue
+          // encendido, es un tinte permanente y la medición lo reporta como tal.
+          await activePage
+            .waitForFunction(
+              () =>
+                (['::before', '::after'] as const).every(
+                  (pseudo) => Number(getComputedStyle(document.body, pseudo).opacity || '0') < 0.01,
+                ),
+              undefined,
+              { timeout: 6_000 },
+            )
+            .catch(() => undefined);
           const m = await medir(activePage);
           const expectedUrl = new URL(destino ?? ruta, BASE);
           const actualUrl = new URL(activePage.url());
@@ -718,8 +810,25 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
             relative(DESTINO, foto).split(sep).join('/'),
             esperado,
           );
-          filas.push(f.texto);
+          filas.push(f.row);
           if (!f.ok) rojos += 1;
+          for (const build of await readServedBuilds(activePage)) servedBuilds.add(build);
+          cells.push({
+            route: ruta,
+            name: nombre,
+            viewport: vp.nombre,
+            theme: tema,
+            expected: esperado ?? 'pantalla',
+            loaded: routeMeasurement.cargo,
+            ok: f.ok,
+            requiresWhiteBackground: f.requiresWhiteBackground,
+            parts: f.parts,
+            row: f.row,
+            consoleErrors: [...consoleState.details],
+            photo: relative(DESTINO, foto).split(sep).join('/'),
+            photoBytes: bytes,
+            photoSha256: createHash('sha256').update(readFileSync(foto)).digest('hex'),
+          });
           if (consoleState.details.length > 0) {
             errores.push(
               `${ruta} @ ${vp.nombre}/${tema}: consola: ${consoleState.details.join(' | ')}`,
@@ -746,6 +855,34 @@ test.describe(`evidencia del carril ${LANE} (${FASE})`, () => {
     writeFileSync(
       join(DESTINO, `MATRIZ-visual${FASE === 'antes' ? '-antes' : ''}.md`),
       matriz,
+      'utf8',
+    );
+
+    const sufijo = FASE === 'antes' ? '-antes' : '';
+    writeFileSync(
+      join(DESTINO, `MANIFIESTO${sufijo}.json`),
+      `${JSON.stringify(
+        {
+          version: 1,
+          lane: LANE,
+          phase: FASE,
+          user: USUARIO,
+          generatedAt: new Date().toISOString(),
+          commit: git('rev-parse', 'HEAD').trim(),
+          branch: git('rev-parse', '--abbrev-ref', 'HEAD').trim(),
+          dirty: git('status', '--porcelain', '--untracked-files=no')
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => line.slice(3).trim()),
+          baseUrl: BASE,
+          servedBuilds: [...servedBuilds],
+          thresholds: { maxGapPx: HOLGURA_MAX_PX, minWidthRatio: ANCHO_MIN, minPhotoBytes: FOTO_MIN_BYTES },
+          cells,
+          errors: errores,
+        },
+        null,
+        2,
+      )}\n`,
       'utf8',
     );
 

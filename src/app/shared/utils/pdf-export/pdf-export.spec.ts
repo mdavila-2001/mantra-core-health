@@ -298,9 +298,9 @@ let buildPdfDocument: typeof import('./pdf-export').buildPdfDocument;
 let campoDeBloque: typeof import('./pdf-export').campoDeBloque;
 let buildBlocksPdf: typeof import('./pdf-export').buildBlocksPdf;
 let exportElementToPdf: typeof import('./pdf-export').exportElementToPdf;
-let establecerLogoDeDocumentos: typeof import('./pdf-logo').establecerLogoDeDocumentos;
-let establecerFirmaDeDocumentos: typeof import('./pdf-firma').establecerFirmaDeDocumentos;
-let establecerFuentesDeDocumentos: typeof import('./pdf-fuentes').establecerFuentesDeDocumentos;
+let establecerLogoDeDocumentos: typeof import('../../../core/pdf-branding/pdf-logo').establecerLogoDeDocumentos;
+let setDocumentSignature: typeof import('../../../core/pdf-branding/pdf-signature').setDocumentSignature;
+let setDocumentFonts: typeof import('../../../core/pdf-branding/pdf-fonts').setDocumentFonts;
 
 /** Un elemento con encabezado, párrafo y una tabla de dos filas. */
 function elementoDeEjemplo(): HTMLElement {
@@ -365,11 +365,11 @@ beforeEach(async () => {
   // lo que corra antes en este trabajador.
   vi.resetModules();
   ({ buildPdfDocument, buildBlocksPdf, exportElementToPdf, campoDeBloque } = await import('./pdf-export'));
-  ({ establecerLogoDeDocumentos } = await import('./pdf-logo'));
-  ({ establecerFirmaDeDocumentos } = await import('./pdf-firma'));
-  ({ establecerFuentesDeDocumentos } = await import('./pdf-fuentes'));
-  establecerFirmaDeDocumentos(null);
-  establecerFuentesDeDocumentos(null);
+  ({ establecerLogoDeDocumentos } = await import('../../../core/pdf-branding/pdf-logo'));
+  ({ setDocumentSignature } = await import('../../../core/pdf-branding/pdf-signature'));
+  ({ setDocumentFonts } = await import('../../../core/pdf-branding/pdf-fonts'));
+  setDocumentSignature(null);
+  setDocumentFonts(null);
   DocumentoFalso.fallarAlDibujarImagenes = false;
   establecerLogoDeDocumentos(null);
 });
@@ -389,14 +389,31 @@ beforeEach(async () => {
  */
 afterEach(() => {
   establecerLogoDeDocumentos(null);
-  establecerFirmaDeDocumentos(null);
-  establecerFuentesDeDocumentos(null);
+  setDocumentSignature(null);
+  setDocumentFonts(null);
 });
 
 afterAll(() => {
   vi.doUnmock('jspdf');
   vi.resetModules();
 });
+
+/**
+ * El builder de Angular corre todos los archivos en el mismo entorno, sin
+ * aislar módulos: lo que este archivo deja —el logo o la firma de la sesión
+ * fijados en un holder, `pdf-export.ts` evaluado con el jsPDF falso en la
+ * caché— lo heredaría el archivo siguiente. Se limpia al salir.
+ */
+afterEach(() => {
+  establecerLogoDeDocumentos(null);
+  setDocumentSignature(null);
+  setDocumentFonts(null);
+});
+
+afterAll(() => {
+  vi.resetModules();
+});
+
 
 describe('buildPdfDocument', () => {
   it('extrae encabezado, párrafo y filas de tabla, en orden', () => {
@@ -567,7 +584,7 @@ describe('las fuentes de marca', () => {
   });
 
   it('con fuentes cargadas registra las cuatro de AloVida y escribe títulos en Poppins y lectura en Nunito Sans', () => {
-    establecerFuentesDeDocumentos(FUENTES);
+    setDocumentFonts(FUENTES);
     buildBlocksPdf([
       { kind: 'heading', text: 'Sección', level: 2 },
       { kind: 'paragraph', text: 'Cuerpo' },
@@ -591,7 +608,7 @@ describe('las fuentes de marca', () => {
 
   /** Cada `jsPDF` guarda sus fuentes: un segundo documento las registra de nuevo. */
   it('registra las fuentes en cada documento, no una vez por sesión', () => {
-    establecerFuentesDeDocumentos(FUENTES);
+    setDocumentFonts(FUENTES);
     buildBlocksPdf([{ kind: 'paragraph', text: 'Uno' }]);
     buildBlocksPdf([{ kind: 'paragraph', text: 'Dos' }]);
 
@@ -1088,7 +1105,7 @@ describe('el bloque de firma y sello', () => {
   });
 
   it('usa la firma de la sesión por omisión, y `null` la apaga para ese documento', () => {
-    establecerFirmaDeDocumentos(SIN_IMAGENES);
+    setDocumentSignature(SIN_IMAGENES);
 
     buildBlocksPdf(CUERPO, { title: 'Receta' });
     expect(hay('Matrícula M-1234')).toBe(true);

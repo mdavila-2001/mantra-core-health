@@ -96,16 +96,16 @@
                 type="button"
                 class="perfil__estrella perfil__calificacion-boton"
                 data-testid="perfil-estrellas"
-                [attr.aria-label]="'Promedio ' + media + ' de 5 estrellas. Ver reseñas.'"
+                title="Ver las reseñas del profesional"
                 (click)="abrirOpiniones()"
               >
-                <span class="perfil__estrellas" aria-hidden="true">
+                <span class="profile-rating__stars" aria-hidden="true">
                   @for (llena of estrellasCabecera(); track $index) {
                     <svg
-                      [class.perfil__estrella--vacia]="!llena"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                       stroke="none"
+                      [class.profile-rating__star--empty]="!llena"
                       focusable="false"
                     >
                       <path
@@ -115,6 +115,7 @@
                   }
                 </span>
                 {{ media }}
+                <span class="solo-lectores">de 5: ver las reseñas del profesional</span>
               </button>
               <button
                 type="button"
@@ -122,7 +123,7 @@
                 data-testid="perfil-opiniones"
                 (click)="abrirOpiniones()"
               >
-                {{ p.ratingCount }} {{ p.ratingCount === 1 ? 'opinión' : 'opiniones' }}
+                {{ p.ratingCount }} {{ p.ratingCount === 1 ? 'reseña' : 'reseñas' }}
               </button>
             } @else {
               <span class="perfil__punto" aria-hidden="true">·</span>
@@ -181,10 +182,8 @@
                 </a>
               }
 
-              <!-- Calificar va acá y no en el modal de opiniones: abrir un
-                   <dialog> encima de otro deja dos trampas de foco anidadas, y
-                   Escape cerraría el de arriba dejando el de abajo abierto.
-                   Quien ya se atendió entra por la ficha, no por la lista. -->
+              <!-- Acceso directo al formulario de calificación, sin pasar por
+                   la pestaña de reseñas. -->
               @if (puedeCalificar()) {
                 <button
                   class="perfil__accion-secundaria"
@@ -467,6 +466,17 @@
             }
           </section>
         }
+
+        @if (opinionesAbiertas()) {
+          <section class="app-card perfil__seccion" id="reviews" [hidden]="!mostrar('reviews')">
+            <app-public-profile-reviews
+              [kind]="p.kind"
+              [slug]="p.slug"
+              [professionalName]="p.displayName"
+              [acceptsReviews]="p.acceptsReviews"
+            />
+          </section>
+        }
       </div>
 
       <!-- El riel: la ficha en frío. Son los datos que deciden si ésta sirve
@@ -504,29 +514,7 @@
       </aside>
     </div>
 
-    <!-- Las reseñas cargan al abrir su pestaña. El componente conserva su
-         paginado y su promedio provisto por la API. -->
-    @if (opinionesAbiertas()) {
-      <section
-        class="app-card perfil__seccion"
-        id="reviews"
-        role="tabpanel"
-        aria-labelledby="pestana-reviews"
-        tabindex="0"
-        data-testid="perfil-reviews"
-        [hidden]="!mostrar('reviews')"
-      >
-        <app-public-profile-reviews
-          [kind]="p.kind"
-          [slug]="p.slug"
-          [professionalName]="p.displayName"
-          [acceptsReviews]="p.acceptsReviews"
-        />
-      </section>
-    }
-
-    <!-- Calificar la atención recibida. Hermano del modal de opiniones y no
-         hijo: dos <dialog> modales anidados se pisan el foco. -->
+    <!-- Formulario del acceso directo de la cabecera. -->
     @if (calificando()) {
       <app-rate-encounter-dialog
         [professionalName]="p.displayName"

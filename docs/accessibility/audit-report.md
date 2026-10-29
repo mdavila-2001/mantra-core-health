@@ -193,20 +193,3 @@ no muestra defectos evidentes y enumera catorce que sí lo son.
 
 Un `aria-live` correcto en el HTML puede no anunciarse en un lector real por
 razones que solo aparecen al probarlo.
-
-## Recomendaciones, en orden
-
-1. **Probar con un lector de pantalla real.** Es lo que más información aporta
-   por unidad de esfuerzo, y no requiere instalar nada.
-2. **Ejecutar el [guion de teclado](keyboard.md#guion-de-prueba-manual).**
-   Tampoco requiere instalar nada.
-3. **Resolver A11Y-01 y A11Y-03/04** con una sola directiva reutilizable.
-4. **Añadir la verificación de contrastes** (A11Y-06): script propio, sin
-   dependencias.
-5. **Incorporar axe-core a las pruebas de componente.** Es la única de la lista
-   que añade una dependencia, y por eso va después.
-
-Ninguna se ejecuta en este trabajo documental: las cinco son cambios de producto
-o de herramientas. Están en
-[el análisis de brechas](../reports/documentation-gap-analysis.md) con su
-clasificación.

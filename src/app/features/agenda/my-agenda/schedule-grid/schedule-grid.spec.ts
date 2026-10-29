@@ -445,6 +445,77 @@ describe('ScheduleGrid', () => {
       expect(leyenda?.textContent).toContain('Otros servicios: cirugías, toma de muestras');
     });
 
+    it('una franja con telemedicina lleva la marca, y lo dice en su rótulo, la celda y el globo', () => {
+      montar(
+        [
+          regla(5, '08:00:00', '12:00:00', { slotMinutes: 30, telemedicineEnabled: true }),
+          regla(1, '08:00:00', '12:00:00', { slotMinutes: 30, telemedicineEnabled: false }),
+        ],
+        { sede: 'Sede Centro' },
+      );
+      const [lunes, viernes] = bloques().sort((a, b) =>
+        a.getAttribute('aria-label')!.localeCompare(b.getAttribute('aria-label')!),
+      );
+      // La marca: palabra e ícono, sólo en la franja que la tiene.
+      const marca = viernes.querySelector('[data-testid="horario-bloque-telemedicina"]');
+      expect(marca?.textContent?.trim()).toBe('Telemedicina');
+      expect(marca?.querySelector('app-nav-icon')).not.toBeNull();
+      expect(lunes.querySelector('[data-testid="horario-bloque-telemedicina"]')).toBeNull();
+      // El nombre accesible no depende del ícono.
+      expect(viernes.getAttribute('aria-label')).toBe(
+        'viernes de 08:00 a 12:00: atiende en Sede Centro, también por telemedicina',
+      );
+      expect(lunes.getAttribute('aria-label')).not.toContain('telemedicina');
+      expect(celda(9, 4).getAttribute('aria-label')).toContain('también por telemedicina');
+      expect(celda(9, 0).getAttribute('aria-label')).not.toContain('telemedicina');
+
+      viernes.dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      const globo =
+        fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
+      expect(globo).toContain('Telemedicina');
+      expect(globo).toContain('también por videollamada');
+    });
+
+    it('sin el campo, la franja no muestra telemedicina: ausente ≡ no', () => {
+      montar([regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 })]);
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="horario-bloque-telemedicina"]'),
+      ).toBeNull();
+      bloques()[0].dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      const globo =
+        fixture.nativeElement.querySelector('[data-testid="horario-globo"]')?.textContent ?? '';
+      expect(globo).not.toContain('Telemedicina');
+    });
+
+    it('la leyenda tiene una muestra por tipo, la misma que lleva su franja', () => {
+      montar([
+        regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 }),
+        regla(2, '14:00:00', '18:00:00', { bookingMode: 'SERVICES' }),
+        regla(3, '08:00:00', '12:00:00', { bookingMode: 'MIXED', slotMinutes: 30 }),
+      ]);
+      const items: HTMLElement[] = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="horario-leyenda"] li'),
+      );
+      const swatchOf = (item: HTMLElement): string =>
+        item.querySelector('.grilla__leyenda-muestra')?.className ?? '';
+
+      expect(items.map((item) => item.textContent?.trim())).toEqual([
+        'Consultas',
+        'Otros servicios: cirugías, toma de muestras, tratamientos y similares',
+        'Consultas y otros servicios',
+      ]);
+      expect(swatchOf(items[0])).toBe('grilla__leyenda-muestra');
+      expect(swatchOf(items[1])).toContain('grilla__leyenda-muestra--services');
+      expect(swatchOf(items[2])).toContain('grilla__leyenda-muestra--mixed');
+      expect(bloques().map((bloque) => bloque.getAttribute('data-mode')).sort()).toEqual([
+        'CONSULTATIONS',
+        'MIXED',
+        'SERVICES',
+      ]);
+    });
+
     it('sin otros servicios no hay leyenda que leer', () => {
       montar([regla(1, '08:00:00', '12:00:00', { slotMinutes: 30 })]);
       expect(fixture.nativeElement.querySelector('[data-testid="horario-leyenda"]')).toBeNull();
@@ -503,6 +574,43 @@ describe('ScheduleGrid', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[data-testid="horario-globo"]')).toBeNull();
+  });
+
+  /**
+   * El título del globo nombra el día como se dice. Sin fechas —la vista previa
+   * de «Publicar agenda», un horario retirado— le agregaba una «s» a nombres
+   * que ya la tienen: decía «Luness».
+   */
+  describe('el título del globo', () => {
+    /** La semana del miércoles 9 de septiembre de 2026 va del lunes 7 al domingo 13. */
+    const SEVEN_DAYS = [
+      { dayOfWeek: 1, undated: 'Lunes', dated: 'Lunes 7 de septiembre' },
+      { dayOfWeek: 2, undated: 'Martes', dated: 'Martes 8 de septiembre' },
+      { dayOfWeek: 3, undated: 'Miércoles', dated: 'Miércoles 9 de septiembre' },
+      { dayOfWeek: 4, undated: 'Jueves', dated: 'Jueves 10 de septiembre' },
+      { dayOfWeek: 5, undated: 'Viernes', dated: 'Viernes 11 de septiembre' },
+      { dayOfWeek: 6, undated: 'Sábado', dated: 'Sábado 12 de septiembre' },
+      { dayOfWeek: 0, undated: 'Domingo', dated: 'Domingo 13 de septiembre' },
+    ] as const;
+
+    function tooltipTitle(dayOfWeek: number, conFechas: boolean): string {
+      montar([regla(dayOfWeek, '09:00:00', '13:00:00')], { conFechas });
+      bloques()[0].dispatchEvent(new Event('mouseenter'));
+      fixture.detectChanges();
+      return (
+        fixture.nativeElement.querySelector('.grilla__globo-titulo')?.textContent?.trim() ?? ''
+      );
+    }
+
+    for (const day of SEVEN_DAYS) {
+      it(`sin fechas dice «${day.undated}», sin agregarle nada`, () => {
+        expect(tooltipTitle(day.dayOfWeek, false)).toBe(day.undated);
+      });
+
+      it(`con fechas dice «${day.dated}»`, () => {
+        expect(tooltipTitle(day.dayOfWeek, true)).toBe(day.dated);
+      });
+    }
   });
   /* ---- la grilla accesible (WCAG 2.1.1 · 1.3.1 · 4.1.2) ------------------- */
 

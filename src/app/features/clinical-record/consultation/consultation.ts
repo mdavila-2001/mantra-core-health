@@ -43,7 +43,7 @@ import { StatusSeal } from '../../../shared/components/organisms/status-seal/sta
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { downloadPrescriptionPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
-import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
+import { sessionContext } from '../../../shared/utils/clinical-pdf/session-signature';
 import {
   recetaDesdeResumen,
   type ContextoDelDocumento,
@@ -55,12 +55,20 @@ import {
   MOTIVO_QUERY_PARAM,
   patientChartRoute,
 } from '../clinical-record.routes';
-import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
-import { loRegistradoEnElEncuentro, type LoRegistrado } from './lo-registrado';
-import { CarePlanBlock, type DiagnosticoDelPlan } from '../patient-chart/care-plan-block/care-plan-block';
-import { DiagnosisBlock, type CitaDelPaciente } from '../patient-chart/diagnosis-block/diagnosis-block';
+import { writeFailureMessage } from '../write-message';
+import { recordedInEncounter, type RecordedItems } from './recorded-items';
+import {
+  CarePlanBlock,
+  type DiagnosticoDelPlan,
+} from '../patient-chart/care-plan-block/care-plan-block';
+import {
+  DiagnosisBlock,
+  type CitaDelPaciente,
+} from '../patient-chart/diagnosis-block/diagnosis-block';
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
 import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
+import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
+import { ConsultationReferrals } from './consultation-referrals';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -72,8 +80,9 @@ import {
   QUOTATION_NEW_ROUTE,
   QUOTATION_PATIENT_QUERY_PARAM,
 } from '../../quotations/quotations.routes';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../billing/invoicing-availability';
 import { PaymentPlanPanel } from './payment-plan-panel/payment-plan-panel';
+import { consultationError } from './consultation-forbidden';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -106,6 +115,7 @@ export type CasillaDeConsulta =
   | 'medicacion'
   | 'ordenes'
   | 'reconsulta'
+  | 'derivacion'
   | 'planes'
   | 'formulario'
   | 'pagos';
@@ -184,6 +194,13 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     icono: 'M4 5h16v16H4V5Zm4-2v4m8-4v4M4 10h16m-8 3v5m-2-2 2 2 2-2',
     testId: 'consulta-casilla-reconsulta',
   },
+  derivacion: {
+    titulo: 'Derivar',
+    descripcion: 'A otro profesional u organización médica, por un servicio concreto.',
+    tituloDelModal: 'Derivar a otro profesional u organización',
+    icono: 'M5 12h11m-4-4 4 4-4 4M19 5v14',
+    testId: 'consulta-casilla-derivacion',
+  },
   planes: {
     titulo: 'Plan de cuidados',
     descripcion: 'Un objetivo y las actividades para alcanzarlo.',
@@ -217,6 +234,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
   'medicacion',
   'planes',
   'reconsulta',
+  'derivacion',
   'pagos',
 ];
 
@@ -260,6 +278,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
     EncounterTimeline,
     FormField,
     FollowUpBlock,
+    ReferralBlock,
     MedicationBlock,
     PaymentsBlock,
     PageHeader,
@@ -286,7 +305,7 @@ export class Consultation {
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   /** Con la facturación simulada, «Pagos» cobra y factura; sin ella, sólo lista lo asentado. */
-  private readonly facturacionSimulada = inject(FACTURACION_SIMULADA_DISPONIBLE)();
+  private readonly facturacionSimulada = inject(SIMULATED_AVAILABLE_INVOICING)();
 
   /**
    * El perfil que se está atendiendo, leído del segmento `:profileId`.
@@ -328,6 +347,7 @@ export class Consultation {
 
   protected readonly consulta = signal<ViewState<Consulta>>(loading());
 
+  protected readonly referrals = new ConsultationReferrals(this.profileId);
   /** Nombre del paciente si se pudo leer; vacío si el padrón está prohibido. */
   private readonly nombre = signal('');
 
@@ -398,7 +418,7 @@ export class Consultation {
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, {
+    return writeFailureMessage(state, {
       accion: 'registrar encuentros',
       sinPermiso: 'Su rol no permite registrar encuentros.',
       yaNoExiste: 'El encuentro ya no existe. Recargue la consulta.',
@@ -445,13 +465,13 @@ export class Consultation {
    * `null` cuando no hay encuentro abierto es deliberado: sin atención en
    * curso no hay «este encuentro» del que hablar, y la sección no se dibuja.
    */
-  protected readonly loRegistrado = computed<LoRegistrado | null>(() => {
+  protected readonly loRegistrado = computed<RecordedItems | null>(() => {
     const datos = this.datos();
     const encuentro = this.encuentroActual();
     if (datos === undefined || datos === null || encuentro === null) {
       return null;
     }
-    return loRegistradoEnElEncuentro(
+    return recordedInEncounter(
       encuentro,
       datos.resumen,
       datos.chart.notes,
@@ -474,6 +494,7 @@ export class Consultation {
       medicacion: datos?.resumen.medicationRequests.length ?? 0,
       ordenes: null,
       reconsulta: null,
+      derivacion: this.referrals.count(), // aparte; sin lectura, sin cifra
       planes: datos?.chart.carePlans.length ?? 0,
       // El formulario no deja una fila propia en la historia: lo que guarda
       // termina en diagnósticos, notas, documentos o laboratorio.
@@ -487,7 +508,9 @@ export class Consultation {
       clave,
       ...CASILLAS[clave],
       // Con la facturación simulada, «Pagos» cobra y factura: la bajada lo dice.
-      ...(clave === 'pagos' && this.facturacionSimulada ? { descripcion: DESCRIPCION_DE_PAGOS_CON_FACTURACION } : {}),
+      ...(clave === 'pagos' && this.facturacionSimulada
+        ? { descripcion: DESCRIPCION_DE_PAGOS_CON_FACTURACION }
+        : {}),
       cantidad: cantidades[clave],
     }));
   });
@@ -508,9 +531,11 @@ export class Consultation {
     const dialog = event.currentTarget.querySelector('dialog');
     if (dialog === null) return;
     if (event.target instanceof Element && event.target.closest('dialog') !== dialog) return;
-    const controls = Array.from(dialog.querySelectorAll<HTMLElement>(
-      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-    )).filter((control) => control.getClientRects().length > 0 && control.tabIndex >= 0);
+    const controls = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter((control) => control.getClientRects().length > 0 && control.tabIndex >= 0);
     const first = controls.at(0);
     const last = controls.at(-1);
     const boundary = event.shiftKey ? first : last;
@@ -545,6 +570,9 @@ export class Consultation {
       return this.facturacionSimulada
         ? `Lo que ${quien} informó como recibido, lo que falta confirmar y sus comprobantes. Los pagos confirmados quedan listos para registrar en contabilidad.`
         : `Los pagos confirmados de ${quien}, tal como quedaron asentados en la caja de la práctica.`;
+    }
+    if (this.casillaAbierta() === 'derivacion') {
+      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Le avisamos en su campana, con un enlace para reservar.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`
@@ -581,8 +609,8 @@ export class Consultation {
     }),
   );
 
-  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(
-    () => this.diagnosticosParaReceta(),
+  protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>
+    this.diagnosticosParaReceta(),
   );
 
   protected readonly medicacionActivaConceptIds = computed<readonly string[]>(() =>
@@ -748,7 +776,7 @@ export class Consultation {
   }
 
   private contextoDelDocumento(): ContextoDelDocumento {
-    return contextoDeLaSesion({
+    return sessionContext({
       paciente: this.nombre(),
       practitionerProfileId: this.auth.practitionerProfileId(),
       displayName: this.auth.displayName(),
@@ -799,11 +827,10 @@ export class Consultation {
           this.etiquetas.set(etiquetas);
           this.consulta.set(ready(datos));
         },
-        error: (error: unknown) => this.consulta.set(errorToViewState<Consulta>(error)),
+        error: (error: unknown) => this.consulta.set(consultationError<Consulta>(error, profileId)),
       });
   }
 
-  /** La etiqueta de un concepto, o el texto de ausencia. Nunca el uuid. */
   /**
    * El **código** de catálogo de un concepto, que es por lo que se ramifica.
    *

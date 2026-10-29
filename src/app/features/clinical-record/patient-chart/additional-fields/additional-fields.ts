@@ -6,7 +6,6 @@ import {
   ElementRef,
   inject,
   input,
-  type OnInit,
   signal,
 } from '@angular/core';
 import { forkJoin, map, switchMap, type Observable } from 'rxjs';
@@ -40,6 +39,41 @@ const TOPE_DEL_ROTULO = 60;
 const TOPE_DEL_VALOR = 500;
 /** Hasta cuántos archivos por fila. */
 export const TOPE_DE_ARCHIVOS_POR_FILA = 10;
+
+/** Una fila «campo: valor» tal como queda en la nota. */
+export interface EntradaAdicional {
+  readonly label: string;
+  readonly value: string;
+}
+
+/** El rótulo con el que se lee una línea de la nota que no trae «campo: valor». */
+const ROTULO_SIN_CAMPO = 'Nota';
+
+/**
+ * Las filas como texto de la nota: una línea «campo: valor» por fila.
+ *
+ * Desde P39 la nota guarda las filas estructuradas (`entries`) y la pantalla
+ * las manda así. Esta forma de texto queda para leer las notas guardadas
+ * antes, cuando las filas viajaban en `objectiveText` (ver
+ * {@link entradasDelTexto}).
+ */
+export function textoDeLasEntradas(entradas: readonly EntradaAdicional[]): string {
+  return entradas.map((entrada) => `${entrada.label}: ${entrada.value}`).join('\n');
+}
+
+/** El camino de vuelta de {@link textoDeLasEntradas}, para leer lo guardado. */
+export function entradasDelTexto(texto: string | undefined): readonly EntradaAdicional[] {
+  return (texto ?? '')
+    .split('\n')
+    .map((linea) => linea.trim())
+    .filter((linea) => linea !== '')
+    .map((linea) => {
+      const corte = linea.indexOf(': ');
+      return corte <= 0
+        ? { label: ROTULO_SIN_CAMPO, value: linea }
+        : { label: linea.slice(0, corte), value: linea.slice(corte + 2) };
+    });
+}
 
 /**
  * Un alta que se corre al completar el formulario. La misma forma que los
@@ -121,7 +155,7 @@ function valorDeLaFila(fila: FilaAdicional): string {
   styleUrl: './additional-fields.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdditionalFields implements OnInit {
+export class AdditionalFields {
   private readonly notes = inject(ChartNotesClient);
   private readonly documents = inject(ChartDocumentsClient);
   private readonly files = inject(FilesClient);
@@ -134,14 +168,6 @@ export class AdditionalFields implements OnInit {
 
   /** Bloquea la edición mientras el formulario se envía. */
   readonly disabled = input(false);
-
-  /**
-   * La sección **es** el formulario: «Formulario libre — campo y valor» del
-   * selector, sin plantilla arriba. Cambia los textos, no el registro —la
-   * misma nota y un documento por fila con archivos— y arranca con una fila
-   * vacía: acá no es un agregado opcional, es lo que se vino a llenar.
-   */
-  readonly libre = input(false);
 
   protected readonly tope = TOPE_DE_FILAS_ADICIONALES;
   protected readonly topeDeArchivos = TOPE_DE_ARCHIVOS_POR_FILA;
@@ -156,12 +182,6 @@ export class AdditionalFields implements OnInit {
    * leería como algo que falta llenar.
    */
   protected readonly filas = signal<readonly FilaAdicional[]>([]);
-
-  ngOnInit(): void {
-    if (this.libre()) {
-      this.filas.set([filaVacia(this.proximaClave++)]);
-    }
-  }
 
   protected readonly textoLibre = signal('');
 
@@ -281,7 +301,7 @@ export class AdditionalFields implements OnInit {
 
   /** Vuelve a la sección vacía, después de registrar. */
   limpiar(): void {
-    this.filas.set(this.libre() ? [filaVacia(this.proximaClave++)] : []);
+    this.filas.set([]);
     this.textoLibre.set('');
     this.descartados.set([]);
   }

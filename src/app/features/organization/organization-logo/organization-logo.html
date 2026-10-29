@@ -1,4 +1,8 @@
-<app-card variant="outlined" padding="lg">
+<app-card
+  [variant]="enmarcado() ? 'outlined' : 'flat'"
+  [padding]="enmarcado() ? 'lg' : 'none'"
+  [class.sin-marco]="!enmarcado()"
+>
   <section class="logo-organizacion" data-testid="logo-organizacion">
     <h2 class="logo-organizacion__titulo">Logo de la organización</h2>
     <p class="logo-organizacion__nota">
@@ -10,7 +14,7 @@
     </p>
 
     <div class="logo-organizacion__cuerpo">
-      <app-logo-consultorio
+      <app-practice-logo
         data-testid="logo-organizacion-vista"
         [src]="vista()"
         [nombre]="nombre()"

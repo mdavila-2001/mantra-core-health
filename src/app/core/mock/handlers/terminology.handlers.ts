@@ -1,25 +1,25 @@
 import {
   CODE_SYSTEM_ID,
   CODE_SYSTEM_VERSION_ID,
-  conceptoPorId,
+  conceptById,
   conceptos,
-  conjuntoPorId,
-  miembrosDe,
-  todosLosConjuntos,
-  type ConceptoSimulado,
-} from '../fixtures/conceptos';
+  setById,
+  membersOf,
+  allSets,
+  type SimulatedConcept,
+} from '../fixtures/concepts';
 import {
-  conjuntosEnLinea,
-  facetasEnLinea,
-  fichaEnLinea,
+  inlineSets,
+  inlineFacets,
+  inlineSheet,
   PAGINA_DE_GRUPO,
-  terminoEnLinea,
+  inlineTerm,
   TIPOS_DEL_VECINDARIO,
   vecindarioEnLinea,
   VECINOS_POR_GRUPO,
   type PedidoDeVecindario,
   type VecinoSimulado,
-} from '../glossary-en-linea';
+} from '../inline-glossary';
 import {
   AlmacenDeGlosario,
   idDeConjunto,
@@ -50,7 +50,7 @@ import { contiene, iso, paginar, texto, uuid } from '../mock-store';
     demanda, con `fetch`, desde `public/glossary-data/` (el completo, fuera de
     git) o `public/glossary-seed/` (la semilla commiteada). Este archivo sólo
     traduce cada pedido a una lectura de shards y le da la forma de la API.
-    Hasta el 2026-09-30 importaba `fixtures/glosario.ts` y `fixtures/anatomia.ts`
+    Hasta el 2026-09-30 importaba `fixtures/glossary.ts` y `fixtures/anatomy.ts`
     —casi 3 MB de fixtures en el trozo de los manejadores—.
     ========================================================================== */
 
@@ -162,7 +162,7 @@ function codigoPublicado(codigo: string): string {
   return codigo.startsWith('BK-') ? `BOOKING_${codigo.slice(3).replace(/-/g, '_')}` : codigo;
 }
 
-function opcion(c: ConceptoSimulado) {
+function opcion(c: SimulatedConcept) {
   return {
     conceptId: c.id,
     code: codigoPublicado(c.code),
@@ -309,7 +309,7 @@ export function registrarTerminologia(
 ): void {
   router.get('/terminology/value-sets/$glossary-facets', async () => {
     try {
-      return facetasEnLinea(await glosario.manifiesto());
+      return inlineFacets(await glosario.manifiesto());
     } catch (error: unknown) {
       return glosarioNoDisponible(error);
     }
@@ -321,19 +321,19 @@ export function registrarTerminologia(
     // Los del glosario van primero; el resto del catálogo de la plataforma va
     // detrás, como hasta ahora. Si el glosario no se puede leer, el resto del
     // catálogo sigue sirviendo: un formulario de alta no depende de él.
-    let delGlosario: ReturnType<typeof conjuntosEnLinea> = [];
+    let delGlosario: ReturnType<typeof inlineSets> = [];
     try {
-      delGlosario = conjuntosEnLinea(await glosario.manifiesto());
+      delGlosario = inlineSets(await glosario.manifiesto());
     } catch (error: unknown) {
       console.error('[mock] el glosario no se pudo leer para el listado de conjuntos', error);
     }
-    const delCatalogo = todosLosConjuntos().map((c) => ({
+    const delCatalogo = allSets().map((c) => ({
       id: c.id,
       internalCode: c.internalCode,
       name: c.name,
       description: c.description,
       defaultVersionId: c.defaultVersionId,
-      memberCount: miembrosDe(c.internalCode).length,
+      memberCount: membersOf(c.internalCode).length,
     }));
     const todos = [...delGlosario, ...delCatalogo]
       .filter((c) => code === null || c.internalCode === code)
@@ -345,7 +345,7 @@ export function registrarTerminologia(
     const id = params['id']!;
     // Un id del glosario sólo se reconoce leyendo el manifiesto; para el resto
     // del catálogo no hace falta, así que se prueba primero lo local.
-    if (conjuntoPorId(id) === undefined) {
+    if (setById(id) === undefined) {
       try {
         const manifiesto = await glosario.manifiesto();
         const delGlosario = conjuntoDelGlosario(manifiesto, id);
@@ -387,9 +387,9 @@ export function registrarTerminologia(
       }
     }
 
-    const conjunto = conjuntoPorId(params['id']!);
+    const conjunto = setById(params['id']!);
     if (conjunto === undefined) return notFound('Conjunto de valores no encontrado');
-    const pagina = paginar(miembrosDe(conjunto.internalCode).map(opcion), query, 200);
+    const pagina = paginar(membersOf(conjunto.internalCode).map(opcion), query, 200);
     return {
       valueSetId: conjunto.id,
       valueSetVersionId: conjunto.defaultVersionId,
@@ -408,8 +408,8 @@ export function registrarTerminologia(
     if (ids !== null) {
       const encontrados = ids
         .split(',')
-        .map((id) => conceptoPorId(id.trim()))
-        .filter((c): c is ConceptoSimulado => c !== undefined)
+        .map((id) => conceptById(id.trim()))
+        .filter((c): c is SimulatedConcept => c !== undefined)
         .map(opcion);
       return { items: encontrados, count: encontrados.length, limit };
     }
@@ -443,7 +443,7 @@ export function registrarTerminologia(
           offset,
           limit,
         });
-        const items = filas.map((fila) => terminoEnLinea(fila, manifiesto));
+        const items = filas.map((fila) => inlineTerm(fila, manifiesto));
         return { items, count: items.length, limit, offset, total };
       } catch (error: unknown) {
         return glosarioNoDisponible(error);
@@ -480,7 +480,7 @@ export function registrarTerminologia(
       );
       const filas = [...pagina.filas, ...sumadas];
       const nodes = filas.map((fila) => {
-        const term = terminoEnLinea(fila, manifiesto);
+        const term = inlineTerm(fila, manifiesto);
         return {
           conceptId: term.conceptId,
           slug: term.slug,
@@ -526,27 +526,21 @@ export function registrarTerminologia(
     }
   });
 
-  /**
-   * El artículo enciclopédico de un término (TAREA-41 §12.3, F9). 404 si el
-   * término no tiene artículo: la pantalla conserva entonces su ficha de
-   * siempre. El backend real todavía no lo sirve; la maqueta lo lee de
-   * `mock/articles/` (`scripts/glossary-articles.mjs`).
-   */
-  router.get('/terminology/concepts/:id/article', async ({ params }) => {
+  router.get('/terminology/concepts/:id/glossary-article', async ({ params }) => {
     try {
-      const articulo = await glosario.articulo(params['id']!);
-      return articulo ?? notFound('El término no tiene artículo');
+      const article = await glosario.articulo(params['id']!);
+      return article ?? notFound('El término no tiene artículo');
     } catch (error: unknown) {
       return glosarioNoDisponible(error);
     }
   });
 
   router.get('/terminology/concepts/:id', async ({ params }) => {
-    const c = conceptoPorId(params['id']!);
+    const c = conceptById(params['id']!);
     if (c === undefined) {
       try {
         const fila = await glosario.porId(params['id']!);
-        if (fila !== null) return fichaEnLinea(fila, await glosario.manifiesto());
+        if (fila !== null) return inlineSheet(fila, await glosario.manifiesto());
       } catch (error: unknown) {
         return glosarioNoDisponible(error);
       }

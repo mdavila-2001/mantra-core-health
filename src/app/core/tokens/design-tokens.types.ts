@@ -110,12 +110,15 @@ export type StatusToken = `--st-${StatusType}-${StatusSlot}`;
  * Chips de marca: la MISMA receta tonal de los `--st-*` aplicada a las rampas
  * de marca. Comparten prefijo porque comparten recipe, pero **no son estados de
  * producto** — por eso viven aparte de `StatusType`.
+ *
+ * `tertiary` es la aguamarina: el tercer tono que pide la grilla del horario
+ * para «consultas y otros servicios», junto al primario y al secundario.
  */
-export const BRAND_TONES = ['primary', 'secondary'] as const;
+export const BRAND_TONES = ['primary', 'secondary', 'tertiary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
 
-/** Niveles de intensidad que usa el resumen de consultas. */
+/** Escala de cuatro niveles para la matriz de intensidad de consultas. */
 export const HEAT_LEVELS = [1, 2, 3, 4] as const;
 export type HeatLevel = (typeof HEAT_LEVELS)[number];
 export const HEAT_SLOTS = ['bg', 'fg'] as const;
@@ -168,6 +171,29 @@ export type DurationToken = `--dur-${DurationName}`;
 export const EASING_NAMES = ['standard', 'out', 'spring'] as const;
 export type EasingName = (typeof EASING_NAMES)[number];
 export type EasingToken = `--ease-${EasingName}`;
+
+/**
+ * Muelles: curvas `linear()` de un muelle amortiguado real. Cada curva va con SU
+ * duración (`--spring-<nombre>-dur`): se usan siempre en pareja. `rebote` pasa
+ * del destino y vuelve, así que se reserva para confirmar un gesto.
+ */
+export const SPRING_NAMES = ['rapido', 'suave', 'rebote'] as const;
+export type SpringName = (typeof SPRING_NAMES)[number];
+export type SpringToken = `--spring-${SpringName}`;
+export type SpringDurationToken = `--spring-${SpringName}-dur`;
+
+/**
+ * Materiales (vidrio): tinte translúcido + desenfoque + trazo fino, con respaldo
+ * opaco donde no hay `backdrop-filter`. Se aplican con `.material-<nombre>`.
+ */
+export const MATERIAL_NAMES = ['fino', 'regular', 'grueso'] as const;
+export type MaterialName = (typeof MATERIAL_NAMES)[number];
+export type MaterialTintToken = `--material-${MaterialName}-tinte`;
+export type MaterialBlurToken = `--material-${MaterialName}-desenfoque`;
+export const MATERIAL_SHARED = {
+  trazo: '--material-trazo',
+  respaldo: '--material-respaldo',
+} as const;
 
 /* ---- apilamiento ---------------------------------------------------------
    Escala cerrada: un `z-index` suelto en un componente vuelve a abrir el
@@ -291,6 +317,11 @@ export type DesignToken =
   | LayerToken
   | DurationToken
   | EasingToken
+  | SpringToken
+  | SpringDurationToken
+  | MaterialTintToken
+  | MaterialBlurToken
+  | (typeof MATERIAL_SHARED)[keyof typeof MATERIAL_SHARED]
   | FontFamilyToken
   | FontSizeToken
   | LineHeightToken
@@ -310,6 +341,14 @@ export function statusToken<T extends StatusType, S extends StatusSlot>(
   slot: S,
 ): `--st-${T}-${S}` {
   return `--st-${status}-${slot}`;
+}
+
+/** Nombre del token de intensidad: `heatToken(2, 'bg')` → `--heat-2-bg`. */
+export function heatToken<L extends HeatLevel, S extends HeatSlot>(
+  level: L,
+  slot: S,
+): `--heat-${L}-${S}` {
+  return `--heat-${level}-${slot}`;
 }
 
 export function spacingToken<S extends SpacingStep>(step: S): `--sp-${S}` {
@@ -340,6 +379,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
   ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot): HeatToken => `--heat-${level}-${slot}`)),
+  ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
@@ -347,6 +387,11 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...LAYER_NAMES.map((name): LayerToken => `--z-${name}`),
   ...DURATION_NAMES.map((name): DurationToken => `--dur-${name}`),
   ...EASING_NAMES.map((name): EasingToken => `--ease-${name}`),
+  ...SPRING_NAMES.map((name): SpringToken => `--spring-${name}`),
+  ...SPRING_NAMES.map((name): SpringDurationToken => `--spring-${name}-dur`),
+  ...MATERIAL_NAMES.map((name): MaterialTintToken => `--material-${name}-tinte`),
+  ...MATERIAL_NAMES.map((name): MaterialBlurToken => `--material-${name}-desenfoque`),
+  ...Object.values(MATERIAL_SHARED),
   ...Object.values(FONT_FAMILY),
   ...TYPE_ROLES.map((role): FontSizeToken => `--fs-${role}`),
   ...LINE_HEIGHT_ROLES.map((role): LineHeightToken => `--lh-${role}`),

@@ -78,7 +78,7 @@ async function contrasteMatriz(page: Page): Promise<void> {
   }
 }
 
-test('panel de trabajo: teclado, contraste, ancho local de la matriz y movimiento reducido', async ({ page }) => {
+test('panel de trabajo: contraste, ancho local de la matriz y movimiento reducido', async ({ page }) => {
   mkdirSync(SALIDA, { recursive: true });
   await entrar(page, MEDICA);
   await irA(page, '/dashboard');
@@ -86,19 +86,9 @@ test('panel de trabajo: teclado, contraste, ancho local de la matriz y movimient
   await expect(page.getByTestId('panel-consultas-resumen').locator('td[data-intensidad="4"]').first()).toBeVisible();
 
   await contrasteMatriz(page);
-  const zona = page.getByTestId('panel-zona').first();
-  const id = await zona.getAttribute('data-zona');
-  await zona.focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByTestId('panel-zona-volver')).toBeFocused();
-  await page.keyboard.press('Escape');
-  await expect(page.locator(`[data-zona="${id}"]`)).toBeFocused();
-
-  await page.keyboard.press('Enter');
-  await page.getByTestId('panel-zona-salto').first().click();
-  await expect(page.getByTestId('panel-zona-volver')).toBeFocused();
-  await page.keyboard.press('Escape');
-  await expect(page.getByTestId('panel-zona-abierta')).toHaveCount(0);
+  // El árbol de accesos «Sus herramientas» se retiró del panel el 28/10/2026:
+  // ya no hay zonas que recorrer con el teclado, y el panel no lo dibuja.
+  await expect(page.getByTestId('panel-accesos')).toHaveCount(0);
 
   await page.setViewportSize({ width: 320, height: 700 });
   await sinDesborde(page);
@@ -111,7 +101,6 @@ test('panel de trabajo: teclado, contraste, ancho local de la matriz y movimient
   await page.setViewportSize({ width: 390, height: 844 });
   await sinDesborde(page);
   await contrasteMatriz(page);
-  expect(await page.getByTestId('panel-zona').first().evaluate((nodo) => getComputedStyle(nodo).animationName)).toBe('none');
   const marca = page.locator('.cinta__ahora');
   if (await marca.count()) {
     expect(await marca.evaluate((nodo) => getComputedStyle(nodo, '::after').animationName)).toBe('none');

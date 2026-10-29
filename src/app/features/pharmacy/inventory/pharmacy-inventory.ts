@@ -284,7 +284,7 @@ export class PharmacyInventory {
     if (written !== undefined) {
       return written;
     }
-    return this.edits()[product.id] !== undefined ? Number(this.stockOf(product)) > 0 : product.inStock !== false;
+    return this.edits()[product.id] !== undefined ? this.hasStock(product) : product.inStock !== false;
   }
 
   protected setHas(product: PharmacyProduct, has: boolean): void {
@@ -304,7 +304,7 @@ export class PharmacyInventory {
   /* ─── Lo escrito ──────────────────────────────────────────────────────── */
 
   protected stockOf(product: PharmacyProduct): string {
-    return this.edits()[product.id]?.stock ?? String(product.stock ?? 0);
+    return this.edits()[product.id]?.stock ?? stockText(product);
   }
 
   protected minimumOf(product: PharmacyProduct): string {
@@ -321,7 +321,7 @@ export class PharmacyInventory {
 
   private edit(product: PharmacyProduct, edit: InventoryEdit): void {
     const original: InventoryEdit = {
-      stock: String(product.stock ?? 0),
+      stock: stockText(product),
       minStock: String(product.minStock ?? DEFAULT_MINIMUM),
     };
     this.edits.update((current) => {
@@ -341,13 +341,18 @@ export class PharmacyInventory {
     if (this.view() === 'AVAILABILITY') {
       return !this.hasNow(product);
     }
+    // Sin conteo (la farmacia sólo avisa si hay): alerta sólo si dijo que no.
+    if (this.stockOf(product) === '') {
+      return product.inStock === false;
+    }
     const stock = Number(this.stockOf(product));
     const minimum = Number(this.minimumOf(product));
     return stock <= 0 || stock <= minimum;
   }
 
   protected hasStock(product: PharmacyProduct): boolean {
-    return Number(this.stockOf(product)) > 0;
+    const written = this.stockOf(product);
+    return written === '' ? product.inStock !== false : Number(written) > 0;
   }
 
   protected isEdited(product: PharmacyProduct): boolean {
@@ -367,7 +372,9 @@ export class PharmacyInventory {
       const edit = this.edits()[product.id];
       const has = this.availabilityEdits()[product.id];
       if (edit !== undefined) {
-        const stock = wholeNumber(edit.stock);
+        // Sin conteo y sin escribirlo: sólo viaja el umbral.
+        const uncounted = edit.stock === '' && stockText(product) === '';
+        const stock = uncounted ? undefined : wholeNumber(edit.stock);
         const minStock = wholeNumber(edit.minStock);
         if (stock === null || minStock === null) {
           problems.push(
@@ -377,7 +384,7 @@ export class PharmacyInventory {
         }
         // Si la persona escribió cantidades, las cantidades mandan: el «hay» de la
         // misma fila diría otra cosa a la vez.
-        lines.push({ productId: product.id, stock, minStock });
+        lines.push({ productId: product.id, ...(stock === undefined ? {} : { stock }), minStock });
       } else if (has !== undefined) {
         lines.push({ productId: product.id, inStock: has });
       }
@@ -444,4 +451,9 @@ function wholeNumber(text: string): number | null {
   }
   const value = Number(text);
   return value <= STOCK_MAX ? value : null;
+}
+
+/** Las existencias de un producto como texto del campo; `''` = «sin conteo». */
+function stockText(product: PharmacyProduct): string {
+  return product.stock === null || product.stock === undefined ? '' : String(product.stock);
 }

@@ -11,10 +11,13 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
+import { FormsModule } from '@angular/forms';
+import { Input } from '../../atoms/input/input';
 import { Textarea } from '../../atoms/textarea/textarea';
 import { FormField } from '../form-field/form-field';
 import { nextControlId } from '@shared/forms/form-control.context';
 import { playExitAnimation } from '@shared/motion/exit-animation';
+import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 import {
   DEFAULT_CANCEL_LABEL,
   DEFAULT_CONFIRM_LABEL,
@@ -34,7 +37,7 @@ import {
  */
 @Component({
   selector: 'app-dialog',
-  imports: [AppButton, FormField, Textarea],
+  imports: [AppButton, FormField, FormsModule, Input, Textarea],
   templateUrl: './dialog.html',
   styleUrl: './dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,33 +99,48 @@ export class Dialog {
       : '',
   );
 
+  /* ---- frase de confirmación, cuando el diálogo la exige ------------------ */
+
+  protected readonly phraseRequired = computed(() => this.config().confirmPhrase ?? null);
+  protected readonly phrase = signal('');
+  private readonly phraseTouched = signal(false);
+  protected readonly phraseIsValid = computed(() => {
+    const exigida = this.phraseRequired();
+    return exigida === null || this.phrase().trim() === exigida;
+  });
+  protected readonly phraseError = computed(() =>
+    this.phraseTouched() && !this.phraseIsValid()
+      ? `Escribí exactamente «${this.phraseRequired()}» para confirmar.`
+      : '',
+  );
+
   constructor() {
     afterNextRender(() => this.showModal());
   }
 
-  /** Ya se está yendo: un `Escape` durante la salida no resuelve dos veces. */
-  private cerrando = false;
-
   /**
    * Cierra devolviendo el resultado. Lo llama el servicio y los botones.
    *
-   * Primero se va (pulse.md §7) y recién después se cierra y resuelve: el
-   * servicio desmonta el componente al recibir el resultado, así que
-   * resolver antes cortaría la salida a la mitad.
+   * **Confirmar no usa la salida del panel (140 ms); descartar sí.** Mientras el
+   * panel sale el `<dialog>` sigue siendo modal: la página de atrás está inerte y
+   * un clic o el tecleo hacia lo que sigue se pierde. Confirmar es el final: la
+   * página se libera en el acto (mismo criterio que `app-select`).
    */
   close(confirmed: boolean): void {
-    if (this.cerrando) {
+    const cerrar = (): void => {
+      this.closeNative();
+      this.resolved.emit({
+        confirmed,
+        ...(confirmed && this.reasonConfig() !== null ? { reason: this.reason().trim() } : {}),
+      });
+    };
+    if (confirmed) {
+      cerrar();
       return;
     }
-    this.cerrando = true;
-    const resultado: DialogResult = {
-      confirmed,
-      ...(confirmed && this.reasonConfig() !== null ? { reason: this.reason().trim() } : {}),
-    };
-    playExitAnimation(this.dialogRef().nativeElement, 'pulse-leaving', () => {
-      this.closeNative();
-      this.resolved.emit(resultado);
-    });
+    // Salida corta; sin animación posible (jsdom, movimiento reducido) cierra en el acto.
+    const panel = this.dialogRef().nativeElement.querySelector<HTMLElement>('.dialog__panel');
+    cerrarConSalida(panel, cerrar);
   }
 
   protected handleCancel(): void {
@@ -135,6 +153,10 @@ export class Dialog {
    * perder lo escrito y obligaría a empezar de nuevo.
    */
   protected handleConfirm(): void {
+    if (!this.phraseIsValid()) {
+      this.phraseTouched.set(true);
+      return;
+    }
     if (!this.reasonIsValid()) {
       this.reasonTouched.set(true);
       return;
@@ -180,7 +202,10 @@ export class Dialog {
       nativo.setAttribute('open', '');
       return;
     }
+    // El control que lo abrió (aún con el foco, antes del `showModal`): de ahí nace.
+    const disparador = nativo.ownerDocument.activeElement;
     nativo.showModal();
+    fijarOrigenDelPanel(nativo.querySelector<HTMLElement>('.dialog__panel'), nativo, disparador);
   }
 
   private closeNative(): void {

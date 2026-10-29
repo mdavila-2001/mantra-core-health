@@ -353,6 +353,19 @@ describe('DayView', () => {
     expect(texto).not.toContain('No atiende este día');
   });
 
+  it('A5 · un día de horario flexible sin citas dice su franja, no «No atiende este día»', () => {
+    montar([]);
+    fixture.componentRef.setInput('horarioFlexible', '09:00 a 13:00');
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('No atiende este día');
+    expect(texto).toContain('Horario flexible de 09:00 a 13:00');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-horario-flexible"]'),
+    ).not.toBeNull();
+  });
+
   it('un día sin nada lo dice con palabras, y deja crear', () => {
     montar([]);
 

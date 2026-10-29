@@ -1,0 +1,307 @@
+<!-- ═══ Las tres cifras ════════════════════════════════════════════════════
+     Lo primero que el doctor quiere saber, y en el orden en que lo pidió:
+     a cuántos atendió, cuánto cobró y cuánto le deben las aseguradoras. Los
+     dos importes van separados a propósito: lo cobrado ya está en la mano, lo
+     de las aseguradoras todavía no. -->
+@if (parte() !== 'registros') {
+<section class="numeros" aria-labelledby="titulo-numeros">
+  <div class="numeros__cabecera">
+    <app-section-heading icono="chart" titulo="Sus pacientes y lo que cobró" id="titulo-numeros" />
+    <app-segmented-control
+      [options]="periods"
+      [value]="period()"
+      ariaLabel="Período de las cifras"
+      (valueChange)="choosePeriod($event)"
+    />
+  </div>
+
+  <app-view-state-host [state]="summary()" (retry)="loadSummary()">
+    @if (numbers(); as n) {
+      <div class="numeros__fila" data-testid="contabilidad-numeros">
+        <app-card variant="outlined" class="numero" data-testid="numero-pacientes">
+          <p class="numero__rotulo">Pacientes atendidos</p>
+          <p class="numero__cifra">{{ n.patientsSeen }}</p>
+          <p class="numero__pie">
+            en {{ n.consultations }}
+            {{ n.consultations === 1 ? 'consulta' : 'consultas' }}
+          </p>
+        </app-card>
+        <app-card variant="elevated" class="numero numero--destacado" data-testid="numero-cobrado">
+          <p class="numero__rotulo">Cobrado</p>
+          <p class="numero__cifra">{{ amount(n.collected) }}</p>
+          <p class="numero__pie">por consultas pagadas en el período</p>
+        </app-card>
+        <app-card variant="outlined" class="numero" data-testid="numero-aseguradoras">
+          <p class="numero__rotulo">Por cobrar a aseguradoras</p>
+          <p class="numero__cifra">{{ amount(n.expectedFromInsurers) }}</p>
+          <p class="numero__pie">
+            a la fecha, en {{ n.pendingClaims }}
+            {{ n.pendingClaims === 1 ? 'solicitud pendiente' : 'solicitudes pendientes' }}
+          </p>
+        </app-card>
+      </div>
+    }
+  </app-view-state-host>
+
+  <!-- Lo que el médico viene a hacer, a un clic: ícono y texto, nunca sólo
+       uno de los dos. -->
+  <div class="atajos" role="group" aria-labelledby="titulo-atajos" data-testid="contabilidad-atajos">
+    <p class="atajos__titulo" id="titulo-atajos">¿Qué quiere anotar?</p>
+    <div class="atajos__botones">
+      @for (a of atajos; track a.kind) {
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          [attr.data-testid]="'atajo-' + a.kind"
+          (clicked)="newRecord(a.kind)"
+        >
+          <app-nav-icon [name]="a.icono" />
+          {{ a.rotulo }}
+        </button>
+      }
+    </div>
+  </div>
+</section>
+}
+
+<!-- ═══ Sus registros ════════════════════════════════════════════════════════
+     Una tarjeta, cinco pestañas (regla 6). Arriba, qué es esta pantalla y qué
+     significa cada cosa, dicho para un médico (propietario, 17/10/2026). Cada
+     pestaña tiene la disciplina de tablas de la casa: qué está viendo,
+     buscador, tabla y paginación. -->
+@if (parte() !== 'numeros') {
+<app-card variant="outlined" padding="lg" class="registros" data-testid="contabilidad-registros">
+  <header class="registros__intro">
+    <span class="registros__icono" aria-hidden="true">
+      <app-nav-icon name="book" />
+    </span>
+    <div class="registros__intro-texto">
+      <h2 class="registros__titulo">Sus registros</h2>
+      <p class="registros__bajada">
+        Aquí anota el dinero del consultorio que no pasa por la facturación: lo que gasta, lo que
+        compra y lo que debe. Con esto el sistema calcula su ganancia y cuánto vale su consultorio.
+        @if (isAccountant()) {
+          La versión Contador suma las transacciones entre cuentas y el plan de cuentas.
+        }
+      </p>
+    </div>
+  </header>
+
+  <details class="registros__glosario" data-testid="registros-glosario">
+    <summary>¿Qué significa cada cosa?</summary>
+    <dl>
+      @for (item of glosario(); track item.termino) {
+        <div class="registros__termino">
+          <dt>{{ item.termino }}</dt>
+          <dd>{{ item.significado }}</dd>
+        </div>
+      }
+    </dl>
+  </details>
+
+  <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
+    @for (kind of kinds; track kind) {
+      <app-tab
+        [icon]="iconoDe[kind]"
+        [label]="
+          (kind === 'EXPENSE' ? 'Gastos' : kind === 'ASSET' ? 'Activos' : 'Deudas') +
+          count(records()[kind])
+        "
+      >
+        <div class="registros__panel">
+          <p class="registros__explicacion">{{ texts[kind].explicacion }}</p>
+          <p class="registros__explicacion">{{ texts[kind].explicacion }}</p>
+          <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              [searchLabel]="'Buscar en ' + texts[kind].plural"
+              searchPlaceholder="Tipo, descripción o fecha"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()[kind]"
+              (searchChanged)="buscar(kind, $event)"
+            />
+            <button
+              app-button
+              type="button"
+              [attr.data-testid]="'nuevo-' + kind"
+              (clicked)="newRecord(kind)"
+            >
+              <app-nav-icon name="note" />
+              {{ texts[kind].nuevo }}
+            </button>
+          </div>
+          <app-data-table
+            [state]="paginaDeRegistros(kind)"
+            [columns]="recordColumns()"
+            [trackBy]="byId"
+            [caption]="texts[kind].tipo"
+            (retry)="loadRecords(kind)"
+            [attr.data-testid]="'tabla-' + kind"
+          />
+          @if (totalDe(kind) > 0) {
+            <app-pagination
+              [totalItems]="totalDe(kind)"
+              [page]="pagina()[kind]"
+              (pageChange)="irAPagina(kind, $event)"
+              [pageSize]="tamano()[kind]"
+              (pageSizeChange)="cambiarTamano(kind, $event)"
+              [attr.data-testid]="'paginacion-' + kind"
+            />
+          }
+        </div>
+      </app-tab>
+    }
+
+    @if (isAccountant()) {
+      <app-tab icon="merge" [label]="'Transacciones' + count(transactions())">
+        <div class="registros__panel">
+          <p class="registros__explicacion">{{ explicacionDeTransacciones }}</p>
+          <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              searchLabel="Buscar en transacciones"
+              searchPlaceholder="Descripción, cuenta o fecha"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()['TX']"
+              (searchChanged)="buscar('TX', $event)"
+            />
+            <button
+              app-button
+              type="button"
+              data-testid="nueva-transaccion"
+              (clicked)="modal.set({ tipo: 'transaccion', transaccion: null })"
+            >
+              <app-nav-icon name="note" />
+              Nueva transacción
+            </button>
+          </div>
+          <app-data-table
+            [state]="paginaDeTransacciones()"
+            [columns]="transactionColumns()"
+            [trackBy]="byId"
+            caption="Transacciones: de qué cuenta sale y a cuál llega el dinero"
+            (retry)="loadTransactions()"
+            data-testid="tabla-transacciones"
+          />
+          @if (totalDe('TX') > 0) {
+            <app-pagination
+              [totalItems]="totalDe('TX')"
+              [page]="pagina()['TX']"
+              (pageChange)="irAPagina('TX', $event)"
+              [pageSize]="tamano()['TX']"
+              (pageSizeChange)="cambiarTamano('TX', $event)"
+              data-testid="paginacion-transacciones"
+            />
+          }
+        </div>
+      </app-tab>
+
+      <app-tab icon="book" [label]="'Cuentas' + count(accounts())">
+        <div class="registros__panel">
+          <p class="registros__explicacion">{{ explicacionDeCuentas }}</p>
+          <div class="registros__barra">
+            <app-filter-bar
+              class="registros__buscador"
+              searchLabel="Buscar una cuenta"
+              searchPlaceholder="Código, nombre o tipo"
+              [searchInUrl]="false"
+              [searchValue]="busqueda()['CUENTAS']"
+              (searchChanged)="buscar('CUENTAS', $event)"
+            />
+            <button
+              app-button
+              type="button"
+              data-testid="nueva-cuenta"
+              (clicked)="modal.set({ tipo: 'cuenta', cuenta: null })"
+            >
+              <app-nav-icon name="note" />
+              Nueva cuenta
+            </button>
+          </div>
+          <app-data-table
+            [state]="paginaDeCuentas()"
+            [columns]="accountColumns()"
+            [trackBy]="byId"
+            caption="Cuentas"
+            (retry)="loadAccounts()"
+            data-testid="tabla-cuentas"
+          />
+          @if (totalDe('CUENTAS') > 0) {
+            <app-pagination
+              [totalItems]="totalDe('CUENTAS')"
+              [page]="pagina()['CUENTAS']"
+              (pageChange)="irAPagina('CUENTAS', $event)"
+              [pageSize]="tamano()['CUENTAS']"
+              (pageSizeChange)="cambiarTamano('CUENTAS', $event)"
+              data-testid="paginacion-cuentas"
+            />
+          }
+        </div>
+      </app-tab>
+    }
+  </app-tabs>
+</app-card>
+}
+
+<!-- Las celdas de acciones: la tabla las instancia por fila. -->
+<ng-template #accionesDeRegistro let-fila>
+  <app-row-actions
+    [actions]="actions"
+    [fila]="fila.descripcion"
+    (actionSelected)="recordAction(fila, $event)"
+  />
+</ng-template>
+<ng-template #accionesDeTransaccion let-fila>
+  <app-row-actions
+    [actions]="actions"
+    [fila]="fila.descripcion"
+    (actionSelected)="transactionAction(fila, $event)"
+  />
+</ng-template>
+<ng-template #accionesDeCuenta let-fila>
+  <app-row-actions
+    [actions]="actionsOf(fila.cuenta)"
+    [fila]="fila.nombre"
+    (actionSelected)="accountAction(fila, $event)"
+  />
+</ng-template>
+
+@if (modal(); as abierto) {
+  @switch (abierto.tipo) {
+    @case ('registro') {
+      @if (abierto.tipo === 'registro') {
+        <app-record-dialog
+          [practiceId]="practiceId()"
+          [kind]="abierto.kind"
+          [registro]="abierto.registro"
+          [cuentas]="accountsList()"
+          (saved)="savedRecord($event)"
+          (cuentaCreada)="loadAccounts()"
+          (closed)="modal.set(null)"
+        />
+      }
+    }
+    @case ('transaccion') {
+      @if (abierto.tipo === 'transaccion') {
+        <app-transaction-dialog
+          [practiceId]="practiceId()"
+          [transaccion]="abierto.transaccion"
+          [cuentas]="accountsList()"
+          (saved)="savedTransaction()"
+          (closed)="modal.set(null)"
+        />
+      }
+    }
+    @case ('cuenta') {
+      @if (abierto.tipo === 'cuenta') {
+        <app-account-dialog
+          [practiceId]="practiceId()"
+          [cuenta]="abierto.cuenta"
+          (saved)="savedAccount()"
+          (closed)="modal.set(null)"
+        />
+      }
+    }
+  }
+}

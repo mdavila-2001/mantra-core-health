@@ -23,13 +23,12 @@
       </app-alert>
     }
 
-    <!-- «Enfermedades activas» (C3): lo primero que se ve del historial
-         estructurado. Sólo aparece con al menos una activa; un expediente sin
-         diagnósticos activos no necesita esta tarjeta vacía. -->
+    <!-- UNA tarjeta: «Enfermedades activas» (C3, sólo con al menos una activa) arriba y la historia en pestañas debajo. -->
+    <app-card variant="elevated" padding="lg" class="expediente__ficha">
     @if (enfermedadesActivas().length > 0) {
       <app-card
-        variant="outlined"
-        padding="lg"
+        variant="flat"
+        padding="none"
         class="expediente__activas"
         data-testid="expediente-enfermedades-activas"
       >
@@ -59,7 +58,85 @@
       aria-label="Historia clínica"
       appTutorialTarget="expediente-pestanas"
     >
-      <app-tabs appearance="browser" [(selectedIndex)]="activeTab">
+      <!-- Tres lecturas de la misma historia. «Por sección» abre la pantalla
+           porque es donde se escribe; la tabla y el recorrido son de lectura y
+           comparten el filtro por tipo. Fuera del PDF: son controles, y el
+           papel no lleva botones. -->
+      <div class="expediente__vistas" data-pdf-ignore>
+        <app-segmented-control
+          [options]="opcionesDeVista"
+          [value]="vista()"
+          ariaLabel="Cómo ver la historia clínica"
+          size="md"
+          data-testid="expediente-vista"
+          (valueChange)="elegirVista($event)"
+        />
+        @if (vista() !== 'secciones' && tiposDelFiltro().length > 1) {
+          <div class="expediente__filtro" role="group" aria-label="Qué tipos de registro mostrar">
+            @for (opcion of tiposDelFiltro(); track opcion.tipo) {
+              <app-chip
+                selectable
+                [variant]="opcion.aspecto.tono"
+                [selected]="!tiposOcultos().has(opcion.tipo)"
+                (selectedChange)="alternarTipo(opcion.tipo, $event)"
+                [label]="opcion.aspecto.plural + ', ' + opcion.cantidad"
+                data-testid="expediente-filtro-tipo"
+              >
+                <app-nav-icon slot="icon" [name]="opcion.aspecto.icono" />
+                {{ opcion.aspecto.plural }} · {{ opcion.cantidad }}
+              </app-chip>
+            }
+          </div>
+        }
+      </div>
+
+      @if (vista() !== 'secciones' && filtroOcultaTodo()) {
+        <app-alert tone="info" title="El filtro oculta todos los registros">
+          <button app-button variant="outline" size="sm" type="button" (clicked)="mostrarTodosLosTipos()">
+            Mostrar todos los tipos
+          </button>
+        </app-alert>
+      } @else if (vista() === 'tabla') {
+        <!-- Lo que el filtro deja afuera se dice en texto, no sólo con un chip
+             apagado: es lo que viaja al PDF exportado desde esta vista. -->
+        @if (tiposOcultosEnPalabras() !== '') {
+          <p class="expediente__aviso-filtro" data-testid="expediente-aviso-filtro">
+            Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
+          </p>
+        }
+        <app-data-table
+          stackedOnMobile
+          data-testid="expediente-tabla-unificada"
+          [state]="estadoDelHistorial()"
+          [columns]="columnasDelHistorial()"
+          [trackBy]="porFilaDelHistorial"
+          [sort]="ordenDelHistorial()"
+          caption="Registros de la historia clínica, en orden cronológico"
+          (sortChanged)="ordenarHistorial($event)"
+          (retry)="recargar()"
+        />
+      } @else if (vista() === 'recorrido') {
+        <!-- El lienzo no sale en el PDF (lleva `data-pdf-ignore`): el papel
+             recibe esta línea en su lugar, en vez de un expediente que parezca
+             completo sin su historia. -->
+        <p class="expediente__aviso-filtro">
+          El recorrido es una vista de pantalla: para exportar la historia a PDF, use «Tabla» o
+          «Secciones».
+        </p>
+        @if (tiposOcultosEnPalabras() !== '') {
+          <p class="expediente__aviso-filtro" data-testid="expediente-aviso-filtro">
+            Filtrado: no se muestran {{ tiposOcultosEnPalabras() }}.
+          </p>
+        }
+        <app-view-state-host [state]="estadoDelRecorrido()" (retry)="recargar()">
+          <app-recorrido-clinico
+            [nodos]="nodosDelRecorrido()"
+            [aristas]="aristasDelRecorrido()"
+            (abrir)="abrirDesdeElRecorrido($event)"
+          />
+        </app-view-state-host>
+      } @else {
+      <app-tabs [(selectedIndex)]="activeTab">
         @for (bloque of bloques(); track bloque.clave) {
           <app-tab [label]="bloque.titulo + ' (' + bloque.filas.length + ')'">
             <!-- El alta del bloque, arriba de su tabla. El expediente sigue
@@ -106,7 +183,7 @@
             <app-data-table
               [state]="estadoDe(bloque.filas, bloque.titulo)"
               [columns]="bloque.columnas"
-              [trackBy]="porFila"
+              [trackBy]="porFila" stackedOnMobile
               [caption]="bloque.titulo + ' del expediente'"
               (retry)="recargar()"
             />
@@ -119,16 +196,48 @@
           }
         </app-tab>
       </app-tabs>
+      }
     </section>
+    </app-card>
   </div>
 </app-view-state-host>
+
+<!-- 403: sin vínculo ni turno. A quien tiene el rol de emergencia se le ofrece la
+     salida —con justificación obligatoria—; a los demás, sólo el muro de arriba. -->
+@if (expediente().status === 'forbidden' && puedeEmergencia()) {
+  <app-alert tone="warning" title="Acceso de emergencia" data-testid="expediente-emergencia">
+    Si es una urgencia, puede pedir acceso a esta historia sin vínculo ni turno. Queda auditado y
+    la persona lo ve en «Quién ve mi historia».
+    <div alert-actions>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        data-testid="expediente-acceso-emergencia"
+        [isLoading]="pidiendoEmergencia()"
+        (clicked)="pedirAccesoDeEmergencia()"
+      >
+        Acceso de emergencia
+      </button>
+    </div>
+  </app-alert>
+}
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrincipal let-fila>
   <span class="expediente__principal">{{ fila.principal }}</span>
-  @if (fila.secundario) {
+  @if (fila.secundario && fila.secundario !== 'Sin registrar') {
     <span class="expediente__secundario">{{ fila.secundario }}</span>
   }
+</ng-template>
+
+<!-- El tipo, en la tabla unificada: ícono y nombre, nunca sólo el color. -->
+<ng-template #celdaTipo let-fila>
+  <app-chip [variant]="fila.aspecto.tono" size="sm">
+    <app-nav-icon slot="icon" [name]="fila.aspecto.icono" />
+    {{ fila.aspecto.singular }}
+  </app-chip>
 </ng-template>
 
 <ng-template #celdaEstado let-fila>
@@ -347,6 +456,34 @@
           <dd>{{ vinculo.valor }}</dd>
         </div>
       }
+      <!-- Un enlace por archivo (CL-27). Baja por la ruta del documento, con la
+           credencial: sin pestañas nuevas sobre URLs de `/common/files`. -->
+      @if (abierta.fila.archivos; as archivos) {
+        @if (archivos.length > 0) {
+          <div class="expediente__detalle-fila">
+            <dt>Archivos</dt>
+            <dd>
+              <ul class="expediente__archivos" data-testid="expediente-archivos">
+                @for (archivo of archivos; track archivo.fileId) {
+                  <li>
+                    <button
+                      app-button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [attr.data-testid]="'expediente-archivo-' + archivo.fileId"
+                      [isLoading]="bajando() === archivo.fileId"
+                      (clicked)="descargarArchivo(abierta.fila, archivo)"
+                    >
+                      Ver / descargar {{ archivo.rotulo }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </dd>
+          </div>
+        }
+      }
     </dl>
 
     <!-- Lo que la consulta guardó como formulario clínico (ficha de la
@@ -362,7 +499,7 @@
           Formularios, procedimientos y estudios del encuentro
         </h3>
         @if (estado.status === 'loading') {
-          <p class="expediente__secundario" role="status">Buscando los formularios…</p>
+          <app-loading-state class="expediente__secundario" message="Buscando los formularios…" />
         } @else if (errorDeFormularios(); as mensaje) {
           <app-alert tone="error" title="No pudimos leer los formularios">
             {{ mensaje }}

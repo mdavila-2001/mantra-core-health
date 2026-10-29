@@ -1,0 +1,13 @@
+# Salida recortada: solo el resumen (la salida completa pesa ~680 KB)
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+Not implemented: HTMLCanvasElement's getContext() method: without installing the canvas npm package
+
+ Test Files  913 passed (913)
+      Tests  12435 passed (12435)
+   Start at  20:17:42
+   Duration  87.69s (transform 161.21s, setup 5.21s, import 46.96s, tests 286.07s, environment 1395.16s)
+
+
+real	2m48.624s
+user	0m0.108s
+sys	0m0.045s

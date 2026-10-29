@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { expect, request, test, type APIRequestContext, type Page } from '@playwright/test';
 
-import { administrador, doctora, urlDeApi } from './support/actores';
+import { administrador, urlDeApi } from './support/actores';
 import { entrar, esperarAplicacionLista, irA } from './support/sesion';
 import { vigilar } from './support/salud-de-rutas';
 
@@ -171,7 +171,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     }
   });
 
-  test(`test 1 · flujo feliz: 50 leídas, 0 errores, importa 50 ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 1 · flujo feliz: 50 leídas, 0 errores, importa 50 ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t1-${testInfo.testId.slice(0, 8)}`) : null;
@@ -195,7 +195,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 2 · idempotencia: segunda vez, 0 insertadas y 50 omitidas ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 2 · idempotencia: segunda vez, 0 insertadas y 50 omitidas ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t2-${testInfo.testId.slice(0, 8)}`) : null;
@@ -225,7 +225,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 3 · con-errores: 5 filas con columna, importar deshabilitado ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 3 · con-errores: 5 filas con columna, importar deshabilitado ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t3-${testInfo.testId.slice(0, 8)}`) : null;
@@ -247,7 +247,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 4 · no-es-nada.pdf: rechazo del cliente, sin petición ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 4 · no-es-nada.pdf: rechazo del cliente, sin petición ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t4-${testInfo.testId.slice(0, 8)}`) : null;
@@ -270,7 +270,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 5 · vacio-solo-encabezado: sin filas ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 5 · vacio-solo-encabezado: sin filas ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t5-${testInfo.testId.slice(0, 8)}`) : null;
@@ -289,7 +289,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test('test 6 · error-red.csv: 503 conservando archivo y selects [backend simulado]', async ({}, testInfo) => {
+  test('test 6 · error-red.csv: 503 conservando archivo y selects [backend simulado]', async (_fixtures, _testInfo) => {
     test.skip(BACKEND === 'real', 'error-red es una regla sólo del doble (terminology.handlers.ts:410); contra la API real ese archivo importa 50 conceptos normales.');
     const vigilante = vigilar(page);
 
@@ -310,7 +310,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante, [/mock-import-red/, /^503/]);
   });
 
-  test(`test 7 · plantilla: descarga plantilla-conceptos.csv con el encabezado ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 7 · plantilla: descarga plantilla-conceptos.csv con el encabezado ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t7-${testInfo.testId.slice(0, 8)}`) : null;
@@ -335,7 +335,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 8 · descargar errores: CSV con encabezado y 5 filas ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 8 · descargar errores: CSV con encabezado y 5 filas ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t8-${testInfo.testId.slice(0, 8)}`) : null;
@@ -360,7 +360,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 9 · sin doble envío: dos clics rápidos, un solo informe ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 9 · sin doble envío: dos clics rápidos, un solo informe ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t9-${testInfo.testId.slice(0, 8)}`) : null;
@@ -393,7 +393,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 10 · teclado: Tab hasta el archivo, Enter abre el diálogo, Tab hasta Validar ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 10 · teclado: Tab hasta el archivo, Enter abre el diálogo, Tab hasta Validar ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const vigilante = vigilar(page);
     const sistemaDePrueba =
       BACKEND === 'real' ? await crearSistemaDePrueba(api, token, `t10-${testInfo.testId.slice(0, 8)}`) : null;
@@ -423,7 +423,7 @@ test.describe(`Carga masiva · contrato ${ETIQUETA}`, () => {
     esperarSinFallosInesperados(vigilante);
   });
 
-  test(`test 11 · accesibilidad: axe sin violaciones serious/critical ${ETIQUETA}`, async ({}, testInfo) => {
+  test(`test 11 · accesibilidad: axe sin violaciones serious/critical ${ETIQUETA}`, async (_fixtures, testInfo) => {
     const contexto = await page.context().browser()!.newContext({ bypassCSP: true });
     const paginaAxe = await contexto.newPage();
     try {

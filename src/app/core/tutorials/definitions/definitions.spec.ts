@@ -62,6 +62,9 @@ const OBJETIVOS_DINAMICOS = new Set([
   // `[appTutorialTarget]="'nav-' + item.route.slice(1)"` en el armazón: hay uno
   // por sección del menú, y su nombre sale de la ruta.
   'nav-tutorials',
+  // `[appTutorialTarget]="objetivoEmergencia()"` en la cabecera: sólo se marca
+  // en la versión responsive, que es donde el botón se ve.
+  'nav-emergencia',
 ]);
 
 function jwt(payload: Record<string, unknown>): string {

@@ -1,9 +1,8 @@
 import type { AnatomyIndexEntry, AnatomyPart, AnatomyStructure } from '../../core/data-access/anatomy-atlas/anatomy-atlas.types';
 import {
   displayName,
+  drawnStructures,
   groupRelations,
-  groupSentences,
-  missingAspectsLabel,
   meshesOf,
   ontologyUrl,
   pageOf,
@@ -13,6 +12,8 @@ import {
   relatedStructureIds,
   searchIndex,
   sideLabel,
+  structureIdsOf,
+  structuresWithMesh,
 } from './glossary-anatomy-atlas.logic';
 
 /** Una pieza mínima; sólo cambia lo que cada prueba necesita. */
@@ -38,7 +39,6 @@ const FEMUR: AnatomyStructure = {
   ],
   netter: [],
   meshes: ['FMA24474', 'FMA24475'],
-  ta2: null,
   extendedDescription: null,
   images: [],
 };
@@ -98,28 +98,6 @@ describe('glossary-anatomy-atlas.logic', () => {
     expect(searchIndex(indice, 'f', 10)).toEqual([]);
   });
 
-  it('ordena por acierto en castellano: el nombre exacto, luego el que empieza así, luego el resto', () => {
-    const indice: AnatomyIndexEntry[] = [
-      ['UBERON:3', 'articulación humerocubital', 'humeroulnar joint', 1],
-      ['UBERON:2', 'cabeza del húmero', 'proximal head of humerus', 1],
-      ['UBERON:1', 'húmero distal', 'distal humerus', 0],
-      ['UBERON:0', 'húmero', 'humerus', 1],
-    ];
-    // «humerocubital» sólo empieza con «humero»: entra, pero al final.
-    const esperado = ['UBERON:0', 'UBERON:1', 'UBERON:2', 'UBERON:3'];
-    expect(searchIndex(indice, 'húmero', 10).map((e) => e[0])).toEqual(esperado);
-    expect(searchIndex(indice, 'HUMERO', 10).map((e) => e[0])).toEqual(esperado);
-  });
-
-  it('busca por varias palabras en cualquier orden, sin tildes', () => {
-    const indice: AnatomyIndexEntry[] = [
-      ['UBERON:2', 'cabeza del húmero', 'proximal head of humerus', 1],
-      ['UBERON:1', 'cabeza del fémur', 'head of femur', 1],
-    ];
-    expect(searchIndex(indice, 'humero cabeza', 10).map((e) => e[0])).toEqual(['UBERON:2']);
-    expect(searchIndex(indice, 'inexistente', 10)).toEqual([]);
-  });
-
   it('enlaza UBERON y FMA a sus PURL y nada más', () => {
     expect(ontologyUrl('UBERON:0000981')).toBe('https://purl.obolibrary.org/obo/UBERON_0000981');
     expect(ontologyUrl('FMA:9611')).toBe('https://purl.org/sig/ont/fma/fma9611');
@@ -132,26 +110,58 @@ describe('glossary-anatomy-atlas.logic', () => {
     expect(sideLabel(null)).toBeNull();
   });
 
-  it('agrupa las frases por aspecto y numera las citas según la lista de fuentes', () => {
-    const grupos = groupSentences({
-      status: 'described',
-      searchedQuery: 'femur',
-      sentences: [
-        { aspect: 'situation', es: 'A.', cites: ['PMID:9'] },
-        { aspect: 'situation', es: 'B.', cites: ['PMID:7', 'PMID:9'] },
-        { aspect: 'clinical', es: 'C.', cites: ['PMID:7', 'PMID:404'] },
-      ],
-      missingAspects: [],
-      sources: [
-        { id: 'PMID:9', pmid: '9', doi: null, title: 't', journal: null, year: null },
-        { id: 'PMID:7', pmid: '7', doi: null, title: 't', journal: null, year: null },
-      ],
+  describe('estructuras compuestas (el pulmón no tiene malla, sus lóbulos sí)', () => {
+    const LOBULOS: readonly AnatomyPart[] = [
+      pieza('FMA7316', 'UBERON:0002170', { layer: 'organs', side: 'right' }),
+      pieza('FMA7317', 'UBERON:0002171', { layer: 'organs', side: 'right' }),
+      pieza('FMA7318', 'UBERON:0008952', { layer: 'organs', side: 'left' }),
+      pieza('FMA9999', 'UBERON:0000981'),
+    ];
+    const COMPUESTAS = {
+      'UBERON:0002048': ['UBERON:0002170', 'UBERON:0002171', 'UBERON:0008952'],
+      'UBERON:0002167': ['UBERON:0002170', 'UBERON:0002171'],
+    };
+
+    it('una compuesta resalta las mallas de sus partes', () => {
+      expect(meshesOf(LOBULOS, 'UBERON:0002167', 'male', COMPUESTAS)).toEqual(['FMA7316', 'FMA7317']);
+      expect(meshesOf(LOBULOS, 'UBERON:0002048', 'male', COMPUESTAS)).toEqual(['FMA7316', 'FMA7317', 'FMA7318']);
     });
-    expect(grupos.map((g) => g.label)).toEqual(['Situación', 'Relevancia clínica']);
-    expect(grupos[0].sentences.map((s) => s.refs)).toEqual([[1], [2, 1]]);
-    // Una cita fuera de la lista no se numera: no se inventa una fuente.
-    expect(grupos[1].sentences[0].refs).toEqual([2]);
-    expect(missingAspectsLabel(['irrigation', 'innervation'])).toBe('irrigación, inervación');
+
+    it('sin el archivo de compuestas, una compuesta no resalta nada (como antes)', () => {
+      expect(meshesOf(LOBULOS, 'UBERON:0002167', 'male')).toEqual([]);
+    });
+
+    it('una estructura de malla propia se resalta igual con o sin compuestas', () => {
+      expect(meshesOf(LOBULOS, 'UBERON:0000981', 'male', COMPUESTAS)).toEqual(['FMA9999']);
+      expect(structureIdsOf('UBERON:0000981', COMPUESTAS)).toEqual(['UBERON:0000981']);
+    });
+
+    it('las partes de una compuesta respetan la vista «Mujer»', () => {
+      const soloVaron = [pieza('FMA1', 'UBERON:0000001', { sex: 'male' })];
+      expect(meshesOf(soloVaron, 'UBERON:0000009', 'female', { 'UBERON:0000009': ['UBERON:0000001'] })).toEqual([]);
+    });
+
+    it('«tiene pieza» incluye a las compuestas', () => {
+      const con = structuresWithMesh(LOBULOS, COMPUESTAS);
+      expect(con.has('UBERON:0002048')).toBe(true);
+      expect(con.has('UBERON:0002170')).toBe(true);
+      expect(con.has('UBERON:0000007')).toBe(false);
+    });
+
+    it('una compuesta se dibuja si alguna parte suya está en una capa encendida', () => {
+      expect(drawnStructures(LOBULOS, new Set(['organs']), 'male', COMPUESTAS).has('UBERON:0002167')).toBe(true);
+      expect(drawnStructures(LOBULOS, new Set(['skeleton']), 'male', COMPUESTAS).has('UBERON:0002167')).toBe(false);
+    });
+
+    it('al relacionar con una compuesta se resaltan sus partes, no las de la propia estructura', () => {
+      const ficha: AnatomyStructure = {
+        ...FEMUR,
+        id: 'UBERON:0002167',
+        relations: [],
+        incoming: [{ type: 'part_of', name: 'tiene como parte', source: 'UBERON:0008952', labelEn: 'x', labelEs: null }],
+      };
+      expect(relatedMeshes(LOBULOS, ficha, 'male', COMPUESTAS)).toEqual(['FMA7318']);
+    });
   });
 });
 

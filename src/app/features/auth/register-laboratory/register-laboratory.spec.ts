@@ -5,15 +5,39 @@ import { provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 
 import { MAX_CAMPOS_POR_PAGINA } from '../../../shared/forms/paginated/paginated-form.types';
-import { UbicacionPicker } from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import { NEVER, lastValueFrom, of } from 'rxjs';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
+import type { EnrollmentDocumentKey } from '../shared-registration/legal-documents';
+import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
+
+/**
+ * Catálogo fijo para el alta: país, jurisdicción, tipo de unidad y modalidad
+ * que la API exige como conceptos. Cada id es «concepto-<código>».
+ */
+const CATALOGOS_DE_PRUEBA = {
+  pais: new Map([['BO', 'concepto-BO']]),
+  jurisdiccion: new Map([['JURISDICTION_NATIONAL', 'concepto-JURISDICTION_NATIONAL']]),
+  tipoDeUnidad: new Map([['DU_TYPE_LAB', 'concepto-DU_TYPE_LAB']]),
+  modalidad: new Map([['DU_MODALITY_LAB', 'concepto-DU_MODALITY_LAB']]),
+};
 
 /* ============================================================================
     Lo que esta pantalla promete, y por lo tanto lo que se prueba:
 
     1. Que pregunta los dieciocho puntos del proceso 4.1 y ninguno inventado.
-    2. Que frena sólo lo básico para nacer (D2, igual que la farmacia) y NO
-       frena el resto: los seis papeles, el mapa, las sucursales y los cargos.
+    2. Que frena sólo lo básico para nacer (D2, igual que la farmacia) —con el
+       punto de la central, obligatorio desde el 26/10/2026— y NO frena el
+       resto: los seis papeles, las sucursales y los cargos.
     3. Que el alta sale a `POST /iam/auth/register-organization` con
        `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`, y que
        ninguna otra petición sale sin que la prueba la espere.
@@ -23,6 +47,9 @@ import { RegisterLaboratory, TIPOS_DE_SOCIEDAD } from './register-laboratory';
     ========================================================================== */
 
 const RUTA_ALTA = '/iam/auth/register-organization';
+
+/** El punto confirmado de la central en las pruebas. */
+const PUNTO_CENTRAL = { lat: -17.7833, lng: -63.1821 };
 
 /** Lo que la API responde a un alta aceptada (201). */
 const ALTA_ACEPTADA = {
@@ -62,6 +89,11 @@ describe('RegisterLaboratory', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         provideRouter([]),
+        { provide: DiagnosisCenterEnrollment, useValue: { catalogs: () => of(CATALOGOS_DE_PRUEBA) } },
+        // El selector de ubicación pide la calle y el catálogo de municipios;
+        // acá no responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -101,9 +133,14 @@ describe('RegisterLaboratory', () => {
       taxId: '1023456789',
       addressLines: 'Av. Cañoto esq. Ballivián 234',
       legalRepName: { name: 'Ana', lastName: 'Paz', motherLastName: 'Rojas' },
+      legalRepIdNumber: '4872190',
       legalRepEmail: 'ana.paz@labsur.test',
+      // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
+      powerOfAttorneyFileId: 'file-poder',
       password: 'secreto12',
     });
+    // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
+    component.fijarGpsCentral(PUNTO_CENTRAL);
   }
 
   /* --- lo que pregunta --------------------------------------------------- */
@@ -142,9 +179,19 @@ describe('RegisterLaboratory', () => {
     // La invariante del formulario por partes. Se comprueba acá además de en el
     // motor porque una página de cinco campos no rompe nada: sólo se ve como
     // una pared, que es lo que hace abandonar un alta a la mitad.
-    for (const pagina of component.paginas) {
+    // Salvo los papeles, que el cliente pidió en UNA sola vista (28/10/2026).
+    for (const pagina of component.paginas().filter((p) => !p.sinPartir)) {
       expect(pagina.campos.length).toBeLessThanOrEqual(MAX_CAMPOS_POR_PAGINA);
     }
+  });
+
+  it('los papeles de la empresa van en una sola página, sin «(1 de 2)»', () => {
+    const papeles = component.paginas().filter((p) => p.clave === 'documentos');
+
+    expect(papeles).toHaveLength(1);
+    expect(papeles[0].titulo).toBe('Los papeles de la empresa');
+    expect(papeles[0].sinPartir).toBe(true);
+    expect(papeles[0].campos).toHaveLength(5);
   });
 
   /* --- qué frena y qué no ------------------------------------------------ */
@@ -168,21 +215,34 @@ describe('RegisterLaboratory', () => {
       legalName: 'Laboratorio Clínico del Sur S.R.L.',
       legalEntityType: 'SRL',
       tenantType: 'DIAGNOSTIC_CENTER',
-      legalRepresentative: { fullName: 'Ana Paz Rojas', email: 'ana.paz@labsur.test' },
+      // País y jurisdicción: sin ellos la API responde 422 «exige país y jurisdicción».
+      countryConceptId: 'concepto-BO',
+      jurisdictionConceptId: 'concepto-JURISDICTION_NATIONAL',
+      legalRepresentative: {
+        fullName: 'Ana Paz Rojas',
+        idNumber: '4872190',
+        email: 'ana.paz@labsur.test',
+        powerOfAttorneyFileId: 'file-poder',
+      },
     });
     expect(cuerpo.organization.diagnosticUnit).toEqual({
       name: 'Laboratorio Clínico del Sur S.R.L.',
-      primarySite: { name: 'Casa central', address: { lines: ['Av. Cañoto esq. Ballivián 234'] } },
+      diagnosticUnitTypeConceptId: 'concepto-DU_TYPE_LAB',
+      modalityConceptIds: ['concepto-DU_MODALITY_LAB'],
+      primarySite: {
+        name: 'Casa central',
+        address: { lines: ['Av. Cañoto esq. Ballivián 234'], latitude: -17.7833, longitude: -63.1821 },
+      },
     });
     expect(cuerpo.owner).toEqual({
       email: 'ana.paz@labsur.test',
       password: 'secreto12',
       displayName: 'Ana Paz Rojas',
     });
-    // Lo opcional que no se completó no viaja: ni papeles, ni cargos, ni poder.
+    // Lo opcional que no se completó no viaja: ni papeles ni cargos. El poder sí:
+    // una S.R.L. no puede omitirlo (BR-09).
     expect(cuerpo.organization).not.toHaveProperty('legalDocuments');
     expect(cuerpo.organization).not.toHaveProperty('executives');
-    expect(cuerpo.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
     expect(component.registered()).toBe(true);
   });
 
@@ -200,7 +260,9 @@ describe('RegisterLaboratory', () => {
     'companyType',
     'taxId',
     'addressLines',
+    'gpsCentral',
     'legalRepName',
+    'legalRepIdNumber',
     'legalRepEmail',
     'password',
   ] as const)('sin %s no se envía', (clave) => {
@@ -208,7 +270,12 @@ describe('RegisterLaboratory', () => {
     // `patchValue` y no `controls[clave].setValue`: el tipo de sociedad se
     // vacía con `null`, el nombre del representante vaciando su primer nombre,
     // y los demás con la cadena vacía.
-    const vacio = clave === 'companyType' ? null : clave === 'legalRepName' ? { name: '' } : '';
+    const vacio =
+      clave === 'companyType' || clave === 'gpsCentral'
+        ? null
+        : clave === 'legalRepName'
+          ? { name: '' }
+          : '';
     component.form.patchValue({ [clave]: vacio });
 
     component.submit();
@@ -240,10 +307,11 @@ describe('RegisterLaboratory', () => {
   });
 
   it('el poder se pide en la página del representante, no con los papeles de la empresa', () => {
-    const pagina = (clave: string) => component.paginas.find((p) => p.clave === clave);
+    const pagina = (clave: string) => component.paginas().find((p) => p.clave === clave);
 
     expect(pagina('representante')?.campos.map((c) => c.key)).toEqual([
       'legalRepName',
+      'legalRepIdNumber',
       'legalRepEmail',
       'powerOfAttorneyFileId',
     ]);
@@ -322,14 +390,13 @@ describe('RegisterLaboratory', () => {
 
   it('el punto de la central y las sucursales con nombre viajan en diagnosticUnit', () => {
     completarLoObligatorio();
-    component.gpsCentral.set({ lat: -17.7833, lng: -63.1821 });
     component.agregarSucursal();
     component.agregarSucursal();
     const [conMapa, sinNombre] = component.sucursales();
     component.escribirNombreDeSucursal(conMapa!.id, 'Equipetrol');
-    component.escribirDireccionDeSucursal(conMapa!.id, 'Av. San Martín 456');
+    component.escribirLocalidadDeSucursal(conMapa!.id, localidad({ lat: -17.76, lng: -63.19 }, 'Av. San Martín 456'));
     component.fijarGpsDeSucursal(conMapa!.id, { lat: -17.76, lng: -63.19 });
-    component.escribirDireccionDeSucursal(sinNombre!.id, 'Calle sin nombre de sucursal');
+    component.escribirLocalidadDeSucursal(sinNombre!.id, localidad({ lat: -17.7, lng: -63.1 }, 'Calle sin sucursal'));
 
     const cuerpo = enviarConExito();
 
@@ -340,11 +407,14 @@ describe('RegisterLaboratory', () => {
     });
     // La fila sin nombre todavía no es una sucursal: no viaja.
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
-      { name: 'Equipetrol', addressLines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+      {
+        name: 'Equipetrol',
+        address: { lines: ['Av. San Martín 456'], latitude: -17.76, longitude: -63.19 },
+      },
     ]);
   });
 
-  it('las sucursales subidas en lote viajan con descripción, enlace y el punto que traía el enlace', () => {
+  it('las sucursales subidas en lote viajan con su dirección, su punto, su descripción y su enlace (P51)', () => {
     completarLoObligatorio();
     component.agregarSucursalesEnLote([
       {
@@ -366,18 +436,27 @@ describe('RegisterLaboratory', () => {
     ]);
 
     expect(component.nombresDeSucursales()).toEqual(['Norte', 'Sur']);
+    // «Sur» vino sin punto: hasta que se marque en el mapa, no se envía.
+    component.submit();
+    expect(component.errorMessage()).toContain('«Sur»');
+    const sur = component.sucursales()[1]!;
+    component.fijarGpsDeSucursal(sur.id, { lat: -17.8, lng: -63.2 });
     const cuerpo = enviarConExito();
 
+    // `DiagnosticUnitBranchDto` declara `description` y `locationUrl` (P51,
+    // D-4): viajan contra la API real. Una descripción vacía no viaja.
     expect(cuerpo.organization.diagnosticUnit.branches).toEqual([
       {
         name: 'Norte',
-        addressLines: ['Av. Banzer 100'],
-        latitude: -17.76,
-        longitude: -63.19,
+        address: { lines: ['Av. Banzer 100'], latitude: -17.76, longitude: -63.19 },
         description: 'Planta baja',
         locationUrl: 'https://www.google.com/maps?q=-17.76,-63.19',
       },
-      { name: 'Sur', addressLines: [], locationUrl: 'https://maps.app.goo.gl/abc' },
+      {
+        name: 'Sur',
+        address: { lines: [], latitude: -17.8, longitude: -63.2 },
+        locationUrl: 'https://maps.app.goo.gl/abc',
+      },
     ]);
   });
 
@@ -408,7 +487,9 @@ describe('RegisterLaboratory', () => {
     await fixture.whenStable();
 
     expect(component.registered()).toBe(false);
-    expect(component.errorMessage()).toContain('Ya existe una cuenta con ese correo');
+    // El catálogo explica de quién es el correo y qué hacer, sin repetir la API.
+    expect(component.errorMessage()).toContain('Ya hay una cuenta registrada con el correo del representante legal');
+    expect(component.errorMessage()).toContain('¿Olvidó su contraseña?');
     const alerta = fixture.debugElement.query(By.css('[data-testid="registro-lab-error"]'));
     expect(alerta).not.toBeNull();
   });
@@ -421,7 +502,7 @@ describe('RegisterLaboratory', () => {
     const [primera, segunda] = component.sucursales();
 
     component.escribirNombreDeSucursal(primera!.id, 'Equipetrol');
-    component.escribirDireccionDeSucursal(primera!.id, 'Av. San Martín 456');
+    component.escribirLocalidadDeSucursal(primera!.id, localidad({ lat: -17.78, lng: -63.18 }, 'Av. San Martín 456'));
     component.fijarGpsDeSucursal(primera!.id, { lat: -17.78, lng: -63.18 });
     component.quitarSucursal(segunda!.id);
 
@@ -470,6 +551,7 @@ describe('RegisterLaboratory', () => {
     enviarConExito();
     fixture.detectChanges();
     await fixture.whenStable();
+    fixture.detectChanges();
 
     const exito = fixture.debugElement.query(By.css('[data-testid="registro-lab-exito"]'));
     expect(exito).not.toBeNull();
@@ -487,9 +569,23 @@ describe('RegisterLaboratory', () => {
     expect(form).not.toBeNull();
   });
 
-  /* --- el mapa vacía la dirección de la central (D-06) ------------------- */
+  it('una sucursal con nombre y sin punto confirmado frena el envío y se nombra', () => {
+    completarLoObligatorio();
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.escribirNombreDeSucursal(sucursal!.id, 'Equipetrol');
 
-  describe('el mapa vacía la dirección de la central', () => {
+    component.submit();
+
+    // `http.verify()` del `afterEach` prueba que no salió nada.
+    expect(component.registered()).toBe(false);
+    expect(component.avisoDeSucursalesSinPunto()).toContain('«Equipetrol»');
+    expect(component.errorMessage()).toContain('Confirmar dirección actual');
+  });
+
+  /* --- la ubicación de la central: sólo el punto (26/10/2026) ------------ */
+
+  describe('la ubicación de la central sale del punto', () => {
     /** Avanza el asistente hasta la página cuyo título contiene `fragmento`. */
     function avanzarHasta(fragmento: string): void {
       for (let paso = 0; paso < 12; paso += 1) {
@@ -502,59 +598,31 @@ describe('RegisterLaboratory', () => {
       throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
     }
 
-    /** La dirección escrita y dejada: tocada, como la deja quien la escribió. */
-    function direccionEscritaYDejada(): HTMLInputElement {
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
+    }
+
+    function irALaUbicacion(): void {
       fixture.detectChanges();
       completarLoObligatorio();
+      component.form.controls.gpsCentral.setValue(null);
       fixture.detectChanges();
       avanzarHasta('Dónde está la central');
-      const campo: HTMLInputElement = fixture.nativeElement.querySelector(
-        '[data-testid="registro-lab-direccion"]',
-      );
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-      return campo;
     }
 
-    function tocarElMapa(): void {
-      const mapa = fixture.debugElement.query(By.directive(UbicacionPicker));
-      (mapa.componentInstance as UbicacionPicker).puntoElegido.emit({ lat: -17.7833, lng: -63.1821 });
-      fixture.detectChanges();
-    }
+    it('el mapa es el primer campo de su página, obligatorio, y la dirección ya no se escribe', () => {
+      const pagina = component.paginas().find((p) => p.clave === 'ubicacion')!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCentral', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('addressLines');
 
-    function errorDe(campo: HTMLElement): string {
-      return campo.closest('app-form-field')?.querySelector('.form-field-error')?.textContent?.trim() ?? '';
-    }
-
-    it('la deja vacía sin marcarla en rojo, aunque la persona ya la hubiera tocado', () => {
-      const campo = direccionEscritaYDejada();
-      expect(component.form.controls.addressLines.touched).toBe(true);
-
-      tocarElMapa();
-
-      expect(campo.value).toBe('');
-      expect(errorDe(campo)).toBe('');
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion-reescribir"]'),
-      ).not.toBeNull();
+      irALaUbicacion();
+      expect(fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion"]')).toBeNull();
+      expect(fixture.debugElement.query(By.directive(MapLocationPicker))).not.toBeNull();
     });
 
-    it('tocarla después sí la marca, y el aviso sigue a su lado', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
-
-      campo.dispatchEvent(new FocusEvent('blur'));
-      fixture.detectChanges();
-
-      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
-      expect(
-        fixture.nativeElement.querySelector('[data-testid="registro-lab-direccion-reescribir"]'),
-      ).not.toBeNull();
-    });
-
-    it('intentar avanzar sin reescribirla la marca y no deja pasar', () => {
-      const campo = direccionEscritaYDejada();
-      tocarElMapa();
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
 
       fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
       fixture.detectChanges();
@@ -562,7 +630,225 @@ describe('RegisterLaboratory', () => {
       expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
         'Dónde está la central',
       );
-      expect(errorDe(campo)).toBe('Escriba la dirección legal de la central.');
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto lo guarda en el control obligatorio, y quitarlo lo vacía', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO_CENTRAL);
+      expect(component.form.controls.gpsCentral.value).toEqual(PUNTO_CENTRAL);
+      expect(component.gpsCentral()).toEqual(PUNTO_CENTRAL);
+
+      selector().confirmado.emit(null);
+      expect(component.form.controls.gpsCentral.valid).toBe(false);
+    });
+
+    it('lo deducido del punto escribe la dirección legal', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad(PUNTO_CENTRAL, 'Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+
+      expect(component.form.controls.addressLines.value).toBe('Calle Guapay 3861, Equipetrol');
+    });
+
+    it('sin calle, la dirección dice la zona o el punto, nunca una calle inventada', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad(PUNTO_CENTRAL, null, 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(PUNTO_CENTRAL, null, null));
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
+    });
+
+    it('un punto restaurado sin dirección no deja un obligatorio invisible vacío', () => {
+      component.form.controls.addressLines.setValue('');
+      component.fijarGpsCentral(PUNTO_CENTRAL);
+
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
+      expect(component.form.controls.addressLines.valid).toBe(true);
+    });
+  });
+
+  // D2 replaces mandatory papers in the older test branch. Upload and retry
+  // remain covered through the shared pre-upload contract used by this screen.
+  describe('document uploads with optional D2 registration', () => {
+    const documentKeys: readonly EnrollmentDocumentKey[] = [
+      'constitutionFileId',
+      'taxIdentifierFileId',
+      'commerceRegistryFileId',
+      'operatingLicenseFileId',
+      'healthAuthorityCertificateFileId',
+      'powerOfAttorneyFileId',
+    ];
+
+    function uploads() {
+      return component as unknown as {
+        subirDocumento: PdfUploader;
+        recordarDocumento(key: EnrollmentDocumentKey, document: UploadedDocument): void;
+        documentoInicialDe(key: EnrollmentDocumentKey): UploadedDocument | null;
+      };
+    }
+
+    const uploaded: UploadedDocument = {
+      fileId: 'file-nit',
+      originalName: 'nit.pdf',
+      sizeBytes: 3,
+      mimeType: 'application/pdf',
+    };
+
+    it('keeps all six papers optional for UNIPERSONAL', () => {
+      completarLoObligatorio();
+      component.form.controls.companyType.setValue('UNIPERSONAL');
+      component.form.controls.powerOfAttorneyFileId.setValue('');
+      for (const key of documentKeys) {
+        expect(component.form.controls[key].value).toBe('');
+        expect(component.form.controls[key].valid).toBe(true);
+      }
+      expect(component.form.valid).toBe(true);
+      const body = enviarConExito();
+      expect(body.organization).not.toHaveProperty('legalDocuments');
+      expect(body.organization['legalRepresentative']).not.toHaveProperty('powerOfAttorneyFileId');
+      // La API exige el documento del representante en toda alta de organización.
+      expect(body.organization['legalRepresentative']).toHaveProperty('idNumber', '4872190');
+    });
+
+    // BR-09: la API rechaza con 422 una S.R.L. sin poder notariado.
+    it('requires the power of attorney for SRL, as the API does', () => {
+      completarLoObligatorio();
+      component.form.controls.companyType.setValue('SRL');
+      component.form.controls.powerOfAttorneyFileId.setValue('');
+      expect(component.form.controls.powerOfAttorneyFileId.valid).toBe(false);
+      expect(component.form.valid).toBe(false);
+    });
+
+    it('uploads the PDF before registration and preserves its response', async () => {
+      const file = new File(['pdf'], 'nit.pdf', { type: 'application/pdf' });
+      const result = lastValueFrom(uploads().subirDocumento(file));
+      const request = http.expectOne('/iam/auth/upload-registration-document');
+      expect(request.request.method).toBe('POST');
+      expect((request.request.body as FormData).get('file')).toBe(file);
+      request.flush(uploaded);
+      expect(await result).toMatchObject({ body: uploaded });
+      http.expectNone(RUTA_ALTA);
+      expect(component.registered()).toBe(false);
+    });
+
+    it('keeps confirmed metadata when another upload fails and is retried', async () => {
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      const file = new File(['pdf'], 'sedes.pdf', { type: 'application/pdf' });
+      const first = lastValueFrom(uploads().subirDocumento(file));
+      const failure = expect(first).rejects.toMatchObject({ status: 422 });
+      http.expectOne('/iam/auth/upload-registration-document').flush(null, {
+        status: 422,
+        statusText: 'Unprocessable Entity',
+      });
+      await failure;
+      expect(component.form.controls.taxIdentifierFileId.value).toBe(uploaded.fileId);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      expect(component.form.controls.healthAuthorityCertificateFileId.value).toBe('');
+      http.expectNone(RUTA_ALTA);
+      const retry = lastValueFrom(uploads().subirDocumento(file));
+      const request = http.expectOne('/iam/auth/upload-registration-document');
+      expect((request.request.body as FormData).get('file')).toBe(file);
+      request.flush({ ...uploaded, fileId: 'file-sedes', originalName: file.name });
+      await retry;
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+    });
+
+    it('remembers name and size and clears only the removed paper', () => {
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      const other = { ...uploaded, fileId: 'file-sedes', originalName: 'sedes.pdf' };
+      uploads().recordarDocumento('healthAuthorityCertificateFileId', other);
+      component.registrarDocumento('healthAuthorityCertificateFileId', other.fileId);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      component.registrarDocumento('taxIdentifierFileId', null);
+      expect(component.form.controls.taxIdentifierFileId.value).toBe('');
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toBeNull();
+      expect(uploads().documentoInicialDe('healthAuthorityCertificateFileId')).toEqual(other);
+    });
+
+    it('allows registration to be retried after a rejection without re-uploading papers', () => {
+      completarLoObligatorio();
+      uploads().recordarDocumento('taxIdentifierFileId', uploaded);
+      component.registrarDocumento('taxIdentifierFileId', uploaded.fileId);
+      enviarYCapturar().flush({ message: 'Rejected', requestId: 'test-retry' }, {
+        status: 409,
+        statusText: 'Conflict',
+      });
+      expect(component.registered()).toBe(false);
+      expect(component.isSubmitting()).toBe(false);
+      enviarConExito();
+      expect(component.registered()).toBe(true);
+      expect(uploads().documentoInicialDe('taxIdentifierFileId')).toEqual(uploaded);
+      http.expectNone('/iam/auth/upload-registration-document');
+    });
+  });
+
+  describe('persistencia de borrador (onboarding draft)', () => {
+    afterEach(() => {
+      localStorage.removeItem('alovida.onboarding.draft.laboratory');
+    });
+
+    it('guarda el avance en localStorage al cambiar de paso', () => {
+      component.form.patchValue({
+        legalName: 'Laboratorio Santa Cruz SRL',
+        taxId: '1023456789',
+      });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.laboratory');
+      expect(raw).not.toBeNull();
+      const draft = JSON.parse(raw!);
+      expect(draft.data.legalName).toBe('Laboratorio Santa Cruz SRL');
+      expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('restaura el borrador guardado', () => {
+      const mockDraft = {
+        id: 'draft-lab-1',
+        formType: 'laboratory',
+        stepIndex: 2,
+        stepKey: 'ubicacion',
+        stepTitle: 'Ubicación de la central',
+        totalSteps: 7,
+        data: {
+          legalName: 'BioLab Central',
+          taxId: '987654321',
+        },
+        extraData: {
+          gpsCentral: { lat: -17.78, lng: -63.18 },
+        },
+        lastSavedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('alovida.onboarding.draft.laboratory', JSON.stringify(mockDraft));
+
+      component.restaurarBorrador();
+
+      expect(component.form.controls.legalName.value).toBe('BioLab Central');
+      expect(component.form.controls.taxId.value).toBe('987654321');
+      expect(component.gpsCentral()).toEqual({ lat: -17.78, lng: -63.18 });
+      expect(component.form.controls.gpsCentral.value).toEqual({ lat: -17.78, lng: -63.18 });
+      expect(component.pasoGuardado()).toBe(2);
+    });
+
+    it('limpia el borrador al descartarlo', () => {
+      localStorage.setItem('alovida.onboarding.draft.laboratory', '{"id":"draft-1"}');
+      component.descartarBorrador();
+      expect(localStorage.getItem('alovida.onboarding.draft.laboratory')).toBeNull();
     });
   });
 });
+
+/** Lo que `app-map-location-picker` emite por `localidad`. */
+function localidad(
+  punto: { lat: number; lng: number },
+  calle: string | null,
+  zona: string | null = null,
+): LocalityFromPoint {
+  return { punto, calle, calleSola: calle, zona, municipioConceptId: null };
+}

@@ -8,7 +8,12 @@ import { provideRouter } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
+import {
+  OWN_OFFICE_KEY,
+  type OrganizationChoice,
+} from '../../../shared/components/molecules/organization-select/organization-select.types';
 import { AgendaCreate } from './agenda-create';
+import { environment } from '../../../../environments/environment';
 
 const TENANT = '11111111-1111-1111-1111-111111111111';
 const PERFIL = '22222222-2222-2222-2222-222222222222';
@@ -50,10 +55,18 @@ interface Testable {
   limpiarCampos(): Promise<void>;
   /** Horario flexible y almuerzo (propietario, 18/09). */
   readonly flexible: WritableSignal<boolean>;
+  /** P36 · lo que se reserva por paciente en horario flexible. */
+  readonly minutosPorPaciente: WritableSignal<number>;
   readonly conAlmuerzo: WritableSignal<boolean>;
   readonly almuerzoDesde: WritableSignal<string>;
   readonly almuerzoHasta: WritableSignal<string>;
   readonly almuerzoInvalido: () => boolean;
+  /** Dónde se publica: lo elegido en el selector de organización (REQ-C2-003). */
+  readonly place: { readonly choice: WritableSignal<OrganizationChoice | null> };
+  readonly misAgendas: () => readonly unknown[];
+  readonly esCambio: () => boolean;
+  /** Elegir otra de las agendas de la organización. */
+  elegirSede(id: string | null): void;
 }
 
 /**
@@ -65,6 +78,14 @@ interface Testable {
  * aserciones de contrato son las más importantes de este archivo: si alguna se
  * cae, el rediseño dejó de ser un rediseño.
  */
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
+
 describe('AgendaCreate', () => {
   let fixture: ComponentFixture<AgendaCreate>;
   let http: HttpTestingController;
@@ -180,12 +201,25 @@ describe('AgendaCreate', () => {
    * Contesta el retiro del horario vigente, que desde el arreglo del cierre de
    * turnos precede a toda publicación de un cambio.
    */
-  function retirarVigente(id = 'tpl-1'): void {
+  /**
+   * Desde el 24/10/2026 el retiro va precedido de la vista previa de citas
+   * vivas (`live-bookings`): sin ninguna, se retira como siempre. La decisión
+   * se toma en una promesa, así que el DELETE sale un tick después del GET.
+   */
+  async function retirarVigente(id = 'tpl-1'): Promise<void> {
+    http
+      .expectOne(`/scheduling/templates/${id}/live-bookings`)
+      .flush({ templateId: id, total: 0, bookings: [], present: [] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
     http.expectOne(`/scheduling/templates/${id}`).flush({
       id,
       statusConceptId: 'archived',
       releasedSlots: 24,
       keptSlots: 0,
+      liveBookings: 0,
+      liveBookingIds: [],
+      truncated: false,
+      cancelledBookings: 0,
     });
   }
 
@@ -246,10 +280,15 @@ describe('AgendaCreate', () => {
      * anterior; como `generate-slots` es idempotente **por instante de
      * inicio**, el cupo viejo de las 08:00 sobrevivía con su fin viejo.
      */
-    it('cambiar el horario retira el vigente ANTES de crear el nuevo', () => {
+    it('cambiar el horario retira el vigente ANTES de crear el nuevo', async () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      // Primero la vista previa de citas vivas; sin ninguna, se retira directo.
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       const retiro = http.expectOne('/scheduling/templates/tpl-1');
       expect(retiro.request.method).toBe('DELETE');
       // Todavía no se creó nada: el orden es lo que impide dos horarios vivos.
@@ -260,6 +299,10 @@ describe('AgendaCreate', () => {
         statusConceptId: 'archived',
         releasedSlots: 24,
         keptSlots: 3,
+        liveBookings: 3,
+        liveBookingIds: ['b-1', 'b-2', 'b-3'],
+        truncated: false,
+        cancelledBookings: 0,
       });
 
       http
@@ -272,13 +315,19 @@ describe('AgendaCreate', () => {
     });
 
     /**
-     * El 409 son citas de pacientes. Publicar igual las movería sin avisar, así
-     * que no se publica nada y el mensaje del servidor se muestra tal cual.
+     * Si el retiro falla, no se publica nada y el mensaje del servidor se
+     * muestra tal cual. Desde M4 las citas vivas ya no lo frenan (P23); el 409
+     * sigue siendo el caso a probar porque es el de una API anterior, y el
+     * camino de error es el mismo para cualquier rechazo.
      */
-    it('si el retiro responde 409, no crea la plantilla nueva', () => {
+    it('si el retiro responde 409, no crea la plantilla nueva', async () => {
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
 
+      http
+        .expectOne('/scheduling/templates/tpl-1/live-bookings')
+        .flush({ templateId: 'tpl-1', total: 0, bookings: [], present: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
       http.expectOne('/scheduling/templates/tpl-1').flush(
         {
           code: 'CONFLICT',
@@ -340,7 +389,7 @@ describe('AgendaCreate', () => {
 
       crearConHorarioVigente(VIGENTE);
       acc.publicar();
-      retirarVigente();
+      await retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -357,7 +406,7 @@ describe('AgendaCreate', () => {
       respuestaDelDialogo = true;
     });
 
-    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', () => {
+    it('reusa el recurso: cambiar el horario NO crea una segunda agenda', async () => {
       crearConHorarioVigente(VIGENTE);
 
       acc.publicar();
@@ -366,7 +415,7 @@ describe('AgendaCreate', () => {
       // el defecto que este carril arregla — «Cambiar mi horario» dejaba al
       // médico con dos agendas y a los pacientes viendo los turnos de las dos.
       http.expectNone((r) => r.url === '/scheduling/resources' && r.method === 'POST');
-      retirarVigente();
+      await retirarVigente();
       http
         .expectOne('/scheduling/resources/res-1/templates')
         .flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
@@ -1279,6 +1328,32 @@ describe('AgendaCreate', () => {
       const reglas = cuerpo['rules'] as Record<string, unknown>[];
       expect(reglas[0]).not.toHaveProperty('slotMinutes');
       expect(reglas[0]).not.toHaveProperty('gapMinutes');
+      // P36: ni capacidad por turno —la API rechaza la franja que la declara—.
+      expect(reglas[0]).not.toHaveProperty('capacityPerSlot');
+      // Lo que se reserva por paciente viaja una vez, en la plantilla.
+      expect(cuerpo['slotMinutes']).toBe(30);
+    });
+
+    it('P36 · en horario flexible se elige cuánto se reserva por paciente y viaja en la plantilla', () => {
+      crear();
+      encenderLunes();
+      acc.flexible.set(true);
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).not.toBeNull();
+
+      acc.minutosPorPaciente.set(20);
+      expect(cuerpoDeLaPlantilla()['slotMinutes']).toBe(20);
+    });
+
+    it('P36 · con turnos fijos no se pregunta el tiempo por paciente', () => {
+      crear();
+      encenderLunes();
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="agenda-create-minutos-por-paciente"]'),
+      ).toBeNull();
     });
 
     it('en horario flexible la tabla no pregunta duración ni descanso', () => {
@@ -1290,10 +1365,112 @@ describe('AgendaCreate', () => {
       const encabezados = [...fixture.nativeElement.querySelectorAll('thead th')].map(
         (th: Element) => th.textContent?.trim(),
       );
-      // «Atiendo» sí está: qué admite la franja (consultas, servicios o ambos) no
-      // depende de si los turnos son fijos. Lo que NO aparece es duración ni descanso.
-      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo']);
+      // «Atiendo» y «Telemedicina» sí están: qué admite la franja (consultas,
+      // servicios o ambos, y si también por videollamada) no depende de si los
+      // turnos son fijos. Lo que NO aparece es duración ni descanso.
+      expect(encabezados).toEqual(['Día', 'Desde', 'Hasta', 'Atiendo', 'Telemedicina']);
       expect(acc.resumen()).toContain('horario flexible sin citas de duración fija');
+    });
+
+    describe('telemedicina por franja', () => {
+      it('arranca apagada y NO se manda: ausente ≡ sin telemedicina', () => {
+        crear();
+        encenderLunes();
+
+        expect(acc.grupoDe(0).getRawValue().telemedicina).toBe(false);
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas[0]).not.toHaveProperty('telemedicineEnabled');
+      });
+
+      it('el interruptor de la fila la activa y viaja como true en cada franja del día', () => {
+        crear();
+        encenderLunes();
+        // Con almuerzo el día son dos franjas: las dos llevan la telemedicina.
+        acc.semana.at(0).patchValue({ desde: '08:00', hasta: '18:00' });
+        acc.conAlmuerzo.set(true);
+        acc.almuerzoDesde.set('12:00');
+        acc.almuerzoHasta.set('14:00');
+        fixture.detectChanges();
+
+        const interruptor = fixture.nativeElement.querySelector(
+          '[data-testid="agenda-create-telemedicina-0"] input[role="switch"]',
+        ) as HTMLInputElement;
+        expect(interruptor).not.toBeNull();
+        expect(interruptor.checked).toBe(false);
+        expect(interruptor.getAttribute('aria-label')).toBe('Atiende por telemedicina, Lunes');
+        interruptor.click();
+        fixture.detectChanges();
+
+        expect(acc.grupoDe(0).getRawValue().telemedicina).toBe(true);
+        const reglas = cuerpoDeLaPlantilla()['rules'] as Record<string, unknown>[];
+        expect(reglas).toHaveLength(2);
+        for (const regla of reglas) expect(regla['telemedicineEnabled']).toBe(true);
+      });
+
+      it('la vista previa marca la franja con telemedicina', () => {
+        crear();
+        encenderLunes();
+        acc.fijarDeLaFila(0, 'telemedicina', true);
+        const previa = (
+          acc as unknown as { reglasDeLaPrevia(): { telemedicineEnabled?: boolean }[] }
+        ).reglasDeLaPrevia();
+        expect(previa[0].telemedicineEnabled).toBe(true);
+      });
+
+      it('repetir una fila copia también la telemedicina', () => {
+        crear();
+        encenderLunes();
+        acc.alternarDia(1);
+        acc.fijarDeLaFila(0, 'telemedicina', true);
+        acc.filaARepetir.set(0);
+        acc.repetirFila();
+        expect(acc.grupoDe(1).getRawValue().telemedicina).toBe(true);
+      });
+
+      it('un horario vigente con telemedicina la carga, y apagarla viaja como false', async () => {
+        crearConHorarioVigente({
+          id: 'tpl-1',
+          name: 'Con telemedicina',
+          slotMinutes: 30,
+          statusConceptId: 'c',
+          rules: [
+            {
+              dayOfWeek: 2,
+              startTime: '15:00:00',
+              endTime: '19:00:00',
+              slotMinutes: 30,
+              telemedicineEnabled: true,
+            },
+            {
+              dayOfWeek: 4,
+              startTime: '15:00:00',
+              endTime: '19:00:00',
+              slotMinutes: 30,
+              telemedicineEnabled: false,
+            },
+          ],
+        });
+        expect(acc.grupoDe(1).getRawValue().telemedicina).toBe(true);
+        expect(acc.grupoDe(3).getRawValue().telemedicina).toBe(false);
+
+        // La apaga el martes, que la tenía publicada.
+        acc.fijarDeLaFila(1, 'telemedicina', false);
+        acc.publicar();
+        await retirarVigente();
+        const plantilla = http.expectOne('/scheduling/resources/res-1/templates');
+        const reglas = (plantilla.request.body as { rules: Record<string, unknown>[] }).rules;
+        plantilla.flush({ id: 'tpl-2', name: 'x', ruleCount: 2, statusConceptId: 'c' });
+        http
+          .expectOne('/scheduling/templates/tpl-2/generate-slots')
+          .flush({ templateId: 'tpl-2', created: 1, skipped: 0 });
+
+        const martes = reglas.find((r) => r['dayOfWeek'] === 2);
+        const jueves = reglas.find((r) => r['dayOfWeek'] === 4);
+        // El martes la tenía y la apagó: se escribe `false`, no se omite.
+        expect(martes?.['telemedicineEnabled']).toBe(false);
+        // El jueves nunca la tuvo: no se escribe nada.
+        expect(jueves).not.toHaveProperty('telemedicineEnabled');
+      });
     });
 
     describe('qué se atiende en cada franja (v4.2.40)', () => {
@@ -1348,7 +1525,7 @@ describe('AgendaCreate', () => {
         fixture.detectChanges();
 
         expect(acc.turnosDelDia(0)).toBe(0);
-        const celda = fixture.nativeElement.querySelector('.agenda-create__fila-turnos');
+        const celda = fixture.nativeElement.querySelector('.schedule-day-row__slots');
         expect(celda.textContent.trim()).toBe('—');
       });
 
@@ -1399,6 +1576,175 @@ describe('AgendaCreate', () => {
       crear();
       encenderLunes();
       expect(cuerpoDeLaPlantilla()).not.toHaveProperty('flexibleHours');
+    });
+
+    /* -- Horario flexible y descanso por día (v4.2.64, REQ-C2-004 a 006) ---- */
+
+    describe('horario flexible y descanso por día', () => {
+      /** Lunes de turnos con descanso de 10 y martes flexible, los dos de 9 a 13. */
+      function buildMixedWeek(): void {
+        acc.alternarDia(0);
+        acc.alternarDia(1);
+        acc.elegirRespiro(0, 10);
+        acc.fijarDeLaFila(1, 'flexible', true);
+        fixture.detectChanges();
+      }
+
+      function rowOf(index: number): HTMLElement {
+        return fixture.nativeElement.querySelectorAll('tbody tr')[index] as HTMLElement;
+      }
+
+      it('semana mixta: el lunes lleva su descanso y el martes sólo flexibleHours', () => {
+        crear();
+        buildMixedWeek();
+        acc.minutosPorPaciente.set(20);
+
+        expect(cuerpoDeLaPlantilla()).toStrictEqual({
+          name: 'Horario de Agenda de Dra. Elena Salas',
+          rules: [
+            {
+              dayOfWeek: 1,
+              startTime: '09:00',
+              endTime: '13:00',
+              slotMinutes: 30,
+              gapMinutes: 10,
+              capacityPerSlot: 1,
+            },
+            { dayOfWeek: 2, startTime: '09:00', endTime: '13:00', flexibleHours: true },
+          ],
+          // Lo que se reserva por paciente los días flexibles; la plantilla NO es flexible.
+          slotMinutes: 20,
+        });
+      });
+
+      it('toda la semana flexible: el cuerpo es el de antes, sin flexibleHours por franja', () => {
+        crear();
+        buildMixedWeek();
+        acc.flexible.set(true);
+        fixture.detectChanges();
+
+        expect(cuerpoDeLaPlantilla()).toStrictEqual({
+          name: 'Horario de Agenda de Dra. Elena Salas',
+          rules: [
+            { dayOfWeek: 1, startTime: '09:00', endTime: '13:00' },
+            { dayOfWeek: 2, startTime: '09:00', endTime: '13:00' },
+          ],
+          slotMinutes: 30,
+          flexibleHours: true,
+        });
+      });
+
+      it('marcar flexibles todos los días, uno por uno, publica lo mismo que el atajo', () => {
+        crear();
+        buildMixedWeek();
+        acc.fijarDeLaFila(0, 'flexible', true);
+        fixture.detectChanges();
+
+        const body = cuerpoDeLaPlantilla();
+        expect(body['flexibleHours']).toBe(true);
+        expect(body['rules']).toStrictEqual([
+          { dayOfWeek: 1, startTime: '09:00', endTime: '13:00' },
+          { dayOfWeek: 2, startTime: '09:00', endTime: '13:00' },
+        ]);
+      });
+
+      it('el descanso se oculta sólo en la fila flexible', () => {
+        crear();
+        buildMixedWeek();
+
+        const headers = [...fixture.nativeElement.querySelectorAll('thead th')].map(
+          (th: Element) => th.textContent?.trim(),
+        );
+        expect(headers).toContain('Descanso');
+        expect(headers).toContain('Horario flexible');
+        expect(rowOf(0).querySelector('[data-testid="schedule-day-gap-0"]')).not.toBeNull();
+        expect(rowOf(1).querySelector('[data-testid="schedule-day-gap-1"]')).toBeNull();
+        expect(rowOf(1).textContent).toContain('Sin citas de duración fija');
+        expect(acc.turnosDelDia(1)).toBe(0);
+      });
+
+      it('apagar el atajo devuelve los turnos fijos a todos los días', () => {
+        crear();
+        buildMixedWeek();
+        const screen = acc as unknown as { setWeekFlexible(flexible: boolean): void };
+        screen.setWeekFlexible(true);
+        screen.setWeekFlexible(false);
+
+        expect(acc.flexible()).toBe(false);
+        expect(acc.semana.at(1).getRawValue().flexible).toBe(false);
+      });
+
+      it('editar una plantilla mixta carga cada fila con lo suyo', () => {
+        crearConHorarioVigente({
+          id: 'tpl-1',
+          retired: false,
+          name: 'Horario',
+          statusConceptId: 'c',
+          slotMinutes: 20,
+          flexibleHours: false,
+          rules: [
+            {
+              dayOfWeek: 1,
+              startTime: '09:00:00',
+              endTime: '13:00:00',
+              slotMinutes: 30,
+              gapMinutes: 10,
+              flexibleHours: false,
+            },
+            { dayOfWeek: 2, startTime: '15:00:00', endTime: '19:00:00', flexibleHours: true },
+          ],
+        });
+
+        expect(acc.flexible()).toBe(false);
+        expect(acc.minutosPorPaciente()).toBe(20);
+        expect(acc.semana.at(0).getRawValue()).toMatchObject({
+          activo: true,
+          respiro: 10,
+          duracion: 30,
+          flexible: false,
+        });
+        expect(acc.semana.at(1).getRawValue()).toMatchObject({
+          activo: true,
+          desde: '15:00',
+          hasta: '19:00',
+          flexible: true,
+        });
+      });
+
+      it('editar una plantilla flexible deja flexibles todas las filas', () => {
+        crearConHorarioVigente({
+          id: 'tpl-1',
+          retired: false,
+          name: 'Horario',
+          statusConceptId: 'c',
+          slotMinutes: 30,
+          flexibleHours: true,
+          rules: [
+            { dayOfWeek: 1, startTime: '09:00:00', endTime: '13:00:00', flexibleHours: true },
+            { dayOfWeek: 3, startTime: '09:00:00', endTime: '13:00:00', flexibleHours: true },
+          ],
+        });
+
+        const screen = acc as unknown as { isFlexibleDay(index: number): boolean };
+        expect(acc.flexible()).toBe(true);
+        expect([0, 2].every((index) => screen.isFlexibleDay(index))).toBe(true);
+      });
+
+      it('la vista previa dice flexible al martes y deja los turnos del lunes', () => {
+        crear();
+        buildMixedWeek();
+
+        const preview = (
+          acc as unknown as { reglasDeLaPrevia(): Record<string, unknown>[] }
+        ).reglasDeLaPrevia();
+        expect(preview[0]).toMatchObject({ dayOfWeek: 1, slotMinutes: 30, gapMinutes: 10 });
+        expect(preview[1]).toStrictEqual({
+          dayOfWeek: 2,
+          startTime: '09:00',
+          endTime: '13:00',
+          flexibleHours: true,
+        });
+      });
     });
 
     it('cada día se enciende con su botón «Sí» y se apaga con «No»', () => {
@@ -1478,5 +1824,446 @@ describe('AgendaCreate', () => {
       expect(acc.almuerzoDesde()).toBe('12:30');
       expect(acc.almuerzoHasta()).toBe('14:00');
     });
+  });
+
+  /**
+   * DÓNDE SE PUBLICA — el selector de organización (REQ-C2-002 y 003).
+   *
+   * «Mi consultorio» tiene que mandar exactamente lo de antes del selector: la
+   * organización de la sesión y ninguna práctica. Otra organización manda la
+   * suya, y como cada organización tiene sus propias agendas, cambiarla suelta
+   * la agenda de la anterior y busca las de la nueva.
+   */
+  describe('la organización donde se publica', () => {
+    const OLIVOS: OrganizationChoice = {
+      key: 'practice-olivos',
+      organization: {
+        practiceId: 'practice-olivos',
+        practiceSiteId: 'site-olivos',
+        name: 'Clínica Los Olivos',
+        isOwnOffice: false,
+        tenantId: 'tenant-olivos',
+      },
+    };
+    const OWN_OFFICE: OrganizationChoice = {
+      key: OWN_OFFICE_KEY,
+      organization: {
+        practiceId: 'practice-own',
+        practiceSiteId: 'site-own',
+        name: 'Consultorio Dra. Salas',
+        isOwnOffice: true,
+        tenantId: null,
+      },
+    };
+
+    function listResourcesOf(tenantId: string) {
+      return http.expectOne(
+        (r) =>
+          r.method === 'GET' &&
+          r.url === '/scheduling/resources' &&
+          r.params.get('tenantId') === tenantId,
+      );
+    }
+
+    /** Termina el creation: plantilla y cupos, para que `verify()` no encuentre nada colgado. */
+    function finishPublishing(resourceId: string): void {
+      http
+        .expectOne(`/scheduling/resources/${resourceId}/templates`)
+        .flush({ id: 'tpl-9', name: 'x', ruleCount: 1, statusConceptId: 'c' });
+      http
+        .expectOne('/scheduling/templates/tpl-9/generate-slots')
+        .flush({ templateId: 'tpl-9', created: 1, skipped: 0 });
+    }
+
+    it('el selector va arriba de la agenda y empieza en «Mi consultorio»', () => {
+      crearConHorarioVigente({ id: 'tpl-1', name: 'Horario', statusConceptId: 'c', rules: [] });
+      const root: HTMLElement = fixture.nativeElement;
+      const field = root.querySelector<HTMLElement>('app-organization-field');
+      const scheduleHeading = Array.from(root.querySelectorAll('h2')).find(
+        (heading) => heading.textContent?.trim() === '¿En qué agenda publica?',
+      );
+
+      expect(field?.querySelector('label')?.textContent?.trim()).toBe('Organización');
+      expect(field?.querySelector('.select-trigger')?.textContent?.trim()).toBe('Mi consultorio');
+      expect(scheduleHeading).toBeDefined();
+      expect(
+        field!.compareDocumentPosition(scheduleHeading!) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it('quien arma la agenda de otro recurso no elige organización', () => {
+      crear(['SCHEDULING_ADMIN'], TENANT, null);
+
+      expect(fixture.nativeElement.querySelector('app-organization-field')).toBeNull();
+    });
+
+    it('con «Mi consultorio», el recurso lleva lo de siempre: la organización de la sesión y ninguna práctica', () => {
+      crear();
+      acc.place.choice.set(OWN_OFFICE);
+      fixture.detectChanges();
+      encenderLunes();
+      acc.publicar();
+
+      const creation = http.expectOne((r) => r.method === 'POST' && r.url === '/scheduling/resources');
+      expect(creation.request.body.tenantId).toBe(TENANT);
+      expect(creation.request.body).not.toHaveProperty('practiceId');
+      creation.flush({ id: 'res-1', name: 'x', stateConceptId: 'c' });
+      finishPublishing('res-1');
+    });
+
+    it('con otra organización, busca sus agendas y el recurso lleva su organización y su práctica', () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      listResourcesOf('tenant-olivos').flush({ items: [], count: 0 });
+      encenderLunes();
+      acc.publicar();
+
+      const creation = http.expectOne((r) => r.method === 'POST' && r.url === '/scheduling/resources');
+      expect(creation.request.body).toMatchObject({
+        tenantId: 'tenant-olivos',
+        practiceId: 'practice-olivos',
+      });
+      creation.flush({ id: 'res-olivos', name: 'x', stateConceptId: 'c' });
+      finishPublishing('res-olivos');
+    });
+
+    it('cambiar de organización suelta la agenda y el horario de la anterior', () => {
+      crearConHorarioVigente({ id: 'tpl-1', name: 'Horario', statusConceptId: 'c', rules: [] });
+      expect(acc.resourceId()).toBe('res-1');
+      expect(acc.esCambio()).toBe(true);
+
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+
+      expect(acc.resourceId()).toBeNull();
+      expect(acc.esCambio()).toBe(false);
+      expect(acc.misAgendas()).toEqual([]);
+      listResourcesOf('tenant-olivos').flush({ items: [], count: 0 });
+    });
+
+    it('las agendas que llegan tarde de la organización anterior no pisan las de la elegida', () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      acc.place.choice.set(OWN_OFFICE);
+      fixture.detectChanges();
+
+      listResourcesOf('tenant-olivos').flush({
+        items: [{ id: 'res-olivos', name: 'Agenda', resourceRefId: PERFIL, stateConceptId: 'c' }],
+        count: 1,
+      });
+
+      expect(acc.misAgendas()).toEqual([]);
+      expect(acc.resourceId()).toBeNull();
+      listResourcesOf(TENANT).flush({ items: [], count: 0 });
+    });
+
+    /*
+     * COMO QUÉ ORGANIZACIÓN SE HABLA — el defecto de la revisión.
+     *
+     * La API resuelve la organización con `X-Tenant-Id`: rechaza con 403 el
+     * `tenantId` del cuerpo o de la query que no es ése (`TENANT_SCOPE_CONFLICT`)
+     * y no ve el recurso de otra. El interceptor pone el de la sesión, así que
+     * con otra organización elegida **cada** petición tiene que declararla —las
+     * lecturas y todos los pasos de la publicación— y con «Mi consultorio»
+     * ninguna: sale como siempre. Acá no corre el interceptor, así que lo que
+     * se ve en el encabezado es exactamente lo que declaró la pantalla.
+     */
+
+    /** Contesta la petición que calce y devuelve la organización que declaró, o `null`. */
+    function answer(
+      match: Parameters<HttpTestingController['expectOne']>[0],
+      body: object,
+    ): string | null {
+      const req = http.expectOne(match);
+      req.flush(body);
+      return req.request.headers.get('X-Tenant-Id');
+    }
+
+    /** Las agendas de la organización, como las contesta la API. */
+    function resourcesOf(tenantId: string, ...ids: string[]): string | null {
+      return answer(
+        (r) =>
+          r.method === 'GET' &&
+          r.url === '/scheduling/resources' &&
+          r.params.get('tenantId') === tenantId,
+        {
+          items: ids.map((id) => ({
+            id,
+            name: 'Agenda',
+            resourceRefId: PERFIL,
+            stateConceptId: 'c',
+          })),
+          count: ids.length,
+        },
+      );
+    }
+
+    /** Un horario vigente de un día: con él, publicar es un cambio y no un alta. */
+    const CURRENT_SCHEDULE = {
+      id: 'tpl-1',
+      name: 'Horario',
+      slotMinutes: 20,
+      statusConceptId: 'c',
+      rules: [{ dayOfWeek: 2, startTime: '15:00:00', endTime: '19:00:00', slotMinutes: 20 }],
+    };
+
+    /** Publica un alta con reglas propias: recurso, política, plantilla y cupos. */
+    function publishNew(): (string | null)[] {
+      encenderLunes();
+      acc.usarPolitica.set(true);
+      fixture.detectChanges();
+      acc.publicar();
+      return [
+        answer('/scheduling/resources', { id: 'res-new', name: 'x', stateConceptId: 'c' }),
+        answer('/scheduling/booking-policies', { id: 'pol-1', code: 'X', stateConceptId: 'c' }),
+        answer('/scheduling/resources/res-new/templates', {
+          id: 'tpl-9',
+          name: 'x',
+          ruleCount: 1,
+          statusConceptId: 'c',
+        }),
+        answer('/scheduling/templates/tpl-9/generate-slots', {
+          templateId: 'tpl-9',
+          created: 1,
+          skipped: 0,
+        }),
+      ];
+    }
+
+    /** Contesta la petición que calce con un error del servidor. */
+    function failWith500(match: Parameters<HttpTestingController['expectOne']>[0]): void {
+      http
+        .expectOne(match)
+        .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+    }
+
+    /** La vista previa sin citas y el retiro de un horario; lo que declaró cada uno. */
+    async function retireCurrent(templateId: string): Promise<(string | null)[]> {
+      const preview = answer(`/scheduling/templates/${templateId}/live-bookings`, {
+        templateId,
+        total: 0,
+        bookings: [],
+        present: [],
+      });
+      // La decisión sobre las citas vivas se toma en una promesa: el DELETE sale un tick después.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return [
+        preview,
+        answer(`/scheduling/templates/${templateId}`, {
+          id: templateId,
+          statusConceptId: 'archived',
+          releasedSlots: 0,
+          keptSlots: 0,
+          liveBookings: 0,
+          liveBookingIds: [],
+          truncated: false,
+          cancelledBookings: 0,
+        }),
+      ];
+    }
+
+    /** Publica un cambio sobre el horario vigente: vista previa, retiro, plantilla y cupos. */
+    async function publishChange(
+      resourceId: string,
+      templateId = CURRENT_SCHEDULE.id,
+    ): Promise<(string | null)[]> {
+      acc.publicar();
+      return [
+        ...(await retireCurrent(templateId)),
+        answer(`/scheduling/resources/${resourceId}/templates`, {
+          id: 'tpl-9',
+          name: 'x',
+          ruleCount: 1,
+          statusConceptId: 'c',
+        }),
+        answer('/scheduling/templates/tpl-9/generate-slots', {
+          templateId: 'tpl-9',
+          created: 1,
+          skipped: 0,
+        }),
+      ];
+    }
+
+    it('con otra organización, buscar sus agendas y cada paso de un alta hablan como ella', () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+
+      const declared = [resourcesOf('tenant-olivos'), ...publishNew()];
+
+      expect(declared).toEqual(Array(5).fill('tenant-olivos'));
+    });
+
+    it('con otra organización, leer su horario vigente y cambiarlo hablan como ella', async () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      const reading = [
+        resourcesOf('tenant-olivos', 'res-olivos'),
+        answer('/scheduling/resources/res-olivos/templates', {
+          items: [CURRENT_SCHEDULE],
+          count: 1,
+        }),
+      ];
+      fixture.detectChanges();
+      expect(acc.esCambio()).toBe(true);
+
+      const declared = [...reading, ...(await publishChange('res-olivos'))];
+
+      expect(declared).toEqual(Array(6).fill('tenant-olivos'));
+    });
+
+    it('con «Mi consultorio», ningún paso de un alta declara organización', () => {
+      crear();
+      acc.place.choice.set(OWN_OFFICE);
+      fixture.detectChanges();
+
+      expect(publishNew()).toEqual([null, null, null, null]);
+    });
+
+    it('al volver a «Mi consultorio», leer y cambiar el horario ya no declaran organización', async () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      resourcesOf('tenant-olivos');
+      acc.place.choice.set(OWN_OFFICE);
+      fixture.detectChanges();
+      const reading = [
+        resourcesOf(TENANT, 'res-1'),
+        answer('/scheduling/resources/res-1/templates', { items: [CURRENT_SCHEDULE], count: 1 }),
+      ];
+      fixture.detectChanges();
+      expect(acc.esCambio()).toBe(true);
+
+      const declared = [...reading, ...(await publishChange('res-1'))];
+
+      expect(declared).toEqual(Array(6).fill(null));
+    });
+
+    /*
+     * LO QUE EL INTENTO YA HIZO no viaja a otra organización ni a otra agenda.
+     *
+     * Reintentar tras un fallo posterior al retiro no vuelve a retirar; pero el
+     * retiro hecho en una agenda no dice nada del horario de otra. Si se
+     * arrastrara, publicar en la nueva saltearía su retiro y dejaría dos
+     * horarios vigentes sobre la misma agenda.
+     */
+
+    it('si falla después del retiro y cambia de organización, en la nueva se retira su horario', async () => {
+      crearConHorarioVigente(CURRENT_SCHEDULE);
+      acc.publicar();
+      await retireCurrent('tpl-1');
+      failWith500('/scheduling/resources/res-1/templates');
+      fixture.detectChanges();
+
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      resourcesOf('tenant-olivos', 'res-olivos');
+      answer('/scheduling/resources/res-olivos/templates', {
+        items: [{ ...CURRENT_SCHEDULE, id: 'tpl-olivos' }],
+        count: 1,
+      });
+      fixture.detectChanges();
+
+      // Espera la vista previa y el DELETE del horario de Olivos antes de la plantilla nueva.
+      const declared = await publishChange('res-olivos', 'tpl-olivos');
+
+      expect(declared).toEqual(Array(4).fill('tenant-olivos'));
+    });
+
+    it('si falla después de crear la plantilla y elige otra agenda, en ésa se retira su horario y se crea uno', async () => {
+      crear();
+      acc.place.choice.set(OLIVOS);
+      fixture.detectChanges();
+      resourcesOf('tenant-olivos', 'res-a', 'res-b');
+      answer('/scheduling/resources/res-a/templates', {
+        items: [{ ...CURRENT_SCHEDULE, id: 'tpl-a' }],
+        count: 1,
+      });
+      fixture.detectChanges();
+      acc.publicar();
+      await retireCurrent('tpl-a');
+      answer('/scheduling/resources/res-a/templates', {
+        id: 'tpl-new-a',
+        name: 'x',
+        ruleCount: 1,
+        statusConceptId: 'c',
+      });
+      failWith500('/scheduling/templates/tpl-new-a/generate-slots');
+      fixture.detectChanges();
+
+      acc.elegirSede('res-b');
+      answer('/scheduling/resources/res-b/templates', {
+        items: [{ ...CURRENT_SCHEDULE, id: 'tpl-b' }],
+        count: 1,
+      });
+      fixture.detectChanges();
+
+      // Ni el retiro de «res-a» ni su plantilla valen para «res-b»: se retira la suya y se crea otra.
+      await publishChange('res-b', 'tpl-b');
+    });
+
+    it('mientras se publica no se puede cambiar de organización; si falla, sí', () => {
+      crear();
+      encenderLunes();
+      const group: HTMLFieldSetElement = fixture.nativeElement
+        .querySelector('app-organization-field')
+        .closest('fieldset');
+      expect(group.disabled).toBe(false);
+
+      acc.publicar();
+      fixture.detectChanges();
+      expect(group.disabled).toBe(true);
+
+      failWith500('/scheduling/resources');
+      fixture.detectChanges();
+      expect(group.disabled).toBe(false);
+
+      acc.publicar();
+      fixture.detectChanges();
+      expect(group.disabled).toBe(true);
+      answer('/scheduling/resources', { id: 'res-new', name: 'x', stateConceptId: 'c' });
+      answer('/scheduling/resources/res-new/templates', {
+        id: 'tpl-9',
+        name: 'x',
+        ruleCount: 1,
+        statusConceptId: 'c',
+      });
+      answer('/scheduling/templates/tpl-9/generate-slots', {
+        templateId: 'tpl-9',
+        created: 1,
+        skipped: 0,
+      });
+      fixture.detectChanges();
+      // Publicada, la pantalla pasa al aviso de éxito: el selector ya no está.
+      expect(fixture.nativeElement.querySelector('app-organization-field')).toBeNull();
+    });
+  });
+
+  /* -- «Opciones avanzadas», con el patrón del sistema (REQ-C2-007) -------- */
+
+  it('«Opciones avanzadas» es una row que dice si está abierta y qué abre', () => {
+    crear();
+    const root: HTMLElement = fixture.nativeElement;
+    const row = Array.from(root.querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent?.trim() === 'Opciones avanzadas',
+    )!;
+
+    expect(row.getAttribute('aria-expanded')).toBe('false');
+    expect(root.textContent).not.toContain('Zona horaria');
+
+    row.click();
+    fixture.detectChanges();
+
+    expect(row.getAttribute('aria-expanded')).toBe('true');
+    expect(acc.avanzadasAbiertas()).toBe(true);
+    const region = root.querySelector<HTMLElement>(`#${row.getAttribute('aria-controls')}`);
+    expect(region?.textContent).toContain('Zona horaria');
+
+    row.click();
+    fixture.detectChanges();
+    expect(row.getAttribute('aria-expanded')).toBe('false');
   });
 });

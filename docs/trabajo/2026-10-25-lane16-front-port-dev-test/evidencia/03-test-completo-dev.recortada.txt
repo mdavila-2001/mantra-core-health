@@ -1,0 +1,30 @@
+# Salida recortada: solo el bloque del fallo y el resumen (la salida completa pesa ~680 KB)
+ FAIL   mantra-core-health  src/app/core/mock/handlers/received-services.handlers.spec.ts > handlers de servicios recibidos: GET /clinical/patients/:id/received-services > acceso > un paciente no lee los servicios de otro
+AssertionError: expected false to be 403 // Object.is equality
+
+- Expected:
+403
+
++ Received:
+false
+
+ ❯ src/app/core/mock/handlers/received-services.handlers.spec.ts:108:50
+    106|       const other = PATIENTS.find((candidate) => candidate.id !== PACI…
+    107|       const reply = pedir(paciente, other.id);
+    108|       expect(isMockReply(reply) && reply.status).toBe(403);
+       |                                                  ^
+    109|     });
+    110|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 912 passed (913)
+      Tests  1 failed | 12434 passed (12435)
+   Start at  20:14:40
+   Duration  87.68s (transform 142.86s, setup 6.68s, import 46.33s, tests 285.30s, environment 1253.49s)
+
+
+real	2m51.740s
+user	0m0.015s
+sys	0m0.091s

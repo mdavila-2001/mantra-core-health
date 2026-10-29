@@ -40,6 +40,9 @@ describe('NAV_SUBGROUPS', () => {
    * estaba detrás de «Consultorio», un escalón que había que desplegar para
    * encontrar una sola cosa (pedido del propietario, 04/09/2026).
    *
+   * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
+   * justifica cuando ordena varias secciones; envolver una sola es ruido.
+   *
    * También cuelga directo «Ayuda psicológica» en General: la sección es una
    * puerta independiente solicitada para ofrecer recursos de salud mental
    * (11/10/2026), no parte de otro subgrupo.
@@ -53,6 +56,9 @@ describe('NAV_SUBGROUPS', () => {
   const SUELTAS_A_PROPOSITO = [
     'schedule',
     'medical-records',
+    // El médico de cabecera (28/10/2026): una sola sección, al lado del archivo
+    // clínico; un subgrupo para envolverla sería el escalón de más.
+    'my-primary-patients',
     'psychological-help',
     // La portada de «Superadministración» (17/10/2026): es el tablero con el que
     // se abre el dominio, no una pantalla más de una lista; envolverla en un

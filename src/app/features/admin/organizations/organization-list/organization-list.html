@@ -46,6 +46,12 @@
   }
 </ng-template>
 
+<!-- El código sale de la razón social: con 300 caracteres sin espacios, la
+     celda tiene que poder partirlo (ver `.organizaciones__codigo`). -->
+<ng-template #celdaCodigo let-organizacion>
+  <span class="organizaciones__codigo">{{ organizacion.code }}</span>
+</ng-template>
+
 <ng-template #celdaTipo let-organizacion>
   @if (etiquetaDe(organizacion.tenantTypeConceptId); as tipo) {
     <app-badge variant="secondary" [value]="tipo.display" />

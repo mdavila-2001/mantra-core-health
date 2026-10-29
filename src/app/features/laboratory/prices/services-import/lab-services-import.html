@@ -10,7 +10,7 @@
     @if (result(); as r) {
       <!-- Paso 4 · lo que respondió la API, fila por fila. -->
       <div class="import__summary" data-testid="lab-import-result">
-        <ul class="import__counts" aria-label="Resultado de la carga">
+        <ul class="import__counts" aria-label="Result de la carga">
           <li>
             <strong data-testid="lab-import-created">{{ r.created }}</strong>
             {{ r.created === 1 ? 'creado' : 'creados' }}
@@ -40,7 +40,7 @@
         }
 
         <app-data-table
-          caption="Resultado de la carga, fila por fila"
+          caption="Result de la carga, fila por fila"
           [state]="resultState()"
           [columns]="resultColumns()"
           [trackBy]="lineOf"

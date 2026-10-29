@@ -41,6 +41,13 @@ export class InsurerProfileCard {
   /** El código de aseguradora de la organización que muestra el perfil. */
   readonly carrierCode = input.required<string>();
 
+  /**
+   * Con su propio marco (el default) o sin él, para vivir dentro de la pestaña
+   * de una ficha que ya es una tarjeta: una tarjeta adentro de otra es justo
+   * lo que la regla de «una tarjeta con pestañas» evita.
+   */
+  readonly enmarcado = input(true);
+
   protected readonly state = signal<ViewState<CarrierSummary>>(loading());
   protected readonly carrier = computed(() => dataOf(this.state()));
 

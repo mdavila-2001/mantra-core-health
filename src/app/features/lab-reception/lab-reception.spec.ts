@@ -8,7 +8,7 @@ import { provideRouter } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import type { LabInboxItem } from '../../core/data-access/diagnostics/diagnostics-lab.types';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
-import { AlarmaDePedidos } from '../organization/pharmacy-inbox/alarma-de-pedidos';
+import { OrdersAlarm } from '../organization/pharmacy-inbox/order-alarm';
 import { LabReception } from './lab-reception';
 
 /**
@@ -156,7 +156,7 @@ describe('LabReception', () => {
   }
 
   describe('las órdenes que llegan (4.2: alarma y quién la pidió)', () => {
-    let alarma: { notificar: ReturnType<typeof vi.fn>; acusarRecibo: ReturnType<typeof vi.fn> };
+    let alarma: { notify: ReturnType<typeof vi.fn>; acknowledgeReceipt: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
       // Otra instancia con relojes falsos: el sondeo se agenda al construir.
@@ -165,8 +165,8 @@ describe('LabReception', () => {
       fixture = TestBed.createComponent(LabReception);
       component = fixture.componentInstance;
       host = fixture.nativeElement as HTMLElement;
-      const real = fixture.debugElement.injector.get(AlarmaDePedidos);
-      alarma = { notificar: vi.spyOn(real, 'notificar').mockImplementation(() => undefined), acusarRecibo: vi.spyOn(real, 'acusarRecibo') } as never;
+      const real = fixture.debugElement.injector.get(OrdersAlarm);
+      alarma = { notify: vi.spyOn(real, 'notify').mockImplementation(() => undefined), acknowledgeReceipt: vi.spyOn(real, 'acknowledgeReceipt') } as never;
     });
 
     afterEach(() => {
@@ -189,7 +189,7 @@ describe('LabReception', () => {
       sondeo([{ ...wireOrder('n1'), requesterDisplayName: 'Valeria Rojas · Cardiología' }]);
 
       expect(rows().map((r) => r.serviceRequestId)).toEqual(['n1']);
-      expect(alarma.notificar).toHaveBeenCalledWith(1);
+      expect(alarma.notify).toHaveBeenCalledWith(1);
       expect(host.querySelector('[data-testid="recepcion-nueva"]')).not.toBeNull();
       expect(host.querySelector('[data-testid="recepcion-cartel-nueva"]')?.textContent).toContain('Valeria Rojas · Cardiología');
       expect(host.querySelector('[data-testid="recepcion-solicitante"]')?.textContent).toContain('Pidió Valeria Rojas');
@@ -198,7 +198,7 @@ describe('LabReception', () => {
     it('lo que ya se veía no suena ni se duplica, tampoco después de recargar la bandeja', () => {
       loadInbox([wireOrder('1')]);
       sondeo([wireOrder('1')]);
-      expect(alarma.notificar).not.toHaveBeenCalled();
+      expect(alarma.notify).not.toHaveBeenCalled();
 
       // Una recarga que ya trae la orden nueva: el sondeo siguiente no la «recibe» otra vez.
       component['reload']();
@@ -206,7 +206,7 @@ describe('LabReception', () => {
       flushLabels();
       sondeo([wireOrder('1'), wireOrder('2')]);
 
-      expect(alarma.notificar).not.toHaveBeenCalled();
+      expect(alarma.notify).not.toHaveBeenCalled();
       expect(rows().map((r) => r.serviceRequestId)).toEqual(['1', '2']);
     });
 
@@ -221,7 +221,7 @@ describe('LabReception', () => {
       fixture.detectChanges();
 
       expect(rows()[0]!.serviceRequestId).toBe('nueva');
-      expect(alarma.notificar).toHaveBeenCalledWith(1);
+      expect(alarma.notify).toHaveBeenCalledWith(1);
     });
 
     it('con una búsqueda puesta no sondea, y una respuesta tardía no pisa la búsqueda', () => {
@@ -235,7 +235,7 @@ describe('LabReception', () => {
       fixture.detectChanges();
 
       expect(component['inbox']().status).toBe('empty');
-      expect(alarma.notificar).not.toHaveBeenCalled();
+      expect(alarma.notify).not.toHaveBeenCalled();
       vi.advanceTimersByTime(20_000);
       http.expectNone((r) => r.url === '/diagnostics/service-requests/inbox');
     });

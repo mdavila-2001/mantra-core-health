@@ -5,7 +5,7 @@
  */
 
 import type { DiagnosticUnitCoverageItem } from '../../../../core/data-access/diagnostic-units/diagnostic-units.types';
-import { modalidadDeEstudio } from '../../../../core/data-access/diagnostic-units/modalidades';
+import { modalityOfStudy } from '../../../../core/data-access/diagnostic-units/modalities';
 import type { PatientOrder } from '../../../../core/data-access/diagnostics/diagnostics.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { categoriaDeAnalisis } from '../../diagnostic-orders/diagnostic-orders.types';
@@ -61,7 +61,7 @@ export function pendingImagingStudies(
     );
     // `LAB` también es una modalidad (la toma de muestras): sin categoría, un
     // análisis no es imagen.
-    const modality = modalidadDeEstudio(study.code);
+    const modality = modalityOfStudy(study.code);
     const imaging =
       category === 'IMAGING' || (category === 'OTHER' && modality !== null && modality !== 'LAB');
     if (imaging) {

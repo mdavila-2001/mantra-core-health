@@ -1,3 +1,4 @@
+import type { EstadoResuelto } from '../calendar-view.types';
 import {
   afterRenderEffect,
   ChangeDetectionStrategy,
@@ -26,14 +27,9 @@ import {
   type StatusSealVariant,
 } from '../../../../shared/components/organisms/status-seal/status-seal.types';
 import { statusLabelOf, statusVariantOf } from '../../booking-status';
-import type { BloqueoDelMes } from '../month-view/month-view';
-import { StaggerList } from '../../../../shared/motion/stagger-list.directive';
+import type { BloqueoDelMes } from '../calendar-view.types';
 
-/** Un estado del catálogo, ya resuelto: su código y cómo se lee. */
-export interface EstadoResuelto {
-  readonly code: string;
-  readonly display: string;
-}
+export type { EstadoResuelto } from '../calendar-view.types';
 
 /** Qué se puede hacer sobre un bloque con cita. */
 export type AccionDeCita = 'llegó' | 'demora' | 'cancelar';
@@ -258,7 +254,7 @@ const WITH_MAIN_CONTROL: ReadonlySet<BloqueDelDia['tipo']> = new Set([
  */
 @Component({
   selector: 'app-day-view',
-  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StaggerList, StatusSeal, Tooltip],
+  imports: [AppButton, Badge, DatePipe, NgTemplateOutlet, RouterLink, StatusSeal, Tooltip],
   templateUrl: './day-view.html',
   styleUrl: './day-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -278,6 +274,14 @@ export class DayView {
 
   /** Dónde se atiende, para las etiquetas del lector. `null` si no hay sede. */
   readonly sede = input<string | null>(null);
+
+  /**
+   * P36 · si el día tiene horario flexible, sus franjas en palabras
+   * («09:00 a 13:00»). Un horario flexible no publica cupos: el paciente pide
+   * la hora que quiere dentro de la franja. Sin cupos ni citas, el día lo dice
+   * en vez de «No atiende este día».
+   */
+  readonly horarioFlexible = input<string | null>(null);
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -835,7 +839,12 @@ export class DayView {
     const cupos = bloques.filter((b) => b.tipo === 'cita' || b.tipo === 'libre');
     const conCita = bloques.filter((b) => b.tipo === 'cita').length;
     const ocupados = bloques.filter((b) => b.tipo === 'ocupado').length;
-    if (cupos.length === 0 && ocupados === 0) return 'No atiende este día.';
+    if (cupos.length === 0 && ocupados === 0) {
+      const flexible = this.horarioFlexible();
+      return flexible === null
+        ? 'No atiende este día.'
+        : `Horario flexible de ${flexible}: sin citas pedidas todavía.`;
+    }
     const partes: string[] = [];
     if (cupos.length > 0) {
       partes.push(

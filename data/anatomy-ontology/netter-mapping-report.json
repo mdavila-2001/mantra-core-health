@@ -1,7 +1,7 @@
 {
  "total": 3161,
  "revisadas": 3161,
- "aceptadas": 806,
+ "aceptadas": 805,
  "rechazadas": [],
  "sinCruce": [
   {
@@ -5733,6 +5733,11 @@
    "netterId": "ENT_ab8d13c609bdc1",
    "name": "Frenillo",
    "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_b325b9c12845dd",
+   "name": "Riñón",
+   "reason": "sin coincidencia exacta en UBERON"
   },
   {
    "netterId": "ENT_c134ae38f89f32",

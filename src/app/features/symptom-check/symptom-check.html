@@ -18,7 +18,7 @@
         <svg class="sintomas__icono-ayuda-top" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
         </svg>
-        <span>{{ mostrarCrisis() ? 'Ocultar líneas de contención' : '¿Necesita ayuda o contención?' }}</span>
+        <span>{{ mostrarCrisis() ? 'Ocultar líneas de contención' : '¿Líneas de contención emocional?' }}</span>
       </button>
     </div>
   </div>
@@ -284,7 +284,7 @@
          quien va a hablar de su salud tiene que saber a dónde va lo que dice
          antes de decirlo (Q-M1). Lo transcribe el navegador; después el
          servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
-    @if (dictado.soportado) {
+    @if (dictado.supported) {
       <div class="sintomas__dictado" data-testid="sintomas-dictado">
         <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
           Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
@@ -296,7 +296,7 @@
           type="button"
           data-testid="sintomas-dictar"
           aria-describedby="sintomas-dictado-aviso"
-          [attr.aria-pressed]="dictado.escuchando()"
+          [attr.aria-pressed]="dictado.listening()"
           (clicked)="alternarDictado()"
         >
           <svg
@@ -313,7 +313,7 @@
             <rect x="9" y="3" width="6" height="11" rx="3" />
             <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" />
           </svg>
-          {{ dictado.escuchando() ? 'Detener' : 'Dictar' }}
+          {{ dictado.listening() ? 'Detener' : 'Dictar' }}
         </button>
         <!-- Los tres errores dicen qué hacer, no qué falló por dentro. -->
         <p
@@ -322,11 +322,11 @@
           aria-live="polite"
           data-testid="sintomas-dictado-estado"
         >
-          @switch (dictado.estado()) {
+          @switch (dictado.status()) {
             @case ('escuchando') {
               <span class="sintomas__dictado-punto" aria-hidden="true"></span>
               Escuchando… diga qué le pasa.
-              @if (dictado.parcial(); as parcial) {
+              @if (dictado.partial(); as parcial) {
                 <em>{{ parcial }}</em>
               }
             }
@@ -384,12 +384,10 @@
       }
     </div>
   }
-
-  @if (mostrarCrisis() || alarmas().length > 0) {
-    <!-- ─── Derivación a urgencias y crisis (ABAJO, en la zona de resolución) ─── -->
+  @if (mostrarCrisis()) {
+    <!-- ─── Soporte en crisis y líneas de contención (detección o apertura manual) ─── -->
     <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
-      @if (mostrarCrisis()) {
-        <div class="sintomas__crisis-soporte sintomas__crisis-soporte--hd" data-testid="sintomas-crisis-soporte">
+      <div class="sintomas__crisis-soporte sintomas__crisis-soporte--hd" data-testid="sintomas-crisis-soporte">
           <div class="sintomas__crisis-cabecera-hd">
             <div class="sintomas__crisis-badge-hd">
               <span class="sintomas__crisis-pulso-hd" aria-hidden="true"></span>
@@ -521,27 +519,39 @@
             <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
           </div>
         </div>
-      } @else {
-        <!-- Alarma médica general no psiquiátrica -->
-        <app-alert tone="error" title="Esto no puede esperar a un turno">
-          @if (mensajeDeAlarma(); as mensaje) {
-            <p>{{ mensaje }}</p>
-          } @else {
-            <p>
-              Lo que cuenta
-              @if (alarmas().length === 1) {
-                —{{ alarmas()[0].nombre }}—
-              }
-              puede ser una urgencia.
-              <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
-            </p>
-          }
-          <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
-        </app-alert>
-      }
+      </div>
+  } @else if (alarmas().length > 0) {
+    <!-- Alarma médica general no psiquiátrica -->
+    <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
+      <app-alert tone="error" title="Esto no puede esperar a un turno">
+        @if (respuestaDelServicio(); as respuesta) {
+          <p class="sintomas__respuesta-ia" data-testid="sintomas-respuesta-ia">{{ respuesta }}</p>
+        } @else if (mensajeDeAlarma(); as mensaje) {
+          <p>{{ mensaje }}</p>
+        } @else {
+          <p>
+            Lo que cuenta
+            @if (alarmas().length === 1) {
+              —{{ alarmas()[0].nombre }}—
+            }
+            puede ser una urgencia.
+            <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
+          </p>
+        }
+        <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
+      </app-alert>
     </div>
-  } @else if (recomendaciones().length > 0) {
+  }
+
+  @if (alarmas().length === 0) {
+    @if (recomendaciones().length > 0) {
       <div class="sintomas__recomendaciones">
+        @if (respuestaEmpatica(); as respuesta) {
+          <section class="sintomas__respuesta-ia" role="status" data-testid="sintomas-respuesta-ia">
+            <span class="sintomas__respuesta-ia-rotulo">Una respuesta para usted</span>
+            <p>{{ respuesta }}</p>
+          </section>
+        }
         @if (sintomas().length === 0) {
           <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
                y la pista para que pruebe de nuevo si quiere. -->
@@ -554,7 +564,7 @@
           <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
           <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
                especialidades de `/directory` —foto, ícono, nombre—, de
-               `shared/styles/rejilla-de-tarjetas.css`. La tarjeta entera lleva a quién
+               `shared/styles/card-grid.css`. La tarjeta entera lleva a quién
                atiende, como allá; acá suma el porqué, que es lo que hace que la
                recomendación no sea una caja negra, y marca por cuál empezar. -->
           <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
@@ -803,6 +813,7 @@
         }
       </p>
     }
+  }
 
   <!-- «Guardar observación» salió a pedido del cliente (27/10/2026). Las que ya
        estaban guardadas en el dispositivo se siguen viendo para poder borrarlas. -->

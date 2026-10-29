@@ -4,7 +4,6 @@ import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/tes
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
-import { MAXIMO_DE_ZONAS } from '../../core/navigation/access-tree';
 import { Dashboard } from './dashboard';
 
 /**
@@ -178,14 +177,14 @@ describe('Dashboard', () => {
       expect(hayJornada()).toBe(false);
     });
 
-    it('a una cuenta administrativa se le habla de sus accesos, no de su jornada', () => {
+    it('a una cuenta administrativa no se le habla de su jornada', () => {
       crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
       http
         .expectOne((request) => request.url.includes('/profiles/patients'))
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
 
       expect(hayJornada()).toBe(false);
-      expect(raiz().textContent).toContain('Todo lo que puede hacer en esta organización');
+      expect(raiz().textContent).toContain('Las secciones se abren desde el menú');
     });
   });
 
@@ -239,98 +238,24 @@ describe('Dashboard', () => {
     expect(pacientes.status).toBe('empty');
   });
 
-  /* -- Carril 02 · «Tus accesos» dejó de ser una lista y pasó a ser un árbol -- */
+  /* -- 28/10/2026 · «Sus herramientas» se retiró del panel ----------------- */
 
-  describe('Sus accesos', () => {
-    function abrirPanel(roles: readonly string[]): void {
+  describe('Sus herramientas', () => {
+    it.each([
+      [['PRACTITIONER', 'CLINICIAN']],
+      [['SECURITY_ADMIN']],
+    ])('con %j el panel ya no dibuja el árbol de accesos', (roles) => {
       crear({ sub: 'u-1', roles, tenants: ['t-1'] });
-    }
-
-    function zonas(): readonly HTMLButtonElement[] {
-      return [...raiz().querySelectorAll<HTMLButtonElement>('[data-testid="panel-zona"]')];
-    }
-
-    function accesos(): readonly HTMLAnchorElement[] {
-      return [...raiz().querySelectorAll<HTMLAnchorElement>('[data-testid="panel-acceso"]')];
-    }
-
-    function abrirZona(id: string): void {
-      zonas()
-        .find((zona) => zona.dataset['zona'] === id)
-        ?.click();
-      fixture.detectChanges();
-    }
-
-    function volver(): void {
-      raiz().querySelector<HTMLButtonElement>('[data-testid="panel-zona-volver"]')?.click();
-      fixture.detectChanges();
-    }
-
-    /** Todas las rutas del árbol, zona por zona. */
-    function todasLasRutas(): readonly string[] {
-      const rutas: string[] = [];
-      for (const id of zonas().map((zona) => zona.dataset['zona'] ?? '')) {
-        abrirZona(id);
-        rutas.push(...accesos().map((acceso) => acceso.dataset['ruta'] ?? ''));
-        volver();
+      if (roles.includes('SECURITY_ADMIN')) {
+        http
+          .expectOne((request) => request.url.includes('/profiles/patients'))
+          .flush({ items: [], count: 0, limit: 5, nextCursor: null });
       }
-      return rutas;
-    }
 
-    it('la doctora ve cinco puertas, no las treinta y dos secciones de un tirón', () => {
-      // Un rol de trabajo: desde J6 el paciente tiene su propio panel y éste no
-      // lo ve. Lo que se prueba acá es la forma del acceso, no el rol.
-      abrirPanel(['PRACTITIONER']);
-
-      expect(zonas().length).toBeGreaterThan(0);
-      expect(zonas().length).toBeLessThanOrEqual(MAXIMO_DE_ZONAS);
-      // Y ni un acceso a la vista antes de abrir una: ése era todo el problema.
-      expect(accesos()).toHaveLength(0);
-    });
-
-    it('adentro de una zona están las secciones, con su ícono y su ruta real', () => {
-      abrirPanel(['PRACTITIONER']);
-      abrirZona('consulta');
-
-      const primero = accesos()[0];
-      expect(primero.querySelector('app-nav-icon svg')).not.toBeNull();
-      expect(primero.getAttribute('href')).toBe(primero.dataset['ruta']);
-      expect(accesos().map((a) => a.dataset['ruta'])).toContain('/medical-records');
-    });
-
-    it('el árbol sigue saliendo del registro: no pierde ninguna sección por el camino', () => {
-      // Ésta es la garantía que el escalón nuevo podía romper en silencio. El
-      // panel y el guard salen del mismo registro; si el reparto se olvidara de
-      // una sección, acá se vería como una ruta que falta y no como un error.
-      abrirPanel(['PRACTITIONER']);
-
-      const rutas = todasLasRutas();
-      expect(rutas).toContain('/schedule');
-      expect(rutas).toContain('/medical-records');
-      // «Mi cuenta» y los tutoriales no (19/09/2026): los abre el perfil y
-      // la pantalla que cada tutorial explica.
-      expect(rutas).not.toContain('/tutorials');
-      expect(rutas).not.toContain('/my-account');
-      // El panel dentro del panel no: es un enlace a la pantalla en la que ya
-      // estás, y ocupaba un lugar de los treinta y dos.
-      expect(rutas).not.toContain('/dashboard');
-    });
-
-    it('la doctora tiene el Directorio de médicos entre sus accesos (24/09/2026)', () => {
-      // La corrección #2 se lo había quitado; el cliente pidió devolvérselo. El
-      // panel sale de `NavigationService`, el mismo origen que el guard.
-      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
-
-      expect(todasLasRutas()).toContain('/directory');
-    });
-
-    it('el atajo a la agenda ya no vive acá: la jornada trae el suyo', () => {
-      // ALV-018 puso un «Ver mi agenda de hoy» dentro de esta tarjeta. Con la
-      // franja de hoy encabezando el panel —y su botón a la agenda completa—,
-      // dos puertas a lo mismo en la misma pantalla se leen como dos destinos.
-      abrirPanel(['PRACTITIONER', 'CLINICIAN']);
-
-      expect(raiz().querySelector('[data-testid="panel-agenda-directa"]')).toBeNull();
+      // Repetía el menú lateral con otra forma; el propietario lo mandó sacar.
+      expect(raiz().querySelector('[data-testid="panel-accesos"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="panel-zona"]')).toBeNull();
+      expect(raiz().textContent).not.toContain('Sus herramientas');
     });
   });
 

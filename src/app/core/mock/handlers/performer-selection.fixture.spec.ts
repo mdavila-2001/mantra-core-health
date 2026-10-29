@@ -1,6 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { conjuntoPorCodigo, MODO_EJECUTOR } from '../fixtures/conceptos';
+import { setByCode } from '../fixtures/concepts';
+import { PERFORMER_MODE } from '../fixtures/performer-concepts';
 import { MockRouter } from '../mock-router';
 import { registrarTerminologia } from './terminology.handlers';
 
@@ -34,11 +35,11 @@ describe('maqueta: conjunto de modos del ejecutor de la orden', () => {
     );
 
     expect(pagina.items).toHaveLength(1);
-    expect(pagina.items[0]!.id).toBe(conjuntoPorCodigo('service-request-performer-selection')!.id);
+    expect(pagina.items[0]!.id).toBe(setByCode('service-request-performer-selection')!.id);
   });
 
   it('expande los tres modos con los códigos del contrato y ids estables', async () => {
-    const conjunto = conjuntoPorCodigo('service-request-performer-selection')!;
+    const conjunto = setByCode('service-request-performer-selection')!;
     const expansion = await get<{ items: readonly { conceptId: string; code: string }[] }>(
       `/terminology/value-sets/${conjunto.id}/$expand`,
     );
@@ -49,7 +50,7 @@ describe('maqueta: conjunto de modos del ejecutor de la orden', () => {
       'SR_PERF_SELF',
     ]);
     for (const item of expansion.items) {
-      expect(item.conceptId).toBe(MODO_EJECUTOR[item.code]);
+      expect(item.conceptId).toBe(PERFORMER_MODE[item.code]);
     }
   });
 });

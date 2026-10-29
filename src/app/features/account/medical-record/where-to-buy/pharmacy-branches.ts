@@ -20,7 +20,7 @@ import type {
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
-import type { EstadoDePin } from '../../../../shared/components/organisms/map/pin-mapa.types';
+import type { PinStatus } from '../../../../shared/components/organisms/map/map-pin.types';
 import type { Tone } from '../../../../shared/components/tone/tone.types';
 import { staleStockNoticeOf } from './stock-freshness';
 import { directionsUrl, formatKm } from './where-to-buy.route';
@@ -61,8 +61,8 @@ export interface PrescriptionItem {
    * El producto publicado que responde a ese medicamento, o `null` si el
    * directorio no publica ninguno. Hoy es **un representante por
    * medicamento** (el primero publicado): si una sede tiene otra marca del
-   * mismo genérico, esta consulta no la ve. TODO(E3): cubrir multimarca
-   * cuando el carril E2 decida cómo agrupar productos por concepto.
+   * mismo genérico, esta consulta no la ve: el catálogo no agrupa productos
+   * por concepto.
    */
   readonly productId: string | null;
 }
@@ -193,7 +193,7 @@ export function pinSubtitleOf(branch: VisibleBranch, withInsurance: boolean): st
 export function pinStatusOf(
   branch: VisibleBranch,
   withInsurance: boolean,
-): EstadoDePin & { readonly tono: Tone } {
+): PinStatus & { readonly tono: Tone } {
   const complete = withInsurance ? branch.insured.complete : branch.complete;
   if (!complete) {
     return { etiqueta: withInsurance ? 'Le falta algo aprobado' : 'Le falta algo', tono: 'warning' };

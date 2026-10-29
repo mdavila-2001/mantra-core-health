@@ -1,0 +1,9 @@
+lote-aa exit=0  Test Files 10 passed (10)  Tests 175 passed (175) 
+lote-ab exit=129 
+lote-ac exit=0  Test Files 10 passed (10)  Tests 219 passed (219) 
+lote-ad exit=0  Test Files 10 passed (10)  Tests 476 passed (476) 
+lote-ae exit=0  Test Files 10 passed (10)  Tests 235 passed (235) 
+lote-af exit=0  Test Files 10 passed (10)  Tests 420 passed (420) 
+lote-ag exit=0  Test Files 10 passed (10)  Tests 155 passed (155) 
+lote-ah exit=0  Test Files 6 passed (6)  Tests 149 passed (149) 
+lote-ab (reintento) exit=0  Test Files 10 passed (10)  Tests 188 passed (188) 

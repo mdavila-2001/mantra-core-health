@@ -14,7 +14,7 @@
  *   mayúsculas («FARMACIA SAN JUAN» → «Farmacia San Juan»);
  * - arma el subtítulo con lo que la fuente declara (tipo, nivel, resolución);
  * - asigna la categoría del directorio con las reglas de
- *   `fixtures/categorias-publicas.ts`.
+ *   `fixtures/public-categories.ts`.
  *
  * Uso:
  *   node scripts/gen-official-directory.mjs                    # ../mantra-core-health-model
@@ -52,7 +52,7 @@ function slugDe(texto) {
     .slice(0, 110);
 }
 
-/** Categoría del directorio (los códigos de `CATEGORIA` en categorias-publicas.ts). */
+/** Categoría del directorio (los códigos de `CATEGORIA` en public-categories.ts). */
 function categoriaDeRues(r) {
   if (r.subsector === 'Seguridad Social (CAJAS)') return 'caja-de-salud';
   if (r.subsector === 'Público') return r.level === '1er NIVEL' ? 'centro-de-primer-nivel' : 'hospital-publico';

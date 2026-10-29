@@ -9,10 +9,10 @@ import type {
 } from '../../data-access/diagnostic-units/center-schedule.types';
 import { horarioDeSemana } from '../../data-access/diagnostic-units/center-schedule.rules';
 import { estadosDeEquipos, horariosDeCentros, turnosDeOrdenes } from '../fixtures/centros';
-import { ordenes } from '../fixtures/clinica';
-import { mensajes } from '../fixtures/comunidad';
-import { ESTUDIO } from '../fixtures/conceptos';
-import { PACIENTE } from '../fixtures/personas';
+import { orderList } from '../fixtures/clinic';
+import { messageList } from '../fixtures/community';
+import { ESTUDIO } from '../fixtures/concepts';
+import { PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 import { uuid } from '../mock-store';
@@ -44,7 +44,7 @@ describe('handlers de horarios de centros y reserva por orden', () => {
   }
 
   const ordenDeEcografia = (): string =>
-    ordenes.filtrar((o) => o.patientProfileId === PACIENTE.id && o.codeConceptId === ESTUDIO['STUDY-ECO-ABD'])[0]!.id;
+    orderList.filtrar((o) => o.patientProfileId === PACIENTE.id && o.codeConceptId === ESTUDIO['STUDY-ECO-ABD'])[0]!.id;
 
   const disponibilidad = (studyCode: string): StudyAvailability => {
     const desde = new Date();
@@ -118,11 +118,11 @@ describe('handlers de horarios de centros y reserva por orden', () => {
   it('reservar confirma el turno, ocupa el cupo, avisa por chat y no deja reservar dos veces', () => {
     const orden = ordenDeEcografia();
     const libre = disponibilidad('STUDY-ECO-ABD').items[0]!;
-    const antes = mensajes.tamano;
+    const antes = messageList.tamano;
     const r = llamar<OrderAppointment>('POST', `/diagnostic-results/me/orders/${orden}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt });
     expect(r.status).toBe(201);
     expect(r.body.unitName).toBe('Centro de Imagen Sur');
-    expect(mensajes.tamano).toBe(antes + 1);
+    expect(messageList.tamano).toBe(antes + 1);
     expect(disponibilidad('STUDY-ECO-ABD').items.some((i) => i.startAt === libre.startAt)).toBe(false);
     expect(llamar('POST', `/diagnostic-results/me/orders/${orden}/booking`, paciente, { unitId: IMAGEN_SUR, startAt: libre.startAt }).status).toBe(409);
 
@@ -172,7 +172,7 @@ describe('handlers de horarios de centros y reserva por orden', () => {
   });
 
   it('una orden con su resultado publicado no se reserva, aunque se llegue por la URL', () => {
-    const conResultado = ordenes
+    const conResultado = orderList
       .filtrar((o) => o.patientProfileId === PACIENTE.id)
       .find((o) => informes.filtrar((i) => i.serviceRequestId === o.id && i.released).length > 0);
     expect(conResultado).toBeDefined();

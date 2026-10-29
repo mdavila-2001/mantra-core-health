@@ -1,9 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
-import { buscarUsuario, type MockUser } from '../mock-session';
-import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
-import { registrarSeguros } from './insurance.handlers';
+import type { MockUser } from '../mock-session';
 
 interface DashboardWire {
   readonly kpis: {
@@ -20,12 +18,32 @@ interface DashboardWire {
  * los KPIs se deriven de ese recorte, no de los doce meses completos.
  */
 describe('handlers de analítica de seguros', () => {
-  const router = new MockRouter();
-  const owner = buscarUsuario('aseguradora')!;
-  const medica = buscarUsuario('medica')!;
+  let router: MockRouter;
+  let owner: MockUser;
+  let medica: MockUser;
+  let storedCatalog: string | null;
+  const catalogStorageKey = 'mock-insurance-administration';
 
-  registrarSeguros(router);
-  registrarAnaliticaDeSeguros(router);
+  beforeEach(async () => {
+    // MOCK-PERSISTE y la prueba de prima nula no deben cambiar el seed de otro caso.
+    storedCatalog = sessionStorage.getItem(catalogStorageKey);
+    sessionStorage.removeItem(catalogStorageKey);
+    vi.resetModules();
+    const { buscarUsuario } = await import('../mock-session');
+    const { registrarSeguros } = await import('./insurance.handlers');
+    const { registrarAnaliticaDeSeguros } = await import('./insurance-analytics.handlers');
+    router = new MockRouter();
+    owner = buscarUsuario('aseguradora')!;
+    medica = buscarUsuario('medica')!;
+    registrarSeguros(router);
+    registrarAnaliticaDeSeguros(router);
+  });
+
+  afterEach(() => {
+    if (storedCatalog === null) sessionStorage.removeItem(catalogStorageKey);
+    else sessionStorage.setItem(catalogStorageKey, storedCatalog);
+    vi.resetModules();
+  });
 
   function call<T>(
     method: MockMethod,
@@ -94,42 +112,31 @@ describe('handlers de analítica de seguros', () => {
       owner,
     );
     const detail = call<{
-      products: readonly {
-        plans: readonly { id: string; planCode: string; monthlyPremiumAmount: string | null }[];
-      }[];
+      products: readonly { plans: readonly { id: string; planCode: string }[] }[];
     }>('GET', `/insurance-carriers/${directory.items[0]!.id}`, {}, owner);
     const plan = detail.products[0]!.plans[0]!;
 
     // `call()` no manda cuerpo (es `GET`-céntrico): el `PUT` de la prima se
     // dispara directo contra el router, como hace el propio helper por dentro.
-    const declararPrima = (monthlyPremiumAmount: string | null): void => {
-      const match = router.match('PUT', `/insurance-plans/${plan.id}/premium`)!;
-      match.handler({
-        method: 'PUT',
-        path: `/insurance-plans/${plan.id}/premium`,
-        params: match.params,
-        query: new URLSearchParams(),
-        body: { monthlyPremiumAmount },
-        headers: new HttpHeaders(),
-        user: owner,
-      });
-    };
+    const match = router.match('PUT', `/insurance-plans/${plan.id}/premium`)!;
+    match.handler({
+      method: 'PUT',
+      path: `/insurance-plans/${plan.id}/premium`,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: { monthlyPremiumAmount: null },
+      headers: new HttpHeaders(),
+      user: owner,
+    });
 
-    // El catálogo es del proceso, no del archivo: lo que esta prueba cambia se
-    // devuelve, o la que corra después —en cualquier archivo— lo encuentra sin prima.
-    declararPrima(null);
-    try {
-      const dashboard = call<DashboardWire>(
-        'GET',
-        '/insurance/analytics/loss-ratio',
-        { startDate: '2025-09-14', endDate: '2026-09-14', planId: plan.id },
-        owner,
-      );
-      expect(dashboard.kpis.lossRatioPercent).toBeNull();
-      expect(dashboard.kpis.coveragesWithoutPremiumCount).toBe(1);
-    } finally {
-      declararPrima(plan.monthlyPremiumAmount);
-    }
+    const dashboard = call<DashboardWire>(
+      'GET',
+      '/insurance/analytics/loss-ratio',
+      { startDate: '2025-09-14', endDate: '2026-09-14', planId: plan.id },
+      owner,
+    );
+    expect(dashboard.kpis.lossRatioPercent).toBeNull();
+    expect(dashboard.kpis.coveragesWithoutPremiumCount).toBe(1);
   });
 
   it('un planId que no es de la aseguradora administrable responde 404', () => {

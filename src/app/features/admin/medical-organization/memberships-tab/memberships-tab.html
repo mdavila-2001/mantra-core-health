@@ -19,10 +19,13 @@
     </app-alert>
   }
   <div class="formulario-de-solicitud">
+    <!-- Sin campo que lo rotule, el nombre lo pone el propio control: sin él
+         el lector de pantalla anuncia «combobox» sin decir de qué. -->
     <app-select
       [options]="opcionesDeOrganizacion()"
       [(value)]="organizacionElegida"
       placeholder="Elija una organización"
+      ariaLabel="Organización a la que pide vincularse"
     />
     <button
       app-button

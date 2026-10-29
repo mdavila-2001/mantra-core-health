@@ -20,6 +20,7 @@ import {
 } from '../../shared/components/organisms/side-nav/side-nav.types';
 import { NAV_STORAGE_KEY } from '../../shared/components/organisms/shell/shell-service';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
+import { accessibleName } from '../../../testing/a11y';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -64,6 +65,7 @@ describe('ShellLayout', () => {
            comprobar. */
         provideRouter([
           { path: 'my-account', children: [] },
+          { path: 'account/profile', children: [] },
           { path: 'my-account/medical-record', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
           { path: 'settings', children: [] },
@@ -252,9 +254,8 @@ describe('ShellLayout', () => {
       // consulta después de ver las órdenes y antes de los cuestionarios.
       '/my-account/quotations',
       // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
-      // la sacó del menú mientras decide qué hacer con la sección
-      // (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la pantalla siguen vivas
-      // y se llega por URL — ver docs/pendiente-decision-cuestionarios.md.
+      // la sacó del menú (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la
+      // pantalla siguen vivas y se llega por URL.
       // El centro de notificaciones tampoco aparece acá: es el otro destino
       // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
       // que cambió es dónde se dibuja.
@@ -932,6 +933,7 @@ describe('ShellLayout', () => {
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-claims', // Adjudicacion real conservada de dev.
         '/administration/insurance-analytics',
         // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
         '/administration/received-claims',
@@ -945,6 +947,85 @@ describe('ShellLayout', () => {
       // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
+    });
+
+    /**
+     * El nombre accesible del menú del médico, desplegado y recogido.
+     *
+     * La auditoría del 23/10/2026 reportó enlaces sin nombre con la barra
+     * recogida. No se reprodujo en el navegador, pero el riesgo es real: basta
+     * con que el rótulo pase de `solo-lectores` a `display: none` o que alguien
+     * lo quite «porque no se ve». Estas pruebas afirman el **nombre**
+     * calculado, no la clase que hoy lo sostiene.
+     */
+    describe('nombre accesible del menú del médico', () => {
+      beforeEach(() => {
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay preferencia que limpiar.
+        }
+        abrirSesion({ sub: 'u-med', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        fixture.detectChanges();
+      });
+
+      function destinos(): HTMLElement[] {
+        return [
+          ...raiz().querySelectorAll<HTMLElement>(
+            '[data-testid="nav-enlace"], .app-side-nav__item.is-disabled, .app-side-nav__group-summary',
+          ),
+        ];
+      }
+
+      function rotuloVisible(destino: HTMLElement): string {
+        const rotulo = destino.querySelector('.side-nav__label, .app-side-nav__eyebrow');
+        return rotulo?.textContent?.trim() ?? '';
+      }
+
+      function recoger(): void {
+        raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]')?.click();
+        fixture.detectChanges();
+      }
+
+      it('desplegada, cada destino se nombra por su rótulo visible', () => {
+        expect(destinos().length).toBeGreaterThan(0);
+        for (const destino of destinos()) {
+          const rotulo = rotuloVisible(destino);
+          expect(rotulo, destino.outerHTML.slice(0, 120)).toBeTruthy();
+          expect(accessibleName(destino)).toContain(rotulo);
+        }
+      });
+
+      it('recogida, ningún destino queda mudo: conserva el mismo nombre', () => {
+        const antes = destinos().map((destino) => accessibleName(destino));
+
+        recoger();
+
+        expect(raiz().querySelector('.app-shell')?.classList.contains('is-nav-recogido')).toBe(true);
+        const despues = destinos().map((destino) => accessibleName(destino));
+        expect(despues).toEqual(antes);
+        expect(despues.every((nombre) => nombre.length > 0)).toBe(true);
+      });
+
+      it('recogida, el globo de ayuda repite el rótulo y se abre con el foco', () => {
+        recoger();
+
+        for (const tooltip of fixture.debugElement.queryAll(By.directive(Tooltip))) {
+          const host = tooltip.nativeElement as HTMLElement;
+          if (!host.matches('[data-testid="nav-enlace"]')) {
+            continue;
+          }
+          expect(tooltip.injector.get(Tooltip).appTooltip()).toBe(rotuloVisible(host));
+        }
+
+        const primero = raiz().querySelector<HTMLElement>('[data-testid="nav-enlace"]');
+        primero?.dispatchEvent(new FocusEvent('focus'));
+        fixture.detectChanges();
+
+        const globo = document.body.querySelector('[role="tooltip"]');
+        expect(globo?.textContent?.trim()).toBe(rotuloVisible(primero as HTMLElement));
+        primero?.dispatchEvent(new FocusEvent('blur'));
+      });
     });
 
     /**
@@ -1011,6 +1092,16 @@ describe('ShellLayout', () => {
         await ir('/my-account');
 
         expect(marcadas()).toEqual(['/my-account']);
+      });
+
+      it('el alias del perfil marca el único enlace de Mi perfil', async () => {
+        await ir('/account/profile?pestana=personales#datos');
+
+        expect(router.url).toBe('/account/profile?pestana=personales#datos');
+        expect(marcadas()).toEqual(['/my-account']);
+        expect(
+          raiz().querySelector('[data-testid="nav-enlace"][data-route="/account/profile"]'),
+        ).toBeNull();
       });
 
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
@@ -1623,6 +1714,49 @@ describe('ShellLayout', () => {
       expect(
         primerDestino && enMenu!.compareDocumentPosition(primerDestino) & Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
+    });
+
+    describe('Emergencia es sólo de quien viene a atenderse (27/10/2026)', () => {
+      function emergencyInSideNav(): Element | null {
+        return raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
+      }
+
+      function emergencyInHeader(): Element | null {
+        return raiz().querySelector('.app-header [data-testid="header-emergencia"]');
+      }
+
+      it('el médico no la ve ni en el menú lateral ni en la cabecera', () => {
+        abrirSesion({ sub: 'u-med', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).toBeNull();
+        expect(emergencyInHeader()).toBeNull();
+        // Tampoco queda la franja vacía con su filete arriba del menú.
+        expect(raiz().querySelector('.app-side-nav__emergencia')).toBeNull();
+      });
+
+      it('el paciente la ve en los dos lugares', () => {
+        abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).not.toBeNull();
+        expect(emergencyInHeader()?.querySelector('[data-testid="boton-emergencia"]')).not.toBeNull();
+      });
+
+      // La regla es `vieneAAtenderse` (role-labels.ts), no la del carrito: quien
+      // atiende —o agenda— y además es paciente entra a trabajar.
+      it.each([
+        ['administración de plataforma', ['PLATFORM_ADMIN'], false],
+        ['seguridad', ['SECURITY_ADMIN'], false],
+        ['sin rol', [], false],
+        ['quien atiende y además es paciente', ['PRACTITIONER', 'PATIENT'], false],
+        ['agendamiento', ['SCHEDULING_AGENT'], false],
+        ['quien agenda y además es paciente', ['SCHEDULING_AGENT', 'PATIENT'], false],
+        ['el paciente sin otro rol', ['PATIENT'], true],
+      ])('%s, con %j: ¿se le ofrece? %s', (_who, roles, offered) => {
+        abrirSesion({ sub: 'u-2', roles, tenants: ['t-1'] });
+
+        expect(emergencyInSideNav() !== null).toBe(offered);
+        expect(emergencyInHeader() !== null).toBe(offered);
+      });
     });
 
     it.each([

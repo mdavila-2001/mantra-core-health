@@ -1,11 +1,10 @@
-import { PERFORMER_MODE } from '../fixtures/conceptos';
-import type { OrdenSimulada } from '../fixtures/clinica';
-import { seededProcedureOrdersOf } from '../fixtures/procedure-orders';
-import { PACIENTE } from '../fixtures/personas';
+import { PERFORMER_MODE } from '../fixtures/performer-concepts';
+import { seededProcedureOrdersOf, type ProcedureOrder } from '../fixtures/procedure-orders';
+import { PACIENTE } from '../fixtures/people';
 import { uuid } from '../mock-store';
 import { performerFieldsOfOrder, pickPerformerFields } from './service-request-performer.mock';
 
-const BASE: OrdenSimulada = {
+const BASE: ProcedureOrder = {
   id: 'o-1',
   patientProfileId: 'p-1',
   codeConceptId: 'c-1',

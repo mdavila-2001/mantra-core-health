@@ -17,11 +17,8 @@
  *   derivar de la posición hace que la demostración funcione con cualquier
  *   receta.
  * - **Es propio de T-E2.** No comparte criterio ni código con los datos de
- *   ejemplo de la orden médica (T-E1): la convergencia F → E del seguro queda
- *   como deuda registrada, no como un contrato común inventado.
- *
- * TODO(seguro real): cuando exista la aprobación por renglón en un contrato,
- * {@link sampleInsuranceApprovals} se reemplaza por esa lectura.
+ *   ejemplo de la orden médica (T-E1): ningún contrato publica la aprobación
+ *   del seguro por renglón, y no se inventa uno común.
  */
 
 /** El rótulo único: quien mira la pantalla sabe qué parte es maqueta. */

@@ -18,7 +18,7 @@ import { filter } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
 import { PatientSurveyInbox } from '../../core/patient-surveys/patient-survey-inbox';
-import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { esPaciente, etiquetasDeRoles, vieneAAtenderse } from '../../core/auth/role-labels';
 import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
@@ -264,6 +264,18 @@ export class ShellLayout {
     if (cuantas === 0) return 'Mis encuestas';
     return `Mis encuestas, ${cuantas} ${cuantas === 1 ? 'pendiente' : 'pendientes'}`;
   });
+
+  /** «Emergencia» (27/10/2026): sólo para quien viene a atenderse, no la señal del carrito. */
+  protected readonly ofreceEmergencia = computed(() => vieneAAtenderse(this.auth.roles()));
+
+  /**
+   * Dónde marca el tutorial el botón de «Emergencia» (28/10/2026): sólo en el
+   * ícono de la cabecera y sólo donde se ve (≤ 900 px). En el escritorio no hay
+   * botón, así que no hay objetivo y el paso se saltea.
+   */
+  protected readonly objetivoEmergencia = computed(() =>
+    this.breakpoints.canCollapseNav() ? '' : 'nav-emergencia',
+  );
 
   /**
    * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la

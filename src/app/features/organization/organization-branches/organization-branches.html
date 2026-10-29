@@ -119,6 +119,7 @@
       }
 
       <app-form-field
+        icon="building"
         label="Nombre"
         [required]="true"
         [errorMessage]="submitted() ? nameError() : ''"
@@ -133,6 +134,7 @@
 
       @if (current.mode === 'create') {
         <app-form-field
+          icon="labels"
           label="Código"
           hint="Opcional. Si lo deja vacío, lo armamos a partir del nombre."
         >
@@ -144,7 +146,7 @@
         </app-form-field>
       }
 
-      <app-form-field label="Descripción" hint="Lo que el paciente ve de esta sede: horario, referencias, piso.">
+      <app-form-field class="branches__wide" icon="note" label="Descripción" hint="Lo que el paciente ve de esta sede: horario, referencias, piso.">
         <app-textarea
           [value]="form().description"
           (valueChange)="setField('description', $event)"
@@ -155,6 +157,8 @@
       </app-form-field>
 
       <app-form-field
+        class="branches__wide"
+        icon="pin"
         label="Enlace de ubicación"
         [hint]="urlHasPoint() ? 'El enlace trae el punto: la sucursal queda marcada en el mapa.' : 'Pegue el enlace de Google Maps u OpenStreetMap.'"
         [errorMessage]="urlError()"

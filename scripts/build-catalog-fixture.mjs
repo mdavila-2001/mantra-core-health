@@ -6,7 +6,7 @@
 //
 // Lee los NDJSON que escribe `build-medicine-catalog.mjs` (repo de la API) en
 // `glossary-data-build/ndjson/` y emite
-// `src/app/core/mock/fixtures/catalogo-medicamentos.generated.ts`.
+// `src/app/core/mock/fixtures/medication-catalog.generated.ts`.
 //
 // Selección determinista (misma entrada → mismo archivo):
 //   · por cada medicamento del vademécum del simulador, hasta 4 productos de CIMA
@@ -34,7 +34,7 @@ const dirIndex = args.indexOf('--build-dir');
 const BUILD_DIR = resolve(
   dirIndex >= 0 ? args[dirIndex + 1] : (process.env.GLOSSARY_BUILD_DIR ?? join(ROOT, '..', 'glossary-data-build')),
 );
-const OUT = join(ROOT, 'src/app/core/mock/fixtures/catalogo-medicamentos.generated.ts');
+const OUT = join(ROOT, 'src/app/core/mock/fixtures/medication-catalog.generated.ts');
 
 /** Medicamento del vademécum del simulador → ATC nivel 5 (clasificación ATC de la OMS). */
 const MEDICATION_ATC = {

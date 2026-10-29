@@ -257,28 +257,9 @@
     }
 }
 
-/* Entrada corta; la regla global de `prefers-reduced-motion` la vuelve
+/* La entrada es `.panel-muelle` (styles.css): muelle `suave` desde el control
+   que abrió el modal. La regla global de `prefers-reduced-motion` la vuelve
    instantánea, que para un modal es exactamente lo correcto. */
-.content-dialog[open] .content-dialog__panel {
-    animation: content-dialog-in var(--dur-base) var(--pulse-ease);
-}
-
-/* La salida (pulse.md §7): la dispara `playExitAnimation()` desde
-   `doClose()`. Más corta que la entrada y acelerando. */
-.content-dialog.pulse-leaving .content-dialog__panel {
-    animation: pulse-leave var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
-}
-
-.content-dialog.pulse-leaving::backdrop {
-    animation: pulse-fade-out var(--pulse-dur-exit) var(--pulse-ease-exit) forwards;
-}
-
-@keyframes content-dialog-in {
-    from {
-        opacity: 0;
-        transform: translateY(var(--sp-4)) scale(0.985);
-    }
-}
 
 @keyframes content-dialog-backdrop-in {
     from {

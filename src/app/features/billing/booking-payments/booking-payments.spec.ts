@@ -4,7 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { API_BASE_URL } from '../../../core/data-access/api';
 import type { PaymentProof, SimulatedCharge } from '../../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../../core/mock/billing-sim/facturacion-simulada';
+import type { SimulatedInvoicing } from '../../../core/mock/billing-sim/simulated-invoicing';
 import { motorDePrueba } from '../billing.spec-fixtures';
 import { BookingPayments } from './booking-payments';
 
@@ -27,7 +27,7 @@ const PROOF: PaymentProof = {
 describe('BookingPayments', () => {
   let fixture: ComponentFixture<BookingPayments>;
   let http: HttpTestingController;
-  let motor: FacturacionSimulada;
+  let motor: SimulatedInvoicing;
   let cobro: SimulatedCharge;
   let cambios: number;
 
@@ -39,7 +39,7 @@ describe('BookingPayments', () => {
     const lectura = http.expectOne((r) => r.url === '/billing/simulated/charges');
     expect(lectura.request.params.get('bookingId')).toBe(BOOKING_ID);
     lectura.flush({ items, count: items.length, simulated: true });
-    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogos());
+    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogs());
     fixture.detectChanges();
   }
 
@@ -63,7 +63,7 @@ describe('BookingPayments', () => {
 
   beforeEach(() => {
     motor = motorDePrueba();
-    cobro = motor.listarCobros().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
+    cobro = motor.listCharges().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
   });
 
   afterEach(() => http.verify());
@@ -135,7 +135,7 @@ describe('BookingPayments', () => {
   it('si la lectura falla, lo dice y deja reintentar', async () => {
     montar();
     await fixture.whenStable();
-    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogos());
+    http.expectOne('/billing/simulated/catalogs').flush(motor.catalogs());
     http.expectOne((r) => r.url === '/billing/simulated/charges').flush({ message: 'x' }, { status: 500, statusText: 'Error' });
     fixture.detectChanges();
     expect(el('booking-payments-error')).not.toBeNull();

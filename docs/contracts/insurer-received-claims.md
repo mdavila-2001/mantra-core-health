@@ -27,7 +27,7 @@ La cara de **quien paga** del mismo `insurance.insurance_claims` que el prestado
 | `policyIdentifier` / `planName` | póliza y plan de la cobertura |
 | `lines` | `insurance_claim_lines` (código del catálogo, cantidad, precio, importe), de mayor a menor importe |
 | `decision` | última `claim_adjudication_versions`: resultado, fecha, quién y motivo; `null` sin dictamen |
-| `invoice` | la factura que emitió el dictamen favorable, con las anuladas en `previous` — **ver «Pendiente en el modelo»** |
+| `invoice` | la factura que emitió el dictamen favorable, con las anuladas en `previous` — **ver «La factura no está en el modelo»** |
 
 Una solicitud sin `encounter_id` viaja con `practitioner: null` y `serviceDate: null`; la pantalla
 lo dice con palabras («Sin atención asociada»), no con un guion.
@@ -119,12 +119,10 @@ pagada (eso se corrige con nota de crédito, otro circuito).
 Emite la factura corregida de una solicitud aprobada cuya factura se anuló. La anulada pasa a
 `invoice.previous`. `409 NOTHING_TO_REISSUE` si no corresponde.
 
-### Pendiente en el modelo
+### La factura no está en el modelo
 
-`insurance_claims` no tiene hoy vínculo con una factura. Para que la API cumpla esto hace falta
-decidir **dónde vive la factura del prestador a la aseguradora** — reusar la facturación
-(`/billing`, SIAT) con la aseguradora como compradora, o una tabla propia — y el evento que la
-emite al dictaminar. La anulación en la API real tiene que pasar por la anulación del SIAT
-(`anulacionFactura`, con código de motivo del catálogo), que el simulador de facturación del
-front ya modela en `core/mock/siat-sim/`. Mientras tanto el simulador de este contrato guarda la
-factura dentro de la solicitud, en `sessionStorage` (`mock.insurerReceivedClaims`).
+`insurance_claims` no tiene vínculo con una factura, así que la API no publica estas dos rutas
+(el cliente las marca `simulatorOnly()`). El simulador de este contrato guarda la factura dentro
+de la solicitud, en `sessionStorage` (`mock.insurerReceivedClaims`); la anulación sigue la del
+SIAT (`anulacionFactura`, con código de motivo del catálogo), que el simulador de facturación del
+front modela en `core/mock/siat-sim/`.

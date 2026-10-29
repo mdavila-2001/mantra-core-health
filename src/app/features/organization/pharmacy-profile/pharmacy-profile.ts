@@ -31,10 +31,10 @@ import { SAMPLE_DATA_ENABLED } from '../../../core/mock/sample-data';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
-import { AVISO_DE_VENCIMIENTO_DIAS } from '../../../shared/utils/vencimiento/vencimiento';
-import { DatosDeLaEmpresa } from './datos-de-la-empresa/datos-de-la-empresa';
-import { DocumentosLegales } from './documentos-legales/documentos-legales';
-import { RepresentanteYGerentes } from './representante-y-gerentes/representante-y-gerentes';
+import { DAYS_EXPIRY_NOTICE } from '../../../shared/utils/expiry/expiry';
+import { CompanyData } from './company-data/company-data';
+import { LegalDocuments } from './legal-documents/legal-documents';
+import { RepresentativeAndManagers } from './representative-and-managers/representative-and-managers';
 import {
   DOCUMENTOS_DE_EJEMPLO,
   EMPRESA_DE_EJEMPLO,
@@ -149,8 +149,11 @@ export function documentsFromLicenses(
   });
 }
 
-/** El cargo, en palabras, desde el rol canónico del contrato. */
-const POSITION_BY_ROLE: Readonly<Record<string, string>> = {
+/**
+ * El cargo, en palabras, desde el rol canónico del contrato. Exportado: la
+ * ficha de las demás organizaciones nombra los mismos cargos.
+ */
+export const POSITION_BY_ROLE: Readonly<Record<string, string>> = {
   LEGAL_REPRESENTATIVE: 'Representante legal',
   GENERAL_MANAGER: 'Gerente General',
   COMMERCIAL_MANAGER: 'Gerente Comercial',
@@ -231,7 +234,7 @@ export function avisoDeLaCarpeta(
     (documento) =>
       documento.diasParaVencer !== null &&
       documento.diasParaVencer >= 0 &&
-      documento.diasParaVencer <= AVISO_DE_VENCIMIENTO_DIAS,
+      documento.diasParaVencer <= DAYS_EXPIRY_NOTICE,
   );
 
   if (vencidos.length === 0 && porVencer.length === 0) {
@@ -243,7 +246,7 @@ export function avisoDeLaCarpeta(
     partes.push(`${vencidos.length} ${vencidos.length === 1 ? 'vencido' : 'vencidos'}`);
   }
   if (porVencer.length > 0) {
-    partes.push(`${porVencer.length} por vencer dentro de los ${AVISO_DE_VENCIMIENTO_DIAS} días`);
+    partes.push(`${porVencer.length} por vencer dentro de los ${DAYS_EXPIRY_NOTICE} días`);
   }
 
   const nombres = [...vencidos, ...porVencer].map((documento) => documento.nombre).join(', ');
@@ -288,10 +291,10 @@ export function avisoDeLaCarpeta(
     Alert,
     AppButton,
     Chip,
-    DatosDeLaEmpresa,
-    DocumentosLegales,
+    CompanyData,
+    LegalDocuments,
     PageHeader,
-    RepresentanteYGerentes,
+    RepresentativeAndManagers,
     Tab,
     Tabs,
   ],

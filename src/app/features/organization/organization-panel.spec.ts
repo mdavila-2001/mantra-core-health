@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
-import { LogoDeOrganizacionClient } from '../../core/data-access/directory/logo-de-organizacion.client';
+import { OrganizationLogoClient } from '../../core/data-access/directory/organization-logo.client';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { OrganizationPanel } from './organization-panel';
 
@@ -58,7 +58,7 @@ describe('OrganizationPanel', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         // El logo tiene su propia prueba (`organization-logo.spec.ts`): acá no es lo que se mira.
-        { provide: LogoDeOrganizacionClient, useValue: { obtenerUrl: () => of(null) } },
+        { provide: OrganizationLogoClient, useValue: { getUrl: () => of(null) } },
       ],
     });
     http = TestBed.inject(HttpTestingController);

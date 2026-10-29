@@ -28,7 +28,7 @@ import { modalidad, type ModalityCode } from './modalidades';
     servicio no cuenta, así que marcarlo baja el cupo sin tocar el horario.
     ========================================================================== */
 
-export const DIAS_DE_LA_SEMANA: readonly { readonly dayOfWeek: number; readonly label: string; readonly short: string }[] = [
+export const WEEK_DAYS: readonly { readonly dayOfWeek: number; readonly label: string; readonly short: string }[] = [
   { dayOfWeek: 1, label: 'Lunes', short: 'Lun' },
   { dayOfWeek: 2, label: 'Martes', short: 'Mar' },
   { dayOfWeek: 3, label: 'Miércoles', short: 'Mié' },
@@ -137,7 +137,7 @@ export function validarHorario(schedule: CenterSchedule, nombreDe: (donde: strin
     for (const franja of block.windows) {
       const desde = enMinutos(franja.startTime);
       const hasta = enMinutos(franja.endTime);
-      const dia = DIAS_DE_LA_SEMANA.find((d) => d.dayOfWeek === franja.dayOfWeek)?.label ?? 'Un día';
+      const dia = WEEK_DAYS.find((d) => d.dayOfWeek === franja.dayOfWeek)?.label ?? 'Un día';
       if (desde === null || hasta === null) {
         problemas.push({ donde, mensaje: `${nombre}, ${dia}: complete la hora de inicio y de fin.` });
       } else if (hasta <= desde) {
@@ -169,7 +169,7 @@ export function describirHorario(block: ScheduleBlock): string {
 }
 
 function agruparDias(dias: readonly number[]): string {
-  const corto = (d: number): string => DIAS_DE_LA_SEMANA.find((x) => x.dayOfWeek === d)?.short ?? '';
+  const corto = (d: number): string => WEEK_DAYS.find((x) => x.dayOfWeek === d)?.short ?? '';
   const tramos: number[][] = [];
   for (const d of dias) {
     const ultimo = tramos[tramos.length - 1];

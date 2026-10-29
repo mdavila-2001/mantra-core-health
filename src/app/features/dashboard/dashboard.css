@@ -1,5 +1,5 @@
 /* Panel de inicio.
-   Tres franjas: la jornada, los accesos y los pacientes. Todo lo de acá es
+   Tres franjas: la jornada, las consultas y los pacientes. Todo lo de acá es
    distribución — ni un color ni una tipografía que el sistema no tenga ya.
 
    ⚠️  Este archivo hablaba OTRO idioma de tokens (`--color-*`, `--space-*`,
@@ -37,8 +37,8 @@
   grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
   gap: var(--sp-6);
   margin-block-start: var(--sp-8);
-  /* Sin esto, la tarjeta de accesos —que ocupa toda la fila— deja huecos
-     detrás cuando las que siguen no llenan su fila. */
+  /* Sin esto, una tarjeta que ocupa toda la fila deja huecos detrás cuando
+     las que siguen no llenan su fila. */
   grid-auto-flow: row dense;
 }
 
@@ -73,20 +73,6 @@
   font-weight: 400;
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
-}
-
-/* ── Accesos ──────────────────────────────────────────────────────────────
-   La rejilla se fue entera a `access-tree/`: dejó de ser una lista plana y
-   pasó a ser un árbol de dos escalones, con su propio estado —qué zona está
-   abierta— y su propio movimiento. Lo que queda acá es el hueco donde entra, y
-   el hueco es la fila completa (`.panel__bloque--ancho`, más arriba).
-
-   La separación con la nota de arriba se declara acá y no en el árbol: es
-   distancia entre DOS piezas de esta tarjeta, y un margen propio del componente
-   lo arrastraría a cualquier otra pantalla que algún día lo use. */
-app-access-tree {
-  display: block;
-  margin-block-start: var(--sp-5);
 }
 
 /* ── Listas y datos ───────────────────────────────────────────────────────*/

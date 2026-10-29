@@ -1,8 +1,8 @@
 import type { ReceivedServiceCost } from '../../data-access/received-services/received-services.types';
 import { TENANT_CLINICA, TENANT_NAMES } from '../mock-session';
 import { uuid } from '../mock-store';
-import { conjunto, definir as define, PROCEDIMIENTO, VACUNA as VACCINE } from './conceptos';
-import { MEDICA as MEDICAL, PACIENTE } from './personas';
+import { conjunto, define, PROCEDIMIENTO, VACCINE } from './concepts';
+import { MEDICAL, PACIENTE } from './people';
 
 /* ============================================================================
     «Servicios recibidos»: el escenario canónico de la maqueta.

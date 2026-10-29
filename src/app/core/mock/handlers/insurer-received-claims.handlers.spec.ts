@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PROFESIONALES } from '../fixtures/personas';
+import { PROFESSIONALS } from '../fixtures/people';
 import { MockRouter, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registerInsurerReceivedClaims } from './insurer-received-claims.handlers';
@@ -62,7 +62,7 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
 
   it('no le atribuye ninguna prestación a un médico real de la red ni a un registrado', () => {
     const reales = new Set(
-      PROFESIONALES.filter((p) => p.origen === 'RED_ASEGURADORA' || p.origen === 'USUARIO_PROPIETARIO').map(
+      PROFESSIONALS.filter((p) => p.origen === 'RED_ASEGURADORA' || p.origen === 'USUARIO_PROPIETARIO').map(
         (p) => p.id,
       ),
     );
@@ -148,14 +148,29 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
       expect((call('POST', path, user, { outcome: 'REJECTED', reason: 'Cambio de idea' }) as MockReply).status).toBe(409);
     });
 
-    it('rechazar sin motivo es 422, y aprobar en parte exige un monto menor al solicitado', () => {
+    it('rechazar sin motivo es 400, y aprobar en parte exige un monto menor al solicitado', () => {
       const open = all().find((c) => c['status'].code === 'IN_REVIEW')!;
       const path = `/insurance/received-claims/${open['id']}/decision`;
-      expect((call('POST', path, user, { outcome: 'REJECTED' }) as MockReply).status).toBe(422);
-      expect(
-        (call('POST', path, user, { outcome: 'PARTIAL', approvedAmount: open['billedTotal'].amount, reason: 'Tope' }) as MockReply)
-          .status,
-      ).toBe(422);
+      expect(call('POST', path, user, { outcome: 'REJECTED' })).toMatchObject({
+        status: 400,
+        body: {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          details: { violations: ['reason Al menos 5 caracteres'] },
+        },
+      });
+      expect(all().find((claim) => claim.id === open.id)).toEqual(open);
+      expect(call('POST', path, user, {
+        outcome: 'PARTIAL', approvedAmount: open['billedTotal'].amount, reason: 'Tope del plan',
+      })).toMatchObject({
+        status: 400,
+        body: {
+          statusCode: 400,
+          code: 'VALIDATION_FAILED',
+          details: { violations: ['approvedAmount Mayor que cero y menor que el monto solicitado'] },
+        },
+      });
+      expect(all().find((claim) => claim.id === open.id)).toEqual(open);
       const partial = call('POST', path, user, { outcome: 'PARTIAL', approvedAmount: '10.00', reason: 'Tope del plan' }) as Fila;
       expect(partial['invoice']!.amount.amount).toBe('10.00');
     });
@@ -171,6 +186,37 @@ describe('handler de solicitudes recibidas por la aseguradora', () => {
       const reissued = call('POST', `${base}/invoice`, user, {}) as Fila;
       expect(reissued['invoice']!.status).toBe('ISSUED');
       expect(reissued['invoice']!.previous[0]!.invoiceNumber).toBe(claim['invoice']!.invoiceNumber);
+    });
+
+    it('despues de recargar toma la numeracion persistida para no repetir una factura', () => {
+      const key = 'mock.insurerReceivedClaims';
+      const saved = sessionStorage.getItem(key);
+      try {
+        sessionStorage.removeItem(key);
+        local = new MockRouter();
+        registerInsurerReceivedClaims(local);
+        const claim = all().find((row) => row.status.code === 'APPROVED')!;
+        const base = `/insurance/received-claims/${claim.id}`;
+        call('POST', `${base}/invoice/annulment`, user, { reason: 'Numero incorrecto' });
+
+        const stored = JSON.parse(sessionStorage.getItem(key)!) as { build: string; filas: Fila[] };
+        const previousNumber = 'FAC-900000';
+        sessionStorage.setItem(key, JSON.stringify({
+          build: stored.build,
+          filas: stored.filas.map((row) => row.id === claim.id
+            ? { ...row, invoice: { ...row.invoice!, invoiceNumber: previousNumber } }
+            : row),
+        }));
+
+        local = new MockRouter();
+        registerInsurerReceivedClaims(local);
+        const reissued = call('POST', `${base}/invoice`, user, {}) as Fila;
+        expect(Number(reissued.invoice!.invoiceNumber.slice(4))).toBeGreaterThan(900_000);
+        expect(reissued.invoice!.previous[0]!.invoiceNumber).toBe(previousNumber);
+      } finally {
+        if (saved === null) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, saved);
+      }
     });
 
     it('una factura pagada no se anula, y quien no es de la aseguradora no decide', () => {

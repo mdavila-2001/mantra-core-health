@@ -17,8 +17,8 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { estadoDeCobro, ROTULO_DE_ESTADO } from '../billing-summary';
-import { ACCION_COMPLETA, accionDeCobro, bs, mensajeDeError, ROTULO_DE_ACCION } from '../cobros-en-pantalla';
-import { FacturaSimuladaDialog } from '../factura-simulada-dialog/factura-simulada-dialog';
+import { COMPLETE_ACTION, chargeAction, bs, errorMessage, ACTION_LABEL } from '../on-screen-charges';
+import { SimulatedInvoiceDialog } from '../simulated-invoice-dialog/simulated-invoice-dialog';
 
 /** Prefijo con el que el servidor simulado deja un PDF: lo único que se acepta como enlace. */
 const PDF_DATA_URL_PREFIX = 'data:application/pdf;base64,';
@@ -42,7 +42,7 @@ const PDF_DATA_URL_PREFIX = 'data:application/pdf;base64,';
  */
 @Component({
   selector: 'app-booking-payments',
-  imports: [Alert, AppButton, Badge, ContentDialog, DatePipe, FacturaSimuladaDialog, Tab, Tabs],
+  imports: [Alert, AppButton, Badge, ContentDialog, DatePipe, SimulatedInvoiceDialog, Tab, Tabs],
   templateUrl: './booking-payments.html',
   styleUrl: './booking-payments.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,9 +77,9 @@ export class BookingPayments {
   protected readonly bs = bs;
   protected readonly formatProofSize = formatProofSize;
   protected readonly stateLabel = ROTULO_DE_ESTADO;
-  protected readonly actionLabel = ROTULO_DE_ACCION;
-  protected readonly actionFull = ACCION_COMPLETA;
-  protected readonly actionOf = accionDeCobro;
+  protected readonly actionLabel = ACTION_LABEL;
+  protected readonly actionFull = COMPLETE_ACTION;
+  protected readonly actionOf = chargeAction;
   protected readonly stateOf = estadoDeCobro;
 
   constructor() {
@@ -99,7 +99,7 @@ export class BookingPayments {
         this.loading.set(false);
       },
       error: (error: unknown) => {
-        this.problem.set(mensajeDeError(error, 'No pudimos leer los pagos de esta cita.'));
+        this.problem.set(errorMessage(error, 'No pudimos leer los pagos de esta cita.'));
         this.loading.set(false);
       },
     });
@@ -118,7 +118,7 @@ export class BookingPayments {
       },
       error: (error: unknown) => {
         this.confirming.set(null);
-        this.problem.set(mensajeDeError(error, 'No pudimos confirmar el pago.'));
+        this.problem.set(errorMessage(error, 'No pudimos confirmar el pago.'));
       },
     });
   }

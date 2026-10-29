@@ -3,7 +3,7 @@
 }
 
 @if (!store.perfilResuelto()) {
-  <p class="mensajeria__cargando" role="status">Cargando sus conversaciones…</p>
+  <app-loading-state class="mensajeria__cargando" message="Cargando sus conversaciones…" />
 } @else if (store.perfil() === null) {
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
        `community`, que es una entidad aparte del perfil de paciente del token. -->
@@ -140,14 +140,14 @@
         @if (consulta().trim() !== '' && store.resultados().length > 0) {
           <p class="mensajeria__rotulo">Contactos</p>
           <ul class="mensajeria__contactos">
-            @for (resultado of store.resultados(); track resultado.slug) {
+            @for (resultado of store.resultados(); track resultado.profileId) {
               <li>
                 <button
                   class="mensajeria__contacto"
                   type="button"
                   data-testid="mensajeria-resultado"
                   [disabled]="store.abriendo()"
-                  (click)="escribirA(resultado.slug)"
+                  (click)="escribirAPerfil(resultado.profileId)"
                 >
                   <span class="mensajeria__contacto-nombre">{{ resultado.displayName }}</span>
                   @if (resultado.headline) {
@@ -199,11 +199,11 @@
               }
             </p>
           } @else if (verArchivados()) {
-            <p class="mensajeria__sin-nada">No tiene conversaciones archivadas. Archive una desde el menú de la conversación.</p>
+            <p class="mensajeria__sin-nada">No tiene conversaciones archivadas.</p>
           } @else {
             <app-empty-state
               title="No tiene conversaciones"
-              description="Busque a un profesional en el buscador de arriba y escríbale: la conversación aparecerá en esta lista."
+              description="Busque a una persona acá arriba y escríbale: la conversación va a aparecer en esta lista."
               variant="empty"
             />
           }
@@ -237,7 +237,7 @@
           </span>
           <p class="mensajeria__vacio-titulo">AloVida · Chats</p>
           <p class="mensajeria__vacio-texto">
-            Elija una conversación de la izquierda para leerla aquí, o busque a un profesional
+            Elija una conversación de la izquierda para leerla acá, o busque a una persona
             para empezar una nueva.
           </p>
         </div>

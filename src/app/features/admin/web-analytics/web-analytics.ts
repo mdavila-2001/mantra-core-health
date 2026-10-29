@@ -12,6 +12,9 @@ import type {
   SessionSummary,
   Timeseries,
   WebVitals,
+  OnboardingFunnelReport,
+  OnboardingHeatmapReport,
+  OnboardingFormType,
 } from '../../../core/data-access/admin-portal/platform.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -98,6 +101,28 @@ export class WebAnalytics {
     { value: 'MOBILE' as const, label: 'Móvil' },
   ];
 
+  // `medical-center` no se ofrece: ni el simulador ni la API tienen todavía su embudo
+  // y caería al de `patient`, con datos que no son los suyos.
+  protected readonly opcionesTipoAlta: readonly { value: OnboardingFormType; label: string }[] = [
+    { value: 'patient', label: 'Paciente' },
+    { value: 'practitioner', label: 'Médico' },
+    { value: 'organization', label: 'Aseguradora' },
+    { value: 'laboratory', label: 'Laboratorio' },
+    { value: 'imaging-center', label: 'Imagenología' },
+    { value: 'pharmacy', label: 'Farmacia' },
+  ];
+
+  protected readonly opcionesMetricaCalor = [
+    { value: 'errors' as const, label: 'Errores de validación' },
+    { value: 'interactions' as const, label: 'Frecuencia de interacción' },
+    { value: 'abandonment' as const, label: 'Puntos de fuga' },
+  ];
+
+  protected readonly tipoAlta = signal<OnboardingFormType>('patient');
+  protected readonly metricaCalor = signal<'errors' | 'interactions' | 'abandonment'>('errors');
+  protected readonly embudoOnboarding = signal<ViewState<OnboardingFunnelReport>>(loading());
+  protected readonly mapaCalorOnboarding = signal<ViewState<OnboardingHeatmapReport>>(loading());
+
   protected readonly resumen = signal<ViewState<AnalyticsOverview>>(loading());
   protected readonly serie = signal<ViewState<Timeseries>>(loading());
   protected readonly vitales = signal<ViewState<WebVitals>>(loading());
@@ -166,6 +191,39 @@ export class WebAnalytics {
       error: (e: unknown) => this.sesiones.set(errorToViewState<readonly SessionSummary[]>(e)),
     });
     this.cargarInforme();
+    this.cargarOnboarding();
+  }
+
+  protected cambiarTipoAlta(tipo: OnboardingFormType | null): void {
+    if (tipo) {
+      this.tipoAlta.set(tipo);
+      this.cargarOnboarding();
+    }
+  }
+
+  protected cambiarMetricaCalor(metrica: 'errors' | 'interactions' | 'abandonment' | null): void {
+    if (metrica) {
+      this.metricaCalor.set(metrica);
+      this.cargarOnboarding();
+    }
+  }
+
+  protected cargarOnboarding(): void {
+    const t = this.tipoAlta();
+    const r = this.rango();
+    const m = this.metricaCalor();
+    this.embudoOnboarding.set(loading());
+    this.mapaCalorOnboarding.set(loading());
+
+    this.analytics.onboardingFunnel(t, r).subscribe({
+      next: (res) => this.embudoOnboarding.set(ready(res)),
+      error: (e: unknown) => this.embudoOnboarding.set(errorToViewState<OnboardingFunnelReport>(e)),
+    });
+
+    this.analytics.onboardingHeatmap(t, m, r).subscribe({
+      next: (res) => this.mapaCalorOnboarding.set(ready(res)),
+      error: (e: unknown) => this.mapaCalorOnboarding.set(errorToViewState<OnboardingHeatmapReport>(e)),
+    });
   }
 
   protected cambiarRango(r: Rango): void {

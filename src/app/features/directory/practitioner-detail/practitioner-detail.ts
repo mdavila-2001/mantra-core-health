@@ -8,7 +8,6 @@ import { FilesClient } from '../../../core/data-access/files/files.client';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import type {
   OwnPractitionerProfile,
-  PractitionerAffiliation,
   PractitionerCredential,
   PractitionerLanguage,
   PractitionerLicense,
@@ -24,30 +23,26 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { conceptosDe } from '../../account/my-profile/practitioner-profile/practitioner-profile';
+import { visibleAffiliations, conceptosDe, sello } from '../../account/my-profile/practitioner-profile/practitioner-profile';
 import { PractitionerProfileView } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view';
 import { PractitionerAvailability } from '../practitioner-availability/practitioner-availability';
 import { PractitionerInsurers } from '../practitioner-insurers/practitioner-insurers';
 import { PractitionerServiceSchedule } from '../practitioner-service-schedule/practitioner-service-schedule';
 import { PractitionerServices } from '../practitioner-services/practitioner-services';
+import { PrimaryPractitionerChoice } from '../../primary-practitioner/primary-practitioner-choice/primary-practitioner-choice';
 import type {
-  AfiliacionVisible,
   EspecialidadVisible,
   FormacionVisible,
   IdiomaVisible,
   MatriculaVisible,
   PerfilProfesionalVisible,
 } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { professionalSubtitle } from '../professional-subtitle';
 
 /** Lo que se muestra cuando el registro no trae ese dato. */
 const SIN_DATO = 'Sin registrar';
 
-/** Códigos de terminología que significan «esto está en orden». */
-const CODIGOS_EN_ORDEN = ['VERIFIED', 'ACTIVE', 'CRED_VERIFIED', 'AUTH_ACTIVE', 'PRACTICE_ACTIVE'];
 
-/** Códigos que significan «todavía no». */
-const CODIGOS_PENDIENTES = ['PENDING', 'ONBOARDING', 'CRED_PENDING', 'AUTH_PENDING', 'IN_REVIEW'];
 
 /** El perfil crudo junto a lo que se resolvió aparte para pintarlo. */
 interface PerfilResuelto {
@@ -88,6 +83,7 @@ interface PerfilResuelto {
     PractitionerProfileView,
     PractitionerServiceSchedule,
     PractitionerServices,
+    PrimaryPractitionerChoice,
     Tab,
     Tabs,
     ViewStateHost,
@@ -192,13 +188,13 @@ export class PractitionerDetail {
 function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
   const { perfil, etiquetas, fotoUrl } = resuelto;
   const especialidades = especialidadesDe(perfil, etiquetas);
-  const afiliaciones = afiliacionesDe(perfil);
+  const afiliaciones = visibleAffiliations(perfil);
   const nombre = perfil.displayName || SIN_DATO;
   return {
     nombre,
     // Mismo guardia que la tarjeta de la Guía (F-25): la ficha tampoco puede
     // presentar a alguien con el nombre de otra persona debajo del suyo.
-    titulo: subtituloProfesional(perfil.professionalTitle, nombre) ?? '',
+    titulo: professionalSubtitle(perfil.professionalTitle, nombre) ?? '',
     especialidadPrincipal: especialidadPrincipal(especialidades),
     codigo: perfil.practitionerCode,
     fotoUrl,
@@ -257,6 +253,7 @@ function formacionDe(
     .sort((a, b) => fecha(b.issueDate) - fecha(a.issueDate))
     .map((credencial: PractitionerCredential) => {
       const vencida = credencial.expiryDate !== undefined && credencial.expiryDate < ahora;
+      const decisionSeal = sello(etiquetas, credencial.stateConceptId);
       return {
         id: credencial.id,
         tipo: label(etiquetas, credencial.credentialTypeConceptId),
@@ -265,11 +262,8 @@ function formacionDe(
         desde: credencial.issueDate ?? null,
         hasta: credencial.expiryDate ?? null,
         estado: label(etiquetas, credencial.stateConceptId),
-        sello: vencida
-          ? ('expired' as StatusSealVariant)
-          : credencial.verifiedAt !== undefined
-            ? ('approved' as StatusSealVariant)
-            : sello(etiquetas, credencial.stateConceptId),
+        approved: decisionSeal === 'approved',
+        sello: vencida ? ('expired' as StatusSealVariant) : decisionSeal,
         vencida,
         fuenteVerificacion: credencial.verificationSourceUri,
       };
@@ -319,19 +313,6 @@ function label(etiquetas: ConceptLabels, conceptId: string | undefined): string 
  * etiqueta. Lo que el catálogo no resuelve queda neutro: afirmar «verificado»
  * sobre lo que no se pudo leer sería inventar la habilitación de alguien.
  */
-function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusSealVariant {
-  const codigo = conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
-  if (codigo === undefined) {
-    return 'unknown';
-  }
-  if (CODIGOS_EN_ORDEN.some((esperado) => codigo.includes(esperado))) {
-    return 'approved';
-  }
-  if (CODIGOS_PENDIENTES.some((esperado) => codigo.includes(esperado))) {
-    return 'in-review';
-  }
-  return 'unknown';
-}
 
 /**
  * La primera vigente, en el orden en que llegan; sin ninguna vigente, ninguna.
@@ -344,26 +325,4 @@ function especialidadPrincipal(especialidades: readonly EspecialidadVisible[]): 
 /** Milisegundos de una fecha opcional; las ausentes van al fondo del orden. */
 function fecha(valor: Date | undefined): number {
   return valor?.getTime() ?? 0;
-}
-
-/** El historial laboral (UC-05-16), separado en fase actual e histórica. */
-function afiliacionesDe(perfil: OwnPractitionerProfile): {
-  readonly actual: readonly AfiliacionVisible[];
-  readonly historica: readonly AfiliacionVisible[];
-} {
-  const visibles = [...perfil.affiliations]
-    .sort((a, b) => fecha(b.startDate) - fecha(a.startDate))
-    .map((afiliacion: PractitionerAffiliation) => ({
-      id: afiliacion.id,
-      organizacion: afiliacion.organizationName,
-      // ALV-007: el cargo es opcional; vacío no dibuja «· undefined».
-      cargo: afiliacion.roleTitle ?? '',
-      desde: afiliacion.startDate,
-      hasta: afiliacion.endDate,
-      actual: afiliacion.current,
-    }));
-  return {
-    actual: visibles.filter((afiliacion) => afiliacion.actual),
-    historica: visibles.filter((afiliacion) => !afiliacion.actual),
-  };
 }

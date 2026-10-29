@@ -1,5 +1,5 @@
 import { RECEIVED_SERVICES } from '../fixtures/received-services';
-import { pacientePorId as patientById } from '../fixtures/personas';
+import { patientById } from '../fixtures/people';
 import { forbidden, notFound, type MockRouter } from '../mock-router';
 import { puedeLeer } from './clinical.handlers';
 

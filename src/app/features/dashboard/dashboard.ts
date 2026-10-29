@@ -7,7 +7,6 @@ import { Alert } from '../../shared/components/molecules/alert/alert';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type { PatientListItem } from '../../core/data-access/profiles/profiles.types';
 import { errorToViewState } from '../../core/http/error-to-view-state';
-import { NavigationService } from '../../core/navigation/navigation.service';
 import { rolesAlcanzan } from '../../core/navigation/navigation.types';
 import { dataOf, empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -18,9 +17,8 @@ import { PageHeader } from '../../shared/components/organisms/page-header/page-h
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
-import { AccessTree } from './access-tree/access-tree';
-import { AgendaDeHoy } from './agenda-de-hoy/agenda-de-hoy';
-import { ConsultasResumen } from './consultas-resumen/consultas-resumen';
+import { TodayAgenda } from './today-agenda/today-agenda';
+import { SummaryConsultations } from './consultations-summary/consultations-summary';
 import { PatientHome } from './patient-home/patient-home';
 
 /**
@@ -56,14 +54,11 @@ const ROLES_DE_TRABAJO: readonly string[] = [
  * dos cifras que quedaban —cuántas secciones habilita la cuenta y cuántas
  * organizaciones alcanza— describen la aplicación, no el trabajo.
  *
- * Lo que quedó responde tres preguntas, en este orden:
+ * Lo que quedó responde dos preguntas, en este orden:
  *
- * 1. **¿Qué toca hoy?** — `app-agenda-de-hoy`: la jornada de quien atiende, con
+ * 1. **¿Qué toca hoy?** — `app-today-agenda`: la jornada de quien atiende, con
  *    su forma, lo que pasa ahora y salida a la agenda completa.
- * 2. **¿A dónde puedo ir?** — las secciones que los roles de la sesión
- *    habilitan, repartidas por zonas. Es la misma lista que arma el menú
- *    lateral, así que no puede desincronizarse.
- * 3. **¿Quién entró último?** — los últimos pacientes registrados, con el total
+ * 2. **¿Quién entró último?** — los últimos pacientes registrados, con el total
  *    de la organización en el propio encabezado. Sólo para quien administra.
  *
  * ## Por qué cada bloque decide solo si aparece
@@ -77,10 +72,9 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 @Component({
   selector: 'app-dashboard',
   imports: [
-    AccessTree,
-    AgendaDeHoy,
+    TodayAgenda,
     Card,
-    ConsultasResumen,
+    SummaryConsultations,
     Alert,
     AppButtonLink,
     PageHeader,
@@ -105,7 +99,6 @@ const ROLES_DE_TRABAJO: readonly string[] = [
 export class Dashboard {
   private readonly auth = inject(AuthService);
   private readonly profiles = inject(ProfilesClient);
-  private readonly navigation = inject(NavigationService);
 
   protected readonly roles = this.auth.roles;
   protected readonly activeTenantId = this.auth.activeTenantId;
@@ -115,16 +108,6 @@ export class Dashboard {
     const id = this.activeTenantId();
     return id === null ? null : this.auth.tenantName(id);
   });
-
-  /**
-   * Todo lo que la sesión alcanza, sin filtrar por disponibilidad.
-   *
-   * Es lo que consume el árbol de accesos, que reparte y **muestra las dos
-   * cosas**: lo que se puede abrir y lo que está en construcción, cada una con
-   * su forma. Dárselo ya separado lo obligaría a volver a juntarlo para
-   * ordenarlo por zona.
-   */
-  protected readonly seccionesVisibles = computed(() => this.navigation.visibleSections());
 
   /**
    * Si esta sesión atiende pacientes, que es lo que decide si hay jornada.
@@ -151,8 +134,8 @@ export class Dashboard {
   /** El subtítulo dice lo que la pantalla trae, y eso depende de quién entró. */
   protected readonly subtituloDelPanel = computed(() =>
     this.atiendePacientes()
-      ? 'Su jornada de hoy y sus herramientas de trabajo, en un solo lugar.'
-      : 'Todo lo que puede hacer en esta organización, en un solo lugar.',
+      ? 'Su jornada de hoy y sus consultas, en un solo lugar.'
+      : 'Lo que pasa en esta organización. Las secciones se abren desde el menú.',
   );
 
   /**

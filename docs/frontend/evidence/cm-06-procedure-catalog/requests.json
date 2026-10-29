@@ -5,8 +5,6 @@
   "requests": [],
   "responses": [],
   "consoleErrors": [
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
-    "Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-W2dlurwp6YKlfiP5xKtYY3wKTw9Sh+t8Qi+cHG+PUBE=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
     "[API] POST /practices/75815a7e-419c-4064-ac46-35a6d0e1a122/healthcare-services → 409 · CONFLICT · «Este procedimiento ya está publicado en esta sede» {status: 409, code: CONFLICT, message: Este procedimiento ya está publicado en esta sede, details: Object}"
   ]
 }

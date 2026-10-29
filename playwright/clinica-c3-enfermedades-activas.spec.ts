@@ -11,7 +11,7 @@ import { entrar, estable, irA } from './support/sesion';
  * que agrega este PR encima de eso.
  *
  * El seed confirma el primer diagnóstico de cada paciente (`i === 0`,
- * `fixtures/clinica.ts:314-332`), así que alcanza con abrir cualquier
+ * `fixtures/clinic.ts:314-332`), así que alcanza con abrir cualquier
  * expediente — sin recrear el alta ni la verificación.
  */
 
@@ -64,7 +64,9 @@ test('el expediente muestra Enfermedades activas y el sello coloreado por estado
   expect(tonos.every((tono) => tono !== 'tone--info'), `Tonos encontrados: ${tonos.join(', ')}`).toBe(true);
 
   await page.screenshot({
-    path: 'docs/trabajo/2026-09-25-encuentro-clinico/c3/evidencia/visual/enfermedades-activas-runtime.png',
+    path: process.env['E2E_EVIDENCE_DIR']
+      ? `${process.env['E2E_EVIDENCE_DIR']}/active-diseases.png`
+      : 'artifacts/evidencia/2026-09-25-encuentro-clinico/c3/evidencia/visual/enfermedades-activas-runtime.png',
     fullPage: true,
   });
 

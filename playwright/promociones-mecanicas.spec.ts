@@ -7,7 +7,7 @@
     pública. No necesita API ni Docker.
 
     Con `--workers=1` y `E2E_BASE_URL` apuntando al `ng serve` que esté arriba.
-    Las capturas van a `docs/progress/evidence/promociones-mecanicas/`.
+    Las capturas van a `artifacts/evidencia/promociones-mecanicas/`.
     ========================================================================== */
 
 import { mkdirSync } from 'node:fs';
@@ -18,7 +18,7 @@ import { test, expect, type Locator, type Page } from '@playwright/test';
 import { farmacia, type Actor } from './support/actores';
 import { entrar, irA } from './support/sesion';
 
-const EVIDENCIA = join('docs', 'progress', 'evidence', 'promociones-mecanicas');
+const EVIDENCIA = join('artifacts', 'evidencia', 'promociones-mecanicas');
 
 /**
  * En una máquina sin el Chromium de Playwright, `E2E_CHANNEL=chrome` usa el

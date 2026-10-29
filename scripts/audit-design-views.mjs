@@ -219,7 +219,9 @@ const OLORES = [
   // provisionales sueltos en `docs/` —ignorando, a propósito, los que están en
   // un bloque o span de código, que es justo este caso—. Sin los acentos, este
   // informe dejaba en rojo esa verificación y con ella el PR de cualquiera.
-  [/\bTODO\b|\bFIXME\b/, '`TODO`/`FIXME`'],
+  // Sólo cuenta el marcador (`TODO:`, `TODO(…)`): «TODO» en mayúsculas también
+  // es la palabra castellana de una cita textual («TODO EL FLUJO…»).
+  [/\b(?:TODO|FIXME)\s*[(:]/, '`TODO`/`FIXME`'],
   [/lorem ipsum/i, 'lorem'],
   [/\bfaker\b/i, 'faker en runtime'],
   [/próximamente|proximamente|coming soon|en construcción/i, 'promesa sin pantalla'],

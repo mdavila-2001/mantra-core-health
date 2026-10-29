@@ -11,10 +11,10 @@ import type {
 import { PublicProfileCard } from './public-profile-card';
 
 /**
- * Pestañas, paginado y opiniones de la ficha pública:
+ * Pestañas, paginado y reseñas de la ficha pública (pedido del 13/09/2026):
  * - las pestañas eran anclas que sacaban de la ficha;
  * - publicaciones y sedes se pagina con anterior / siguiente;
- * - la calificación y la cantidad resumen el promedio; «Reseñas» abre la lista.
+ * - el promedio y la cantidad abren la pestaña con reseñas verificadas.
  */
 describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
   const post = (i: number): PublicPostSummary => ({
@@ -139,11 +139,13 @@ describe('PublicProfileCard · pestañas, paginado y opiniones', () => {
     expect(sedes()).toBe(1);
   });
 
-  it('la pestaña «Reseñas» despliega las opiniones y se leen', async () => {
+  /** La cabecera y la pestaña muestran el agregado y las reseñas del perfil. */
+  it('«2 reseñas» abre la pestaña y las reseñas se leen', async () => {
     const { fixture, el, q } = crear();
     const http = TestBed.inject(HttpTestingController);
 
-    q('perfil-tab-reviews')!.click();
+    expect(q('perfil-opiniones')!.textContent!.trim()).toBe('2 reseñas');
+    q('perfil-opiniones')!.click();
     fixture.detectChanges();
     expect(q('perfil-tab-reviews')!.getAttribute('aria-selected')).toBe('true');
     const panel = q('perfil-reviews')!;

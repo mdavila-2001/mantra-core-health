@@ -44,9 +44,9 @@ import { DataTable } from '../../../shared/components/organisms/data-table/data-
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { FilterBar } from '../../../shared/components/organisms/filter-bar/filter-bar';
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
-import { centavos, deCentavos } from '../../billing/cobros-en-pantalla';
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../billing/facturacion-disponible';
-import { importeBs } from '../resumen/ventanas';
+import { cents, fromCents } from '../../billing/on-screen-charges';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../billing/invoicing-availability';
+import { amountBs } from '../summary/windows';
 import { ESTADO_DEL_COMPROBANTE } from './comprobante-pdf';
 
 const TAMANO_INICIAL = 10;
@@ -165,9 +165,9 @@ export class FlujoDeDinero {
   private readonly avisos = inject(ToastService);
   private readonly destroyRef = inject(DestroyRef);
 
-  protected readonly facturacionDisponible = inject(FACTURACION_SIMULADA_DISPONIBLE)();
+  protected readonly facturacionDisponible = inject(SIMULATED_AVAILABLE_INVOICING)();
   protected readonly pestana = signal(0);
-  protected readonly importe = importeBs;
+  protected readonly importe = amountBs;
 
   /* ---- la cuenta de caja o banco ------------------------------------------- */
 
@@ -200,13 +200,13 @@ export class FlujoDeDinero {
     { initialValue: loading() as ViewState<GeneralLedgerPage> },
   );
 
-  /** Lo que entró, lo que salió y lo que queda. Las sumas van en centavos enteros. */
+  /** Lo que entró, lo que salió y lo que queda. Las sumas van en cents enteros. */
   protected readonly totales = computed(() => {
     const estado = this.mayor();
     if (estado.status !== 'ready') return null;
-    const entro = estado.data.items.reduce((suma, m) => suma + centavos(m.debit), 0);
-    const salio = estado.data.items.reduce((suma, m) => suma + centavos(m.credit), 0);
-    return { entro: deCentavos(entro), salio: deCentavos(salio), neto: deCentavos(entro - salio) };
+    const entro = estado.data.items.reduce((suma, m) => suma + cents(m.debit), 0);
+    const salio = estado.data.items.reduce((suma, m) => suma + cents(m.credit), 0);
+    return { entro: fromCents(entro), salio: fromCents(salio), neto: fromCents(entro - salio) };
   });
 
   /* ---- 1 · cobros facturados ---------------------------------------------- */
@@ -225,7 +225,7 @@ export class FlujoDeDinero {
       numero: `N.º ${item.invoice.invoiceNumber}`,
       paciente: item.patientName,
       concepto: item.description,
-      monto: sinCortes(importeBs(item.invoice.total)),
+      monto: sinCortes(amountBs(item.invoice.total)),
       estado: INGRESO_SEGUN_FACTURA[item.invoice.status].texto,
       tono: INGRESO_SEGUN_FACTURA[item.invoice.status].tono,
       item,
@@ -246,12 +246,12 @@ export class FlujoDeDinero {
   );
   /** Lo que entró por facturas vigentes: las anuladas y rechazadas no suman. */
   protected readonly totalFacturado = computed(() =>
-    deCentavos(
+    fromCents(
       this.cobros()
         .filter(
           (f) => f.item.invoice.status === 'VALIDATED' || f.item.invoice.status === 'OBSERVED',
         )
-        .reduce((suma, f) => suma + centavos(f.item.invoice.total), 0),
+        .reduce((suma, f) => suma + cents(f.item.invoice.total), 0),
     ),
   );
 
@@ -273,7 +273,7 @@ export class FlujoDeDinero {
         fecha: FORMATO_DIA.format(asiento.transactionDate),
         numero: asiento.transactionNumber ?? 'Sin número',
         concepto: asiento.description?.trim() || 'Sin concepto',
-        monto: sinCortes(importeBs(asiento.totalAmount ?? '0')),
+        monto: sinCortes(amountBs(asiento.totalAmount ?? '0')),
         estado: ESTADO_DEL_COMPROBANTE[status],
         tono: TONO_DEL_COMPROBANTE[status],
         asiento,
@@ -313,9 +313,9 @@ export class FlujoDeDinero {
       fecha: FORMATO_DIA.format(m.transactionDate),
       comprobante: m.transactionNumber ?? '—',
       detalle: m.memo?.trim() || 'Sin detalle',
-      entro: centavos(m.debit) === 0 ? '' : sinCortes(importeBs(m.debit)),
-      salio: centavos(m.credit) === 0 ? '' : sinCortes(importeBs(m.credit)),
-      saldo: sinCortes(importeBs(m.runningBalance)),
+      entro: cents(m.debit) === 0 ? '' : sinCortes(amountBs(m.debit)),
+      salio: cents(m.credit) === 0 ? '' : sinCortes(amountBs(m.credit)),
+      saldo: sinCortes(amountBs(m.runningBalance)),
       movimiento: m,
     }));
   });
@@ -468,16 +468,16 @@ export class FlujoDeDinero {
 
   /* ---- descargas ---------------------------------------------------------------- */
 
-  protected accionDeCobro(fila: FilaDeCobro, codigo: string): void {
+  protected chargeAction(fila: FilaDeCobro, codigo: string): void {
     this.facturacion
       .myInvoice(fila.item.invoice.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: async (factura) => {
-          const { descargarRepresentacionGrafica, descargarXml } =
-            await import('../../billing/representacion-grafica');
-          if (codigo === 'pdf') await descargarRepresentacionGrafica(factura);
-          else descargarXml(factura);
+          const { downloadGraphicRepresentation, downloadXml } =
+            await import('../../billing/graphic-representation');
+          if (codigo === 'pdf') await downloadGraphicRepresentation(factura);
+          else downloadXml(factura);
         },
         error: () =>
           this.avisos.error('No se pudo leer la factura. Intente de nuevo.', 'Sin descarga'),

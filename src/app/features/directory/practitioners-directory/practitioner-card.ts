@@ -1,8 +1,8 @@
 import type { PractitionerListItem } from '../../../core/data-access/profiles/profiles.types';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
-import { inicialesDe } from '../../../shared/text/iniciales';
-import { subtituloProfesional } from '../subtitulo-profesional';
+import { initialsOf } from '../../../shared/text/initials';
+import { professionalSubtitle } from '../professional-subtitle';
 
 /*
  * La tarjeta de un médico en la guía: de la fila del dominio a lo que
@@ -76,7 +76,7 @@ export function toResultado(
   // escrito a mano sólo cuando no declaró ninguna.
   const subtitulo =
     especialidadesDe(fila, etiquetas, elegida) ??
-    subtituloProfesional(fila.professionalTitle, nombre, nombresDeOtros);
+    professionalSubtitle(fila.professionalTitle, nombre, nombresDeOtros);
   // El subtítulo del profesional —«Cardióloga · Clínica Los Olivos»— NO va en
   // `meta`: es qué es esta persona, no un dato de contexto, y en el gris de
   // 13 px se leía igual que la lista de sedes de abajo. Va en `subtitle`, que
@@ -131,7 +131,7 @@ export function toResultado(
     // persona ajena se lee como la cara del médico. Un lugar admite una imagen
     // ilustrativa; una persona, no. Cuando la guía resuelva `photoFileId`, su
     // foto real va acá.
-    figureText: inicialesDe(nombre),
+    figureText: initialsOf(nombre),
     ...(subtitulo === undefined ? {} : { subtitle: subtitulo }),
     // Las reseñas reales, cuando la API las mande en el listado (P61).
     ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0

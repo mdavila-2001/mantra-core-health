@@ -9,7 +9,7 @@
   </app-alert>
 } @else {
   <!-- Regla 8: una sola tarjeta centrada a lo ancho, con las cuatro pestañas dentro. -->
-  <app-card class="ordenes" variant="outlined" padding="lg" data-testid="mis-ordenes-card">
+  <app-card class="ordenes" variant="elevated" padding="lg" data-testid="mis-ordenes-card">
     <!-- `data-testid` acá cae en el panel (`app-tab` ES el panel), no en el
          botón visible de la pestaña: ese lo dibuja `Tabs` internamente y no
          tiene forma de recibir un id desde afuera (pieza de la casa, no se
@@ -75,6 +75,7 @@
               [trackBy]="porId"
               [rowLabel]="nombreDeFila"
               caption="Sus órdenes de laboratorio, imagen y procedimientos"
+              stackedOnMobile
               maxHeight="480px"
               data-testid="mis-ordenes-tabla"
             />
@@ -97,7 +98,7 @@
 <ng-template #celdaPedida let-fila>{{ fila.requestedAt | date: 'dd/MM/yyyy' }}</ng-template>
 
 <ng-template #celdaEstudio let-fila>
-  {{ fila.studyLabel }}
+  <span class="ordenes__estudio">{{ fila.studyLabel }}</span>
   <app-order-performer-summary [mode]="fila.performerMode" [siteName]="fila.suggestedSiteName" />
 </ng-template>
 

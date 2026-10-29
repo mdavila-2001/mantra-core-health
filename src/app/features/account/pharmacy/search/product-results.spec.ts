@@ -68,6 +68,7 @@ describe('ProductResults', () => {
     // Ejecuta el efecto inicial de carga del store antes de que cada prueba
     // escriba el primer carrito.
     fixture.detectChanges();
+    cart.clear();
   });
 
   function raiz(): HTMLElement {

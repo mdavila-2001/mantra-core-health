@@ -15,7 +15,7 @@ import type { PatientSettlementFields } from '../insurance/patient-insurance-set
  * terminales al final. Es el value set pedido a Marcelo (la solicitud está en
  * `COORDINACION-AGENTES.md`); mientras el catálogo no exista, estos códigos
  * provisorios son la identidad — jamás se muestran: la etiqueta en castellano
- * vive en `pedido-status.ts` de la pantalla.
+ * vive en `order-status.ts` de la pantalla.
  */
 export const ESTADOS_DE_PEDIDO = [
   'ENVIADO',
@@ -110,7 +110,6 @@ export interface EntregaRegistrada {
  * Estados del pago, value set provisorio del front (como `ESTADOS_DE_PEDIDO`).
  * La pasarela real no existe: `PAGADO` llega hoy por dos caminos — el
  * mostrador al cerrar la dispensación, o el simulador del QR detrás del gate.
- * TODO(FAR-E4): el puerto real define el catálogo y este set se ajusta acá.
  */
 export const ESTADOS_DE_PAGO = ['PENDIENTE', 'PAGADO'] as const;
 

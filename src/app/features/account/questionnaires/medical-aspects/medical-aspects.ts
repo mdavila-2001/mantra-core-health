@@ -16,6 +16,7 @@ import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /** Un campo del formulario: qué se pregunta y dónde se guarda. */
 interface CampoDeAspectos {
@@ -115,7 +116,7 @@ const CAMPOS: readonly CampoDeAspectos[] = [
  */
 @Component({
   selector: 'app-medical-aspects',
-  imports: [Alert, AppButton, DatePipe, FormField, Input, Textarea],
+  imports: [Alert, AppButton, DatePipe, FormField, Input, Textarea, LoadingState],
   templateUrl: './medical-aspects.html',
   styleUrl: './medical-aspects.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

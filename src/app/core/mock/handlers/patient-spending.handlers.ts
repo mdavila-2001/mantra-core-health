@@ -3,7 +3,7 @@ import type {
   SpendingConceptDto,
   SpendingMovementDto,
 } from '../../data-access/patient-spending/patient-spending.dto';
-import { semillaDe } from '../faker/semilla';
+import { seedOf } from '../faker/seed';
 import { preconditionFailed, validation, type MockRouter } from '../mock-router';
 import {
   TENANT_ASEGURADORA,
@@ -17,10 +17,12 @@ import {
 import { hoy, uuid } from '../mock-store';
 
 /* ============================================================================
-    Gastos de salud del paciente (P43): `GET /patient-spending/me?from=&to=`.
+    Gastos de salud del paciente (P44): `GET /patient-spending/me?from=&to=`.
 
-    La API real todavía no lo tiene. El doble genera los movimientos de cada
-    mes **a partir de una semilla por paciente y por mes**, así que:
+    Doble de la ruta de la API (`PatientSpendingController`, que deriva cada
+    movimiento de una factura del paciente). Sirve la misma forma, con
+    `truncated: false`: la maqueta nunca llega al tope. Genera los movimientos
+    de cada mes **a partir de una semilla por paciente y por mes**, así que:
 
       · el mismo paciente ve las mismas cifras en cada recarga y en cada
         máquina, y
@@ -106,7 +108,7 @@ function draftsForMonth(
   monthIndex: number,
   baseYear: number,
 ): readonly MovementDraft[] {
-  const random = seededRandom(semillaDe(`${patientProfileId}:${year}-${monthIndex + 1}`));
+  const random = seededRandom(seedOf(`${patientProfileId}:${year}-${monthIndex + 1}`));
   const lastDay = daysInMonth(year, monthIndex);
   const day = (): number => 1 + Math.floor(random() * lastDay);
   const growth = 1 + YEARLY_GROWTH * (year - baseYear);
@@ -296,6 +298,7 @@ export function registerPatientSpending(router: MockRouter): void {
       from,
       to,
       items: spendingMovementsFor(user.patientProfileId, from, to),
+      truncated: false,
     } satisfies PatientSpendingResponseDto;
   });
 }

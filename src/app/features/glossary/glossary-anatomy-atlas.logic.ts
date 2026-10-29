@@ -1,6 +1,5 @@
 import type {
-  AnatomyAspect,
-  AnatomyExtendedDescription,
+  AnatomyComposites,
   AnatomyIndexEntry,
   AnatomyLayer,
   AnatomyPart,
@@ -40,9 +39,46 @@ export function partVisibleFor(part: AnatomyPart, sex: AnatomySex): boolean {
   return !(sex === 'female' && part.sex === 'male');
 }
 
-/** Las mallas de una estructura (las dos caras de un hueso par, por ejemplo). */
-export function meshesOf(parts: readonly AnatomyPart[], structureId: string, sex: AnatomySex): string[] {
-  return parts.filter((p) => p.structureId === structureId && partVisibleFor(p, sex)).map((p) => p.meshId);
+/**
+ * Las estructuras cuyas mallas representan a esta: ella misma y, si es
+ * compuesta, las partes suyas que tienen malla (el pulmón, sus lóbulos).
+ */
+export function structureIdsOf(structureId: string, composites: AnatomyComposites): string[] {
+  return [structureId, ...(composites[structureId] ?? [])];
+}
+
+/** Las mallas de una estructura (las dos caras de un hueso par; los lóbulos de un pulmón). */
+export function meshesOf(
+  parts: readonly AnatomyPart[],
+  structureId: string,
+  sex: AnatomySex,
+  composites: AnatomyComposites = {},
+): string[] {
+  const ids = new Set(structureIdsOf(structureId, composites));
+  return parts.filter((p) => ids.has(p.structureId) && partVisibleFor(p, sex)).map((p) => p.meshId);
+}
+
+/** Las estructuras que tienen algo que resaltar: las de malla propia y las compuestas. */
+export function structuresWithMesh(parts: readonly AnatomyPart[], composites: AnatomyComposites): Set<string> {
+  return new Set([...parts.map((p) => p.structureId), ...Object.keys(composites)]);
+}
+
+/**
+ * Las estructuras que se están dibujando: con malla en una capa encendida y
+ * visible para el sexo elegido. Una compuesta cuenta si se dibuja alguna parte suya.
+ */
+export function drawnStructures(
+  parts: readonly AnatomyPart[],
+  layers: ReadonlySet<AnatomyLayer>,
+  sex: AnatomySex,
+  composites: AnatomyComposites,
+): Set<string> {
+  const propias = new Set(parts.filter((p) => layers.has(p.layer) && partVisibleFor(p, sex)).map((p) => p.structureId));
+  const dibujadas = new Set(propias);
+  for (const [id, partes] of Object.entries(composites)) {
+    if (partes.some((parte) => propias.has(parte))) dibujadas.add(id);
+  }
+  return dibujadas;
 }
 
 /** Las estructuras relacionadas: lo que la ficha declara, en los dos sentidos. */
@@ -55,10 +91,16 @@ export function relatedStructureIds(structure: AnatomyStructure): Set<string> {
 }
 
 /** Las mallas de las estructuras relacionadas, sin las de la propia estructura. */
-export function relatedMeshes(parts: readonly AnatomyPart[], structure: AnatomyStructure, sex: AnatomySex): string[] {
-  const relacionadas = relatedStructureIds(structure);
+export function relatedMeshes(
+  parts: readonly AnatomyPart[],
+  structure: AnatomyStructure,
+  sex: AnatomySex,
+  composites: AnatomyComposites = {},
+): string[] {
+  const propias = new Set(structureIdsOf(structure.id, composites));
+  const relacionadas = new Set([...relatedStructureIds(structure)].flatMap((id) => structureIdsOf(id, composites)));
   return parts
-    .filter((p) => relacionadas.has(p.structureId) && p.structureId !== structure.id && partVisibleFor(p, sex))
+    .filter((p) => relacionadas.has(p.structureId) && !propias.has(p.structureId) && partVisibleFor(p, sex))
     .map((p) => p.meshId);
 }
 
@@ -122,110 +164,33 @@ export function normalizeSearch(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase().trim();
 }
 
-/**
- * Qué tan buen acierto es una entrada para lo escrito; menor es mejor, `null` si no acierta.
- *
- * Cada palabra escrita tiene que aparecer en el nombre en castellano, en el
- * inglés o en el identificador. Entre los que aciertan manda el nombre en
- * castellano, que es el idioma de quien busca:
- *
- * - 0: el nombre es exactamente lo escrito («húmero»).
- * - 1: el nombre empieza con lo escrito («húmero» → «húmero distal»).
- * - 2: lo escrito son palabras completas del nombre («humero» → «cabeza del húmero»).
- * - 3: lo escrito abre una palabra del nombre («humero» → «humerocubital»).
- * - 4: lo escrito está dentro de una palabra o sólo en el nombre en inglés.
- */
-function matchRank(entry: AnatomyIndexEntry, palabras: readonly string[], frase: string): number | null {
-  const [id, es, en] = entry;
-  const nombreEs = normalizeSearch(es ?? '');
-  const nombreEn = normalizeSearch(en);
-  const idMinuscula = id.toLowerCase();
-  const aciertaEn = (texto: string) => palabras.every((p) => texto.includes(p));
-  const enEs = nombreEs !== '' && aciertaEn(nombreEs);
-  const enIngles = aciertaEn(nombreEn);
-  if (!enEs && !enIngles && idMinuscula !== frase) return null;
+/** Los nombres ya normalizados de cada entrada, calculados una vez por índice y no en cada tecla. */
+const NORMALIZED_NAMES = new WeakMap<readonly AnatomyIndexEntry[], readonly (readonly [string, string])[]>();
 
-  if (enEs) {
-    if (nombreEs === frase) return 0;
-    if (nombreEs.startsWith(frase)) return 1;
-    const sus = nombreEs.split(/[^\p{L}\p{N}]+/u);
-    if (palabras.every((p) => sus.includes(p))) return 2;
-    if (palabras.every((p) => sus.some((palabra) => palabra.startsWith(p)))) return 3;
+function normalizedNames(entries: readonly AnatomyIndexEntry[]): readonly (readonly [string, string])[] {
+  let nombres = NORMALIZED_NAMES.get(entries);
+  if (nombres === undefined) {
+    nombres = entries.map(([, es, en]) => [normalizeSearch(es ?? ''), normalizeSearch(en)] as const);
+    NORMALIZED_NAMES.set(entries, nombres);
   }
-  return 4;
+  return nombres;
 }
 
-/**
- * Las entradas del índice que aciertan con lo escrito, de mejor a peor.
- *
- * Se busca sin tildes ni mayúsculas y por palabras: «cabeza humero» encuentra
- * «cabeza del húmero». A igual acierto van primero las que tienen pieza 3D, y
- * después las de nombre más corto —«fémur» antes que «cabeza del fémur»—.
- */
+/** Las entradas del índice cuyo nombre (castellano o inglés) contiene el texto; primero las que tienen pieza. */
 export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string, limit: number): AnatomyIndexEntry[] {
-  const frase = normalizeSearch(query).replace(/\s+/g, ' ');
-  if (frase.length < 2) return [];
-  const palabras = frase.split(' ');
-  const aciertos: { entrada: AnatomyIndexEntry; rango: number }[] = [];
-  for (const entrada of entries) {
-    const rango = matchRank(entrada, palabras, frase);
-    if (rango !== null) aciertos.push({ entrada, rango });
-  }
-  aciertos.sort(
-    (a, b) =>
-      a.rango - b.rango ||
-      b.entrada[3] - a.entrada[3] ||
-      (a.entrada[1] ?? a.entrada[2]).length - (b.entrada[1] ?? b.entrada[2]).length,
+  const q = normalizeSearch(query);
+  if (q.length < 2) return [];
+  const nombres = normalizedNames(entries);
+  const aciertos = entries.filter(
+    ([id], i) => nombres[i][0].includes(q) || nombres[i][1].includes(q) || id.toLowerCase() === q,
   );
-  return aciertos.slice(0, limit).map((a) => a.entrada);
+  aciertos.sort((a, b) => b[3] - a[3]);
+  return aciertos.slice(0, limit);
 }
 
 /** El lado de una pieza par, dicho en castellano. */
 export function sideLabel(side: AnatomyPart['side']): string | null {
   return side === 'right' ? 'lado derecho' : side === 'left' ? 'lado izquierdo' : null;
-}
-
-export const ASPECT_LABELS: Readonly<Record<AnatomyAspect, string>> = {
-  situation: 'Situación',
-  parts: 'Partes y morfología',
-  relations: 'Relaciones',
-  irrigation: 'Irrigación',
-  innervation: 'Inervación',
-  function: 'Función',
-  clinical: 'Relevancia clínica',
-};
-
-/** Una frase con sus citas como números de la lista de fuentes (1, 2, …). */
-export interface NumberedSentence {
-  readonly es: string;
-  readonly refs: readonly number[];
-}
-
-export interface SentenceGroup {
-  readonly aspect: AnatomyAspect;
-  readonly label: string;
-  readonly sentences: readonly NumberedSentence[];
-}
-
-/**
- * Las frases de la descripción extendida agrupadas por aspecto, con cada cita
- * convertida en su número dentro de `sources`. Una cita que no está en
- * `sources` no se numera (el generador ya lo impide; acá no se inventa).
- */
-export function groupSentences(description: AnatomyExtendedDescription): SentenceGroup[] {
-  const numero = new Map(description.sources.map((s, i) => [s.id, i + 1]));
-  const grupos = new Map<AnatomyAspect, NumberedSentence[]>();
-  for (const frase of description.sentences) {
-    const lista = grupos.get(frase.aspect) ?? [];
-    lista.push({ es: frase.es, refs: frase.cites.map((c) => numero.get(c)).filter((n): n is number => n !== undefined) });
-    grupos.set(frase.aspect, lista);
-  }
-  return [...grupos].map(([aspect, sentences]) => ({ aspect, label: ASPECT_LABELS[aspect], sentences }));
-}
-
-/** Los aspectos sin fuente, dichos en castellano y en minúscula: «irrigación, inervación». */
-export function missingAspectsLabel(aspects: readonly AnatomyAspect[]): string {
-  return aspects.map((a) => ASPECT_LABELS[a].toLowerCase()).join(', ');
 }
 
 /** Una página (1-based) de `items`; la página se acota al rango válido. */

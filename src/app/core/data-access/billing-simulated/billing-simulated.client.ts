@@ -21,11 +21,12 @@ import type {
 /**
  * El cliente de la facturación **SIMULADA** (FACT-SIAT-MOCK).
  *
- * Habla con `/billing/simulated/*`, que sólo responde el backend simulado del
- * front. No hay contrato de API real detrás: cuando la API publique
- * facturación, este cliente se reemplaza —no se «conecta»—. La pantalla sólo lo
- * usa si la facturación simulada está encendida y el backend simulado activo
- * (ver `environment.billingSiatDemo`).
+ * Habla con `/billing/simulated/*`, que responden **dos** fuentes con el mismo
+ * contrato: el backend simulado del front (demo) y la **API real** (módulo
+ * billing, parche v434), que cobra de verdad la consulta —`billing.invoices` +
+ * `payments_received`— y emite una factura SIAT **simulada** (CUF/CUFD/XML
+ * ficticios, `simulated: true`). La pantalla sólo lo usa si la facturación
+ * simulada está disponible (ver `invoicing-availability.ts`).
  *
  * Los valores de dinero viajan como texto decimal y las fechas como texto ISO
  * (o la `fechaEmision` del SIAT, sin zona): no se convierten acá, porque la

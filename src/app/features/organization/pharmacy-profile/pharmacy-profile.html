@@ -41,7 +41,7 @@
 
 <app-tabs [(selectedIndex)]="pestana">
   <app-tab label="Empresa">
-    <app-datos-de-la-empresa [state]="empresa()" [sampleData]="sampleData" (retry)="recargar()" />
+    <app-company-data [state]="empresa()" [sampleData]="sampleData" (retry)="recargar()" />
   </app-tab>
 
   <!-- La referencia no se llama «documentos» a propósito: en una plantilla la
@@ -52,7 +52,7 @@
        Todavía no hay dónde subir un papel ni guardar un cambio, así que no se
        ofrece. -->
   <app-tab label="Documentos" #panelDeDocumentos>
-    <app-documentos-legales
+    <app-legal-documents
       [state]="documentos()"
       [readOnly]="!sampleData"
       (retry)="recargar()"
@@ -60,7 +60,7 @@
   </app-tab>
 
   <app-tab label="Representante y gerentes">
-    <app-representante-y-gerentes
+    <app-representative-and-managers
       [state]="gente()"
       [readOnly]="!sampleData"
       (retry)="recargar()"

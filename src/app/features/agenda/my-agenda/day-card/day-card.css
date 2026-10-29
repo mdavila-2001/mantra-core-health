@@ -1,0 +1,75 @@
+/* ============================================================================
+    LA TARJETA — el único gesto de creación (AG-5).
+
+    La regla de Justin gobierna el layout: «cómodo, y no lleno de tantas
+    funciones o botones en la cara». Cuatro campos, una inferencia dicha en
+    palabras, un botón.
+
+    C-10 (2026-09-20): desde que la tarjeta es un modal, la caja, el borde, la
+    sombra, el encabezado y el pie los pone `app-content-dialog`. Acá quedó
+    sólo lo de adentro; lo que se borró de este archivo no se perdió, se dejó
+    de duplicar.
+    ========================================================================== */
+
+.tarjeta__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.tarjeta__rango {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+
+/* La franja que pone el cupo: es un DATO, no un campo. Se lee como un dato —sin
+   caja de entrada, sin cursor de texto— para que nadie intente escribirla. */
+.tarjeta__franja {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.tarjeta__franja-rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tarjeta__franja-valor {
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.tarjeta__franja-nota {
+  flex-basis: 100%;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* La inferencia: informa sin alarmar. Es lo que va a pasar, no un problema.
+   En qué anda la búsqueda de la agenda se dice con el mismo tono. */
+.tarjeta__inferencia,
+.tarjeta__destination-status {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* El selector de organización y, debajo, la región viva de su búsqueda. La
+   región está siempre —para que el lector anuncie el cambio de texto— y vacía
+   no ocupa lugar: la separación de la tarjeta la pone sólo cuando dice algo. */
+.tarjeta__destination {
+  display: flex;
+  flex-direction: column;
+}
+
+.tarjeta__destination-status:not(:empty) {
+  margin-block-start: var(--sp-3);
+}

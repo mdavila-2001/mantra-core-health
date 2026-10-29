@@ -1,0 +1,4 @@
+{"level":30,"time":1793009024245,"pid":8802,"hostname":"vm","context":"RoutesResolver","msg":"InsurerReceivedClaimsController {/insurance/received-claims}:"}
+    UniqueConstraintViolationException: duplicate key value violates unique constraint "pk_dynamic_field_sections"
+Tests:       1 failed, 2 passed, 3 total
+real	0m37.226s

@@ -1,12 +1,19 @@
 import { expect, request, test, type Page } from '@playwright/test';
 import { urlDeApi } from './support/actores';
-import { empezarElAlta, avanzarHasta, elegirLocalidadDeResidencia } from './support/registro-paciente';
+import {
+  PASOS_DEL_ALTA,
+  completarContacto,
+  elegirLocalidadDeResidencia,
+  marcarYConfirmarCasa,
+  empezarElAlta,
+  valorDelSelect,
+} from './support/registro-paciente';
 
 /**
  * Un solo paso: clic en «Siguiente»/«Crear cuenta» y esperar el título de la
  * página que sigue.
  *
- * A diferencia de `avanzarHasta()` (que reintenta a ciegas hasta 8 veces con
+ * A diferencia de `avanzarHasta()` de `support/registro-paciente` (que reintenta a ciegas hasta 8 veces con
  * una espera fija de 150ms), acá se sabe exactamente cuál es la página
  * siguiente: un solo clic, y una espera generosa del título exacto. Esto
  * importa en el tramo final del alta —seguro y facturación pueden traer un
@@ -46,31 +53,28 @@ test('el alta persiste contra la API: un login nuevo devuelve la misma localidad
 
   await empezarElAlta(page, documento);
 
-  await avanzarHasta(page, '¿Dónde vive?');
+  // `empezarElAlta` deja la pantalla en «Lugares donde vive».
   await elegirLocalidadDeResidencia(page);
-  // El nombre de la ciudad que el `<select>` acotado ofreció para Santa Cruz:
+  // Obligatorio desde el 26/10/2026; antes de leer la ciudad, porque el punto
+  // puede elegir otra.
+  await marcarYConfirmarCasa(page);
+  // El nombre de la ciudad que el select acotado ofreció para Santa Cruz:
   // se lee de la propia pantalla para comparar contra lo que devuelva la API,
   // en vez de asumir cuál es la primera ciudad del catálogo.
-  const municipioSeleccionado = page
-    .getByTestId('registration-residence-municipio')
-    .locator('select');
-  const ciudadElegida = await municipioSeleccionado.evaluate(
-    (select: HTMLSelectElement) => select.selectedOptions[0]?.textContent?.trim() ?? '',
-  );
+  const ciudadElegida =
+    (await valorDelSelect(page, 'registration-residence-municipio').textContent())?.trim() ?? '';
   expect(ciudadElegida.length).toBeGreaterThan(0);
 
   // Trabajo (empresa + localidad) y seguro quedan vacíos: son opcionales y no
   // son lo que esta prueba verifica. Un paso por página, con el título exacto
   // de la que sigue (ver `avanzarUnPaso`): así una carga lenta de catálogo no
   // hace que un reintento a ciegas se salte una página.
-  await avanzarUnPaso(page, '¿Dónde trabaja?');
-  await avanzarUnPaso(page, 'El lugar donde trabaja');
-  await avanzarUnPaso(page, 'Su acceso');
+  await avanzarUnPaso(page, PASOS_DEL_ALTA.contacto);
+  await completarContacto(page);
+  await avanzarUnPaso(page, PASOS_DEL_ALTA.resto);
 
   await page.getByTestId('registro-correo').fill(email);
   await page.getByTestId('registro-password').fill(password);
-  await avanzarUnPaso(page, 'Su seguro de salud');
-  await avanzarUnPaso(page, 'Datos de facturación');
 
   // Última página: el mismo botón, con el texto de envío.
   const enviar = page.getByTestId('paginated-form-continuar');
@@ -135,7 +139,7 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
 
   await empezarElAlta(page, documento);
 
-  await avanzarHasta(page, '¿Dónde vive?');
+  // `empezarElAlta` deja la pantalla en «Lugares donde vive».
   await elegirLocalidadDeResidencia(page);
 
   await page.getByTestId('registro-usar-ubicacion').click();
@@ -144,14 +148,12 @@ test('el GPS del domicilio, confirmado sobre el mapa, persiste contra la API', a
   await page.getByTestId('registro-confirmar-direccion').click();
   await expect(page.getByTestId('registro-direccion-confirmada')).toBeVisible();
 
-  await avanzarUnPaso(page, '¿Dónde trabaja?');
-  await avanzarUnPaso(page, 'El lugar donde trabaja');
-  await avanzarUnPaso(page, 'Su acceso');
+  await avanzarUnPaso(page, PASOS_DEL_ALTA.contacto);
+  await completarContacto(page);
+  await avanzarUnPaso(page, PASOS_DEL_ALTA.resto);
 
   await page.getByTestId('registro-correo').fill(email);
   await page.getByTestId('registro-password').fill(password);
-  await avanzarUnPaso(page, 'Su seguro de salud');
-  await avanzarUnPaso(page, 'Datos de facturación');
 
   const enviar = page.getByTestId('paginated-form-continuar');
   await expect(enviar).toHaveText(/Crear cuenta/);

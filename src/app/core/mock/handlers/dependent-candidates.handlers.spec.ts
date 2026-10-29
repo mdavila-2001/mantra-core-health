@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTES } from '../fixtures/personas';
+import { PATIENTS } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -19,7 +19,7 @@ describe('dependientes por nombre y acciones de la notificación (simulador)', (
   registrarNotificaciones(router);
 
   const titular = buscarUsuario('paciente')!;
-  const OTRA = PACIENTES.find((p) => p.email !== '' && p.id !== PACIENTES[0]!.id && p.id !== PACIENTES[1]!.id)!;
+  const OTRA = PATIENTS.find((p) => p.email !== '' && p.id !== PATIENTS[0]!.id && p.id !== PATIENTS[1]!.id)!;
   const otra: MockUser = {
     ...titular,
     key: 'p-otra',
@@ -81,7 +81,7 @@ describe('dependientes por nombre y acciones de la notificación (simulador)', (
     const primerNombre = OTRA.name.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
     const filas = buscar(primerNombre);
     expect(filas.map((f) => f.patientProfileId)).toContain(OTRA.id);
-    expect(filas.map((f) => f.patientProfileId)).not.toContain(PACIENTES[0]!.id);
+    expect(filas.map((f) => f.patientProfileId)).not.toContain(PATIENTS[0]!.id);
   });
 
   it('devuelve pocas filas y nunca el CI entero', () => {
@@ -89,7 +89,7 @@ describe('dependientes por nombre y acciones de la notificación (simulador)', (
     expect(filas.length).toBeLessThanOrEqual(8);
     for (const fila of filas) {
       expect(fila.maskedNationalId ?? '').toMatch(/^••••.{0,3}$|^•••$|^$/);
-      expect(JSON.stringify(fila)).not.toContain(PACIENTES.find((p) => p.id === fila.patientProfileId)!.nationalId);
+      expect(JSON.stringify(fila)).not.toContain(PATIENTS.find((p) => p.id === fila.patientProfileId)!.nationalId);
     }
   });
 
@@ -116,7 +116,7 @@ describe('dependientes por nombre y acciones de la notificación (simulador)', (
   });
 
   it('el propio perfil se rechaza con 422', () => {
-    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { patientProfileId: PACIENTES[0]!.id }, titular);
+    const respuesta = call('POST', '/profiles/patients/me/dependent-requests', { patientProfileId: PATIENTS[0]!.id }, titular);
     expect(estado(respuesta)).toBe(422);
   });
 

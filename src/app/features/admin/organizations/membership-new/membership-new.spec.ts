@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { MembershipNew } from './membership-new';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Sumar a alguien son una o dos peticiones, y cuál es depende del alcance.
@@ -40,6 +41,14 @@ const RESPUESTA = {
 };
 
 const PERSONA: ReferenceOption = { value: 'u-1', label: 'María Condori' };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('MembershipNew', () => {
   let fixture: ComponentFixture<MembershipNew>;
@@ -177,7 +186,7 @@ describe('MembershipNew', () => {
   });
 
   it('la búsqueda de personas marca las cuentas sin verificar', () => {
-    interno<(t: string) => void>('buscarPersona')('maria');
+    crudo<{ buscar: (t: string) => void }>('personas').buscar('maria');
 
     http.expectOne((r) => r.url === '/iam/users/search').flush({
       items: [
@@ -189,9 +198,7 @@ describe('MembershipNew', () => {
       nextCursor: null,
     });
 
-    const candidatos = crudo<() => readonly ReferenceOption[]>('candidatos').call(
-      fixture.componentInstance,
-    );
+    const candidatos = crudo<{ candidatos: () => readonly ReferenceOption[] }>('personas').candidatos();
     expect(candidatos[0].hint).toBeUndefined();
     expect(candidatos[1].hint).toBe('Correo sin verificar');
   });

@@ -24,12 +24,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { MessageTemplates } from '../../../../core/messaging/message-templates';
-import { SelectorEmojis } from './selector-emojis';
+import { EmojiPicker } from './emoji-picker';
 import { StickerPicker } from './sticker-picker/sticker-picker';
-import { Grabador } from './grabador';
+import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
 import { AttachmentPreview } from './attachment-preview/attachment-preview';
 import { type AttachmentDraft, createDraft, partitionFiles } from './attachment-draft';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * La barra de escribir — carril P2 y P9.
@@ -54,13 +55,14 @@ import { type AttachmentDraft, createDraft, partitionFiles } from './attachment-
     AttachmentPreview,
     FileDropTarget,
     FormsModule,
-    Grabador,
+    Recorder,
+    EmojiPicker,
     Menu,
     MenuItem,
     MenuTrigger,
-    SelectorEmojis,
     StickerPicker,
     Tooltip,
+    LoadingState,
   ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',

@@ -101,6 +101,57 @@ describe('DialogService', () => {
     });
   });
 
+  describe('salida del panel', () => {
+    // Con animación de salida posible (en jsdom no existe `animate`) el panel
+    // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+    // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+    // Una salida que nunca termina deja a la vista si el gesto espera por ella.
+    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let terminarSalida: () => void;
+
+    beforeEach(() => {
+      animarOriginal = HTMLElement.prototype.animate;
+      terminarSalida = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminarSalida = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.animate = animarOriginal;
+    });
+
+    it('Confirmar libera la página en el acto, sin esperar la salida del panel', async () => {
+      const respuesta = service.confirm(CONFIRMACION);
+      await esperarRender();
+
+      boton('Confirmar').click();
+
+      await expect(respuesta).resolves.toBe(true);
+      expect(document.querySelector('dialog')).toBeNull();
+    });
+
+    it('descartar sí anima la salida: Cancelar espera a que el panel se vaya', async () => {
+      let resuelto = false;
+      const respuesta = service.confirm(CONFIRMACION).then((valor) => {
+        resuelto = true;
+        return valor;
+      });
+      await esperarRender();
+
+      boton('Cancelar').click();
+      await Promise.resolve();
+      expect(resuelto).toBe(false);
+      expect(document.querySelector('dialog')).not.toBeNull();
+
+      terminarSalida();
+      await expect(respuesta).resolves.toBe(false);
+    });
+  });
+
   describe('contenido y etiquetas', () => {
     it('muestra título y mensaje, y los usa como nombre y descripción', async () => {
       const respuesta = service.confirm(CONFIRMACION);
@@ -252,6 +303,61 @@ describe('DialogService', () => {
       boton('Confirmar').click();
 
       await expect(respuesta).resolves.toBe('Ahora sí es un motivo largo de verdad');
+    });
+  });
+
+  describe('frase de confirmación', () => {
+    const FRASE: DialogConfig = { ...CONFIRMACION, confirmPhrase: 'GUARDAR' };
+
+    function campoDeFrase(): HTMLInputElement {
+      const campo = dialogo().querySelector('[data-testid="dialogo-frase"]');
+      if (!(campo instanceof HTMLInputElement)) throw new Error('el diálogo no pide frase');
+      return campo;
+    }
+
+    function escribir(texto: string): void {
+      const campo = campoDeFrase();
+      campo.value = texto;
+      campo.dispatchEvent(new Event('input'));
+      TestBed.inject(ApplicationRef).tick();
+    }
+
+    it('sin frase pedida no dibuja el campo', async () => {
+      const respuesta = service.confirm(CONFIRMACION);
+      await esperarRender();
+      expect(dialogo().querySelector('[data-testid="dialogo-frase"]')).toBeNull();
+      boton('Cancelar').click();
+      await respuesta;
+    });
+
+    it('no confirma sin la frase: queda abierto y explica qué escribir', async () => {
+      let resuelto = false;
+      const respuesta = service.confirm(FRASE).then((valor) => {
+        resuelto = true;
+        return valor;
+      });
+      await esperarRender();
+
+      boton('Confirmar').click();
+      await esperarRender();
+      expect(resuelto).toBe(false);
+      expect(dialogo().textContent).toContain('«GUARDAR»');
+
+      escribir('guardar');
+      boton('Confirmar').click();
+      await esperarRender();
+      expect(resuelto).toBe(false);
+
+      boton('Cancelar').click();
+      await expect(respuesta).resolves.toBe(false);
+    });
+
+    it('con la frase exacta (aunque con espacios alrededor) confirma', async () => {
+      const respuesta = service.confirm(FRASE);
+      await esperarRender();
+      escribir('  GUARDAR ');
+      boton('Confirmar').click();
+      await expect(respuesta).resolves.toBe(true);
     });
   });
 

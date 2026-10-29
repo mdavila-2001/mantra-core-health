@@ -1,8 +1,8 @@
 import { ROLE_ASSIGNMENT_STATUS } from '../../data-access/practice-sites/role-assignment-concepts';
 import { ROLE_ASSIGNMENT_STATUS_CODE } from '../../data-access/role-assignments/role-assignment-status';
 import type { RoleAssignmentRow } from '../../data-access/role-assignments/role-assignments.types';
-import { MEDICA, profesionalPorId } from './personas';
-import { CARGO, ESTADO } from './conceptos';
+import { MEDICAL, professionalById } from './people';
+import { CARGO, STATUS } from './concepts';
 import { PRACTICE_CM_NORTE, PRACTICE_CM_SUR, PROCEDURE_COLONOSCOPY, PROCEDURE_UPPER_ENDOSCOPY, SITE_CM_NORTE_1, SITE_CM_SUR_1, SITES_BY_PRACTICE } from './healthcare-services';
 import { reply, validation } from '../mock-router';
 import { Coleccion, iso, nuevoId, uuid } from '../mock-store';
@@ -16,7 +16,7 @@ export { PRACTICE_CM_NORTE, PRACTICE_CM_SUR, SITE_CM_NORTE_1, SITE_CM_SUR_1 };
 
 const BOB_CURRENCY = uuid('concept-currency-bob');
 const CLINIC_TYPE = uuid('concept-practice-type-clinic');
-const ACTIVE_STATUS = ESTADO['ST-ACTIVE']!;
+const ACTIVE_STATUS = STATUS['ST-ACTIVE']!;
 
 /** Las prácticas de ejemplo que suma `GET /practices`. */
 export const CM_PRACTICES = [
@@ -69,11 +69,11 @@ const STATUS_CONCEPT: Readonly<Record<StatusCode, string>> = {
 
 type StoredRow = RoleAssignmentRow & { readonly createdAt: string };
 
-function row(id: string, offerId: string, practiceId: string, practiceSiteId: string, concept: string, display: string, code: StatusCode, initiatedBy: RoleAssignmentRow['initiatedBy'], profileId = MEDICA.id, days = -1): StoredRow {
+function row(id: string, offerId: string, practiceId: string, practiceSiteId: string, concept: string, display: string, code: StatusCode, initiatedBy: RoleAssignmentRow['initiatedBy'], profileId = MEDICAL.id, days = -1): StoredRow {
   return {
     id: uuid(id),
     practitionerProfileId: profileId,
-    practitionerName: profesionalPorId(profileId)?.displayName ?? 'Profesional',
+    practitionerName: professionalById(profileId)?.displayName ?? 'Profesional',
     practiceId,
     practiceSiteId,
     healthcareServiceId: offerId,
@@ -89,7 +89,7 @@ function row(id: string, offerId: string, practiceId: string, practiceSiteId: st
 export const affiliations = new Coleccion<StoredRow>([
   row('ra-cm-norte-endoscopia', uuid('offer-cm-norte-endoscopia'), PRACTICE_CM_NORTE, SITE_CM_NORTE_1, PROCEDURE_UPPER_ENDOSCOPY, 'Endoscopia digestiva alta', 'ROLE_ASG_INVITED', 'PRACTICE'),
   // La sede Sur nace sin procedimientos publicados (spec de CM-06): la oferta existe cuando el centro la publica.
-  row('ra-cm-sur-colonoscopia', uuid('offer-cm-sur-colonoscopia'), PRACTICE_CM_SUR, SITE_CM_SUR_1, PROCEDURE_COLONOSCOPY, 'Colonoscopia', 'ROLE_ASG_ACTIVE', 'PRACTITIONER', MEDICA.id, -7),
+  row('ra-cm-sur-colonoscopia', uuid('offer-cm-sur-colonoscopia'), PRACTICE_CM_SUR, SITE_CM_SUR_1, PROCEDURE_COLONOSCOPY, 'Colonoscopia', 'ROLE_ASG_ACTIVE', 'PRACTITIONER', MEDICAL.id, -7),
 ]).persistirEn('mock.practice.afiliaciones-cm');
 
 /** La fila tal como viaja: sin el sello interno de creación. */
@@ -109,7 +109,7 @@ export function createAffiliation(practiceId: string, practiceSiteId: string, he
   return affiliations.agregar({
     id: nuevoId('ra-cm'),
     practitionerProfileId: profileId,
-    practitionerName: profesionalPorId(profileId)?.displayName ?? 'Profesional',
+    practitionerName: professionalById(profileId)?.displayName ?? 'Profesional',
     practiceId,
     practiceSiteId,
     healthcareServiceId,

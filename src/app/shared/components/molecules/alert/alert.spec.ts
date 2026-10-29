@@ -135,4 +135,21 @@ describe('Alert', () => {
       expect(ALERT_TONES).not.toContain('secondary');
     });
   });
+
+  /**
+   * El color de enlace del sistema se calcula contra el fondo de la página. Dentro
+   * de una alerta el fondo es tonal y, en oscuro, el enlace quedaba en 4,35:1.
+   * Por eso el enlace proyectado toma la tinta del tono, que ya trae su contraste.
+   */
+  describe('enlaces dentro del mensaje', () => {
+    it('toman la tinta del tono, no el color de enlace de la página', () => {
+      const css = readFileSync(ALERT_CSS, 'utf8');
+      const desde = css.indexOf(':host ::ng-deep .alert__message a:where([href]:not([class])) {');
+
+      expect(desde).toBeGreaterThanOrEqual(0);
+      expect(css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde))).toContain(
+        'color: inherit',
+      );
+    });
+  });
 });

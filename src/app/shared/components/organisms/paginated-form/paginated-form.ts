@@ -8,6 +8,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   input,
   isDevMode,
   output,
@@ -18,9 +19,11 @@ import {
 } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 
-import { mensajeDeError } from '../../../forms/paginated/mensaje-de-error';
-import { camposOcultos } from '../../../forms/paginated/visibilidad-condicional';
-import { esPreguntaPrincipal } from '../../../forms/paginated/paginar-campos';
+import { mensajeDeError, mensajeDeFechaRechazada } from '../../../forms/paginated/error-message';
+import { enfocarCampoInvalido } from '../../../forms/paginated/focus-first-invalid';
+import { ApilarAlEnvolver, columnasDeOpciones } from '../../../forms/paginated/paginated-layout';
+import { hiddenFields } from '../../../forms/paginated/conditional-visibility';
+import { isMainQuestion } from '../../../forms/paginated/paginate-fields';
 import {
   MAX_CAMPOS_POR_PAGINA,
   type CampoDeFormulario,
@@ -43,13 +46,14 @@ import { GridGroup } from '../../molecules/grid-group/grid-group';
 import { PhoneInput } from '../../molecules/phone-input/phone-input';
 import { Radio } from '../../molecules/radio/radio';
 import { RadioGroup } from '../../molecules/radio-group/radio-group';
-import { RadioOtro } from '../../molecules/radio-otro/radio-otro';
+import { OtherRadio } from '../../molecules/other-radio/other-radio';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { Stepper } from '../../molecules/stepper/stepper';
-import type { StepperStep } from '../../molecules/stepper/stepper.types';
+import { porcentajeDelRecorrido, type StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
-import { CampoPersonalizado } from './campo-personalizado';
+import type { DateTextProblem } from '../date-picker/date-picker.types';
+import { CustomField } from './custom-field';
 
 /**
  * Cuántas páginas admite el stepper **con rótulos** antes de estorbar.
@@ -121,9 +125,14 @@ type RespuestaSiNo = 'si' | 'no' | '';
  *   tres páginas atrás; validar todo al entrar pintaría de rojo lo que aún no
  *   escribió.
  *
- * - **La barra cuenta páginas terminadas, no la actual.** En el paso 1 de 4 dice
- *   0%: no hay nada hecho todavía. Empezar en 25% por haber abierto la pantalla
- *   es una barra que miente, y una barra que miente no se vuelve a mirar.
+ * - **La barra mide el recorrido, igual que el stepper.** En la primera página
+ *   dice 0 %, sobre el primer marcador; en la última, 100 %, sobre el último;
+ *   en el medio, la posición entre los dos (`posición / (páginas − 1)`). No
+ *   empieza en 25 % por haber abierto la pantalla. La cuenta no es propia: sale
+ *   de la misma lista de pasos que dibuja el stepper (`porcentajeDelRecorrido`),
+ *   así que la barra y el riel no pueden dar dos avances distintos. Antes
+ *   contaba «páginas terminadas sobre el total» y el stepper otra cosa
+ *   (issue #1448).
  *
  * - **El foco viaja con la página.** Al cambiar de paso, el título recibe el
  *   foco y una región viva anuncia «Paso 2 de 4: Datos de contacto». Sin eso,
@@ -179,13 +188,14 @@ type RespuestaSiNo = 'si' | 'no' | '';
     Progress,
     Radio,
     RadioGroup,
-    RadioOtro,
+    OtherRadio,
     SegmentedControl,
     Select,
     Stepper,
     Switch,
     Textarea,
     Tooltip,
+    ApilarAlEnvolver,
   ],
   templateUrl: './paginated-form.html',
   styleUrl: './paginated-form.css',
@@ -197,6 +207,8 @@ type RespuestaSiNo = 'si' | 'no' | '';
 export class PaginatedForm {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly dialogs = inject(DialogService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly paginas = input.required<readonly PaginaDeFormulario[]>();
 
@@ -207,6 +219,12 @@ export class PaginatedForm {
   readonly label = input<string>('');
 
   readonly submitLabel = input<string>('Enviar');
+
+  /** Un grupo paginado dentro de otro formulario: el padre conserva el envio. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
+  /** Conserva el selector del envio al migrar un formulario existente. */
+  readonly submitTestId = input('paginated-form-continuar');
 
   readonly pending = input(false, { transform: booleanAttribute });
 
@@ -319,7 +337,7 @@ export class PaginatedForm {
   readonly rechazada = output<PaginaDeFormulario>();
 
   /** Las plantillas de los campos `custom`, por `key`. */
-  private readonly personalizados = contentChildren(CampoPersonalizado);
+  private readonly personalizados = contentChildren(CustomField);
 
   private readonly titulo = viewChild<ElementRef<HTMLElement>>('titulo');
 
@@ -362,7 +380,7 @@ export class PaginatedForm {
   /** Las claves de los campos que su condición deja fuera de la vista. */
   protected readonly ocultos = computed(() => {
     const valores = this.valores();
-    return camposOcultos(
+    return hiddenFields(
       this.paginas().flatMap((pagina) => pagina.campos),
       (key) => valores[key],
     );
@@ -402,10 +420,15 @@ export class PaginatedForm {
    */
   protected readonly nextAsIcon = computed(() => this.iconOnlyNav() && !this.esUltima());
 
-  /** Páginas terminadas sobre el total, en tanto por ciento. */
-  readonly avance = computed(() =>
-    this.total() === 0 ? 0 : Math.round((this.indice() / this.total()) * 100),
-  );
+  /**
+   * Dónde va la persona en el recorrido, en tanto por ciento: 0 % en la primera
+   * página y 100 % en la última.
+   *
+   * Sale de `pasos()` —la misma lista que dibuja el stepper— y no de un cálculo
+   * propio sobre `indice()`: la barra y el riel del stepper cuentan lo mismo
+   * porque leen lo mismo. Ver {@link porcentajeDelRecorrido}.
+   */
+  readonly avance = computed(() => porcentajeDelRecorrido(this.pasos()));
 
   /** «Crear cuenta: paso 2 de 4, Datos de contacto». */
   readonly resumen = computed(() => {
@@ -489,8 +512,9 @@ export class PaginatedForm {
     effect(() => {
       if (!isDevMode() || this.allowLargePages()) return;
       for (const pagina of this.paginas()) {
+        if (pagina.sinPartir) continue;
         // Los «¿cuál?» condicionales no cuentan: viajan con su pregunta.
-        const principales = pagina.campos.filter(esPreguntaPrincipal).length;
+        const principales = pagina.campos.filter(isMainQuestion).length;
         if (principales > MAX_CAMPOS_POR_PAGINA) {
           console.error(
             `[app-paginated-form] La página «${pagina.titulo}» trae ${principales} campos y el tope es ${MAX_CAMPOS_POR_PAGINA}. Páselos por paginarCampos().`,
@@ -597,6 +621,9 @@ export class PaginatedForm {
     return campo.control as InputType;
   }
 
+  /** Cuántas columnas de opciones en rejilla, ancha y media (ver `columnasDeOpciones`). */
+  protected readonly columnas = columnasDeOpciones;
+
   /** Las dos respuestas de un campo de sí/no. */
   protected readonly siNo = SI_NO;
 
@@ -606,7 +633,36 @@ export class PaginatedForm {
   }
 
   protected errorDe(campo: CampoDeFormulario): string {
+    const problema = this.fechasRechazadas().get(campo.key);
+    if (problema !== undefined && this.controlDe(campo)?.touched === true) {
+      return mensajeDeFechaRechazada(problema, campo);
+    }
     return mensajeDeError(this.controlDe(campo), campo);
+  }
+
+  /**
+   * Las fechas escritas a mano que el selector rechazó, por campo. El control
+   * queda en `null` —como vacío—, así que el motivo vive acá: sin esto el
+   * campo decía «ingrese su fecha» y, si no era obligatorio, el paso seguía
+   * de largo tirando lo escrito.
+   */
+  private readonly fechasRechazadas = signal<ReadonlyMap<string, DateTextProblem>>(new Map());
+
+  protected anotarFechaRechazada(campo: CampoDeFormulario, problema: DateTextProblem | null): void {
+    const actual = this.fechasRechazadas();
+    if ((actual.get(campo.key) ?? null) === problema) return;
+    const siguiente = new Map(actual);
+    if (problema === null) {
+      siguiente.delete(campo.key);
+    } else {
+      siguiente.set(campo.key, problema);
+      this.controlDe(campo)?.markAsTouched();
+    }
+    this.fechasRechazadas.set(siguiente);
+  }
+
+  private fechaRechazada(campo: CampoDeFormulario): boolean {
+    return this.fechasRechazadas().has(campo.key);
   }
 
   protected plantillaDe(campo: CampoDeFormulario) {
@@ -714,15 +770,19 @@ export class PaginatedForm {
   protected async enviar(): Promise<void> {
     const grupo = this.form();
     grupo.markAllAsTouched();
-    if (grupo.invalid) {
+    const conFechaRechazada = this.paginasActivas().some((pagina) =>
+      pagina.campos.some((campo) => this.fechaRechazada(campo)),
+    );
+    if (grupo.invalid || conFechaRechazada) {
       // Lleva a la primera página con algo mal: dejar a la persona en la última
       // con un botón que no responde es el peor final posible.
-      const fallo = this.paginasActivas().findIndex((pagina) =>
-        pagina.campos.some((campo) => this.form().get(campo.key)?.invalid === true),
-      );
+      const mal = (campo: CampoDeFormulario) =>
+        this.form().get(campo.key)?.invalid === true || this.fechaRechazada(campo);
+      const fallo = this.paginasActivas().findIndex((pagina) => pagina.campos.some(mal));
       if (fallo !== -1) {
         this.indice.set(fallo);
         this.rechazada.emit(this.paginasActivas()[fallo]);
+        this.enfocarError(this.paginasActivas()[fallo]!.campos.find(mal)?.key ?? null);
       }
       return;
     }
@@ -742,8 +802,20 @@ export class PaginatedForm {
     this.enviado.emit();
   }
 
+  protected onEmbeddedEnter(event: Event): void {
+    if (!(event instanceof KeyboardEvent)) return;
+    if ((event.target as HTMLElement | null)?.tagName !== 'INPUT') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.pending()) this.avanzar();
+  }
+
   /** El submit del `<form>`: en la última página envía, en el resto avanza. */
   protected continuar(): void {
+    if (this.embedded()) {
+      if (!this.pending()) this.avanzar();
+      return;
+    }
     if (this.esUltima()) {
       void this.enviar();
       return;
@@ -756,14 +828,22 @@ export class PaginatedForm {
     const pagina = this.paginasActivas()[posicion] ?? null;
     if (pagina === null) return true;
 
-    let valida = true;
+    let primero: string | null = null;
     for (const campo of pagina.campos) {
       const control = this.controlDe(campo);
       if (control === null) continue;
       control.markAsTouched();
-      if (control.invalid) valida = false;
+      if (control.invalid || this.fechaRechazada(campo)) primero ??= campo.key;
     }
-    if (!valida) this.rechazada.emit(pagina);
-    return valida;
+    if (primero === null) return true;
+    this.rechazada.emit(pagina);
+    this.enfocarError(primero);
+    return false;
+  }
+
+  /** El foco, al primer campo con error de la página (ver `enfocarCampoInvalido`). */
+  private enfocarError(clave: string | null): void {
+    if (!isPlatformBrowser(this.platformId) || clave === null) return;
+    enfocarCampoInvalido(this.host.nativeElement, clave, this.injector);
   }
 }

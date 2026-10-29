@@ -13,7 +13,7 @@
         <dd>{{ study.studyName }}</dd>
       </div>
       <div class="duplicate-study__fact">
-        <dt>Realizado</dt>
+        <dt>{{ !study.reportId ? 'Pedido' : 'Realizado' }}</dt>
         <dd>{{ study.performedAt | date: 'd MMM y' }}</dd>
       </div>
       <div class="duplicate-study__fact">
@@ -26,7 +26,9 @@
           @if (study.resultsAvailable) {
             <app-badge variant="success">Resultados disponibles</app-badge>
           } @else {
-            <app-badge variant="warning">Sin resultados liberados</app-badge>
+            <app-badge variant="warning">{{
+              !study.reportId ? 'Orden activa, sin informe' : 'Sin resultados liberados'
+            }}</app-badge>
           }
         </dd>
       </div>
@@ -45,7 +47,11 @@
 
     @if (!study.resultsAvailable) {
       <p class="duplicate-study__hint">
-        No se puede reutilizar un resultado que todavía no fue liberado.
+        {{
+          !study.reportId
+            ? 'La orden sigue activa y todavía no tiene informe: no hay resultado que reutilizar.'
+            : 'No se puede reutilizar un resultado que todavía no fue liberado.'
+        }}
       </p>
     }
 

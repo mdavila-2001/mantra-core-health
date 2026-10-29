@@ -161,8 +161,16 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // consulta —el vocabulario y el catálogo de servicios de la práctica—, lo
     // que se diseña, lo que se manda a responder y lo que se cotiza sobre ese
     // mismo catálogo (FT-24, junto a «Mis servicios» por ser la misma tabla
-    // vista desde el paso siguiente).
-    paths: ['glossary', 'form-builder', 'my-services', 'my-quotations', 'questionnaires'],
+    // vista desde el paso siguiente). Los grupos médicos (FT-21) también se
+    // arman sobre un servicio de ese catálogo, así que van con ellos.
+    paths: [
+      'glossary',
+      'form-builder',
+      'my-services',
+      'my-quotations',
+      'my-medical-groups',
+      'questionnaires',
+    ],
   },
 
   /* -- Administración ----------------------------------------------------- */
@@ -273,6 +281,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // —la portada del dominio— va suelta arriba (ver `SUELTAS_A_PROPOSITO`).
     paths: [
       'superadmin/data-catalog',
+      'superadmin/portal',
       'superadmin/flows',
       'superadmin/qa-lab',
       'superadmin/web-analytics',
@@ -296,6 +305,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
       'administration/pharmacy-prices',
+      'administration/pharmacy-hours',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
@@ -338,7 +348,15 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     group: 'Mi cuenta',
     icon: 'patients',
     // Quién soy para la plataforma, y cómo lo demuestro.
-    paths: ['my-account', 'my-account/identity', 'my-account/dependents'],
+    paths: [
+      'my-account',
+      'my-account/identity',
+      'my-account/dependents',
+      'my-account/security',
+      // Quién ve mi historia y qué consentí: también es «quién soy» para la plataforma.
+      'my-account/privacy',
+      'my-account/clinical-access',
+    ],
   },
   {
     label: 'Mis gestiones',

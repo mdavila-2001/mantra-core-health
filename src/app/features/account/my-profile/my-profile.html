@@ -58,7 +58,7 @@
          El host de estados envuelve **sólo** el contenido de lectura: es lo
          único que depende del resumen, y cuando ese resumen falla con el 403
          que pide verificar la identidad, la cabecera sigue en pie. -->
-      <app-card class="mi-perfil__bloque" variant="outlined" padding="lg">
+      <app-card class="mi-perfil__bloque" variant="elevated" padding="lg">
         <div class="mi-perfil__cabecera">
           <div class="mi-perfil__identidad">
             <!-- El retrato es el disparador de la subida, mismo patrón que el
@@ -249,7 +249,7 @@
                           @if (p.nationalId) {
                             {{ p.nationalId }}
                             @if (p.issuerAdministrativeAreaConceptId; as depto) {
-                              <span class="mi-perfil__sufijo">{{ etiquetaDe(depto) }}</span>
+                              <span class="mi-perfil__sufijo">· exp. en {{ etiquetaDe(depto) }}</span>
                             }
                           } @else {
                             <span class="mi-perfil__ausente">Sin registrar</span>
@@ -559,14 +559,14 @@
                   }
                 }
 
-                <!-- ─── Mis puntos ───────────────────────────────────────────── -->
-                <!-- N-03: la billetera del programa de fidelidad, dentro de la
-                   misma tarjeta. Es la MISMA pantalla que sirve la ruta
+                <!-- ─── Mis puntos ─── N-03: la billetera del programa de fidelidad,
+                   dentro de la misma tarjeta. Es la MISMA pantalla que sirve la ruta
                    `/my-account/loyalty`, embebida: sin su cabecera, porque la
                    tarjeta ya tiene una. -->
                 <app-tab [label]="pestanas[5]">
                   <app-loyalty embebido data-testid="mi-perfil-puntos" />
                 </app-tab>
+                <app-tab [label]="pestanas[6]">@if (pestana() === pestanaDeDirecciones()) { <app-address-book /> }</app-tab>
               </app-tabs>
             }
           </app-view-state-host>

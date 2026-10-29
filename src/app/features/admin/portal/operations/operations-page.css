@@ -1,0 +1,37 @@
+.operations {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.operations__op {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.operations__route {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  /* `break-word` y no `anywhere`: `anywhere` baja el ancho mínimo de la celda a una
+     letra y la tabla le quita la columna a la ruta. Parte en `/` (con <wbr>). */
+  overflow-wrap: break-word;
+}
+
+.operations__secondary,
+.operations__roles {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.operations__signals {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}

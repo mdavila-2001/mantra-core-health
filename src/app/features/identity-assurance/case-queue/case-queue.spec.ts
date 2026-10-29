@@ -82,14 +82,14 @@ describe('CaseQueue', () => {
     expect(texto).toContain('Marcado por riesgo');
   });
 
-  it('enlaza cada caso al formulario de revisión con el id ya puesto', () => {
+  it('enlaza cada caso a su expediente con el id en la ruta', () => {
     responder([caso()]);
 
     const enlace: HTMLAnchorElement | null =
-      fixture.nativeElement.querySelector(`a[href*="caseId=${CASO}"]`);
+      fixture.nativeElement.querySelector(`a[href$="/cases/${CASO}"]`);
     expect(enlace).not.toBeNull();
     expect(enlace?.getAttribute('href')).toContain(
-      '/administration/identity-assurance/review/escalate',
+      '/administration/identity-assurance/cases/',
     );
   });
 

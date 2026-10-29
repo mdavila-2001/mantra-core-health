@@ -1,0 +1,5 @@
+     name     | open_24h | turnos 
+--------------+----------+--------
+ Casa central | t        |      2
+(1 row)
+

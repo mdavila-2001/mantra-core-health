@@ -1,3 +1,4 @@
+import type { FilaDeClausula, PlanDelMercado } from './insurer-detail.types';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -42,15 +43,15 @@ import { ViewStateHost } from '@shared/components/organisms/view-state-host/view
 import { formatKpiAmount } from '../../insurance/money-format';
 import { PublicCatalogDetail } from '../public-catalog-detail';
 import {
-  CLAVE_COBERTURA,
-  CLAVE_SEGMENTO,
-  CLAVE_TIPO,
-  criterioDe,
-  filtrarPlanes,
-  filtrosDelCatalogo,
-  hayCriterio,
-  type PlanFiltrado,
-} from './insurer-detail.filtros';
+  COVERAGE_KEY,
+  SEGMENT_KEY,
+  TYPE_KEY,
+  criterionOf,
+  filterPlans,
+  catalogFilters,
+  hasCriterion,
+  type FilteredPlan,
+} from './insurer-detail.filters';
 
 /** Los documentos que una cláusula puede exigir, dichos para el paciente. */
 const DOCUMENTOS: Readonly<Record<ApprovalDocumentCode, string>> = {
@@ -60,54 +61,7 @@ const DOCUMENTOS: Readonly<Record<ApprovalDocumentCode, string>> = {
   INFORME_CLINICO: 'Informe clínico',
 };
 
-/** Una cláusula, lista para la tabla: todo en palabras, nada que calcular. */
-export interface FilaDeClausula {
-  readonly id: string;
-  /** La categoría sola («Maternidad»): es el value set del filtro «Que cubra». */
-  readonly categoria: string;
-  readonly cobertura: string;
-  readonly cubre: string;
-  readonly copago: string;
-  readonly deducible: string;
-  readonly tope: string;
-  readonly autorizacion: string;
-  readonly requisitos: string;
-}
-
-/** Una cobertura del plan dicha en una línea: qué y cuánto cubre. */
-export interface CoberturaDestacada {
-  readonly id: string;
-  readonly cobertura: string;
-  readonly cubre: string;
-}
-
-/** Un plan de la aseguradora, como lo lee quien lo va a contratar. */
-export interface PlanDelMercado {
-  readonly id: string;
-  readonly nombre: string;
-  readonly producto: string;
-  /** El tipo de producto («Salud», «Accidentes personales»): filtro «Tipo de seguro». */
-  readonly tipo: string;
-  readonly segmento: string | null;
-  /**
-   * Qué es y para quién, en una línea: «Salud · Individual y familiar». Es el
-   * rótulo de la tarjeta del plan; el nombre del producto repite el de la
-   * aseguradora, que ya está en el título de la página.
-   */
-  readonly rotulo: string;
-  /** La prima mensual formateada, o `null` si la aseguradora no la publicó. */
-  readonly prima: string | null;
-  /** El plan de mayor cobertura del producto (`planType` PREMIUM). */
-  readonly mayorCobertura: boolean;
-  /**
-   * Las primeras coberturas, en el orden en que la aseguradora las publicó:
-   * lo que la tarjeta del plan alcanza a decir sin abrir la tabla.
-   */
-  readonly destacadas: readonly CoberturaDestacada[];
-  /** Cuántas coberturas, el tope anual mayor y cuántas piden autorización. */
-  readonly resumen: string;
-  readonly clausulas: readonly FilaDeClausula[];
-}
+export type { FilaDeClausula, CoberturaDestacada, PlanDelMercado } from './insurer-detail.types';
 
 /** Cuántas coberturas se destacan en la tarjeta de un plan. */
 const DESTACADAS = 3;
@@ -281,8 +235,8 @@ const COLUMNAS: readonly ColumnDef<FilaDeClausula>[] = [
   ],
   templateUrl: './insurer-detail.html',
   styleUrls: [
-    '../../../shared/styles/rejilla-de-tarjetas.css',
-    '../../../shared/styles/ficha-publica.css',
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/public-sheet.css',
     './insurer-detail.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -321,15 +275,15 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   });
 
   /** Sólo los filtros con algo que elegir en el catálogo de esta aseguradora. */
-  protected readonly filtros = computed(() => filtrosDelCatalogo(this.items()));
+  protected readonly filtros = computed(() => catalogFilters(this.items()));
 
-  private readonly criterio = computed(() => criterioDe(this.params(), this.filtros()));
+  private readonly criterio = computed(() => criterionOf(this.params(), this.filtros()));
 
-  protected readonly filtrando = computed(() => hayCriterio(this.criterio()));
+  protected readonly filtrando = computed(() => hasCriterion(this.criterio()));
 
   /** Los planes que pasaron el filtro, cada uno con las cláusulas a la vista. */
-  protected readonly visibles = computed<readonly PlanFiltrado[]>(() =>
-    filtrarPlanes(this.items(), this.criterio()),
+  protected readonly visibles = computed<readonly FilteredPlan[]>(() =>
+    filterPlans(this.items(), this.criterio()),
   );
 
   /**
@@ -344,9 +298,9 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
       relativeTo: this.rutaActual,
       queryParams: {
         [SEARCH_PARAM]: null,
-        [CLAVE_TIPO]: null,
-        [CLAVE_SEGMENTO]: null,
-        [CLAVE_COBERTURA]: null,
+        [TYPE_KEY]: null,
+        [SEGMENT_KEY]: null,
+        [COVERAGE_KEY]: null,
       },
       queryParamsHandling: 'merge',
     });
@@ -356,7 +310,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
 
   /** Página y tamaño de la tabla de cada plan, por id; sin entrada, los de omisión. */
   private readonly paginas = linkedSignal<
-    readonly PlanFiltrado[],
+    readonly FilteredPlan[],
     Readonly<Record<string, { readonly pagina: number; readonly porPagina: number }>>
   >({
     source: this.visibles,
@@ -370,29 +324,29 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
       ),
   });
 
-  protected paginaDe(plan: PlanFiltrado): number {
+  protected paginaDe(plan: FilteredPlan): number {
     const porPagina = this.porPaginaDe(plan);
     const ultima = Math.max(1, Math.ceil(plan.clausulas.length / porPagina));
     return Math.min(ultima, this.paginas()[plan.plan.id]?.pagina ?? 1);
   }
 
-  protected porPaginaDe(plan: PlanFiltrado): number {
+  protected porPaginaDe(plan: FilteredPlan): number {
     return this.paginas()[plan.plan.id]?.porPagina ?? POR_PAGINA;
   }
 
-  protected irAPagina(plan: PlanFiltrado, pagina: number): void {
+  protected irAPagina(plan: FilteredPlan, pagina: number): void {
     this.paginas.update((actual) => ({
       ...actual,
       [plan.plan.id]: { pagina, porPagina: this.porPaginaDe(plan) },
     }));
   }
 
-  protected cambiarPorPagina(plan: PlanFiltrado, porPagina: number): void {
+  protected cambiarPorPagina(plan: FilteredPlan, porPagina: number): void {
     this.paginas.update((actual) => ({ ...actual, [plan.plan.id]: { pagina: 1, porPagina } }));
   }
 
   /** Si la tabla de un plan lleva paginador: sólo si no entra en la página menor. */
-  protected paginada(plan: PlanFiltrado): boolean {
+  protected paginada(plan: FilteredPlan): boolean {
     return plan.clausulas.length > (TAMANOS_DE_PAGINA[0] ?? POR_PAGINA);
   }
 
@@ -425,7 +379,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   }
 
   /** La página a la vista de las cláusulas del plan, ya filtradas. */
-  protected estadoDeClausulas(plan: PlanFiltrado): ViewState<readonly FilaDeClausula[]> {
+  protected estadoDeClausulas(plan: FilteredPlan): ViewState<readonly FilaDeClausula[]> {
     if (!this.paginada(plan)) return ready(plan.clausulas);
     const porPagina = this.porPaginaDe(plan);
     const desde = (this.paginaDe(plan) - 1) * porPagina;
@@ -433,7 +387,7 @@ export class InsurerDetail extends PublicCatalogDetail<PlanDelMercado> {
   }
 
   /** «Se ven 2 de 12 coberturas», cuando el filtro acotó la tabla del plan. */
-  protected acotadas(plan: PlanFiltrado): string | null {
+  protected acotadas(plan: FilteredPlan): string | null {
     const total = plan.plan.clausulas.length;
     return plan.clausulas.length === total
       ? null

@@ -1,4 +1,4 @@
-import { PROFESIONALES, PROFESIONALES_DEMO_REGISTRADOS } from './personas';
+import { PROFESSIONALS, PROFESSIONALS_REGISTERED_DEMO } from './people';
 import { recursos } from './agenda';
 
 /**
@@ -12,11 +12,11 @@ import { recursos } from './agenda';
  */
 describe('agenda de los registrados — casos límite', () => {
   it('un médico sin ninguna especialidad sigue sin recurso', () => {
-    // El médico escrito sin especialidad (`personas.ts`, clave
+    // El médico escrito sin especialidad (`people.ts`, clave
     // `sinespecialidad`): el filtro de `recursos` lo deja afuera a propósito,
     // porque no hay nada que reservarle. El caso se prueba con él y no con
     // uno de los 13 de demostración, que tienen todos especialidad.
-    const sinEspecialidad = PROFESIONALES.filter((p) => p.origen === undefined && p.especialidades.length === 0);
+    const sinEspecialidad = PROFESSIONALS.filter((p) => p.origen === undefined && p.especialidades.length === 0);
     expect(sinEspecialidad.length).toBeGreaterThan(0);
 
     for (const p of sinEspecialidad) {
@@ -25,7 +25,7 @@ describe('agenda de los registrados — casos límite', () => {
   });
 
   it('ninguna de las 13 personas de la planilla del propietario tiene recurso', () => {
-    const deLaPlanilla = PROFESIONALES.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
+    const deLaPlanilla = PROFESSIONALS.filter((p) => p.origen === 'USUARIO_PROPIETARIO');
     expect(deLaPlanilla).toHaveLength(13);
 
     const idsConRecurso = new Set(recursos.todos().map((r) => r.resourceRefId));
@@ -35,9 +35,9 @@ describe('agenda de los registrados — casos límite', () => {
   });
 
   it('los 13 de demostración tienen recurso en una de las dos instituciones inventadas, nunca en un consultorio de una persona', () => {
-    expect(PROFESIONALES_DEMO_REGISTRADOS).toHaveLength(13);
+    expect(PROFESSIONALS_REGISTERED_DEMO).toHaveLength(13);
     const sitiosDemo = new Set(['OLIVOS-C', 'SANLUCAS']);
-    for (const p of PROFESIONALES_DEMO_REGISTRADOS) {
+    for (const p of PROFESSIONALS_REGISTERED_DEMO) {
       const suyos = recursos.todos().filter((r) => r.resourceRefId === p.id);
       expect(suyos, p.id).toHaveLength(1);
       expect(sitiosDemo.has(suyos[0]!.site?.code ?? ''), p.id).toBe(true);

@@ -1,20 +1,25 @@
-import { CATEGORIA_ORDEN, ESTADO, PERFORMER_MODE, PRIORIDAD } from './conceptos';
-import type { OrdenSimulada } from './clinica';
-import { MEDICA, PACIENTE } from './personas';
+import type { ServiceRequestPerformerInput } from '../../data-access/diagnostics/service-request-performer.types';
+import { ORDER_CATEGORY, PRIORITY, STATUS } from './concepts';
+import type { SimulatedOrder } from './clinic';
+import { PERFORMER_MODE } from './performer-concepts';
+import { MEDICAL, PACIENTE } from './people';
 import { iso, uuid } from '../mock-store';
 
 /* ============================================================================
-    Órdenes de procedimiento de la paciente de ejemplo (centros médicos, CM-10).
+    Órdenes de procedimiento de la paciente de ejemplo (centros médicos).
 
-    Viven aparte de `ordenes` a propósito: esa colección es la base de la que
+    Viven aparte de `orderList` a propósito: esa colección es la base de la que
     leen las pantallas de laboratorio, imagen y seguros, y sumarle filas movería
     sus conteos. Sólo `GET /diagnostic-results/me/orders` las agrega a lo que ve
     la paciente; las que se piden por `POST /clinical/service-requests` sí van a
-    `ordenes`, como cualquier otra.
+    `orderList`, como cualquier otra.
 
     Los ids de procedimiento y de sede son los de «Datos de la maqueta» del
     contrato, así que la orden, el centro y la búsqueda hablan de lo mismo.
     ========================================================================== */
+
+/** Una orden con el ejecutor que eligió el médico (CONTRATO §3). */
+export type ProcedureOrder = SimulatedOrder & ServiceRequestPerformerInput;
 
 /** Los nombres de las sedes de ejemplo, que la API resolvería desde `practice`. */
 const SITE_NAME: ReadonlyMap<string, string> = new Map([
@@ -27,15 +32,15 @@ export function sampleSiteName(siteId: string): string | null {
   return SITE_NAME.get(siteId) ?? null;
 }
 
-const SAMPLE_PROCEDURE_ORDERS: readonly OrdenSimulada[] = [
+const SAMPLE_PROCEDURE_ORDERS: readonly ProcedureOrder[] = [
   {
     id: uuid('order-proc-endoscopia-alta'),
     patientProfileId: PACIENTE.id,
     codeConceptId: uuid('proc-endoscopia-alta'),
-    categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE']!,
-    priorityConceptId: PRIORIDAD['PRI-ROUTINE']!,
-    statusConceptId: ESTADO['ST-PENDING']!,
-    requesterProfileId: MEDICA.id,
+    categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE']!,
+    priorityConceptId: PRIORITY['PRI-ROUTINE']!,
+    statusConceptId: STATUS['ST-PENDING']!,
+    requesterProfileId: MEDICAL.id,
     reasonText: 'Dolor epigástrico persistente',
     createdAt: iso(-4),
     // El médico sugiere un centro: es una recomendación, no un candado.
@@ -46,10 +51,10 @@ const SAMPLE_PROCEDURE_ORDERS: readonly OrdenSimulada[] = [
     id: uuid('order-proc-colonoscopia'),
     patientProfileId: PACIENTE.id,
     codeConceptId: uuid('proc-colonoscopia'),
-    categoryConceptId: CATEGORIA_ORDEN['SRQ-PROCEDURE']!,
-    priorityConceptId: PRIORIDAD['PRI-ROUTINE']!,
-    statusConceptId: ESTADO['ST-PENDING']!,
-    requesterProfileId: MEDICA.id,
+    categoryConceptId: ORDER_CATEGORY['SRQ-PROCEDURE']!,
+    priorityConceptId: PRIORITY['PRI-ROUTINE']!,
+    statusConceptId: STATUS['ST-PENDING']!,
+    requesterProfileId: MEDICAL.id,
     reasonText: 'Control por antecedente familiar',
     createdAt: iso(-9),
     // Sin recomendación: elige la paciente.
@@ -57,7 +62,7 @@ const SAMPLE_PROCEDURE_ORDERS: readonly OrdenSimulada[] = [
   },
 ];
 
-/** Las órdenes de procedimiento sembradas de una persona, de la más nueva a la más vieja. */
-export function seededProcedureOrdersOf(patientProfileId: string): readonly OrdenSimulada[] {
+/** Las órdenes de procedimiento sembradas de una persona. */
+export function seededProcedureOrdersOf(patientProfileId: string): readonly ProcedureOrder[] {
   return SAMPLE_PROCEDURE_ORDERS.filter((o) => o.patientProfileId === patientProfileId);
 }

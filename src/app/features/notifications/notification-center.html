@@ -57,11 +57,18 @@
      garantizado que el arreglo de una se aplicara a la mitad. -->
 <ng-template #bandeja>
   <app-view-state-host [state]="estado()" (retry)="recargar()">
+    <div vsh-empty class="avisos__vacio">
+      <app-empty-state [title]="tituloVacio()" [description]="descripcionVacio()" variant="empty">
+        <a app-button empty-actions variant="outline" size="sm" routerLink="/settings">
+          Ir a preferencias
+        </a>
+      </app-empty-state>
+    </div>
     @if (hayFiltrosSinResultados()) {
       <div class="avisos__vacio">
         <app-empty-state
           title="Todavía no aparecen avisos de esta categoría"
-          description="Cargá más notificaciones para seguir buscando."
+          description="Cargue más notificaciones para seguir buscando."
           variant="empty"
         />
       </div>
@@ -95,6 +102,23 @@
                     [ngTemplateOutletContext]="{ $implicit: aviso }"
                   />
                 </div>
+                <!-- Sin destino no hay fila que abrir: marcarla leída se ofrece
+                     aparte, de a una, y no sólo con «Marcar todas». -->
+                @if (aviso.unread) {
+                  <div class="avisos__marcar">
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      data-testid="aviso-marcar-leida"
+                      [attr.aria-label]="'Marcar como leída: ' + aviso.subject"
+                      (clicked)="marcarLeida(aviso)"
+                    >
+                      Marcar como leída
+                    </button>
+                  </div>
+                }
               }
 
               <!-- Las acciones que la notificación ofrece, sin salir de la

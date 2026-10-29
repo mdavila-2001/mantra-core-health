@@ -42,7 +42,14 @@
   color: var(--text-primary);
 }
 
+.inventory__producto {
+  display: block;
+  min-inline-size: 0;
+}
+
 .inventory__code {
+  display: block;
+  overflow-wrap: anywhere;
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
@@ -76,4 +83,35 @@
   .inventory__csv {
     justify-content: flex-end;
   }
+}
+
+/* Una nota, no una alerta: es contexto, no un problema. Texto secundario y sin
+   caja (un recuadro verde dentro de la tarjeta era «caja dentro de caja»). */
+.inventory__nota {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+}
+
+/* El estado no va sólo en el texto: el icono de información delante. */
+.inventory__nota::before {
+  content: '';
+  flex: none;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin-block-start: 0.2rem;
+  background: var(--st-info-fg);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Un número de unas pocas cifras no necesita toda la columna: el campo se
+   acota y la fila deja de ser una pared de recuadros anchos. */
+app-input {
+  display: block;
+  max-inline-size: 7.5rem;
 }

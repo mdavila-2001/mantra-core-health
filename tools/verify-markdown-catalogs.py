@@ -128,9 +128,9 @@ def main() -> None:
 
     # 5-7. Clínicas, hospitales y aseguradoras.
     instituciones = {
-        "CLINICAS_REALES": generated("instituciones.generated.ts", "CLINICAS_REALES"),
-        "HOSPITALES_REALES": generated("instituciones.generated.ts", "HOSPITALES_REALES"),
-        "ASEGURADORAS_REALES": generated("instituciones.generated.ts", "ASEGURADORAS_REALES"),
+        "CLINICAS_REALES": generated("institutions.generated.ts", "CLINICAS_REALES"),
+        "HOSPITALES_REALES": generated("institutions.generated.ts", "HOSPITALES_REALES"),
+        "ASEGURADORAS_REALES": generated("institutions.generated.ts", "ASEGURADORAS_REALES"),
     }
 
     def present(pool: list[dict], name: str, *values: str) -> bool:
@@ -155,7 +155,7 @@ def main() -> None:
         n for n, nit in names if not any(norm(a["name"]) == norm(n) and a["taxId"] == nit for a in instituciones["ASEGURADORAS_REALES"])
     ] + ([] if len(names) == len(instituciones["ASEGURADORAS_REALES"]) else [f"{len(names)} filas y {len(instituciones['ASEGURADORAS_REALES'])} aseguradoras"]),
     "BISA y Fortaleza figuran en los dos ramos: 19 filas, 19 fichas")
-    conceptos = (FIXTURES / "conceptos.ts").read_text(encoding="utf-8")
+    conceptos = (FIXTURES / "concepts.ts").read_text(encoding="utf-8")
     departments = [r[5] for r in rows(src / "LISTADO_DE_ASEGURADORAS_1.md") if len(r) > 5 and r[5] and r[5] != "DEPARTAMENTO"]
     check("Aseguradoras · tabla de departamentos", len(departments), [
         d for d in departments if not any(norm(d).startswith(norm(x)) or norm(x).startswith(norm(d)) for x in re.findall(r"\['geo:bo:department:\w+', '([^']+)'\]", conceptos))

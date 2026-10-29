@@ -53,6 +53,7 @@ describe('PharmacyProfile', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: SAMPLE_DATA_ENABLED, useValue: true },
         {
           provide: CARGADOR_DE_LEAFLET,
           useValue: (() => Promise.resolve(leafletDoblado())) as CargadorDeLeaflet,

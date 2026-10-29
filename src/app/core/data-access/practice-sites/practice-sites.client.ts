@@ -71,9 +71,7 @@ export class PracticeSitesClient {
    */
   listMyRoleAssignments(): Observable<readonly MyRoleAssignment[]> {
     return this.http
-      .get<readonly ConNulos<WireRoleAssignment>[]>(
-        this.url('/practitioners/me/role-assignments'),
-      )
+      .get<readonly ConNulos<WireRoleAssignment>[]>(this.url('/practitioners/me/role-assignments'))
       .pipe(map((items) => items.map(aVinculacion)));
   }
 
@@ -163,14 +161,16 @@ export class PracticeSitesClient {
   }
 
   /**
-   * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio.
+   * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio, el
+   * que sale en el membrete de sus PDF.
    *
    * Mismo molde que {@link PracticeSitesClient.setSiteBankQr}: el archivo ya
-   * está subido (`FilesClient.upload`) y lo único que viaja es su id.
+   * está subido (`FilesClient.upload`) y lo único que viaja es su id. A
+   * diferencia del QR, sólo alcanza al consultorio **propio**: la API responde
+   * 404 a una sede de otra organización y 422 a un archivo que no sirve como
+   * logo (png, jpeg o webp, sensibilidad normal, hasta 2 MB).
    *
-   * **Sólo simulador por ahora.** La API todavía no expone esta ruta; el
-   * contrato esperado está en `docs/pendientes-backend-perfil-profesional.md`.
-   * Ningún componente lo llama: pasan por `LogoDelConsultorioClient`.
+   * Ningún componente lo llama directo: pasan por `PracticeLogoClient`.
    *
    * @param siteId - La sede propia cuyo logo se cambia.
    * @param fileId - El archivo ya subido, o `null` para quitar el logo.
@@ -244,9 +244,7 @@ function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
   };
 }
 
-function aResultadoDeVinculacion(
-  body: ConNulos<WireRoleAssignmentResult>,
-): RoleAssignmentResult {
+function aResultadoDeVinculacion(body: ConNulos<WireRoleAssignmentResult>): RoleAssignmentResult {
   const { createdAt, ...resto } = body;
   return {
     ...sinNulos(resto),

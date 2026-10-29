@@ -7,7 +7,7 @@
     la lista releída, no en un aviso.
 
     Con `--workers=1`. Antes de correrlo hay que tener `ng serve` en :4200.
-    Las capturas van a `docs/trabajo/2026-09-29-farmacia-cuenta/evidencia/B/`.
+    Las capturas van a `artifacts/evidencia/2026-09-29-farmacia-cuenta/evidencia/B/`.
     ========================================================================== */
 
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -18,7 +18,9 @@ import { test, expect, type Page } from '@playwright/test';
 import { farmacia, type Actor } from './support/actores';
 import { entrar, irA } from './support/sesion';
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-09-29-farmacia-cuenta', 'evidencia', 'B');
+const EVIDENCIA = process.env['E2E_EVIDENCE_DIR']
+  ? join(process.env['E2E_EVIDENCE_DIR'], 'pharmacy')
+  : join('artifacts', 'evidencia', '2026-09-29-farmacia-cuenta', 'evidencia', 'B');
 
 /** Los ocho renglones del menú de la farmacia, en el orden que pidió el propietario. */
 const MENU = [
@@ -75,8 +77,6 @@ test.describe('portal de la cuenta de farmacia', () => {
   });
 
   test('el recorrido: crear un producto, dejarlo sin stock, darle existencias, una categoría y una importación', async ({ page }) => {
-    /** El nombre oficial del producto elegido del catálogo (lo lee de la lista de resultados). */
-    let NOMBRE = '';
     // 1 · Resumen: los números de partida.
     await irPorMenu(page, '/administration/pharmacy');
     const publicados = page.getByTestId('summary-published');
@@ -94,7 +94,8 @@ test.describe('portal de la cuenta de farmacia', () => {
     await modal.getByRole('combobox', { name: 'Medicamento del catálogo oficial' }).fill('ibuprofeno');
     const opcion = page.locator('[role="option"]:not([aria-disabled="true"])').first();
     await expect(opcion).toBeVisible();
-    NOMBRE = (await opcion.locator('.reference-combobox__label').innerText()).trim();
+    /** El nombre oficial del producto elegido del catálogo (lo lee de la lista de resultados). */
+    const NOMBRE = (await opcion.locator('.reference-combobox__label').innerText()).trim();
     await opcion.click();
     // La tarjeta del registro oficial: sus datos se ven y no se editan.
     const oficial = modal.getByTestId('product-official');

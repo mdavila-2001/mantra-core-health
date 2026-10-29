@@ -20,6 +20,7 @@ import { publicProfileLink } from '../../../../core/data-access/community/public
 import type { PublicProfileDetail } from '../../../../core/data-access/community/community.types';
 import { inertBackground, trapTabKey } from '../../../../shared/a11y/modal-focus';
 import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * «Ver perfil» del chat: quién es la persona del otro lado, sin salir del hilo.
@@ -46,7 +47,7 @@ import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
  */
 @Component({
   selector: 'app-contact-panel',
-  imports: [Avatar, RouterLink],
+  imports: [Avatar, RouterLink, LoadingState],
   templateUrl: './contact-panel.html',
   styleUrl: './contact-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
