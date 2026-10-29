@@ -7,7 +7,7 @@ import {
 } from '../../../core/floor-plan/editor-model';
 import type { DraftShape } from '../../../core/floor-plan/editor-overlay';
 import { neighborGeometry, snapDelta, snapWorldPoint, type NeighborGeometry } from '../../../core/floor-plan/editor-snap';
-import { orientClockwise, validatePolygon, type Point } from '../../../core/floor-plan/geometry';
+import { bboxIntersects, bboxOf, contactOverlapArea, orientClockwise, validatePolygon, type Point } from '../../../core/floor-plan/geometry';
 
 export type EditTool = 'select' | 'hand' | 'rect' | 'polygon';
 
@@ -39,7 +39,7 @@ export interface EditorPointerHost {
 }
 
 type Gesture =
-  | { kind: 'move'; id: string; startWorld: Point; startState: EditState; moving: Point[]; neighbors: NeighborGeometry }
+  | { kind: 'move'; id: string; startWorld: Point; startState: EditState; moving: Point[]; neighbors: NeighborGeometry; siblings: Point[][] }
   | { kind: 'resize'; id: string; handle: ResizeHandle; startState: EditState; neighbors: NeighborGeometry }
   | { kind: 'rotate'; id: string; startState: EditState }
   | { kind: 'vertex'; id: string; index: number; startState: EditState; neighbors: NeighborGeometry }
@@ -120,7 +120,8 @@ export class EditorPointerController {
       return;
     }
     const ids = descendantsOf(start, id);
-    this.gesture = { kind: 'move', id, startWorld: world, startState: start, moving: verticesOfEdit(space), neighbors: this.neighborsOf(ids) };
+    const siblings = [...start.spaces.values()].filter((s) => s.parentId === space.parentId && !ids.has(s.id) && !start.removed.has(s.id)).map((s) => verticesOfEdit(s));
+    this.gesture = { kind: 'move', id, startWorld: world, startState: start, moving: verticesOfEdit(space), neighbors: this.neighborsOf(ids), siblings };
     this.host.dragFocus.set(ids);
   }
 
@@ -152,7 +153,8 @@ export class EditorPointerController {
     const suspended = ev.altKey;
     if (g.kind === 'move') {
       const raw: Point = [ev.world[0] - g.startWorld[0], ev.world[1] - g.startWorld[1]];
-      const snapped = snapDelta({ moving: g.moving, delta: raw, neighbors: g.neighbors, gridSizeM: this.host.snapOn() ? this.host.gridSizeM() : null, radiusM: this.radiusM(), suspended, orthogonal: ev.shiftKey });
+      const rejects = (delta: Point): boolean => this.overlapsSibling(g.moving.map(([x, y]) => [x + delta[0], y + delta[1]] as Point), g.siblings);
+      const snapped = snapDelta({ moving: g.moving, delta: raw, neighbors: g.neighbors, gridSizeM: this.host.snapOn() ? this.host.gridSizeM() : null, radiusM: this.radiusM(), suspended, orthogonal: ev.shiftKey, rejects });
       this.host.snapMark.set(snapped.mark);
       this.host.live(moveWithChildren(g.startState, g.id, snapped.delta[0], snapped.delta[1]));
       this.host.measuring.set(g.id);
@@ -175,6 +177,12 @@ export class EditorPointerController {
       this.host.live(setGeometry(this.host.current(), g.id, movePolygonVertex(live, g.index, p.point)));
     }
     this.host.measuring.set(g.id);
+  }
+
+  /** ¿La figura, en esa posición, pisa a una hermana? (más que el contacto de pared compartida) */
+  private overlapsSibling(ring: readonly Point[], siblings: readonly (readonly Point[])[]): boolean {
+    const box = bboxOf(ring);
+    return siblings.some((other) => bboxIntersects(box, bboxOf(other)) && contactOverlapArea(ring, other, 0.01) > 0);
   }
 
   private finish(g: Gesture): void {

@@ -37,4 +37,12 @@ describe('editor-snap', () => {
     expect(result.point[1]).toBeCloseTo(4, 6);
     expect(result.mark).not.toBeNull();
   });
+
+  it('descarta un imán que dejaría la figura encima de otra y cae en la grilla', () => {
+    const result = snapDelta({
+      moving: square(0, 0, 4), delta: [5.95, 0.02], neighbors, gridSizeM: 0.5, radiusM: 0.3, suspended: false, orthogonal: false,
+      rejects: () => true,
+    });
+    expect(result.kind).toBe('grid');
+  });
 });

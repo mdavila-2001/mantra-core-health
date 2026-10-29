@@ -53,11 +53,11 @@ const FIELDS: readonly { key: RectField; label: string; unit: string }[] = [
   `,
   styles: `
     :host { display: block; }
-    .insp { display: grid; gap: var(--sp-2); padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-lg); }
+    .insp { display: grid; gap: var(--sp-2); min-width: 0; padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-lg); }
     .insp__title { margin: 0; font-size: var(--fs-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
     .insp__measure { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
     .insp__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2); }
-    .insp__field { display: grid; gap: 2px; font-size: var(--fs-caption); color: var(--text-secondary); font-weight: 600; }
+    .insp__field { display: grid; gap: 2px; min-width: 0; font-size: var(--fs-caption); color: var(--text-secondary); font-weight: 600; }
     .insp__actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
     .insp__note { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
   `,

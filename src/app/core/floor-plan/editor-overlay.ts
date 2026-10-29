@@ -24,6 +24,8 @@ export interface OverlayInput {
   readonly measuring: EditSpace | null;
   readonly errors: ReadonlyMap<string, string>;
   readonly errorShapes: ReadonlyMap<string, readonly Point[]>;
+  /** Rótulo corto de cada figura con error (glifo + qué pasa); el detalle va en la lista de problemas. */
+  readonly errorLabels: ReadonlyMap<string, string>;
   readonly snapMark: Point | null;
   /** Píxeles por metro, para que las asas y los desfases queden del mismo tamaño en pantalla. */
   readonly scale: number;
@@ -104,12 +106,12 @@ export function buildEditorOverlay(input: OverlayInput): CanvasOverlay {
     labels.push({ x: (box[0] + box[2]) / 2, y: box[1] - 10 / input.scale, text: measureText(input.measuring), kind: 'measure' });
   }
 
-  // Cada error: glifo + mensaje junto a la figura (además del borde): no depende del color.
-  for (const [id, ring] of input.errorShapes) {
-    const message = input.errors.get(id);
-    if (!message) continue;
+  // Cada error: glifo + rótulo corto sobre el borde superior de la figura (además del borde: no depende del color).
+  for (const [id, label] of input.errorLabels) {
+    const ring = input.errorShapes.get(id);
+    if (!ring) continue;
     const box = bboxOf(ring);
-    labels.push({ x: (box[0] + box[2]) / 2, y: (box[1] + box[3]) / 2, text: `⚠ ${message}`, kind: 'error' });
+    labels.push({ x: (box[0] + box[2]) / 2, y: box[1] - 8 / input.scale, text: `⚠ ${label}`, kind: 'error' });
   }
 
   return {

@@ -134,13 +134,13 @@ export class FloorPlanEditorStore {
   });
 
   readonly overlay = computed<CanvasOverlay | null>(() => {
-    const { errors, shapes } = errorMarks(this.issues(), this.current());
+    const { errors, shapes, labels } = errorMarks(this.issues(), this.current());
     const sel = this.selected();
     const measuringId = this.measuring();
     const measured = measuringId ? (this.current().spaces.get(measuringId) ?? null) : null;
     return buildEditorOverlay({
       selected: sel, selectedVertex: this.selectedVertex(), locked: sel?.locked ?? false, draft: this.draft(), measuring: measured,
-      errors, errorShapes: shapes, snapMark: this.snapMark(), scale: this.viewScale(), pointerType: this.pointerType(),
+      errors, errorShapes: shapes, errorLabels: labels, snapMark: this.snapMark(), scale: this.viewScale(), pointerType: this.pointerType(),
     });
   });
 

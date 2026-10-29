@@ -36,6 +36,8 @@ export interface DragSnapInput {
   readonly radiusM: number;
   readonly suspended: boolean;
   readonly orthogonal: boolean;
+  /** Descarta un imán que deje la figura encima de otra (el imán es para pegar paredes, no para pisarlas). */
+  readonly rejects?: (delta: Point) => boolean;
 }
 
 export interface DragSnapResult {
@@ -57,17 +59,21 @@ export function snapDelta(input: DragSnapInput): DragSnapResult {
   }
   if (input.suspended || input.moving.length === 0) return { delta: [dx, dy], mark: null, kind: 'none' };
 
-  let best: { correction: Point; mark: Point; kind: 'vertex' | 'edge'; distance: number } | null = null;
+  // Todos los imanes posibles, del vértice más cerca al más lejano; gana el primero que no pisa a una vecina.
+  const candidates: { correction: Point; mark: Point; kind: 'vertex' | 'edge'; distance: number }[] = [];
   for (const v of input.moving) {
     const probe: Point = [v[0] + dx, v[1] + dy];
     const hit = snapPoint(probe, { gridSizeM: null, vertices: input.neighbors.vertices, edges: input.neighbors.edges, radiusM: input.radiusM });
     if (hit.kind !== 'vertex' && hit.kind !== 'edge') continue;
     const correction: Point = [hit.point[0] - probe[0], hit.point[1] - probe[1]];
-    const distance = Math.hypot(correction[0], correction[1]);
-    const better = best === null || (hit.kind === 'vertex' && best.kind === 'edge') || (hit.kind === best.kind && distance < best.distance);
-    if (better) best = { correction, mark: hit.point, kind: hit.kind, distance };
+    candidates.push({ correction, mark: hit.point, kind: hit.kind, distance: Math.hypot(correction[0], correction[1]) });
   }
-  if (best !== null) return { delta: [dx + best.correction[0], dy + best.correction[1]], mark: best.mark, kind: best.kind };
+  candidates.sort((a, b) => (a.kind === b.kind ? a.distance - b.distance : a.kind === 'vertex' ? -1 : 1));
+  for (const c of candidates) {
+    const delta: Point = [dx + c.correction[0], dy + c.correction[1]];
+    if (input.rejects?.(delta)) continue;
+    return { delta, mark: c.mark, kind: c.kind };
+  }
 
   const grid = input.gridSizeM;
   if (grid != null && grid > 0) {

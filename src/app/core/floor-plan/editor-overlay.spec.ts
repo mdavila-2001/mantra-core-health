@@ -34,8 +34,9 @@ describe('editor-overlay', () => {
   it('los errores llevan borde, glifo y mensaje; sin selección no hay asas', () => {
     const overlay = buildEditorOverlay({
       selected: null, selectedVertex: null, locked: false, draft: null, measuring: null,
-      errors: new Map([['a', 'Se solapa con B']]),
+      errors: new Map([['a', 'A se solapa con B.']]),
       errorShapes: new Map([['a', [[0, 0], [2, 0], [2, 2], [0, 2]]]]),
+      errorLabels: new Map([['a', 'Se solapa con B']]),
       snapMark: null, scale: 10, pointerType: 'mouse',
     });
     expect(overlay.handles).toHaveLength(0);

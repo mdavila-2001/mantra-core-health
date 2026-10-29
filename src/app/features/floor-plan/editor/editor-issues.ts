@@ -39,10 +39,33 @@ export function mergeIssues(server: readonly LayoutItemError[], local: readonly 
   return [...fromServer, ...fromLocal];
 }
 
-/** Qué figuras se pintan con error (la propia y su vecina) y con qué mensaje. */
-export function errorMarks(issues: readonly EditorIssue[], state: EditState): { errors: Map<string, string>; shapes: Map<string, readonly Point[]> } {
+/** Texto corto para rotular la figura en el plano; el detalle completo está en la lista de problemas. */
+export function shortIssueLabel(issue: EditorIssue): string {
+  const other = issue.conflictsWith[0]?.code;
+  switch (issue.code) {
+    case 'PLAN_SIBLING_OVERLAP':
+      return other ? `Se solapa con ${other}` : 'Se solapa';
+    case 'PLAN_CHILD_OUTSIDE_PARENT':
+      return 'Sale de su espacio padre';
+    case 'PLAN_OUT_OF_BOUNDS':
+      return 'Sale del lienzo';
+    case 'PLAN_GEOMETRY_INVALID':
+      return 'Figura no válida';
+    case 'PLAN_PARENT_NOT_PLACED':
+      return 'Su espacio padre no está dibujado';
+    default:
+      return issue.message.length > 42 ? `${issue.message.slice(0, 40)}…` : issue.message;
+  }
+}
+
+/** Qué figuras se pintan con error (la propia y su vecina), con qué mensaje y con qué rótulo corto. */
+export function errorMarks(
+  issues: readonly EditorIssue[],
+  state: EditState,
+): { errors: Map<string, string>; shapes: Map<string, readonly Point[]>; labels: Map<string, string> } {
   const errors = new Map<string, string>();
   const shapes = new Map<string, readonly Point[]>();
+  const labels = new Map<string, string>();
   const mark = (id: string, message: string): void => {
     const space = state.spaces.get(id);
     if (!space || state.removed.has(id)) return;
@@ -52,7 +75,8 @@ export function errorMarks(issues: readonly EditorIssue[], state: EditState): { 
   for (const issue of issues) {
     if (issue.kind !== 'SPACE') continue;
     mark(issue.id, issue.message);
+    if (!labels.has(issue.id) && state.spaces.has(issue.id)) labels.set(issue.id, shortIssueLabel(issue));
     for (const other of issue.conflictsWith) mark(other.id, `Choca con ${state.spaces.get(issue.id)?.code ?? 'otra figura'}.`);
   }
-  return { errors, shapes };
+  return { errors, shapes, labels };
 }

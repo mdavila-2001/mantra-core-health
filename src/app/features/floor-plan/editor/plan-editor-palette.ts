@@ -49,11 +49,11 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
   `,
   styles: `
     :host { display: block; }
-    .pal { display: grid; gap: var(--sp-2); padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-lg); }
+    .pal { display: grid; gap: var(--sp-2); min-width: 0; padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-lg); }
     .pal__title { margin: 0; font-size: var(--fs-body); font-weight: 700; color: var(--text-primary); }
     .pal__count { margin-left: var(--sp-1); font-variant-numeric: tabular-nums; color: var(--text-secondary); font-weight: 600; }
     .pal__filter { display: grid; gap: 2px; font-size: var(--fs-caption); color: var(--text-secondary); font-weight: 600; }
-    .pal__input { min-height: 40px; padding: 0 var(--sp-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--bg-surface); color: var(--text-primary); font: inherit; }
+    .pal__input { box-sizing: border-box; width: 100%; min-height: 40px; padding: 0 var(--sp-2); border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--bg-surface); color: var(--text-primary); font: inherit; }
     .pal__input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 1px; }
     .pal__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; max-height: 320px; overflow: auto; }
     .pal__item { display: grid; width: 100%; gap: 2px; padding: var(--sp-2); min-height: 44px; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--text-primary); font: inherit; font-size: var(--fs-caption); text-align: left; cursor: pointer; }
