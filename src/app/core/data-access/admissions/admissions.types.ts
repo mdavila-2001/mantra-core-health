@@ -39,7 +39,7 @@ export const ADMISSION_STATUS_LABELS: Readonly<Record<AdmissionStatusCode, strin
   VERIFIED: 'Verificada',
   REJECTED: 'Rechazada',
   SUSPENDED: 'Suspendida',
-  EXPIRED: 'Vencida',
+  EXPIRED: 'Verificación vencida',
   ABANDONED: 'Abandonada',
   WITHDRAWN: 'Retirada',
 };
@@ -244,6 +244,12 @@ export interface AdmissionRequirement {
   /** Ítem de la ficha al que corresponde (matrícula, título, especialidad). */
   readonly itemRef: { readonly type: AdmissionItemType; readonly id: string } | null;
   readonly source: RequirementSource | null;
+  /**
+   * La huella de lo que hay que mirar para decidir (los documentos y los
+   * datos del requisito). Se manda al verificar: si el médico cambió algo
+   * mientras tanto, la API responde 409 `ADMISSION_EVIDENCE_CHANGED`.
+   */
+  readonly evidenceSha256: string | null;
   readonly reasonCode: string | null;
   /** Lo que lee el médico. */
   readonly reasonText: string | null;
@@ -282,6 +288,8 @@ export interface AdmissionDocument {
   readonly uploadedAt: Date | null;
   readonly pages: number | null;
   readonly reviewState: RequirementStatusCode | null;
+  /** Huella SHA-256 del contenido, tal como la API lo tiene hoy. */
+  readonly evidenceSha256: string | null;
 }
 
 /** Un campo del formulario que el médico llenó al registrarse. */
@@ -400,6 +408,11 @@ export interface RequirementReviewCommand {
   readonly sourceRef?: string;
   /** Fecha de la consulta, `YYYY-MM-DD`. */
   readonly sourceConsultedAt?: string;
+  /**
+   * La huella de la evidencia que el revisor tenía en pantalla. Obligatoria al
+   * verificar; opcional al rechazar o pedir información.
+   */
+  readonly evidenceSha256?: string;
   /** Al rechazar o pedir información. */
   readonly reasonCode?: ReasonCode;
   readonly reason?: string;
@@ -479,13 +492,15 @@ export interface WireAdmissionDetail extends Omit<WireAdmissionSummary, 'practit
     readonly verifiedAt: Iso | null;
   })[];
   readonly specialties: readonly AdmissionSpecialty[];
-  readonly requirements?: readonly (Omit<AdmissionRequirement, 'reviewedAt' | 'source'> & {
+  readonly requirements?: readonly (Omit<AdmissionRequirement, 'reviewedAt' | 'source' | 'evidenceSha256'> & {
+    readonly evidenceSha256?: string | null;
     readonly reviewedAt: Iso | null;
     readonly source: (Omit<RequirementSource, 'consultedAt'> & { readonly consultedAt: Iso | null }) | null;
   })[];
   /** Ausentes en una API anterior: el cliente los deriva de los requisitos y la ficha. */
-  readonly documents?: readonly (Omit<AdmissionDocument, 'uploadedAt'> & {
+  readonly documents?: readonly (Omit<AdmissionDocument, 'uploadedAt' | 'evidenceSha256'> & {
     readonly uploadedAt: Iso | null;
+    readonly evidenceSha256?: string | null;
   })[];
   readonly submittedForm?: readonly SubmittedFormSection[];
   readonly events: readonly (Omit<AdmissionEvent, 'occurredAt'> & { readonly occurredAt: Iso })[];

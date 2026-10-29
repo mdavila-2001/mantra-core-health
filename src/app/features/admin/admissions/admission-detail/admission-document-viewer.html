@@ -25,10 +25,12 @@
       }
     }
     <span class="visor__espacio"></span>
-    @if (safeUrl(); as url) {
-      <a class="visor__enlace" [href]="url" [attr.download]="document().name" data-testid="viewer-download">
+    @if (safeDownload(); as url) {
+      <a class="visor__enlace" [href]="url" [attr.download]="downloadName()" data-testid="viewer-download">
         <app-nav-icon name="download" /> Descargar
       </a>
+    }
+    @if (openable()) {
       <button app-button type="button" variant="ghost" size="sm" data-testid="viewer-open" (clicked)="openInNewTab()">
         <app-nav-icon name="share" /> Abrir en pestaña nueva
       </button>
@@ -88,8 +90,21 @@
       }
       @case ('unsupported') {
         <div class="visor__mensaje" role="status" data-testid="viewer-unsupported">
-          <p><strong>Este formato no tiene vista previa.</strong></p>
-          <p>{{ typeText() }} · {{ sizeText() }}. Descárguelo para revisarlo con su aplicación.</p>
+          <p><strong>Este formato no se muestra.</strong></p>
+          <p>{{ typeText() }} · {{ sizeText() }}. Por seguridad solo se muestran imágenes y PDF: descárguelo para revisarlo con su aplicación.</p>
+        </div>
+      }
+      @case ('mismatch') {
+        <div class="visor__mensaje visor__mensaje--error" role="alert" data-testid="viewer-mismatch">
+          <p><strong>El archivo no es lo que dice ser.</strong></p>
+          <p>Declara ser {{ typeText() }}, pero su contenido es otro. No se muestra: puede descargarlo para revisarlo con cuidado.</p>
+        </div>
+      }
+      @case ('expired') {
+        <div class="visor__mensaje visor__mensaje--error" role="alert" data-testid="viewer-expired">
+          <p><strong>El enlace del documento venció.</strong></p>
+          <p>Pedimos uno nuevo cada vez que lo abre. Reintente.</p>
+          <button app-button type="button" variant="secondary" size="sm" data-testid="viewer-retry" (clicked)="retry()">Reintentar</button>
         </div>
       }
       @case ('corrupt') {
