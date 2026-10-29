@@ -315,14 +315,16 @@ describe('Agenda', () => {
     extra: Record<string, unknown> = {},
   ): Promise<void> {
     await responderRecursos();
-    http
-      .expectOne((r) => r.url === '/scheduling/bookings')
-      .flush({
+    // Con PRACTITIONER también lee «Pagos por registrar» (`pending-payments`),
+    // que pide la misma ruta por su cuenta: las dos reciben la misma cita.
+    for (const lectura of http.match((r) => r.url === '/scheduling/bookings')) {
+      lectura.flush({
         items: [{ ...CITA, statusConceptId: 'c-estado', ...extra }],
         count: 1,
         limit: 100,
         truncated: false,
       });
+    }
     http
       .expectOne((r) => r.url === '/scheduling/slots')
       .flush({ items: [], count: 0, limit: 100, truncated: false });
@@ -2315,7 +2317,9 @@ describe('Agenda', () => {
       // El `http.verify()` del afterEach lo confirma.
     });
 
-    it('una SOLICITUD sin aceptar no navega: abre su detalle y dice por qué', async () => {
+    // H11: el detalle de una solicitud es el de «Ver detalle», con «Aceptar
+    // solicitud»; antes decía «acéptela primero» sin ofrecer cómo.
+    it('una SOLICITUD sin aceptar no navega: abre «Solicitud de consulta» con «Aceptar solicitud»', async () => {
       await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
       await responderConEstado('BOOKING_PENDING_CONFIRMATION', 'Por confirmar');
       const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -2328,8 +2332,100 @@ describe('Agenda', () => {
 
       expect(navegar).not.toHaveBeenCalled();
       const config = confirmar.mock.calls[0]?.[0];
-      expect(config?.title).toContain('todavía no se atiende');
-      expect(config?.message).toContain('acéptela primero');
+      expect(config?.title).toBe('Solicitud de consulta');
+      expect(config?.confirmLabel).toBe('Aceptar solicitud');
+      // «Cerrar» no acepta: sin `POST …/accept`, lo confirma el `http.verify()`.
+    });
+
+    /**
+     * H11: la tarjeta del calendario es de `my-agenda`, con su propia ventana.
+     * Una cita fuera de la ventana de la tabla trae un `statusConceptId` que
+     * `etiquetas()` no tiene: el código quedaba vacío, `porResponder` daba
+     * `false` y el detalle decía «Su estado es "Sin registrar"», sin aceptar.
+     */
+    it('H11 · una solicitud fuera de la ventana de la tabla resuelve su estado y ofrece aceptarla', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const confirm = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const notify = vi.spyOn(TestBed.inject(ToastService), 'success');
+      const outside = {
+        ...CITA,
+        id: 'b-fuera',
+        statusConceptId: 'c-fuera',
+        bookableSlotId: CUPO.id,
+      };
+
+      interno<(b: unknown) => void>('atenderDesdeLaTarjeta')(outside);
+      http
+        .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'c-fuera')
+        .flush({
+          items: [
+            {
+              conceptId: 'c-fuera',
+              code: 'BOOKING_PENDING_CONFIRMATION',
+              display: 'Por confirmar',
+              codeSystemVersionId: 'csv-1',
+            },
+          ],
+          count: 1,
+          limit: 200,
+        });
+      await harness.fixture.whenStable();
+
+      const config = confirm.mock.calls[0]?.[0];
+      expect(config?.title).toBe('Solicitud de consulta');
+      expect(config?.confirmLabel).toBe('Aceptar solicitud');
+      expect(config?.message).not.toContain('Sin registrar');
+      // El sí del diálogo se resuelve en otra vuelta de la cola.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const accept = http.expectOne('/scheduling/bookings/b-fuera/accept');
+      expect(accept.request.method).toBe('POST');
+      accept.flush({});
+      await harness.fixture.whenStable();
+      expect(notify).toHaveBeenCalledWith('La cita quedó confirmada.', 'Solicitud aceptada');
+      // Tras aceptar, la agenda relee: la tarjeta pasa a «Confirmada» con la lectura nueva.
+      http
+        .match((r) => r.url === '/scheduling/bookings')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 100, truncated: false }));
+      http
+        .match((r) => r.url === '/scheduling/slots')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 100, truncated: false }));
+      http
+        .match((r) => r.url === '/terminology/concepts')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 200 }));
+    });
+
+    it('H11 · citaDelDia no memoriza una cita con el estado sin resolver', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const outside = { ...CITA, id: 'b-fuera', statusConceptId: 'c-fuera' };
+      const dayBooking = interno<(b: unknown) => { estado: { code: string } }>('citaDelDia');
+
+      expect(dayBooking(outside).estado.code).toBe('');
+      http
+        .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'c-fuera')
+        .flush({
+          items: [
+            {
+              conceptId: 'c-fuera',
+              code: 'BOOKING_PENDING_CONFIRMATION',
+              display: 'Por confirmar',
+              codeSystemVersionId: 'csv-1',
+            },
+          ],
+          count: 1,
+          limit: 200,
+        });
+      await harness.fixture.whenStable();
+
+      expect(dayBooking(outside).estado.code).toBe('BOOKING_PENDING_CONFIRMATION');
+      expect(interno<(c: unknown) => boolean>('porResponder')(dayBooking(outside))).toBe(true);
+      // El menú de la fila (vista Semana) sale de la misma cita resuelta.
+      const actions = interno<(c: unknown) => readonly { code: string }[]>('accionesDe')(
+        dayBooking(outside),
+      );
+      expect(actions.map((a) => a.code)).toContain('agenda-aceptar');
     });
 
     it('sin permiso de expediente la atención se inicia igual, y se DICE que no se entró', async () => {
