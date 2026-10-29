@@ -1,0 +1,75 @@
+{
+  "checks": [
+    {
+      "name": "una sola parada de Tab en el lienzo [390 light]",
+      "pass": true,
+      "detail": "tabindex=0: 1"
+    },
+    {
+      "name": "Tab entra al lienzo [390 light]",
+      "pass": true,
+      "detail": "6 Tab → Habitación 101, habitación de internación, ocupada, higiene inspeccionada, sin aislamiento, dato actualizado ahora"
+    },
+    {
+      "name": "las flechas recorren los espacios [390 light]",
+      "pass": true,
+      "detail": "Aislamiento 1 (presión negativa), aislamiento de presión negativa, ocupada, higiene inspeccionada, aislamiento aéreo, dato actualizado ahora"
+    },
+    {
+      "name": "la tarjeta aparece por foco, sin robar el foco [390 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "anillo de foco de dos tonos [390 light]",
+      "pass": true,
+      "detail": "{\"outer\":{\"stroke\":\"rgb(255, 255, 255)\",\"w\":\"7px\"},\"inner\":{\"stroke\":\"rgb(51, 112, 108)\",\"w\":\"3.5px\"}}"
+    },
+    {
+      "name": "Escape cierra la tarjeta sin mover el foco [390 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Inicio y Fin saltan al primero y al último [390 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "+ y 0 hacen zoom y ajustan [390 light]",
+      "pass": true,
+      "detail": "52 % → 65 % → 52 %"
+    },
+    {
+      "name": "Enter abre la ficha [390 light]",
+      "pass": true,
+      "detail": "/administration/medical-organization/spaces/62f2728e-52eb-42c0-ae47-41f2e494014e"
+    },
+    {
+      "name": "primer toque abre la tarjeta (dialog no modal) [390 light]",
+      "pass": true,
+      "detail": "dialog"
+    },
+    {
+      "name": "en 390 la hoja va anclada abajo y ocupa ≤ 40 % [390 light]",
+      "pass": true,
+      "detail": "{\"top\":506.40625,\"bottom\":844,\"h\":337.59375,\"vh\":844}"
+    },
+    {
+      "name": "la hoja no tapa el espacio seleccionado [390 light]",
+      "pass": true,
+      "detail": "espacio 503 / hoja 506"
+    },
+    {
+      "name": "segundo toque abre la ficha [390 light]",
+      "pass": true,
+      "detail": "/administration/medical-organization/spaces/62f2728e-52eb-42c0-ae47-41f2e494014e"
+    },
+    {
+      "name": "tocar el fondo cierra la tarjeta [390 light]",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "notes": []
+}
