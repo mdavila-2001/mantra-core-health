@@ -93,14 +93,14 @@ describe('Tooltip · modo rico', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(globo()).toBeNull();
     fixture.componentInstance.hoverable.set(false);
-    await fixture.whenStable();
+    fixture.detectChanges();
     await abrir();
     expect(globo()!.className).not.toContain('tooltip--hoverable');
   });
 
   it('con ancla propia se ubica junto a ella y no junto al host', async () => {
     fixture.componentInstance.anchor.set({ left: 600, top: 500, width: 10, height: 10 });
-    await fixture.whenStable();
+    fixture.detectChanges();
     await abrir();
     const left = parseFloat(globo()!.style.left);
     // jsdom no mide: el globo mide 0 × 0, así que queda centrado sobre el ancla (605) y no sobre el host (230).
