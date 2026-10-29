@@ -142,7 +142,8 @@ export class FloorPlanCanvas {
   protected readonly dragging = signal(false);
   protected readonly liveText = signal('');
   private resizeObserver: ResizeObserver | null = null;
-  private fitted = false;
+  /** Mientras nadie movió la vista, un cambio de tamaño del contenedor vuelve a encuadrar el lienzo entero. */
+  private userMoved = false;
   private lastLive = '';
   private lastFrameNonce = -1;
   private lastRevealNonce = -1;
@@ -308,7 +309,7 @@ export class FloorPlanCanvas {
       this.widthM();
       this.heightM();
       untracked(() => {
-        this.fitted = false;
+        this.userMoved = false;
         this.fitWhole();
       });
     });
@@ -357,6 +358,7 @@ export class FloorPlanCanvas {
   /* ---- API pública ---------------------------------------------------------- */
 
   fit(): void {
+    this.userMoved = false;
     this.fitWhole();
   }
 
@@ -426,7 +428,7 @@ export class FloorPlanCanvas {
       const next = { width: Math.round(rect.width), height: Math.round(rect.height) };
       if (previous.width === next.width && previous.height === next.height) return;
       this.size.set(next);
-      if (!this.fitted) this.fitWhole();
+      if (!this.userMoved) this.fitWhole();
     };
     measure();
     this.resizeObserver = new ResizeObserver(measure);
@@ -443,11 +445,11 @@ export class FloorPlanCanvas {
   }
 
   private fitWhole(): void {
-    this.fitted = true;
     this.view.set(frameBBox([0, 0, this.widthM(), this.heightM()], this.size(), 16, 40));
   }
 
   private setView(next: Viewport): void {
+    this.userMoved = true;
     this.view.set(clampViewport(next, this.size(), [0, 0, this.widthM(), this.heightM()]));
   }
 

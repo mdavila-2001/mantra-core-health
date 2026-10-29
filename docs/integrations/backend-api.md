@@ -817,6 +817,39 @@ acreditaciones e inventario, y ninguna operación los volvía a mencionar.
 > `GET /practices` ya lo consumía `AccountingClient` para elegir de qué práctica
 > son los libros. Se reusa el mismo endpoint: no se forkea el contrato.
 
+### `FloorPlanClient` — 12 operaciones · F1c plano de planta
+
+El plano arquitectónico de una sede (M14 `practice`): lienzos por piso, zona o
+campus, geometría en metros, estado operativo casi en tiempo real y la tarjeta
+de detalle. La fuente del contrato es `CONTRATO-PLANO.md` (repositorio de
+documentación, `SALUD/Arquitectura/infraestructura-hospitalaria/`).
+
+**Verificado contra el simulador (`core/mock/handlers/floor-plan.handlers.ts`),
+no contra la API real**: el contrato está escrito y la API de F1c se implementa
+en paralelo. Cada tipo de `core/data-access/floor-plan/floor-plan.types.ts`
+sigue el contrato; cuando la API real exista, esta tabla se contrasta con su
+OpenAPI.
+
+`PATCH /floor-plans/:planId/layout` lleva `If-Match: <layoutVersion>` y admite
+`?dryRun=true`; responde 200 con `layoutVersion` nuevo, 412 `PLAN_VERSION_MISMATCH`
+o 422 `PLAN_LAYOUT_INVALID` con un error por elemento. `plan-card` es la única
+operación que devuelve el nombre del paciente y queda auditada por la API.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practice/floor-plan-catalog` | `FloorPlanStore` |
+| `GET` | `/sites/:siteId/floor-plans` | `FloorPlanStore` |
+| `GET` | `/floor-plans/:planId` | `FloorPlanStore` |
+| `GET` | `/floor-plans/:planId/layout` | `FloorPlanStore`, `FloorPlanEditorStore` |
+| `PATCH` | `/floor-plans/:planId/layout` | `FloorPlanEditorStore` |
+| `GET` | `/floor-plans/:planId/state` | `FloorPlanStore` (sondeo cada 30 s) |
+| `GET` | `/floor-plans/:planId/validation` | `FloorPlanClient` (sin pantalla todavía) |
+| `GET` | `/floor-plans/:planId/unplaced-spaces` | `FloorPlanEditorStore` (paleta) |
+| `GET` | `/care-spaces/:spaceId/plan-location` | `FloorPlanClient` (para «Ver en plano» desde otras pantallas) |
+| `GET` | `/care-spaces/:spaceId/plan-card` | `FloorPlanStore` (nombre del paciente tras 350 ms) |
+| `GET` | `/sites/:siteId/plan-search` | `FloorPlanStore` |
+| `GET` | `/sites/:siteId/plan-focus` | `FloorPlanStore` |
+
 ### `DiagnosticsClient` — 6 operaciones
 
 Laboratorios e imagenología (M52).

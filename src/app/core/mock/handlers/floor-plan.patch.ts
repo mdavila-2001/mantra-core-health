@@ -145,8 +145,8 @@ export function applyLayoutPatch(model: FloorPlanModel, code: PlanCode, patch: L
 
   // Elementos.
   for (const id of removeElements) {
-    const el = elements.get(id);
-    if (!el) continue;
+    const element = elements.get(id);
+    if (!element) continue;
     for (const hosted of [...elements.values()].filter((e) => e.hostElementId === id)) {
       elements.delete(hosted.id);
       applied.elementsRemoved += 1;

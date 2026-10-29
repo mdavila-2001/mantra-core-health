@@ -51,15 +51,15 @@ export function rectVertices(
   const halfWidth = width / 2;
   const halfDepth = depth / 2;
   const angle = toRadians(rotationDeg);
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
   const corners: Point[] = [
     [-halfWidth, -halfDepth],
     [halfWidth, -halfDepth],
     [halfWidth, halfDepth],
     [-halfWidth, halfDepth],
   ];
-  return corners.map(([x, y]) => [centerX + x * cos - y * sin, centerY + x * sin + y * cos] as Point);
+  return corners.map(([x, y]) => [centerX + x * cosine - y * sine, centerY + x * sine + y * cosine] as Point);
 }
 
 /** Área con signo (shoelace). Positiva si el recorrido es horario en pantalla (y hacia abajo). */
@@ -482,12 +482,12 @@ export function translateVertices(vertices: readonly Point[], dx: number, dy: nu
 
 export function rotateVertices(vertices: readonly Point[], pivot: Point, degrees: number): Point[] {
   const angle = toRadians(degrees);
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
+  const cosine = Math.cos(angle);
+  const sine = Math.sin(angle);
   return vertices.map(([x, y]) => {
     const rx = x - pivot[0];
     const ry = y - pivot[1];
-    return [pivot[0] + rx * cos - ry * sin, pivot[1] + rx * sin + ry * cos] as Point;
+    return [pivot[0] + rx * cosine - ry * sine, pivot[1] + rx * sine + ry * cosine] as Point;
   });
 }
 

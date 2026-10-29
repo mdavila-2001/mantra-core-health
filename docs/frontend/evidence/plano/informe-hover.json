@@ -1,0 +1,593 @@
+{
+  "checks": [
+    {
+      "name": "hover ocupada [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-101-C1 · Cama 1 · Habitación 101 Edificio principal › Piso 1 › Internación Medicina › Habitación 101 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover aislamiento [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-AIS-C1 · Cama 1 · Aislamiento 1 (presión negativa) Edificio principal › Piso 1 › Internación Medicina › Aislamiento 1 (presión negativa) Cama estándar "
+    },
+    {
+      "name": "hover bloqueada [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-201-C2 · Cama 2 · Habitación 201 Edificio principal › Piso 1 › Internación Cirugía › Habitación 201 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "hover mantenimiento [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-202-C1 · Cama 1 · Habitación 202 Edificio principal › Piso 1 › Internación Cirugía › Habitación 202 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "hover contaminada [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-203-C1 · Cama 1 · Habitación 203 Edificio principal › Piso 1 › Internación Cirugía › Habitación 203 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "hover limpiando [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-102-C2 · Cama 2 · Habitación 102 Edificio principal › Piso 1 › Internación Medicina › Habitación 102 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover reservada [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-UTI-C4 · Cama 4 · Terapia intermedia Edificio principal › Piso 1 › Terapia intermedia Cama de terapia intermedia · Cama · Activo Unidad Terapia interme"
+    },
+    {
+      "name": "hover cerrada [1440 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-401-C2 · Cama 2 · Habitación 401 · puerperio Edificio principal › Piso 1 › Gineco-obstetricia › Habitación 401 · puerperio Cama estándar · Cama · Activ"
+    },
+    {
+      "name": "singleton [1440 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "hoverable: ir hacia la tarjeta no la cierra [1440 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape descarta la tarjeta sin mover el foco [1440 light]",
+      "pass": true,
+      "detail": "Cama 1 · Habitación 101, cama estándar, ocupada, higiene limpia, sin aislamiento, dato de hace 13 s"
+    },
+    {
+      "name": "borde norte: la tarjeta no se recorta [1440 light]",
+      "pass": true,
+      "detail": "lado=bottom"
+    },
+    {
+      "name": "borde sur: la tarjeta no se recorta [1440 light]",
+      "pass": true,
+      "detail": "lado=left"
+    },
+    {
+      "name": "borde oeste: la tarjeta no se recorta [1440 light]",
+      "pass": true,
+      "detail": "lado=right"
+    },
+    {
+      "name": "borde este: la tarjeta no se recorta [1440 light]",
+      "pass": true,
+      "detail": "lado=left"
+    },
+    {
+      "name": "hover ocupada [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-101-C1 · Cama 1 · Habitación 101 Edificio principal › Piso 1 › Internación Medicina › Habitación 101 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover aislamiento [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-AIS-C1 · Cama 1 · Aislamiento 1 (presión negativa) Edificio principal › Piso 1 › Internación Medicina › Aislamiento 1 (presión negativa) Cama estándar "
+    },
+    {
+      "name": "hover bloqueada [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-201-C2 · Cama 2 · Habitación 201 Edificio principal › Piso 1 › Internación Cirugía › Habitación 201 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "hover mantenimiento [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-202-C1 · Cama 1 · Habitación 202 Edificio principal › Piso 1 › Internación Cirugía › Habitación 202 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "hover contaminada [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-203-C1 · Cama 1 · Habitación 203 Edificio principal › Piso 1 › Internación Cirugía › Habitación 203 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "hover limpiando [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-102-C2 · Cama 2 · Habitación 102 Edificio principal › Piso 1 › Internación Medicina › Habitación 102 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover reservada [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-UTI-C4 · Cama 4 · Terapia intermedia Edificio principal › Piso 1 › Terapia intermedia Cama de terapia intermedia · Cama · Activo Unidad Terapia interme"
+    },
+    {
+      "name": "hover cerrada [1440 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-401-C2 · Cama 2 · Habitación 401 · puerperio Edificio principal › Piso 1 › Gineco-obstetricia › Habitación 401 · puerperio Cama estándar · Cama · Activ"
+    },
+    {
+      "name": "singleton [1440 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "hoverable: ir hacia la tarjeta no la cierra [1440 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape descarta la tarjeta sin mover el foco [1440 dark]",
+      "pass": true,
+      "detail": "Cama 1 · Habitación 101, cama estándar, ocupada, higiene limpia, sin aislamiento, dato de hace 13 s"
+    },
+    {
+      "name": "borde norte: la tarjeta no se recorta [1440 dark]",
+      "pass": true,
+      "detail": "lado=bottom"
+    },
+    {
+      "name": "borde sur: la tarjeta no se recorta [1440 dark]",
+      "pass": true,
+      "detail": "lado=left"
+    },
+    {
+      "name": "borde oeste: la tarjeta no se recorta [1440 dark]",
+      "pass": true,
+      "detail": "lado=right"
+    },
+    {
+      "name": "borde este: la tarjeta no se recorta [1440 dark]",
+      "pass": true,
+      "detail": "lado=left"
+    },
+    {
+      "name": "hover ocupada [768 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-101-C1 · Cama 1 · Habitación 101 Edificio principal › Piso 1 › Internación Medicina › Habitación 101 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover aislamiento [768 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-AIS-C1 · Cama 1 · Aislamiento 1 (presión negativa) Edificio principal › Piso 1 › Internación Medicina › Aislamiento 1 (presión negativa) Cama estándar "
+    },
+    {
+      "name": "hover mantenimiento [768 light] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-202-C1 · Cama 1 · Habitación 202 Edificio principal › Piso 1 › Internación Cirugía › Habitación 202 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "singleton [768 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "hoverable: ir hacia la tarjeta no la cierra [768 light]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape descarta la tarjeta sin mover el foco [768 light]",
+      "pass": true,
+      "detail": "Cama 1 · Habitación 101, cama estándar, ocupada, higiene limpia, sin aislamiento, dato actualizado ahora"
+    },
+    {
+      "name": "borde norte: la tarjeta no se recorta [768 light]",
+      "pass": true,
+      "detail": "lado=bottom"
+    },
+    {
+      "name": "borde sur: la tarjeta no se recorta [768 light]",
+      "pass": true,
+      "detail": "lado=top"
+    },
+    {
+      "name": "borde oeste: la tarjeta no se recorta [768 light]",
+      "pass": true,
+      "detail": "lado=right"
+    },
+    {
+      "name": "borde este: la tarjeta no se recorta [768 light]",
+      "pass": true,
+      "detail": "lado=bottom"
+    },
+    {
+      "name": "hover ocupada [768 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-101-C1 · Cama 1 · Habitación 101 Edificio principal › Piso 1 › Internación Medicina › Habitación 101 Cama estándar · Cama · Activo Unidad Medicina inte"
+    },
+    {
+      "name": "hover aislamiento [768 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-AIS-C1 · Cama 1 · Aislamiento 1 (presión negativa) Edificio principal › Piso 1 › Internación Medicina › Aislamiento 1 (presión negativa) Cama estándar "
+    },
+    {
+      "name": "hover mantenimiento [768 dark] muestra ruta, función, unidad, estados y antigüedad",
+      "pass": true,
+      "detail": "PLANO-P1-202-C1 · Cama 1 · Habitación 202 Edificio principal › Piso 1 › Internación Cirugía › Habitación 202 Cama estándar · Cama · Activo Unidad Cirugía Camas "
+    },
+    {
+      "name": "singleton [768 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "hoverable: ir hacia la tarjeta no la cierra [768 dark]",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "Escape descarta la tarjeta sin mover el foco [768 dark]",
+      "pass": true,
+      "detail": "Cama 1 · Habitación 101, cama estándar, ocupada, higiene limpia, sin aislamiento, dato actualizado ahora"
+    },
+    {
+      "name": "borde norte: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=bottom"
+    },
+    {
+      "name": "borde sur: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=top"
+    },
+    {
+      "name": "borde oeste: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=right"
+    },
+    {
+      "name": "borde este: la tarjeta no se recorta [768 dark]",
+      "pass": true,
+      "detail": "lado=bottom"
+    }
+  ],
+  "flips": [
+    {
+      "vp": "1440",
+      "theme": "light",
+      "edge": "norte",
+      "card": {
+        "l": 561,
+        "t": 430,
+        "r": 840.9375,
+        "b": 713,
+        "w": 279.9375,
+        "h": 283
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "bottom"
+    },
+    {
+      "vp": "1440",
+      "theme": "light",
+      "edge": "sur",
+      "card": {
+        "l": 902,
+        "t": 357,
+        "r": 1242,
+        "b": 657,
+        "w": 340,
+        "h": 300
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "left"
+    },
+    {
+      "vp": "1440",
+      "theme": "light",
+      "edge": "oeste",
+      "card": {
+        "l": 770,
+        "t": 335,
+        "r": 1110,
+        "b": 679,
+        "w": 340,
+        "h": 344
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "right"
+    },
+    {
+      "vp": "1440",
+      "theme": "light",
+      "edge": "este",
+      "card": {
+        "l": 890,
+        "t": 206.5,
+        "r": 1230,
+        "b": 531.5,
+        "w": 340,
+        "h": 325
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "left"
+    },
+    {
+      "vp": "1440",
+      "theme": "dark",
+      "edge": "norte",
+      "card": {
+        "l": 561,
+        "t": 430,
+        "r": 840.9375,
+        "b": 713,
+        "w": 279.9375,
+        "h": 283
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "bottom"
+    },
+    {
+      "vp": "1440",
+      "theme": "dark",
+      "edge": "sur",
+      "card": {
+        "l": 902,
+        "t": 357,
+        "r": 1242,
+        "b": 657,
+        "w": 340,
+        "h": 300
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "left"
+    },
+    {
+      "vp": "1440",
+      "theme": "dark",
+      "edge": "oeste",
+      "card": {
+        "l": 770,
+        "t": 335,
+        "r": 1110,
+        "b": 679,
+        "w": 340,
+        "h": 344
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "right"
+    },
+    {
+      "vp": "1440",
+      "theme": "dark",
+      "edge": "este",
+      "card": {
+        "l": 890,
+        "t": 206.5,
+        "r": 1230,
+        "b": 531.5,
+        "w": 340,
+        "h": 325
+      },
+      "stage": {
+        "l": 552,
+        "t": 144,
+        "r": 1400,
+        "b": 756
+      },
+      "inside": true,
+      "side": "left"
+    },
+    {
+      "vp": "768",
+      "theme": "light",
+      "edge": "norte",
+      "card": {
+        "l": 29,
+        "t": 601.4375,
+        "r": 308.9375,
+        "b": 884.4375,
+        "w": 279.9375,
+        "h": 283
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "bottom"
+    },
+    {
+      "vp": "768",
+      "theme": "light",
+      "edge": "sur",
+      "card": {
+        "l": 399,
+        "t": 317.421875,
+        "r": 739,
+        "b": 617.421875,
+        "w": 340,
+        "h": 300
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "top"
+    },
+    {
+      "vp": "768",
+      "theme": "light",
+      "edge": "oeste",
+      "card": {
+        "l": 178.03125,
+        "t": 506.421875,
+        "r": 518.03125,
+        "b": 850.421875,
+        "w": 340,
+        "h": 344
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "right"
+    },
+    {
+      "vp": "768",
+      "theme": "light",
+      "edge": "este",
+      "card": {
+        "l": 399,
+        "t": 601.4375,
+        "r": 739,
+        "b": 926.4375,
+        "w": 340,
+        "h": 325
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "bottom"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "norte",
+      "card": {
+        "l": 29,
+        "t": 601.4375,
+        "r": 308.9375,
+        "b": 884.4375,
+        "w": 279.9375,
+        "h": 283
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "bottom"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "sur",
+      "card": {
+        "l": 399,
+        "t": 317.421875,
+        "r": 739,
+        "b": 617.421875,
+        "w": 340,
+        "h": 300
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "top"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "oeste",
+      "card": {
+        "l": 178.03125,
+        "t": 506.421875,
+        "r": 518.03125,
+        "b": 850.421875,
+        "w": 340,
+        "h": 344
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "right"
+    },
+    {
+      "vp": "768",
+      "theme": "dark",
+      "edge": "este",
+      "card": {
+        "l": 399,
+        "t": 601.4375,
+        "r": 739,
+        "b": 926.4375,
+        "w": 340,
+        "h": 325
+      },
+      "stage": {
+        "l": 20,
+        "t": 304,
+        "r": 748,
+        "b": 938.875
+      },
+      "inside": true,
+      "side": "bottom"
+    }
+  ],
+  "notes": []
+}

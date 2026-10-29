@@ -134,12 +134,6 @@
   }
 
   <div class="ed-body" [class.is-read-only]="narrow()">
-    @if (!narrow()) {
-      <aside class="ed-left" aria-label="Espacios sin ubicar">
-        <app-plan-editor-palette [entries]="ed.palette()" [armedId]="ed.armedId()" (arm)="ed.arm($event)" (placeCenter)="placeCenter()" />
-      </aside>
-    }
-
     <section class="ed-stage" aria-label="Plano en edición" data-testid="editor-stage">
       @if (plan.meta(); as meta) {
         <app-floor-plan-canvas
@@ -166,7 +160,8 @@
     </section>
 
     @if (!narrow()) {
-      <aside class="ed-right" aria-label="Figura elegida y problemas">
+      <aside class="ed-right" aria-label="Espacios, figura elegida y problemas">
+        <app-plan-editor-palette [entries]="ed.palette()" [armedId]="ed.armedId()" (arm)="ed.arm($event)" (placeCenter)="placeCenter()" />
         <div class="ed-pick">
           <span class="ed-pick__label">Elegir figura por nombre</span>
           <app-select ariaLabel="Elegir figura por nombre" [options]="figureOptions()" [value]="ed.selectedId() ?? ''" (valueChange)="ed.select($event || null)" />
