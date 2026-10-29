@@ -43,6 +43,25 @@ describe('OnboardingDraftBanner', () => {
     expect(el.textContent).toContain('Datos de contacto');
   });
 
+  it('trata al usuario de usted, como el resto del alta', () => {
+    fixture.componentRef.setInput('draft', mockDraft);
+    fixture.detectChanges();
+    const texto: string = fixture.nativeElement.querySelector('[data-testid="onboarding-draft-banner"]').textContent;
+    expect(texto).toContain('Tiene un registro guardado en borrador');
+    expect(texto).toContain('Quedó en el paso 3');
+    expect(texto).toContain('¿Desea continuar desde donde lo dejó?');
+    expect(texto).not.toMatch(/Tenés|Quedaste|Querés|dejaste/);
+  });
+
+  it('muestra la fecha en 24 h, sin «a. m.» ni «p. m.» ni puntos dobles', () => {
+    fixture.componentRef.setInput('draft', { ...mockDraft, updatedAt: '2026-10-20T15:15:00' });
+    fixture.detectChanges();
+    const texto: string = fixture.nativeElement.querySelector('.onboarding-draft-banner__details').textContent;
+    expect(texto).toContain('20/10/2026 15:15.');
+    expect(texto).not.toMatch(/[ap]\. ?m\./);
+    expect(texto).not.toContain('..');
+  });
+
   it('emite el evento resume al pulsar Reanudar avance', () => {
     fixture.componentRef.setInput('draft', mockDraft);
     fixture.detectChanges();
