@@ -3,7 +3,7 @@ import {
   ADMISSION_NOTE_MAX,
   ADMISSION_REASON_MAX,
   admissionStatusVariant,
-  canVerifyFinal,
+  blockerText,
   doctorStatusCopy,
   formatBytes,
   missingMandatory,
@@ -18,9 +18,8 @@ import {
 
 function req(overrides: Partial<AdmissionRequirement>): AdmissionRequirement {
   return {
-    id: 'r', code: 'C', label: 'Requisito', description: null, mandatory: true, status: 'PENDING',
-    documents: [], data: [], itemRef: null, source: null, evidenceSha256: null, reasonCode: null, reasonText: null,
-    internalNote: null, reviewedAt: null, reviewedBy: null, ...overrides,
+    code: 'C', label: 'Requisito', description: null, mandatory: true, evidenceKind: 'DOCUMENT', requiresSource: true,
+    minItems: null, maxItems: null, state: 'PENDING', satisfied: false, blockedBy: 'PENDING', items: [], ...overrides,
   };
 }
 
@@ -32,17 +31,26 @@ describe('presentación de admisiones', () => {
     expect(progressText({ total: 0, verified: 0, rejected: 0, pending: 0 })).toBe('Sin requisitos cargados');
   });
 
-  it('«Verificar al profesional» exige todos los obligatorios verificados; los opcionales no cuentan', () => {
-    const lista = [req({ id: 'a', status: 'VERIFIED' }), req({ id: 'b', mandatory: false, status: 'PENDING' })];
-    expect(canVerifyFinal(lista)).toBe(true);
+  it('lo que falta son los obligatorios que la API no da por cumplidos; los opcionales no cuentan', () => {
+    const lista = [
+      req({ code: 'a', state: 'VERIFIED', satisfied: true, blockedBy: null }),
+      req({ code: 'b', mandatory: false, state: 'PENDING', satisfied: false }),
+    ];
     expect(missingMandatory(lista)).toEqual([]);
-    const falta = [...lista, req({ id: 'c', status: 'REJECTED', label: 'Matrícula' })];
-    expect(canVerifyFinal(falta)).toBe(false);
+    const falta = [...lista, req({ code: 'c', state: 'REJECTED', label: 'Matrícula' })];
     expect(missingMandatory(falta).map((r) => r.label)).toEqual(['Matrícula']);
   });
 
-  it('sin requisitos no se puede verificar a nadie', () => {
-    expect(canVerifyFinal([])).toBe(false);
+  it('dice por qué un requisito bloquea la verificación', () => {
+    expect(blockerText({ label: 'Matrícula', reason: 'REJECTED' })).toBe('Matrícula: está rechazado');
+    expect(blockerText({ label: 'Título', reason: 'BELOW_MINIMUM' })).toBe('Título: no llega al mínimo de documentos');
+    expect(blockerText({ label: 'Cédula', reason: 'MISSING' })).toBe('Cédula: no se aportó');
+    expect(blockerText({ label: 'X', reason: 'NUEVO' })).toBe('X: NUEVO');
+  });
+
+  it('nombra los estados de un requisito que no se aportó', () => {
+    expect(requirementStatusLabel('NOT_PROVIDED')).toBe('No aportado');
+    expect(requirementStatusLabel('MISSING')).toBe('Falta');
   });
 
   it('el motivo acepta de 5 a 500 caracteres, contados sin los espacios de los bordes', () => {
@@ -97,8 +105,8 @@ describe('presentación de admisiones', () => {
     expect(todayIso(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 
-  it('al médico solo se le ofrece reenviar cuando se le pidió algo o se lo rechazó', () => {
-    const puede = ['INFO_REQUESTED', 'REJECTED'];
+  it('al médico solo se le ofrece reenviar donde la API lo admite: información pedida, rechazo, vencimiento y abandono', () => {
+    const puede = ['INFO_REQUESTED', 'REJECTED', 'EXPIRED', 'ABANDONED'];
     for (const code of ['SUBMITTED', 'IN_REVIEW', 'INFO_REQUESTED', 'VERIFIED', 'REJECTED', 'SUSPENDED', 'EXPIRED', 'ABANDONED', 'WITHDRAWN']) {
       expect(doctorStatusCopy(code).canResubmit).toBe(puede.includes(code));
       expect(doctorStatusCopy(code).title).not.toBe('');

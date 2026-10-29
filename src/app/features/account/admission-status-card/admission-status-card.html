@@ -76,8 +76,8 @@
                 (checkedChange)="onAttest($event)"
                 data-testid="admission-card-attest"
               />
-              @if (attestationTouched() && !attested()) {
-                <p class="verificacion__problema" role="alert" data-testid="admission-card-attest-error">
+              @if (!attested()) {
+                <p id="verificacion-atestacion" class="verificacion__problema" data-testid="admission-card-attest-error">
                   Marque la declaración para poder reenviar.
                 </p>
               }
@@ -89,7 +89,8 @@
                 type="button"
                 variant="primary"
                 [isLoading]="submitting()"
-                [disabled]="submitting()"
+                [disabled]="submitting() || !attested()"
+                [attr.aria-describedby]="attested() ? null : 'verificacion-atestacion'"
                 data-testid="admission-card-resubmit"
                 (clicked)="resubmit()"
               >

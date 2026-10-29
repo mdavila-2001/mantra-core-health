@@ -1,0 +1,230 @@
+{
+  "veredictos": [
+    {
+      "nombre": "La bandeja «Admisiones» carga con filas",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "La sección está en el menú de Administración",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Las pestañas de estado traen contadores",
+      "cond": true,
+      "detalle": "Todas 15 Enviadas 4 En revisión 3 Información requerida 2 Verificadas 2 Rechazadas 1 Suspendidas 1 Verificación vencida "
+    },
+    {
+      "nombre": "El estado queda en la URL y reproduce la bandeja al recargar",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "La búsqueda va por POST /admissions/search",
+      "cond": true,
+      "detalle": "{\"q\":\"4567\",\"status\":\"SUBMITTED\",\"limit\":25,\"sort\":\"due_at\"}"
+    },
+    {
+      "nombre": "La búsqueda no escribe el texto en la dirección",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "La ficha es UNA tarjeta con pestañas",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Tomar revisión: la petición lleva la versión vista",
+      "cond": true,
+      "detalle": "{\"expectedRowVersion\":2}"
+    },
+    {
+      "nombre": "Tomar revisión: la respuesta deja la admisión en revisión",
+      "cond": true,
+      "detalle": "HTTP 200 → IN_REVIEW"
+    },
+    {
+      "nombre": "Tras recargar (F5) sigue en revisión",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Los requisitos muestran el avance y qué falta",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Verificar sin fuente no manda nada y lo dice",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Verificar: la petición lleva fuente, fecha, huella y versión",
+      "cond": true,
+      "detalle": "{\"decision\":\"VERIFIED\",\"sourceType\":\"MINSALUD_REGISTRY\",\"sourceConsultedAt\":\"2026-10-29\",\"evidenceSha256\":\"a6627b7c85d544c8abc288cc89915cc4b6581653c0ab476ba555eb7881b6c46e\",\"expectedRowVersion\":3}"
+    },
+    {
+      "nombre": "Verificar: la respuesta marca el requisito como verificado",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Todos los obligatorios quedan verificados",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Rechazar sin motivo no manda nada",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Rechazar: código + texto para el médico + nota interna aparte",
+      "cond": true,
+      "detalle": "{\"decision\":\"REJECTED\",\"reason\":\"Falta el reverso del documento.\",\"reasonCode\":\"INCOMPLETE_DOCUMENT\",\"internalNote\":\"Pedir también el original en la próxima cita.\",\"evidenceSha256\":\"fdb00aadd42d45abac7ed09e14b5eb08d7527ed24a8f43a8ad8d0f16cadd6cfa\",\"expectedRowVersion\":7}"
+    },
+    {
+      "nombre": "La nota interna se rotula «no la ve el profesional»",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "El carrusel muestra el contador «1 de N»",
+      "cond": true,
+      "detalle": "1 de 66"
+    },
+    {
+      "nombre": "Las imágenes se muestran dentro de la ficha",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "→ avanza el carrusel con el teclado",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Inicio vuelve al primero",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "El zoom responde al teclado",
+      "cond": true,
+      "detalle": "150 %"
+    },
+    {
+      "nombre": "El formulario llenado se muestra por secciones",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "El historial lista lo hecho",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "El aprobador ve «Verificar al profesional» habilitado",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Decisión final: sin ítems en la petición, solo decisión y versión",
+      "cond": true,
+      "detalle": "{\"decision\":\"VERIFIED\",\"expectedRowVersion\":8}"
+    },
+    {
+      "nombre": "Decisión final: la respuesta es VERIFIED",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Tras recargar (F5) sigue verificada",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "La bandeja la lista ahora en «Verificadas»",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "El médico ve «Estado de su verificación» en el panel",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Dice qué se le pidió y hasta cuándo puede responder",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Reenviar sin la atestación no manda nada y lo dice",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Reenviar: la petición lleva la atestación y su versión",
+      "cond": true,
+      "detalle": "{\"attested\":true,\"attestationVersion\":\"2026-10\"}"
+    },
+    {
+      "nombre": "Reenviar: la respuesta es SUBMITTED",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Tras recargar (F5) la tarjeta dice «Enviada»",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "409: la API responde versión vieja",
+      "cond": true,
+      "detalle": "HTTP 409"
+    },
+    {
+      "nombre": "409: el diálogo sigue abierto, conserva lo escrito y ofrece «Ver cambios»",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Tras «Ver cambios» la confirmación sale con la versión nueva y funciona",
+      "cond": true,
+      "detalle": "HTTP 200"
+    },
+    {
+      "nombre": "409: evidencia cambiada, no se decide a ciegas",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Se avisa «El profesional cambió este documento; revíselo de nuevo.»",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Existe un caso con 50+ documentos",
+      "cond": true,
+      "detalle": ""
+    },
+    {
+      "nombre": "Con 59 documentos el contador y la tira aguantan",
+      "cond": true,
+      "detalle": "1 de 66"
+    },
+    {
+      "nombre": "El paciente no entra a «Admisiones» (el guard lo manda al panel)",
+      "cond": true,
+      "detalle": "http://127.0.0.1:4301/dashboard"
+    },
+    {
+      "nombre": "Sin errores de consola de la aplicación",
+      "cond": true,
+      "detalle": ""
+    }
+  ],
+  "errores": []
+}
