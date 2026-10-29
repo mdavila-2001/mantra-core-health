@@ -67,8 +67,12 @@ sustituye a `app-bed-picker` conservando sus tres puntos: `cells`, `value`,
 - `navigation.subgroups.ts`: subgrupo «Internación» (Atención) con tres rutas; si
   F2 agrega otro con el mismo nombre, unirlos.
 - Las tres secciones (`inpatient/admissions/new`, `/census`, `/indicators`) se ven
-  con `roles: [ANY_ROLE] + requiresTenant` (menos paciente): quién opera camas
-  no es un rol del token. `inpatient/stays/:encounterId` no es sección.
+  con `roles: [ANY_ROLE] + requiresTenant` (menos paciente) y
+  `onlyForTenantTypes: HOSPITAL, CLINIC`: quién opera camas no es un rol del
+  token, y una farmacia, un laboratorio o una aseguradora conservan su menú
+  (comprobado en navegador: `farmacia@` no ve las entradas y `/inpatient/census`
+  la manda al panel; `superadmin@` y `medica@` en el Hospital San Lucas sí).
+  `inpatient/stays/:encounterId` no es sección.
 - Las camas de ADT se insertan en el árbol de F1 al registrar el simulador
   (`sembrarCamasAdt`, idempotente); no hay edición de `infrastructure.data.ts`.
 - `marcarSucia`/`registrarOcupacion` de `adt.store.ts` son el doble de
@@ -100,7 +104,14 @@ eventos HL7 (A01, A02, A17, A03, A20) se comprueban en el registro del simulador
 - `tsc` app limpio; `eslint --max-warnings=0` limpio sobre lo tocado.
 - Unit corrida: 78 pruebas (simulador + cliente + lógica + F1) en verde al cierre
   del primer commit; ver el commit de pruebas para las de componentes.
-- Navegador (maqueta, build `development,demo` **JIT** por memoria): 61/61.
+- Navegador (maqueta, build `development,demo` **JIT** por memoria): 61/61. Tras
+  esa corrida solo cambió metadato del registro de menú (`onlyForTenantTypes`) y
+  se comprobó aparte con un guion corto (arriba); el recorrido completo no se
+  repitió porque el Chromium compartido empezó a morir por memoria.
+- **No corridas** (el build AOT de pruebas muere por memoria con el árbol completo):
+  `navigation.map.spec`, `navigation.subgroups.spec`, `navigation.service.spec`,
+  `app.routes.spec` y `patient-chart.spec`, que son las que ejercitan lo que tocan
+  el menú, las rutas y el expediente. Quedan como primera comprobación del integrador.
 - **No verificado**: API real; axe ni lector de pantalla; la suite completa;
   S1 (ruta con autenticación pendiente) en navegador; el plano ni el tablero de F2
   reales; un build AOT completo (el de navegador se hizo con `--aot=false` porque

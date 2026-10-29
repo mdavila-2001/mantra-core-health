@@ -1125,6 +1125,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
      desde el censo o desde el expediente. */
   {
     path: 'inpatient/admissions/new',
+    // Camas con pacientes internados: hospitales y clínicas. Una farmacia, un laboratorio o una
+    // aseguradora no tienen qué hacer acá (su menú es el suyo y nada más).
+    onlyForTenantTypes: ['HOSPITAL', 'CLINIC'],
     label: 'Nuevo ingreso',
     group: 'Atención',
     icon: 'hospital',
@@ -1137,6 +1140,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'inpatient/census',
+    // Camas con pacientes internados: hospitales y clínicas. Una farmacia, un laboratorio o una
+    // aseguradora no tienen qué hacer acá (su menú es el suyo y nada más).
+    onlyForTenantTypes: ['HOSPITAL', 'CLINIC'],
     label: 'Censo diario',
     group: 'Atención',
     icon: 'clipboard',
@@ -1149,6 +1155,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'inpatient/indicators',
+    // Camas con pacientes internados: hospitales y clínicas. Una farmacia, un laboratorio o una
+    // aseguradora no tienen qué hacer acá (su menú es el suyo y nada más).
+    onlyForTenantTypes: ['HOSPITAL', 'CLINIC'],
     label: 'Indicadores de camas',
     group: 'Atención',
     icon: 'chart',
