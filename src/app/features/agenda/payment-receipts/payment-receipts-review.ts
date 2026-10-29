@@ -8,16 +8,19 @@ import { describeFailure } from '../../../core/data-access/scheduling/payment-re
 import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import type { PaymentReceipt } from '../../../core/data-access/scheduling/payment-receipts.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-import type { NewPaymentState } from '../../../core/data-access/scheduling/scheduling.types';
+import type {
+  NewPaymentState,
+  PaymentStateInfo,
+} from '../../../core/data-access/scheduling/scheduling.types';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { AlertTone } from '../../../shared/components/molecules/alert/alert.types';
+import { formatMoney } from '../../../shared/utils/pdf-export/pdf-format';
 import { BookingPaymentStates } from './booking-payment-states';
 
 /** La operación en vuelo: sobre qué comprobante y cuál, o el marcado a mano. */
 export type PaymentReviewAction =
-  | { readonly kind: 'confirm' | 'reject'; readonly receiptId: string }
-  | { readonly kind: 'manual' };
+  { readonly kind: 'confirm' | 'reject'; readonly receiptId: string } | { readonly kind: 'manual' };
 
 /** Lo que el modal le dice a quien revisa después de una operación. */
 export interface PaymentReviewNotice {
@@ -155,7 +158,12 @@ export class PaymentReceiptsReview {
       return {
         tone: 'success',
         title: 'Estado del pago actualizado',
-        message: state.insuranceUsed ? `${state.label}, con seguro.` : `${state.label}.`,
+        message: [
+          state.insuranceUsed ? `${state.label}, con seguro.` : `${state.label}.`,
+          billingNote(change, state),
+        ]
+          .filter(Boolean)
+          .join(' '),
       };
     });
   }
@@ -222,4 +230,19 @@ export class PaymentReceiptsReview {
       ready(current.data.map((receipt) => (receipt.id === updated.id ? updated : receipt))),
     );
   }
+}
+
+/**
+ * Qué pasó con el monto en facturación (FAC-01). Solo se dice si se mandó un
+ * monto: sin él, que no se facture es lo esperado.
+ */
+function billingNote(change: NewPaymentState, state: PaymentStateInfo): string {
+  if (change.amountReceived === undefined) return '';
+  const billing = state.billing;
+  if (billing?.linked && billing.amountPaid !== null && billing.amountBilled !== null) {
+    return `Recibido: ${formatMoney(billing.amountPaid, 'Bs')} de ${formatMoney(billing.amountBilled, 'Bs')}.`;
+  }
+  return billing?.reason === 'NO_PRACTICE'
+    ? 'El monto no se facturó: la agenda no está ligada a un consultorio.'
+    : 'El monto no se facturó: el consultorio todavía no publicó el precio de la consulta.';
 }
