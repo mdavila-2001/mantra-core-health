@@ -175,7 +175,7 @@ Ocultarlo no es seguridad y mostrarlo no otorga nada.
 
 | Entrada | Para qué |
 |---|---|
-| `status` | `VERIFIED` · `IN_REVIEW` · `UNVERIFIED` · `SUSPENDED` · `EXPIRED`. Cualquier otro valor se trata como no verificado |
+| `status` | `VERIFIED` · `IN_REVIEW` · `UNVERIFIED` · `EXPIRED` (el contrato del backend). Una suspensión o un rechazo llegan como `UNVERIFIED`; cualquier otro valor se trata como no verificado |
 | `size` | `sm` (16 px, junto a un nombre de tabla o tarjeta) · `md` (20 px) · `lg` (24 px, cabecera de ficha). Crece con el texto vecino |
 | `variant` | `icon` (por omisión) o `label` (pictograma + palabra) |
 | `verifiedAt`, `validUntil` | Fechas reales, ISO o `Date`; inválidas o nulas no se muestran |
@@ -188,7 +188,7 @@ Ocultarlo no es seguridad y mostrarlo no otorga nada.
 | `VERIFIED` | Escudo azul (`--verified-bg`) con tilde (`--verified-fg`). Es el **único** con tilde |
 | `IN_REVIEW` | Reloj ámbar con borde (`--st-warning-*`): «Verificación en proceso» |
 | `EXPIRED` | Círculo gris con exclamación: «Verificación vencida» |
-| `SUSPENDED`, `UNVERIFIED` | **Ningún glifo.** En `icon` no se pinta nada; en `label`, sólo el texto |
+| `UNVERIFIED` | **Ningún glifo.** En `icon` no se pinta nada; en `label`, sólo «No verificado» |
 
 Un `VERIFIED` con `validUntil` ya vencido se pinta como `EXPIRED` aunque la API
 todavía no lo haya degradado (nunca al revés: el cliente no promueve).

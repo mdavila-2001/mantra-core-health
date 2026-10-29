@@ -43,11 +43,6 @@ export const VERIFICATION_COPY: Readonly<Record<string, VerificationCopy>> = Obj
     meaning:
       'AloVida está comprobando su identidad y su matrícula profesional. Hasta que termine no se muestra como verificado.',
   },
-  SUSPENDED: {
-    visible: 'Verificación suspendida',
-    name: 'Verificación suspendida',
-    meaning: 'AloVida suspendió la verificación de este perfil.',
-  },
   EXPIRED: {
     visible: 'Verificación vencida',
     name: 'Verificación vencida',
@@ -60,7 +55,7 @@ export const VERIFICATION_COPY: Readonly<Record<string, VerificationCopy>> = Obj
   },
 });
 
-/** Los estados que llevan pictograma. SUSPENDED y UNVERIFIED nunca dibujan un glifo: sólo texto, y sólo en `label`. */
+/** Los estados que llevan pictograma. UNVERIFIED nunca dibuja un glifo: sólo texto, y sólo en `label`. */
 export const VERIFICATION_GLYPH_STATES = ['VERIFIED', 'IN_REVIEW', 'EXPIRED'] as const;
 
 /**

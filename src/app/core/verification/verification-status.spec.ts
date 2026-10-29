@@ -86,9 +86,13 @@ describe('verification-status', () => {
       expect(showsVerifiedCheck(info.status)).toBe(false);
     });
 
-    it('verification.status gana aunque verified sea true (SUSPENDED)', () => {
+    it('verification.status gana aunque verified sea true (UNVERIFIED: así llega una suspensión)', () => {
+      expect(verificationOf({ verified: true, verification: { status: 'UNVERIFIED' } }).status).toBe(
+        'UNVERIFIED',
+      );
+      // un SUSPENDED suelto no es del contrato: se lee como desconocido
       expect(verificationOf({ verified: true, verification: { status: 'SUSPENDED' } }).status).toBe(
-        'SUSPENDED',
+        'UNVERIFIED',
       );
     });
 
@@ -127,10 +131,10 @@ describe('verification-status', () => {
   describe('verificationWithSealFallback', () => {
     it('usa verification.status cuando la API lo envía', () => {
       const info = verificationWithSealFallback(
-        { verification: { status: 'SUSPENDED', validUntil: '2027-05-01' } },
+        { verification: { status: 'EXPIRED', validUntil: '2027-05-01' } },
         'approved',
       );
-      expect(info.status).toBe('SUSPENDED');
+      expect(info.status).toBe('EXPIRED');
       expect(info.validUntil?.getFullYear()).toBe(2027);
     });
 
@@ -186,7 +190,7 @@ describe('verification-status', () => {
     it('nunca promueve: un IN_REVIEW o UNVERIFIED con fechas sigue igual', () => {
       expect(effectiveVerificationStatus('IN_REVIEW', null, now)).toBe('IN_REVIEW');
       expect(effectiveVerificationStatus('UNVERIFIED', new Date(2020, 0, 1), now)).toBe('UNVERIFIED');
-      expect(effectiveVerificationStatus('SUSPENDED', new Date(2099, 0, 1), now)).toBe('SUSPENDED');
+      expect(effectiveVerificationStatus('EXPIRED', new Date(2099, 0, 1), now)).toBe('EXPIRED');
     });
 
     it('vigente o sin vigencia declarada sigue VERIFIED', () => {

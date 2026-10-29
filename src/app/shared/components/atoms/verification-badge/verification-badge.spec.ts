@@ -83,19 +83,21 @@ describe('VerificationBadge', () => {
       expect(host().querySelector('.vb__check')).toBeNull();
     });
 
-    it('SUSPENDED y UNVERIFIED nunca dibujan un glifo: en icono no hay nada, en label sólo texto', async () => {
-      for (const status of ['SUSPENDED', 'UNVERIFIED']) {
-        await setInputs({ status, variant: 'icon' });
-        expect(face(), status).toBeNull();
-        expect(host().classList.contains('vb-host--hidden'), status).toBe(true);
+    it('UNVERIFIED nunca dibuja un glifo: en icono no hay nada, en label sólo texto', async () => {
+      await setInputs({ status: 'UNVERIFIED', variant: 'icon' });
+      expect(face()).toBeNull();
+      expect(host().classList.contains('vb-host--hidden')).toBe(true);
 
-        await setInputs({ status, variant: 'label' });
-        expect(host().querySelector('svg'), status).toBeNull();
-        expect(host().classList.contains('vb-host--hidden'), status).toBe(false);
-      }
-      await setInputs({ status: 'SUSPENDED', variant: 'label' });
-      expect(host().textContent).toContain('Verificación suspendida');
       await setInputs({ status: 'UNVERIFIED', variant: 'label' });
+      expect(host().querySelector('svg')).toBeNull();
+      expect(host().textContent).toContain('No verificado');
+    });
+
+    it('una suspensión llega como UNVERIFIED; un SUSPENDED suelto se trata como desconocido: sin glifo ni texto de verificado', async () => {
+      await setInputs({ status: 'SUSPENDED', variant: 'icon' });
+      expect(face()).toBeNull();
+      await setInputs({ status: 'SUSPENDED', variant: 'label' });
+      expect(host().querySelector('svg')).toBeNull();
       expect(host().textContent).toContain('No verificado');
     });
 
@@ -215,7 +217,7 @@ describe('VerificationBadge', () => {
     });
 
     it('no tiene violaciones serias de axe en ningún estado, abierto ni cerrado', async () => {
-      for (const status of ['VERIFIED', 'IN_REVIEW', 'SUSPENDED', 'EXPIRED', 'UNVERIFIED']) {
+      for (const status of ['VERIFIED', 'IN_REVIEW', 'EXPIRED', 'UNVERIFIED']) {
         for (const variant of ['icon', 'label']) {
           await setInputs({ status, variant, subject: 'Dra. Ana Rojas' });
           await expectNoSeriousViolations(host());

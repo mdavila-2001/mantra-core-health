@@ -15,12 +15,16 @@
     actual ni con los mocks que todavía no la envían.
     ========================================================================== */
 
-/** Los cinco estados que la API puede declarar. */
+/**
+ * Los cuatro estados que la API declara en `verification.status`. Una
+ * suspensión o un rechazo NO tienen estado propio en el contrato público:
+ * llegan como `UNVERIFIED` (ADR de verificación, §3.7). Si algún día llegara un
+ * `SUSPENDED` suelto, se trata como cualquier valor desconocido: no verificado.
+ */
 export const VERIFICATION_STATUSES = [
   'VERIFIED',
   'IN_REVIEW',
   'UNVERIFIED',
-  'SUSPENDED',
   'EXPIRED',
 ] as const;
 export type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
@@ -191,7 +195,7 @@ export function showsVerifiedCheck(status: VerificationStatus): boolean {
  * objeto `verification`.
  *
  * `rejected` y `unknown` no afirman nada: no hay insignia. La revocación
- * explícita llega como `SUSPENDED` desde la API, no se deduce de un rechazo.
+ * explícita llega como `UNVERIFIED` desde la API.
  */
 export function verificationFromSeal(seal: string | null | undefined): VerificationStatus {
   switch (seal) {

@@ -144,8 +144,7 @@ button.vb {
     padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-1);
 }
 
-/* sin glifo (suspendida, no verificada): el texto solo, con el mismo aire a ambos lados */
-.vb--label.vb--suspended .vb__face,
+/* sin glifo (no verificada): el texto solo, con el mismo aire a ambos lados */
 .vb--label.vb--unverified .vb__face {
     padding-inline: var(--sp-2);
 }
