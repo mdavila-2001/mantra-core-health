@@ -8,6 +8,7 @@ import { ToastContainer } from '@shared/components/organisms/toast-container/toa
 import { environment } from '../environments/environment';
 import { MockBanner } from './core/mock/mock-banner';
 import { FreeGapNotice } from './features/notifications/free-slot-notice';
+import { DelayNotice } from './features/notifications/delay-notice';
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,7 @@ export class App {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly huecosLibres = inject(FreeGapNotice);
+  private readonly delays = inject(DelayNotice);
 
   /**
    * Sólo con el simulador encendido (H1.S2.M1). Contra la API real el cartel
@@ -40,6 +42,10 @@ export class App {
        enciende solo en la maqueta y sólo con sesión abierta: contra la API real
        el empujón lo da el servidor (módulo 35). Ver `free-slot-notice.ts`. */
     this.huecosLibres.start();
+    /* «El médico se demora» como push: toast fijo con «Ver mi cita» y, con
+       permiso, notificación del sistema. Corre también contra la API real.
+       Ver `delay-notice.ts`. */
+    this.delays.start();
     this.aplicarPantalla();
     this.router.events
       .pipe(
