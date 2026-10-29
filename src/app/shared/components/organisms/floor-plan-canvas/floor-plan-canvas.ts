@@ -142,8 +142,7 @@ export class FloorPlanCanvas {
   protected readonly dragging = signal(false);
   protected readonly liveText = signal('');
   private resizeObserver: ResizeObserver | null = null;
-  /** Mientras nadie movió la vista, un cambio de tamaño del contenedor vuelve a encuadrar el lienzo entero. */
-  private userMoved = false;
+  private userMoved = false; // mientras sea false, cambiar el tamaño del contenedor reencuadra el lienzo entero
   private lastLive = '';
   private lastFrameNonce = -1;
   private lastRevealNonce = -1;
