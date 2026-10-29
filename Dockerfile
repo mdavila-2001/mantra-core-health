@@ -110,50 +110,56 @@ ARG BUILD_CONFIGURATION="production"
 # contexto: sin él queda `desconocido` y se pierde la trazabilidad del artefacto.
 RUN yarn build --configuration=$BUILD_CONFIGURATION
 
-# ─── Etapa 2 · ejecución ─────────────────────────────────────────────────────
+# ─── Etapa 2 · dependencias de producción ────────────────────────────────────
+FROM node:24-bookworm-slim AS prod-deps
+
+RUN corepack enable
+WORKDIR /app
+
+# ─── ESTE `COPY --from=build` ENCADENA LAS DOS INSTALACIONES A PROPÓSITO ─────
+#
+# BuildKit construye en grafo, no en lista: dos etapas sin dependencia entre
+# ellas corren EN PARALELO. Si esta etapa copiara los manifiestos del contexto,
+# los dos `yarn install` —el de desarrollo de arriba y el de producción de acá—
+# arrancarían a la vez. Dos instalaciones simultáneas de este repositorio son el
+# pico de memoria real del build: no es Angular. En el H310 eso despertaba a
+# `h310-guardian`, que mataba los dos pasos y dejaba en el log dos
+# `exit code: 137` seguidos, uno por cada `yarn` (despliegue 712, 17/09, con el
+# swap todavía al 57% libre — o sea que ni siquiera era falta de swap, era la
+# presión instantánea).
+#
+# Copiarlos DESDE la etapa `build` obliga a esperar a que termine, así que las
+# instalaciones siguen una detrás de otra. Y como BuildKit calcula la caché de
+# un `COPY` por el contenido de lo que copia, mientras `package.json`,
+# `yarn.lock` y `.yarnrc.yml` no cambien el `yarn install` de abajo sale de
+# caché: ya no se paga un minuto largo de instalación en cada despliegue.
+#
+# Antes esta instalación vivía en la etapa `runtime`, después de copiar `dist/`.
+# Encadenaba igual, pero como `dist/` cambia en cada commit la capa no se
+# reutilizaba nunca.
+COPY --from=build /app/package.json /app/yarn.lock /app/.yarnrc.yml ./
+
+# El servidor SSR necesita resolver `express` y `@angular/ssr` en ejecución. Se
+# instala solo lo de producción en vez de copiar el `node_modules` de la etapa
+# anterior, que arrastra el toolchain de build (esbuild, lmdb) sin usarlo.
+#
+# El montón va acotado en la propia orden y NO como `ENV`, por costumbre: en la
+# etapa `runtime` un `ENV` se hornearía en la imagen final y le pondría techo
+# al heap del servidor SSR. Lo que se acota es la instalación.
+RUN NODE_OPTIONS=--max-old-space-size=1024     yarn workspaces focus --production --all || yarn install --immutable
+
+# ─── Etapa 3 · ejecución ─────────────────────────────────────────────────────
 FROM node:24-bookworm-slim AS runtime
 
 RUN corepack enable
 WORKDIR /app
 
 COPY package.json yarn.lock .yarnrc.yml ./
+COPY --from=prod-deps /app/node_modules ./node_modules
 
-# ─── ESTE `COPY` VA ANTES DEL `yarn install` A PROPÓSITO ─────────────────────
-#
 # Preserva la estructura `dist/mantra-core-health/{browser,server}`, que
-# `server.mjs` necesita porque busca `../browser` relativo a sí mismo. Pero el
-# motivo de que esté AQUÍ ARRIBA, y no después de instalar, es otro: es lo único
-# que ENCADENA esta etapa con la anterior.
-#
-# BuildKit construye en grafo, no en lista: dos etapas sin dependencia entre
-# ellas corren EN PARALELO. Con el `COPY --from=build` al final, nada ataba esta
-# etapa a la de compilación hasta el último paso, así que los dos `yarn install`
-# —el de desarrollo de arriba y el de producción de abajo— arrancaban a la vez.
-# Dos instalaciones simultáneas de este repositorio son el pico de memoria real
-# del build: no es Angular. En el H310 eso despertaba a `h310-guardian`, que
-# mataba los dos pasos y dejaba en el log dos `exit code: 137` seguidos, uno por
-# cada `yarn` (despliegue 712, 17/09, con el swap todavía al 57% libre — o sea
-# que ni siquiera era falta de swap, era la presión instantánea).
-#
-# Poniendo el `COPY` primero, esta etapa no puede empezar hasta que la anterior
-# termine, y las instalaciones quedan una detrás de otra.
-#
-# El precio, que conviene saber: la capa del `yarn install` de abajo ya no se
-# reutiliza entre builds, porque el `dist/` cambia en cada commit. Se paga un
-# minuto largo de instalación por despliegue a cambio de que el despliegue
-# termine, que hasta ahora no pasaba nunca.
+# `server.mjs` necesita porque busca `../browser` relativo a sí mismo.
 COPY --from=build /app/dist/mantra-core-health ./dist/mantra-core-health
-
-# El servidor SSR necesita resolver `express` y `@angular/ssr` en ejecución. Se
-# reinstala solo lo de producción en vez de copiar el `.yarn` entero de la etapa
-# anterior, que arrastra el toolchain de build (esbuild, lmdb) sin usarlo.
-#
-# El montón va acotado en la propia orden y NO como `ENV`: un `ENV` aquí se
-# hornea en la imagen final y le pondría techo al heap del servidor SSR en
-# ejecución, que no es lo que se quiere acotar. Lo que se acota es la
-# instalación.
-RUN NODE_OPTIONS=--max-old-space-size=1024 \
-    yarn workspaces focus --production --all || yarn install --immutable
 
 # Usuario sin privilegios. La imagen base trae `node` (uid 1000) creado.
 USER node

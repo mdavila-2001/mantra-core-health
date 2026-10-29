@@ -153,6 +153,9 @@ export class IamClient {
       ...(registration.homeAddressLines === undefined
         ? {}
         : { homeAddressLines: registration.homeAddressLines }),
+      ...(registration.homeDistrict === undefined
+        ? {}
+        : { homeDistrict: registration.homeDistrict }),
       ...(registration.homeLatitude === undefined
         ? {}
         : { homeLatitude: registration.homeLatitude }),
@@ -165,6 +168,9 @@ export class IamClient {
       ...(registration.workAddressLines === undefined
         ? {}
         : { workAddressLines: registration.workAddressLines }),
+      ...(registration.workDistrict === undefined
+        ? {}
+        : { workDistrict: registration.workDistrict }),
       ...(registration.workLatitude === undefined
         ? {}
         : { workLatitude: registration.workLatitude }),
@@ -254,6 +260,9 @@ export class IamClient {
       ...(registration.homeAddressLines === undefined
         ? {}
         : { homeAddressLines: registration.homeAddressLines }),
+      ...(registration.homeDistrict === undefined
+        ? {}
+        : { homeDistrict: registration.homeDistrict }),
       // El par entero o nada: media coordenada no ubica nada.
       ...(registration.homeLatitude === undefined || registration.homeLongitude === undefined
         ? {}

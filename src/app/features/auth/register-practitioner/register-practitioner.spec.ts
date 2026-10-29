@@ -3010,7 +3010,9 @@ describe('RegisterPractitioner', () => {
 
       component.submit();
       const req = http.expectOne('/iam/auth/register-practitioner');
-      expect(req.request.body.homeAddressLines).toBe('Calle Warnes 45, Equipetrol');
+      // Calle y distrito viajan separados (ADR-0028 de la API).
+      expect(req.request.body.homeAddressLines).toBe('Calle Warnes 45');
+      expect(req.request.body.homeDistrict).toBe('Equipetrol');
       expect(req.request.body.residenceMunicipalityConceptId).toBe('mun-scz');
       expect(req.request.body.homeLatitude).toBe(-17.79);
       req.flush(RESPUESTA_PRO);
@@ -3451,6 +3453,29 @@ describe('RegisterPractitioner', () => {
           latitude: -17.78,
           longitude: -63.18,
         },
+      });
+    });
+
+    it('el distrito del consultorio viaja aparte de la calle (ADR-0028)', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({
+        officeAddressLines: 'Calle Warnes 45',
+        officeDistrict: 'Equipetrol',
+      });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: ['Calle Warnes 45'], district: 'Equipetrol' },
+      });
+    });
+
+    it('un distrito solo alcanza para declarar la dirección del consultorio', () => {
+      completarProfesional();
+      component.formProfesional.patchValue({ officeDistrict: '  Equipetrol  ' });
+
+      expect(cuerpoDelAlta()['ownSite']).toEqual({
+        name: 'Mi consultorio',
+        address: { lines: [], district: 'Equipetrol' },
       });
     });
 

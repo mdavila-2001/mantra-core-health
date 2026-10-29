@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import {
   ReverseGeocodingClient,
@@ -60,8 +60,8 @@ describe('MapLocationPicker — lo deducido del punto', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  function campoCalle(): HTMLInputElement {
-    return raiz().querySelector('[data-testid="calle"]') as HTMLInputElement;
+  function campoCalle(): HTMLTextAreaElement {
+    return raiz().querySelector('[data-testid="calle"] textarea') as HTMLTextAreaElement;
   }
 
   it('tocar el mapa pide la calle de ese punto y la escribe en un campo de sólo lectura', async () => {
@@ -81,7 +81,9 @@ describe('MapLocationPicker — lo deducido del punto', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(campoCalle().value).toBe('Calle Guapay 3861, Equipetrol');
+    // Calle y número: el distrito va en su campo, justo debajo, no dos veces.
+    expect(campoCalle().value).toBe('Calle Guapay 3861');
+    expect(campoCalle().value).not.toContain('Equipetrol');
     expect(campoCalle().readOnly).toBe(true);
     expect(component.zone()).toBe('Equipetrol');
   });
@@ -141,5 +143,149 @@ describe('MapLocationPicker — lo deducido del punto', () => {
     expect(component.street()).toBeNull();
     expect(component.zone()).toBeNull();
     expect(raiz().querySelector('[data-testid="mapa-deducido"]')).toBeNull();
+  });
+  function campoDistrito(): HTMLTextAreaElement {
+    return raiz().querySelector('[data-testid="mapa-distrito"] textarea') as HTMLTextAreaElement;
+  }
+
+  it('el distrito se ve siempre junto a la calle: buscando, con dato y sin dato', () => {
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(campoDistrito().value).toContain('Buscando');
+    expect(campoDistrito().readOnly).toBe(true);
+    respuestas.next({
+      found: true,
+      line: 'Calle X, Equipetrol',
+      neighbourhood: 'Equipetrol',
+      attribution: 'OSM',
+    });
+    fixture.detectChanges();
+    expect(campoDistrito().value).toBe('Equipetrol');
+
+    component.pinPunto({ lat: -17.7, lng: -63.1 });
+    respuestas.next({ found: true, line: 'Calle Z', attribution: 'OSM' });
+    fixture.detectChanges();
+    expect(campoDistrito().value).toContain('no tiene un distrito');
+  });
+
+  it('si la API cae, lo dice en calle y distrito, y deja volver a buscar', () => {
+    let falla = true;
+    const geocoder = TestBed.inject(ReverseGeocodingClient) as unknown as {
+      streetAt: (lat: number, lng: number) => unknown;
+    };
+    geocoder.streetAt = (lat: number, lng: number) => {
+      pedidos.push({ lat, lng });
+      if (falla) return throwError(() => new Error('503'));
+      return of({
+        found: true,
+        line: 'Calle Q, Centro',
+        neighbourhood: 'Centro',
+        attribution: 'OSM',
+      });
+    };
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(campoCalle().value).toBe('No disponible por ahora.');
+    expect(campoDistrito().value).toBe('No disponible por ahora.');
+    expect(
+      raiz().querySelector('app-alert[data-testid="mapa-calle-caida"]')?.textContent,
+    ).toContain('No pudimos traer la calle ni el distrito');
+
+    falla = false;
+    const reintentar = raiz().querySelector(
+      '[data-testid="mapa-reintentar-calle"] button, [data-testid="mapa-reintentar-calle"]',
+    ) as HTMLElement;
+    reintentar.click();
+    fixture.detectChanges();
+    expect(pedidos).toHaveLength(2);
+    expect(campoCalle().value).toBe('Calle Q, Centro');
+    expect(campoDistrito().value).toBe('Centro');
+    expect(raiz().querySelector('[data-testid="mapa-calle-caida"]')).toBeNull();
+  });
+
+  it('fuera de Bolivia no dibuja el mapa de Bolivia: lo dice, y la calle se sigue buscando', () => {
+    component.pinPunto({ lat: 40.4168, lng: -3.7038 });
+    fixture.detectChanges();
+    expect(pedidos).toEqual([{ lat: 40.4168, lng: -3.7038 }]);
+    expect(raiz().querySelector('app-alert[data-testid="mapa-fuera-de-bolivia"]')).not.toBeNull();
+    expect(raiz().querySelector('app-location-picker')).toBeNull();
+    respuestas.next({
+      found: true,
+      line: 'Calle Mayor 1, Sol',
+      neighbourhood: 'Sol',
+      attribution: 'OSM',
+    });
+    fixture.detectChanges();
+    expect(campoCalle().value).toBe('Calle Mayor 1, Sol');
+    expect(campoDistrito().value).toBe('Sol');
+    expect(component.municipality()).toBeNull();
+
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(raiz().querySelector('[data-testid="mapa-fuera-de-bolivia"]')).toBeNull();
+    expect(raiz().querySelector('app-location-picker')).not.toBeNull();
+  });
+  it('el país lo decide la API: un punto en Perú dentro del recuadro de Bolivia muestra el aviso', () => {
+    // Puno: cae dentro del recuadro de Bolivia, pero no es Bolivia.
+    component.pinPunto({ lat: -15.84, lng: -69.6 });
+    fixture.detectChanges();
+    expect(raiz().querySelector('[data-testid="mapa-fuera-de-bolivia"]')).toBeNull();
+    respuestas.next({
+      found: true,
+      line: 'Jirón Lima 100, Centro',
+      countryCode: 'PE',
+      adminAreas: { level1: 'Puno', level3: 'Puno', district: 'Centro' },
+      attribution: 'OSM',
+    });
+    fixture.detectChanges();
+    const aviso = raiz().querySelector('[data-testid="mapa-fuera-de-bolivia"]');
+    expect(aviso?.textContent).toContain('Por el momento sólo operamos en Bolivia');
+    expect(raiz().querySelector('app-location-picker')).toBeNull();
+    expect(campoDistrito().value).toBe('Centro');
+  });
+
+  it('avisa a quien lo monta el país y los niveles, para cualquier país', () => {
+    const emitidos: (LocalityFromPoint | null)[] = [];
+    component.localidad.subscribe((l) => emitidos.push(l));
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    respuestas.next({
+      found: true,
+      line: 'Calle Guapay 3861, Equipetrol',
+      countryCode: 'BO',
+      adminAreas: {
+        level1: 'Santa Cruz',
+        level2: 'Provincia Andrés Ibáñez',
+        level3: 'Santa Cruz de la Sierra',
+        district: 'Distrito 2',
+      },
+      neighbourhood: 'Equipetrol',
+      attribution: 'OSM',
+    });
+    fixture.detectChanges();
+    const ultimo = emitidos.at(-1);
+    expect(ultimo?.paisCodigo).toBe('BO');
+    expect(ultimo?.niveles?.level2).toBe('Provincia Andrés Ibáñez');
+    // El distrito administrativo manda sobre el barrio.
+    expect(ultimo?.zona).toBe('Distrito 2');
+    expect(raiz().querySelector('[data-testid="mapa-fuera-de-bolivia"]')).toBeNull();
+  });
+  it('fuera de donde se opera no deja confirmar el punto (ni por botón ni por el método)', () => {
+    const confirmados: unknown[] = [];
+    component.confirmado.subscribe((c) => confirmados.push(c));
+    component.pinPunto({ lat: 40.4168, lng: -3.7038 });
+    fixture.detectChanges();
+    const boton = raiz().querySelector('[data-testid="confirmar"]') as HTMLElement;
+    expect(boton.getAttribute('aria-disabled')).toBe('true');
+    boton.click();
+    component.confirmAddressActual();
+    expect(component.confirmed()).toBe(false);
+    expect(confirmados.filter((c) => c !== null)).toEqual([]);
+
+    // De vuelta en Bolivia, sí.
+    component.pinPunto({ lat: -17.78, lng: -63.18 });
+    fixture.detectChanges();
+    expect(boton.getAttribute('aria-disabled')).not.toBe('true');
+    component.confirmAddressActual();
+    expect(component.confirmed()).toBe(true);
   });
 });

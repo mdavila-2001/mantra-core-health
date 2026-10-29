@@ -1,5 +1,4 @@
 import type { NewOwnSite } from '../../../core/data-access/practice-sites/practice-sites.types';
-import { componerDireccion } from '../shared-registration/address-line';
 import type { Coordinates } from '../shared-registration/map-location-picker/map-location-picker';
 
 /**
@@ -77,11 +76,12 @@ function hasAddressAnswer(answers: OwnSiteAnswers): boolean {
 }
 
 function addressOf(answers: OwnSiteAnswers): NonNullable<NewOwnSite['address']> {
-  // El distrito no tiene columna propia: viaja dentro de la línea de dirección.
-  const street = componerDireccion(answers.addressLines, answers.district);
+  const street = answers.addressLines.trim();
+  const district = answers.district.trim();
   const { municipalityConceptId, point } = answers;
   return {
     lines: street === '' ? [] : [street],
+    ...(district === '' ? {} : { district }),
     ...(municipalityConceptId === null ? {} : { municipalityConceptId }),
     ...(point === null ? {} : { latitude: point.lat, longitude: point.lng }),
   };

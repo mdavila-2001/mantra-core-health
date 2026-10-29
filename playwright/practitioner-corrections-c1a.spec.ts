@@ -275,18 +275,23 @@ test.describe('Correcciones del médico · perfil y menú', () => {
       }
     });
 
-    test(`a ${width} px el paciente tiene Emergencia en el menú y en la cabecera`, async ({ page }) => {
+    test(`a ${width} px el paciente tiene Emergencia sólo en la versión responsive`, async ({ page }) => {
       await setWidth(page, width);
       await signIn(page, 'paciente');
 
-      // La cabecera la lleva siempre; la hoja la muestra sólo donde el menú es un cajón.
+      // La cabecera la lleva siempre; la hoja la muestra sólo donde el menú es
+      // un cajón. En el escritorio no va ni en la cabecera ni en el menú
+      // (propietario, 28/10/2026).
       await expect(page.getByTestId('header-emergencia')).toHaveCount(1);
       if (width === 360) {
         await expect(page.locator('[data-testid="header-emergencia"] [data-testid="boton-emergencia"]')).toBeVisible();
         await capture(page, `patient-emergency-${width}`);
         await openDrawer(page);
+        await expect(page.locator('#app-side-nav [data-testid="boton-emergencia"]')).toBeVisible();
+      } else {
+        await expect(page.locator('[data-testid="header-emergencia"] [data-testid="boton-emergencia"]')).toBeHidden();
+        await expect(page.locator('#app-side-nav [data-testid="boton-emergencia"]')).toBeHidden();
       }
-      await expect(page.locator('#app-side-nav [data-testid="boton-emergencia"]')).toBeVisible();
       await capture(page, width === 360 ? `patient-emergency-drawer-${width}` : `patient-emergency-${width}`);
     });
   }

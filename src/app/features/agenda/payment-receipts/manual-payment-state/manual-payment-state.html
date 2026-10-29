@@ -34,4 +34,54 @@
       </button>
     }
   </div>
+  @if (showsAmount()) {
+    <div class="manual-payment__amount" data-testid="payment-amount">
+      @if (showsField()) {
+        <app-form-field
+          label="Monto recibido (Bs)"
+          hint="Opcional. Mayor que 0, con hasta dos decimales."
+          [errorMessage]="problem()"
+        >
+          <app-input
+            testId="payment-amount-input"
+            inputMode="decimal"
+            autocomplete="off"
+            placeholder="150,00"
+            [hasError]="problem() !== null"
+            [value]="draft()"
+            (valueChange)="setDraft($event)"
+          />
+        </app-form-field>
+        <div class="manual-payment__amount-actions">
+          <button
+            app-button
+            size="sm"
+            data-testid="payment-amount-save"
+            [disabled]="!canSave()"
+            (clicked)="saveAmount()"
+          >
+            Guardar monto
+          </button>
+        </div>
+      } @else {
+        <p class="manual-payment__saved" data-testid="payment-amount-saved">
+          Recibido: <strong>{{ savedLabel() }}</strong>
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="payment-amount-edit"
+            [disabled]="disabled()"
+            (clicked)="startEditing()"
+          >
+            Cambiar monto
+          </button>
+        </p>
+      }
+      <!-- TODO(pago-monto-api): el aviso sale cuando el monto viaje al servidor. -->
+      <app-alert tone="warning" data-testid="payment-amount-notice">
+        Guardado solo en este equipo: todavía no se envía al servidor.
+      </app-alert>
+    </div>
+  }
 </fieldset>

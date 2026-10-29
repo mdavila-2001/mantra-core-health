@@ -1,0 +1,117 @@
+PUT payment-state (marca a mano): 200 {"state":"PAID","label":"Pagada","conceptId":"bf7528a2-75cd-5412-aaba-27c486257463","insuranceUsed":false,"markedByUserId":"6a14db38-4d10-422c-b46f-ce8d4c099b3e
+[paciente 1440] 200 GET /scheduling/waitlist?patientProfileId=fc920127-1ca9-4cd4-b44c-b3340560fa5b
+[paciente 1440] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840&resourceType=PRACTITIONER
+[paciente 1440] 200 GET /scheduling/bookings?patientProfileId=fc920127-1ca9-4cd4-b44c-b3340560fa5b&includeCancelled=true&limi
+[paciente 1440] 200 GET /terminology/concepts?ids=de6bce1b-8b85-5edb-bea0-3994b5245d27%2Cbf910452-1485-58ca-88dc-184b8b4b2935&
+H03 1440: insignia de la fila pagada = «Pagada»; Subir comprobante en la pagada: 0
+H03 1440: insignia en la aceptada sin pagar: 0; botón: «Subir comprobante»
+[paciente 1440] 200 GET /scheduling/bookings/0426d289-d1d3-491f-a228-a0d18cf4996b
+[paciente 1440] 200 GET /scheduling/bookings/0426d289-d1d3-491f-a228-a0d18cf4996b/payment-receipts
+[paciente 1440] 200 GET /patient-spending/me?from=2025-01-01&to=2026-10-29
+H02 1440: vacío «Todavía no hay nada acáTodavía no tiene gastos registrados. Acá aparecen las consultas, compras de farmacia y análisis que le facturaron. Si pagó una cita y no la ve acá, el pago figura en «Mis citas». Buscar un profesional»
+[médica 1440] 200 GET /quotations?patientProfileId=fc920127-1ca9-4cd4-b44c-b3340560fa5b
+[médica 1440] 200 GET /terminology/concepts?ids=38a1d301-f40d-5b17-a695-5e6d605f8b19%2Cd2fe4f04-ea13-510a-9a10-dfee2302a98f&
+H15 1440: estado «Vigente», precio «300,00 Bs», atención «10/11/2026», válida «30/11/2026»
+[paciente 390] 200 GET /scheduling/waitlist?patientProfileId=fc920127-1ca9-4cd4-b44c-b3340560fa5b
+[paciente 390] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840&resourceType=PRACTITIONER
+[paciente 390] 200 GET /scheduling/bookings?patientProfileId=fc920127-1ca9-4cd4-b44c-b3340560fa5b&includeCancelled=true&limi
+[paciente 390] 200 GET /terminology/concepts?ids=de6bce1b-8b85-5edb-bea0-3994b5245d27%2Cbf910452-1485-58ca-88dc-184b8b4b2935&
+H03 390: insignia de la fila pagada = «Pagada»; Subir comprobante en la pagada: 0
+H03 390: insignia en la aceptada sin pagar: 0; botón: «Subir comprobante»
+[paciente 390] 200 GET /scheduling/bookings/0426d289-d1d3-491f-a228-a0d18cf4996b/payment-receipts
+[paciente 390] 200 GET /scheduling/bookings/0426d289-d1d3-491f-a228-a0d18cf4996b
+[paciente 390] 200 GET /patient-spending/me?from=2025-01-01&to=2026-10-29
+H02 390: vacío «Todavía no hay nada acáTodavía no tiene gastos registrados. Acá aparecen las consultas, compras de farmacia y análisis que le facturaron. Si pagó una cita y no la ve acá, el pago figura en «Mis citas». Buscar un profesional»
+[médica 390] 200 GET /quotations?patientProfileId=fc920127-1ca9-4cd4-b44c-b3340560fa5b
+[médica 390] 200 GET /terminology/concepts?ids=38a1d301-f40d-5b17-a695-5e6d605f8b19%2Cd2fe4f04-ea13-510a-9a10-dfee2302a98f&
+H15 390: estado «Vigente», precio «300,00 Bs», atención «10/11/2026», válida «30/11/2026»
+[médica agenda] 200 GET /scheduling/activity-types
+[médica agenda] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840
+[médica agenda] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A00%3A00.000Z&to=2026-11-05T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/templates
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-29T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-09-29T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z
+[médica agenda] 200 GET /scheduling/slots?from=2026-11-10T04%3A00%3A00.000Z&to=2026-11-11T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A09%3A56.432Z&to=2027-01-29T04%3A09%3A56.432Z&resourceId=145
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-26T04%3A00%3A00.000Z&to=2026-11-02T04%3A00%3A00.000Z
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-25T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935%2C10960d55-a26d-51ab-98ef-48b1d64b306b%
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-11-10T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935%2Cde6bce1b-8b85-5edb-bea0-3994b5245d27&
+[médica agenda] 200 GET /terminology/concepts?ids=de6bce1b-8b85-5edb-bea0-3994b5245d27&lang=ES
+[médica agenda] 200 GET /terminology/concepts?ids=de6bce1b-8b85-5edb-bea0-3994b5245d27&lang=ES
+[médica agenda] 200 GET /scheduling/activity-types
+[médica agenda] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840
+[médica agenda] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/templates
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A00%3A00.000Z&to=2026-11-05T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z
+[médica agenda] 200 GET /scheduling/slots?from=2026-11-10T04%3A00%3A00.000Z&to=2026-11-11T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-29T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-09-29T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A11%3A42.900Z&to=2027-01-29T04%3A11%3A42.900Z&resourceId=145
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-11-10T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-26T04%3A00%3A00.000Z&to=2026-11-02T04%3A00%3A00.000Z
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-25T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935%2C10960d55-a26d-51ab-98ef-48b1d64b306b%
+[médica agenda] 200 GET /terminology/concepts?ids=de6bce1b-8b85-5edb-bea0-3994b5245d27&lang=ES
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935%2Cde6bce1b-8b85-5edb-bea0-3994b5245d27&
+[médica agenda] 200 GET /terminology/concepts?ids=de6bce1b-8b85-5edb-bea0-3994b5245d27&lang=ES
+H11: menú de la cita: «Ver detalle de la solicitud Ver el historial del paciente Aceptar la solicitud Rechazar la solicitud Cancelar la cita»
+H11: diálogo «Solicitud de consultaTodo lo que el paciente mandó con su pedido.EstadoPor confirmarPacienteAna Pagada PruebaSolicitadajueves 29 de octubre, 00:04Citamartes 10 de noviembre, 09:00Hastamartes 10 de noviembre, 09:30ProfesionalConsulta Dra. ArceMotivosolicitud-po»
+[médica agenda] 200 POST /scheduling/bookings/7ff0f6ad-b032-42c2-8c38-f360c5a04609/accept
+H11: 200 POST /scheduling/bookings/:id/accept
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A00%3A00.000Z&to=2026-11-05T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/slots?from=2026-11-10T04%3A00%3A00.000Z&to=2026-11-11T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-29T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-11-10T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935%2C10960d55-a26d-51ab-98ef-48b1d64b306b%
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-09-29T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935&lang=ES
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-25T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935&lang=ES
+[médica agenda] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840
+[médica agenda] 200 GET /scheduling/activity-types
+[médica agenda] 200 GET /scheduling/resources?tenantId=1befcfea-44c0-563a-81cd-337ec6acc840
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A00%3A00.000Z&to=2026-11-05T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-29T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/templates
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-09-29T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935%2C10960d55-a26d-51ab-98ef-48b1d64b306b%
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-25T04%3A00%3A00.000Z&to=2026-12-08T04%3A00%3A00.000Z
+[médica agenda] 200 GET /scheduling/slots?from=2026-11-10T04%3A00%3A00.000Z&to=2026-11-11T04%3A00%3A00.000Z&resourceId=145
+[médica agenda] 200 GET /scheduling/slots?from=2026-10-29T04%3A11%3A51.812Z&to=2027-01-29T04%3A11%3A51.812Z&resourceId=145
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-10-25T04%3A00%3A00.000
+[médica agenda] 200 GET /scheduling/resources/145aacbf-c4b4-4492-8942-9195f74471f8/exceptions?from=2026-10-26T04%3A00%3A00.000Z&to=2026-11-02T04%3A00%3A00.000Z
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935&lang=ES
+[médica agenda] 200 GET /scheduling/bookings?resourceId=145aacbf-c4b4-4492-8942-9195f74471f8&from=2026-11-10T04%3A00%3A00.000
+[médica agenda] 200 GET /terminology/concepts?ids=bf910452-1485-58ca-88dc-184b8b4b2935&lang=ES
+H11: tras recargar, la API dice statusConceptId=bf910452-1485-58ca-88dc-184b8b4b2935
+
+# 2026-10-29, segunda vuelta: H11 a 390 px y el detalle del calendario de la cita pagada a mano
+201 POST /scheduling/slots/:id/holds
+201 POST /scheduling/holds/:token/request
+H11 390: diálogo «Solicitud de consultaTodo lo que el paciente mandó con su pedido.EstadoPor confirmarPacienteAna Pagada PruebaSolicitadajueves 29 de octubre, 07:53Citasábado 7 de noviembre, 10:00Hastasábado 7 de noviembre, 10:30Profesion»
+[médica 390] 200 POST /scheduling/bookings/:id/accept
+H11 390: 200 POST /scheduling/bookings/:id/accept
+H11 390: tras recargar, la API dice status=bf910452-1485-58ca-88dc-184b8b4b2935
+cita pagada: 2026-10-29 09:00 · paymentState=null
+[paciente 1440] 200 GET /scheduling/bookings
+[paciente 1440] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 1440] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 1440] 200 GET /scheduling/bookings/:id
+detalle 1440: «Comprobante de pago Esta cita ya figura como pagada: no hace falta subir ningún comprobante. El pago se registró sin comprobante.»
+detalle 1440: formulario para subir comprobante visible: 0
+[paciente 390] 200 GET /scheduling/bookings
+[paciente 390] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 390] 200 GET /scheduling/bookings/:id/payment-receipts
+[paciente 390] 200 GET /scheduling/bookings/:id
+detalle 390: «Comprobante de pago Esta cita ya figura como pagada: no hace falta subir ningún comprobante. El pago se registró sin comprobante.»
+detalle 390: formulario para subir comprobante visible: 0

@@ -17,6 +17,7 @@
         [label]="label()"
         [interactive]="interactiveSteps()"
         [compact]="pasosCompactos()"
+        currentLabelOnly
         (stepSelected)="goToStep($event)"
       />
     } @else {

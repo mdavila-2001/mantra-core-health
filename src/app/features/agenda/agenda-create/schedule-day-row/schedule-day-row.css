@@ -1,0 +1,45 @@
+/* La fila es parte de la tabla de la pantalla: mismas celdas, mismo trazo. */
+:host > th,
+:host > td {
+  text-align: left;
+  padding: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+/* El día encendido se distingue por peso, no sólo por color: quien no
+   distingue tonos tiene que poder leer qué filas cuentan. */
+:host(.schedule-day-row--active) .schedule-day-row__day {
+  font-weight: 600;
+}
+
+/* El nombre a la izquierda y su «Sí / No» alineado en columna de una fila a otra. */
+.schedule-day-row__check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  white-space: nowrap;
+}
+
+/* Los interruptores, centrados bajo su encabezado. */
+:host > .schedule-day-row__switch {
+  text-align: center;
+}
+
+/* Sin un mínimo propio, «Sin respiro» —la opción más larga— quedaba cortada en
+   «Sin respi» en los tres anchos, incluso con lugar de sobra en escritorio. */
+.schedule-day-row__choice {
+  min-width: 8rem;
+}
+
+.schedule-day-row__off,
+:host > .schedule-day-row__free {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+:host > .schedule-day-row__slots {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

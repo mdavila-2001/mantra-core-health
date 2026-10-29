@@ -16,13 +16,14 @@ glosario ya traía soluciones propias que se conservan: la fuente de «Datos» a
 
 ---
 
+
 ## Alta de médico: cada habilitación con su fecha y su respaldo, y el colegio de la profesión — 2026-10-27
 
 El paso «Su habilitación para ejercer» tiene tres renglones —matrícula, registro del SEDES y registro en el colegio—,
 cada uno con **su** número, **su** fecha de inscripción y **su** respaldo PDF. El colegio sale del título profesional
 elegido antes («Registro en el Colegio Médico de Bolivia», «… de Odontólogos de Bolivia»); es obligatorio cuando el
 título tiene colegio conocido. Viajan `sedesLicenseIssueDate` y `collegeLicenseNumber`/`collegeName`/
-`collegeLicenseIssueDate`/`collegeLicenseFileId`, que la API recibe en `test` desde la rama `claude/relaxed-cannon-nt2pik-test` de
+`collegeLicenseIssueDate`/`collegeLicenseFileId`, que la API recibe desde la rama `claude/relaxed-cannon-nt2pik` de
 `mantra-core-health-api` (tercera fila de `jurisdiction_authorizations`, concepto `JURISDICTION_PROFESSIONAL_COLLEGE`).
 **Sin esa rama de la API mergeada, la API real rechaza estos campos**: hay que mergear las dos juntas.
 

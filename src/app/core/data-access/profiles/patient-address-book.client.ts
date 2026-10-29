@@ -21,6 +21,10 @@ export interface PatientAddress {
   readonly lines?: string;
   readonly city?: string;
   readonly municipalityConceptId?: string;
+  /** Provincia o condado, deducida del municipio por la API (ADR-0028). */
+  readonly administrativeArea2ConceptId?: string;
+  /** Distrito o zona, aparte de la calle (ADR-0028). */
+  readonly district?: string;
   readonly latitude?: number;
   readonly longitude?: number;
   readonly isPreferred: boolean;
@@ -31,6 +35,8 @@ export interface NewPatientAddress {
   readonly label: string;
   readonly municipalityConceptId: string;
   readonly lines?: string;
+  /** Distrito o zona; en una corrección, `''` lo quita. */
+  readonly district?: string;
   readonly latitude?: number;
   readonly longitude?: number;
   readonly isPreferred?: boolean;

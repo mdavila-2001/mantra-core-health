@@ -18,10 +18,11 @@ import { nameExtraControl, type NameGroup } from '../name-fields/person-name';
  * nombres: en vez de casillas fijas que casi nadie usa, se agregan las que
  * hagan falta.
  *
- * Existe aparte de `CamposDeNombre` porque ése reparte los nombres en dos
- * sub-páginas embebidas (farmacia, laboratorio, centro de imagen): dentro de
- * una página que ya forma parte de un formulario paginado —representante legal,
- * gerencias, owner— eso anidaría un «Siguiente» dentro de otro.
+ * Lo usan todas las altas que piden nombres de personas dentro de una página
+ * de un formulario paginado —representante legal, gerencias, owner—. Antes
+ * farmacia, laboratorio y centro de imagen usaban un mini-asistente propio
+ * («Nombres» → «Apellidos») embebido en la página: anidaba un «Siguiente»
+ * dentro de otro y dejaba el resto de la página flotando debajo.
  */
 @Component({
   selector: 'app-inline-name-fields',

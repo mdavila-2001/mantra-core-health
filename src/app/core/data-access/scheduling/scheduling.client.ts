@@ -332,6 +332,8 @@ export class SchedulingClient {
           ...(rule.telemedicineEnabled === undefined
             ? {}
             : { telemedicineEnabled: rule.telemedicineEnabled }),
+          // v4.2.64: el día flexible de una semana mixta. Ausente ≡ turnos fijos.
+          ...(rule.flexibleHours === true ? { flexibleHours: true } : {}),
         })),
         ...(template.slotMinutes === undefined ? {} : { slotMinutes: template.slotMinutes }),
         ...(template.bookingPolicyId === undefined

@@ -283,6 +283,79 @@ describe('Appointments', () => {
     });
   });
 
+  /* ---- H03 · el pago en la lista ------------------------------------------ */
+
+  describe('H03: la fila de «Mis citas» muestra el pago', () => {
+    const PAID_STATE = {
+      state: 'PAID',
+      label: 'Pagada',
+      conceptId: 'c-pagada',
+      insuranceUsed: false,
+      markedByUserId: 'u-medica',
+      markedAt: '2026-10-28T10:00:00.000Z',
+    };
+
+    /** La fila de la lista, por el motivo de la cita (lo único que la distingue en pantalla). */
+    function rowWith(reason: string): HTMLElement | null {
+      const rows = [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.turnos__item'),
+      ];
+      return rows.find((li) => li.textContent?.includes(reason)) ?? null;
+    }
+
+    function start(bookings: unknown[]): void {
+      montar();
+      responderArranque(bookings);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    it('una cita PAID lleva la insignia con la etiqueta de la API; otra sin paymentState, ninguna', () => {
+      start([
+        { ...cita('b-1', CONFIRMADO), reasonText: 'pagada-b1', paymentState: PAID_STATE },
+        { ...cita('b-2', CONFIRMADO), reasonText: 'sin-pago-b2' },
+      ]);
+
+      const paidRow = rowWith('pagada-b1');
+      const unpaidRow = rowWith('sin-pago-b2');
+      expect(
+        paidRow?.querySelector('[data-testid="appointment-payment-badge"]')?.textContent?.trim(),
+      ).toBe('Pagada');
+      expect(unpaidRow?.querySelector('[data-testid="appointment-payment-badge"]')).toBeNull();
+      // Sin monto en la respuesta, ningún monto en pantalla.
+      expect(paidRow?.textContent).not.toContain('Bs');
+    });
+
+    it('una cita aceptada y sin pagar ofrece «Subir comprobante»; la pagada, no', () => {
+      start([
+        { ...cita('b-1', CONFIRMADO), reasonText: 'pagada-b1', paymentState: PAID_STATE },
+        { ...cita('b-2', CONFIRMADO), reasonText: 'sin-pago-b2' },
+      ]);
+
+      expect(
+        rowWith('pagada-b1')?.querySelector('[data-testid="appointment-receipt-upload-toggle"]'),
+      ).toBeNull();
+      const upload = rowWith('sin-pago-b2')?.querySelector<HTMLElement>(
+        '[data-testid="appointment-receipt-upload-toggle"]',
+      );
+      expect(upload?.textContent?.trim()).toBe('Subir comprobante');
+      expect(rowWith('sin-pago-b2')?.querySelector('app-booking-payment-receipts')).toBeNull();
+
+      upload!.click();
+      fixture.detectChanges();
+
+      // El mismo bloque del calendario, montado a pedido: lee sus comprobantes y la cita.
+      expect(rowWith('sin-pago-b2')?.querySelector('app-booking-payment-receipts')).not.toBeNull();
+      http.expectOne((r) => r.url === '/scheduling/bookings/b-2/payment-receipts').flush([]);
+      http.expectOne((r) => r.url === '/scheduling/bookings/b-2').flush({ id: 'b-2' });
+      fixture.detectChanges();
+      expect(
+        rowWith('sin-pago-b2')?.querySelector('[data-testid="booking-receipts-form"]'),
+      ).not.toBeNull();
+    });
+  });
+
   /* ---- TJ-2 · la ventana y la reprogramación ------------------------------ */
 
   describe('reglas finas de la cita (TJ-2)', () => {

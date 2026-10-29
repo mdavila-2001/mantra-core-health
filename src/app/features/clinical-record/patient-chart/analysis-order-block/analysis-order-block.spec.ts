@@ -41,16 +41,6 @@ const CATALOGO = {
   ],
 };
 
-/** Las categorías que publica el catálogo: el tipo de la orden viaja como su concepto. */
-const CATEGORIAS = {
-  ...CATALOGO,
-  code: 'service-request-category',
-  options: [
-    { conceptId: 'cat-lab', code: 'SR_LAB', display: 'Lab', ordinal: 1 },
-    { conceptId: 'cat-img', code: 'SR_IMAGING', display: 'Img', ordinal: 2 },
-  ],
-};
-
 const CIRCUITO_VACIO = {
   patientProfileId: 'p-1',
   orders: [],
@@ -157,7 +147,7 @@ describe('AnalysisOrderBlock', () => {
         req.flush({ message: 'sin binding' }, { status: 404, statusText: 'Not Found' });
         continue;
       }
-      req.flush(req.request.params.get('target') === TARGET_CATEGORIA ? CATEGORIAS : CATALOGO);
+      req.flush(CATALOGO);
     }
   }
 
@@ -334,28 +324,20 @@ describe('AnalysisOrderBlock', () => {
     componente['estudio'].set('code-rx');
     expect(componente['tipo'].label()).toBe('Imagenología');
     componente['estudio'].set('code-raro');
-    expect(componente['tipo'].label()).toContain('Otro estudio');
+    expect(componente['tipo'].label()).toBe('Otro estudio');
   });
 
-  /** Todo viaja como el concepto publicado: en `test` el alta no acepta `category`. */
+  /**
+   * La imagen viaja como texto: la API escribe el concepto de `diagnostics`,
+   * que es el que la ficha y la cola del centro de imagen leen.
+   */
   it.each([
-    ['code-hemograma', 'cat-lab'],
-    ['code-rx', 'cat-img'],
-  ])('el estudio %s manda la categoría %s', (estudio, esperado) => {
+    ['code-hemograma', { category: 'LAB' }],
+    ['code-rx', { category: 'IMAGING' }],
+    ['code-raro', { category: 'OTHER' }],
+  ])('el estudio %s manda %o como categoría', (estudio, esperado) => {
     fixture.detectChanges();
-    for (const req of http.match((r) => r.url === '/system-context/dynamic-enums')) {
-      req.flush(
-        req.request.params.get('target') === TARGET_CATEGORIA
-          ? {
-              ...CATALOGO,
-              options: [
-                { conceptId: 'cat-lab', code: 'SR_LAB', display: 'Lab', ordinal: 1 },
-                { conceptId: 'cat-img', code: 'SR_IMAGING', display: 'Img', ordinal: 2 },
-              ],
-            }
-          : CATALOGO,
-      );
-    }
+    responderCatalogos();
     responderCircuito();
 
     componente['estudio'].set(estudio);
@@ -363,18 +345,8 @@ describe('AnalysisOrderBlock', () => {
     responderChequeo(false);
 
     const req = http.expectOne((r) => r.url === '/clinical/service-requests');
-    expect(req.request.body.categoryConceptId).toBe(esperado);
-    expect('category' in req.request.body).toBe(false);
-  });
-
-  it('un estudio sin categoría publicada no se puede pedir', () => {
-    fixture.detectChanges();
-    responderCatalogos();
-    responderCircuito();
-
-    componente['estudio'].set('code-raro');
-    expect(componente['tipo'].label()).toContain('Otro estudio');
-    expect(componente['puedePedir']()).toBe(false);
+    expect(req.request.body).toMatchObject(esperado);
+    expect('categoryConceptId' in req.request.body).toBe(false);
   });
 
   it('un estudio cardiológico manda el concepto de la categoría publicada', () => {
@@ -414,7 +386,7 @@ describe('AnalysisOrderBlock', () => {
     const req = http.expectOne((r) => r.url === '/clinical/service-requests');
     expect(req.request.method).toBe('POST');
     expect(req.request.body.codeConceptId).toBe('code-hemograma');
-    expect(req.request.body.categoryConceptId).toBe('cat-lab');
+    expect(req.request.body.category).toBe('LAB');
     expect(req.request.body.encounterId).toBe('enc-1');
     expect(req.request.body.custodianTenantId).toBe('t-1');
     // La prioridad no se eligió: la clave se omite, no viaja en null.

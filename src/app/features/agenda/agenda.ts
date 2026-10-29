@@ -76,6 +76,7 @@ import { AGENDA_BOOKING_PARAM, AGENDA_CREATE_ROUTE, bookingNewRoute } from './ag
 import { MyAgenda } from './my-agenda/my-agenda';
 import { BookingPaymentStates } from './payment-receipts/booking-payment-states';
 import { PaymentReceiptsDialog } from './payment-receipts/payment-receipts-dialog/payment-receipts-dialog';
+import { PendingPayments } from './payment-receipts/pending-payments/pending-payments';
 import { WalkInForm, type TurnoDeMostrador } from './walk-in/walk-in-form';
 import { AgendaWindowNav } from './window-nav/window-nav';
 import { rangoDeVentana } from './window-nav/window-range';
@@ -518,6 +519,7 @@ type AgendaTab = 'calendar' | 'consultations' | 'schedule' | 'slots';
     AgendaWindowNav,
     MyAgenda,
     PaymentReceiptsDialog,
+    PendingPayments,
     WalkInForm,
   ],
   templateUrl: './agenda.html',
@@ -569,6 +571,13 @@ export class Agenda {
 
   private readonly recursos = signal<readonly AgendaResource[]>([]);
   private readonly etiquetas = signal<ConceptLabels>(new Map());
+  /**
+   * Los estados de citas que la tabla no trajo (H11): la tarjeta del día es de
+   * `my-agenda`, con su propia ventana. Aparte de `etiquetas()` para que
+   * recargar la tabla no los borre; cada concepto se pide una sola vez.
+   */
+  private readonly extraLabels = signal<ConceptLabels>(new Map());
+  private readonly requestedLabels = new Map<string, Promise<void>>();
 
   protected readonly citas = signal<ViewState<readonly CitaVisible[]>>(loading());
   protected readonly cupos = signal<ViewState<readonly CupoVisible[]>>(loading());
@@ -1631,8 +1640,31 @@ export class Agenda {
     const guardada = this.citasDelDia.get(booking);
     if (guardada !== undefined) return guardada;
     const cita = this.aCitaVisible(booking);
+    // H11: sin el estado resuelto no se memoriza; se pide y la tarjeta se
+    // recalcula cuando llega (`extraLabels` es una señal).
+    if (cita.estado.code === '' && booking.statusConceptId !== undefined) {
+      void this.requestLabel(booking.statusConceptId);
+      return cita;
+    }
     this.citasDelDia.set(booking, cita);
     return cita;
+  }
+
+  /** Pide a terminología un estado que la tabla no trajo; una vez por concepto. */
+  private requestLabel(conceptId: string): Promise<void> {
+    const pending = this.requestedLabels.get(conceptId);
+    if (pending !== undefined) return pending;
+    const request = new Promise<void>((resolve) => {
+      this.terminology
+        .readConceptLabels([conceptId])
+        .pipe(catchError(() => of<ConceptLabels>(new Map())))
+        .subscribe((labels) => {
+          this.extraLabels.update((current) => new Map([...current, ...labels]));
+          resolve();
+        });
+    });
+    this.requestedLabels.set(conceptId, request);
+    return request;
   }
 
   /* -- Acciones sobre una cita (UC-41-09 y UC-41-10) ----------------------- */
@@ -2303,6 +2335,15 @@ export class Agenda {
    */
   protected atenderDesdeLaTarjeta(booking: Booking): void {
     const cita = this.citaDelDia(booking);
+    // H11: fuera de la ventana de la tabla, primero el estado; si no, el
+    // detalle decía «Sin registrar» a una solicitud que espera respuesta.
+    if (cita.estado.code === '' && booking.statusConceptId !== undefined) {
+      void this.requestLabel(booking.statusConceptId).then(() => {
+        if (this.citaDelDia(booking).estado.code !== '') this.atenderDesdeLaTarjeta(booking);
+        else void this.verDetalleDeLaCita(cita);
+      });
+      return;
+    }
 
     if (this.sePuedeCompletar(cita)) {
       this.continuarAtencion(cita);
@@ -2385,6 +2426,11 @@ export class Agenda {
    * clic que no hace nada enseña a no confiar en los clics.
    */
   private async verDetalleDeLaCita(cita: CitaVisible): Promise<void> {
+    // H11: una solicitud se responde desde su detalle, con «Aceptar solicitud».
+    if (this.porResponder(cita)) {
+      await this.verDetalle(cita);
+      return;
+    }
     // El título separa los dos casos y no los junta en un «todavía»: una cita
     // ya atendida no está esperando nada, y decirle que «todavía no se atiende»
     // es informarle mal a quien la toca para revisarla.
@@ -2770,7 +2816,8 @@ export class Agenda {
     const estado = toBookingStatusPresentation(
       cita.statusConceptId === undefined
         ? undefined
-        : this.etiquetas().get(cita.statusConceptId),
+        : (this.etiquetas().get(cita.statusConceptId) ??
+            this.extraLabels().get(cita.statusConceptId)),
       SIN_DATO,
     );
     return {
