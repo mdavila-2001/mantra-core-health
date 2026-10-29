@@ -1,13 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
@@ -260,9 +251,6 @@ function formatCoordinate(valor: number): string {
 export class MapLocationPicker {
   private readonly document = inject(DOCUMENT);
 
-  /** Si ya se sembró el punto guardado. Ver {@link inicial}. */
-  private seeded = false;
-
   constructor() {
     this.listenStreetRequests();
     // Quien monta el selector se entera de cada cambio de lo deducido.
@@ -284,13 +272,15 @@ export class MapLocationPicker {
     });
     // `effect` y no un valor inicial de la señal: el perfil llega por HTTP y el
     // componente ya está montado cuando aparece.
+    //
+    // Se vuelve a sembrar cuando el padre trae un punto distinto del que ya
+    // está —el alta de farmacia ubica una sucursal desde su enlace de Maps—.
+    // Lo que el propio picker confirmó vuelve igual por `inicial` y no mueve
+    // nada; un `null` (pin quitado) tampoco.
     effect(() => {
       const guardado = this.inicial();
-      if (this.seeded || guardado === null) return;
-      this.seeded = true;
-      // El padre puede devolver el mismo punto que este selector acaba de
-      // confirmar: no hay nada que sembrar ni que volver a buscar.
-      const actual = this.punto();
+      if (guardado === null) return;
+      const actual = untracked(this.punto);
       if (actual !== null && actual.lat === guardado.lat && actual.lng === guardado.lng) return;
       this.punto.set(guardado);
       this.deduceFrom(guardado);

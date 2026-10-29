@@ -768,17 +768,32 @@ export class RegisterPharmacy {
     this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
   }
 
+  /**
+   * Las sucursales cuyo pin salió del enlace y no de la mano: mientras sea
+   * así, corregir el enlace mueve el pin. En cuanto la persona confirma un
+   * punto en el mapa, el enlace deja de moverlo.
+   */
+  private readonly pinesDelEnlace = new Set<string>();
+
   escribirUrlDeSucursal(id: string, url: string | number | null): void {
-    const enlace = url === null ? '' : String(url).trim();
-    // Pegar el enlace es una de las dos maneras de ubicar la sucursal: si trae el
-    // punto escrito, es el punto (y el pin lo muestra); si ya había uno marcado
-    // a mano, ése se respeta.
-    const punto = enlace === '' ? null : coordinatesFromMapUrl(enlace);
-    const yaUbicada = (this.sucursales().find((sucursal) => sucursal.id === id)?.gps ?? null) !== null;
-    this.actualizarSucursal(id, {
-      urlUbicacion: enlace,
-      ...(punto === null || yaUbicada ? {} : { gps: { lat: punto.latitude, lng: punto.longitude } }),
-    });
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /**
+   * Al salir del campo del enlace: si trae el punto escrito (Google Maps,
+   * OpenStreetMap) y la sucursal no tiene un pin puesto a mano, el pin sale
+   * de ahí, igual que en la carga en lote. Al salir y no en cada tecla: a
+   * medio escribir «…q=-17.748,-6» ya es un punto legible —en medio del
+   * Atlántico—, y aparecer el pin mientras se escribe le quitaba el foco al
+   * campo y se comía el resto del enlace.
+   */
+  ubicarSucursalPorEnlace(id: string): void {
+    const actual = this.sucursales().find((sucursal) => sucursal.id === id);
+    if (actual === undefined) return;
+    const punto = coordinatesFromMapUrl(actual.urlUbicacion);
+    if (punto === null || (actual.gps !== null && !this.pinesDelEnlace.has(id))) return;
+    this.pinesDelEnlace.add(id);
+    this.actualizarSucursal(id, { gps: { lat: punto.latitude, lng: punto.longitude } });
   }
 
   /* --- carga en lote ------------------------------------------------------ */
@@ -850,6 +865,8 @@ export class RegisterPharmacy {
   });
 
   fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
+    // Un punto confirmado (o quitado) en el mapa manda sobre el enlace.
+    this.pinesDelEnlace.delete(id);
     this.actualizarSucursal(id, { gps });
   }
 
@@ -899,6 +916,10 @@ export class RegisterPharmacy {
       this.form.markAllAsTouched();
       return;
     }
+
+    // Enviar con Enter dentro del campo del enlace no pasa por «salir del campo»:
+    // el pin del enlace se resuelve acá también, para no perder esa sucursal.
+    for (const sucursal of this.sucursales()) this.ubicarSucursalPorEnlace(sucursal.id);
 
     const aviso = this.avisoDeSucursalesIncompletas();
     if (aviso !== null) {
