@@ -6,12 +6,13 @@
 
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="contacto-form">
   <app-form-field
+    icon="patients"
     label="Nombre de la persona"
     hint="Con quién se contacta a esta persona si hace falta."
     [required]="true"
     [errorMessage]="
       form.controls.displayName.touched && form.controls.displayName.invalid
-        ? 'Escribí el nombre del contacto.'
+        ? 'Escriba el nombre del contacto.'
         : ''
     "
   >
@@ -19,6 +20,7 @@
   </app-form-field>
 
   <app-form-field
+    icon="calendar"
     label="Fecha de nacimiento"
     hint="Opcional. Ayuda a distinguirla de un homónimo."
   >
@@ -44,7 +46,7 @@
 
   @if (conflictoDeTutor()) {
     <app-alert appAnuncio tone="warning" class="contacto__alert" data-testid="contacto-tutor-aviso">
-      Este paciente ya tiene un tutor legal registrado y el modelo admite uno solo activo. Dale de
+      Este paciente ya tiene un tutor legal registrado y el modelo admite uno solo activo. Dele de
       baja al anterior antes de designar a otro.
     </app-alert>
   }

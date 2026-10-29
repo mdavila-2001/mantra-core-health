@@ -10,5 +10,11 @@
 export interface SelectOption<T> {
   value: T;
   label: string;
+  /**
+   * Qué significa la opción, en una frase. Se ve en segunda línea dentro del
+   * modal y el buscador también la mira: una lista de estados o de tipos deja
+   * de ser una lista de palabras a adivinar.
+   */
+  description?: string;
   disabled?: boolean;
 }

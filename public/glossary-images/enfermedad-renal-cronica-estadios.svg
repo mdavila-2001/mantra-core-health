@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Mapa de riesgo KDIGO de la enfermedad renal crónica</title>
+  <desc id="d">Cuadrícula que cruza seis categorías de filtrado glomerular, de G1 a G5, con tres categorías de albuminuria, de A1 a A3. Los colores indican el riesgo de progresión y de complicaciones: bajo, moderadamente aumentado, alto y muy alto, que crece hacia abajo y hacia la derecha.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --c0:#bfe5cf; --c1:#f4e3a1; --c2:#f4bf8a; --c3:#ee9a8f; --t0:#12432b; --t1:#4a3d06; --t2:#5a2f06; --t3:#5c1710; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --c0:#1e5a3f; --c1:#6b5c17; --c2:#8a4e1c; --c3:#8c2f27; --t0:#d9f4e5; --t1:#fbf0c4; --t2:#fbdcc0; --t3:#fbd6d1; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .lbl { font-size: 15px; }
+    .sm { font-size: 12px; }
+    .cell { font-size: 14px; font-weight: 700; }
+    .hd { font-size: 14px; font-weight: 700; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="12" y="10" width="776" height="428" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="24" y="40" class="title">Clasificación KDIGO: filtrado y albuminuria</text>
+  <text x="24" y="62" class="sub muted">Riesgo de progresión y de complicaciones (guía KDIGO 2024). Filtrado en ml/min/1,73 m².</text>
+  <text x="24" y="116" class="hd">Filtrado glomerular</text>
+  <text x="370.0" y="96" text-anchor="middle" class="hd">A1</text><text x="370.0" y="112" text-anchor="middle" class="sm muted">&lt; 30 mg/g</text>
+  <text x="514.0" y="96" text-anchor="middle" class="hd">A2</text><text x="514.0" y="112" text-anchor="middle" class="sm muted">30–300 mg/g</text>
+  <text x="658.0" y="96" text-anchor="middle" class="hd">A3</text><text x="658.0" y="112" text-anchor="middle" class="sm muted">&gt; 300 mg/g</text>
+  <text x="514.0" y="82" text-anchor="middle" class="sm muted">Albuminuria (cociente albúmina/creatinina)</text>
+<text x="24" y="155" class="lbl" style="font-weight:700">G1</text><text x="62" y="155" class="lbl muted">≥ 90</text><text x="130" y="155" class="sm muted">Normal o alto</text>
+<rect x="300" y="130" width="140" height="40" rx="6" fill="var(--c0)"/><text x="370.0" y="155" text-anchor="middle" class="cell" style="fill:var(--t0)">Bajo</text>
+<rect x="444" y="130" width="140" height="40" rx="6" fill="var(--c1)"/><text x="514.0" y="155" text-anchor="middle" class="cell" style="fill:var(--t1)">Moderado</text>
+<rect x="588" y="130" width="140" height="40" rx="6" fill="var(--c2)"/><text x="658.0" y="155" text-anchor="middle" class="cell" style="fill:var(--t2)">Alto</text>
+<text x="24" y="199" class="lbl" style="font-weight:700">G2</text><text x="62" y="199" class="lbl muted">60–89</text><text x="130" y="199" class="sm muted">Levemente disminuido</text>
+<rect x="300" y="174" width="140" height="40" rx="6" fill="var(--c0)"/><text x="370.0" y="199" text-anchor="middle" class="cell" style="fill:var(--t0)">Bajo</text>
+<rect x="444" y="174" width="140" height="40" rx="6" fill="var(--c1)"/><text x="514.0" y="199" text-anchor="middle" class="cell" style="fill:var(--t1)">Moderado</text>
+<rect x="588" y="174" width="140" height="40" rx="6" fill="var(--c2)"/><text x="658.0" y="199" text-anchor="middle" class="cell" style="fill:var(--t2)">Alto</text>
+<text x="24" y="243" class="lbl" style="font-weight:700">G3a</text><text x="62" y="243" class="lbl muted">45–59</text><text x="130" y="243" class="sm muted">Leve a moderado</text>
+<rect x="300" y="218" width="140" height="40" rx="6" fill="var(--c1)"/><text x="370.0" y="243" text-anchor="middle" class="cell" style="fill:var(--t1)">Moderado</text>
+<rect x="444" y="218" width="140" height="40" rx="6" fill="var(--c2)"/><text x="514.0" y="243" text-anchor="middle" class="cell" style="fill:var(--t2)">Alto</text>
+<rect x="588" y="218" width="140" height="40" rx="6" fill="var(--c3)"/><text x="658.0" y="243" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<text x="24" y="287" class="lbl" style="font-weight:700">G3b</text><text x="62" y="287" class="lbl muted">30–44</text><text x="130" y="287" class="sm muted">Moderado a grave</text>
+<rect x="300" y="262" width="140" height="40" rx="6" fill="var(--c2)"/><text x="370.0" y="287" text-anchor="middle" class="cell" style="fill:var(--t2)">Alto</text>
+<rect x="444" y="262" width="140" height="40" rx="6" fill="var(--c3)"/><text x="514.0" y="287" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<rect x="588" y="262" width="140" height="40" rx="6" fill="var(--c3)"/><text x="658.0" y="287" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<text x="24" y="331" class="lbl" style="font-weight:700">G4</text><text x="62" y="331" class="lbl muted">15–29</text><text x="130" y="331" class="sm muted">Gravemente disminuido</text>
+<rect x="300" y="306" width="140" height="40" rx="6" fill="var(--c3)"/><text x="370.0" y="331" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<rect x="444" y="306" width="140" height="40" rx="6" fill="var(--c3)"/><text x="514.0" y="331" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<rect x="588" y="306" width="140" height="40" rx="6" fill="var(--c3)"/><text x="658.0" y="331" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<text x="24" y="375" class="lbl" style="font-weight:700">G5</text><text x="62" y="375" class="lbl muted">&lt; 15</text><text x="130" y="375" class="sm muted">Fallo renal</text>
+<rect x="300" y="350" width="140" height="40" rx="6" fill="var(--c3)"/><text x="370.0" y="375" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<rect x="444" y="350" width="140" height="40" rx="6" fill="var(--c3)"/><text x="514.0" y="375" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+<rect x="588" y="350" width="140" height="40" rx="6" fill="var(--c3)"/><text x="658.0" y="375" text-anchor="middle" class="cell" style="fill:var(--t3)">Muy alto</text>
+
+  <text x="400" y="462" text-anchor="middle" class="sub muted">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

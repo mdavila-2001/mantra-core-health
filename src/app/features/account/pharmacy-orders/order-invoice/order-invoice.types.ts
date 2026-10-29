@@ -68,7 +68,7 @@ export interface DocumentoDeFactura {
 
 /**
  * Los rótulos del documento. Los cuatro primeros son los del resumen del
- * mostrador (`resumen-de-factura.html`): una misma factura se nombra igual en
+ * mostrador (`invoice-summary.html`): una misma factura se nombra igual en
  * las dos caras (AC-T-E4-07).
  */
 export const ROTULOS_DE_FACTURA = Object.freeze({

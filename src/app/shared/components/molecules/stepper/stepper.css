@@ -193,10 +193,25 @@
 /* ---- conector ------------------------------------------------------------ */
 
 .stepper__connector {
+    position: relative;
     flex: 1 1 var(--sp-4);
     min-width: var(--sp-4);
     height: 2px;
+    overflow: hidden;
     background: var(--border-default);
+}
+
+/* El relleno del riel: una capa que crece de izquierda a derecha. Antes el riel
+   cambiaba de color de golpe; con la capa, avanzar se VE como un trazo que se
+   llena, que es lo que dice «vas avanzando». */
+.stepper__connector::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--brand-primary);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--dur-slow) var(--ease-out);
 }
 
 /* ---- estados ------------------------------------------------------------- */
@@ -224,17 +239,69 @@
 
 /* El completado ya cruzó su riel: se tiñe para que la línea llena marque el
    avance de un vistazo. */
-.stepper__step--complete .stepper__connector {
-    background: var(--brand-primary);
+.stepper__step--complete .stepper__connector::after {
+    transform: scaleX(1);
 }
 
 /* El riel del paso completado se tiñe entero (arriba); el que sale del paso
    actual queda a medias, para que la línea llena termine donde terminó el
    avance de verdad. */
-.stepper__step--current .stepper__connector {
-    background: linear-gradient(
-        to right,
-        var(--brand-primary) 50%,
-        var(--border-default) 50%
-    );
+.stepper__step--current .stepper__connector::after {
+    transform: scaleX(0.5);
+}
+
+/* ---- movimiento ---------------------------------------------------------- */
+
+/* El marcador cambia de color con suavidad, y el que pasa a ser el actual se
+   asienta con el resorte del sistema: es el «estás acá» que se siente, no sólo
+   se ve. Se dispara solo cuando la clase del paso cambia. */
+.stepper__marker {
+    transition:
+        background-color var(--dur-base) var(--ease-out),
+        border-color var(--dur-base) var(--ease-out),
+        color var(--dur-base) var(--ease-out);
+}
+
+.stepper__step--current .stepper__marker {
+    animation: stepper-marker-pop var(--dur-slow) var(--ease-spring) both;
+}
+
+.stepper__step--complete .stepper__marker {
+    animation: stepper-marker-pop var(--dur-slow) var(--ease-spring) both;
+}
+
+/* La marca ✓ se dibuja al completarse. */
+.stepper__step--complete .stepper__marker polyline {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: stepper-check-draw 360ms var(--ease-out) 120ms forwards;
+}
+
+@keyframes stepper-marker-pop {
+    from {
+        transform: scale(0.72);
+    }
+}
+
+@keyframes stepper-check-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .stepper__connector::after,
+    .stepper__marker {
+        transition: none;
+    }
+
+    .stepper__step--current .stepper__marker,
+    .stepper__step--complete .stepper__marker {
+        animation: none;
+    }
+
+    .stepper__step--complete .stepper__marker polyline {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
 }

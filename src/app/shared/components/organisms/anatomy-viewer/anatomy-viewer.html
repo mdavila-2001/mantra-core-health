@@ -1,0 +1,40 @@
+<div class="anatomy-viewer" [attr.data-status]="status()">
+  <canvas
+    #lienzo
+    class="anatomy-viewer__canvas"
+    tabindex="0"
+    role="application"
+    aria-roledescription="modelo 3D"
+    [attr.aria-label]="label() + '. Use las flechas para girar el modelo, más y menos para acercar o alejar, e Inicio para volver a la vista inicial.'"
+    data-testid="anatomy-viewer-canvas"
+    (keydown)="onKeydown($event)"
+  ></canvas>
+
+  <!-- La región viva está siempre en el DOM: un lector de pantalla sólo
+       anuncia cambios de texto en una región que ya existía. -->
+  <p
+    class="anatomy-viewer__aviso"
+    [class.anatomy-viewer__aviso--oculto]="status() === 'ready' || status() === 'idle'"
+    [class.anatomy-viewer__aviso--error]="status() === 'error'"
+    role="status"
+  >
+    @switch (status()) {
+      @case ('loading') {
+        Cargando el modelo…
+      }
+      @case ('unsupported') {
+        Su navegador no puede dibujar el modelo en 3D (no ofrece WebGL 2). Puede elegir las piezas desde la lista.
+      }
+      @case ('error') {
+        No pudimos cargar el modelo. Apague y vuelva a encender la capa para reintentar.
+      }
+      @case ('ready') {
+        Modelo cargado.
+      }
+    }
+  </p>
+
+  @if (hoveredLabel(); as nombre) {
+    <p class="anatomy-viewer__rotulo" aria-hidden="true">{{ nombre }}</p>
+  }
+</div>

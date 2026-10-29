@@ -1,0 +1,71 @@
+.access {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.access__note,
+.access__empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.access__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.access__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.access__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+}
+
+.access__role {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.access__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow-wrap: break-word;
+}
+
+.access__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.access__detail {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.access__actions,
+.access__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

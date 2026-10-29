@@ -12,6 +12,7 @@ import type {
   CreatePharmacyOrderDto,
   DispensePharmacyOrderDto,
   PharmacyOrderDto,
+  PharmacyOrderPrescriberDto,
 } from './pharmacy-orders.dto';
 
 const ORDER_STATUS_BY_API_CODE: Readonly<Record<string, EstadoDePedido>> = {
@@ -43,6 +44,18 @@ export class UnsupportedPharmacyOrderLineError extends Error {
   }
 }
 
+/**
+ * Quién prescribió, en una línea: «Nombre · Especialidad», o sólo el nombre.
+ * Sin nombre no hay a quién nombrar: una especialidad suelta no dice quién
+ * firmó.
+ */
+export function prescriberText(prescriber: PharmacyOrderPrescriberDto | null): string | null {
+  if (prescriber === null || prescriber.name === null) return null;
+  return prescriber.specialty === null
+    ? prescriber.name
+    : `${prescriber.name} · ${prescriber.specialty}`;
+}
+
 export function pharmacyOrderFromDto(
   dto: PharmacyOrderDto,
   viewer: 'owner' | 'staff' = 'owner',
@@ -58,9 +71,9 @@ export function pharmacyOrderFromDto(
     sede: dto.siteName,
     direccion: null,
     modalidad: deliveryModeFromDto(dto.deliveryMode?.code),
-    direccionDeEntrega: null,
+    direccionDeEntrega: dto.deliveryAddressText ?? null,
     paciente: dto.patientName,
-    prescriptor: null,
+    prescriptor: prescriberText(dto.prescriber ?? null),
     lineas: dto.lines.map((line) => ({
       productId: line.productId,
       conceptId: line.medicationConceptId,

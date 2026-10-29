@@ -1,0 +1,7 @@
+# Suite completa del front (`yarn test --watch=false`) sobre el árbol integrado de test, antes de separar las ramas.
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL   mantra-core-health  src/app/core/mock/fixtures/fichas-estandar.spec.ts > las fichas clínicas estándar del simulador > son tantas como los JSON que siembra el backend
+AssertionError: expected 137 to be 43 // Object.is equality
+ Test Files  1 failed | 764 passed (765)
+      Tests  1 failed | 10534 passed (10535)
+tests-full EXIT=1

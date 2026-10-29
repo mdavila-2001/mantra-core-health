@@ -95,7 +95,10 @@ async function escenario(pagina, clave, variante, nombre, capturar, comprobar) {
   await pagina.goto(url, { waitUntil: 'domcontentloaded', timeout: 180_000 });
   const selector = pagina.getByTestId('stock-escenario');
   await selector.waitFor({ timeout: 60_000 });
-  await selector.selectOption(`${clave}#${variante}`);
+  // `app-select`: se abre el modal y se elige la opción por su valor, no por
+  // `selectOption` (ya no es un `<select>` nativo).
+  await selector.getByRole('combobox').click();
+  await pagina.locator(`dialog.select-dialog li[role="option"]`).filter({ hasText: new RegExp(`#${variante}\\s*$`) }).click();
   await pagina.getByTestId('stock-montaje').waitFor({ timeout: 60_000 });
   await pagina.waitForTimeout(800);
   const montaje = await pagina.getByTestId('stock-montaje').textContent();

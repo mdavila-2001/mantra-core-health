@@ -108,7 +108,7 @@ test('recorrido completo del editor: lista, alta, preguntas, publicación y huec
   await expect(page.getByRole('heading', { name: 'Encuestas' })).toBeVisible();
 
   const lista = page.getByTestId('encuestas-lista');
-  const vacio = page.getByText('Todavía no creaste ninguna encuesta');
+  const vacio = page.getByText('Todavía no creó ninguna encuesta');
   await expect(lista.or(vacio)).toBeVisible({ timeout: 15_000 });
   if (await lista.isVisible()) {
     await expect(lista.getByText(/Versión \d+/).first()).toBeVisible();
@@ -120,9 +120,9 @@ test('recorrido completo del editor: lista, alta, preguntas, publicación y huec
 
   await expect(page.getByText('Todavía no tiene preguntas')).toBeVisible();
 
-  await agregarPreguntaDeTexto(page, '¿Cómo calificarías la atención?');
+  await agregarPreguntaDeTexto(page, '¿Cómo calificaría la atención?');
 
-  await page.getByTestId('pregunta-texto').fill('¿Qué servicios usaste?');
+  await page.getByTestId('pregunta-texto').fill('¿Qué servicios usó?');
   await page.getByLabel('Tipo de respuesta').selectOption({ label: 'Elección múltiple' });
   await expect(page.getByTestId('pregunta-opciones')).toBeVisible();
   await page
@@ -133,19 +133,19 @@ test('recorrido completo del editor: lista, alta, preguntas, publicación y huec
   await expect(page.getByText('Consulta · Laboratorio · Imágenes')).toBeVisible({
     timeout: 15_000,
   });
-  await expect(page.getByText('¿Qué servicios usaste?')).toBeVisible();
+  await expect(page.getByText('¿Qué servicios usó?')).toBeVisible();
 
   // --- AC-27-4 parcial: persiste al recargar. ----------------------------
   await page.reload();
   await estable(page);
-  await expect(page.getByText('¿Cómo calificarías la atención?')).toBeVisible({
+  await expect(page.getByText('¿Cómo calificaría la atención?')).toBeVisible({
     timeout: 15_000,
   });
   await expect(page.getByText('Consulta · Laboratorio · Imágenes')).toBeVisible();
 
   // --- Hueco documentado (ficha §2.2): no hay editar ni eliminar pregunta.
   const preguntaExistente = page.locator('.encuesta__pregunta', {
-    has: page.getByText('¿Cómo calificarías la atención?'),
+    has: page.getByText('¿Cómo calificaría la atención?'),
   });
   await expect(preguntaExistente.getByRole('button', { name: /editar/i })).toHaveCount(0);
   await expect(preguntaExistente.getByRole('button', { name: /eliminar|borrar/i })).toHaveCount(
@@ -173,7 +173,7 @@ test('recorrido completo del editor: lista, alta, preguntas, publicación y huec
   // así que sólo se mide que la pantalla no se cuelga en `loading`). ------
   await irA(page, MIS_CUESTIONARIOS);
   await estable(page);
-  const forbidden = page.getByText(/no ten[ée]s permiso|acceso denegado/i);
+  const forbidden = page.getByText(/no tiene permiso|acceso denegado/i);
   const encabezado = page.getByRole('heading', { name: 'Mis cuestionarios' });
   await expect(encabezado.or(forbidden)).toBeVisible({ timeout: 15_000 });
 });
@@ -203,7 +203,7 @@ test.describe('AC-27-21 · sin scroll horizontal en los tres anchos obligatorios
       await abrirEditorDe(page, titulo);
       await agregarPreguntaDeTexto(page, 'Pregunta de texto para la captura');
 
-      await page.getByTestId('pregunta-texto').fill('¿Con qué frecuencia volverías?');
+      await page.getByTestId('pregunta-texto').fill('¿Con qué frecuencia volvería?');
       await page.getByLabel('Tipo de respuesta').selectOption({ label: 'Elección múltiple' });
       await page
         .getByTestId('pregunta-opciones')

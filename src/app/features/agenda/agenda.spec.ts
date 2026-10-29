@@ -309,12 +309,16 @@ describe('Agenda', () => {
    * #11 y #15), así que cada caso necesita que terminología resuelva el suyo:
    * sin eso, el código llega vacío y —correctamente— no se ofrece nada.
    */
-  async function responderConEstado(code: string, display: string): Promise<void> {
+  async function responderConEstado(
+    code: string,
+    display: string,
+    extra: Record<string, unknown> = {},
+  ): Promise<void> {
     await responderRecursos();
     http
       .expectOne((r) => r.url === '/scheduling/bookings')
       .flush({
-        items: [{ ...CITA, statusConceptId: 'c-estado' }],
+        items: [{ ...CITA, statusConceptId: 'c-estado', ...extra }],
         count: 1,
         limit: 100,
         truncated: false,
@@ -545,6 +549,8 @@ describe('Agenda', () => {
     // «Consultas» ES el calendario; la tabla de consultas y la grilla de cupos
     // no están. El horario se llama «Mis horarios», no «Mi agenda».
     const solapas = [...raiz.querySelectorAll('[role="tab"]')] as HTMLElement[];
+    // 28/10/2026: se retira «Horarios de otros servicios» (propietario): la
+    // barra vuelve a ser de DOS.
     expect(solapas.map((s) => s.textContent?.trim().replace(/\s*\(\d+\)$/, ''))).toEqual([
       'Consultas',
       'Mis horarios',
@@ -597,7 +603,7 @@ describe('Agenda', () => {
    * una solapa que exista y **no mostrar ninguna tabla**, sin romper el
    * «atrás» del navegador con una redirección.
    */
-  for (const vieja of ['table', 'citas', 'solicitudes', 'cupos'] as const) {
+  for (const vieja of ['table', 'citas', 'solicitudes', 'cupos', 'servicios'] as const) {
     it(`con calendario, \`vista=${vieja}\` cae al calendario y no a una tabla`, async () => {
       await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, `/schedule?vista=${vieja}`);
       await responderTodo();
@@ -647,6 +653,7 @@ describe('Agenda', () => {
     ] as HTMLElement[];
 
     expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Mis horarios');
+    expect(solapas.map((s) => s.textContent?.trim())).not.toContain('Horarios de otros servicios');
   });
 
   /* -- Ingreso por mostrador (AC-C3-03) ------------------------------------ */
@@ -654,25 +661,33 @@ describe('Agenda', () => {
   /**
    * El botón que abre el modal, o `null` si no se ofrece.
    *
-   * C-11 (2026-09-20): **bajó del encabezado de la página al del día.** El
-   * `data-testid` cambió de `agenda-ingreso-mostrador` a
-   * `dia-ingreso-mostrador` con la mudanza; la capacidad no cambió, y la sigue
-   * decidiendo `puedeIngresarPorMostrador()` de esta pantalla, que se la pasa
-   * al día por input.
+   * C-11 (2026-09-20) lo había bajado del encabezado de la página al del día.
+   * Desde el 24/09 **el médico no lo ve en ninguno de los dos**: el ingreso por
+   * mostrador es de quien reparte turnos, que no tiene calendario y lo sigue
+   * teniendo en el encabezado de la página.
    */
   function botonDeMostrador(): HTMLElement | null {
-    return harness.fixture.nativeElement.querySelector('[data-testid="dia-ingreso-mostrador"]');
+    return harness.fixture.nativeElement.querySelector(
+      '[data-testid="dia-ingreso-mostrador"], [data-testid="agenda-ingreso-mostrador"]',
+    );
   }
 
-  it('ofrece el ingreso por mostrador a quien atiende, con recurso elegido', async () => {
+  it('al médico no le ofrece el ingreso por mostrador, ni en el día ni arriba', async () => {
     await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
     await responderTodo();
 
+    // El día está pintado: la ausencia no es porque falte la agenda.
+    expect(harness.fixture.nativeElement.querySelector('app-day-view')).not.toBeNull();
+    expect(botonDeMostrador()).toBeNull();
+    expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).toBeNull();
+  });
+
+  it('se lo sigue ofreciendo a quien reparte turnos, con recurso elegido', async () => {
+    await montar({ roles: ['SCHEDULING_AGENT'] }, '/schedule');
+    await responder();
+    harness.fixture.detectChanges();
+
     expect(botonDeMostrador()?.textContent).toContain('Ingreso Mostrador');
-    // Y NO en el encabezado de la página: ahí es exactamente de donde se fue.
-    expect(
-      harness.fixture.nativeElement.querySelector('[data-testid="agenda-ingreso-mostrador"]'),
-    ).toBeNull();
     // Cerrado hasta que alguien lo toque: el `<dialog>` atrapa el foco, y
     // dejarlo montado metería sus campos en el orden de tabulación de atrás.
     expect(harness.fixture.nativeElement.querySelector('app-walk-in-form')).toBeNull();
@@ -682,7 +697,7 @@ describe('Agenda', () => {
     // Mismo criterio que el aviso de demora. La autoridad sigue siendo la API
     // —`walk-in` declara SCHEDULING_ADMIN, AGENT y PRACTITIONER—; esconder el
     // botón sólo evita ofrecer un gesto que no se puede completar.
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+    await montar({ roles: ['SCHEDULING_AGENT'] });
     await responderRecursos([]);
     harness.fixture.detectChanges();
 
@@ -690,8 +705,9 @@ describe('Agenda', () => {
   });
 
   it('el botón abre el modal sobre la agenda, sin navegar', async () => {
-    await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule');
-    await responderTodo();
+    await montar({ roles: ['SCHEDULING_AGENT'] }, '/schedule');
+    await responder();
+    harness.fixture.detectChanges();
 
     const antes = TestBed.inject(Router).url;
     botonDeMostrador()?.click();
@@ -775,7 +791,7 @@ describe('Agenda', () => {
     // que llevar directo al asistente.
     harness.fixture.detectChanges();
     const alerta = harness.fixture.nativeElement.querySelector('app-alert');
-    expect(alerta?.textContent).toContain('no pueden pedirte turno');
+    expect(alerta?.textContent).toContain('no pueden pedirle una cita');
     expect(alerta?.querySelector('a[app-button]')?.getAttribute('href')).toContain('/schedule/new');
     expect(citas().status).toBe('empty');
   });
@@ -986,7 +1002,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBe('ap-1');
-    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', cita: 'ap-1' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', cita: 'ap-1', booking: CITA.id });
   });
 
   /**
@@ -999,7 +1015,7 @@ describe('Agenda', () => {
 
     const fila = citas().data?.[0] as Record<string, unknown>;
     expect(fila['appointmentId']).toBeNull();
-    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual' });
+    expect(fila['paramsDeLaAtencion']).toEqual({ motivo: 'Control anual', booking: CITA.id });
   });
 
   it('una cita sin motivo no inventa uno para llevar', async () => {
@@ -1829,6 +1845,30 @@ describe('Agenda', () => {
     expect(boton('agenda-reprogramar')).toBeNull();
   });
 
+  /**
+   * 02/10/2026 — un turno de **otro servicio** (estudio, procedimiento) no se
+   * mueve a un cupo de consulta: dura lo que declara el servicio y su lugar lo
+   * calcula la API sobre las franjas de servicios. Se cancela y se vuelve a
+   * pedir; «Mover» llevaría a un hueco que no le corresponde.
+   */
+  it('un turno de servicio vigente no ofrece moverlo a un cupo de consulta', async () => {
+    await montar();
+    await responderConEstado('BOOKING_CONFIRMED', 'Confirmada', {
+      service: {
+        offeringId: 'of-1',
+        name: 'Holter de 24 horas',
+        price: '350.00',
+        minDurationMinutes: 20,
+        maxDurationMinutes: 30,
+        requiresApproval: true,
+      },
+    });
+    await verSolapaDeCitas();
+
+    expect(boton('agenda-reprogramar')).toBeNull();
+    expect(boton('agenda-cancelar')).not.toBeNull();
+  });
+
   it('moverla abre la solapa de cupos, y el cupo deja de ofrecer reservar', async () => {
     await montar();
     await responder();
@@ -1850,6 +1890,10 @@ describe('Agenda', () => {
     expect(boton('agenda-mover-aca')).not.toBeNull();
     // El mismo hueco no puede significar dos cosas a la vez.
     expect(boton('agenda-reservar')).toBeNull();
+    // El destino dice dónde, no sólo cuándo: la sede del recurso va en su nombre.
+    expect(boton('agenda-mover-aca')?.getAttribute('aria-label')).toMatch(
+      /^Mover acá: .+, Consultorio Central$/,
+    );
   });
 
   it('sin motivo no se mueve nada', async () => {
@@ -2024,9 +2068,9 @@ describe('Agenda', () => {
    * y `:308`). Es una brecha del contrato, no una funcionalidad: el freno del
    * cliente **no reemplaza** la validacion del servidor (regla 95.6.1), y por
    * eso aca se ejercita el camino del 409 contra un doble del endpoint,
-   * declarado como tal. Lo que queda pendiente de verificar contra el servidor
-   * real es que el 409 exista; lo que queda verificado es que si llega, la
-   * pantalla lo trata bien y no deja la segunda cita cambiada.
+   * declarado como tal. Esta prueba no demuestra que el servidor real devuelva
+   * el 409; demuestra que si llega, la pantalla lo trata bien y no deja la
+   * segunda cita cambiada.
    */
   describe('una sola consulta a la vez (C-11)', () => {
     /** Dos citas de la ventana: una en curso y otra confirmada. */
@@ -2076,7 +2120,7 @@ describe('Agenda', () => {
 
       // Nada salio a la red: el `http.verify()` del afterEach lo confirma.
       const config = confirmar.mock.calls[0]?.[0];
-      expect(config?.title).toContain('Ya tenés una consulta en curso');
+      expect(config?.title).toContain('Ya tiene una consulta en curso');
       // «Paciente asignado» y no el nombre: esta sesión no tiene permiso de
       // padrón, y la compuerta del nombre es la misma de siempre. Lo que el
       // aviso tiene que decir es CUÁL está abierta, no quién es.
@@ -2161,6 +2205,57 @@ describe('Agenda', () => {
    * La tarjeta no repite un botón: hace lo que la cita admite en su estado, y
    * el estado sale del ciclo (`booking-status.ts`), no de una bandera nueva.
    */
+  describe('`?booking=<id>` abre esa cita lista para atenderla (panel de inicio)', () => {
+    /** La cita pedida por id y la etiqueta de su estado, como las responde la API. */
+    async function responderCitaPedida(code: string, display: string): Promise<void> {
+      http
+        .expectOne('/scheduling/bookings/b-1')
+        .flush({ ...CITA, statusConceptId: 'c-pedida' });
+      http
+        .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'c-pedida')
+        .flush({
+          items: [{ conceptId: 'c-pedida', code, display, codeSystemVersionId: 'csv-1' }],
+          count: 1,
+          limit: 200,
+        });
+      await harness.fixture.whenStable();
+    }
+
+    it('una cita CONFIRMADA ofrece «Iniciar consulta», la inicia y entra a atender', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&booking=b-1');
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      await responderCitaPedida('BOOKING_CONFIRMED', 'Confirmada');
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Iniciar consulta');
+      http.expectOne('/scheduling/bookings/b-1/start').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-curso',
+        occurredAt: '2026-08-15T12:00:00.000Z',
+      });
+      await harness.fixture.whenStable();
+
+      const rutas = navegar.mock.calls.map(([comandos]) => String((comandos as unknown[])[0] ?? ''));
+      expect(rutas.some((ruta) => /\/medical-records\/[^/]+\/consultation$/.test(ruta))).toBe(true);
+    });
+
+    it('una cita EN CURSO ofrece «Continuar consulta», sin repetir el inicio', async () => {
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' }, '/schedule?vista=table&booking=b-1');
+      await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+      await responderCitaPedida('BOOKING_IN_PROGRESS', 'En curso');
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Continuar consulta');
+      const rutas = navegar.mock.calls.map(([comandos]) => String((comandos as unknown[])[0] ?? ''));
+      expect(rutas.some((ruta) => /\/medical-records\/[^/]+\/consultation$/.test(ruta))).toBe(true);
+      // Sin `POST …/start`: el `http.verify()` del afterEach lo confirma.
+    });
+  });
+
   describe('la tarjeta del calendario lleva a atender (C-04)', () => {
     /** Activa la tarjeta como lo hace el día, con la reserva cruda. */
     function tocarLaTarjeta(): void {
@@ -2168,12 +2263,16 @@ describe('Agenda', () => {
       interno<(b: unknown) => void>('atenderDesdeLaTarjeta')(cruda);
     }
 
-    it('una cita CONFIRMADA se inicia y se entra a atender', async () => {
+    it('una cita CONFIRMADA pregunta antes de iniciarla y, con el sí, entra a atender', async () => {
       await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
       await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
       const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
       tocarLaTarjeta();
+      await harness.fixture.whenStable();
+
+      expect(confirmar.mock.calls[0]?.[0]?.confirmLabel).toBe('Iniciar consulta');
       http.expectOne('/scheduling/bookings/b-1/start').flush({
         bookingId: 'b-1',
         statusConceptId: 'c-curso',
@@ -2184,6 +2283,23 @@ describe('Agenda', () => {
       expect(navegar).toHaveBeenCalledTimes(1);
       const [ruta] = navegar.mock.calls[0] as [string[]];
       expect(ruta[0]).toMatch(/\/medical-records\/[^/]+\/consultation$/);
+    });
+
+    /**
+     * Abrir la tarjeta para mirarla no puede cambiar el estado de la cita: la
+     * dejaba «en curso» y sin Mover, Cancelar, Llegó ni Demora (2026-10-03).
+     */
+    it('una cita CONFIRMADA abierta y cerrada con «Ahora no» queda como estaba', async () => {
+      await montar({ roles: ['PRACTITIONER'], hpid: 'hp-1' });
+      await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      tocarLaTarjeta();
+      await harness.fixture.whenStable();
+
+      expect(navegar).not.toHaveBeenCalled();
+      // Sin `POST …/start`: el `http.verify()` del afterEach lo confirma.
     });
 
     it('una cita EN CURSO se continúa, sin repetir la transición', async () => {
@@ -2213,7 +2329,7 @@ describe('Agenda', () => {
       expect(navegar).not.toHaveBeenCalled();
       const config = confirmar.mock.calls[0]?.[0];
       expect(config?.title).toContain('todavía no se atiende');
-      expect(config?.message).toContain('aceptala primero');
+      expect(config?.message).toContain('acéptela primero');
     });
 
     it('sin permiso de expediente la atención se inicia igual, y se DICE que no se entró', async () => {
@@ -2227,7 +2343,9 @@ describe('Agenda', () => {
       const avisar = vi.spyOn(TestBed.inject(ToastService), 'info');
 
       expect(interno<() => boolean>('puedeVerExpedientes')()).toBe(false);
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
       tocarLaTarjeta();
+      await harness.fixture.whenStable();
       http.expectOne('/scheduling/bookings/b-1/start').flush({
         bookingId: 'b-1',
         statusConceptId: 'c-curso',
@@ -2259,8 +2377,27 @@ describe('Agenda', () => {
     // En curso ya no se cancela ni se mueve: el backend tampoco lo acepta.
     expect(boton('agenda-cancelar')).toBeNull();
 
-    interno<(c: unknown) => void>('completarCita')(citas().data?.[0]);
+    const confirmar = vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(true);
+    void interno<(c: unknown) => Promise<void>>('completarCita')(citas().data?.[0]);
     await harness.fixture.whenStable();
+
+    // Antes de completar se revisa el historial del paciente y se pregunta.
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush({
+        patientProfileId: 'p-1',
+        conditions: [],
+        allergies: [],
+        medicationRequests: [],
+        observations: [],
+        encounters: [],
+        careEpisodes: [],
+        limit: 50,
+        truncated: [],
+      });
+    // La respuesta y el diálogo se encadenan en promesas: dejarlas correr.
+    await new Promise((listo) => setTimeout(listo, 0));
+    expect(confirmar).toHaveBeenCalledTimes(1);
 
     const req = http.expectOne('/scheduling/bookings/b-1/complete');
     req.flush({
@@ -2269,6 +2406,111 @@ describe('Agenda', () => {
       occurredAt: '2026-08-15T12:30:00.000Z',
     });
     responderResto();
+  });
+
+  describe('completar la cita pide confirmación', () => {
+    /** El resumen que la API devuelve; los bloques que no se pasan van vacíos. */
+    function resumenClinico(parcial: Record<string, unknown[]> = {}): Record<string, unknown> {
+      return {
+        patientProfileId: 'p-1',
+        conditions: [],
+        allergies: [],
+        medicationRequests: [],
+        observations: [],
+        encounters: [],
+        careEpisodes: [],
+        limit: 50,
+        truncated: [],
+        ...parcial,
+      };
+    }
+
+    async function completarConRespuesta(
+      respuesta: () => void,
+      confirma: boolean,
+    ): Promise<ReturnType<typeof vi.spyOn>> {
+      await montar();
+      await responderConEstado('BOOKING_IN_PROGRESS', 'En curso');
+      await verSolapaDeCitas();
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(confirma);
+
+      void interno<(c: unknown) => Promise<void>>('completarCita')(citas().data?.[0]);
+      await harness.fixture.whenStable();
+      respuesta();
+      await new Promise((listo) => setTimeout(listo, 0));
+      return confirmar as unknown as ReturnType<typeof vi.spyOn>;
+    }
+
+    const resumenDe = (cuerpo: Record<string, unknown>) => (): void => {
+      http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(cuerpo);
+    };
+
+    it('sin nada registrado avisa que pudo ser un clic por error', async () => {
+      const confirmar = await completarConRespuesta(resumenDe(resumenClinico()), false);
+
+      const [config] = confirmar.mock.calls[0] as [{ message: string; confirmLabel: string }];
+      expect(config.message).toContain('no tiene nada registrado');
+      expect(config.confirmLabel).toBe('Completar igual');
+      // Dijo que no: la cita no se toca.
+      http.expectNone('/scheduling/bookings/b-1/complete');
+    });
+
+    it('con un encuentro del día lista lo registrado y completa al confirmar', async () => {
+      const confirmar = await completarConRespuesta(
+        resumenDe(
+          resumenClinico({
+            encounters: [{ id: 'e-1', statusConceptId: 'c-x', startAt: CITA.startAt }],
+            medicationRequests: [
+              { id: 'r-1', encounterId: 'e-1' },
+              { id: 'r-2', encounterId: 'e-otro' },
+            ],
+          }),
+        ),
+        true,
+      );
+
+      const [config] = confirmar.mock.calls[0] as [
+        { message: string; details: { label: string; value: string }[] },
+      ];
+      expect(config.details).toEqual([
+        { label: 'Encuentros', value: '1' },
+        { label: 'Recetas', value: '1' },
+      ]);
+      http.expectOne('/scheduling/bookings/b-1/complete').flush({
+        bookingId: 'b-1',
+        statusConceptId: 'c-completada',
+        occurredAt: '2026-08-15T12:30:00.000Z',
+      });
+      responderResto();
+    });
+
+    it('un encuentro de otro día no cuenta como de esta cita', async () => {
+      const confirmar = await completarConRespuesta(
+        resumenDe(
+          resumenClinico({
+            encounters: [{ id: 'e-1', statusConceptId: 'c-x', startAt: '2026-01-02T13:00:00.000Z' }],
+          }),
+        ),
+        false,
+      );
+
+      const [config] = confirmar.mock.calls[0] as [{ message: string }];
+      expect(config.message).toContain('no tiene nada registrado');
+    });
+
+    it('si no se puede leer el historial, lo dice y deja completar igual', async () => {
+      const confirmar = await completarConRespuesta(() => {
+        http
+          .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+          .flush({ message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
+      }, false);
+
+      const [config] = confirmar.mock.calls[0] as [{ message: string; confirmLabel: string }];
+      expect(config.message).toContain('No pudimos revisar');
+      expect(config.confirmLabel).toBe('Completar la cita');
+    });
   });
 
   it('una cita completada no ofrece ninguna acción', async () => {
@@ -2557,6 +2799,125 @@ describe('Agenda', () => {
 
       expect((citas().data?.[0] as Record<string, unknown>)['admitePago']).toBe(false);
     });
+
+    /**
+     * Corrección 11 · «Estado del pago» abre el modal de comprobantes, y lo que
+     * el modal cambia se ve en la fila **sin releer la agenda**: la respuesta
+     * de la API trae el estado de pago nuevo y la fila lo pinta.
+     */
+    describe('el modal de comprobantes', () => {
+      const RECEIPTS_URL = '/scheduling/bookings/b-1/payment-receipts';
+
+      /** Un comprobante en PDF: el PDF no pide miniatura, así que no hay bytes que servir. */
+      const RECEIPT = {
+        id: 'r-1',
+        bookingId: 'b-1',
+        fileId: 'f-1',
+        mimeType: 'application/pdf',
+        originalName: 'comprobante.pdf',
+        amount: '150.00',
+        paidAt: '2026-10-27T14:00:00.000Z',
+        note: null,
+        uploadedAt: '2026-10-27T15:00:00.000Z',
+        uploadedBy: { userId: 'u-paciente', displayName: 'Ana Pérez' },
+        status: 'PENDING',
+        reviewedAt: null,
+        reviewedBy: null,
+        rejectionReason: null,
+      };
+
+      const PAID_STATE = {
+        state: 'PAID',
+        label: 'Pagada',
+        conceptId: 'c-pagada',
+        insuranceUsed: false,
+        markedByUserId: 'u-1',
+        markedAt: '2026-10-28T10:00:00.000Z',
+      };
+
+      function root(): HTMLElement {
+        return harness.routeNativeElement as HTMLElement;
+      }
+
+      async function press(testid: string): Promise<void> {
+        const button = root().querySelector<HTMLButtonElement>(`[data-testid="${testid}"]`);
+        expect(button, `no está ${testid}`).not.toBeNull();
+        button!.click();
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+      }
+
+      async function openModal(receipts: unknown[] = [RECEIPT]): Promise<void> {
+        await montar();
+        await responderConEstado('BOOKING_CONFIRMED', 'Confirmada');
+        await verSolapaDeCitas();
+        await press('agenda-pago');
+        http.expectOne(RECEIPTS_URL).flush(receipts);
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+      }
+
+      function rowPaymentBadge(): string {
+        return root().querySelector('[data-testid="payment-state-badge"]')?.textContent?.trim() ?? '';
+      }
+
+      it('«Estado del pago» abre el modal, no el menú de estados', async () => {
+        await openModal();
+
+        expect(root().querySelector('app-payment-receipts-dialog')).not.toBeNull();
+        expect(root().querySelector('[data-testid="payment-receipt-confirm"]')).not.toBeNull();
+        // Ningún desplegable con los tres estados: el marcado a mano vive en el modal.
+        const menuOptions = [...root().ownerDocument.querySelectorAll('[role="menuitem"]')].map(
+          (option) => option.textContent?.trim(),
+        );
+        expect(menuOptions).not.toContain('Parcialmente pagada');
+      });
+
+      it('confirmar pinta «Pagada» en la fila con el estado que devolvió la API, sin releer la agenda', async () => {
+        await openModal();
+        expect(rowPaymentBadge()).toBe('');
+
+        await press('payment-receipt-confirm');
+        const confirmRequest = http.expectOne(`${RECEIPTS_URL}/r-1/confirm`);
+        expect(confirmRequest.request.method).toBe('POST');
+        confirmRequest.flush({
+          receipt: { ...RECEIPT, status: 'CONFIRMED', reviewedAt: PAID_STATE.markedAt },
+          paymentState: PAID_STATE,
+        });
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+
+        expect(rowPaymentBadge()).toBe('Pagada');
+        // Sin releer: ninguna lectura nueva de la agenda.
+        expect(http.match((r) => r.url === '/scheduling/bookings')).toHaveLength(0);
+        // La fila confirmada perdió sus acciones.
+        expect(root().querySelector('[data-testid="payment-receipt-confirm"]')).toBeNull();
+      });
+
+      it('«Marcar sin comprobante…» sigue marcando el pago por PUT payment-state', async () => {
+        await openModal([]);
+
+        await press('payment-receipts-manual-toggle');
+        await press('payment-manual-PAID');
+        const markRequest = http.expectOne('/scheduling/bookings/b-1/payment-state');
+        expect(markRequest.request.method).toBe('PUT');
+        // Sin estado previo, el seguro sale en falso: no se inventa una cobertura.
+        expect(markRequest.request.body).toEqual({ state: 'PAID', insuranceUsed: false });
+        markRequest.flush(PAID_STATE);
+        await harness.fixture.whenStable();
+        harness.detectChanges();
+
+        expect(rowPaymentBadge()).toBe('Pagada');
+      });
+
+      it('cerrar el modal lo saca del DOM', async () => {
+        await openModal();
+
+        await press('content-dialog-close');
+
+        expect(root().querySelector('app-payment-receipts-dialog')).toBeNull();
+      });
+    });
   });
 
   /**
@@ -2651,6 +3012,81 @@ describe('Agenda', () => {
         'Profesional',
         'Motivo',
       ]);
+    });
+  });
+
+  /**
+   * El sello de reconsulta (C4).
+   *
+   * Una reconsulta es una cita como cualquier otra —mismo estado, mismo ciclo—
+   * y por eso la fila no se distingue sola. El sello y «de la cita del …» son
+   * lo único que dice de qué consulta salió, y sin eso la fila es un turno que
+   * nadie sabe explicar.
+   */
+  describe('el sello de reconsulta (C4)', () => {
+    /** Una cita que sale de otra, tal como la manda la API con `followUpOf`. */
+    const RECONSULTA = {
+      ...CITA,
+      id: 'b-reconsulta',
+      reasonText: 'Reconsulta: Control anual',
+      followUpOf: { bookingId: 'b-1', encounterId: null, startAt: '2026-08-08T13:00:00.000Z' },
+      followUpBookingId: null,
+    };
+
+    async function montarCon(citas: unknown[]): Promise<void> {
+      await montar();
+      await responderRecursos();
+      responderResto({ citas });
+      harness.detectChanges();
+    }
+
+    function fila(indice = 0): Record<string, unknown> {
+      return citas().data?.[indice] as Record<string, unknown>;
+    }
+
+    it('marca la cita como reconsulta y guarda de cuándo era la consulta de origen', async () => {
+      await montarCon([RECONSULTA]);
+
+      expect(fila()['esReconsulta']).toBe(true);
+      expect(fila()['reconsultaDe']).toEqual(new Date('2026-08-08T13:00:00.000Z'));
+    });
+
+    it('una cita común no lleva sello, y eso no es un dato faltante', async () => {
+      await montarCon([CITA]);
+
+      expect(fila()['esReconsulta']).toBe(false);
+      expect(fila()['reconsultaDe']).toBeNull();
+      expect(
+        (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="cita-reconsulta-sello"]'),
+      ).toBeNull();
+    });
+
+    it('la fila muestra el sello junto al motivo y de qué consulta salió', async () => {
+      await montarCon([RECONSULTA]);
+
+      const sello = (harness.fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="cita-reconsulta-sello"]',
+      );
+      expect(sello).not.toBeNull();
+      expect(sello?.textContent?.trim()).toBe('Reconsulta');
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('de la cita del');
+      // El motivo sigue estando: el sello lo acompaña, no lo reemplaza.
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('Reconsulta: Control anual');
+    });
+
+    /**
+     * El contrato admite una cita sin cupo, así que el origen puede no tener
+     * horario. Decir «de la cita del —» sería peor que no decir nada.
+     */
+    it('sin fecha del origen el sello va solo, sin la frase', async () => {
+      await montarCon([{ ...RECONSULTA, followUpOf: { bookingId: 'b-1', encounterId: null } }]);
+
+      expect(fila()['esReconsulta']).toBe(true);
+      expect(fila()['reconsultaDe']).toBeNull();
+      expect(
+        (harness.fixture.nativeElement as HTMLElement).querySelector('[data-testid="cita-reconsulta-sello"]'),
+      ).not.toBeNull();
+      expect((harness.fixture.nativeElement as HTMLElement).textContent).not.toContain('de la cita del');
     });
   });
 });

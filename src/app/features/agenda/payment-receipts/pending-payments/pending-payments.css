@@ -1,0 +1,80 @@
+:host {
+  display: block;
+}
+
+.pending {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.pending__summary {
+  padding: var(--sp-3) var(--sp-4);
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.pending__summary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.pending__body {
+  padding: 0 var(--sp-4) var(--sp-3);
+}
+
+.pending__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pending__empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.pending__list {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Con muchas citas, la lista no empuja el calendario fuera de la vista. */
+  max-block-size: 22rem;
+  overflow-y: auto;
+}
+
+.pending__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-2) 0;
+  border-block-start: 1px solid var(--border-default);
+}
+
+.pending__who {
+  display: grid;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  color: var(--text-primary);
+}
+
+.pending__when,
+.pending__received {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.pending__state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}

@@ -5,8 +5,11 @@
 <div
   class="auth-split"
   [class.auth-split--full]="contentWidth() === 'full'"
+  [class.auth-split--plain]="plainSurface()"
   [class.auth-split--stage]="scene() === 'stage'"
+  [class.auth-split--calm]="scene() === 'calm'"
   appPointerScene
+  [pointerSceneTouch]="scene() === 'stage'"
 >
   @if (scene() === 'stage') {
     <!-- Escenario del latido (`scene="stage"`): una sola capa por detrás de
@@ -237,15 +240,61 @@
          profesional el nodo se rehace y la animación de entrada vuelve a
          correr, en vez de que el titular se reemplace de golpe. -->
     <div class="auth-split__brand-content">
+      <!-- La marca con su identidad: glifo y «Alo»/«Vida» en sus dos tonos
+           (ver `BrandMark`). En `calm` va grande y con su latido; en las otras
+           escenas, sobre el degradado oscuro, sigue siendo el logo blanco con
+           su rótulo, como antes. -->
       <p class="auth-split__wordmark">
-        <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
-        <span>AloVida</span>
+        @if (scene() === 'calm') {
+          <app-brand-mark size="lg" beat />
+        } @else {
+          <img src="/alovida/imagenes/alovida-logo-blanco.svg" alt="" width="38" height="28" />
+          <!-- El mismo logo en tinta petróleo, para el escenario claro. Los dos
+               van en el DOM y la hoja elige por tema: con un binding al tema,
+               el servidor pintaría uno y el oscuro parpadearía al hidratar. -->
+          <img
+            class="auth-split__wordmark-ink"
+            src="/alovida/imagenes/alovida-logo.svg"
+            alt=""
+            width="38"
+            height="28"
+          />
+          <span>AloVida</span>
+        }
       </p>
       @for (texto of claimKeyed(); track texto) {
         <h2 class="auth-split__claim">{{ texto }}</h2>
       }
       @for (texto of taglineKeyed(); track texto) {
         <p class="auth-split__tagline">{{ texto }}</p>
+      }
+      @if (scene() === 'calm') {
+        <!-- La onda del latido: la firma de la marca en la pantalla principal.
+             Cruza la columna de lado a lado. Se dibuja una vez al entrar y
+             después le recorre un pulso lento, con el mismo ritmo que el
+             escenario oscuro tenía (un barrido cada 5,2 s). No es un fondo
+             que compita con el formulario: es una línea fina, a baja
+             opacidad, que se apaga con «reducir movimiento». -->
+        <svg class="auth-split__ecg" viewBox="0 0 640 64" fill="none" aria-hidden="true">
+          <path
+            class="auth-split__ecg-base"
+            pathLength="1000"
+            d="M0 36H196L212 28L228 42L246 8L266 58L282 30L294 36H640"
+          />
+          <path
+            class="auth-split__ecg-pulse"
+            pathLength="1000"
+            d="M0 36H196L212 28L228 42L246 8L266 58L282 30L294 36H640"
+          />
+        </svg>
+        <!-- Las seis puertas de la red, a la vista antes de elegir una. -->
+        <ul class="auth-split__roles">
+          @for (rol of roles; track rol; let i = $index) {
+            <li class="auth-split__role" [style.--i]="i">
+              <app-account-icon [name]="rol" />
+            </li>
+          }
+        </ul>
       }
     </div>
   </aside>
@@ -262,15 +311,46 @@
     </div>
   }
 
+  <!-- La onda también en las altas. A ancho completo (`contentWidth="full"`) la
+       columna de marca no se pinta, y la firma de la marca desaparecía justo
+       donde la persona más tiempo pasa. Esta franja la trae de vuelta detrás de
+       la barra superior —sin ocupar lugar, el formulario no se corre—: el mismo
+       gesto del acceso, dibujado una vez y con un pulso lento encima. -->
+  @if (scene() === 'calm' && contentWidth() === 'full') {
+    <svg
+      class="auth-split__banda"
+      viewBox="0 0 1440 64"
+      preserveAspectRatio="none"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        class="auth-split__banda-base"
+        pathLength="1000"
+        vector-effect="non-scaling-stroke"
+        d="M0 36H520l16-8 16 14 18-30 20 50 16-26 14 0H900q20-16 40 0H1260l10-6 12 10 12-18 14 30 10-16H1440"
+      />
+      <path
+        class="auth-split__banda-pulse"
+        pathLength="1000"
+        vector-effect="non-scaling-stroke"
+        d="M0 36H520l16-8 16 14 18-30 20 50 16-26 14 0H900q20-16 40 0H1260l10-6 12 10 12-18 14 30 10-16H1440"
+      />
+    </svg>
+  }
+
   <main class="auth-split__panel">
     <div class="auth-split__chrome">
       <!-- La marca también acá, y no solo en la columna de la izquierda: en
            teléfono esa columna no existe y la pantalla de acceso quedaba sin
            decir de qué producto es. Se pinta con `mask` sobre `currentColor`
            (ver CSS) para que sirva en los dos temas con un solo archivo. -->
+      <!-- La marca completa: glifo y «AloVida» con sus dos tonos. El nombre
+           accesible sale del propio texto («Alo» y «Vida» contiguos se anuncian
+           «AloVida»), así que no hace falta un rótulo aparte para el lector. -->
       <p class="auth-split__marca-mini">
-        <span class="auth-split__marca-mini-glifo" aria-hidden="true"></span>
-        AloVida
+        <app-brand-mark />
       </p>
 
       <!-- El selector de tema va fuera del formulario: es chrome, no contenido.
@@ -308,12 +388,6 @@
                     stroke-linejoin="round"
                     d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z"
                   />
-                </svg>
-              }
-              @default {
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
-                  <rect x="2.5" y="4" width="19" height="12.5" rx="2" />
-                  <path stroke-linecap="round" d="M9 20h6m-3-3.5V20" />
                 </svg>
               }
             }

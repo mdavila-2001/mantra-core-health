@@ -4,32 +4,35 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { pharmacyOrderDtoFixture } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
-import { ID_PEDIDO_CON_DELIVERY } from '../../../core/mock/fixtures/pedidos-de-farmacia';
-import { AlarmaDePedidos } from './alarma-de-pedidos';
+import type { PharmacySiteRead } from '../../../core/data-access/pharmacy/pharmacy.types';
+import { FARMACIA_DETALLE } from '../../../core/data-access/pharmacy/pharmacy.fixtures';
+import { ID_ORDER_WITH_DELIVERY } from '../../../core/mock/fixtures/pharmacy-orders';
+import { OrdersAlarm } from './order-alarm';
 import { PharmacyInbox } from './pharmacy-inbox';
 
 describe('PharmacyInbox with the tenant API list', () => {
   let http: HttpTestingController;
   let alarm: {
-    sonidoActivo: ReturnType<typeof signal<boolean>>;
-    alternarSonido: ReturnType<typeof vi.fn>;
-    notificar: ReturnType<typeof vi.fn>;
-    descartar: ReturnType<typeof vi.fn>;
-    acusarRecibo: ReturnType<typeof vi.fn>;
+    activeSound: ReturnType<typeof signal<boolean>>;
+    toggleSound: ReturnType<typeof vi.fn>;
+    notify: ReturnType<typeof vi.fn>;
+    discard: ReturnType<typeof vi.fn>;
+    acknowledgeReceipt: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
     alarm = {
-      sonidoActivo: signal(true),
-      alternarSonido: vi.fn(),
-      notificar: vi.fn(),
-      descartar: vi.fn(),
-      acusarRecibo: vi.fn(),
+      activeSound: signal(true),
+      toggleSound: vi.fn(),
+      notify: vi.fn(),
+      discard: vi.fn(),
+      acknowledgeReceipt: vi.fn(),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -38,11 +41,18 @@ describe('PharmacyInbox with the tenant API list', () => {
         // El detalle existe como ruta para que abrir una tarjeta sea un clic
         // de verdad y no una llamada directa al método de la clase.
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', children: [] }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        // `userId` no es cosmético: sin él, `AuthService.userId` queda
+        // `undefined` (se alia por asignación, no por getter) y el
+        // `effect()` de `CartStore` —que `PharmacyOrdersClient` construye
+        // igual, aunque esta pantalla no muestre carrito— revienta con
+        // `this.auth.userId is not a function` en un tick asíncrono
+        // posterior, envenenando cualquier archivo que corra después en el
+        // mismo worker.
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
       ],
     });
     TestBed.overrideComponent(PharmacyInbox, {
-      set: { providers: [{ provide: AlarmaDePedidos, useValue: alarm }] },
+      set: { providers: [{ provide: OrdersAlarm, useValue: alarm }] },
     });
     http = TestBed.inject(HttpTestingController);
   });
@@ -52,10 +62,33 @@ describe('PharmacyInbox with the tenant API list', () => {
     http.verify();
   });
 
-  function mount(items: readonly PharmacyOrderDto[]): ComponentFixture<PharmacyInbox> {
+  /** La petición de la bandeja, con cualquier combinación de filtros. */
+  function pedidosRequest() {
+    return http.expectOne((request) => request.url === '/pharmacy/orders');
+  }
+
+  /**
+   * Monta la bandeja. La carga empieza por las sedes —la bandeja abre en la
+   * casa matriz—, así que primero se contestan las dos lecturas de farmacia y
+   * después la de pedidos. Sin `sedes`, la organización no tiene ninguna.
+   */
+  function mount(
+    items: readonly PharmacyOrderDto[],
+    sedes: readonly PharmacySiteRead[] = [],
+  ): ComponentFixture<PharmacyInbox> {
     const fixture = TestBed.createComponent(PharmacyInbox);
     fixture.detectChanges();
-    const request = http.expectOne('/pharmacy/orders');
+    if (sedes.length === 0) {
+      http.expectOne('/pharmacy/pharmacies').flush({ items: [], count: 0 });
+    } else {
+      http
+        .expectOne('/pharmacy/pharmacies')
+        .flush({ items: [{ id: FARMACIA_DETALLE.id }], count: 1 });
+      http
+        .expectOne(`/pharmacy/pharmacies/${FARMACIA_DETALLE.id}`)
+        .flush({ ...FARMACIA_DETALLE, sites: sedes });
+    }
+    const request = pedidosRequest();
     expect(request.request.method).toBe('GET');
     request.flush({ items, count: items.length });
     fixture.detectChanges();
@@ -83,7 +116,14 @@ describe('PharmacyInbox with the tenant API list', () => {
     const fixture = mount([submitted, ready]);
     const root = fixture.nativeElement as HTMLElement;
     expect([...root.querySelectorAll('.bandeja__cola')].map((node) => node.getAttribute('aria-label')))
-      .toEqual(['Nuevos', 'En revisión', 'Esperando al paciente', 'Listos para retiro']);
+      .toEqual([
+        'Nuevos',
+        'En revisión',
+        'Esperando al paciente',
+        'Listos para retiro',
+        'En preparación',
+        'Cerrados',
+      ]);
     expect(text(fixture)).toContain('Ana Paciente');
     expect(text(fixture)).toContain('Amoxicilina');
     expect(text(fixture)).not.toContain('SECRET');
@@ -95,14 +135,14 @@ describe('PharmacyInbox with the tenant API list', () => {
     vi.useFakeTimers();
     const initial = pharmacyOrderDtoFixture();
     const fixture = mount([initial]);
-    expect(alarm.notificar).not.toHaveBeenCalled();
+    expect(alarm.notify).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(20_000);
     const added = pharmacyOrderDtoFixture({ id: '00000000-0000-4000-8000-000000000009' });
-    http.expectOne('/pharmacy/orders').flush({ items: [initial, added], count: 2 });
+    pedidosRequest().flush({ items: [initial, added], count: 2 });
     fixture.detectChanges();
 
-    expect(alarm.notificar).toHaveBeenCalledWith(1);
+    expect(alarm.notify).toHaveBeenCalledWith(1);
     expect(text(fixture)).toContain('Llegó un pedido nuevo');
     fixture.destroy();
   });
@@ -115,7 +155,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     const initial = pharmacyOrderDtoFixture();
     const fixture = mount([initial]);
     vi.advanceTimersByTime(20_000);
-    http.expectOne('/pharmacy/orders').flush({
+    pedidosRequest().flush({
       items: [initial, pharmacyOrderDtoFixture({ id: '00000000-0000-4000-8000-000000000009' })],
       count: 2,
     });
@@ -128,10 +168,10 @@ describe('PharmacyInbox with the tenant API list', () => {
     const root = fixture.nativeElement as HTMLElement;
     const contadores = [...root.querySelectorAll('.bandeja__titulo app-badge')];
 
-    expect(contadores).toHaveLength(4);
+    expect(contadores).toHaveLength(6);
     expect(contadores[0]?.classList.contains('badge--primary')).toBe(true);
     expect(contadores[0]?.textContent?.trim()).toBe('1');
-    // Las tres colas vacías no reclaman atención.
+    // Las cinco colas vacías no reclaman atención.
     expect(contadores.slice(1).every((nodo) => nodo.classList.contains('badge--secondary'))).toBe(
       true,
     );
@@ -143,7 +183,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     const root = fixture.nativeElement as HTMLElement;
 
     for (const contador of root.querySelectorAll('.bandeja__titulo app-badge')) {
-      // `app-badge` es `role="status"`: cuatro contadores serían cuatro
+      // `app-badge` es `role="status"`: seis contadores serían seis
       // regiones vivas compitiendo con el aviso único de la bandeja.
       expect(contador.getAttribute('aria-hidden')).toBe('true');
     }
@@ -174,6 +214,8 @@ describe('PharmacyInbox with the tenant API list', () => {
       { antes: 'En', unidad: 'revisión', conCifra: true },
       { antes: 'Esperando al', unidad: 'paciente', conCifra: true },
       { antes: 'Listos para', unidad: 'retiro', conCifra: true },
+      { antes: 'En', unidad: 'preparación', conCifra: true },
+      { antes: '', unidad: 'Cerrados', conCifra: true },
     ]);
     fixture.destroy();
   });
@@ -230,7 +272,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     ]) {
       items.push(pharmacyOrderDtoFixture({ id }));
       vi.advanceTimersByTime(20_000);
-      http.expectOne('/pharmacy/orders').flush({ items: [...items], count: items.length });
+      pedidosRequest().flush({ items: [...items], count: items.length });
       fixture.detectChanges();
     }
 
@@ -248,7 +290,7 @@ describe('PharmacyInbox with the tenant API list', () => {
 
     // Otro tic sin novedades no lo borra: nadie acusó recibo todavía.
     vi.advanceTimersByTime(20_000);
-    http.expectOne('/pharmacy/orders').flush({ items: [], count: 0 });
+    pedidosRequest().flush({ items: [], count: 0 });
     fixture.detectChanges();
     expect(root.querySelector('[data-testid="bandeja-cartel-nuevos"]')).not.toBeNull();
 
@@ -281,12 +323,18 @@ describe('PharmacyInbox with the tenant API list', () => {
     fixture.destroy();
   });
 
-  it('el pedido de ejemplo se ve como delivery y se declara maqueta en la tarjeta', () => {
-    const fixture = mount([pharmacyOrderDtoFixture({ id: ID_PEDIDO_CON_DELIVERY })]);
+  it('un pedido a domicilio se ve como delivery por lo que dice el contrato, sin rótulo de maqueta', () => {
+    const fixture = mount([
+      pharmacyOrderDtoFixture({
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' },
+      }),
+    ]);
     const root = fixture.nativeElement as HTMLElement;
     const chips = [...root.querySelectorAll('.bandeja__entrega app-chip')];
 
-    expect(chips.map((nodo) => nodo.textContent?.trim())).toEqual(['Delivery', 'Datos de ejemplo']);
+    expect(chips.map((nodo) => nodo.textContent?.trim())).toEqual(['Delivery']);
+    expect(text(fixture)).not.toContain('Datos de ejemplo');
     expect(chips[0]?.classList.contains('tone--info')).toBe(true);
     fixture.destroy();
   });
@@ -298,9 +346,178 @@ describe('PharmacyInbox with the tenant API list', () => {
       root.querySelector('[data-testid="bandeja-estado-sonido"]')?.textContent?.trim() ?? '';
 
     expect(etiqueta()).toBe('Aviso sonoro activado');
-    alarm.sonidoActivo.set(false);
+    alarm.activeSound.set(false);
     fixture.detectChanges();
     expect(etiqueta()).toBe('Aviso sonoro silenciado');
     fixture.destroy();
+  });
+  /* ─── El tablero: sede por defecto, fechas de «Cerrados», tope ─────────── */
+
+  const SEDE_NORTE: PharmacySiteRead = {
+    id: '00000000-0000-4000-8000-0000000000a1',
+    code: 'S1',
+    name: 'Sucursal Norte',
+    addressText: null,
+    latitude: null,
+    longitude: null,
+  };
+  const SEDE_MATRIZ: PharmacySiteRead = {
+    id: '00000000-0000-4000-8000-0000000000a2',
+    code: 'S2',
+    name: 'Casa matriz',
+    addressText: null,
+    latitude: null,
+    longitude: null,
+    isHeadOffice: true,
+  };
+
+  const DIA_MS = 86_400_000;
+  const hace = (dias: number) => new Date(Date.now() - dias * DIA_MS).toISOString();
+
+  function pedido(
+    id: string,
+    estado: string,
+    paciente: string,
+    creado: string,
+  ): PharmacyOrderDto {
+    return pharmacyOrderDtoFixture({
+      id,
+      status: { code: `PINV_ORDER_${estado}`, display: estado },
+      patientName: paciente,
+      createdAt: creado,
+    });
+  }
+
+  function sedeSelect(fixture: ComponentFixture<PharmacyInbox>) {
+    return fixture.debugElement.query(By.css('[data-testid="bandeja-filtro-sede"]'));
+  }
+
+  it('abre en la casa matriz y le pide al servidor sólo esa sede', () => {
+    const fixture = TestBed.createComponent(PharmacyInbox);
+    fixture.detectChanges();
+    http.expectOne('/pharmacy/pharmacies').flush({ items: [{ id: FARMACIA_DETALLE.id }], count: 1 });
+    http
+      .expectOne(`/pharmacy/pharmacies/${FARMACIA_DETALLE.id}`)
+      .flush({ ...FARMACIA_DETALLE, sites: [SEDE_NORTE, SEDE_MATRIZ] });
+
+    const request = pedidosRequest();
+    expect(request.request.params.get('siteId')).toBe(SEDE_MATRIZ.id);
+    expect(request.request.params.get('limit')).toBe('500');
+    request.flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(sedeSelect(fixture)).not.toBeNull();
+    fixture.destroy();
+  });
+
+  // Con varias sedes y ninguna matriz marcada la bandeja abre con **todas**
+  // (`siteByDefault`, 9f27b9d30): abrir con una sola sucursal escondería los
+  // pedidos de las demás. Ya no hay una sede «adivinada» que avisar.
+  it('sin casa matriz marcada y con varias sedes abre con todas, sin acotar a una sola', () => {
+    const fixture = TestBed.createComponent(PharmacyInbox);
+    fixture.detectChanges();
+    http.expectOne('/pharmacy/pharmacies').flush({ items: [{ id: FARMACIA_DETALLE.id }], count: 1 });
+    http
+      .expectOne(`/pharmacy/pharmacies/${FARMACIA_DETALLE.id}`)
+      .flush({ ...FARMACIA_DETALLE, sites: [{ ...SEDE_MATRIZ, isHeadOffice: false }, SEDE_NORTE] });
+
+    const request = pedidosRequest();
+    expect(request.request.params.has('siteId')).toBe(false);
+    request.flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    fixture.destroy();
+  });
+
+  it('con una sola sede no hay selector de sede, pero sí de fechas', () => {
+    const fixture = mount([pharmacyOrderDtoFixture()], [SEDE_NORTE]);
+    expect(sedeSelect(fixture)).toBeNull();
+    expect(
+      fixture.debugElement.query(By.css('[data-testid="bandeja-filtro-cerrados"]')),
+    ).not.toBeNull();
+    fixture.destroy();
+  });
+
+  it('cambiar de sede vuelve a pedir, y lo que hay en la otra no suena como nuevo', () => {
+    const fixture = mount([pharmacyOrderDtoFixture()], [SEDE_NORTE, SEDE_MATRIZ]);
+
+    sedeSelect(fixture).triggerEventHandler('valueChange', SEDE_NORTE.id);
+    const otra = pedidosRequest();
+    expect(otra.request.params.get('siteId')).toBe(SEDE_NORTE.id);
+    otra.flush({
+      items: [pharmacyOrderDtoFixture({ id: '00000000-0000-4000-8000-000000000009' })],
+      count: 1,
+    });
+    fixture.detectChanges();
+
+    expect(alarm.notify).not.toHaveBeenCalled();
+    fixture.destroy();
+  });
+
+  it('elegir «Todas las sedes» pide sin filtrar por sede', () => {
+    const fixture = mount([], [SEDE_NORTE, SEDE_MATRIZ]);
+    sedeSelect(fixture).triggerEventHandler('valueChange', 'all');
+    const todas = pedidosRequest();
+    expect(todas.request.params.has('siteId')).toBe(false);
+    todas.flush({ items: [], count: 0 });
+    fixture.destroy();
+  });
+
+  it('la fecha recorta sólo «Cerrados»: lo pendiente de hace días sigue en su cola', () => {
+    const fixture = mount([
+      pedido('00000000-0000-4000-8000-0000000000b1', 'ENVIADO', 'Pendiente Vieja', hace(10)),
+      pedido('00000000-0000-4000-8000-0000000000b2', 'RETIRADO', 'Cerrado Hoy', hace(0)),
+      pedido('00000000-0000-4000-8000-0000000000b3', 'RETIRADO', 'Cerrado Antiguo', hace(10)),
+    ]);
+
+    expect(text(fixture)).toContain('Pendiente Vieja');
+    expect(text(fixture)).toContain('Cerrado Hoy');
+    expect(text(fixture)).not.toContain('Cerrado Antiguo');
+
+    // Es del lado del cliente: no vuelve a pedir nada.
+    fixture.debugElement
+      .query(By.css('[data-testid="bandeja-filtro-cerrados"]'))
+      .triggerEventHandler('valueChange', 'all');
+    fixture.detectChanges();
+    http.expectNone((request) => request.url === '/pharmacy/orders');
+    expect(text(fixture)).toContain('Cerrado Antiguo');
+    fixture.destroy();
+  });
+
+  it('la columna de cerrados dice de qué fechas es', () => {
+    const fixture = mount([pharmacyOrderDtoFixture()]);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="bandeja-recorte"]')
+        ?.textContent,
+    ).toContain('Hoy');
+    fixture.destroy();
+  });
+
+  it('avisa cuando volvieron tantos pedidos como el tope: puede haber más', () => {
+    const muchos = Array.from({ length: 500 }, (_, i) =>
+      pedido(
+        `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        'EN_REVISION',
+        `Paciente ${i}`,
+        hace(1),
+      ),
+    );
+    const fixture = mount(muchos);
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="bandeja-cortado"]'),
+    ).not.toBeNull();
+    fixture.destroy();
+  });
+
+  it('el tablero se desplaza por dentro: tope de alto por columna y scroll horizontal', () => {
+    // jsdom no maqueta: se lee la hoja para que nadie borre el tope por
+    // parecer decorativo y el tablero vuelva a estirar la página.
+    const hoja = readFileSync(
+      'src/app/features/organization/pharmacy-inbox/pharmacy-inbox.css',
+      'utf8',
+    ).replace(/\s+/gu, ' ');
+
+    expect(hoja).toMatch(/\.bandeja__lista \{[^}]*max-height:[^}]*overflow-y: auto/u);
+    expect(hoja).toMatch(/\.bandeja__colas \{[^}]*grid-auto-flow: column[^}]*overflow-x: auto/u);
   });
 });

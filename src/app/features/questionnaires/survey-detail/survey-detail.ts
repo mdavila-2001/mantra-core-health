@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
+import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
 import type {
   AnswerType,
@@ -18,7 +19,7 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
-import { Input as AppInput } from '../../../shared/components/atoms/input/input';
+import { Select } from '../../../shared/components/atoms/select/select';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
@@ -28,6 +29,13 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { SurveyForm } from '../../../shared/components/organisms/survey-form/survey-form';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { QuestionEditor, ETIQUETA_TIPO as ETIQUETAS } from './question-editor/question-editor';
+import {
+  asociacionesVisibles,
+  destinoDeOpcion,
+  opcionesDeDestino,
+  serviciosAsociables,
+  type ServicioAsociable,
+} from './survey-destinos';
 import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
 
 /**
@@ -50,7 +58,7 @@ import { ENCUESTAS_ROUTE } from '../questionnaires.routes';
 const UMBRAL_MINIMO_RESPUESTAS = 5;
 
 /** Una barra del gráfico de una pregunta: cuántos eligieron esta opción, y qué porcentaje del total es. */
-interface BarraDeResumen {
+export interface BarraDeResumen {
   readonly etiqueta: string;
   readonly cantidad: number;
   /** 0 a 100, sobre quienes respondieron *esta* pregunta (no sobre toda la encuesta). */
@@ -61,7 +69,7 @@ interface BarraDeResumen {
  * El resumen de una pregunta: sus barras (vacío en texto libre, donde un
  * gráfico no dice nada) y, para escala, el promedio.
  */
-interface ResumenDePregunta {
+export interface ResumenDePregunta {
   readonly questionId: string;
   readonly questionText: string;
   readonly answerType: AnswerType;
@@ -93,7 +101,6 @@ interface ResumenDePregunta {
   imports: [
     Alert,
     AppButton,
-    AppInput,
     BackLink,
     Badge,
     Card,
@@ -103,6 +110,7 @@ interface ResumenDePregunta {
     PageHeader,
     QuestionEditor,
     ReactiveFormsModule,
+    Select,
     Skeleton,
     SurveyForm,
     ViewStateHost,
@@ -113,6 +121,7 @@ interface ResumenDePregunta {
 })
 export class SurveyDetailScreen {
   private readonly surveys = inject(SurveysClient);
+  private readonly scheduling = inject(SchedulingClient);
   private readonly route = inject(ActivatedRoute);
   private readonly toast = inject(ToastService);
   private readonly navigation = inject(NavigationService);
@@ -171,7 +180,7 @@ export class SurveyDetailScreen {
     const actual = this.estadoRespuestas();
     return actual.status === 'forbidden'
       ? (actual.message ??
-          'Tu rol o el propósito de uso declarado no alcanzan para ver este contenido.')
+          'Su rol o el propósito de uso declarado no alcanzan para ver este contenido.')
       : '';
   });
 
@@ -228,15 +237,45 @@ export class SurveyDetailScreen {
     return actual.status === 'ready' && actual.data.published;
   });
 
+  /* -- asociar a un servicio -------------------------------------------------- */
+
+  /**
+   * Los servicios del médico, para el selector y para decir **por nombre** a qué
+   * está asociada la encuesta. Es un estado propio: si la lista no llega, el
+   * resto de la ficha sigue sirviendo y «Todas mis consultas» sigue ofrecida.
+   */
+  protected readonly estadoServicios = signal<ViewState<readonly ServicioAsociable[]>>(loading());
+  protected readonly servicios = computed(() => dataOf(this.estadoServicios()) ?? []);
+  protected readonly serviciosFallaron = computed(() => this.estadoServicios().status !== 'ready' && this.estadoServicios().status !== 'loading');
+  protected readonly opcionesDestino = computed(() => opcionesDeDestino(this.servicios()));
+
+  /** A qué está asociada hoy, en palabras. `null` si el servidor no lo informó. */
+  protected readonly asociaciones = computed(() => {
+    const dadas = this.encuesta()?.assignments;
+    return dadas === undefined ? null : asociacionesVisibles(dadas, this.servicios());
+  });
+
+  /** El motivo por el que la última asociación no se pudo guardar, o `''`. */
+  protected readonly errorAsignacion = signal('');
+
   protected readonly formularioAsignacion = new FormGroup({
-    targetId: new FormControl('', {
-      nonNullable: true,
+    destino: new FormControl<string | null>(null, {
       validators: [Validators.required],
     }),
   });
 
   constructor() {
     this.cargar();
+    this.cargarServicios();
+  }
+
+  /** Trae los servicios que el médico ofrece. */
+  protected cargarServicios(): void {
+    this.estadoServicios.set(loading());
+    this.scheduling.listServiceOfferings().subscribe({
+      next: (ofertas) => this.estadoServicios.set(ready(serviciosAsociables(ofertas))),
+      error: (error: unknown) => this.estadoServicios.set(errorToViewState(error)),
+    });
   }
 
   /** Trae la encuesta con su cuestionario. */
@@ -410,21 +449,26 @@ export class SurveyDetailScreen {
     });
   }
 
-  /** Asocia la versión publicada a un servicio de salud. */
+  /**
+   * Asocia la versión publicada a lo elegido: un servicio o «Todas mis consultas».
+   *
+   * Un rechazo (duplicada, 412, 404) se dice **junto al selector** y no
+   * reemplaza la ficha por una pantalla de error: la encuesta está bien, lo que
+   * no se pudo fue esta asociación.
+   */
   protected asignar(): void {
     const actual = this.estado();
-    if (actual.status !== 'ready' || this.formularioAsignacion.invalid || this.asignando()) {
+    const valor = this.formularioAsignacion.getRawValue().destino;
+    if (actual.status !== 'ready' || valor === null || this.asignando()) {
       this.formularioAsignacion.markAllAsTouched();
       return;
     }
 
+    const destino = destinoDeOpcion(valor);
     this.asignando.set(true);
+    this.errorAsignacion.set('');
     this.surveys
-      .assignSurvey({
-        surveyVersionId: actual.data.latestVersionId,
-        targetType: 'SERVICE',
-        targetId: this.formularioAsignacion.getRawValue().targetId.trim(),
-      })
+      .assignSurvey({ surveyVersionId: actual.data.latestVersionId, ...destino })
       .subscribe({
         next: () => {
           this.asignando.set(false);
@@ -432,12 +476,24 @@ export class SurveyDetailScreen {
           this.toast.success(
             'Encuesta asociada. Se le ofrecerá al paciente al cerrar una consulta de ese servicio.',
           );
+          // Se vuelve a leer: lo que la pantalla muestra como «asociada a» es lo
+          // que el servidor guardó, no lo que se acaba de mandar.
+          this.recargarEncuesta();
         },
         error: (error: unknown) => {
           this.asignando.set(false);
-          this.estado.set(errorToViewState(error));
+          const estado = errorToViewState(error);
+          this.errorAsignacion.set(mensajeDe(estado));
         },
       });
+  }
+
+  /** Relee la encuesta sin pasar por el esqueleto de página entera. */
+  private recargarEncuesta(): void {
+    this.surveys.getSurvey(this.surveyId).subscribe({
+      next: (encuesta) => this.estado.set(ready(encuesta)),
+      error: (error: unknown) => this.estado.set(errorToViewState(error)),
+    });
   }
 
   /**
@@ -451,7 +507,7 @@ export class SurveyDetailScreen {
     this.surveys.createNextVersion(this.surveyId).subscribe({
       next: () => {
         this.creandoVersion.set(false);
-        this.toast.success('Versión nueva creada. Agregale preguntas y publicala.');
+        this.toast.success('Versión nueva creada. Agréguele preguntas y publíquela.');
         this.cargar();
       },
       error: (error: unknown) => {
@@ -520,6 +576,36 @@ export class SurveyDetailScreen {
   }
 }
 
+/**
+ * Una barra por etiqueta, con su porcentaje sobre `total`.
+ *
+ * Es la parte de `resumirPregunta` que no depende de cómo llegaron las
+ * respuestas: la reutiliza el resumen general del profesional
+ * (`insights/survey-insights.logic.ts`), que recibe los conteos ya agregados por
+ * el servidor en vez de respuestas sueltas.
+ */
+export function armarBarras(
+  total: number,
+  etiquetas: readonly string[],
+  cantidadDe: (etiqueta: string) => number,
+): readonly BarraDeResumen[] {
+  return etiquetas.map((etiqueta) => {
+    const cantidad = cantidadDe(etiqueta);
+    return { etiqueta, cantidad, porcentaje: total === 0 ? 0 : Math.round((cantidad / total) * 100) };
+  });
+}
+
+/** El texto de un estado de error, sin inventar uno si no trae. */
+function mensajeDe(estado: ViewState<unknown>): string {
+  if ('message' in estado && typeof estado.message === 'string' && estado.message !== '') {
+    return estado.message;
+  }
+  if (estado.status === 'validation' && estado.issues.length > 0) {
+    return estado.issues.map((i) => i.message).join(' ');
+  }
+  return 'No se pudo asociar la encuesta. Intente de nuevo en unos segundos.';
+}
+
 /** Arma el resumen (barras + promedio) de una pregunta a partir de las respuestas recibidas. */
 export function resumirPregunta(
   pregunta: SurveyQuestion,
@@ -531,10 +617,7 @@ export function resumirPregunta(
   const total = respondidas.length;
 
   const conBarras = (etiquetas: readonly string[], cantidadDe: (etiqueta: string) => number) =>
-    etiquetas.map((etiqueta) => {
-      const cantidad = cantidadDe(etiqueta);
-      return { etiqueta, cantidad, porcentaje: total === 0 ? 0 : Math.round((cantidad / total) * 100) };
-    });
+    armarBarras(total, etiquetas, cantidadDe);
 
   let barras: readonly BarraDeResumen[] = [];
   let promedio: number | null = null;

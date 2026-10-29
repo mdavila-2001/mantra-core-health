@@ -1,0 +1,139 @@
+<h2 class="titulo-de-seccion">Pedir una vinculación</h2>
+<app-card>
+  @if (errorDeSolicitud(); as mensaje) {
+    <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+  }
+  @if (errorDeOrganizaciones(); as motivo) {
+    <app-alert tone="warning" class="alerta-de-formulario" data-testid="organizaciones-no-cargaron">
+      {{ motivo }}
+      <div alert-actions>
+        <button app-button type="button" variant="outline" size="sm" (clicked)="cargarOrganizaciones()">
+          Volver a cargar
+        </button>
+      </div>
+    </app-alert>
+  }
+  @if (solicitudEnviada()) {
+    <app-alert appAnuncio [asertivo]="false" tone="success" class="alerta-de-formulario">
+      Solicitud enviada. Queda pendiente hasta que la organización la apruebe.
+    </app-alert>
+  }
+  <div class="formulario-de-solicitud">
+    <!-- Sin campo que lo rotule, el nombre lo pone el propio control: sin él
+         el lector de pantalla anuncia «combobox» sin decir de qué. -->
+    <app-select
+      [options]="opcionesDeOrganizacion()"
+      [(value)]="organizacionElegida"
+      placeholder="Elija una organización"
+      ariaLabel="Organización a la que pide vincularse"
+    />
+    <button
+      app-button
+      variant="primary"
+      [disabled]="organizacionElegida() === null || enviando()"
+      (clicked)="solicitar()"
+    >
+      {{ enviando() ? 'Enviando…' : 'Pedir vinculación' }}
+    </button>
+  </div>
+  <p class="nota-de-acceso">
+    Estar vinculado no da acceso a los pacientes de la organización: eso depende siempre de una
+    cita, derivación, intervención o autorización con esa persona.
+  </p>
+</app-card>
+
+<h2 class="titulo-de-seccion">Mis vinculaciones</h2>
+
+<!-- El organismo de tabla del sistema, en vez de la lista de tarjetas que el
+     propietario marcó como «totalmente detonada» (2026-09-10). -->
+<!-- El vacío se dice sólo si la lectura respondió vacía: una caída va por el
+     estado de error de la tabla, con su reintento (regla 14). -->
+@if (sinVinculaciones()) {
+  <app-empty-state
+    title="Todavía no tiene vinculaciones"
+    description="Pida una arriba para empezar."
+  />
+} @else {
+  <app-data-table
+    [state]="estadoDeLaTabla()"
+    [columns]="columnas()"
+    [trackBy]="porId"
+    [fitContainer]="true"
+    [wrapHeaders]="true"
+    caption="Sus vinculaciones con organizaciones"
+    data-testid="mis-vinculaciones"
+    (retry)="reintentarVinculaciones()"
+  />
+}
+
+<!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
+     solo: la tabla las instancia por fila. -->
+<ng-template #celdaOrg let-fila>
+  <span class="vinculacion__org">
+    <app-avatar
+      [src]="fila.avatarUrl"
+      [name]="fila.practiceName"
+      [alt]="'Logo de ' + fila.practiceName"
+      size="sm"
+    />
+    <span class="vinculacion__nombre">
+      {{ fila.practiceName }}
+      @if (fila.verified) {
+        <!-- El sello se gana, no se declara: sólo cuando la propia organización
+             aceptó la vinculación. -->
+        <span class="vinculacion__sello" title="Vinculación aceptada por la organización">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+          <span class="solo-lectores">Vinculación aceptada por la organización</span>
+        </span>
+      }
+    </span>
+  </span>
+</ng-template>
+
+<ng-template #celdaEstado let-fila>
+  <app-badge class="vinculacion__estado" [variant]="fila.statusVariant">
+    <span class="vinculacion__estado-rotulo">{{ fila.statusLabel }}</span>
+  </app-badge>
+</ng-template>
+
+<ng-template #celdaCargo let-fila>
+  {{ fila.roleLabel }}
+</ng-template>
+
+<ng-template #celdaDesde let-fila>
+  {{ fila.sinceLabel }}
+</ng-template>
+
+<ng-template #celdaAcciones let-fila>
+  @if (fila.isPrimary) {
+    <span class="vinculacion__principal">Principal</span>
+  }
+  @if (fila.isFinal) {
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [attr.aria-label]="'Solicitar vinculación con ' + fila.practiceName"
+      (clicked)="elegirParaNuevaSolicitud(fila)"
+    >
+      Solicitar
+    </button>
+  } @else {
+    @if (!fila.isPrimary) {
+      <span class="vinculacion__sin-dato">—</span>
+    }
+  }
+</ng-template>

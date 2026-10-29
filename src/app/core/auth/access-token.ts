@@ -9,6 +9,9 @@
  * Por eso no hay `/me`: el propio token trae `sub`, `roles[]` y `tenants[]`.
  */
 
+/** Clase de cuenta que declara el token. */
+export type AccountKind = 'PERSON' | 'ORGANIZATION';
+
 /**
  * Claims que emite `TokenService.signAccessToken` de la API.
  *
@@ -30,6 +33,19 @@ export interface AccessTokenClaims {
   readonly name?: string;
   /** Nombre de cada tenant por su identificador, para no mostrar uuid crudos. */
   readonly tenantNames?: Readonly<Record<string, string>>;
+  /**
+   * Código de tipo de cada tenant por su identificador (`'PAYER'`,
+   * `'PROVIDER'`, `'PHARMACY'`…), tal como lo declara `TenantTypeCode` de
+   * `core/data-access/directory/directory.types`.
+   *
+   * Es dato de presentación, igual que `tenantNames`: no participa de ninguna
+   * decisión de autorización. Existe para que el registro de navegación pueda
+   * ocultarle a una organización una sección que no es suya —p. ej. el
+   * autoservicio del paciente, a una aseguradora— sin que la API tenga que
+   * exponer una ruta `/me`. Ausente = tipo desconocido para ese tenant: no
+   * oculta nada.
+   */
+  readonly tenantTypes?: Readonly<Record<string, string>>;
   /**
    * Perfil de paciente del titular, si la cuenta es la de un paciente.
    *
@@ -55,14 +71,24 @@ export interface AccessTokenClaims {
    */
   readonly hpid?: string;
   /**
-   * La organización propia del titular —«Mi consultorio» de quien atiende—, si
-   * la tiene.
+   * Roles con ámbito de organización, indexados por el tenant en el que se
+   * concedieron (`scopedRoles` de `jwt-payload.interface.ts` de la API).
    *
-   * Es la que se activa por defecto cuando el token trae varias: no es adivinar
-   * en nombre de la persona, es su propio consultorio. Una clínica ajena sigue
-   * exigiendo que la elija.
+   * Es dato para **mostrar**: la regla es la de `RolesGuard` —un código que
+   * aparece acá sólo vale en esos tenants; uno que no aparece es global— y la
+   * autoridad sigue siendo la API. Ver `SessionStore.roles`.
    */
-  readonly ownTenantId?: string;
+  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
+  /**
+   * Qué clase de cuenta es: una persona o una organización.
+   *
+   * La cuenta de organización **es** la organización (farmacia, laboratorio,
+   * aseguradora): se muestra con su nombre y su «Mi perfil» es su ficha, no un
+   * perfil de persona. Es dato de presentación, no autoriza nada. Ausente = el
+   * emisor no lo declara (API anterior): `SessionStore.isOrganizationAccount`
+   * lo deduce de la organización activa.
+   */
+  readonly accountKind?: AccountKind;
   /** Expiración en segundos desde epoch, si el token la declara. */
   readonly exp?: number;
 }
@@ -152,8 +178,8 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
   const name = source['name'];
   const pid = source['pid'];
   const hpid = source['hpid'];
-  const ownTenantId = source['ownTenantId'];
   const exp = source['exp'];
+  const accountKind = source['accountKind'];
 
   return {
     sub,
@@ -163,14 +189,25 @@ function toClaims(payload: unknown): AccessTokenClaims | null {
     ...(typeof name === 'string' ? { name } : {}),
     ...(typeof pid === 'string' && pid !== '' ? { pid } : {}),
     ...(typeof hpid === 'string' && hpid !== '' ? { hpid } : {}),
-    ...(typeof ownTenantId === 'string' && ownTenantId !== '' ? { ownTenantId } : {}),
+    ...(accountKind === 'PERSON' || accountKind === 'ORGANIZATION' ? { accountKind } : {}),
     ...(typeof exp === 'number' ? { exp } : {}),
-    ...(toNameMap(source['tenantNames']) ?? {}),
+    ...(toStringMapClaim('tenantNames', source['tenantNames']) ?? {}),
+    ...(toStringMapClaim('tenantTypes', source['tenantTypes']) ?? {}),
+    ...(toScopedRolesClaim(source['scopedRoles']) ?? {}),
   };
 }
 
-/** `tenantNames` solo se acepta si es un mapa de texto a texto. */
-function toNameMap(value: unknown): { tenantNames: Record<string, string> } | null {
+/**
+ * Lee un claim que es un mapa de texto a texto (`tenantNames`, `tenantTypes`).
+ *
+ * Se descarta entero si no es un mapa, o si queda vacío tras filtrar las
+ * entradas que no son texto: un claim vacío es lo mismo que ausente, y así lo
+ * trata quien lo consuma después.
+ */
+function toStringMapClaim<K extends string>(
+  key: K,
+  value: unknown,
+): Record<K, Record<string, string>> | null {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return null;
   }
@@ -179,7 +216,27 @@ function toNameMap(value: unknown): { tenantNames: Record<string, string> } | nu
     (entry): entry is [string, string] => typeof entry[1] === 'string',
   );
 
-  return entries.length === 0 ? null : { tenantNames: Object.fromEntries(entries) };
+  return entries.length === 0 ? null : ({ [key]: Object.fromEntries(entries) } as Record<K, Record<string, string>>);
+}
+
+/**
+ * Lee `scopedRoles`: un mapa de tenant a lista de códigos. Se descartan las
+ * entradas que no son lista y las listas vacías; sin entradas, el claim es
+ * ausente (todos los roles son globales).
+ */
+function toScopedRolesClaim(
+  value: unknown,
+): { scopedRoles: Record<string, readonly string[]> } | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+
+  const entries = Object.entries(value as Record<string, unknown>).flatMap(([tenantId, codes]) => {
+    const list = toStringArray(codes);
+    return list.length === 0 ? [] : [[tenantId, list] as const];
+  });
+
+  return entries.length === 0 ? null : { scopedRoles: Object.fromEntries(entries) };
 }
 
 /** Un claim de lista ausente equivale a lista vacía, no a error. */

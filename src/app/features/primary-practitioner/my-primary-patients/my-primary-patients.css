@@ -1,0 +1,22 @@
+:host {
+  display: block;
+}
+
+.cabecera__resumen {
+  margin: 0 0 var(--sp-4);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.cabecera__paginas {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-4);
+}
+
+.cabecera__nota {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}

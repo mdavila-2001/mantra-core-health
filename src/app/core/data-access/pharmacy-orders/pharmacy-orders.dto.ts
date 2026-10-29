@@ -37,6 +37,11 @@ export interface PharmacyOrderSubstitutionDto {
   readonly decidedAt: string | null;
 }
 
+export interface PharmacyOrderPrescriberDto {
+  readonly name: string | null;
+  readonly specialty: string | null;
+}
+
 export interface PharmacyOrderDto extends PatientSettlementFields {
   readonly id: string;
   readonly status: PharmacyOrderConceptDto;
@@ -47,8 +52,19 @@ export interface PharmacyOrderDto extends PatientSettlementFields {
   readonly pharmacyId: string;
   readonly pharmacyName: string;
   readonly medicationRequestId: string | null;
+  /**
+   * Quién firmó la receta del pedido: nombre y especialidad principal. `null`
+   * sin receta o sin prescriptor declarado. Opcional para tolerar un backend
+   * anterior a este campo.
+   */
+  readonly prescriber?: PharmacyOrderPrescriberDto | null;
   readonly patientName: string | null;
   readonly deliveryMode: PharmacyOrderConceptDto | null;
+  /**
+   * La dirección de entrega guardada, en una línea; `null` si el pedido no la
+   * tiene. Opcional por la misma razón que `prescriber`.
+   */
+  readonly deliveryAddressText?: string | null;
   readonly pickupCode: string | null;
   readonly totalAmount: string | null;
   readonly currency: PharmacyOrderConceptDto | null;

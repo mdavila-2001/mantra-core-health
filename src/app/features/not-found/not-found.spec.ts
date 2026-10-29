@@ -42,7 +42,7 @@ describe('NotFound', () => {
   it('no dice si la dirección existe o no', () => {
     const texto = html().textContent ?? '';
 
-    expect(texto).toContain('No encontramos lo que buscás');
-    expect(texto).not.toMatch(/no existe|inexistente|sin permiso|no tenés acceso/i);
+    expect(texto).toContain('No encontramos lo que busca');
+    expect(texto).not.toMatch(/no existe|inexistente|sin permiso|no tiene acceso/i);
   });
 });

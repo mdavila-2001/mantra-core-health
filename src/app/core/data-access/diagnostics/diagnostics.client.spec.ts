@@ -7,6 +7,7 @@ import type {
   DiagnosticOrderCreated,
   LabWorkOrder,
   PatientDiagnostics,
+  PatientOwnOrders,
 } from './diagnostics.types';
 
 /** El circuito vacío con todos los bloques presentes, que es como llega. */
@@ -199,6 +200,58 @@ describe('DiagnosticsClient', () => {
     });
   });
 
+  describe('getOwnOrders', () => {
+    const ORDEN_PROPIA = {
+      id: 'sr-1',
+      codeConceptId: 'code-1',
+      statusConceptId: 'st-activa',
+      createdAt: '2026-08-14T10:00:00.000Z',
+      hasReleasedResult: false,
+    };
+
+    function leer(items: readonly object[]): PatientOwnOrders {
+      let pagina: PatientOwnOrders | undefined;
+      client.getOwnOrders().subscribe((p) => (pagina = p));
+      http
+        .expectOne((r) => r.url === '/diagnostic-results/me/orders')
+        .flush({ patientProfileId: 'p-1', items, limit: 50, truncated: false });
+      return pagina!;
+    }
+
+    it('conserva los cuatro campos del ejecutor sin renombrarlos', () => {
+      const pagina = leer([
+        {
+          ...ORDEN_PROPIA,
+          performerSelectionConceptId: 'perf-org',
+          performerPractitionerProfileId: 'pr-1',
+          suggestedPracticeSiteId: 'site-1',
+          suggestedPracticeSiteName: 'Centro Médico Sur',
+        },
+      ]);
+
+      expect(pagina.items[0].performerSelectionConceptId).toBe('perf-org');
+      expect(pagina.items[0].performerPractitionerProfileId).toBe('pr-1');
+      expect(pagina.items[0].suggestedPracticeSiteId).toBe('site-1');
+      expect(pagina.items[0].suggestedPracticeSiteName).toBe('Centro Médico Sur');
+      expect(pagina.items[0].createdAt).toBeInstanceOf(Date);
+    });
+
+    it('sin esos campos quedan ausentes: no se inventa un null', () => {
+      const orden = leer([ORDEN_PROPIA]).items[0];
+
+      expect('performerSelectionConceptId' in orden).toBe(false);
+      expect('performerPractitionerProfileId' in orden).toBe(false);
+      expect('suggestedPracticeSiteId' in orden).toBe(false);
+      expect('suggestedPracticeSiteName' in orden).toBe(false);
+    });
+
+    it('conserva un nombre de sede null tal como llega', () => {
+      const orden = leer([{ ...ORDEN_PROPIA, performerSelectionConceptId: 'perf-org', suggestedPracticeSiteName: null }]).items[0];
+
+      expect(orden.suggestedPracticeSiteName).toBeNull();
+    });
+  });
+
   describe('requestStudy', () => {
     /**
      * El alta es de `clinical`, no de `diagnostics`. Es el punto entero del
@@ -237,6 +290,28 @@ describe('DiagnosticsClient', () => {
       req.flush(ORDEN_CREADA);
     });
 
+    it('manda los tres campos del ejecutor tal como los nombra el contrato', () => {
+      client
+        .requestStudy({
+          custodianTenantId: 't-1',
+          patientProfileId: 'p-1',
+          codeConceptId: 'code-1',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: 'pr-1',
+          suggestedPracticeSiteId: 'site-1',
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(req.request.body.performerSelectionConceptId).toBe('perf-self');
+      expect(req.request.body.performerPractitionerProfileId).toBe('pr-1');
+      expect(req.request.body.suggestedPracticeSiteId).toBe('site-1');
+      // El nombre de la sede es sólo de lectura: no viaja en el alta.
+      expect('suggestedPracticeSiteName' in req.request.body).toBe(false);
+
+      req.flush(ORDEN_CREADA);
+    });
+
     it('convierte la fecha de la orden creada', () => {
       let creada: DiagnosticOrderCreated | undefined;
       client
@@ -251,6 +326,71 @@ describe('DiagnosticsClient', () => {
 
       expect(creada?.createdAt).toBeInstanceOf(Date);
       expect(creada?.id).toBe('sr-1');
+    });
+
+    it('manda Idempotency-Key: la misma al reintentar, otra si cambian los datos', () => {
+      const orden = { custodianTenantId: 't-1', patientProfileId: 'p-1', codeConceptId: 'code-1' };
+
+      client.requestStudy(orden).subscribe({ error: () => undefined });
+      const primera = http.expectOne((r) => r.url === '/clinical/service-requests');
+      const clave = primera.request.headers.get('Idempotency-Key');
+      expect(clave).toBeTruthy();
+      primera.flush(null, { status: 504, statusText: 'Gateway Timeout' });
+
+      client.requestStudy(orden).subscribe({ error: () => undefined });
+      const reintento = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+      reintento.flush(null, { status: 504, statusText: 'Gateway Timeout' });
+
+      client.requestStudy({ ...orden, codeConceptId: 'code-2' }).subscribe();
+      const corregida = http.expectOne((r) => r.url === '/clinical/service-requests');
+      expect(corregida.request.headers.get('Idempotency-Key')).not.toBe(clave);
+      corregida.flush(ORDEN_CREADA);
+    });
+  });
+
+  describe('shareResult (CL-48/CL-50)', () => {
+    const SHARE = {
+      id: 'share-1',
+      reportId: 'r-1',
+      practitionerUserId: 'user-9',
+      practitionerName: 'Marta Rivas',
+      validFrom: '2026-08-10T12:00:00.000Z',
+      validTo: '2026-08-17T12:00:00.000Z',
+      active: true,
+    };
+
+    it('aceptado: manda practitionerProfileId, nunca practitionerUserId ni reason', () => {
+      client
+        .shareResult('r-1', {
+          practitionerProfileId: 'prof-1',
+          validUntil: new Date('2026-08-17T12:00:00.000Z'),
+        })
+        .subscribe();
+
+      const req = http.expectOne((r) => r.url === '/diagnostic-results/me/r-1/shares');
+      expect(req.request.body).toEqual({
+        practitionerProfileId: 'prof-1',
+        validUntil: '2026-08-17T12:00:00.000Z',
+      });
+      expect('practitionerUserId' in req.request.body).toBe(false);
+      expect('reason' in req.request.body).toBe(false);
+
+      req.flush(SHARE);
+    });
+
+    it('propaga practitionerName de la respuesta, para no mostrar el uuid', () => {
+      let resultado: { practitionerName?: string } | undefined;
+      client
+        .shareResult('r-1', {
+          practitionerProfileId: 'prof-1',
+          validUntil: new Date('2026-08-17T12:00:00.000Z'),
+        })
+        .subscribe((share) => (resultado = share));
+
+      http.expectOne((r) => r.url === '/diagnostic-results/me/r-1/shares').flush(SHARE);
+
+      expect(resultado?.practitionerName).toBe('Marta Rivas');
     });
   });
 });

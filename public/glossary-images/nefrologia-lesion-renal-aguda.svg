@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Tres niveles de origen de la lesión renal aguda</title>
+  <desc id="d">Esquema de tres tarjetas en serie siguiendo el recorrido de la sangre y de la orina. Antes del riñón, causa prerrenal: falta de flujo sanguíneo por deshidratación, hemorragia, insuficiencia cardíaca o sepsis. En el riñón, causa intrínseca: necrosis tubular, nefritis intersticial, glomerulonefritis y lesión de vasos. Después del riñón, causa posrenal: obstrucción por cálculos, próstata o tumores.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2b7bbf; --b:#c0392b; --c:#8a5bc2; --blood:#d6453d; --kid:#e7a79a; --kid-d:#c9705f; --pipe:#a9b8c9; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#5aa6e6; --b:#ef7467; --c:#b48ae6; --blood:#e0584f; --kid:#b9695c; --kid-d:#e08a7a; --pipe:#5d7188; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .head { font-size: 16px; font-weight: 800; }
+    .sub { font-size: 13px; font-weight: 600; }
+    .lab { font-size: 13px; }
+    .pista { font-size: 12.5px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="24" y="36" class="title">Lesión renal aguda: ¿en qué nivel está el problema?</text>
+
+  <!-- tarjeta 1 -->
+  <rect x="24" y="56" width="240" height="376" rx="14" fill="var(--panel)" stroke="var(--a)" stroke-width="2"/>
+  <text x="144" y="86" text-anchor="middle" class="head" style="fill:var(--a)">Prerrenal</text>
+  <text x="144" y="105" text-anchor="middle" class="sub muted">Antes del riñón: llega poca sangre</text>
+  <!-- icono: tubo con flujo débil hacia el riñón -->
+  <path d="M44 150 H150" stroke="var(--pipe)" stroke-width="22" stroke-linecap="round"/>
+  <path d="M60 150 H132" stroke="var(--blood)" stroke-width="8" stroke-linecap="round" opacity=".55"/>
+  <path d="M122 142 l14 8 -14 8" fill="none" stroke="var(--blood)" stroke-width="3"/>
+  <path d="M168 128 c-22 0 -32 14 -32 22 c0 18 14 34 36 34 c22 0 34 -16 30 -34 c-4 -14 -16 -22 -34 -22z" fill="var(--kid)" stroke="var(--kid-d)" stroke-width="2.5" transform="translate(16,-6)"/>
+  <text x="144" y="204" text-anchor="middle" class="lab muted" style="font-size:12px">el riñón está sano pero «seco»</text>
+  <text x="40" y="232" class="lab">• Deshidratación o hemorragia</text>
+  <text x="40" y="252" class="lab">• Insuficiencia cardíaca</text>
+  <text x="40" y="272" class="lab">• Cirrosis, sepsis, shock</text>
+  <text x="40" y="292" class="lab">• Fármacos que alteran el flujo</text>
+  <text x="40" y="314" class="lab">  renal (hemodinámica)</text>
+  <line x1="40" y1="336" x2="248" y2="336" stroke="var(--line)"/>
+  <text x="40" y="358" class="pista muted">Pistas habituales</text>
+  <text x="40" y="378" class="pista">Orina concentrada y sedimento sin</text>
+  <text x="40" y="395" class="pista">alteraciones. Suele revertir si se</text>
+  <text x="40" y="412" class="pista">restablece el flujo a tiempo.</text>
+
+  <!-- flecha 1-2 -->
+  <path d="M266 244 h12" stroke="var(--muted)" stroke-width="3"/><path d="M272 236 l8 8 -8 8" fill="none" stroke="var(--muted)" stroke-width="3"/>
+
+  <!-- tarjeta 2 -->
+  <rect x="280" y="56" width="240" height="376" rx="14" fill="var(--panel)" stroke="var(--b)" stroke-width="2"/>
+  <text x="400" y="86" text-anchor="middle" class="head" style="fill:var(--b)">Intrínseca</text>
+  <text x="400" y="105" text-anchor="middle" class="sub muted">En el riñón: tejido lesionado</text>
+  <!-- icono: riñón con lesión -->
+  <path d="M400 122 c-34 0 -52 22 -52 44 c0 26 20 44 48 44 c30 0 52 -20 52 -46 c0 -24 -18 -42 -48 -42z" fill="var(--kid)" stroke="var(--kid-d)" stroke-width="2.5"/>
+  <path d="M432 166 c-12 -2 -20 6 -18 16 c2 8 -4 14 -14 14" fill="none" stroke="var(--kid-d)" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="378" cy="156" r="6" fill="var(--b)"/><circle cx="392" cy="184" r="5" fill="var(--b)"/><circle cx="362" cy="178" r="4" fill="var(--b)"/>
+  <text x="400" y="228" text-anchor="middle" class="lab muted" style="font-size:12px">glomérulos, túbulos, intersticio o vasos</text>
+  <text x="296" y="252" class="lab">• Necrosis tubular aguda</text>
+  <text x="296" y="272" class="lab">• Nefritis intersticial</text>
+  <text x="296" y="292" class="lab">• Glomerulonefritis</text>
+  <text x="296" y="312" class="lab">• Lesión de vasos pequeños</text>
+  <line x1="296" y1="336" x2="504" y2="336" stroke="var(--line)"/>
+  <text x="296" y="358" class="pista muted">Pistas habituales</text>
+  <text x="296" y="378" class="pista">Cilindros, hematíes o leucocitos en el</text>
+  <text x="296" y="395" class="pista">sedimento según la causa. Puede</text>
+  <text x="296" y="412" class="pista">requerir biopsia.</text>
+
+  <!-- flecha 2-3 -->
+  <path d="M522 244 h12" stroke="var(--muted)" stroke-width="3"/><path d="M528 236 l8 8 -8 8" fill="none" stroke="var(--muted)" stroke-width="3"/>
+
+  <!-- tarjeta 3 -->
+  <rect x="536" y="56" width="240" height="376" rx="14" fill="var(--panel)" stroke="var(--c)" stroke-width="2"/>
+  <text x="656" y="86" text-anchor="middle" class="head" style="fill:var(--c)">Posrenal</text>
+  <text x="656" y="105" text-anchor="middle" class="sub muted">Después del riñón: la orina no sale</text>
+  <!-- icono: uréter obstruido -->
+  <path d="M572 140 H690" stroke="var(--pipe)" stroke-width="22" stroke-linecap="round"/>
+  <path d="M580 140 H640" stroke="#e7c34a" stroke-width="8" stroke-linecap="round"/>
+  <rect x="644" y="126" width="22" height="28" rx="6" fill="var(--c)"/>
+  <text x="656" y="204" text-anchor="middle" class="lab muted" style="font-size:12px">un obstáculo detiene el flujo de orina</text>
+  <text x="552" y="232" class="lab">• Cálculos en uréter o vejiga</text>
+  <text x="552" y="252" class="lab">• Hipertrofia o tumor de próstata</text>
+  <text x="552" y="272" class="lab">• Tumores que comprimen la vía</text>
+  <text x="552" y="292" class="lab">• Vejiga neurógena</text>
+  <text x="552" y="312" class="lab">• Sonda obstruida</text>
+  <line x1="552" y1="336" x2="760" y2="336" stroke="var(--line)"/>
+  <text x="552" y="358" class="pista muted">Pistas habituales</text>
+  <text x="552" y="378" class="pista">Ecografía con dilatación de la vía</text>
+  <text x="552" y="395" class="pista">urinaria. Aliviar la obstrucción a</text>
+  <text x="552" y="412" class="pista">tiempo puede recuperar la función.</text>
+
+  <text x="400" y="460" text-anchor="middle" class="lab muted">Esquema conceptual. Pueden coexistir varios niveles. Ilustración original de AloVida.</text>
+</svg>

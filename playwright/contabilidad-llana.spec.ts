@@ -81,7 +81,7 @@ test.describe('Contabilidad en cristiano', () => {
 
     /* ---- 1 · cuánto hiciste hoy, esta semana y este mes -------------------- */
 
-    await expect(page.getByRole('heading', { name: '¿Cuánto hiciste?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toBeVisible();
 
     const tramos = page.locator('.tramo');
     await expect(tramos).toHaveCount(3);
@@ -103,11 +103,11 @@ test.describe('Contabilidad en cristiano', () => {
 
     // Cada tramo dice también lo que salió y lo que quedó.
     await expect(tramos.nth(0)).toContainText('Se fue en gastos');
-    await expect(tramos.nth(0)).toContainText('Te quedó');
+    await expect(tramos.nth(0)).toContainText('Le quedó');
 
     /* ---- 2 · en qué se te va la plata -------------------------------------- */
 
-    await expect(page.getByRole('heading', { name: '¿En qué se te va la plata?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿En qué se le va la plata?' })).toBeVisible();
 
     // Acotado al panel de gastos: el de ingresos usa las mismas clases de
     // barra, y sin acotar las dos listas se mezclan en un solo orden que no
@@ -118,7 +118,7 @@ test.describe('Contabilidad en cristiano', () => {
     // Traducidos: el plan dice «Depreciación», la pantalla dice de qué se
     // trata. Un médico no tiene por qué saber la palabra.
     await expect(panelGastos.getByText('Desgaste de los equipos')).toBeVisible();
-    await expect(panelGastos.getByText(/No sale plata de tu cuenta/)).toBeVisible();
+    await expect(panelGastos.getByText(/No sale plata de su cuenta/)).toBeVisible();
 
     // De mayor a menor: la primera barra es la más grande.
     const gastos = (await panelGastos.locator('.barra__importe').allTextContents()).map(aNumero);
@@ -128,8 +128,8 @@ test.describe('Contabilidad en cristiano', () => {
 
     /* ---- 3 y 4 · quién te debe, a quién le debés --------------------------- */
 
-    await expect(page.getByRole('heading', { name: 'Te deben' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Tenés que pagar' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Le deben' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Tiene que pagar' })).toBeVisible();
 
     // El plazo va escrito, no sólo en color: la regla de la casa es no
     // depender de distinguir rojo.
@@ -148,7 +148,7 @@ test.describe('Contabilidad en cristiano', () => {
     // Un toast no prueba nada: se recarga la página entera y se vuelve a leer.
     await page.reload();
     await estable(page);
-    await expect(page.getByRole('heading', { name: 'Te deben' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Le deben' })).toBeVisible();
 
     const totalDespues = aNumero(await page.locator('.panel--cobrar .panel__total').textContent());
     expect(totalDespues).toBeLessThan(totalAntes);
@@ -157,7 +157,7 @@ test.describe('Contabilidad en cristiano', () => {
     /* ---- activos y pasivos: adentro, no al lado ---------------------------- */
 
     await expect(
-      page.getByRole('heading', { name: 'Lo que tenés y lo que debés' }),
+      page.getByRole('heading', { name: 'Lo que tiene y lo que debe' }),
     ).toBeVisible();
 
     // Fuera del menú lateral: era la undécima entrada y el propietario pidió
@@ -186,7 +186,7 @@ test.describe('Contabilidad en cristiano', () => {
 
     await page.getByTestId('volver-al-resumen').click();
     await expect(page).toHaveURL(/\/administration\/accounting$/);
-    await expect(page.getByRole('heading', { name: '¿Cuánto hiciste?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toBeVisible();
   });
 
   test('en teléfono se apila sin scroll horizontal', async ({ page }) => {
@@ -197,7 +197,7 @@ test.describe('Contabilidad en cristiano', () => {
     await irA(page, '/administration/accounting');
     await estable(page);
 
-    await expect(page.getByRole('heading', { name: '¿Cuánto hiciste?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toBeVisible();
 
     const desborde = await page.evaluate(() => ({
       scroll: document.documentElement.scrollWidth,

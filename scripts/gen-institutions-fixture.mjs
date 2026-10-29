@@ -52,7 +52,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'instituciones.generated.ts',
+  'institutions.generated.ts',
 );
 
 const leer = (nombre) => JSON.parse(readFileSync(join(ORIGEN, `${nombre}.json`), 'utf8'));

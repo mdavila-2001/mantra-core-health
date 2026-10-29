@@ -1,0 +1,532 @@
+/* ============================================================================
+    ALOVIDA Pulse — capa de profundidad, respuesta y latido.
+
+    El logotipo de la marca ES un pulso (la línea del electrocardiograma). Pulse
+    parte de ahí: lo que está vivo late, lo que se toca responde, y nada más se
+    mueve. No introduce un color, una tipografía ni una curva de movimiento que
+    `styles.css` no tenga: sólo compone los tokens existentes en tres ideas.
+
+      1. LATIDO   — un estado real (en curso, ahora, sin leer, escribiendo) lo
+                    anuncia un anillo que late TRES veces y se posa. Nunca en
+                    bucle: un bucle sólo es válido para la carga (motion.md §4).
+      2. ELEVACIÓN— lo que se puede pulsar se levanta al apuntarlo y se hunde al
+                    pulsarlo. Sólo `transform` y `box-shadow`.
+      3. MOMENTO  — UNA entrada autorada por pantalla (la cinta del día, la
+                    llegada de un mensaje). Es lo único que supera los 320 ms.
+
+    Contenido clínico: no se anima. Un valor que se desliza se lee mal
+    (motion.md §5). Pulse anima el continente y el estado, jamás la cifra.
+
+    Documentación y reglas de uso: docs/design-system/pulse.md
+   ========================================================================== */
+
+:root {
+    /* Desaceleración exponencial: arranca decidida y se posa sin rebote. Es la
+       curva de las llegadas; `--ease-spring` sigue reservada para confirmar un
+       gesto del dedo. */
+    --pulse-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+    /* El momento autorado. Por encima de `--dur-slow` (320) a propósito y
+       acotado a 480: es la excepción documentada a la regla «nada sobre ~320 ms»
+       y sólo vale para una entrada no clínica por pantalla. */
+    --pulse-dur-moment: 480ms;
+
+    /* Lo que late hereda el color del estado: aguamarina por defecto. */
+    --pulse-aura: color-mix(in srgb, var(--brand-secondary) 70%, transparent);
+
+    /* Elevación al apuntar: sombra con desplazamiento y difusión, tintada de
+       petróleo. Una sola declaración de elevación por pieza (sin borde + sombra
+       ancha a la vez: la tarjeta fantasma). */
+    --pulse-lift: 0 10px 24px rgba(11, 85, 126, 0.14), 0 2px 6px rgba(11, 85, 126, 0.08);
+    --pulse-lift-distance: -2px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+        --pulse-lift: 0 14px 30px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+        --pulse-aura: color-mix(in srgb, var(--brand-primary) 60%, transparent);
+    }
+}
+
+:root[data-theme='dark'] {
+    --pulse-lift: 0 14px 30px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.3);
+    --pulse-aura: color-mix(in srgb, var(--brand-primary) 60%, transparent);
+}
+
+/* ── Keyframes ─────────────────────────────────────────────────────────────
+   Todos arrancan en un estado ya visible o con `fill: backwards`: si la
+   animación no corre (movimiento reducido, JS caído) el contenido está ahí. */
+
+/* El anillo del latido: nace del borde del elemento y se disuelve. Se usa
+   `box-shadow` en el propio elemento para no crear capas extra. */
+@keyframes pulse-ring {
+    0% {
+        box-shadow: 0 0 0 0 var(--pulse-aura);
+    }
+
+    70%,
+    100% {
+        box-shadow: 0 0 0 9px transparent;
+    }
+}
+
+/* El trazo de una cinta: se descubre de izquierda a derecha, como el barrido de
+   un monitor. `clip-path` no dispara layout. El margen negativo deja pasar lo
+   que sobresale del riel (la etiqueta del reloj y las muescas). */
+@keyframes pulse-draw {
+    from {
+        clip-path: inset(-32px 100% -12px 0);
+    }
+
+    to {
+        clip-path: inset(-32px -32px -12px -32px);
+    }
+}
+
+/* Una llegada: lo que acaba de aparecer sube 8 px y se aclara. */
+@keyframes pulse-arrive {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ── Utilidades ────────────────────────────────────────────────────────────*/
+
+/* LATIDO. Se pone en el elemento que representa un estado vivo. Tres latidos y
+   se posa; si el estado cambia y el elemento se vuelve a pintar, late otra vez. */
+.pulse-live {
+    animation: pulse-ring 1.6s var(--pulse-ease) 3 both;
+    border-radius: inherit;
+}
+
+/* ELEVACIÓN. Sólo donde hay un puntero fino: en táctil el «hover» se queda
+   pegado tras el toque y la tarjeta parecería rota. */
+.pulse-lift {
+    transition:
+        transform var(--dur-base) var(--pulse-ease),
+        box-shadow var(--dur-base) var(--pulse-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pulse-lift:hover {
+        transform: translateY(var(--pulse-lift-distance));
+        box-shadow: var(--pulse-lift);
+    }
+}
+
+.pulse-lift:active {
+    transform: translateY(0) scale(0.995);
+    box-shadow: var(--shadow-sm);
+    transition-duration: var(--dur-fast);
+}
+
+/* PULSACIÓN. Para botones y chips: el dedo «hunde» la pieza 3 %. Respuesta en
+   120 ms, que es lo que se percibe como inmediato. */
+.pulse-press {
+    transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.pulse-press:active {
+    transform: scale(0.97);
+}
+
+/* LLEGADA. Lo que se inserta después de que la pantalla ya estaba lista. */
+.pulse-arrive {
+    animation: pulse-arrive var(--dur-slow) var(--pulse-ease) backwards;
+}
+
+/* Movimiento reducido: sin desplazamiento ni escala ni anillo. Lo que confirma
+   un estado (color, borde) se queda; lo que se movía deja de moverse. La regla
+   global de `styles.css` ya reduce las duraciones; ésta quita además el
+   desplazamiento, que a 0,01 ms seguiría teniendo un cuadro intermedio. */
+@media (prefers-reduced-motion: reduce) {
+    .pulse-live,
+    .pulse-arrive {
+        animation: none;
+    }
+
+    .pulse-lift:hover,
+    .pulse-lift:active,
+    .pulse-press:active {
+        transform: none;
+    }
+}
+
+/* ============================================================================
+    PULSE · INTERACCIÓN — cuarta idea: RESPUESTA.
+
+    Lo que se toca contesta, y contesta IGUAL en toda la aplicación. Antes cada
+    componente elegía su curva y su duración (había 0,18 s, 150 ms, 70 ms,
+    `ease`, `ease-out`… para el mismo gesto), así que la misma acción se sentía
+    distinta según la pantalla. Esta sección fija el idioma común:
+
+      APUNTAR   el estado de hover llega con `--dur-fast`, sólo con puntero fino.
+      PULSAR    hunde la pieza al instante (sin transición de bajada) y la
+                devuelve con `--ease-spring`: el eco físico del dedo.
+      APARECER  una superficie flotante entra con `--dur-base` + `--pulse-ease`.
+      IRSE      sale con `--pulse-dur-exit` + `--pulse-ease-exit`: más corta que
+                la entrada, acelerando. Lo que se va no se hace esperar.
+
+    Guía: docs/design-system/pulse.md §7.
+   ========================================================================== */
+
+:root {
+    /* La salida: más corta que la entrada (`--dur-base`) y acelerando, porque
+       lo que se va ya no tiene nada que decir. */
+    --pulse-dur-exit: 140ms;
+    --pulse-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+    /* Cuánto se hunde lo pulsado. Una pieza chica (botón, chip, número de
+       página) usa `--pulse-press-scale`; una grande (fila, tarjeta) apenas
+       baja, porque escalar 1000 px un 3 % son 30 px de salto. */
+    --pulse-press-scale: 0.97;
+
+    /* Capa de estado: el tinte que pone el hover y el que pone la pulsación,
+       derivados del petróleo de la marca. En vez de un gris por componente. */
+    --pulse-hover-tint: color-mix(in srgb, var(--brand-primary) 7%, transparent);
+    --pulse-press-tint: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+}
+
+/* ── Base de todo lo pulsable ───────────────────────────────────────────────
+   `:where()` tiene especificidad cero: cualquier regla de un componente le
+   gana. Esto no le pone aspecto a nada; sólo hace que, cuando un componente
+   cambia el color de algo al apuntarlo, el cambio LLEGUE en vez de saltar.
+   Son las 448 `<button>` sueltas y los enlaces de la aplicación que nunca
+   declararon su transición. */
+:where(button, a[href], summary, [role='button'], [role='tab'], [role='menuitem'], [role='option']) {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease-standard);
+}
+
+/* ── Utilidades de respuesta ────────────────────────────────────────────────*/
+
+/* Pieza chica pulsable sin componente propio (un botón de ícono a mano, una
+   miniatura): hover con capa de estado y pulsación con resorte. */
+.pulse-tap {
+    transition:
+        background-color var(--dur-fast) var(--ease-standard),
+        color var(--dur-fast) var(--ease-standard),
+        transform var(--dur-base) var(--ease-spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pulse-tap:hover {
+        background-color: var(--pulse-hover-tint);
+    }
+}
+
+.pulse-tap:active {
+    background-color: var(--pulse-press-tint);
+    transform: scale(var(--pulse-press-scale));
+    transition-duration: var(--dur-fast), var(--dur-fast), 0s;
+}
+
+/* Una superficie que se va. La pone `playExitAnimation()` (shared/motion) en
+   la superficie; el componente decide QUÉ pieza se anima con
+   `.pulse-leaving .su-panel { animation: pulse-leave … }`. */
+@keyframes pulse-leave {
+    to {
+        opacity: 0;
+        transform: translateY(4px) scale(0.985);
+    }
+}
+
+@keyframes pulse-fade-out {
+    to {
+        opacity: 0;
+    }
+}
+
+/* Una superficie flotante que nace de su ancla (menú, calendario): crece desde
+   el borde por donde se abrió, no desde el centro. */
+@keyframes pulse-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.97);
+    }
+}
+
+/* Cambio de página de una lista: el contenido nuevo llega desde el lado hacia
+   el que se avanzó. Dos nombres idénticos por sentido para que el navegador
+   vuelva a correr la animación en dos avances seguidos (cambiar el nombre es
+   lo que la reinicia). Sólo opacidad y desplazamiento: las cifras de una fila
+   no se deforman. */
+@keyframes pulse-page-next-a { from { opacity: 0; transform: translateX(12px); } }
+@keyframes pulse-page-next-b { from { opacity: 0; transform: translateX(12px); } }
+@keyframes pulse-page-prev-a { from { opacity: 0; transform: translateX(-12px); } }
+@keyframes pulse-page-prev-b { from { opacity: 0; transform: translateX(-12px); } }
+
+[data-page-turn='next-a'] { animation: pulse-page-next-a var(--dur-base) var(--pulse-ease); }
+[data-page-turn='next-b'] { animation: pulse-page-next-b var(--dur-base) var(--pulse-ease); }
+[data-page-turn='prev-a'] { animation: pulse-page-prev-a var(--dur-base) var(--pulse-ease); }
+[data-page-turn='prev-b'] { animation: pulse-page-prev-b var(--dur-base) var(--pulse-ease); }
+
+/* ============================================================================
+    PULSE · ÍCONOS VIVOS — reactividad transversal, estética minimalista y vibrante.
+
+    Cada ícono de la aplicación responde con dinamismo físico y sutileza:
+    1. REACTIVIDAD: el ícono contesta con micro-resorte elástico al apuntar
+       (hover/focus) y compresión háptica al pulsar (active).
+    2. VIBRACIÓN: un halo translúcido sutil tintado de aguamarina/petróleo
+       destaca el trazo sin empastar ni romper el minimalismo.
+    3. DIRECCIÓN & CONTEXTO: flechas que avanzan o retroceden, lupas que rotan al
+       enfocar la búsqueda, campanas que oscilan orgánicamente al interactuar, y
+       cápsulas de cabecera que levitan suavemente.
+    4. ACCESIBILIDAD: con `prefers-reduced-motion` todo movimiento se anula.
+   ========================================================================== */
+
+:root {
+    --pulse-icon-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --pulse-icon-dur: 220ms;
+    --pulse-icon-glow: color-mix(in srgb, var(--brand-secondary, #4FB3A9) 32%, transparent);
+    --pulse-icon-glow-strong: color-mix(in srgb, var(--brand-secondary, #4FB3A9) 55%, transparent);
+}
+
+/* ── Base transversal de todo ícono ─────────────────────────────────────── */
+.icono,
+app-nav-icon,
+app-account-icon,
+app-data-type-icon,
+app-question-type-icon,
+app-service-icon,
+app-specialty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+    backface-visibility: hidden;
+    transition:
+        transform var(--pulse-icon-dur) var(--pulse-icon-ease),
+        filter var(--pulse-icon-dur) var(--pulse-ease),
+        color var(--dur-fast) var(--ease-standard),
+        opacity var(--dur-fast) var(--ease-standard);
+}
+
+.icono,
+app-nav-icon svg,
+app-account-icon svg,
+app-data-type-icon svg,
+app-question-type-icon svg,
+app-service-icon svg,
+app-specialty-icon svg {
+    transform-origin: center center;
+    transition:
+        transform var(--pulse-icon-dur) var(--pulse-icon-ease),
+        filter var(--pulse-icon-dur) var(--pulse-ease),
+        color var(--dur-fast) var(--ease-standard),
+        stroke var(--dur-fast) var(--ease-standard),
+        opacity var(--dur-fast) var(--ease-standard);
+}
+
+/* ── Respuesta viva al apuntar (Hover & Focus) ───────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+    button:hover .icono,
+    [app-button]:hover .icono,
+    .btn:hover .icono,
+    a:hover .icono,
+    [role='button']:hover .icono,
+    [role='tab']:hover .icono,
+    summary:hover .icono,
+    .app-side-nav__item:hover .icono,
+    .public-nav-rail__item:hover .icono,
+    .rejilla-item:hover .icono,
+    .app-card:hover .icono,
+    .landing-enlace-baja:hover .icono,
+    button:hover app-nav-icon,
+    [app-button]:hover app-nav-icon,
+    a:hover app-nav-icon,
+    .app-side-nav__item:hover app-nav-icon,
+    .public-nav-rail__item:hover app-nav-icon,
+    button:focus-visible .icono,
+    [app-button]:focus-visible .icono,
+    .btn:focus-visible .icono,
+    a:focus-visible .icono,
+    .app-side-nav__item:focus-visible .icono,
+    .app-side-nav__item:focus-visible app-nav-icon {
+        transform: scale(1.14) translateY(-1px);
+        filter: drop-shadow(0 2px 6px var(--pulse-icon-glow));
+    }
+
+    button:hover app-nav-icon svg,
+    [app-button]:hover app-nav-icon svg,
+    a:hover app-nav-icon svg,
+    .app-side-nav__item:hover app-nav-icon svg,
+    .public-nav-rail__item:hover app-nav-icon svg {
+        transform: scale(1.14) translateY(-1px);
+        filter: drop-shadow(0 2px 6px var(--pulse-icon-glow));
+    }
+
+    .pulse-tap:hover .icono,
+    .pulse-tap:hover svg,
+    .btn--icon-only:hover .icono,
+    .btn--icon-only:hover svg,
+    .boton-desborde:hover .icono,
+    .boton-desborde:hover svg {
+        transform: scale(1.16) rotate(3deg);
+        filter: drop-shadow(0 2px 8px var(--pulse-icon-glow-strong));
+    }
+}
+
+/* ── Compresión háptica al pulsar (Active) ──────────────────────────────── */
+button:active .icono,
+[app-button]:active .icono,
+.btn:active .icono,
+a:active .icono,
+.app-side-nav__item:active .icono,
+.app-side-nav__item:active app-nav-icon,
+.pulse-tap:active .icono,
+.pulse-tap:active svg,
+button:active app-nav-icon svg,
+[app-button]:active app-nav-icon svg,
+a:active app-nav-icon svg {
+    transform: scale(0.92) translateY(0);
+    transition-duration: var(--dur-fast);
+}
+
+/* ── Especializaciones por rol y contexto ────────────────────────────────── */
+
+/* 1. Direccionales: avanzar (flechas a la derecha, chevrons al final) */
+@media (hover: hover) and (pointer: fine) {
+    :where(button, [app-button], .btn, a):hover :where(.icono--flecha, .icono--chevron, .icono:last-child:not(:only-child)) {
+        transform: translateX(3px) scale(1.12);
+    }
+
+    /* Retroceso (volver, back links, variante secundaria) */
+    :where(app-back-link, [app-button][data-variante='secundario'], .btn--secondary):hover :where(.icono, .icono--retroceso, .icono:first-child:not(:only-child)) {
+        transform: translateX(-3px) scale(1.12);
+    }
+}
+
+/* 2. Buscadores: la lupa se orienta y resalta al interactuar */
+.app-search-field:focus-within :where(.icono, .icono--busqueda) {
+    transform: scale(1.16) rotate(10deg);
+    color: var(--brand-primary);
+    filter: drop-shadow(0 0 6px var(--pulse-icon-glow-strong));
+}
+
+/* 3. Campana de notificaciones: oscilación viva (swing) */
+@keyframes pulse-bell-ring {
+    0% { transform: rotate(0deg); }
+    20% { transform: rotate(-14deg) scale(1.12); }
+    40% { transform: rotate(11deg) scale(1.12); }
+    60% { transform: rotate(-6deg) scale(1.08); }
+    80% { transform: rotate(3deg) scale(1.04); }
+    100% { transform: rotate(0deg) scale(1.08); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .campana__boton:hover :where(svg, .icono),
+    .app-header__campana:hover :where(svg, .icono) {
+        animation: pulse-bell-ring 0.55s var(--pulse-ease) both;
+        filter: drop-shadow(0 2px 8px var(--pulse-icon-glow));
+    }
+}
+
+/* 4. Selector de tema: giro limpio */
+@media (hover: hover) and (pointer: fine) {
+    .app-theme-toggle:hover .icono {
+        transform: rotate(30deg) scale(1.16);
+        color: var(--brand-primary);
+        filter: drop-shadow(0 0 8px var(--pulse-icon-glow));
+    }
+}
+
+/* 5. Cabeceras de página y estados vacíos: levitación vibrante */
+.app-page-header__icono,
+.app-empty-state__icono {
+    transition:
+        transform var(--dur-base) var(--pulse-ease),
+        box-shadow var(--dur-base) var(--pulse-ease),
+        background-color var(--dur-fast) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .app-page-header__icono:hover {
+        transform: translateY(-2px) scale(1.04);
+        box-shadow: 0 8px 20px var(--pulse-icon-glow), inset 0 0 0 1px var(--c-aqua-400);
+    }
+
+    .app-page-header__icono:hover .icono {
+        transform: scale(1.14) rotate(-3deg);
+        color: var(--brand-primary);
+    }
+
+    .app-empty-state__icono:hover {
+        transform: translateY(-4px) scale(1.06);
+        box-shadow: 0 10px 24px var(--pulse-icon-glow), inset 0 2px 6px var(--sombra-azul-suave);
+    }
+
+    .app-empty-state__icono:hover .icono {
+        transform: scale(1.16) rotate(3deg);
+    }
+}
+
+/* 6. Badges con ícono: realce sutil */
+@media (hover: hover) and (pointer: fine) {
+    .app-badge:hover .icono {
+        transform: scale(1.22);
+        filter: drop-shadow(0 1px 3px var(--pulse-icon-glow));
+    }
+}
+
+/* 7. Íconos de cabecera de tarjeta */
+@media (hover: hover) and (pointer: fine) {
+    .app-card:hover .app-card__cabecera .icono {
+        transform: scale(1.14) translateY(-1px);
+        color: var(--brand-secondary);
+        filter: drop-shadow(0 2px 6px var(--pulse-icon-glow));
+    }
+}
+
+/* 8. Entrada viva y pop-in al montar */
+@keyframes pulse-icon-enter {
+    from {
+        opacity: 0.3;
+        transform: scale(0.86);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.app-page-header__icono .icono,
+.app-empty-state__icono .icono {
+    animation: pulse-icon-enter var(--dur-base) var(--pulse-icon-ease) backwards;
+}
+
+/* ── Reducción de movimiento: anulación estricta ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .pulse-live,
+    .pulse-arrive,
+    .app-page-header__icono .icono,
+    .app-empty-state__icono .icono {
+        animation: none !important;
+    }
+
+    .pulse-tap:active,
+    .pulse-lift:hover,
+    .pulse-lift:active,
+    .pulse-press:active,
+    [data-page-turn] {
+        transform: none !important;
+        animation: none !important;
+    }
+
+    :where(.icono, app-nav-icon, app-account-icon, app-data-type-icon, app-question-type-icon, app-service-icon, app-specialty-icon),
+    :where(.icono, app-nav-icon svg, app-account-icon svg, app-data-type-icon svg, app-question-type-icon svg, app-service-icon svg, app-specialty-icon svg),
+    .app-page-header__icono,
+    .app-empty-state__icono {
+        transition: none !important;
+        animation: none !important;
+        transform: none !important;
+        filter: none !important;
+    }
+}

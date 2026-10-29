@@ -4,7 +4,6 @@ import {
 } from '../../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.money';
 import {
   CENTAVOS_POR_PUNTO,
-  COSTO_DE_ENVIO_DE_EJEMPLO,
   PORCENTAJE_DE_COASEGURO,
   PORCENTAJE_DE_DESCUENTO_DE_RED,
 } from './checkout.fixtures';
@@ -16,8 +15,15 @@ export interface RenglonACobrar {
   readonly medicamento: string;
   readonly presentacion: string | null;
   readonly cantidad: number;
-  /** El precio unitario que la orden médica mostró, o `null`. */
+  /** El precio unitario **de lista** que la orden médica mostró, o `null`. */
   readonly precioUnitario: string | null;
+  /**
+   * Lo que una campaña descuenta en este renglón (importe, no porcentaje). Se
+   * resta del renglón: el precio unitario sigue siendo el de lista.
+   */
+  readonly descuentoDeCampana?: string | null;
+  /** «2x1», «20 % menos»…: la campaña que lo alcanzó. */
+  readonly promocion?: string | null;
   readonly esAlternativa: boolean;
   readonly aprobadoPorSeguro: boolean;
   readonly disponible: boolean;
@@ -27,7 +33,12 @@ export interface EntradaDelResumen {
   readonly renglones: readonly RenglonACobrar[];
   readonly moneda: string | null;
   readonly conSeguro: boolean;
-  readonly conEnvio: boolean;
+  /**
+   * Lo que las campañas descuentan sobre el **total** del pedido (compra mínima,
+   * escalonados). Se resta de lo que paga la persona; lo aprobado por el seguro
+   * no lo recibe.
+   */
+  readonly descuentoDeCampanaDelTotal?: string | null;
 }
 
 /**
@@ -59,6 +70,7 @@ export function resumirPedido(entrada: EntradaDelResumen): ResumenDelPedido {
     presentacion: renglon.presentacion,
     cantidad: renglon.cantidad,
     subtotal: centavos === null || !renglon.disponible ? null : aTexto(centavos),
+    promocion: renglon.promocion ?? null,
     esAlternativa: renglon.esAlternativa,
     disponible: renglon.disponible,
   });
@@ -73,19 +85,23 @@ export function resumirPedido(entrada: EntradaDelResumen): ResumenDelPedido {
   const subtotal =
     sumaAprobados === null || sumaNoAprobados === null ? null : sumaAprobados + sumaNoAprobados;
 
-  const descuento =
-    sumaNoAprobados === null ? null : porcentaje(sumaNoAprobados, PORCENTAJE_DE_DESCUENTO_DE_RED);
+  // El descuento de una campaña sobre el total nunca supera lo que se paga.
+  const descuentoDeCampana =
+    sumaNoAprobados === null
+      ? 0
+      : Math.min(aCentavos(entrada.descuentoDeCampanaDelTotal ?? '0') ?? 0, sumaNoAprobados);
+  const baseDePago = sumaNoAprobados === null ? null : sumaNoAprobados - descuentoDeCampana;
+  const descuento = baseDePago === null ? null : porcentaje(baseDePago, PORCENTAJE_DE_DESCUENTO_DE_RED);
   const hayAprobados = aprobados.length > 0;
   const coaseguro =
     !hayAprobados || sumaAprobados === null
       ? null
       : porcentaje(sumaAprobados, PORCENTAJE_DE_COASEGURO);
-  const envio = entrada.conEnvio ? aCentavos(COSTO_DE_ENVIO_DE_EJEMPLO) : null;
 
   const total =
-    sumaNoAprobados === null || descuento === null || (hayAprobados && coaseguro === null)
+    baseDePago === null || descuento === null || (hayAprobados && coaseguro === null)
       ? null
-      : sumaNoAprobados - descuento + (coaseguro ?? 0) + (envio ?? 0);
+      : baseDePago - descuento + (coaseguro ?? 0);
 
   return {
     moneda: entrada.moneda,
@@ -93,11 +109,11 @@ export function resumirPedido(entrada: EntradaDelResumen): ResumenDelPedido {
     aprobados: aprobados.map(aResumen),
     noAprobados: noAprobados.map(aResumen),
     subtotal: textoONull(subtotal),
+    descuentoDeCampana: descuentoDeCampana > 0 ? aTexto(descuentoDeCampana) : null,
     descuentoDeRed: textoONull(descuento),
     coaseguro: textoONull(coaseguro),
     cubreElSeguro:
       coaseguro === null || sumaAprobados === null ? null : aTexto(sumaAprobados - coaseguro),
-    envio: textoONull(envio),
     total: textoONull(total),
     puntos: total === null ? null : Math.floor(total / CENTAVOS_POR_PUNTO),
   };
@@ -112,7 +128,12 @@ function centavosDelRenglon(renglon: RenglonACobrar): number | null {
     return null;
   }
   const unitario = aCentavos(renglon.precioUnitario);
-  return unitario === null ? null : unitario * renglon.cantidad;
+  if (unitario === null) {
+    return null;
+  }
+  // Una campaña nunca deja un renglón en negativo.
+  const descuento = aCentavos(renglon.descuentoDeCampana ?? '0') ?? 0;
+  return Math.max(0, unitario * renglon.cantidad - descuento);
 }
 
 function sumar(renglones: readonly { centavos: number | null }[]): number | null {

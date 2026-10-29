@@ -1,0 +1,3 @@
+Output location: /home/user/wt/final/mantra-core-health/dist/mantra-core-health
+
+exit=0

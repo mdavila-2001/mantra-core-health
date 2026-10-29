@@ -92,6 +92,48 @@ describe('patient settlement normalization', () => {
       insuranceSettlement: null,
     });
   });
+  /** Tarea 3 · H8 — la ecuación cubierto + copago + rechazado = facturado. */
+  it('withdraws a publication whose three amounts do not add up to the billed total', () => {
+    const original = patientSettlementFixture('order', 'PARTIALLY_APPROVED');
+    const result = normalizePatientSettlement({
+      ...original,
+      insuranceSettlement: {
+        ...original.insuranceSettlement!,
+        totalBilledAmount: '300.00',
+        totalApprovedAmount: '150.00',
+        totalPatientAmount: '150.00',
+        totalDeniedAmount: '120.00',
+      },
+    });
+    expect(result).toEqual({
+      insuranceSettlementAvailability: 'UNDER_REVIEW',
+      insuranceSettlement: null,
+    });
+  });
+
+  it('accepts a publication whose three amounts reconcile exactly with the billed total', () => {
+    const original = patientSettlementFixture('order', 'PARTIALLY_APPROVED');
+    const settlement = {
+      ...original.insuranceSettlement!,
+      totalBilledAmount: '300.00',
+      totalApprovedAmount: '150.00',
+      totalPatientAmount: '30.00',
+      totalDeniedAmount: '120.00',
+      exclusions: [
+        {
+          ...original.insuranceSettlement!.exclusions[0]!,
+          amount: '120.00',
+        },
+      ],
+    };
+    const result = normalizePatientSettlement({
+      insuranceSettlementAvailability: 'AVAILABLE',
+      insuranceSettlement: settlement,
+    });
+    expect(result.insuranceSettlementAvailability).toBe('AVAILABLE');
+    expect(result.insuranceSettlement).toEqual(settlement);
+  });
+
   it('preserves exact decimal strings through the pharmacy adapter and excludes staff', () => {
     const publication = patientSettlementFixture('order', 'APPROVED', '9007199254740993.12');
     const dto = { ...pharmacyOrderDtoFixture(), ...publication };

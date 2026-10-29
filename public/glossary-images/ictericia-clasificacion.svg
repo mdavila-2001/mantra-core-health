@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Los tres niveles de la ictericia: antes, dentro y después del hígado</title>
+  <desc id="d">Cuadro comparativo de la ictericia prehepática, hepatocelular y poshepática u obstructiva. Para cada una indica qué falla, ejemplos, qué fracción de bilirrubina predomina, y el aspecto habitual de la orina y de las heces.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --yel:#c99a00; --yel-l:#fbefc2; --blue:#2f6fb5; --blue-l:#dbe9f7; --grn:#1f8a5b; --grn-l:#d8f0e4; --red:#c0392b; --red-l:#f8dcd8; --brn:#8a5a2b; --brn-l:#efdcc6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --yel:#e0b93a; --yel-l:#4a4224; --blue:#6aa6e6; --blue-l:#22384f; --grn:#4cc38a; --grn-l:#1f3d31; --red:#ef7467; --red-l:#4a2723; --brn:#c99a66; --brn-l:#3d3125; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 13px; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .rl { font-size: 12px; font-weight: 700; fill: var(--muted); }
+    .s { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="30" text-anchor="middle" class="title">Ictericia: ¿en qué nivel está el problema?</text>
+
+  <!-- cabeceras -->
+  <rect x="104" y="46" width="214" height="52" rx="10" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <text x="211" y="68" text-anchor="middle" class="h">Prehepática</text>
+  <text x="211" y="87" text-anchor="middle" class="s muted">antes del hígado</text>
+  <rect x="293" y="46" width="214" height="52" rx="10" fill="var(--grn-l)" stroke="var(--grn)" stroke-width="2" transform="translate(32 0)"/>
+  <text x="432" y="68" text-anchor="middle" class="h">Hepatocelular</text>
+  <text x="432" y="87" text-anchor="middle" class="s muted">dentro del hígado</text>
+  <rect x="560" y="46" width="226" height="52" rx="10" fill="var(--brn-l)" stroke="var(--brn)" stroke-width="2"/>
+  <text x="673" y="68" text-anchor="middle" class="h">Poshepática (colestásica)</text>
+  <text x="673" y="87" text-anchor="middle" class="s muted">después del hígado</text>
+
+  <!-- fondo de filas -->
+  <g fill="var(--panel)" stroke="var(--line)">
+    <rect x="14" y="108" width="772" height="62" rx="8"/>
+    <rect x="14" y="178" width="772" height="62" rx="8"/>
+    <rect x="14" y="248" width="772" height="62" rx="8"/>
+    <rect x="14" y="318" width="772" height="62" rx="8"/>
+    <rect x="14" y="388" width="772" height="62" rx="8"/>
+  </g>
+  <text x="26" y="134" class="rl">QUÉ FALLA</text>
+  <text x="26" y="204" class="rl">EJEMPLOS</text>
+  <text x="26" y="274" class="rl">BILIRRUBINA</text>
+  <text x="26" y="344" class="rl">ORINA</text>
+  <text x="26" y="414" class="rl">HECES</text>
+
+  <!-- col 1 -->
+  <g class="s" text-anchor="middle">
+    <text x="211" y="135">Se produce más bilirrubina</text><text x="211" y="153">de la que el hígado procesa</text>
+    <text x="211" y="205">Hemólisis, reabsorción de</text><text x="211" y="223">grandes hematomas</text>
+    <text x="211" y="275">Predomina la no conjugada</text><text x="211" y="293">(indirecta)</text>
+    <text x="211" y="345">Color normal: la no conjugada</text><text x="211" y="363">no pasa al riñón</text>
+    <text x="211" y="415">Color normal o algo más oscuro</text>
+  </g>
+  <!-- col 2 -->
+  <g class="s" text-anchor="middle">
+    <text x="432" y="135">La célula hepática captura o</text><text x="432" y="153">conjuga o excreta peor</text>
+    <text x="432" y="205">Hepatitis virales o por fármacos,</text><text x="432" y="223">alcohol, cirrosis</text>
+    <text x="432" y="275">Suben ambas fracciones,</text><text x="432" y="293">con proporción variable</text>
+    <text x="432" y="345">Suele oscurecerse</text><text x="432" y="363">(por la conjugada)</text>
+    <text x="432" y="415">Normales o algo más claras</text>
+  </g>
+  <!-- col 3 -->
+  <g class="s" text-anchor="middle">
+    <text x="673" y="135">La bilis no llega al intestino:</text><text x="673" y="153">obstrucción o colestasis</text>
+    <text x="673" y="205">Cálculo en el colédoco, tumor de</text><text x="673" y="223">páncreas o vía biliar, colangitis</text>
+    <text x="673" y="275">Predomina la conjugada</text><text x="673" y="293">(directa)</text>
+    <text x="673" y="345">Oscura, color té o cola</text>
+    <text x="673" y="415">Pálidas o grisáceas (acolia);</text><text x="673" y="433">prurito frecuente</text>
+  </g>
+  <text x="400" y="470" text-anchor="middle" class="s muted">Esquema orientativo; los patrones se solapan. Ilustración original de AloVida.</text>
+</svg>

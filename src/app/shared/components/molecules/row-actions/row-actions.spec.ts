@@ -11,8 +11,8 @@ const DOS: readonly RowAction[] = [
 
 const CINCO: readonly RowAction[] = [
   { code: 'ver', label: 'Ver detalle', icon: 'note' },
-  { code: 'aceptar', label: 'Aceptar' },
-  { code: 'iniciar', label: 'Iniciar', disabled: true },
+  { code: 'aceptar', label: 'Aceptar', icon: 'check' },
+  { code: 'iniciar', label: 'Iniciar', icon: 'stethoscope', disabled: true },
   { code: 'reprogramar', label: 'Reprogramar', icon: 'calendar' },
   { code: 'anular', label: 'Anular', icon: 'remove', destructive: true },
 ];
@@ -23,6 +23,7 @@ const CINCO: readonly RowAction[] = [
     <app-row-actions
       [actions]="acciones()"
       [fila]="fila()"
+      [inline]="inline()"
       (actionSelected)="elegidos.push($event)"
     />
   `,
@@ -30,6 +31,7 @@ const CINCO: readonly RowAction[] = [
 class HostComponent {
   readonly acciones = signal<readonly RowAction[]>(CINCO);
   readonly fila = signal('la solicitud de Ana Pérez');
+  readonly inline = signal(false);
   readonly elegidos: string[] = [];
 }
 
@@ -103,6 +105,13 @@ describe('RowActions', () => {
     await abrir();
     for (const item of items()) {
       expect(item.textContent?.trim()).not.toBe('');
+    }
+  });
+
+  it('ninguna opción del desplegable queda sin su ícono', async () => {
+    await abrir();
+    for (const item of items()) {
+      expect(item.querySelector('app-nav-icon svg')).not.toBeNull();
     }
   });
 
@@ -190,5 +199,19 @@ describe('RowActions', () => {
       .map((i) => i.dataset['action']);
 
     expect(destructivas).toEqual(['anular']);
+  });
+
+  it('con `inline` dibuja las cinco en la fila y ningún desplegable (dentro de un modal el menú quedaría inerte)', () => {
+    host.inline.set(true);
+    fixture.detectChanges();
+
+    expect(root().querySelector('[data-testid="row-actions-trigger"]')).toBeNull();
+    expect(botonesEnFila().map((boton) => boton.textContent?.trim())).toEqual([
+      'Ver detalle',
+      'Aceptar',
+      'Iniciar',
+      'Reprogramar',
+      'Anular',
+    ]);
   });
 });

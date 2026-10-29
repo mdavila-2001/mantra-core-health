@@ -16,7 +16,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   objetoJson,
@@ -68,13 +68,13 @@ export class ProvisioningRuleForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Qué se configura',
       hint: 'El proveedor y el alcance de la regla.',
       campos: [
         { key: 'providerId', label: 'Identificador del proveedor', hint: UUID_HINT, control: 'text', required: true, mensajeDeError: UUID_ERROR },
-        { key: 'tenantId', label: 'Organización a la que aplica', hint: 'Opcional: vacía, la regla aplica a todas. Pegá el identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
+        { key: 'tenantId', label: 'Organización a la que aplica', hint: 'Opcional: vacía, la regla aplica a todas. Pegue el identificador (UUID).', control: 'text', mensajeDeError: UUID_ERROR },
       ],
     },
     {
@@ -132,7 +132,7 @@ export class ProvisioningRuleForm {
   protected readonly created = signal<CreatedProvisioningRule | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para configurar proveedores de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para configurar proveedores de identidad.'),
   );
 
   protected submit(): void {

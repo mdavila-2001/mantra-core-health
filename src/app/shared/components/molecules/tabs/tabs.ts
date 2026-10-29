@@ -17,6 +17,7 @@ import {
   viewChildren,
 } from '@angular/core';
 
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tab } from './tab/tab';
 import {
   TABS_PARENT,
@@ -42,6 +43,7 @@ import {
  */
 @Component({
   selector: 'app-tabs',
+  imports: [NavIcon],
   templateUrl: './tabs.html',
   styleUrl: './tabs.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -197,7 +199,14 @@ export class Tabs implements TabsHost {
     // señales, y eso no debe rastrearse.
     this.rotulos();
     this.appearance();
-    untracked(() => this.medirDesborde());
+    this.desborda();
+    const indiceActivo = this.activeIndex();
+    untracked(() => {
+      this.medirDesborde();
+      // Una URL puede seleccionar una pestaña que está fuera de la franja
+      // visible (por ejemplo la octava en móvil); su rótulo debe quedar entero.
+      this.traerALaVista(indiceActivo);
+    });
   });
 
   constructor() {
@@ -218,13 +227,24 @@ export class Tabs implements TabsHost {
     const destruccion = inject(DestroyRef);
     afterNextRender(() => {
       const tira = this.tablist()?.nativeElement;
-      if (tira === undefined || typeof ResizeObserver === 'undefined') {
+      if (tira === undefined) {
+        return;
+      }
+      // La selección puede venir resuelta desde la URL antes de que exista el
+      // DOM de la tira; al primer render se asegura que el rótulo activo entre.
+      this.traerALaVista(this.activeIndex());
+      if (typeof ResizeObserver === 'undefined') {
         return;
       }
       const observador = new ResizeObserver(() => this.medirDesborde());
       observador.observe(tira);
       destruccion.onDestroy(() => observador.disconnect());
     });
+  }
+
+  /** «Todas (4)»: palabra + contador. Se queda en una línea (si no cabe, la tira se desplaza). */
+  protected esContado(rotulo: string): boolean {
+    return /^\S+ \(\d+\)$/.test(rotulo);
   }
 
   protected medirDesborde(): void {
@@ -255,6 +275,21 @@ export class Tabs implements TabsHost {
   /** Trae una pestaña a la vista sin mover el resto de la página. */
   private traerALaVista(index: number): void {
     const boton = this.tabButtons()[index]?.nativeElement;
-    boton?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+    const tira = this.tablist()?.nativeElement;
+    if (boton === undefined || tira === undefined) {
+      return;
+    }
+
+    const visible = tira.getBoundingClientRect();
+    const pestaña = boton.getBoundingClientRect();
+    const desplazamiento =
+      pestaña.left < visible.left
+        ? pestaña.left - visible.left
+        : pestaña.right > visible.right
+          ? pestaña.right - visible.right
+          : 0;
+    if (desplazamiento !== 0) {
+      tira.scrollBy?.({ left: desplazamiento, behavior: 'smooth' });
+    }
   }
 }

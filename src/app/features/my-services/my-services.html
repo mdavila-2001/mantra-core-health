@@ -1,8 +1,29 @@
 <app-page-header
   title="Mis servicios"
-  subtitle="Lo que ofrece tu práctica y su precio de referencia. Al armar el presupuesto podés cotizar otro."
+  subtitle="Lo que ofrece su práctica y su precio de referencia. Al armar el presupuesto puede cotizar otro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="my-services-import"
+    routerLink="/my-services/import"
+  >
+    Importar producto
+  </a>
+  <button
+    app-button
+    page-actions
+    type="button"
+    variant="secondary"
+    data-testid="my-services-add"
+    [disabled]="practicaElegida() === null"
+    (clicked)="agregando.set(true)"
+  >
+    Agregar servicio adicional
+  </button>
+</app-page-header>
 
 <div class="mis-servicios">
   @if (hayQueElegirPractica()) {
@@ -11,7 +32,7 @@
         [value]="practicaElegida()"
         (valueChange)="cambiarPractica($event)"
         [options]="opcionesDePractica()"
-        placeholder="Elegí una práctica"
+        placeholder="Elija una práctica"
         data-testid="my-services-practice"
       />
     </app-form-field>
@@ -39,7 +60,7 @@
     <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
          servicios hay antes de leer el primero.
 
-         La rejilla y la tarjeta salen de `rejilla-de-tarjetas.css`, la misma
+         La rejilla y la tarjeta salen de `card-grid.css`, la misma
          hoja que pinta las portadas de los directorios: el ícono que encabeza,
          el nombre y el renglón de dato son la anatomía compartida, y lo único
          propio de esta pantalla es lo que va debajo —el precio y su edición—. -->
@@ -66,6 +87,25 @@
             </div>
 
             <p class="rejilla__dato">{{ servicio.code }}</p>
+
+            <!-- Cuánto dura lo declara cada profesional, no el catálogo: el mismo
+                 servicio lo hacen dos médicos con tiempos distintos. Sin
+                 declarar, se dice —un servicio sin duración no se puede reservar—. -->
+            @if (ofertaDe(servicio); as oferta) {
+              <p class="rejilla__dato" data-testid="my-services-duration">
+                Dura {{ duracionDe(oferta) }}
+                @if (!oferta.isPatientBookable) {
+                  · el paciente no lo pide solo
+                }
+              </p>
+            } @else {
+              <p
+                class="rejilla__dato tarjeta-servicio__pendiente"
+                data-testid="my-services-duration-missing"
+              >
+                Todavía no declaró cuánto dura
+              </p>
+            }
 
             @if (enEdicion() === servicio.id) {
               <!-- El campo reemplaza al importe en su mismo lugar: la tarjeta no
@@ -120,7 +160,7 @@
                   @if (sinPrecio(servicio)) {
                     <!-- Un «0.00» se lee como que la consulta no se cobra. Lo
                          que pasa de verdad es que nadie declaró el arancel. -->
-                    <span class="tarjeta-servicio__pendiente">Definí el precio</span>
+                    <span class="tarjeta-servicio__pendiente">Defina el precio</span>
                   } @else {
                     {{ precio(servicio) }}
                   }
@@ -139,19 +179,31 @@
                 >
                   Editar precio
                 </button>
-                <!-- C-12 (2026-09-20) · «que se pueda programar horarios para
-                     Mis Servicios, que bloqueen la agenda de consulta médica
-                     con el motivo OTROS SERVICIOS». -->
                 <button
                   app-button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  data-testid="my-services-schedule"
-                  [attr.aria-label]="'Programar horario: ' + servicio.name"
-                  (clicked)="programarHorario(servicio)"
+                  data-testid="my-services-terms"
+                  [attr.aria-label]="'Términos y condiciones: ' + servicio.name"
+                  (clicked)="terminosDe.set(servicio)"
                 >
-                  Programar horario
+                  Términos
+                </button>
+                <!-- Reemplaza al «Programar horario» (C-12), que sólo bloqueaba la
+                     agenda: acá se declara cuánto dura el servicio y el paciente
+                     puede reservarlo. El horario donde se atiende lo marca cada
+                     franja de «Mis horarios». -->
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="my-services-offer"
+                  [attr.aria-label]="'Cómo ofrezco: ' + servicio.name"
+                  (clicked)="abrirOferta(servicio)"
+                >
+                  {{ ofertaDe(servicio) === undefined ? 'Declarar duración' : 'Cómo lo ofrezco' }}
                 </button>
               </div>
             }
@@ -179,96 +231,142 @@
 </div>
 
 
-<!-- ─── Programar el horario de un servicio (C-12) ──────────────────────────
-     El rato se elige MIRANDO el horario real: el modal monta
-     `app-schedule-grid`, el mismo organismo que dibuja «Mis horarios de
-     atención» en `/schedule?vista=agenda`, con las reglas publicadas y los
-     bloqueos ya creados. «Reciclar sus vistas» es esto, y no una grilla nueva
-     que se vería parecida y se desfasaría a la primera diferencia.
-
-     El rato se guarda como una excepción de disponibilidad sobre la agenda del
-     profesional —el mismo mecanismo con que se bloquea un día—, que es lo que
-     produce el bloqueo que el pedido exige. -->
-@if (programando(); as servicio) {
+<!-- ─── Cómo ofrezco un servicio (v4.2.40) ──────────────────────────────────
+     Mínimo y máximo de duración, colchones, y si el paciente puede pedirlo.
+     El tiempo que se RESERVA en la agenda es el máximo: así dos pacientes nunca
+     se pisan, y si la atención termina antes el sobrante se libera solo. -->
+@if (ofreciendo(); as servicio) {
   <app-content-dialog
-    [heading]="'Programar horario · ' + servicio.name"
-    description="El rato queda bloqueado en tu agenda de consulta médica."
+    [heading]="'Cómo ofrezco · ' + servicio.name"
+    description="Los turnos de este servicio duran entre un mínimo y un máximo; en su agenda se reserva el máximo."
     size="lg"
-    (closed)="cerrarProgramacion()"
+    (closed)="cerrarOferta()"
   >
-    @if (sinAgendaPropia()) {
-      <app-alert tone="info" title="Todavía no tenés agenda propia">
-        Para bloquear un rato hace falta una agenda publicada a tu nombre. Publicá tu horario de
-        atención y volvé acá.
-      </app-alert>
-    } @else {
-      <div class="programar-servicio">
-        <!-- La MISMA grilla del horario, con lo que ya está bloqueado. -->
-        <app-schedule-grid
-          [reglas]="reglasDelHorario()"
-          [bloqueos]="bloqueosDeLaSemana()"
-          rango="atencion"
-          nombre="Tu horario de atención"
-          vigencia="Lo que marques abajo se bloquea sobre este horario."
-          data-testid="my-services-schedule-grid"
-        />
-
-        <div class="programar-servicio__campos">
-          <div class="programar-servicio__dia">
-            <span class="programar-servicio__rotulo" id="programar-dia">¿Qué día?</span>
-            <app-segmented-control
-              data-testid="my-services-schedule-day"
-              ariaLabel="¿Qué día se presta el servicio?"
-              [options]="diasDeLaSemana"
-              [value]="diaElegido()"
-              (valueChange)="diaElegido.set($event)"
-            />
-          </div>
-
-          <div class="programar-servicio__rango">
-            <app-form-field label="Desde" [required]="true">
-              <app-input
-                [value]="desdeElegido()"
-                (valueChange)="fijarDesde($event)"
-                placeholder="14:00"
-                testId="my-services-schedule-from"
-              />
-            </app-form-field>
-            <app-form-field label="Hasta" [required]="true">
-              <app-input
-                [value]="hastaElegido()"
-                (valueChange)="fijarHasta($event)"
-                placeholder="16:00"
-                testId="my-services-schedule-to"
-              />
-            </app-form-field>
-          </div>
-        </div>
-
-        <!-- El motivo se dice antes de guardar: es lo que va a leer quien mire
-             la agenda, y lo que el paciente ve como rato no disponible. -->
-        <p class="programar-servicio__motivo" data-testid="my-services-schedule-reason">
-          En tu agenda va a aparecer como <strong>«Otros servicios · {{ servicio.name }}»</strong>.
-        </p>
-
-        @if (errorDelHorario(); as mensaje) {
-          <app-alert tone="error" title="No se pudo programar">{{ mensaje }}</app-alert>
-        }
+    <div class="oferta-servicio">
+      <div class="oferta-servicio__par">
+        <app-form-field label="Dura como mínimo (min)" [required]="true">
+          <app-input
+            inputMode="numeric"
+            autocomplete="off"
+            placeholder="30"
+            [value]="minimo()"
+            (valueChange)="escribir(minimo, $event)"
+            [disabled]="guardandoOferta()"
+            testId="my-services-offer-min"
+          />
+        </app-form-field>
+        <app-form-field
+          label="Dura como máximo (min)"
+          [required]="true"
+          hint="Es lo que se reserva en su agenda."
+        >
+          <app-input
+            inputMode="numeric"
+            autocomplete="off"
+            placeholder="45"
+            [value]="maximo()"
+            (valueChange)="escribir(maximo, $event)"
+            [disabled]="guardandoOferta()"
+            testId="my-services-offer-max"
+          />
+        </app-form-field>
       </div>
-    }
 
-    @if (!sinAgendaPropia()) {
-      <button
-        dialog-actions
-        app-button
-        type="button"
-        variant="primary"
-        data-testid="my-services-schedule-save"
-        [isLoading]="guardandoHorario()"
-        (clicked)="guardarHorarioDelServicio()"
-      >
-        Bloquear ese rato
-      </button>
-    }
+      <div class="oferta-servicio__par">
+        <app-form-field label="Preparación antes (min)" hint="Opcional. El paciente no la ve.">
+          <app-input
+            inputMode="numeric"
+            autocomplete="off"
+            placeholder="0"
+            [value]="preparacion()"
+            (valueChange)="escribir(preparacion, $event)"
+            [disabled]="guardandoOferta()"
+            testId="my-services-offer-prep"
+          />
+        </app-form-field>
+        <app-form-field label="Limpieza después (min)" hint="Opcional. Nadie más puede ocuparla.">
+          <app-input
+            inputMode="numeric"
+            autocomplete="off"
+            placeholder="0"
+            [value]="limpieza()"
+            (valueChange)="escribir(limpieza, $event)"
+            [disabled]="guardandoOferta()"
+            testId="my-services-offer-cleanup"
+          />
+        </app-form-field>
+      </div>
+
+      <app-form-field label="¿Cómo se atiende?">
+        <app-select
+          [options]="modalidades"
+          [value]="modalidad()"
+          (valueChange)="fijarModalidad($event)"
+          [disabled]="guardandoOferta()"
+          data-testid="my-services-offer-channel"
+        />
+      </app-form-field>
+
+      <div class="oferta-servicio__interruptores">
+        <app-switch
+          label="Los pacientes pueden pedirlo desde el portal"
+          [checked]="reservable()"
+          (checkedChange)="reservable.set($event)"
+          [disabled]="guardandoOferta()"
+          data-testid="my-services-offer-bookable"
+        />
+        <app-switch
+          label="Cada pedido necesita mi aprobación"
+          [checked]="requiereAprobacion()"
+          (checkedChange)="requiereAprobacion.set($event)"
+          [disabled]="guardandoOferta()"
+          data-testid="my-services-offer-approval"
+        />
+      </div>
+
+      <!-- Dónde se atiende no se configura acá: lo marca cada franja de «Mis
+           horarios» (consultas, servicios o ambos). Decirlo evita buscar el
+           control donde no está. -->
+      <p class="oferta-servicio__nota">
+        El horario donde se atiende lo elige en «Mis horarios»: cada franja admite consultas,
+        servicios o ambos.
+      </p>
+
+      @if (errorDeLaOferta(); as mensaje) {
+        <app-alert tone="error" title="No se pudo guardar" data-testid="my-services-offer-error">
+          {{ mensaje }}
+        </app-alert>
+      }
+    </div>
+
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      variant="primary"
+      data-testid="my-services-offer-save"
+      [isLoading]="guardandoOferta()"
+      (clicked)="guardarOferta()"
+    >
+      Guardar
+    </button>
   </app-content-dialog>
+}
+
+@if (terminosDe(); as servicio) {
+  <app-service-terms
+    [service]="servicio"
+    [priceLabel]="precio(servicio)"
+    (updated)="terminosGuardados($event)"
+    (closed)="terminosDe.set(null)"
+  />
+}
+
+@if (agregando() && practicaElegida(); as practiceId) {
+  <app-service-add
+    [practiceId]="practiceId"
+    (created)="servicioAgregado($event)"
+    (chosen)="servicioElegido($event)"
+    (closed)="agregando.set(false)"
+  />
 }

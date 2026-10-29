@@ -1,0 +1,91 @@
+.recetas {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Una sola tarjeta, centrada y a lo ancho (regla §6 del CLAUDE.md del front). */
+.recetas__tarjeta {
+  width: 100%;
+}
+
+.recetas__lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Mobile-first: la tarjeta apilada. Desde tableta, el CTA va a la derecha de
+   los medicamentos en vez de debajo. */
+.receta {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-raised);
+}
+
+@media (min-width: 780px) {
+  .receta {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: var(--sp-4);
+  }
+
+  .receta__cabecera,
+  .receta__cuantos,
+  .receta__medicamentos {
+    grid-column: 1 / 2;
+  }
+
+  .receta__cta {
+    grid-row: 1 / 4;
+    grid-column: 2 / 3;
+    align-self: center;
+  }
+}
+
+.receta__cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+
+.receta__cuando {
+  margin: 0;
+  font-weight: 600;
+}
+
+.receta__cuantos {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.receta__medicamentos {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.medicamento {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: baseline;
+}
+
+.medicamento__indicacion {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.recetas__sin-perfil {
+  margin: 0;
+  color: var(--text-secondary);
+}

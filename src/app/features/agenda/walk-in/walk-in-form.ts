@@ -338,7 +338,7 @@ export class WalkInForm {
       this.ultimaBusqueda.set(this.nuevoDocumento().trim());
       this.paso.set('buscando');
       this.error.set(
-        'Ese documento ya está registrado. Buscalo por su cédula acá arriba y agendale el turno.',
+        'Ese documento ya está registrado. Búsquelo por su cédula acá arriba y agéndele el turno.',
       );
       return;
     }
@@ -357,7 +357,7 @@ export class WalkInForm {
  * mismo defecto que ya se corrigió en `appointment-new`.
  */
 function mensajeDeError(estado: ViewState<never>): string {
-  const generico = 'No pudimos registrar el ingreso. Probá de nuevo.';
+  const generico = 'No pudimos registrar el ingreso. Pruebe de nuevo.';
   if (estado.status === 'validation') {
     return estado.issues[0]?.message ?? generico;
   }

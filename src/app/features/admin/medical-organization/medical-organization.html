@@ -3,7 +3,7 @@
 @let estado = consola();
 
 <app-page-header
-  [title]="ficha?.name ?? 'Organización médica'"
+  [title]="ficha?.name ?? 'Mis organizaciones'"
   subtitle="Sedes, áreas, infraestructura, servicios, plantilla, legajo e inventario de la organización."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -11,18 +11,18 @@
 <!-- El selector sólo aparece con más de una organización: ofrecer una lista de
      un elemento es ruido, y el caso mayoritario es tener una sola. -->
 @if (listado.status === 'ready' && listado.data.length > 1) {
-  <section class="organizacion-medica__selector">
-    <label for="practica-elegida">Organización</label>
-    <select
-      id="practica-elegida"
+  <!-- El MISMO campo que «Unidad» en el laboratorio: `app-form-field` +
+       `app-select`, que elige en el modal de la casa. Era un `<select>` del
+       navegador, con su propio alto y su lista del sistema operativo. -->
+  <app-form-field label="Organización">
+    <app-select
       [value]="practicaElegida()"
-      (change)="elegirPractica($any($event.target).value)"
-    >
-      @for (practica of listado.data; track practica.id) {
-        <option [value]="practica.id">{{ practica.name }} ({{ practica.code }})</option>
-      }
-    </select>
-  </section>
+      (valueChange)="elegirPractica($event ?? '')"
+      [options]="opcionesDePractica()"
+      placeholder="Elija una organización"
+      data-testid="practica-elegida"
+    />
+  </app-form-field>
 }
 
 <!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
@@ -102,7 +102,7 @@
   }
   @case ('forbidden') {
     <section class="organizacion-medica__ambito organizacion-medica__ambito--error" role="alert">
-      <p>{{ estado.message ?? 'No administrás esta organización.' }}</p>
+      <p>{{ estado.message ?? 'No administra esta organización.' }}</p>
     </section>
   }
   @case ('not-found') {
@@ -122,7 +122,10 @@
   }
   @default {
     <section class="organizacion-medica__ambito" aria-busy="true">
-      <p class="organizacion-medica__cargando">Cargando la organización…</p>
+      <app-loading-state
+        class="organizacion-medica__cargando"
+        message="Cargando la organización…"
+      />
     </section>
   }
 }
@@ -205,12 +208,12 @@
        dibuja su membrete ni la explicación larga. -->
   <app-tab label="Mis vinculaciones">
     <!-- Sólo cuando la pestaña está abierta. `app-tab` proyecta su contenido
-         aunque el panel no se vea, así que sin esto `MyOrganizations` se
+         aunque el panel no se vea, así que sin esto `MembershipsTab` se
          instanciaba siempre y pedía `/practices` **por segunda vez** —una el
          panel para su selector de organización y otra la pestaña para el
          suyo—. Lo detectó su propia prueba: «found 2 requests». -->
     @if (pestana() === pestanaDeVinculaciones) {
-      <app-my-organizations [embedded]="true" />
+      <app-memberships-tab />
     }
   </app-tab>
 </app-tabs>
@@ -331,7 +334,7 @@
 
 <ng-template #celdaCondicionesServicio let-servicio>
   @if (servicio.appointmentRequired) {
-    <span>Con turno previo</span>
+    <span>Con cita previa</span>
   }
   @if (servicio.referralRequired) {
     <span class="organizacion-medica__secundario">Requiere derivación</span>

@@ -1,3 +1,4 @@
+import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
@@ -9,6 +10,7 @@ import type {
   PractitionerRequest,
   TenantAgendaItem,
 } from '../../core/data-access/directory/directory.types';
+import { describeApiFailure, fieldErrorsOf } from '../../core/http/api-failure';
 import { errorToViewState } from '../../core/http/error-to-view-state';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
@@ -23,6 +25,21 @@ import { ToastService } from '../../shared/components/molecules/toast/toast.serv
 import { FormActions } from '../../shared/components/organisms/form-actions/form-actions';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { InsurerProfileCard } from '../insurance/insurer-profile-card/insurer-profile-card';
+import { OrganizationLogo } from './organization-logo/organization-logo';
+
+/**
+ * Los campos del `PATCH /tenants/:id` que el formulario ancla debajo de su
+ * control. Un rechazo de otro campo no tiene dónde verse y va en el aviso.
+ */
+const CAMPOS_DEL_FORMULARIO: ReadonlySet<string> = new Set([
+  'legalName',
+  'tradeName',
+  'timeZone',
+  'payer.sigla',
+  'payer.address',
+  'payer.regulatorIdentifier',
+]);
 
 /**
  * El panel de la organización (TP-1).
@@ -72,7 +89,10 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
     FormActions,
     FormField,
     Input,
+    InsurerProfileCard,
+    OrganizationLogo,
     PageHeader,
+    RouterLink,
     ViewStateHost,
   ],
   templateUrl: './organization-panel.html',
@@ -171,6 +191,7 @@ export class OrganizationPanel {
     const org = this.elegida();
     if (!org || this.guardando()) return;
 
+    this.erroresDelServidor.set({});
     this.guardando.set(true);
     this.directory
       .updateOrganization(org.id, {
@@ -193,16 +214,38 @@ export class OrganizationPanel {
       .subscribe({
         next: () => {
           this.guardando.set(false);
-          this.toasts.success('Los datos de tu organización quedaron guardados.');
+          this.toasts.success('Los datos de su organización quedaron guardados.');
           // Se recarga la lista y no sólo la ficha: el nombre que se acaba de
           // cambiar es el que rotula el selector de arriba.
           this.cargar();
         },
-        error: () => {
+        error: (error: unknown) => {
+          // Lo escrito queda en el formulario para corregirlo.
           this.guardando.set(false);
-          this.toasts.error('No se pudieron guardar los datos. Probá de nuevo.');
+          const porCampo = fieldErrorsOf(error);
+          this.erroresDelServidor.set(porCampo);
+          this.toasts.error(
+            Object.keys(porCampo).some((campo) => CAMPOS_DEL_FORMULARIO.has(campo))
+              ? 'Revise los campos marcados y vuelva a guardar.'
+              : describeApiFailure(
+                  error,
+                  Object.values(porCampo).join(' ') || 'No se pudieron guardar los datos. Pruebe de nuevo.',
+                ),
+          );
         },
       });
+  }
+
+  /**
+   * Los rechazos del servidor, por la ruta del contrato (`legalName`,
+   * `payer.sigla`…). Antes cualquier fallo decía «No se pudieron guardar los
+   * datos» y nada más.
+   */
+  private readonly erroresDelServidor = signal<Readonly<Record<string, string>>>({});
+
+  /** El mensaje que el servidor dio para ese campo, o vacío. */
+  protected errorDelServidor(campo: string): string {
+    return this.erroresDelServidor()[campo] ?? '';
   }
 
   private cargar(): void {
@@ -272,7 +315,7 @@ export class OrganizationPanel {
         this.decidiendo.set(null);
         this.toasts.success(
           acepta
-            ? 'El profesional ya forma parte de tu organización.'
+            ? 'El profesional ya forma parte de su organización.'
             : 'La solicitud quedó rechazada.',
         );
         // Se recarga la bandeja en vez de sacar la fila a mano: si alguien más
@@ -280,9 +323,11 @@ export class OrganizationPanel {
         // pantalla mostrando algo que ya no está.
         this.cargarSolicitudes(org.id);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.decidiendo.set(null);
-        this.toasts.error('No se pudo registrar la decisión. Probá de nuevo.');
+        this.toasts.error(
+          describeApiFailure(error, 'No se pudo registrar la decisión. Pruebe de nuevo.'),
+        );
       },
     });
   }
@@ -389,6 +434,8 @@ export class OrganizationPanel {
    * lo que la persona acaba de teclear.
    */
   private sembrarFormulario(org: MyOrganization): void {
+    // Los rechazos eran de lo escrito para la organización anterior.
+    this.erroresDelServidor.set({});
     this.razonSocial.set(org.legalName);
     this.nombreComercial.set(org.tradeName ?? '');
     this.zonaHoraria.set(org.timeZone ?? '');

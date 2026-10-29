@@ -16,6 +16,9 @@ import { entrar, estable, irA } from './support/sesion';
 /**
  * ALV-054 — «Eliminar accesos muertos del panel».
  *
+ * Desde el 28/10/2026 el panel ya no tiene árbol de accesos: se recorre el
+ * menú lateral, que es la puerta que quedó.
+ *
  * La auditoría del registro de navegación contra el árbol de rutas no encontró
  * ningún acceso muerto: cada sección ofrecida resuelve a una pantalla real, y
  * la única todavía sin construir se pinta **sin enlace** y con su sello. Las
@@ -90,97 +93,45 @@ const LOADING = 'app-skeleton, [aria-busy="true"]';
  */
 const LOADING_TIMEOUT_MS = 10_000;
 
-/** Un acceso ofrecido por el panel, con de dónde salió. */
+/** Un acceso ofrecido por el menú lateral, con su rótulo. */
 interface PanelAccess {
   readonly route: string;
   readonly label: string;
   readonly zone: string;
 }
 
-/** Los identificadores de las zonas de la primera pantalla del árbol. */
-async function zoneIds(page: Page): Promise<string[]> {
-  const ids = await page
-    .getByTestId('panel-zona')
-    .evaluateAll((nodes) => nodes.map((node) => (node as HTMLElement).dataset['zona'] ?? ''));
-
-  return ids.filter((id) => id !== '');
-}
-
-/** Abre una zona y espera a que aparezca el camino de vuelta. */
-async function openZone(page: Page, id: string): Promise<void> {
-  await page.locator(`[data-zona="${id}"]`).click();
-  await page.getByTestId('panel-zona-volver').waitFor();
-}
-
-/** Vuelve a la primera pantalla del árbol. */
-async function backToZones(page: Page): Promise<void> {
-  await page.getByTestId('panel-zona-volver').click();
-  await page.getByTestId('panel-zona').first().waitFor();
-}
-
 /**
- * Recorre el árbol entero y devuelve lo que ofrece, zona por zona.
+ * Lee los destinos que el menú lateral ofrece.
  *
- * De paso comprueba, dentro de cada zona, las dos mitades de la regla:
+ * Hasta el 28/10/2026 esto recorría el árbol «Sus herramientas» del panel,
+ * zona por zona. El propietario mandó retirar ese árbol, y la pregunta de esta
+ * suite —¿todo lo ofrecido abre una pantalla?— pasa a hacerse sobre el menú,
+ * que es ahora la puerta de las secciones. Los enlaces de los desplegables
+ * plegados están en el DOM igual (`<details>` sólo los oculta).
  *
- * - lo **disponible** es un enlace con destino — un acceso sin `href` no lleva
- *   a ninguna parte por más que se dibuje;
- * - lo **planificado** no es enlace ni lo aparenta, y lo dice con palabras.
- *   Prometer una pantalla que no existe es peor que avisar que falta.
+ * Lo **disponible** tiene que ser un enlace con destino; lo planificado se
+ * dibuja como un renglón deshabilitado sin ancla, y por eso no aparece acá.
  */
 async function collectAccesses(page: Page): Promise<PanelAccess[]> {
+  const offered = await page.getByTestId('nav-enlace').evaluateAll((nodes) =>
+    nodes.map((node) => ({
+      route: (node as HTMLElement).dataset['route'] ?? '',
+      label: (node.textContent ?? '').trim(),
+      href: node.getAttribute('href') ?? '',
+      tag: node.tagName.toLowerCase(),
+    })),
+  );
+
   const accesses: PanelAccess[] = [];
+  for (const access of offered) {
+    expect(access.tag, `menú: el acceso «${access.label}» no es un enlace`).toBe('a');
+    expect(
+      access.href,
+      `menú: el acceso «${access.label}» no lleva a ninguna parte (href vacío)`,
+    ).not.toBe('');
+    expect(access.route, `menú: el acceso «${access.label}» no declara su ruta`).not.toBe('');
 
-  for (const zone of await zoneIds(page)) {
-    await openZone(page, zone);
-
-    const offered = await page.getByTestId('panel-acceso').evaluateAll((nodes) =>
-      nodes.map((node) => ({
-        route: (node as HTMLElement).dataset['ruta'] ?? '',
-        label: (node.textContent ?? '').trim(),
-        href: node.getAttribute('href') ?? '',
-        tag: node.tagName.toLowerCase(),
-      })),
-    );
-
-    for (const access of offered) {
-      expect(access.tag, `zona «${zone}»: el acceso «${access.label}» no es un enlace`).toBe('a');
-      expect(
-        access.href,
-        `zona «${zone}»: el acceso «${access.label}» no lleva a ninguna parte (href vacío)`,
-      ).not.toBe('');
-      expect(
-        access.route,
-        `zona «${zone}»: el acceso «${access.label}» no declara la ruta a la que va`,
-      ).not.toBe('');
-
-      accesses.push({ route: access.route, label: access.label, zone });
-    }
-
-    const planned = await page.getByTestId('panel-acceso-planificado').evaluateAll((nodes) =>
-      nodes.map((node) => ({
-        label: (node.textContent ?? '').trim(),
-        href: node.getAttribute('href') ?? '',
-        tag: node.tagName.toLowerCase(),
-      })),
-    );
-
-    for (const section of planned) {
-      expect(
-        section.tag,
-        `zona «${zone}»: la sección sin construir «${section.label}» se ofrece como enlace`,
-      ).not.toBe('a');
-      expect(
-        section.href,
-        `zona «${zone}»: la sección sin construir «${section.label}» tiene destino`,
-      ).toBe('');
-      expect(
-        section.label,
-        `zona «${zone}»: la sección sin construir «${section.label}» no avisa que falta`,
-      ).toContain('En construcción');
-    }
-
-    await backToZones(page);
+    accesses.push({ route: access.route, label: access.label, zone: 'menú lateral' });
   }
 
   return accesses;
@@ -210,7 +161,7 @@ async function visitAccess(page: Page, actorFolder: string, access: PanelAccess)
   };
   page.on('response', noteHttpError);
 
-  const where = `«${access.label}» (${access.route}, zona «${access.zone}»)`;
+  const where = `«${access.label}» (${access.route}, ${access.zone})`;
 
   try {
     // Se recuerda qué había antes y se espera a que deje de estar: recién ahí
@@ -292,14 +243,14 @@ async function openPanel(page: Page, actor: Actor): Promise<void> {
   await estable(page);
 }
 
-/** Recorre todo lo que el panel le ofrece a un actor, uno por uno. */
+/** Recorre todo lo que el menú le ofrece a un actor, uno por uno. */
 async function sweep(page: Page, actorFolder: string, accesses: PanelAccess[]): Promise<void> {
   for (const access of accesses) {
     await visitAccess(page, actorFolder, access);
   }
 }
 
-test.describe('ALV-054 · every panel access opens a real screen', () => {
+test.describe('ALV-054 · every menu access opens a real screen', () => {
   test.beforeAll(async () => {
     // Sin backend cada prueba falla por un motivo distinto y ninguno dice la
     // verdad, que es que no hay API. Se dice una vez y en voz alta.
@@ -308,21 +259,20 @@ test.describe('ALV-054 · every panel access opens a real screen', () => {
     await api.dispose();
   });
 
-  test('practitioner: every access of the tree opens a screen', async ({ page }) => {
+  test('practitioner: every menu access opens a screen', async ({ page }) => {
     test.setTimeout(SWEEP_TIMEOUT_MS);
 
     await openPanel(page, doctora());
 
     const accesses = await collectAccesses(page);
-    expect(accesses.length, 'la doctora no vio ni un acceso en el panel').toBeGreaterThan(0);
+    expect(accesses.length, 'la doctora no vio ni un acceso en el menú').toBeGreaterThan(0);
 
     await sweep(page, 'practitioner', accesses);
   });
 
   // Hasta el 23/09/2026 el panel del paciente sumaba su propia grilla de
-  // accesos («Ir a lo tuyo»); se retiró a pedido del doctor (P-03), así que
-  // los accesos del paciente son sólo los del árbol, como en los otros roles.
-  test('patient: every access of the tree opens a screen', async ({ page }) => {
+  // accesos («Ir a lo tuyo»); se retiró a pedido del doctor (P-03).
+  test('patient: every menu access opens a screen', async ({ page }) => {
     test.setTimeout(SWEEP_TIMEOUT_MS);
 
     // El paciente se da de alta en la corrida: las cuentas de paciente de la
@@ -335,18 +285,18 @@ test.describe('ALV-054 · every panel access opens a real screen', () => {
     await openPanel(page, patient);
 
     const accesses = await collectAccesses(page);
-    expect(accesses.length, 'el paciente no vio ni un acceso en el panel').toBeGreaterThan(0);
+    expect(accesses.length, 'el paciente no vio ni un acceso en el menú').toBeGreaterThan(0);
 
     await sweep(page, 'patient', accesses);
   });
 
-  test('administrator: every access of the tree opens a screen', async ({ page }) => {
+  test('administrator: every menu access opens a screen', async ({ page }) => {
     test.setTimeout(SWEEP_TIMEOUT_MS);
 
     await openPanel(page, administrador());
 
     const accesses = await collectAccesses(page);
-    expect(accesses.length, 'quien administra no vio ni un acceso en el panel').toBeGreaterThan(0);
+    expect(accesses.length, 'quien administra no vio ni un acceso en el menú').toBeGreaterThan(0);
 
     await sweep(page, 'administrator', accesses);
   });

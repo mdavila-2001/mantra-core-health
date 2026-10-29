@@ -87,6 +87,17 @@ no: a ellas se llega desde su panel, no desde un favorito.
 existe, que se declaren después de toda pantalla, y que ninguna quede detrás del
 comodín.
 
+### El bloque generado de ALOVIDA (TAREA-29)
+
+Las 126 pantallas que `scripts/port-vistas-alovida.mjs` porta desde la bóveda
+también pasaron a inglés (`/accesos/roles-listado` →
+`/access-control/roles-list`, `/inicio` → `/home`,
+`/buscar/seguidos-y-guardados-listado` → `/search/followed-and-saved-list`…). La
+tabla vieja → nueva vive en `scripts/port-vistas-alovida.rutas.mjs` y sale
+generada en `src/app/features/alovida/alovida-legacy-paths.ts`;
+`design-mockup-gate.ts` las redirige con el query desde `app.routes.ts`. Detalle
+en `docs/design-system/port-alovida.md`.
+
 ### La trampa que la migración destapó
 
 Los nombres en castellano eran seguros **por accidente**: el proxy de la API está

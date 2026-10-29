@@ -11,12 +11,19 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import {
   PharmacyCampaignsClient,
   ahorroDe,
+  alcanceDe,
+  condicionesDe,
+  describirCampana,
+  mecanicaDe,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.client';
 import type {
   CampanaPublica,
   ProductoEnCampana,
 } from '../../../core/data-access/pharmacy-campaigns/pharmacy-campaigns.types';
 import { displayCurrency } from '../../../core/money/display-currency';
+import { describeConditions } from '../../../core/promotions-engine/describe-conditions';
+import { exampleFor } from '../../../core/promotions-engine/describe-example';
+import { hasUnitPrice } from '../../../core/promotions-engine/mechanic-level';
 
 /** Un producto de la campaña con su ahorro ya derivado. */
 interface ProductoVisible {
@@ -80,6 +87,51 @@ export class CampaignDetail {
     const publica = this.resuelta();
     return publica?.tipo === 'vigente' ? publica.campana : null;
   });
+
+  /** La mecánica dicha para quien lee: etiqueta y oración, del motor. */
+  protected readonly mecanica = computed(() => {
+    const campana = this.vigente();
+    return campana === null ? null : describirCampana(campana);
+  });
+
+  /** Las condiciones, una oración cada una. El código del cupón nunca se dice. */
+  protected readonly condiciones = computed<readonly string[]>(() => {
+    const campana = this.vigente();
+    return campana === null
+      ? []
+      : describeConditions(condicionesDe(campana), {
+          currency: displayCurrency(campana.productos[0]?.moneda),
+        });
+  });
+
+  /**
+   * Un caso calculado con las reglas reales: «Llevando 3 unidades, pagás Bs 90
+   * en vez de Bs 135». Sólo donde el precio por unidad no lo dice solo: en las
+   * de precio ya se ven los dos precios de cada producto.
+   */
+  protected readonly ejemplo = computed<string | null>(() => {
+    const campana = this.vigente();
+    const mecanica = campana === null ? null : mecanicaDe(campana);
+    if (campana === null || mecanica === null || hasUnitPrice(mecanica)) {
+      return null;
+    }
+    return exampleFor(
+      mecanica,
+      campana.productos.map((producto) => ({
+        itemId: producto.productId,
+        label: producto.nombre,
+        detail: producto.presentacion,
+        unitPrice: producto.precioNormal,
+        currency: producto.moneda,
+      })),
+      condicionesDe(campana),
+      displayCurrency(campana.productos[0]?.moneda),
+      alcanceDe(campana).allItems,
+    );
+  });
+
+  /** ¿La campaña apunta a productos? Las de total y «toda la farmacia» no. */
+  protected readonly apuntaAProductos = computed(() => (this.vigente()?.productos.length ?? 0) > 0);
 
   protected readonly productos = computed<readonly ProductoVisible[]>(() => {
     const campana = this.vigente();

@@ -5,50 +5,152 @@
        no queda ningún hueco: no hay envoltorio. -->
   <ng-content select="[slot=icon-start]" />
 
-  <!-- La selección se marca en cada `<option>` con `[selected]`, y NO con un
-       `[value]` sobre el `<select>`.
-
-       El motivo es de orden de renderizado: en el primer pase, Angular aplica
-       las propiedades del elemento **antes** de crear los `<option>` del `@for`.
-       Escribir `select.value = "1"` cuando esa opción todavía no existe no hace
-       nada, y el navegador se queda en la primera —el placeholder oculto—. El
-       síntoma es un desplegable que dice «Seleccionar opción» aunque tenga
-       valor, y sólo aparece cuando el control **nace** con selección; con un
-       formulario, que la escribe después, no se veía. Lo encontró el recorrido
-       con usuarios reales, en el selector de recurso de la agenda. -->
-  <select
-    class="native-select"
+  <!-- Un botón y no un `<select>`: la lista nativa la dibuja el sistema
+       operativo, distinta en cada navegador y sin tokens. Abre el mismo
+       `<dialog>` modal que `app-tree-select` y el calendario, para que todo lo
+       que se elige de una lista se elija igual. -->
+  <button
+    #trigger
+    type="button"
+    class="select-trigger"
     [id]="controlId()"
     [disabled]="isDisabled()"
+    role="combobox"
+    aria-haspopup="dialog"
+    [attr.aria-controls]="listId()"
+    [attr.aria-expanded]="isOpen()"
     [attr.aria-label]="accessibleLabel()"
     [attr.aria-invalid]="invalid()"
     [attr.aria-required]="required() || null"
     [attr.aria-describedby]="describedBy()"
-    (change)="handleChange($event)"
+    [attr.data-value-index]="selectedIndex()"
+    (click)="open()"
+    (keydown)="handleTriggerKeydown($event)"
     (focus)="handleFocus($event)"
     (blur)="handleBlur($event)"
   >
-    <!-- `hidden` y no `disabled`: el navegador se niega a seleccionar una
-         opción deshabilitada, así que con `disabled` el placeholder nunca
-         llegaba a mostrarse y el select saltaba a la primera opción real. -->
-    @if (placeholder()) {
-      <option value="" hidden>{{ placeholder() }}</option>
-    }
-    @for (option of options(); track $index) {
-      <option
-        [value]="$index"
-        [selected]="selectedIndex() === $index"
-        [disabled]="option.disabled ?? false"
-      >
-        {{ option.label }}
-      </option>
-    }
-  </select>
+    <span
+      class="select-value"
+      [class.select-value--dos-renglones]="multilineValue()"
+      [class.is-placeholder]="selectedIndex() < 0"
+    >
+      {{ selectedLabel() }}
+    </span>
+  </button>
 
-  <!-- Flecha del spec: la nativa se apaga con `appearance: none` en el CSS -->
   <span class="select-arrow" aria-hidden="true">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="6 9 12 15 18 9" />
     </svg>
   </span>
 </div>
+
+@if (isOpen()) {
+  <!-- `<dialog>` nativo por la misma razón que el calendario: la capa superior
+       del navegador es lo único que no recorta un ancestro con `overflow`. -->
+  <dialog
+    #dialog
+    class="select-dialog"
+    tabindex="-1"
+    aria-modal="true"
+    [attr.aria-label]="dialogTitle()"
+    (click)="handleBackdropClick($event)"
+    (cancel)="$event.preventDefault(); close()"
+    (keydown)="handleDialogKeydown($event)"
+  >
+    <div class="select-panel panel-muelle">
+      <div class="dialog-header">
+        <h3 class="dialog-title">{{ dialogTitle() }}</h3>
+        <button app-button iconOnly variant="ghost" size="sm" (clicked)="close()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      @if (isSearchable()) {
+        <!-- Con buscador, el foco vive acá y la fila señalada viaja por
+             `aria-activedescendant`: escribir y usar las flechas a la vez. -->
+        <div class="search-row">
+          <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </span>
+          <input
+            #search
+            type="text"
+            class="search-input"
+            role="combobox"
+            autocomplete="off"
+            aria-label="Buscar opción"
+            aria-expanded="true"
+            [attr.aria-controls]="listId()"
+            [attr.aria-activedescendant]="activeId()"
+            placeholder="Buscar…"
+            [value]="query()"
+            (input)="handleSearch($event)"
+          />
+        </div>
+        <p class="search-count" aria-live="polite">
+          @if (query().trim()) {
+            {{ visible().length }}
+            @if (visible().length === 1) { resultado } @else { resultados }
+          }
+        </p>
+      }
+
+      @if (visible().length === 0) {
+        <p class="select-empty">
+          {{ options().length === 0 ? 'No hay opciones disponibles.' : 'Ninguna opción coincide con la búsqueda.' }}
+        </p>
+      } @else {
+        <ul
+          #list
+          class="select-list"
+          role="listbox"
+          [id]="listId()"
+          [attr.aria-label]="dialogTitle()"
+          [attr.aria-activedescendant]="searchable() ? null : activeId()"
+          [attr.tabindex]="searchable() ? -1 : 0"
+        >
+          @for (row of visible(); track row.index; let i = $index) {
+            <li
+              class="select-option"
+              role="option"
+              [id]="optionId(i)"
+              [attr.aria-selected]="row.index === selectedIndex()"
+              [attr.aria-disabled]="row.option.disabled || null"
+              [class.is-active]="i === active()"
+              [class.is-chosen]="row.index === selectedIndex()"
+              [class.is-disabled]="row.option.disabled"
+              [attr.data-testid]="'select-opcion-' + row.index"
+              tabindex="-1"
+              (click)="choose(row.index)"
+              (keydown.enter)="choose(row.index)"
+              (mousemove)="active.set(i)"
+            >
+              <span class="option-text">
+                <span class="option-label">{{ row.option.label }}</span>
+                @if (row.option.description) {
+                  <span class="option-description">{{ row.option.description }}</span>
+                }
+              </span>
+              @if (row.index === selectedIndex()) {
+                <svg class="option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              }
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="dialog-actions">
+        <button app-button variant="ghost" size="sm" (clicked)="close()">Cancelar</button>
+      </div>
+    </div>
+  </dialog>
+}

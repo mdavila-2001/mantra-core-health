@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Escalera de dispositivos de oxigenoterapia</title>
+  <desc id="d">Cinco peldaños ascendentes: cánula nasal, mascarilla simple, mascarilla con reservorio, cánula nasal de alto flujo y ventilación mecánica. Se asciende cuando el peldaño anterior no alcanza el objetivo clínico y se desciende al mejorar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --s1:#cfe6f5; --s2:#a9d3ee; --s3:#7fbbe3; --s4:#4f9ad0; --s5:#2f6fa8; --on-dark:#ffffff; --accent:#c0392b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --s1:#2a4256; --s2:#2f5a7c; --s3:#3a74a3; --s4:#4f93c7; --s5:#6fb0e0; --on-dark:#0f1720; --accent:#ef7467; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .name { font-size: 15px; font-weight: 700; }
+    .cap { font-size: 13px; }
+    .foot { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="16" width="768" height="448" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="400" y="52" text-anchor="middle" class="title">Escalera de la oxigenoterapia</text>
+  <text x="400" y="74" text-anchor="middle" class="cap muted">Se sube un peldaño si no se alcanza el objetivo; se baja al mejorar</text>
+
+  <rect x="36" y="330" width="140" height="80" fill="var(--s1)" stroke="var(--line)"/>
+  <text x="106" y="356" text-anchor="middle" class="name">Cánula nasal</text>
+  <text x="106" y="378" text-anchor="middle" class="cap">Bajo flujo</text>
+  <text x="106" y="396" text-anchor="middle" class="cap muted">aporte variable</text>
+
+  <rect x="184" y="290" width="140" height="120" fill="var(--s2)" stroke="var(--line)"/>
+  <text x="254" y="322" text-anchor="middle" class="name">Mascarilla</text>
+  <text x="254" y="341" text-anchor="middle" class="name">simple</text>
+  <text x="254" y="368" text-anchor="middle" class="cap">Bajo flujo</text>
+  <text x="254" y="386" text-anchor="middle" class="cap muted">aporte variable</text>
+
+  <rect x="332" y="240" width="140" height="170" fill="var(--s3)" stroke="var(--line)"/>
+  <text x="402" y="276" text-anchor="middle" class="name">Mascarilla con</text>
+  <text x="402" y="295" text-anchor="middle" class="name">reservorio</text>
+  <text x="402" y="326" text-anchor="middle" class="cap">Mayor aporte</text>
+  <text x="402" y="344" text-anchor="middle" class="cap">en urgencias</text>
+  <text x="402" y="370" text-anchor="middle" class="cap muted">aporte variable</text>
+
+  <rect x="480" y="190" width="140" height="220" fill="var(--s4)" stroke="var(--line)"/>
+  <text x="550" y="230" text-anchor="middle" class="name" style="fill:var(--on-dark)">Cánula nasal</text>
+  <text x="550" y="249" text-anchor="middle" class="name" style="fill:var(--on-dark)">de alto flujo</text>
+  <text x="550" y="282" text-anchor="middle" class="cap" style="fill:var(--on-dark)">Gas calentado</text>
+  <text x="550" y="300" text-anchor="middle" class="cap" style="fill:var(--on-dark)">y humidificado</text>
+  <text x="550" y="326" text-anchor="middle" class="cap" style="fill:var(--on-dark)">aporte estable</text>
+
+  <rect x="628" y="140" width="140" height="270" fill="var(--s5)" stroke="var(--line)"/>
+  <text x="698" y="190" text-anchor="middle" class="name" style="fill:var(--on-dark)">Soporte</text>
+  <text x="698" y="209" text-anchor="middle" class="name" style="fill:var(--on-dark)">ventilatorio</text>
+  <text x="698" y="244" text-anchor="middle" class="cap" style="fill:var(--on-dark)">CPAP, ventilación</text>
+  <text x="698" y="262" text-anchor="middle" class="cap" style="fill:var(--on-dark)">no invasiva e</text>
+  <text x="698" y="280" text-anchor="middle" class="cap" style="fill:var(--on-dark)">invasiva</text>
+  <text x="698" y="312" text-anchor="middle" class="cap" style="fill:var(--on-dark)">ayuda a mover</text>
+  <text x="698" y="330" text-anchor="middle" class="cap" style="fill:var(--on-dark)">el aire</text>
+
+  <path d="M40 430 H760" stroke="var(--accent)" stroke-width="3" fill="none"/>
+  <path d="M760 430 l-12 -7 v14z" fill="var(--accent)"/>
+  <text x="400" y="452" text-anchor="middle" class="foot muted">Mayor intensidad de soporte. Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

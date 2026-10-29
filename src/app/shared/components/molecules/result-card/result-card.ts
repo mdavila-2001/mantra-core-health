@@ -1,47 +1,39 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
-import type { SearchResultItem } from '../search-result/search-result.types';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type {
+  SearchResultAction,
+  SearchResultItem,
+  SearchResultRating,
+} from '../search-result/search-result.types';
+import { cleanDisplayName } from '../../../utils/clean-display-name';
+import { ratingOf } from './rating-of';
 
 /**
- * Un resultado de directorio **en tarjeta de grilla**.
+ * Un resultado de directorio **en tarjeta de grilla o lista**.
  *
- * Es el hermano vertical de {@link SearchResult}: mismo dato de entrada
- * —`SearchResultItem`—, distinta forma. La fila se lee de corrido y sirve para
- * una lista larga que se recorre; la tarjeta se hojea de un vistazo y sirve
- * para una grilla que se compara. El cliente pidió lo segundo para los cuatro
- * directorios (A1 del plan de UX del 22/08/2026): «Grilla de directorio de lab
- * … y todos los anteriores».
- *
- * ## Por qué es un componente hermano y no una variante de `search-result`
- *
- * Porque `search-result` **no tiene CSS propio a propósito**: su diseño vive en
- * `src/styles/alovida.css` §25, que es una copia del CSS de la bóveda y se
- * vuelve a copiar entera cuando diseño corrige algo. Una variante de grilla
- * escrita ahí desaparecería en silencio en la primera recopia — y una que
- * viviera en el componente rompería la regla que ese archivo declara.
- *
- * Así que la grilla nace con estilos **encapsulados** en su propio componente,
- * que es lo que la hace sobrevivir a la próxima copia. Lo que sí se comparte
- * es lo único que importaba compartir: **el tipo de dato**. Los mappers de las
- * cuatro pantallas ya producen `SearchResultItem` y no se toca ninguno.
- *
- * ## Lo que proyecta
- *
- * El pie de la tarjeta (`<ng-content>`): ahí va el botón que cada directorio
- * necesite —«Pedir turno», «Ver oferta», «Cómo llegar»— por la misma razón por
- * la que la fila proyecta su tercera columna. Sin contenido proyectado, el pie
- * no se dibuja.
+ * Muestra el perfil profesional, centro o entidad con fotografía,
+ * nombre higienizado, calificación de pacientes cuando existe, especialidad,
+ * ubicación y acciones directas.
  */
 @Component({
   selector: 'li[app-result-card]',
-  imports: [AppButtonLink],
+  imports: [AppButtonLink, NavIcon],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
-  host: { class: 'tarjeta-resultado' },
+  host: { class: 'tarjeta-resultado', '[class.tarjeta-resultado--lista]': "vista() === 'lista'" },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ResultCard {
@@ -52,28 +44,95 @@ export class ResultCard {
 
   /**
    * Bloquea activaciones repetidas mientras el router resuelve el destino.
-   *
-   * Es opt-in porque esta molécula también pinta resultados que no representan
-   * una navegación costosa. El directorio de médicos la habilita; sus demás
-   * consumidores conservan exactamente su interacción anterior.
    */
   readonly preventDuplicateNavigation = input(false);
+
+  /**
+   * Cómo se dibuja: `grilla` (tarjeta vertical) o `lista` (fila horizontal).
+   */
+  readonly vista = input<'grilla' | 'lista'>('grilla');
 
   /** El enlace de esta tarjeta ya inició una navegación. */
   protected readonly navegando = signal(false);
 
-  /**
-   * Cuántas líneas de contexto entran antes de recortar.
-   *
-   * En grilla todas las tarjetas comparten alto de fila: una con seis líneas
-   * estira a las cinco vecinas y deja la grilla llena de aire. Dos es lo que
-   * la maqueta muestra, y lo que se recorta sigue estando en la ficha.
-   */
+  /** Cuántas líneas de contexto entran antes de recortar. */
   readonly maximoDeMeta = input(2);
+
+  /** Nombre del resultado sin comas iniciales o puntuación espuria. */
+  protected readonly tituloLimpio = computed(() => {
+    return cleanDisplayName(this.resultado().title);
+  });
+
+  /** La calificación real, o `null`. Ver {@link ratingOf}. */
+  protected readonly calificacion = computed<SearchResultRating | null>(() =>
+    ratingOf(this.resultado()),
+  );
+
+  /**
+   * Cuánto de las cinco estrellas se rellena, en porcentaje: 3,7 de 5 es el
+   * 74 %. Las estrellas parciales son las de cualquier tienda: se leen de un
+   * vistazo sin tener que leer el número.
+   */
+  protected readonly rellenoDeEstrellas = computed(() => {
+    const nota = this.calificacion();
+    return nota === null ? 0 : Math.min(100, Math.max(0, (nota.average / 5) * 100));
+  });
+
+  /**
+   * La distinción, **sólo para las notas que la merecen**. Antes toda nota por
+   * debajo de 4,8 salía «Muy recomendado», también un 3,7 o un 2,0: un elogio
+   * que las reseñas no dicen.
+   */
+  protected readonly distincion = computed(() => {
+    const nota = this.calificacion();
+    if (nota === null) return null;
+    if (nota.label) return nota.label;
+    if (nota.average >= 4.8) return 'Excelente';
+    if (nota.average >= 4.5) return 'Muy recomendado';
+    return null;
+  });
+
+  /** «4,5 de 5 estrellas, 60 opiniones» o «Sin reseñas todavía», para el lector. */
+  protected readonly textoDeResenas = computed(() => {
+    const nota = this.calificacion();
+    if (nota === null) return 'Sin reseñas todavía';
+    const media = nota.average.toFixed(1).replace('.', ',');
+    return `${media} de 5 estrellas, ${nota.count} ${nota.count === 1 ? 'opinión' : 'opiniones'}`;
+  });
+
+  /** Si cuenta con sello de verificación activa. */
+  protected readonly verificado = computed(() => {
+    return (this.resultado().seals ?? []).some(
+      (s) => s.label.toLowerCase().includes('verificad') && s.tone === 'ok',
+    );
+  });
+
+  /** Líneas de contexto excluyendo la puntuación (ahora en componente estrella propio). */
+  protected readonly metaLimpio = computed(() => {
+    return (this.resultado().meta ?? [])
+      .filter((m) => m.iconKey !== 'puntuacion' && !/reseña/i.test(m.text))
+      .slice(0, this.maximoDeMeta());
+  });
 
   protected readonly meta = computed(() =>
     (this.resultado().meta ?? []).slice(0, this.maximoDeMeta()),
   );
+
+  /**
+   * Acción de la tarjeta: la que trae el resultado o, si sólo hay enlace,
+   * «Ver ficha». Antes el respaldo era «Revisar disponibilidad», que sólo
+   * tiene sentido en un médico —el directorio de médicos lo declara explícito
+   * con el ancla a sus horarios— y salía también en clínicas, farmacias y
+   * aseguradoras, que no tienen agenda.
+   */
+  protected readonly accion = computed<SearchResultAction | undefined>(() => {
+    const r = this.resultado();
+    if (r.action) return r.action;
+    if (r.link) {
+      return { label: 'Ver ficha', link: r.link };
+    }
+    return undefined;
+  });
 
   /**
    * Una foto rota no puede dejar el cuadrado vacío: cae a `figureText`.
@@ -94,6 +153,20 @@ export class ResultCard {
   protected readonly mostrarImagen = computed(
     () => Boolean(this.resultado().figureImageUrl) && !this.imagenFallo(),
   );
+
+  /** Igual que `imagenFallo`, para la foto: una foto rota vuelve a la figura. */
+  protected readonly fotoFallo = linkedSignal({
+    source: this.resultado,
+    computation: () => false,
+  });
+
+  protected readonly mostrarFoto = computed(
+    () => Boolean(this.resultado().photoUrl) && !this.fotoFallo(),
+  );
+
+  protected manejarErrorDeFoto(): void {
+    this.fotoFallo.set(true);
+  }
 
   protected manejarErrorDeImagen(): void {
     this.imagenFallo.set(true);

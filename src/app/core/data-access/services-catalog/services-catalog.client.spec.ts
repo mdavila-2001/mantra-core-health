@@ -96,4 +96,87 @@ describe('ServicesCatalogClient', () => {
 
     expect(creado).toEqual(item);
   });
+
+  describe('arancel: especialidades del médico e import en lote', () => {
+    const RUTA = '/billing/service-catalog';
+
+    it('lee las especialidades del arancel que le corresponden al médico', () => {
+      let recibidas: readonly { specialty: string; count: number }[] | undefined;
+      client.listMyProcedureSpecialties().subscribe((e) => (recibidas = e));
+
+      const req = http.expectOne(`${RUTA}/procedure-specialties/mine`);
+      expect(req.request.method).toBe('GET');
+      req.flush({ items: [{ specialty: 'Cardiología', count: 120 }] });
+
+      expect(recibidas).toEqual([{ specialty: 'Cardiología', count: 120 }]);
+    });
+
+    it('acepta que el médico no tenga ninguna especialidad', () => {
+      let recibidas: readonly unknown[] | undefined;
+      client.listMyProcedureSpecialties().subscribe((e) => (recibidas = e));
+
+      http.expectOne(`${RUTA}/procedure-specialties/mine`).flush({ items: [] });
+
+      expect(recibidas).toEqual([]);
+    });
+
+    it('une varias especialidades con `|` en un solo parámetro', () => {
+      client.searchProcedures({ specialties: ['Cardiología', 'Pediatría'], query: 'ecg' }).subscribe();
+
+      const req = http.expectOne((r) => r.url === `${RUTA}/procedures`);
+      expect(req.request.params.get('specialty')).toBe('Cardiología|Pediatría');
+      expect(req.request.params.get('q')).toBe('ecg');
+      req.flush({ items: [], nextCursor: null });
+    });
+
+    it('sigue aceptando una sola especialidad y no manda las vacías', () => {
+      client.searchProcedures({ specialty: 'Cardiología' }).subscribe();
+      const una = http.expectOne((r) => r.url === `${RUTA}/procedures`);
+      expect(una.request.params.get('specialty')).toBe('Cardiología');
+      una.flush({ items: [], nextCursor: null });
+
+      client.searchProcedures({ specialties: [], specialty: '', query: '' }).subscribe();
+      const ninguna = http.expectOne((r) => r.url === `${RUTA}/procedures`);
+      expect(ninguna.request.params.keys()).toEqual([]);
+      ninguna.flush({ items: [], nextCursor: null });
+    });
+
+    it('importa en lote mandando sólo las claves presentes', () => {
+      let resultado: unknown;
+      client
+        .importProcedures({ practiceId: 'pr1', specialties: ['Cardiología', 'Pediatría'] })
+        .subscribe((r) => (resultado = r));
+
+      const req = http.expectOne(`${RUTA}/import-procedures`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({
+        practiceId: 'pr1',
+        specialties: ['Cardiología', 'Pediatría'],
+      });
+      expect(Object.keys(req.request.body as object)).toEqual(['practiceId', 'specialties']);
+      req.flush({ created: 10, skipped: 2, total: 12 });
+
+      expect(resultado).toEqual({ created: 10, skipped: 2, total: 12 });
+    });
+
+    it('omite el texto vacío y las listas vacías del cuerpo del import', () => {
+      client
+        .importProcedures({ practiceId: 'pr1', specialties: [], codes: [], q: '' })
+        .subscribe();
+
+      const req = http.expectOne(`${RUTA}/import-procedures`);
+      expect(req.request.body).toEqual({ practiceId: 'pr1' });
+      req.flush({ created: 0, skipped: 0, total: 0 });
+    });
+
+    it('manda texto y códigos cuando están presentes', () => {
+      client
+        .importProcedures({ practiceId: 'pr1', codes: ['A-1'], q: 'consulta' })
+        .subscribe();
+
+      const req = http.expectOne(`${RUTA}/import-procedures`);
+      expect(req.request.body).toEqual({ practiceId: 'pr1', codes: ['A-1'], q: 'consulta' });
+      req.flush({ created: 1, skipped: 0, total: 1 });
+    });
+  });
 });

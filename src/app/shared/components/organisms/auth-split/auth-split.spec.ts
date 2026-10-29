@@ -1,4 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { readFileSync } from 'node:fs';
+
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthSplit, type AuthSplitScene } from './auth-split';
@@ -7,7 +9,7 @@ import type { ThemeMode } from '../../../../core/tokens/design-tokens.types';
 
 /** Doble del servicio de tema: jsdom no da `localStorage` con origen opaco. */
 class ThemeServiceFalso {
-  readonly currentTheme = signal<ThemeMode>('system');
+  readonly currentTheme = signal<ThemeMode>('light');
 
   setTheme(mode: ThemeMode): void {
     this.currentTheme.set(mode);
@@ -21,9 +23,10 @@ class ThemeServiceFalso {
       <p class="proyectado">formulario</p>
     </app-auth-split>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class Host {
-  readonly claim = signal('Tu salud, conectada');
+  readonly claim = signal('Su salud, conectada');
   readonly tagline = signal('La red más grande');
   readonly scene = signal<AuthSplitScene>('split');
 }
@@ -51,7 +54,7 @@ describe('AuthSplit', () => {
     Array.from(el().querySelectorAll('.auth-split__theme button'));
 
   it('muestra el titular y la bajada de la columna de marca', () => {
-    expect(el().querySelector('.auth-split__claim')?.textContent).toContain('Tu salud, conectada');
+    expect(el().querySelector('.auth-split__claim')?.textContent).toContain('Su salud, conectada');
     expect(el().querySelector('.auth-split__tagline')?.textContent).toContain('La red más grande');
   });
 
@@ -65,11 +68,11 @@ describe('AuthSplit', () => {
       // se reemplazaría de golpe y no habría transición que ver.
       const antes = el().querySelector('.auth-split__claim');
 
-      host.claim.set('Potenciá tu práctica médica');
+      host.claim.set('Potencie su práctica médica');
       await fixture.whenStable();
 
       const despues = el().querySelector('.auth-split__claim');
-      expect(despues?.textContent).toContain('Potenciá tu práctica médica');
+      expect(despues?.textContent).toContain('Potencie su práctica médica');
       expect(despues).not.toBe(antes);
     });
 
@@ -97,12 +100,11 @@ describe('AuthSplit', () => {
   });
 
   describe('selector de tema', () => {
-    it('ofrece los tres modos', () => {
+    it('ofrece los dos modos', () => {
       // Son botones de ícono: el nombre va en `aria-label`, no en texto visible.
       expect(botonesTema().map((b) => b.getAttribute('aria-label'))).toEqual([
         'Claro',
         'Oscuro',
-        'Sistema',
       ]);
     });
 
@@ -114,7 +116,7 @@ describe('AuthSplit', () => {
       // Quien no distingue el matiz del `secondary` necesita otra señal.
       const pressed = () => botonesTema().map((b) => b.getAttribute('aria-pressed'));
 
-      expect(pressed()).toEqual(['false', 'false', 'true']);
+      expect(pressed()).toEqual(['true', 'false']);
     });
 
     it('cambia el tema al elegir uno', async () => {
@@ -152,8 +154,37 @@ describe('AuthSplit', () => {
       expect(el().querySelectorAll('.auth-split__aurora')).toHaveLength(0);
       // El titular sigue: el escenario cambia el fondo, no el mensaje.
       expect(el().querySelector('.auth-split__claim')?.textContent).toContain(
-        'Tu salud, conectada',
+        'Su salud, conectada',
       );
+    });
+
+    it('con `stage` la marca trae los dos logos: el blanco y el petróleo del escenario claro', async () => {
+      host.scene.set('stage');
+      await fixture.whenStable();
+
+      const logos = Array.from(el().querySelectorAll<HTMLImageElement>('.auth-split__wordmark img'));
+      expect(logos.map((img) => img.getAttribute('src'))).toEqual([
+        '/alovida/imagenes/alovida-logo-blanco.svg',
+        '/alovida/imagenes/alovida-logo.svg',
+      ]);
+      expect(logos[1].classList).toContain('auth-split__wordmark-ink');
+      // Decorativos los dos: el nombre ya lo dice el texto de al lado.
+      expect(logos.every((img) => img.getAttribute('alt') === '')).toBe(true);
+    });
+
+    it('la hoja del escenario claro esconde el logo petróleo fuera de claro y nunca usa literales de color', () => {
+      const css = readFileSync(
+        'src/app/shared/components/organisms/auth-split/auth-split-light-stage.css',
+        'utf8',
+      );
+      expect(css).toMatch(/^\.auth-split__wordmark-ink \{\s*display: none;/m);
+      expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|rgba?\(/i);
+      // Todo lo demás es override de claro: el oscuro no cambia.
+      const rules = css.replace(/\/\*[\s\S]*?\*\//g, '').match(/[^{}]+\{/g) ?? [];
+      const unscoped = rules
+        .map((r) => r.replace('{', '').trim())
+        .filter((r) => !r.startsWith('@media') && !r.startsWith(":host-context(:root[data-tema='claro'])"));
+      expect(unscoped).toEqual(['.auth-split__wordmark-ink']);
     });
   });
 });

@@ -1,4 +1,4 @@
-import { DatePipe, isPlatformBrowser, Location } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type {
@@ -16,7 +16,6 @@ import type {
   AssistedRegistrationResult,
 } from '../../../core/data-access/iam/iam.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
-import { NavigationHistoryService } from '../../../core/navigation/navigation-history.service';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -25,12 +24,15 @@ import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
+import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
+import { joinNames } from '../../../core/profession/additional-names';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Largos que exige `AssistedRegistrationDto` en el backend. */
 const MAX_MOTIVO = 500;
-const MAX_PARTE_NOMBRE = 100;
 
 /**
  * Alta asistida de un paciente que no puede registrarse por sí mismo
@@ -74,6 +76,8 @@ const MAX_PARTE_NOMBRE = 100;
     Link,
     PageHeader,
     PaginatedForm,
+    CustomField,
+    InlineNameFields,
     RouterLink,
   ],
   templateUrl: './assisted-registration.html',
@@ -83,104 +87,42 @@ const MAX_PARTE_NOMBRE = 100;
 export class AssistedRegistration {
   private readonly iam = inject(IamClient);
   private readonly navigation = inject(NavigationService);
-  private readonly history = inject(NavigationHistoryService);
-  private readonly location = inject(Location);
-  private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
-  /**
+/**
    * El formulario, servido de a una página.
    *
    * El tope de cuatro y la barra de avance los pone el motor; acá sólo se
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Datos del paciente',
       hint: 'Lo mínimo para crear la cuenta; el resto lo completa su filiación.',
       campos: [
-        {
-          key: 'name',
-          testId: 'alta-paciente-nombre',
-          label: 'Nombre',
-          control: 'text',
-          required: true,
-          mensajeDeError: 'Escribí el nombre del paciente.',
-        },
-        {
-          key: 'middleName',
-          testId: 'alta-paciente-segundo-nombre',
-          label: 'Segundo nombre',
-          hint: 'Si no tiene, dejalo vacío.',
-          control: 'text',
-        },
-        {
-          key: 'lastName',
-          testId: 'alta-paciente-apellido-paterno',
-          label: 'Apellido paterno',
-          control: 'text',
-          required: true,
-          mensajeDeError: 'Escribí el apellido paterno del paciente.',
-        },
-        {
-          key: 'motherLastName',
-          testId: 'alta-paciente-apellido-materno',
-          label: 'Apellido materno',
-          hint: 'Si no lleva, dejalo vacío.',
-          control: 'text',
-        },
-        {
-          key: 'email',
-          testId: 'alta-paciente-correo',
-          label: 'Correo',
-          hint: 'Con este correo va a activar la cuenta e iniciar sesión.',
-          control: 'email',
-          required: true,
-          mensajeDeError: 'Ingresá un correo válido.',
-        },
+        // El nombre es el mismo bloque que usan paciente, médico y aseguradora:
+        // tres nombres, «+ Agregar otro nombre» y los dos apellidos.
+        { key: 'patientName', label: '', control: 'custom', mensajeDeError: 'Complete el primer nombre y el apellido paterno del paciente.' },
+        { key: 'email', testId: 'alta-paciente-correo', label: 'Correo', hint: 'Con este correo va a activar la cuenta e iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingrese un correo válido.' },
       ],
     },
     {
       titulo: 'Justificación',
-      hint: 'Estás creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
+      hint: 'Está creando una cuenta a nombre de otra persona: queda registrado quién y por qué.',
       campos: [
-        {
-          key: 'reason',
-          testId: 'alta-paciente-motivo',
-          label: 'Motivo del registro asistido',
-          hint: 'Queda en la trazabilidad. Máximo 500 caracteres.',
-          control: 'textarea',
-          required: true,
-          mensajeDeError:
-            'Explicá por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).',
-        },
+        { key: 'reason', testId: 'alta-paciente-motivo', label: 'Motivo del registro asistido', hint: 'Queda en la trazabilidad. Máximo 500 caracteres.', control: 'textarea', required: true, mensajeDeError: 'Explique por qué el paciente no puede registrarse por sí mismo (máximo 500 caracteres).' },
       ],
     },
   ]);
 
   protected readonly form = new FormGroup({
-    // El nombre va en sus cuatro partes, no en un campo libre: es como lo emite
-    // el documento de identidad y como se comparan dos personas al buscar
+    // El nombre va desglosado, no en un campo libre: es como lo emite el
+    // documento de identidad y como se comparan dos personas al buscar
     // duplicados.
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    middleName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    lastName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    motherLastName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
+    patientName: nameGroup(true),
     email: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],
@@ -206,28 +148,16 @@ export class AssistedRegistration {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No tenés permiso para registrar pacientes.';
+      return state.message ?? 'No tiene permiso para registrar pacientes.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
     }
     return null;
   });
-
-  /**
-   * «Atrás» en el primer paso: a la pantalla de la que se vino, o a `/administration/patients` si no
-   * hubo una (enlace directo, recarga).
-   */
-  protected volver(): void {
-    if (this.history.hasInternalHistory()) {
-      this.location.back();
-      return;
-    }
-    void this.router.navigateByUrl('/administration/patients');
-  }
 
   protected submit(): void {
     if (this.isSubmitting()) {
@@ -269,6 +199,8 @@ export class AssistedRegistration {
 
   /** Deja la pantalla lista para otra alta y saca el token de la vista. */
   protected altaNueva(): void {
+    // `reset()` vacía los valores pero deja las casillas agregadas: se quitan.
+    this.form.controls.patientName.controls.extraNames.clear();
     this.form.reset();
     this.result.set(null);
     this.copied.set(false);
@@ -276,13 +208,19 @@ export class AssistedRegistration {
   }
 
   private datos(): AssistedPatientRegistration {
-    const { name, middleName, lastName, motherLastName, email, reason } = this.form.getRawValue();
-    const segundoNombre = middleName.trim();
-    const apellidoMaterno = motherLastName.trim();
+    const { patientName, email, reason } = this.form.getRawValue();
+    // El backend no tiene columna para el tercer nombre ni los agregados: se
+    // pliegan en `middleName`, igual que en el alta de paciente.
+    const segundoNombre = joinNames([
+      patientName.middleName,
+      patientName.thirdName,
+      ...patientName.extraNames,
+    ]);
+    const apellidoMaterno = patientName.motherLastName.trim();
 
     return {
-      name: name.trim(),
-      lastName: lastName.trim(),
+      name: patientName.name.trim(),
+      lastName: patientName.lastName.trim(),
       // Ausente si no se completó: `forbidNonWhitelisted` rechaza lo que sobra,
       // y una cadena vacía no es lo mismo que la ausencia del campo.
       ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),

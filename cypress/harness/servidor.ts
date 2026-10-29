@@ -130,7 +130,7 @@ async function manejadorDelArtefacto(): Promise<RequestHandler> {
 
   if (typeof manejador !== 'function') {
     throw new Error(
-      `${ENTRADA_SERVIDOR} no exporta «reqHandler». Revisá el final de src/server.ts.`,
+      `${ENTRADA_SERVIDOR} no exporta «reqHandler». Revise el final de src/server.ts.`,
     );
   }
   return manejador;
@@ -180,7 +180,7 @@ export async function levantarArnes(): Promise<ArnesEnMarcha> {
       rechazar(
         fallo.code === 'EADDRINUSE'
           ? new Error(
-              `El puerto ${config.puerto} está ocupado. Cerrá lo que lo use o ` +
+              `El puerto ${config.puerto} está ocupado. Cierre lo que lo use o ` +
                 'exportá E2E_PORT con otro.',
             )
           : fallo,

@@ -1,0 +1,76 @@
+/* ============================================================================
+    LoadingState — el aro va en la tinta de marca y el mensaje en la del texto:
+    la espera se distingue del texto gris de ayuda que la rodea, que era el
+    problema de los `<p>` sueltos.
+
+    Aparece con un fundido corto y un poco de retraso: una lectura que vuelve
+    en 100 ms no tiene por qué hacer parpadear la sección.
+    ========================================================================== */
+
+:host {
+  display: grid;
+  gap: var(--sp-3);
+  animation: loading-state-entra var(--dur-base) var(--ease-out) 150ms backwards;
+}
+
+:host(.loading-state--block) {
+  justify-items: center;
+  padding-block: var(--sp-6);
+  text-align: center;
+}
+
+.loading-state__fila {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+:host(.loading-state--block) .loading-state__fila {
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-state__aro {
+  flex: none;
+  color: var(--brand-primary);
+  /* el aro centrado con la primera línea del mensaje, no con el bloque */
+  min-block-size: var(--lh-body);
+}
+
+.loading-state__texto {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.loading-state__mensaje {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+}
+
+.loading-state__detalle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.loading-state__silueta {
+  inline-size: 100%;
+}
+
+@keyframes loading-state-entra {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Con movimiento reducido el fundido ya dura 0,01 ms; el retraso también sobra. */
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    animation-delay: 0s;
+  }
+}

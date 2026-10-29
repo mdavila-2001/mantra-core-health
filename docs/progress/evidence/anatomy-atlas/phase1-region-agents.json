@@ -1,0 +1,204 @@
+[
+ {
+  "bucket": "R01N",
+  "netterTotal": 1101,
+  "netterMapped": 356,
+  "uberonTotal": 0,
+  "translatedLabels": 0,
+  "translatedDefinitions": 0,
+  "problems": [
+   "The uberon array was empty, so Task B did not apply and /home/user/mantra-core-health/data/anatomy-ontology/es/R01N.json was not written.",
+   "Many Netter entries are fragmentary sub-terms with no head term (e.g. 'Arteria(s) — posterior', 'Nervio(s) — esquema') or have OCR-damaged heads ('Abertura lateral (agujero de Luschka) — X', 'Atla —', 'Atlas de anatomía hum —'). The bare fragments were left unmapped without queries. Damaged-head entries were mapped only when the sub-term named a single unambiguous structure, e.g. '— espinoso' to foramen spinosum.",
+   "Mappings accepted on UBERON's own exact synonym or label where the class name differs from the usual term: 'Cerebelo — amígdala' to paraflocculus (exact synonym 'cerebellar tonsil'); 'Seno — recto' to tentorial sinus (the definition describes the straight sinus); 'Nervio(s) — intermedio' to 'sensory root of facial nerve' (matched by label; 'nervus intermedius' appears only among its non-exact synonyms); 'Arteria(s) — carótida — común' to 'common carotid artery plus branches' (exact synonym 'common carotid artery'); 'Tálamo' to dorsal thalamus (the human UBERON subset has no plain 'thalamus' class).",
+   "Every mapping is matchKind 'exact'; none needed 'laterality_dropped'.",
+   "The human UBERON subset has no class for many common head structures (e.g. sphenopalatine artery, mandibular fossa, pterygopalatine fossa, frontal bone, supraorbital and supratrochlear nerves, diploic and emissary veins), so those entries stay unmapped with a Spanish reason.",
+   "Output: /home/user/mantra-core-health/data/anatomy-ontology/netter-mapping/R01N.json. It parses and has all 1101 entries in input order, each netterId exactly once."
+  ]
+ },
+ {
+  "bucket": "R02",
+  "netterTotal": 128,
+  "netterMapped": 23,
+  "uberonTotal": 193,
+  "translatedLabels": 193,
+  "translatedDefinitions": 164,
+  "problems": [
+   "Many Netter entries in R02 are OCR garbage (for example 'Atlas de anatomía hun', 'C2. V. Axis (C2)', 'G3'), regional groupings or procedures. They are left unmapped, each with a reason.",
+   "These Netter structures have no exact UBERON class in the offline lookup, so they stay unmapped: radicular/segmental medullary arteries, artery of Adamkiewicz, greater occipital nerve, supraspinous ligament, superior nuchal line, vertebral notches, spinal pia mater, lateral intertransversarii, superior lateral cutaneous nerve of arm, superficial cervical vein, dorsal rami of C2 and C4.",
+   "Lumbar-specific or C2-specific entries were left unmapped where UBERON only has the general class (pedicle of vertebra, ligamentum flavum). These are not lateralized entries, so laterality_dropped does not apply.",
+   "'Ligamento coccígeo' was mapped to UBERON:0010270 'filum terminale externum' on anatomical equivalence. The query 'coccygeal ligament' itself returned no match.",
+   "Some English UBERON definitions contain source errors: thoracic spinal cord (UBERON:0003038) is defined by describing the thoracic nerves, and the lumbar/sacral intervertebral disk definitions say 'another thoracic vertebra'. They were translated faithfully without correction. Source tags such as [WP] and [ncit,modified] were kept, and '[Automatically generated definition]' was translated.",
+   "29 UBERON classes have a null definition, so their definitionEs is null."
+  ]
+ },
+ {
+  "bucket": "R01",
+  "netterTotal": 0,
+  "netterMapped": 0,
+  "uberonTotal": 1009,
+  "translatedLabels": 1009,
+  "translatedDefinitions": 884,
+  "problems": [
+   "Task A skipped: the 'netter' array for R01 is empty, so /home/user/mantra-core-health/data/anatomy-ontology/netter-mapping/R01.json was not written.",
+   "125 UBERON classes have a null definition, so definitionEs is null for them. All 1009 ids appear exactly once, in source order, in /home/user/mantra-core-health/data/anatomy-ontology/es/R01.json. The file parses, and no two classes share the same labelEs.",
+   "Source errors were translated as they stand, not corrected. UBERON:0002819 'apex of cochlea' has a definition that describes the cupula of the semicircular canals. UBERON:0018593 and UBERON:0018594 (upper central/lateral primary incisor) are defined as 'upper primary canine tooth'. UBERON:0008594 'zygomaticus minor' is defined as 'ventral to the zygomaticus minor'. UBERON:0003277 'skeleton of upper jaw' says 'lower jaw skeleton includes...'. UBERON:0008455 has a missing word ('posterior arch of the [atlas]'), left as a gap in the Spanish. UBERON:0001861 keeps 'Hansen' as in the source (the usual spelling is Hensen).",
+   "UBERON:0004090 'periorbital region' has a placeholder definition ('Missing definition for term...'). It was translated literally and should probably be nulled or replaced upstream.",
+   "Some source definitions contain mojibake ('choanC&', 'atlantoC6ccipital', 'vertebrC&', 'alE nasi', 'zygomaticoC6rbital'). These were translated as the intended words (coanas, atlantooccipital, vértebras, ala de la nariz, cigomaticoorbitaria).",
+   "Source tags such as [WP,unvetted], [MP], [ZFA] and [WP,modified] were kept verbatim. '[Automatically generated definition]' was translated as '[definición generada automáticamente]'. Ontology relation names in definitions (branching_part_of, in_the_central_side_of) were rendered in Spanish, with branching_part_of also kept in parentheses."
+  ]
+ },
+ {
+  "bucket": "R03",
+  "netterTotal": 297,
+  "netterMapped": 90,
+  "uberonTotal": 429,
+  "translatedLabels": 429,
+  "translatedDefinitions": 361,
+  "problems": [
+   "Netter: many entries are OCR fragments ('Atlas de anatomía hun', 'Ebner)', 'Wolff)', 'jana') or bare qualifiers ('— izquierda', '— derecha'). All left unmapped with a reason.",
+   "Netter: the lookup tool lists 'muscular coat of stomach' as an exact synonym of UBERON:0001203 (muscularis mucosae of stomach). This looks like a UBERON synonym error and was not used. Entry 'Estómago — musculatura' was mapped to UBERON:0008856 (stomach muscularis externa) instead.",
+   "Netter: 'Arteria carótida izquierda' left unmapped. It is ambiguous, and UBERON's 'left common carotid artery' resolves only to the 'plus branches' class UBERON:0001536.",
+   "Netter: two choices are judgement calls. 'Nódulos linfáticos braquiales' went to UBERON:0002525 (brachial lymph node) rather than UBERON:0037590 (lateral axillary lymph node). 'Nódulos linfáticos subclavios' went to UBERON:0038037, which has no definition to confirm it.",
+   "UBERON:0006198 'dorsal intercostal artery': the English definition describes the highest/supreme intercostal artery, which is a different structure. labelEs follows the label ('arteria intercostal posterior'); the definition was translated as given.",
+   "UBERON:0004155: the source 'definition' is placeholder text ('Missing definition for term...'). It was translated literally rather than set to null.",
+   "UBERON:0003253: the source definition has OCR artifacts ('vertebrC&', 'costE', 'eminencebthe'). They were read as the intended words in the translation.",
+   "Source tags such as [GO], [WP,unvetted], [FMA] and [Automatically generated definition] were kept as they appear, following the R02 convention."
+  ]
+ },
+ {
+  "bucket": "R05",
+  "netterTotal": 338,
+  "netterMapped": 82,
+  "uberonTotal": 169,
+  "translatedLabels": 169,
+  "translatedDefinitions": 141,
+  "problems": [
+   "UBERON:0015878 (common iliac lymph node): the source definition actually describes the external iliac lymph nodes. It was translated as given, so the error is now in the Spanish definition too.",
+   "Source citation tags in the definitions, such as [WP,unvetted], [Automatically generated definition], [MP], [FMA] and [PHENOSCAPE:ad], were left out of definitionEs. Garbled OCR characters (Roser-NC)laton, raphC), perinC&i) were rendered as the intended words (Roser-Nélaton, rafe, periné).",
+   "28 UBERON classes have a null definition, so definitionEs is null for them.",
+   "Three Netter mappings rest only on UBERON exact synonyms and are worth a look: Pelvis -> UBERON:0002355 'pelvic region of trunk', Acetábulo -> UBERON:0001269 'acetabular part of hip bone', and Próstata — istmo -> UBERON:0001329 'prostate gland anterior lobe' (matched through 'isthmus of prostate').",
+   "Conducto — cervical was mapped to UBERON:0013761 'cervical cavity', on the judgement that the cervical canal and the cervical cavity are the same structure. Folículo was mapped to ovarian follicle based on its subregion.",
+   "Gubernáculo was left unmapped: the entry sits in the cross-sex homology section, and UBERON only offers the male class 'gubernaculum testis'.",
+   "Many named pelvic structures have no exact label or exact synonym in the lookup and stay unmapped. Examples: middle rectal artery, lateral sacral artery, sacrospinous and sacrotuberous ligaments, greater and lesser sciatic foramina, ischioanal fossa, retropubic space, cardinal and uterosacral ligaments, compressor urethrae, the visceral and parietal layers of the tunica vaginalis, and internal os of uterus."
+  ]
+ },
+ {
+  "bucket": "R04",
+  "netterTotal": 562,
+  "netterMapped": 143,
+  "uberonTotal": 329,
+  "translatedLabels": 329,
+  "translatedDefinitions": 272,
+  "problems": [
+   "Task A: 419 entries left unmapped. Many are fragments with no noun (e.g. 'Arteria(s) — derecha'), views or sections, groupings, OCR page-header bleed ('Atla —', 'Atlas de anatomía hum —', 'Ebner)'), imaging/procedures, or names with no exact UBERON match. Each has a Spanish reason.",
+   "Task A: one mapping is laterality_dropped: 'Hígado — triangular izquierdo' -> UBERON:0035444 (triangular ligament of liver).",
+   "Task A judgement calls: 'Hígado — arterias' -> hepatic artery (UBERON:0001193, whose definition is 'an artery that supplies the liver'); 'Placas de Peyer' -> small intestine Peyer's patch (UBERON:0003454); 'Vena(s) — pancreática' / 'Páncreas — venas' -> pancreatic tributary of splenic vein (matched through its exact synonym 'pancreatic vein'); 'Colangiolo' -> intralobular bile duct (matched through its exact synonym 'cholangiole'); 'Recto — varón/mujer' -> rectum.",
+   "Task A: candidates found by the lookup but rejected: 'Arteria(s) — rectas' (UBERON vasa recta is the kidney structure); 'Nódulos sacros — medio' (only the general sacral lymph node class exists); 'Vasos — rectales superiores' (artery and vein together); 'Hígado — derecho/izquierdo' (no noun, so could be a lobe or a duct).",
+   "Task B: 57 classes have a null English definition, so definitionEs is null for them.",
+   "Task B: source citation tags such as [GO], [WP,unvetted] and [MP] were kept as they appear. The phrase '[Automatically generated definition]' was translated as '[definición generada automáticamente]'.",
+   "Task B: obvious typos in the UBERON source were translated by their evident meaning: 'Pancreaticosplenioc', 'Pylorioc', 'anterior anterior' (UBERON:0038697), the label 'posterior ancreaticoduodenal lymph node' (UBERON:0038818) and 'he renal vessels' (UBERON:0008716).",
+   "Output files: /home/user/mantra-core-health/data/anatomy-ontology/netter-mapping/R04.json and /home/user/mantra-core-health/data/anatomy-ontology/es/R04.json. Both were validated: they parse, every netterId is present in input order, and every UBERON id appears exactly once."
+  ]
+ },
+ {
+  "bucket": "R06",
+  "netterTotal": 380,
+  "netterMapped": 53,
+  "uberonTotal": 274,
+  "translatedLabels": 274,
+  "translatedDefinitions": 254,
+  "problems": [
+   "Most of the 327 unmapped Netter entries are index fragments with no head structure, such as 'Arteria(s) — medial', 'Ligamento(s) — radial' or 'Tendón — dedos'. The rest are groupings, procedimiento_o_imagen entries, or entries whose OCR is corrupted ('Atla —', 'Atlas de anatomía hun —', 'Masculo').",
+   "Several clear structures stayed unmapped because none of the exact names I tried returned a UBERON match. These include the coracoacromial, conoid and trapezoid ligaments, the carpal ligaments, the cords, trunks and roots of the brachial plexus, the suprascapular nerve, the antebrachial cutaneous nerves, the cubital fossa, the anatomical snuffbox and the extensor retinaculum.",
+   "Entry 70 'Mielencéfalo' (subregion: shoulder and axilla) was left unmapped as doubtful. 'myelencephalon' has no exact match, and the subregion suggests an indexing error.",
+   "These mappings depend on context: 'Lecho ungueal' (carpus and hand) maps to UBERON:0005278 'nail bed of finger'; 'Articulación — hombro' maps to UBERON:0001470 'glenohumeral joint'; 'disco articular' and 'Menisco' map to UBERON:0000387 'meniscus' (the generic articular disc). Generic joint terms (capsule, joint cavity) were mapped to the generic UBERON classes.",
+   "In the source data, UBERON:0013749 (metaphysis of humerus) has a self-referential definition ('A metaphysis that is part of a metaphysis'). It was translated faithfully without correction.",
+   "UBERON:0011187 is labelled 'ventral tubercle of humerus', but its definition describes the greater tubercle. labelEs was set to 'tubérculo mayor del húmero' to match the definition.",
+   "Source citation tags such as [WP,unvetted] and [Phenoscape] were kept verbatim. '[Automatically generated definition]' was rendered as '[Definición generada automáticamente]', following the convention in the existing es/R02.json.",
+   "Output files: /home/user/mantra-core-health/data/anatomy-ontology/netter-mapping/R06.json (380 entries, in order, every netterId present) and /home/user/mantra-core-health/data/anatomy-ontology/es/R06.json (274 ids, each exactly once; 20 null definitions match the 20 null source definitions)."
+  ]
+ },
+ {
+  "bucket": "R07",
+  "netterTotal": 355,
+  "netterMapped": 58,
+  "uberonTotal": 286,
+  "translatedLabels": 286,
+  "translatedDefinitions": 265,
+  "problems": [
+   "Many Netter entries are OCR fragments or bare subheadings with no parent (e.g. 'Arteria(s) — transversa', 'Músculo(s) — inserciones', 'Atlas de anatomía hum — tendón'), so they stay unmapped as ambiguous.",
+   "The local UBERON lookup has no class for many standard structures that were tried, e.g. lateral circumflex femoral artery, the genicular arteries, iliofemoral ligament, linea aspera, tibial tuberosity, adductor canal, the cluneal nerves, genitofemoral nerve, the retinacula and most named tendons. Those entries stay unmapped with a reason.",
+   "Two lookup hits were rejected on review as ambiguous: #36 'Arteria(s) — propia' (proper plantar digital artery) and #65 'Masculo(s) — fascia lata' (probably a subentry of the tensor fasciae latae).",
+   "The UBERON definitions of UBERON:0011907 and UBERON:0011908 are placeholders ('Missing definition for term ... Please replace it using linked reference'). They were translated literally to stay faithful to the source.",
+   "21 UBERON classes have a null definition, so their definitionEs is null.",
+   "Source citation tags such as [WP,unvetted] and [Automatically generated definition] were kept verbatim inside definitionEs."
+  ]
+ },
+ {
+  "bucket": "SYSA2",
+  "netterTotal": 0,
+  "netterMapped": 0,
+  "uberonTotal": 847,
+  "translatedLabels": 847,
+  "translatedDefinitions": 686,
+  "problems": [
+   "La tarea A no aplicaba (el array netter está vacío), así que no se escribió ningún archivo netter-mapping/SYSA2.json.",
+   "Las 161 clases UBERON con definition null tienen definitionEs null.",
+   "Dos definiciones de origen se contradicen con su propia etiqueta y se tradujeron tal cual: UBERON:0009898 'left auditory cortex' dice 'right side'; UBERON:0018243 'thymic artery' dice 'A vein'.",
+   "Los artefactos de codificación del original se conservaron sin cambios: UBERON:0010355 'areolC&'; UBERON:0034773 'Vicq dbAzyr (1748b1794)'; UBERON:0006984 termina en 'blood.n.'; UBERON:0013554 'nn* Definition Source'.",
+   "Los marcadores de 'definición faltante' de UBERON (0005346, 0005977, 0006100) se tradujeron como el aviso estándar en español, igual que en los archivos R*.json existentes.",
+   "Las etiquetas de fuente como [WP], [WP,unvetted] o [FMA] se dejaron sin traducir; '[Automatically generated definition]' se tradujo como '[definición generada automáticamente]', siguiendo la convención de los archivos es/R*.json existentes.",
+   "Salida: /home/user/mantra-core-health/data/anatomy-ontology/es/SYSA2.json (847 IDs, cada uno una sola vez, en el orden de entrada; JSON validado). Partes: /tmp/claude-0/-home-user-mantra-core-health/0936bc81-5207-5906-b755-dffb86a17712/scratchpad/work/SYSA2.part-01..07.tsv"
+  ]
+ },
+ {
+  "bucket": "SYSA1",
+  "netterTotal": 0,
+  "netterMapped": 0,
+  "uberonTotal": 846,
+  "translatedLabels": 846,
+  "translatedDefinitions": 728,
+  "problems": [
+   "Task A skipped: the netter array is empty for SYSA1, so no netter-mapping/SYSA1.json was written.",
+   "118 UBERON classes have a null English definition, so their definitionEs is null.",
+   "UBERON:0004074, 0004076, 0004080 and 0004082 carry the placeholder definition 'Missing definition for term ... Please replace it using linked reference.' It was translated literally as the placeholder. Treating these as null may be preferable.",
+   "Errors in the source definitions were translated as they stand, not corrected. UBERON:0000443 (left testicular vein) says it drains the RIGHT pampiniform plexus. UBERON:0003477 (vein of upper lip) calls it the 'inferior labial vein'. UBERON:0001747 (parenchyma of thyroid gland) says it is part of a thyroid follicle. UBERON:0002689 (supraoptic crest) refers to the OVLT. UBERON:0002155 (gigantocellular nucleus) describes the PGL (paragigantocellular nucleus).",
+   "Several definitions keep their source tags ([WP,unvetted] -> [WP, no verificado], [Automatically generated definition] -> [definición generada automáticamente]) and their bibliographic citations as they are in the source.",
+   "Output: /home/user/mantra-core-health/data/anatomy-ontology/es/SYSA1.json. Validated: it parses, has all 846 ids exactly once in input order, and its null definitions match the source exactly."
+  ]
+ },
+ {
+  "bucket": "SYSB2",
+  "netterTotal": 0,
+  "netterMapped": 0,
+  "uberonTotal": 846,
+  "translatedLabels": 846,
+  "translatedDefinitions": 680,
+  "problems": [
+   "Task A not applicable: the netter array is empty, so no netter-mapping/SYSB2.json was written.",
+   "166 UBERON classes have a null definition, so their definitionEs is null.",
+   "UBERON:0005976, UBERON:0006099 and UBERON:0006101 have placeholder definitions in the source ('Missing definition for term ... Please replace it using linked reference.'). These were translated literally, the same way the existing es/*.json files handle them.",
+   "Source definitions that seem to contradict their own labels were translated as given, without correction: UBERON:0009897 'right auditory cortex' (defined as 'in the left side'), UBERON:0011121 'cricothyroid joint' (defined as 'cricoarytenoid articulation'), UBERON:0022355 'basal layer of endometrium' (defined as 'adjacent to the uterine cavity'), UBERON:0035483 'left suprarenal vein' (defined as draining 'into the left renal artery') and UBERON:0035969 'encapsulated tactile receptor' (defined as 'lacks a capsule').",
+   "Truncated or broken source sentences were kept as they are: UBERON:0011124 (xiphisternal joint) and UBERON:0006574 (ends with ':.'). The encoding residue 'u2018inflatedu2019' in UBERON:0022352 was rendered as «inflada»."
+  ]
+ },
+ {
+  "bucket": "SYSB1",
+  "netterTotal": 0,
+  "netterMapped": 0,
+  "uberonTotal": 846,
+  "translatedLabels": 846,
+  "translatedDefinitions": 734,
+  "problems": [
+   "Task A skipped: the netter array was empty, so no netter-mapping/SYSB1.json was written.",
+   "112 classes have no definition (null) in the source, so definitionEs is null for them.",
+   "UBERON:0000089, UBERON:0004075 and UBERON:0004083: the source definition is the placeholder 'Missing definition for term ...'. It was translated literally.",
+   "UBERON:0000442 'right testicular vein': the source definition describes the left pampiniform plexus and left renal vein. It was translated faithfully and the error was left as is.",
+   "UBERON:0001755 'distal part of styloid process of temporal bone': the source definition describes the zebrafish interhyal and epihyal. It was translated faithfully.",
+   "OCR artifacts in the sources were rendered as the obvious word: 'parietoC6ccipital' in UBERON:0002900, 'dorsum sellC&'/'squamC&' in UBERON:0003722 and 'sulcus valleculC&' in UBERON:0004078.",
+   "Duplicated wording in the source was kept: 'unbranched, unbranched' in UBERON:0000423 and the double period '..' in UBERON:0002012.",
+   "UBERON:0002623 'cerebral peduncle': the source definition calls it a synonym of the tegmentum. It was translated faithfully.",
+   "Labels chosen to follow the Terminologia Anatomica Spanish name rather than the English UBERON label: anterior vena cava -> vena cava superior, lymph node -> nodulo linfatico, dorsal root ganglion -> ganglio sensitivo de nervio espinal, serratus ventralis -> musculo serrato anterior, celiac artery -> tronco celiaco, circle of Willis -> circulo arterial del cerebro. Output written to /home/user/mantra-core-health/data/anatomy-ontology/es/SYSB1.json (846 ids, each once, in source order; validated)."
+  ]
+ }
+]

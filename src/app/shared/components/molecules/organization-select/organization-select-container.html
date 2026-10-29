@@ -1,0 +1,25 @@
+<app-organization-select
+  [organizations]="organizations()"
+  [value]="value()"
+  [disabled]="disabled()"
+  (selected)="selected.emit($event)"
+  (affiliationRequested)="affiliationRequested.emit()"
+/>
+
+@if (failed()) {
+  <app-alert tone="warning" data-testid="organization-select-failure">
+    No pudimos cargar sus organizaciones. Por ahora puede elegir «Mi consultorio».
+    <div alert-actions>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-testid="organization-select-retry"
+        (clicked)="retry()"
+      >
+        Reintentar
+      </button>
+    </div>
+  </app-alert>
+}

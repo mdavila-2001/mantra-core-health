@@ -118,8 +118,6 @@ Diferirlas es el cambio de mayor relación beneficio/riesgo del proyecto. Pero:
 | Es el patrón que ya usa la vitrina | Añade un salto de red en la primera navegación |
 
 **No se ejecuta acá**: es un cambio de producto con impacto en el renderizado.
-Registrado como propuesta con impacto y prueba requerida en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).
 
 ## Presupuestos que faltan
 
@@ -160,18 +158,3 @@ Lee los presupuestos de `angular.json`, mide el artefacto de
 agrega es un resultado en formato de informe, apto para el
 [pipeline documental](../governance/change-management.md#pipeline), y la
 posibilidad de aplicar presupuestos que `angular.json` no expresa.
-
-## Decisión pendiente
-
-El aviso de 16,70 kB tiene **dos salidas legítimas**, y elegir es del equipo:
-
-1. **Bajar el paquete** difiriendo las pantallas de autenticación. Es trabajo, y
-   toca el prerenderizado.
-2. **Subir el umbral** a un valor que refleje la realidad (por ejemplo 550 kB) y
-   dejar el error en 1 MB. Es reconocer que 500 era una cifra redonda, no una
-   medida.
-
-Lo que **no** es defendible es dejar el aviso indefinidamente: un aviso que nadie
-va a atender entrena a ignorar los avisos.
-
-Registrado en [el informe de preparación productiva](../reports/production-readiness.md).

@@ -144,22 +144,6 @@ escritorio.
 | Composición del bundle | Sin analizador instalado |
 | Rendimiento con la API real | Sin entorno |
 
-## Recomendaciones
-
-| # | Qué | Dependencias | Valor |
-|---|---|---|---|
-| 1 | **Lighthouse con `npx`** | Ninguna permanente | **Alto** — desbloquea todo lo demás |
-| 2 | Decidir P-01: bajar o subir | Ninguna | Medio |
-| 3 | Resolver P-02 midiendo | Ninguna | Medio |
-| 4 | `source-map-explorer` con `npx`, una vez | Ninguna permanente | Medio |
-| 5 | Presupuesto por fragmento | Ninguna | Bajo |
-| 6 | Quitar las tres tipografías de reserva | Ninguna | Bajo |
-| 7 | Web Vitals de campo | Una, + privacidad | Alto, después |
-
-**Las seis primeras no añaden ninguna dependencia al proyecto.**
-
-Ninguna se ejecuta en este trabajo documental.
-
 ## Veredicto
 
 **El rendimiento del artefacto es razonable y está sin medir.**

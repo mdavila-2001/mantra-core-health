@@ -1,0 +1,15 @@
+# Despliegues en Coolify (solo lectura, 2026-10-03 02:44) — apps de test
+== front
+  estado actual: running:healthy · rama: test
+   2026-10-03T06:34:51 UTC  finished commit af1550f4
+   2026-10-03T06:13:31 UTC  failed commit fa68b1c8
+   2026-10-03T05:46:04 UTC  finished commit 30e69936
+   2026-10-03T05:24:44 UTC  finished commit a9f2b4f9
+   2026-10-02T23:58:23 UTC  finished commit ab9a6e0e
+== api
+  estado actual: running:healthy · rama: test
+   2026-10-03T06:34:54 UTC  finished commit b8315d9c
+   2026-10-03T05:49:09 UTC  finished commit 5e245aec
+   2026-10-02T21:59:33 UTC  finished commit 1fc64dad
+   2026-10-02T21:15:46 UTC  finished commit a22514db
+   2026-10-02T14:07:30 UTC  finished commit 97ab376b

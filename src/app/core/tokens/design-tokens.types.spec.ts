@@ -48,14 +48,14 @@ describe('design tokens', () => {
   });
 
   describe('isThemeMode', () => {
-    it('acepta los tres modos declarados', () => {
+    it('acepta los modos declarados', () => {
       for (const mode of THEME_MODES) {
         expect(isThemeMode(mode)).toBe(true);
       }
     });
 
     it('rechaza lo que venga de localStorage sin contrato', () => {
-      for (const valor of ['', 'DARK', 'oscuro', null, undefined, 0, {}]) {
+      for (const valor of ['', 'system', 'DARK', 'oscuro', null, undefined, 0, {}]) {
         expect(isThemeMode(valor)).toBe(false);
       }
     });

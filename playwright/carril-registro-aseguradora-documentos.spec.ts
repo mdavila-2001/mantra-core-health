@@ -10,7 +10,6 @@ import {
   subirArchivo,
   subirLosCincoDocumentos,
 } from './helpers/documentos-legales';
-import { completarCuentaDelOwner } from './helpers/owner';
 import { completarGerencias, completarRepresentanteLegal } from './helpers/representante-legal';
 
 /**
@@ -87,23 +86,10 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     await expect(rotuloDeDocumento('Certificado de NIT')).toBeVisible();
     await expect(rotuloDeDocumento('Matrícula de comercio (SEPREC)')).toBeVisible();
     await expect(rotuloDeDocumento('Licencia de funcionamiento municipal')).toBeVisible();
-    await capturar(page, 'paso-4-primera-tanda');
-
-    // «Continuar» no avanza con la primera tanda vacía (los 4 son
-    // obligatorios): hay que subirlos para ver la segunda tanda.
-    for (const clave of [
-      'constitutionFileId',
-      'taxIdentifierFileId',
-      'commerceRegistryFileId',
-      'operatingLicenseFileId',
-    ] as const) {
-      await subirArchivo(page, clave, pdfDePrueba(clave));
-      await esperarSubidaLista(page, clave);
-    }
-    await page.getByTestId('paginated-form-continuar').click();
-    await expect(page.locator('.paginated-form__titulo')).toContainText('(2 de 2)');
+    // Los cinco en UNA sola vista: sin «(1 de 2)» / «(2 de 2)».
     await expect(rotuloDeDocumento('Certificado del SEDES')).toBeVisible();
-    await capturar(page, 'paso-4-segunda-tanda');
+    await expect(page.locator('.paginated-form__titulo')).not.toContainText('de 2)');
+    await capturar(page, 'paso-4-documentos');
   });
 
   test('un archivo que no es PDF se rechaza y no queda «subido»', async ({ page }) => {
@@ -190,8 +176,6 @@ test.describe('alta pública de aseguradora — documentación legal en PDF (sub
     await expect(page.locator('.paginated-form__titulo')).toContainText('Directorio ejecutivo');
     await completarGerencias(page);
 
-    await expect(page.locator('.paginated-form__titulo')).toContainText('Tu cuenta');
-    await completarCuentaDelOwner(page, { email: 'admin@andina.test' });
 
     await expect(page.getByTestId('registro-organizacion-exito')).toBeVisible({ timeout: 20_000 });
     await capturar(page, 'exito-con-documentos');

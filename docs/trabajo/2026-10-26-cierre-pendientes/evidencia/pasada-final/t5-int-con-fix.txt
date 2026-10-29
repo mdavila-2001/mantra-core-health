@@ -1,0 +1,3 @@
+{"level":30,"time":1793009124332,"pid":9886,"hostname":"vm","context":"RoutesResolver","msg":"InsurerReceivedClaimsController {/insurance/received-claims}:"}
+Tests:       3 passed, 3 total
+real	0m32.252s

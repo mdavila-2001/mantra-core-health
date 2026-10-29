@@ -39,6 +39,15 @@
   border-radius: var(--r-md);
 }
 
+/* El de la organización es un `fieldset`: se deshabilita entero mientras se publica,
+   porque cambiarla a mitad de camino partiría la cadena en dos organizaciones. Sin
+   el marco, el margen ni el ancho mínimo que le pone el navegador. */
+fieldset.agenda-create__bloque {
+  margin: 0;
+  border: 0;
+  min-inline-size: 0;
+}
+
 .agenda-create__titulo {
   margin: 0;
   font-size: var(--fs-h3);
@@ -387,7 +396,7 @@
 .agenda-create__tabla {
   width: 100%;
   border-collapse: collapse;
-  min-width: 44rem;
+  min-width: 50rem;
 }
 
 .agenda-create__tabla-caption {
@@ -397,50 +406,32 @@
   padding-block-end: var(--sp-2);
 }
 
-.agenda-create__tabla th,
-.agenda-create__tabla td {
+/* Los encabezados; las celdas de cada día las dibuja `ScheduleDayRow` con el
+   mismo trazo. */
+.agenda-create__tabla thead th {
   text-align: left;
   padding: var(--sp-2);
   border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
 }
 
-/* La columna «Descanso» («Desde», «Hasta», «Dura», Descanso, Turnos): sin un
-   mínimo propio, «Sin respiro» —la opción más larga— quedaba cortada en
-   «Sin respi» en los tres anchos, incluso con lugar de sobra en escritorio. */
-.agenda-create__tabla th:nth-child(5),
-.agenda-create__tabla td:nth-child(5) {
+/* «Dura» y «Descanso» (Día, Desde, Hasta, Atiendo, Telemedicina, Horario
+   flexible, Dura, Descanso, Horarios): el mismo mínimo que sus celdas. */
+.agenda-create__tabla th:nth-child(7),
+.agenda-create__tabla th:nth-child(8) {
   min-width: 8rem;
+}
+
+/* Telemedicina y Horario flexible, centrados sobre sus interruptores. */
+.agenda-create__tabla th:nth-child(5),
+.agenda-create__tabla th:nth-child(6) {
+  text-align: center;
 }
 
 .agenda-create__tabla thead th {
   font-size: var(--fs-caption);
   color: var(--text-secondary);
   font-weight: 600;
-}
-
-/* El día encendido se distingue por peso, no sólo por color: quien no
-   distingue tonos tiene que poder leer qué filas cuentan. */
-.agenda-create__fila--activa .agenda-create__fila-dia {
-  font-weight: 600;
-}
-
-.agenda-create__fila-check {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.agenda-create__fila-apagada {
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
-.agenda-create__fila-turnos {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 
 /* En escritorio los botones secundarios de las secciones miden su texto: se
@@ -493,13 +484,6 @@
   gap: var(--sp-3);
 }
 
-/* En la fila del día, el nombre y su «Sí / No» se reparten el ancho: el
-   nombre a la izquierda, los botones alineados en columna de una fila a otra. */
-.agenda-create__fila-check {
-  justify-content: space-between;
-  cursor: default;
-}
-
 /* En el teléfono el «Sí / No» baja y ocupa la fila entera: el control se
    estira a lo ancho por debajo de 30 rem, y como ítem flex sin base quedaba en
    su ancho mínimo, con el «No» cortado en «N.». Desde 30 rem vuelve a medir su
@@ -512,4 +496,21 @@
   .agenda-create__pregunta > app-segmented-control {
     flex: none;
   }
+}
+
+/* Arriba de la tabla: qué es «Otros servicios» y el botón de repetir un
+   horario. En fila cuando entra; apilado en pantallas chicas. */
+.agenda-create__tabla-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.agenda-create__tabla-ayuda {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
 }

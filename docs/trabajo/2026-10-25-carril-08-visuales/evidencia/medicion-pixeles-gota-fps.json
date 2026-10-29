@@ -1,0 +1,50 @@
+{
+  "contraste_pixeles": {
+    "muestras": 8,
+    "pixel_mas_oscuro_del_fondo": [
+      242,
+      249,
+      248
+    ],
+    "tinta-3 #656768": 5.33,
+    "tinta-2 #4E5151": 7.51
+  },
+  "gota_estilo_computado": [
+    {
+      "t": 8690,
+      "opacidad": "0.701231",
+      "transform": "matrix(0.175023, 0, 0, 0.175023, 0, 0)"
+    },
+    {
+      "t": 8845,
+      "opacidad": "0.279767",
+      "transform": "matrix(0.670863, 0, 0, 0.670863, 0, 0)"
+    },
+    {
+      "t": 8991,
+      "opacidad": "0.115736",
+      "transform": "matrix(0.86384, 0, 0, 0.86384, 0, 0)"
+    },
+    {
+      "t": 9315,
+      "opacidad": "0.0124698",
+      "transform": "matrix(0.98533, 0, 0, 0.98533, 0, 0)"
+    }
+  ],
+  "fps_reposo": {
+    "prom_ms": 16.6,
+    "p95_ms": 16.8,
+    "max_ms": 16.8
+  },
+  "fps_moviendo": {
+    "prom_ms": 17,
+    "p95_ms": 16.7,
+    "max_ms": 33.3
+  },
+  "oscuro_opacidad": "1",
+  "formulario": {
+    "valor": "prueba",
+    "enfocado": "INPUT"
+  },
+  "errores_consola": []
+}

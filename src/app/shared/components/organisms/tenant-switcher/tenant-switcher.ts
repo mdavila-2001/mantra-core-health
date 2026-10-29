@@ -13,6 +13,7 @@ import { AppButton } from '../../atoms/button/button';
 import { Card } from '../../molecules/card/card';
 import { Menu } from '../../molecules/menu/menu';
 import { MenuItem } from '../../molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../molecules/menu/menu-trigger/menu-trigger';
 import type { TenantOption, TenantSwitcherVariant } from './tenant-switcher.types';
 
@@ -39,7 +40,7 @@ import type { TenantOption, TenantSwitcherVariant } from './tenant-switcher.type
  */
 @Component({
   selector: 'app-tenant-switcher',
-  imports: [AppButton, Card, Menu, MenuItem, MenuTrigger],
+  imports: [AppButton, Card, Menu, MenuItem, MenuTrigger, NavIcon],
   templateUrl: './tenant-switcher.html',
   styleUrl: './tenant-switcher.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,7 +73,7 @@ export class TenantSwitcher {
   );
 
   protected readonly triggerLabel = computed(
-    () => this.activeTenant()?.name ?? 'Elegí una organización',
+    () => this.activeTenant()?.name ?? 'Elija una organización',
   );
 
   protected readonly switcherClasses = computed(
@@ -97,7 +98,7 @@ export class TenantSwitcher {
     if (this.isIndeterminate()) {
       console.warn(
         '[app-tenant-switcher] `activeTenantId` no está entre los tenants recibidos: ' +
-          'se muestra sin resolver. Corregilo en el origen, no acá.',
+          'se muestra sin resolver. Corríjalo en el origen, no acá.',
         this.activeTenantId(),
       );
     }

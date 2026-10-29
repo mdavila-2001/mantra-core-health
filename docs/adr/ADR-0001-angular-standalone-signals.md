@@ -48,8 +48,8 @@ propio.
 ## Consecuencias negativas
 
 - Angular 21 es reciente: menos ejemplos y menos respuestas en la comunidad.
-- Las API nuevas (`linkedSignal`, `resource()`) no se usan, así que hay una
-  segunda ola de migración pendiente si se adoptan.
+- Las API nuevas (`linkedSignal`, `resource()`) no se usan: adoptarlas sería
+  otra migración.
 - El modo PnP de Yarn convive mal con Vite, y las pruebas avisan de ello.
 
 ## Riesgos

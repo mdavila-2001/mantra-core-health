@@ -72,7 +72,7 @@ existe de fábrica.
 
 ## Levantar el sistema completo
 
-Orden que funciona, tomado de `ESTADO-FRONTEND.md` (trabajo previo del equipo):
+Orden que funciona (trabajo previo del equipo):
 
 ```bash
 # 1 · Almacenes de la API — NUNCA el servicio `api` del compose de la API:
@@ -100,7 +100,7 @@ yarn start                            # http://localhost:4200
 | `http://localhost:4200/auth` | El login pinta |
 | `http://localhost:4200/` sin sesión | Redirige a `/auth` — es el `authGuard` |
 | Entrar con la cuenta de demostración | Cae en `/dashboard` |
-| El panel, con la API caída | Tarjeta «Directorio público» en estado S8 o S9 |
+| El panel, con la API caída | La franja «Lo que toca hoy» en estado S8 o S9 |
 
 Esa última fila es una **prueba, no un fallo**: la aplicación debe decir que no
 hay API en vez de quedarse en blanco.

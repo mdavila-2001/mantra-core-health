@@ -1,4 +1,11 @@
-import { artefactosInexistentesDan404, esArtefactoDeConstruccion } from './build-assets';
+import type express from 'express';
+
+import {
+  artefactosInexistentesDan404,
+  cachePorHuella,
+  esArtefactoDeConstruccion,
+  tieneHuellaDeContenido,
+} from './build-assets';
 
 /**
  * Lo que estas pruebas vigilan es un fallo que **se disfraza de otra cosa**: un
@@ -65,6 +72,31 @@ describe('build-assets', () => {
       const { res, siguiente } = correr('/auth/register');
       expect(siguiente).toBe(true);
       expect(res.codigo).toBe(0);
+    });
+  });
+
+  /* `paciente.css` no lleva huella y se servía con un año de caché: quien la
+     bajó en la primera vuelta del rediseño seguía viendo esa versión. */
+  describe('cuánto se cachea cada estático', () => {
+    function cabecera(ruta: string): string | undefined {
+      const cabeceras: Record<string, string> = {};
+      const res = {
+        setHeader: (nombre: string, valor: string) => (cabeceras[nombre] = valor),
+      } as unknown as express.Response;
+      cachePorHuella(res, ruta);
+      return cabeceras['Cache-Control'];
+    }
+
+    it('lo que esbuild firma conserva el año de caché', () => {
+      expect(tieneHuellaDeContenido('/srv/browser/main-YHR6MAGL.js')).toBe(true);
+      expect(tieneHuellaDeContenido('/srv/browser/styles-YPWVIL3N.css')).toBe(true);
+      expect(cabecera('/srv/browser/chunk-P744KRQN.js')).toBeUndefined();
+    });
+
+    it('lo que no lleva huella se revalida antes de usarse', () => {
+      expect(cabecera('/srv/browser/paciente.css')).toBe('no-cache');
+      expect(cabecera('/srv/browser/alovida/imagenes/alovida-logo.svg')).toBe('no-cache');
+      expect(cabecera('/srv/browser/favicon.ico')).toBe('no-cache');
     });
   });
 });

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -28,6 +28,7 @@ import type { SegmentedOption } from '../../shared/components/molecules/segmente
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
+import { SurveyInsightsPanel } from './insights/survey-insights';
 import { encuestaRoute } from './questionnaires.routes';
 
 /** Largo máximo del título, el mismo que valida el backend. */
@@ -142,6 +143,7 @@ interface EncuestaVisible extends SurveySummary {
     SearchField,
     SegmentedControl,
     Skeleton,
+    SurveyInsightsPanel,
     Textarea,
     ViewStateHost,
   ],
@@ -150,6 +152,12 @@ interface EncuestaVisible extends SurveySummary {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SurveysHome {
+  /**
+   * Dentro del centro «Formularios | Encuestas» la cabecera la dibuja el
+   * centro; acá sólo queda la acción «Nueva encuesta», en su propio renglón.
+   */
+  readonly embedded = input(false);
+
   private readonly surveys = inject(SurveysClient);
   private readonly toast = inject(ToastService);
   private readonly navigation = inject(NavigationService);
@@ -262,7 +270,7 @@ export class SurveysHome {
           this.estado.set(
             empty(
               { label: 'Crear una encuesta' },
-              'Todavía no creaste ninguna encuesta. Una encuesta se le ofrece al paciente cuando cerrás una consulta que la tenga asociada.',
+              'Todavía no creó ninguna encuesta. Una encuesta se le ofrece al paciente cuando cierra una consulta que la tenga asociada.',
             ),
           );
           return;
@@ -315,7 +323,7 @@ export class SurveysHome {
           // borrador— podría no entrar en el grupo visible y el alta parecería
           // no haber hecho nada.
           this.limpiarFiltros();
-          this.toast.success('Encuesta creada. Agregale preguntas y publicala.');
+          this.toast.success('Encuesta creada. Agréguele preguntas y publíquela.');
           this.cargar();
         },
         error: (error: unknown) => {

@@ -18,10 +18,10 @@
 
 import { test, expect, type Page } from '@playwright/test';
 
-const LISTADO = '/accesos/accesos-clinicos-listado';
-const FORMULARIO = '/accesos/accesos-clinicos-del-paciente-formulario';
-const REPETIDOR = '/terminologia/conjuntos-de-valor-formulario';
-const PROPIEDADES = '/terminologia/propiedades-listado';
+const LISTADO = '/access-control/clinical-access-list';
+const FORMULARIO = '/access-control/patient-clinical-access-form';
+const REPETIDOR = '/vocabulary/value-sets-form';
+const PROPIEDADES = '/vocabulary/properties-list';
 
 /**
  * `networkidle` no llega nunca contra `ng serve` —el canal de recarga en

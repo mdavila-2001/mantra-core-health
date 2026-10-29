@@ -1,0 +1,3 @@
+#!/bin/sh
+# Refresca el grafo de graphify al traer cambios (`git pull`, `git merge`).
+exec sh "$(git rev-parse --show-toplevel)/.githooks/graphify-refresh.sh"

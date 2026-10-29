@@ -16,28 +16,6 @@
 
 /* El selector de organización. Sólo se dibuja con más de una, así que no compite
    con la ficha: es una línea, no un panel. */
-.organizacion-medica__selector {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.organizacion-medica__selector label {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.organizacion-medica__selector select {
-  padding: var(--sp-2) var(--sp-3);
-  background: var(--bg-surface);
-  color: var(--text-primary);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-sm);
-  font: inherit;
-}
-
 /* Ficha compacta de la práctica cuyo id gobierna las siete pestañas. Fondo
    inset —no tarjeta— para que se lea como ámbito y no como una sección más. */
 .organizacion-medica__ambito {

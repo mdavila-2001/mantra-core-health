@@ -245,8 +245,6 @@ node scripts/generate-doc-report.mjs
 | 11 | Dominio de los enlaces del correo sin coordinar | HIGH |
 | 12 | 22 hallazgos MEDIUM y 10 LOW | — |
 
-Detalle en [el análisis de brechas](documentation-gap-analysis.md).
-
 ## 20 · Declaración
 
 ### Del producto — al cierre de este trabajo
@@ -263,7 +261,7 @@ Detalle en [el análisis de brechas](documentation-gap-analysis.md).
 | 4 | Cabeceras de seguridad y CSP (C-02) | ✅ Seis cabeceras, CSP por hash |
 | 5 | Telemetría de errores (C-01) | ⚠️ **Parcial**: el código de soporte existe; **falta el destino** |
 | 6 | Monitoreo de disponibilidad y alertas | ❌ Depende de que exista un despliegue |
-| 7 | Smoke posterior al despliegue | ✅ Checklist escrito · pendiente de ejecutarse |
+| 7 | Smoke posterior al despliegue | ✅ Checklist escrito ([despliegue](../operations/deployment.md)) |
 
 Veredicto vigente en
 [el informe de preparación productiva](production-readiness.md).

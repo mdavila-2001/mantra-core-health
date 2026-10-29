@@ -5,10 +5,9 @@
     ## Por qué vive aparte de `public-directory.types.ts`
 
     Porque aquel archivo es la transcripción literal de `CONTRATO-PUBLICO.md`
-    del backend —lo dice su cabecera— y estas dos lecturas **todavía no están
-    en ese contrato**: son P30 y P31 de `PENDIENTES-BACKEND.md`. Mezclarlas ahí
-    diría que la API ya las sirve, y el próximo que compare el archivo contra el
-    contrato no sabría cuál de los dos está mal.
+    del backend —lo dice su cabecera— y estas lecturas **no están en ese
+    contrato** (P30 y P31). Mezclarlas ahí haría que el próximo que compare el
+    archivo contra el contrato no supiera cuál de los dos está mal.
 
     Sobre la rama `mockup` las responde el simulador, que es para lo que existe.
     Contra la API real, las dos pantallas que las consumen se quedan en su
@@ -74,8 +73,7 @@ export interface PublicPharmacyProduct {
     Pedido del propietario (19/09/2026): «debe mostrar todas sus sucursales y
     pedirle ubicación para la más cercana recomendar dada una receta médica».
 
-    Como las dos lecturas de arriba, **la API real todavía no las publica**:
-    son P37 de `PENDIENTES-BACKEND.md` y sobre `mockup` las responde el
+    **La API real no las publica** (P37): sobre `mockup` las responde el
     simulador. Contra la API real la sección se queda en su estado de error;
     no inventa sucursales ni existencias.
     ========================================================================== */
@@ -90,7 +88,15 @@ export interface PublicPharmacyProduct {
  * elegir entre ellas sin abrir ninguna.
  */
 export interface PublicPharmacyBranch {
-  /** El slug de su propia ficha pública. */
+  /**
+   * La sede (`pharmacy.pharmacy_sites`). Es la clave de la sucursal: dos sedes
+   * del mismo tenant comparten ficha y por eso comparten `slug`.
+   */
+  readonly id: string;
+  /**
+   * El slug de su ficha pública. Contra la API real todas las sedes de una
+   * cadena comparten el de la cadena; el simulador tiene una ficha por sede.
+   */
   readonly slug: string;
   /** «Farmacorp · San Miguel»: la cadena y la sucursal, que es como se nombra. */
   readonly name: string;
@@ -101,6 +107,14 @@ export interface PublicPharmacyBranch {
   readonly phone: string | null;
   /** «Lun a Sáb 08:00–22:00», tal como lo publica la cadena. `null` si no lo declara. */
   readonly openingHours: string | null;
+  /**
+   * Lo que la cadena escribió de esa sucursal en su pestaña Sucursales (P54):
+   * horario, piso, qué se atiende. `null` si no escribió nada. La API real no
+   * tiene horario estructurado, así que hoy el horario llega por acá.
+   */
+  readonly description: string | null;
+  /** El enlace de mapa que pegó la cadena, ya validado `http(s)` por la API. */
+  readonly locationUrl: string | null;
   /** Sin punto no hay pin ni distancia: la sucursal se lista igual, con su dirección. */
   readonly location: PublicGeoPoint | null;
   /**
@@ -113,7 +127,10 @@ export interface PublicPharmacyBranch {
    * fingida.
    */
   readonly locationAccuracy: string | null;
-  /** Si es la sucursal cuya ficha se está mirando. */
+  /**
+   * Si es la sucursal cuya ficha se está mirando. La API real lo pone en
+   * `true` sólo cuando la cadena tiene una única sucursal.
+   */
   readonly isCurrent: boolean;
 }
 
@@ -121,6 +138,19 @@ export interface PublicPharmacyBranch {
 export interface PublicGeoPoint {
   readonly lat: number;
   readonly lng: number;
+}
+
+/**
+ * Cuerpo de `POST /public/profiles/f/:slug/branch-availability` (P37).
+ *
+ * Los renglones van en el cuerpo y no en la URL: son datos de salud. `lat` y
+ * `lng` viajan juntas o no viajan; la API rechaza una sola con 400.
+ */
+export interface PublicPrescriptionAvailabilityRequest {
+  /** De 1 a 20 renglones de hasta 120 caracteres, como están en la receta. */
+  readonly items: readonly string[];
+  readonly lat?: number;
+  readonly lng?: number;
 }
 
 /** Un renglón de la receta que la sucursal **sí** tiene. */

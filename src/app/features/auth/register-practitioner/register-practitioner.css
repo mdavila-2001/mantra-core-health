@@ -1,5 +1,5 @@
 /* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
-   `../registro-compartido/registro.css`, que esta pantalla y el alta de
+   `../shared-registration/registration.css`, que esta pantalla y el alta de
    paciente declaran las dos en su `styleUrls`. */
 
 /* Las casillas de nombre: entran como UN campo de la página para que los
@@ -41,6 +41,20 @@
 
 .registro__especialidad-extra app-select {
   flex: 1 1 auto;
+}
+
+/* Cada especialidad es un bloque propio: la casilla, y debajo dónde la estudió.
+   Sin el marco, el número del diploma de la especialidad 1 se leía como el de
+   la 2. */
+.registro__especialidad {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  width: 100%;
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-default);
+  background-color: var(--surface-raised);
 }
 
 @media (min-width: 40rem) {
@@ -126,6 +140,38 @@
   border-width: 0;
 }
 
+
+/* ---------------------------------------------------------- habilitación
+   Matrícula, SEDES y colegio: cada registro es un renglón con su número, su
+   fecha de inscripción y su respaldo. En una tarjeta ancha, las tres casillas
+   en una fila; angosta, una debajo de la otra. Se mide el renglón y no la
+   ventana: el formulario comparte pantalla con la ayuda lateral. */
+
+.registro-habilitacion {
+  container: habilitacion / inline-size;
+  width: 100%;
+}
+
+.registro-habilitacion__grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+}
+
+@container habilitacion (min-width: 44rem) {
+  .registro-habilitacion__grilla {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}
+
+.registro-habilitacion__icono {
+  color: var(--text-muted);
+}
 
 /* ---------------------------------------------------------------- respaldos
    Los adjuntos de la habilitación y de los títulos. Mismo lenguaje visual que
@@ -306,6 +352,11 @@
 .registro-titulo__estudio-campo,
 .registro__estudio-campo {
   display: grid;
+  /* `minmax(0, 1fr)` y no la pista `auto` implícita: con `auto` la pista
+     tomaba el ancho mínimo del contenido —el nombre de la universidad en una
+     sola línea— y el desplegable se salía de su columna, encima de la ciudad
+     («Alice-Salomon-Fachhochschule für Sozialarbeit…»). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   min-width: 0;
 }
@@ -323,10 +374,36 @@
   /* La fila dejó de ser un renglón: con el nombre, tres casillas de dónde se
      cursó, el adjunto y el botón de quitar, en línea quedaba cada campo en
      ochenta píxeles. Se apila, y lo que se agrupa en renglón es el bloque de
-     estudio. La universidad lleva el doble: sus nombres son los largos. */
-  .registro-titulo__estudio,
-  .registro__estudio {
-    grid-template-columns: 1fr 2fr 1fr;
+     estudio. La universidad lleva el doble: sus nombres son los largos.
+     `minmax(0, …)` y no `1fr` a secas: `1fr` es `minmax(auto, 1fr)` y deja que
+     un nombre largo («Universidad Mayor de San Andrés (UMSA) — La Paz») ensanche
+     la columna y se salga de la tarjeta. */
+  .registro-titulo__estudio {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
     align-items: start;
+  }
+
+  /* El título con el que ejerce tiene CUATRO bloques —número del diploma, país,
+     universidad y ciudad—, no tres. Con la grilla de tres, el `2fr` caía sobre
+     el país y la universidad quedaba en la mitad de ancho, recortada. En
+     tablet son dos columnas y la universidad ocupa el renglón entero. */
+  .registro__estudio {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .registro__estudio-campo--ancha {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Escritorio: los cuatro en un renglón, y la universidad con el doble. */
+  .registro__estudio {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .registro__estudio-campo--ancha {
+    grid-column: auto;
   }
 }

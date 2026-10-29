@@ -1,0 +1,52 @@
+/* «Su médico de cabecera» en el inicio: una referencia de un renglón, del
+   mismo peso que la tira de última receta y última atención. */
+
+:host {
+  display: block;
+  margin-block: var(--sp-6);
+}
+
+.mi-cabecera__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.mi-cabecera__icono {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--sp-10);
+  block-size: var(--sp-10);
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.mi-cabecera__texto {
+  display: grid;
+  gap: 2px;
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+}
+
+.mi-cabecera__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 400;
+}
+
+.mi-cabecera__dato {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.mi-cabecera__dato--vacio,
+.mi-cabecera__desde {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}

@@ -1,25 +1,21 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { NgTemplateOutlet } from '@angular/common';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-  type AbstractControl,
-  type ValidationErrors,
-  type ValidatorFn,
-} from '@angular/forms';
+import { ChangeDetectionStrategy, Component, computed, inject, PLATFORM_ID, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { OrganizationRegistration } from '../../../core/data-access/iam/iam.types';
 import { LegalEntityTypesCatalog } from '../../../core/data-access/system-context/legal-entity-types.service';
-import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
 import { uiLanguage } from '../../../core/i18n/ui-language';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { DynamicEnumOption } from '../../../core/data-access/system-context/system-context.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Input } from '../../../shared/components/atoms/input/input';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
@@ -35,35 +31,43 @@ import {
   telefonoCompleto,
 } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { mensajeDeError } from '../../../shared/forms/paginated/mensaje-de-error';
+import { mensajeDeError } from '../../../shared/forms/paginated/error-message';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import {
-  camposDeDocumentosLegales,
-  campoDelPoderNotariado,
-  DOCUMENTOS_LEGALES_DEL_REGISTRO,
-  type ClaveDeDocumentoDelAlta,
-} from '../registro-compartido/documentos-legales';
+  legalDocumentsFields,
+  notarizedPowerField,
+  RECORD_LEGAL_DOCUMENTS,
+  type EnrollmentDocumentKey,
+} from '../shared-registration/legal-documents';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
-import { unirNombres } from '../../../core/profesion/nombres-adicionales';
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
+import { joinNames } from '../../../core/profession/additional-names';
 import {
   esPaisMultizona,
   obtenerZonaHorariaDefectoDePais,
   obtenerZonasHorariasDePais,
 } from '../../../core/i18n/timezone-by-country';
-import { codigoDesdeSigla, MAX_SIGLA, MIN_SIGLA, siglaDerivaCodigo } from './codigo-desde-sigla';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
+import {
+  nameGroup,
+  completeName,
+  type NameValue,
+} from '../shared-registration/name-fields/person-name';
+import { codeFromAcronym, MAX_ACRONYM, MIN_ACRONYM, codeDriftAcronym } from './code-from-acronym';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /** Largos que declara el bloque `organization` de `RegisterOrganizationDto`. */
 const MAX_NOMBRE = 300;
@@ -73,18 +77,9 @@ const MAX_ZONA_HORARIA = 100;
 const MAX_NIT = 100;
 const MAX_DIRECCION = 300;
 
-/** Tope del `fullName` compuesto (subtarea 1.4), igual al del DTO del backend. */
-const MAX_NOMBRE_CONTACTO = 200;
 const MIN_CI_REPRESENTANTE = 4;
 const MAX_CI_REPRESENTANTE = 50;
 const MAX_CORREO = 320;
-
-/**
- * Topes por parte del nombre (representante, gerencias y owner): sólo los ve
- * el cliente — el backend recibe siempre el compuesto, nunca las partes.
- */
-const MIN_PARTE_NOMBRE = 2;
-const MAX_PARTE_NOMBRE = 100;
 
 /**
  * El país con el que arranca el formulario: Bolivia, zona única. Fija el
@@ -100,124 +95,24 @@ const PAIS_POR_DEFECTO = 'BO';
  * muestra ningún «código», ese 409 genérico se reescribe nombrando la sigla,
  * que es lo único que la persona escribió.
  */
-const MENSAJE_CODIGO_EN_USO_API = 'El código de organización ya existe';
-
-/** Los cinco controles con los que se declara el nombre de una persona en este alta. */
-interface ControlesDeNombre {
-  name: FormControl<string>;
-  middleName: FormControl<string>;
-  thirdName: FormControl<string>;
-  lastName: FormControl<string>;
-  motherLastName: FormControl<string>;
-}
 
 /**
- * Los cinco controles de nombre, en blanco: primer nombre y apellido paterno
- * obligatorios, los otros tres opcionales — mismo desglose que paciente y
- * médico (`register-patient.ts`/`register-practitioner.ts`).
+ * Una gerencia de contacto (subtarea 1.4): el nombre como grupo compartido
+ * —el mismo desglose y el mismo «+ Agregar otro nombre» que paciente, médico y
+ * farmacia—, más celular y correo.
  */
-function controlesDeNombre(): ControlesDeNombre {
-  return {
-    name: new FormControl('', {
+function grupoDeGerente() {
+  return new FormGroup({
+    nombre: nameGroup(true),
+    phone: new FormControl('', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(MIN_PARTE_NOMBRE),
-        Validators.maxLength(MAX_PARTE_NOMBRE),
-      ],
+      validators: [Validators.required, telefonoCompleto],
     }),
-    middleName: new FormControl('', {
+    email: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
-    thirdName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-    lastName: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(MIN_PARTE_NOMBRE),
-        Validators.maxLength(MAX_PARTE_NOMBRE),
-      ],
-    }),
-    motherLastName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(MAX_PARTE_NOMBRE)],
-    }),
-  };
-}
-
-/**
- * Compone el nombre completo tal como lo espera `fullName` en el backend
- * (`RegisterOrganizationLegalRepresentativeDto`/`RegisterOrganizationExecutiveContactDto`):
- * las partes no vacías, recortadas y separadas por un espacio. Reusa
- * `unirNombres`, la misma función que ya concilia esto entre el alta de
- * médico y su editor de perfil — ver su JSDoc.
- */
-function componerNombreCompleto(p: {
-  name: string;
-  middleName: string;
-  thirdName: string;
-  lastName: string;
-  motherLastName: string;
-}): string {
-  return unirNombres([p.name, p.middleName, p.thirdName, p.lastName, p.motherLastName]);
-}
-
-/**
- * El nombre compuesto no puede pasar el `@MaxLength(200)` de `fullName` en el
- * backend. Vive a nivel de GRUPO (no de un control) porque depende de las
- * cinco partes juntas.
- *
- * El mínimo de 3 caracteres del mismo decorador queda garantizado por
- * `name`/`lastName` (2 + 2 + el espacio que los separa): no hace falta
- * repetirlo acá.
- */
-const nombreCompletoCabe: ValidatorFn = (grupo: AbstractControl): ValidationErrors | null => {
-  const valor = grupo.value as Partial<{
-    name: string;
-    middleName: string;
-    thirdName: string;
-    lastName: string;
-    motherLastName: string;
-  }>;
-  const compuesto = componerNombreCompleto({
-    name: valor.name ?? '',
-    middleName: valor.middleName ?? '',
-    thirdName: valor.thirdName ?? '',
-    lastName: valor.lastName ?? '',
-    motherLastName: valor.motherLastName ?? '',
   });
-  return compuesto.length > MAX_NOMBRE_CONTACTO
-    ? { nombreCompletoLargo: { max: MAX_NOMBRE_CONTACTO, actual: compuesto.length } }
-    : null;
-};
-
-/** El nombre del representante legal: sus cinco partes, como un único grupo. */
-function grupoDeNombre(): FormGroup<ControlesDeNombre> {
-  return new FormGroup(controlesDeNombre(), { validators: [nombreCompletoCabe] });
-}
-
-/** Los siete campos de una gerencia de contacto (subtarea 1.4): nombre en cinco partes, celular, correo. */
-function grupoDeGerente(): FormGroup<
-  ControlesDeNombre & { phone: FormControl<string>; email: FormControl<string> }
-> {
-  return new FormGroup(
-    {
-      ...controlesDeNombre(),
-      phone: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, telefonoCompleto],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
-      }),
-    },
-    { validators: [nombreCompletoCabe] },
-  );
 }
 
 /**
@@ -236,7 +131,7 @@ function grupoDeGerente(): FormGroup<
  * ## El tipo de tenant es fijo
  *
  * A diferencia del alta administrativa (`OrganizationNew`), que ofrece los
- * diez tipos de `TENANT_TYPE_CODES`, acá no hay nada que elegir: esta
+ * once tipos de `TENANT_TYPE_CODES`, acá no hay nada que elegir: esta
  * pantalla sólo da de alta aseguradoras, así que el cliente manda
  * `tenantType: 'PAYER'` fijo y el bloque `payer` **siempre** viaja completo.
  *
@@ -262,17 +157,23 @@ function grupoDeGerente(): FormGroup<
  */
 @Component({
   selector: 'app-register-organization',
-  imports: [
+  imports: [RegistrationBadge, 
     RouterLink,
+    // El botón «Ir a iniciar sesión» de la confirmación es `<button app-button>`:
+    // sin esta importación es un `<button>` nativo y su `(clicked)` —un output
+    // de AppButton— nunca se dispara, así que quien termina el alta se quedaba
+    // sin poder avanzar. `tsc` no lo ve: los eventos de un elemento nativo no
+    // se tipan.
+    AppButton,
     Link,
     Alert,
     AuthSplit,
     AnnounceOnAppear,
     PaginatedForm,
-    CampoPersonalizado,
+    CustomField,
     NgTemplateOutlet,
     DropzonePdf,
-    UbicacionPicker,
+    MapLocationPicker,
     // Representante legal y gerencias (subtarea 1.4): el acordeón se declara
     // fuera del `[formGroup]` del motor (como los demás `ng-template` de
     // `appCampoPersonalizado`), así que sus controles se enchufan con
@@ -283,19 +184,27 @@ function grupoDeGerente(): FormGroup<
     FormField,
     Input,
     PhoneInput,
+    InlineNameFields,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-organization.html',
   styleUrl: './register-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterOrganization {
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly iam = inject(IamClient);
   private readonly router = inject(Router);
   private readonly legalEntityTypes = inject(LegalEntityTypesCatalog);
+  private readonly draftService = inject(OnboardingDraftService);
 
-  protected readonly claim = 'Gestioná tu aseguradora en un solo lugar';
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
+  readonly claveVisible = signal('');
+
+  protected readonly claim = 'Gestione su aseguradora en un solo lugar';
   protected readonly tagline =
-    'Sumate a la red de salud y conectá con miles de pacientes y prestadores.';
+    'Súmese a la red de salud y conecte con miles de pacientes y prestadores.';
 
   readonly form = new FormGroup({
     legalName: new FormControl('', {
@@ -314,9 +223,9 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.minLength(MIN_SIGLA),
-        Validators.maxLength(MAX_SIGLA),
-        siglaDerivaCodigo,
+        Validators.minLength(MIN_ACRONYM),
+        Validators.maxLength(MAX_ACRONYM),
+        codeDriftAcronym,
       ],
     }),
     // País de constitución y tipo societario (subtarea 1.1). El país nunca
@@ -334,9 +243,19 @@ export class RegisterOrganization {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_NIT)],
     }),
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la casa matriz, ver `escribirLocalidadCasaMatriz`. Sigue obligatoria
+    // porque la API la exige, y nunca queda vacía con un punto puesto.
     address: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
+    }),
+    // **El punto de la casa matriz es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCasaMatriz` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCasaMatriz: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
     }),
     // Siempre tiene un valor: para países de zona única lo asigna
     // `acomodarPaisYTipoSocietario` sin que la persona la vea; para
@@ -374,7 +293,7 @@ export class RegisterOrganization {
     // alta. El teléfono es el único dato de contacto opcional: el registro
     // de procesos no lo pide, y `telefonoCompleto` deja pasar la cadena
     // vacía (ver su JSDoc).
-    legalRepresentative: grupoDeNombre(),
+    legalRepresentative: nameGroup(true),
     legalRepresentativeIdNumber: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -405,25 +324,14 @@ export class RegisterOrganization {
       commercialManager: grupoDeGerente(),
       marketingManager: grupoDeGerente(),
     }),
-    // Datos del owner. El nombre va en sus cinco partes como un ÚNICO grupo
-    // (`grupoDeNombre`), igual que el representante legal y las tres
-    // gerencias. Eran cinco controles sueltos, y el motor —que corta de a
-    // cuatro— dejaba el apellido materno en la página siguiente, separado
-    // del paterno. Como grupo entran los cinco en una sola página, con el
-    // mismo reparto de anchos que el resto del alta, y de paso alcanza al
-    // owner el tope de 200 caracteres del nombre compuesto, que depende de
-    // las cinco partes juntas y por eso no puede vivir en un control suelto.
-    //
-    // El backend sigue sin columna de tercer nombre: `thirdName` se pliega
-    // en `middleName` al enviar — ver `datos()` y `unirNombres`.
-    ownerName: grupoDeNombre(),
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
+    // La contraseña del representante legal. El representante ES el owner:
+    // es la única persona que inicia sesión por la aseguradora, así que ya
+    // no hay un segundo juego de nombre y correo («Tu cuenta»). El nombre y
+    // el correo salen de `legalRepresentative` y `legalRepresentativeEmail`;
+    // acá sólo falta la clave con la que va a entrar. Ver `datos()`.
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -478,28 +386,25 @@ export class RegisterOrganization {
    * mitad, y este es el alta pública de una aseguradora: quien la abre no
    * tiene ninguna obligación de terminarla. Las secciones son las que ya
    * separaban visualmente el formulario —la empresa, sus datos, su
-   * documentación, sus personas, y la cuenta de quien la administra—; el
-   * motor las parte en páginas de cuatro conservando el nombre.
+   * documentación y sus personas—; el motor las parte en páginas de cuatro
+   * conservando el nombre.
    *
    * Ya no hay un paso de «Cómo se la identifica»: el código de tenant y el
    * de aseguradora se derivan de la sigla (`codigoDesdeSigla`, en `datos()`)
-   * y no son algo que la persona escriba. Para un país de zona única
-   * (Bolivia, Argentina…) el alta queda en **8 páginas**; para uno
-   * multizona (Estados Unidos, Brasil, México) el selector de zona horaria
-   * en «Datos de la aseguradora» suma un quinto campo a esa sección, que el
-   * motor parte en dos — **9 páginas** sólo ahí.
-   *
-   * Eran 9 y 10: «Tu cuenta» tenía siete campos —los cinco nombres del
-   * owner, el correo y la contraseña— y el motor la partía en dos, con el
-   * apellido materno huérfano al principio de la segunda. Desde que los
-   * cinco nombres viajan como un único campo `custom` (el grupo
-   * `ownerName`), la sección son tres campos y entra en una sola página.
+   * y no son algo que la persona escriba. Tampoco hay un paso de «Tu
+   * cuenta»: la única persona que inicia sesión por una aseguradora es su
+   * representante legal, y su contraseña se pide en la misma sección que su
+   * nombre y su correo. Para un país de zona única (Bolivia, Argentina…) el
+   * alta queda en **7 páginas**. Para uno multizona (Estados Unidos, Brasil,
+   * México) el selector de zona horaria suma un campo a «Datos de la
+   * aseguradora»; desde que «Dirección» dejó de escribirse (26/10/2026) la
+   * sección sigue cabiendo en una página de cuatro, así que también son 7.
    *
    * `computed`, y no una constante: las opciones del tipo societario y de
    * zona horaria cambian con el país elegido (subtareas 1.1 y ésta).
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'La empresa',
         hint: 'Cómo se llama y qué figura jurídica tiene.',
@@ -510,7 +415,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-nombre',
-            mensajeDeError: 'Escribí el nombre de la empresa.',
+            mensajeDeError: 'Escriba el nombre de la empresa.',
           },
           {
             // La sigla es lo único que la persona escribe para identificarse
@@ -522,7 +427,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-sigla',
-            mensajeDeError: 'Escribí la sigla: de 3 a 20 letras o números.',
+            mensajeDeError: 'Escriba la sigla: de 3 a 20 letras o números.',
           },
           {
             key: 'incorporationCountry',
@@ -532,7 +437,7 @@ export class RegisterOrganization {
             options: this.opcionesPaisSocietario,
             required: true,
             testId: 'registro-organizacion-pais',
-            mensajeDeError: 'Elegí el país de constitución.',
+            mensajeDeError: 'Elija el país de constitución.',
           },
           {
             key: 'legalEntityType',
@@ -542,7 +447,7 @@ export class RegisterOrganization {
             options: this.opcionesTipoSocietario(),
             required: true,
             testId: 'registro-organizacion-tipo-societario',
-            mensajeDeError: 'Elegí el tipo societario.',
+            mensajeDeError: 'Elija el tipo societario.',
           },
         ],
       },
@@ -550,6 +455,18 @@ export class RegisterOrganization {
         titulo: 'Datos de la aseguradora',
         hint: 'Lo que la plataforma necesita para facturarle y ubicarla.',
         campos: [
+          // El mapa va primero y es lo único de la ubicación que se marca: la
+          // dirección, el departamento, el municipio y la zona salen del punto
+          // y el selector los muestra sin dejarlos editar (26/10/2026).
+          {
+            key: 'gpsCasaMatriz',
+            label: 'Ubicación de la casa matriz en el mapa',
+            hint: 'Use su GPS o toque el plano. De ese punto sacamos la dirección, el municipio y la zona.',
+            control: 'custom' as const,
+            ancho: 'completo' as const,
+            required: true,
+            mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+          },
           {
             key: 'regulatorIdentifier',
             label: 'NIT',
@@ -557,16 +474,7 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-nit',
-            mensajeDeError: 'Escribí el NIT de la empresa.',
-          },
-          {
-            key: 'address',
-            label: 'Dirección',
-            hint: 'La de la casa matriz. Las de cada sucursal se cargan después.',
-            control: 'text' as const,
-            required: true,
-            testId: 'registro-organizacion-direccion',
-            mensajeDeError: 'Escribí la dirección (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba el NIT de la empresa.',
           },
           // Sólo en países multizona: uno de zona única (Bolivia, Argentina)
           // no tiene nada que preguntar acá — `acomodarPaisYTipoSocietario`
@@ -576,12 +484,12 @@ export class RegisterOrganization {
                 {
                   key: 'timeZone',
                   label: 'Zona horaria de la casa matriz',
-                  hint: 'Elegí el huso horario en el que opera la sede principal.',
+                  hint: 'Elija el huso horario en el que opera la sede principal.',
                   control: 'select' as const,
                   options: this.opcionesZonaHoraria(),
                   required: true,
                   testId: 'registro-organizacion-zona',
-                  mensajeDeError: 'Elegí la zona horaria de la casa matriz.',
+                  mensajeDeError: 'Elija la zona horaria de la casa matriz.',
                 },
               ]
             : []),
@@ -592,13 +500,6 @@ export class RegisterOrganization {
             control: 'text' as const,
             testId: 'registro-organizacion-comercial',
           },
-          {
-            key: 'gpsCasaMatriz',
-            label: 'Ubicación de la casa matriz en el mapa (opcional)',
-            hint: 'Usá tu GPS o tocá el plano. Sin el punto, la aseguradora no aparece cuando alguien busca la más cercana.',
-            control: 'custom' as const,
-            ancho: 'completo' as const,
-          },
         ],
       },
       {
@@ -606,12 +507,13 @@ export class RegisterOrganization {
         clave: 'documentos-legales',
         icon: 'folder' as const,
         hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
-        campos: camposDeDocumentosLegales(this.incorporationCountryElegido(), uiLanguage()),
+        sinPartir: true,
+        campos: legalDocumentsFields(this.incorporationCountryElegido(), uiLanguage()),
       },
       {
         titulo: 'Representante legal',
         clave: 'legal-representative',
-        hint: 'Quien está facultado para firmar en nombre de la aseguradora.',
+        hint: 'Quien está facultado para firmar en nombre de la aseguradora. Es la única persona que inicia sesión por ella.',
         campos: [
           {
             // Sin rótulo, mismo motivo que `executives` más abajo: el
@@ -622,7 +524,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError: 'Completá el nombre y el apellido paterno del representante legal.',
+            mensajeDeError: 'Complete el nombre y el apellido paterno del representante legal.',
           },
           {
             key: 'legalRepresentativeIdNumber',
@@ -631,24 +533,36 @@ export class RegisterOrganization {
             control: 'text' as const,
             required: true,
             testId: 'registro-organizacion-representante-ci',
-            mensajeDeError: 'Escribí el número de cédula.',
+            mensajeDeError: 'Escriba el número de cédula.',
           },
           {
             key: 'legalRepresentativeEmail',
-            label: 'Correo oficial de notificaciones',
+            label: 'Correo',
+            hint: 'Con este correo y la contraseña de abajo se inicia sesión. También recibe las notificaciones oficiales.',
             control: 'email' as const,
             required: true,
+            autocomplete: 'username',
             testId: 'registro-organizacion-representante-correo',
-            mensajeDeError: 'Ingresá un correo válido.',
+            mensajeDeError: 'Ingrese un correo válido.',
+          },
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            control: 'password' as const,
+            required: true,
+            autocomplete: 'new-password',
+            testId: 'registro-organizacion-representante-password',
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
           },
           {
             key: 'legalRepresentativePhone',
             label: 'Teléfono de contacto (opcional)',
             control: 'tel' as const,
             testId: 'registro-organizacion-representante-telefono',
-            mensajeDeError: 'Completá el número.',
+            mensajeDeError: 'Complete el número.',
           },
-          campoDelPoderNotariado(this.incorporationCountryElegido(), uiLanguage()),
+          notarizedPowerField(this.incorporationCountryElegido(), uiLanguage()),
         ],
       },
       {
@@ -666,51 +580,7 @@ export class RegisterOrganization {
             label: '',
             control: 'custom' as const,
             ancho: 'completo' as const,
-            mensajeDeError: 'Completá nombre, celular y correo de las tres gerencias.',
-          },
-        ],
-      },
-      {
-        titulo: 'Tu cuenta',
-        clave: 'owner',
-        hint: 'Quien administra la aseguradora en la plataforma.',
-        campos: [
-          {
-            // Sin rótulo, mismo motivo que `legalRepresentative` y
-            // `executives`: el `app-form-field` externo de un campo
-            // `custom` pintaría un `<label for>` hacia un control que no
-            // existe, y el título de la página ya dice de qué se trata.
-            //
-            // Los cinco nombres entran como UN campo —el grupo
-            // `ownerName`— para que el motor no los reparta en dos
-            // páginas. La plantilla los pinta con la misma grilla que el
-            // representante legal, y los `data-testid` siguen siendo los
-            // de antes (`registro-organizacion-owner-…`).
-            key: 'ownerName',
-            label: '',
-            control: 'custom' as const,
-            ancho: 'completo' as const,
-            mensajeDeError: 'Completá tu nombre y tu apellido paterno.',
-          },
-          {
-            key: 'email',
-            label: 'Correo',
-            hint: 'Con este correo vas a iniciar sesión.',
-            control: 'email' as const,
-            required: true,
-            autocomplete: 'username',
-            testId: 'registro-organizacion-owner-correo',
-            mensajeDeError: 'Ingresá un correo válido.',
-          },
-          {
-            key: 'password',
-            label: 'Contraseña',
-            hint: 'Al menos 8 caracteres.',
-            control: 'password' as const,
-            required: true,
-            autocomplete: 'new-password',
-            testId: 'registro-organizacion-owner-password',
-            mensajeDeError: MENSAJE_CONTRASENA_CORTA,
+            mensajeDeError: 'Complete nombre, celular y correo de las tres gerencias.',
           },
         ],
       },
@@ -732,14 +602,14 @@ export class RegisterOrganization {
       // único que la persona escribió y puede cambiar. Cualquier otro 409
       // (el correo del owner, por ejemplo) se muestra tal como lo manda
       // la API.
-      if (mensaje === MENSAJE_CODIGO_EN_USO_API) {
+      if (state.issues[0]?.field === 'code') {
         const sigla = this.form.controls.sigla.value.trim();
-        return `La sigla «${sigla}» ya está en uso en la plataforma. Elegí otra.`;
+        return `La sigla «${sigla}» ya está en uso en la plataforma. Elija otra.`;
       }
       return mensaje;
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -747,9 +617,102 @@ export class RegisterOrganization {
     return null;
   });
 
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginas();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.form.getRawValue();
+      const extraData = {
+        gpsCasaMatriz: this.gpsCasaMatriz(),
+      };
+      this.draftService.saveProgress(
+        'organization',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'organization', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('organization');
+      if (!draft) return;
+      if (draft.data) {
+        this.form.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (extra['gpsCasaMatriz'] !== undefined) {
+        this.fijarGpsCasaMatriz(extra['gpsCasaMatriz'] as Coordinates | null);
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'organization', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('organization');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  /** Lo que el motor avisa al cambiar de página. */
+  protected recordarPaso(pagina: PaginaDeFormulario): void {
+    this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
+  }
+
   constructor() {
+    const detectado = this.draftService.detectDraft('organization');
+    if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+      this.borradorDetectado.set(detectado);
+    }
+    this.draftService.trackEvent('start', 'organization', 0);
+
+    // El representante legal es el owner: sus nombres adicionales viajan
+    // plegados en el `middleName` de la cuenta, que el backend topa en 100.
+    this.form.controls.legalRepresentative.addValidators((grupo) => {
+      const nombre = grupo.getRawValue() as NameValue;
+      return joinNames([nombre.middleName, nombre.thirdName, ...nombre.extraNames]).length > 100
+        ? { nombresAdicionalesLargos: true }
+        : null;
+    });
+    this.form.controls.legalRepresentative.updateValueAndValidity();
     this.cargarTipoSocietario();
     this.acomodarPaisYTipoSocietario();
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
   }
 
   /**
@@ -808,50 +771,47 @@ export class RegisterOrganization {
   /**
    * La ubicación de la casa matriz, si la persona la confirmó (subtarea 1.3).
    *
-   * Una señal y no un `FormControl`: el campo es `custom` (lo pinta
-   * `app-ubicacion-picker`, no un control de texto), y `app-paginated-form`
-   * tolera un campo `custom` sin control homónimo en el `FormGroup`. Pasarla
-   * como `[inicial]` al picker es lo que le permite sobrevivir a que el
-   * asistente destruya y recree esta página al navegar (misma lección que
-   * `documentosSubidos`, arriba).
+   * Pasarla como `[inicial]` al picker es lo que le permite sobrevivir a que
+   * el asistente destruya y recree esta página al navegar (misma lección que
+   * `documentosSubidos`, arriba). El control homónimo del formulario es el que
+   * hace obligatorio el punto y el que viaja; los dos los escribe
+   * {@link fijarGpsCasaMatriz}.
    */
-  readonly gpsCasaMatriz = signal<Coordenadas | null>(null);
+  readonly gpsCasaMatriz = signal<Coordinates | null>(null);
 
-  /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
-   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
-   * vuelve a escribir, se va solo.
-   */
-  private readonly direccionVaciadaPorElMapa = signal(false);
-  private readonly direccionEscrita = toSignal(this.form.controls.address.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
-
-  /** Tocaron el mapa de la casa matriz: la dirección escrita ya no vale (D-06). */
-  vaciarDireccionPorElMapa(): void {
-    this.form.controls.address.setValue('');
-    this.direccionVaciadaPorElMapa.set(true);
+  /** El punto confirmado de la casa matriz (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCasaMatriz(punto: Coordinates | null): void {
+    this.gpsCasaMatriz.set(punto);
+    const control = this.form.controls.gpsCasaMatriz;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
+    const direccion = this.form.controls.address;
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
   }
 
-  protected readonly idsUbicacionCasaMatriz: IdsDePrueba = {
+  /**
+   * Lo deducido del punto de la casa matriz llena «Dirección», que ya no se
+   * escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se ve,
+   * es el que frena.
+   */
+  escribirLocalidadCasaMatriz(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.address.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
+  }
+
+  protected readonly idsUbicacionCasaMatriz: TestIds = {
     mapa: 'registro-organizacion-casa-matriz-map',
     confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
     avisoGeocodificacion: 'registro-organizacion-casa-matriz-geocoding-notice',
     quitar: 'registro-organizacion-casa-matriz-location-remove',
-    sinConfirmar: 'registro-organizacion-casa-matriz-location-unconfirmed',
     confirmar: 'registro-organizacion-casa-matriz-location-confirm',
     usarUbicacion: 'registro-organizacion-casa-matriz-location-use',
     marcarEnMapa: 'registro-organizacion-casa-matriz-location-pick',
   };
 
   /** Los cinco documentos legales, en el orden del registro de procesos (subtarea 1.2). */
-  protected readonly documentosLegales = DOCUMENTOS_LEGALES_DEL_REGISTRO;
+  protected readonly documentosLegales = RECORD_LEGAL_DOCUMENTS;
 
   /** Cómo sube cada `app-dropzone-pdf`: delega en el mismo endpoint de pre-carga pública. */
   protected readonly subirDocumento: PdfUploader = (file) =>
@@ -863,11 +823,11 @@ export class RegisterOrganization {
    * Ver el JSDoc de `documentoInicial` en `DropzonePdf`.
    */
   protected readonly documentosSubidos = signal<
-    Partial<Record<ClaveDeDocumentoDelAlta, UploadedDocument>>
+    Partial<Record<EnrollmentDocumentKey, UploadedDocument>>
   >({});
 
   /** Guarda el `fileId` que la dropzone recordó, en el control que le corresponde. */
-  protected registrarDocumento(clave: ClaveDeDocumentoDelAlta, fileId: string | null): void {
+  protected registrarDocumento(clave: EnrollmentDocumentKey, fileId: string | null): void {
     const control = this.form.controls[clave];
     control.setValue(fileId ?? '');
     control.markAsTouched();
@@ -881,7 +841,7 @@ export class RegisterOrganization {
   }
 
   /** Recuerda el documento recién subido para poder restaurarlo tras ir y volver. */
-  protected recordarDocumento(clave: ClaveDeDocumentoDelAlta, documento: UploadedDocument): void {
+  protected recordarDocumento(clave: EnrollmentDocumentKey, documento: UploadedDocument): void {
     this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
@@ -893,18 +853,18 @@ export class RegisterOrganization {
    * contexto para un `ng-template` sin directiva propia), y TypeScript no
    * deja indexar un `Record` con una clave `any` bajo `noImplicitAny`.
    */
-  protected documentoInicialDe(clave: ClaveDeDocumentoDelAlta): UploadedDocument | null {
+  protected documentoInicialDe(clave: EnrollmentDocumentKey): UploadedDocument | null {
     return this.documentosSubidos()[clave] ?? null;
   }
 
   /** Si ese documento está tocado y vacío/incompleto — mismo criterio que el resto de los campos. */
-  protected esDocumentoInvalido(clave: ClaveDeDocumentoDelAlta): boolean {
+  protected esDocumentoInvalido(clave: EnrollmentDocumentKey): boolean {
     const control = this.form.controls[clave];
     return control.touched && control.invalid;
   }
 
   /** El rótulo ya traducido del documento, para pasárselo a su dropzone. */
-  protected etiquetaDeDocumento(clave: ClaveDeDocumentoDelAlta): string {
+  protected etiquetaDeDocumento(clave: EnrollmentDocumentKey): string {
     const campo = this.paginas()
       .flatMap((pagina) => pagina.campos)
       .find((c) => c.key === clave);
@@ -941,57 +901,6 @@ export class RegisterOrganization {
     },
   ];
 
-  /**
-   * Los cinco campos de nombre, iguales para el representante legal y las
-   * tres gerencias — mismo desglose que paciente, médico y el owner de este
-   * alta. `ancho` decide cuánto ocupa cada uno en `register-org__nombres`.
-   */
-  protected readonly camposDeNombre: readonly {
-    readonly key: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName';
-    readonly label: string;
-    readonly autocomplete?: string;
-    readonly testId: string;
-    readonly ancho: 'tercio' | 'mitad';
-    readonly required?: boolean;
-  }[] = [
-    {
-      key: 'name',
-      label: 'Primer nombre',
-      autocomplete: 'given-name',
-      testId: 'nombre',
-      ancho: 'tercio',
-      required: true,
-    },
-    {
-      key: 'middleName',
-      label: 'Segundo nombre (opcional)',
-      autocomplete: 'additional-name',
-      testId: 'segundo-nombre',
-      ancho: 'tercio',
-    },
-    {
-      key: 'thirdName',
-      label: 'Tercer nombre u otros (opcional)',
-      testId: 'tercer-nombre',
-      ancho: 'tercio',
-    },
-    {
-      key: 'lastName',
-      label: 'Apellido paterno',
-      autocomplete: 'family-name',
-      testId: 'apellido-paterno',
-      ancho: 'mitad',
-      required: true,
-    },
-    {
-      key: 'motherLastName',
-      label: 'Apellido materno (opcional)',
-      autocomplete: 'family-name',
-      testId: 'apellido-materno',
-      ancho: 'mitad',
-    },
-  ];
-
   /** Celular y correo de una gerencia (subtarea 1.4): lo único que no es nombre. */
   protected readonly camposDeContactoDeGerencia: readonly {
     readonly key: 'phone' | 'email';
@@ -1010,87 +919,23 @@ export class RegisterOrganization {
     { key: 'email', label: 'Correo corporativo', control: 'email', autocomplete: 'email' },
   ];
 
-  /**
-   * El `FormControl` de un campo de una gerencia, dentro del grupo `executives`.
-   *
-   * Tipado como `FormControl` y no como `AbstractControl`: `[formControl]`
-   * (`FormControlDirective`) exige el tipo concreto, y el grupo anidado sólo
-   * contiene `FormControl`s (nunca otro `FormGroup`).
-   */
+  /** El `FormControl` de celular o correo de una gerencia, dentro del grupo `executives`. */
   protected controlDeGerencia(
     gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
-    campoKey:
-      'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName' | 'phone' | 'email',
+    campoKey: 'phone' | 'email',
   ): FormControl<string> {
     return this.form.controls.executives.controls[gerenciaKey].controls[campoKey];
-  }
-
-  /** El `FormControl` de un campo de nombre del representante legal. */
-  protected controlDelRepresentante(
-    campoKey: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName',
-  ): FormControl<string> {
-    return this.form.controls.legalRepresentative.controls[campoKey];
-  }
-
-  /** El `FormControl` de un campo de nombre del owner. */
-  protected controlDelOwner(
-    campoKey: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName',
-  ): FormControl<string> {
-    return this.form.controls.ownerName.controls[campoKey];
-  }
-
-  /**
-   * El error de un nombre compuesto (>200 caracteres en total), a nivel de
-   * `FormGroup` — nunca del `FormControl` de una parte: el validador vive
-   * en el grupo porque depende de las cinco partes juntas. Se muestra bajo
-   * el apellido paterno, que es donde ya se lee cuando el resto del nombre
-   * está completo.
-   */
-  private errorDeNombreLargo(grupo: AbstractControl): string {
-    return grupo.touched && grupo.hasError('nombreCompletoLargo')
-      ? 'El nombre completo no puede pasar de 200 caracteres.'
-      : '';
   }
 
   /** Reusa los mismos textos de error que el resto del alta. */
   protected errorDeGerencia(
     gerenciaKey: 'generalManager' | 'commercialManager' | 'marketingManager',
-    campo: {
-      readonly key:
-        'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName' | 'phone' | 'email';
-      readonly label: string;
-    },
+    campo: { readonly key: 'phone' | 'email'; readonly label: string },
   ): string {
-    const mensajePropio = mensajeDeError(this.controlDeGerencia(gerenciaKey, campo.key), {
+    return mensajeDeError(this.controlDeGerencia(gerenciaKey, campo.key), {
       label: campo.label,
-      mensajeDeError: campo.key === 'phone' ? 'Completá el número.' : undefined,
+      mensajeDeError: campo.key === 'phone' ? 'Complete el número.' : undefined,
     });
-    if (mensajePropio !== '' || campo.key !== 'lastName') return mensajePropio;
-    return this.errorDeNombreLargo(this.form.controls.executives.controls[gerenciaKey]);
-  }
-
-  /** Mismo criterio que {@link errorDeGerencia}, para el representante legal. */
-  protected errorDelRepresentante(campo: {
-    readonly key: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName';
-    readonly label: string;
-  }): string {
-    const mensajePropio = mensajeDeError(this.controlDelRepresentante(campo.key), {
-      label: campo.label,
-    });
-    if (mensajePropio !== '' || campo.key !== 'lastName') return mensajePropio;
-    return this.errorDeNombreLargo(this.form.controls.legalRepresentative);
-  }
-
-  /** Mismo criterio que `errorDelRepresentante`, sobre el grupo del owner. */
-  protected errorDelOwner(campo: {
-    readonly key: 'name' | 'middleName' | 'thirdName' | 'lastName' | 'motherLastName';
-    readonly label: string;
-  }): string {
-    const mensajePropio = mensajeDeError(this.controlDelOwner(campo.key), {
-      label: campo.label,
-    });
-    if (mensajePropio !== '' || campo.key !== 'lastName') return mensajePropio;
-    return this.errorDeNombreLargo(this.form.controls.ownerName);
   }
 
   /**
@@ -1103,12 +948,6 @@ export class RegisterOrganization {
    * que esto viva acá y no escuchando el propio `FormGroup`.
    */
   protected alRechazarPagina(pagina: PaginaDeFormulario): void {
-    if (pagina.clave === 'owner') {
-      // Mismo motivo que abajo: el motor sólo marca el GRUPO
-      // (`markAsTouched`), y sin esto las casillas vacías no se pintarían.
-      this.form.controls.ownerName.markAllAsTouched();
-      return;
-    }
     if (pagina.clave === 'legal-representative') {
       // Mismo motivo que para `executives`: el motor sólo marca el GRUPO
       // (`markAsTouched`), no a sus cinco hijos.
@@ -1124,14 +963,6 @@ export class RegisterOrganization {
         gerencia.expanded.set(true);
       }
     }
-  }
-
-  /**
-   * «Atrás» en el primer paso: de vuelta al selector de tipo de cuenta, que es de
-   * donde se llegó.
-   */
-  volverAlTipoDeCuenta(): void {
-    void this.router.navigateByUrl('/auth/register');
   }
 
   submit(): void {
@@ -1151,8 +982,10 @@ export class RegisterOrganization {
         this.state.set(ready(null));
         this.verificationSent.set(resultado.emailVerificationSent);
         this.registered.set(true);
+        this.limpiarBorrador();
+        this.draftService.trackEvent('complete', 'organization', 4);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => this.state.set(registrationErrorToViewState(error, 'organization')),
     });
   }
 
@@ -1176,23 +1009,25 @@ export class RegisterOrganization {
     const timeZone = raw.timeZone.trim();
     // El código de tenant y el de aseguradora nacen de la sigla: la persona
     // ya no escribe ninguno de los dos. Ver el JSDoc de `codigoDesdeSigla`.
-    const codigo = codigoDesdeSigla(raw.sigla);
+    const codigo = codeFromAcronym(raw.sigla);
+    // El owner ES el representante legal: la API pide una cuenta owner con
+    // su correo y su clave, y la aseguradora sólo tiene una persona que
+    // inicia sesión. Su nombre y su correo viajan dos veces —como `owner`,
+    // que es la cuenta, y como `legalRepresentative`, que es el vínculo
+    // legal—, sin pedirlos dos veces.
+    //
     // El backend no tiene columna de tercer nombre: se pliega en
     // `middleName`, igual que en el alta de paciente y de médico.
-    const segundoNombre = unirNombres([raw.ownerName.middleName, raw.ownerName.thirdName]);
-    const apellidoMaterno = raw.ownerName.motherLastName.trim();
-    const casaMatriz = this.gpsCasaMatriz();
+    const segundoNombre = joinNames([
+      raw.legalRepresentative.middleName,
+      raw.legalRepresentative.thirdName,
+      ...raw.legalRepresentative.extraNames,
+    ]);
+    const apellidoMaterno = raw.legalRepresentative.motherLastName.trim();
+    const casaMatriz = raw.gpsCasaMatriz;
     const telefonoRepresentante = raw.legalRepresentativePhone.trim();
-    const gerente = (g: {
-      name: string;
-      middleName: string;
-      thirdName: string;
-      lastName: string;
-      motherLastName: string;
-      phone: string;
-      email: string;
-    }) => ({
-      fullName: componerNombreCompleto(g),
+    const gerente = (g: { nombre: NameValue; phone: string; email: string }) => ({
+      fullName: completeName(g.nombre),
       phone: g.phone.trim(),
       email: g.email.trim(),
     });
@@ -1211,10 +1046,10 @@ export class RegisterOrganization {
         ...(casaMatriz === null ? {} : { latitude: casaMatriz.lat, longitude: casaMatriz.lng }),
       },
       owner: {
-        email: raw.email.trim(),
+        email: raw.legalRepresentativeEmail.trim(),
         password: raw.password,
-        name: raw.ownerName.name.trim(),
-        lastName: raw.ownerName.lastName.trim(),
+        name: raw.legalRepresentative.name.trim(),
+        lastName: raw.legalRepresentative.lastName.trim(),
         ...(segundoNombre === '' ? {} : { middleName: segundoNombre }),
         ...(apellidoMaterno === '' ? {} : { motherLastName: apellidoMaterno }),
       },
@@ -1228,7 +1063,7 @@ export class RegisterOrganization {
       // Representante legal y gerencias (subtarea 1.4): al nivel de
       // `organization`, nunca dentro de `payer` — ver el JSDoc de la clase.
       legalRepresentative: {
-        fullName: componerNombreCompleto(raw.legalRepresentative),
+        fullName: completeName(raw.legalRepresentative),
         idNumber: raw.legalRepresentativeIdNumber.trim(),
         email: raw.legalRepresentativeEmail.trim(),
         ...(telefonoRepresentante === '' ? {} : { phone: telefonoRepresentante }),
