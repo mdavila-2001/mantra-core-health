@@ -1,6 +1,6 @@
 import { reservas } from '../fixtures/agenda';
 import { STATUS } from '../fixtures/concepts';
-import { reservasTerminadasDe } from '../fixtures/atencion-resenable';
+import { profesionalDeReserva, reservasTerminadasDe } from '../fixtures/atencion-resenable';
 import { offers } from '../fixtures/offered-services';
 import { PACIENTE } from '../fixtures/people';
 import { conflict, forbidden, notFound, preconditionFailed, validation, type MockRouter } from '../mock-router';
@@ -167,13 +167,18 @@ const asignaciones = new Coleccion<AsignacionSimulada>([
   { id: uuid('assignment-teleconsulta'), surveyId: uuid('survey-teleconsulta'), surveyVersionId: uuid('survey-teleconsulta-v1'), targetType: 'SERVICE', targetId: uuid('service-TELE-CARDIO') },
 ]);
 
+/**
+ * Las respuestas recibidas de una encuesta, como las sirve la API: **sin la
+ * reserva** (`appointmentBookingId` ya no viaja) y con `submittedAt` redondeado
+ * al DÍA (medianoche UTC). Fecha y hora exactas junto a un comentario permitirían
+ * reconocer qué paciente lo escribió.
+ */
 function respuestasDe(e: EncuestaSimulada) {
   const invitados = reservas.todos().slice(0, 9);
-  return invitados.map((r, i) => ({
+  return invitados.map((_, i) => ({
     id: uuid(`response-${e.id}-${i}`),
     invitationId: uuid(`inv-resp-${e.id}-${i}`),
-    appointmentBookingId: r.id,
-    submittedAt: iso(-i * 3 - 1, 18),
+    submittedAt: `${diaDe(iso(-i * 3 - 1, 18))}T00:00:00.000Z`,
     answers: e.questions.map((q) => ({
       questionId: q.id,
       questionText: q.questionText,
@@ -285,6 +290,31 @@ export function emitirInvitacionDeAtencion(bookingId: string): void {
   });
 }
 
+/**
+ * De qué atención salió una invitación, con los campos aditivos que la API suma a
+ * `GET /surveys/me/invitations`: `kind`, `serviceName`, `practitionerDisplayName`
+ * y `attendedAt`. Se deducen de la reserva (con oferta de servicio ≡ servicio).
+ * Una reserva que ya no existe no aporta nada: las claves quedan ausentes, como
+ * con una API que todavía no las manda.
+ */
+function contextoDeAtencion(bookingId: string): {
+  kind?: 'CONSULTATION' | 'SERVICE';
+  serviceName?: string;
+  practitionerDisplayName?: string;
+  attendedAt?: string;
+} {
+  const reserva = reservas.get(bookingId);
+  if (reserva === undefined) return {};
+  const esServicio = reserva.serviceOfferingId !== undefined && reserva.serviceOfferingId !== null;
+  const profesional = profesionalDeReserva(reserva);
+  return {
+    kind: esServicio ? 'SERVICE' : 'CONSULTATION',
+    ...(esServicio && reserva.service ? { serviceName: reserva.service.name } : {}),
+    ...(profesional ? { practitionerDisplayName: profesional.displayName } : {}),
+    attendedAt: reserva.startAt,
+  };
+}
+
 /** Los envíos de las encuestas base, generados una sola vez por carga. */
 const enviosBase = generarEnviosBase();
 
@@ -310,8 +340,8 @@ function enviosPropios(): readonly EmisionSimulada[] {
         id: r.id,
         fuente: e.id,
         servicioId: null,
-        emitidaEl: diaDe(r.submittedAt),
-        respondidaEl: diaDe(r.submittedAt),
+        emitidaEl: r.submittedAt.slice(0, 10),
+        respondidaEl: r.submittedAt.slice(0, 10),
         respuestas: r.answers.map((a) => ({
           questionId: a.questionId,
           ...('valueNumber' in a ? { valueNumber: a.valueNumber } : {}),
@@ -573,7 +603,7 @@ export function registrarEncuestas(router: MockRouter): void {
       .filtrar((i) => i.patientProfileId === (request.user?.patientProfileId ?? PACIENTE.id))
       .map((i) => {
         const e = contenidoDeInvitacion(i.surveyId);
-        return { id: i.id, title: e.title, description: e.description, status: i.status, issuedAt: i.issuedAt, expiresAt: i.expiresAt, answeredAt: i.answeredAt, appointmentBookingId: i.appointmentBookingId };
+        return { id: i.id, title: e.title, description: e.description, status: i.status, issuedAt: i.issuedAt, expiresAt: i.expiresAt, answeredAt: i.answeredAt, appointmentBookingId: i.appointmentBookingId, ...contextoDeAtencion(i.appointmentBookingId) };
       }),
   );
 
@@ -581,7 +611,7 @@ export function registrarEncuestas(router: MockRouter): void {
     const i = invitaciones.get(params['id']!);
     if (i === undefined) return notFound('Invitación no encontrada');
     const e = contenidoDeInvitacion(i.surveyId);
-    return { id: i.id, title: e.title, description: e.description, status: i.status, issuedAt: i.issuedAt, expiresAt: i.expiresAt, answeredAt: i.answeredAt, appointmentBookingId: i.appointmentBookingId, questions: e.questions };
+    return { id: i.id, title: e.title, description: e.description, status: i.status, issuedAt: i.issuedAt, expiresAt: i.expiresAt, answeredAt: i.answeredAt, appointmentBookingId: i.appointmentBookingId, ...contextoDeAtencion(i.appointmentBookingId), questions: e.questions };
   });
 
   router.post('/surveys/me/invitations/:id/responses', ({ params }) => {

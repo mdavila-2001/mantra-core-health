@@ -256,6 +256,10 @@ test.describe('Bandeja de encuestas del paciente y puente a la reseña pública'
       await expect(page).toHaveURL(/\/my-account\/questionnaires\?seccion=encuestas/);
       await expect(page.getByTestId('cuestionarios-lista')).toBeVisible();
       await expect(page.getByTestId('cuestionarios-pendientes')).toContainText('1 cuestionario pendiente');
+      // Cada tarjeta dice de qué atención es: «Consulta con <médico> · <fecha>».
+      const contexto = page.getByTestId('cuestionario-contexto').first();
+      await expect(contexto).toBeVisible();
+      await expect(contexto).toContainText(/^\s*Consulta con .+ · .*\d{4}/);
       await abrirMasAccesosSiHaceFalta(page);
       await expect(page.getByTestId('header-encuestas')).toHaveClass(/is-activo/);
       await expect(page.getByTestId('header-encuestas')).toHaveAttribute('aria-current', 'page');
@@ -274,7 +278,12 @@ test.describe('Bandeja de encuestas del paciente y puente a la reseña pública'
       await expect(page.getByTestId('responder-faltantes')).toContainText(/Falta(n)? responder .*obligatoria/);
       // Nada se guardó: el simulador no escribió ninguna tabla.
       expect(await leerTabla(page, TABLA_DE_INVITACIONES)).toEqual([]);
-      await page.getByTestId('responder-faltantes').scrollIntoViewIfNeeded();
+      // El aviso se lleva a la vista y recibe el foco por sí solo (sin scrollIntoViewIfNeeded
+      // del script): quien no ve el borde de la pantalla o usa lector se entera.
+      const aviso = page.getByTestId('responder-faltantes');
+      await expect(aviso).toBeFocused();
+      await expect(aviso).toHaveAttribute('role', 'alert');
+      await expect(aviso).toBeInViewport({ ratio: 1 });
       await foto(page, '04-obligatorias-bloquean-el-envio', variante);
 
       await responderLasObligatorias(page);

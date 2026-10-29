@@ -66,6 +66,35 @@ const PRESENTACION: Readonly<
   EXPIRED: { palabra: 'Vencido', tono: 'secondary' },
 };
 
+/** Lo que identifica la atención de una invitación: qué fue y cuándo. */
+export interface ContextoDeAtencion {
+  readonly etiqueta: string;
+  readonly fecha: Date | null;
+}
+
+/**
+ * La línea «Consulta con <médico> · <fecha>» / «<servicio> · <fecha>».
+ *
+ * Los campos son aditivos y opcionales en la API: sin `kind` ni médico ni
+ * servicio no hay nada fiable que decir y devuelve `null` (la tarjeta muestra
+ * entonces el texto genérico de siempre). Con `kind` pero sin el nombre, dice
+ * lo que sí sabe («Consulta», «Servicio de salud»), nunca inventa un nombre.
+ */
+export function contextoDeAtencion(invitacion: PatientInvitation): ContextoDeAtencion | null {
+  const medico = invitacion.practitionerDisplayName?.trim() || null;
+  const servicio = invitacion.serviceName?.trim() || null;
+  const tipo = invitacion.kind ?? (servicio ? 'SERVICE' : medico ? 'CONSULTATION' : null);
+  if (tipo === null) return null;
+  const fecha = invitacion.attendedAt ?? null;
+  const etiqueta =
+    tipo === 'SERVICE'
+      ? (servicio ?? 'Servicio de salud')
+      : medico
+        ? `Consulta con ${medico}`
+        : 'Consulta';
+  return { etiqueta, fecha };
+}
+
 /** Un cuestionario del paciente, listo para mostrarse. */
 interface CuestionarioVisible {
   readonly id: string;
@@ -76,6 +105,11 @@ interface CuestionarioVisible {
   readonly tono: BadgeVariant;
   readonly vence: Date | null;
   readonly respondido: Date | null;
+  /**
+   * De qué atención salió: «Consulta con Dra. Rojas» / «Ecografía». `null` si la
+   * API todavía no lo informa; la tarjeta cae entonces al texto genérico.
+   */
+  readonly contexto: ContextoDeAtencion | null;
   /** La reserva de la atención: con ella se pregunta si se puede reseñar. */
   readonly reservaId: string;
   /** Solo los pendientes se pueden abrir para responder. */
@@ -296,6 +330,7 @@ export class Questionnaires {
       tono: presentacion.tono,
       vence: invitacion.expiresAt,
       respondido: invitacion.answeredAt,
+      contexto: contextoDeAtencion(invitacion),
       reservaId: invitacion.appointmentBookingId,
       sePuedeResponder: invitacion.status === 'PENDING',
       ruta: responderCuestionarioRoute(invitacion.id),

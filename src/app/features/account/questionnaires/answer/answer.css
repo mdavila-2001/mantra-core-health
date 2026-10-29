@@ -14,6 +14,8 @@
 .responder__aviso {
   display: block;
   margin-block-end: var(--sp-4);
+  /* Al desplazarlo a la vista no queda pegado al borde ni bajo la cabecera fija. */
+  scroll-margin-block: var(--sp-6);
 }
 
 .responder__form {
