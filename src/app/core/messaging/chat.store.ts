@@ -20,6 +20,7 @@ import type {
   ConversationListItem,
   ChatContact,
   DirectMessage,
+  DirectMessageContentType,
   MessageReaction,
   MessageReceipt,
 } from '../data-access/community/community.types';
@@ -124,8 +125,8 @@ export interface MensajeDelHilo {
   readonly estado: 'enviando' | 'fallado' | 'enviado';
   /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
   readonly isEdited?: boolean;
-  /** `STICKER` si es uno propio de quien lo mandó; ver `DirectMessage`. */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  /** `STICKER` (propio) o `AUTO_REPLY_AI` (lo redactó la IA); ver `DirectMessage`. */
+  readonly contentType?: DirectMessageContentType;
   readonly reactions?: readonly MessageReaction[];
   readonly receipts?: readonly MessageReceipt[];
   /** Sólo en los pendientes: con qué reintentar. */
@@ -1469,6 +1470,8 @@ export class ChatStore {
     if (propio === null || mensaje.senderProfileId === propio) {
       return;
     }
+    // Con IA guardada en el servidor contesta él (dos respuestas, no); si no la tiene, sale el respaldo.
+    if (this.autoReply.configuracion().conIa && this.autoReply.enElServidor()) return;
     const ahora = Date.now();
     const ultimo = this.ultimoAvisoPorConversacion.get(mensaje.conversationId) ?? null;
     if (!this.autoReply.corresponde(ahora, ultimo)) {
