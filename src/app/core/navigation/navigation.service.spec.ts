@@ -918,12 +918,17 @@ describe('NavigationService', () => {
         '/administration/health-context',
         '/administration/geolocation',
         '/administration/services-catalog',
-        '/administration/medical-organization',
         '/administration/medical-laboratory',
         '/administration/pharma-lab',
       ]) {
         expect(rutas, rutaAdmin).toContain(rutaAdmin);
       }
+      // «Mis organizaciones» (antes «Organización médica») pasó el 28/10/2026 a la
+      // barra superior: el superadministrador la alcanza —`visibleSections`— pero ya
+      // no ocupa un renglón del menú lateral.
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      expect(alcanzables).toContain('/administration/medical-organization');
+      expect(rutas).not.toContain('/administration/medical-organization');
     });
 
     it('en Superadministración contiene las secciones de plataforma', () => {
