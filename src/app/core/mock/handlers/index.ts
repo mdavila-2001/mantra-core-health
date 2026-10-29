@@ -34,6 +34,7 @@ import { registerPrimaryPractitioner } from './primary-practitioner.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
 import { registerInfrastructure } from './infrastructure.handlers';
+import { registerInfrastructureOps } from './infrastructure-ops.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
 import { registerInsuranceCampaigns } from './insurance-campaigns.handlers';
@@ -80,6 +81,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarPracticas(router);
   // Infraestructura hospitalaria (F1): `/sites/:id/structure`, `/care-spaces/*`.
   registerInfrastructure(router);
+  registerInfrastructureOps(router);
   registrarClinica(router);
   registerReferrals(router);
   registerReceivedServices(router);

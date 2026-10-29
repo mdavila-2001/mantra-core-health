@@ -15,6 +15,7 @@ import {
   type EspacioSim,
 } from '../fixtures/infrastructure.data';
 import { notFound, noContent, reply, type MockRouter } from '../mock-router';
+import { OPS_CATALOG } from './infrastructure-ops.handlers';
 import { ahora, cuerpo, isoDia, nuevoId } from '../mock-store';
 import {
   anotar,
@@ -85,7 +86,7 @@ import {
 /* ---- rutas ----------------------------------------------------------------- */
 
 export function registerInfrastructure(router: MockRouter): void {
-  router.get('/practice/infrastructure-catalog', () => CATALOGO);
+  router.get('/practice/infrastructure-catalog', () => ({ ...CATALOGO, ...OPS_CATALOG }));
 
   router.get('/sites/:siteId/structure', (request) => {
     const sitio = sitioPropio(request.params['siteId']!);
