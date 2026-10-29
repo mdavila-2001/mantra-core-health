@@ -63,6 +63,13 @@
   min-inline-size: 0;
 }
 
+.hilo__nombre-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-inline-size: 0;
+}
+
 .hilo__nombre {
   margin: 0;
   font-family: var(--f-titulo);

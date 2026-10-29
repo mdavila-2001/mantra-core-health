@@ -53,7 +53,19 @@
             <!-- El sello sólo si la verificación está activa. Pendiente cuenta
                  como no verificado: la jerarquía la pone el sello, y uno que
                  aparece por omisión no significa nada. -->
-            @if (p.verified) {
+            @if (!esLugar()) {
+              <!-- Un profesional: el sello de AloVida (o el reloj de «en
+                   verificación»). La API decide el estado; acá sólo se pinta. -->
+              <app-verification-badge
+                class="perfil__insignia"
+                size="lg"
+                [animated]="true"
+                [status]="verificacion().status"
+                [verifiedAt]="verificacion().verifiedAt"
+                [validUntil]="verificacion().validUntil"
+                [subject]="p.displayName"
+              />
+            } @else if (p.verified) {
               <span class="perfil__sello" title="Identidad verificada">
                 <svg
                   viewBox="0 0 24 24"

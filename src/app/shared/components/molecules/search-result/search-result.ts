@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, linkedSignal } fro
 import { RouterLink } from '@angular/router';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
+import { VerificationBadge } from '../../atoms/verification-badge/verification-badge';
 
 import type { SearchResultItem } from './search-result.types';
 
@@ -52,7 +53,7 @@ import type { SearchResultItem } from './search-result.types';
  */
 @Component({
   selector: 'li[app-search-result]',
-  imports: [AppButtonLink, RouterLink],
+  imports: [AppButtonLink, RouterLink, VerificationBadge],
   templateUrl: './search-result.html',
   styleUrl: './search-result.css',
   host: { class: 'app-resultado' },

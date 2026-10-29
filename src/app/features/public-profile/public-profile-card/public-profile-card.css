@@ -123,6 +123,10 @@
   block-size: 22px;
 }
 
+.perfil__insignia {
+  margin-inline-start: var(--e1);
+}
+
 .perfil__titular {
   margin: var(--e2) 0 0;
   font-size: var(--fs-body-lg);

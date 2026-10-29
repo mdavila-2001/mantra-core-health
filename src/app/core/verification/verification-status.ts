@@ -115,23 +115,61 @@ export function parseVerificationDate(value: unknown): Date | null {
  * - Sin `verification.status` → `verified === true` es VERIFIED; cualquier otra
  *   cosa es UNVERIFIED.
  */
-export function verificationOf(source: WithVerification | null | undefined): VerificationInfo {
+export function verificationOf(
+  source: WithVerification | null | undefined,
+  now: Date = new Date(),
+): VerificationInfo {
   if (source === null || source === undefined) {
     return NO_VERIFICATION;
   }
   const detail = source.verification;
-  if (detail !== null && detail !== undefined && detail.status != null) {
-    return {
-      status: toVerificationStatus(detail.status),
-      verifiedAt: parseVerificationDate(detail.verifiedAt),
-      validUntil: parseVerificationDate(detail.validUntil),
-    };
-  }
+  const verifiedAt = parseVerificationDate(detail?.verifiedAt);
+  const validUntil = parseVerificationDate(detail?.validUntil);
+  const declared =
+    detail !== null && detail !== undefined && detail.status != null
+      ? toVerificationStatus(detail.status)
+      : source.verified === true
+        ? 'VERIFIED'
+        : 'UNVERIFIED';
   return {
-    status: source.verified === true ? 'VERIFIED' : 'UNVERIFIED',
-    verifiedAt: parseVerificationDate(detail?.verifiedAt),
-    validUntil: parseVerificationDate(detail?.validUntil),
+    status: effectiveVerificationStatus(declared, validUntil, now),
+    verifiedAt,
+    validUntil,
   };
+}
+
+/**
+ * ¿Ya pasó la vigencia? La vigencia vale hasta el FIN del día indicado (hora
+ * local), no hasta su medianoche: una fecha sin hora no adelanta el vencimiento.
+ */
+export function isPastValidity(validUntil: Date | null, now: Date = new Date()): boolean {
+  if (validUntil === null) {
+    return false;
+  }
+  const endOfDay = new Date(
+    validUntil.getFullYear(),
+    validUntil.getMonth(),
+    validUntil.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+  return endOfDay.getTime() < now.getTime();
+}
+
+/**
+ * Defensa en profundidad: un `VERIFIED` con la vigencia vencida NO se pinta como
+ * verificado, aunque el servidor todavía no lo haya degradado. Es una red de
+ * seguridad con el reloj del cliente —la autoridad sigue siendo la API, que
+ * degrada con su hora—; nunca promueve: sólo puede bajar VERIFIED a EXPIRED.
+ */
+export function effectiveVerificationStatus(
+  status: VerificationStatus,
+  validUntil: Date | null,
+  now: Date = new Date(),
+): VerificationStatus {
+  return status === 'VERIFIED' && isPastValidity(validUntil, now) ? 'EXPIRED' : status;
 }
 
 /**
@@ -175,14 +213,16 @@ export function verificationFromSeal(seal: string | null | undefined): Verificat
 export function verificationWithSealFallback(
   source: WithVerification | null | undefined,
   seal: string | null | undefined,
+  now: Date = new Date(),
 ): VerificationInfo {
   const detail = source?.verification;
   if (detail !== null && detail !== undefined && detail.status != null) {
-    return verificationOf(source);
+    return verificationOf(source, now);
   }
+  const validUntil = parseVerificationDate(detail?.validUntil);
   return {
-    status: verificationFromSeal(seal),
+    status: effectiveVerificationStatus(verificationFromSeal(seal), validUntil, now),
     verifiedAt: parseVerificationDate(detail?.verifiedAt),
-    validUntil: parseVerificationDate(detail?.validUntil),
+    validUntil,
   };
 }

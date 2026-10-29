@@ -1,4 +1,6 @@
 import {
+  effectiveVerificationStatus,
+  isPastValidity,
   NO_VERIFICATION,
   parseVerificationDate,
   showsVerifiedCheck,
@@ -145,6 +147,52 @@ describe('verification-status', () => {
       );
       expect(info.status).toBe('VERIFIED');
       expect(info.verifiedAt?.getDate()).toBe(12);
+    });
+  });
+
+  describe('vigencia vencida (defensa en profundidad)', () => {
+    const now = new Date(2026, 9, 29, 15, 0);
+
+    it('la vigencia vale hasta el fin del día indicado, no hasta su medianoche', () => {
+      expect(isPastValidity(new Date(2026, 9, 29, 12), now)).toBe(false);
+      expect(isPastValidity(new Date(2026, 9, 28, 12), now)).toBe(true);
+      expect(isPastValidity(null, now)).toBe(false);
+    });
+
+    it('un VERIFIED con validUntil vencido se degrada a EXPIRED, aunque la API diga VERIFIED', () => {
+      const info = verificationOf(
+        { verified: true, verification: { status: 'VERIFIED', validUntil: '2026-10-01' } },
+        now,
+      );
+      expect(info.status).toBe('EXPIRED');
+      expect(showsVerifiedCheck(info.status)).toBe(false);
+    });
+
+    it('también degrada la forma vieja si trae validUntil', () => {
+      expect(
+        verificationOf({ verified: true, verification: { validUntil: '2026-01-01' } }, now).status,
+      ).toBe('EXPIRED');
+    });
+
+    it('nunca promueve: un IN_REVIEW o UNVERIFIED con fechas sigue igual', () => {
+      expect(effectiveVerificationStatus('IN_REVIEW', null, now)).toBe('IN_REVIEW');
+      expect(effectiveVerificationStatus('UNVERIFIED', new Date(2020, 0, 1), now)).toBe('UNVERIFIED');
+      expect(effectiveVerificationStatus('SUSPENDED', new Date(2099, 0, 1), now)).toBe('SUSPENDED');
+    });
+
+    it('vigente o sin vigencia declarada sigue VERIFIED', () => {
+      expect(
+        verificationOf({ verification: { status: 'VERIFIED', validUntil: '2099-12-31' } }, now)
+          .status,
+      ).toBe('VERIFIED');
+      expect(verificationOf({ verification: { status: 'VERIFIED' } }, now).status).toBe('VERIFIED');
+    });
+
+    it('el puente por sello también se degrada', () => {
+      expect(
+        verificationWithSealFallback({ verification: { validUntil: '2026-01-01' } }, 'approved', now)
+          .status,
+      ).toBe('EXPIRED');
     });
   });
 });

@@ -1,3 +1,6 @@
+import { VerificationBadge } from '../../shared/components/atoms/verification-badge/verification-badge';
+import { VERIFICATION_BADGE_SIZES } from '../../shared/components/atoms/verification-badge/verification-badge.types';
+import { VERIFICATION_STATUSES } from '../../core/verification/verification-status';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -89,6 +92,7 @@ const DEMO_UPLOAD_STEP = 12;
     Avatar,
     AvatarGroup,
     Badge,
+    VerificationBadge,
     AppButton,
     AppButtonLink,
     Input,
@@ -135,6 +139,9 @@ const DEMO_UPLOAD_STEP = 12;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DesignSystemSample {
+  protected readonly verificationStatuses = VERIFICATION_STATUSES;
+  protected readonly verificationSizes = VERIFICATION_BADGE_SIZES;
+
   private readonly themeService = inject(ThemeService);
   private readonly dialogs = inject(DialogService);
 
