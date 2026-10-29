@@ -269,6 +269,15 @@ export class ShellLayout {
   protected readonly ofreceEmergencia = computed(() => vieneAAtenderse(this.auth.roles()));
 
   /**
+   * Dónde marca el tutorial el botón de «Emergencia» (28/10/2026): sólo en el
+   * ícono de la cabecera y sólo donde se ve (≤ 900 px). En el escritorio no hay
+   * botón, así que no hay objetivo y el paso se saltea.
+   */
+  protected readonly objetivoEmergencia = computed(() =>
+    this.breakpoints.canCollapseNav() ? '' : 'nav-emergencia',
+  );
+
+  /**
    * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
    * cuarta vuelta, quien atiende. El resto de los roles, la de siempre.
    */
