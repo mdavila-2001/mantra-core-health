@@ -91,20 +91,22 @@ export class PlanSpaceCard {
   protected readonly placement = computed<Placement>(() => {
     const hover = this.hover();
     const size = this.size();
-    if (hover === null) return { side: 'top', left: 0, top: 0, arrowOffset: 0, clipped: false };
+    if (hover === null) return { side: 'top', left: 0, top: 0, arrowOffset: 0, clipped: false, overlapsAnchor: false };
     let anchor = hover.anchor;
     const space = this.spaceSizePx();
     const largeSpace = space !== null && space.width > size.width * 1.5 && space.height > size.height * 1.5;
     if (largeSpace && hover.pointer && hover.source === 'pointer') {
       anchor = { left: hover.pointer.x - 4, top: hover.pointer.y - 4, width: 8, height: 8 };
     }
-    return placeFloating(anchor, size, {
-      preferred: 'top',
-      gap: PLAN_CARD_GAP_PX,
-      margin: PLAN_CARD_MARGIN_PX,
-      bounds: hover.bounds,
-      shift: true,
-    });
+    const options = { preferred: 'top' as const, gap: PLAN_CARD_GAP_PX, margin: PLAN_CARD_MARGIN_PX, shift: true };
+    const inCanvas = placeFloating(anchor, size, { ...options, bounds: hover.bounds });
+    if (!inCanvas.clipped && !inCanvas.overlapsAnchor) return inCanvas;
+    // No entra dentro del lienzo sin tapar el espacio (una tarjeta grande en un lienzo chico): se
+    // usa la ventana. Tapar el espacio bajo el puntero cerraría la tarjeta por rebote.
+    const view = typeof window === 'undefined' ? null : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    if (view === null) return inCanvas;
+    const inWindow = placeFloating(anchor, size, { ...options, bounds: view });
+    return inWindow.overlapsAnchor && !inCanvas.overlapsAnchor ? inCanvas : inWindow;
   });
 
   constructor() {

@@ -17,42 +17,13 @@ import {
 } from '@angular/core';
 
 import type { SpaceState } from '../../../../core/data-access/floor-plan/floor-plan.types';
-import { GestureTracker } from '../../../../core/floor-plan/gestures';
-import { bboxInflate, type BBox, type Point } from '../../../../core/floor-plan/geometry';
-import { HoverIntent, reduceTouch, type HoverSource, type TouchState } from '../../../../core/floor-plan/hover-intent';
-import { paintOrder, sortedElements, type ElementView, type SpaceView } from '../../../../core/floor-plan/plan-view';
-import {
-  clampViewport,
-  ensureVisible,
-  frameBBox,
-  panBy,
-  screenToWorld,
-  viewBoxOf,
-  visibleBBox,
-  worldToScreen,
-  zoomAt,
-  zoomPercent,
-  ZOOM_STEP,
-  type PixelSize,
-  type Viewport,
-} from '../../../../core/floor-plan/plan-viewport';
-import { shortName } from '../../../../core/floor-plan/labels';
-import { GridIndex, defaultCellSize } from '../../../../core/floor-plan/spatial-index';
-import { nextInDirection, readingOrder, type NavDirection, type NavItem } from '../../../../core/floor-plan/spatial-nav';
-import {
-  NO_STATE_VISUAL,
-  ageLabel,
-  ariaLabelFor,
-  stateVisual,
-  type ColorMode,
-  type StateVisual,
-} from '../../../../core/floor-plan/state-visuals';
+import { buildFillRows, buildHaloRows, buildLabelRows, type FillRow, type LabelRow } from '../../../../core/floor-plan/canvas-rows';
+import { keyAction } from '../../../../core/floor-plan/canvas-keys';
 import {
   DEFAULT_LAYERS,
   PLAN_LOD_BEDS_MIN_ZOOM,
   PLAN_LOD_GLYPHS_MIN_ZOOM,
   PLAN_LOD_LABELS_MIN_ZOOM,
-  PLAN_MIN_TOUCH_TARGET_PX,
   PLAN_VIRTUALIZE_MIN_NODES,
   type CanvasHover,
   type CanvasOverlay,
@@ -62,63 +33,35 @@ import {
   type ViewInfo,
   type WorldPointerEvent,
 } from '../../../../core/floor-plan/canvas.types';
+import { bboxInflate, type BBox, type Point } from '../../../../core/floor-plan/geometry';
+import { paintOrder, sortedElements, type ElementView, type SpaceView } from '../../../../core/floor-plan/plan-view';
+import {
+  clampViewport,
+  ensureVisible,
+  frameBBox,
+  panBy,
+  screenToWorld,
+  viewBoxOf,
+  visibleBBox,
+  zoomAt,
+  zoomPercent,
+  ZOOM_STEP,
+  type PixelSize,
+  type Viewport,
+} from '../../../../core/floor-plan/plan-viewport';
+import { GridIndex, defaultCellSize } from '../../../../core/floor-plan/spatial-index';
+import { nextInDirection, readingOrder, type NavItem } from '../../../../core/floor-plan/spatial-nav';
+import { NO_STATE_VISUAL, stateVisual, type ColorMode, type StateVisual } from '../../../../core/floor-plan/state-visuals';
 import { AppButton } from '../../atoms/button/button';
 import { PlanGlyphDefs } from './plan-glyph-defs';
-
-/** Una fila de la capa de rellenos: el espacio con todo lo que se decide una vez por cambio de datos. */
-interface FillRow {
-  readonly s: SpaceView;
-  readonly visual: StateVisual;
-  readonly cls: string;
-  readonly interactive: boolean;
-  readonly aria: string | null;
-  readonly dim: boolean;
-  readonly hiddenByLegend: boolean;
-  readonly patternUrl: string | null;
-  readonly showBorder: boolean;
-}
-
-interface LabelRow {
-  readonly s: SpaceView;
-  readonly visual: StateVisual;
-  readonly x: number;
-  readonly y: number;
-  readonly text: string | null;
-  readonly glyph: StateVisual['glyph'];
-  readonly mark: string | undefined;
-  readonly tone: string;
-  readonly zone: boolean;
-  readonly halo: boolean;
-}
-
-const FILL_PATTERN: Readonly<Record<string, string>> = {
-  diagonal: 'url(#plan-pat-diagonal)',
-  cross: 'url(#plan-pat-cross)',
-  dots: 'url(#plan-pat-dots)',
-  hstripes: 'url(#plan-pat-hstripes)',
-  grid: 'url(#plan-pat-grid)',
-};
+import { PlanPointerController, type PointerHost } from './plan-pointer-controller';
 
 /**
- * Lienzo del plano de planta (CONTRATO-PLANO §5.2, §5.5, §5.6 y §5.9).
- *
- * **SVG con el `viewBox` en metros.** Una sola capa de rellenos por espacio
- * hace de blanco de puntería, de nodo enfocable y de pieza de la leyenda; los
- * muros, las aberturas, los glifos y los rótulos van en capas propias encima,
- * sin eventos. Eso respeta el orden de pintado del contrato (rellenos de estado
- * debajo de los muros) sin duplicar nodos interactivos.
- *
- * - **Un solo manejador delegado** de puntero sobre el SVG, acotado por
- *   `requestAnimationFrame`: no hay un listener por espacio.
- * - **Una sola parada de `Tab`** (*roving tabindex*): las flechas recorren los
- *   espacios por vecindad espacial, `Enter` abre la ficha, `Escape` descarta la
- *   tarjeta sin mover el foco.
- * - **Virtualización** desde `PLAN_VIRTUALIZE_MIN_NODES` nodos: se monta solo
- *   lo visible (más el espacio activo, el seleccionado y el resaltado).
- * - **Nivel de detalle** por zoom: rótulos, camas y glifos aparecen al acercar.
- * - La tarjeta de detalle NO se pinta acá: este componente avisa con
- *   `hoverChange` qué espacio y dónde, y quien lo usa la dibuja en una capa
- *   HTML fuera del SVG.
+ * Lienzo del plano de planta (CONTRATO-PLANO §5.2, §5.5, §5.6 y §5.9): SVG con el
+ * `viewBox` en metros. Una capa de rellenos hace de blanco de puntería y de nodo
+ * enfocable; muros, aberturas, glifos y rótulos van encima, sin eventos. Puntero
+ * y tarjeta: `PlanPointerController`; teclas: `keyAction`; filas: `canvas-rows`.
+ * La tarjeta NO se pinta acá: se avisa con `hoverChange` y quien lo usa la dibuja.
  */
 @Component({
   selector: 'app-floor-plan-canvas',
@@ -132,11 +75,12 @@ const FILL_PATTERN: Readonly<Record<string, string>> = {
     '[class.plan-canvas--touch]': 'touchSeen()',
     '[class.plan-canvas--grabbing]': 'dragging()',
     '[class.plan-canvas--hand]': 'handTool()',
+    // La inversa del zoom (metros por píxel): los rótulos y los glifos se escalan con ella.
+    '[style.--u]': 'unit()',
   },
 })
 export class FloorPlanCanvas {
-  private readonly platformId = inject(PLATFORM_ID);
-  private readonly isBrowser = isPlatformBrowser(this.platformId);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly svg = viewChild<ElementRef<SVGSVGElement>>('svg');
@@ -197,20 +141,38 @@ export class FloorPlanCanvas {
   protected readonly touchSeen = signal(false);
   protected readonly dragging = signal(false);
   protected readonly liveText = signal('');
-  private touchState: TouchState = { openId: null };
-  private readonly gestures = new GestureTracker();
   private resizeObserver: ResizeObserver | null = null;
-  private pendingHover: { target: string | null; x: number; y: number } | null = null;
-  private hoverFrame = 0;
-  private lastPointer: { x: number; y: number } | null = null;
   private fitted = false;
   private lastLive = '';
   private lastFrameNonce = -1;
   private lastRevealNonce = -1;
   private wheelListener: ((event: WheelEvent) => void) | null = null;
-  private editDragging = false;
 
-  private readonly intent = new HoverIntent((id, source) => this.onIntent(id, source));
+  /** Lo que el controlador de puntero necesita del lienzo. */
+  private readonly pointerHost: PointerHost = {
+    interactionMode: () => this.interactionMode(),
+    handTool: () => this.handTool(),
+    hostRect: () => this.boundsRect(),
+    svg: () => this.svg()?.nativeElement ?? null,
+    view: () => this.view(),
+    size: () => this.size(),
+    setView: (view) => this.setView(view),
+    isInteractive: (id) => this.fillRows().some((r) => r.s.id === id && r.interactive),
+    isHoverable: (id) => this.fillRows().some((r) => r.s.id === id && !r.hiddenByLegend),
+    hoveredId: () => this.hoveredId(),
+    setHovered: (id) => this.hoveredId.set(id),
+    setTouchSeen: () => this.touchSeen.set(true),
+    dragging: () => this.dragging(),
+    setDragging: (on) => this.dragging.set(on),
+    setFocusVisible: (on) => this.focusVisible.set(on),
+    focusVisible: () => this.focusVisible(),
+    setActive: (id) => this.setActive(id),
+    emitPick: (id) => this.pick.emit(id),
+    emitOpen: (id) => this.open.emit(id),
+    emitHover: (hover) => this.hoverChange.emit(hover),
+    emitWorld: (event) => this.worldPointer.emit(event),
+  };
+  private readonly pointer = new PlanPointerController(this.pointerHost);
 
   /* ---- derivados ------------------------------------------------------------ */
   protected readonly viewBox = computed(() => viewBoxOf(this.view(), this.size()));
@@ -251,106 +213,31 @@ export class FloorPlanCanvas {
     return stateVisual(mode, this.states()[s.id]);
   };
 
-  protected readonly fillRows = computed<FillRow[]>(() => {
-    const layers = this.layers();
-    const lod = this.lod();
-    const mounted = this.mountedIds();
-    const hidden = this.hiddenValues();
-    const focus = this.focusIds();
-    const selectable = this.selectable();
-    const asOf = this.asOf() ?? undefined;
-    const now = this.nowMs() || Date.now();
-    const states = this.states();
-    const rows: FillRow[] = [];
-    for (const s of this.ordered()) {
-      if (mounted && !mounted.has(s.id)) continue;
-      if (s.band === 'zone' && !layers.has('zones')) continue;
-      if (s.band === 'room' && !layers.has('rooms')) continue;
-      if (s.band === 'bed' && (!layers.has('beds') || !lod.beds)) continue;
-      const visual = this.visual(s);
-      const interactive = s.inScope && s.band !== 'zone';
-      const stateless = !this.canSeeState() && this.colorBy() !== 'none' && this.colorBy() !== 'unit' && this.colorBy() !== 'function';
-      const tone = !s.inScope ? 'silhouette' : visual.tone;
-      const classes = ['sp', `sp--${s.band}`, `tone-${tone}`];
-      if (visual.strong) classes.push('is-strong');
-      if (visual.quiet) classes.push('is-quiet');
-      if (visual.border === 'dashed-thick') classes.push('b-dashed');
-      if (visual.border === 'dotted') classes.push('b-dotted');
-      if (visual.pattern === 'solid-strong') classes.push('p-strong');
-      if (!s.inScope) classes.push('is-silhouette');
-      if (s.locked) classes.push('is-locked');
-      if (stateless) classes.push('is-stateless');
-      const dimByFocus = focus !== null && !focus.has(s.id);
-      const dimByPick = !selectable(s.id);
-      const hiddenByLegend = visual.key !== NO_STATE_VISUAL.key && hidden.has(visual.key);
-      rows.push({
-        s,
-        visual,
-        cls: classes.join(' '),
-        interactive,
-        aria: interactive
-          ? ariaLabelFor({ name: s.name, functionDisplay: s.card?.functionDisplay, inScope: s.inScope }, this.canSeeState() ? states[s.id] : undefined, asOf, now)
-          : null,
-        dim: dimByFocus || dimByPick,
-        hiddenByLegend,
-        patternUrl: s.inScope ? (FILL_PATTERN[visual.pattern] ?? null) : null,
-        showBorder: visual.border === 'dashed-thick',
-      });
-    }
-    return rows;
-  });
+  private readonly rowContext = computed(() => ({
+    ordered: this.ordered(),
+    layers: this.layers(),
+    lod: this.lod(),
+    mounted: this.mountedIds(),
+    visual: this.visual,
+  }));
 
-  protected readonly labelRows = computed<LabelRow[]>(() => {
-    const layers = this.layers();
-    const lod = this.lod();
-    if (!lod.glyphs && !lod.labels) return [];
-    const mounted = this.mountedIds();
-    const scale = lod.scale;
-    const rows: LabelRow[] = [];
-    const showLabels = layers.has('labels') && lod.labels;
-    const showGlyphs = layers.has('state') && lod.glyphs;
-    for (const s of this.ordered()) {
-      if (!s.inScope) continue;
-      if (mounted && !mounted.has(s.id)) continue;
-      if (s.band === 'zone' && !layers.has('zones')) continue;
-      if (s.band === 'room' && !layers.has('rooms')) continue;
-      if (s.band === 'bed' && (!layers.has('beds') || !lod.beds)) continue;
-      const widthPx = (s.bbox[2] - s.bbox[0]) * scale;
-      const heightPx = (s.bbox[3] - s.bbox[1]) * scale;
-      const visual = this.visual(s);
-      const fitsGlyph = widthPx >= 18 && heightPx >= 18;
-      const fitsText = widthPx >= 54 && heightPx >= 30;
-      const glyph = showGlyphs && fitsGlyph && s.band !== 'zone' ? visual.glyph : null;
-      const mark = showGlyphs && fitsGlyph && s.band !== 'zone' ? visual.mark : undefined;
-      let text: string | null = null;
-      if (showLabels && s.band === 'zone') text = widthPx >= 70 ? shortName(s.name, Math.floor((widthPx - 12) / 7.6)) || null : null;
-      else if (showLabels && s.band === 'room' && fitsText) text = shortName(s.name, Math.floor(widthPx / 6.5));
-      if (text === null && glyph === null && mark === undefined) continue;
-      const zone = s.band === 'zone';
-      rows.push({
-        s,
-        visual,
-        x: zone ? s.bbox[0] : s.center[0],
-        y: zone ? s.bbox[1] : s.center[1],
-        text,
-        glyph,
-        mark,
-        tone: visual.tone,
-        zone,
-        halo: false,
-      });
-    }
-    return rows;
-  });
+  protected readonly fillRows = computed<FillRow[]>(() =>
+    buildFillRows({
+      ...this.rowContext(),
+      hidden: this.hiddenValues(),
+      focus: this.focusIds(),
+      selectable: this.selectable(),
+      asOf: this.asOf() ?? undefined,
+      now: this.nowMs() || Date.now(),
+      states: this.states(),
+      canSeeState: this.canSeeState(),
+      colorBy: this.colorBy(),
+    }),
+  );
 
-  /** Halos transparentes del área de toque (44 px) para los espacios que se ven más chicos que eso. */
-  protected readonly haloRows = computed(() => {
-    if (!this.touchSeen()) return [];
-    const scale = this.lod().scale;
-    return this.fillRows()
-      .filter((r) => r.interactive && Math.min(r.s.bbox[2] - r.s.bbox[0], r.s.bbox[3] - r.s.bbox[1]) * scale < PLAN_MIN_TOUCH_TARGET_PX)
-      .map((r) => ({ id: r.s.id, x: r.s.center[0], y: r.s.center[1] }));
-  });
+  protected readonly labelRows = computed<LabelRow[]>(() => buildLabelRows(this.rowContext()));
+
+  protected readonly haloRows = computed(() => (this.touchSeen() ? buildHaloRows(this.fillRows(), this.lod().scale) : []));
 
   protected readonly zoneRows = computed(() => this.fillRows().filter((r) => r.s.band === 'zone'));
   protected readonly solidRows = computed(() => this.fillRows().filter((r) => r.s.band !== 'zone'));
@@ -360,12 +247,6 @@ export class FloorPlanCanvas {
   protected readonly walls = computed(() => (this.layers().has('walls') ? sortedElements(this.elements(), 'walls') : []));
   protected readonly openings = computed(() => (this.layers().has('openings') ? sortedElements(this.elements(), 'openings') : []));
   protected readonly annotations = computed(() => (this.layers().has('labels') ? sortedElements(this.elements(), 'labels') : []));
-  protected readonly dimensions = computed(() =>
-    this.layers().has('dimensions') && this.lod().labels
-      ? this.walls().filter((w) => w.vertices.length >= 2 && (w.thicknessM ?? 0) <= 0.2 && !w.label).slice(0, 80)
-      : [],
-  );
-
   protected readonly gridPath = computed(() => {
     if (!this.layers().has('grid')) return '';
     const step = this.gridSizeM();
@@ -398,8 +279,6 @@ export class FloorPlanCanvas {
     return `${this.planName()}, ${total} ${total === 1 ? 'espacio' : 'espacios'}`;
   });
 
-  protected readonly northTransform = computed(() => `rotate(${this.northBearingDeg()})`);
-
   constructor() {
     // El espacio activo por omisión: el seleccionado o el primero en orden de lectura.
     effect(() => {
@@ -413,6 +292,9 @@ export class FloorPlanCanvas {
       const preferred = untracked(() => this.selectedId());
       const next = preferred && items.some((i) => i.id === preferred) ? preferred : readingOrder(items)[0]!;
       this.activeId.set(next);
+      // Si el espacio activo desapareció del DOM (por ejemplo, las camas al alejar el zoom) el foco
+      // se habría perdido: vuelve al nuevo espacio activo para que el teclado no quede mudo.
+      if (untracked(() => this.focusVisible())) queueMicrotask(() => setTimeout(() => this.focusActive(), 0));
     });
 
     // La selección externa mueve el espacio activo.
@@ -452,7 +334,7 @@ export class FloorPlanCanvas {
       const sizePx = this.size();
       untracked(() => {
         this.viewChange.emit({ viewport, sizePx, visible: visibleBBox(viewport, sizePx), zoomPercent: zoomPercent(viewport.scale) });
-        if (this.intent.activeId !== null) queueMicrotask(() => this.reanchor());
+        if (this.pointer.activeIntentId !== null) queueMicrotask(() => this.pointer.reanchor(this.focusVisible()));
       });
     });
 
@@ -514,28 +396,17 @@ export class FloorPlanCanvas {
     return screenToWorld(this.view(), this.size(), [clientX - rect.left, clientY - rect.top]);
   }
 
-  pxPerMeter(): number {
-    return this.view().scale;
-  }
-
   cardEnter(): void {
-    this.intent.cardEnter();
+    this.pointer.cardEnter();
   }
 
   cardLeave(): void {
-    this.intent.cardLeave();
+    this.pointer.cardLeave();
   }
 
   /** Cierra la tarjeta ya (clic en el fondo, otro espacio, botón Cerrar). */
   closeCard(): void {
-    this.intent.closeNow();
-    this.touchState = { openId: null };
-  }
-
-  /** Mueve el foco de teclado a un espacio. */
-  focusSpace(id: string): void {
-    this.activeId.set(id);
-    this.focusActive();
+    this.pointer.closeCard();
   }
 
   boundsRect(): { left: number; top: number; width: number; height: number } {
@@ -561,296 +432,127 @@ export class FloorPlanCanvas {
     this.resizeObserver = new ResizeObserver(measure);
     this.resizeObserver.observe(host);
     // La rueda con Ctrl hace zoom: el listener no puede ser pasivo.
-    this.wheelListener = (event: WheelEvent): void => this.onWheel(event);
+    this.wheelListener = (event: WheelEvent): void => this.pointer.onWheel(event);
     host.addEventListener('wheel', this.wheelListener, { passive: false });
   }
 
   private disconnect(): void {
     this.resizeObserver?.disconnect();
     if (this.wheelListener) this.hostElement.nativeElement.removeEventListener('wheel', this.wheelListener);
-    cancelAnimationFrameSafe(this.hoverFrame);
-    this.intent.destroy();
+    this.pointer.destroy();
   }
 
   private fitWhole(): void {
     this.fitted = true;
-    const size = this.size();
-    this.view.set(frameBBox([0, 0, this.widthM(), this.heightM()], size, 16, 40));
+    this.view.set(frameBBox([0, 0, this.widthM(), this.heightM()], this.size(), 16, 40));
   }
 
   private setView(next: Viewport): void {
     this.view.set(clampViewport(next, this.size(), [0, 0, this.widthM(), this.heightM()]));
   }
 
-  /* ---- puntero -------------------------------------------------------------- */
-
-  private targetOf(event: Event): { spaceId: string | null; handleId: string | null } {
-    const element = event.target instanceof Element ? event.target : null;
-    const handle = element?.closest('[data-handle-id]');
-    if (handle) return { spaceId: null, handleId: handle.getAttribute('data-handle-id') };
-    const space = element?.closest('[data-space-id]');
-    return { spaceId: space?.getAttribute('data-space-id') ?? null, handleId: null };
-  }
-
-  private localPoint(event: PointerEvent | WheelEvent | MouseEvent): [number, number] {
-    const rect = this.hostElement.nativeElement.getBoundingClientRect();
-    return [event.clientX - rect.left, event.clientY - rect.top];
-  }
+  /* ---- eventos del SVG (delegados al controlador) ---------------------------- */
 
   protected onPointerDown(event: PointerEvent): void {
-    if (event.pointerType === 'touch') this.touchSeen.set(true);
-    this.focusVisible.set(false);
-    const [x, y] = this.localPoint(event);
-    this.gestures.down(event.pointerId, x, y, event.timeStamp);
-    const target = this.targetOf(event);
-    this.downTarget = target.spaceId;
-    this.downButton = event.button;
-    const panGesture = event.button === 1 || this.handTool() || this.interactionMode() === 'view';
-    if (this.interactionMode() === 'edit' && !this.gestures.isPinching && !panGesture) {
-      this.editDragging = true;
-      (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
-      this.worldPointer.emit(this.worldEvent('down', event, target));
-      return;
-    }
-    (event.currentTarget as Element).setPointerCapture?.(event.pointerId);
-    if (this.gestures.isPinching) this.dragging.set(true);
+    this.pointer.onDown(event);
   }
 
-  private downTarget: string | null = null;
-  private downButton = 0;
-
   protected onPointerMove(event: PointerEvent): void {
-    const [x, y] = this.localPoint(event);
-    this.lastPointer = { x: event.clientX, y: event.clientY };
-    if (this.editDragging) {
-      this.worldPointer.emit(this.worldEvent('move', event, this.targetOf(event)));
-      return;
-    }
-    const step = this.gestures.move(event.pointerId, x, y);
-    if (step === null) {
-      // Sin botón apretado: es un paso del mouse (o un lápiz flotando) → intención de hover.
-      if (this.interactionMode() === 'edit') {
-        this.worldPointer.emit(this.worldEvent('move', event, this.targetOf(event)));
-        return;
-      }
-      if (event.pointerType === 'mouse' || event.pointerType === 'pen') this.scheduleHover(this.targetOf(event).spaceId, event.clientX, event.clientY);
-      return;
-    }
-    if (step.kind === 'pinch') {
-      this.dragging.set(true);
-      this.intent.closeNow();
-      const size = this.size();
-      let next = zoomAt(this.view(), size, step.factor, [step.center.x, step.center.y]);
-      next = panBy(next, step.dx, step.dy);
-      this.setView(next);
-      return;
-    }
-    if (this.gestures.moved) {
-      if (!this.dragging()) {
-        this.dragging.set(true);
-        this.intent.closeNow();
-        this.hoverChange.emit(null);
-      }
-      this.setView(panBy(this.view(), step.dx, step.dy));
-    }
+    this.pointer.onMove(event);
   }
 
   protected onPointerUp(event: PointerEvent): void {
-    (event.currentTarget as Element).releasePointerCapture?.(event.pointerId);
-    if (this.editDragging) {
-      this.editDragging = false;
-      this.worldPointer.emit(this.worldEvent('up', event, this.targetOf(event)));
-      this.gestures.up(event.pointerId, event.timeStamp);
-      return;
-    }
-    const { wasTap } = this.gestures.up(event.pointerId, event.timeStamp);
-    if (this.gestures.count === 0) this.dragging.set(false);
-    if (!wasTap) return;
-    const target = this.targetOf(event).spaceId;
-    if (event.pointerType === 'touch') {
-      this.onTouchTap(target);
-      return;
-    }
-    if (this.interactionMode() === 'edit') return;
-    if (this.downButton !== 0) return;
-    this.pick.emit(target);
-    if (target) this.setActive(target);
-    if (target === null) this.intent.closeNow();
+    this.pointer.onUp(event);
   }
 
   protected onPointerCancel(event: PointerEvent): void {
-    if (this.editDragging) {
-      this.editDragging = false;
-      this.worldPointer.emit(this.worldEvent('cancel', event, { spaceId: null, handleId: null }));
-    }
-    this.gestures.cancel();
-    this.dragging.set(false);
+    this.pointer.onCancel(event);
   }
 
   protected onPointerLeave(): void {
-    this.cancelScheduledHover();
-    const id = this.hoveredId();
-    if (id) this.intent.pointerLeave(id);
-    this.hoveredId.set(null);
-  }
-
-  private onTouchTap(target: string | null): void {
-    const interactive = target !== null && this.fillRows().some((r) => r.s.id === target && r.interactive);
-    const { state, outcome } = reduceTouch(this.touchState, interactive ? target : null);
-    this.touchState = state;
-    switch (outcome.action) {
-      case 'open-card':
-        this.setActive(outcome.id);
-        this.pick.emit(outcome.id);
-        this.emitHover(outcome.id, 'touch');
-        break;
-      case 'open-file':
-        this.open.emit(outcome.id);
-        break;
-      case 'close':
-        this.pick.emit(null);
-        this.hoverChange.emit(null);
-        break;
-      case 'none':
-        this.pick.emit(null);
-        break;
-    }
-  }
-
-  private scheduleHover(target: string | null, x: number, y: number): void {
-    this.pendingHover = { target, x, y };
-    if (this.hoverFrame) return;
-    this.hoverFrame = requestAnimationFrame(() => {
-      this.hoverFrame = 0;
-      const pending = this.pendingHover;
-      this.pendingHover = null;
-      if (pending) this.applyHover(pending.target);
-    });
-  }
-
-  private cancelScheduledHover(): void {
-    cancelAnimationFrameSafe(this.hoverFrame);
-    this.hoverFrame = 0;
-    this.pendingHover = null;
-  }
-
-  private applyHover(target: string | null): void {
-    const interactive = target !== null && this.fillRows().some((r) => r.s.id === target && !r.hiddenByLegend);
-    const next = interactive ? target : null;
-    const previous = this.hoveredId();
-    if (next === previous) return;
-    if (previous) this.intent.pointerLeave(previous);
-    this.hoveredId.set(next);
-    if (next) this.intent.pointerEnter(next);
-  }
-
-  private onWheel(event: WheelEvent): void {
-    if (!(event.ctrlKey || event.metaKey)) return;
-    event.preventDefault();
-    const [x, y] = this.localPoint(event);
-    const factor = Math.exp(-event.deltaY * (event.deltaMode === 1 ? 0.05 : 0.0025));
-    this.setView(zoomAt(this.view(), this.size(), factor, [x, y]));
-  }
-
-  private worldEvent(phase: WorldPointerEvent['phase'], event: PointerEvent, target: { spaceId: string | null; handleId: string | null }): WorldPointerEvent {
-    return {
-      phase,
-      world: this.toWorld(event.clientX, event.clientY),
-      targetId: target.spaceId,
-      handleId: target.handleId,
-      shiftKey: event.shiftKey,
-      altKey: event.altKey,
-      ctrlKey: event.ctrlKey || event.metaKey,
-      pointerType: event.pointerType,
-      detail: event.detail,
-      scale: this.view().scale,
-    };
+    this.pointer.onLeave();
   }
 
   /* ---- teclado y foco ------------------------------------------------------- */
 
   protected onKeyDown(event: KeyboardEvent): void {
     this.focusVisible.set(true);
-    const key = event.key;
-    const ctrl = event.ctrlKey || event.metaKey;
-    if (key === 'Escape') {
-      this.intent.dismiss();
-      this.touchState = { openId: null };
-      this.hoverChange.emit(null);
+    const action = keyAction(event, this.interactionMode() === 'edit');
+    if (action === null) return;
+    if (action.type === 'dismiss') {
+      this.pointer.dismiss();
       return;
     }
-    if (key === '+' || key === '=') return this.consume(event, () => this.zoomIn());
-    if (key === '-' || key === '_') return this.consume(event, () => this.zoomOut());
-    if (key === '0') return this.consume(event, () => this.fit());
-    if (key === '.') {
-      const selected = this.selected();
-      return this.consume(event, () => (selected ? this.frameBox(bboxInflate(selected.bbox, 1)) : this.fit()));
-    }
-    if (key === '/') return this.consume(event, () => this.searchRequested.emit());
-    if (key === 'PageDown') return this.consume(event, () => this.floorStep.emit(1));
-    if (key === 'PageUp') return this.consume(event, () => this.floorStep.emit(-1));
-
-    const direction = arrowDirection(key);
-    if (direction !== null) {
-      if (event.altKey || this.interactionMode() === 'edit') {
-        const step = 80;
-        const dx = direction === 'left' ? step : direction === 'right' ? -step : 0;
-        const dy = direction === 'up' ? step : direction === 'down' ? -step : 0;
-        return this.consume(event, () => this.setView(panBy(this.view(), dx, dy)));
+    event.preventDefault();
+    event.stopPropagation();
+    switch (action.type) {
+      case 'zoomIn':
+        this.zoomIn();
+        break;
+      case 'zoomOut':
+        this.zoomOut();
+        break;
+      case 'fit':
+        this.fit();
+        break;
+      case 'frameSelected': {
+        const selected = this.selected();
+        if (selected) this.frameBox(bboxInflate(selected.bbox, 1));
+        else this.fit();
+        break;
       }
-      const current = this.activeId();
-      if (current === null) return;
-      const next = nextInDirection(current, direction, this.navItems());
-      return this.consume(event, () => {
-        if (next === null) return;
-        this.setActive(next);
-        this.focusActive();
-        this.ensureActiveVisible();
-      });
-    }
-    if (key === 'Home' || key === 'End') {
-      const order = readingOrder(this.navItems());
-      const id = key === 'Home' ? order[0] : order[order.length - 1];
-      return this.consume(event, () => {
-        if (!id) return;
-        this.setActive(id);
-        this.focusActive();
-        this.ensureActiveVisible();
-      });
-    }
-    if ((key === 'Enter' || key === ' ') && !ctrl) {
-      const id = this.targetOf(event).spaceId ?? this.activeId();
-      if (id) this.consume(event, () => this.open.emit(id));
+      case 'search':
+        this.searchRequested.emit();
+        break;
+      case 'floor':
+        this.floorStep.emit(action.step);
+        break;
+      case 'pan':
+        this.setView(panBy(this.view(), action.dx, action.dy));
+        break;
+      case 'move': {
+        const current = this.activeId();
+        const next = current === null ? null : nextInDirection(current, action.direction, this.navItems());
+        if (next !== null) this.goTo(next);
+        break;
+      }
+      case 'edge': {
+        const order = readingOrder(this.navItems());
+        const id = action.which === 'first' ? order[0] : order[order.length - 1];
+        if (id) this.goTo(id);
+        break;
+      }
+      case 'open': {
+        const id = this.pointer.targetOf(event).spaceId ?? this.activeId();
+        if (id) this.open.emit(id);
+        break;
+      }
     }
   }
 
-  private consume(event: Event, action: () => void): void {
-    event.preventDefault();
-    event.stopPropagation();
-    action();
+  private goTo(id: string): void {
+    this.setActive(id);
+    this.focusActive();
+    this.ensureActiveVisible();
   }
 
   protected onFocusIn(event: FocusEvent): void {
-    const id = this.targetOf(event).spaceId;
+    const id = this.pointer.targetOf(event).spaceId;
     if (id === null) return;
     this.activeId.set(id);
     this.activeChange.emit(id);
     // Solo el foco de teclado abre la tarjeta; un clic ya tiene su propio camino.
-    if (this.focusVisible() || this.isKeyboardFocus(event)) {
+    const keyboard = event.target instanceof Element && event.target.matches(':focus-visible');
+    if (this.focusVisible() || keyboard) {
       this.focusVisible.set(true);
-      this.intent.focus(id);
+      this.pointer.focus(id);
     }
-  }
-
-  private isKeyboardFocus(event: FocusEvent): boolean {
-    const target = event.target;
-    return target instanceof Element && target.matches(':focus-visible');
   }
 
   protected onFocusOut(event: FocusEvent): void {
     const next = event.relatedTarget;
     if (next instanceof Node && this.svg()?.nativeElement.contains(next)) return;
-    this.intent.blur();
+    this.pointer.blur();
     this.focusVisible.set(false);
   }
 
@@ -864,14 +566,14 @@ export class FloorPlanCanvas {
     const id = this.activeId();
     const svg = this.svg()?.nativeElement;
     if (!id || !svg) return;
-    const find = (): SVGElement | null => svg.querySelector<SVGElement>(`[data-space-id="${cssEscape(id)}"][role="button"]`);
-    const element = find();
+    const selector = `[data-space-id="${typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id}"][role="button"]`;
+    const element = svg.querySelector<SVGElement>(selector);
     if (element) {
       element.focus({ preventScroll: true });
       return;
     }
     // Aún no se montó (virtualizado): después del próximo ciclo de cambios.
-    queueMicrotask(() => setTimeout(() => find()?.focus({ preventScroll: true }), 0));
+    queueMicrotask(() => setTimeout(() => svg.querySelector<SVGElement>(selector)?.focus({ preventScroll: true }), 0));
   }
 
   private ensureActiveVisible(): void {
@@ -881,43 +583,6 @@ export class FloorPlanCanvas {
     if (next !== this.view()) this.setView(next);
   }
 
-  /* ---- tarjeta -------------------------------------------------------------- */
-
-  private onIntent(id: string | null, source: HoverSource | null): void {
-    if (id === null || source === null) {
-      this.hoverChange.emit(null);
-      return;
-    }
-    this.emitHover(id, source);
-  }
-
-  private emitHover(id: string, source: HoverSource | 'touch'): void {
-    const hover = this.buildHover(id, source);
-    if (hover) this.hoverChange.emit(hover);
-  }
-
-  private buildHover(id: string, source: HoverSource | 'touch'): CanvasHover | null {
-    const svg = this.svg()?.nativeElement;
-    if (!svg) return null;
-    const element = svg.querySelector<SVGGraphicsElement>(`[data-space-id="${cssEscape(id)}"]`);
-    if (!element) return null;
-    const rect = element.getBoundingClientRect();
-    return {
-      spaceId: id,
-      source,
-      anchor: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
-      pointer: this.lastPointer,
-      bounds: this.boundsRect(),
-    };
-  }
-
-  private reanchor(): void {
-    const id = this.intent.activeId ?? (this.touchState.openId);
-    if (!id) return;
-    const source: HoverSource | 'touch' = this.touchState.openId === id ? 'touch' : this.focusVisible() ? 'focus' : 'pointer';
-    this.emitHover(id, source);
-  }
-
   /** Cuánto mide un espacio en pantalla (para decidir si la tarjeta se ancla al cursor). */
   screenSizeOf(spaceId: string): { width: number; height: number } | null {
     const s = this.byId().get(spaceId);
@@ -925,43 +590,6 @@ export class FloorPlanCanvas {
     const scale = this.view().scale;
     return { width: (s.bbox[2] - s.bbox[0]) * scale, height: (s.bbox[3] - s.bbox[1]) * scale };
   }
-
-  /** Para el minimapa: ¿dónde queda un punto del mundo en el lienzo? */
-  toScreen(point: Point): Point {
-    return worldToScreen(this.view(), this.size(), point);
-  }
-
-  protected ageText(): string {
-    const asOf = this.asOf();
-    return asOf ? ageLabel(asOf, this.nowMs() || Date.now()) : '';
-  }
-
-  protected layerOn(id: PlanLayerId): boolean {
-    return this.layers().has(id);
-  }
-}
-
-function arrowDirection(key: string): NavDirection | null {
-  switch (key) {
-    case 'ArrowLeft':
-      return 'left';
-    case 'ArrowRight':
-      return 'right';
-    case 'ArrowUp':
-      return 'up';
-    case 'ArrowDown':
-      return 'down';
-    default:
-      return null;
-  }
 }
 
 const round = (value: number): number => Math.round(value * 1000) / 1000;
-
-function cancelAnimationFrameSafe(handle: number): void {
-  if (handle && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(handle);
-}
-
-function cssEscape(value: string): string {
-  return typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(value) : value.replace(/["\\]/g, '\\$&');
-}

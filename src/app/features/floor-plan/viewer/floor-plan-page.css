@@ -154,6 +154,8 @@
     .plan-filters { display: none; width: 100%; }
     .plan-filters.is-open { display: grid; }
     .plan-search { max-width: none; flex-basis: 100%; }
+    .plan-toolbar { gap: var(--sp-2); padding: var(--sp-2); }
+    .plan-toolbar app-segmented-control { flex: none; }
     .plan-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: var(--sp-1); }
     .plan-tab { flex: none; }
     .plan-stage { height: clamp(320px, 56vh, 520px); }

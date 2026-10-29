@@ -44,6 +44,13 @@ describe('posicionamiento flip + shift', () => {
     expect(placeFloating(east, tall, { ...base, preferred: 'top' }).side).toBe('left');
   });
 
+  it('informa si la capa tapa al ancla (no debe, o cierra la tarjeta al rebotar el puntero)', () => {
+    const anchor: Rect = { left: 450, top: 300, width: 100, height: 60 };
+    expect(placeFloating(anchor, card, { ...base, preferred: 'top' }).overlapsAnchor).toBe(false);
+    const huge = { width: 900, height: 590 };
+    expect(placeFloating(anchor, huge, { ...base, preferred: 'top' }).overlapsAnchor).toBe(true);
+  });
+
   it('si no entra por ningún lado se queda con el lado de más espacio y marca el recorte', () => {
     const huge = { width: 2000, height: 1200 };
     const anchor: Rect = { left: 500, top: 300, width: 40, height: 40 };

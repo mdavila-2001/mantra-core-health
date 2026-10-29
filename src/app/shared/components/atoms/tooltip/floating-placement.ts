@@ -61,6 +61,8 @@ export interface Placement {
   readonly arrowOffset: number;
   /** ¿La capa quedó fuera de `bounds` aun después de voltear y desplazar? (capa más grande que el lienzo). */
   readonly clipped: boolean;
+  /** ¿La capa tapa al ancla? Con el puntero sobre el ancla, taparla la cierra por rebote. */
+  readonly overlapsAnchor: boolean;
 }
 
 const DEFAULT_ORDER: Readonly<Record<Side, readonly Side[]>> = {
@@ -174,5 +176,11 @@ export function placeFloating(anchor: Rect, card: Size, options: PlacementOption
   const span = vertical ? card.width : card.height;
   const arrowOffset = clamp(anchorCenter - origin, Math.min(12, span / 2), Math.max(span - 12, span / 2));
 
-  return { side, left, top, arrowOffset, clipped };
+  const overlapsAnchor =
+    left < anchor.left + anchor.width - 0.5 &&
+    left + card.width > anchor.left + 0.5 &&
+    top < anchor.top + anchor.height - 0.5 &&
+    top + card.height > anchor.top + 0.5;
+
+  return { side, left, top, arrowOffset, clipped, overlapsAnchor };
 }

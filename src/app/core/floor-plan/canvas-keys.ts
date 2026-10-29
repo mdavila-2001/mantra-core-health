@@ -1,0 +1,69 @@
+/* ============================================================================
+    Teclado del lienzo (CONTRATO-PLANO §5.6, «Teclado completo»): qué hace cada
+    tecla. Función pura: el componente ejecuta la acción que se devuelve.
+    ========================================================================== */
+
+import type { NavDirection } from './spatial-nav';
+
+export type KeyAction =
+  | { readonly type: 'dismiss' }
+  | { readonly type: 'zoomIn' }
+  | { readonly type: 'zoomOut' }
+  | { readonly type: 'fit' }
+  | { readonly type: 'frameSelected' }
+  | { readonly type: 'search' }
+  | { readonly type: 'floor'; readonly step: 1 | -1 }
+  | { readonly type: 'pan'; readonly dx: number; readonly dy: number }
+  | { readonly type: 'move'; readonly direction: NavDirection }
+  | { readonly type: 'edge'; readonly which: 'first' | 'last' }
+  | { readonly type: 'open' };
+
+export interface KeyInput {
+  readonly key: string;
+  readonly ctrlKey: boolean;
+  readonly metaKey: boolean;
+  readonly altKey: boolean;
+}
+
+/** Paso del desplazamiento por teclado, en píxeles. */
+export const KEY_PAN_STEP_PX = 80;
+
+const DIRECTIONS: Readonly<Record<string, NavDirection>> = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+};
+
+/**
+ * `Escape` descarta la tarjeta; `+ − 0 .` hacen zoom y encuadre; `/` enfoca la
+ * búsqueda; `Av Pág`/`Re Pág` cambian de lienzo; las flechas van al vecino
+ * espacial (con `Alt`, o en el editor, desplazan la vista); `Inicio`/`Fin` van
+ * al primero y al último; `Enter` y `Espacio` abren la ficha.
+ */
+export function keyAction(input: KeyInput, editMode: boolean): KeyAction | null {
+  const { key } = input;
+  if (key === 'Escape') return { type: 'dismiss' };
+  if (key === '+' || key === '=') return { type: 'zoomIn' };
+  if (key === '-' || key === '_') return { type: 'zoomOut' };
+  if (key === '0') return { type: 'fit' };
+  if (key === '.') return { type: 'frameSelected' };
+  if (key === '/') return { type: 'search' };
+  if (key === 'PageDown') return { type: 'floor', step: 1 };
+  if (key === 'PageUp') return { type: 'floor', step: -1 };
+  const direction = DIRECTIONS[key];
+  if (direction !== undefined) {
+    if (input.altKey || editMode) {
+      return {
+        type: 'pan',
+        dx: direction === 'left' ? KEY_PAN_STEP_PX : direction === 'right' ? -KEY_PAN_STEP_PX : 0,
+        dy: direction === 'up' ? KEY_PAN_STEP_PX : direction === 'down' ? -KEY_PAN_STEP_PX : 0,
+      };
+    }
+    return { type: 'move', direction };
+  }
+  if (key === 'Home') return { type: 'edge', which: 'first' };
+  if (key === 'End') return { type: 'edge', which: 'last' };
+  if ((key === 'Enter' || key === ' ') && !(input.ctrlKey || input.metaKey)) return { type: 'open' };
+  return null;
+}
