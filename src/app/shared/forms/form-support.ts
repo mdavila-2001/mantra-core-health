@@ -36,7 +36,8 @@ export const NUMBER_STRING_ERROR = 'Ingrese un número, como 0.98.';
 /**
  * Mensaje de error de un `ViewState`, con el mismo criterio que el resto de
  * las pantallas del producto: validación → los detalles de la API; prohibido →
- * el mensaje del backend o el propio de la pantalla; S8/S9, textos comunes con
+ * el mensaje del backend o el propio de la pantalla; no encontrado → un texto
+ * fijo que no confirma si el recurso existe (S6); S8/S9, textos comunes con
  * `requestId` para poder reportar.
  */
 export function errorMessageOf(
@@ -47,7 +48,12 @@ export function errorMessageOf(
     return state.issues.map((issue) => issue.message).join(' ') || null;
   }
   if (state.status === 'forbidden') {
-    return state.message ?? forbiddenFallback;
+    return state.message || forbiddenFallback;
+  }
+  if (state.status === 'not-found') {
+    // S6: el mismo texto exista o no el recurso, y sin repetir el identificador.
+    // Sin esta rama un 404 al enviar no mostraba NADA: el botón parecía roto.
+    return 'No encontramos lo que intenta guardar. Puede que ya no exista o que no tenga acceso a él.';
   }
   if (state.status === 'offline') {
     return 'No pudimos conectarnos. Revise su conexión y reintente.';

@@ -14,6 +14,7 @@ import {
 } from '../../../../core/data-access/directory/directory.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
@@ -267,6 +268,8 @@ export class ChildOrganizationNew {
   });
   protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoPais = signal(false);
+  /** Por qué falló la última búsqueda de país o jurisdicción; vacío si anduvo. */
+  protected readonly errorDeBusqueda = signal<string | null>(null);
 
   protected readonly jurisdiccion = toSignal(this.form.controls.jurisdiccion.valueChanges, {
     initialValue: this.form.controls.jurisdiccion.value,
@@ -277,22 +280,14 @@ export class ChildOrganizationNew {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesita administración de seguridad para crear una filial.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * Por qué falló el envío, con el texto común del producto (`errorMessageOf`):
+   * incluye el 404 —antes un formulario de una organización que ya no existe
+   * no mostraba **nada** al enviar— y el código de la petición en S9.
+   */
+  protected readonly errorMessage = computed<string | null>(
+    () => errorMessageOf(this.state(), 'Necesita administración de seguridad para crear una filial.') ?? this.errorDeBusqueda(),
+  );
 
   /** El código es único global: un `409` sólo puede venir de él. */
   protected readonly codigoEnConflicto = computed(() => {
@@ -310,6 +305,7 @@ export class ChildOrganizationNew {
       CANDIDATOS_POR_BUSQUEDA,
       this.candidatosPais,
       this.buscandoPais,
+      this.errorDeBusqueda,
     );
   }
 
@@ -320,6 +316,7 @@ export class ChildOrganizationNew {
       CANDIDATOS_POR_BUSQUEDA,
       this.candidatosJurisdiccion,
       this.buscandoJurisdiccion,
+      this.errorDeBusqueda,
     );
   }
 

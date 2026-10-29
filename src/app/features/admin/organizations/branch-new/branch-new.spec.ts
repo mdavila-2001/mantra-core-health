@@ -142,4 +142,22 @@ describe('BranchNew', () => {
 
     expect(crudo<() => boolean>('codigoEnConflicto').call(fixture.componentInstance)).toBe(true);
   });
+
+  it('un 404 (la organización ya no existe) se avisa en pantalla en vez de dejar el botón mudo', () => {
+    // El defecto: `errorMessage` no conocía `not-found`, así que el envío fallaba
+    // sin mostrar nada. S6 usa un texto fijo: no confirma si el id existe.
+    completar();
+    interno<() => void>('submit')();
+
+    http
+      .expectOne(`/tenants/${TENANT_ID}/branches`)
+      .flush({ statusCode: 404, code: 'NOT_FOUND', message: 'x' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="alta-sucursal-error"]',
+    );
+    expect(aviso?.textContent).toContain('No encontramos');
+    expect(aviso?.textContent).not.toContain(TENANT_ID);
+  });
 });

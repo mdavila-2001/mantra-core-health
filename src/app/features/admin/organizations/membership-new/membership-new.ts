@@ -8,7 +8,7 @@ import {
   untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
@@ -19,9 +19,12 @@ import type {
   TenantRoleCode,
 } from '../../../../core/data-access/directory/directory.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Link } from '../../../../shared/components/atoms/link/link';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
@@ -33,7 +36,11 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import {
+  branchNewRoute,
+  ORGANIZATIONS_ROUTE,
+  organizationDetailRoute,
+} from '../organizations.routes';
 import { crearBuscadorDePersonas } from '../people-search';
 
 /** Cuántos candidatos trae cada búsqueda del combobox de persona. */
@@ -82,11 +89,14 @@ const ETIQUETAS_DE_ALCANCE: Readonly<Record<AccessScopeCode, string>> = {
   imports: [
     Alert,
     AnnounceOnAppear,
+    AppButton,
     FormActions,
     FormField,
     FormSection,
+    Link,
     PageHeader,
     ReferenceCombobox,
+    RouterLink,
     Select,
   ],
   templateUrl: './membership-new.html',
@@ -148,8 +158,34 @@ export class MembershipNew {
 
   protected readonly esPorSede = computed(() => this.alcance() === 'BRANCH');
 
+  /** La lectura de las sedes terminó bien (aunque no haya ninguna). */
+  private readonly sedesLeidas = signal(false);
+
+  /**
+   * Por qué no se pudieron leer las sedes, si falló. **No es «no hay sedes»**:
+   * antes el fallo se tragaba, la lista quedaba vacía y la pantalla afirmaba que
+   * la organización no tenía sedes cuando lo que había fallado era la lectura.
+   */
+  protected readonly errorDeSedes = signal<string | null>(null);
+
+  /** A dónde lleva «Abrir una sucursal», que es lo que el aviso de sin-sedes pide hacer. */
+  protected readonly rutaDeNuevaSucursal = computed(() => branchNewRoute(this.tenantId()));
+
+  /**
+   * La membresía que ya existe pero quedó sin su sede.
+   *
+   * Es lo que vuelve ejecutable el aviso de «falta la sede»: antes decía
+   * «complete la asignación desde la ficha de la organización», y la ficha no
+   * tiene ninguna pantalla para asignar la sede de una membresía. Ahora la
+   * pantalla se queda y ofrece repetir **sólo** ese paso, sin volver a crear a
+   * la persona (que duplicaría la membresía).
+   */
+  protected readonly membresiaSinSede = signal<string | null>(null);
+
   /** Sin sedes cargadas no se puede acotar a una: hay que abrir alguna antes. */
-  protected readonly sinSedes = computed(() => this.esPorSede() && this.sedes().length === 0);
+  protected readonly sinSedes = computed(
+    () => this.esPorSede() && this.sedesLeidas() && this.sedes().length === 0,
+  );
 
   protected readonly sedeFaltante = computed(
     () => this.enviado() && this.esPorSede() && this.sede() === null,
@@ -158,22 +194,14 @@ export class MembershipNew {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesita administrar esta organización para sumar a alguien.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * Por qué falló el envío, con el texto común del producto (`errorMessageOf`):
+   * incluye el 404 —antes un formulario de una organización que ya no existe
+   * no mostraba **nada** al enviar— y el código de la petición en S9.
+   */
+  protected readonly errorMessage = computed<string | null>(
+    () => errorMessageOf(this.state(), 'Necesita administrar esta organización para sumar a alguien.'),
+  );
 
   constructor() {
     // Las sedes alimentan el desplegable del alcance por sucursal, y saber si
@@ -195,12 +223,32 @@ export class MembershipNew {
    * @param tenantId - La organización cuyas sedes se listan.
    */
   private cargarSedes(tenantId: string): void {
+    this.errorDeSedes.set(null);
     this.directory.listBranches(tenantId).subscribe({
-      next: (lista) => this.sedes.set(lista.items),
-      // Un fallo acá no rompe el alta: deja el alcance por sede sin opciones y
-      // la pantalla lo dice. El error general se reserva para el envío.
-      error: () => this.sedes.set([]),
+      next: (lista) => {
+        this.sedes.set(lista.items);
+        this.sedesLeidas.set(true);
+      },
+      error: (error: unknown) => {
+        this.sedes.set([]);
+        // El alta sigue posible con alcance sobre toda la organización; lo que
+        // no se puede es afirmar que no hay sedes ni acotar a una.
+        this.errorDeSedes.set(
+          errorMessageOf(
+            errorToViewState<null>(error),
+            'No tiene permiso para ver las sedes de esta organización.',
+          ) ?? 'No pudimos leer las sedes de la organización.',
+        );
+      },
     });
+  }
+
+  /** Reintento de la lectura de sedes. */
+  protected recargarSedes(): void {
+    const id = this.tenantId();
+    if (id !== '') {
+      this.cargarSedes(id);
+    }
   }
 
   protected cambiarRol(rol: TenantRoleCode | null): void {
@@ -217,6 +265,15 @@ export class MembershipNew {
 
   protected submit(): void {
     if (this.enviando()) {
+      return;
+    }
+
+    // La persona ya está dentro: repetir el alta la duplicaría. Sólo se repite
+    // el paso que falló.
+    const pendiente = this.membresiaSinSede();
+    if (pendiente !== null) {
+      this.state.set(loading());
+      this.asignarSedeSiHaceFalta(pendiente);
       return;
     }
 
@@ -238,10 +295,10 @@ export class MembershipNew {
    * Cierra el alta, encadenando la asignación de sede cuando el alcance la
    * exige.
    *
-   * Si la asignación falla, la membresía ya existe y no se deshace: se avisa
-   * para que alguien la complete desde la ficha, en vez de dejar creer que no
-   * pasó nada. Deshacerla sería peor —la persona quedaría fuera sin que nadie
-   * lo pidiera—.
+   * Si la asignación falla, la membresía ya existe y no se deshace: la pantalla
+   * se queda, dice qué falta y ofrece repetir **sólo** esa asignación
+   * (`membresiaSinSede`). Deshacerla sería peor —la persona quedaría fuera sin
+   * que nadie lo pidiera—.
    *
    * @param membershipId - La membresía recién creada.
    */
@@ -254,24 +311,32 @@ export class MembershipNew {
 
     this.directory.assignBranch(this.tenantId(), membershipId, { branchId: sede }).subscribe({
       next: () => this.terminar(),
-      error: () => {
-        this.state.set(ready(null));
-        this.toast.warning(
-          'La persona quedó incorporada, pero no pudimos asignarle la sede. ' +
-            'Complete la asignación desde la ficha de la organización.',
-          'Falta la sede',
+      error: (error: unknown) => {
+        // La membresía existe: no es un fracaso del alta, y la pantalla no queda
+        // en error. Se recuerda cuál es y se ofrece repetir sólo la asignación.
+        this.membresiaSinSede.set(membershipId);
+        this.errorDeAsignacion.set(
+          errorMessageOf(errorToViewState<null>(error), 'No tiene permiso para asignar la sede.') ??
+            null,
         );
-        void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
+        this.state.set(ready(null));
       },
     });
   }
 
+  /** Por qué falló la última asignación de sede, para mostrarlo junto al aviso. */
+  protected readonly errorDeAsignacion = signal<string | null>(null);
+
   private terminar(): void {
     this.state.set(ready(null));
+    this.membresiaSinSede.set(null);
     const nombre = this.persona()?.label ?? 'La persona';
     this.toast.success(`${nombre} ya forma parte de la organización.`, 'Alguien más adentro');
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
   }
+
+  /** A dónde lleva «Ir a la organización». */
+  protected readonly rutaDeLaFicha = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

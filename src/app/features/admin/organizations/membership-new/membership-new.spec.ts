@@ -202,4 +202,95 @@ describe('MembershipNew', () => {
     expect(candidatos[0].hint).toBeUndefined();
     expect(candidatos[1].hint).toBe('Correo sin verificar');
   });
+
+  describe('defectos F0 de la pantalla', () => {
+    function conSedeElegida(): void {
+      elegirPersona();
+      crudo<{ set: (v: string) => void }>('alcance').set('BRANCH');
+      crudo<{ set: (v: string) => void }>('sede').set('b-1');
+    }
+
+    it('si la asignación falla se queda en la pantalla y repetir NO vuelve a crear a la persona', () => {
+      // «Complétela desde la ficha» era imposible: la ficha no tiene dónde asignar la
+      // sede de una membresía. Y repetir el alta habría duplicado la membresía.
+      conSedeElegida();
+      interno<() => void>('submit')();
+      http.expectOne(`/tenants/${TENANT_ID}/memberships`).flush(RESPUESTA);
+      http
+        .expectOne(`/tenants/${TENANT_ID}/memberships/${MEMBRESIA_ID}/branch-assignments`)
+        .flush({ message: 'No se pudo' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+
+      expect(crudo<() => string | null>('membresiaSinSede').call(fixture.componentInstance)).toBe(
+        MEMBRESIA_ID,
+      );
+      const el = fixture.nativeElement as HTMLElement;
+      expect(el.querySelector('[data-testid="alta-membresia-reintentar-sede"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="alta-membresia-form"]')).toBeNull();
+
+      interno<() => void>('submit')();
+      http.expectNone(`/tenants/${TENANT_ID}/memberships`);
+      http
+        .expectOne(`/tenants/${TENANT_ID}/memberships/${MEMBRESIA_ID}/branch-assignments`)
+        .flush({
+          id: 'a-1',
+          branchId: 'b-1',
+          statusConceptId: 'c-activa',
+          createdAt: '2026-08-22T12:00:00.000Z',
+        });
+      expect(crudo<() => string | null>('membresiaSinSede').call(fixture.componentInstance)).toBeNull();
+    });
+
+    it('un fallo al leer las sedes no se presenta como «no hay sedes»', () => {
+      const otro = TestBed.createComponent(MembershipNew);
+      otro.detectChanges();
+      http
+        .expectOne(`/tenants/${TENANT_ID}/branches`)
+        .flush({ message: 'caído' }, { status: 500, statusText: 'Server Error' });
+      otro.detectChanges();
+
+      const instancia = otro.componentInstance as unknown as Record<string, unknown>;
+      (instancia['alcance'] as { set: (v: string) => void }).set('BRANCH');
+      otro.detectChanges();
+
+      expect((instancia['sinSedes'] as () => boolean).call(instancia)).toBe(false);
+      expect((instancia['errorDeSedes'] as () => string | null).call(instancia)).not.toBeNull();
+      const el = otro.nativeElement as HTMLElement;
+      expect(el.querySelector('[data-testid="alta-membresia-error-sedes"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="alta-membresia-sin-sedes"]')).toBeNull();
+    });
+
+    it('sin sedes, el aviso lleva a abrir una sucursal en vez de pedirlo sin salida', () => {
+      const otro = TestBed.createComponent(MembershipNew);
+      otro.detectChanges();
+      http.expectOne(`/tenants/${TENANT_ID}/branches`).flush({ count: 0, items: [] });
+      const instancia = otro.componentInstance as unknown as Record<string, unknown>;
+      (instancia['alcance'] as { set: (v: string) => void }).set('BRANCH');
+      otro.detectChanges();
+
+      const enlace = (otro.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+        '[data-testid="alta-membresia-abrir-sucursal"]',
+      );
+      expect(enlace?.getAttribute('href')).toBe(
+        `/administration/organizations/${TENANT_ID}/branches/new`,
+      );
+    });
+
+    it('un 404 al enviar muestra un aviso (S6) en vez de quedarse mudo', () => {
+      elegirPersona();
+      interno<() => void>('submit')();
+      http.expectOne(`/tenants/${TENANT_ID}/memberships`).flush(
+        { statusCode: 404, code: 'NOT_FOUND', message: 'x' },
+        { status: 404, statusText: 'Not Found' },
+      );
+      fixture.detectChanges();
+
+      expect(crudo<() => string | null>('errorMessage').call(fixture.componentInstance)).toContain(
+        'No encontramos',
+      );
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="alta-membresia-error"]'),
+      ).not.toBeNull();
+    });
+  });
 });

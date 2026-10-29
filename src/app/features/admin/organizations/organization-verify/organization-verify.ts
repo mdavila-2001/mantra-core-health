@@ -7,6 +7,7 @@ import { DirectoryClient } from '../../../../core/data-access/directory/director
 import type { VerifyTenantConfirmation } from '../../../../core/data-access/directory/directory.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../../shared/a11y/announce-on-appear';
@@ -117,6 +118,8 @@ export class OrganizationVerify {
   protected readonly pais = signal<ReferenceOption | null>(null);
   protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoPais = signal(false);
+  /** Por qué falló la última búsqueda de país o jurisdicción; vacío si anduvo. */
+  protected readonly errorDeBusqueda = signal<string | null>(null);
 
   protected readonly jurisdiccion = signal<ReferenceOption | null>(null);
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
@@ -125,24 +128,14 @@ export class OrganizationVerify {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return (
-        state.message || 'Sólo una cuenta con administración de seguridad puede verificar.'
-      );
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * Por qué falló el envío, con el texto común del producto (`errorMessageOf`):
+   * incluye el 404 —antes un formulario de una organización que ya no existe
+   * no mostraba **nada** al enviar— y el código de la petición en S9.
+   */
+  protected readonly errorMessage = computed<string | null>(
+    () => errorMessageOf(this.state(), 'Sólo una cuenta con administración de seguridad puede verificar.') ?? this.errorDeBusqueda(),
+  );
 
   protected buscarPais(texto: string): void {
     searchConceptOptions(
@@ -151,6 +144,7 @@ export class OrganizationVerify {
       CANDIDATOS_POR_BUSQUEDA,
       this.candidatosPais,
       this.buscandoPais,
+      this.errorDeBusqueda,
     );
   }
 
@@ -161,6 +155,7 @@ export class OrganizationVerify {
       CANDIDATOS_POR_BUSQUEDA,
       this.candidatosJurisdiccion,
       this.buscandoJurisdiccion,
+      this.errorDeBusqueda,
     );
   }
 

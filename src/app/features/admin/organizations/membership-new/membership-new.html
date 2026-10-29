@@ -10,6 +10,38 @@
   }}</app-alert>
 }
 
+<!-- La persona ya quedó incorporada pero sin su sede: se queda acá y se ofrece
+     repetir SÓLO esa asignación. «Complétela desde la ficha» era una
+     instrucción imposible —la ficha no tiene dónde asignar la sede de una
+     membresía—, y repetir el alta habría duplicado a la persona. -->
+@if (membresiaSinSede()) {
+  <app-alert
+    appAnuncio
+    tone="warning"
+    title="La persona quedó incorporada, pero sin su sede"
+    data-testid="alta-membresia-sin-sede-asignada"
+  >
+    <p>
+      Ya forma parte de la organización, pero no pudimos asignarle la sede.
+      @if (errorDeAsignacion(); as motivo) {
+        {{ motivo }}
+      }
+    </p>
+    <div alert-actions>
+      <button
+        app-button
+        size="sm"
+        type="button"
+        [isLoading]="enviando()"
+        data-testid="alta-membresia-reintentar-sede"
+        (clicked)="submit()"
+      >
+        Reintentar la asignación de sede
+      </button>
+      <a app-link [routerLink]="rutaDeLaFicha()">Ir a la organización</a>
+    </div>
+  </app-alert>
+} @else {
 <form (ngSubmit)="submit()" novalidate data-testid="alta-membresia-form">
   <app-form-section
     legend="Quién"
@@ -56,10 +88,26 @@
       />
     </app-form-field>
 
-    @if (esPorSede()) {
+    <!-- Un fallo al leer las sedes NO es «no hay sedes»: se dice qué pasó y se
+         ofrece reintentar. -->
+    @if (errorDeSedes(); as motivo) {
+      <app-alert tone="error" data-testid="alta-membresia-error-sedes">
+        {{ motivo }}
+        <div alert-actions>
+          <button app-button size="sm" variant="secondary" type="button" (clicked)="recargarSedes()">
+            Reintentar
+          </button>
+        </div>
+      </app-alert>
+    }
+
+    @if (esPorSede() && !errorDeSedes()) {
       @if (sinSedes()) {
         <app-alert tone="warning" data-testid="alta-membresia-sin-sedes">
-          La organización todavía no tiene sedes, así que no hay ninguna a la que acotar. Abra una
+          La organización todavía no tiene sedes, así que no hay ninguna a la que acotar.
+          <a app-link [routerLink]="rutaDeNuevaSucursal()" data-testid="alta-membresia-abrir-sucursal"
+            >Abra una sucursal</a
+          >
           primero, o deje el alcance en toda la organización.
         </app-alert>
       } @else {
@@ -93,3 +141,4 @@
     (cancelled)="cancelar()"
   />
 </form>
+}
