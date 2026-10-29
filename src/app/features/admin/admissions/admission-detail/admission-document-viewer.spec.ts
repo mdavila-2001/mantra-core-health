@@ -109,7 +109,7 @@ describe('AdmissionDocumentViewer', () => {
     fixture.componentRef.setInput('admissionId', 'a-1');
     fixture.componentRef.setInput('document', documento);
     fixture.detectChanges();
-    http.expectOne('/admissions/a-1/documents/f-1').flush({ url: '/common/files/f-1/content', expiresAt: '2030-01-01T00:00:00Z' });
+    http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({ url: '/common/files/f-1/content', expiresAt: '2030-01-01T00:00:00Z', name: 'cedula.png', mimeType: 'image/png' });
     http.expectOne('/common/files/f-1/content').flush(new Blob(contenido, { type: tipo }));
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r, 20));
@@ -121,7 +121,7 @@ describe('AdmissionDocumentViewer', () => {
     fixture.componentRef.setInput('document', doc());
     fixture.detectChanges();
     expect(q('viewer-loading')?.getAttribute('aria-busy')).toBe('true');
-    http.expectOne('/admissions/a-1/documents/f-1').flush({ url: '/common/files/f-1/content', expiresAt: '2030-01-01T00:00:00Z' });
+    http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({ url: '/common/files/f-1/content', expiresAt: '2030-01-01T00:00:00Z', name: 'cedula.png', mimeType: 'image/png' });
     http.expectOne('/common/files/f-1/content').flush(new Blob([]));
   });
 
@@ -147,10 +147,20 @@ describe('AdmissionDocumentViewer', () => {
     });
 
     it('un PDF se abre con el tipo application/pdf aunque la cabecera diga otra cosa', async () => {
-      await abrir([new Uint8Array(PDF)], 'application/octet-stream', doc({ name: 'm.pdf', mimeType: 'application/pdf' }));
-      expect(q('viewer-open')).not.toBeNull();
-      q('viewer-open')!.click();
-      expect(objetos.get(abiertas[0]![0] as string)?.type).toBe('application/pdf');
+      // Lo que se prueba es el tipo VERIFICADO por la firma y la apertura en pestaña, no la decodificación del PDF
+      // (la prueba del PDF corrupto la ejerce con pdf.js real). Con bytes de cabecera solamente, pdf.js falla en
+      // cuanto termina de cargar y el visor pasa a «dañado»: la prueba dependería de quién llegue antes.
+      const sinPdfJs = vi
+        .spyOn(AdmissionDocumentViewer.prototype as unknown as { openPdf(blob: Blob): Promise<void> }, 'openPdf')
+        .mockResolvedValue(undefined);
+      try {
+        await abrir([new Uint8Array(PDF)], 'application/octet-stream', doc({ name: 'm.pdf', mimeType: 'application/pdf' }));
+        expect(q('viewer-open')).not.toBeNull();
+        q('viewer-open')!.click();
+        expect(objetos.get(abiertas[0]![0] as string)?.type).toBe('application/pdf');
+      } finally {
+        sinPdfJs.mockRestore();
+      }
     });
   });
 
@@ -164,7 +174,8 @@ describe('AdmissionDocumentViewer', () => {
       ['tipo vacío', '<html><body onload=alert(1)>', ''],
     ];
     it.each(casos)('%s: sin vista, sin «abrir en pestaña», y la descarga es octet-stream', async (_n, contenido, tipo) => {
-      await abrir([contenido], tipo);
+      // «Tipo vacío» es que NADIE declaró un tipo (ni la cabecera ni la ficha): con uno declarado de imagen o PDF sería «mismatch».
+      await abrir([contenido], tipo, tipo === '' ? doc({ mimeType: null }) : doc());
       expect(q('viewer-unsupported')).not.toBeNull();
       expect(el().querySelector('img')).toBeNull();
       expect(el().querySelector('iframe, object, embed')).toBeNull();
@@ -186,6 +197,13 @@ describe('AdmissionDocumentViewer', () => {
       expect(el().querySelector('img')).toBeNull();
       expect(q('viewer-open')).toBeNull();
       expect([...objetos.values()].every((b) => b.type === 'application/octet-stream')).toBe(true);
+    });
+
+    it('sin tipo en la cabecera pero con la ficha declarando una imagen, bytes HTML tampoco se muestran: «mismatch»', async () => {
+      await abrir(['<!doctype html><script>alert(1)</script>'], '', doc({ mimeType: 'image/png' }));
+      expect(q('viewer-mismatch')).not.toBeNull();
+      expect(el().querySelector('img')).toBeNull();
+      expect(q('viewer-open')).toBeNull();
     });
 
     it('lo mismo con una cabecera application/pdf sobre bytes HTML', async () => {
@@ -223,7 +241,7 @@ describe('AdmissionDocumentViewer', () => {
 
     it('403 al pedir el acceso: sin acceso, y no se ofrece reintentar', () => {
       pedir();
-      http.expectOne('/admissions/a-1/documents/f-1').flush({}, { status: 403, statusText: 'Forbidden' });
+      http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({}, { status: 403, statusText: 'Forbidden' });
       fixture.detectChanges();
       expect(q('viewer-forbidden')).not.toBeNull();
       expect(q('viewer-retry')).toBeNull();
@@ -231,30 +249,33 @@ describe('AdmissionDocumentViewer', () => {
 
     it('404: el archivo ya no está', () => {
       pedir();
-      http.expectOne('/admissions/a-1/documents/f-1').flush({}, { status: 404, statusText: 'Not Found' });
+      http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({}, { status: 404, statusText: 'Not Found' });
       fixture.detectChanges();
       expect(q('viewer-not-found')).not.toBeNull();
     });
 
     it('un error de red permite reintentar y el reintento vuelve a pedir el acceso', () => {
       pedir();
-      http.expectOne('/admissions/a-1/documents/f-1').error(new ProgressEvent('error'));
+      http.expectOne('/admissions/a-1/documents/f-1/download-url').error(new ProgressEvent('error'));
       fixture.detectChanges();
       q('viewer-retry')!.click();
       fixture.detectChanges();
-      http.expectOne('/admissions/a-1/documents/f-1').flush({}, { status: 404, statusText: 'x' });
+      http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({}, { status: 404, statusText: 'x' });
     });
 
-    it('una URL firmada vencida dice «el enlace venció» y reintentar pide una firma nueva', () => {
+    it('una URL firmada vencida dice «el enlace venció» y reintentar pide una firma nueva', async () => {
       pedir();
-      http.expectOne('/admissions/a-1/documents/f-1').flush({ url: 'https://almacen.example.com/o?s=1', expiresAt: '2020-01-01T00:00:00Z' });
-      http.expectOne('https://almacen.example.com/o?s=1').flush('vencida', { status: 403, statusText: 'Forbidden' });
+      http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({ url: 'https://almacen.example.com/o?s=1', expiresAt: '2020-01-01T00:00:00Z', name: 'cedula.png', mimeType: 'image/png' });
+      http.expectOne('https://almacen.example.com/o?s=1').flush(new Blob(['vencida']), { status: 403, statusText: 'Forbidden' });
+      // El cuerpo de un error de descarga es un Blob: se lee de forma asíncrona antes de decidir qué error es.
+      await fixture.whenStable();
+      await new Promise((r) => setTimeout(r, 20));
       fixture.detectChanges();
       expect(q('viewer-expired')?.textContent).toContain('El enlace del documento venció');
       expect(q('viewer-forbidden')).toBeNull();
       q('viewer-retry')!.click();
       fixture.detectChanges();
-      http.expectOne('/admissions/a-1/documents/f-1').flush({}, { status: 404, statusText: 'x' });
+      http.expectOne('/admissions/a-1/documents/f-1/download-url').flush({}, { status: 404, statusText: 'x' });
     });
   });
 
@@ -272,7 +293,7 @@ describe('AdmissionDocumentViewer', () => {
     fixture.componentRef.setInput('document', doc({ id: 'd-2', fileId: 'f-2' }));
     fixture.detectChanges();
     expect(revocadas).toContain(primera);
-    http.expectOne('/admissions/a-1/documents/f-2').flush({}, { status: 404, statusText: 'x' });
+    http.expectOne('/admissions/a-1/documents/f-2/download-url').flush({}, { status: 404, statusText: 'x' });
   });
 
   it('el zoom y la rotación responden al teclado y respetan sus límites', async () => {
