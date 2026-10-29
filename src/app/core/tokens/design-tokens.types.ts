@@ -118,6 +118,17 @@ export const BRAND_TONES = ['primary', 'secondary', 'tertiary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
 
+/**
+ * Insignia de verificación (el check azul de `app-verification-badge`): el
+ * relleno del sello y la tinta del tilde. No es un estado de producto, por eso
+ * no entra en `StatusType`; es una marca de identidad comprobada.
+ */
+export const VERIFIED = {
+  bg: '--verified-bg',
+  fg: '--verified-fg',
+} as const;
+export type VerifiedToken = (typeof VERIFIED)[keyof typeof VERIFIED];
+
 /** Escala de cuatro niveles para la matriz de intensidad de consultas. */
 export const HEAT_LEVELS = [1, 2, 3, 4] as const;
 export type HeatLevel = (typeof HEAT_LEVELS)[number];

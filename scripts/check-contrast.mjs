@@ -215,6 +215,16 @@ const PARES = [
   { tinta: '--st-primary-fg', fondo: '--st-primary-bg', nivel: 4.5 },
   { tinta: '--st-secondary-fg', fondo: '--st-secondary-bg', nivel: 4.5 },
   { tinta: '--st-tertiary-fg', fondo: '--st-tertiary-bg', nivel: 4.5 },
+  // Insignia de verificación: el tilde sobre el relleno (4,5:1 aunque el WCAG
+  // pida 3:1 a un pictograma: a 16 px el trazo mide 1,5 px) y el relleno contra
+  // TODA superficie donde vive el sello, incluido el chip `primary` que lo
+  // lleva en la variante con texto.
+  { tinta: '--verified-fg', fondo: '--verified-bg', nivel: 4.5 },
+  { tinta: '--verified-bg', fondo: '--bg-base', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--bg-surface-alt', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--bg-inset', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--st-primary-bg', nivel: 3 },
 ];
 
 const TEMAS = [
