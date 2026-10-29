@@ -74,6 +74,7 @@ import {
   ubicacionReservada,
   ubicacionesDe,
   unidadDeCama,
+  unidadesCensables,
   unidadesConCamas,
   veDatosDePaciente,
   versionVieja,
@@ -706,7 +707,7 @@ export function registerAdt(router: MockRouter): void {
     const fecha = request.query.get('date') ?? hoyLocal();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return validation('Error de validación', [{ field: 'date', message: 'debe ser AAAA-MM-DD' }]);
     const unitId = request.query.get('unitId');
-    const unidades = unidadesConCamas(siteId).filter((u) => unitId === null || u.id === unitId);
+    const unidades = unidadesCensables(siteId).filter((u) => unitId === null || u.id === unitId);
     const respuesta: CensusResponse = {
       siteId,
       date: fecha,
@@ -731,7 +732,7 @@ export function registerAdt(router: MockRouter): void {
       return regla('CENSUS_DATE_NOT_ENDED', 'El día todavía no terminó.');
     }
     const pedidas = leer<{ unitIds?: string[] }>(request).unitIds;
-    const unidades = unidadesConCamas(siteId).filter((u) => pedidas === undefined || pedidas.includes(u.id));
+    const unidades = unidadesCensables(siteId).filter((u) => pedidas === undefined || pedidas.includes(u.id));
     const pendientes = unidades.filter((u) => cerradoDe(siteId, u.id, fecha) === undefined);
     if (pendientes.length === 0) return conflicto('CENSUS_ALREADY_CLOSED', 'Ese censo ya estaba cerrado.');
     const cerrados = pendientes.map((u) => cerrarDia(siteId, u, fecha, 'Cierre manual'));

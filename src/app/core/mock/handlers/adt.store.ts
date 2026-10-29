@@ -376,6 +376,11 @@ export class GuardaDeInmutabilidad extends Error {
 }
 
 class ColeccionDeCensos extends Coleccion<CensoSim> {
+  /** Solo para reiniciar la maqueta o las pruebas: la base real nunca borra un día cerrado. */
+  vaciarTodo(): void {
+    for (const fila of this.todos()) super.borrar(fila.id);
+  }
+
   override actualizar(id: string, cambios: Partial<CensoSim>): CensoSim | undefined {
     if (this.get(id)?.status === 'CLOSED') throw new GuardaDeInmutabilidad(id);
     return super.actualizar(id, cambios);
@@ -419,6 +424,59 @@ export function sembrarCamasAdt(): void {
 }
 
 export const camasSembradas = (): boolean => sembrado;
+
+function reemplazar<T extends { readonly id: string }>(col: Coleccion<T>, filas: readonly T[]): void {
+  for (const f of col.todos()) col.borrar(f.id);
+  for (const f of filas) col.agregar(f);
+}
+
+/**
+ * Vuelve el estado de ADT a sus semillas (fechas relativas a hoy): ingresos,
+ * ubicaciones, incidentes, higiene, órdenes, bloqueos, eventos, ajustes y censos.
+ *
+ * Existe para las pruebas y para quien quiera «empezar de cero» la maqueta. Con
+ * `isolate: false` varios archivos comparten este módulo en memoria: sin
+ * reiniciarlo, un archivo hereda lo que otro dejó (una internación, un censo
+ * cerrado, una falla inyectada) y las pruebas dependen del orden.
+ */
+export function reiniciarAdt(): void {
+  const s = sembrar();
+  reemplazar(ingresos, s.ingresos);
+  reemplazar(ubicaciones, s.ubicaciones);
+  reemplazar(opsCamas, s.ops);
+  reemplazar(ordenes, s.ordenes);
+  reemplazar(bloqueosDeCama, s.bloqueos);
+  reemplazar(incidentes, []);
+  reemplazar(eventos, []);
+  reemplazar(ajustes, []);
+  censosCerrados.vaciarTodo();
+  inyeccion.fallarEn = null;
+  sembrarCamasAdt();
+  sembrarCensosPasados(SITIO_ADT);
+}
+
+/**
+ * Quita de las colecciones de otras franjas lo que ADT sembró: sus espacios y
+ * vínculos (F1) y los episodios y encuentros de internación (expediente). Lo usan
+ * las pruebas al terminar, para no dejar camas ni internaciones a quien corra
+ * después en el mismo proceso.
+ */
+export function retirarAdt(): void {
+  for (const i of ingresos.todos()) {
+    episodeList.borrar(i.episodeId);
+    encounterList.borrar(i.id);
+  }
+  for (const e of ESPACIOS_ADT) {
+    for (const v of vinculos.filtrar((x) => x.careSpaceId === e.id)) vinculos.borrar(v.id);
+    espacios.borrar(e.id);
+  }
+  for (const col of [ingresos, ubicaciones, opsCamas, ordenes, bloqueosDeCama, incidentes, eventos, ajustes] as Coleccion<{ readonly id: string }>[]) {
+    for (const f of col.todos()) col.borrar(f.id);
+  }
+  censosCerrados.vaciarTodo();
+  inyeccion.fallarEn = null;
+  sembrado = false;
+}
 
 /** Que el expediente vea la internación: un episodio abierto y un encuentro `ENC_IMP`. */
 export function sincronizarClinica(): void {
@@ -600,6 +658,21 @@ export function unidadesConCamas(siteId: string): { id: string; code: string; na
     if (u !== null) mapa.set(u.id, u);
   }
   return [...mapa.values()].sort((a, b) => a.name.localeCompare(b.name, 'es'));
+}
+
+/**
+ * Las unidades que se censan: las que tienen al menos una cama **censable** activa.
+ * Otras franjas agregan camas no censables (observación, aislamiento, maternidad) a
+ * unidades que no cuentan en el censo: no deben aparecer como una unidad en cero.
+ */
+export function unidadesCensables(siteId: string): { id: string; code: string; name: string }[] {
+  const conCensable = new Set(
+    camasDelSitio(siteId)
+      .filter((b) => b.censable === true && b.status === 'SPACE_ACTIVE')
+      .map((b) => unidadDeCama(b)?.id)
+      .filter((id): id is string => id !== undefined),
+  );
+  return unidadesConCamas(siteId).filter((u) => conCensable.has(u.id));
 }
 
 export const edadEnAnios = (nacimiento: string, ref: number = Date.now()): number => Math.floor((ref - Date.parse(nacimiento)) / (365.25 * DIA));
@@ -1121,7 +1194,7 @@ function razones(a: Acumulado, dias: number): Omit<IndicatorsByUnit, 'unit'> & {
 }
 
 export function calcularIndicadores(siteId: string, desde: string, hasta: string, unitId: string | null): InpatientIndicators {
-  const unidades = unidadesConCamas(siteId).filter((u) => unitId === null || u.id === unitId);
+  const unidades = unidadesCensables(siteId).filter((u) => unitId === null || u.id === unitId);
   const fechas = fechasDelPeriodo(desde, hasta);
   const total: Acumulado = { dcd: 0, dp: 0, adm: 0, egr: 0, diasEstancia: 0 };
   const porUnidad = new Map<string, Acumulado>(unidades.map((u) => [u.id, { dcd: 0, dp: 0, adm: 0, egr: 0, diasEstancia: 0 }]));
@@ -1197,7 +1270,7 @@ export function calcularIndicadores(siteId: string, desde: string, hasta: string
 export function sembrarCensosPasados(siteId: string): void {
   if (censosCerrados.tamano > 0) return;
   const hoy = hoyLocal();
-  for (const u of unidadesConCamas(siteId)) {
+  for (const u of unidadesCensables(siteId)) {
     for (let atras = 7; atras >= 2; atras--) {
       cerrarDia(siteId, u, sumarDias(hoy, -atras), null);
     }

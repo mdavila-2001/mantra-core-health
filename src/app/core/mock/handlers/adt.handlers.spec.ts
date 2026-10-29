@@ -29,6 +29,8 @@ import {
   hoyLocal,
   inyeccion,
   paciente,
+  reiniciarAdt,
+  retirarAdt,
   sumarDias,
   ubicaciones,
 } from './adt.store';
@@ -47,6 +49,26 @@ describe('simulador de internación / ADT', () => {
   registerAdtBedBoardDouble(router);
   const medica = buscarUsuario('medica')!;
   const admin = buscarUsuario('superadmin')!;
+
+  /*
+   * Con `isolate: false` los archivos de prueba comparten módulos en memoria: lo que
+   * este archivo deje (una internación, un censo cerrado, una falla inyectada, un
+   * perfil de sesión) lo hereda el siguiente, y al revés. Se parte de las semillas
+   * y se devuelve todo al terminar.
+   */
+  beforeAll(() => {
+    reiniciarAdt();
+    sessionStorage.removeItem('mock:adt-perfil');
+    sessionStorage.removeItem('mock:adt-carrera');
+  });
+  afterEach(() => {
+    inyeccion.fallarEn = null;
+    sessionStorage.removeItem('mock:adt-perfil');
+    sessionStorage.removeItem('mock:adt-carrera');
+  });
+  afterAll(() => {
+    retirarAdt();
+  });
 
   function llamar(
     method: MockMethod,
@@ -94,7 +116,7 @@ describe('simulador de internación / ADT', () => {
   describe('el hospital y el tablero doble', () => {
     it('trae las camas de F1 más las de ADT, con la ocupación derivada de las ubicaciones', () => {
       const codigos = celdas().map((c) => c.code);
-      expect(codigos).toEqual(expect.arrayContaining(['301-A', '301-B', '302-A', 'UTI-1', '303-A', '304-A', '401-A']));
+      expect(codigos).toEqual(expect.arrayContaining(['301-A', '301-B', '302-A', 'UTI-1', '323-A', '324-A', '421-A']));
       const mamani = celdaDe('301-B');
       expect(mamani.occupancy.code).toBe('OCC_OCCUPIED');
       expect(mamani.v2Code).toBe('O');
@@ -113,10 +135,10 @@ describe('simulador de internación / ADT', () => {
     });
 
     it('asignable = activa, disponible, libre y limpia; la sucia, la ocupada y la que está en mantenimiento no', () => {
-      expect(celdaDe('303-B').assignable).toBe(true);
+      expect(celdaDe('323-B').assignable).toBe(true);
       expect(celdaDe('301-A')).toMatchObject({ assignable: false, v2Code: 'H' });
       expect(celdaDe('301-B').assignable).toBe(false);
-      expect(celdaDe('UTI-4')).toMatchObject({ assignable: false, v2Code: 'C' });
+      expect(celdaDe('UTI-6')).toMatchObject({ assignable: false, v2Code: 'C' });
       expect(celdaDe('UTI-2').assignable).toBe(false);
     });
 
@@ -132,7 +154,7 @@ describe('simulador de internación / ADT', () => {
     it('hombre a la habitación de mujeres: una violación SEX que se puede forzar', () => {
       const r = cuerpo<BedCompatibility>(
         llamar('POST', '/clinical/admissions/bed-compatibility', {
-          body: { patientProfileId: paciente('Solíz').id, careSpaceId: camaId('303-B'), levelOfCareCode: 'LOC_CARE_GENERAL' },
+          body: { patientProfileId: paciente('Solíz').id, careSpaceId: camaId('323-B'), levelOfCareCode: 'LOC_CARE_GENERAL' },
         }),
       );
       expect(r.assignable).toBe(false);
@@ -147,17 +169,17 @@ describe('simulador de internación / ADT', () => {
       );
       expect(r.violations).toContainEqual(expect.objectContaining({ rule: 'ISOLATION_AIRBORNE', severity: 'BLOCKING' }));
       expect(cuerpo<BedCompatibility>(llamar('POST', '/clinical/admissions/bed-compatibility', {
-        body: { patientProfileId: paciente('Solíz').id, careSpaceId: camaId('304-A'), levelOfCareCode: 'LOC_CARE_GENERAL', isolationPrecautionCode: 'ISO_AIRBORNE' },
+        body: { patientProfileId: paciente('Solíz').id, careSpaceId: camaId('324-A'), levelOfCareCode: 'LOC_CARE_GENERAL', isolationPrecautionCode: 'ISO_AIRBORNE' },
       })).assignable).toBe(true);
     });
 
     it('un niño a la habitación de adultos y un general a terapia: AGE y LEVEL_OF_CARE', () => {
       const niño = cuerpo<BedCompatibility>(llamar('POST', '/clinical/admissions/bed-compatibility', {
-        body: { patientProfileId: paciente('Rocha').id, careSpaceId: camaId('305-B'), levelOfCareCode: 'LOC_CARE_GENERAL' },
+        body: { patientProfileId: paciente('Rocha').id, careSpaceId: camaId('325-B'), levelOfCareCode: 'LOC_CARE_GENERAL' },
       }));
       expect(niño.violations.map((v) => v.rule)).toEqual(['AGE']);
       const nivel = cuerpo<BedCompatibility>(llamar('POST', '/clinical/admissions/bed-compatibility', {
-        body: { patientProfileId: paciente('Solíz').id, careSpaceId: camaId('UTI-3'), levelOfCareCode: 'LOC_CARE_GENERAL' },
+        body: { patientProfileId: paciente('Solíz').id, careSpaceId: camaId('UTI-5'), levelOfCareCode: 'LOC_CARE_GENERAL' },
       }));
       expect(nivel.violations.map((v) => v.rule)).toEqual(['LEVEL_OF_CARE']);
     });
@@ -184,7 +206,7 @@ describe('simulador de internación / ADT', () => {
     });
 
     it('la misma persona dos veces: 409 PATIENT_ALREADY_ADMITTED', () => {
-      const r = ingreso('Pérez', { bed: { careSpaceId: camaId('303-B'), mode: 'ASSIGN' } });
+      const r = ingreso('Pérez', { bed: { careSpaceId: camaId('323-B'), mode: 'ASSIGN' } });
       expect(r.status).toBe(409);
       expect(razon(r)).toBe('PATIENT_ALREADY_ADMITTED');
     });
@@ -199,18 +221,18 @@ describe('simulador de internación / ADT', () => {
 
     it('carrera: otra persona ocupa la cama justo antes → 409 BED_DOUBLE_OCCUPANCY y nada queda a medias', () => {
       sessionStorage.setItem('mock:adt-carrera', '1');
-      const antes = ubicaciones.filtrar((u) => u.careSpaceId === camaId('401-B')).length;
-      const r = ingreso('Rocha', { bed: { careSpaceId: camaId('401-B'), mode: 'ASSIGN' } });
+      const antes = ubicaciones.filtrar((u) => u.careSpaceId === camaId('421-B')).length;
+      const r = ingreso('Rocha', { bed: { careSpaceId: camaId('421-B'), mode: 'ASSIGN' } });
       expect(r.status).toBe(409);
       expect(razon(r)).toBe('BED_DOUBLE_OCCUPANCY');
-      expect(ubicaciones.filtrar((u) => u.careSpaceId === camaId('401-B') && u.status === 'LOCATION_ACTIVE')).toHaveLength(1);
-      expect(ubicaciones.filtrar((u) => u.careSpaceId === camaId('401-B')).length).toBe(antes + 1);
-      expect(celdaDe('401-B').occupancy.code).toBe('OCC_OCCUPIED');
+      expect(ubicaciones.filtrar((u) => u.careSpaceId === camaId('421-B') && u.status === 'LOCATION_ACTIVE')).toHaveLength(1);
+      expect(ubicaciones.filtrar((u) => u.careSpaceId === camaId('421-B')).length).toBe(antes + 1);
+      expect(celdaDe('421-B').occupancy.code).toBe('OCC_OCCUPIED');
       expect(sessionStorage.getItem('mock:adt-carrera')).toBeNull();
     });
 
     it('incompatibilidad forzable sin override: 422; con override corto: 422; de Enfermería: 403', () => {
-      const bed = { careSpaceId: camaId('303-B'), mode: 'ASSIGN' };
+      const bed = { careSpaceId: camaId('323-B'), mode: 'ASSIGN' };
       const sin = ingreso('Solíz', { bed });
       expect(sin.status).toBe(422);
       expect(razon(sin)).toBe('BED_COMPATIBILITY_OVERRIDE_REQUIRED');
@@ -224,7 +246,7 @@ describe('simulador de internación / ADT', () => {
     });
 
     it('la justificación cuenta sin los espacios de borde: 19 + espacios no alcanza, 20 sí', () => {
-      const bed = { careSpaceId: camaId('303-B'), mode: 'ASSIGN' };
+      const bed = { careSpaceId: camaId('323-B'), mode: 'ASSIGN' };
       const diecinueve = '1234567890123456 ab';
       expect(diecinueve.trim().length).toBe(19);
       const corto = ingreso('Solíz', { bed, override: { justification: `   ${diecinueve}   `, ruleCodes: ['SEX'] } });
@@ -233,7 +255,7 @@ describe('simulador de internación / ADT', () => {
 
     it('con override de supervisión: 201 y un incidente ABIERTO que queda en la ficha', () => {
       const r = ingreso('Solíz', {
-        bed: { careSpaceId: camaId('303-B'), mode: 'ASSIGN' },
+        bed: { careSpaceId: camaId('323-B'), mode: 'ASSIGN' },
         override: { justification: 'No hay otra cama de hombres disponible hoy', ruleCodes: ['SEX'] },
       });
       expect(r.status).toBe(201);
@@ -275,11 +297,11 @@ describe('simulador de internación / ADT', () => {
     it('un ingreso que falla a mitad no deja nada hecho', () => {
       const antes = { ingresos: llamar('GET', `/sites/${SITIO_ADT}/inpatients`).body as InpatientsPage, locs: ubicaciones.tamano };
       inyeccion.fallarEn = 'admision:tras-encuentro';
-      expect(() => ingreso('Rocha', { bed: { careSpaceId: camaId('401-A'), mode: 'ASSIGN' } })).toThrow('Falla inyectada');
+      expect(() => ingreso('Rocha', { bed: { careSpaceId: camaId('421-A'), mode: 'ASSIGN' } })).toThrow('Falla inyectada');
       const despues = llamar('GET', `/sites/${SITIO_ADT}/inpatients`).body as InpatientsPage;
       expect(despues.items.length).toBe(antes.ingresos.items.length);
       expect(ubicaciones.tamano).toBe(antes.locs);
-      expect(celdaDe('401-A').assignable).toBe(true);
+      expect(celdaDe('421-A').assignable).toBe(true);
     });
   });
 
@@ -291,31 +313,31 @@ describe('simulador de internación / ADT', () => {
       const v = estancia(mamani).encounter.rowVersion;
       const r = llamar('POST', `/clinical/encounters/${mamani}/transfer`, {
         ifMatch: v,
-        body: { toCareSpaceId: camaId('304-A'), reasonCode: 'ADT_RSN_CLINICAL' },
+        body: { toCareSpaceId: camaId('324-A'), reasonCode: 'ADT_RSN_CLINICAL' },
       });
       expect(r.status).toBe(200);
       const t = cuerpo<TransferResult>(r);
       orden = t.cleaningOrderId;
       const ficha = estancia(mamani);
-      expect(ficha.currentBed?.code).toBe('304-A');
+      expect(ficha.currentBed?.code).toBe('324-A');
       const mov = ficha.movements.filter((m) => m.status.code !== 'LOCATION_CANCELLED');
       expect(mov.at(-2)).toMatchObject({ status: { code: 'LOCATION_COMPLETED' }, endReason: { code: 'ADT_END_TRANSFER_OUT' } });
       expect(mov.at(-1)).toMatchObject({ status: { code: 'LOCATION_ACTIVE' }, previousLocationId: t.fromLocationId });
       expect(celdaDe('301-B')).toMatchObject({ v2Code: 'H', assignable: false, openCleaningOrderId: orden });
-      expect(celdaDe('304-A').occupancy.code).toBe('OCC_OCCUPIED');
+      expect(celdaDe('324-A').occupancy.code).toBe('OCC_OCCUPIED');
       expect(eventos.todos().some((e) => e.eventType === 'clinical.adt.transferred' && e.hl7 === 'ADT^A02')).toBe(true);
       expect(eventos.todos().some((e) => e.eventType === 'practice.cleaning_order.created')).toBe(true);
     });
 
     it('con la versión vieja: 412; sin cama: 409; a la misma cama: 422; a futuro: 422', () => {
-      const viejo = llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: 1, body: { toCareSpaceId: camaId('305-B'), reasonCode: 'ADT_RSN_CLINICAL' } });
+      const viejo = llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: 1, body: { toCareSpaceId: camaId('325-B'), reasonCode: 'ADT_RSN_CLINICAL' } });
       expect(viejo.status).toBe(412);
       const v = estancia(mamani).encounter.rowVersion;
-      expect(razon(llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('304-A'), reasonCode: 'ADT_RSN_CLINICAL' } }))).toBe('TRANSFER_TO_SAME_BED');
+      expect(razon(llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('324-A'), reasonCode: 'ADT_RSN_CLINICAL' } }))).toBe('TRANSFER_TO_SAME_BED');
       const manana = new Date(Date.now() + 86_400_000).toISOString();
-      expect(razon(llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('305-B'), reasonCode: 'ADT_RSN_CLINICAL', occurredAt: manana } }))).toBe('OCCURRED_AT_IN_FUTURE');
+      expect(razon(llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('325-B'), reasonCode: 'ADT_RSN_CLINICAL', occurredAt: manana } }))).toBe('OCCURRED_AT_IN_FUTURE');
       const pendiente = cuerpo<AdmissionResult>(ingreso(adulto(0))).encounterId;
-      expect(razon(llamar('POST', `/clinical/encounters/${pendiente}/transfer`, { body: { toCareSpaceId: camaId('305-B'), reasonCode: 'ADT_RSN_CLINICAL' } }))).toBe('ENCOUNTER_HAS_NO_BED');
+      expect(razon(llamar('POST', `/clinical/encounters/${pendiente}/transfer`, { body: { toCareSpaceId: camaId('325-B'), reasonCode: 'ADT_RSN_CLINICAL' } }))).toBe('ENCOUNTER_HAS_NO_BED');
     });
 
     it('un traslado que falla a mitad no cambia nada', () => {
@@ -323,10 +345,10 @@ describe('simulador de internación / ADT', () => {
       const v = estancia(mamani).encounter.rowVersion;
       inyeccion.fallarEn = 'traslado:tras-cerrar-origen';
       expect(() =>
-        llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('305-B'), reasonCode: 'ADT_RSN_CLINICAL' } }),
+        llamar('POST', `/clinical/encounters/${mamani}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('325-B'), reasonCode: 'ADT_RSN_CLINICAL' } }),
       ).toThrow('Falla inyectada');
       expect(JSON.stringify(estancia(mamani).movements)).toBe(antes);
-      expect(celdaDe('304-A').occupancy.encounterId).toBe(mamani);
+      expect(celdaDe('324-A').occupancy.encounterId).toBe(mamani);
       expect(estancia(mamani).encounter.rowVersion).toBe(v);
     });
 
@@ -388,42 +410,42 @@ describe('simulador de internación / ADT', () => {
 
     it('con aislamiento el egreso pide limpieza terminal y la cama no es asignable hasta inspeccionar', () => {
       const id = cuerpo<AdmissionResult>(
-        ingreso(adulto(2), { levelOfCareCode: 'LOC_CARE_ICU', isolationPrecautionCode: 'ISO_CONTACT', isolationOrganismText: 'SARM', bed: { careSpaceId: camaId('UTI-3'), mode: 'ASSIGN' } }),
+        ingreso(adulto(2), { levelOfCareCode: 'LOC_CARE_ICU', isolationPrecautionCode: 'ISO_CONTACT', isolationOrganismText: 'SARM', bed: { careSpaceId: camaId('UTI-5'), mode: 'ASSIGN' } }),
       ).encounterId;
       const v = estancia(id).encounter.rowVersion;
       expect(llamar('POST', `/clinical/encounters/${id}/discharge`, { ifMatch: v, body: { dischargeDispositionCode: 'DISP_HOME', occurredAt: new Date().toISOString() } }).status).toBe(200);
-      expect(celdaDe('UTI-3')).toMatchObject({ v2Code: 'K', assignable: false, hygiene: { code: 'HYG_CONTAMINATED', terminalRequired: true } });
-      expect(completarLimpieza('UTI-3')).toBe(true);
-      expect(celdaDe('UTI-3')).toMatchObject({ assignable: true, hygiene: { terminalRequired: false } });
+      expect(celdaDe('UTI-5')).toMatchObject({ v2Code: 'K', assignable: false, hygiene: { code: 'HYG_CONTAMINATED', terminalRequired: true } });
+      expect(completarLimpieza('UTI-5')).toBe(true);
+      expect(celdaDe('UTI-5')).toMatchObject({ assignable: true, hygiene: { terminalRequired: false } });
     });
 
     it('cancelar un traslado reciente devuelve a la cama anterior si sigue libre', () => {
       const id = cuerpo<AdmissionResult>(ingreso(adulto(1), { bed: { careSpaceId: camaId('301-B'), mode: 'ASSIGN' } })).encounterId;
       const v = estancia(id).encounter.rowVersion;
-      const t = cuerpo<TransferResult>(llamar('POST', `/clinical/encounters/${id}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('305-B'), reasonCode: 'ADT_RSN_BED_MANAGEMENT' } }));
+      const t = cuerpo<TransferResult>(llamar('POST', `/clinical/encounters/${id}/transfer`, { ifMatch: v, body: { toCareSpaceId: camaId('325-B'), reasonCode: 'ADT_RSN_BED_MANAGEMENT' } }));
       expect(celdaDe('301-B').assignable).toBe(false);
       const c = llamar('POST', `/clinical/encounter-locations/${t.toLocationId}/cancel`, { body: { reasonText: 'Error de carga' } });
       expect(c.status).toBe(204);
       expect(estancia(id).currentBed?.code).toBe('301-B');
-      expect(celdaDe('305-B').occupancy.code).toBe('OCC_FREE');
+      expect(celdaDe('325-B').occupancy.code).toBe('OCC_FREE');
       expect(celdaDe('301-B').occupancy.code).toBe('OCC_OCCUPIED');
       // Ya no es el último movimiento: no se puede cancelar de nuevo.
       expect(razon(llamar('POST', `/clinical/encounter-locations/${t.toLocationId}/cancel`, { body: { reasonText: 'otra vez' } }))).toBe('LOCATION_NOT_CANCELLABLE');
     });
 
     it('reservar deja la cama en R; cancelar la reserva la libera; asignar la convierte en ocupación', () => {
-      const id = cuerpo<AdmissionResult>(ingreso(adulto(3), { bed: { careSpaceId: camaId('305-B'), mode: 'RESERVE' } }));
-      expect(celdaDe('305-B')).toMatchObject({ v2Code: 'R', assignable: false });
+      const id = cuerpo<AdmissionResult>(ingreso(adulto(3), { bed: { careSpaceId: camaId('325-B'), mode: 'RESERVE' } }));
+      expect(celdaDe('325-B')).toMatchObject({ v2Code: 'R', assignable: false });
       const reserva = estancia(id.encounterId).movements.at(-1)!;
       expect(reserva.status.code).toBe('LOCATION_RESERVED');
       expect(llamar('POST', `/clinical/encounter-locations/${reserva.id}/cancel`, { body: { reasonText: 'No llegó' } }).status).toBe(204);
-      expect(celdaDe('305-B').assignable).toBe(true);
+      expect(celdaDe('325-B').assignable).toBe(true);
       const v = estancia(id.encounterId).encounter.rowVersion;
-      expect(llamar('POST', `/clinical/encounters/${id.encounterId}/bed-assignment`, { ifMatch: v + 5, body: { careSpaceId: camaId('305-B'), mode: 'ASSIGN' } }).status).toBe(412);
-      const ok = llamar('POST', `/clinical/encounters/${id.encounterId}/bed-assignment`, { ifMatch: v, body: { careSpaceId: camaId('305-B'), mode: 'ASSIGN' } });
+      expect(llamar('POST', `/clinical/encounters/${id.encounterId}/bed-assignment`, { ifMatch: v + 5, body: { careSpaceId: camaId('325-B'), mode: 'ASSIGN' } }).status).toBe(412);
+      const ok = llamar('POST', `/clinical/encounters/${id.encounterId}/bed-assignment`, { ifMatch: v, body: { careSpaceId: camaId('325-B'), mode: 'ASSIGN' } });
       expect(ok.status).toBe(200);
-      expect(celdaDe('305-B').v2Code).toBe('O');
-      expect(razon(llamar('POST', `/clinical/encounters/${id.encounterId}/bed-assignment`, { body: { careSpaceId: camaId('401-A'), mode: 'ASSIGN' } }))).toBe('ENCOUNTER_ALREADY_HAS_BED');
+      expect(celdaDe('325-B').v2Code).toBe('O');
+      expect(razon(llamar('POST', `/clinical/encounters/${id.encounterId}/bed-assignment`, { body: { careSpaceId: camaId('421-A'), mode: 'ASSIGN' } }))).toBe('ENCOUNTER_ALREADY_HAS_BED');
     });
   });
 
@@ -443,7 +465,7 @@ describe('simulador de internación / ADT', () => {
       const d = unidad().find((x) => x.day.unit.code === 'MEDINT')!.day;
       expect(d.patientDays).toBe(d.patientsAtCutoff + d.sameDayStays);
       expect(d.bedsAvailable + d.bedsBlocked).toBe(d.bedsCensable);
-      expect(d.bedsBlocked).toBe(1); // UTI-4 en mantenimiento desde ayer
+      expect(d.bedsBlocked).toBe(1); // UTI-6 en mantenimiento desde ayer
       expect(d.discharges).toBeGreaterThanOrEqual(1);
       expect(d).toMatchObject({ patientsAtCutoff: expect.any(Number) });
     });
@@ -568,7 +590,7 @@ describe('simulador de internación / ADT', () => {
 
   describe('incidentes', () => {
     it('solo la supervisión los revisa; la revisión queda en el incidente', () => {
-      const ficha = cuerpo<InpatientsPage>(llamar('GET', `/sites/${SITIO_ADT}/inpatients`)).items.find((f) => f.bed?.code === '303-B')!;
+      const ficha = cuerpo<InpatientsPage>(llamar('GET', `/sites/${SITIO_ADT}/inpatients`)).items.find((f) => f.bed?.code === '323-B')!;
       const inc = estancia(ficha.encounterId).incidents[0]!;
       sessionStorage.setItem('mock:adt-perfil', 'ENFERMERIA');
       expect(llamar('PATCH', `/clinical/placement-incidents/${inc.id}`, { body: { status: 'REVIEWED', reviewNote: 'ok' } }).status).toBe(403);

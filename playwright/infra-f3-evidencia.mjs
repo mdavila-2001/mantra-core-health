@@ -185,13 +185,13 @@ await A.evaluate((id) => localStorage.setItem('inpatient.site', id), uuid('site-
 
 /* ============ 1 · Ingreso con compatibilidad forzada ============ */
 await irAlPasoCama(A, { paciente: 'Sol', nombre: /Solíz/ });
-ok('el paso Cama ofrece sólo camas asignables y avisa las que quedan afuera', (await hay(A, 'cama-303-B')) && !(await hay(A, 'cama-301-A')) && (await hay(A, 'selector-de-camas-todas')));
+ok('el paso Cama ofrece sólo camas asignables y avisa las que quedan afuera', (await hay(A, 'cama-323-B')) && !(await hay(A, 'cama-301-A')) && (await hay(A, 'selector-de-camas-todas')));
 await foto(A, 'ingreso-paso-cama', { anchos: TRES, oscuros: [0] });
 await A.getByTestId('selector-de-camas-todas').click();
 await A.waitForTimeout(300);
 ok('«ver también las no asignables» muestra la sucia con su motivo', /Pendiente de limpieza/.test(await texto(A, '[data-testid="cama-301-A"]')));
 await A.getByTestId('selector-de-camas-todas').click();
-await A.getByTestId('cama-303-B').click();
+await A.getByTestId('cama-323-B').click();
 await A.getByTestId('compatibilidad-forzable').waitFor({ timeout: 15_000 });
 ok('hombre a habitación de mujeres: advertencia forzable con «Forzar con justificación»', (await hay(A, 'compatibilidad-forzar')) && /mujeres/.test(await texto(A, '[data-testid="compatibilidad-forzable"]')));
 await foto(A, 'ingreso-compatibilidad-forzable', { anchos: TRES, oscuros: [0] });
@@ -214,7 +214,7 @@ ok('la confirmación avisa que quedará un incidente', await hay(A, 'ingreso-for
 await A.getByTestId('ingreso-registrar').click();
 await A.getByTestId('estancia').waitFor({ timeout: 30_000 });
 const urlEstancia1 = A.url();
-ok('el ingreso lleva a la ficha, en la cama 303-B, con el incidente abierto', /303-B/.test(await texto(A, '[data-testid="estancia-cama-actual"]')) && (await hay(A, 'estancia-incidente-abierto')));
+ok('el ingreso lleva a la ficha, en la cama 323-B, con el incidente abierto', /323-B/.test(await texto(A, '[data-testid="estancia-cama-actual"]')) && (await hay(A, 'estancia-incidente-abierto')));
 await foto(A, 'estancia-cama-actual', { anchos: TRES, oscuros: [0] });
 await A.getByRole('tab', { name: 'Compatibilidad e incidentes' }).click();
 await A.getByTestId('estancia-incidentes').waitFor();
@@ -225,7 +225,7 @@ await A.waitForTimeout(400);
 // recarga dura: sigue ahí
 await A.reload({ waitUntil: 'domcontentloaded' });
 await A.getByTestId('estancia').waitFor({ timeout: 30_000 });
-ok('tras recargar, la internación sigue en 303-B', /303-B/.test(await texto(A, '[data-testid="estancia-cama-actual"]')));
+ok('tras recargar, la internación sigue en 323-B', /323-B/.test(await texto(A, '[data-testid="estancia-cama-actual"]')));
 const incidenteId = await A.evaluate(() => window.__adtSim.eventos().filter((e) => e.eventType === 'clinical.adt.placement_override').length);
 ok('el simulador emitió el evento clinical.adt.placement_override', incidenteId === 1);
 // supervisión revisa el incidente
@@ -250,7 +250,7 @@ ok('el rechazo trae código de soporte', await hay(A, 'adt-problema-request-id')
 await foto(A, 'rechazo-cama-ocupada-S4', { anchos: [0] });
 // carrera: la validación previa pasa y la EXCLUDE de la base rechaza
 await irAlPasoCama(A, { paciente: 'Med', nombre: /Medina/, nivel: /^Terapia intensiva$/ });
-await A.getByTestId('cama-UTI-3').click();
+await A.getByTestId('cama-UTI-5').click();
 await A.getByTestId('compatibilidad-ok').waitFor({ timeout: 15_000 });
 await A.evaluate(() => sessionStorage.setItem('mock:adt-carrera', '1'));
 await siguiente(A);
@@ -271,11 +271,11 @@ await foto(A, 'estancia-pendiente-de-cama', { anchos: [0] });
 // asignar cama desde la ficha
 await A.getByTestId('accion-asignar').click();
 await A.getByTestId('accion-assign').waitFor();
-await A.getByTestId('cama-304-A').click();
+await A.getByTestId('cama-324-A').click();
 await A.getByTestId('compatibilidad-ok').waitFor({ timeout: 15_000 });
 await A.getByTestId('accion-confirmar').click();
 await A.getByTestId('acciones-resultado').waitFor({ timeout: 15_000 });
-ok('asignar cama: la ficha lee 304-A del servidor', await esperaTexto(A, '[data-testid="estancia-cama-actual"]', /304-A/));
+ok('asignar cama: la ficha lee 324-A del servidor', await esperaTexto(A, '[data-testid="estancia-cama-actual"]', /324-A/));
 
 /* ============ 3 · Traslado, intercambio, egreso ============ */
 const mamani = uuid('encounter-301-B');
@@ -284,7 +284,7 @@ await A.getByTestId('estancia').waitFor({ timeout: 30_000 });
 await A.getByTestId('accion-trasladar').click();
 await A.getByTestId('accion-transfer').waitFor();
 await A.getByTestId('cama-302-B').waitFor().catch(() => undefined);
-await A.getByTestId('cama-305-B').click();
+await A.getByTestId('cama-325-B').click();
 await A.getByTestId('compatibilidad-ok').waitFor({ timeout: 15_000 });
 ok('el traslado explica qué hace en una sola operación', /sola operación/.test(await texto(A, '[data-testid="traslado-efecto"]')));
 await foto(A, 'accion-trasladar', { anchos: [0] });
@@ -292,23 +292,23 @@ await A.getByTestId('accion-confirmar').click();
 await A.getByTestId('acciones-resultado').waitFor({ timeout: 15_000 });
 const resTraslado = await texto(A, '[data-testid="acciones-resultado"]');
 ok('traslado: origen sucio y orden de limpieza creada', /quedó sucia/.test(resTraslado) && /orden de limpieza/.test(resTraslado), resTraslado);
-ok('traslado: la ficha lee 305-B', await esperaTexto(A, '[data-testid="estancia-cama-actual"]', /305-B/));
+ok('traslado: la ficha lee 325-B', await esperaTexto(A, '[data-testid="estancia-cama-actual"]', /325-B/));
 await A.getByRole('tab', { name: 'Movimientos' }).click();
 await A.waitForTimeout(400);
 const mov = await texto(A, '[data-testid="estancia-movimientos"]');
 ok('movimientos: A01 completada, A02 en curso con la cama anterior', /Ingreso \(A01\)/.test(mov) && /Traslado \(A02\)/.test(mov) && /Traslado a otra cama/.test(mov));
 await foto(A, 'estancia-movimientos-traslado', { anchos: [0, 2] });
 const ocupacion1 = await A.evaluate(() => window.__adtSim.ocupacionPorCodigo());
-ok('en el registro del simulador 301-B quedó libre y 305-B ocupada', ocupacion1['301-B'] === null && ocupacion1['305-B'] === mamani);
-// intercambio con Torrez (305-A)
+ok('en el registro del simulador 301-B quedó libre y 325-B ocupada', ocupacion1['301-B'] === null && ocupacion1['325-B'] === mamani);
+// intercambio con Torrez (325-A)
 await A.getByRole('tab', { name: 'Cama actual' }).click();
 await A.getByTestId('accion-intercambiar').click();
 await A.getByTestId('accion-swap').waitFor();
-await A.getByTestId('cama-305-A').click();
+await A.getByTestId('cama-325-A').click();
 await A.getByTestId('intercambio-motivo').locator('textarea').fill('Cambio de cama por cercanía a la enfermería');
 await A.getByTestId('accion-confirmar').click();
 await A.getByTestId('acciones-resultado').waitFor({ timeout: 15_000 });
-ok('intercambio A17: ahora está en 305-A', await esperaTexto(A, '[data-testid="estancia-cama-actual"]', /305-A/));
+ok('intercambio A17: ahora está en 325-A', await esperaTexto(A, '[data-testid="estancia-cama-actual"]', /325-A/));
 ok('intercambio: no se generó orden de limpieza (ninguna cama quedó libre)', /no se generó orden de limpieza/.test(await texto(A, '[data-testid="acciones-resultado"]')));
 await foto(A, 'intercambio-resultado');
 const ev = await A.evaluate(() => window.__adtSim.eventos().map((e) => e.hl7));
@@ -329,11 +329,11 @@ await A.waitForTimeout(300);
 // la cama no es asignable hasta terminar la limpieza; luego vuelve
 await irAlPasoCama(A, { paciente: 'Rocha', nombre: /Rocha/ });
 await A.getByTestId('selector-de-camas-todas').click();
-ok('la cama del egreso aparece NO asignable y sucia', /Pendiente de limpieza/.test(await texto(A, '[data-testid="cama-305-A"]')));
+ok('la cama del egreso aparece NO asignable y sucia', /Pendiente de limpieza/.test(await texto(A, '[data-testid="cama-325-A"]')));
 await foto(A, 'cama-sucia-no-asignable', { anchos: [0] });
-await A.evaluate(() => window.__adtSim.completarLimpieza('305-A'));
+await A.evaluate(() => window.__adtSim.completarLimpieza('325-A'));
 await irAlPasoCama(A, { paciente: 'Rocha', nombre: /Rocha/ });
-ok('terminada la limpieza, la cama vuelve a ser asignable', await hay(A, 'cama-305-A'));
+ok('terminada la limpieza, la cama vuelve a ser asignable', await hay(A, 'cama-325-A'));
 await foto(A, 'cama-vuelve-asignable', { anchos: [0] });
 
 /* ============ 4 · Censo ============ */
