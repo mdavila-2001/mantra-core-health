@@ -5,7 +5,7 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
-import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
+import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, isGroupFlattened } from './navigation.subgroups';
 import {
   apareceEnElMenu,
   isVisibleTo,
@@ -107,7 +107,7 @@ export class NavigationService {
         // Un dominio con un solo destino también va suelto: un desplegable que
         // al abrirse muestra un único renglón es un clic de más. Es el caso
         // de «Administración» para el médico desde el 28/10/2026.
-        aplanado: seAplanaElGrupo(group, activeTenantType, roles) || delGrupo.length === 1,
+        aplanado: isGroupFlattened(group, activeTenantType, roles) || delGrupo.length === 1,
       };
     }).filter((section) => section.items.length > 0);
   });

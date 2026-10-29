@@ -5,7 +5,7 @@ import {
   NAV_GROUP_ICONS,
   NAV_SUBGROUPS,
   SUBGROUP_BY_PATH,
-  seAplanaElGrupo,
+  isGroupFlattened,
 } from './navigation.subgroups';
 import { NAV_GROUPS, NAV_ICON_NAMES } from './navigation.types';
 
@@ -149,24 +149,24 @@ describe('NAV_GROUP_ICONS', () => {
   });
 });
 
-describe('seAplanaElGrupo', () => {
+describe('isGroupFlattened', () => {
   it('se aplana siempre para rol SUPERADMIN sin importar el grupo ni el tipo de organización', () => {
-    expect(seAplanaElGrupo('Administración', null, ['SUPERADMIN'])).toBe(true);
-    expect(seAplanaElGrupo('Superadministración', null, ['SUPERADMIN'])).toBe(true);
-    expect(seAplanaElGrupo('Administración', 'PROVIDER', ['SUPERADMIN'])).toBe(true);
+    expect(isGroupFlattened('Administración', null, ['SUPERADMIN'])).toBe(true);
+    expect(isGroupFlattened('Superadministración', null, ['SUPERADMIN'])).toBe(true);
+    expect(isGroupFlattened('Administración', 'PROVIDER', ['SUPERADMIN'])).toBe(true);
   });
 
   it('se aplana para los grupos base (General, Atención, Facturación, Mi cuenta)', () => {
-    expect(seAplanaElGrupo('General', null)).toBe(true);
-    expect(seAplanaElGrupo('Atención', null)).toBe(true);
-    expect(seAplanaElGrupo('Facturación', null)).toBe(true);
-    expect(seAplanaElGrupo('Mi cuenta', null)).toBe(true);
+    expect(isGroupFlattened('General', null)).toBe(true);
+    expect(isGroupFlattened('Atención', null)).toBe(true);
+    expect(isGroupFlattened('Facturación', null)).toBe(true);
+    expect(isGroupFlattened('Mi cuenta', null)).toBe(true);
   });
 
   it('para otros roles de administración, se pliega según tipo de organización', () => {
-    expect(seAplanaElGrupo('Administración', 'PAYER')).toBe(true);
-    expect(seAplanaElGrupo('Administración', 'PROVIDER', ['SECURITY_ADMIN'])).toBe(false);
-    expect(seAplanaElGrupo('Administración', null, ['PLATFORM_ADMIN'])).toBe(false);
+    expect(isGroupFlattened('Administración', 'PAYER')).toBe(true);
+    expect(isGroupFlattened('Administración', 'PROVIDER', ['SECURITY_ADMIN'])).toBe(false);
+    expect(isGroupFlattened('Administración', null, ['PLATFORM_ADMIN'])).toBe(false);
   });
 });
 

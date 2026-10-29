@@ -495,7 +495,7 @@ export const GRUPOS_APLANADOS_POR_TIPO_DE_ORGANIZACION: Readonly<
 };
 
 /** ¿Se dibuja este dominio sin desplegable para la organización activa o rol superadmin? */
-export function seAplanaElGrupo(
+export function isGroupFlattened(
   group: NavGroup,
   activeTenantType: string | null,
   roles?: readonly string[],
