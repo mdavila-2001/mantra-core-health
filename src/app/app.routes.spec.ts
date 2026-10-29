@@ -115,6 +115,11 @@ describe('rutas del armazón', () => {
       // cuando todavía no hay ninguna organización; dejarla en el menú sería
       // ofrecerle para siempre «poner en marcha» a quien ya la puso.
       'administration/getting-started',
+      // Franja F3 · la ficha de una internación. Es el detalle de una fila del
+      // censo o del expediente: se llega por enlace desde ellos y no es un
+      // lugar al que se vuelve desde el menú, así que no es una sección. Quién
+      // la puede abrir lo decide la API (403, estado S5), no el rol del token.
+      'inpatient/stays/:encounterId',
     ];
 
     const huerfanas = hijas.filter((r) => {

@@ -407,6 +407,9 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // «Configurar práctica», sólo para una organización médica: los
     // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
     // P34 (26/10/2026) suma «Horario y turnos» a la farmacia.
+    // Franja F3 (internación y ADT) suma «Nuevo ingreso», «Censo diario» e
+    // «Indicadores de camas», sólo para hospitales y clínicas: son los únicos
+    // tipos de organización con camas y pacientes internados.
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/medical-center-setup',
       'administration/pharmacy',
@@ -432,7 +435,9 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
         ? ['PHARMACY']
         : section.path.includes('medical-center')
           ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
-          : ['DIAGNOSTIC_CENTER'];
+          : section.path.startsWith('inpatient/')
+            ? ['HOSPITAL', 'CLINIC']
+            : ['DIAGNOSTIC_CENTER'];
       expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
     }
   });

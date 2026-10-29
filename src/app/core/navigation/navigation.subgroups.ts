@@ -265,6 +265,10 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // es configurar la clínica, el laboratorio o la planta como institución.
     paths: [
       'administration/medical-organization',
+      // F1c · el plano de planta y su editor cuelgan de la consola de la
+      // organización: se llega desde el árbol de infraestructura.
+      'administration/medical-organization/plan',
+      'administration/medical-organization/plan/edit',
       'administration/medical-center-setup',
       'administration/medical-laboratory',
       'administration/pharma-lab',

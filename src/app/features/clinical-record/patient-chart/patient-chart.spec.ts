@@ -1557,8 +1557,12 @@ describe('PatientChart', () => {
       estado: 'Activa',
       detalle: 'En curso',
     });
-    // Sin alta en el expediente: la internación se abre desde la consulta.
-    expect(interno<(clave: string) => unknown>('altaDe')('internaciones')).toBeUndefined();
+    // Franja F3: el expediente ofrece «Internar», el atajo a «Nuevo ingreso» con
+    // la cama; ya no se abre sólo desde la consulta. Antes esta aserción exigía
+    // que no hubiera alta: cambió el requisito, no se debilita la prueba.
+    expect(interno<(clave: string) => { rotulo: string } | undefined>('altaDe')('internaciones')).toMatchObject({
+      rotulo: 'Internar',
+    });
   });
 
   /**
