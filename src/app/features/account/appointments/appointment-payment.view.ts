@@ -17,7 +17,7 @@ export interface AppointmentPaymentView {
   /** La etiqueta que manda la API, tal cual: la pantalla no inventa estados. */
   readonly label: string;
   readonly tone: BadgeVariant;
-  /** «150,00 Bs» cuando la API manda el monto; `''` si no lo manda. Nunca «0,00» inventado. */
+  /** «150,00 Bs» cuando la API manda un monto mayor que cero; `''` si no. Nunca «Pagada · 0,00 Bs». */
   readonly amountText: string;
 }
 
@@ -36,7 +36,7 @@ export function appointmentPaymentView(
     label: paymentState.label,
     tone: paymentState.state === 'PAID' ? 'success' : 'warning',
     amountText:
-      typeof amountPaid === 'number' && Number.isFinite(amountPaid)
+      typeof amountPaid === 'number' && Number.isFinite(amountPaid) && amountPaid > 0
         ? formatMoney(
             amountPaid,
             currencyCode === undefined || currencyCode === null || currencyCode === 'BOB'
