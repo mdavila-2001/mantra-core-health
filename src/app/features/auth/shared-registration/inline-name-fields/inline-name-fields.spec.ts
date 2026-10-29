@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { FormGroup } from '@angular/forms';
 
 import { InlineNameFields } from './inline-name-fields';
+import { executivesControls } from '../executives';
 import { nameGroup, completeName } from '../name-fields/person-name';
 
 @Component({
@@ -12,6 +14,84 @@ import { nameGroup, completeName } from '../name-fields/person-name';
 class Anfitrion {
   readonly grupo = nameGroup(true);
 }
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [InlineNameFields],
+  template: `<app-inline-name-fields [grupo]="grupo" [obligatorio]="true" prefijoTestId="t" />`,
+})
+class AnfitrionEnPartes {
+  /** Un nombre que viaja en partes (`name`, `middleName`, `lastName`, `motherLastName`). */
+  readonly grupo = nameGroup(true, true);
+}
+
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [InlineNameFields],
+  template: `<app-inline-name-fields [grupo]="grupo" [obligatorio]="enUso" prefijoTestId="g" />`,
+})
+class AnfitrionGerencia {
+  readonly form = new FormGroup(executivesControls());
+  readonly grupo = this.form.controls.generalManagerName;
+  enUso = true;
+}
+
+describe('CamposDeNombreEnLinea en una gerencia con el bloque en uso', () => {
+  it('con el nombre cargado y el apellido paterno vacío: asterisco en los dos y el mensaje bajo el apellido', () => {
+    const fixture = TestBed.createComponent(AnfitrionGerencia);
+    fixture.detectChanges();
+    fixture.componentInstance.form.patchValue({
+      generalManagerPhone: '+591 70011111',
+      generalManagerName: { name: 'Carla' },
+    });
+    fixture.componentInstance.grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelectorAll('.required-asterisk')).toHaveLength(2);
+    expect(raiz.textContent).toContain('Escriba el apellido paterno.');
+    expect(raiz.textContent).not.toContain('Escriba el primer nombre.');
+  });
+
+  it('con el bloque vacío (sin `obligatorio`) no hay asteriscos ni mensajes', () => {
+    const fixture = TestBed.createComponent(AnfitrionGerencia);
+    fixture.componentInstance.enUso = false;
+    fixture.detectChanges();
+    fixture.componentInstance.grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelectorAll('.required-asterisk')).toHaveLength(0);
+    expect(raiz.textContent).not.toContain('Escriba el apellido paterno.');
+  });
+});
+
+describe('CamposDeNombreEnLinea con el nombre en partes', () => {
+  it('60 + 1 + 59 caracteres de segundo y tercer nombre pasan los 100 del middleName y lo dice bajo el apellido', () => {
+    const fixture = TestBed.createComponent(AnfitrionEnPartes);
+    fixture.detectChanges();
+    const grupo = fixture.componentInstance.grupo;
+    grupo.patchValue({ name: 'Ana', lastName: 'Paz', middleName: 'a'.repeat(60), thirdName: 'b'.repeat(59) });
+    grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    expect(grupo.invalid).toBe(true);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'El segundo, tercer y demás nombres juntos no pueden pasar de 100 caracteres.',
+    );
+  });
+
+  it('un primer nombre de solo espacios dice «Escriba el primer nombre.»', () => {
+    const fixture = TestBed.createComponent(AnfitrionEnPartes);
+    fixture.detectChanges();
+    const grupo = fixture.componentInstance.grupo;
+    grupo.patchValue({ name: '   ', lastName: 'Paz' });
+    grupo.markAllAsTouched();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Escriba el primer nombre.');
+  });
+});
 
 describe('CamposDeNombreEnLinea', () => {
   function montar() {

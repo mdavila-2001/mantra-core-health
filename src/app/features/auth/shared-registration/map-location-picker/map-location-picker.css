@@ -80,3 +80,30 @@
   inline-size: 100%;
   padding-block-start: var(--sp-2);
 }
+
+/* Opt-in (`disposicion`): la calle y el distrito en columnas por ancho, como el
+   resto de los formularios a lo ancho (`composition-rules.md` §5): dos desde
+   672 px; con `tres-columnas`, tres desde 1120 px. Esta última además dibuja
+   el bloque aun sin punto y deja proyectar con `[campo-previo]` un campo que va
+   primero en su rejilla (el nombre de una sucursal). Los avisos y la ficha de
+   la localidad cruzan todas las columnas. Por omisión (`apilada`) nada de esto
+   aplica: las demás altas quedan idénticas. */
+@media (min-width: 42rem) {
+  .registro__deducido--dos,
+  .registro__deducido--tres {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 70rem) {
+  .registro__deducido--tres {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.registro__deducido--dos > app-alert,
+.registro__deducido--dos > app-location-picker,
+.registro__deducido--tres > app-alert,
+.registro__deducido--tres > app-location-picker {
+  grid-column: 1 / -1;
+}

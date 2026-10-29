@@ -1,0 +1,11 @@
+{
+  "tenantId": "68d25e56-efaa-4772-a124-53dc532bbce8",
+  "code": "CM-CLINICA-NORTE-1793230788515",
+  "ownerUserId": "a55ef9f8-6e2d-459e-a4ad-6aa6f65e7976",
+  "status": "PENDING_VERIFICATION",
+  "verificationStatus": "PENDING",
+  "emailVerificationSent": true,
+  "legalDocumentsRegistered": 5,
+  "representativesRegistered": 4,
+  "medicalFacilityRegistered": true
+}

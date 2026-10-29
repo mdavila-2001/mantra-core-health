@@ -22,6 +22,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
   BoEmployersCatalog,
@@ -159,13 +160,6 @@ function nuevoContactoExtra(
     relationshipConceptId: new FormControl<string | null>(valor.relationshipConceptId ?? null),
   });
 }
-
-/**
- * El correo necesita un dominio con su terminación (`.com`, `.bo`…), como lo
- * exige el `@IsEmail` del backend. `Validators.email` deja pasar `ana@gmail`, que la
- * API rechaza recién al enviar; este patrón lo frena en el paso.
- */
-const CORREO_CON_DOMINIO = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[^\s@.]{2,}$/;
 
 /** Un punto en el mapa, tal como lo entrega el navegador. */
 export interface Coordenadas {

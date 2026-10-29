@@ -1,9 +1,0 @@
-# Resumen recortado
-## Dirigidos
- Test Files  127 passed (127)
-      Tests  1433 passed (1433)
-## Suite completa (con el cambio)
- FAIL   mantra-core-health  src/app/shared/motion/motion.spec.ts > Sistema de movimiento > la cascada > escalona el retraso de cada hijo
- FAIL   mantra-core-health  src/app/shared/motion/motion.spec.ts > Sistema de movimiento > la cascada > tiene techo: a partir del octavo no crece el retraso
- Test Files  1 failed | 938 passed (939)
-      Tests  2 failed | 12918 passed (12920)
