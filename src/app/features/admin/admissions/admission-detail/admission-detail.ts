@@ -18,9 +18,8 @@ import type { ViewState } from '@core/view-state/view-state.types';
 import { readAdmissionError } from '@shared/admissions/admission-error';
 import {
   admissionStatusVariant,
-  canVerifyFinal,
+  blockerText,
   isInReview,
-  missingMandatory,
   progressText,
   reasonCodeLabel,
 } from '@shared/admissions/admission-presentation';
@@ -36,7 +35,7 @@ import { PageHeader } from '@shared/components/organisms/page-header/page-header
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 import { ADMISSIONS_ROUTE } from '../admissions.routes';
 import { AdmissionEvidenceGallery, type GalleryReviewRequest } from './admission-evidence-gallery';
-import { AdmissionRequirements } from './admission-requirements';
+import { AdmissionRequirements, type RequirementReviewRequest } from './admission-requirements';
 import {
   AdmissionReviewDialog,
   type ReviewDialogConfig,
@@ -62,7 +61,9 @@ type DialogKind =
 interface ActiveDialog {
   readonly kind: DialogKind;
   readonly config: ReviewDialogConfig;
-  readonly requirementId?: string;
+  /** La ficha que se revisa y el requisito al que pertenece. */
+  readonly itemId?: string;
+  readonly requirementCode?: string;
   /** La huella de la evidencia que se tenía en pantalla al abrir el diálogo. */
   readonly evidenceSha256?: string | null;
 }
@@ -75,10 +76,15 @@ interface ActionButton {
   readonly run: () => void;
 }
 
+const FOUR_EYES_NOTE =
+  'La decisión final la toma una persona distinta de quienes revisaron los requisitos. La plataforma lo valida al confirmar.';
+
 const ROLE_REVIEWER = 'ADMISSIONS_REVIEWER';
 const ROLE_APPROVER = 'ADMISSIONS_APPROVER';
 
 const EVENT_LABELS: Readonly<Record<string, string>> = {
+  CREATED: 'Solicitud enviada',
+  BACKFILLED: 'Solicitud migrada',
   SUBMITTED: 'Solicitud enviada',
   CLAIMED: 'Revisión tomada',
   RELEASED: 'Revisión liberada',
@@ -176,7 +182,7 @@ export class AdmissionDetail {
     const d = this.detail();
     return d === null ? '' : progressText(d.requirementsSummary);
   });
-  protected readonly missing = computed(() => missingMandatory(this.detail()?.requirements ?? []));
+  protected readonly missing = computed(() => (this.detail()?.requirements ?? []).filter((r) => r.mandatory && !r.satisfied));
   protected readonly inReview = computed(() => isInReview(this.detail()?.status.code ?? ''));
   protected readonly documentsTab = computed(() => `Documentos (${this.detail()?.documents.length ?? 0})`);
 
@@ -239,11 +245,21 @@ export class AdmissionDetail {
 
   /* ---- qué se puede hacer ----------------------------------------------------- */
 
-  private fallbackAllowed(code: AdmissionActionCode, status: string): { allowed: boolean; message?: string } {
+  /**
+   * Qué se ofrece según el rol y el estado. La API no manda una lista de
+   * acciones permitidas: autoriza cada petición (403/412 con su motivo), así
+   * que esto solo decide qué botones se muestran, nunca qué se puede hacer.
+   */
+  protected action(code: AdmissionActionCode): { allowed: boolean; message?: string } {
+    const d = this.detail();
+    if (d === null) return { allowed: false };
+    const status = d.status.code;
     const roles = this.roles();
     const wild = roles.includes('SUPERADMIN');
-    const reviewer = wild || roles.includes(ROLE_REVIEWER);
-    const approver = wild || roles.includes(ROLE_APPROVER);
+    // `SECURITY_ADMIN` hereda ambos roles solo si la API lo configura: se ofrece y la API decide.
+    const security = roles.includes('SECURITY_ADMIN');
+    const reviewer = wild || security || roles.includes(ROLE_REVIEWER);
+    const approver = wild || security || roles.includes(ROLE_APPROVER);
     switch (code) {
       case 'CLAIM':
         return { allowed: reviewer && status === 'SUBMITTED' };
@@ -255,22 +271,15 @@ export class AdmissionDetail {
       case 'REVIEW_REQUIREMENT':
         return { allowed: reviewer && status === 'IN_REVIEW' };
       case 'DECIDE':
-        return { allowed: approver && status === 'IN_REVIEW' };
+        return {
+          allowed: approver && status === 'IN_REVIEW',
+          ...(d.fourEyesRequired ? { message: FOUR_EYES_NOTE } : {}),
+        };
       case 'SUSPEND':
         return { allowed: approver && status === 'VERIFIED' };
       case 'REINSTATE':
         return { allowed: approver && status === 'SUSPENDED' };
     }
-  }
-
-  protected action(code: AdmissionActionCode): { allowed: boolean; message?: string } {
-    const d = this.detail();
-    if (d === null) return { allowed: false };
-    const hallada = d.allowedActions.find((a) => a.code === code);
-    if (hallada !== undefined) {
-      return { allowed: hallada.allowed, ...(hallada.message === undefined ? {} : { message: hallada.message }) };
-    }
-    return this.fallbackAllowed(code, d.status.code);
   }
 
   private allowed(code: AdmissionActionCode): boolean {
@@ -289,7 +298,7 @@ export class AdmissionDetail {
         break;
       case 'IN_REVIEW': {
         const decide = this.action('DECIDE');
-        add({ key: 'verify', label: 'Verificar al profesional', variant: 'primary', disabled: !decide.allowed || !canVerifyFinal(d.requirements), run: () => this.openDecision('VERIFIED') });
+        add({ key: 'verify', label: 'Verificar al profesional', variant: 'primary', disabled: !decide.allowed || !d.canVerify, run: () => this.openDecision('VERIFIED') });
         if (decide.allowed) add({ key: 'reject', label: 'Rechazar admisión', variant: 'danger', disabled: false, run: () => this.openDecision('REJECTED') });
         if (this.allowed('REQUEST_INFO')) add({ key: 'info', label: 'Pedir información', variant: 'secondary', disabled: false, run: () => this.openRequestInfo() });
         if (this.allowed('RELEASE')) add({ key: 'release', label: 'Liberar', variant: 'ghost', disabled: false, run: () => this.openRelease() });
@@ -311,10 +320,8 @@ export class AdmissionDetail {
     const d = this.detail();
     if (d === null || d.status.code !== 'IN_REVIEW') return [];
     const razones: string[] = [];
-    const decide = this.action('DECIDE');
-    if (!decide.allowed && decide.message !== undefined) razones.push(decide.message);
-    const faltan = missingMandatory(d.requirements);
-    if (faltan.length > 0) razones.push(`Falta verificar: ${faltan.map((r) => r.label).join(', ')}.`);
+    if (d.blockers.length > 0) razones.push(`Falta resolver: ${d.blockers.map(blockerText).join('; ')}.`);
+    if (d.fourEyesRequired) razones.push(FOUR_EYES_NOTE);
     return razones;
   });
 
@@ -351,8 +358,9 @@ export class AdmissionDetail {
       kind: 'reassign',
       config: {
         heading: 'Reasignar la revisión',
+        description: 'Escriba el id de la cuenta del revisor que recibe la admisión.',
         confirmLabel: 'Reasignar',
-        assignees: this.detail()?.assignableReviewers ?? [],
+        assigneeById: true,
       },
     });
   }
@@ -423,29 +431,34 @@ export class AdmissionDetail {
     });
   }
 
-  protected openRequirementReview(request: { requirementId: string; decision: RequirementDecision }): void {
-    const requisito = this.detail()?.requirements.find((r) => r.id === request.requirementId);
-    if (requisito === undefined) return;
+  protected openRequirementReview(request: RequirementReviewRequest): void {
+    const requisito = this.detail()?.requirements.find((r) => r.code === request.requirementCode);
+    const ficha = requisito?.items.find((i) => i.itemId === request.itemId);
+    if (requisito === undefined || ficha === undefined) return;
+    // La huella se toma AHORA, de lo que la persona tiene en pantalla: si el
+    // médico cambia algo mientras escribe, la API lo detecta (409) y no se decide a ciegas.
+    const comun = { itemId: ficha.itemId, requirementCode: requisito.code, evidenceSha256: ficha.evidenceSha256 } as const;
     if (request.decision === 'VERIFIED') {
       this.openDialog({
         kind: 'req-verify',
-        requirementId: requisito.id,
-        evidenceSha256: requisito.evidenceSha256,
+        ...comun,
         config: {
-          heading: `Verificar: ${requisito.label}`,
-          description: 'Declare de dónde obtuvo el dato. Queda en el historial.',
-          confirmLabel: 'Verificar requisito',
+          heading: `Verificar: ${ficha.label}`,
+          description: requisito.requiresSource
+            ? 'Declare de dónde obtuvo el dato. Queda en el historial.'
+            : 'Si consultó una fuente, decláquela; queda en el historial.',
+          confirmLabel: 'Verificar',
           source: true,
+          sourceOptional: !requisito.requiresSource,
         },
       });
     } else if (request.decision === 'REJECTED') {
       this.openDialog({
         kind: 'req-reject',
-        requirementId: requisito.id,
-        evidenceSha256: requisito.evidenceSha256,
+        ...comun,
         config: {
-          heading: `Rechazar: ${requisito.label}`,
-          confirmLabel: 'Rechazar requisito',
+          heading: `Rechazar: ${ficha.label}`,
+          confirmLabel: 'Rechazar',
           destructive: true,
           reason: { label: 'Qué está mal (lo lee el médico)', withCode: true, note: true },
         },
@@ -453,10 +466,9 @@ export class AdmissionDetail {
     } else {
       this.openDialog({
         kind: 'req-info',
-        requirementId: requisito.id,
-        evidenceSha256: requisito.evidenceSha256,
+        ...comun,
         config: {
-          heading: `Pedir información: ${requisito.label}`,
+          heading: `Pedir información: ${ficha.label}`,
           confirmLabel: 'Pedir información',
           reason: { label: 'Qué falta (lo lee el médico)', withCode: true, note: true },
         },
@@ -494,8 +506,18 @@ export class AdmissionDetail {
       case 'req-info': {
         const decision: RequirementDecision = activo.kind === 'req-verify' ? 'VERIFIED' : activo.kind === 'req-reject' ? 'REJECTED' : 'INFO_REQUIRED';
         const mensajes = { VERIFIED: 'Requisito verificado.', REJECTED: 'Requisito rechazado.', INFO_REQUIRED: 'Se pidió información sobre el requisito.' };
+        // La versión es la de la FICHA, leída de la ficha vigente (tras un «Ver cambios» es la nueva).
+        const ficha = d.requirements
+          .find((r) => r.code === activo.requirementCode)
+          ?.items.find((i) => i.itemId === activo.itemId);
+        if (ficha === undefined || ficha.id === null || ficha.rowVersion === null) {
+          this.dialogError.set('Esa ficha todavía no se puede revisar: tome la revisión de la admisión primero.');
+          return;
+        }
+        const itemVersion = ficha.rowVersion;
+        const reviewId = ficha.id;
         this.execute(
-          () => this.client.reviewRequirement(d.id, activo.requirementId!, {
+          () => this.client.reviewRequirement(d.id, reviewId, {
             decision,
             ...(result.sourceType === undefined ? {} : { sourceType: result.sourceType }),
             ...(result.sourceRef === undefined ? {} : { sourceRef: result.sourceRef }),
@@ -503,7 +525,7 @@ export class AdmissionDetail {
             ...(result.reason === undefined ? {} : { reason: result.reason }),
             ...razon,
             ...(activo.evidenceSha256 ? { evidenceSha256: activo.evidenceSha256 } : {}),
-            expectedRowVersion: v,
+            expectedRowVersion: itemVersion,
           }),
           mensajes[decision],
           ROLE_REVIEWER,
@@ -527,7 +549,7 @@ export class AdmissionDetail {
         this.execute(() => this.client.reinstate(d.id, { reason: result.reason ?? '', expectedRowVersion: v }), 'La verificación fue repuesta.', ROLE_APPROVER);
         break;
       case 'reassign':
-        this.execute(() => this.client.reassign(d.id, { assigneeId: result.assigneeId ?? '', expectedRowVersion: v }), 'La revisión fue reasignada.', ROLE_APPROVER);
+        this.execute(() => this.client.reassign(d.id, { toUserId: result.assigneeId ?? '', expectedRowVersion: v }), 'La revisión fue reasignada.', ROLE_APPROVER);
         break;
       case 'release':
         this.execute(() => this.client.release(d.id, { expectedRowVersion: v }), 'La revisión volvió a la cola.', ROLE_REVIEWER);
@@ -630,8 +652,8 @@ export class AdmissionDetail {
     return reasonCodeLabel(code);
   }
 
-  protected requirementLabel(itemId: string | null): string | null {
-    if (itemId === null) return null;
-    return this.detail()?.requirements.find((r) => r.id === itemId)?.label ?? null;
+  protected requirementLabel(code: string | null): string | null {
+    if (code === null) return null;
+    return this.detail()?.requirements.find((r) => r.code === code)?.label ?? null;
   }
 }

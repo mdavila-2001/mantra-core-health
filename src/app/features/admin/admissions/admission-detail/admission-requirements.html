@@ -14,8 +14,8 @@
     </div>
     @if (missing().length > 0) {
       <p class="requisitos__falta" data-testid="requirements-missing">
-        Falta verificar {{ missing().length === 1 ? 'este requisito obligatorio' : 'estos requisitos obligatorios' }}:
-        @for (r of missing(); track r.id; let ultimo = $last) {
+        Falta cumplir {{ missing().length === 1 ? 'este requisito obligatorio' : 'estos requisitos obligatorios' }}:
+        @for (r of missing(); track r.code; let ultimo = $last) {
           <strong>{{ r.label }}</strong>{{ ultimo ? '.' : ', ' }}
         }
       </p>
@@ -33,12 +33,12 @@
     />
   } @else {
     <ul class="requisitos__lista">
-      @for (r of requirements(); track r.id) {
+      @for (r of requirements(); track r.code) {
         <li
           class="requisito"
           [class.requisito--resaltado]="highlight() === r.code"
           [attr.id]="'requisito-' + r.code"
-          [attr.data-estado]="r.status.toLowerCase()"
+          [attr.data-estado]="r.state.toLowerCase()"
           data-testid="requirement-row"
         >
           <header class="requisito__encabezado">
@@ -46,120 +46,127 @@
             <span class="requisito__obligatorio" [class.requisito__obligatorio--si]="r.mandatory">
               {{ r.mandatory ? 'Obligatorio' : 'Opcional' }}
             </span>
-            <app-badge [variant]="variant(r)" data-testid="requirement-status">{{ statusText(r) }}</app-badge>
+            <app-badge [variant]="variant(r.state)" data-testid="requirement-status">{{ statusText(r.state) }}</app-badge>
           </header>
 
           @if (r.description) {
             <p class="requisito__descripcion">{{ r.description }}</p>
           }
 
-          @if (r.data.length > 0) {
-            <dl class="requisito__datos">
-              @for (d of r.data; track d.label) {
-                <div>
-                  <dt>{{ d.label }}</dt>
-                  <dd>{{ d.value }}</dd>
-                </div>
-              }
-            </dl>
-          }
+          @if (r.items.length === 0) {
+            <p class="requisito__sin" data-testid="requirement-empty">
+              {{ r.mandatory ? 'El médico todavía no aportó este requisito.' : 'El médico no aportó este requisito (es opcional).' }}
+            </p>
+          } @else {
+            <ul class="requisito__fichas" [attr.aria-label]="'Fichas de ' + r.label">
+              @for (item of visibleItems(r); track item.itemId) {
+                <li class="ficha" [attr.data-estado]="item.state.toLowerCase()" data-testid="requirement-item">
+                  <div class="ficha__encabezado">
+                    <span class="ficha__nombre">{{ item.label }}</span>
+                    <app-badge [variant]="variant(item.state)" data-testid="item-status">{{ statusText(item.state) }}</app-badge>
+                  </div>
 
-          <div class="requisito__documentos">
-            @if (documentsOf(r.code).length === 0) {
-              <p class="requisito__sin">El médico no subió documentos para este requisito.</p>
-            } @else {
-              <ul class="requisito__archivos" [attr.aria-label]="'Documentos de ' + r.label">
-                @for (doc of visibleDocuments(r); track doc.id) {
-                  <li>
+                  @if (item.evidenceChanged) {
+                    <p class="ficha__cambio" role="status" data-testid="item-evidence-changed">
+                      El médico cambió esta ficha o su documento después de la última revisión: revísela de nuevo.
+                    </p>
+                  }
+
+                  @if (documentOf(item); as doc) {
                     <button type="button" class="requisito__archivo" data-testid="requirement-document" (click)="viewDocument.emit(doc.id)">
                       <app-nav-icon name="paperclip" />
                       <span class="requisito__archivo-nombre">{{ doc.name }}</span>
                       <span class="requisito__archivo-meta">{{ docMeta(doc) }}</span>
                     </button>
-                  </li>
-                }
-              </ul>
-              @if (documentsOf(r.code).length > 4) {
-                <button type="button" class="requisito__mas" (click)="toggle(r)">
-                  {{ isExpanded(r) ? 'Ver menos' : 'Ver todos (' + documentsOf(r.code).length + ')' }}
-                </button>
-              }
-            }
-          </div>
+                  } @else if (r.evidenceKind === 'DOCUMENT') {
+                    <p class="requisito__sin">Sin documento adjunto.</p>
+                  }
 
-          @if (r.status === 'VERIFIED' && r.source; as fuente) {
-            <p class="requisito__fuente" data-testid="requirement-source">
-              <strong>Fuente consultada:</strong>
-              {{ fuente.type.label }}
-              @if (fuente.ref) {
-                ·
-                @if (isLink(fuente.ref)) {
-                  <a [href]="fuente.ref" target="_blank" rel="noopener noreferrer">{{ fuente.ref }}</a>
-                } @else {
-                  {{ fuente.ref }}
-                }
+                  @if (item.state === 'VERIFIED' && item.source; as fuente) {
+                    <p class="requisito__fuente" data-testid="requirement-source">
+                      <strong>Fuente consultada:</strong>
+                      {{ fuente.type.label }}
+                      @if (fuente.ref) {
+                        ·
+                        @if (isLink(fuente.ref)) {
+                          <a [href]="fuente.ref" target="_blank" rel="noopener noreferrer">{{ fuente.ref }}</a>
+                        } @else {
+                          {{ fuente.ref }}
+                        }
+                      }
+                      @if (fuente.consultedAt) {
+                        · consultada el {{ fuente.consultedAt | date: 'dd/MM/yyyy' }}
+                      }
+                    </p>
+                  }
+                  @if (item.reasonText) {
+                    <p class="requisito__motivo" data-testid="requirement-reason">
+                      <strong>{{ item.state === 'REJECTED' ? 'Motivo del rechazo' : 'Información que se pidió' }}@if (item.reasonCode) { ({{ reasonText(item.reasonCode) }}) }:</strong>
+                      {{ item.reasonText }}
+                    </p>
+                  }
+                  @if (item.internalNote) {
+                    <p class="requisito__nota" data-testid="requirement-internal-note">
+                      <strong>Nota interna: no la ve el profesional.</strong> {{ item.internalNote }}
+                    </p>
+                  }
+                  @if (item.reviewedBy && item.reviewedAt) {
+                    <p class="requisito__revisor">
+                      Revisado por {{ item.reviewedBy.name }} el {{ item.reviewedAt | date: 'dd/MM/yyyy HH:mm' }}
+                    </p>
+                  }
+
+                  @if (canReview()) {
+                    <div class="requisito__acciones">
+                      <button
+                        app-button
+                        type="button"
+                        variant="primary"
+                        size="sm"
+                        [disabled]="busy() || !reviewable(item) || (item.state === 'VERIFIED' && !item.evidenceChanged)"
+                        [attr.aria-label]="'Verificar ' + item.label"
+                        data-testid="requirement-verify"
+                        (clicked)="decide(r, item, 'VERIFIED')"
+                      >
+                        Verificar
+                      </button>
+                      <button
+                        app-button
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        [disabled]="busy() || !reviewable(item) || item.state === 'REJECTED'"
+                        [attr.aria-label]="'Rechazar ' + item.label"
+                        data-testid="requirement-reject"
+                        (clicked)="decide(r, item, 'REJECTED')"
+                      >
+                        Rechazar
+                      </button>
+                      <button
+                        app-button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        [disabled]="busy() || !reviewable(item) || item.state === 'INFO_REQUIRED'"
+                        [attr.aria-label]="'Pedir información sobre ' + item.label"
+                        data-testid="requirement-info"
+                        (clicked)="decide(r, item, 'INFO_REQUIRED')"
+                      >
+                        Pedir información
+                      </button>
+                    </div>
+                  }
+                </li>
               }
-              @if (fuente.consultedAt) {
-                · consultada el {{ fuente.consultedAt | date: 'dd/MM/yyyy' }}
-              }
-            </p>
-          }
-          @if (r.reasonText) {
-            <p class="requisito__motivo" data-testid="requirement-reason">
-              <strong>{{ r.status === 'REJECTED' ? 'Motivo del rechazo' : 'Información que se pidió' }}@if (r.reasonCode) { ({{ reasonText(r.reasonCode) }}) }:</strong>
-              {{ r.reasonText }}
-            </p>
-          }
-          @if (r.internalNote) {
-            <p class="requisito__nota" data-testid="requirement-internal-note">
-              <strong>Nota interna: no la ve el profesional.</strong> {{ r.internalNote }}
-            </p>
-          }
-          @if (r.reviewedBy && r.reviewedAt) {
-            <p class="requisito__revisor">
-              Revisado por {{ r.reviewedBy.name }} el {{ r.reviewedAt | date: 'dd/MM/yyyy HH:mm' }}
-            </p>
+            </ul>
+            @if (r.items.length > 4) {
+              <button type="button" class="requisito__mas" (click)="toggle(r)">
+                {{ isExpanded(r) ? 'Ver menos' : 'Ver todas (' + r.items.length + ')' }}
+              </button>
+            }
           }
 
           <footer class="requisito__acciones">
-            @if (canReview()) {
-              <button
-                app-button
-                type="button"
-                variant="primary"
-                size="sm"
-                [disabled]="busy() || r.status === 'VERIFIED'"
-                [attr.aria-label]="'Verificar ' + r.label"
-                data-testid="requirement-verify"
-                (clicked)="decide(r, 'VERIFIED')"
-              >
-                Verificar
-              </button>
-              <button
-                app-button
-                type="button"
-                variant="danger"
-                size="sm"
-                [disabled]="busy() || r.status === 'REJECTED'"
-                [attr.aria-label]="'Rechazar ' + r.label"
-                data-testid="requirement-reject"
-                (clicked)="decide(r, 'REJECTED')"
-              >
-                Rechazar
-              </button>
-              <button
-                app-button
-                type="button"
-                variant="secondary"
-                size="sm"
-                [disabled]="busy() || r.status === 'INFO_REQUIRED'"
-                [attr.aria-label]="'Pedir información sobre ' + r.label"
-                data-testid="requirement-info"
-                (clicked)="decide(r, 'INFO_REQUIRED')"
-              >
-                Pedir información
-              </button>
-            }
             <button type="button" class="requisito__enlace" (click)="viewField.emit(r.code)">
               Ver en el formulario
             </button>

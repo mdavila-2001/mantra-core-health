@@ -68,8 +68,8 @@ function toRow(a: AdmissionSummary): QueueRow {
   return {
     id: a.id,
     name: a.practitioner.fullName,
-    profession: a.practitioner.profession,
-    maskedId: a.practitioner.maskedNationalId,
+    profession: a.practitioner.profession ?? 'Sin profesión',
+    maskedId: a.practitioner.maskedNationalId ?? 'Sin documento',
     typeLabel: a.type.label,
     statusCode: a.status.code,
     statusLabel: a.status.label,

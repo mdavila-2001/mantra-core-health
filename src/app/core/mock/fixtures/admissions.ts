@@ -1,22 +1,29 @@
 import type {
-  AdmissionCoded,
+  AdmissionBlocker,
   AdmissionItemType,
-  RequirementStatusCode,
-  WireAdmissionDetail,
+  RequirementsSummary,
+  WireCoded,
+  WireEvent,
+  WireSubmittedForm,
 } from '../../data-access/admissions/admissions.types';
-import { ADMISSION_STATUS_LABELS } from '../../data-access/admissions/admissions.types';
-import { registerAdmissionFile } from './admission-files';
+import { registerAdmissionFile, type AdmissionFileKind } from './admission-files';
 import { conceptById } from './concepts';
 import { MEDICAL, PROFESSIONALS } from './people';
 import type { ProfesionalSimulado } from './people.types';
 import { iso, uuid } from '../mock-store';
 
 /* ============================================================================
-    Los datos de las admisiones del simulador: la plantilla de requisitos del
-    alta de doctor y una cola sembrada con el padrón simulado.
+    Los datos de las admisiones del simulador: el catálogo de requisitos del
+    alta de doctor, una cola sembrada con el padrón simulado y la evaluación
+    del checklist.
 
-    Nada de acá promete una consulta a una entidad que no la ofrece: los
-    requisitos dicen «se contrasta con la fuente que declare el revisor», y las
+    Todo sigue el contrato REAL de `/admissions` (requisitos con fichas,
+    versión por ficha, huella de evidencia, códigos en español). La evaluación
+    del checklist es una copia fiel de la del servidor
+    (`admission-checklist.ts`): el simulador tiene que bloquear donde bloquea
+    la API.
+
+    Nada de acá promete una consulta a una entidad que no la ofrece: las
     fuentes sembradas son tipos de fuente con un comprobante, nunca una
     dirección web inventada.
     ========================================================================== */
@@ -24,15 +31,32 @@ import { iso, uuid } from '../mock-store';
 /** Días hábiles para resolver una admisión (SLA) y días para responder un pedido de información. */
 export const SLA_DIAS_HABILES = 3;
 export const PLAZO_INFORMACION_DIAS = 30;
+/** Meses de vigencia de una verificación. */
+export const VIGENCIA_MESES = 36;
+/** Cuántas veces puede reenviar un médico. */
+export const MAX_REENVIOS = 3;
 
-export const TIPO_ALTA: AdmissionCoded = { code: 'ALTA_DE_DOCTOR', label: 'Alta de doctor' };
+export const TIPO_ALTA: WireCoded = { code: 'ALTA_DE_DOCTOR', label: 'Alta de doctor' };
 
-export const estado = (code: string): AdmissionCoded => ({
-  code,
-  label: (ADMISSION_STATUS_LABELS as Record<string, string>)[code] ?? code,
-});
+/** Los estados tal como los publica la API: código en español y su rótulo. */
+export const ETIQUETA_DE_ESTADO: Readonly<Record<string, string>> = {
+  ENVIADA: 'Enviada',
+  EN_REVISION: 'En revisión',
+  INFORMACION_REQUERIDA: 'Información requerida',
+  VERIFICADA: 'Verificada',
+  RECHAZADA: 'Rechazada',
+  SUSPENDIDA: 'Suspendida',
+  EXPIRADA: 'Expirada',
+  RETIRADA: 'Retirada',
+  ABANDONADA: 'Abandonada',
+};
 
-/** Suma días hábiles (sin sábados ni domingos; el feriado es una decisión pendiente). */
+export const estado = (code: string): WireCoded => ({ code, label: ETIQUETA_DE_ESTADO[code] ?? code });
+
+/** Estados en los que corre el plazo de respuesta (SLA). */
+export const ESTADOS_CON_PLAZO = ['ENVIADA', 'EN_REVISION'];
+
+/** Suma días hábiles (sin sábados ni domingos; el feriado no se modela). */
 export function sumarDiasHabiles(desde: Date, dias: number): Date {
   const fecha = new Date(desde);
   let restan = dias;
@@ -44,18 +68,99 @@ export function sumarDiasHabiles(desde: Date, dias: number): Date {
   return fecha;
 }
 
-export type Requisito = NonNullable<WireAdmissionDetail['requirements']>[number];
+export type EstadoFicha = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'INFO_REQUIRED';
 
-/** La fila guardada: el detalle del contrato más lo que sólo el servidor sabe. */
-export interface FilaAdmision extends Omit<WireAdmissionDetail, 'overdue'> {
+/** Quién aparece como revisor o autor de un evento. */
+export interface Actor {
   readonly id: string;
+  readonly name: string;
+}
+
+export interface ArchivoFila {
+  readonly fileId: string;
+  readonly name: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly pages: number | null;
+  readonly uploadedAt: string;
+  readonly kind: AdmissionFileKind;
+}
+
+/** Una ficha del checklist, con todo lo que guarda el servidor de su revisión. */
+export interface FichaFila {
+  /** Id de la revisión: `null` hasta que alguien toma la admisión. */
+  reviewId: string | null;
+  readonly itemId: string;
+  readonly itemType: AdmissionItemType;
+  label: string;
+  state: EstadoFicha;
+  readonly archivo: ArchivoFila | null;
+  /** Huella VIVA: cambia si el médico cambia el dato o el archivo. */
+  evidenceSha256: string;
+  /** La huella que el revisor tenía delante al decidir. */
+  reviewedSha256: string | null;
+  sourceType: string | null;
+  sourceRef: string | null;
+  sourceConsultedAt: string | null;
+  reasonCode: string | null;
+  reasonText: string | null;
+  internalNote: string | null;
+  reviewedBy: Actor | null;
+  reviewedAt: string | null;
+  /** Versión de la ficha: el `expectedRowVersion` de su revisión. */
+  rowVersion: number | null;
+}
+
+export interface RequisitoFila {
+  readonly code: string;
+  readonly label: string;
+  readonly description: string;
+  readonly required: boolean;
+  readonly evidenceKind: 'DOCUMENT' | 'DATA';
+  readonly requiresSource: boolean;
+  readonly minItems: number | null;
+  readonly maxItems: number | null;
+  items: FichaFila[];
+}
+
+/** La fila guardada: la admisión tal como la sirve la API más lo que sólo el servidor sabe. */
+export interface FilaAdmision {
+  readonly id: string;
+  readonly type: WireCoded;
+  status: WireCoded;
+  readonly practitioner: {
+    readonly id: string;
+    readonly fullName: string;
+    readonly profession: string | null;
+    readonly nationalId: string | null;
+    readonly nationalIdIssuer: string | null;
+    readonly birthDate: string | null;
+    readonly age: number | null;
+    readonly occupation: string | null;
+    readonly personalMobile: string | null;
+    readonly personalEmail: string | null;
+    readonly workMobile: string | null;
+    readonly workPhone: string | null;
+    readonly workEmail: string | null;
+  };
+  readonly submittedAt: string;
+  dueAt: string;
+  assignedTo: Actor | null;
+  rowVersion: number;
+  requisitos: RequisitoFila[];
+  events: WireEvent[];
+  infoRequestedText: string | null;
+  infoDueAt: string | null;
+  decisionReasonText: string | null;
+  decisionReasonCode: string | null;
+  internalNote: string | null;
+  validUntil: string | null;
+  resubmissionCount: number;
+  attestedAt: string | null;
+  form: WireSubmittedForm;
   /** Usuario del médico: es quien ve su propia admisión. */
   readonly practitionerUserId: string;
   readonly practitionerProfileId: string;
-  /** Quién tomó la revisión. */
-  readonly claimedById: string | null;
-  /** Cuántas veces reenvió el médico. */
-  readonly resubmissionCount: number;
 }
 
 export type Persona = Pick<
@@ -65,104 +170,103 @@ export type Persona = Pick<
   | 'birthDate' | 'lat' | 'lng' | 'direccion' | 'organizacion'
 >;
 
+/* ---- catálogo de requisitos ----------------------------------------------------
+   Los mismos códigos, rótulos y reglas que el catálogo del servidor para un
+   médico (el colegio de odontólogos no aplica). */
+
 interface PlantillaRequisito {
   readonly code: string;
   readonly label: string;
   readonly description: string;
-  readonly mandatory: boolean;
-  readonly documents: readonly { name: string; kind: 'png' | 'pdf' | 'pdf-long' | 'png-large' }[];
-  readonly itemType?: AdmissionItemType;
+  readonly itemType: AdmissionItemType;
+  readonly evidenceKind: 'DOCUMENT' | 'DATA';
+  readonly required: boolean;
+  readonly requiresSource: boolean;
+  readonly minItems?: number;
+  readonly maxItems?: number;
 }
 
-/** El orden de la plantilla es el de los arreglos de estados de la semilla. */
-export const PLANTILLA_ALTA_DE_DOCTOR: readonly PlantillaRequisito[] = [
+export const CATALOGO_MEDICO: readonly PlantillaRequisito[] = [
   {
-    code: 'NATIONAL_ID',
-    label: 'Cédula de identidad',
-    description: 'Anverso y reverso, vigente y legible. Se contrasta con la fuente que declare el revisor.',
-    mandatory: true,
-    documents: [
-      { name: 'cedula-anverso.png', kind: 'png' },
-      { name: 'cedula-reverso.png', kind: 'png' },
-    ],
+    code: 'CI',
+    label: 'Cédula de identidad (con terminación del departamento de emisión)',
+    description: 'Número de la cédula y su terminación (SC, LP, CB…). Se compara con el documento de identidad del profesional.',
+    itemType: 'PROFILE', evidenceKind: 'DATA', required: true, requiresSource: false,
   },
   {
-    code: 'PROFESSIONAL_LICENSE',
-    label: 'Matrícula profesional',
-    description: 'Registro profesional del Ministerio de Salud y Deportes.',
-    mandatory: true,
-    documents: [{ name: 'matricula-profesional.pdf', kind: 'pdf' }],
-    itemType: 'LICENSE',
+    code: 'MATRICULA_MSALUD',
+    label: 'Matrícula del Ministerio de Salud Nacional',
+    description: 'Número de matrícula y su respaldo. Verificar contra el registro del Ministerio y declarar la fuente consultada.',
+    itemType: 'LICENSE', evidenceKind: 'DOCUMENT', required: true, requiresSource: true, minItems: 1, maxItems: 1,
   },
   {
-    code: 'COLLEGE_REGISTRATION',
-    label: 'Registro del colegio profesional',
-    description: 'Carnet vigente del colegio de la profesión. Hoy es opcional: la obligatoriedad la decide el cliente.',
-    mandatory: false,
-    documents: [{ name: 'carnet-colegio.pdf', kind: 'pdf' }],
+    code: 'TITULO_UNIVERSITARIO',
+    label: 'Título profesional universitario',
+    description: 'Hasta dos títulos de carrera diferentes (hay profesionales con dos carreras).',
+    itemType: 'CREDENTIAL', evidenceKind: 'DOCUMENT', required: true, requiresSource: true, minItems: 1, maxItems: 2,
   },
   {
-    code: 'DEGREE',
-    label: 'Título profesional en provisión nacional',
-    description: 'Diploma académico y título en provisión nacional.',
-    mandatory: true,
-    documents: [{ name: 'titulo-provision-nacional.pdf', kind: 'pdf-long' }],
-    itemType: 'CREDENTIAL',
+    code: 'DIPLOMADO',
+    label: 'Título de diplomado',
+    description: 'Opcional. Puede cargar varios.',
+    itemType: 'CREDENTIAL', evidenceKind: 'DOCUMENT', required: false, requiresSource: true,
   },
   {
-    code: 'SPECIALTY_CERTIFICATE',
-    label: 'Certificado de especialidad',
-    description: 'Solo si declara una especialidad.',
-    mandatory: false,
-    documents: [{ name: 'certificado-especialidad.pdf', kind: 'pdf' }],
-    itemType: 'SPECIALTY',
+    code: 'MAESTRIA',
+    label: 'Título de maestría',
+    description: 'Opcional. Puede cargar varias.',
+    itemType: 'CREDENTIAL', evidenceKind: 'DOCUMENT', required: false, requiresSource: true,
   },
   {
-    code: 'SEDES_REGISTRATION',
+    code: 'DOCTORADO',
+    label: 'Título de doctorado',
+    description: 'Opcional. Puede cargar varios.',
+    itemType: 'CREDENTIAL', evidenceKind: 'DOCUMENT', required: false, requiresSource: true,
+  },
+  {
+    code: 'TITULO_ESPECIALIDAD',
+    label: 'Título de especialidad',
+    description: 'Opcional. Puede cargar varios.',
+    itemType: 'CREDENTIAL', evidenceKind: 'DOCUMENT', required: false, requiresSource: true,
+  },
+  {
+    code: 'REGISTRO_COLEGIO_MEDICO',
+    label: 'Registro del Colegio Médico',
+    description: 'Aplica a médicos. Número de registro, su fecha y el respaldo emitido por el colegio.',
+    itemType: 'LICENSE', evidenceKind: 'DOCUMENT', required: true, requiresSource: true, minItems: 1, maxItems: 1,
+  },
+  {
+    code: 'ESPECIALIDADES_DECLARADAS',
+    label: 'Especialidades declaradas',
+    description: 'Hasta tres. Se comparan con el título de especialidad que las respalda.',
+    itemType: 'SPECIALTY', evidenceKind: 'DATA', required: false, requiresSource: false, maxItems: 3,
+  },
+  {
+    code: 'UBICACION_CONSULTORIOS',
+    label: 'Ubicación de los consultorios de atención',
+    description: 'Dirección y ubicación GPS de cada consultorio declarado en el alta.',
+    itemType: 'PROFILE', evidenceKind: 'DATA', required: false, requiresSource: false,
+  },
+  {
+    code: 'REGISTRO_SEDES',
     label: 'Registro del SEDES',
-    description: 'Registro departamental, si el médico lo tiene.',
-    mandatory: false,
-    documents: [{ name: 'registro-sedes.pdf', kind: 'pdf' }],
-  },
-  {
-    code: 'PROFILE_PHOTO',
-    label: 'Fotografía de perfil',
-    description: 'Rostro visible y sin filtros. Se compara con la cédula.',
-    mandatory: true,
-    documents: [{ name: 'foto-perfil.png', kind: 'png' }],
+    description: 'Registro ante el Servicio Departamental de Salud, que la app ya captura al registrarse.',
+    itemType: 'LICENSE', evidenceKind: 'DOCUMENT', required: false, requiresSource: true, maxItems: 1,
   },
 ];
 
-const TIPO_DE_FUENTE: Readonly<Record<string, { code: string; label: string; ref: string | null }>> = {
-  NATIONAL_ID: { code: 'PROVIDED_DOCUMENT', label: 'Documento aportado por el médico', ref: 'Cédula, anverso y reverso' },
-  PROFESSIONAL_LICENSE: { code: 'MINSALUD_REGISTRY', label: 'Registro del Ministerio de Salud', ref: 'Comprobante de consulta 4512' },
-  COLLEGE_REGISTRATION: { code: 'MEDICAL_COLLEGE', label: 'Colegio Médico', ref: null },
-  DEGREE: { code: 'PROVIDED_DOCUMENT', label: 'Documento aportado por el médico', ref: 'Título en provisión nacional' },
-  SPECIALTY_CERTIFICATE: { code: 'MEDICAL_COLLEGE', label: 'Colegio Médico', ref: null },
-  SEDES_REGISTRATION: { code: 'SEDES', label: 'SEDES', ref: null },
-  PROFILE_PHOTO: { code: 'PROVIDED_DOCUMENT', label: 'Documento aportado por el médico', ref: 'Comparada con la cédula' },
+/** La fuente con la que se siembran las fichas verificadas. */
+const FUENTE_SEMBRADA: Readonly<Record<string, { type: string; ref: string | null }>> = {
+  CI: { type: 'DOCUMENTO_APORTADO', ref: 'Cédula, anverso y reverso' },
+  MATRICULA_MSALUD: { type: 'REGISTRO_MINSALUD', ref: 'Comprobante de consulta 4512' },
+  TITULO_UNIVERSITARIO: { type: 'DOCUMENTO_APORTADO', ref: 'Título en provisión nacional' },
+  DIPLOMADO: { type: 'DOCUMENTO_APORTADO', ref: null },
+  TITULO_ESPECIALIDAD: { type: 'COLEGIO_MEDICO', ref: null },
+  REGISTRO_COLEGIO_MEDICO: { type: 'COLEGIO_MEDICO', ref: null },
+  ESPECIALIDADES_DECLARADAS: { type: 'DOCUMENTO_APORTADO', ref: 'Título de especialidad' },
+  UBICACION_CONSULTORIOS: { type: 'OTRO', ref: 'Dirección contrastada con el consultorio' },
+  REGISTRO_SEDES: { type: 'SEDES', ref: null },
 };
-
-function datosDe(code: string, p: Pick<Persona, 'displayName' | 'matricula' | 'nationalId'>): { label: string; value: string }[] {
-  switch (code) {
-    case 'NATIONAL_ID':
-      return [
-        { label: 'Nombre declarado', value: p.displayName },
-        { label: 'Documento', value: p.nationalId },
-      ];
-    case 'PROFESSIONAL_LICENSE':
-      return [
-        { label: 'Número de matrícula', value: p.matricula || 'Sin número' },
-        { label: 'Autoridad', value: 'Ministerio de Salud y Deportes' },
-      ];
-    case 'COLLEGE_REGISTRATION':
-      return [{ label: 'Colegio', value: 'Colegio Médico de Bolivia' }];
-    case 'DEGREE':
-      return [{ label: 'Institución', value: 'Universidad Mayor de San Andrés' }];
-    default:
-      return [];
-  }
-}
 
 /** Una huella de 64 hex, determinista por contenido. No es un SHA-256 real: es la forma del dato. */
 export function huella(...partes: string[]): string {
@@ -171,274 +275,351 @@ export function huella(...partes: string[]): string {
   return `${a}${b}`.slice(0, 64);
 }
 
-const tipoDeArchivo = (kind: string): string => (kind.startsWith('png') ? 'image/png' : 'application/pdf');
-
-export function requisitosDe(
-  clave: string,
-  p: Pick<Persona, 'userId' | 'displayName' | 'matricula' | 'nationalId'>,
-  tieneEspecialidad: boolean,
-  estados: readonly RequirementStatusCode[],
-  revisor: { id: string; name: string } | null,
-  opciones: { nombresLargos?: boolean } = {},
-): Requisito[] {
-  return PLANTILLA_ALTA_DE_DOCTOR.flatMap((t, indice): Requisito[] => {
-    if (t.itemType === 'SPECIALTY' && !tieneEspecialidad) return [];
-    const status = estados[indice] ?? 'PENDING';
-    const documents = t.documents.map((d, n) => {
-      const id = uuid(`adm-doc-${clave}-${t.code}-${n}`);
-      const name = opciones.nombresLargos
-        ? `${t.code.toLowerCase()}-documento-escaneado-con-nombre-extremadamente-largo-para-probar-el-corte-de-lineas-${n + 1}.${d.kind.startsWith('png') ? 'png' : 'pdf'}`
-        : d.name;
-      registerAdmissionFile({ id, name, kind: d.kind, ownerUserId: p.userId, title: t.label });
-      return {
-        fileId: id,
-        name,
-        mimeType: tipoDeArchivo(d.kind),
-        sizeBytes: d.kind === 'pdf-long' ? 218_400 : d.kind === 'pdf' ? 18_400 : 412_300,
-      };
-    });
-    const revisado = status !== 'PENDING';
-    const fuente = TIPO_DE_FUENTE[t.code]!;
-    const datos = datosDe(t.code, p);
-    return [
-      {
-        id: uuid(`adm-req-${clave}-${t.code}`),
-        code: t.code,
-        label: t.label,
-        description: t.description,
-        mandatory: t.mandatory,
-        status,
-        documents,
-        data: datos,
-        evidenceSha256: huella(...documents.map((d) => huella(d.fileId, d.name)), ...datos.map((x) => `${x.label}=${x.value}`)),
-        itemRef: t.itemType === undefined ? null : { type: t.itemType, id: uuid(`adm-item-${clave}-${t.code}`) },
-        source:
-          status === 'VERIFIED'
-            ? { type: { code: fuente.code, label: fuente.label }, ref: fuente.ref, consultedAt: iso(-1, 10) }
-            : null,
-        reasonCode: status === 'REJECTED' ? 'ILLEGIBLE' : status === 'INFO_REQUIRED' ? 'INCOMPLETE_DOCUMENT' : null,
-        reasonText:
-          status === 'REJECTED'
-            ? 'El documento está cortado y no se lee el número. Suba una imagen completa.'
-            : status === 'INFO_REQUIRED'
-              ? 'Falta el reverso o una fecha de emisión legible.'
-              : null,
-        internalNote: status === 'REJECTED' ? 'Revisar si el escaneo viene de la misma fuente que el título.' : null,
-        reviewedAt: revisado ? iso(-1, 10) : null,
-        reviewedBy: revisado ? revisor : null,
-      },
-    ];
-  });
-}
-
-/** Un requisito con decenas de respaldos: prueba la galería con un volumen real. */
-export function requisitoConMuchosDocumentos(clave: string, p: Pick<Persona, 'userId'>): Requisito {
-  const documents = Array.from({ length: 58 }, (_, n) => {
-    const id = uuid(`adm-doc-${clave}-OTHER_EVIDENCE-${n}`);
-    const kind = n === 0 ? 'png-large' : n % 7 === 0 ? 'pdf-long' : n % 2 === 0 ? 'pdf' : 'png';
-    const ext = kind.startsWith('png') ? 'png' : 'pdf';
-    const name = n === 0 ? 'grande-escaneo-a-alta-resolucion.png' : `respaldo-adicional-${String(n).padStart(2, '0')}-certificado-de-curso-o-congreso.${ext}`;
-    registerAdmissionFile({ id, name, kind, ownerUserId: p.userId, title: `Respaldo adicional ${n}` });
-    return { fileId: id, name, mimeType: tipoDeArchivo(kind), sizeBytes: kind === 'png-large' ? 6_000_000 : 52_000 };
-  });
-  return {
-    id: uuid(`adm-req-${clave}-OTHER_EVIDENCE`),
-    code: 'OTHER_EVIDENCE',
-    label: 'Otros respaldos',
-    description: 'Cursos, congresos y constancias que el médico adjuntó por su cuenta.',
-    mandatory: false,
-    status: 'PENDING',
-    documents,
-    data: [],
-    evidenceSha256: huella(...documents.map((d) => huella(d.fileId, d.name))),
-    itemRef: null,
-    source: null,
-    reasonCode: null,
-    reasonText: null,
-    internalNote: null,
-    reviewedAt: null,
-    reviewedBy: null,
-  };
-}
-
-export function resumenDe(requisitos: readonly Requisito[]): { total: number; verified: number; rejected: number; pending: number } {
-  return {
-    total: requisitos.length,
-    verified: requisitos.filter((r) => r.status === 'VERIFIED').length,
-    rejected: requisitos.filter((r) => r.status === 'REJECTED').length,
-    pending: requisitos.filter((r) => r.status === 'PENDING' || r.status === 'INFO_REQUIRED').length,
-  };
-}
-
-export function documentosDeRequisitos(requisitos: readonly Requisito[], subido: string): NonNullable<WireAdmissionDetail['documents']> {
-  return requisitos.flatMap((r) =>
-    r.documents.map((d) => ({
-      id: `${r.id}:${d.fileId}`,
-      requirementCode: r.code,
-      fileId: d.fileId,
-      name: d.name,
-      mimeType: d.mimeType,
-      sizeBytes: d.sizeBytes,
-      uploadedAt: subido,
-      pages: d.name.startsWith('titulo') ? 42 : d.mimeType === 'application/pdf' ? 1 : null,
-      reviewState: r.status,
-      evidenceSha256: huella(d.fileId, d.name),
-    })),
-  );
-}
-
-/* ---- formulario enviado ------------------------------------------------------ */
-
-function edadDe(nacimiento: string): string {
-  const fecha = new Date(nacimiento);
-  if (Number.isNaN(fecha.getTime())) return nacimiento;
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - fecha.getFullYear();
-  if (hoy.getMonth() < fecha.getMonth() || (hoy.getMonth() === fecha.getMonth() && hoy.getDate() < fecha.getDate())) edad -= 1;
-  const dia = fecha.toLocaleDateString('es-BO', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
-  return `${dia} (${edad} años)`;
-}
-
-type CampoForm = NonNullable<WireAdmissionDetail['submittedForm']>[number]['fields'][number];
-
-export function formularioDe(p: Persona, especialidades: readonly { name: string }[], incompleto: boolean): NonNullable<WireAdmissionDetail['submittedForm']> {
-  const campo = (key: string, label: string, value: string | null | undefined, required: boolean, requirementCode: string | null = null, kind: CampoForm['kind'] = 'TEXT'): CampoForm => ({
-    key, label, value: value === undefined || value === '' ? null : value, required, requirementCode, kind,
-  });
-  const slug = p.email.split('@')[0] ?? 'medico';
-  return [
-    {
-      key: 'personal', title: 'Datos personales',
-      fields: [
-        campo('name', 'Nombres', p.name, true, 'NATIONAL_ID'),
-        campo('lastName', 'Apellido paterno', p.lastName, true, 'NATIONAL_ID'),
-        campo('motherLastName', 'Apellido materno', p.motherLastName, false, 'NATIONAL_ID'),
-        campo('nationalId', 'Documento de identidad', p.nationalId, true, 'NATIONAL_ID'),
-        campo('birthDate', 'Fecha de nacimiento', incompleto || !p.birthDate ? null : edadDe(p.birthDate), true, 'NATIONAL_ID'),
-      ],
-    },
-    {
-      key: 'occupation', title: 'Ocupación y profesión',
-      fields: [
-        campo('profession', 'Profesión', p.professionalTitle || 'Médico', true, 'DEGREE'),
-        campo('occupation', 'Ocupación', 'Médico en ejercicio', false),
-      ],
-    },
-    {
-      key: 'contact', title: 'Contacto',
-      fields: [
-        campo('personalEmail', 'Correo personal', p.email, true),
-        campo('mobilePhone', 'Celular personal', incompleto ? null : p.phone, true),
-        campo('workEmail', 'Correo del trabajo', `consultorio.${slug}@alovida.mock`, false),
-        campo('workPhone', 'Teléfono del trabajo', p.phone ? `+591 2 ${p.phone.replace(/\D/g, '').slice(-7)}` : null, false),
-      ],
-    },
-    {
-      key: 'home', title: 'Domicilio y ubicación',
-      fields: [
-        campo('address', 'Dirección', p.direccion, true),
-        campo('city', 'Ciudad', p.ciudad, true),
-        campo('gps', 'Ubicación GPS', Number.isFinite(p.lat) && Number.isFinite(p.lng) && p.lat !== 0 ? `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}` : null, false, null, 'COORDINATES'),
-      ],
-    },
-    {
-      key: 'licenses', title: 'Habilitación profesional',
-      fields: [
-        campo('licenseNumber', 'Matrícula del Ministerio de Salud', p.matricula, true, 'PROFESSIONAL_LICENSE'),
-        campo('licenseAuthority', 'Autoridad emisora', 'Ministerio de Salud y Deportes', false, 'PROFESSIONAL_LICENSE'),
-        campo('collegeName', 'Colegio profesional', 'Colegio Médico de Bolivia', false, 'COLLEGE_REGISTRATION'),
-        campo('collegeNumber', 'Registro del colegio', p.matricula ? `CMB-${p.matricula.replace(/\D/g, '')}` : null, false, 'COLLEGE_REGISTRATION'),
-      ],
-    },
-    {
-      key: 'education', title: 'Títulos y estudios',
-      fields: [
-        campo('degreeTitle', 'Título', 'Médico cirujano', true, 'DEGREE'),
-        campo('degreeInstitution', 'Institución', 'Universidad Mayor de San Andrés', true, 'DEGREE'),
-        campo('degreeYear', 'Año de titulación', '2012', false, 'DEGREE'),
-      ],
-    },
-    {
-      key: 'specialties', title: 'Especialidades',
-      fields: especialidades.length === 0
-        ? [campo('specialty-none', 'Especialidad', null, false, 'SPECIALTY_CERTIFICATE')]
-        : especialidades.map((e, i) => campo(`specialty-${i}`, 'Especialidad', e.name, false, 'SPECIALTY_CERTIFICATE')),
-    },
-    {
-      key: 'sites', title: 'Consultorios y ubicaciones',
-      fields: [
-        campo('organization', 'Organización', p.organizacion, false),
-        campo('siteAddress', 'Dirección del consultorio', p.direccion, false),
-      ],
-    },
-    {
-      key: 'signature', title: 'Firma y sello',
-      fields: [campo('signatureSeal', 'Firma y sello para recetas', 'Imágenes cargadas en el registro', false)],
-    },
-  ];
-}
-
-/* ---- semilla ------------------------------------------------------------------ */
-
-export const REVISOR_ADMIN = { id: uuid('user-admin'), name: 'Marcelo Dávila Arce' };
-export const OTRO_REVISOR = { id: uuid('user-revisor-2'), name: 'Rosario Quispe Flores' };
-export const APROBADOR = { id: uuid('user-aprobador'), name: 'Sandra Mamani Quispe' };
-
-export interface EstadoDeSemilla {
-  readonly status: string;
-  readonly requisitos: readonly RequirementStatusCode[];
-  readonly asignado: 'admin' | 'otro' | null;
-  readonly dias: number;
-}
-
-const V = 'VERIFIED';
-const R = 'REJECTED';
-const P = 'PENDING';
-const I = 'INFO_REQUIRED';
-
-/** Orden de los requisitos: cédula, matrícula, colegio, título, especialidad, SEDES, foto. */
-export const SEMILLAS: readonly EstadoDeSemilla[] = [
-  { status: 'SUBMITTED', requisitos: [P, P, P, P, P, P, P], asignado: null, dias: 0 },
-  { status: 'SUBMITTED', requisitos: [P, P, P, P, P, P, P], asignado: null, dias: 1 },
-  { status: 'IN_REVIEW', requisitos: [V, V, P, P, P, P, V], asignado: 'admin', dias: 2 },
-  { status: 'SUBMITTED', requisitos: [P, P, P, P, P, P, P], asignado: null, dias: 9 },
-  { status: 'IN_REVIEW', requisitos: [V, V, V, V, P, P, V], asignado: 'admin', dias: 3 },
-  { status: 'IN_REVIEW', requisitos: [V, R, P, P, P, P, V], asignado: 'otro', dias: 4 },
-  { status: 'INFO_REQUESTED', requisitos: [V, V, I, P, P, P, V], asignado: 'otro', dias: 3 },
-  { status: 'VERIFIED', requisitos: [V, V, V, V, V, V, V], asignado: 'otro', dias: 20 },
-  { status: 'REJECTED', requisitos: [V, R, V, P, P, P, V], asignado: 'otro', dias: 14 },
-  { status: 'SUSPENDED', requisitos: [V, V, V, V, V, V, V], asignado: 'otro', dias: 40 },
-  { status: 'EXPIRED', requisitos: [V, V, V, V, V, V, V], asignado: 'otro', dias: 400 },
-  { status: 'ABANDONED', requisitos: [V, V, I, P, P, P, V], asignado: 'otro', dias: 60 },
-  { status: 'SUBMITTED', requisitos: [P, P, P, P, P, P, P], asignado: null, dias: 2 },
-  { status: 'IN_REVIEW', requisitos: [V, V, V, P, P, P, V], asignado: 'admin', dias: 8 },
-];
-
-function especialidadesDe(p: Pick<Persona, 'id' | 'especialidades'>): { id: string; name: string; state: string; supportingCredentialId: string | null }[] {
-  return p.especialidades.map((conceptId, i) => ({
-    id: uuid(`adm-spec-${p.id}-${i}`),
-    name: conceptById(conceptId)?.display ?? 'Especialidad',
-    state: 'PENDING',
-    supportingCredentialId: null,
-  }));
-}
-
-type Evento = WireAdmissionDetail['events'][number];
-
-function evento(clave: string, n: number, datos: Partial<Evento> & { type: string; occurredAt: string }, actor: { id: string; name: string }): Evento {
-  return {
-    id: uuid(`adm-ev-${clave}-${n}`),
-    fromStatus: null, toStatus: null, itemType: null, itemId: null, sourceLabel: null,
-    reasonCode: null, reasonText: null, internalNote: null,
-    actor,
-    ...datos,
-  };
-}
-
 export function enmascarar(documento: string): string {
   const limpio = documento.trim();
   if (limpio.length <= 3) return '***';
   return `${'*'.repeat(Math.max(limpio.length - 3, 3))}${limpio.slice(-3)}`;
+}
+
+/* ---- evaluación del checklist (copia fiel de la del servidor) -------------------- */
+
+/** La ficha tal como se evalúa: si el médico cambió algo tras la revisión, vuelve a pendiente. */
+export function estadoEfectivo(ficha: FichaFila): EstadoFicha {
+  return evidenciaCambio(ficha) ? 'PENDING' : ficha.state;
+}
+
+export function evidenciaCambio(ficha: FichaFila): boolean {
+  return ficha.state !== 'PENDING' && ficha.reviewedSha256 !== null && ficha.reviewedSha256 !== ficha.evidenceSha256;
+}
+
+export interface EvaluacionRequisito {
+  readonly state: string;
+  readonly satisfied: boolean;
+  readonly blockedBy: AdmissionBlocker['reason'] | null;
+}
+
+export function evaluarRequisito(r: RequisitoFila): EvaluacionRequisito {
+  const estados = r.items.map(estadoEfectivo);
+  const verificados = estados.filter((s) => s === 'VERIFIED').length;
+  const info = estados.filter((s) => s === 'INFO_REQUIRED').length;
+  const pendientes = estados.filter((s) => s === 'PENDING').length;
+  if (r.items.length === 0) {
+    return r.required
+      ? { state: 'MISSING', satisfied: false, blockedBy: 'MISSING' }
+      : { state: 'NOT_PROVIDED', satisfied: true, blockedBy: null };
+  }
+  if (info > 0) return { state: 'INFO_REQUIRED', satisfied: false, blockedBy: 'INFO_REQUIRED' };
+  if (pendientes > 0) return { state: 'PENDING', satisfied: false, blockedBy: 'PENDING' };
+  if (verificados > 0) {
+    const debajo = r.required && verificados < (r.minItems ?? 1);
+    return { state: 'VERIFIED', satisfied: !debajo, blockedBy: debajo ? 'BELOW_MINIMUM' : null };
+  }
+  return { state: 'REJECTED', satisfied: !r.required, blockedBy: r.required ? 'REJECTED' : null };
+}
+
+export interface EvaluacionChecklist {
+  readonly summary: RequirementsSummary;
+  readonly blockers: AdmissionBlocker[];
+  readonly canVerify: boolean;
+}
+
+export function evaluarChecklist(requisitos: readonly RequisitoFila[]): EvaluacionChecklist {
+  let total = 0;
+  let verified = 0;
+  let rejected = 0;
+  let pending = 0;
+  const blockers: AdmissionBlocker[] = [];
+  for (const r of requisitos) {
+    const e = evaluarRequisito(r);
+    if (e.state !== 'NOT_PROVIDED') {
+      total += 1;
+      if (e.state === 'VERIFIED' && e.satisfied) verified += 1;
+      else if (e.state === 'REJECTED') rejected += 1;
+      else pending += 1;
+    }
+    if (e.blockedBy !== null) blockers.push({ requirementCode: r.code, label: r.label, reason: e.blockedBy });
+  }
+  return { summary: { total, verified, rejected, pending }, blockers, canVerify: requisitos.length > 0 && blockers.length === 0 };
+}
+
+/* ---- fichas ----------------------------------------------------------------------- */
+
+const tipoDeArchivo = (kind: AdmissionFileKind): string => (kind.startsWith('png') ? 'image/png' : 'application/pdf');
+
+interface BorradorFicha {
+  readonly clave: string;
+  readonly itemType: AdmissionItemType;
+  readonly label: string;
+  readonly archivo?: { readonly name: string; readonly kind: AdmissionFileKind; readonly paginas?: number | null };
+  readonly datos?: readonly string[];
+}
+
+function crearFicha(
+  admision: string,
+  codigo: string,
+  b: BorradorFicha,
+  p: Pick<Persona, 'userId'>,
+  titulo: string,
+  subido: string,
+  opciones: { nombresLargos?: boolean } = {},
+): FichaFila {
+  const itemId = uuid(`adm-item-${admision}-${codigo}-${b.clave}`);
+  let archivo: ArchivoFila | null = null;
+  if (b.archivo !== undefined) {
+    const fileId = uuid(`adm-doc-${admision}-${codigo}-${b.clave}`);
+    const extension = b.archivo.kind.startsWith('png') ? 'png' : 'pdf';
+    const name = opciones.nombresLargos === true
+      ? `${codigo.toLowerCase()}-documento-escaneado-con-nombre-extremadamente-largo-para-probar-el-corte-de-lineas-${b.clave}.${extension}`
+      : b.archivo.name;
+    registerAdmissionFile({ id: fileId, name, kind: b.archivo.kind, ownerUserId: p.userId, title: titulo });
+    archivo = {
+      fileId,
+      name,
+      mimeType: tipoDeArchivo(b.archivo.kind),
+      sizeBytes: b.archivo.kind === 'png-large' ? 6_000_000 : b.archivo.kind === 'pdf-long' ? 218_400 : b.archivo.kind === 'pdf' ? 18_400 : 412_300,
+      pages: b.archivo.paginas ?? (b.archivo.kind === 'pdf-long' ? 42 : b.archivo.kind === 'pdf' ? 1 : null),
+      uploadedAt: subido,
+      kind: b.archivo.kind,
+    };
+  }
+  return {
+    reviewId: null,
+    itemId,
+    itemType: b.itemType,
+    label: b.label,
+    state: 'PENDING',
+    archivo,
+    evidenceSha256: huella(itemId, b.label, archivo?.fileId ?? '', archivo?.name ?? '', ...(b.datos ?? [])),
+    reviewedSha256: null,
+    sourceType: null,
+    sourceRef: null,
+    sourceConsultedAt: null,
+    reasonCode: null,
+    reasonText: null,
+    internalNote: null,
+    reviewedBy: null,
+    reviewedAt: null,
+    rowVersion: null,
+  };
+}
+
+function especialidadesDe(p: Pick<Persona, 'id' | 'especialidades'>): { id: string; name: string }[] {
+  return p.especialidades.map((conceptId, i) => ({
+    id: uuid(`adm-spec-${p.id}-${i}`),
+    name: conceptById(conceptId)?.display ?? 'Especialidad',
+  }));
+}
+
+/** Las fichas que el médico declaró, por requisito. */
+function fichasDe(
+  clave: string,
+  p: Persona,
+  subido: string,
+  opciones: { nombresLargos?: boolean; muchosDocumentos?: boolean },
+): Map<string, FichaFila[]> {
+  const nombre = (codigo: string, b: BorradorFicha): FichaFila =>
+    crearFicha(clave, codigo, b, p, b.label, subido, opciones);
+  const salida = new Map<string, FichaFila[]>();
+  salida.set('CI', [nombre('CI', { clave: 'identidad', itemType: 'PROFILE', label: `Cédula ${p.nationalId || 'sin número'}`, datos: [p.nationalId, p.displayName] })]);
+  salida.set('MATRICULA_MSALUD', [
+    nombre('MATRICULA_MSALUD', { clave: 'matricula', itemType: 'LICENSE', label: `Matrícula ${p.matricula || 'sin número'}`, archivo: { name: 'matricula-profesional.png', kind: 'png' }, datos: [p.matricula] }),
+  ]);
+  salida.set('TITULO_UNIVERSITARIO', [
+    nombre('TITULO_UNIVERSITARIO', { clave: 'titulo', itemType: 'CREDENTIAL', label: 'Título: Médico cirujano', archivo: { name: 'titulo-provision-nacional.pdf', kind: 'pdf-long' } }),
+  ]);
+  salida.set('REGISTRO_COLEGIO_MEDICO', [
+    nombre('REGISTRO_COLEGIO_MEDICO', { clave: 'colegio', itemType: 'LICENSE', label: 'Registro del Colegio Médico de Bolivia', archivo: { name: 'carnet-colegio.pdf', kind: 'pdf' } }),
+  ]);
+  const especialidades = especialidadesDe(p);
+  if (especialidades.length > 0) {
+    salida.set('ESPECIALIDADES_DECLARADAS', especialidades.map((e) => nombre('ESPECIALIDADES_DECLARADAS', { clave: e.id, itemType: 'SPECIALTY', label: `Especialidad: ${e.name}`, datos: [e.name] })));
+    salida.set('TITULO_ESPECIALIDAD', [
+      nombre('TITULO_ESPECIALIDAD', { clave: 'especialidad', itemType: 'CREDENTIAL', label: `Título de especialidad: ${especialidades[0]!.name}`, archivo: { name: 'certificado-especialidad.pdf', kind: 'pdf' } }),
+    ]);
+  }
+  salida.set('UBICACION_CONSULTORIOS', [
+    nombre('UBICACION_CONSULTORIOS', { clave: 'consultorio', itemType: 'PROFILE', label: `Consultorio: ${p.organizacion || 'consultorio propio'}`, datos: [p.direccion, `${p.lat}`, `${p.lng}`] }),
+  ]);
+  salida.set('REGISTRO_SEDES', [
+    nombre('REGISTRO_SEDES', { clave: 'sedes', itemType: 'LICENSE', label: 'Registro del SEDES', archivo: { name: 'registro-sedes.png', kind: 'png' } }),
+  ]);
+  if (opciones.muchosDocumentos === true) {
+    // Un requisito con decenas de respaldos: prueba la galería con un volumen real.
+    salida.set(
+      'DIPLOMADO',
+      Array.from({ length: 58 }, (_, n) => {
+        const kind: AdmissionFileKind = n === 0 ? 'png-large' : n % 7 === 0 ? 'pdf-long' : n % 2 === 0 ? 'pdf' : 'png';
+        const extension = kind.startsWith('png') ? 'png' : 'pdf';
+        return nombre('DIPLOMADO', {
+          clave: `d${n}`,
+          itemType: 'CREDENTIAL',
+          label: `Diplomado ${n + 1}`,
+          archivo: { name: n === 0 ? 'grande-escaneo-a-alta-resolucion.png' : `respaldo-adicional-${String(n).padStart(2, '0')}-certificado-de-curso-o-congreso.${extension}`, kind },
+        });
+      }),
+    );
+  }
+  return salida;
+}
+
+/* ---- formulario enviado ------------------------------------------------------------- */
+
+function edadDe(nacimiento: string): number | null {
+  const fecha = new Date(nacimiento);
+  if (Number.isNaN(fecha.getTime())) return null;
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - fecha.getFullYear();
+  if (hoy.getMonth() < fecha.getMonth() || (hoy.getMonth() === fecha.getMonth() && hoy.getDate() < fecha.getDate())) edad -= 1;
+  return edad;
+}
+
+export function formularioDe(p: Persona, requisitos: readonly RequisitoFila[], incompleto: boolean): WireSubmittedForm {
+  const slug = p.email.split('@')[0] ?? 'medico';
+  const ficha = (codigo: string): FichaFila | undefined => requisitos.find((r) => r.code === codigo)?.items[0];
+  const gps = Number.isFinite(p.lat) && Number.isFinite(p.lng) && p.lat !== 0 ? { lat: Number(p.lat.toFixed(5)), lng: Number(p.lng.toFixed(5)) } : null;
+  const matricula = ficha('MATRICULA_MSALUD');
+  const titulo = ficha('TITULO_UNIVERSITARIO');
+  const colegio = ficha('REGISTRO_COLEGIO_MEDICO');
+  const sedes = ficha('REGISTRO_SEDES');
+  const consultorio = ficha('UBICACION_CONSULTORIOS');
+  return {
+    personal: {
+      requirementCode: 'CI',
+      firstName: p.name || null,
+      middleName: null,
+      paternalLastName: p.lastName || null,
+      maternalLastName: p.motherLastName || null,
+      nationalId: p.nationalId || null,
+      nationalIdIssuer: 'SC',
+      birthDate: incompleto || !p.birthDate ? null : p.birthDate,
+      age: incompleto || !p.birthDate ? null : edadDe(p.birthDate),
+      occupation: 'Médico en ejercicio',
+    },
+    contact: {
+      personalMobile: incompleto ? null : p.phone || null,
+      personalEmail: p.email || null,
+      workMobile: null,
+      workPhone: p.phone ? `+591 2 ${p.phone.replace(/\D/g, '').slice(-7)}` : null,
+      workEmail: `consultorio.${slug}@alovida.mock`,
+    },
+    addresses: {
+      home: { lines: p.direccion || null, locality: p.ciudad || null, department: 'Santa Cruz', gps },
+      work: null,
+    },
+    licenses: [
+      ...(matricula === undefined ? [] : [{ id: matricula.itemId, requirementCode: 'MATRICULA_MSALUD', number: p.matricula || 'MP-0000', jurisdiction: 'Bolivia', authority: 'Ministerio de Salud y Deportes', validFrom: null, validTo: null, fileId: matricula.archivo?.fileId ?? null }]),
+      ...(colegio === undefined ? [] : [{ id: colegio.itemId, requirementCode: 'REGISTRO_COLEGIO_MEDICO', number: p.matricula ? `CMB-${p.matricula.replace(/\D/g, '')}` : 'CMB-0000', jurisdiction: 'Colegio Médico de Bolivia', authority: 'Colegio Médico de Bolivia', validFrom: null, validTo: null, fileId: colegio.archivo?.fileId ?? null }]),
+      ...(sedes === undefined ? [] : [{ id: sedes.itemId, requirementCode: 'REGISTRO_SEDES', number: 'SEDES-0001', jurisdiction: 'SEDES Santa Cruz', authority: 'SEDES', validFrom: null, validTo: null, fileId: sedes.archivo?.fileId ?? null }]),
+    ],
+    education: titulo === undefined ? [] : [{ id: titulo.itemId, requirementCode: 'TITULO_UNIVERSITARIO', level: 'Título universitario', title: 'Médico cirujano', institution: 'Universidad Mayor de San Andrés', year: 2012, number: 'TP-2012-0412', fileId: titulo.archivo?.fileId ?? null }],
+    specialties: (requisitos.find((r) => r.code === 'ESPECIALIDADES_DECLARADAS')?.items ?? []).map((i, n) => ({
+      id: i.itemId,
+      requirementCode: 'ESPECIALIDADES_DECLARADAS',
+      name: i.label.replace(/^Especialidad: /, ''),
+      isPrimary: n === 0,
+      supportingCredentialId: null,
+    })),
+    practices: consultorio === undefined ? [] : [{ id: consultorio.itemId, requirementCode: 'UBICACION_CONSULTORIOS', name: p.organizacion || 'Consultorio propio', address: p.direccion || null, gps }],
+  };
+}
+
+/* ---- semilla ----------------------------------------------------------------------------- */
+
+export const REVISOR_ADMIN: Actor = { id: uuid('user-admin'), name: 'Marcelo Dávila Arce' };
+export const OTRO_REVISOR: Actor = { id: uuid('user-revisor-2'), name: 'Rosario Quispe Flores' };
+export const APROBADOR: Actor = { id: uuid('user-aprobador'), name: 'Sandra Mamani Quispe' };
+
+/** Los revisores a los que se puede reasignar: las cuentas con el rol de revisión. */
+export const REVISORES: readonly Actor[] = [REVISOR_ADMIN, OTRO_REVISOR];
+
+export interface EstadoDeSemilla {
+  readonly status: string;
+  /** Estado de cada ficha por código de requisito; lo que no se nombra queda pendiente. */
+  readonly fichas: Readonly<Record<string, EstadoFicha>> | 'todas-verificadas';
+  readonly asignado: 'admin' | 'otro' | null;
+  readonly dias: number;
+}
+
+const V: EstadoFicha = 'VERIFIED';
+const R: EstadoFicha = 'REJECTED';
+const I: EstadoFicha = 'INFO_REQUIRED';
+
+export const SEMILLAS: readonly EstadoDeSemilla[] = [
+  { status: 'ENVIADA', fichas: {}, asignado: null, dias: 0 },
+  { status: 'ENVIADA', fichas: {}, asignado: null, dias: 1 },
+  { status: 'EN_REVISION', fichas: { CI: V, MATRICULA_MSALUD: V, UBICACION_CONSULTORIOS: V }, asignado: 'admin', dias: 2 },
+  { status: 'ENVIADA', fichas: {}, asignado: null, dias: 9 },
+  { status: 'EN_REVISION', fichas: { CI: V, MATRICULA_MSALUD: V, REGISTRO_COLEGIO_MEDICO: V, TITULO_UNIVERSITARIO: V }, asignado: 'admin', dias: 3 },
+  { status: 'EN_REVISION', fichas: { CI: V, MATRICULA_MSALUD: R, UBICACION_CONSULTORIOS: V }, asignado: 'otro', dias: 4 },
+  { status: 'INFORMACION_REQUERIDA', fichas: { CI: V, MATRICULA_MSALUD: V, REGISTRO_COLEGIO_MEDICO: I }, asignado: 'otro', dias: 3 },
+  { status: 'VERIFICADA', fichas: 'todas-verificadas', asignado: 'otro', dias: 20 },
+  { status: 'RECHAZADA', fichas: { CI: V, MATRICULA_MSALUD: R, REGISTRO_COLEGIO_MEDICO: V }, asignado: 'otro', dias: 14 },
+  { status: 'SUSPENDIDA', fichas: 'todas-verificadas', asignado: 'otro', dias: 40 },
+  { status: 'EXPIRADA', fichas: 'todas-verificadas', asignado: 'otro', dias: 400 },
+  { status: 'ABANDONADA', fichas: { CI: V, MATRICULA_MSALUD: V, REGISTRO_COLEGIO_MEDICO: I }, asignado: 'otro', dias: 60 },
+  { status: 'ENVIADA', fichas: {}, asignado: null, dias: 2 },
+  { status: 'EN_REVISION', fichas: { CI: V, MATRICULA_MSALUD: V, REGISTRO_COLEGIO_MEDICO: V, UBICACION_CONSULTORIOS: V }, asignado: 'admin', dias: 8 },
+];
+
+function evento(
+  clave: string,
+  n: number,
+  datos: Partial<WireEvent> & { type: string; occurredAt: string },
+  actor: Actor | null,
+  rol: string | null,
+): WireEvent {
+  return {
+    id: uuid(`adm-ev-${clave}-${n}`),
+    fromStatus: null,
+    toStatus: null,
+    itemType: null,
+    itemId: null,
+    requirementCode: null,
+    verificationSourceUri: null,
+    reasonCode: null,
+    reasonText: null,
+    actor,
+    actorRole: rol,
+    ...datos,
+  };
+}
+
+/** Aplica el estado sembrado a las fichas. */
+function sembrarEstados(
+  requisitos: readonly RequisitoFila[],
+  semilla: EstadoDeSemilla,
+  revisor: Actor | null,
+  claimed: boolean,
+  clave: string,
+): void {
+  for (const r of requisitos) {
+    for (const ficha of r.items) {
+      const estadoFicha: EstadoFicha = semilla.fichas === 'todas-verificadas' ? V : (semilla.fichas[r.code] ?? 'PENDING');
+      if (claimed) {
+        ficha.reviewId = uuid(`adm-review-${clave}-${ficha.itemId}`);
+        ficha.rowVersion = 1;
+      }
+      if (estadoFicha === 'PENDING' || revisor === null) continue;
+      ficha.state = estadoFicha;
+      ficha.reviewedSha256 = ficha.evidenceSha256;
+      ficha.reviewedAt = iso(-1, 10);
+      ficha.reviewedBy = revisor;
+      ficha.rowVersion = 2;
+      if (estadoFicha === V) {
+        const fuente = FUENTE_SEMBRADA[r.code];
+        ficha.sourceType = fuente?.type ?? 'OTRO';
+        ficha.sourceRef = fuente?.ref ?? null;
+        ficha.sourceConsultedAt = iso(-1, 10);
+      } else {
+        ficha.reasonCode = estadoFicha === R ? 'ILEGIBLE' : 'DOCUMENTO_INCOMPLETO';
+        ficha.reasonText =
+          estadoFicha === R
+            ? 'El documento está cortado y no se lee el número. Suba una imagen completa.'
+            : 'Falta el reverso o una fecha de emisión legible.';
+        ficha.internalNote = estadoFicha === R ? 'Revisar si el escaneo viene de la misma fuente que el título.' : null;
+      }
+    }
+  }
 }
 
 export function armarAdmision(
@@ -448,46 +629,66 @@ export function armarAdmision(
   opciones: { nombresLargos?: boolean; muchosDocumentos?: boolean; incompleto?: boolean } = {},
 ): FilaAdmision {
   const revisor = semilla.asignado === 'admin' ? REVISOR_ADMIN : semilla.asignado === 'otro' ? OTRO_REVISOR : null;
-  const especialidades = especialidadesDe(p);
-  const requisitos = requisitosDe(clave, p, especialidades.length > 0, semilla.requisitos, revisor, opciones);
-  if (opciones.muchosDocumentos === true) requisitos.push(requisitoConMuchosDocumentos(clave, p));
   const enviadaFecha = new Date(iso(-semilla.dias, 9));
   const enviada = enviadaFecha.toISOString();
-  const abierta = ['SUBMITTED', 'IN_REVIEW'].includes(semilla.status);
-  const conAsignado = ['IN_REVIEW', 'INFO_REQUESTED'].includes(semilla.status);
-  const dueAt = abierta ? sumarDiasHabiles(enviadaFecha, SLA_DIAS_HABILES).toISOString() : null;
-  const actor = { id: p.userId, name: p.displayName };
-  const eventos = [evento(clave, 0, { type: 'SUBMITTED', toStatus: 'SUBMITTED', occurredAt: enviada }, actor)];
+  const fichas = fichasDe(clave, p, enviada, opciones);
+  const requisitos: RequisitoFila[] = CATALOGO_MEDICO.map((t) => ({
+    code: t.code,
+    label: t.label,
+    description: t.description,
+    required: t.required,
+    evidenceKind: t.evidenceKind,
+    requiresSource: t.requiresSource,
+    minItems: t.minItems ?? null,
+    maxItems: t.maxItems ?? null,
+    items: fichas.get(t.code) ?? [],
+  }));
+  const reclamada = semilla.status !== 'ENVIADA';
+  sembrarEstados(requisitos, semilla, revisor, reclamada, clave);
+
+  const conAsignado = ['EN_REVISION', 'INFORMACION_REQUERIDA'].includes(semilla.status);
+  const dueAt = sumarDiasHabiles(enviadaFecha, SLA_DIAS_HABILES).toISOString();
+  const medico: Actor = { id: p.userId, name: p.displayName };
+  const sistema = null;
+  const eventos: WireEvent[] = [
+    evento(clave, 0, { type: 'CREATED', toStatus: estado('ENVIADA'), occurredAt: enviada }, medico, 'PRACTITIONER'),
+  ];
   if (revisor !== null) {
-    eventos.push(evento(clave, 1, { type: 'CLAIMED', fromStatus: 'SUBMITTED', toStatus: 'IN_REVIEW', occurredAt: iso(-Math.max(semilla.dias - 1, 0), 11) }, revisor));
+    eventos.push(evento(clave, 1, { type: 'CLAIMED', fromStatus: estado('ENVIADA'), toStatus: estado('EN_REVISION'), occurredAt: iso(-Math.max(semilla.dias - 1, 0), 11) }, revisor, 'ADMISSIONS_REVIEWER'));
   }
-  for (const r of requisitos.filter((q) => q.reviewedBy !== null)) {
-    eventos.push(
-      evento(clave, eventos.length, {
-        type: r.status === 'VERIFIED' ? 'ITEM_VERIFIED' : r.status === 'REJECTED' ? 'ITEM_REJECTED' : 'ITEM_INFO_REQUIRED',
-        itemType: 'REQUIREMENT', itemId: r.id, sourceLabel: r.source?.type.label ?? null,
-        reasonCode: r.reasonCode, reasonText: r.reasonText, internalNote: r.internalNote,
-        occurredAt: iso(-Math.max(semilla.dias - 1, 0), 12),
-      }, revisor!),
-    );
+  for (const r of requisitos) {
+    for (const f of r.items.filter((x) => x.reviewedBy !== null)) {
+      eventos.push(
+        evento(clave, eventos.length, {
+          type: f.state === 'VERIFIED' ? 'ITEM_VERIFIED' : f.state === 'REJECTED' ? 'ITEM_REJECTED' : 'ITEM_INFO_REQUIRED',
+          itemType: f.itemType,
+          itemId: f.itemId,
+          requirementCode: r.code,
+          verificationSourceUri: f.sourceRef,
+          reasonCode: f.reasonCode,
+          reasonText: f.reasonText,
+          occurredAt: iso(-Math.max(semilla.dias - 1, 0), 12),
+        }, revisor, 'ADMISSIONS_REVIEWER'),
+      );
+    }
   }
-  if (semilla.status === 'INFO_REQUESTED' || semilla.status === 'ABANDONED') {
-    eventos.push(evento(clave, eventos.length, { type: 'INFO_REQUESTED', fromStatus: 'IN_REVIEW', toStatus: 'INFO_REQUESTED', reasonCode: 'INCOMPLETE_DOCUMENT', reasonText: 'Falta el registro del colegio.', occurredAt: iso(-1, 15) }, revisor!));
+  if (semilla.status === 'INFORMACION_REQUERIDA' || semilla.status === 'ABANDONADA') {
+    eventos.push(evento(clave, eventos.length, { type: 'INFO_REQUESTED', fromStatus: estado('EN_REVISION'), toStatus: estado('INFORMACION_REQUERIDA'), reasonCode: 'DOCUMENTO_INCOMPLETO', reasonText: 'Falta el registro del colegio.', occurredAt: iso(-1, 15) }, revisor, 'ADMISSIONS_REVIEWER'));
   }
-  if (semilla.status === 'ABANDONED') {
-    eventos.push(evento(clave, eventos.length, { type: 'ABANDONED', fromStatus: 'INFO_REQUESTED', toStatus: 'ABANDONED', occurredAt: iso(-2, 3) }, { id: 'system', name: 'Sistema' }));
+  if (semilla.status === 'ABANDONADA') {
+    eventos.push(evento(clave, eventos.length, { type: 'ABANDONED', fromStatus: estado('INFORMACION_REQUERIDA'), toStatus: estado('ABANDONADA'), occurredAt: iso(-2, 3) }, sistema, 'SYSTEM'));
   }
-  if (['VERIFIED', 'REJECTED', 'SUSPENDED', 'EXPIRED'].includes(semilla.status)) {
-    const rechazada = semilla.status === 'REJECTED';
-    eventos.push(evento(clave, eventos.length, { type: rechazada ? 'REJECTED' : 'VERIFIED', fromStatus: 'IN_REVIEW', toStatus: rechazada ? 'REJECTED' : 'VERIFIED', occurredAt: iso(-Math.max(semilla.dias - 2, 0), 16) }, APROBADOR));
+  if (['VERIFICADA', 'RECHAZADA', 'SUSPENDIDA', 'EXPIRADA'].includes(semilla.status)) {
+    const rechazada = semilla.status === 'RECHAZADA';
+    eventos.push(evento(clave, eventos.length, { type: rechazada ? 'REJECTED' : 'VERIFIED', fromStatus: estado('EN_REVISION'), toStatus: estado(rechazada ? 'RECHAZADA' : 'VERIFICADA'), occurredAt: iso(-Math.max(semilla.dias - 2, 0), 16) }, APROBADOR, 'ADMISSIONS_APPROVER'));
   }
-  if (semilla.status === 'SUSPENDED') {
-    eventos.push(evento(clave, eventos.length, { type: 'SUSPENDED', fromStatus: 'VERIFIED', toStatus: 'SUSPENDED', reasonCode: 'OTHER', reasonText: 'Denuncia en trámite ante el colegio.', occurredAt: iso(-2, 9) }, APROBADOR));
+  if (semilla.status === 'SUSPENDIDA') {
+    eventos.push(evento(clave, eventos.length, { type: 'SUSPENDED', fromStatus: estado('VERIFICADA'), toStatus: estado('SUSPENDIDA'), reasonCode: 'OTRO', reasonText: 'Denuncia en trámite ante el colegio.', occurredAt: iso(-2, 9) }, APROBADOR, 'ADMISSIONS_APPROVER'));
   }
-  if (semilla.status === 'EXPIRED') {
-    eventos.push(evento(clave, eventos.length, { type: 'EXPIRED', fromStatus: 'VERIFIED', toStatus: 'EXPIRED', occurredAt: iso(-3, 0) }, { id: 'system', name: 'Sistema' }));
+  if (semilla.status === 'EXPIRADA') {
+    eventos.push(evento(clave, eventos.length, { type: 'EXPIRED', fromStatus: estado('VERIFICADA'), toStatus: estado('EXPIRADA'), occurredAt: iso(-3, 0) }, sistema, 'SYSTEM'));
   }
-  const requisito = (code: string): Requisito | undefined => requisitos.find((r) => r.code === code);
+  const verificada = ['VERIFICADA', 'SUSPENDIDA'].includes(semilla.status);
   return {
     id: uuid(`adm-${clave}`),
     type: TIPO_ALTA,
@@ -496,38 +697,39 @@ export function armarAdmision(
       id: p.id,
       fullName: p.displayName,
       profession: p.professionalTitle || 'Médico',
-      maskedNationalId: enmascarar(p.nationalId),
       nationalId: p.nationalId || null,
-      email: p.email,
-      phone: p.phone || null,
-      city: p.ciudad || null,
-      registeredAt: enviada,
+      nationalIdIssuer: 'SC',
+      birthDate: opciones.incompleto === true || !p.birthDate ? null : p.birthDate,
+      age: opciones.incompleto === true || !p.birthDate ? null : edadDe(p.birthDate),
+      occupation: 'Médico en ejercicio',
+      personalMobile: opciones.incompleto === true ? null : p.phone || null,
+      personalEmail: p.email || null,
+      workMobile: null,
+      workPhone: null,
+      workEmail: null,
     },
-    itemsSummary: { licenses: 1, credentials: 1, specialties: especialidades.length },
-    requirementsSummary: resumenDe(requisitos),
     submittedAt: enviada,
     dueAt,
     assignedTo: conAsignado ? revisor : null,
     rowVersion: 1 + eventos.length,
-    licenses: [{ id: uuid(`adm-item-${clave}-PROFESSIONAL_LICENSE`), number: p.matricula || 'MP-0000', jurisdiction: 'Bolivia', state: requisito('PROFESSIONAL_LICENSE')?.status ?? 'PENDING', fileId: requisito('PROFESSIONAL_LICENSE')?.documents[0]?.fileId ?? null, verifiedAt: null, rejectionReasonText: null }],
-    credentials: [{ id: uuid(`adm-item-${clave}-DEGREE`), title: 'Título de médico cirujano', institution: 'Universidad Mayor de San Andrés', state: requisito('DEGREE')?.status ?? 'PENDING', fileId: requisito('DEGREE')?.documents[0]?.fileId ?? null, verifiedAt: null, rejectionReasonText: null }],
-    specialties: especialidades,
-    requirements: requisitos,
-    documents: documentosDeRequisitos(requisitos, enviada),
-    submittedForm: formularioDe(p, especialidades, opciones.incompleto === true),
+    requisitos,
     events: eventos,
-    infoRequestedText: semilla.status === 'INFO_REQUESTED' ? 'Falta el registro del colegio. Suba el carnet vigente, con la fecha de emisión legible.' : null,
-    infoDueAt: semilla.status === 'INFO_REQUESTED' ? new Date(Date.now() + 27 * 86_400_000).toISOString() : null,
+    infoRequestedText: semilla.status === 'INFORMACION_REQUERIDA' ? 'Falta el registro del colegio. Suba el carnet vigente, con la fecha de emisión legible.' : null,
+    infoDueAt: semilla.status === 'INFORMACION_REQUERIDA' ? new Date(Date.now() + 27 * 86_400_000).toISOString() : null,
     decisionReasonText:
-      semilla.status === 'REJECTED'
+      semilla.status === 'RECHAZADA'
         ? 'La matrícula no figura en el registro del Ministerio de Salud.'
-        : semilla.status === 'SUSPENDED'
+        : semilla.status === 'SUSPENDIDA'
           ? 'Denuncia en trámite ante el colegio.'
           : null,
+    decisionReasonCode: semilla.status === 'RECHAZADA' ? 'NO_FIGURA_EN_REGISTRO' : null,
+    internalNote: semilla.status === 'RECHAZADA' ? 'Pedir el original en la próxima cita.' : null,
+    validUntil: verificada ? new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10) : null,
+    resubmissionCount: 0,
+    attestedAt: enviada,
+    form: formularioDe(p, requisitos, opciones.incompleto === true),
     practitionerUserId: p.userId,
     practitionerProfileId: p.id,
-    claimedById: conAsignado ? (revisor?.id ?? null) : null,
-    resubmissionCount: 0,
   };
 }
 
@@ -542,14 +744,14 @@ export function sembrarAdmisiones(): FilaAdmision[] {
   const resto = padron.filter((p) => p !== nuevo);
   const salida: FilaAdmision[] = [];
   // La médica con la que se entra: ya verificada.
-  salida.push(armarAdmision(MEDICAL, 'medica', { status: 'VERIFIED', requisitos: [V, V, V, V, V, V, V], asignado: 'otro', dias: 120 }));
+  salida.push(armarAdmision(MEDICAL, 'medica', { status: 'VERIFICADA', fichas: 'todas-verificadas', asignado: 'otro', dias: 120 }));
   if (nuevo !== undefined) {
     // El médico nuevo: pidieron información; puede corregir y reenviar.
-    salida.push(armarAdmision(nuevo, CLAVE_MEDICO_NUEVO, { status: 'INFO_REQUESTED', requisitos: [V, V, I, V, P, P, V], asignado: 'otro', dias: 3 }, { incompleto: true }));
+    salida.push(armarAdmision(nuevo, CLAVE_MEDICO_NUEVO, { status: 'INFORMACION_REQUERIDA', fichas: { CI: V, MATRICULA_MSALUD: V, REGISTRO_COLEGIO_MEDICO: I, TITULO_UNIVERSITARIO: V }, asignado: 'otro', dias: 3 }, { incompleto: true }));
   }
   resto.slice(0, 24).forEach((p, i) => {
     const semilla = SEMILLAS[i % SEMILLAS.length]!;
-    salida.push(armarAdmision(p, `seed-${i}`, semilla, { nombresLargos: i === 3, muchosDocumentos: i === 3, incompleto: i === 1 }));
+    salida.push(armarAdmision(p, `seed-${i}`, semilla, { nombresLargos: i === 3, muchosDocumentos: i === 12, incompleto: i === 1 }));
   });
   return salida;
 }

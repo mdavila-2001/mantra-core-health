@@ -1,6 +1,6 @@
 import { HttpBackend, HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, map, switchMap, throwError, type Observable } from 'rxjs';
+import { catchError, from, map, switchMap, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
@@ -8,39 +8,49 @@ import type {
   AdmissionDecisionCommand,
   AdmissionDetail,
   AdmissionDocument,
+  AdmissionEvent,
   AdmissionListQuery,
   AdmissionPage,
+  AdmissionRequirement,
+  AdmissionReviewItem,
   AdmissionStatusCode,
   AdmissionSummary,
   ClaimAdmissionCommand,
   DocumentAccess,
   MyAdmission,
   ReassignAdmissionCommand,
+  ReasonCode,
   ReinstateCommand,
   ReleaseAdmissionCommand,
   RequestInfoCommand,
   RequirementReviewCommand,
-  RequirementStatusCode,
   RequirementsSummary,
-  ResubmitCommand,
+  RequirementSource,
+  RequirementStateCode,
+  RequirementStatusCode,
+  SourceTypeCode,
   SubmittedFormField,
   SubmittedFormSection,
   SuspendCommand,
   WireAdmissionDetail,
   WireAdmissionPage,
   WireAdmissionSummary,
+  WireCoded,
   WireDocumentAccess,
   WireMyAdmission,
+  WireRequirement,
+  WireReviewItem,
+  WireSubmittedForm,
 } from './admissions.types';
-import { ADMISSION_STATUS_LABELS } from './admissions.types';
+import { ADMISSION_STATUS_LABELS, SOURCE_TYPE_LABELS } from './admissions.types';
 
-const SIN_REQUISITOS: RequirementsSummary = { total: 0, verified: 0, rejected: 0, pending: 0 };
+/* ---- vocabulario de la API ---------------------------------------------------
+   La API habla en español (`EN_REVISION`, `REGISTRO_MINSALUD`, `ILEGIBLE`). El
+   resto de la aplicación conoce códigos estables en inglés: se traduce aquí, en
+   la frontera, en los dos sentidos. Un código que no se conoce pasa tal cual
+   (la API puede sumar uno sin romper la pantalla). */
 
-/* ---- vocabulario heredado --------------------------------------------------
-   La primera versión del contrato hablaba en español. Se acepta en la frontera
-   y se traduce: el resto de la aplicación solo conoce los códigos en inglés. */
-
-const ESTADO_HEREDADO: Readonly<Record<string, AdmissionStatusCode>> = {
+const ESTADO_DE_API: Readonly<Record<string, AdmissionStatusCode>> = {
   ENVIADA: 'SUBMITTED',
   EN_REVISION: 'IN_REVIEW',
   INFORMACION_REQUERIDA: 'INFO_REQUESTED',
@@ -49,27 +59,52 @@ const ESTADO_HEREDADO: Readonly<Record<string, AdmissionStatusCode>> = {
   SUSPENDIDA: 'SUSPENDED',
   EXPIRADA: 'EXPIRED',
   RETIRADA: 'WITHDRAWN',
+  ABANDONADA: 'ABANDONED',
 };
 
-const REQUISITO_HEREDADO: Readonly<Record<string, RequirementStatusCode>> = {
-  PENDIENTE: 'PENDING',
-  VERIFICADO: 'VERIFIED',
-  RECHAZADO: 'REJECTED',
-  INFO_REQUERIDA: 'INFO_REQUIRED',
+const FUENTE_DE_API: Readonly<Record<string, SourceTypeCode>> = {
+  REGISTRO_MINSALUD: 'MINSALUD_REGISTRY',
+  COLEGIO_MEDICO: 'MEDICAL_COLLEGE',
+  COLEGIO_ODONTOLOGOS: 'DENTAL_COLLEGE',
+  SEDES: 'SEDES',
+  SEGIP: 'SEGIP',
+  DOCUMENTO_APORTADO: 'PROVIDED_DOCUMENT',
+  OTRO: 'OTHER',
 };
+
+const MOTIVO_DE_API: Readonly<Record<string, ReasonCode>> = {
+  ILEGIBLE: 'ILLEGIBLE',
+  VENCIDO: 'EXPIRED_DOCUMENT',
+  NO_COINCIDE_NOMBRE: 'NAME_MISMATCH',
+  NO_FIGURA_EN_REGISTRO: 'NOT_IN_REGISTRY',
+  DOCUMENTO_INCOMPLETO: 'INCOMPLETE_DOCUMENT',
+  SOSPECHA_DE_FRAUDE: 'SUSPECTED_FRAUD',
+  OTRO: 'OTHER',
+};
+
+function invertir<T extends string>(mapa: Readonly<Record<string, T>>): Readonly<Record<string, string>> {
+  return Object.fromEntries(Object.entries(mapa).map(([api, dominio]) => [dominio, api]));
+}
+
+const ESTADO_A_API = invertir(ESTADO_DE_API);
+const FUENTE_A_API = invertir(FUENTE_DE_API);
+const MOTIVO_A_API = invertir(MOTIVO_DE_API);
+
+const SIN_REQUISITOS: RequirementsSummary = { total: 0, verified: 0, rejected: 0, pending: 0 };
 
 export function normalizeStatusCode(code: string): string {
-  return ESTADO_HEREDADO[code] ?? code;
+  return ESTADO_DE_API[code] ?? code;
 }
 
-function requirementCode(code: string): RequirementStatusCode {
-  return (REQUISITO_HEREDADO[code] ?? code) as RequirementStatusCode;
-}
-
-function normalizeStatus(status: AdmissionCoded): AdmissionCoded {
+function normalizeStatus(status: WireCoded): AdmissionCoded {
   const code = normalizeStatusCode(status.code);
   const known = ADMISSION_STATUS_LABELS[code as AdmissionStatusCode] as string | undefined;
-  return { code, label: status.label || known || code };
+  // El rótulo es el de la pantalla, no el de la API: «Expirada» vs «Verificación vencida».
+  return { code, label: known ?? status.label ?? code };
+}
+
+function normalizeReason(code: string | null): string | null {
+  return code === null ? null : (MOTIVO_DE_API[code] ?? code);
 }
 
 function fecha(valor: string | null | undefined): Date | null {
@@ -92,102 +127,230 @@ function toSummary(wire: WireAdmissionSummary): AdmissionSummary {
   };
 }
 
-/** La lista plana de documentos, a partir de los requisitos, si la API no la trae. */
-function documentosDe(requisitos: AdmissionDetail['requirements']): AdmissionDocument[] {
-  return requisitos.flatMap((r) =>
-    r.documents.map((d) => ({
-      id: `${r.id}:${d.fileId}`,
-      requirementCode: r.code,
-      fileId: d.fileId,
-      name: d.name,
-      mimeType: d.mimeType,
-      sizeBytes: d.sizeBytes,
-      uploadedAt: null,
-      pages: null,
-      reviewState: r.status,
-      evidenceSha256: null,
-    })),
-  );
+function toSource(item: WireReviewItem): RequirementSource | null {
+  const tipo = item.sourceType === null ? null : (FUENTE_DE_API[item.sourceType] ?? 'OTHER');
+  // Una revisión antigua solo trae la dirección: se muestra como «otra fuente».
+  if (tipo === null && item.verificationSourceUri === null) return null;
+  const code = tipo ?? 'OTHER';
+  return {
+    type: { code, label: SOURCE_TYPE_LABELS[code as SourceTypeCode] },
+    ref: item.sourceRef ?? item.verificationSourceUri,
+    consultedAt: fecha(item.sourceConsultedAt),
+  };
 }
 
-/** El formulario enviado, armado con la ficha, si la API no lo trae por secciones. */
-function formularioDe(wire: WireAdmissionDetail): SubmittedFormSection[] {
+function toItem(wire: WireReviewItem): AdmissionReviewItem {
+  return {
+    id: wire.id,
+    itemId: wire.itemId,
+    itemType: wire.itemType,
+    label: wire.label,
+    state: wire.state as RequirementStatusCode,
+    fileId: wire.fileId,
+    source: toSource(wire),
+    reasonCode: normalizeReason(wire.reasonCode),
+    reasonText: wire.reasonText,
+    internalNote: wire.internalNote,
+    reviewedBy: wire.reviewedBy,
+    reviewedAt: fecha(wire.reviewedAt),
+    evidenceChanged: wire.evidenceChanged,
+    evidenceSha256: wire.evidenceSha256,
+    rowVersion: wire.rowVersion,
+  };
+}
+
+function toRequirement(wire: WireRequirement): AdmissionRequirement {
+  return {
+    code: wire.code,
+    label: wire.label,
+    description: wire.description,
+    mandatory: wire.required,
+    evidenceKind: wire.evidenceKind === 'DATA' ? 'DATA' : 'DOCUMENT',
+    requiresSource: wire.requiresSource,
+    minItems: wire.minItems,
+    maxItems: wire.maxItems,
+    state: wire.state as RequirementStateCode,
+    satisfied: wire.satisfied,
+    blockedBy: wire.blockedBy,
+    items: wire.items.map(toItem),
+  };
+}
+
+function toDocument(wire: WireAdmissionDetail['documents'][number]): AdmissionDocument {
+  return {
+    id: wire.id,
+    requirementCode: wire.requirementCode,
+    fileId: wire.fileId,
+    name: wire.name,
+    mimeType: wire.mimeType,
+    sizeBytes: wire.sizeBytes,
+    uploadedAt: fecha(wire.uploadedAt),
+    pages: wire.pages,
+    reviewState: wire.reviewState as RequirementStatusCode,
+    evidenceSha256: wire.evidenceSha256,
+  };
+}
+
+function toEvent(wire: WireAdmissionDetail['events'][number]): AdmissionEvent {
+  return {
+    id: wire.id,
+    type: wire.type,
+    fromStatus: wire.fromStatus === null ? null : normalizeStatus(wire.fromStatus),
+    toStatus: wire.toStatus === null ? null : normalizeStatus(wire.toStatus),
+    itemType: wire.itemType,
+    itemId: wire.itemId,
+    requirementCode: wire.requirementCode,
+    sourceUri: wire.verificationSourceUri,
+    reasonCode: normalizeReason(wire.reasonCode),
+    reasonText: wire.reasonText,
+    actor: wire.actor,
+    actorRole: wire.actorRole,
+    occurredAt: new Date(wire.occurredAt),
+  };
+}
+
+/* ---- el formulario enviado ---------------------------------------------------
+   La API entrega el formulario tal como lo envió el médico (`personal`,
+   `contact`, `addresses`, `licenses`…). La pantalla lo lee por secciones, con
+   cada campo ligado al requisito que lo respalda. Un campo es obligatorio si
+   el requisito que lo respalda lo es. */
+
+function coordenadas(gps: { lat: number; lng: number } | null): string | null {
+  return gps === null ? null : `${gps.lat}, ${gps.lng}`;
+}
+
+function juntar(...partes: readonly (string | number | null | undefined)[]): string | null {
+  const limpias = partes.filter((p): p is string | number => p !== null && p !== undefined && `${p}`.trim() !== '');
+  return limpias.length === 0 ? null : limpias.join(' ');
+}
+
+function buildForm(form: WireSubmittedForm, requirements: readonly WireRequirement[]): SubmittedFormSection[] {
+  const obligatorio = (code: string | null): boolean =>
+    code !== null && requirements.some((r) => r.code === code && r.required);
   const campo = (
     key: string,
     label: string,
-    value: string | null | undefined,
-    required: boolean,
-    requirementCode: string | null = null,
-  ): SubmittedFormField => ({ key, label, value: value ?? null, required, requirementCode, kind: 'TEXT' });
-  const p = wire.practitioner;
-  return [
+    value: string | number | null | undefined,
+    requirementCode: string | null,
+    esClave = false,
+    kind: SubmittedFormField['kind'] = 'TEXT',
+  ): SubmittedFormField => ({
+    key,
+    label,
+    value: value === null || value === undefined || `${value}`.trim() === '' ? null : `${value}`,
+    required: esClave && obligatorio(requirementCode),
+    requirementCode,
+    kind,
+  });
+  const p = form.personal;
+  const c = form.contact;
+  const ci = p.requirementCode;
+  const secciones: SubmittedFormSection[] = [
     {
       key: 'personal',
       title: 'Datos personales',
       fields: [
-        campo('fullName', 'Nombre completo', p.fullName, true, 'NATIONAL_ID'),
-        campo('nationalId', 'Documento de identidad', p.nationalId, true, 'NATIONAL_ID'),
-        campo('profession', 'Profesión', p.profession, true),
+        campo('firstName', 'Nombres', juntar(p.firstName, p.middleName), ci, true),
+        campo('paternalLastName', 'Apellido paterno', p.paternalLastName, ci, true),
+        campo('maternalLastName', 'Apellido materno', p.maternalLastName, ci),
+        campo('nationalId', 'Documento de identidad', juntar(p.nationalId, p.nationalIdIssuer), ci, true),
+        campo('birthDate', 'Fecha de nacimiento', p.birthDate, ci, true),
+        campo('age', 'Edad', p.age, ci),
+        campo('occupation', 'Ocupación', p.occupation, null),
       ],
     },
     {
       key: 'contact',
       title: 'Contacto',
-      fields: [campo('email', 'Correo', p.email, true), campo('phone', 'Teléfono', p.phone, false)],
-    },
-    {
-      key: 'licenses',
-      title: 'Matrícula',
-      fields: wire.licenses.map((l) =>
-        campo(`license-${l.id}`, `Matrícula (${l.jurisdiction})`, l.number, true, 'PROFESSIONAL_LICENSE'),
-      ),
-    },
-    {
-      key: 'credentials',
-      title: 'Títulos y estudios',
-      fields: wire.credentials.map((c) => campo(`credential-${c.id}`, c.title, c.institution, true, 'DEGREE')),
-    },
-    {
-      key: 'specialties',
-      title: 'Especialidades',
-      fields: wire.specialties.map((e) =>
-        campo(`specialty-${e.id}`, 'Especialidad', e.name, false, 'SPECIALTY_CERTIFICATE'),
-      ),
+      fields: [
+        campo('personalMobile', 'Celular personal', c.personalMobile, null),
+        campo('personalEmail', 'Correo personal', c.personalEmail, null),
+        campo('workMobile', 'Celular de trabajo', c.workMobile, null),
+        campo('workPhone', 'Teléfono de trabajo', c.workPhone, null),
+        campo('workEmail', 'Correo de trabajo', c.workEmail, null),
+      ],
     },
   ];
+  const domicilios: SubmittedFormField[] = [];
+  for (const [clave, titulo, dir] of [
+    ['home', 'Domicilio', form.addresses.home],
+    ['work', 'Lugar de trabajo', form.addresses.work],
+  ] as const) {
+    domicilios.push(
+      campo(`${clave}-address`, titulo, juntar(dir?.lines, dir?.locality, dir?.department), null),
+      campo(`${clave}-gps`, `${titulo}: ubicación`, coordenadas(dir?.gps ?? null), null, false, 'COORDINATES'),
+    );
+  }
+  secciones.push({ key: 'addresses', title: 'Direcciones', fields: domicilios });
+  if (form.licenses.length > 0) {
+    secciones.push({
+      key: 'licenses',
+      title: 'Matrículas',
+      fields: form.licenses.flatMap((l, n) => [
+        campo(`license-${l.id}-number`, `Matrícula ${n + 1}: número`, l.number, l.requirementCode, true),
+        campo(`license-${l.id}-jurisdiction`, `Matrícula ${n + 1}: jurisdicción`, l.jurisdiction, l.requirementCode),
+        campo(`license-${l.id}-authority`, `Matrícula ${n + 1}: autoridad`, l.authority, l.requirementCode),
+        campo(`license-${l.id}-validity`, `Matrícula ${n + 1}: vigencia`, juntar(l.validFrom, '→', l.validTo), l.requirementCode),
+      ]),
+    });
+  }
+  if (form.education.length > 0) {
+    secciones.push({
+      key: 'education',
+      title: 'Títulos y estudios',
+      fields: form.education.flatMap((e, n) => [
+        campo(`education-${e.id}-title`, `${e.level} ${n + 1}: título`, e.title, e.requirementCode, true),
+        campo(`education-${e.id}-institution`, `${e.level} ${n + 1}: institución`, e.institution, e.requirementCode, true),
+        campo(`education-${e.id}-year`, `${e.level} ${n + 1}: año`, e.year, e.requirementCode),
+        campo(`education-${e.id}-number`, `${e.level} ${n + 1}: número`, e.number, e.requirementCode),
+      ]),
+    });
+  }
+  if (form.specialties.length > 0) {
+    secciones.push({
+      key: 'specialties',
+      title: 'Especialidades',
+      fields: form.specialties.map((s) =>
+        campo(`specialty-${s.id}`, s.isPrimary ? 'Especialidad principal' : 'Especialidad', s.name, s.requirementCode),
+      ),
+    });
+  }
+  if (form.practices.length > 0) {
+    secciones.push({
+      key: 'practices',
+      title: 'Consultorios',
+      fields: form.practices.flatMap((x) => [
+        campo(`practice-${x.id}-name`, `Consultorio: ${x.name}`, x.address, x.requirementCode, true),
+        campo(`practice-${x.id}-gps`, `Consultorio: ${x.name} (ubicación)`, coordenadas(x.gps), x.requirementCode, false, 'COORDINATES'),
+      ]),
+    });
+  }
+  return secciones;
 }
 
 function toDetail(wire: WireAdmissionDetail): AdmissionDetail {
-  const requirements = (wire.requirements ?? []).map((r) => ({
-    ...r,
-    status: requirementCode(r.status),
-    reviewedAt: fecha(r.reviewedAt),
-    source: r.source === null ? null : { ...r.source, consultedAt: fecha(r.source.consultedAt) },
-    evidenceSha256: r.evidenceSha256 ?? null,
-  }));
   return {
     ...toSummary(wire),
-    practitioner: { ...wire.practitioner, registeredAt: fecha(wire.practitioner.registeredAt) },
+    practitioner: wire.practitioner,
     licenses: wire.licenses.map((l) => ({ ...l, verifiedAt: fecha(l.verifiedAt) })),
     credentials: wire.credentials.map((c) => ({ ...c, verifiedAt: fecha(c.verifiedAt) })),
     specialties: wire.specialties,
-    requirements,
-    documents:
-      wire.documents === undefined
-        ? documentosDe(requirements)
-        : wire.documents.map((d) => ({
-            ...d,
-            uploadedAt: fecha(d.uploadedAt),
-            evidenceSha256: d.evidenceSha256 ?? null,
-            reviewState: d.reviewState === null ? null : requirementCode(d.reviewState),
-          })),
-    submittedForm: wire.submittedForm ?? formularioDe(wire),
-    events: wire.events.map((e) => ({ ...e, occurredAt: new Date(e.occurredAt) })),
+    requirements: wire.requirements.map(toRequirement),
+    blockers: wire.blockers,
+    canVerify: wire.canVerify,
+    fourEyesRequired: wire.fourEyesRequired,
+    documents: wire.documents.map(toDocument),
+    submittedForm: buildForm(wire.submittedForm, wire.requirements),
+    submittedFormSource: wire.submittedFormSource === 'LIVE' ? 'LIVE' : 'SNAPSHOT',
+    events: wire.events.map(toEvent),
     infoRequestedText: wire.infoRequestedText,
     infoDueAt: fecha(wire.infoDueAt),
     decisionReasonText: wire.decisionReasonText,
-    allowedActions: wire.allowedActions ?? [],
-    assignableReviewers: wire.assignableReviewers ?? [],
+    decisionReasonCode: normalizeReason(wire.decisionReasonCode),
+    internalNote: wire.internalNote,
+    validUntil: wire.validUntil,
+    resubmissionCount: wire.resubmissionCount,
+    attestedAt: fecha(wire.attestedAt),
   };
 }
 
@@ -200,13 +363,12 @@ function toMine(wire: WireMyAdmission): MyAdmission {
     infoDueAt: fecha(wire.infoDueAt),
     infoRequestedText: wire.infoRequestedText,
     decisionReasonText: wire.decisionReasonText,
-    resubmissionsRemaining: wire.resubmissionsRemaining ?? null,
-    items: wire.items.map((i) => ({ ...i, state: normalizeItemState(i.state) })),
+    validUntil: wire.validUntil,
+    items: wire.items.map((i) => ({ ...i, reasonCode: normalizeReason(i.reasonCode) })),
+    resubmissionCount: wire.resubmissionCount,
+    canResubmit: wire.canResubmit,
+    canWithdraw: wire.canWithdraw,
   };
-}
-
-function normalizeItemState(state: string): string {
-  return REQUISITO_HEREDADO[state] ?? state;
 }
 
 function toPage(page: WireAdmissionPage): AdmissionPage {
@@ -215,16 +377,45 @@ function toPage(page: WireAdmissionPage): AdmissionPage {
   return { items: page.items.map(toSummary), nextCursor: page.nextCursor, counts };
 }
 
+/** El filtro tal como lo espera la API (el estado va en español). */
+function filtersOf(query: AdmissionListQuery): Record<string, string | number | boolean> {
+  const filtros: Record<string, string | number | boolean> = {};
+  if (query.type) filtros['type'] = query.type;
+  if (query.status) filtros['status'] = ESTADO_A_API[query.status] ?? query.status;
+  if (query.assignedTo) filtros['assignedTo'] = query.assignedTo;
+  if (query.overdue === true) filtros['overdue'] = true;
+  if (query.cursor) filtros['cursor'] = query.cursor;
+  if (query.limit !== undefined) filtros['limit'] = query.limit;
+  filtros['sort'] = query.sort ?? 'due_at';
+  return filtros;
+}
+
 /** Los filtros como parámetros de URL; lo vacío no se manda. */
 function paramsOf(query: AdmissionListQuery): HttpParams {
   let params = new HttpParams();
-  if (query.type) params = params.set('type', query.type);
-  if (query.status) params = params.set('status', query.status);
-  if (query.assignedTo) params = params.set('assignedTo', query.assignedTo);
-  if (query.overdue === true) params = params.set('overdue', 'true');
-  if (query.cursor) params = params.set('cursor', query.cursor);
-  if (query.limit !== undefined) params = params.set('limit', query.limit);
-  return params.set('sort', query.sort ?? 'due_at');
+  for (const [clave, valor] of Object.entries(filtersOf(query))) params = params.set(clave, String(valor));
+  return params;
+}
+
+/** Los códigos de un comando de revisión, tal como los espera la API. */
+function reviewBody(command: RequirementReviewCommand): Record<string, unknown> {
+  return {
+    decision: command.decision,
+    ...(command.sourceType === undefined ? {} : { sourceType: FUENTE_A_API[command.sourceType] ?? command.sourceType }),
+    ...(command.sourceRef === undefined ? {} : { sourceRef: command.sourceRef }),
+    ...(command.sourceConsultedAt === undefined ? {} : { sourceConsultedAt: command.sourceConsultedAt }),
+    ...(command.evidenceSha256 === undefined ? {} : { evidenceSha256: command.evidenceSha256 }),
+    ...(command.reasonCode === undefined ? {} : { reasonCode: MOTIVO_A_API[command.reasonCode] ?? command.reasonCode }),
+    ...(command.reason === undefined ? {} : { reason: command.reason }),
+    ...(command.internalNote === undefined ? {} : { internalNote: command.internalNote }),
+    expectedRowVersion: command.expectedRowVersion,
+  };
+}
+
+/** Un motivo estructurado, con su código en el vocabulario de la API. */
+function reasonBody<T extends { reasonCode?: ReasonCode }>(command: T): Omit<T, 'reasonCode'> & { reasonCode?: string } {
+  const { reasonCode, ...resto } = command;
+  return { ...resto, ...(reasonCode === undefined ? {} : { reasonCode: MOTIVO_A_API[reasonCode] ?? reasonCode }) };
 }
 
 /** Dirección absoluta de otro origen que el de la API: no lleva nuestra credencial. */
@@ -232,6 +423,18 @@ function isForeignAbsolute(url: string, apiBaseUrl: string): boolean {
   if (!/^https?:\/\//i.test(url)) return false;
   const raiz = apiBaseUrl.replace(/\/+$/, '');
   return !(raiz !== '' && url.startsWith(raiz) && (url.length === raiz.length || '/?#'.includes(url[raiz.length]!)));
+}
+
+/** El motivo estable de un error cuyo cuerpo llegó como `Blob` (descarga que falla). */
+async function reasonOfBlobError(error: HttpErrorResponse): Promise<string | null> {
+  const cuerpo: unknown = error.error;
+  if (!(cuerpo instanceof Blob)) return null;
+  try {
+    const json = JSON.parse(await cuerpo.text()) as { reason?: unknown };
+    return typeof json.reason === 'string' ? json.reason : null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -273,13 +476,7 @@ export class AdmissionsClient {
         ? this.http.get<WireAdmissionPage>(this.url('/admissions'), { params: paramsOf(query) })
         : this.http.post<WireAdmissionPage>(this.url('/admissions/search'), {
             q: query.q.trim(),
-            ...(query.type ? { type: query.type } : {}),
-            ...(query.status ? { status: query.status } : {}),
-            ...(query.assignedTo ? { assignedTo: query.assignedTo } : {}),
-            ...(query.overdue === true ? { overdue: true } : {}),
-            ...(query.cursor ? { cursor: query.cursor } : {}),
-            ...(query.limit === undefined ? {} : { limit: query.limit }),
-            sort: query.sort ?? 'due_at',
+            ...filtersOf(query),
           });
     return request.pipe(map(toPage));
   }
@@ -315,11 +512,15 @@ export class AdmissionsClient {
   /** `POST /admissions/:id/request-info` — pedir información (REVIEWER). */
   requestInfo(id: string, command: RequestInfoCommand): Observable<AdmissionDetail> {
     return this.http
-      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/request-info`), command)
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/request-info`), reasonBody(command))
       .pipe(map(toDetail));
   }
 
-  /** `POST /admissions/:id/items/:itemId/review` — revisar un requisito (REVIEWER). */
+  /**
+   * `POST /admissions/:id/items/:itemId/review` — revisar una ficha (REVIEWER).
+   * `itemId` es el id de la revisión de la ficha (`AdmissionReviewItem.id`) y
+   * `expectedRowVersion`, el de la ficha.
+   */
   reviewRequirement(
     id: string,
     itemId: string,
@@ -328,7 +529,7 @@ export class AdmissionsClient {
     return this.http
       .post<WireAdmissionDetail>(
         this.url(`/admissions/${encodeURIComponent(id)}/items/${encodeURIComponent(itemId)}/review`),
-        command,
+        reviewBody(command),
       )
       .pipe(map(toDetail));
   }
@@ -336,14 +537,14 @@ export class AdmissionsClient {
   /** `POST /admissions/:id/decision` — la decisión final (APPROVER). */
   decide(id: string, command: AdmissionDecisionCommand): Observable<AdmissionDetail> {
     return this.http
-      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/decision`), command)
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/decision`), reasonBody(command))
       .pipe(map(toDetail));
   }
 
   /** `POST /admissions/:id/suspend` (APPROVER). */
   suspend(id: string, command: SuspendCommand): Observable<AdmissionDetail> {
     return this.http
-      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/suspend`), command)
+      .post<WireAdmissionDetail>(this.url(`/admissions/${encodeURIComponent(id)}/suspend`), reasonBody(command))
       .pipe(map(toDetail));
   }
 
@@ -355,24 +556,34 @@ export class AdmissionsClient {
   }
 
   /**
-   * `GET /admissions/:id/documents/:fileId` — acceso auditado a un documento:
-   * la API deja constancia de quién lo pidió y entrega una dirección firmada
-   * de vida corta.
+   * `POST /admissions/:id/documents/:fileId/download-url` — acceso auditado a
+   * un documento: la API deja constancia de quién lo pidió y entrega una ruta
+   * firmada de 2 minutos, atada a quien la pide y a esa admisión.
    */
   documentAccess(id: string, fileId: string): Observable<DocumentAccess> {
     return this.http
-      .get<WireDocumentAccess>(
-        this.url(`/admissions/${encodeURIComponent(id)}/documents/${encodeURIComponent(fileId)}`),
+      .post<WireDocumentAccess>(
+        this.url(`/admissions/${encodeURIComponent(id)}/documents/${encodeURIComponent(fileId)}/download-url`),
+        {},
       )
-      .pipe(map((acceso) => ({ url: acceso.url, expiresAt: new Date(acceso.expiresAt) })));
+      .pipe(
+        map((acceso) => ({
+          url: acceso.url,
+          expiresAt: new Date(acceso.expiresAt),
+          name: acceso.name,
+          mimeType: acceso.mimeType,
+        })),
+      );
   }
 
   /**
-   * Pide el acceso y baja los bytes del documento con esa dirección.
+   * Pide el acceso y baja los bytes del documento (`GET .../content`).
    *
-   * Una dirección firmada de otro origen se baja sin credenciales; si responde
-   * 401/403/410 es que venció y se lanza {@link DocumentLinkExpiredError}: la
-   * pantalla pide una nueva. Una ruta de esta API sigue por el cliente normal.
+   * La ruta firmada es de esta API y va por el cliente normal (con la sesión:
+   * la API la ata a quien la pidió). Una dirección absoluta de OTRO origen se
+   * baja sin credenciales ni cabeceras propias. Si la firma venció o no sirve
+   * (`ADMISSION_DOCUMENT_URL_INVALID`, 410) se lanza
+   * {@link DocumentLinkExpiredError}: la pantalla pide una nueva.
    */
   documentContent(
     id: string,
@@ -384,11 +595,18 @@ export class AdmissionsClient {
         const cliente = externa ? this.bare : this.http;
         const direccion = /^https?:\/\//i.test(acceso.url) ? acceso.url : this.url(acceso.url);
         return cliente.get(direccion, { responseType: 'blob', observe: 'response' }).pipe(
-          catchError((error: unknown) =>
-            externa && error instanceof HttpErrorResponse && [401, 403, 410].includes(error.status)
-              ? throwError(() => new DocumentLinkExpiredError(error.status))
-              : throwError(() => error),
-          ),
+          catchError((error: unknown) => {
+            if (!(error instanceof HttpErrorResponse)) return throwError(() => error);
+            return from(reasonOfBlobError(error)).pipe(
+              switchMap((motivo) =>
+                error.status === 410 ||
+                motivo === 'ADMISSION_DOCUMENT_URL_INVALID' ||
+                (externa && [401, 403].includes(error.status))
+                  ? throwError(() => new DocumentLinkExpiredError(error.status))
+                  : throwError(() => error),
+              ),
+            );
+          }),
         );
       }),
       map((respuesta) => ({
@@ -405,10 +623,21 @@ export class AdmissionsClient {
       .pipe(map(toMine));
   }
 
-  /** `POST /profiles/practitioners/me/admission/resubmit` — corregir y reenviar, con atestación. */
-  resubmitMyAdmission(command: ResubmitCommand): Observable<MyAdmission> {
+  /**
+   * `POST /profiles/practitioners/me/admission/resubmit` — corregir y reenviar.
+   * Sin cuerpo: el sujeto sale de la sesión. La API decide si corresponde
+   * (estado y tope de reenvíos) y responde la admisión actualizada.
+   */
+  resubmitMyAdmission(): Observable<MyAdmission> {
     return this.http
-      .post<WireMyAdmission>(this.url('/profiles/practitioners/me/admission/resubmit'), command)
+      .post<WireMyAdmission>(this.url('/profiles/practitioners/me/admission/resubmit'), {})
+      .pipe(map(toMine));
+  }
+
+  /** `POST /profiles/practitioners/me/admission/withdraw` — retirar la solicitud (enviada o con información pedida). */
+  withdrawMyAdmission(): Observable<MyAdmission> {
+    return this.http
+      .post<WireMyAdmission>(this.url('/profiles/practitioners/me/admission/withdraw'), {})
       .pipe(map(toMine));
   }
 }
