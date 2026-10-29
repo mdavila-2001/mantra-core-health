@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { PLAN_GLYPH_NAMES, PLAN_GLYPH_SHAPES } from './plan-glyphs';
+import { PLAN_GLYPH_NAMES, PLAN_GLYPH_SHAPES } from '../../atoms/plan-glyph/plan-glyphs';
 
 /**
  * Los `<symbol>` de los glifos de estado del plano (CONTRATO-PLANO §5.4): el

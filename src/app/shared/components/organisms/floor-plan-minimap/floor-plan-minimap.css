@@ -1,0 +1,14 @@
+:host {
+    display: block;
+    width: 160px;
+    padding: var(--sp-1);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-sm);
+}
+.minimap__svg { display: block; width: 100%; height: auto; touch-action: none; cursor: crosshair; }
+.minimap__sheet { fill: var(--bg-inset); stroke: var(--border-strong); stroke-width: 1px; vector-effect: non-scaling-stroke; }
+.minimap__shape { fill: var(--bg-surface-alt); stroke: var(--text-secondary); stroke-width: 0.75px; vector-effect: non-scaling-stroke; }
+.minimap__shape--zone { fill: none; }
+.minimap__window { fill: color-mix(in srgb, var(--brand-primary) 14%, transparent); stroke: var(--brand-primary); stroke-width: 2px; vector-effect: non-scaling-stroke; }

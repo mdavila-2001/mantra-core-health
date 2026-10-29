@@ -1,0 +1,106 @@
+/* ============================================================================
+    Tarjeta de detalle del plano — superficie elevada del sistema, solo tokens.
+    Contraste del cuerpo ≥ 4,5:1 en claro y oscuro; el estado se repite con
+    glifo y texto, nunca solo color.
+    ========================================================================== */
+
+:host {
+    position: fixed;
+    z-index: var(--z-tooltip);
+    width: max-content;
+    max-width: min(340px, calc(100vw - 16px));
+    max-height: min(70vh, 520px);
+    overflow: auto;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    /* Hasta medirla no se ve: evita un parpadeo en (0,0). */
+    visibility: hidden;
+}
+:host(.is-ready) { visibility: visible; }
+
+/* Dentro del panel de selección: una ficha más, sin flotar. */
+:host(.is-inline) {
+    position: static;
+    visibility: visible;
+    max-width: none;
+    max-height: none;
+    width: auto;
+    box-shadow: none;
+    border-radius: var(--r-md);
+}
+
+/* Hoja inferior no modal (< 768 px, toque): nunca más del 40 % de la altura. */
+:host(.is-sheet) {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: auto;
+    max-width: none;
+    max-height: 40vh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.card__body { padding: var(--sp-3); display: grid; gap: var(--sp-2); }
+.card__head { display: grid; gap: 2px; }
+.card__title { margin: 0; font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 700; }
+.card__path, .card__kind { margin: 0; color: var(--text-secondary); }
+.card__line { margin: 0; }
+.card__label { color: var(--text-secondary); font-weight: 600; margin-right: var(--sp-1); }
+.card__label::after { content: ':'; }
+.card__note { margin: 0; color: var(--text-secondary); }
+.card__note--warn { color: var(--st-warning-fg); font-weight: 600; }
+.card__name { margin-left: var(--sp-1); }
+
+.card__states { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-1); }
+.card__state { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.card__axis { color: var(--text-secondary); }
+
+.tone-success { --tone-bg: var(--st-success-bg); --tone-fg: var(--st-success-fg); }
+.tone-info { --tone-bg: var(--st-info-bg); --tone-fg: var(--st-info-fg); }
+.tone-warning { --tone-bg: var(--st-warning-bg); --tone-fg: var(--st-warning-fg); }
+.tone-error { --tone-bg: var(--st-error-bg); --tone-fg: var(--st-error-fg); }
+.tone-accent { --tone-bg: var(--st-tertiary-bg); --tone-fg: var(--st-tertiary-fg); }
+.tone-primary { --tone-bg: var(--st-primary-bg); --tone-fg: var(--st-primary-fg); }
+.tone-secondary { --tone-bg: var(--st-secondary-bg); --tone-fg: var(--st-secondary-fg); }
+.tone-neutral { --tone-bg: var(--bg-surface-alt); --tone-fg: var(--text-secondary); }
+
+.card__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    padding: 1px var(--sp-2);
+    border-radius: var(--r-full);
+    background: var(--tone-bg);
+    color: var(--tone-fg);
+    border: 1px solid var(--tone-fg);
+    font-weight: 700;
+}
+.card__mark { font-weight: 800; }
+
+.card__tech { margin: 0; display: grid; gap: 2px; }
+.card__tech div { display: flex; justify-content: space-between; gap: var(--sp-3); }
+.card__tech dt { color: var(--text-secondary); }
+.card__tech dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+
+.card__age { margin: 0; color: var(--text-secondary); }
+.card__age--stale { color: var(--st-error-fg); background: var(--st-error-bg); padding: 1px var(--sp-2); border-radius: var(--r-sm); }
+
+.card__actions { display: flex; gap: var(--sp-2); justify-content: flex-end; }
+
+.card__skeleton { display: grid; gap: var(--sp-1); }
+.card__skeleton span { height: 10px; border-radius: var(--r-xs); background: var(--bg-inset); }
+.card__skeleton span:nth-child(2) { width: 70%; }
+.card__skeleton span:nth-child(3) { width: 45%; }
+
+@media (prefers-reduced-motion: no-preference) {
+    :host(.is-ready) { animation: card-in var(--dur-fast) var(--ease-standard); }
+    @keyframes card-in { from { opacity: 0; } }
+}

@@ -1,0 +1,75 @@
+@let m = model();
+<div class="card__body">
+  <header class="card__head">
+    <p class="card__title" data-testid="plan-card-title">{{ m.title }}</p>
+    @if (m.path) {
+      <p class="card__path">{{ m.path }}</p>
+    }
+    @if (m.kind) {
+      <p class="card__kind">{{ m.kind }}@if (m.lifecycle) { · {{ m.lifecycle }} }</p>
+    }
+  </header>
+
+  @if (m.loadingStatic) {
+    <div class="card__skeleton" aria-hidden="true"><span></span><span></span><span></span></div>
+  }
+
+  @if (m.ownerUnit) {
+    <p class="card__line"><span class="card__label">Unidad</span> {{ m.ownerUnit }}</p>
+  }
+  @if (m.capacity) {
+    <p class="card__line" data-testid="plan-card-capacity"><span class="card__label">Camas</span> {{ m.capacity }}</p>
+  }
+
+  @if (m.rows.length > 0) {
+    <ul class="card__states" aria-label="Estado operativo">
+      @for (row of m.rows; track row.axis) {
+        <li class="card__state tone-{{ row.visual.tone }}" [attr.data-axis]="row.axis">
+          <span class="card__chip">
+            @if (row.visual.glyph) {
+              <app-plan-glyph [name]="row.visual.glyph" />
+            }
+            @if (row.visual.mark) {
+              <span class="card__mark">{{ row.visual.mark }}</span>
+            }
+            <span class="card__chip-text">{{ row.visual.label }}</span>
+          </span>
+          <span class="card__axis">{{ row.title }}@if (row.detail) { · {{ row.detail }} }</span>
+        </li>
+      }
+    </ul>
+  } @else if (m.noStateText) {
+    <p class="card__note">{{ m.noStateText }}</p>
+  }
+
+  @if (m.patientLine) {
+    <p class="card__line card__patient" data-testid="plan-card-patient"><span class="card__label">Paciente</span> {{ m.patientLine }}@if (m.patientName) { <strong class="card__name" data-testid="plan-card-patient-name">{{ m.patientName }}</strong> }</p>
+  }
+
+  @if (m.assignable === false && m.notAssignableWhy) {
+    <p class="card__note card__note--warn" data-testid="plan-card-why">No se puede elegir: {{ m.notAssignableWhy }}</p>
+  }
+
+  @if (m.technical.length > 0) {
+    <dl class="card__tech">
+      @for (t of m.technical; track t.label) {
+        <div><dt>{{ t.label }}</dt><dd>{{ t.value }}</dd></div>
+      }
+    </dl>
+  }
+
+  @if (m.ageText) {
+    <p class="card__age" [class.card__age--stale]="m.stale" data-testid="plan-card-age">
+      {{ m.ageText }}@if (m.stale) { · <strong>Desactualizado</strong> }
+    </p>
+  }
+
+  @if (interactive()) {
+    <div class="card__actions">
+      @if (canOpenFile() && m.inScope) {
+        <button app-button size="sm" type="button" data-testid="plan-card-open" (clicked)="openFile.emit()">Abrir ficha</button>
+      }
+      <button app-button size="sm" variant="outline" type="button" data-testid="plan-card-close" (clicked)="closed.emit()">Cerrar</button>
+    </div>
+  }
+</div>

@@ -1,7 +1,7 @@
-import type { Point } from '../../../../core/floor-plan/geometry';
-import type { BBox } from '../../../../core/floor-plan/geometry';
-import type { Viewport } from '../../../../core/floor-plan/plan-viewport';
-import type { HoverSource } from '../../../../core/floor-plan/hover-intent';
+import type { Point } from './geometry';
+import type { BBox } from './geometry';
+import type { Viewport } from './plan-viewport';
+import type { HoverSource } from './hover-intent';
 
 /** Capas conmutables del visor (CONTRATO-PLANO §5.2). */
 export const PLAN_LAYERS = [

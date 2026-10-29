@@ -1,0 +1,164 @@
+/* ============================================================================
+    Visor del plano — 1440: filtros arriba, lienzo al centro y panel a la
+    derecha (360 px); 768: panel como cajón y herramientas plegadas; 390: barra
+    mínima y hoja inferior. Solo tokens del sistema.
+    ========================================================================== */
+
+:host { display: grid; gap: var(--sp-3); width: 100%; }
+
+.plan-skip {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    padding: var(--sp-2) var(--sp-3);
+    background: var(--bg-surface);
+    color: var(--text-link);
+    border: 2px solid var(--focus-ring);
+    border-radius: var(--r-sm);
+    z-index: var(--z-menu);
+}
+.plan-skip:focus { left: var(--sp-3); top: var(--sp-3); }
+
+.plan-skeleton { display: grid; gap: var(--sp-3); }
+.plan-skeleton__bar { height: 44px; border-radius: var(--r-md); background: var(--bg-inset); }
+.plan-skeleton__stage {
+    height: min(60vh, 560px);
+    border-radius: var(--r-lg);
+    border: 1px solid var(--border-default);
+    background:
+        linear-gradient(var(--border-default) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(90deg, var(--border-default) 1px, transparent 1px) 0 0 / 32px 32px,
+        var(--bg-inset);
+}
+
+/* ---- barra ---------------------------------------------------------------------- */
+.plan-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--sp-3);
+    padding: var(--sp-3);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: var(--r-lg);
+}
+
+.plan-tabs { display: flex; gap: var(--sp-1); flex-wrap: wrap; }
+.plan-tab {
+    min-height: 40px;
+    padding: var(--sp-1) var(--sp-4);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--fs-body);
+    font-weight: 600;
+    cursor: pointer;
+}
+.plan-tab:hover { background: var(--bg-hover); }
+.plan-tab:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.plan-tab.is-active { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
+.plan-tab__count { margin-left: var(--sp-2); font-variant-numeric: tabular-nums; opacity: 0.9; }
+
+.plan-search { position: relative; flex: 1 1 260px; min-width: 200px; max-width: 420px; }
+.plan-hits {
+    position: absolute;
+    z-index: var(--z-menu);
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    margin: 0;
+    padding: var(--sp-1);
+    list-style: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    box-shadow: var(--shadow-md);
+    max-height: 320px;
+    overflow: auto;
+}
+.plan-hit {
+    display: grid;
+    width: 100%;
+    gap: 2px;
+    padding: var(--sp-2);
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: var(--fs-caption);
+    text-align: left;
+    cursor: pointer;
+}
+.plan-hit:hover, .plan-hit:focus-visible { background: var(--bg-hover); outline: none; }
+.plan-hit:focus-visible { box-shadow: inset 0 0 0 2px var(--focus-ring); }
+.plan-hit__where { color: var(--text-secondary); }
+
+.plan-filters { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.plan-field { display: grid; gap: 2px; min-width: 180px; font-size: var(--fs-caption); color: var(--text-secondary); font-weight: 600; }
+.plan-toggle-filters { display: none; }
+
+/* ---- cuerpo ----------------------------------------------------------------------- */
+.plan-body {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: start;
+}
+.plan-body.has-panel { grid-template-columns: 260px minmax(0, 1fr) 360px; }
+
+.plan-left { display: grid; gap: var(--sp-3); align-content: start; }
+.plan-toggle-tools { display: none; }
+.plan-tools { display: grid; gap: var(--sp-4); padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-lg); }
+.plan-layers { margin: 0; padding: 0; border: 0; display: grid; gap: var(--sp-1); }
+.plan-layers legend { padding: 0; margin-bottom: var(--sp-2); font-size: var(--fs-overline); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); font-weight: 700; }
+
+.plan-stage {
+    position: relative;
+    height: clamp(420px, 68vh, 760px);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: var(--bg-inset);
+}
+.plan-stage app-floor-plan-canvas { position: absolute; inset: 0; }
+.plan-minimap { position: absolute; left: var(--sp-3); bottom: var(--sp-3); display: grid; gap: var(--sp-1); justify-items: start; }
+
+.plan-right { position: sticky; top: var(--sp-3); max-height: calc(100vh - 2 * var(--sp-3)); overflow: auto; padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--r-lg); }
+
+/* ---- 768: herramientas plegadas, panel como cajón ----------------------------------- */
+@media (max-width: 1099.98px) {
+    .plan-body, .plan-body.has-panel { grid-template-columns: minmax(0, 1fr); }
+    .plan-toggle-tools { display: inline-flex; justify-self: start; }
+    .plan-tools { display: none; }
+    .plan-tools.is-open { display: grid; }
+    .plan-right {
+        position: fixed;
+        z-index: var(--z-drawer);
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(360px, 92vw);
+        max-height: none;
+        border-radius: var(--r-xl) 0 0 var(--r-xl);
+        box-shadow: var(--shadow-lg);
+    }
+    .plan-stage { height: clamp(380px, 62vh, 640px); }
+}
+
+/* ---- 390: barra mínima, minimapa plegado por omisión ----------------------------------- */
+@media (max-width: 767.98px) {
+    .plan-toggle-filters { display: inline-flex; }
+    .plan-filters { display: none; width: 100%; }
+    .plan-filters.is-open { display: grid; }
+    .plan-search { max-width: none; flex-basis: 100%; }
+    .plan-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: var(--sp-1); }
+    .plan-tab { flex: none; }
+    .plan-stage { height: clamp(320px, 56vh, 520px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { scroll-behavior: auto; }
+}

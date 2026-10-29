@@ -1,0 +1,17 @@
+<svg
+  class="minimap__svg"
+  [attr.viewBox]="viewBox()"
+  role="img"
+  aria-label="Minimapa del plano. Arrastre el rectángulo para desplazar la vista."
+  (pointerdown)="down($event)"
+  (pointermove)="move($event)"
+  (pointerup)="up($event)"
+  (pointercancel)="up($event)"
+  data-testid="plan-minimap"
+>
+  <rect class="minimap__sheet" x="0" y="0" [attr.width]="widthM()" [attr.height]="heightM()" />
+  @for (s of shapes(); track s.id) {
+    <path class="minimap__shape" [class.minimap__shape--zone]="s.band === 'zone'" [attr.d]="s.path" />
+  }
+  <rect class="minimap__window" [attr.x]="windowRect().x" [attr.y]="windowRect().y" [attr.width]="windowRect().width" [attr.height]="windowRect().height" />
+</svg>

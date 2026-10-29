@@ -15,6 +15,7 @@ import type {
   UnplacedSpace,
 } from '../../data-access/floor-plan/floor-plan.types';
 import {
+  FOREIGN_SITE_ID,
   PLAN_SITE_ID,
   SEED_SPACES,
   SEED_SPACE_BY_KEY,
@@ -158,7 +159,7 @@ export function registerFloorPlan(router: MockRouter, model: FloorPlanModel = ne
   router.get('/sites/:siteId/floor-plans', (request) => {
     const actor = guard(request);
     if (isReply(actor)) return actor;
-    if (request.params['siteId'] !== PLAN_SITE_ID) return notFound();
+    if (request.params['siteId'] === FOREIGN_SITE_ID) return notFound();
     return (['CP', 'PB', 'P1'] as const).map((c) => {
       const { siteId: _s, northBearingDeg: _n, gridSizeM: _g, snapToGrid: _sn, contactToleranceM: _c, rowVersion: _r, siblings: _sib, ...summary } = metaOf(c);
       void [_s, _n, _g, _sn, _c, _r, _sib];
@@ -335,7 +336,7 @@ export function registerFloorPlan(router: MockRouter, model: FloorPlanModel = ne
   router.get('/sites/:siteId/plan-search', (request) => {
     const actor = guard(request);
     if (isReply(actor)) return actor;
-    if (request.params['siteId'] !== PLAN_SITE_ID) return notFound();
+    if (request.params['siteId'] === FOREIGN_SITE_ID) return notFound();
     const q = texto(request.query, 'q') ?? '';
     const limit = Math.min(50, Number(texto(request.query, 'limit') ?? '10') || 10);
     if (q.trim() === '') return [];
@@ -366,7 +367,7 @@ export function registerFloorPlan(router: MockRouter, model: FloorPlanModel = ne
   router.get('/sites/:siteId/plan-focus', (request) => {
     const actor = guard(request);
     if (isReply(actor)) return actor;
-    if (request.params['siteId'] !== PLAN_SITE_ID) return notFound();
+    if (request.params['siteId'] === FOREIGN_SITE_ID) return notFound();
     const spaceParam = texto(request.query, 'spaceId');
     const unitParam = texto(request.query, 'unitId');
     if ((spaceParam && model.keyOfSpaceId(spaceParam) === null) || (unitParam && !UNIT_ROWS.some((u) => unitId(u[0]) === unitParam))) return notFound();

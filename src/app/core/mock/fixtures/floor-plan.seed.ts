@@ -17,6 +17,8 @@ import { uuid } from '../mock-store';
 
 export const PLAN_SITE_ID = uuid('plano-site-hospital');
 /** Un lienzo «de otro tenant»: existe en el mundo pero la API contesta 404 igual que a un id inexistente. */
+/** Una sede de otro tenant: el simulador sirve el hospital de ejemplo para cualquier sede PROPIA y contesta 404 a esta. */
+export const FOREIGN_SITE_ID = uuid('plano-sede-otro-tenant');
 export const FOREIGN_PLAN_ID = uuid('plano-lienzo-otro-tenant');
 export const FOREIGN_SPACE_ID = uuid('plano-espacio-otro-tenant');
 

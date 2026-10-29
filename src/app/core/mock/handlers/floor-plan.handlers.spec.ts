@@ -2,7 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { PLAN_REASONS } from '../../data-access/floor-plan/floor-plan.codes';
 import type { LayoutApplyResponse, LayoutResponse, PlanCardResponse, PlanStateResponse } from '../../data-access/floor-plan/floor-plan.types';
-import { FOREIGN_PLAN_ID, FOREIGN_SPACE_ID, PLAN_SITE_ID, SEED_SPACES, planId, spaceId, unitId } from '../fixtures/floor-plan.seed';
+import { FOREIGN_PLAN_ID, FOREIGN_SITE_ID, FOREIGN_SPACE_ID, PLAN_SITE_ID, SEED_SPACES, planId, spaceId, unitId } from '../fixtures/floor-plan.seed';
 import { MockRouter, isMockReply, type MockMethod, type MockReply } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 import { registerFloorPlan } from './floor-plan.handlers';
@@ -224,7 +224,7 @@ describe('plano de planta del simulador (/floor-plans)', () => {
       expect(a.status).toBe(404);
       expect(a.body).toEqual(b.body);
       expect(call('GET', `/care-spaces/${FOREIGN_SPACE_ID}/plan-card`).status).toBe(404);
-      expect(call('GET', `/sites/${FOREIGN_PLAN_ID}/floor-plans`).status).toBe(404);
+      expect(call('GET', `/sites/${FOREIGN_SITE_ID}/floor-plans`).status).toBe(404);
     });
   });
 

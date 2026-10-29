@@ -60,7 +60,7 @@ import {
   type RevealRequest,
   type ViewInfo,
   type WorldPointerEvent,
-} from './floor-plan-canvas.types';
+} from '../../../../core/floor-plan/canvas.types';
 import { AppButton } from '../../atoms/button/button';
 import { PlanGlyphDefs } from './plan-glyph-defs';
 
