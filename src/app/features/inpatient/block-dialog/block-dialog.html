@@ -1,0 +1,90 @@
+<app-content-dialog
+  [heading]="title() + ' · ' + cell().code"
+  [description]="cell().name"
+  closeLabel="Cancelar"
+  size="md"
+  (closed)="closed.emit()"
+>
+  <div class="block" data-testid="block-dialog">
+    <app-ops-issue-alert [state]="generalState()" [heading]="'No se pudo aplicar: ' + kindLabel().toLowerCase()" />
+
+    @if (conflicts().length > 0) {
+      <app-alert tone="warning" title="Hay compromisos futuros en esa ventana" data-testid="block-conflicts">
+        <p class="block__lead">
+          Bloquear {{ cell().code }} deja sin lugar a lo siguiente. Resuélvalo primero o confirme que sigue adelante.
+        </p>
+        <ul class="block__conflicts">
+          @for (c of conflicts(); track c.id) {
+            <li>
+              <strong>{{ commitmentKind[c.kind] }}</strong> · {{ shortDateTime(c.startsAt) }}
+              <span class="block__next">Qué hacer: {{ c.nextAction }}</span>
+            </li>
+          }
+        </ul>
+        <app-switch
+          [checked]="acknowledged()"
+          (checkedChange)="acknowledged.set($event)"
+          label="Entiendo que estos compromisos quedan en conflicto"
+          data-testid="block-acknowledge"
+        />
+      </app-alert>
+    }
+
+    <app-form-field label="Motivo" [required]="true" [errorMessage]="fieldError('reasonCode')">
+      <app-select
+        [options]="reasonOptions()"
+        [value]="reasonCode()"
+        (valueChange)="reasonCode.set($event ?? '')"
+        placeholder="Elija un motivo"
+        [hasError]="fieldError('reasonCode') !== ''"
+        ariaLabel="Motivo del bloqueo"
+        data-testid="block-reason"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Detalle"
+      [hint]="reasonCode() === 'BLOCK_RSN_OTHER' ? 'Obligatorio con el motivo «Otro».' : 'Opcional: qué se necesita saber para levantarlo.'"
+      [required]="reasonCode() === 'BLOCK_RSN_OTHER'"
+      [errorMessage]="fieldError('reasonText')"
+    >
+      <app-textarea
+        [rows]="2"
+        [maxLength]="300"
+        [value]="reasonText()"
+        (valueChange)="reasonText.set($event)"
+        [hasError]="fieldError('reasonText') !== ''"
+        data-testid="block-text"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Fecha estimada de fin"
+      [required]="needsEnd()"
+      [hint]="needsEnd() ? 'Obligatoria en mantenimiento: es lo que el tablero muestra como «hasta».' : 'Opcional. Sin fecha, el bloqueo sigue hasta que alguien lo levante.'"
+      [errorMessage]="fieldError('expectedEndAt')"
+    >
+      <app-date-picker
+        mode="date-time"
+        [value]="expectedEnd()"
+        (valueChange)="expectedEnd.set($event)"
+        [minDate]="minDate"
+        [maxDate]="maxDate"
+        placeholder="dd/mm/aaaa hh:mm"
+        [hasError]="fieldError('expectedEndAt') !== ''"
+        data-testid="block-end"
+      />
+    </app-form-field>
+  </div>
+  <button
+    app-button
+    dialog-actions
+    type="button"
+    variant="primary"
+    data-testid="block-confirm"
+    [disabled]="pending() || (conflicts().length > 0 && !acknowledged())"
+    (clicked)="submit()"
+  >
+    {{ pending() ? 'Aplicando…' : conflicts().length > 0 ? 'Bloquear de todos modos' : 'Aplicar' }}
+  </button>
+</app-content-dialog>

@@ -33,6 +33,7 @@ import { fechaCorta, fechaYHora, permisosDe, rutaDeEspacio, varianteDeEstado } f
 import { InfraIssueAlert } from '../issue-alert';
 import { RetireBlockersDialog } from '../retire-blockers-dialog/retire-blockers-dialog';
 import { SpaceFormDialog } from '../space-form-dialog/space-form-dialog';
+import { SpaceOpsTab } from '../../../../inpatient/space-ops-tab/space-ops-tab';
 import { UnitLinkDialog } from '../unit-link-dialog/unit-link-dialog';
 
 interface Ficha {
@@ -42,10 +43,11 @@ interface Ficha {
 }
 
 /** Las pestañas de la ficha, en el orden del contrato. */
-export const PESTANAS_DE_LA_FICHA = ['General', 'Atributos técnicos', 'Unidades', 'Hijos', 'Historial'] as const;
+export const PESTANAS_DE_LA_FICHA = ['General', 'Atributos técnicos', 'Unidades', 'Hijos', 'Historial', 'Operación'] as const;
 const PESTANA_HISTORIAL = 4;
+const OPERATION_TAB = 5;
 /** El lápiz abre el formulario en la página que corresponde a la pestaña que se miraba. */
-const PAGINA_POR_PESTANA: readonly number[] = [0, 2, 1, 0, 0];
+const PAGINA_POR_PESTANA: readonly number[] = [0, 2, 1, 0, 0, 0];
 
 const ETIQUETA_DE_ACCION: Readonly<Record<LifecycleAction, string>> = {
   activate: 'Activar',
@@ -59,7 +61,7 @@ const ETIQUETA_DE_ACCION: Readonly<Record<LifecycleAction, string>> = {
  *
  * Regla del cliente del 09/09/2026: la ficha es **lo único de su pantalla**, así
  * que va centrada, a lo ancho del área de contenido y en **una tarjeta con
- * pestañas** (General · Atributos técnicos · Unidades · Hijos · Historial). Sin
+ * pestañas** (General · Atributos técnicos · Unidades · Hijos · Historial · Operación). Sin
  * columna lateral reservada y sin tarjetas apiladas.
  *
  * ## Qué carga
@@ -97,6 +99,7 @@ const ETIQUETA_DE_ACCION: Readonly<Record<LifecycleAction, string>> = {
     RetireBlockersDialog,
     RouterLink,
     SpaceFormDialog,
+    SpaceOpsTab,
     Tab,
     Tabs,
     UnitLinkDialog,
@@ -117,6 +120,7 @@ export class SpaceDetail {
   protected readonly id = computed(() => this.spaceId().get('id') ?? '');
 
   protected readonly pestanas = PESTANAS_DE_LA_FICHA;
+  protected readonly operationTab = OPERATION_TAB;
   protected readonly pestana = signal(0);
 
   protected readonly state = signal<ViewState<Ficha>>(loading());

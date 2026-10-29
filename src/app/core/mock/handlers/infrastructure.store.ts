@@ -101,6 +101,9 @@ export const requestId = (): string => `req-infra-${String(++secuencia).padStart
 export const ESTADOS_OPERATIVOS: Readonly<Record<string, string>> = {
   SPACE_OP_AVAILABLE: 'Disponible',
   SPACE_OP_MAINTENANCE: 'En mantenimiento',
+  SPACE_OP_BLOCKED_CLINICAL: 'Bloqueo clínico',
+  SPACE_OP_BLOCKED_ADMIN: 'Bloqueo administrativo',
+  SPACE_OP_CLOSED: 'Cerrada',
 };
 
 export function concepto(lista: readonly InfraConcept[], code: string | null): InfraConcept | null {
