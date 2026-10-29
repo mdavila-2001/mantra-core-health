@@ -1669,6 +1669,19 @@ function citaMock(
   };
 }
 
+/**
+ * Fija el reloj antes de los turnos de `citaMock` (12/08/2026, 12:00 UTC), para
+ * que esas citas sean «próximas» y se puedan cancelar sin depender del día en
+ * que corre la prueba. Solo se finge `Date`; los temporizadores siguen reales.
+ */
+function pinClockBeforeBookings(): void {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-10T12:00:00.000Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+}
+
 function etiqueta(conceptId: string, code: string, display = code): [string, unknown] {
   return [conceptId, { conceptId, code, display, codeSystemVersionId: 'csv-1' }];
 }
@@ -1794,6 +1807,8 @@ function api(comp: Appointments) {
 }
 
 describe('Appointments · cancelar turno propio', () => {
+  pinClockBeforeBookings();
+
   it('muestra "Cancelar" solo en turnos cancelables (gate por código normalizado)', () => {
     const { fixture } = montarCancelacion({
       bookings: [
@@ -1814,6 +1829,22 @@ describe('Appointments · cancelar turno propio', () => {
     // Confirmado y solicitado sí; cancelado y completado no.
     const botones = fixture.nativeElement.querySelectorAll('.turnos__cancelar');
     expect(botones.length).toBe(2);
+  });
+
+  it('una cita confirmada que ya terminó no ofrece «Cancelar»', () => {
+    const ended = {
+      ...citaMock('b-pasada', 's-conf'),
+      startAt: new Date('2026-08-05T12:00:00.000Z'),
+      endAt: new Date('2026-08-05T12:30:00.000Z'),
+    };
+    const { fixture } = montarCancelacion({
+      bookings: [citaMock('b-conf', 's-conf'), ended],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED')],
+    });
+    fixture.detectChanges();
+
+    // La próxima sí; la que ya pasó, confirmada y todo, no.
+    expect(fixture.nativeElement.querySelectorAll('.turnos__cancelar').length).toBe(1);
   });
 
   it('no ofrece cancelar para cancelado, completado, no-show, reprogramado ni desconocido', () => {
@@ -1958,6 +1989,8 @@ describe('Appointments · cancelar turno propio', () => {
  * reconocer que es la suya movida y no una ajena.
  */
 describe('Appointments · el paciente no reprograma', () => {
+  pinClockBeforeBookings();
+
   it('ninguna cita vigente ofrece «Reprogramar»', () => {
     const { fixture } = montarCancelacion({
       bookings: [citaMock('b-conf', 's-conf'), citaMock('b-in', 's-in')],
@@ -2054,6 +2087,8 @@ describe('booking-status · presentación por código normalizado', () => {
  * está el control en vez de dejar a la persona buscándolo.
  */
 describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
+  pinClockBeforeBookings();
+
   it('un turno solicitado dice «Pedido», se puede cancelar y no se puede mover', () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [citaMock('b-req', 's-req')],
@@ -2100,6 +2135,8 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
 // Carril 06 — vista dual (corrección #10) y motivo visible (corrección #14).
 
 describe('Appointments · lista y calendario', () => {
+  pinClockBeforeBookings();
+
   it('arranca en lista y el calendario no está dibujado', () => {
     const { fixture } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],

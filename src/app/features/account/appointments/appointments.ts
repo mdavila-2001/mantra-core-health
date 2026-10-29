@@ -70,7 +70,7 @@ import {
   reservaDelPortalRoute,
 } from './appointments.routes';
 import { sufijoDeCodigo, toBookingStatusPresentation } from './booking-status';
-import { splitUpcomingAndPast } from './upcoming-and-past';
+import { hasEnded, splitUpcomingAndPast } from './upcoming-and-past';
 
 /**
  * Cuántos días hacia adelante se ofrecen.
@@ -1699,14 +1699,13 @@ export class Appointments {
   /* ---- cancelar ----------------------------------------------------------- */
 
   /**
-   * Si el turno admite cancelarse, por su código de estado.
-   *
-   * Allowlist sobre el sufijo del código (ver {@link CODIGOS_CANCELABLES}): un
-   * estado fuera de la lista —cancelado, atendido, completado o desconocido— no
-   * ofrece el botón. Mientras el código no se resolvió (`''`) tampoco: nunca se
-   * ofrece cancelar sobre un estado que no se conoce.
+   * Si el turno admite cancelarse: su código está en {@link CODIGOS_CANCELABLES}
+   * (cancelado, atendido, completado, desconocido o sin resolver no ofrecen el
+   * botón) y la cita todavía no terminó, con el mismo instante que la manda a
+   * «Anteriores»: cancelar lo que ya pasó no tiene sentido para el paciente.
    */
   protected esCancelable(turno: TurnoVisible): boolean {
+    if (hasEnded(turno, this.momentoDeLectura())) return false;
     return turno.codigo !== '' && CODIGOS_CANCELABLES.has(sufijoDeCodigo(turno.codigo));
   }
 
