@@ -287,20 +287,12 @@ const membresias = new Coleccion<{
     endDate: i === 5 ? isoDia(-20) : null,
     createdAt: iso(-500 + i * 30),
   })),
-  // La plantilla de un hospital no son siete personas: treinta más, para que
-  // la pestaña «Plantilla» de la ficha tenga una segunda página (el tope es 25)
-  // y se pueda ver la paginación por cursor.
+  // Treinta más en el hospital: la «Plantilla» de la ficha tiene segunda página (tope 25).
   ...PROFESSIONALS.slice(8, 38).map((p, i) => ({
-    id: uuid(`membership-sanlucas-${p.id}`),
-    tenantId: TENANT_HOSPITAL,
-    userId: p.userId,
-    tenantRoleConceptId: ROL_TENANT.STAFF,
-    statusConceptId: STATUS['ST-ACTIVE']!,
-    accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT,
-    primaryBranchId: uuid('branch-sanlucas-central'),
-    startDate: isoDia(-200 + i),
-    endDate: null,
-    createdAt: iso(-200 + i),
+    id: uuid(`membership-sanlucas-${p.id}`), tenantId: TENANT_HOSPITAL, userId: p.userId,
+    tenantRoleConceptId: ROL_TENANT.STAFF, statusConceptId: STATUS['ST-ACTIVE']!,
+    accessScopeConceptId: ALCANCE_ACCESO.ALL_TENANT, primaryBranchId: uuid('branch-sanlucas-central'),
+    startDate: isoDia(-200 + i), endDate: null, createdAt: iso(-200 + i),
   })),
   {
     id: uuid('membership-medica-sanlucas'),

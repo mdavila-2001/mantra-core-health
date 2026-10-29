@@ -250,12 +250,9 @@ export class AgendaCreate {
   protected readonly agendaNueva = signal(false);
 
   /**
-   * Por qué no se pudo leer la agenda o el horario vigentes, si falló.
-   *
-   * **Mientras haya un error acá no se publica.** El fallo se tragaba («se sigue
-   * con el formulario en blanco») y eso no era inocuo: sin las agendas leídas
-   * no hay `resourceId`, y publicar CREA una agenda nueva en vez de editar la
-   * que ya existía, duplicándola ante los pacientes.
+   * Por qué no se pudo leer la agenda o el horario vigentes. **Con un error acá
+   * no se publica**: sin `resourceId` publicar CREA una agenda y duplicaría la
+   * que ya existe.
    */
   protected readonly errorDeLectura = signal<string | null>(null);
 
@@ -263,16 +260,9 @@ export class AgendaCreate {
   protected readonly nombreNuevo = signal('');
 
   /**
-   * Se ofrece el bloque «¿En qué agenda publica?» cuando **ya hay al menos una**.
-   *
-   * No es «cuando hay que elegir entre varias»: con una sola agenda no hay
-   * nada que elegir, pero el bloque es también donde vive «crear otra agenda»,
-   * y sin él quien tiene una no puede abrir la segunda nunca. Con cero agendas
-   * no se pregunta: la primera se crea con el formulario de siempre.
-   *
-   * Antes decía `length > 1 || length > 0` —la segunda condición absorbía a la
-   * primera— y el comentario de arriba y el de la plantilla describían una
-   * regla («sólo con más de una») que el código no cumplía.
+   * El bloque «¿En qué agenda publica?» se ofrece con **al menos una** agenda:
+   * ahí vive «crear otra agenda». Con cero se crea la primera con el formulario
+   * de siempre.
    */
   protected readonly eligeSede = computed(() => this.misAgendas().length > 0);
 
@@ -721,10 +711,8 @@ export class AgendaCreate {
    * pantalla que se reabre es **reconocible**, que es lo que hace que editar se
    * sienta editar.
    *
-   * Un fallo acá **se dice y frena la publicación** (`errorDeLectura`), con
-   * «Reintentar». Antes se seguía con el formulario en blanco «para no arruinar
-   * el alta», pero sin la agenda leída publicar crea una nueva y duplica la que
-   * ya existía.
+   * Un fallo acá **se dice y frena la publicación** (`errorDeLectura`): sin la
+   * agenda leída publicar crearía una nueva y duplicaría la existente.
    */
   private cargarHorarioVigente(tenantId: string | null): void {
     const perfil = this.auth.practitionerProfileId();
@@ -766,7 +754,6 @@ export class AgendaCreate {
     });
   }
 
-  /** «Reintentar» del aviso de lectura: vuelve a pedir las agendas de la organización elegida. */
   protected reintentarLectura(): void {
     this.cargarHorarioVigente(this.place.tenantId());
   }
