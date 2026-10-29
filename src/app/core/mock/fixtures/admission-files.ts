@@ -130,15 +130,15 @@ function crc32(bytes: Uint8Array): number {
     }
   }
   let c = 0xffffffff;
-  for (let i = 0; i < bytes.length; i++) c = tablaCrc[(c ^ bytes[i]!) & 0xff]! ^ (c >>> 8);
+  for (const byte of bytes) c = tablaCrc[(c ^ byte) & 0xff]! ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
 
 function adler32(bytes: Uint8Array): number {
   let a = 1;
   let b = 0;
-  for (let i = 0; i < bytes.length; i++) {
-    a = (a + bytes[i]!) % 65521;
+  for (const byte of bytes) {
+    a = (a + byte) % 65521;
     b = (b + a) % 65521;
   }
   return ((b << 16) | a) >>> 0;
