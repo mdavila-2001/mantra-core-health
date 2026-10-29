@@ -19,8 +19,13 @@ const SECCIONES: SubmittedFormSection[] = [
 ];
 
 const REQ: AdmissionRequirement = {
-  id: 'r1', code: 'NATIONAL_ID', label: 'Cédula de identidad', description: null, mandatory: true, status: 'PENDING', documents: [], data: [],
-  itemRef: null, source: null, evidenceSha256: 'e'.repeat(64), reasonCode: null, reasonText: null, internalNote: null, reviewedAt: null, reviewedBy: null,
+  code: 'NATIONAL_ID', label: 'Cédula de identidad', description: null, mandatory: true, evidenceKind: 'DATA', requiresSource: false,
+  minItems: 1, maxItems: 1, state: 'PENDING', satisfied: false, blockedBy: 'PENDING',
+  items: [{
+    id: 'rev-ci', itemId: 'item-ci', itemType: 'PROFILE', label: 'Cédula 4567890', state: 'PENDING', fileId: null, source: null,
+    reasonCode: null, reasonText: null, internalNote: null, reviewedBy: null, reviewedAt: null, evidenceChanged: false,
+    evidenceSha256: 'e'.repeat(64), rowVersion: 2,
+  }],
 };
 
 describe('AdmissionSubmittedForm', () => {
@@ -101,9 +106,23 @@ describe('AdmissionSubmittedForm', () => {
     botones.find((b) => b.textContent?.includes('Verificar'))!.click();
     botones.find((b) => b.textContent?.includes('Rechazar'))!.click();
     expect(decisiones).toEqual([
-      { requirementId: 'r1', decision: 'VERIFIED' },
-      { requirementId: 'r1', decision: 'REJECTED' },
+      { itemId: 'item-ci', requirementCode: 'NATIONAL_ID', decision: 'VERIFIED' },
+      { itemId: 'item-ci', requirementCode: 'NATIONAL_ID', decision: 'REJECTED' },
     ]);
+  });
+
+  it('un requisito con varias fichas no se decide desde acá: manda a revisarlas una por una', () => {
+    const ficha = REQ.items[0]!;
+    const varias: AdmissionRequirement = { ...REQ, maxItems: 2, items: [ficha, { ...ficha, id: 'rev-ci2', itemId: 'item-ci2' }] };
+    montar();
+    fixture.componentRef.setInput('requirements', [varias]);
+    const pedidosFichas: string[] = [];
+    fixture.componentInstance.viewRequirement.subscribe((c) => pedidosFichas.push(c));
+    fixture.detectChanges();
+    expect([...q('form-requirement')!.querySelectorAll('button')].some((b) => b.textContent?.includes('Verificar'))).toBe(false);
+    q('form-review-items')!.click();
+    expect(pedidosFichas).toEqual(['NATIONAL_ID']);
+    expect(decisiones).toEqual([]);
   });
 
   it('sin permiso de revisar, solo se mira', () => {
