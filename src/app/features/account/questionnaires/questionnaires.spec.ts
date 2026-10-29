@@ -13,6 +13,13 @@ const RESEÑA = '/patients/me/reviews';
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Un solo «ahora» para todo el archivo: la lista ordena por vencimiento, y con
+ * un `Date.now()` por invitación dos tarjetas armadas seguidas difieren por
+ * milisegundos y el orden esperado dependía del reloj.
+ */
+const AHORA = Date.now();
+
 /** Una invitación como viaja: fechas en texto y opcionales en `null`. */
 function enElCable(id: string, status: 'PENDING' | 'ANSWERED' | 'EXPIRED', diasDeRespuesta = 2) {
   return {
@@ -20,10 +27,10 @@ function enElCable(id: string, status: 'PENDING' | 'ANSWERED' | 'EXPIRED', diasD
     title: `Encuesta ${id}`,
     description: null,
     status,
-    issuedAt: new Date(Date.now() - 5 * DIA_MS).toISOString(),
-    expiresAt: new Date(Date.now() + 3 * DIA_MS).toISOString(),
+    issuedAt: new Date(AHORA - 5 * DIA_MS).toISOString(),
+    expiresAt: new Date(AHORA + 3 * DIA_MS).toISOString(),
     answeredAt:
-      status === 'ANSWERED' ? new Date(Date.now() - diasDeRespuesta * DIA_MS).toISOString() : null,
+      status === 'ANSWERED' ? new Date(AHORA - diasDeRespuesta * DIA_MS).toISOString() : null,
     appointmentBookingId: `bk-${id}`,
   };
 }
