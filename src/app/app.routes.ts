@@ -18,6 +18,7 @@ import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import { INPATIENT_SCREENS } from './features/inpatient/inpatient.screens';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -73,6 +74,7 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   ...MEDICAL_CENTER_SCREENS,
+  ...INPATIENT_SCREENS,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //

@@ -190,11 +190,11 @@ function commitmentsOf(e: EspacioSim, from: string, to: string | null): FutureCo
   const all: Commitment[] =
     e.code === 'QX-1'
       ? [
-          { kind: 'PROCEDURE_CASE', id: nuevoIdFor('surgical-case-6'), startsAt: iso(0, 14), endsAt: iso(0, 16), nextAction: 'Cirugía en curso hoy: espere a que termine o reprográmela en Intervenciones.' },
-          { kind: 'PROCEDURE_CASE', id: nuevoIdFor('surgical-case-4'), startsAt: iso(3, 8), endsAt: iso(3, 10), nextAction: 'Reprogramar o cancelar la cirugía en Intervenciones.' },
+          { kind: 'PROCEDURE_CASE', id: seededId('surgical-case-6'), startsAt: iso(0, 14), endsAt: iso(0, 16), nextAction: 'Cirugía en curso hoy: espere a que termine o reprográmela en Intervenciones.' },
+          { kind: 'PROCEDURE_CASE', id: seededId('surgical-case-4'), startsAt: iso(3, 8), endsAt: iso(3, 10), nextAction: 'Reprogramar o cancelar la cirugía en Intervenciones.' },
         ]
       : e.code === 'QX-2'
-        ? [{ kind: 'PROCEDURE_CASE', id: nuevoIdFor('surgical-case-5'), startsAt: iso(6, 11), endsAt: iso(6, 13), nextAction: 'Reprogramar o cancelar la cirugía en Intervenciones.' }]
+        ? [{ kind: 'PROCEDURE_CASE', id: seededId('surgical-case-5'), startsAt: iso(6, 11), endsAt: iso(6, 13), nextAction: 'Reprogramar o cancelar la cirugía en Intervenciones.' }]
         : [];
   const start = new Date(from).getTime();
   const end = to === null ? Number.POSITIVE_INFINITY : new Date(to).getTime();
@@ -203,7 +203,7 @@ function commitmentsOf(e: EspacioSim, from: string, to: string | null): FutureCo
     .map(({ endsAt: _endsAt, ...rest }) => rest);
 }
 
-const nuevoIdFor = (seed: string): string => uuid(seed);
+const seededId = (seed: string): string => uuid(seed);
 
 /* ---- transiciones de estado -------------------------------------------------------- */
 

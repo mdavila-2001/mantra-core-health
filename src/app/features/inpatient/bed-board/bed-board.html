@@ -1,0 +1,196 @@
+<app-page-header
+  title="Tablero de camas"
+  [subtitle]="subtitle()"
+  [breadcrumbs]="[{ label: 'Internación' }, { label: 'Tablero de camas' }]"
+>
+  <span page-meta class="bb__fresh" data-testid="bb-freshness">
+    @if (board()) {
+      <span [class.bb__fresh--old]="ageSeconds() > 120" aria-live="off" data-testid="bb-freshness-text">Actualizado {{ freshness() }}</span>
+    }
+    <button app-button variant="outline" type="button" [disabled]="refreshing()" (clicked)="refresh()" data-testid="bb-refresh">
+      {{ refreshing() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
+  </span>
+</app-page-header>
+
+<!-- Una sola tarjeta con las pestañas de las unidades (regla del 09/09/2026);
+     el panel de la cama solo ocupa lugar cuando hay una cama elegida. -->
+<app-card class="bb" data-testid="bed-board">
+  <div class="bb__toolbar" role="toolbar" aria-label="Filtros del tablero">
+    @if (sites().length > 1) {
+      <app-select
+        class="bb__site"
+        [options]="siteOptions()"
+        [value]="siteId()"
+        (valueChange)="chooseSite($event)"
+        ariaLabel="Establecimiento"
+        data-testid="bb-site"
+      />
+    }
+    @if (filterDefs()[0]!.options.length > 0) {
+      <app-filter-bar class="bb__filters" [filters]="filterDefs()" [showSearch]="false" [wrap]="true" />
+    } @else {
+      <span class="bb__filters"></span>
+    }
+    <button
+      app-button
+      variant="outline"
+      type="button"
+      [attr.aria-expanded]="locationOpen()"
+      (clicked)="locationOpen.set(!locationOpen())"
+      data-testid="bb-location-toggle"
+    >
+      Ubicación{{ locationName() ? ': ' + locationName() : '' }}
+    </button>
+    <app-segmented-control
+      [options]="viewOptions"
+      [value]="layout()"
+      (valueChange)="chooseLayout($event)"
+      ariaLabel="Forma de ver el tablero"
+      data-testid="bb-layout"
+    />
+  </div>
+
+  @if (locationOpen()) {
+    <div class="bb__location" data-testid="bb-location">
+      <app-tree
+        label="Ubicación en el establecimiento"
+        [nodes]="locationNodes()"
+        [selectedId]="filterParent() || null"
+        (selectedIdChange)="chooseLocation($event)"
+        [(expandedIds)]="locationExpanded"
+      />
+      @if (filterParent()) {
+        <button app-button variant="secondary" type="button" (clicked)="chooseLocation(null)">Quitar el filtro de ubicación</button>
+      }
+    </div>
+  }
+
+  <ul class="bb__legend" aria-label="Leyenda de estados" data-testid="bb-legend">
+    @for (l of legend; track l.label) {
+      <li><app-bed-status-badge [look]="l" /></li>
+    }
+  </ul>
+
+  <app-view-state-host [state]="state()" (retry)="refresh()" (refresh)="refresh()">
+    <!-- S3: el establecimiento no tiene camas -->
+    <app-empty-state vsh-empty title="No hay camas para mostrar" description="Este establecimiento todavía no tiene camas ni locales con estado operativo." data-testid="bb-empty">
+      <a app-button empty-actions variant="primary" routerLink="/administration/medical-organization">Crear camas</a>
+    </app-empty-state>
+
+    <!-- S7: la antigüedad del dato, a la vista y con una salida -->
+    <div vsh-stale class="bb__stale" role="status" data-testid="bb-stale">
+      <strong>Dato de hace {{ ageMinutes() }} min</strong>
+      <span>{{ staleCause() }}</span>
+      <button app-button variant="secondary" type="button" (clicked)="refresh()" data-testid="bb-stale-retry">Reintentar</button>
+    </div>
+
+    @if (board(); as b) {
+      @if (hygieneOnly()) {
+        <p class="bb__note" data-testid="bb-hygiene-note">Vista de limpieza: se muestra únicamente el estado de higiene de cada cama.</p>
+      }
+      <div class="bb__body" [class.bb__body--panel]="selectedId()">
+        <div class="bb__main">
+          <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="chooseTab($event)" data-testid="bb-units">
+            @for (u of units(); track u.unitId; let i = $index) {
+              <app-tab [label]="unitLabels()[i]">
+                <ul class="bb__counts" aria-label="Recuentos de la unidad" [attr.data-testid]="'bb-counts-' + i">
+                  @if (!hygieneOnly()) {
+                    <li><span>Asignables</span> <strong data-count="assignable">{{ u.counts.assignable }}</strong></li>
+                    <li><span>Ocupadas</span> <strong data-count="occupied">{{ u.counts.occupied }}</strong></li>
+                    <li><span>Reservadas</span> <strong data-count="reserved">{{ u.counts.reserved }}</strong></li>
+                    <li><span>Bloqueadas</span> <strong data-count="blocked">{{ u.counts.blocked }}</strong></li>
+                    <li><span>En mantenimiento</span> <strong data-count="maintenance">{{ u.counts.maintenance }}</strong></li>
+                  }
+                  <li><span>Sucias</span> <strong data-count="dirty">{{ u.counts.dirty }}</strong></li>
+                  <li><span>En limpieza</span> <strong data-count="cleaning">{{ u.counts.cleaning }}</strong></li>
+                  @if (!hygieneOnly()) {
+                    <li><span>Aisladas</span> <strong data-count="isolation">{{ u.counts.isolation }}</strong></li>
+                  }
+                  <li><span>Contaminadas</span> <strong data-count="contaminated">{{ u.counts.contaminated }}</strong></li>
+                </ul>
+
+                @if (u.cells.length === 0) {
+                  <app-empty-state
+                    [title]="hasFilters() ? 'Ninguna cama coincide con los filtros' : 'Esta unidad no tiene camas'"
+                    [description]="hasFilters() ? 'Cambie o quite los filtros para ver las demás.' : 'Cree las camas de la unidad para que aparezcan en el tablero.'"
+                    variant="no-results"
+                    data-testid="bb-unit-empty"
+                  >
+                    @if (hasFilters()) {
+                      <button app-button empty-actions variant="primary" type="button" (clicked)="clearFilters()">Quitar los filtros</button>
+                    } @else {
+                      <a app-button empty-actions variant="primary" routerLink="/administration/medical-organization">Crear camas</a>
+                    }
+                  </app-empty-state>
+                } @else if (layout() === 'grid') {
+                  <div class="bb__grid" role="list" data-testid="bb-grid">
+                    @for (c of u.cells; track c.id) {
+                      <app-bed-tile
+                        role="listitem"
+                        [cell]="c"
+                        [selected]="c.id === selectedId()"
+                        [hygieneOnly]="hygieneOnly()"
+                        [now]="now()"
+                        [reasons]="reasons()"
+                        (activated)="selectCell($event)"
+                      />
+                    }
+                  </div>
+                } @else {
+                  <app-data-table
+                    [state]="listStates()[i]!"
+                    [columns]="columns()"
+                    [trackBy]="trackBy"
+                    [rowLabel]="rowLabel"
+                    rowNavigable
+                    (rowActivated)="selectCell($event)"
+                    [caption]="'Camas de ' + u.name"
+                    data-testid="bb-list"
+                  />
+                }
+              </app-tab>
+            }
+          </app-tabs>
+        </div>
+
+        @if (selectedId()) {
+          <aside class="bb__panel" aria-label="Detalle de la cama elegida" data-testid="bb-panel">
+            <div class="bb__panel-bar">
+              <button app-button variant="outline" type="button" (clicked)="closePanel()" data-testid="bb-panel-close">Cerrar panel</button>
+            </div>
+            @if (detail(); as d) {
+              <app-cell-detail
+                [state]="d"
+                [reasons]="reasons()"
+                [now]="now()"
+                (stateChange)="onDetailChange($event)"
+                (changed)="reloadBoard()"
+              >
+                <!-- Hueco de la internación (F3): su componente de acciones (ingresar,
+                     trasladar, dar de alta) se coloca acá con el atributo `adtActions`. -->
+              </app-cell-detail>
+            } @else if (detailError(); as e) {
+              <p class="bb__note" role="alert" data-testid="bb-panel-error">
+                {{ e.status === 'not-found' ? 'No encontramos esa cama en este establecimiento.' : 'No se pudo leer el estado de la cama.' }}
+                <button app-button variant="secondary" type="button" (clicked)="refresh()">Reintentar</button>
+              </p>
+            } @else {
+              <p class="bb__note" role="status">Cargando el estado de la cama…</p>
+            }
+          </aside>
+        }
+      </div>
+    }
+  </app-view-state-host>
+</app-card>
+
+<ng-template #codeCell let-row>
+  <strong class="tabular-nums">{{ row.code }}</strong> <span class="bb__muted">{{ row.name }}</span>
+</ng-template>
+<ng-template #stateCell let-row>
+  <app-bed-status-badge [look]="hygieneOnly() ? lookOfHygiene(row.hygiene.code, row.hygiene.code === 'HYG_CLEAN') : lookOfV2(row.v2Code)" />
+</ng-template>
+<ng-template #detailCell let-row>{{ hygieneOnly() ? hygieneText(row) : summarize(row) }}</ng-template>
+<ng-template #hygieneCell let-row>{{ hygieneText(row) }}{{ row.hygiene.terminalRequired ? ' · terminal' : '' }}</ng-template>
+<ng-template #ageCell let-row><span class="tabular-nums">{{ ageOf(row) }}</span></ng-template>

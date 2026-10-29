@@ -1,0 +1,35 @@
+<section class="hist" data-testid="status-history">
+  <app-segmented-control
+    [options]="filters"
+    [value]="axis()"
+    (valueChange)="axis.set($event)"
+    ariaLabel="Filtrar el historial por eje"
+  />
+  <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+    <ol class="hist__list" data-testid="status-history-list">
+      @for (e of items(); track e.id) {
+        <li class="hist__item">
+          <header class="hist__head">
+            <app-badge size="sm" variant="secondary">{{ axisLabel[e.axis] }}</app-badge>
+            <strong>{{ labelOf(e.from) }} → {{ labelOf(e.to) }}</strong>
+            <app-badge size="sm" variant="info" [label]="'Resumen v2-0116: ' + v2Label[e.v2Code]">{{ e.v2Code }}</app-badge>
+          </header>
+          <p class="hist__meta">
+            {{ when(e.occurredAt) }} · {{ e.recordedBy ?? 'Sistema' }} · {{ sourceLabel[e.source] }}
+          </p>
+          @if (e.reasonCode || e.reasonText) {
+            <p class="hist__reason">
+              Motivo: {{ e.reasonCode ? labelOf(e.reasonCode) : '' }}{{ e.reasonCode && e.reasonText ? ' — ' : '' }}{{ e.reasonText ?? '' }}
+            </p>
+          }
+          <p class="hist__support">Código de petición: <code class="tabular-nums">{{ e.requestId }}</code></p>
+        </li>
+      }
+    </ol>
+    @if (nextCursor()) {
+      <button app-button variant="secondary" type="button" [disabled]="loadingMore()" (clicked)="more()" data-testid="status-history-more">
+        {{ loadingMore() ? 'Cargando…' : 'Ver más cambios' }}
+      </button>
+    }
+  </app-view-state-host>
+</section>

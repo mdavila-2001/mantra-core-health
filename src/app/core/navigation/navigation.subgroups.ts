@@ -146,6 +146,15 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: ['diagnostics', 'interventions'],
   },
   {
+    label: 'Camas y limpieza',
+    group: 'Atención',
+    icon: 'hospital',
+    // Franja F2 de la infraestructura hospitalaria: el estado operativo de las
+    // camas y la cola de quien las limpia. Es la misma conversación de trabajo:
+    // lo que enfermería marca en el tablero es lo que limpieza ve en la cola.
+    paths: ['inpatient/bed-board', 'inpatient/cleaning'],
+  },
+  {
     label: 'Visitas',
     group: 'Atención',
     icon: 'route',

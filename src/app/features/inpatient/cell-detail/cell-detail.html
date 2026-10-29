@@ -1,0 +1,151 @@
+<section class="cd" [attr.aria-label]="'Estado operativo de ' + cell().code" data-testid="cell-detail">
+  <header class="cd__head">
+    <div>
+      <h3 class="cd__title" data-testid="cell-detail-title">{{ cell().name }}</h3>
+      <p class="cd__path">{{ cell().code }} · {{ cell().function.display }}@if (pathText()) { · {{ pathText() }} }</p>
+    </div>
+    <app-bed-status-badge [look]="look()" size="md" data-testid="cell-detail-v2" />
+  </header>
+
+  @if (notice(); as n) {
+    <app-alert tone="success" data-testid="cell-notice" role="status">{{ n }}</app-alert>
+  }
+  <app-ops-issue-alert [state]="actionError()" heading="No se pudo aplicar el cambio" />
+
+  <dl class="cd__facts" data-testid="cell-axes">
+    @if (!hygieneOnly()) {
+      <div>
+        <dt>Disponibilidad</dt>
+        <dd data-testid="axis-availability">
+          {{ availabilityLabel[cell().availability.code] }}
+          @if (cell().availability.reasonCode) {
+            <span class="cd__sub">{{ reasonText(cell().availability.reasonCode) }}@if (cell().availability.reasonText) { — {{ cell().availability.reasonText }} }</span>
+          }
+          @if (cell().availability.expectedUntil; as hasta) {
+            <span class="cd__sub">hasta {{ shortDateTime(hasta) }}</span>
+          }
+        </dd>
+      </div>
+    }
+    <div>
+      <dt>Higiene</dt>
+      <dd data-testid="axis-hygiene">
+        {{ hygieneLabel[cell().hygiene.code] }}
+        @if (cell().hygiene.terminalRequired) {
+          <span class="cd__sub">Exige limpieza terminal</span>
+        }
+      </dd>
+    </div>
+    @if (!hygieneOnly()) {
+      <div>
+        <dt>Aislamiento</dt>
+        <dd data-testid="axis-isolation">
+          {{ isolationLabel[cell().isolation.code] }}
+          @if (cell().isolation.organism) {
+            <span class="cd__sub">{{ cell().isolation.organism }}</span>
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Ocupación (derivada)</dt>
+        <dd data-testid="axis-occupancy">
+          {{ occupancyLabel[cell().occupancy.code] }}
+          @if (cell().occupancy.patient; as p) {
+            <span class="cd__sub">{{ p.initials }} · {{ p.sexCode === 'F' ? 'mujer' : 'hombre' }}, {{ p.ageYears }} años</span>
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>¿Se puede asignar?</dt>
+        <dd data-testid="axis-assignable">
+          {{ cell().assignable ? 'Sí' : 'No' }}
+          @if (notAssignable(); as why) {
+            <span class="cd__sub">{{ why }}</span>
+          }
+        </dd>
+      </div>
+    }
+  </dl>
+
+  @if (blocks().length > 0) {
+    <h4 class="cd__sub-title">Bloqueos vigentes</h4>
+    <ul class="cd__blocks" data-testid="cell-blocks">
+      @for (b of blocks(); track b.id) {
+        <li>
+          <strong>{{ blockKindLabel[b.kind] }}</strong>@if (showReason(b)) { · {{ reasonText(b.reasonCode) }} }
+          @if (b.reasonText) { — {{ b.reasonText }} }
+          <span class="cd__sub">
+            Desde {{ shortDateTime(b.startsAt) }} ·
+            @if (b.expectedEndAt) {
+              hasta {{ shortDateTime(b.expectedEndAt) }}
+              @if (overdue(b)) { <app-badge size="sm" variant="warning">Vencido: nadie lo levantó</app-badge> }
+            } @else {
+              sin fecha de fin
+            }
+            · {{ b.startedBy ?? 'Sistema' }}
+            @if (b.workOrderRef) { · Orden de trabajo {{ b.workOrderRef }} }
+          </span>
+        </li>
+      }
+    </ul>
+  }
+
+  @if (order(); as o) {
+    <h4 class="cd__sub-title">Orden de limpieza abierta</h4>
+    <p class="cd__order" data-testid="cell-order">
+      <app-badge size="sm" [variant]="o.cleaningType === 'CLEAN_TERMINAL' ? 'error' : 'warning'">{{ typeLabel[o.cleaningType] }}</app-badge>
+      {{ statusLabel[o.status] }} · prioridad {{ priorityLabel[o.priority].toLowerCase() }} · {{ triggerLabel[o.trigger] }}
+      · pedida hace {{ minutesSince(o.requestedAt, now()) }} min
+      · {{ o.assignedTo ? o.assignedTo.displayName : 'sin asignar' }}
+      <a [routerLink]="['/inpatient/cleaning']" class="cd__link">Ver en la cola</a>
+    </p>
+  }
+
+  <div class="cd__actions" role="group" aria-label="Acciones sobre la cama" data-testid="cell-actions">
+    @for (o of offers(); track o.code) {
+      <button
+        app-button
+        type="button"
+        [variant]="o.code === 'mark-contaminated' ? 'outline' : 'secondary'"
+        [disabled]="pending()"
+        [attr.data-testid]="'action-' + o.code"
+        (clicked)="act(o.code)"
+      >
+        {{ o.label }}
+      </button>
+    }
+    @if (offers().length === 0) {
+      <p class="cd__sub" data-testid="cell-no-actions">Su rol puede ver esta cama, pero no cambiar su estado.</p>
+    }
+    <!-- Hueco de la internación (F3): ingresar, trasladar, dar de alta. -->
+    <ng-content select="[adtActions]" />
+  </div>
+
+  @if (canSeeHistory()) {
+    <details class="cd__history" [open]="historyOpen()">
+      <summary>Historial de estados</summary>
+      <app-status-history [spaceId]="cell().id" [version]="historyVersion()" />
+    </details>
+  }
+</section>
+
+@if (dialog(); as d) {
+  @switch (d.kind) {
+    @case ('block') {
+      <app-block-dialog
+        [cell]="cell()"
+        [mode]="d.mode"
+        [reasons]="reasons()"
+        (saved)="afterDialog('Aplicado: ' + cell().code + ' queda registrado en el historial.')"
+        (closed)="dialog.set(null)"
+      />
+    }
+    @case ('isolation') {
+      <app-isolation-dialog
+        [cell]="cell()"
+        (saved)="afterDialog('Aislamiento aplicado en ' + cell().code + '.')"
+        (closed)="dialog.set(null)"
+      />
+    }
+  }
+}

@@ -309,13 +309,15 @@ export function summarizeCell(cell: BedBoardCell, reasons: readonly BlockReason[
       const reason = reasonLabel(cell.availability.reasonCode, reasons);
       const base = AVAILABILITY_LABEL[cell.availability.code];
       const until = cell.availability.expectedUntil;
+      // «Mantenimiento · Mantenimiento preventivo» repite; si el motivo ya dice el tipo, va solo.
+      const named = reason.toLowerCase().includes(base.toLowerCase()) ? reason : `${base} · ${reason}`;
       return {
-        headline: cell.availability.code === 'SPACE_OP_AVAILABLE' ? 'Fuera de uso' : `${base} · ${reason}`,
+        headline: cell.availability.code === 'SPACE_OP_AVAILABLE' ? 'Fuera de servicio' : named,
         detail: until === null ? null : `hasta ${shortDateTime(until)}`,
       };
     }
     case 'K':
-      return { headline: 'Contaminada · limpieza terminal', detail: null };
+      return { headline: 'Exige limpieza terminal', detail: null };
     case 'I':
       return {
         headline: ISOLATION_LABEL[cell.isolation.code],
@@ -325,11 +327,11 @@ export function summarizeCell(cell: BedBoardCell, reasons: readonly BlockReason[
       return {
         headline: cell.occupancy.patient
           ? `${cell.occupancy.patient.initials} · ${cell.occupancy.patient.ageYears} a`
-          : 'Ocupada',
+          : 'Con paciente internado',
         detail: null,
       };
     case 'R':
-      return { headline: 'Reservada', detail: null };
+      return { headline: 'Reservada para un ingreso', detail: null };
     case 'H':
       return {
         headline: cell.hygiene.terminalRequired
@@ -374,6 +376,8 @@ const has = (viewer: OpsViewer | undefined, action: OpsAction): boolean => viewe
  */
 export function offerCellActions(cell: BedBoardCell, viewer: OpsViewer | undefined): readonly CellActionOffer[] {
   const out: CellActionOffer[] = [];
+  // La jefatura de quirófano opera únicamente quirófanos; en el resto, la API respondería 403.
+  if (viewer?.role === 'OR_MANAGER' && cell.function.code !== 'SPACE_FN_OPERATING_ROOM') return out;
   const free = cell.occupancy.code === 'OCC_FREE';
   const available = cell.availability.code === 'SPACE_OP_AVAILABLE';
   const cleanable = cell.hygiene.code !== 'HYG_DIRTY' && cell.hygiene.code !== 'HYG_CLEANING' && cell.hygiene.code !== 'HYG_CONTAMINATED' && cell.openCleaningOrderId === null;
@@ -466,3 +470,16 @@ export function sortCleaningQueue(items: readonly CleaningOrder[]): readonly Cle
 /** ¿El tablero viene con una vista reducida (solo higiene)? */
 export const isHygieneOnly = (viewer: OpsViewer | undefined): boolean =>
   viewer?.role === 'HOUSEKEEPING' || viewer?.role === 'HOUSEKEEPING_SUPERVISOR';
+
+/** Las funciones no-cama que llevan estado operativo propio (§F2.4): quirófano, parto, box, procedimientos, imagen. */
+const OPERABLE_FUNCTIONS: readonly string[] = [
+  'SPACE_FN_OPERATING_ROOM',
+  'SPACE_FN_DELIVERY_ROOM',
+  'SPACE_FN_EMERGENCY_BOX',
+  'SPACE_FN_PROCEDURE_ROOM',
+  'SPACE_FN_IMAGING_ROOM',
+];
+
+/** ¿Este espacio tiene estado operativo? Una cama, o uno de esos locales. La API responde 404 al resto. */
+export const hasOperationalState = (formCode: string, functionCode: string): boolean =>
+  formCode === 'LOC_FORM_BED' || OPERABLE_FUNCTIONS.includes(functionCode);

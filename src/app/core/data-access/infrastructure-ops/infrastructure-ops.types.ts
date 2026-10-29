@@ -124,6 +124,9 @@ export type OpsRole =
  */
 export interface OpsViewer {
   readonly role: OpsRole;
+  /** Quién actúa (el `sub` del token). Opcional: sin él la pantalla usa el de la sesión. */
+  readonly userId?: string;
+  readonly displayName?: string;
   readonly actions: readonly OpsAction[];
 }
 

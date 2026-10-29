@@ -1,0 +1,25 @@
+<button
+  type="button"
+  class="tile"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-pressed]="selected()"
+  [attr.data-testid]="'bed-tile-' + cell().code"
+  [attr.data-v2]="cell().v2Code"
+  (click)="activate()"
+>
+  <span class="tile__band" aria-hidden="true"></span>
+  <span class="tile__head">
+    <strong class="tile__code">{{ cell().code }}</strong>
+    @if (isolationFlag()) {
+      <svg class="tile__flag" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" />
+      </svg>
+    }
+  </span>
+  <app-bed-status-badge [look]="look()" />
+  <span class="tile__headline">{{ summary().headline }}</span>
+  @if (summary().detail; as detail) {
+    <span class="tile__detail">{{ detail }}</span>
+  }
+  <span class="tile__age">{{ age() }}</span>
+</button>

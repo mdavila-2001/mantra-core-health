@@ -106,7 +106,7 @@ export function personaOf(request: MockRequest): Persona {
   return PERSONAS['nurse']!;
 }
 
-export const viewerOf = (p: Persona): OpsViewer => ({ role: p.role, actions: p.actions });
+export const viewerOf = (p: Persona): OpsViewer => ({ role: p.role, userId: p.userId, displayName: p.displayName, actions: p.actions });
 
 export const can = (p: Persona, action: OpsAction): boolean => p.actions.includes(action);
 

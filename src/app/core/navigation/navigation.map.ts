@@ -2,6 +2,7 @@ import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.t
 import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
+import { INPATIENT_SECTIONS } from './navigation.inpatient';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import type { AppSection } from './navigation.types';
 
@@ -537,6 +538,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Mire las intervenciones programadas y confirme su participación.',
     module: 'M53 procedures_perioperative',
   },
+  ...INPATIENT_SECTIONS,
   {
     // Carril 17. La bandeja de visitas de laboratorio del doctor.
     //

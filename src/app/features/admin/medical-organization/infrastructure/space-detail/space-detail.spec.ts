@@ -60,11 +60,11 @@ describe('SpaceDetail (ficha de un espacio)', () => {
     dialogs.confirmWithReason.mockClear().mockResolvedValue('Fumigación del piso');
   });
 
-  it('es UNA tarjeta con cinco pestañas, centrada y sin columna lateral (regla del 09/09/2026)', async () => {
+  it('es UNA tarjeta con seis pestañas (las cinco de F1 más Operación), centrada y sin columna lateral (regla del 09/09/2026)', async () => {
     const { fixture } = await montar(id('HAB-301'));
     expect(el(fixture).querySelectorAll('app-card')).toHaveLength(1);
     const rotulos = Array.from(el(fixture).querySelectorAll('[role="tab"]')).map((t) => t.textContent!.trim());
-    expect(rotulos).toEqual(['General', 'Atributos técnicos', 'Unidades', 'Hijos', 'Historial']);
+    expect(rotulos).toEqual(['General', 'Atributos técnicos', 'Unidades', 'Hijos', 'Historial', 'Operación']);
     const ficha = q(fixture, 'ficha-espacio')!;
     expect(ficha.classList.contains('ficha-espacio')).toBe(true);
     expect(el(fixture).querySelector('aside')).toBeNull();

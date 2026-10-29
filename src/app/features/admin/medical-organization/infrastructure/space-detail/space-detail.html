@@ -190,6 +190,15 @@
               </app-view-state-host>
             }
           </app-tab>
+
+          <!-- Franja F2: el estado operativo (ejes, bloqueos, limpieza, historial A20).
+               Va al final para no mover los índices de las cinco pestañas de F1, y se
+               monta solo al abrirla: abrir la ficha no cuesta una lectura más. -->
+          <app-tab label="Operación">
+            @if (pestana() === operationTab) {
+              <app-space-ops-tab [spaceId]="d.id" [siteId]="d.siteId" [formCode]="d.form.code" [functionCode]="d.function.code" />
+            }
+          </app-tab>
         </app-tabs>
       </app-card>
     </div>

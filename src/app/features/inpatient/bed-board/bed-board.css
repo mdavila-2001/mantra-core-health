@@ -1,0 +1,143 @@
+/* ============================================================================
+    Tablero de camas: una tarjeta, pestañas por unidad, grilla de recuadros y un
+    panel que solo ocupa lugar cuando hay una cama elegida. Sólo tokens.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.bb__fresh {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.bb__fresh--old {
+  color: var(--st-warning-fg);
+  font-weight: 700;
+}
+
+.bb__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.bb__site {
+  min-inline-size: 220px;
+}
+
+.bb__filters {
+  flex: 1 1 320px;
+  min-inline-size: 0;
+}
+
+.bb__location {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  max-block-size: 320px;
+  overflow: auto;
+  padding: var(--sp-3);
+  margin-block-end: var(--sp-3);
+  background: var(--bg-inset);
+  border-radius: var(--r-md);
+}
+
+.bb__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+}
+
+.bb__note {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.bb__muted {
+  color: var(--text-secondary);
+}
+
+.bb__stale {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  margin-block-end: var(--sp-4);
+  color: var(--st-warning-fg);
+  background: var(--st-warning-bg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+}
+
+.bb__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+
+/* La columna del panel existe solo con una cama elegida: nunca una columna vacía. */
+@media (min-width: 1120px) {
+  .bb__body--panel {
+    grid-template-columns: minmax(0, 7fr) minmax(360px, 5fr);
+  }
+}
+
+.bb__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-3) 0 var(--sp-4);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.bb__counts li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  color: var(--text-secondary);
+}
+
+.bb__counts strong {
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.bb__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--sp-3);
+}
+
+.bb__panel {
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-lg);
+}
+
+.bb__panel-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: var(--sp-3);
+}

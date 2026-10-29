@@ -1,0 +1,89 @@
+<app-page-header
+  title="Limpieza de camas"
+  [subtitle]="'Órdenes de limpieza del establecimiento. No muestra datos de pacientes.'"
+  [breadcrumbs]="[{ label: 'Internación' }, { label: 'Limpieza de camas' }]"
+>
+  <span page-meta class="cq__fresh" data-testid="cq-freshness">
+    @if (freshness()) {
+      <span [class.cq__fresh--old]="ageSeconds() > 120" data-testid="cq-freshness-text">Actualizado {{ freshness() }}</span>
+    }
+    <button app-button variant="outline" type="button" [disabled]="refreshing()" (clicked)="refresh()" data-testid="cq-refresh">
+      {{ refreshing() ? 'Actualizando…' : 'Actualizar' }}
+    </button>
+  </span>
+  @if (canCreate()) {
+    <button page-actions app-button variant="primary" type="button" (clicked)="openCreate()" data-testid="cq-create">Pedir limpieza</button>
+  }
+</app-page-header>
+
+<app-card class="cq" data-testid="cleaning-queue">
+  <div class="cq__toolbar" role="toolbar" aria-label="Filtros de la cola">
+    @if (sites().length > 1) {
+      <app-select class="cq__field" [options]="siteOptions()" [value]="siteId()" (valueChange)="chooseSite($event)" ariaLabel="Establecimiento" data-testid="cq-site" />
+    }
+    <app-select class="cq__field" [options]="statusOptions" [value]="status()" (valueChange)="chooseStatus($event)" ariaLabel="Estado de la orden" data-testid="cq-status" />
+    <app-select class="cq__field" [options]="priorityOptions" [value]="priority()" (valueChange)="choosePriority($event)" ariaLabel="Prioridad" data-testid="cq-priority" />
+    <app-switch [checked]="mine()" (checkedChange)="chooseMine($event)" label="Solo las mías" data-testid="cq-mine" />
+  </div>
+
+  @if (notice(); as n) {
+    <app-alert tone="success" role="status" data-testid="cq-notice">{{ n }}</app-alert>
+  }
+  <app-ops-issue-alert [state]="actionError()" heading="No se pudo cambiar la orden" />
+
+  @if (isStale()) {
+    <div class="cq__stale" role="status" data-testid="cq-stale">
+      <strong>Dato de hace {{ ageMinutes() }} min</strong>
+      <span>{{ pollFailedFlag() ? 'No se pudo actualizar: se muestran los datos de antes.' : 'La última lectura es más vieja de lo esperado.' }}</span>
+      <button app-button variant="secondary" type="button" (clicked)="refresh()" data-testid="cq-stale-retry">Reintentar</button>
+    </div>
+  }
+
+  <app-data-table
+    [state]="rows()"
+    [columns]="columns()"
+    [trackBy]="trackBy"
+    [rowLabel]="rowLabel"
+    caption="Órdenes de limpieza"
+    stackedOnMobile
+    (retry)="refresh()"
+    (refresh)="refresh()"
+    data-testid="cq-table"
+  />
+</app-card>
+
+@if (creating()) {
+  <app-cleaning-order-dialog [siteId]="siteId()" [beds]="beds()" (created)="afterCreate()" (closed)="creating.set(false)" />
+}
+
+<ng-template #priorityCell let-row>
+  <app-badge [variant]="priorityTone(row)" size="sm">{{ priorityText(row) }}</app-badge>
+</ng-template>
+<ng-template #bedCell let-row>
+  <strong class="tabular-nums">{{ row.careSpace.code }}</strong>
+  <span class="cq__muted"> {{ row.careSpace.name }}</span>
+  @if (row.clinicalUnit) {
+    <span class="cq__muted"> · {{ row.clinicalUnit.name }}</span>
+  }
+</ng-template>
+<ng-template #typeCell let-row>
+  @if (isTerminal(row)) {
+    <app-badge variant="error" size="sm">{{ typeText(row) }}</app-badge>
+  } @else {
+    {{ typeText(row) }}
+  }
+  <span class="cq__muted"> · {{ triggerText(row) }}</span>
+</ng-template>
+<ng-template #statusCell let-row>
+  {{ statusText(row) }}
+  @if (row.status === 'CLN_DONE') {
+    <span class="cq__muted">
+      @if (needsSupervision(row)) { · solo la inspecciona supervisión } @else { · falta inspección }
+    </span>
+  }
+</ng-template>
+<ng-template #ageCell let-row><span class="tabular-nums">{{ age(row) }}</span></ng-template>
+<ng-template #assignedCell let-row>{{ row.assignedTo ? row.assignedTo.displayName : 'Sin asignar' }}</ng-template>
+<ng-template #actionsCell let-row>
+  <app-row-actions [actions]="actionsById().get(row.id) ?? []" [fila]="row.careSpace.code" [inline]="true" (actionSelected)="act(row, $event)" />
+</ng-template>

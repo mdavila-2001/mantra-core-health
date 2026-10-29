@@ -1,0 +1,129 @@
+/* ============================================================================
+    Recuadro de una cama. El tono sale de `tone.css` (trío `--st-*`), el patrón
+    de la clase `pat--*` del host: banda superior + estilo de borde. Sólo
+    tokens; el modo oscuro lo resuelve el tema.
+    ========================================================================== */
+
+@import '../../tone/tone.css';
+
+:host {
+  --_bd: var(--tone-bd, var(--border-strong));
+  display: block;
+  min-inline-size: 0;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  inline-size: 100%;
+  min-block-size: 112px;
+  padding: var(--sp-3);
+  padding-block-start: calc(var(--sp-3) + 6px);
+  font: inherit;
+  text-align: start;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 2px solid var(--_bd);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.tile:hover {
+  background: var(--bg-hover);
+}
+
+.tile:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+:host(.bed-tile--selected) .tile {
+  background: var(--tone-bg, var(--bg-active));
+  box-shadow: 0 0 0 2px var(--brand-primary);
+}
+
+/* ---- la banda y el borde dicen el estado sin color ------------------------- */
+
+.tile__band {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  block-size: 6px;
+  background: var(--_bd);
+}
+
+:host(.pat--dashed) .tile {
+  border-style: dashed;
+}
+
+:host(.pat--double) .tile {
+  border-style: double;
+  border-width: 4px;
+}
+
+:host(.pat--dots) .tile__band {
+  background: radial-gradient(var(--_bd) 1.4px, transparent 1.6px) 0 0 / 6px 6px;
+}
+
+:host(.pat--hatch) .tile__band {
+  background: repeating-linear-gradient(135deg, var(--_bd) 0 3px, transparent 3px 7px);
+}
+
+:host(.pat--cross) .tile__band {
+  background:
+    repeating-linear-gradient(45deg, var(--_bd) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, var(--_bd) 0 2px, transparent 2px 6px);
+}
+
+/* ---- contenido ----------------------------------------------------------------- */
+
+.tile__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.tile__code {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__flag {
+  color: var(--st-info-fg);
+}
+
+.tile__headline {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tile__detail,
+.tile__age {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.tile__age {
+  margin-block-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+}
