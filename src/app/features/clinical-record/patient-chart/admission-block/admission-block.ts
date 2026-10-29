@@ -11,7 +11,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AdtClient } from '../../../../core/data-access/adt/adt.client';
@@ -100,7 +100,7 @@ export interface InternacionEnFicha {
  */
 @Component({
   selector: 'app-admission-block',
-  imports: [Alert, Card, DatePicker, DatePipe, FormActions, FormField, RouterLink],
+  imports: [Alert, Card, DatePicker, DatePipe, FormActions, FormField],
   templateUrl: './admission-block.html',
   styleUrl: './admission-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -150,12 +150,23 @@ export class AdmissionBlock {
   /** Sin permiso para ver la internación (S5), el bloque lo dice y sigue siendo útil. */
   protected readonly estanciaSinPermiso = computed(() => this.estancia()?.status === 'forbidden');
 
-  protected readonly rutaIngreso = RUTAS.ingreso;
   protected readonly rutaEstancia = RUTAS.estancia;
   protected readonly textoDeCama = textoDeCama;
 
   /** Se llega al ingreso con la persona ya elegida: `?patient=`. */
-  protected readonly consultaDeIngreso = computed(() => ({ patient: this.patientProfileId() }));
+  protected readonly enlaceDeIngreso = computed(() => `${RUTAS.ingreso}?patient=${encodeURIComponent(this.patientProfileId())}`);
+
+  /**
+   * Navega sin `routerLink`: el bloque se monta también donde no hay
+   * `ActivatedRoute`, y el enlace sigue siendo un `<a href>` de verdad (se abre en
+   * otra pestaña) que, con un clic simple, navega dentro de la aplicación.
+   */
+  protected ir(evento: Event, ruta: string): void {
+    const clic = evento as MouseEvent;
+    if (clic.ctrlKey || clic.metaKey || clic.shiftKey || clic.button === 1) return;
+    evento.preventDefault();
+    void this.injector.get(Router).navigateByUrl(ruta);
+  }
 
   private readonly _leerEstancia = effect(() => {
     const id = this.estanciaEncounterId();

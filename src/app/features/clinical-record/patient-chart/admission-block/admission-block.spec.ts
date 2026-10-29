@@ -232,3 +232,58 @@ describe('AdmissionBlock', () => {
     expect(tardio(fixture.componentInstance.internaciones()[0])).toBe(false);
   });
 });
+
+/**
+ * Franja F3: la cama de hoy y el atajo a «Nuevo ingreso». Lo anterior del bloque
+ * (alta del episodio) no cambia y lo cubren las pruebas de arriba.
+ */
+describe('AdmissionBlock · internación con cama (F3)', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  const ficha = {
+    encounter: { id: 'enc-imp', unitName: 'Medicina interna' },
+    currentBed: { id: 'b1', code: '301-B', name: 'Cama 301-B', path: [{ id: 'h', code: 'H', name: 'Habitación 301', form: 'R' }] },
+    movements: [],
+    incidents: [],
+    asOf: '2026-10-29T10:00:00Z',
+  };
+
+  it('con el encuentro de internación lee la ficha y muestra cama, unidad y el enlace', async () => {
+    const { fixture, http } = await montar({ internaciones: [ABIERTA] });
+    fixture.componentRef.setInput('estanciaEncounterId', 'enc-imp');
+    fixture.detectChanges();
+    http.expectOne('/clinical/encounters/enc-imp/stay').flush(ficha);
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    const cama = el.querySelector('[data-testid="internacion-cama"]');
+    expect(cama?.textContent).toContain('301-B');
+    expect(cama?.textContent).toContain('Medicina interna');
+    expect(el.querySelector('[data-testid="internacion-ver-ficha"]')?.getAttribute('href')).toBe('/inpatient/stays/enc-imp');
+    // Con una internación abierta no se ofrece «Internar».
+    expect(el.querySelector('[data-testid="internacion-internar"]')).toBeNull();
+  });
+
+  it('sin permiso sobre la internación (403) lo dice y el bloque sigue sirviendo', async () => {
+    const { fixture, http } = await montar({ internaciones: [ABIERTA] });
+    fixture.componentRef.setInput('estanciaEncounterId', 'enc-imp');
+    fixture.detectChanges();
+    http.expectOne('/clinical/encounters/enc-imp/stay').flush({ statusCode: 403, code: 'FORBIDDEN', message: 'No' }, { status: 403, statusText: 'Forbidden' });
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="internacion-cama-sin-permiso"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="internacion-lista"]')).not.toBeNull();
+  });
+
+  it('sin internación abierta ofrece «Internar» con la persona en el enlace', async () => {
+    const { fixture } = await montar({ internaciones: [] });
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="internacion-internar"]');
+    expect(enlace?.getAttribute('href')).toBe('/inpatient/admissions/new?patient=pp-1');
+  });
+
+  it('sin encuentro de internación no pide nada al servidor de internación', async () => {
+    const { http } = await montar({ internaciones: [ABIERTA] });
+    http.expectNone((r) => r.url.includes('/stay'));
+  });
+});

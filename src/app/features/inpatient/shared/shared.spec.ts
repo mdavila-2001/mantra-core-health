@@ -6,6 +6,9 @@ import { BedPicker } from './bed-picker/bed-picker';
 import { BedStatus } from './bed-status/bed-status';
 import { CompatPanel } from './compat-panel/compat-panel';
 
+// El primer componente de un archivo compila su plantilla y su hoja de estilos: con la máquina cargada pasa de 5 s.
+vi.setConfig({ testTimeout: 20_000 });
+
 function celda(code: string, extra: Partial<BedBoardCell> = {}): BedBoardCell {
   return {
     id: `id-${code}`,

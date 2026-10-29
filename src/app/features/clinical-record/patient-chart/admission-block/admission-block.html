@@ -80,14 +80,14 @@
           · Unidad {{ e.encounter.unitName }}
         }
       </p>
-      <a class="internacion__enlace" [routerLink]="rutaEstancia(e.encounter.id)" data-testid="internacion-ver-ficha">Ver ficha de internación</a>
+      <a class="internacion__enlace" [href]="rutaEstancia(e.encounter.id)" (click)="ir($event, rutaEstancia(e.encounter.id))" data-testid="internacion-ver-ficha">Ver ficha de internación</a>
     </div>
   } @else if (estanciaSinPermiso()) {
     <p class="internacion__nota" data-testid="internacion-cama-sin-permiso">Su rol no ve la cama ni la unidad de esta internación.</p>
   }
 
   @if (!internacionAbierta()) {
-    <a class="internacion__enlace internacion__enlace--accion" [routerLink]="rutaIngreso" [queryParams]="consultaDeIngreso()" data-testid="internacion-internar">Internar en una cama</a>
+    <a class="internacion__enlace internacion__enlace--accion" [href]="enlaceDeIngreso()" (click)="ir($event, enlaceDeIngreso())" data-testid="internacion-internar">Internar en una cama</a>
   }
 
   <!-- ─── Dar de alta ─────────────────────────────────────────────────────
