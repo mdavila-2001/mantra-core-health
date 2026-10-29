@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
+import type { GlossarySourceReference } from '../../core/data-access/terminology/glossary-source-reference.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
   GlossaryNeighborhood,
@@ -108,6 +109,41 @@ export interface SeccionDeLaFuente {
 
 function esObjeto(valor: unknown): valor is Readonly<Record<string, unknown>> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
+}
+
+function editorialSourcesFromProperty(raw: unknown): readonly GlossarySourceReference[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item: unknown) => {
+    if (!esObjeto(item)) return [];
+    const { source, recordId, url, language, version, retrievedAt, role, attribution, rights } = item;
+    if (
+      typeof source !== 'string' ||
+      typeof recordId !== 'string' ||
+      typeof url !== 'string' ||
+      !url.startsWith('https://') ||
+      (language !== 'es' && language !== 'en') ||
+      typeof version !== 'string' ||
+      typeof retrievedAt !== 'string' ||
+      (role !== 'concept_match' && role !== 'related_context' && role !== 'editorial_reference') ||
+      typeof attribution !== 'string' ||
+      typeof rights !== 'string'
+    ) {
+      return [];
+    }
+    const matchBasis = item['matchBasis'];
+    return [{
+      source,
+      recordId,
+      url,
+      language,
+      version,
+      retrievedAt,
+      role,
+      ...(matchBasis === 'title' || matchBasis === 'also_called' ? { matchBasis } : {}),
+      attribution,
+      rights,
+    }];
+  });
 }
 
 /**
@@ -285,6 +321,22 @@ export class GlossaryTerm {
       consultado: typeof cruda['retrievedAt'] === 'string' ? cruda['retrievedAt'].slice(0, 10) : null,
     };
   });
+
+  /** Referencias editoriales curadas, sin confundir contexto relacionado con equivalencia. */
+  protected readonly editorialReferences = computed<readonly GlossarySourceReference[]>(() =>
+    editorialSourcesFromProperty(this.ficha()?.properties?.['glossary-sources']),
+  );
+
+  protected sourceRoleLabel(role: GlossarySourceReference['role']): string {
+    switch (role) {
+      case 'concept_match':
+        return 'Correspondencia del concepto';
+      case 'related_context':
+        return 'Contexto relacionado; no es una equivalencia';
+      case 'editorial_reference':
+        return 'Referencia editorial';
+    }
+  }
 
   /**
    * Si la «definición» es la descripción breve de la comunidad de Wikidata

@@ -542,6 +542,51 @@ describe('GlossaryTerm', () => {
     );
   });
 
+  const EDITORIAL_SOURCE = {
+    source: 'MedlinePlus',
+    recordId: 'highbloodpressure',
+    url: 'https://medlineplus.gov/spanish/highbloodpressure.html',
+    language: 'es',
+    version: '2026-09',
+    retrievedAt: '2026-09-29T10:00:00Z',
+    role: 'related_context',
+    attribution: 'Biblioteca Nacional de Medicina de EE. UU.',
+    rights: 'Dominio público.',
+  };
+
+  it('las fuentes editoriales de la API se citan con su rol, atribución y derechos', async () => {
+    peticion().flush({ ...FICHA, properties: { 'glossary-sources': [EDITORIAL_SOURCE] } });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    const lista = html().querySelector('.termino__fuentes-editoriales');
+    expect(lista?.querySelector('a')?.getAttribute('href')).toBe(EDITORIAL_SOURCE.url);
+    expect(lista?.querySelector('a')?.getAttribute('rel')).toContain('noopener');
+    expect(lista?.textContent).toContain('MedlinePlus · highbloodpressure');
+    expect(lista?.textContent).toContain('Contexto relacionado; no es una equivalencia');
+    expect(lista?.textContent).toContain('Dominio público.');
+    expect(html().textContent).not.toContain('Este término no declara su fuente');
+  });
+
+  it('descarta las fuentes editoriales mal formadas o sin https y conserva el aviso de que no declara fuente', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        'glossary-sources': [
+          { ...EDITORIAL_SOURCE, url: 'http://medlineplus.gov/spanish/x.html' },
+          { ...EDITORIAL_SOURCE, role: 'otro' },
+          { ...EDITORIAL_SOURCE, rights: undefined },
+          'texto suelto',
+        ],
+      },
+    });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    expect(html().querySelector('.termino__fuentes-editoriales')).toBeNull();
+    expect(html().textContent).toContain('Este término no declara su fuente');
+  });
+
   const CIMA = {
     nregistro: '62935',
     name: 'Paracetamol Ejemplo 500 mg comprimidos',
