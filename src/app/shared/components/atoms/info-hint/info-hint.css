@@ -1,0 +1,52 @@
+/* ============================================================================
+    InfoHint — el «i» que explica. Solo tokens: el tema lo resuelve styles.css.
+    El área táctil mide 44 px aunque el dibujo mida 16: el rectángulo extra es
+    un pseudo-elemento, así no empuja el renglón de la columna que acompaña.
+    ========================================================================== */
+
+:host {
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.info-hint {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--sp-5);
+    block-size: var(--sp-5);
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-full);
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: help;
+    transition: color var(--dur-fast, 120ms) var(--ease-standard, ease);
+}
+
+.info-hint::after {
+    content: '';
+    position: absolute;
+    inset-inline-start: 50%;
+    inset-block-start: 50%;
+    inline-size: 44px;
+    block-size: 44px;
+    transform: translate(-50%, -50%);
+}
+
+.info-hint:hover {
+    color: var(--brand-primary);
+}
+
+.info-hint:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    color: var(--brand-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .info-hint {
+        transition: none;
+    }
+}

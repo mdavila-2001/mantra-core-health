@@ -31,6 +31,10 @@ export { Divider } from './divider/divider';
 export { DIVIDER_ORIENTATIONS } from './divider/divider.types';
 export type { DividerOrientation } from './divider/divider.types';
 
+/* El «i» que explica una columna, un campo o un indicador (regla del cliente: todo se
+   explica solo). Un botón con globo `Tooltip` rico, accesible por teclado y toque. */
+export { InfoHint } from './info-hint/info-hint';
+
 export { Input } from './input/input';
 export { INPUT_TYPES } from './input/input.types';
 export type { InputComboboxAria, InputType } from './input/input.types';
