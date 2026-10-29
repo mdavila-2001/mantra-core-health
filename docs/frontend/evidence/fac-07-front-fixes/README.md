@@ -30,13 +30,13 @@ No verificado:
 
 ## `playwright/practitioner-corrections-c4b.spec.ts`
 
-Corrido en la rama de `dev` de este carril contra la maqueta (`yarn start:demo`),
-con el Chromium de la máquina; el archivo y el diálogo son iguales en las dos bases.
+Corrido contra la maqueta (`yarn start:demo`), con el Chromium de la máquina.
 «Una cita sin comprobantes lo dice y ofrece marcar el pago sin comprobante»,
 la que cambia de selector en este carril, **pasa** (19,5 s). La otra prueba del
 archivo cumple todos sus pasos y cae al final por dos avisos de consola
 `AbortError: Transition was skipped` de la transición de vista; en la base
 limpia (`origin/dev`) esa prueba también cae, antes, al buscar el turno de las
-13:00 en el calendario: no es de este cambio. Las capturas del diálogo vacío en
-`correcciones-medico-c4b/` se actualizan solo en la rama de `dev`, que es donde
-se tomaron.
+13:00 en el calendario: no es de este cambio. De esa corrida se actualizan las
+capturas del diálogo vacío en `correcciones-medico-c4b/`
+(`practitioner-receipts-dialog-empty-*`, `practitioner-manual-payment-1280-light`),
+que mostraban el botón dos veces.

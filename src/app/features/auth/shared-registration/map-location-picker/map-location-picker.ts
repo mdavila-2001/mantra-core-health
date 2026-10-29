@@ -382,6 +382,7 @@ export class MapLocationPicker {
    * acercado, departamento, provincia, municipio y zona—, todo en sólo lectura.
    */
   readonly detallar = input(true);
+  readonly disposicion = input<'apilada' | 'dos-columnas' | 'tres-columnas'>('apilada'); // opt-in, ver el .css
 
   /** El título de la ficha de lo deducido. */
   readonly etiquetaFicha = input('Lo que sale del punto');
