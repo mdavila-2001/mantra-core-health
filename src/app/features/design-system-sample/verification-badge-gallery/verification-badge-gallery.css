@@ -22,17 +22,15 @@
     display: block;
 }
 
-.showroom-section {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-lg);
-    padding: var(--sp-6);
-    margin-bottom: var(--sp-6);
-}
-
-.showroom-section h3 {
+h3 {
     margin-top: var(--sp-6);
     color: var(--text-secondary);
+}
+
+h4 {
+    margin: var(--sp-4) 0 0;
+    color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .sandbox-grid {
