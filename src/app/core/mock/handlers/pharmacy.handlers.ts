@@ -14,6 +14,7 @@ import {
 } from '../fixtures/pharmacy-orders';
 import { horarioDeFarmacias } from './pharmacy-opening-hours.handlers';
 import { conflict, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { sucursalesDelTenant } from './directory.handlers';
 import { TENANT_TYPES } from '../mock-session';
 import { haversineKm, withStockUpdatedAt } from './pharmacy-availability.mock';
 import { ahora, Coleccion, contiene, contieneSinTildes, cuerpo, iso, isoDia, masMinutos, nuevoId, texto, uuid } from '../mock-store';
@@ -601,6 +602,27 @@ const SEDES_ADICIONALES: readonly SedeAdicional[] = (() => {
 
 const SEDE_CENTRAL_ID = FARMACIAS[0]!.siteId;
 
+/**
+ * Las sucursales que la farmacia cargó en «Sucursales» (a mano o por CSV) y
+ * que la bandeja todavía no conoce: aparecen como sedes del mostrador. Las
+ * que ya están —la central y las dos de `SEDES_ADICIONALES`, sembradas con el
+ * mismo nombre en el directorio— se reconocen por nombre y no se duplican.
+ */
+function sedesCargadas(pharmacyId: string, propias: readonly string[]) {
+  const conocidas = new Set([...propias, ...(pharmacyId === FARMACIAS[0]!.id ? SEDES_ADICIONALES.map((s) => s.name) : [])]);
+  return sucursalesDelTenant(pharmacyId)
+    .filter((s) => !conocidas.has(s.name))
+    .map((s) => ({
+      id: s.id,
+      code: s.code,
+      name: s.name,
+      addressText: s.description ?? null,
+      latitude: s.latitude ?? null,
+      longitude: s.longitude ?? null,
+      isHeadOffice: false,
+    }));
+}
+
 /** La sede de un pedido: la declarada, o la de su farmacia. */
 function sedeDelPedido(p: PedidoSimulado, farmacia: FarmaciaSimulada) {
   const adicional = SEDES_ADICIONALES.find((sede) => sede.siteId === p.siteId);
@@ -695,6 +717,50 @@ const pedidos = new Coleccion<PedidoSimulado>(
 for (const suffix of ['partial', 'denied', 'pending']) {
   const original = pedidos.get(uuid('pharmacy-order-1'))!;
   pedidos.agregar({ ...original, id: uuid(`pharmacy-copay-${suffix}`), estado: 'CONFIRMADO' });
+}
+
+/* ---- el pedido que llega mientras se mira la bandeja ----------------------
+
+   El registro de procesos (3.2) pide que el pedido *llegue* con alarma, «muy
+   similar a PEDIDOS YA». Con todo sembrado de antemano la alarma no suena
+   nunca: la bandeja toma lo que ve al abrir como punto de partida y sólo avisa
+   de lo que aparece después. Este pedido nace la primera vez que alguien mira
+   la casa matriz de Farmacia Vida, con la hora de creación unos segundos en
+   el futuro —menos que el sondeo de la bandeja (20 s)—; el listado esconde lo
+   que todavía no fue creado, así que entra en el sondeo siguiente y suena.
+   Una sola vez por sesión: queda en la colección. */
+
+const ID_PEDIDO_ENTRANTE = uuid('pharmacy-order-entrante');
+const SEGUNDOS_HASTA_EL_PEDIDO_ENTRANTE = 15;
+
+function sembrarPedidoEntrante(): void {
+  if (pedidos.get(ID_PEDIDO_ENTRANTE) !== undefined) return;
+  const f0 = FARMACIAS[0]!;
+  const llega = new Date(Date.parse(ahora()) + SEGUNDOS_HASTA_EL_PEDIDO_ENTRANTE * 1000).toISOString();
+  pedidos.agregar({
+    id: ID_PEDIDO_ENTRANTE,
+    estado: 'ENVIADO',
+    createdAt: llega,
+    expiresAt: masMinutos(llega, 60 * 72),
+    pharmacyId: f0.id,
+    // Una orden médica de verdad (3.2: «la ORDEN MEDICA»), para que el
+    // mostrador vea quién la prescribió.
+    medicationRequestId: prescriptionList.todos().find((r) => professionalById(r.prescriberProfileId) !== undefined)?.id ?? null,
+    patientProfileId: uuid('pid-p-montano'),
+    patientName: 'Carla Montaño Rivero',
+    pickupCode: 'AV-7315',
+    rejectionReasonText: null,
+    lineas: [
+      { productId: productoDe(f0.id, 'MED-PARACETAMOL').id, requestedQuantity: 2, reservedQuantity: 2, fulfilledQuantity: 0, status: 'RESERVED' },
+      { productId: productoDe(f0.id, 'MED-OMEPRAZOL').id, requestedQuantity: 1, reservedQuantity: 1, fulfilledQuantity: 0, status: 'RESERVED' },
+    ],
+    sustituciones: [],
+  });
+}
+
+/** Lo que ya existe: un pedido con la creación en el futuro todavía no llegó. */
+function yaLlego(p: PedidoSimulado): boolean {
+  return Date.parse(p.createdAt) <= Date.parse(ahora());
 }
 
 function settlementForOrder(order: PedidoSimulado) {
@@ -840,7 +906,7 @@ export function registrarFarmacia(router: MockRouter): void {
     const propias = tenant !== null && TENANT_TYPES[tenant] === 'PHARMACY' ? FARMACIAS.filter((f) => f.id === tenant) : [];
     const visibles = propias.length > 0 ? propias : FARMACIAS;
     return {
-      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: f === FARMACIAS[0] ? 1 + SEDES_ADICIONALES.length : 1, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
+      items: visibles.map((f) => ({ id: f.id, code: f.code, name: f.name, siteCount: (f === FARMACIAS[0] ? 1 + SEDES_ADICIONALES.length : 1) + sedesCargadas(f.id, [f.siteName]).length, productCount: activos().filter((p) => p.pharmacyId === f.id).length })),
       count: visibles.length,
     };
   });
@@ -863,7 +929,7 @@ export function registrarFarmacia(router: MockRouter): void {
       // el nombre comercial también como `legalName`.
       legalName: f0.name,
       type: null,
-      siteCount: sedes.length + (id === FARMACIAS[0]!.id ? SEDES_ADICIONALES.length : 0),
+      siteCount: sedes.length + (id === FARMACIAS[0]!.id ? SEDES_ADICIONALES.length : 0) + sedesCargadas(id, sedes.map((f) => f.siteName)).length,
       productCount: productos.filtrar((p) => p.pharmacyId === id).length,
       homeDeliveryAvailable: sedes.some((f) => f.homeDelivery),
       pickupAvailable: true,
@@ -890,6 +956,7 @@ export function registrarFarmacia(router: MockRouter): void {
               isHeadOffice: false,
             }))
           : []),
+        ...sedesCargadas(id, sedes.map((f) => f.siteName)),
       ],
       ...legalProfileOf(f0),
     };
@@ -1449,14 +1516,19 @@ export function registrarFarmacia(router: MockRouter): void {
     return { items, count: items.length };
   });
 
-  router.get('/pharmacy/orders', ({ query }) => {
+  router.get('/pharmacy/orders', ({ query, headers, user }) => {
     const status = texto(query, 'status');
     const siteId = texto(query, 'siteId');
     const desde = texto(query, 'from');
     const hasta = texto(query, 'to');
     const tope = Number(texto(query, 'limit') ?? 100);
+    // Sólo para quien mira Farmacia Vida: otra farmacia no tiene por qué
+    // oír la alarma de un pedido que no es suyo.
+    const tenant = headers.get('X-Tenant-Id') ?? user?.tenants[0] ?? null;
+    if (tenant === FARMACIAS[0]!.id && (siteId === null || siteId === SEDE_CENTRAL_ID)) sembrarPedidoEntrante();
     const items = pedidos
       .todos()
+      .filter(yaLlego)
       .filter((p) => status === null || p.estado === status || `PINV_ORDER_${p.estado}` === status)
       .filter((p) => siteId === null || dto(p).siteId === siteId)
       // Como la API: `from` inclusive y `to` exclusivo, sobre la creación.

@@ -17,6 +17,7 @@ import {
   showcaseBySlug,
   showcases,
   type SimulatedComment,
+  type SimulatedConversation,
   type SimulatedMessage,
   type SimulatedPost,
   type SimulatedShowcase,
@@ -30,7 +31,7 @@ import { conflict, forbidden, notFound, preconditionFailed, validation, type Moc
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
-import { ahora, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
+import { ahora, Coleccion, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 import { fileContent, urlDeArchivoSimulado } from './files.handlers';
 
 /* ============================================================================
@@ -85,10 +86,152 @@ function respuestaAutomaticaEncendida(): boolean {
 /**
  * Las respuestas automáticas configuradas, por perfil (F4.7).
  *
- * Un `Map` y no una `Coleccion`: se busca siempre por perfil, nunca por id, y
- * hay a lo sumo una por perfil.
+ * Una `Coleccion` cuyo `id` **es el perfil** —se busca siempre por perfil y hay
+ * a lo sumo una por perfil— y no un `Map`: así sobrevive a recargar la página,
+ * como el resto de lo que se escribe en la maqueta. Con un `Map`, recargar
+ * devolvía la configuración de fábrica y pisaba lo que se acababa de guardar.
  */
-const respuestasAutomaticas = new Map<string, Record<string, unknown>>();
+interface RespuestaAutomaticaGuardada {
+  /** El perfil público al que pertenece. */
+  readonly id: string;
+  /** Lo que devuelve `GET …/auto-reply`, tal cual. */
+  readonly datos: Readonly<Record<string, unknown>>;
+}
+
+/**
+ * La médica de la maqueta contesta con IA cuando no está.
+ *
+ * Es lo que deja ver la respuesta redactada por la IA sin backend: la paciente
+ * le escribe y, al rato, llega la respuesta con su etiqueta. Encendida de
+ * fábrica y no a mano porque en la maqueta nadie inicia sesión como la médica
+ * para configurarla mientras la paciente escribe.
+ */
+const respuestasAutomaticas = new Coleccion<RespuestaAutomaticaGuardada>(
+  [
+    {
+      id: MEDICAL_SHOWCASE.id,
+      datos: {
+        id: uuid(`auto-reply-${MEDICAL_SHOWCASE.id}`),
+        publicProfileId: MEDICAL_SHOWCASE.id,
+        isActive: true,
+        inactivityMinutes: 30,
+        bodyText:
+          'Gracias por escribir. En este momento no estoy disponible; le respondo apenas pueda. Si es una urgencia, acuda a Emergencia.',
+        cooldownHours: 4,
+        onlyOutsideBusinessHours: false,
+        businessHoursFrom: null,
+        businessHoursTo: null,
+        replyMode: 'AI',
+        updatedAt: ahora(),
+      },
+    },
+  ],
+  'mock.comunidad.respuestas-automaticas',
+);
+
+/**
+ * Cuándo se le contestó solo a cada conversación, por perfil que contesta.
+ * Persistido como el resto: recargar no puede reiniciar el descanso.
+ */
+const ultimaRespuestaConIa = new Coleccion<{ readonly id: string; readonly en: number }>(
+  [],
+  'mock.comunidad.respuestas-con-ia',
+);
+
+/** Señales de alarma que la IA nunca contesta con otra cosa que «vaya a Emergencia». */
+const SIGNOS_DE_ALARMA =
+  /dolor (de|en el) pecho|no puedo respirar|falta (de )?(el )?aire|me ahogo|desmay|convulsi|sangrado|sangra mucho|no para de sangrar|(vomito|tos|toso) con sangre|sangre en (la )?(orina|heces)|inconscien|paralis|no siento (el|la|los|las)|suicid|quitarme la vida/u;
+
+/** Lo que pide una indicación de medicamento o de dosis. */
+const PIDE_MEDICACION = /medicament|pastilla|dosis|cuanto (tomo|tomar)|puedo tomar|antibiotic|ibuprofeno|paracetamol|receta/u;
+
+function sinAcentos(texto: string): string {
+  return texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+/**
+ * Lo que «redacta la IA» en la maqueta.
+ *
+ * Reglas fijas y no un modelo: la maqueta no llama a ningún servicio. Son las
+ * mismas instrucciones que la API le da a la IA de verdad —no diagnosticar, no
+ * indicar medicamentos ni dosis, derivar a Emergencia ante signos de alarma,
+ * hablar de usted—, así que lo que se ve acá es la forma de la respuesta.
+ */
+function redactarConIa(pregunta: string, nombre: string, config: Record<string, unknown>): string {
+  const texto = sinAcentos(pregunta);
+  if (SIGNOS_DE_ALARMA.test(texto)) {
+    return `Lo que describe puede ser una urgencia. Por favor, acuda de inmediato a Emergencia o llame al servicio de emergencias. ${nombre} no está disponible en este momento para atenderle por aquí.`;
+  }
+  if (PIDE_MEDICACION.test(texto)) {
+    return `Gracias por escribir. Por este medio no podemos indicarle medicamentos ni dosis; ${nombre} lo revisará personalmente apenas esté disponible. Si se siente peor, acuda a Emergencia.`;
+  }
+  // El horario sólo se menciona si la persona lo declaró: decirle al paciente
+  // un horario que nadie puso sería inventar.
+  const declarado = config['onlyOutsideBusinessHours'] === true;
+  const desde = declarado && typeof config['businessHoursFrom'] === 'string' ? config['businessHoursFrom'] : null;
+  const hasta = declarado && typeof config['businessHoursTo'] === 'string' ? config['businessHoursTo'] : null;
+  const horario = desde !== null && hasta !== null ? ` El horario de atención es de ${desde} a ${hasta}.` : '';
+  return `Gracias por escribir. ${nombre} no puede responderle en este momento; le contestará apenas sea posible.${horario} Si tiene una urgencia, acuda a Emergencia.`;
+}
+
+/**
+ * `true` si el instante cae dentro de la franja declarada. Una franja que
+ * termina antes de empezar cruza la medianoche, como en la API.
+ */
+function dentroDelHorario(config: Readonly<Record<string, unknown>>, ahoraMismo: Date): boolean {
+  const enMinutos = (valor: unknown): number | null => {
+    if (typeof valor !== 'string' || !/^\d{2}:\d{2}/u.test(valor)) return null;
+    return Number(valor.slice(0, 2)) * 60 + Number(valor.slice(3, 5));
+  };
+  const desde = enMinutos(config['businessHoursFrom']);
+  const hasta = enMinutos(config['businessHoursTo']);
+  if (desde === null || hasta === null) return false;
+  const minutos = ahoraMismo.getHours() * 60 + ahoraMismo.getMinutes();
+  return desde <= hasta ? minutos >= desde && minutos < hasta : minutos >= desde || minutos < hasta;
+}
+
+/**
+ * Lo que haría el servidor al llegar un mensaje: si el destinatario tiene la
+ * respuesta con IA encendida, contesta en su nombre, una vez por conversación
+ * dentro del descanso configurado.
+ *
+ * Sin texto que leer (sólo un adjunto) no hay pregunta que responder: sale el
+ * mensaje de respaldo, sin la etiqueta de IA, que es lo mismo que hace la API
+ * cuando la IA no responde.
+ */
+function quizasContestarConIa(c: SimulatedConversation, entrante: SimulatedMessage): void {
+  // Sólo en conversaciones de a dos: en un grupo no hay un «otro» por quien
+  // contestar, y que respondan todos los ausentes sería ruido.
+  if (c.groupId !== null || c.participantes.length !== 2) return;
+  for (const destinatario of c.participantes) {
+    if (destinatario === entrante.senderProfileId) continue;
+    const config = respuestasAutomaticas.get(destinatario)?.datos;
+    if (config?.['isActive'] !== true || config['replyMode'] !== 'AI') continue;
+    if (config['onlyOutsideBusinessHours'] === true && dentroDelHorario(config, new Date())) continue;
+    const clave = `${c.id}:${destinatario}`;
+    const descanso = Number(config['cooldownHours'] ?? 4) * 3_600_000;
+    const ultima = ultimaRespuestaConIa.get(clave)?.en;
+    if (ultima !== undefined && Date.now() - ultima < descanso) continue;
+    ultimaRespuestaConIa.agregar({ id: clave, en: Date.now() });
+
+    const nombre = showcases.get(destinatario)?.displayName ?? 'El profesional';
+    const pregunta = entrante.bodyText.trim();
+    setTimeout(() => {
+      messageList.agregar({
+        id: nuevoId('msg-ia'),
+        conversationId: c.id,
+        senderProfileId: destinatario,
+        replyToMessageId: null,
+        contentTypeConceptId: CONCEPT.messageText,
+        bodyText: pregunta === '' ? String(config['bodyText'] ?? '') : redactarConIa(pregunta, nombre, config),
+        attachmentFileId: null,
+        isEdited: false,
+        sentAt: ahora(),
+        ...(pregunta === '' ? {} : { contentType: 'AUTO_REPLY_AI' as const }),
+      });
+    }, 1800);
+  }
+}
 
 function vitrinaDeSesion(request: MockRequest): SimulatedShowcase | undefined {
   const user = request.user;
@@ -331,7 +474,7 @@ export function registrarComunidad(router: MockRouter): void {
    * que un cambio futuro la apague sin que nadie se entere.
    */
   router.get('/community/profiles/:id/auto-reply', ({ params }) => {
-    return respuestasAutomaticas.get(params['id']!) ?? null;
+    return respuestasAutomaticas.get(params['id']!)?.datos ?? null;
   });
 
   router.put('/community/profiles/:id/auto-reply', (request) => {
@@ -344,6 +487,7 @@ export function registrarComunidad(router: MockRouter): void {
       onlyOutsideBusinessHours: boolean;
       businessHoursFrom?: string;
       businessHoursTo?: string;
+      replyMode?: 'FIXED' | 'AI';
     }>(request);
     const guardada = {
       id: uuid(`auto-reply-${perfil}`),
@@ -359,9 +503,10 @@ export function registrarComunidad(router: MockRouter): void {
       businessHoursTo: datos.onlyOutsideBusinessHours
         ? (datos.businessHoursTo ?? null)
         : null,
+      replyMode: datos.replyMode === 'AI' ? 'AI' : 'FIXED',
       updatedAt: ahora(),
     };
-    respuestasAutomaticas.set(perfil, guardada);
+    respuestasAutomaticas.agregar({ id: perfil, datos: guardada });
     return guardada;
   });
 
@@ -908,6 +1053,7 @@ export function registrarComunidad(router: MockRouter): void {
       ...(datos.contentType === 'STICKER' ? { contentType: 'STICKER' as const } : {}),
     };
     messageList.agregar(nuevo);
+    quizasContestarConIa(c, nuevo);
     const noLeidos = { ...c.noLeidosPor };
     for (const p of c.participantes) if (p !== nuevo.senderProfileId) noLeidos[p] = (noLeidos[p] ?? 0) + 1;
     conversationList.actualizar(c.id, { noLeidosPor: noLeidos });
@@ -925,7 +1071,7 @@ export function registrarComunidad(router: MockRouter): void {
       const otro = c.participantes.find((p) => p !== nuevo.senderProfileId);
       if (otro !== undefined) {
         setTimeout(() => {
-          messageList.agregar({
+          const eco: SimulatedMessage = {
             ...nuevo,
             id: nuevoId('msg-eco'),
             senderProfileId: otro,
@@ -933,7 +1079,10 @@ export function registrarComunidad(router: MockRouter): void {
             attachmentFileId: null,
             contentTypeConceptId: CONCEPT.messageText,
             sentAt: ahora(),
-          });
+          };
+          // Al eco no se le contesta con IA: quien usa la maqueta está
+          // escribiendo en ese momento, así que no está ausente.
+          messageList.agregar(eco);
         }, 2000);
       }
     }

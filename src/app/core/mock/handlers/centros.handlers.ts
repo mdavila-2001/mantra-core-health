@@ -35,7 +35,7 @@ import {
 import { orderList } from '../fixtures/clinic';
 import { ACTIVITY, CANAL, BOOKING_STATUS, ESTUDIO, APPOINTMENT_TYPE } from '../fixtures/concepts';
 import { patientById } from '../fixtures/people';
-import { conflict, forbidden, noContent, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, unprocessable, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { equipoDe, estudiosDe, informes, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';
@@ -273,7 +273,7 @@ function ordenDelPaciente(request: MockRequest) {
   const studyCode = ESTUDIO_POR_CONCEPTO.get(orden.codeConceptId);
   const modalityCode = studyCode === undefined ? null : modalidadDeEstudio(studyCode);
   if (studyCode === undefined || modalityCode === null) {
-    return { error: validation('Esta orden no es de un estudio que se reserve en un centro.') } as const;
+    return { error: unprocessable('Esta orden no es de un estudio que se reserve en un centro.') } as const;
   }
   // La autoridad es el servidor: una orden con su resultado publicado ya se
   // hizo, y no se reserva aunque alguien llegue a la URL de reserva.
@@ -319,7 +319,7 @@ export function registrarCentros(router: MockRouter): void {
           ? modalidad(donde).label
           : (estudiosDelCentro(u).find((e) => e.code === donde)?.name ?? donde),
     );
-    if (problemas.length > 0) return validation('El horario tiene datos incompletos.', problemas.map((p) => ({ field: p.donde, message: p.mensaje })));
+    if (problemas.length > 0) return unprocessable('El horario tiene datos incompletos.', problemas.map((p) => ({ field: p.donde, problem: p.mensaje })));
     const afectados = turnosFueraDeHorario(u, schedule);
     if (afectados > 0) {
       return conflict(`Hay ${afectados} turno${afectados === 1 ? '' : 's'} reservado${afectados === 1 ? '' : 's'} que quedaría${afectados === 1 ? '' : 'n'} fuera del horario nuevo.`, {
@@ -338,7 +338,7 @@ export function registrarCentros(router: MockRouter): void {
     if (equipo === undefined) return notFound('Equipo no encontrado');
     const { status } = cuerpo<{ status?: EquipmentStatus }>(request);
     if (status !== 'OPERATIONAL' && status !== 'MAINTENANCE' && status !== 'OUT_OF_SERVICE') {
-      return validation('Elija un estado: operativo, en mantenimiento o fuera de servicio.');
+      return unprocessable('Elija un estado: operativo, en mantenimiento o fuera de servicio.');
     }
     estadosDeEquipos.agregar({ id: equipo.id, status, updatedAt: ahora() });
     return vistaDelCentro(u);
@@ -402,7 +402,7 @@ export function registrarCentros(router: MockRouter): void {
     const u = unidadPorId(unitId ?? '');
     if (u === undefined) return notFound('Centro no encontrado');
     const inicio = new Date(startAt ?? '');
-    if (Number.isNaN(inicio.getTime())) return validation('Falta el horario elegido.');
+    if (Number.isNaN(inicio.getTime())) return unprocessable('Falta el horario elegido.');
     const libre = disponibilidad(u, r.studyCode, inicio, inicio).items.find((i) => i.startAt === inicio.toISOString());
     if (libre === undefined) return conflict('Ese horario se acaba de ocupar. Elija otro.', { slotTaken: true });
     const paciente = patientById(r.orden.patientProfileId);

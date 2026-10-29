@@ -291,6 +291,7 @@ export class PublicProfileCard {
   protected readonly pestanaActiva = signal('resumen');
 
   protected seleccionar(id: string): void {
+    if (this.preview() && id === 'reviews') return;
     this.pestanaActiva.set(id);
     if (id === 'reviews') this.opinionesAbiertas.set(true);
   }
@@ -357,6 +358,7 @@ export class PublicProfileCard {
   protected readonly opinionesAbiertas = signal(false);
 
   protected abrirOpiniones(): void {
+    if (this.preview()) return;
     this.opinionesAbiertas.set(true);
     this.seleccionar('reviews');
   }

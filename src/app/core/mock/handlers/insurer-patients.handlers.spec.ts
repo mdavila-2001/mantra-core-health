@@ -107,7 +107,7 @@ describe('directorio de pacientes de la aseguradora en el simulador', () => {
     expect([...codigos].every((c) => c === undefined || c.startsWith('GENDER_'))).toBe(true);
   });
 
-  it('«Escribir» a alguien fuera del directorio es 404, y sin mensajería es 412', () => {
+  it('«Escribir» a alguien fuera del directorio es 404, y sin mensajería es 422 (PRECONDITION_FAILED)', () => {
     expect(
       call('POST', '/insurance/patients/conversation', ASEGURADORA, { patientProfileId: 'no-existe', channel: 'internal' })
         .status,
@@ -124,7 +124,8 @@ describe('directorio de pacientes de la aseguradora en el simulador', () => {
         patientProfileId: sinMensajeria!.patientProfileId,
         channel: 'internal',
       }).status,
-    ).toBe(412);
+      // `PreconditionFailedException` de la API es 422, nunca 412 (ver `preconditionFailed` en `mock-router.ts`).
+    ).toBe(422);
   });
 
   it('«Escribir» a la paciente de la demo abre siempre la misma conversación', () => {

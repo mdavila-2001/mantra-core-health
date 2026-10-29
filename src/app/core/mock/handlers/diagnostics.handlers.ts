@@ -689,52 +689,6 @@ const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, readonly [code: string, disp
   'STUDY-DENSITOMETRIA': ['BMD', 'Densitometría ósea'],
 };
 
-/**
- * El menor precio publicado entre los estudios del centro, o `null` si ninguno
- * tiene tarifa (los laboratorios del corpus no publican precios). Con `null` el
- * filtro por importe máximo deja pasar al centro: no hay precio que lo excluya.
- */
-/**
- * Los centros publicados que ofrecen al menos uno de los estudios pedidos,
- * evaluados contra todos: completos primero, después por distancia en línea
- * recta y por nombre — el mismo orden que la disponibilidad de farmacia.
- */
-function coberturaDeEstudios(query: URLSearchParams, conceptos: readonly string[]) {
-  const kind = texto(query, 'kind');
-  const lat = query.get('lat');
-  const lng = query.get('lng');
-  const origen = lat === null || lng === null ? null : { lat: Number(lat), lng: Number(lng) };
-  const limit = Number(query.get('limit') ?? 20) || 20;
-  const todos = UNIDADES.filter((u) => u.publiclyListed && (kind === null || u.kind === kind))
-    .map((u) => {
-      // Por concepto y no por `code`: el código es el arancel propio de cada
-      // centro (FONASA, INLASA…); el concepto es lo que comparte con la orden.
-      const ofrecidos = new Set(estudiosDe(u).map((e) => e.conceptId));
-      return { u, faltantes: conceptos.filter((id) => !ofrecidos.has(id)) };
-    })
-    .filter(({ faltantes }) => faltantes.length < conceptos.length)
-    .map(({ u, faltantes }) => {
-      const ubicada = Number.isFinite(u.lat) && Number.isFinite(u.lng);
-      const sitio = sitioDe(u) as { addressText?: string | null };
-      return {
-        ...itemDeDirectorio(u),
-        tenantId: u.tenantId,
-        rating: u.ratingCount === 0 ? null : u.rating,
-        ratingCount: u.ratingCount,
-        minAmount: precioMinimoDe(u),
-        cities: ciudadesDe(u),
-        complete: faltantes.length === 0,
-        missingStudyConceptIds: faltantes,
-        distanceKm: origen === null || !ubicada ? null : kmEnLineaRecta(origen.lat, origen.lng, u.lat, u.lng),
-        addressText: sitio.addressText ?? null,
-        latitude: ubicada ? u.lat : null,
-        longitude: ubicada ? u.lng : null,
-      };
-    })
-    .sort((a, b) => Number(b.complete) - Number(a.complete) || (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity) || a.name.localeCompare(b.name, 'es'));
-  return { items: todos.slice(0, limit), total: todos.length, limit, offset: 0 };
-}
-
 /** Haversine redondeado a 100 m, como el resto de los dobles. */
 function kmEnLineaRecta(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const rad = (g: number): number => (g * Math.PI) / 180;
@@ -1687,11 +1641,6 @@ export function registrarDiagnostico(router: MockRouter): void {
   });
 
   router.get('/diagnostic-units/search', ({ query }) => {
-    // Con varios estudios contesta la cobertura (carril 19): qué centros los
-    // tienen todos y qué les falta a los demás. Es otra pregunta, con otra
-    // forma de respuesta, sobre el mismo catálogo.
-    const conceptos = (texto(query, 'studyConceptIds') ?? '').split(',').filter((id) => id !== '');
-    if (conceptos.length > 0) return coberturaDeEstudios(query, conceptos);
     const q = texto(query, 'q');
     const [kind, studyCode] = ['kind', 'studyCode'].map((key) => texto(query, key));
     const [home, walkIn, external] = ['homeCollection', 'walkIn', 'acceptsExternalOrders'].map((key) => query.get(key) === 'true');
