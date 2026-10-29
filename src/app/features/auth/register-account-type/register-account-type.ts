@@ -117,14 +117,6 @@ const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   {
     icono: 'clinic',
     tone: 'primary',
-    titulo: 'Centro médico',
-    detalle: 'Clínicas y hospitales: publique sus procedimientos y afilie a sus médicos.',
-    ruta: '/auth/register/medical-center',
-    testId: 'account-type-medical-center',
-  },
-  {
-    icono: 'clinic',
-    tone: 'primary',
     titulo: 'Organización médica',
     detalle:
       'Hospitales, clínicas, consultorios y centros de enfermería: publique sus procedimientos y afilie a sus médicos.',

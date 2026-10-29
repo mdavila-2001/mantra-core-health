@@ -378,8 +378,8 @@ describe('Consultation', () => {
     const abrir = interno<(clave: string) => void>('abrir').bind(componente);
     abrir('pagos');
 
-    expect(interno<() => string>('tituloDelModal')()).toBe('Ver pagos de la persona');
-    expect(interno<() => string>('descripcionDelModal')()).toContain('falta confirmar');
+    expect(interno<() => string>('tituloDelModal')()).toBe('Pagos de la persona');
+    expect(interno<() => string>('descripcionDelModal')()).toContain('ya pagó');
     expect(interno<() => string>('descripcionDelModal')()).not.toContain('Se registra');
   });
 

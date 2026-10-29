@@ -216,9 +216,9 @@ const CASILLAS: Readonly<Record<CasillaDeConsulta, DefinicionDeCasilla>> = {
     testId: 'consulta-casilla-formulario',
   },
   pagos: {
-    titulo: 'Ver pagos',
-    descripcion: 'Pagos recibidos, pendientes de confirmación y comprobantes.',
-    tituloDelModal: 'Ver pagos de la persona',
+    titulo: 'Pagos',
+    descripcion: 'Lo que ya pagó: comprobantes, fechas e importes.',
+    tituloDelModal: 'Pagos de la persona',
     icono: 'M3 7h18v10H3V7Zm0 4h18M7 15h3',
     testId: 'consulta-casilla-pagos',
   },
@@ -564,12 +564,12 @@ export class Consultation {
    */
   protected readonly descripcionDelModal = computed(() => {
     const quien = this.nombre() === '' ? 'esta persona' : this.nombre();
-    // Un aviso recibido todavía no es dinero contabilizado: quien atiende lo
-    // confirma después de verificar la acreditación.
+    // Pagos no escribe en la historia, así que prometer que «se registra»
+    // sería mentir en la única línea que explica qué va a pasar al confirmar.
     if (this.casillaAbierta() === 'pagos') {
       return this.facturacionSimulada
-        ? `Lo que ${quien} informó como recibido, lo que falta confirmar y sus comprobantes. Los pagos confirmados quedan listos para registrar en contabilidad.`
-        : `Los pagos confirmados de ${quien}, tal como quedaron asentados en la caja de la práctica.`;
+        ? `Lo que ${quien} tiene que pagar y lo que ya pagó: nota de venta por cada pago del plan y la factura al saldarlo.`
+        : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
     }
     if (this.casillaAbierta() === 'derivacion') {
       return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Le avisamos en su campana, con un enlace para reservar.`;

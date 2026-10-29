@@ -378,7 +378,6 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...BRAND_TONES.flatMap((tone) =>
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
-  ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot): HeatToken => `--heat-${level}-${slot}`)),
   ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),

@@ -76,12 +76,13 @@ describe('bandeja-status', () => {
     }
   });
 
-  it('el tablero tiene las seis colas en el orden en que un pedido las recorre', () => {
+  it('el tablero tiene las seis colas, de lo que corre contra el reloj a lo cerrado', () => {
     expect(INBOX_GROUPS).toEqual([
       'NUEVOS',
       'EN_REVISION',
       'ESPERANDO_PACIENTE',
       'LISTOS',
+      'EN_PREPARACION',
       'CERRADOS',
     ]);
     for (const grupo of INBOX_GROUPS) {

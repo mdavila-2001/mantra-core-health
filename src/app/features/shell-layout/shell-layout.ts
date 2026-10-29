@@ -662,7 +662,6 @@ export class ShellLayout {
     if (
       esPaciente(roles) ||
       roles.includes('PRACTITIONER') ||
-      roles.includes('SUPERADMIN') ||
       this.auth.activeTenantType() === 'PAYER' ||
       this.auth.activeTenantType() === 'PHARMACY' ||
       this.auth.activeTenantType() === 'DIAGNOSTIC_CENTER'

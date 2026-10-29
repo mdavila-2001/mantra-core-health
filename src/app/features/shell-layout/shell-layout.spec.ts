@@ -310,12 +310,6 @@ describe('ShellLayout', () => {
     expect(rutasDelMenu()).not.toContain('/design-system');
   });
 
-  it('tampoco a superadministración: su menú es el de plataforma y gobierno', () => {
-    abrirSesion({ sub: 'u-4', roles: ['SUPERADMIN'], tenants: ['t-1'] });
-    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
-    expect(rutasDelMenu()).not.toContain('/design-system');
-  });
-
   /**
    * El armazón es **el único lugar que puede ver las dos capas**: `core/` no
    * importa de `shared/` (lo hace cumplir `scripts/check-architecture.mjs`), así

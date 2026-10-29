@@ -121,6 +121,7 @@ describe('PharmacyInbox with the tenant API list', () => {
         'En revisión',
         'Esperando al paciente',
         'Listos para retiro',
+        'En preparación',
         'Cerrados',
       ]);
     expect(text(fixture)).toContain('Ana Paciente');
@@ -213,6 +214,7 @@ describe('PharmacyInbox with the tenant API list', () => {
       { antes: 'En', unidad: 'revisión', conCifra: true },
       { antes: 'Esperando al', unidad: 'paciente', conCifra: true },
       { antes: 'Listos para', unidad: 'retiro', conCifra: true },
+      { antes: 'En', unidad: 'preparación', conCifra: true },
       { antes: '', unidad: 'Cerrados', conCifra: true },
     ]);
     fixture.destroy();
@@ -226,7 +228,7 @@ describe('PharmacyInbox with the tenant API list', () => {
     );
 
     expect(leido[2]).toContain('Esperando al paciente');
-    expect(leido[4]).toContain('Listos para retiro');
+    expect(leido[3]).toContain('Listos para retiro');
     fixture.destroy();
   });
 

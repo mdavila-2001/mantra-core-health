@@ -280,7 +280,6 @@ export class PublicProfileCard {
       tira.push({ id: 'donde-queda', rotulo: this.esLugar() ? 'Dónde queda' : 'Dónde atiende' });
     }
     if (p.posts.length > 0 || previa) tira.push({ id: 'publicaciones', rotulo: 'Publicaciones' });
-    if (!previa) tira.push({ id: 'reviews', rotulo: 'Reseñas' });
     tira.push({ id: 'reviews', rotulo: 'Reseñas' });
 
     // Con una sola sección la tira sobra: sería un rótulo disfrazado de
@@ -292,7 +291,6 @@ export class PublicProfileCard {
   protected readonly pestanaActiva = signal('resumen');
 
   protected seleccionar(id: string): void {
-    if (this.preview() && id === 'reviews') return;
     this.pestanaActiva.set(id);
     if (id === 'reviews') this.opinionesAbiertas.set(true);
   }
@@ -359,7 +357,6 @@ export class PublicProfileCard {
   protected readonly opinionesAbiertas = signal(false);
 
   protected abrirOpiniones(): void {
-    if (this.preview()) return;
     this.opinionesAbiertas.set(true);
     this.seleccionar('reviews');
   }

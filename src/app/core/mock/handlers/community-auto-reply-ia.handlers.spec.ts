@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { mensajes, vitrinaDe, VITRINA_MEDICA, VITRINA_PACIENTE, type MensajeSimulado } from '../fixtures/comunidad';
-import { PROFESIONALES } from '../fixtures/personas';
+import { messageList, showcaseOf, MEDICAL_SHOWCASE, PATIENT_SHOWCASE, type SimulatedMessage } from '../fixtures/community';
+import { PROFESSIONALS } from '../fixtures/people';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
@@ -48,7 +48,7 @@ describe('respuesta automática con IA (maqueta)', () => {
 
   const medica = buscarUsuario('medica')!;
   const configurar = (cambios: Record<string, unknown> = {}) =>
-    call('PUT', `/community/profiles/${VITRINA_MEDICA.id}/auto-reply`, {
+    call('PUT', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`, {
       user: medica,
       body: {
         isActive: true,
@@ -74,15 +74,15 @@ describe('respuesta automática con IA (maqueta)', () => {
 
   const escribir = (bodyText: string, extra: Record<string, unknown> = {}) =>
     call('POST', `/community/conversations/${conversacion}/messages`, {
-      body: { senderProfileId: VITRINA_PACIENTE.id, bodyText, ...extra },
+      body: { senderProfileId: PATIENT_SHOWCASE.id, bodyText, ...extra },
     });
 
-  /** Los mensajes de la médica en la conversación, en orden de llegada. */
-  const respuestasDeLaMedica = (): MensajeSimulado[] =>
-    mensajes.filtrar((m) => m.conversationId === conversacion && m.senderProfileId === VITRINA_MEDICA.id);
+  /** Los messageList de la médica en la conversación, en orden de llegada. */
+  const respuestasDeLaMedica = (): SimulatedMessage[] =>
+    messageList.filtrar((m) => m.conversationId === conversacion && m.senderProfileId === MEDICAL_SHOWCASE.id);
 
   it('la configuración de la médica dice que responde con IA, sin un horario que no declaró', () => {
-    const config = call<{ replyMode: string; isActive: boolean }>('GET', `/community/profiles/${VITRINA_MEDICA.id}/auto-reply`);
+    const config = call<{ replyMode: string; isActive: boolean }>('GET', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`);
     expect(config.body).toMatchObject({ replyMode: 'AI', isActive: true });
   });
 
@@ -120,11 +120,11 @@ describe('respuesta automática con IA (maqueta)', () => {
 
   it('en una conversación de grupo no contesta nadie con IA', () => {
     const grupo = uuid('conv-equipo-cardio');
-    const enElGrupo = () => mensajes.filtrar((m) => m.conversationId === grupo && m.senderProfileId === VITRINA_MEDICA.id).length;
+    const enElGrupo = () => messageList.filtrar((m) => m.conversationId === grupo && m.senderProfileId === MEDICAL_SHOWCASE.id).length;
     const antes = enElGrupo();
     call('POST', `/community/conversations/${grupo}/messages`, {
       user: medica,
-      body: { senderProfileId: vitrinaDe(PROFESIONALES[1]!.id)!.id, bodyText: 'Hola equipo' },
+      body: { senderProfileId: showcaseOf(PROFESSIONALS[1]!.id)!.id, bodyText: 'Hola equipo' },
     });
     vi.advanceTimersByTime(2000);
 
@@ -181,7 +181,7 @@ describe('respuesta automática con IA (maqueta)', () => {
   it('guardar el modo lo conserva', () => {
     const guardada = configurar({ replyMode: 'FIXED' }) as { body: { replyMode: string } };
     expect(guardada.body.replyMode).toBe('FIXED');
-    expect(call<{ replyMode: string }>('GET', `/community/profiles/${VITRINA_MEDICA.id}/auto-reply`).body.replyMode).toBe('FIXED');
+    expect(call<{ replyMode: string }>('GET', `/community/profiles/${MEDICAL_SHOWCASE.id}/auto-reply`).body.replyMode).toBe('FIXED');
 
     // Con texto fijo, el simulador ya no contesta con IA.
     const antes = respuestasDeLaMedica().length;

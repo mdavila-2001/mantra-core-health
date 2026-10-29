@@ -846,15 +846,15 @@ describe('NavigationService', () => {
       ]);
     });
 
-    it('el aplanado es de la aseguradora o superadmin: otros administradores siguen viendo el desplegable', () => {
-      abrirSesion(['SECURITY_ADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
+    it('el aplanado es de la aseguradora: quien administra la plataforma sigue viendo el desplegable', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
 
       const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
       expect(administracion?.aplanado).toBe(false);
     });
 
-    it('sin el claim de tipo, «Administración» sigue plegada para roles no superadmin', () => {
-      abrirSesion(['SECURITY_ADMIN'], ['t-1']);
+    it('sin el claim de tipo, «Administración» sigue plegada', () => {
+      abrirSesion(['SUPERADMIN'], ['t-1']);
 
       const administracion = service.menu().find((grupo) => grupo.label === 'Administración');
       expect(administracion?.aplanado).toBe(false);
@@ -897,114 +897,4 @@ describe('NavigationService', () => {
       expect(rutasDelMenu()).toContain('/my-account/appointments');
     });
   });
-
-  describe('el menú de superadministración', () => {
-    it('solo muestra los grupos Administración y Superadministración, y sus destinos fijados arriba', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      expect(service.menu().map((g) => g.label)).toEqual([
-        'Administración',
-        'Superadministración',
-      ]);
-
-      expect(service.pinnedItems().map((i) => i.route)).toEqual([
-        '/my-account',
-        '/notification-center',
-      ]);
-    });
-
-    it('los grupos de superadministración vienen todos aplanados para mostrar los accesos sin desplegables', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      const grupos = service.menu();
-      expect(grupos.length).toBeGreaterThan(0);
-      expect(grupos.every((g) => g.aplanado)).toBe(true);
-    });
-
-    it('no contiene accesos clínicos, generales, de facturación ni de autoservicio del paciente', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      const rutas = rutasDelMenu();
-      for (const rutaNoPermitida of [
-        '/directories',
-        '/groups',
-        '/schedule',
-        '/medical-records',
-        '/diagnostics',
-        '/interventions',
-        '/glossary',
-        '/billing',
-        '/administration/accounting',
-        '/my-account/dependents',
-        '/my-account/appointments',
-        '/my-account/medical-record',
-        '/my-account/diagnostic-results',
-        '/my-account/diagnostic-orders',
-        '/my-account/quotations',
-        '/my-account/pharmacy',
-      ]) {
-        expect(rutas, rutaNoPermitida).not.toContain(rutaNoPermitida);
-      }
-    });
-
-    it('en Administración no muestra mi organización ni productos o seguros de aseguradora', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      const rutas = rutasDelMenu();
-      for (const rutaAseguradora of [
-        '/administration/my-organization',
-        '/administration/insurance',
-        '/administration/brokers',
-        '/administration/insurance-claims',
-        '/administration/received-claims',
-        '/administration/insurance-patients',
-        '/administration/insurance-analytics',
-        '/administration/insurance-campaigns',
-      ]) {
-        expect(rutas, rutaAseguradora).not.toContain(rutaAseguradora);
-      }
-    });
-
-    it('en Administración contiene las secciones de administración de plataforma', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      const rutas = rutasDelMenu();
-      for (const rutaAdmin of [
-        '/administration/patients',
-        '/administration/users',
-        '/administration/organizations',
-        '/administration/delegated-access',
-        '/administration/identity-providers',
-        '/administration/identity-assurance',
-        '/administration/terminology',
-        '/administration/content-packs',
-        '/administration/moderation',
-        '/administration/health-context',
-        '/administration/geolocation',
-        '/administration/services-catalog',
-        '/administration/medical-organization',
-        '/administration/medical-laboratory',
-        '/administration/pharma-lab',
-      ]) {
-        expect(rutas, rutaAdmin).toContain(rutaAdmin);
-      }
-    });
-
-    it('en Superadministración contiene las secciones de plataforma', () => {
-      abrirSesion(['SUPERADMIN'], ['t-1'], { 't-1': 'PROVIDER' });
-
-      const rutas = rutasDelMenu();
-      for (const rutaSuper of [
-        '/superadmin/observability',
-        '/superadmin/data-catalog',
-        '/superadmin/flows',
-        '/superadmin/qa-lab',
-        '/superadmin/web-analytics',
-        '/superadmin/operations',
-      ]) {
-        expect(rutas, rutaSuper).toContain(rutaSuper);
-      }
-    });
-  });
 });
-

@@ -222,7 +222,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'General',
     icon: 'directory',
     roles: [ANY_ROLE],
-    fueraDelMenuPara: ['SUPERADMIN'],
     availability: 'disponible',
     summary:
       'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas, farmacias y aseguradoras.',
@@ -443,7 +442,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos—. «Cupos» NO se renombra: es disponibilidad, no consulta.
     // La ruta sigue siendo `schedule`.
     path: 'schedule',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Consultas médicas',
     group: 'Atención',
     icon: 'calendar',
@@ -461,7 +459,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'medical-records',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Archivo clínico',
     group: 'Atención',
     icon: 'folder',
@@ -532,7 +529,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // aceptación **ninguna intervención podía confirmarse**: `confirm` exige que
     // cada integrante haya aceptado y no había dónde hacerlo.
     path: 'interventions',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
@@ -557,7 +553,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // clínica, y eso se sigue cumpliendo — la sección existe, tiene su ruta y
     // su bandeja propia, y no se fusionó con Turnos. Lo único que perdió es el
     // renglón lateral, y se llega por el enlace que Turnos ofrece.
-    fueraDelMenuPara: ['PRACTITIONER', 'SUPERADMIN'],
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Visitas de laboratorio',
     group: 'Atención',
     icon: 'route',
@@ -574,7 +570,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // en el resto del registro— porque la especificación le prohíbe el acceso a
     // pacientes, recetas y diagnósticos (5316-5318).
     path: 'my-visits',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Mis visitas médicas',
     group: 'Atención',
     icon: 'route',
@@ -598,7 +593,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // una pantalla suya (feedback de la analista F-03, decidido el 18/08/2026).
     // La ruta lo hace cumplir por `seccionRolesGuard`, hija incluida.
     path: 'glossary',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Glosario',
     group: 'Atención',
     icon: 'book',
@@ -650,7 +644,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // puede depender de que alguien recuerde la ruta. La lista cerrada pasa de
     // once a doce con esa decisión, no por descuido.
     path: 'my-services',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Mis servicios',
     group: 'Atención',
     icon: 'tag',
@@ -684,7 +677,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // descuido — ver el comentario de `navigation.service.spec.ts` que fija
     // la lista completa.
     path: 'my-quotations',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Cotizaciones',
     group: 'Atención',
     icon: 'billing',
@@ -816,7 +808,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // dos gestiones distintas —el catálogo y la fuerza comercial— y mezclarlas
     // obligaría a una sola pantalla a pedir permisos de las dos.
     path: 'administration/brokers',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Brokers',
     group: 'Administración',
     icon: 'briefcase',
@@ -838,7 +829,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // ciclo del reclamo no se ofrecen acá: adjudicar o revertir son actos de
     // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
-    fueraDelMenuPara: ['SUPERADMIN'],
     hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Una organización médica la ve sólo quien factura: la dueña (`USER`) la
     // veía y la API le contestaba 403 `ROLE_INSUFFICIENT`.
@@ -868,7 +858,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // arriba) y el segundo no existe en ningún catálogo de roles del proyecto.
     // La capacidad real la resuelve la API (membresía o `INSURANCE_OPERATOR`).
     path: 'administration/insurance-analytics',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Siniestralidad y analítica',
     group: 'Administración',
     icon: 'chart',
@@ -889,7 +878,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // quien paga, y por eso lleva el mismo acceso que «Siniestralidad»: la
     // autoridad es la membresía en la aseguradora, que resuelve la API.
     path: 'administration/received-claims',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Solicitudes recibidas',
     group: 'Administración',
     icon: 'clipboard',
@@ -929,7 +917,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // la autoridad es la membresía en la aseguradora, que resuelve la API, y
     // el médico y el paciente quedan fuera con `hiddenFor`.
     path: 'administration/insurance-campaigns',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Campañas preventivas',
     group: 'Administración',
     icon: 'megaphone',
@@ -1184,7 +1171,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
 
   {
     path: 'billing',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Facturación',
     group: 'Facturación',
     icon: 'billing',
@@ -1219,7 +1205,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
 
   {
     path: 'administration/accounting',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Contabilidad',
     group: 'Facturación',
     icon: 'chart',
@@ -1263,8 +1248,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: a quien atiende no se le ofrece.
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Dependientes',
     group: 'Mi cuenta',
     icon: 'patients',
@@ -1356,8 +1340,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis citas',
     group: 'Mi cuenta',
     icon: 'calendar',
@@ -1380,8 +1363,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mi historia clínica',
     group: 'Mi cuenta',
     // `results` y no `patients`: lo que esta sección muestra son resultados de
@@ -1404,8 +1386,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis resultados',
     group: 'Mi cuenta',
     icon: 'results',
@@ -1427,8 +1408,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis órdenes',
     group: 'Mi cuenta',
     icon: 'orders',
@@ -1442,8 +1422,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Cotizaciones',
     group: 'Mi cuenta',
     icon: 'billing',
@@ -1577,7 +1556,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Mismos roles que «Mis pedidos», que hereda al montarla como pestaña:
     // su contenido nace de una receta propia.
     path: 'my-account/pharmacy',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Farmacia',
     group: 'Mi cuenta',
     icon: 'bag',
@@ -1953,14 +1931,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // administra.
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Pedidos',
+    label: 'Solicitudes de retiro',
     // `General` y no `Administración`: es un dominio aplanado, así que los
     // ocho renglones van sueltos, sin encabezado ni desplegable.
     group: 'General',
     icon: 'bag',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'La bandeja del mostrador: pedidos que llegan, preparación, retiros y envíos.',
+    summary: 'La bandeja del mostrador: solicitudes que llegan, preparación y retiros.',
     module: 'M24 pharmacy',
   },
   {

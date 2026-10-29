@@ -1739,16 +1739,13 @@ describe('Agenda', () => {
     });
 
     it('con dos acciones o menos van EN la fila, con su texto, sin desplegable', async () => {
-      // Una cita ya atendida ofrece dos: ver su detalle y sus pagos
-      // (comprobantes + factura, que es lo que se busca al terminar de atender).
+      // Una cita ya atendida ofrece una sola: ver su detalle.
       await montar();
       await responderConEstado('BOOKING_COMPLETED', 'Atendida');
       await verSolapaDeCitas();
 
-      const acciones = interno<(c: unknown) => readonly { code: string }[]>('accionesDe')(
-        citas().data?.[0],
-      );
-      expect(acciones.map((accion) => accion.code)).toEqual(['agenda-detalle', 'agenda-pagos']);
+      expect(interno<(c: unknown) => readonly unknown[]>('accionesDe')(citas().data?.[0]))
+        .toHaveLength(1);
       expect(
         harness.routeNativeElement?.querySelector('[data-testid="row-actions-trigger"]'),
       ).toBeNull();
@@ -1757,11 +1754,6 @@ describe('Agenda', () => {
       ) as HTMLElement;
       expect(enLinea).not.toBeNull();
       expect(enLinea.textContent?.trim()).toContain('Ver detalle de la cita');
-      const pagos = harness.routeNativeElement?.querySelector(
-        '[data-action="agenda-pagos"]',
-      ) as HTMLElement;
-      expect(pagos).not.toBeNull();
-      expect(pagos.textContent?.trim()).toContain('Pagos y comprobantes');
     });
 
     it('sin estado resuelto no se ofrece ninguna accion', async () => {
