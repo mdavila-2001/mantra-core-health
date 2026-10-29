@@ -160,14 +160,14 @@
     </section>
 
     @if (!narrow()) {
-      <aside class="ed-right" aria-label="Espacios, figura elegida y problemas">
+      <aside class="ed-right" aria-label="Problemas, espacios y figura elegida">
+        <app-plan-editor-issues [issues]="ed.issues()" [nameOf]="nameOf" (pickIssue)="focusIssue($event)" />
         <app-plan-editor-palette [entries]="ed.palette()" [armedId]="ed.armedId()" (arm)="ed.arm($event)" (placeCenter)="placeCenter()" />
         <div class="ed-pick">
           <span class="ed-pick__label">Elegir figura por nombre</span>
           <app-select ariaLabel="Elegir figura por nombre" [options]="figureOptions()" [value]="ed.selectedId() ?? ''" (valueChange)="ed.select($event || null)" />
         </div>
         <app-plan-editor-inspector [space]="ed.selected()" (geometryChange)="onGeometry($event)" (lockToggled)="ed.toggleLock(ed.selectedId()!)" (remove)="ed.removeSelected()" />
-        <app-plan-editor-issues [issues]="ed.issues()" [nameOf]="nameOf" (pickIssue)="focusIssue($event)" />
       </aside>
     }
   </div>
