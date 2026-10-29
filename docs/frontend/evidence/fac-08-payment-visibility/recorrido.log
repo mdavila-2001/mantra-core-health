@@ -115,3 +115,12 @@ detalle 1440: formulario para subir comprobante visible: 0
 [paciente 390] 200 GET /scheduling/bookings/:id
 detalle 390: «Comprobante de pago Esta cita ya figura como pagada: no hace falta subir ningún comprobante. El pago se registró sin comprobante.»
 detalle 390: formulario para subir comprobante visible: 0
+
+# 2026-10-29, tercera vuelta: el monto de la insignia (REQ-FAC-08-003)
+# La API de dev todavía no manda amountPaid (FAC-01). El navegador toma la respuesta REAL de
+# GET /scheduling/bookings y le suma, solo a la cita pagada a mano, amountPaid y currencyCode con la forma del contrato §2.
+bob 1440: lista modificada en 1 cita(s); insignias: ["Pagada","Pagada · 150,00 Bs"]
+bob 390: lista modificada en 1 cita(s); insignias: ["Pagada","Pagada · 150,00 Bs"]
+usd 1440: lista modificada en 1 cita(s); insignias: ["Pagada","Pagada · 20,50 USD"]
+zero 1440: lista modificada en 1 cita(s); insignias: ["Pagada","Pagada"]
+null 1440: lista modificada en 1 cita(s); insignias: ["Pagada","Pagada"]
