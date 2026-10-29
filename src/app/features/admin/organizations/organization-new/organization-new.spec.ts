@@ -243,4 +243,15 @@ describe('OrganizationNew', () => {
     // `expectOne` falla si hubo dos.
     http.expectOne('/admin/tenants').flush(RESPUESTA);
   });
+  it('un 404 del envío se dice, no deja el formulario mudo (S6)', () => {
+    // Antes `errorMessage` no tenía rama `not-found`: el estado quedaba en S6,
+    // el botón volvía a habilitarse y la pantalla no decía nada.
+    const instancia = fixture.componentInstance as unknown as Record<string, unknown>;
+    (instancia['state'] as { set: (v: unknown) => void }).set({ status: 'not-found' });
+    fixture.detectChanges();
+
+    const mensaje = (instancia['errorMessage'] as () => string | null).call(instancia);
+    expect(mensaje).toContain('No encontramos la cuenta que elegiste como owner');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos la cuenta que elegiste como owner');
+  });
 });

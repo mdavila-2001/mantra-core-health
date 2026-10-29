@@ -29,6 +29,11 @@ import { PaginatedForm } from '../../../../shared/components/organisms/paginated
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del envío: la organización de la ruta no está (o no se puede ver). */
+const ORGANIZACION_NO_ENCONTRADA =
+  'No encontramos esta organización: puede que ya no exista. Volvé al listado de organizaciones.';
 
 /** Largos que declara `CreateChildTenantDto`. */
 const MAX_CODIGO = 100;
@@ -247,22 +252,18 @@ export class ChildOrganizationNew {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesitás administración de seguridad para crear una filial.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Necesitás administración de seguridad para crear una filial.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
 
   /** El código es único global: un `409` sólo puede venir de él. */
   protected readonly codigoEnConflicto = computed(() => {
