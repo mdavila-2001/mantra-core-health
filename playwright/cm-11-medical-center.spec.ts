@@ -21,7 +21,7 @@ import { CLAVE } from './support/actores';
 import { esperarAplicacionLista } from './support/sesion';
 
 const EVIDENCIA = join('docs', 'frontend', 'evidence', 'cm-11-medical-center-registration');
-/** Las claves de los cinco documentos legales del alta, en el orden de sus páginas. */
+/** Las claves de los cinco documentos legales del alta, en el orden de su página. */
 const CLAVES_DE_DOCUMENTOS = [
   'constitutionFileId',
   'taxIdentifierFileId',
@@ -112,7 +112,7 @@ for (const view of VIEWPORTS) {
       await foto(page, `${view.label}-01-organization-type-selector`);
     });
 
-    test('el alta recorre sus páginas, con los cinco PDF, y termina pendiente de verificación', async ({ page }) => {
+    test('el alta recorre sus páginas —empresa, SEDES, director, papeles, mapa, representante y gerencias— y termina pendiente de verificación', async ({ page }) => {
       const errores: string[] = [];
       page.on('console', (m) => {
         if (m.type() === 'error') errores.push(m.text());
@@ -146,27 +146,80 @@ for (const view of VIEWPORTS) {
       await foto(page, `${view.label}-04-signup-page-1-filled`);
       await page.getByTestId('paginated-form-continuar').click();
 
-      // Páginas 2 y 3 · los cinco documentos legales, en PDF y obligatorios.
+      // Página 2 · el NIT y el número de registro del SEDES, juntos. Un NIT que no es un NIT frena y lo dice.
+      await escribir(page, 'medical-center-signup-tax-id', 'abc');
+      await escribir(page, 'medical-center-signup-health-registration', 'SEDES SC');
+      await page.getByTestId('paginated-form-continuar').click();
+      await expect(page.getByText('Escriba el NIT: sólo números')).toBeVisible();
+      await expect(page.getByText('Escriba el número de registro del SEDES')).toBeVisible();
+      await escribir(page, 'medical-center-signup-tax-id', '1023456789');
+      await escribir(page, 'medical-center-signup-health-registration', 'SEDES-SC-2020-0412');
+      await noHorizontalOverflow(page);
+      await foto(page, `${view.label}-04a-signup-health-registration`);
+      await page.getByTestId('paginated-form-continuar').click();
+
+      // Página 3 · el director médico, con su matrícula.
+      await page.getByTestId('paginated-form-continuar').click();
+      await expect(page.getByText('Escriba la matrícula profesional del director')).toBeVisible();
+      await escribir(page, 'medical-center-signup-director-nombre', 'Ana');
+      await escribir(page, 'medical-center-signup-director-apellido-paterno', 'Rojas');
+      await escribir(page, 'medical-center-signup-director-license', 'MAT-12345');
+      await escribir(page, 'medical-center-signup-director-email', 'dir@clinica-norte.test');
+      await noHorizontalOverflow(page);
+      await foto(page, `${view.label}-04b-signup-director`);
+      await page.getByTestId('paginated-form-continuar').click();
+
+      // Página 4 · los cinco papeles legales, en PDF y obligatorios, en una sola vista.
       await page.getByTestId('paginated-form-continuar').click();
       await expect(page.getByText('Este documento es obligatorio para continuar').first()).toBeVisible();
-      await foto(page, `${view.label}-04b-signup-documents-errors`);
-      for (const tanda of [CLAVES_DE_DOCUMENTOS.slice(0, 4), CLAVES_DE_DOCUMENTOS.slice(4)]) {
-        for (const clave of tanda) {
-          const testId = `medical-center-signup-doc-${clave}`;
-          await page.getByTestId(testId).setInputFiles(pdfDePrueba(clave));
-          await expect(page.getByTestId(`${testId}-quitar`)).toBeVisible({ timeout: 15_000 });
-        }
-        await noHorizontalOverflow(page);
-        await foto(page, `${view.label}-04c-signup-documents-${tanda.length === 4 ? '1' : '2'}-uploaded`);
-        await page.getByTestId('paginated-form-continuar').click();
+      await foto(page, `${view.label}-04c-signup-documents-errors`);
+      for (const clave of CLAVES_DE_DOCUMENTOS) {
+        const testId = `medical-center-signup-doc-${clave}`;
+        await page.getByTestId(testId).setInputFiles(pdfDePrueba(clave));
+        await expect(page.getByTestId(`${testId}-quitar`)).toBeVisible({ timeout: 15_000 });
       }
+      await noHorizontalOverflow(page);
+      await foto(page, `${view.label}-04d-signup-documents-uploaded`);
+      await page.getByTestId('paginated-form-continuar').click();
 
-      // Página 4 · la cuenta.
-      await escribir(page, 'medical-center-signup-owner-name', 'Marta Rojas');
-      await escribir(page, 'medical-center-signup-email', `marta${Date.now()}@centro-norte.test`);
+      // Página 5 · la casa central en el mapa (obligatoria).
+      await page.getByTestId('paginated-form-continuar').click();
+      await expect(page.getByText('Marque el lugar en el mapa').first()).toBeVisible();
+      await page.getByTestId('medical-center-signup-central-map').click({ position: { x: 120, y: 120 } });
+      await page.getByTestId('medical-center-signup-central-location-confirm').click();
+      await expect(page.getByTestId('medical-center-signup-central-location-confirmed')).toBeAttached();
+      await noHorizontalOverflow(page);
+      await foto(page, `${view.label}-04e-signup-central`);
+      await page.getByTestId('paginated-form-continuar').click();
+
+      // Página 6 · las sucursales son opcionales: se sigue sin ninguna.
+      await expect(page.getByTestId('medical-center-signup-agregar-sucursal')).toBeVisible();
+      await page.getByTestId('paginated-form-continuar').click();
+
+      // Página 7 · el representante legal (también es el dueño de la cuenta).
+      await escribir(page, 'medical-center-signup-legal-rep-nombre', 'Marta');
+      await escribir(page, 'medical-center-signup-legal-rep-apellido-paterno', 'Rojas');
+      await escribir(page, 'medical-center-signup-legal-rep-id', '4872190');
+      await noHorizontalOverflow(page);
+      await foto(page, `${view.label}-05-signup-legal-rep`);
+      await page.getByTestId('paginated-form-continuar').click();
+
+      // Página 8 · el poder: obligatorio para una S.R.L.
+      await page.getByTestId('paginated-form-continuar').click();
+      await expect(page.getByText('Este documento es obligatorio para continuar').first()).toBeVisible();
+      const poder = 'medical-center-signup-doc-powerOfAttorneyFileId';
+      await page.getByTestId(poder).setInputFiles(pdfDePrueba('poder'));
+      await expect(page.getByTestId(`${poder}-quitar`)).toBeVisible({ timeout: 15_000 });
+      await page.getByTestId('paginated-form-continuar').click();
+
+      // Páginas 9 a 11 · las tres gerencias son opcionales: se siguen vacías.
+      for (let i = 0; i < 3; i += 1) await page.getByTestId('paginated-form-continuar').click();
+
+      // Página 12 · el usuario (el correo del representante) y la clave. «Crear cuenta» envía.
+      await escribir(page, 'medical-center-signup-legal-rep-email', `marta${Date.now()}@centro-norte.test`);
       await escribir(page, 'medical-center-signup-password', 'S3cret-passw0rd');
       await noHorizontalOverflow(page);
-      await foto(page, `${view.label}-05-signup-page-2-filled`);
+      await foto(page, `${view.label}-05b-signup-password`);
       await page.getByTestId('paginated-form-continuar').click();
 
       await expect(page.getByTestId('medical-center-signup-success')).toBeVisible();

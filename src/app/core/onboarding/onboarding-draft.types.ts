@@ -4,6 +4,7 @@ export type OnboardingFormType =
   | 'organization'
   | 'laboratory'
   | 'imaging-center'
+  | 'medical-center'
   | 'pharmacy';
 
 export interface OnboardingDraft<T = Record<string, unknown>> {
