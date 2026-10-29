@@ -1,6 +1,8 @@
 import { ArchivoAusente, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
 export { ArchivoAusente, leerConFetch, type LectorDeArchivos } from '../data-access/glossary/glossary-shards.reader';
 import type { GlossaryArticle } from '../data-access/terminology/glossary-article.types';
+import { mockAssets } from '../../../environments/env.generated';
+import type { MockAssets } from '../../../environments/environment.types';
 import { uuid } from './mock-store';
 
 /* ============================================================================
@@ -29,6 +31,25 @@ import { uuid } from './mock-store';
 
 /** Las dos raíces posibles, en orden de preferencia. */
 export const RAICES_DEL_GLOSARIO = ['glossary-data', 'glossary-seed'] as const;
+
+export type RaizDelGlosario = (typeof RAICES_DEL_GLOSARIO)[number];
+
+/**
+ * Las raíces que vale la pena pedir, según lo que el build encontró en `public/`.
+ *
+ * `glossary-data/` no se versiona: en una máquina sin la descarga pedir su
+ * `manifest.json` es un 404 seguro, y el navegador lo imprime en la consola como
+ * error aunque el código lo atrape. Es un fallo **esperado** —la semilla existe
+ * para eso—, así que en vez de provocarlo y tragarlo no se pide: `generate-env`
+ * mira si `public/glossary-data/manifest.json` existe y lo deja en `mockAssets`.
+ *
+ * Sin dato (`glossaryData` indefinido) se prueban las dos, como siempre.
+ */
+export function raicesEsperadasDelGlosario(
+  assets: Pick<MockAssets, 'glossaryData'> = mockAssets,
+): readonly RaizDelGlosario[] {
+  return assets.glossaryData === false ? ['glossary-seed'] : RAICES_DEL_GLOSARIO;
+}
 
 /** Dónde está una fila: categoría, página del shard (1-based) y posición. */
 export type RefDeFila = readonly [categoryKey: string, page: number, index: number];
@@ -194,7 +215,11 @@ export class AlmacenDeGlosario {
   private raiz: Promise<{ base: string; manifiesto: ManifiestoDelGlosario }> | null = null;
   private readonly cache = new Map<string, Promise<unknown>>();
 
-  constructor(private readonly leer: LectorDeArchivos) {}
+  constructor(
+    private readonly leer: LectorDeArchivos,
+    /** Por omisión las dos; quien sabe que la completa no está pasa sólo la semilla. */
+    private readonly raices: readonly RaizDelGlosario[] = RAICES_DEL_GLOSARIO,
+  ) {}
 
   /** La raíz en uso y su manifiesto: el glosario completo si está, si no la semilla. */
   manifiesto(): Promise<ManifiestoDelGlosario> {
@@ -208,7 +233,7 @@ export class AlmacenDeGlosario {
 
   private resolverRaiz(): Promise<{ base: string; manifiesto: ManifiestoDelGlosario }> {
     this.raiz ??= (async () => {
-      for (const base of RAICES_DEL_GLOSARIO) {
+      for (const base of this.raices) {
         try {
           const manifiesto = (await this.leer(`${base}/manifest.json`)) as ManifiestoDelGlosario;
           return { base, manifiesto };
@@ -298,7 +323,7 @@ export class AlmacenDeGlosario {
   /** El artículo del término, buscando primero el corpus completo y luego la semilla. */
   async articulo(id: string): Promise<GlossaryArticle | null> {
     const shard = `mock/articles/${id.slice(0, 2).toLowerCase()}.json`;
-    for (const base of RAICES_DEL_GLOSARIO) {
+    for (const base of this.raices) {
       try {
         const bucket = await this.leer(`${base}/${shard}`) as Record<string, GlossaryArticle>;
         const article = bucket[id];
