@@ -8,6 +8,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
 import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
 import { Consultation } from './consultation';
+import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
 
 /**
  * La consulta — la rejilla de todo lo que se registra mientras se atiende.
@@ -197,15 +198,60 @@ describe('Consultation', () => {
     ).toHaveLength(1);
   });
 
+  it('H07: un 403 al leer la historia deja S5 con el texto del profesional y «Pedir acceso a su historia»', async () => {
+    http.expectOne((r) => r.url === '/referrals').flush([]);
+    http
+      .expectOne((r) => r.url === '/profiles/patients/p-1')
+      .flush({ profileId: 'p-1', displayName: 'Ana Pérez', patientCode: 'P1' });
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush(
+        {
+          code: 'FORBIDDEN',
+          message: 'Sólo puede consultar su propia historia clínica.',
+          correlationId: 'req-403',
+        },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    // forkJoin cancela la lectura del chart al fallar el resumen.
+    http
+      .match((r) => r.url === '/charts/patients/p-1/chart')
+      .forEach((req) => {
+        if (!req.cancelled) req.flush(CHART);
+      });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    const state = interno<
+      () => {
+        status: string;
+        message?: string;
+        requestId?: string;
+        nextAction?: { label: string; route?: string };
+      }
+    >('consulta')();
+    expect(state.status).toBe('forbidden');
+    expect(state.message).toBe(CONSULTATION_FORBIDDEN_MESSAGE);
+    expect(state.requestId).toBe('req-403');
+    expect(state.nextAction).toEqual({
+      label: 'Pedir acceso a su historia',
+      route: '/medical-records/p-1/request-access',
+    });
+
+    const text = harness.routeNativeElement!.textContent ?? '';
+    expect(text).toContain(CONSULTATION_FORBIDDEN_MESSAGE);
+    expect(text).toContain('Pedir acceso a su historia');
+    expect(text).not.toContain('Sólo puede consultar su propia historia clínica');
+  });
+
   it('si las derivaciones no se pueden leer, la casilla no inventa un cero y la rejilla sigue', async () => {
     http
       .expectOne((r) => r.url === '/referrals')
       .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
     await flushChartReadsOnly();
 
-    const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
-      'casillas',
-    )();
+    const casillas =
+      interno<() => readonly { clave: string; cantidad: number | null }[]>('casillas')();
     expect(casillas.find((c) => c.clave === 'derivacion')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
   });
