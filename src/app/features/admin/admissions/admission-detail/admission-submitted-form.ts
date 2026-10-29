@@ -3,11 +3,13 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import type {
   AdmissionDocument,
   AdmissionRequirement,
+  AdmissionReviewItem,
   RequirementDecision,
   SubmittedFormField,
   SubmittedFormSection,
 } from '@core/data-access/admissions/admissions.types';
 import { requirementStatusLabel, requirementStatusVariant, shortHash } from '@shared/admissions/admission-presentation';
+import type { RequirementReviewRequest } from './admission-requirements';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { Alert } from '@shared/components/molecules/alert/alert';
@@ -49,8 +51,10 @@ export class AdmissionSubmittedForm {
   /** Código de requisito al que se llegó desde el carrusel o la lista. */
   readonly highlight = input<string | null>(null);
 
-  readonly review = output<{ requirementId: string; decision: RequirementDecision }>();
+  readonly review = output<RequirementReviewRequest>();
   readonly viewEvidence = output<string>();
+  /** Un requisito con varias fichas se revisa una por una, en la pestaña de requisitos. */
+  readonly viewRequirement = output<string>();
 
   protected readonly views = computed<readonly SectionView[]>(() => {
     const porCodigo = new Map(this.requirements().map((r) => [r.code, r] as const));
@@ -82,16 +86,25 @@ export class AdmissionSubmittedForm {
       : (this.requirements().find((r) => r.code === field.requirementCode) ?? null);
   }
 
-  protected hash(r: AdmissionRequirement): string {
-    return shortHash(r.evidenceSha256);
+  /** La única ficha del requisito, si tiene una sola: lo que se puede decidir desde acá. */
+  protected singleItem(r: AdmissionRequirement): AdmissionReviewItem | null {
+    return r.items.length === 1 ? (r.items[0] ?? null) : null;
+  }
+
+  protected reviewable(item: AdmissionReviewItem | null): boolean {
+    return this.canReview() && item !== null && item.id !== null && item.rowVersion !== null;
+  }
+
+  protected hash(item: AdmissionReviewItem): string {
+    return shortHash(item.evidenceSha256);
   }
 
   protected statusLabel(r: AdmissionRequirement): string {
-    return requirementStatusLabel(r.status);
+    return requirementStatusLabel(r.state);
   }
 
   protected variant(r: AdmissionRequirement) {
-    return requirementStatusVariant(r.status);
+    return requirementStatusVariant(r.state);
   }
 
   protected mapUrl(value: string | null): string | null {
@@ -102,6 +115,9 @@ export class AdmissionSubmittedForm {
   }
 
   protected decide(requirement: AdmissionRequirement, decision: RequirementDecision): void {
-    if (!this.busy()) this.review.emit({ requirementId: requirement.id, decision });
+    const item = this.singleItem(requirement);
+    if (!this.busy() && item !== null && this.reviewable(item)) {
+      this.review.emit({ itemId: item.itemId, requirementCode: requirement.code, decision });
+    }
   }
 }

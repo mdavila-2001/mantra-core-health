@@ -119,18 +119,23 @@
           </dl>
 
           @if (item.requirement; as requisito) {
-            @if (requisito.reasonText) {
-              <p class="galeria__motivo">Motivo: {{ requisito.reasonText }}</p>
+            @if (item.item?.evidenceChanged) {
+              <p class="galeria__motivo" role="status" data-testid="gallery-evidence-changed">
+                El médico cambió esta ficha después de la última revisión: revísela de nuevo.
+              </p>
+            }
+            @if (item.item?.reasonText; as motivo) {
+              <p class="galeria__motivo">Motivo: {{ motivo }}</p>
             }
             <div class="galeria__acciones">
               @if (canReview()) {
-                <button app-button type="button" variant="primary" size="sm" [disabled]="busy()" data-testid="gallery-verify" (clicked)="decide('VERIFIED')">
+                <button app-button type="button" variant="primary" size="sm" [disabled]="busy() || !reviewable(item.item)" data-testid="gallery-verify" (clicked)="decide('VERIFIED')">
                   Verificar
                 </button>
-                <button app-button type="button" variant="danger" size="sm" [disabled]="busy()" data-testid="gallery-reject" (clicked)="decide('REJECTED')">
+                <button app-button type="button" variant="danger" size="sm" [disabled]="busy() || !reviewable(item.item)" data-testid="gallery-reject" (clicked)="decide('REJECTED')">
                   Rechazar
                 </button>
-                <button app-button type="button" variant="secondary" size="sm" [disabled]="busy()" data-testid="gallery-info-required" (clicked)="decide('INFO_REQUIRED')">
+                <button app-button type="button" variant="secondary" size="sm" [disabled]="busy() || !reviewable(item.item)" data-testid="gallery-info-required" (clicked)="decide('INFO_REQUIRED')">
                   Pedir información
                 </button>
               }

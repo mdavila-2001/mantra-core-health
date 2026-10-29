@@ -241,3 +241,45 @@
 .requisito__acciones .requisito__enlace {
   margin-inline-start: auto;
 }
+
+.requisito__fichas {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  min-inline-size: 0;
+}
+
+.ficha__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.ficha__nombre {
+  flex: 1 1 12rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ficha__cambio {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+  background: var(--st-warning-bg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-sm);
+}

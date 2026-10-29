@@ -44,21 +44,29 @@
 
         @if (view.linked.length > 0) {
           <ul class="formulario__requisitos" aria-label="Requisitos que verifican esta sección">
-            @for (enlace of view.linked; track enlace.requirement.id) {
+            @for (enlace of view.linked; track enlace.requirement.code) {
               <li class="vinculo" [class.vinculo--resaltado]="highlight() === enlace.requirement.code" data-testid="form-requirement">
                 <span class="vinculo__nombre">{{ enlace.requirement.label }}</span>
                 <app-badge [variant]="variant(enlace.requirement)" size="sm">{{ statusLabel(enlace.requirement) }}</app-badge>
-                <span class="vinculo__huella" [attr.title]="enlace.requirement.evidenceSha256" data-testid="form-hash">Huella {{ hash(enlace.requirement) }}</span>
+                @if (singleItem(enlace.requirement); as ficha) {
+                  <span class="vinculo__huella" [attr.title]="ficha.evidenceSha256" data-testid="form-hash">Huella {{ hash(ficha) }}</span>
+                }
                 @if (enlace.documents > 0) {
                   <button type="button" class="vinculo__enlace" data-testid="form-view-evidence" (click)="viewEvidence.emit(enlace.requirement.code)">
                     Ver evidencia ({{ enlace.documents }})
                   </button>
                 }
                 @if (canReview()) {
-                  <span class="vinculo__acciones">
-                    <button app-button type="button" variant="secondary" size="sm" [disabled]="busy() || enlace.requirement.status === 'VERIFIED'" [attr.aria-label]="'Verificar ' + enlace.requirement.label" (clicked)="decide(enlace.requirement, 'VERIFIED')">Verificar</button>
-                    <button app-button type="button" variant="ghost" size="sm" [disabled]="busy() || enlace.requirement.status === 'REJECTED'" [attr.aria-label]="'Rechazar ' + enlace.requirement.label" (clicked)="decide(enlace.requirement, 'REJECTED')">Rechazar</button>
-                  </span>
+                  @if (singleItem(enlace.requirement); as ficha) {
+                    <span class="vinculo__acciones">
+                      <button app-button type="button" variant="secondary" size="sm" [disabled]="busy() || !reviewable(ficha) || ficha.state === 'VERIFIED'" [attr.aria-label]="'Verificar ' + enlace.requirement.label" (clicked)="decide(enlace.requirement, 'VERIFIED')">Verificar</button>
+                      <button app-button type="button" variant="ghost" size="sm" [disabled]="busy() || !reviewable(ficha) || ficha.state === 'REJECTED'" [attr.aria-label]="'Rechazar ' + enlace.requirement.label" (clicked)="decide(enlace.requirement, 'REJECTED')">Rechazar</button>
+                    </span>
+                  } @else if (enlace.requirement.items.length > 1) {
+                    <button type="button" class="vinculo__enlace" data-testid="form-review-items" (click)="viewRequirement.emit(enlace.requirement.code)">
+                      Revisar las {{ enlace.requirement.items.length }} fichas
+                    </button>
+                  }
                 }
               </li>
             }

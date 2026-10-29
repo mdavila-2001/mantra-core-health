@@ -5,7 +5,7 @@ import {
   type AdmissionRequirement,
   type AdmissionStatusCode,
   type ReasonCode,
-  type RequirementStatusCode,
+  type RequirementStateCode,
   type RequirementsSummary,
   type SourceTypeCode,
 } from '@core/data-access/admissions/admissions.types';
@@ -66,22 +66,25 @@ export const ADMISSION_STATUS_TABS: readonly { readonly code: AdmissionStatusCod
   { code: 'WITHDRAWN', label: 'Retiradas' },
 ];
 
-export const REQUIREMENT_STATUS_LABEL: Readonly<Record<RequirementStatusCode, string>> = {
+export const REQUIREMENT_STATUS_LABEL: Readonly<Record<RequirementStateCode, string>> = {
   PENDING: 'Pendiente',
   VERIFIED: 'Verificado',
   REJECTED: 'Rechazado',
   INFO_REQUIRED: 'Información requerida',
+  NOT_PROVIDED: 'No aportado',
+  MISSING: 'Falta',
 };
 
 export function requirementStatusLabel(code: string | null): string {
-  return code === null ? 'Sin revisar' : (REQUIREMENT_STATUS_LABEL[code as RequirementStatusCode] ?? code);
+  return code === null ? 'Sin revisar' : (REQUIREMENT_STATUS_LABEL[code as RequirementStateCode] ?? code);
 }
 
 export function requirementStatusVariant(code: string | null): BadgeVariant {
-  switch (code as RequirementStatusCode | null) {
+  switch (code as RequirementStateCode | null) {
     case 'VERIFIED':
       return 'success';
     case 'REJECTED':
+    case 'MISSING':
       return 'error';
     case 'INFO_REQUIRED':
       return 'warning';
@@ -109,14 +112,22 @@ export function progressText(summary: RequirementsSummary): string {
   return partes.join(', ');
 }
 
-/** Los requisitos obligatorios que todavía no están verificados. */
+/** Los requisitos obligatorios que todavía no se dan por cumplidos. */
 export function missingMandatory(requirements: readonly AdmissionRequirement[]): readonly AdmissionRequirement[] {
-  return requirements.filter((r) => r.mandatory && r.status !== 'VERIFIED');
+  return requirements.filter((r) => r.mandatory && !r.satisfied);
 }
 
-/** La decisión final de «Verificar» solo se habilita con todos los obligatorios verificados. */
-export function canVerifyFinal(requirements: readonly AdmissionRequirement[]): boolean {
-  return requirements.length > 0 && missingMandatory(requirements).length === 0;
+/** Cómo se dice por qué un requisito bloquea la verificación. */
+export const BLOCKER_REASON_LABEL: Readonly<Record<string, string>> = {
+  MISSING: 'no se aportó',
+  REJECTED: 'está rechazado',
+  PENDING: 'espera su revisión',
+  INFO_REQUIRED: 'espera lo que se pidió al médico',
+  BELOW_MINIMUM: 'no llega al mínimo de documentos',
+};
+
+export function blockerText(blocker: { readonly label: string; readonly reason: string }): string {
+  return `${blocker.label}: ${BLOCKER_REASON_LABEL[blocker.reason] ?? blocker.reason}`;
 }
 
 /* ---- validación de los formularios de decisión ------------------------------- */
@@ -248,14 +259,14 @@ export function doctorStatusCopy(code: string): DoctorStatusCopy {
     case 'EXPIRED':
       return {
         title: 'Su verificación venció',
-        detail: 'La vigencia de su verificación terminó. Escriba al equipo de soporte para renovarla.',
-        canResubmit: false,
+        detail: 'La vigencia de su verificación terminó. Corrija lo que haga falta y reenvíe la solicitud para renovarla.',
+        canResubmit: true,
       };
     case 'ABANDONED':
       return {
         title: 'Su solicitud se cerró por falta de respuesta',
-        detail: 'No recibimos la información que se le pidió dentro del plazo. Escriba al equipo de soporte para reabrirla.',
-        canResubmit: false,
+        detail: 'No recibimos la información que se le pidió dentro del plazo. Puede reenviar su solicitud cuando la tenga.',
+        canResubmit: true,
       };
     case 'WITHDRAWN':
       return {

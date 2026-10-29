@@ -98,18 +98,16 @@
         <app-tab label="Resumen">
           <div class="admision__panel" data-testid="admission-summary">
             <dl class="admision__resumen">
-              <div><dt>Correo</dt><dd>{{ d.practitioner.email ?? 'No declarado' }}</dd></div>
-              <div><dt>Teléfono</dt><dd>{{ d.practitioner.phone ?? 'No declarado' }}</dd></div>
-              <div><dt>Ciudad</dt><dd>{{ d.practitioner.city ?? 'No declarada' }}</dd></div>
+              <div><dt>Documento completo</dt><dd data-testid="admission-national-id">{{ d.practitioner.nationalId ?? 'No declarado' }}</dd></div>
+              <div><dt>Correo</dt><dd>{{ d.practitioner.personalEmail ?? d.practitioner.workEmail ?? 'No declarado' }}</dd></div>
+              <div><dt>Celular</dt><dd>{{ d.practitioner.personalMobile ?? d.practitioner.workMobile ?? 'No declarado' }}</dd></div>
               <div>
-                <dt>Se registró</dt>
-                <dd>
-                  @if (d.practitioner.registeredAt) {
-                    {{ d.practitioner.registeredAt | date: 'dd/MM/yyyy HH:mm' }}
-                  } @else {
-                    Sin fecha
-                  }
-                </dd>
+                <dt>Verificación vigente hasta</dt>
+                <dd>{{ d.validUntil ?? 'Aún no verificada' }}</dd>
+              </div>
+              <div>
+                <dt>Reenvíos del médico</dt>
+                <dd>{{ d.resubmissionCount }}</dd>
               </div>
               <div>
                 <dt>Matrículas, títulos y especialidades</dt>
@@ -131,6 +129,11 @@
                 {{ d.decisionReasonText }}
               </app-alert>
             }
+            @if (d.internalNote) {
+              <app-alert tone="info" title="Nota interna: no la ve el profesional" data-testid="admission-internal-note">
+                {{ d.internalNote }}
+              </app-alert>
+            }
             @if (missing().length > 0 && inReview()) {
               <p class="admision__falta" data-testid="admission-summary-missing">
                 Falta verificar: <strong>{{ missing().length }}</strong>
@@ -149,6 +152,7 @@
           <app-admission-requirements
             [requirements]="d.requirements"
             [documents]="d.documents"
+            [summary]="d.requirementsSummary"
             [canReview]="canReview()"
             [busy]="busy()"
             [highlight]="highlight()"
@@ -191,6 +195,7 @@
             [highlight]="highlight()"
             (review)="openRequirementReview($event)"
             (viewEvidence)="showEvidence($event)"
+            (viewRequirement)="showRequirement($event)"
           />
           }
         </app-tab>
@@ -201,18 +206,18 @@
               <li class="historial__evento">
                 <p class="historial__titulo">
                   <strong>{{ eventLabel(e.type) }}</strong>
-                  @if (requirementLabel(e.itemId); as requisito) {
+                  @if (requirementLabel(e.requirementCode); as requisito) {
                     · {{ requisito }}
                   }
                 </p>
                 <p class="historial__meta">
-                  {{ e.actor.name }} · {{ e.occurredAt | date: 'dd/MM/yyyy HH:mm' }}
-                  @if (e.fromStatus && e.toStatus && e.fromStatus !== e.toStatus) {
-                    · {{ e.fromStatus }} → {{ e.toStatus }}
+                  {{ e.actor?.name ?? 'Sistema' }} · {{ e.occurredAt | date: 'dd/MM/yyyy HH:mm' }}
+                  @if (e.fromStatus && e.toStatus && e.fromStatus.code !== e.toStatus.code) {
+                    · {{ e.fromStatus.label }} → {{ e.toStatus.label }}
                   }
                 </p>
-                @if (e.sourceLabel) {
-                  <p class="historial__detalle">Fuente: {{ e.sourceLabel }}</p>
+                @if (e.sourceUri) {
+                  <p class="historial__detalle">Fuente: {{ e.sourceUri }}</p>
                 }
                 @if (e.reasonText) {
                   <p class="historial__detalle">
@@ -220,11 +225,6 @@
                       <strong>{{ reasonLabel(e.reasonCode) }}:</strong>
                     }
                     {{ e.reasonText }}
-                  </p>
-                }
-                @if (e.internalNote) {
-                  <p class="historial__detalle historial__nota">
-                    <strong>Nota interna: no la ve el profesional.</strong> {{ e.internalNote }}
                   </p>
                 }
               </li>

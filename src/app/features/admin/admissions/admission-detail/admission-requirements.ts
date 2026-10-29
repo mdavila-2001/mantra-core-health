@@ -4,38 +4,45 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import type {
   AdmissionDocument,
   AdmissionRequirement,
+  AdmissionReviewItem,
   RequirementDecision,
+  RequirementsSummary,
 } from '@core/data-access/admissions/admissions.types';
 import {
   formatBytes,
   missingMandatory,
   mimeLabel,
   progressText,
-  requirementStatusLabel,
   reasonCodeLabel,
+  requirementStatusLabel,
   requirementStatusVariant,
-  sourceTypeLabel,
 } from '@shared/admissions/admission-presentation';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { EmptyState } from '@shared/components/molecules/empty-state/empty-state';
 
-/** Cuántos documentos se listan por requisito antes de «Ver todos». */
-export const DOCUMENTS_VISIBLE = 4;
+/** Cuántas fichas se listan por requisito antes de «Ver todas». */
+export const ITEMS_VISIBLE = 4;
 
+/** Qué pidió quien revisa: una decisión sobre UNA ficha de un requisito. */
 export interface RequirementReviewRequest {
-  readonly requirementId: string;
+  /** La ficha (matrícula, título…): se vuelve a buscar en la ficha vigente al abrir el formulario. */
+  readonly itemId: string;
+  readonly requirementCode: string;
   readonly decision: RequirementDecision;
 }
 
 /**
  * La lista de requisitos de la admisión: lo principal de la revisión.
  *
- * Cada requisito dice qué es, si es obligatorio, qué datos y documentos subió
- * el médico, en qué estado está y quién lo revisó con qué fuente. Las tres
- * decisiones —«Verificar», «Rechazar», «Pedir información»— se piden acá y las
- * resuelve el anfitrión (formulario con fuente o motivo, petición, recarga).
+ * Cada requisito dice qué es, si es obligatorio y en qué estado está; debajo,
+ * una fila por ficha que el médico declaró (cada matrícula, cada título), con
+ * su documento, la fuente que declaró quien la verificó y sus tres decisiones:
+ * «Verificar», «Rechazar» y «Pedir información». Cada ficha se revisa por
+ * separado: un título verificado no verifica al siguiente. Las decisiones se
+ * piden acá y las resuelve el anfitrión (formulario con fuente o motivo,
+ * petición, recarga).
  */
 @Component({
   selector: 'app-admission-requirements',
@@ -47,6 +54,8 @@ export interface RequirementReviewRequest {
 export class AdmissionRequirements {
   readonly requirements = input.required<readonly AdmissionRequirement[]>();
   readonly documents = input.required<readonly AdmissionDocument[]>();
+  /** El avance que calculó la API, a nivel de requisito. */
+  readonly summary = input.required<RequirementsSummary>();
   readonly canReview = input(false);
   readonly busy = input(false);
   /** Requisito resaltado (llegó desde el formulario o el carrusel). */
@@ -59,51 +68,42 @@ export class AdmissionRequirements {
   private readonly expanded = signal<ReadonlySet<string>>(new Set());
 
   protected readonly progress = computed(() => {
-    const todos = this.requirements();
-    const summary = {
-      total: todos.length,
-      verified: todos.filter((r) => r.status === 'VERIFIED').length,
-      rejected: todos.filter((r) => r.status === 'REJECTED').length,
-      pending: todos.filter((r) => r.status === 'PENDING' || r.status === 'INFO_REQUIRED').length,
+    const resumen = this.summary();
+    return {
+      ...resumen,
+      text: progressText(resumen),
+      ratio: resumen.total === 0 ? 0 : resumen.verified / resumen.total,
     };
-    return { ...summary, text: progressText(summary), ratio: summary.total === 0 ? 0 : summary.verified / summary.total };
   });
   protected readonly missing = computed(() => missingMandatory(this.requirements()));
 
-  protected documentsOf(code: string): readonly AdmissionDocument[] {
-    return this.documents().filter((d) => d.requirementCode === code);
+  protected documentOf(item: AdmissionReviewItem): AdmissionDocument | null {
+    return item.fileId === null ? null : (this.documents().find((d) => d.fileId === item.fileId) ?? null);
   }
 
-  protected visibleDocuments(requirement: AdmissionRequirement): readonly AdmissionDocument[] {
-    const todos = this.documentsOf(requirement.code);
-    return this.expanded().has(requirement.id) ? todos : todos.slice(0, DOCUMENTS_VISIBLE);
-  }
-
-  protected hiddenCount(requirement: AdmissionRequirement): number {
-    return this.expanded().has(requirement.id)
-      ? 0
-      : Math.max(0, this.documentsOf(requirement.code).length - DOCUMENTS_VISIBLE);
+  protected visibleItems(requirement: AdmissionRequirement): readonly AdmissionReviewItem[] {
+    return this.expanded().has(requirement.code) ? requirement.items : requirement.items.slice(0, ITEMS_VISIBLE);
   }
 
   protected toggle(requirement: AdmissionRequirement): void {
     this.expanded.update((actual) => {
       const next = new Set(actual);
-      if (next.has(requirement.id)) next.delete(requirement.id);
-      else next.add(requirement.id);
+      if (next.has(requirement.code)) next.delete(requirement.code);
+      else next.add(requirement.code);
       return next;
     });
   }
 
   protected isExpanded(requirement: AdmissionRequirement): boolean {
-    return this.expanded().has(requirement.id);
+    return this.expanded().has(requirement.code);
   }
 
-  protected statusText(requirement: AdmissionRequirement): string {
-    return requirementStatusLabel(requirement.status);
+  protected statusText(state: string): string {
+    return requirementStatusLabel(state);
   }
 
-  protected variant(requirement: AdmissionRequirement) {
-    return requirementStatusVariant(requirement.status);
+  protected variant(state: string) {
+    return requirementStatusVariant(state);
   }
 
   protected docMeta(doc: AdmissionDocument): string {
@@ -114,15 +114,18 @@ export class AdmissionRequirements {
     return value !== null && /^https?:\/\//i.test(value);
   }
 
-  protected sourceTypeText(code: string): string {
-    return sourceTypeLabel(code);
-  }
-
   protected reasonText(code: string | null): string {
     return reasonCodeLabel(code);
   }
 
-  protected decide(requirement: AdmissionRequirement, decision: RequirementDecision): void {
-    if (!this.busy()) this.review.emit({ requirementId: requirement.id, decision });
+  /** Una ficha se puede revisar cuando la admisión se tomó y la ficha ya tiene su revisión. */
+  protected reviewable(item: AdmissionReviewItem): boolean {
+    return this.canReview() && item.id !== null && item.rowVersion !== null;
+  }
+
+  protected decide(requirement: AdmissionRequirement, item: AdmissionReviewItem, decision: RequirementDecision): void {
+    if (!this.busy() && this.reviewable(item)) {
+      this.review.emit({ itemId: item.itemId, requirementCode: requirement.code, decision });
+    }
   }
 }
