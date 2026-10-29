@@ -128,13 +128,13 @@
       }
     }
 
-    @if (ed.hint(); as hint) {
-      <p class="ed-hint" role="status" data-testid="editor-hint">{{ hint }}</p>
-    }
   }
 
   <div class="ed-body" [class.is-read-only]="narrow()">
     <section class="ed-stage" aria-label="Plano en edición" data-testid="editor-stage">
+      @if (ed.hint(); as hint) {
+        <p class="ed-hint" role="status" data-testid="editor-hint">{{ hint }}</p>
+      }
       @if (plan.meta(); as meta) {
         <app-floor-plan-canvas
           [planName]="meta.name"

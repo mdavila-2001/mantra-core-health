@@ -28,7 +28,22 @@
 .ed-dirty.is-dirty { color: var(--text-primary); }
 .ed-dirty.is-dirty::before { content: '● '; color: var(--st-warning-fg); }
 
-.ed-hint { margin: 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-md); background: var(--bg-inset); color: var(--text-primary); font-size: var(--fs-caption); }
+/* La ayuda de la herramienta flota sobre el lienzo: si empujara el plano, el puntero dejaría de apuntar a lo que se ve. */
+.ed-hint {
+    position: absolute;
+    z-index: 2;
+    top: var(--sp-2);
+    left: var(--sp-2);
+    right: 64px;
+    margin: 0;
+    padding: var(--sp-2) var(--sp-3);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-md);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: var(--fs-caption);
+    pointer-events: none;
+}
 
 .ed-changes { padding: var(--sp-3); background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--r-lg); font-size: var(--fs-caption); }
 .ed-changes h2 { margin: 0 0 var(--sp-2); font-size: var(--fs-body); }
