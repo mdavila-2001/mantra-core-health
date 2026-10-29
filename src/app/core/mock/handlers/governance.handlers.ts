@@ -8,6 +8,8 @@ import {
   type MockRequest,
   type MockRouter,
 } from '../mock-router';
+import { PROFESSIONALS } from '../fixtures/people';
+import { MOCK_USERS } from '../mock-session';
 
 /* ============================================================================
     Backend simulado del gobierno de acceso: bitácora de auditoría
@@ -372,8 +374,17 @@ function registerAccessAdmin(router: MockRouter): void {
   // Sólo el nombre visible: es lo que lee la consola de una persona fuera de la lista.
   router.get('/iam/users/:id', (req) => {
     const user = USERS.find((u) => u.id === req.params['id']);
-    return user
-      ? { id: user.id, displayName: user.displayName, statusConceptId: ACTIVE_STATUS, lastLoginAt: user.lastLoginAt }
+    if (user) {
+      return { id: user.id, displayName: user.displayName, statusConceptId: ACTIVE_STATUS, lastLoginAt: user.lastLoginAt };
+    }
+    // Las cuentas con las que se inicia sesión y las de los profesionales de la
+    // maqueta también tienen nombre: las membresías de las organizaciones
+    // apuntan a ellas y la plantilla tiene que poder mostrar a la persona.
+    const cuenta =
+      MOCK_USERS.find((u) => u.id === req.params['id']) ??
+      PROFESSIONALS.find((p) => p.userId === req.params['id']);
+    return cuenta
+      ? { id: req.params['id'], displayName: cuenta.displayName, statusConceptId: ACTIVE_STATUS, lastLoginAt: null }
       : notFound('Usuario no encontrado');
   });
 
