@@ -599,7 +599,14 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
    Sólo se anima el contenido (`view-transition-name: contenido`, en
    `.app-main__inner`): el menú lateral y la barra superior no se mueven. El
    resto de la página no tiene transición propia. Sin la API el router
-   navega como siempre; con `prefers-reduced-motion` ni siquiera se crea. */
+   navega como siempre.
+
+   Con `prefers-reduced-motion` la transición SÍ se crea y la regla del final
+   de este bloque apaga la animación de sus pseudo-capas. No se salta con
+   `skipTransition()`: eso rechaza `ready` con «AbortError: Transition was
+   skipped» y el router lo escribe en la consola en cada navegación (#1449).
+   Aparte, el `*` del bloque global de movimiento reducido no alcanza a los
+   `::view-transition-*`, así que esta regla no es redundante. */
 @keyframes vt-sale {
     to {
         opacity: 0;
@@ -627,6 +634,13 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 }
 .app-main__inner {
     view-transition-name: contenido;
+}
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
