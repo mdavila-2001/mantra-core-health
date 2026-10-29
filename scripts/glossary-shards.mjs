@@ -16,7 +16,12 @@
  * Sin `public/glossary-data/`, la maqueta sirve la semilla
  * (`public/glossary-seed/`, `yarn mock:glossary:seed`), que sale del mismo
  * build sin las fichas completas de `detail/`.
+ *
+ * Al terminar regenera `src/environments/env.generated.ts`: ahí queda anotado
+ * (`mockAssets.glossaryData`) que la descarga completa existe, y el simulador
+ * la prueba primero. Si la copiás a mano, corré `yarn env:generate`.
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
@@ -71,3 +76,7 @@ console.log(
 console.log(
   `glossary-data: ${filas.length} términos de ${ORIGEN}, ${archivos.size} archivos, ${(bytes / 1024 / 1024).toFixed(1)} MB → public/glossary-data/`,
 );
+
+// El simulador no pide `glossary-data/` si el entorno generado dice que no está
+// (así evita un 404 esperado en la consola): hay que decirle que ahora sí.
+execFileSync(process.execPath, [join(RAIZ, 'scripts', 'generate-env.mjs')], { stdio: 'inherit' });
