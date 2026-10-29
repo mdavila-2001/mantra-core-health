@@ -25,6 +25,12 @@ const BASE = process.argv[2] ?? 'http://localhost:4300';
 const SALIDA = fileURLToPath(new URL('../evidencias/admisiones-2026-10-29', import.meta.url));
 const VISTAS = [390, 768, 1440];
 const TEMAS = ['claro', 'oscuro'];
+// MATRIZ=completa (por defecto): 3 anchos x 2 temas. MATRIZ=rapida: 1440 claro, 390 claro y
+// 1440 oscuro, para correr con poca memoria (cada captura a página completa pesa).
+const COMBINACIONES =
+  process.env.MATRIZ === 'rapida'
+    ? [['claro', 1440], ['claro', 390], ['oscuro', 1440]]
+    : TEMAS.flatMap((tema) => VISTAS.map((ancho) => [tema, ancho]));
 
 const veredictos = [];
 const errores = [];
@@ -36,9 +42,10 @@ const ok = (nombre, cond, detalle = '') => {
 
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
-  const navegador = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  const navegador = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--disable-gpu', '--disable-dev-shm-usage'] } : {});
   const contexto = await navegador.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'es-BO' });
   const pagina = await contexto.newPage();
+  pagina.on('crash', () => process.stdout.write('!! la pestaña del navegador se cayó\n'));
   pagina.on('pageerror', (e) => errores.push(String(e)));
   pagina.on('console', (m) => {
     if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text()) && !/\/review → 409 · CONFLICT/.test(m.text())) errores.push(m.text());
@@ -56,15 +63,17 @@ async function main() {
   /** Una captura por ancho y por tema. */
   async function fotos(nombre, opciones = {}) {
     const archivos = [];
-    for (const tema of TEMAS) {
-      await fijarTema(tema);
-      for (const ancho of VISTAS) {
-        await pagina.setViewportSize({ width: ancho, height: ancho === 390 ? 844 : ancho === 768 ? 1024 : 1000 });
-        await esperar(250);
-        const archivo = `${nombre}__${tema}-${ancho}.png`;
-        await pagina.screenshot({ path: `${SALIDA}/${archivo}`, fullPage: opciones.completa ?? true });
-        archivos.push(archivo);
+    let temaActual = '';
+    for (const [tema, ancho] of COMBINACIONES) {
+      if (tema !== temaActual) {
+        await fijarTema(tema);
+        temaActual = tema;
       }
+      await pagina.setViewportSize({ width: ancho, height: ancho === 390 ? 844 : ancho === 768 ? 1024 : 1000 });
+      await esperar(250);
+      const archivo = `${nombre}__${tema}-${ancho}.png`;
+      await pagina.screenshot({ path: `${SALIDA}/${archivo}`, fullPage: opciones.completa ?? true });
+      archivos.push(archivo);
     }
     await pagina.setViewportSize({ width: 1440, height: 1000 });
     await fijarTema('claro');
