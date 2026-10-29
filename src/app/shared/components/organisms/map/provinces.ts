@@ -7,7 +7,7 @@ import type { PuntoGeo } from './map-pin.types';
 
 export {
   CARGADOR_DE_PROVINCIAS,
-  RUTA_DE_PROVINCIAS,
+  PROVINCES_ASSET_PATH,
   type CargadorDeProvincias,
   type GeometriaDeProvincia,
   type ProvinciaGeo,

@@ -16,6 +16,7 @@ import {
   usuarioDeRefreshToken,
   type MockUser,
 } from '../mock-session';
+import { medicalFacilityRejection } from './medical-facility.validation';
 import { ahora, bodyAsQuery, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -397,6 +398,9 @@ export function registrarAuth(router: MockRouter): void {
           'generalManager' | 'commercialManager' | 'marketingManager',
           { fullName?: string; phone?: string; email?: string } | undefined
         >;
+        // Bloque propio de una organización médica (contrato del 28/10/2026):
+        // se valida en `medicalFacilityRejection`.
+        medicalFacility?: unknown;
       };
       owner?: { email?: string };
     }>({ body });
@@ -501,6 +505,9 @@ export function registrarAuth(router: MockRouter): void {
       });
     }
 
+    const rechazoMedico = medicalFacilityRejection(datos.organization ?? {});
+    if (rechazoMedico !== null) return rechazoMedico;
+
     const diagnosticUnit = datos.organization?.diagnosticUnit;
     if (diagnosticUnit !== undefined) {
       // Mismo contrato que la API real: `diagnosticUnit` sólo corresponde a
@@ -595,7 +602,13 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
     if (legalDocuments !== undefined && !demoPortalRegistration) {
-      const obligatorios = LEGAL_DOCUMENT_FIELDS.filter((campo) => campo !== 'constitutionFileId');
+      // Como `assertLegalDocumentsForEntityType`: la matrícula de comercio sólo
+      // la omite un profesional independiente (decisión del 28/10/2026).
+      const obligatorios = LEGAL_DOCUMENT_FIELDS.filter(
+        (campo) =>
+          campo !== 'constitutionFileId' &&
+          !(campo === 'commerceRegistryFileId' && legalEntityType === 'PROFESIONAL_INDEPENDIENTE'),
+      );
       const faltantes = obligatorios.filter((campo) => !legalDocuments[campo]);
       if (faltantes.length > 0) {
         // Mismo contrato que el `ValidationPipe` real: el bloque es todo o
@@ -634,7 +647,11 @@ export function registrarAuth(router: MockRouter): void {
     }
     const executives = datos.organization?.executives;
     if (!esUnipersonal && !demoPortalRegistration) {
-      if (legalDocuments !== undefined && !legalDocuments.constitutionFileId) {
+      if (
+        legalDocuments !== undefined &&
+        !legalDocuments.constitutionFileId &&
+        legalEntityType !== 'PROFESIONAL_INDEPENDIENTE'
+      ) {
         return preconditionFailed(
           'Falta la escritura de constitución: sólo una empresa unipersonal puede omitirla',
           { document: 'constitutionFileId' },
@@ -700,6 +717,8 @@ export function registrarAuth(router: MockRouter): void {
       ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
       // Como la API (P50): toda farmacia nace con su fila y su casa central.
       ...(tipoDeOrganizacion === 'PHARMACY' ? { pharmacyId: nuevoId('farmacia') } : {}),
+      // Como la API: el bloque se persiste en la misma transacción del alta.
+      ...(datos.organization?.medicalFacility === undefined ? {} : { medicalFacilityRegistered: true }),
     };
   });
 

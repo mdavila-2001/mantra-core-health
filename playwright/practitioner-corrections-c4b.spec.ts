@@ -301,7 +301,7 @@ test('médica · una cita sin comprobantes lo dice y ofrece marcar el pago sin c
   await expect(dialog).toContainText('El paciente todavía no subió comprobantes');
   await snapshotMatrix(page, () => dialog, 'practitioner-receipts-dialog-empty');
 
-  await dialog.getByTestId('payment-receipts-empty-manual').click();
+  await dialog.getByTestId('payment-receipts-manual-toggle').click();
   await expect(dialog.getByTestId('payment-manual')).toBeVisible();
   await snapshot(dialog, 'practitioner-manual-payment-1280-light');
 

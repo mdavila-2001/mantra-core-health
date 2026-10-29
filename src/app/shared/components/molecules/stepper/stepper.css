@@ -27,6 +27,14 @@
     min-width: max-content;
 }
 
+/* El último paso no tiene riel a su derecha: si también crece, reserva un
+   hueco vacío que se come ~40 % del ancho y el recorrido se queda corto de la
+   tarjeta (issue #1448). Que mida lo que mide su marcador y su rótulo, y el
+   resto del ancho lo reparten los tramos entre pasos. */
+.stepper__step:last-child {
+    flex: 0 0 auto;
+}
+
 /* ---- modo compacto -------------------------------------------------------
 
    Diez fases con rótulo no entran en un teléfono. En compacto queda el
@@ -73,6 +81,97 @@
     display: none;
     flex-basis: var(--sp-2);
     min-width: var(--sp-2);
+}
+
+/* ---- solo el rótulo del paso actual (`currentLabelOnly`) ------------------
+
+   En teléfono, una fila: marcadores unidos por el riel y, junto al actual, su
+   rótulo. Los demás rótulos salen de la vista —no del árbol de accesibilidad—.
+   El rótulo del actual puede ser largo («Documentación legal obligatoria
+   (PDF)…»): se parte en renglones dentro de su paso, por palabras, en vez de
+   partir el recorrido.
+
+   El actual crece y se queda con el ancho que sobra; el resto mide su marcador
+   y un tramo corto de riel. `flex-wrap` sigue puesto: si de verdad no entran
+   —cinco pasos en 320 px—, caen a un segundo renglón en vez de desbordar.
+
+   Por debajo de 360 px ni el rótulo del actual cabe junto a los marcadores:
+   queda sólo el recorrido, y el nombre de la página lo dice el título que el
+   formulario trae debajo. Con `compact` activo nada de esto entra (la clase ni
+   se pone). */
+@media (max-width: 779px) {
+    .stepper--solo-actual {
+        gap: var(--sp-1);
+        align-items: center;
+    }
+
+    .stepper--solo-actual .stepper__step {
+        min-width: 0;
+        gap: var(--sp-1);
+    }
+
+    .stepper--solo-actual .stepper__step:not(.stepper__step--current) {
+        flex: 0 0 auto;
+    }
+
+    /* Base 0: el ancho de su rótulo NO cuenta para decidir si el recorrido cabe
+       en la fila —un rótulo largo mandaba a los demás pasos a otros renglones—;
+       el actual se queda con lo que sobra y su rótulo se parte dentro. */
+    .stepper--solo-actual .stepper__step--current {
+        flex: 1 1 0;
+    }
+
+    .stepper--solo-actual .stepper__body {
+        min-width: 0;
+    }
+
+    .stepper--solo-actual .stepper__label {
+        overflow-wrap: break-word;
+    }
+
+    .stepper--solo-actual .stepper__connector {
+        flex-basis: var(--sp-2);
+        min-width: var(--sp-2);
+    }
+
+    /* El área táctil de 44 que el rótulo daba por ancho, ahora la da el control. */
+    .stepper--solo-actual .stepper__step:not(.stepper__step--current) .stepper__control {
+        min-width: 44px;
+        justify-content: center;
+        gap: 0;
+        padding-inline: 0;
+    }
+
+    .stepper--solo-actual .stepper__step:not(.stepper__step--current) .stepper__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 359px) {
+    .stepper--solo-actual .stepper__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
+
+    .stepper--solo-actual .stepper__control {
+        min-width: 44px;
+        justify-content: center;
+        gap: 0;
+        padding-inline: 0;
+    }
 }
 
 /* ---- el paso como control (modo interactivo) ----------------------------- */
@@ -243,11 +342,13 @@
     transform: scaleX(1);
 }
 
-/* El riel del paso completado se tiñe entero (arriba); el que sale del paso
-   actual queda a medias, para que la línea llena termine donde terminó el
-   avance de verdad. */
+/* El riel que sale del paso actual queda VACÍO: la línea llena termina en el
+   marcador actual y ni un tramo más. Antes quedaba a medias, y entonces el
+   stepper decía «a mitad de camino hacia el siguiente» mientras la barra del
+   formulario —que cuenta el mismo avance, `porcentajeDelRecorrido`— decía
+   que todavía no había salido del primero (issue #1448). */
 .stepper__step--current .stepper__connector::after {
-    transform: scaleX(0.5);
+    transform: scaleX(0);
 }
 
 /* ---- movimiento ---------------------------------------------------------- */
