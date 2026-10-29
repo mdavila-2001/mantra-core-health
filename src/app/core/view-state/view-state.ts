@@ -116,6 +116,16 @@ export function unexpectedError(requestId: string, message?: string): Unexpected
     : { status: 'error', requestId, message };
 }
 
+/**
+ * El mensaje que la API ancló a `field` en un estado S4, o `''` si no hay.
+ *
+ * `''` y no `null`: `app-form-field` espera siempre un texto en `errorMessage`.
+ */
+export function fieldIssueOf<T>(state: ViewState<T>, field: string): string {
+  if (state.status !== 'validation') return '';
+  return state.issues.find((issue) => issue.field === field)?.message ?? '';
+}
+
 // ---------------------------------------------------------------------------
 // Guardas de tipo
 // ---------------------------------------------------------------------------
