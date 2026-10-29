@@ -6,6 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { SessionStore } from '../../../../core/auth/session.store';
+import { Select } from '../../../../shared/components/atoms/select/select';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import type { CierreDelFormulario } from '../form-conclusion-block/form-conclusion-block';
 import { ProceduresBlock } from '../procedures-block/procedures-block';
@@ -56,6 +57,33 @@ const PLANTILLA = {
       name: 'Edema',
       dataType: 'boolean',
       required: false,
+    },
+  ],
+};
+
+/**
+ * Una plantilla con un campo de catálogo: `valueSetId` apunta al conjunto de
+ * valores de terminología, no a opciones tecleadas. Un `dataType: 'string'`
+ * a propósito — `valueSetId` convive con cualquier tipo, igual que en
+ * `ChartTemplateFieldDto`; no es el `dataType` el que decide si el campo es
+ * de catálogo.
+ */
+const PLANTILLA_CATALOGO = {
+  id: 'tpl-cat',
+  specialtyConceptId: 'sp-1',
+  code: 'CATALOGO_INTAKE',
+  name: 'Ficha con catálogo',
+  version: 1,
+  statusConceptId: 'st-1',
+  fields: [
+    {
+      assignmentId: 'as-10',
+      fieldId: 'f-10',
+      code: 'habito_tabaquico',
+      name: '¿Fuma?',
+      dataType: 'string',
+      valueSetId: 'vs-tabaco',
+      required: true,
     },
   ],
 };
@@ -196,6 +224,11 @@ describe('SpecialtyFormBlock', () => {
 
   function peticionDePlantillas() {
     return http.expectOne((r) => r.url === '/charts/templates' && r.method === 'GET');
+  }
+
+  /** `GET /terminology/value-sets/:id/$expand` — las opciones de un campo de catálogo. */
+  function expansionRequest(valueSetId: string) {
+    return http.expectOne((r) => r.url === `/terminology/value-sets/${valueSetId}/$expand`);
   }
 
   function peticionDeRespuesta() {
@@ -1717,6 +1750,113 @@ describe('SpecialtyFormBlock', () => {
 
       expect(error).toHaveBeenCalledTimes(1);
       expect(interno<() => readonly string[]>('fallosDelCierre')()[0]).toContain('organización');
+    });
+  });
+
+  /**
+   * Un campo con `valueSetId` se dibuja como desplegable sobre el catálogo de
+   * terminología — no como texto libre, que es lo que pasaba antes: el
+   * backend ya publicaba `valueSetId` por campo y ya servía sus opciones por
+   * `GET /terminology/value-sets/:id/$expand`, y este bloque los ignoraba.
+   */
+  describe('campo de catálogo (valueSetId)', () => {
+    it('se dibuja como desplegable, con las opciones del conjunto de valores', () => {
+      peticionDePlantillas().flush([PLANTILLA_CATALOGO]);
+      fixture.detectChanges();
+
+      expansionRequest('vs-tabaco').flush({
+        valueSetId: 'vs-tabaco',
+        valueSetVersionId: 'vsv-1',
+        version: '1.0.0',
+        items: [
+          { conceptId: 'c-nunca', code: 'NUNCA', display: 'Nunca', codeSystemVersionId: 'cv-1' },
+          {
+            conceptId: 'c-exfumador',
+            code: 'EX',
+            display: 'Ex fumador',
+            codeSystemVersionId: 'cv-1',
+          },
+        ],
+        count: 2,
+        limit: 200,
+        nextCursor: null,
+      });
+      peticionDeRespuesta().flush(LISTADO_VACIO);
+      fixture.detectChanges();
+
+      const campo = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="campo-catalogo"]',
+      );
+      expect(campo).not.toBeNull();
+      // El desplegable del sistema es un botón que abre un diálogo, no un
+      // `<select>` nativo: se comprueban las opciones que recibe y se emite
+      // la elección como lo hace él.
+      const selector = fixture.debugElement.query(By.css('[data-testid="campo-catalogo"]'));
+      const select = selector.componentInstance as Select<string>;
+      expect(select.options().map((opcion) => opcion.label)).toEqual(['Nunca', 'Ex fumador']);
+      expect(select.placeholder()).toBe('Seleccionar opción');
+
+      select.value.set('c-exfumador');
+      fixture.detectChanges();
+
+      const valores = interno<() => Record<string, unknown>>('valores')();
+      // Lo que se guarda es el `conceptId`, no la etiqueta: es lo que
+      // `valoresParaEnviar` manda y lo que el modo lectura tiene que resolver
+      // de vuelta a texto.
+      expect(valores['f-10']).toBe('c-exfumador');
+    });
+
+    it('en modo lectura, muestra la etiqueta elegida y no el conceptId guardado', () => {
+      peticionDePlantillas().flush([PLANTILLA_CATALOGO]);
+      fixture.detectChanges();
+
+      expansionRequest('vs-tabaco').flush({
+        valueSetId: 'vs-tabaco',
+        valueSetVersionId: 'vsv-1',
+        version: '1.0.0',
+        items: [
+          {
+            conceptId: 'c-exfumador',
+            code: 'EX',
+            display: 'Ex fumador',
+            codeSystemVersionId: 'cv-1',
+          },
+        ],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+      peticionDeRespuesta().flush({ ...LISTADO_VACIO, items: [INSTANCIA] });
+      http
+        .expectOne((r) => r.url === '/forms/instances/inst-9' && r.method === 'GET')
+        .flush({
+          ...INSTANCIA,
+          values: [
+            {
+              id: 'v-10',
+              fieldId: 'f-10',
+              dataType: 'string',
+              value: 'c-exfumador',
+              ordinal: 0,
+              masked: false,
+            },
+          ],
+        });
+      // El modo lectura carga también el bloque de notas/adicionales.
+      http.expectOne((r) => r.url === '/charts/notes' && r.method === 'GET').flush({
+        items: [],
+        limit: 50,
+        truncated: false,
+      });
+      fixture.detectChanges();
+
+      const respuestas =
+        interno<() => readonly { etiqueta: string; texto: string; masked: boolean }[]>(
+          'respuestasVisibles',
+        )();
+      expect(respuestas).toEqual([
+        { id: 'v-10', etiqueta: '¿Fuma?', texto: 'Ex fumador', masked: false },
+      ]);
     });
   });
 });

@@ -65,10 +65,18 @@ export function templateByCoverage(
   return menorQueCubreTodo ?? mejor;
 }
 
-/** Las respuestas de una instancia, en orden y en palabras. */
+/**
+ * Las respuestas de una instancia, en orden y en palabras.
+ *
+ * @param labelByConceptId - `conceptId → display` de los campos de
+ *   catálogo (`valueSetId`). Sin esto, un campo así imprimiría el uuid
+ *   guardado: el valor capturado es el `conceptId` elegido, no un texto que
+ *   `textoDeValor` sepa mostrar.
+ */
 export function responsesOf(
   detalle: FormInstanceDetail,
   campos: ReadonlyMap<string, ChartTemplateField>,
+  labelByConceptId: ReadonlyMap<string, string> = new Map(),
 ): readonly ResponseVisible[] {
   return [...detalle.values]
     .sort((a, b) => a.ordinal - b.ordinal)
@@ -80,8 +88,21 @@ export function responsesOf(
         texto: valor.masked
           ? // El marcador lo pone la vista; acá jamás viaja el contenido.
             ''
-          : textoDeValor(valor.value, valor.dataType ?? campo?.dataType),
+          : responseText(valor, campo, labelByConceptId),
         masked: valor.masked,
       };
     });
+}
+
+/** El texto de una respuesta, resolviendo primero contra el catálogo si el campo es de elección. */
+function responseText(
+  valor: FormInstanceDetail['values'][number],
+  campo: ChartTemplateField | undefined,
+  labelByConceptId: ReadonlyMap<string, string>,
+): string {
+  if (campo?.valueSetId !== undefined && typeof valor.value === 'string') {
+    const label = labelByConceptId.get(valor.value);
+    if (label !== undefined) return label;
+  }
+  return textoDeValor(valor.value, valor.dataType ?? campo?.dataType);
 }

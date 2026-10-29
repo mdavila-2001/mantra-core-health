@@ -18,6 +18,7 @@ import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.c
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
 import { writeFailureMessage } from '../../write-message';
+import { CatalogOptions } from './catalog-options';
 import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
 import type { MedicalNoteEntry } from '../../../../core/data-access/clinical/clinical.types';
@@ -301,6 +302,7 @@ export class SpecialtyFormBlock {
   private readonly adicionales = viewChild(AdditionalFields);
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
+  protected readonly catalogs = new CatalogOptions();
 
   /**
    * El encuentro en curso, o `null` si no hay ninguno abierto.
@@ -591,7 +593,7 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos traerlas.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
@@ -642,6 +644,7 @@ export class SpecialtyFormBlock {
       const encounterId = this.encounterId();
       untracked(() => this.consultarRespuesta(encounterId));
     });
+    this.catalogs.watch(this.catalogo);
   }
 
   protected recargarPlantillas(): void {
@@ -784,7 +787,7 @@ export class SpecialtyFormBlock {
       return state.issues.map((issue) => issue.message).join(' ') || 'No pudimos revisarlo.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
@@ -829,7 +832,7 @@ export class SpecialtyFormBlock {
           'No pudimos leer las notas de esta consulta.'
         );
       case 'error':
-        return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+        return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
       default:
         return 'No pudimos leer las notas de esta consulta.';
     }
@@ -944,7 +947,7 @@ export class SpecialtyFormBlock {
   protected readonly respuestasVisibles = computed<readonly ResponseVisible[]>(() => {
     const detalle = this.formularioRespondido();
     if (detalle === null) return [];
-    return responsesOf(detalle, this.camposConocidos());
+    return responsesOf(detalle, this.camposConocidos(), this.catalogs.labelByConceptId());
   });
 
   /** Descarga el formulario respondido con el motor PDF compartido. */
@@ -1256,7 +1259,7 @@ export class SpecialtyFormBlock {
       return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+      return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
     }
     return null;
   });
