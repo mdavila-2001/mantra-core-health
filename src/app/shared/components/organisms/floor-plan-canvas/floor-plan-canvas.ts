@@ -367,6 +367,9 @@ export class FloorPlanCanvas {
     this.setView(zoomAt(this.view(), size, factor, [size.width / 2, size.height / 2]));
   }
 
+  /** Desplaza el plano en píxeles (la hoja anclada abajo no debe tapar el espacio elegido). */
+  panByPixels(dx: number, dy: number): void { this.setView(panBy(this.view(), dx, dy)); }
+
   zoomIn(): void {
     this.zoomBy(ZOOM_STEP);
   }

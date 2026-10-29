@@ -291,6 +291,12 @@ export class FloorPlanPage {
 
   protected onHover(hover: CanvasHover | null): void {
     this.hover.set(hover);
+    // Con toque en pantalla chica la tarjeta es una hoja anclada abajo (≤ 40 % del alto): sube el plano lo justo para no taparlo.
+    if (hover && hover.source === 'touch' && this.narrow() && this.isBrowser) {
+      const limit = window.innerHeight * 0.6 - 8;
+      const bottom = hover.anchor.top + hover.anchor.height;
+      if (bottom > limit) this.canvas()?.panByPixels(0, limit - bottom);
+    }
   }
 
   protected closeCard(): void {
