@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { Stepper } from './stepper';
-import type { StepperStep } from './stepper.types';
+import { porcentajeDelRecorrido, type StepperStep } from './stepper.types';
 
 @Component({
   imports: [Stepper],
@@ -47,6 +47,22 @@ class HostCompacto {
   readonly interactivo = signal(true);
   readonly compacto = signal(true);
   readonly pedidos: number[] = [];
+}
+
+/** El recorrido con `currentLabelOnly` y `compact` a la vista (issue #1448). */
+@Component({
+  imports: [Stepper],
+  template: `<app-stepper
+    [steps]="steps()"
+    label="Crear cuenta"
+    [currentLabelOnly]="soloActual()"
+    [compact]="compacto()"
+  />`,
+})
+class HostSoloActual {
+  readonly steps = signal<readonly StepperStep[]>([]);
+  readonly soloActual = signal(true);
+  readonly compacto = signal(false);
 }
 
 const TRES_PASOS: readonly StepperStep[] = [
@@ -424,5 +440,91 @@ describe('Stepper', () => {
       expect(atributosDe(actual(compactado))).toEqual(atributosDe(actual(sinCompactar)));
       expect(atributosDe(item(compactado))).toEqual(atributosDe(item(sinCompactar)));
     });
+  });
+});
+
+describe('porcentajeDelRecorrido', () => {
+  const paso = (status: StepperStep['status'], i = 0): StepperStep => ({
+    label: `Paso ${i + 1}`,
+    status,
+  });
+
+  /** Un recorrido de `total` pasos cuyo actual es el `actual` (base 0). */
+  function recorrido(total: number, actual: number): readonly StepperStep[] {
+    return Array.from({ length: total }, (_, i) =>
+      paso(i < actual ? 'complete' : i === actual ? 'current' : 'upcoming', i),
+    );
+  }
+
+  it('es 0 % sobre el primer marcador y 100 % sobre el último', () => {
+    expect(porcentajeDelRecorrido(recorrido(2, 0))).toBe(0);
+    expect(porcentajeDelRecorrido(recorrido(2, 1))).toBe(100);
+    expect(porcentajeDelRecorrido(recorrido(5, 0))).toBe(0);
+    expect(porcentajeDelRecorrido(recorrido(5, 4))).toBe(100);
+  });
+
+  it('en el medio es la posición entre los tramos, no entre los pasos', () => {
+    expect(porcentajeDelRecorrido(recorrido(3, 1))).toBe(50);
+    expect(porcentajeDelRecorrido(recorrido(5, 1))).toBe(25);
+    expect(porcentajeDelRecorrido(recorrido(5, 2))).toBe(50);
+    expect(porcentajeDelRecorrido(recorrido(10, 1))).toBe(11);
+  });
+
+  it('crece con cada paso y nunca se pasa de 100', () => {
+    const valores = Array.from({ length: 7 }, (_, i) => porcentajeDelRecorrido(recorrido(7, i)));
+    expect(valores).toEqual([...valores].sort((a, b) => a - b));
+    expect(new Set(valores).size).toBe(7);
+    expect(Math.max(...valores)).toBe(100);
+  });
+
+  it('un recorrido de un paso, o vacío, no tiene qué medir', () => {
+    expect(porcentajeDelRecorrido([])).toBe(0);
+    expect(porcentajeDelRecorrido([paso('current')])).toBe(0);
+  });
+
+  it('sin paso actual: todo completado es 100 %, y si no hay nada hecho, 0 %', () => {
+    expect(porcentajeDelRecorrido([paso('complete', 0), paso('complete', 1)])).toBe(100);
+    expect(porcentajeDelRecorrido([paso('upcoming', 0), paso('upcoming', 1)])).toBe(0);
+  });
+});
+
+describe('Stepper · `currentLabelOnly` (#1448)', () => {
+  function montar(): ComponentFixture<HostSoloActual> {
+    TestBed.configureTestingModule({ imports: [HostSoloActual] });
+    const fixture = TestBed.createComponent(HostSoloActual);
+    fixture.componentInstance.steps.set(TRES_PASOS);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const lista = (fixture: ComponentFixture<HostSoloActual>): HTMLElement =>
+    fixture.debugElement.query(By.css('ol.stepper')).nativeElement as HTMLElement;
+
+  it('apagado por defecto: nadie pierde rótulos sin pedirlo', () => {
+    TestBed.configureTestingModule({ imports: [Host] });
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.steps.set(TRES_PASOS);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.stepper--solo-actual'))).toBeNull();
+  });
+
+  it('encendido marca la lista, y los tres rótulos siguen en el DOM para el lector', () => {
+    const fixture = montar();
+
+    expect(lista(fixture).classList.contains('stepper--solo-actual')).toBe(true);
+    const rotulos = fixture.debugElement
+      .queryAll(By.css('.stepper__label'))
+      .map((el) => (el.nativeElement as HTMLElement).textContent!.trim());
+    expect(rotulos).toEqual(['Recurso', 'Política', 'Plantilla']);
+  });
+
+  it('en `compact` no hace nada: el rótulo ya lo resolvió el compacto', () => {
+    const fixture = montar();
+    fixture.componentInstance.compacto.set(true);
+    fixture.detectChanges();
+
+    expect(lista(fixture).classList.contains('stepper--solo-actual')).toBe(false);
+    expect(lista(fixture).classList.contains('stepper--compact')).toBe(true);
   });
 });
