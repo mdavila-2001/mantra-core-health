@@ -9,7 +9,8 @@
     una **ayuda inmediata**: la autoridad es `dryRun` + el guardado.
     ========================================================================== */
 
-import type { LayoutPatch, PlacementGeometry, PlacementUpsert } from '../data-access/floor-plan/floor-plan.types';
+import type { LayoutPatch, PlacementGeometry, PlacementUpsert, PlanElementDTO } from '../data-access/floor-plan/floor-plan.types';
+import { EDITABLE_ELEMENT_KINDS, type EditableElementKind, type EditElement, type EditSpace, type EditState } from './editor-state.types';
 import {
   MAX_POLYGON_VERTICES,
   bboxOf,
@@ -20,33 +21,18 @@ import {
   toRadians,
   type Point,
 } from './geometry';
+import { elementPatch, reapplyElements } from './editor-elements';
 import type { LayoutShape } from './layout-validation';
 import type { SpaceView } from './plan-view';
 
-export interface EditSpace {
-  readonly id: string;
-  readonly code: string;
-  readonly name: string;
-  readonly parentId: string | null;
-  readonly formCode: string;
-  readonly geometry: PlacementGeometry;
-  readonly zOrder: number;
-  readonly locked: boolean;
-  /** `null` = figura nueva (todavía sin fila en el servidor). */
-  readonly rowVersion: number | null;
-}
-
-export interface EditState {
-  readonly spaces: ReadonlyMap<string, EditSpace>;
-  /** Espacios que se sacan del plano (no se borran del árbol). */
-  readonly removed: ReadonlySet<string>;
-}
+export { EDITABLE_ELEMENT_KINDS } from './editor-state.types';
+export type { EditableElementKind, EditElement, EditSpace, EditState } from './editor-state.types';
 
 export type RectGeometry = Extract<PlacementGeometry, { kind: 'RECT' }>;
 
-export const EMPTY_EDIT: EditState = { spaces: new Map(), removed: new Set() };
+export const EMPTY_EDIT: EditState = { spaces: new Map(), removed: new Set(), elements: new Map(), removedElements: new Set() };
 
-export function fromViews(views: readonly SpaceView[]): EditState {
+export function fromViews(views: readonly SpaceView[], elementDtos: readonly PlanElementDTO[] = []): EditState {
   const spaces = new Map<string, EditSpace>();
   for (const v of views) {
     if (!v.inScope) continue;
@@ -64,7 +50,17 @@ export function fromViews(views: readonly SpaceView[]): EditState {
       rowVersion: v.rowVersion,
     });
   }
-  return { spaces, removed: new Set() };
+  const elements = new Map<string, EditElement>();
+  for (const dto of elementDtos) {
+    if (!EDITABLE_ELEMENT_KINDS.includes(dto.kind)) continue;
+    elements.set(dto.id, {
+      id: dto.id, kind: dto.kind as EditableElementKind, zOrder: dto.zOrder, rowVersion: dto.rowVersion,
+      ...(dto.vertices ? { vertices: dto.vertices } : {}), ...(dto.thicknessM !== undefined ? { thicknessM: dto.thicknessM } : {}),
+      ...(dto.hostElementId ? { hostElementId: dto.hostElementId } : {}), ...(dto.offsetM !== undefined ? { offsetM: dto.offsetM } : {}),
+      ...(dto.widthM !== undefined ? { widthM: dto.widthM } : {}), ...(dto.swing ? { swing: dto.swing } : {}), ...(dto.swingSide ? { swingSide: dto.swingSide } : {}),
+    });
+  }
+  return { spaces, removed: new Set(), elements, removedElements: new Set() };
 }
 
 /** Ancho, fondo y rotación de un rectángulo a partir de sus cuatro esquinas. */
@@ -156,14 +152,14 @@ export function withSpace(state: EditState, space: EditSpace): EditState {
   spaces.set(space.id, space);
   const removed = new Set(state.removed);
   removed.delete(space.id);
-  return { spaces, removed };
+  return { ...state, spaces, removed };
 }
 
 export function removeFromPlan(state: EditState, id: string): EditState {
   if (!state.spaces.has(id)) return state;
   const removed = new Set(state.removed);
   removed.add(id);
-  return { spaces: state.spaces, removed };
+  return { ...state, removed };
 }
 
 export function setGeometry(state: EditState, id: string, geometry: PlacementGeometry): EditState {
@@ -339,9 +335,14 @@ export function diffPatch(baseline: EditState, current: EditState): LayoutPatch 
   }
   // Sacar del plano lo que existía en el servidor (lo que se dibujó y se quitó sin guardar no viaja).
   const removeIds = [...current.removed].filter((id) => baseline.spaces.has(id) && !baseline.removed.has(id));
+  const { upserts: elementUpserts, removeIds: elementRemoveIds } = elementPatch(baseline, current);
   return {
-    ...(upsert.length > 0 ? { upsert: { placements: upsert } } : {}),
-    ...(removeIds.length > 0 ? { remove: { spaceIds: removeIds } } : {}),
+    ...(upsert.length > 0 || elementUpserts.length > 0
+      ? { upsert: { ...(upsert.length > 0 ? { placements: upsert } : {}), ...(elementUpserts.length > 0 ? { elements: elementUpserts } : {}) } }
+      : {}),
+    ...(removeIds.length > 0 || elementRemoveIds.length > 0
+      ? { remove: { ...(removeIds.length > 0 ? { spaceIds: removeIds } : {}), ...(elementRemoveIds.length > 0 ? { elementIds: elementRemoveIds } : {}) } }
+      : {}),
   };
 }
 
@@ -384,5 +385,8 @@ export function reapply(oldBase: EditState, mine: EditState, newBase: EditState)
     }
     applied.push(id);
   }
-  return { state, applied, conflicts };
+  const els = reapplyElements(oldBase, mine, { ...newBase, ...{} });
+  // Los elementos se reaplican sobre el resultado de los espacios.
+  const merged: EditState = { ...state, elements: els.state.elements, removedElements: els.state.removedElements };
+  return { state: merged, applied: [...applied, ...els.applied], conflicts: [...conflicts, ...els.conflicts] };
 }

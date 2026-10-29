@@ -7,6 +7,8 @@ import { FloorPlanClient } from '../../../core/data-access/floor-plan/floor-plan
 import type { FloorPlanMeta, FloorPlanSummary, LayoutResponse, SpacePlacementDTO, ViewerCaps } from '../../../core/data-access/floor-plan/floor-plan.types';
 import { MedicalOrganizationClient } from '../../../core/data-access/medical-organization/medical-organization.client';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import type { WorldPointerEvent } from '../../../core/floor-plan/canvas.types';
+import type { Point } from '../../../core/floor-plan/geometry';
 import { FloorPlanStore } from '../viewer/floor-plan.store';
 import { FloorPlanEditorStore } from './floor-plan-editor.store';
 
@@ -25,6 +27,9 @@ function layout(version = 3, over: Partial<Record<string, SpacePlacementDTO>> = 
   return { floorPlan: { ...META, layoutVersion: version }, layoutVersion: version, asOf: '2026-10-29T12:00:00Z', page: { nextCursor: null, total: spaces.length }, viewer: VIEWER, elements: [], spaces };
 }
 
+const pointerAt = (phase: WorldPointerEvent['phase'], world: Point, over: Partial<WorldPointerEvent> = {}): WorldPointerEvent => ({
+  phase, world, targetId: null, handleId: null, shiftKey: false, altKey: false, ctrlKey: false, pointerType: 'mouse', detail: 0, scale: 10, ...over,
+});
 const http = (status: number, error: unknown = null): HttpErrorResponse => new HttpErrorResponse({ status, error });
 const applied = { layoutVersion: 4, applied: { placed: 0, moved: 1, removed: 0, elementsUpserted: 0, elementsRemoved: 0 }, warnings: [], requestId: 'rq-1' };
 
@@ -231,5 +236,102 @@ describe('FloorPlanEditorStore', () => {
     } finally {
       Storage.prototype.setItem = original;
     }
+  });
+
+  describe('muros, puertas y ventanas', () => {
+    const tap = (p: Point, over: Partial<WorldPointerEvent> = {}): void => {
+      ed.onWorld(pointerAt('down', p, over));
+      ed.onWorld(pointerAt('up', p, over));
+    };
+
+    it('el muro se dibuja punto a punto (Entrar lo termina) y queda elegido con la herramienta de selección', () => {
+      ed.setTool('wall');
+      tap([30, 10]);
+      tap([36, 10]);
+      expect(ed.pathDraft()).toBe(true);
+      ed.finishDraft();
+      const wall = ed.selectedElement()!;
+      expect(wall.kind).toBe('WALL');
+      expect(wall.vertices).toEqual([[30, 10], [36, 10]]);
+      expect(wall.rowVersion).toBeNull();
+      expect(ed.tool()).toBe('select');
+      expect(ed.dirty()).toBe(true);
+      expect(ed.elementViews().some((v) => v.id === wall.id && v.kind === 'WALL')).toBe(true);
+    });
+
+    it('una puerta se ubica sobre el muro más cercano y no cae fuera de él', () => {
+      ed.setTool('wall');
+      tap([30, 10]);
+      tap([36, 10]);
+      ed.finishDraft();
+      const wallId = ed.selectedElementId()!;
+      ed.setTool('door');
+      tap([30.1, 10.05]);
+      const door = ed.selectedElement()!;
+      expect(door).toMatchObject({ kind: 'DOOR', hostElementId: wallId, offsetM: 0, widthM: 0.9 });
+      expect(ed.issues().filter((i) => i.kind === 'ELEMENT')).toEqual([]);
+    });
+
+    it('sin un muro cerca la herramienta de puerta no ubica nada y explica qué hacer', () => {
+      ed.setTool('door');
+      tap([50, 20]);
+      expect(ed.dirty()).toBe(false);
+      expect(ed.hint()).toMatch(/Acerque el puntero a un muro/);
+    });
+
+    it('guardar manda el muro nuevo (con id de cliente) antes que su puerta, y quitar el muro quita la puerta', async () => {
+      ed.setTool('wall');
+      tap([30, 10]);
+      tap([36, 10]);
+      ed.finishDraft();
+      ed.setTool('window');
+      tap([33, 10.02]);
+      client.getLayout.mockReturnValue(of(layout(4)));
+      await ed.save();
+      const patch = client.patchLayout.mock.calls[0]![1];
+      expect(patch.upsert.elements.map((e: { kind: string }) => e.kind)).toEqual(['WALL', 'WINDOW']);
+      expect(patch.upsert.elements[0].id).toMatch(/^[0-9a-f-]{36}$/);
+      expect(patch.upsert.elements[1].hostElementId).toBe(patch.upsert.elements[0].id);
+    });
+
+    it('un muro y su puerta se deshacen y se quitan de a un paso; la puerta sola se empuja a lo largo del muro', async () => {
+      ed.setTool('wall');
+      tap([30, 10]);
+      tap([36, 10]);
+      ed.finishDraft();
+      ed.setTool('door');
+      tap([33, 10.02]);
+      const before = ed.selectedElement()!.offsetM!;
+      ed.nudge(0.5, 0);
+      expect(ed.selectedElement()!.offsetM).toBe(before + 0.5);
+      await ed.removeSelected();
+      expect(ed.selectedElement()).toBeNull();
+      ed.undo();
+      ed.undo();
+      ed.undo();
+      expect(ed.dirty()).toBe(true);
+      ed.undo();
+      expect(ed.dirty()).toBe(false);
+    });
+
+    it('con el 422 de una abertura fuera de su muro, el error queda en el elemento y se rotula sobre el muro', async () => {
+      ed.setTool('wall');
+      tap([30, 10]);
+      tap([36, 10]);
+      ed.finishDraft();
+      const wallId = ed.selectedElementId()!;
+      ed.setTool('window');
+      tap([33, 10.02]);
+      const windowId = ed.selectedElementId()!;
+      ed.setElementFields(windowId, { offsetM: 5.5 });
+      expect(ed.issues().find((i) => i.id === windowId)?.code).toBe('PLAN_OPENING_OUTSIDE_WALL');
+      expect(ed.overlay()!.labels.some((l) => l.text.startsWith('⚠ Ventana'))).toBe(true);
+      client.patchLayout.mockReturnValue(throwError(() => http(422, { reason: 'PLAN_LAYOUT_INVALID', requestId: 'r', errors: [{ kind: 'ELEMENT', id: windowId, code: 'PLAN_OPENING_OUTSIDE_WALL', field: 'host', message: 'No cabe en su muro.' }] })));
+      await ed.save();
+      expect(ed.issues()[0]).toMatchObject({ source: 'server', id: windowId });
+      ed.focusIssue(windowId);
+      expect(ed.selectedElementId()).toBe(windowId);
+      expect(wallId).toBeTruthy();
+    });
   });
 });

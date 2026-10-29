@@ -13,7 +13,8 @@ export const ROTATE_HANDLE_OFFSET_PX = 30;
 
 export type DraftShape =
   | { readonly kind: 'rect'; readonly a: Point; readonly b: Point; readonly space: EditSpace | null }
-  | { readonly kind: 'polygon'; readonly points: readonly Point[]; readonly cursor: Point | null };
+  | { readonly kind: 'polygon'; readonly points: readonly Point[]; readonly cursor: Point | null }
+  | { readonly kind: 'opening'; readonly start: Point; readonly end: Point };
 
 export interface OverlayInput {
   readonly selected: EditSpace | null;
@@ -22,6 +23,10 @@ export interface OverlayInput {
   readonly draft: DraftShape | null;
   /** Figura que se está arrastrando: muestra sus medidas vivas. */
   readonly measuring: EditSpace | null;
+  /** Muro, puerta o ventana elegido: su eje y (si es un muro) los vértices que se pueden arrastrar. */
+  readonly elementSelection?: { readonly path: string; readonly vertices: readonly Point[] | null } | null;
+  /** Elementos con error: se marcan sobre su eje. */
+  readonly elementErrors?: ReadonlyMap<string, { readonly path: string; readonly label: string; readonly at: Point }>;
   readonly errors: ReadonlyMap<string, string>;
   readonly errorShapes: ReadonlyMap<string, readonly Point[]>;
   /** Rótulo corto de cada figura con error (glifo + qué pasa); el detalle va en la lista de problemas. */
@@ -87,6 +92,15 @@ export function buildEditorOverlay(input: OverlayInput): CanvasOverlay {
     }
   }
 
+  if (input.elementSelection) {
+    shapes.push({ id: 'selection-element', path: input.elementSelection.path, kind: 'selection-line' });
+    input.elementSelection.vertices?.forEach((v, i) => handles.push({ id: `vertex:${i}`, x: v[0], y: v[1], kind: 'vertex', cursor: 'move' }));
+  }
+  for (const [id, mark] of input.elementErrors ?? []) {
+    shapes.push({ id: `error-element:${id}`, path: mark.path, kind: 'error-line' });
+    labels.push({ x: mark.at[0], y: mark.at[1] - 8 / input.scale, text: `⚠ ${mark.label}`, kind: 'error' });
+  }
+
   const draft = input.draft;
   if (draft?.kind === 'rect') {
     const ring: Point[] = [draft.a, [draft.b[0], draft.a[1]], draft.b, [draft.a[0], draft.b[1]]];
@@ -95,6 +109,8 @@ export function buildEditorOverlay(input: OverlayInput): CanvasOverlay {
     const d = Math.abs(draft.b[1] - draft.a[1]);
     const fmt = (n: number): string => n.toFixed(2).replace('.', ',');
     labels.push({ x: (draft.a[0] + draft.b[0]) / 2, y: Math.min(draft.a[1], draft.b[1]) - 10 / input.scale, text: `${fmt(w)} × ${fmt(d)} m · ${fmt(w * d)} m²`, kind: 'measure' });
+  } else if (draft?.kind === 'opening') {
+    shapes.push({ id: 'draft', path: pathOf([draft.start, draft.end], false), kind: 'draft' });
   } else if (draft?.kind === 'polygon') {
     const pts = draft.cursor ? [...draft.points, draft.cursor] : [...draft.points];
     if (pts.length >= 2) shapes.push({ id: 'draft', path: pathOf(pts, false), kind: 'draft' });

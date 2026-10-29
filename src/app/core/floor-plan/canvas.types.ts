@@ -87,7 +87,7 @@ export interface WorldPointerEvent {
 export interface OverlayShape {
   readonly id: string;
   readonly path: string;
-  readonly kind: 'draft' | 'ghost' | 'error' | 'selection' | 'guide' | 'measure';
+  readonly kind: 'draft' | 'ghost' | 'error' | 'selection' | 'selection-line' | 'error-line' | 'guide' | 'measure';
 }
 export interface OverlayHandle {
   readonly id: string;

@@ -143,7 +143,7 @@
           [gridSizeM]="meta.gridSizeM"
           [northBearingDeg]="meta.northBearingDeg"
           [spaces]="ed.views()"
-          [elements]="plan.elements()"
+          [elements]="ed.elementViews()"
           [colorBy]="'none'"
           [layers]="layers"
           [selectedId]="ed.selectedId()"
@@ -167,7 +167,15 @@
           <span class="ed-pick__label">Elegir figura por nombre</span>
           <app-select ariaLabel="Elegir figura por nombre" [options]="figureOptions()" [value]="ed.selectedId() ?? ''" (valueChange)="ed.select($event || null)" />
         </div>
-        <app-plan-editor-inspector [space]="ed.selected()" (geometryChange)="onGeometry($event)" (lockToggled)="ed.toggleLock(ed.selectedId()!)" (remove)="ed.removeSelected()" />
+        <app-plan-editor-inspector
+          [space]="ed.selected()"
+          [element]="ed.selectedElement()"
+          [wallLengthM]="selectedWallLength()"
+          (geometryChange)="onGeometry($event)"
+          (elementChange)="onElementFields($event)"
+          (lockToggled)="ed.toggleLock(ed.selectedId()!)"
+          (remove)="ed.removeSelected()"
+        />
       </aside>
     }
   </div>

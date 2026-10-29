@@ -7,7 +7,7 @@ const space = (id: string, x: number): EditSpace => ({
   id, code: id.toUpperCase(), name: id, parentId: null, formCode: 'ROOM', zOrder: 10, locked: false, rowVersion: 1,
   geometry: { kind: 'RECT', centerXM: x, centerYM: 5, widthM: 3, depthM: 3, rotationDeg: 0 },
 });
-const base: EditState = { spaces: new Map([['a', space('a', 5)], ['b', space('b', 12)]]), removed: new Set() };
+const base: EditState = { spaces: new Map([['a', space('a', 5)], ['b', space('b', 12)]]), removed: new Set(), elements: new Map(), removedElements: new Set() };
 
 describe('editor-draft', () => {
   it('sin cambios no hay borrador', () => {

@@ -5,7 +5,8 @@
     `try/catch` y la pantalla funciona igual sin él.
     ========================================================================== */
 
-import { withSpace, removeFromPlan, type EditSpace, type EditState } from './editor-model';
+import { withElement, removeElement } from './editor-elements';
+import { withSpace, removeFromPlan, type EditElement, type EditSpace, type EditState } from './editor-model';
 
 export interface EditDraft {
   readonly v: 1;
@@ -15,6 +16,9 @@ export interface EditDraft {
   readonly savedAt: string;
   readonly spaces: readonly EditSpace[];
   readonly removed: readonly string[];
+  /** Muros, puertas y ventanas nuevos o cambiados, y los quitados (un borrador anterior no los traía). */
+  readonly elements?: readonly EditElement[];
+  readonly removedElements?: readonly string[];
 }
 
 export const DRAFT_KEY_PREFIX = 'mantra-core-health.floor-plan.draft.';
@@ -34,14 +38,18 @@ export function buildDraft(planId: string, baseVersion: number, baseline: EditSt
     if (!before || !sameGeometry(before.geometry, space.geometry)) spaces.push(space);
   }
   const removed = [...current.removed].filter((id) => baseline.spaces.has(id));
-  if (spaces.length === 0 && removed.length === 0) return null;
-  return { v: 1, planId, baseVersion, savedAt: now.toISOString(), spaces, removed };
+  const elements = [...current.elements.values()].filter((el) => !current.removedElements.has(el.id) && !sameGeometry(baseline.elements.get(el.id), el));
+  const removedElements = [...current.removedElements].filter((id) => baseline.elements.has(id));
+  if (spaces.length === 0 && removed.length === 0 && elements.length === 0 && removedElements.length === 0) return null;
+  return { v: 1, planId, baseVersion, savedAt: now.toISOString(), spaces, removed, elements, removedElements };
 }
 
 export function applyDraft(baseline: EditState, draft: EditDraft): EditState {
   let state = baseline;
   for (const space of draft.spaces) state = withSpace(state, space);
   for (const id of draft.removed) state = removeFromPlan(state, id);
+  for (const el of draft.elements ?? []) state = withElement(state, el);
+  for (const id of draft.removedElements ?? []) state = removeElement(state, id);
   return state;
 }
 

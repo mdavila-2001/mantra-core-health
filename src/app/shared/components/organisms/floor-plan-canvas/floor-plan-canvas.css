@@ -219,6 +219,8 @@
 .ov--ghost { stroke: var(--text-secondary); stroke-width: 1.5px; stroke-dasharray: 3 3; }
 .ov--error { stroke: var(--st-error-fg); stroke-width: 3px; fill: color-mix(in srgb, var(--st-error-fg) 14%, transparent); }
 .ov--selection { stroke: var(--brand-primary); stroke-width: 1.5px; }
+.ov--selection-line { stroke: var(--brand-primary); stroke-width: 5px; stroke-opacity: 0.45; stroke-linecap: round; stroke-linejoin: round; }
+.ov--error-line { stroke: var(--st-error-fg); stroke-width: 5px; stroke-opacity: 0.6; stroke-linecap: round; stroke-linejoin: round; }
 .ov--guide { stroke: var(--st-tertiary-fg); stroke-width: 1px; stroke-dasharray: 2 3; }
 .ov--measure { stroke: var(--text-secondary); stroke-width: 1px; }
 .handle {

@@ -1,7 +1,9 @@
 import type { LayoutItemError } from '../../../core/data-access/floor-plan/floor-plan.types';
+import { elementAxis, elementLabel } from '../../../core/floor-plan/editor-elements';
 import { verticesOfEdit, type EditState } from '../../../core/floor-plan/editor-model';
 import type { Point } from '../../../core/floor-plan/geometry';
 import type { LayoutIssue } from '../../../core/floor-plan/layout-validation';
+import { pathOf } from '../../../core/floor-plan/plan-view';
 
 /** Un problema de la figura, venga de la ayuda local o del servidor (que decide). */
 export interface EditorIssue {
@@ -53,6 +55,10 @@ export function shortIssueLabel(issue: EditorIssue): string {
       return 'Figura no válida';
     case 'PLAN_PARENT_NOT_PLACED':
       return 'Su espacio padre no está dibujado';
+    case 'PLAN_OPENING_OUTSIDE_WALL':
+      return 'No cabe en su muro';
+    case 'PLAN_HOST_NOT_WALL':
+      return 'No tiene muro';
     default:
       return issue.message.length > 42 ? `${issue.message.slice(0, 40)}…` : issue.message;
   }
@@ -62,10 +68,16 @@ export function shortIssueLabel(issue: EditorIssue): string {
 export function errorMarks(
   issues: readonly EditorIssue[],
   state: EditState,
-): { errors: Map<string, string>; shapes: Map<string, readonly Point[]>; labels: Map<string, string> } {
+): {
+  errors: Map<string, string>;
+  shapes: Map<string, readonly Point[]>;
+  labels: Map<string, string>;
+  elements: Map<string, { path: string; label: string; at: Point }>;
+} {
   const errors = new Map<string, string>();
   const shapes = new Map<string, readonly Point[]>();
   const labels = new Map<string, string>();
+  const elements = new Map<string, { path: string; label: string; at: Point }>();
   const mark = (id: string, message: string): void => {
     const space = state.spaces.get(id);
     if (!space || state.removed.has(id)) return;
@@ -73,10 +85,19 @@ export function errorMarks(
     shapes.set(id, verticesOfEdit(space));
   };
   for (const issue of issues) {
+    if (issue.kind === 'ELEMENT') {
+      const el = state.elements.get(issue.id);
+      const axis = el && !state.removedElements.has(el.id) ? elementAxis(state, el) : null;
+      if (el && axis && !elements.has(el.id)) {
+        const mid = axis[Math.floor(axis.length / 2)]!;
+        elements.set(el.id, { path: pathOf(axis, false), label: `${elementLabel(el)}: ${shortIssueLabel(issue)}`, at: mid });
+      }
+      continue;
+    }
     if (issue.kind !== 'SPACE') continue;
     mark(issue.id, issue.message);
     if (!labels.has(issue.id) && state.spaces.has(issue.id)) labels.set(issue.id, shortIssueLabel(issue));
     for (const other of issue.conflictsWith) mark(other.id, `Choca con ${state.spaces.get(issue.id)?.code ?? 'otra figura'}.`);
   }
-  return { errors, shapes, labels };
+  return { errors, shapes, labels, elements };
 }

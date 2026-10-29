@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import type { PlacementGeometry } from '../../../core/data-access/floor-plan/floor-plan.types';
 import type { PlanLayerId, RevealRequest, ViewInfo } from '../../../core/floor-plan/canvas.types';
+import { elementLabel, wallLength } from '../../../core/floor-plan/editor-elements';
 import { bboxCenter, type Point } from '../../../core/floor-plan/geometry';
 import { forbidden } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -18,8 +19,9 @@ import { FloorPlanCanvas } from '../../../shared/components/organisms/floor-plan
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { FloorPlanStore } from '../viewer/floor-plan.store';
+import { editorKeyCommand } from './editor-keys';
 import { FloorPlanEditorStore, type EditTool } from './floor-plan-editor.store';
-import { PlanEditorInspector } from './plan-editor-inspector';
+import { PlanEditorInspector, type ElementFields } from './plan-editor-inspector';
 import { PlanEditorIssues } from './plan-editor-issues';
 import { PlanEditorPalette } from './plan-editor-palette';
 
@@ -31,6 +33,9 @@ const TOOLS: readonly { id: EditTool; label: string; key: string; hint: string }
   { id: 'hand', label: 'Mano', key: 'H', hint: 'Desplazar el plano sin tocar las figuras' },
   { id: 'rect', label: 'Local rectangular', key: 'R', hint: 'Dibujar un rectángulo' },
   { id: 'polygon', label: 'Local poligonal', key: 'P', hint: 'Dibujar un polígono; doble toque o Entrar para cerrarlo' },
+  { id: 'wall', label: 'Muro', key: 'W', hint: 'Dibujar un muro punto a punto; doble toque o Entrar para terminarlo' },
+  { id: 'door', label: 'Puerta', key: 'D', hint: 'Ubicar una puerta sobre un muro' },
+  { id: 'window', label: 'Ventana', key: 'N', hint: 'Ubicar una ventana sobre un muro' },
 ];
 
 /**
@@ -124,7 +129,27 @@ export class FloorPlanEditorPage {
 
   protected onKey(event: KeyboardEvent): void {
     if (this.narrow()) return;
-    if (this.ed.onKey(event)) event.preventDefault();
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.closest('input, select, textarea, [contenteditable="true"]') || target.closest('dialog'))) return;
+    const command = editorKeyCommand(event, { pathDraft: this.ed.pathDraft(), canNudge: this.ed.canNudge() });
+    if (!command) return;
+    event.preventDefault();
+    const ed = this.ed;
+    switch (command.type) {
+      case 'undo': ed.undo(); break;
+      case 'redo': ed.redo(); break;
+      case 'save': void ed.save(); break;
+      case 'escape': ed.escape(); break;
+      case 'finish-draft': ed.finishDraft(); break;
+      case 'back-draft': ed.backDraft(); break;
+      case 'delete': void ed.removeSelected(); break;
+      case 'tool': ed.setTool(command.tool); break;
+      case 'nudge': {
+        const step = ed.gridSizeM() * (command.big ? 5 : 1);
+        ed.nudge(command.dx * step, command.dy * step);
+        break;
+      }
+    }
   }
 
   protected onView(info: ViewInfo): void {
@@ -142,6 +167,17 @@ export class FloorPlanEditorPage {
     this.ed.placeAtCenter(center);
   }
 
+  protected readonly selectedWallLength = computed(() => {
+    const el = this.ed.selectedElement();
+    const host = el?.hostElementId ? this.ed.current().elements.get(el.hostElementId) : undefined;
+    return host ? wallLength(host) : null;
+  });
+
+  protected onElementFields(fields: ElementFields): void {
+    const id = this.ed.selectedElementId();
+    if (id) this.ed.setElementFields(id, fields);
+  }
+
   protected onGeometry(geometry: PlacementGeometry): void {
     const id = this.ed.selectedId();
     if (id) this.ed.setGeometryOf(id, geometry);
@@ -153,8 +189,11 @@ export class FloorPlanEditorPage {
   }
 
   protected readonly nameOf = (id: string): string => {
-    const s = this.ed.current().spaces.get(id);
-    return s ? `${s.code} · ${s.name}` : id;
+    const cur = this.ed.current();
+    const s = cur.spaces.get(id);
+    if (s) return `${s.code} · ${s.name}`;
+    const el = cur.elements.get(id);
+    return el ? elementLabel(el) : id;
   };
 
   protected nameOfConflicts(ids: readonly string[]): string {
