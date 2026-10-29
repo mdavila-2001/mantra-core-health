@@ -31,15 +31,6 @@
             @if (sede.direccion) {
               <span class="sedes__direccion">{{ sede.direccion }}</span>
             }
-            @if (sede.contactPhone; as contactPhone) {
-              <a
-                class="sedes__ruta"
-                [href]="'tel:' + contactPhone.replaceAll(' ', '')"
-                data-testid="practice-site-contact-phone"
-              >
-                Teléfono: {{ contactPhone }}
-              </a>
-            }
             @if (!sede.ubicada) {
               <span class="sedes__aviso">Sin ubicación cargada: no aparece en el mapa.</span>
             }
