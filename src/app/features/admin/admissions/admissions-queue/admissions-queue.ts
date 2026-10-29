@@ -32,7 +32,6 @@ import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Link } from '@shared/components/atoms/link/link';
 import { Card } from '@shared/components/molecules/card/card';
-import { SegmentedControl } from '@shared/components/molecules/segmented-control/segmented-control';
 import { DataTable } from '@shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '@shared/components/organisms/data-table/data-table.types';
 import { FilterBar, type FilterDef } from '@shared/components/organisms/filter-bar/filter-bar';
@@ -140,7 +139,6 @@ const FILTERS: readonly FilterDef[] = [
     Link,
     PageHeader,
     RouterLink,
-    SegmentedControl,
     ViewStateHost,
   ],
   templateUrl: './admissions-queue.html',
@@ -201,8 +199,8 @@ export class AdmissionsQueue {
     const counts = this.page()?.counts ?? {};
     const total = Object.values(counts).reduce((suma, n) => suma + n, 0);
     return [
-      { value: '', label: `Todas (${total})` },
-      ...ADMISSION_STATUS_TABS.map((t) => ({ value: t.code as string, label: `${t.label} (${counts[t.code] ?? 0})` })),
+      { value: '', label: 'Todas', count: total },
+      ...ADMISSION_STATUS_TABS.map((t) => ({ value: t.code as string, label: t.label, count: counts[t.code] ?? 0 })),
     ];
   });
 

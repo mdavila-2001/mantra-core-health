@@ -48,6 +48,7 @@
               <li class="vinculo" [class.vinculo--resaltado]="highlight() === enlace.requirement.code" data-testid="form-requirement">
                 <span class="vinculo__nombre">{{ enlace.requirement.label }}</span>
                 <app-badge [variant]="variant(enlace.requirement)" size="sm">{{ statusLabel(enlace.requirement) }}</app-badge>
+                <span class="vinculo__huella" [attr.title]="enlace.requirement.evidenceSha256" data-testid="form-hash">Huella {{ hash(enlace.requirement) }}</span>
                 @if (enlace.documents > 0) {
                   <button type="button" class="vinculo__enlace" data-testid="form-view-evidence" (click)="viewEvidence.emit(enlace.requirement.code)">
                     Ver evidencia ({{ enlace.documents }})

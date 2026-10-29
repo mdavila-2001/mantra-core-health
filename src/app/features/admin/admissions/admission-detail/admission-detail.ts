@@ -13,7 +13,7 @@ import type {
 import { SessionStore } from '@core/auth/session.store';
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { NavigationService } from '@core/navigation/navigation.service';
-import { loading, notFound, ready } from '@core/view-state/view-state';
+import { forbidden, loading, notFound, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { readAdmissionError } from '@shared/admissions/admission-error';
 import {
@@ -63,6 +63,8 @@ interface ActiveDialog {
   readonly kind: DialogKind;
   readonly config: ReviewDialogConfig;
   readonly requirementId?: string;
+  /** La huella de la evidencia que se tenía en pantalla al abrir el diálogo. */
+  readonly evidenceSha256?: string | null;
 }
 
 interface ActionButton {
@@ -199,20 +201,39 @@ export class AdmissionDetail {
     this.state.set(loading());
     this.client.get(this.admissionId()).subscribe({
       next: (detalle) => this.state.set(ready(detalle)),
-      error: (error: unknown) => this.state.set(errorToViewState<AdmissionDetailData>(error)),
+      error: (error: unknown) => this.state.set(this.loadFailure(error)),
     });
   }
 
+  /**
+   * Qué se muestra si la ficha no carga. El 403 se explica: quien tiene rol de
+   * admisiones y es el propio profesional no revisa su solicitud, y a quien le
+   * falta el rol se le dice cuál.
+   */
+  private loadFailure(error: unknown): ViewState<AdmissionDetailData> {
+    const problema = readAdmissionError(error, ROLE_REVIEWER);
+    if (problema.kind === 'self-access' || problema.kind === 'role') {
+      return forbidden({
+        message: problema.message,
+        ...(problema.requestId === null ? {} : { requestId: problema.requestId }),
+        nextAction: { label: 'Volver a las admisiones', route: ADMISSIONS_ROUTE },
+      });
+    }
+    return errorToViewState<AdmissionDetailData>(error);
+  }
+
   /** Relee la ficha sin parpadeo: se usa tras un 409 para mostrar lo que cambió. */
-  protected refresh(): void {
+  protected refresh(announce = true): void {
     this.client.get(this.admissionId()).subscribe({
       next: (detalle) => {
         this.state.set(ready(detalle));
         this.dialogStale.set(false);
-        this.dialogError.set('Cargamos la versión actual de la admisión. Revise los cambios y confirme de nuevo.');
-        this.say('Se cargó la versión actual de la admisión.');
+        if (announce) {
+          this.dialogError.set('Cargamos la versión actual de la admisión. Revise los cambios y confirme de nuevo.');
+          this.say('Se cargó la versión actual de la admisión.');
+        }
       },
-      error: (error: unknown) => this.state.set(errorToViewState<AdmissionDetailData>(error)),
+      error: (error: unknown) => this.state.set(this.loadFailure(error)),
     });
   }
 
@@ -409,6 +430,7 @@ export class AdmissionDetail {
       this.openDialog({
         kind: 'req-verify',
         requirementId: requisito.id,
+        evidenceSha256: requisito.evidenceSha256,
         config: {
           heading: `Verificar: ${requisito.label}`,
           description: 'Declare de dónde obtuvo el dato. Queda en el historial.',
@@ -420,6 +442,7 @@ export class AdmissionDetail {
       this.openDialog({
         kind: 'req-reject',
         requirementId: requisito.id,
+        evidenceSha256: requisito.evidenceSha256,
         config: {
           heading: `Rechazar: ${requisito.label}`,
           confirmLabel: 'Rechazar requisito',
@@ -431,6 +454,7 @@ export class AdmissionDetail {
       this.openDialog({
         kind: 'req-info',
         requirementId: requisito.id,
+        evidenceSha256: requisito.evidenceSha256,
         config: {
           heading: `Pedir información: ${requisito.label}`,
           confirmLabel: 'Pedir información',
@@ -478,6 +502,7 @@ export class AdmissionDetail {
             ...(result.sourceConsultedAt === undefined ? {} : { sourceConsultedAt: result.sourceConsultedAt }),
             ...(result.reason === undefined ? {} : { reason: result.reason }),
             ...razon,
+            ...(activo.evidenceSha256 ? { evidenceSha256: activo.evidenceSha256 } : {}),
             expectedRowVersion: v,
           }),
           mensajes[decision],
@@ -543,7 +568,13 @@ export class AdmissionDetail {
           this.state.set(notFound({ label: 'Volver a las admisiones', route: ADMISSIONS_ROUTE }));
           return;
         }
-        if (this.dialog() !== null) {
+        if (problema.kind === 'evidence-changed') {
+          // El profesional reemplazó el documento mientras se lo miraba: no se
+          // decide a ciegas. Se cierra el formulario y se muestra lo nuevo.
+          this.dialog.set(null);
+          this.notice.set({ tone: 'warning', text: problema.message });
+          this.refresh(false);
+        } else if (this.dialog() !== null) {
           if (problema.kind === 'stale') this.dialogStale.set(true);
           else this.dialogError.set(problema.message);
         } else if (problema.kind === 'stale') {

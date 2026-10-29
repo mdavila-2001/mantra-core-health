@@ -137,6 +137,12 @@
   overflow-wrap: anywhere;
 }
 
+.galeria__huella {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
 .galeria__motivo {
   margin: 0;
   padding: var(--sp-2) var(--sp-3);

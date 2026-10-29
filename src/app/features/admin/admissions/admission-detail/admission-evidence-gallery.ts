@@ -20,6 +20,7 @@ import type {
 import {
   formatBytes,
   mimeLabel,
+  shortHash,
   requirementStatusLabel,
 } from '@shared/admissions/admission-presentation';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -169,6 +170,10 @@ export class AdmissionEvidenceGallery {
 
   protected typeLabel(doc: AdmissionDocument): string {
     return mimeLabel(doc.mimeType);
+  }
+
+  protected hash(doc: AdmissionDocument): string {
+    return shortHash(doc.evidenceSha256);
   }
 
   protected sizeLabel(doc: AdmissionDocument): string {
