@@ -355,6 +355,64 @@
   }
 }
 
+/* ─── El «cómo funciona» (rediseño del 22/10/2026) ──────────────────────────
+   Tres pasos con número en un círculo de color, en el lugar que quedaba vacío
+   al lado de la figura. Se va apenas se toca una zona: ahí el panel muestra
+   los síntomas de esa parte. */
+.sintomas__guia {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: var(--e4) var(--e5);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  list-style: none;
+  animation: sintomas-entrar var(--mov-medio) var(--curva);
+}
+
+.sintomas__guia-paso {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--e3);
+}
+
+.sintomas__guia-numero {
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: var(--petroleo);
+  color: #fff;
+  font-family: var(--f-titulo);
+  font-weight: 700;
+}
+
+/* Los tres en tonos de la marca con texto blanco legible (≥ 4,5:1). */
+.sintomas__guia-paso:nth-child(2) .sintomas__guia-numero {
+  background: var(--c-aqua-700);
+}
+
+.sintomas__guia-paso:nth-child(3) .sintomas__guia-numero {
+  background: var(--c-amber-700);
+}
+
+.sintomas__guia-texto {
+  color: var(--tinta);
+  line-height: 1.4;
+}
+
+.sintomas__guia-texto strong {
+  color: var(--tinta-marca);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sintomas__guia {
+    animation: none;
+  }
+}
+
 .sintomas__zona {
   display: flex;
   flex-direction: column;

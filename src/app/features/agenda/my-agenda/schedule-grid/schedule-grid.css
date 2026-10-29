@@ -317,7 +317,7 @@
 }
 
 .grilla__bloque-detalle {
-  font-size: 12px;
+  font-size: var(--fs-caption);
   opacity: 0.85;
   overflow-wrap: anywhere;
 }

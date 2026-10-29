@@ -1632,6 +1632,7 @@ export function registrarSeguros(router: MockRouter): void {
     return { status: 201, body: { id: nueva.id, status: 'SUBMITTED' } };
   });
 
+
   /**
    * Seguros de una persona, para quien cobra. Con la forma de la API real: sin
    * póliza ni afiliado.

@@ -297,6 +297,12 @@
     --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
     --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
 
+    /* Escala semántica de la matriz de consultas: contraste AA en ambos temas. */
+    --heat-1-bg: var(--c-petrol-100); --heat-1-fg: var(--c-petrol-900);
+    --heat-2-bg: var(--c-petrol-200); --heat-2-fg: var(--c-petrol-900);
+    --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
+    --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
+
     /* alias semánticos de compatibilidad para superficies y enlaces */
     --surface-raised: var(--bg-surface);
     --surface-hover: var(--bg-hover);
