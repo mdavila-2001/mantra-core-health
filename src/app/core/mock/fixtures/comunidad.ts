@@ -650,8 +650,11 @@ export interface MensajeSimulado {
   readonly attachmentFileId: string | null;
   readonly isEdited: boolean;
   readonly sentAt: string;
-  /** `STICKER` si lo mandó como sticker propio; ausente = texto o adjunto. */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  /**
+   * `STICKER` si lo mandó como sticker propio; `AUTO_REPLY_AI` si es una
+   * respuesta automática que redactó la IA. Ausente = texto o adjunto.
+   */
+  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
   /** Reacciones por emoji. Un perfil aparece en una sola. */
   readonly reactions?: readonly { readonly emoji: string; readonly profileIds: readonly string[] }[];
 }

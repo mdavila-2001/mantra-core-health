@@ -2606,3 +2606,51 @@ reintento; visor) y `features/laboratory/summary/`.
 >
 > **Mientras tanto:** la pantalla oculta el desglose cuando no llega. El botón de objetar aparece en la
 > vista del paciente, y si la API no lo permite responde 403 y la pantalla lo dice. No se calculan importes en el front.
+
+## P64 · La respuesta automática redactada por la IA — 29/10/2026
+
+> **Qué pide el front.** En Ajustes → Chats, la respuesta automática es una sola decisión con tres
+> opciones: no responder, responder con un mensaje fijo o **responder con IA**. Con IA, la IA interna
+> de AloVida redacta la respuesta a cada mensaje y el texto fijo (`bodyText`) queda como **respaldo
+> obligatorio**. En el chat, la respuesta de la IA se ve con la etiqueta «Respuesta automática
+> generada por IA».
+>
+> **Qué hace la maqueta.** `PUT …/auto-reply` acepta `replyMode: 'FIXED' | 'AI'` como extensión
+> «sólo simulador» (`CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS`): contra la API real la clave no sale y la
+> opción «Responder con IA» se ve apagada con el motivo. La médica de la maqueta la tiene encendida;
+> cuando la paciente le escribe, el simulador contesta en su nombre con reglas fijas (deriva a
+> Emergencia ante signos de alarma, no indica medicamentos ni dosis) y marca el mensaje con
+> `contentType: 'AUTO_REPLY_AI'`. Sin texto que leer (sólo un adjunto) manda el respaldo, sin
+> etiqueta.
+>
+> **Qué tiene que hacer el backend, por capas (ADR-0021):**
+> 1. **Modelo** (`mantra-core-technologies/mantra-core-health-model`): `community.chat_auto_replies`
+>    no tiene dónde guardar el modo. Agregar `reply_mode_concept_id uuid NULL` (FK a
+>    `terminology.catalog_concepts`; `NULL` = texto fijo, así la columna es aditiva) en el `.puml` de
+>    `community`, regenerar `SQL/` con `gen_ddl.py` y la entidad con `gen_entities.py`.
+> 2. **API**:
+>    - Conceptos sembrados por la API: `AUTO_REPLY_MODE_FIXED`, `AUTO_REPLY_MODE_AI` y
+>      `MESSAGE_CONTENT_AUTO_REPLY_AI` (el mensaje de IA se marca por su tipo de contenido, sin tocar
+>      `direct_messages`).
+>    - `UpsertChatAutoReplyDto` y `ChatAutoReplyDto`: `replyMode?: 'FIXED' | 'AI'` (por defecto
+>      `FIXED`). La lectura de mensajes publica `contentType: 'AUTO_REPLY_AI'` para ese concepto.
+>    - Un puerto inyectado (token de Nest) con su adapter HTTP a `POST {AI_BASE_URL}/v1/assistant/ask`
+>      con `tier: 'fast'`, `question` = el último mensaje recibido y `context` = datos públicos del
+>      perfil que contesta (nombre, especialidad, horario de atención) más el `bodyText` de respaldo.
+>      `AI_BASE_URL` va en `.env.example`. Timeout corto.
+>    - Instrucciones fijas a la IA: no diagnosticar, no indicar medicamentos ni dosis, derivar a
+>      Emergencia ante signos de alarma, hablar de usted.
+>    - **Fuera de la transacción**: `textForResponder` decide en su `tx` y marca el descanso; la
+>      llamada a la IA va entre esa transacción y el envío (`responderOnly` ya las tiene separadas).
+>    - Ante error, timeout o respuesta vacía, se manda el `bodyText` sin la marca de IA.
+>    - No se manda PHI de otras conversaciones y no se loguea el contenido del mensaje.
+> 3. **Front**, cuando la API lo publique: sacar `replyMode` de `CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS`,
+>    regenerar el contrato de la maqueta y que `ChatAutoReply.iaDisponible()` dependa de que la
+>    lectura traiga `replyMode`.
+>
+> **Abierto:** la forma de la respuesta de `/v1/assistant/ask` no se pudo leer (el repo de la IA no
+> estaba disponible en la sesión que hizo el front). El adapter tiene que leer el campo de texto que
+> el servicio publica y tratar cualquier otra forma como respuesta vacía, o sea, respaldo.
+>
+> **Mientras tanto:** contra la API real se ofrecen «No responder» y «Mensaje fijo», que el servidor
+> ya sostiene. «Responder con IA» se ve apagada y dice por qué. No se finge una respuesta de IA.
