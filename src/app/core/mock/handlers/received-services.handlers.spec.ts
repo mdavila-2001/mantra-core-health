@@ -41,6 +41,41 @@ describe('handlers de servicios recibidos: GET /clinical/patients/:id/received-s
     return value;
   }
 
+  /**
+   * Alguien que el paciente de demostración no es ni representa: un extraño de verdad.
+   *
+   * No sirve «el primer paciente que no sea él». El builder de Angular corre las
+   * pruebas con `isolate: false`, así que los archivos que caen en el mismo worker
+   * comparten el estado del backend simulado, y `dependent-requests.handlers.spec.ts`
+   * deja a `PATIENTS[1]` como dependiente de este mismo paciente (acepta la
+   * solicitud y el vínculo vive en memoria). Con ese vínculo la API responde 200,
+   * correctamente, y la prueba fallaba según qué archivo hubiera corrido antes en
+   * el worker (#1366).
+   *
+   * Por eso se le pregunta al propio simulador a quién representa, por el mismo
+   * endpoint que usa la pantalla de dependientes, y se elige a alguien fuera de esa
+   * lista: la aserción de abajo sigue siendo «un extraño recibe 403», sin importar
+   * qué vínculos hayan dejado otros archivos.
+   */
+  function extrano(): (typeof PATIENTS)[number] {
+    const path = '/profiles/patients/me/dependents';
+    const match = router.match('GET', path);
+    if (match === null) throw new Error(`No existe GET ${path}`);
+    const dependientes = match.handler({
+      method: 'GET',
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body: {},
+      headers: new HttpHeaders(),
+      user: paciente,
+    } satisfies MockRequest) as { patientProfileId: string }[];
+    const representados = new Set(dependientes.map((dependiente) => dependiente.patientProfileId));
+    const candidato = PATIENTS.find((p) => p.id !== PACIENTE.id && !representados.has(p.id));
+    if (candidato === undefined) throw new Error('No hay ningún paciente ajeno al de demostración');
+    return candidato;
+  }
+
   it('el titular recibe sus cuatro servicios, del más reciente al más antiguo', () => {
     const result = page(pedir(paciente, PACIENTE.id));
 
@@ -103,8 +138,7 @@ describe('handlers de servicios recibidos: GET /clinical/patients/:id/received-s
     });
 
     it('un paciente no lee los servicios de otro', () => {
-      const other = PATIENTS.find((candidate) => candidate.id !== PACIENTE.id)!;
-      const reply = pedir(paciente, other.id);
+      const reply = pedir(paciente, extrano().id);
       expect(isMockReply(reply) && reply.status).toBe(403);
     });
 
