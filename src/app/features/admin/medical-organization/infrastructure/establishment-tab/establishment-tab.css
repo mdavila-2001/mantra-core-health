@@ -1,0 +1,121 @@
+:host {
+  display: block;
+}
+
+.estab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.estab__barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.estab__datos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5) var(--sp-6);
+  margin: 0;
+}
+
+@media (min-width: 780px) {
+  .estab__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .estab__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.estab__datos dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.estab__datos dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: var(--sp-1) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.estab__nota {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estab__aviso {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estab__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+}
+
+.estab__vacio p {
+  margin: 0;
+}
+
+.estab__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.estab__tabla {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.estab__tabla table {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.estab__tabla th,
+.estab__tabla td {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: start;
+  vertical-align: middle;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.estab__tabla thead th {
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.estab__caption {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

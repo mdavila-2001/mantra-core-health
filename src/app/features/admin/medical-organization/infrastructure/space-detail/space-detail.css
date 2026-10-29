@@ -1,0 +1,166 @@
+/* ============================================================================
+    Ficha de un espacio. Una tarjeta centrada y a lo ancho (regla del 09/09/2026):
+    el bloque lleva `inline-size: 100%` y `margin-inline: auto`; el tope de ancho
+    lo pone `.app-main__inner` y nadie más. Los datos se reparten en columnas
+    según el ancho —una en móvil, dos desde 780 px, tres desde 1120 px— y no se
+    acota el bloque.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.ficha-espacio {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.ficha-espacio__datos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5) var(--sp-6);
+  margin: 0;
+}
+
+@media (min-width: 780px) {
+  .ficha-espacio__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .ficha-espacio__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ficha-espacio__datos dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ficha-espacio__datos dd {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.ficha-espacio__dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.ficha-espacio__subtitulo {
+  margin: var(--sp-8) 0 var(--sp-4);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.ficha-espacio__cifra {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.ficha-espacio__nota {
+  margin: var(--sp-5) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.ficha-espacio__salida {
+  margin: 0 0 var(--sp-4);
+}
+
+.ficha-espacio__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+}
+
+.ficha-espacio__vacio p {
+  margin: 0;
+}
+
+.ficha-espacio__barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.ficha-espacio__tabla {
+  overflow-x: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  margin-block-end: var(--sp-4);
+}
+
+.ficha-espacio__tabla table {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+
+.ficha-espacio__tabla th,
+.ficha-espacio__tabla td {
+  padding: var(--sp-3) var(--sp-4);
+  text-align: start;
+  vertical-align: middle;
+  border-block-end: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.ficha-espacio__tabla thead th {
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+}
+
+.ficha-espacio__caption {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.ficha-espacio__historial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ficha-espacio__historial li {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.ficha-espacio__historial header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.ficha-espacio__cuando {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.ficha-espacio__motivo,
+.ficha-espacio__cambio {
+  margin: var(--sp-2) 0 0;
+}

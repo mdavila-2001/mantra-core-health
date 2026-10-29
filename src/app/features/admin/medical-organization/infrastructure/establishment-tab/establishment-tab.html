@@ -1,0 +1,192 @@
+<div class="estab" data-testid="estab-tab">
+  @if (sites().length > 1) {
+    <app-form-field label="Establecimiento">
+      <app-select
+        [options]="opcionesDeSitio()"
+        [value]="siteId()"
+        (valueChange)="elegirSitio($event ?? '')"
+        placeholder="Elija un establecimiento"
+        data-testid="estab-sitio"
+      />
+    </app-form-field>
+  }
+
+  <!-- Una tarjeta con tres pestañas, no tres tarjetas apiladas (regla 09/09/2026). -->
+  <app-card>
+    <app-tabs [(selectedIndex)]="pestana" data-testid="estab-pestanas">
+      <app-tab label="Datos regulatorios">
+        <app-view-state-host [state]="estructura()" (retry)="cargarEstructura()">
+          @if (sitio(); as s) {
+            @if (permisos().canEditRegulatory) {
+              <div class="estab__barra">
+                <button app-button variant="primary" size="sm" type="button" data-testid="regulatorio-editar" (clicked)="dialogo.set('regulatorio')">Editar datos regulatorios</button>
+              </div>
+            } @else {
+              <p class="estab__nota" data-testid="regulatorio-solo-lectura">
+                Los datos regulatorios los registra la organización ante el SEDES; desde acá sólo se consultan.
+              </p>
+            }
+            <dl class="estab__datos" data-testid="regulatorio-datos">
+              <div>
+                <dt>Código SNIS / SUIS</dt>
+                <dd>
+                  <span class="tabular-nums">{{ s.regulatory.snisCode ?? '—' }}</span>
+                  @if (s.regulatory.snisCode) {
+                    <app-badge [variant]="s.regulatory.snisVerified ? 'success' : 'warning'">{{ s.regulatory.snisVerified ? 'Verificado por la plataforma' : 'Sin verificar' }}</app-badge>
+                  }
+                </dd>
+              </div>
+              <div><dt>Subsector</dt><dd>{{ s.regulatory.subsector?.display ?? '—' }}</dd></div>
+              <div><dt>Nivel de atención</dt><dd>{{ s.regulatory.careLevel?.display ?? '—' }}</dd></div>
+              <div><dt>Tipología</dt><dd>{{ s.regulatory.typology?.display ?? '—' }}</dd></div>
+              <div><dt>Ente gestor</dt><dd>{{ s.regulatory.managingEntityName ?? '—' }}</dd></div>
+              <div><dt>Red de salud</dt><dd>{{ s.regulatory.healthNetworkName ?? '—' }}</dd></div>
+              <div><dt>SEDES</dt><dd>{{ s.regulatory.sedes?.display ?? '—' }}</dd></div>
+              <div><dt>Municipio</dt><dd>{{ s.regulatory.municipalityName ?? '—' }}</dd></div>
+            </dl>
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Habilitaciones">
+        <app-view-state-host [state]="habilitaciones()" (retry)="cargarHabilitaciones()">
+          <div vsh-empty class="estab__vacio" data-testid="habilitaciones-vacio">
+            <h3 class="estab__titulo">Sin habilitaciones registradas</h3>
+            <p>Una habilitación es la autorización del SEDES (u otra autoridad) para que el establecimiento funcione.</p>
+            @if (permisos().canEditRegulatory) {
+              <button app-button variant="primary" type="button" data-testid="habilitacion-primera" (clicked)="editarLicencia(null)">Registrar la primera habilitación</button>
+            } @else {
+              <p class="estab__nota">Pida a la organización que registre la habilitación.</p>
+            }
+          </div>
+          @if (listaDeHabilitaciones().length > 0) {
+            @if (permisos().canEditRegulatory) {
+              <div class="estab__barra">
+                <button app-button variant="primary" size="sm" type="button" data-testid="habilitacion-nueva" (clicked)="editarLicencia(null)">Registrar habilitación</button>
+              </div>
+            }
+            <div class="estab__tabla" role="region" tabindex="0" aria-label="Habilitaciones">
+              <table data-testid="habilitaciones">
+                <caption class="estab__caption">Habilitaciones del establecimiento</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Autoridad</th><th scope="col">Resolución</th><th scope="col">Emisión</th><th scope="col">Vencimiento</th><th scope="col">Estado</th><th scope="col">Alcance</th>
+                    @if (permisos().canEditRegulatory) {<th scope="col"><span class="estab__caption">Acciones</span></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (l of listaDeHabilitaciones(); track l.id) {
+                    <tr [attr.data-estado]="l.status.code">
+                      <td>{{ l.authorityName }}</td>
+                      <td class="tabular-nums">{{ l.resolutionNumber ?? '—' }}</td>
+                      <td>{{ fechaCorta(l.issuedOn) }}</td>
+                      <td>
+                        {{ fechaCorta(l.expiresOn) }}
+                        @if (avisoDeVencimiento(l); as aviso) {
+                          <span class="estab__aviso">{{ aviso }}</span>
+                        }
+                      </td>
+                      <td><app-badge [variant]="varianteDeHabilitacion(l.status.code)">{{ l.status.display }}</app-badge></td>
+                      <td>{{ unidadDe(l.clinicalUnitId) }}</td>
+                      @if (permisos().canEditRegulatory) {
+                        <td><button app-button size="sm" variant="outline" type="button" (clicked)="editarLicencia(l)">Editar</button></td>
+                      }
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="estab__nota">Una habilitación vencida avisa, pero no borra ni bloquea datos. «Vencida» la calcula el sistema al leer, con la fecha de vencimiento.</p>
+          }
+        </app-view-state-host>
+      </app-tab>
+
+      <app-tab label="Capacidad">
+        <app-view-state-host [state]="capacidad()" (retry)="cargarCapacidad()" (refresh)="cargarCapacidad()">
+          <div vsh-empty class="estab__vacio" data-testid="capacidad-vacio">
+            <h3 class="estab__titulo">Sin capacidad declarada</h3>
+            <p>No se declaró capacidad ante la autoridad. La capacidad real se cuenta del árbol y se muestra igual.</p>
+            @if (permisos().canEditRegulatory) {
+              <button app-button variant="primary" type="button" data-testid="capacidad-declarar-primera" (clicked)="dialogo.set('capacidad')">Declarar capacidad</button>
+            } @else {
+              <p class="estab__nota">Pida a la organización que declare la capacidad.</p>
+            }
+          </div>
+          @if (filasDeCapacidad().length > 0) {
+            @if (permisos().canEditRegulatory) {
+              <div class="estab__barra">
+                <button app-button variant="primary" size="sm" type="button" data-testid="capacidad-declarar" (clicked)="dialogo.set('capacidad')">Declarar capacidad</button>
+              </div>
+            }
+            <div class="estab__tabla" role="region" tabindex="0" aria-label="Capacidad declarada y real">
+              <table data-testid="capacidad-tabla">
+                <caption class="estab__caption">Capacidad declarada frente a la real</caption>
+                <thead>
+                  <tr><th scope="col">Tipo</th><th scope="col">Declarada</th><th scope="col">Real (contada del árbol)</th><th scope="col">Diferencia</th></tr>
+                </thead>
+                <tbody>
+                  @for (f of filasDeCapacidad(); track f.kindCode) {
+                    <tr [attr.data-tipo]="f.kindCode">
+                      <td>{{ f.etiqueta }}</td>
+                      <td class="tabular-nums">
+                        {{ f.declarada ?? '—' }}
+                        @if (f.corte) {
+                          <span class="estab__aviso">al {{ fechaCorta(f.corte) }}{{ f.resolucion ? ' · ' + f.resolucion : '' }}</span>
+                        }
+                      </td>
+                      <td class="tabular-nums" data-testid="capacidad-real">{{ f.real }}</td>
+                      <td>
+                        @if (f.diferencia === null) {
+                          <app-badge variant="secondary">Sin declarar</app-badge>
+                        } @else if (f.diferencia === 0) {
+                          <app-badge variant="success">Coincide</app-badge>
+                        } @else {
+                          <app-badge variant="warning">{{ f.diferencia > 0 ? '+' + f.diferencia : f.diferencia }} respecto de lo declarado</app-badge>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="estab__nota" data-testid="capacidad-asof">
+              La capacidad real no se escribe a mano: se cuenta de los espacios activos. Leída {{ capacidadAntiguedad() }}.
+            </p>
+          }
+          @if (faltantes().length > 0) {
+            <app-alert tone="warning" title="Falta lo que la tipología exige" data-testid="capacidad-faltantes">
+              {{ sitio()?.regulatory?.typology?.display }} exige al menos un espacio activo de: {{ faltantes().join(', ') }}.
+              Es una advertencia, no un bloqueo.
+            </app-alert>
+          }
+        </app-view-state-host>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+@if (dialogo() === 'regulatorio' && sitio() && catalogo()) {
+  <app-regulatory-form-dialog [site]="sitio()!" [catalog]="catalogo()!" (saved)="alGuardarRegulatorio($event)" (closed)="dialogo.set(null)" />
+}
+
+@if (esDialogoDeLicencia() && sitio() && catalogo()) {
+  <app-license-form-dialog
+    [siteId]="sitio()!.id"
+    [siteName]="sitio()!.name"
+    [catalog]="catalogo()!"
+    [units]="unidades()"
+    [license]="licenciaEnEdicion()"
+    (saved)="alGuardarLicencia()"
+    (closed)="dialogo.set(null)"
+  />
+}
+
+@if (dialogo() === 'capacidad' && sitio() && catalogo()) {
+  <app-capacity-form-dialog
+    [siteId]="sitio()!.id"
+    [siteName]="sitio()!.name"
+    [kinds]="catalogo()!.regulatory.capacityKind"
+    (saved)="alDeclarar()"
+    (closed)="dialogo.set(null)"
+  />
+}

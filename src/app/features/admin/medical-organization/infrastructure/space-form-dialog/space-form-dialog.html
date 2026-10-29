@@ -1,0 +1,26 @@
+<app-content-dialog
+  [heading]="titulo()"
+  [description]="descripcion()"
+  closeLabel="Cancelar"
+  size="lg"
+  (closed)="cerrar()"
+>
+  <div data-testid="espacio-formulario">
+    <app-infra-issue-alert
+      [state]="serverState()"
+      [heading]="esEdicion() ? 'No se pudo guardar el espacio' : 'No se pudo crear el espacio'"
+    />
+    <app-paginated-form
+      [paginas]="paginas()"
+      [form]="form"
+      [label]="titulo()"
+      [submitLabel]="esEdicion() ? 'Guardar cambios' : 'Crear espacio'"
+      submitTestId="espacio-guardar"
+      [pending]="pending()"
+      [initialStep]="initialStep()"
+      cancelLabel="Cancelar"
+      (enviado)="submit()"
+      (cancelado)="cerrar()"
+    />
+  </div>
+</app-content-dialog>

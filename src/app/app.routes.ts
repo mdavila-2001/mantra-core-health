@@ -708,6 +708,20 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Infraestructura hospitalaria (F1). La ficha de un espacio cuelga de la
+    // consola «Mis organizaciones» (`administration/medical-organization`), cuya
+    // sección fija los roles: el guard de sección la resuelve por prefijo, así
+    // que quien no entra a la consola tampoco entra a la ficha. Una sola
+    // tarjeta con pestañas, a lo ancho (regla del 09/09/2026).
+    path: 'administration/medical-organization/spaces/:id',
+    title: `${APP_TITLE} - Espacio`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/admin/medical-organization/infrastructure/space-detail/space-detail')
+        .then((m) => m.SpaceDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
     path: 'administration/patients/merge',
     title: `${APP_TITLE} - Fusionar duplicados`,
     canActivate: [seccionRolesGuard],

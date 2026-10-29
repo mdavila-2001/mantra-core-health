@@ -1,0 +1,258 @@
+<app-page-header
+  [title]="detail()?.name ?? 'Espacio'"
+  [subtitle]="detail() ? detail()!.form.display + ' · ' + detail()!.function.display + ' · ' + detail()!.code : ''"
+  [breadcrumbs]="breadcrumbs()"
+  [secondaryActions]="acciones()"
+  (actionSelected)="alElegirAccion($event)"
+>
+  @if (detail(); as d) {
+    <span page-meta>
+      <app-badge [variant]="varianteDeEstado(d.status.code)" data-testid="ficha-estado">{{ d.status.display }}</app-badge>
+    </span>
+  }
+</app-page-header>
+
+<app-view-state-host [state]="state()" (retry)="recargar()" (refresh)="recargar()">
+  @if (detail(); as d) {
+    @if (accionError()) {
+      <app-infra-issue-alert [state]="accionError()" heading="No se pudo cambiar el espacio" />
+      @if (reasonDelError() === 'PARENT_NOT_ACTIVE' && d.path.length > 0) {
+        <p class="ficha-espacio__salida" data-testid="ficha-salida-padre">
+          Qué hacer:
+          <a [routerLink]="rutaDeEspacio(d.path[d.path.length - 1].id)">abrir «{{ d.path[d.path.length - 1].name }}»</a>
+          y activarlo o reactivarlo primero.
+        </p>
+      }
+    }
+
+    <!-- Una sola tarjeta, centrada y a lo ancho, con las pestañas: regla del
+         09/09/2026 (docs/components/composition-rules.md §5). Sin columna lateral. -->
+    <div class="ficha-espacio" data-testid="ficha-espacio">
+      <app-card>
+        <app-tabs [(selectedIndex)]="pestana" data-testid="ficha-pestanas">
+          <app-tab label="General">
+            <dl class="ficha-espacio__datos" data-testid="ficha-general">
+              <div><dt>Código</dt><dd class="tabular-nums">{{ d.code }}</dd></div>
+              <div><dt>Nombre</dt><dd>{{ d.name }}</dd></div>
+              <div><dt>Forma</dt><dd>{{ d.form.display }}</dd></div>
+              <div><dt>Función</dt><dd>{{ d.function.display }}</dd></div>
+              <div>
+                <dt>Estado</dt>
+                <dd><app-badge [variant]="varianteDeEstado(d.status.code)">{{ d.status.display }}</app-badge></dd>
+              </div>
+              <div><dt>Disponibilidad</dt><dd>{{ d.operationalStatus?.display ?? '—' }}</dd></div>
+              <div>
+                <dt>Ubicación</dt>
+                <dd>
+                  @if (d.path.length === 0) {
+                    En la raíz del establecimiento
+                  } @else {
+                    @for (p of d.path; track p.id; let ultimo = $last) {
+                      <a [routerLink]="rutaDeEspacio(p.id)">{{ p.name }}</a>{{ ultimo ? '' : ' › ' }}
+                    }
+                  }
+                </dd>
+              </div>
+              <div><dt>Unidad propietaria</dt><dd>{{ propietaria() ?? 'Sin unidad propietaria' }}</dd></div>
+              <div><dt>Vigente desde</dt><dd>{{ fechaCorta(d.validFrom) }}</dd></div>
+              <div><dt>Vigente hasta</dt><dd>{{ d.validTo ? fechaCorta(d.validTo) : 'Sin fecha de cierre' }}</dd></div>
+              <div class="ficha-espacio__dato--ancho"><dt>Descripción</dt><dd>{{ d.description || '—' }}</dd></div>
+            </dl>
+            <h3 class="ficha-espacio__subtitulo">Lo que hay adentro</h3>
+            <dl class="ficha-espacio__datos ficha-espacio__datos--cifras" data-testid="ficha-derivados">
+              <div><dt>Camas</dt><dd class="ficha-espacio__cifra">{{ d.derived.beds }}</dd></div>
+              <div><dt>Camas censables activas</dt><dd class="ficha-espacio__cifra">{{ d.derived.censableBeds }}</dd></div>
+              <div><dt>Hijos activos</dt><dd class="ficha-espacio__cifra">{{ d.derived.activeChildren }}</dd></div>
+            </dl>
+            <p class="ficha-espacio__nota">Estos números se cuentan del árbol cada vez que se abre la ficha; no se escriben a mano.</p>
+          </app-tab>
+
+          <app-tab label="Atributos técnicos">
+            <dl class="ficha-espacio__datos" data-testid="ficha-atributos">
+              <div><dt>Superficie útil</dt><dd>{{ d.areaM2 === null ? '—' : d.areaM2 + ' m²' }}</dd></div>
+              <div><dt>Número de piso</dt><dd>{{ d.floorNumber ?? '—' }}</dd></div>
+              <div><dt>Capacidad</dt><dd>{{ d.capacity === null ? '—' : d.capacity + ' personas' }}</dd></div>
+              <div><dt>Asepsia</dt><dd>{{ d.asepsis?.display ?? '—' }}</dd></div>
+              <div><dt>Presión</dt><dd>{{ d.pressure?.display ?? '—' }}</dd></div>
+              <div><dt>Renovaciones de aire por hora</dt><dd>{{ d.airChangesPerHour ?? '—' }}</dd></div>
+              <div><dt>Validación de climatización</dt><dd>{{ fechaCorta(d.hvacValidatedOn) }}</dd></div>
+              <div><dt>Categoría de cama</dt><dd>{{ d.bedCategory?.display ?? '—' }}</dd></div>
+              <div><dt>Censable</dt><dd>{{ d.censable === null ? '—' : d.censable ? 'Sí' : 'No' }}</dd></div>
+              <div><dt>Restricción de sexo</dt><dd>{{ d.sexRestriction?.display ?? '—' }}</dd></div>
+              <div><dt>Grupo de edad</dt><dd>{{ d.ageGroup?.display ?? '—' }}</dd></div>
+              <div><dt>Preparación</dt><dd>{{ d.prepMinutes === null ? '—' : d.prepMinutes + ' min' }}</dd></div>
+              <div><dt>Limpieza</dt><dd>{{ d.cleanupMinutes === null ? '—' : d.cleanupMinutes + ' min' }}</dd></div>
+              <div><dt>GLN</dt><dd class="tabular-nums">{{ d.gln ?? '—' }}</dd></div>
+            </dl>
+            <p class="ficha-espacio__nota">«—» quiere decir que el dato no se cargó, no que valga cero.</p>
+          </app-tab>
+
+          <app-tab label="Unidades">
+            @if (d.assignments.length === 0) {
+              <div class="ficha-espacio__vacio" data-testid="ficha-unidades-vacio">
+                <p>Este espacio no está vinculado a ninguna unidad.</p>
+                @if (hijosEditables()) {
+                  <button app-button variant="primary" type="button" (clicked)="vinculando.set(true)" data-testid="ficha-vincular">Vincular con una unidad</button>
+                } @else {
+                  <p class="ficha-espacio__nota">Un administrador del establecimiento puede vincularlo.</p>
+                }
+              </div>
+            } @else {
+              <div class="ficha-espacio__tabla" role="region" tabindex="0" aria-label="Unidades vinculadas">
+                <table data-testid="ficha-unidades">
+                  <caption class="ficha-espacio__caption">Unidades vinculadas al espacio</caption>
+                  <thead><tr><th scope="col">Unidad</th><th scope="col">Rol</th><th scope="col">Desde</th>@if (hijosEditables()) {<th scope="col"><span class="ficha-espacio__caption">Acciones</span></th>}</tr></thead>
+                  <tbody>
+                    @for (v of d.assignments; track v.id) {
+                      <tr>
+                        <td>{{ nombreDeUnidad(v.clinicalUnitId) }}</td>
+                        <td><app-badge [variant]="v.role.code === 'SPACE_UNIT_ROLE_OWNER' ? 'primary' : 'secondary'">{{ v.role.display }}</app-badge></td>
+                        <td>{{ fechaCorta(v.validFrom) }}</td>
+                        @if (hijosEditables()) {
+                          <td><button app-button size="sm" variant="outline" type="button" (clicked)="cerrarVinculo(v)">Cerrar vínculo</button></td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (hijosEditables()) {
+                <button app-button variant="secondary" type="button" (clicked)="vinculando.set(true)" data-testid="ficha-vincular">Vincular otra unidad</button>
+              }
+            }
+          </app-tab>
+
+          <app-tab label="Hijos">
+            @if (hijosEditables() && (puedeAgregarHijos() || puedeAgregarVarios())) {
+              <div class="ficha-espacio__barra">
+                @if (puedeAgregarHijos()) {
+                  <button app-button variant="primary" size="sm" type="button" (clicked)="agregando.set('uno')" data-testid="ficha-agregar-hijo">Agregar hijo</button>
+                }
+                @if (puedeAgregarVarios()) {
+                  <button app-button variant="secondary" size="sm" type="button" (clicked)="agregando.set('varios')" data-testid="ficha-agregar-varios">Agregar varios</button>
+                }
+              </div>
+            }
+            @if (d.children.length === 0) {
+              <div class="ficha-espacio__vacio" data-testid="ficha-hijos-vacio">
+                <p>
+                  {{ puedeAgregarHijos() ? 'Todavía no tiene espacios adentro.' : 'Este tipo de espacio no admite hijos: es el último nivel.' }}
+                </p>
+              </div>
+            } @else {
+              <div class="ficha-espacio__tabla" role="region" tabindex="0" aria-label="Espacios hijos">
+                <table data-testid="ficha-hijos">
+                  <caption class="ficha-espacio__caption">Espacios que cuelgan de este</caption>
+                  <thead><tr><th scope="col">Código</th><th scope="col">Nombre</th><th scope="col">Forma</th><th scope="col">Función</th><th scope="col">Estado</th></tr></thead>
+                  <tbody>
+                    @for (h of d.children; track h.id) {
+                      <tr>
+                        <td class="tabular-nums"><a [routerLink]="rutaDeEspacio(h.id)">{{ h.code }}</a></td>
+                        <td>{{ h.name }}</td>
+                        <td>{{ h.form.display }}</td>
+                        <td>{{ h.function.display }}</td>
+                        <td><app-badge [variant]="varianteDeEstado(h.status.code)">{{ h.status.display }}</app-badge></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </app-tab>
+
+          <app-tab label="Historial">
+            @if (!permisos().canSeeHistory) {
+              <p class="ficha-espacio__nota" data-testid="ficha-historial-sin-permiso">
+                El historial de cambios lo ven los administradores de la organización o del establecimiento.
+              </p>
+            } @else {
+              <app-view-state-host [state]="historial()" (retry)="cargarHistorial()">
+                @if (entradas().length > 0) {
+                  <ol class="ficha-espacio__historial" data-testid="ficha-historial">
+                    @for (e of entradas(); track e.revision) {
+                      <li>
+                        <header>
+                          <strong>Revisión {{ e.revision }}</strong>
+                          <app-badge variant="secondary">{{ e.action === 'created' ? 'Alta' : e.action === 'updated' ? 'Edición' : e.action === 'moved' ? 'Movimiento' : 'Ciclo de vida' }}</app-badge>
+                          <span class="ficha-espacio__cuando">{{ fechaYHora(e.changedAt) }} · {{ e.changedBy ?? 'Sistema' }}</span>
+                        </header>
+                        @if (e.reason) {
+                          <p class="ficha-espacio__motivo">Motivo: {{ e.reason }}</p>
+                        }
+                        @for (c of e.changes; track c.field) {
+                          <p class="ficha-espacio__cambio"><code>{{ c.field }}</code>: {{ c.from ?? '—' }} → {{ c.to ?? '—' }}</p>
+                        }
+                        <p class="ficha-espacio__nota">Código de soporte: <code class="tabular-nums">{{ e.requestId }}</code></p>
+                      </li>
+                    }
+                  </ol>
+                }
+              </app-view-state-host>
+            }
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    </div>
+
+    @if (edicion(); as e) {
+      <app-space-form-dialog
+        mode="edit"
+        [site]="ficha()!.structure.site"
+        [catalog]="ficha()!.catalog"
+        [units]="ficha()!.structure.units"
+        [space]="d"
+        [initialStep]="e.paso"
+        (saved)="alGuardar($event)"
+        (closed)="edicion.set(null)"
+      />
+    }
+
+    @if (agregando() === 'uno' && nodoPadre(); as padre) {
+      <app-space-form-dialog
+        mode="create"
+        [site]="ficha()!.structure.site"
+        [catalog]="ficha()!.catalog"
+        [units]="ficha()!.structure.units"
+        [parent]="padre"
+        (saved)="alAgregarHijos()"
+        (closed)="agregando.set(null)"
+      />
+    }
+
+    @if (agregando() === 'varios' && nodoPadre(); as padre) {
+      <app-bulk-create-dialog
+        [site]="ficha()!.structure.site"
+        [catalog]="ficha()!.catalog"
+        [parent]="padre"
+        [takenCodes]="codigosUsados()"
+        (created)="alAgregarHijos()"
+        (closed)="agregando.set(null)"
+      />
+    }
+
+    @if (vinculando()) {
+      <app-unit-link-dialog
+        [spaceId]="d.id"
+        [spaceName]="d.name"
+        [spaceCode]="d.code"
+        [units]="ficha()!.structure.units"
+        [roles]="ficha()!.catalog.attributes.unitRole"
+        [linkedUnitIds]="unidadesVinculadas()"
+        (linked)="alVincular($event)"
+        (closed)="vinculando.set(false)"
+      />
+    }
+
+    @if (bloqueos(); as b) {
+      <app-retire-blockers-dialog
+        [spaceName]="d.name"
+        [spaceCode]="d.code"
+        [blockers]="b.blockers"
+        [asOf]="b.asOf"
+        [checking]="comprobando()"
+        (recheck)="recomprobar()"
+        (closed)="bloqueos.set(null)"
+      />
+    }
+  }
+</app-view-state-host>

@@ -1,0 +1,64 @@
+.bulk__previa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.bulk__resumen {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.bulk__tabla {
+  max-block-size: 40vh;
+  overflow: auto;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.bulk__tabla table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+}
+
+.bulk__caption {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.bulk__tabla th,
+.bulk__tabla td {
+  padding: var(--sp-2) var(--sp-4);
+  text-align: start;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.bulk__tabla thead th {
+  position: sticky;
+  inset-block-start: 0;
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+}
+
+.bulk__fila--choque td {
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+}
+
+.bulk__aviso {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

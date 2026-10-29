@@ -1,0 +1,56 @@
+<app-content-dialog
+  heading="No se puede clausurar todavía"
+  [description]="'«' + spaceName() + '» (' + spaceCode() + ') tiene dependencias activas.'"
+  closeLabel="Cerrar"
+  size="lg"
+  (closed)="closed.emit()"
+>
+  <div class="bloqueos" data-testid="bloqueos-dialogo">
+    <p class="bloqueos__resumen" aria-live="polite">
+      <strong>{{ blockers().length }}</strong>
+      {{ blockers().length === 1 ? 'bloqueo' : 'bloqueos' }}
+      ({{ total() }} {{ total() === 1 ? 'elemento' : 'elementos' }}).
+      @if (antiguedad(); as cuando) {
+        <span class="bloqueos__cuando" data-testid="bloqueos-antiguedad">Comprobado {{ cuando }}.</span>
+      }
+    </p>
+
+    <ul class="bloqueos__lista">
+      @for (b of blockers(); track b.kind) {
+        <li class="bloqueos__item" [attr.data-kind]="b.kind" data-testid="bloqueo">
+          <header class="bloqueos__encabezado">
+            <h3 class="bloqueos__titulo">{{ titulo(b.kind) }}</h3>
+            <app-badge variant="warning">{{ b.count }}</app-badge>
+          </header>
+          <p class="bloqueos__accion"><span class="bloqueos__etiqueta">Qué hacer</span> {{ b.nextAction }}</p>
+          @if (b.sampleIds.length > 0) {
+            <p class="bloqueos__muestras">
+              @if (esEspacio(b)) {
+                Abrir:
+                @for (id of b.sampleIds; track id) {
+                  <a [routerLink]="rutaDeEspacio(id)" (click)="closed.emit()">espacio {{ $index + 1 }}</a>
+                }
+              } @else {
+                Referencias:
+                @for (id of b.sampleIds; track id) {
+                  <code class="tabular-nums">{{ id.slice(0, 8) }}</code>
+                }
+              }
+            </p>
+          }
+        </li>
+      }
+    </ul>
+  </div>
+  <button
+    app-button
+    dialog-actions
+    type="button"
+    variant="secondary"
+    data-testid="bloqueos-recomprobar"
+    [disabled]="checking()"
+    (clicked)="recheck.emit()"
+  >
+    {{ checking() ? 'Comprobando…' : 'Volver a comprobar' }}
+  </button>
+</app-content-dialog>

@@ -1,0 +1,81 @@
+<app-content-dialog
+  [heading]="fase() === 'datos' ? 'Agregar varios espacios' : 'Vista previa del lote'"
+  [description]="'Dentro de «' + parent().name + '» (' + parent().code + ')'"
+  closeLabel="Cancelar"
+  size="lg"
+  (closed)="cerrar()"
+>
+  <div data-testid="masiva-dialogo">
+    <app-infra-issue-alert [state]="serverState()" heading="No se pudo crear el lote" />
+
+    @if (fase() === 'datos') {
+      <app-paginated-form
+        [paginas]="paginas()"
+        [form]="form"
+        label="Alta masiva"
+        submitLabel="Ver vista previa"
+        submitTestId="masiva-vista-previa"
+        cancelLabel="Cancelar"
+        (enviado)="verVistaPrevia()"
+        (cancelado)="cerrar()"
+      />
+    } @else {
+      <section class="bulk__previa" aria-labelledby="bulk-previa-titulo">
+        <p id="bulk-previa-titulo" class="bulk__resumen" data-testid="masiva-resumen">
+          Se van a crear <strong>{{ filas().length }}</strong>
+          {{ filas().length === 1 ? 'espacio' : 'espacios' }}.
+          @if (choques() > 0) {
+            <app-badge variant="error">{{ choques() }} con código ya usado</app-badge>
+          } @else {
+            <app-badge variant="success">Sin códigos repetidos</app-badge>
+          }
+        </p>
+        <div class="bulk__tabla" tabindex="0" role="region" aria-label="Espacios que se van a crear">
+          <table>
+            <caption class="bulk__caption">Códigos y nombres que se crearán, en orden</caption>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Código</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (fila of filas(); track fila.code; let i = $index) {
+                <tr [class.bulk__fila--choque]="fila.existe">
+                  <td class="tabular-nums">{{ i + 1 }}</td>
+                  <td class="tabular-nums">{{ fila.code }}</td>
+                  <td>{{ fila.name }}</td>
+                  <td>{{ fila.existe ? 'Ya existe: no se reutiliza' : 'Se creará' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        @if (choques() > 0) {
+          <p class="bulk__aviso">
+            Un código no se reutiliza, ni siquiera el de un espacio clausurado. Cambie el patrón y vuelva a
+            ver la vista previa.
+          </p>
+        }
+      </section>
+    }
+  </div>
+  @if (fase() === 'vista-previa') {
+    <button app-button dialog-actions variant="outline" type="button" (clicked)="volver()">Volver a editar</button>
+  }
+  @if (fase() === 'vista-previa') {
+    <button
+      app-button
+      dialog-actions
+      variant="primary"
+      type="button"
+      data-testid="masiva-crear"
+      [disabled]="pending() || choques() > 0"
+      (clicked)="crear()"
+    >
+      {{ pending() ? 'Creando…' : 'Crear ' + filas().length + (filas().length === 1 ? ' espacio' : ' espacios') }}
+    </button>
+  }
+</app-content-dialog>

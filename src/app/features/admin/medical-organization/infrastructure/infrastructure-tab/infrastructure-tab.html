@@ -1,0 +1,145 @@
+<div class="infra" data-testid="infra-tab">
+  @if (sites().length > 1) {
+    <app-form-field label="Establecimiento">
+      <app-select
+        [options]="opcionesDeSitio()"
+        [value]="siteId()"
+        (valueChange)="elegirSitio($event ?? '')"
+        placeholder="Elija un establecimiento"
+        data-testid="infra-sitio"
+      />
+    </app-form-field>
+  }
+
+  @if (aviso(); as mensaje) {
+    <app-alert tone="success" data-testid="infra-aviso" role="status">{{ mensaje }}</app-alert>
+  }
+
+  <!-- Barra de acciones. Sólo las ve quien el servidor dice que puede escribir:
+       la API decide, esto refleja. -->
+  @if (vista() && puedeEscribir()) {
+    <div class="infra__barra" role="toolbar" aria-label="Acciones de la estructura">
+      <button app-button variant="primary" size="sm" type="button" data-testid="infra-agregar" (clicked)="abrirAlta(seleccionado())">
+        {{ seleccionado() ? 'Agregar espacio dentro de la selección' : 'Agregar espacio en la raíz' }}
+      </button>
+      <button app-button variant="secondary" size="sm" type="button" data-testid="infra-agregar-varios" [disabled]="!puedeAgregarVarios()" (clicked)="abrirVarios()">
+        Agregar varios
+      </button>
+      <button app-button variant="secondary" size="sm" type="button" data-testid="infra-importar" (clicked)="dialogo.set({ tipo: 'csv' })">
+        Importar CSV
+      </button>
+    </div>
+  }
+
+  <app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+    <!-- S3: sin espacios. La próxima acción es un botón, no un enlace. -->
+    <div vsh-empty class="infra__vacio" data-testid="infra-vacio">
+      <h3 class="infra__vacio-titulo">Todavía no hay estructura cargada</h3>
+      <p>Un edificio es el primer nivel: de él cuelgan pisos, salas, habitaciones y camas.</p>
+      @if (puedeEscribir()) {
+        <div class="infra__barra">
+          <button app-button variant="primary" type="button" data-testid="infra-primer-edificio" (clicked)="abrirAlta(null)">Agregar el primer edificio</button>
+          <button app-button variant="secondary" type="button" data-testid="infra-importar-vacio" (clicked)="dialogo.set({ tipo: 'csv' })">Importar CSV</button>
+        </div>
+      } @else {
+        <p class="infra__nota" data-testid="infra-vacio-sin-permiso">Pida a un administrador del establecimiento que cargue la estructura.</p>
+      }
+    </div>
+
+    @if (vista(); as v) {
+      <div class="infra__cuerpo">
+        <app-card class="infra__arbol">
+          <div class="infra__arbol-cabecera">
+            <h3 class="infra__titulo">Espacios de {{ v.structure.site.name }}</h3>
+            <app-switch
+              [checked]="mostrarClausurados()"
+              (checkedChange)="mostrarClausurados.set($event)"
+              label="Mostrar clausurados"
+              data-testid="infra-clausurados"
+            />
+          </div>
+          <app-tree
+            label="Espacios del establecimiento"
+            [nodes]="nodos()"
+            [selectedId]="selectedId()"
+            (selectedIdChange)="alElegirNodo($event)"
+            [(expandedIds)]="expandedIds"
+          />
+        </app-card>
+
+        <app-card class="infra__panel">
+          <section aria-live="polite" data-testid="infra-panel">
+            @if (seleccionado(); as s) {
+              <header class="infra__panel-cabecera">
+                <h3 class="infra__titulo" data-testid="infra-panel-nombre">{{ s.name }}</h3>
+                <app-badge [variant]="varianteDeEstado(s.status.code)">{{ s.status.display }}</app-badge>
+              </header>
+              <dl class="infra__datos">
+                <div><dt>Código</dt><dd class="tabular-nums">{{ s.code }}</dd></div>
+                <div><dt>Forma</dt><dd>{{ s.form.display }}</dd></div>
+                <div><dt>Función</dt><dd>{{ s.function.display }}</dd></div>
+                <div><dt>Disponibilidad</dt><dd>{{ s.operationalStatus?.display ?? '—' }}</dd></div>
+                <div><dt>Unidad propietaria</dt><dd>{{ unidadDelSeleccionado() ?? 'Sin unidad' }}</dd></div>
+                <div><dt>Espacios adentro</dt><dd class="tabular-nums">{{ s.childCount }}</dd></div>
+              </dl>
+              <div class="infra__barra">
+                <a app-button variant="primary" size="sm" [routerLink]="rutaDeEspacio(s.id)" data-testid="infra-abrir-ficha">Abrir ficha</a>
+                @if (puedeAgregarDentro()) {
+                  <button app-button variant="secondary" size="sm" type="button" data-testid="infra-agregar-dentro" (clicked)="abrirAltaEnSeleccion()">Agregar dentro</button>
+                }
+              </div>
+            } @else {
+              <h3 class="infra__titulo">{{ v.structure.site.name }}</h3>
+              <p class="infra__nota">Elija un espacio del árbol para ver su detalle. Con el teclado: flechas para moverse, Enter para elegir.</p>
+              <dl class="infra__datos" data-testid="infra-resumen">
+                <div><dt>Espacios vigentes</dt><dd class="infra__cifra">{{ resumen().espacios }}</dd></div>
+                <div><dt>Camas activas</dt><dd class="infra__cifra">{{ resumen().camas }}</dd></div>
+                <div><dt>Quirófanos activos</dt><dd class="infra__cifra">{{ resumen().quirofanos }}</dd></div>
+                <div><dt>Consultorios activos</dt><dd class="infra__cifra">{{ resumen().consultorios }}</dd></div>
+                <div><dt>Planificados</dt><dd class="infra__cifra">{{ resumen().planificados }}</dd></div>
+              </dl>
+              @if (faltantes().length > 0) {
+                <app-alert tone="warning" title="Falta lo que la tipología exige" data-testid="infra-faltantes">
+                  {{ v.structure.site.regulatory.typology?.display }} exige al menos un espacio activo de:
+                  {{ faltantes().join(', ') }}. Es una advertencia: un hospital se arma de a poco.
+                </app-alert>
+              }
+            }
+          </section>
+        </app-card>
+      </div>
+      <p class="infra__nota" data-testid="infra-asof">Estructura leída {{ antiguedad() }}.</p>
+    }
+  </app-view-state-host>
+</div>
+
+@if (dialogo(); as d) {
+  @if (vista(); as v) {
+    @switch (d.tipo) {
+      @case ('crear') {
+        <app-space-form-dialog
+          mode="create"
+          [site]="v.structure.site"
+          [catalog]="v.catalog"
+          [units]="v.structure.units"
+          [parent]="d.parent"
+          (saved)="alCrear([$event])"
+          (closed)="cerrarDialogo()"
+        />
+      }
+      @case ('varios') {
+        <app-bulk-create-dialog
+          [site]="v.structure.site"
+          [catalog]="v.catalog"
+          [parent]="d.parent"
+          [takenCodes]="codigosUsados()"
+          (created)="alCrear($event)"
+          (closed)="cerrarDialogo()"
+        />
+      }
+      @case ('csv') {
+        <app-csv-import-dialog [site]="v.structure.site" (imported)="alImportar($event)" (closed)="cerrarDialogo()" />
+      }
+    }
+  }
+}

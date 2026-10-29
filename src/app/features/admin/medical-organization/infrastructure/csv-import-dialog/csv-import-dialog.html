@@ -1,0 +1,110 @@
+<app-content-dialog
+  heading="Importar espacios desde CSV"
+  [description]="'En ' + site().name + '. Se valida todo en seco antes de crear nada.'"
+  closeLabel="Cancelar"
+  size="xl"
+  (closed)="cerrar()"
+>
+  <div class="csv" data-testid="csv-dialogo">
+    <section class="csv__entrada" aria-label="Archivo">
+      <div class="csv__archivo">
+        <label class="csv__elegir" for="csv-archivo">Elegir archivo CSV</label>
+        <input
+          id="csv-archivo"
+          class="csv__input"
+          type="file"
+          accept=".csv,.txt,text/csv"
+          data-testid="csv-archivo"
+          (change)="elegirArchivo($event)"
+        />
+        <a class="csv__plantilla" [href]="plantillaHref" download="plantilla-espacios.csv">Descargar plantilla</a>
+      </div>
+      @if (nombreDeArchivo() !== '') {
+        <p class="csv__nombre">Archivo: <strong>{{ nombreDeArchivo() }}</strong></p>
+      }
+      @if (lectura(); as problema) {
+        <app-alert tone="error" role="alert">{{ problema }}</app-alert>
+      }
+      <app-form-field
+        label="O pegue el contenido"
+        hint="Primera línea: los nombres de columna. Obligatorias: code, name, formCode, functionCode. El padre se indica por código en parentCode."
+      >
+        <app-textarea
+          [value]="texto()"
+          (valueChange)="alCambiarTexto($event)"
+          [rows]="6"
+          placeholder="code,name,formCode,functionCode,parentCode"
+        />
+      </app-form-field>
+      <div class="csv__acciones">
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          data-testid="csv-validar"
+          [disabled]="validando() || leyendo() || texto().trim() === ''"
+          (clicked)="validar()"
+        >
+          {{ validando() ? 'Validando…' : 'Validar sin crear' }}
+        </button>
+      </div>
+    </section>
+
+    <app-infra-issue-alert [state]="serverState()" heading="No se pudo procesar el archivo" />
+
+    @if (fase() === 'revision' && parseado()) {
+      <section class="csv__resultado" aria-labelledby="csv-resultado-titulo" data-testid="csv-resultado" aria-live="polite">
+        <h3 id="csv-resultado-titulo" class="csv__titulo">
+          Validación del archivo
+          @if (validando()) {
+            <app-badge variant="info">Validando…</app-badge>
+          } @else if (limpio()) {
+            <app-badge variant="success">{{ filas() }} filas sin errores</app-badge>
+          } @else if (errores().length > 0) {
+            <app-badge variant="error">{{ errores().length }} {{ errores().length === 1 ? 'error' : 'errores' }}</app-badge>
+          }
+        </h3>
+
+        @if (errores().length > 0) {
+          <div class="csv__tabla" role="region" tabindex="0" aria-label="Errores por línea">
+            <table data-testid="csv-errores">
+              <caption class="csv__caption">Errores por línea del archivo</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Línea</th>
+                  <th scope="col">Campo</th>
+                  <th scope="col">Motivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of errores(); track $index) {
+                  <tr data-testid="csv-error-fila">
+                    <td class="tabular-nums">{{ e.line }}</td>
+                    <td><code>{{ e.field }}</code></td>
+                    <td>{{ e.reason }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <p class="csv__ayuda">Corrija el archivo —o el texto de arriba— y valide de nuevo. «Importar» no se ofrece mientras haya errores.</p>
+        } @else if (limpio()) {
+          <p class="csv__ayuda">Todo el archivo es válido. Al importar, la API lo revalida y lo crea completo, o no crea nada.</p>
+        }
+      </section>
+    }
+  </div>
+  @if (limpio()) {
+    <button
+      app-button
+      dialog-actions
+      type="button"
+      variant="primary"
+      data-testid="csv-importar"
+      [disabled]="importando()"
+      (clicked)="importar()"
+    >
+      {{ importando() ? 'Importando…' : 'Importar ' + filas() + (filas() === 1 ? ' fila' : ' filas') }}
+    </button>
+  }
+</app-content-dialog>
