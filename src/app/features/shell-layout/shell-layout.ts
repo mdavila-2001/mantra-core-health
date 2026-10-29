@@ -746,6 +746,21 @@ export class ShellLayout {
     destino?.scrollIntoView();
   }
 
+  /** La sesión es de paciente y de personal a la vez: el menú de la cuenta ofrece conmutar. */
+  protected readonly tieneDosContextos = this.navigation.tieneDosContextos;
+
+  /** El contexto con el que se arma el menú lateral (`TRABAJO` o `PACIENTE`). */
+  protected readonly contextoDelMenu = this.navigation.contexto;
+
+  /** Cambia entre «Trabajo» y «Mi salud» y lleva al panel, que existe en los dos contextos. */
+  protected elegirContexto(contexto: 'TRABAJO' | 'PACIENTE'): void {
+    if (this.navigation.contexto() === contexto) {
+      return;
+    }
+    this.navigation.cambiarContexto(contexto);
+    void this.router.navigateByUrl(contexto === 'PACIENTE' ? '/my-account/appointments' : '/dashboard');
+  }
+
   protected logout(): void {
     this.auth.logout();
     void this.router.navigateByUrl(LOGIN_ROUTE);

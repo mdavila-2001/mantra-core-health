@@ -1,10 +1,17 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
+import {
+  guardarContexto,
+  leerContextoGuardado,
+  rolesDelMenu,
+  tieneDosContextos,
+  type ContextoDelMenu,
+} from './navigation.contexto';
 import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
 import {
   apareceEnElMenu,
@@ -58,6 +65,29 @@ export class NavigationService {
     { initialValue: this.router.url },
   );
 
+  /** El contexto elegido (sólo cuenta si la sesión es de paciente y de personal a la vez). */
+  private readonly contextoElegido = signal<ContextoDelMenu>(leerContextoGuardado());
+
+  /** La sesión es paciente y personal: se le ofrece conmutar entre «Trabajo» y «Mi salud». */
+  readonly tieneDosContextos = computed(() => tieneDosContextos(this.auth.roles()));
+
+  /** El contexto con el que se arma el menú: `TRABAJO` salvo que haya dos y se haya elegido otro. */
+  readonly contexto = computed<ContextoDelMenu>(() =>
+    this.tieneDosContextos() ? this.contextoElegido() : 'TRABAJO',
+  );
+
+  /**
+   * Los roles con los que se arma el menú (no la puerta). Ver `navigation.contexto.ts`:
+   * en «Mi salud» sólo los base; en «Trabajo» sin `PATIENT`.
+   */
+  private readonly rolesDelMenu = computed(() => rolesDelMenu(this.auth.roles(), this.contexto()));
+
+  /** Cambia de contexto y lo recuerda en este navegador. */
+  cambiarContexto(contexto: ContextoDelMenu): void {
+    this.contextoElegido.set(contexto);
+    guardarContexto(contexto);
+  }
+
   /** Las secciones que esta sesión puede ver, sin agrupar. */
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
@@ -83,7 +113,7 @@ export class NavigationService {
     // quedar en ocho renglones (§4.H del plan de UX). Una sección con
     // `fueraDelMenuPara` sigue en `visibleSections` —el guard la deja pasar— y no ocupa
     // un renglón acá.
-    const roles = this.auth.roles();
+    const roles = this.rolesDelMenu();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
     // Las fijas salen **antes** de repartir, no después: si se descontaran al
@@ -121,7 +151,7 @@ export class NavigationService {
    * rol no puede ver, tampoco se le fija arriba.
    */
   readonly pinnedItems = computed<readonly NavMenuItem[]>(() => {
-    const roles = this.auth.roles();
+    const roles = this.rolesDelMenu();
     const tenants = this.auth.tenants();
     const activeTenantType = this.auth.activeTenantType();
     return APP_SECTIONS.filter(

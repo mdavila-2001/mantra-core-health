@@ -172,22 +172,13 @@ describe('NavigationService', () => {
         // «Mi perfil» tampoco aparece acá: desde el 07/09/2026 es un destino
         // fijo y se dibuja arriba de todo, fuera de «Mi cuenta». Sigue estando
         // —encabeza la lista—, sólo que ya no cuelga del grupo.
-        // Los dependientes (B.1) tampoco exigen rol: el filtro real es tener
-        // perfil de paciente, que no es un rol sino un dato de la cuenta, y la
-        // pantalla lo dice cuando falta. Mismo criterio que «Mis citas».
-        '/my-account/dependents',
-        '/my-account/appointments',
-        // El archivo clínico propio (carril 09), por lo mismo que «Mis turnos»:
-        // el filtro real es tener perfil de paciente, y lo resuelve la pantalla.
-        '/my-account/medical-record',
-        // Los resultados propios no exigen rol por lo mismo que los turnos: el
-        // filtro real es tener perfil de paciente, que es un dato de la cuenta.
-        '/my-account/diagnostic-results',
-        // Las órdenes propias entran por lo mismo que los resultados: son las
-        // dos mitades del mismo circuito y ninguna exige rol — el filtro real
-        // es tener perfil de paciente, que la pantalla resuelve.
-        '/my-account/diagnostic-orders',
-        '/my-account/quotations',
+        // El autoservicio del paciente —dependientes, citas, historia, resultados,
+        // órdenes, cotizaciones— YA NO entra (29/10/2026, corrección 1 del
+        // cliente): declara `audiencia: 'PACIENTE'`, y una sesión sin el rol
+        // `PATIENT` no es de un paciente. Antes entraba porque «el filtro real es
+        // tener perfil de paciente»; eso dejaba «Mis citas» y «Mi historia
+        // clínica» en el menú del administrador de la organización. Lo que SÍ ve
+        // un paciente se prueba en «el autoservicio del paciente», más abajo.
         // «Mis cuestionarios» ya NO entra (2026-09-25): pedido del propietario
         // — declara `fueraDelMenuPara: [ANY_ROLE]`, no una restricción de rol.
         // Sigue sin exigir rol y se sigue alcanzando por su ruta y por «Tus
@@ -534,7 +525,10 @@ describe('NavigationService', () => {
       // F-03 es de quien atiende. Para el paciente, sus cosas viven en «Mi cuenta».
       // «Administración» tampoco: su único ítem sin rol —«Tu organización»— pide
       // membresía desde F-31, y quien no pertenece a ninguna no ve el rótulo.
-      expect(service.menu().map((g) => g.label)).toEqual(['General', 'Mi cuenta']);
+      // «Mi cuenta» tampoco (29/10/2026): lo único que le quedaba era el autoservicio
+      // del paciente (`audiencia: 'PACIENTE'`), que ya no se le ofrece a una sesión
+      // sin el rol `PATIENT`. «Mi perfil» y «Notificaciones» siguen arriba, fijos.
+      expect(service.menu().map((g) => g.label)).toEqual(['General']);
     });
 
     it('con membresía pero sin rol global sí se ve «Su organización»', () => {
@@ -561,7 +555,10 @@ describe('NavigationService', () => {
         .filter((grupo) => grupo.aplanado)
         .map((grupo) => grupo.label);
 
-      expect(aplanados).toEqual(['General', 'Atención', 'Facturación', 'Mi cuenta']);
+      // Sin «Mi cuenta» (29/10/2026): era el autoservicio del paciente, y esta
+      // sesión es de personal. Lo que dice la prueba —que los dominios que quedan
+      // vienen aplanados— no cambia.
+      expect(aplanados).toEqual(['General', 'Atención', 'Facturación']);
       // Aplanar no filtra: el grupo conserva su reparto en bloques, que es lo
       // que lo deja volver a plegarse sin recalcular nada.
       for (const grupo of service.menu()) {
@@ -595,9 +592,9 @@ describe('NavigationService', () => {
         'Facturación',
         // 17/10/2026 · `SECURITY_ADMIN` alcanza las secciones de plataforma
         // (catálogo, analítica, operación), que ahora forman su propio dominio.
-        // Va entre «Facturación» y «Mi cuenta», que sigue siendo el último.
+        // Va después de «Facturación». «Mi cuenta» ya no cierra la lista para el
+        // personal (29/10/2026): era el autoservicio del paciente.
         'Superadministración',
-        'Mi cuenta',
       ]);
     });
   });
@@ -891,10 +888,112 @@ describe('NavigationService', () => {
     it('sin el claim de tipo, nada cambia: es el menú de hoy', () => {
       // Una API que todavía no emite `tenantTypes`, o un token viejo: la
       // degradación es no ocultar nada, no romper el menú de esta cuenta.
-      abrirSesion(['USER'], ['t-1']);
+      // Sesión de paciente de verdad: el login devuelve `['USER', 'PATIENT']`.
+      abrirSesion(['USER', 'PATIENT'], ['t-1']);
 
       expect(rutasDelMenu()).toContain('/directories');
       expect(rutasDelMenu()).toContain('/my-account/appointments');
+    });
+  });
+
+  /**
+   * Corrección 1 del cliente (29/10/2026): «quitame esas burreras de paciente».
+   * El menú de quien trabaja en una organización no ofrece el autoservicio del
+   * paciente; el del paciente sí. Quien es las dos cosas conmuta de contexto.
+   */
+  describe('el autoservicio del paciente', () => {
+    const DEL_PACIENTE = [
+      '/my-account/dependents',
+      '/my-account/appointments',
+      '/my-account/medical-record',
+      '/my-account/diagnostic-results',
+      '/my-account/diagnostic-orders',
+      '/my-account/quotations',
+    ];
+
+    beforeEach(() => {
+      localStorage.removeItem('alovida.menu.contexto');
+    });
+
+    it('el paciente lo ve completo', () => {
+      abrirSesion(['USER', 'PATIENT'], ['t-1']);
+
+      for (const ruta of DEL_PACIENTE) {
+        expect(rutasDelMenu(), ruta).toContain(ruta);
+      }
+    });
+
+    it.each([
+      ['administración de la organización por membresía (sin rol laboral en el token)', ['USER']],
+      ['administración de seguridad', ['USER', 'SECURITY_ADMIN']],
+      ['plataforma: el comodín de SUPERADMIN no lo trae', ['USER', 'SUPERADMIN']],
+      ['quien coordina agenda', ['USER', 'SCHEDULING_ADMIN']],
+      ['mostrador de agenda', ['USER', 'SCHEDULING_AGENT']],
+      ['quien atiende', ['USER', 'PRACTITIONER']],
+      ['clínico', ['USER', 'CLINICIAN']],
+      ['facturación', ['USER', 'BILLING']],
+      ['perioperatorio', ['USER', 'PERIOP_ADMIN', 'SURGEON', 'PERIOP_NURSE']],
+    ])('%s no ve ninguna de sus secciones, ni «Mi cuenta» como rótulo', (_nombre, roles) => {
+      abrirSesion(roles, ['t-1']);
+
+      for (const ruta of DEL_PACIENTE) {
+        expect(rutasDelMenu(), ruta).not.toContain(ruta);
+      }
+      expect(rutasDelMenu()).not.toContain('/my-account/privacy');
+      expect(rutasDelMenu()).not.toContain('/my-account/pharmacy');
+      expect(service.menu().map((g) => g.label)).not.toContain('Mi cuenta');
+    });
+
+    it('no es la puerta: la ruta sigue alcanzable para quien es paciente y personal', () => {
+      abrirSesion(['USER', 'PATIENT', 'PRACTITIONER'], ['t-1']);
+
+      const alcanzables = service.visibleSections().map((seccion) => `/${seccion.path}`);
+      for (const ruta of DEL_PACIENTE) {
+        expect(alcanzables, ruta).toContain(ruta);
+      }
+    });
+
+    describe('quien es paciente y personal a la vez', () => {
+      beforeEach(() => abrirSesion(['USER', 'PATIENT', 'PRACTITIONER'], ['t-1']));
+
+      it('tiene dos contextos y arranca en «Trabajo»: su menú laboral queda limpio', () => {
+        expect(service.tieneDosContextos()).toBe(true);
+        expect(service.contexto()).toBe('TRABAJO');
+        for (const ruta of DEL_PACIENTE) {
+          expect(rutasDelMenu(), ruta).not.toContain(ruta);
+        }
+        expect(rutasDelMenu()).toContain('/schedule');
+      });
+
+      it('en «Mi salud» el menú es el de un paciente, sin nada laboral', () => {
+        service.cambiarContexto('PACIENTE');
+
+        for (const ruta of DEL_PACIENTE) {
+          expect(rutasDelMenu(), ruta).toContain(ruta);
+        }
+        expect(rutasDelMenu()).not.toContain('/schedule');
+        expect(rutasDelMenu()).not.toContain('/medical-records');
+      });
+
+      it('recuerda el contexto elegido y se puede volver', () => {
+        service.cambiarContexto('PACIENTE');
+        expect(localStorage.getItem('alovida.menu.contexto')).toBe('PACIENTE');
+
+        service.cambiarContexto('TRABAJO');
+        expect(rutasDelMenu()).toContain('/schedule');
+        expect(rutasDelMenu()).not.toContain('/my-account/appointments');
+      });
+    });
+
+    it('quien sólo es paciente o sólo es personal no tiene a qué conmutar', () => {
+      abrirSesion(['USER', 'PATIENT'], ['t-1']);
+      expect(service.tieneDosContextos()).toBe(false);
+
+      abrirSesion(['USER', 'PRACTITIONER'], ['t-1']);
+      expect(service.tieneDosContextos()).toBe(false);
+      // Aunque el navegador recuerde «PACIENTE» de otra sesión, no se aplica.
+      localStorage.setItem('alovida.menu.contexto', 'PACIENTE');
+      expect(service.contexto()).toBe('TRABAJO');
     });
   });
 });

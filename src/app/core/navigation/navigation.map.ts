@@ -291,6 +291,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'psychological-help',
+    audiencia: 'PACIENTE',
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Ayuda psicológica',
     group: 'General',
@@ -1327,6 +1328,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // un dato de la cuenta, y la pantalla lo dice cuando falta en vez de
     // esconderse del menú.
     path: 'my-account/dependents',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1366,6 +1368,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // mío— y se leían como duplicados. La pantalla tiene dos vistas
     // (`?ver=historia` y `?ver=consentimientos`).
     path: 'my-account/privacy',
+    audiencia: 'PACIENTE',
     label: 'Mi privacidad',
     group: 'Mi cuenta',
     icon: 'shield',
@@ -1380,6 +1383,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
     // este menú (DECISIONES.md, BR-20).
     path: 'my-account/clinical-access',
+    audiencia: 'PACIENTE',
     // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
     // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
     // queda registrada para que los enlaces guardados sigan resolviendo.
@@ -1418,6 +1422,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // no es un rol sino un dato de la cuenta —el claim `pid` del token—, y la
     // pantalla lo dice cuando falta en vez de esconderse del menú.
     path: 'my-account/appointments',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1441,6 +1446,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Encendida con el carril 09: `GET /clinical/patients/:id/summary` acepta
     // ahora al titular, con el aislamiento comprobado del lado del servidor.
     path: 'my-account/medical-record',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1464,6 +1470,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // mismos estudios desde el otro lado, sólo los propios y sólo los que un
     // profesional ya validó. Sin `roles` por lo mismo que las dos de arriba.
     path: 'my-account/diagnostic-results',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1486,6 +1493,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Sin `roles` por lo mismo que su hermana: el filtro real es tener perfil
     // de paciente, y la pantalla lo dice cuando falta.
     path: 'my-account/diagnostic-orders',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1502,6 +1510,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'my-account/quotations',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
@@ -1522,6 +1531,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // La ruta tampoco puede llamarse `surveys`: ver la nota de «Encuestas».
     path: 'my-account/questionnaires',
+    audiencia: 'PACIENTE',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER'],
@@ -1639,6 +1649,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Mismos roles que «Mis pedidos», que hereda al montarla como pestaña:
     // su contenido nace de una receta propia.
     path: 'my-account/pharmacy',
+    audiencia: 'PACIENTE',
     label: 'Farmacia',
     group: 'Mi cuenta',
     icon: 'bag',
@@ -1665,6 +1676,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `exclusiveRoles`: el comodín de administración puede verla, y la
     // pantalla igual se guarda por perfil de paciente, como «Mis órdenes».
     path: 'my-account/pharmacy-orders',
+    audiencia: 'PACIENTE',
     label: 'Mis pedidos',
     group: 'Mi cuenta',
     icon: 'bag',
@@ -1687,6 +1699,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así que va `billing`, el de valor acumulado. Un icono propio es del
     // dueño del sistema de iconos, no de este carril.
     path: 'my-account/loyalty',
+    audiencia: 'PACIENTE',
     // N-03/Q-17 (2026-09-22, Itzan): «Mis puntos» es una pestaña del perfil
     // del paciente (#606, 24/09/2026) y no tiene renglón de primer nivel. La
     // ruta vieja redirige a `/my-account?pestana=puntos` en `app.routes.ts`
@@ -1711,6 +1724,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // llega por el ícono de la barra superior, junto al carrito.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/promotions',
+    audiencia: 'PACIENTE',
     label: 'Promociones',
     group: 'Mi cuenta',
     icon: 'tag',
@@ -1728,6 +1742,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // (`GET /patient-spending/me`, P44) sólo lo sirve el simulador.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/spending',
+    audiencia: 'PACIENTE',
     label: 'Mis gastos',
     group: 'Mi cuenta',
     icon: 'wallet',

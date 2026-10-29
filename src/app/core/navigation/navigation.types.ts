@@ -427,6 +427,26 @@ export interface AppSection {
   readonly fueraDelMenuPara?: readonly string[];
 
   /**
+   * A quién está dirigida la sección. `'PACIENTE'` marca el **autoservicio del
+   * paciente** (sus citas, su historia, sus resultados, sus órdenes, sus
+   * dependientes…): sólo aparece en el menú de una sesión que **tiene** el rol
+   * `PATIENT`, y el comodín de `SUPERADMIN` no la trae.
+   *
+   * Nació con la corrección 1 del cliente (29/10/2026): el administrador de la
+   * organización veía «Mis citas», «Mi historia clínica», «Mis resultados» y
+   * «Mis órdenes» porque esas secciones declaraban `roles: [ANY_ROLE]` y sólo
+   * se ocultaban al médico. Enumerar a quién ocultárselas (`hiddenFor`) se
+   * queda corto con cada rol nuevo; decir **para quién son** no.
+   *
+   * Es del **menú** (lo lee {@link apareceEnElMenu}). No cierra la puerta: el
+   * guard sigue mirando los roles reales —y {@link isVisibleTo} sólo lo usa para
+   * que el `hiddenFor` laboral no le cierre el autoservicio a quien también es
+   * paciente—, porque esa persona llega por el conmutador de contexto
+   * (`navigation.contexto.ts`) y la autoridad es la API.
+   */
+  readonly audiencia?: 'PACIENTE';
+
+  /**
    * Si la sección se dibuja **suelta y arriba de todo**, fuera de su grupo.
    *
    * Nace con «Mi perfil» y «Notificaciones» (07/09/2026). Las dos siguen
@@ -574,7 +594,12 @@ export function isVisibleTo(
 
   // Fuera del acceso global explícito, una sección oculta no existe para este
   // rol, comodín incluido. Ver {@link AppSection.hiddenFor}.
-  if (section.hiddenFor?.some((role) => roles.includes(role)) === true) {
+  // Excepción: el autoservicio del paciente (`audiencia: 'PACIENTE'`) sigue
+  // abierto para quien es personal **y** paciente —un médico que también se
+  // atiende en su clínica—: ese `hiddenFor` habla de la sesión laboral, no de
+  // la persona. Lo que se le ofrece lo decide el conmutador de contexto.
+  const esPacienteConAutoservicio = section.audiencia === 'PACIENTE' && roles.includes('PATIENT');
+  if (!esPacienteConAutoservicio && section.hiddenFor?.some((role) => roles.includes(role)) === true) {
     return false;
   }
 
@@ -635,6 +660,11 @@ export function apareceEnElMenu(
   activeTenantType: string | null = null,
 ): boolean {
   if (!isVisibleTo(section, roles, tenants, activeTenantType)) {
+    return false;
+  }
+  // El autoservicio del paciente se ofrece a quien es paciente, y a nadie más:
+  // ni el administrador de la organización ni el comodín de `SUPERADMIN`.
+  if (section.audiencia === 'PACIENTE' && !roles.includes('PATIENT')) {
     return false;
   }
   const fuera = section.fueraDelMenuPara;

@@ -711,6 +711,31 @@
                   <span class="caption">{{ rolesLegibles() }}</span>
                 }
               </p>
+              <!-- Quien es paciente **y** personal tiene dos menús, no uno
+                   mezclado: «Trabajo» (el de su rol) y «Mi salud» (el del paciente).
+                   Ver `core/navigation/navigation.contexto.ts`. -->
+              @if (tieneDosContextos()) {
+                <button
+                  class="app-menu-item"
+                  type="button"
+                  role="menuitemradio"
+                  data-testid="header-contexto-trabajo"
+                  [attr.aria-checked]="contextoDelMenu() === 'TRABAJO'"
+                  (click)="elegirContexto('TRABAJO')"
+                >
+                  Menú de trabajo
+                </button>
+                <button
+                  class="app-menu-item"
+                  type="button"
+                  role="menuitemradio"
+                  data-testid="header-contexto-paciente"
+                  [attr.aria-checked]="contextoDelMenu() === 'PACIENTE'"
+                  (click)="elegirContexto('PACIENTE')"
+                >
+                  Mi salud (como paciente)
+                </button>
+              }
               <!-- ID-24: cambiar la contraseña y cerrar sesiones. Es de cualquier
                    persona con sesión; vive acá y no en el menú lateral. -->
               <a

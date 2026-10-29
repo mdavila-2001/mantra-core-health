@@ -236,23 +236,11 @@ describe('ShellLayout', () => {
       // «Mi perfil» ya no aparece en este tramo: encabeza la lista como destino
       // fijo, fuera del grupo.
       //
-      // Los dependientes (B.1) van con el mismo criterio que «Mis turnos»: sin
-      // rol, porque el filtro real es tener perfil de paciente.
-      '/my-account/dependents',
-      '/my-account/appointments',
-      // El archivo clínico del paciente (carril 09). Sin rol por lo mismo que
-      // «Mis turnos»: el filtro real es tener perfil de paciente, que es un
-      // dato de la cuenta y no un rol.
-      '/my-account/medical-record',
-      // Los resultados propios no exigen rol por lo mismo que los turnos: el
-      // filtro real es tener perfil de paciente, que es un dato de la cuenta.
-      '/my-account/diagnostic-results',
-      // Las órdenes propias, la otra mitad del mismo circuito. Tampoco exigen
-      // rol: el filtro real es tener perfil de paciente.
-      '/my-account/diagnostic-orders',
-      // Cotizaciones comparte el bloque de datos clínicos del paciente: se
-      // consulta después de ver las órdenes y antes de los cuestionarios.
-      '/my-account/quotations',
+      // El autoservicio del paciente —dependientes, citas, historia, resultados,
+      // órdenes, cotizaciones— YA NO está (29/10/2026, corrección 1 del
+      // cliente): declara `audiencia: 'PACIENTE'` y una sesión sin el rol
+      // `PATIENT` no es de un paciente. Con un paciente de verdad sí aparece:
+      // ver «el menú del paciente ofrece su autoservicio», más abajo.
       // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
       // la sacó del menú (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la
       // pantalla siguen vivas y se llega por URL.
@@ -333,6 +321,28 @@ describe('ShellLayout', () => {
     expect(Array.isArray(menu)).toBe(true);
   });
 
+  it('el menú del paciente ofrece su autoservicio, y el del personal no', () => {
+    abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+    expect(rutasDelMenu()).toEqual(
+      expect.arrayContaining([
+        '/my-account/appointments',
+        '/my-account/medical-record',
+        '/my-account/diagnostic-results',
+        '/my-account/diagnostic-orders',
+      ]),
+    );
+
+    abrirSesion({ sub: 'u-2', roles: ['USER', 'SECURITY_ADMIN'], tenants: ['t-1'] });
+    for (const ruta of [
+      '/my-account/appointments',
+      '/my-account/medical-record',
+      '/my-account/diagnostic-results',
+      '/my-account/diagnostic-orders',
+    ]) {
+      expect(rutasDelMenu(), ruta).not.toContain(ruta);
+    }
+  });
+
   it('cambiar de organización vuelve al panel: es un cambio de contexto de datos', async () => {
     abrirSesion({ sub: 'u-1', roles: [], tenants: ['t-1', 't-2'] });
     const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
@@ -356,6 +366,20 @@ describe('ShellLayout', () => {
       fixture.detectChanges();
       return fixture.nativeElement as HTMLElement;
     }
+
+    it('el menú de la cuenta ofrece conmutar sólo a quien es paciente y personal', () => {
+      localStorage.removeItem('alovida.menu.contexto');
+      abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+      fixture.detectChanges();
+      expect(raiz().querySelector('[data-testid="header-contexto-paciente"]')).toBeNull();
+
+      abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT', 'PRACTITIONER'], tenants: ['t-1'] });
+      fixture.detectChanges();
+      expect(raiz().querySelector('[data-testid="header-contexto-paciente"]')).not.toBeNull();
+      expect(
+        raiz().querySelector('[data-testid="header-contexto-trabajo"]')?.getAttribute('aria-checked'),
+      ).toBe('true');
+    });
 
     it('monta la geometría que espera la hoja: nav, luego columna con header y contenido', () => {
       const marco = raiz().querySelector('.app-shell');
@@ -1099,6 +1123,9 @@ describe('ShellLayout', () => {
       });
 
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
+        // Con un paciente: «Mi historia» es autoservicio del paciente y a una
+        // sesión sin el rol no se le ofrece renglón (29/10/2026).
+        abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
         // Con «Mi historia» y no con «Mis cuestionarios», que era la hija de
         // antes: salió del menú el 25/09/2026 (dc790b01) y ya no tiene
         // renglón que marcar.
@@ -1160,6 +1187,7 @@ describe('ShellLayout', () => {
       it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {
         // La ficha de un paciente no es entrada de menú: si no se marcara
         // ninguna, la sección dejaría de decir dónde está uno.
+        abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
         await ir('/my-account/appointments/book/turno-1');
 
         expect(marcadas()).toEqual(['/my-account/appointments']);
