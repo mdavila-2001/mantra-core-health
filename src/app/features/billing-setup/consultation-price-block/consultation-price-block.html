@@ -1,0 +1,57 @@
+<app-view-state-host [state]="item()" (retry)="reload()">
+  @if (item(); as state) {
+    @if (state.status === 'ready') {
+      <div class="billing-setup__form" data-testid="consultation-price">
+        <p class="billing-setup__lead">
+          Es lo que se cobra por una consulta en esta práctica. Lo ve el paciente al reservar y es el importe de la
+          factura cuando se confirma el pago.
+        </p>
+        <dl class="billing-setup__facts">
+          <div>
+            <dt>{{ state.data.name }}</dt>
+            @if (priceText(); as price) {
+              <dd data-testid="consultation-price-current">{{ price }}</dd>
+            } @else {
+              <dd class="billing-setup__warning" data-testid="consultation-price-undefined">Defina el precio</dd>
+            }
+          </div>
+        </dl>
+        <app-form-field
+          label="Precio nuevo"
+          hint="En bolivianos, con hasta dos decimales."
+          [errorMessage]="fieldError() ?? ''"
+        >
+          <app-input
+            inputMode="decimal"
+            autocomplete="off"
+            placeholder="150,00"
+            [value]="priceDraft()"
+            (valueChange)="writePrice($event)"
+            [hasError]="fieldError() !== null"
+            [disabled]="saving()"
+            testId="consultation-price-input"
+          />
+        </app-form-field>
+        @if (saved()) {
+          <p class="billing-setup__ok" role="status" data-testid="consultation-price-saved">Precio guardado.</p>
+        }
+        <div class="billing-setup__actions">
+          <a app-button variant="ghost" [routerLink]="myServicesRoute" data-testid="consultation-price-my-services">
+            Ver «Mis servicios»
+          </a>
+          <button
+            app-button
+            type="button"
+            variant="primary"
+            [isLoading]="saving()"
+            [disabled]="priceDraft().trim() === '' || formatError() !== null"
+            data-testid="consultation-price-save"
+            (clicked)="save()"
+          >
+            Guardar precio
+          </button>
+        </div>
+      </div>
+    }
+  }
+</app-view-state-host>
