@@ -44,6 +44,7 @@ const PRECONDITION_MESSAGES: Readonly<Record<string, string>> = {
   ADMISSION_VALIDITY_LAPSED: 'La vigencia de esta verificación ya terminó: no se puede reponer.',
   ADMISSION_ASSIGNEE_INVALID: 'Esa persona no puede recibir la revisión. Elija a quien tenga el rol de revisión.',
   ADMISSION_DECISION_ITEMS_NOT_ACCEPTED: 'La decisión final no admite requisitos: se resuelven uno por uno.',
+  ADMISSION_ATTESTATION_REQUIRED: 'Para reenviar, marque la declaración de que los datos y documentos son verídicos.',
   ADMISSION_RESUBMISSION_LIMIT: 'Llegó al máximo de reenvíos. Escriba al equipo de soporte.',
 };
 

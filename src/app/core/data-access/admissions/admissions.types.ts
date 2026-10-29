@@ -507,7 +507,17 @@ export interface MyAdmission {
   readonly canWithdraw: boolean;
 }
 
-/** La versión del texto de atestación que se muestra en pantalla. */
+/**
+ * El reenvío lleva la atestación de quien lo hace. Se manda SOLO después de
+ * que la persona marque «Declaro que los datos y documentos son verídicos»:
+ * nunca `attested: true` por defecto.
+ */
+export interface ResubmitCommand {
+  readonly attested: true;
+  readonly attestationVersion: string;
+}
+
+/** La versión del texto de atestación que se muestra en pantalla y se manda al reenviar. */
 export const ATTESTATION_VERSION = '2026-10';
 
 /* ---- wire: el contrato real de la API (códigos en español) ------------------- */
