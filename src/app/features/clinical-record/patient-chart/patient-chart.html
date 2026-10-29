@@ -591,6 +591,17 @@
           (cambio)="altaRegistrada()"
         />
       }
+      @case ('internaciones') {
+        <!-- La cama de hoy y el atajo a «Nuevo ingreso»; el alta del episodio
+             que ya existía se conserva dentro del bloque. -->
+        <app-admission-block
+          [patientProfileId]="pacienteDeLaFicha()"
+          [encounterId]="null"
+          [internaciones]="internacionesEnFicha()"
+          [estanciaEncounterId]="encuentroDeInternacion()"
+          (cambio)="altaRegistrada()"
+        />
+      }
       @case ('documentos') {
         <app-document-block
           [patientProfileId]="pacienteDeLaFicha()"

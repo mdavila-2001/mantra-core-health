@@ -1,0 +1,71 @@
+<section class="acciones" aria-label="Acciones de internación" data-testid="acciones-adt">
+  <h3 class="acciones__titulo">Internación</h3>
+
+  @if (resultado(); as texto) {
+    <app-alert tone="success" title="Hecho" data-testid="acciones-resultado">{{ texto }}</app-alert>
+  }
+
+  @if (stay()?.status === 'loading') {
+    <p class="acciones__nota" data-testid="acciones-cargando">Leyendo la internación…</p>
+  } @else if (stay()?.status === 'forbidden') {
+    <app-alert tone="info" title="Sin acceso a la internación" data-testid="acciones-forbidden">
+      Su rol no ve los datos de la persona internada ni puede moverla. El tablero sigue mostrando el estado de la cama.
+    </app-alert>
+  } @else if (stay()?.status === 'not-found') {
+    <p class="acciones__nota">La internación ya no está disponible.</p>
+  } @else if (stay()?.status === 'error' || stay()?.status === 'offline') {
+    <app-alert tone="error" title="No se pudo leer la internación" data-testid="acciones-error">
+      <button app-button variant="outline" size="sm" type="button" (clicked)="cargar()">Reintentar</button>
+    </app-alert>
+  } @else if (!puedeOperar()) {
+    <p class="acciones__nota" data-testid="acciones-solo-lectura">
+      Su rol puede ver esta cama, pero no moverla. Las acciones las ofrecen Enfermería y Admisión.
+    </p>
+  } @else {
+    <div class="acciones__botones">
+      @switch (modo()) {
+        @case ('libre') {
+          <button app-button variant="primary" type="button" (clicked)="abrir('assign')" data-testid="accion-asignar">Asignar</button>
+          <button app-button variant="outline" type="button" (clicked)="abrir('reserve')" data-testid="accion-reservar">Reservar</button>
+        }
+        @case ('pendiente') {
+          <button app-button variant="primary" type="button" (clicked)="abrir('assign')" data-testid="accion-asignar">Asignar cama</button>
+          <button app-button variant="outline" type="button" (clicked)="abrir('reserve')" data-testid="accion-reservar">Reservar cama</button>
+        }
+        @case ('ocupada') {
+          <button app-button variant="primary" type="button" (clicked)="abrir('transfer')" data-testid="accion-trasladar">Trasladar</button>
+          <button app-button variant="outline" type="button" (clicked)="abrir('swap')" data-testid="accion-intercambiar">Intercambiar</button>
+          <button app-button variant="danger" type="button" (clicked)="abrir('discharge')" data-testid="accion-alta">Dar de alta</button>
+        }
+        @case ('reservada') {
+          <button app-button variant="primary" type="button" (clicked)="abrir('assign')" data-testid="accion-asignar">Convertir en ocupación</button>
+        }
+        @case ('no-asignable') {
+          <p class="acciones__nota" data-testid="acciones-no-asignable">La cama no se puede asignar ahora (ocupada por otra internación, sucia, bloqueada o en limpieza).</p>
+        }
+      }
+      @if (cancelable(); as m) {
+        <button app-button variant="ghost" type="button" (clicked)="abrir('cancel', { locationId: m.id, label: m.status.code === 'LOCATION_RESERVED' ? 'La reserva de la cama ' + m.bed.code : 'El traslado a la cama ' + m.bed.code })" data-testid="accion-cancelar">
+          {{ m.status.code === 'LOCATION_RESERVED' ? 'Cancelar reserva' : 'Cancelar traslado' }}
+        </button>
+      }
+      @if (encuentro(); as id) {
+        <a class="acciones__enlace" [routerLink]="rutaEstancia(id)" data-testid="accion-ver-ficha">Ver ficha de internación</a>
+      }
+    </div>
+  }
+
+  @if (abierta(); as a) {
+    <app-bed-action-dialog
+      [kind]="a.kind"
+      [siteId]="siteId()"
+      [stay]="estancia()"
+      [cell]="cell()"
+      [viewer]="viewerEfectivo()"
+      [locationId]="a.locationId ?? null"
+      [locationLabel]="a.label ?? ''"
+      (done)="alTerminar($event)"
+      (closed)="abierta.set(null)"
+    />
+  }
+</section>

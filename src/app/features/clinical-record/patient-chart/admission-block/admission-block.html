@@ -69,6 +69,27 @@
     </ul>
   }
 
+  <!-- ─── La cama de hoy (F3) ─────────────────────────────────────────────
+       De la ficha de internación del servidor. Si la persona no tiene permiso
+       sobre ella (S5) se dice, sin romper el resto del bloque. -->
+  @if (estanciaLeida(); as e) {
+    <div class="internacion__cama" data-testid="internacion-cama">
+      <p class="internacion__nota">
+        <strong>{{ e.currentBed ? textoDeCama(e.currentBed) : 'Pendiente de cama' }}</strong>
+        @if (e.encounter.unitName) {
+          · Unidad {{ e.encounter.unitName }}
+        }
+      </p>
+      <a class="internacion__enlace" [href]="rutaEstancia(e.encounter.id)" (click)="ir($event, rutaEstancia(e.encounter.id))" data-testid="internacion-ver-ficha">Ver ficha de internación</a>
+    </div>
+  } @else if (estanciaSinPermiso()) {
+    <p class="internacion__nota" data-testid="internacion-cama-sin-permiso">Su rol no ve la cama ni la unidad de esta internación.</p>
+  }
+
+  @if (!internacionAbierta()) {
+    <a class="internacion__enlace internacion__enlace--accion" [href]="enlaceDeIngreso()" (click)="ir($event, enlaceDeIngreso())" data-testid="internacion-internar">Internar en una cama</a>
+  }
+
   <!-- ─── Dar de alta ─────────────────────────────────────────────────────
        Cada precondición se dice con su propia explicación: «no se puede» sin
        decir qué falta obliga a adivinar. -->

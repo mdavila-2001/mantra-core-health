@@ -1,0 +1,69 @@
+<div class="camas" data-testid="selector-de-camas">
+  <div class="camas__barra">
+    <div class="camas__buscar">
+      <app-input
+        type="search"
+        ariaLabel="Buscar una cama por código o ubicación"
+        placeholder="Buscar cama, habitación o sala"
+        [value]="texto()"
+        (valueChange)="texto.set('' + ($event ?? ''))"
+        testId="selector-de-camas-buscar"
+      />
+    </div>
+    @if (mode() === 'assignable' && cuantasNoAsignables() > 0) {
+      <button app-button variant="outline" size="md" type="button" [attr.aria-pressed]="verTodas()" (clicked)="verTodas.set(!verTodas())" data-testid="selector-de-camas-todas">
+        {{ verTodas() ? 'Ocultar las no asignables' : 'Ver también las ' + cuantasNoAsignables() + ' no asignables' }}
+      </button>
+    }
+  </div>
+
+  @if (ofrecidas().length === 0) {
+    <app-empty-state
+      [title]="mode() === 'occupied' ? 'No hay otra cama ocupada con la que intercambiar' : 'No hay camas asignables con ese criterio'"
+      [description]="
+        mode() === 'occupied'
+          ? 'Un intercambio necesita dos camas ocupadas, cada una con su paciente.'
+          : 'Las camas sucias, ocupadas o en mantenimiento no se ofrecen. Puede ver cuáles son y por qué, o pedir una a otra unidad.'
+      "
+      data-testid="selector-de-camas-vacio"
+    >
+      @if (mode() === 'assignable' && cuantasNoAsignables() > 0 && !verTodas()) {
+        <button app-button empty-actions variant="primary" type="button" (clicked)="verTodas.set(true)" data-testid="selector-de-camas-ver-motivos">Ver las camas no asignables y por qué</button>
+      }
+    </app-empty-state>
+  } @else {
+    @for (g of grupos(); track g.lugar) {
+      <section class="camas__grupo" [attr.aria-label]="g.lugar">
+        <h4 class="camas__lugar">{{ g.lugar }}</h4>
+        <ul class="camas__lista">
+          @for (c of g.camas; track c.id) {
+            <li>
+              <button
+                type="button"
+                class="cama"
+                [class.cama--elegida]="c.id === value()"
+                [class.cama--apagada]="mode() === 'assignable' && !c.assignable"
+                [attr.aria-pressed]="c.id === value()"
+                [attr.aria-disabled]="mode() === 'assignable' && !c.assignable ? 'true' : null"
+                [attr.aria-label]="etiqueta(c)"
+                [attr.data-testid]="'cama-' + c.code"
+                [attr.data-v2]="c.v2Code"
+                (click)="elegir(c)"
+              >
+                <span class="cama__codigo">{{ c.code }}</span>
+                <app-bed-status [v2Code]="c.v2Code" />
+                <span class="cama__detalle">{{ c.function.display }}</span>
+                @if (c.occupancy.patient) {
+                  <span class="cama__detalle">{{ c.occupancy.patient.initials }} · {{ c.occupancy.patient.ageYears }} años</span>
+                }
+                @if (mode() === 'assignable' && !c.assignable) {
+                  <span class="cama__motivo">{{ motivo(c) }}</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>

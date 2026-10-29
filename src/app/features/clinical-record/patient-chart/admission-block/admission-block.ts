@@ -3,13 +3,20 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
+  Injector,
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../../core/auth/auth.service';
+import { AdtClient } from '../../../../core/data-access/adt/adt.client';
+import { adtErrorToViewState } from '../../../../core/data-access/adt/adt.errors';
+import type { StayView } from '../../../../core/data-access/adt/adt.types';
 import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -21,6 +28,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
+import { RUTAS, textoDeCama } from '../../../inpatient/shared/adt.view';
 import { writeFailureMessage } from '../../write-message';
 
 /**
@@ -102,6 +110,7 @@ export class AdmissionBlock {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly injector = inject(Injector);
 
   /** La persona de la ficha. */
   readonly patientProfileId = input.required<string>();
@@ -118,8 +127,65 @@ export class AdmissionBlock {
   /** Las internaciones que ya tiene esta persona, del expediente. */
   readonly internaciones = input<readonly InternacionEnFicha[]>([]);
 
+  /**
+   * El encuentro de internación (ADT) del episodio abierto, si el expediente lo
+   * conoce: de él salen la cama actual y la unidad (franja F3). Sin él el bloque
+   * se comporta como siempre: lista los episodios y deja abrir uno.
+   */
+  readonly estanciaEncounterId = input<string | null>(null);
+
   /** Algo se escribió y el expediente tiene que releerse. */
   readonly cambio = output<void>();
+
+  /* -- La cama actual (F3) --------------------------------------------------- */
+
+  /** La ficha de internación, o `null` si no hay encuentro de internación que leer. */
+  protected readonly estancia = signal<ViewState<StayView> | null>(null);
+
+  protected readonly estanciaLeida = computed(() => {
+    const e = this.estancia();
+    return e !== null && e.status === 'ready' ? e.data : null;
+  });
+
+  /** Sin permiso para ver la internación (S5), el bloque lo dice y sigue siendo útil. */
+  protected readonly estanciaSinPermiso = computed(() => this.estancia()?.status === 'forbidden');
+
+  protected readonly rutaEstancia = RUTAS.estancia;
+  protected readonly textoDeCama = textoDeCama;
+
+  /** Se llega al ingreso con la persona ya elegida: `?patient=`. */
+  protected readonly enlaceDeIngreso = computed(() => `${RUTAS.ingreso}?patient=${encodeURIComponent(this.patientProfileId())}`);
+
+  /**
+   * Navega sin `routerLink`: el bloque se monta también donde no hay
+   * `ActivatedRoute`, y el enlace sigue siendo un `<a href>` de verdad (se abre en
+   * otra pestaña) que, con un clic simple, navega dentro de la aplicación.
+   */
+  protected ir(evento: Event, ruta: string): void {
+    const clic = evento as MouseEvent;
+    if (clic.ctrlKey || clic.metaKey || clic.shiftKey || clic.button === 1) return;
+    evento.preventDefault();
+    void this.injector.get(Router).navigateByUrl(ruta);
+  }
+
+  private readonly _leerEstancia = effect(() => {
+    const id = this.estanciaEncounterId();
+    untracked(() => {
+      if (id === null || id === '') {
+        this.estancia.set(null);
+        return;
+      }
+      this.estancia.set(loading());
+      // Se inyecta al usarlo: sin encuentro de internación el bloque no necesita el cliente.
+      this.injector
+        .get(AdtClient)
+        .getStay(id)
+        .subscribe({
+          next: (s) => this.estancia.set(ready(s)),
+          error: (e: unknown) => this.estancia.set(adtErrorToViewState<StayView>(e)),
+        });
+    });
+  });
 
   /* -- El formulario ------------------------------------------------------- */
 

@@ -164,6 +164,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/floor-plan/viewer/floor-plan-page').then((m) => m.FloorPlanPage),
   'administration/medical-organization/plan/edit': () =>
     import('./features/floor-plan/editor/floor-plan-editor-page').then((m) => m.FloorPlanEditorPage),
+  // Internación / ADT (franja F3): ingreso, censo diario e indicadores de camas.
+  'inpatient/admissions/new': () =>
+    import('./features/inpatient/admission-new/admission-new').then((m) => m.AdmissionNew),
+  'inpatient/census': () => import('./features/inpatient/census/census').then((m) => m.Census),
+  'inpatient/indicators': () =>
+    import('./features/inpatient/indicators/indicators').then((m) => m.Indicators),
   // TP-1: la organización mirándose a sí misma. Diferida por lo mismo que sus
   // hermanas de administración.
   'administration/my-organization': () =>
@@ -726,6 +732,18 @@ const PANTALLAS_HIJAS: Routes = [
     loadComponent: () =>
       import('./features/admin/medical-organization/infrastructure/space-detail/space-detail')
         .then((m) => m.SpaceDetail)
+        .catch(() => chunkFallido()),
+  },
+  {
+    // Internación / ADT (F3). El ingreso, el censo y los indicadores son secciones
+    // del menú y sus pantallas están en `PANTALLAS_DIFERIDAS`; la ficha de una
+    // internación no es una sección: se llega desde el censo o el expediente.
+    // Quién puede operar camas no es un rol del token: la API contesta 403 (S5).
+    path: 'inpatient/stays/:encounterId',
+    title: `${APP_TITLE} - Ficha de internación`,
+    loadComponent: () =>
+      import('./features/inpatient/stay/stay')
+        .then((m) => m.Stay)
         .catch(() => chunkFallido()),
   },
   {

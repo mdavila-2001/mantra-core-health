@@ -1,0 +1,145 @@
+:host {
+  display: block;
+}
+
+.estancia {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.estancia__acciones {
+  margin-block-end: var(--sp-5);
+  padding-block-end: var(--sp-5);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.estancia__datos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5) var(--sp-6);
+  margin: 0;
+}
+
+@media (min-width: 780px) {
+  .estancia__datos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .estancia__datos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.estancia__datos dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.estancia__datos dd {
+  margin: var(--sp-1) 0 0;
+  overflow-wrap: anywhere;
+}
+
+.estancia__dato--ancho {
+  grid-column: 1 / -1;
+}
+
+.estancia__camino {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estancia__nota {
+  margin: var(--sp-5) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.estancia__vacio,
+.estancia__egreso {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  background: var(--bg-inset);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+}
+
+.estancia__vacio p,
+.estancia__egreso p {
+  margin: 0;
+}
+
+.estancia__incidentes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.estancia__incidentes > li {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.estancia__incidentes header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.estancia__cuando {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.estancia__reglas {
+  margin: var(--sp-3) 0 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.estancia__justificacion {
+  margin: var(--sp-3) 0 0;
+}
+
+.estancia__justificacion span {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.estancia__botones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-3);
+}
+
+.mov__tipo,
+.mov__sec {
+  display: block;
+}
+
+.mov__sec {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

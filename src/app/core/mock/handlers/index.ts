@@ -35,6 +35,7 @@ import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
 import { registerInfrastructure } from './infrastructure.handlers';
 import { registerInfrastructureOps } from './infrastructure-ops.handlers';
+import { registerAdt, registerAdtBedBoardDouble } from './adt.handlers';
 import { registrarPublico } from './public.handlers';
 import { registrarAnaliticaDeSeguros } from './insurance-analytics.handlers';
 import { registerInsuranceCampaigns } from './insurance-campaigns.handlers';
@@ -83,6 +84,8 @@ export function crearRouterSimulado(): MockRouter {
   // Infraestructura hospitalaria (F1): `/sites/:id/structure`, `/care-spaces/*`.
   registerInfrastructure(router);
   registerInfrastructureOps(router);
+  // Internación / ADT (F3): `/clinical/admissions`, `/clinical/bed-swaps`, censo e indicadores.
+  registerAdt(router);
   registrarClinica(router);
   registerReferrals(router);
   registerReceivedServices(router);
@@ -130,5 +133,7 @@ export function crearRouterSimulado(): MockRouter {
   registerRegistrationLogo(router);
   // F1c · Plano de planta (CONTRATO-PLANO §3). Rutas propias: `/floor-plans`, `/sites/:id/plan-*`.
   registerFloorPlan(router);
+  // Doble del tablero de camas de F2: sólo si ninguna franja registró esa ruta.
+  registerAdtBedBoardDouble(router);
   return router;
 }

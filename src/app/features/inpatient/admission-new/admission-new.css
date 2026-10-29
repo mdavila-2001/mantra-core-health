@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.ingreso {
+  inline-size: 100%;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ingreso__cama {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.ingreso__resumen {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-4) var(--sp-6);
+  margin: 0 0 var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .ingreso__resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.ingreso__resumen dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.ingreso__resumen dd {
+  margin: var(--sp-1) 0 0;
+  overflow-wrap: anywhere;
+}

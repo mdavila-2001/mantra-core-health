@@ -100,6 +100,7 @@ import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
 import { DiagnosisBlock } from './diagnosis-block/diagnosis-block';
 import type { CitaDelPaciente } from './diagnosis-block/diagnosis-block';
+import { AdmissionBlock, type InternacionEnFicha } from './admission-block/admission-block';
 import { DocumentBlock } from './document-block/document-block';
 import { DRAFT_BLOCK } from './draft-block';
 import { FreeNoteBlock } from './free-note-block/free-note-block';
@@ -220,6 +221,13 @@ const ALTAS_DEL_EXPEDIENTE: Readonly<Record<string, AltaDelExpediente>> = {
     rotulo: 'Nuevo documento',
     titulo: 'Registrar un documento',
     testId: 'expediente-nuevo-documento',
+  },
+  // Franja F3: la internación con su cama y el atajo a «Nuevo ingreso». El alta
+  // del episodio que ya existía (`AdmissionBlock`) se conserva dentro.
+  internaciones: {
+    rotulo: 'Internar',
+    titulo: 'Internación',
+    testId: 'expediente-nueva-internacion',
   },
 };
 
@@ -401,6 +409,7 @@ interface Expediente {
     DiagnosisVerifyDialog,
     DataTable,
     DatePipe,
+    AdmissionBlock,
     DocumentBlock,
     FactList,
     FreeNoteBlock,
@@ -782,6 +791,35 @@ export class PatientChart {
    * Las internaciones. Se abren y se cierran desde la consulta, y hasta acá no
    * tenían pestaña: lo cargado en la consulta no aparecía en la historia.
    */
+  /**
+   * Las internaciones como las muestra `AdmissionBlock`: abiertas o cerradas,
+   * con su tipo en palabras. Es la misma lectura que la pestaña, sin volver a
+   * pedirla.
+   */
+  protected readonly internacionesEnFicha = computed<readonly InternacionEnFicha[]>(() =>
+    (this.datos()?.resumen.careEpisodes ?? []).map((fila) => ({
+      id: fila.id,
+      abierta: fila.endAt === undefined,
+      desde: fila.startAt ?? null,
+      hasta: fila.endAt ?? null,
+      ...(this.label(fila.typeConceptId) === SIN_DATO ? {} : { tipo: this.label(fila.typeConceptId) }),
+      conResponsable: fila.responsiblePractitionerId !== undefined,
+      registradaEl: fila.createdAt ?? null,
+    })),
+  );
+
+  /**
+   * El encuentro de internación del episodio abierto (franja F3): de él sale la
+   * cama de hoy. Es el encuentro en curso que pertenece al episodio; si no lo
+   * hay, el bloque funciona como siempre.
+   */
+  protected readonly encuentroDeInternacion = computed<string | null>(() => {
+    const resumen = this.datos()?.resumen;
+    const abierta = resumen?.careEpisodes.find((e) => e.endAt === undefined);
+    if (resumen === undefined || abierta === undefined) return null;
+    return resumen.encounters.find((e) => e.episodeId === abierta.id && e.endAt === undefined)?.id ?? null;
+  });
+
   protected readonly internaciones = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.resumen.careEpisodes ?? []).map((fila) => ({
       id: fila.id,
