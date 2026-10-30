@@ -1,3 +1,3 @@
 export { ChartPanel } from './chart-panel';
-export { violacionesDelContrato, tieneDatos } from './chart-contract';
+export { getContractViolations, hasData } from '@core/data-access/reporting/reporting-contract';
 export { provideGraficos } from './chart-echarts.setup';

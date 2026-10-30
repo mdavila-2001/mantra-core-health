@@ -1,4 +1,4 @@
-import { violacionesDelContrato } from '@shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import type {
   ComparacionReporte,
   ContextoReporte,
@@ -129,7 +129,7 @@ function contratoEstandar(nombre: string, construir: (ctx: ContextoReporte) => P
         expect(p.pestana).toBe('resumen');
         expect(p.origen).toBe('ejemplo');
         for (const g of p.graficos) {
-          expect(violacionesDelContrato(g), `${g.id} en ${JSON.stringify(ctx)}`).toEqual([]);
+          expect(getContractViolations(g), `${g.id} en ${JSON.stringify(ctx)}`).toEqual([]);
         }
       }
     });
@@ -302,7 +302,7 @@ describe('Resumen: una vertical sin dato no se esconde detrás de una suma parci
     expect(medidor.tipo === 'medidor' && medidor.valor).toBeNull();
     const top = grafico(p, 'top10-clientes');
     expect(top.sinDatoMotivo).toMatch(/Publicidad/);
-    for (const g of p.graficos) expect(violacionesDelContrato(g), g.id).toEqual([]);
+    for (const g of p.graficos) expect(getContractViolations(g), g.id).toEqual([]);
   });
 
   it('con las tres vacías, el MRR, los clientes y las alertas dicen «sin dato» o «sin evaluar»', () => {

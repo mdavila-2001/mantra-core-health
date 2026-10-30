@@ -1,0 +1,67 @@
+:host { display: block; min-width: 0; container-type: inline-size; }
+
+.rg { display: flex; flex-direction: column; gap: var(--sp-6); min-width: 0; }
+
+.rg__toolbar { display: flex; flex-direction: column; gap: var(--sp-3); }
+.rg__search { max-width: 32rem; }
+.rg__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.rg__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+.rg__chip:hover { background: var(--bg-hover); }
+.rg__chip[aria-pressed='true'] { background: var(--brand-primary); border-color: var(--brand-primary); color: var(--text-inverse); }
+.rg__chip:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.rg__count { font-variant-numeric: tabular-nums; font-weight: 700; opacity: 0.85; }
+.rg__clear { align-self: flex-start; }
+
+.rg__section { display: flex; flex-direction: column; gap: var(--sp-3); min-width: 0; }
+.rg__heading { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
+.rg__total { font-size: var(--fs-body); font-weight: 500; color: var(--text-secondary); }
+
+/* Una columna en el móvil, dos en la tableta, tres en el escritorio. Se decide por el ancho del
+   contenedor (no de la ventana) porque el menú lateral y el asistente le quitan espacio. */
+.rg__cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
+@container (min-width: 38rem) { .rg__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container (min-width: 62rem) { .rg__cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.rg__recents { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.rg__recent {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: none;
+}
+.rg__recent:hover { background: var(--bg-hover); text-decoration: underline; }
+.rg__recent:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+
+.rg__none {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-6);
+  background: var(--bg-surface-alt);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  color: var(--text-secondary);
+}
+.rg__none p { margin: 0; }

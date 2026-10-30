@@ -1,0 +1,70 @@
+:host { display: block; min-width: 0; }
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.kpi__title {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-wrap: balance;
+}
+
+.kpi__value {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+/* «Sin dato» es una ausencia, no un resultado: más chico y en gris para que no compita con un número real. */
+.kpi__value--empty {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-muted);
+}
+.kpi__reason { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+
+.kpi__delta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+.kpi__delta-num { font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi__delta-word { font-weight: 600; }
+.kpi__delta-vs { color: var(--text-secondary); }
+.kpi__delta[data-verdict='better'] .kpi__arrow,
+.kpi__delta[data-verdict='better'] .kpi__delta-num,
+.kpi__delta[data-verdict='better'] .kpi__delta-word { color: var(--st-success-fg); }
+.kpi__delta[data-verdict='worse'] .kpi__arrow,
+.kpi__delta[data-verdict='worse'] .kpi__delta-num,
+.kpi__delta[data-verdict='worse'] .kpi__delta-word { color: var(--st-error-fg); }
+.kpi__arrow { font-size: var(--fs-overline); }
+
+.kpi__fraction { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+.kpi__spark { width: 100%; height: 44px; margin-top: var(--sp-1); min-width: 0; }
+.kpi__spark--wait { background: var(--bg-surface-alt); border-radius: var(--r-sm); }
+
+.kpi__foot { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); margin-top: auto; padding-top: var(--sp-1); }
+.kpi__info { align-self: stretch; }
+.kpi__note { margin: 0; font-size: var(--fs-caption); color: var(--text-muted); }

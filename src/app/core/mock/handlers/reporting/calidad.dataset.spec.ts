@@ -10,7 +10,7 @@ import type {
   PestanaReporte,
   AlcanceReporte,
 } from '../../../data-access/reporting/reporting.types';
-import { violacionesDelContrato } from '@shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import { PESTANAS_CATALOGADAS, leerPestanas, type PestanasLeidas } from './calidad.catalogo';
 import { construirCalidad, construirCalidadDesde } from './calidad.dataset';
 
@@ -138,7 +138,7 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
         expect(tab.pestana).toBe('calidad');
         expect(tab.origen).toBe('ejemplo');
         for (const g of tab.graficos) {
-          expect(violacionesDelContrato(g), `${g.id} con ${JSON.stringify(c)}`).toEqual([]);
+          expect(getContractViolations(g), `${g.id} con ${JSON.stringify(c)}`).toEqual([]);
         }
       }
     });
@@ -288,7 +288,7 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
     });
 
     it('los gráficos cumplen el contrato también con datos', () => {
-      for (const g of tab.graficos) expect(violacionesDelContrato(g), g.id).toEqual([]);
+      for (const g of tab.graficos) expect(getContractViolations(g), g.id).toEqual([]);
     });
   });
 
@@ -342,7 +342,7 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
     it('sin indicadores ningún gráfico inventa un cero y todos explican por qué no hay dato', () => {
       const tab = construirCalidadDesde(ctx(), VACIAS);
       for (const g of tab.graficos) {
-        expect(violacionesDelContrato(g), g.id).toEqual([]);
+        expect(getContractViolations(g), g.id).toEqual([]);
         expect(g.sinDatoMotivo, g.id).toBeTruthy();
       }
       const medidor = tab.graficos.find((g) => g.id === 'calidad-cobertura-definicion')!;

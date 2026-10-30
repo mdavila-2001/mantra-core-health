@@ -1,0 +1,45 @@
+<div class="tv" data-testid="tab-view">
+  @for (notice of data().avisos ?? []; track notice) {
+    <app-alert tone="info" data-testid="tab-notice">{{ notice }}</app-alert>
+  }
+
+  @if (data().kpis.length > 0) {
+    <section class="tv__section" [attr.aria-labelledby]="ids + '-kpis'">
+      <h2 class="tv__heading" [id]="ids + '-kpis'">Indicadores clave</h2>
+      <div class="tv__kpis">
+        @for (kpi of data().kpis; track kpi.id) {
+          <app-kpi-tile [kpi]="kpi" [comparison]="comparison()" />
+        }
+      </div>
+    </section>
+  }
+
+  @for (section of sections(); track $index) {
+    <section class="tv__section" [attr.aria-labelledby]="section.title ? ids + '-s' + $index : null">
+      @if (section.title; as title) {
+        <h2 class="tv__heading" [id]="ids + '-s' + $index">{{ title }}</h2>
+      }
+      @if (section.description; as description) {
+        <p class="tv__lead">{{ description }}</p>
+      }
+
+      @if (section.charts.length > 0) {
+        <div class="tv__charts">
+          @for (spec of section.charts; track spec.id) {
+            <div class="tv__cell" [class.tv__cell--full]="spec.ancho === 'completo'">
+              <app-chart-panel
+                [spec]="spec"
+                [seleccion]="store.seleccionDe(spec.filtro?.dimension)"
+                (filtroCambia)="store.alternarFiltro($event)"
+              />
+            </div>
+          }
+        </div>
+      }
+
+      @for (table of section.tables; track table.id) {
+        <app-report-table [table]="table" />
+      }
+    </section>
+  }
+</div>

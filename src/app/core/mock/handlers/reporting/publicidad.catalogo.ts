@@ -106,26 +106,26 @@ export interface Anuncio {
 }
 
 export const ANUNCIOS: readonly Anuncio[] = [
-  { nombre: 'Tu corazón merece un chequeo', campana: 0, conjunto: 'Adultos 45–64 · La Paz', formato: 'Video corto', peso: 0.5, sesgoCosto: 0.85 },
-  { nombre: 'Agenda tu cardiólogo hoy', campana: 0, conjunto: 'Adultos 45–64 · La Paz', formato: 'Texto en notificación', peso: 0.3, sesgoCosto: 1.05 },
+  { nombre: 'Su corazón merece un chequeo', campana: 0, conjunto: 'Adultos 45–64 · La Paz', formato: 'Video corto', peso: 0.5, sesgoCosto: 0.85 },
+  { nombre: 'Agende su cardiólogo hoy', campana: 0, conjunto: 'Adultos 45–64 · La Paz', formato: 'Texto en notificación', peso: 0.3, sesgoCosto: 1.05 },
   { nombre: 'Chequeo con electrocardiograma', campana: 0, conjunto: 'Adultos 35–54 · El Alto', formato: 'Imagen', peso: 0.2, sesgoCosto: 1.7 },
-  { nombre: 'Protege a tu familia esta temporada', campana: 1, conjunto: 'Madres y padres · Santa Cruz', formato: 'Carrusel', peso: 0.6, sesgoCosto: 0.9 },
+  { nombre: 'Proteja a su familia esta temporada', campana: 1, conjunto: 'Madres y padres · Santa Cruz', formato: 'Carrusel', peso: 0.6, sesgoCosto: 0.9 },
   { nombre: 'Vacunas disponibles sin filas', campana: 1, conjunto: 'Madres y padres · Cochabamba', formato: 'Texto en notificación', peso: 0.4, sesgoCosto: 1.15 },
   { nombre: 'Control del niño sano', campana: 2, conjunto: 'Madres 25–40 · Cochabamba', formato: 'Imagen', peso: 0.55, sesgoCosto: 0.9 },
   { nombre: 'Pediatra a un toque', campana: 2, conjunto: 'Madres 25–40 · Sucre', formato: 'Video corto', peso: 0.45, sesgoCosto: 1.12 },
-  { nombre: 'Tus análisis sin salir de casa', campana: 3, conjunto: 'Adultos 30–60 · Santa Cruz', formato: 'Video corto', peso: 0.65, sesgoCosto: 0.88 },
+  { nombre: 'Sus análisis sin salir de casa', campana: 3, conjunto: 'Adultos 30–60 · Santa Cruz', formato: 'Video corto', peso: 0.65, sesgoCosto: 0.88 },
   { nombre: 'Toma de muestra a domicilio', campana: 3, conjunto: 'Adultos 30–60 · La Paz', formato: 'Imagen', peso: 0.35, sesgoCosto: 1.3 },
-  { nombre: 'Cotiza tu seguro en un minuto', campana: 4, conjunto: 'Profesionales 28–45 · Santa Cruz', formato: 'Carrusel', peso: 0.5, sesgoCosto: 0.95 },
+  { nombre: 'Cotice su seguro en un minuto', campana: 4, conjunto: 'Profesionales 28–45 · Santa Cruz', formato: 'Carrusel', peso: 0.5, sesgoCosto: 0.95 },
   { nombre: 'Cobertura para toda la familia', campana: 4, conjunto: 'Profesionales 28–45 · La Paz', formato: 'Imagen', peso: 0.5, sesgoCosto: 1.05 },
   { nombre: 'Limpieza dental con cita hoy', campana: 5, conjunto: 'Adultos 20–45 · Tarija', formato: 'Imagen', peso: 0.6, sesgoCosto: 0.8 },
   { nombre: 'Blanqueamiento: antes de fin de año', campana: 5, conjunto: 'Adultos 20–45 · Cochabamba', formato: 'Video corto', peso: 0.4, sesgoCosto: 1.45 },
-  { nombre: 'Tus medicinas de siempre, más baratas', campana: 6, conjunto: 'Mayores de 50 · La Paz', formato: 'Texto en notificación', peso: 0.7, sesgoCosto: 0.9 },
+  { nombre: 'Sus medicinas de siempre, más baratas', campana: 6, conjunto: 'Mayores de 50 · La Paz', formato: 'Texto en notificación', peso: 0.7, sesgoCosto: 0.9 },
   { nombre: 'Entrega de receta a domicilio', campana: 6, conjunto: 'Mayores de 50 · Santa Cruz', formato: 'Imagen', peso: 0.3, sesgoCosto: 1.35 },
   { nombre: 'Prueba genética preventiva', campana: 8, conjunto: 'Adultos 30–55 · Santa Cruz', formato: 'Video corto', peso: 1, sesgoCosto: 1 },
-  { nombre: 'Chequeo ejecutivo para tu equipo', campana: 7, conjunto: 'Gerentes 35–60 · Santa Cruz', formato: 'Carrusel', peso: 0.45, sesgoCosto: 0.92 },
+  { nombre: 'Chequeo ejecutivo para su equipo', campana: 7, conjunto: 'Gerentes 35–60 · Santa Cruz', formato: 'Carrusel', peso: 0.45, sesgoCosto: 0.92 },
   { nombre: 'Un día de salud en una mañana', campana: 7, conjunto: 'Gerentes 35–60 · La Paz', formato: 'Imagen', peso: 0.55, sesgoCosto: 1.08 },
   { nombre: 'Mamografía y consulta sin espera', campana: 11, conjunto: 'Mujeres 40–65 · La Paz', formato: 'Video corto', peso: 0.5, sesgoCosto: 0.9 },
-  { nombre: 'Tu salud, tu mes', campana: 11, conjunto: 'Mujeres 25–45 · Cochabamba', formato: 'Texto en notificación', peso: 0.5, sesgoCosto: 1.1 },
+  { nombre: 'Su salud, su mes', campana: 11, conjunto: 'Mujeres 25–45 · Cochabamba', formato: 'Texto en notificación', peso: 0.5, sesgoCosto: 1.1 },
 ];
 
 export interface Ubicacion {

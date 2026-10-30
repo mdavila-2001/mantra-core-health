@@ -1,4 +1,4 @@
-<section class="gp" [class.gp--grande]="grande()" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'grafico-' + spec().id">
+<section class="gp" [class.gp--grande]="grande()" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'chart-' + spec().id">
   <!-- 1) TÍTULO -->
   <header class="gp__cab">
     <div class="gp__titulos">
@@ -28,7 +28,7 @@
             class="gp__info-btn"
             [attr.aria-expanded]="infoAbierta()"
             [attr.aria-controls]="ids + '-info'"
-            data-testid="grafico-como-se-calcula"
+            data-testid="chart-how-calculated"
             (click)="infoAbierta.set(!infoAbierta())"
           >
             <app-nav-icon name="note" /> Cómo se calcula
@@ -44,7 +44,7 @@
             aria-haspopup="menu"
             [attr.aria-expanded]="menuAbierto()"
             [attr.aria-controls]="ids + '-menu'"
-            data-testid="grafico-mas"
+            data-testid="chart-more"
             (click)="alternarMenu()"
           >
             Más
@@ -64,7 +64,7 @@
   </header>
 
   @if (violaciones().length > 0) {
-    <div class="gp__contrato" role="alert" data-testid="grafico-contrato-incumplido">
+    <div class="gp__contrato" role="alert" data-testid="chart-contract-violated">
       <strong>Este gráfico no cumple el contrato y no se dibuja:</strong>
       <ul>
         @for (v of violaciones(); track v) {
@@ -74,7 +74,7 @@
     </div>
   } @else {
     @if (infoAbierta() && spec().info; as info) {
-      <div class="gp__info" [id]="ids + '-info'" role="region" [attr.aria-label]="'Cómo se calcula ' + spec().titulo" data-testid="grafico-info">
+      <div class="gp__info" [id]="ids + '-info'" role="region" [attr.aria-label]="'Cómo se calcula ' + spec().titulo" data-testid="chart-info">
         <dl>
           <dt>Qué es</dt>
           <dd>{{ info.definicion }}</dd>
@@ -123,14 +123,14 @@
         <div class="gp__lienzo gp__lienzo--espera" [style.height.px]="alto()" aria-hidden="true"></div>
       }
     } @else {
-      <div class="gp__sin-dato" [style.min-height.px]="alto() / 2" role="status" data-testid="grafico-sin-dato">
+      <div class="gp__sin-dato" [style.min-height.px]="alto() / 2" role="status" data-testid="chart-no-data">
         <strong>Sin dato</strong>
         <span>{{ spec().sinDatoMotivo }}</span>
       </div>
     }
 
     @if (modoEfectivo() === 'velas' && spec().velas; as velas) {
-      <p class="gp__nota" data-testid="grafico-nota-velas">
+      <p class="gp__nota" data-testid="chart-candles-note">
         {{ velas.explicacion }}
         Color: verde = mejora, rojo = empeora. Relleno: sólido = sube, hueco = baja.
       </p>
@@ -139,7 +139,7 @@
     <!-- 5) FILTRO POR CLIC -->
     @if (etiquetaFiltro(); as et) {
       <p class="gp__pista">
-        Haz clic en un elemento del gráfico para filtrar por {{ et }}.
+        Haga clic en un elemento del gráfico para filtrar por {{ et }}.
         @if (seleccion(); as sel) {
           <strong class="gp__sel">Filtrando: {{ sel }}</strong>
         }
@@ -155,7 +155,7 @@
         </details>
       }
     } @else if (spec().filtroMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="grafico-sin-filtro">Sin filtro por clic: {{ spec().filtroMotivo }}</p>
+      <p class="gp__pista gp__pista--no" data-testid="chart-no-filter">Sin filtro por clic: {{ spec().filtroMotivo }}</p>
     }
 
     <!-- Tabla de respaldo (obligatoria: contraste de tres tonos < 3:1) -->
