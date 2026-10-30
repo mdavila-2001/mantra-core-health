@@ -15,11 +15,7 @@ import {
   restringePorRol,
   titleOf,
 } from './core/navigation/navigation.types';
-import {
-  tabIndex,
-  TAB,
-  PROFILE_TABS,
-} from './features/account/my-profile/profile-tabs';
+import { tabIndex, TAB, PROFILE_TABS } from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
@@ -267,8 +263,13 @@ describe('rutas del armazón', () => {
   });
 
   /** Las dos pantallas del médico de CM-07 cuelgan de «Mi perfil»: sólo las abre quien atiende. */
-  it('«Invitaciones y solicitudes» y «Procedimientos que hago» son de quien atiende y llevan el guard', () => {
-    for (const path of ['my-account/affiliations', 'my-account/my-procedures']) {
+  it('«Invitaciones y solicitudes», «Procedimientos que hago» y «Mis verificaciones» son de quien atiende y llevan el guard', () => {
+    // «Mis verificaciones» es sección (ANY_ROLE en el registro): la ruta la cierra igual.
+    for (const path of [
+      'my-account/affiliations',
+      'my-account/my-procedures',
+      'my-account/verifications',
+    ]) {
       const route = hijas.find((r) => r.path === path);
 
       expect(route, path).toBeDefined();
@@ -477,16 +478,18 @@ describe('rutas del armazón', () => {
     const sections = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
     );
-    await Promise.all(sections.map(async (section) => {
-      const ruta = hijas.find((route) => route.path === section.path);
-      const componente = ruta?.component ?? (await ruta?.loadComponent?.());
+    await Promise.all(
+      sections.map(async (section) => {
+        const ruta = hijas.find((route) => route.path === section.path);
+        const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
-      expect(componente, section.path).toBeDefined();
-      // Se compara por identidad y no por `name`: el compilador de Angular
-      // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
-      // rompería sin que nada esté mal.
-      expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }));
+        expect(componente, section.path).toBeDefined();
+        // Se compara por identidad y no por `name`: el compilador de Angular
+        // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
+        // rompería sin que nada esté mal.
+        expect(componente, section.path).not.toBe(SectionPlaceholder);
+      }),
+    );
   }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
@@ -796,7 +799,9 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   }
 
   it('la clave de la redirección es la pestaña «Mis puntos» de la ficha', () => {
-    const indice = tabIndex(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
+    const indice = tabIndex(
+      SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null,
+    );
 
     expect(indice).toBe(TAB.puntos);
     expect(PROFILE_TABS[indice ?? -1]).toBe('Mis puntos');
@@ -959,7 +964,10 @@ describe('la mudanza del portal de plataforma a «Superadministración»', () =>
       expect(ruta, path).toBeDefined();
       expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
     }
-    for (const path of ['administration/data-catalog/:objectId', 'administration/qa-lab/plans/:planId']) {
+    for (const path of [
+      'administration/data-catalog/:objectId',
+      'administration/qa-lab/plans/:planId',
+    ]) {
       const ruta = hijas.find((r) => r.path === path);
 
       expect(ruta?.redirectTo, path).toBeDefined();

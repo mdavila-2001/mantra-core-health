@@ -18,10 +18,16 @@ import {
   listaDeTextos,
   valorDeTexto,
 } from '../../../../core/data-access/terminology/terminology.types';
+import type { Condition, MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import {
+  CODIGO_CONFIRMADO,
+  normalizarCodigoDx,
+  type ResolverCodigo,
+} from '../../../../shared/clinical/diagnosis-state';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
@@ -119,20 +125,81 @@ export interface DiagnosisOption {
   /** El diagnóstico en palabras. Nunca el uuid del concepto. */
   readonly etiqueta: string;
   /**
-   * Cuándo se confirmó (C5, ADR-0015-adjacent), o `null`/ausente si el
-   * diagnóstico no está confirmado (provisional, diferencial o descartado).
-   * La receta sólo se liga a un diagnóstico **confirmado** (pedido literal
-   * del propietario) — ver `opcionesDeIndicacion()`.
-   *
-   * **Pendiente de integración real:** quien arma esta lista hoy
-   * (`patient-chart.ts:diagnosticosParaReceta`, fuera de mi alcance esta
-   * noche — reservado a C3) todavía no puebla este campo, aunque el
-   * `Condition` de origen sí trae `verificationStatusConceptId`. Hasta que
-   * se agregue esa línea, ningún diagnóstico real llega marcado como
-   * confirmado y el selector sólo ofrece «Otro motivo» — comportamiento
-   * seguro (nunca ofrece un presuntivo), documentado en el `REPORTE.md`.
+   * Si el diagnóstico está **confirmado**. La receta sólo se liga a uno
+   * confirmado (pedido literal del propietario, C5) — ver
+   * `opcionesDeIndicacion()`. Lo arma {@link diagnosticoParaReceta}.
+   */
+  readonly confirmado?: boolean;
+  /**
+   * Cuándo se confirmó, si se sabe: la fecha de la decisión de C3
+   * (`verification.decidedAt`). `null` cuando el diagnóstico está confirmado
+   * pero no hay registro de esa decisión —los de la semilla, o los cargados
+   * ya confirmados—: es un confirmado sin fecha, no un presuntivo.
    */
   readonly confirmadoEl?: string | null;
+}
+
+/**
+ * Un diagnóstico del expediente como opción de «¿para qué es esta receta?».
+ *
+ * ## Por qué existe
+ *
+ * El formulario de receta sólo ofrece diagnósticos confirmados, y tanto el
+ * expediente como «Atención» le pasaban la lista sin decir cuáles lo estaban:
+ * el selector quedaba siempre en «Otro motivo», y una receta no se podía atar
+ * a ningún diagnóstico registrado. Se arma acá, una sola vez, para que las dos
+ * pantallas no vuelvan a separarse.
+ *
+ * ## Qué cuenta como confirmado
+ *
+ * Manda la certeza actual del diagnóstico (`verificationStatusConceptId`, con
+ * código `COND_CONFIRMED`): es su estado de hoy. Si el código no se pudo leer
+ * —el catálogo de terminología falló—, vale la última decisión registrada
+ * (`verification.outcome`). Un descartado nunca se ofrece.
+ */
+export function diagnosticoParaReceta(
+  condicion: Pick<Condition, 'id' | 'resolvedAt' | 'verificationStatusConceptId' | 'verification'>,
+  etiqueta: string,
+  codigo: ResolverCodigo,
+): DiagnosisOption {
+  const certeza = normalizarCodigoDx(codigo(condicion.verificationStatusConceptId));
+  const decision = condicion.verification ?? null;
+  const confirmado =
+    certeza !== undefined
+      ? certeza === normalizarCodigoDx(CODIGO_CONFIRMADO)
+      : decision?.outcome === 'CONFIRMED';
+  return {
+    id: condicion.id,
+    etiqueta: condicion.resolvedAt === undefined ? etiqueta : `${etiqueta} · Resuelto`,
+    confirmado,
+    confirmadoEl: confirmado && decision?.outcome === 'CONFIRMED' ? decision.decidedAt : null,
+  };
+}
+
+/**
+ * Lo que la lista de recetas muestra como su vínculo: el diagnóstico (con el
+ * nombre que ya tiene en la lista de diagnósticos) o el motivo escrito a mano.
+ *
+ * Un `indicationConditionId` que no está entre los diagnósticos a la vista —
+ * quedó fuera del tope de la lectura— se dice así, en vez de callarlo: decir
+ * «sin vínculo» sería falso.
+ */
+export function vinculoDeReceta(
+  receta: Pick<MedicationRequest, 'indicationConditionId' | 'indicationText'>,
+  diagnosticos: readonly DiagnosisOption[],
+): Pick<PrescriptionInChart, 'vinculo' | 'vinculoEsDiagnostico' | 'indicationConditionId'> {
+  if (receta.indicationConditionId !== undefined) {
+    const dx = diagnosticos.find((d) => d.id === receta.indicationConditionId);
+    return {
+      vinculo: dx?.etiqueta ?? 'Diagnóstico de la historia',
+      vinculoEsDiagnostico: true,
+      indicationConditionId: receta.indicationConditionId,
+    };
+  }
+  const motivo = receta.indicationText?.trim() ?? '';
+  return motivo === ''
+    ? { vinculo: null, vinculoEsDiagnostico: false, indicationConditionId: null }
+    : { vinculo: motivo, vinculoEsDiagnostico: false, indicationConditionId: null };
 }
 
 /** Alias de compatibilidad: `patient-chart.ts` (C3, fuera de mi alcance) sigue importando el nombre viejo. */
@@ -149,12 +216,9 @@ export interface PrescriptionInChart {
   readonly firmada: boolean;
   readonly emitida: boolean;
   /**
-   * El diagnóstico o motivo de la receta, ya en palabras (C5). Opcional por
-   * la misma razón que `DiagnosisOption.confirmadoEl`: `patient-chart.ts`
-   * (C3, fuera de mi alcance) todavía no lo puebla en `recetasEnFicha`,
-   * aunque el `MedicationRequest` de origen ya trae `indicationConditionId`/
-   * `indicationText` (Patch v4.1.6). `undefined`/ausente = sin vínculo
-   * mostrado (recetas de antes de C5, o pendiente de esa línea en C3).
+   * El diagnóstico o motivo de la receta, ya en palabras (C5). Lo arma
+   * {@link vinculoDeReceta} desde `indicationConditionId`/`indicationText`
+   * (Patch v4.1.6). `null`/ausente = la receta no dice para qué es.
    */
   readonly vinculo?: string | null;
   /** `true` si el vínculo es un diagnóstico confirmado; `false`/ausente si es un motivo escrito a mano. */
@@ -289,11 +353,17 @@ export class MedicationBlock implements DraftBlock {
    */
   readonly exigeRespuesta = input(false);
 
+  /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
+  readonly ofreceRespuesta = input(false);
+
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
   protected readonly faltaRespuesta = computed(
-    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+    () =>
+      (this.exigeRespuesta() && this.respuestaDelFormulario() === null) ||
+      // Sin formulario se emite, pero el encuentro abierto sigue siendo necesario.
+      (this.ofreceRespuesta() && this.encounterId() === null),
   );
 
   /** Las recetas de la persona, ya traducidas por el expediente. */
@@ -447,10 +517,15 @@ export class MedicationBlock implements DraftBlock {
   protected readonly opcionesDeIndicacion = computed<readonly SelectOption<string | null>[]>(
     () => [
       ...this.diagnosticos()
-        .filter((dx) => dx.confirmadoEl !== undefined && dx.confirmadoEl !== null)
+        // `confirmadoEl` solo también cuenta: es como llegaban los confirmados
+        // antes de que existiera `confirmado`, y no hay por qué dejarlos fuera.
+        .filter((dx) => dx.confirmado === true || (dx.confirmadoEl ?? null) !== null)
         .map((dx) => ({
           value: dx.id,
-          label: `${dx.etiqueta} · Confirmado el ${this.fechaCorta(dx.confirmadoEl!)}`,
+          label:
+            dx.confirmadoEl === undefined || dx.confirmadoEl === null
+              ? `${dx.etiqueta} · Confirmado`
+              : `${dx.etiqueta} · Confirmado el ${this.fechaCorta(dx.confirmadoEl)}`,
         })),
       { value: OTRO_MOTIVO, label: 'Otro motivo — escribirlo' },
     ],

@@ -293,6 +293,22 @@ describe('MedicationBlock', () => {
     expect(opciones[1]?.label).toBe('Otro motivo — escribirlo');
   });
 
+  it('C5: ofrece también el confirmado sin fecha de decisión, sin inventarle una', () => {
+    responderCatalogo();
+    fixture.componentRef.setInput('diagnosticos', [
+      // Confirmado en la semilla o cargado ya confirmado: no hay registro de la decisión.
+      { id: 'cond-1', etiqueta: 'Hipertensión arterial esencial', confirmado: true, confirmadoEl: null },
+      { id: 'cond-2', etiqueta: 'Dislipidemia', confirmado: false, confirmadoEl: null },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+      'opcionesDeIndicacion',
+    )();
+    expect(opciones.map((o) => o.value)).toEqual(['cond-1', '__otro_motivo__']);
+    expect(opciones[0]?.label).toBe('Hipertensión arterial esencial · Confirmado');
+  });
+
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
     responderCatalogo();
 
@@ -1004,6 +1020,32 @@ describe('MedicationBlock', () => {
     expect(interno<() => boolean>('hayPosologia')()).toBe(false);
   });
   /* -- El porqué de la receta (pedido del cliente) ------------------------- */
+
+  /**
+   * Cambio de requisito (30/10/2026): en la consulta la respuesta del formulario
+   * médico se **ofrece** y ya no se exige. Ofrecerla no bloquea el botón; exigirla
+   * (como antes) sí, mientras no haya una elegida.
+   */
+  describe('la respuesta del formulario médico, ofrecida y exigida', () => {
+    it('ofrecerla no bloquea la emisión; exigirla sí, hasta que se elige una', () => {
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(false);
+
+      fixture.componentRef.setInput('exigeRespuesta', true);
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(true);
+    });
+
+    /** Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo. */
+    it('ofrecerla NO exime del encuentro abierto: sin él no se emite', () => {
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      fixture.componentRef.setInput('encounterId', null);
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(true);
+
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(false);
+    });
+  });
 
   describe('el porqué de la receta', () => {
     it('C5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos', () => {

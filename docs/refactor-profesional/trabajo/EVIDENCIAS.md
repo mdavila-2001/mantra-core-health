@@ -1,5 +1,30 @@
 # Evidencias
 
+## Modales fuera de la consulta: pie, fechas y campos sueltos · 2026-10-30
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `dev` en `c5f2363f2`.
+`playwright/modales-fuera-de-consulta.spec.ts` abre 31 modales con los seis usuarios del simulador, en
+1440 y 390, y mide columnas de campos, hueco a la derecha del último campo y desborde lateral.
+
+| Comprobación | Resultado |
+|---|---|
+| Medidas antes/después (31 modales × 2 anchos) | Cambian sólo los tres tocados a propósito: historial (1→2 columnas, hueco 16→0), nuevo lugar (hueco 16→0), confirmar diagnóstico (1→2 columnas). El resto, idéntico. |
+| Página «Trayectoria» (aloja el modal del historial) | idéntica píxel a píxel a la de `dev` |
+| Regresión propia encontrada y corregida | `.historial__periodo` chocaba con la clase de la lista; renombrada a `.historial__rango` (`a816bb592`) |
+| `yarn test` completo, por tramos (el proceso entero muere con 129 en este entorno) | 15 586 pasan, 3 fallan; las 3 fallan igual con el código de `dev` (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+| `yarn typecheck` · `yarn build` · `eslint` de las pruebas | 0 · 0 · 0 |
+| `check-contrast` · `check-css-tokens` | 0 · 0; `check-colores-sueltos` falla en archivos no tocados |
+
+**Los que no se habían podido abrir (30/10/2026, segunda vuelta).** Los botones habían cambiado
+de lugar: transacciones y cuentas viven dentro de «Registros», las encuestas son una lista con su
+«Abrir», el mostrador es `agenda-ingreso-mostrador` y la aprobación parcial se pide desde el
+detalle. Abiertos los cinco en 1440 y 390: mostrador, nueva cuenta, nueva transacción y aprobar
+parcialmente están bien y no se tocan. «Editar la pregunta» era el único con los botones dentro
+del cuerpo y «Listo» a la izquierda: pasan al pie (`antes-despues-editar-pregunta.png`); en
+teléfono «Cancelar» y «Listo» bajan juntos. Medidas de los tres usuarios antes/después: sólo
+cambian los modales ya corregidos. `ng test` de encuestas: 144/144. Capturas: `capturas/antes/modales-2026-10-28/` y
+`capturas/despues/modales-2026-10-28/antes-despues-*.png`.
+
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
 
 Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, sesión médica simulada, Chromium.
@@ -256,6 +281,27 @@ Sin cambio: L-2 (las imágenes `geometria-*.png` siguen sin atenciones ni tema o
 oscuro se comprueban en las capturas de la app).
 
 Capturas: `capturas/recorrido-clinico/`.
+
+## Formulario de receta: los diagnósticos confirmados — 2026-10-30
+
+Defecto: el formulario de receta (`medication-block`) sólo ofrece diagnósticos confirmados, y ni el
+expediente ni «Atención» le decían cuáles lo estaban (`diagnosticosParaReceta` no pasaba
+`confirmadoEl`). El selector quedaba siempre en «Otro motivo». Además la lista de recetas no recibía
+su vínculo (`vinculo`, `vinculoEsDiagnostico`): no mostraba para qué era cada una y ofrecía «Vincular»
+aunque ya estuviera atada. Arreglo: `diagnosticoParaReceta` y `vinculoDeReceta`, en
+`medication-block.ts`, usados por las dos pantallas.
+
+Entorno: base `origin/dev` (`d6f3462e3`) · `ng serve --configuration development,demo` · Chromium ·
+`medica@alovida.mock`, paciente `pid-paciente`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `tsc -p tsconfig.app.json` · `eslint` de `patient-chart/` y `consultation/` | 0 · 0 |
+| `ng test --include='…/clinical-record/**/*.spec.ts'` | 39 archivos; 1 prueba roja preexistente (`follow-up-block`, «el calendario pinta de verde…»: roja también sin este cambio). Nuevas: 9 en `indicacion-de-receta.spec.ts`, 1 en `medication-block.spec.ts`, 2 en `patient-chart.spec.ts` |
+| `yarn test` completo | **no se ejecutó** |
+| UI → alta → lista → salir y volver → tabla y Recorrido | el selector ofrece «Hipertensión arterial esencial · Confirmado»; Losartán prescrito para ese diagnóstico (con el aviso de interacción con Enalapril aceptado); la lista lo muestra con «Diagnóstico: Hipertensión arterial esencial»; tras salir y volver, la tabla de Medicación lo trae atado a Hipertensión y el Recorrido dibuja dos indicaciones; 0 errores de consola. El backend simulado vive dentro de Angular: la petición no pasa por la red |
+
+Capturas: `capturas/receta-diagnostico/`. «Atención» usa el mismo ayudante; no se probó en navegador.
 
 ## WEB-F0 · Ficha de organización y vecinos — 2026-10-30
 

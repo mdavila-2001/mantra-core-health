@@ -1,4 +1,12 @@
 import { environment } from '../../../../environments/environment';
+import {
+  AYUDA_LUGARES,
+  aseguradorasInactivas,
+  lugaresDelAlta,
+  lugaresDelBorrador,
+  WorkplacePicker,
+  type ChosenInstitution,
+} from '../shared-registration/workplace-picker/workplace-picker';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
@@ -586,6 +594,7 @@ const AYUDA_PROFESIONAL: Readonly<Record<string, readonly HelpCard[]>> = {
         'Son los datos por los que le ubican en el trabajo, no los de su acceso. Puede dejarlos vacíos y cargarlos después desde su perfil.',
     },
   ],
+  workplaces: AYUDA_LUGARES,
   practice: [
     {
       icono: 'stethoscope',
@@ -726,6 +735,7 @@ function sinTildes(texto: string): string {
     Avatar,
     OnboardingDraftBanner,
     OfficeLogoField,
+    WorkplacePicker,
   ],
   providers: [OfficeLogoSelection],
   templateUrl: './register-practitioner.html',
@@ -1850,6 +1860,14 @@ export class RegisterPractitioner {
   readonly gpsTrabajo = signal<Coordinates | null>(null);
 
   /**
+   * Las instituciones y aseguradoras con las que dice trabajar (página
+   * «Dónde trabaja y con qué seguros»). Viven en señales y no en el formulario:
+   * son opcionales, no validan nada y las gobierna `app-workplace-picker`.
+   */
+  readonly institucionesElegidas = signal<readonly ChosenInstitution[]>([]);
+  readonly aseguradorasElegidas = signal<readonly string[]>([]);
+
+  /**
    * La localidad del consultorio propio, deducida de su punto.
    *
    * Separada de la del domicilio a propósito: son dos lugares distintos, y hay
@@ -2576,6 +2594,9 @@ export class RegisterPractitioner {
 
   readonly registered = signal(false);
 
+  /** Cuántos pedidos de confirmación salieron con el alta (instituciones + seguros). */
+  readonly pedidosEnviados = signal(0);
+
   /**
    * La clave de la página que se está contestando, tal como la avisa el motor.
    *
@@ -2609,6 +2630,8 @@ export class RegisterPractitioner {
         gpsDomicilio: this.gpsDomicilio(),
         gpsTrabajo: this.gpsTrabajo(),
         gpsConsultorio: this.gpsConsultorio(),
+        institucionesElegidas: this.institucionesElegidas(),
+        aseguradorasElegidas: this.aseguradorasElegidas(),
       };
       this.draftService.saveProgress(
         'practitioner',
@@ -2661,7 +2684,16 @@ export class RegisterPractitioner {
       if (extra['gpsConsultorio'] !== undefined) {
         this.gpsConsultorio.set(extra['gpsConsultorio'] as Coordinates | null);
       }
-      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+      const lugares = lugaresDelBorrador(extra);
+      this.institucionesElegidas.set(lugares.institutions);
+      this.aseguradorasElegidas.set(lugares.insurerIds);
+      // Por la clave de la página, no por su número: sumar una página (como
+      // «workplaces», 28/10/2026) corre los números y un borrador viejo
+      // retomaría una página antes. El número queda para los sin clave.
+      const porClave = this.paginasProfesional().findIndex((p) => p.clave === draft.stepKey);
+      if (porClave >= 0) {
+        this.pasoGuardado.set(porClave);
+      } else if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
         this.pasoGuardado.set(draft.stepIndex);
       }
       this.borradorDetectado.set(null);
@@ -2957,14 +2989,23 @@ export class RegisterPractitioner {
       .subscribe({
         next: () => {
           this.iam.registerPractitioner(this.datosProfesional()).subscribe({
-            next: () => {
+            next: (alta) => {
+              // Lo que la API confirma que creó, no lo que se eligió: si un
+              // pedido no se hubiera creado, contarlo sería prometer un sello
+              // que nadie va a dar.
+              this.pedidosEnviados.set(
+                (alta?.affiliationIds?.length ?? 0) + (alta?.insurerRequestIds?.length ?? 0),
+              );
               this.state.set(ready(null));
               this.registered.set(true);
               this.limpiarBorrador();
               this.draftService.trackEvent('complete', 'practitioner', 4);
             },
-            error: (error: unknown) =>
-              this.state.set(registrationErrorToViewState(error, 'practitioner')),
+            error: (error: unknown) => {
+              const inactivas = aseguradorasInactivas(error);
+              this.aseguradorasElegidas.update((ids) => ids.filter((id) => !inactivas.includes(id)));
+              this.state.set(registrationErrorToViewState(error, 'practitioner'));
+            },
           });
         },
         error: (error: unknown) =>
@@ -3297,6 +3338,7 @@ export class RegisterPractitioner {
       ...(this.credencialesDeclaradas().length === 0
         ? {}
         : { credentials: this.credencialesDeclaradas() }),
+      ...lugaresDelAlta(this.institucionesElegidas(), this.aseguradorasElegidas()),
     };
   }
 
