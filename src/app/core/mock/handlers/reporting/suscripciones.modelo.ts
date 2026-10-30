@@ -1,8 +1,8 @@
 import type { ContextoReporte, FiltroActivo, PeriodoReporte } from '../../../data-access/reporting/reporting.types';
 import {
-  diasDelPeriodo,
+  daysInPeriod,
   factorContexto,
-  fechasDelPeriodo,
+  periodDates,
   granularidad,
   hashTexto,
   rng,
@@ -135,9 +135,9 @@ export interface ModeloSuscripciones {
 }
 
 export function modelarSuscripciones(ctx: ContextoReporte): ModeloSuscripciones {
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const n = fechas.length;
-  const dias = diasDelPeriodo(ctx.periodo);
+  const dias = daysInPeriod(ctx.periodo);
   const meses = dias / 30;
   const r = rng(semillaDe(ctx));
 

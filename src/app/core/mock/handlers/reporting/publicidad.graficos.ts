@@ -2,7 +2,7 @@ import type { ChartSpec, ContextoReporte } from '../../../data-access/reporting/
 import { DIAS_SEMANA, DISPOSITIVOS, UBICACIONES } from './publicidad.catalogo';
 import { aMoneda, aMonedaNull, info, unidadMoneda } from './publicidad.comun';
 import { calcularModelo, razon, type Modelo } from './publicidad.modelo';
-import { agrupar, redondear, suma, velasDeSerie } from './reporting-dataset.util';
+import { agrupar, redondear, suma, candlesFromSeries } from './reporting-dataset.util';
 
 /* Resultados · Entrega y alcance · Rendimiento por ubicación y horario (series y distribuciones). */
 
@@ -42,7 +42,7 @@ export function graficoGastoDiario(ctx: ContextoReporte, m: Modelo): ChartSpec {
       ? {
           explicacion:
             'CPM: costo por mil impresiones. Cada vela resume unos días: apertura, máximo, mínimo y cierre. Una vela roja es un CPM que sube (más caro).',
-          velas: velasDeSerie(m.fechas, m.cpmDia.map((v) => aMoneda(ctx, v)), m.gran),
+          velas: candlesFromSeries(m.fechas, m.cpmDia.map((v) => aMoneda(ctx, v)), m.gran),
           subirEsMalo: true,
         }
       : null,
@@ -88,7 +88,7 @@ export function graficoValorAtribuido(ctx: ContextoReporte, m: Modelo): ChartSpe
     velas: m.roasDia
       ? {
           explicacion: 'ROAS diario: valor atribuido ÷ gasto. Vela verde = el retorno sube.',
-          velas: velasDeSerie(m.fechas, m.roasDia, m.gran),
+          velas: candlesFromSeries(m.fechas, m.roasDia, m.gran),
         }
       : null,
     velasMotivo: m.roasDia ? undefined : 'Sin citas atribuidas no hay ROAS: no se dibuja un cero.',

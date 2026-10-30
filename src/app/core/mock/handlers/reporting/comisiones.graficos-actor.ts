@@ -2,7 +2,7 @@ import { formatearValor } from '../../../data-access/reporting/reporting-format'
 import type { ChartSpec, ContextoReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { FUENTE_COMISIONES, info } from './comisiones.info';
 import { aMonto, ACTORES, MOTIVO_SIN_ESQUEMA, repartir, type FilaActor, type ModeloComisiones } from './comisiones.modelo';
-import { FECHA_ANCLA, hashTexto, redondear, rng } from './reporting-dataset.util';
+import { ANCHOR_DATE, hashTexto, redondear, rng } from './reporting-dataset.util';
 
 /* Gráficos «Por actor». Estos gráficos muestran SIEMPRE a todos los actores: el actor
    elegido por el filtro se resalta (`seleccion`) y mueve el resto del tablero, pero no
@@ -146,7 +146,7 @@ export function graficoProductividad(ctx: ContextoReporte, m: ModeloComisiones):
 function mesesDelPeriodo(dias: number): string[] {
   const n = Math.min(12, Math.max(1, Math.ceil(dias / 30)));
   return Array.from({ length: n }, (_, i) => {
-    const d = new Date(Date.UTC(FECHA_ANCLA.getUTCFullYear(), FECHA_ANCLA.getUTCMonth() - (n - 1 - i), 1));
+    const d = new Date(Date.UTC(ANCHOR_DATE.getUTCFullYear(), ANCHOR_DATE.getUTCMonth() - (n - 1 - i), 1));
     return `${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   });
 }

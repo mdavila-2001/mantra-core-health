@@ -21,10 +21,10 @@ import type {
     ========================================================================== */
 
 /** Fecha ancla de la maqueta: «hoy» no se mueve. */
-export const FECHA_ANCLA = new Date(Date.UTC(2026, 9, 30));
+export const ANCHOR_DATE = new Date(Date.UTC(2026, 9, 30));
 
 /** Tipo de cambio de EJEMPLO para pasar BOB a USD. No es una cotización. */
-export const BOB_POR_USD = 6.96;
+export const BOB_PER_USD = 6.96;
 
 export function rng(semilla: number): () => number {
   let a = semilla >>> 0;
@@ -54,24 +54,24 @@ const DIAS: Readonly<Record<PeriodoReporte, number>> = {
   '12m': 365,
 };
 
-export function diasDelPeriodo(periodo: PeriodoReporte): number {
+export function daysInPeriod(periodo: PeriodoReporte): number {
   return DIAS[periodo];
 }
 
-export function etiquetaFecha(desplazamientoDias: number): string {
-  const d = new Date(FECHA_ANCLA.getTime() - desplazamientoDias * 86_400_000);
+export function dateLabel(desplazamientoDias: number): string {
+  const d = new Date(ANCHOR_DATE.getTime() - desplazamientoDias * 86_400_000);
   return d.toISOString().slice(0, 10);
 }
 
 /** Fechas ISO (día) del periodo, de la más vieja a la más nueva. */
-export function fechasDelPeriodo(periodo: PeriodoReporte): string[] {
-  const n = diasDelPeriodo(periodo);
-  return Array.from({ length: n }, (_, i) => etiquetaFecha(n - 1 - i));
+export function periodDates(periodo: PeriodoReporte): string[] {
+  const n = daysInPeriod(periodo);
+  return Array.from({ length: n }, (_, i) => dateLabel(n - 1 - i));
 }
 
 /** Cubos para no dibujar 365 puntos: ≤ 31 → diario, ≤ 120 → semanal, resto → mensual. */
 export function granularidad(periodo: PeriodoReporte): 'dia' | 'semana' | 'mes' {
-  const n = diasDelPeriodo(periodo);
+  const n = daysInPeriod(periodo);
   return n <= 31 ? 'dia' : n <= 120 ? 'semana' : 'mes';
 }
 
@@ -79,18 +79,18 @@ export function granularidad(periodo: PeriodoReporte): 'dia' | 'semana' | 'mes' 
 export function factorContexto(ctx: ContextoReporte): number {
   let f = ctx.alcance === 'organizacion' ? 0.22 : 1;
   for (const filtro of ctx.filtros) {
-    f *= factorDeFiltro(filtro);
+    f *= filterFactor(filtro);
   }
   return f;
 }
 
-export function factorDeFiltro(filtro: FiltroActivo): number {
+export function filterFactor(filtro: FiltroActivo): number {
   const h = hashTexto(`${filtro.dimension}:${filtro.valor}`) % 1000;
   return 0.18 + (h / 1000) * 0.4; // 0,18 – 0,58
 }
 
 export function convertir(valorBob: number, moneda: Moneda): number {
-  return moneda === 'USD' ? valorBob / BOB_POR_USD : valorBob;
+  return moneda === 'USD' ? valorBob / BOB_PER_USD : valorBob;
 }
 
 /** Serie con tendencia, estacionalidad semanal y ruido. */
@@ -151,7 +151,7 @@ export function agrupar(
  * día, cierre = último, mínimo y máximo del cubo). Para series de SALDO o de
  * RAZÓN (MRR, CPM, saldo por pagar) — no para flujos que se suman.
  */
-export function velasDeSerie(
+export function candlesFromSeries(
   fechas: readonly string[],
   valores: readonly number[],
   gran: 'dia' | 'semana' | 'mes',
@@ -203,7 +203,7 @@ export function kpi(
 }
 
 /** Atajo para tests y para verificar que un gráfico declara lo que debe. */
-export function huecosDelContrato(spec: ChartSpec): string[] {
+export function contractGaps(spec: ChartSpec): string[] {
   const huecos: string[] = [];
   if (spec.titulo.trim() === '') huecos.push('titulo');
   if (spec.resumenAccesible.trim() === '') huecos.push('resumenAccesible');

@@ -14,7 +14,7 @@ import {
   TRAMOS_REZAGO,
   type ModeloCobros,
 } from './cobros.modelo';
-import { suma, velasDeSerie } from './reporting-dataset.util';
+import { suma, candlesFromSeries } from './reporting-dataset.util';
 
 const PCT = { tipo: 'porcentaje' } as const;
 const NUM = { tipo: 'numero' } as const;
@@ -50,7 +50,7 @@ function reembolsosYDisputas(m: ModeloCobros): ChartSpec {
     }),
     velas: {
       explicacion: 'Reembolsos como % de lo cobrado por tramo: apertura, máximo, mínimo y cierre. Una vela que sube es peor.',
-      velas: velasDeSerie(m.fechas, diaria, m.gran),
+      velas: candlesFromSeries(m.fechas, diaria, m.gran),
       subirEsMalo: true,
     },
     alto: 300,
@@ -102,7 +102,7 @@ function costoGateway(m: ModeloCobros): ChartSpec {
     }),
     velas: {
       explicacion: 'Costo del gateway por tramo: apertura, máximo, mínimo y cierre. Una vela que sube es peor.',
-      velas: velasDeSerie(m.fechas, diaria, m.gran),
+      velas: candlesFromSeries(m.fechas, diaria, m.gran),
       subirEsMalo: true,
     },
     alto: 300,

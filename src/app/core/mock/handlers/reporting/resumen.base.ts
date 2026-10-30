@@ -10,8 +10,8 @@ import { construirSuscripciones } from './suscripciones.dataset';
 import {
   INFO_EJEMPLO,
   agrupar,
-  diasDelPeriodo,
-  fechasDelPeriodo,
+  daysInPeriod,
+  periodDates,
   granularidad,
   hashTexto,
   redondear,
@@ -153,9 +153,9 @@ export interface SerieIngreso {
  */
 export function serieDeIngreso(base: BaseResumen): SerieIngreso {
   const { ctx } = base;
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
-  const n = diasDelPeriodo(ctx.periodo);
+  const n = daysInPeriod(ctx.periodo);
   let etiquetas: string[] = [];
   const porVertical = {} as Record<ClaveVertical, (number | null)[]>;
   for (const c of ORDEN) {

@@ -9,7 +9,7 @@ import {
   type FilaCatalogo,
 } from './calidad.catalogo';
 import { UMBRAL_REGLA_PCT, type ReglaEvaluada } from './calidad.reglas';
-import { agrupar, fechasDelPeriodo, granularidad, redondear, rng, velasDeSerie } from './reporting-dataset.util';
+import { agrupar, periodDates, granularidad, redondear, rng, candlesFromSeries } from './reporting-dataset.util';
 
 /* Gráficos de la pestaña «Calidad del dato». Todos nacen del catálogo vivo (calidad.catalogo)
    y de las reglas (calidad.reglas); ninguno pinta un cero donde no hay indicadores. */
@@ -173,7 +173,7 @@ export function graficoCobertura(filas: readonly FilaCatalogo[]): ChartSpec {
 }
 
 function etiquetasDelPeriodo(ctx: ContextoReporte): { fechas: string[]; gran: ReturnType<typeof granularidad> } {
-  return { fechas: fechasDelPeriodo(ctx.periodo), gran: granularidad(ctx.periodo) };
+  return { fechas: periodDates(ctx.periodo), gran: granularidad(ctx.periodo) };
 }
 
 /** Corridas de reglas pasadas y falladas por periodo. La última barra es el estado actual, calculado. */
@@ -254,7 +254,7 @@ export function graficoCompletitud(ctx: ContextoReporte, filas: readonly FilaCat
     velas: hay
       ? {
           explicacion: 'Completitud: apertura, máximo, mínimo y cierre de cada tramo del periodo.',
-          velas: velasDeSerie(fechas, diaria, gran),
+          velas: candlesFromSeries(fechas, diaria, gran),
           subirEsMalo: false,
         }
       : null,

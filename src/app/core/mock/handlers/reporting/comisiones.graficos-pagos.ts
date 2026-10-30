@@ -4,12 +4,12 @@ import { FUENTE_CONCILIACION, FUENTE_COMISIONES, FUENTE_FEES, FUENTE_PAYOUTS, in
 import { aMonto, MOTIVO_SIN_ESQUEMA, porcentaje, repartir, type ModeloComisiones } from './comisiones.modelo';
 import {
   agrupar,
-  fechasDelPeriodo,
+  periodDates,
   granularidad,
   hashTexto,
   redondear,
   serie,
-  velasDeSerie,
+  candlesFromSeries,
 } from './reporting-dataset.util';
 
 /* Gráficos «Resultado de la plataforma», «Pagos y antigüedad» y «Conciliación». */
@@ -72,7 +72,7 @@ export function graficoCascada(ctx: ContextoReporte, m: ModeloComisiones): Chart
 export function graficoTakeRate(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
   const a = m.alcance;
   const take = porcentaje(a.ingresoNetoC, a.volumenC);
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
   const diaria =
     take === null ? null : serie(hashTexto(`comisiones:take:${ctx.periodo}`), fechas.length, take / 1.0125, 2.5, 2.5).map((v) => redondear(v, 2));
@@ -114,7 +114,7 @@ export function graficoTakeRate(ctx: ContextoReporte, m: ModeloComisiones): Char
         ? null
         : {
             explicacion: 'Take rate: apertura, máximo, mínimo y cierre de cada tramo. Es una razón, no un flujo que se suma.',
-            velas: velasDeSerie(fechas, diaria, gran),
+            velas: candlesFromSeries(fechas, diaria, gran),
           },
     velasMotivo: diaria === null ? 'Sin dato no hay velas que dibujar.' : undefined,
     alto: 300,
@@ -124,7 +124,7 @@ export function graficoTakeRate(ctx: ContextoReporte, m: ModeloComisiones): Char
 
 export function graficoSaldoPorPagar(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
   const pendiente = aMonto(m.alcance.pendienteC);
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
   const unidad = moneda(ctx);
   let diaria: number[] | null = null;
@@ -168,7 +168,7 @@ export function graficoSaldoPorPagar(ctx: ContextoReporte, m: ModeloComisiones):
         ? null
         : {
             explicacion: 'Saldo por pagar: apertura, máximo, mínimo y cierre de cada tramo. Subir es malo: es deuda acumulada.',
-            velas: velasDeSerie(fechas, diaria, gran),
+            velas: candlesFromSeries(fechas, diaria, gran),
             subirEsMalo: true,
           },
     velasMotivo: diaria === null ? 'Sin dato no hay velas que dibujar.' : undefined,

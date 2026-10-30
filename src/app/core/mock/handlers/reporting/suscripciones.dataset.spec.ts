@@ -10,7 +10,7 @@ import type {
 } from '@core/data-access/reporting/reporting.types';
 import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 
-import { BOB_POR_USD } from './reporting-dataset.util';
+import { BOB_PER_USD } from './reporting-dataset.util';
 import { construirSuscripciones } from './suscripciones.dataset';
 
 const PERIODOS: PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
@@ -133,7 +133,7 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
       for (const id of ['mrr', 'arr', 'arpu', 'ingreso-periodo', 'saldo-mora']) {
         const b = kpiDe(bob, id).valor!;
         // Cada tramo se redondea a centavos en su moneda: el error admitido es de centavos, no de porcentaje.
-        const esperado = b / BOB_POR_USD;
+        const esperado = b / BOB_PER_USD;
         expect(Math.abs(kpiDe(usd, id).valor! - esperado), `${id} ${periodo}`).toBeLessThan(Math.max(0.25, esperado * 0.0005));
       }
       expect(kpiDe(usd, 'suscriptores-activos').valor).toBe(kpiDe(bob, 'suscriptores-activos').valor);
@@ -141,7 +141,7 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
       const mrrU = graficoDe(usd, 'mrr-evolucion').datos;
       if (mrrB.tipo === 'cartesiano' && mrrU.tipo === 'cartesiano') {
         mrrB.series[0]!.valores.forEach((v, i) => {
-          expect(Math.abs(mrrU.series[0]!.valores[i]! - v! / BOB_POR_USD)).toBeLessThan(0.01);
+          expect(Math.abs(mrrU.series[0]!.valores[i]! - v! / BOB_PER_USD)).toBeLessThan(0.01);
         });
       }
     }

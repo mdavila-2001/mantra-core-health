@@ -1,9 +1,9 @@
 import type { ContextoReporte, Vela } from '../../../data-access/reporting/reporting.types';
 import {
   agrupar,
-  diasDelPeriodo,
+  daysInPeriod,
   factorContexto,
-  fechasDelPeriodo,
+  periodDates,
   granularidad,
   redondear,
   rng,
@@ -139,9 +139,9 @@ export function canalFiltrado(ctx: ContextoReporte): string | null {
 }
 
 export function calcularModelo(ctx: ContextoReporte): ModeloAdquisicion {
-  const n = diasDelPeriodo(ctx.periodo);
+  const n = daysInPeriod(ctx.periodo);
   const factor = factorContexto(ctx);
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
 
   const leadsDia = serie(7101, n, 46, 18, 7).map((v) => Math.round(v * factor));

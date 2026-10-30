@@ -11,7 +11,7 @@ import type {
 } from '@core/data-access/reporting/reporting.types';
 import {
   convertir,
-  diasDelPeriodo,
+  daysInPeriod,
   factorContexto,
   redondear,
   suma,
@@ -61,7 +61,7 @@ function vertical(
   moneda?: Moneda,
 ): (ctx: ContextoReporte) => PestanaReporte {
   return (ctx) => {
-    const ingreso = redondear(convertir(baseBob * factorContexto(ctx) * (diasDelPeriodo(ctx.periodo) / 30), ctx.moneda));
+    const ingreso = redondear(convertir(baseBob * factorContexto(ctx) * (daysInPeriod(ctx.periodo) / 30), ctx.moneda));
     return {
       pestana,
       generadoEn: 'x',

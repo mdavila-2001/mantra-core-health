@@ -12,7 +12,7 @@ import type {
 } from '../../../data-access/reporting/reporting.types';
 import { CAMPANAS } from './publicidad.catalogo';
 import { construirPublicidad } from './publicidad.dataset';
-import { huecosDelContrato } from './reporting-dataset.util';
+import { contractGaps } from './reporting-dataset.util';
 
 const PERIODOS: PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
 const COMPARAR: ComparacionReporte[] = ['ninguna', 'periodo-anterior', 'mismo-periodo-ano-anterior'];
@@ -80,7 +80,7 @@ describe('Pestaña publicidad (datos de EJEMPLO)', () => {
       expect(p.origen).toBe('ejemplo');
       for (const g of p.graficos) {
         expect(getContractViolations(g), `${etiqueta} ${g.id}`).toEqual([]);
-        expect(huecosDelContrato(g), `${etiqueta} ${g.id}`).toEqual([]);
+        expect(contractGaps(g), `${etiqueta} ${g.id}`).toEqual([]);
       }
       for (const k of p.kpis) {
         expect(k.info !== null || !!k.infoMotivo, `${etiqueta} ${k.id}`).toBe(true);

@@ -10,7 +10,7 @@ import type {
 } from '../../../data-access/reporting/reporting.types';
 import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import { construirCobros } from './cobros.dataset';
-import { BOB_POR_USD } from './reporting-dataset.util';
+import { BOB_PER_USD } from './reporting-dataset.util';
 
 const PERIODOS: PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
 const COMPARACIONES: ComparacionReporte[] = ['ninguna', 'periodo-anterior', 'mismo-periodo-ano-anterior'];
@@ -147,7 +147,7 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
     const bob = kpi(ctx(), 'volumen-cobrado').valor!;
     const usd = kpi(ctx({ moneda: 'USD' }), 'volumen-cobrado');
     expect(usd.unidad).toEqual({ tipo: 'moneda', moneda: 'USD' });
-    expect(usd.valor!).toBeCloseTo(bob / BOB_POR_USD, 0);
+    expect(usd.valor!).toBeCloseTo(bob / BOB_PER_USD, 0);
     expect(kpi(ctx({ moneda: 'USD' }), 'tasa-exito-pago').valor).toBe(kpi(ctx(), 'tasa-exito-pago').valor);
     expect(kpi(ctx({ moneda: 'USD' }), 'costo-gateway-pct').valor).toBeCloseTo(kpi(ctx(), 'costo-gateway-pct').valor!, 1);
   });
