@@ -1,6 +1,8 @@
 /** Cuántas preguntas se recuerdan. */
 export const MAX_HISTORIAL = 30;
 const PREFIJO = 'alovida:reportes:asistente:historial:';
+/** Llave de una versión previa (un solo historial para todo el navegador): también se olvida. */
+const LLAVE_ANTIGUA = 'alovida:reportes:asistente:historial';
 
 /** El historial es de QUIEN lo escribió: en un navegador compartido el siguiente no lo hereda. */
 const clave = (userId: string | null): string => `${PREFIJO}${userId ?? 'anonymous'}`;
@@ -65,7 +67,7 @@ export function olvidarHistorialesDelNavegador(): void {
     const claves: string[] = [];
     for (let i = 0; i < almacen.length; i++) {
       const k = almacen.key(i);
-      if (k?.startsWith(PREFIJO)) {
+      if (k === LLAVE_ANTIGUA || k?.startsWith(PREFIJO)) {
         claves.push(k);
       }
     }

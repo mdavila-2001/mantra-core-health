@@ -79,4 +79,10 @@ describe('historial del asistente', () => {
     expect(localStorage.getItem('otra-cosa')).toBe('x');
     localStorage.removeItem('otra-cosa');
   });
+
+  it('cerrar sesión también olvida la llave de la versión previa', () => {
+    localStorage.setItem('alovida:reportes:asistente:historial', JSON.stringify(['vieja']));
+    olvidarHistorialesDelNavegador();
+    expect(localStorage.getItem('alovida:reportes:asistente:historial')).toBeNull();
+  });
 });
