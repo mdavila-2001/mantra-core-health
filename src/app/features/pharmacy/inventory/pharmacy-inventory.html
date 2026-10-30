@@ -1,7 +1,9 @@
-<app-page-header
-  title="Inventario"
-  subtitle="Llévelo con cantidades o sólo con un «hay / no hay». Lo que no tiene deja de ofrecerse a los pacientes. Puede editarlo acá o subirlo con un CSV."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Inventario"
+    subtitle="Llévelo con cantidades o sólo con un «hay / no hay». Lo que no tiene deja de ofrecerse a los pacientes. Puede editarlo acá o subirlo con un CSV."
+  />
+}
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {
