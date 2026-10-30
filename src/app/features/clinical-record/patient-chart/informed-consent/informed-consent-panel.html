@@ -1,0 +1,539 @@
+<app-card variant="outlined" padding="lg" class="consentimiento" data-testid="consent-panel">
+  <!-- ─── Qué se consiente y cómo está ─────────────────────────────────
+       La cabecera responde las dos preguntas que se hacen antes de leer nada:
+       ¿a qué? y ¿ya está? Revocar vive acá, a la vista, igual de fácil de
+       encontrar que registrar. -->
+  <header class="consentimiento__cabecera">
+    <div class="consentimiento__titulos">
+      <h2 class="consentimiento__titulo">Consentimiento informado</h2>
+      <p class="consentimiento__objeto" data-testid="consent-target">
+        <span class="consentimiento__objeto-tipo">{{ nombreDelObjeto() }}:</span>
+        {{ targetLabel() }}
+      </p>
+    </div>
+
+    <div class="consentimiento__estado">
+      @if (lectura().status === 'ready') {
+        <app-informed-consent-badge [consent]="vigente()" />
+      }
+    </div>
+
+    @if (revocable()) {
+      <div class="consentimiento__acciones">
+        @if (firma()?.etiqueta === 'Firma pendiente') {
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="consent-attach-signature"
+            (clicked)="adjuntandoFirma.set(true)"
+          >
+            Adjuntar firma
+          </button>
+        }
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="consent-withdraw"
+          [disabled]="revocacion().status === 'loading'"
+          (clicked)="revocar()"
+        >
+          Revocar consentimiento
+        </button>
+      </div>
+    }
+  </header>
+
+  <p class="consentimiento__norma">
+    {{ citaCpe }} {{ ayudaExpediente }}
+    @if (targetType() === 'REFERRAL') {
+      {{ ayudaDerivacion }}
+    }
+  </p>
+
+  <!-- Los nueve estados de la lectura los resuelve el anfitrión; el
+       formulario sólo se ofrece con el historial a la vista. -->
+  <app-view-state-host [state]="lectura()" (retry)="recargar()">
+    @if (errorDeLaRevocacion(); as mensaje) {
+      <app-alert tone="error" data-testid="consent-withdraw-error">{{ mensaje }}</app-alert>
+    }
+    @if (errorDelInformePosterior(); as mensaje) {
+      <app-alert tone="error">{{ mensaje }}</app-alert>
+    }
+
+    @if (recienRegistrado(); as creado) {
+      <app-alert tone="success" title="Decisión registrada" data-testid="consent-recorded">
+        Quedó en el expediente
+        {{ creado.decision === 'ACCEPTED' ? 'la aceptación' : 'el rechazo' }}.
+        @if (creado.signatureStatus === 'PENDING') {
+          Próximo paso: adjunte la firma de quien otorgó con «Adjuntar firma».
+        }
+        @if (creado.channel === 'TELEHEALTH' && creado.signatureStatus === 'PENDING') {
+          Por telesalud, conviene la firma electrónica o la constancia grabada.
+        }
+      </app-alert>
+    } @else if (vigente() === null && encuentro() !== null) {
+      <!-- S3 con próxima acción: el vacío dice qué hacer. -->
+      <app-alert tone="info" title="Todavía no tiene consentimiento" data-testid="consent-empty">
+        Registre la decisión de la persona antes de empezar. Complete las pestañas en orden:
+        información, quién otorga y decisión.
+      </app-alert>
+    }
+
+    @if (resumenDeErrores().length > 0) {
+      <app-alert tone="error" title="Revise antes de registrar" data-testid="consent-error-summary">
+        <ul class="consentimiento__errores">
+          @for (error of resumenDeErrores(); track error.texto) {
+            <li>
+              <button
+                type="button"
+                class="consentimiento__ir-al-error"
+                (click)="irA(error.pestana, error.campo)"
+              >
+                {{ error.texto }}
+              </button>
+            </li>
+          }
+        </ul>
+      </app-alert>
+    }
+
+    @if (errorDelRegistro(); as mensaje) {
+      <app-alert tone="error" data-testid="consent-error">{{ mensaje }}</app-alert>
+    }
+
+    @if (encuentro() === null) {
+      <!-- S3 con próxima acción: sin atención la API rechaza el registro
+           (encounterId es obligatorio). Un formulario que siempre falla no se
+           ofrece; se dice qué hacer y se deja ver y revocar lo que ya hay. -->
+      <app-view-state-host [state]="sinEncuentro" data-testid="consent-no-encounter">
+        <app-empty-state
+          vsh-empty
+          title="Falta la atención"
+          description="El consentimiento se registra dentro de una atención: es la que queda en el expediente como el momento en que se informó."
+        >
+          <p empty-actions class="consentimiento__proxima-accion">
+            Abra un encuentro para registrar el consentimiento
+          </p>
+        </app-empty-state>
+      </app-view-state-host>
+      <ng-container [ngTemplateOutlet]="historialDelObjeto" />
+    } @else {
+      <app-tabs [(selectedIndex)]="pestana" class="consentimiento__pestanas">
+        <!-- ─── 1 · Información ───────────────────────────────────────── -->
+        <app-tab [label]="rotulos()[0]">
+          <div class="consentimiento__grilla app-form-grid">
+            <app-form-field
+              class="app-form-grid__ancho"
+              label="Diagnóstico que lo motiva"
+              hint="Opcional. Viene del ítem cuando lo tiene."
+            >
+              <app-textarea [(value)]="diagnostico" [rows]="2" autoResize data-testid="consent-diagnosis" />
+            </app-form-field>
+
+            <app-form-field
+              class="app-form-grid__ancho"
+              data-campo="proposito"
+              label="En qué consiste y para qué se indica"
+              [required]="!conExcepcion()"
+              [hint]="conExcepcion() ? 'Opcional con una excepción legal.' : 'Con palabras que la persona entienda.'"
+              [errorMessage]="errorDe('proposito')"
+            >
+              <app-textarea
+                [(value)]="proposito"
+                [rows]="3"
+                autoResize
+                [hasError]="errorDe('proposito') !== ''"
+                placeholder="Ej.: Antibiótico por vía oral para tratar la infección urinaria"
+                data-testid="consent-purpose"
+                (blurred)="tocar('proposito')"
+              />
+            </app-form-field>
+
+            <app-form-field
+              data-campo="beneficios"
+              label="Beneficios esperados"
+              [required]="!conExcepcion()"
+              [errorMessage]="errorDe('beneficios')"
+            >
+              <app-textarea
+                [(value)]="beneficios"
+                [rows]="3"
+                autoResize
+                [hasError]="errorDe('beneficios') !== ''"
+                data-testid="consent-benefits"
+                (blurred)="tocar('beneficios')"
+              />
+            </app-form-field>
+
+            <app-form-field
+              data-campo="riesgos"
+              label="Riesgos frecuentes y graves"
+              [required]="!conExcepcion()"
+              hint="Los efectos adversos esperables y los poco frecuentes pero graves."
+              [errorMessage]="errorDe('riesgos')"
+            >
+              <app-textarea
+                [(value)]="riesgos"
+                [rows]="3"
+                autoResize
+                [hasError]="errorDe('riesgos') !== ''"
+                data-testid="consent-risks"
+                (blurred)="tocar('riesgos')"
+              />
+            </app-form-field>
+
+            <app-form-field
+              label="Riesgos personalizados"
+              hint="Opcional. Los que dependen de esta persona: edad, embarazo, comorbilidades, otros fármacos."
+            >
+              <app-textarea [(value)]="riesgosPersonalizados" [rows]="2" autoResize />
+            </app-form-field>
+
+            <app-form-field
+              label="Alternativas disponibles"
+              hint="Opcional. Incluida la de no tratar, y el derecho a pedir otra opinión."
+            >
+              <app-textarea [(value)]="alternativas" [rows]="2" autoResize />
+            </app-form-field>
+
+            <app-form-field label="Consecuencias de no aceptar" hint="Opcional. Lo previsible si decide que no.">
+              <app-textarea [(value)]="consecuencias" [rows]="2" autoResize />
+            </app-form-field>
+
+            <app-form-field
+              class="app-form-grid__ancho"
+              label="Preguntas de la persona y qué se respondió"
+              hint="Opcional."
+            >
+              <app-textarea [(value)]="preguntas" [rows]="2" autoResize />
+            </app-form-field>
+          </div>
+          <div class="consentimiento__siguiente">
+            <button app-button variant="ghost" size="sm" type="button" (clicked)="pestana.set(1)">
+              Seguir con quién otorga
+            </button>
+          </div>
+        </app-tab>
+
+        <!-- ─── 2 · Quién otorga ──────────────────────────────────────── -->
+        <app-tab [label]="rotulos()[1]">
+          <div class="consentimiento__grilla app-form-grid">
+            <app-form-field label="¿Quién otorga el consentimiento?" [required]="true">
+              <app-radio-group [(value)]="otorgante" data-testid="consent-grantor">
+                @for (o of otorgantes; track o) {
+                  <app-radio [value]="o" [label]="nombreDelOtorgante[o]" />
+                }
+              </app-radio-group>
+            </app-form-field>
+
+            <app-form-field label="¿Cómo se informó?" [required]="true">
+              <app-radio-group [(value)]="canal" data-testid="consent-channel">
+                <app-radio value="IN_PERSON" [label]="nombreDelCanal.IN_PERSON" />
+                <app-radio value="TELEHEALTH" [label]="nombreDelCanal.TELEHEALTH" />
+              </app-radio-group>
+            </app-form-field>
+
+            @if (esRepresentante()) {
+              <app-form-field
+                data-campo="representante"
+                label="Nombre de quien otorga"
+                [required]="true"
+                [errorMessage]="errorDe('representante')"
+              >
+                <app-input
+                  [(value)]="representante"
+                  autocomplete="off"
+                  [hasError]="errorDe('representante') !== ''"
+                  testId="consent-representative"
+                  (blurred)="tocar('representante')"
+                />
+              </app-form-field>
+
+              <app-form-field
+                data-campo="parentesco"
+                label="Parentesco o calidad"
+                [required]="true"
+                [errorMessage]="errorDe('parentesco')"
+              >
+                <app-input
+                  [(value)]="parentesco"
+                  autocomplete="off"
+                  placeholder="Ej.: Madre, tutor judicial"
+                  [hasError]="errorDe('parentesco') !== ''"
+                  testId="consent-relationship"
+                  (blurred)="tocar('parentesco')"
+                />
+              </app-form-field>
+
+              <app-form-field label="Documento de identidad" hint="Opcional. CI u otro documento.">
+                <app-input [(value)]="documento" autocomplete="off" />
+              </app-form-field>
+
+              <app-form-field
+                class="app-form-grid__ancho"
+                label="Por qué no consiente la persona atendida"
+                hint="Opcional. Minoría de edad, incapacidad, inconsciencia."
+              >
+                <app-textarea [(value)]="incapacidad" [rows]="2" autoResize />
+              </app-form-field>
+
+              <app-form-field
+                data-campo="asentimiento"
+                label="¿La persona representada dio su asentimiento?"
+                [required]="true"
+                hint="Su opinión cuenta aunque no decida: un menor o una persona con discapacidad también se escucha."
+                [errorMessage]="errorDe('asentimiento')"
+              >
+                <app-radio-group
+                  [(value)]="asentimiento"
+                  [hasError]="errorDe('asentimiento') !== ''"
+                  data-testid="consent-assent"
+                  (focusout)="tocar('asentimiento')"
+                >
+                  <app-radio [value]="true" label="Sí" />
+                  <app-radio [value]="false" label="No" />
+                </app-radio-group>
+              </app-form-field>
+
+              <app-form-field label="Notas del asentimiento" hint="Opcional.">
+                <app-textarea [(value)]="notasDelAsentimiento" [rows]="2" autoResize />
+              </app-form-field>
+
+              <p class="consentimiento__privacidad app-form-grid__ancho">
+                Estos datos se guardan en el expediente y sólo los ven profesionales autorizados.
+              </p>
+            }
+
+            <app-form-field label="Testigo" [hint]="ayudaTestigo">
+              <app-input [(value)]="testigo" autocomplete="off" placeholder="Nombre y apellido" />
+            </app-form-field>
+
+            <app-form-field label="Documento del testigo" hint="Opcional. CI u otro documento.">
+              <app-input [(value)]="documentoDelTestigo" autocomplete="off" />
+            </app-form-field>
+          </div>
+          <div class="consentimiento__siguiente">
+            <button app-button variant="ghost" size="sm" type="button" (clicked)="pestana.set(2)">
+              Seguir con la decisión
+            </button>
+          </div>
+        </app-tab>
+
+        <!-- ─── 3 · Decisión y excepción ──────────────────────────────── -->
+        <app-tab [label]="rotulos()[2]">
+          <div class="consentimiento__grilla app-form-grid">
+            <app-form-field label="Idioma en que se informó" hint="Si no fue en castellano, anote si hubo intérprete en las preguntas.">
+              <app-select
+                [options]="idiomas"
+                [value]="idioma()"
+                (valueChange)="idioma.set($event)"
+                data-testid="consent-language"
+              />
+            </app-form-field>
+
+            @if (idioma() === 'OTRO') {
+              <app-form-field label="¿Cuál idioma?">
+                <app-input [(value)]="otroIdioma" autocomplete="off" placeholder="Ej.: Chiquitano" />
+              </app-form-field>
+            }
+
+            <div class="app-form-grid__ancho consentimiento__excepcion">
+              <app-checkbox
+                [(checked)]="conExcepcion"
+                label="No se pudo obtener antes: se aplica una excepción legal"
+                data-testid="consent-with-exception"
+              />
+            </div>
+
+            @if (conExcepcion()) {
+              <app-form-field
+                data-campo="excepcion"
+                label="¿Cuál excepción?"
+                [required]="true"
+                [errorMessage]="errorDe('excepcion')"
+              >
+                <app-radio-group [(value)]="excepcion" data-testid="consent-exception">
+                  @for (e of excepciones; track e) {
+                    <app-radio [value]="e" [label]="nombreDeLaExcepcion[e]" />
+                  }
+                </app-radio-group>
+              </app-form-field>
+
+              <app-form-field
+                data-campo="justificacion"
+                label="Justificación"
+                [required]="true"
+                hint="Por qué no se pudo obtener antes. En una urgencia, después se informa a la persona o a su familia."
+                [errorMessage]="errorDe('justificacion')"
+              >
+                <app-textarea
+                  [(value)]="justificacion"
+                  [rows]="3"
+                  autoResize
+                  [hasError]="errorDe('justificacion') !== ''"
+                  data-testid="consent-justification"
+                  (blurred)="tocar('justificacion')"
+                />
+              </app-form-field>
+            }
+
+            <!-- La decisión: dos opciones del mismo peso, ninguna marcada. -->
+            <app-form-field
+              class="app-form-grid__ancho"
+              data-campo="decision"
+              label="Decisión de la persona"
+              [required]="true"
+              [errorMessage]="errorDe('decision')"
+            >
+              <app-radio-group
+                [(value)]="decision"
+                [hasError]="errorDe('decision') !== ''"
+                class="consentimiento__decision"
+                data-testid="consent-decision"
+                (focusout)="tocar('decision')"
+              >
+                <app-radio value="ACCEPTED" label="Acepta" />
+                <app-radio value="DECLINED" label="No acepta" />
+              </app-radio-group>
+            </app-form-field>
+
+            <div class="app-form-grid__ancho" data-campo="revocabilidad">
+              <app-checkbox
+                [(checked)]="revocabilidadInformada"
+                [hasError]="errorDe('revocabilidad') !== ''"
+                label="Le informé que puede revocar su decisión cuando quiera, sin efecto sobre lo ya realizado"
+                data-testid="consent-revocation-right"
+              />
+              @if (errorDe('revocabilidad'); as mensaje) {
+                <p class="consentimiento__error-suelto" role="alert">{{ mensaje }}</p>
+              }
+            </div>
+
+            <div class="app-form-grid__ancho consentimiento__enviar">
+              <button
+                app-button
+                variant="primary"
+                type="button"
+                data-testid="consent-record"
+                [isLoading]="registrando()"
+                [disabled]="registrando() || encuentro() === null"
+                (clicked)="registrar()"
+              >
+                {{ etiquetaDelEnvio() }}
+              </button>
+            </div>
+          </div>
+        </app-tab>
+
+        <!-- ─── 4 · Historial y revocación ────────────────────────────── -->
+        <app-tab [label]="rotulos()[3]">
+          <ng-container [ngTemplateOutlet]="historialDelObjeto" />
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>
+
+@if (adjuntandoFirma() && vigente() !== null) {
+  <app-attachment-dialog
+    ownerType="PATIENT"
+    [ownerId]="patientProfileId()"
+    heading="Adjuntar la firma del consentimiento"
+    [description]="nombreDelObjeto() + ': ' + targetLabel()"
+    [linkVia]="ligarFirma"
+    (attached)="firmaAdjuntada()"
+    (closed)="adjuntandoFirma.set(false)"
+  />
+}
+
+<!-- El historial del objeto: pestaña 4 con atención, o solo debajo del S3 sin ella. -->
+<ng-template #historialDelObjeto>
+    @if (urgenciaPorInformar()) {
+      <app-alert tone="warning" title="Falta informar después de la urgencia">
+        Se actuó sin consentimiento previo por urgencia. Cuando la persona o su familia estén en
+        condiciones, explíqueles lo que se hizo y regístrelo.
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="consent-post-emergency"
+          (clicked)="informarDespuesDeLaUrgencia()"
+        >
+          Registrar que se informó
+        </button>
+      </app-alert>
+    }
+
+    @if (historial().length === 0) {
+      <p class="consentimiento__vacio">
+        Sin registros para esta indicación.
+      @if (encuentro() !== null) {
+        La decisión se registra en la pestaña «Decisión».
+      }
+      </p>
+    } @else {
+      <ol class="consentimiento__historial" data-testid="consent-history">
+        @for (c of historial(); track c.id) {
+          <li class="consentimiento__registro">
+            <div class="consentimiento__registro-cabecera">
+              <app-badge size="sm" [variant]="estadoDe(c).variante">{{ estadoDe(c).etiqueta }}</app-badge>
+              @if (c.status === 'ACTIVE') {
+                <app-badge size="sm" [variant]="c.signatureStatus === 'SIGNED' ? 'success' : 'warning'">
+                  {{ c.signatureStatus === 'SIGNED' ? 'Firmado' : 'Firma pendiente' }}
+                </app-badge>
+              }
+              <time class="consentimiento__fecha" [attr.datetime]="c.createdAt.toISOString()">
+                {{ c.createdAt | date: 'd MMM y, HH:mm' }}
+              </time>
+            </div>
+            <dl class="consentimiento__datos">
+              <div>
+                <dt>Otorga</dt>
+                <dd>
+                  {{ nombreDelOtorganteDe(c) }}
+                  @if (c.representativeName) {
+                    · {{ c.representativeName }} ({{ c.representativeRelationship }})
+                  }
+                </dd>
+              </div>
+              @if (c.channel) {
+                <div>
+                  <dt>Canal</dt>
+                  <dd>{{ nombreDelCanal[c.channel] }}</dd>
+                </div>
+              }
+              @if (c.exceptionType) {
+                <div>
+                  <dt>Excepción</dt>
+                  <dd>{{ nombreDeLaExcepcion[c.exceptionType] }}</dd>
+                </div>
+              }
+              @if (c.witnessName) {
+                <div>
+                  <dt>Testigo</dt>
+                  <dd>{{ c.witnessName }}</dd>
+                </div>
+              }
+              @if (c.withdrawnAt) {
+                <div>
+                  <dt>Revocado</dt>
+                  <dd>{{ c.withdrawnAt | date: 'd MMM y, HH:mm' }} · {{ c.withdrawalReason }}</dd>
+                </div>
+              }
+              @if (c.postEmergencyInformedAt) {
+                <div>
+                  <dt>Informado después</dt>
+                  <dd>{{ c.postEmergencyInformedAt | date: 'd MMM y, HH:mm' }}</dd>
+                </div>
+              }
+            </dl>
+          </li>
+        }
+      </ol>
+    }
+</ng-template>
