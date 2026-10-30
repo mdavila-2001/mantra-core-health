@@ -2,7 +2,7 @@ import type { ContextoReporte } from '../../../data-access/reporting/reporting.t
 import {
   agrupar,
   factorContexto,
-  fechasDelPeriodo,
+  periodDates,
   granularidad,
   redondear,
   rng,
@@ -183,7 +183,7 @@ function repartoSiat(m: Metodo, capturados: number): number[] {
 }
 
 export function construirModelo(ctx: ContextoReporte): ModeloCobros {
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const n = fechas.length;
   const filtroMetodo = ctx.filtros.find((f) => f.dimension === 'metodo-pago');
   const seleccion = METODOS.find((m) => m === filtroMetodo?.valor) ?? null;

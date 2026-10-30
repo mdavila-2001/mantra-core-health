@@ -1,6 +1,6 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ChartSpec, ContextoReporte, DimensionFiltro } from '../../../data-access/reporting/reporting.types';
-import { agrupar, diasDelPeriodo, redondear, suma, velasDeSerie } from './reporting-dataset.util';
+import { agrupar, daysInPeriod, redondear, suma, candlesFromSeries } from './reporting-dataset.util';
 import {
   CIUDADES,
   cuentasDelContexto,
@@ -23,7 +23,7 @@ const MUESTRA_MINIMA = 10;
 
 /** Cuentas por plan al cierre, sin el filtro de plan: los planes se comparan entre sí y el clic solo resalta. */
 export function cuentasPorPlan(ctx: ContextoReporte): number[] {
-  return distribuirEnteros(suscriptoresAlCierre(sinDimension(ctx, 'plan')), participacionPlanes(1, diasDelPeriodo(ctx.periodo)));
+  return distribuirEnteros(suscriptoresAlCierre(sinDimension(ctx, 'plan')), participacionPlanes(1, daysInPeriod(ctx.periodo)));
 }
 
 export function graficoMixPlan(ctx: ContextoReporte): ChartSpec {
@@ -245,7 +245,7 @@ export function graficoSaldoMora(m: ModeloSuscripciones, ctx: ContextoReporte): 
     }),
     velas: {
       explicacion: 'Saldo en mora del tramo: apertura, máximo, mínimo y cierre. Una vela que sube es peor.',
-      velas: velasDeSerie(m.fechas, diario, m.gran),
+      velas: candlesFromSeries(m.fechas, diario, m.gran),
       subirEsMalo: true,
     },
     sinDatoMotivo: SIN_CUENTAS,

@@ -12,7 +12,7 @@ import type {
 } from '../../../data-access/reporting/reporting.types';
 import { AVISO_TASAS } from './comisiones.info';
 import { construirComisiones } from './comisiones.dataset';
-import { huecosDelContrato } from './reporting-dataset.util';
+import { contractGaps } from './reporting-dataset.util';
 
 const PERIODOS: readonly PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
 const COMPARACIONES: readonly ComparacionReporte[] = ['ninguna', 'periodo-anterior', 'mismo-periodo-ano-anterior'];
@@ -75,7 +75,7 @@ describe('comisiones.dataset', () => {
         const p = construirComisiones(c);
         for (const g of p.graficos) {
           expect(getContractViolations(g), `${g.id} ${JSON.stringify(c)}`).toEqual([]);
-          expect(huecosDelContrato(g), `${g.id}`).toEqual([]);
+          expect(contractGaps(g), `${g.id}`).toEqual([]);
         }
       }
     });

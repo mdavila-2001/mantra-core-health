@@ -13,8 +13,8 @@ import {
   type Ubicacion,
 } from './publicidad.catalogo';
 import {
-  factorDeFiltro,
-  fechasDelPeriodo,
+  filterFactor,
+  periodDates,
   granularidad,
   hashTexto,
   serie,
@@ -137,11 +137,11 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
   let factorGeneral = ctx.alcance === 'organizacion' ? 0.22 : 1;
   for (const f of filtros) {
     if (!reconocido(f)) {
-      factorGeneral *= factorDeFiltro(f);
+      factorGeneral *= filterFactor(f);
     }
   }
 
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const dias = fechas.length;
   const gran = granularidad(ctx.periodo);
 

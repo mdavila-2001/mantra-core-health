@@ -18,7 +18,7 @@ import {
   type Metodo,
   type ModeloCobros,
 } from './cobros.modelo';
-import { agrupar, redondear, suma, velasDeSerie } from './reporting-dataset.util';
+import { agrupar, redondear, suma, candlesFromSeries } from './reporting-dataset.util';
 
 const PCT = { tipo: 'porcentaje' } as const;
 const NUM = { tipo: 'numero' } as const;
@@ -164,7 +164,7 @@ function tasaExitoVelas(m: ModeloCobros): ChartSpec {
     }),
     velas: {
       explicacion: 'Tasa de éxito por tramo: apertura = primer día, cierre = último día, mínimo y máximo del tramo.',
-      velas: velasDeSerie(m.fechas, diaria, m.gran),
+      velas: candlesFromSeries(m.fechas, diaria, m.gran),
     },
     alto: 300,
     ancho: 'completo',

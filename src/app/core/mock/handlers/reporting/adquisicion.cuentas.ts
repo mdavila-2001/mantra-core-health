@@ -1,5 +1,5 @@
 import type { ContextoReporte } from '../../../data-access/reporting/reporting.types';
-import { diasDelPeriodo, etiquetaFecha, factorContexto, redondear, rng, suma } from './reporting-dataset.util';
+import { daysInPeriod, dateLabel, factorContexto, redondear, rng, suma } from './reporting-dataset.util';
 import type { ModeloAdquisicion } from './adquisicion.modelo';
 
 /* ============================================================================
@@ -52,7 +52,7 @@ export interface ModeloPromociones {
 }
 
 export function calcularPromociones(ctx: ContextoReporte): ModeloPromociones {
-  const n = diasDelPeriodo(ctx.periodo);
+  const n = daysInPeriod(ctx.periodo);
   const f = factorContexto(ctx);
   const r = rng(7301);
   const promociones = PROMOCIONES.map((p) => {
@@ -152,7 +152,7 @@ export function calcularCohortes(ctx: ContextoReporte): ModeloCohortes {
   const filas: string[] = [];
   for (let c = 0; c < COHORTES; c++) {
     const semanasAtras = COHORTES - 1 - c;
-    filas.push(`Semana del ${etiquetaFecha(semanasAtras * 7 + 6)}`);
+    filas.push(`Semana del ${dateLabel(semanasAtras * 7 + 6)}`);
     const tamano = Math.round(210 * f * (0.92 + 0.16 * r()));
     const observadas = Math.min(SEMANAS_COHORTE, semanasAtras + 1);
     let previo = 0;

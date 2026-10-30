@@ -1,15 +1,15 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ChartSpec, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import {
-  diasDelPeriodo,
-  fechasDelPeriodo,
+  daysInPeriod,
+  periodDates,
   agrupar,
   granularidad,
   hashTexto,
   redondear,
   rng,
   suma,
-  velasDeSerie,
+  candlesFromSeries,
 } from './reporting-dataset.util';
 import {
   NOMBRE_VERTICAL,
@@ -110,10 +110,10 @@ function mrrConVelas(base: BaseResumen): ChartSpec {
   const { ctx } = base;
   const k = buscarKpi(base.lecturas.suscripciones.pestana, 'mrr');
   const mrr = importeEnMoneda(k, ctx, 'el MRR de suscripciones');
-  const fechas = fechasDelPeriodo(ctx.periodo);
+  const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
   const diario =
-    mrr.valor === null ? null : saldoDiario(hashTexto(`resumen:mrr:${ctx.periodo}`), diasDelPeriodo(ctx.periodo), mrr.valor, k?.variacionPct ?? null);
+    mrr.valor === null ? null : saldoDiario(hashTexto(`resumen:mrr:${ctx.periodo}`), daysInPeriod(ctx.periodo), mrr.valor, k?.variacionPct ?? null);
   const cubos = diario === null ? null : agrupar(fechas, diario, gran, 'ultimo');
   const etiquetas = cubos?.etiquetas ?? agrupar(fechas, fechas.map(() => 0), gran, 'ultimo').etiquetas;
   return {
@@ -143,7 +143,7 @@ function mrrConVelas(base: BaseResumen): ChartSpec {
         ? null
         : {
             explicacion: 'Cada vela resume un tramo del MRR: apertura (primer día), cierre (último), mínimo y máximo.',
-            velas: velasDeSerie(fechas, diario, gran),
+            velas: candlesFromSeries(fechas, diario, gran),
           },
     velasMotivo: 'Sin MRR no hay serie con apertura y cierre que mostrar.',
     ancho: 'completo',
@@ -299,7 +299,7 @@ function embudo(base: BaseResumen): ChartSpec {
 const MESES = ['2026-05', '2026-06', '2026-07', '2026-08', '2026-09', '2026-10'];
 
 function calorMensual(base: BaseResumen): ChartSpec {
-  const dias = diasDelPeriodo(base.ctx.periodo);
+  const dias = daysInPeriod(base.ctx.periodo);
   const celdas: [number, number, number | null][] = [];
   ORDEN.forEach((c, fila) => {
     const ingreso = base.lecturas[c].ingreso;

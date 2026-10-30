@@ -1,5 +1,5 @@
 import type { ContextoReporte } from '../../../data-access/reporting/reporting.types';
-import { convertir, diasDelPeriodo, factorContexto, redondear } from './reporting-dataset.util';
+import { convertir, daysInPeriod, factorContexto, redondear } from './reporting-dataset.util';
 
 /* ============================================================================
     Modelo contable de la pestaña «Comisiones y actores» (datos de EJEMPLO).
@@ -119,7 +119,7 @@ function sumaONulo(filas: readonly FilaActor[], campo: (f: FilaActor) => number 
 }
 
 export function construirModelo(ctx: ContextoReporte): ModeloComisiones {
-  const dias = diasDelPeriodo(ctx.periodo);
+  const dias = daysInPeriod(ctx.periodo);
   // El filtro `actor` no escala magnitudes: ELIGE al actor. Los demás filtros sí las escalan.
   const factor = factorContexto({ ...ctx, filtros: ctx.filtros.filter((f) => f.dimension !== 'actor') });
   const volumenBob = VOLUMEN_DIARIO_BOB * dias * factor;

@@ -2,7 +2,7 @@ import { formatearValor } from '../../../data-access/reporting/reporting-format'
 import type { ContextoReporte, TablaReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { FUENTE_COMISIONES, FUENTE_PAYOUTS, info } from './comisiones.info';
 import { type FilaActor, type ModeloComisiones, porcentaje } from './comisiones.modelo';
-import { etiquetaFecha, hashTexto, rng } from './reporting-dataset.util';
+import { dateLabel, hashTexto, rng } from './reporting-dataset.util';
 
 /* Los importes viajan ya formateados con su moneda (`formatearValor`): una tabla de
    dinero sin moneda es la clase de error que esta pestaña existe para impedir.
@@ -83,7 +83,7 @@ export function tablaPayoutsFallidos(ctx: ContextoReporte, m: ModeloComisiones):
           return {
             payout: `PO-${String(i + 1).padStart(4, '0')}`,
             actor: f.actor.nombre,
-            fecha: etiquetaFecha(Math.floor(r() * Math.min(m.dias, 30))),
+            fecha: dateLabel(Math.floor(r() * Math.min(m.dias, 30))),
             monto: dinero(centimos, unidad),
             motivo: MOTIVOS[Math.floor(r() * MOTIVOS.length)]!,
             intentos: 1 + Math.floor(r() * 3),

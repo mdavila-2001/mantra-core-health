@@ -1,6 +1,6 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ChartSpec, ContextoReporte } from '../../../data-access/reporting/reporting.types';
-import { agrupar, FECHA_ANCLA, factorContexto, redondear, rng, suma, velasDeSerie } from './reporting-dataset.util';
+import { agrupar, ANCHOR_DATE, factorContexto, redondear, rng, suma, candlesFromSeries } from './reporting-dataset.util';
 import { aMoneda, info, unidadMoneda } from './suscripciones.info';
 import { PLANES, semillaDe, type ModeloSuscripciones } from './suscripciones.modelo';
 
@@ -38,7 +38,7 @@ export function graficoMrr(m: ModeloSuscripciones, ctx: ContextoReporte): ChartS
     }),
     velas: {
       explicacion: 'MRR del tramo: apertura (primer día), máximo, mínimo y cierre (último día).',
-      velas: velasDeSerie(m.fechas, diario, m.gran),
+      velas: candlesFromSeries(m.fechas, diario, m.gran),
     },
     sinDatoMotivo: SIN_DATO_MOTIVO,
   };
@@ -166,7 +166,7 @@ export function graficoChurn(m: ModeloSuscripciones): ChartSpec {
     }),
     velas: {
       explicacion: 'Churn móvil del tramo: apertura, máximo, mínimo y cierre. Una vela que sube es peor.',
-      velas: velasDeSerie(m.fechas, m.churnDia, m.gran),
+      velas: candlesFromSeries(m.fechas, m.churnDia, m.gran),
       subirEsMalo: true,
     },
     sinDatoMotivo: SIN_DATO_MOTIVO,
@@ -180,7 +180,7 @@ export function graficoCohortes(m: ModeloSuscripciones, ctx: ContextoReporte): C
   const cohortes = MESES_COHORTE[ctx.periodo];
   const f = factorContexto(ctx);
   const filas = Array.from({ length: cohortes }, (_, c) =>
-    new Date(Date.UTC(FECHA_ANCLA.getUTCFullYear(), FECHA_ANCLA.getUTCMonth() - (cohortes - 1 - c), 1)).toISOString().slice(0, 7),
+    new Date(Date.UTC(ANCHOR_DATE.getUTCFullYear(), ANCHOR_DATE.getUTCMonth() - (cohortes - 1 - c), 1)).toISOString().slice(0, 7),
   );
   const columnas = Array.from({ length: cohortes }, (_, k) => `Mes ${k}`);
   const celdas: [number, number, number | null][] = [];
