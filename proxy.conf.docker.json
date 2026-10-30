@@ -89,6 +89,7 @@
       "/billing/simulated",
       "/diagnostics/service-requests",
       "/insurance/received-claims",
+      "/insurance/practitioner-requests",
       "/insurance/my-claims",
       "/diagnostics/lab",
       "/patient-spending",

@@ -1,0 +1,124 @@
+<div class="lugares" data-testid="registro-pro-lugares">
+  <!-- ─── Instituciones ──────────────────────────────────────────────────── -->
+  <section class="lugares__bloque" aria-labelledby="lugares-instituciones-titulo">
+    <h3 id="lugares-instituciones-titulo" class="lugares__titulo">
+      <app-nav-icon name="building" aria-hidden="true" />
+      Instituciones donde trabaja (opcional)
+    </h3>
+    <p class="lugares__explica">
+      Clínicas, hospitales o centros que ya están en AloVida. Las que tienen quién confirme vínculos
+      reciben su pedido; cuando lo confirman, el vínculo lleva su sello oficial.
+    </p>
+
+    <app-form-field
+      label="Buscar institución"
+      [hint]="
+        topeAlcanzado()
+          ? 'Ya eligió ' +
+            maxInstitutions +
+            ', el máximo para el alta. Puede sumar más desde su perfil.'
+          : 'Escriba al menos dos letras del nombre.'
+      "
+    >
+      @for (clave of [comboKey()]; track clave) {
+        <app-reference-combobox
+          data-testid="registro-pro-instituciones-buscar"
+          label="Buscar institución"
+          placeholder="Clínica, hospital o centro"
+          emptyMessage="No encontramos esa institución en AloVida"
+          [options]="opciones()"
+          [loading]="buscando()"
+          [disabled]="topeAlcanzado()"
+          (searched)="buscar($event)"
+          (selectionChange)="elegir($event)"
+        />
+      }
+    </app-form-field>
+
+    @if (busquedaFallida()) {
+      <app-alert tone="warning" data-testid="registro-pro-instituciones-error">
+        No pudimos buscar instituciones ahora. Vuelva a escribir en unos segundos; el resto del alta
+        sigue funcionando.
+      </app-alert>
+    }
+
+    @if (institutions().length > 0) {
+      <ul class="lugares__lista" aria-label="Instituciones elegidas">
+        @for (inst of institutions(); track inst.slug) {
+          <li class="lugares__item" [attr.data-testid]="'registro-pro-institucion-' + inst.slug">
+            <div class="lugares__item-texto">
+              <span class="lugares__nombre">{{ inst.name }}</span>
+              @if (inst.city) {
+                <span class="lugares__ciudad">{{ inst.city }}</span>
+              }
+            </div>
+            <div class="lugares__sellos">
+              @if (inst.verified) {
+                <app-badge variant="success" size="sm">Institución verificada</app-badge>
+              } @else {
+                <app-badge variant="info" size="sm">Institución sin verificar</app-badge>
+              }
+              <app-badge variant="warning" size="sm">Su vínculo: sin confirmar todavía</app-badge>
+            </div>
+            <button
+              app-button
+              type="button"
+              variant="ghost"
+              size="sm"
+              [iconOnly]="true"
+              [attr.aria-label]="'Quitar ' + inst.name"
+              [attr.data-testid]="'registro-pro-quitar-institucion-' + inst.slug"
+              (clicked)="quitar(inst.slug)"
+            >
+              <app-nav-icon name="remove" />
+            </button>
+          </li>
+        }
+      </ul>
+      <p class="lugares__nota">
+        El sello de cada vínculo aparece en <strong>Mis verificaciones</strong> cuando la
+        institución lo confirma. Mientras tanto figura sin confirmar.
+      </p>
+    }
+  </section>
+
+  <!-- ─── Aseguradoras ───────────────────────────────────────────────────── -->
+  <section class="lugares__bloque" aria-labelledby="lugares-seguros-titulo">
+    <h3 id="lugares-seguros-titulo" class="lugares__titulo">
+      <app-nav-icon name="shield" aria-hidden="true" />
+      Seguros con los que trabaja (opcional)
+    </h3>
+    <p class="lugares__explica">
+      Marque las aseguradoras que le derivan pacientes. Cada una recibe su solicitud y la confirma o
+      la rechaza; hasta entonces no aparece como prestador de esa aseguradora.
+    </p>
+
+    @if (catalogoCargando()) {
+      <p class="lugares__cargando" role="status">Cargando las aseguradoras…</p>
+    } @else if (catalogoFallido()) {
+      <app-alert tone="warning" data-testid="registro-pro-seguros-error">
+        No pudimos cargar la lista de aseguradoras. Puede seguir con el alta y pedirlas después
+        desde «Mis verificaciones».
+        <button
+          app-button
+          type="button"
+          variant="secondary"
+          size="sm"
+          data-testid="registro-pro-seguros-reintentar"
+          (clicked)="cargarAseguradoras()"
+        >
+          Reintentar
+        </button>
+      </app-alert>
+    } @else {
+      <app-form-field label="Aseguradoras">
+        <app-checkbox-group
+          data-testid="registro-pro-seguros"
+          [options]="opcionesDeSeguro()"
+          [value]="insurerIds()"
+          (valueChange)="elegirAseguradoras($event)"
+        />
+      </app-form-field>
+    }
+  </section>
+</div>

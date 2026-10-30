@@ -887,6 +887,26 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M26 insurance',
   },
   {
+    // La bandeja de LA ASEGURADORA para los profesionales que piden sumarse a
+    // ella (28/10/2026): aprobar es el sello oficial que el médico ve en «Mis
+    // verificaciones». Mismo acceso que «Solicitudes recibidas» —la autoridad
+    // es la membresía en la aseguradora, que resuelve la API—, y fuera del
+    // menú: el de la aseguradora es una lista cerrada que fijó la propietaria.
+    // Se llega desde el panel de la aseguradora (franja de dashboard.html).
+    path: 'administration/insurer-practitioner-requests',
+    label: 'Profesionales que piden sumarse',
+    group: 'Administración',
+    icon: 'people',
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
+    roles: [ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
+    fueraDelMenuPara: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Apruebe o rechace a los profesionales que piden trabajar con su aseguradora.',
+    module: 'M26 insurance',
+  },
+  {
     // La cara de LA ASEGURADORA de las solicitudes de seguro: lo que cada
     // prestador le presentó, con paciente, médico, servicio, monto y fechas.
     // «Solicitudes de seguro» (arriba) es la cara del prestador; ésta es la de
@@ -1714,6 +1734,27 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Sus solicitudes de seguro y lo que decidió la aseguradora: si cubre, cuánto y por qué.',
     module: 'M26 insurance',
+  },
+  {
+    // «Mis verificaciones» (propietario, 28/10/2026): la hoja de ruta de la
+    // verificación del profesional —perfil, matrícula, títulos,
+    // especialidades, instituciones, seguros— y la bandeja de las solicitudes
+    // que mandó, contada como un chat.
+    //
+    // Fuera del menú lateral: el menú del médico es una lista cerrada de nueve.
+    // Se llega desde el panel, desde «Mi perfil» y desde el final del alta.
+    path: 'my-account/verifications',
+    label: 'Mis verificaciones',
+    group: 'Mi cuenta',
+    icon: 'shield',
+    // Sin rol propio, como «Mi identidad»: «Mi cuenta» es autoservicio y no
+    // admite roles de gestión. La ruta la cierra a quien atiende
+    // (`SECCIONES_DE_QUIEN_ATIENDE` en app.routes.ts) y la API decide qué ve.
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Siga el avance de su verificación y las solicitudes que envió a instituciones y aseguradoras.',
+    module: 'M05 profiles · M26 insurance',
   },
   {
     // **«Mi consultorio propio»** (propietario, 2026-10-13), en el lugar que

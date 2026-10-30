@@ -91,6 +91,22 @@ for (const entry of navigationEntries) {
   });
 }
 
+// Secciones que el registro declara ANY_ROLE pero cuya RUTA cierra a quien
+// atiende (`SECCIONES_DE_QUIEN_ATIENDE` en app.routes.ts): el guard manda ahí
+// los roles, así que el inventario los toma de ahí. Sin esto, la ruta caía en
+// los carriles de paciente y de administración y el guard la rebotaba.
+const deQuienAtiende = routesSource.match(/SECCIONES_DE_QUIEN_ATIENDE[^=]*=\s*new Set\(\[([^\]]*)\]\)/)?.[1];
+for (const [, path] of (deQuienAtiende ?? '').matchAll(/'([^']+)'/g)) {
+  const restriccion = restrictionsByRoute.get(`/${path}`);
+  if (restriccion === undefined) continue;
+  restrictionsByRoute.set(`/${path}`, {
+    ...restriccion,
+    roleCodes: roleGroups.get('ROLES_DE_QUIEN_ATIENDE') ?? ['CLINICIAN', 'PRACTITIONER'],
+    rolesDeclared: true,
+    allRoles: false,
+  });
+}
+
 function routesForRoles(allowedRoles) {
   return rutas.filter(({ ruta }) => {
     if (ruta === '/posts' || ruta.startsWith('/auth/')) return true;
