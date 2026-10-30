@@ -1,0 +1,197 @@
+:host {
+  display: block;
+}
+
+.ob {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+.ob > * {
+  min-inline-size: 0;
+}
+
+.ob__notice {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+}
+
+.ob__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-3);
+}
+
+.ob__sum {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-inline-start-width: 4px;
+  border-radius: var(--r-md);
+}
+
+.ob__sum--risk { border-inline-start-color: var(--st-warning-fg); }
+.ob__sum--opportunity { border-inline-start-color: var(--st-info-fg); }
+.ob__sum--neutral { border-inline-start-color: var(--text-secondary); }
+
+.ob__sum-n {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ob__sum-l {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.ob__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+}
+
+.ob__label {
+  display: block;
+  margin-block-end: var(--sp-1);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.ob__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.ob__card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-inline-start-width: 4px;
+  border-radius: var(--r-md);
+}
+
+.ob__card--risk { border-inline-start-color: var(--st-warning-fg); }
+.ob__card--opportunity { border-inline-start-color: var(--st-info-fg); }
+.ob__card--neutral { border-inline-start-color: var(--text-secondary); }
+
+.ob__head {
+  display: grid;
+  gap: var(--sp-2);
+  inline-size: 100%;
+  padding: var(--sp-4);
+  background: transparent;
+  color: inherit;
+  border: 0;
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ob__head:hover {
+  background: var(--bg-hover);
+}
+
+.ob__head:focus-visible,
+.ob__go:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.ob__meta {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.ob__tag {
+  font-weight: 700;
+  color: var(--st-warning-fg);
+}
+
+.ob__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h4, var(--fs-body));
+  font-weight: 600;
+}
+
+.ob__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.ob__badge {
+  padding: 1px var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.ob__badge--risk {
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-color: var(--st-warning-bd);
+}
+
+.ob__badge--opportunity {
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  border-color: var(--st-info-bd);
+}
+
+.ob__body {
+  display: grid;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4) var(--sp-4);
+}
+
+.ob__summary-text {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.ob__qa {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--sp-3);
+  margin: 0;
+}
+
+.ob__qa div {
+  padding: var(--sp-3);
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+}
+
+.ob__qa dt {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.ob__qa dd {
+  margin: var(--sp-1) 0 0;
+}
+
+.ob__go {
+  justify-self: start;
+  font-weight: 600;
+  color: var(--brand-primary);
+}

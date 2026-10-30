@@ -1,0 +1,42 @@
+<div class="alp">
+  <section class="alp__counts" aria-label="Alertas abiertas por nivel">
+    @for (c of counts(); track c.severity) {
+      <button type="button" class="alp__count alp__count--{{ c.severity }}" [attr.aria-pressed]="severity() === c.severity" (click)="setSeverity(c.severity)">
+        <span class="alp__count-n">{{ c.count }}</span>
+        <span class="alp__count-l"><span aria-hidden="true">{{ icon[c.severity] }}</span> {{ labels[c.severity] }}</span>
+      </button>
+    }
+  </section>
+
+  <div class="alp__filters" role="search">
+    <label class="alp__search"><span class="alp__label">Buscar</span><input type="search" placeholder="Título, fuente o descripción" [value]="query()" (input)="search($event)" /></label>
+    <div class="alp__pick"><span class="alp__label">Módulo</span><app-select ariaLabel="Módulo de origen" [value]="module()" [options]="moduleOptions" (valueChange)="setModule($event)" /></div>
+    <div class="alp__pick"><span class="alp__label">Estado</span><app-select ariaLabel="Estado de la alerta" [value]="show()" [options]="showOptions" (valueChange)="setShow($event)" /></div>
+  </div>
+
+  <app-view-state-host [state]="state()">
+    <ul class="alp__list">
+      @for (a of cards(); track a.id) {
+        <li class="alp__item" [class.alp__item--done]="a.status === 'resolved'">
+          <ins-alert-card [alert]="a" />
+          <div class="alp__actions">
+            @if (a.status === 'open') { <button type="button" class="alp__btn" (click)="mark(a.id, 'seen')">Marcar como vista</button> }
+            @if (a.status !== 'resolved') { <button type="button" class="alp__btn alp__btn--main" (click)="mark(a.id, 'resolved')">Marcar como resuelta</button> }
+            @if (a.status !== 'open') { <button type="button" class="alp__btn" (click)="mark(a.id, null)">Reabrir</button> }
+            <span class="alp__state">{{ a.status === 'resolved' ? 'Resuelta' : a.status === 'seen' ? 'Vista' : 'Sin revisar' }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+
+  <ins-panel title="Cómo se asigna cada nivel" question="¿Por qué esta alerta es crítica y aquella no? Las reglas son explícitas.">
+    <ul class="alp__rules">
+      <li><strong>■ Crítico:</strong> un costo por resultado se encarece ≥ 20 %, un retorno cae, o el sentimiento de un tema cae ≥ 45 puntos con el volumen duplicado.</li>
+      <li><strong>▲ Posible riesgo:</strong> degradación entre 10 y 20 %, una etapa del embudo se fuga, o el sentimiento de un tema cae ≥ 20 puntos.</li>
+      <li><strong>◆ Anomalía:</strong> un cambio grande que no daña (por ejemplo, un CTR muy alto): hay que verificarlo antes de celebrarlo.</li>
+      <li><strong>● Brecha de oportunidad:</strong> un tema crece con volumen suficiente y ninguna campaña lo atiende.</li>
+    </ul>
+    <p class="alp__foot">La causa siempre se escribe como hipótesis. Las marcas de «vista» y «resuelta» se guardan solo en este navegador. Alertas resueltas hasta ahora: {{ resolvedCount() }}.</p>
+  </ins-panel>
+</div>

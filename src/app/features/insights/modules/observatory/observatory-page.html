@@ -1,0 +1,46 @@
+<div class="ob">
+  <p class="ob__notice">{{ notice }}</p>
+
+  <section class="ob__summary" aria-label="Resumen por tipo de efecto">
+    @for (s of summary(); track s.impact) {
+      <div class="ob__sum ob__sum--{{ s.impact }}"><span class="ob__sum-n">{{ s.count }}</span><span class="ob__sum-l">{{ s.label }}</span></div>
+    }
+  </section>
+
+  <div class="ob__filters">
+    <div><span class="ob__label">Categoría</span><app-segmented-control ariaLabel="Categoría" [options]="categoryOptions" [value]="category()" (valueChange)="setCategory($event)" /></div>
+    <div><span class="ob__label">Efecto en AloVida</span><app-segmented-control ariaLabel="Efecto en AloVida" [options]="impactOptions" [value]="impact()" (valueChange)="setImpact($event)" /></div>
+  </div>
+
+  <app-view-state-host [state]="state()">
+    <ul class="ob__list">
+      @for (o of items(); track o.id) {
+        <li class="ob__card ob__card--{{ o.impact }}">
+          <button type="button" class="ob__head" [attr.aria-expanded]="opened() === o.id" [attr.aria-controls]="'ob-' + o.id" (click)="toggle(o.id)">
+            <span class="ob__meta">{{ categories[o.category] }} · {{ date(o.date) }} · <span class="ob__tag">Ejemplo ilustrativo</span></span>
+            <span class="ob__title">{{ o.title }}</span>
+            <span class="ob__badges">
+              <span class="ob__badge ob__badge--{{ o.impact }}"><span aria-hidden="true">{{ o.impact === 'risk' ? '▲' : o.impact === 'opportunity' ? '●' : '◆' }}</span> {{ impacts[o.impact] }}</span>
+              <span class="ob__badge">{{ relevance[o.relevance] }}</span>
+              <span class="ob__badge">Confianza {{ confidence[o.confidence].toLowerCase() }}</span>
+            </span>
+          </button>
+          @if (opened() === o.id) {
+            <div class="ob__body" [id]="'ob-' + o.id">
+              <p class="ob__summary-text">{{ o.summary }}</p>
+              <div class="ob__trend"><span class="ob__label">Atención al tema, últimos 30 días (índice relativo)</span><ins-spark [values]="o.trend" /></div>
+              <dl class="ob__qa">
+                @for (q of questions; track q.key) {
+                  <div><dt>{{ q.label }}</dt><dd>{{ o.answers[q.key] }}</dd></div>
+                }
+              </dl>
+              @if (o.relatedTopic) {
+                <a class="ob__go" [routerLink]="opinionLink">Contrastar con la conversación en Opinión pública <span aria-hidden="true">→</span></a>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  </app-view-state-host>
+</div>

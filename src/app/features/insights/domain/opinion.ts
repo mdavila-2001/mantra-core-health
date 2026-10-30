@@ -292,7 +292,7 @@ export interface TopicShift {
  * 21 anteriores. Un promedio de todo el periodo diluye un empeoramiento de una
  * semana; esta ventana corta lo encuentra. Exige muestra en ambas ventanas.
  */
-export function topicShifts(filter: OpinionFilter): TopicShift[] {
+export function topicShifts(filter: OpinionFilter, minRecent = 25): TopicShift[] {
   const end = filter.range.to;
   const recentFrom = addDays(end, -6);
   const baseFrom = addDays(recentFrom, -21);
@@ -300,7 +300,7 @@ export function topicShifts(filter: OpinionFilter): TopicShift[] {
   return TOPICS.flatMap((t) => {
     const recent = summarize(all.filter((m) => m.topic === t.id && m.date >= recentFrom));
     const base = summarize(all.filter((m) => m.topic === t.id && m.date < recentFrom));
-    if (recent.n < 25 || base.n < MIN_SENTIMENT || recent.net === null || base.net === null) return [];
+    if (recent.n < minRecent || base.n < MIN_SENTIMENT || recent.net === null || base.net === null) return [];
     return [{ id: t.id, label: t.label, recentNet: recent.net, baselineNet: base.net, delta: recent.net - base.net, recentVolume: recent.n, baselineDailyVolume: base.n / 21, recentDailyVolume: recent.n / 7, since: recentFrom }];
   }).sort((a, b) => a.delta - b.delta);
 }
