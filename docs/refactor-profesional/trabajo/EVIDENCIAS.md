@@ -1,5 +1,30 @@
 # Evidencias
 
+## Modales fuera de la consulta: pie, fechas y campos sueltos · 2026-10-30
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `dev` en `c5f2363f2`.
+`playwright/modales-fuera-de-consulta.spec.ts` abre 31 modales con los seis usuarios del simulador, en
+1440 y 390, y mide columnas de campos, hueco a la derecha del último campo y desborde lateral.
+
+| Comprobación | Resultado |
+|---|---|
+| Medidas antes/después (31 modales × 2 anchos) | Cambian sólo los tres tocados a propósito: historial (1→2 columnas, hueco 16→0), nuevo lugar (hueco 16→0), confirmar diagnóstico (1→2 columnas). El resto, idéntico. |
+| Página «Trayectoria» (aloja el modal del historial) | idéntica píxel a píxel a la de `dev` |
+| Regresión propia encontrada y corregida | `.historial__periodo` chocaba con la clase de la lista; renombrada a `.historial__rango` (`a816bb592`) |
+| `yarn test` completo, por tramos (el proceso entero muere con 129 en este entorno) | 15 586 pasan, 3 fallan; las 3 fallan igual con el código de `dev` (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+| `yarn typecheck` · `yarn build` · `eslint` de las pruebas | 0 · 0 · 0 |
+| `check-contrast` · `check-css-tokens` | 0 · 0; `check-colores-sueltos` falla en archivos no tocados |
+
+**Los que no se habían podido abrir (30/10/2026, segunda vuelta).** Los botones habían cambiado
+de lugar: transacciones y cuentas viven dentro de «Registros», las encuestas son una lista con su
+«Abrir», el mostrador es `agenda-ingreso-mostrador` y la aprobación parcial se pide desde el
+detalle. Abiertos los cinco en 1440 y 390: mostrador, nueva cuenta, nueva transacción y aprobar
+parcialmente están bien y no se tocan. «Editar la pregunta» era el único con los botones dentro
+del cuerpo y «Listo» a la izquierda: pasan al pie (`antes-despues-editar-pregunta.png`); en
+teléfono «Cancelar» y «Listo» bajan juntos. Medidas de los tres usuarios antes/después: sólo
+cambian los modales ya corregidos. `ng test` de encuestas: 144/144. Capturas: `capturas/antes/modales-2026-10-28/` y
+`capturas/despues/modales-2026-10-28/antes-despues-*.png`.
+
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
 
 Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, sesión médica simulada, Chromium.
@@ -363,6 +388,10 @@ Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-aud
 | `yarn build` | exit 0 |
 | Specs de F1 y de los archivos en conflicto (16 archivos) | verdes |
 | Suite completa, por tramos (tras los dos merges) | 1 116 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+
+Las cifras de arriba son del árbol `4a7ad084`. Después, `origin/infra-f1-web` recibió otro merge de `dev`
+(`c8071f27`, con WEB-F0 ya en `dev` por #1717); el tercer merge sólo aporta esta nota, el comentario de
+`GET /practices` y los dos textos del e2e, y sobre él se corrieron `yarn typecheck` y `yarn lint`.
 
 Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
 textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.

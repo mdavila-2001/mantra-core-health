@@ -40,6 +40,14 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
 /**
  * **La respuesta del formulario médico** a la que pertenece lo que se emite.
  *
+ * ## Obligatorio u opcional (30/10/2026)
+ *
+ * Por omisión la atadura es obligatoria, como se describe abajo. Con
+ * `opcional` el médico puede emitir sin formulario médico —por practicidad, la
+ * API nunca lo exigió: `formInstanceId` es opcional en receta, orden, plan y
+ * reconsulta—: el selector suma «Sin formulario médico», conserva la respuesta
+ * más reciente preelegida y no avisa que «falta» nada.
+ *
  * Receta, orden de análisis, plan de cuidados y reconsulta nacen de lo que se
  * respondió en el formulario médico de la cita. Este selector los ata a esa
  * respuesta, y la atadura es obligatoria: sin respuesta no hay nada que emitir.
@@ -90,9 +98,18 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
         title="No pudimos traer la respuesta del formulario"
         data-testid="respuesta-error"
       >
-        Sin saber a qué respuesta pertenece no se puede emitir. Cierre y vuelva a abrir para
-        reintentar.
+        @if (opcional()) {
+          No pudimos traer las respuestas del formulario médico. Puede continuar igual, sin asociar
+          ninguna, o cerrar y volver a abrir para reintentar.
+        } @else {
+          Sin saber a qué respuesta pertenece no se puede emitir. Cierre y vuelva a abrir para
+          reintentar.
+        }
       </app-alert>
+    } @else if (opciones().length === 0 && opcional()) {
+      <p class="respuesta__estado" role="status" data-testid="respuesta-opcional-vacia">
+        Sin formulario médico en esta cita: se registra igual, sin asociarlo a ninguna respuesta.
+      </p>
     } @else if (opciones().length === 0 && borrador(); as nota) {
       <app-alert
         tone="warning"
@@ -126,18 +143,15 @@ const FORMATO = new Intl.DateTimeFormat('es-BO', {
       <app-form-field
         icon="survey"
         label="Respuesta del formulario médico"
-        [required]="true"
-        [hint]="
-          opciones().length === 1
-            ? 'La única respuesta de esta cita; queda asociada sola.'
-            : 'Hay más de una respuesta en esta cita: elija de cuál sale.'
-        "
+        [required]="!opcional()"
+        [hint]="pista()"
       >
         <app-select
           data-testid="respuesta-del-formulario"
-          [options]="opciones()"
+          [options]="opcionesDelSelector()"
           [value]="valorElegido()"
-          [disabled]="opciones().length === 1"
+          [placeholder]="opcional() ? sinFormulario : 'Seleccionar opción'"
+          [disabled]="!opcional() && opciones().length === 1"
           (valueChange)="elegir($event)"
         />
       </app-form-field>
@@ -171,6 +185,9 @@ export class FormResponsePicker {
 
   /** Si una nota libre firmada del encuentro sirve de respuesta (ver arriba). */
   readonly aceptaNotas = input(false);
+
+  /** Con `true` el médico puede emitir sin respuesta del formulario médico. */
+  readonly opcional = input(false);
 
   /** La respuesta de `forms` elegida, o `null`. */
   readonly seleccionada = model<string | null>(null);
@@ -206,6 +223,25 @@ export class FormResponsePicker {
         label: `Formulario libre · ${FORMATO.format(nota.signedAt ?? nota.createdAt)}`,
       })),
   ]);
+
+  /** La opción nula del modo opcional: lo que se lee cuando no se ata a nada. */
+  protected readonly sinFormulario = 'Sin formulario médico';
+
+  /** En modo opcional, «Sin formulario médico» va primero para poder desvincular. */
+  protected readonly opcionesDelSelector = computed<readonly SelectOption<string | null>[]>(() =>
+    this.opcional()
+      ? [{ value: null, label: this.sinFormulario }, ...this.opciones()]
+      : this.opciones(),
+  );
+
+  protected readonly pista = computed(() => {
+    if (this.opcional()) {
+      return 'Opcional. Elija de cuál sale lo que se registra, o déjelo sin formulario.';
+    }
+    return this.opciones().length === 1
+      ? 'La única respuesta de esta cita; queda asociada sola.'
+      : 'Hay más de una respuesta en esta cita: elija de cuál sale.';
+  });
 
   protected readonly valorElegido = computed<string | null>(() => {
     const respuesta = this.seleccionada();
