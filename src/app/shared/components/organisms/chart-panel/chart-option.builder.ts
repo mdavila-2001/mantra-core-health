@@ -4,7 +4,7 @@ import { formatDate, formatearValor, NO_DATA } from '@core/data-access/reporting
 import type { ConfigFiltro, DatosGrafico } from '@core/data-access/reporting/reporting.types';
 import { rampColorAt, readableOn } from './chart-color';
 import { construirCascada, construirVelas } from './chart-option.cascada';
-import { base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase, unitOf } from './chart-option.common';
+import { ajusteEtiquetas, base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase, unitOf } from './chart-option.common';
 
 export { escapar, type ModoGrafico, type OpcionesBuild } from './chart-option.common';
 
@@ -63,6 +63,15 @@ function construirCartesiano(
   });
 
   const emptyCategories = new Set(d.categorias.filter((_, i) => d.series.every((s) => s.valores[i] === null || s.valores[i] === undefined)));
+  // Inclinadas van en una línea: dos líneas inclinadas se pisan con las del vecino.
+  const etiquetaInclinada =
+    !horizontal &&
+    d.categorias.length >= 4 &&
+    d.categorias.length <= 12 &&
+    ajusteEtiquetas(
+      d.categorias.map((c) => formatDate(c)),
+      Math.max(44, Math.min(spec.ancho === 'completo' ? 160 : 120, Math.floor((spec.ancho === 'completo' ? 880 : 520) / d.categorias.length))),
+    ).rotate > 0;
   const categoria = {
     type: 'category',
     data: d.categorias,
@@ -78,14 +87,16 @@ function construirCartesiano(
       // «Organizaci / ón afiliada» con sitio de sobra.
       ...(!horizontal && d.categorias.length >= 4 && d.categorias.length <= 12
         ? {
-            width: Math.max(44, Math.min(spec.ancho === 'completo' ? 160 : 120, Math.floor((spec.ancho === 'completo' ? 880 : 520) / d.categorias.length))),
-            overflow: 'break',
+            ...ajusteEtiquetas(
+              d.categorias.map((c) => formatDate(c)),
+              Math.max(44, Math.min(spec.ancho === 'completo' ? 160 : 120, Math.floor((spec.ancho === 'completo' ? 880 : 520) / d.categorias.length))),
+            ),
             hideOverlap: false,
           }
         : {}),
       // Una categoría sin ningún valor no dibuja barra: el eje lo dice en vez de hacerla desaparecer.
       formatter: (nombre: string) =>
-        emptyCategories.has(nombre) ? `${formatDate(nombre)}\n(sin dato)` : formatDate(nombre),
+        emptyCategories.has(nombre) ? `${formatDate(nombre)}${etiquetaInclinada ? ' ' : '\n'}(sin dato)` : formatDate(nombre),
     },
     axisTick: { alignWithLabel: true },
   };

@@ -69,7 +69,7 @@ export function construirAlertas(base: BaseResumen, concentracionPct: number | n
 
   return {
     id: 'alertas',
-    titulo: 'Alertas: indicadores fuera de umbral',
+    titulo: 'Alertas: cada indicador frente a su umbral',
     columnas: [
       { clave: 'severidad', etiqueta: 'Severidad' },
       { clave: 'indicador', etiqueta: 'Indicador' },
@@ -79,7 +79,7 @@ export function construirAlertas(base: BaseResumen, concentracionPct: number | n
     ],
     filas,
     info: infoEjemplo({
-      definicion: 'Indicadores del negocio que cruzaron un umbral, de la más grave a la menos grave.',
+      definicion: 'Cada indicador del negocio con su umbral, de la alerta más grave a la menos grave; los que están dentro del umbral salen como «Normal».',
       formula: 'Cada indicador se compara con un umbral de atención y otro crítico',
       fuente: 'KPI de las pestañas Suscripciones y Comisiones y del propio Resumen; umbrales en report_schedules (por crear).',
       salvedades: [

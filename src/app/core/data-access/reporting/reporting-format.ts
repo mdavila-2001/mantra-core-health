@@ -88,6 +88,7 @@ export function formatearFrescura(minutos: number): string {
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] as const;
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ISO_MONTH = /^(\d{4})-(\d{2})$/;
 
 /**
  * «2026-10-06» → «6 oct» (o «6 oct 2026» con `conAnio`). Cualquier otro texto vuelve igual: una
@@ -95,6 +96,12 @@ const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
  * para que la zona horaria del navegador no mueva el día.
  */
 export function formatDate(texto: string, conAnio = false): string {
+  const mensual = ISO_MONTH.exec(texto);
+  const mesDelMes = mensual === null ? undefined : MESES[Number(mensual[2]) - 1];
+  if (mensual !== null && mesDelMes !== undefined) {
+    // Un mes de cohorte («2026-05») se lee «may 2026»: aquí el año es parte de lo que se quiere decir.
+    return `${mesDelMes} ${mensual[1]}`;
+  }
   const m = ISO_DATE.exec(texto);
   const mes = m === null ? undefined : MESES[Number(m[2]) - 1];
   if (m === null || mes === undefined) {

@@ -103,3 +103,21 @@ export function readValue(p: ParamEje): number | null {
 export function unitOf(serie: SerieCartesiana | undefined, general: UnidadValor): UnidadValor {
   return serie?.unidad ?? general;
 }
+
+/** Píxeles aproximados por carácter a 12 px de fuente (media de letras y espacios del texto de los ejes). */
+const PX_POR_CARACTER = 6.8;
+
+/**
+ * Cómo rotular los nombres de un eje de categorías dentro de la casilla que le toca a cada uno. Se parten
+ * por palabras; pero si la palabra MÁS LARGA no cabe en la casilla, partirla a media palabra («Activacione/s»)
+ * es peor que inclinar el nombre entero en una línea.
+ */
+export function ajusteEtiquetas(
+  textos: readonly string[],
+  casilla: number,
+): { readonly width: number; readonly overflow: 'break' | 'none'; readonly rotate: number } {
+  const palabraMasLarga = Math.max(0, ...textos.flatMap((t) => t.split(/\s+/)).map((w) => w.length)) * PX_POR_CARACTER;
+  return palabraMasLarga <= casilla
+    ? { width: casilla, overflow: 'break', rotate: 0 }
+    : { width: 180, overflow: 'none', rotate: 30 };
+}

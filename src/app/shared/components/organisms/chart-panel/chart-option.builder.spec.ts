@@ -333,6 +333,17 @@ describe('correcciones de lectura (revisión visual)', () => {
     expect(at(raw, 'media.0.option.grid.bottom') as number).toBeLessThanOrEqual(16);
   });
 
+  it('si la palabra más larga no cabe en su casilla el nombre se inclina en una línea en vez de partirse a media palabra', () => {
+    media({});
+    const nombres = ['Invitaciones', 'Registros', 'Activaciones', 'Recompensa por pagar', 'Recompensas pagadas', 'Neto', 'Final'];
+    const datos: DatosGrafico = { tipo: 'cascada', pasos: nombres.map((nombre, i) => ({ nombre, valor: i + 1 })) };
+    expect(at(build(datos), 'xAxis.axisLabel.rotate')).toBe(30);
+    expect(at(build(datos), 'xAxis.axisLabel.overflow')).toBe('none');
+    const corto: DatosGrafico = { tipo: 'cascada', pasos: ['A', 'B', 'C'].map((nombre, i) => ({ nombre, valor: i + 1 })) };
+    expect(at(build(corto), 'xAxis.axisLabel.rotate')).toBe(0);
+    expect(at(build(corto), 'xAxis.axisLabel.overflow')).toBe('break');
+  });
+
   it('con 7 pasos la cascada reparte el ancho: cada nombre mide menos que con 3', () => {
     media({});
     const pasos = (n: number): DatosGrafico => ({ tipo: 'cascada', pasos: Array.from({ length: n }, (_, i) => ({ nombre: `Paso ${i}`, valor: i + 1 })) });

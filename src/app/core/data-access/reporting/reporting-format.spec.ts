@@ -58,8 +58,13 @@ describe('formatDate', () => {
     expect(formatDate('2026-12-01')).toBe('1 dic');
   });
 
+  it('un mes de cohorte se escribe «may 2026»', () => {
+    expect(formatDate('2026-05')).toBe('may 2026');
+    expect(formatDate('2026-12', true)).toBe('dic 2026');
+  });
+
   it('lo que no es una fecha ISO vuelve igual: una categoría no se inventa', () => {
-    for (const texto of ['Esencial', 'T1', '2026-13-01', '2026-10', '']) {
+    for (const texto of ['Esencial', 'T1', '2026-13-01', '2026-13', '']) {
       expect(formatDate(texto)).toBe(texto);
     }
   });
