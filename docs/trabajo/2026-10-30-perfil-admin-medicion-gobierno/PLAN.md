@@ -17,6 +17,8 @@
 | D6 | Gobernanza | Políticas, PII, calidad de datos, linaje y auditoría al estilo AtlasAdminPortal, sobre endpoints reales. |
 | D7 | Entrega | Por franjas, front + API, 2 PRs (dev y test) por franja. |
 | D8 | Permisos | **Ultra granulares** y gobierno de usuarios (pedido posterior; ver H5). |
+| D9 | Historias clínicas masivas | Carga especial (H7): CSV/JSON propio por tipo de registro; solo a pacientes ya existentes (casar por documento + fecha de nacimiento, coincidencia única o rechazo); base legal declarada por lote + auditoría; solo agregar, nunca sobrescribir. |
+| D10 | Plantillas | **Regla transversal:** todo motor de carga masiva (H6, H7 y los existentes de farmacia y terminología al tocarlos) expone su plantilla esperada **en CSV y en JSON** (JSON = ejemplo + esquema de campos), con el mismo contrato que valida la carga. |
 
 ## Alcance
 
@@ -153,15 +155,44 @@
 | H6.S1.M2 | Módulo API de lote: crear trabajo, validar, previsualizar, confirmar, consultar estado, informe | Estados del trabajo con transición validada | specs de API | TODO |
 | H6.S1.M3 | Idempotencia por clave de lote y por fila | Reintento no duplica | test con salida pegada | TODO |
 | H6.S1.M4 | Trabajo asíncrono con timeout, reintento y visibilidad | Fallo parcial no aborta el resto | spec | TODO |
-| H6.S2.M1 | Plantillas CSV/XLSX por tipo | Descarga con encabezados del contrato | spec | TODO |
+| H6.S2.M1 | Plantillas por tipo, **CSV y JSON** (T1), generadas del mismo esquema que valida | Descarga con encabezados del contrato; la fila de la plantilla pasa validación | spec | TODO |
 | H6.S2.M2 | UI de carga: arrastrar archivo, vista previa, errores, confirmar, progreso, informe | Reutiliza el patrón de `branch-bulk-import` | captura + E2E | TODO |
 | H6.S2.M3 | Auditoría del lote y ligazón a permisos (H5) | Cada alta deja actor y lote | spec | TODO |
 
 ---
 
+## Regla transversal T1 — Plantilla CSV **y** JSON en toda carga masiva
+
+**CA:** Dado cualquier motor de carga masiva, cuando se pide su plantilla, entonces se obtiene en CSV y en JSON; la plantilla se **genera desde el mismo esquema** que valida la carga (una sola fuente), de modo que una fila de la plantilla siempre pasa la validación.
+**DoD:** por motor: `GET …/import-template?format=csv|json` con spec de contrato; spec «lo que la plantilla trae pasa la validación» y «un campo fuera de la plantilla se rechaza»; botones de descarga CSV y JSON en la UI.
+Precedente a seguir: `terminology-import-template.controller.ts` (`GET terminology/import-template`, descarga con nombre y tipo). Hoy ese motor admite CSV; se completa JSON al tocarlo.
+
+## H7 — Carga masiva especial de historias clínicas
+
+**CA:** Dado un admin autorizado, cuando sube un lote de historias clínicas (CSV/JSON por tipo de registro), entonces cada fila se enlaza solo a un paciente existente por documento + fecha de nacimiento (sin coincidencia única → rechazo, nunca se adivina); el lote declara organización origen, base legal y fecha; se muestra vista previa con errores por fila y por campo; al confirmar, lo cargado **se agrega** como registro nuevo con procedencia (origen, lote, fecha), un duplicado exacto se omite, un conflicto se reporta sin sobrescribir; se procesa como trabajo asíncrono idempotente; y entrega un informe sin datos clínicos en el texto.
+**DoD:** plantillas CSV y JSON por tipo (T1) · idempotencia (mismo lote dos veces no duplica) · casos válido/límite/inválido por fila · matriz de autorización negativa (otro usuario, otra organización, rol insuficiente, sin token) · auditoría de escritura y de lectura de lo cargado · prueba contra base real (no ORM mockeado) · gate `data-privacy-phi` · sin PHI en logs, URLs, reportes ni capturas.
+**Estado:** TODO
+
+| ID | Microtarea | CA (binario) | DoD | Estado |
+|---|---|---|---|---|
+| H7.S1.M1 | Descubrir modelos de destino (`charts/*`, `clinical/*`, `health_data`, `clinical_ext`) y qué tipos de registro admiten alta externa | Tabla tipo de registro → entidad/endpoint existente, sin inventar | citas ruta:línea | TODO |
+| H7.S1.M2 | Definir el esquema por tipo de registro (paciente-ref, encuentro, diagnóstico, medicación, alergia, signo vital, resultado, nota) **desde las entidades y catálogos reales**; códigos clínicos contra terminología existente | Cada campo trazable a una entidad; sin catálogo clínico escrito a mano | spec de esquema | TODO |
+| H7.S1.M3 | Plantillas CSV y JSON generadas desde el esquema (T1) | La fila de la plantilla pasa validación | spec de contrato | TODO |
+| H7.S2.M1 | Resolución de paciente por documento + fecha de nacimiento | 0 o >1 coincidencias → rechazo con motivo; sin PII en el motivo | spec con base real | TODO |
+| H7.S2.M2 | Lote con declaración de origen, base legal y fecha; transición de estados validada | Lote sin declaración no se confirma | spec API | TODO |
+| H7.S2.M3 | Escritura solo-agregar con procedencia y deduplicación exacta | Segunda corrida no inserta; conflicto reportado | salida de las dos corridas pegada | TODO |
+| H7.S2.M4 | Trabajo asíncrono con timeout, reintento y fallo parcial | Una fila mala no aborta el resto | spec | TODO |
+| H7.S2.M5 | Auditoría de escritura y de lectura sobre lo cargado | Cada alta y cada lectura dejan actor y lote | spec | TODO |
+| H7.S3.M1 | UI: plantillas (CSV y JSON), carga, vista previa, confirmación, progreso, informe | Reutiliza el patrón de H6 | E2E real + capturas | TODO |
+| H7.S3.M2 | Gate de privacidad y matriz de autorización negativa | Roles sin permiso reciben 403/404 | specs + salida | TODO |
+
+**Ambigüedades de H7 (supuesto → a quién confirmar):** roles autorizados para cargar historia (supuesto: nuevo permiso fino `clinical.bulk_import`, solo bajo H5; a Usuario) · tamaño máximo de lote (supuesto: 5.000 filas y 20 MB; a Usuario) · retención del archivo original (supuesto: no se conserva, solo el informe; a DPO) · estado de la carga cuando el paciente tiene consentimiento revocado (supuesto: se rechaza la fila; a DPO).
+
+**Riesgo principal:** datos de salud reales. Se prueba solo con datos sintéticos declarados como tales; ningún dato real de paciente entra a este repositorio, a capturas ni a reportes.
+
 ## Orden de franjas (dependencias)
 
-1. H1 (menú) → 2. H2 (medición) → 3. H3 (catálogos) → 4. H4 (gobernanza) → 5. H5 (permisos y gobierno) → 6. H6 (altas masivas, usa permisos de H5).
+1. H1 (menú) → 2. H2 (medición) → 3. H3 (catálogos) → 4. H4 (gobernanza) → 5. H5 (permisos y gobierno) → 6. H6 (altas masivas, usa permisos de H5) → 7. H7 (historias clínicas masivas, usa el motor de H6, permisos de H5 y la regla T1).
 Una franja a la vez; cada una cierra con su evidencia y sus dos PRs antes de abrir la siguiente.
 
 ## Gates por franja
