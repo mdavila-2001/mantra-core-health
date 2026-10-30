@@ -122,8 +122,10 @@ app-content-dialog .historial__formulario {
   max-inline-size: none;
 }
 
-/* Desde y Hasta lado a lado; una sola columna cuando no entran dos de 12rem. */
-.historial__periodo {
+/* Desde y Hasta lado a lado; una sola columna cuando no entran dos de 12rem.
+   No es `.historial__periodo`: ese nombre ya es el de la fecha de cada fila de
+   la lista, alineada a la derecha. */
+.historial__rango {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
   gap: var(--sp-4);
