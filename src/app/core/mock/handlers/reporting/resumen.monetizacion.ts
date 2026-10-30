@@ -127,16 +127,16 @@ export function lecturaRapida(base: BaseResumen): string {
   const sube = [...conVariacion].sort((a, b) => (b.variacionPct ?? 0) - (a.variacionPct ?? 0))[0];
   const baja = [...conVariacion].sort((a, b) => (a.variacionPct ?? 0) - (b.variacionPct ?? 0))[0];
   if (sube !== undefined && sube.variacionPct !== null && baja !== undefined && baja.variacionPct !== null) {
-    const unaSola = sube === baja;
+    const isSingle = sube === baja;
     if (sube.variacionPct < 0) {
       // Si todas caen, «la que más cae» no es la que cae menos.
       frases.push(
-        unaSola
+        isSingle
           ? `${sube.nombre} cae ${formatearVariacion(Math.abs(sube.variacionPct)).replace('+', '')}.`
           : `Ninguna fuente crece; la que menos cae es ${sube.nombre} (${formatearVariacion(sube.variacionPct)}) y la que más cae, ${baja.nombre} (${formatearVariacion(baja.variacionPct)}).`,
       );
     } else {
-      frases.push(`La que más crece es ${sube.nombre} (${formatearVariacion(sube.variacionPct)})${!unaSola && baja.variacionPct < 0 ? ` y la que más cae, ${baja.nombre} (${formatearVariacion(baja.variacionPct)})` : ''}.`);
+      frases.push(`La que más crece es ${sube.nombre} (${formatearVariacion(sube.variacionPct)})${!isSingle && baja.variacionPct < 0 ? ` y la que más cae, ${baja.nombre} (${formatearVariacion(baja.variacionPct)})` : ''}.`);
     }
   }
   return frases.join(' ');
