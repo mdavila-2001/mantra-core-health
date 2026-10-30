@@ -2,7 +2,7 @@
 
 - Fecha: 2026-10-30 · Repos afectados: `mantra-core-health-model` (fuente de verdad del esquema), `mantra-core-health-api`, `mantra-core-health` (frontend) · Predecesor: ninguno
 - **Peldaño de evidencia (regla 30): `DISCOVERED`.** Todo lo de §1 está localizado en código con ruta. Nada de lo propuesto en §3 en adelante existe, se escribió ni se ejecutó. Las columnas de las tablas candidatas **no se leyeron todas**: están marcadas «a verificar».
-- Resultado observable buscado: un admin entra, elige «Portal de administración» o «Portal de reportería», y en este último ve un **grid de reportes**; abre el **Dashboard comercial** con pestañas por vertical (suscripciones de doctores, publicidad push/pauteo, comisiones a actores) con números que salen del mayor y de las tablas de pagos, no de sumas ad-hoc.
+- Resultado observable buscado: un admin entra, elige «Portal de administración» o «Portal de reportería», y en este último —un panel integral cuyo centro son los reportes, con un asistente de chat plegable como una pieza más— ve un **grid de reportes**; abre el **Dashboard comercial** con pestañas por vertical (suscripciones de doctores, publicidad push/pauteo, comisiones a actores) con números que salen del mayor y de las tablas de pagos, no de sumas ad-hoc.
 - Kill-test: abrir el dashboard con una organización sin ventas y con un periodo sin datos. Si algún KPI muestra `0` en vez de «sin dato», o si un admin de la organización A ve una fila de la B, el trabajo **no** está hecho.
 
 ---
@@ -80,7 +80,7 @@ Lo que hace que Power BI sea un motor y no un conjunto de gráficos. Estado = lo
 | 13 | **Observabilidad del motor** | Tiempo por consulta, errores, reportes más usados, costo | **Parcial.** `web-analytics` mide el portal, no las consultas |
 | 14 | **Experiencia** | Responsivo, tema claro/oscuro, accesible (WCAG 2.2 AA), formato de moneda/fecha, 9 estados | **Parcial.** El sistema de diseño lo cubre; falta aplicarlo a reportes |
 | 15 | **Moneda y exactitud** | Importes exactos, moneda siempre al lado, sin sumar monedas distintas sin tipo de cambio | **Reglas existentes** (91.1, `payment-money.ts`); hay que aplicarlas al reporte |
-| 16 | **Lenguaje natural** (diferencial) | Preguntar en lenguaje natural y obtener el reporte | **Pendiente de decisión** (ver §7, ambigüedad A-1). Existe `AlovidaAIService` con asistente por skills |
+| 16 | **Asistente conversacional integrado** | Preguntar en lenguaje natural sobre los reportes existentes y obtener el número, su definición y el reporte donde verlo | **Ausente.** Es una pieza del portal (§5.3), no su centro. Existe `AlovidaAIService` (asistente con citas, MedGemma local) como candidato, sin evaluar para este uso |
 
 **Conclusión del cruce:** el *esqueleto de ciclo de vida* (definir → versionar → ejecutar → snapshot → distribuir) existe en el API; **faltan la capa semántica, el ejecutor de consultas, las lecturas, los visuales y toda la UI**. No hay que empezar de cero: hay que completar `reporting` y alimentarlo.
 
@@ -239,6 +239,33 @@ Decisiones de diseño y su motivo:
 - Abrir una tarjeta lleva al visor con las pestañas de §3 y el filtro global arriba.
 - Estados: cargando, vacío con orientación («aún no hay reportes publicados para tu rol»), error accionable, sin permiso, datos desactualizados, parcial.
 
+### 5.3 El portal es un panel integral; el chat es una pieza dentro
+
+Aclaración del pedido (2026-10-30): el «portal de reportería» es un **panel completo e integral** donde se ve todo lo que hay. Puede incluir un chat, pero **el centro son los reportes**.
+
+Estructura del portal:
+
+```
+┌ cabecera: conmutador de portal · filtros globales (periodo, comparar, moneda, organización) · frescura ┐
+├ navegación lateral ─┬ área central ─────────────────────────────┬ panel del asistente (plegable) ──┤
+│ Inicio (grid)       │ Grid de reportes  /  Visor con pestañas    │ «Pregúntale a tus reportes»      │
+│ Dashboard comercial │                                            │ historial · sugerencias          │
+│ Favoritos/Recientes │                                            │                                  │
+│ Programados         │                                            │                                  │
+│ Catálogo de KPI     │                                            │                                  │
+└─────────────────────┴────────────────────────────────────────────┴──────────────────────────────────┘
+```
+
+Reglas del asistente (para que no contradiga las reglas del resto del portal):
+
+1. **Plegado por defecto**; el portal funciona entero sin él. Nunca es el único camino a un número.
+2. **El modelo no escribe cifras.** Traduce la pregunta a una consulta declarativa sobre el catálogo semántico (`{ medida, dimensiones, filtros, periodo }`); el número lo calcula y entrega el motor (`POST /reporting/query`) con el **token del usuario**, así que hereda sus permisos y su tenant. Una pregunta fuera del catálogo se contesta «no tengo esa medida», no se inventa.
+3. **Cada respuesta cita**: definición del KPI, fuente, frescura y botón «abrir en el reporte». `null` se dice como «sin dato» con su motivo, no como 0.
+4. **Sin SQL generado.** Lista blanca de medidas y dimensiones, igual que cualquier otro cliente.
+5. **Sin PHI y sin salir de la infraestructura:** los datos de filas no viajan a un modelo externo (regla 90.2.4); el modelo sólo ve nombres del catálogo y la pregunta. Si se reutiliza `AlovidaAIService`, queda por verificar que corra con autenticación (hoy sus rutas son públicas para el paciente) y que no guarde ni registre el texto.
+6. **Acciones:** sólo lectura y navegación (abrir reporte, aplicar filtros, programar un envío con confirmación). No muta datos.
+7. Todos los estados: cargando, sin respuesta, error accionable, sin permiso, modelo no disponible (el portal sigue operando).
+
 ---
 
 ## 6. Hitos
@@ -306,9 +333,20 @@ Orden: **Resumen** al final (depende de todas) → Suscripciones → Cobros y ca
 **CA:** Dado un reporte programado semanal, cuando vence el tick, entonces se genera un snapshot y se entrega **una sola vez** por destinatario aunque el tick se repita; y dado un KPI fuera de umbral, entonces se avisa a quien corresponde.
 **DoD:** prueba de duplicado (mismo tick dos veces) · exportes CSV/XLSX/PDF con importes exactos · sin PHI en el artefacto · prueba de caída del canal de envío.
 
-### H6 — Gobierno, observabilidad y (opcional) lenguaje natural
+### H6 — Gobierno, observabilidad y asistente integrado
 
-Catálogo visible, linaje de KPI, métricas del motor (tiempo y error por consulta, reportes más abiertos), `correlationId` de punta a punta. Lenguaje natural sólo si A-1 lo confirma y siempre **sobre el catálogo semántico**, nunca generando SQL.
+Catálogo visible, linaje de KPI, métricas del motor (tiempo y error por consulta, reportes más abiertos), `correlationId` de punta a punta.
+
+**Asistente (§5.3).** Se construye **después** de H2 y de al menos dos pestañas de H4, porque sin catálogo ni datos no hay nada que preguntar.
+**CA:** Dado el catálogo, cuando alguien pregunta «¿cuál fue el MRR de septiembre?», entonces el panel responde con el valor del motor, su definición, fuente y frescura y un enlace al reporte; con una pregunta fuera del catálogo responde que no tiene esa medida; y un usuario de la organización A no obtiene nunca una cifra de la B.
+**DoD:** evaluación con banco de preguntas sintéticas declaradas (correctas, límite e inválidas: medida inexistente, periodo futuro, intento de pedir datos de pacientes, intento de inyección en la pregunta) · prueba de que la cifra mostrada coincide con la de `POST /reporting/query` · prueba de autorización negativa · prueba con el modelo apagado (el portal sigue operando) · capturas del panel plegado/abierto en los tres viewports y ambos temas.
+
+| ID | Microtarea | DoD |
+|---|---|---|
+| H6.S1.M1 | Decisión (ADR): reutilizar `AlovidaAIService` con autenticación o servicio de mapeo propio dentro de `reporting` | ADR |
+| H6.S1.M2 | Traductor pregunta → consulta declarativa (sólo nombres del catálogo) | banco de preguntas, salida pegada |
+| H6.S2.M1 | Panel plegable en el portal + historial local con opción de borrarlo | e2e + capturas |
+| H6.S2.M2 | Respuesta con cita (definición, fuente, frescura, enlace) y estados | test de contrato + capturas |
 
 ---
 
@@ -318,7 +356,7 @@ Catálogo visible, linaje de KPI, métricas del motor (tiempo y error por consul
 
 | ID | Pregunta | Supuesto tomado | A quién confirmar |
 |---|---|---|---|
-| **A-1** | «Portal de reportería **chat**»: ¿es un typo de «portal de reportería», o quieres un portal conversacional (preguntar en lenguaje natural)? | Es el portal de reportería con grid de reportes. Lo conversacional queda en H6 como opcional | Tú |
+| ~~A-1~~ | ~~«Portal de reportería chat»~~ **RESUELTA 2026-10-30:** es un panel integral de reportería; el chat es una pieza dentro, no el centro | El asistente va plegable en el portal (§5.3) y se construye en H6 | Confirmado por el solicitante |
 | **A-2** | **Publicidad push / pauteo**: ¿qué se vende exactamente? ¿Espacio dentro de la app, envíos push a un segmento, ambos? ¿Quién paga (doctor, clínica, farmacia, laboratorio, aseguradora)? ¿Cómo se cobra (CPM, CPC, tarifa plana)? | La pestaña 3 asume «anunciante paga por entrega a un segmento». No hay canal push en el modelo | Tú / negocio |
 | **A-3** | **Alcance de los datos**: ¿el dashboard es de la **plataforma** (equipo Mantra ve todo) o cada **organización** ve lo suyo, o ambos? | Ambos, con rol distinto | Tú |
 | **A-4** | **Comisiones → actores**: ¿qué actores cobran y cómo se calcula cada comisión (visitador, corredor, referidor, organización)? Las tasas no se infieren (regla 97.5.4) | Sólo se **reportan** los mecanismos que ya existen; no se crean reglas de cálculo | Negocio / cumplimiento |
@@ -346,4 +384,4 @@ Catálogo visible, linaje de KPI, métricas del motor (tiempo y error por consul
 
 ### Siguiente paso
 
-Confirmar A-1 a A-4 (son las que cambian el alcance). Con eso, H0 puede arrancar sin esperar al resto.
+Confirmar A-2 a A-4 (son las que cambian el alcance). Con eso, H0 puede arrancar sin esperar al resto.
