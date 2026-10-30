@@ -42,3 +42,38 @@ describe('readableOn', () => {
     expect(readableOn([0, 0, 0], 'currentColor', SURFACE)).toBe('currentColor');
   });
 });
+
+describe('readableOn · contraste AA con los tokens reales', () => {
+  const lin = (v: number): number => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  };
+  const lum = (h: string): number => {
+    const n = parseInt(h.slice(1), 16);
+    return 0.2126 * lin(n >> 16) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+  };
+  const hex = (rgb: readonly number[]): string => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
+  const ratio = (a: string, b: string): number => {
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05);
+  };
+
+  const CASOS = [
+    // [rampa, texto, superficie] tal como salen de styles.css (--chart-seq-*, --text-primary, --bg-surface)
+    ['claro', ['#cde2fb', '#86b6ef', '#3987e5', '#1c5cab', '#0d366b'], '#242828', '#ffffff'],
+    ['oscuro', ['#184f95', '#1c5cab', '#3987e5', '#6da7ec', '#9ec5f4'], '#f6f3ed', '#0a2b3d'],
+  ] as const;
+
+  for (const [tema, rampa, texto, superficie] of CASOS) {
+    it(`en tema ${tema} ninguna celda de la rampa baja de 4,5:1 (antes el peor caso era 3,7–3,9:1)`, () => {
+      let peor = Infinity;
+      for (let t = 0; t <= 1.0001; t += 0.01) {
+        const fondo = rampColorAt(rampa, t);
+        expect(fondo).not.toBeNull();
+        const color = readableOn(fondo, texto, superficie);
+        peor = Math.min(peor, ratio(hex(fondo ?? [0, 0, 0]), color));
+      }
+      expect(peor).toBeGreaterThanOrEqual(4.5);
+    });
+  }
+});

@@ -146,7 +146,10 @@ describe('construirOpciones', () => {
       // Una serie diaria (muchas categorías) o un eje horizontal no se envuelven: no los necesitan.
       const dias = Array.from({ length: 30 }, (_, i) => `D${i}`);
       expect(at(buildRaw({ tipo: 'cartesiano', categorias: dias, series: [{ nombre: 'S', valores: dias.map(() => 1), forma: 'barra' }] }), 'media')).toBeUndefined();
-      expect(at(buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] }), 'media')).toBeUndefined();
+      // Las horizontales sí tienen media, pero distinta: truncan el nombre en vez de rotarlo.
+      const horizontal = buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] });
+      expect(at(horizontal, 'media.0.option.yAxis.axisLabel.overflow')).toBe('truncate');
+      expect(at(horizontal, 'media.0.option.xAxis.axisLabel.rotate')).toBeUndefined();
     });
 
     it('con pocas categorías se rotulan todas', () => {
@@ -297,6 +300,33 @@ describe('correcciones de lectura (revisión visual)', () => {
     expect(eje('Esencial')).toBe('Esencial');
     const tip = at(o, 'tooltip.formatter') as (p: unknown) => string;
     expect(tip([{ seriesName: 'S', axisValueLabel: '2026-10-06', name: '2026-10-06', value: 1, dataIndex: 0 }])).toContain('6 oct 2026');
+  });
+
+  it('la cascada escribe el valor firmado bajo cada paso y da altura mínima a los pasos pequeños', () => {
+    media({});
+    const o = build({ tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 1000, total: true }, { nombre: 'Sube', valor: 5 }, { nombre: 'Baja', valor: -3 }, { nombre: 'Fin', valor: 1002, total: true }] });
+    const eje = at(o, 'xAxis.axisLabel.formatter') as (v: string) => string;
+    expect(eje('Sube')).toBe('Sube\n+5');
+    expect(eje('Baja')).toBe('Baja\n−3');
+    expect(eje('Inicio')).toBe('Inicio\n1 k');
+    expect(at(o, 'series.1.barMinHeight')).toBe(3);
+    expect(at(o, 'series.2.barMinHeight')).toBe(3);
+  });
+
+  it('el embudo en un lienzo angosto deja sitio a la leyenda y parte la etiqueta', () => {
+    media({});
+    const raw = buildRaw({ tipo: 'partes', forma: 'embudo', partes: [{ nombre: 'En prueba o con campaña creada', valor: 5 }, { nombre: 'B', valor: 2 }] });
+    expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
+    expect(at(raw, 'media.0.option.series.0.label.overflow')).toBe('break');
+    expect(at(raw, 'media.0.option.series.0.bottom')).toBeGreaterThan(at(raw, 'baseOption.series.0.bottom') as number);
+  });
+
+  it('la vela y su eje escriben la fecha como «6 oct»', () => {
+    media({});
+    const velas = { explicacion: 'e', velas: [{ fecha: '2026-10-06', apertura: 1, cierre: 2, minimo: 1, maximo: 2 }] };
+    const o = construirOpciones({ spec: { ...spec({ tipo: 'cartesiano', categorias: ['a'], series: [{ nombre: 'S', valores: [1], forma: 'linea' }] }), velas }, tema: TEMA, modo: 'velas', seleccion: null });
+    expect((at(o, 'xAxis.axisLabel.formatter') as (f: string) => string)('2026-10-06')).toBe('6 oct');
+    expect((at(o, 'tooltip.formatter') as (p: unknown) => string)([{ name: '2026-10-06' }])).toContain('6 oct 2026');
   });
 
   it('un mapa de calor oculta las cifras de las celdas en un lienzo angosto', () => {

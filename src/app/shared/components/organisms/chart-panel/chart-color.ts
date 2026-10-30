@@ -51,5 +51,17 @@ export function readableOn(fondo: Rgb | null, texto: string, superficie: string)
   if (fondo === null || t === null || s === null) {
     return texto;
   }
-  return contrast(fondo, t) >= contrast(fondo, s) ? texto : superficie;
+  const mejor = contrast(fondo, t) >= contrast(fondo, s) ? texto : superficie;
+  const mejorRatio = Math.max(contrast(fondo, t), contrast(fondo, s));
+  if (mejorRatio >= CONTRASTE_MINIMO) {
+    return mejor;
+  }
+  // En la mitad de la rampa ni el texto ni la superficie del tema llegan a AA (3,7–3,9:1 medido con los
+  // tokens reales): ahí el negro o el blanco puros sí (≥ 4,59:1 en todo el recorrido, en los dos temas).
+  return contrast(fondo, NEGRO) >= contrast(fondo, BLANCO) ? '#000000' : '#ffffff';
 }
+
+/** WCAG 2.2 AA para texto pequeño. */
+const CONTRASTE_MINIMO = 4.5;
+const NEGRO: Rgb = [0, 0, 0];
+const BLANCO: Rgb = [255, 255, 255];

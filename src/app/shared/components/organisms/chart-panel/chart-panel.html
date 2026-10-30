@@ -157,15 +157,15 @@
         </details>
       }
     } @else if (spec().filtroMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="chart-no-filter">Sin filtro por clic: {{ spec().filtroMotivo }}</p>
+      <p class="gp__pista gp__pista--no" data-testid="chart-no-filter">Sin filtro por clic: {{ minusculaInicial(spec().filtroMotivo!) }}</p>
     }
 
     <!-- 6) y 7) Lo que el gráfico NO trae, dicho por escrito: omitirlo sin decir por qué es el defecto. -->
     @if (spec().info === null && spec().infoMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="chart-no-info">Sin explicación de cálculo: {{ spec().infoMotivo }}</p>
+      <p class="gp__pista gp__pista--no" data-testid="chart-no-info">Sin explicación de cálculo: {{ minusculaInicial(spec().infoMotivo!) }}</p>
     }
     @if (spec().velas === null && spec().velasMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="chart-no-candles">Sin versión en velas: {{ spec().velasMotivo }}</p>
+      <p class="gp__pista gp__pista--no" data-testid="chart-no-candles">Sin versión en velas: {{ minusculaInicial(spec().velasMotivo!) }}</p>
     }
 
     <!-- Tabla de respaldo (obligatoria: contraste de tres tonos < 3:1) -->
@@ -185,7 +185,7 @@
               <tr>
                 @for (celda of fila; track $index) {
                   @if ($first) {
-                    <th scope="row">{{ celda }}</th>
+                    <th scope="row">{{ fecha(celda) }}</th>
                   } @else {
                     <td>{{ celda }}</td>
                   }

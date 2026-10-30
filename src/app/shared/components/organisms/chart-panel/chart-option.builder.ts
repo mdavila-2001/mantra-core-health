@@ -164,11 +164,11 @@ function construirCartesiano(
       ...(d.categorias.length <= 12 ? { interval: 0 } : {}),
       // Entre 4 y 12 categorías en el eje horizontal los nombres largos se parten en vez de taparse:
       // el ancho de cada nombre es lo que le toca de un panel de media columna (~330 px).
-      // Un panel de ancho completo reparte ~880 px, no 330: sin esto «Organización afiliada» se partía en
+      // Una media columna de escritorio mide ~520 px y una de ancho completo ~880, no 330: sin esto «Organización afiliada» se partía en
       // «Organizaci / ón afiliada» con sitio de sobra.
       ...(!horizontal && d.categorias.length >= 4 && d.categorias.length <= 12
         ? {
-            width: Math.max(44, Math.min(spec.ancho === 'completo' ? 160 : 96, Math.floor((spec.ancho === 'completo' ? 880 : 330) / d.categorias.length))),
+            width: Math.max(44, Math.min(spec.ancho === 'completo' ? 160 : 120, Math.floor((spec.ancho === 'completo' ? 880 : 520) / d.categorias.length))),
             overflow: 'break',
             hideOverlap: false,
           }
@@ -478,14 +478,34 @@ function construirCascada(
       },
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
-    xAxis: { type: 'category', data: nombres, axisLabel: { color: tema.textoSuave, interval: 0, width: 96, overflow: 'break' }, axisLine: { lineStyle: { color: tema.linea } } },
+    // Con las barras de los totales desde cero, un paso del 1 % del total mide 1–3 px: el valor firmado
+    // viaja en la propia etiqueta del eje para que se lea sin pasar el ratón por encima.
+    xAxis: {
+      type: 'category',
+      data: nombres,
+      axisLabel: {
+        color: tema.textoSuave,
+        interval: 0,
+        width: 96,
+        overflow: 'break',
+        formatter: (nombre: string) => {
+          const paso = d.pasos[nombres.indexOf(nombre)];
+          if (paso === undefined) {
+            return nombre;
+          }
+          const texto = formatearValor(Math.abs(paso.valor), spec.unidad, true);
+          return `${nombre}\n${paso.total === true ? texto : `${paso.valor < 0 ? '−' : '+'}${texto}`}`;
+        },
+      },
+      axisLine: { lineStyle: { color: tema.linea } },
+    },
     // Con el eje desde cero las variaciones (1–5 % del total) quedan como rayitas: el eje arranca
     // cerca del mínimo para que cada paso se lea, y el borde inferior no pretende ser el cero.
     yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
     series: [
       { name: 'Base', type: 'bar', stack: 'cascada', silent: true, itemStyle: { color: 'transparent' }, data: base0, tooltip: { show: false } },
-      { name: 'Aumento', type: 'bar', stack: 'cascada', data: withOpacity(sube), itemStyle: { color: tema.bueno }, barMaxWidth: 40 },
-      { name: 'Disminución', type: 'bar', stack: 'cascada', data: withOpacity(baja), itemStyle: { color: tema.malo }, barMaxWidth: 40 },
+      { name: 'Aumento', type: 'bar', stack: 'cascada', data: withOpacity(sube), itemStyle: { color: tema.bueno }, barMaxWidth: 40, barMinHeight: 3 },
+      { name: 'Disminución', type: 'bar', stack: 'cascada', data: withOpacity(baja), itemStyle: { color: tema.malo }, barMaxWidth: 40, barMinHeight: 3 },
       { name: 'Total', type: 'bar', stack: 'cascada', data: withOpacity(total), itemStyle: { color: tema.serie[0] }, barMaxWidth: 40 },
     ],
   };
@@ -510,7 +530,7 @@ function construirVelas(o: OpcionesBuild): EChartsCoreOption {
         }
         const f = (n: number) => escapar(formatearValor(n, spec.unidad));
         const cambio = v.apertura === 0 ? null : ((v.cierre - v.apertura) / v.apertura) * 100;
-        return `<div style="font-weight:600;margin-bottom:4px">${escapar(v.fecha)}</div>
+        return `<div style="font-weight:600;margin-bottom:4px">${escapar(formatearFecha(v.fecha, true))}</div>
           <div>Apertura: <b>${f(v.apertura)}</b></div><div>Cierre: <b>${f(v.cierre)}</b></div>
           <div>Mínimo: <b>${f(v.minimo)}</b></div><div>Máximo: <b>${f(v.maximo)}</b></div>
           <div>Variación: <b>${cambio === null ? NO_DATA : `${cambio >= 0 ? '+' : '−'}${Math.abs(cambio).toFixed(1)} %`}</b> · ${cambio === null ? '' : (cambio >= 0) === (spec.velas?.subirEsMalo !== true) ? 'Mejora' : 'Empeora'}</div>`;
@@ -518,7 +538,7 @@ function construirVelas(o: OpcionesBuild): EChartsCoreOption {
     },
     grid: { left: 8, right: 16, top: 20, bottom: 84, containLabel: true },
     dataZoom: [{ type: 'inside' }, { type: 'slider', height: 18, bottom: 34, borderColor: tema.rejilla, textStyle: { color: tema.textoSuave } }],
-    xAxis: { type: 'category', data: velas.map((v) => v.fecha), axisLabel: { color: tema.textoSuave, hideOverlap: true }, axisLine: { lineStyle: { color: tema.linea } } },
+    xAxis: { type: 'category', data: velas.map((v) => v.fecha), axisLabel: { color: tema.textoSuave, hideOverlap: true, formatter: (f: string) => formatearFecha(f) }, axisLine: { lineStyle: { color: tema.linea } } },
     yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
     series: [
       {
@@ -567,6 +587,13 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
   switch (d.tipo) {
     case 'cartesiano':
       // Solo con pocas categorías (las que se rotulan todas): una serie diaria se aclara sola por intervalo.
+      if (d.horizontal === true) {
+        // Con el nombre ocupando el 70 % del ancho la barra no tenía área útil: en angosto se trunca y el tooltip lo dice entero.
+        return conMovil(construirCartesiano(o, d), {
+          yAxis: { axisLabel: { width: 84, overflow: 'truncate' } },
+          grid: { left: 8 },
+        });
+      }
       if (d.horizontal !== true && d.categorias.length >= 2 && d.categorias.length <= 3 && d.categorias.some((c) => c.length > 10)) {
         // Con 2 o 3 categorías de nombre largo («Notificación push»), en un lienzo angosto cada nombre se parte
         // dentro de su casilla; si no, ECharts oculta el del medio por solaparse y parece una barra sin nombre.
@@ -578,7 +605,13 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
         ? conMovil(construirCartesiano(o, d))
         : construirCartesiano(o, d);
     case 'partes':
-      return construirPartes(o, d);
+      // En un teléfono la leyenda se parte en dos líneas y pisaba la última etapa; la etiqueta de «En prueba o
+      // con campaña creada» salía cortada: se deja más sitio abajo y a la derecha y la etiqueta se parte.
+      return d.forma === 'embudo'
+        ? conMovil(construirPartes(o, d), {
+            series: [{ right: '46%', bottom: 110, label: { width: 110, overflow: 'break' }, labelLine: { length: 14 } }],
+          })
+        : construirPartes(o, d);
     case 'mapa-calor':
       // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
       return conMovil(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
