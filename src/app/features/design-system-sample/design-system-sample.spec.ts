@@ -57,6 +57,7 @@ describe('DesignSystemSample', () => {
   it('cada átomo y molécula del sistema aparece al menos una vez', () => {
     const piezas = [
       'app-badge',
+      'app-verification-badge',
       'app-avatar',
       'app-reference-combobox',
       'app-input',

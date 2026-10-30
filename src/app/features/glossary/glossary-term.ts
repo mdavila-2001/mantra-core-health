@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
+import type { GlossarySourceReference } from '../../core/data-access/terminology/glossary-source-reference.types';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
   GlossaryNeighborhood,
@@ -21,6 +22,7 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { AppButton } from '../../shared/components/atoms/button/button';
 import { Chip } from '../../shared/components/atoms/chip/chip';
 import { Card } from '../../shared/components/molecules/card/card';
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
@@ -41,6 +43,7 @@ import {
   type GlossaryDrugFacts,
 } from './glossary-drug-facts';
 import { GlossaryCategoryIcon } from './glossary-category-icon';
+import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryArticleView } from './glossary-article';
 import { enlaceSeguro, esImagenPropia, imagenesVisibles } from './glossary-article.logic';
 import { GlossaryTermCover, pictogramOfTags } from './glossary-term-cover';
@@ -108,6 +111,41 @@ function esObjeto(valor: unknown): valor is Readonly<Record<string, unknown>> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor);
 }
 
+function editorialSourcesFromProperty(raw: unknown): readonly GlossarySourceReference[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item: unknown) => {
+    if (!esObjeto(item)) return [];
+    const { source, recordId, url, language, version, retrievedAt, role, attribution, rights } = item;
+    if (
+      typeof source !== 'string' ||
+      typeof recordId !== 'string' ||
+      typeof url !== 'string' ||
+      !url.startsWith('https://') ||
+      (language !== 'es' && language !== 'en') ||
+      typeof version !== 'string' ||
+      typeof retrievedAt !== 'string' ||
+      (role !== 'concept_match' && role !== 'related_context' && role !== 'editorial_reference') ||
+      typeof attribution !== 'string' ||
+      typeof rights !== 'string'
+    ) {
+      return [];
+    }
+    const matchBasis = item['matchBasis'];
+    return [{
+      source,
+      recordId,
+      url,
+      language,
+      version,
+      retrievedAt,
+      role,
+      ...(matchBasis === 'title' || matchBasis === 'also_called' ? { matchBasis } : {}),
+      attribution,
+      rights,
+    }];
+  });
+}
+
 /**
  * La ficha de un término del glosario.
  *
@@ -145,6 +183,7 @@ function esObjeto(valor: unknown): valor is Readonly<Record<string, unknown>> {
 @Component({
   selector: 'app-glossary-term',
   imports: [
+    AppButton,
     Card,
     Chip,
     ContentDialog,
@@ -167,6 +206,7 @@ export class GlossaryTerm {
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly glossaryPdf = inject(GlossaryPdfService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -282,6 +322,22 @@ export class GlossaryTerm {
     };
   });
 
+  /** Referencias editoriales curadas, sin confundir contexto relacionado con equivalencia. */
+  protected readonly editorialReferences = computed<readonly GlossarySourceReference[]>(() =>
+    editorialSourcesFromProperty(this.ficha()?.properties?.['glossary-sources']),
+  );
+
+  protected sourceRoleLabel(role: GlossarySourceReference['role']): string {
+    switch (role) {
+      case 'concept_match':
+        return 'Correspondencia del concepto';
+      case 'related_context':
+        return 'Contexto relacionado; no es una equivalencia';
+      case 'editorial_reference':
+        return 'Referencia editorial';
+    }
+  }
+
   /**
    * Si la «definición» es la descripción breve de la comunidad de Wikidata
    * (anatomía): se dice, para que no pase por una definición clínica revisada.
@@ -310,6 +366,10 @@ export class GlossaryTerm {
   protected readonly resumen = computed(() => this.ficha()?.plainSummary?.text.trim() ?? '');
 
   protected readonly articulo = signal<GlossaryArticle | null>(null);
+  /** El artículo ya se pidió (llegó o falló): el PDF espera a saber si lo lleva. */
+  protected readonly articuloCargado = signal(false);
+  protected readonly pdfOcupado = signal(false);
+  protected readonly pdfError = signal('');
 
   protected readonly nombresAlternativos = computed(() =>
     (this.ficha()?.synonyms ?? []).map((sinonimo) => sinonimo.value),
@@ -427,14 +487,25 @@ export class GlossaryTerm {
 
     this.termino.set(loading());
     this.articulo.set(null);
+    this.articuloCargado.set(false);
+    this.pdfError.set('');
     this.pestana.set(0);
     this.ampliada.set(false);
 
     this.terminology.readGlossaryArticle(conceptId).subscribe({
       next: (article) => {
-        if (conceptId === this.conceptId()) this.articulo.set(article);
+        if (conceptId === this.conceptId()) {
+          this.articulo.set(article);
+          this.articuloCargado.set(true);
+        }
       },
-      error: () => this.articulo.set(null),
+      // El artículo es un complemento: si falla la lectura, la ficha sigue.
+      error: () => {
+        if (conceptId === this.conceptId()) {
+          this.articulo.set(null);
+          this.articuloCargado.set(true);
+        }
+      },
     });
 
     this.cargarRelaciones(conceptId);
@@ -448,6 +519,23 @@ export class GlossaryTerm {
         this.termino.set(errorToViewState<GlossaryTermDetail>(error));
       },
     });
+  }
+
+  /** Descarga la ficha como PDF, con su artículo si lo tiene, sus imágenes y sus fuentes. */
+  protected async descargarPdf(): Promise<void> {
+    const term = this.ficha();
+    if (term === null || !this.articuloCargado() || this.pdfOcupado()) return;
+    this.pdfOcupado.set(true);
+    this.pdfError.set('');
+    try {
+      await this.glossaryPdf.download(term, this.articulo());
+    } catch {
+      this.pdfError.set(
+        'No pudimos generar un PDF completo con las imágenes y sus fuentes. Vuelva a intentarlo.',
+      );
+    } finally {
+      this.pdfOcupado.set(false);
+    }
   }
 
   /**

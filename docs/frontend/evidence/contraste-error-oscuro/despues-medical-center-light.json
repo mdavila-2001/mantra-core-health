@@ -1,0 +1,27 @@
+{
+  "label": "despues",
+  "route": "/auth/register/medical-center",
+  "theme": "light",
+  "viewport": "1440x900",
+  "results": [
+    {
+      "sel": ".form-field-error",
+      "text": "Elija el tipo de institución.",
+      "computedColor": "rgb(111,56,44)",
+      "bg": "rgb(255,255,255)",
+      "computedRatio": 9.22,
+      "pixelColor": "rgb(111,56,44)",
+      "pixelRatio": 9.22
+    },
+    {
+      "sel": ".required-asterisk",
+      "text": "*",
+      "computedColor": "rgb(111,56,44)",
+      "bg": "rgb(255,255,255)",
+      "computedRatio": 9.22,
+      "pixelColor": "rgb(111,56,44)",
+      "pixelRatio": 9.22
+    }
+  ],
+  "pageErrors": []
+}

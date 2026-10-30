@@ -200,6 +200,7 @@
         label="Medicamento"
         hint="Busque por nombre o código. Es lo único obligatorio."
         [required]="true"
+        [errorMessage]="issueOf('medicationConceptId')"
       >
         <app-reference-combobox
           [(value)]="medicamento"

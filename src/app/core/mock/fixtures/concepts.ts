@@ -1363,6 +1363,9 @@ conjunto(
 );
 export const CORPORATE_TYPE = define('VS_LEGAL_ENTITY_TYPE', [
   ['UNIPERSONAL', 'Sole proprietorship'],
+  // Persona natural que ejerce con su NIT personal (consultorio): la API real lo
+  // acepta y el front lo ofrece, así que el simulador no puede rechazarlo.
+  ['PROFESIONAL_INDEPENDIENTE', 'Independent professional'],
   ['SRL', 'Limited liability company (S.R.L.)'],
   ['LTDA', 'Limited company (Ltda.)'],
   ['SA', 'Corporation (S.A.)'],

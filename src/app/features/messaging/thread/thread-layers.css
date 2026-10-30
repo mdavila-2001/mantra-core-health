@@ -413,3 +413,21 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* --- La etiqueta de la respuesta que redactó la IA ------------------------ */
+
+.hilo__etiqueta-ia {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  margin-block-end: 2px;
+  color: var(--tinta-marca);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+.hilo__etiqueta-ia svg {
+  flex: none;
+  inline-size: 14px;
+  block-size: 14px;
+}

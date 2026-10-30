@@ -1,4 +1,10 @@
-import { contenerLogo, establecerLogoDeDocumentos, logoDeDocumentos, prepararLogo } from './pdf-logo';
+import {
+  contenerLogo,
+  establecerLogoDeDocumentos,
+  logoDeDocumentos,
+  prepararImagenPdf,
+  prepararLogo,
+} from './pdf-logo';
 
 const CAJA = { ancho: 120, alto: 34 } as const;
 
@@ -68,5 +74,18 @@ describe('prepararLogo', () => {
     await vi.advanceTimersByTimeAsync(3500);
 
     await expect(listo).resolves.toBeNull();
+  });
+});
+
+describe('prepararImagenPdf', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('con una imagen ilegible devuelve null pasado el tope, sin rechazar', async () => {
+    vi.useFakeTimers();
+
+    const lista = prepararImagenPdf('data:image/png;base64,esto-no-es-una-imagen');
+    await vi.advanceTimersByTimeAsync(3500);
+
+    await expect(lista).resolves.toBeNull();
   });
 });

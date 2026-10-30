@@ -1,0 +1,59 @@
+H16 1440: 403 GET /patient-coverages/by-patient/:id → application/json; charset=utf-8 {"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"1fac6cda-e864-42fc-ad90-5280c8c18da8
+H16 1440: 403 GET /billing/invoices → application/json; charset=utf-8 {"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"629a8541-4a5a-4f4d-8df1-3a7662e56668
+H16 1440: 404 GET /billing/payments-received → application/json; charset=utf-8 {"code":"NOT_FOUND","message":"Cannot GET /billing/payments-received","correlationId":"5aa0fe6e-565b-474a-962a-a6781a78f
+H16 390: 403 GET /patient-coverages/by-patient/:id → application/json; charset=utf-8 {"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"a7041df4-a8ca-4ef1-9184-25d9dea166bf
+H16 390: 403 GET /billing/invoices → application/json; charset=utf-8 {"code":"FORBIDDEN","message":"Rol insuficiente para la operación","correlationId":"2bc6af72-b329-42fa-a012-566fb4726d73
+H16 390: 404 GET /billing/payments-received → application/json; charset=utf-8 {"code":"NOT_FOUND","message":"Cannot GET /billing/payments-received","correlationId":"b27d6ea4-78cc-41da-b982-3edf5820e
+[médica 1440] 200 GET /accounting/practitioner/simple/accounts
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/accounts
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/transactions
+H12 1440: aviso «no disponible»: 0
+[médica 1440] 201 POST /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+H12: 201 POST /accounting/practitioner/simple/records → {"id":"1782eb51-c5f8-41b4-bc88-4e06bdc5ed38","kind":"EXPENSE","date":"2026-10-28","accountId":"c6a17452-5a7a-414c-8581-79b928f0515f","description":"Guantes de e
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/records
+[médica 1440] 200 GET /accounting/practitioner/simple/accounts
+[médica 1440] 200 GET /accounting/practitioner/simple/transactions
+H12: tras recargar, el gasto sigue en la tabla
+[médica 1440] 200 GET /accounting/practitioner/simple/summary
+[médica 1440] 200 GET /accounting/practitioner/simple/accounts
+H12: Resumen · Pacientes atendidos0 en 0 consultas CobradoBs 0,00por consultas pagadas en el períodoPor cobrar a aseguradorasBs 0,00 a la fecha, en 0 solicitudes pendientes
+H12 390: aviso «no disponible»: 0
+H04 1440: «Comprobantes de pago Ana Pagada Prueba · jueves 29 de octubre, 09:00 Cerrar Estado del pago de la citaPagadaEl pago se registró sin comprobanteSe marcó a mano. Si el paciente sube un comprobante, va a aparecer acá. Marcar sin comprobante…» · controles «Marcar sin comprobante…»: 1
+H04 390: «Comprobantes de pago Ana Pagada Prueba · jueves 29 de octubre, 09:00 Cerrar Estado del pago de la citaPagadaEl pago se registró sin comprobanteSe marcó a mano. Si el paciente sube un comprobante, va a aparecer acá. Marcar sin comprobante…» · controles «Marcar sin comprobante…»: 1
+H04 sin pago: controles «Marcar sin comprobante…»: 1
+[médica 1440] 200 PUT /scheduling/bookings/0426d289-d1d3-491f-a228-a0d18cf4996b/payment-state
+H04: 200 PUT /scheduling/bookings/:id/payment-state → {"state":"PAID","label":"Pagada","conceptId":"bf7528a2-75cd-5412-aaba-27c486257463","insuranceUsed":false,"markedByUserI
+H04: en una sesión nueva (recarga), «Estado del pago de la citaPagada», «El pago se registró sin comprobante», controles «Marcar sin comprobante…»: 1
+[médica 1440] 403 GET /clinical/patients/66a49e22-282a-4e8c-b987-e27b9840fa43/summary
+H07 1440 ajena: texto del profesional: true; texto de pacientes: false; código de soporte: true; enlace → /medical-records/66a49e22-282a-4e8c-b987-e27b9840fa43/request-access
+H07 1440 inventado: texto del profesional: true; texto de pacientes: false; código de soporte: true; enlace → /medical-records/00000000-0000-4000-8000-000000000000/request-access
+H07: «Pedir acceso a su historia» abre /medical-records/:id/request-access
+[médica 1440] 200 GET /clinical/patients/fc920127-1ca9-4cd4-b44c-b3340560fa5b/summary
+H07: la paciente de la cita de hoy · «Panel/ … /Ana Pagada Prueba/ConsultaAna Pagada PruebaLo que se registra durante esta consulta. Ver expediente Ofrecer plan de pago Motivo de consulta 0 / 500 Má»
+H07 390 ajena: texto del profesional: true; texto de pacientes: false; código de soporte: true; enlace → /medical-records/66a49e22-282a-4e8c-b987-e27b9840fa43/request-access
+H07 390 inventado: texto del profesional: true; texto de pacientes: false; código de soporte: true; enlace → /medical-records/00000000-0000-4000-8000-000000000000/request-access
+paciente en la consulta: /dashboard · «Hoy es jueves 29 de octubre Buenas noches, Ana Cuéntenos qué le pasa y le decimos a quién ver. Más abajo, sus citas y su historia. Conozca A»
+paciente en contabilidad: /dashboard · «Hoy es jueves 29 de octubre Buenas noches, Ana Cuéntenos qué le pasa y le decimos a quién ver. Más abajo, sus citas y su historia. Conozca A»
+
+# 2026-10-29, segunda vuelta: H12 con un gasto creado a 390 px
+[médica 390] 200 GET /accounting/practitioner/simple/transactions
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/accounts
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+H12 390: aviso «no disponible»: 0
+[médica 390] 201 POST /accounting/practitioner/simple/records
+H12 390: 201 POST /accounting/practitioner/simple/records → {"id":"067dc2b5-e238-448e-8ebf-edd017e50ba8","kind":"EXPENSE","date":"2026-10-29","accountId":"c6a17452-5a7a-414c-8581-79b928f0515f","description":"Alcohol en g
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/records
+[médica 390] 200 GET /accounting/practitioner/simple/transactions
+[médica 390] 200 GET /accounting/practitioner/simple/accounts
+H12 390: tras recargar, el gasto sigue en la tabla

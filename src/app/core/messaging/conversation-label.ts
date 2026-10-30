@@ -1,4 +1,5 @@
 import type { ConversationListItem } from '../data-access/community/community.types';
+import { verificationOf, type VerificationInfo } from '../verification/verification-status';
 
 /**
  * Con quién es una conversación, en una línea.
@@ -30,4 +31,21 @@ export function conversationLabel(conversacion: ConversationListItem): string {
 export function conversationAvatar(conversacion: ConversationListItem): string | null {
   if (conversacion.peers.length !== 1) return null;
   return conversacion.peers[0].avatarUrl ?? null;
+}
+
+/**
+ * La verificación de con quién es una conversación, o `null`.
+ *
+ * Sólo en una directa y sólo si la API la envió en el `peer`: nunca se deriva
+ * de otra cosa, porque en la bandeja un check de más es decirle a alguien que
+ * le escribe a un profesional comprobado cuando no lo sabemos. Un grupo no
+ * tiene una identidad que verificar.
+ */
+export function conversationVerification(
+  conversacion: ConversationListItem,
+): VerificationInfo | null {
+  if (conversacion.peers.length !== 1) return null;
+  const peer = conversacion.peers[0];
+  if (peer.verification?.status == null) return null;
+  return verificationOf({ verification: peer.verification });
 }

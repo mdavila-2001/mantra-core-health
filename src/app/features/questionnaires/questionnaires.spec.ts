@@ -179,6 +179,14 @@ describe('SurveysHome · buscar, filtrar y los vacíos que no se confunden', () 
   describe('el filtro por estado', () => {
     beforeEach(() => responderListado(CATALOGO));
 
+    it('permite que las opciones pasen a otra fila en pantalla angosta, sin cortar su texto', () => {
+      expect(
+        buscar('[data-testid="encuestas-filtro-estado"] .segmentado')?.classList.contains(
+          'segmentado--envuelto',
+        ),
+      ).toBe(true);
+    });
+
     it('deja sólo el grupo elegido', () => {
       filtrarPor('DRAFT');
 

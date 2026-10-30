@@ -1,3 +1,5 @@
+import { verificationFromSeal } from '../../../../core/verification/verification-status';
+import { VerificationBadge } from '../../atoms/verification-badge/verification-badge';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { SpecialtyIcon } from '../../atoms/specialty-icon/specialty-icon';
@@ -71,7 +73,7 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  */
 @Component({
   selector: 'app-specialty-badge',
-  imports: [SpecialtyIcon, StatusSeal],
+  imports: [SpecialtyIcon, StatusSeal, VerificationBadge],
   templateUrl: './specialty-badge.html',
   styleUrl: './specialty-badge.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,4 +97,16 @@ export class SpecialtyBadge {
   protected readonly muestraSello = computed(
     () => this.sello() !== null && this.estado().trim() !== '',
   );
+
+  /**
+   * La verificación de la especialidad, para el átomo. Sólo cuando el servidor
+   * trajo un estado y éste dice algo: aprobada, en trámite o vencida. Un estado
+   * que no se pudo leer no se inventa como «Verificado».
+   */
+  protected readonly verificacion = computed(() =>
+    this.muestraSello() ? verificationFromSeal(this.sello()) : 'UNVERIFIED',
+  );
+
+  /** Un rechazo no es una verificación: sigue siendo el sello del trámite (el dueño lo necesita ver). */
+  protected readonly rechazada = computed(() => this.muestraSello() && this.sello() === 'rejected');
 }

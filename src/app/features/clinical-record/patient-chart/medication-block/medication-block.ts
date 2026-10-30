@@ -20,7 +20,7 @@ import {
 } from '../../../../core/data-access/terminology/terminology.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../../core/view-state/view-state';
+import { fieldIssueOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
@@ -575,8 +575,7 @@ export class MedicationBlock implements DraftBlock {
   private readonly recetaSinFirma = signal<PrescriptionInChart | null>(null);
 
   /**
-   * Si el último fallo vino de prescribir y no del ciclo de una receta ya
-   * cargada.
+   * Si el último fallo vino de prescribir y no del ciclo de una receta ya cargada.
    *
    * Existe porque `PRECONDITION_FAILED` cubre **dos cosas distintas**: emitir
    * sin firma o sobre algo que ya no es borrador —el ciclo—, y la indicación
@@ -585,6 +584,7 @@ export class MedicationBlock implements DraftBlock {
    * lado se recuerda de dónde salió en vez de leer el texto.
    */
   private readonly falloAlPrescribir = signal(false);
+  protected readonly issueOf = (field: string): string => fieldIssueOf(this.registro(), field);
 
   /**
    * La revisión de interacciones que **no se pudo hacer**, o `null`.

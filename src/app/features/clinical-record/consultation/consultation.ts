@@ -82,6 +82,7 @@ import {
 } from '../../quotations/quotations.routes';
 import { SIMULATED_AVAILABLE_INVOICING } from '../../billing/invoicing-availability';
 import { PaymentPlanPanel } from './payment-plan-panel/payment-plan-panel';
+import { consultationError } from './consultation-forbidden';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -826,11 +827,10 @@ export class Consultation {
           this.etiquetas.set(etiquetas);
           this.consulta.set(ready(datos));
         },
-        error: (error: unknown) => this.consulta.set(errorToViewState<Consulta>(error)),
+        error: (error: unknown) => this.consulta.set(consultationError<Consulta>(error, profileId)),
       });
   }
 
-  /** La etiqueta de un concepto, o el texto de ausencia. Nunca el uuid. */
   /**
    * El **código** de catálogo de un concepto, que es por lo que se ramifica.
    *

@@ -58,6 +58,11 @@ export class BranchBulkImport {
   readonly confirmVerb = input('Agregar');
   /** Aviso propio de la pantalla (por ejemplo, qué pasa con las que no traen punto). */
   readonly contextNote = input<string | null>(null);
+  /**
+   * El tope real de la pantalla que lo abre (un alta admite menos que un archivo).
+   * Sin él, el diálogo habla del tope del archivo, como siempre.
+   */
+  readonly maxSucursales = input<number | null>(null);
   /** Mientras quien la abrió persiste, el diálogo no se cierra ni se reenvía. */
   readonly pending = input(false);
   /**
@@ -76,6 +81,7 @@ export class BranchBulkImport {
   protected readonly columns = BRANCH_IMPORT_COLUMNS;
   protected readonly maxBytes = BRANCH_IMPORT_MAX_BYTES;
   protected readonly maxRows = BRANCH_IMPORT_MAX_ROWS;
+  protected readonly tope = computed(() => this.maxSucursales() ?? this.maxRows);
 
   protected readonly files = signal<readonly File[]>([]);
   protected readonly reading = signal(false);

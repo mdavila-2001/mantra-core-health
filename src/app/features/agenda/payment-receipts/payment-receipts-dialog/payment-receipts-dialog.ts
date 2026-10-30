@@ -111,6 +111,12 @@ export class PaymentReceiptsDialog implements OnInit {
     this.paymentStates.resolve(this.bookingId(), this.paymentState()),
   );
 
+  /** Pagada o pagada en parte: sin comprobantes, el pago se marcó a mano (H04). */
+  protected readonly paidWithoutReceipt = computed(() => {
+    const state = this.currentPaymentState()?.state;
+    return state === 'PAID' || state === 'PARTIALLY_PAID';
+  });
+
   protected readonly description = computed(() => {
     const startsAt = this.startsAt();
     return startsAt === null

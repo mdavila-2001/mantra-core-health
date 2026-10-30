@@ -36,8 +36,8 @@
 }
 
 /* Buscador y filtro en un renglón mientras entren; en pantalla angosta el
-   filtro baja entero, porque partir una fila de opciones excluyentes en dos
-   renglones desarma el control. */
+   filtro baja entero y sus opciones pasan a una segunda fila (`wrap`) antes que
+   cortar el texto de cada una. */
 .encuestas__barra {
   display: flex;
   flex-wrap: wrap;
@@ -56,7 +56,7 @@
   display: flex;
   flex: 0 1 auto;
   min-inline-size: 0;
-  overflow-x: auto;
+  max-inline-size: 100%;
 }
 
 .encuestas__recuento {

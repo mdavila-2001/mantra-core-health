@@ -85,6 +85,13 @@
   min-inline-size: 0;
 }
 
+.conversaciones__nombre-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  min-inline-size: 0;
+}
+
 .conversaciones__con-quien {
   overflow: hidden;
   text-overflow: ellipsis;

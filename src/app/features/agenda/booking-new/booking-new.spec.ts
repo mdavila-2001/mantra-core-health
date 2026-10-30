@@ -174,6 +174,36 @@ describe('BookingNew', () => {
     expect(estado.message).toContain('ya no está disponible');
   });
 
+  describe('FAC-01 · el precio de la consulta', () => {
+    const renglon = () =>
+      (harness.routeNativeElement as HTMLElement).querySelector<HTMLElement>(
+        '[data-testid="reserva-precio-consulta"]',
+      );
+
+    it('dice el precio que trae el turno', async () => {
+      await montar();
+      responderCupo([{ ...CUPO, price: { amount: 150, currencyCode: 'BOB' } }]);
+
+      expect(renglon()?.textContent).toContain('Precio de la consulta');
+      expect(renglon()?.textContent).toContain('150.00 Bs');
+    });
+
+    it('sin precio publicado lo dice, nunca «0,00»', async () => {
+      await montar();
+      responderCupo([{ ...CUPO, price: null }]);
+
+      expect(renglon()?.textContent).toContain('El consultorio todavía no publicó el precio');
+      expect(renglon()?.textContent).not.toContain('0');
+    });
+
+    it('si la API no manda el precio, el renglón no se dibuja', async () => {
+      await montar();
+      responderCupo();
+
+      expect(renglon()).toBeNull();
+    });
+  });
+
   it('sin paciente elegido no se retiene nada', async () => {
     await montar();
     responderCupo();

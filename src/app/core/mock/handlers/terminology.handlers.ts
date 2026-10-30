@@ -16,6 +16,7 @@ import {
 } from '../inline-glossary';
 import {
   AlmacenDeGlosario,
+  raicesEsperadasDelGlosario,
   idDeConjunto,
   idDeVersion,
   leerConFetch,
@@ -230,7 +231,7 @@ function campoDelFormulario(body: unknown, clave: string): string | null {
 
 export function registrarTerminologia(
   router: MockRouter,
-  glosario: AlmacenDeGlosario = new AlmacenDeGlosario(leerConFetch),
+  glosario: AlmacenDeGlosario = new AlmacenDeGlosario(leerConFetch, raicesEsperadasDelGlosario()),
 ): void {
   router.get('/terminology/value-sets/$glossary-facets', async () => {
     try {

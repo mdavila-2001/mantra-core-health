@@ -109,13 +109,27 @@
 
             <span class="conversaciones__texto">
               <span class="conversaciones__cabecera">
-                <span class="conversaciones__con-quien">
-                  @if (trozos(conversacion.id)[1]) {
-                    {{ trozos(conversacion.id)[0]
-                    }}<mark class="conversaciones__marca">{{ trozos(conversacion.id)[1] }}</mark
-                    >{{ trozos(conversacion.id)[2] }}
-                  } @else {
-                    {{ conQuien(conversacion) }}
+                <span class="conversaciones__nombre-fila">
+                  <span class="conversaciones__con-quien">
+                    @if (trozos(conversacion.id)[1]) {
+                      {{ trozos(conversacion.id)[0]
+                      }}<mark class="conversaciones__marca">{{ trozos(conversacion.id)[1] }}</mark
+                      >{{ trozos(conversacion.id)[2] }}
+                    } @else {
+                      {{ conQuien(conversacion) }}
+                    }
+                  </span>
+                  <!-- Dentro de un enlace no se anida un foco: sin tabstop, y el
+                       significado queda en el nombre accesible y en `title`. -->
+                  @if (verificacionDe(conversacion); as verificacion) {
+                    <app-verification-badge
+                      size="sm"
+                      [interactive]="false"
+                      [status]="verificacion.status"
+                      [verifiedAt]="verificacion.verifiedAt"
+                      [validUntil]="verificacion.validUntil"
+                      [subject]="conQuien(conversacion)"
+                    />
                   }
                 </span>
                 <span class="conversaciones__cuando">{{ hora(conversacion) }}</span>

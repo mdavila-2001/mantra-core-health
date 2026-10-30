@@ -1,0 +1,36 @@
+<app-page-header
+  title="Configuración para facturar"
+  subtitle="Lo que su práctica necesita para que cada pago llegue a la facturación y a la contabilidad."
+  [breadcrumbs]="breadcrumbs()"
+/>
+<div class="billing-setup" data-testid="billing-setup">
+  <app-view-state-host [state]="practices()" (retry)="load()">
+    @if (selectedPracticeId(); as practiceId) {
+      <app-card variant="elevated" padding="lg">
+        @if (practiceOptions().length > 1) {
+          <div class="billing-setup__practice">
+            <app-form-field label="Práctica">
+              <app-select
+                [options]="practiceOptions()"
+                [value]="practiceId"
+                (valueChange)="choosePractice($event)"
+                data-testid="billing-setup-practice"
+              />
+            </app-form-field>
+          </div>
+        }
+        <app-tabs [(selectedIndex)]="tab" data-testid="billing-setup-tabs">
+          <app-tab label="Ejercicio fiscal">
+            <app-fiscal-year-block [practiceId]="practiceId" [(yearDraft)]="yearDraft" />
+          </app-tab>
+          <app-tab label="Precio de la consulta">
+            <app-consultation-price-block [practiceId]="practiceId" [(priceDraft)]="priceDraft" />
+          </app-tab>
+          <app-tab label="Emisor de facturas">
+            <app-invoice-issuer-block />
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  </app-view-state-host>
+</div>

@@ -1,0 +1,42 @@
+<app-page-header
+  title="Catálogo"
+  subtitle="Productos, categorías, precios, inventario e importación de su farmacia, en una sola pantalla."
+/>
+
+<!-- UNA tarjeta con pestañas, a lo ancho y centrada: la regla de la casa
+     (`docs/components/composition-rules.md` §5). Cada pantalla se monta sólo
+     mientras su pestaña está abierta. -->
+<app-card padding="lg" class="catalog__card" data-testid="pharmacy-catalog-card">
+  <app-tabs
+    appearance="browser"
+    [selectedIndex]="selected()"
+    (selectedIndexChange)="select($event)"
+    data-testid="pharmacy-catalog-tabs"
+  >
+    <app-tab [label]="labels[tabs[0]]">
+      @if (selected() === 0) {
+        <app-pharmacy-products [embedded]="true" />
+      }
+    </app-tab>
+    <app-tab [label]="labels[tabs[1]]">
+      @if (selected() === 1) {
+        <app-pharmacy-categories [embedded]="true" />
+      }
+    </app-tab>
+    <app-tab [label]="labels[tabs[2]]">
+      @if (selected() === 2) {
+        <app-pharmacy-prices [embedded]="true" />
+      }
+    </app-tab>
+    <app-tab [label]="labels[tabs[3]]">
+      @if (selected() === 3) {
+        <app-pharmacy-inventory [embedded]="true" />
+      }
+    </app-tab>
+    <app-tab [label]="labels[tabs[4]]">
+      @if (selected() === 4) {
+        <app-pharmacy-import [embedded]="true" />
+      }
+    </app-tab>
+  </app-tabs>
+</app-card>
