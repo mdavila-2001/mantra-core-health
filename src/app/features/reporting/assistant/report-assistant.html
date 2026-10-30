@@ -1,8 +1,8 @@
 <section class="asistente" aria-label="Asistente de reportes">
   <p class="asistente__nota">
     <app-badge variant="warning" size="sm">Respuestas de ejemplo</app-badge>
-    Busco en el catálogo la medida que más se parece a tu pregunta; no entiendo cualquier frase.
-    Las cifras son datos de ejemplo y salen del mismo reporte que ves en pantalla.
+    Busco en el catálogo la medida que más se parece a su pregunta; no entiendo cualquier frase.
+    Las cifras son datos de ejemplo y salen del mismo reporte que ve en pantalla.
   </p>
 
   <div
@@ -18,7 +18,7 @@
     @if (!hayMensajes()) {
       <div class="asistente__inicio">
         <p class="asistente__inicio-texto">
-          Pregunta por una medida de tus reportes y te digo su valor, qué significa y dónde verla. Prueba con
+          Pregunte por una medida de sus reportes y le digo su valor, qué significa y dónde verla. Pruebe con
           una de estas:
         </p>
         <ul class="asistente__sugerencias" aria-label="Preguntas sugeridas">
@@ -44,7 +44,7 @@
     @for (mensaje of mensajes(); track mensaje.id) {
       @if (mensaje.rol === 'usuario') {
         <div class="msg msg--usuario" data-mensaje>
-          <p class="msg__autor">Tú</p>
+          <p class="msg__autor">Usted</p>
           <p class="msg__texto">{{ mensaje.texto }}</p>
         </div>
       } @else {
@@ -162,7 +162,7 @@
             }
 
             @case ('sin-pregunta') {
-              <p class="msg__texto">No vi ninguna pregunta. Escribe una medida, por ejemplo «MRR».</p>
+              <p class="msg__texto">No vi ninguna pregunta. Escriba una medida, por ejemplo «MRR».</p>
             }
 
             @case ('catalogo-vacio') {
@@ -210,7 +210,7 @@
     @if (respondiendo()) {
       <p class="asistente__buscando">
         <app-spinner size="sm" decorative />
-        Buscando en tus reportes…
+        Buscando en sus reportes…
       </p>
     }
   </div>
@@ -218,7 +218,7 @@
   <div class="asistente__entrada">
     <div class="asistente__campo">
       <app-input
-        ariaLabel="Escribe tu pregunta sobre los reportes"
+        ariaLabel="Escriba su pregunta sobre los reportes"
         placeholder="Ej.: ¿cuál es el churn?"
         autocomplete="off"
         [value]="borrador()"
@@ -240,7 +240,7 @@
     @if (avisoEntrada()) {
       {{ avisoEntrada() }}
     } @else {
-      Enter envía tu pregunta.
+      Enter envía su pregunta.
     }
   </p>
 
