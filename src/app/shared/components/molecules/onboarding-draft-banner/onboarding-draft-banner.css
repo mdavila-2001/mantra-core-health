@@ -11,7 +11,7 @@
   font-size: var(--fs-body, 0.875rem);
   line-height: var(--lh-body, 1.4);
   margin-bottom: var(--sp-4, 1rem);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .onboarding-draft-banner__icon {
@@ -29,7 +29,7 @@
   gap: var(--sp-2, 0.5rem);
 }
 
-@media (min-width: 640px) {
+@media (min-width: 780px) {
   .onboarding-draft-banner__content {
     flex-direction: row;
     align-items: center;
@@ -62,8 +62,18 @@
   margin-top: var(--sp-1, 0.25rem);
 }
 
-@media (min-width: 640px) {
+/* En móvil cada botón ocupa su línea completa y queda alineado al texto. */
+.onboarding-draft-banner__actions > * {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+@media (min-width: 780px) {
   .onboarding-draft-banner__actions {
     margin-top: 0;
+  }
+
+  .onboarding-draft-banner__actions > * {
+    flex: 0 0 auto;
   }
 }
