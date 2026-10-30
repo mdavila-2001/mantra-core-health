@@ -34,6 +34,30 @@ export const ROLES_DE_GESTION: readonly string[] = [
 ];
 
 /**
+ * Roles **administrativos de negocio**: no son de la plataforma, pero tampoco
+ * son uso personal de la app —quien administra agenda, pagos o facturación no
+ * por eso tiene «Mis citas»—. Se toleran junto a un rol de plataforma sin que
+ * la sesión deje de ser de gestión: la cuenta de pruebas de administración los
+ * junta casi todos, y la de producción puede juntar algunos.
+ */
+const ROLES_ADMINISTRATIVOS: readonly string[] = [
+  'SCHEDULING_ADMIN',
+  'IDENTITY_ADMIN',
+  'BUSINESS_ADMIN',
+  'PAYMENTS_ADMIN',
+  'PHARMA_LAB_ADMIN',
+  'ACCOUNTING_APPROVER',
+  'BILLING',
+  'BILLING_OPERATOR',
+  'FINANCE',
+  'CASHIER',
+  'PERIOP_ADMIN',
+  'CLINICAL_INFORMATICIAN',
+  'ADMISSIONS_REVIEWER',
+  'ADMISSIONS_APPROVER',
+];
+
+/**
  * Roles que no dicen nada del uso que se le da a la app: `USER` es el rol base de
  * toda cuenta (ver `role-labels.ts`).
  */
@@ -71,14 +95,19 @@ const RUTAS_DE_GESTION: ReadonlySet<string> = new Set([
 /**
  * Si esta sesión es **sólo** de gestión de la plataforma.
  *
- * Alcanza con que tenga un rol ajeno —paciente, profesional, facturación, un
- * clínico— para que conserve su menú completo: quitarle «Mis citas» a quien
+ * Alcanza con que tenga un rol ajeno —paciente, profesional, un clínico— para
+ * que conserve su menú completo: quitarle «Mis citas» a quien
  * también las usa sería perder acceso, y esto no es una limpieza de permisos.
  */
 export function esPerfilDeGestion(roles: readonly string[]): boolean {
   return (
     roles.some((rol) => ROLES_DE_GESTION.includes(rol)) &&
-    roles.every((rol) => ROLES_DE_GESTION.includes(rol) || ROLES_NEUTROS.includes(rol))
+    roles.every(
+      (rol) =>
+        ROLES_DE_GESTION.includes(rol) ||
+        ROLES_ADMINISTRATIVOS.includes(rol) ||
+        ROLES_NEUTROS.includes(rol),
+    )
   );
 }
 
