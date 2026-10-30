@@ -45,12 +45,12 @@ export function sanitizeUrl(url: string): string {
   const [withoutQuery = ''] = withoutFragment.split('?');
 
   if (!withoutQuery.includes('://')) {
-    return withoutQuery === '' ? '/' : withoutQuery;
+    return withoutQuery === '' ? '/' : redactPathTokens(withoutQuery);
   }
 
   try {
     // `usuario:contraseña@` no sobrevive: `pathname` no lo incluye.
-    return new URL(withoutQuery).pathname;
+    return redactPathTokens(new URL(withoutQuery).pathname);
   } catch {
     // Una URL que no se puede analizar no se adivina: se descarta entera. Un
     // recorte a mano de algo con forma desconocida es cómo se filtra un token.
@@ -114,3 +114,36 @@ export function apiRouteTemplate(url: string): string {
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Los segmentos detrás de los cuales la **ruta** lleva una credencial: el
+ * token del enlace de una receta compartida (FAR-01), que abre la receta a
+ * una farmacia con sesión.
+ *
+ * - API: `/public/prescription-shares/<token>`,
+ *   `/clinical/prescription-shares/by-token/<token>` y
+ *   `/pharmacy/prescription-shares/<token>`;
+ * - front: `/rx/<token>` y `/administration/pharmacy-orders/rx/<token>`.
+ *
+ * Un uuid detrás de esos segmentos no es el token (que es base64url de 43
+ * caracteres) sino un id —el `shareId` de revocar, la receta de
+ * `/verify/rx/:id`— y sigue el camino de siempre.
+ */
+const TOKEN_PREFIXES: ReadonlySet<string> = new Set(['prescription-shares', 'by-token', 'rx']);
+
+/** Reemplaza por `:token` el segmento que sigue a un {@link TOKEN_PREFIXES}. */
+function redactPathTokens(path: string): string {
+  const segments = path.split('/');
+  return segments
+    .map((segment, index) => {
+      const previous = segments[index - 1]?.toLowerCase();
+      const isToken =
+        previous !== undefined &&
+        TOKEN_PREFIXES.has(previous) &&
+        segment !== '' &&
+        segment.toLowerCase() !== 'by-token' &&
+        !UUID.test(segment);
+      return isToken ? ':token' : segment;
+    })
+    .join('/');
+}

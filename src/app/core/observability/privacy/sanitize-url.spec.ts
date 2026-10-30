@@ -66,6 +66,60 @@ describe('apiRouteTemplate', () => {
   });
 });
 
+/**
+ * El token del enlace de una receta compartida (FAR-01) viaja en la **ruta**,
+ * no en el query: abre la receta a una farmacia con sesión. No puede llegar a
+ * `url.path`, a `app.api.route.template` ni a la plantilla del Router.
+ */
+describe('el token de la receta compartida', () => {
+  const TOKEN = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
+
+  it('se redacta en la vista pública de la API', () => {
+    expect(sanitizeUrl(`/public/prescription-shares/${TOKEN}`)).toBe('/public/prescription-shares/:token');
+    expect(apiRouteTemplate(`/public/prescription-shares/${TOKEN}`)).toBe(
+      '/public/prescription-shares/:token',
+    );
+  });
+
+  it('se redacta detrás de by-token, sin tocar el segmento by-token', () => {
+    expect(sanitizeUrl(`https://api.example.test/clinical/prescription-shares/by-token/${TOKEN}`)).toBe(
+      '/clinical/prescription-shares/by-token/:token',
+    );
+    expect(apiRouteTemplate(`/clinical/prescription-shares/by-token/${TOKEN}`)).toBe(
+      '/clinical/prescription-shares/by-token/:token',
+    );
+  });
+
+  it('sin distinguir mayúsculas de minúsculas', () => {
+    expect(sanitizeUrl(`/Pharmacy/Prescription-Shares/${TOKEN}`)).toBe('/Pharmacy/Prescription-Shares/:token');
+    expect(sanitizeUrl(`/clinical/prescription-shares/BY-TOKEN/${TOKEN}`)).toBe(
+      '/clinical/prescription-shares/BY-TOKEN/:token',
+    );
+  });
+
+  it('se redacta en las rutas del front que lo llevan', () => {
+    expect(sanitizeUrl(`/rx/${TOKEN}?utm=x`)).toBe('/rx/:token');
+    expect(sanitizeUrl(`/administration/pharmacy-orders/rx/${TOKEN}`)).toBe(
+      '/administration/pharmacy-orders/rx/:token',
+    );
+  });
+
+  it('un uuid detrás de esos segmentos es un id, no el token', () => {
+    const id = '0b9d3f4e-1a2b-4c3d-8e9f-001122334455';
+    expect(apiRouteTemplate(`/clinical/prescription-shares/${id}/revoke`)).toBe(
+      '/clinical/prescription-shares/:id/revoke',
+    );
+    expect(sanitizeUrl(`/verify/rx/${id}`)).toBe(`/verify/rx/${id}`);
+  });
+
+  it('no cambia la lista ni el resto de las rutas', () => {
+    expect(sanitizeUrl('/clinical/prescription-shares?patientProfileId=pp-1')).toBe(
+      '/clinical/prescription-shares',
+    );
+    expect(sanitizeUrl('/my-account/pharmacy/prescriptions')).toBe('/my-account/pharmacy/prescriptions');
+  });
+});
+
 describe('hostOf y schemeOf', () => {
   it('no ponen nada para una ruta relativa: el mismo origen no aporta información', () => {
     expect(hostOf('/iam/auth/login')).toBeNull();
