@@ -416,7 +416,7 @@ function nombreDeCategoriaInvalido() {
  */
 const STOCK_SIN_CONTEO = null;
 
-const productos = new Coleccion<ProductoSimulado>(
+export const productos = new Coleccion<ProductoSimulado>(
   FARMACIAS.flatMap((f, fi) =>
     Object.entries(MEDICAMENTO).map(([code, conceptId], i) => {
       const display = displayOf(conceptId);
