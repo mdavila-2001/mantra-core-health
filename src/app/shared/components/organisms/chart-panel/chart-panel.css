@@ -77,3 +77,6 @@
 
 .gp__contrato { padding: var(--sp-3); border: 1px solid var(--st-error-bd); border-radius: var(--r-md); background: var(--st-error-bg); color: var(--st-error-fg); font-size: var(--fs-caption); }
 .gp__contrato ul { margin: var(--sp-1) 0 0; padding-left: var(--sp-4); }
+
+.gp__tabla-pista { display: none; margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+@media (max-width: 780px) { .gp__tabla-pista { display: block; } }
