@@ -100,7 +100,7 @@ export class AppUsagePage {
   });
 
   protected readonly cohort = computed(() => {
-    const cohorts = buildCohorts(selectFacts({ campaignIds: ['reg-oct', 'esp-sep', 'tel-oct', 'far-ago'], channels: CHANNELS, range: { from: addDays(this.range().to, -62), to: this.range().to } }));
+    const cohorts = buildCohorts(selectFacts({ campaignIds: ['c1', 'c2', 'c3', 'c4'], channels: CHANNELS, range: { from: addDays(this.range().to, -62), to: this.range().to } }));
     return {
       rows: cohorts.map((c) => `Sem. ${shortDate(c.weekStart)}`),
       meta: cohorts.map((c) => formatInt(c.size)),

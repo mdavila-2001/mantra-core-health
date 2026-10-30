@@ -62,4 +62,4 @@ export function longDate(iso: string): string {
 }
 
 /** Día «de hoy» del prototipo. Fijo para que los datos y las pruebas no dependan del reloj. */
-export const PROTOTYPE_TODAY = '2026-10-30';
+export const PROTOTYPE_TODAY = '2026-10-29';
