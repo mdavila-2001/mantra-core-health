@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -69,6 +70,7 @@ export class ReportAssistant {
   private readonly session = inject(SessionStore);
   private readonly injector = inject(Injector);
   private readonly anfitrion = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly documento = inject(DOCUMENT);
   private readonly registro = viewChild<ElementRef<HTMLElement>>('registro');
 
   protected readonly sugerenciasIniciales = SUGERENCIAS_INICIALES;
@@ -86,7 +88,22 @@ export class ReportAssistant {
   constructor() {
     // Leer el almacenamiento al montar, no al construir: en el servidor no
     // existe y en el cliente cambiaría el HTML que ya se hidrató.
-    afterNextRender(() => this.historial.set(leerHistorial(this.session.userId())));
+    afterNextRender(() => {
+      this.historial.set(leerHistorial(this.session.userId()));
+      // El panel se monta con `@defer` DESPUÉS de que el portal ya abrió y mandó el foco al contenedor: sin
+      // esto, la primera vez el foco se queda ahí y quien teclea tiene que buscar el campo. Solo se toma si
+      // el foco no está en otra parte (otro campo, otro control): un asistente que carga tarde no roba el foco.
+      const activo = this.documento.activeElement;
+      const ocioso =
+        activo === null ||
+        activo === this.documento.body ||
+        this.anfitrion.nativeElement.contains(activo) ||
+        activo.closest('#reporting-asistente') !== null ||
+        activo.getAttribute('data-testid') === 'reporting-asistente-boton';
+      if (ocioso) {
+        this.focus();
+      }
+    });
   }
 
   /** Lleva el foco a la caja de la pregunta (el portal lo usa al abrir el panel). */

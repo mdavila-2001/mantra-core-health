@@ -439,7 +439,9 @@ test('autorización negativa · una cuenta sin reportería no entra al portal', 
 
 const ejecutadas: string[] = [];
 
-test.afterEach((_fixtures, info) => {
+// Playwright exige el patrón de desestructuración aunque no se pida ninguna fixture (pedir `page` abriría otra página).
+// eslint-disable-next-line no-empty-pattern
+test.afterEach(({}, info) => {
   ejecutadas.push(`${info.title} → ${info.status}`);
 });
 

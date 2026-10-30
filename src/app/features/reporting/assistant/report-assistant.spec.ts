@@ -1,3 +1,4 @@
+import { afterEach } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -53,14 +54,21 @@ describe('ReportAssistant', () => {
   let pedir: ReturnType<typeof vi.fn>;
   let datos: Map<VerticalReporte, PestanaReporte>;
 
-  async function montar(impl?: (v: VerticalReporte) => Observable<PestanaReporte>): Promise<void> {
+  async function montar(
+    impl?: (v: VerticalReporte) => Observable<PestanaReporte>,
+    /** Corre justo antes de montar el asistente: sirve para poner el foco en otro sitio. */
+    antes?: () => void,
+  ): Promise<void> {
     datos = buildTestData();
     pedir = vi.fn((v: VerticalReporte) => (impl ? impl(v) : of(datos.get(v) as PestanaReporte)));
     await TestBed.configureTestingModule({
       imports: [ReportAssistant],
       providers: [provideRouter([]), { provide: ReportingClient, useValue: { pestana: pedir } }],
     }).compileComponents();
+    antes?.();
     fixture = TestBed.createComponent(ReportAssistant);
+    // En el documento de verdad: `focus()` no hace nada sobre un elemento desconectado.
+    document.body.appendChild(fixture.nativeElement as HTMLElement);
     fixture.detectChanges();
     await fixture.whenStable();
   }
@@ -104,7 +112,7 @@ describe('ReportAssistant', () => {
   });
 
   describe('vacío con sugerencias', () => {
-    beforeEach(montar.bind(null, undefined));
+    beforeEach(async () => montar());
 
     it('dice que las respuestas son de ejemplo', () => {
       expect(texto()).toContain('Respuestas de ejemplo');
@@ -140,7 +148,7 @@ describe('ReportAssistant', () => {
   });
 
   describe('responder', () => {
-    beforeEach(montar.bind(null, undefined));
+    beforeEach(async () => montar());
 
     it('cita el mismo número que el KPI, con definición, fuente, frescura y variación', async () => {
       await preguntar('¿Cuál es el MRR?');
@@ -214,7 +222,7 @@ describe('ReportAssistant', () => {
   });
 
   describe('medidas que no se pueden contestar', () => {
-    beforeEach(montar.bind(null, undefined));
+    beforeEach(async () => montar());
 
     it('una medida inexistente se dice y sugiere tres cercanas que se pueden pulsar', async () => {
       await preguntar('cuál es el NPS');
@@ -343,7 +351,7 @@ describe('ReportAssistant', () => {
   });
 
   describe('historial', () => {
-    beforeEach(montar.bind(null, undefined));
+    beforeEach(async () => montar());
 
     it('recuerda las preguntas, las ofrece de nuevo y se puede borrar', async () => {
       await preguntar('mrr');
@@ -384,6 +392,30 @@ describe('ReportAssistant', () => {
       globalThis.sessionStorage.setItem('alovida:reportes:asistente:historial:anonymous', JSON.stringify(['cac', 'mrr']));
       await montar();
       await esperar(() => texto().includes('Preguntas recientes (2)'));
+    });
+  });
+
+  describe('el foco al montarse (el panel carga con @defer después de abrirse)', () => {
+    afterEach(() => {
+      (fixture.nativeElement as HTMLElement).remove();
+      document.querySelectorAll('[data-test-otro]').forEach((e) => e.remove());
+    });
+
+    it('con el foco ocioso, lleva el foco al campo de la pregunta', async () => {
+      await montar();
+      expect(document.activeElement).toBe(raiz().querySelector('input.native-input'));
+    });
+
+    it('no le roba el foco a otro campo en el que la persona ya estaba escribiendo', async () => {
+      let otro: HTMLInputElement | null = null;
+      await montar(undefined, () => {
+        otro = document.createElement('input');
+        otro.setAttribute('data-test-otro', '');
+        document.body.appendChild(otro);
+        otro.focus();
+      });
+      expect(document.activeElement).toBe(otro);
+      expect(document.activeElement).not.toBe(raiz().querySelector('input.native-input'));
     });
   });
 });
