@@ -152,6 +152,7 @@ function construirCartesiano(
     };
   });
 
+  const sinDato = new Set(d.categorias.filter((_, i) => d.series.every((s) => s.valores[i] === null || s.valores[i] === undefined)));
   const categoria = {
     type: 'category',
     data: d.categorias,
@@ -161,8 +162,13 @@ function construirCartesiano(
       color: tema.textoSuave,
       hideOverlap: true,
       ...(d.categorias.length <= 12 ? { interval: 0 } : {}),
-      // Entre 4 y 12 categorías en el eje horizontal los nombres largos se parten en vez de taparse.
-      ...(!horizontal && d.categorias.length >= 4 && d.categorias.length <= 12 ? { width: 84, overflow: 'break' } : {}),
+      // Entre 4 y 12 categorías en el eje horizontal los nombres largos se parten en vez de taparse:
+      // el ancho de cada nombre es lo que le toca de un panel de media columna (~330 px).
+      ...(!horizontal && d.categorias.length >= 4 && d.categorias.length <= 12
+        ? { width: Math.max(44, Math.min(96, Math.floor(330 / d.categorias.length))), overflow: 'break' }
+        : {}),
+      // Una categoría sin ningún valor no dibuja barra: el eje lo dice en vez de hacerla desaparecer.
+      formatter: (nombre: string) => (sinDato.has(nombre) ? `${nombre}\n(sin dato)` : nombre),
     },
     axisTick: { alignWithLabel: true },
   };
@@ -170,6 +176,8 @@ function construirCartesiano(
     type: 'value',
     // Una línea no necesita el cero: con el eje desde 0 una serie que se mueve 10 % queda plana.
     scale: d.series.every((s) => s.forma === 'linea'),
+    // En porcentajes, un eje que se aclara a 0,05 repetiría «1,9 % · 1,9 % · 1,8 %…» con un decimal.
+    ...(spec.unidad.tipo === 'porcentaje' ? { minInterval: 0.1 } : {}),
     splitLine: { lineStyle: { color: tema.rejilla } },
     axisLabel: {
       color: tema.textoSuave,
@@ -246,6 +254,8 @@ function construirPartes(
             bottom: 64,
             sort: 'none',
             gap: 3,
+            // Una etapa que es el 0,04 % de la anterior no puede quedar en una astilla sin forma.
+            minSize: '14%',
             label: {
               show: true,
               position: 'right',
@@ -253,7 +263,7 @@ function construirPartes(
               lineHeight: 16,
               formatter: (p: ParamEje) => `${p.name ?? ''}\n${formatearValor(readValue(p), spec.unidad, true)}`,
             },
-            labelLine: { show: true, length: 14, lineStyle: { color: tema.linea } },
+            labelLine: { show: true, length: 24, lineStyle: { color: tema.linea } },
             data: datos,
           }
         : {
@@ -292,7 +302,7 @@ function construirMapaCalor(
       bottom: 4,
       itemWidth: 12,
       itemHeight: 160,
-      text: [formatearValor(max, spec.unidad), formatearValor(min, spec.unidad)],
+      text: [formatearValor(max, spec.unidad, true), formatearValor(min, spec.unidad, true)],
       textStyle: { color: tema.texto },
       inRange: { color: [...tema.rampa] },
     },
@@ -440,7 +450,15 @@ function construirCascada(
     arr.map((v, i) => (v === null ? null : idxSel >= 0 && i !== idxSel ? { value: v, itemStyle: { opacity: 0.35 } } : v));
   return {
     ...base(tema),
-    legend: leyenda(tema, ['Aumento', 'Disminución', 'Total']),
+    // Solo las series que existen: «Aumento» en la leyenda de un puente que solo baja no significa nada.
+    legend: leyenda(
+      tema,
+      [
+        ['Aumento', sube],
+        ['Disminución', baja],
+        ['Total', total],
+      ].flatMap(([nombre, valores]) => ((valores as (number | null)[]).some((v) => v !== null) ? [nombre as string] : [])),
+    ),
     tooltip: {
       ...tooltipBase(tema),
       trigger: 'axis',
@@ -454,7 +472,9 @@ function construirCascada(
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
     xAxis: { type: 'category', data: nombres, axisLabel: { color: tema.textoSuave, interval: 0, width: 96, overflow: 'break' }, axisLine: { lineStyle: { color: tema.linea } } },
-    yAxis: { type: 'value', splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
+    // Con el eje desde cero las variaciones (1–5 % del total) quedan como rayitas: el eje arranca
+    // cerca del mínimo para que cada paso se lea, y el borde inferior no pretende ser el cero.
+    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
     series: [
       { name: 'Base', type: 'bar', stack: 'cascada', silent: true, itemStyle: { color: 'transparent' }, data: base0, tooltip: { show: false } },
       { name: 'Aumento', type: 'bar', stack: 'cascada', data: withOpacity(sube), itemStyle: { color: tema.bueno }, barMaxWidth: 40 },
@@ -517,13 +537,13 @@ function construirVelas(o: OpcionesBuild): EChartsCoreOption {
  * unos sobre otros: ECharts decide por el ancho real del lienzo (`media`), no por la ventana,
  * así que sigue valiendo dentro de un panel estrecho en una pantalla grande.
  */
-function conMovil(option: EChartsCoreOption): EChartsCoreOption {
+function conMovil(option: EChartsCoreOption, angosto?: Record<string, unknown>): EChartsCoreOption {
   return {
     baseOption: option,
     media: [
       {
         query: { maxWidth: 520 },
-        option: {
+        option: angosto ?? {
           xAxis: { axisLabel: { rotate: 35, width: 160, overflow: 'none', hideOverlap: false } },
           grid: { left: 28, bottom: 84 },
         },
@@ -546,7 +566,8 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
     case 'partes':
       return construirPartes(o, d);
     case 'mapa-calor':
-      return construirMapaCalor(o, d);
+      // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
+      return conMovil(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
     case 'medidor':
       return construirMedidor(o, d);
     case 'cascada':

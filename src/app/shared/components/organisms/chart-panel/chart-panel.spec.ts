@@ -98,6 +98,13 @@ describe('ChartPanel · menú Más', () => {
     expect(m.item('Ocultar la tabla de datos')).toBeTruthy();
   });
 
+  it('al abrir el menú el foco entra en la primera opción (sin zone.js se espera al render)', async () => {
+    const m = await mount();
+    m.byId('chart-more')?.click();
+    await m.fixture.whenStable();
+    expect(document.activeElement).toBe(m.item('Ver en grande'));
+  });
+
   it('Escape cierra el menú', async () => {
     const m = await mount();
     await openMenu(m);
@@ -106,5 +113,28 @@ describe('ChartPanel · menú Más', () => {
       ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     await m.fixture.whenStable();
     expect(m.root.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  describe('lo que el gráfico no trae, dicho por escrito', () => {
+    it('muestra el motivo de no tener velas y el de no tener explicación de cálculo', async () => {
+      const fixture = TestBed.createComponent(ChartPanel);
+      fixture.componentRef.setInput('spec', { ...SPEC, info: null, infoMotivo: 'Es un dato de ejemplo.' });
+      await fixture.whenStable();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('[data-testid="chart-no-candles"]')?.textContent).toContain(SPEC.velasMotivo);
+      expect(root.querySelector('[data-testid="chart-no-info"]')?.textContent).toContain('Es un dato de ejemplo.');
+    });
+
+    it('no escribe ninguno de los dos motivos cuando el gráfico sí trae la función', async () => {
+      const m = await mount();
+      expect(m.byId('chart-no-info')).toBeNull();
+      const conVelas = TestBed.createComponent(ChartPanel);
+      conVelas.componentRef.setInput('spec', {
+        ...SPEC,
+        velas: { explicacion: 'e', velas: [{ fecha: '2026-10-01', apertura: 1, cierre: 2, minimo: 1, maximo: 2 }] },
+      });
+      await conVelas.whenStable();
+      expect((conVelas.nativeElement as HTMLElement).querySelector('[data-testid="chart-no-candles"]')).toBeNull();
+    });
   });
 });

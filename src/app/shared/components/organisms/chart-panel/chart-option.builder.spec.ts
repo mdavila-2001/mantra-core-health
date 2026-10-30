@@ -238,3 +238,41 @@ describe('filtro por serie en el constructor', () => {
     expect(o.series.find((s) => s.name === 'Pro')?.itemStyle).toBeUndefined();
   });
 });
+
+describe('correcciones de lectura (revisión visual)', () => {
+  it('la cascada arranca el eje cerca del mínimo y solo lista las series que existen', () => {
+    media({});
+    const o = build({ tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 100, total: true }, { nombre: 'Baja', valor: -5 }, { nombre: 'Fin', valor: 95, total: true }] });
+    expect(at(o, 'yAxis.scale')).toBe(true);
+    expect(at(o, 'legend.data')).toEqual(['Disminución', 'Total']);
+  });
+
+  it('un embudo con etapas desproporcionadas no deja astillas: cada etapa tiene un tamaño mínimo', () => {
+    media({});
+    const o = build({ tipo: 'partes', forma: 'embudo', partes: [{ nombre: 'Impresiones', valor: 4_800_000 }, { nombre: 'Citas', valor: 1900 }] });
+    expect(at(o, 'series.0.minSize')).toBe('14%');
+  });
+
+  it('un eje de porcentajes no repite marcas: el intervalo mínimo es 0,1', () => {
+    media({});
+    const base = { tipo: 'cartesiano', categorias: ['A', 'B'], series: [{ nombre: 'S', valores: [1.81, 1.79], forma: 'linea' }] } as const;
+    const pct = construirOpciones({ spec: { ...spec(base), unidad: { tipo: 'porcentaje' } }, tema: TEMA, modo: 'normal', seleccion: null });
+    expect(at(pct, 'yAxis.minInterval')).toBe(0.1);
+    expect(at(build(base), 'yAxis.minInterval')).toBeUndefined();
+  });
+
+  it('una categoría sin ningún valor lo dice en el eje: «Sin dato» en vez de una barra que desaparece', () => {
+    media({});
+    const o = build({ tipo: 'cartesiano', categorias: ['Con dato', 'Sin nada'], series: [{ nombre: 'S', valores: [5, null], forma: 'barra' }] });
+    const formatter = at(o, 'xAxis.axisLabel.formatter') as (v: string) => string;
+    expect(formatter('Sin nada')).toBe('Sin nada\n(sin dato)');
+    expect(formatter('Con dato')).toBe('Con dato');
+  });
+
+  it('un mapa de calor oculta las cifras de las celdas en un lienzo angosto', () => {
+    media({});
+    const raw = buildRaw({ tipo: 'mapa-calor', filas: ['F'], columnas: ['A', 'B'], celdas: [[0, 0, 1], [1, 0, 2]], nombreValor: 'V' });
+    expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
+    expect(at(raw, 'media.0.option.series.0.label.show')).toBe(false);
+  });
+});

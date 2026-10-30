@@ -6,6 +6,8 @@ import {
   GridComponent,
   LegendComponent,
   MarkLineComponent,
+  // `construirOpciones` usa `baseOption` + `media` (lienzo angosto): ECharts exige el componente de línea de tiempo.
+  TimelineComponent,
   TooltipComponent,
   VisualMapComponent,
 } from 'echarts/components';
@@ -35,6 +37,7 @@ export function registrarEcharts(): typeof echartsCore {
       GridComponent,
       LegendComponent,
       MarkLineComponent,
+      TimelineComponent,
       TooltipComponent,
       VisualMapComponent,
       SVGRenderer,
