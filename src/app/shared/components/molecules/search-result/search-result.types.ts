@@ -1,3 +1,4 @@
+import type { VerificationInfo } from '../../../../core/verification/verification-status';
 import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 
 /* ============================================================================
@@ -126,6 +127,15 @@ export interface SearchResultItem {
    * `aTarjeta`, que la omite en esos casos.
    */
   readonly kind?: SearchResultSeal;
+  /**
+   * La verificación de un PROFESIONAL, para el check azul junto al nombre.
+   *
+   * La decide la API (`verificationOf` la normaliza); la tarjeta sólo la pinta.
+   * **Sólo la declaran los resultados de profesionales**: una clínica o una
+   * farmacia no es «un profesional verificado», y esas tarjetas conservan su
+   * sello textual. Ausente, no se pinta insignia.
+   */
+  readonly verification?: VerificationInfo;
   /** Las líneas de contexto, en el orden en que se muestran. */
   readonly meta?: readonly SearchResultMeta[];
   /** Los sellos, bajo las líneas de contexto. */

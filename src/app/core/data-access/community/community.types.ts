@@ -31,6 +31,8 @@
     «página 3 de 47» está pidiendo algo que este contrato no da.
     ========================================================================== */
 
+import type { VerificationDto } from '../../verification/verification-status';
+
 // ─── Perfil público ──────────────────────────────────────────────────────────
 
 /** Un sello de verificación sobre un perfil público. */
@@ -74,6 +76,11 @@ export type PublicProfileKind =
 export interface PublicProfileDetail {
   readonly id: string;
   readonly tenantId: string;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: la ficha deriva entonces de sus sellos (`badges`).
+   */
+  readonly verification?: VerificationDto | null;
   /** A qué apunta el perfil: profesional, organización, farmacia… */
   readonly targetTypeConceptId: string;
   /**
@@ -749,6 +756,11 @@ export interface PublicDirectoryResult {
   readonly headline: string | null;
   readonly city: string | null;
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** Persona autenticada que puede elegirse para iniciar un chat. */
@@ -757,6 +769,11 @@ export interface ChatContact {
   readonly displayName: string;
   readonly headline: string | null;
   readonly avatarUrl: string | null;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** El otro lado de una conversación. */
@@ -765,6 +782,11 @@ export interface ConversationPeer {
   readonly displayName?: string;
   /** Su avatar público, o `null`/ausente si no subió ninguno. */
   readonly avatarUrl?: string | null;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** Una página de conversaciones. */
@@ -774,6 +796,9 @@ export interface ConversationPage {
   readonly limit: number;
   readonly nextCursor: string | null;
 }
+
+/** Cómo se muestra un mensaje. `AUTO_REPLY_AI`: la redactó la IA y la burbuja lo rotula. */
+export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
 
 /** Un mensaje directo. */
 export interface DirectMessage {
@@ -803,7 +828,7 @@ export interface DirectMessage {
    * viaja marcado. Ausente = el servidor todavía no lo publica: el mensaje se
    * ve como una imagen cualquiera, que es una degradación honesta.
    */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  readonly contentType?: DirectMessageContentType;
   /**
    * Las reacciones, agrupadas por emoji. Ausente o vacío = nadie reaccionó.
    *
@@ -875,7 +900,7 @@ export interface NewDirectMessage {
   readonly bodyText: string;
   readonly replyToMessageId?: string;
   /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
-  readonly contentType?: 'TEXT' | 'MEDIA' | 'STICKER';
+  readonly contentType?: Exclude<DirectMessageContentType, 'AUTO_REPLY_AI'>;
   readonly attachmentFileId?: string;
 }
 
@@ -914,8 +939,14 @@ export interface ChatAutoReplySettings {
    * —el turno noche—, y es válida.
    */
   readonly businessHoursTo?: string;
+  /** `FIXED` o `AI` (con `bodyText` de respaldo). Sólo maqueta: falta la columna en el modelo. */
+  readonly replyMode?: ChatAutoReplyMode;
   readonly updatedAt?: Date;
 }
+
+export type ChatAutoReplyMode = 'FIXED' | 'AI';
+/** Claves que el DTO de la API no declara (`forbidNonWhitelisted`): sólo van a la maqueta. */
+export const CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS: readonly string[] = ['replyMode'];
 
 /** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
 export type UpsertChatAutoReply = Omit<

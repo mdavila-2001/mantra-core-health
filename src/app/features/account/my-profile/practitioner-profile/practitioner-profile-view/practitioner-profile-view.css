@@ -104,6 +104,9 @@
   font-weight: 600;
 }
 
+.profesional__insignia { margin-inline-start: var(--sp-1); }
+.profesional__cola { white-space: nowrap; }
+
 .profesional__titulo {
   margin: var(--sp-1) 0 0;
   font-size: var(--fs-body-lg);

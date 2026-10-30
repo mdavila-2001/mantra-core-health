@@ -127,6 +127,22 @@ describe('WebAnalytics', () => {
     expect(texto).toContain('no usuarios únicos');
   });
 
+  it('el filtro del embudo de altas no ofrece «medical-center»: ni el simulador ni la API tienen su embudo y caería al de paciente', () => {
+    responder();
+    const opciones = (
+      fixture.componentInstance as unknown as { opcionesTipoAlta: readonly { value: string }[] }
+    ).opcionesTipoAlta;
+
+    expect(opciones.map((o) => o.value)).toEqual([
+      'patient',
+      'practitioner',
+      'organization',
+      'laboratory',
+      'imaging-center',
+      'pharmacy',
+    ]);
+  });
+
   it('elegir 24 h pide intervalo por hora', () => {
     responder();
     (fixture.componentInstance as unknown as { cambiarRango(r: string): void }).cambiarRango('24h');

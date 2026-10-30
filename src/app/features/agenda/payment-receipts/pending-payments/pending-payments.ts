@@ -14,13 +14,17 @@ import {
 import type { Subscription } from 'rxjs';
 
 import { SchedulingClient } from '../../../../core/data-access/scheduling/scheduling.client';
-import type { Booking } from '../../../../core/data-access/scheduling/scheduling.types';
+import type {
+  Booking,
+  PaymentStateInfo,
+} from '../../../../core/data-access/scheduling/scheduling.types';
+import { displayCurrency } from '../../../../core/money/display-currency';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Skeleton } from '../../../../shared/components/atoms/skeleton/skeleton';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { formatMoney } from '../../../../shared/utils/pdf-export/pdf-format';
 import { BookingPaymentStates } from '../booking-payment-states';
-import { formatBolivianos, ReceivedAmountStore } from '../received-amount-store';
 
 /** Cuántos días hacia atrás y hacia adelante se buscan citas sin pago registrado. */
 const DAYS_BACK = 30;
@@ -55,7 +59,6 @@ export class PendingPayments {
 
   private readonly scheduling = inject(SchedulingClient);
   private readonly paymentStates = inject(BookingPaymentStates);
-  private readonly amounts = inject(ReceivedAmountStore);
 
   protected readonly status = signal<'loading' | 'ready' | 'error'>('loading');
   private readonly bookings = signal<readonly Booking[]>([]);
@@ -69,7 +72,6 @@ export class PendingPayments {
       .map((booking) => ({
         booking,
         state: this.paymentStates.resolve(booking.id, booking.paymentState ?? null),
-        received: this.amounts.get(booking.id),
       }))
       .filter((row) => row.state?.state !== 'PAID')
       .sort(
@@ -102,8 +104,12 @@ export class PendingPayments {
     this.userOpen.set(!this.expanded());
   }
 
-  protected amountLabel(amount: number): string {
-    return `Bs ${formatBolivianos(amount)}`;
+  /** Lo cobrado según la API (FAC-01); `''` si el pago se marcó sin monto. */
+  protected receivedLabel(state: PaymentStateInfo | null): string {
+    const amount = state?.amountPaid;
+    return amount !== undefined && amount > 0
+      ? formatMoney(amount, displayCurrency(state?.currencyCode))
+      : '';
   }
 
   private load(resourceId: string): void {

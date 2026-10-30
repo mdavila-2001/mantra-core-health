@@ -1,6 +1,7 @@
 /** Tipos de la vista para `profiles`. Se mapean desde los DTOs, no son ellos. */
 
 import type { BirthSexCode } from '../iam/iam.types';
+import type { VerificationDto } from '../../verification/verification-status';
 
 /**
  * Alta de un perfil de paciente hecha por personal (no auto-registro):
@@ -426,6 +427,11 @@ export interface OwnPractitionerProfile {
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
   readonly practiceStatusConceptId: string;
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
@@ -1089,6 +1095,11 @@ export interface PractitionerListItem {
    * declara una matrícula, no la prueba— y esto distingue a quien la probó.
    */
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
   /** Sólo las vigentes, la principal primero. */

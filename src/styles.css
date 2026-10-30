@@ -298,6 +298,15 @@
     --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
     --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
 
+    /* insignia de verificación (check azul, estilo Twitter/Instagram). Relleno
+       del sello y tinta del tilde: NO es un estado de producto sino una marca de
+       identidad comprobada, por eso no vive en la receta 50/700/200. En claro,
+       petróleo-500 con tilde blanco (8,03:1); en oscuro sube a petróleo-300 con
+       tilde petróleo-900 (5,38:1) y el sello se mide ≥3:1 contra TODA superficie
+       donde vive, incluido el fondo del chip `primary` (petróleo-600, 3,07:1). */
+    --verified-bg: var(--c-petrol-500);
+    --verified-fg: var(--surface-white);
+
     /* alias semánticos de compatibilidad para superficies y enlaces */
     --surface-raised: var(--bg-surface);
     --surface-hover: var(--bg-hover);
@@ -374,6 +383,10 @@
         --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
         --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
         --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+        /* insignia de verificación en oscuro: ver el comentario del bloque claro */
+        --verified-bg: var(--c-petrol-300);
+        --verified-fg: var(--c-petrol-900);
     }
 }
 
@@ -428,6 +441,9 @@
     --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
     --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
     --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+    --verified-bg: var(--c-petrol-300);
+    --verified-fg: var(--c-petrol-900);
 }
 
 /* ---- base ---- */
@@ -604,7 +620,14 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
    Sólo se anima el contenido (`view-transition-name: contenido`, en
    `.app-main__inner`): el menú lateral y la barra superior no se mueven. El
    resto de la página no tiene transición propia. Sin la API el router
-   navega como siempre; con `prefers-reduced-motion` ni siquiera se crea. */
+   navega como siempre.
+
+   Con `prefers-reduced-motion` la transición SÍ se crea y la regla del final
+   de este bloque apaga la animación de sus pseudo-capas. No se salta con
+   `skipTransition()`: eso rechaza `ready` con «AbortError: Transition was
+   skipped» y el router lo escribe en la consola en cada navegación (#1449).
+   Aparte, el `*` del bloque global de movimiento reducido no alcanza a los
+   `::view-transition-*`, así que esta regla no es redundante. */
 @keyframes vt-sale {
     to {
         opacity: 0;
@@ -632,6 +655,13 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 }
 .app-main__inner {
     view-transition-name: contenido;
+}
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

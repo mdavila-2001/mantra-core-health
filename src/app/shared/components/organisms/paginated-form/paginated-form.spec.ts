@@ -234,6 +234,54 @@ describe('PaginatedForm', () => {
     });
   });
 
+  describe('la entrada de cada página', () => {
+    function seccion(): HTMLElement {
+      return fixture.debugElement.query(By.css('.paginated-form__pagina')).nativeElement as HTMLElement;
+    }
+
+    function avanzar(): void {
+      host.form.controls.documento.setValue('1234567');
+      botonContinuar().click();
+      fixture.detectChanges();
+      fixture.detectChanges();
+    }
+
+    function volver(): void {
+      fixture.debugElement
+        .query(By.css('[data-testid="paginated-form-atras"]'))
+        .nativeElement.click();
+      fixture.detectChanges();
+      fixture.detectChanges();
+    }
+
+    it('al avanzar entra de adelante, y alterna la animación para que se repita', () => {
+      expect(seccion().dataset['direction']).toBe('forward');
+      expect(seccion().classList).not.toContain('paginated-form__pagina--alt');
+
+      avanzar();
+
+      expect(seccion().dataset['direction']).toBe('forward');
+      // Cambiar el nombre de la animación es lo que la reinicia sin recrear los
+      // campos: si el paso 2 llevara el mismo que el 1, no se vería nada.
+      expect(seccion().classList).toContain('paginated-form__pagina--alt');
+    });
+
+    it('al volver entra del otro lado, y la paridad vuelve a la de la primera', () => {
+      avanzar();
+      volver();
+
+      expect(seccion().dataset['direction']).toBe('back');
+      expect(seccion().classList).not.toContain('paginated-form__pagina--alt');
+    });
+
+    it('volver no pierde lo escrito: la animación no recrea el formulario', () => {
+      avanzar();
+      volver();
+
+      expect(host.form.controls.documento.value).toBe('1234567');
+    });
+  });
+
   describe('los campos condicionales («¿cuál?»)', () => {
     /** «Documento» decide si se pregunta el correo, que vive solo en su página. */
     const CONDICIONALES: readonly PaginaDeFormulario[] = [
@@ -514,7 +562,7 @@ describe('PaginatedForm', () => {
   });
 
   describe('el avance', () => {
-    it('la barra cuenta páginas terminadas: en la primera todavía no hay nada hecho', () => {
+    it('la barra mide el recorrido: 0 % sobre la primera página y 100 % sobre la última', () => {
       const barra = fixture.debugElement.query(By.css('app-progress')).nativeElement as HTMLElement;
       expect(barra.getAttribute('aria-valuenow')).toBe('0');
 
@@ -522,7 +570,96 @@ describe('PaginatedForm', () => {
       botonContinuar().click();
       fixture.detectChanges();
 
-      expect(barra.getAttribute('aria-valuenow')).toBe('50');
+      expect(barra.getAttribute('aria-valuenow')).toBe('100');
+    });
+
+    describe('la barra y el stepper cuentan el mismo avance (#1448)', () => {
+      let fixtureL: ComponentFixture<HostLargo>;
+
+      beforeEach(() => {
+        fixtureL = TestBed.createComponent(HostLargo);
+        fixtureL.detectChanges();
+      });
+
+      function barraL(): HTMLElement {
+        return fixtureL.debugElement.query(By.css('app-progress')).nativeElement as HTMLElement;
+      }
+
+      /** Lo que el stepper dibuja: el índice del marcador actual sobre los tramos. */
+      function avanceDelStepper(): number {
+        const pasos = Array.from(
+          (fixtureL.nativeElement as HTMLElement).querySelectorAll('.stepper__step'),
+        );
+        const actual = pasos.findIndex((paso) => paso.classList.contains('stepper__step--current'));
+        return Math.round((actual / (pasos.length - 1)) * 100);
+      }
+
+      function siguienteL(): void {
+        (
+          fixtureL.debugElement.query(By.css('[data-testid="paginated-form-continuar"]'))
+            .nativeElement as HTMLButtonElement
+        ).click();
+        fixtureL.detectChanges();
+      }
+
+      it('en cada página de un recorrido de tres, la barra dice lo que dice el stepper', () => {
+        fixtureL.componentInstance.paginas.set(PAGINAS_LARGAS.slice(0, 3));
+        fixtureL.detectChanges();
+
+        const vistos: string[] = [];
+        for (let pagina = 0; pagina < 3; pagina++) {
+          vistos.push(barraL().getAttribute('aria-valuenow')!);
+          expect(Number(barraL().getAttribute('aria-valuenow'))).toBe(avanceDelStepper());
+          if (pagina < 2) siguienteL();
+        }
+
+        expect(vistos).toEqual(['0', '50', '100']);
+      });
+
+      it('con el recorrido compacto de diez páginas también coinciden, de la primera a la última', () => {
+        fixtureL.componentInstance.compactSteps.set(true);
+        fixtureL.detectChanges();
+
+        for (let pagina = 0; pagina < 10; pagina++) {
+          expect(Number(barraL().getAttribute('aria-valuenow'))).toBe(avanceDelStepper());
+          if (pagina < 9) siguienteL();
+        }
+
+        expect(barraL().getAttribute('aria-valuenow')).toBe('100');
+      });
+
+      it('el motor enciende `currentLabelOnly`: en teléfono el recorrido es una fila', () => {
+        fixtureL.componentInstance.paginas.set(PAGINAS_LARGAS.slice(0, 3));
+        fixtureL.detectChanges();
+
+        expect(fixtureL.debugElement.query(By.css('ol.stepper.stepper--solo-actual'))).not.toBeNull();
+      });
+
+      it('al volver atrás la barra retrocede con el stepper', () => {
+        fixtureL.componentInstance.paginas.set(PAGINAS_LARGAS.slice(0, 3));
+        fixtureL.detectChanges();
+        siguienteL();
+        siguienteL();
+        expect(barraL().getAttribute('aria-valuenow')).toBe('100');
+
+        (
+          fixtureL.debugElement.query(By.css('[data-testid="paginated-form-atras"]'))
+            .nativeElement as HTMLButtonElement
+        ).click();
+        fixtureL.detectChanges();
+
+        expect(barraL().getAttribute('aria-valuenow')).toBe('50');
+        expect(avanceDelStepper()).toBe(50);
+      });
+
+      it('el contador sin stepper (diez páginas, sin `compactSteps`) sigue con la misma cuenta', () => {
+        expect(fixtureL.debugElement.query(By.css('app-stepper'))).toBeNull();
+        expect(barraL().getAttribute('aria-valuenow')).toBe('0');
+
+        siguienteL();
+        // Segunda de diez: 1/9 del recorrido.
+        expect(barraL().getAttribute('aria-valuenow')).toBe('11');
+      });
     });
 
     it('el nombre de la barra dice dónde está la persona', () => {

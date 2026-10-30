@@ -120,6 +120,17 @@ export const BRAND_TONES = ['primary', 'secondary', 'tertiary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
 
+/**
+ * Insignia de verificación (el check azul de `app-verification-badge`): el
+ * relleno del sello y la tinta del tilde. No es un estado de producto, por eso
+ * no entra en `StatusType`; es una marca de identidad comprobada.
+ */
+export const VERIFIED = {
+  bg: '--verified-bg',
+  fg: '--verified-fg',
+} as const;
+export type VerifiedToken = (typeof VERIFIED)[keyof typeof VERIFIED];
+
 /** Escala de cuatro niveles para la matriz de intensidad de consultas. */
 export const HEAT_LEVELS = [1, 2, 3, 4] as const;
 export type HeatLevel = (typeof HEAT_LEVELS)[number];
@@ -312,6 +323,7 @@ export type DesignToken =
   | StatusToken
   | BrandToneToken
   | HeatToken
+  | VerifiedToken
   | EffectToken
   | SpacingToken
   | RadiusToken
@@ -381,6 +393,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
   ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
+  ...Object.values(VERIFIED),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),

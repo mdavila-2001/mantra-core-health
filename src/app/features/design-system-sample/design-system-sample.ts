@@ -76,6 +76,7 @@ import {
   PERSISTENT_DEMO_TOAST,
 } from '../../core/dev/toast-samples';
 import { OrganismsGallery } from './organisms-gallery/organisms-gallery';
+import { VerificationBadgeGallery } from './verification-badge-gallery/verification-badge-gallery';
 import { ViewStateGallery } from './view-state-gallery/view-state-gallery';
 
 const DEMO_LOADING_MS = 1500;
@@ -124,6 +125,7 @@ const DEMO_UPLOAD_STEP = 12;
     EmptyState,
     Accordion,
     AccordionPanel,
+    VerificationBadgeGallery,
     ViewStateGallery,
     OrganismsGallery,
     ReactiveFormsModule,

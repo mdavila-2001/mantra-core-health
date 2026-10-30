@@ -1,6 +1,7 @@
 <ol
   class="stepper"
   [class.stepper--compact]="compact()"
+  [class.stepper--solo-actual]="currentLabelOnly() && !compact()"
   [attr.aria-label]="summary() || null"
 >
   @for (step of steps(); track step.label; let i = $index; let last = $last) {

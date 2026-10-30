@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { DepartmentMap, type DepartamentoElegible } from './department-map';
@@ -328,5 +330,81 @@ describe('DepartmentMap', () => {
     await estabilizar();
     expect(html.querySelector('[data-testid="department-map-municipio"]')).toBeNull();
     expect(html.querySelector('[data-testid="department-map-punto"]')).toBeNull();
+  });
+
+  /**
+   * El acercamiento sigue al tema (issue #1534). jsdom no resuelve `:host-context`
+   * ni las variables del tema, así que se prueba lo que sí se sostiene sin
+   * navegador: que los colores del plano pasan por variables locales y que las
+   * dos formas del tema oscuro las redefinen con tokens del tema. El color
+   * computado real se mide en el navegador.
+   */
+  describe('acercamiento y tema oscuro', () => {
+    const css = readFileSync(
+      'src/app/shared/components/organisms/department-map/department-map.css',
+      'utf8',
+    );
+    const VARIABLES = [
+      '--plano-fondo',
+      '--plano-marco',
+      '--plano-otro',
+      '--plano-departamento',
+      '--plano-trazo',
+      '--plano-municipio',
+    ];
+
+    /** El cuerpo de la regla que empieza con `selector`. */
+    function cuerpoDe(selector: string): string {
+      const desde = css.indexOf(selector);
+      expect(desde, `no hay regla para ${selector}`).toBeGreaterThanOrEqual(0);
+      return css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde));
+    }
+
+    it('las formas del plano pintan con variables locales, no con la rampa fija', () => {
+      for (const clase of [
+        '.department-map__acercamiento-otro {',
+        '.department-map__acercamiento-departamento {',
+        '.department-map__acercamiento-vecino {',
+        '.department-map__acercamiento-municipio {',
+      ]) {
+        expect(cuerpoDe(clase), clase).not.toMatch(/--c-(neutral|petrol)-/);
+        expect(cuerpoDe(clase), clase).toContain('var(--plano-');
+      }
+    });
+
+    it('el modo claro conserva los colores pedidos por el cliente', () => {
+      const base = cuerpoDe('.department-map__acercamiento {');
+      expect(base).toContain('--plano-fondo: var(--c-neutral-50)');
+      expect(base).toContain('--plano-trazo: var(--c-neutral-900)');
+      expect(base).toContain('--plano-municipio: var(--c-petrol-500)');
+    });
+
+    it.each([
+      [
+        'preferencia del sistema',
+        ":host-context(html:not([data-theme='light'])) .department-map__acercamiento {",
+      ],
+      [
+        'data-theme explícito',
+        ":host-context(html[data-theme='dark']) .department-map__acercamiento {",
+      ],
+    ])('en oscuro (%s) redefine todo el plano con tokens del tema', (_nombre, selector) => {
+      const cuerpo = cuerpoDe(selector);
+      for (const variable of VARIABLES) {
+        expect(cuerpo, variable).toMatch(
+          new RegExp(`${variable}: var\\(--(bg|text|border|brand)-`),
+        );
+      }
+      expect(cuerpo).not.toMatch(/--c-neutral-/);
+    });
+
+    it('la regla de la preferencia del sistema está dentro de prefers-color-scheme: dark', () => {
+      const media = css.indexOf('@media (prefers-color-scheme: dark)');
+      const regla = css.indexOf(
+        ":host-context(html:not([data-theme='light'])) .department-map__acercamiento",
+      );
+      expect(media).toBeGreaterThanOrEqual(0);
+      expect(regla).toBeGreaterThan(media);
+    });
   });
 });

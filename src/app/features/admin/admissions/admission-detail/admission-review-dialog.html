@@ -1,0 +1,184 @@
+<app-content-dialog
+  [heading]="config().heading"
+  [description]="config().description ?? null"
+  size="md"
+  [dismissible]="false"
+  (dismissAttempt)="cancel()"
+  (closed)="cancel()"
+>
+  <form class="review-dialog" novalidate data-testid="admission-review-form" (submit)="$event.preventDefault(); submit()">
+    @if (config().warning; as aviso) {
+      <app-alert tone="warning" data-testid="admission-review-warning">{{ aviso }}</app-alert>
+    }
+
+    @if (config().summary; as lineas) {
+      <ul class="review-dialog__resumen" data-testid="admission-review-summary">
+        @for (linea of lineas; track linea) {
+          <li>{{ linea }}</li>
+        }
+      </ul>
+    }
+
+    @if (config().source) {
+      <div class="review-dialog__campo">
+        <label class="review-dialog__rotulo" for="rd-source-type">
+          Fuente consultada <span class="review-dialog__req" aria-hidden="true">*</span>
+          <span class="sr-only">(obligatorio)</span>
+        </label>
+        <select
+          id="rd-source-type"
+          class="review-dialog__select"
+          data-testid="admission-review-source-type"
+          [value]="sourceType()"
+          [attr.aria-invalid]="touched() && sourceProblem() !== null"
+          (change)="onSourceType($event)"
+        >
+          <option value="">Elija una fuente…</option>
+          @for (tipo of sourceTypes; track tipo.code) {
+            <option [value]="tipo.code">{{ tipo.label }}</option>
+          }
+        </select>
+        @if (touched() && sourceProblem(); as problema) {
+          <p class="review-dialog__error" role="alert">{{ problema }}</p>
+        }
+      </div>
+      <app-form-field
+        label="Referencia (opcional)"
+        hint="Número de comprobante, nombre del documento o dirección web. No hace falta inventarla si la fuente no tiene una."
+      >
+        <app-input [(value)]="sourceRef" testId="admission-review-source-ref" />
+      </app-form-field>
+      <div class="review-dialog__campo">
+        <label class="review-dialog__rotulo" for="rd-consulted-at">Fecha de la consulta</label>
+        <input
+          id="rd-consulted-at"
+          class="review-dialog__select"
+          type="date"
+          data-testid="admission-review-consulted-at"
+          [value]="consultedAt()"
+          
+          [attr.aria-invalid]="touched() && dateProblem() !== null"
+          (input)="onDate($event)"
+        />
+        @if (touched() && dateProblem(); as problema) {
+          <p class="review-dialog__error" role="alert">{{ problema }}</p>
+        }
+      </div>
+    }
+
+    @if (config().reason; as razon) {
+      @if (razon.withCode) {
+        <div class="review-dialog__campo">
+          <label class="review-dialog__rotulo" for="rd-reason-code">
+            Motivo <span class="review-dialog__req" aria-hidden="true">*</span>
+            <span class="sr-only">(obligatorio)</span>
+          </label>
+          <select
+            id="rd-reason-code"
+            class="review-dialog__select"
+            data-testid="admission-review-reason-code"
+            [value]="reasonCode()"
+            [attr.aria-invalid]="touched() && codeProblem() !== null"
+            (change)="onReasonCode($event)"
+          >
+            <option value="">Elija un motivo…</option>
+            @for (motivo of reasonCodes; track motivo.code) {
+              <option [value]="motivo.code">{{ motivo.label }}</option>
+            }
+          </select>
+          @if (touched() && codeProblem(); as problema) {
+            <p class="review-dialog__error" role="alert">{{ problema }}</p>
+          }
+          @if (fraudSelected()) {
+            <p class="review-dialog__aviso" data-testid="admission-review-fraud-hint">
+              El profesional verá este motivo como «Otro motivo». Escriba la sospecha solo en la nota interna, no en el texto que él lee.
+            </p>
+          }
+        </div>
+      }
+      <app-form-field
+        [label]="razon.label"
+        [hint]="razon.hint ?? 'Lo lee el médico. No escriba datos personales de otras personas.'"
+        [required]="true"
+        [errorMessage]="touched() ? reasonProblem() : ''"
+      >
+        <app-textarea [(value)]="reason" [rows]="4" [hasError]="touched() && reasonProblem() !== null" />
+      </app-form-field>
+      <p
+        class="review-dialog__count"
+        [class.review-dialog__count--over]="reasonCount() > reasonMax"
+        aria-live="polite"
+        data-testid="admission-review-count"
+      >
+        {{ reasonCount() }} / {{ reasonMax }}
+      </p>
+      @if (razon.note) {
+        <app-form-field
+          label="Nota interna: no la ve el profesional"
+          hint="Para el equipo de revisión. Queda en el historial interno."
+          [errorMessage]="touched() ? noteProblem() : ''"
+        >
+          <app-textarea [(value)]="note" [rows]="3" [hasError]="touched() && noteProblem() !== null" />
+        </app-form-field>
+        <p class="review-dialog__count" [class.review-dialog__count--over]="noteCount() > noteMax">
+          {{ noteCount() }} / {{ noteMax }}
+        </p>
+      }
+    }
+
+    @if (config().assignees; as personas) {
+      <div class="review-dialog__campo">
+        <label class="review-dialog__rotulo" for="rd-assignee">
+          Reasignar a <span class="review-dialog__req" aria-hidden="true">*</span>
+          <span class="sr-only">(obligatorio)</span>
+        </label>
+        <select id="rd-assignee" class="review-dialog__select" data-testid="admission-review-assignee" [value]="assigneeId()" (change)="onAssignee($event)">
+          <option value="">Elija a una persona…</option>
+          @for (persona of personas; track persona.id) {
+            <option [value]="persona.id">{{ persona.name }}</option>
+          }
+        </select>
+        @if (touched() && assigneeProblem(); as problema) {
+          <p class="review-dialog__error" role="alert">{{ problema }}</p>
+        }
+      </div>
+    }
+
+    @if (config().assigneeById) {
+      <app-form-field
+        label="Reasignar a (id de la cuenta del revisor)"
+        hint="Pegue el id de la cuenta que recibe la revisión; debe tener el rol de revisión de admisiones."
+        [required]="true"
+        [errorMessage]="touched() ? assigneeProblem() : ''"
+      >
+        <app-input [(value)]="assigneeText" testId="admission-review-assignee-id" />
+      </app-form-field>
+    }
+
+    @if (stale()) {
+      <app-alert tone="warning" title="Otra persona modificó esta admisión" data-testid="admission-review-stale">
+        Lo que escribió se conserva. Vea los cambios y, si sigue de acuerdo, confirme de nuevo.
+        <button app-button type="button" variant="secondary" size="sm" data-testid="admission-review-reload" (clicked)="reload.emit()">
+          Ver cambios
+        </button>
+      </app-alert>
+    } @else if (serverError(); as problema) {
+      <app-alert tone="error" data-testid="admission-review-error">{{ problema }}</app-alert>
+    }
+  </form>
+
+  <div dialog-actions class="review-dialog__actions">
+    <button app-button type="button" variant="ghost" [disabled]="busy()" (clicked)="cancel()">Volver</button>
+    <button
+      app-button
+      type="button"
+      [variant]="config().destructive ? 'danger' : 'primary'"
+      [isLoading]="busy()"
+      [disabled]="busy()"
+      data-testid="admission-review-confirm"
+      (clicked)="submit()"
+    >
+      {{ config().confirmLabel }}
+    </button>
+  </div>
+</app-content-dialog>

@@ -218,13 +218,13 @@ export class BookingNew {
   protected readonly servicio = signal<ServiceOffering | null>(null);
 
   /**
-   * El precio de referencia con la moneda del producto. La API sirve el concepto de
-   * moneda y no su código, y el helper asume el boliviano cuando no hay código: es
-   * la moneda del producto y la única que declara hoy el catálogo.
+   * El precio con la moneda del producto: el del servicio o, en una consulta, el
+   * del turno (FAC-01). El helper asume el boliviano cuando no hay código.
    */
   protected readonly precio = computed(() => {
-    const s = this.servicio();
-    return s === null ? '' : withDisplayCurrency(s.price);
+    const [s, consulta] = [this.servicio(), this.cupoListo()?.price];
+    if (s !== null) return withDisplayCurrency(s.price);
+    return consulta ? withDisplayCurrency(consulta.amount.toFixed(2)) : '';
   });
 
   /** «30–45 min», o «20 min» cuando el mínimo y el máximo coinciden. */

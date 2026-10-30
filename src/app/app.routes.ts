@@ -17,6 +17,11 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
+import {
+  ADMISSIONS_SCREENS,
+  ADMISSION_DETAIL_PATH,
+  loadAdmissionDetail,
+} from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import {
   designMockupRoutes,
@@ -73,6 +78,7 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   ...MEDICAL_CENTER_SCREENS,
+  ...ADMISSIONS_SCREENS,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //
@@ -419,6 +425,18 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // FAC-06 · «Configuración para facturar»: ejercicio fiscal, precio de la
+    // consulta y emisor de prueba. Hereda los roles de Contabilidad; quién
+    // cambia cada cosa lo decide la API. Se llega desde la contabilidad.
+    path: 'administration/accounting/billing-setup',
+    title: `${APP_TITLE} - Configuración para facturar`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/billing-setup/billing-setup')
+        .then((m) => m.BillingSetup)
+        .catch(() => chunkFallido()),
+  },
   {
     // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
     // estado del flujo, cartera por antigüedad y cierre del período. Abría en
@@ -911,6 +929,13 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
+  {
+    // La ficha de una admisión cuelga de la bandeja: hereda los roles de su sección.
+    path: ADMISSION_DETAIL_PATH,
+    title: `${APP_TITLE} - Revisión de admisión`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () => loadAdmissionDetail().catch(() => chunkFallido()),
+  },
   {
     // La importación por archivo. No es una sección del menú: cuelga de
     // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí

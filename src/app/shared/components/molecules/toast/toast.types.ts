@@ -16,11 +16,26 @@ export interface ToastMessage {
   readonly message: string;
   /** Encabezado opcional; sin él el aviso es una sola línea. */
   readonly title?: string;
+  /** Botón opcional que lleva a donde se resuelve el aviso. */
+  readonly action?: ToastAction;
   /**
    * Milisegundos hasta el cierre automático, o `null` para que quede fijo hasta
    * que la persona lo cierre.
    */
   readonly durationMs: number | null;
+}
+
+/**
+ * La acción de un aviso: un botón que navega dentro de la app y cierra el aviso.
+ *
+ * Es una URL de la app (puede llevar `?…`), no un callback: un aviso que
+ * sobrevive a la pantalla que lo lanzó no puede llamar de vuelta a un
+ * componente que ya no existe.
+ */
+export interface ToastAction {
+  readonly label: string;
+  /** URL interna, con su barra inicial: `/my-account/appointments?turno=…`. */
+  readonly url: string;
 }
 
 /**
@@ -32,6 +47,7 @@ export interface ToastInput {
   readonly type?: ToastType;
   readonly message: string;
   readonly title?: string;
+  readonly action?: ToastAction;
   readonly durationMs?: number | null;
 }
 

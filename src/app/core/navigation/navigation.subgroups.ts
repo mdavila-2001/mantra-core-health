@@ -178,8 +178,8 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     label: 'Personas',
     group: 'Administración',
     icon: 'people',
-    // Las dos caras del padrón: quien se atiende y quien tiene cuenta.
-    paths: ['administration/patients', 'administration/users'],
+    // Las caras del padrón: quien se atiende, quien tiene cuenta y quien pide entrar.
+    paths: ['administration/patients', 'administration/users', 'administration/admissions'],
   },
   {
     label: 'Organizaciones',

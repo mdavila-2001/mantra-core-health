@@ -64,6 +64,27 @@ describe('AuthStage', () => {
     const css = (): string =>
       readFileSync('src/app/shared/components/organisms/auth-stage/auth-stage.css', 'utf8');
 
+    it('todo grosor de la tira lleva el factor `--ecg-k`: en teléfono se pinta a ~0,31× y sin él la onda se pierde', () => {
+      const grosores = css().match(/stroke-width:[^;]+;/g) ?? [];
+
+      expect(grosores.length).toBeGreaterThanOrEqual(6);
+      for (const grosor of grosores) {
+        expect(grosor, grosor).toContain('var(--ecg-k)');
+      }
+    });
+
+    it('el factor vale 1 en escritorio, donde la tira cubre el escenario a ~0,83×', () => {
+      expect(css()).toMatch(/--ecg-k:\s*2\.4;/);
+      expect(css()).toMatch(/aspect-ratio:\s*auto;\s*--ecg-k:\s*1;/);
+    });
+
+    it('el trazo base respira con el ciclo del monitor y «reducir movimiento» lo apaga', () => {
+      expect(css()).toMatch(/auth-stage-ecg-breathe var\(--beat\)/);
+      const reducido = css().slice(css().indexOf('prefers-reduced-motion'));
+      expect(reducido).toContain('.auth-stage__ecg-base');
+      expect(reducido).toMatch(/animation:\s*none\s*!important/);
+    });
+
     describe('modo claro', () => {
       const lightBlock = (): string => css().slice(css().indexOf('Modo claro'));
 

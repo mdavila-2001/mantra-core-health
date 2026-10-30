@@ -7,6 +7,7 @@ import {
   AlmacenDeGlosario,
   ArchivoAusente,
   idDeConjunto,
+  raicesEsperadasDelGlosario,
   type LectorDeArchivos,
   type ManifiestoDelGlosario,
 } from './glossary-shards';
@@ -82,6 +83,42 @@ describe('glosario de la maqueta en shards (semilla commiteada)', () => {
     const manifiesto = await almacen.manifiesto();
     // Los 69 curados + el glosario oficial (CIE-10-ES, CIMA, MedlinePlus, TA98, Wikidata).
     expect(manifiesto.total).toBeGreaterThan(15000);
+  });
+
+  describe('la raíz completa que se sabe ausente no se pide', () => {
+    // Un `fetch` a una ruta que no existe termina en un 404 que el navegador
+    // imprime en la consola como error aunque el código lo atrape. El 404 de
+    // `glossary-data/manifest.json` ensuciaba toda pantalla que lee el glosario.
+    it('el entorno sin glossary-data/ deja sólo la semilla; con ella, las dos', () => {
+      expect(raicesEsperadasDelGlosario({ glossaryData: false })).toEqual(['glossary-seed']);
+      expect(raicesEsperadasDelGlosario({ glossaryData: true })).toEqual([
+        'glossary-data',
+        'glossary-seed',
+      ]);
+    });
+
+    it('lee el manifiesto de la semilla sin pedir nada de glossary-data/', async () => {
+      const { leer, pedidos } = lectorDeDisco();
+      const almacen = new AlmacenDeGlosario(leer, raicesEsperadasDelGlosario({ glossaryData: false }));
+
+      expect(await almacen.origen()).toBe('glossary-seed');
+      expect((await almacen.manifiesto()).total).toBeGreaterThan(15000);
+      expect(pedidos).toEqual(['glossary-seed/manifest.json']);
+    });
+
+    it('un artículo ausente tampoco prueba glossary-data/', async () => {
+      const { leer, pedidos } = lectorDeDisco();
+      const almacen = new AlmacenDeGlosario(leer, raicesEsperadasDelGlosario({ glossaryData: false }));
+
+      expect(await almacen.articulo('00000000-0000-4000-8000-000000000000')).toBeNull();
+      expect(pedidos.filter((ruta) => ruta.startsWith('glossary-data/'))).toEqual([]);
+    });
+
+    it('sin saber nada (raíces por omisión) sigue probando la completa primero', async () => {
+      const { leer, pedidos } = lectorDeDisco();
+      await new AlmacenDeGlosario(leer).manifiesto();
+      expect(pedidos).toEqual(['glossary-data/manifest.json', 'glossary-seed/manifest.json']);
+    });
   });
 
   it('las facetas cuentan por categoría y por etiqueta sin bajar un solo shard', async () => {

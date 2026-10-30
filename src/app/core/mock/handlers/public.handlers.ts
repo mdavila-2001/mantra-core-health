@@ -4,7 +4,12 @@ import { categoryByCode } from '../fixtures/public-categories';
 import { CATALOGO_MEDICAMENTOS } from '../fixtures/medication-catalog.generated';
 import { calificacionDe, commentList, CONCEPT, postList, reviewList, showcaseBySlug, showcases, type SimulatedShowcase } from '../fixtures/community';
 import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
-import { affiliationList, PROFESSIONALS, professionalById } from '../fixtures/people';
+import {
+  affiliationList,
+  PROFESSIONALS,
+  professionalById,
+} from '../fixtures/people';
+import { showcaseVerification } from '../fixtures/verification-body';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { addDecimalStrings } from '../../money/decimal-strings';
 import { notFound, validation, type MockRouter } from '../mock-router';
@@ -26,6 +31,7 @@ function resultado(v: SimulatedShowcase) {
     city: v.city,
     avatarUrl: v.avatarUrl,
     verified: v.verified,
+    ...showcaseVerification(v),
     ratingAverage: calificacionDe(v).average,
     ratingCount: calificacionDe(v).count,
     coverUrl: v.coverUrl,
@@ -571,6 +577,7 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
       avatarUrl: v.avatarUrl,
       coverUrl: v.coverUrl,
       verified: v.verified,
+      ...showcaseVerification(v),
       city: v.city,
       address: v.address === '' ? null : v.address,
       location: { lat: v.lat, lng: v.lng },

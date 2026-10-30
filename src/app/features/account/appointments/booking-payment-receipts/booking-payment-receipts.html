@@ -10,7 +10,7 @@
   @switch (blocker()) {
     @case ('paid') {
       <p class="payment-upload__blocked" data-testid="booking-receipts-blocked">
-        Esta cita ya figura como pagada: no hace falta subir otro comprobante.
+        Esta cita ya figura como pagada: no hace falta subir ningún comprobante.
       </p>
     }
     @case ('without-payment') {
@@ -104,7 +104,9 @@
     <div vsh-skeleton>
       <app-skeleton variant="text" [lines]="3" />
     </div>
-    <p vsh-empty class="payment-upload__empty">Todavía no subió comprobantes para esta cita.</p>
+    <p vsh-empty class="payment-upload__empty">
+      {{ blocker() === 'paid' ? 'El pago se registró sin comprobante.' : 'Todavía no subió comprobantes para esta cita.' }}
+    </p>
 
     @if (items(); as list) {
       <h5 class="payment-upload__list-title">Lo que ya subió</h5>
