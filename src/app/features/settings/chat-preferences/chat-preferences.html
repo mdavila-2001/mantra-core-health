@@ -5,6 +5,15 @@
     está mirando los chats.
   </p>
 
+  <!-- Es la de la persona, no la de la farmacia: lo dice mientras se escribe
+       como la vitrina, para que nadie crea que configuró la de la farmacia. -->
+  @if (comoOrganizacion(); as nombre) {
+    <p class="chat-prefs__aviso" data-testid="chat-prefs-personal">
+      Esta es su respuesta automática personal, no la de {{ nombre }}: no se manda cuando
+      escribe como {{ nombre }}.
+    </p>
+  }
+
   <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
        pantalla y no sólo en el código. -->
   @if (errorDeLectura()) {

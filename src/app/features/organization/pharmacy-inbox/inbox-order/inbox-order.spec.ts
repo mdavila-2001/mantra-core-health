@@ -18,7 +18,25 @@ import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
-import { InboxOrder } from './inbox-order';
+import { InboxOrder, motivoDeChatNoAbierto } from './inbox-order';
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Router } from '@angular/router';
+
+/**
+ * La sesión del mostrador. El botón del chat inyecta `ChatStore`, que mira
+ * quién es la cuenta (para no heredar la identidad de otra en la pestaña).
+ */
+const SESION_DEL_MOSTRADOR = {
+  displayName: () => 'Ana Pérez',
+  userId: () => 'u-mostrador',
+  roles: () => ['PHARMACY_STAFF'],
+  activeTenantId: () => 't-farmacia',
+};
+
+/** Donde aterriza el chat; el hilo de verdad no hace falta acá. */
+@Component({ template: '<p>hilo</p>', changeDetection: ChangeDetectionStrategy.OnPush })
+class HiloDePrueba {}
 
 /** Lo que el contrato devuelve para un pedido que sale a domicilio. */
 const DOMICILIO = { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' };
@@ -42,12 +60,15 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
+        provideRouter([
+          { path: 'administration/pharmacy-orders/:orderId', component: InboxOrder },
+          { path: 'messaging/:id', component: HiloDePrueba },
+        ]),
         // Ver el mismo comentario en `../pharmacy-inbox.spec.ts`: sin
         // `userId`, el `effect()` de `CartStore` (construido igual por
         // `PharmacyOrdersClient`, aunque esta pantalla no tenga carrito)
         // revienta en un tick asíncrono y envenena al resto del worker.
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
+        { provide: SessionStore, useValue: SESION_DEL_MOSTRADOR },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
@@ -721,6 +742,229 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       ],
     });
   }
+
+  describe('«Chatear con el paciente»', () => {
+    const ID = PHARMACY_ORDER_TEST_IDS.order;
+    const VITRINA = 'vitrina-farmacia';
+
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    async function abrirElChat(): Promise<void> {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      click('mostrador-chatear');
+    }
+
+    const pagina = (items: unknown[]) => ({ items, count: items.length, limit: 30, nextCursor: null });
+
+    it('abre el hilo del pedido como la farmacia, pone la tarjeta una vez y navega al chat', async () => {
+      await abrirElChat();
+      const abrir = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      abrir.flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+
+      // Antes de mandar la tarjeta se mira el hilo **como la farmacia**.
+      const lectura = http.expectOne((r) => r.url === '/community/conversations/c-9/messages');
+      expect(lectura.request.params.get('profileId')).toBe(VITRINA);
+      lectura.flush(pagina([]));
+
+      const tarjeta = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      expect(tarjeta.request.body.senderProfileId).toBe(VITRINA);
+      expect(tarjeta.request.body.bodyText).toMatch(/^Pedido: .+\n.+\n\/my-account\/pharmacy-orders\//u);
+      tarjeta.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+
+      const bandeja = http.expectOne((r) => r.url === '/community/conversations');
+      expect(bandeja.request.params.get('profileId')).toBe(VITRINA);
+      bandeja.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toBe('/messaging/c-9');
+      const store = TestBed.inject(ChatStore);
+      expect(store.perfil()).toBe(VITRINA);
+      expect(store.actuandoComoOrganizacion()).toBe(true);
+    });
+
+    it('tocarlo otra vez desde el mismo pedido no repite la tarjeta', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(pagina([]));
+      const primera = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      const tarjeta = primera.request.body.bodyText as string;
+      primera.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+      http
+        .expectOne((r) => r.url === '/community/conversations')
+        .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      await harness.fixture.whenStable();
+
+      // Vuelve al pedido y lo toca de nuevo: el hilo ya tiene esa tarjeta.
+      await harness.navigateByUrl(`/administration/pharmacy-orders/${ID}`, InboxOrder);
+      http
+        .expectOne(`/pharmacy/orders/${ID}`)
+        .flush(pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }));
+      harness.detectChanges();
+      click('mostrador-chatear');
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(
+        pagina([
+          {
+            id: 'm-1',
+            conversationId: 'c-9',
+            senderProfileId: VITRINA,
+            contentTypeConceptId: 'c-text',
+            bodyText: tarjeta,
+            sentAt: '2026-10-28T10:00:00.000Z',
+          },
+        ]),
+      );
+      http.expectNone({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toBe('/messaging/c-9');
+    });
+
+    it('422 PATIENT_CHAT_PROFILE_MISSING: lo dice con su texto y no navega ni cambia de perfil', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'PATIENT_CHAT_PROFILE_MISSING', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        'El paciente todavía no tiene perfil de mensajería',
+      );
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+      expect(TestBed.inject(ChatStore).actuandoComoOrganizacion()).toBe(false);
+    });
+
+    it('422 ORGANIZATION_CHAT_PROFILE_UNAVAILABLE: dice que la farmacia no tiene vitrina activa', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        'La farmacia no tiene vitrina pública activa',
+      );
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    /** El botón del chat, para mirar si sigue girando. */
+    const botonDelChat = (): HTMLElement =>
+      element('[data-testid="mostrador-chatear"]') as HTMLElement;
+
+    it('store ocupado: avisa con ChatOcupadoError, el botón no queda girando y lo dice', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      // Otro chat a medio abrir: el store no pide este y avisa por `alFallar`.
+      TestBed.inject(ChatStore).abriendo.set(true);
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      http.expectNone({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(CHAT_YA_ABRIENDO);
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    it('store ocupado que sí llama a alFallar: queda su motivo, no el resguardo', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation(
+        (_resolver, _nombre, _alAbrir, _contexto, alFallar) => alFallar?.(new Error('ocupado')),
+      );
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        motivoDeChatNoAbierto(new Error('ocupado')),
+      );
+    });
+
+    it('la respuesta termina sin traer el hilo: el botón deja de girar', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      // Un store que se suscribe pero corta antes de la respuesta, sin avisar.
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation((resolver) => {
+        resolver.subscribe().unsubscribe();
+      });
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('L-5 · un único texto de «ocupado»: el del store', () => {
+      expect(motivoDeChatNoAbierto(new ChatOcupadoError())).toBe(CHAT_YA_ABRIENDO);
+    });
+
+    it('si el store corta la apertura (cambio de cuenta) sin avisar, el botón deja de girar', async () => {
+      await abrirElChat();
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).toBe('true');
+      const abrir = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+
+      // Sale la cuenta con el POST en vuelo: el store corta la apertura.
+      (TestBed.inject(ChatStore) as unknown as { olvidarIdentidad(): void }).olvidarIdentidad();
+      harness.detectChanges();
+
+      expect(abrir.cancelled).toBe(true);
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('L-4 · si el mostrador se fue de la pantalla mientras se abría, no lo lleva al chat', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      const lectura = http.expectOne((r) => r.url === '/community/conversations/c-9/messages');
+
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+      harness.fixture.destroy();
+
+      lectura.flush(pagina([]));
+      http
+        .expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' })
+        .flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    it('mientras el hilo se abre de verdad, el botón sí gira', async () => {
+      await abrirElChat();
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).toBe('true');
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'PATIENT_CHAT_PROFILE_MISSING', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+  });
 });
 
 /** El selector de un `data-testid` ya existente en la plantilla. */

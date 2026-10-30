@@ -209,10 +209,35 @@ export class ChatPreferences implements OnInit {
     effect(() => {
       if (cargado || !this.chat.perfilResuelto()) return;
       cargado = true;
-      const perfil = this.chat.perfil();
+      const perfil = this.perfil();
       untracked(() => this.autoReply.cargar(perfil));
     });
   }
+
+  /**
+   * El perfil **propio**, o `null` mientras no se resolvió.
+   *
+   * Nunca la vitrina con la que se esté escribiendo (`ChatStore.perfil()`):
+   * esta pantalla configura la respuesta automática **de la persona** («estoy
+   * de vacaciones») y su copia local es de la persona. La API también deja
+   * configurar la de la farmacia (`PUT /community/profiles/:vitrina/auto-reply`),
+   * pero esa es de la organización y no se edita desde las preferencias de
+   * nadie: antes, con «Escribiendo como» en la farmacia, esta pantalla leía la
+   * de la farmacia y le subía la personal encima.
+   */
+  private perfil(): string | null {
+    return this.chat.perfilPropio();
+  }
+
+  /**
+   * El nombre de la vitrina con la que se está escribiendo, si alguna: la
+   * pantalla aclara que lo que se configura acá no se manda en su nombre.
+   */
+  protected readonly comoOrganizacion = computed<string | null>(() =>
+    this.chat.actuandoComoOrganizacion()
+      ? (this.chat.vitrinaDeOrganizacion()?.nombre ?? null)
+      : null,
+  );
 
   /* --- Borrador ------------------------------------------------------------ */
 
@@ -278,7 +303,7 @@ export class ChatPreferences implements OnInit {
 
   /** Vuelve a pedir lo guardado, después de una lectura fallida. */
   protected reintentarLectura(): void {
-    this.autoReply.cargar(this.chat.perfil());
+    this.autoReply.cargar(this.perfil());
   }
 
   /* --- Guardar ------------------------------------------------------------- */
@@ -310,7 +335,7 @@ export class ChatPreferences implements OnInit {
         horarioDesde: borrador.desde,
         horarioHasta: borrador.hasta,
       },
-      this.chat.perfil(),
+      this.perfil(),
       (llego) => {
         this.guardando.set(false);
         if (llego) {

@@ -161,6 +161,22 @@
               <app-badge variant="warning" size="sm">Con receta</app-badge>
             }
           </div>
+
+          <!-- «¿Me lo guardan?», «¿llega hoy?»: lo que la fila no contesta se
+               le pregunta a esa farmacia, con el producto ya puesto en el
+               chat. Por fila y no uno solo: el chat es con una farmacia. -->
+          <button
+            class="farmacia__chat"
+            app-button
+            variant="secondary"
+            type="button"
+            data-testid="consultar-oferta-por-chat"
+            [attr.aria-label]="'Consultar por chat a ' + oferta.pharmacyName"
+            (clicked)="consultarPorChat(oferta)"
+          >
+            <app-nav-icon name="chat" />
+            Consultar por chat
+          </button>
         </li>
       }
     </ul>
