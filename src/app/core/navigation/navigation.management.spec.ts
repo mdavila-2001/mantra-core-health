@@ -52,12 +52,15 @@ describe('Menú del perfil de gestión', () => {
       expect(esPerfilDeGestion(['PLATFORM_ADMIN'])).toBe(true);
       expect(esPerfilDeGestion(['SUPERADMIN'])).toBe(true);
       expect(esPerfilDeGestion(['DPO', 'USER'])).toBe(true);
+      // la cuenta de administración de pruebas junta roles administrativos de negocio
+      expect(esPerfilDeGestion(['PLATFORM_ADMIN', 'BILLING', 'CASHIER', 'SCHEDULING_ADMIN'])).toBe(true);
     });
 
     it('no lo es sin rol de plataforma, ni si además usa la app para sí', () => {
       expect(esPerfilDeGestion([])).toBe(false);
       expect(esPerfilDeGestion(['USER'])).toBe(false);
       expect(esPerfilDeGestion(['BILLING'])).toBe(false);
+      expect(esPerfilDeGestion(['CASHIER', 'SCHEDULING_ADMIN'])).toBe(false);
       expect(esPerfilDeGestion(['PLATFORM_ADMIN', 'PATIENT'])).toBe(false);
       expect(esPerfilDeGestion(['SUPERADMIN', 'PRACTITIONER'])).toBe(false);
       expect(esPerfilDeGestion(['SECURITY_ADMIN', 'CLINICIAN', 'BILLING'])).toBe(false);
