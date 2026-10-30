@@ -1,0 +1,165 @@
+<div class="lc" [style.height.px]="height()">
+  <svg
+    class="lc__svg"
+    [attr.viewBox]="'0 0 ' + width() + ' ' + height()"
+    [attr.width]="width()"
+    [attr.height]="height()"
+    role="img"
+    tabindex="0"
+    [attr.aria-label]="ariaLabel()"
+    (pointermove)="onMove($event)"
+    (pointerleave)="hover.set(null)"
+    (pointerdown)="onDown($event)"
+    (pointerup)="onUp($event)"
+    (keydown)="onKey($event)"
+  >
+    @for (t of yTicks(); track t) {
+      <line class="lc__grid" [attr.x1]="margin().left" [attr.x2]="margin().left + plotW()" [attr.y1]="yScale()(t)" [attr.y2]="yScale()(t)" />
+      <text class="lc__tick" [attr.x]="margin().left - 8" [attr.y]="yScale()(t)" text-anchor="end" dominant-baseline="middle">{{ axis(t) }}</text>
+    }
+    @for (i of xTicks(); track i) {
+      <text class="lc__tick" [attr.x]="xAt(i)" [attr.y]="height() - 10" text-anchor="middle">{{ labels()[i] }}</text>
+    }
+
+    @if (bandRect(); as b) {
+      <rect class="lc__band" [attr.x]="margin().left" [attr.y]="b.y" [attr.width]="plotW()" [attr.height]="b.h" />
+    }
+
+    @for (r of refDrawn(); track r.id) {
+      <line
+        [class]="'lc__ref lc__ref--' + r.kind"
+        [attr.x1]="margin().left"
+        [attr.x2]="margin().left + plotW()"
+        [attr.y1]="r.y"
+        [attr.y2]="r.y"
+      />
+    }
+
+    @if (ghost()) {
+      <path class="lc__ghost" [attr.d]="ghost()" />
+    }
+
+    @for (s of drawn(); track s.id) {
+      @if (s.area) {
+        <path class="lc__area" [attr.d]="s.area" [style.fill]="'var(--ins-s' + s.color + ')'" />
+      }
+      <path class="lc__line" [attr.d]="s.d" [style.stroke]="'var(--ins-s' + s.color + ')'" [attr.stroke-dasharray]="s.dash || null" />
+      @if (s.last) {
+        <circle class="lc__end" [attr.cx]="s.last.x" [attr.cy]="s.last.y" r="3.5" [style.fill]="'var(--ins-s' + s.color + ')'" />
+      }
+    }
+
+    @for (l of endLabels(); track l.key) {
+      <text
+        [class]="'lc__label lc__label--' + l.kind"
+        [attr.x]="margin().left + plotW() + 8"
+        [attr.y]="l.y"
+        dominant-baseline="middle"
+        [style.fill]="l.kind === 'series' ? 'var(--ins-s' + l.color + ')' : null"
+      >{{ l.text }}</text>
+    }
+
+    @if (dragRect(); as d) {
+      <rect class="lc__drag" [attr.x]="d.x" [attr.y]="14" [attr.width]="d.w" [attr.height]="plotH()" />
+    }
+
+    @if (hoverInfo(); as h) {
+      <line class="lc__guide" [attr.x1]="h.x" [attr.x2]="h.x" [attr.y1]="14" [attr.y2]="14 + plotH()" />
+      @for (s of visibleSeries(); track s.id) {
+        @if (s.values[h.index] !== null && s.values[h.index] !== undefined) {
+          <circle class="lc__dot" [attr.cx]="h.x" [attr.cy]="yScale()(s.values[h.index]!)" r="4.5" [style.stroke]="'var(--ins-s' + s.color + ')'" />
+        }
+      }
+    }
+  </svg>
+
+  @if (hoverInfo(); as h) {
+    <div class="lc__tip" role="presentation" [style.left.px]="tipLeft()">
+      <p class="lc__tip-date">{{ h.label }}</p>
+      @for (row of h.rows; track row.id) {
+        <p class="lc__tip-row">
+          <span class="lc__swatch" [style.background]="'var(--ins-s' + row.color + ')'"></span>
+          <span class="lc__tip-name">{{ row.label }}</span>
+          <strong class="lc__tip-val">{{ row.value }}</strong>
+        </p>
+      }
+      @for (ref of h.refs; track ref.id) {
+        <p class="lc__tip-row lc__tip-row--ref">
+          <span class="lc__tip-name">{{ ref.label }}</span>
+          <span class="lc__tip-val">{{ ref.value }}</span>
+          @if (ref.delta) {
+            <span class="lc__tip-delta">{{ ref.delta }}</span>
+          }
+        </p>
+      }
+      @if (h.previous; as p) {
+        <p class="lc__tip-row lc__tip-row--ref">
+          <span class="lc__tip-name">{{ p.label }}</span>
+          <span class="lc__tip-val">{{ p.value }}</span>
+          @if (p.delta) {
+            <span class="lc__tip-delta">{{ p.delta }}</span>
+          }
+        </p>
+      }
+    </div>
+  }
+
+  <p class="lc__sr" aria-live="polite">
+    @if (hoverInfo(); as h) {
+      {{ h.label }}.
+      @for (row of h.rows; track row.id) {
+        <span>{{ row.label }} {{ row.value }}.</span>
+      }
+    }
+  </p>
+</div>
+
+<div class="lc__foot">
+  @if (series().length > 1) {
+    <div class="lc__legend" role="group" aria-label="Series visibles">
+      @for (s of series(); track s.id) {
+        <button type="button" class="lc__chip" [attr.aria-pressed]="!hidden().has(s.id)" (click)="toggle(s.id)">
+          <svg class="lc__chip-line" viewBox="0 0 22 6" aria-hidden="true">
+            <line x1="0" x2="22" y1="3" y2="3" [style.stroke]="'var(--ins-s' + s.color + ')'" [attr.stroke-dasharray]="s.dashed ? '6 3' : null" />
+          </svg>
+          {{ s.label }}
+        </button>
+      }
+    </div>
+  }
+  @if (zoom()) {
+    <button type="button" class="lc__reset" (click)="resetZoom()">Restablecer zoom</button>
+  } @else {
+    <span class="lc__hint">Arrastre sobre el gráfico para acercar.</span>
+  }
+</div>
+
+<details class="lc__table">
+  <summary>Ver los datos como tabla</summary>
+  <div class="lc__table-wrap">
+    <table>
+      <caption class="lc__sr">{{ ariaLabel() }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Periodo</th>
+          @for (s of series(); track s.id) {
+            <th scope="col">{{ s.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr>
+            @for (cell of row; track $index) {
+              @if ($first) {
+                <th scope="row">{{ cell }}</th>
+              } @else {
+                <td>{{ cell }}</td>
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</details>

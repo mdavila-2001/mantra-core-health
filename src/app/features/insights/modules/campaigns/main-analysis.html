@@ -1,0 +1,86 @@
+<ins-panel [title]="def().label + ' · análisis principal'" [question]="question()">
+  <div panel-tools class="ma__def" [title]="def().definition">
+    <span class="ma__unit">{{ def().definition }}</span>
+  </div>
+
+  <ins-chart-picker [options]="options()" [value]="chart()" [recommendation]="recommendation()" (picked)="pick($event)" />
+
+  @if (hasControls()) {
+<div class="ma__ctx" role="group" aria-label="Controles de este gráfico (no afectan al resto de la pantalla)">
+    <span class="ma__ctx-tag">Solo este gráfico</span>
+    @switch (chart()) {
+      @case ('line') {
+        <ng-container *ngTemplateOutlet="lineControls" />
+      }
+      @case ('area') {
+        <ng-container *ngTemplateOutlet="lineControls" />
+      }
+      @case ('heatmap') {
+        <app-segmented-control ariaLabel="Vista de horario" [options]="timeViewOptions" [value]="timeView()" (valueChange)="setTimeView($event)" />
+      }
+      @case ('scatter') {
+        <div class="ma__rel"><app-select ariaLabel="Relación entre variables" [value]="relationId()" [options]="relationOptions" (valueChange)="setRelation($event)" /></div>
+      }
+    }
+  </div>
+  }
+
+  <div class="ma__body">
+    @switch (chart()) {
+      @case ('line') {
+        <ins-line-chart [labels]="lineModel().labels" [series]="lineModel().series" [refs]="lineModel().refs" [band]="lineModel().band" [compare]="lineModel().compare" [unit]="def().unit" [ariaLabel]="lineAria()" />
+      }
+      @case ('area') {
+        <ins-line-chart [labels]="lineModel().labels" [series]="lineModel().series" [refs]="lineModel().refs" [band]="lineModel().band" [compare]="lineModel().compare" [unit]="def().unit" [area]="true" [ariaLabel]="lineAria()" />
+      }
+      @case ('bar') {
+        <ins-bar-chart [data]="bars().data" [unit]="def().unit" [ref]="bars().ref" orientation="v" [higherIsBetter]="def().goodWhen !== 'down'" [ariaLabel]="def().label + ' por canal'" (picked)="channelPicked.emit($event)" />
+      }
+      @case ('hbar') {
+        <ins-bar-chart [data]="bars().data" [unit]="def().unit" [ref]="bars().ref" orientation="h" [higherIsBetter]="def().goodWhen !== 'down'" [ariaLabel]="def().label + ' por canal, ordenado'" (picked)="channelPicked.emit($event)" />
+      }
+      @case ('stacked') {
+        <ins-stacked-chart [rows]="stack().rows" [segments]="stack().segments" [unit]="def().unit" [ariaLabel]="def().label + ' por canal, apilado'" />
+      }
+      @case ('stacked100') {
+        <ins-stacked-chart [rows]="stack().rows" [segments]="stack().segments" [unit]="def().unit" [proportion]="true" [ariaLabel]="'Proporción de ' + def().label.toLowerCase() + ' por canal'" />
+      }
+      @case ('heatmap') {
+        @switch (timeView()) {
+          @case ('dayhour') {
+            <ins-heatmap-chart [rows]="heat().rows" [cols]="heat().cols" [cells]="heat().cells" [unit]="def().unit" [valueName]="def().label" [best]="heat().best" [colLabelEvery]="2" [minCell]="30" [showValues]="false" [ariaLabel]="def().label + ' por día de la semana y hora'" />
+          }
+          @case ('hour') {
+            <ins-bar-chart [data]="hourBars()" [unit]="def().unit" orientation="v" [sorted]="false" [ariaLabel]="def().label + ' por hora'" />
+          }
+          @case ('daypart') {
+            <ins-bar-chart [data]="partBars()" [unit]="def().unit" orientation="v" [sorted]="false" [ariaLabel]="def().label + ' por franja del día'" />
+          }
+          @case ('weekday') {
+            <ins-bar-chart [data]="weekdayBars()" [unit]="def().unit" orientation="v" [sorted]="false" [ariaLabel]="def().label + ' por día de la semana'" />
+          }
+        }
+        <p class="ma__note">{{ bestText() }} Reparto horario modelado a partir de datos diarios (prototipo).</p>
+      }
+      @case ('scatter') {
+        <ins-scatter-chart [points]="scatter()" [xUnit]="xUnit()" [yUnit]="yUnit()" [xLabel]="relationDef().xLabel" [yLabel]="relationDef().yLabel" [ariaLabel]="relationDef().label" />
+      }
+      @case ('histogram') {
+        <ins-distribution-chart mode="histogram" [groups]="histogramGroups()" [unit]="def().unit" [ariaLabel]="'Distribución diaria de ' + def().label.toLowerCase()" />
+      }
+      @case ('boxplot') {
+        <ins-distribution-chart mode="boxplot" [groups]="boxGroups()" [unit]="def().unit" [ariaLabel]="'Variabilidad de ' + def().label.toLowerCase() + ' por canal'" />
+      }
+      @case ('cohort') {
+        <ins-heatmap-chart [rows]="cohort().rows" [cols]="cohort().cols" [cells]="cohort().cells" [unit]="def().unit" [rowMeta]="cohort().meta" rowMetaLabel="Activados" valueName="Retención" [minCell]="52" ariaLabel="Retención por cohorte semanal" />
+        <p class="ma__note">Las celdas rayadas son semanas que todavía no terminan: no se pueden medir, y no equivalen a 0 %.</p>
+      }
+    }
+  </div>
+</ins-panel>
+
+<ng-template #lineControls>
+  <label class="ma__check"><input type="checkbox" [checked]="compare()" [disabled]="split()" (change)="toggle(compare, $event)" /> Comparar con el periodo anterior</label>
+  <label class="ma__check"><input type="checkbox" [checked]="band()" (change)="toggle(band, $event)" /> Mostrar rango normal</label>
+  <label class="ma__check"><input type="checkbox" [checked]="split()" (change)="toggle(split, $event)" /> Dividir por canal</label>
+</ng-template>

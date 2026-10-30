@@ -1,0 +1,53 @@
+<button type="button" class="kpi__btn" [attr.aria-pressed]="selected()" [attr.aria-label]="def().label + ': ' + shown() + '. ' + changeAria() + '. Abrir análisis.'" (click)="opened.emit()">
+  <span class="kpi__top">
+    <span class="kpi__label">{{ def().label }}@if (assessment().kpi.estimated) {<abbr class="kpi__est" title="Cifra estimada con un modelo">est.</abbr>}</span>
+    @if (density() !== 'compact') {
+      <ins-status [status]="assessment().status" [short]="true" />
+    }
+  </span>
+
+  @if (assessment().kpi.value !== null) {
+    <span class="kpi__value">{{ shown() }}</span>
+    <span class="kpi__change">
+      @if (change() !== null) {
+        <span class="kpi__delta" [class.kpi__delta--good]="changeGood() === true" [class.kpi__delta--bad]="changeGood() === false">
+          <span aria-hidden="true">{{ change()! > 0 ? '↑' : change()! < 0 ? '↓' : '→' }}</span> {{ changeText() }}
+        </span>
+        <span class="kpi__vs">vs periodo anterior</span>
+      } @else {
+        <span class="kpi__vs">Sin periodo anterior comparable</span>
+      }
+    </span>
+  } @else {
+    <span class="kpi__value kpi__value--none">Sin dato</span>
+    <span class="kpi__gap">{{ assessment().kpi.gap?.message }}</span>
+  }
+
+  @if (density() !== 'compact') {
+    <span class="kpi__refs">
+      @if (benchmarkText(); as b) {
+        <span class="kpi__ref" [title]="benchmarkTitle()"><span class="kpi__ref-name">Benchmark</span> {{ b }}@if (vsBenchmark(); as v) { <span class="kpi__ref-d">({{ v }})</span>}</span>
+      }
+      @if (targetText(); as t) {
+        <span class="kpi__ref" [title]="targetTitle()"><span class="kpi__ref-name">Objetivo</span> {{ t }}</span>
+      }
+      @if (!benchmarkText() && !targetText()) {
+        <span class="kpi__ref kpi__ref--none">Sin referencia para comparar</span>
+      }
+    </span>
+    @if (assessment().kpi.value !== null && assessment().status !== 'insufficient' && density() === 'standard') {
+      <span class="kpi__why">{{ assessment().statusReason }}</span>
+    }
+  }
+
+  @if (density() === 'expanded') {
+    @if (series(); as s) {
+      <ins-spark [values]="s" />
+    }
+    <span class="kpi__read">
+      <strong>Decisión que permite</strong> {{ def().decision }}
+      <strong>Si sube</strong> {{ def().ifUp }}
+      <strong>Si baja</strong> {{ def().ifDown }}
+    </span>
+  }
+</button>

@@ -1,0 +1,68 @@
+<svg class="st__svg" [attr.viewBox]="'0 0 ' + width() + ' ' + height()" [attr.width]="width()" [attr.height]="height()" role="group" [attr.aria-label]="ariaLabel()">
+  @for (t of ticks(); track t) {
+    <line class="st__grid" [attr.x1]="m.left" [attr.x2]="width() - m.right" [attr.y1]="y()(t)" [attr.y2]="y()(t)" />
+    <text class="st__tick" [attr.x]="m.left - 8" [attr.y]="y()(t)" text-anchor="end" dominant-baseline="middle">{{ axis(t) }}</text>
+  }
+  @for (c of cols(); track c.row.id) {
+    @for (p of c.parts; track p.seg.id) {
+      <rect
+        class="st__seg"
+        [class.st__seg--hover]="hover() === c.row.id + p.seg.id"
+        [attr.x]="p.x"
+        [attr.y]="p.y"
+        [attr.width]="p.w"
+        [attr.height]="p.h"
+        [style.fill]="'var(--ins-s' + p.seg.color + ')'"
+        tabindex="0"
+        role="img"
+        [attr.aria-label]="p.tip"
+        (pointerenter)="hover.set(c.row.id + p.seg.id)"
+        (pointerleave)="hover.set(null)"
+        (focus)="hover.set(c.row.id + p.seg.id)"
+        (blur)="hover.set(null)"
+      >
+        <title>{{ p.tip }}</title>
+      </rect>
+      @if (p.h > 18 && p.w > 34) {
+        <text class="st__num" [attr.x]="c.cx" [attr.y]="p.y + p.h / 2" text-anchor="middle" dominant-baseline="middle">{{ p.label }}</text>
+      }
+    }
+    <text class="st__tick" [attr.x]="c.cx" [attr.y]="height() - 14" text-anchor="middle">{{ c.row.label }}</text>
+  }
+</svg>
+
+<ul class="st__legend">
+  @for (s of segments(); track s.id) {
+    <li><span class="st__key" [style.background]="'var(--ins-s' + s.color + ')'"></span>{{ s.label }}</li>
+  }
+</ul>
+
+<details class="st__table">
+  <summary>Ver los datos como tabla</summary>
+  <div class="st__wrap">
+    <table>
+      <caption class="st__sr">{{ ariaLabel() }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Periodo</th>
+          @for (s of segments(); track s.id) {
+            <th scope="col">{{ s.label }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr>
+            @for (cell of row; track $index) {
+              @if ($first) {
+                <th scope="row">{{ cell }}</th>
+              } @else {
+                <td>{{ cell }}</td>
+              }
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</details>

@@ -1,0 +1,77 @@
+<div class="bc">
+  <svg
+    class="bc__svg"
+    [attr.viewBox]="'0 0 ' + width() + ' ' + svgHeight()"
+    [attr.width]="width()"
+    [attr.height]="svgHeight()"
+    role="group"
+    [attr.aria-label]="ariaLabel()"
+  >
+    @for (t of ticks(); track t) {
+      @if (orientation() === 'h') {
+        <line class="bc__grid" [attr.x1]="tickPos(t)" [attr.x2]="tickPos(t)" y1="6" [attr.y2]="svgHeight() - 24" />
+        <text class="bc__tick" [attr.x]="tickPos(t)" [attr.y]="svgHeight() - 8" text-anchor="middle">{{ axis(t) }}</text>
+      } @else {
+        <line class="bc__grid" x1="52" [attr.x2]="width() - 8" [attr.y1]="tickPos(t)" [attr.y2]="tickPos(t)" />
+        <text class="bc__tick" x="44" [attr.y]="tickPos(t)" text-anchor="end" dominant-baseline="middle">{{ axis(t) }}</text>
+      }
+    }
+
+    @for (b of bars(); track b.datum.id) {
+      <g
+        class="bc__bar"
+        [class.bc__bar--picked]="selectedId() === b.datum.id"
+        [class.bc__bar--hover]="hover() === b.datum.id"
+        tabindex="0"
+        role="button"
+        [attr.aria-label]="b.tip"
+        [attr.aria-pressed]="selectedId() === b.datum.id"
+        (pointerenter)="hover.set(b.datum.id)"
+        (pointerleave)="hover.set(null)"
+        (focus)="hover.set(b.datum.id)"
+        (blur)="hover.set(null)"
+        (click)="pick(b.datum.id)"
+        (keydown.enter)="pick(b.datum.id)"
+        (keydown.space)="pick(b.datum.id); $event.preventDefault()"
+      >
+        <title>{{ b.tip }}</title>
+        @if (b.datum.value === null) {
+          <rect class="bc__gap" [attr.x]="orientation() === 'h' ? b.x : b.x" [attr.y]="orientation() === 'h' ? b.y : svgHeight() - 46 - 24" [attr.width]="orientation() === 'h' ? 80 : b.w" [attr.height]="orientation() === 'h' ? b.h : 24" />
+        } @else {
+          <rect class="bc__fill" [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h" rx="3" [style.fill]="'var(--ins-s' + (b.datum.color ?? 1) + ')'" />
+        }
+        <text class="bc__value" [class.bc__value--gap]="b.datum.value === null" [attr.x]="b.labelX" [attr.y]="b.labelY" [attr.text-anchor]="orientation() === 'h' ? 'start' : 'middle'" dominant-baseline="middle">{{ b.text }}</text>
+        @if (orientation() === 'h') {
+          <text class="bc__cat" [attr.x]="horizontalLabelWidth() - 8" [attr.y]="b.y + b.h / 2" text-anchor="end" dominant-baseline="middle">{{ slotLabel(b.datum.label) }}</text>
+        } @else {
+          <text class="bc__cat" [attr.x]="b.labelX" [attr.y]="svgHeight() - 24" text-anchor="middle">{{ slotLabel(b.datum.label) }}</text>
+        }
+      </g>
+    }
+
+    @if (refDrawn(); as r) {
+      @if (orientation() === 'h') {
+        <line [class]="'bc__ref bc__ref--' + r.kind" [attr.x1]="r.pos" [attr.x2]="r.pos" y1="6" [attr.y2]="svgHeight() - 24" />
+        <text class="bc__reflabel" [attr.x]="r.pos" y="2" text-anchor="middle">{{ r.label }}</text>
+      } @else {
+        <line [class]="'bc__ref bc__ref--' + r.kind" x1="52" [attr.x2]="width() - 8" [attr.y1]="r.pos" [attr.y2]="r.pos" />
+        <text class="bc__reflabel" [attr.x]="width() - 8" [attr.y]="r.pos - 5" text-anchor="end">{{ r.label }}</text>
+      }
+    }
+  </svg>
+</div>
+
+<details class="bc__table">
+  <summary>Ver los datos como tabla</summary>
+  <div class="bc__table-wrap">
+    <table>
+      <caption class="bc__sr">{{ ariaLabel() }}</caption>
+      <thead><tr><th scope="col">Elemento</th><th scope="col">Valor</th><th scope="col">Nota</th></tr></thead>
+      <tbody>
+        @for (row of tableRows(); track $index) {
+          <tr><th scope="row">{{ row[0] }}</th><td>{{ row[1] }}</td><td>{{ row[2] }}</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</details>

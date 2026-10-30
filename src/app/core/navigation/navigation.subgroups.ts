@@ -209,6 +209,13 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     ],
   },
   {
+    label: 'Marketing',
+    group: 'Administración',
+    icon: 'megaphone',
+    // Medir, comparar, entender y decidir: la inteligencia de marketing de AloVida.
+    paths: ['administration/marketing-insights'],
+  },
+  {
     label: 'Identidad y accesos',
     group: 'Administración',
     icon: 'shield',
