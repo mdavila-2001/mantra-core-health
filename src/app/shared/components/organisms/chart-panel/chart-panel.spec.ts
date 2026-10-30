@@ -115,6 +115,36 @@ describe('ChartPanel · menú Más', () => {
     expect(m.root.querySelector('[role="menu"]')).toBeNull();
   });
 
+  it('Escape devuelve el foco al botón «Más» y no llega al anfitrión (no cierra el asistente de al lado)', async () => {
+    const m = await mount();
+    await openMenu(m);
+    const llegaAlPadre = vi.fn();
+    m.root.parentElement?.addEventListener('keydown', llegaAlPadre);
+    m.root
+      .querySelector('[role="menu"]')
+      ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await m.fixture.whenStable();
+    expect(document.activeElement).toBe(m.byId('chart-more'));
+    expect(llegaAlPadre).not.toHaveBeenCalled();
+  });
+
+  it('las flechas recorren las opciones del menú y dan la vuelta', async () => {
+    const m = await mount();
+    await openMenu(m);
+    const menu = m.root.querySelector('[role="menu"]');
+    const flecha = (key: string) => {
+      menu?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    };
+    flecha('ArrowDown');
+    expect(document.activeElement).toBe(m.item('Ver datos en tabla'));
+    flecha('ArrowDown');
+    expect(document.activeElement).toBe(m.item('Exportar CSV'));
+    flecha('ArrowDown');
+    expect(document.activeElement).toBe(m.item('Ver en grande'));
+    flecha('ArrowUp');
+    expect(document.activeElement).toBe(m.item('Exportar CSV'));
+  });
+
   describe('lo que el gráfico no trae, dicho por escrito', () => {
     it('muestra el motivo de no tener velas y el de no tener explicación de cálculo', async () => {
       const fixture = TestBed.createComponent(ChartPanel);

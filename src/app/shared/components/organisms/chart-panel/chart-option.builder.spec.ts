@@ -275,4 +275,43 @@ describe('correcciones de lectura (revisión visual)', () => {
     expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
     expect(at(raw, 'media.0.option.series.0.label.show')).toBe(false);
   });
+
+  describe('el tooltip nunca interpreta como HTML un nombre que viene del dato', () => {
+    const MALO = '<img src=x onerror=alert(1)>';
+    type Formatter = (p: unknown) => string;
+
+    function tooltip(datos: DatosGrafico): Formatter {
+      return at(build(datos), 'tooltip.formatter') as Formatter;
+    }
+
+    it('cartesiano: categoría y serie', () => {
+      const f = tooltip({ tipo: 'cartesiano', categorias: [MALO], series: [{ nombre: MALO, valores: [1], forma: 'barra' }] });
+      const html = f([{ seriesName: MALO, axisValueLabel: MALO, name: MALO, value: 1, dataIndex: 0 }]);
+      expect(html).not.toContain('<img');
+      expect(html).toContain('&lt;img');
+    });
+
+    it('partes (dona y embudo)', () => {
+      for (const forma of ['dona', 'embudo'] as const) {
+        const f = tooltip({ tipo: 'partes', forma, partes: [{ nombre: MALO, valor: 3 }, { nombre: 'B', valor: 1 }] });
+        const html = f({ name: MALO, value: 3, data: { value: 3 } });
+        expect(html).not.toContain('<img');
+        expect(html).toContain('&lt;img');
+      }
+    });
+
+    it('mapa de calor: fila, columna y nombre del valor', () => {
+      const f = tooltip({ tipo: 'mapa-calor', filas: [MALO], columnas: [MALO], celdas: [[0, 0, 1]], nombreValor: MALO });
+      const html = f({ value: [0, 0, 1], data: {} });
+      expect(html).not.toContain('<img');
+      expect(html).toContain('&lt;img');
+    });
+
+    it('cascada: nombre del paso', () => {
+      const f = tooltip({ tipo: 'cascada', pasos: [{ nombre: MALO, valor: 5, total: true }] });
+      const html = f([{ name: MALO, dataIndex: 0, value: 5 }]);
+      expect(html).not.toContain('<img');
+      expect(html).toContain('&lt;img');
+    });
+  });
 });
