@@ -1,4 +1,4 @@
-<section class="rt" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'tabla-' + table().id">
+<section class="rt" [class.rt--cards]="table().filas.length <= MAX_CARD_ROWS" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'tabla-' + table().id">
   <header class="rt__head">
     <h3 class="rt__title" [id]="ids + '-t'">{{ table().titulo }}</h3>
     @if (table().info; as info) {
@@ -49,7 +49,7 @@
                 @if ($first) {
                   <th scope="row" [class.rt__missing]="isMissing(row[column.clave])">{{ display(row[column.clave], column) }}</th>
                 } @else {
-                  <td [class.rt__num]="numericColumns().has(column.clave)" [class.rt__missing]="isMissing(row[column.clave])">
+                  <td [class.rt__num]="numericColumns().has(column.clave)" [class.rt__missing]="isMissing(row[column.clave])" [class.rt__blank]="row[column.clave] === ''" [attr.data-label]="column.etiqueta">
                     {{ display(row[column.clave], column) }}
                   </td>
                 }

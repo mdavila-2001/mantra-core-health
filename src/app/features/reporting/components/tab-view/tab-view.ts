@@ -33,6 +33,8 @@ const COMPARISON_TEXT: Readonly<Record<ComparacionReporte, string | null>> = {
   'mismo-periodo-ano-anterior': 'frente al mismo periodo del año pasado',
 };
 
+const MAX_MAIN_KPIS = 6;
+
 /**
  * El cuerpo de una pestaña del dashboard comercial: avisos, tarjetas de
  * indicadores, gráficos y tablas de detalle.
@@ -45,8 +47,6 @@ const COMPARISON_TEXT: Readonly<Record<ComparacionReporte, string | null>> = {
  * Si la pestaña trae `secciones` se respeta su orden y sus títulos; lo que
  * ninguna sección nombra no se pierde: va al final, bajo «Más detalle».
  */
-const MAX_MAIN_KPIS = 6;
-
 @Component({
   selector: 'app-tab-view',
   imports: [Alert, ChartPanel, KpiTile, ReportTable],

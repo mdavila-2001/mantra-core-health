@@ -38,6 +38,8 @@ const COLLATOR = new Intl.Collator('es', { numeric: true, sensitivity: 'base' })
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportTable {
+  /** Hasta aquí, en un teléfono, cada fila pasa a una tarjeta; una tabla más larga seguiría siendo una columna interminable. */
+  protected readonly MAX_CARD_ROWS = 12;
   readonly table = input.required<TablaReporte>();
 
   protected readonly ids = nextControlId('rt');

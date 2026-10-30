@@ -1,9 +1,9 @@
 import type { ContextoReporte, TablaReporte } from '../../../data-access/reporting/reporting.types';
 import { redondear, suma } from './reporting-dataset.util';
-import { contextAccounts } from './suscripciones.cortes';
+import { contextAccounts, withoutDimension } from './suscripciones.cortes';
 import { accountsByPlan } from './suscripciones.graficos-cuentas';
 import { aMoneda, info } from './suscripciones.info';
-import { oscilar, PLANES, type ModeloSuscripciones } from './suscripciones.modelo';
+import { oscilar, PLANES, suscriptoresAlCierre, type ModeloSuscripciones } from './suscripciones.modelo';
 
 const UMBRAL_SUBIDA = 85;
 
@@ -74,8 +74,12 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
   // se separaba de la tarjeta (490.340 frente a 490.068,67) en la misma pantalla.
   const mrrExacto = visibles.map(({ i }) => m.mrrPlan[i]![m.n - 1]!);
   const mrrFilas = mrrRepartido(mrrExacto, mon);
+  // Cuentas y MRR tienen que salir del MISMO corte: las cuentas por plan se calculan sin el filtro de plan,
+  // pero el MRR del modelo sí lo lleva; sin este factor el ingreso por cuenta salía a una fracción del precio.
+  const sinPlan = suscriptoresAlCierre(withoutDimension(ctx, 'plan'));
+  const factor = hasPlan && sinPlan > 0 ? suscriptoresAlCierre(ctx) / sinPlan : 1;
   const filas = visibles.map(({ p, i }, k) => {
-    const n = cuentas[i]!;
+    const n = Math.round(cuentas[i]! * factor);
     const mrr = mrrFilas[k]!;
     return {
       plan: p.nombre,
@@ -93,10 +97,10 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
     titulo: 'Resumen por plan',
     columnas: [
       { clave: 'plan', etiqueta: 'Plan' },
-      { clave: 'cuentas', etiqueta: 'Cuentas activas', alinear: 'der' },
-      { clave: 'mrr', etiqueta: `MRR (${simbolo(ctx)})`, alinear: 'der' },
-      { clave: 'arpu', etiqueta: `Ingreso por cuenta (${simbolo(ctx)})`, alinear: 'der' },
-      { clave: 'churn', etiqueta: 'Churn mensual (%)', alinear: 'der' },
+      { clave: 'cuentas', etiqueta: 'Cuentas activas', alinear: 'der', unidad: { tipo: 'numero' } },
+      { clave: 'mrr', etiqueta: `MRR (${simbolo(ctx)})`, alinear: 'der', unidad: { tipo: 'moneda', moneda: ctx.moneda } },
+      { clave: 'arpu', etiqueta: `Ingreso por cuenta (${simbolo(ctx)})`, alinear: 'der', unidad: { tipo: 'moneda', moneda: ctx.moneda } },
+      { clave: 'churn', etiqueta: 'Churn mensual (%)', alinear: 'der', unidad: { tipo: 'porcentaje' } },
       { clave: 'cuota', etiqueta: 'Consultas incluidas', alinear: 'der' },
     ],
     filas: [
@@ -105,7 +109,7 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
     ],
     info: info({
       definicion: 'Cada plan con sus cuentas, su MRR y su churn; la fila de total suma las filas de arriba.',
-      formula: 'MRR del plan = cuentas activas × precio mensual; ingreso por cuenta = MRR ÷ cuentas',
+      formula: 'MRR del plan = el del modelo de suscripciones al cierre (el mismo de la tarjeta «MRR»); ingreso por cuenta = MRR ÷ cuentas',
       fuente: 'payments.subscriptions · payments.plan_prices',
       salvedades: ['El churn por plan sale sin dato si el plan tiene menos de 10 cuentas en el corte.', 'El total no tiene churn propio: el de toda la base está en el gráfico de churn.', 'El MRR de cada plan sale del mismo cálculo que la tarjeta «MRR»; el total es el de la tarjeta y los centavos de redondeo se asignan a la fila mayor.'],
     }),
