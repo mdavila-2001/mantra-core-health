@@ -189,10 +189,13 @@ export type VerticalReporte =
   | 'adquisicion'
   | 'calidad';
 
+/** Dónde se agrupa un reporte en el grid: una vertical del dashboard comercial o «existentes» (pantallas que ya tiene la aplicación). */
+export type CategoriaReporte = VerticalReporte | 'existentes';
+
 export interface ReporteCatalogo {
   readonly id: string;
   readonly nombre: string;
-  readonly vertical: VerticalReporte;
+  readonly vertical: CategoriaReporte;
   readonly descripcion: string;
   readonly responsable: string;
   readonly certificado: boolean;

@@ -17,6 +17,8 @@ export interface ChartTheme {
   readonly malo: string;
   readonly superficie: string;
   readonly rampa: readonly string[];
+  /** Familia tipográfica real de la página: ECharts mide el texto con ella para ubicar leyendas y ejes. */
+  readonly fuente: string;
 }
 
 /** Paleta categórica en orden FIJO (validada, ADR-0017); cambia por tema en `styles.css`. */
@@ -58,5 +60,6 @@ export function leerTemaGraficos(): ChartTheme {
     malo: leer(estilo, '--st-error-fg', 'currentColor'),
     superficie: leer(estilo, '--bg-surface', 'Canvas'),
     rampa: RAMPA_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
+    fuente: getComputedStyle(document.body).fontFamily || 'sans-serif',
   };
 }

@@ -12,6 +12,7 @@
   box-shadow: var(--shadow-sm);
   color: var(--text-primary);
   min-width: 0;
+  container-type: inline-size;
 }
 
 .kpi__title {
@@ -26,11 +27,13 @@
 .kpi__value {
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--fs-h1);
-  line-height: var(--lh-h1);
+  /* Un importe nunca se parte en dos líneas («Bs 658.520,8 / 5» se leía como otra cifra):
+     el tamaño sigue al ancho de la ficha, con el techo del sistema. */
+  font-size: min(var(--fs-h2), 9.6cqi);
+  line-height: var(--lh-h2);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 /* «Sin dato» es una ausencia, no un resultado: más chico y en gris para que no compita con un número real. */
 .kpi__value--empty {

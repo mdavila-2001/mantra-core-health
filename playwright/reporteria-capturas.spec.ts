@@ -130,6 +130,13 @@ async function esperarGraficos(page: Page): Promise<void> {
 }
 
 async function capturar(page: Page, nombre: string): Promise<void> {
+  // Una captura a media transición (la pantalla de acceso todavía debajo) no es evidencia:
+  // se espera a que la vista anterior salga y a que terminen las animaciones y las fuentes.
+  await expect(page.locator('app-login')).toHaveCount(0);
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
+  });
   await page.screenshot({ path: join(CAPTURAS, `${nombre}.png`), fullPage: true });
 }
 

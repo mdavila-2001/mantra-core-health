@@ -1,7 +1,10 @@
 import { VERTICALES } from '@core/data-access/reporting/reporting-labels';
-import type { ReporteCatalogo, VerticalReporte } from '@core/data-access/reporting/reporting.types';
+import type { CategoriaReporte, ReporteCatalogo } from '@core/data-access/reporting/reporting.types';
 
-export type VerticalFilter = VerticalReporte | 'all';
+/** Las verticales del portal, en su orden, y al final las pantallas que ya existían. */
+const CATEGORIAS: readonly CategoriaReporte[] = [...VERTICALES, 'existentes'];
+
+export type VerticalFilter = CategoriaReporte | 'all';
 
 /** Minúsculas y sin tildes: «analitica» encuentra «Analítica». */
 export function normalizeText(text: string): string {
@@ -33,13 +36,13 @@ export function filterReports(
 export function sortReports(reports: readonly ReporteCatalogo[]): readonly ReporteCatalogo[] {
   return [...reports].sort(
     (a, b) =>
-      VERTICALES.indexOf(a.vertical) - VERTICALES.indexOf(b.vertical) ||
+      CATEGORIAS.indexOf(a.vertical) - CATEGORIAS.indexOf(b.vertical) ||
       a.nombre.localeCompare(b.nombre, 'es'),
   );
 }
 
 export interface VerticalCount {
-  readonly vertical: VerticalReporte;
+  readonly vertical: CategoriaReporte;
   readonly count: number;
 }
 
@@ -48,7 +51,7 @@ export interface VerticalCount {
  * que el catálogo trae: un chip con cero que nunca podrá tener nada sería ruido.
  */
 export function countByVertical(reports: readonly ReporteCatalogo[], query: string): readonly VerticalCount[] {
-  return VERTICALES.filter((v) => reports.some((r) => r.vertical === v)).map((vertical) => ({
+  return CATEGORIAS.filter((v) => reports.some((r) => r.vertical === v)).map((vertical) => ({
     vertical,
     count: reports.filter((r) => r.vertical === vertical && matchesQuery(r, query)).length,
   }));

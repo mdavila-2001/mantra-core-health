@@ -17,6 +17,7 @@ const THEME: ChartTheme = {
   malo: '#a00',
   superficie: '#fff',
   rampa: ['#aaa'],
+  fuente: 'sans-serif',
 };
 const UNIT: UnidadValor = { tipo: 'numero' };
 

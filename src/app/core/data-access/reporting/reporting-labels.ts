@@ -1,4 +1,4 @@
-import type { DimensionFiltro, VerticalReporte } from './reporting.types';
+import type { CategoriaReporte, DimensionFiltro, VerticalReporte } from './reporting.types';
 
 export const ETIQUETA_DIMENSION: Readonly<Record<DimensionFiltro, string>> = {
   plan: 'plan',
@@ -14,7 +14,7 @@ export const ETIQUETA_DIMENSION: Readonly<Record<DimensionFiltro, string>> = {
   mes: 'mes',
 };
 
-export const ETIQUETA_VERTICAL: Readonly<Record<VerticalReporte, string>> = {
+export const ETIQUETA_VERTICAL: Readonly<Record<CategoriaReporte, string>> = {
   resumen: 'Resumen ejecutivo',
   suscripciones: 'Suscripciones de doctores',
   publicidad: 'Publicidad push y pauteo',
@@ -22,6 +22,7 @@ export const ETIQUETA_VERTICAL: Readonly<Record<VerticalReporte, string>> = {
   cobros: 'Cobros y caja',
   adquisicion: 'Adquisición y cuentas',
   calidad: 'Calidad del dato',
+  existentes: 'Pantallas existentes',
 };
 
 export const VERTICALES: readonly VerticalReporte[] = [

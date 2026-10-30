@@ -96,11 +96,20 @@ describe('TabView', () => {
   });
 
   it('un gráfico de ancho completo ocupa toda la fila', async () => {
-    const fixture = mount(data());
+    // Dos de media columna y uno completo: ninguno queda huérfano, así que solo el completo ocupa la fila.
+    const fixture = mount(data({ graficos: [chart('g1'), chart('g2', { ancho: 'completo' }), chart('g3')] }));
     await fixture.whenStable();
     const cells = (fixture.nativeElement as HTMLElement).querySelectorAll('.tv__cell');
     expect(cells[0]?.classList.contains('tv__cell--full')).toBe(false);
     expect(cells[1]?.classList.contains('tv__cell--full')).toBe(true);
+    expect(cells[2]?.classList.contains('tv__cell--full')).toBe(false);
+  });
+
+  it('un gráfico de media columna que quedaría solo en su fila pasa a ancho completo', async () => {
+    const fixture = mount(data({ graficos: [chart('g1'), chart('g2', { ancho: 'completo' })] }));
+    await fixture.whenStable();
+    const cells = (fixture.nativeElement as HTMLElement).querySelectorAll('.tv__cell');
+    expect(cells[0]?.classList.contains('tv__cell--full')).toBe(true);
   });
 
   it('muestra los avisos del servidor', async () => {
