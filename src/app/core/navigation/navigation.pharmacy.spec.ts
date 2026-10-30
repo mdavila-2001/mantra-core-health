@@ -9,9 +9,11 @@ import { SessionStore } from '../auth/session.store';
 import { NavigationService } from './navigation.service';
 
 /**
- * El menú de la cuenta de farmacia (tenant `PHARMACY`): diez renglones planos,
+ * El menú de la cuenta de farmacia (tenant `PHARMACY`): seis renglones planos,
  * en este orden y nada más, más los dos fijos de toda cuenta. «Precios» y
- * «Sucursales» entraron el 01/10/2026 (pedido del propietario).
+ * «Sucursales» entraron el 01/10/2026 (pedido del propietario); desde el
+ * 30/10/2026 productos, categorías, precios, inventario e importación son
+ * las pestañas de un solo renglón, «Catálogo».
  *
  * Y, del otro lado, que **ninguna otra cuenta cambió de menú**: la regla 3 del
  * propietario. Las listas de abajo son el menú de cada una antes de este
@@ -34,10 +36,6 @@ function jwt(payload: Record<string, unknown>): string {
 const MENU_DE_LA_FARMACIA = [
   '/administration/pharmacy',
   '/administration/pharmacy-catalog',
-  '/administration/pharmacy-categories',
-  '/administration/pharmacy-import',
-  '/administration/pharmacy-inventory',
-  '/administration/pharmacy-prices',
   // P34 (26/10/2026): 24 h y turnos de guardia.
   '/administration/pharmacy-hours',
   '/administration/pharmacy-orders',
@@ -86,7 +84,7 @@ describe('Menú de la cuenta de farmacia', () => {
     ];
   }
 
-  it('ofrece los nueve renglones de la farmacia, en orden, y nada de otra cuenta', () => {
+  it('ofrece los seis renglones de la farmacia, en orden, y nada de otra cuenta', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const rutas = rutasDelMenu();
@@ -99,7 +97,7 @@ describe('Menú de la cuenta de farmacia', () => {
     );
   });
 
-  it('los diez van planos (P34 sumó «Horario y turnos»): en un dominio aplanado, sin encabezado ni desplegable', () => {
+  it('los seis van planos («Catálogo» junta cinco pantallas en pestañas): en un dominio aplanado, sin encabezado ni desplegable', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
 
     const grupos = service
@@ -110,11 +108,7 @@ describe('Menú de la cuenta de farmacia', () => {
     expect(grupos[0].aplanado).toBe(true);
     expect(grupos[0].items.map((item) => item.label)).toEqual([
       'Resumen',
-      'Productos',
-      'Categorías',
-      'Importación masiva',
-      'Inventario',
-      'Precios',
+      'Catálogo',
       'Horario y turnos',
       'Solicitudes de retiro',
       'Promociones',
