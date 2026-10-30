@@ -36,7 +36,11 @@ import { historialDeCursor } from '../../../../shared/components/organisms/data-
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { ORGANIZATIONS_ROUTE, ORGANIZATION_NEW_ROUTE } from '../organizations.routes';
+import {
+  ORGANIZATIONS_ROUTE,
+  ORGANIZATION_NEW_ROUTE,
+  organizationDetailRoute,
+} from '../organizations.routes';
 
 /** Filas por página. El backend admite hasta 200 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
@@ -165,6 +169,14 @@ export class OrganizationList {
       queryParams: texto === '' ? {} : { q: texto },
       replaceUrl: true,
     });
+  }
+
+  /** La ficha de una organización: sus sucursales, su plantilla y sus hijas. */
+  protected readonly rutaDeFicha = organizationDetailRoute;
+
+  /** La fila entera abre la ficha; el enlace del nombre lleva al mismo lugar. */
+  protected abrir(organizacion: TenantListItem): void {
+    void this.router.navigateByUrl(organizationDetailRoute(organizacion.id));
   }
 
   protected mover(cursor: string): void {

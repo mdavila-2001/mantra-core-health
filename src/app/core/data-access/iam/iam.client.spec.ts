@@ -831,4 +831,23 @@ describe('IamClient · precarga de firma/sello', () => {
       Object.assign(environment, { mockBackend: original });
     }
   });
+  describe('getUser', () => {
+    it('pide la ficha por id y la reduce a la forma de una fila', () => {
+      let nombre = '';
+      client.getUser('u-1').subscribe((usuario) => (nombre = usuario.displayName));
+
+      const req = http.expectOne('/iam/users/u-1');
+      expect(req.request.method).toBe('GET');
+      req.flush({
+        id: 'u-1',
+        displayName: 'Ana Pérez',
+        statusConceptId: 'c-activo',
+        emailVerified: true,
+        lastLoginAt: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+      });
+
+      expect(nombre).toBe('Ana Pérez');
+    });
+  });
 });

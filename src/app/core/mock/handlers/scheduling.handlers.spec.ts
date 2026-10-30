@@ -2,6 +2,7 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { registrarAgenda } from './scheduling.handlers';
 import {
+  RECURSO_CONSULTORIO_MEDICA,
   RECURSO_MEDICA,
   TIPO_CITA_RECONSULTA,
   recursos,
@@ -11,7 +12,7 @@ import {
 import { BOOKING_STATUS } from '../fixtures/concepts';
 import { MEDICAL, PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
-import { buscarUsuario } from '../mock-session';
+import { buscarUsuario, TENANT_CLINICA, TENANT_CONSULTORIO } from '../mock-session';
 
 /**
  * El doble de los bloqueos de agenda no puede ser más permisivo que el
@@ -577,5 +578,43 @@ describe('handlers de telemedicina por franja', () => {
 
   it('la misma hora en presencial no mira la telemedicina: 201', () => {
     expect(citaDirecta(proximo(1, 9, 30), 'PRESENCIAL').status).toBe(201);
+  });
+});
+
+/**
+ * `GET /scheduling/resources` filtra por `tenantId` en la API
+ * (`SchedulingAgendaRepository.findResources`). El doble tenía `|| true` en el
+ * filtro y devolvía las agendas de todas las organizaciones a cualquier tenant.
+ */
+describe('handler de recursos de agenda — aislamiento por organización', () => {
+  const router = new MockRouter();
+  registrarAgenda(router);
+  const medica = buscarUsuario('medica')!;
+
+  function recursosDe(tenantId: string): readonly { id: string }[] {
+    const match = router.match('GET', '/scheduling/resources')!;
+    const resultado = match.handler({
+      method: 'GET',
+      path: '/scheduling/resources',
+      params: match.params,
+      query: new URLSearchParams({ tenantId }),
+      body: {},
+      headers: new HttpHeaders(),
+      user: medica,
+    }) as { items: readonly { id: string }[] };
+    return resultado.items;
+  }
+
+  it('una organización sin agendas no recibe las de otra', () => {
+    expect(recursosDe('tenant-que-no-tiene-agendas')).toEqual([]);
+  });
+
+  it('cada organización ve sólo las suyas', () => {
+    const clinica = recursosDe(TENANT_CLINICA).map((r) => r.id);
+    const consultorio = recursosDe(TENANT_CONSULTORIO).map((r) => r.id);
+
+    expect(clinica).toContain(RECURSO_MEDICA);
+    expect(clinica).not.toContain(RECURSO_CONSULTORIO_MEDICA);
+    expect(consultorio).toEqual([RECURSO_CONSULTORIO_MEDICA]);
   });
 });

@@ -7,7 +7,7 @@ import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { crearAdmisionDeAltaDeDoctor } from './admissions.handlers';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
-import { conflict, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
@@ -891,6 +891,31 @@ export function registrarAuth(router: MockRouter): void {
 
   router.get('/iam/users', ({ query }) => searchUsers(query));
   router.post('/iam/users/search', (request) => searchUsers(bodyAsQuery(request)));
+
+  // Ficha de una cuenta. Igual que la API (`@Roles('SECURITY_ADMIN')`): sin
+  // ese rol, 403 —así la plantilla de una organización tiene que saber
+  // degradar a «nombre no disponible» también en la maqueta—.
+  router.get('/iam/users/:id', ({ params, user }) => {
+    const roles = user?.roles ?? [];
+    if (!roles.includes('SECURITY_ADMIN') && !roles.includes('SUPERADMIN')) {
+      return forbidden('Se requiere SECURITY_ADMIN para leer la ficha de una cuenta');
+    }
+    const i = MOCK_USERS.findIndex((u) => u.id === params['id']);
+    const base = MOCK_USERS[i];
+    if (base !== undefined) {
+      return {
+        id: base.id,
+        displayName: base.displayName,
+        statusConceptId: STATUS['ST-ACTIVE']!,
+        emailVerified: true,
+        lastLoginAt: iso(-i, 9),
+        createdAt: iso(-400 + i * 7, 8),
+      };
+    }
+    return (
+      usuariosAdicionales.find((u) => u.id === params['id']) ?? notFound('Usuario no encontrado')
+    );
+  });
 
   router.post('/iam/users', ({ body }) => {
     const datos = cuerpo<{ displayName?: string; email?: string }>({ body });
