@@ -1,0 +1,115 @@
+:host {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.hm__scroll {
+  overflow-x: auto;
+  padding-block-end: var(--sp-1);
+}
+
+.hm__grid {
+  display: grid;
+  gap: 3px;
+  min-inline-size: max-content;
+  inline-size: 100%;
+}
+
+.hm__colhead,
+.hm__rowhead,
+.hm__rowmeta {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hm__colhead {
+  text-align: center;
+  align-self: end;
+  padding-block-end: 2px;
+}
+
+.hm__rowhead {
+  align-self: center;
+  padding-inline-end: var(--sp-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hm__rowmeta {
+  align-self: center;
+  padding-inline-end: var(--sp-2);
+  text-align: end;
+  color: var(--text-muted);
+}
+
+.hm__colhead--meta {
+  text-align: end;
+  padding-inline-end: var(--sp-2);
+}
+
+.hm__cell {
+  display: grid;
+  place-items: center;
+  min-block-size: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--r-xs);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.hm__cell:hover {
+  border-color: var(--text-primary);
+}
+
+.hm__cell:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+  z-index: 1;
+}
+
+.hm__cell--0 {
+  background: repeating-linear-gradient(135deg, var(--bg-inset) 0 4px, var(--bg-surface) 4px 8px);
+  color: var(--text-muted);
+  border-color: var(--border-default);
+}
+
+.hm__cell--1 { background: var(--heat-1-bg); color: var(--heat-1-fg); }
+.hm__cell--2 { background: var(--heat-2-bg); color: var(--heat-2-fg); }
+.hm__cell--3 { background: var(--heat-3-bg); color: var(--heat-3-fg); }
+.hm__cell--4 { background: var(--heat-4-bg); color: var(--heat-4-fg); }
+
+.hm__cell--best {
+  outline: 2px solid var(--text-primary);
+  outline-offset: -2px;
+  font-weight: 800;
+}
+
+.hm__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.hm__swatch {
+  inline-size: 22px;
+  block-size: 12px;
+  border-radius: 2px;
+  border: 1px solid var(--border-default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm__cell {
+    transition: none;
+  }
+}

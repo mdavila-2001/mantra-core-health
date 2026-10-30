@@ -1,0 +1,44 @@
+<ins-panel title="Rendimiento por pieza de campaña" question="¿Qué creativo, formato, audiencia o llamado a la acción rinde mejor? Aplica a canales pagados.">
+  <app-segmented-control panel-tools ariaLabel="Dimensión del análisis" [options]="options" [value]="dimension()" (valueChange)="setDimension($event)" />
+
+  @if (rows().length === 0) {
+    <p class="dp__empty">No hay canales pagados con datos en la selección. Elija otro canal o periodo.</p>
+  } @else {
+    <div class="dp__wrap">
+      <table class="dp__table">
+        <caption class="dp__sr">Rendimiento por {{ dimLabel().toLowerCase() }}</caption>
+        <thead>
+          <tr>
+            <th scope="col" [attr.aria-sort]="ariaSort('label')"><button type="button" (click)="sort('label')">{{ dimLabel() }}</button></th>
+            <th scope="col" class="dp__n" [attr.aria-sort]="ariaSort('impressions')"><button type="button" (click)="sort('impressions')">Impresiones</button></th>
+            <th scope="col" class="dp__n" [attr.aria-sort]="ariaSort('ctr')"><button type="button" (click)="sort('ctr')">CTR</button></th>
+            <th scope="col" class="dp__n" [attr.aria-sort]="ariaSort('conversions')"><button type="button" (click)="sort('conversions')">Conversiones</button></th>
+            <th scope="col" class="dp__n" [attr.aria-sort]="ariaSort('cpa')"><button type="button" (click)="sort('cpa')">CPA</button></th>
+            <th scope="col" [attr.aria-sort]="ariaSort('roas')"><button type="button" (click)="sort('roas')">ROAS</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.id) {
+            <tr [class.dp__row--on]="picked() === r.id">
+              <th scope="row"><button type="button" class="dp__name" [attr.aria-pressed]="picked() === r.id" (click)="pick(r.id)">{{ r.label }}</button></th>
+              <td class="dp__n">{{ int(r.impressions) }}</td>
+              <td class="dp__n">{{ pct(r.ctr) }}</td>
+              <td class="dp__n">{{ int(r.conversions) }}</td>
+              <td class="dp__n">{{ money(r.cpa) }}</td>
+              <td class="dp__roas">
+                <span class="dp__bar" aria-hidden="true"><span [style.inline-size.%]="((r.roas ?? 0) / maxRoas()) * 100"></span></span>
+                <span class="dp__n">{{ ratio(r.roas) }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (selected(); as s) {
+      <p class="dp__detail" aria-live="polite">
+        <strong>{{ s.label }}</strong>: {{ int(s.conversions) }} conversiones con {{ money(s.spendCents) }} de inversión ({{ share(s) }} del total pagado).
+        Los cortes se reparten con pesos del prototipo y suman exactamente el total de la selección.
+      </p>
+    }
+  }
+</ins-panel>

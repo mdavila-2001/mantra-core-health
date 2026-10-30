@@ -1,0 +1,34 @@
+<article class="al__box" [attr.aria-labelledby]="'al-' + alert().id">
+  <header class="al__head">
+    <span class="al__level"><span aria-hidden="true">{{ icon() }}</span> {{ labels[alert().severity] }}</span>
+    <span class="al__when">{{ when() }} · {{ alert().source }}</span>
+  </header>
+  <h3 class="al__title" [id]="'al-' + alert().id">{{ alert().title }}</h3>
+  <p class="al__what">{{ alert().what }}</p>
+
+  @if (alert().series.length > 1) {
+    <ins-spark [values]="alert().series" />
+  }
+
+  <dl class="al__facts">
+    <div><dt>Magnitud</dt><dd>{{ alert().magnitude }}</dd></div>
+    @if (!compact()) {
+      <div><dt>Posible causa</dt><dd>{{ alert().cause }}</dd></div>
+      <div><dt>Impacto</dt><dd>{{ alert().impact }}</dd></div>
+    }
+    <div><dt>Confianza</dt><dd>{{ confidence[alert().confidence] }}</dd></div>
+  </dl>
+
+  @if (!compact()) {
+    <p class="al__rec"><strong>Recomendación</strong> {{ alert().recommendation }}</p>
+    <ul class="al__evidence" aria-label="Evidencia">
+      @for (e of alert().evidence; track $index) {
+        <li>{{ e }}</li>
+      }
+    </ul>
+  }
+
+  <footer class="al__foot">
+    <a class="al__go" [routerLink]="link()" [queryParams]="alert().query">Investigar en {{ moduleName() }} <span aria-hidden="true">→</span></a>
+  </footer>
+</article>

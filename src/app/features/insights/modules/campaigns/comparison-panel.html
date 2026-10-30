@@ -1,0 +1,42 @@
+<ins-panel title="Comparar campañas" question="¿Qué campaña rindió mejor y en qué métricas? Cada una se mide en sus propias fechas.">
+  <div panel-tools class="cmp__tools">
+    <ins-multi-select class="cmp__pick" label="Campañas a comparar" allLabel="Todas" [min]="2" [options]="campaignOptions" [selected]="ids()" (changed)="setIds($event)" />
+  </div>
+
+  <div class="cmp__grid">
+    <div class="cmp__wrap">
+      <table class="cmp__table">
+        <caption class="cmp__sr">Comparación de campañas</caption>
+        <thead>
+          <tr>
+            <th scope="col">Campaña</th>
+            @for (c of columns; track c.id) {
+              <th scope="col" class="cmp__n" [title]="c.definition">{{ c.label }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rows(); track r.campaignId) {
+            <tr>
+              <th scope="row">{{ r.name }}</th>
+              @for (c of columns; track c.id) {
+                <td class="cmp__n" [class.cmp__best]="best().get(c.id) === r.campaignId" [title]="gapOf(r, c.id)">
+                  {{ show(r, c.id) }}@if (best().get(c.id) === r.campaignId) {<span class="cmp__star" aria-label=" (mejor valor)"> ★</span>}
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+      <p class="cmp__legend">★ mejor valor de la columna. «—» significa que la métrica no se pudo calcular para esa campaña (hover para el motivo).</p>
+    </div>
+
+    <div class="cmp__chart">
+      <div class="cmp__metric">
+        <span class="cmp__label">Métrica del gráfico (solo este gráfico)</span>
+        <app-select ariaLabel="Métrica de la comparación" [value]="metric()" [options]="metricOptions" (valueChange)="setMetric($event)" />
+      </div>
+      <ins-bar-chart [data]="bars()" [unit]="metricDef().unit" orientation="v" [higherIsBetter]="metricDef().goodWhen !== 'down'" [ariaLabel]="'Comparación de ' + metricDef().label + ' entre campañas'" />
+    </div>
+  </div>
+</ins-panel>

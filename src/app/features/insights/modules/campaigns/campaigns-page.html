@@ -1,0 +1,49 @@
+<div class="cm">
+  <ins-filter-bar [controls]="['campaign', 'period', 'channel', 'metric', 'grain']" />
+
+  <nav class="cm__drill" aria-label="Nivel de detalle">
+    <span class="cm__drill-label">Nivel de detalle</span>
+    <span>General</span>
+    @if (drillChannel()) {
+      <span aria-hidden="true">›</span>
+      <span class="cm__drill-now">Canal: {{ drillLabel() }}</span>
+      <button type="button" class="cm__drill-clear" (click)="clearDrill()">Volver a todos los canales</button>
+    } @else {
+      <span class="cm__drill-hint">Haga clic en una barra de canal para profundizar sin perder el contexto.</span>
+    }
+  </nav>
+
+  <app-view-state-host [state]="state()">
+    @if (model(); as m) {
+      <div class="cm__stack">
+      <section class="cm__kpis" aria-label="Indicadores principales">
+        @for (k of m.kpis; track k.assessment.kpi.metric) {
+          <ins-kpi [assessment]="k.assessment" [series]="k.series" [selected]="k.assessment.kpi.metric === filter().metric" (opened)="setMetric(k.assessment.kpi.metric)" />
+        }
+      </section>
+
+      <ins-main-analysis [filter]="filter()" (channelPicked)="drillTo($event)" />
+
+      @if (m.insights.length) {
+        <section class="cm__insights" aria-label="Hallazgos">
+          <h2 class="cm__h2">Qué está pasando y qué conviene mirar</h2>
+          <div class="cm__insights-grid">
+            @for (i of m.insights; track i.id) {
+              <ins-insight [insight]="i" />
+            }
+          </div>
+        </section>
+      }
+
+      <div class="cm__two">
+        <ins-timing-panel [filter]="filter()" />
+        <ins-objectives-panel [filter]="filter()" />
+      </div>
+
+      <ins-dimension-panel [filter]="filter()" />
+      <ins-comparison-panel [channels]="filter().channels" [initial]="ctx.state().campaignIds" />
+      <ins-detail-table [filter]="filter()" />
+      </div>
+    }
+  </app-view-state-host>
+</div>
