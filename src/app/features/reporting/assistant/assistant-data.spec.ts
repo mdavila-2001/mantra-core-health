@@ -8,12 +8,12 @@ import { ReportAssistantData } from './assistant-data';
 import { CONTEXTO_BASE, PESTANAS } from './assistant.fixtures';
 
 describe('ReportAssistantData', () => {
-  const porNombre = new Map<VerticalReporte, PestanaReporte>(PESTANAS.map((p) => [p.pestana, p]));
+  const byName = new Map<VerticalReporte, PestanaReporte>(PESTANAS.map((p) => [p.pestana, p]));
   let pedir: ReturnType<typeof vi.fn>;
   let datos: ReportAssistantData;
 
   function montar(impl?: (v: VerticalReporte) => ReturnType<ReportingClient['pestana']>): void {
-    pedir = vi.fn((v: VerticalReporte) => (impl ? impl(v) : of(porNombre.get(v) as PestanaReporte)));
+    pedir = vi.fn((v: VerticalReporte) => (impl ? impl(v) : of(byName.get(v) as PestanaReporte)));
     TestBed.configureTestingModule({ providers: [{ provide: ReportingClient, useValue: { pestana: pedir } }] });
     datos = TestBed.inject(ReportAssistantData);
   }
@@ -43,7 +43,7 @@ describe('ReportAssistantData', () => {
   });
 
   it('si solo algunas fallan, devuelve las que llegaron y dice cuáles faltan', async () => {
-    montar((v) => (v === 'cobros' ? throwError(() => new Error('caída')) : of(porNombre.get(v) as PestanaReporte)));
+    montar((v) => (v === 'cobros' ? throwError(() => new Error('caída')) : of(byName.get(v) as PestanaReporte)));
     const r = await datos.todas(CONTEXTO_BASE);
     expect(r.pestanas).toHaveLength(6);
     expect(r.faltantes).toEqual(['cobros']);
@@ -56,7 +56,7 @@ describe('ReportAssistantData', () => {
 
   it('un fallo no se guarda: reintentar vuelve a pedir', async () => {
     let falla = true;
-    montar((v) => (falla ? throwError(() => new Error('caída')) : of(porNombre.get(v) as PestanaReporte)));
+    montar((v) => (falla ? throwError(() => new Error('caída')) : of(byName.get(v) as PestanaReporte)));
     await expect(datos.todas(CONTEXTO_BASE)).rejects.toThrow();
     falla = false;
     const r = await datos.todas(CONTEXTO_BASE);

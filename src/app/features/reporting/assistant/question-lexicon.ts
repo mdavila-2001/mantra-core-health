@@ -94,7 +94,7 @@ export const CONCEPTOS_GENERICOS: ReadonlySet<string> = new Set([
  * buscarlos: se rechaza antes de puntuar nada, aunque la frase mencione una
  * medida («MRR por paciente»).
  */
-export const PATRONES_DE_PERSONAS: readonly RegExp[] = [
+export const PEOPLE_PATTERNS: readonly RegExp[] = [
   /\bpacientes?\b/,
   /\bpersonas?\b/,
   /\bhistori(?:a|as) clinicas?\b/,

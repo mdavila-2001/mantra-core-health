@@ -28,7 +28,7 @@ export interface Concentracion {
  * concentran los diez (30–45 %) es de EJEMPLO, pero el importe sale del total
  * real de la composición, así que cambia con el periodo, la moneda y los filtros.
  */
-export function concentracionDe(base: BaseResumen): Concentracion | null {
+export function computeConcentration(base: BaseResumen): Concentracion | null {
   if (base.total === null) {
     return null;
   }

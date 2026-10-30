@@ -7,7 +7,7 @@ import {
   graficoIngresoPlan,
   graficoMovimiento,
   graficoMrr,
-  ingresoPorPlan,
+  revenueByPlan,
 } from './suscripciones.graficos-mrr';
 import {
   graficoChurnPlan,
@@ -22,7 +22,7 @@ import {
   renovacionesProximas,
 } from './suscripciones.graficos-cuentas';
 import { aMoneda, info, unidadMoneda } from './suscripciones.info';
-import { modelarSuscripciones, semillaDe, type ModeloSuscripciones } from './suscripciones.modelo';
+import { modelarSuscripciones, seedOf, type ModeloSuscripciones } from './suscripciones.modelo';
 import { tablaCandidatas, tablaResumenPlanes } from './suscripciones.tablas';
 
 /* ============================================================================
@@ -44,10 +44,10 @@ function tendencia(m: ModeloSuscripciones, diaria: readonly number[], agregar: '
 function construirKpis(m: ModeloSuscripciones, ctx: ContextoReporte): KpiSpec[] {
   const mon = aMoneda(ctx);
   const moneda = unidadMoneda(ctx);
-  const sem = semillaDe(ctx) + (ctx.comparar === 'mismo-periodo-ano-anterior' ? 1 : 0);
+  const sem = seedOf(ctx) + (ctx.comparar === 'mismo-periodo-ano-anterior' ? 1 : 0);
   const variacion = (valor: number | null, k: number): number | null => (valor === null ? null : variacionContexto(ctx, valor, sem + k));
   const mrrFin = mon(m.mrr[m.n - 1]!);
-  const ing = ingresoPorPlan(m, ctx);
+  const ing = revenueByPlan(m, ctx);
   const ingreso = redondear(suma(ing.series.flat()));
   const churnPct = m.subsIni > 0 ? redondear((m.bajasTotal / m.subsIni) * 100, 1) : null;
   const churnMensual = m.subsIni > 0 ? m.bajasTotal / m.subsIni / m.meses : null;

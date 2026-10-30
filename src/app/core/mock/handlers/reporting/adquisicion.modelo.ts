@@ -26,8 +26,8 @@ import {
 export const MIN_MUESTRA_TASA = 30;
 
 export const CANAL_ORGANICO = 'Orgánico y buscadores';
-export const MOTIVO_ORGANICO = 'Canal orgánico: sin inversión atribuible';
-export const MOTIVO_SIN_CLIENTES = 'Sin clientes nuevos en el periodo: el costo por cliente no se puede calcular.';
+export const ORGANIC_REASON = 'Canal orgánico: sin inversión atribuible';
+export const NO_CLIENTS_REASON = 'Sin clientes nuevos en el periodo: el costo por cliente no se puede calcular.';
 
 export const CANALES = [
   'Búsqueda de pago',
@@ -122,14 +122,14 @@ export interface ModeloAdquisicion {
   readonly fechas: readonly string[];
   readonly leadsDia: readonly number[];
   readonly registrosDia: readonly number[];
-  readonly nuevosDia: readonly number[];
+  readonly newPerDay: readonly number[];
   readonly embudo: { readonly leads: number; readonly registros: number; readonly identidad: number; readonly activas: number; readonly pagantes: number };
   readonly campanas: readonly FilaCampana[];
   readonly canales: readonly FilaCanal[];
   readonly inversionBob: number | null;
   readonly cacBob: number | null;
   /** Por qué no hay CAC (o `null` si lo hay). */
-  readonly motivoSinCac: string | null;
+  readonly noCacReason: string | null;
   /** CAC móvil de 7 días por día, en BOB; `null` = sin clientes nuevos en la ventana. */
   readonly cacMovil: readonly (number | null)[];
 }
@@ -197,13 +197,13 @@ export function calcularModelo(ctx: ContextoReporte): ModeloAdquisicion {
   // Series diarias que suman exactamente lo del embudo (tope: lo del día anterior en el embudo).
   const r = rng(7102);
   const registrosDia = repartir(embudo.registros, leadsDia.map((v) => v * (0.92 + 0.16 * r())), leadsDia);
-  const nuevosDia = repartir(embudo.pagantes, registrosDia.map((v) => v * (0.85 + 0.3 * r())), registrosDia);
+  const newPerDay = repartir(embudo.pagantes, registrosDia.map((v) => v * (0.85 + 0.3 * r())), registrosDia);
 
   const organicoFiltrado = canalFiltrado(ctx) === CANAL_ORGANICO;
   const inversionTotal = organicoFiltrado ? null : redondear(suma(campanas.map((c) => c.inversionBob)));
   const cacBob =
     inversionTotal === null || embudo.pagantes === 0 ? null : redondear(inversionTotal / embudo.pagantes);
-  const motivoSinCac = organicoFiltrado ? MOTIVO_ORGANICO : embudo.pagantes === 0 ? MOTIVO_SIN_CLIENTES : null;
+  const noCacReason = organicoFiltrado ? ORGANIC_REASON : embudo.pagantes === 0 ? NO_CLIENTS_REASON : null;
 
   // La inversión diaria se reparte en céntimos para que la suma sea exacta.
   const centDia =
@@ -212,16 +212,16 @@ export function calcularModelo(ctx: ContextoReporte): ModeloAdquisicion {
       : repartir(Math.round(inversionTotal * 100), leadsDia.map((v) => v * (0.9 + 0.2 * r())));
   const cacMovil = fechas.map((_, i): number | null => {
     if (centDia === null) return null;
-    const desde = Math.max(0, i - 6);
-    const nuevos = suma(nuevosDia.slice(desde, i + 1));
-    return nuevos === 0 ? null : redondear(suma(centDia.slice(desde, i + 1)) / 100 / nuevos);
+    const start = Math.max(0, i - 6);
+    const newCustomers = suma(newPerDay.slice(start, i + 1));
+    return newCustomers === 0 ? null : redondear(suma(centDia.slice(start, i + 1)) / 100 / newCustomers);
   });
 
-  return { factor, gran, fechas, leadsDia, registrosDia, nuevosDia, embudo, campanas, canales, inversionBob: inversionTotal, cacBob, motivoSinCac, cacMovil };
+  return { factor, gran, fechas, leadsDia, registrosDia, newPerDay, embudo, campanas, canales, inversionBob: inversionTotal, cacBob, noCacReason, cacMovil };
 }
 
 /** Suma por tramo de la granularidad del periodo (para ejes y mini-series). */
-export function porTramo(m: ModeloAdquisicion, valores: readonly number[]): { etiquetas: string[]; valores: number[] } {
+export function byBucket(m: ModeloAdquisicion, valores: readonly number[]): { etiquetas: string[]; valores: number[] } {
   return agrupar(m.fechas, valores, m.gran, 'suma');
 }
 
@@ -229,7 +229,7 @@ export function porTramo(m: ModeloAdquisicion, valores: readonly number[]): { et
  * Velas del CAC móvil: cada vela resume un tramo de días. Solo cuentan los días
  * con CAC calculable; un tramo sin ninguno no dibuja vela (no se inventa uno).
  */
-export function velasDelCac(m: ModeloAdquisicion): Vela[] {
+export function cacCandles(m: ModeloAdquisicion): Vela[] {
   const tamano = m.gran === 'dia' ? 3 : m.gran === 'semana' ? 7 : 30;
   const velas: Vela[] = [];
   for (let i = 0; i < m.cacMovil.length; i += tamano) {

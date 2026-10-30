@@ -48,7 +48,7 @@ interface Request {
 
 /**
  * El dashboard comercial: una pestaña por vertical de negocio, con filtros
- * globales arriba. La pestaña activa sale de la URL (`reporting/comercial/:pestana`),
+ * globales arriba. La pestaña activa sale de la URL (`reports/commercial/:pestana`),
  * así que cada pestaña tiene enlace propio y el botón «atrás» funciona.
  *
  * Reglas de carga (por qué no es un `rxResource` a secas):
@@ -88,7 +88,7 @@ export class CommercialDashboard {
   protected readonly tabs = VERTICALES.map((vertical) => ({
     vertical,
     label: ETIQUETA_VERTICAL[vertical],
-    link: ['/reporting', 'comercial', vertical],
+    link: ['/reports', 'commercial', vertical],
   }));
   protected readonly skeletonKpis = SKELETON_KPIS;
   protected readonly skeletonCharts = SKELETON_CHARTS;
@@ -182,7 +182,7 @@ export class CommercialDashboard {
   private loadTab(request: Request | null): Observable<ViewState<PestanaReporte>> {
     if (request === null) {
       this.lastGood = null;
-      return of(notFound({ label: 'Ir al resumen ejecutivo', route: '/reporting/comercial/resumen' }));
+      return of(notFound({ label: 'Ir al resumen ejecutivo', route: '/reports/commercial/resumen' }));
     }
     if (this.lastGood?.tab === request.tab) {
       this.refreshing.set(true);

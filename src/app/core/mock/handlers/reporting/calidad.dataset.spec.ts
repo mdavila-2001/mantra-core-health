@@ -12,7 +12,7 @@ import type {
 } from '../../../data-access/reporting/reporting.types';
 import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import { PESTANAS_CATALOGADAS, leerPestanas, type PestanasLeidas } from './calidad.catalogo';
-import { construirCalidad, construirCalidadDesde } from './calidad.dataset';
+import { construirCalidad, buildQualityFromTabs } from './calidad.dataset';
 
 const PERIODOS: readonly PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
 const COMPARACIONES: readonly ComparacionReporte[] = ['ninguna', 'periodo-anterior', 'mismo-periodo-ano-anterior'];
@@ -47,7 +47,7 @@ const infoOk = (): InfoCalculo => ({
 });
 
 /** Un indicador que no es tasa: no declara numerador ni denominador, y no debe. */
-const infoSinTasa = (): InfoCalculo => ({
+const infoWithoutRate = (): InfoCalculo => ({
   definicion: 'Definición de prueba',
   formula: 'Σ importes',
   fuente: 'ads.ad_accounts',
@@ -55,7 +55,7 @@ const infoSinTasa = (): InfoCalculo => ({
 });
 
 /** Una tasa a medias: dice el numerador pero no el denominador. */
-const infoSinDenominador = (): InfoCalculo => ({
+const infoWithoutDenominator = (): InfoCalculo => ({
   definicion: 'Definición de prueba',
   formula: 'a ÷ b',
   numerador: 'a',
@@ -95,13 +95,13 @@ const pestanaPrueba = (
 
 const FIXTURE: PestanasLeidas = {
   suscripciones: pestanaPrueba('suscripciones', [kpiPrueba('mrr'), kpiPrueba('churn', { unidad: { tipo: 'porcentaje' } })], [graficoPrueba('mrr-evolucion')]),
-  publicidad: pestanaPrueba('publicidad', [kpiPrueba('entregas-push'), kpiPrueba('gasto', { info: infoSinTasa() })], [graficoPrueba('gasto-por-campana')]),
+  publicidad: pestanaPrueba('publicidad', [kpiPrueba('entregas-push'), kpiPrueba('gasto', { info: infoWithoutRate() })], [graficoPrueba('gasto-por-campana')]),
   comisiones: pestanaPrueba('comisiones', [
     kpiPrueba('comision-por-actor'),
     // Sin información de cálculo: ni fórmula ni fuente.
     { ...kpiPrueba('take-rate', { unidad: { tipo: 'porcentaje' } }), info: null, infoMotivo: 'prueba' },
   ]),
-  cobros: pestanaPrueba('cobros', [kpiPrueba('tasa-exito', { unidad: { tipo: 'porcentaje' }, info: infoSinDenominador() })]),
+  cobros: pestanaPrueba('cobros', [kpiPrueba('tasa-exito', { unidad: { tipo: 'porcentaje' }, info: infoWithoutDenominator() })]),
   // Sin indicadores a propósito: su columna de reglas debe quedar vacía, no en 0.
   adquisicion: pestanaPrueba('adquisicion', []),
 };
@@ -114,7 +114,7 @@ const VACIAS: PestanasLeidas = {
   adquisicion: pestanaPrueba('adquisicion', []),
 };
 
-const kpiDe = (p: PestanaReporte, id: string): KpiSpec => {
+const kpiOf = (p: PestanaReporte, id: string): KpiSpec => {
   const k = p.kpis.find((x) => x.id === id);
   if (k === undefined) throw new Error(`falta el KPI ${id}`);
   return k;
@@ -206,12 +206,12 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
       const filas = filasCatalogo(tab);
       expect(filas.length).toBe(kpis + graficos);
       expect(filas.filter((f) => f['tipo'] === 'KPI').length).toBe(kpis);
-      expect(kpiDe(tab, 'indicadores-catalogados').valor).toBe(kpis + graficos);
+      expect(kpiOf(tab, 'indicadores-catalogados').valor).toBe(kpis + graficos);
     });
   });
 
   describe('con indicadores de prueba (incluye uno sin definición y una tasa sin denominador)', () => {
-    const tab = construirCalidadDesde(ctx(), FIXTURE);
+    const tab = buildQualityFromTabs(ctx(), FIXTURE);
     const filas = filasCatalogo(tab);
 
     it('el catálogo suma exactamente los KPI y gráficos de las pestañas, sin repetir códigos', () => {
@@ -220,7 +220,7 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
       expect(filas.length).toBe(kpis + graficos);
       const claves = filas.map((f) => `${f['tipo']}/${f['id']}`);
       expect(new Set(claves).size).toBe(claves.length);
-      expect(kpiDe(tab, 'indicadores-catalogados').valor).toBe(filas.length);
+      expect(kpiOf(tab, 'indicadores-catalogados').valor).toBe(filas.length);
     });
 
     it('está ordenado por pestaña y los KPI van antes que los gráficos de su pestaña', () => {
@@ -233,9 +233,9 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
     });
 
     it('un indicador sin fórmula ni fuente nunca figura como «Fuente localizada»', () => {
-      const sinBase = filas.filter((f) => f['formula'] === null || f['fuente'] === null);
-      expect(sinBase.length).toBeGreaterThan(0);
-      for (const f of sinBase) {
+      const withoutBasis = filas.filter((f) => f['formula'] === null || f['fuente'] === null);
+      expect(withoutBasis.length).toBeGreaterThan(0);
+      for (const f of withoutBasis) {
         expect(f['estado'], String(f['id'])).not.toBe('Fuente localizada');
       }
       const takeRate = filas.find((f) => f['id'] === 'take-rate')!;
@@ -259,21 +259,21 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
 
     it('los porcentajes del encabezado salen del recuento del catálogo', () => {
       const completas = filas.filter((f) => f['definicion'] === 'Completa').length;
-      const k = kpiDe(tab, 'definicion-completa-pct');
+      const k = kpiOf(tab, 'definicion-completa-pct');
       expect(k.numerador).toBe(completas);
       expect(k.denominador).toBe(filas.length);
       expect(k.valor).toBeCloseTo((completas / filas.length) * 100, 1);
       const localizadas = filas.filter((f) => f['estado'] === 'Fuente localizada').length;
-      expect(kpiDe(tab, 'fuente-localizada-pct').numerador).toBe(localizadas);
+      expect(kpiOf(tab, 'fuente-localizada-pct').numerador).toBe(localizadas);
     });
 
     it('la pestaña sin indicadores deja su columna de reglas vacía, no en cero', () => {
       const mapa = tab.graficos.find((g) => g.id === 'calidad-mapa-reglas')!;
       if (mapa.datos.tipo !== 'mapa-calor') throw new Error('se esperaba un mapa de calor');
       const col = mapa.datos.columnas.indexOf('Adquisición');
-      const deAdquisicion = mapa.datos.celdas.filter((c) => c[0] === col);
-      expect(deAdquisicion.length).toBeGreaterThan(0);
-      expect(deAdquisicion.every((c) => c[2] === null)).toBe(true);
+      const acquisitionCells = mapa.datos.celdas.filter((c) => c[0] === col);
+      expect(acquisitionCells.length).toBeGreaterThan(0);
+      expect(acquisitionCells.every((c) => c[2] === null)).toBe(true);
       // y alguna celda de otra pestaña sí tiene dato
       expect(mapa.datos.celdas.some((c) => c[0] !== col && c[2] !== null)).toBe(true);
     });
@@ -284,7 +284,7 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
       expect(resultado('Tasas con numerador y denominador')).toBe('Falla');
       expect(resultado('Cuadre con el mayor')).toBe('Falla');
       expect(resultado('Identificadores sin duplicados')).toBe('Pasa');
-      expect(kpiDe(tab, 'reglas-en-falla').valor).toBe(reglas.filter((r) => r['resultado'] === 'Falla').length);
+      expect(kpiOf(tab, 'reglas-en-falla').valor).toBe(reglas.filter((r) => r['resultado'] === 'Falla').length);
     });
 
     it('los gráficos cumplen el contrato también con datos', () => {
@@ -293,54 +293,54 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
   });
 
   describe('filtro por clic en «estado»', () => {
-    const sin = construirCalidadDesde(ctx(), FIXTURE);
+    const unfiltered = buildQualityFromTabs(ctx(), FIXTURE);
     const filtro: FiltroActivo = { dimension: 'estado', valor: 'Decisión pendiente' };
-    const con = construirCalidadDesde(ctx({ filtros: [filtro] }), FIXTURE);
+    const filtered = buildQualityFromTabs(ctx({ filtros: [filtro] }), FIXTURE);
 
     it('cambia de verdad los números, la tabla y las reglas', () => {
-      const pendientes = filasCatalogo(sin).filter((f) => f['estado'] === 'Decisión pendiente').length;
+      const pendientes = filasCatalogo(unfiltered).filter((f) => f['estado'] === 'Decisión pendiente').length;
       expect(pendientes).toBeGreaterThan(0);
-      expect(kpiDe(con, 'indicadores-catalogados').valor).toBe(pendientes);
-      expect(kpiDe(con, 'indicadores-catalogados').valor).not.toBe(kpiDe(sin, 'indicadores-catalogados').valor);
-      expect(filasCatalogo(con).every((f) => f['estado'] === 'Decisión pendiente')).toBe(true);
-      expect(JSON.stringify(con.graficos.find((g) => g.id === 'calidad-mapa-reglas'))).not.toBe(
-        JSON.stringify(sin.graficos.find((g) => g.id === 'calidad-mapa-reglas')),
+      expect(kpiOf(filtered, 'indicadores-catalogados').valor).toBe(pendientes);
+      expect(kpiOf(filtered, 'indicadores-catalogados').valor).not.toBe(kpiOf(unfiltered, 'indicadores-catalogados').valor);
+      expect(filasCatalogo(filtered).every((f) => f['estado'] === 'Decisión pendiente')).toBe(true);
+      expect(JSON.stringify(filtered.graficos.find((g) => g.id === 'calidad-mapa-reglas'))).not.toBe(
+        JSON.stringify(unfiltered.graficos.find((g) => g.id === 'calidad-mapa-reglas')),
       );
     });
 
     it('los gráficos que originan el filtro siguen mostrando el catálogo entero', () => {
       for (const id of ['calidad-estado-fuente', 'calidad-estado-pestana']) {
-        expect(JSON.stringify(con.graficos.find((g) => g.id === id)!.datos)).toBe(
-          JSON.stringify(sin.graficos.find((g) => g.id === id)!.datos),
+        expect(JSON.stringify(filtered.graficos.find((g) => g.id === id)!.datos)).toBe(
+          JSON.stringify(unfiltered.graficos.find((g) => g.id === id)!.datos),
         );
       }
     });
 
     it('acepta también el código del estado y se hace el sordo ante un valor desconocido', () => {
-      const porCodigo = construirCalidadDesde(ctx({ filtros: [{ dimension: 'estado', valor: 'decision-pendiente' }] }), FIXTURE);
-      expect(kpiDe(porCodigo, 'indicadores-catalogados').valor).toBe(kpiDe(con, 'indicadores-catalogados').valor);
-      const raro = construirCalidadDesde(ctx({ filtros: [{ dimension: 'estado', valor: 'Suscripciones' }] }), FIXTURE);
-      expect(kpiDe(raro, 'indicadores-catalogados').valor).toBe(kpiDe(sin, 'indicadores-catalogados').valor);
+      const byCode = buildQualityFromTabs(ctx({ filtros: [{ dimension: 'estado', valor: 'decision-pendiente' }] }), FIXTURE);
+      expect(kpiOf(byCode, 'indicadores-catalogados').valor).toBe(kpiOf(filtered, 'indicadores-catalogados').valor);
+      const raro = buildQualityFromTabs(ctx({ filtros: [{ dimension: 'estado', valor: 'Suscripciones' }] }), FIXTURE);
+      expect(kpiOf(raro, 'indicadores-catalogados').valor).toBe(kpiOf(unfiltered, 'indicadores-catalogados').valor);
     });
   });
 
   describe('«Sin dato» (null ≠ 0)', () => {
     it('sin indicadores la antigüedad media es null con su motivo, no 0', () => {
-      const tab = construirCalidadDesde(ctx(), VACIAS);
-      const antig = kpiDe(tab, 'antiguedad-media-datos');
+      const tab = buildQualityFromTabs(ctx(), VACIAS);
+      const antig = kpiOf(tab, 'antiguedad-media-datos');
       expect(antig.valor).toBeNull();
       expect(antig.motivoSinDato).toBeTruthy();
       for (const id of ['definicion-completa-pct', 'fuente-localizada-pct', 'reglas-en-falla']) {
-        const k = kpiDe(tab, id);
+        const k = kpiOf(tab, id);
         expect(k.valor, id).toBeNull();
         expect(k.motivoSinDato, id).toBeTruthy();
       }
       // el recuento sí es un cero verdadero: hay cero indicadores
-      expect(kpiDe(tab, 'indicadores-catalogados').valor).toBe(0);
+      expect(kpiOf(tab, 'indicadores-catalogados').valor).toBe(0);
     });
 
     it('sin indicadores ningún gráfico inventa un cero y todos explican por qué no hay dato', () => {
-      const tab = construirCalidadDesde(ctx(), VACIAS);
+      const tab = buildQualityFromTabs(ctx(), VACIAS);
       for (const g of tab.graficos) {
         expect(getContractViolations(g), g.id).toEqual([]);
         expect(g.sinDatoMotivo, g.id).toBeTruthy();
@@ -352,7 +352,7 @@ describe('Pestaña «Calidad del dato y definiciones» (EJEMPLO)', () => {
     });
 
     it('si una pestaña no se puede leer se avisa y las demás se catalogan', () => {
-      const tab = construirCalidadDesde(ctx(), { ...FIXTURE, publicidad: null });
+      const tab = buildQualityFromTabs(ctx(), { ...FIXTURE, publicidad: null });
       expect(tab.avisos?.some((a) => a.includes('Publicidad'))).toBe(true);
       expect(filasCatalogo(tab).every((f) => f['pestana'] !== 'Publicidad')).toBe(true);
       expect(filasCatalogo(tab).length).toBeGreaterThan(0);

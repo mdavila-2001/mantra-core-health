@@ -59,11 +59,11 @@ Nombres exactos que **otros agentes darán por existentes** (respétalos tal cua
 - `PortalSelector` — `features/portal-selector/portal-selector.ts`, ruta `/portal-selector`
 - `ReportGrid` — `features/reporting/pages/report-grid/report-grid.ts`
 - `CommercialDashboard` — `features/reporting/pages/commercial-dashboard/commercial-dashboard.ts`
-  (lee `:pestana` de la ruta `reporting/comercial/:pestana`)
+  (lee `:pestana` de la ruta `reports/commercial/:pestana`)
 - `ReportAssistant` — `features/reporting/assistant/report-assistant.ts` (selector
   `app-report-assistant`, **sin inputs**; el shell lo monta plegable)
 - `KpiTile`, `ReportFilterBar`, `TabView` — en `features/reporting/components/`
-- Rutas: `/portal-selector`, `/reporting` (grid), `/reporting/comercial/:pestana`
+- Rutas: `/portal-selector`, `/reports` (grid), `/reports/commercial/:pestana`
 
 ## 3. Reglas de la casa que aplican (CLAUDE.md del repo y reglas 95/80/30)
 

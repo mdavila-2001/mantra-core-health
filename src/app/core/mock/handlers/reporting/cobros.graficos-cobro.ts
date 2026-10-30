@@ -3,17 +3,17 @@ import type { ChartSpec } from '../../../data-access/reporting/reporting.types';
 import {
   enMoneda,
   info,
-  nombreGranularidad,
-  SIN_FILTRO_ETAPAS,
-  SIN_VELAS_FLUJO,
-  SIN_VELAS_FOTO,
+  granularityName,
+  NO_STAGE_FILTER,
+  NO_CANDLES_FLOW,
+  NO_CANDLES_SNAPSHOT,
   unidadMoneda,
 } from './cobros.comun';
 import {
   METODOS,
   MOTIVOS_RECHAZO,
-  razonDiaria,
-  razonPorCubo,
+  dailyRatio,
+  ratioPerBucket,
   tasaEnPct,
   type Metodo,
   type ModeloCobros,
@@ -38,14 +38,14 @@ function volumenDiario(m: ModeloCobros): ChartSpec {
   return {
     id: 'volumen-cobrado-diario',
     titulo: 'Volumen cobrado',
-    subtitulo: `Por ${nombreGranularidad(m)}, solo pagos capturados`,
+    subtitulo: `Por ${granularityName(m)}, solo pagos capturados`,
     unidad: unidadMoneda(m),
     datos: {
       tipo: 'cartesiano',
       categorias: g.etiquetas,
       series: [{ nombre: 'Volumen cobrado', valores: g.valores.map((v) => redondear(v, 2)), forma: 'barra' }],
     },
-    resumenAccesible: `Barras del dinero cobrado por ${nombreGranularidad(m)}. En el periodo suma ${formatearValor(enMoneda(m, total), unidadMoneda(m))}; se lee la tendencia y los días más flojos.`,
+    resumenAccesible: `Barras del dinero cobrado por ${granularityName(m)}. En el periodo suma ${formatearValor(enMoneda(m, total), unidadMoneda(m))}; se lee la tendencia y los días más flojos.`,
     filtro: null,
     filtroMotivo: 'Cada barra es un tramo de tiempo, no una categoría; para filtrar se usa el método de pago o el estado de los otros gráficos.',
     info: info({
@@ -55,7 +55,7 @@ function volumenDiario(m: ModeloCobros): ChartSpec {
       salvedades: ['Los importes se guardan en BOB y se convierten con un tipo de cambio de ejemplo.'],
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FLUJO,
+    velasMotivo: NO_CANDLES_FLOW,
     alto: 300,
     ancho: 'completo',
   };
@@ -86,7 +86,7 @@ function embudo(m: ModeloCobros): ChartSpec {
     },
     resumenAccesible: `De ${formatearValor(t.intentos, NUM)} intentos se autorizan ${formatearValor(t.autorizados, NUM)}, se capturan ${formatearValor(t.capturados, NUM)} y ya se liquidaron ${formatearValor(t.liquidados, NUM)}; la etapa donde más se pierde es ${mayor.nombre}.`,
     filtro: null,
-    filtroMotivo: SIN_FILTRO_ETAPAS,
+    filtroMotivo: NO_STAGE_FILTER,
     info: info({
       definicion: 'Cuántos pagos sobreviven en cada etapa del recorrido, de la intención al dinero liquidado por el gateway.',
       formula: 'Conteo de intentos → autorizados → capturados → liquidados (cada etapa es parte de la anterior).',
@@ -94,7 +94,7 @@ function embudo(m: ModeloCobros): ChartSpec {
       salvedades: ['Los cobros de los últimos días todavía no se liquidan, por eso «Liquidados» queda por debajo de «Capturados».'],
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FOTO,
+    velasMotivo: NO_CANDLES_SNAPSHOT,
     alto: 300,
   };
 }
@@ -137,22 +137,22 @@ function cascadaNeto(m: ModeloCobros): ChartSpec {
       salvedades: ['Los contracargos se cuentan por el monto en disputa, aunque algunos se ganan después.'],
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FLUJO,
+    velasMotivo: NO_CANDLES_FLOW,
     alto: 300,
   };
 }
 
 function tasaExitoVelas(m: ModeloCobros): ChartSpec {
-  const r = razonPorCubo(m.fechas, m.dia.capturados, m.dia.intentos, m.gran);
+  const r = ratioPerBucket(m.fechas, m.dia.capturados, m.dia.intentos, m.gran);
   const global = tasaEnPct(m.total.capturados, m.total.intentos);
-  const diaria = razonDiaria(m.dia.capturados, m.dia.intentos, global ?? 0);
+  const diaria = dailyRatio(m.dia.capturados, m.dia.intentos, global ?? 0);
   return {
     id: 'tasa-exito-pago',
     titulo: 'Tasa de éxito de pago',
-    subtitulo: `Pagos capturados ÷ intentos, por ${nombreGranularidad(m)}`,
+    subtitulo: `Pagos capturados ÷ intentos, por ${granularityName(m)}`,
     unidad: PCT,
     datos: { tipo: 'cartesiano', categorias: r.etiquetas, series: [{ nombre: 'Tasa de éxito', valores: r.valores, forma: 'linea' }] },
-    resumenAccesible: `Línea de la tasa de éxito de pago por ${nombreGranularidad(m)}; en el periodo es ${formatearValor(global, PCT)}. Si baja, más clientes se quedan sin pagar.`,
+    resumenAccesible: `Línea de la tasa de éxito de pago por ${granularityName(m)}; en el periodo es ${formatearValor(global, PCT)}. Si baja, más clientes se quedan sin pagar.`,
     filtro: null,
     filtroMotivo: 'Cada punto es un tramo de tiempo; para filtrar se usa el gráfico de éxito por método de pago.',
     info: info({
@@ -171,18 +171,18 @@ function tasaExitoVelas(m: ModeloCobros): ChartSpec {
   };
 }
 
-function exitoPorMetodo(m: ModeloCobros): ChartSpec {
-  const tasas = METODOS.map((k) => tasaEnPct(suma(m.porMetodo[k].capturados), suma(m.porMetodo[k].intentos)));
-  const conDato = METODOS.map((k, i) => ({ k, v: tasas[i] ?? null })).filter((x): x is { k: Metodo; v: number } => x.v !== null);
-  const mejor = conDato.reduce((a, x) => (x.v > a.v ? x : a), conDato[0]!);
-  const peor = conDato.reduce((a, x) => (x.v < a.v ? x : a), conDato[0]!);
+function successByMethod(m: ModeloCobros): ChartSpec {
+  const tasas = METODOS.map((k) => tasaEnPct(suma(m.byMethod[k].capturados), suma(m.byMethod[k].intentos)));
+  const withData = METODOS.map((k, i) => ({ k, v: tasas[i] ?? null })).filter((x): x is { k: Metodo; v: number } => x.v !== null);
+  const mejor = withData.reduce((a, x) => (x.v > a.v ? x : a), withData[0]!);
+  const peor = withData.reduce((a, x) => (x.v < a.v ? x : a), withData[0]!);
   return {
     id: 'exito-por-metodo',
     titulo: 'Éxito de pago por método',
     subtitulo: 'Haz clic en un método para filtrar el tablero',
     unidad: PCT,
     datos: { tipo: 'cartesiano', categorias: [...METODOS], series: [{ nombre: 'Tasa de éxito', valores: tasas, forma: 'barra' }] },
-    resumenAccesible: `Barras de la tasa de éxito por método de pago: ${METODOS.map((k, i) => `${k} ${formatearValor(tasas[i], PCT)}`).join(', ')}. ${conDato.length > 1 ? `El método más sólido es ${mejor.k} y el más débil, ${peor.k}.` : ''}`,
+    resumenAccesible: `Barras de la tasa de éxito por método de pago: ${METODOS.map((k, i) => `${k} ${formatearValor(tasas[i], PCT)}`).join(', ')}. ${withData.length > 1 ? `El método más sólido es ${mejor.k} y el más débil, ${peor.k}.` : ''}`,
     filtro: { dimension: 'metodo-pago' },
     info: info({
       definicion: 'Tasa de éxito de pago separada por método (tarjeta, QR, transferencia, efectivo en caja).',
@@ -198,9 +198,9 @@ function exitoPorMetodo(m: ModeloCobros): ChartSpec {
   };
 }
 
-function exitoPorPasarela(m: ModeloCobros): ChartSpec {
+function successByGateway(m: ModeloCobros): ChartSpec {
   const valores = PASARELAS.map((p) => {
-    const base = tasaEnPct(suma(m.porMetodo[p.metodo].capturados), suma(m.porMetodo[p.metodo].intentos));
+    const base = tasaEnPct(suma(m.byMethod[p.metodo].capturados), suma(m.byMethod[p.metodo].intentos));
     return base === null || !m.activos.includes(p.metodo) ? null : redondear(Math.min(100, Math.max(0, base + p.ajuste)), 2);
   });
   return {
@@ -245,11 +245,11 @@ function motivosRechazo(m: ModeloCobros): ChartSpec {
       salvedades: ['No incluye pagos autorizados que luego no se capturaron.'],
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FOTO,
+    velasMotivo: NO_CANDLES_SNAPSHOT,
     alto: 300,
   };
 }
 
-export function graficosDeCobro(m: ModeloCobros): ChartSpec[] {
-  return [volumenDiario(m), embudo(m), cascadaNeto(m), tasaExitoVelas(m), exitoPorMetodo(m), exitoPorPasarela(m), motivosRechazo(m)];
+export function collectionCharts(m: ModeloCobros): ChartSpec[] {
+  return [volumenDiario(m), embudo(m), cascadaNeto(m), tasaExitoVelas(m), successByMethod(m), successByGateway(m), motivosRechazo(m)];
 }

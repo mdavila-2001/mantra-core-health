@@ -40,7 +40,7 @@ export class ReportPrefsStore {
   }
 
   load(): void {
-    let raw: string | null = null;
+    let raw: string | null;
     try {
       raw = this.document.defaultView?.localStorage.getItem(this.key()) ?? null;
     } catch {

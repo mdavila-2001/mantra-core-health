@@ -1,0 +1,284 @@
+/* ============================================================================
+    Armazón del portal de reportería.
+
+    Tres columnas en escritorio: navegación · reportes · asistente (plegable).
+    El centro manda: el asistente nace cerrado y, abierto, es una columna al
+    lado, no un reemplazo. En pantallas angostas la navegación y el asistente se
+    superponen como cajones, para que el reporte conserve todo el ancho.
+    ========================================================================== */
+
+:host {
+  display: block;
+  min-block-size: 100dvh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.rep__saltar {
+  position: absolute;
+  inset-inline-start: var(--sp-2);
+  inset-block-start: calc(-1 * var(--sp-12));
+  z-index: var(--z-toast);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-link);
+}
+
+.rep__saltar:focus {
+  inset-block-start: var(--sp-2);
+  box-shadow: var(--focus-ring);
+}
+
+.rep {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+}
+
+/* ---- cabecera ------------------------------------------------------------ */
+
+.rep__cabecera {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
+.rep__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--r-sm);
+}
+
+.rep__marca:focus-visible,
+.rep__enlace:focus-visible,
+.rep__item:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.rep__titulo {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-secondary);
+  /* El nombre del portal es la segunda mitad de la marca: con poco ancho cede
+     antes que el conmutador de alcance. */
+  white-space: nowrap;
+}
+
+.rep__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  margin-inline-start: auto;
+}
+
+.rep__portales {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-4);
+}
+
+.rep__enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 32px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-link);
+  text-decoration: none;
+}
+
+.rep__enlace:hover {
+  text-decoration: underline;
+}
+
+/* «Menú» solo existe donde la navegación es un cajón. */
+.rep__menu {
+  display: none;
+}
+
+/* ---- cuerpo -------------------------------------------------------------- */
+
+.rep__cuerpo {
+  position: relative;
+  flex: 1;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-block-size: 0;
+}
+
+.rep--con-asistente .rep__cuerpo {
+  grid-template-columns: 248px minmax(0, 1fr) 360px;
+}
+
+.rep__nav {
+  padding: var(--sp-4);
+  border-inline-end: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  overflow-y: auto;
+}
+
+.rep__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rep__grupo {
+  margin: var(--sp-6) 0 var(--sp-2);
+  padding-inline: var(--sp-3);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.rep__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-block-size: 36px;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+
+.rep__item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* La página actual se dice con fondo, peso y la marca lateral: no solo con color. */
+.rep__item.is-activa {
+  background: var(--st-primary-bg);
+  color: var(--brand-primary);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+
+.rep__centro {
+  min-inline-size: 0;
+  padding: var(--sp-6);
+}
+
+.rep__centro:focus {
+  outline: none;
+}
+
+/* ---- asistente ----------------------------------------------------------- */
+
+.rep__asistente {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+  padding: var(--sp-4);
+  border-inline-start: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  overflow-y: auto;
+}
+
+.rep__asistente:focus {
+  outline: none;
+}
+
+.rep__asistente-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.rep__asistente-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+}
+
+.rep__asistente-carga {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ---- tablet y teléfono: la navegación pasa a cajón ------------------------ */
+
+@media (max-width: 780px) {
+  .rep__menu {
+    display: inline-flex;
+  }
+
+  .rep__titulo {
+    white-space: normal;
+  }
+
+  .rep__cuerpo,
+  .rep--con-asistente .rep__cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rep__nav {
+    display: none;
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-drawer);
+    inline-size: min(280px, 85vw);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .rep__nav.is-abierto {
+    display: block;
+  }
+
+  .rep__centro {
+    padding: var(--sp-4);
+  }
+}
+
+/* ---- asistente como hoja superpuesta cuando no cabe al lado --------------- */
+
+@media (max-width: 1024px) {
+  .rep--con-asistente .rep__cuerpo {
+    grid-template-columns: 248px minmax(0, 1fr);
+  }
+
+  .rep__asistente {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: var(--z-drawer);
+    inline-size: min(400px, 100vw);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@media (max-width: 780px) {
+  .rep--con-asistente .rep__cuerpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rep__item {
+    transition: none;
+  }
+}

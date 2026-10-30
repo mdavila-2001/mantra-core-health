@@ -35,7 +35,7 @@ export const PLANES: readonly Plan[] = [
 
 export const SUSCRIPTORES_BASE = 1240;
 const CHURN_MENSUAL_PCT = 2.4;
-const TRIALS_POR_MES = 150;
+const TRIALS_PER_MONTH = 150;
 const TASA_PRUEBA_A_PAGO = 0.38;
 const VENTANA_MORA_DIAS = 30;
 
@@ -54,7 +54,7 @@ export function claveFiltros(filtros: readonly FiltroActivo[]): string {
     .join('|');
 }
 
-export function semillaDe(ctx: ContextoReporte): number {
+export function seedOf(ctx: ContextoReporte): number {
   return hashTexto(`susc|${ctx.alcance}|${claveFiltros(ctx.filtros)}`);
 }
 
@@ -95,7 +95,7 @@ export function repartir(total: number, n: number, r: () => number): number[] {
 
 export interface ComponentesMrr {
   readonly inicial: number;
-  readonly nuevas: number;
+  readonly newMrr: number;
   readonly expansion: number;
   readonly contraccion: number;
   readonly bajas: number;
@@ -124,7 +124,7 @@ export interface ModeloSuscripciones {
   readonly ingresoPlan: readonly (readonly number[])[];
   readonly ingresoTotal: number;
   readonly mora: {
-    readonly nueva: readonly number[];
+    readonly newFailures: readonly number[];
     readonly recuperada: readonly number[];
     readonly saldo: readonly number[];
     readonly fallidos: number;
@@ -139,7 +139,7 @@ export function modelarSuscripciones(ctx: ContextoReporte): ModeloSuscripciones 
   const n = fechas.length;
   const dias = daysInPeriod(ctx.periodo);
   const meses = dias / 30;
-  const r = rng(semillaDe(ctx));
+  const r = rng(seedOf(ctx));
 
   const subsFin = suscriptoresAlCierre(ctx);
   const subsIni = Math.round(subsFin / (1 + CRECIMIENTO_SUBS_PCT[ctx.periodo] / 100));
@@ -171,7 +171,7 @@ export function modelarSuscripciones(ctx: ContextoReporte): ModeloSuscripciones 
 
   const mora = modelarMora(ctx, mrr, arpu, subsFin, n, r);
 
-  const trials = Math.round(TRIALS_POR_MES * meses * factorContexto(ctx));
+  const trials = Math.round(TRIALS_PER_MONTH * meses * factorContexto(ctx));
   const pagantes = Math.min(altasTotal, Math.round(trials * TASA_PRUEBA_A_PAGO * oscilar(ctx, 'conversion', 0.15)));
   const verificados = Math.round(trials / 0.8);
   const embudo = { registros: Math.round(verificados / 0.7), verificados, enPrueba: trials, pagantes };
@@ -197,14 +197,14 @@ function componentesMrr(
   const bajas = bajasTotal * arpu[0]!;
   const expansion = inicial * 0.011 * meses * oscilar(ctx, 'expansion', 0.2);
   let contraccion = inicial * 0.004 * meses * oscilar(ctx, 'contraccion', 0.2);
-  let nuevas = altasTotal * arpu[0]! * 0.85;
-  const error = final - (inicial + nuevas + expansion - contraccion - bajas);
+  let newMrr = altasTotal * arpu[0]! * 0.85;
+  const error = final - (inicial + newMrr + expansion - contraccion - bajas);
   if (error >= 0) {
-    nuevas += error;
+    newMrr += error;
   } else {
     contraccion -= error;
   }
-  return { inicial, nuevas, expansion, contraccion, bajas, final };
+  return { inicial, newMrr, expansion, contraccion, bajas, final };
 }
 
 /**
@@ -222,12 +222,12 @@ function modelarMora(
 ): ModeloSuscripciones['mora'] {
   const tasa = Math.min(0.95, 0.58 * oscilar(ctx, 'recuperacion', 0.1));
   const previo = VENTANA_MORA_DIAS - 1;
-  const nuevaExt = Array.from({ length: n + previo }, (_, j) => (mrr[Math.max(0, j - previo)]! / 30) * 0.12 * (0.85 + 0.3 * r()));
-  const sinResolver = nuevaExt.map((v) => v * (1 - tasa));
-  const saldo = Array.from({ length: n }, (_, i) => suma(sinResolver.slice(i, i + VENTANA_MORA_DIAS)));
-  const nueva = nuevaExt.slice(previo);
-  const recuperada = nueva.map((v) => v * tasa);
+  const extendedNew = Array.from({ length: n + previo }, (_, j) => (mrr[Math.max(0, j - previo)]! / 30) * 0.12 * (0.85 + 0.3 * r()));
+  const unresolved = extendedNew.map((v) => v * (1 - tasa));
+  const saldo = Array.from({ length: n }, (_, i) => suma(unresolved.slice(i, i + VENTANA_MORA_DIAS)));
+  const newFailures = extendedNew.slice(previo);
+  const recuperada = newFailures.map((v) => v * tasa);
   const ticket = suma(arpu) / n;
-  const fallidos = ticket > 0 && subsFin > 0 ? Math.round(suma(nueva) / ticket) : 0;
-  return { nueva, recuperada, saldo, fallidos, recuperados: Math.round(fallidos * tasa) };
+  const fallidos = ticket > 0 && subsFin > 0 ? Math.round(suma(newFailures) / ticket) : 0;
+  return { newFailures, recuperada, saldo, fallidos, recuperados: Math.round(fallidos * tasa) };
 }

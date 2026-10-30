@@ -23,7 +23,7 @@ function ctx(parcial: Partial<ContextoReporte> = {}): ContextoReporte {
   return { periodo: '30d', comparar: 'periodo-anterior', moneda: 'BOB', alcance: 'plataforma', filtros: [], ...parcial };
 }
 
-function todosLosContextos(): ContextoReporte[] {
+function allContexts(): ContextoReporte[] {
   const out: ContextoReporte[] = [];
   for (const periodo of PERIODOS) {
     for (const comparar of COMPARACIONES) {
@@ -60,18 +60,18 @@ function categorias(g: ChartSpec): readonly string[] {
   return g.datos.categorias;
 }
 
-function numerosDe(valor: unknown, ruta: string, hallazgos: string[]): void {
+function numbersOf(valor: unknown, ruta: string, hallazgos: string[]): void {
   if (typeof valor === 'number' && !Number.isFinite(valor)) hallazgos.push(`${ruta} = ${valor}`);
-  else if (Array.isArray(valor)) valor.forEach((v, i) => numerosDe(v, `${ruta}[${i}]`, hallazgos));
+  else if (Array.isArray(valor)) valor.forEach((v, i) => numbersOf(v, `${ruta}[${i}]`, hallazgos));
   else if (valor !== null && typeof valor === 'object') {
-    for (const [k, v] of Object.entries(valor)) numerosDe(v, `${ruta}.${k}`, hallazgos);
+    for (const [k, v] of Object.entries(valor)) numbersOf(v, `${ruta}.${k}`, hallazgos);
   }
 }
 
 describe('comisiones.dataset', () => {
   describe('contrato', () => {
     it('cumple el contrato de gráfico en todas las combinaciones de periodo × comparar × moneda × alcance', () => {
-      for (const c of todosLosContextos()) {
+      for (const c of allContexts()) {
         const p = construirComisiones(c);
         for (const g of p.graficos) {
           expect(getContractViolations(g), `${g.id} ${JSON.stringify(c)}`).toEqual([]);
@@ -81,11 +81,11 @@ describe('comisiones.dataset', () => {
     });
 
     it('cumple el contrato con el filtro de actor elegido (también el que no tiene esquema)', () => {
-      for (const nombre of ['Visitador médico', 'Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma']) {
+      for (const actorName of ['Visitador médico', 'Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma']) {
         for (const periodo of PERIODOS) {
-          const p = construirComisiones(ctx({ periodo, filtros: [actor(nombre)] }));
+          const p = construirComisiones(ctx({ periodo, filtros: [actor(actorName)] }));
           for (const g of p.graficos) {
-            expect(getContractViolations(g), `${g.id} ${nombre} ${periodo}`).toEqual([]);
+            expect(getContractViolations(g), `${g.id} ${actorName} ${periodo}`).toEqual([]);
           }
         }
       }
@@ -121,7 +121,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('trae los ids canónicos, ids únicos y secciones que apuntan a ids reales', () => {
-      for (const c of todosLosContextos()) {
+      for (const c of allContexts()) {
         const p = construirComisiones(c);
         for (const id of ['ingreso-periodo', 'comision-devengada', 'comision-liquidada', 'comision-pendiente', 'take-rate']) {
           expect(p.kpis.some((k) => k.id === id), id).toBe(true);
@@ -208,9 +208,9 @@ describe('comisiones.dataset', () => {
 
   describe('valores sanos', () => {
     it('no deja NaN ni infinitos en ningún contexto', () => {
-      for (const c of [...todosLosContextos(), ctx({ filtros: [actor('Visitador médico')] }), ctx({ filtros: [actor('Plataforma')] })]) {
+      for (const c of [...allContexts(), ctx({ filtros: [actor('Visitador médico')] }), ctx({ filtros: [actor('Plataforma')] })]) {
         const hallazgos: string[] = [];
-        numerosDe(construirComisiones(c), 'pestana', hallazgos);
+        numbersOf(construirComisiones(c), 'pestana', hallazgos);
         expect(hallazgos, JSON.stringify(c)).toEqual([]);
       }
     });
@@ -273,7 +273,7 @@ describe('comisiones.dataset', () => {
 
   describe('invariantes contables', () => {
     it('devengada = liquidada + pendiente, exacto, en todos los contextos', () => {
-      for (const c of [...todosLosContextos(), ...['Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma'].map((n) => ctx({ filtros: [actor(n)] }))]) {
+      for (const c of [...allContexts(), ...['Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma'].map((n) => ctx({ filtros: [actor(n)] }))]) {
         const p = construirComisiones(c);
         const dev = cents(kpi(p, 'comision-devengada').valor);
         expect(dev, JSON.stringify(c)).toBe(cents(kpi(p, 'comision-liquidada').valor) + cents(kpi(p, 'comision-pendiente').valor));
@@ -281,7 +281,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('la suma por actor es el total, y lo retenido sale de lo pendiente', () => {
-      for (const c of todosLosContextos()) {
+      for (const c of allContexts()) {
         const p = construirComisiones(c);
         const g = grafico(p, 'comision-por-actor');
         const nombres = categorias(g);
@@ -311,7 +311,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('el aging suma exactamente lo pendiente', () => {
-      for (const c of [...todosLosContextos(), ctx({ filtros: [actor('Referidor')] }), ctx({ filtros: [actor('Plataforma')] })]) {
+      for (const c of [...allContexts(), ctx({ filtros: [actor('Referidor')] }), ctx({ filtros: [actor('Plataforma')] })]) {
         const p = construirComisiones(c);
         const suma = valores(grafico(p, 'aging-pendiente'), 0).reduce<number>((a, v) => a + cents(v), 0);
         expect(suma, JSON.stringify(c)).toBe(cents(kpi(p, 'comision-pendiente').valor));
@@ -319,7 +319,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('el mapa de calor suma, por actor, lo liquidado', () => {
-      for (const c of todosLosContextos()) {
+      for (const c of allContexts()) {
         const p = construirComisiones(c);
         const d = grafico(p, 'liquidado-actor-mes').datos;
         if (d.tipo !== 'mapa-calor') throw new Error('mapa de calor');
@@ -335,7 +335,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('la cascada cierra: fees − gateway − comisiones = ingreso neto, que es el KPI', () => {
-      for (const c of [...todosLosContextos(), ctx({ filtros: [actor('Corredor de seguros')] }), ctx({ filtros: [actor('Plataforma')] })]) {
+      for (const c of [...allContexts(), ctx({ filtros: [actor('Corredor de seguros')] }), ctx({ filtros: [actor('Plataforma')] })]) {
         const p = construirComisiones(c);
         const d = grafico(p, 'cascada-resultado').datos;
         if (d.tipo !== 'cascada') throw new Error('cascada');
@@ -349,7 +349,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('los payouts: la dona suma los payouts y los fallidos de la tabla no superan lo pendiente', () => {
-      for (const c of [...todosLosContextos(), ctx({ filtros: [actor('Organización afiliada')] })]) {
+      for (const c of [...allContexts(), ctx({ filtros: [actor('Organización afiliada')] })]) {
         const p = construirComisiones(c);
         const d = grafico(p, 'estado-payouts').datos;
         if (d.tipo !== 'partes') throw new Error('dona');
@@ -369,7 +369,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('la conciliación cuadra: barras de descuadres suman el KPI y el porcentaje sale de num/den', () => {
-      for (const c of todosLosContextos()) {
+      for (const c of allContexts()) {
         const p = construirComisiones(c);
         const barras = valores(grafico(p, 'descuadres-por-tipo'), 0).reduce<number>((a, v) => a + (v ?? 0), 0);
         expect(barras).toBe(kpi(p, 'descuadres-abiertos').valor);
@@ -382,7 +382,7 @@ describe('comisiones.dataset', () => {
     });
 
     it('el saldo por pagar termina exactamente en la comisión pendiente', () => {
-      for (const c of todosLosContextos()) {
+      for (const c of allContexts()) {
         const p = construirComisiones(c);
         const g = grafico(p, 'saldo-por-pagar');
         const ultimo = valores(g, 0).at(-1);

@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { accesoAPortales, PORTAL_SELECTOR_ROUTE } from '../../reporting/reporting-access';
 
 /**
  * Selector de organización.
@@ -41,6 +42,11 @@ export class TenantSelection {
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    void this.router.navigateByUrl('/');
+    // Con acceso a administración Y a reportería, tras elegir organización toca
+    // elegir portal: el mismo destino que el login (`login.ts`).
+    const acceso = accesoAPortales(this.auth.roles());
+    void this.router.navigateByUrl(
+      acceso.administracion && acceso.reporteria ? PORTAL_SELECTOR_ROUTE : '/',
+    );
   }
 }

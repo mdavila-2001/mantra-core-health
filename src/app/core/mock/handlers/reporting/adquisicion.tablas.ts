@@ -1,7 +1,7 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ContextoReporte, TablaReporte } from '../../../data-access/reporting/reporting.types';
 import { PLANES } from './adquisicion.cuentas';
-import { infoCalculo, monedaDe } from './adquisicion.graficos';
+import { infoCalculo, currencyUnit } from './adquisicion.graficos';
 import type { ModeloAdquisicion } from './adquisicion.modelo';
 import { convertir, redondear } from './reporting-dataset.util';
 
@@ -12,7 +12,7 @@ import { convertir, redondear } from './reporting-dataset.util';
     ========================================================================== */
 
 export function tablaCampanas(ctx: ContextoReporte, m: ModeloAdquisicion): TablaReporte {
-  const u = monedaDe(ctx);
+  const u = currencyUnit(ctx);
   const dinero = (bob: number | null): string | null =>
     bob === null || m.inversionBob === null ? null : formatearValor(redondear(convertir(bob, ctx.moneda)), u);
   return {
@@ -47,7 +47,7 @@ export function tablaCampanas(ctx: ContextoReporte, m: ModeloAdquisicion): Tabla
   };
 }
 
-interface CuentaRiesgo {
+interface AccountRisk {
   readonly cuenta: string;
   readonly plan: (typeof PLANES)[number];
   readonly nivel: 'Alto' | 'Crítico';
@@ -58,7 +58,7 @@ interface CuentaRiesgo {
 }
 
 // Nombres comerciales INVENTADOS; ninguna es una organización real.
-const CUENTAS_EN_RIESGO: readonly CuentaRiesgo[] = [
+const CUENTAS_EN_RIESGO: readonly AccountRisk[] = [
   { cuenta: 'Clínica Mirador Andino', plan: 'Clínica', nivel: 'Crítico', diasSinUso: 74, deudaBob: 3480, tickets: 3 },
   { cuenta: 'Centro Integral Ceibo', plan: 'Premium', nivel: 'Crítico', diasSinUso: 66, deudaBob: 1740, tickets: 2 },
   { cuenta: 'Policlínico Cerro Alto', plan: 'Profesional', nivel: 'Crítico', diasSinUso: 58, deudaBob: 870, tickets: null },
@@ -72,7 +72,7 @@ const CUENTAS_EN_RIESGO: readonly CuentaRiesgo[] = [
 ];
 
 export function tablaCuentasEnRiesgo(ctx: ContextoReporte): TablaReporte {
-  const u = monedaDe(ctx);
+  const u = currencyUnit(ctx);
   // Un clic en el mapa de salud filtra por plan; un valor que no es un plan no filtra nada.
   const plan = ctx.filtros.find((f) => f.dimension === 'plan')?.valor;
   const filas = CUENTAS_EN_RIESGO.filter((c) => plan === undefined || !(PLANES as readonly string[]).includes(plan) || c.plan === plan);

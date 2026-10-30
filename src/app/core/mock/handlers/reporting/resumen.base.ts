@@ -31,7 +31,7 @@ import {
 
 export type ClaveVertical = 'suscripciones' | 'publicidad' | 'comisiones';
 
-export const NOMBRE_VERTICAL: Readonly<Record<ClaveVertical, string>> = {
+export const VERTICAL_NAME: Readonly<Record<ClaveVertical, string>> = {
   suscripciones: 'Suscripciones',
   publicidad: 'Publicidad',
   comisiones: 'Comisiones',
@@ -95,7 +95,7 @@ export function importeEnMoneda(
   return { valor: k.valor, motivo: null };
 }
 
-export function anteriorDe(valor: number | null, pct: number | null, ctx: ContextoReporte): number | null {
+export function previousValue(valor: number | null, pct: number | null, ctx: ContextoReporte): number | null {
   if (valor === null || pct === null || ctx.comparar === 'ninguna' || pct <= -100) {
     return null;
   }
@@ -103,11 +103,11 @@ export function anteriorDe(valor: number | null, pct: number | null, ctx: Contex
 }
 
 function leer(clave: ClaveVertical, pestana: PestanaReporte, ctx: ContextoReporte): LecturaVertical {
-  const nombre = NOMBRE_VERTICAL[clave];
+  const name = VERTICAL_NAME[clave];
   const k = buscarKpi(pestana, 'ingreso-periodo');
-  const { valor, motivo } = importeEnMoneda(k, ctx, `el ingreso de ${nombre}`);
+  const { valor, motivo } = importeEnMoneda(k, ctx, `el ingreso de ${name}`);
   const pct = valor === null ? null : (k?.variacionPct ?? null);
-  return { clave, nombre, pestana, ingreso: valor, motivo, variacionPct: pct, anterior: anteriorDe(valor, pct, ctx) };
+  return { clave, nombre: name, pestana, ingreso: valor, motivo, variacionPct: pct, anterior: previousValue(valor, pct, ctx) };
 }
 
 /** De dónde sale cada vertical. Se inyecta sólo en las pruebas, para simular una vertical vacía. */
@@ -130,11 +130,11 @@ export function componerBase(ctx: ContextoReporte, fuentes: FuentesResumen = FUE
     faltan.length === 0 ? redondear(suma(ORDEN.map((c) => lecturas[c].ingreso))) : null;
   const priors = ORDEN.map((c) => lecturas[c].anterior);
   const anterior = total !== null && priors.every((p) => p !== null) ? redondear(suma(priors)) : null;
-  const motivoTotal =
+  const totalReason =
     faltan.length === 0
       ? null
       : `${faltan.map((l) => l.motivo ?? `Falta el ingreso de ${l.nombre}.`).join(' ')} Sin las tres verticales no hay total: una suma parcial parecería completa.`;
-  return { ctx, lecturas, total, anterior, motivoTotal };
+  return { ctx, lecturas, total, anterior, motivoTotal: totalReason };
 }
 
 /* ---- series ------------------------------------------------------------------ */
@@ -151,33 +151,33 @@ export interface SerieIngreso {
  * propia y lo CALIBRA para que la suma de los cubos sea exactamente el ingreso:
  * el residuo del redondeo cae en el último cubo, nunca se pierde.
  */
-export function serieDeIngreso(base: BaseResumen): SerieIngreso {
+export function incomeSeries(base: BaseResumen): SerieIngreso {
   const { ctx } = base;
   const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
   const n = daysInPeriod(ctx.periodo);
   let etiquetas: string[] = [];
-  const porVertical = {} as Record<ClaveVertical, (number | null)[]>;
+  const byVertical = {} as Record<ClaveVertical, (number | null)[]>;
   for (const c of ORDEN) {
     const ingreso = base.lecturas[c].ingreso;
     const diaria = serie(hashTexto(`resumen:${c}:${ctx.periodo}`), n, 1, CRECIMIENTO[c], 5);
     const g = agrupar(fechas, diaria, gran, 'suma');
     etiquetas = g.etiquetas;
     if (ingreso === null) {
-      porVertical[c] = g.valores.map(() => null);
+      byVertical[c] = g.valores.map(() => null);
       continue;
     }
     const k = ingreso / suma(g.valores);
     const cubos = g.valores.map((v) => redondear(v * k));
     const residuo = redondear(ingreso - suma(cubos));
     cubos[cubos.length - 1] = redondear(cubos[cubos.length - 1]! + residuo);
-    porVertical[c] = cubos;
+    byVertical[c] = cubos;
   }
   const total = etiquetas.map((_, i) => {
-    const partes = ORDEN.map((c) => porVertical[c][i] ?? null);
+    const partes = ORDEN.map((c) => byVertical[c][i] ?? null);
     return partes.every((p) => p !== null) ? redondear(suma(partes)) : null;
   });
-  return { etiquetas, porVertical, total };
+  return { etiquetas, porVertical: byVertical, total };
 }
 
 /** Saldo diario que termina EXACTAMENTE en `cierre` (para MRR: es un saldo, no un flujo). */

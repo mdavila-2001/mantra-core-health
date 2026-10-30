@@ -46,11 +46,11 @@ export function distribuirEnteros(total: number, pesos: readonly number[]): numb
 }
 
 /** El contexto sin los filtros de una dimensión: un gráfico por corte se compara con sus hermanos y solo se resalta. */
-export function sinDimension(ctx: ContextoReporte, dimension: DimensionFiltro): ContextoReporte {
+export function withoutDimension(ctx: ContextoReporte, dimension: DimensionFiltro): ContextoReporte {
   return { ...ctx, filtros: ctx.filtros.filter((f) => f.dimension !== dimension) };
 }
 
-export interface Cuenta {
+export interface Account {
   readonly nombre: string;
   readonly plan: number;
   readonly especialidad: string;
@@ -60,7 +60,7 @@ export interface Cuenta {
   readonly usoPct: number;
 }
 
-export const ORGANIZACION_PROPIA = 'Organización Ejemplo 1';
+export const OWN_ORGANIZATION = 'Organización Ejemplo 1';
 
 function elegir(cortes: readonly Corte[], u: number): string {
   const total = suma(cortes.map((c) => c.peso));
@@ -73,7 +73,7 @@ function elegir(cortes: readonly Corte[], u: number): string {
 }
 
 /** 60 cuentas de EJEMPLO, siempre las mismas: la semilla no depende del contexto. */
-export const CUENTAS: readonly Cuenta[] = (() => {
+export const CUENTAS: readonly Account[] = (() => {
   const r = rng(20261030);
   return Array.from({ length: 60 }, (_, i) => {
     const u = r();
@@ -89,7 +89,7 @@ export const CUENTAS: readonly Cuenta[] = (() => {
   });
 })();
 
-function coincide(c: Cuenta, f: FiltroActivo): boolean {
+function coincide(c: Account, f: FiltroActivo): boolean {
   switch (f.dimension) {
     case 'plan':
       return PLANES[c.plan]!.nombre === f.valor;
@@ -105,8 +105,8 @@ function coincide(c: Cuenta, f: FiltroActivo): boolean {
 }
 
 /** Cuentas que quedan con el alcance y los filtros activos (un admin de organización solo ve las suyas). */
-export function cuentasDelContexto(ctx: ContextoReporte): Cuenta[] {
+export function contextAccounts(ctx: ContextoReporte): Account[] {
   return CUENTAS.filter(
-    (c) => (ctx.alcance === 'plataforma' || c.organizacion === ORGANIZACION_PROPIA) && ctx.filtros.every((f) => coincide(c, f)),
+    (c) => (ctx.alcance === 'plataforma' || c.organizacion === OWN_ORGANIZATION) && ctx.filtros.every((f) => coincide(c, f)),
   );
 }

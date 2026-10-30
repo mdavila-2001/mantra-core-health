@@ -4,13 +4,13 @@ import {
   guardarHistorial,
   leerHistorial,
   MAX_HISTORIAL,
-  olvidarHistorialesDelNavegador,
+  clearBrowserHistories,
 } from './assistant-history';
 
 describe('historial del asistente', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
-    olvidarHistorialesDelNavegador();
+    clearBrowserHistories();
   });
 
   it('agrega al principio y no repite (sin distinguir mayúsculas)', () => {
@@ -38,11 +38,11 @@ describe('historial del asistente', () => {
   });
 
   it('un contenido corrupto o de otro tipo se lee como vacío', () => {
-    globalThis.localStorage.setItem('alovida:reportes:asistente:historial', '{no es json');
+    globalThis.localStorage.setItem('alovida:reportes:asistente:historial:u1', '{no es json');
     expect(leerHistorial('u1')).toEqual([]);
-    globalThis.localStorage.setItem('alovida:reportes:asistente:historial', '{"a":1}');
+    globalThis.localStorage.setItem('alovida:reportes:asistente:historial:u1', '{"a":1}');
     expect(leerHistorial('u1')).toEqual([]);
-    globalThis.localStorage.setItem('alovida:reportes:asistente:historial', '["ok", 3, "", null]');
+    globalThis.localStorage.setItem('alovida:reportes:asistente:historial:u1', '["ok", 3, "", null]');
     expect(leerHistorial('u1')).toEqual(['ok']);
   });
 
@@ -66,7 +66,7 @@ describe('historial del asistente', () => {
     guardarHistorial('u1', ['a']);
     guardarHistorial('u2', ['b']);
     guardarHistorial(null, ['c']);
-    olvidarHistorialesDelNavegador();
+    clearBrowserHistories();
     expect(leerHistorial('u1')).toEqual([]);
     expect(leerHistorial('u2')).toEqual([]);
     expect(leerHistorial(null)).toEqual([]);
@@ -75,14 +75,14 @@ describe('historial del asistente', () => {
   it('olvidar no toca claves ajenas del almacenamiento', () => {
     localStorage.setItem('otra-cosa', 'x');
     guardarHistorial('u1', ['a']);
-    olvidarHistorialesDelNavegador();
+    clearBrowserHistories();
     expect(localStorage.getItem('otra-cosa')).toBe('x');
     localStorage.removeItem('otra-cosa');
   });
 
   it('cerrar sesión también olvida la llave de la versión previa', () => {
     localStorage.setItem('alovida:reportes:asistente:historial', JSON.stringify(['vieja']));
-    olvidarHistorialesDelNavegador();
+    clearBrowserHistories();
     expect(localStorage.getItem('alovida:reportes:asistente:historial')).toBeNull();
   });
 });

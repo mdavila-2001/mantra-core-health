@@ -3,10 +3,10 @@ import type { ChartSpec, ContextoReporte, DimensionFiltro } from '../../../data-
 import { agrupar, daysInPeriod, redondear, suma, candlesFromSeries } from './reporting-dataset.util';
 import {
   CIUDADES,
-  cuentasDelContexto,
+  contextAccounts,
   distribuirEnteros,
   ESPECIALIDADES,
-  sinDimension,
+  withoutDimension,
   type Corte,
 } from './suscripciones.cortes';
 import { aMoneda, info, unidadMoneda } from './suscripciones.info';
@@ -18,16 +18,16 @@ import {
   type ModeloSuscripciones,
 } from './suscripciones.modelo';
 
-const SIN_CUENTAS = 'No hay cuentas activas en este corte; quite algún filtro para ver datos.';
+const NO_ACCOUNTS = 'No hay cuentas activas en este corte; quite algún filtro para ver datos.';
 const MUESTRA_MINIMA = 10;
 
 /** Cuentas por plan al cierre, sin el filtro de plan: los planes se comparan entre sí y el clic solo resalta. */
-export function cuentasPorPlan(ctx: ContextoReporte): number[] {
-  return distribuirEnteros(suscriptoresAlCierre(sinDimension(ctx, 'plan')), participacionPlanes(1, daysInPeriod(ctx.periodo)));
+export function accountsByPlan(ctx: ContextoReporte): number[] {
+  return distribuirEnteros(suscriptoresAlCierre(withoutDimension(ctx, 'plan')), participacionPlanes(1, daysInPeriod(ctx.periodo)));
 }
 
 export function graficoMixPlan(ctx: ContextoReporte): ChartSpec {
-  const valores = cuentasPorPlan(ctx);
+  const valores = accountsByPlan(ctx);
   const total = suma(valores);
   const mayor = valores.indexOf(Math.max(...valores));
   return {
@@ -36,7 +36,7 @@ export function graficoMixPlan(ctx: ContextoReporte): ChartSpec {
     subtitulo: 'Al cierre del periodo',
     unidad: { tipo: 'numero' },
     datos: { tipo: 'partes', forma: 'dona', partes: PLANES.map((p, i) => ({ nombre: p.nombre, valor: valores[i]! })) },
-    resumenAccesible: total > 0 ? `El plan ${PLANES[mayor]!.nombre} concentra ${valores[mayor]} de las ${total} cuentas activas.` : SIN_CUENTAS,
+    resumenAccesible: total > 0 ? `El plan ${PLANES[mayor]!.nombre} concentra ${valores[mayor]} de las ${total} cuentas activas.` : NO_ACCOUNTS,
     filtro: { dimension: 'plan' },
     info: info({
       definicion: 'Cuentas con suscripción vigente al cierre, repartidas por plan.',
@@ -46,7 +46,7 @@ export function graficoMixPlan(ctx: ContextoReporte): ChartSpec {
     }),
     velas: null,
     velasMotivo: 'Es un reparto en un instante (una foto), no una serie con apertura y cierre.',
-    sinDatoMotivo: SIN_CUENTAS,
+    sinDatoMotivo: NO_ACCOUNTS,
   };
 }
 
@@ -67,7 +67,7 @@ export function graficoEmbudo(m: ModeloSuscripciones): ChartSpec {
         { nombre: 'Pagantes', valor: e.pagantes },
       ],
     },
-    resumenAccesible: e.registros > 0 ? `De ${e.registros} registros, ${e.pagantes} llegan a pagar.` : SIN_CUENTAS,
+    resumenAccesible: e.registros > 0 ? `De ${e.registros} registros, ${e.pagantes} llegan a pagar.` : NO_ACCOUNTS,
     filtro: null,
     filtroMotivo: 'Los pasos son etapas del recorrido, no segmentos de cuentas; filtrar por una etapa no cambia al resto del informe.',
     info: info({
@@ -78,12 +78,12 @@ export function graficoEmbudo(m: ModeloSuscripciones): ChartSpec {
     }),
     velas: null,
     velasMotivo: 'Un embudo cuenta personas que avanzan; no es un saldo con apertura y cierre.',
-    sinDatoMotivo: SIN_CUENTAS,
+    sinDatoMotivo: NO_ACCOUNTS,
   };
 }
 
 export function graficoUso(ctx: ContextoReporte): ChartSpec {
-  const cuentas = cuentasDelContexto(ctx);
+  const cuentas = contextAccounts(ctx);
   const valor = cuentas.length >= 5 ? redondear(Math.min(100, suma(cuentas.map((c) => c.usoPct)) / cuentas.length), 1) : null;
   return {
     id: 'uso-cuota',
@@ -149,7 +149,7 @@ export function graficoRenovaciones(m: ModeloSuscripciones): ChartSpec {
     }),
     velas: null,
     velasMotivo: 'Es un conteo de vencimientos futuros; no tiene apertura y cierre.',
-    sinDatoMotivo: SIN_CUENTAS,
+    sinDatoMotivo: NO_ACCOUNTS,
   };
 }
 
@@ -161,7 +161,7 @@ function graficoCorte(
   cortes: readonly Corte[],
   etiqueta: string,
 ): ChartSpec {
-  const total = suscriptoresAlCierre(sinDimension(ctx, dimension));
+  const total = suscriptoresAlCierre(withoutDimension(ctx, dimension));
   const valores = distribuirEnteros(total, cortes.map((c) => c.peso));
   return {
     id,
@@ -174,7 +174,7 @@ function graficoCorte(
       categorias: cortes.map((c) => c.nombre),
       series: [{ nombre: 'Cuentas activas', valores, forma: 'barra' }],
     },
-    resumenAccesible: total > 0 ? `${cortes[0]!.nombre} concentra ${valores[0]} de las ${total} cuentas activas, la mayor ${etiqueta}.` : SIN_CUENTAS,
+    resumenAccesible: total > 0 ? `${cortes[0]!.nombre} concentra ${valores[0]} de las ${total} cuentas activas, la mayor ${etiqueta}.` : NO_ACCOUNTS,
     filtro: { dimension },
     info: info({
       definicion: `Cuentas con suscripción vigente al cierre, según su ${etiqueta}.`,
@@ -184,7 +184,7 @@ function graficoCorte(
     }),
     velas: null,
     velasMotivo: 'Es un reparto en un instante (una foto), no una serie con apertura y cierre.',
-    sinDatoMotivo: SIN_CUENTAS,
+    sinDatoMotivo: NO_ACCOUNTS,
   };
 }
 
@@ -195,11 +195,11 @@ export const graficoCiudad = (ctx: ContextoReporte) =>
   graficoCorte(ctx, 'cuentas-ciudad', 'Cuentas por ciudad', 'ciudad', CIUDADES, 'ciudad');
 
 export function graficoChurnPlan(ctx: ContextoReporte): ChartSpec {
-  const sin = sinDimension(ctx, 'plan');
-  const cuentas = cuentasPorPlan(ctx);
+  const unfilteredCtx = withoutDimension(ctx, 'plan');
+  const cuentas = accountsByPlan(ctx);
   const base = [3.4, 2.1, 0.9];
   const valores = PLANES.map((p, i) =>
-    cuentas[i]! >= MUESTRA_MINIMA ? redondear(base[i]! * oscilar(sin, `churn-${p.nombre}`, 0.12), 1) : null,
+    cuentas[i]! >= MUESTRA_MINIMA ? redondear(base[i]! * oscilar(unfilteredCtx, `churn-${p.nombre}`, 0.12), 1) : null,
   );
   return {
     id: 'churn-plan',
@@ -248,13 +248,13 @@ export function graficoSaldoMora(m: ModeloSuscripciones, ctx: ContextoReporte): 
       velas: candlesFromSeries(m.fechas, diario, m.gran),
       subirEsMalo: true,
     },
-    sinDatoMotivo: SIN_CUENTAS,
+    sinDatoMotivo: NO_ACCOUNTS,
   };
 }
 
 export function graficoMoraFlujo(m: ModeloSuscripciones, ctx: ContextoReporte): ChartSpec {
   const mon = aMoneda(ctx);
-  const nueva = agrupar(m.fechas, m.mora.nueva.map(mon), m.gran, 'suma');
+  const newFailures = agrupar(m.fechas, m.mora.newFailures.map(mon), m.gran, 'suma');
   const recuperada = agrupar(m.fechas, m.mora.recuperada.map(mon), m.gran, 'suma');
   const unidad = unidadMoneda(ctx);
   const pct = m.mora.fallidos > 0 ? redondear((m.mora.recuperados / m.mora.fallidos) * 100, 1) : null;
@@ -265,9 +265,9 @@ export function graficoMoraFlujo(m: ModeloSuscripciones, ctx: ContextoReporte): 
     unidad,
     datos: {
       tipo: 'cartesiano',
-      categorias: nueva.etiquetas,
+      categorias: newFailures.etiquetas,
       series: [
-        { nombre: 'Cobros fallidos', valores: nueva.valores.map((v) => redondear(v)), forma: 'barra' },
+        { nombre: 'Cobros fallidos', valores: newFailures.valores.map((v) => redondear(v)), forma: 'barra' },
         { nombre: 'Recuperados tras reintento', valores: recuperada.valores.map((v) => redondear(v)), forma: 'barra' },
       ],
     },
@@ -284,6 +284,6 @@ export function graficoMoraFlujo(m: ModeloSuscripciones, ctx: ContextoReporte): 
     }),
     velas: null,
     velasMotivo: 'Son flujos que se suman por tramo; las velas son para saldos (el saldo en mora ya las tiene).',
-    sinDatoMotivo: SIN_CUENTAS,
+    sinDatoMotivo: NO_ACCOUNTS,
   };
 }

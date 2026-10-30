@@ -20,14 +20,14 @@ const THEME: ChartTheme = {
 };
 const UNIT: UnidadValor = { tipo: 'numero' };
 
-type Option = {
+interface Option {
   xAxis: { show: boolean };
   yAxis: { show: boolean };
   legend?: unknown;
   animation: boolean;
   tooltip: { formatter: (p: unknown) => string };
   series: { connectNulls: boolean; data: (number | null)[]; symbol: (v: unknown, p: { dataIndex: number }) => string }[];
-};
+}
 
 describe('describeTrend', () => {
   it('dice de dónde a dónde fue, ignorando los huecos', () => {

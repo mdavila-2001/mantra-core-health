@@ -1,14 +1,14 @@
 import type { ChartSpec, ContextoReporte } from '../../../data-access/reporting/reporting.types';
 import { DIAS_SEMANA, DISPOSITIVOS, UBICACIONES } from './publicidad.catalogo';
 import { aMoneda, aMonedaNull, info, unidadMoneda } from './publicidad.comun';
-import { calcularModelo, razon, type Modelo } from './publicidad.modelo';
+import { calcularModelo, ratio, type Modelo } from './publicidad.modelo';
 import { agrupar, redondear, suma, candlesFromSeries } from './reporting-dataset.util';
 
 /* Resultados · Entrega y alcance · Rendimiento por ubicación y horario (series y distribuciones). */
 
 const MIN_MUESTRA_CELDA = 400;
 
-const SIN_ENTREGA = 'La selección no tuvo entrega en el periodo (campañas en revisión, rechazadas o sin gasto).';
+const NO_DELIVERY = 'La selección no tuvo entrega en el periodo (campañas en revisión, rechazadas o sin gasto).';
 
 export function graficoGastoDiario(ctx: ContextoReporte, m: Modelo): ChartSpec {
   const cubos = (valores: readonly number[]) => agrupar(m.fechas, [...valores], m.gran, 'suma');
@@ -28,7 +28,7 @@ export function graficoGastoDiario(ctx: ContextoReporte, m: Modelo): ChartSpec {
     subtitulo: 'Por ubicación del anuncio',
     unidad: unidadMoneda(ctx),
     datos: { tipo: 'cartesiano', categorias: base.etiquetas, series },
-    resumenAccesible: m.sinEntrega
+    resumenAccesible: m.noDelivery
       ? 'Sin gasto en el periodo para la selección actual.'
       : 'Barras apiladas del gasto de los anunciantes por ubicación; la notificación push concentra la mayor parte. Las velas muestran cómo se movió el CPM.',
     filtro: { dimension: 'canal' },
@@ -49,7 +49,7 @@ export function graficoGastoDiario(ctx: ContextoReporte, m: Modelo): ChartSpec {
     velasMotivo: m.cpmDia ? undefined : 'Sin entrega no hay CPM que dibujar.',
     ancho: 'completo',
     alto: 320,
-    sinDatoMotivo: SIN_ENTREGA,
+    sinDatoMotivo: NO_DELIVERY,
   };
 }
 
@@ -107,8 +107,8 @@ export function graficoEmbudo(m: Modelo): ChartSpec {
       tipo: 'partes',
       forma: 'embudo',
       partes: [
-        { nombre: 'Impresiones', valor: m.sinEntrega ? null : m.impresiones },
-        { nombre: 'Clics en el enlace', valor: m.sinEntrega ? null : m.clics },
+        { nombre: 'Impresiones', valor: m.noDelivery ? null : m.impresiones },
+        { nombre: 'Clics en el enlace', valor: m.noDelivery ? null : m.clics },
         { nombre: 'Clientes potenciales', valor: m.leads },
         { nombre: 'Citas agendadas', valor: m.citas },
       ],
@@ -127,13 +127,13 @@ export function graficoEmbudo(m: Modelo): ChartSpec {
     velas: null,
     velasMotivo: 'Son etapas de un flujo, no una serie de saldo o razón en el tiempo.',
     alto: 300,
-    sinDatoMotivo: SIN_ENTREGA,
+    sinDatoMotivo: NO_DELIVERY,
   };
 }
 
 export function graficoPacing(m: Modelo): ChartSpec {
-  const conPacing = m.filas.filter((f) => f.presupuesto !== null && f.entrega);
-  const pacing = razon(suma(conPacing.map((f) => f.gasto)), suma(conPacing.map((f) => f.presupuesto)));
+  const withPacing = m.filas.filter((f) => f.presupuesto !== null && f.entrega);
+  const pacing = ratio(suma(withPacing.map((f) => f.gasto)), suma(withPacing.map((f) => f.presupuesto)));
   return {
     id: 'pub-pacing',
     titulo: 'Pacing del presupuesto',
@@ -219,7 +219,7 @@ export function graficoCpaUbicacion(ctx: ContextoReporte): ChartSpec {
   const valores = UBICACIONES.map((u) => {
     const otros = ctx.filtros.filter((f) => f.dimension !== 'canal');
     const mu = calcularModelo({ ...ctx, filtros: [...otros, { dimension: 'canal', valor: u.nombre }] });
-    return aMonedaNull(ctx, razon(mu.gastoCitas, mu.citas));
+    return aMonedaNull(ctx, ratio(mu.gastoCitas, mu.citas));
   });
   return {
     id: 'pub-cpa-ubicacion',
@@ -242,24 +242,24 @@ export function graficoCpaUbicacion(ctx: ContextoReporte): ChartSpec {
   };
 }
 
-function perfilHora(h: number): number {
+function hourProfile(h: number): number {
   const pico = (centro: number, ancho: number) => Math.exp(-((h - centro) ** 2) / (2 * ancho ** 2));
   return 0.05 + pico(9, 1.8) + 0.85 * pico(13, 1.6) + 1.15 * pico(20, 2);
 }
 
 export function graficoCtrHora(m: Modelo): ChartSpec {
   const horas = Array.from({ length: 24 }, (_, h) => h);
-  const total = suma(horas.map(perfilHora));
+  const total = suma(horas.map(hourProfile));
   const pesoDia = [1.05, 1.08, 1.1, 1.07, 0.98, 0.8, 0.72];
   const sumaDia = suma(pesoDia);
   const ctrDia = [1.02, 1.05, 1.06, 1.03, 0.97, 0.9, 0.86];
-  const ctrGlobal = m.sinEntrega ? 0 : (m.clics / m.impresiones) * 100;
+  const ctrGlobal = m.noDelivery ? 0 : (m.clics / m.impresiones) * 100;
   const celdas: (readonly [number, number, number | null])[] = [];
   DIAS_SEMANA.forEach((_, d) => {
     horas.forEach((h) => {
-      const impresiones = m.impresiones * (pesoDia[d]! / sumaDia) * (perfilHora(h) / total);
-      const hayMuestra = !m.sinEntrega && impresiones >= MIN_MUESTRA_CELDA;
-      const factorHora = 0.8 + 0.4 * (perfilHora(h) / 1.2);
+      const impresiones = m.impresiones * (pesoDia[d]! / sumaDia) * (hourProfile(h) / total);
+      const hayMuestra = !m.noDelivery && impresiones >= MIN_MUESTRA_CELDA;
+      const factorHora = 0.8 + 0.4 * (hourProfile(h) / 1.2);
       celdas.push([h, d, hayMuestra ? redondear(ctrGlobal * ctrDia[d]! * factorHora, 2) : null]);
     });
   });

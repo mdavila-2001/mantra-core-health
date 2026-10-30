@@ -32,13 +32,13 @@ const CONSTRUCTORES: Readonly<Record<VerticalReporte, (ctx: ContextoReporte) => 
 };
 
 const CATALOGO: readonly ReporteCatalogo[] = [
-  { id: 'rep-comercial', nombre: 'Dashboard comercial', vertical: 'resumen', descripcion: 'Ventas de las tres verticales: suscripciones de doctores, publicidad push y comisiones a actores, con pestañas y comparativos.', responsable: 'Dirección comercial', certificado: true, frescuraMin: 12, ruta: '/reporting/comercial/resumen' },
-  { id: 'rep-suscripciones', nombre: 'Suscripciones de doctores', vertical: 'suscripciones', descripcion: 'MRR, churn, cohortes de retención, conversión de prueba a pago y uso contra cuota.', responsable: 'Dirección comercial', certificado: true, frescuraMin: 12, ruta: '/reporting/comercial/suscripciones' },
-  { id: 'rep-publicidad', nombre: 'Publicidad push y pauteo', vertical: 'publicidad', descripcion: 'Campañas, conjuntos y anuncios con las métricas de un gestor de anuncios: alcance, frecuencia, CPM, CTR, CPA y ROAS.', responsable: 'Marketing', certificado: false, frescuraMin: 35, ruta: '/reporting/comercial/publicidad', enDiseno: true },
-  { id: 'rep-comisiones', nombre: 'Comisiones y actores', vertical: 'comisiones', descripcion: 'Comisión devengada, liquidada y pendiente por actor; take rate, payouts y aging.', responsable: 'Finanzas', certificado: true, frescuraMin: 60, ruta: '/reporting/comercial/comisiones' },
-  { id: 'rep-cobros', nombre: 'Cobros y caja', vertical: 'cobros', descripcion: 'Éxito de pago, reembolsos, disputas, rezago de liquidación y costo del gateway.', responsable: 'Finanzas', certificado: true, frescuraMin: 20, ruta: '/reporting/comercial/cobros' },
-  { id: 'rep-adquisicion', nombre: 'Adquisición y cuentas', vertical: 'adquisicion', descripcion: 'Embudo lead → activación, rendimiento por canal, cupones y salud de cuenta.', responsable: 'Crecimiento', certificado: false, frescuraMin: 180, ruta: '/reporting/comercial/adquisicion' },
-  { id: 'rep-calidad', nombre: 'Calidad del dato y definiciones', vertical: 'calidad', descripcion: 'Catálogo de KPI con fórmula, dueño, fuente y frescura; reglas de calidad.', responsable: 'Gobierno de datos', certificado: true, frescuraMin: 5, ruta: '/reporting/comercial/calidad' },
+  { id: 'rep-comercial', nombre: 'Dashboard comercial', vertical: 'resumen', descripcion: 'Ventas de las tres verticales: suscripciones de doctores, publicidad push y comisiones a actores, con pestañas y comparativos.', responsable: 'Dirección comercial', certificado: true, frescuraMin: 12, ruta: '/reports/commercial/resumen' },
+  { id: 'rep-suscripciones', nombre: 'Suscripciones de doctores', vertical: 'suscripciones', descripcion: 'MRR, churn, cohortes de retención, conversión de prueba a pago y uso contra cuota.', responsable: 'Dirección comercial', certificado: true, frescuraMin: 12, ruta: '/reports/commercial/suscripciones' },
+  { id: 'rep-publicidad', nombre: 'Publicidad push y pauteo', vertical: 'publicidad', descripcion: 'Campañas, conjuntos y anuncios con las métricas de un gestor de anuncios: alcance, frecuencia, CPM, CTR, CPA y ROAS.', responsable: 'Marketing', certificado: false, frescuraMin: 35, ruta: '/reports/commercial/publicidad', enDiseno: true },
+  { id: 'rep-comisiones', nombre: 'Comisiones y actores', vertical: 'comisiones', descripcion: 'Comisión devengada, liquidada y pendiente por actor; take rate, payouts y aging.', responsable: 'Finanzas', certificado: true, frescuraMin: 60, ruta: '/reports/commercial/comisiones' },
+  { id: 'rep-cobros', nombre: 'Cobros y caja', vertical: 'cobros', descripcion: 'Éxito de pago, reembolsos, disputas, rezago de liquidación y costo del gateway.', responsable: 'Finanzas', certificado: true, frescuraMin: 20, ruta: '/reports/commercial/cobros' },
+  { id: 'rep-adquisicion', nombre: 'Adquisición y cuentas', vertical: 'adquisicion', descripcion: 'Embudo lead → activación, rendimiento por canal, cupones y salud de cuenta.', responsable: 'Crecimiento', certificado: false, frescuraMin: 180, ruta: '/reports/commercial/adquisicion' },
+  { id: 'rep-calidad', nombre: 'Calidad del dato y definiciones', vertical: 'calidad', descripcion: 'Catálogo de KPI con fórmula, dueño, fuente y frescura; reglas de calidad.', responsable: 'Gobierno de datos', certificado: true, frescuraMin: 5, ruta: '/reports/commercial/calidad' },
   { id: 'rep-contable', nombre: 'Vista contable', vertical: 'cobros', descripcion: 'Resultado del periodo, documentos pendientes y cartera de la práctica. Pantalla existente conectada a la API.', responsable: 'Finanzas', certificado: true, frescuraMin: 30, ruta: '/administration/accounting/cockpit' },
   { id: 'rep-seguros', nombre: 'Analítica de seguros', vertical: 'comisiones', descripcion: 'Reclamos, corredores y campañas de aseguradoras. Pantalla existente conectada a la API.', responsable: 'Seguros', certificado: false, frescuraMin: 90, ruta: '/administration/insurance-analytics' },
 ];
@@ -63,11 +63,11 @@ function forcedState(): ForcedState {
   }
 }
 
-function forcedResponse(estado: ForcedState) {
-  if (estado === 'error') {
+function forcedResponse(state: ForcedState) {
+  if (state === 'error') {
     return reply(500, { statusCode: 500, code: 'INTERNAL', message: 'Falla simulada del servidor de reportes', error: 'Internal Server Error' });
   }
-  if (estado === 'sin-permiso') {
+  if (state === 'sin-permiso') {
     return forbidden('Su rol no puede ver este reporte.');
   }
   return null;
@@ -75,8 +75,8 @@ function forcedResponse(estado: ForcedState) {
 
 export function registrarReporteria(router: MockRouter): void {
   router.get('/reporting/catalog', () => {
-    const estado = forcedState();
-    return forcedResponse(estado) ?? (estado === 'vacio' ? [] : CATALOGO);
+    const state = forcedState();
+    return forcedResponse(state) ?? (state === 'vacio' ? [] : CATALOGO);
   });
   router.post('/reporting/commercial/:pestana', (req) => {
     const pestana = req.params['pestana'] ?? '';
@@ -89,16 +89,16 @@ export function registrarReporteria(router: MockRouter): void {
         { field: 'periodo', message: 'es obligatorio' },
       ]);
     }
-    const estado = forcedState();
-    const forzada = forcedResponse(estado);
+    const state = forcedState();
+    const forzada = forcedResponse(state);
     if (forzada !== null) {
       return forzada;
     }
     const datos = CONSTRUCTORES[pestana as VerticalReporte](ctx);
-    if (estado === 'vacio') {
+    if (state === 'vacio') {
       return { ...datos, kpis: [], graficos: [], tablas: [], secciones: undefined };
     }
-    if (estado === 'atrasado') {
+    if (state === 'atrasado') {
       return { ...datos, generadoEn: '2026-10-27T09:00:00-04:00', avisos: [...(datos.avisos ?? []), 'Los datos tienen más de 3 días.'] };
     }
     return datos;

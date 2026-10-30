@@ -27,8 +27,8 @@ function contextos(): ContextoReporte[] {
 }
 
 const BASE: ContextoReporte = { periodo: '30d', comparar: 'periodo-anterior', moneda: 'BOB', alcance: 'plataforma', filtros: [] };
-const kpiDe = (p: PestanaReporte, id: string): KpiSpec => p.kpis.find((k) => k.id === id)!;
-const graficoDe = (p: PestanaReporte, id: string): ChartSpec => p.graficos.find((g) => g.id === id)!;
+const kpiById = (p: PestanaReporte, id: string): KpiSpec => p.kpis.find((k) => k.id === id)!;
+const chartById = (p: PestanaReporte, id: string): ChartSpec => p.graficos.find((g) => g.id === id)!;
 const sumaNum = (v: readonly (number | null)[]) => v.reduce<number>((a, x) => a + (x ?? 0), 0);
 
 function numerosNoFinitos(valor: unknown, ruta = ''): string[] {
@@ -65,7 +65,7 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
     expect(p.graficos.length).toBeGreaterThanOrEqual(8);
     expect(new Set(p.graficos.map(forma)).size).toBeGreaterThanOrEqual(5);
     expect(p.graficos.filter((g) => g.velas !== null).length).toBeGreaterThanOrEqual(3);
-    expect(graficoDe(p, 'churn-cuentas-velas').velas?.subirEsMalo).toBe(true);
+    expect(chartById(p, 'churn-cuentas-velas').velas?.subirEsMalo).toBe(true);
     expect(p.tablas.length).toBeGreaterThanOrEqual(1);
     expect(p.avisos?.join(' ')).toContain('EJEMPLO');
     for (const g of p.graficos) {
@@ -87,7 +87,7 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
       for (const id of ['mrr', 'arr', 'suscriptores-activos', 'churn-cuentas', 'arpu', 'ingreso-periodo']) {
         expect(p.kpis.some((k) => k.id === id), id).toBe(true);
       }
-      const churn = kpiDe(p, 'churn-cuentas');
+      const churn = kpiById(p, 'churn-cuentas');
       expect(churn.subirEsMalo).toBe(true);
       expect(churn.unidad.tipo).toBe('porcentaje');
       expect(churn.numerador).toBeDefined();
@@ -102,26 +102,26 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
   });
 
   it('un filtro de plan cambia los valores de verdad', () => {
-    const sin = construirSuscripciones(BASE);
-    const con = construirSuscripciones({ ...BASE, filtros: [{ dimension: 'plan', valor: 'Profesional' }] });
-    expect(kpiDe(con, 'mrr').valor).not.toBe(kpiDe(sin, 'mrr').valor);
-    expect(kpiDe(con, 'suscriptores-activos').valor).not.toBe(kpiDe(sin, 'suscriptores-activos').valor);
-    expect(JSON.stringify(graficoDe(con, 'mrr-evolucion').datos)).not.toBe(JSON.stringify(graficoDe(sin, 'mrr-evolucion').datos));
-    expect(JSON.stringify(graficoDe(con, 'cuentas-ciudad').datos)).not.toBe(JSON.stringify(graficoDe(sin, 'cuentas-ciudad').datos));
+    const unfiltered = construirSuscripciones(BASE);
+    const filtered = construirSuscripciones({ ...BASE, filtros: [{ dimension: 'plan', valor: 'Profesional' }] });
+    expect(kpiById(filtered, 'mrr').valor).not.toBe(kpiById(unfiltered, 'mrr').valor);
+    expect(kpiById(filtered, 'suscriptores-activos').valor).not.toBe(kpiById(unfiltered, 'suscriptores-activos').valor);
+    expect(JSON.stringify(chartById(filtered, 'mrr-evolucion').datos)).not.toBe(JSON.stringify(chartById(unfiltered, 'mrr-evolucion').datos));
+    expect(JSON.stringify(chartById(filtered, 'cuentas-ciudad').datos)).not.toBe(JSON.stringify(chartById(unfiltered, 'cuentas-ciudad').datos));
     // Los cortes por plan siguen mostrando los tres planes, para poder compararlos.
-    const mix = graficoDe(con, 'mix-plan').datos;
+    const mix = chartById(filtered, 'mix-plan').datos;
     expect(mix.tipo === 'partes' && mix.partes.length).toBe(3);
-    expect(con.tablas.find((t) => t.id === 'candidatas-subir-plan')!.filas.every((f) => f['plan'] === 'Profesional')).toBe(true);
+    expect(filtered.tablas.find((t) => t.id === 'candidatas-subir-plan')!.filas.every((f) => f['plan'] === 'Profesional')).toBe(true);
   });
 
   it('cada filtro por clic mueve algún número', () => {
-    const sin = construirSuscripciones(BASE);
+    const unfiltered = construirSuscripciones(BASE);
     const casos: [string, string][] = [['plan', 'Clínica'], ['especialidad', 'Pediatría'], ['ciudad', 'La Paz']];
     for (const [dimension, valor] of casos) {
-      const con = construirSuscripciones({ ...BASE, filtros: [{ dimension: dimension as 'plan', valor }] });
-      expect(kpiDe(con, 'mrr').valor, dimension).not.toBe(kpiDe(sin, 'mrr').valor);
+      const filtered = construirSuscripciones({ ...BASE, filtros: [{ dimension: dimension as 'plan', valor }] });
+      expect(kpiById(filtered, 'mrr').valor, dimension).not.toBe(kpiById(unfiltered, 'mrr').valor);
     }
-    for (const g of sin.graficos.filter((x) => x.filtro !== null)) {
+    for (const g of unfiltered.graficos.filter((x) => x.filtro !== null)) {
       expect(['plan', 'especialidad', 'ciudad']).toContain(g.filtro!.dimension);
     }
   });
@@ -131,14 +131,14 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
       const bob = construirSuscripciones({ ...BASE, periodo });
       const usd = construirSuscripciones({ ...BASE, periodo, moneda: 'USD' });
       for (const id of ['mrr', 'arr', 'arpu', 'ingreso-periodo', 'saldo-mora']) {
-        const b = kpiDe(bob, id).valor!;
+        const b = kpiById(bob, id).valor!;
         // Cada tramo se redondea a centavos en su moneda: el error admitido es de centavos, no de porcentaje.
         const esperado = b / BOB_PER_USD;
-        expect(Math.abs(kpiDe(usd, id).valor! - esperado), `${id} ${periodo}`).toBeLessThan(Math.max(0.25, esperado * 0.0005));
+        expect(Math.abs(kpiById(usd, id).valor! - esperado), `${id} ${periodo}`).toBeLessThan(Math.max(0.25, esperado * 0.0005));
       }
-      expect(kpiDe(usd, 'suscriptores-activos').valor).toBe(kpiDe(bob, 'suscriptores-activos').valor);
-      const mrrB = graficoDe(bob, 'mrr-evolucion').datos;
-      const mrrU = graficoDe(usd, 'mrr-evolucion').datos;
+      expect(kpiById(usd, 'suscriptores-activos').valor).toBe(kpiById(bob, 'suscriptores-activos').valor);
+      const mrrB = chartById(bob, 'mrr-evolucion').datos;
+      const mrrU = chartById(usd, 'mrr-evolucion').datos;
       if (mrrB.tipo === 'cartesiano' && mrrU.tipo === 'cartesiano') {
         mrrB.series[0]!.valores.forEach((v, i) => {
           expect(Math.abs(mrrU.series[0]!.valores[i]! - v! / BOB_PER_USD)).toBeLessThan(0.01);
@@ -154,11 +154,11 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
   });
 
   it('null no se convierte en 0: sin dato siempre trae motivo y no cambia con la moneda', () => {
-    const contextosConFiltro = [
+    const contextsWithFilter = [
       ...contextos(),
       ...PERIODOS.map((periodo): ContextoReporte => ({ ...BASE, periodo, alcance: 'organizacion', filtros: [{ dimension: 'especialidad', valor: 'Cardiología' }] })),
     ];
-    for (const ctx of contextosConFiltro) {
+    for (const ctx of contextsWithFilter) {
       const p = construirSuscripciones(ctx);
       for (const k of p.kpis) {
         if (k.valor === null) {
@@ -176,15 +176,15 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
 
   it('hay un caso honesto de «Sin dato»: conversión con muestra menor a 10', () => {
     const p = construirSuscripciones({ ...BASE, periodo: '7d', alcance: 'organizacion' });
-    const conversion = kpiDe(p, 'conversion-prueba-pago');
+    const conversion = kpiById(p, 'conversion-prueba-pago');
     expect(conversion.valor).toBeNull();
     expect(conversion.motivoSinDato).toContain('10');
-    expect(kpiDe(construirSuscripciones(BASE), 'conversion-prueba-pago').valor).not.toBeNull();
+    expect(kpiById(construirSuscripciones(BASE), 'conversion-prueba-pago').valor).not.toBeNull();
   });
 
   it('los meses futuros de cada cohorte son null, no 0', () => {
     for (const ctx of contextos()) {
-      const d = graficoDe(construirSuscripciones(ctx), 'retencion-cohortes').datos;
+      const d = chartById(construirSuscripciones(ctx), 'retencion-cohortes').datos;
       if (d.tipo !== 'mapa-calor') throw new Error('la retención debe ser un mapa de calor');
       expect(d.celdas.length).toBe(d.filas.length * d.columnas.length);
       for (const [col, fila, valor] of d.celdas) {
@@ -197,23 +197,23 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
       }
     }
     // Sin filtros y a escala de plataforma sí hay datos reales en la diagonal observada.
-    const real = graficoDe(construirSuscripciones(BASE), 'retencion-cohortes').datos;
+    const real = chartById(construirSuscripciones(BASE), 'retencion-cohortes').datos;
     expect(real.tipo === 'mapa-calor' && real.celdas.some((c) => c[2] === 100)).toBe(true);
   });
 
   it('el ingreso del periodo es la suma de la serie de ingresos por plan', () => {
     for (const ctx of [...contextos(), { ...BASE, filtros: [{ dimension: 'ciudad' as const, valor: 'Sucre' }] }]) {
       const p = construirSuscripciones(ctx);
-      const d = graficoDe(p, 'ingreso-plan').datos;
+      const d = chartById(p, 'ingreso-plan').datos;
       if (d.tipo !== 'cartesiano') throw new Error('el ingreso debe ser cartesiano');
       const total = d.series.reduce((a, s) => a + sumaNum(s.valores), 0);
-      expect(Math.abs(total - kpiDe(p, 'ingreso-periodo').valor!), JSON.stringify(ctx)).toBeLessThan(0.01);
+      expect(Math.abs(total - kpiById(p, 'ingreso-periodo').valor!), JSON.stringify(ctx)).toBeLessThan(0.01);
     }
   });
 
   it('la cascada del MRR cierra: inicial + nuevas + expansión − contracción − bajas = final', () => {
     for (const ctx of contextos()) {
-      const d = graficoDe(construirSuscripciones(ctx), 'cascada-mrr').datos;
+      const d = chartById(construirSuscripciones(ctx), 'cascada-mrr').datos;
       if (d.tipo !== 'cascada') throw new Error('debe ser cascada');
       const [ini, ...resto] = d.pasos;
       const final = resto.pop()!;
@@ -226,29 +226,29 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
   it('altas, bajas y churn son coherentes entre tarjetas y gráficos', () => {
     for (const ctx of contextos()) {
       const p = construirSuscripciones(ctx);
-      const d = graficoDe(p, 'movimiento-cuentas').datos;
+      const d = chartById(p, 'movimiento-cuentas').datos;
       if (d.tipo !== 'cartesiano') throw new Error('debe ser cartesiano');
       const altas = sumaNum(d.series[0]!.valores);
       const bajas = -sumaNum(d.series[1]!.valores);
-      expect(altas - bajas).toBe(kpiDe(p, 'altas-netas').valor);
-      expect(bajas).toBe(kpiDe(p, 'churn-cuentas').numerador);
-      const mrrChart = graficoDe(p, 'mrr-evolucion').datos;
+      expect(altas - bajas).toBe(kpiById(p, 'altas-netas').valor);
+      expect(bajas).toBe(kpiById(p, 'churn-cuentas').numerador);
+      const mrrChart = chartById(p, 'mrr-evolucion').datos;
       if (mrrChart.tipo === 'cartesiano') {
-        expect(mrrChart.series[0]!.valores.at(-1)).toBeCloseTo(kpiDe(p, 'mrr').valor!, 2);
+        expect(mrrChart.series[0]!.valores.at(-1)).toBeCloseTo(kpiById(p, 'mrr').valor!, 2);
       }
     }
   });
 
   it('un periodo corto da menos puntos que uno largo', () => {
-    const largo = graficoDe(construirSuscripciones({ ...BASE, periodo: '90d' }), 'mrr-evolucion');
-    const corto = graficoDe(construirSuscripciones({ ...BASE, periodo: '7d' }), 'mrr-evolucion');
+    const largo = chartById(construirSuscripciones({ ...BASE, periodo: '90d' }), 'mrr-evolucion');
+    const corto = chartById(construirSuscripciones({ ...BASE, periodo: '7d' }), 'mrr-evolucion');
     expect(corto.datos.tipo === 'cartesiano' && largo.datos.tipo === 'cartesiano' && corto.datos.categorias.length < largo.datos.categorias.length).toBe(true);
     expect(corto.velas!.velas.length).toBeLessThan(largo.velas!.velas.length);
   });
 
   it('con alcance de organización los números son menores que los de la plataforma', () => {
     const plataforma = construirSuscripciones(BASE);
-    const organizacion = construirSuscripciones({ ...BASE, alcance: 'organizacion' });
-    expect(kpiDe(organizacion, 'mrr').valor!).toBeLessThan(kpiDe(plataforma, 'mrr').valor!);
+    const orgScoped = construirSuscripciones({ ...BASE, alcance: 'organizacion' });
+    expect(kpiById(orgScoped, 'mrr').valor!).toBeLessThan(kpiById(plataforma, 'mrr').valor!);
   });
 });

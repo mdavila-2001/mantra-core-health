@@ -4,14 +4,14 @@ import type {
   PestanaReporte,
 } from '../../../data-access/reporting/reporting.types';
 import { AVISO_TASAS } from './comisiones.info';
-import { graficoMapaCalor, graficoPorActor, graficoProductividad, graficoRetenciones } from './comisiones.graficos-actor';
+import { graficoMapaCalor, byActorChart, graficoProductividad, graficoRetenciones } from './comisiones.graficos-actor';
 import {
   graficoAging,
   graficoCascada,
   graficoConciliacion,
   graficoDescuadres,
   graficoPayouts,
-  graficoSaldoPorPagar,
+  payableBalanceChart,
   graficoTakeRate,
 } from './comisiones.graficos-pagos';
 import { construirKpis } from './comisiones.kpis';
@@ -39,13 +39,13 @@ export function construirComisiones(ctx: ContextoReporte): PestanaReporte {
 
   const cascada = graficoCascada(ctx, m);
   const takeRate = graficoTakeRate(ctx, m);
-  const porActor = graficoPorActor(ctx, m);
+  const byActor = byActorChart(ctx, m);
   const productividad = graficoProductividad(ctx, m);
   const retenciones = graficoRetenciones(ctx, m);
   const mapaCalor = graficoMapaCalor(ctx, m);
   const payouts = graficoPayouts(ctx, m);
   const aging = graficoAging(ctx, m);
-  const saldo = graficoSaldoPorPagar(ctx, m);
+  const saldo = payableBalanceChart(ctx, m);
   const conciliacion = graficoConciliacion(ctx, m);
   const descuadres = graficoDescuadres(ctx, m);
 
@@ -57,7 +57,7 @@ export function construirComisiones(ctx: ContextoReporte): PestanaReporte {
     generadoEn: GENERADO_EN,
     origen: 'ejemplo',
     kpis: construirKpis(ctx, m, { takeRate: cola(takeRate), saldo: cola(saldo) }),
-    graficos: [cascada, takeRate, porActor, productividad, retenciones, mapaCalor, payouts, aging, saldo, conciliacion, descuadres],
+    graficos: [cascada, takeRate, byActor, productividad, retenciones, mapaCalor, payouts, aging, saldo, conciliacion, descuadres],
     tablas: [ranking, fallidos],
     avisos: [
       AVISO_TASAS,
@@ -74,7 +74,7 @@ export function construirComisiones(ctx: ContextoReporte): PestanaReporte {
       {
         titulo: 'Por actor',
         descripcion: 'Qué devenga, cobra y rinde cada actor.',
-        graficos: [porActor.id, productividad.id, retenciones.id, mapaCalor.id],
+        graficos: [byActor.id, productividad.id, retenciones.id, mapaCalor.id],
         tablas: [ranking.id],
       },
       {

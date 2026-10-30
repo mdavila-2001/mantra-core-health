@@ -18,7 +18,7 @@ export interface Anunciante {
 
 export type Objetivo = 'Citas agendadas' | 'Clientes potenciales' | 'Alcance';
 
-export type EstadoEntrega =
+export type DeliveryStatus =
   | 'Activa'
   | 'En fase de aprendizaje'
   | 'Aprendizaje limitada'
@@ -27,7 +27,7 @@ export type EstadoEntrega =
   | 'Pausada';
 
 /** Orden fijo de lectura de los estados (el color sigue a la entidad, no al ranking). */
-export const ESTADOS: readonly EstadoEntrega[] = [
+export const ESTADOS: readonly DeliveryStatus[] = [
   'Activa',
   'En fase de aprendizaje',
   'Aprendizaje limitada',
@@ -37,7 +37,7 @@ export const ESTADOS: readonly EstadoEntrega[] = [
 ];
 
 /** Fracción del periodo en que la campaña estuvo entregando. En revisión y rechazada: nunca. */
-export const DIAS_ENTREGA: Readonly<Record<EstadoEntrega, number>> = {
+export const DIAS_ENTREGA: Readonly<Record<DeliveryStatus, number>> = {
   Activa: 1,
   'En fase de aprendizaje': 0.85,
   'Aprendizaje limitada': 0.7,
@@ -64,7 +64,7 @@ export interface Campana {
   /** Índice en `ANUNCIANTES`. */
   readonly anunciante: number;
   readonly objetivo: Objetivo;
-  readonly estado: EstadoEntrega;
+  readonly estado: DeliveryStatus;
   /** Peso relativo en el gasto antes de aplicar los días de entrega. */
   readonly peso: number;
   /** Gastado ÷ presupuesto esperado a la fecha. `null` si no entregó. */

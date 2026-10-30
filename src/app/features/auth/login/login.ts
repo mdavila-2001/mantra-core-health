@@ -14,6 +14,10 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
+import {
+  accesoAPortales,
+  PORTAL_SELECTOR_ROUTE,
+} from '../../reporting/reporting-access';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -207,7 +211,18 @@ export class Login {
         ? GETTING_STARTED_ROUTE
         : MY_ORGANIZATIONS_ROUTE;
     }
-    return this.retornoPedido() ?? HOME_ROUTE;
+    // Un enlace pedido a mano manda sobre la pantalla de elección: quien venía
+    // a una página concreta no tiene que elegir portal para llegar a ella.
+    const requested = this.retornoPedido();
+    if (requested !== null) {
+      return requested;
+    }
+    // Con acceso a los dos portales hay que elegir. Con uno solo no se agrega
+    // una pantalla de paso: se entra derecho, como siempre. Que la tarjeta
+    // exista o no no autoriza nada; cada portal vuelve a validar el rol en su
+    // ruta y la API en cada petición.
+    const acceso = accesoAPortales(this.auth.roles());
+    return acceso.administracion && acceso.reporteria ? PORTAL_SELECTOR_ROUTE : HOME_ROUTE;
   }
 
   /**

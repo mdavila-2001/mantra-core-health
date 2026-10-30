@@ -43,7 +43,7 @@ interface MensajeBase {
   readonly id: number;
 }
 
-export interface MensajeUsuario extends MensajeBase {
+export interface UserMessage extends MensajeBase {
   readonly rol: 'usuario';
   readonly texto: string;
 }
@@ -70,4 +70,4 @@ export type MensajeAsistente =
       readonly reintento: { readonly pregunta: string; readonly medida: SugerenciaMedida | null } | null;
     });
 
-export type Mensaje = MensajeUsuario | MensajeAsistente;
+export type Mensaje = UserMessage | MensajeAsistente;

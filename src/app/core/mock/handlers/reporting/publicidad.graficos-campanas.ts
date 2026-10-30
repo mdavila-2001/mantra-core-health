@@ -1,7 +1,7 @@
 import type { ChartSpec, ContextoReporte } from '../../../data-access/reporting/reporting.types';
 import { CIUDADES, ESTADOS } from './publicidad.catalogo';
 import { aMoneda, calcularModeracion, info, unidadMoneda } from './publicidad.comun';
-import { anunciantesConGasto, type Modelo } from './publicidad.modelo';
+import { advertisersWithSpend, type Modelo } from './publicidad.modelo';
 import { redondear } from './reporting-dataset.util';
 
 /* Campañas y moderación. Cada gráfico categórico recibe el modelo SIN su propio
@@ -9,7 +9,7 @@ import { redondear } from './reporting-dataset.util';
 
 const NO_SERIE = 'Compara entidades en el mismo momento; no es una serie de saldo o razón en el tiempo.';
 
-export function graficoPorCampana(ctx: ContextoReporte, m: Modelo): ChartSpec {
+export function campaignChart(ctx: ContextoReporte, m: Modelo): ChartSpec {
   const filas = m.filas.filter((f) => f.gasto > 0).sort((a, b) => b.gasto - a.gasto);
   return {
     id: 'pub-por-campana',
@@ -36,8 +36,8 @@ export function graficoPorCampana(ctx: ContextoReporte, m: Modelo): ChartSpec {
   };
 }
 
-export function graficoPorAnunciante(ctx: ContextoReporte, m: Modelo): ChartSpec {
-  const filas = anunciantesConGasto(m).sort((a, b) => b.gasto - a.gasto);
+export function advertiserChart(ctx: ContextoReporte, m: Modelo): ChartSpec {
+  const filas = advertisersWithSpend(m).sort((a, b) => b.gasto - a.gasto);
   return {
     id: 'pub-por-anunciante',
     titulo: 'Gasto por anunciante',
@@ -64,7 +64,7 @@ export function graficoPorAnunciante(ctx: ContextoReporte, m: Modelo): ChartSpec
   };
 }
 
-export function graficoEstadoCampanas(m: Modelo): ChartSpec {
+export function campaignStatusChart(m: Modelo): ChartSpec {
   return {
     id: 'pub-estado-campanas',
     titulo: 'Estado de entrega de las campañas',

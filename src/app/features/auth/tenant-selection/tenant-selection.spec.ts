@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
+
+import { AuthService } from '../../../core/auth/auth.service';
 
 import { TenantSelection } from './tenant-selection';
 
@@ -47,5 +49,24 @@ describe('TenantSelection', () => {
     const vacio = (fixture.nativeElement as HTMLElement).querySelector('.tenant__vacio');
     expect(vacio?.getAttribute('role')).toBe('status');
     expect(vacio?.getAttribute('aria-live')).toBe('polite');
+  });
+  /**
+   * Con acceso a administración Y a reportería, tras elegir organización toca
+   * elegir portal; con solo uno, se entra directo a la aplicación.
+   */
+  it.each([
+    [['PLATFORM_ADMIN', 'REPORTING_ADMIN'], '/portal-selector'],
+    [['SUPERADMIN'], '/portal-selector'],
+    [['PLATFORM_ADMIN'], '/'],
+    [['PATIENT'], '/'],
+  ])('al elegir organización con los roles %j va a %s', (roles, destino) => {
+    const auth = TestBed.inject(AuthService);
+    vi.spyOn(auth, 'selectTenant').mockImplementation(() => undefined);
+    vi.spyOn(auth, 'roles').mockReturnValue(roles);
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+
+    component.choose('tenant-1');
+
+    expect(navegar).toHaveBeenCalledWith(destino);
   });
 });

@@ -21,7 +21,7 @@ function ctx(parcial: Partial<ContextoReporte> = {}): ContextoReporte {
   return { periodo: '30d', comparar: 'periodo-anterior', moneda: 'BOB', alcance: 'plataforma', filtros: [], ...parcial };
 }
 
-function todasLasCombinaciones(): ContextoReporte[] {
+function allCombinations(): ContextoReporte[] {
   const lista: ContextoReporte[] = [];
   for (const periodo of PERIODOS)
     for (const comparar of COMPARACIONES)
@@ -36,7 +36,7 @@ const kpi = (c: ContextoReporte, id: string): KpiSpec => {
   return k;
 };
 
-function numerosDe(datos: DatosGrafico): (number | null)[] {
+function numbersOf(datos: DatosGrafico): (number | null)[] {
   switch (datos.tipo) {
     case 'cartesiano': return datos.series.flatMap((s) => [...s.valores]);
     case 'partes': return datos.partes.map((p) => p.valor);
@@ -48,7 +48,7 @@ function numerosDe(datos: DatosGrafico): (number | null)[] {
 
 describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   it('cumple el contrato de gráfico en todas las combinaciones de contexto', () => {
-    for (const c of todasLasCombinaciones()) {
+    for (const c of allCombinations()) {
       for (const g of construirCobros(c).graficos) {
         expect(getContractViolations(g), `${g.id} con ${JSON.stringify(c)}`).toEqual([]);
       }
@@ -86,7 +86,7 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   });
 
   it('los ids de KPI, gráficos y tablas son únicos y los KPI canónicos existen', () => {
-    for (const c of todasLasCombinaciones()) {
+    for (const c of allCombinations()) {
       const p = construirCobros(c);
       for (const lista of [p.kpis.map((k) => k.id), p.graficos.map((g) => g.id), p.tablas.map((t) => t.id)]) {
         expect(new Set(lista).size).toBe(lista.length);
@@ -103,12 +103,12 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   });
 
   it('no produce NaN ni infinitos en KPI, gráficos ni velas', () => {
-    for (const c of todasLasCombinaciones()) {
+    for (const c of allCombinations()) {
       const p = construirCobros(c);
       const numeros = [
         ...p.kpis.flatMap((k) => [k.valor, k.variacionPct, k.numerador ?? null, k.denominador ?? null, ...(k.tendencia ?? [])]),
         ...p.graficos.flatMap((g) => [
-          ...numerosDe(g.datos),
+          ...numbersOf(g.datos),
           ...(g.velas?.velas.flatMap((v) => [v.apertura, v.cierre, v.minimo, v.maximo]) ?? []),
         ]),
       ];
@@ -119,14 +119,14 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   });
 
   it('el filtro por método de pago cambia los valores de verdad', () => {
-    const sin = construirCobros(ctx());
+    const withoutFilter = construirCobros(ctx());
     for (const valor of ['Tarjeta', 'QR', 'Transferencia', 'Efectivo en caja']) {
-      const con = construirCobros(ctx({ filtros: [{ dimension: 'metodo-pago', valor }] }));
+      const withFilter = construirCobros(ctx({ filtros: [{ dimension: 'metodo-pago', valor }] }));
       expect(kpi(ctx({ filtros: [{ dimension: 'metodo-pago', valor }] }), 'volumen-cobrado').valor).not.toBe(
-        sin.kpis.find((k) => k.id === 'volumen-cobrado')!.valor,
+        withoutFilter.kpis.find((k) => k.id === 'volumen-cobrado')!.valor,
       );
-      expect(con.kpis.find((k) => k.id === 'tasa-exito-pago')!.valor).not.toBe(
-        sin.kpis.find((k) => k.id === 'tasa-exito-pago')!.valor,
+      expect(withFilter.kpis.find((k) => k.id === 'tasa-exito-pago')!.valor).not.toBe(
+        withoutFilter.kpis.find((k) => k.id === 'tasa-exito-pago')!.valor,
       );
     }
     // El costo del gateway de un método es el de ese método: efectivo no paga comisión.
@@ -153,10 +153,10 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   });
 
   it('sin comparación no hay variación; con comparación sí', () => {
-    for (const c of todasLasCombinaciones()) {
-      const sinComparar = c.comparar === 'ninguna';
+    for (const c of allCombinations()) {
+      const noComparison = c.comparar === 'ninguna';
       for (const k of construirCobros(c).kpis) {
-        if (sinComparar) expect(k.variacionPct, k.id).toBeNull();
+        if (noComparison) expect(k.variacionPct, k.id).toBeNull();
       }
     }
     expect(kpi(ctx(), 'volumen-cobrado').variacionPct).not.toBeNull();
@@ -164,7 +164,7 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   });
 
   it('cada tasa es su numerador entre su denominador', () => {
-    for (const c of todasLasCombinaciones()) {
+    for (const c of allCombinations()) {
       for (const k of construirCobros(c).kpis) {
         if (k.unidad.tipo !== 'porcentaje') continue;
         if (k.valor === null) {
@@ -179,7 +179,7 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   });
 
   it('el embudo no sube nunca de una etapa a la siguiente', () => {
-    for (const c of todasLasCombinaciones()) {
+    for (const c of allCombinations()) {
       const g = construirCobros(c).graficos.find((x) => x.id === 'embudo-pago')!;
       expect(g.datos.tipo).toBe('partes');
       if (g.datos.tipo !== 'partes') continue;
@@ -208,8 +208,8 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
 
   it('las velas solo van en razones y suben mal cuando subir es malo', () => {
     const p = construirCobros(ctx());
-    const conVelas = p.graficos.filter((g) => g.velas !== null).map((g) => g.id).sort();
-    expect(conVelas).toEqual(['costo-gateway', 'reembolsos-disputas', 'tasa-exito-pago']);
+    const withCandles = p.graficos.filter((g) => g.velas !== null).map((g) => g.id).sort();
+    expect(withCandles).toEqual(['costo-gateway', 'reembolsos-disputas', 'tasa-exito-pago']);
     expect(p.graficos.find((g) => g.id === 'tasa-exito-pago')!.velas!.subirEsMalo).toBeUndefined();
     expect(p.graficos.find((g) => g.id === 'costo-gateway')!.velas!.subirEsMalo).toBe(true);
     expect(p.graficos.find((g) => g.id === 'reembolsos-disputas')!.velas!.subirEsMalo).toBe(true);
@@ -223,7 +223,7 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
       expect(k.numerador).toBeNull();
       expect(k.motivoSinDato).toContain('SIAT');
       const g = p.graficos.find((x) => x.id === 'facturacion-siat')!;
-      expect(numerosDe(g.datos).every((n) => n === null)).toBe(true);
+      expect(numbersOf(g.datos).every((n) => n === null)).toBe(true);
       expect(g.sinDatoMotivo).toBeTruthy();
       expect(p.avisos!.length).toBeGreaterThan(1);
     }
@@ -237,13 +237,13 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   it('con un método filtrado, los métodos excluidos de la facturación son null y no cero', () => {
     const g = construirCobros(ctx({ filtros: [{ dimension: 'metodo-pago', valor: 'QR' }] })).graficos.find((x) => x.id === 'facturacion-siat')!;
     if (g.datos.tipo !== 'cartesiano') throw new Error('forma inesperada');
-    const porNombre = new Map(g.datos.series.map((s) => [s.nombre, s.valores]));
-    expect(porNombre.get('Tarjeta')!.every((v) => v === null)).toBe(true);
-    expect(porNombre.get('QR')!.every((v) => typeof v === 'number')).toBe(true);
+    const byName = new Map(g.datos.series.map((s) => [s.nombre, s.valores]));
+    expect(byName.get('Tarjeta')!.every((v) => v === null)).toBe(true);
+    expect(byName.get('QR')!.every((v) => typeof v === 'number')).toBe(true);
   });
 
   it('las tablas no llevan datos del pagador ni números de cuenta o tarjeta', () => {
-    for (const c of todasLasCombinaciones()) {
+    for (const c of allCombinations()) {
       for (const t of construirCobros(c).tablas) {
         for (const fila of t.filas) {
           for (const [clave, valor] of Object.entries(fila)) {

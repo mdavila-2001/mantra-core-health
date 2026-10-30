@@ -15,7 +15,7 @@ import { convertir, daysInPeriod, factorContexto, redondear } from './reporting-
     (regla 97.5.4): son números para que la maqueta tenga forma.
     ========================================================================== */
 
-export const MOTIVO_SIN_ESQUEMA = 'Esquema de comisión sin definir (decisión de negocio pendiente)';
+export const NO_SCHEME_REASON = 'Esquema de comisión sin definir (decisión de negocio pendiente)';
 
 export interface ActorDef {
   readonly nombre: string;

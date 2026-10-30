@@ -36,7 +36,7 @@ import {
   construirCatalogo,
   MAX_CARACTERES_PREGUNTA,
   normalizar,
-  pideDatosDePersonas,
+  asksForPersonalData,
   resolverPregunta,
   type CatalogoIndexado,
   type MedidaIndexada,
@@ -163,7 +163,7 @@ export class ReportAssistant {
     this.agregar({ id: this.siguienteId++, rol: 'usuario', texto });
     // Una pregunta por personas se rechaza y NO se recuerda: no hay motivo para
     // guardar en el navegador un intento de pedir datos que el reporte no tiene.
-    if (!(medida === null && pideDatosDePersonas(normalizar(texto)))) {
+    if (!(medida === null && asksForPersonalData(normalizar(texto)))) {
       this.historial.update((h) => agregarAlHistorial(h, texto));
       guardarHistorial(this.session.userId(), this.historial());
     }
@@ -175,7 +175,7 @@ export class ReportAssistant {
     const contexto = this.store.contexto();
     try {
       // Una pregunta por personas no necesita ir a buscar nada: se rechaza antes de pedir datos.
-      if (medida === null && pideDatosDePersonas(normalizar(pregunta))) {
+      if (medida === null && asksForPersonalData(normalizar(pregunta))) {
         this.agregar({ id: this.siguienteId++, rol: 'asistente', tipo: 'personas' });
         return;
       }
@@ -241,17 +241,17 @@ export class ReportAssistant {
   private mensajeDeError(error: unknown, pregunta: string, medida: SugerenciaMedida | null): MensajeAsistente {
     const base = { id: this.siguienteId++, rol: 'asistente' as const, tipo: 'error' as const };
     const reintento = { pregunta, medida };
-    const estado = errorToViewState<never>(error);
-    if (estado.status === 'forbidden') {
+    const viewState = errorToViewState<never>(error);
+    if (viewState.status === 'forbidden') {
       return {
         ...base,
         estado: 'forbidden',
         mensaje: 'Su cuenta no tiene permiso para consultar estos reportes. Pida acceso a quien administra su organización.',
-        requestId: estado.requestId ?? null,
+        requestId: viewState.requestId ?? null,
         reintento: null,
       };
     }
-    if (estado.status === 'offline') {
+    if (viewState.status === 'offline') {
       return {
         ...base,
         estado: 'offline',
@@ -264,7 +264,7 @@ export class ReportAssistant {
       ...base,
       estado: 'error',
       mensaje: 'No pude buscar en sus reportes. Inténtelo de nuevo; si sigue igual, comparte el código de la petición con soporte.',
-      requestId: estado.status === 'error' && estado.requestId !== 'sin-id' ? estado.requestId : null,
+      requestId: viewState.status === 'error' && viewState.requestId !== 'sin-id' ? viewState.requestId : null,
       reintento,
     };
   }

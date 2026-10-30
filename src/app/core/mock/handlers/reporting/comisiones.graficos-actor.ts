@@ -1,7 +1,7 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ChartSpec, ContextoReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { FUENTE_COMISIONES, info } from './comisiones.info';
-import { aMonto, ACTORES, MOTIVO_SIN_ESQUEMA, repartir, type FilaActor, type ModeloComisiones } from './comisiones.modelo';
+import { aMonto, ACTORES, NO_SCHEME_REASON, repartir, type FilaActor, type ModeloComisiones } from './comisiones.modelo';
 import { ANCHOR_DATE, hashTexto, redondear, rng } from './reporting-dataset.util';
 
 /* Gráficos «Por actor». Estos gráficos muestran SIEMPRE a todos los actores: el actor
@@ -10,13 +10,13 @@ import { ANCHOR_DATE, hashTexto, redondear, rng } from './reporting-dataset.util
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 const NOMBRES = ACTORES.map((a) => a.nombre);
-const SIN_VELAS_FLUJO = 'Es un flujo acumulado del periodo (se suma), no un saldo con apertura y cierre.';
+const NO_CANDLES_FLOW = 'Es un flujo acumulado del periodo (se suma), no un saldo con apertura y cierre.';
 
 function moneda(ctx: ContextoReporte): UnidadValor {
   return { tipo: 'moneda', moneda: ctx.moneda };
 }
 
-function conDato(filas: readonly FilaActor[], campo: (f: FilaActor) => number | null): FilaActor | null {
+function withData(filas: readonly FilaActor[], campo: (f: FilaActor) => number | null): FilaActor | null {
   let mejor: FilaActor | null = null;
   for (const f of filas) {
     const v = campo(f);
@@ -27,10 +27,10 @@ function conDato(filas: readonly FilaActor[], campo: (f: FilaActor) => number | 
   return mejor;
 }
 
-export function graficoPorActor(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
+export function byActorChart(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
   const unidad = moneda(ctx);
-  const lider = conDato(m.filas, (f) => f.devengadaC);
-  const pendiente = conDato(m.filas, (f) => f.pendienteC);
+  const lider = withData(m.filas, (f) => f.devengadaC);
+  const pendiente = withData(m.filas, (f) => f.pendienteC);
   return {
     id: 'comision-por-actor',
     titulo: 'Comisión devengada, liquidada y pendiente por actor',
@@ -58,16 +58,16 @@ export function graficoPorActor(ctx: ContextoReporte, m: ModeloComisiones): Char
       fuente: FUENTE_COMISIONES,
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FLUJO,
+    velasMotivo: NO_CANDLES_FLOW,
     alto: 320,
     ancho: 'completo',
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 
 export function graficoRetenciones(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
   const unidad = moneda(ctx);
-  const mayor = conDato(m.filas, (f) => f.retenidoC);
+  const mayor = withData(m.filas, (f) => f.retenidoC);
   return {
     id: 'retenciones-contracargos',
     titulo: 'Retenciones y contracargos por actor',
@@ -96,7 +96,7 @@ export function graficoRetenciones(ctx: ContextoReporte, m: ModeloComisiones): C
     velas: null,
     velasMotivo: 'Son importes del periodo por actor, no una serie de saldo con apertura y cierre.',
     alto: 300,
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 
@@ -138,12 +138,12 @@ export function graficoProductividad(ctx: ContextoReporte, m: ModeloComisiones):
     velas: null,
     velasMotivo: 'Es una comparación entre actores en el periodo, no una serie en el tiempo.',
     alto: 300,
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 
 /** Meses que cubre el periodo, de más viejo a más nuevo (máximo 12). */
-function mesesDelPeriodo(dias: number): string[] {
+function periodMonths(dias: number): string[] {
   const n = Math.min(12, Math.max(1, Math.ceil(dias / 30)));
   return Array.from({ length: n }, (_, i) => {
     const d = new Date(Date.UTC(ANCHOR_DATE.getUTCFullYear(), ANCHOR_DATE.getUTCMonth() - (n - 1 - i), 1));
@@ -153,7 +153,7 @@ function mesesDelPeriodo(dias: number): string[] {
 
 export function graficoMapaCalor(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
   const unidad = moneda(ctx);
-  const columnas = mesesDelPeriodo(m.dias);
+  const columnas = periodMonths(m.dias);
   const celdas: (readonly [number, number, number | null])[] = [];
   m.filas.forEach((f, fila) => {
     if (f.liquidadaC === null) {
@@ -185,6 +185,6 @@ export function graficoMapaCalor(ctx: ContextoReporte, m: ModeloComisiones): Cha
     velasMotivo: 'Es un monto liquidado por casilla (actor × mes), no una serie con apertura y cierre.',
     alto: 300,
     ancho: 'completo',
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }

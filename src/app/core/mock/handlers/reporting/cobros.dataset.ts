@@ -1,8 +1,8 @@
 import type { ContextoReporte, KpiSpec, PestanaReporte } from '../../../data-access/reporting/reporting.types';
 import { AVISO_EJEMPLO, enMoneda, info, unidadMoneda } from './cobros.comun';
-import { graficosDeCobro } from './cobros.graficos-cobro';
-import { graficosDeLiquidacion } from './cobros.graficos-liquidacion';
-import { construirModelo, razonPorCubo, rezagoPromedio, tasaEnPct, DIAS_CON_SIAT, type ModeloCobros } from './cobros.modelo';
+import { collectionCharts } from './cobros.graficos-cobro';
+import { settlementCharts } from './cobros.graficos-liquidacion';
+import { construirModelo, ratioPerBucket, rezagoPromedio, tasaEnPct, SIAT_COVERED_DAYS, type ModeloCobros } from './cobros.modelo';
 import { tablaAtipicas, tablaExcepciones } from './cobros.tablas';
 import { agrupar, rng, suma, variacionContexto, variacionPct } from './reporting-dataset.util';
 
@@ -27,7 +27,7 @@ function variacionSuave(ctx: ContextoReporte, actual: number | null, semilla: nu
 function kpis(m: ModeloCobros): KpiSpec[] {
   const { ctx, total: t } = m;
   const u = unidadMoneda(m);
-  const cubo = (num: readonly number[], den: readonly number[]) => razonPorCubo(m.fechas, num, den, m.gran).valores;
+  const cubo = (num: readonly number[], den: readonly number[]) => ratioPerBucket(m.fechas, num, den, m.gran).valores;
 
   const tasa = tasaEnPct(t.capturados, t.intentos);
   const reembolsos = tasaEnPct(t.reembolsos, t.volumen);
@@ -118,7 +118,7 @@ function kpis(m: ModeloCobros): KpiSpec[] {
       variacionPct: variacionSuave(ctx, facturado, 8107), numerador: emitidos, denominador: comprobantes,
       motivoSinDato:
         m.siat === null
-          ? `La emisión SIAT está conectada desde el 01/07/2026; el periodo elegido empieza antes (máximo ${DIAS_CON_SIAT} días).`
+          ? `La emisión SIAT está conectada desde el 01/07/2026; el periodo elegido empieza antes (máximo ${SIAT_COVERED_DAYS} días).`
           : facturado === null ? 'No hubo cobros que facturar en el periodo.' : undefined,
       info: info({
         definicion: 'Qué parte de los cobros ya tiene su comprobante fiscal emitido.',
@@ -144,7 +144,7 @@ function kpis(m: ModeloCobros): KpiSpec[] {
 /** Pestaña «Cobros y caja»: cuánto se cobra, con qué calidad, cuánto cuesta y qué falta por cuadrar. */
 export function construirCobros(ctx: ContextoReporte): PestanaReporte {
   const m = construirModelo(ctx);
-  const graficos = [...graficosDeCobro(m), ...graficosDeLiquidacion(m)];
+  const graficos = [...collectionCharts(m), ...settlementCharts(m)];
   const tablas = [tablaAtipicas(m), tablaExcepciones(m)];
   const ids = (...nombres: string[]) => nombres.filter((n) => graficos.some((g) => g.id === n));
   return {

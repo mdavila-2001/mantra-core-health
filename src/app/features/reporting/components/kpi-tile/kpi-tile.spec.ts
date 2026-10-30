@@ -121,7 +121,11 @@ describe('KpiTile', () => {
   describe('mini-tendencia', () => {
     it('dibuja la tendencia con una frase para el lector de pantalla', async () => {
       // jsdom no trae `ResizeObserver`, que `ngx-echarts` exige para ajustar el lienzo.
-      vi.stubGlobal('ResizeObserver', class { observe(): void {} unobserve(): void {} disconnect(): void {} });
+      vi.stubGlobal('ResizeObserver', class {
+        observe = vi.fn();
+        unobserve = vi.fn();
+        disconnect = vi.fn();
+      });
       try {
         const { fixture, root } = await mount(kpi({ tendencia: [10, 12, 15], unidad: { tipo: 'numero' } }));
         await fixture.whenStable();

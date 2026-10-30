@@ -22,7 +22,7 @@ function dinero(centimos: number | null, unidad: UnidadValor): string | null {
 }
 
 /** Ingreso neto atribuible al canal del actor ÷ el volumen que trajo. `null` si su comisión no existe. */
-function takeDelActor(f: FilaActor, m: ModeloComisiones): number | null {
+function actorTake(f: FilaActor, m: ModeloComisiones): number | null {
   if (f.devengadaC === null) {
     return null;
   }
@@ -48,7 +48,7 @@ export function tablaRanking(ctx: ContextoReporte, m: ModeloComisiones): TablaRe
       { clave: 'esquema', etiqueta: 'Esquema de comisión' },
     ],
     filas: orden.map((f) => {
-      const take = takeDelActor(f, m);
+      const take = actorTake(f, m);
       return {
         actor: f.actor.nombre,
         devengada: dinero(f.devengadaC, unidad),

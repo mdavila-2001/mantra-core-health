@@ -80,9 +80,9 @@ export interface Moderacion {
 export function calcularModeracion(m: Modelo): Moderacion {
   const revisados = Math.round(m.dias * 3.4 * m.factorGeneral * (m.filas.length / CAMPANAS.length));
   const rechazadosTotal = Math.round(revisados * 0.11);
-  const porMotivo = repartir(rechazadosTotal, MOTIVOS_RECHAZO.map((x) => x.parte));
+  const byReason = repartir(rechazadosTotal, MOTIVOS_RECHAZO.map((x) => x.parte));
   const filas = MOTIVOS_RECHAZO.map((x, i) => {
-    const rechazados = porMotivo[i]!;
+    const rechazados = byReason[i]!;
     const apelados = Math.round(rechazados * 0.6);
     return {
       motivo: x.nombre,

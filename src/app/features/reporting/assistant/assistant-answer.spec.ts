@@ -12,7 +12,7 @@ describe('construirRespuesta', () => {
     variacionPct: 4.2,
   });
   const p = pestana('suscripciones', [mrr]);
-  const con = (parcial: Partial<ContextoReporte>): ContextoReporte => ({ ...CONTEXTO_BASE, ...parcial });
+  const withContext = (parcial: Partial<ContextoReporte>): ContextoReporte => ({ ...CONTEXTO_BASE, ...parcial });
 
   it('cita el valor tal cual lo formatea el reporte', () => {
     const r = construirRespuesta(mrr, p, CONTEXTO_BASE);
@@ -26,7 +26,7 @@ describe('construirRespuesta', () => {
     expect(r.definicion).toBe('Ingreso recurrente mensual.');
     expect(r.fuente).toBe('fuente de ejemplo');
     expect(r.frescura).toBe('cada hora');
-    expect(r.ruta).toBe('/reporting/comercial/suscripciones');
+    expect(r.ruta).toBe('/reports/commercial/suscripciones');
     expect(r.esEjemplo).toBe(true);
   });
 
@@ -54,12 +54,12 @@ describe('construirRespuesta', () => {
   });
 
   it('dice de quién es el número según el alcance', () => {
-    expect(construirRespuesta(mrr, p, con({ alcance: 'organizacion' })).ambito).toBe('de tu organización');
-    expect(construirRespuesta(mrr, p, con({ alcance: 'plataforma' })).ambito).toBe('de toda la plataforma');
+    expect(construirRespuesta(mrr, p, withContext({ alcance: 'organizacion' })).ambito).toBe('de su organización');
+    expect(construirRespuesta(mrr, p, withContext({ alcance: 'plataforma' })).ambito).toBe('de toda la plataforma');
   });
 
   it('nombra los filtros activos', () => {
-    const r = construirRespuesta(mrr, p, con({ filtros: [{ dimension: 'plan', valor: 'Pro' }] }));
+    const r = construirRespuesta(mrr, p, withContext({ filtros: [{ dimension: 'plan', valor: 'Pro' }] }));
     expect(r.filtros).toEqual(['plan: Pro']);
   });
 
@@ -79,10 +79,10 @@ describe('construirRespuesta', () => {
   });
 
   it('sin comparación activa no hay variación; con ella pero sin dato, se dice', () => {
-    expect(construirRespuesta(mrr, p, con({ comparar: 'ninguna' })).variacion).toBeNull();
-    const sinComparativo = construirRespuesta(kpi('x', 'X', 'd', { variacionPct: null }), p, CONTEXTO_BASE).variacion;
-    expect(sinComparativo?.texto).toBe('Sin comparativo');
-    expect(sinComparativo?.favorable).toBeNull();
+    expect(construirRespuesta(mrr, p, withContext({ comparar: 'ninguna' })).variacion).toBeNull();
+    const withoutComparison = construirRespuesta(kpi('x', 'X', 'd', { variacionPct: null }), p, CONTEXTO_BASE).variacion;
+    expect(withoutComparison?.texto).toBe('Sin comparativo');
+    expect(withoutComparison?.favorable).toBeNull();
   });
 
   it('sin información declarada lo dice en vez de inventar una definición', () => {

@@ -2,7 +2,7 @@ import { formatearValor, formatearVariacion } from '../../../data-access/reporti
 import type { ContextoReporte, TablaReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { ANUNCIOS, CAMPANAS } from './publicidad.catalogo';
 import { aMoneda, aMonedaNull, calcularModeracion, info, unidadMoneda } from './publicidad.comun';
-import { razon, type FilaCampana, type Modelo } from './publicidad.modelo';
+import { ratio, type FilaCampana, type Modelo } from './publicidad.modelo';
 import { variacionPct, suma } from './reporting-dataset.util';
 
 /** Resultado mínimo de un anuncio para que su costo por resultado se compare. */
@@ -21,8 +21,8 @@ export function tablaCampanas(ctx: ContextoReporte, m: Modelo): TablaReporte {
   const moneda = unidadMoneda(ctx);
   const orden = [...m.filas].sort((a, b) => b.gasto - a.gasto || a.indice - b.indice);
   const filas = orden.map((r: FilaCampana) => {
-    const cpmBob = razon(r.gasto, r.impresiones);
-    const roas = r.citas !== null && r.citas > 0 ? razon(r.valor, r.gasto) : null;
+    const cpmBob = ratio(r.gasto, r.impresiones);
+    const roas = r.citas !== null && r.citas > 0 ? ratio(r.valor, r.gasto) : null;
     return {
       campana: r.campana.nombre,
       anunciante: `${r.anunciante.nombre} · ${r.anunciante.tipo}`,
@@ -33,13 +33,13 @@ export function tablaCampanas(ctx: ContextoReporte, m: Modelo): TablaReporte {
       pacing: f(r.campana.pacing === null || !r.entrega ? null : r.campana.pacing * 100, PCT),
       alcance: f(r.alcance, NUM),
       impresiones: f(r.impresiones, NUM),
-      frecuencia: f(razon(r.impresiones, r.alcance), { tipo: 'razon', sufijo: '' }),
+      frecuencia: f(ratio(r.impresiones, r.alcance), { tipo: 'razon', sufijo: '' }),
       cpm: f(aMonedaNull(ctx, cpmBob === null ? null : cpmBob * 1000), moneda),
-      ctr: f(r.clics === null ? null : razon(r.clics * 100, r.impresiones), PCT),
-      cpc: f(aMonedaNull(ctx, razon(r.gasto, r.clics)), moneda),
+      ctr: f(r.clics === null ? null : ratio(r.clics * 100, r.impresiones), PCT),
+      cpc: f(aMonedaNull(ctx, ratio(r.gasto, r.clics)), moneda),
       resultados: f(r.resultados, NUM),
       tipoResultado: r.tipoResultado,
-      costoResultado: f(aMonedaNull(ctx, razon(r.gasto, r.resultados)), moneda),
+      costoResultado: f(aMonedaNull(ctx, ratio(r.gasto, r.resultados)), moneda),
       roas: f(roas, ROAS),
     };
   });

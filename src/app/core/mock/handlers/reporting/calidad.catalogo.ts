@@ -52,14 +52,14 @@ export const ETIQUETA_PESTANA: Readonly<Record<PestanaCatalogada, string>> = {
 
 /* ---- estado real de la fuente (vocabulario del patrón Atlas, adaptado) ----- */
 
-export type EstadoFuente =
+export type SourceStatus =
   | 'fuente-localizada'
   | 'requiere-vista'
   | 'decision-pendiente'
   | 'no-existe'
   | 'manual';
 
-export const ESTADOS_FUENTE: readonly EstadoFuente[] = [
+export const ESTADOS_FUENTE: readonly SourceStatus[] = [
   'fuente-localizada',
   'requiere-vista',
   'decision-pendiente',
@@ -67,7 +67,7 @@ export const ESTADOS_FUENTE: readonly EstadoFuente[] = [
   'manual',
 ];
 
-export const ETIQUETA_ESTADO: Readonly<Record<EstadoFuente, string>> = {
+export const STATUS_LABEL: Readonly<Record<SourceStatus, string>> = {
   'fuente-localizada': 'Fuente localizada',
   'requiere-vista': 'Requiere vista',
   'decision-pendiente': 'Decisión pendiente',
@@ -75,7 +75,7 @@ export const ETIQUETA_ESTADO: Readonly<Record<EstadoFuente, string>> = {
   manual: 'Manual',
 };
 
-export const EXPLICACION_ESTADO: Readonly<Record<EstadoFuente, string>> = {
+export const STATUS_EXPLANATION: Readonly<Record<SourceStatus, string>> = {
   'fuente-localizada': 'Hay una tabla candidata en el API; sus columnas están por verificar.',
   'requiere-vista': 'Habría que crear una vista de lectura que hoy no existe.',
   'decision-pendiente': 'Depende de una decisión de negocio que todavía no se tomó.',
@@ -86,7 +86,7 @@ export const EXPLICACION_ESTADO: Readonly<Record<EstadoFuente, string>> = {
 /* Supuestos de EJEMPLO. Los ids los publican otros agentes en paralelo: además del mapa
    por id hay reglas por palabra del id, y todo lo que no calza queda en la hipótesis
    más optimista del plan (§3: «S»), que es la que menos se puede dar por cierta. */
-const ESTADO_POR_ID: Readonly<Record<string, EstadoFuente>> = {
+const STATUS_BY_ID: Readonly<Record<string, SourceStatus>> = {
   'alertas-umbral': 'requiere-vista',
   'comision-por-actor': 'decision-pendiente', // A-4: sin esquema de actores
   'comisiones-por-actor': 'decision-pendiente',
@@ -99,13 +99,13 @@ const ESTADO_POR_ID: Readonly<Record<string, EstadoFuente>> = {
   'salud-de-cuenta': 'decision-pendiente',
 };
 
-interface ReglaEstado {
+interface StatusRule {
   readonly pestana?: PestanaCatalogada;
   readonly palabras: readonly string[];
-  readonly estado: EstadoFuente;
+  readonly estado: SourceStatus;
 }
 
-const REGLAS_ESTADO: readonly ReglaEstado[] = [
+const STATUS_RULES: readonly StatusRule[] = [
   { pestana: 'comisiones', palabras: ['actor', 'actores'], estado: 'decision-pendiente' },
   {
     pestana: 'publicidad',
@@ -117,13 +117,13 @@ const REGLAS_ESTADO: readonly ReglaEstado[] = [
   { palabras: ['meta', 'metas', 'objetivo', 'objetivos'], estado: 'manual' },
 ];
 
-function estadoSupuesto(pestana: PestanaCatalogada, id: string): EstadoFuente {
-  const porId = ESTADO_POR_ID[id];
-  if (porId !== undefined) {
-    return porId;
+function assumedStatus(pestana: PestanaCatalogada, id: string): SourceStatus {
+  const byId = STATUS_BY_ID[id];
+  if (byId !== undefined) {
+    return byId;
   }
   const palabras = id.split(/[-_.]/);
-  const regla = REGLAS_ESTADO.find(
+  const regla = STATUS_RULES.find(
     (r) => (r.pestana === undefined || r.pestana === pestana) && r.palabras.some((p) => palabras.includes(p)),
   );
   return regla?.estado ?? 'fuente-localizada';
@@ -169,7 +169,7 @@ export interface FilaCatalogo {
   readonly fuente: string | null;
   readonly responsable: string;
   readonly frescuraMin: number;
-  readonly estado: EstadoFuente;
+  readonly estado: SourceStatus;
   /** Es una tasa: exige numerador y denominador. */
   readonly tasa: boolean;
   /** Partes de la definición que faltan; vacío = definición completa. */
@@ -181,7 +181,7 @@ export const filaCompleta = (f: FilaCatalogo): boolean => f.faltan.length === 0;
 const texto = (t: string | undefined | null): string | null => (t != null && t.trim() !== '' ? t : null);
 const hayTexto = (t: string | undefined | null): boolean => texto(t) !== null;
 
-function faltantesDe(info: InfoCalculo | null, tasa: boolean): string[] {
+function missingFields(info: InfoCalculo | null, tasa: boolean): string[] {
   const falta: string[] = [];
   if (!hayTexto(info?.definicion)) falta.push('definición');
   if (!hayTexto(info?.formula)) falta.push('fórmula');
@@ -202,11 +202,11 @@ function fila(
   traeDenominador: boolean,
 ): FilaCatalogo {
   const tasa = unidad.tipo === 'porcentaje' || traeDenominador || hayTexto(info?.denominador);
-  const faltan = faltantesDe(info, tasa);
-  const declarado = estadoSupuesto(pestana, id);
+  const faltan = missingFields(info, tasa);
+  const declarado = assumedStatus(pestana, id);
   // Sin fórmula o sin fuente no se puede decir que la fuente está localizada.
-  const sinBase = faltan.includes('fórmula') || faltan.includes('fuente');
-  const estado = declarado === 'fuente-localizada' && sinBase ? 'no-existe' : declarado;
+  const withoutBasis = faltan.includes('fórmula') || faltan.includes('fuente');
+  const status = declarado === 'fuente-localizada' && withoutBasis ? 'no-existe' : declarado;
   const jitter = (hashTexto(`${pestana}/${tipo}/${id}`) % 7) - 3;
   return {
     id,
@@ -219,16 +219,16 @@ function fila(
     fuente: texto(info?.fuente),
     responsable: RESPONSABLE[pestana],
     frescuraMin: Math.max(1, FRESCURA_BASE_MIN[pestana] + jitter),
-    estado,
+    estado: status,
     tasa,
     faltan,
   };
 }
 
-const filaDeKpi = (p: PestanaCatalogada, k: KpiSpec): FilaCatalogo =>
+const kpiRow = (p: PestanaCatalogada, k: KpiSpec): FilaCatalogo =>
   fila(p, 'KPI', k.id, k.titulo, k.unidad, k.info, k.denominador !== undefined);
 
-const filaDeGrafico = (p: PestanaCatalogada, g: ChartSpec): FilaCatalogo =>
+const chartRow = (p: PestanaCatalogada, g: ChartSpec): FilaCatalogo =>
   fila(p, 'Gráfico', g.id, g.titulo, g.unidad, g.info, false);
 
 export type PestanasLeidas = Readonly<Record<PestanaCatalogada, PestanaReporte | null>>;
@@ -237,23 +237,23 @@ export interface CatalogoLeido {
   /** Ordenado por pestaña, KPI antes que gráfico, y por id. */
   readonly filas: readonly FilaCatalogo[];
   /** Pestañas que no se pudieron leer (el constructor falló): se avisa, no se calla. */
-  readonly sinLeer: readonly PestanaCatalogada[];
+  readonly unread: readonly PestanaCatalogada[];
 }
 
 export function armarCatalogo(pestanas: PestanasLeidas): CatalogoLeido {
   const filas: FilaCatalogo[] = [];
-  const sinLeer: PestanaCatalogada[] = [];
+  const unread: PestanaCatalogada[] = [];
   for (const p of PESTANAS_CATALOGADAS) {
     const tab = pestanas[p];
     if (tab === null) {
-      sinLeer.push(p);
+      unread.push(p);
       continue;
     }
-    const delTab = [...tab.kpis.map((k) => filaDeKpi(p, k)), ...tab.graficos.map((g) => filaDeGrafico(p, g))];
-    delTab.sort((a, b) => (a.tipo === b.tipo ? a.id.localeCompare(b.id) : a.tipo === 'KPI' ? -1 : 1));
-    filas.push(...delTab);
+    const tabRows = [...tab.kpis.map((k) => kpiRow(p, k)), ...tab.graficos.map((g) => chartRow(p, g))];
+    tabRows.sort((a, b) => (a.tipo === b.tipo ? a.id.localeCompare(b.id) : a.tipo === 'KPI' ? -1 : 1));
+    filas.push(...tabRows);
   }
-  return { filas, sinLeer };
+  return { filas, unread };
 }
 
 /* Un catálogo es de definiciones, no de cifras: se lee siempre con el mismo contexto
@@ -294,13 +294,13 @@ const plano = (t: string): string =>
     .trim();
 
 /** Estado al que apunta un valor de filtro (la etiqueta del gráfico o el código); `null` si no es ninguno. */
-export function estadoDeFiltro(valor: string): EstadoFuente | null {
+export function statusFromFilter(valor: string): SourceStatus | null {
   const v = plano(valor);
-  return ESTADOS_FUENTE.find((e) => plano(ETIQUETA_ESTADO[e]) === v || e === v) ?? null;
+  return ESTADOS_FUENTE.find((e) => plano(STATUS_LABEL[e]) === v || e === v) ?? null;
 }
 
-export function filtrarPorEstado(filas: readonly FilaCatalogo[], ctx: ContextoReporte): readonly FilaCatalogo[] {
+export function filterByStatus(filas: readonly FilaCatalogo[], ctx: ContextoReporte): readonly FilaCatalogo[] {
   const valor = ctx.filtros.find((f) => f.dimension === 'estado')?.valor;
-  const estado = valor === undefined ? null : estadoDeFiltro(valor);
-  return estado === null ? filas : filas.filter((f) => f.estado === estado);
+  const status = valor === undefined ? null : statusFromFilter(valor);
+  return status === null ? filas : filas.filter((f) => f.estado === status);
 }

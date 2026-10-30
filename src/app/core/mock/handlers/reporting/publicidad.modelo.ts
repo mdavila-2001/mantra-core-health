@@ -9,7 +9,7 @@ import {
   type Anunciante,
   type Campana,
   type Ciudad,
-  type EstadoEntrega,
+  type DeliveryStatus,
   type Ubicacion,
 } from './publicidad.catalogo';
 import {
@@ -82,7 +82,7 @@ export interface Modelo {
   readonly valor: number | null;
   /** Gasto de las campañas con objetivo «Citas agendadas» (base de CPA y ROAS). */
   readonly gastoCitas: number;
-  readonly sinEntrega: boolean;
+  readonly noDelivery: boolean;
   /** Series de razón por día; `null` si no hay entrega. */
   readonly cpmDia: readonly number[] | null;
   readonly ctrDia: readonly number[] | null;
@@ -92,7 +92,7 @@ export interface Modelo {
   readonly gastoCitasDia: readonly number[] | null;
 }
 
-export function razon(numerador: number | null, denominador: number | null): number | null {
+export function ratio(numerador: number | null, denominador: number | null): number | null {
   if (numerador === null || denominador === null || denominador <= 0) {
     return null;
   }
@@ -104,7 +104,7 @@ function normalizar(valores: readonly number[]): number[] {
   return valores.map((v) => (media > 0 ? v / media : 1));
 }
 
-function filtroDe(filtros: readonly FiltroActivo[], dimension: DimensionFiltro): string | undefined {
+function filterValue(filtros: readonly FiltroActivo[], dimension: DimensionFiltro): string | undefined {
   return [...filtros].reverse().find((f) => f.dimension === dimension)?.valor;
 }
 
@@ -115,15 +115,15 @@ function sumaNullable(valores: readonly (number | null)[]): number | null {
 
 export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro): Modelo {
   const filtros = ctx.filtros.filter((f) => f.dimension !== ignorar);
-  const vCampana = filtroDe(filtros, 'campana');
-  const vAnunciante = filtroDe(filtros, 'anunciante');
-  const vEstado = filtroDe(filtros, 'estado');
-  const vCanal = filtroDe(filtros, 'canal');
-  const vCiudad = filtroDe(filtros, 'ciudad');
+  const vCampana = filterValue(filtros, 'campana');
+  const vAnunciante = filterValue(filtros, 'anunciante');
+  const statusValue = filterValue(filtros, 'estado');
+  const vCanal = filterValue(filtros, 'canal');
+  const vCiudad = filterValue(filtros, 'ciudad');
 
   const idxCampana = vCampana === undefined ? -1 : CAMPANAS.findIndex((c) => c.nombre === vCampana);
   const idxAnunciante = vAnunciante === undefined ? -1 : ANUNCIANTES.findIndex((a) => a.nombre === vAnunciante);
-  const estado = ESTADOS.find((e) => e === vEstado) as EstadoEntrega | undefined;
+  const status = ESTADOS.find((e) => e === statusValue) as DeliveryStatus | undefined;
   const ubicacion = UBICACIONES.find((u) => u.nombre === vCanal) ?? null;
   const ciudad = CIUDADES.find((c) => c.nombre === vCiudad) ?? null;
 
@@ -131,7 +131,7 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
   const reconocido = (f: FiltroActivo): boolean =>
     (f.dimension === 'campana' && idxCampana >= 0) ||
     (f.dimension === 'anunciante' && idxAnunciante >= 0) ||
-    (f.dimension === 'estado' && estado !== undefined) ||
+    (f.dimension === 'estado' && status !== undefined) ||
     (f.dimension === 'canal' && ubicacion !== null) ||
     (f.dimension === 'ciudad' && ciudad !== null);
   let factorGeneral = ctx.alcance === 'organizacion' ? 0.22 : 1;
@@ -150,7 +150,7 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
   const retenida = (c: Campana, i: number): boolean =>
     (idxCampana < 0 || i === idxCampana) &&
     (idxAnunciante < 0 || c.anunciante === idxAnunciante) &&
-    (estado === undefined || c.estado === estado);
+    (status === undefined || c.estado === status);
   const fraccionCampanas = suma(pesos.filter((_, i) => retenida(CAMPANAS[i]!, i))) / pesoTotal;
   const fCanal = ubicacion?.parte ?? 1;
   const fCiudad = ciudad?.parte ?? 1;
@@ -169,12 +169,12 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
     const gasto = gastoBase * escalaGasto * (pesos[i]! / pesoTotal);
     const entrega = gasto > 0;
     const anunciante = ANUNCIANTES[c.anunciante]!;
-    const sinDatos = {
+    const noData = {
       presupuesto: null, impresiones: null, alcance: null, clics: null, leads: null, citas: null, valor: null, resultados: null,
     };
     const tipoResultado = c.objetivo === 'Alcance' ? 'Personas alcanzadas' : c.objetivo;
     if (!entrega) {
-      filas.push({ indice: i, campana: c, anunciante, entrega, gasto: 0, tipoResultado, ...sinDatos });
+      filas.push({ indice: i, campana: c, anunciante, entrega, gasto: 0, tipoResultado, ...noData });
       return;
     }
     const impresiones = (gasto / (CPM_BASE_BOB * c.sesgoCpm * sesgoUbic.cpm)) * 1000;
@@ -210,7 +210,7 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
   const valor = sumaNullable(filas.map((f) => f.valor));
   const gastoCitas = suma(filas.filter((f) => f.citas !== null).map((f) => f.gasto));
   const alcance = impresiones > 0 ? publico * (1 - Math.exp(-impresiones / publico)) : 0;
-  const sinEntrega = gasto <= 0;
+  const noDelivery = gasto <= 0;
 
   const gastoDia = crudo.map((g) => g * escalaGasto * fraccionCampanas);
   let cpmDia: number[] | null = null;
@@ -219,7 +219,7 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
   let roasDia: number[] | null = null;
   let valorDia: number[] | null = null;
   let gastoCitasDia: number[] | null = null;
-  if (!sinEntrega) {
+  if (!noDelivery) {
     const cpm = (gasto / impresiones) * 1000;
     cpmDia = normalizar(serie(hashTexto('pub:cpm'), dias, 1, -6, 3)).map((s) => cpm * s);
     ctrDia = normalizar(serie(hashTexto('pub:ctr'), dias, 1, 8, 3)).map((s) => (clics / impresiones) * 100 * s);
@@ -238,13 +238,13 @@ export function calcularModelo(ctx: ContextoReporte, ignorar?: DimensionFiltro):
 
   return {
     dias, fechas, gran, filas, ubicacion, ciudad, factorGeneral, fraccionCampanas,
-    gastoDia, gasto, impresiones, clics, alcance, leads, citas, valor, gastoCitas, sinEntrega,
+    gastoDia, gasto, impresiones, clics, alcance, leads, citas, valor, gastoCitas, noDelivery,
     cpmDia, ctrDia, cpaDia, roasDia, valorDia, gastoCitasDia,
   };
 }
 
 /** Anunciantes con gasto, en el orden del catálogo. */
-export function anunciantesConGasto(m: Modelo): { nombre: string; gasto: number }[] {
+export function advertisersWithSpend(m: Modelo): { nombre: string; gasto: number }[] {
   return ANUNCIANTES.map((a, i) => ({
     nombre: a.nombre,
     gasto: suma(m.filas.filter((f) => f.campana.anunciante === i).map((f) => f.gasto)),

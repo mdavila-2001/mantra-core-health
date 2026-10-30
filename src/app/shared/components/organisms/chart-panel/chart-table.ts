@@ -67,5 +67,5 @@ export function celdaCsv(valor: string | number | null): string {
 
 export function tableToCsv(tabla: ChartTableData): string {
   const lineas = [tabla.columnas.map(celdaCsv).join(','), ...tabla.crudo.map((r) => r.map(celdaCsv).join(','))];
-  return `﻿${lineas.join('\r\n')}\r\n`;
+  return `\uFEFF${lineas.join('\r\n')}\r\n`;
 }

@@ -19,16 +19,16 @@ import {
   graficoPayback,
   graficoRendimientoCanal,
   infoCalculo,
-  monedaDe,
-  NUMERO,
+  currencyUnit,
+  NUMBER_UNIT,
   PORCENTAJE,
   tasaPct,
 } from './adquisicion.graficos';
 import {
-  graficoCanjesPorEstado,
+  redemptionsByStatusChart,
   graficoCohortes,
   graficoCostoPromociones,
-  graficoDescuentoPorEstado,
+  discountByStatusChart,
   graficoReferidos,
   graficoSaludCuentas,
 } from './adquisicion.graficos-cuentas';
@@ -38,7 +38,7 @@ import {
   MIN_MUESTRA_TASA,
   CANAL_ORGANICO,
   canalFiltrado,
-  porTramo,
+  byBucket,
 } from './adquisicion.modelo';
 import { tablaCampanas, tablaCuentasEnRiesgo } from './adquisicion.tablas';
 import { convertir, kpi, redondear, variacionContexto } from './reporting-dataset.util';
@@ -53,7 +53,7 @@ import { convertir, kpi, redondear, variacionContexto } from './reporting-datase
     ========================================================================== */
 
 const MESES: UnidadValor = { tipo: 'razon', sufijo: ' meses' };
-const motivoMuestra = (que: string): string => `Menos de ${MIN_MUESTRA_TASA} ${que}: muestra insuficiente para calcular la tasa.`;
+const sampleReason = (que: string): string => `Menos de ${MIN_MUESTRA_TASA} ${que}: muestra insuficiente para calcular la tasa.`;
 
 export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
   const m = calcularModelo(ctx);
@@ -61,7 +61,7 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
   const referidos = calcularReferidos(m);
   const salud = calcularSalud(ctx);
   const cohortes = calcularCohortes(ctx);
-  const u = monedaDe(ctx);
+  const u = currencyUnit(ctx);
   const e = m.embudo;
   const dinero = (bob: number | null): number | null => (bob === null ? null : redondear(convertir(bob, ctx.moneda)));
   const variacion = (valor: number | null, semilla: number): number | null =>
@@ -78,18 +78,18 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
       id: 'leads',
       titulo: 'Leads',
       valor: e.leads,
-      unidad: NUMERO,
+      unidad: NUMBER_UNIT,
       variacionPct: variacion(e.leads, 7601),
-      tendencia: porTramo(m, m.leadsDia).valores,
+      tendencia: byBucket(m, m.leadsDia).valores,
       info: infoCalculo({ definicion: 'Personas que dejaron sus datos o pidieron información en el periodo.', formula: 'Conteo de leads nuevos del periodo.', fuente: 'crm.crm_accounts · marketing.attribution_touches' }),
     }),
     kpi({
       id: 'registros',
       titulo: 'Registros',
       valor: e.registros,
-      unidad: NUMERO,
+      unidad: NUMBER_UNIT,
       variacionPct: variacion(e.registros, 7602),
-      tendencia: porTramo(m, m.registrosDia).valores,
+      tendencia: byBucket(m, m.registrosDia).valores,
       info: infoCalculo({ definicion: 'Leads que completaron el registro de su cuenta.', formula: 'Conteo de registros completados en el periodo.', fuente: 'crm.crm_accounts · onboarding' }),
     }),
     kpi({
@@ -100,7 +100,7 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
       variacionPct: variacion(convActiva, 7603),
       numerador: e.activas,
       denominador: e.leads,
-      motivoSinDato: convActiva === null ? motivoMuestra('leads') : undefined,
+      motivoSinDato: convActiva === null ? sampleReason('leads') : undefined,
       info: infoCalculo({ definicion: 'Qué parte de los leads termina con una cuenta activa.', formula: 'Cuentas activas ÷ leads × 100.', numerador: 'Cuentas activas', denominador: 'Leads del periodo', fuente: FUENTE_EMBUDO }),
     }),
     kpi({
@@ -112,7 +112,7 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
       variacionPct: variacion(cac, 7604),
       numerador: dinero(m.inversionBob),
       denominador: e.pagantes,
-      motivoSinDato: m.motivoSinCac ?? undefined,
+      motivoSinDato: m.noCacReason ?? undefined,
       info: infoCalculo({ definicion: 'Cuánto cuesta, en promedio, conseguir un cliente pagante nuevo.', formula: 'Inversión en adquisición ÷ clientes pagantes nuevos.', numerador: 'Inversión en adquisición', denominador: 'Clientes pagantes nuevos', fuente: 'marketing.marketing_campaigns · marketing.attribution_touches · payments.subscriptions' }, ['Es un CAC combinado: los clientes de canales sin inversión (orgánico) también cuentan en el denominador.']),
     }),
     kpi({
@@ -124,16 +124,16 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
       variacionPct: variacion(payback, 7605),
       numerador: cac,
       denominador: redondear(convertir(MARGEN_MENSUAL_BOB, ctx.moneda)),
-      motivoSinDato: m.motivoSinCac ?? undefined,
+      motivoSinDato: m.noCacReason ?? undefined,
       info: infoCalculo({ definicion: 'Meses que tarda un cliente nuevo en devolver lo que costó conseguirlo.', formula: 'CAC ÷ margen mensual por cliente pagante.', numerador: 'CAC', denominador: 'Margen mensual por cliente', fuente: 'payments.subscriptions · marketing.marketing_campaigns' }, ['El margen por cliente es un valor de EJEMPLO.']),
     }),
     kpi({
       id: 'clientes-nuevos',
       titulo: 'Clientes pagantes nuevos',
       valor: e.pagantes,
-      unidad: NUMERO,
+      unidad: NUMBER_UNIT,
       variacionPct: variacion(e.pagantes, 7606),
-      tendencia: porTramo(m, m.nuevosDia).valores,
+      tendencia: byBucket(m, m.newPerDay).valores,
       info: infoCalculo({ definicion: 'Cuentas que hicieron su primer pago en el periodo.', formula: 'Conteo de primeras suscripciones pagadas.', fuente: 'payments.subscriptions' }),
     }),
     kpi({
@@ -142,7 +142,7 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
       valor: dinero(m.inversionBob),
       unidad: u,
       variacionPct: variacion(dinero(m.inversionBob), 7607),
-      motivoSinDato: m.inversionBob === null ? (m.motivoSinCac ?? undefined) : undefined,
+      motivoSinDato: m.inversionBob === null ? (m.noCacReason ?? undefined) : undefined,
       info: infoCalculo({ definicion: 'Lo gastado en pauta, mensajes y recompensas para captar leads.', formula: 'Suma de la inversión de todas las campañas con costo atribuible.', fuente: 'marketing.marketing_campaigns' }),
     }),
     kpi({
@@ -173,7 +173,7 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
       variacionPct: variacion(riesgoPct, 7610),
       numerador: salud.enRiesgo,
       denominador: salud.total,
-      motivoSinDato: riesgoPct === null ? motivoMuestra('cuentas') : undefined,
+      motivoSinDato: riesgoPct === null ? sampleReason('cuentas') : undefined,
       info: infoCalculo({ definicion: 'Qué parte de las cuentas activas está en riesgo alto o crítico de abandonar.', formula: 'Cuentas en riesgo alto o crítico ÷ cuentas activas × 100.', numerador: 'Cuentas en riesgo alto o crítico', denominador: 'Cuentas activas', fuente: 'subscription_usage_counters · payment_debts · feedback_tickets' }),
     }),
   ];
@@ -186,8 +186,8 @@ export function construirAdquisicion(ctx: ContextoReporte): PestanaReporte {
     graficoRendimientoCanal(m),
     graficoCacCanal(ctx, m),
     graficoPayback(ctx, m),
-    graficoCanjesPorEstado(promos),
-    graficoDescuentoPorEstado(ctx, promos),
+    redemptionsByStatusChart(promos),
+    discountByStatusChart(ctx, promos),
     graficoCostoPromociones(promos),
     graficoReferidos(referidos),
     graficoSaludCuentas(salud),
