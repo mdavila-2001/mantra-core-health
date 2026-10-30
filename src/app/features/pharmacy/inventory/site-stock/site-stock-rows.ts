@@ -7,16 +7,14 @@ import {
 import { productName, productStatus } from '../../products/product-view';
 
 /**
- * Qué se puede hacer con un producto en una sede:
+ * Qué se puede hacer con un producto en una sede. La API decide por producto:
  *
- * - `TRACKED`: la sede lleva su propio stock y el producto tiene posición.
- * - `UNTRACKED`: la sede lleva su propio stock y el producto no tiene posición
- *   (se publicó después): no se ofrece ahí hasta que se diga «Lo tengo».
- * - `CATALOG`: la sede todavía muestra lo declarado en el catálogo.
+ * - `TRACKED`: el producto tiene posición en la sede; manda esa cantidad.
+ * - `CATALOG`: no tiene posición; la sede muestra lo declarado en el catálogo.
  * - `DECLARED_OUT`: marcado sin stock para toda la farmacia. Esa marca gana en
  *   todas las sedes y sólo se quita desde el catálogo: sin interruptor.
  */
-export type SiteStockRowKind = 'TRACKED' | 'UNTRACKED' | 'CATALOG' | 'DECLARED_OUT';
+export type SiteStockRowKind = 'TRACKED' | 'CATALOG' | 'DECLARED_OUT';
 
 /** Un producto publicado, tal como está hoy en la sede. */
 export interface SiteStockRow {
@@ -36,19 +34,14 @@ export interface SiteStockEdit {
   readonly quantity: string;
 }
 
-/** Una sede con al menos una posición lleva su propio stock (modo libro). */
+/** Una sede con al menos una posición lleva stock propio de algún producto. */
 export function isLedgerSite(stock: SiteStock): boolean {
   return stock.items.length > 0;
 }
 
-/**
- * Marcado «no lo tengo» para toda la farmacia. La lectura de gestión no sirve
- * la marca: se deduce de `inStock: false` con existencias que no son 0 (con 0
- * la API también responde `inStock: false`, y ahí no se puede distinguir; si
- * estaba marcado, el `PUT` lo rechaza con su motivo).
- */
+/** Marcado «no lo tengo» para toda la farmacia, como lo sirve la lectura de gestión. */
 export function declaredOutOfStock(product: PharmacyProduct): boolean {
-  return product.inStock === false && product.stock !== 0;
+  return product.outOfStockDeclared === true;
 }
 
 /**
@@ -56,7 +49,6 @@ export function declaredOutOfStock(product: PharmacyProduct): boolean {
  * o un retirado no se ofrece en ninguna sede.
  */
 export function siteStockRows(products: readonly PharmacyProduct[], stock: SiteStock): readonly SiteStockRow[] {
-  const ledger = isLedgerSite(stock);
   const positions = new Map(stock.items.map((item) => [item.productId, item]));
   return products
     .filter((product) => productStatus(product) === 'PUBLISHED')
@@ -65,12 +57,9 @@ export function siteStockRows(products: readonly PharmacyProduct[], stock: SiteS
       if (declaredOutOfStock(product)) {
         return { ...base, kind: 'DECLARED_OUT', available: false, quantity: null };
       }
-      if (!ledger) {
-        return { ...base, kind: 'CATALOG', available: product.inStock !== false, quantity: product.stock ?? null };
-      }
       const position = positions.get(product.id);
       return position === undefined
-        ? { ...base, kind: 'UNTRACKED', available: false, quantity: null }
+        ? { ...base, kind: 'CATALOG', available: product.inStock !== false, quantity: product.stock ?? null }
         : {
             ...base,
             kind: 'TRACKED',
