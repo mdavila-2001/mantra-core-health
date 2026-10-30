@@ -1,0 +1,154 @@
+.tienda {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Una sola tarjeta, centrada y a lo ancho (regla §6 del CLAUDE.md del front).
+   Sin pestañas: no hay dos contenidos que alternar, hay uno con dos maneras
+   de mirarlo, y el selector de modo ya lo dice. */
+.tienda__tarjeta {
+  display: grid;
+  gap: var(--sp-5);
+  width: 100%;
+}
+
+/* Mobile-first: los controles apilados; desde tableta, la búsqueda ocupa la
+   fila entera y modo y orden comparten la siguiente. */
+.tienda__controles {
+  display: grid;
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+@media (min-width: 780px) {
+  .tienda__controles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tienda__busqueda,
+  .tienda__filtros,
+  .tienda__origen,
+  .tienda__atajos {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tienda__controles {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  }
+
+  .tienda__busqueda {
+    grid-column: 1 / 2;
+  }
+}
+
+.tienda__atajos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: center;
+}
+
+.tienda__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-3);
+  align-items: center;
+}
+
+.tienda__filtros-nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.tienda__sin-perfil,
+.tienda__sin-termino,
+.tienda__sin-origen {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* Un botón que se lee como enlace dentro del párrafo: la acción es cambiar el
+   orden, no navegar, así que no puede ser un `<a>`. */
+.tienda__enlace-accion {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tienda__enlace-accion:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+
+/* ════ Rediseño del paciente, tercera vuelta (22/10/2026) ════
+   Va en la hoja del componente y no en `styles/paciente.css`: esa hoja cuenta
+   en el paquete inicial, que está al ras de su presupuesto, y estas reglas
+   sólo hacen falta al abrir esta pantalla. `:host-context` las sigue atando a
+   la sesión de paciente, igual que la capa global. */
+
+/* La invitación a buscar, como una tarjeta que se ve. */
+:host-context(.app-shell--paciente) .tienda__sin-termino {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-block: var(--sp-5) var(--sp-6);
+  padding: var(--sp-5) var(--sp-6);
+  border: 1px dashed var(--c-aqua-300);
+  border-radius: var(--r-xl);
+  background: var(--c-aqua-50);
+  color: var(--text-primary);
+}
+
+:host-context(.app-shell--paciente) .tienda__sin-termino::before {
+  content: '';
+  flex-shrink: 0;
+  inline-size: 2.75rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--bg-surface) center / 1.4rem no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23145374' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z'/%3E%3Cpath d='m8.5 8.5 7 7'/%3E%3C/svg%3E");
+  box-shadow: inset 0 0 0 1px var(--c-aqua-200);
+}
+
+/* Los atajos y los pedidos se separan de los controles: eran una fila pegada
+   al selector de origen y al aviso de abajo. */
+:host-context(.app-shell--paciente) .tienda__atajos {
+  margin-block-start: var(--sp-2);
+}
+
+:host-context(.app-shell--paciente) app-recent-orders {
+  display: block;
+  margin-block-start: var(--sp-6);
+  padding-block-start: var(--sp-6);
+  border-block-start: 1px solid var(--border-default);
+}
+
+/* En oscuro, la píldora va en la aguamarina de la acción primaria: el trazo
+   petróleo no se veía sobre la superficie oscura. */
+:host-context([data-theme='dark']) .tienda__sin-termino {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+:host-context([data-theme='dark']) .tienda__sin-termino::before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2370C1B9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z'/%3E%3Cpath d='m8.5 8.5 7 7'/%3E%3C/svg%3E");
+  box-shadow: inset 0 0 0 1px var(--border-default);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .tienda__sin-termino {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
+  }
+
+  :host-context(html:not([data-theme='light'])) .tienda__sin-termino::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2370C1B9' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z'/%3E%3Cpath d='m8.5 8.5 7 7'/%3E%3C/svg%3E");
+    box-shadow: inset 0 0 0 1px var(--border-default);
+  }
+}

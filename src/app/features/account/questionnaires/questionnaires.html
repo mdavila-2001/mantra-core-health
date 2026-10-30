@@ -1,6 +1,6 @@
 <app-page-header
   title="Mis cuestionarios"
-  subtitle="Respondé los cuestionarios de las consultas que ya tuviste."
+  subtitle="Responda los cuestionarios de las consultas que ya tuvo."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -19,11 +19,17 @@
 
   <!-- FT-22-R02/R05 · Lo que le pidieron responder. Una vez respondida, la
        encuesta no se edita: es un registro de lo que dijo ese día. -->
-  <app-tab [label]="pendientes() > 0 ? 'Encuestas (' + pendientes() + ' pendientes)' : 'Encuestas'">
+  <app-tab
+    [label]="
+      pendientes() > 0
+        ? 'Encuestas (' + pendientes() + (pendientes() === 1 ? ' pendiente)' : ' pendientes)')
+        : 'Encuestas'
+    "
+  >
     @if (seccion() === 1) {
 @if (pendientes() > 0) {
   <p class="cuestionarios__resumen" data-testid="cuestionarios-pendientes">
-    Tenés {{ pendientes() }}
+    Tiene {{ pendientes() }}
     {{ pendientes() === 1 ? 'cuestionario pendiente' : 'cuestionarios pendientes' }}.
   </p>
 }
@@ -41,13 +47,23 @@
                 <div class="cuestionarios__datos">
                   <h2 class="cuestionarios__titulo">{{ cuestionario.titulo }}</h2>
 
-                  @if (cuestionario.consigna) {
+                  <!-- Qué atención es: sin esto las tarjetas de dos consultas distintas
+                       son idénticas. Con el contexto, la consigna larga (la misma en
+                       todas) se omite: se lee al abrir la encuesta. -->
+                  @if (cuestionario.contexto; as contexto) {
+                    <p class="cuestionarios__contexto" data-testid="cuestionario-contexto">
+                      {{ contexto.etiqueta }}
+                      @if (contexto.fecha) {
+                        · {{ contexto.fecha | date: 'd MMM y' }}
+                      }
+                    </p>
+                  } @else if (cuestionario.consigna) {
                     <p class="cuestionarios__consigna">{{ cuestionario.consigna }}</p>
                   }
 
                   @if (cuestionario.estado === 'PENDING' && cuestionario.vence) {
                     <p class="cuestionarios__plazo">
-                      Podés responderlo hasta el
+                      Puede responderlo hasta el
                       {{ cuestionario.vence | date: 'd MMM y' }}.
                     </p>
                   } @else if (cuestionario.estado === 'ANSWERED' && cuestionario.respondido) {
@@ -64,9 +80,24 @@
                 <div class="cuestionarios__acciones">
                   <app-badge [variant]="cuestionario.tono">{{ cuestionario.palabra }}</app-badge>
 
+                  <!-- Quien dijo «Ahora no» a la reseña pública puede cambiar de
+                       idea. Sólo si el servidor dice que se puede (`canReview`). -->
+                  @if (cuestionario.estado === 'ANSWERED' && resenables().has(cuestionario.id)) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      [attr.data-testid]="'resenar-' + cuestionario.id"
+                      (clicked)="abrirResena(cuestionario.id)"
+                    >
+                      Dejar reseña pública
+                    </button>
+                  }
+
                   @if (cuestionario.sePuedeResponder) {
                     <a
-                      app-button-link
+                      app-button
                       variant="primary"
                       [routerLink]="cuestionario.ruta"
                       [attr.data-testid]="'responder-' + cuestionario.id"
@@ -83,6 +114,15 @@
     }
   }
 </app-view-state-host>
+
+@if (resenando(); as atencion) {
+  <app-rate-encounter-dialog
+    [encounterId]="atencion.encounterId"
+    [practitionerName]="atencion.practitionerDisplayName"
+    (saved)="resenaPublicada()"
+    (closed)="cerrarResena()"
+  />
+}
     }
   </app-tab>
 </app-tabs>

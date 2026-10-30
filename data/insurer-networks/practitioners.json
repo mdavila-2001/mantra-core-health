@@ -7443,40 +7443,6 @@
     ]
   },
   {
-    "id": "red-centro-orthospine",
-    "surnames": "Centro",
-    "givenNames": "Orthospine",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS",
-          "SILVER",
-          "ACC. PERSONALES"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "CALLE GUATEMALA ESQ. SALVADOR 1ER ANILLO – CMO",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "77695966"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
     "id": "red-cervantes-sanabria-miki-antonio",
     "surnames": "Cervantes Sanabria",
     "givenNames": "Miki Antonio",
@@ -8081,55 +8047,6 @@
         "municipality": "Santa Cruz de la Sierra",
         "phones": [
           "3180060"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
-    "id": "red-clinica-good-center",
-    "surnames": "Clinica",
-    "givenNames": "Good Center",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIATRA",
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "AV. ALEMANA CALLE LUIS ARCE NRO. 3146 – CLINICA GOODCENTER",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "63323303",
-          "78124131"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      },
-      {
-        "address": "CALLE MOLDES NRO 207 ENTRE LA PAZ Y COCHABAMBA – GOOD CENTER",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "3347259",
-          "3709951",
-          "79849905",
-          "75555726"
         ],
         "lat": -17.7834,
         "lng": -63.1821,
@@ -10913,103 +10830,6 @@
         "phones": [
           "3534000",
           "77389998"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
-    "id": "red-fisiocentro",
-    "surnames": "Fisiocentro",
-    "givenNames": ".",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "CALLE TENIENTE ARTEAGA NRO 73 – FISIOCENTRO",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "3340480",
-          "76002339"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
-    "id": "red-fisiovic",
-    "surnames": "Fisiovic",
-    "givenNames": ".",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "RAFAEL PEÑA NRO 149 ENTRE CALLE LIBERTAD – CLINICA NIÑO JESUS",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "77027143"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
-    "id": "red-fisiovida",
-    "surnames": "Fisiovida",
-    "givenNames": ".",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "CALLE TENIENTE MAMERTO CUELLAR NRO 140 ZONA PARQUE URBANO – FISIOVIDA",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "3371202",
-          "70018915"
         ],
         "lat": -17.7834,
         "lng": -63.1821,
@@ -14860,83 +14680,6 @@
         "lng": -63.1841539,
         "precision": "establecimiento",
         "institutionId": "hos-hospital-san-juan-de-dios"
-      }
-    ]
-  },
-  {
-    "id": "red-kineser",
-    "surnames": "Kineser",
-    "givenNames": ".",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS",
-          "ACC. PERSONALES"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "AV. 3ER ANILLO EXTERNO ESQ. LOS TUCANES NRO 97 – NEOMEDIC",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "3269264",
-          "3400299",
-          "79466485"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
-    "id": "red-kinesis-srl",
-    "surnames": "Kinesis .",
-    "givenNames": "Srl",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "AV. VELARDE 1ER ANILLO ZONA PLAZA BLACUT – KINESIS",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "3370668"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      },
-      {
-        "address": "AV. NICOLAS ORTIZ BARIO EQUIPETROL",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
       }
     ]
   },
@@ -22434,49 +22177,6 @@
     ]
   },
   {
-    "id": "red-physio-center-rehabilitacion-s-r-l",
-    "surnames": "Physio Center",
-    "givenNames": "Rehabilitacion S.r.l",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS",
-          "ACC. PERSONALES"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "AV. 2DO. ANILLO UNA CUADRA ANTES DE LA AV. BUSCH NRO. 1146",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "60003452"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      },
-      {
-        "address": "AV. SANTOS DUMONT ENTRE CALLE CHACO Y AV. PILCOMAYO",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
     "id": "red-physio-run",
     "surnames": "Physio",
     "givenNames": "Run",
@@ -27781,38 +27481,6 @@
         "municipality": "Santa Cruz de la Sierra",
         "phones": [
           "3410022"
-        ],
-        "lat": -17.7834,
-        "lng": -63.1821,
-        "precision": "ciudad",
-        "institutionId": null
-      }
-    ]
-  },
-  {
-    "id": "red-slimbody-srl",
-    "surnames": "Slimbody",
-    "givenNames": "Srl",
-    "nameSplit": "source",
-    "specialties": [
-      "FISIOTERAPIA"
-    ],
-    "networks": [
-      {
-        "insurer": "Alianza Seguros",
-        "plans": [
-          "AFI GOLD",
-          "OASIS"
-        ]
-      }
-    ],
-    "offices": [
-      {
-        "address": "AV. RADIAL 27 CALLE TIESTO ESQ. EXODO NRO. 38 ENTRE 4TO Y 5TO ANILLO",
-        "city": "Santa Cruz de la Sierra",
-        "municipality": "Santa Cruz de la Sierra",
-        "phones": [
-          "70826241"
         ],
         "lat": -17.7834,
         "lng": -63.1821,

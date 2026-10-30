@@ -14,32 +14,38 @@ import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-import {
-  ChatStore,
-  editable,
-  type MensajeDelHilo,
-} from '../../../core/messaging/chat.store';
+import { ChatStore, editable, type MensajeDelHilo } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
-import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
+import { appointmentLinkOf, type MessageAppointment } from '../../../core/messaging/appointment-link';
+import type {
+  ConversationListItem,
+  MessageReaction,
+} from '../../../core/data-access/community/community.types';
+import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import {
-  avatarDeConQuien as avatarDeConQuienDe,
-  conQuien as conQuienDe,
-} from '../../../core/messaging/con-quien';
-import { etiquetaDeDia, horaDelReloj } from '../../../shared/date/hora-de-chat';
+  conversationAvatar as avatarDeConQuienDe,
+  conversationLabel as conQuienDe,
+  conversationVerification as verificacionDe,
+} from '../../../core/messaging/conversation-label';
+import { dayLabel, clockTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { Composer } from './composer/composer';
+import { trackArrivals } from './live-arrivals';
+import { EmojiPicker } from './composer/emoji-picker';
 import { ContactPanel } from './contact-panel/contact-panel';
 import { FilePreview } from '../../../shared/components/molecules/file-preview/file-preview';
 import { formatearTamano } from '../../../core/data-access/files/upload-policy';
 import {
-  archivoDeDataUrl,
+  dataUrlFile,
   esPdf,
-  metadatosDeDataUrl,
-  nombreDelTipo,
-  type MetadatosDeAdjunto,
-} from '../../../core/messaging/adjunto-metadata';
+  dataUrlMetadata,
+  typeName,
+  type AttachmentMetadata,
+} from '../../../core/messaging/attachment-metadata';
 
 /**
  * Una línea del hilo: un separador —de día o de «no leídos»— o un mensaje con
@@ -79,6 +85,27 @@ const TONOS = 8;
  * un tic por segundo sería redibujar el hilo entero sesenta veces de más.
  */
 const TIC_DE_EDICION_MS = 30_000;
+
+/**
+ * Las seis reacciones al alcance de un toque, como la barra de WhatsApp. Las
+ * demás están detrás del «+», que abre el catálogo completo.
+ */
+export const REACCIONES_RAPIDAS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
+
+/** Cómo va un mensaje propio: ✓ salió, ✓✓ llegó, ✓✓ azul lo leyeron. */
+export type EstadoDeEntrega = 'enviado' | 'entregado' | 'leido';
+
+/** Una línea de «Info. del mensaje»: qué pasó con él para una persona. */
+export interface FilaDeInfo {
+  readonly nombre: string;
+  readonly entregado: Date | null;
+  readonly leido: Date | null;
+  /** `true` si se sabe que lo leyó pero la API no dice cuándo. */
+  readonly leidoSinHora: boolean;
+}
+
+/** Cuánto lugar libre bajo la flecha hace falta para abrir el menú hacia abajo. */
+const ESPACIO_PARA_EL_MENU = 340;
 
 /** A cuántos píxeles del tope se pide la página anterior. */
 const MARGEN_DE_CARGA = 220;
@@ -170,20 +197,32 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
  */
 @Component({
   selector: 'app-thread',
-  imports: [Avatar, Composer, ContactPanel, EmptyState, FilePreview, RouterLink],
+  imports: [
+    AppButton,
+    Avatar,
+    VerificationBadge,
+    Composer,
+    ContactPanel,
+    ContentDialog,
+    EmptyState,
+    FilePreview,
+    RouterLink,
+    EmojiPicker,
+  ],
   templateUrl: './thread.html',
-  styleUrls: ['./thread.css', './thread-capas.css'],
+  styleUrls: ['./thread.css', './thread-layers.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Thread {
   protected readonly store = inject(ChatStore);
-  private readonly preferencias = inject(ChatPreferencias);
+  private readonly preferencias = inject(ChatPreferences);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly marco = viewChild<ElementRef<HTMLElement>>('marco');
   private readonly buscador = viewChild<ElementRef<HTMLInputElement>>('buscador');
+  private readonly forwardDialog = viewChild<ContentDialog>('forwardDialog');
 
   /** Si la vista está al pie. Arranca en `true`: un hilo se abre por el final. */
   private pegadoAbajo = true;
@@ -196,6 +235,9 @@ export class Thread {
 
   /** Qué mensaje tiene el menú abierto. */
   protected readonly menuAbierto = signal<string | null>(null);
+
+  /** Si el menú abierto se despliega hacia arriba, por falta de lugar abajo. */
+  protected readonly menuArriba = signal(false);
 
   /** Si está abierto el menú de la cabecera. */
   protected readonly menuCabecera = signal(false);
@@ -224,19 +266,35 @@ export class Thread {
 
   protected readonly esFavorito = computed(() => {
     const id = this.store.activaId();
-    return id !== null && this.preferencias.favoritos().has(id);
+    return id !== null && this.preferencias.favorites().has(id);
   });
 
   protected readonly estaArchivado = computed(() => {
     const id = this.store.activaId();
-    return id !== null && this.preferencias.archivados().has(id);
+    return id !== null && this.preferencias.archived().has(id);
   });
 
   /** La imagen que se está mirando a tamaño completo. */
-  protected readonly imagenAbierta = signal<string | null>(null);
+  protected readonly imagenAbierta = signal<{ readonly url: string; readonly nombre: string } | null>(
+    null,
+  );
+
+  /** El mensaje al que se está eligiendo reacción con el catálogo entero. */
+  protected readonly reaccionandoA = signal<MensajeDelHilo | null>(null);
+
+  /** El mensaje cuya «Info. del mensaje» está abierta. */
+  protected readonly infoDe = signal<MensajeDelHilo | null>(null);
+
+  /** Si se está confirmando el bloqueo del otro lado. */
+  protected readonly confirmandoBloqueo = signal(false);
+
+  protected readonly reaccionesRapidas = REACCIONES_RAPIDAS;
 
   /** El mensaje al que saltó una cita, para destellarlo. */
   protected readonly destellando = signal<string | null>(null);
+
+  /** Las burbujas ajenas que llegaron en vivo (ALOVIDA Pulse): ver `trackArrivals`. */
+  protected readonly llegadas = trackArrivals(this.store);
 
   /** Si está abierta la búsqueda dentro de la conversación. */
   protected readonly buscando = signal(false);
@@ -261,6 +319,12 @@ export class Thread {
     return activa === undefined ? 'Conversación' : conQuienDe(activa);
   });
 
+  /** La verificación del otro lado, si la API la dijo (sólo en una conversación directa). */
+  protected readonly verificacion = computed(() => {
+    const activa = this.store.conversacionActiva();
+    return activa === undefined ? null : verificacionDe(activa);
+  });
+
   protected readonly avatar = computed(() => {
     const activa = this.store.conversacionActiva();
     return activa === undefined ? null : avatarDeConQuienDe(activa);
@@ -278,7 +342,7 @@ export class Thread {
     const nombres = activa.peers
       .map((peer) => peer.displayName)
       .filter((nombre): nombre is string => nombre !== undefined && nombre !== null);
-    return [...nombres, 'Tú'].join(', ');
+    return [...nombres, 'Usted'].join(', ');
   });
 
   protected readonly esGrupo = computed(() => {
@@ -345,7 +409,7 @@ export class Thread {
         salida.push({
           tipo: 'fecha',
           clave: `f-${dia || mensaje.clave}`,
-          etiqueta: etiquetaDeDia(mensaje.sentAt),
+          etiqueta: dayLabel(mensaje.sentAt),
         });
         diaAnterior = dia;
         // Un día nuevo siempre abre bloque, aunque escriba el mismo.
@@ -395,6 +459,9 @@ export class Thread {
         this.menuCabecera.set(false);
         this.cerrarBusqueda();
         this.reenviando.set(null);
+        this.infoDe.set(null);
+        this.reaccionandoA.set(null);
+        this.confirmandoBloqueo.set(false);
         this.contactoAbierto.set(false);
         this.store.abrir(id);
       }
@@ -430,7 +497,7 @@ export class Thread {
   /** El nombre de quien escribió, para el rótulo de un grupo. */
   private nombreDe(profileId: string): string {
     if (profileId === this.store.perfil()) {
-      return 'Tú';
+      return 'Usted';
     }
     const activa = this.store.conversacionActiva();
     const peer = activa?.peers.find((p) => p.profileId === profileId);
@@ -439,15 +506,118 @@ export class Thread {
 
   /** `true` si un mensaje propio ya lo leyó el otro lado — ✓✓ en vez de ✓. */
   protected leido(mensaje: MensajeDelHilo): boolean {
+    if (mensaje.senderProfileId !== this.store.perfil()) {
+      return false;
+    }
+    // Con recibos —un grupo, o una API que ya publica las horas— manda lo que
+    // dicen: leído es que **todos** los leyeron.
+    const recibos = mensaje.receipts ?? [];
+    if (recibos.length > 0 && recibos.every((r) => r.readAt !== undefined)) {
+      return true;
+    }
     const hasta = this.store.peerReadUpTo();
-    if (
-      mensaje.senderProfileId !== this.store.perfil() ||
-      hasta === null ||
-      !mensaje.sentAt
-    ) {
+    if (hasta === null || !mensaje.sentAt) {
       return false;
     }
     return mensaje.sentAt.getTime() <= hasta.getTime();
+  }
+
+  /**
+   * Si un mensaje propio salió, llegó o ya lo leyeron.
+   *
+   * «Llegó» sólo se afirma con recibos que lo digan: sin ellos la API no sabe
+   * más que «salió» y «leído», y pintar dos tildes grises sin saberlo sería
+   * mentir sobre lo único que mira quien espera una respuesta.
+   */
+  protected estadoDeEntrega(mensaje: MensajeDelHilo): EstadoDeEntrega {
+    if (this.leido(mensaje)) {
+      return 'leido';
+    }
+    const recibos = mensaje.receipts ?? [];
+    if (recibos.length > 0 && recibos.every((r) => r.deliveredAt !== undefined)) {
+      return 'entregado';
+    }
+    return 'enviado';
+  }
+
+  protected rotuloDeEntrega(mensaje: MensajeDelHilo): string {
+    return { enviado: 'Enviado', entregado: 'Entregado', leido: 'Leído' }[
+      this.estadoDeEntrega(mensaje)
+    ];
+  }
+
+  /* --- Reacciones ---------------------------------------------------------- */
+
+  protected reaccionar(mensaje: MensajeDelHilo, emoji: string): void {
+    this.menuAbierto.set(null);
+    this.reaccionandoA.set(null);
+    this.store.reaccionar(mensaje, emoji);
+  }
+
+  /** Abre el catálogo entero para elegir la reacción. */
+  protected masReacciones(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.reaccionandoA.set(mensaje);
+  }
+
+  protected cerrarReacciones(): void {
+    this.reaccionandoA.set(null);
+  }
+
+  /** Con qué emoji reaccionó la persona a este mensaje, si lo hizo. */
+  protected miReaccion(mensaje: MensajeDelHilo): string | null {
+    const propio = this.store.perfil();
+    return (
+      (mensaje.reactions ?? []).find((r) => propio !== null && r.profileIds.includes(propio))
+        ?.emoji ?? null
+    );
+  }
+
+  /** «Vos y Valeria reaccionaron con ❤️», para quien no puede pasar el mouse. */
+  protected rotuloDeReaccion(reaccion: MessageReaction): string {
+    const nombres = reaccion.profileIds.map((id) => this.nombreDe(id));
+    return `${nombres.join(', ')}: ${reaccion.emoji}`;
+  }
+
+  /** Una reacción tocada en la burbuja: quita la propia o suma la del emoji. */
+  protected tocarReaccion(mensaje: MensajeDelHilo, reaccion: MessageReaction): void {
+    this.store.reaccionar(mensaje, reaccion.emoji);
+  }
+
+  /* --- Info del mensaje ---------------------------------------------------- */
+
+  protected abrirInfo(mensaje: MensajeDelHilo): void {
+    this.menuAbierto.set(null);
+    this.infoDe.set(mensaje);
+  }
+
+  protected cerrarInfo(): void {
+    this.infoDe.set(null);
+  }
+
+  /** Quién lo recibió y leyó, y cuándo. Una fila por cada otro participante. */
+  protected readonly filasDeInfo = computed<readonly FilaDeInfo[]>(() => {
+    const mensaje = this.infoDe();
+    const activa = this.store.conversacionActiva();
+    if (mensaje === null || activa === undefined) {
+      return [];
+    }
+    const leidoEnGeneral = this.leido(mensaje);
+    return activa.peers.map((peer) => {
+      const recibo = (mensaje.receipts ?? []).find((r) => r.profileId === peer.profileId);
+      const leido = recibo?.readAt ?? null;
+      return {
+        nombre: peer.displayName ?? 'Alguien',
+        entregado: recibo?.deliveredAt ?? null,
+        leido,
+        leidoSinHora: leido === null && leidoEnGeneral && activa.peers.length === 1,
+      };
+    });
+  });
+
+  /** «Hoy · 9:12 a. m.»: cuándo pasó, con día. */
+  protected fechaYHora(fecha: Date | undefined): string {
+    return fecha === undefined ? '' : `${dayLabel(fecha)} · ${clockTime(fecha)}`;
   }
 
   /** El mensaje al que responde otro, si está cargado. */
@@ -484,7 +654,12 @@ export class Thread {
    * producto — no hace falta un tipo de mensaje nuevo en el modelo.
    */
   protected esSticker(mensaje: MensajeDelHilo): boolean {
-    return stickerDe(mensaje.attachmentFileId) !== undefined;
+    return mensaje.contentType === 'STICKER' || stickerDe(mensaje.attachmentFileId) !== undefined;
+  }
+
+  /** Respuesta automática de la IA, si nadie la editó después (editada, la etiqueta mentiría). */
+  protected esRespuestaDeIa(mensaje: MensajeDelHilo): boolean {
+    return mensaje.contentType === 'AUTO_REPLY_AI' && mensaje.isEdited !== true;
   }
 
   /** Cómo se anuncia el sticker a quien no lo ve. */
@@ -520,6 +695,11 @@ export class Thread {
     );
   }
 
+  /** La cita a la que apunta un aviso de agenda, si apunta a una. */
+  protected appointmentOf(texto: string | undefined, propio: boolean): MessageAppointment | null {
+    return appointmentLinkOf(texto, propio);
+  }
+
   /** El texto de una burbuja, en trozos: enlaces y coincidencias. */
   protected segmentos(texto: string): readonly TrozoDeTexto[] {
     return trocear(texto, this.termino());
@@ -546,7 +726,21 @@ export class Thread {
 
   /* --- Reenviar ------------------------------------------------------------ */
 
-  protected reenviar(mensaje: MensajeDelHilo): void {
+  /**
+   * Abre la elección de destino.
+   *
+   * Antes de abrir, el foco pasa al botón «Opciones del mensaje»: el ítem
+   * «Reenviar» desaparece con el menú en el mismo ciclo en que se crea el
+   * modal, y `app-content-dialog` devuelve el foco a quien lo tenía al
+   * abrirse. Sin este paso volvería a `<body>` y el teclado arrancaría desde
+   * el principio de la página.
+   */
+  protected reenviar(mensaje: MensajeDelHilo, evento?: Event): void {
+    const item = evento?.currentTarget;
+    if (item instanceof HTMLElement) {
+      const trigger = item.closest('.hilo__menu')?.previousElementSibling;
+      if (trigger instanceof HTMLElement) trigger.focus();
+    }
     this.menuAbierto.set(null);
     this.reenviando.set(mensaje);
   }
@@ -555,27 +749,15 @@ export class Thread {
     this.reenviando.set(null);
   }
 
-  /**
-   * Cierra el reenvío sólo si el clic cayó en el fondo, no en el recuadro.
-   *
-   * Antes el recuadro paraba la propagación con un `(click)` propio, y un
-   * `(click)` sin equivalente de teclado no pasa la regla de accesibilidad
-   * —con razón: un recuadro no es un control—. Ponerle un `(keydown)` para
-   * callar al linter habría sido peor, porque también habría frenado el
-   * `Escape` que cierra desde el fondo. Se decide acá, mirando dónde cayó.
-   */
-  protected cerrarReenvioSiEsElFondo(evento: Event): void {
-    if (evento.target === evento.currentTarget) {
-      this.cancelarReenvio();
-    }
-  }
-
   protected reenviarA(conversationId: string): void {
     const mensaje = this.reenviando();
     if (mensaje === null) {
       return;
     }
     this.store.reenviar(mensaje, conversationId);
+    // Por el modal y no bajando la señal: así el foco vuelve a su origen y el
+    // scroll de la página se libera, igual que al cerrar con «Cancelar».
+    this.forwardDialog()?.close(true);
     this.reenviando.set(null);
     const destino = this.store.conversaciones().find((c) => c.id === conversationId);
     this.avisoReenvio.set(`Reenviado a ${destino === undefined ? 'la conversación' : conQuienDe(destino)}`);
@@ -621,8 +803,8 @@ export class Thread {
    * local de un envío en curso (`blob:`) o cualquier contenido que no se pueda
    * leer con certeza.
    */
-  protected metadatosDelAdjunto(mensaje: MensajeDelHilo): MetadatosDeAdjunto | null {
-    return metadatosDeDataUrl(this.urlDelAdjunto(mensaje));
+  protected metadatosDelAdjunto(mensaje: MensajeDelHilo): AttachmentMetadata | null {
+    return dataUrlMetadata(this.urlDelAdjunto(mensaje));
   }
 
   /** «PDF · 2.1 KB», o `null` si no hay metadata que decir. */
@@ -630,7 +812,7 @@ export class Thread {
     const metadatos = this.metadatosDelAdjunto(mensaje);
     return metadatos === null
       ? null
-      : `${nombreDelTipo(metadatos.mimeType)} · ${formatearTamano(metadatos.sizeBytes)}`;
+      : `${typeName(metadatos.mimeType)} · ${formatearTamano(metadatos.sizeBytes)}`;
   }
 
   /**
@@ -655,7 +837,7 @@ export class Thread {
     const url = this.urlDelAdjunto(mensaje);
     if (url === null) return null;
     if (!this.archivosDeVistaPrevia.has(url)) {
-      this.archivosDeVistaPrevia.set(url, archivoDeDataUrl(url, this.nombreParaDescargar(mensaje)));
+      this.archivosDeVistaPrevia.set(url, dataUrlFile(url, this.nombreParaDescargar(mensaje)));
     }
     return this.archivosDeVistaPrevia.get(url) ?? null;
   }
@@ -688,7 +870,7 @@ export class Thread {
 
   /** La hora de la burbuja, con el mismo formato que la fila de la bandeja. */
   protected hora(fecha: Date | undefined): string {
-    return horaDelReloj(fecha);
+    return clockTime(fecha);
   }
 
   /* --- El menú de la cabecera --------------------------------------------- */
@@ -702,7 +884,7 @@ export class Thread {
     this.menuCabecera.set(false);
     const id = this.store.activaId();
     if (id !== null) {
-      this.preferencias.alternarFavorito(id);
+      this.preferencias.toggleFavorite(id);
     }
   }
 
@@ -710,7 +892,33 @@ export class Thread {
     this.menuCabecera.set(false);
     const id = this.store.activaId();
     if (id !== null) {
-      this.preferencias.alternarArchivado(id);
+      this.preferencias.toggleArchived(id);
+    }
+  }
+
+  /** Pide confirmación antes de bloquear: es lo que corta la conversación. */
+  protected pedirBloqueo(): void {
+    this.menuCabecera.set(false);
+    this.confirmandoBloqueo.set(true);
+  }
+
+  protected confirmarBloqueo(): void {
+    const otro = this.perfilDelOtro();
+    this.confirmandoBloqueo.set(false);
+    if (otro !== null) {
+      this.store.bloquear(otro, this.conQuien());
+    }
+  }
+
+  protected cancelarBloqueo(): void {
+    this.confirmandoBloqueo.set(false);
+  }
+
+  protected desbloquear(): void {
+    this.menuCabecera.set(false);
+    const otro = this.perfilDelOtro();
+    if (otro !== null) {
+      this.store.desbloquear(otro);
     }
   }
 
@@ -779,6 +987,15 @@ export class Thread {
 
   protected alternarMenu(clave: string, evento: Event): void {
     evento.stopPropagation();
+    // Cerca del pie el menú se abre hacia arriba: el de la última burbuja se
+    // cortaba contra el borde. El menú mide unos 20 rem con la barra de
+    // reacciones, así que el umbral es un poco más.
+    const boton = evento.currentTarget;
+    const marco = this.marco()?.nativeElement;
+    if (boton instanceof HTMLElement && marco) {
+      const libre = marco.getBoundingClientRect().bottom - boton.getBoundingClientRect().bottom;
+      this.menuArriba.set(libre < ESPACIO_PARA_EL_MENU);
+    }
     this.menuAbierto.set(this.menuAbierto() === clave ? null : clave);
   }
 
@@ -795,6 +1012,19 @@ export class Thread {
    */
   protected puedeEditarse(mensaje: MensajeDelHilo): boolean {
     return editable(mensaje, this.store.perfil(), this.ahora());
+  }
+
+  /**
+   * `true` si el mensaje es propio y de texto: al que el menú le muestra
+   * «Editar», habilitado o —fuera de la ventana— apagado y con su motivo.
+   * Ocultar la opción hacía creer que la función no existía.
+   */
+  protected esEditableEnTeoria(mensaje: MensajeDelHilo): boolean {
+    return (
+      mensaje.senderProfileId === this.store.perfil() &&
+      mensaje.estado === 'enviado' &&
+      (mensaje.bodyText ?? '').trim() !== ''
+    );
   }
 
   protected editar(mensaje: MensajeDelHilo): void {
@@ -821,8 +1051,8 @@ export class Thread {
     }
   }
 
-  protected abrirImagen(url: string): void {
-    this.imagenAbierta.set(url);
+  protected abrirImagen(url: string, nombre: string): void {
+    this.imagenAbierta.set({ url, nombre });
   }
 
   protected cerrarImagen(): void {

@@ -93,4 +93,56 @@ describe('AttachmentDialog', () => {
     expect(anfitrion.abierto()).toBe(false);
     expect(raiz().querySelector('app-content-dialog')).toBeNull();
   });
+  describe('salida del panel', () => {
+    // Con animación de salida posible (en jsdom no existe `animate`) el panel
+    // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+    // atrás está inerte. Adjuntar el lote es confirmar: termina y libera en el
+    // acto; descartar sí anima (#1432, mismo criterio que `app-content-dialog`).
+    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let terminarSalida: () => void;
+
+    beforeEach(() => {
+      animarOriginal = HTMLElement.prototype.animate;
+      terminarSalida = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminarSalida = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.animate = animarOriginal;
+    });
+
+    it('adjuntar el lote libera la página en el acto, sin esperar la salida del panel', async () => {
+      const subidor = fixture.debugElement.query(
+        (nodo) => nodo.name === 'app-attachment-uploader',
+      ).componentInstance as { attached: { emit: () => void } };
+
+      subidor.attached.emit();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(anfitrion.adjuntados).toBe(1);
+      expect(anfitrion.abierto()).toBe(false);
+      expect(raiz().querySelector('app-content-dialog')).toBeNull();
+    });
+
+    it('descartar sin nada pendiente sí anima: el modal espera a que el panel se vaya', async () => {
+      const dialogo = raiz().querySelector('dialog');
+      expect(dialogo).not.toBeNull();
+
+      dialogo?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await fixture.whenStable();
+      expect(anfitrion.abierto()).toBe(true);
+
+      terminarSalida();
+      await Promise.resolve();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(anfitrion.abierto()).toBe(false);
+    });
+  });
 });

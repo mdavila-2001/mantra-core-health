@@ -1,12 +1,12 @@
 import { reservas } from '../fixtures/agenda';
-import { conversaciones } from '../fixtures/comunidad';
-import { recetas } from '../fixtures/clinica';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
+import { conversationList } from '../fixtures/community';
+import { prescriptionList } from '../fixtures/clinic';
+import { MEDICAL, PACIENTE } from '../fixtures/people';
 import {
-  avisoDeHorarioLiberado,
-  esperaUnHueco,
-  horariosLiberados,
-} from '../horario-liberado';
+  releasedScheduleNotice,
+  waitsForGap,
+  releasedSchedules,
+} from '../released-slot';
 import { notFound, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, Coleccion, cuerpo, iso, paginar, uuid } from '../mock-store';
 
@@ -24,38 +24,51 @@ interface NotificacionSimulada {
   readonly bodyText: string;
   readonly destination: { type: string; id: string } | null;
   readonly payloadJson: unknown;
+  /** Los botones que ofrece mientras la decisión siga pendiente. */
+  readonly actions?: readonly AccionSimulada[];
   readonly unread: boolean;
   readonly availableAt: string;
   readonly readAt: string | null;
 }
 
+interface AccionSimulada {
+  readonly key: string;
+  readonly label: string;
+  readonly tone?: 'primary' | 'neutral' | 'danger';
+}
+
 function paraPaciente(): NotificacionSimulada[] {
   const citas = reservas.filtrar((r) => r.patientProfileId === PACIENTE.id).sort((a, b) => a.startAt.localeCompare(b.startAt));
   const proxima = citas.find((r) => r.startAt > ahora());
-  const receta = recetas.filtrar((r) => r.patientProfileId === PACIENTE.id)[0];
-  const conversacion = conversaciones.filtrar((c) => c.participantes.some((p) => p === uuid(`public-profile-${PACIENTE.id}`)))[0];
+  const receta = prescriptionList.filtrar((r) => r.patientProfileId === PACIENTE.id)[0];
+  const conversacion = conversationList.filtrar((c) => c.participantes.some((p) => p === uuid(`public-profile-${PACIENTE.id}`)))[0];
   return [
-    { id: uuid('notif-pac-1'), userId: PACIENTE.userId, category: 'SCHEDULING', subject: 'Tu cita fue confirmada', bodyText: `La Dra. Valeria Rojas Mendoza confirmó tu cita${proxima === undefined ? '' : ` para el ${new Date(proxima.startAt).toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${new Date(proxima.startAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}`}.`, destination: { type: 'APPOINTMENT', id: proxima?.id ?? '' }, payloadJson: { bookingId: proxima?.id }, unread: true, availableAt: iso(-1, 9), readAt: null },
-    { id: uuid('notif-pac-2'), userId: PACIENTE.userId, category: 'CLINICAL', subject: 'Nueva receta disponible', bodyText: 'La Dra. Rojas emitió una receta de enalapril 10 mg. Ya la podés ver en tu historia clínica.', destination: { type: 'PRESCRIPTION', id: receta?.id ?? '' }, payloadJson: null, unread: true, availableAt: iso(-2, 11), readAt: null },
-    { id: uuid('notif-pac-3'), userId: PACIENTE.userId, category: 'MESSAGES', subject: 'Te escribió la Dra. Rojas', bodyText: 'Sí. Y si el dolor sigue más de una semana, avisame y lo vemos en consulta.', destination: { type: 'CONVERSATION', id: conversacion?.id ?? '' }, payloadJson: null, unread: false, availableAt: iso(-3, 18), readAt: iso(-3, 18, 30) },
-    { id: uuid('notif-pac-4'), userId: PACIENTE.userId, category: 'CLINICAL', subject: 'Resultados de laboratorio listos', bodyText: 'Laboratorio Central publicó los resultados de tu hemograma y perfil lipídico.', destination: { type: 'DIAGNOSTIC_REPORT', id: uuid('report-1') }, payloadJson: null, unread: false, availableAt: iso(-5, 8), readAt: iso(-5, 9) },
-    { id: uuid('notif-pac-5'), userId: PACIENTE.userId, category: 'SCHEDULING', subject: 'Recordatorio de cita', bodyText: 'Mañana tenés control con el Dr. Salazar Vaca (pediatría) a las 10:00.', destination: { type: 'APPOINTMENT', id: citas[1]?.id ?? '' }, payloadJson: null, unread: false, availableAt: iso(-8, 20), readAt: iso(-8, 21) },
-    { id: uuid('notif-pac-6'), userId: PACIENTE.userId, category: 'SOCIAL', subject: 'Nueva publicación de la Dra. Rojas', bodyText: '«¿Sabías que la hipertensión no suele dar síntomas?…»', destination: { type: 'POST', id: uuid('post-0') }, payloadJson: null, unread: false, availableAt: iso(-1, 10), readAt: iso(-1, 12) },
-    { id: uuid('notif-pac-7'), userId: PACIENTE.userId, category: 'CLINICAL', subject: 'Un profesional pide ver tu historia clínica', bodyText: 'El Dr. Daniel Aguilar Roca pide tu autorización para ver tu expediente. Podés elegir qué áreas autorizar, o rechazarlo.', destination: { type: 'CARE_RELATIONSHIP_REQUEST', id: uuid('care-request-pendiente') }, payloadJson: null, unread: true, availableAt: iso(0, 8, 30), readAt: null },
-    { id: uuid('notif-pac-8'), userId: PACIENTE.userId, category: 'SCHEDULING', subject: 'Tu pedido de farmacia está listo', bodyText: 'Farmacia Vida preparó tu pedido. Podés retirarlo o esperar la entrega a domicilio.', destination: { type: 'PHARMACY_ORDER', id: uuid('pharmacy-order-1') }, payloadJson: null, unread: false, availableAt: iso(-4, 16), readAt: iso(-4, 17) },
+    { id: uuid('notif-pac-1'), userId: PACIENTE.userId, category: 'SCHEDULING', subject: 'Su cita fue confirmada', bodyText: `La Dra. Valeria Rojas Mendoza confirmó su cita${proxima === undefined ? '' : ` para el ${new Date(proxima.startAt).toLocaleDateString('es-BO', { weekday: 'long', day: 'numeric', month: 'long' })} a las ${new Date(proxima.startAt).toLocaleTimeString('es-BO', { hour: '2-digit', minute: '2-digit' })}`}.`, destination: { type: 'APPOINTMENT', id: proxima?.id ?? '' }, payloadJson: { bookingId: proxima?.id }, unread: true, availableAt: iso(-1, 9), readAt: null },
+    { id: uuid('notif-pac-2'), userId: PACIENTE.userId, category: 'CLINICAL', subject: 'Nueva receta disponible', bodyText: 'La Dra. Rojas emitió una receta de enalapril 10 mg. Ya la puede ver en su historia clínica.', destination: { type: 'PRESCRIPTION', id: receta?.id ?? '' }, payloadJson: null, unread: true, availableAt: iso(-2, 11), readAt: null },
+    { id: uuid('notif-pac-3'), userId: PACIENTE.userId, category: 'MESSAGES', subject: 'Le escribió la Dra. Rojas', bodyText: 'Sí. Y si el dolor sigue más de una semana, avíseme y lo vemos en consulta.', destination: { type: 'CONVERSATION', id: conversacion?.id ?? '' }, payloadJson: null, unread: false, availableAt: iso(-3, 18), readAt: iso(-3, 18, 30) },
+    { id: uuid('notif-pac-4'), userId: PACIENTE.userId, category: 'CLINICAL', subject: 'Resultados de laboratorio listos', bodyText: 'Laboratorio Central publicó los resultados de su hemograma y perfil lipídico.', destination: { type: 'DIAGNOSTIC_REPORT', id: uuid('report-1') }, payloadJson: null, unread: false, availableAt: iso(-5, 8), readAt: iso(-5, 9) },
+    { id: uuid('notif-pac-5'), userId: PACIENTE.userId, category: 'SCHEDULING', subject: 'Recordatorio de cita', bodyText: 'Mañana tiene control con el Dr. Salazar Vaca (pediatría) a las 10:00.', destination: { type: 'APPOINTMENT', id: citas[1]?.id ?? '' }, payloadJson: null, unread: false, availableAt: iso(-8, 20), readAt: iso(-8, 21) },
+    { id: uuid('notif-pac-6'), userId: PACIENTE.userId, category: 'SOCIAL', subject: 'Nueva publicación de la Dra. Rojas', bodyText: '«¿Sabía que la hipertensión no suele dar síntomas?…»', destination: { type: 'POST', id: uuid('post-0') }, payloadJson: null, unread: false, availableAt: iso(-1, 10), readAt: iso(-1, 12) },
+    { id: uuid('notif-pac-7'), userId: PACIENTE.userId, category: 'CLINICAL', subject: 'Un profesional pide ver su historia clínica', bodyText: 'El Dr. Daniel Aguilar Roca pide su autorización para ver su expediente. Puede elegir qué áreas autorizar, o rechazarlo.', destination: { type: 'CARE_RELATIONSHIP_REQUEST', id: uuid('care-request-pendiente') }, payloadJson: null, unread: true, availableAt: iso(0, 8, 30), readAt: null },
+    { id: uuid('notif-pac-8'), userId: PACIENTE.userId, category: 'SCHEDULING', subject: 'Su pedido de farmacia está listo', bodyText: 'Farmacia Vida preparó su pedido. Puede pasar a retirarlo.', destination: { type: 'PHARMACY_ORDER', id: uuid('pharmacy-order-1') }, payloadJson: null, unread: false, availableAt: iso(-4, 16), readAt: iso(-4, 17) },
   ];
 }
 
+/**
+ * La bandeja de la médica. `notif-med-6` nace **sin leer y sin destino** a
+ * propósito: es el único caso en el que la fila no se abre y «Marcar como
+ * leída» se ofrece aparte; sin él la maqueta no lo mostraría nunca.
+ */
 function paraMedica(): NotificacionSimulada[] {
   const solicitudes = reservas.filtrar((r) => r.startAt > ahora()).sort((a, b) => a.startAt.localeCompare(b.startAt));
   return [
-    { id: uuid('notif-med-1'), userId: MEDICA.userId, category: 'SCHEDULING', subject: 'Nueva solicitud de consulta', bodyText: `${solicitudes[0]?.patientName ?? 'Un paciente'} pidió turno: «${solicitudes[0]?.reasonText ?? 'Consulta'}».`, destination: { type: 'APPOINTMENT', id: solicitudes[0]?.id ?? '' }, payloadJson: null, unread: true, availableAt: iso(0, 7, 45), readAt: null },
-    { id: uuid('notif-med-2'), userId: MEDICA.userId, category: 'MESSAGES', subject: 'Ana Lucía Pérez Quiroga te escribió', bodyText: 'Doctora, ya me llegaron los resultados del laboratorio…', destination: { type: 'CONVERSATION', id: uuid('conv-medica-paciente') }, payloadJson: null, unread: true, availableAt: iso(0, 9, 12), readAt: null },
-    { id: uuid('notif-med-3'), userId: MEDICA.userId, category: 'SCHEDULING', subject: 'Cita cancelada', bodyText: 'Jorge Luis Mamani Choque canceló su cita de mañana: «El paciente avisó que viajaba».', destination: { type: 'APPOINTMENT', id: '' }, payloadJson: null, unread: true, availableAt: iso(-1, 17), readAt: null },
-    { id: uuid('notif-med-4'), userId: MEDICA.userId, category: 'CLINICAL', subject: 'Resultado crítico', bodyText: 'Laboratorio Central informa potasio 5,9 mmol/L en Ricardo Condori Apaza.', destination: { type: 'DIAGNOSTIC_REPORT', id: uuid('report-critico') }, payloadJson: null, unread: false, availableAt: iso(-2, 13), readAt: iso(-2, 13, 20) },
-    { id: uuid('notif-med-5'), userId: MEDICA.userId, category: 'SOCIAL', subject: 'Tu publicación tiene 30 reacciones', bodyText: '«¿Sabías que la hipertensión no suele dar síntomas?…» sigue sumando.', destination: { type: 'POST', id: uuid('post-0') }, payloadJson: null, unread: false, availableAt: iso(-1, 20), readAt: iso(-1, 21) },
-    { id: uuid('notif-med-6'), userId: MEDICA.userId, category: 'SCHEDULING', subject: 'Solicitud de vinculación aprobada', bodyText: 'Hospital San Lucas aprobó tu vinculación como médica de planta.', destination: null, payloadJson: null, unread: false, availableAt: iso(-6, 10), readAt: iso(-6, 11) },
-    { id: uuid('notif-med-7'), userId: MEDICA.userId, category: 'MESSAGES', subject: 'Dra. Terrazas te escribió', bodyText: 'Le pedí un Holter, cuando lo tengas lo vemos juntas.', destination: { type: 'CONVERSATION', id: uuid('conv-medica-endocrino') }, payloadJson: null, unread: true, availableAt: iso(-1, 8, 47), readAt: null },
+    { id: uuid('notif-med-1'), userId: MEDICAL.userId, category: 'SCHEDULING', subject: 'Nueva solicitud de consulta', bodyText: `${solicitudes[0]?.patientName ?? 'Un paciente'} pidió cita: «${solicitudes[0]?.reasonText ?? 'Consulta'}».`, destination: { type: 'APPOINTMENT', id: solicitudes[0]?.id ?? '' }, payloadJson: null, unread: true, availableAt: iso(0, 7, 45), readAt: null },
+    { id: uuid('notif-med-2'), userId: MEDICAL.userId, category: 'MESSAGES', subject: 'Ana Lucía Pérez Quiroga le escribió', bodyText: 'Doctora, ya me llegaron los resultados del laboratorio…', destination: { type: 'CONVERSATION', id: uuid('conv-medica-paciente') }, payloadJson: null, unread: true, availableAt: iso(0, 9, 12), readAt: null },
+    { id: uuid('notif-med-3'), userId: MEDICAL.userId, category: 'SCHEDULING', subject: 'Cita cancelada', bodyText: 'Jorge Luis Mamani Choque canceló su cita de mañana: «El paciente avisó que viajaba».', destination: { type: 'APPOINTMENT', id: '' }, payloadJson: null, unread: true, availableAt: iso(-1, 17), readAt: null },
+    { id: uuid('notif-med-4'), userId: MEDICAL.userId, category: 'CLINICAL', subject: 'Resultado crítico', bodyText: 'Laboratorio Central informa potasio 5,9 mmol/L en Ricardo Condori Apaza.', destination: { type: 'DIAGNOSTIC_REPORT', id: uuid('report-critico') }, payloadJson: null, unread: false, availableAt: iso(-2, 13), readAt: iso(-2, 13, 20) },
+    { id: uuid('notif-med-5'), userId: MEDICAL.userId, category: 'SOCIAL', subject: 'Su publicación tiene 30 reacciones', bodyText: '«¿Sabía que la hipertensión no suele dar síntomas?…» sigue sumando.', destination: { type: 'POST', id: uuid('post-0') }, payloadJson: null, unread: false, availableAt: iso(-1, 20), readAt: iso(-1, 21) },
+    { id: uuid('notif-med-6'), userId: MEDICAL.userId, category: 'SCHEDULING', subject: 'Solicitud de vinculación aprobada', bodyText: 'Hospital San Lucas aprobó su vinculación como médica de planta.', destination: null, payloadJson: null, unread: true, availableAt: iso(-6, 10), readAt: null },
+    { id: uuid('notif-med-7'), userId: MEDICAL.userId, category: 'MESSAGES', subject: 'Dra. Terrazas le escribió', bodyText: 'Le pedí un Holter, cuando lo tenga lo vemos juntas.', destination: { type: 'CONVERSATION', id: uuid('conv-medica-endocrino') }, payloadJson: null, unread: true, availableAt: iso(-1, 8, 47), readAt: null },
   ];
 }
 
@@ -81,6 +94,8 @@ export function emitirNotificacion(datos: {
   readonly bodyText: string;
   readonly destination?: { type: string; id: string } | null;
   readonly payloadJson?: unknown;
+  /** Botones que la notificación ofrece hasta que {@link cerrarAcciones} los retire. */
+  readonly actions?: readonly AccionSimulada[];
 }): void {
   notificaciones.agregar({
     id: uuid(`notif-${datos.userId}-${Date.now()}-${Math.random()}`),
@@ -90,10 +105,36 @@ export function emitirNotificacion(datos: {
     bodyText: datos.bodyText,
     destination: datos.destination ?? null,
     payloadJson: datos.payloadJson ?? null,
+    ...(datos.actions === undefined ? {} : { actions: datos.actions }),
     unread: true,
     availableAt: ahora(),
     readAt: null,
   });
+}
+
+/**
+ * Retira los botones de las notificaciones de una decisión que ya se tomó, y
+ * las da por leídas.
+ *
+ * Es lo que hace el servidor real cuando una solicitud se responde: la
+ * notificación queda como registro de lo que pasó pero deja de ofrecer la
+ * decisión. Se busca por destino y no por id de notificación porque quien
+ * responde puede hacerlo desde otra pantalla, sin haber tocado el aviso.
+ */
+export function cerrarAcciones(destino: { readonly type: string; readonly id: string }): void {
+  const pendientes = notificaciones.filtrar(
+    (n) =>
+      n.destination?.type === destino.type &&
+      n.destination.id === destino.id &&
+      (n.actions?.length ?? 0) > 0,
+  );
+  for (const n of pendientes) {
+    notificaciones.actualizar(n.id, {
+      actions: [],
+      unread: false,
+      readAt: n.readAt ?? ahora(),
+    });
+  }
 }
 
 const preferencias = new Map<string, { categories: { category: Categoria; optedIn: boolean }[]; quietHours: { start: string; end: string } | null }>();
@@ -101,7 +142,7 @@ const preferencias = new Map<string, { categories: { category: Categoria; optedI
 function preferenciasDe(userId: string) {
   let p = preferencias.get(userId);
   if (p === undefined) {
-    p = { categories: [{ category: 'CLINICAL', optedIn: true }, { category: 'SCHEDULING', optedIn: true }, { category: 'MESSAGES', optedIn: true }, { category: 'SOCIAL', optedIn: userId !== MEDICA.userId }], quietHours: userId === MEDICA.userId ? { start: '22:00', end: '07:00' } : null };
+    p = { categories: [{ category: 'CLINICAL', optedIn: true }, { category: 'SCHEDULING', optedIn: true }, { category: 'MESSAGES', optedIn: true }, { category: 'SOCIAL', optedIn: userId !== MEDICAL.userId }], quietHours: userId === MEDICAL.userId ? { start: '22:00', end: '07:00' } : null };
     preferencias.set(userId, p);
   }
   return p;
@@ -109,7 +150,7 @@ function preferenciasDe(userId: string) {
 
 function propias(request: MockRequest): NotificacionSimulada[] {
   const userId = request.user?.id;
-  const guardadas = notificaciones.filtrar((n) => n.userId === userId || (userId !== undefined && userId !== PACIENTE.userId && userId !== MEDICA.userId && n.userId === MEDICA.userId && n.category === 'SCHEDULING'));
+  const guardadas = notificaciones.filtrar((n) => n.userId === userId || (userId !== undefined && userId !== PACIENTE.userId && userId !== MEDICAL.userId && n.userId === MEDICAL.userId && n.category === 'SCHEDULING'));
   return [...guardadas, ...huecosParaPaciente(userId)];
 }
 
@@ -117,7 +158,7 @@ function propias(request: MockRequest): NotificacionSimulada[] {
  * Los avisos de cupo libre, calculados **en cada lectura**.
  *
  * No se siembran con el resto porque no son un dato: son una conclusión sobre
- * el reloj (ver `horario-liberado.ts`). Sembrarlos al arrancar los dejaría
+ * el reloj (ver `released-slot.ts`). Sembrarlos al arrancar los dejaría
  * ahí desde el primer render, y lo que hay que poder mostrar es que *llegan*.
  *
  * Se guardan la primera vez que se los ve —y sólo entonces— para que marcarlos
@@ -126,9 +167,9 @@ function propias(request: MockRequest): NotificacionSimulada[] {
  * fila que actualizar.
  */
 function huecosParaPaciente(userId: string | undefined): NotificacionSimulada[] {
-  if (userId !== PACIENTE.userId || !esperaUnHueco(PACIENTE.id)) return [];
-  return horariosLiberados()
-    .map((hueco) => avisoDeHorarioLiberado(hueco))
+  if (userId !== PACIENTE.userId || !waitsForGap(PACIENTE.id)) return [];
+  return releasedSchedules()
+    .map((hueco) => releasedScheduleNotice(hueco))
     .filter((aviso) => !notificaciones.has(aviso.id))
     .map((aviso) => notificaciones.agregar(aviso));
 }
@@ -158,6 +199,10 @@ export function registrarNotificaciones(router: MockRouter): void {
     return { marked: pendientes.length, unreadCount: 0 };
   });
 
+  // La maqueta no tiene servidor de push: se dice que está apagado para que la
+  // pantalla no ofrezca algo que no puede cumplir.
+  router.get('/notifications/web-push/config', () => ({ enabled: false, publicKey: null }));
+
   router.get('/notifications/preferences/me', (request) => preferenciasDe(request.user?.id ?? ''));
 
   router.put('/notifications/preferences/me', (request) => {
@@ -167,13 +212,6 @@ export function registrarNotificaciones(router: MockRouter): void {
       categories: datos.categories ?? actuales.categories,
       quietHours: datos.quietHours === undefined ? actuales.quietHours : datos.quietHours,
     };
-    preferencias.set(request.user?.id ?? '', siguiente);
-    return siguiente;
-  });
-  router.patch('/notifications/preferences/me', (request) => {
-    const actuales = preferenciasDe(request.user?.id ?? '');
-    const datos = cuerpo<{ categories?: { category: Categoria; optedIn: boolean }[]; quietHours?: { start: string; end: string } | null }>(request);
-    const siguiente = { categories: datos.categories ?? actuales.categories, quietHours: datos.quietHours === undefined ? actuales.quietHours : datos.quietHours };
     preferencias.set(request.user?.id ?? '', siguiente);
     return siguiente;
   });

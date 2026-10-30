@@ -15,15 +15,10 @@ solo.
 
 **Extraída, no inventada.** El comentario del código lo dice:
 
-> *«780 px era el corte de facto con 30 usos y 1024 px el secundario con 2.
-> Pendiente de que el diseñador la confirme.»*
+> *«780 px era el corte de facto con 30 usos y 1024 px el secundario con 2.»*
 
 Es la forma correcta de fijar una escala en un proyecto que ya existe: se mide lo
 que hay y se nombra, en vez de imponer los valores de un framework.
-
-> **Pendiente real, registrado.** La escala espera confirmación de diseño. Está
-> anotado como brecha `LOW` — no bloquea nada, pero la nota está en el código y
-> conviene cerrarla.
 
 ## Mobile-first, sin excepción
 

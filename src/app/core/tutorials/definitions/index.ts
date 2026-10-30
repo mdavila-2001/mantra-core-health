@@ -28,7 +28,7 @@ const BIENVENIDA: TutorialDefinition = {
   version: '1.0',
   title: 'Primeros pasos en AloVida',
   description:
-    'Qué es cada parte de la pantalla y cómo moverte. Cinco minutos para no tener que adivinar nada.',
+    'Qué es cada parte de la pantalla y cómo moverse. Cinco minutos para no tener que adivinar nada.',
   category: 'General',
   route: '/dashboard',
   estimatedMinutes: 3,
@@ -39,19 +39,20 @@ const BIENVENIDA: TutorialDefinition = {
     {
       id: 'saludo',
       title: 'Bienvenida',
-      body: 'Te voy a mostrar las cuatro cosas que necesitás para empezar a usar la plataforma. Podés dejarlo cuando quieras y retomarlo después desde el centro de tutoriales.',
+      body: 'Le voy a mostrar las cuatro cosas que necesita para empezar a usar la plataforma. Puede dejarlo cuando quiera y retomarlo después desde el centro de tutoriales.',
     },
     {
       id: 'panel',
       title: 'El panel',
-      body: 'Es tu punto de partida: qué secciones tenés habilitadas, en qué organización estás trabajando y cómo va tu verificación de identidad.',
-      target: 'panel-accesos',
+      // Apuntaba al árbol «Sus herramientas», retirado del panel el 28/10/2026.
+      body: 'Es su punto de partida: lo que toca hoy y lo último de su organización. Las secciones se abren desde el menú de la izquierda.',
+      target: 'panel-titulo',
       placement: 'top',
     },
     {
       id: 'organizacion',
       title: 'La organización activa',
-      body: 'Casi todo lo que ves depende de la organización en la que estás. Si trabajás en más de una, se cambia acá.',
+      body: 'Casi todo lo que ve depende de la organización en la que está. Si trabaja en más de una, se cambia acá.',
       target: 'shell-selector-organizacion',
       placement: 'bottom',
     },
@@ -63,9 +64,84 @@ const BIENVENIDA: TutorialDefinition = {
     {
       id: 'ayuda',
       title: 'Dónde volver',
-      body: 'Todos los tutoriales viven en el centro de tutoriales. Podés repetir cualquiera las veces que quieras.',
+      body: 'Todos los tutoriales viven en el centro de tutoriales. Puede repetir cualquiera las veces que quiera.',
       target: 'nav-tutorials',
       placement: 'right',
+    },
+  ],
+};
+
+/**
+ * El recorrido de quien viene a atenderse.
+ *
+ * `bienvenida` habla de organizaciones y del panel de accesos, que el paciente
+ * no tiene: con su sesión casi todos sus pasos se saltaban. Éste señala sólo lo
+ * que el paciente ve en su inicio y en la cabecera, en palabras de todos los
+ * días, y lo ofrece el propio inicio con un botón —no se abre solo—.
+ */
+export const PATIENT_WELCOME_ID = 'bienvenida-paciente';
+
+const BIENVENIDA_PACIENTE: TutorialDefinition = {
+  id: PATIENT_WELCOME_ID,
+  version: '1.0',
+  title: 'Conozca AloVida en un minuto',
+  description:
+    'Dónde pedir ayuda urgente, cómo contar lo que le pasa, dónde ver sus citas y dónde están sus cosas.',
+  category: 'General',
+  route: '/dashboard',
+  roles: ['PATIENT'],
+  estimatedMinutes: 1,
+  level: 'inicial',
+  steps: [
+    {
+      id: 'saludo',
+      title: '¡Bienvenido a AloVida!',
+      body: 'Le mostramos lo importante en seis pasos cortos. Toque «Siguiente» para avanzar; puede salir cuando quiera.',
+    },
+    {
+      id: 'emergencia',
+      title: 'Si es urgente',
+      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba, en la cabecera.',
+      target: 'nav-emergencia',
+      placement: 'bottom',
+      // Sólo existe en la versión responsive (28/10/2026): en el escritorio no
+      // hay a quién esperar, y el paso se saltea sin la pausa de cuatro segundos.
+      waitForTargetMs: 0,
+    },
+    {
+      id: 'sintomas',
+      title: 'Cuéntenos qué le pasa',
+      body: 'Toque en la figura dónde le duele, o escríbalo con sus palabras. Le decimos a qué especialista ir.',
+      target: 'mi-salud-sintomas',
+      placement: 'top',
+    },
+    {
+      id: 'cita',
+      title: 'Su próxima cita',
+      body: 'Acá ve el día, la hora y con quién es su próxima cita. Desde el botón la puede cambiar.',
+      target: 'mi-salud-proxima-cita',
+      placement: 'top',
+    },
+    {
+      id: 'menu',
+      title: 'Sus cosas, en el menú',
+      body: 'A la izquierda están sus citas, su historia clínica, sus resultados, sus órdenes y la farmacia.',
+      target: 'shell-nav',
+      placement: 'right',
+    },
+    {
+      id: 'atajos',
+      title: 'Atajos con nombre',
+      body: 'Arriba tiene los chats con su médico, sus solicitudes, sus gastos con sus facturas y su carrito con las promociones. Cada uno dice qué es.',
+      target: 'header-atajos',
+      placement: 'bottom',
+    },
+    {
+      id: 'ayuda',
+      title: 'Si se pierde',
+      body: 'En «Ajustes», pestaña «Tutoriales», puede repetir este recorrido o aprender algo nuevo. ¡Listo, ya conoce AloVida!',
+      target: 'header-ajustes',
+      placement: 'bottom',
     },
   ],
 };
@@ -74,9 +150,9 @@ const BIENVENIDA: TutorialDefinition = {
 const NAVEGACION: TutorialDefinition = {
   id: 'navegacion',
   version: '1.0',
-  title: 'Moverte por la aplicación',
+  title: 'Moverse por la aplicación',
   description:
-    'Cómo está organizado el menú, por qué ves unas secciones y no otras, y cómo volver sobre tus pasos.',
+    'Cómo está organizado el menú, por qué ve unas secciones y no otras, y cómo volver sobre sus pasos.',
   category: 'General',
   route: '/dashboard',
   estimatedMinutes: 2,
@@ -86,21 +162,21 @@ const NAVEGACION: TutorialDefinition = {
     {
       id: 'grupos',
       title: 'El menú, por dominios',
-      body: 'Las secciones están agrupadas por lo que hacés con ellas: atención, facturación, administración y tu cuenta.',
+      body: 'Las secciones están agrupadas por lo que hace con ellas: atención, facturación, administración y su cuenta.',
       target: 'shell-nav',
       placement: 'right',
     },
     {
       id: 'roles',
-      title: 'Por qué ves estas secciones',
-      body: 'El menú se arma con los roles de tu sesión. Si una sección no aparece, es porque tu rol no la puede abrir, no porque no exista.',
-      target: 'panel-accesos',
-      placement: 'top',
+      title: 'Por qué ve estas secciones',
+      body: 'El menú se arma con los roles de su sesión. Si una sección no aparece, es porque su rol no la puede abrir, no porque no exista.',
+      target: 'shell-nav',
+      placement: 'right',
     },
     {
       id: 'migas',
-      title: 'Volver sobre tus pasos',
-      body: 'La ruta de navegación de cada pantalla te dice dónde estás y te deja subir un nivel sin usar el botón de atrás del navegador.',
+      title: 'Volver sobre sus pasos',
+      body: 'La ruta de navegación de cada pantalla le dice dónde está y le deja subir un nivel sin usar el botón de atrás del navegador.',
       target: 'panel-titulo',
       placement: 'bottom',
     },
@@ -111,9 +187,9 @@ const NAVEGACION: TutorialDefinition = {
 const AGENDA_DEL_DIA: TutorialDefinition = {
   id: 'agenda-del-dia',
   version: '1.0',
-  title: 'Tu agenda del día',
+  title: 'Su agenda del día',
   description:
-    'Ver tus turnos, cambiar la ventana de consulta y entrar al expediente de quien llega.',
+    'Ver sus citas, cambiar la ventana de consulta y entrar al expediente de quien llega.',
   category: 'Atención',
   route: '/schedule',
   roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN', 'SCHEDULING_AGENT'],
@@ -124,28 +200,28 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'La agenda',
-      body: 'Acá están tus citas comprometidas y los cupos que todavía podés ofrecer. Son dos pestañas de la misma agenda.',
+      body: 'Acá están sus citas comprometidas y los cupos que todavía puede ofrecer. Son dos pestañas de la misma agenda.',
     },
     {
       id: 'ventana',
-      title: 'Cambiá la ventana',
-      body: 'Elegí «Hoy» para ver sólo lo de hoy. Probalo: el listado se recarga solo.',
+      title: 'Cambie la ventana',
+      body: 'Elija «Hoy» para ver sólo lo de hoy. Pruébelo: el listado se recarga solo.',
       target: 'agenda-ventana',
       placement: 'bottom',
       advanceOn: 'input',
-      hint: 'Si no pasa nada, abrí el desplegable y elegí una opción distinta a la actual.',
+      hint: 'Si no pasa nada, abra el desplegable y elija una opción distinta a la actual.',
     },
     {
       id: 'pestanas',
       title: 'Citas y cupos',
-      body: 'Las citas son turnos ya tomados. Los cupos son huecos libres: desde ahí se reserva.',
+      body: 'Las citas son horarios ya tomados. Los cupos son huecos libres: desde ahí se reserva.',
       target: 'agenda-pestanas',
       placement: 'bottom',
     },
     {
       id: 'expediente',
-      title: 'Del turno al expediente',
-      body: 'Cada cita enlaza al expediente de la persona, con el motivo de consulta ya cargado. Es por donde sigue tu día.',
+      title: 'De la cita al expediente',
+      body: 'Cada cita enlaza al expediente de la persona, con el motivo de consulta ya cargado. Es por donde sigue su día.',
       target: 'agenda-tabla-citas',
       placement: 'top',
       roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -156,39 +232,25 @@ const AGENDA_DEL_DIA: TutorialDefinition = {
 /**
  * Leer una historia clínica.
  *
- * Versión 2.0: sube la **mayor** porque el recorrido cambió de verdad —lo que
- * se escribe se mudó a su propia pantalla y este tutorial perdió sus dos
- * últimos pasos, que ahora son `atencion-clinica`—. Quien completó la versión
- * anterior lo vuelve a ver, y corresponde: lo que aprendió ya no es lo que la
- * pantalla hace.
+ * Versión 3.0: sube la **mayor** cada vez que el recorrido cambia de verdad.
+ * En la 2.0 lo que se escribe se mudó a su propia pantalla (`atencion-clinica`).
+ * En la 3.0 la banda de contexto se fue: las alergias y la consulta abierta se
+ * dicen en un modal al entrar —no hay nada fijo en la página que señalar— y las
+ * cifras se sacaron. Quien completó una versión anterior lo vuelve a ver, y
+ * corresponde: lo que aprendió ya no es lo que la pantalla hace.
  */
 const EXPEDIENTE: TutorialDefinition = {
   id: 'expediente-clinico',
-  version: '2.1',
+  version: '3.1',
   title: 'Leer el expediente',
-  description:
-    'Cómo está organizada la historia clínica y dónde miran las alergias antes de recetar.',
+  description: 'Cómo está organizada la historia clínica, bloque por bloque.',
   category: 'Atención',
   roles: ['PRACTITIONER', 'CLINICIAN'],
-  estimatedMinutes: 3,
+  estimatedMinutes: 1,
   level: 'intermedio',
   prerequisites: ['agenda-del-dia'],
   next: 'atencion-clinica',
   steps: [
-    {
-      id: 'alergias',
-      title: 'Las alergias, primero',
-      body: 'Están arriba y fuera de las pestañas a propósito: son lo único que tenés que ver antes de recetar. Incluyen los diagnósticos de alergia (CIE-10 Z88, Z91.0, T78).',
-      target: 'expediente-alergias',
-      placement: 'bottom',
-    },
-    {
-      id: 'contexto',
-      title: 'Cuánto expediente hay',
-      body: 'Las cifras te dicen el tamaño de la historia sin abrir pestaña por pestaña, y cuándo fue la última atención.',
-      target: 'expediente-contexto',
-      placement: 'bottom',
-    },
     {
       id: 'bloques',
       title: 'La historia, por bloques',
@@ -211,7 +273,7 @@ const ATENCION_CLINICA: TutorialDefinition = {
   version: '1.1',
   title: 'Registrar una atención',
   description:
-    'Abrir el encuentro, elegir en la rejilla qué le vas a registrar a la persona y cerrar cuando terminás.',
+    'Abrir el encuentro, elegir en la rejilla qué le va a registrar a la persona y cerrar cuando termina.',
   category: 'Atención',
   roles: ['PRACTITIONER', 'CLINICIAN'],
   estimatedMinutes: 3,
@@ -221,14 +283,14 @@ const ATENCION_CLINICA: TutorialDefinition = {
     {
       id: 'encuentro',
       title: 'Dejar constancia',
-      body: 'El encuentro es el registro de que atendiste a esta persona. Se abre al empezar y se cierra al terminar; todo lo demás cuelga de él.',
+      body: 'El encuentro es el registro de que atendió a esta persona. Se abre al empezar y se cierra al terminar; todo lo demás cuelga de él.',
       target: 'consulta-encuentro',
       placement: 'bottom',
     },
     {
       id: 'receta',
-      title: 'Qué le vas a registrar',
-      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: diagnóstico (también alergias), receta, observación, nota, plan, documento, formulario clínico o internación. Tocá una y se abre su formulario.',
+      title: 'Qué le va a registrar',
+      body: 'Cada casilla de la rejilla es algo que se puede registrar en esta consulta: formulario médico, orden de análisis, diagnóstico (también alergias), receta, plan de cuidados o reconsulta. Toque una y se abre su formulario.',
       target: 'consulta-rejilla',
       placement: 'top',
     },
@@ -247,9 +309,9 @@ const ATENCION_CLINICA: TutorialDefinition = {
 const PERFIL_PROFESIONAL: TutorialDefinition = {
   id: 'perfil-profesional',
   version: '2.0',
-  title: 'Tu perfil profesional',
+  title: 'Su perfil profesional',
   description:
-    'Tu trayectoria, tus credenciales y cómo se ve tu perfil público para un paciente.',
+    'Su trayectoria, sus credenciales y cómo se ve su perfil público para un paciente.',
   category: 'Mi cuenta',
   route: '/my-account',
   roles: ['PRACTITIONER', 'CLINICIAN'],
@@ -258,22 +320,22 @@ const PERFIL_PROFESIONAL: TutorialDefinition = {
   steps: [
     {
       id: 'portada',
-      title: 'Cómo te ven',
-      body: 'Tu nombre, tu título y la especialidad con la que te presentás. También si estás tomando pacientes nuevos.',
+      title: 'Cómo le ven',
+      body: 'Su nombre, su título y la especialidad con la que se presenta. También si está tomando pacientes nuevos.',
       target: 'perfil-portada',
       placement: 'bottom',
     },
     {
       id: 'actividad',
-      title: 'Lo que llevás registrado',
-      body: 'Encuentros, recetas, notas y documentos que dejaste asentados con esta cuenta. No es un ranking: es tu historial.',
+      title: 'Lo que lleva registrado',
+      body: 'Encuentros, recetas, notas y documentos que dejó asentados con esta cuenta. No es un ranking: es su historial.',
       target: 'perfil-actividad',
       placement: 'top',
     },
     {
       id: 'trayectoria',
-      title: 'Tu trayectoria',
-      body: 'Formación, dónde ejerciste antes y dónde ejercés hoy, en una línea de tiempo. Acá también agregás vínculos laborales nuevos.',
+      title: 'Su trayectoria',
+      body: 'Formación, dónde ejerció antes y dónde ejerce hoy, en una línea de tiempo. Acá también agrega vínculos laborales nuevos.',
       target: 'perfil-trayectoria',
       placement: 'top',
     },
@@ -292,7 +354,7 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
   id: 'centro-de-ayuda',
   version: '1.0',
   title: 'Usar el centro de tutoriales',
-  description: 'Buscar, filtrar, continuar lo empezado y repetir lo que ya hiciste.',
+  description: 'Buscar, filtrar, continuar lo empezado y repetir lo que ya hizo.',
   category: 'General',
   route: '/tutorials',
   estimatedMinutes: 2,
@@ -300,15 +362,15 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
   steps: [
     {
       id: 'avance',
-      title: 'Cuánto llevás',
-      body: 'El avance general cuenta los tutoriales que completaste sobre los que tenés disponibles según tu rol.',
+      title: 'Cuánto lleva',
+      body: 'El avance general cuenta los tutoriales que completó sobre los que tiene disponibles según su rol.',
       target: 'tutoriales-avance',
       placement: 'bottom',
     },
     {
       id: 'buscador',
       title: 'Buscar',
-      body: 'Escribí lo que querés aprender. Busca en el título y en la descripción.',
+      body: 'Escriba lo que quiere aprender. Busca en el título y en la descripción.',
       target: 'tutoriales-busqueda',
       placement: 'bottom',
       advanceOn: 'input',
@@ -316,14 +378,14 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
     {
       id: 'filtros',
       title: 'Filtrar',
-      body: 'Por categoría y por estado, para encontrar lo que dejaste a medias.',
+      body: 'Por categoría y por estado, para encontrar lo que dejó a medias.',
       target: 'tutoriales-filtros',
       placement: 'bottom',
     },
     {
       id: 'tarjeta',
       title: 'Empezar, continuar o repetir',
-      body: 'Cada tutorial te ofrece lo que corresponde según cómo lo dejaste. Repetir uno completado no borra que lo hiciste.',
+      body: 'Cada tutorial le ofrece lo que corresponde según cómo lo dejó. Repetir uno completado no borra que lo hizo.',
       target: 'tutoriales-lista',
       placement: 'top',
     },
@@ -338,14 +400,14 @@ const CENTRO_DE_AYUDA: TutorialDefinition = {
 const CONTABILIDAD: TutorialDefinition = {
   id: 'contabilidad',
   version: '1.1',
-  title: 'Registrar tus movimientos contables',
+  title: 'Registrar sus movimientos contables',
   description:
-    'El balance de sumas y saldos y el libro diario de tu práctica, y cómo registrar un ingreso o un gasto.',
+    'El balance de sumas y saldos y el libro diario de su práctica, y cómo registrar un ingreso o un gasto.',
   category: 'Facturación',
   // Los pasos explican el balance, el diario y cómo registrar un movimiento:
   // eso vive en los libros, que desde el 2026-09-12 están un clic adentro de
   // Contabilidad —la dirección de la sección abre el cockpit—.
-  route: '/administration/accounting/libros',
+  route: '/administration/accounting/books',
   roles: ['BILLING_ADMIN', 'ACCOUNTANT', 'PRACTITIONER'],
   estimatedMinutes: 3,
   level: 'intermedio',
@@ -353,17 +415,17 @@ const CONTABILIDAD: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Contabilidad',
-      body: 'Acá revisás lo que tu práctica facturó y cobró, y registrás vos mismo tus movimientos.',
+      body: 'Acá revisa lo que su práctica facturó y cobró, y registra usted mismo sus movimientos.',
     },
     {
       id: 'registrar-ingreso',
       title: 'Ingreso de una consulta pagada',
-      body: 'Elegí la factura ya pagada, elegí las cuentas de debe y haber, y confirmá. Queda en borrador, anclado a esa factura.',
+      body: 'Elija la factura ya pagada, elija las cuentas de debe y haber, y confirme. Queda en borrador, anclado a esa factura.',
     },
     {
       id: 'aprobacion',
       title: 'Quién lo aprueba',
-      body: 'Un borrador no es un hecho contable todavía: el posteo final lo hace quien tiene autoridad contable en tu práctica.',
+      body: 'Un borrador no es un hecho contable todavía: el posteo final lo hace quien tiene autoridad contable en su práctica.',
     },
   ],
 };
@@ -372,10 +434,12 @@ const CONTABILIDAD: TutorialDefinition = {
 const ORGANIZACIONES: TutorialDefinition = {
   id: 'mis-organizaciones',
   version: '1.0',
-  title: 'Vincularte a una organización',
+  title: 'Vincularse a una organización',
   description: 'Pedir una vinculación y entender qué implica (y qué no).',
   category: 'Administración',
-  route: '/administration/medical-organization',
+  // Directo a la pestaña: el tutorial habla de «Mis vinculaciones», y sin el
+  // parámetro abría el panel en «Resumen», donde nada de lo que dice está.
+  route: '/administration/medical-organization?tab=memberships',
   roles: ['PRACTITIONER'],
   estimatedMinutes: 2,
   level: 'inicial',
@@ -383,17 +447,17 @@ const ORGANIZACIONES: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Mis vinculaciones',
-      body: 'Podés ejercer en más de una organización a la vez. En la pestaña «Mis vinculaciones» de este panel pedís vincularte a una y ves el estado de todas.',
+      body: 'Puede ejercer en más de una organización a la vez. En la pestaña «Mis vinculaciones» de este panel pide vincularse a una y ve el estado de todas.',
     },
     {
       id: 'pendiente',
       title: 'Queda pendiente',
-      body: 'Pedir una vinculación no te agrega de inmediato: la organización tiene que aprobarla, igual que en la vida real.',
+      body: 'Pedir una vinculación no le agrega de inmediato: la organización tiene que aprobarla, igual que en la vida real.',
     },
     {
       id: 'no-da-acceso',
       title: 'No da acceso a pacientes',
-      body: 'Estar vinculado a una organización nunca te da acceso a sus pacientes. Eso depende siempre de una cita, derivación, intervención o autorización concreta con ese paciente.',
+      body: 'Estar vinculado a una organización nunca le da acceso a sus pacientes. Eso depende siempre de una cita, derivación, intervención o autorización concreta con ese paciente.',
     },
   ],
 };
@@ -402,8 +466,8 @@ const ORGANIZACIONES: TutorialDefinition = {
 const NOTIFICACIONES: TutorialDefinition = {
   id: 'notificaciones',
   version: '1.1',
-  title: 'Tus notificaciones',
-  description: 'La bandeja de avisos y tus preferencias por categoría.',
+  title: 'Sus notificaciones',
+  description: 'La bandeja de avisos y sus preferencias por categoría.',
   category: 'General',
   route: '/notification-center',
   estimatedMinutes: 2,
@@ -412,17 +476,17 @@ const NOTIFICACIONES: TutorialDefinition = {
     {
       id: 'que-es',
       title: 'Notificaciones',
-      body: 'Acá ves tus avisos: recetas, consultas, turnos y mensajes. Tocá uno para abrir lo que anuncia, y marcalos leídos de a uno o todos juntos.',
+      body: 'Acá ve sus avisos: recetas, consultas, citas y mensajes. Toque uno para abrir lo que anuncia, y márquelos leídos de a uno o todos juntos.',
     },
     {
       id: 'preferencias',
-      title: 'Elegí de qué te avisamos',
-      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activás o silenciás cada familia: recetas y consultas, turnos, mensajes y actividad social.',
+      title: 'Elija de qué le avisamos',
+      body: 'Desde el ícono de Ajustes, arriba a la derecha, en «Avisos» activa o silencia cada familia: recetas y consultas, citas, mensajes y actividad social.',
     },
     {
       id: 'silencio',
       title: 'Ventana de silencio',
-      body: 'También podés fijar un horario de silencio, que se escribe en tu hora local: en esa ventana no te avisamos, y lo pendiente te espera en la bandeja.',
+      body: 'También puede fijar un horario de silencio, que se escribe en su hora local: en esa ventana no le avisamos, y lo pendiente le espera en la bandeja.',
     },
   ],
 };
@@ -433,6 +497,7 @@ const NOTIFICACIONES: TutorialDefinition = {
  */
 export const TUTORIALS: readonly TutorialDefinition[] = [
   BIENVENIDA,
+  BIENVENIDA_PACIENTE,
   NAVEGACION,
   AGENDA_DEL_DIA,
   EXPEDIENTE,

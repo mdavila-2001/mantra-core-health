@@ -1,0 +1,451 @@
+/* ============================================================================
+    «Cómo le va» — el resumen general del profesional.
+
+    UNA tarjeta, a lo ancho de la pestaña. Dentro, secciones separadas por una
+    línea y no por más tarjetas apiladas. Los gráficos son barras de CSS con los
+    tokens del sistema: la marca para la magnitud, y los colores de estado sólo
+    en el NPS, donde además cada tramo lleva su nombre y su cifra escritos.
+    ========================================================================== */
+
+:host {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  margin-block-end: var(--sp-6);
+}
+
+.resumen {
+  display: block;
+}
+
+.resumen__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.resumen__bajada {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}
+
+/* Período y servicio en un renglón mientras entren. */
+.resumen__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-5);
+}
+
+.resumen__periodo {
+  display: flex;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+/* En el celular el período ocupa su renglón y NO es un contenedor flex: el
+   control segmentado reparte el ancho entre sus opciones cuando mide el 100 %
+   (≤ 30rem), y como ítem flex medía lo que le tocaba y cortaba «12 meses». */
+@media (max-width: 40rem) {
+  .resumen__periodo {
+    display: block;
+    flex: 1 1 100%;
+  }
+}
+
+.resumen__servicio {
+  flex: 1 1 14rem;
+  max-inline-size: 22rem;
+  min-inline-size: 0;
+}
+
+.resumen__esqueleto {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.resumen__esqueleto-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.resumen__cuerpo {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+/* Cinco cifras: de a tres, de a dos o de a una según el ancho. */
+.resumen__kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14.5rem, 1fr));
+  gap: var(--sp-3);
+}
+
+.resumen__seccion {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-5);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.resumen__subtitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+}
+
+.resumen__n {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+/* -- NPS --------------------------------------------------------------------- */
+
+.nps {
+  display: flex;
+  gap: 2px;
+  block-size: 0.875rem;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.nps__tramo {
+  flex-basis: 0;
+  min-inline-size: 4px;
+}
+
+.nps__tramo--promoters,
+.nps__marca--promoters {
+  background: var(--st-success-fg);
+}
+.nps__tramo--passives,
+.nps__marca--passives {
+  background: var(--text-muted);
+}
+.nps__tramo--detractors,
+.nps__marca--detractors {
+  background: var(--st-error-fg);
+}
+
+.nps__leyenda {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nps__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'marca nombre cifra'
+    'marca regla  cifra';
+  column-gap: var(--sp-2);
+  align-items: center;
+  font-size: var(--fs-body);
+}
+
+.nps__marca {
+  grid-area: marca;
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  border-radius: var(--r-xs);
+}
+.nps__nombre {
+  grid-area: nombre;
+  font-weight: 600;
+}
+.nps__regla {
+  grid-area: regla;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+.nps__cifra {
+  grid-area: cifra;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* -- Por pregunta ------------------------------------------------------------- */
+
+.preguntas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-5) var(--sp-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 62rem) {
+  .preguntas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.pregunta {
+  display: grid;
+  align-content: start;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+/* Sin datos suficientes: una pregunta que no tiene nada que graficar no pide el
+   alto de las que sí. Letra y espacios más chicos, y la grilla no la estira. */
+.pregunta--suprimida {
+  align-self: start;
+  gap: 0;
+}
+
+.pregunta--suprimida .pregunta__texto {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.pregunta--suprimida .resumen__nota {
+  margin-block: var(--sp-1) 0;
+}
+
+.pregunta__rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pregunta__texto {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pregunta__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.barras {
+  /* Una sola rejilla para todas las filas: la columna de etiquetas mide lo que
+     la más larga (hasta 14rem), así las barras de una pregunta arrancan todas
+     en el mismo lugar. */
+  display: grid;
+  grid-template-columns: fit-content(14rem) minmax(4rem, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barras__fila {
+  display: contents;
+}
+
+/* En el celular no hay ancho para etiqueta, barra y cifra en una línea: la
+   etiqueta pasa arriba de su barra. */
+@media (max-width: 40rem) {
+  .barras {
+    grid-template-columns: 1fr;
+    gap: var(--sp-2);
+  }
+
+  .barras__fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'etiqueta etiqueta'
+      'pista    cifra';
+    align-items: center;
+    gap: 2px var(--sp-3);
+  }
+
+  .barras__etiqueta {
+    grid-area: etiqueta;
+  }
+  .barras__pista {
+    grid-area: pista;
+  }
+  .barras__cifra {
+    grid-area: cifra;
+  }
+}
+
+.resumen__ver-mas {
+  justify-self: start;
+}
+
+.barras__etiqueta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: anywhere;
+}
+
+.barras__pista {
+  display: block;
+  block-size: 0.625rem;
+  overflow: hidden;
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.barras__relleno {
+  display: block;
+  block-size: 100%;
+  min-inline-size: 0;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+  transition: inline-size var(--dur-base) var(--ease-standard);
+}
+
+.barras__cifra {
+  min-inline-size: 4.5rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* -- Tendencia ----------------------------------------------------------------- */
+
+.tendencia {
+  overflow-x: auto;
+  padding-block-end: var(--sp-1);
+}
+
+.tendencia__columnas {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tendencia__col {
+  display: grid;
+  grid-template-rows: auto 7rem auto auto;
+  flex: 1 0 2.75rem;
+  justify-items: center;
+  gap: var(--sp-1);
+  min-inline-size: 2.75rem;
+}
+
+.tendencia__cantidad {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tendencia__pista {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: 7rem;
+}
+
+.tendencia__barra {
+  display: block;
+  inline-size: min(100%, 2rem);
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  background: var(--brand-primary);
+  transition: block-size var(--dur-base) var(--ease-standard);
+}
+
+.tendencia__etiqueta {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+}
+
+.tendencia__promedio {
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.tendencia__tabla summary {
+  cursor: pointer;
+  color: var(--text-link);
+  font-size: var(--fs-body);
+}
+
+.tendencia__tabla table {
+  inline-size: 100%;
+  margin-block-start: var(--sp-2);
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.tendencia__tabla th,
+.tendencia__tabla td {
+  padding: var(--sp-2);
+  border-block-end: 1px solid var(--border-default);
+  text-align: start;
+}
+
+/* -- Comentarios ---------------------------------------------------------------- */
+
+.comentarios {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 62rem) {
+  .comentarios {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.comentario {
+  padding: var(--sp-3) var(--sp-4);
+  border-inline-start: 3px solid var(--brand-primary);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+}
+
+.comentario__texto {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barras__relleno,
+  .tendencia__barra {
+    transition: none;
+  }
+}

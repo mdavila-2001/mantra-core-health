@@ -1,5 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { chooseSelectOption } from '../../../../../testing/select';
 import { Pagination } from './pagination';
 import { MAX_PAGE_SLOTS, PAGE_GAP } from './pagination.types';
 
@@ -199,9 +200,9 @@ describe('Pagination', () => {
   });
 
   describe('saltar a una página (ADR-0015, regla 7)', () => {
-    function selectDeSalto(): HTMLSelectElement {
-      const select = host().querySelector('.pagination__jump select');
-      if (!(select instanceof HTMLSelectElement)) {
+    function selectDeSalto(): HTMLElement {
+      const select = host().querySelector<HTMLElement>('app-select.pagination__jump');
+      if (select === null) {
         throw new Error('no está el select de saltar página');
       }
       return select;
@@ -220,10 +221,8 @@ describe('Pagination', () => {
     it('elegir una página navega ahí', async () => {
       await setInputs({ page: 1 });
 
-      const select = selectDeSalto();
-      select.value = '2';
-      select.dispatchEvent(new Event('change'));
-      await fixture.whenStable();
+      // La tercera opción de la lista es la página 3.
+      await chooseSelectOption(fixture, selectDeSalto(), 2);
 
       expect(fixture.componentInstance.page()).toBe(3);
     });
@@ -240,14 +239,12 @@ describe('Pagination', () => {
     it('cambiarlo vuelve a la página 1', async () => {
       await setInputs({ page: 12 });
 
-      const select = host().querySelector('.pagination__size select');
-      if (!(select instanceof HTMLSelectElement)) {
+      const select = host().querySelector<HTMLElement>('app-select.pagination__size');
+      if (select === null) {
         throw new Error('el select de tamaño no está en el DOM');
       }
-      // el `<option>` lleva el índice: 10 · 20 · 50 · 100 → el 50 es el índice 2
-      select.value = '2';
-      select.dispatchEvent(new Event('change'));
-      await fixture.whenStable();
+      // la lista va 10 · 20 · 50 · 100 → el 50 es el índice 2
+      await chooseSelectOption(fixture, select, 2);
 
       expect(fixture.componentInstance.pageSize()).toBe(50);
       expect(fixture.componentInstance.page()).toBe(1);

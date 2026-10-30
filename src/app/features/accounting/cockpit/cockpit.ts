@@ -3,12 +3,15 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin, of, throwError } from 'rxjs';
+import { concatMap, forkJoin, from, of, throwError, toArray } from 'rxjs';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 import { AccountingClient } from '../../../core/data-access/accounting/accounting.client';
+import { AccountingPractices, NO_ACTIVE_PRACTICE } from '../../../core/data-access/accounting/accounting-practices';
+import { SessionStore } from '../../../core/auth/session.store';
 import { readApiError } from '../../../core/http/api-error';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import type {
   AccrualRegister,
   BalanceSheet,
@@ -19,6 +22,8 @@ import type {
   FixedAssetRegister,
   IncomeStatement,
   JournalTransaction,
+  LedgerAccount,
+  OpenItem,
   OpenItemsPage,
   Practice,
   TrialBalance,
@@ -40,14 +45,17 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import {
-  ACCION_DEL_ESTADO,
-  ETIQUETA_DE_ESTADO,
-  TONO_DEL_ESTADO,
-  type AccionDisponible,
-} from './flujo-del-documento';
+  STATUS_ACTION,
+  STATUS_LABEL,
+  STATUS_TONE,
+  type AvailableAction,
+} from './document-flow';
 
 /**
  * El **cockpit contable**: la pantalla que responde «¿cómo va el ejercicio?»
@@ -93,6 +101,7 @@ import {
   selector: 'app-accounting-cockpit',
   imports: [
     Alert,
+    SegmentedControl,
     DatePipe,
     AppButton,
     AppButtonLink,
@@ -114,8 +123,11 @@ import {
 })
 export class Cockpit {
   private readonly accounting = inject(AccountingClient);
+  private readonly accountingPractices = inject(AccountingPractices);
   private readonly toasts = inject(ToastService);
+  private readonly dialogs = inject(DialogService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly session = inject(SessionStore);
 
   /** Fuerza una relectura sin tocar la práctica elegida. */
   private readonly recarga = signal(0);
@@ -132,6 +144,16 @@ export class Cockpit {
 
   readonly practicaElegida = signal<string | null>(null);
   readonly periodoElegido = signal<string | null>(null);
+
+  /*
+   * Las cuentas que asientan los tres procesos que la API no deduce sola
+   * (informe B, C9 y C10): dónde entra o sale el dinero de una compensación,
+   * y el par gasto / acumulada de la amortización. Las elige la persona entre
+   * las del plan de cuentas de la práctica; la pantalla no adivina una.
+   */
+  readonly cuentaDeBanco = signal<string | null>(null);
+  readonly cuentaDeGastoPorAmortizacion = signal<string | null>(null);
+  readonly cuentaDeAmortizacionAcumulada = signal<string | null>(null);
 
   private readonly practicas = signal<ViewState<readonly Practice[]>>(loading());
 
@@ -162,6 +184,34 @@ export class Cockpit {
     return porId ?? ejercicio.periods.find((p) => p.id === ejercicio.currentPeriodId) ?? null;
   });
 
+  /** El plan de cuentas como opciones: `código · nombre`. */
+  readonly opcionesDeCuenta = computed(() =>
+    (this.datos()?.cuentas ?? []).map((c) => ({ value: c.id, label: `${c.code} · ${c.name}` })),
+  );
+
+  /**
+   * El período donde asientan las corridas y las compensaciones: el elegido,
+   * y sólo si está ABIERTO. Uno cerrado o planificado rechaza el asiento, así
+   * que la pantalla no ofrece correr nada contra él.
+   */
+  readonly periodoParaAsentar = computed<FiscalPeriod | null>(() => {
+    const periodo = this.periodoActivo();
+    return periodo !== null && periodo.status === 'OPEN' ? periodo : null;
+  });
+
+  readonly puedeAmortizar = computed(
+    () =>
+      this.periodoParaAsentar() !== null &&
+      this.cuentaDeGastoPorAmortizacion() !== null &&
+      this.cuentaDeAmortizacionAcumulada() !== null,
+  );
+
+  readonly puedeDevengar = computed(
+    () =>
+      this.periodoParaAsentar() !== null &&
+      (this.datos()?.devengos.items.some((d) => !d.completed) ?? false),
+  );
+
   readonly opcionesDePeriodo = computed(() => {
     const ejercicio = this.datos()?.ejercicio ?? null;
     return ejercicio === null
@@ -173,50 +223,123 @@ export class Cockpit {
   });
 
   /**
-   * Los documentos agrupados por estado, en el orden del flujo.
+   * Qué muestra la bandeja: los pendientes (los cuatro estados que todavía no
+   * llegaron al mayor) o un estado concreto del flujo.
+   *
+   * Arranca en «pendientes» porque es la pregunta con la que se entra: qué
+   * está frenado. Los posteados son la mayoría del diario y, listados de
+   * entrada, tapaban a los cinco que pedían una acción.
+   */
+  readonly filtroDeDocumentos = signal<FiltroDeDocumentos>('PENDIENTES');
+
+  /**
+   * Las etapas del flujo con su cuenta, en el orden del recorrido.
    *
    * El orden no es alfabético ni por fecha: es el del recorrido. Quien mira la
    * bandeja está buscando dónde se frenó algo, y eso se lee siguiendo la
    * secuencia.
    */
-  readonly bandeja = computed(() => {
+  readonly etapas = computed(() => {
     const datos = this.datos();
     if (datos === null) return [];
-    const orden: readonly WorkflowStatus[] = [
-      'DRAFT',
-      'AUTO_CLASSIFIED',
-      'PENDING_REVIEW',
-      'APPROVED',
-      'POSTED',
-      'REVERSED',
-    ];
-    return orden.map((estado) => {
-      const todos = datos.diario.filter((a) => (a.status ?? 'POSTED') === estado);
-      // Lo cerrado se recorta. La bandeja existe para ver dónde se frenó algo;
-      // los posteados y los revertidos ya no se frenan en ningún lado, y
-      // listarlos enteros convierte el cockpit en un segundo libro diario
-      // —que ya existe, y con filtros—. Se muestran los últimos y se dice
-      // cuántos quedan.
-      const cerrado = estado === 'POSTED' || estado === 'REVERSED';
+    return ORDEN_DEL_FLUJO.map((estado) => ({
+      estado,
+      etiqueta: STATUS_LABEL[estado],
+      total: datos.diario.filter((a) => estadoDe(a) === estado).length,
+    }));
+  });
+
+  /** Los documentos que la bandeja muestra con el filtro elegido. */
+  readonly bandeja = computed(() => {
+    const datos = this.datos();
+    const filtro = this.filtroDeDocumentos();
+    if (datos === null) return { filas: [], ocultos: 0, total: 0 };
+    const todos = datos.diario.filter((a) =>
+      filtro === 'PENDIENTES' ? !ESTADOS_CERRADOS.has(estadoDe(a)) : estadoDe(a) === filtro,
+    );
+    // Lo cerrado se recorta. La bandeja existe para ver dónde se frenó algo;
+    // los posteados y los revertidos ya no se frenan en ningún lado, y
+    // listarlos enteros convierte el cockpit en un segundo libro diario
+    // —que ya existe, y con filtros—. Se muestran los últimos y se dice
+    // cuántos quedan.
+    const cerrado = filtro !== 'PENDIENTES' && ESTADOS_CERRADOS.has(filtro);
+    const filas = (cerrado ? todos.slice(0, CERRADOS_A_LA_VISTA) : todos).map((doc) => {
+      const estado = estadoDe(doc);
       return {
+        doc,
         estado,
-        etiqueta: ETIQUETA_DE_ESTADO[estado],
-        tono: TONO_DEL_ESTADO[estado],
-        accion: ACCION_DEL_ESTADO[estado],
-        documentos: cerrado ? todos.slice(0, CERRADOS_A_LA_VISTA) : todos,
-        ocultos: cerrado ? Math.max(0, todos.length - CERRADOS_A_LA_VISTA) : 0,
-        total: todos.length,
+        etiqueta: STATUS_LABEL[estado],
+        tono: STATUS_TONE[estado],
+        accion: STATUS_ACTION[estado],
       };
     });
+    return { filas, ocultos: todos.length - filas.length, total: todos.length };
+  });
+
+  /** Cuántos documentos están listos para postear: aprobados, esperando el último paso. */
+  readonly listosParaPostear = computed(
+    () => this.datos()?.diario.filter((a) => estadoDe(a) === 'APPROVED').length ?? 0,
+  );
+
+  /** Qué lado de la cartera se lista: las dos, sólo cobros o sólo pagos. */
+  readonly ladoDePartidas = signal<LadoDePartidas>('TODAS');
+
+  readonly opcionesDeLado: readonly SegmentedOption<LadoDePartidas>[] = [
+    { value: 'TODAS', label: 'Todas' },
+    { value: 'RECEIVABLE', label: 'Por cobrar' },
+    { value: 'PAYABLE', label: 'Por pagar' },
+  ];
+
+  /** Las partidas del lado elegido, la más vencida primero. */
+  readonly partidasVisibles = computed(() => {
+    const datos = this.datos();
+    if (datos === null) return [];
+    const lado = this.ladoDePartidas();
+    return datos.partidas.items
+      .filter((p) => lado === 'TODAS' || p.side === lado)
+      .slice()
+      .sort((a, b) => b.overdueDays - a.overdueDays);
+  });
+
+  /** Cuántas partidas de cada lado ya pasaron su vencimiento. */
+  readonly vencidas = computed(() => {
+    const items = this.datos()?.partidas.items ?? [];
+    return {
+      cobrar: items.filter((p) => p.side === 'RECEIVABLE' && p.overdueDays > 0).length,
+      pagar: items.filter((p) => p.side === 'PAYABLE' && p.overdueDays > 0).length,
+    };
+  });
+
+  /**
+   * Margen del período, en porcentaje con un decimal.
+   *
+   * Es la única cuenta que la pantalla hace con importes, y no produce un
+   * importe: produce una proporción para leer. Los montos siguen viajando y
+   * mostrándose como texto; acá no se suma ni se resta dinero.
+   */
+  readonly margen = computed<string | null>(() => {
+    const resultado = this.datos()?.resultado;
+    if (resultado === undefined) return null;
+    const ingresos = Number(resultado.totalRevenue);
+    const neto = Number(resultado.netIncome);
+    if (!Number.isFinite(ingresos) || !Number.isFinite(neto) || ingresos === 0) return null;
+    return `${((neto / ingresos) * 100).toFixed(1).replace('.', ',')} %`;
+  });
+
+  /** Los tres tipos de objeto de controlling, cada uno con sus objetos. */
+  readonly dimensiones = computed(() => {
+    const controlling = this.datos()?.controlling ?? [];
+    return TIPOS_DE_DIMENSION.map((tipo) => ({
+      ...tipo,
+      items: controlling.filter((d) => d.kind === tipo.kind),
+    }));
   });
 
   /** Cuántos documentos están a mitad de camino: ni borrador ni posteados. */
   readonly documentosEnCurso = computed(() => {
     const datos = this.datos();
     if (datos === null) return 0;
-    return datos.diario.filter(
-      (a) => a.status !== 'POSTED' && a.status !== 'REVERSED',
-    ).length;
+    return datos.diario.filter((a) => !ESTADOS_CERRADOS.has(estadoDe(a))).length;
   });
 
   readonly carteraVencida = computed(() => {
@@ -228,8 +351,8 @@ export class Cockpit {
   });
 
   constructor() {
-    this.accounting
-      .listPractices()
+    this.accountingPractices
+      .list()
       .pipe(
         map((items) => ready(items)),
         catchError((error: unknown) => of(errorToViewState<readonly Practice[]>(error))),
@@ -239,6 +362,9 @@ export class Cockpit {
         this.practicas.set(estado);
         if (estado.status === 'ready' && estado.data.length > 0 && this.practicaElegida() === null) {
           this.practicaElegida.set(estado.data[0]!.id);
+        }
+        if (estado.status === 'ready' && estado.data.length === 0) {
+          this.tablero.set(NO_ACTIVE_PRACTICE);
         }
       });
 
@@ -266,6 +392,7 @@ export class Cockpit {
             activos: this.accounting.fixedAssets(practiceId),
             devengos: this.accounting.accrualObjects(practiceId),
             diario: this.accounting.listJournal(practiceId, { limit: 50 }).pipe(map((p) => p.items)),
+            cuentas: this.accounting.chartOfAccounts(practiceId).pipe(map((c) => c.items)),
           }).pipe(
             map((datos): ViewState<Tablero> => ready(datos)),
             startWith(loading()),
@@ -274,7 +401,26 @@ export class Cockpit {
         }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((estado) => this.tablero.set(estado));
+      .subscribe((estado) => {
+        if (estado.status === 'ready') this.olvidarCuentasAjenas(estado.data.cuentas);
+        this.tablero.set(estado);
+      });
+  }
+
+  /**
+   * Al cambiar de práctica, una cuenta elegida antes puede no ser de ésta: se
+   * suelta, para no asentar contra el plan de otra práctica.
+   */
+  private olvidarCuentasAjenas(cuentas: readonly LedgerAccount[]): void {
+    const ids = new Set(cuentas.map((c) => c.id));
+    for (const elegida of [
+      this.cuentaDeBanco,
+      this.cuentaDeGastoPorAmortizacion,
+      this.cuentaDeAmortizacionAcumulada,
+    ]) {
+      const id = elegida();
+      if (id !== null && !ids.has(id)) elegida.set(null);
+    }
   }
 
   /**
@@ -297,8 +443,11 @@ export class Cockpit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (cadena) => this.cadenaDelFlujo.set(cadena),
-        error: () =>
-          this.toasts.show({ type: 'error', message: 'No se pudo leer el flujo del documento.' }),
+        error: (error: unknown) =>
+          this.toasts.show({
+            type: 'error',
+            message: describeApiFailure(error, 'No se pudo leer el flujo del documento. Intente de nuevo.'),
+          }),
       });
   }
 
@@ -306,8 +455,26 @@ export class Cockpit {
     this.recarga.update((n) => n + 1);
   }
 
+  /** Lleva a la bandeja con un filtro puesto: es el destino de los atajos. */
+  irABandeja(filtro: FiltroDeDocumentos): void {
+    this.filtroDeDocumentos.set(filtro);
+    this.pestana.set(0);
+  }
+
   /** Mueve un documento un paso, y vuelve a leer: el mayor pudo cambiar. */
-  avanzar(transactionId: string, accion: AccionDisponible): void {
+  async avanzar(transactionId: string, numero: string, accion: AvailableAction): Promise<void> {
+    // Revertir es lo único del flujo que no tiene vuelta atrás: crea el
+    // documento espejo y los dos quedan en el mayor para siempre.
+    if (accion.action === 'reverse') {
+      const confirmado = await this.dialogs.confirm({
+        title: `Revertir ${numero}`,
+        message:
+          'Se crea un documento espejo que anula el efecto de este en el mayor. Los dos quedan registrados y ninguno se puede editar.',
+        confirmLabel: 'Revertir',
+        destructive: true,
+      });
+      if (!confirmado) return;
+    }
     this.accounting
       .advanceWorkflow(transactionId, accion.action as WorkflowAction)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -319,18 +486,31 @@ export class Cockpit {
           });
           this.recargar();
         },
-        error: () =>
+        // La causa la dice la API (período cerrado, transición no permitida…);
+        // la pantalla no la adivina.
+        error: (error: unknown) =>
           this.toasts.show({
             type: 'error',
-            message: 'No se pudo mover el documento. El período puede estar cerrado.',
+            message: describeApiFailure(error, `No se pudo mover el documento ${numero}. Intente de nuevo.`),
           }),
       });
   }
 
-  /** Cerrar el mes. Falla si queda un documento sin postear — y eso es correcto. */
-  cerrarPeriodo(): void {
+  /**
+   * Cerrar el mes. La API sólo cierra un período abierto (`PRECONDITION_FAILED`
+   * si no lo está); el motivo de un rechazo lo da ella, no esta pantalla.
+   */
+  async cerrarPeriodo(): Promise<void> {
     const periodo = this.periodoActivo();
     if (periodo === null) return;
+    const confirmado = await this.dialogs.confirm({
+      title: `Cerrar ${periodo.name}`,
+      message:
+        'Un período cerrado no admite asientos nuevos. Lo que falte habrá que registrarlo en el período abierto siguiente.',
+      confirmLabel: 'Cerrar el período',
+      destructive: true,
+    });
+    if (!confirmado) return;
     this.accounting
       .lockFiscalPeriod(periodo.id)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -339,10 +519,10 @@ export class Cockpit {
           this.toasts.show({ type: 'success', message: `Período cerrado: ${periodo.name}` });
           this.recargar();
         },
-        error: () =>
+        error: (error: unknown) =>
           this.toasts.show({
             type: 'error',
-            message: 'No se cerró: quedan documentos sin postear en el período.',
+            message: describeApiFailure(error, `No se pudo cerrar el período ${periodo.name}. Intente de nuevo.`),
           }),
       });
   }
@@ -353,73 +533,141 @@ export class Cockpit {
    * No es un informe: crea el asiento y mueve los saldos, así que después hay
    * que releer el tablero entero — el resultado del período acaba de cambiar.
    */
-  amortizar(): void {
+  async amortizar(): Promise<void> {
     const practiceId = this.practicaElegida();
-    if (practiceId === null) return;
+    const tablero = this.datos();
+    const periodo = this.periodoParaAsentar();
+    const gasto = this.cuentaDeGastoPorAmortizacion();
+    const acumulada = this.cuentaDeAmortizacionAcumulada();
+    if (practiceId === null || tablero === null || periodo === null || gasto === null || acumulada === null) {
+      return;
+    }
+    const confirmado = await this.dialogs.confirm({
+      title: 'Correr la amortización',
+      message: `Se registra un asiento por activo, por ${this.importe(tablero.activos.monthlyCharge)} en total, en el período ${periodo.name}.`,
+      confirmLabel: 'Correr la amortización',
+    });
+    if (!confirmado) return;
     this.corriendo.set('amortizacion');
     this.accounting
-      .runDepreciation(practiceId)
+      .runDepreciation({
+        practiceId,
+        fiscalPeriodId: periodo.id,
+        depreciationExpenseAccountId: gasto,
+        accumulatedDepreciationAccountId: acumulada,
+        postingDate: periodo.endsOn.slice(0, 10),
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'success',
-            message: `Amortización de ${r.periodName}: ${this.importe(r.amount)} sobre ${r.assets ?? 0} activos · ${r.transactionNumber}`,
+            message: `Amortización de ${periodo.name}: ${r.depreciatedAssets} ${r.depreciatedAssets === 1 ? 'activo' : 'activos'}`,
           });
           this.recargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se corrió la amortización. Revisá que el período esté abierto.',
+            message: describeApiFailure(error, 'No se pudo correr la amortización. Intente de nuevo.'),
           });
         },
       });
   }
 
-  /** La corrida de devengos: reconoce el período de cada objeto pendiente. */
-  devengar(): void {
+  /**
+   * La corrida de devengos: reconoce el período de cada objeto pendiente.
+   *
+   * La API corre **un** objeto por llamada (informe B, C11), así que se
+   * recorren de a uno y en orden: si uno falla, los anteriores ya quedaron
+   * asentados y la recarga lo muestra.
+   */
+  async devengar(): Promise<void> {
     const practiceId = this.practicaElegida();
-    if (practiceId === null) return;
+    const tablero = this.datos();
+    const periodo = this.periodoParaAsentar();
+    if (practiceId === null || tablero === null || periodo === null) return;
+    const pendientes = tablero.devengos.items.filter((d) => !d.completed);
+    if (pendientes.length === 0) return;
+    const confirmado = await this.dialogs.confirm({
+      title: 'Correr el devengo',
+      message: `Se reconocen ${this.importe(tablero.devengos.periodCharge)} de ${pendientes.length} ${pendientes.length === 1 ? 'concepto' : 'conceptos'} en el período ${periodo.name}.`,
+      confirmLabel: 'Correr el devengo',
+    });
+    if (!confirmado) return;
     this.corriendo.set('devengo');
-    this.accounting
-      .runAccruals(practiceId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    from(pendientes)
+      .pipe(
+        concatMap((devengo) =>
+          this.accounting.runAccruals({
+            accrualObjectId: devengo.id,
+            fiscalPeriodId: periodo.id,
+            practiceId,
+            postingDate: periodo.endsOn.slice(0, 10),
+          }),
+        ),
+        toArray(),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe({
-        next: (r) => {
+        next: (corridas) => {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'success',
-            message: `Devengo de ${r.periodName}: ${this.importe(r.amount)} en ${r.objects ?? 0} objetos`,
+            message: `Devengo de ${periodo.name}: ${corridas.length} ${corridas.length === 1 ? 'concepto reconocido' : 'conceptos reconocidos'}`,
           });
           this.recargar();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.corriendo.set(null);
           this.toasts.show({
             type: 'error',
-            message: 'No se corrió el devengo. Revisá que el período esté abierto.',
+            message: describeApiFailure(error, 'No se pudo correr el devengo. Intente de nuevo.'),
           });
+          this.recargar();
         },
       });
   }
 
-  compensar(openItemId: string): void {
+  async compensar(partida: OpenItem): Promise<void> {
+    const practiceId = this.practicaElegida();
+    const periodo = this.periodoParaAsentar();
+    const banco = this.cuentaDeBanco();
+    if (practiceId === null || periodo === null || banco === null) return;
+    const confirmado = await this.dialogs.confirm({
+      title: `Compensar ${partida.documentNumber}`,
+      message: `Se cancela el saldo abierto de ${this.importe(partida.openAmount)} con ${partida.partnerName}.`,
+      confirmLabel: 'Compensar',
+    });
+    if (!confirmado) return;
+    const tenantId = this.session.activeTenantId();
     this.accounting
-      .clearOpenItems([openItemId])
+      .clearOpenItems({
+        ...(tenantId === null ? {} : { tenantId }),
+        practiceId,
+        bankAccountId: banco,
+        clearingDate: fechaDeCompensacion(periodo),
+        items: [{ openItemId: partida.id, clearedAmount: partida.openAmount }],
+      })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (r) => {
           this.toasts.show({
             type: 'success',
-            message: `Compensado ${this.importe(r.clearedAmount)} · documento ${r.clearingDocumentId.slice(0, 8)}`,
+            message: `Compensado ${this.importe(partida.openAmount)} · documento ${r.clearingNumber}`,
           });
           this.recargar();
         },
-        error: () =>
-          this.toasts.show({ type: 'error', message: 'No se pudo compensar la partida.' }),
+        error: (error: unknown) =>
+          this.toasts.show({
+            type: 'error',
+            message: describeApiFailure(
+              error,
+              `No se pudo compensar la partida ${partida.documentNumber}. Intente de nuevo.`,
+            ),
+          }),
       });
   }
 
@@ -428,6 +676,22 @@ export class Cockpit {
     const partes = valor.split('.');
     const entero = (partes[0] ?? '0').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return `Bs ${entero},${partes[1] ?? '00'}`;
+  }
+
+  /** Fecha `AAAA-MM-DD` de la API como `dd/mm/aaaa`, sin pasar por `Date` (y su huso). */
+  fecha(iso: string): string {
+    const [anio, mes, dia] = iso.slice(0, 10).split('-');
+    return anio && mes && dia ? `${dia}/${mes}/${anio}` : iso;
+  }
+
+  /** Avance de un devengo, en porcentaje entero para la barra. */
+  avance(hechos: number, total: number): number {
+    return total > 0 ? Math.round((hechos / total) * 100) : 0;
+  }
+
+  /** Un tramo en cero se atenúa: la tabla se lee por lo que sí tiene saldo. */
+  esCero(valor: string): boolean {
+    return /^-?0*(\.0*)?$/.test(valor.trim());
   }
 
   /** Negativo se pinta distinto. Se mira el signo del texto, no su valor. */
@@ -461,6 +725,32 @@ export class Cockpit {
  */
 const CERRADOS_A_LA_VISTA = 5;
 
+const ORDEN_DEL_FLUJO: readonly WorkflowStatus[] = [
+  'DRAFT',
+  'AUTO_CLASSIFIED',
+  'PENDING_REVIEW',
+  'APPROVED',
+  'POSTED',
+  'REVERSED',
+];
+
+/** Los estados que ya no esperan nada: están en el mayor, o anulados en él. */
+const ESTADOS_CERRADOS: ReadonlySet<WorkflowStatus> = new Set<WorkflowStatus>(['POSTED', 'REVERSED']);
+
+/** Un asiento sin estado publicado se lee como posteado (ver `JournalTransaction.status`). */
+function estadoDe(asiento: JournalTransaction): WorkflowStatus {
+  return asiento.status ?? 'POSTED';
+}
+
+type FiltroDeDocumentos = 'PENDIENTES' | WorkflowStatus;
+type LadoDePartidas = 'TODAS' | 'RECEIVABLE' | 'PAYABLE';
+
+const TIPOS_DE_DIMENSION = [
+  { kind: 'COST_CENTER', titulo: 'Centros de coste', ayuda: 'Dónde se gasta' },
+  { kind: 'PROFIT_CENTER', titulo: 'Centros de beneficio', ayuda: 'Qué línea deja margen' },
+  { kind: 'SEGMENT', titulo: 'Segmentos', ayuda: 'Resultado por línea de negocio' },
+] as const;
+
 /** Todo lo que el cockpit necesita para pintarse de una sola vez. */
 interface Tablero {
   /** `null` si la práctica todavía no tiene ejercicio fiscal abierto. */
@@ -473,4 +763,17 @@ interface Tablero {
   readonly devengos: AccrualRegister;
   readonly controlling: readonly ControllingObject[];
   readonly diario: readonly JournalTransaction[];
+  /** El plan de cuentas: de acá salen las cuentas que asientan los procesos. */
+  readonly cuentas: readonly LedgerAccount[];
+}
+
+/**
+ * Fecha de una compensación: hoy si cae dentro del período abierto; si no, su
+ * último día, para que el asiento no caiga fuera del período que se muestra.
+ */
+function fechaDeCompensacion(periodo: FiscalPeriod, hoy = new Date()): string {
+  const iso = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`;
+  const desde = periodo.startsOn.slice(0, 10);
+  const hasta = periodo.endsOn.slice(0, 10);
+  return iso >= desde && iso <= hasta ? iso : hasta;
 }

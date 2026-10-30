@@ -137,6 +137,49 @@
     /* rebote corto: SOLO para confirmar una acción del dedo, nunca para datos */
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
+    /* ---- muelles ---------------------------------------------------------
+       Curvas `linear()` de un muelle amortiguado real (x'' + 2ζω·x' + ω²·x = 0,
+       de 0 a 1), muestreadas. Son la ley del movimiento «físico»: lo que se
+       abre, se arrastra o cambia de lugar llega con inercia y se posa.
+       Cada curva trae SU duración: un muelle no se estira ni se acorta, o deja
+       de ser ese muelle. Usar siempre el par (`--spring-x` + `--spring-x-dur`).
+
+         rápido  ζ=1,00  260 ms  sin rebote · menús, chips, interruptores
+         suave   ζ=0,85  380 ms  asomo de 0,6 % · diálogos, hojas, popovers
+         rebote  ζ=0,60  460 ms  pasa 9 % y vuelve · SÓLO confirmaciones (el
+                                 check del botón); nunca para datos
+
+       Sin `linear()` (navegadores previos a 2023) caen a un cubic-bezier
+       equivalente, al final de este bloque. Espejo en Flutter: MantraMotion
+       (mismos ζ y duración; el nombre se alinea, los valores no cambian). */
+    --spring-rapido: linear(0, 0.169, 0.433, 0.648, 0.793, 0.882, 0.935, 0.965, 0.981, 0.99, 0.995, 0.997, 1);
+    --spring-rapido-dur: 260ms;
+    --spring-suave: linear(0, 0.147, 0.407, 0.64, 0.806, 0.909, 0.966, 0.993, 1.004, 1.006, 1.006, 1.004, 1.002, 1.001, 1);
+    --spring-suave-dur: 380ms;
+    --spring-rebote: linear(0, 0.211, 0.584, 0.885, 1.047, 1.094, 1.079, 1.044, 1.014, 0.997, 0.991, 0.992, 0.995, 0.998, 1, 1.001, 1.001, 1, 1);
+    --spring-rebote-dur: 460ms;
+
+    /* ================= materiales ========================================
+       Tres grosores de vidrio. Cada uno es un tinte (translúcido sobre el
+       contenido que pasa por debajo) + un desenfoque + un trazo fino; las
+       capas se leen por profundidad, no por líneas. Los tres traen RESPALDO
+       OPACO (`--material-respaldo`) para donde no hay `backdrop-filter` y para
+       `prefers-reduced-transparency`: el texto nunca depende del desenfoque.
+
+         fino     barras de herramientas, cabeceras que se desplazan
+         regular  menús, popovers, listas desplegables
+         grueso   diálogos y hojas modales
+
+       Se usan con las clases `.material-fino|regular|grueso` (más abajo). */
+    --material-fino-tinte: rgba(255, 255, 255, 0.62);
+    --material-regular-tinte: rgba(255, 255, 255, 0.78);
+    --material-grueso-tinte: rgba(255, 255, 255, 0.90);
+    --material-fino-desenfoque: blur(10px) saturate(1.5);
+    --material-regular-desenfoque: blur(22px) saturate(1.7);
+    --material-grueso-desenfoque: blur(34px) saturate(1.8);
+    --material-trazo: rgba(11, 85, 126, 0.12);
+    --material-respaldo: #FFFFFF;
+
     /* ================= apilamiento =========================================
        Sin estos tokens, cada capa fijaba su propio z-index y dos podían
        coincidir: el orden lo decidía entonces la posición en el DOM, que es
@@ -179,9 +222,16 @@
     --fs-overline: 11px;                      /* Inter 700 · +8 % · MAYÚSCULAS */
     --fs-data: 14px;                          /* Inter 600 · tabular */
 
+    /* ---- gráficos (ADR-0017): categórica validada + secuencial de un tono ---- */
+    --chart-1: #2a78d6; --chart-2: #eb6834; --chart-3: #1baf7a; --chart-4: #eda100;
+    --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
+    --chart-seq-1: #cde2fb; --chart-seq-2: #86b6ef; --chart-seq-3: #3987e5;
+    --chart-seq-4: #1c5cab; --chart-seq-5: #0d366b;
+
     /* ================= tokens semánticos — modo claro ===================== */
-    --bg-base: #FFFFFF;
-    --bg-surface: #FFFFFF;
+    --surface-white: #FFFFFF;
+    --bg-base: var(--surface-white);
+    --bg-surface: var(--surface-white);
     --bg-surface-alt: var(--c-ivory-400);
     --bg-inset: var(--c-ivory-300);
 
@@ -201,7 +251,10 @@
 
     --text-primary: var(--c-neutral-500);    /* 13,46 AAA peor caso */
     --text-secondary: var(--c-neutral-400);  /* 7,24 AAA peor caso */
-    --text-muted: var(--c-neutral-300);      /* 3,86–4,27: excepción E1 — solo terciario */
+    /* terciario. Era neutral-300 (#787B7B): 3,86:1 sobre marfil y 4,27 sobre
+       blanco, la excepción «E1». Ya no hay excepción: ivory-800 da 5,13 en el
+       peor caso (marfil) y sigue un escalón por debajo del secundario (7,24). */
+    --text-muted: var(--c-ivory-800);        /* 5,13 AA peor caso */
     --text-inverse: #FFFFFF;
 
     --brand-primary: var(--c-petrol-500);      /* 7,25 AAA peor caso */
@@ -213,8 +266,12 @@
 
     --border-default: var(--c-sage-500);   /* divisor decorativo: no delimita controles */
     --border-strong: var(--c-sage-700);    /* 3,34 peor caso ≥ 3:1 */
+    --border-danger: var(--c-error-500);   /* borde de control en error: 4,92 sobre blanco */
 
-    --focus-ring: rgba(79, 179, 169, 0.45);
+    /* anillo de foco SÓLIDO. Era aguamarina al 45 %, que compuesta sobre
+       blanco da 1,48:1 y no llega al 3:1 que WCAG pide a un indicador de foco
+       (1.4.11). aqua-700 da 5,71 sobre blanco y 5,16 sobre marfil. */
+    --focus-ring: var(--c-aqua-700);
     --shadow-sm: 0 1px 2px rgba(11, 85, 126, 0.08), 0 1px 1px rgba(11, 85, 126, 0.04);
     --shadow-md: 0 6px 16px rgba(11, 85, 126, 0.10), 0 2px 4px rgba(11, 85, 126, 0.06);
     --shadow-lg: 0 20px 48px rgba(11, 85, 126, 0.16), 0 6px 12px rgba(11, 85, 126, 0.08);
@@ -235,6 +292,26 @@
        llega a AA con texto chico; con el 800 sube a 6,62:1. */
     --st-primary-bg: var(--c-petrol-50);  --st-primary-fg: var(--c-petrol-700);  --st-primary-bd: var(--c-petrol-200);
     --st-secondary-bg: var(--c-mint-50);  --st-secondary-fg: var(--c-mint-800);  --st-secondary-bd: var(--c-mint-300);
+    /* tertiary: la aguamarina, tercer tono de marca. Lo usa la grilla del horario
+       para «consultas y otros servicios». NO sigue el 50/700/200: con 50 sería el
+       mismo `info` de la píldora de telemedicina, que desaparecería encima de la
+       franja. Sube a 200/800/600: texto 6,23:1 sobre su fondo. */
+    --st-tertiary-bg: var(--c-aqua-200);  --st-tertiary-fg: var(--c-aqua-800);  --st-tertiary-bd: var(--c-aqua-600);
+
+    /* Escala semántica de la matriz de consultas: contraste AA en ambos temas. */
+    --heat-1-bg: var(--c-petrol-100); --heat-1-fg: var(--c-petrol-900);
+    --heat-2-bg: var(--c-petrol-200); --heat-2-fg: var(--c-petrol-900);
+    --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
+    --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
+
+    /* insignia de verificación (check azul, estilo Twitter/Instagram). Relleno
+       del sello y tinta del tilde: NO es un estado de producto sino una marca de
+       identidad comprobada, por eso no vive en la receta 50/700/200. En claro,
+       petróleo-500 con tilde blanco (8,03:1); en oscuro sube a petróleo-300 con
+       tilde petróleo-900 (5,38:1) y el sello se mide ≥3:1 contra TODA superficie
+       donde vive, incluido el fondo del chip `primary` (petróleo-600, 3,07:1). */
+    --verified-bg: var(--c-petrol-500);
+    --verified-fg: var(--surface-white);
 
     /* alias semánticos de compatibilidad para superficies y enlaces */
     --surface-raised: var(--bg-surface);
@@ -253,6 +330,10 @@
    aguamarina acciona. Oscuro por preferencia del sistema… */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
+        --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+        --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+        --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
+        --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
         --bg-base: var(--c-petrol-900);
         --bg-surface: var(--c-petrol-800);
         --bg-surface-alt: var(--c-petrol-700);
@@ -275,12 +356,24 @@
         --brand-accent: var(--c-amber-400);
 
         --border-default: rgba(255, 255, 255, 0.12);
-        --border-strong: rgba(255, 255, 255, 0.24);  /* excepción E3: <3:1 sin foco */
+        /* borde de control. Era velo al 24 % (2,15:1 sobre la tarjeta: la
+           excepción E3). Al 40 % da 3,57 tarjeta · 3,27 surface-alt · 3,51
+           inset · 3,78 base: ≥3:1 (WCAG 1.4.11) en toda superficie oscura. */
+        --border-strong: rgba(255, 255, 255, 0.40);
+        /* borde de control en error. La rampa fija --c-error-500 daba 2,99:1 sobre
+           la tarjeta oscura (<3:1 de WCAG 1.4.11); el 400 da 4,17. */
+        --border-danger: var(--c-error-400);
 
-        --focus-ring: rgba(159, 216, 208, 0.45);
+        --focus-ring: var(--c-mint-500);     /* sólido: ≥7,6:1 sobre toda superficie oscura */
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
         --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
         --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
+
+        --material-fino-tinte: rgba(10, 43, 61, 0.62);
+        --material-regular-tinte: rgba(10, 43, 61, 0.78);
+        --material-grueso-tinte: rgba(10, 43, 61, 0.90);
+        --material-trazo: rgba(255, 255, 255, 0.14);
+        --material-respaldo: #0A2B3D;
 
         /* estados en oscuro: fondo hundido + texto claro (800/200/600) */
         --st-success-bg: var(--c-success-800); --st-success-fg: var(--c-success-200); --st-success-bd: var(--c-success-600);
@@ -292,12 +385,28 @@
            y el chip desaparecería sobre una tarjeta. Sube a 600/100/400. */
         --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
         --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+        /* tertiary NO sigue el 800/200/600 por la misma razón que en claro: aqua-800
+           ES el `info` de oscuro. Sube a 700/50/400: texto 5,01:1. */
+        --st-tertiary-bg: var(--c-aqua-700); --st-tertiary-fg: var(--c-aqua-50); --st-tertiary-bd: var(--c-aqua-400);
+
+        --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
+        --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
+        --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
+        --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+        /* insignia de verificación en oscuro: ver el comentario del bloque claro */
+        --verified-bg: var(--c-petrol-300);
+        --verified-fg: var(--c-petrol-900);
     }
 }
 
 /* …y el toggle manual manda sobre la preferencia del sistema
    (bajo SSR se estampa tras afterNextRender, nunca en la ruta de render) */
 :root[data-theme='dark'] {
+    --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+    --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+    --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
+    --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
     --bg-base: var(--c-petrol-900);
     --bg-surface: var(--c-petrol-800);
     --bg-surface-alt: var(--c-petrol-700);
@@ -319,12 +428,19 @@
     --brand-accent: var(--c-amber-400);
 
     --border-default: rgba(255, 255, 255, 0.12);
-    --border-strong: rgba(255, 255, 255, 0.24);
+    --border-strong: rgba(255, 255, 255, 0.40);  /* ≥3:1, ver el bloque de arriba */
+    --border-danger: var(--c-error-400);         /* ≥3:1, ver el bloque de arriba */
 
-    --focus-ring: rgba(159, 216, 208, 0.45);
+    --focus-ring: var(--c-mint-500);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
     --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.40);
     --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.50);
+
+    --material-fino-tinte: rgba(10, 43, 61, 0.62);
+    --material-regular-tinte: rgba(10, 43, 61, 0.78);
+    --material-grueso-tinte: rgba(10, 43, 61, 0.90);
+    --material-trazo: rgba(255, 255, 255, 0.14);
+    --material-respaldo: #0A2B3D;
 
     --st-success-bg: var(--c-success-800); --st-success-fg: var(--c-success-200); --st-success-bd: var(--c-success-600);
     --st-warning-bg: var(--c-warning-800); --st-warning-fg: var(--c-warning-200); --st-warning-bd: var(--c-warning-600);
@@ -333,6 +449,15 @@
 
     --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
     --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+    --st-tertiary-bg: var(--c-aqua-700); --st-tertiary-fg: var(--c-aqua-50); --st-tertiary-bd: var(--c-aqua-400);
+
+    --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
+    --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
+    --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
+    --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+    --verified-bg: var(--c-petrol-300);
+    --verified-fg: var(--c-petrol-900);
 }
 
 /* ---- base ---- */
@@ -363,6 +488,35 @@ h1 { font-size: var(--fs-h1); line-height: var(--lh-h1); font-weight: 600; }
 h2 { font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; }
 h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 
+/* enlaces de texto sin clase: los de un párrafo, una alerta o un pie.
+   Sin esta regla salen con el azul del navegador (y el violeta al visitarlos),
+   que no es del sistema y en oscuro no contrasta.
+
+   Alcance, a propósito angosto:
+   · `[href]` — un `<a>` sin destino no es un enlace y no se le pinta como tal;
+   · `:not([class])` — quien pone clase decide su aspecto (tarjetas, navegación,
+     chips...); esta regla es sólo para el texto suelto;
+   · `:not([app-button], [app-link])` — esos tienen la suya, en `alovida.css` y
+     en el átomo `app-link`, y esta no debe competir con ellas.
+   `:where()` la deja en especificidad cero: cualquier regla de componente o de
+   contenedor (`.pie a`, `.alerta a`) le gana sin pelearse.
+
+   No hace falta una regla `:visited`: un `color` de autor le gana al violeta del
+   navegador en todos los estados, también en el visitado. El peso se hereda,
+   que es lo que corresponde dentro de un texto corrido. */
+:where(a[href]:not([class], [app-button], [app-link])) {
+    color: var(--text-link);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+    transition: color var(--dur-fast) var(--ease-standard);
+}
+
+:where(a[href]:not([class], [app-button], [app-link]):hover) {
+    color: var(--brand-primary-hover);
+    text-decoration-thickness: 2px;
+}
+
 /* solo para lectores de pantalla: texto que completa un nombre accesible sin
    ocupar espacio visual (p. ej. «(obligatorio)» junto al asterisco) */
 .sr-only {
@@ -385,7 +539,7 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
     font-variant-numeric: tabular-nums;
 }
 
-/* foco: anillo aqua/menta de 4 px, dibujado con `outline`.
+/* foco: anillo aqua-700/menta de 4 px, sólido, dibujado con `outline`.
 
    Antes era un `box-shadow`, y eso lo dejaba a merced de cualquier pieza
    enfocable que declarara la suya: el avatar del encabezado, el selector de
@@ -403,6 +557,125 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 :focus-visible {
     outline: 4px solid var(--focus-ring);
     outline-offset: 0;
+}
+
+/* ---- materiales: las tres clases ----------------------------------------
+   `background` con el tinte, `backdrop-filter` con el desenfoque, trazo fino
+   por dentro. Sin `backdrop-filter` (o con `prefers-reduced-transparency`) el
+   tinte se vuelve el respaldo opaco: mismo aspecto, sin vidrio. */
+.material-fino,
+.material-regular,
+.material-grueso {
+    border: 1px solid var(--material-trazo);
+}
+.material-fino {
+    background: var(--material-fino-tinte);
+    -webkit-backdrop-filter: var(--material-fino-desenfoque);
+    backdrop-filter: var(--material-fino-desenfoque);
+}
+.material-regular {
+    background: var(--material-regular-tinte);
+    -webkit-backdrop-filter: var(--material-regular-desenfoque);
+    backdrop-filter: var(--material-regular-desenfoque);
+}
+.material-grueso {
+    background: var(--material-grueso-tinte);
+    -webkit-backdrop-filter: var(--material-grueso-desenfoque);
+    backdrop-filter: var(--material-grueso-desenfoque);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .material-fino,
+    .material-regular,
+    .material-grueso {
+        background: var(--material-respaldo);
+    }
+}
+@media (prefers-reduced-transparency: reduce) {
+    .material-fino,
+    .material-regular,
+    .material-grueso {
+        background: var(--material-respaldo);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+/* Muelles sin `linear()`: cubic-bezier de la misma duración y rebote parecido. */
+@supports not (transition-timing-function: linear(0, 1)) {
+    :root {
+        --spring-rapido: cubic-bezier(0.2, 0.9, 0.3, 1);
+        --spring-suave: cubic-bezier(0.22, 1.1, 0.36, 1);
+        --spring-rebote: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+}
+
+/* ---- paneles que nacen del control que los abre ------------------------
+   `.panel-muelle` va en el PANEL de un `<dialog>` (no en el `<dialog>`: el
+   velo `::backdrop` aparece con su propio fundido). Entra con el muelle
+   `suave` desde `--origen-x/y`, que `fijarOrigenDelPanel` publica con el
+   centro del control; sin control, crece desde el centro. Nace chico y
+   transparente y se posa: el movimiento explica de dónde viene. */
+@keyframes panel-nace {
+    from {
+        opacity: 0;
+        transform: scale(0.88);
+    }
+}
+.panel-muelle {
+    transform-origin: var(--origen-x, 50%) var(--origen-y, 50%);
+    animation: panel-nace var(--spring-suave-dur) var(--spring-suave) both;
+}
+/* Mientras sale no recibe toques: un segundo clic no repite la elección. */
+.panel-muelle[data-saliendo='true'] {
+    pointer-events: none;
+}
+
+/* ---- transición entre rutas (View Transitions API) ----------------------
+   Sólo se anima el contenido (`view-transition-name: contenido`, en
+   `.app-main__inner`): el menú lateral y la barra superior no se mueven. El
+   resto de la página no tiene transición propia. Sin la API el router
+   navega como siempre.
+
+   Con `prefers-reduced-motion` la transición SÍ se crea y la regla del final
+   de este bloque apaga la animación de sus pseudo-capas. No se salta con
+   `skipTransition()`: eso rechaza `ready` con «AbortError: Transition was
+   skipped» y el router lo escribe en la consola en cada navegación (#1449).
+   Aparte, el `*` del bloque global de movimiento reducido no alcanza a los
+   `::view-transition-*`, así que esta regla no es redundante. */
+@keyframes vt-sale {
+    to {
+        opacity: 0;
+    }
+}
+@keyframes vt-entra {
+    from {
+        opacity: 0;
+        transform: translateY(var(--sp-2));
+    }
+}
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation: none;
+}
+::view-transition-old(contenido) {
+    animation: vt-sale var(--dur-fast) var(--ease-standard) both;
+}
+::view-transition-new(contenido) {
+    animation: vt-entra var(--dur-base) var(--ease-out) both;
+}
+::view-transition-group(contenido) {
+    animation-duration: 0s;
+}
+.app-main__inner {
+    view-transition-name: contenido;
+}
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

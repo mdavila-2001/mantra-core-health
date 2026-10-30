@@ -10,6 +10,15 @@
   <div class="app-resultado__cuerpo">
     <p class="app-resultado__titulo">
       <a [routerLink]="r.link">{{ r.title }}</a>
+      @if (r.verification; as verificacion) {
+        <app-verification-badge
+          size="sm"
+          [status]="verificacion.status"
+          [verifiedAt]="verificacion.verifiedAt"
+          [validUntil]="verificacion.validUntil"
+          [subject]="r.title"
+        />
+      }
       @if (r.kind; as tipo) {
         <span class="app-badge" [attr.data-tono]="tipo.tone">{{ tipo.label }}</span>
       }

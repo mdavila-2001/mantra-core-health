@@ -14,26 +14,27 @@
 </ng-template>
 
 <app-auth-split
-  claim="Sumá tu centro de imagenología a la red"
-  tagline="Rayos X, ecografía, tomografía y resonancia: recibí las órdenes médicas de toda la red y facturalas desde un solo lugar."
+  claim="Sume su centro de imagenología a la red"
+  tagline="Rayos X, ecografía, tomografía y resonancia: reciba las órdenes médicas de toda la red y factúrelas desde un solo lugar."
   contentWidth="full"
+  [plainSurface]="!enviada()"
+  [scene]="enviada() ? 'stage' : 'split'"
 >
   <div class="registro-conjunto" [class.registro-conjunto--solo]="enviada()">
     <div class="registro">
       @if (enviada()) {
         <div class="registro__header">
+          <app-registration-badge type="imaging" celebrate />
           <h1
             appAnuncio
             [asertivo]="false"
             class="registro__title"
             data-testid="registro-imagen-exito"
           >
-            Recibimos la solicitud de tu centro
+            Recibimos la solicitud de su centro
           </h1>
           <p class="registro__subtitle">
-            Vamos a revisar los papeles que adjuntaste y te escribimos al correo del representante
-            legal. Hasta que la solicitud se apruebe, el centro no aparece en las búsquedas de
-            pacientes.
+            Su centro está en revisión. Ya puede ingresar con su cuenta.
           </p>
         </div>
         <button
@@ -48,27 +49,42 @@
         </button>
       } @else {
         <div class="registro__header">
-          <h1 class="registro__title">Registrá tu centro de imagenología</h1>
+          <app-registration-badge type="imaging" />
+          <h1 class="registro__title">Registre su centro de imagenología</h1>
           <!-- Sin contar los pasos: el indicador de arriba ya dice «Paso 1 de
                N» y lo calcula solo. Un número escrito acá se desincroniza el
                día que una sección se parta en dos. -->
           <p class="registro__subtitle">
-            Necesitamos los datos legales de la empresa y qué estudios hacés. Podés volver atrás en
+            Necesitamos los datos legales de la empresa y qué estudios hace. Puede volver atrás en
             cualquier paso.
           </p>
         </div>
+
+        @if (borradorDetectado(); as borrador) {
+          <app-onboarding-draft-banner
+            [draft]="borrador"
+            (resume)="restaurarBorrador(borrador)"
+            (discard)="descartarBorrador()"
+          />
+        }
+
+        @if (mensajeDeError(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-error">{{
+            mensaje
+          }}</app-alert>
+        }
 
         <div class="registro__body">
           <app-paginated-form
             data-testid="registro-form-imagenologia"
             [paginas]="paginas"
             [form]="form"
+            [initialStep]="pasoGuardado()"
             label="Registrar centro de imagenología"
             submitLabel="Enviar solicitud"
+            [pending]="enviando()"
             [iconOnlyNav]="true"
             (pasoVisible)="recordarPaso($event)"
-            [atrasEnPrimera]="true"
-            (atrasDesdeInicio)="volverAlTipoDeCuenta()"
             (enviado)="submit()"
           >
             <ng-template appCampoPersonalizado="seprecFile">
@@ -113,42 +129,44 @@
               />
             </ng-template>
 
-            <ng-template appCampoPersonalizado="radioproteccionFile">
-              <ng-container
-                [ngTemplateOutlet]="bloqueAdjunto"
-                [ngTemplateOutletContext]="{ $implicit: 'radioproteccionFile' }"
+            <ng-template appCampoPersonalizado="legalRepName">
+              <app-inline-name-fields
+                [grupo]="form.controls.legalRepName"
+                [obligatorio]="true"
+                prefijoTestId="registro-imagen-representante"
               />
             </ng-template>
+            <ng-template appCampoPersonalizado="generalManagerName">
+              <app-inline-name-fields [grupo]="form.controls.generalManagerName" prefijoTestId="registro-imagen-gerente-general" />
+            </ng-template>
+            <ng-template appCampoPersonalizado="salesManagerName">
+              <app-inline-name-fields [grupo]="form.controls.salesManagerName" prefijoTestId="registro-imagen-gerente-comercial" />
+            </ng-template>
+            <ng-template appCampoPersonalizado="marketingManagerName">
+              <app-inline-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-imagen-gerente-marketing" />
+            </ng-template>
 
+            <!-- El punto es lo único que se marca: la calle, el departamento,
+                 el municipio y la zona salen de él y se muestran sin editarse
+                 (pedido del cliente del 26/10/2026). `[inicial]` devuelve el
+                 pin confirmado cuando el asistente recrea la página. -->
             <ng-template appCampoPersonalizado="gpsCentral">
-              @if (direccionPorReescribir()) {
-                <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                     anuncia sin robar el foco, que sigue en el mapa. -->
-                <app-alert
-                  appAnuncio
-                  [asertivo]="false"
-                  [enfocar]="false"
-                  tone="info"
-                  data-testid="registro-imagen-direccion-reescribir"
-                >
-                  {{ avisoReescribir }}
-                </app-alert>
-              }
-              <app-ubicacion-picker
+              <app-map-location-picker
                 pinId="imagenologia-central"
-                etiquetaConfirmada="Tu centro"
-                pregunta="¿Es acá donde está la central? Movete por el mapa para comprobarlo."
+                etiquetaConfirmada="Su centro"
                 etiquetaQuitar="Quitar la ubicación de la central"
-                etiquetaMapa="La ubicación de tu centro en el mapa"
+                etiquetaMapa="La ubicación de su centro en el mapa"
+                etiquetaFicha="La dirección de la central"
                 [ids]="idsUbicacionCentral"
-                (confirmado)="gpsCentral.set($event)"
-                (puntoElegido)="vaciarDireccionPorElMapa()"
+                [inicial]="gpsCentral()"
+                (confirmado)="fijarGpsCentral($event)"
+                (localidad)="escribirLocalidadCentral($event)"
               />
             </ng-template>
 
-            <!-- Las sucursales. Cada una trae su propio mapa, con su propio
-                 pin y su propia confirmación: confirmar una no confirma otra, y
-                 el mapa no se dibuja hasta que alguien pide la ubicación. -->
+            <!-- Las sucursales. Cada una trae su propio mapa, primero, con su
+                 propio pin y su propia confirmación: confirmar una no confirma
+                 otra. Su dirección sale del punto, como la de la central. -->
             <ng-template appCampoPersonalizado="sucursales">
               <div class="imagen-sucursales">
                 @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
@@ -170,7 +188,19 @@
                       </button>
                     </header>
 
-                    <app-form-field [label]="'Nombre de la sucursal ' + (i + 1)">
+                    <app-map-location-picker
+                      [pinId]="sucursal.id"
+                      [inicial]="sucursal.gps"
+                      etiquetaConfirmada="Esta sucursal"
+                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
+                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
+                      etiquetaFicha="La dirección de esta sucursal"
+                      [ids]="idsDeSucursal(sucursal.id)"
+                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
+                      (localidad)="escribirLocalidadDeSucursal(sucursal.id, $event)"
+                    />
+
+                    <app-form-field icon="building" [label]="'Nombre de la sucursal ' + (i + 1)">
                       <app-input
                         [testId]="'registro-imagen-' + sucursal.id + '-nombre'"
                         placeholder="Sucursal Equipetrol"
@@ -179,55 +209,62 @@
                       />
                     </app-form-field>
 
-                    <app-form-field [label]="'Dirección de la sucursal ' + (i + 1)">
+                    <app-form-field [label]="'Descripción de la sucursal ' + (i + 1)" hint="Opcional. Horario, piso o qué se atiende ahí.">
                       <app-input
-                        [testId]="'registro-imagen-' + sucursal.id + '-direccion'"
-                        placeholder="Av. San Martín 456"
-                        [value]="sucursal.direccion"
-                        (valueChange)="escribirDireccionDeSucursal(sucursal.id, $event)"
+                        [testId]="'registro-imagen-' + sucursal.id + '-descripcion'"
+                        placeholder="Planta baja, lunes a sábado"
+                        [value]="sucursal.descripcion"
+                        (valueChange)="escribirDescripcionDeSucursal(sucursal.id, $event)"
                       />
                     </app-form-field>
-                    @if (sucursalPorReescribir(sucursal)) {
-                      <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                           anuncia sin robar el foco, que sigue en el mapa. -->
-                      <app-alert
-                        appAnuncio
-                        [asertivo]="false"
-                        [enfocar]="false"
-                        tone="info"
-                        [attr.data-testid]="'registro-imagen-' + sucursal.id + '-direccion-reescribir'"
-                      >
-                        {{ avisoReescribir }}
-                      </app-alert>
-                    }
 
-                    <app-ubicacion-picker
-                      [pinId]="sucursal.id"
-                      etiquetaConfirmada="Esta sucursal"
-                      pregunta="¿Es acá donde está esta sucursal? Movete por el mapa para comprobarlo."
-                      etiquetaQuitar="Quitar la ubicación de esta sucursal"
-                      etiquetaMapa="La ubicación de esta sucursal en el mapa"
-                      [ids]="idsDeSucursal(sucursal.id)"
-                      (confirmado)="fijarGpsDeSucursal(sucursal.id, $event)"
-                      (puntoElegido)="vaciarDireccionDeSucursalPorElMapa(sucursal.id)"
-                    />
+                    <app-form-field [label]="'Enlace de ubicación de la sucursal ' + (i + 1)" hint="Opcional. El enlace de Google Maps u OpenStreetMap.">
+                      <app-input
+                        type="url"
+                        [testId]="'registro-imagen-' + sucursal.id + '-url-ubicacion'"
+                        placeholder="https://maps.google.com/…"
+                        [value]="sucursal.urlUbicacion"
+                        (valueChange)="escribirUrlDeSucursal(sucursal.id, $event)"
+                      />
+                    </app-form-field>
                   </section>
                 } @empty {
                   <p class="imagen-sucursales__vacio">
-                    Todavía no agregaste ninguna. Si atendés en un solo local, no hace falta.
+                    Todavía no agregó ninguna. Si atiende en un solo local, no hace falta.
                   </p>
                 }
 
-                <button
-                  app-button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  data-testid="registro-imagen-agregar-sucursal"
-                  (clicked)="agregarSucursal()"
-                >
-                  + Agregar sucursal
-                </button>
+                <div class="imagen-sucursales__acciones">
+                  <button
+                    app-button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    data-testid="registro-imagen-agregar-sucursal"
+                    (clicked)="agregarSucursal()"
+                  >
+                    + Agregar sucursal
+                  </button>
+                  <button
+                    app-button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    data-testid="registro-imagen-subir-sucursales"
+                    (clicked)="cargaEnLoteAbierta.set(true)"
+                  >
+                    Subir sucursales en lote (CSV)
+                  </button>
+                </div>
+
+                @if (cargaEnLoteAbierta()) {
+                  <app-branch-bulk-import
+                    testIdPrefix="registro-imagen-lote"
+                    [existingNames]="nombresDeSucursales()"
+                    (imported)="agregarSucursalesEnLote($event)"
+                    (closed)="cargaEnLoteAbierta.set(false)"
+                  />
+                }
               </div>
             </ng-template>
           </app-paginated-form>
@@ -244,14 +281,14 @@
 
         <div class="registro__footer">
           <p class="registro__pie">
-            ¿Ya tenés cuenta? <a app-link routerLink="/auth">Iniciá sesión</a>
+            ¿Ya tiene cuenta? <a app-link routerLink="/auth">Inicie sesión</a>
           </p>
         </div>
       }
     </div>
 
     @if (!enviada()) {
-      <app-registro-ayuda class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+      <app-registration-help class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" para="empresa" />
     }
   </div>
 </app-auth-split>

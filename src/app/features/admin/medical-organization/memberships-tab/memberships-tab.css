@@ -1,0 +1,105 @@
+/* La lista de tarjetas se reemplazó por `app-data-table` el 2026-09-10 (pedido
+   del propietario: «que sea como están los organismos de tabla»). Lo que queda
+   acá es lo de las **celdas**: el organismo pinta la tabla, la presentación de
+   cada celda es de esta pantalla. */
+
+.titulo-de-seccion {
+  font-size: var(--fs-h3, 1.1rem);
+  margin: var(--e5) 0 var(--e3);
+}
+
+.alerta-de-formulario {
+  display: block;
+  margin-bottom: var(--e4);
+}
+
+.formulario-de-solicitud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--e3);
+}
+
+.formulario-de-solicitud app-select {
+  flex: 1 1 18rem;
+  min-inline-size: 0;
+}
+
+.nota-de-acceso {
+  margin: var(--e3) 0 0;
+  font-size: var(--fs-caption, 0.8rem);
+  color: var(--text-muted, var(--tinta-3));
+}
+
+/* ------------------------------------------------------------------ celdas */
+
+.vinculacion__org {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+
+.vinculacion__nombre {
+  display: inline-flex;
+  flex: 1 1 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* Los nombres de organizaciones pueden ser largos. Permitir que el texto
+   reduzca su ancho mínimo evita que la tabla empuje Estado y Acciones fuera
+   del teléfono. */
+.vinculacion__org app-avatar {
+  flex: 0 0 auto;
+}
+
+.vinculacion__estado {
+  max-inline-size: 100%;
+  white-space: normal;
+}
+
+.vinculacion__estado-rotulo {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+/* El sello va con su tamaño en `em`: acompaña al nombre si la tabla cambia de
+   escala, en vez de quedarse en un tamaño fijo que en móvil se ve enorme. */
+.vinculacion__sello {
+  display: inline-flex;
+  inline-size: 1em;
+  block-size: 1em;
+  flex-shrink: 0;
+  color: var(--exito, var(--brand-primary));
+}
+
+.vinculacion__principal {
+  font-weight: 600;
+}
+
+.vinculacion__sin-dato {
+  color: var(--text-muted, var(--tinta-3));
+}
+
+/* Oculto a la vista, presente para el lector de pantalla. */
+.solo-lectores {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

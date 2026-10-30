@@ -1,0 +1,18 @@
+:host {
+  display: block;
+}
+
+.rejection-form {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--st-error-bd);
+  border-radius: var(--r-md);
+  background: var(--st-error-bg);
+}
+
+.rejection-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

@@ -1,0 +1,150 @@
+@import './chart-tokens.css';
+
+:host {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.fc__head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--sp-1) var(--sp-3);
+  align-items: baseline;
+  padding: var(--sp-3);
+  margin-block-end: var(--sp-2);
+  background: var(--bg-inset);
+  border-radius: var(--r-sm);
+}
+
+.fc__head-name {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.fc__head-val {
+  font-size: var(--fs-body-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+.fc__head-note {
+  grid-column: 1 / -1;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.fc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.fc__btn {
+  display: grid;
+  grid-template-columns: minmax(96px, 140px) 1fr minmax(140px, 220px);
+  grid-template-areas: 'name track nums' '. extra extra';
+  gap: var(--sp-1) var(--sp-3);
+  align-items: center;
+  inline-size: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.fc__btn:hover {
+  background: var(--bg-hover);
+}
+
+.fc__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.fc__row--picked .fc__btn {
+  border-color: var(--border-strong);
+  background: var(--bg-active);
+}
+
+.fc__row--worst .fc__btn {
+  border-color: var(--st-warning-bd);
+  background: var(--st-warning-bg);
+}
+
+.fc__name {
+  grid-area: name;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.fc__track {
+  grid-area: track;
+  display: block;
+  block-size: 22px;
+  background: var(--bg-inset);
+  border-radius: var(--r-xs);
+  overflow: hidden;
+}
+
+.fc__bar {
+  display: block;
+  block-size: 100%;
+  background: var(--ins-s1);
+  border-radius: var(--r-xs);
+  transition: inline-size var(--dur-slow) var(--ease-out);
+}
+
+.fc__nums {
+  grid-area: nums;
+  display: grid;
+  font-variant-numeric: tabular-nums;
+}
+
+.fc__nums strong {
+  font-size: var(--fs-body-lg);
+}
+
+.fc__rate {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.fc__extra {
+  grid-area: extra;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fc__bm--bad {
+  color: var(--st-error-fg);
+  font-weight: 700;
+}
+
+.fc__flag {
+  font-weight: 700;
+  color: var(--st-warning-fg);
+}
+
+@media (max-width: 649px) {
+  .fc__btn {
+    grid-template-columns: 1fr;
+    grid-template-areas: 'name' 'track' 'nums' 'extra';
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc__bar {
+    transition: none;
+  }
+}

@@ -36,6 +36,12 @@
       <dt>{{ rotulos.subtotal }}</dt>
       <dd class="cifras-tabulares">{{ importe(resumen().subtotal) }}</dd>
     </div>
+    @if (resumen().descuentoDeCampana; as promocion) {
+      <div class="resumen__cuenta" data-testid="resumen-promocion">
+        <dt>Promociones sobre el total</dt>
+        <dd class="cifras-tabulares">−{{ promocion }} {{ moneda(resumen().moneda) }}</dd>
+      </div>
+    }
     <div class="resumen__cuenta" data-testid="resumen-descuento">
       <dt>{{ rotulos.descuentoDeRed }}</dt>
       <dd class="cifras-tabulares">
@@ -52,14 +58,8 @@
         <dd class="cifras-tabulares">{{ importe(resumen().coaseguro) }}</dd>
       </div>
       <div class="resumen__cuenta resumen__cuenta--nota" data-testid="resumen-cubre-el-seguro">
-        <dt>Lo cubre tu aseguradora</dt>
+        <dt>Lo cubre su aseguradora</dt>
         <dd class="cifras-tabulares">{{ importe(resumen().cubreElSeguro) }}</dd>
-      </div>
-    }
-    @if (resumen().envio !== null) {
-      <div class="resumen__cuenta" data-testid="resumen-envio">
-        <dt>Envío</dt>
-        <dd class="cifras-tabulares">{{ importe(resumen().envio) }}</dd>
       </div>
     }
     <div class="resumen__cuenta resumen__cuenta--total" data-testid="resumen-total">
@@ -76,7 +76,7 @@
 
   @if (resumen().puntos !== null) {
     <p class="resumen__puntos" data-testid="resumen-puntos">
-      Puntos AloVida que ganás: <strong class="cifras-tabulares">{{ resumen().puntos }}</strong>
+      Puntos AloVida que gana: <strong class="cifras-tabulares">{{ resumen().puntos }}</strong>
       <span class="resumen__secundario"> (valor de ejemplo)</span>
     </p>
   }
@@ -93,6 +93,11 @@
           }
           @if (renglon.esAlternativa) {
             <span class="resumen__secundario">Alternativa de demostración</span>
+          }
+          @if (renglon.promocion) {
+            <span class="resumen__promocion" data-testid="resumen-renglon-promocion">
+              <app-badge variant="success">{{ renglon.promocion }}</app-badge>
+            </span>
           }
         </span>
         <span class="cifras-tabulares">

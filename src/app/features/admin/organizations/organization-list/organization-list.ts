@@ -36,7 +36,11 @@ import { historialDeCursor } from '../../../../shared/components/organisms/data-
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { ORGANIZATIONS_ROUTE, ORGANIZATION_NEW_ROUTE } from '../organizations.routes';
+import {
+  ORGANIZATIONS_ROUTE,
+  ORGANIZATION_NEW_ROUTE,
+  organizationDetailRoute,
+} from '../organizations.routes';
 
 /** Filas por página. El backend admite hasta 200 y aplica 50 por omisión. */
 const TAMANO_DE_PAGINA = 25;
@@ -95,6 +99,8 @@ export class OrganizationList {
 
   private readonly celdaOrganizacion =
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaOrganizacion');
+  private readonly celdaCodigo =
+    viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaCodigo');
   private readonly celdaTipo =
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaTipo');
   private readonly celdaEstado =
@@ -125,7 +131,7 @@ export class OrganizationList {
   /** `priority` 1 nunca se pliega; en móvil las 2 caen a la fila de detalle. */
   protected readonly columnas = computed<readonly ColumnDef<TenantListItem>[]>(() => [
     { key: 'legalName', header: 'Organización', priority: 1, cell: this.celdaOrganizacion() },
-    { key: 'code', header: 'Código', priority: 1 },
+    { key: 'code', header: 'Código', priority: 1, cell: this.celdaCodigo() },
     { key: 'tenantTypeConceptId', header: 'Tipo', priority: 1, cell: this.celdaTipo() },
     { key: 'statusConceptId', header: 'Estado', priority: 2, cell: this.celdaEstado() },
     {
@@ -163,6 +169,14 @@ export class OrganizationList {
       queryParams: texto === '' ? {} : { q: texto },
       replaceUrl: true,
     });
+  }
+
+  /** La ficha de una organización: sus sucursales, su plantilla y sus hijas. */
+  protected readonly rutaDeFicha = organizationDetailRoute;
+
+  /** La fila entera abre la ficha; el enlace del nombre lleva al mismo lugar. */
+  protected abrir(organizacion: TenantListItem): void {
+    void this.router.navigateByUrl(organizationDetailRoute(organizacion.id));
   }
 
   protected mover(cursor: string): void {

@@ -11,13 +11,50 @@ import {
   type PlantillaSimulada,
   type ReservaSimulada,
 } from '../fixtures/agenda';
-import { ACTIVIDAD, CANAL, ESTADO, ESTADO_RESERVA, TIPO_BLOQUEO, TIPO_CITA } from '../fixtures/conceptos';
+import { TIPO_CITA_RECONSULTA } from '../fixtures/agenda';
+import {
+  ACTIVITY,
+  CANAL,
+  ENCOUNTER_CLASS,
+  STATUS,
+  ENCOUNTER_STATUS,
+  BOOKING_STATUS,
+  BLOCK_TYPE,
+  APPOINTMENT_TYPE,
+} from '../fixtures/concepts';
+import { encounterList, type SimulatedEncounter } from '../fixtures/clinic';
+import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
+import { writeFromSupport } from './community.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
-import { pacientePorId } from '../fixtures/personas';
+import { patientById, patientList } from '../fixtures/people';
 import { representaA } from './profiles.handlers';
-import { conflict, noContent, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import {
+  conflict,
+  forbidden,
+  isMockReply,
+  noContent,
+  notFound,
+  preconditionFailed,
+  reply,
+  validation,
+  type MockReply,
+  type MockRequest,
+  type MockRouter,
+} from '../mock-router';
 import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
+import { emitirInvitacionDeAtencion } from './surveys-forms.handlers';
+import {
+  liberarCupoDeServicio,
+  liberarSobranteDeServicio,
+  ofertaDelCupo,
+} from './service-offerings.handlers';
+
+/** El motivo con el que la API cancela al cambiar el horario (`SCHEDULE_CHANGE_CANCELLATION_REASON`). */
+const MOTIVO_CAMBIO_DE_HORARIO = 'Cambio en el horario de atención del profesional';
+
+/** Cuántas citas vivas nombra la respuesta del retiro (`MAX_BOOKINGS_IN_NOTICE`). */
+const MAX_CITAS_EN_EL_AVISO = 10;
 
 /* ============================================================================
     Agenda: recursos, cupos, reservas, plantillas, bloqueos y lista de espera.
@@ -38,13 +75,55 @@ import { ahora, cuerpo, masMinutos, nuevoId, texto, uuid } from '../mock-store';
  * contra la maqueta — el error simétrico de "más permisivo que la API".
  */
 const TIPOS_DE_BLOQUEO = [
-  { type: 'ABSENCE', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Ausencia', requiresText: false, blocks: true },
-  { type: 'HOLIDAY', conceptId: TIPO_BLOQUEO['EXC-FERIADO']!, label: 'Feriado', requiresText: false, blocks: true },
-  { type: 'VACATION', conceptId: TIPO_BLOQUEO['EXC-VACACIONES']!, label: 'Vacaciones', requiresText: false, blocks: true },
-  { type: 'CONFERENCE', conceptId: TIPO_BLOQUEO['EXC-CONGRESO']!, label: 'Congreso', requiresText: false, blocks: true },
-  { type: 'ERRAND', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Trámite personal', requiresText: false, blocks: true },
-  { type: 'EXTRA', conceptId: TIPO_BLOQUEO['EXC-CIRUGIA']!, label: 'Horario extra', requiresText: false, blocks: false },
-  { type: 'OTHER', conceptId: TIPO_BLOQUEO['EXC-PERSONAL']!, label: 'Otro', requiresText: true, blocks: true },
+  {
+    type: 'ABSENCE',
+    conceptId: BLOCK_TYPE['EXC-PERSONAL']!,
+    label: 'Ausencia',
+    requiresText: false,
+    blocks: true,
+  },
+  {
+    type: 'HOLIDAY',
+    conceptId: BLOCK_TYPE['EXC-FERIADO']!,
+    label: 'Feriado',
+    requiresText: false,
+    blocks: true,
+  },
+  {
+    type: 'VACATION',
+    conceptId: BLOCK_TYPE['EXC-VACACIONES']!,
+    label: 'Vacaciones',
+    requiresText: false,
+    blocks: true,
+  },
+  {
+    type: 'CONFERENCE',
+    conceptId: BLOCK_TYPE['EXC-CONGRESO']!,
+    label: 'Congreso',
+    requiresText: false,
+    blocks: true,
+  },
+  {
+    type: 'ERRAND',
+    conceptId: BLOCK_TYPE['EXC-PERSONAL']!,
+    label: 'Trámite personal',
+    requiresText: false,
+    blocks: true,
+  },
+  {
+    type: 'EXTRA',
+    conceptId: BLOCK_TYPE['EXC-CIRUGIA']!,
+    label: 'Horario extra',
+    requiresText: false,
+    blocks: false,
+  },
+  {
+    type: 'OTHER',
+    conceptId: BLOCK_TYPE['EXC-PERSONAL']!,
+    label: 'Otro',
+    requiresText: true,
+    blocks: true,
+  },
 ] as const;
 
 function dentro(instante: string, from: string | null, to: string | null): boolean {
@@ -53,8 +132,8 @@ function dentro(instante: string, from: string | null, to: string | null): boole
   return true;
 }
 
-function estadoEs(r: ReservaSimulada, ...estados: (keyof typeof ESTADO_RESERVA)[]): boolean {
-  return estados.some((e) => ESTADO_RESERVA[e] === r.statusConceptId);
+function estadoEs(r: ReservaSimulada, ...estados: (keyof typeof BOOKING_STATUS)[]): boolean {
+  return estados.some((e) => BOOKING_STATUS[e] === r.statusConceptId);
 }
 
 function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
@@ -71,10 +150,64 @@ function reservaVisible(request: MockRequest, r: ReservaSimulada): boolean {
   return true;
 }
 
-function cambiarEstado(id: string, estado: keyof typeof ESTADO_RESERVA, extra: Partial<ReservaSimulada> = {}) {
+/* ---- la reconsulta (C4) ---------------------------------------------------
+
+   El vínculo se guarda en UN solo lado —la reconsulta apunta a su origen— y el
+   sentido inverso (`followUpBookingId`) se **deriva al leer**, igual que
+   `insuranceClaim`. Guardarlo en los dos lados dejaría dos verdades que se
+   pueden contradecir: una cancelación que actualizara un lado y no el otro
+   bastaría para que la cita origen siguiera diciendo que ya tiene reconsulta. */
+
+/** La reconsulta viva de una cita, si alguien la agendó. */
+function reconsultaDe(bookingId: string): ReservaSimulada | undefined {
+  return reservas
+    .todos()
+    .find(
+      (r) => r.followUpOf?.bookingId === bookingId && !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED'),
+    );
+}
+
+/**
+ * La reconsulta **por venir** de una cita, que es la que impide agendar otra.
+ *
+ * Una reconsulta ya pasada no bloquea: si a la persona se la citó de nuevo en
+ * marzo y ya vino, citarla otra vez por la misma consulta es legítimo. Lo que
+ * la regla prohíbe es tener dos turnos futuros colgando de la misma consulta.
+ */
+function reconsultaVigenteDe(bookingId: string): ReservaSimulada | undefined {
+  const candidata = reconsultaDe(bookingId);
+  if (candidata === undefined) return undefined;
+  return new Date(candidata.startAt).getTime() > Date.now() ? candidata : undefined;
+}
+
+/**
+ * La reserva con los dos campos de reconsulta resueltos, como la ve la API.
+ *
+ * Al origen se le agrega **cuándo fue**: es lo que la agenda y «Mis citas»
+ * necesitan para decir «de la cita del 12 de septiembre», y resolverlo acá
+ * evita una petición por fila. Si el origen ya no existe, el vínculo viaja como
+ * vino: la reconsulta sigue siendo una reconsulta.
+ */
+function conReconsulta(r: ReservaSimulada) {
+  const origen = r.followUpOf === null ? undefined : reservas.get(r.followUpOf.bookingId);
+  return {
+    ...r,
+    followUpOf:
+      r.followUpOf === null || origen === undefined
+        ? r.followUpOf
+        : { ...r.followUpOf, startAt: origen.startAt },
+    followUpBookingId: reconsultaDe(r.id)?.id ?? null,
+  };
+}
+
+function cambiarEstado(
+  id: string,
+  estado: keyof typeof BOOKING_STATUS,
+  extra: Partial<ReservaSimulada> = {},
+) {
   const r = reservas.get(id);
   if (r === undefined) return undefined;
-  return reservas.actualizar(id, { statusConceptId: ESTADO_RESERVA[estado]!, ...extra });
+  return reservas.actualizar(id, { statusConceptId: BOOKING_STATUS[estado]!, ...extra });
 }
 
 /**
@@ -95,12 +228,14 @@ function avisarDemoraAlPaciente(
   minutos: number,
   mensaje: string | undefined,
 ): boolean {
-  const paciente = pacientePorId(reserva.patientProfileId);
+  const paciente = patientById(reserva.patientProfileId);
   if (paciente === undefined) return false;
 
   const hora = new Date(reserva.startAt).toLocaleTimeString('es-BO', {
     hour: '2-digit',
     minute: '2-digit',
+    // 24 h, como la API (`timeText`): «05:30 p. m.» terminaba en «p. m..».
+    hour12: false,
   });
   // El mensaje del profesional va DESPUÉS del dato duro y entre comillas: es su
   // voz, no la del sistema, y quien lee necesita primero cuánto y de qué cita.
@@ -109,14 +244,151 @@ function avisarDemoraAlPaciente(
   emitirNotificacion({
     userId: paciente.userId,
     category: 'SCHEDULING',
-    subject: `Tu cita de las ${hora} se demora ${minutos} minutos`,
+    subject: `Su cita de las ${hora} se demora ${minutos} minutos`,
     // El nombre sale del RECURSO, que es donde vive: la reserva guarda el del
     // paciente, no el de quien atiende.
-    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Tu profesional'} avisó una demora de ${minutos} minutos en tu cita de las ${hora}.${explicacion}`,
-    destination: { type: 'APPOINTMENT', id: reserva.id },
-    payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
+    bodyText: `${recursos.get(reserva.resourceId)?.practitionerName ?? 'Su profesional'} avisó una demora de ${minutos} minutos en su cita de las ${hora}.${explicacion}`,
+    // Mismo literal que emite `RECURSO_CITA` en la API real
+    // (`scheduling/notices/agenda-notices.ts`): el mock honesto no inventa
+    // vocabulario (AG-06).
+    destination: { type: 'scheduling.appointment_bookings', id: reserva.id },
+    // Igual que la API (`delayNoticeFor`): el `kind` es lo que levanta el push
+    // (`DelayNotice`) y `route` a dónde lleva su botón.
+    payloadJson: {
+      kind: 'PRACTITIONER_DELAY',
+      route: `/my-account/appointments?turno=${reserva.id}`,
+      bookingId: reserva.id,
+      delayMinutes: minutos,
+    },
   });
+  // Y al chat, con el mismo formato que la API (`chatTextForNotice`).
+  const quien = recursos.get(reserva.resourceId)?.practitionerName ?? 'Su profesional';
+  writeFromSupport(
+    [paciente.id, paciente.userId, paciente.personId],
+    textoDeChat(
+      '⏳ Aviso de demora',
+      `Su cita de las ${hora} con ${quien} se atrasa unos ${minutos} minutos.${explicacion}`,
+      'Gracias por su paciencia. 🙏',
+      reserva.id,
+    ),
+  );
   return true;
+}
+
+/* ---- Idempotency-Key -------------------------------------------------------
+
+   El espejo del `IdempotencyInterceptor` de la API (PR #494 del API) para el
+   turno de mostrador, que es la escritura de este archivo que el cliente manda
+   con la cabecera (PR #727 del front):
+
+   - la clave vale por usuario + método + ruta: la misma en otra operación es
+     otra operación;
+   - la repetición con el mismo cuerpo devuelve **la misma respuesta y el mismo
+     status** sin volver a ejecutar, con `Idempotent-Replayed: true`;
+   - la misma clave con otro cuerpo es **422 `IDEMPOTENCY_KEY_REUSED`**;
+   - sólo se recuerdan los éxitos: un 409 o un 422 de negocio pueden dejar de
+     serlo, y fijarlos obligaría a cambiar de clave para un reintento legítimo;
+   - sin cabecera, nada cambia.
+
+   Sin esto, un doble clic en «Registrar ingreso» daba de alta dos pacientes
+   con la misma cédula en la maqueta, y la API real responde el segundo con la
+   respuesta del primero. */
+
+const idempotentReplies = new Map<
+  string,
+  { readonly fingerprint: string; readonly reply: MockReply }
+>();
+
+/** JSON con las claves ordenadas: el orden en que viajan no cambia la huella. */
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`;
+  if (value !== null && typeof value === 'object') {
+    return `{${Object.keys(value)
+      .sort()
+      .map(
+        (key) => `${JSON.stringify(key)}:${canonicalJson((value as Record<string, unknown>)[key])}`,
+      )
+      .join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+function withIdempotency(request: MockRequest, execute: () => MockReply): MockReply {
+  const key = request.headers.get('Idempotency-Key');
+  if (key === null) return execute();
+  if (key.trim() === '' || key !== key.trim() || key.length > 255) {
+    return validation('Idempotency-Key inválida', [
+      {
+        field: 'Idempotency-Key',
+        message: 'must be a non-empty string without spaces of up to 255 characters',
+      },
+    ]);
+  }
+  const scope = `${request.user?.id ?? 'anonymous'} ${request.method} ${request.path} ${key}`;
+  const fingerprint = canonicalJson({
+    body: request.body ?? null,
+    query: request.query.toString(),
+  });
+  const previous = idempotentReplies.get(scope);
+  if (previous !== undefined) {
+    if (previous.fingerprint !== fingerprint) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'IDEMPOTENCY_KEY_REUSED',
+        message: 'La clave de idempotencia ya se usó con otro contenido.',
+        error: 'Unprocessable Entity',
+      });
+    }
+    return {
+      ...previous.reply,
+      headers: { ...previous.reply.headers, 'Idempotent-Replayed': 'true' },
+    };
+  }
+  const result = execute();
+  if (result.status >= 200 && result.status < 300)
+    idempotentReplies.set(scope, { fingerprint, reply: result });
+  return result;
+}
+
+/**
+ * Si el instante cae en una franja con telemedicina de alguna plantilla no
+ * retirada y vigente ese día (`validFrom`/`validTo`, inclusive) del recurso. La franja es de pared y se mide en la hora local, como
+ * el generador de cupos; el fin es exclusivo.
+ */
+function teleconsultaEnFranja(resourceId: string, instante: Date): boolean {
+  const minuto = instante.getHours() * 60 + instante.getMinutes();
+  const aMinutos = (hora: string): number => {
+    const [h, m] = hora.split(':');
+    return Number(h) * 60 + Number(m);
+  };
+  const fecha = `${instante.getFullYear()}-${String(instante.getMonth() + 1).padStart(2, '0')}-${String(instante.getDate()).padStart(2, '0')}`;
+  return plantillas
+    .filtrar(
+      (t) =>
+        t.resourceId === resourceId &&
+        !t.retired &&
+        t.validFrom.slice(0, 10) <= fecha &&
+        (t.validTo === undefined || fecha <= t.validTo.slice(0, 10)),
+    )
+    .some((t) =>
+      t.rules.some(
+        (r) =>
+          r.telemedicineEnabled === true &&
+          r.dayOfWeek === instante.getDay() &&
+          aMinutos(r.startTime) <= minuto &&
+          minuto < aMinutos(r.endTime),
+      ),
+    );
+}
+
+/**
+ * El aviso de agenda tal como la API lo deja en el chat
+ * (`scheduling/domain/notices/chat-messages.ts`): encabezado con emoji, cuerpo,
+ * cierre y la línea con el enlace que el hilo convierte en «Ir a la cita».
+ */
+function textoDeChat(encabezado: string, cuerpoDelAviso: string, cierre: string, bookingId: string): string {
+  const base = globalThis.location?.origin ?? 'https://alovida.bo';
+  return [encabezado, cuerpoDelAviso, cierre, `👉 Ver la cita: ${base}/my-account/appointments?turno=${bookingId}`].join('\n\n');
 }
 
 export function registrarAgenda(router: MockRouter): void {
@@ -126,15 +398,27 @@ export function registrarAgenda(router: MockRouter): void {
     const includeInactive = query.get('includeInactive') === 'true';
     const items = recursos
       .todos()
-      .filter((r) => tenantId === null || r.tenantId === tenantId || true)
+      // Aislado por organización, como la API (`findResources` filtra
+      // `where.tenantId` siempre): el `|| true` que había acá le mostraba a
+      // cualquier sesión las agendas de todas las organizaciones, y tapaba en
+      // la maqueta las pantallas que piden con el tenant equivocado.
+      .filter((r) => tenantId === null || r.tenantId === tenantId)
       .filter((r) => practiceId === null || r.practiceId === practiceId)
-      .filter((r) => includeInactive || r.stateConceptId === ESTADO['ST-ACTIVE'])
+      .filter((r) => includeInactive || r.stateConceptId === STATUS['ST-ACTIVE'])
       .map(({ tenantId: _t, ...r }) => r);
     return { items, count: items.length };
   });
 
   router.post('/scheduling/resources', (request) => {
-    const datos = cuerpo<{ name: string; tenantId: string; resourceRefType: string; resourceRefId: string; practiceId?: string; timeZone?: string; capacity?: number }>(request);
+    const datos = cuerpo<{
+      name: string;
+      tenantId: string;
+      resourceRefType: string;
+      resourceRefId: string;
+      practiceId?: string;
+      timeZone?: string;
+      capacity?: number;
+    }>(request);
     const nuevo = recursos.agregar({
       id: nuevoId('resource'),
       name: datos.name ?? 'Recurso nuevo',
@@ -146,15 +430,25 @@ export function registrarAgenda(router: MockRouter): void {
       tenantId: datos.tenantId ?? '',
       timeZone: datos.timeZone ?? 'America/La_Paz',
       capacity: datos.capacity ?? 1,
-      stateConceptId: ESTADO['ST-ACTIVE']!,
+      stateConceptId: STATUS['ST-ACTIVE']!,
       site: null,
     });
-    return { status: 201, body: { id: nuevo.id, name: nuevo.name, stateConceptId: nuevo.stateConceptId } };
+    return {
+      status: 201,
+      body: { id: nuevo.id, name: nuevo.name, stateConceptId: nuevo.stateConceptId },
+    };
   });
 
   router.post('/scheduling/booking-policies', (request) => {
     const datos = cuerpo<{ code: string }>(request);
-    return { status: 201, body: { id: nuevoId('policy'), code: datos.code ?? 'POL', stateConceptId: ESTADO['ST-ACTIVE']! } };
+    return {
+      status: 201,
+      body: {
+        id: nuevoId('policy'),
+        code: datos.code ?? 'POL',
+        stateConceptId: STATUS['ST-ACTIVE']!,
+      },
+    };
   });
 
   router.get('/scheduling/slots', ({ query }) => {
@@ -169,18 +463,36 @@ export function registrarAgenda(router: MockRouter): void {
       .filter((c) => resourceId === null || c.resourceId === resourceId)
       .filter((c) => templateId === null || c.scheduleTemplateId === templateId)
       .filter((c) => dentro(c.startAt, from, to))
-      .filter((c) => !onlyAvailable || (c.remainingCapacity > 0 && c.statusConceptId === ESTADO['ST-ACTIVE']))
+      .filter(
+        (c) =>
+          !onlyAvailable || (c.remainingCapacity > 0 && c.statusConceptId === STATUS['ST-ACTIVE']),
+      )
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
-    return { items: todos.slice(0, limit), count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
+    return {
+      items: todos.slice(0, limit),
+      count: Math.min(todos.length, limit),
+      limit,
+      truncated: todos.length > limit,
+    };
   });
 
   router.post('/scheduling/slots/:id/holds', ({ params }) => {
     const cupo = cupos.get(params['id']!);
     if (cupo === undefined) return notFound('Cupo no encontrado');
-    if (cupo.remainingCapacity <= 0) return conflict('El cupo ya no tiene lugar', { slotId: cupo.id });
+    // Cerrado por un bloqueo o conservado de un horario retirado: la API
+    // responde 422 antes de mirar la capacidad (`slotHoldRefusal`).
+    if (cupo.statusConceptId === STATUS['ST-CLOSED'])
+      return preconditionFailed('El slot está bloqueado', { slotId: cupo.id });
+    if (cupo.remainingCapacity <= 0)
+      return conflict('El cupo ya no tiene lugar', { slotId: cupo.id });
     return {
       status: 201,
-      body: { id: nuevoId('hold'), holdToken: `hold.${cupo.id}`, expiresAt: masMinutos(ahora(), 5), remainingCapacity: cupo.remainingCapacity - 1 },
+      body: {
+        id: nuevoId('hold'),
+        holdToken: `hold.${cupo.id}`,
+        expiresAt: masMinutos(ahora(), 5),
+        remainingCapacity: cupo.remainingCapacity - 1,
+      },
     };
   });
 
@@ -189,21 +501,42 @@ export function registrarAgenda(router: MockRouter): void {
     const slotId = token.startsWith('hold.') ? token.slice(5) : token;
     const cupo = cupos.get(slotId);
     if (cupo === undefined) return preconditionFailed('El hold venció o no existe');
-    const datos = cuerpo<{ patientProfileId: string; channel?: string; reasonText?: string }>(request);
-    const paciente = pacientePorId(datos.patientProfileId ?? request.user?.patientProfileId ?? '');
+    const datos = cuerpo<{ patientProfileId: string; channel?: string; reasonText?: string }>(
+      request,
+    );
+    const paciente = patientById(datos.patientProfileId ?? request.user?.patientProfileId ?? '');
+    // v4.2.40 — el cupo de un servicio manda sobre el pedido: de la oferta salen la
+    // modalidad, lo que el paciente acepta y si la reserva espera aprobación. Un
+    // servicio que NO requiere aprobación nace confirmado aunque el paciente "pida".
+    const delServicio = ofertaDelCupo(cupo);
+    const estadoFinal: 'BK-CONFIRMED' | 'BK-REQUESTED' =
+      delServicio !== undefined && estado === 'BK-REQUESTED' && !delServicio.oferta.requiresApproval
+        ? 'BK-CONFIRMED'
+        : estado;
     const nueva: ReservaSimulada = {
       id: nuevoId('booking'),
       patientProfileId: paciente?.id ?? datos.patientProfileId ?? '',
       resourceId: cupo.resourceId,
       bookableSlotId: cupo.id,
-      appointmentId: estado === 'BK-CONFIRMED' ? nuevoId('appointment') : null,
-      typeConceptId: TIPO_CITA['APT-PRIMERA']!,
+      appointmentId: estadoFinal === 'BK-CONFIRMED' ? nuevoId('appointment') : null,
+      // Un servicio es un procedimiento para la agenda (la API lo clasifica así): es lo
+      // que la pinta con su tipología y no como una consulta más.
+      typeConceptId:
+        delServicio === undefined
+          ? APPOINTMENT_TYPE['APT-PRIMERA']!
+          : ACTIVITY['ACT-PROCEDIMIENTO']!,
       startAt: cupo.startAt,
       endAt: cupo.endAt,
-      statusConceptId: ESTADO_RESERVA[estado]!,
-      serviceConceptId: cupo.serviceConceptId ?? ACTIVIDAD['ACT-CONSULTA']!,
-      bookingChannelConceptId: datos.channel === 'PHONE' ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!,
-      confirmedAt: estado === 'BK-CONFIRMED' ? ahora() : null,
+      statusConceptId: BOOKING_STATUS[estadoFinal]!,
+      serviceConceptId:
+        delServicio === undefined
+          ? (cupo.serviceConceptId ?? ACTIVITY['ACT-CONSULTA']!)
+          : delServicio.oferta.channel === 'TELECONSULTA'
+            ? ACTIVITY['ACT-TELECONSULTA']!
+            : ACTIVITY['ACT-PROCEDIMIENTO']!,
+      bookingChannelConceptId:
+        datos.channel === 'PHONE' ? CANAL['CH-TELECONSULTA']! : CANAL['CH-PRESENCIAL']!,
+      confirmedAt: estadoFinal === 'BK-CONFIRMED' ? ahora() : null,
       checkedInAt: null,
       reasonText: datos.reasonText ?? 'Consulta',
       patientName: paciente?.displayName ?? 'Paciente',
@@ -212,11 +545,38 @@ export function registrarAgenda(router: MockRouter): void {
       statusReason: null,
       delayNotice: null,
       paymentState: null,
+      // Un turno que el paciente pidió por su cuenta no sale de ninguna
+      // consulta: la reconsulta la agenda el profesional (C4).
+      followUpOf: null,
+      ...(delServicio === undefined
+        ? {}
+        : {
+            serviceOfferingId: delServicio.oferta.id,
+            service: {
+              offeringId: delServicio.oferta.id,
+              name: delServicio.dto.serviceName,
+              price: delServicio.dto.price,
+              minDurationMinutes: delServicio.oferta.minDurationMinutes,
+              maxDurationMinutes: delServicio.oferta.maxDurationMinutes,
+              requiresApproval: delServicio.oferta.requiresApproval,
+            },
+          }),
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
-    cupos.actualizar(cupo.id, { remainingCapacity: Math.max(0, cupo.remainingCapacity - 1) });
-    return { status: 201, body: { id: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, remindersScheduled: 2 } };
+    cupos.actualizar(cupo.id, {
+      remainingCapacity: Math.max(0, cupo.remainingCapacity - 1),
+      ...(delServicio === undefined ? {} : { heldUntil: null }),
+    });
+    return {
+      status: 201,
+      body: {
+        id: nueva.id,
+        bookableSlotId: cupo.id,
+        statusConceptId: nueva.statusConceptId,
+        remindersScheduled: estadoFinal === 'BK-CONFIRMED' ? 2 : 0,
+      },
+    };
   };
   router.post('/scheduling/holds/:token/confirm', confirmar('BK-CONFIRMED'));
   router.post('/scheduling/holds/:token/request', confirmar('BK-REQUESTED'));
@@ -239,11 +599,16 @@ export function registrarAgenda(router: MockRouter): void {
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
     // `insuranceClaim` se resuelve al leer, como en la API: la solicitud cambia de
     // estado sin que la cita se entere.
-    const items = todos.slice(0, limit).map((r) => ({ ...r, insuranceClaim: solicitudDeLaCita(r) }));
+    const items = todos
+      .slice(0, limit)
+      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r) }));
     return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
-  router.get('/scheduling/bookings/:id', ({ params }) => reservas.get(params['id']!) ?? notFound('Reserva no encontrada'));
+  router.get('/scheduling/bookings/:id', ({ params }) => {
+    const r = reservas.get(params['id']!);
+    return r === undefined ? notFound('Reserva no encontrada') : conReconsulta(r);
+  });
 
   /* El cliente hace `PUT` (es idempotente) y devuelve `PaymentStateInfo`, no
      la reserva: la agenda lee `estado.label` para el aviso. Con `POST` y la
@@ -251,13 +616,16 @@ export function registrarAgenda(router: MockRouter): void {
   const marcarPago = (request: MockRequest) => {
     const r = reservas.get(request.params['id']!);
     if (r === undefined) return notFound();
-    const datos = cuerpo<{ state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; insuranceUsed?: boolean }>(request);
+    const datos = cuerpo<{ state: 'PENDING' | 'PARTIALLY_PAID' | 'PAID'; insuranceUsed?: boolean }>(
+      request,
+    );
     const state = datos.state ?? 'PAID';
     const actualizada = reservas.actualizar(r.id, {
       paymentState: {
         state,
-        label: state === 'PAID' ? 'Pagada' : state === 'PARTIALLY_PAID' ? 'Pago parcial' : 'Pendiente',
-        conceptId: ESTADO['ST-COMPLETED']!,
+        label:
+          state === 'PAID' ? 'Pagada' : state === 'PARTIALLY_PAID' ? 'Pago parcial' : 'Pendiente',
+        conceptId: STATUS['ST-COMPLETED']!,
         insuranceUsed: datos.insuranceUsed ?? false,
         markedByUserId: request.user?.id ?? '',
         markedAt: ahora(),
@@ -266,19 +634,35 @@ export function registrarAgenda(router: MockRouter): void {
     return actualizada?.paymentState ?? notFound();
   };
   router.put('/scheduling/bookings/:id/payment-state', marcarPago);
-  router.post('/scheduling/bookings/:id/payment-state', marcarPago);
 
   router.post('/scheduling/bookings/:id/cancel', (request) => {
     const r = reservas.get(request.params['id']!);
     if (r === undefined) return notFound();
-    const datos = cuerpo<{ cancelledBy: 'PATIENT' | 'PROVIDER'; isNoShow?: boolean; reasonText: string }>(request);
+    const datos = cuerpo<{
+      cancelledBy: 'PATIENT' | 'PROVIDER';
+      isNoShow?: boolean;
+      reasonText: string;
+    }>(request);
     const estado = datos.isNoShow ? 'BK-NO-SHOW' : 'BK-CANCELLED';
     cambiarEstado(r.id, estado, {
-      statusReason: { reasonText: datos.reasonText ?? '', actorKind: datos.cancelledBy ?? 'PROVIDER', toStateConceptId: ESTADO_RESERVA[estado]!, changedAt: ahora() },
+      statusReason: {
+        reasonText: datos.reasonText ?? '',
+        actorKind: datos.cancelledBy ?? 'PROVIDER',
+        toStateConceptId: BOOKING_STATUS[estado]!,
+        changedAt: ahora(),
+      },
     });
-    const cupo = cupos.get(r.bookableSlotId);
-    if (cupo !== undefined) cupos.actualizar(cupo.id, { remainingCapacity: cupo.capacity });
-    return { bookingId: r.id, feeAmount: datos.isNoShow ? '50.00' : undefined, capacityReleased: true };
+    // El cupo de un servicio nació para esta reserva: se borra y vuelven las
+    // consultas que había retraído. El de una consulta se reabre, como siempre.
+    if (!liberarCupoDeServicio(r.bookableSlotId)) {
+      const cupo = cupos.get(r.bookableSlotId);
+      if (cupo !== undefined) cupos.actualizar(cupo.id, { remainingCapacity: cupo.capacity });
+    }
+    return {
+      bookingId: r.id,
+      feeAmount: datos.isNoShow ? '50.00' : undefined,
+      capacityReleased: true,
+    };
   });
 
   router.post('/scheduling/bookings/:id/reject', (request) => {
@@ -286,8 +670,14 @@ export function registrarAgenda(router: MockRouter): void {
     if (r === undefined) return notFound();
     const datos = cuerpo<{ reasonText: string }>(request);
     cambiarEstado(r.id, 'BK-REJECTED', {
-      statusReason: { reasonText: datos.reasonText ?? '', actorKind: 'PROVIDER', toStateConceptId: ESTADO_RESERVA['BK-REJECTED']!, changedAt: ahora() },
+      statusReason: {
+        reasonText: datos.reasonText ?? '',
+        actorKind: 'PROVIDER',
+        toStateConceptId: BOOKING_STATUS['BK-REJECTED']!,
+        changedAt: ahora(),
+      },
     });
+    liberarCupoDeServicio(r.bookableSlotId);
     return { bookingId: r.id, capacityReleased: true };
   });
 
@@ -296,7 +686,8 @@ export function registrarAgenda(router: MockRouter): void {
     if (r === undefined) return notFound();
     const datos = cuerpo<{ toSlotId: string; reasonText: string }>(request);
     const destino = cupos.get(datos.toSlotId ?? '');
-    if (destino === undefined || destino.remainingCapacity <= 0) return conflict('El cupo de destino no está disponible');
+    if (destino === undefined || destino.remainingCapacity <= 0)
+      return conflict('El cupo de destino no está disponible');
     cupos.actualizar(r.bookableSlotId, { remainingCapacity: 1 });
     cupos.actualizar(destino.id, { remainingCapacity: 0 });
     reservas.actualizar(r.id, {
@@ -305,20 +696,54 @@ export function registrarAgenda(router: MockRouter): void {
       startAt: destino.startAt,
       endAt: destino.endAt,
       rescheduledFrom: r.startAt,
-      statusReason: { reasonText: datos.reasonText ?? '', actorKind: 'PROVIDER', toStateConceptId: r.statusConceptId, changedAt: ahora() },
+      statusReason: {
+        reasonText: datos.reasonText ?? '',
+        actorKind: 'PROVIDER',
+        toStateConceptId: r.statusConceptId,
+        changedAt: ahora(),
+      },
     });
     return { bookingId: r.id, fromSlotId: r.bookableSlotId, toSlotId: destino.id };
   });
 
-  const decision = (estado: keyof typeof ESTADO_RESERVA, extra: (r: ReservaSimulada) => Partial<ReservaSimulada> = () => ({})) => (request: MockRequest) => {
+  const decision =
+    (
+      estado: keyof typeof BOOKING_STATUS,
+      extra: (r: ReservaSimulada) => Partial<ReservaSimulada> = () => ({}),
+    ) =>
+    (request: MockRequest) => {
+      const r = reservas.get(request.params['id']!);
+      if (r === undefined) return notFound();
+      cambiarEstado(r.id, estado, extra(r));
+      return { bookingId: r.id, statusConceptId: BOOKING_STATUS[estado]!, occurredAt: ahora() };
+    };
+  router.post('/scheduling/bookings/:id/accept', (request) => {
+    const respuesta = decision('BK-CONFIRMED', () => ({ confirmedAt: ahora(), appointmentId: nuevoId('appointment') }))(request);
     const r = reservas.get(request.params['id']!);
-    if (r === undefined) return notFound();
-    cambiarEstado(r.id, estado, extra(r));
-    return { bookingId: r.id, statusConceptId: ESTADO_RESERVA[estado]!, occurredAt: ahora() };
-  };
-  router.post('/scheduling/bookings/:id/accept', decision('BK-CONFIRMED', () => ({ confirmedAt: ahora(), appointmentId: nuevoId('appointment') })));
+    const paciente = r === undefined ? undefined : patientById(r.patientProfileId);
+    if (r !== undefined && paciente !== undefined) {
+      const cuando = new Date(r.startAt).toLocaleString('es-BO', { dateStyle: 'full', timeStyle: 'short' });
+      const quien = recursos.get(r.resourceId)?.practitionerName ?? 'su profesional';
+      writeFromSupport(
+        [paciente.id, paciente.userId, paciente.personId],
+        textoDeChat('✅ ¡Cita confirmada!', `Su cita con ${quien} del ${cuando} quedó confirmada.`, '¡Lo esperamos! 💙', r.id),
+      );
+    }
+    return respuesta;
+  });
   router.post('/scheduling/bookings/:id/start', decision('BK-IN-PROGRESS'));
-  router.post('/scheduling/bookings/:id/complete', decision('BK-COMPLETED'));
+  router.post('/scheduling/bookings/:id/complete', (request) => {
+    const respuesta = decision('BK-COMPLETED')(request);
+    // Terminar antes de lo reservado libera el sobrante del servicio.
+    const r = reservas.get(request.params['id']!);
+    if (r !== undefined) liberarSobranteDeServicio(r);
+    // La atención terminó: la encuesta base sale sola hacia el paciente (sólo si
+    // la decisión se aplicó: un rechazo no emite nada).
+    if (r !== undefined && !(isMockReply(respuesta) && respuesta.status >= 400)) {
+      emitirInvitacionDeAtencion(r.id);
+    }
+    return respuesta;
+  });
 
   router.post('/scheduling/bookings/:id/check-in', ({ params }) => {
     const r = reservas.get(params['id']!);
@@ -333,34 +758,159 @@ export function registrarAgenda(router: MockRouter): void {
     if (r === undefined) return notFound();
     const datos = cuerpo<{ delayMinutes: number; message?: string }>(request);
     const minutos = datos.delayMinutes ?? 15;
-    reservas.actualizar(r.id, { delayNotice: { delayMinutes: minutos, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
+    reservas.actualizar(r.id, {
+      delayNotice: {
+        delayMinutes: minutos,
+        message: datos.message ?? 'Demora en la atención',
+        announcedAt: ahora(),
+      },
+    });
     const avisado = avisarDemoraAlPaciente(r, minutos, datos.message);
-    return { notified: avisado ? 1 : 0, affected: 1, bookingIds: [r.id], detail: avisado ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.` : `${r.patientName} no tiene cuenta de portal: avisale por otro medio.` };
+    return {
+      notified: avisado ? 1 : 0,
+      affected: 1,
+      bookingIds: [r.id],
+      detail: avisado
+        ? `Se avisó a ${r.patientName} una demora de ${minutos} minutos.`
+        : `${r.patientName} no tiene cuenta de portal: avísele por otro medio.`,
+    };
   });
 
   router.post('/scheduling/resources/:id/delay', (request) => {
-    const datos = cuerpo<{ delayMinutes: number; message?: string; from?: string; to?: string }>(request);
+    const datos = cuerpo<{ delayMinutes: number; message?: string; from?: string; to?: string }>(
+      request,
+    );
     const hoy = new Date().toDateString();
     const afectadas = reservas
       .todos()
-      .filter((r) => r.resourceId === request.params['id'] && new Date(r.startAt).toDateString() === hoy && estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN'))
+      .filter(
+        (r) =>
+          r.resourceId === request.params['id'] &&
+          new Date(r.startAt).toDateString() === hoy &&
+          estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN'),
+      )
       .filter((r) => new Date(r.startAt).getTime() > Date.now());
     const minutos = datos.delayMinutes ?? 15;
     let avisados = 0;
     for (const r of afectadas) {
-      reservas.actualizar(r.id, { delayNotice: { delayMinutes: minutos, message: datos.message ?? 'Demora en la atención', announcedAt: ahora() } });
+      reservas.actualizar(r.id, {
+        delayNotice: {
+          delayMinutes: minutos,
+          message: datos.message ?? 'Demora en la atención',
+          announcedAt: ahora(),
+        },
+      });
       if (avisarDemoraAlPaciente(r, minutos, datos.message)) avisados += 1;
     }
-    return { notified: avisados, affected: afectadas.length, bookingIds: afectadas.map((r) => r.id), detail: `${avisados} de ${afectadas.length} pacientes avisados.` };
+    return {
+      notified: avisados,
+      affected: afectadas.length,
+      bookingIds: afectadas.map((r) => r.id),
+      detail: `${avisados} de ${afectadas.length} pacientes avisados.`,
+    };
   });
 
+  /**
+   * La cita puntual (AG-2) y, desde C4, **la reconsulta**.
+   *
+   * Es el mismo endpoint a propósito: una reconsulta no es otra cosa que una
+   * cita directa que recuerda de qué consulta salió. Lo único que agrega es
+   * `followUpOf`, y con él cuatro rechazos que **sólo corren cuando ese campo
+   * viene**: una cita puntual sin reconsulta se sigue creando exactamente como
+   * antes, que es lo que `appointment-new` y el mostrador esperan.
+   *
+   * Orden de los rechazos, y por qué:
+   *
+   * 1. **403** — la agenda no es del profesional de la sesión. Va primero
+   *    porque es lo único que se decide sin mirar nada ajeno: citar de nuevo a
+   *    alguien en la agenda de un colega no es un error de datos, es no tener
+   *    permiso.
+   * 2. **404** — la cita de origen no existe.
+   * 3. **422** — el paciente no es el de esa cita, o el horario no es futuro.
+   * 4. **409** — esa consulta ya tiene una reconsulta por venir.
+   */
   router.post('/scheduling/appointments/direct', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; resourceId: string; startAt: string; durationMinutes: number; reasonText?: string; channel?: string }>(request);
-    const paciente = pacientePorId(datos.patientProfileId ?? '');
+    const datos = cuerpo<{
+      patientProfileId: string;
+      resourceId: string;
+      startAt: string;
+      durationMinutes: number;
+      reasonText?: string;
+      channel?: string;
+      followUpOf?: FollowUpOrigin;
+    }>(request);
+    const paciente = patientById(datos.patientProfileId ?? '');
     const startAt = datos.startAt ?? ahora();
+    const origenPedido = datos.followUpOf ?? null;
+
+    let origen: ReservaSimulada | undefined;
+    if (origenPedido !== null) {
+      const hpid = request.user?.practitionerProfileId;
+      const propias = new Set(
+        recursos.filtrar((r) => hpid !== undefined && r.resourceRefId === hpid).map((r) => r.id),
+      );
+      if (!propias.has(datos.resourceId ?? '')) {
+        return forbidden(
+          'La reconsulta se agenda en su propia agenda, no en la de otro profesional',
+        );
+      }
+
+      origen = reservas.get(origenPedido.bookingId ?? '');
+      if (origen === undefined) {
+        return notFound('La cita de la que sale esta reconsulta no existe');
+      }
+      if (origen.patientProfileId !== (datos.patientProfileId ?? '')) {
+        return validation('La reconsulta es para el paciente de la cita de origen', [
+          {
+            field: 'patientProfileId',
+            code: 'FOLLOW_UP_PATIENT_MISMATCH',
+            message: 'El paciente no es el de la cita de origen.',
+          },
+        ]);
+      }
+      if (new Date(startAt).getTime() <= Date.now()) {
+        return validation('Una reconsulta se agenda para más adelante', [
+          {
+            field: 'startAt',
+            code: 'FOLLOW_UP_NOT_FUTURE',
+            message: 'La fecha de la reconsulta tiene que ser futura.',
+          },
+        ]);
+      }
+      const yaAgendada = reconsultaVigenteDe(origen.id);
+      if (yaAgendada !== undefined) {
+        return conflict('Esta consulta ya tiene una reconsulta agendada', {
+          bookingId: yaAgendada.id,
+          startAt: yaAgendada.startAt,
+        });
+      }
+    }
+
+    // La teleconsulta sólo cabe en una franja vigente con telemedicina: el
+    // mismo 422 que `CreateDirectAppointmentUseCase` (reason
+    // `TELEMEDICINE_NOT_ENABLED`). Las demás modalidades no miran franjas.
+    if (
+      datos.channel === 'TELECONSULTA' &&
+      !teleconsultaEnFranja(datos.resourceId ?? '', new Date(startAt))
+    ) {
+      // `reason` en el primer nivel, como lo deja el filtro de excepciones.
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message:
+          'Ese horario no atiende por telemedicina. Habilítela en la franja de su horario de atención o elija otra modalidad.',
+        error: 'Unprocessable Entity',
+        reason: 'TELEMEDICINE_NOT_ENABLED',
+        details: { resourceId: datos.resourceId ?? '', startAt },
+      });
+    }
+
     const endAt = masMinutos(startAt, datos.durationMinutes ?? 30);
-    const pisados = cupos.filtrar((c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt);
-    for (const c of pisados) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
+    const pisados = cupos.filtrar(
+      (c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt,
+    );
+    for (const c of pisados)
+      cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: STATUS['ST-CLOSED']! });
     const cupo: CupoSimulado = {
       id: nuevoId('slot-directo'),
       resourceId: datos.resourceId ?? '',
@@ -369,8 +919,8 @@ export function registrarAgenda(router: MockRouter): void {
       endAt,
       capacity: 1,
       remainingCapacity: 0,
-      statusConceptId: ESTADO['ST-ACTIVE']!,
-      serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+      statusConceptId: STATUS['ST-ACTIVE']!,
+      serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
     };
     cupos.agregar(cupo);
     const nueva: ReservaSimulada = {
@@ -379,36 +929,292 @@ export function registrarAgenda(router: MockRouter): void {
       resourceId: cupo.resourceId,
       bookableSlotId: cupo.id,
       appointmentId: nuevoId('appointment'),
-      typeConceptId: TIPO_CITA['APT-CONTROL']!,
+      typeConceptId: origen === undefined ? APPOINTMENT_TYPE['APT-CONTROL']! : TIPO_CITA_RECONSULTA,
       startAt,
       endAt,
-      statusConceptId: ESTADO_RESERVA['BK-CONFIRMED']!,
-      serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
-      bookingChannelConceptId: datos.channel === 'TELECONSULTA' ? CANAL['CH-TELECONSULTA']! : datos.channel === 'DOMICILIO' ? CANAL['CH-DOMICILIO']! : CANAL['CH-PRESENCIAL']!,
+      statusConceptId: BOOKING_STATUS['BK-CONFIRMED']!,
+      serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
+      bookingChannelConceptId:
+        datos.channel === 'TELECONSULTA'
+          ? CANAL['CH-TELECONSULTA']!
+          : datos.channel === 'DOMICILIO'
+            ? CANAL['CH-DOMICILIO']!
+            : CANAL['CH-PRESENCIAL']!,
       confirmedAt: ahora(),
       checkedInAt: null,
-      reasonText: datos.reasonText ?? 'Cita creada por el profesional',
+      // El motivo que mandaron; si no mandaron ninguno y esto es una
+      // reconsulta, el de la consulta de origen con su prefijo. Una reconsulta
+      // sin motivo es una cita que después nadie sabe explicar.
+      reasonText:
+        datos.reasonText ??
+        (origen === undefined
+          ? 'Cita creada por el profesional'
+          : `Reconsulta: ${origen.reasonText}`),
       patientName: paciente?.displayName ?? 'Paciente',
       insuranceCarrierName: paciente?.aseguradora ?? null,
       rescheduledFrom: null,
       statusReason: null,
       delayNotice: null,
       paymentState: null,
+      followUpOf:
+        origen === undefined || origenPedido === null
+          ? null
+          : {
+              bookingId: origen.id,
+              encounterId: origenPedido.encounterId ?? null,
+              ...(origenPedido.formInstanceId === undefined
+                ? {}
+                : { formInstanceId: origenPedido.formInstanceId }),
+            },
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
-    return { status: 201, body: { bookingId: nueva.id, bookableSlotId: cupo.id, statusConceptId: nueva.statusConceptId, retractedSlots: pisados.length } };
+    return {
+      status: 201,
+      body: {
+        bookingId: nueva.id,
+        bookableSlotId: cupo.id,
+        statusConceptId: nueva.statusConceptId,
+        retractedSlots: pisados.length,
+      },
+    };
   });
+
+  /**
+   * El turno de mostrador (AC-3.3): alta del paciente sin cuenta, reserva,
+   * encuentro abierto e inicio de la atención, todo o nada — el espejo de
+   * `SchedulingWalkInService`.
+   *
+   * Los rechazos, en el orden en que la API los encuentra:
+   *
+   * 1. **400** — falta un dato obligatorio del paciente o de la cita, o viene
+   *    el teléfono del tutor sin su nombre.
+   * 2. **404** — la agenda no existe.
+   * 3. **409** — el documento YA está registrado: el mostrador tiene que
+   *    buscarlo y agendarle con `appointments/direct`, no duplicarlo.
+   * 4. **422** — el horario pisa otro turno vivo de esa agenda.
+   *
+   * La reserva nace `IN_PROGRESS` y el encuentro `IN_PROGRESS`: quien llegó al
+   * mostrador ya está siendo atendido.
+   */
+  router.post('/scheduling/appointments/walk-in', (request) =>
+    withIdempotency(request, () => {
+      const data = cuerpo<{
+        patient: {
+          name?: string;
+          middleName?: string;
+          lastName?: string;
+          motherLastName?: string;
+          nationalId?: string;
+          phone?: string;
+          birthDate?: string;
+          occupationConceptId?: string;
+          issuerAdministrativeAreaConceptId?: string;
+          guardianName?: string;
+          guardianPhone?: string;
+        };
+        resourceId: string;
+        startAt: string;
+        durationMinutes: number;
+        reasonText?: string;
+        channel?: string;
+      }>(request);
+      const patientData = data.patient ?? {};
+
+      const missing = [
+        ...(['name', 'lastName', 'nationalId', 'phone'] as const)
+          .filter((field) => (patientData[field] ?? '').trim() === '')
+          .map((field) => ({ field: `patient.${field}`, message: 'should not be empty' })),
+        ...(['resourceId', 'startAt'] as const)
+          .filter((field) => (data[field] ?? '') === '')
+          .map((field) => ({ field, message: 'should not be empty' })),
+        ...(typeof data.durationMinutes === 'number' && data.durationMinutes > 0
+          ? []
+          : [{ field: 'durationMinutes', message: 'must be a positive number' }]),
+        ...(patientData.guardianPhone !== undefined &&
+        (patientData.guardianName ?? '').trim() === ''
+          ? [
+              {
+                field: 'patient.guardianName',
+                message: 'is required when guardianPhone is present',
+              },
+            ]
+          : []),
+      ];
+      if (missing.length > 0) return validation('Faltan datos del turno de mostrador', missing);
+
+      const resource = recursos.get(data.resourceId!);
+      if (resource === undefined) return notFound('La agenda no existe');
+
+      const nationalId = patientData.nationalId!.trim();
+      if (patientList.todos().some((p) => p.nationalId === nationalId)) {
+        return conflict(
+          'Ya existe un paciente con ese documento de identidad. Búsquelo con ' +
+            'GET /profiles/patients?nationalId= en vez de registrarlo de nuevo.',
+        );
+      }
+
+      const startAt = data.startAt!;
+      const endAt = masMinutos(startAt, data.durationMinutes!);
+      const clash = reservas
+        .todos()
+        .find(
+          (r) =>
+            r.resourceId === resource.id &&
+            !estadoEs(r, 'BK-CANCELLED', 'BK-REJECTED', 'BK-COMPLETED', 'BK-NO-SHOW') &&
+            r.startAt < endAt &&
+            r.endAt > startAt,
+        );
+      if (clash !== undefined) {
+        const time = new Date(clash.startAt).toLocaleTimeString('es-BO', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        return preconditionFailed(
+          `${resource.practitionerName ?? 'La agenda'} ya tiene a ${clash.patientName} a las ${time}: el turno de mostrador se superpone.`,
+          { bookingId: clash.id, startAt: clash.startAt, endAt: clash.endAt },
+        );
+      }
+
+      // El alta del paciente: lo mismo que `POST /profiles/patients`, con lo
+      // que el mostrador pregunta y nada inventado para completar la fila.
+      const displayName = [
+        patientData.name,
+        patientData.middleName,
+        patientData.lastName,
+        patientData.motherLastName,
+      ]
+        .map((part) => (part ?? '').trim())
+        .filter((part) => part !== '')
+        .join(' ');
+      const patientProfileId = nuevoId('paciente-mostrador');
+      const newPatient: Parameters<typeof patientList.agregar>[0] = {
+        id: patientProfileId,
+        personId: uuid(`person-${patientProfileId}`),
+        userId: uuid(`user-${patientProfileId}`),
+        patientCode: `PAT-${patientProfileId.slice(-8).toUpperCase()}`,
+        displayName,
+        name: patientData.name!.trim(),
+        ...(patientData.middleName === undefined
+          ? {}
+          : { middleName: patientData.middleName.trim() }),
+        lastName: patientData.lastName!.trim(),
+        motherLastName: (patientData.motherLastName ?? '').trim(),
+        birthDate: patientData.birthDate ?? '',
+        nationalId,
+        email: '',
+        phone: patientData.phone!.trim(),
+        municipioId: '',
+        departamentoId: patientData.issuerAdministrativeAreaConceptId ?? '',
+        ocupacionId: patientData.occupationConceptId ?? '',
+        direccion: '',
+        deceased: false,
+        // Nace sin identidad probada: nadie verificó nada en el mostrador.
+        identityVerified: false,
+      };
+      patientList.agregar(newPatient);
+
+      // La cita, igual que la directa: retira los cupos ofrecidos que pisa.
+      const overlapped = cupos.filtrar(
+        (c) => c.resourceId === resource.id && c.startAt < endAt && c.endAt > startAt,
+      );
+      for (const c of overlapped)
+        cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: STATUS['ST-CLOSED']! });
+      const slot: CupoSimulado = {
+        id: nuevoId('slot-mostrador'),
+        resourceId: resource.id,
+        scheduleTemplateId: null,
+        startAt,
+        endAt,
+        capacity: 1,
+        remainingCapacity: 0,
+        statusConceptId: STATUS['ST-ACTIVE']!,
+        serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
+      };
+      cupos.agregar(slot);
+      const booking: ReservaSimulada = {
+        id: nuevoId('booking-mostrador'),
+        patientProfileId,
+        resourceId: resource.id,
+        bookableSlotId: slot.id,
+        appointmentId: nuevoId('appointment'),
+        typeConceptId: APPOINTMENT_TYPE['APT-PRIMERA']!,
+        startAt,
+        endAt,
+        statusConceptId: BOOKING_STATUS['BK-IN-PROGRESS']!,
+        serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
+        bookingChannelConceptId:
+          data.channel === 'TELECONSULTA'
+            ? CANAL['CH-TELECONSULTA']!
+            : data.channel === 'DOMICILIO'
+              ? CANAL['CH-DOMICILIO']!
+              : CANAL['CH-PRESENCIAL']!,
+        confirmedAt: ahora(),
+        checkedInAt: ahora(),
+        reasonText: data.reasonText ?? 'Turno de mostrador',
+        patientName: displayName,
+        insuranceCarrierName: null,
+        rescheduledFrom: null,
+        statusReason: null,
+        delayNotice: null,
+        paymentState: null,
+        followUpOf: null,
+        createdAt: ahora(),
+      };
+      reservas.agregar(booking);
+
+      // El encuentro abierto, que es a donde el médico entra a registrar la
+      // atención apenas se cierra el alta.
+      const encounter: SimulatedEncounter = {
+        id: nuevoId('encounter'),
+        patientProfileId,
+        statusConceptId: ENCOUNTER_STATUS['ENCST-IN-PROGRESS']!,
+        classConceptId: ENCOUNTER_CLASS['ENC-AMB']!,
+        primaryPractitionerId: resource.resourceRefId,
+        reasonText: booking.reasonText,
+        startAt: ahora(),
+        endAt: null,
+      };
+      encounterList.agregar(encounter);
+
+      return reply(201, {
+        patientProfileId,
+        personId: newPatient.personId,
+        patientCode: newPatient.patientCode,
+        bookingId: booking.id,
+        bookableSlotId: slot.id,
+        appointmentId: booking.appointmentId,
+        encounterId: encounter.id,
+        statusConceptId: booking.statusConceptId,
+        retractedSlots: overlapped.length,
+      });
+    }),
+  );
 
   /* ---- plantillas --------------------------------------------------------- */
 
   router.get('/scheduling/resources/:id/templates', ({ params }) => {
-    const items = plantillas.filtrar((t) => t.resourceId === params['id']).map(({ resourceId: _r, ...t }) => t);
+    const items = plantillas
+      .filtrar((t) => t.resourceId === params['id'])
+      // La API devuelve `telemedicineEnabled` siempre, como booleano: la
+      // columna es anulable y el `null` se lee como «no».
+      .map(({ resourceId: _r, ...t }) => ({
+        ...t,
+        rules: t.rules.map((r) => ({ ...r, telemedicineEnabled: r.telemedicineEnabled === true })),
+      }));
     return { items, count: items.length };
   });
 
   router.post('/scheduling/resources/:id/templates', (request) => {
-    const datos = cuerpo<{ name: string; rules: PlantillaSimulada['rules']; slotMinutes?: number; bookingPolicyId?: string; validFrom?: string; validTo?: string; flexibleHours?: boolean }>(request);
+    const datos = cuerpo<{
+      name: string;
+      rules: PlantillaSimulada['rules'];
+      slotMinutes?: number;
+      bookingPolicyId?: string;
+      validFrom?: string;
+      validTo?: string;
+      flexibleHours?: boolean;
+    }>(request);
     const nueva = plantillas.agregar({
       id: nuevoId('template'),
       resourceId: request.params['id']!,
@@ -420,9 +1226,18 @@ export function registrarAgenda(router: MockRouter): void {
       ...(datos.validTo === undefined ? {} : { validTo: datos.validTo }),
       ...(datos.flexibleHours === true ? { flexibleHours: true } : {}),
       bookingPolicyId: datos.bookingPolicyId ?? POLITICA_ESTANDAR,
-      statusConceptId: ESTADO['ST-PUBLISHED']!,
+      statusConceptId: STATUS['ST-PUBLISHED']!,
     });
-    return { status: 201, body: { id: nueva.id, name: nueva.name, ruleCount: nueva.rules.length, statusConceptId: nueva.statusConceptId } };
+    return {
+      status: 201,
+      body: {
+        id: nueva.id,
+        name: nueva.name,
+        ruleCount: nueva.rules.length,
+        statusConceptId: nueva.statusConceptId,
+        flexibleHours: nueva.flexibleHours === true,
+      },
+    };
   });
 
   router.patch('/scheduling/templates/:id', (request) => {
@@ -435,40 +1250,125 @@ export function registrarAgenda(router: MockRouter): void {
   });
 
   /**
-   * Retira un horario publicado.
-   *
-   * **Responde 409 con las citas comprometidas**, igual que el contrato: sin
-   * eso la maqueta dejaba retirar cualquier horario y el camino del error —el
-   * que impide mover turnos de pacientes sin avisar— no se podía ni ver ni
-   * probar.
+   * Las citas de un horario como las ve el retiro: las que se pueden cancelar
+   * (confirmadas y solicitudes sin responder) y las de pacientes ya recibidos,
+   * que lo frenan. Igual que `BlockedBookingsCanceller.describe` de la API: sin
+   * filtro de fecha.
    */
-  router.delete('/scheduling/templates/:id', ({ params }) => {
-    const t = plantillas.get(params['id']!);
-    if (t === undefined) return notFound();
-    const delHorario = new Set(cupos.filtrar((c) => c.scheduleTemplateId === t.id).map((c) => c.id));
-    const comprometidas = reservas.filtrar(
-      (r) =>
-        delHorario.has(r.bookableSlotId) &&
-        r.startAt > ahora() &&
-        estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'),
+  function citasDelHorario(templateId: string) {
+    const delHorario = new Map(
+      cupos.filtrar((c) => c.scheduleTemplateId === templateId).map((c) => [c.id, c]),
     );
-    if (comprometidas.length > 0) {
-      return conflict(
-        `El horario tiene ${comprometidas.length} ${comprometidas.length === 1 ? 'cita comprometida' : 'citas comprometidas'}: resolvelas antes de cambiarlo.`,
-        { bookingIds: comprometidas.map((r) => r.id) },
-      );
+    const deSusCupos = reservas.filtrar((r) => delHorario.has(r.bookableSlotId));
+    const describir = (r: ReservaSimulada) => {
+      const cupo = delHorario.get(r.bookableSlotId)!;
+      return {
+        bookingId: r.id,
+        startAt: cupo.startAt,
+        endAt: cupo.endAt,
+        patientName: r.patientName === '' ? null : r.patientName,
+        pending: estadoEs(r, 'BK-REQUESTED'),
+      };
+    };
+    return {
+      delHorario,
+      deSusCupos,
+      cancelables: deSusCupos.filter((r) => estadoEs(r, 'BK-CONFIRMED', 'BK-REQUESTED')),
+      presentes: deSusCupos.filter((r) => estadoEs(r, 'BK-CHECKED-IN', 'BK-IN-PROGRESS')),
+      describir,
+    };
+  }
+
+  /** `GET /scheduling/templates/:id/live-bookings`: la vista previa del retiro. */
+  router.get('/scheduling/templates/:id/live-bookings', ({ params }) => {
+    const t = plantillas.get(params['id']!);
+    if (t === undefined) return notFound('Plantilla no encontrada');
+    const { cancelables, presentes, describir } = citasDelHorario(t.id);
+    return {
+      templateId: t.id,
+      total: cancelables.length + presentes.length,
+      bookings: cancelables.map(describir),
+      present: presentes.map(describir),
+    };
+  });
+
+  /**
+   * Retira un horario publicado — el mismo contrato que la API (P23).
+   *
+   * Antes respondía **409** con cualquier cita comprometida; la API dejó de
+   * hacerlo en M4 (26/09/2026) y la maqueta seguía frenando, así que «Cambiar mi
+   * horario» era imposible justo acá, con 42 citas de demostración. Ahora:
+   *
+   * - Por omisión **conserva** las citas: sus cupos quedan, cerrados, y la
+   *   respuesta las cuenta en `liveBookings`/`liveBookingIds`.
+   * - Con `?affectedBookings=cancel` cancela las confirmadas y rechaza las
+   *   solicitudes con el motivo «cambio de horario», salvo que haya un paciente
+   *   ya recibido (422, como la API).
+   * - Suelta (borra) los cupos sin ninguna cita, pasada o presente; los que
+   *   tienen historia se conservan **cerrados**: un horario retirado no vuelve a
+   *   ofrecer turnos con su hora y su duración viejas.
+   */
+  router.delete('/scheduling/templates/:id', (request) => {
+    const t = plantillas.get(request.params['id']!);
+    if (t === undefined) return notFound('Plantilla no encontrada');
+
+    let cancelledBookings = 0;
+    if (request.query.get('affectedBookings') === 'cancel') {
+      const { cancelables, presentes } = citasDelHorario(t.id);
+      if (presentes.length > 0) {
+        return preconditionFailed(
+          'Hay un paciente ya recibido en ese rato. Atiéndalo o cancele su cita desde la agenda antes de bloquear.',
+          { resourceId: t.resourceId, bookingIds: presentes.map((r) => r.id) },
+        );
+      }
+      for (const r of cancelables) {
+        const estado = estadoEs(r, 'BK-REQUESTED') ? 'BK-REJECTED' : 'BK-CANCELLED';
+        cambiarEstado(r.id, estado, {
+          statusReason: {
+            reasonText: MOTIVO_CAMBIO_DE_HORARIO,
+            actorKind: 'PROVIDER',
+            toStateConceptId: BOOKING_STATUS[estado]!,
+            changedAt: ahora(),
+          },
+        });
+        const cupo = cupos.get(r.bookableSlotId);
+        if (cupo !== undefined) cupos.actualizar(cupo.id, { remainingCapacity: cupo.capacity });
+      }
+      cancelledBookings = cancelables.length;
     }
-    plantillas.actualizar(t.id, { retired: true, statusConceptId: ESTADO['ST-ARCHIVED']! });
-    const libres = cupos.filtrar((c) => c.scheduleTemplateId === t.id && c.remainingCapacity > 0 && c.startAt > ahora());
-    for (const c of libres) cupos.borrar(c.id);
-    return { id: t.id, statusConceptId: ESTADO['ST-ARCHIVED']!, releasedSlots: libres.length, keptSlots: cupos.filtrar((c) => c.scheduleTemplateId === t.id).length };
+
+    const { delHorario, deSusCupos } = citasDelHorario(t.id);
+    const conHistoria = new Set(deSusCupos.map((r) => r.bookableSlotId));
+    let releasedSlots = 0;
+    for (const c of delHorario.values()) {
+      if (conHistoria.has(c.id)) {
+        cupos.actualizar(c.id, { statusConceptId: STATUS['ST-CLOSED']! });
+      } else {
+        cupos.borrar(c.id);
+        releasedSlots++;
+      }
+    }
+    plantillas.actualizar(t.id, { retired: true, statusConceptId: STATUS['ST-ARCHIVED']! });
+
+    const vivas = deSusCupos.filter((r) => estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN'));
+    const muestra = vivas.slice(0, MAX_CITAS_EN_EL_AVISO);
+    return {
+      id: t.id,
+      statusConceptId: STATUS['ST-ARCHIVED']!,
+      releasedSlots,
+      keptSlots: conHistoria.size,
+      liveBookings: vivas.length,
+      liveBookingIds: muestra.map((r) => r.id),
+      truncated: vivas.length > muestra.length,
+      cancelledBookings,
+    };
   });
 
   router.post('/scheduling/templates/:id/reactivate', ({ params }) => {
     const t = plantillas.get(params['id']!);
     if (t === undefined) return notFound();
-    plantillas.actualizar(t.id, { retired: false, statusConceptId: ESTADO['ST-PUBLISHED']! });
-    return { id: t.id, statusConceptId: ESTADO['ST-PUBLISHED']!, slotsPendientes: true };
+    plantillas.actualizar(t.id, { retired: false, statusConceptId: STATUS['ST-PUBLISHED']! });
+    return { id: t.id, statusConceptId: STATUS['ST-PUBLISHED']!, slotsPendientes: true };
   });
 
   router.post('/scheduling/templates/:id/generate-slots', (request) => {
@@ -479,29 +1379,59 @@ export function registrarAgenda(router: MockRouter): void {
     const hasta = new Date(datos.to ?? masMinutos(ahora(), 60 * 24 * 14));
     let created = 0;
     let skipped = 0;
+    let omittedByCommitments = 0;
+    // Las citas vivas del profesional: un turno nuevo que las pisa no se genera
+    // (`commitments` de la API). Es lo que impide que el horario nuevo ofrezca
+    // las 08:00 encima de la cita que el retiro del viejo conservó (P23).
+    const comprometidas = reservas.filtrar(
+      (r) =>
+        r.resourceId === t.resourceId && estadoEs(r, 'BK-CONFIRMED', 'BK-CHECKED-IN', 'BK-IN-PROGRESS'),
+    );
     for (let d = new Date(desde); d <= hasta; d.setDate(d.getDate() + 1)) {
       // TODAS las franjas del día, no la primera: con hora de almuerzo un día
       // son dos franjas (mañana y tarde), igual que en el generador real, que
       // recorre cada regla. Con `find` la tarde desaparecía en silencio.
-      for (const regla of t.rules.filter((r) => r.dayOfWeek === d.getDay())) {
+      // Horario flexible (P36): no hay grilla; las horas se calculan al leer y
+      // el cupo nace al retener (`flexible-hours.handlers.ts`), como en la API.
+      // Vale para la plantilla entera o para la franja (`isFlexibleBand`).
+      for (const regla of t.rules.filter(
+        (r) =>
+          t.flexibleHours !== true &&
+          r.flexibleHours !== true &&
+          r.dayOfWeek === d.getDay() &&
+          r.bookingMode !== 'SERVICES',
+      )) {
         const [hi, mi] = regla.startTime.split(':').map(Number) as [number, number];
         const [hf, mf] = regla.endTime.split(':').map(Number) as [number, number];
         const apertura = hi * 60 + mi;
         const cierre = hf * 60 + mf;
-        // Horario flexible (P36): la franja entera es UN bloque abierto y el
-        // paciente pide dentro de ella la hora que quiera. La capacidad es una
-        // suposición de la maqueta —una consulta cada 15 min como techo— hasta
-        // que el backend defina el modo; está anotado en P36.
-        const flexible = t.flexibleHours === true;
-        const dur = flexible ? cierre - apertura : (regla.slotMinutes ?? t.slotMinutes);
-        const paso = flexible ? dur : dur + (regla.gapMinutes ?? 0);
-        const capacidad = flexible ? Math.max(1, Math.floor(dur / 15)) : (regla.capacityPerSlot ?? 1);
+        const dur = regla.slotMinutes ?? t.slotMinutes;
+        const paso = dur + (regla.gapMinutes ?? 0);
+        const capacidad = regla.capacityPerSlot ?? 1;
         if (dur <= 0) continue;
         for (let m = apertura; m + dur <= cierre; m += paso) {
           const inicio = new Date(d);
           inicio.setHours(Math.floor(m / 60), m % 60, 0, 0);
           const id = uuid(`slot-${t.id}-${inicio.toISOString()}`);
-          if (cupos.has(id) || cupos.filtrar((c) => c.resourceId === t.resourceId && c.startAt === inicio.toISOString()).length > 0) {
+          const fin = new Date(inicio.getTime() + dur * 60_000).toISOString();
+          if (cupos.has(id)) {
+            skipped++;
+            continue;
+          }
+          if (comprometidas.some((r) => r.startAt < fin && r.endAt > inicio.toISOString())) {
+            omittedByCommitments++;
+            continue;
+          }
+          // Un cupo del mismo instante en otro horario VIGENTE de la agenda. Los
+          // de un horario retirado no cuentan: quedaron cerrados y no se ofrecen.
+          if (
+            cupos.filtrar(
+              (c) =>
+                c.resourceId === t.resourceId &&
+                c.startAt === inicio.toISOString() &&
+                plantillas.get(c.scheduleTemplateId ?? '')?.retired !== true,
+            ).length > 0
+          ) {
             skipped++;
             continue;
           }
@@ -510,59 +1440,104 @@ export function registrarAgenda(router: MockRouter): void {
             resourceId: t.resourceId,
             scheduleTemplateId: t.id,
             startAt: inicio.toISOString(),
-            endAt: new Date(inicio.getTime() + dur * 60_000).toISOString(),
+            endAt: fin,
             capacity: capacidad,
             remainingCapacity: capacidad,
-            statusConceptId: ESTADO['ST-ACTIVE']!,
-            serviceConceptId: ACTIVIDAD['ACT-CONSULTA']!,
+            statusConceptId: STATUS['ST-ACTIVE']!,
+            serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
           });
           created++;
         }
       }
     }
-    return { templateId: t.id, created, skipped };
+    return { templateId: t.id, created, skipped, omittedByCommitments };
   });
 
   router.post('/scheduling/resources/:id/shift-slots', (request) => {
-    const datos = cuerpo<{ shiftMinutes: number; from: string; to: string; slotIds?: string[] }>(request);
-    const afectados = cupos.filtrar((c) => c.resourceId === request.params['id'] && (datos.slotIds === undefined ? dentro(c.startAt, datos.from ?? null, datos.to ?? null) : datos.slotIds.includes(c.id)));
+    const datos = cuerpo<{ shiftMinutes: number; from: string; to: string; slotIds?: string[] }>(
+      request,
+    );
+    const afectados = cupos.filtrar(
+      (c) =>
+        c.resourceId === request.params['id'] &&
+        (datos.slotIds === undefined
+          ? dentro(c.startAt, datos.from ?? null, datos.to ?? null)
+          : datos.slotIds.includes(c.id)),
+    );
     for (const c of afectados) {
-      cupos.actualizar(c.id, { startAt: masMinutos(c.startAt, datos.shiftMinutes ?? 0), endAt: masMinutos(c.endAt, datos.shiftMinutes ?? 0) });
+      cupos.actualizar(c.id, {
+        startAt: masMinutos(c.startAt, datos.shiftMinutes ?? 0),
+        endAt: masMinutos(c.endAt, datos.shiftMinutes ?? 0),
+      });
       for (const r of reservas.filtrar((r) => r.bookableSlotId === c.id)) {
-        reservas.actualizar(r.id, { startAt: masMinutos(r.startAt, datos.shiftMinutes ?? 0), endAt: masMinutos(r.endAt, datos.shiftMinutes ?? 0) });
+        reservas.actualizar(r.id, {
+          startAt: masMinutos(r.startAt, datos.shiftMinutes ?? 0),
+          endAt: masMinutos(r.endAt, datos.shiftMinutes ?? 0),
+        });
       }
     }
-    return { movedSlots: afectados.length, notified: reservas.filtrar((r) => afectados.some((c) => c.id === r.bookableSlotId)).length, shiftMinutes: datos.shiftMinutes ?? 0 };
+    return {
+      movedSlots: afectados.length,
+      notified: reservas.filtrar((r) => afectados.some((c) => c.id === r.bookableSlotId)).length,
+      shiftMinutes: datos.shiftMinutes ?? 0,
+    };
   });
 
   router.post('/scheduling/resources/:id/close-slots', (request) => {
     const datos = cuerpo<{ exceptionType: string; reason?: string; slotIds: string[] }>(request);
     const cerrados = cupos.filtrar((c) => (datos.slotIds ?? []).includes(c.id));
-    for (const c of cerrados) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
+    for (const c of cerrados)
+      cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: STATUS['ST-CLOSED']! });
     const ordenados = cerrados.map((c) => c.startAt).sort();
     const bloqueo = bloqueos.agregar({
       id: nuevoId('exception'),
       resourceId: request.params['id']!,
-      exceptionTypeConceptId: TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType)?.conceptId ?? TIPO_BLOQUEO['EXC-PERSONAL']!,
+      exceptionTypeConceptId:
+        TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType)?.conceptId ??
+        BLOCK_TYPE['EXC-PERSONAL']!,
       exceptionType: datos.exceptionType ?? 'OTHER',
       startAt: ordenados[0] ?? ahora(),
-      endAt: cerrados.map((c) => c.endAt).sort().at(-1) ?? ahora(),
+      endAt:
+        cerrados
+          .map((c) => c.endAt)
+          .sort()
+          .at(-1) ?? ahora(),
       reasonLabel: TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType)?.label ?? 'Otro',
       reason: datos.reason ?? '',
       isAvailable: false,
     });
-    return { closedSlots: cerrados.length, exceptionId: bloqueo.id, from: bloqueo.startAt, to: bloqueo.endAt };
+    return {
+      closedSlots: cerrados.length,
+      exceptionId: bloqueo.id,
+      from: bloqueo.startAt,
+      to: bloqueo.endAt,
+    };
   });
 
   /* ---- catálogos de la agenda --------------------------------------------- */
 
   router.get('/scheduling/activity-types', () => ({
     items: [
-      { type: 'CONSULTATION', conceptId: ACTIVIDAD['ACT-CONSULTA']!, label: 'Consulta', tone: 'primary' },
-      { type: 'FOLLOW_UP', conceptId: ACTIVIDAD['ACT-CONTROL']!, label: 'Control', tone: 'success' },
-      { type: 'PROCEDURE', conceptId: ACTIVIDAD['ACT-PROCEDIMIENTO']!, label: 'Procedimiento', tone: 'warning' },
-      { type: 'TELEHEALTH', conceptId: ACTIVIDAD['ACT-TELECONSULTA']!, label: 'Teleconsulta', tone: 'info' },
-      { type: 'EXAM', conceptId: ACTIVIDAD['ACT-EXAMEN']!, label: 'Examen', tone: 'neutral' },
+      {
+        type: 'CONSULTATION',
+        conceptId: ACTIVITY['ACT-CONSULTA']!,
+        label: 'Consulta',
+        tone: 'primary',
+      },
+      { type: 'FOLLOW_UP', conceptId: ACTIVITY['ACT-CONTROL']!, label: 'Control', tone: 'success' },
+      {
+        type: 'PROCEDURE',
+        conceptId: ACTIVITY['ACT-PROCEDIMIENTO']!,
+        label: 'Procedimiento',
+        tone: 'warning',
+      },
+      {
+        type: 'TELEHEALTH',
+        conceptId: ACTIVITY['ACT-TELECONSULTA']!,
+        label: 'Teleconsulta',
+        tone: 'info',
+      },
+      { type: 'EXAM', conceptId: ACTIVITY['ACT-EXAMEN']!, label: 'Examen', tone: 'neutral' },
     ],
   }));
 
@@ -581,7 +1556,13 @@ export function registrarAgenda(router: MockRouter): void {
   });
 
   router.post('/scheduling/resources/:id/exceptions', (request) => {
-    const datos = cuerpo<{ exceptionType: string; startAt: string; endAt: string; reason?: string; isAvailable?: boolean }>(request);
+    const datos = cuerpo<{
+      exceptionType: string;
+      startAt: string;
+      endAt: string;
+      reason?: string;
+      isAvailable?: boolean;
+    }>(request);
     const tipo = TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
     // El doble no puede ser más permisivo que el contrato real. `exceptionType`
     // se valida a nivel de DTO con `@IsIn(EXCEPTION_TYPES)`
@@ -595,7 +1576,11 @@ export function registrarAgenda(router: MockRouter): void {
         code: 'VALIDATION_FAILED',
         message: 'Validation failed',
         error: 'Bad Request',
-        details: { messages: [`exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`] },
+        details: {
+          messages: [
+            `exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`,
+          ],
+        },
       });
     }
     // «Otro» sin explicación no dice nada: regla del catálogo, no de la
@@ -605,7 +1590,7 @@ export function registrarAgenda(router: MockRouter): void {
     // 412 (domain.exception.ts:106-118)— y no una validación de forma: por
     // eso va después del `@IsIn` (400) y no junto a él.
     if (tipo.requiresText && (datos.reason === undefined || datos.reason.trim() === '')) {
-      return validation('Elegiste «Otro» como motivo: escribí cuál es.');
+      return validation('Eligió «Otro» como motivo: escriba cuál es.');
     }
     const inicio = datos.startAt ?? ahora();
     const fin = datos.endAt ?? masMinutos(inicio, 60);
@@ -615,7 +1600,7 @@ export function registrarAgenda(router: MockRouter): void {
     const nuevo: BloqueoSimulado = {
       id: nuevoId('exception'),
       resourceId: request.params['id']!,
-      exceptionTypeConceptId: tipo?.conceptId ?? TIPO_BLOQUEO['EXC-PERSONAL']!,
+      exceptionTypeConceptId: tipo?.conceptId ?? BLOCK_TYPE['EXC-PERSONAL']!,
       exceptionType: tipo.type,
       startAt: inicio,
       endAt: fin,
@@ -624,16 +1609,34 @@ export function registrarAgenda(router: MockRouter): void {
       isAvailable: datos.isAvailable ?? false,
     };
     bloqueos.agregar(nuevo);
-    const bloqueados = nuevo.isAvailable ? [] : cupos.filtrar((c) => c.resourceId === nuevo.resourceId && c.startAt < nuevo.endAt && c.endAt > nuevo.startAt);
-    for (const c of bloqueados) cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: ESTADO['ST-CLOSED']! });
-    return { status: 201, body: { id: nuevo.id, blockedSlots: bloqueados.length } };
+    const bloqueados = nuevo.isAvailable
+      ? []
+      : cupos.filtrar(
+          (c) =>
+            c.resourceId === nuevo.resourceId && c.startAt < nuevo.endAt && c.endAt > nuevo.startAt,
+        );
+    for (const c of bloqueados)
+      cupos.actualizar(c.id, { remainingCapacity: 0, statusConceptId: STATUS['ST-CLOSED']! });
+    // La maqueta no tiene citas que un bloqueo alcance: nunca cancela ninguna.
+    return {
+      status: 201,
+      body: { id: nuevo.id, blockedSlots: bloqueados.length, cancelledBookings: 0 },
+    };
   });
 
   router.patch('/scheduling/exceptions/:id', (request) => {
     const b = bloqueos.get(request.params['id']!);
     if (b === undefined) return notFound();
-    const datos = cuerpo<{ exceptionType?: string; reason?: string; startAt?: string; endAt?: string }>(request);
-    const tipo = datos.exceptionType === undefined ? undefined : TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
+    const datos = cuerpo<{
+      exceptionType?: string;
+      reason?: string;
+      startAt?: string;
+      endAt?: string;
+    }>(request);
+    const tipo =
+      datos.exceptionType === undefined
+        ? undefined
+        : TIPOS_DE_BLOQUEO.find((t) => t.type === datos.exceptionType);
     if (datos.exceptionType !== undefined && tipo === undefined) {
       // Mismo contrato que el POST: `@IsIn` a nivel de DTO es 400, no 422.
       return reply(400, {
@@ -641,23 +1644,52 @@ export function registrarAgenda(router: MockRouter): void {
         code: 'VALIDATION_FAILED',
         message: 'Validation failed',
         error: 'Bad Request',
-        details: { messages: [`exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`] },
+        details: {
+          messages: [
+            `exceptionType must be one of the following values: ${TIPOS_DE_BLOQUEO.map((t) => t.type).join(', ')}`,
+          ],
+        },
       });
     }
     const actualizado = bloqueos.actualizar(b.id, {
       ...(datos.reason === undefined ? {} : { reason: datos.reason }),
       ...(datos.startAt === undefined ? {} : { startAt: datos.startAt }),
       ...(datos.endAt === undefined ? {} : { endAt: datos.endAt }),
-      ...(tipo === undefined ? {} : { exceptionType: tipo.type, exceptionTypeConceptId: tipo.conceptId, reasonLabel: tipo.label }),
+      ...(tipo === undefined
+        ? {}
+        : {
+            exceptionType: tipo.type,
+            exceptionTypeConceptId: tipo.conceptId,
+            reasonLabel: tipo.label,
+          }),
     })!;
-    return { id: actualizado.id, startAt: actualizado.startAt, endAt: actualizado.endAt, blockedSlots: cupos.filtrar((c) => c.resourceId === b.resourceId && c.startAt < actualizado.endAt && c.endAt > actualizado.startAt).length };
+    return {
+      id: actualizado.id,
+      startAt: actualizado.startAt,
+      endAt: actualizado.endAt,
+      blockedSlots: cupos.filtrar(
+        (c) =>
+          c.resourceId === b.resourceId &&
+          c.startAt < actualizado.endAt &&
+          c.endAt > actualizado.startAt,
+      ).length,
+    };
   });
 
   router.delete('/scheduling/exceptions/:id', ({ params }) => {
     const b = bloqueos.get(params['id']!);
     if (b !== undefined) {
-      for (const c of cupos.filtrar((c) => c.resourceId === b.resourceId && c.startAt < b.endAt && c.endAt > b.startAt && c.statusConceptId === ESTADO['ST-CLOSED'])) {
-        cupos.actualizar(c.id, { remainingCapacity: c.capacity, statusConceptId: ESTADO['ST-ACTIVE']! });
+      for (const c of cupos.filtrar(
+        (c) =>
+          c.resourceId === b.resourceId &&
+          c.startAt < b.endAt &&
+          c.endAt > b.startAt &&
+          c.statusConceptId === STATUS['ST-CLOSED'],
+      )) {
+        cupos.actualizar(c.id, {
+          remainingCapacity: c.capacity,
+          statusConceptId: STATUS['ST-ACTIVE']!,
+        });
       }
       bloqueos.borrar(b.id);
     }
@@ -672,12 +1704,18 @@ export function registrarAgenda(router: MockRouter): void {
     return {
       items: listaDeEspera
         .filtrar((e) => patientProfileId === null || e.patientProfileId === patientProfileId)
-        .filter((e) => includeClosed || e.statusConceptId === ESTADO['ST-PENDING']),
+        .filter((e) => includeClosed || e.statusConceptId === STATUS['ST-PENDING']),
     };
   });
 
   router.post('/scheduling/waitlist', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; resourceId?: string; desiredFrom?: string; desiredTo?: string; priority?: number }>(request);
+    const datos = cuerpo<{
+      patientProfileId: string;
+      resourceId?: string;
+      desiredFrom?: string;
+      desiredTo?: string;
+      priority?: number;
+    }>(request);
     const recurso = datos.resourceId === undefined ? undefined : recursos.get(datos.resourceId);
     const nueva = listaDeEspera.agregar({
       id: nuevoId('waitlist'),
@@ -687,9 +1725,12 @@ export function registrarAgenda(router: MockRouter): void {
       desiredFrom: datos.desiredFrom ?? ahora(),
       desiredTo: datos.desiredTo ?? masMinutos(ahora(), 60 * 24 * 14),
       priority: datos.priority ?? 3,
-      statusConceptId: ESTADO['ST-PENDING']!,
+      statusConceptId: STATUS['ST-PENDING']!,
       createdAt: ahora(),
     });
-    return { status: 201, body: { id: nueva.id, priority: nueva.priority, statusConceptId: nueva.statusConceptId } };
+    return {
+      status: 201,
+      body: { id: nueva.id, priority: nueva.priority, statusConceptId: nueva.statusConceptId },
+    };
   });
 }

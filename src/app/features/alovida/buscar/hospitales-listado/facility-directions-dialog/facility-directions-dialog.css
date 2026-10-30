@@ -117,3 +117,8 @@
         inline-size: 10rem;
     }
 }
+
+/* El recorrido lo calcula OpenStreetMap, aparte. */
+.llegar__recorrido {
+  margin: var(--sp-3) 0 0;
+}

@@ -3,14 +3,11 @@
  * Compara el catálogo tipado de tokens con lo que `styles.css` declara — **en
  * las dos direcciones**.
  *
- * Las pruebas del proyecto ya cubrían un sentido: cada token declarado en
- * TypeScript existe en el CSS. Faltaba el inverso, y ése es el que se rompe sin
- * ruido: **un token declarado solo en CSS pasa desapercibido**. No rompe nada
- * —el CSS funciona igual— pero el catálogo tipado deja de ser completo, y quien
- * lo busque por autocompletado no lo encuentra. Es cómo un sistema de diseño
- * empieza a tener dos fuentes.
+ * El catálogo debe coincidir con CSS en ambas direcciones. Si un token aparece
+ * en una sola fuente, el chequeo informa la deriva antes de que el catálogo
+ * tipado y los estilos se separen.
  *
- * Es el hallazgo M-22 / D4.
+ * Cierra el hallazgo M-22 / D4.
  *
  * Uso: node scripts/check-tokens.mjs
  */
@@ -77,7 +74,7 @@ function declaradosEnTypeScript() {
   // por donde el script mira el catálogo. El resultado fue el peor de los dos
   // mundos: un guardarraíl en rojo permanente, que es un guardarraíl que nadie
   // lee. `DESIGN_TOKENS` sí los incluye, al final y aparte.
-  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES']) {
+  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES', 'MATERIAL_SHARED', 'VERIFIED', 'CHART']) {
     for (const token of objetoDe(objeto)) tokens.add(token);
   }
 
@@ -87,6 +84,9 @@ function declaradosEnTypeScript() {
   for (const tono of listaDe('BRAND_TONES')) {
     for (const ranura of listaDe('STATUS_SLOTS')) tokens.add(`--st-${tono}-${ranura}`);
   }
+  for (const nivel of listaDe('HEAT_LEVELS')) {
+    for (const ranura of listaDe('HEAT_SLOTS')) tokens.add(`--heat-${nivel}-${ranura}`);
+  }
 
   for (const paso of listaDe('SPACING_STEPS')) tokens.add(`--sp-${paso}`);
   for (const nombre of listaDe('RADIUS_NAMES')) tokens.add(`--r-${nombre}`);
@@ -94,6 +94,14 @@ function declaradosEnTypeScript() {
   for (const nombre of listaDe('LAYER_NAMES')) tokens.add(`--z-${nombre}`);
   for (const nombre of listaDe('DURATION_NAMES')) tokens.add(`--dur-${nombre}`);
   for (const nombre of listaDe('EASING_NAMES')) tokens.add(`--ease-${nombre}`);
+  for (const nombre of listaDe('SPRING_NAMES')) {
+    tokens.add(`--spring-${nombre}`);
+    tokens.add(`--spring-${nombre}-dur`);
+  }
+  for (const nombre of listaDe('MATERIAL_NAMES')) {
+    tokens.add(`--material-${nombre}-tinte`);
+    tokens.add(`--material-${nombre}-desenfoque`);
+  }
   for (const rol of listaDe('TYPE_ROLES')) tokens.add(`--fs-${rol}`);
   for (const rol of listaDe('LINE_HEIGHT_ROLES')) tokens.add(`--lh-${rol}`);
 

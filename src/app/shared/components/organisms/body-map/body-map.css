@@ -1,9 +1,9 @@
 /* La silueta del cuerpo. Sólo tokens ALOVIDA; el molde es `department-map.css`.
 
-   La regla que gobierna esta hoja: **la elección nunca se dice sólo con
-   color**. La zona elegida cambia de relleno, cambia de trazo y además se
-   nombra en la línea de abajo (ver la plantilla). Quitá el color y el control
-   sigue siendo usable. */
+   La regla que gobierna esta hoja: **ningún estado se dice sólo con color**.
+   La zona elegida cambia de relleno, de trazo y se nombra abajo; la marcada
+   por lo que se contó lleva un trazo punteado y también se nombra abajo.
+   Quitá el color y el control sigue siendo usable. */
 
 :host {
   display: block;
@@ -13,7 +13,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--sp-3);
 }
 
 /* En angosto el selector de vista reparte la fila entera (así lo hace
@@ -25,13 +25,100 @@
   }
 }
 
-/* Una figura humana es vertical: 14rem de ancho la deja en unos 31rem de alto,
-   que es lo máximo que puede ocupar sin empujar el resto fuera de la vista en
-   una tablet. A 375 px ocupa la columna; el `viewBox` conserva la proporción. */
+/* ─── El escenario ──────────────────────────────────────────────────────────
+   Un panel con el centro apenas más claro y una sombra de piso bajo los pies:
+   la figura queda parada en un lugar, no recortada sobre la página. */
+
+.body-map__escenario {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  inline-size: 100%;
+  /* Para medir el marco en unidades del propio escenario (`cqi`). */
+  container-type: inline-size;
+  padding: var(--sp-5) var(--sp-4) var(--sp-6);
+  /* Superficie tonal sin trazo ni sombra: va dentro de una tarjeta, y una caja
+     con borde dentro de otra caja con borde era «caja dentro de caja». */
+  border: 0;
+  border-radius: var(--r-xl);
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 42%,
+    var(--bg-surface) 0%,
+    var(--bg-surface-alt) 100%
+  );
+}
+
+/* La sombra de piso: una elipse difusa bajo los pies. En la cara no va (es un
+   busto, no hay piso). */
+.body-map__escenario::after {
+  content: '';
+  position: absolute;
+  inset-block-end: var(--sp-4);
+  inset-inline-start: 50%;
+  inline-size: 44%;
+  block-size: var(--sp-4);
+  translate: -50% 0;
+  border-radius: var(--r-full);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--text-primary) 16%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.body-map__escenario--cara::after {
+  content: none;
+}
+
+/* El nombre de lo que se va a tocar, flotando arriba del escenario. */
+.body-map__pista {
+  position: absolute;
+  inset-block-start: var(--sp-3);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  z-index: 1;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+/* El marco reserva el alto de la figura entera (240 × 440 de `viewBox`, a lo
+   sumo 16rem de ancho): la cara es más baja y se centra adentro. Así el paso
+   entre vistas no corre lo que hay debajo. */
+.body-map__marco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: calc(min(100cqi, 16rem) * 440 / 240);
+}
+
+/* Mientras llega la imagen de la vista pedida se sigue viendo la anterior,
+   apenas apagada: es la señal de que el toque se recibió. */
 .body-map__lienzo {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.body-map__escenario--cambiando .body-map__lienzo {
+  opacity: 0.55;
+}
+
+/* Una figura humana es vertical: 16rem de ancho la deja en unos 35rem de alto
+   en escritorio. A 375 px ocupa la columna; el `viewBox` conserva la
+   proporción. */
+.body-map__lienzo {
+  position: relative;
   display: block;
   width: 100%;
-  max-width: 14rem;
+  max-width: 16rem;
   height: auto;
   overflow: visible;
 }
@@ -39,48 +126,85 @@
 /* La cara es un busto apaisado: más ancha, para que ojos, nariz y boca sean
    objetivos cómodos para el dedo. */
 .body-map__lienzo--cara {
-  max-width: 18rem;
+  max-width: 19rem;
 }
 
-/* El contorno entero, debajo de todo: da el borde exterior parejo. */
-.body-map__contorno {
-  fill: var(--bg-surface-alt);
-  stroke: var(--border-strong);
-  stroke-width: 3;
-  stroke-linejoin: round;
+/* ─── La figura ─────────────────────────────────────────────────────────── */
+
+/* El maniquí renderizado: decorativo y sin clic (lo reciben las zonas). En
+   oscuro se apaga apenas: el yeso claro a pleno brillo sobre la superficie
+   oscura encandilaba y se comía las zonas. */
+.body-map__render {
   pointer-events: none;
+  /* Yeso claro sobre fondo claro pierde el volumen: un contorno finísimo y una
+     sombra de contacto separan la figura del escenario y dejan leer cintura,
+     cadera y hombros (lo que distingue una silueta de otra). Sólo el `<image>`,
+     que no recibe clics: un `filter` sobre las zonas se tragaba los toques. */
+  filter: contrast(1.07)
+    drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 55%, transparent))
+    drop-shadow(0 1.5px 2.5px color-mix(in srgb, var(--text-primary) 16%, transparent));
 }
 
-/* Las zonas se separan con una costura del color del fondo: se ven como
-   partes de una misma figura, no como piezas sueltas con borde propio. */
+:host-context([data-theme='dark']) .body-map__render {
+  filter: brightness(0.86) saturate(0.9) contrast(1.05)
+    drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 40%, transparent));
+}
+
+/* Las zonas son transparentes: el maniquí se ve a través. La costura entre
+   ellas es un hilo tenue: se adivina dónde termina cada parte sin cortar la
+   figura en pedazos. */
 .body-map__forma {
-  fill: color-mix(in srgb, var(--bg-surface) 82%, var(--text-secondary));
-  stroke: var(--bg-surface);
-  stroke-width: 1.4;
+  fill: transparent;
+  stroke: color-mix(in srgb, var(--text-secondary) 30%, transparent);
+  stroke-width: 0.7;
+  /* Punteada, como una marca de sastre: se lee como «división» y no como un
+     contorno duro dibujado sobre el cuerpo. */
+  stroke-dasharray: 0.1 2.6;
   stroke-linejoin: round;
+  stroke-linecap: round;
   /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
      clic en el hueco llega a la zona de adentro. */
   fill-rule: evenodd;
   cursor: pointer;
   transition:
     fill var(--dur-fast) var(--ease-out),
-    stroke var(--dur-fast) var(--ease-out);
+    stroke var(--dur-fast) var(--ease-out),
+    stroke-width var(--dur-fast) var(--ease-out);
 }
 
-/* Los rasgos no se pulsan: el clic atraviesa hasta la zona de abajo. */
-.body-map__detalles {
-  fill: none;
-  stroke: color-mix(in srgb, var(--text-secondary) 70%, transparent);
-  stroke-width: 1.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  pointer-events: none;
+/* La costura se insinúa en reposo y se revela cuando se mira de cerca: al pasar
+   el puntero por la figura, las divisiones suben de tono para que se vea qué
+   se puede tocar sin que el maniquí parezca un plano. */
+:where(.body-map__escenario:hover, .body-map__escenario:focus-within) .body-map__forma {
+  stroke: color-mix(in srgb, var(--text-secondary) 62%, transparent);
+  stroke-dasharray: 2.4 1.8;
+}
+
+/* ─── Estados ───────────────────────────────────────────────────────────── */
+
+/* Marcada por lo que se contó: un tinte del color secundario y un trazo
+   punteado, que es la seña que no depende del color. */
+.body-map__zona--marcada .body-map__forma {
+  fill: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
+  stroke: var(--brand-secondary);
+  stroke-width: 1.6;
+  stroke-dasharray: 4 3;
+  animation: body-map-latido var(--dur-slow) var(--ease-out) 2;
+}
+
+@keyframes body-map-latido {
+  50% {
+    fill: color-mix(in srgb, var(--brand-secondary) 60%, transparent);
+  }
 }
 
 /* El puntero sólo insinúa: el estado de verdad es `--elegida`, y sobre la
    elegida el puntero no la hace parecer suelta. */
 .body-map__zona:not(.body-map__zona--elegida):hover .body-map__forma {
-  fill: color-mix(in srgb, var(--brand-primary) 22%, var(--bg-surface));
+  fill: color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  stroke: color-mix(in srgb, var(--brand-primary) 75%, var(--bg-surface));
+  stroke-width: 1.2;
+  stroke-dasharray: none;
 }
 
 /* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
@@ -90,21 +214,82 @@
   outline: none;
 }
 
+/* Sin `filter` por lo mismo que la elegida (ver abajo): el halo se hace con
+   el trazo, que no cambia la forma que recibe el clic. */
 .body-map__forma:focus-visible {
-  stroke: var(--brand-primary);
-  stroke-width: 4;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--brand-primary) 70%, transparent));
-}
-
-/* Las dos señas visuales de la elegida, y son dos a propósito: el relleno para
-   quien ve color, el trazo grueso para quien no. */
-.body-map__zona--elegida .body-map__forma {
-  fill: var(--brand-primary);
-  stroke: var(--text-primary);
+  stroke: var(--focus-ring);
   stroke-width: 3;
+  stroke-dasharray: none;
 }
 
-.body-map__elegida {
+/* Las señas de la elegida: el relleno en degradado para quien ve color, el
+   trazo marcado para quien no, y el marcador de abajo. Gana sobre la marcada.
+
+   Sin `filter`: con una sombra, el navegador toma la caja entera de la forma
+   para el clic, y la cabeza de la vista «Cara» —que tiene huecos donde van
+   ojos, nariz y boca— se tragaba los clics de esas zonas. */
+.body-map__zona--elegida .body-map__forma {
+  fill: var(--body-map-relleno-elegida, var(--brand-primary));
+  /* Translúcido: debajo hay un cuerpo, y la parte elegida tiene que seguir
+     viéndose como cuerpo, no como un recorte de color. */
+  fill-opacity: 0.62;
+  stroke: color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary));
+  stroke-width: 1.8;
+  stroke-dasharray: none;
+}
+
+.body-map__elegida-arriba {
+  stop-color: color-mix(in srgb, var(--brand-primary) 72%, var(--bg-surface));
+}
+
+.body-map__elegida-abajo {
+  stop-color: var(--brand-primary-active);
+}
+
+/* ─── El marcador de la elegida ───────────────────────────────────────────
+   Un punto de la marca dentro de un halo claro, y una onda que se expande y
+   se apaga dos veces al elegir: lo que se ve primero cuando se mira la figura. */
+
+.body-map__marcador {
+  pointer-events: none;
+}
+
+.body-map__marcador-halo {
+  fill: var(--bg-surface);
+  stroke: var(--brand-primary-active);
+  stroke-width: 1.2;
+}
+
+.body-map__marcador-punto {
+  fill: var(--brand-primary-active);
+}
+
+.body-map__marcador-onda {
+  fill: none;
+  stroke: var(--bg-surface);
+  stroke-width: 1.4;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: body-map-onda 1.6s var(--ease-out) 3;
+}
+
+@keyframes body-map-onda {
+  0% {
+    opacity: 0.9;
+    scale: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    scale: 2.4;
+  }
+}
+
+/* ─── Las líneas de abajo ───────────────────────────────────────────────── */
+
+.body-map__elegida,
+.body-map__marcadas {
   margin: 0;
   text-align: center;
   font-size: var(--fs-caption);
@@ -112,10 +297,39 @@
   color: var(--text-secondary);
 }
 
-/* Quien pidió menos movimiento no recibe transiciones. El estado sigue
-   cambiando: lo que se apaga es la animación, no la información. */
+.body-map__marcadas {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px dashed var(--brand-secondary);
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--brand-secondary) 10%, var(--bg-surface));
+  color: var(--text-primary);
+}
+
+/* La misma seña que en la figura, para que se lea como su leyenda. */
+.body-map__marca {
+  display: inline-block;
+  inline-size: var(--sp-3);
+  block-size: var(--sp-3);
+  border: 2px dashed var(--brand-secondary);
+  border-radius: var(--r-xs);
+  background: color-mix(in srgb, var(--brand-secondary) 34%, transparent);
+}
+
+/* Quien pidió menos movimiento no recibe transiciones ni latido. El estado
+   sigue cambiando: lo que se apaga es la animación, no la información. */
 @media (prefers-reduced-motion: reduce) {
-  .body-map__forma {
+  .body-map__forma,
+  .body-map__lienzo {
     transition: none;
+  }
+
+  .body-map__zona--marcada .body-map__forma,
+  .body-map__marcador-onda {
+    animation: none;
   }
 }

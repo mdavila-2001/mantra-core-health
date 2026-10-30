@@ -13,6 +13,12 @@
   display: block;
 }
 
+/* Dentro del modal las tarjetas de los bloques llenan el ancho del diálogo en
+   vez de quedar con su tope de 68ch pegadas a la izquierda. */
+app-content-dialog {
+  --expediente-card-max: none;
+}
+
 .consulta {
   display: grid;
   gap: var(--sp-5);
@@ -99,9 +105,11 @@
 }
 
 /* ── La rejilla ─────────────────────────────────────────────────────────────
-   Columnas declaradas por punto de quiebre y no `auto-fill`: son nueve
-   casillas y en cada ancho llenan las filas sin dejar un hueco suelto
-   (1·9, 2·5, 3·3). */
+   Columnas declaradas por punto de quiebre y no `auto-fill`. Cuántas casillas
+   hay depende de la cita (siete, ocho o nueve), así que la última fila se
+   completa por cuenta y no por un número fijo: la última casilla se estira
+   hasta el final de su fila en vez de dejar uno o dos huecos al lado («Ver
+   pagos» sola con dos columnas vacías, 27/10/2026). */
 
 .consulta__registro {
   min-inline-size: 0;
@@ -137,16 +145,34 @@
   .consulta__rejilla > li:last-child:nth-child(odd) {
     grid-column: auto;
   }
+
+  /* Sobra una: ocupa la fila entera. Sobran dos: la segunda toma dos. */
+  .consulta__rejilla > li:last-child:nth-child(3n + 1) {
+    grid-column: 1 / -1;
+  }
+
+  .consulta__rejilla > li:last-child:nth-child(3n + 2) {
+    grid-column: span 2;
+  }
 }
 
-/* La casilla entera es el botón: icono a la izquierda, texto en el medio y la
-   cantidad a la derecha. Hereda la tipografía del cuerpo porque un `<button>`
-   no lo hace solo. */
+/* La casilla entera es el botón: icono a la izquierda y, a su lado, el texto
+   con la cantidad debajo. La cantidad iba en una tercera columna a la
+   derecha y le comía a la descripción el ancho de «en la historia»: con
+   cifra, la descripción se partía en tres renglones y sin cifra en uno, y
+   las casillas vecinas no se parecían. Hereda la tipografía del cuerpo
+   porque un `<button>` no lo hace solo. */
 .consulta__casilla {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'icono texto'
+    'icono cantidad';
+  grid-template-rows: auto auto;
+  align-content: center;
   align-items: center;
-  gap: var(--sp-3);
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-2);
   inline-size: 100%;
   /* Todo el alto de la fila: una casilla con descripción de dos renglones no
      deja a sus vecinas más bajas. */
@@ -175,6 +201,8 @@
 /* el anillo de foco lo pone la regla global de :focus-visible */
 
 .consulta__casilla-icono {
+  grid-area: icono;
+  align-self: center;
   display: grid;
   place-items: center;
   inline-size: 2.75rem;
@@ -190,6 +218,7 @@
 }
 
 .consulta__casilla-texto {
+  grid-area: texto;
   display: grid;
   gap: var(--sp-1);
   min-inline-size: 0;
@@ -205,23 +234,27 @@
   line-height: var(--lh-caption);
 }
 
-/* Tabular: nueve cifras en una rejilla se comparan de un vistazo sólo si los
-   dígitos ocupan lo mismo. */
+/* Una pastilla bajo la descripción: «2 en la historia» se lee como un dato
+   de la casilla y no como un botón aparte. Tabular: las cifras de la rejilla
+   se comparan de un vistazo sólo si los dígitos ocupan lo mismo. */
 .consulta__casilla-cantidad {
-  display: grid;
-  justify-items: end;
-  font-family: var(--font-display);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
+  grid-area: cantidad;
+  justify-self: start;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-1);
+  padding: 0 var(--sp-2);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .consulta__casilla-cantidad-rotulo {
-  font-family: var(--font-body);
-  font-size: var(--fs-overline);
-  line-height: var(--lh-caption);
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   white-space: nowrap;
 }

@@ -1,0 +1,29 @@
+<button
+  app-button
+  variant="danger"
+  size="sm"
+  type="button"
+  data-testid="boton-emergencia"
+  [attr.aria-label]="etiqueta()"
+  [attr.title]="etiqueta()"
+  (clicked)="activar()"
+>
+  @if (compacto()) {
+    <svg class="panico__icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+  } @else {
+    Emergencia
+  }
+</button>
+
+<dialog #dialogo class="panico__dialogo" aria-labelledby="panico-titulo" data-testid="dialogo-emergencia">
+  <div class="panico__panel">
+    <h2 id="panico-titulo" class="panico__titulo">¿A quién quiere llamar?</h2>
+    <p class="panico__texto">Toque un número para llamar ahora. Si alguien está grave, no espere: llame.</p>
+    <app-emergency-panel (llamando)="cerrar()" />
+    <div class="panico__cierre">
+      <button app-button variant="ghost" size="sm" type="button" data-testid="dialogo-emergencia-cerrar" (clicked)="cerrar()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</dialog>

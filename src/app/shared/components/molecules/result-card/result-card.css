@@ -1,169 +1,638 @@
 /* ============================================================================
-    Tarjeta de directorio — la forma de grilla de un resultado.
-
-    Estilos **encapsulados a propósito**, a diferencia de `search-result`: ver
-    el JSDoc del componente. La regla corta es que `alovida.css` es una copia de
-    la bóveda y se vuelve a copiar entera, así que lo que nace de este lado
-    tiene que vivir de este lado o se pierde.
-
-    Lo que sí se toma prestado del archivo global es `.app-badge`, que se pinta
-    igual acá que en la fila: dos escalas de insignia en el mismo directorio se
-    verían como dos productos.
+    Tarjeta de directorio — ultra estética en grilla y lista.
+    Estilos encapsulados con tokens del sistema de diseño.
     ========================================================================== */
 
 :host {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2);
-    padding: var(--sp-4);
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-lg);
-    background: var(--bg-surface);
-    box-shadow: var(--shadow-sm);
-    transition:
-        box-shadow var(--dur-fast) var(--ease-standard),
-        border-color var(--dur-fast) var(--ease-standard),
-        transform var(--dur-fast) var(--ease-standard);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-4);
+  border: 1px solid color-mix(in srgb, var(--border-default) 65%, transparent);
+  border-radius: var(--r-xl);
+  background: linear-gradient(
+    180deg,
+    var(--bg-surface),
+    color-mix(in srgb, var(--bg-surface-alt) 25%, var(--bg-surface))
+  );
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard);
 }
 
 :host(:hover) {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-md);
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--border-default));
+  box-shadow:
+    0 8px 24px -6px color-mix(in srgb, var(--brand-primary) 15%, transparent),
+    var(--shadow-md);
+  transform: translateY(-2px);
 }
 
-/* El anillo va en el HOST y no en el enlace: el enlace se estiró sobre toda la
-   tarjeta con el `::after` de abajo, así que su propio anillo dibujaría un
-   rectángulo invisible de 0 px. `:focus-within` lo pone donde se ve. */
 :host(:focus-within) {
-    border-color: var(--brand-secondary);
-    box-shadow: 0 0 0 3px var(--focus-ring);
+  border-color: var(--brand-secondary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    :host {
-        transition: none;
-    }
+  :host,
+  :host(:hover) {
+    transition: none;
+    transform: none;
+  }
 }
 
-/* ---- figura ------------------------------------------------------------- */
+/* ---- figura e iniciales ------------------------------------------------- */
 
 .tarjeta-resultado__figura {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 56px;
-    block-size: 56px;
-    border-radius: var(--r-md);
-    background: var(--bg-inset);
-    color: var(--text-secondary);
-    font-family: var(--font-display);
-    font-size: var(--fs-h3);
-    font-weight: 600;
-    overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 56px;
+  block-size: 56px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand-primary) 16%, var(--bg-surface-alt)),
+    color-mix(in srgb, var(--brand-secondary) 16%, var(--bg-surface-alt))
+  );
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  color: var(--brand-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .tarjeta-resultado__figura img {
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  border-radius: inherit;
 }
 
-/* ---- texto -------------------------------------------------------------- */
+/* En la fila el sello tapaba la segunda inicial: va montado en la esquina,
+   con un aro del color de la tarjeta (propietario, 24/10/2026). */
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura { overflow: visible; }
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura > .tarjeta-resultado__foto-badge {
+  inset: auto -6px -6px auto;
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
 
-/* El nombre en `body-lg` y no en `body`: la tarjeta tiene tres niveles de
-   texto —nombre, subtítulo y contexto— y con el nombre y el subtítulo al mismo
-   tamaño la única diferencia era el peso, que a 15 px casi no se ve. Con
-   17/15/13 la jerarquía se lee sin tener que leer: se sabe cuál es el nombre
-   antes de haberlo leído, que es lo que hace que una grilla se recorra rápido.
+/* ---- foto --------------------------------------------------------------- */
 
-   Son los tres escalones que la escala ALOVIDA ya tiene; no se inventa
-   ninguno. */
+.tarjeta-resultado__foto {
+  position: relative;
+  display: block;
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-1);
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.tarjeta-resultado__foto img {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  transition: transform var(--dur-slow, 300ms) var(--ease-standard);
+}
+
+:host(:hover) .tarjeta-resultado__foto img {
+  transform: scale(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host(:hover) .tarjeta-resultado__foto img {
+    transform: none;
+  }
+}
+
+.tarjeta-resultado__foto-badge {
+  position: absolute;
+  inset-block-end: var(--sp-2);
+  inset-inline-end: var(--sp-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+  color: var(--text-on-brand, var(--bg-surface));
+  box-shadow: var(--shadow-sm);
+  z-index: 1;
+}
+
+/* ---- cabecera y título -------------------------------------------------- */
+
+.tarjeta-resultado__cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
 .tarjeta-resultado__titulo {
-    margin: 0;
-    font-size: var(--fs-body-lg);
-    line-height: var(--lh-body-lg);
-    font-weight: 600;
+  /* flex para que la insignia de verificación quede junto al nombre y no
+     debajo: el enlace del título es un `-webkit-box` de bloque (grilla). */
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-h4, 1.15rem);
+  line-height: var(--lh-body-lg);
+  font-weight: 700;
+  letter-spacing: -0.015em;
 }
 
 .tarjeta-resultado__titulo a {
-    color: var(--text-primary);
-    text-decoration: none;
+  min-inline-size: 0;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-standard);
 }
 
-/* El objetivo táctil es la tarjeta entera, no las tres palabras del nombre:
-   en una grilla en el teléfono, apuntarle al texto es la diferencia entre
-   entrar y volver a intentarlo. El `::after` se queda DEBAJO del pie
-   (`z-index`) para que el botón proyectado siga siendo pulsable. */
+:host(:hover) .tarjeta-resultado__titulo a {
+  color: var(--brand-primary);
+}
+
 .tarjeta-resultado__titulo a::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
 }
 
 .tarjeta-resultado__titulo a:focus-visible {
-    outline: none;
+  outline: none;
 }
 
-/* Pegado al título —de ahí el margen negativo, que come el `gap` del host— y
-   en el tamaño del cuerpo: el subtítulo y el nombre son una sola idea leída en
-   dos renglones, y separarlos los volvía dos datos sueltos.
+.tarjeta-resultado__tipo {
+  margin: 0;
+  flex-shrink: 0;
+}
 
-   Dos líneas como tope, igual que las de contexto: un titular largo estiraba su
-   fila entera de la grilla y dejaba huecos en las tarjetas vecinas. */
+/* ---- reseñas ------------------------------------------------------------
+   Cinco estrellas como en cualquier tienda: una fila gris de fondo y encima
+   la misma fila en ámbar, recortada al ancho de la nota. Son caracteres y no
+   cinco SVG: el recorte parcial sale con un solo `inline-size`. */
+
+.tarjeta-resultado__resenas {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: 1.2;
+}
+
+.tarjeta-resultado__estrellas {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.tarjeta-resultado__estrellas-base {
+  color: color-mix(in srgb, var(--text-secondary) 28%, transparent);
+}
+
+.tarjeta-resultado__estrellas-relleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--c-amber-500);
+}
+
+.tarjeta-resultado__puntuacion {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tarjeta-resultado__opiniones {
+  color: var(--text-link, var(--brand-primary));
+  font-weight: 600;
+}
+
+.tarjeta-resultado__resenas--vacias .tarjeta-resultado__opiniones {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.tarjeta-resultado__distincion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 24%, transparent);
+  color: var(--brand-primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ---- subtítulo / especialidad ------------------------------------------- */
+
 .tarjeta-resultado__subtitulo {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin: calc(var(--sp-2) * -1 + 2px) 0 0;
-    color: var(--text-secondary);
-    font-size: var(--fs-body);
-    line-height: var(--lh-body);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
 }
 
-.tarjeta-resultado__tipo,
-.tarjeta-resultado__sellos {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
-    margin: 0;
+.tarjeta-resultado__subtitulo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--bg-surface-alt) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-default) 65%, transparent);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  max-inline-size: 100%;
 }
+
+.tarjeta-resultado__subtitulo-icono {
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.tarjeta-resultado__subtitulo-texto {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- meta / ubicación --------------------------------------------------- */
 
 .tarjeta-resultado__meta {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin: 0;
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
-.tarjeta-resultado__meta span {
-    /* Dos líneas iguales en todas las tarjetas: una que se desborda estira su
-       fila entera de la grilla y deja huecos en las vecinas. */
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.tarjeta-resultado__meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
 }
 
-/* ---- pie ---------------------------------------------------------------- */
+.tarjeta-resultado__meta-icono {
+  color: color-mix(in srgb, var(--brand-primary) 70%, var(--text-secondary));
+  flex-shrink: 0;
+  margin-block-start: 2px;
+}
+
+.tarjeta-resultado__meta-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- sellos ------------------------------------------------------------- */
+
+.tarjeta-resultado__sellos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  align-items: center;
+}
+
+.tarjeta-resultado__sello {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.tarjeta-resultado__sello .icono {
+  inline-size: 13px;
+  block-size: 13px;
+}
+
+/* ---- pie y acción ------------------------------------------------------- */
 
 .tarjeta-resultado__pie {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--sp-2);
-    /* Empuja el pie al fondo: las tarjetas de una fila comparten alto y los
-       botones tienen que quedar alineados entre sí, no cada uno donde termine
-       su texto. `:empty` no dibuja nada. */
-    margin-block-start: auto;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: auto;
+  padding-block-start: var(--sp-1);
 }
 
 .tarjeta-resultado__pie:empty {
-    display: none;
+  display: none;
+}
+
+.tarjeta-resultado__accion {
+  display: inline-flex;
+  align-items: center;
+  max-inline-size: 100%;
+  gap: 6px;
+  font-weight: 600;
+  border-radius: var(--r-md);
+  transition: all var(--dur-fast) var(--ease-standard);
+  background: color-mix(in srgb, var(--brand-primary) 8%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--brand-primary) 35%, transparent);
+  color: var(--brand-primary);
+}
+
+.tarjeta-resultado__accion:hover {
+  background: var(--brand-primary);
+  color: var(--text-on-brand, var(--bg-surface));
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  transform: translateY(-1px);
+}
+
+.tarjeta-resultado__accion-icono {
+  flex-shrink: 0;
+  color: currentColor;
+}
+
+/* ---- vista de lista ----------------------------------------------------- */
+
+:host(.tarjeta-resultado--lista) {
+  display: grid;
+  /* `auto`: la columna mide lo que su figura —10rem la foto, 72 px las
+       iniciales—. Fija en 10rem dejaba 70 px de aire junto a las iniciales. */
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-auto-rows: min-content;
+  align-content: center;
+  column-gap: var(--sp-4);
+  /* Sin `row-gap`: la foto y el pie abarcan 12 filas implícitas, y cada
+       hueco entre ellas sumaba su espacio aunque la fila estuviera vacía
+       —unos 90 px de aire en cada tarjeta—. El ritmo lo pone el margen de
+       cada línea de la columna del medio. */
+  row-gap: 0;
+  padding: var(--sp-4);
+}
+
+:host(.tarjeta-resultado--lista) > * {
+  grid-column: 2;
+}
+
+:host(.tarjeta-resultado--lista) > :not(:first-child, .tarjeta-resultado__pie) {
+  margin-block-start: var(--sp-2);
+}
+
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__cabecera {
+  margin-block-start: 0;
+}
+
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__foto {
+  grid-column: 1;
+  grid-row: 1 / span 12;
+  align-self: center;
+  aspect-ratio: 4 / 3;
+  inline-size: 10rem;
+  margin: 0;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura {
+  grid-column: 1;
+  grid-row: 1 / span 12;
+  align-self: center;
+  justify-self: center;
+  inline-size: 72px;
+  block-size: 72px;
+  border-radius: var(--r-lg);
+}
+
+:host(.tarjeta-resultado--lista) > .tarjeta-resultado__pie {
+  grid-column: 3;
+  grid-row: 1 / span 12;
+  align-self: center;
+  justify-self: end;
+  margin-block-start: 0;
+  padding-block-start: 0;
+}
+
+@media (max-width: 48rem) {
+  :host(.tarjeta-resultado--lista) {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--sp-3);
+    padding: var(--sp-3);
+  }
+
+  /* Arriba y no centrada: centrada en una fila alta dejaba un hueco encima
+     de la foto y la tarjeta se leía corrida hacia un lado. */
+  :host(.tarjeta-resultado--lista) > .tarjeta-resultado__foto {
+    align-self: start;
+    aspect-ratio: 1;
+    inline-size: 6.5rem;
+    min-block-size: 5.5rem;
+  }
+
+  :host(.tarjeta-resultado--lista) > .tarjeta-resultado__figura {
+    inline-size: 64px;
+    block-size: 64px;
+  }
+
+  /* A todo el ancho, como en la grilla: en la columna de al lado de la foto
+     «Ver medicamentos y precios» no entraba y empujaba la página. */
+  :host(.tarjeta-resultado--lista) > .tarjeta-resultado__pie {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    align-self: start;
+    justify-self: stretch;
+    padding-block-start: var(--sp-1);
+  }
+
+  :host(.tarjeta-resultado--lista) .tarjeta-resultado__accion {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* ============================================================================
+    Grilla como vitrina de marketplace (propietario, 23/10/2026: «al estilo de
+    Amazon»).
+
+    Cada tarjeta es un producto: imagen a todo el ancho y a la misma altura en
+    todas —con foto o con las iniciales grandes—, el nombre en dos líneas como
+    mucho, los datos debajo y la acción a lo ancho al pie. Que todas midan lo
+    mismo arriba es lo que deja recorrer la grilla con la vista, fila por fila.
+    ========================================================================== */
+
+:host(:not(.tarjeta-resultado--lista)) {
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__foto,
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: auto;
+  block-size: auto;
+  aspect-ratio: 4 / 3;
+  margin: calc(var(--sp-3) * -1) calc(var(--sp-4) * -1) var(--sp-2);
+  border: 0;
+  border-block-end: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+
+/* Sin foto, las iniciales ocupan la vitrina: grandes, sobre un fondo de
+   marca suave. Mejor eso que una foto de banco que no es la de nadie. */
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+  font-size: 2.75rem;
+  letter-spacing: 0.02em;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__cabecera {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo {
+  font-size: var(--fs-body-lg);
+  line-height: 1.3;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo a {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__pie {
+  justify-content: stretch;
+  padding-block-start: var(--sp-2);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__accion {
+  flex: 1 1 100%;
+  justify-content: center;
+  min-block-size: 40px;
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__accion:hover {
+  background: var(--brand-primary-hover);
+  border-color: var(--brand-primary-hover);
+  color: var(--text-inverse);
+}
+
+/* El tipo se lee entero: en la vitrina es lo que distingue una tarjeta de la
+   de al lado. Hasta dos líneas, sin puntos suspensivos a mitad de palabra. */
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__subtitulo-tag {
+  align-items: flex-start;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__subtitulo-icono {
+  margin-block-start: 1px;
+}
+
+:host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__subtitulo-texto {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+}
+
+/* Dos por fila en el teléfono: la vitrina se achica sin perder la forma. */
+@media (max-width: 34rem) {
+  :host(:not(.tarjeta-resultado--lista)) {
+    padding: var(--sp-2) var(--sp-3) var(--sp-3);
+  }
+
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__foto,
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+    margin: calc(var(--sp-2) * -1) calc(var(--sp-3) * -1) var(--sp-1);
+  }
+
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__figura {
+    font-size: 2rem;
+  }
+
+  :host(:not(.tarjeta-resultado--lista)) .tarjeta-resultado__titulo {
+    font-size: var(--fs-body);
+  }
+}
+
+/* ---- detalles (propietario, 23/10/2026) ---------------------------------- */
+
+.tarjeta-resultado__distincion-icono {
+  font-size: 0.85rem;
+  color: var(--c-amber-500);
+}
+
+.tarjeta-resultado__accion-flecha {
+  font-size: 0.95rem;
+}
+
+/* Un velo suave abajo de la foto: el sello de verificación y el borde de la
+   tarjeta se separan de fotos claras sin oscurecer la imagen. */
+.tarjeta-resultado__foto::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  block-size: 40%;
+  background: linear-gradient(transparent, rgb(0 0 0 / 0.18));
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Las estrellas se llenan hasta la nota al aparecer la tarjeta. */
+  .tarjeta-resultado__estrellas-relleno {
+    animation: estrellas-llenan 700ms var(--ease-out) 150ms backwards;
+  }
+
+  .tarjeta-resultado__accion-flecha {
+    transition: transform var(--dur-base) var(--ease-standard);
+  }
+
+  :host(:hover) .tarjeta-resultado__accion-flecha,
+  .tarjeta-resultado__accion:focus-visible .tarjeta-resultado__accion-flecha {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes estrellas-llenan {
+  from {
+    inline-size: 0;
+  }
 }

@@ -1,0 +1,63 @@
+<div class="busca" role="search">
+  <label class="busca__etiqueta" for="portal-busqueda">Buscar en el portal</label>
+  <input
+    #campo
+    id="portal-busqueda"
+    class="busca__campo"
+    type="search"
+    autocomplete="off"
+    placeholder="Pantallas, rutas, tablas…"
+    data-testid="portal-busqueda"
+    role="combobox"
+    aria-autocomplete="list"
+    aria-controls="portal-busqueda-lista"
+    [attr.aria-expanded]="abierto() && !demasiadoCorto()"
+    [attr.aria-activedescendant]="idDeActiva()"
+    [value]="texto()"
+    (input)="escribir(campo.value)"
+    (focus)="abrirSiHayTexto()"
+    (keydown)="teclado($event)"
+  />
+
+  @if (abierto() && !demasiadoCorto()) {
+    <div
+      class="busca__panel"
+      id="portal-busqueda-lista"
+      role="listbox"
+      aria-label="Resultados de la búsqueda"
+    >
+      @if (buscando()) {
+        <app-loading-state class="busca__estado" message="Buscando…" />
+      }
+      @if (fallo()) {
+        <p class="busca__estado busca__estado--error" role="status">
+          No se pudo consultar la API; se muestran sólo las pantallas.
+        </p>
+      }
+      @for (grupo of grupos(); track grupo.nombre) {
+        <div class="busca__grupo" role="presentation">
+          <span class="busca__grupo-nombre" role="presentation">{{ grupo.nombre }}</span>
+          @for (x of grupo.items; track x.h.id) {
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+            <div
+              class="busca__opcion"
+              role="option"
+              tabindex="-1"
+              [id]="'portal-search-' + x.i"
+              [class.busca__opcion--activa]="x.i === activa()"
+              [attr.aria-selected]="x.i === activa()"
+              (mousedown)="$event.preventDefault()"
+              (click)="ir(x.h)"
+            >
+              <span class="busca__texto">{{ x.h.label }}</span>
+              <span class="busca__pista">{{ x.h.hint }}</span>
+            </div>
+          }
+        </div>
+      }
+      @if (!buscando() && hits().length === 0 && !fallo()) {
+        <p class="busca__estado" role="status">Nada coincide con «{{ texto() }}».</p>
+      }
+    </div>
+  }
+</div>

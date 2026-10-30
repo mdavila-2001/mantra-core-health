@@ -7,7 +7,11 @@ import { of } from 'rxjs';
 import { SessionStore } from '../../../core/auth/session.store';
 import { LoyaltyClient } from '../../../core/data-access/loyalty/loyalty.client';
 import { resolverEstadosDeCaso } from '../../../../testing/case-status';
+import { sinSolicitudDeAdmision } from '../../../../testing/admissions';
+import { libretaInmediata } from '../../../../testing/address-book';
+import { PatientAddressBookClient } from '../../../core/data-access/profiles/patient-address-book.client';
 import { MyProfile } from './my-profile';
+
 
 /** base64url **sobre UTF-8**, como el token real. */
 function jwt(payload: Record<string, unknown>): string {
@@ -51,7 +55,7 @@ const RESUMEN_SIN_VERIFICAR = {
 };
 
 /**
- * Doble de la billetera: la quinta pestaña la monta y pediría `/loyalty/me`.
+ * Doble de la billetera: la última pestaña la monta y pediría `/loyalty/me`.
  *
  * Sin membresía, que es el estado más común y no llama a nada más. Lo que la
  * billetera hace con sus datos lo prueba su propio spec.
@@ -87,6 +91,7 @@ function resolverPerfilCompleto(
       patientProfileId: 'pp-1',
       identityVerified: false,
       coverages: [],
+      emergencyContacts: [],
       guardians: [],
       ...perfil,
     });
@@ -100,7 +105,7 @@ describe('MyProfile', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -158,6 +163,7 @@ describe('MyProfile', () => {
         patientProfileId: 'pp-1',
         identityVerified: false,
         coverages: [],
+        emergencyContacts: [],
         guardians: [],
         ...perfil,
       });
@@ -229,13 +235,13 @@ describe('MyProfile', () => {
       expect(texto).toContain('Sin verificar');
     });
 
-    it('el tutor se ve con su teléfono: es el dato por el que existe', () => {
+    it('el tutor se ve con su parentesco y su teléfono', () => {
       const texto = conPerfil({
         guardians: [
           {
             displayName: 'Carlos Mamani',
             phone: '+591 70055443',
-            isEmergencyContact: true,
+            relationshipDisplay: 'Padre',
             isLegalGuardian: true,
           },
         ],
@@ -243,7 +249,81 @@ describe('MyProfile', () => {
 
       expect(texto).toContain('Carlos Mamani');
       expect(texto).toContain('+591 70055443');
+      expect(texto).toContain('Padre');
       expect(texto).toContain('Tutor legal');
+    });
+
+    it('el contacto de emergencia vive en Contacto y no crea la pestaña Tutores', () => {
+      conPerfil({
+        emergencyContacts: [
+          {
+            displayName: 'Rosa Pérez',
+            phone: '+591 70011223',
+            relationshipDisplay: 'Madre',
+          },
+        ],
+      });
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      expect(pestanas.map((p) => p.textContent?.trim())).not.toContain('Tutores');
+      pestanas.find((p) => p.textContent?.trim() === 'Contacto')!.click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Rosa Pérez');
+      expect(raiz.textContent).toContain('Madre');
+      expect(raiz.textContent).toContain('+591 70011223');
+    });
+
+    /**
+     * Pedido del propietario del 24/09/2026: separar el seguro del tutor en
+     * dos categorías. Antes eran una sola pestaña «Seguros y tutores» con dos
+     * listas adentro; ahora son dos pestañas, y cada una sólo dibuja lo suyo
+     * — no basta con que el texto junto de todas las pestañas contenga los dos
+     * datos, como prueban los dos casos de arriba.
+     */
+    it('«Seguros» y «Tutores» son pestañas separadas: cada una sólo muestra lo suyo', () => {
+      http.expectOne('/profiles/patients/me/summary').flush(RESUMEN);
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0 });
+      const señal = (
+        fixture.componentInstance as unknown as Record<string, { set: (v: unknown) => void }>
+      )['perfil'];
+      señal.set({
+        personId: 'per-1',
+        patientProfileId: 'pp-1',
+        identityVerified: false,
+        coverages: [{ carrierName: 'Alianza Vida Seguros', isPublic: false, verified: false }],
+        emergencyContacts: [],
+        guardians: [
+          {
+            displayName: 'Carlos Mamani',
+            relationshipDisplay: 'Padre',
+            isLegalGuardian: true,
+          },
+        ],
+      });
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const pestanas = [...raiz.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+      expect(pestanas.map((p) => p.textContent?.trim())).toEqual([
+        'Datos personales',
+        'Contacto',
+        'Facturación',
+        'Seguros',
+        'Tutores',
+        'Mis puntos',
+        'Mis direcciones',
+      ]);
+
+      pestanas[3].click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Alianza Vida Seguros');
+      expect(raiz.textContent).not.toContain('Carlos Mamani');
+
+      pestanas[4].click();
+      fixture.detectChanges();
+      expect(raiz.textContent).toContain('Carlos Mamani');
+      expect(raiz.textContent).not.toContain('Alianza Vida Seguros');
     });
 
     /**
@@ -271,7 +351,7 @@ describe('MyProfile', () => {
     it('pero una sección entera sin contenido no aparece', () => {
       const texto = conPerfil({});
 
-      expect(texto).not.toContain('Tus seguros');
+      expect(texto).not.toContain('Sus seguros');
       expect(texto).not.toContain('Contactos y tutores');
     });
 
@@ -378,7 +458,7 @@ describe('MyProfile', () => {
     http.expectOne('/profiles/patients/me/summary').flush(
       {
         code: 'IDENTITY_VERIFICATION_REQUIRED',
-        message: 'Necesitás verificar tu identidad para continuar.',
+        message: 'Necesita verificar su identidad para continuar.',
       },
       { status: 403, statusText: 'Forbidden' },
     );
@@ -393,7 +473,7 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
+        { code: 'FORBIDDEN', message: 'No tiene acceso a este recurso.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
@@ -442,7 +522,7 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
@@ -475,7 +555,7 @@ describe('MyProfile', () => {
    * Se prueba con un rol de trabajo a propósito: era el único caso en que la
    * tarjeta se dibujaba, así que es el que demuestra que ya no queda ninguno.
    */
-  it('«Tu acceso» ya no se muestra, tampoco a quien viene a trabajar', () => {
+  it('«Su acceso» ya no se muestra, tampoco a quien viene a trabajar', () => {
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
         sub: 'u-1',
@@ -489,7 +569,7 @@ describe('MyProfile', () => {
 
     const raiz = fixture.nativeElement as HTMLElement;
     expect(raiz.querySelector('[data-testid="mi-perfil-acceso"]')).toBeNull();
-    expect(raiz.textContent).not.toContain('Tu acceso');
+    expect(raiz.textContent).not.toContain('Su acceso');
     expect(raiz.textContent).not.toContain('Care Default Tenant');
     expect(raiz.textContent).not.toContain('Organización');
     // Sin lateral que dibujar, la ficha ocupa el ancho entero (REGLA DE LA CASA).
@@ -515,7 +595,7 @@ describe('MyProfile', () => {
     );
   }
 
-  it('sin identidad verificada, «Tus datos» lo dice en neutro y con la salida a mano', () => {
+  it('sin identidad verificada, «Sus datos» lo dice en neutro y con la salida a mano', () => {
     // Todo paciente recién registrado pasa por acá: pintarlo como «No tenés
     // acceso» en rojo lee como que algo se rompió, y el mensaje crudo del
     // backend habla de usted (feedback de la analista, barrido del 18/08/2026).
@@ -529,8 +609,8 @@ describe('MyProfile', () => {
 
     const alerta = alertaDeDatos();
     expect(alerta?.classList.contains('alert--info')).toBe(true);
-    expect(alerta?.textContent).toContain('cuando tu identidad esté verificada');
-    expect(alerta?.textContent).not.toContain('No tenés acceso');
+    expect(alerta?.textContent).toContain('cuando su identidad esté verificada');
+    expect(alerta?.textContent).not.toContain('No tiene acceso');
     expect(alerta?.textContent).not.toContain('Verifique su identidad');
     expect(alerta?.querySelector('a[href="/my-account/identity"]')).not.toBeNull();
   });
@@ -539,16 +619,16 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'FORBIDDEN', message: 'No tenés acceso a este recurso.' },
+        { code: 'FORBIDDEN', message: 'No tiene acceso a este recurso.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
 
     const alerta = alertaDeDatos();
     expect(alerta?.classList.contains('alert--error')).toBe(true);
-    expect(alerta?.textContent).toContain('No tenés acceso a esta sección');
+    expect(alerta?.textContent).toContain('No tiene acceso a esta sección');
     // El motivo que dio el backend se conserva, como lo haría el host de estados.
-    expect(alerta?.textContent).toContain('No tenés acceso a este recurso.');
+    expect(alerta?.textContent).toContain('No tiene acceso a este recurso.');
     expect(alerta?.querySelector('a')).toBeNull();
   });
 
@@ -606,7 +686,7 @@ describe('MyProfile', () => {
     expect(texto).not.toContain('Código de paciente');
     expect(texto).not.toContain('Pendiente de verificación');
     expect(texto).not.toContain('PAC-');
-    expect(texto).not.toContain('cuando tu identidad esté verificada');
+    expect(texto).not.toContain('cuando su identidad esté verificada');
     expect(invitacionAVerificar()).toBeNull();
   });
 
@@ -628,12 +708,12 @@ describe('MyProfile', () => {
     http
       .expectOne('/profiles/patients/me/summary')
       .flush(
-        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verificá tu identidad.' },
+        { code: 'IDENTITY_VERIFICATION_REQUIRED', message: 'Verifique su identidad.' },
         { status: 403, statusText: 'Forbidden' },
       );
     fixture.detectChanges();
 
-    expect(alertaDeDatos()?.textContent).toContain('cuando tu identidad esté verificada');
+    expect(alertaDeDatos()?.textContent).toContain('cuando su identidad esté verificada');
     expect(listaDeDatos()).toBeNull();
     expect(invitacionAVerificar()).toBeNull();
   });
@@ -651,7 +731,7 @@ describe('MyProfile · orden del historial', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -717,10 +797,12 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
       providers: [
+        sinSolicitudDeAdmision(),
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
         billeteraSinPrograma(),
+        ...libretaInmediata(),
       ],
     }).compileComponents();
 
@@ -772,10 +854,12 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
     expect(raiz.querySelector('[data-testid="mi-perfil-editor"]')).toBeNull();
 
     const boton = enlaceDeEdicion();
-    // Es un botón de lápiz (pedido del 09/09/2026): el nombre va en
-    // `aria-label`, no en el texto, y el dibujo es el glifo `edit` del set.
-    expect(boton?.getAttribute('aria-label')).toBe('Editar');
+    // Lápiz y nombre a la vista (D-05, 22/09/2026): el glifo `edit` del set y
+    // «Editar perfil» escrito (30/09/2026), que es también su nombre
+    // accesible. Ya no es un botón de sólo ícono.
+    expect(boton?.textContent?.trim()).toBe('Editar perfil');
     expect(boton?.querySelector('svg')).not.toBeNull();
+    expect(boton?.classList.contains('btn--icon-only')).toBe(false);
     // Un botón, no un enlace: no lleva a ninguna parte.
     expect(boton?.tagName).toBe('BUTTON');
     expect(boton?.getAttribute('href')).toBeNull();
@@ -798,13 +882,14 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
 
   /**
    * N-03. «Mis puntos» deja de ser una pantalla aparte con su propia cabecera
-   * y pasa a ser la quinta pestaña de la tarjeta: la misma billetera, sin el
-   * título repetido.
+   * y pasa a ser una pestaña más de la tarjeta: la misma billetera, sin el
+   * título repetido. Desde el 24/09/2026, con «Seguros» y «Tutores» separadas,
+   * es la SEXTA y última.
    */
-  describe('«Mis puntos» como quinta pestaña', () => {
+  describe('«Mis puntos» como última pestaña', () => {
     const PACIENTE = { sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'], pid: 'pp-1' };
 
-    it('la ficha tiene cinco pestañas y la última es «Mis puntos»', () => {
+    it('sin tutores, la ficha oculta esa pestaña y «Mis puntos» queda antes de «Mis direcciones»', () => {
       montar(PACIENTE);
       pintarLaFicha();
 
@@ -813,8 +898,9 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
         'Datos personales',
         'Contacto',
         'Facturación',
-        'Seguros y tutores',
+        'Seguros',
         'Mis puntos',
+        'Mis direcciones',
       ]);
       // Se entra por «Datos personales», como siempre.
       expect(pestanas[0].getAttribute('aria-selected')).toBe('true');
@@ -834,6 +920,31 @@ describe('MyProfile · el enlace a editar los datos propios', () => {
       // Una sola cabecera en la pantalla: la de «Mi perfil».
       expect(raiz.querySelectorAll('app-page-header').length).toBe(1);
       expect(billetera?.textContent).toContain('Todavía no hay un programa');
+    });
+
+    it('la libreta no se pide mientras su pestaña está cerrada; sí al abrirla', () => {
+      const libreta = TestBed.inject(PatientAddressBookClient);
+      const lista = vi.spyOn(libreta, 'list');
+      montar(PACIENTE);
+      pintarLaFicha();
+      expect(lista).not.toHaveBeenCalled();
+
+      pestanasDeLaFicha()[5].click();
+      fixture.detectChanges();
+
+      expect(lista).toHaveBeenCalledTimes(1);
+    });
+
+    it('«?pestana=direcciones» abre la libreta de direcciones (26/10/2026)', async () => {
+      await TestBed.inject(Router).navigate(['/'], { queryParams: { pestana: 'direcciones' } });
+      montar(PACIENTE);
+      pintarLaFicha();
+
+      // Sin tutores, «Mis direcciones» es la sexta: el índice se corre uno.
+      expect(pestanasDeLaFicha()[5].getAttribute('aria-selected')).toBe('true');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="libreta-direcciones"]'),
+      ).not.toBeNull();
     });
 
     it('«?pestana=puntos» abre la billetera al entrar: la ruta vieja sigue llegando', async () => {
@@ -924,7 +1035,7 @@ describe('MyProfile · foto de perfil', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     TestBed.inject(SessionStore).start({
@@ -968,6 +1079,40 @@ describe('MyProfile · foto de perfil', () => {
     http.verify();
   });
 
+  /**
+   * RP-PAC-L0012: «el perfil muestra el departamento de emisión». La fila de
+   * documento sólo agrega el sufijo cuando `cargarPerfil()` trajo el concepto
+   * **y** `readConceptLabels` resolvió su etiqueta — a diferencia de
+   * `conPerfil()` (arriba, en el describe de `MyProfile`), acá se ejercita el
+   * camino real: `GET /profiles/patients/me` seguido de
+   * `GET /terminology/concepts?ids=<uuid>`, no la señal inyectada a mano.
+   */
+  it('L0012: el documento muestra el departamento de emisión cuando el perfil lo trae', () => {
+    http
+      .expectOne('/profiles/patients/me')
+      .flush(perfilCon({ nationalId: '7654321', issuerAdministrativeAreaConceptId: 'dept-1' }));
+
+    http
+      .expectOne((r) => r.url === '/terminology/concepts' && r.params.get('ids') === 'dept-1')
+      .flush({ items: [{ conceptId: 'dept-1', display: 'Santa Cruz' }], count: 1 });
+
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('7654321');
+    expect(texto).toContain('Santa Cruz');
+  });
+
+  /** El mismo criterio, en su ausencia: sin concepto, no hay sufijo que resolver. */
+  it('L0012: sin departamento de emisión declarado, no pide etiqueta ni la inventa', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({ nationalId: '7654321' }));
+    fixture.detectChanges();
+
+    const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(texto).toContain('7654321');
+    http.verify();
+  });
+
   it('con foto ya guardada, baja la imagen y la pinta como data: URL', async () => {
     http.expectOne('/profiles/patients/me').flush(perfilCon({ photoFileId: 'f-1' }));
 
@@ -988,6 +1133,65 @@ describe('MyProfile · foto de perfil', () => {
     fixture.detectChanges();
 
     expect(fotoDelPerfil(fixture)).toBeNull();
+  });
+
+  /* ---- la ficha que no llega se dice (regla 14, 2026-10-08) -------------- */
+
+  it('si la ficha completa no llega, lo dice con el código de soporte y ofrece volver a cargar', () => {
+    http.expectOne('/profiles/patients/me').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Internal server error',
+        correlationId: 'corr-ficha',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/profiles/patients/me',
+      },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="mi-perfil-ficha-incompleta"]',
+    );
+    expect(aviso?.textContent).toContain('No pudimos traer el resto de su ficha');
+    expect(aviso?.textContent).toContain('(Código de soporte: corr-ficha)');
+    expect(aviso?.getAttribute('role')).toBe('status');
+    expect(aviso?.textContent).toContain('Volver a cargar');
+  });
+
+  it('un 404 (cuenta sin perfil de paciente) sigue sin aviso: a esa persona no le falta nada', () => {
+    http
+      .expectOne('/profiles/patients/me')
+      .flush({ code: 'NOT_FOUND', message: 'No encontrado' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-perfil-ficha-incompleta"]'),
+    ).toBeNull();
+  });
+
+  it('una subida de foto rechazada dice el motivo de la API', () => {
+    http.expectOne('/profiles/patients/me').flush(perfilCon({}));
+    fixture.detectChanges();
+
+    const alElegirFoto = (
+      fixture.componentInstance as unknown as { alElegirFoto: (e: Event) => void }
+    ).alElegirFoto.bind(fixture.componentInstance);
+    alElegirFoto(eventoDeArchivo(new File(['x'], 'foto.png', { type: 'image/png' })));
+    http.expectOne('/common/files/upload').flush(
+      {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'La imagen supera los 5 MB.',
+        correlationId: 'corr-foto',
+        timestamp: '2026-10-08T00:00:00.000Z',
+        path: '/common/files/upload',
+      },
+      { status: 413, statusText: 'Payload Too Large' },
+    );
+    fixture.detectChanges();
+
+    const error = (fixture.nativeElement as HTMLElement).querySelector('.mi-perfil__foto-error');
+    expect(error?.textContent).toContain('La imagen supera los 5 MB. (Código de soporte: corr-foto)');
   });
 
   it('sube la foto elegida, la fija y la pinta', async () => {
@@ -1026,7 +1230,7 @@ describe('MyProfile · foto de perfil', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
@@ -1098,7 +1302,7 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(false), sinSolicitudDeAdmision()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyProfile);
@@ -1157,6 +1361,15 @@ describe('MyProfile · las etiquetas del perfil sobreviven a las del resumen', (
     expect(raiz.querySelector('[data-testid="mi-perfil-municipio"]')?.textContent?.trim()).toBe(
       'Santa Cruz de la Sierra',
     );
+
+    // Y debajo, el mapa de residencia (30/09/2026): el mismo del médico, que
+    // pide su catálogo de departamentos y municipios al montarse.
+    expect(raiz.querySelector('[data-testid="mi-perfil-residencia"]')).not.toBeNull();
+    // Las dos lecturas van juntas: la primera que falla cancela la otra, y el
+    // mapa se queda sin dibujar —el municipio ya está escrito arriba—.
+    const municipios = http.expectOne('/terminology/value-sets?code=VS_BO_MUNICIPALITY');
+    http.expectOne('/terminology/value-sets?code=VS_BO_DEPARTMENT').flush([]);
+    if (!municipios.cancelled) municipios.flush([]);
   });
 });
 
@@ -1191,7 +1404,7 @@ describe('MyProfile · los accesos de quien atiende', () => {
   it('el perfil ya no tiene enlaces sueltos a otras pantallas', () => {
     TestBed.configureTestingModule({
       imports: [MyProfile],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]), ...libretaInmediata(), sinSolicitudDeAdmision()],
     });
     TestBed.inject(SessionStore).start({
       accessToken: jwt({
@@ -1217,7 +1430,7 @@ describe('MyProfile · los accesos de quien atiende', () => {
     const raiz = fixture.nativeElement as HTMLElement;
 
     // La barra entera se fue: no queda un `nav` vacío ocupando el margen.
-    expect(raiz.querySelector('nav[aria-label="Dónde ejercés"]')).toBeNull();
+    expect(raiz.querySelector('nav[aria-label="Dónde ejerce"]')).toBeNull();
 
     // Y ningún enlace de la pantalla —esté donde esté— salta a las dos
     // pantallas que C-02 nombra. Se mira por destino y no por `data-testid`,

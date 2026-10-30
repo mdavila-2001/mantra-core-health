@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+.received-services {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.received-services__title {
+  display: block;
+  font-weight: 500;
+}
+
+.received-services__secondary {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.received-services__date {
+  font-variant-numeric: tabular-nums;
+  /* Los meses abreviados llegan en minúscula del pipe de fecha. */
+  text-transform: capitalize;
+}

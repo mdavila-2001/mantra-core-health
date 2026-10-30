@@ -35,12 +35,15 @@ const LISTADO = '/administration/insurance-claims';
 /** Un uuid con forma válida que no corresponde a ninguna solicitud. */
 const INEXISTENTE = '00000000-0000-4000-8000-000000000000';
 
-/** Los tres anchos obligatorios de la ficha. */
+/** Los tres anchos obligatorios de REQ-16-035: 375, 768 y 1280 px. */
 const VIEWPORTS = [
-  { nombre: 'movil', width: 390, height: 844 },
-  { nombre: 'tablet', width: 768, height: 1024 },
-  { nombre: 'escritorio', width: 1440, height: 900 },
+  { width: 375, height: 812 },
+  { width: 768, height: 1024 },
+  { width: 1280, height: 800 },
 ] as const;
+
+/** Los dos temas obligatorios: claro y oscuro. */
+const TEMAS = ['claro', 'oscuro'] as const;
 
 let api: APIRequestContext;
 
@@ -459,45 +462,54 @@ test.describe('el alcance del prestador', () => {
   });
 });
 
-for (const viewport of VIEWPORTS) {
-  test(`AC-16-17 · sin scroll horizontal del body en ${viewport.width} px`, async ({
+for (const tema of TEMAS) {
+  test(`AC-16-17 · sin scroll horizontal en 375, 768 y 1280 px, tema ${tema}`, async ({
     page,
   }) => {
-    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.addInitScript((valor: string) => {
+      window.localStorage.setItem('mantra-core-health.theme', valor);
+    }, tema === 'oscuro' ? 'dark' : 'light');
     await abrirListado(page);
-
-    const desborde = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-theme',
+      tema === 'oscuro' ? 'dark' : 'light',
     );
-    expect(desborde, 'el listado desborda a lo ancho').toBe(false);
 
-    await page.screenshot({
-      path: `artifacts/playwright/tarea-16/listado-${viewport.nombre}.png`,
-      fullPage: true,
-    });
+    for (const viewport of VIEWPORTS) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await irA(page, LISTADO);
+      await expect(page.getByTestId('tabla')).toBeVisible({ timeout: 30_000 });
 
-    // El detalle es el que tiene ocho columnas: es donde el desborde aparece.
-    await page.getByTestId('claim-link').first().click();
-    await expect(page.getByTestId('claim-lines-table')).toBeVisible();
-    await estable(page);
+      const desborde = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+      expect(desborde, `el listado desborda a lo ancho a ${viewport.width} px`).toBe(false);
+      await page.screenshot({
+        path: `artifacts/playwright/tarea-16/listado-${viewport.width}-${tema}.png`,
+        fullPage: true,
+      });
 
-    const desbordeDetalle = await page.evaluate(
-      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    );
-    expect(desbordeDetalle, 'el detalle desborda a lo ancho').toBe(false);
+      // El detalle es el que tiene ocho columnas: es donde el desborde aparece.
+      await page.getByTestId('claim-link').first().click();
+      await expect(page.getByTestId('claim-lines-table')).toBeVisible();
 
-    // La tabla sí desplaza, pero **dentro de su contenedor**.
-    const desplazaAdentro = await page
-      .locator('.claim__table-scroll')
-      .evaluate((el) => el.scrollWidth > el.clientWidth);
-    if (viewport.width < 900) {
-      expect(desplazaAdentro, 'la tabla debería desplazar en su caja').toBe(true);
+      const desbordeDetalle = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+      expect(desbordeDetalle, `el detalle desborda a lo ancho a ${viewport.width} px`).toBe(false);
+
+      // La tabla sí desplaza, pero **dentro de su contenedor**.
+      if (viewport.width < 900) {
+        const desplazaAdentro = await page
+          .locator('.claim__table-scroll')
+          .evaluate((el) => el.scrollWidth > el.clientWidth);
+        expect(desplazaAdentro, 'la tabla debería desplazar en su caja').toBe(true);
+      }
+      await page.screenshot({
+        path: `artifacts/playwright/tarea-16/detalle-${viewport.width}-${tema}.png`,
+        fullPage: true,
+      });
     }
-
-    await page.screenshot({
-      path: `artifacts/playwright/tarea-16/detalle-${viewport.nombre}.png`,
-      fullPage: true,
-    });
   });
 }
 

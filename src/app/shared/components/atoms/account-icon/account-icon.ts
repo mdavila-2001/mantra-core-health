@@ -116,6 +116,49 @@ import type { AccountIconName } from './account-icon.types';
           <path d="M6.4 12h11.2" />
         </svg>
       }
+      @case ('pharmacy') {
+        <!-- La cruz de farmacia enmarcada: es el signo con el que se
+             reconoce una farmacia en la calle, no un frasco de pastillas
+             —que a 24 píxeles se confunde con cualquier envase— ni un
+             edificio, que sería cualquier empresa. -->
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect x="3.25" y="3.25" width="17.5" height="17.5" rx="4" />
+          <path d="M12 8v8" />
+          <path d="M8 12h8" />
+        </svg>
+      }
+      @case ('clinic') {
+        <!-- Un edificio con la cruz de salud en la fachada: un centro médico es
+             un lugar al que se va, no una persona ni un frasco. No lleva el marco
+             de la farmacia ni las esquinas de imagenología, para que las altas de
+             organización se distingan sin leer el rótulo. -->
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M3 20.75h18" />
+          <path
+            d="M5.5 20.75V9.4a2 2 0 0 1 1-1.73l4.5-2.6a2 2 0 0 1 2 0l4.5 2.6a2 2 0 0 1 1 1.73v11.35"
+          />
+          <path d="M12 9.5v5" />
+          <path d="M9.5 12h5" />
+        </svg>
+      }
     }
   `,
   styles: `

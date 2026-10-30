@@ -303,7 +303,7 @@ for (const ancho of ANCHOS) {
       // S5: la API niega la estructura.
       await page.evaluate(() => sessionStorage.setItem('mock:fallos', JSON.stringify([{ patron: '/structure', modo: 'forbidden' }])));
       await irALaConsola(page, `tab=infrastructure&site=${sitio}`);
-      await expect(page.getByText('No tenés acceso a esta sección')).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByText('No tiene acceso a esta sección')).toBeVisible({ timeout: 60_000 });
       await captura(page, '21-estado-prohibido-S5', ancho.nombre);
 
       // S9: error inesperado con su código de petición.
@@ -321,7 +321,7 @@ for (const ancho of ANCHOS) {
 
       // S6: un espacio que no existe (o de otro tenant).
       await page.goto(`${CONSOLA}/spaces/no-existe`, { waitUntil: 'domcontentloaded' });
-      await expect(page.getByText('No encontramos lo que buscás')).toBeVisible({ timeout: 60_000 });
+      await expect(page.getByText('No encontramos lo que busca')).toBeVisible({ timeout: 60_000 });
       await captura(page, '24-estado-no-encontrado-S6', ancho.nombre);
     });
   });

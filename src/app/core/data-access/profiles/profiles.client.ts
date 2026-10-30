@@ -1,11 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, throwError, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import type { BirthSexCode } from '../iam/iam.types';
 import { maybeDate, maybeDateOnly, sinNulos, type ConNulos } from '../wire';
 import type {
   AccountLink,
+  InsuranceBillingFrequency,
   NewJurisdictionAuthorization,
   NewOwnCredential,
   NewPatientProfile,
@@ -33,6 +35,7 @@ import type {
   NewPractitionerAffiliation,
   UpdatePractitionerAffiliation,
   PractitionerCredential,
+  PractitionerLanguage,
   PractitionerLicense,
   PractitionerProfile,
   PractitionerDirectoryPage,
@@ -42,11 +45,25 @@ import type {
   RelatedPerson,
   RelatedPersonCreated,
   Dependent,
+  DependentCandidate,
+  DependentLinkRequestSent,
+  DependentLinkTarget,
   DependentRelationshipCode,
+  IncomingDependentLinkRequest,
   NewDependent,
   PractitionerOnboarding,
   LinkableOrganizationPage,
 } from './profiles.types';
+import {
+  PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
+  PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
+  practitionerProfileExtensionsLabel,
+} from './profiles.types';
+import {
+  droppedSimulatorExtensions,
+  unavailableInApiError,
+  withSimulatorExtensions,
+} from '../simulator-only';
 
 /** Las mismas respuestas, con las fechas como viajan: texto. */
 type Wire<T> = { readonly [K in keyof T]: T[K] extends Date ? string : T[K] };
@@ -115,7 +132,14 @@ export class ProfilesClient {
   private readonly baseUrl = inject(API_BASE_URL);
 
   /**
-   * `GET /profiles/patients` — una página del listado (UC-05-13).
+   * `POST /profiles/patients/search` — una página del listado (UC-05-13).
+   *
+   * Los filtros viajan en el **cuerpo**, no en la query string: `q` es el
+   * nombre de una persona y `nationalId` su documento, y la URL de una
+   * petición queda en los logs de acceso de nginx y de cualquier proxy, en el
+   * historial y en el `Referer`. El `GET /profiles/patients?q=` de antes sigue
+   * vivo en la API pero obsoleto; es la misma búsqueda (mismo DTO, mismos
+   * roles, misma respuesta) y responde `200`, no `201`.
    *
    * Paginación **por cursor**: la respuesta no trae total, así que quien la
    * consuma no puede ofrecer «página 7 de 42». Es deliberado del backend.
@@ -124,39 +148,36 @@ export class ProfilesClient {
    * @returns La página con su cursor siguiente, o `null` si no hay más.
    */
   searchPatients(query: PatientSearchQuery = {}): Observable<PatientPage> {
-    // Parámetro a parámetro, no con un objeto: el backend valida con
-    // `forbidNonWhitelisted` y un opcional en `undefined` viaja como clave
-    // declarada, que vuelve 400.
-    let params = new HttpParams();
-    if (query.query !== undefined && query.query !== '') {
-      params = params.set('q', query.query);
-    }
+    // Clave a clave, sin las vacías: el backend valida con
+    // `forbidNonWhitelisted`, y un texto vacío no filtra —mandarlo como `''`
+    // no sería lo mismo que no buscar nada—.
+    const filters: Record<string, string | number> = {};
+    if (query.query !== undefined && query.query !== '') filters['q'] = query.query;
     if (query.nationalId !== undefined && query.nationalId !== '') {
-      params = params.set('nationalId', query.nationalId);
+      filters['nationalId'] = query.nationalId;
     }
     if (query.issuerAdministrativeAreaConceptId !== undefined) {
-      params = params.set(
-        'issuerAdministrativeAreaConceptId',
-        query.issuerAdministrativeAreaConceptId,
-      );
+      filters['issuerAdministrativeAreaConceptId'] = query.issuerAdministrativeAreaConceptId;
     }
     if (query.aboGroupConceptId !== undefined) {
-      params = params.set('aboGroupConceptId', query.aboGroupConceptId);
+      filters['aboGroupConceptId'] = query.aboGroupConceptId;
     }
     if (query.rhFactorConceptId !== undefined) {
-      params = params.set('rhFactorConceptId', query.rhFactorConceptId);
+      filters['rhFactorConceptId'] = query.rhFactorConceptId;
     }
     if (query.clinicalLanguageConceptId !== undefined) {
-      params = params.set('clinicalLanguageConceptId', query.clinicalLanguageConceptId);
+      filters['clinicalLanguageConceptId'] = query.clinicalLanguageConceptId;
     }
-    if (query.cursor !== undefined) {
-      params = params.set('cursor', query.cursor);
-    }
-    if (query.limit !== undefined) {
-      params = params.set('limit', String(query.limit));
-    }
+    if (query.cursor !== undefined) filters['cursor'] = query.cursor;
+    if (query.limit !== undefined) filters['limit'] = query.limit;
 
-    return this.http.get<RespuestaPagina>(this.url('/profiles/patients'), { params }).pipe(
+    const url = this.url('/profiles/patients/search');
+    if (droppedSimulatorExtensions(filters, PATIENT_SEARCH_SIMULATOR_EXTENSIONS).length > 0) {
+      return throwError(() =>
+        unavailableInApiError('Filtrar pacientes por grupo sanguíneo, factor Rh o idioma', url),
+      );
+    }
+    return this.http.post<RespuestaPagina>(url, filters).pipe(
       map((body) => ({
         ...body,
         items: body.items.map(toPatientListItem),
@@ -334,6 +355,85 @@ export class ProfilesClient {
   }
 
   /**
+   * `POST /profiles/patients/me/dependent-requests` — pide representar a quien
+   * ya tiene cuenta, señalada por su CI o por el perfil que salió de buscarla
+   * por nombre.
+   *
+   * No crea nada todavía: a esa cuenta le llega una notificación y el vínculo
+   * nace recién cuando la acepta. `404` es «no hay cuenta con ese CI».
+   *
+   * La publica la API desde mdavila-2001/mantra-core-health-api#493, con
+   * `nationalId` o con el `patientProfileId` que devuelve la búsqueda por
+   * nombre (`dependent-candidates`).
+   */
+  requestDependentLink(target: DependentLinkTarget): Observable<DependentLinkRequestSent> {
+    return this.http.post<DependentLinkRequestSent>(
+      this.url('/profiles/patients/me/dependent-requests'),
+      { ...target },
+    );
+  }
+
+  /**
+   * `GET /profiles/patients/me/dependent-candidates?q=` — cuentas cuyo nombre
+   * coincide con lo escrito.
+   *
+   * Devuelve pocas (el servidor tope), con el CI enmascarado, y nada por debajo
+   * de tres letras: es una búsqueda de personas, no un listado.
+   */
+  searchDependentCandidates(query: string): Observable<readonly DependentCandidate[]> {
+    return this.http
+      .get<
+        readonly {
+          patientProfileId: string;
+          displayName: string;
+          maskedNationalId?: string | null;
+        }[]
+      >(this.url('/profiles/patients/me/dependent-candidates'), { params: { q: query } })
+      .pipe(
+        map((filas) =>
+          filas.map((fila) => ({
+            patientProfileId: fila.patientProfileId,
+            displayName: fila.displayName,
+            ...(fila.maskedNationalId ? { maskedNationalId: fila.maskedNationalId } : {}),
+          })),
+        ),
+      );
+  }
+
+  /** `GET /profiles/patients/me/dependent-requests/incoming` — las que esperan respuesta. */
+  listIncomingDependentLinkRequests(): Observable<readonly IncomingDependentLinkRequest[]> {
+    return this.http
+      .get<{ id: string; requesterDisplayName: string; createdAt: string }[]>(
+        this.url('/profiles/patients/me/dependent-requests/incoming'),
+      )
+      .pipe(map((body) => body.map((fila) => ({ ...fila, createdAt: new Date(fila.createdAt) }))));
+  }
+
+  /** `POST …/dependent-requests/:id/accept` — quien pidió pasa a representar a esta cuenta. */
+  acceptDependentLinkRequest(requestId: string, relationshipConceptId?: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(
+          `/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/accept`,
+        ),
+        relationshipConceptId === undefined ? {} : { relationshipConceptId },
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** `POST …/dependent-requests/:id/reject`. */
+  rejectDependentLinkRequest(requestId: string): Observable<void> {
+    return this.http
+      .post<unknown>(
+        this.url(
+          `/profiles/patients/me/dependent-requests/${encodeURIComponent(requestId)}/reject`,
+        ),
+        {},
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /**
    * `GET /profiles/practitioners/me/summary` — el perfil profesional propio.
    *
    * Autoservicio, igual que el resumen del paciente: el sujeto lo resuelve el
@@ -480,10 +580,18 @@ export class ProfilesClient {
       readonly lastName: string;
       readonly motherLastName: string;
       readonly birthDate: string;
+      /* P28: el sexo al nacer, el departamento emisor y el número del
+         documento se corrigen. El número sólo mientras la identidad no está
+         verificada (`identityVerified`): si no, la API responde 409
+         `NATIONAL_ID_LOCKED_BY_VERIFIED_IDENTITY`. No se puede vaciar. */
+      readonly sexAtBirth: BirthSexCode;
+      readonly nationalId: string;
+      readonly issuerAdministrativeAreaConceptId: string;
       readonly phone: string;
-      /* Los cuatro contactos que el alta declara por separado. El correo de
-         trabajo NO está: es la identidad de acceso y se cambia por su propio
-         trámite. */
+      /* Los cinco contactos que el alta declara por separado. El correo de
+         trabajo es un contacto más: cambiarlo no cambia el correo de acceso,
+         y a diferencia de los otros no se puede vaciar. */
+      readonly workEmail: string;
       readonly mobilePhone: string;
       readonly workMobilePhone: string;
       readonly workLandline: string;
@@ -493,6 +601,7 @@ export class ProfilesClient {
          forma de sacar un NIT que se cargó mal. */
       readonly taxId: string;
       readonly taxHolderName: string;
+      readonly insuranceBillingFrequency: InsuranceBillingFrequency;
       /* El domicilio (ALV-009): mismo contrato que
          `OwnPatientProfileChanges.homeAddressLines`. Sólo el texto y, si se
          marcó un punto, las dos coordenadas juntas — el municipio ya viaja
@@ -504,10 +613,37 @@ export class ProfilesClient {
       readonly workAddressLines: string;
       readonly workLatitude: number | null;
       readonly workLongitude: number | null;
+      /* Distrito o zona de cada dirección (ADR-0028), aparte de la calle.
+         `''` lo quita. */
+      readonly homeDistrict: string;
+      readonly workDistrict: string;
+      /* Los idiomas en los que atiende. A diferencia del resto, viaja la lista
+         ENTERA con la misma forma en que la lectura la devuelve, y se espera
+         que reemplace la guardada: un idioma no tramita nada, así que no hay
+         «agregar» ni «retirar» con su propio recurso, como sí tienen los
+         títulos. `[]` quita el último. Hasta el 02/10/2026 el perfil los leía
+         (`OwnPractitionerProfile.languages`) y nadie los escribía.
+
+         `UpdateOwnPractitionerProfileDto` declara `languages` con esta misma
+         forma y la reemplaza entera (`MAX_PRACTITIONER_LANGUAGES`). La que
+         sigue sin declarar es `insuranceBillingFrequency`, extensión de la
+         maqueta (`PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS`): contra la API
+         real no viaja, y si el `PATCH` no tenía otra cosa el error nombra qué
+         falta. */
+      readonly languages: readonly PractitionerLanguage[];
     }>,
   ): Observable<OwnPractitionerProfile> {
+    const url = this.url('/profiles/practitioners/me');
+    const cuerpo = withSimulatorExtensions(cambios, PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS);
+    // Si no queda nada que mandar, el cambio era sólo de extensiones —también
+    // `languages: []`, que es «quitar todos»—: se dice, no se manda un vacío.
+    if (Object.keys(cuerpo).length === 0 && Object.keys(cambios).length > 0) {
+      return throwError(() =>
+        unavailableInApiError(practitionerProfileExtensionsLabel(Object.keys(cambios)), url),
+      );
+    }
     return this.http
-      .patch<ConNulos<WireOwnPractitioner>>(this.url('/profiles/practitioners/me'), cambios)
+      .patch<ConNulos<WireOwnPractitioner>>(url, cuerpo)
       .pipe(map((body) => this.traducirPerfilPropio(body)));
   }
 
@@ -744,9 +880,13 @@ export class ProfilesClient {
    * Sin `profileId`: el sujeto sale de la sesión, como el resto del
    * autoservicio. Hasta el 13/09/2026 `isPrimary` sólo podía fijarse al
    * agregar, así que una especialidad cargada después del alta quedaba
-   * adicional para siempre; ver `docs/progress/BLOCKERS.md`.
+   * adicional para siempre.
    *
    * Es idempotente: marcar la que ya lo es devuelve la misma especialidad.
+   *
+   * Sin consumidor desde el 23/09/2026: el editor retiró «Marcar como
+   * principal» porque el médico pidió todas las especialidades iguales (D-01).
+   * Se conserva mientras la API lo exponga.
    *
    * @param specialtyId - La especialidad que pasa a ser la principal.
    * @returns La especialidad, ya primaria.
@@ -812,12 +952,9 @@ export class ProfilesClient {
      propietario el 13/09/2026: «que en la tabla se pueda eliminar registros,
      editar registros o descargar elementos».
 
-     **De los cinco, sólo `removeOwnCredential` existe hoy en la API.** Los
-     otros cuatro los atiende el simulador de la rama `mockup` —que es el
-     backend de esta rama, `mockBackend: true` fijo— y están escritos con la
-     forma REST que le toca a cada recurso, para que publicarlos del lado del
-     servidor no obligue a tocar la pantalla. El hueco queda anotado en
-     `docs/progress/BLOCKERS.md`, no escondido acá. */
+     Los cinco existen en la API (`PATCH`/`DELETE` de títulos, especialidades
+     y matrículas propias, sólo mientras siguen pendientes de verificación) y
+     el simulador de `mockup` los atiende con la misma forma. */
 
   /**
    * `PATCH /profiles/practitioners/me/credentials/:id` — corrige un título
@@ -1028,12 +1165,15 @@ function toOwnPatientProfile(body: ConNulos<WireOwnPatientProfile>): OwnPatientP
     // preguntar. Vacías dicen «no declaró ninguna», que es lo correcto ahí.
     coverages: (limpio.coverages ?? []).map((coverage, index) => ({
       ...sinNulos(coverage),
-      id: coverage.id ?? `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
+      id:
+        coverage.id ??
+        `legacy:${coverage.policyIdentifier ?? coverage.memberIdentifier ?? coverage.planId ?? 'coverage'}:${index}`,
       benefits: (coverage.benefits ?? []).map((benefit, benefitIndex) => ({
         ...sinNulos(benefit),
         id: benefit.id ?? `legacy-benefit:${index}:${benefitIndex}`,
       })),
     })),
+    emergencyContacts: limpio.emergencyContacts ?? [],
     guardians: limpio.guardians ?? [],
   };
 }

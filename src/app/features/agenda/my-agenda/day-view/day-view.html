@@ -1,12 +1,12 @@
 <div class="dia">
   <header class="dia__barra">
     <div class="dia__cabecera">
-      <h3 class="dia__titulo">
+      <h2 class="dia__titulo">
         {{ titulo() }}
         @if (esHoy()) {
           <span class="dia__hoy">Hoy</span>
         }
-      </h3>
+      </h2>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
     </div>
 
@@ -105,7 +105,7 @@
         </button>
         <button
           app-button
-          variant="secondary"
+          variant="ghost"
           size="sm"
           type="button"
           data-testid="dia-agregar"
@@ -134,16 +134,16 @@
        a quién alcanza. Mismo criterio que el aviso de demora. -->
   @if (moverAbierto()) {
     <section class="dia__mover" data-testid="dia-mover-panel" aria-labelledby="mover-titulo">
-      <h4 id="mover-titulo" class="dia__mover-titulo">
+      <h3 id="mover-titulo" class="dia__mover-titulo">
         @if (moverDesde()) {
           Correr desde las {{ moverDesde() | date: 'HH:mm' }} en adelante
         } @else {
           Correr todo el día
         }
-      </h4>
+      </h3>
       <p class="dia__mover-nota">
-        Los turnos cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
-        tuya, <strong>no se mueve ninguno</strong>.
+        Las citas cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
+        suya, <strong>no se mueve ninguno</strong>.
       </p>
       <div class="dia__mover-opciones">
         @for (minutos of desplazamientos; track minutos) {
@@ -185,13 +185,29 @@
 
   @if (bloques().length === 0) {
     <div class="dia__vacio">
-      <p>No atendés este día.</p>
+      <!-- Con la lectura caída, vacío no quiere decir que no atiende. -->
+      @if (incompleteLoad()) {
+        <p>Este día no se pudo cargar. Vuelva a cargarlo desde el aviso de arriba.</p>
+      } @else if (horarioFlexible(); as flexible) {
+        <p data-testid="dia-horario-flexible">
+          Atiende con horario flexible de {{ flexible }}: los pacientes eligen la hora. Todavía no
+          hay citas pedidas.
+        </p>
+      } @else {
+        <p>No atiende este día.</p>
+      }
       <button app-button variant="ghost" size="sm" type="button" (clicked)="crear()">
         Agregar una cita o un rato ocupado
       </button>
     </div>
   } @else {
-    <ol class="dia__linea">
+    <!-- Una sola parada de `Tab` para la línea (roving tabindex): el control
+         principal de cada rato. Ver «Con el teclado» en el componente. -->
+    <p class="solo-lectores" [id]="ayudaId">
+      Use las flechas arriba y abajo para recorrer los ratos del día, e izquierda y derecha para
+      cambiar de día.
+    </p>
+    <ol class="dia__linea" [attr.aria-describedby]="ayudaId">
       @for (bloque of bloques(); track bloque.clave) {
         <!-- Cliqueable sólo lo que TIENE detalle: el aire entre bloques no es
              una actividad, y un clic que no hace nada enseña a no confiar en
@@ -211,8 +227,12 @@
               type="button"
               class="dia__detalle"
               data-testid="dia-detalle"
-              [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato')"
+              [attr.aria-label]="'Ver el detalle de ' + (bloque.paciente || bloque.motivo || 'este rato') + ', ' + contextoDe(bloque)"
+              [attr.data-linea]="detalleEsPrincipal(bloque) ? bloque.clave : null"
+              [attr.tabindex]="detalleEsPrincipal(bloque) ? tabindexDe(bloque) : null"
               (click)="detallePedido.emit(bloque)"
+              (focus)="alEnfocarDetalle(bloque)"
+              (keydown)="alTeclearDetalle($event, bloque)"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -248,8 +268,12 @@
                   type="button"
                   class="dia__ir-a-atender"
                   data-testid="dia-ir-a-atender"
-                  [attr.aria-label]="'Atender a ' + bloque.paciente + ', ' + (bloque.desde | date: 'HH:mm')"
+                  [attr.aria-label]="'Atender a ' + bloque.paciente + ', ' + contextoDe(bloque)"
+                  [attr.data-linea]="bloque.clave"
+                  [attr.tabindex]="tabindexDe(bloque)"
                   (click)="citaActivada.emit(cita)"
+                  (focus)="alEnfocar(bloque)"
+                  (keydown)="alTeclear($event, bloque)"
                 ></button>
               }
               <span class="dia__hora">
@@ -279,6 +303,19 @@
                 <p class="dia__estado">
                   <app-status-seal [variant]="bloque.statusVariant" [label]="bloque.estado" />
                 </p>
+                <!-- v4.2.40 · el servicio, si la cita no es una consulta: qué es y
+                     cuánto puede durar. El bloque ya mide lo que se reservó (el
+                     máximo); el mínimo dice cuándo podría quedar libre antes. -->
+                @if (bloque.cita?.service; as servicio) {
+                  <p class="dia__motivo" data-testid="dia-servicio">
+                    {{ servicio.name }} · dura
+                    {{
+                      servicio.minDurationMinutes === servicio.maxDurationMinutes
+                        ? servicio.maxDurationMinutes + ' min'
+                        : servicio.minDurationMinutes + '–' + servicio.maxDurationMinutes + ' min'
+                    }}
+                  </p>
+                }
                 <!-- El motivo se muestra acá y NO en la agenda de la
                      organización: para quien va a recibir a esa persona en diez
                      minutos, saber por qué viene es el trabajo. -->
@@ -386,8 +423,16 @@
                      alcanzable: acá está su puerta, que es lo que reemplaza al
                      botón que C-11 quitó del encabezado. -->
                 <p class="dia__visita-bandeja">
-                  <a routerLink="/lab-visits" data-testid="dia-ir-a-lab-visits"
-                    >Ver la bandeja de visitas</a
+                  <a
+                    routerLink="/lab-visits"
+                    data-testid="dia-ir-a-lab-visits"
+                    [attr.data-linea]="bloque.clave"
+                    [attr.tabindex]="tabindexDe(bloque)"
+                    (focus)="alEnfocar(bloque)"
+                    (keydown)="alTeclear($event, bloque)"
+                    >Ver la bandeja de visitas<span class="solo-lectores"
+                      >, {{ contextoDe(bloque) }}</span
+                    ></a
                   >
                 </p>
               </div>
@@ -422,6 +467,20 @@
               </div>
             }
 
+            @case ('sin-cargar') {
+              <!-- El cupo existe pero la lectura del día falló: no se sabe si
+                   está cerrado o tomado, así que no se afirma ninguna de las
+                   dos. El aviso de arriba ofrece volver a cargar. -->
+              <span class="dia__hora">
+                {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
+              </span>
+              <div class="dia__cuerpo">
+                <p class="dia__no-disponible" data-testid="dia-sin-cargar">
+                  No se pudo cargar este horario
+                </p>
+              </div>
+            }
+
             @case ('libre') {
               <span class="dia__hora">
                 {{ bloque.desde | date: 'HH:mm' }}–{{ bloque.hasta | date: 'HH:mm' }}
@@ -438,13 +497,28 @@
                   size="sm"
                   type="button"
                   data-testid="dia-mover-aca"
+                  [attr.aria-label]="'Mover acá: ' + contextoDe(bloque, 'libre')"
+                  [attr.data-linea]="bloque.clave"
+                  [attr.tabindex]="tabindexDe(bloque)"
                   [isLoading]="ratoEnVuelo() === bloque.clave"
                   (clicked)="tocar(bloque)"
+                  (focus)="alEnfocar(bloque)"
+                  (keydown)="alTeclear($event, bloque)"
                 >
                   Mover acá
                 </button>
               } @else {
-                <button class="dia__libre" type="button" (click)="tocar(bloque)">
+                <button
+                  class="dia__libre"
+                  type="button"
+                  data-testid="day-view-free-slot"
+                  [attr.aria-label]="'Disponible: ' + contextoDe(bloque, 'libre')"
+                  [attr.data-linea]="bloque.clave"
+                  [attr.tabindex]="tabindexDe(bloque)"
+                  (click)="tocar(bloque)"
+                  (focus)="alEnfocar(bloque)"
+                  (keydown)="alTeclear($event, bloque)"
+                >
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                   Disponible
                 </button>
@@ -461,6 +535,7 @@
                   size="sm"
                   type="button"
                   data-testid="dia-cerrar-rato"
+                  [attr.aria-label]="'Cerrar este rato: ' + contextoDe(bloque)"
                   (clicked)="cierrePedido.emit(bloque)"
                 >
                   Cerrar este rato
@@ -475,8 +550,12 @@
               <button
                 class="dia__aire"
                 type="button"
-                aria-label="Agregar algo en este hueco"
+                [attr.aria-label]="'Agregar algo en este hueco: ' + contextoDe(bloque, 'sin horarios')"
+                [attr.data-linea]="bloque.clave"
+                [attr.tabindex]="tabindexDe(bloque)"
                 (click)="tocar(bloque)"
+                (focus)="alEnfocar(bloque)"
+                (keydown)="alTeclear($event, bloque)"
               >
                 @if (rotuloDelHueco(bloque); as rotulo) {
                   <span class="dia__hueco" aria-hidden="true">{{ rotulo }}</span>

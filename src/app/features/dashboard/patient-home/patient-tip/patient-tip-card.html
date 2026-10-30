@@ -1,0 +1,19 @@
+<aside class="consejo" data-testid="mi-salud-consejo" aria-labelledby="consejo-titulo">
+  <span class="consejo__foco" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1.1 2V16h5v-.2c.1-.8.5-1.5 1.1-2A6 6 0 0 0 12 3z" /></svg>
+  </span>
+  <h2 class="consejo__titulo" id="consejo-titulo">¿Sabía que…?</h2>
+  <p class="consejo__texto" aria-live="polite" data-testid="mi-salud-consejo-texto">
+    {{ consejo().text }}
+  </p>
+  <div class="consejo__pie">
+    <span class="consejo__puntos" aria-hidden="true">
+      @for (n of puntosDeConsejo; track n) {
+        <i class="consejo__punto" [class.consejo__punto--activo]="n === consejoIndice() % totalConsejos"></i>
+      }
+    </span>
+    <button app-button variant="outline" size="sm" type="button" data-testid="mi-salud-otro-consejo" (clicked)="otroConsejo()">
+      Otro consejo
+    </button>
+  </div>
+</aside>

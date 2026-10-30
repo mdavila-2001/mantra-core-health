@@ -1,9 +1,18 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { registrarAgenda } from './scheduling.handlers';
-import { RECURSO_MEDICA } from '../fixtures/agenda';
+import {
+  RECURSO_CONSULTORIO_MEDICA,
+  RECURSO_MEDICA,
+  TIPO_CITA_RECONSULTA,
+  recursos,
+  reservas,
+  type ReservaSimulada,
+} from '../fixtures/agenda';
+import { BOOKING_STATUS } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE } from '../fixtures/people';
 import { MockRouter, type MockMethod } from '../mock-router';
-import { buscarUsuario } from '../mock-session';
+import { buscarUsuario, TENANT_CLINICA, TENANT_CONSULTORIO } from '../mock-session';
 
 /**
  * El doble de los bloqueos de agenda no puede ser más permisivo que el
@@ -135,14 +144,14 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
     );
   });
 
-  it('inválido — OTHER sin reason se rechaza con 422 (precondición de negocio, no de forma)', () => {
+  it('inválido — OTHER sin reason se rechaza con 400 (precondición de negocio, no de forma)', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(estado('POST', path, { exceptionType: 'OTHER', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' })).toBe(
-      422,
+      400,
     );
     expect(
       estado('POST', path, { exceptionType: 'OTHER', reason: '   ', startAt: '2026-10-04T08:00:00.000Z', endAt: '2026-10-04T09:00:00.000Z' }),
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('correcto — ABSENCE, CONFERENCE y ERRAND NO exigen reason (requiresText sólo en OTHER)', () => {
@@ -159,14 +168,14 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(
       estado('POST', path, { exceptionType: 'ABSENCE', startAt: '2026-10-05T10:00:00.000Z', endAt: '2026-10-05T09:00:00.000Z' }),
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('inválido — una franja de cero minutos se rechaza', () => {
     const path = `/scheduling/resources/${RECURSO_MEDICA}/exceptions`;
     expect(
       estado('POST', path, { exceptionType: 'ABSENCE', startAt: '2026-10-06T10:00:00.000Z', endAt: '2026-10-06T10:00:00.000Z' }),
-    ).toBe(422);
+    ).toBe(400);
   });
 
   it('PATCH también rechaza un exceptionType inválido, sin dejarlo pasar en silencio', () => {
@@ -177,5 +186,435 @@ describe('handlers de bloqueos de agenda (excepciones)', () => {
       endAt: '2026-10-07T09:00:00.000Z',
     });
     expect(estado('PATCH', `/scheduling/exceptions/${creado.id}`, { exceptionType: 'NOPE' })).toBe(400);
+  });
+});
+
+/**
+ * La reconsulta (C4): `POST /scheduling/appointments/direct` con `followUpOf`.
+ *
+ * Los seis casos del contrato —el correcto y los cinco rechazos— más las dos
+ * lecturas que tienen que devolver el vínculo en los dos sentidos. Cubre los
+ * tres niveles de la regla 65: correcto, límite (una reconsulta de una
+ * reconsulta, y el horario justo en el pasado) e inválido (paciente ajeno,
+ * agenda ajena, origen inexistente).
+ */
+describe('handlers de reconsulta (cita directa con followUpOf)', () => {
+  const router = new MockRouter();
+  registrarAgenda(router);
+  const medica = buscarUsuario('medica')!;
+
+  interface Respuesta<T> {
+    readonly status: number;
+    readonly body: T;
+  }
+
+  function pedir<T>(
+    method: MockMethod,
+    path: string,
+    body: unknown = {},
+    query = new URLSearchParams(),
+  ): Respuesta<T> {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    const resultado = match.handler({
+      method,
+      path,
+      params: match.params,
+      query,
+      body,
+      headers: new HttpHeaders(),
+      user: medica,
+    });
+    if (
+      resultado !== null &&
+      typeof resultado === 'object' &&
+      'status' in resultado &&
+      'body' in resultado
+    ) {
+      return resultado as Respuesta<T>;
+    }
+    return { status: 200, body: resultado as T };
+  }
+
+  /** Dentro de una semana, que es futuro y cae dentro de los +90 días. */
+  function enUnaSemana(): string {
+    return new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  /**
+   * Una consulta ya atendida de la médica que todavía no tiene reconsulta.
+   *
+   * Se busca en vez de fijarse por índice: el generador de reservas reparte los
+   * estados por posición, y un cambio suyo dejaría el test apuntando a una cita
+   * cancelada sin que nada avisara. Cada caso toma la suya, así que ninguno
+   * depende de que otro haya corrido antes.
+   */
+  function origenLibre(): ReservaSimulada {
+    const ocupados = new Set(
+      reservas
+        .todos()
+        .map((r) => r.followUpOf?.bookingId)
+        .filter((id): id is string => id !== undefined),
+    );
+    const candidata = reservas
+      .todos()
+      .filter((r) => r.resourceId === RECURSO_MEDICA)
+      .filter((r) => r.statusConceptId === BOOKING_STATUS['BK-COMPLETED'])
+      .filter((r) => new Date(r.startAt).getTime() < Date.now())
+      .find((r) => !ocupados.has(r.id));
+    if (candidata === undefined) {
+      throw new Error('El fixture no tiene ninguna consulta atendida sin reconsulta');
+    }
+    return candidata;
+  }
+
+  function agendarReconsulta(
+    origen: ReservaSimulada,
+    cambios: Record<string, unknown> = {},
+  ): Respuesta<{ bookingId: string }> {
+    return pedir<{ bookingId: string }>('POST', '/scheduling/appointments/direct', {
+      patientProfileId: origen.patientProfileId,
+      resourceId: RECURSO_MEDICA,
+      startAt: enUnaSemana(),
+      durationMinutes: 30,
+      followUpOf: { bookingId: origen.id, encounterId: null },
+      ...cambios,
+    });
+  }
+
+  it('la seed trae una reconsulta futura colgada de una consulta atendida', async () => {
+    const guardadas = sessionStorage.getItem('mock.agenda.reservas');
+    sessionStorage.removeItem('mock.agenda.reservas');
+    vi.resetModules();
+    try {
+      const fixture = await import('../fixtures/agenda');
+      const sembrada = fixture.reservas.todos().find(
+        (r) => r.typeConceptId === TIPO_CITA_RECONSULTA && new Date(r.startAt).getTime() > Date.now(),
+      );
+      expect(sembrada, 'el fixture tiene que sembrar una reconsulta').toBeDefined();
+      expect(sembrada!.followUpOf).not.toBeNull();
+      expect(new Date(sembrada!.startAt).getTime()).toBeGreaterThan(Date.now());
+      expect(sembrada!.reasonText.startsWith('Reconsulta: ')).toBe(true);
+
+      const origen = fixture.reservas.get(sembrada!.followUpOf!.bookingId);
+      expect(origen, 'la cita de origen tiene que existir').toBeDefined();
+      expect(origen!.patientProfileId).toBe(sembrada!.patientProfileId);
+      expect(origen!.statusConceptId).toBe(BOOKING_STATUS['BK-COMPLETED']);
+      expect(new Date(origen!.startAt).getTime()).toBeLessThan(Date.now());
+    } finally {
+      if (guardadas === null) sessionStorage.removeItem('mock.agenda.reservas');
+      else sessionStorage.setItem('mock.agenda.reservas', guardadas);
+    }
+  });
+
+  it('correcto — crea la reconsulta confirmada, con su tipo y su motivo heredado', () => {
+    const origen = origenLibre();
+
+    const { status, body } = agendarReconsulta(origen);
+
+    expect(status).toBe(201);
+    const creada = reservas.get(body.bookingId)!;
+    expect(creada.statusConceptId).toBe(BOOKING_STATUS['BK-CONFIRMED']);
+    expect(creada.typeConceptId).toBe(TIPO_CITA_RECONSULTA);
+    expect(creada.followUpOf).toEqual({ bookingId: origen.id, encounterId: null });
+    expect(creada.reasonText).toBe(`Reconsulta: ${origen.reasonText}`);
+  });
+
+  it('correcto — el motivo que manda el bloque gana sobre el heredado, y el encuentro viaja', () => {
+    const origen = origenLibre();
+
+    const { body } = agendarReconsulta(origen, {
+      reasonText: 'Reconsulta: traer el laboratorio',
+      followUpOf: { bookingId: origen.id, encounterId: 'encuentro-de-la-consulta' },
+    });
+
+    const creada = reservas.get(body.bookingId)!;
+    expect(creada.reasonText).toBe('Reconsulta: traer el laboratorio');
+    expect(creada.followUpOf?.encounterId).toBe('encuentro-de-la-consulta');
+  });
+
+  it('404 — la cita de origen no existe', () => {
+    const origen = origenLibre();
+
+    const { status } = agendarReconsulta(origen, {
+      followUpOf: { bookingId: 'no-existe-esta-cita', encounterId: null },
+    });
+
+    expect(status).toBe(404);
+  });
+
+  it('400 — el paciente no es el de la cita de origen', () => {
+    const origen = origenLibre();
+    const otro = reservas.todos().find((r) => r.patientProfileId !== origen.patientProfileId)!;
+
+    const { status } = agendarReconsulta(origen, { patientProfileId: otro.patientProfileId });
+
+    expect(status).toBe(400);
+  });
+
+  it('400 — el horario no es futuro, y el límite es AHORA y no el día de hoy', () => {
+    const origen = origenLibre();
+
+    expect(
+      agendarReconsulta(origen, { startAt: new Date(Date.now() - 60_000).toISOString() }).status,
+    ).toBe(400);
+    // El límite exacto: un instante que pasó por un segundo tampoco entra.
+    expect(
+      agendarReconsulta(origen, { startAt: new Date(Date.now() - 1_000).toISOString() }).status,
+    ).toBe(400);
+  });
+
+  it('403 — la agenda no es del profesional de la sesión', () => {
+    const origen = origenLibre();
+    const ajena = recursos.todos().find((r) => r.resourceRefId !== MEDICAL.id)!;
+
+    const { status } = agendarReconsulta(origen, { resourceId: ajena.id });
+
+    expect(status).toBe(403);
+  });
+
+  it('409 — la segunda reconsulta de la misma consulta se rechaza, diciendo cuál ya hay', () => {
+    const origen = origenLibre();
+
+    const primera = agendarReconsulta(origen);
+    expect(primera.status).toBe(201);
+
+    const segunda = agendarReconsulta(origen);
+
+    expect(segunda.status).toBe(409);
+    const conflicto = segunda.body as unknown as { details: { bookingId: string } };
+    expect(conflicto.details.bookingId).toBe(primera.body.bookingId);
+  });
+
+  it('límite — una reconsulta de una reconsulta se admite', () => {
+    const origen = origenLibre();
+    const primera = reservas.get(agendarReconsulta(origen).body.bookingId)!;
+
+    const segunda = pedir<{ bookingId: string }>('POST', '/scheduling/appointments/direct', {
+      patientProfileId: primera.patientProfileId,
+      resourceId: RECURSO_MEDICA,
+      startAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      durationMinutes: 30,
+      reasonText: primera.reasonText,
+      followUpOf: { bookingId: primera.id, encounterId: null },
+    });
+
+    expect(segunda.status).toBe(201);
+    expect(reservas.get(segunda.body.bookingId)!.followUpOf?.bookingId).toBe(primera.id);
+  });
+
+  it('una cita directa SIN followUpOf se sigue creando como antes, y sin 403', () => {
+    const ajena = recursos.todos().find((r) => r.resourceRefId !== MEDICAL.id)!;
+
+    const { status, body } = pedir<{ bookingId: string }>(
+      'POST',
+      '/scheduling/appointments/direct',
+      {
+        patientProfileId: PACIENTE.id,
+        resourceId: ajena.id,
+        startAt: enUnaSemana(),
+        durationMinutes: 30,
+        reasonText: 'Cita puntual de siempre',
+      },
+    );
+
+    expect(status).toBe(201);
+    const creada = reservas.get(body.bookingId)!;
+    expect(creada.followUpOf).toBeNull();
+    expect(creada.typeConceptId).not.toBe(TIPO_CITA_RECONSULTA);
+  });
+
+  it('GET /scheduling/bookings trae followUpOf en la reconsulta y followUpBookingId en su origen', () => {
+    const origen = origenLibre();
+    const { body } = agendarReconsulta(origen);
+
+    const listado = pedir<{
+      items: readonly { id: string; followUpOf: unknown; followUpBookingId: string | null }[];
+    }>(
+      'GET',
+      '/scheduling/bookings',
+      {},
+      new URLSearchParams({ resourceId: RECURSO_MEDICA, limit: '2000', includeCancelled: 'true' }),
+    );
+
+    const reconsulta = listado.body.items.find((i) => i.id === body.bookingId)!;
+    // La lectura resuelve **cuándo** fue la consulta de origen, que es lo que
+    // el contrato declara en `FollowUpOriginRef.startAt` y lo que permite decir
+    // «de la cita del 12 de septiembre» sin una petición por fila.
+    expect(reconsulta.followUpOf).toEqual({
+      bookingId: origen.id,
+      encounterId: null,
+      startAt: origen.startAt,
+    });
+
+    const laDeOrigen = listado.body.items.find((i) => i.id === origen.id)!;
+    expect(laDeOrigen.followUpBookingId).toBe(body.bookingId);
+  });
+
+  it('GET /scheduling/bookings/:id trae los dos campos, y null cuando no hay reconsulta', () => {
+    const origen = origenLibre();
+    const { body } = agendarReconsulta(origen);
+
+    const detalle = pedir<{ followUpOf: unknown; followUpBookingId: string | null }>(
+      'GET',
+      `/scheduling/bookings/${body.bookingId}`,
+    );
+    expect(detalle.body.followUpOf).toEqual({
+      bookingId: origen.id,
+      encounterId: null,
+      startAt: origen.startAt,
+    });
+    // La reconsulta recién creada no tiene todavía una propia.
+    expect(detalle.body.followUpBookingId).toBeNull();
+
+    const deOrigen = pedir<{ followUpBookingId: string | null }>(
+      'GET',
+      `/scheduling/bookings/${origen.id}`,
+    );
+    expect(deOrigen.body.followUpBookingId).toBe(body.bookingId);
+  });
+
+  it('cancelar la reconsulta libera la consulta de origen: se puede agendar otra', () => {
+    const origen = origenLibre();
+    const primera = agendarReconsulta(origen);
+
+    pedir('POST', `/scheduling/bookings/${primera.body.bookingId}/cancel`, {
+      cancelledBy: 'PROVIDER',
+      reasonText: 'Se acordó otra fecha',
+    });
+
+    expect(agendarReconsulta(origen).status).toBe(201);
+  });
+});
+
+/**
+ * Telemedicina por franja (v4.2.61): la plantilla guarda y devuelve
+ * `telemedicineEnabled` por franja, y la cita directa por `TELECONSULTA` sólo
+ * entra en una franja vigente que la tenga — si no, 422 con `reason`
+ * `TELEMEDICINE_NOT_ENABLED`, como `CreateDirectAppointmentUseCase`.
+ *
+ * La médica del fixture atiende por telemedicina sólo los viernes de 8 a 12.
+ */
+describe('handlers de telemedicina por franja', () => {
+  const router = new MockRouter();
+  registrarAgenda(router);
+  const medica = buscarUsuario('medica')!;
+
+  function pedir<T>(method: MockMethod, path: string, body: unknown = {}): { status: number; body: T } {
+    const match = router.match(method, path);
+    if (match === null) throw new Error(`No existe ${method} ${path}`);
+    const resultado = match.handler({
+      method,
+      path,
+      params: match.params,
+      query: new URLSearchParams(),
+      body,
+      headers: new HttpHeaders(),
+      user: medica,
+    });
+    if (resultado !== null && typeof resultado === 'object' && 'status' in resultado && 'body' in resultado) {
+      return resultado as { status: number; body: T };
+    }
+    return { status: 200, body: resultado as T };
+  }
+
+  /** El próximo día de la semana pedido (a partir de mañana), a la hora local dada. */
+  function proximo(diaDeLaSemana: number, hora: number, minuto = 0): string {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + 1);
+    while (fecha.getDay() !== diaDeLaSemana) fecha.setDate(fecha.getDate() + 1);
+    fecha.setHours(hora, minuto, 0, 0);
+    return fecha.toISOString();
+  }
+
+  function citaDirecta(startAt: string, channel: string) {
+    return pedir<{ code?: string; reason?: string; bookingId?: string }>(
+      'POST',
+      '/scheduling/appointments/direct',
+      {
+        patientProfileId: PACIENTE.id,
+        resourceId: RECURSO_MEDICA,
+        startAt,
+        durationMinutes: 30,
+        channel,
+      },
+    );
+  }
+
+  it('guarda telemedicineEnabled por franja y el GET lo devuelve siempre como booleano', () => {
+    const recurso = 'recurso-spec-telemedicina';
+    const creada = pedir<{ id: string }>('POST', `/scheduling/resources/${recurso}/templates`, {
+      name: 'Con telemedicina',
+      rules: [
+        { dayOfWeek: 1, startTime: '09:00', endTime: '13:00', telemedicineEnabled: true },
+        { dayOfWeek: 2, startTime: '09:00', endTime: '13:00' },
+      ],
+    });
+    expect(creada.status).toBe(201);
+
+    const { body } = pedir<{ items: readonly { id: string; rules: readonly Record<string, unknown>[] }[] }>(
+      'GET',
+      `/scheduling/resources/${recurso}/templates`,
+    );
+    const reglas = body.items.find((t) => t.id === creada.body.id)!.rules;
+    expect(reglas.map((r) => r['telemedicineEnabled'])).toEqual([true, false]);
+  });
+
+  it('correcto — teleconsulta dentro de la franja con telemedicina: 201', () => {
+    expect(citaDirecta(proximo(5, 9), 'TELECONSULTA').status).toBe(201);
+  });
+
+  it('límite — el fin de la franja es exclusivo: a las 12:00 ya no hay telemedicina', () => {
+    const respuesta = citaDirecta(proximo(5, 12), 'TELECONSULTA');
+    expect(respuesta.status).toBe(422);
+    expect(respuesta.body).toMatchObject({ code: 'PRECONDITION_FAILED', reason: 'TELEMEDICINE_NOT_ENABLED' });
+  });
+
+  it('inválido — teleconsulta en una franja sin telemedicina: 422 TELEMEDICINE_NOT_ENABLED', () => {
+    const respuesta = citaDirecta(proximo(1, 9), 'TELECONSULTA');
+    expect(respuesta.status).toBe(422);
+    expect(respuesta.body.reason).toBe('TELEMEDICINE_NOT_ENABLED');
+  });
+
+  it('la misma hora en presencial no mira la telemedicina: 201', () => {
+    expect(citaDirecta(proximo(1, 9, 30), 'PRESENCIAL').status).toBe(201);
+  });
+});
+
+/**
+ * `GET /scheduling/resources` filtra por `tenantId` en la API
+ * (`SchedulingAgendaRepository.findResources`). El doble tenía `|| true` en el
+ * filtro y devolvía las agendas de todas las organizaciones a cualquier tenant.
+ */
+describe('handler de recursos de agenda — aislamiento por organización', () => {
+  const router = new MockRouter();
+  registrarAgenda(router);
+  const medica = buscarUsuario('medica')!;
+
+  function recursosDe(tenantId: string): readonly { id: string }[] {
+    const match = router.match('GET', '/scheduling/resources')!;
+    const resultado = match.handler({
+      method: 'GET',
+      path: '/scheduling/resources',
+      params: match.params,
+      query: new URLSearchParams({ tenantId }),
+      body: {},
+      headers: new HttpHeaders(),
+      user: medica,
+    }) as { items: readonly { id: string }[] };
+    return resultado.items;
+  }
+
+  it('una organización sin agendas no recibe las de otra', () => {
+    expect(recursosDe('tenant-que-no-tiene-agendas')).toEqual([]);
+  });
+
+  it('cada organización ve sólo las suyas', () => {
+    const clinica = recursosDe(TENANT_CLINICA).map((r) => r.id);
+    const consultorio = recursosDe(TENANT_CONSULTORIO).map((r) => r.id);
+
+    expect(clinica).toContain(RECURSO_MEDICA);
+    expect(clinica).not.toContain(RECURSO_CONSULTORIO_MEDICA);
+    expect(consultorio).toEqual([RECURSO_CONSULTORIO_MEDICA]);
   });
 });

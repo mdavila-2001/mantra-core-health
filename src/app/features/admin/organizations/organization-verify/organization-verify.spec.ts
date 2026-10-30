@@ -10,9 +10,9 @@ import { OrganizationVerify } from './organization-verify';
 /**
  * Verificar es una sola petición contra `POST /admin/tenants/{id}/verification`.
  *
- * Lo que estas pruebas fijan: que va por la superficie de plataforma —sin la
- * cabecera de organización, porque quien verifica no pertenece a lo que
- * verifica— y que los dos campos son de veras opcionales: sin corregir nada, el
+ * Lo que estas pruebas fijan: que va por la superficie de plataforma —con la
+ * organización verificada como cabecera, porque quien verifica no pertenece a
+ * lo que verifica y su organización activa contradiría la ruta— y que los dos campos son de veras opcionales: sin corregir nada, el
  * cuerpo va vacío y lo declarado en el alta queda como estaba.
  */
 const TENANT_ID = 't-9';
@@ -80,8 +80,12 @@ describe('OrganizationVerify', () => {
 
     const pedido = http.expectOne(`/admin/tenants/${TENANT_ID}/verification`);
     expect(pedido.request.method).toBe('POST');
-    // Sin cabecera de organización: verificar no exige pertenecer.
-    expect(pedido.request.headers.get('X-Tenant-Id')).toBeNull();
+    // La organización declarada es la que se verifica (A2, 26/10/2026). Antes
+    // la petición salía sin cabecera propia, el interceptor le ponía la
+    // organización ACTIVA de quien verifica y la API respondía 403 «tenants
+    // contradictorios» (visto en navegador contra la API real). Pertenecer
+    // sigue sin exigirse: lo decide la API con la autoridad de plataforma.
+    expect(pedido.request.headers.get('X-Tenant-Id')).toBe(TENANT_ID);
     expect(pedido.request.body).toEqual({});
 
     pedido.flush(RESPUESTA);
@@ -111,6 +115,15 @@ describe('OrganizationVerify', () => {
     });
 
     pedido.flush(RESPUESTA);
+  });
+
+  it('el envío nativo del formulario no recarga la página (A2)', () => {
+    // Sin esto, el botón «submit» de la barra recargaba la página y abortaba
+    // el POST: ni éxito ni error llegaban a verse.
+    const form = (fixture.nativeElement as HTMLElement).querySelector('form');
+    const evento = new Event('submit', { cancelable: true });
+    form?.dispatchEvent(evento);
+    expect(evento.defaultPrevented).toBe(true);
   });
 
   it('un 403 muestra lo que dijo el servidor', () => {
@@ -161,5 +174,16 @@ describe('OrganizationVerify', () => {
       fixture.componentInstance,
     );
     expect(candidatos[0]).toEqual({ value: 'c-jur-bo', label: 'Bolivia', hint: 'JUR_BO' });
+  });
+  it('un 404 del envío se dice, no deja el formulario mudo (S6)', () => {
+    // Antes `errorMessage` no tenía rama `not-found`: el estado quedaba en S6,
+    // el botón volvía a habilitarse y la pantalla no decía nada.
+    const instancia = fixture.componentInstance as unknown as Record<string, unknown>;
+    (instancia['state'] as { set: (v: unknown) => void }).set({ status: 'not-found' });
+    fixture.detectChanges();
+
+    const mensaje = (instancia['errorMessage'] as () => string | null).call(instancia);
+    expect(mensaje).toContain('No encontramos esta organización');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos esta organización');
   });
 });

@@ -52,6 +52,17 @@ jobs:
           # Git. Con el clon superficial por defecto alcanza para `rev-parse`.
           fetch-depth: 1
 
+      # La prueba de fichas del simulador compara el fixture con los JSON que
+      # siembra la API. Se fija el snapshot correspondiente a cada base para
+      # que los PR sean reproducibles y no dependan de un checkout vecino.
+      - name: Catálogo clínico de la API
+        uses: actions/checkout@v4
+        with:
+          repository: mdavila-2001/mantra-core-health-api
+          # `test` depende del API #638; otras bases usan el snapshot de API dev.
+          ref: ${{ github.event.pull_request.base.ref == 'test' && '6d7ce6c76a871d2a36e6b7a5ad0447e05eb5b27b' || '594e64e5ad1e9e9f057d17500dbe3e783d8090a2' }}
+          path: api-catalog
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -93,6 +104,8 @@ jobs:
       # Los umbrales de cobertura son por área y bloquean: si un cambio los baja,
       # esta etapa falla en vez de avisar.
       - name: Pruebas y cobertura
+        env:
+          CLINICAL_FORMS_DIR: ${{ github.workspace }}/api-catalog/src/common/seed/data/clinical-forms
         run: yarn test:coverage
 
       - name: Build de producción
@@ -118,6 +131,13 @@ jobs:
       # y dejaría la pantalla en blanco (ya pasó con `/admin`).
       - name: Rutas contra prefijos
         run: node scripts/check-route-prefixes.mjs
+
+      # Cada llamada de los clientes del portal de administración (admin-portal,
+      # audit, authz-admin) existe en el contrato OpenAPI de la API, versionado en
+      # scripts/contracts/. Una ruta o un método que la API no expone se ve acá y no
+      # como un 404 en la pantalla. Se refresca con yarn contract:refresh.
+      - name: Clientes del portal contra el contrato
+        run: yarn check:admin-portal-contract
 
       # Un formulario de este sistema se sirve de a una página, con un tope de
       # cuatro campos. La regla vive en `MAX_CAMPOS_POR_PAGINA` y la hace cumplir
@@ -155,6 +175,30 @@ jobs:
       # sin que nada avisara. Un guardarraíl que no corre no guarda nada.
       - name: Contraste del sistema de diseño
         run: node scripts/check-contrast.mjs
+
+      # Ningún color literal nuevo fuera de las hojas de tokens, ni archivo nuevo
+      # por encima del tope de líneas (ratchets sobre scripts/baselines/*.json).
+      - name: Colores sueltos fuera de tokens
+        run: node scripts/check-colores-sueltos.mjs
+
+      - name: Tamaño máximo de archivo
+        run: node scripts/check-max-lines.mjs
+
+      # Regla 29 (transversal a los 36 carriles): toda ruta, identificador,
+      # variable, clase y archivo NUEVO o TOCADO va en inglés. El checkout de
+      # arriba es superficial (`fetch-depth: 1`): sólo trae el commit de la
+      # punta, así que hace falta un fetch acotado del commit base antes de
+      # poder diffear contra él.
+      - name: Fetch de la base para el diff de identificadores
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            git fetch --no-tags --depth=50 origin "$BASE_SHA" || true
+            echo "CHECK_ENGLISH_BASE=$BASE_SHA" >> "$GITHUB_ENV"
+          fi
+
+      - name: Identificadores nuevos en inglés
+        run: node scripts/check-english-identifiers.mjs
 
       # Inventarios al día, enlaces, cobertura documental y deriva de contrato.
       - name: Documentación
@@ -245,6 +289,18 @@ jobs:
       # comprueba que ese `dist/` sea suyo antes de reutilizarlo.
       - name: Suite crítica
         run: yarn test:e2e:critical
+        env:
+          E2E_SKIP_BUILD: 'true'
+
+      # Accesibilidad en cada pull request hacia `test` o `mockup`: los
+      # problemas `serious`/`critical` de axe sobre el login, el panel y el
+      # registro bloquean el merge. Es una sola spec de la regresión, con la
+      # misma API simulada del arnés y el artefacto que ya construyó el humo:
+      # no levanta nada nuevo. En `master` y a mano no se repite: ahí ya la
+      # corre la regresión completa de abajo.
+      - name: Accesibilidad
+        if: github.event_name == 'pull_request' && contains(fromJSON('["test", "mockup"]'), github.base_ref)
+        run: yarn test:e2e:a11y
         env:
           E2E_SKIP_BUILD: 'true'
 

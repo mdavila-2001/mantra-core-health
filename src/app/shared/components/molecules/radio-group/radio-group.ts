@@ -41,6 +41,7 @@ import { createValueAccessorBridge } from '@shared/forms/value-accessor';
   host: {
     role: 'radiogroup',
     '[attr.aria-labelledby]': 'labelledBy()',
+    '[attr.aria-describedby]': 'describedBy()',
     '[attr.aria-invalid]': 'invalid()',
     '[attr.aria-required]': 'required() || null',
     '[attr.aria-disabled]': 'isDisabled()',
@@ -78,6 +79,15 @@ export class RadioGroup<T = unknown> implements ControlValueAccessor {
 
   /** Un grupo no se etiqueta con `for`: apunta al label del campo. */
   protected readonly labelledBy = computed(() => this.field?.labelId() ?? null);
+
+  /**
+   * El hint o el error del campo, igual que cualquier control (ADR-0008).
+   *
+   * Un grupo no recibe el `id` del campo —no es etiquetable—, pero sí puede
+   * ser descrito: sin esto, «Elija el tipo de institución.» se pintaba debajo
+   * del grupo y el lector de pantalla no lo asociaba a nada.
+   */
+  protected readonly describedBy = computed(() => this.field?.describedBy() ?? null);
 
   protected readonly invalid = computed(
     () => this.hasError() || this.field?.invalid() === true,

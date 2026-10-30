@@ -61,7 +61,26 @@ describe('PatientHome', () => {
     session = TestBed.inject(SessionStore);
   });
 
-  afterEach(() => http.verify());
+  afterEach(async () => {
+    // Tarea 4 · M-06: el widget de beneficios del seguro pide sus campañas desde
+    // un `@defer`. Las pruebas que no van de eso lo responden vacío acá, para que
+    // el panel quede exactamente como estaba y `verify` siga exigiendo que no haya
+    // ninguna otra petición suelta.
+    await fixture?.whenStable();
+    for (const pending of http.match((r) => r.url.startsWith('/insurance-campaigns/patient/'))) {
+      pending.flush([]);
+    }
+    // El `@defer` de síntomas (C5) pide `GET /profiles/patients/me` al abrir
+    // (P-04, 2026-09-25) — mismo drenaje que usa `symptom-check.spec.ts`.
+    for (const pending of http.match((r) => r.url === '/profiles/patients/me')) {
+      pending.flush({});
+    }
+    // La tarjeta del médico de cabecera (28/10/2026) también llega por `@defer`.
+    for (const pending of http.match((r) => r.url === '/profiles/patients/me/primary-practitioner')) {
+      pending.flush({ current: null });
+    }
+    http.verify();
+  });
 
   /**
    * Abre sesión de paciente y monta. `pid` ausente = cuenta sin ficha.
@@ -83,6 +102,29 @@ describe('PatientHome', () => {
     });
     await TestBed.compileComponents();
     fixture = TestBed.createComponent(PatientHome);
+    fixture.detectChanges();
+    await answerOwnProfile(pid === undefined ? 'without-record' : 'with-record');
+  }
+
+  /**
+   * Responde el `GET /profiles/patients/me` que pide el chequeo de síntomas.
+   *
+   * No es una lectura del panel sino de `SymptomCheck`, que va en su `@defer`:
+   * desde P-04 (2975b45f, 25/09/2026) lee el sexo al nacer del propio perfil
+   * al abrir, para elegir la silueta y qué síntomas de «Salud íntima» ofrece.
+   * Se espera a que el bloque diferido se resuelva antes de contestarla —si no,
+   * la petición aparece o no según cuánto tarde la carga— y se contesta sin
+   * `sexAtBirth`, que no filtra nada: estas pruebas no son sobre la silueta.
+   * Sin ficha de paciente el servidor responde 404, y el chequeo lo tolera.
+   */
+  async function answerOwnProfile(profile: 'with-record' | 'without-record'): Promise<void> {
+    await fixture.whenStable();
+    const request = http.expectOne((r) => r.url === '/profiles/patients/me');
+    if (profile === 'without-record') {
+      request.flush('not found', { status: 404, statusText: 'Not Found' });
+    } else {
+      request.flush({});
+    }
     fixture.detectChanges();
   }
 
@@ -106,8 +148,8 @@ describe('PatientHome', () => {
       .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
       .flush(historia ?? historiaVacia());
     fixture.detectChanges();
-    for (const pedido of http.match((r) => r.url === '/scheduling/resources')) {
-      pedido.flush({ items: recursos, count: recursos.length });
+    for (const request of http.match((r) => r.url === '/scheduling/resources')) {
+      request.flush({ items: recursos, count: recursos.length });
     }
     fixture.detectChanges();
   }
@@ -116,13 +158,89 @@ describe('PatientHome', () => {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
 
+  /**
+   * Tarea 4 · M-06: los beneficios preventivos de la aseguradora del paciente van
+   * en su panel. Sin campañas vigentes no se dibuja ni un renglón.
+   */
+  describe('beneficios preventivos del seguro', () => {
+    const CAMPANA = {
+      id: 'camp-1',
+      code: 'CMP-CARDIO-2026',
+      title: 'Chequeo Preventivo Cardiovascular y Perfil Lipídico',
+      description: null,
+      campaignType: 'LABORATORY',
+      targetCondition: null,
+      copayBonusPercentage: 100,
+      validFrom: '2026-01-01',
+      validTo: '2099-12-31',
+      carrierName: 'Seguros Andina',
+      partners: [{ role: 'PROVIDER', type: 'LABORATORY', name: 'Laboratorio Central AloVida' }],
+    };
+
+    it('muestra la tarjeta con el sello y el botón cuando hay una campaña vigente', async () => {
+      await montar();
+      responder([], null);
+      await fixture.whenStable();
+
+      http.expectOne(`/insurance-campaigns/patient/${PERFIL}`).flush([CAMPANA]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      expect(texto()).toContain('Beneficios preventivos de su seguro');
+      expect(texto()).toContain('100% Cubierto por su Seguro');
+      expect(raiz.querySelector('[data-testid="btn-campaign-action"]')?.textContent).toContain(
+        'Agendar chequeo preventivo',
+      );
+    });
+
+    it('sin campañas vigentes el panel no suma ni un renglón', async () => {
+      await montar();
+      responder([], null);
+      await fixture.whenStable();
+
+      http.expectOne(`/insurance-campaigns/patient/${PERFIL}`).flush([]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(texto()).not.toContain('Beneficios preventivos');
+      expect(
+        (fixture.nativeElement as HTMLElement).querySelector('[data-testid="campaigns-widget"]'),
+      ).toBeNull();
+    });
+
+    it('si la consulta de campañas falla, el resto del panel sigue igual', async () => {
+      await montar();
+      responder([], null);
+      await fixture.whenStable();
+
+      http
+        .expectOne(`/insurance-campaigns/patient/${PERFIL}`)
+        .flush(
+          { statusCode: 403, code: 'FORBIDDEN', message: 'no', timestamp: 'x', path: '/x' },
+          { status: 403, statusText: 'Forbidden' },
+        );
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(texto()).toContain(', Ana');
+      expect(texto()).not.toContain('Beneficios preventivos');
+    });
+  });
+
   it('saluda por el nombre y habla de lo suyo, no de la organización', async () => {
     await montar();
     responder([], null);
 
-    expect(texto()).toContain('Ana Quispe');
+    // Rediseño del 22/10/2026: saluda con el nombre de pila —«Ana», no «Ana
+    // Quispe»— y con el saludo de la hora. El apellido en el saludo lo volvía
+    // un trámite; se exige que no esté.
+    const titulo = fixture.nativeElement.querySelector('#portada-titulo')?.textContent ?? '';
+    expect(titulo).toMatch(/^\s*(Buenos días|Buenas tardes|Buenas noches|Hola), Ana\s*$/);
+    expect(titulo).not.toContain('Quispe');
     // El subtítulo cambió con C5: el panel ahora encabeza con los síntomas.
-    expect(texto()).toContain('Contanos qué te pasa');
+    expect(texto()).toContain('Cuéntenos qué le pasa');
   });
 
   /**
@@ -169,15 +287,15 @@ describe('PatientHome', () => {
   /* ---- FT-03 · el bloque de la próxima cita ------------------------------ */
 
   /**
-   * FT-03-R01. El texto es el pedido literal del cliente: «Tu próximo turno»
+   * FT-03-R01. El texto es el request literal del cliente: «Tu próximo turno»
    * no puede quedar en ninguna parte de la pantalla.
    */
-  it('llama al bloque «Tu próxima cita» y no «Tu próximo turno»', async () => {
+  it('llama al bloque «Su próxima cita» y no «Su próximo turno»', async () => {
     await montar();
     responder([{ id: 'b-1', statusConceptId: 'c-1', startAt: '2099-01-01T13:00:00.000Z' }], null);
 
-    expect(texto()).toContain('Tu próxima cita');
-    expect(texto()).not.toContain('Tu próximo turno');
+    expect(texto()).toContain('Su próxima cita');
+    expect(texto()).not.toContain('Su próximo turno');
   });
 
   /**
@@ -238,7 +356,7 @@ describe('PatientHome', () => {
       '[data-testid="mi-salud-proxima-cita"]',
     );
     expect(bloque?.getAttribute('data-estado')).toBe('empty');
-    expect(bloque?.textContent).toContain('No tenés citas pedidas');
+    expect(bloque?.textContent).toContain('No tiene citas pedidas');
     expect(bloque?.textContent).toContain('Pedir una cita');
   });
 
@@ -250,7 +368,7 @@ describe('PatientHome', () => {
       '[data-testid="mi-salud-primera-vez"]',
     );
     expect(primera).not.toBeNull();
-    expect(primera?.textContent).toContain('Pedir mi primer turno');
+    expect(primera?.textContent).toContain('Pedir mi primera cita');
   });
 
   it('con historia, ofrece ver y descargar la última receta', async () => {
@@ -270,7 +388,7 @@ describe('PatientHome', () => {
   });
 
   /**
-   * La grilla «Ir a lo tuyo» se retiró a pedido del doctor (P-03, 22/09/2026):
+   * La grilla «Ir a lo tuyo» se retiró a request del doctor (P-03, 22/09/2026):
    * turnos e historia siguen a mano desde las tarjetas del resumen, y la Guía,
    * desde el menú. Lo que se comprueba es que no volvió, y que el camino a los
    * turnos no se fue con ella.
@@ -308,10 +426,92 @@ describe('PatientHome', () => {
     expect(texto()).toContain('Ver y descargar');
   });
 
-  it('sin ficha de paciente no sale a la red', async () => {
+  /**
+   * El fallo de la lectura de citas dejaba `proximoTurno` en `null` y la banda
+   * decía «No tiene citas pedidas»: la respuesta contraria para quien tiene
+   * consulta mañana.
+   */
+  it('si fallan las citas, no dice «No tiene citas pedidas»: dice que no pudo traerlas', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-citas-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    http
+      .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
+      .flush(historiaVacia());
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    // Tampoco la bienvenida de «recién llega»: no se sabe si tiene citas.
+    expect(html.querySelector('[data-testid="mi-salud-primera-vez"]')).toBeNull();
+    const bloque = html.querySelector('[data-testid="mi-salud-proxima-cita"]');
+    expect(bloque?.getAttribute('data-estado')).toBe('error');
+    expect(bloque?.textContent).not.toContain('No tiene citas pedidas');
+    const aviso = html.querySelector('[data-testid="mi-salud-cita-error"]');
+    expect(aviso?.getAttribute('role')).toBe('alert');
+    expect(aviso?.textContent).toContain(
+      'No pudimos traer su próxima cita. (Código de soporte: corr-citas-1)',
+    );
+  });
+
+  it('si falla la historia, no dice «Todavía no le recetaron nada»', async () => {
+    await montar();
+    http
+      .expectOne((r) => r.url === '/scheduling/bookings')
+      .flush({ items: [], count: 0, limit: 20, truncated: false });
+    http.expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`).flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-hist-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="mi-salud-primera-vez"]')).toBeNull();
+    expect(texto()).not.toContain('Todavía no le recetaron nada');
+    expect(texto()).not.toContain('Todavía no tiene atenciones registradas');
+    expect(html.querySelector('[data-testid="mi-salud-historia-error"]')?.textContent).toContain(
+      'Código de soporte: corr-hist-1',
+    );
+    // Las citas sí se leyeron: su vacío es cierto y se dice.
+    expect(
+      html.querySelector('[data-testid="mi-salud-proxima-cita"]')?.getAttribute('data-estado'),
+    ).toBe('empty');
+  });
+
+  it('si fallan las dos, el error del panel trae el código de soporte y un reintento que relee', async () => {
+    await montar();
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush(
+      { code: 'INTERNAL', message: 'Error interno', timestamp: '', path: '', correlationId: 'corr-panel-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    http
+      .expectOne((r) => r.url === `/clinical/patients/${PERFIL}/summary`)
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    expect(html.querySelector('[data-testid="mi-salud-error"]')?.textContent).toContain(
+      'No pudimos cargar su información en este momento. (Código de soporte: corr-panel-1)',
+    );
+
+    (html.querySelector('[data-testid="mi-salud-reintentar"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    responder([], null);
+
+    expect(html.querySelector('[data-testid="mi-salud-error"]')).toBeNull();
+    expect(html.querySelector('[data-testid="mi-salud-primera-vez"]')).not.toBeNull();
+  });
+
+  it('sin ficha de paciente no pide citas ni historia', async () => {
     await montar({ pid: undefined });
 
-    // El `http.verify()` del afterEach falla si algo salió a la red.
+    // El panel no sale a la red por lo suyo: sin ficha no hay turnos ni
+    // historia que leer. La única petición es la del chequeo de síntomas
+    // (`/profiles/patients/me`, ver `answerOwnProfile`), que ya se
+    // contestó; el `http.verify()` del afterEach falla si salió otra.
+    http.expectNone((r) => r.url === '/scheduling/bookings');
+    http.expectNone((r) => r.url === `/clinical/patients/${PERFIL}/summary`);
     expect(texto()).toContain('ficha de paciente');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="mi-salud-sin-ficha"]'),

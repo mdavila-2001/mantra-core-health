@@ -1,0 +1,110 @@
+<app-page-header
+  title="Invitaciones y solicitudes"
+  subtitle="Acepte lo que un centro le ofrece, o pida sumarse a uno con los procedimientos que haría. Nadie figura como activo hasta que la otra parte acepta."
+/>
+
+<app-card class="invitations" padding="lg" data-testid="invitations-card">
+  <div class="invitations__panel">
+    <div class="invitations__bar">
+      <button
+        app-button
+        type="button"
+        size="sm"
+        [disabled]="requesting()"
+        data-testid="invitations-request-open"
+        (clicked)="requesting.set(true)"
+      >
+        Pedir afiliarme a un centro
+      </button>
+    </div>
+
+    @if (requesting()) {
+      <app-affiliation-request-form
+        (requested)="onRequested($event)"
+        (changed)="reload()"
+        (cancelled)="requesting.set(false)"
+      />
+    }
+
+    <app-view-state-host [state]="rows()" (retry)="reload()" (refresh)="reload()">
+      <section class="invitations__section" aria-labelledby="invitations-title" data-testid="invitations-list">
+        <div class="invitations__heading">
+          <h2 id="invitations-title" class="invitations__title">Invitaciones de centros</h2>
+          @if (invitedCount() > 1) {
+            <button
+              app-button
+              type="button"
+              variant="outline"
+              size="sm"
+              [disabled]="acceptingAll() || busyRowId() !== null"
+              [isLoading]="acceptingAll()"
+              data-testid="invitations-accept-all"
+              (clicked)="acceptAll()"
+            >
+              Aceptar todas ({{ invitedCount() }})
+            </button>
+          }
+        </div>
+        @for (group of invitations(); track group.practiceId) {
+          <div class="invitations__group">
+            <h3 class="invitations__center">{{ group.practiceName }}</h3>
+            <ul class="invitations__rows">
+              @for (row of group.rows; track row.id) {
+                <li class="invitations__row" [attr.data-testid]="'invitation-' + row.id">
+                  <span class="invitations__service">{{ row.serviceDisplay }}</span>
+                  <app-badge [variant]="statusTone(row)">{{ statusText(row) }}</app-badge>
+                  <span class="invitations__actions">
+                    <button
+                      app-button
+                      type="button"
+                      size="sm"
+                      [disabled]="busyRowId() !== null || acceptingAll()"
+                      [attr.aria-label]="'Aceptar ' + row.serviceDisplay + ' en ' + row.practiceName"
+                      [attr.data-testid]="'invitation-accept-' + row.id"
+                      (clicked)="accept(row)"
+                    >
+                      Aceptar
+                    </button>
+                    <button
+                      app-button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      [disabled]="busyRowId() !== null || acceptingAll()"
+                      [attr.aria-label]="'Rechazar ' + row.serviceDisplay + ' en ' + row.practiceName"
+                      [attr.data-testid]="'invitation-decline-' + row.id"
+                      (clicked)="decline(row)"
+                    >
+                      Rechazar
+                    </button>
+                  </span>
+                </li>
+              }
+            </ul>
+          </div>
+        } @empty {
+          <p class="invitations__muted" data-testid="invitations-none">No tiene invitaciones pendientes.</p>
+        }
+      </section>
+
+      <section class="invitations__section" aria-labelledby="requests-title" data-testid="requests-list">
+        <h2 id="requests-title" class="invitations__title">Mis solicitudes</h2>
+        @for (group of requests(); track group.practiceId) {
+          <div class="invitations__group">
+            <h3 class="invitations__center">{{ group.practiceName }}</h3>
+            <ul class="invitations__rows">
+              @for (row of group.rows; track row.id) {
+                <li class="invitations__row" [attr.data-testid]="'request-' + row.id">
+                  <span class="invitations__service">{{ row.serviceDisplay }}</span>
+                  <app-badge [variant]="statusTone(row)">{{ statusText(row) }}</app-badge>
+                </li>
+              }
+            </ul>
+          </div>
+        } @empty {
+          <p class="invitations__muted" data-testid="requests-none">No tiene solicitudes pendientes del centro.</p>
+        }
+      </section>
+    </app-view-state-host>
+  </div>
+</app-card>

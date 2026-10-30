@@ -18,6 +18,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { SearchOrigin, SearchOriginSource } from './search-origin-picker.types';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Mismo margen que ya usaba `/nearby-places`: diez segundos y cinco minutos de caché. */
 const GPS_TIMEOUT_MS = 10_000;
@@ -30,7 +31,7 @@ const GPS_MAX_AGE_MS = 300_000;
  * al navegador: quien la negaba, o entraba desde un escritorio sin antena,
  * se quedaba sin poder ver nada cercano. El paciente ya declara su domicilio
  * y su trabajo en «Mi perfil» —con coordenadas, desde que existe
- * `app-ubicacion-picker`— y ese dato es justo lo que hacía falta para no
+ * `app-map-location-picker`— y ese dato es justo lo que hacía falta para no
  * depender del permiso del navegador.
  *
  * ## Qué hace, y qué no hace
@@ -50,7 +51,7 @@ const GPS_MAX_AGE_MS = 300_000;
  */
 @Component({
   selector: 'app-search-origin-picker',
-  imports: [Alert, AppButton, Link, RouterLink, SegmentedControl],
+  imports: [Alert, AppButton, Link, RouterLink, SegmentedControl, LoadingState],
   templateUrl: './search-origin-picker.html',
   styleUrl: './search-origin-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,10 +103,10 @@ export class SearchOriginPicker {
     const places = this.places();
     const opciones: SegmentedOption<SearchOriginSource>[] = [];
     if (places?.home) {
-      opciones.push({ value: 'home', label: 'Tu casa', icon: 'home' });
+      opciones.push({ value: 'home', label: 'Su casa', icon: 'home' });
     }
     if (places?.work) {
-      opciones.push({ value: 'work', label: 'Tu trabajo', icon: 'briefcase' });
+      opciones.push({ value: 'work', label: 'Su trabajo', icon: 'briefcase' });
     }
     opciones.push({ value: 'current', label: 'Ubicación actual', icon: 'pin' });
     return opciones;

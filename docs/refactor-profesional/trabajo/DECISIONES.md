@@ -78,14 +78,24 @@ lo usan. El expediente (`patient-chart`) no lo hacía: cerrar el alta con Escape
 perdía lo escrito sin preguntar. Se adopta el mismo patrón, con un contrato nuevo
 `DRAFT_BLOCK`/`DraftBlock` (`features/clinical-record/patient-chart/draft-block.ts`) para que
 el expediente pregunte al bloque montado —cualquiera de los siete— si tiene algo sin registrar,
-en vez de siete banderas espejadas. Pendiente de confirmación explícita de Producto (Q-M1 del
-carril); mientras tanto es la única lectura consistente con `content-dialog`. Contratos completos
+en vez de siete banderas espejadas. Es la única lectura consistente con `content-dialog`
+(Q-M1 del carril). Contratos completos
 en `contratos/content-dialog.md`, `contratos/adjuntos.md` y `contratos/seccion-de-datos.md`.
 
 ### D-19 · `fact-section` no se adopta ni se retira esta noche (2026-09-21, Marcelo)
 0 consumidores medidos fuera del banco de componentes (ver `contratos/seccion-de-datos.md`). El
 único candidato dentro de este carril —el detalle de lectura del expediente— es una ficha de 3-5
 campos fijos: `fact-section` trae buscador y paginación pensados para listas largas, así que
-adoptarlo ahí sería forzar el organismo equivocado. Queda pendiente con dueño Pablo; propuesto
-para retiro si nadie lo adopta en la oleada 2. `fact-list` (la molécula, sin buscador) sí encaja
-y queda como candidata separada, sin decidir esta noche.
+adoptarlo ahí sería forzar el organismo equivocado. Después lo adoptó la ficha de laboratorio
+(`features/laboratory-directory/laboratory-detail`), así que sigue en el catálogo.
+
+### D-20 · Rótulo «Mis organizaciones»: queda sólo el de `my-practice` (2026-10-30, WEB-F0)
+`administration/my-practice` se llama «Mis organizaciones» por decisión del propietario
+(19/09/2026: lista todos los lugares donde atiende). La colisión venía de la pantalla vieja
+`my-organizations`; al integrar `dev` (merge de WEB-F0) esa pantalla ya no existe: `dev` la
+trasladó a la pestaña «Mis vinculaciones» de Organización médica (`7525d979`), que no tiene
+título propio y ya dice los fallos de lectura con reintento. El renombre de WEB-F0 se descarta
+por innecesario y no se toca el rótulo del propietario.
+**Propuesta pendiente de Producto:** si se quiere un rótulo que no choque con la memoria del
+nombre viejo, «Dónde atiendo» (coincide con el `summary` de la sección y con la pestaña de
+«Mi perfil»). «Mis consultorios» se descarta: promete menos de lo que la pantalla lista.

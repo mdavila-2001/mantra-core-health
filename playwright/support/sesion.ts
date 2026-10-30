@@ -99,13 +99,21 @@ async function intentarIngreso(page: Page, actor: Actor): Promise<void> {
   await escribir(page, 'login-password', actor.clave);
   await page.getByTestId('login-submit').click();
 
-  // Dos destinos legítimos: el panel, o la elección de organización cuando la
-  // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
-  // para cualquiera con dos organizaciones, que es normal.
-  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  // Tres destinos legítimos: el panel, la elección de organización cuando la
+  // sesión pertenece a más de una, o la elección de portal cuando la cuenta
+  // administra Y tiene reportería (`/portal-selector`). Esperar sólo el panel
+  // dejaría la suite roja para cualquiera con dos organizaciones o con ambos
+  // accesos, que es normal.
+  await page.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
 
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
+    await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+
+  // Estas pruebas recorren la aplicación de administración: se elige ese portal.
+  if (page.url().includes('/portal-selector')) {
+    await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
 }

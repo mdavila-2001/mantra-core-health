@@ -1,0 +1,105 @@
+<th scope="row" class="schedule-day-row__day">
+  <div class="schedule-day-row__check">
+    <span>{{ dayName() }}</span>
+    <app-segmented-control
+      [attr.data-testid]="'agenda-create-dia-' + index()"
+      [ariaLabel]="'¿Atiende el ' + dayName().toLowerCase() + '?'"
+      [options]="yesNo"
+      [value]="value().activo ? 'si' : 'no'"
+      (valueChange)="set('activo', $event === 'si')"
+    />
+  </div>
+</th>
+
+@if (value().activo) {
+  <td>
+    <app-input
+      type="time"
+      [step]="timeStep"
+      [value]="value().desde"
+      [ariaLabel]="'Desde, ' + dayName()"
+      [testId]="'agenda-create-desde-' + index()"
+      (valueChange)="setTime('desde', $event)"
+    />
+  </td>
+  <td>
+    <app-input
+      type="time"
+      [step]="timeStep"
+      [value]="value().hasta"
+      [ariaLabel]="'Hasta, ' + dayName()"
+      [testId]="'agenda-create-hasta-' + index()"
+      (valueChange)="setTime('hasta', $event)"
+    />
+  </td>
+  <td>
+    <!-- Qué admite esta franja: consultas (la grilla de siempre), servicios
+         (turnos de largo variable que nacen al reservar) o ambos, que
+         comparten el tiempo del médico. -->
+    <app-select
+      [options]="modeOptions"
+      [value]="value().modo"
+      [ariaLabel]="'Qué atiende, ' + dayName()"
+      [attr.data-testid]="'agenda-create-modo-' + index()"
+      (valueChange)="set('modo', $event)"
+    />
+  </td>
+  <td class="schedule-day-row__switch">
+    <!-- Si en esta franja también atiende por videollamada. Apagado por
+         omisión: sólo viaja si el médico lo enciende (o lo apaga donde ya
+         estaba). La API rechaza la teleconsulta fuera de una franja con esto
+         activo. -->
+    <app-switch
+      [checked]="value().telemedicina"
+      [ariaLabel]="'Atiende por telemedicina, ' + dayName()"
+      [attr.data-testid]="'agenda-create-telemedicina-' + index()"
+      (checkedChange)="set('telemedicina', $event)"
+    />
+  </td>
+  @if (!weekFlexible()) {
+    <td class="schedule-day-row__switch">
+      <app-switch
+        [checked]="value().flexible"
+        [ariaLabel]="'Horario flexible, ' + dayName()"
+        [attr.data-testid]="'schedule-day-flexible-' + index()"
+        (checkedChange)="set('flexible', $event)"
+      />
+    </td>
+    @if (flexible()) {
+      <!-- Sin turnos fijos ese día: no hay duración, descanso ni horarios que
+           contar. El paciente pide la hora dentro de la franja. -->
+      <td colspan="3" class="schedule-day-row__free">Sin citas de duración fija</td>
+    } @else {
+      <td class="schedule-day-row__choice">
+        <app-select
+          [options]="durationOptions"
+          [value]="value().duracion"
+          [ariaLabel]="'Cuánto dura una consulta, ' + dayName()"
+          (valueChange)="set('duracion', $event)"
+        />
+      </td>
+      <td class="schedule-day-row__choice">
+        <app-select
+          [options]="gapOptions"
+          [value]="value().respiro"
+          [ariaLabel]="'Descanso entre consultas, ' + dayName()"
+          [attr.data-testid]="'schedule-day-gap-' + index()"
+          (valueChange)="set('respiro', $event)"
+        />
+      </td>
+      <!-- El costo, en la misma fila: elegir descanso sobre una franja corta
+           quita turnos, y ese número no se deduce. -->
+      <td class="schedule-day-row__slots" aria-live="polite">
+        @if (servicesOnly()) {
+          <!-- Sin turnos fijos: cada servicio dura lo que declaró su
+               profesional y el turno nace al reservarlo. -->
+          <span title="Las citas de servicios se crean al reservar">—</span>
+        } @else {
+          <strong>{{ slots() }}</strong>
+        }
+      </td>
+    }
+  }
+} @else {
+  <td [attr.colspan]="weekFlexible() ? 4 : 8" class="schedule-day-row__off">No atiende</td>
+}

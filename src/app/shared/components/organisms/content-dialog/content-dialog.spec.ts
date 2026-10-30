@@ -2,6 +2,7 @@ import { Component, signal, viewChild } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { ContentDialog } from './content-dialog';
+import { reemplazarAnimate } from '../../../../../testing/animate';
 
 @Component({
   imports: [ContentDialog],
@@ -198,6 +199,53 @@ describe('ContentDialog', () => {
       host.contentDialog()?.close(true);
       await fixture.whenStable();
 
+      expect(dialogo()).toBeNull();
+    });
+  });
+
+  describe('salida del panel', () => {
+    // Con animación de salida posible (en jsdom no existe `animate`) el panel
+    // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+    // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+    // Una salida que nunca termina deja a la vista si el gesto espera por ella.
+    let restaurarAnimate: () => void;
+    let terminarSalida: () => void;
+
+    beforeEach(() => {
+      terminarSalida = () => undefined;
+      restaurarAnimate = reemplazarAnimate(() => ({
+        finished: new Promise<void>((resolve) => {
+          terminarSalida = resolve;
+        }),
+        cancel: () => undefined,
+      }));
+    });
+
+    afterEach(() => {
+      restaurarAnimate();
+    });
+
+    it('`close(true)` —quien ya decidió— libera la página en el acto y devuelve el foco', async () => {
+      await abrir();
+
+      host.contentDialog()?.close(true);
+      await fixture.whenStable();
+
+      expect(dialogo()).toBeNull();
+      expect(document.activeElement).toBe(botonDeApertura());
+    });
+
+    it('descartar sí anima la salida: Escape espera a que el panel se vaya', async () => {
+      await abrir();
+
+      dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await fixture.whenStable();
+      expect(dialogo()).not.toBeNull();
+
+      terminarSalida();
+      await Promise.resolve();
+      fixture.detectChanges();
+      await fixture.whenStable();
       expect(dialogo()).toBeNull();
     });
   });

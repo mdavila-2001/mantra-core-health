@@ -3,13 +3,19 @@ import {
   type HttpInterceptorFn,
   type HttpRequest,
 } from '@angular/common/http';
+import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
+import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
+import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
+import { readApiError } from './api-error';
+import { API_BASE_URL } from '../data-access/api';
 import { TokenRefreshService } from './token-refresh.service';
+import { isTransientFailure } from './transient-failure';
 
 /** Ruta a la que se manda a quien se quedó sin sesión. */
 export const LOGIN_ROUTE = '/auth';
@@ -38,6 +44,11 @@ const PUBLIC_PATHS: readonly string[] = [
   // La pre-carga de documentos legales (subtarea 1.2): sin sesión, igual que
   // el alta que la reclama después.
   '/iam/auth/upload-registration-document',
+  // La firma y el sello del alta de médico: misma pre-carga sin sesión, con
+  // su propia ruta porque son imágenes y no PDF (informe B, C3).
+  '/iam/auth/upload-registration-signature-image',
+  // El logo del consultorio propio del mismo alta: otra pre-carga sin sesión.
+  '/iam/auth/upload-registration-logo',
   '/iam/auth/register-practitioner',
   '/iam/auth/verify-email',
   // Verificado contra la API viva: responde 401 con un token de activación
@@ -86,9 +97,18 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
+  // La credencial es de esta API: a una dirección de otro origen (una URL
+  // firmada de un almacenamiento de objetos, un servicio de terceros) no viaja
+  // ni el `Authorization` ni el tenant. Además, una cabecera de más suele
+  // invalidar una URL firmada.
+  if (!isOwnOrigin(request.url, inject(API_BASE_URL), inject(DOCUMENT).location?.origin ?? null)) {
+    return next(request);
+  }
+
   const session = inject(SessionStore);
   const refresher = inject(TokenRefreshService);
   const router = inject(Router);
+  const storage = inject(RefreshTokenStorage);
 
   /**
    * Refresco **proactivo**: si el token ya venció, se renueva antes de mandar.
@@ -102,15 +122,25 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
    * revocado del lado del servidor, que `exp` no puede anticipar.
    */
   const claims = session.claims();
-  if (claims !== null && isAccessTokenExpired(claims) && session.refreshToken() !== null) {
+  if (claims !== null && isAccessTokenExpired(claims) && session.canRefresh()) {
     return refresher.refresh().pipe(
       switchMap(() => next(withCredentials(request, session))),
-      catchError((refreshError: unknown) => endSession(session, router, refreshError)),
+      catchError((refreshError: unknown) =>
+        failedRefresh(session, storage, router, refreshError),
+      ),
     );
   }
 
   return next(withCredentials(request, session)).pipe(
     catchError((error: unknown) => {
+      // Falta elegir organización: no es un muro, es una puerta. La API lo dice
+      // con `details.reason` sin cambiar el status (403 o 422), y la respuesta es
+      // abrir el selector, no pintar «sin permiso».
+      if (isTenantRequired(error) && session.tenants().length > 1) {
+        void router.navigateByUrl(TENANT_SELECTION_ROUTE);
+        return throwError(() => error);
+      }
+
       if (!isUnauthorized(error)) {
         return throwError(() => error);
       }
@@ -130,19 +160,21 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
       // cuenta—, el 401 disparaba esto, y al visitante lo mandaba al login
       // antes de que pudiera escribir su nombre. El error se propaga igual y
       // cada pantalla decide qué hacer con él.
-      if (session.accessToken() === null && session.refreshToken() === null) {
+      if (session.accessToken() === null && !session.canRefresh()) {
         return throwError(() => error);
       }
 
       // Sin refresh token no hay nada que renovar: se corta acá en vez de
       // gastar una petición que ya sabemos que va a fallar.
-      if (session.refreshToken() === null) {
-        return endSession(session, router, error);
+      if (!session.canRefresh()) {
+        return endSession(session, storage, router, error);
       }
 
       return refresher.refresh().pipe(
         switchMap(() => next(withCredentials(request, session))),
-        catchError((refreshError: unknown) => endSession(session, router, refreshError)),
+        catchError((refreshError: unknown) =>
+          failedRefresh(session, storage, router, refreshError),
+        ),
       );
     }),
   );
@@ -181,12 +213,45 @@ function isUnauthorized(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 401;
 }
 
-/** Cierra la sesión y manda al login, propagando el error original. */
-function endSession(session: SessionStore, router: Router, error: unknown) {
+/**
+ * Cierra la sesión y manda al login, propagando el error original.
+ *
+ * Limpia también lo guardado: antes sólo se vaciaba el store y el refresh token
+ * quedaba en `localStorage`, así que la siguiente recarga **restauraba la sesión
+ * que acababa de terminar** (TX-10).
+ */
+function endSession(session: SessionStore, storage: RefreshTokenStorage, router: Router, error: unknown) {
   session.clear();
+  storage.clear();
   void router.navigateByUrl(LOGIN_ROUTE);
 
   return throwError(() => error);
+}
+
+/**
+ * Qué hacer cuando el **refresco** falla. Sólo 400/401 dicen que la sesión murió;
+ * un corte de red, un 429 o un 5xx no dicen nada de ella (TX-30): el error
+ * sube, la persona reintenta y la sesión sigue en pie.
+ */
+function failedRefresh(
+  session: SessionStore,
+  storage: RefreshTokenStorage,
+  router: Router,
+  error: unknown,
+) {
+  if (isTransientFailure(error)) {
+    return throwError(() => error);
+  }
+  return endSession(session, storage, router, error);
+}
+
+/** `details.reason` de la API cuando hay que elegir organización. */
+function isTenantRequired(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse) || ![403, 422].includes(error.status)) {
+    return false;
+  }
+  const reason = readApiError(error)?.details?.['reason'];
+  return reason === 'TENANT_REQUIRED' || reason === 'TENANT_AMBIGUOUS';
 }
 
 /**
@@ -203,6 +268,28 @@ function isPublic(url: string): boolean {
 function isOptionalAuth(url: string): boolean {
   const path = pathOf(url);
   return OPTIONAL_AUTH_PREFIXES.some((prefijo) => path.startsWith(prefijo));
+}
+
+/**
+ * Si la dirección es de esta aplicación o de su API: una ruta relativa, la raíz
+ * configurada (`API_BASE_URL`) o el mismo origen de la página. El mismo origen
+ * importa en el servidor, que antes de los interceptores vuelve absolutas las
+ * rutas relativas.
+ */
+export function isOwnOrigin(url: string, apiBaseUrl: string, pageOrigin: string | null): boolean {
+  if (!url.includes('://') && !url.startsWith('//')) {
+    return true;
+  }
+  const raiz = apiBaseUrl.replace(/\/+$/, '');
+  // Con el límite de segmento: `https://api.x.evil.com` no es `https://api.x`.
+  if (raiz !== '' && url.startsWith(raiz) && (url.length === raiz.length || '/?#'.includes(url[raiz.length]!))) {
+    return true;
+  }
+  try {
+    return pageOrigin !== null && new URL(url).origin === pageOrigin;
+  } catch {
+    return false;
+  }
 }
 
 function pathOf(url: string): string {

@@ -1,7 +1,13 @@
+import { readFileSync } from 'node:fs';
+
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { DepartmentMap, type DepartamentoElegible } from './department-map';
 import { SILUETAS_DE_BOLIVIA } from './bolivia-departments.geometry';
+import { CONTORNOS_DE_MUNICIPIOS } from './bolivia-municipalities.geometry';
+
+/** El mismo módulo que el componente pide con `import()`: ya resuelto acá. */
+const CONTORNOS_LISTOS = import('./bolivia-municipalities.geometry');
 
 /**
  * Los nueve del catálogo, tal como los entrega `VS_BO_DEPARTMENT` una vez
@@ -73,6 +79,39 @@ describe('DepartmentMap', () => {
     expect(formaDe('SC').getAttribute('aria-label')).toBe('Santa Cruz');
   });
 
+  /**
+   * «En TODOS LOS MAPAS se pongan las provincias» —cliente, 24/09/2026—. Las
+   * líneas son dibujo, no control: no se tabulan, no se anuncian y no le roban
+   * el clic al departamento que tienen debajo.
+   */
+  it('traza las provincias sin volverlas un control', () => {
+    const provincias = html.querySelector('[data-testid="department-map-provincias"]');
+    expect(provincias?.getAttribute('d')?.startsWith('M')).toBe(true);
+    expect((provincias?.getAttribute('d')?.match(/M/g) ?? []).length).toBeGreaterThan(100);
+    expect(provincias?.getAttribute('aria-hidden')).toBe('true');
+    expect(provincias?.hasAttribute('tabindex')).toBe(false);
+    expect(provincias?.hasAttribute('role')).toBe(false);
+  });
+
+  it('las siglas quedan por encima de las provincias, y la del elegido cambia de tono', () => {
+    const svg = html.querySelector('svg');
+    const hijos = Array.from(svg?.children ?? []);
+    const provincias = hijos.findIndex((hijo) =>
+      hijo.classList.contains('department-map__provincias'),
+    );
+    const primeraSigla = hijos.findIndex((hijo) =>
+      hijo.classList.contains('department-map__sigla'),
+    );
+    expect(provincias).toBeGreaterThan(-1);
+    expect(primeraSigla).toBeGreaterThan(provincias);
+
+    formaDe('SC').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    const elegidas = html.querySelectorAll('.department-map__sigla--elegida');
+    expect(elegidas).toHaveLength(1);
+    expect(elegidas[0].textContent?.trim()).toBe('SC');
+  });
+
   it('cada departamento es alcanzable con el tabulador', () => {
     for (const silueta of SILUETAS_DE_BOLIVIA) {
       expect(formaDe(silueta.sigla).getAttribute('tabindex')).toBe('0');
@@ -127,7 +166,7 @@ describe('DepartmentMap', () => {
    */
   it('dice en palabras cuál quedó elegido', () => {
     const linea = html.querySelector('[data-testid="department-map-elegido"]');
-    expect(linea?.textContent).toContain('Todavía no elegiste');
+    expect(linea?.textContent).toContain('Todavía no eligió');
 
     formaDe('BE').dispatchEvent(new MouseEvent('click'));
     fixture.detectChanges();
@@ -158,5 +197,214 @@ describe('DepartmentMap', () => {
 
     expect(html.querySelectorAll('[role="button"]')).toHaveLength(1);
     expect(formaDe('SC')).not.toBeNull();
+  });
+
+  /* ---- El municipio y el lugar (pedido del 30/09/2026) ---- */
+
+  /** Espera a que llegue el `import()` diferido de los contornos. */
+  async function estabilizar(): Promise<void> {
+    fixture.detectChanges();
+    await CONTORNOS_LISTOS;
+    await new Promise((listo) => setTimeout(listo));
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  /** Si un punto del `viewBox` cae dentro de un contorno (`M…L…Z`, varios anillos). */
+  function dentroDe(d: string, x: number, y: number): boolean {
+    return d
+      .split('M')
+      .filter(Boolean)
+      .some((tramo) => {
+        const anillo = tramo
+          .replace('Z', '')
+          .split('L')
+          .map((par) => par.split(' ').map(Number));
+        let adentro = false;
+        for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
+          const [xi, yi] = anillo[i];
+          const [xj, yj] = anillo[j];
+          if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) adentro = !adentro;
+        }
+        return adentro;
+      });
+  }
+
+  it('los contornos cubren 339 de los 340 municipios del catálogo, sin INE repetido', () => {
+    expect(CONTORNOS_DE_MUNICIPIOS).toHaveLength(339);
+    expect(new Set(CONTORNOS_DE_MUNICIPIOS.map((c) => c.ine)).size).toBe(339);
+    for (const c of CONTORNOS_DE_MUNICIPIOS) {
+      expect(c.d.startsWith('M') && c.d.endsWith('Z'), `${c.ine} no cierra`).toBe(true);
+    }
+  });
+
+  it('sombrea el municipio por su código INE y dice su nombre', async () => {
+    fixture.componentRef.setInput('value', 'dep-SC');
+    fixture.componentRef.setInput('municipio', '070101');
+    await estabilizar();
+
+    const municipio = html.querySelector('[data-testid="department-map-municipio"]');
+    expect(municipio?.getAttribute('data-ine')).toBe('070101');
+    expect(municipio?.getAttribute('aria-hidden')).toBe('true');
+    expect(html.querySelector('[data-testid="department-map-elegido"]')?.textContent).toContain(
+      'Santa Cruz de la Sierra',
+    );
+  });
+
+  it('la etiqueta es completa: departamento, provincia y municipio, cada uno con su nombre', async () => {
+    fixture.componentRef.setInput('value', 'dep-SC');
+    fixture.componentRef.setInput('municipio', '070101');
+    fixture.componentRef.setInput('provincia', 'Andrés Ibáñez');
+    await estabilizar();
+
+    const linea = html.querySelector('[data-testid="department-map-elegido"]')?.textContent ?? '';
+    expect(linea.replace(/\s+/g, ' ').trim()).toBe(
+      'Departamento: Santa Cruz · Provincia: Andrés Ibáñez · Municipio: Santa Cruz de la Sierra',
+    );
+  });
+
+  it('sin provincia deducida la etiqueta la omite, no la inventa', async () => {
+    fixture.componentRef.setInput('value', 'dep-SC');
+    fixture.componentRef.setInput('municipio', '070101');
+    await estabilizar();
+
+    const linea = html.querySelector('[data-testid="department-map-elegido"]')?.textContent ?? '';
+    expect(linea).not.toContain('Provincia');
+    expect(linea).toContain('Municipio:');
+  });
+
+  it('busca el nombre sólo dentro del departamento elegido', async () => {
+    // «San Pedro» existe en Santa Cruz y en Pando: con Pando elegido, no se
+    // marca el de Santa Cruz (ni al revés).
+    fixture.componentRef.setInput('value', 'dep-PD');
+    fixture.componentRef.setInput('municipio', 'San Pedro');
+    await estabilizar();
+    expect(
+      html.querySelector('[data-testid="department-map-municipio"]')?.getAttribute('data-ine'),
+    ).toMatch(/^09/);
+
+    fixture.componentRef.setInput('value', 'dep-LP');
+    fixture.detectChanges();
+    expect(html.querySelector('[data-testid="department-map-municipio"]')).toBeNull();
+  });
+
+  it('sin coordenadas, el punto rojo cae en el centro del municipio', async () => {
+    fixture.componentRef.setInput('value', 'dep-CB');
+    fixture.componentRef.setInput('municipio', 'cochabamba');
+    await estabilizar();
+
+    const contorno = CONTORNOS_DE_MUNICIPIOS.find((c) => c.ine === '030101');
+    const punto = html.querySelector('.department-map__marca-punto');
+    expect(punto?.getAttribute('cx')).toBe(String(contorno?.x));
+    expect(punto?.getAttribute('cy')).toBe(String(contorno?.y));
+  });
+
+  /**
+   * La prueba de que la proyección de las coordenadas es la misma que la de
+   * los contornos: tres plazas principales, cada una tiene que caer **dentro**
+   * de su municipio. Con una proyección corrida, el punto rojo quedaría en el
+   * municipio de al lado sin que nada fallara a la vista.
+   */
+  it.each([
+    ['dep-SC', '070101', { lat: -17.7834, lng: -63.1821 }], // Plaza 24 de Septiembre
+    ['dep-LP', '020101', { lat: -16.4958, lng: -68.1336 }], // Plaza Murillo
+    ['dep-CH', '010101', { lat: -19.0476, lng: -65.2594 }], // Plaza 25 de Mayo, Sucre
+  ])('con coordenadas, el punto cae dentro de su municipio (%s %s)', async (dep, ine, lugar) => {
+    fixture.componentRef.setInput('value', dep);
+    fixture.componentRef.setInput('municipio', ine);
+    fixture.componentRef.setInput('punto', lugar);
+    await estabilizar();
+
+    const punto = html.querySelector('.department-map__marca-punto');
+    const x = Number(punto?.getAttribute('cx'));
+    const y = Number(punto?.getAttribute('cy'));
+    const contorno = CONTORNOS_DE_MUNICIPIOS.find((c) => c.ine === ine);
+    expect(contorno).toBeDefined();
+    expect(dentroDe(contorno?.d ?? '', x, y), `(${x}, ${y}) fuera de ${ine}`).toBe(true);
+    // No es el centro del municipio: es el lugar.
+    expect(x).not.toBe(contorno?.x);
+  });
+
+  it('sin departamento elegido no hay municipio ni punto', async () => {
+    fixture.componentRef.setInput('municipio', '070101');
+    await estabilizar();
+    expect(html.querySelector('[data-testid="department-map-municipio"]')).toBeNull();
+    expect(html.querySelector('[data-testid="department-map-punto"]')).toBeNull();
+  });
+
+  /**
+   * El acercamiento sigue al tema (issue #1534). jsdom no resuelve `:host-context`
+   * ni las variables del tema, así que se prueba lo que sí se sostiene sin
+   * navegador: que los colores del plano pasan por variables locales y que las
+   * dos formas del tema oscuro las redefinen con tokens del tema. El color
+   * computado real se mide en el navegador.
+   */
+  describe('acercamiento y tema oscuro', () => {
+    const css = readFileSync(
+      'src/app/shared/components/organisms/department-map/department-map.css',
+      'utf8',
+    );
+    const VARIABLES = [
+      '--plano-fondo',
+      '--plano-marco',
+      '--plano-otro',
+      '--plano-departamento',
+      '--plano-trazo',
+      '--plano-municipio',
+    ];
+
+    /** El cuerpo de la regla que empieza con `selector`. */
+    function cuerpoDe(selector: string): string {
+      const desde = css.indexOf(selector);
+      expect(desde, `no hay regla para ${selector}`).toBeGreaterThanOrEqual(0);
+      return css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde));
+    }
+
+    it('las formas del plano pintan con variables locales, no con la rampa fija', () => {
+      for (const clase of [
+        '.department-map__acercamiento-otro {',
+        '.department-map__acercamiento-departamento {',
+        '.department-map__acercamiento-vecino {',
+        '.department-map__acercamiento-municipio {',
+      ]) {
+        expect(cuerpoDe(clase), clase).not.toMatch(/--c-(neutral|petrol)-/);
+        expect(cuerpoDe(clase), clase).toContain('var(--plano-');
+      }
+    });
+
+    it('el modo claro conserva los colores pedidos por el cliente', () => {
+      const base = cuerpoDe('.department-map__acercamiento {');
+      expect(base).toContain('--plano-fondo: var(--c-neutral-50)');
+      expect(base).toContain('--plano-trazo: var(--c-neutral-900)');
+      expect(base).toContain('--plano-municipio: var(--c-petrol-500)');
+    });
+
+    it.each([
+      [
+        'preferencia del sistema',
+        ":host-context(html:not([data-theme='light'])) .department-map__acercamiento {",
+      ],
+      [
+        'data-theme explícito',
+        ":host-context(html[data-theme='dark']) .department-map__acercamiento {",
+      ],
+    ])('en oscuro (%s) redefine todo el plano con tokens del tema', (_nombre, selector) => {
+      const cuerpo = cuerpoDe(selector);
+      for (const variable of VARIABLES) {
+        expect(cuerpo, variable).toMatch(
+          new RegExp(`${variable}: var\\(--(bg|text|border|brand)-`),
+        );
+      }
+      expect(cuerpo).not.toMatch(/--c-neutral-/);
+    });
+
+    it('la regla de la preferencia del sistema está dentro de prefers-color-scheme: dark', () => {
+      const media = css.indexOf('@media (prefers-color-scheme: dark)');
+      const regla = css.indexOf(
+        ":host-context(html:not([data-theme='light'])) .department-map__acercamiento",
+      );
+      expect(media).toBeGreaterThanOrEqual(0);
+      expect(regla).toBeGreaterThan(media);
+    });
   });
 });

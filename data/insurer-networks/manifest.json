@@ -15,10 +15,11 @@
     }
   ],
   "counts": {
-    "practitioners": 763,
-    "offices": 1282,
+    "practitioners": 754,
+    "offices": 1270,
     "locatedAtInstitution": 150,
-    "skippedOutsideKnownTowns": 0
+    "skippedOutsideKnownTowns": 0,
+    "skippedEstablishments": 9
   },
   "warnings": [
     "Los nombres de Nacional Seguros no separan apellidos de nombres; la división es convencional (nameSplit=heuristic).",

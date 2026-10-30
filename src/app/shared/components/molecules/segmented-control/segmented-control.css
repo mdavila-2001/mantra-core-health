@@ -44,7 +44,8 @@
   transition:
     background var(--mov-rapido, 120ms) var(--curva, ease),
     color var(--mov-rapido, 120ms) var(--curva, ease),
-    border-color var(--mov-rapido, 120ms) var(--curva, ease);
+    border-color var(--mov-rapido, 120ms) var(--curva, ease),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .segmentado--md .segmentado__opcion {
@@ -117,5 +118,35 @@
   .segmentado__opcion {
     flex: 1 1 0;
     padding: 0 var(--sp-2, 8px);
+  }
+}
+
+/* `wrap`: las pastillas conservan su rótulo entero y pasan a otra fila cuando no
+   entran. El marco deja de ser una píldora —con dos filas sería un óvalo
+   raro— y las opciones se reparten el renglón sin achicarse por debajo de su
+   contenido. */
+.segmentado--envuelto {
+  flex-wrap: wrap;
+  border-radius: var(--r-lg);
+}
+
+.segmentado--envuelto .segmentado__opcion {
+  flex: 1 1 auto;
+}
+
+.segmentado--envuelto .segmentado__rotulo {
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Pulsación (pulse.md §7). */
+.segmentado__opcion:active:not(:disabled) {
+  transform: scale(var(--pulse-press-scale));
+  transition-duration: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmentado__opcion:active:not(:disabled) {
+    transform: none;
   }
 }

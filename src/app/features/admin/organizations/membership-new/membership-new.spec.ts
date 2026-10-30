@@ -1,11 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { MembershipNew } from './membership-new';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * Sumar a alguien son una o dos peticiones, y cuál es depende del alcance.
@@ -40,6 +41,14 @@ const RESPUESTA = {
 };
 
 const PERSONA: ReferenceOption = { value: 'u-1', label: 'María Condori' };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('MembershipNew', () => {
   let fixture: ComponentFixture<MembershipNew>;
@@ -177,9 +186,9 @@ describe('MembershipNew', () => {
   });
 
   it('la búsqueda de personas marca las cuentas sin verificar', () => {
-    interno<(t: string) => void>('buscarPersona')('maria');
+    crudo<{ buscar: (t: string) => void }>('personas').buscar('maria');
 
-    http.expectOne((r) => r.url === '/iam/users').flush({
+    http.expectOne((r) => r.url === '/iam/users/search').flush({
       items: [
         { id: 'u-1', displayName: 'María Condori', emailVerified: true },
         { id: 'u-2', displayName: 'Juan Pérez', emailVerified: false },
@@ -189,10 +198,79 @@ describe('MembershipNew', () => {
       nextCursor: null,
     });
 
-    const candidatos = crudo<() => readonly ReferenceOption[]>('candidatos').call(
-      fixture.componentInstance,
-    );
+    const candidatos = crudo<{ candidatos: () => readonly ReferenceOption[] }>('personas').candidatos();
     expect(candidatos[0].hint).toBeUndefined();
     expect(candidatos[1].hint).toBe('Correo sin verificar');
+  });
+
+  it('si la búsqueda de personas falla lo dice, no «ninguna cuenta coincide»', () => {
+    // La búsqueda exige SECURITY_ADMIN: al dueño de una organización le
+    // responde 403, y antes la pantalla lo tragaba como lista vacía.
+    crudo<{ buscar: (t: string) => void }>('personas').buscar('maria');
+    http
+      .expectOne((r) => r.url === '/iam/users/search')
+      .flush(
+        { statusCode: 403, code: 'FORBIDDEN', message: '' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="alta-membresia-persona-error"]',
+    );
+    expect(aviso?.textContent).toContain('No pudimos buscar personas');
+  });
+
+  it('si las sedes no se pudieron leer, no dice «no tiene sedes» y ofrece reintentar', () => {
+    const otro = TestBed.createComponent(MembershipNew);
+    otro.detectChanges();
+    http
+      .expectOne(`/tenants/${TENANT_ID}/branches`)
+      .flush(null, { status: 500, statusText: 'Error', headers: { 'x-request-id': 'req-sedes' } });
+    const instancia = otro.componentInstance as unknown as Record<string, unknown>;
+    (instancia['alcance'] as { set: (v: string) => void }).set('BRANCH');
+    otro.detectChanges();
+
+    const raiz = otro.nativeElement as HTMLElement;
+    expect(raiz.querySelector('[data-testid="alta-membresia-sin-sedes"]')).toBeNull();
+    const aviso = raiz.querySelector('[data-testid="alta-membresia-sedes-error"]');
+    expect(aviso?.textContent).toContain('req-sedes');
+    expect(raiz.querySelector('button[type="submit"]')?.getAttribute('aria-disabled')).toBe('true');
+
+    [...(aviso?.querySelectorAll('button') ?? [])]
+      .find((b) => b.textContent?.includes('Reintentar'))
+      ?.click();
+    http.expectOne(`/tenants/${TENANT_ID}/branches`).flush(SEDES);
+    otro.detectChanges();
+    expect(raiz.querySelector('[data-testid="alta-membresia-sedes-error"]')).toBeNull();
+  });
+
+  it('si la asignación falla, abre la plantilla de la ficha, donde «Asignar sede» existe', () => {
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    elegirPersona();
+    crudo<{ set: (v: string) => void }>('alcance').set('BRANCH');
+    crudo<{ set: (v: string) => void }>('sede').set('b-1');
+    interno<() => void>('submit')();
+
+    http.expectOne(`/tenants/${TENANT_ID}/memberships`).flush(RESPUESTA);
+    http
+      .expectOne(`/tenants/${TENANT_ID}/memberships/${MEMBRESIA_ID}/branch-assignments`)
+      .flush({ message: 'No se pudo' }, { status: 500, statusText: 'Server Error' });
+
+    expect(navegar).toHaveBeenCalledWith(
+      `/administration/organizations/${TENANT_ID}?tab=plantilla`,
+    );
+  });
+
+  it('un 404 del envío se dice, no deja el formulario mudo (S6)', () => {
+    // Antes `errorMessage` no tenía rama `not-found`: el estado quedaba en S6,
+    // el botón volvía a habilitarse y la pantalla no decía nada.
+    const instancia = fixture.componentInstance as unknown as Record<string, unknown>;
+    (instancia['state'] as { set: (v: unknown) => void }).set({ status: 'not-found' });
+    fixture.detectChanges();
+
+    const mensaje = (instancia['errorMessage'] as () => string | null).call(instancia);
+    expect(mensaje).toContain('No encontramos esta organización');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos esta organización');
   });
 });

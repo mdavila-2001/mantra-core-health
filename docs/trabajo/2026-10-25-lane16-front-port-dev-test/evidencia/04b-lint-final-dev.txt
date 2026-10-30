@@ -1,0 +1,2 @@
+warning: in the working copy of 'src/app/core/mock/handlers/insurance.handlers.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/app/core/mock/handlers/insurer-received-claims.handlers.ts', LF will be replaced by CRLF the next time Git touches it

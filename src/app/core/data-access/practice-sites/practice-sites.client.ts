@@ -71,9 +71,7 @@ export class PracticeSitesClient {
    */
   listMyRoleAssignments(): Observable<readonly MyRoleAssignment[]> {
     return this.http
-      .get<readonly ConNulos<WireRoleAssignment>[]>(
-        this.url('/practitioners/me/role-assignments'),
-      )
+      .get<readonly ConNulos<WireRoleAssignment>[]>(this.url('/practitioners/me/role-assignments'))
       .pipe(map((items) => items.map(aVinculacion)));
   }
 
@@ -154,6 +152,37 @@ export class PracticeSitesClient {
     );
   }
 
+  /** Guarda o elimina el teléfono del profesional en una sede vinculada. */
+  setSiteContactPhone(siteId: string, contactPhone: string | null): Observable<PracticeSite> {
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/contact-phone`),
+      { contactPhone },
+    );
+  }
+
+  /**
+   * `PUT /practitioners/me/sites/:siteId/logo` — el logo del consultorio, el
+   * que sale en el membrete de sus PDF.
+   *
+   * Mismo molde que {@link PracticeSitesClient.setSiteBankQr}: el archivo ya
+   * está subido (`FilesClient.upload`) y lo único que viaja es su id. A
+   * diferencia del QR, sólo alcanza al consultorio **propio**: la API responde
+   * 404 a una sede de otra organización y 422 a un archivo que no sirve como
+   * logo (png, jpeg o webp, sensibilidad normal, hasta 2 MB).
+   *
+   * Ningún componente lo llama directo: pasan por `PracticeLogoClient`.
+   *
+   * @param siteId - La sede propia cuyo logo se cambia.
+   * @param fileId - El archivo ya subido, o `null` para quitar el logo.
+   * @returns La sede con el logo aplicado.
+   */
+  setSiteLogo(siteId: string, fileId: string | null): Observable<PracticeSite> {
+    return this.http.put<PracticeSite>(
+      this.url(`/practitioners/me/sites/${encodeURIComponent(siteId)}/logo`),
+      { fileId },
+    );
+  }
+
   /**
    * `DELETE /practitioners/me/sites/:siteId` — ALV-005: dejo de atender en
    * esa sede. No se borra: se cierra mi vinculación vigente con ella.
@@ -179,7 +208,13 @@ interface WireRoleAssignment {
   readonly practiceSiteId: string | null;
   readonly roleConceptId: string;
   readonly specialtyConceptId: string | null;
+  readonly healthcareServiceId: string | null;
+  readonly serviceConceptId: string | null;
+  readonly serviceDisplay: string | null;
   readonly status: string;
+  readonly statusConceptId: string | null;
+  readonly statusCode: string | null;
+  readonly initiatedBy: 'PRACTICE' | 'PRACTITIONER' | null;
   readonly isPrimary: boolean;
   readonly validFrom: string | null;
   readonly validTo: string | null;
@@ -209,9 +244,7 @@ function aVinculacion(body: ConNulos<WireRoleAssignment>): MyRoleAssignment {
   };
 }
 
-function aResultadoDeVinculacion(
-  body: ConNulos<WireRoleAssignmentResult>,
-): RoleAssignmentResult {
+function aResultadoDeVinculacion(body: ConNulos<WireRoleAssignmentResult>): RoleAssignmentResult {
   const { createdAt, ...resto } = body;
   return {
     ...sinNulos(resto),

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">El método teach-back paso a paso</title>
+  <desc id="d">Diagrama de flujo del teach-back. El profesional explica en lenguaje claro, pide al paciente que lo diga con sus propias palabras y valora si lo explica correctamente. Si es así, refuerza y pasa al siguiente punto. Si no, vuelve a explicar de otra manera y repite la comprobación.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="32" text-anchor="middle" class="t">Teach-back: comprobar que se entendió</text>
+  <rect x="24" y="52" width="240" height="88" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="40" y="82" class="h" style="fill:var(--a)">1  Explicar</text>
+  <text x="144" y="106" text-anchor="middle" class="n">Lenguaje claro, pocos puntos</text>
+  <text x="144" y="124" text-anchor="middle" class="n">a la vez, sin jerga</text>
+  <rect x="320" y="52" width="240" height="88" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="336" y="82" class="h" style="fill:var(--a)">2  Pedir que lo repita</text>
+  <text x="440" y="106" text-anchor="middle" class="n">«¿Cómo se lo explicaría</text>
+  <text x="440" y="124" text-anchor="middle" class="n">a alguien de su casa?»</text>
+  <path d="M266 96 H318" class="ln" marker-end="url(#ar)"/>
+  <path d="M440 142 V176" class="ln" marker-end="url(#ar)"/>
+  <polygon points="440,178 566,246 440,314 314,246" fill="var(--c-l)" stroke="var(--c)" stroke-width="2"/>
+  <text x="440" y="242" text-anchor="middle" class="h">¿Lo explica</text>
+  <text x="440" y="262" text-anchor="middle" class="h">correctamente?</text>
+  <path d="M568 246 H620" class="ln" marker-end="url(#ar)"/>
+  <text x="594" y="238" text-anchor="middle" class="n" style="fill:var(--b)">Sí</text>
+  <rect x="622" y="200" width="154" height="92" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="699" y="232" text-anchor="middle" class="n">Reforzar y pasar</text>
+  <text x="699" y="252" text-anchor="middle" class="n">al siguiente punto</text>
+  <text x="699" y="272" text-anchor="middle" class="n m">Registrar lo logrado</text>
+  <path d="M440 316 V352" class="ln" marker-end="url(#ar)"/>
+  <text x="454" y="338" class="n" style="fill:var(--d)">No</text>
+  <rect x="290" y="354" width="300" height="70" rx="12" fill="var(--d-l)" stroke="var(--d)" stroke-width="2"/>
+  <text x="440" y="380" text-anchor="middle" class="n">Reexplicar de otra manera: la falla</text>
+  <text x="440" y="398" text-anchor="middle" class="n">es de la explicación, no del paciente</text>
+  <path d="M288 390 H276 V124 H318" fill="none" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <rect x="24" y="200" width="214" height="124" rx="12" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="40" y="226" class="h">Cuándo conviene</text>
+  <text x="40" y="248" class="n">• Indicaciones nuevas</text>
+  <text x="40" y="266" class="n">• Cambios de tratamiento</text>
+  <text x="40" y="284" class="n">• Antes del alta</text>
+  <text x="40" y="302" class="n">• Antes de consentir</text>
+  <text x="400" y="458" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

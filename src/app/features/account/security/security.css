@@ -1,0 +1,65 @@
+:host {
+  display: block;
+}
+
+/* Una sola columna a lo ancho y centrada (regla del cliente §5): dos tarjetas
+   apiladas con el mismo ancho, sin un bloque pegado a la izquierda. */
+.seguridad {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+.seguridad__tarjeta {
+  --card-body-display: grid;
+  --card-body-gap: var(--sp-3);
+}
+
+.seguridad__titulo {
+  margin: 0;
+}
+
+.seguridad__ayuda,
+.seguridad__estado {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.seguridad__form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.seguridad__acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}
+
+.seguridad__sesiones {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sesion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  padding: var(--sp-3) var(--sp-4);
+}
+
+.sesion__datos {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.sesion__detalle {
+  color: var(--text-secondary);
+}

@@ -1,0 +1,68 @@
+:host { display: block; min-width: 0; }
+
+.fb {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.fb__controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3) var(--sp-4); }
+.fb__field { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; flex: 1 1 11rem; }
+.fb__field--wide { flex-basis: 15rem; }
+/* La moneda ocupa lo que miden sus dos opciones: con `flex: 1` el conmutador se partía en dos filas en tableta. */
+.fb__field--moneda { flex: 0 0 auto; }
+.fb__label { font-size: var(--fs-overline); font-weight: 700; color: var(--text-secondary); }
+
+.fb__active { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+.fb__active-title { font-size: var(--fs-caption); font-weight: 600; color: var(--text-secondary); }
+.fb__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: 0; padding: 0; list-style: none; }
+.fb__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-1) var(--sp-1) var(--sp-3);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+}
+.fb__chip-remove {
+  min-height: 24px;
+  padding: 0 var(--sp-2);
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.fb__chip-remove:hover { background: var(--bg-hover); }
+.fb__chip-remove:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 1px; }
+
+/* Solo para lector de pantalla. */
+.fb__live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* En escritorio la barra se queda a la vista bajo la cabecera mientras se baja por los gráficos.
+   El shell del portal puede ajustar el desplazamiento con `--reporting-sticky-top`. */
+@media (min-width: 1024px) {
+  :host {
+    position: sticky;
+    top: var(--reporting-sticky-top, 64px);
+    z-index: var(--z-sticky);
+  }
+}

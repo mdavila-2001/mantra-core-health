@@ -1,0 +1,80 @@
+
+✗ check-api-contract-drift
+
+  51 operación(es) que el código llama y la documentación no declara:
+    DELETE /authz/users/:userId/role-assignments/:assignmentId
+    DELETE /notifications/web-push/subscription
+    GET /accounting/practitioner/assets/:assetId/depreciations
+    GET /accounting/practitioner/liabilities/:liabilityId/schedule
+    GET /admin/analytics/onboarding/funnel
+    GET /admin/analytics/onboarding/heatmap
+    GET /admin/catalog/permission-drift
+    GET /audit/data-access
+    GET /audit/log
+    GET /authz/internal-users
+    GET /authz/permissions
+    GET /authz/roles
+    GET /authz/roles/:roleId/permissions
+    GET /authz/users/:userId/role-assignments
+    GET /clinical/me/procedure-centers
+    GET /iam/users/:userId
+    GET /identity/verification-cases/:caseId
+    GET /insurance/my-claims
+    GET /insurance/patients/options
+    GET /medical-centers/search
+    GET /medical-centers/search/for-my-orders
+    GET /notifications/web-push/config
+    GET /patient-coverages/by-patient/:patientProfileId
+    GET /pharmacy/catalog-products
+    GET /practices/:practiceId/role-assignments
+    GET /scheduling/service-availability
+    GET /scheduling/service-offerings
+    GET /scheduling/templates/:templateId/live-bookings
+    GET /tenants/:tenantId/logo
+    GET /tenants/:tenantId/logo/content
+    GET /terminology/concepts/:conceptId/glossary-article
+    GET /terminology/concepts/:conceptId/glossary-neighborhood
+    PATCH /scheduling/service-offerings/:id
+    POST /authz/users/:userId/role-assignments
+    POST /community/conversations/contacts/search
+    POST /iam/auth/upload-registration-signature-image
+    POST /insurance-claims
+    POST /insurance-claims/quote
+    POST /insurance/patients/conversation
+    POST /insurance/patients/search
+    POST /practices/:practiceId/role-assignments/invitations
+    POST /practitioners/me/role-assignments/:roleId/:action
+    POST /referrals
+    POST /role-assignments/:roleId/:action
+    POST /scheduling/service-offerings
+    POST /scheduling/service-offerings/:offeringId/holds
+    POST /telemetry/activity-events
+    POST /tenants/:tenantId/practices
+    PUT /notifications/web-push/subscription
+    PUT /practitioners/me/sites/:siteId/contact-phone
+    PUT /tenants/:tenantId/logo
+
+  20 operación(es) declarada(s) que el código no llama:
+    DELETE /accounting/practitioner/simple/accounts/:id
+    DELETE /accounting/practitioner/simple/records/:id
+    DELETE /accounting/practitioner/simple/transactions/:id
+    DELETE /insurance-plans/:planId
+    GET /pharmacies/:pharmacyId/inventory
+    PATCH /forms/field-definitions/:fieldId
+    PATCH /pharmacies/:pharmacyId/products/:productId
+    PATCH /profiles/practitioners/me
+    POST /accounting/practitioner/simple/accounts
+    POST /accounting/practitioner/simple/records
+    POST /accounting/practitioner/simple/transactions
+    POST /forms/field-definitions
+    POST /iam/users/search
+    POST /insurance/received-claims/:claimId/invoice
+    POST /insurance/received-claims/:claimId/invoice/annulment
+    POST /profiles/patients/search
+    PUT /accounting/practitioner/simple/accounts/:id
+    PUT /accounting/practitioner/simple/records/:id
+    PUT /accounting/practitioner/simple/transactions/:id
+    PUT /insurance-plans/:planId
+
+  Actualizá docs/integrations/backend-api.md.
+

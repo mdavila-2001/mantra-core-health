@@ -81,11 +81,16 @@ async function textoDeLaPagina(pagina: Page): Promise<string> {
 }
 
 test.describe('los laboratorios del corpus en el directorio', () => {
-  test('la portada ofrece la categoría de laboratorio clínico', async ({ page }) => {
+  // Sin portada de categorías desde el 24/10/2026 (propietario: «directo al
+  // buscador»): la categoría es la faceta «Tipo de centro».
+  test('abre directo en los centros, con la categoría como faceta', async ({ page }) => {
     await entrarComoPaciente(page);
     await abrir(page, '/laboratory-directory');
 
-    await expect(page.getByTestId('portada-categorias')).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByText('SELADIS', { exact: false }).first()).toBeVisible({
+      timeout: 60_000,
+    });
+    await expect(page.getByRole('button', { name: /Laboratorio clínico/ })).toBeVisible();
     await page.screenshot({
       path: `${CAPTURAS}/laboratorios-portada.png`,
       fullPage: true,

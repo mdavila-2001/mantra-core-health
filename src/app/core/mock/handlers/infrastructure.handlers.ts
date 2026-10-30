@@ -171,11 +171,15 @@ function espacioVisible(request: MockRequest, id: string | undefined): EspacioSi
   return sitioVisible(request, espacio.siteId) === null ? null : espacio;
 }
 
-/** `SECURITY_ADMIN` o dueña del tenant: el reflejo simulado de §3. */
-function puedeEscribir(request: MockRequest, sitio: SitioSimulado): boolean {
+/**
+ * `SECURITY_ADMIN`: el reflejo simulado de §3. Antes sumaba a la dueña por el
+ * claim `ownTenantId`, que `dev` retiró porque la API no lo firma (TX-11); el
+ * dueño/admin de la organización queda pendiente de leerse de la membresía.
+ */
+function puedeEscribir(request: MockRequest, _sitio: SitioSimulado): boolean {
   const usuario = request.user;
   if (usuario === null) return false;
-  return usuario.roles.includes('SECURITY_ADMIN') || usuario.ownTenantId === sitio.tenantId;
+  return usuario.roles.includes('SECURITY_ADMIN');
 }
 
 /** `If-Match` obligatorio y coincidente. */

@@ -67,17 +67,17 @@ test.describe('el panel del médico', () => {
     // `isVisible()` no espera, así que preguntar de entrada contesta siempre
     // «todavía no» y la rama de abajo elegía mal.
     const encabezado = page.getByRole('heading', {
-      name: /Publicá tu agenda|Cambiá tu horario/,
+      name: /Publique su agenda|Cambie su horario/,
     });
     await expect(encabezado).toBeVisible({ timeout: 20_000 });
-    const yaTieneHorario = (await encabezado.textContent())?.includes('Cambiá') === true;
+    const yaTieneHorario = (await encabezado.textContent())?.includes('Cambie') === true;
 
     if (!yaTieneHorario) {
       await capturar(page, '04-publicar-mi-agenda');
       await page.getByRole('button', { name: 'Martes', exact: true }).click();
       await page.getByRole('button', { name: 'Jueves', exact: true }).click();
       await page.getByRole('button', { name: 'Publicar mi agenda' }).click();
-      await expect(page.getByText('Listo, tu agenda ya está publicada')).toBeVisible({
+      await expect(page.getByText('Listo, su agenda ya está publicada')).toBeVisible({
         timeout: 30_000,
       });
       await capturar(page, '05-agenda-publicada');
@@ -85,7 +85,7 @@ test.describe('el panel del médico', () => {
 
     // D2 · la misma pantalla, reabierta: ahora es un cambio y viene cargada.
     await page.goto(`${BASE}/schedule/new`);
-    await expect(page.getByRole('heading', { name: 'Cambiá tu horario' })).toBeVisible({
+    await expect(page.getByRole('heading', { name: 'Cambie su horario' })).toBeVisible({
       timeout: 20_000,
     });
     await expect(page.getByRole('button', { name: 'Guardar mi horario' })).toBeVisible();
@@ -106,7 +106,7 @@ test.describe('el panel del médico', () => {
     await expect(page.getByRole('heading', { name: 'Bloquear días u horarios' })).toBeVisible();
     await capturar(page, '09-bloqueo-por-rango-y-franja');
 
-    await page.goto(`${BASE}/administration/accounting/libros`);
+    await page.goto(`${BASE}/administration/accounting/books`);
     await capturar(page, '20-mi-facturacion');
 
     await page.goto(`${BASE}/laboratory-directory`);
@@ -120,7 +120,7 @@ test.describe('el panel del paciente', () => {
     test.skip(PACIENTE.documento === '', 'sin cuenta de paciente sembrada');
     await entrar(page, PACIENTE.documento, PACIENTE.clave);
 
-    await expect(page.getByRole('heading', { name: '¿Qué te pasa?' })).toBeVisible({
+    await expect(page.getByRole('heading', { name: '¿Qué le pasa?' })).toBeVisible({
       timeout: 20_000,
     });
     await capturar(page, '10-panel-del-paciente-sintomas');

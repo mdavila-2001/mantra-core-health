@@ -492,12 +492,12 @@ export function simularApiTotal(opciones: OpcionesApi = {}): void {
 
   cy.intercept('POST', '**/iam/auth/forgot-password', {
     statusCode: 200,
-    body: { message: 'Si la cuenta existe, te enviamos un enlace.' },
+    body: { message: 'Si la cuenta existe, le enviamos un enlace.' },
   });
 
   cy.intercept('POST', '**/iam/auth/reset-password', {
     statusCode: 200,
-    body: { message: 'Tu contraseña quedó actualizada.' },
+    body: { message: 'Su contraseña quedó actualizada.' },
   });
 
   /* -- Administración de cuentas ------------------------------------------ */

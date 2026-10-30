@@ -1,6 +1,6 @@
 <app-page-header
   title="Cotizaciones"
-  subtitle="Buscá a un paciente para ver sus cotizaciones, o armá una nueva."
+  subtitle="Busque a un paciente para ver sus cotizaciones, o arme una nueva."
   [breadcrumbs]="breadcrumbs()"
 >
   <a
@@ -58,11 +58,23 @@
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaPrecio let-cotizacion>
-  {{ cotizacion.offeredPrice }}
+  <span data-testid="quotation-list-price">{{ priceOf(cotizacion) }}</span>
 </ng-template>
 
 <ng-template #celdaEstado let-cotizacion>
-  <app-badge variant="secondary" [value]="cotizacion.status" />
+  <app-badge
+    variant="secondary"
+    data-testid="quotation-list-status"
+    [value]="statusOf(cotizacion)"
+  />
+</ng-template>
+
+<ng-template #attentionCell let-cotizacion>
+  <span data-testid="quotation-list-attention-date">{{ formatDate(cotizacion.attentionDate) }}</span>
+</ng-template>
+
+<ng-template #validUntilCell let-cotizacion>
+  <span data-testid="quotation-list-valid-until">{{ formatDate(cotizacion.validUntil) }}</span>
 </ng-template>
 
 <!-- El camino accesible: `rowNavigable` es sólo comodidad de puntero (ver

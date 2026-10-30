@@ -1,0 +1,111 @@
+<section class="mappings" aria-labelledby="integration-mappings-title" data-testid="integration-mappings">
+  <div class="mappings__heading">
+    <div class="mappings__text">
+      <h2 class="mappings__title" id="integration-mappings-title">Productos vinculados</h2>
+      <p class="mappings__lead">
+        Cada producto del catálogo, con el código que tiene en el sistema de la farmacia. Sólo lo vinculado se
+        sincroniza.
+      </p>
+    </div>
+    <button app-button variant="outline" type="button" (clicked)="openDialog()" data-testid="integration-link-button">
+      Vincular producto
+    </button>
+  </div>
+
+  <app-data-table
+    caption="Productos vinculados con el sistema de la farmacia"
+    [state]="mappings()"
+    [columns]="columns()"
+    [trackBy]="rowId"
+    [rowLabel]="rowLabel"
+    stackedOnMobile
+    (retry)="reload()"
+    (refresh)="reload()"
+    data-testid="integration-mappings-table"
+  />
+</section>
+
+@if (dialogOpen()) {
+  <app-content-dialog
+    heading="Vincular producto"
+    description="Elija el producto de su catálogo y el código con que lo nombra el sistema de la farmacia."
+    size="md"
+    [dismissible]="!saving()"
+    data-testid="integration-link-dialog"
+    (closed)="closeDialog()"
+  >
+    <div class="mappings__form">
+      @if (dialogError(); as message) {
+        <app-alert tone="error" data-testid="integration-link-error">{{ message }}</app-alert>
+      }
+      @if (externalsError(); as message) {
+        <app-alert tone="warning" data-testid="integration-externals-error">{{ message }}</app-alert>
+      }
+
+      <app-form-field label="Producto del catálogo" [required]="true">
+        <app-select
+          [options]="productOptions()"
+          [value]="productId()"
+          (valueChange)="productId.set($event)"
+          [disabled]="products().status !== 'ready'"
+          [placeholder]="products().status === 'loading' ? 'Cargando el catálogo…' : 'Elija un producto'"
+          [searchable]="true"
+          [multilineValue]="true"
+          data-testid="integration-link-product"
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Código en el sistema de la farmacia"
+        [required]="true"
+        hint="Del catálogo que publica el sistema de la farmacia. Los que ya tienen producto no se pueden elegir."
+      >
+        <app-select
+          [options]="externalOptions()"
+          [value]="externalCode()"
+          (valueChange)="externalCode.set($event)"
+          [disabled]="externals().status !== 'ready' || externalOptions().length === 0"
+          [placeholder]="externals().status === 'loading' ? 'Leyendo el sistema de la farmacia…' : 'Elija un código'"
+          [searchable]="true"
+          [multilineValue]="true"
+          data-testid="integration-link-external"
+        />
+      </app-form-field>
+    </div>
+
+    <button dialog-actions app-button type="button" variant="ghost" [disabled]="saving()" (clicked)="closeDialog()">
+      Cancelar
+    </button>
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      [isLoading]="saving()"
+      [disabled]="!canSave()"
+      (clicked)="save()"
+      data-testid="integration-link-save"
+    >
+      Vincular
+    </button>
+  </app-content-dialog>
+}
+
+<ng-template #externalCell let-mapping>
+  <span class="mappings__cell">
+    <code class="mappings__code">{{ mapping.externalProductCode }}</code>
+    @if (externalName(mapping.externalProductCode); as name) {
+      <span class="mappings__secondary">{{ name }}</span>
+    }
+  </span>
+</ng-template>
+
+<ng-template #productCell let-mapping>
+  <span class="mappings__cell">
+    <span class="mappings__main">{{ mapping.productName }}</span>
+    <code class="mappings__code">{{ mapping.productCode }}</code>
+  </span>
+</ng-template>
+
+<ng-template #dateCell let-mapping>
+  {{ mapping.createdAt | date: 'd MMM y, HH:mm' }}
+</ng-template>

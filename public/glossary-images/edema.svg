@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Intercambio de líquido en el capilar y origen del edema</title>
+  <desc id="d">Esquema de un capilar sanguíneo con su extremo arterial a la izquierda y su extremo venoso a la derecha. En el extremo arterial predomina la presión hidrostática y sale líquido al espacio intersticial; en el venoso predomina la presión oncótica de las proteínas y el líquido regresa. El exceso restante drena por un vaso linfático. El edema aparece cuando la salida supera la reabsorción y el drenaje linfático.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --yel:#c99a00; --yel-l:#fbefc2; --blue:#2f6fb5; --blue-l:#dbe9f7; --grn:#1f8a5b; --grn-l:#d8f0e4; --red:#c0392b; --red-l:#f8dcd8; --brn:#8a5a2b; --brn-l:#efdcc6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --yel:#e0b93a; --yel-l:#4a4224; --blue:#6aa6e6; --blue-l:#22384f; --grn:#4cc38a; --grn-l:#1f3d31; --red:#ef7467; --red-l:#4a2723; --brn:#c99a66; --brn-l:#3d3125; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 13px; text-anchor: middle; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 13px; }
+    .out { stroke: var(--blue); stroke-width: 4; fill: none; stroke-linecap: round; marker-end: url(#hb); }
+    .in { stroke: var(--grn); stroke-width: 4; fill: none; stroke-linecap: round; marker-end: url(#hg); }
+    .arrow { stroke: var(--muted); stroke-width: 2.5; fill: none; marker-end: url(#ah); }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+    <marker id="hb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--blue)"/></marker>
+    <marker id="hg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--grn)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="28" class="title">Del capilar al tejido: cómo se forma el edema</text>
+
+  <rect x="40" y="108" width="720" height="196" rx="14" fill="var(--blue-l)" stroke="var(--line)"/>
+  <text x="130" y="292" class="h muted">Espacio intersticial</text>
+
+  <rect x="60" y="64" width="680" height="54" rx="27" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <text x="400" y="96" class="h">Capilar sanguíneo: la sangre avanza de izquierda a derecha</text>
+  <path class="arrow" d="M80 91 H112" />
+  <text x="190" y="56" class="s muted">Extremo arterial: presión alta</text>
+  <text x="610" y="56" class="s muted">Extremo venoso: presión baja</text>
+
+  <path class="out" d="M130 124 V180"/>
+  <path class="out" d="M200 124 V180"/>
+  <path class="out" d="M270 124 V180"/>
+  <path class="in" d="M530 180 V124"/>
+  <path class="in" d="M600 180 V124"/>
+  <path class="in" d="M670 180 V124"/>
+  <text x="200" y="208" class="h" style="fill:var(--blue)">Sale líquido</text>
+  <text x="200" y="227" class="s">gana la presión hidrostática</text>
+  <text x="200" y="244" class="s">(empuje de la sangre)</text>
+  <text x="600" y="208" class="h" style="fill:var(--grn)">Vuelve líquido</text>
+  <text x="600" y="227" class="s">gana la presión oncótica</text>
+  <text x="600" y="244" class="s">(albúmina que retiene agua)</text>
+
+  <rect x="250" y="320" width="300" height="32" rx="16" fill="var(--grn-l)" stroke="var(--grn)" stroke-width="2"/>
+  <text x="400" y="341" class="h">Vaso linfático</text>
+  <path class="arrow" d="M400 296 V316"/>
+  <text x="400" y="372" class="s">Drena el exceso de líquido y de proteínas hacia la sangre</text>
+
+  <rect x="110" y="394" width="580" height="46" rx="12" fill="none" stroke="var(--red)" stroke-width="2"/>
+  <text x="400" y="414" class="h">Edema: sale más líquido del que se reabsorbe y se drena</text>
+  <text x="400" y="431" class="s">por más presión venosa, menos albúmina, vasos permeables u obstrucción linfática</text>
+  <text x="400" y="464" class="s muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

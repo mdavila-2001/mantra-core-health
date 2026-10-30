@@ -1,4 +1,5 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
@@ -66,6 +67,14 @@ export class SegmentedControl<T extends string = string> {
   /** `sm` para barras de herramientas; `md` cuando el control encabeza la vista. */
   readonly size = input<'sm' | 'md'>('sm');
 
+  /**
+   * Con muchas opciones o rótulos largos, las pastillas pasan a una segunda
+   * fila en pantalla angosta en vez de achicarse hasta cortar el texto
+   * («Borrado…»). Para filtros con varias opciones y recuentos; los selectores
+   * de dos vistas no lo necesitan.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
+
   readonly valueChange = output<T>();
 
   private readonly botones = viewChildren<ElementRef<HTMLButtonElement>>('opcion');
@@ -120,7 +129,11 @@ export class SegmentedControl<T extends string = string> {
     }
     event.preventDefault();
     const opcion = this.options()[destino];
-    this.botones()[destino]?.nativeElement.focus();
+    // `preventScroll: true`: sin él, el navegador reencuadra el contenedor
+    // scrolleable (el control suele vivir dentro de un modal) cada vez que una
+    // flecha mueve el foco entre «Sí» y «No», y la pantalla salta aunque el
+    // control ya estuviera a la vista.
+    this.botones()[destino]?.nativeElement.focus({ preventScroll: true });
     this.elegir(opcion);
   }
 

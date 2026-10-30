@@ -1,6 +1,6 @@
 <app-content-dialog
   [heading]="titulo()"
-  description="La imagen que tus pacientes escanean para pagarte cuando te atienden acá."
+  description="La imagen que sus pacientes escanean para pagarle cuando le atienden acá."
   size="sm"
   closeLabel="Cerrar"
   (closed)="cerrar()"
@@ -17,7 +17,7 @@
              que gana sería el que termine último. -->
         <p class="qr-sede__subiendo" data-testid="sede-qr-subiendo">
           <app-spinner size="sm" decorative />
-          Subiendo tu QR…
+          Subiendo su QR…
         </p>
       } @else {
         <app-file-input
@@ -49,7 +49,7 @@
                como «no tenés ninguno»: son dos cosas distintas y la segunda
                llevaría a cargar otro encima del que ya está. -->
           <p class="qr-sede__sin-imagen" data-testid="sede-qr-sin-imagen">
-            No pudimos mostrar la imagen guardada. Podés cargar otra con «Cambiar el QR».
+            No pudimos mostrar la imagen guardada. Puede cargar otra con «Cambiar el QR».
           </p>
         }
 
@@ -58,7 +58,7 @@
         @if (subiendo()) {
           <figcaption class="qr-sede__subiendo" data-testid="sede-qr-subiendo">
             <app-spinner size="sm" decorative />
-            Subiendo tu QR…
+            Subiendo su QR…
           </figcaption>
         }
       </figure>

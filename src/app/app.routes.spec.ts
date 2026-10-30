@@ -2,14 +2,24 @@ import { Location } from '@angular/common';
 import type { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { SessionStore } from './core/auth/session.store';
+import { LOGIN_ROUTE } from './core/http/auth.interceptor';
+import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
 import {
   ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
   restringePorRol,
   titleOf,
 } from './core/navigation/navigation.types';
+import {
+  tabIndex,
+  TAB,
+  PROFILE_TABS,
+} from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
@@ -69,8 +79,8 @@ describe('rutas del armazón', () => {
   /**
    * Ninguna **pantalla** puede quedar fuera del árbol que el registro declara.
    *
-   * Una ruta hija es legítima de dos maneras: **es** una sección, o **cuelga**
-   * de una —el alta, la ficha de un registro, un flujo alternativo—. Lo que
+   * Una ruta hija **es** una sección, **cuelga** de una o declara un alias de
+   * ella con la misma política —el alta, la ficha, un flujo alternativo—. Lo que
    * sigue prohibido es una pantalla que no se pueda alcanzar desde ninguna
    * sección: esa es una pantalla a la que el menú nunca lleva y que nadie
    * recuerda mantener.
@@ -113,10 +123,38 @@ describe('rutas del armazón', () => {
       if (path === '' || r.redirectTo !== undefined || sinSeccionAProposito.includes(path)) {
         return false;
       }
-      return !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`));
+      const esAliasDeclarado = APP_SECTIONS.some(
+        (seccion) =>
+          r.data?.[SECTION_ROUTE_DATA] === seccion &&
+          seccion.representaEnElMenu?.includes(path) === true &&
+          r.pathMatch === 'full' &&
+          r.canActivate?.includes(seccionRolesGuard) === true &&
+          r.data?.[ROLES_ROUTE_DATA] === seccion.roles,
+      );
+      return (
+        !esAliasDeclarado &&
+        !declaradas.some((seccion) => path === seccion || path.startsWith(`${seccion}/`))
+      );
     });
 
     expect(huerfanas.map((r) => r.path)).toEqual([]);
+  });
+
+  it('el alias del perfil conserva el cargador, el título y la política de Mi perfil', async () => {
+    const canonica = hijas.find((route) => route.path === 'my-account');
+    const alias = hijas.find((route) => route.path === 'account/profile');
+    const seccion = APP_SECTIONS.find((section) => section.path === 'my-account');
+    const { MyAccount } = await import('./features/account/my-account/my-account');
+
+    expect(alias).toBeDefined();
+    expect(alias?.redirectTo).toBeUndefined();
+    expect(alias?.pathMatch).toBe('full');
+    expect(alias?.title).toBe(canonica?.title);
+    expect(alias?.data?.[SECTION_ROUTE_DATA]).toBe(seccion);
+    expect(alias?.data?.[ROLES_ROUTE_DATA]).toBe(seccion?.roles);
+    expect(alias?.canActivate).toEqual(canonica?.canActivate);
+    expect(await alias?.loadComponent?.()).toBe(MyAccount);
+    expect(APP_SECTIONS.some((section) => section.path === 'account/profile')).toBe(false);
   });
 
   /**
@@ -157,12 +195,34 @@ describe('rutas del armazón', () => {
       return section !== undefined && restringePorRol(section);
     });
 
+    /**
+     * Pantallas que la sección cerraría de más y llevan un guard propio, más
+     * angosto que «nada» y más ancho que el de la sección: la API las abre al
+     * OWNER/ADMIN de la organización (`assertCanAdminister`) y no sólo a
+     * `SECURITY_ADMIN`. Siguen guardadas: cambian de guard, no lo pierden.
+     */
+    const CON_GUARD_PROPIO: Readonly<Record<string, unknown>> = {
+      'administration/organizations/:tenantId/branches/new': organizacionAdministrableGuard,
+      'administration/organizations/:tenantId/memberships/new': organizacionAdministrableGuard,
+    };
+
     it('lo lleva toda pantalla hija cuya sección declara roles', () => {
       const destapadas = hijasDeSeccionConRoles
         .filter((r) => !SIN_GUARD_A_PROPOSITO.includes(r.path ?? ''))
+        .filter((r) => CON_GUARD_PROPIO[r.path ?? ''] === undefined)
         .filter((r) => !(r.canActivate ?? []).includes(seccionRolesGuard));
 
       expect(destapadas.map((r) => r.path)).toEqual([]);
+    });
+
+    it('las altas de sucursal y membresía llevan el guard de la organización, no el de sección', () => {
+      for (const [path, guard] of Object.entries(CON_GUARD_PROPIO)) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect(ruta?.canActivate ?? [], path).toContain(guard);
+        expect(ruta?.canActivate ?? [], path).not.toContain(seccionRolesGuard);
+      }
     });
 
     it('las excepciones existen, cuelgan de una sección con roles y siguen sin guard', () => {
@@ -206,6 +266,29 @@ describe('rutas del armazón', () => {
     });
   });
 
+  /** Las dos pantallas del médico de CM-07 cuelgan de «Mi perfil»: sólo las abre quien atiende. */
+  it('«Invitaciones y solicitudes» y «Procedimientos que hago» son de quien atiende y llevan el guard', () => {
+    for (const path of ['my-account/affiliations', 'my-account/my-procedures']) {
+      const route = hijas.find((r) => r.path === path);
+
+      expect(route, path).toBeDefined();
+      expect((route?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+      expect(route?.data?.[ROLES_ROUTE_DATA], path).toEqual(['CLINICIAN', 'PRACTITIONER']);
+    }
+  });
+
+  /**
+   * «Médicos del centro» (CM-07) cuelga de «Mi organización», que declara `ANY_ROLE`: el rol que importa es la
+   * membresía en la organización, que el guard no ve, así que la ruta lleva el guard para heredar lo que la
+   * sección declare y la autoridad queda en la API.
+   */
+  it('«Médicos del centro» cuelga de «Mi organización» y lleva el guard de sección', () => {
+    const ruta = hijas.find((r) => r.path === 'administration/my-organization/affiliations');
+
+    expect(ruta).toBeDefined();
+    expect((ruta?.canActivate ?? []).includes(seccionRolesGuard)).toBe(true);
+  });
+
   /**
    * Las direcciones viejas tienen que llevar a algún lado real.
    *
@@ -232,6 +315,8 @@ describe('rutas del armazón', () => {
 
     // `redirectTo` admite además una función desde Angular 19; las tablas de
     // direcciones viejas son todas de texto, y el estrechamiento lo deja dicho.
+    // Las de `SECCIONES_REDIRIGIDAS` sí son función —conservan el query que
+    // traían— y se comprueban abajo contra su destino declarado.
     const redirecciones = [...hijas, ...routes].filter(
       (r): r is typeof r & { redirectTo: string } =>
         typeof r.redirectTo === 'string' && (r.path ?? '') !== '',
@@ -244,6 +329,17 @@ describe('rutas del armazón', () => {
     for (const redireccion of redirecciones) {
       expect(redireccion.pathMatch, redireccion.path).toBe('full');
       expect(destinos, redireccion.path).toContain(redireccion.redirectTo);
+    }
+
+    const seccionesRedirigidas = Object.entries(SECCIONES_REDIRIGIDAS);
+    expect(seccionesRedirigidas.length).toBeGreaterThan(0);
+
+    for (const [path, destino] of seccionesRedirigidas) {
+      const ruta = hijas.find((r) => r.path === path);
+
+      expect(typeof ruta?.redirectTo, path).toBe('function');
+      expect(ruta?.pathMatch, path).toBe('full');
+      expect(destinos, path).toContain(destino.ruta);
     }
   });
 
@@ -269,7 +365,7 @@ describe('rutas del armazón', () => {
     for (const lista of [hijas, routes]) {
       const pantallas = lista
         .map((r, indice) => ({ r, indice }))
-        .filter(({ r }) => typeof r.redirectTo !== 'string' && r.path !== '**');
+        .filter(({ r }) => r.redirectTo === undefined && r.path !== '**');
       const viejas = lista
         .map((r, indice) => ({ r, indice }))
         .filter(
@@ -360,9 +456,10 @@ describe('rutas del armazón', () => {
    * ningún defecto: no hay aserción que dependa de cuánto tarde.
    */
   it('una sección disponible NO cae en el placeholder', async () => {
-    for (const section of APP_SECTIONS.filter(
+    const sections = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
-    )) {
+    );
+    await Promise.all(sections.map(async (section) => {
       const ruta = hijas.find((route) => route.path === section.path);
       const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
@@ -371,7 +468,7 @@ describe('rutas del armazón', () => {
       // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
       // rompería sin que nada esté mal.
       expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }
+    }));
   }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
@@ -395,8 +492,8 @@ describe('rutas del armazón', () => {
 /**
  * Lo que esta prueba fija.
  *
- * La superficie pública del buscador declara `buscar` en `app.routes.ts` y el
- * archivo **generado** `alovida.routes.ts` declara otro `buscar` con los
+ * La superficie pública del buscador declara `search` en `app.routes.ts` y el
+ * archivo **generado** `alovida.routes.ts` declara otro `search` con los
  * segmentos derivados del nombre de archivo de cada maqueta. Los dos conviven
  * porque el router prueba el primero y **retrocede** al siguiente cuando ningún
  * hijo coincide.
@@ -404,7 +501,7 @@ describe('rutas del armazón', () => {
  * Eso es un comportamiento del router, no una garantía que este repositorio
  * controle, y de él dependen dos cosas a la vez: que las URL limpias sean las
  * que se indexan, y que los enlaces de la bóveda que todavía apuntan a
- * `/buscar/buscador-listado` no se rompan. Si el retroceso dejara de ocurrir,
+ * `/search/finder-list` no se rompan. Si el retroceso dejara de ocurrir,
  * media superficie pública devolvería la pantalla equivocada **sin ningún
  * error**: el router simplemente no navegaría.
  */
@@ -413,7 +510,12 @@ describe('rutas públicas del buscador', () => {
   let location: Location;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter(routes),
+        { provide: PublicDirectoryClient, useValue: { getProfile: () => of(null) } },
+      ],
+    });
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
   });
@@ -454,12 +556,14 @@ describe('rutas públicas del buscador', () => {
 
   /**
    * El segmento no existe en el bloque de URL limpias, así que el router tiene
-   * que retroceder al `buscar` generado para encontrarlo. Es el supuesto del
+   * que retroceder al `search` generado para encontrarlo. Es el supuesto del
    * que depende que las dos formas convivan.
    */
-  it('las URL de la bóveda siguen abriendo, por retroceso al bloque generado', async () => {
-    expect(await resuelve('/buscar/buscador-listado')).toBe(true);
-    expect(await resuelve('/buscar/perfil-profesional-detalle')).toBe(true);
+  it('las URL de la bóveda conservan su destino en API real', async () => {
+    expect(await router.navigateByUrl('/search/finder-list')).toBe(true);
+    expect(location.path()).toBe('/search');
+    expect(await router.navigateByUrl('/search/practitioner-profile-detail')).toBe(true);
+    expect(location.path()).toBe('/search/practitioners');
   });
 
   // ─── TAREA-29: las direcciones viejas siguen abriendo ──────────────────────
@@ -478,6 +582,11 @@ describe('rutas públicas del buscador', () => {
     ['/buscar/aseguradoras', '/search/insurers'],
     ['/buscar/sintomas', '/search/symptoms'],
     ['/buscar/mapa', '/search/map'],
+    // Las direcciones en castellano de las maquetas: vieja → nueva → real.
+    ['/buscar/buscador-listado', '/search'],
+    ['/buscar/perfil-profesional-detalle', '/search/practitioners'],
+    ['/buscar/perfil-farmacia-detalle/una', '/f/una'],
+    ['/search/pharmacy-profile-detail/una', '/f/una'],
   ])('%s redirige a %s', async (vieja, nueva) => {
     await router.navigateByUrl(vieja);
 
@@ -493,9 +602,9 @@ describe('rutas públicas del buscador', () => {
    * de acá arriba, y por eso las dos tienen que estar verdes a la vez.
    */
   it('el redirect de `buscar` no se traga a las pantallas portadas', async () => {
-    await router.navigateByUrl('/buscar/seguidos-y-guardados-listado');
+    await router.navigateByUrl('/search/followed-and-saved-list');
 
-    expect(location.path()).toBe('/buscar/seguidos-y-guardados-listado');
+    expect(location.path()).toBe('/search/followed-and-saved-list');
   });
 
   // ─── El texto buscado viaja en la URL ──────────────────────────────────────
@@ -520,6 +629,65 @@ function withoutGuards(tree: typeof routes): typeof routes {
     ...(route.children === undefined ? {} : { children: withoutGuards(route.children) }),
   }));
 }
+
+describe('el alias del perfil conserva su URL con los guards reales', () => {
+  let router: Router;
+  let session: SessionStore;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(routes)] });
+    router = TestBed.inject(Router);
+    session = TestBed.inject(SessionStore);
+  });
+
+  function openSession(rol: string): void {
+    // Claims sintéticos ASCII: el test de rutas sólo necesita identidad y rol.
+    const payload = btoa(JSON.stringify({ sub: 'perfil-test', roles: [rol], tenants: ['t-1'] }))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    session.start({ accessToken: `eyJhbGciOiJIUzI1NiJ9.${payload}.firma`, refreshToken: 'r-test' });
+  }
+
+  it.each(['PRACTITIONER', 'PATIENT', 'USER'])(
+    'una sesión %s abre la misma ficha sin cambiar la URL',
+    async (rol) => {
+      openSession(rol);
+
+      expect(await router.navigateByUrl('/account/profile')).toBe(true);
+      expect(router.url).toBe('/account/profile');
+      expect(router.routerState.snapshot.root.firstChild?.firstChild?.routeConfig?.path).toBe(
+        'account/profile',
+      );
+    },
+  );
+
+  it('conserva query y fragmento al abrir el alias', async () => {
+    openSession('PRACTITIONER');
+    const url = '/account/profile?pestana=personales#datos';
+
+    await router.navigateByUrl(url);
+
+    expect(router.url).toBe(url);
+  });
+
+  it('sin sesión la URL del perfil pasa por el login', async () => {
+    await router.navigateByUrl('/account/profile');
+
+    expect(router.url).toBe(LOGIN_ROUTE);
+  });
+
+  it('el acceso anterior a Mi perfil continúa disponible', async () => {
+    openSession('PRACTITIONER');
+
+    await router.navigateByUrl('/my-account');
+
+    expect(router.url).toBe('/my-account');
+    expect(router.routerState.snapshot.root.firstChild?.firstChild?.routeConfig?.path).toBe(
+      'my-account',
+    );
+  });
+});
 
 /**
  * El comprobante (FAR-I5) vive en `…/:orderId/receipt`, declarado DESPUÉS del
@@ -582,6 +750,128 @@ describe('la ruta de Ajustes (TAREA-17 · TAREA-29)', () => {
 });
 
 /**
+ * «Mis puntos» es una pestaña de «Mi perfil» (#606) y la dirección vieja abre
+ * esa pestaña (H4.S2.M2, N-03/Q-17). La ficha elige pestaña con `?pestana=`
+ * (`my-profile.spec.ts` fija que `puntos` abre la billetera); acá se fija que
+ * la ruta vieja llega a esa URL y no se lleva puesto el query que traía. Sin
+ * guards, por lo mismo que los bloques de arriba: `redirectTo` se resuelve
+ * antes que cualquier guard, y qué ve cada rol lo decide `/my-account`.
+ */
+describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  /** Navega y devuelve la ruta y el query donde terminó. */
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('la clave de la redirección es la pestaña «Mis puntos» de la ficha', () => {
+    const indice = tabIndex(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
+
+    expect(indice).toBe(TAB.puntos);
+    expect(PROFILE_TABS[indice ?? -1]).toBe('Mis puntos');
+  });
+
+  it('`/my-account/loyalty` termina en `/my-account?pestana=puntos`', async () => {
+    expect(await terminaEn('/my-account/loyalty')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos' },
+    });
+  });
+
+  it('el query que traía sobrevive a la redirección', async () => {
+    expect(await terminaEn('/my-account/loyalty?foo=bar')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos', foo: 'bar' },
+    });
+  });
+
+  it('sobreviven también los valores repetidos y los codificados', async () => {
+    expect(await terminaEn('/my-account/loyalty?foo=bar&foo=baz&q=cardiolog%C3%ADa')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos', foo: ['bar', 'baz'], q: 'cardiología' },
+    });
+  });
+
+  it('una `pestana` entrante no le gana: la dirección vieja sigue siendo «Mis puntos»', async () => {
+    expect(await terminaEn('/my-account/loyalty?pestana=contacto&foo=bar')).toEqual({
+      ruta: '/my-account',
+      query: { pestana: 'puntos', foo: 'bar' },
+    });
+  });
+
+  it('Cotizaciones sigue resolviendo en su propia ruta', async () => {
+    expect(await terminaEn('/my-account/quotations')).toEqual({
+      ruta: '/my-account/quotations',
+      query: {},
+    });
+  });
+});
+
+/**
+ * Dos direcciones viejas que abren una pestaña concreta de la pantalla que las
+ * absorbió: «Mis organizaciones» (ahora «Mis vinculaciones») y el seguimiento de
+ * trámites de identidad (ahora «Mis trámites»). Un `redirectTo` de texto no
+ * conserva el query, así que son funciones; acá se fija adónde terminan.
+ */
+describe('las direcciones viejas que abren una pestaña', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('`/my-organizations` termina en la pestaña «Mis vinculaciones»', async () => {
+    expect(await terminaEn('/my-organizations')).toEqual({
+      ruta: '/administration/medical-organization',
+      query: { tab: 'memberships' },
+    });
+  });
+
+  it('`/my-account/identity/cases` termina en la pestaña «Mis trámites» y conserva el query', async () => {
+    expect(await terminaEn('/my-account/identity/cases')).toEqual({
+      ruta: '/my-account/identity',
+      query: { tab: 'cases' },
+    });
+    expect(await terminaEn('/my-account/identity/cases?foo=bar')).toEqual({
+      ruta: '/my-account/identity',
+      query: { tab: 'cases', foo: 'bar' },
+    });
+  });
+
+  it('`/my-account/identity/verify` sigue abriendo la pestaña de verificar', async () => {
+    expect(await terminaEn('/my-account/identity/verify')).toEqual({
+      ruta: '/my-account/identity',
+      query: {},
+    });
+  });
+});
+
+/**
  * Cada alta pública monta SU componente.
  *
  * Las dos vivían en `RegisterPatient`, que elegía qué formulario dibujar
@@ -620,5 +910,93 @@ describe('las rutas de alta pública', () => {
     // Se fue con la separación: lo que decide qué alta es, es la URL.
     expect(rutaDe('auth/register/patient')?.data?.['tipoDeCuenta']).toBeUndefined();
     expect(rutaDe('auth/register/practitioner')?.data?.['tipoDeCuenta']).toBeUndefined();
+  });
+});
+
+/**
+ * El portal de plataforma se mudó a «Superadministración» (17/10/2026).
+ *
+ * Las direcciones viejas están en favoritos y en el historial de quien ya
+ * entró, así que tienen que seguir sirviendo: terminan en la nueva y no se
+ * llevan puesto ni el identificador de la ficha ni el query que traían. Sin
+ * guards, por lo mismo que «Mis puntos»: `redirectTo` se resuelve antes que
+ * cualquier guard, y qué ve cada rol lo decide la ruta de destino.
+ */
+describe('la mudanza del portal de plataforma a «Superadministración»', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  /** Navega y devuelve la ruta y el query donde terminó. */
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('la sección redirigida conserva también el fragmento (#ancla)', async () => {
+    await router.navigateByUrl('/administration/data-catalog?schema=iam#tabla');
+    expect(location.path(true)).toBe('/superadmin/data-catalog?schema=iam#tabla');
+  });
+
+  it.each([
+    ['/administration/data-catalog', '/superadmin/data-catalog'],
+    ['/administration/web-analytics', '/superadmin/web-analytics'],
+    ['/administration/qa-lab', '/superadmin/qa-lab'],
+    ['/administration/operations', '/superadmin/operations'],
+  ])('la sección %s termina en %s y conserva el query', async (vieja, nueva) => {
+    expect(await terminaEn(`${vieja}?pestana=1&q=cardiolog%C3%ADa`)).toEqual({
+      ruta: nueva,
+      query: { pestana: '1', q: 'cardiología' },
+    });
+  });
+
+  it('la ficha del catálogo conserva el identificador y el query', async () => {
+    expect(await terminaEn('/administration/data-catalog/abc-123?pestana=2')).toEqual({
+      ruta: '/superadmin/data-catalog/abc-123',
+      query: { pestana: '2' },
+    });
+  });
+
+  it('el plan de QA conserva el identificador', async () => {
+    expect(await terminaEn('/administration/qa-lab/plans/p-9')).toEqual({
+      ruta: '/superadmin/qa-lab/plans/p-9',
+      query: {},
+    });
+  });
+
+  it('`/superadmin` abre la portada del dominio: Observabilidad', async () => {
+    expect(await terminaEn('/superadmin')).toEqual({
+      ruta: '/superadmin/observability',
+      query: {},
+    });
+  });
+
+  it('las rutas nuevas llevan el guard de rol y las viejas no (un redirect no admite guard)', () => {
+    const armazon = routes.find(
+      (r) => r.path === '' && r.component !== undefined && r.children !== undefined,
+    );
+    const hijas = armazon?.children ?? [];
+
+    for (const path of ['superadmin/data-catalog/:objectId', 'superadmin/qa-lab/plans/:planId']) {
+      const ruta = hijas.find((r) => r.path === path);
+
+      expect(ruta, path).toBeDefined();
+      expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
+    }
+    for (const path of ['administration/data-catalog/:objectId', 'administration/qa-lab/plans/:planId']) {
+      const ruta = hijas.find((r) => r.path === path);
+
+      expect(ruta?.redirectTo, path).toBeDefined();
+      expect(ruta?.canActivate, path).toBeUndefined();
+    }
   });
 });

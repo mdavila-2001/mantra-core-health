@@ -92,9 +92,7 @@
 
 .doctor__sello {
   flex: none;
-  inline-size: 14px;
-  block-size: 14px;
-  color: var(--petroleo);
+  margin-inline-start: var(--e1);
 }
 
 .doctor__titular,

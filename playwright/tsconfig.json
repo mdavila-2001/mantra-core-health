@@ -12,7 +12,7 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/playwright",
-    "module": "preserve",
+    "module": "ES2022",
     "moduleResolution": "bundler",
     /* `node` por el `node:fs`/`node:path` de los informes. Los tipos del DOM
        entran por el `target` y hacen falta igual: lo que se ejecuta dentro de

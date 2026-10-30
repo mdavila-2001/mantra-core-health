@@ -16,13 +16,13 @@ import type { ViewState } from '../../core/view-state/view-state.types';
 export const UUID_PATTERN = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 /** Mensaje único para todo campo de identificador con formato inválido. */
-export const UUID_ERROR = 'Pegá el identificador completo (formato UUID).';
+export const UUID_ERROR = 'Pegue el identificador completo (formato UUID).';
 
 /**
  * Ayuda compartida de los campos de identificador: dice por qué se pide pegado
  * mientras no exista el listado que debería ofrecerlo.
  */
-export const UUID_HINT = 'El módulo todavía no expone listados: pegá el identificador (UUID).';
+export const UUID_HINT = 'El módulo todavía no expone listados: pegue el identificador (UUID).';
 
 /**
  * Forma de un puntaje que viaja como texto: el backend valida `matchScore` y
@@ -31,7 +31,11 @@ export const UUID_HINT = 'El módulo todavía no expone listados: pegá el ident
 export const NUMBER_STRING_PATTERN = /^[+-]?(\d+(\.\d+)?|\.\d+)$/;
 
 /** Mensaje único para los puntajes en texto con formato inválido. */
-export const NUMBER_STRING_ERROR = 'Ingresá un número, como 0.98.';
+export const NUMBER_STRING_ERROR = 'Ingrese un número, como 0.98.';
+
+/** Mensaje por omisión de un `404` en un envío (S6, sin filtrar existencia). */
+export const NOT_FOUND_MESSAGE =
+  'No encontramos lo que está modificando: puede que ya no exista. Vuelva al listado y reintente.';
 
 /**
  * Mensaje de error de un `ViewState`, con el mismo criterio que el resto de
@@ -42,18 +46,28 @@ export const NUMBER_STRING_ERROR = 'Ingresá un número, como 0.98.';
 export function errorMessageOf(
   state: ViewState<unknown>,
   forbiddenFallback: string,
+  notFoundMessage: string = NOT_FOUND_MESSAGE,
 ): string | null {
   if (state.status === 'validation') {
     return state.issues.map((issue) => issue.message).join(' ') || null;
   }
   if (state.status === 'forbidden') {
-    return state.message ?? forbiddenFallback;
+    // `||` y no `??`: un 403 con `message: ''` también es «sin mensaje».
+    return state.message || forbiddenFallback;
+  }
+  // S6: un 404 sobre un envío no es «no pasó nada». Sin esta rama el
+  // formulario volvía a habilitarse sin decir por qué —la organización, la
+  // membresía o el recurso al que apuntaba ya no existe—, y la persona
+  // reintentaba contra algo que no está. El texto no dice si existe y no se
+  // puede ver: S6 no filtra existencia.
+  if (state.status === 'not-found') {
+    return notFoundMessage;
   }
   if (state.status === 'offline') {
-    return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    return 'No pudimos conectarnos. Revise su conexión y reintente.';
   }
   if (state.status === 'error') {
-    return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    return `${state.message || 'No pudimos completar la acción. Intente de nuevo en unos segundos.'} (${state.requestId})`;
   }
   return null;
 }

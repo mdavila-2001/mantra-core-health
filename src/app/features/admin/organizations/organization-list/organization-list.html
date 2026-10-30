@@ -1,6 +1,6 @@
 <app-page-header
   title="Organizaciones"
-  subtitle="Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación."
+  subtitle="Dé de alta clínicas, farmacias y aseguradoras, y siga su verificación."
   [breadcrumbs]="breadcrumbs()"
 >
   <!-- Ancla con aspecto de acción: la acción principal navega, así que
@@ -34,16 +34,32 @@
   [rowLabel]="nombreDeOrganizacion"
   caption="Organizaciones registradas en la plataforma"
   [cursor]="cursor()"
+  rowNavigable
+  (rowActivated)="abrir($event)"
   (cursorChanged)="mover($event)"
   (retry)="recargar()"
 />
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 <ng-template #celdaOrganizacion let-organizacion>
-  <span class="organizaciones__nombre">{{ organizacion.legalName }}</span>
+  <!-- El enlace real acompaña a la fila navegable: el clic en la fila es una
+       comodidad de puntero, y el teclado, el lector de pantalla y «abrir en
+       pestaña nueva» necesitan un <a> con el mismo destino. -->
+  <a
+    class="organizaciones__nombre"
+    data-testid="organizaciones-abrir"
+    [routerLink]="rutaDeFicha(organizacion.id)"
+    >{{ organizacion.legalName }}</a
+  >
   @if (organizacion.tradeName) {
     <span class="organizaciones__comercial">{{ organizacion.tradeName }}</span>
   }
+</ng-template>
+
+<!-- El código sale de la razón social: con 300 caracteres sin espacios, la
+     celda tiene que poder partirlo (ver `.organizaciones__codigo`). -->
+<ng-template #celdaCodigo let-organizacion>
+  <span class="organizaciones__codigo">{{ organizacion.code }}</span>
 </ng-template>
 
 <ng-template #celdaTipo let-organizacion>

@@ -49,6 +49,8 @@ const LAB = {
   rating: 4.5,
   ratingCount: 12,
   minAmount: 90,
+  minAmountCurrency: 'USD',
+  cities: [],
 };
 const IMAGING = {
   ...LAB,
@@ -63,6 +65,7 @@ const IMAGING = {
   rating: null,
   ratingCount: 0,
   minAmount: null,
+  minAmountCurrency: null,
 };
 
 /** La ruta del buscador. El directorio del tenant es otra y no la usa esta pantalla. */
@@ -143,19 +146,35 @@ describe('LaboratoryDirectory', () => {
       .flush({ items, total, limit: 20, offset: 0 });
   }
 
-  describe('the search bar on every level (19/09/2026)', () => {
-    it('shows the same search bar on the category cover, above the categories', () => {
+  // Sin portada de categorías desde el 24/10/2026 (propietario: «directo al
+  // buscador», menos clics hasta pedir un estudio).
+  describe('straight to the list, no category cover (24/10/2026)', () => {
+    it('opens on the centres with the search bar, without a category cover', () => {
       mount();
       responder([LAB, IMAGING]);
       fixture.detectChanges();
 
       const raiz = fixture.nativeElement as HTMLElement;
       expect(raiz.querySelector('app-filter-bar app-search-field')).not.toBeNull();
-      expect(raiz.querySelector('[data-testid="portada-categorias"]')).not.toBeNull();
-      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(0);
+      expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
+      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
     });
 
-    it('a term typed on the cover searches every category and lists the centres grouped', () => {
+    it('offers the kind of centre as a facet, not as a second category facet', () => {
+      mount();
+      responder([LAB, IMAGING]);
+      fixture.detectChanges();
+
+      const raiz = fixture.nativeElement as HTMLElement;
+      const rotulos = [...raiz.querySelectorAll('.filter-bar__faceta-rotulo')].map((r) =>
+        r.textContent?.trim(),
+      );
+      expect(rotulos).toContain('Tipo de centro');
+      // La faceta de grupos repetía la misma pregunta: no se dibuja.
+      expect(raiz.querySelector('.mercado__faceta')).toBeNull();
+    });
+
+    it('a typed term searches every kind of centre at once', () => {
       parametros.next({ q: 'central' });
       mount();
       const pedido = http.expectOne((request) => request.url === BUSQUEDA);
@@ -164,40 +183,70 @@ describe('LaboratoryDirectory', () => {
       pedido.flush({ items: [LAB, IMAGING], total: 2, limit: 20, offset: 0 });
       fixture.detectChanges();
 
-      const raiz = fixture.nativeElement as HTMLElement;
-      expect(raiz.querySelector('[data-testid="portada-categorias"]')).toBeNull();
-      expect(raiz.querySelectorAll('li[app-result-card]').length).toBe(2);
       expect(
-        [...raiz.querySelectorAll('.directorio__rotulo')].map((rotulo) =>
-          rotulo.textContent?.replace(/\d+/g, '').trim(),
-        ),
-      ).toEqual(['Imagenología diagnóstica', 'Laboratorio clínico']);
+        (fixture.nativeElement as HTMLElement).querySelectorAll('li[app-result-card]').length,
+      ).toBe(2);
+    });
+
+    it('each card jumps straight to the studies and prices of its centre', () => {
+      mount();
+      responder([LAB]);
+      fixture.detectChanges();
+
+      const accion = groups()[0]!.resultados[0]!.action;
+      expect(accion).toEqual({
+        label: 'Ver estudios y precios',
+        link: `/laboratory-directory/${LAB.id}`,
+        fragment: 'estudios',
+        icon: 'flask',
+      });
     });
   });
 
-  describe('the Bolivia map as a filter, like clinics and pharmacies', () => {
+  // Sin mapa desde el 23/10/2026 (propietario): el departamento es una
+  // faceta de la columna, con cuántos centros tiene cada uno.
+  describe('the department as a facet, in place of the Bolivia map', () => {
     const EN_LA_PAZ = { ...LAB, cities: ['La Paz'] };
     const EN_SANTA_CRUZ = { ...IMAGING, cities: ['Santa Cruz de la Sierra'] };
 
-    function mapa(): HTMLElement | null {
-      return (fixture.nativeElement as HTMLElement).querySelector('app-department-map');
+    function opcionesDeDepartamento(): readonly HTMLButtonElement[] {
+      const pantalla = fixture.nativeElement as HTMLElement;
+      const grupo = [...pantalla.querySelectorAll<HTMLElement>('[role="group"]')].find(
+        (candidato) =>
+          candidato.querySelector('.filter-bar__faceta-rotulo')?.textContent?.trim() ===
+          'Departamento',
+      );
+      return grupo === undefined
+        ? []
+        : [...grupo.querySelectorAll<HTMLButtonElement>('.filter-bar__faceta-opcion')];
     }
 
-    it('draws the map when the centres carry their cities', () => {
+    it('offers each department with its count when the centres carry their cities', () => {
+      parametros.next({ kind: 'LABORATORY' });
       mount();
       responder([EN_LA_PAZ, EN_SANTA_CRUZ]);
       fixture.detectChanges();
 
-      expect(mapa()).not.toBeNull();
+      expect((fixture.nativeElement as HTMLElement).querySelector('app-department-map')).toBeNull();
+      // El nombre y la cantidad van en piezas separadas: la cantidad es una
+      // pastilla a la derecha.
+      const leidas = opcionesDeDepartamento().map(
+        (opcion) =>
+          `${opcion.querySelector('.filter-bar__faceta-texto')?.textContent?.trim()} (${opcion
+            .querySelector('.filter-bar__faceta-cantidad')
+            ?.textContent?.trim()})`,
+      );
+      expect(leidas).toEqual(expect.arrayContaining(['La Paz (1)', 'Santa Cruz (1)']));
     });
 
-    it('does not draw a map that could not filter anything', () => {
+    it('does not offer a department facet that could not filter anything', () => {
       // La búsqueda de la API todavía no manda `cities`.
+      parametros.next({ kind: 'LABORATORY' });
       mount();
       responder([LAB, IMAGING]);
       fixture.detectChanges();
 
-      expect(mapa()).toBeNull();
+      expect(opcionesDeDepartamento()).toEqual([]);
     });
 
     it('keeps only the centres with a site in the chosen department', () => {
@@ -212,11 +261,6 @@ describe('LaboratoryDirectory', () => {
       expect(groups().flatMap((grupo) => grupo.resultados.map((r) => r.title))).toEqual([
         'Imagen Diagnóstica',
       ]);
-      expect(
-        (fixture.nativeElement as HTMLElement)
-          .querySelector('[data-testid="laboratorios-mapa-resumen"]')
-          ?.textContent?.trim(),
-      ).toBe('1 en Santa Cruz. Tocá otra vez el departamento para ver todo el país.');
     });
 
     it('says so when the chosen department has no centres', () => {
@@ -284,7 +328,7 @@ describe('LaboratoryDirectory', () => {
     expect(textos).toContain('4,5 · 12 reseñas');
   });
 
-  it('shows the entry price as "desde" when the centre publishes one', () => {
+  it('shows the entry price as "desde" with the real currency (CL-45/CL-51)', () => {
     mountEnCategoria();
     responder([LAB]);
     fixture.detectChanges();
@@ -294,6 +338,15 @@ describe('LaboratoryDirectory', () => {
     // entrada que el mapper produce al final nunca llega a la pantalla.
     // «Desde» y no el importe a secas: es el menor de la tarifa pública, y sin
     // esa palabra prometería que cualquier estudio del centro cuesta eso.
+    // La moneda es la que trae `minAmountCurrency` (USD acá), nunca "Bs" literal.
+    expect(lineasDibujadas()).toContain('desde USD 90');
+  });
+
+  it('límite: sin minAmountCurrency, usa Bs como piso conocido', () => {
+    mountEnCategoria();
+    responder([{ ...LAB, minAmountCurrency: null }]);
+    fixture.detectChanges();
+
     expect(lineasDibujadas()).toContain('desde Bs 90');
   });
 
@@ -334,6 +387,13 @@ describe('LaboratoryDirectory', () => {
   });
 
   describe('aConsulta', () => {
+    it('sends the price ceiling and the external-orders filter in the types the contract expects', () => {
+      expect(aConsulta({ maxAmount: '100', acceptsExternalOrders: 'true' })).toEqual({
+        maxAmount: 100,
+        acceptsExternalOrders: true,
+      });
+    });
+
     it('drops keys the contract does not declare instead of sending them', () => {
       // El backend valida con `forbidNonWhitelisted`: una clave de más vuelve
       // 400 y tira abajo la búsqueda entera.

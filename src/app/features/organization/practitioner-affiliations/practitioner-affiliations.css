@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.affiliations__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.affiliations__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: end;
+  gap: var(--sp-3);
+}
+
+.affiliations__invite {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.affiliations__main {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.affiliations__service {
+  display: block;
+  color: var(--text-secondary);
+}
+
+.affiliations__muted {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.affiliations__state {
+  display: block;
+  margin-block-start: var(--sp-2);
+}
+
+.affiliations__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-2);
+}

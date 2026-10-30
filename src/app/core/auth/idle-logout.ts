@@ -80,7 +80,7 @@ export class IdleLogout {
     // El reloj solo corre con sesión abierta: sin ella no hay nada que cerrar,
     // y mantener oyentes en el login sería trabajo por nada.
     effect(() => {
-      if (this.session.isAuthenticated()) {
+      if (this.haySesion()) {
         this.arrancar();
       } else {
         this.detener();
@@ -90,9 +90,20 @@ export class IdleLogout {
     this.destroyRef.onDestroy(() => this.detener());
   }
 
+  /**
+   * `session.isAuthenticated()`, tolerando un doble de prueba incompleto
+   * (misma causa que `CartStore` — carril M6 H2, 2026-09-26): `IdleLogout`
+   * se construye en el `provideAppInitializer` de `app.config.ts`, así que
+   * cualquier spec que arranque la app real —no sólo las de sesión— lo
+   * construye con lo que sea que provea como `SessionStore`.
+   */
+  private haySesion(): boolean {
+    return typeof this.session.isAuthenticated === 'function' && this.session.isAuthenticated();
+  }
+
   /** Reinicia la cuenta. Público para que una acción de «seguir acá» lo llame. */
   reiniciar(): void {
-    if (!this.isBrowser || !this.session.isAuthenticated()) {
+    if (!this.isBrowser || !this.haySesion()) {
       return;
     }
 

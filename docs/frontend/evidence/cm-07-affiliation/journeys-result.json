@@ -1,0 +1,81 @@
+{
+  "fecha": "2026-10-26T00:56:40.728Z",
+  "results": [
+    {
+      "name": "centro ve la fila INVITED de ejemplo con estado e iniciador",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro"
+    },
+    {
+      "name": "la sede viene del catálogo de CM-06",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "INVITED no ofrece Aprobar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "las casillas son los procedimientos que publica la sede en el catálogo",
+      "ok": true,
+      "detail": "Endoscopía digestiva alta | Colonoscopía"
+    },
+    {
+      "name": "tras recargar hay 2 invitaciones pendientes de aceptación",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Pendiente de aceptación del médico Invitado por el centro Valeria Rojas Mendoza Colonoscopía Pendiente de aceptación del médico Invitado por"
+    },
+    {
+      "name": "la médica ve las dos invitaciones",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras aceptar y recargar queda 1 invitación",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras rechazar y recargar no quedan invitaciones",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "«Procedimientos que hago» agrupa por centro y sede (sede del catálogo) y marca Colonoscopía Activa",
+      "ok": true,
+      "detail": "Agregar un procedimiento Centro Médico Norte Centro Médico Norte · Sede principal Endoscopia digestiva alta Invitado por el centro Rechazada Colonoscopía Invitado por el centro Activa Centro Médico Sur Centro Médico Sur · Sede principal Colonoscopia Pedido por el médico Activa"
+    },
+    {
+      "name": "muestra lo de Sur (Colonoscopia Activa)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "lo rechazado figura «Rechazada», no se oculta",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tras recargar, lo pedido queda «Pendiente del centro» (nunca Activa solo)",
+      "ok": true,
+      "detail": "Agregar un procedimiento Centro Médico Norte Centro Médico Norte · Sede principal Endoscopia digestiva alta Invitado por el centro Rechazada Colonoscopía Invitado por el centro Activa Endoscopía digestiva alta Pedido por el médico Pendiente del centro Centro Médico Sur Centro Médico Sur · Sede principal Colonoscopia Pedido por el médico Activa"
+    },
+    {
+      "name": "centro ve la solicitud con Aprobar y Rechazar",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Rechazada Invitado por el centro Valeria Rojas Mendoza Colonoscopía Activa Invitado por el centro Valeria Rojas Mendoza Endoscopía digestiva alta Pendiente del centro Aprobar Recha"
+    },
+    {
+      "name": "tras recargar la solicitud figura «Rechazada» y ya no ofrece Aprobar",
+      "ok": true,
+      "detail": "Médicos afiliados a la sede MÉDICO, PROCEDIMIENTO Y ESTADO INICIADA POR Valeria Rojas Mendoza Endoscopia digestiva alta Rechazada Invitado por el centro Valeria Rojas Mendoza Colonoscopía Activa Invitado por el centro Valeria Rojas Mendoza Endoscopía digestiva alta Rechazada Pedido por el médico"
+    },
+    {
+      "name": "sin errores de consola ni de página (se excluye el aviso CSP del script en línea que inyecta ng serve)",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "errors": []
+}

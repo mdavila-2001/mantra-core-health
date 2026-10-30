@@ -51,6 +51,8 @@ describe('DayView', () => {
   const ETIQUETAS = new Map([
     ['confirmado', { code: 'BOOKING_CONFIRMED', display: 'Confirmado' }],
     ['llego', { code: 'scheduling:BOOKING_CHECKED_IN', display: 'Llegó' }],
+    // Como lo devuelve la API real: `display` en inglés, que no se muestra.
+    ['curso', { code: 'BOOKING_IN_PROGRESS', display: 'Booking in progress' }],
     ['cancelado', { code: 'BOOKING_CANCELLED', display: 'Cancelado' }],
   ]);
 
@@ -117,7 +119,7 @@ describe('DayView', () => {
     expect(aire.getAttribute('data-tipo')).toBe('aire');
     // No los 624 px de seis horas y media: la altura de una hora.
     expect(Number.parseInt(aire.style.minHeight, 10)).toBeLessThanOrEqual(96);
-    expect(aire.textContent).toContain('6 h 30 min sin turnos');
+    expect(aire.textContent).toContain('6 h 30 min sin horarios');
   });
 
   it('las citas van en orden de reloj, aunque los cupos no vengan ordenados', () => {
@@ -251,8 +253,21 @@ describe('DayView', () => {
     montar([cupo(9)], [cita('s-9-0', { statusConceptId: 'llego' })]);
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Llegó');
+    expect(texto).toContain('Ya llegó');
     expect(texto).not.toContain('BOOKING_CHECKED_IN');
+  });
+
+  /**
+   * La API devuelve el `display` del catálogo en inglés. El día lo mostraba
+   * tal cual y «Booking in progress» se leía como «la reserva sigue
+   * pendiente» sobre una consulta que ya había empezado (2026-10-03).
+   */
+  it('nunca muestra la etiqueta inglesa del catálogo: una consulta iniciada dice «En curso»', () => {
+    montar([cupo(9)], [cita('s-9-0', { statusConceptId: 'curso' })]);
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('En curso');
+    expect(texto).not.toContain('Booking in progress');
   });
 
   it('a quien ya llegó no le ofrece «Llegó» otra vez', () => {
@@ -310,14 +325,51 @@ describe('DayView', () => {
     );
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('1 de 3 turnos reservados');
+    expect(texto).toContain('1 de 3 horarios reservados');
     expect(texto).toContain('1 rato ocupado');
+  });
+
+  it('con la lectura del día caída NO dice «No atiende» ni pinta «No disponible»', () => {
+    // El cupo tomado sin cita encima es justo lo que deja una lectura de citas
+    // fallida: la médica atiende y tiene un paciente que la pantalla no ve.
+    montar([{ ...cupo(9), remainingCapacity: 0 }]);
+    fixture.componentRef.setInput('incompleteLoad', true);
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('No se pudieron cargar las citas de este día.');
+    expect(texto).not.toContain('No atiende este día');
+    expect(texto).not.toContain('No disponible');
+    expect(tipos()).toEqual(['sin-cargar']);
+  });
+
+  it('con la lectura caída y sin cupos tampoco dice «No atiende este día»', () => {
+    montar([]);
+    fixture.componentRef.setInput('incompleteLoad', true);
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).toContain('No se pudieron cargar las citas de este día.');
+    expect(texto).not.toContain('No atiende este día');
+  });
+
+  it('A5 · un día de horario flexible sin citas dice su franja, no «No atiende este día»', () => {
+    montar([]);
+    fixture.componentRef.setInput('horarioFlexible', '09:00 a 13:00');
+    fixture.detectChanges();
+
+    const texto: string = fixture.nativeElement.textContent;
+    expect(texto).not.toContain('No atiende este día');
+    expect(texto).toContain('Horario flexible de 09:00 a 13:00');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-horario-flexible"]'),
+    ).not.toBeNull();
   });
 
   it('un día sin nada lo dice con palabras, y deja crear', () => {
     montar([]);
 
-    expect(fixture.nativeElement.textContent).toContain('No atendés este día');
+    expect(fixture.nativeElement.textContent).toContain('No atiende este día');
     expect(fixture.nativeElement.textContent).toContain('Agregar');
   });
 
@@ -427,6 +479,76 @@ describe('DayView', () => {
   });
 
   /**
+   * EL SERVICIO RESERVADO (v4.2.40).
+   *
+   * Una reserva de un servicio no es una consulta: el médico necesita ver qué es y
+   * cuánto puede durar. El bloque ya mide lo que se reservó —el máximo—; el mínimo
+   * dice cuándo podría quedar libre antes.
+   */
+  describe('el servicio reservado', () => {
+    function montarConServicio(service: unknown): void {
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      fixture = TestBed.createComponent(DayView);
+      fixture.componentRef.setInput('dia', DIA);
+      fixture.componentRef.setInput('cupos', [
+        { id: 's-1', startAt: new Date(2026, 8, 10, 9), endAt: new Date(2026, 8, 10, 9, 45) },
+      ]);
+      fixture.componentRef.setInput('citas', [
+        {
+          id: 'b-1',
+          bookableSlotId: 's-1',
+          statusConceptId: 'c-confirmada',
+          patientName: 'Ana',
+          ...(service === undefined ? {} : { service }),
+        },
+      ]);
+      fixture.componentRef.setInput('bloqueos', []);
+      fixture.componentRef.setInput('etiquetas', ETIQUETAS);
+      fixture.componentRef.setInput('puedeRegistrarLlegada', true);
+      fixture.detectChanges();
+    }
+
+    const linea = (): HTMLElement | null =>
+      (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dia-servicio"]');
+
+    it('dice qué servicio es y su duración en rango', () => {
+      montarConServicio({
+        offeringId: 'of-1',
+        name: 'Ecocardiograma Doppler',
+        price: '480.00',
+        minDurationMinutes: 30,
+        maxDurationMinutes: 45,
+        requiresApproval: false,
+      });
+
+      const texto = linea()?.textContent?.replace(/\s+/g, ' ').trim();
+      expect(texto).toBe('Ecocardiograma Doppler · dura 30–45 min');
+    });
+
+    it('con mínimo y máximo iguales dice un solo número', () => {
+      montarConServicio({
+        offeringId: 'of-2',
+        name: 'Electrocardiograma',
+        price: '120.00',
+        minDurationMinutes: 20,
+        maxDurationMinutes: 20,
+        requiresApproval: false,
+      });
+
+      expect(linea()?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Electrocardiograma · dura 20 min');
+    });
+
+    it('una consulta no lleva esa línea', () => {
+      montarConServicio(undefined);
+
+      expect(linea()).toBeNull();
+      // Y sigue diciendo quién viene: lo nuevo no desplaza lo de siempre.
+      expect(fixture.nativeElement.textContent).toContain('Ana');
+    });
+  });
+
+  /**
    * MOVER EL HORARIO Y CERRAR RATOS — los dos últimos del carril 12.
    *
    * «Un botón que se llame mover horario, que desplace los slots N minutos
@@ -485,6 +607,117 @@ describe('DayView', () => {
       fixture.detectChanges();
 
       expect(porTestid('dia-mover-panel')).toBeNull();
+    });
+  });
+  /* ---- el teclado y el lector (WCAG 2.1.1 · 1.3.1 · 2.5.3) --------------- */
+
+  describe('recorrido con el teclado', () => {
+    function controles(): HTMLElement[] {
+      return Array.from(fixture.nativeElement.querySelectorAll('[data-linea]'));
+    }
+
+    function tecla(key: string): void {
+      (document.activeElement as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }),
+      );
+      fixture.detectChanges();
+    }
+
+    it('la línea del día es UNA parada de Tab, en el primer rato', () => {
+      montar([cupo(9), cupo(14)]);
+
+      const stops = controles().filter((c) => c.getAttribute('tabindex') === '0');
+      expect(stops).toHaveLength(1);
+      expect(stops[0]).toBe(controles()[0]);
+      // Libre de 9, el hueco del medio y libre de 14: los tres se recorren.
+      expect(controles()).toHaveLength(3);
+    });
+
+    it('↑/↓ van al rato anterior y al siguiente; Inicio/Fin, al primero y al último', () => {
+      montar([cupo(9), cupo(14)]);
+      const [nueve, hueco, catorce] = controles();
+      nueve.focus();
+
+      tecla('ArrowDown');
+      expect(document.activeElement).toBe(hueco);
+      tecla('ArrowDown');
+      expect(document.activeElement).toBe(catorce);
+      tecla('ArrowDown');
+      expect(document.activeElement).toBe(catorce);
+
+      tecla('Home');
+      expect(document.activeElement).toBe(nueve);
+      tecla('End');
+      expect(document.activeElement).toBe(catorce);
+      tecla('ArrowUp');
+      expect(document.activeElement).toBe(hueco);
+
+      // La parada sigue al foco.
+      expect(controles().filter((c) => c.getAttribute('tabindex') === '0')).toEqual([hueco]);
+    });
+
+    it('el clic sigue creando: el teclado no cambió lo que hace el botón', () => {
+      const tocados: RatoTocado[] = [];
+      montar([cupo(9), cupo(14)]);
+      fixture.componentInstance.ratoTocado.subscribe((r: RatoTocado) => tocados.push(r));
+
+      controles()[2].click();
+      expect(tocados[0].desde.getHours()).toBe(14);
+    });
+
+    it('←/→ cambian de día y dejan el foco en el rato más cercano a la misma hora', async () => {
+      montar([cupo(9), cupo(14)]);
+      const vistos: number[] = [];
+      fixture.componentInstance.diaCambiado.subscribe((d: number) => vistos.push(d));
+      controles()[2].focus();
+
+      tecla('ArrowRight');
+      expect(vistos).toEqual([1]);
+
+      // Lo que haría la agenda: el día siguiente, con sus cupos.
+      const slotOn26 = (hora: number, minuto: number) => ({
+        ...cupo(hora, minuto, `s26-${hora}-${minuto}`),
+        startAt: new Date(2026, 7, 26, hora, minuto),
+        endAt: new Date(2026, 7, 26, hora, minuto + 30),
+      });
+      fixture.componentRef.setInput('dia', new Date(2026, 7, 26));
+      fixture.componentRef.setInput('cupos', [slotOn26(8, 0), slotOn26(13, 30)]);
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect((document.activeElement as HTMLElement).getAttribute('data-linea')).toBe('s26-13-30');
+    });
+  });
+
+  describe('lo que lee el lector', () => {
+    it('«Disponible» dice día, hora, que está libre y la sede', () => {
+      montar([cupo(12)]);
+      fixture.componentRef.setInput('sede', 'Sede Centro');
+      fixture.detectChanges();
+
+      const libre = fixture.nativeElement.querySelector('[data-testid="day-view-free-slot"]') as HTMLElement;
+      // La palabra visible va primero (WCAG 2.5.3): quien dicta «Disponible» lo encuentra.
+      expect(libre.getAttribute('aria-label')).toBe(
+        'Disponible: Martes 25 de agosto, 12:00 a 12:30, libre, Sede Centro',
+      );
+    });
+
+    it('sin sede no la inventa', () => {
+      montar([cupo(12)]);
+
+      const libre = fixture.nativeElement.querySelector('[data-testid="day-view-free-slot"]') as HTMLElement;
+      expect(libre.getAttribute('aria-label')).toBe('Disponible: Martes 25 de agosto, 12:00 a 12:30, libre');
+    });
+
+    it('el hueco y la cita también dicen cuándo', () => {
+      montar([cupo(9), cupo(14, 0, 's-14')], [cita('s-14')]);
+
+      const hueco = fixture.nativeElement.querySelector('.dia__aire') as HTMLElement;
+      expect(hueco.getAttribute('aria-label')).toBe(
+        'Agregar algo en este hueco: Martes 25 de agosto, 09:30 a 14:00, sin horarios',
+      );
+      const atender = fixture.nativeElement.querySelector('[data-testid="dia-ir-a-atender"]') as HTMLElement;
+      expect(atender.getAttribute('aria-label')).toBe('Atender a Ana Quispe, Martes 25 de agosto, 14:00 a 14:30');
     });
   });
 });

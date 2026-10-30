@@ -33,54 +33,6 @@ graph LR
 **Nada de lo de la derecha tiene sentido sin lo de la izquierda.** Por eso el
 despliegue es `BLOCKER` y esto es `HIGH` dependiente.
 
-## Lo que habría que vigilar, cuando se pueda
-
-### Disponibilidad — lo primero, y no necesita telemetría
-
-Un monitor externo que pida `/auth` cada minuto ya diría si la aplicación está en
-pie. **No requiere instrumentar nada**: solo que exista una URL.
-
-| Alerta | Umbral |
-|---|---|
-| La aplicación no responde | 2 fallos consecutivos |
-| Respuesta > 3 s | 5 minutos sostenidos |
-
-### Errores — el mayor valor por unidad de esfuerzo
-
-| Alerta | Umbral propuesto | Qué significa |
-|---|---|---|
-| **Pico de S8** | > línea base × 3 en 15 min | **La API no responde para los usuarios** |
-| Pico de S9 | > línea base × 3 en 15 min | Fallo del servidor o contrato roto |
-| Pantallas en blanco | Cualquiera | Fallo de render: hoy invisible |
-| `chunk_fallido` | > 5 en 15 min | Despliegue con clientes en caché vieja |
-| Pico de S4 en el login | > línea base × 5 | Posible ataque de fuerza bruta, o un cambio de contrato |
-
-**El pico de S8 es la alerta más importante de la lista**, y hoy es exactamente
-lo que nadie detecta.
-
-### Rendimiento
-
-| Alerta | Umbral |
-|---|---|
-| LCP p75 | > 2,5 s |
-| INP p75 | > 200 ms |
-| CLS p75 | > 0,1 |
-
-**A fijar con datos, no antes.** Copiar los umbrales de Google sin haber medido
-produce alertas que nadie cree.
-
-### Build y entrega
-
-| Alerta | Umbral | Ya medible |
-|---|---|---|
-| Paquete inicial | > 550 kB | **Sí**, en cada build |
-| Tiempo de build | > 30 s | Sí (~5–10 s hoy) |
-| Tiempo de pruebas | > 60 s | Sí (~10–19 s hoy) |
-| Despliegue fallido | Cualquiera | No hay despliegue |
-
-Las tres primeras **se pueden vigilar hoy** en cuanto exista un pipeline, sin
-nada más.
-
 ## Panel propuesto
 
 Cuatro secciones, en orden de lo que se mira primero:
@@ -125,9 +77,3 @@ alerta debería llegarle a quien pueda arreglarlo.
 6. **Panel**, cuando haya datos que mostrar.
 
 El 1 y el 4 se pueden hacer sin ninguna decisión previa.
-
-## Estado
-
-`HIGH`, dependiente del `BLOCKER` de
-[despliegue](../operations/deployment.md). Registrado en
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

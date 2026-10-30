@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Capas que permiten la interoperabilidad de la historia electrónica</title>
+  <desc id="d">Pila de cuatro capas. De arriba abajo: servicios de intercambio con API y documentos, modelo de información con recursos y perfiles, terminologías y clasificaciones, y seguridad y gobernanza. A la derecha, el nivel de interoperabilidad que resuelve cada capa: técnica, sintáctica, semántica y organizativa.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#c9d3df; --ink:#1c2733; --muted:#566576; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a6b; --b-l:#d9f0e8; --c:#b86e0a; --c-l:#fbecd2; --bad:#c0392b; --bad-l:#f9dcd8; --p:#7a4bb0; --p-l:#ebe0f6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#3a4958; --ink:#e8eef5; --muted:#a3b3c4; --a:#7db4ea; --a-l:#223a54; --b:#4cc38a; --b-l:#1d3a31; --c:#e8b04a; --c-l:#43361d; --bad:#ef7467; --bad-l:#4a2723; --p:#b794e0; --p-l:#35294a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 12.5px; }
+    .t { font-size: 13px; }
+    .big { font-size: 28px; font-weight: 800; }
+    .w { font-weight: 700; }
+    .mid { text-anchor: middle; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" class="title mid">Estándares de la historia clínica electrónica</text>
+  <rect x="30" y="56" width="124" height="40" rx="8" fill="var(--p-l)" stroke="var(--p)" stroke-width="1.6"/>
+  <text x="92.0" y="73.0" class="s muted mid">Historia electrónica</text>
+  <rect x="166" y="56" width="124" height="40" rx="8" fill="var(--p-l)" stroke="var(--p)" stroke-width="1.6"/>
+  <text x="228.0" y="73.0" class="s muted mid">Portal del paciente</text>
+  <rect x="302" y="56" width="124" height="40" rx="8" fill="var(--p-l)" stroke="var(--p)" stroke-width="1.6"/>
+  <text x="364.0" y="73.0" class="s muted mid">Otro centro</text>
+  <rect x="438" y="56" width="124" height="40" rx="8" fill="var(--p-l)" stroke="var(--p)" stroke-width="1.6"/>
+  <text x="500.0" y="73.0" class="s muted mid">Salud pública</text>
+  <rect x="30" y="118" width="520" height="72" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.8"/>
+  <text x="46" y="144" class="h">Servicios de intercambio</text>
+  <text x="46" y="164" class="s muted">API REST, mensajes y documentos</text>
+  <text x="46" y="182" class="s w">HL7 FHIR, HL7 v2, CDA, DICOM</text>
+  <path d="M552 154 L620 154" fill="none" stroke="var(--a)" stroke-width="2.2" marker-end="url(#ar)"/>
+  <rect x="622" y="130" width="148" height="48" rx="24" fill="none" stroke="var(--a)" stroke-width="2"/>
+  <text x="696" y="160" class="h mid">Técnica</text>
+  <rect x="30" y="202" width="520" height="72" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.8"/>
+  <text x="46" y="228" class="h">Modelo de información</text>
+  <text x="46" y="248" class="s muted">Recursos, perfiles y arquetipos</text>
+  <text x="46" y="266" class="s w">FHIR, openEHR, ISO 13606, IPS</text>
+  <path d="M552 238 L620 238" fill="none" stroke="var(--b)" stroke-width="2.2" marker-end="url(#ar)"/>
+  <rect x="622" y="214" width="148" height="48" rx="24" fill="none" stroke="var(--b)" stroke-width="2"/>
+  <text x="696" y="244" class="h mid">Sintáctica</text>
+  <rect x="30" y="286" width="520" height="72" rx="12" fill="var(--c-l)" stroke="var(--c)" stroke-width="1.8"/>
+  <text x="46" y="312" class="h">Terminologías y clasificaciones</text>
+  <text x="46" y="332" class="s muted">Mismo significado en origen y destino</text>
+  <text x="46" y="350" class="s w">SNOMED CT, LOINC, CIE-10/11, ATC</text>
+  <path d="M552 322 L620 322" fill="none" stroke="var(--c)" stroke-width="2.2" marker-end="url(#ar)"/>
+  <rect x="622" y="298" width="148" height="48" rx="24" fill="none" stroke="var(--c)" stroke-width="2"/>
+  <text x="696" y="328" class="h mid">Semántica</text>
+  <rect x="30" y="370" width="520" height="72" rx="12" fill="var(--bad-l)" stroke="var(--bad)" stroke-width="1.8"/>
+  <text x="46" y="396" class="h">Seguridad y gobernanza</text>
+  <text x="46" y="416" class="s muted">Quién es quién, quién puede qué</text>
+  <text x="46" y="434" class="s w">Identificación, consentimiento, auditoría</text>
+  <path d="M552 406 L620 406" fill="none" stroke="var(--bad)" stroke-width="2.2" marker-end="url(#ar)"/>
+  <rect x="622" y="382" width="148" height="48" rx="24" fill="none" stroke="var(--bad)" stroke-width="2"/>
+  <text x="696" y="412" class="h mid">Organizativa</text>
+  <line x1="400" y1="98" x2="400" y2="116" stroke="var(--muted)" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="696" y="104" class="s muted mid">Nivel que resuelve</text>
+  <text x="400" y="468" class="s muted mid">Cada capa depende de las inferiores; las decisiones de la última suelen ser las más difíciles.</text>
+</svg>

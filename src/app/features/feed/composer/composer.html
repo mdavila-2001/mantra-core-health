@@ -8,15 +8,15 @@
          pacientes. Vacío hoy, y por eso no se pinta nada: una advertencia
          inventada acá diría que el sistema detecta algo que no detecta. -->
     @if (avisoPii(); as aviso) {
-      <app-alert class="composer__aviso" tone="warning" title="Revisá antes de publicar">
+      <app-alert class="composer__aviso" tone="warning" title="Revise antes de publicar">
         {{ aviso }}
       </app-alert>
     }
 
     <app-form-field
-      label="Qué querés compartir"
-      hint="Escribí #etiquetas dentro del texto y se guardan solas."
-      [errorMessage]="excedido() ? 'Te pasaste del largo permitido.' : ''"
+      label="Qué quiere compartir"
+      hint="Escriba #etiquetas dentro del texto y se guardan solas."
+      [errorMessage]="excedido() ? 'Se pasó del largo permitido.' : ''"
     >
       <app-textarea
         data-testid="post-composer-body"

@@ -60,6 +60,79 @@
     margin-top: var(--sp-5);
 }
 
+.verificar__guia {
+    margin: calc(var(--sp-3) * -1) 0 var(--sp-2);
+    max-width: 32rem;
+}
+
+.verificar__guia img {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+}
+
+.verificar__guia figcaption {
+    margin-top: var(--sp-1);
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+}
+
+.verificar__liveness {
+    display: grid;
+    gap: var(--sp-2);
+    padding: var(--sp-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-md);
+    background: var(--bg-inset);
+}
+
+.verificar__liveness h3,
+.verificar__liveness .verificar__texto {
+    margin: 0;
+}
+
+.verificar__poses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: var(--fs-caption);
+}
+
+.verificar__poses li {
+    padding: var(--sp-1) var(--sp-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--r-pill);
+}
+
+.verificar__poses li.is-complete {
+    color: var(--st-success-fg);
+    border-color: var(--st-success-bd);
+}
+
+.verificar__liveness video {
+    width: min(100%, 30rem);
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--r-md);
+    transform: scaleX(-1);
+    background: var(--bg-inset);
+}
+
+.verificar__liveness video[hidden] {
+    display: none;
+}
+
+.verificar__pose-actual,
+.verificar__capturas-listas {
+    margin: 0;
+    font-weight: 600;
+}
+
 .verificar__acciones {
     display: flex;
     gap: var(--sp-3);

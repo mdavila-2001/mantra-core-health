@@ -18,8 +18,13 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del envío: la organización de la ruta no está (o no se puede ver). */
+const ORGANIZACION_NO_ENCONTRADA =
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Largos que declara `CreateBranchDto`. */
 const MAX_CODIGO = 100;
@@ -144,7 +149,7 @@ export class BranchNew {
    * servidor —el 409 del código— y de la regla de las coordenadas.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identificación',
         hint: 'Con qué se la nombra dentro de la organización.',
@@ -157,8 +162,8 @@ export class BranchNew {
             required: true,
             testId: 'alta-sucursal-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una sede con este código en la organización. Probá con otro.'
-              : 'Escribí el código de la sede.',
+              ? 'Ya existe una sede con este código en la organización. Pruebe con otro.'
+              : 'Escriba el código de la sede.',
           },
           {
             key: 'name',
@@ -166,7 +171,7 @@ export class BranchNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-sucursal-nombre',
-            mensajeDeError: 'Escribí el nombre de la sede (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba el nombre de la sede (hasta 300 caracteres).',
           },
           {
             key: 'tipo',
@@ -174,13 +179,13 @@ export class BranchNew {
             hint: 'Opcional. Cómo se atiende en esta dirección.',
             control: 'select' as const,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
+            placeholder: 'Elija un tipo',
           },
         ],
       },
       {
         titulo: 'Datos operativos',
-        hint: 'Se pueden completar después, pero la zona horaria es lo que hace que un turno signifique la misma hora para todos.',
+        hint: 'Se pueden completar después, pero la zona horaria es lo que hace que una cita signifique la misma hora para todos.',
         campos: [
           {
             key: 'timeZone',
@@ -197,7 +202,7 @@ export class BranchNew {
             control: 'number' as const,
             testId: 'alta-sucursal-latitud',
             mensajeDeError: this.coordenadaIncompleta()
-              ? 'Cargá las dos coordenadas o ninguna: una sola no ubica la sede.'
+              ? 'Cargue las dos coordenadas o ninguna: una sola no ubica la sede.'
               : 'La latitud va entre -90 y 90.',
           },
           {
@@ -234,22 +239,18 @@ export class BranchNew {
     return (latitude == null) !== (longitude == null);
   });
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesitás pertenecer a esta organización para abrir una sede.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Necesita pertenecer a esta organización para abrir una sede.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
 
   /** El código es único dentro de la organización: un `409` sólo viene de él. */
   protected readonly codigoEnConflicto = computed(() => {

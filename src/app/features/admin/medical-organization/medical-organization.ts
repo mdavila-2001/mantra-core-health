@@ -29,16 +29,19 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionStore } from '../../../core/auth/session.store';
 import { ofrecerEscritura } from '../../../core/data-access/infrastructure/infrastructure.rules';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { MyOrganizations } from '../../organizations/my-organizations';
+import { MembershipsTab } from './memberships-tab/memberships-tab';
 import { EstablecimientoTab } from './establecimiento/establecimiento-tab';
 import { InfraestructuraTab, type SitioElegible } from './infraestructura/infraestructura-tab';
-import { empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
+import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
   ViewStateNextAction,
 } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
+import { Select } from '../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -136,10 +139,12 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
     Badge,
     DataTable,
     EstablecimientoTab,
+    FormField,
     InfraestructuraTab,
-    MyOrganizations,
+    MembershipsTab,
     NgTemplateOutlet,
     PageHeader,
+    Select,
     Tab,
     Tabs,
     ViewStateHost,
@@ -193,7 +198,9 @@ export class MedicalOrganization {
    * Reflejo, no autorización: la API responde 403 a quien no administra.
    */
   protected readonly puedeEscribir = computed(() =>
-    ofrecerEscritura(this.session.roles(), this.session.activeTenantId(), this.session.ownTenantId()),
+    // Sin organización propia: `dev` retiró `ownTenantId` (la API no lo
+      // firma, TX-11). Se ofrece a la plataforma; la API decide igual.
+      ofrecerEscritura(this.session.roles(), this.session.activeTenantId(), null),
   );
 
   private readonly celdaSede =
@@ -253,6 +260,14 @@ export class MedicalOrganization {
 
   /** Las prácticas que se pueden administrar. */
   protected readonly practicas = signal<ViewState<readonly PracticeSummary[]>>(loading());
+
+  /** Las prácticas como opciones del selector, con su código para distinguirlas. */
+  protected readonly opcionesDePractica = computed<readonly SelectOption<string>[]>(() =>
+    (dataOf(this.practicas()) ?? []).map((practica) => ({
+      value: practica.id,
+      label: `${practica.name} (${practica.code})`,
+    })),
+  );
 
   /** La práctica elegida. Vacío mientras el listado no resolvió. */
   protected readonly practicaElegida = signal('');

@@ -1,0 +1,14 @@
+{
+  "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.html": 12,
+  "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.css": 5,
+  "src/app/features/account/my-profile/practitioner-profile-edit/practitioner-profile-edit.logic.ts": 2,
+  "src/app/features/alovida/buscar/public-result.mapper.ts": 1,
+  "src/app/features/alovida/personas/vinculos-de-cuenta-listado/vinculos-de-cuenta-listado.html": 1,
+  "src/app/features/alovida/personas/vinculos-de-identidad-listado/vinculos-de-identidad-listado.html": 1,
+  "src/app/features/insurance/broker-detail/broker-detail.html": 1,
+  "src/app/features/insurance/broker-directory/broker-directory.html": 1,
+  "src/app/features/insurance/insurer-profile-card/insurer-profile-card.html": 1,
+  "src/app/features/organization/medical-center-setup/medical-center-setup.html": 1,
+  "src/app/features/public-profile/public-profile-card/public-profile-card.html": 1,
+  "src/app/shared/components/molecules/result-card/result-card.html": 1
+}

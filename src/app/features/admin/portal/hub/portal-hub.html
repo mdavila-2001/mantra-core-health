@@ -1,0 +1,66 @@
+<app-page-header
+  title="Centro del portal"
+  subtitle="Qué tiene el sistema, cómo se conecta y qué falta revisar. Las cifras salen del inventario que genera la API."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="estado()" (retry)="cargar()">
+  @if (estado(); as e) {
+    @if (e.status === 'ready') {
+      <section class="hub__cifras" aria-label="Cifras del inventario" data-testid="portal-cifras">
+        <app-metric-card
+          label="Operaciones"
+          [value]="e.data.operaciones"
+          hint="endpoints de la API"
+          tone="primary"
+          icon="route"
+        />
+        <app-metric-card
+          label="Procesos"
+          [value]="e.data.procesos"
+          hint="módulos y flujos críticos"
+          tone="info"
+          icon="orders"
+        />
+        <app-metric-card
+          label="Tablas"
+          [value]="e.data.tablas"
+          hint="del modelo de datos"
+          tone="neutral"
+          icon="folder"
+        />
+        <app-metric-card
+          label="Columnas"
+          [value]="e.data.columnas"
+          hint="en esas tablas"
+          tone="neutral"
+          icon="note"
+        />
+      </section>
+
+      <p class="hub__origen">
+        Inventario <code>{{ e.data.hash }}</code> leído de <code>{{ e.data.origen }}</code
+        >.
+      </p>
+
+      <nav class="hub__accesos" aria-label="Áreas del portal">
+        <a class="hub__acceso" [routerLink]="portalUrl('systems/operations')">
+          <strong>Operaciones</strong>
+          <span>Riesgo, tablas que toca, pruebas y de qué depende cada endpoint.</span>
+        </a>
+        <a class="hub__acceso" [routerLink]="portalUrl('systems/flows')">
+          <strong>Mapa de rutas</strong>
+          <span>Qué flujo usa cada ruta y qué señales de atención tiene.</span>
+        </a>
+        <a class="hub__acceso" [routerLink]="portalUrl('catalog/tables')">
+          <strong>Tablas</strong>
+          <span>La ficha de cada tabla: columnas, relaciones, índices y gobierno.</span>
+        </a>
+        <a class="hub__acceso" [routerLink]="portalUrl('lineage')">
+          <strong>Linaje</strong>
+          <span>Qué operación lee o escribe qué tabla, y qué depende de qué.</span>
+        </a>
+      </nav>
+    }
+  }
+</app-view-state-host>

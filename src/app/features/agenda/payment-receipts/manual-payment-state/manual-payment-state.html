@@ -1,0 +1,72 @@
+<fieldset class="manual-payment" data-testid="payment-manual">
+  <legend class="manual-payment__legend">Marcar sin comprobante</legend>
+  <p class="manual-payment__hint">
+    Para el pago en efectivo, o cuando el paciente no va a subir un comprobante. Queda firmado con
+    su nombre y la hora.
+  </p>
+
+  <div class="manual-payment__options">
+    @for (option of options; track option.code) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [attr.data-testid]="'payment-manual-' + option.code"
+        [attr.aria-pressed]="current()?.state === option.code"
+        [disabled]="disabled() || current()?.state === option.code"
+        (clicked)="selectState(option.code)"
+      >
+        <app-nav-icon [name]="option.icon" />
+        {{ option.label }}
+      </button>
+    }
+    @if (current(); as state) {
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        data-testid="payment-manual-insurance"
+        [disabled]="disabled()"
+        (clicked)="toggleInsurance()"
+      >
+        <app-nav-icon name="umbrella" />
+        {{ state.insuranceUsed ? 'Quitar «con seguro»' : 'Marcar «con seguro»' }}
+      </button>
+    }
+  </div>
+  @if (showsAmount()) {
+    <div class="manual-payment__amount" data-testid="payment-amount">
+      @if (receivedLabel(); as received) {
+        <p class="manual-payment__saved" data-testid="payment-amount-saved">
+          Recibido: <strong>{{ received }}</strong>
+        </p>
+      }
+      <app-form-field
+        [label]="receivedLabel() ? 'Registrar otro pago (Bs)' : 'Monto recibido (Bs)'"
+        hint="Opcional. Mayor que 0, con hasta dos decimales. Se suma a lo recibido y queda en la factura de la cita."
+        [errorMessage]="problem()"
+      >
+        <app-input
+          testId="payment-amount-input"
+          inputMode="decimal"
+          autocomplete="off"
+          placeholder="150,00"
+          [hasError]="problem() !== null"
+          [value]="draft()"
+          (valueChange)="setDraft($event)"
+        />
+      </app-form-field>
+      <div class="manual-payment__amount-actions">
+        <button
+          app-button
+          size="sm"
+          data-testid="payment-amount-save"
+          [disabled]="!canSave()"
+          (clicked)="saveAmount()"
+        >
+          Registrar pago
+        </button>
+      </div>
+    </div>
+  }
+</fieldset>

@@ -1,4 +1,6 @@
-import { booleanAttribute, ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { verificationFromSeal } from '../../../../core/verification/verification-status';
+import { VerificationBadge } from '../../atoms/verification-badge/verification-badge';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { SpecialtyIcon } from '../../atoms/specialty-icon/specialty-icon';
 import { StatusSeal } from '../status-seal/status-seal';
@@ -11,8 +13,6 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  * ```html
  * <app-specialty-badge
  *   [especialidad]="e.nombre"
- *   [principal]="e.principal"
- *   [certificada]="e.certificada"
  *   [estado]="e.estado"
  *   [sello]="e.sello"
  * />
@@ -26,9 +26,17 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  * la miraba**: en el perfil propio se repartía por un hash del nombre, y en la
  * ficha que ve un paciente iban todas grises.
  *
- * ## El tono: sólo dos, y la distinción no la hace el color
+ * ## El tono: uno solo, igual para todas
  *
- * `primary` para la principal, `secondary` para el resto. Nada más.
+ * `secondary`, para todas las especialidades. Hasta el 23/09/2026 la principal
+ * iba en `primary` y con la palabra «Principal»; el médico pidió que todas se
+ * vieran iguales (D-01) y la distinción se retiró de la insignia. El dato
+ * `isPrimary` sigue en el contrato: sólo dejó de mostrarse.
+ *
+ * Por la misma razón, desde el 24/09/2026 tampoco marca la certificación del
+ * consejo: una tilde en una sola insignia la volvía distinta de las otras, que
+ * es justo lo que D-01 quita. El dato `boardCertified` sigue en el contrato y
+ * se dice con palabras donde corresponde, en «Credenciales» de la ficha.
  *
  * **Por qué no el hash.** Repartía `success`, `info` y `secondary` entre
  * especialidades, y los dos primeros **significan algo** en este sistema, así
@@ -47,9 +55,8 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  *
  * ## Nada se dice sólo con color
  *
- * «Principal» lleva la palabra, no sólo el tono. «Certificada» lleva un glifo
- * —forma, no color— con su texto para lectores. El estado lo pone
- * `app-status-seal`, que ya exige `label` por la misma razón.
+ * El estado lo pone `app-status-seal`, que exige `label` por la misma razón:
+ * el tono acompaña al texto, no lo reemplaza.
  *
  * ## Por qué vive en `organisms/` y no en `molecules/`
  *
@@ -66,28 +73,21 @@ import type { StatusSealVariant } from '../status-seal/status-seal.types';
  */
 @Component({
   selector: 'app-specialty-badge',
-  imports: [SpecialtyIcon, StatusSeal],
+  imports: [SpecialtyIcon, StatusSeal, VerificationBadge],
   templateUrl: './specialty-badge.html',
   styleUrl: './specialty-badge.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
-    '[class]': 'badgeClasses()',
+    class: 'specialty-badge tone--secondary',
   },
 })
 export class SpecialtyBadge {
   /** El nombre de la especialidad. El ícono se resuelve de acá adentro. */
   readonly especialidad = input.required<string>();
 
-  readonly principal = input(false, { transform: booleanAttribute });
-  readonly certificada = input(false, { transform: booleanAttribute });
-
   /** El estado en palabras. Sin texto no se dibuja sello, aunque haya `sello`. */
   readonly estado = input('');
   readonly sello = input<StatusSealVariant | null>(null);
-
-  protected readonly badgeClasses = computed(
-    () => `specialty-badge tone--${this.principal() ? 'primary' : 'secondary'}`,
-  );
 
   /**
    * El sello se dibuja sólo con las dos mitades: la variante pone tono y forma,
@@ -97,4 +97,16 @@ export class SpecialtyBadge {
   protected readonly muestraSello = computed(
     () => this.sello() !== null && this.estado().trim() !== '',
   );
+
+  /**
+   * La verificación de la especialidad, para el átomo. Sólo cuando el servidor
+   * trajo un estado y éste dice algo: aprobada, en trámite o vencida. Un estado
+   * que no se pudo leer no se inventa como «Verificado».
+   */
+  protected readonly verificacion = computed(() =>
+    this.muestraSello() ? verificationFromSeal(this.sello()) : 'UNVERIFIED',
+  );
+
+  /** Un rechazo no es una verificación: sigue siendo el sello del trámite (el dueño lo necesita ver). */
+  protected readonly rechazada = computed(() => this.muestraSello() && this.sello() === 'rejected');
 }

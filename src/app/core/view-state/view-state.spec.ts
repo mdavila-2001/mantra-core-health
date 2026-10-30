@@ -2,6 +2,7 @@ import {
   canRequestSensitiveData,
   dataOf,
   empty,
+  fieldIssueOf,
   forbidden,
   hasData,
   isEmpty,
@@ -157,9 +158,9 @@ describe('ViewState · los 9 estados del M34', () => {
     });
 
     it('S5 sí puede llevar una salida: distingue la puerta del muro', () => {
-      const muro = forbidden({ message: 'No tenés permiso sobre esta sección' });
+      const muro = forbidden({ message: 'No tiene permiso sobre esta sección' });
       const puerta = forbidden({
-        message: 'Verificá tu identidad para continuar',
+        message: 'Verifique su identidad para continuar',
         nextAction: { label: 'Verificar identidad', route: '/identity/me' },
       });
 
@@ -277,6 +278,26 @@ describe('ViewState · los 9 estados del M34', () => {
       expect('lastAttemptAt' in offline()).toBe(false);
       const intento = new Date('2026-07-31T10:00:00Z');
       expect(offline(intento).lastAttemptAt).toBe(intento);
+    });
+  });
+
+  describe('fieldIssueOf', () => {
+    const rechazo = validation([
+      { field: 'medicationConceptId', message: 'Elija un medicamento del catálogo.' },
+      { message: 'Revise lo ingresado.' },
+    ]);
+
+    it('devuelve el mensaje que la API ancló al campo', () => {
+      expect(fieldIssueOf(rechazo, 'medicationConceptId')).toBe('Elija un medicamento del catálogo.');
+    });
+
+    it('devuelve texto vacío si el campo no tiene problema', () => {
+      expect(fieldIssueOf(rechazo, 'otroCampo')).toBe('');
+    });
+
+    it('devuelve texto vacío fuera de S4: no hay problemas por campo que mostrar', () => {
+      expect(fieldIssueOf(loading(), 'medicationConceptId')).toBe('');
+      expect(fieldIssueOf(unexpectedError('req-1'), 'medicationConceptId')).toBe('');
     });
   });
 });

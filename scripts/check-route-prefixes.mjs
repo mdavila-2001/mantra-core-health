@@ -25,6 +25,9 @@
  *
  *   - `core/navigation/navigation.map.ts`  las secciones del armazón
  *   - `app/app.routes.ts`                  raíz, pantallas hijas y redirecciones
+ *   - `features/alovida/alovida.routes.ts` los segmentos de módulo del bloque
+ *                                          generado de la bóveda (sólo los de
+ *                                          primer nivel; sus pantallas cuelgan de ellos)
  *   - los helpers `pantallaDe*(subpath, …)`, recompuestos con su base
  *
  * Uso: node scripts/check-route-prefixes.mjs
@@ -44,6 +47,7 @@ function prefijosDeLaApi() {
 
 const rutasApp = read(join(SRC_ROOT, 'app/app.routes.ts'));
 const rutasNav = read(join(SRC_ROOT, 'app/core/navigation/navigation.map.ts'));
+const rutasAlovida = read(join(SRC_ROOT, 'app/features/alovida/alovida.routes.ts'));
 
 /**
  * Toda ruta declarada, sin barra inicial.
@@ -57,6 +61,15 @@ function rutasDeclaradas() {
     for (const [, ruta] of fuente.matchAll(/path:\s*'([^']*)'/g)) {
       if (ruta !== '' && ruta !== '**') rutas.add(ruta);
     }
+  }
+
+  // El bloque generado de la bóveda: `    path: 'shared-data'`, con cuatro espacios,
+  // es un módulo (o la portada); sus pantallas, con ocho, cuelgan de él. Los
+  // segmentos de módulo son ingleses desde TAREA-29 y el proxy los compara por
+  // inicio igual que a cualquier otro: `/terminology` era el candidato obvio
+  // para V03 y se comía el módulo entero (por eso es `vocabulary`).
+  for (const [, ruta] of rutasAlovida.matchAll(/^ {4}path:\s*'([^']+)'/gm)) {
+    rutas.add(ruta);
   }
 
   // Las redirecciones heredadas y las nuevas viven en tablas, no en `path:`.
@@ -141,7 +154,9 @@ if (problemas.length > 0) {
 }
 
 console.log('✓ check-route-prefixes');
-console.log(`  ${rutas.length} rutas del router, ninguna colisiona con los ${prefijos.length} prefijos de la API`);
+console.log(
+  `  ${rutas.length} rutas del router, ninguna colisiona con los ${prefijos.length} prefijos de la API`,
+);
 for (const [ruta, motivo] of ANIDADAS) {
   console.log(`  excepción declarada: '${ruta}' — ${motivo}`);
 }

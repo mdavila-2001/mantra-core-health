@@ -131,7 +131,7 @@ export class AttachmentDialog {
     () => !(this.uploader()?.tieneCambiosPendientes() ?? false),
   );
 
-  /** Termina el lote: avisa y cierra. */
+  /** Termina el lote: avisa y cierra en el acto. */
   protected alAdjuntar(): void {
     this.attached.emit();
     // `close()` del modal reemite `closed`. Si el diálogo todavía no se montó
@@ -142,7 +142,11 @@ export class AttachmentDialog {
       this.closed.emit();
       return;
     }
-    modal.close();
+    // `force`: terminar el lote es confirmar, y quien confirmó terminó. Con la
+    // salida de 140 ms el `<dialog>` sigue siendo modal, la página de atrás
+    // inerte y, al acabar, el foco vuelve al botón de origen (#1432). Descartar
+    // —`alIntentarCerrar`— sí anima.
+    modal.close(true);
   }
 
   /**
@@ -166,7 +170,7 @@ export class AttachmentDialog {
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar los archivos elegidos?',
       message:
-        'Todavía no se adjuntaron. Si cerrás, la selección se pierde y hay que volver a elegirlos.',
+        'Todavía no se adjuntaron. Si cierra, la selección se pierde y hay que volver a elegirlos.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir adjuntando',
       destructive: true,

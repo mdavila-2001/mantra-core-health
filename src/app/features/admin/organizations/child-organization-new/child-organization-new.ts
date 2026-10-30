@@ -12,7 +12,6 @@ import {
   type NewChildTenant,
   type TenantTypeCode,
 } from '../../../../core/data-access/directory/directory.types';
-import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
@@ -24,11 +23,18 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { CampoPersonalizado } from '../../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
+import { searchConceptOptions } from '../concept-search';
+import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del envío: la organización de la ruta no está (o no se puede ver). */
+const ORGANIZACION_NO_ENCONTRADA =
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Largos que declara `CreateChildTenantDto`. */
 const MAX_CODIGO = 100;
@@ -58,7 +64,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
   imports: [
     Alert,
     AnnounceOnAppear,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -69,7 +75,6 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
 })
 export class ChildOrganizationNew {
   private readonly directory = inject(DirectoryClient);
-  private readonly iam = inject(IamClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -110,12 +115,43 @@ export class ChildOrganizationNew {
     tipo: new FormControl<TenantTypeCode | null>(null, {
       validators: [Validators.required],
     }),
+
+    /*
+     * Lo que se elige en un buscador vive también en el grupo, por la misma
+     * razón que el tipo: el motor valida un campo `custom` cuando el grupo
+     * tiene un control con su `key`. Como señales sueltas, «Dónde opera» se
+     * daba por completa sin jurisdicción y «Crear sub-organización» no hacía
+     * nada, sin petición ni mensaje. País y jurisdicción se apagan en los
+     * tipos que no son territoriales.
+     */
+    pais: new FormControl<ReferenceOption | null>(null, { validators: [Validators.required] }),
+    jurisdiccion: new FormControl<ReferenceOption | null>(null, {
+      validators: [Validators.required],
+    }),
+    administrador: new FormControl<ReferenceOption | null>(null, {
+      validators: [Validators.required],
+    }),
   });
 
   protected readonly tipo = toSignal(this.form.controls.tipo.valueChanges, {
     initialValue: this.form.controls.tipo.value,
   });
-  private readonly enviado = signal(false);
+
+  constructor() {
+    // `valueChanges` y no un `effect`: el cambio de tipo tiene que apagar o
+    // encender país y jurisdicción antes de cualquier envío, no en la cola.
+    this.form.controls.tipo.valueChanges.subscribe((tipo) => this.applyTenantType(tipo));
+    this.applyTenantType(this.form.controls.tipo.value);
+  }
+
+  /** Enciende país y jurisdicción sólo para los tipos territoriales. */
+  private applyTenantType(tipo: TenantTypeCode | null): void {
+    const territorial = tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
+    for (const control of [this.form.controls.pais, this.form.controls.jurisdiccion]) {
+      if (territorial) control.enable({ emitEvent: false });
+      else control.disable({ emitEvent: false });
+    }
+  }
 
   protected readonly opcionesDeTipo: readonly SelectOption<TenantTypeCode>[] =
     TENANT_TYPE_CODES.map((code) => ({ value: code, label: TENANT_TYPE_LABELS[code] }));
@@ -130,7 +166,7 @@ export class ChildOrganizationNew {
    * controles de texto.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Identificación',
         hint: 'Con qué se la encuentra en la plataforma.',
@@ -142,8 +178,8 @@ export class ChildOrganizationNew {
             required: true,
             testId: 'alta-filial-codigo',
             mensajeDeError: this.codigoEnConflicto()
-              ? 'Ya existe una organización con este código. Probá con otro.'
-              : 'Escribí el código de la sub-organización.',
+              ? 'Ya existe una organización con este código. Pruebe con otro.'
+              : 'Escriba el código de la sub-organización.',
           },
           {
             key: 'legalName',
@@ -151,7 +187,7 @@ export class ChildOrganizationNew {
             control: 'text' as const,
             required: true,
             testId: 'alta-filial-razon',
-            mensajeDeError: 'Escribí la razón social (hasta 300 caracteres).',
+            mensajeDeError: 'Escriba la razón social (hasta 300 caracteres).',
           },
         ],
       },
@@ -165,8 +201,8 @@ export class ChildOrganizationNew {
             control: 'select' as const,
             required: true,
             options: this.opcionesDeTipo,
-            placeholder: 'Elegí un tipo',
-            mensajeDeError: 'Elegí el tipo de la sub-organización.',
+            placeholder: 'Elija un tipo',
+            mensajeDeError: 'Elija el tipo de la sub-organización.',
           },
         ],
       },
@@ -179,9 +215,10 @@ export class ChildOrganizationNew {
                 {
                   key: 'pais',
                   label: 'País',
-                  hint: 'Buscá por nombre; el código acompaña para distinguir homónimos.',
+                  hint: 'Busque por nombre; el código acompaña para distinguir homónimos.',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError: 'Elija el país donde opera la sub-organización.',
                 },
                 {
                   key: 'jurisdiccion',
@@ -189,6 +226,8 @@ export class ChildOrganizationNew {
                   hint: 'La jurisdicción regulatoria, por ejemplo «Bolivia · JUR_BO».',
                   control: 'custom' as const,
                   required: true,
+                  mensajeDeError:
+                    'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
                 },
               ],
             },
@@ -201,9 +240,10 @@ export class ChildOrganizationNew {
           {
             key: 'administrador',
             label: 'Administrador',
-            hint: 'Buscá por nombre o correo y elegí de la lista.',
+            hint: 'Busque por nombre o correo y elija de la lista.',
             control: 'custom' as const,
             required: true,
+            mensajeDeError: 'Elija la cuenta que va a administrarla.',
           },
         ],
       },
@@ -215,54 +255,45 @@ export class ChildOrganizationNew {
     return tipo !== null && TERRITORIAL_TENANT_TYPES.includes(tipo);
   });
 
-  protected readonly tipoFaltante = computed(() => this.enviado() && this.tipo() === null);
 
   /* ---- administrador de la filial: se elige, nunca se tipea -------------- */
 
-  protected readonly administrador = signal<ReferenceOption | null>(null);
-  protected readonly candidatosAdmin = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscandoAdmin = signal(false);
+  protected readonly administrador = toSignal(this.form.controls.administrador.valueChanges, {
+    initialValue: this.form.controls.administrador.value,
+  });
+  /** La búsqueda del administrador: errores distintos del vacío y la última tecla manda. */
+  protected readonly administradores = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
-  protected readonly adminFaltante = computed(
-    () => this.enviado() && this.administrador() === null,
-  );
 
   /* ---- país y jurisdicción: obligatorios para los tipos territoriales ---- */
 
-  protected readonly pais = signal<ReferenceOption | null>(null);
+  protected readonly pais = toSignal(this.form.controls.pais.valueChanges, {
+    initialValue: this.form.controls.pais.value,
+  });
   protected readonly candidatosPais = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoPais = signal(false);
 
-  protected readonly jurisdiccion = signal<ReferenceOption | null>(null);
+  protected readonly jurisdiccion = toSignal(this.form.controls.jurisdiccion.valueChanges, {
+    initialValue: this.form.controls.jurisdiccion.value,
+  });
   protected readonly candidatosJurisdiccion = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoJurisdiccion = signal(false);
-
-  protected readonly paisFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.pais() === null,
-  );
-  protected readonly jurisdiccionFaltante = computed(
-    () => this.enviado() && this.esTerritorial() && this.jurisdiccion() === null,
-  );
 
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message || 'Necesitás administración de seguridad para crear una filial.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Necesita administración de seguridad para crear una filial.',
+      ORGANIZACION_NO_ENCONTRADA,
+    ),
+  );
 
   /** El código es único global: un `409` sólo puede venir de él. */
   protected readonly codigoEnConflicto = computed(() => {
@@ -273,81 +304,30 @@ export class ChildOrganizationNew {
     );
   });
 
-  protected buscarAdministrador(texto: string): void {
-    if (texto === '') {
-      this.candidatosAdmin.set([]);
-      return;
-    }
-
-    this.buscandoAdmin.set(true);
-    this.iam.searchUsers({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.candidatosAdmin.set(
-          pagina.items.map((usuario) => ({
-            value: usuario.id,
-            label: usuario.displayName,
-            ...(usuario.emailVerified ? {} : { hint: 'Correo sin verificar' }),
-          })),
-        );
-        this.buscandoAdmin.set(false);
-      },
-      error: () => {
-        this.candidatosAdmin.set([]);
-        this.buscandoAdmin.set(false);
-      },
-    });
-  }
-
   protected buscarPais(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosPais, this.buscandoPais);
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosPais,
+      this.buscandoPais,
+    );
   }
 
   protected buscarJurisdiccion(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosJurisdiccion, this.buscandoJurisdiccion);
-  }
-
-  /**
-   * Busca conceptos y los traduce a opciones, con el código como pista.
-   *
-   * @param texto - Lo que se escribió en el buscador.
-   * @param destino - Dónde dejar los candidatos.
-   * @param cargando - Bandera de búsqueda en curso.
-   */
-  private buscarConcepto(
-    texto: string,
-    destino: { set: (opciones: readonly ReferenceOption[]) => void },
-    cargando: { set: (valor: boolean) => void },
-  ): void {
-    if (texto === '') {
-      destino.set([]);
-      return;
-    }
-
-    cargando.set(true);
-    this.terminology.searchConcepts({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        destino.set(
-          pagina.items.map((concepto) => ({
-            value: concepto.conceptId,
-            label: concepto.display,
-            hint: concepto.code,
-          })),
-        );
-        cargando.set(false);
-      },
-      error: () => {
-        destino.set([]);
-        cargando.set(false);
-      },
-    });
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosJurisdiccion,
+      this.buscandoJurisdiccion,
+    );
   }
 
   protected submit(): void {
     if (this.enviando()) {
       return;
     }
-
-    this.enviado.set(true);
 
     if (!this.puedeEnviar()) {
       this.form.markAllAsTouched();
