@@ -7,7 +7,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
-import { DiagnosisBlock } from '../patient-chart/diagnosis-block/diagnosis-block';
+import { PresuntivoForm } from '../patient-chart/diagnosis-block/presuntivo-form/presuntivo-form';
 import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
 import { Consultation } from './consultation';
 import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
@@ -371,7 +371,7 @@ describe('Consultation', () => {
    * filas de motivos, `Escape` o la X perdían todo sin preguntar.
    */
   describe('cerrar una casilla con algo escrito', () => {
-    async function abrirDiagnostico(): Promise<DiagnosisBlock> {
+    async function abrirDiagnostico(): Promise<PresuntivoForm> {
       await responderLectura();
       interno<(clave: string) => void>('abrir').call(componente, 'diagnosticos');
       await harness.fixture.whenStable();
@@ -390,7 +390,8 @@ describe('Consultation', () => {
         .match((r) => r.url === '/terminology/concepts')
         .forEach((r) => r.flush({ items: [], count: 0, limit: 200 }));
       await harness.fixture.whenStable();
-      return harness.fixture.debugElement.query(By.directive(DiagnosisBlock)).componentInstance as DiagnosisBlock;
+      return harness.fixture.debugElement.query(By.directive(PresuntivoForm))
+        .componentInstance as PresuntivoForm;
     }
 
     it('sin nada escrito se cierra sin preguntar', async () => {
