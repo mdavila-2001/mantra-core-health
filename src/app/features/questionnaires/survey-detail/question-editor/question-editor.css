@@ -165,15 +165,18 @@
 
 .editor-pregunta__acciones {
     display: flex;
+    flex: 1 1 auto;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--sp-2);
+    justify-content: flex-end;
+    gap: var(--sp-3);
 }
 
 /* Borrar se separa de guardar y cancelar: es la única de las tres que no se
-   deshace, y pegada a «Listo» se pulsa por error. */
+   deshace, y pegada a «Listo» se pulsa por error. Va primera y empuja a las
+   otras dos hacia la derecha. */
 .editor-pregunta__borrar {
-    margin-inline-start: auto;
+    margin-inline-end: auto;
     color: var(--st-error-fg, var(--text-primary));
 }
 
