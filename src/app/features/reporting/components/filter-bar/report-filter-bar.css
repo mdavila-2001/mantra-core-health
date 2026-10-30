@@ -14,6 +14,8 @@
 .fb__controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--sp-3) var(--sp-4); }
 .fb__field { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; flex: 1 1 11rem; }
 .fb__field--wide { flex-basis: 15rem; }
+/* La moneda ocupa lo que miden sus dos opciones: con `flex: 1` el conmutador se partía en dos filas en tableta. */
+.fb__field--moneda { flex: 0 0 auto; }
 .fb__label { font-size: var(--fs-overline); font-weight: 700; color: var(--text-secondary); }
 
 .fb__active { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }

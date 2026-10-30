@@ -176,11 +176,13 @@ function construirPartes(
             label: {
               show: true,
               position: 'right',
+              // Sin distancia, el rótulo del primer paso (el más ancho) arrancaba bajo el borde oblicuo del trapecio.
+              distance: 16,
               color: tema.texto,
               lineHeight: 16,
               formatter: (p: ParamEje) => `${p.name ?? ''}\n${formatearValor(readValue(p), spec.unidad, true)}`,
             },
-            labelLine: { show: true, length: 36, lineStyle: { color: tema.linea } },
+            labelLine: { show: true, length: 48, lineStyle: { color: tema.linea } },
             data: datos,
           }
         : {
