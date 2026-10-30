@@ -1,109 +1,19 @@
 import type { EChartsCoreOption } from 'echarts/core';
 
 import { formatearFecha, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
-import type {
-  ConfigFiltro,
-  ChartSpec,
-  DatosGrafico,
-  SerieCartesiana,
-  UnidadValor,
-} from '@core/data-access/reporting/reporting.types';
+import type { ConfigFiltro, DatosGrafico } from '@core/data-access/reporting/reporting.types';
 import { rampColorAt, readableOn } from './chart-color';
-import type { ChartTheme } from './chart-theme';
+import { construirCascada, construirVelas } from './chart-option.cascada';
+import { base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase, unitOf } from './chart-option.common';
+
+export { escapar, type ModoGrafico, type OpcionesBuild } from './chart-option.common';
 
 /* ============================================================================
     Traduce un `ChartSpec` a las opciones de Apache ECharts, cumpliendo el
     contrato: leyenda y tooltip SIEMPRE presentes, `null` como «Sin dato», y el
-    elemento elegido por un filtro resaltado.
+    elemento elegido por un filtro resaltado. Los helpers comunes viven en
+    `chart-option.common.ts` y la cascada y las velas en `chart-option.cascada.ts`.
     ========================================================================== */
-
-export type ModoGrafico = 'normal' | 'velas';
-
-export interface OpcionesBuild {
-  readonly spec: ChartSpec;
-  readonly tema: ChartTheme;
-  readonly modo: ModoGrafico;
-  /** Valor del elemento filtrado (nombre de categoría/parte), si lo hay. */
-  readonly seleccion: string | null;
-}
-
-export function escapar(texto: string): string {
-  return texto
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function prefersMoreContrast(): boolean {
-  return (
-    typeof window.matchMedia === 'function' &&
-    (window.matchMedia('(prefers-contrast: more)').matches || window.matchMedia('(forced-colors: active)').matches)
-  );
-}
-
-function base(tema: ChartTheme): Record<string, unknown> {
-  return {
-    backgroundColor: 'transparent',
-    color: tema.serie,
-    textStyle: { color: tema.texto, fontFamily: tema.fuente },
-    // Los patrones de relleno son para quien pide más contraste (ADR-0017): por defecto
-    // ensucian marcas pequeñas y las etiquetas; la leyenda, el tooltip y la tabla ya llevan la identidad.
-    aria: { enabled: true, decal: { show: prefersMoreContrast() } },
-    animation: !(typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
-  };
-}
-
-function leyenda(tema: ChartTheme, nombres?: readonly string[]): Record<string, unknown> {
-  return {
-    show: true,
-    type: 'plain',
-    bottom: 0,
-    left: 'center',
-    width: '92%',
-    itemGap: 14,
-    textStyle: { color: tema.texto, fontSize: 12 },
-    ...(nombres === undefined ? {} : { data: nombres }),
-  };
-}
-
-function tooltipBase(tema: ChartTheme): Record<string, unknown> {
-  return {
-    confine: true,
-    appendToBody: false,
-    backgroundColor: tema.fondoTooltip,
-    borderColor: tema.bordeTooltip,
-    borderWidth: 1,
-    padding: [8, 10],
-    textStyle: { color: tema.texto, fontSize: 12 },
-    extraCssText: 'box-shadow: var(--shadow-md);',
-  };
-}
-
-interface ParamEje {
-  readonly marker?: string;
-  readonly seriesName?: string;
-  readonly axisValueLabel?: string;
-  readonly name?: string;
-  readonly value?: unknown;
-  readonly data?: unknown;
-}
-
-const num = (v: unknown): number | null => (typeof v === 'number' && !Number.isNaN(v) ? v : null);
-
-function readValue(p: ParamEje): number | null {
-  if (Array.isArray(p.value)) {
-    return num(p.value[p.value.length - 1]);
-  }
-  if (p.data !== null && typeof p.data === 'object' && 'value' in (p.data as object)) {
-    return num((p.data as { value: unknown }).value);
-  }
-  return num(p.value);
-}
-
-function unitOf(serie: SerieCartesiana | undefined, general: UnidadValor): UnidadValor {
-  return serie?.unidad ?? general;
-}
 
 function construirCartesiano(
   o: OpcionesBuild,
@@ -420,144 +330,6 @@ function construirMedidor(
   };
 }
 
-function construirCascada(
-  o: OpcionesBuild,
-  d: Extract<DatosGrafico, { tipo: 'cascada' }>,
-): EChartsCoreOption {
-  const { tema, spec, seleccion } = o;
-  let acumulado = 0;
-  const base0: number[] = [];
-  const sube: (number | null)[] = [];
-  const baja: (number | null)[] = [];
-  const total: (number | null)[] = [];
-  for (const paso of d.pasos) {
-    if (paso.total === true) {
-      base0.push(0);
-      sube.push(null);
-      baja.push(null);
-      total.push(paso.valor);
-      acumulado = paso.valor;
-    } else if (paso.valor >= 0) {
-      base0.push(acumulado);
-      sube.push(paso.valor);
-      baja.push(null);
-      total.push(null);
-      acumulado += paso.valor;
-    } else {
-      acumulado += paso.valor;
-      base0.push(acumulado);
-      sube.push(null);
-      baja.push(-paso.valor);
-      total.push(null);
-    }
-  }
-  const nombres = d.pasos.map((p) => p.nombre);
-  const idxSel = seleccion === null ? -1 : nombres.indexOf(seleccion);
-  const withOpacity = (arr: (number | null)[]) =>
-    arr.map((v, i) => (v === null ? null : idxSel >= 0 && i !== idxSel ? { value: v, itemStyle: { opacity: 0.35 } } : v));
-  return {
-    ...base(tema),
-    // Solo las series que existen: «Aumento» en la leyenda de un puente que solo baja no significa nada.
-    legend: leyenda(
-      tema,
-      [
-        ['Aumento', sube],
-        ['Disminución', baja],
-        ['Total', total],
-      ].flatMap(([nombre, valores]) => ((valores as (number | null)[]).some((v) => v !== null) ? [nombre as string] : [])),
-    ),
-    tooltip: {
-      ...tooltipBase(tema),
-      trigger: 'axis',
-      axisPointer: { type: 'shadow' },
-      formatter: (params: ParamEje | ParamEje[]) => {
-        const lista = (Array.isArray(params) ? params : [params]).filter((p) => p.seriesName !== 'Base' && readValue(p) !== null);
-        const paso = d.pasos[nombres.indexOf(lista[0]?.name ?? '')];
-        const v = paso?.valor ?? null;
-        return `<div style="font-weight:600">${escapar(lista[0]?.name ?? '')}</div><div>${paso?.total === true ? 'Total' : v !== null && v < 0 ? 'Disminución' : 'Aumento'}: <b>${escapar(formatearValor(v, spec.unidad))}</b></div>`;
-      },
-    },
-    grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
-    // Con las barras de los totales desde cero, un paso del 1 % del total mide 1–3 px: el valor firmado
-    // viaja en la propia etiqueta del eje para que se lea sin pasar el ratón por encima.
-    xAxis: {
-      type: 'category',
-      data: nombres,
-      axisLabel: {
-        color: tema.textoSuave,
-        interval: 0,
-        width: 96,
-        overflow: 'break',
-        formatter: (nombre: string) => {
-          const paso = d.pasos[nombres.indexOf(nombre)];
-          if (paso === undefined) {
-            return nombre;
-          }
-          const texto = formatearValor(Math.abs(paso.valor), spec.unidad, true);
-          return `${nombre}\n${paso.total === true ? texto : `${paso.valor < 0 ? '−' : '+'}${texto}`}`;
-        },
-      },
-      axisLine: { lineStyle: { color: tema.linea } },
-    },
-    // Con el eje desde cero las variaciones (1–5 % del total) quedan como rayitas: el eje arranca
-    // cerca del mínimo para que cada paso se lea, y el borde inferior no pretende ser el cero.
-    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
-    series: [
-      { name: 'Base', type: 'bar', stack: 'cascada', silent: true, itemStyle: { color: 'transparent' }, data: base0, tooltip: { show: false } },
-      { name: 'Aumento', type: 'bar', stack: 'cascada', data: withOpacity(sube), itemStyle: { color: tema.bueno }, barMaxWidth: 40, barMinHeight: 3 },
-      { name: 'Disminución', type: 'bar', stack: 'cascada', data: withOpacity(baja), itemStyle: { color: tema.malo }, barMaxWidth: 40, barMinHeight: 3 },
-      { name: 'Total', type: 'bar', stack: 'cascada', data: withOpacity(total), itemStyle: { color: tema.serie[0] }, barMaxWidth: 40 },
-    ],
-  };
-}
-
-function construirVelas(o: OpcionesBuild): EChartsCoreOption {
-  const { tema, spec } = o;
-  const velas = spec.velas?.velas ?? [];
-  const seriesName = 'Velas (apertura–cierre)';
-  return {
-    ...base(tema),
-    legend: leyenda(tema, [seriesName]),
-    tooltip: {
-      ...tooltipBase(tema),
-      trigger: 'axis',
-      axisPointer: { type: 'cross' },
-      formatter: (params: ParamEje | ParamEje[]) => {
-        const p = Array.isArray(params) ? params[0] : params;
-        const v = velas.find((x) => x.fecha === p?.name);
-        if (v === undefined) {
-          return '';
-        }
-        const f = (n: number) => escapar(formatearValor(n, spec.unidad));
-        const cambio = v.apertura === 0 ? null : ((v.cierre - v.apertura) / v.apertura) * 100;
-        return `<div style="font-weight:600;margin-bottom:4px">${escapar(formatearFecha(v.fecha, true))}</div>
-          <div>Apertura: <b>${f(v.apertura)}</b></div><div>Cierre: <b>${f(v.cierre)}</b></div>
-          <div>Mínimo: <b>${f(v.minimo)}</b></div><div>Máximo: <b>${f(v.maximo)}</b></div>
-          <div>Variación: <b>${cambio === null ? NO_DATA : `${cambio >= 0 ? '+' : '−'}${Math.abs(cambio).toFixed(1)} %`}</b> · ${cambio === null ? '' : (cambio >= 0) === (spec.velas?.subirEsMalo !== true) ? 'Mejora' : 'Empeora'}</div>`;
-      },
-    },
-    grid: { left: 8, right: 16, top: 20, bottom: 84, containLabel: true },
-    dataZoom: [{ type: 'inside' }, { type: 'slider', height: 18, bottom: 34, borderColor: tema.rejilla, textStyle: { color: tema.textoSuave } }],
-    xAxis: { type: 'category', data: velas.map((v) => v.fecha), axisLabel: { color: tema.textoSuave, hideOverlap: true, formatter: (f: string) => formatearFecha(f) }, axisLine: { lineStyle: { color: tema.linea } } },
-    yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
-    series: [
-      {
-        name: seriesName,
-        type: 'candlestick',
-        // [apertura, cierre, mínimo, máximo]
-        data: velas.map((v) => [v.apertura, v.cierre, v.minimo, v.maximo]),
-        // Color = mejora/empeora (según el sentido del indicador); relleno = sube (sólido) / baja (hueco).
-        itemStyle: {
-          color: spec.velas?.subirEsMalo === true ? tema.malo : tema.bueno,
-          borderColor: spec.velas?.subirEsMalo === true ? tema.malo : tema.bueno,
-          color0: tema.superficie,
-          borderColor0: spec.velas?.subirEsMalo === true ? tema.bueno : tema.malo,
-          borderWidth: 1.5,
-        },
-      },
-    ],
-  };
-}
 
 /**
  * En un lienzo angosto (teléfono) cinco nombres de categoría no caben en horizontal y se montan
@@ -594,14 +366,14 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
           grid: { left: 8 },
         });
       }
-      if (d.horizontal !== true && d.categorias.length >= 2 && d.categorias.length <= 3 && d.categorias.some((c) => c.length > 10)) {
+      if (d.categorias.length >= 2 && d.categorias.length <= 3 && d.categorias.some((c) => c.length > 10)) {
         // Con 2 o 3 categorías de nombre largo («Notificación push»), en un lienzo angosto cada nombre se parte
         // dentro de su casilla; si no, ECharts oculta el del medio por solaparse y parece una barra sin nombre.
         return conMovil(construirCartesiano(o, d), {
           xAxis: { axisLabel: { width: Math.floor(240 / d.categorias.length), overflow: 'break', hideOverlap: false } },
         });
       }
-      return d.horizontal !== true && d.categorias.length >= 4 && d.categorias.length <= 12
+      return d.categorias.length >= 4 && d.categorias.length <= 12
         ? conMovil(construirCartesiano(o, d))
         : construirCartesiano(o, d);
     case 'partes':
