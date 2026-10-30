@@ -333,6 +333,22 @@ describe('MedicationBlock', () => {
     expect(opciones[1]?.label).toBe('Otro motivo — escribirlo');
   });
 
+  it('C5: ofrece también el confirmado sin fecha de decisión, sin inventarle una', () => {
+    responderCatalogo();
+    fixture.componentRef.setInput('diagnosticos', [
+      // Confirmado en la semilla o cargado ya confirmado: no hay registro de la decisión.
+      { id: 'cond-1', etiqueta: 'Hipertensión arterial esencial', confirmado: true, confirmadoEl: null },
+      { id: 'cond-2', etiqueta: 'Dislipidemia', confirmado: false, confirmadoEl: null },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+      'opcionesDeIndicacion',
+    )();
+    expect(opciones.map((o) => o.value)).toEqual(['cond-1', '__otro_motivo__']);
+    expect(opciones[0]?.label).toBe('Hipertensión arterial esencial · Confirmado');
+  });
+
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
     responderCatalogo();
 

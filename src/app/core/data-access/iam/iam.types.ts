@@ -467,6 +467,18 @@ export interface PractitionerRegistration {
    * veces.
    */
   readonly credentials?: readonly NewRegistrationCredential[];
+  /**
+   * Las instituciones de la plataforma con las que dice trabajar, por el slug
+   * del buscador público. Cada una recibe un pedido de vínculo PENDIENTE: su
+   * aprobación es el sello oficial que después se ve en «Mis verificaciones».
+   */
+  readonly institutionSlugs?: readonly string[];
+  /**
+   * Las aseguradoras con las que dice trabajar, del catálogo público
+   * (`GET /insurance-carrier-catalog`). Cada una recibe una solicitud que
+   * aprueba o rechaza.
+   */
+  readonly insurerCarrierIds?: readonly string[];
 }
 
 /**
@@ -500,6 +512,10 @@ export interface RegisteredPractitioner {
   readonly practitionerProfileId: string;
   readonly practitionerCode: string;
   readonly photoFileId?: string;
+  /** Los vínculos pedidos a las instituciones elegidas. Ausente si no eligió ninguna. */
+  readonly affiliationIds?: readonly string[];
+  /** Las solicitudes a las aseguradoras elegidas. Ausente si no eligió ninguna. */
+  readonly insurerRequestIds?: readonly string[];
 }
 
 /**

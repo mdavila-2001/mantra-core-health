@@ -2280,4 +2280,56 @@ describe('PatientChart', () => {
       }
     });
   });
+
+  /**
+   * El formulario de receta sólo ofrece diagnósticos confirmados, y el
+   * expediente no le decía cuáles lo estaban: quedaba siempre en «Otro
+   * motivo». Y la lista de recetas no mostraba para qué era cada una.
+   */
+  describe('lo que el expediente le pasa al formulario de receta', () => {
+    const CONCEPTOS_CON_CERTEZA = {
+      ...CONCEPTOS,
+      items: [
+        ...CONCEPTOS.items,
+        { conceptId: 'v-confirmado', code: 'COND_CONFIRMED', display: 'Confirmado', codeSystemVersionId: 'v1' },
+        { conceptId: 'v-provisional', code: 'COND_PROVISIONAL', display: 'Provisional', codeSystemVersionId: 'v1' },
+        { conceptId: 'med-x', code: 'MED-X', display: 'Metformina 850 mg', codeSystemVersionId: 'v1' },
+      ],
+    };
+
+    function pintar(): void {
+      responderNombre();
+      responderExpediente({
+        resumen: {
+          conditions: [
+            { ...RESUMEN.conditions[0], verificationStatusConceptId: 'v-confirmado' },
+            { id: 'c-2', codeConceptId: 'obs-peso', verificationStatusConceptId: 'v-provisional', createdAt: '2026-01-04T00:00:00.000Z' },
+          ],
+          medicationRequests: [
+            { id: 'm-1', medicationConceptId: 'med-x', statusConceptId: 'st-activa', indicationConditionId: 'c-1', createdAt: '2026-01-05T00:00:00.000Z' },
+          ],
+        },
+        conceptos: CONCEPTOS_CON_CERTEZA,
+      });
+      harness.fixture.detectChanges();
+    }
+
+    it('marca confirmados los diagnósticos que lo están, y sólo esos', () => {
+      pintar();
+      const opciones = interno<() => readonly { id: string; confirmado?: boolean }[]>('diagnosticosParaReceta')();
+      expect(opciones.map((o) => [o.id, o.confirmado])).toEqual([
+        ['c-1', true],
+        ['c-2', false],
+      ]);
+    });
+
+    it('cada receta dice para qué diagnóstico es', () => {
+      pintar();
+      const [receta] = interno<() => readonly { vinculo?: string | null; vinculoEsDiagnostico?: boolean }[]>(
+        'recetasEnFicha',
+      )();
+      expect(receta.vinculo).toBe('Diabetes tipo 2');
+      expect(receta.vinculoEsDiagnostico).toBe(true);
+    });
+  });
 });

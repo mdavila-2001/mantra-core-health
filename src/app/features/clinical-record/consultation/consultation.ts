@@ -75,6 +75,8 @@ import {
   MedicationBlock,
   type DiagnosticoEnFicha,
   type RecetaEnFicha,
+  diagnosticoParaReceta,
+  vinculoDeReceta,
 } from '../patient-chart/medication-block/medication-block';
 import { PaymentsBlock } from '../patient-chart/payments-block/payments-block';
 import { SpecialtyFormBlock } from '../patient-chart/specialty-form-block/specialty-form-block';
@@ -626,18 +628,19 @@ export class Consultation {
       estado: this.label(receta.statusConceptId),
       firmada: receta.signedAt !== undefined,
       emitida: receta.issuedAt !== undefined,
+      // Para qué es: la lista lo muestra, y «Vincular a un diagnóstico…» sólo
+      // se ofrece si todavía no está atada a uno.
+      ...vinculoDeReceta(receta, this.diagnosticosParaReceta()),
     })),
   );
 
   /** Todos los diagnósticos, con «Resuelto» en la etiqueta cuando corresponde. */
   protected readonly diagnosticosParaReceta = computed<readonly DiagnosticoEnFicha[]>(() =>
-    (this.datos()?.resumen.conditions ?? []).map((dx) => {
-      const principal = this.label(dx.codeConceptId);
-      return {
-        id: dx.id,
-        etiqueta: dx.resolvedAt === undefined ? principal : `${principal} · Resuelto`,
-      };
-    }),
+    // Con su certeza: el formulario sólo ofrece los confirmados, y sin ella
+    // quedaba siempre en «Otro motivo» (ver `diagnosticoParaReceta`).
+    (this.datos()?.resumen.conditions ?? []).map((dx) =>
+      diagnosticoParaReceta(dx, this.label(dx.codeConceptId), (id) => this.codigo(id)),
+    ),
   );
 
   protected readonly diagnosticosParaElPlan = computed<readonly DiagnosticoDelPlan[]>(() =>

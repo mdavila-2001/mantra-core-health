@@ -57,6 +57,36 @@
     appTutorialTarget="panel-titulo"
   />
 
+  <!-- Puertas a dos bandejas fuera de los menús cerrados (28/10/2026), debajo
+       del saludo para no romper la jerarquía: «Mis verificaciones» para quien
+       atiende y los profesionales que piden sumarse para la aseguradora. -->
+  @if (veMisVerificaciones()) {
+    <div class="panel__verificaciones" data-testid="panel-mis-verificaciones">
+      <p class="panel__verificaciones-texto">
+        Siga el sello de su perfil y las respuestas de las instituciones y aseguradoras a las que
+        les pidió trabajar.
+      </p>
+      <a app-button variant="secondary" size="sm" routerLink="/my-account/verifications">
+        Mis verificaciones
+      </a>
+    </div>
+  }
+  @if (veProfesionalesQuePidenSumarse()) {
+    <div class="panel__verificaciones" data-testid="panel-profesionales-que-piden">
+      <p class="panel__verificaciones-texto">
+        Revise a los profesionales que piden trabajar con su aseguradora: aprobar les da su sello.
+      </p>
+      <a
+        app-button
+        variant="secondary"
+        size="sm"
+        routerLink="/administration/insurer-practitioner-requests"
+      >
+        Profesionales que piden sumarse
+      </a>
+    </div>
+  }
+
   <!-- ─── Lo que toca hoy ─────────────────────────────────────────────────
        La primera franja de quien atiende, y lo primero que se ve al entrar.
 

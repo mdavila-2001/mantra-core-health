@@ -54,6 +54,13 @@ import {
   type AppSection,
 } from './core/navigation/navigation.types';
 
+/**
+ * Secciones de «Mi cuenta» que sólo tienen sentido para quien atiende. El
+ * registro las declara `ANY_ROLE` —«Mi cuenta» es autoservicio y no admite
+ * roles de gestión—, así que la restricción va en la ruta, como `my-account/edit`.
+ */
+const SECCIONES_DE_QUIEN_ATIENDE: ReadonlySet<string> = new Set(['my-account/verifications']);
+
 /** La declaración que cierra una hija de «Mi perfil» a quien atiende. */
 function soloDeQuienAtiende(): Pick<Routes[number], 'canActivate' | 'data'> {
   return {
@@ -199,6 +206,12 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/received-claims': () =>
     import('./features/insurance/received-claims/received-claims').then((m) => m.ReceivedClaims),
+  // La bandeja de la aseguradora: profesionales que piden trabajar con ella
+  // (28/10/2026). Es la otra cara de «Mis verificaciones» del médico.
+  'administration/insurer-practitioner-requests': () =>
+    import('./features/insurance/practitioner-requests/practitioner-requests').then(
+      (m) => m.InsurerPractitionerRequests,
+    ),
   'administration/insurance-patients': () =>
     import('./features/insurance/insurance-patients/insurance-patients').then(
       (m) => m.InsurancePatients,
@@ -300,6 +313,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // vez de pagarla **toda** primera visita a la aplicación.
   'my-account/identity': () =>
     import('./features/identity-verification/identity-hub/identity-hub').then((m) => m.IdentityHub),
+  // «Mis verificaciones» del profesional (28/10/2026): hoja de ruta y bandeja
+  // de solicitudes. Diferida: arrastra el stepper, el sello y el chat.
+  'my-account/verifications': () =>
+    import('./features/account/my-verifications/my-verifications').then((m) => m.MyVerifications),
   'administration/my-practice': () =>
     import('./features/practice/my-practice/my-practice').then((m) => m.MyPractice),
   'administration/pharmacy-campaigns': () =>
@@ -1271,7 +1288,12 @@ function rutasDeSecciones(): Routes {
         : {}),
       // La sección viaja con la ruta: el placeholder la lee de acá y no necesita
       // saber cuál de todas es.
-      data: { [SECTION_ROUTE_DATA]: section },
+      data: {
+        [SECTION_ROUTE_DATA]: section,
+        ...(SECCIONES_DE_QUIEN_ATIENDE.has(section.path)
+          ? { [ROLES_ROUTE_DATA]: ROLES_DE_QUIEN_ATIENDE }
+          : {}),
+      },
       ...componenteDe(section),
     };
     if (section.path !== 'my-account') {
@@ -1866,6 +1888,24 @@ export const routes: Routes = [
         import('./features/admin/services-catalog/procedure-import/procedure-import').then(
           (m) => m.ProcedureImport,
         ),
+      ),
+      // Infraestructura hospitalaria (F1): la ficha de un espacio y sus
+      // formularios cuelgan de la consola de la organización médica. Las
+      // literales van antes que `spaces/:id` para que «new» no se lea como id.
+      pantallaDeOperacion('administration/medical-organization', 'spaces/new', 'Registrar un espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-form').then((m) => m.SpaceForm),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/bulk', 'Alta masiva de espacios', () =>
+        import('./features/admin/medical-organization/espacio/space-bulk').then((m) => m.SpaceBulk),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/import', 'Importar espacios', () =>
+        import('./features/admin/medical-organization/espacio/space-import').then((m) => m.SpaceImport),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/:id/edit', 'Editar un espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-form').then((m) => m.SpaceForm),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/:id', 'Ficha del espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-detail').then((m) => m.SpaceDetail),
       ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),

@@ -8,12 +8,12 @@ import {
   viewChild,
   type TemplateRef,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { catchError, of } from 'rxjs';
 
 import { MedicalOrganizationClient } from '../../../core/data-access/medical-organization/medical-organization.client';
 import type {
   MedicalOrganizationConsole,
-  OrganizationCareSpace,
   OrganizationClinicalUnit,
   OrganizationConcept,
   OrganizationHealthcareService,
@@ -25,12 +25,13 @@ import type {
 } from '../../../core/data-access/medical-organization/medical-organization.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { SessionStore } from '../../../core/auth/session.store';
+import { ofrecerEscritura } from '../../../core/data-access/infrastructure/infrastructure.rules';
 import { NavigationService } from '../../../core/navigation/navigation.service';
+import { EstablecimientoTab } from './establecimiento/establecimiento-tab';
+import { InfraestructuraTab, type SitioElegible } from './infraestructura/infraestructura-tab';
 import { MembershipsTab } from './memberships-tab/memberships-tab';
-
-/** El índice de «Mis vinculaciones», para no escribir `7` en dos lugares. */
-const PESTANA_VINCULACIONES = 7;
 import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
@@ -38,7 +39,6 @@ import type {
 } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -47,7 +47,27 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+
+/**
+ * Las pestañas, por **clave**: la clave es lo que viaja en `?tab=` y lo que se
+ * compara; el índice sale de acá y no se escribe a mano en ningún lado.
+ *
+ * `memberships` conserva su clave de siempre: la usan el login y el tutorial
+ * para abrir «Mis vinculaciones» directo.
+ */
+export const PESTANAS = [
+  'sites',
+  'units',
+  'infrastructure',
+  'establishment',
+  'services',
+  'staff',
+  'legal',
+  'inventory',
+  'memberships',
+] as const;
+export type ClaveDePestana = (typeof PESTANAS)[number];
 
 /**
  * Variante del badge por **código** de concepto, no por etiqueta.
@@ -66,7 +86,11 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
   UNIT_RETIRED: 'secondary',
   SPACE_ACTIVE: 'success',
   SPACE_RETIRED: 'secondary',
+  SPACE_PLANNED: 'info',
+  SPACE_SUSPENDED: 'warning',
   SPACE_OP_AVAILABLE: 'success',
+  SPACE_OP_MAINTENANCE: 'warning',
+  SITE_OP_OPEN: 'success',
   SPACE_OP_CLOSED: 'error',
   SVC_ACTIVE: 'success',
   SVC_SUSPENDED: 'warning',
@@ -111,7 +135,20 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, FormField, MembershipsTab, PageHeader, Select, Tab, Tabs, LoadingState],
+  imports: [
+    Badge,
+    DataTable,
+    EstablecimientoTab,
+    FormField,
+    InfraestructuraTab,
+    MembershipsTab,
+    NgTemplateOutlet,
+    PageHeader,
+    Select,
+    Tab,
+    Tabs,
+    ViewStateHost,
+  ],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -120,6 +157,8 @@ export class MedicalOrganization {
   private readonly client = inject(MedicalOrganizationClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly session = inject(SessionStore);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -130,24 +169,37 @@ export class MedicalOrganization {
   /**
    * La pestaña que abre la URL, y la que la persona elija después.
    *
-   * `?tab=memberships` abre «Mis vinculaciones» directo. Lo necesita el
-   * aterrizaje de quien entra **sin ninguna organización**: antes caía en la
-   * pantalla «Mis organizaciones», cuyo vacío le explicaba que tenía que pedir
-   * el alta. Absorbida esa pantalla, mandarlo al panel sin más lo dejaría
-   * mirando siete tablas vacías de una organización que no tiene — y sin la
-   * única pestaña que sí puede usar, que no depende de tenant.
+   * `?tab=<clave>` abre cualquier pestaña directo, y elegir otra la escribe en
+   * la URL (sin apilar historial): un enlace pegado o un F5 abren lo mismo, y
+   * «volver a la consola» desde una ficha de espacio cae en Infraestructura.
+   *
+   * `?tab=memberships` es el aterrizaje de quien entra **sin ninguna
+   * organización**: lo manda el login a «Mis vinculaciones», la única pestaña
+   * que no depende de tenant.
    *
    * **`linkedSignal` y no `signal` con el `snapshot`.** Angular reutiliza el
    * componente cuando cambia sólo la query, así que el constructor no vuelve a
-   * correr: leer el snapshot una vez dejaba `?tab=memberships` sin efecto para
-   * cualquiera que ya estuviera en el panel. Así se recalcula cuando cambia la
-   * URL, y sigue siendo escribible para que un clic en otra pestaña mande.
+   * correr. Así se recalcula cuando cambia la URL, y sigue siendo escribible.
    */
-  protected readonly pestana = linkedSignal<number>(() =>
-    this.parametros().get('tab') === 'memberships' ? PESTANA_VINCULACIONES : 0,
-  );
+  protected readonly pestana = linkedSignal<number>(() => {
+    const indice = PESTANAS.indexOf(this.parametros().get('tab') as ClaveDePestana);
+    return indice === -1 ? 0 : indice;
+  });
 
-  protected readonly pestanaDeVinculaciones = PESTANA_VINCULACIONES;
+  protected readonly pestanaDeVinculaciones = PESTANAS.indexOf('memberships');
+  protected readonly pestanaDeInfraestructura = PESTANAS.indexOf('infrastructure');
+  protected readonly pestanaDeEstablecimiento = PESTANAS.indexOf('establishment');
+
+  /** El establecimiento que pide la URL (lo comparten Infraestructura y Establecimiento). */
+  protected readonly sitioDeLaUrl = computed(() => this.parametros().get('site'));
+
+  /**
+   * ¿Se le ofrecen a esta sesión los botones de escritura de estructura?
+   * Reflejo, no autorización: la API responde 403 a quien no administra.
+   */
+  protected readonly puedeEscribir = computed(() =>
+    ofrecerEscritura(this.session.roles()),
+  );
 
   private readonly celdaSede =
     viewChild.required<TemplateRef<{ $implicit: OrganizationSite }>>('celdaSede');
@@ -163,14 +215,6 @@ export class MedicalOrganization {
   private readonly celdaEstadoArea =
     viewChild.required<TemplateRef<{ $implicit: OrganizationClinicalUnit }>>('celdaEstadoArea');
 
-  private readonly celdaEspacio =
-    viewChild.required<TemplateRef<{ $implicit: OrganizationCareSpace }>>('celdaEspacio');
-  private readonly celdaUbicacionEspacio =
-    viewChild.required<TemplateRef<{ $implicit: OrganizationCareSpace }>>('celdaUbicacionEspacio');
-  private readonly celdaDisponibilidadEspacio =
-    viewChild.required<
-      TemplateRef<{ $implicit: OrganizationCareSpace }>
-    >('celdaDisponibilidadEspacio');
 
   private readonly celdaServicio =
     viewChild.required<
@@ -232,7 +276,7 @@ export class MedicalOrganization {
   /** La ficha, cuando la consola cargó. `null` en cualquier otro estado. */
   protected readonly organizacion = computed(() => {
     const estado = this.consola();
-    return estado.status === 'ready' ? estado.data.organization : null;
+    return hasData(estado) ? estado.data.organization : null;
   });
 
   /** Nombre de cada sede por su id: las demás pestañas devuelven `siteId` crudo. */
@@ -252,7 +296,7 @@ export class MedicalOrganization {
   protected readonly sedes = computed(() =>
     this.listaDe(
       (datos) => datos.sites,
-      { label: 'Registrar una sede' },
+      { label: 'Registrar una sede desde la ficha de la organización', route: '/administration/organizations' },
       'Una sede es cada lugar donde la organización atiende. Sin al menos una no hay dónde ubicar áreas, quirófanos ni consultorios.',
     ),
   );
@@ -260,23 +304,15 @@ export class MedicalOrganization {
   protected readonly areas = computed(() =>
     this.listaDe(
       (datos) => datos.clinicalUnits,
-      { label: 'Crear un área' },
+      { label: 'Ver el árbol organizativo', route: '/administration/medical-organization?tab=infrastructure&view=units' },
       'Las áreas son los departamentos de cada sede —emergencias, cirugía, laboratorio—. Ordenan al personal y los espacios; sin ellas todo cuelga directo de la sede.',
-    ),
-  );
-
-  protected readonly espacios = computed(() =>
-    this.listaDe(
-      (datos) => datos.careSpaces,
-      { label: 'Registrar un espacio' },
-      'Quirófanos, consultorios y salas. Sin espacios registrados no se puede reservar uno para una intervención ni asociar una cita a un consultorio.',
     ),
   );
 
   protected readonly servicios = computed(() =>
     this.listaDe(
       (datos) => datos.healthcareServices,
-      { label: 'Publicar un servicio' },
+      { label: 'Publicar un servicio en el catálogo', route: '/administration/services-catalog' },
       'Los servicios son lo que la organización ofrece. Mientras no haya ninguno, no hay nada que un paciente pueda pedir.',
     ),
   );
@@ -284,7 +320,7 @@ export class MedicalOrganization {
   protected readonly plantilla = computed(() =>
     this.listaDe(
       (datos) => datos.staff,
-      { label: 'Vincular a un profesional' },
+      { label: 'Vincular profesionales desde la ficha de la organización', route: '/administration/organizations' },
       'La plantilla es quién trabaja acá y con qué rol clínico. Mientras esté vacía, ninguna pantalla que dependa de un rol clínico va a funcionar.',
     ),
   );
@@ -292,7 +328,7 @@ export class MedicalOrganization {
   protected readonly legajo = computed(() =>
     this.listaDe(
       (datos) => datos.legalDocuments,
-      { label: 'Cargar un documento' },
+      { label: 'Cargar habilitaciones en Establecimiento', route: '/administration/medical-organization?tab=establishment' },
       'Licencias, registros sanitarios y acreditaciones, con su vencimiento. Es el respaldo legal de la organización.',
     ),
   );
@@ -300,10 +336,25 @@ export class MedicalOrganization {
   protected readonly inventario = computed(() =>
     this.listaDe(
       (datos) => datos.inventory,
-      { label: 'Dar de alta un insumo' },
+      { label: 'Definir depósitos y botiquines en Infraestructura', route: '/administration/medical-organization?tab=infrastructure' },
       'Insumos y equipamiento con sus existencias. El punto de reposición avisa antes de que falte.',
     ),
   );
+
+  /** Los establecimientos que ofrecen Infraestructura y Establecimiento. */
+  protected readonly sitiosElegibles = computed<readonly SitioElegible[]>(() => {
+    const estado = this.consola();
+    return hasData(estado) ? estado.data.sites.map(({ id, code, name }) => ({ id, code, name })) : [];
+  });
+
+  /**
+   * ¿Hay consola para mostrar en las pestañas?
+   *
+   * Sin datos, el estado (S1…S9) se dibuja **una sola vez**, en la cabecera.
+   * Antes cada una de las siete tablas repetía la misma alerta de error con
+   * el mismo código, y la persona veía siete veces el mismo fallo.
+   */
+  protected readonly hayDatos = computed(() => hasData(this.consola()));
 
   /** Documentos vencidos o por vencer dentro del mes: el aviso de la cabecera. */
   protected readonly documentosPorVencer = computed(() => {
@@ -339,20 +390,6 @@ export class MedicalOrganization {
       { key: 'code', header: 'Código', priority: 1 },
       { key: 'siteId', header: 'Sede', priority: 2, cell: this.celdaSedeDelArea() },
       { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstadoArea() },
-    ],
-  );
-
-  protected readonly columnasDeEspacio = computed<readonly ColumnDef<OrganizationCareSpace>[]>(
-    () => [
-      { key: 'name', header: 'Espacio', priority: 1, cell: this.celdaEspacio() },
-      { key: 'code', header: 'Código', priority: 1 },
-      { key: 'siteId', header: 'Ubicación', priority: 2, cell: this.celdaUbicacionEspacio() },
-      {
-        key: 'operationalStatus',
-        header: 'Disponibilidad',
-        priority: 1,
-        cell: this.celdaDisponibilidadEspacio(),
-      },
     ],
   );
 
@@ -410,6 +447,19 @@ export class MedicalOrganization {
 
   constructor() {
     this.cargarPracticas();
+  }
+
+  /** Elegir una pestaña la escribe en la URL, sin apilar historial. */
+  protected cambiarPestana(indice: number): void {
+    this.pestana.set(indice);
+    const clave = PESTANAS[indice];
+    if (clave === undefined) return;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: clave },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /** Cambia de organización desde el selector. */
@@ -485,7 +535,7 @@ export class MedicalOrganization {
           // tener dos textos distintos dejaba el informativo sin pantalla que
           // lo mostrara.
           const vacio = empty(
-            { label: 'Dar de alta la organización' },
+            { label: 'Dar de alta la organización', route: '/administration/organizations/new' },
             'Este tenant todavía no tiene ninguna organización médica dada de alta, así que no hay estructura que administrar.',
           );
           this.practicas.set(vacio);

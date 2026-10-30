@@ -108,7 +108,11 @@ import { consentEncounter } from './informed-consent/consent-encounter';
 import { InformedConsentBadge } from './informed-consent/informed-consent-badge';
 import { InformedConsentDialog } from './informed-consent/informed-consent-dialog';
 import { patientConsents } from './informed-consent/patient-consents';
-import { MedicationBlock } from './medication-block/medication-block';
+import {
+  MedicationBlock,
+  diagnosticoParaReceta,
+  vinculoDeReceta,
+} from './medication-block/medication-block';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import { ReferralBlock } from './referral-block/referral-block';
@@ -1468,6 +1472,9 @@ export class PatientChart {
       firmada: receta.signedAt !== undefined,
       emitida: receta.issuedAt !== undefined,
       ...(receta.encounterId === undefined ? {} : { encounterId: receta.encounterId }),
+      // Para qué es: la lista lo muestra, y «Vincular a un diagnóstico…» sólo
+      // se ofrece si todavía no está atada a uno.
+      ...vinculoDeReceta(receta, this.diagnosticosParaReceta()),
     })),
   );
 
@@ -1479,13 +1486,11 @@ export class PatientChart {
    * estado, para que elegir una resuelta sea una decisión y no un descuido.
    */
   protected readonly diagnosticosParaReceta = computed<readonly DiagnosticoEnFicha[]>(() =>
-    (this.datos()?.resumen.conditions ?? []).map((dx) => {
-      const principal = this.label(dx.codeConceptId);
-      return {
-        id: dx.id,
-        etiqueta: dx.resolvedAt === undefined ? principal : `${principal} · Resuelto`,
-      };
-    }),
+    // Con su certeza: el formulario sólo ofrece los confirmados, y sin ella
+    // quedaba siempre en «Otro motivo» (ver `diagnosticoParaReceta`).
+    (this.datos()?.resumen.conditions ?? []).map((dx) =>
+      diagnosticoParaReceta(dx, this.label(dx.codeConceptId), (id) => this.codigo(id)),
+    ),
   );
 
   /**

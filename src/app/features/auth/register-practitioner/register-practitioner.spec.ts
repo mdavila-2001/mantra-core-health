@@ -143,6 +143,13 @@ describe('RegisterPractitioner', () => {
       if (pendiente.cancelled) continue;
       pendiente.flush({ found: false, attribution: '© OpenStreetMap' });
     }
+    // Desde el 28/10/2026 la página «Dónde trabaja y con qué seguros» pide el
+    // catálogo de aseguradoras al mostrarse: las pruebas que sólo la atraviesan
+    // la dan por atendida acá, como el mapa.
+    for (const pendiente of http.match((r) => r.url === '/insurance-carrier-catalog')) {
+      if (pendiente.cancelled) continue;
+      pendiente.flush({ carriers: [] });
+    }
     http.verify();
   });
 
@@ -301,7 +308,8 @@ describe('RegisterPractitioner', () => {
 
     it('presenta los bloques en el orden pedido (AC-05-1)', () => {
       // Nueve páginas desde el 26/10/2026 (pedido del propietario): eran
-      // quince y el alta se hacía eterna. Se juntaron por tema.
+      // quince y el alta se hacía eterna. Se juntaron por tema. Diez desde el
+      // 28/10/2026: instituciones y seguros, en UNA página nueva.
       expect(component.paginasProfesional().map((pagina) => pagina.clave)).toEqual([
         // Nombre y cédula comparten página, como en el alta de paciente.
         'name',
@@ -313,6 +321,9 @@ describe('RegisterPractitioner', () => {
         'workplace-location',
         // Contacto y ubicación del consultorio propio, en una sola página.
         'own-office',
+        // Dónde trabaja y con qué seguros: lo que otro tiene que confirmar, después
+        // de lo que no depende de nadie (28/10/2026).
+        'workplaces',
         // El título profesional va ANTES de la habilitación: de él dependen el
         // colegio y la lista de especialidades.
         'practice',
@@ -485,13 +496,14 @@ describe('RegisterPractitioner', () => {
     }
   });
 
-  it('tiene nueve páginas, ninguna con más de seis preguntas', () => {
+  it('tiene diez páginas, ninguna con más de seis preguntas', () => {
     // Antes eran quince, de a cuatro campos como mucho (AC-05-2). El
     // propietario pidió juntarlas (26/10/2026): ahora se agrupan por tema, y
     // las páginas largas lo son por campos opcionales o que se abren solos
     // (`showWhen`).
+    // Diez desde el 28/10/2026: «Dónde trabaja y con qué seguros».
     const paginas = component.paginasProfesional();
-    expect(paginas.length).toBe(9);
+    expect(paginas.length).toBe(10);
     for (const pagina of paginas) {
       expect(
         pagina.campos.length,
@@ -3359,6 +3371,77 @@ describe('RegisterPractitioner', () => {
   });
 
   /* ==========================================================================
+     Dónde trabaja y con qué seguros (28/10/2026).
+
+     Lo elegido vive en dos señales que gobierna `app-workplace-picker`. Lo que
+     importa acá es el contrato: viajan los slugs públicos y los ids del
+     catálogo, no viaja nada si no eligió nada, y el aviso final cuenta lo que
+     la API dice que creó —no lo que se eligió—.
+     ========================================================================== */
+  describe('instituciones y seguros', () => {
+    function enviar(respuesta: object = RESPUESTA_PRO): Record<string, unknown> {
+      component.submit();
+      const req = http.expectOne('/iam/auth/register-practitioner');
+      const cuerpo = req.request.body as Record<string, unknown>;
+      req.flush(respuesta);
+      return cuerpo;
+    }
+
+    it('sin elegir nada, el cuerpo no las menciona', () => {
+      completarProfesional();
+
+      const cuerpo = enviar();
+
+      expect(cuerpo['institutionSlugs']).toBeUndefined();
+      expect(cuerpo['insurerCarrierIds']).toBeUndefined();
+    });
+
+    it('viajan los slugs de las instituciones y los ids de las aseguradoras elegidas', () => {
+      completarProfesional();
+      component.institucionesElegidas.set([
+        { slug: 'clinica-foianini', name: 'Clínica Foianini', city: 'Santa Cruz', verified: true },
+        { slug: 'hospital-japones', name: 'Hospital Japonés', city: null, verified: false },
+      ]);
+      component.aseguradorasElegidas.set(['carrier-a', 'carrier-b']);
+
+      const cuerpo = enviar();
+
+      expect(cuerpo['institutionSlugs']).toEqual(['clinica-foianini', 'hospital-japones']);
+      expect(cuerpo['insurerCarrierIds']).toEqual(['carrier-a', 'carrier-b']);
+    });
+
+    it('el aviso final cuenta los pedidos que la API confirma, no los elegidos', () => {
+      completarProfesional();
+      component.institucionesElegidas.set([
+        { slug: 'clinica-foianini', name: 'Clínica Foianini', city: null, verified: true },
+      ]);
+      component.aseguradorasElegidas.set(['carrier-a', 'carrier-b']);
+
+      // La API creó un vínculo y una sola solicitud: la otra ya estaba viva.
+      enviar({ ...RESPUESTA_PRO, affiliationIds: ['af-1'], insurerRequestIds: ['ir-1'] });
+      fixture.detectChanges();
+
+      expect(component.pedidosEnviados()).toBe(2);
+      const aviso = fixture.nativeElement.querySelector(
+        '[data-testid="registro-pedidos-enviados"]',
+      ) as HTMLElement | null;
+      expect(aviso?.textContent).toContain('Registramos 2 vínculos');
+      expect(aviso?.textContent).toContain('Mis verificaciones');
+    });
+
+    it('sin pedidos confirmados no promete ninguno', () => {
+      completarProfesional();
+
+      enviar();
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="registro-pedidos-enviados"]'),
+      ).toBeNull();
+    });
+  });
+
+  /* ==========================================================================
      El consultorio propio.
 
      La regla que lo gobierna: la página entera es opcional, así que lo que
@@ -3743,6 +3826,4 @@ describe('RegisterPractitioner con mockBackend', () => {
     // que los 5 s por defecto de Vitest. Con 20 s pasa, aislada y dentro de la
     // suite; no se debilitó ninguna aserción.
   }, 20_000);
-
 });
-
