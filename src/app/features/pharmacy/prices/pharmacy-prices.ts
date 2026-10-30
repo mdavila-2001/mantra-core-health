@@ -1,9 +1,11 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
   viewChild,
@@ -84,6 +86,9 @@ interface PriceRejection {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyPrices {
+  /** Montada como pestaña de «Catálogo»: el membrete lo pone el contenedor. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);

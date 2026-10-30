@@ -301,10 +301,6 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     paths: [
       'administration/pharmacy',
       'administration/pharmacy-catalog',
-      'administration/pharmacy-categories',
-      'administration/pharmacy-import',
-      'administration/pharmacy-inventory',
-      'administration/pharmacy-prices',
       'administration/pharmacy-hours',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
