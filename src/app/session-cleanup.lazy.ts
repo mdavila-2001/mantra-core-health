@@ -2,6 +2,8 @@ import type { Injector } from '@angular/core';
 
 import { ChatAutoReply } from './core/messaging/chat-auto-reply';
 import { MessageTemplates } from './core/messaging/message-templates';
+import { ReportAssistantData } from './features/reporting/assistant/assistant-data';
+import { olvidarHistorialesDelNavegador } from './features/reporting/assistant/assistant-history';
 import { RememberedPriceLists } from './features/admin/medical-laboratory/remembered-price-lists';
 
 /**
@@ -19,4 +21,7 @@ export function olvidarLoSensibleDelNavegador(injector: Injector): void {
   injector.get(MessageTemplates).olvidar();
   injector.get(ChatAutoReply).olvidar();
   injector.get(RememberedPriceLists).forget();
+  // Portal de reportería: lo que el asistente trajo y las preguntas que se hicieron.
+  injector.get(ReportAssistantData).limpiar();
+  olvidarHistorialesDelNavegador();
 }
