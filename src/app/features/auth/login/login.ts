@@ -15,8 +15,7 @@ import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
 import {
-  accesoAPortales,
-  PORTAL_SELECTOR_ROUTE,
+  destinoDeEntrada,
 } from '../../reporting/reporting-access';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
@@ -36,7 +35,6 @@ import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
-const HOME_ROUTE = '/';
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -217,12 +215,9 @@ export class Login {
     if (requested !== null) {
       return requested;
     }
-    // Con acceso a los dos portales hay que elegir. Con uno solo no se agrega
-    // una pantalla de paso: se entra derecho, como siempre. Que la tarjeta
-    // exista o no no autoriza nada; cada portal vuelve a validar el rol en su
-    // ruta y la API en cada petición.
-    const acceso = accesoAPortales(this.auth.roles());
-    return acceso.administracion && acceso.reporteria ? PORTAL_SELECTOR_ROUTE : HOME_ROUTE;
+    // Con acceso a los dos portales hay que elegir; con uno solo se entra derecho a ese
+    // (ver `destinoDeEntrada`). Quien no tiene ninguno de los dos entra como siempre.
+    return destinoDeEntrada(this.auth.roles());
   }
 
   /**

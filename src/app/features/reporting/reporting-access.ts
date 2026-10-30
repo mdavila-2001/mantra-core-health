@@ -74,6 +74,20 @@ export function accesoAPortales(roles: readonly string[]): AccesoAPortales {
   };
 }
 
+/**
+ * A dónde entra una sesión recién abierta. Con los dos accesos hay que elegir; con uno solo
+ * no se agrega una pantalla de paso: quien solo ve reportería entra a su portal y todos los
+ * demás, a la aplicación de siempre. Que una tarjeta exista o no no autoriza nada: cada
+ * portal vuelve a validar el rol en su ruta y la API en cada petición.
+ */
+export function destinoDeEntrada(roles: readonly string[]): string {
+  const acceso = accesoAPortales(roles);
+  if (acceso.administracion && acceso.reporteria) {
+    return PORTAL_SELECTOR_ROUTE;
+  }
+  return acceso.reporteria ? PORTAL_REPORTERIA_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
+}
+
 /** Las dos direcciones de destino, para que nadie las escriba a mano. */
 export const PORTAL_ADMINISTRACION_ROUTE = '/';
 export const PORTAL_REPORTERIA_ROUTE = '/reports';

@@ -52,12 +52,15 @@ describe('TenantSelection', () => {
   });
   /**
    * Con acceso a administración Y a reportería, tras elegir organización toca
-   * elegir portal; con solo uno, se entra directo a la aplicación.
+   * elegir portal; con solo uno, se entra directo a ese portal.
    */
   it.each([
     [['PLATFORM_ADMIN', 'REPORTING_ADMIN'], '/portal-selector'],
     [['SUPERADMIN'], '/portal-selector'],
-    [['PLATFORM_ADMIN'], '/'],
+    // PLATFORM_ADMIN da los dos accesos (reporting-access.spec): también elige.
+    [['PLATFORM_ADMIN'], '/portal-selector'],
+    [['SECURITY_ADMIN'], '/'],
+    [['REPORT_VIEWER'], '/reports'],
     [['PATIENT'], '/'],
   ])('al elegir organización con los roles %j va a %s', (roles, destino) => {
     const auth = TestBed.inject(AuthService);
