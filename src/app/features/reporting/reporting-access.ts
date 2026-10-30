@@ -55,6 +55,18 @@ export const ROLES_ADMINISTRACION: readonly string[] = [
   'QA_ADMIN',
 ];
 
+/**
+ * Los roles que abren AloVida Insights (inteligencia de marketing). Son los mismos de la sección
+ * `administration/marketing-insights` del registro de navegación. Es una tercera tarjeta del selector:
+ * no cambia `AccesoAPortales`, así que el login y el selector de dos portales siguen igual.
+ */
+export const ROLES_INSIGHTS: readonly string[] = [
+  'SUPERADMIN',
+  'PLATFORM_ADMIN',
+  'DATA_PLATFORM_ADMIN',
+  'MARKETING_MANAGER',
+];
+
 /** Lo que el selector y el login necesitan saber de una sesión. */
 export interface AccesoAPortales {
   readonly administracion: boolean;
@@ -71,6 +83,11 @@ export function puedeVerReporteria(roles: readonly string[]): boolean {
 /** Si los roles de la sesión abren el portal de administración. */
 export function puedeVerAdministracion(roles: readonly string[]): boolean {
   return rolesAlcanzan(ROLES_ADMINISTRACION, roles);
+}
+
+/** Si los roles de la sesión abren AloVida Insights. */
+export function puedeVerInsights(roles: readonly string[]): boolean {
+  return rolesAlcanzan(ROLES_INSIGHTS, roles);
 }
 
 /** Si los roles de la sesión pueden elegir el alcance «Plataforma». */
@@ -100,7 +117,8 @@ export function entryDestination(roles: readonly string[]): string {
   return acceso.reporteria ? PORTAL_REPORTERIA_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
 }
 
-/** Las dos direcciones de destino, para que nadie las escriba a mano. */
+/** Las direcciones de destino, para que nadie las escriba a mano. */
 export const PORTAL_ADMINISTRACION_ROUTE = '/';
 export const PORTAL_REPORTERIA_ROUTE = '/reports';
+export const PORTAL_INSIGHTS_ROUTE = '/administration/marketing-insights';
 export const PORTAL_SELECTOR_ROUTE = '/portal-selector';
