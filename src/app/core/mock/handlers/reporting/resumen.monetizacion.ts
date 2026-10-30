@@ -123,9 +123,9 @@ export function lecturaRapida(base: BaseResumen): string {
   if (mayor !== undefined) {
     frases.push(`${mayor.nombre} es la fuente más grande: aporta ${formatearValor(shareOfTotal(mayor.ingreso, total) ?? 0, { tipo: 'porcentaje' })} del ingreso.`);
   }
-  const conVariacion = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.variacionPct !== null);
-  const sube = [...conVariacion].sort((a, b) => (b.variacionPct ?? 0) - (a.variacionPct ?? 0))[0];
-  const baja = [...conVariacion].sort((a, b) => (a.variacionPct ?? 0) - (b.variacionPct ?? 0))[0];
+  const withChange = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.variacionPct !== null);
+  const sube = [...withChange].sort((a, b) => (b.variacionPct ?? 0) - (a.variacionPct ?? 0))[0];
+  const baja = [...withChange].sort((a, b) => (a.variacionPct ?? 0) - (b.variacionPct ?? 0))[0];
   if (sube !== undefined && sube.variacionPct !== null && baja !== undefined && baja.variacionPct !== null) {
     const isSingle = sube === baja;
     if (sube.variacionPct < 0) {
