@@ -122,8 +122,8 @@ export class ConversationList {
   protected readonly menuAbierto = signal<string | null>(null);
 
   protected readonly conQuien = conversationLabel;
-  protected readonly avatarDeConQuien = conversationAvatar;
   protected readonly verificacionDe = conversationVerification;
+  protected readonly avatarDeConQuien = conversationAvatar;
 
   protected esFavorito(id: string): boolean {
     return this.preferencias.isFavorite(id);

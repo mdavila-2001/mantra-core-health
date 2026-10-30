@@ -11,15 +11,18 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, of, type Observable } from 'rxjs';
 
+import { SessionStore } from '../../../../core/auth/session.store';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
 import type {
   BranchListItem,
   MembershipListItem,
+  MyOrganization,
   TenantListItem,
 } from '../../../../core/data-access/directory/directory.types';
+import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type {
   ConceptLabels,
@@ -27,6 +30,7 @@ import type {
 } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
+import { rolesAlcanzan } from '../../../../core/navigation/navigation.types';
 import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type {
   ViewState,
@@ -36,6 +40,7 @@ import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { Card } from '../../../../shared/components/molecules/card/card';
 import { Link } from '../../../../shared/components/atoms/link/link';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -44,11 +49,11 @@ import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-
 import { createBranchesInSeries } from '../../../organization/organization-branches/create-branches-in-series';
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
+import { historialDeCursor } from '../../../../shared/components/organisms/data-table/cursor-history';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
-import { SessionStore } from '../../../../core/auth/session.store';
-import { rolesAlcanzan } from '../../../../core/navigation/navigation.types';
+import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import {
   ORGANIZATIONS_ROUTE,
   branchNewRoute,
@@ -56,10 +61,19 @@ import {
   membershipNewRoute,
   organizationVerifyRoute,
 } from '../organizations.routes';
-import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
+import { BranchAssignmentDialog } from './branch-assignment-dialog/branch-assignment-dialog';
 
-/** Membresías por página. El backend aplica 50 por omisión y admite hasta 200. */
+/** Filas por página. El backend aplica 50 por omisión y admite hasta 200. */
 const TAMANO_DE_PAGINA = 25;
+
+/**
+ * Las pestañas de la ficha, en orden, por su nombre en `?tab=`.
+ *
+ * Con nombre y no con índice: el alta de membresía manda acá con
+ * `?tab=plantilla` cuando falta asignar la sede, y un índice se rompe en
+ * silencio el día que alguien reordena las pestañas.
+ */
+export const PESTANAS_DE_LA_FICHA = ['sucursales', 'plantilla', 'sub-organizaciones'] as const;
 
 /**
  * Variante del badge por **código** de concepto. Mismo criterio que el
@@ -87,31 +101,32 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
  * ## Por qué las tres viven en una pantalla y no en tres
  *
  * Los tres endpoints exigen el mismo `tenantId` en la ruta. Un parámetro
- * obligatorio **no es un filtro**: es el ámbito de la pantalla. Las tres listas
- * son del mismo registro, así que abren con su ficha compacta arriba y se
- * reparten en pestañas — no repiten la organización como columna ni la piden
- * de nuevo en una barra de filtros.
+ * obligatorio **no es un filtro**: es el ámbito de la pantalla. Van en UNA
+ * tarjeta con pestañas (`composition-rules.md` §5), con la ficha compacta
+ * arriba, sin repetir la organización como columna.
  *
- * ## Dos de los tres endpoints no paginan
+ * ## Los nueve estados de la organización
  *
- * `/branches` y `/branch-assignments` devuelven `{ items, count }` plano: sin
- * cursor y sin total separado. Prometer «Siguientes» sobre eso sería mentir, y
- * por eso esas dos tablas van sin pie de paginación. Membresías sí pagina por
- * cursor, y sólo ella lo lleva.
+ * La ficha entera cuelga de `GET /tenants/{id}` a través de
+ * `app-view-state-host`: un `403` (no pertenecés) es S5, un `404` es S6 —sin
+ * un solo dato del recurso—, y S8/S9 ofrecen reintentar con el código de
+ * soporte. Antes la plantilla sólo distinguía `ready` y `error`, y todo lo
+ * demás caía en «Cargando…» para siempre.
  *
- * ## Las lecturas no piden rol global
+ * ## Paginación
  *
- * Cuelgan de `/tenants/{id}`, no de `/admin/tenants`: basta pertenecer a la
- * organización. Quien no pertenece recibe `403` y un tenant inexistente
- * responde `404`, para que el código de error no sirva para sondear qué
- * identificadores existen. Los dos casos caen en el estado de error de la
- * pantalla con su mensaje propio.
+ * `/branches` devuelve `{ items, count }` plano y no pagina. Membresías y
+ * sub-organizaciones sí, por cursor: cada una lleva su propio historial
+ * (`historialDeCursor`) y su pie de «Anterior / Siguiente».
  *
- * ## Las tres cargan juntas, y ninguna tumba a las otras
+ * ## Quién ve qué acción
  *
- * Un `forkJoin` con `catchError` por rama: si la organización responde pero sus
- * membresías fallan, se ve la ficha con dos pestañas cargadas y una en error.
- * Encadenarlas dejaría la pantalla en blanco por el fallo de la tercera.
+ * La API es la autoridad. Las lecturas las abre a cualquier miembro; sucursales
+ * y plantilla las escribe OWNER/ADMIN de la organización o la plataforma
+ * (`TenantAdministrationService.assertCanAdminister`), y las sub-organizaciones
+ * sólo `SECURITY_ADMIN`. La ficha ofrece cada acción a quien la API se la va a
+ * aceptar —el `canAdminister` de `GET /tenants/me`—, para no poner una puerta
+ * que va a estar cerrada. Ocultarla no protege nada.
  */
 @Component({
   selector: 'app-organization-detail',
@@ -120,7 +135,9 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
     AppButton,
     AppButtonLink,
     Badge,
+    BranchAssignmentDialog,
     BranchBulkImport,
+    Card,
     DataTable,
     DatePipe,
     Link,
@@ -128,7 +145,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
     RouterLink,
     Tab,
     Tabs,
-    LoadingState,
+    ViewStateHost,
   ],
   templateUrl: './organization-detail.html',
   styleUrl: './organization-detail.css',
@@ -136,23 +153,29 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
 })
 export class OrganizationDetail {
   private readonly directory = inject(DirectoryClient);
+  private readonly iam = inject(IamClient);
   private readonly toasts = inject(ToastService);
   private readonly terminology = inject(TerminologyClient);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly session = inject(SessionStore);
 
   /**
    * La organización que se está mirando, leída del segmento `:tenantId`.
    *
    * Por `paramMap` y no por `input.required`: el router de esta aplicación no
-   * declara `withComponentInputBinding()`, así que un `input` de ruta nunca se
-   * llenaría y la pantalla quedaría en blanco sin decir por qué. Es el mismo
-   * camino que usa la ficha de paciente.
+   * declara `withComponentInputBinding()`.
    */
   protected readonly tenantId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('tenantId') ?? '')),
     { initialValue: '' },
+  );
+
+  /** La pestaña abierta, de `?tab=`. Sin parámetro (o con uno que no existe), la primera. */
+  protected readonly pestana = toSignal(
+    this.route.queryParamMap.pipe(map((params) => indiceDePestana(params.get('tab')))),
+    { initialValue: 0 },
   );
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -167,6 +190,8 @@ export class OrganizationDetail {
   private readonly celdaAltaSucursal =
     viewChild.required<TemplateRef<{ $implicit: BranchListItem }>>('celdaAltaSucursal');
 
+  private readonly celdaPersona =
+    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaPersona');
   private readonly celdaRol =
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaRol');
   private readonly celdaEstadoMembresia =
@@ -175,6 +200,8 @@ export class OrganizationDetail {
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaSede');
   private readonly celdaVigencia =
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaVigencia');
+  private readonly celdaAccionesMembresia =
+    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaAccionesMembresia');
 
   private readonly celdaHija =
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaHija');
@@ -186,21 +213,76 @@ export class OrganizationDetail {
   protected readonly membresias = signal<ViewState<readonly MembershipListItem[]>>(loading());
   protected readonly hijas = signal<ViewState<readonly TenantListItem[]>>(loading());
 
-  /** Etiquetas de todos los conceptos de la ficha, resueltas de una vez. */
+  private readonly paginadoMembresias = historialDeCursor();
+  protected readonly cursorMembresias = this.paginadoMembresias.cursor;
+  private readonly paginadoHijas = historialDeCursor();
+  protected readonly cursorHijas = this.paginadoHijas.cursor;
+
+  /** Etiquetas de los conceptos ya vistos, acumuladas entre páginas. */
   private readonly etiquetas = signal<ConceptLabels>(new Map());
 
   /**
-   * Nombre de cada sucursal por su id. Las asignaciones y las membresías
-   * devuelven `branchId` crudo, y un uuid no le dice nada a nadie: la
-   * resolución es trabajo del frontend, que ya tiene las sucursales cargadas.
+   * Nombre de cada persona de la plantilla por su `userId`. `null` es «no se
+   * pudo resolver» (la ficha de cuenta exige `SECURITY_ADMIN`): se muestra como
+   * tal, nunca el uuid.
    */
-  private readonly nombreDeSucursal = computed<ReadonlyMap<string, string>>(() => {
+  private readonly nombres = signal<ReadonlyMap<string, string | null>>(new Map());
+
+  /** La organización vista desde `GET /tenants/me`: trae `canAdminister`. */
+  private readonly miOrganizacion = signal<MyOrganization | null>(null);
+
+  /** La persona de la plantilla a la que se le está asignando sede. */
+  protected readonly asignandoA = signal<MembershipListItem | null>(null);
+
+  private readonly esPlataforma = computed(() =>
+    rolesAlcanzan(['SECURITY_ADMIN'], this.session.roles()),
+  );
+
+  /**
+   * Si la sesión administra esta organización: plataforma, o OWNER/ADMIN de
+   * ella según la propia API. Decide qué acciones se ofrecen, no qué se puede.
+   */
+  protected readonly puedeAdministrar = computed(
+    () => this.esPlataforma() || this.miOrganizacion()?.canAdminister === true,
+  );
+
+  /** `POST /tenants/{id}/child-tenants` sigue pidiendo `SECURITY_ADMIN`. */
+  protected readonly puedeCrearHijas = this.esPlataforma;
+
+  /** El listado de organizaciones es de plataforma: a otro no se lo ofrece. */
+  protected readonly ofreceListado = this.esPlataforma;
+
+  protected readonly fichaLista = computed(() => this.organizacion().status === 'ready');
+
+  protected readonly rutaDeSucursal = computed(() => branchNewRoute(this.tenantId()));
+  protected readonly rutaDeMembresia = computed(() => membershipNewRoute(this.tenantId()));
+  protected readonly rutaDeHija = computed(() => childOrganizationNewRoute(this.tenantId()));
+
+  /** Hay a qué sede asignar: sin sucursales, la acción de la fila no se ofrece. */
+  protected readonly sucursalesCargadas = computed<readonly BranchListItem[]>(() => {
     const estado = this.sucursales();
-    if (estado.status !== 'ready') {
-      return new Map();
-    }
-    return new Map(estado.data.map((sucursal) => [sucursal.id, sucursal.name]));
+    return estado.status === 'ready' ? estado.data : [];
   });
+
+  private readonly nombreDeSucursal = computed<ReadonlyMap<string, string>>(
+    () => new Map(this.sucursalesCargadas().map((sucursal) => [sucursal.id, sucursal.name])),
+  );
+
+  /**
+   * Lo que pintan las tablas. El vacío (S3) exige una próxima acción; a quien
+   * no puede ejecutarla se le dice a quién pedírsela, en vez de un enlace a
+   * una pantalla que le va a responder 403. Es `computed` porque el permiso
+   * (`GET /tenants/me`) puede llegar después que la lista.
+   */
+  protected readonly vistaDeSucursales = computed(() =>
+    conAccionPosible(this.sucursales(), this.puedeAdministrar()),
+  );
+  protected readonly vistaDeMembresias = computed(() =>
+    conAccionPosible(this.membresias(), this.puedeAdministrar()),
+  );
+  protected readonly vistaDeHijas = computed(() =>
+    conAccionPosible(this.hijas(), this.puedeCrearHijas()),
+  );
 
   protected readonly columnasDeSucursal = computed<readonly ColumnDef<BranchListItem>[]>(() => [
     { key: 'name', header: 'Sucursal', priority: 1, cell: this.celdaSucursal() },
@@ -217,6 +299,7 @@ export class OrganizationDetail {
 
   protected readonly columnasDeMembresia = computed<readonly ColumnDef<MembershipListItem>[]>(
     () => [
+      { key: 'userId', header: 'Persona', priority: 1, cell: this.celdaPersona() },
       { key: 'tenantRoleConceptId', header: 'Rol', priority: 1, cell: this.celdaRol() },
       {
         key: 'statusConceptId',
@@ -226,6 +309,18 @@ export class OrganizationDetail {
       },
       { key: 'primaryBranchId', header: 'Sucursal principal', priority: 2, cell: this.celdaSede() },
       { key: 'startDate', header: 'Vigencia', priority: 2, cell: this.celdaVigencia() },
+      ...(this.puedeAdministrar() && this.sucursalesCargadas().length > 0
+        ? [
+            {
+              key: 'acciones',
+              header: 'Acciones',
+              priority: 1,
+              align: 'end' as const,
+              sticky: 'end' as const,
+              cell: this.celdaAccionesMembresia(),
+            },
+          ]
+        : []),
     ],
   );
 
@@ -236,6 +331,28 @@ export class OrganizationDetail {
   ]);
 
   protected readonly porId = (row: { readonly id: string }): string => row.id;
+
+  /** Nombre de la fila para el lector de pantalla: la persona, nunca el uuid. */
+  protected readonly nombreDeFila = (row: MembershipListItem): string => this.personaDe(row.userId);
+
+  /**
+   * A dónde lleva el botón de verificar: sólo mientras la organización está
+   * sin verificar y a quien puede hacerlo. `rolesAlcanzan`, no un `includes`
+   * propio: el comodín `SUPERADMIN` tiene que pasar igual que en el menú.
+   */
+  protected readonly rutaDeVerificacion = computed<string | null>(() => {
+    const ficha = this.organizacion();
+    if (ficha.status !== 'ready' || !this.esPlataforma()) {
+      return null;
+    }
+    const verificacion = this.etiquetaDe(ficha.data.verificationStatusConceptId);
+    // Sin etiqueta el catálogo no respondió: no se ofrece una acción cuyo
+    // sentido no se puede afirmar.
+    if (verificacion === undefined || verificacion.code === 'TENANT_VERIFIED') {
+      return null;
+    }
+    return organizationVerifyRoute(ficha.data.id);
+  });
 
   /* --- carga de sucursales en lote ---------------------------------------- */
 
@@ -300,15 +417,46 @@ export class OrganizationDetail {
 
   constructor() {
     // El id viaja en la ruta: navegar de una organización a otra sin desmontar
-    // el componente tiene que recargar las cuatro lecturas.
+    // el componente tiene que recargar todo y olvidar las páginas visitadas.
     effect(() => {
       this.tenantId();
-      untracked(() => this.cargar());
+      untracked(() => {
+        this.paginadoMembresias.reiniciar();
+        this.paginadoHijas.reiniciar();
+        this.cargar();
+      });
     });
   }
 
   protected recargar(): void {
     this.cargar();
+  }
+
+  protected cambiarPestana(indice: number): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: PESTANAS_DE_LA_FICHA[indice] ?? PESTANAS_DE_LA_FICHA[0] },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  protected moverMembresias(cursor: string): void {
+    this.paginadoMembresias.mover(cursor);
+    this.cargarMembresias(this.tenantId());
+  }
+
+  protected moverHijas(cursor: string): void {
+    this.paginadoHijas.mover(cursor);
+    this.cargarHijas(this.tenantId());
+  }
+
+  protected abrirAsignacion(membresia: MembershipListItem): void {
+    this.asignandoA.set(membresia);
+  }
+
+  protected cerrarAsignacion(): void {
+    this.asignandoA.set(null);
   }
 
   /** La etiqueta de un concepto, si el catálogo la conoce. */
@@ -326,32 +474,22 @@ export class OrganizationDetail {
   }
 
   /**
-   * A dónde lleva el botón de verificar.
-   *
-   * Se ofrece sólo mientras la organización está sin verificar y a quien puede
-   * hacerlo. `rolesAlcanzan` y no un `includes` propio: el comodín `SUPERADMIN`
-   * tiene que pasar igual que en el menú, y duplicar la regla es cómo las dos
-   * lecturas terminan diciendo cosas distintas.
-   *
-   * Devuelve `null` en vez de un booleano aparte porque la plantilla necesita
-   * la ruta, y dos señales que hay que leer juntas son una sola.
+   * Quién es la persona de una membresía. La propia sesión se reconoce sin
+   * preguntar; el resto sale de `GET /iam/users/:id`. Mientras no llega, o si
+   * la API no lo deja leer, se dice eso —el uuid no le dice nada a nadie—.
    */
-  protected readonly rutaDeVerificacion = computed<string | null>(() => {
-    const ficha = this.organizacion();
-    if (ficha.status !== 'ready') {
-      return null;
+  protected personaDe(userId: string): string {
+    if (userId === this.session.userId()) {
+      return this.session.displayName() ?? 'Usted';
     }
-    if (!rolesAlcanzan(['SECURITY_ADMIN'], this.session.roles())) {
-      return null;
-    }
-    const verificacion = this.etiquetaDe(ficha.data.verificationStatusConceptId);
-    // Sin etiqueta el catálogo no respondió: no se ofrece una acción cuyo
-    // sentido no se puede afirmar.
-    if (verificacion === undefined || verificacion.code === 'TENANT_VERIFIED') {
-      return null;
-    }
-    return organizationVerifyRoute(ficha.data.id);
-  });
+    const nombre = this.nombres().get(userId);
+    if (nombre === undefined) return 'Buscando el nombre…';
+    return nombre ?? 'Nombre no disponible';
+  }
+
+  protected esLaSesion(userId: string): boolean {
+    return userId === this.session.userId();
+  }
 
   private cargar(): void {
     const id = this.tenantId();
@@ -361,27 +499,14 @@ export class OrganizationDetail {
 
     this.organizacion.set(loading());
     this.sucursales.set(loading());
-    this.membresias.set(loading());
-    this.hijas.set(loading());
 
-    // Cada rama trae su propio fallo envuelto: una lectura caída deja su
-    // pestaña en error y no arrastra a las otras tres.
     forkJoin({
-      ficha: this.directory.getTenant(id).pipe(catchError((error: unknown) => of({ error }))),
-      sucursales: this.directory
-        .listBranches(id)
-        .pipe(catchError((error: unknown) => of({ error }))),
-      membresias: this.directory
-        .listMemberships(id, { limit: TAMANO_DE_PAGINA })
-        .pipe(catchError((error: unknown) => of({ error }))),
-      hijas: this.directory
-        .listChildTenants(id, { limit: TAMANO_DE_PAGINA })
-        .pipe(catchError((error: unknown) => of({ error }))),
-    }).subscribe(({ ficha, sucursales, membresias, hijas }) => {
+      ficha: conFallo(this.directory.getTenant(id)),
+      sucursales: conFallo(this.directory.listBranches(id)),
+    }).subscribe(({ ficha, sucursales }) => {
       this.organizacion.set(
-        esFallo(ficha) ? errorToViewState<TenantListItem>(ficha.error) : ready(ficha),
+        esFallo(ficha) ? this.estadoDeFallo<TenantListItem>(ficha.error) : ready(ficha),
       );
-
       this.sucursales.set(
         esFallo(sucursales)
           ? errorToViewState<readonly BranchListItem[]>(sucursales.error)
@@ -391,62 +516,180 @@ export class OrganizationDetail {
               'Una sucursal es cada lugar físico donde esta organización atiende. Sin al menos una no hay dónde agendar ni a qué sede asignar a la plantilla.',
             ),
       );
-
-      this.membresias.set(
-        esFallo(membresias)
-          ? errorToViewState<readonly MembershipListItem[]>(membresias.error)
-          : estadoDeLista(
-              membresias.items,
-              { label: 'Sumar a alguien', route: membershipNewRoute(id) },
-              'La plantilla es quién trabaja acá y con qué rol. Mientras esté vacía, sólo quien creó la organización puede entrar.',
-            ),
-      );
-
-      this.hijas.set(
-        esFallo(hijas)
-          ? errorToViewState<readonly TenantListItem[]>(hijas.error)
-          : estadoDeLista(
-              hijas.items,
-              { label: 'Nueva sub-organización', route: childOrganizationNewRoute(id) },
-              'Una sub-organización es una unidad con identidad propia dentro de esta —una red de farmacias, un instituto—. La mayoría de las organizaciones no tiene ninguna, y está bien así.',
-            ),
-      );
-
-      // Una sola lectura de terminología para toda la ficha: los concept ids
-      // de las cuatro respuestas juntos, no uno por fila ni uno por pestaña.
-      // Si el catálogo falla, las columnas degradan a «—» y nada más.
-      const conceptos = conceptosDe({
-        ...(esFallo(ficha) ? {} : { ficha }),
-        ...(esFallo(sucursales) ? {} : { sucursales: sucursales.items }),
-        ...(esFallo(membresias) ? {} : { membresias: membresias.items }),
-        ...(esFallo(hijas) ? {} : { hijas: hijas.items }),
-      });
-      if (conceptos.length === 0) {
-        return;
-      }
-      this.terminology
-        .readConceptLabels(conceptos)
-        .pipe(catchError(() => of<ConceptLabels>(new Map())))
-        .subscribe((etiquetas) => this.etiquetas.set(etiquetas));
+      this.resolverEtiquetas([
+        ...(esFallo(ficha)
+          ? []
+          : [ficha.tenantTypeConceptId, ficha.statusConceptId, ficha.verificationStatusConceptId]),
+        ...(esFallo(sucursales)
+          ? []
+          : sucursales.items.flatMap((s) => [s.branchTypeConceptId, s.statusConceptId])),
+      ]);
     });
+
+    this.cargarMembresias(id);
+    this.cargarHijas(id);
+    this.cargarMiRol(id);
+  }
+
+  private cargarMembresias(id: string): void {
+    this.membresias.set(loading());
+    const cursor = this.paginadoMembresias.actual();
+    this.directory
+      .listMemberships(id, {
+        limit: TAMANO_DE_PAGINA,
+        ...(cursor === undefined ? {} : { cursor }),
+      })
+      .subscribe({
+        next: (pagina) => {
+          this.paginadoMembresias.llego(pagina.nextCursor);
+          this.membresias.set(
+            cursor === undefined
+              ? estadoDeLista(
+                  pagina.items,
+                  { label: 'Sumar a alguien', route: membershipNewRoute(id) },
+                  'La plantilla es quién trabaja acá y con qué rol. Mientras esté vacía, sólo quien creó la organización puede entrar.',
+                )
+              : ready(pagina.items),
+          );
+          this.resolverNombres(pagina.items.map((m) => m.userId));
+          this.resolverEtiquetas(
+            pagina.items.flatMap((m) => [
+              m.tenantRoleConceptId,
+              m.statusConceptId,
+              m.accessScopeConceptId,
+            ]),
+          );
+        },
+        error: (error: unknown) => {
+          this.paginadoMembresias.llego(null);
+          this.membresias.set(errorToViewState<readonly MembershipListItem[]>(error));
+        },
+      });
+  }
+
+  private cargarHijas(id: string): void {
+    this.hijas.set(loading());
+    const cursor = this.paginadoHijas.actual();
+    this.directory
+      .listChildTenants(id, {
+        limit: TAMANO_DE_PAGINA,
+        ...(cursor === undefined ? {} : { cursor }),
+      })
+      .subscribe({
+        next: (pagina) => {
+          this.paginadoHijas.llego(pagina.nextCursor);
+          this.hijas.set(
+            cursor === undefined
+              ? estadoDeLista(
+                  pagina.items,
+                  { label: 'Nueva sub-organización', route: childOrganizationNewRoute(id) },
+                  'Una sub-organización es una unidad con identidad propia dentro de esta —una red de farmacias, un instituto—. La mayoría de las organizaciones no tiene ninguna, y está bien así.',
+                )
+              : ready(pagina.items),
+          );
+          this.resolverEtiquetas(pagina.items.map((h) => h.statusConceptId));
+        },
+        error: (error: unknown) => {
+          this.paginadoHijas.llego(null);
+          this.hijas.set(errorToViewState<readonly TenantListItem[]>(error));
+        },
+      });
+  }
+
+  /**
+   * `canAdminister` de la propia API. La plataforma no lo necesita, así que no
+   * se pide. Si la lectura falla, la ficha sigue: sólo no ofrece las altas, y
+   * la API sigue siendo quien decide.
+   */
+  private cargarMiRol(id: string): void {
+    this.miOrganizacion.set(null);
+    if (this.esPlataforma()) return;
+    this.directory
+      .listMyOrganizations()
+      .pipe(catchError(() => of<readonly MyOrganization[]>([])))
+      .subscribe((items) => this.miOrganizacion.set(items.find((o) => o.id === id) ?? null));
+  }
+
+  /** Nombres de la página vigente, de a uno y sólo los que faltan. */
+  private resolverNombres(userIds: readonly string[]): void {
+    const conocidos = this.nombres();
+    const faltan = [...new Set(userIds)].filter(
+      (id) => !conocidos.has(id) && id !== this.session.userId(),
+    );
+    if (faltan.length === 0) return;
+
+    // Sin `SECURITY_ADMIN` la API responde 403 a cada una: se marca «no
+    // disponible» de entrada en vez de gastar una petición por fila.
+    if (!this.esPlataforma()) {
+      this.nombres.update((previo) => new Map([...previo, ...faltan.map((id) => [id, null] as const)]));
+      return;
+    }
+
+    forkJoin(
+      faltan.map((id) =>
+        this.iam.getUser(id).pipe(
+          map((usuario) => [id, usuario.displayName] as const),
+          catchError(() => of([id, null] as const)),
+        ),
+      ),
+    ).subscribe((pares) => this.nombres.update((previo) => new Map([...previo, ...pares])));
+  }
+
+  /** Una sola lectura de terminología por tanda, sólo con lo que no se conoce. */
+  private resolverEtiquetas(ids: readonly (string | undefined)[]): void {
+    const conocidas = this.etiquetas();
+    const faltan = [...new Set(ids)].filter(
+      (id): id is string => id !== undefined && !conocidas.has(id),
+    );
+    if (faltan.length === 0) return;
+    // Si el catálogo falla, las columnas degradan a «—» y nada más.
+    this.terminology
+      .readConceptLabels(faltan)
+      .pipe(catchError(() => of<ConceptLabels>(new Map())))
+      .subscribe((nuevas) => this.etiquetas.update((previas) => new Map([...previas, ...nuevas])));
+  }
+
+  /**
+   * S6 con salida: volver al listado si la sesión lo puede ver. Sin dato del
+   * recurso —el texto lo fija `ViewStateHost` y es el mismo exista o no—.
+   */
+  private estadoDeFallo<T>(error: unknown): ViewState<T> {
+    const estado = errorToViewState<T>(error);
+    if (estado.status === 'not-found' && this.ofreceListado()) {
+      return { status: 'not-found', nextAction: { label: 'Volver al listado', route: ORGANIZATIONS_ROUTE } };
+    }
+    return estado;
   }
 }
-
 
 /** Una rama del `forkJoin` que se resolvió con fallo en vez de con datos. */
 interface Fallo {
   readonly error: unknown;
 }
 
+function conFallo<T extends object>(fuente: Observable<T>): Observable<T | Fallo> {
+  return fuente.pipe(catchError((error: unknown) => of<Fallo>({ error })));
+}
+
 function esFallo(valor: object): valor is Fallo {
   return 'error' in valor;
+}
+
+function conAccionPosible<T>(estado: ViewState<T>, puede: boolean): ViewState<T> {
+  return estado.status === 'empty' && !puede
+    ? { ...estado, nextAction: { label: 'Pídaselo a quien administra la organización' } }
+    : estado;
+}
+
+function indiceDePestana(nombre: string | null): number {
+  const indice = PESTANAS_DE_LA_FICHA.indexOf(nombre as (typeof PESTANAS_DE_LA_FICHA)[number]);
+  return indice === -1 ? 0 : indice;
 }
 
 /**
  * De la lista al estado. El vacío lleva su propio texto y su propia salida:
  * «no hay sucursales» y «no hay sub-organizaciones» son situaciones distintas,
- * y la tercera —una organización sin sub-organizaciones— es lo normal, no una
- * carencia. Decirlo evita que alguien crea que le falta cargar algo.
+ * y la tercera —una organización sin sub-organizaciones— es lo normal.
  */
 function estadoDeLista<T>(
   items: readonly T[],
@@ -454,42 +697,4 @@ function estadoDeLista<T>(
   mensaje: string,
 ): ViewState<readonly T[]> {
   return items.length === 0 ? empty(accion, mensaje) : ready(items);
-}
-
-/**
- * Los concept ids únicos de toda la ficha, para resolverlos en una sola
- * llamada. `Set` porque el mismo estado se repite en casi todas las filas.
- */
-function conceptosDe(fuentes: {
-  readonly ficha?: TenantListItem;
-  readonly sucursales?: readonly BranchListItem[];
-  readonly membresias?: readonly MembershipListItem[];
-  readonly hijas?: readonly TenantListItem[];
-}): readonly string[] {
-  const ids = new Set<string>();
-  const agregar = (id: string | undefined): void => {
-    if (id !== undefined) {
-      ids.add(id);
-    }
-  };
-
-  if (fuentes.ficha !== undefined) {
-    agregar(fuentes.ficha.tenantTypeConceptId);
-    agregar(fuentes.ficha.statusConceptId);
-    agregar(fuentes.ficha.verificationStatusConceptId);
-  }
-  for (const sucursal of fuentes.sucursales ?? []) {
-    agregar(sucursal.branchTypeConceptId);
-    agregar(sucursal.statusConceptId);
-  }
-  for (const membresia of fuentes.membresias ?? []) {
-    agregar(membresia.tenantRoleConceptId);
-    agregar(membresia.statusConceptId);
-    agregar(membresia.accessScopeConceptId);
-  }
-  for (const hija of fuentes.hijas ?? []) {
-    agregar(hija.statusConceptId);
-  }
-
-  return [...ids];
 }

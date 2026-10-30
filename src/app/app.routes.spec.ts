@@ -8,6 +8,7 @@ import { LOGIN_ROUTE } from './core/http/auth.interceptor';
 import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
 import {
   ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
@@ -194,12 +195,34 @@ describe('rutas del armazón', () => {
       return section !== undefined && restringePorRol(section);
     });
 
+    /**
+     * Pantallas que la sección cerraría de más y llevan un guard propio, más
+     * angosto que «nada» y más ancho que el de la sección: la API las abre al
+     * OWNER/ADMIN de la organización (`assertCanAdminister`) y no sólo a
+     * `SECURITY_ADMIN`. Siguen guardadas: cambian de guard, no lo pierden.
+     */
+    const CON_GUARD_PROPIO: Readonly<Record<string, unknown>> = {
+      'administration/organizations/:tenantId/branches/new': organizacionAdministrableGuard,
+      'administration/organizations/:tenantId/memberships/new': organizacionAdministrableGuard,
+    };
+
     it('lo lleva toda pantalla hija cuya sección declara roles', () => {
       const destapadas = hijasDeSeccionConRoles
         .filter((r) => !SIN_GUARD_A_PROPOSITO.includes(r.path ?? ''))
+        .filter((r) => CON_GUARD_PROPIO[r.path ?? ''] === undefined)
         .filter((r) => !(r.canActivate ?? []).includes(seccionRolesGuard));
 
       expect(destapadas.map((r) => r.path)).toEqual([]);
+    });
+
+    it('las altas de sucursal y membresía llevan el guard de la organización, no el de sección', () => {
+      for (const [path, guard] of Object.entries(CON_GUARD_PROPIO)) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect(ruta?.canActivate ?? [], path).toContain(guard);
+        expect(ruta?.canActivate ?? [], path).not.toContain(seccionRolesGuard);
+      }
     });
 
     it('las excepciones existen, cuelgan de una sección con roles y siguen sin guard', () => {
