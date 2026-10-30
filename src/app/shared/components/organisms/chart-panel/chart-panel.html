@@ -25,7 +25,7 @@
           <button
             app-button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             class="gp__info-btn"
             [attr.aria-expanded]="infoAbierta()"
@@ -41,15 +41,17 @@
             #botonMenu
             app-button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
+            class="gp__mas"
+            [attr.aria-label]="'Más opciones de ' + spec().titulo"
             aria-haspopup="menu"
             [attr.aria-expanded]="menuAbierto()"
             [attr.aria-controls]="ids + '-menu'"
             data-testid="chart-more"
             (click)="alternarMenu()"
           >
-            Más
+            <span aria-hidden="true">⋯</span>
           </button>
           @if (menuAbierto()) {
             <div class="gp__menu-lista" role="menu" [id]="ids + '-menu'" [attr.aria-label]="'Opciones de ' + spec().titulo" tabindex="-1" (keydown)="tecladoMenu($event)">
@@ -156,16 +158,21 @@
           </div>
         </details>
       }
-    } @else if (spec().filtroMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="chart-no-filter">Sin filtro por clic: {{ minusculaInicial(spec().filtroMotivo!) }}</p>
     }
 
-    <!-- 6) y 7) Lo que el gráfico NO trae, dicho por escrito: omitirlo sin decir por qué es el defecto. -->
-    @if (spec().info === null && spec().infoMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="chart-no-info">Sin explicación de cálculo: {{ minusculaInicial(spec().infoMotivo!) }}</p>
-    }
-    @if (spec().velas === null && spec().velasMotivo) {
-      <p class="gp__pista gp__pista--no" data-testid="chart-no-candles">Sin versión en velas: {{ minusculaInicial(spec().velasMotivo!) }}</p>
+    <!-- 5) 6) y 7) Lo que el gráfico NO trae, dicho por escrito (compacto): omitirlo sin decir por qué es el defecto. -->
+    @if ((!etiquetaFiltro() && spec().filtroMotivo) || (spec().info === null && spec().infoMotivo) || (spec().velas === null && spec().velasMotivo)) {
+      <div class="gp__faltas">
+        @if (!etiquetaFiltro() && spec().filtroMotivo) {
+          <p class="gp__pista gp__pista--no" data-testid="chart-no-filter"><span>Sin filtro por clic:</span> {{ minusculaInicial(spec().filtroMotivo!) }}</p>
+        }
+        @if (spec().info === null && spec().infoMotivo) {
+          <p class="gp__pista gp__pista--no" data-testid="chart-no-info"><span>Sin explicación de cálculo:</span> {{ minusculaInicial(spec().infoMotivo!) }}</p>
+        }
+        @if (spec().velas === null && spec().velasMotivo) {
+          <p class="gp__pista gp__pista--no" data-testid="chart-no-candles"><span>Sin versión en velas:</span> {{ minusculaInicial(spec().velasMotivo!) }}</p>
+        }
+      </div>
     }
 
     <!-- Tabla de respaldo (obligatoria: contraste de tres tonos < 3:1) -->

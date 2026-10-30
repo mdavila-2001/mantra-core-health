@@ -60,7 +60,10 @@ export function leyenda(tema: ChartTheme, nombres?: readonly string[]): Record<s
     bottom: 0,
     left: 'center',
     width: '92%',
-    itemGap: 14,
+    itemGap: 16,
+    icon: 'circle',
+    itemWidth: 9,
+    itemHeight: 9,
     textStyle: { color: tema.texto, fontSize: 12 },
     ...(nombres === undefined ? {} : { data: nombres }),
   };
@@ -73,9 +76,9 @@ export function tooltipBase(tema: ChartTheme): Record<string, unknown> {
     backgroundColor: tema.fondoTooltip,
     borderColor: tema.bordeTooltip,
     borderWidth: 1,
-    padding: [8, 10],
+    padding: [10, 12],
     textStyle: { color: tema.texto, fontSize: 12 },
-    extraCssText: 'box-shadow: var(--shadow-md);',
+    extraCssText: 'box-shadow: var(--shadow-md); border-radius: 10px;',
   };
 }
 
@@ -105,7 +108,7 @@ export function unitOf(serie: SerieCartesiana | undefined, general: UnidadValor)
 }
 
 /** Píxeles aproximados por carácter a 12 px de fuente (media de letras y espacios del texto de los ejes). */
-const PX_POR_CARACTER = 6.8;
+const PX_PER_CHAR = 6.8;
 
 /**
  * Cómo rotular los nombres de un eje de categorías dentro de la casilla que le toca a cada uno. Se parten
@@ -116,7 +119,7 @@ export function ajusteEtiquetas(
   textos: readonly string[],
   casilla: number,
 ): { readonly width: number; readonly overflow: 'break' | 'none'; readonly rotate: number } {
-  const palabraMasLarga = Math.max(0, ...textos.flatMap((t) => t.split(/\s+/)).map((w) => w.length)) * PX_POR_CARACTER;
+  const palabraMasLarga = Math.max(0, ...textos.flatMap((t) => t.split(/\s+/)).map((w) => w.length)) * PX_PER_CHAR;
   return palabraMasLarga <= casilla
     ? { width: casilla, overflow: 'break', rotate: 0 }
     : { width: 180, overflow: 'none', rotate: 30 };

@@ -8,10 +8,12 @@
     <p class="kpi__reason" data-testid="kpi-reason">{{ reason() }}</p>
   } @else {
     <p class="kpi__delta" [attr.data-verdict]="delta().verdict" data-testid="kpi-delta">
-      @if (arrow(); as glyph) {
-        <span class="kpi__arrow" aria-hidden="true">{{ glyph }}</span>
-      }
-      <span class="kpi__delta-num">{{ delta().text }}</span>
+      <span class="kpi__pill">
+        @if (arrow(); as glyph) {
+          <span class="kpi__arrow" aria-hidden="true">{{ glyph }}</span>
+        }
+        <span class="kpi__delta-num">{{ delta().text }}</span>
+      </span>
       @if (delta().word) {
         <span class="kpi__delta-word">{{ delta().word }}</span>
       }

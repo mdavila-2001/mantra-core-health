@@ -21,6 +21,8 @@
 .gp__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 
 .gp__menu { position: relative; }
+.gp__info-btn { color: var(--text-secondary); }
+.gp__mas { min-width: 2.5rem; font-size: 1.25rem; line-height: 1; letter-spacing: 0.1em; color: var(--text-secondary); }
 .gp__menu-lista {
   position: absolute; right: 0; top: calc(100% + var(--sp-1)); z-index: var(--z-dropdown, 20);
   display: flex; flex-direction: column; min-width: 14rem; padding: var(--sp-1);
@@ -47,7 +49,9 @@
 .gp__sin-dato strong { color: var(--text-primary); }
 
 .gp__nota, .gp__pista { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
-.gp__pista--no { color: var(--text-muted); }
+.gp__pista--no { color: var(--text-secondary); line-height: 1.4; }
+.gp__pista--no span { font-weight: 600; }
+.gp__faltas { display: flex; flex-direction: column; gap: var(--sp-1); padding: var(--sp-2) var(--sp-3); border-left: 3px solid var(--border-strong); background: var(--bg-surface-alt); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
 .gp__sel { margin-left: var(--sp-2); padding: 1px var(--sp-2); border-radius: var(--r-full); background: var(--st-info-bg); color: var(--st-info-fg); border: 1px solid var(--st-info-bd); }
 
 .gp__teclado summary { cursor: pointer; font-size: var(--fs-caption); color: var(--text-secondary); }

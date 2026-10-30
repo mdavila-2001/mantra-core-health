@@ -42,12 +42,15 @@ function construirCartesiano(
       stack: s.apilar,
       smooth: false,
       connectNulls: false,
-      showSymbol: d.categorias.length <= 40,
-      symbolSize: 6,
-      areaStyle: s.forma === 'area' ? { opacity: 0.18 } : undefined,
+      showSymbol: d.categorias.length <= 14,
+      symbolSize: 7,
+      areaStyle: s.forma === 'area' ? { opacity: 0.14 } : undefined,
       lineStyle: tipo === 'line' ? { width: 2, ...(atenuada ? { opacity: 0.35 } : {}) } : undefined,
-      ...(atenuada && tipo === 'bar' ? { itemStyle: { opacity: 0.35 } } : {}),
-      barMaxWidth: 36,
+      ...(atenuada && tipo === 'bar' && s.apilar !== undefined ? { itemStyle: { opacity: 0.35 } } : {}),
+      barMaxWidth: 28,
+      ...(tipo === 'bar' && s.apilar === undefined
+        ? { itemStyle: { borderRadius: horizontal ? [0, 4, 4, 0] : [4, 4, 0, 0], ...(atenuada ? { opacity: 0.35 } : {}) } }
+        : {}),
       emphasis: { focus: 'series' },
       markLine:
         tipo === 'line' && idxSel >= 0
@@ -106,9 +109,11 @@ function construirCartesiano(
     scale: d.series.every((s) => s.forma === 'linea'),
     // En porcentajes, un eje que se aclara a 0,05 repetiría «1,9 % · 1,9 % · 1,8 %…» con un decimal.
     ...(spec.unidad.tipo === 'porcentaje' ? { minInterval: 0.1 } : {}),
-    splitLine: { lineStyle: { color: tema.rejilla } },
+    splitLine: { lineStyle: { color: tema.rejilla, type: 'dashed', opacity: 0.7 } },
+    axisLine: { show: false },
     axisLabel: {
       color: tema.textoSuave,
+      fontSize: 11,
       hideOverlap: true,
       formatter: (v: number) => formatearValor(v, spec.unidad, true),
     },

@@ -4,6 +4,7 @@ import { construirAlertas } from './resumen.alertas';
 import { computeConcentration } from './resumen.concentracion';
 import { construirGraficos } from './resumen.graficos';
 import { construirKpis } from './resumen.kpis';
+import { construirEconomiaUnitaria, construirGlosario, construirMapaMonetizacion, lecturaRapida } from './resumen.monetizacion';
 
 /**
  * Pestaña «Resumen ejecutivo» — datos de EJEMPLO.
@@ -26,18 +27,39 @@ export function buildSummaryWith(ctx: ContextoReporte, fuentes: FuentesResumen):
     origen: 'ejemplo',
     kpis: construirKpis(base),
     graficos: construirGraficos(base),
-    tablas: [construirAlertas(base, computeConcentration(base)?.pct ?? null)],
+    tablas: [
+      construirMapaMonetizacion(base),
+      construirEconomiaUnitaria(base),
+      construirAlertas(base, computeConcentration(base)?.pct ?? null),
+      construirGlosario(base),
+    ],
     avisos: [
       'Datos de EJEMPLO',
       ...(faltantes.length === 0
         ? []
         : [`Falta el ingreso de ${faltantes.join(', ')}: el total y lo que depende de él no se calculan.`]),
     ],
+    // Cada sección responde una pregunta que se hace quien necesita entender el negocio, en el orden en que se hace.
     secciones: [
-      { titulo: 'Ingreso', descripcion: 'Cuánto se ganó y cómo cambió.', graficos: ['ingreso-vertical-tiempo', 'cascada-ingreso', 'avance-meta', 'mrr-total'] },
-      { titulo: 'Composición', descripcion: 'De dónde viene el ingreso.', graficos: ['mix-ingresos', 'calor-vertical-mes', 'embudo-global'] },
-      { titulo: 'Riesgo y concentración', descripcion: 'Cuánto depende el ingreso de pocos clientes.', graficos: ['top10-clientes'] },
-      { titulo: 'Alertas', descripcion: 'Cada indicador frente a su umbral; arriba, los más graves.', tablas: ['alertas'] },
+      {
+        titulo: '¿Cuánto entró y cómo viene cambiando?',
+        descripcion: lecturaRapida(base),
+        graficos: ['ingreso-vertical-tiempo', 'avance-meta', 'cascada-ingreso', 'mrr-total'],
+      },
+      {
+        titulo: '¿De dónde sale la plata y por qué nos la pagan?',
+        descripcion: 'Alovida tiene tres fuentes de ingreso. La tabla dice quién paga cada una y por qué; los gráficos, cuánto aporta cada una mes a mes.',
+        tablas: ['mapa-monetizacion'],
+        graficos: ['mix-ingresos', 'calor-vertical-mes'],
+      },
+      {
+        titulo: '¿Es un ingreso sano?',
+        descripcion: 'Un ingreso grande no basta: importa si las cuentas se quedan, si cada una rinde y si no depende de unos pocos clientes.',
+        tablas: ['economia-unitaria'],
+        graficos: ['embudo-global', 'top10-clientes'],
+      },
+      { titulo: '¿Qué miro hoy?', descripcion: 'Cada indicador frente a su umbral; arriba, los más graves.', tablas: ['alertas'] },
+      { titulo: 'Glosario en palabras simples', descripcion: 'Los términos de este tablero, sin jerga y con su fórmula.', tablas: ['glosario-monetizacion'] },
     ],
   };
 }
