@@ -17,6 +17,11 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
+import {
+  ADMISSIONS_SCREENS,
+  ADMISSION_DETAIL_PATH,
+  loadAdmissionDetail,
+} from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import {
   designMockupRoutes,
@@ -73,6 +78,7 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   ...MEDICAL_CENTER_SCREENS,
+  ...ADMISSIONS_SCREENS,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //
@@ -924,6 +930,13 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
+  {
+    // La ficha de una admisión cuelga de la bandeja: hereda los roles de su sección.
+    path: ADMISSION_DETAIL_PATH,
+    title: `${APP_TITLE} - Revisión de admisión`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () => loadAdmissionDetail().catch(() => chunkFallido()),
+  },
   {
     // La importación por archivo. No es una sección del menú: cuelga de
     // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí
