@@ -1,0 +1,57 @@
+== check-css-tokens
+✓ check-css-tokens — 529 tokens declarados, ningún var() huérfano
+== check-tokens
+✓ check-tokens
+  241 tokens, iguales en styles.css y en el catálogo tipado
+== check-contrast
+  ✓ oscuro             --ok-tinta           sobre --ok-bg                7.89:1  (mín. 4.5)
+  ✓ oscuro             --aviso-tinta        sobre --aviso-bg             7.83:1  (mín. 4.5)
+  ✓ oscuro             --error-tinta        sobre --error-bg             7.40:1  (mín. 4.5)
+  ✓ oscuro             --info-tinta         sobre --info-bg              8.19:1  (mín. 4.5)
+  ✓ oscuro             --neutro-tinta       sobre --neutro-bg            8.72:1  (mín. 4.5)
+  ✓ oscuro             --anillo-foco        sobre --sup-pagina           8.59:1  (mín. 3)
+  ✓ oscuro             --anillo-foco        sobre --sup-tarjeta          7.80:1  (mín. 3)
+  ✓ oscuro             --anillo-foco        sobre --sup-inset            8.20:1  (mín. 3)
+  ✓ oscuro             --anillo-foco-nav    sobre --sup-nav             11.38:1  (mín. 3)
+  ✓ oscuro             --anillo-foco-nav    sobre --nav-carril          11.94:1  (mín. 3)
+
+  158 combinaciones medidas en 2 hojas · sin excepciones declaradas
+== check-colores-sueltos
+  src/app/features/clinical-record/patient-chart/patient-chart.css: 1 (techo 0)
+      292: mask-image: linear-gradient(to right, #000 calc(100% - var(--sp-8)), transparent);
+  src/app/features/dashboard/patient-home/patient-tip/patient-tip-card.css: 1 (techo 0)
+      26: color: var(--c-amber-900, #312c24);
+  src/app/shared/components/molecules/result-card/result-card.css: 1 (techo 0)
+      614: background: linear-gradient(transparent, rgb(0 0 0 / 0.18));
+  src/app/shared/components/organisms/drawer-panel/drawer-panel.css: 1 (techo 0)
+      19: background: rgb(10 28 39 / 55%);
+
+  Usá un token (`var(--st-error-fg)`, `var(--brand-primary)`…); ver docs/design-system/tokens.md.
+  Si falta el token, se agrega en styles.css con su par de contraste en check-contrast.mjs.
+
+== check-max-lines
+  src/app/features/account/medical-record/history-view-model.ts: 674 líneas (techo 654)
+  src/app/features/clinical-record/patient-chart/analysis-order-block/analysis-order-block.ts: 664 líneas (techo 649)
+  src/app/features/admin/admissions/admission-detail/admission-detail.ts: 660 líneas (techo 600)
+  src/app/features/accounting/summary/summary.css: 655 líneas (techo 600)
+  src/app/shared/components/molecules/result-card/result-card.css: 639 líneas (techo 600)
+  src/app/features/glossary/glossary.css: 635 líneas (techo 600)
+  src/app/features/accounting/summary/summary.ts: 611 líneas (techo 600)
+  src/app/features/dashboard/today-agenda/today-agenda.css: 611 líneas (techo 609)
+  src/app/features/messaging/thread/thread.html: 609 líneas (techo 600)
+
+  Partilo: plantilla en .html, estilos en .css, lógica en servicios/ayudas. No subas el techo.
+
+== check-usted
+  src/app/features/psychological-help/psychological-help.html:97  «podés»  …te o lastimar a alguien, o no podés mantenerte a salvo, ace…
+  src/app/features/psychological-help/psychological-help.html:98  «pedile»  … a un servicio de urgencias y pedile a una persona de confianza qu…
+  src/app/features/psychological-help/psychological-help.html:98  «te»  … una persona de confianza que te acompañe. Esta página n…
+  src/app/features/symptom-check/text.ts:127  «te»  …te…
+  src/app/features/symptom-check/text.ts:128  «tu»  …tu…
+  src/app/features/symptom-check/text.ts:129  «tus»  …tus…
+  src/app/features/symptom-check/text.ts:153  «tienes»  …tienes…
+  src/app/features/symptom-check/text.ts:352  «te»  …te…
+  src/app/shared/components/molecules/dialog/dialog.html:54  «Escribí»  …orm-field [label]="'Escribí «' + exigida + '» para confir…
+  src/app/shared/components/molecules/dialog/dialog.ts:112  «Escribí»  …Escribí exactamente «${this.phraseReq…
+
+Páselos a usted («Elija», «Le avisamos», «su»). Guía: docs/design-system/voice-and-tone.md

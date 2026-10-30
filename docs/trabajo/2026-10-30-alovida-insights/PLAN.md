@@ -1,7 +1,7 @@
 # Plan — AloVida Insights (plataforma de inteligencia de marketing)
 
 - Fecha: 2026-10-30 · Repos afectados: `mantra-core-health` (frontend) · Predecesor: ninguno · Hermano: `docs/trabajo/2026-10-30-reporteria-comercial-alovida/PLAN.md` (rama `claude/focused-lamport-mufj3h`, sesión de reportería comercial)
-- **Peldaño de evidencia (regla 30): `DISCOVERED`.** Se actualiza en `REPORTE.md` a medida que haya salida real.
+- **Peldaño de evidencia (regla 30): dominio `TESTED`; interfaz `RUNS` + `VERIFIED_FUNCTIONAL_ONLY` parcial.** Detalle y salidas en `REPORTE.md`.
 - Resultado observable: un gerente de marketing entra a `/marketing/insights`, ve los 8 módulos de AloVida Insights en una carcasa SaaS con la línea gráfica ALOVIDA, filtra campaña / periodo / canal / métrica / horario, recibe la visualización recomendada con su razón, ve cada KPI con actual · benchmark · target · estado, abre la evidencia de cada insight y navega de una alerta al módulo donde se investiga.
 - Kill-test: elegir un periodo sin datos → ningún KPI muestra `0`, muestra «Sin evidencia suficiente»; cambiar de tema claro/oscuro → ningún gráfico queda ilegible; la misma campaña muestra la MISMA cifra de conversiones en Campañas, Embudo y Alertas.
 
@@ -33,12 +33,12 @@
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H1.S1.M1 | Tipos y catálogo de métricas (qué decisión permite, qué significa si sube/baja) | spec del catálogo | TODO |
-| H1.S1.M2 | Generador determinista de hechos diarios y por hora | spec de coherencia y determinismo | TODO |
-| H1.S1.M3 | Cálculo de KPI con `null` y `minSample` | spec casos válido / límite / inválido | TODO |
-| H1.S2.M1 | Sistema de benchmarks (5 fuentes) y estados (óptimo…sin evidencia) | spec de umbrales | TODO |
-| H1.S2.M2 | Recomendador de visualización con razón | spec por métrica y contexto | TODO |
-| H1.S3.M1 | Detector de anomalías y generador de alertas | spec | TODO |
+| H1.S1.M1 | Tipos y catálogo de métricas (qué decisión permite, qué significa si sube/baja) | spec del catálogo | HECHO |
+| H1.S1.M2 | Generador determinista de hechos diarios y por hora | spec de coherencia y determinismo | HECHO |
+| H1.S1.M3 | Cálculo de KPI con `null` y `minSample` | spec casos válido / límite / inválido | HECHO |
+| H1.S2.M1 | Sistema de benchmarks (5 fuentes) y estados (óptimo…sin evidencia) | spec de umbrales | HECHO |
+| H1.S2.M2 | Recomendador de visualización con razón | spec por métrica y contexto | HECHO |
+| H1.S3.M1 | Detector de anomalías y generador de alertas | spec | HECHO |
 
 ## H2 — Gráficos SVG y componentes
 **CA:** Cada gráfico responde una pregunta, se lee sin color (marcadores, etiquetas directas), ofrece alternativa tabular y respeta `prefers-reduced-motion`.
@@ -46,22 +46,46 @@
 
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
-| H2.S1.M1 | Línea/área con benchmark, target, umbrales y tooltip | spec | TODO |
-| H2.S1.M2 | Barras (horizontal/vertical/apiladas/100 %) | spec | TODO |
-| H2.S1.M3 | Embudo, heatmap (día×hora, cohortes) | spec | TODO |
-| H2.S1.M4 | Dispersión con tendencia, histograma, caja | spec | TODO |
-| H2.S2.M1 | Tarjeta KPI (compact/standard/expanded), insight, alerta, evidencia | spec | TODO |
+| H2.S1.M1 | Línea/área con benchmark, target, umbrales y tooltip | spec | A MEDIAS |
+| H2.S1.M2 | Barras (horizontal/vertical/apiladas/100 %) | spec | A MEDIAS |
+| H2.S1.M3 | Embudo, heatmap (día×hora, cohortes) | spec | A MEDIAS |
+| H2.S1.M4 | Dispersión con tendencia, histograma, caja | spec | A MEDIAS |
+| H2.S2.M1 | Tarjeta KPI (compact/standard/expanded), insight, alerta, evidencia | spec | A MEDIAS |
+
+> H2: los gráficos están escritos, compilan y se ven en el navegador; falta la prueba de componente (solo la matemática de `chart-math` tiene spec). Por eso `A MEDIAS`.
 
 ## H3 — Carcasa y módulo 01 Campañas
 **CA:** Dado el filtro (campaña, periodo, canal, métrica, horario, visualización), cuando cambia la métrica, entonces se recomienda un gráfico con razón y el usuario puede cambiarlo; comparar campañas funciona sin reconstruir la pantalla.
 **DoD:** typecheck + lint + vitest + capturas 390/768/1440 × claro/oscuro.
 
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H3.S1.M1 | Carcasa (menú de 8 módulos, filtros en URL, vistas guardadas) y registro de ruta/navegación | capturas + `ngc` | A MEDIAS |
+| H3.S1.M2 | Módulo 01 Resumen de campañas | capturas 1440 claro/oscuro, 390 claro | A MEDIAS |
+
 ## H4 — Módulos 02 a 08
 Embudo y Journey · Uso de la app · Redes · Opinión pública · Informes · Observatorio · Alertas.
 **CA por módulo:** responde SU pregunta; cada insight trae confianza y trazabilidad; cada alerta enlaza al módulo.
 
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H4.S1.M1 | 02 Embudo y experiencia del paciente | `ngc` + captura 1440 claro | A MEDIAS |
+| H4.S1.M2 | 03 Uso de la app y mapa de calor | `ngc` + captura 1440 claro | A MEDIAS |
+| H4.S1.M3 | 04 Redes sociales | `ngc` + captura 1440 claro | A MEDIAS |
+| H4.S2.M1 | 05 Opinión pública | `ngc` + spec + captura 1440 claro/oscuro | A MEDIAS |
+| H4.S2.M2 | 06 Generador de informes | `ngc` + spec + captura 1440 claro + flujo | A MEDIAS |
+| H4.S2.M3 | 07 Observatorio de salud | `ngc` + captura 1440 y 390 | A MEDIAS |
+| H4.S2.M4 | 08 Alertas (centro de alertas con estado) | `ngc` + spec + flujo en navegador | A MEDIAS |
+
 ## H5 — Verificación y cierre
 `yarn typecheck`, `yarn lint`, `yarn test` (dirigido), `yarn build`, `node scripts/check-*.mjs` aplicables, capturas miradas, `REPORTE.md`.
+
+| ID | Microtarea | DoD | Estado |
+|---|---|---|---|
+| H5.S1.M1 | `ngc` + `eslint` + gates de diseño sobre lo tocado | salidas en `evidencia/` | HECHO |
+| H5.S1.M2 | `ng build` de producción | exit 0 | BLOQUEADO (ENVIRONMENT: el build de esbuild se cuelga en este contenedor; se verificó con `ng serve --configuration demo`) |
+| H5.S1.M3 | `ng test` completo del repo | exit 0 | BLOQUEADO (ENVIRONMENT: sin memoria en el contenedor; se corrieron los specs de Insights con Vitest suelto) |
+| H5.S1.M4 | `REPORTE.md` con evidencia | archivo en disco | HECHO |
 
 ## Riesgos
 | Riesgo | Impacto | Mitigación |
