@@ -137,7 +137,7 @@ async function esperarGraficos(page: Page): Promise<void> {
   await page.evaluate(() => new Promise<void>((r) => requestAnimationFrame(() => r())));
 }
 
-async function capturar(page: Page, nombre: string): Promise<void> {
+async function capturar(page: Page, nombre: string, paginaCompleta = true): Promise<void> {
   // Una captura a media transición (la pantalla de acceso todavía debajo) no es evidencia:
   // se espera a que la vista anterior salga y a que terminen las animaciones y las fuentes.
   await expect(page.locator('app-login')).toHaveCount(0);
@@ -146,7 +146,7 @@ async function capturar(page: Page, nombre: string): Promise<void> {
     await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
   });
   await esperarLayoutEstable(page);
-  await page.screenshot({ path: join(CAPTURAS, `${nombre}.png`), fullPage: true });
+  await page.screenshot({ path: join(CAPTURAS, `${nombre}.png`), fullPage: paginaCompleta });
 }
 
 /**
@@ -487,7 +487,8 @@ test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte'
       const f = await focusInSheetOrOutside();
       expect(f.dentro, `Tab #${i + 1} → ${f.quien}`).toBe(true);
     }
-    await capturar(page, 'movil-claro-interaccion-asistente-abierto');
+    // Al tamaño de la ventana: una captura de página completa deja la hoja al final del flujo y no demuestra el overlay.
+    await capturar(page, 'movil-claro-interaccion-asistente-abierto', false);
   } finally {
     await context.close();
   }
