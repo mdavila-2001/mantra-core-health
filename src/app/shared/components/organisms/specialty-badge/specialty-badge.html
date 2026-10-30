@@ -2,6 +2,10 @@
 
 <span class="specialty-badge__nombre">{{ especialidad() }}</span>
 
-@if (muestraSello()) {
+<!-- El estado de la especialidad lo dice el átomo (una sola fuente visual): sólo si el
+     servidor lo trajo, y nunca como «Verificado» por omisión. -->
+@if (verificacion() !== 'UNVERIFIED') {
+  <app-verification-badge class="specialty-badge__sello" variant="label" size="sm" [status]="verificacion()" [subject]="especialidad()" />
+} @else if (rechazada()) {
   <app-status-seal class="specialty-badge__sello" [variant]="sello()!" [label]="estado()" />
 }

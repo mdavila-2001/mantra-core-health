@@ -5,7 +5,18 @@
   </a>
   <app-avatar [src]="avatar()" [name]="conQuien()" size="md" />
   <div class="hilo__cabecera-texto">
-    <h1 class="hilo__nombre">{{ conQuien() }}</h1>
+    <div class="hilo__nombre-fila">
+      <h1 class="hilo__nombre">{{ conQuien() }}</h1>
+      @if (verificacion(); as v) {
+        <app-verification-badge
+          size="md"
+          [status]="v.status"
+          [verifiedAt]="v.verifiedAt"
+          [validUntil]="v.validUntil"
+          [subject]="conQuien()"
+        />
+      }
+    </div>
     <p class="hilo__estado">{{ subtitulo() }}</p>
   </div>
 

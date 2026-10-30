@@ -1,7 +1,7 @@
 import { Component, input, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
-import type { AdmissionDocument, AdmissionRequirement } from '@core/data-access/admissions/admissions.types';
+import type { AdmissionDocument, AdmissionRequirement, RequirementStatusCode } from '@core/data-access/admissions/admissions.types';
 import { AdmissionDocumentViewer } from './admission-document-viewer';
 import { AdmissionEvidenceGallery, type GalleryReviewRequest } from './admission-evidence-gallery';
 
@@ -11,11 +11,22 @@ class ViewerStub {
   readonly document = input.required<AdmissionDocument>();
 }
 
-function req(code: string, status: AdmissionRequirement['status'], extra: Partial<AdmissionRequirement> = {}): AdmissionRequirement {
+/**
+ * Un requisito con la ficha que respalda el archivo `f-N` (A → f-1, B → f-2, C → f-3):
+ * el carrusel toma el estado y la decisión de la ficha cuyo `fileId` coincide con el del documento.
+ */
+const ARCHIVO_DE: Readonly<Record<string, string>> = { A: 'f-1', B: 'f-2', C: 'f-3' };
+
+function req(code: string, state: RequirementStatusCode, extra: Partial<AdmissionRequirement> = {}): AdmissionRequirement {
   return {
-    id: `r-${code}`, code, label: `Requisito ${code}`, description: null, mandatory: true, status, documents: [], data: [],
-    itemRef: null, source: null, evidenceSha256: null, reasonCode: null, reasonText: null, internalNote: null,
-    reviewedAt: null, reviewedBy: null, ...extra,
+    code, label: `Requisito ${code}`, description: null, mandatory: true, evidenceKind: 'DOCUMENT', requiresSource: true,
+    minItems: 1, maxItems: 1, state, satisfied: state === 'VERIFIED', blockedBy: state === 'VERIFIED' ? null : state,
+    items: [{
+      id: `rev-${code}`, itemId: `item-${code}`, itemType: 'LICENSE', label: `Ficha ${code}`, state, fileId: ARCHIVO_DE[code] ?? null,
+      source: null, reasonCode: null, reasonText: null, internalNote: null, reviewedBy: null, reviewedAt: null,
+      evidenceChanged: false, evidenceSha256: 'a'.repeat(64), rowVersion: 2,
+    }],
+    ...extra,
   };
 }
 
@@ -200,15 +211,15 @@ describe('AdmissionEvidenceGallery', () => {
   });
 
   describe('decidir desde el carrusel', () => {
-    it('Verificar, Rechazar y Pedir información piden la decisión sobre el requisito del documento en pantalla', () => {
+    it('Verificar, Rechazar y Pedir información piden la decisión sobre la ficha del documento en pantalla', () => {
       montar(tresDocs);
       q('gallery-verify')!.click();
       q('gallery-reject')!.click();
       q('gallery-info-required')!.click();
       expect(pedidos).toEqual([
-        { requirementId: 'r-A', decision: 'VERIFIED' },
-        { requirementId: 'r-A', decision: 'REJECTED' },
-        { requirementId: 'r-A', decision: 'INFO_REQUIRED' },
+        { itemId: 'item-A', requirementCode: 'A', decision: 'VERIFIED' },
+        { itemId: 'item-A', requirementCode: 'A', decision: 'REJECTED' },
+        { itemId: 'item-A', requirementCode: 'A', decision: 'INFO_REQUIRED' },
       ]);
     });
 

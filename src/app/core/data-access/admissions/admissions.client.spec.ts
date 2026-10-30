@@ -1,4 +1,5 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+/* eslint-disable @typescript-eslint/no-explicit-any -- los cuerpos son JSON del contrato HTTP del backend (sin tipo estático en la prueba); lo que se verifica es su forma, no su tipo TS. */
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
@@ -262,23 +263,24 @@ describe('AdmissionsClient', () => {
         expect(r.blob.size).toBe(1);
       });
 
-      it('una firma vencida de otro origen (403) es «el enlace venció», y se pide una nueva al reintentar', () => {
+      it('una firma vencida de otro origen (403) es «el enlace venció», y se pide una nueva al reintentar', async () => {
         let falla: unknown;
         client.documentContent('a', 'f').subscribe({ error: (e) => (falla = e) });
         http.expectOne('/admissions/a/documents/f/download-url').flush(acceso('https://almacen.example.com/obj?s=1'));
-        http.expectOne('https://almacen.example.com/obj?s=1').flush('expired', { status: 403, statusText: 'Forbidden' });
-        expect(falla).toBeInstanceOf(DocumentLinkExpiredError);
+        http.expectOne('https://almacen.example.com/obj?s=1').flush(new Blob(['expired']), { status: 403, statusText: 'Forbidden' });
+        // El cuerpo de un error de descarga es un Blob: se lee de forma asíncrona antes de decidir qué error es.
+        await vi.waitFor(() => expect(falla).toBeInstanceOf(DocumentLinkExpiredError));
         client.documentContent('a', 'f').subscribe();
         http.expectOne('/admissions/a/documents/f/download-url').flush(acceso('https://almacen.example.com/obj?s=2'));
         http.expectOne('https://almacen.example.com/obj?s=2').flush(new Blob(['x']));
       });
 
-      it('la API responde 410 a una firma vencida: «el enlace venció»', () => {
+      it('la API responde 410 a una firma vencida: «el enlace venció»', async () => {
         let falla: unknown;
         client.documentContent('a', 'f').subscribe({ error: (e) => (falla = e) });
         http.expectOne('/admissions/a/documents/f/download-url').flush(acceso('/admissions/a/documents/f/content?expires=1&signature=s'));
         http.expectOne('/admissions/a/documents/f/content?expires=1&signature=s').flush(new Blob(['{}']), { status: 410, statusText: 'Gone' });
-        expect(falla).toBeInstanceOf(DocumentLinkExpiredError);
+        await vi.waitFor(() => expect(falla).toBeInstanceOf(DocumentLinkExpiredError));
       });
 
       it('`ADMISSION_DOCUMENT_URL_INVALID` (403) es una firma que no sirve: «el enlace venció»', async () => {

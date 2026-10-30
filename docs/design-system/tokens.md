@@ -17,6 +17,7 @@ que el sistema necesita y vigila.
 | Estados | 4 × 3 = **12** | `--st-<estado>-<bg\|fg\|bd>` | **Sí** |
 | Tonos de marca | 2 × 3 = **6** | `--st-<primary\|secondary>-*` | **Sí** |
 | Escala de intensidad | 4 × 2 = **8** | `--heat-<1…4>-<bg\|fg>` | **Sí** |
+| Insignia de verificación | 2 | `--verified-bg`, `--verified-fg` | **Sí** |
 | Efectos | 4 | `--shadow-*`, `--focus-ring` | **Sí** |
 | Capas | 8 | `--z-*` | No |
 | Duraciones | 3 | `--dur-*` | No |

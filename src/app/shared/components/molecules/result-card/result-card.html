@@ -37,6 +37,15 @@
       >
         {{ navegando() ? 'Abriendo…' : tituloLimpio() }}
       </a>
+      @if (r.verification; as verificacion) {
+        <app-verification-badge
+          size="md"
+          [status]="verificacion.status"
+          [verifiedAt]="verificacion.verifiedAt"
+          [validUntil]="verificacion.validUntil"
+          [subject]="tituloLimpio()"
+        />
+      }
     </p>
 
     @if (r.kind; as tipo) {
