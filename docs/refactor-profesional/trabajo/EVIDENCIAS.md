@@ -1,5 +1,24 @@
 # Evidencias
 
+## Modales fuera de la consulta: pie, fechas y campos sueltos · 2026-10-30
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `dev` en `c5f2363f2`.
+`playwright/modales-fuera-de-consulta.spec.ts` abre 31 modales con los seis usuarios del simulador, en
+1440 y 390, y mide columnas de campos, hueco a la derecha del último campo y desborde lateral.
+
+| Comprobación | Resultado |
+|---|---|
+| Medidas antes/después (31 modales × 2 anchos) | Cambian sólo los tres tocados a propósito: historial (1→2 columnas, hueco 16→0), nuevo lugar (hueco 16→0), confirmar diagnóstico (1→2 columnas). El resto, idéntico. |
+| Página «Trayectoria» (aloja el modal del historial) | idéntica píxel a píxel a la de `dev` |
+| Regresión propia encontrada y corregida | `.historial__periodo` chocaba con la clase de la lista; renombrada a `.historial__rango` (`a816bb592`) |
+| `yarn test` completo, por tramos (el proceso entero muere con 129 en este entorno) | 15 586 pasan, 3 fallan; las 3 fallan igual con el código de `dev` (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+| `yarn typecheck` · `yarn build` · `eslint` de las pruebas | 0 · 0 · 0 |
+| `check-contrast` · `check-css-tokens` | 0 · 0; `check-colores-sueltos` falla en archivos no tocados |
+
+No se pudo abrir en el simulador: «Ingreso por mostrador», «Nueva cuenta» de contabilidad y
+«Editar la pregunta»; no se les cambió nada. Capturas: `capturas/antes/modales-2026-10-28/` y
+`capturas/despues/modales-2026-10-28/antes-despues-*.png`.
+
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
 
 Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, sesión médica simulada, Chromium.
