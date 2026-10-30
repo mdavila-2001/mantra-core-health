@@ -18,6 +18,7 @@ import {
 } from './reporting-dataset.util';
 import { construirResumen, buildSummaryWith } from './resumen.dataset';
 import type { FuentesResumen } from './resumen.base';
+import { construirSuscripciones } from './suscripciones.dataset';
 
 const PERIODOS: PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
 const COMPARAR: ComparacionReporte[] = ['ninguna', 'periodo-anterior', 'mismo-periodo-ano-anterior'];
@@ -233,6 +234,18 @@ describe('Resumen: composición de las tres verticales', () => {
       expect(valores[valores.length - 1]).toBe(mrr);
     }
     expect(g.velas?.velas.length).toBeGreaterThan(0);
+  });
+
+  it('el MRR del Resumen dibuja la MISMA trayectoria que la pestaña Suscripciones y que la tarjeta de arriba', () => {
+    for (const ctx of [CTX, { ...CTX, periodo: '12m' as const }, { ...CTX, moneda: 'USD' as const }]) {
+      // Con las verticales REALES (no con los dobles): lo que se prueba es que el Resumen lee el modelo de Suscripciones.
+      const resumen = construirResumen(ctx);
+      const susc = construirSuscripciones(ctx);
+      const delResumen = grafico(resumen, 'mrr-total');
+      const deSusc = susc.graficos.find((g) => g.id === 'mrr-evolucion')!;
+      expect(delResumen.datos).toEqual(deSusc.datos);
+      expect(delResumen.velas?.velas).toEqual(deSusc.velas?.velas);
+    }
   });
 
   it('la cascada suma: anterior + variaciones = actual, y el actual es el total', () => {
