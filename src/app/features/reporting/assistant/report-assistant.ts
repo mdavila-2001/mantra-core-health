@@ -118,7 +118,7 @@ export class ReportAssistant {
     }
     const texto = this.borrador().trim().slice(0, MAX_CARACTERES_PREGUNTA);
     if (texto === '') {
-      this.avisoEntrada.set('Escribe una pregunta primero, por ejemplo «¿Cuál es el MRR?».');
+      this.avisoEntrada.set('Escriba una pregunta primero, por ejemplo «¿Cuál es el MRR?».');
       return;
     }
     this.borrador.set('');
@@ -240,7 +240,7 @@ export class ReportAssistant {
       return {
         ...base,
         estado: 'forbidden',
-        mensaje: 'Tu cuenta no tiene permiso para consultar estos reportes. Pide acceso a quien administra tu organización.',
+        mensaje: 'Su cuenta no tiene permiso para consultar estos reportes. Pida acceso a quien administra su organización.',
         requestId: estado.requestId ?? null,
         reintento: null,
       };
@@ -249,7 +249,7 @@ export class ReportAssistant {
       return {
         ...base,
         estado: 'offline',
-        mensaje: 'No hay conexión con el servidor. Revisa tu conexión e inténtalo de nuevo.',
+        mensaje: 'No hay conexión con el servidor. Revise su conexión e inténtelo de nuevo.',
         requestId: null,
         reintento,
       };
@@ -257,7 +257,7 @@ export class ReportAssistant {
     return {
       ...base,
       estado: 'error',
-      mensaje: 'No pude buscar en tus reportes. Inténtalo de nuevo; si sigue igual, comparte el código de la petición con soporte.',
+      mensaje: 'No pude buscar en sus reportes. Inténtelo de nuevo; si sigue igual, comparte el código de la petición con soporte.',
       requestId: estado.status === 'error' && estado.requestId !== 'sin-id' ? estado.requestId : null,
       reintento,
     };

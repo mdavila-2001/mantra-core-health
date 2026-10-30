@@ -28,7 +28,7 @@ export function construirRespuesta(
   const sinDato = kpi.valor === null || Number.isNaN(kpi.valor);
   return {
     titulo: kpi.titulo,
-    ambito: contexto.alcance === 'organizacion' ? 'de tu organización' : 'de toda la plataforma',
+    ambito: contexto.alcance === 'organizacion' ? 'de su organización' : 'de toda la plataforma',
     periodo: ETIQUETA_PERIODO[contexto.periodo],
     filtros: contexto.filtros.map((f) => `${ETIQUETA_DIMENSION[f.dimension]}: ${f.valor}`),
     valorTexto: sinDato ? NO_DATA : formatearValor(kpi.valor, kpi.unidad),
