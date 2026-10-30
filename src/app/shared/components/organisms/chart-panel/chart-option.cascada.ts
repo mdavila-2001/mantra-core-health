@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { formatDate, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type { DatosGrafico, UnidadValor } from '@core/data-access/reporting/reporting.types';
-import { base, escapar, leyenda, LIENZO_ANGOSTO, type OpcionesBuild, type ParamEje, readValue, tooltipBase } from './chart-option.common';
+import { ajusteEtiquetas, base, escapar, leyenda, LIENZO_ANGOSTO, type OpcionesBuild, type ParamEje, readValue, tooltipBase } from './chart-option.common';
 
 /* ============================================================================
     Cascada (puente) y velas: los dos gráficos de «cómo se llega de un valor a otro».
@@ -60,6 +60,11 @@ export function construirCascada(
     }
   }
   const nombres = d.pasos.map((p) => p.nombre);
+  // La casilla de cada paso reparte el ancho de la tarjeta; el texto que debe caber incluye el valor firmado.
+  const ajuste = ajusteEtiquetas(
+    d.pasos.map((_, i) => etiquetaCascada(d, spec.unidad, () => ' ')(nombres[i]!)),
+    Math.max(44, Math.min(96, Math.floor((spec.ancho === 'completo' ? 880 : 520) / Math.max(1, d.pasos.length)) - 8)),
+  );
   const idxSel = seleccion === null ? -1 : nombres.indexOf(seleccion);
   const withOpacity = (arr: (number | null)[]) =>
     arr.map((v, i) => (v === null ? null : idxSel >= 0 && i !== idxSel ? { value: v, itemStyle: { opacity: 0.35 } } : v));
@@ -94,10 +99,8 @@ export function construirCascada(
       axisLabel: {
         color: tema.textoSuave,
         interval: 0,
-        // El nombre se parte en la casilla que le toca: con 7 pasos cada una mide ~70 px, no 96.
-        width: Math.max(44, Math.min(96, Math.floor((spec.ancho === 'completo' ? 880 : 520) / Math.max(1, d.pasos.length)) - 8)),
-        overflow: 'break',
-        formatter: etiquetaCascada(d, spec.unidad, () => ((o.anchoLienzo?.() ?? Infinity) <= LIENZO_ANGOSTO ? ' ' : '\n')),
+        ...ajuste,
+        formatter: etiquetaCascada(d, spec.unidad, () => (ajuste.rotate > 0 || (o.anchoLienzo?.() ?? Infinity) <= LIENZO_ANGOSTO ? ' ' : '\n')),
       },
       axisLine: { lineStyle: { color: tema.linea } },
     },

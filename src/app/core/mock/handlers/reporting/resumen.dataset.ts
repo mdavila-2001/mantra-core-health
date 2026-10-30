@@ -37,7 +37,7 @@ export function buildSummaryWith(ctx: ContextoReporte, fuentes: FuentesResumen):
       { titulo: 'Ingreso', descripcion: 'Cuánto se ganó y cómo cambió.', graficos: ['ingreso-vertical-tiempo', 'cascada-ingreso', 'avance-meta', 'mrr-total'] },
       { titulo: 'Composición', descripcion: 'De dónde viene el ingreso.', graficos: ['mix-ingresos', 'calor-vertical-mes', 'embudo-global'] },
       { titulo: 'Riesgo y concentración', descripcion: 'Cuánto depende el ingreso de pocos clientes.', graficos: ['top10-clientes'] },
-      { titulo: 'Alertas', descripcion: 'Indicadores fuera de umbral.', tablas: ['alertas'] },
+      { titulo: 'Alertas', descripcion: 'Cada indicador frente a su umbral; arriba, los más graves.', tablas: ['alertas'] },
     ],
   };
 }

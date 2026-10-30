@@ -252,3 +252,17 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
     expect(kpiById(orgScoped, 'mrr').valor!).toBeLessThan(kpiById(plataforma, 'mrr').valor!);
   });
 });
+
+describe('la tabla «Resumen por plan» cuadra con las tarjetas de la misma pestaña', () => {
+  for (const ctx of contextos().slice(0, 12)) {
+    it(`${ctx.periodo} · ${ctx.comparar} · ${ctx.moneda} · ${ctx.alcance}: el total de MRR coincide con la tarjeta MRR (centavos de redondeo)`, () => {
+      const pestana = construirSuscripciones(ctx);
+      const tarjeta = pestana.kpis.find((k) => k.id === 'mrr')?.valor;
+      const tabla = pestana.tablas.find((t) => t.id === 'resumen-planes');
+      const total = tabla?.filas.find((f) => f['plan'] === 'Total')?.['mrr'];
+      expect(typeof tarjeta).toBe('number');
+      expect(typeof total).toBe('number');
+      expect(Math.abs((total as number) - (tarjeta as number))).toBeLessThanOrEqual(0.05);
+    });
+  }
+});

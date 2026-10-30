@@ -58,12 +58,14 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
   const visibles = PLANES.map((p, i) => ({ p, i })).filter(({ p }) => !hasPlan || ctx.filtros.some((f) => f.dimension === 'plan' && f.valor === p.nombre));
   const filas = visibles.map(({ p, i }) => {
     const n = cuentas[i]!;
-    const mrr = n * p.precio;
+    // El MRR de cada plan sale del mismo modelo que la tarjeta «MRR»: con cuentas enteras × precio el total
+    // se separaba de la tarjeta (490.340 frente a 490.068,67) en la misma pantalla.
+    const mrr = m.mrrPlan[i]![m.n - 1]!;
     return {
       plan: p.nombre,
       cuentas: n,
       mrr: mon(mrr),
-      arpu: n > 0 ? mon(p.precio) : null,
+      arpu: n > 0 ? mon(mrr / n) : null,
       churn: n >= 10 ? redondear(m.churnMensualPct * (i === 0 ? 1.4 : i === 1 ? 0.9 : 0.4) * oscilar(ctx, `res-${p.nombre}`, 0.08), 1) : null,
       cuota: p.cuota,
     };
@@ -89,7 +91,7 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
       definicion: 'Cada plan con sus cuentas, su MRR y su churn; la fila de total suma las filas de arriba.',
       formula: 'MRR del plan = cuentas activas × precio mensual; ingreso por cuenta = MRR ÷ cuentas',
       fuente: 'payments.subscriptions · payments.plan_prices',
-      salvedades: ['El churn por plan sale sin dato si el plan tiene menos de 10 cuentas en el corte.', 'El total no tiene churn propio: el de toda la base está en el gráfico de churn.', 'Aquí las cuentas son enteras por plan, así que el total puede diferir del MRR de la tarjeta en menos de 0,1 % por redondeo.'],
+      salvedades: ['El churn por plan sale sin dato si el plan tiene menos de 10 cuentas en el corte.', 'El total no tiene churn propio: el de toda la base está en el gráfico de churn.', 'El MRR de cada plan sale del mismo cálculo que la tarjeta «MRR»; el total puede diferir de ella en unos centavos por redondear cada fila.'],
     }),
   };
 }
