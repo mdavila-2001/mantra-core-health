@@ -39,7 +39,7 @@ import { errorMessageOf } from '../../../../shared/forms/form-support';
 
 /** S6 del envío: la organización de la ruta no está (o no se puede ver). */
 const ORGANIZACION_NO_ENCONTRADA =
-  'No encontramos esta organización: puede que ya no exista. Volvé al listado de organizaciones.';
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 import { crearBuscadorDePersonas } from '../people-search';
 
 /** Cuántos candidatos trae cada búsqueda del combobox de persona. */
