@@ -167,10 +167,14 @@ sólo es válido para un relleno o un borde cuyo contraste no dependa del tema.
 `scripts/check-contrast.mjs` mide ahora `--text-danger` sobre `--bg-surface`,
 `--bg-surface-alt` y `--bg-inset` en claro y en los dos oscuros.
 
-Pendiente, fuera de este cambio: los bordes de control en error
-(`border-color: var(--c-error-500)` en `input`, `select`, `textarea`,
-`checkbox`, `radio`) quedan en 2,99:1 contra la superficie oscura, a una
-centésima del 3:1 de WCAG 1.4.11.
+Los bordes de control en error tenían el mismo defecto (`--c-error-500`: 2,99:1
+contra la superficie oscura, a una centésima del 3:1 de WCAG 1.4.11). Se resolvió
+con un token de borde que **sí** cambia con el tema, `--border-danger`
+(catalogado en `BORDER`): `--c-error-500` en claro (4,92:1 sobre blanco, sin
+cambio visual) y `--c-error-400` en oscuro (4,17:1 sobre la tarjeta; 3,45:1 en el
+peor caso, `--bg-surface-alt`). Lo usan `input`, `select`, `textarea`,
+`checkbox`, `radio`, `grid-group`, `tree-select` y `date-picker`.
+`check-contrast.mjs` lo mide a 3:1 sobre las cuatro superficies.
 
 ## Radios y sombras: cuál va en qué
 
