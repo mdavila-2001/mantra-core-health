@@ -256,3 +256,30 @@ Sin cambio: L-2 (las imágenes `geometria-*.png` siguen sin atenciones ni tema o
 oscuro se comprueban en las capturas de la app).
 
 Capturas: `capturas/recorrido-clinico/`.
+
+## WEB-F0 · Ficha de organización y vecinos — 2026-10-30
+
+> Medido en la rama de F0 sobre `dev`. En la rama para `test`
+> (`claude/trusting-hawking-q3p12v-test`, cherry-pick de los 10 commits) los gates se
+> volvieron a correr y están en la descripción de su PR; las capturas de abajo son de la
+> rama de F0 y no se rehicieron sobre `test`.
+
+Entorno: contenedor Linux · Node 22.22 · Yarn 4.18 (corepack, `COREPACK_NPM_REGISTRY` a npm) ·
+`ng serve --port 4310` · backend simulado · Chromium 1243 (`PW_CHROMIUM_PATH`) · cuenta
+`superadmin@alovida.mock`.
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 1 · 258 errores; base 256. Los 2 nuevos se corrigieron (`f1b27a86`); el `eslint` de los archivos tocados sólo marca `tutorial.engine.spec.ts:33`, preexistente |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · inicial 1,29 MB / 363 kB transferido · avisos de presupuesto (inicial 667 kB > 620 kB y CSS > 4 kB), no se midió la base |
+| `yarn test` (completo) | exit 1 · 7 563 ✅ · 5 ❌. Aislados: 3 deterministas **iguales en la base `8c695ed5`** (`fichas-estandar`, `pestanas-del-perfil-medico`, `appointment-calendar`); 2 (`diagnosis-block`, `documentos-legales`) pasan solos: dependían de la memoria saturada (Playwright + `ng serve` en paralelo). Los 9 de work-history/instituciones citados antes no aparecieron |
+| Specs tocados (12 archivos) | verdes; **kill-test**: los mismos specs sobre la base `8c695ed5` → 131 rojos, entre ellos todas las pruebas nuevas |
+| `E2E_BASE_URL=http://localhost:4310 yarn pw playwright/infra-f0-ficha-organizacion.spec.ts` | **8/8** (24,8 s) |
+
+Medido en el navegador (spec nuevo): sin desborde horizontal en 1440/768/390 en los seis estados;
+tarjeta centrada (holgura ≤ 2 px) y ≥ 85 % del área (§5); la plantilla no muestra uuid; «Asignar
+sede» → relectura muestra la sede → **F5** → la sede sigue asignada; sin `pageerror`.
+
+Capturas: `capturas/infra-f0/` — `listado-*`, `ficha-{ready,ready-plantilla,forbidden,not-found,error,vacio}-{1440,768,390}.png`,
+`ficha-asignar-sede-1440.png`.
