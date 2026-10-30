@@ -379,9 +379,11 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
     case 'cartesiano':
       // Solo con pocas categorías (las que se rotulan todas): una serie diaria se aclara sola por intervalo.
       if (d.horizontal === true) {
-        // Con el nombre ocupando el 70 % del ancho la barra no tenía área útil: en angosto se trunca y el tooltip lo dice entero.
+        // Con el nombre ocupando el 70 % del ancho la barra no tenía área útil: en angosto el nombre se limita a
+        // ~130 px. Con pocas barras sobra alto para partirlo en dos líneas y se lee entero; con muchas, dos líneas
+        // por barra se pisarían y se trunca (el tooltip y la tabla lo dicen entero).
         return withNarrow(construirCartesiano(o, d), {
-          yAxis: { axisLabel: { width: 110, overflow: 'truncate' } },
+          yAxis: { axisLabel: { width: 130, overflow: d.categorias.length <= 7 ? 'break' : 'truncate' } },
           grid: { left: 8 },
         });
       }
