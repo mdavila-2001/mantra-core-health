@@ -508,12 +508,12 @@ test('autorización negativa · una cuenta sin reportería no entra al portal', 
     await expect(page).not.toHaveURL(new RegExp(`${REPORTS}$`));
     // Una captura en blanco no prueba nada: se espera a que la pantalla a la que lo mandaron esté pintada.
     await expect(page.locator('main').first()).toBeVisible();
-    await capturar(page, 'negativo-paciente-intenta-reportes');
+    await capturar(page, 'negative-patient-tries-reports');
     await page.goto('/portal-selector');
     await expect(page).not.toHaveURL(/\/portal-selector/);
     await expect(page.getByTestId('portal-reporteria')).toHaveCount(0);
     await expect(page.locator('main').first()).toBeVisible();
-    await capturar(page, 'negativo-paciente-intenta-selector');
+    await capturar(page, 'negative-patient-tries-selector');
   } finally {
     await context.close();
   }
