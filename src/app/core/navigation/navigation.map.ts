@@ -2,6 +2,7 @@ import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.t
 import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
+import { INSIGHTS_SECTIONS } from './navigation.insights';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import type { AppSection } from './navigation.types';
 
@@ -1036,6 +1037,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   ...SECCIONES_DE_PLATAFORMA,
+  ...INSIGHTS_SECTIONS,
   {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
