@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -10,6 +10,19 @@ import {
   elegirLocalidadDeResidencia,
   marcarYConfirmarCasa,
 } from './support/registro-paciente';
+
+/**
+ * Espera el panel tras entrar. Una cuenta que administra Y tiene reportería
+ * aterriza en la elección de portal (`/portal-selector`): estas pruebas
+ * recorren la aplicación de administración, así que se elige ese portal.
+ */
+async function esperarPanel(page: Page): Promise<void> {
+  await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 15000 });
+  if (page.url().includes('/portal-selector')) {
+    await page.getByRole('link', { name: /Portal de administración/ }).click();
+    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+  }
+}
 
 const EVIDENCE_DIR = path.resolve('artifacts/playwright/auditoria');
 if (!fs.existsSync(EVIDENCE_DIR)) {
@@ -211,7 +224,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await page.getByTestId('login-identifier').fill('paciente@alovida.mock');
     await page.getByTestId('login-password').fill('password123');
     await page.getByTestId('login-submit').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+    await esperarPanel(page);
 
     await page.goto('/my-account/pharmacy-orders');
     await expect(page).toHaveURL(/\/my-account\/pharmacy-orders/);
@@ -225,7 +238,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await page.getByTestId('login-identifier').fill('admin@alovida.mock');
     await page.getByTestId('login-password').fill('password123');
     await page.getByTestId('login-submit').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+    await esperarPanel(page);
 
     await page.goto('/administration/insurance-claims');
     await expect(page).toHaveURL(/\/administration\/insurance-claims/);
@@ -239,7 +252,7 @@ test.describe('Auditoría Técnica y Suite de Pruebas: Flujo Mockup', () => {
     await page.getByTestId('login-identifier').fill('paciente@alovida.mock');
     await page.getByTestId('login-password').fill('password123');
     await page.getByTestId('login-submit').click();
-    await page.waitForURL(/\/dashboard/, { timeout: 15000 });
+    await esperarPanel(page);
 
     await page.goto('/my-account/loyalty');
     await expect(page).toHaveURL(/\/my-account\/loyalty/);

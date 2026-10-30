@@ -141,9 +141,11 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./session-cleanup.lazy').then((m) =>
-            m.olvidarLoSensibleDelNavegador(injector),
-          );
+          void import('./session-cleanup.lazy')
+            .then((m) => m.olvidarLoSensibleDelNavegador(injector))
+            // Sin red o con un despliegue nuevo el chunk puede no cargar: la sesión ya se cerró, y un rechazo
+            // sin capturar solo ensuciaría la consola de quien se va.
+            .catch(() => undefined);
       },
     },
     // Los avisos push de la cuenta que se va no deben seguir llegando a este
@@ -155,9 +157,10 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./core/notifications/web-push.service').then((m) =>
-            injector.get(m.WebPushService).forgetBrowser(),
-          );
+          void import('./core/notifications/web-push.service')
+            .then((m) => injector.get(m.WebPushService).forgetBrowser())
+            // Mismo criterio que el limpiador de arriba: sin red el chunk puede no cargar y la sesión ya se cerró.
+            .catch(() => undefined);
       },
     },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se

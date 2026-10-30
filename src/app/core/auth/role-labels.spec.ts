@@ -11,6 +11,13 @@ describe('etiquetaDeRol', () => {
     expect(etiquetaDeRol('SECURITY_ADMIN')).toBe('Administración de seguridad');
   });
 
+  it('los roles del portal de reportería tienen etiqueta en español', () => {
+    expect(etiquetaDeRol('REPORTING_ADMIN')).toBe('Administración de reportería');
+    expect(etiquetaDeRol('REPORT_AUTHOR')).toBe('Autoría de reportes');
+    expect(etiquetaDeRol('REPORT_VIEWER')).toBe('Lectura de reportes');
+    expect(etiquetaDeRol('DATA_STEWARD')).toBe('Custodia de datos');
+  });
+
   it('USER no tiene etiqueta: es el rol base y no informa nada', () => {
     expect(etiquetaDeRol('USER')).toBeNull();
   });

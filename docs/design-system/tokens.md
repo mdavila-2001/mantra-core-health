@@ -32,7 +32,7 @@ que el sistema necesita y vigila.
 | Materiales | 3 × 2 + 2 = **8** | `--material-<fino\|regular\|grueso>-<tinte\|desenfoque>`, `--material-trazo\|respaldo` | **Sí** (tinte, trazo, respaldo) |
 | Alias de compatibilidad | 7 | `--surface-*`, `--text-*`, `--border-*`, `--accent` | **Sí** |
 
-**234 tokens** (220 + 6 muelles + 8 materiales, 2026-10-12). `DESIGN_TOKENS` los enumera en tiempo de ejecución.
+**247 tokens** (234 + 13 de gráficos `--chart-*`, 2026-10-30; ver ADR-0017). `DESIGN_TOKENS` los enumera en tiempo de ejecución.
 
 Los PDF del sistema toman de acá sus colores y sus dos familias tipográficas,
 copiados en RGB y TTF porque `jsPDF` no lee CSS; cómo y con qué prueba de
@@ -134,7 +134,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([…]);
 > *«Existe para que la deriva CSS ↔ TS sea detectable, **no para iterarlo en la
 > UI**.»*
 
-La advertencia importa: pintar 234 tokens en una pantalla no es documentación, es
+La advertencia importa: pintar 247 tokens en una pantalla no es documentación, es
 un volcado. La vitrina exhibe los que tienen significado, no todos.
 
 ## Tokens que **no** existen

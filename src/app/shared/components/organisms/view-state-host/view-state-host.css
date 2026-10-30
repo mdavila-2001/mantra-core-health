@@ -86,3 +86,10 @@
     /* la flecha es el gesto, no la información: la palabra ya lo dice todo */
     opacity: 0.7;
 }
+
+/* Las acciones del error se proyectan dentro de UN contenedor: el `gap` del alert no llega a los botones. */
+[alert-actions] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
