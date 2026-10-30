@@ -23,7 +23,7 @@ import {
   loadAdmissionDetail,
 } from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
-import { INSIGHTS_RUTAS } from './features/insights/insights.routes';
+import { insightsPortalRoute } from './features/insights/insights-portal.route';
 import { publicPrescriptionShareRoutes } from './features/prescription-share/prescription-share.routes';
 import { prescriptionDispenseRoutes } from './features/prescription-dispense/prescription-dispense.routes';
 import {
@@ -243,8 +243,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
   'superadmin/portal': () =>
     import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
-  'administration/marketing-insights': () =>
-    import('./features/insights/insights-shell').then((m) => m.InsightsShell),
   'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
   'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
@@ -1237,7 +1235,6 @@ function pantallaDeGeolocalizacion(
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
   'superadmin/portal': PORTAL_RUTAS,
-  'administration/marketing-insights': INSIGHTS_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
@@ -1341,6 +1338,8 @@ export const SECCIONES_REDIRIGIDAS: Readonly<Record<string, DestinoRedirigido>> 
   'administration/web-analytics': { ruta: '/superadmin/web-analytics' },
   'administration/qa-lab': { ruta: '/superadmin/qa-lab' },
   'administration/operations': { ruta: '/superadmin/operations' },
+  // Insights dejó de ser una sección del admin: es el portal de marketing (30/10/2026).
+  'administration/marketing-insights': { ruta: '/insights' },
 };
 
 /** A dónde manda una sección redirigida: la ruta y el query que le suma. */
@@ -1796,6 +1795,7 @@ export const routes: Routes = [
         // recuperación que el resto, en vez de una navegación muerta.
         .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
   },
+  insightsPortalRoute(chunkFallido),
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
   // salen del propio `homeGuard` (un `UrlTree`, nunca `true`) porque Angular no

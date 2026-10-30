@@ -26,6 +26,7 @@ import { SegmentedControl } from '../../../shared/components/molecules/segmented
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import {
   accesoAPortales,
+  cantidadDePortales,
   puedeVerPlataforma,
   PORTAL_ADMINISTRACION_ROUTE,
   PORTAL_SELECTOR_ROUTE,
@@ -101,11 +102,15 @@ export class ReportingShell {
   protected readonly selectorRoute = PORTAL_SELECTOR_ROUTE;
   protected readonly administracionRoute = PORTAL_ADMINISTRACION_ROUTE;
 
-  /** Quien tiene los dos accesos puede volver al otro portal; el resto no tiene adónde. */
-  protected readonly puedeCambiarDePortal = computed(() => {
-    const acceso = accesoAPortales(this.auth.roles());
-    return acceso.administracion && acceso.reporteria;
-  });
+  /** Quien tiene otro acceso además de este puede volver al selector; el resto no tiene adónde. */
+  protected readonly puedeCambiarDePortal = computed(
+    () => cantidadDePortales(accesoAPortales(this.auth.roles())) >= 2,
+  );
+
+  /** El atajo a administración solo se ofrece a quien la administra. */
+  protected readonly puedeIrAAdministracion = computed(
+    () => accesoAPortales(this.auth.roles()).administracion,
+  );
 
   /** Cerrado por defecto: el centro son los reportes. */
   readonly asistenteAbierto = signal(false);

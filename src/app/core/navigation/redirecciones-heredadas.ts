@@ -24,6 +24,8 @@ export const RUTAS_HEREDADAS_CON_PARAMETRO: Readonly<Record<string, string>> = {
   // El portal de plataforma pasó a «Superadministración» (17/10/2026).
   'administration/data-catalog/:objectId': '/superadmin/data-catalog/:objectId',
   'administration/qa-lab/plans/:planId': '/superadmin/qa-lab/plans/:planId',
+  // Insights pasó a ser el portal de marketing (30/10/2026); el módulo y el query viajan.
+  'administration/marketing-insights/:module': '/insights/:module',
 };
 
 /**
