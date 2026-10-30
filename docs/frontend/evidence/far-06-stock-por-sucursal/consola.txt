@@ -1,0 +1,17 @@
+Errores de consola, pageerror y pedidos fallidos durante la captura (farmacia y paciente, claro y oscuro, 1440x900 y 390x844):
+
+console.error: 0
+pageerror: 0
+requestfailed: 0
+
+Pedidos de escritura observados en la red:
+PUT /pharmacies/:pharmacyId/sites/:siteId/products/:productId/availability  {"available":false}  -> 200
+  respuesta: {"siteId":"<Sucursal Sur 2>","productId":"<FAR06-A>","available":false,"quantity":0,"stockUpdatedAt":"2026-10-30T04:33:07.239Z"}
+  seguido de GET /pharmacy-inventory/sites/:siteId/stock -> 200 (relectura del panel)
+
+Persistencia, leída por la API después de recargar:
+GET /pharmacy-inventory/sites/<Sucursal Sur 2>/stock -> 310 posiciones; FAR06-A 0, FAR06-B 1, FAR06-C 0, FAR06-D 4, FAR06-G 2
+
+Disponibilidad vista por el paciente (tienda «Farmacia», búsqueda FAR06, Farmacia FAR Uno):
+antes:   Casa central=A,B,G ; Sucursal Norte=A,B,G ; Sucursal Oeste 31=A,B,G ; Sucursal Oeste 35=A,B,G ; Sucursal Sur 2=A,B,G
+despues: Casa central=A,B,G ; Sucursal Norte=A,B,G ; Sucursal Oeste 31=A,B,G ; Sucursal Oeste 35=A,B,G ; Sucursal Sur 2=B,G

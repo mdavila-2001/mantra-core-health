@@ -51,6 +51,9 @@ import {
   type InventoryCsvRow,
 } from './inventory-csv';
 import { InventoryUploadDialog } from './upload-dialog/inventory-upload-dialog';
+import { ALL_SITES, InventorySites } from './site-stock/inventory-sites';
+import { SiteStockPanel } from './site-stock/site-stock-panel';
+import { joinNames } from './site-stock/site-stock-rows';
 
 /** Tope de existencias: el mismo del servidor, que atrapa un dedo de más. */
 const STOCK_MAX = INVENTORY_STOCK_MAX;
@@ -102,6 +105,10 @@ interface InventoryEdit {
  *   de arriba lo dice.
  *
  * Los retirados no aparecen: no se venden, no tienen inventario que llevar.
+ *
+ * «Sucursal» (FAR-06): con «Todas», esta tabla de lo declarado en el catálogo;
+ * con una sede, su propio stock (`app-site-stock-panel`). Una sede que lleva su
+ * propio stock ya no lee lo de «Todas», y la pantalla lo dice.
  */
 @Component({
   selector: 'app-pharmacy-inventory',
@@ -118,10 +125,11 @@ interface InventoryEdit {
     SearchField,
     SegmentedControl,
     Select,
+    SiteStockPanel,
     Switch,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [PharmacyScope, InventorySites],
   templateUrl: './pharmacy-inventory.html',
   styleUrl: './pharmacy-inventory.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -135,6 +143,21 @@ export class PharmacyInventory {
   private readonly toasts = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly csv = inject(CsvExportService);
+  protected readonly sites = inject(InventorySites);
+
+  protected readonly allSites = ALL_SITES;
+  /** La sucursal elegida, o «Todas». */
+  protected readonly site = signal<string>(ALL_SITES);
+
+  /** Con «Todas»: qué sedes ya no leen lo que se cambie acá. */
+  protected readonly ledgerNotice = computed(() => {
+    const names = this.sites.ledgerNames();
+    if (names.length === 0) {
+      return '';
+    }
+    const one = names.length === 1;
+    return `${joinNames(names)} ${one ? 'lleva' : 'llevan'} su propio stock: lo que cambie en "Todas" no ${one ? 'la' : 'las'} afecta, tampoco lo que suba por CSV.`;
+  });
 
   protected readonly products = signal<ViewState<readonly PharmacyProduct[]>>(loading());
   /** Lo escrito y sin guardar, por producto. */
@@ -224,13 +247,27 @@ export class PharmacyInventory {
 
   constructor() {
     effect(() => {
-      if (this.scope.pharmacyId() !== null) {
+      const pharmacyId = this.scope.pharmacyId();
+      if (pharmacyId !== null) {
         untracked(() => {
           this.edits.set({});
+          this.site.set(ALL_SITES);
+          this.sites.load(pharmacyId);
           this.reload();
         });
       }
     });
+  }
+
+  protected chooseSite(siteId: string | null): void {
+    this.site.set(siteId ?? ALL_SITES);
+  }
+
+  protected retrySites(): void {
+    const pharmacyId = this.scope.pharmacyId();
+    if (pharmacyId !== null) {
+      this.sites.load(pharmacyId);
+    }
   }
 
   protected reload(): void {
