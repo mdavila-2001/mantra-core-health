@@ -197,6 +197,10 @@
   overflow-y: auto;
 }
 
+.rep__asistente[hidden] {
+  display: none;
+}
+
 .rep__asistente:focus {
   outline: none;
 }

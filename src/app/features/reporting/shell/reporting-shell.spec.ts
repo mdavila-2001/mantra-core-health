@@ -170,8 +170,20 @@ describe('ReportingShell', () => {
       await pulsar(boton);
       await pulsar(byTestId('reporting-asistente-cerrar'));
 
-      expect(byTestId('reporting-asistente')).toBeNull();
+      expect(byTestId('reporting-asistente')?.hidden).toBe(true);
+      expect(boton?.getAttribute('aria-expanded')).toBe('false');
       expect(document.activeElement).toBe(boton);
+    });
+
+    it('cerrarlo lo oculta pero no lo destruye: al volver a abrirlo es el mismo panel', async () => {
+      const boton = byTestId('reporting-asistente-boton');
+      await pulsar(boton);
+      const panel = byTestId('reporting-asistente');
+      await pulsar(byTestId('reporting-asistente-cerrar'));
+      await pulsar(boton);
+
+      expect(byTestId('reporting-asistente')).toBe(panel);
+      expect(panel?.hidden).toBe(false);
     });
 
     it('Escape lo cierra', async () => {
@@ -183,6 +195,22 @@ describe('ReportingShell', () => {
       fixture.detectChanges();
 
       expect(shell.asistenteAbierto()).toBe(false);
+    });
+
+    it('un Escape que ya atendió un menú o un diálogo anidado no cierra además el asistente', async () => {
+      await pulsar(byTestId('reporting-asistente-boton'));
+      const panel = byTestId('reporting-asistente');
+      const menu = document.createElement('div');
+      menu.setAttribute('role', 'menu');
+      panel?.appendChild(menu);
+
+      menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      const atendido = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      atendido.preventDefault();
+      panel?.dispatchEvent(atendido);
+      fixture.detectChanges();
+
+      expect(shell.asistenteAbierto()).toBe(true);
     });
 
     it('abrirlo no cambia lo que hay en el centro', async () => {
