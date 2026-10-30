@@ -1,4 +1,4 @@
-import type { AppSection } from './navigation.types';
+import { ANY_ROLE, type AppSection } from './navigation.types';
 
 /* ============================================================================
     AloVida Insights — plataforma de inteligencia de marketing.
@@ -16,6 +16,11 @@ import type { AppSection } from './navigation.types';
 export const INSIGHTS_SECTIONS: readonly AppSection[] = [
   {
     path: 'administration/marketing-insights',
+    // 30/10/2026 · Insights es el portal de marketing, en `/insights` (fuera del
+    // armazón de administración). La dirección vieja redirige en `app.routes.ts`
+    // (`SECCIONES_REDIRIGIDAS`); la sección sigue registrada para que esa
+    // redirección resuelva y para los subgrupos del menú.
+    fueraDelMenuPara: [ANY_ROLE],
     label: 'AloVida Insights',
     group: 'Administración',
     icon: 'chart',

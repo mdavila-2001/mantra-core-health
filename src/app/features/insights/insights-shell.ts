@@ -5,7 +5,7 @@ import { filter, map, startWith } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
-import { accesoAPortales, PORTAL_SELECTOR_ROUTE } from '../reporting/reporting-access';
+import { accesoAPortales, cantidadDePortales, PORTAL_SELECTOR_ROUTE } from '../reporting/reporting-access';
 import { SYNTHETIC_NOTICE } from './domain/campaigns.data';
 import { longDate, PROTOTYPE_TODAY } from './domain/dates';
 import { InsightsContext } from './insights-context';
@@ -45,11 +45,10 @@ export class InsightsShell {
   protected readonly ctx = inject(InsightsContext);
 
   protected readonly selectorRoute = PORTAL_SELECTOR_ROUTE;
-  /** «Cambiar de portal» solo se ofrece a quien elige entre administración y reportería. */
-  protected readonly canSwitchPortal = computed(() => {
-    const acceso = accesoAPortales(this.auth.roles());
-    return acceso.administracion && acceso.reporteria;
-  });
+  /** «Cambiar de portal» solo se ofrece a quien tiene otro acceso además de Insights. */
+  protected readonly canSwitchPortal = computed(
+    () => cantidadDePortales(accesoAPortales(this.auth.roles())) >= 2,
+  );
 
   protected readonly modules = INSIGHTS_MODULES;
   protected readonly base = INSIGHTS_BASE;

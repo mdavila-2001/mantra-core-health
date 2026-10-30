@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, ElementRef, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { INSIGHTS_BASE } from '../insights-nav';
+
 const KEY = 'insights.views';
 
 interface SavedView {
@@ -13,7 +15,7 @@ function read(): SavedView[] {
     const raw = localStorage.getItem(KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed)
-      ? parsed.filter((v): v is SavedView => typeof v?.name === 'string' && typeof v?.url === 'string' && v.url.startsWith('/administration/marketing-insights'))
+      ? parsed.filter((v): v is SavedView => typeof v?.name === 'string' && typeof v?.url === 'string' && v.url.startsWith(INSIGHTS_BASE))
       : [];
   } catch {
     return [];
