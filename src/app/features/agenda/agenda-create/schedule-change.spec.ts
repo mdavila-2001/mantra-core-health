@@ -16,9 +16,10 @@ import {
   type CupoSimulado,
   type PlantillaSimulada,
 } from '../../../core/mock/fixtures/agenda';
+import { registrarPracticas } from '../../../core/mock/handlers/practice.handlers';
 import { registrarAgenda } from '../../../core/mock/handlers/scheduling.handlers';
 import { isMockReply, MockRouter, type MockMethod } from '../../../core/mock/mock-router';
-import { buscarUsuario, TENANT_CONSULTORIO } from '../../../core/mock/mock-session';
+import { buscarUsuario, TENANT_CLINICA } from '../../../core/mock/mock-session';
 import type { Coleccion } from '../../../core/mock/mock-store';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { DialogService } from '@shared/components/molecules/dialog/dialog-service';
@@ -86,6 +87,9 @@ function restoreTable<T extends { readonly id: string }>(
 describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulador', () => {
   const simulator = new MockRouter();
   registrarAgenda(simulator);
+  // La pantalla lee las prácticas de la organización activa (`GET /practices`)
+  // una sola vez, para saber a qué práctica pertenece el destino.
+  registrarPracticas(simulator);
   const doctor = buscarUsuario('medica')!;
 
   let fixture: ComponentFixture<AgendaCreate>;
@@ -128,7 +132,9 @@ describe('AgendaCreate · cambiar «Mañanas en la clínica» contra el simulado
           provide: AuthService,
           useValue: {
             roles: signal<readonly string[]>(doctor.roles),
-            activeTenantId: signal<string | null>(TENANT_CONSULTORIO),
+            // La agenda de «la clínica» es de la clínica: el simulador aísla
+            // `GET /scheduling/resources` por organización, como la API.
+            activeTenantId: signal<string | null>(TENANT_CLINICA),
             practitionerProfileId: signal<string | null>(doctor.practitionerProfileId ?? null),
             displayName: signal<string | null>(doctor.displayName),
           },
