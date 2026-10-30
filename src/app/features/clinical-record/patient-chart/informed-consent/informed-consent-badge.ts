@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 
 import type { InformedConsent } from '../../../../core/data-access/informed-consents/informed-consents.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
-import { estadoDeLaFirma, estadoDelConsentimiento } from './informed-consent.textos';
+import { signatureState, consentState } from './informed-consent.texts';
 
 /**
  * El estado del consentimiento de UN ítem —receta, orden, procedimiento,
@@ -17,12 +17,12 @@ import { estadoDeLaFirma, estadoDelConsentimiento } from './informed-consent.tex
   imports: [Badge],
   template: `
     @if (estado(); as e) {
-      <app-badge size="sm" [variant]="e.variante" data-testid="consentimiento-estado" [attr.data-estado]="e.clave">
+      <app-badge size="sm" [variant]="e.variante" data-testid="consent-state" [attr.data-estado]="e.clave">
         {{ e.etiqueta }}
       </app-badge>
     }
     @if (firma(); as f) {
-      <app-badge size="sm" [variant]="f.variante" data-testid="consentimiento-firma-item">{{ f.etiqueta }}</app-badge>
+      <app-badge size="sm" [variant]="f.variante" data-testid="consent-signature-item">{{ f.etiqueta }}</app-badge>
     }
   `,
   styles: `
@@ -40,12 +40,12 @@ export class InformedConsentBadge {
 
   protected readonly estado = computed(() => {
     const c = this.consent();
-    return c === undefined ? null : estadoDelConsentimiento(c);
+    return c === undefined ? null : consentState(c);
   });
 
   /** «Firmado» / «Firma pendiente», sólo sobre un consentimiento activo. */
   protected readonly firma = computed(() => {
     const c = this.consent();
-    return c === undefined ? null : estadoDeLaFirma(c);
+    return c === undefined ? null : signatureState(c);
   });
 }

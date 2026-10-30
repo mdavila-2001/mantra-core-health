@@ -1,0 +1,109 @@
+<section class="sync" aria-labelledby="integration-sync-title" data-testid="integration-sync">
+  <div class="sync__heading">
+    <div class="sync__text">
+      <h2 class="sync__title" id="integration-sync-title">Sincronización</h2>
+      <p class="sync__last" data-testid="integration-last-sync">
+        @if (last(); as batch) {
+          Última sincronización: {{ batch.receivedAt | date: 'd MMM y, HH:mm' }} · {{ batch.itemCount }}
+          {{ batch.itemCount === 1 ? 'ítem recibido' : 'ítems recibidos' }} · {{ batch.discrepancies }} sin vincular.
+        } @else {
+          Todavía no se sincronizó.
+        }
+      </p>
+    </div>
+    <button
+      app-button
+      type="button"
+      [isLoading]="syncing()"
+      [disabled]="syncing() || !canSync()"
+      (clicked)="sync()"
+      data-testid="integration-sync-button"
+    >
+      Sincronizar ahora
+    </button>
+  </div>
+
+  @if (syncing()) {
+    <p class="sync__status" role="status" data-testid="integration-sync-running">
+      Pidiendo las existencias al sistema de la farmacia…
+    </p>
+  }
+
+  @if (error(); as message) {
+    <app-alert tone="error" title="No se pudo sincronizar" data-testid="integration-sync-error">{{ message }}</app-alert>
+  }
+
+  @if (result(); as summary) {
+    <app-alert tone="success" title="Sincronización terminada" data-testid="integration-sync-result">
+      <dl class="sync__summary">
+        <div class="sync__figure">
+          <dt>Recibidos</dt>
+          <dd data-testid="integration-sync-received">{{ summary.received }}</dd>
+        </div>
+        <div class="sync__figure">
+          <dt>Vinculados</dt>
+          <dd data-testid="integration-sync-mapped">{{ summary.mapped }}</dd>
+        </div>
+        <div class="sync__figure">
+          <dt>Aplicados</dt>
+          <dd data-testid="integration-sync-applied">{{ summary.applied }}</dd>
+        </div>
+      </dl>
+      @if (summary.applied === 0) {
+        <p class="sync__note">Ninguna existencia cambió: ya estaban al día.</p>
+      }
+    </app-alert>
+
+    @if (summary.unmapped.length > 0) {
+      <div class="sync__unmapped" data-testid="integration-sync-unmapped">
+        <h3 class="sync__subtitle">
+          {{ summary.unmapped.length === 1 ? '1 producto sin vincular' : summary.unmapped.length + ' productos sin vincular' }}
+        </h3>
+        <p class="sync__note">
+          El sistema de la farmacia los mandó, pero no tienen un producto del catálogo vinculado: sus existencias no se
+          aplicaron. Vincúlelos abajo con «Vincular producto».
+        </p>
+        <ul class="sync__list">
+          @for (item of summary.unmapped; track item.externalCode) {
+            <li>
+              <code class="sync__code">{{ item.externalCode }}</code>
+              <span>{{ item.name }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    } @else {
+      <p class="sync__note" data-testid="integration-sync-all-mapped">
+        Todos los productos que mandó el sistema de la farmacia están vinculados.
+      </p>
+    }
+  }
+
+  <app-data-table
+    caption="Últimas sincronizaciones"
+    [state]="batches()"
+    [columns]="columns()"
+    [trackBy]="rowId"
+    [rowLabel]="rowLabel"
+    stackedOnMobile
+    (retry)="reload()"
+    (refresh)="reload()"
+    data-testid="integration-batches"
+  />
+</section>
+
+<ng-template #dateCell let-batch>
+  {{ batch.receivedAt | date: 'd MMM y, HH:mm' }}
+</ng-template>
+
+<ng-template #statusCell let-batch>
+  @if (batch.status === 'COMPLETED') {
+    <app-badge variant="success">Completada</app-badge>
+  } @else {
+    <app-badge variant="info">Recibida</app-badge>
+  }
+</ng-template>
+
+<ng-template #itemsCell let-batch>{{ batch.itemCount }}</ng-template>
+
+<ng-template #discrepanciesCell let-batch>{{ batch.discrepancies }}</ng-template>

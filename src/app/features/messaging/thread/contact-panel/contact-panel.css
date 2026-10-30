@@ -121,11 +121,6 @@
   color: var(--tinta-marca);
 }
 
-.contacto__sello svg {
-  inline-size: 18px;
-  block-size: 18px;
-}
-
 .contacto__titular {
   margin: 0;
   font-size: var(--fs-body);

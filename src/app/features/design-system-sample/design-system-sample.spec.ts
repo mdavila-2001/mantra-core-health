@@ -57,6 +57,7 @@ describe('DesignSystemSample', () => {
   it('cada átomo y molécula del sistema aparece al menos una vez', () => {
     const piezas = [
       'app-badge',
+      'app-verification-badge',
       'app-avatar',
       'app-reference-combobox',
       'app-input',
@@ -109,6 +110,8 @@ describe('DesignSystemSample', () => {
   it('el selector de tema sigue expuesto: es la única UI del ThemeService', () => {
     const grupo = root().querySelector('[role="group"][aria-label="Tema de la interfaz"]');
 
-    expect(grupo?.querySelectorAll('button')).toHaveLength(3);
+    // Claro y oscuro: la tercera opción «sistema» se retiró del ThemeService
+    // (65985b534) y de todos los selectores.
+    expect(grupo?.querySelectorAll('button')).toHaveLength(2);
   });
 });

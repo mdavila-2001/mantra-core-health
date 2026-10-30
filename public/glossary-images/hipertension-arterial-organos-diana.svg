@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Órganos que daña la hipertensión mantenida</title>
+  <desc id="d">Esquema de una figura humana con seis órganos señalados mediante líneas. Cerebro: ictus y deterioro cognitivo. Ojos: retinopatía hipertensiva. Corazón: infarto e insuficiencia cardíaca. Riñones: enfermedad renal crónica. Aorta: aneurisma y disección. Piernas: enfermedad arterial periférica.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#c2cddb; --ink:#1c2733; --muted:#5a6878; --body:#e9eef5; --body-d:#aab8c8; --organ:#e7a79a; --organ-d:#c0503f; --vessel:#d6453d; --accent:#1d5fa8; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#425364; --ink:#e8eef5; --muted:#9fb0c1; --body:#2a3948; --body-d:#5d7287; --organ:#b9695c; --organ-d:#f0958a; --vessel:#e0584f; --accent:#7db4ec; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 16px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .lead { stroke: var(--muted); stroke-width: 1.8; fill: none; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="30" text-anchor="middle" class="title">Órganos diana de la presión alta sostenida</text>
+
+  <!-- figura humana esquemática -->
+  <g fill="var(--body)" stroke="var(--body-d)" stroke-width="2.5">
+    <circle cx="400" cy="92" r="32"/>
+    <rect x="388" y="122" width="24" height="16"/>
+    <path d="M345 142 Q400 130 455 142 L468 260 Q400 276 332 260 Z"/>
+    <path d="M345 148 L316 248 L334 254 L356 168 Z"/>
+    <path d="M455 148 L484 248 L466 254 L444 168 Z"/>
+    <path d="M356 258 L350 400 L376 402 L398 270 Z"/>
+    <path d="M444 258 L450 400 L424 402 L402 270 Z"/>
+  </g>
+
+  <!-- cerebro -->
+  <ellipse cx="400" cy="82" rx="22" ry="15" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+  <!-- ojos -->
+  <circle cx="389" cy="100" r="4" fill="var(--accent)"/>
+  <circle cx="411" cy="100" r="4" fill="var(--accent)"/>
+  <!-- corazón -->
+  <path d="M410 168 C410 156 430 156 430 170 C430 184 410 196 410 202 C410 196 390 184 390 170 C390 156 410 156 410 168 Z" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+  <!-- aorta -->
+  <path d="M398 150 L398 172 M400 140 L400 258" stroke="var(--vessel)" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- riñones -->
+  <ellipse cx="373" cy="214" rx="9" ry="16" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+  <ellipse cx="427" cy="214" rx="9" ry="16" fill="var(--organ)" stroke="var(--organ-d)" stroke-width="2"/>
+  <!-- arterias de las piernas -->
+  <path d="M400 258 L378 330 L370 390 M400 258 L422 330 L430 390" stroke="var(--vessel)" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+  <!-- rótulos izquierda -->
+  <g>
+    <path class="lead" d="M378 80 L250 80"/>
+    <text x="240" y="76" text-anchor="end" class="h">Cerebro</text>
+    <text x="240" y="95" text-anchor="end" class="s muted">ictus, demencia vascular</text>
+
+    <path class="lead" d="M386 101 L300 140 L250 140"/>
+    <text x="240" y="136" text-anchor="end" class="h">Ojos</text>
+    <text x="240" y="155" text-anchor="end" class="s muted">retinopatía hipertensiva</text>
+
+    <path class="lead" d="M392 178 L250 200"/>
+    <text x="240" y="196" text-anchor="end" class="h">Corazón</text>
+    <text x="240" y="215" text-anchor="end" class="s muted">infarto, insuficiencia cardíaca</text>
+    <text x="240" y="233" text-anchor="end" class="s muted">fibrilación auricular</text>
+  </g>
+
+  <!-- rótulos derecha -->
+  <g>
+    <path class="lead" d="M400 150 L550 110 L560 110"/>
+    <text x="566" y="106" class="h">Aorta</text>
+    <text x="566" y="125" class="s muted">aneurisma, disección</text>
+
+    <path class="lead" d="M436 214 L560 214"/>
+    <text x="566" y="210" class="h">Riñones</text>
+    <text x="566" y="229" class="s muted">enfermedad renal crónica</text>
+    <text x="566" y="247" class="s muted">albuminuria</text>
+
+    <path class="lead" d="M424 340 L560 340"/>
+    <text x="566" y="336" class="h">Arterias de las piernas</text>
+    <text x="566" y="355" class="s muted">dolor al caminar</text>
+  </g>
+
+  <text x="400" y="440" text-anchor="middle" class="s">El daño es gradual y puede no dar síntomas durante años.</text>
+  <text x="400" y="464" text-anchor="middle" class="s muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

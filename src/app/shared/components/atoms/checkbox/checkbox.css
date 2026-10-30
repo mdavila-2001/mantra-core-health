@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), transform var(--spring-rapido-dur) var(--spring-rapido);
   flex-shrink: 0;
 }
 
@@ -48,6 +48,36 @@
   /* literal del spec (.checkbox/.radio: `color: #fff`): el tilde es blanco
      en ambos temas, no sigue a --text-inverse */
   color: #ffffff;
+}
+
+/* El tilde nace con el muelle `rápido` y se dibuja (trazo, no aparición): el
+   gesto se lee como «se marcó». Con movimiento reducido la regla global lo
+   deja completo y quieto. */
+.checkbox-box svg {
+  animation: checkbox-pop var(--spring-rapido-dur) var(--spring-rapido) both;
+}
+
+.checkbox-box svg :is(polyline, line) {
+  stroke-dasharray: 1;
+  animation: checkbox-draw var(--dur-base) var(--ease-out) both;
+}
+
+@keyframes checkbox-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes checkbox-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+/* Responde al toque antes de soltar: la caja se hunde un poco. */
+.checkbox-container:not(.is-disabled):active .checkbox-box {
+  transform: scale(0.9);
 }
 
 /* Base = móvil (área táctil 44px, caja 22px, tilde 14px).
@@ -82,7 +112,7 @@
 
 /* Estado Error */
 .checkbox-container.has-error .checkbox-box {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 /* Estado Deshabilitado */

@@ -39,11 +39,10 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { Odontogram } from '../odontogram/odontogram';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
-import { consentimientosDelPaciente } from '../informed-consent/consentimientos-del-paciente';
+import { writeFailureMessage } from '../../write-message';
+import { consentTargetState } from '../informed-consent/consent-target';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
 import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
-
 
 /**
  * Cuántos casos quirúrgicos se traen, y de cuántos se pide el detalle.
@@ -99,7 +98,7 @@ export interface TratamientoEnPantalla {
   readonly nota: string;
   readonly cuando: Date | null;
   /** La consulta en la que se hizo, si la lectura la trae. Ata su consentimiento. */
-  readonly encuentroId?: string;
+  readonly encounterId?: string;
 }
 
 /**
@@ -161,6 +160,8 @@ export interface TratamientoEnPantalla {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProceduresBlock {
+  /** Dentro del registro clínico ya existe una tarjeta contenedora. */
+  readonly embedded = input(false);
   private readonly procedures = inject(ProceduresClient);
   private readonly clinical = inject(ClinicalClient);
   private readonly terminology = inject(TerminologyClient);
@@ -190,31 +191,23 @@ export class ProceduresBlock {
    */
   readonly modo = input<'ambos' | 'cirugia' | 'odontologia'>('ambos');
 
-  /* -- Consentimiento informado dirigido a cada procedimiento -------------- */
+  /* -- Consentimiento informado dirigido a cada procedimiento y cirugía -----
+     La API valida `PROCEDURE` contra `clinical.procedures` (odontología) y,
+     si no, contra `procedures_perioperative.procedure_cases` (cirugía), del
+     mismo paciente. El caso quirúrgico no trae encuentro: usa el del contexto. */
 
-  protected readonly consentimientos = consentimientosDelPaciente(() => this.patientProfileId());
+  protected readonly consent = consentTargetState<{ readonly id: string; readonly label: string; readonly encounterId?: string }>(
+    () => this.patientProfileId(),
+    (item) => [item?.encounterId, this.encounterId()],
+  );
 
-  /**
-   * El procedimiento cuyo consentimiento está abierto: id, lo que se consiente
-   * en palabras y la consulta en la que se hizo.
-   *
-   * Sólo odontología: es `clinical.procedures`, que es contra lo que la API
-   * valida `PROCEDURE`. Un caso quirúrgico vive en otra tabla y no trae
-   * encuentro; ofrecerle el consentimiento sería un formulario que siempre
-   * responde 404.
-   */
-  protected readonly consintiendo = signal<{
-    readonly id: string;
-    readonly etiqueta: string;
-    readonly encuentroId: string | null;
-  } | null>(null);
+  protected consentToTreatment(t: TratamientoEnPantalla): void {
+    const label = t.piezas === '' ? t.que : `${t.que} · pieza ${t.piezas}`;
+    this.consent.target.set({ id: t.id, label, ...(t.encounterId === undefined ? {} : { encounterId: t.encounterId }) });
+  }
 
-  protected consentirTratamiento(tratamiento: TratamientoEnPantalla): void {
-    this.consintiendo.set({
-      id: tratamiento.id,
-      etiqueta: tratamiento.piezas === '' ? tratamiento.que : `${tratamiento.que} · pieza ${tratamiento.piezas}`,
-      encuentroId: tratamiento.encuentroId ?? null,
-    });
+  protected consentToSurgery(surgicalCase: { readonly id: string; readonly numero: string }): void {
+    this.consent.target.set({ id: surgicalCase.id, label: `Cirugía · caso ${surgicalCase.numero}` });
   }
 
   /* -- Lo quirúrgico ------------------------------------------------------- */
@@ -305,7 +298,7 @@ export class ProceduresBlock {
         .join(', '),
       nota: tratamiento.noteText ?? '',
       cuando: tratamiento.performedAt ?? tratamiento.createdAt,
-      ...(tratamiento.encounterId === undefined ? {} : { encuentroId: tratamiento.encounterId }),
+      ...(tratamiento.encounterId === undefined ? {} : { encounterId: tratamiento.encounterId }),
     })),
   );
 
@@ -475,9 +468,9 @@ export class ProceduresBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, {
+    return writeFailureMessage(state, {
       accion: 'registrar tratamientos odontológicos',
-      sinPermiso: 'Tu rol no permite registrar tratamientos odontológicos.',
+      sinPermiso: 'Su rol no permite registrar tratamientos odontológicos.',
     });
   });
 

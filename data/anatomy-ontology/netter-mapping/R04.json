@@ -1,0 +1,6284 @@
+[
+ {
+  "netterId": "ENT_0032542f7653e4",
+  "name": "Yeyuno — arterias",
+  "queries": [
+   "jejunal artery",
+   "jejunal arteries"
+  ],
+  "uberon": "UBERON:0018255",
+  "matchedText": "jejunal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_00334c4d7ba310",
+  "name": "Uréter — arterias",
+  "queries": [
+   "ureteric artery",
+   "ureteral artery",
+   "artery of ureter"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_01b7c3f1eeffac",
+  "name": "Atlas de anatomía hun — arco de Riolano, arteria media e — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_04e63e54aa4647",
+  "name": "Arteria(s) — segmentaria — inferior anterior",
+  "queries": [
+   "anterior inferior segmental artery",
+   "anterior inferior segmental artery of kidney",
+   "inferior anterior segmental artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_08072f5291fe21",
+  "name": "Arteria(s) — apendicular",
+  "queries": [
+   "appendicular artery"
+  ],
+  "uberon": "UBERON:0039215",
+  "matchedText": "appendicular artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_08d54e4e02577a",
+  "name": "Arteria(s) — gastroduodenal",
+  "queries": [
+   "gastroduodenal artery"
+  ],
+  "uberon": "UBERON:0010132",
+  "matchedText": "gastroduodenal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_08e2e68cca47c8",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_09cf29575fd84a",
+  "name": "Yeyuno — arterias",
+  "queries": [
+   "jejunal artery"
+  ],
+  "uberon": "UBERON:0018255",
+  "matchedText": "jejunal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_114baad34f82e1",
+  "name": "Arteria(s) — frénica, inferior",
+  "queries": [
+   "inferior phrenic artery"
+  ],
+  "uberon": "UBERON:0012255",
+  "matchedText": "inferior phrenic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1313c9de2df513",
+  "name": "Arteria(s) — intermedia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_13f342e5c58318",
+  "name": "Arteria(s) — rama — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1719f06f42a56a",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1ba87f9ac4c7a0",
+  "name": "Pared — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_1bc2dede4d030f",
+  "name": "Arteria(s) — relaciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1dafa904b856fd",
+  "name": "Arteria(s) — gastroomental — derecha",
+  "queries": [
+   "right gastroepiploic artery",
+   "right gastro-omental artery"
+  ],
+  "uberon": "UBERON:0035829",
+  "matchedText": "right gastroepiploic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1e6b3efebc2ef3",
+  "name": "Arteria(s) — gastroepiploica izquierda",
+  "queries": [
+   "left gastroepiploic artery",
+   "left gastro-omental artery"
+  ],
+  "uberon": "UBERON:0035830",
+  "matchedText": "left gastroepiploic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_20d07e02cc2898",
+  "name": "Arteria(s) — sigmoidea",
+  "queries": [
+   "sigmoid artery"
+  ],
+  "uberon": "UBERON:0035180",
+  "matchedText": "sigmoid artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_292f118c41c02c",
+  "name": "Arteria(s) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_29525bff737af1",
+  "name": "Arteria(s) — rama",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_2c46d1eca17393",
+  "name": "Arteria(s) — renal",
+  "queries": [
+   "renal artery"
+  ],
+  "uberon": "UBERON:0001184",
+  "matchedText": "renal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2c81be40124021",
+  "name": "Arteria(s) — yeyuno",
+  "queries": [
+   "jejunal artery"
+  ],
+  "uberon": "UBERON:0018255",
+  "matchedText": "jejunal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_36069b03c9e05f",
+  "name": "Arteria(s) — quinta",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_3d604d03cf40c8",
+  "name": "Arteria(s) — ileon",
+  "queries": [
+   "ileal artery"
+  ],
+  "uberon": "UBERON:0005628",
+  "matchedText": "ileal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3e01f1295a5f17",
+  "name": "Arteria(s) — plexo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_3e257459f91b98",
+  "name": "Arteria(s) — capsular",
+  "queries": [
+   "capsular artery",
+   "renal capsular artery",
+   "capsular artery of kidney"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_46ce9c0b27c276",
+  "name": "Arteria(s) — cecal",
+  "queries": [
+   "cecal artery",
+   "caecal artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_494b05cbac8a98",
+  "name": "Arteria(s) — arteriografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_4b064c02db9206",
+  "name": "Hígado — arterias",
+  "queries": [
+   "hepatic artery"
+  ],
+  "uberon": "UBERON:0001193",
+  "matchedText": "hepatic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4d09645a323755",
+  "name": "Arteria(s) — duodeno y cabeza páncreas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_546b67c87dde94",
+  "name": "Arteria(s) — mesentérica — superior",
+  "queries": [
+   "superior mesenteric artery"
+  ],
+  "uberon": "UBERON:0001182",
+  "matchedText": "superior mesenteric artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_57a7513aed207d",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_5de9bf93d4c1c8",
+  "name": "Arteria(s) — anastomosis inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_63b56192159976",
+  "name": "Arteria(s) — propia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6ca5df38291328",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6ce12467e32af7",
+  "name": "Arteria(s) — renales",
+  "queries": [
+   "renal artery"
+  ],
+  "uberon": "UBERON:0001184",
+  "matchedText": "renal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7107ecc27a8626",
+  "name": "Hígado — arteriales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_71c2cc98de1624",
+  "name": "Arteria(s) — segmentaria — posterior",
+  "queries": [
+   "posterior segmental artery",
+   "posterior segmental artery of kidney"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_76bb664375cd46",
+  "name": "Arteria(s) — rectas",
+  "queries": [
+   "arteriae rectae",
+   "vasa recta",
+   "straight artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«arterias rectas» intestinales; la clase «vasa recta» de UBERON es renal"
+ },
+ {
+  "netterId": "ENT_7bd62d383f7e0d",
+  "name": "Ebner) — arterias y venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_7efa81a2b5b672",
+  "name": "Arteria(s) — glútea — inferior",
+  "queries": [
+   "inferior gluteal artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_816304c578fe34",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_819095ae8c4184",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_83ff57681f3510",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_84f24e9f2ebe34",
+  "name": "Arteria(s) — corta",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_85bc7189ac775b",
+  "name": "Arteria(s) — ramas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_87c08c935772fd",
+  "name": "Arteria(s) — esplénica",
+  "queries": [
+   "splenic artery"
+  ],
+  "uberon": "UBERON:0001194",
+  "matchedText": "splenic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8acc32693b7dcd",
+  "name": "Estómago — arterias",
+  "queries": [
+   "gastric artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8f248e3ef9cc7c",
+  "name": "Páncreas — arterias",
+  "queries": [
+   "pancreatic artery"
+  ],
+  "uberon": "UBERON:0039261",
+  "matchedText": "pancreatic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9014b884260b02",
+  "name": "Arteria(s) — mesentérica — inferior",
+  "queries": [
+   "inferior mesenteric artery"
+  ],
+  "uberon": "UBERON:0001183",
+  "matchedText": "inferior mesenteric artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_908815fc78117e",
+  "name": "Arteria(s) — estómago, hígado y bazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_92538ad1554dee",
+  "name": "Arteria(s) — supraduodenal",
+  "queries": [
+   "supraduodenal artery"
+  ],
+  "uberon": "UBERON:8920044",
+  "matchedText": "supraduodenal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9f8ef9b16dd7a2",
+  "name": "Arteria(s) — media",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a18e97ed91819c",
+  "name": "Arteria(s) — páncreas",
+  "queries": [
+   "pancreatic artery"
+  ],
+  "uberon": "UBERON:0039261",
+  "matchedText": "pancreatic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a2c8c0859c3dd6",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a4103506bc9c98",
+  "name": "Arteria(s) — rama esofágica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_abacc90fd97dfe",
+  "name": "Bazo — arterias",
+  "queries": [
+   "splenic artery"
+  ],
+  "uberon": "UBERON:0001194",
+  "matchedText": "splenic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b3a8ffaa72ec5b",
+  "name": "Arteria(s) — vasos linfaticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b602cf860539ea",
+  "name": "Arteria(s) — común",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b779e5c293e2b5",
+  "name": "Duodeno — arterias",
+  "queries": [
+   "duodenal artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_b8e68935064760",
+  "name": "Arteria(s) — rectosigmoidea",
+  "queries": [
+   "rectosigmoid artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_beb1b81ca7d9f6",
+  "name": "Wolff) — arteria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_c1467c9d8f4e22",
+  "name": "Arteria(s) — intestino grueso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_c332a2b9e276c0",
+  "name": "Arteria(s) — recta",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c43c017226f7a4",
+  "name": "Vejiga urinaria — arterias",
+  "queries": [
+   "vesical artery",
+   "artery of urinary bladder"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c56fa5812b3f22",
+  "name": "Arteria(s) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c8840193067ba4",
+  "name": "Arteria(s) — uretérica",
+  "queries": [
+   "ureteric artery",
+   "ureteral artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ca745bed4fef43",
+  "name": "Arteria(s) — bifurcación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_cc7c7505c51b12",
+  "name": "Arteria(s) — derecha",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_cd87b4675f78e3",
+  "name": "Páncreas — arteria",
+  "queries": [
+   "pancreatic artery"
+  ],
+  "uberon": "UBERON:0039261",
+  "matchedText": "pancreatic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cf621767b947dc",
+  "name": "Arteria(s) — segmentaria — inferior",
+  "queries": [
+   "inferior segmental artery",
+   "inferior segmental artery of kidney"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d3935700bd22ff",
+  "name": "Arteria(s) — gástrica",
+  "queries": [
+   "gastric artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d3a0cd878e69c0",
+  "name": "Arteria(s) — segmentaria — superior",
+  "queries": [
+   "superior segmental artery",
+   "superior segmental artery of kidney"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d5e9be71d8f2dd",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_d7396f0200db3f",
+  "name": "Arteria(s) — omento menor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_da6386a76b9286",
+  "name": "Arteria(s) — variaciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_db49971d6c63be",
+  "name": "Pliegue(s) — arteria hepática",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_dc8a347a986fac",
+  "name": "Arteria(s) — marginal",
+  "queries": [
+   "marginal artery",
+   "marginal artery of colon",
+   "marginal artery of Drummond"
+  ],
+  "uberon": "UBERON:8920035",
+  "matchedText": "marginal artery of Drummond",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ddd408e9ee5265",
+  "name": "Pared — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_de36bc28149890",
+  "name": "Páncreas — arterias",
+  "queries": [
+   "pancreatic artery"
+  ],
+  "uberon": "UBERON:0039261",
+  "matchedText": "pancreatic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e04ce0d256e289",
+  "name": "Arteria(s) — subcostal",
+  "queries": [
+   "subcostal artery"
+  ],
+  "uberon": "UBERON:0001561",
+  "matchedText": "subcostal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e282a26464521a",
+  "name": "Arteria(s) — origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e2908b820fb8f5",
+  "name": "Arteria(s) — unión omento menor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e440f50c0bd60f",
+  "name": "Arteria(s) — rama recurrente",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_ea2cfa1dc435aa",
+  "name": "Arteria(s) — arteriola glomerular aferente",
+  "queries": [
+   "afferent arteriole",
+   "glomerular afferent arteriole",
+   "kidney afferent arteriole"
+  ],
+  "uberon": "UBERON:0004639",
+  "matchedText": "afferent arteriole",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ede16503c6a25f",
+  "name": "Arteria(s) — bazo",
+  "queries": [
+   "splenic artery"
+  ],
+  "uberon": "UBERON:0001194",
+  "matchedText": "splenic artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f00593c9f70530",
+  "name": "Arteria(s) — raíz mesenterio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f0560dc4969370",
+  "name": "Arteria(s) — izquierda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f08b53bd110f26",
+  "name": "Arteria(s) — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f361b7f696e148",
+  "name": "Arteria(s) — bifurcación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f71d05251ce655",
+  "name": "Arteria(s) — origen común",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f83fb12f0b268b",
+  "name": "Arteria(s) — ramas esplénicas",
+  "queries": [
+   "branch of splenic artery",
+   "splenic branch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f863797e53e1aa",
+  "name": "Arteria(s) — rectal — superior",
+  "queries": [
+   "superior rectal artery"
+  ],
+  "uberon": "UBERON:0035040",
+  "matchedText": "superior rectal artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fb03c938e3527a",
+  "name": "Arteria(s) — retroperitoneal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_ffc294653ff15b",
+  "name": "Arteria(s) — accesoria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_062f0c27f92d43",
+  "name": "Espacio(s) — costomediastínico",
+  "queries": [
+   "costomediastinal recess"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_10fe5107f98727",
+  "name": "Fosa — duodenal — superior",
+  "queries": [
+   "superior duodenal fossa",
+   "superior duodenal recess"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_132a5bb3e0db46",
+  "name": "Espacio(s) — perisinusoidales",
+  "queries": [
+   "perisinusoidal space",
+   "space of Disse"
+  ],
+  "uberon": "UBERON:0006729",
+  "matchedText": "space of Disse",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_287e03627d8410",
+  "name": "Fosa — duodenal — inferior",
+  "queries": [
+   "inferior duodenal fossa",
+   "inferior duodenal recess"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_338e202c5a26c3",
+  "name": "Espacio(s) — grasa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_3a1bcf8378e64e",
+  "name": "Receso — costodiafragmático",
+  "queries": [
+   "costodiaphragmatic recess"
+  ],
+  "uberon": "UBERON:0035468",
+  "matchedText": "costodiaphragmatic recess",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_44e830fee335a9",
+  "name": "Bolsa — receso superior",
+  "queries": [
+   "superior recess of omental bursa",
+   "superior recess of lesser sac"
+  ],
+  "uberon": "UBERON:0001180",
+  "matchedText": "superior recess of omental bursa",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6eaf29e76fc379",
+  "name": "Espacio(s) — portal, lámina limitante",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_93e25282a33f9b",
+  "name": "Fosa — paraduodenal",
+  "queries": [
+   "paraduodenal fossa",
+   "paraduodenal recess"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_e4a0a2fc097fb2",
+  "name": "Espacio(s) — periportal",
+  "queries": [
+   "periportal space",
+   "space of Mall"
+  ],
+  "uberon": "UBERON:0035386",
+  "matchedText": "space of Mall",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0e0588d69d93d2",
+  "name": "Saco — herniario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "condición o manifestación clínica; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_6a63e36486097a",
+  "name": "Atlas de anatomía hun — intestinal, saco herniario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "condición o manifestación clínica; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_cf29243cefcc06",
+  "name": "Arteria(s) — efectos obstrucción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "condición o manifestación clínica; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_0450f12b40b0e0",
+  "name": "Conducto — hepáticos",
+  "queries": [
+   "hepatic duct"
+  ],
+  "uberon": "UBERON:0005171",
+  "matchedText": "hepatic duct",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0d0adb4f842aea",
+  "name": "Conducto — porción lisa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_3af39e8b1f57a3",
+  "name": "Conducto — cístico",
+  "queries": [
+   "cystic duct"
+  ],
+  "uberon": "UBERON:0001152",
+  "matchedText": "cystic duct",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_539e6bb8505f1f",
+  "name": "Conducto — pliegue espiral",
+  "queries": [
+   "spiral fold of cystic duct",
+   "spiral valve of cystic duct",
+   "spiral valve of Heister"
+  ],
+  "uberon": "UBERON:0010017",
+  "matchedText": "spiral fold of cystic duct",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_588a591019bf65",
+  "name": "Conducto — pancreáticos",
+  "queries": [
+   "pancreatic duct"
+  ],
+  "uberon": "UBERON:0007329",
+  "matchedText": "pancreatic duct",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_794639ac5421b9",
+  "name": "Conducto — duodeno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9e7b74359218af",
+  "name": "Conducto — colédoco",
+  "queries": [
+   "common bile duct",
+   "bile duct"
+  ],
+  "uberon": "UBERON:0001174",
+  "matchedText": "common bile duct",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b6c5266e6fff30",
+  "name": "Conducto — variaciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_d50ad925687781",
+  "name": "Conducto — extrahepático",
+  "queries": [
+   "extrahepatic bile duct"
+  ],
+  "uberon": "UBERON:0003703",
+  "matchedText": "extrahepatic bile duct",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dbde612fdf4d4a",
+  "name": "Conducto — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_083e3bfe19db6d",
+  "name": "Cordón — conducto deferente",
+  "queries": [
+   "vas deferens",
+   "ductus deferens"
+  ],
+  "uberon": "UBERON:0001000",
+  "matchedText": "vas deferens",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1fd7816fa510fe",
+  "name": "Tronco — cisterna quilo y conducto torácico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_27ccff08d51c24",
+  "name": "Hígado — vasos y conductos intrahepaticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_3365ce4d63df04",
+  "name": "Hígado — conductos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_ee718438298200",
+  "name": "Canal gástrico",
+  "queries": [
+   "gastric canal"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_2720da77393b83",
+  "name": "Piloro",
+  "queries": [
+   "pylorus"
+  ],
+  "uberon": "UBERON:0001166",
+  "matchedText": "pylorus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2e4fe8c05418eb",
+  "name": "Pleura",
+  "queries": [
+   "pleura"
+  ],
+  "uberon": "UBERON:0000977",
+  "matchedText": "pleura",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_35cd1d7a04790a",
+  "name": "Colangiolo",
+  "queries": [
+   "cholangiole",
+   "bile ductule",
+   "canal of Hering"
+  ],
+  "uberon": "UBERON:0001282",
+  "matchedText": "cholangiole",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3d45a57f224f7f",
+  "name": "Muscular mucosa",
+  "queries": [
+   "muscularis mucosa",
+   "lamina muscularis mucosae",
+   "muscularis mucosae"
+  ],
+  "uberon": "UBERON:0006676",
+  "matchedText": "muscularis mucosa",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4ac3e55a9474a1",
+  "name": "Ombligo",
+  "queries": [
+   "umbilicus",
+   "navel"
+  ],
+  "uberon": "UBERON:0007118",
+  "matchedText": "umbilicus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7f17b50b4ae4dd",
+  "name": "Peritoneo",
+  "queries": [
+   "peritoneum"
+  ],
+  "uberon": "UBERON:0002358",
+  "matchedText": "peritoneum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7fdb3958a1fe10",
+  "name": "Placas de Peyer",
+  "queries": [
+   "Peyer's patch",
+   "Peyer's patches",
+   "small intestine Peyer's patch",
+   "small intestine Peyer's patch"
+  ],
+  "uberon": "UBERON:0003454",
+  "matchedText": "small intestine Peyer's patch",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_88244520ca1920",
+  "name": "L1-3, ramos dorsales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_99c8fd4331893c",
+  "name": "Sinfisis pubis",
+  "queries": [
+   "pubic symphysis"
+  ],
+  "uberon": "UBERON:0003699",
+  "matchedText": "pubic symphysis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a048b4565ba981",
+  "name": "Arteriografía celíaca",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_a796bf5c86362f",
+  "name": "Porta hepático",
+  "queries": [
+   "porta hepatis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_a79f36921f9e1e",
+  "name": "Morison)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_ab8d13c609bdc1",
+  "name": "Frenillo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b08f24a753e5dd",
+  "name": "Cáliz mayor",
+  "queries": [
+   "major calyx",
+   "major renal calyx"
+  ],
+  "uberon": "UBERON:0001226",
+  "matchedText": "major calyx",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b325b9c12845dd",
+  "name": "Riñón",
+  "queries": [
+   "kidney"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c134ae38f89f32",
+  "name": "Mesoapéndice",
+  "queries": [
+   "mesoappendix"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c9299ed4147183",
+  "name": "Tríada portal",
+  "queries": [
+   "portal triad"
+  ],
+  "uberon": "UBERON:0001279",
+  "matchedText": "portal triad",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ce5aba97bb3823",
+  "name": "Punto de McBurney",
+  "queries": [
+   "McBurney's point"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d5e51e74f48d9d",
+  "name": "Estroma intermuscular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_db9cc242059269",
+  "name": "Íleon",
+  "queries": [
+   "ileum"
+  ],
+  "uberon": "UBERON:0002116",
+  "matchedText": "ileum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e0ff545a2aae85",
+  "name": "Cardias, nódulos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e6a7aad16a2c75",
+  "name": "Ciego",
+  "queries": [
+   "cecum",
+   "caecum"
+  ],
+  "uberon": "UBERON:0001153",
+  "matchedText": "cecum",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_eb7ab852779d33",
+  "name": "Periné",
+  "queries": [
+   "perineum"
+  ],
+  "uberon": "UBERON:0002356",
+  "matchedText": "perineum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fd20e16e80f4c8",
+  "name": "Aorta",
+  "queries": [
+   "aorta"
+  ],
+  "uberon": "UBERON:0000947",
+  "matchedText": "aorta",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0845fc118ee759",
+  "name": "Escroto — fascia superficial",
+  "queries": [
+   "superficial fascia of scrotum",
+   "dartos fascia",
+   "scrotal fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_12d7b24fde8dfe",
+  "name": "Hiato — fascia cribiforme",
+  "queries": [
+   "cribriform fascia"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ad2affbbc01493",
+  "name": "Lámina — unión fascia lata",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b60c2a7818c491",
+  "name": "Abertura lateral (agujero de Luschka) — obturado",
+  "queries": [
+   "lateral aperture of fourth ventricle",
+   "foramen of Luschka",
+   "lateral aperture"
+  ],
+  "uberon": "UBERON:0003992",
+  "matchedText": "lateral aperture of fourth ventricle",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_02c2fe72e3945f",
+  "name": "Ganglio — autónomo abdominal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_216695d6fd9786",
+  "name": "Ganglio — celíaco",
+  "queries": [
+   "celiac ganglion"
+  ],
+  "uberon": "UBERON:0002262",
+  "matchedText": "celiac ganglion",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_388a71527ec42c",
+  "name": "Ganglio — mesentérico superior",
+  "queries": [
+   "superior mesenteric ganglion"
+  ],
+  "uberon": "UBERON:0005479",
+  "matchedText": "superior mesenteric ganglion",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4dfabfcf3720e7",
+  "name": "Ganglio — celíaco",
+  "queries": [
+   "celiac ganglion"
+  ],
+  "uberon": "UBERON:0002262",
+  "matchedText": "celiac ganglion",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_58b1ef080cbcb3",
+  "name": "Ganglio — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8fe8ce42b16fb3",
+  "name": "Ganglio — aorticorrenal",
+  "queries": [
+   "aorticorenal ganglion"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_e353e1acb968fc",
+  "name": "Ganglio — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1597eb2696c5ee",
+  "name": "Glándula(s) — intestinales",
+  "queries": [
+   "intestinal gland",
+   "crypt of Lieberkuhn"
+  ],
+  "uberon": "UBERON:0000333",
+  "matchedText": "intestinal gland",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_212254543727ac",
+  "name": "Glándula(s) — membrana perineal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6822a9cecea30e",
+  "name": "C5, ramo ventral — piel, vasos y glándulas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_c2081b56910984",
+  "name": "Glándula(s) — duodenales",
+  "queries": [
+   "duodenal gland",
+   "Brunner's gland"
+  ],
+  "uberon": "UBERON:0001212",
+  "matchedText": "duodenal gland",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ca973dec3d6cc4",
+  "name": "Glándula(s) — gástricas",
+  "queries": [
+   "gastric gland"
+  ],
+  "uberon": "UBERON:0000325",
+  "matchedText": "gastric gland",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d128d83a64af36",
+  "name": "Atle — glandulas suprarrenales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_5b09d37f9ffe83",
+  "name": "Hueso. V. también huesos específicos — abdomen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_64c9a745ba67b0",
+  "name": "Fémur — trocánter — menor",
+  "queries": [
+   "lesser trochanter"
+  ],
+  "uberon": "UBERON:0002504",
+  "matchedText": "lesser trochanter",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_15ad0e7201b427",
+  "name": "Ligamento(s) (cont.} — fisura",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_3327517d982a17",
+  "name": "Ligamento(s) (cont.} — rectoanal",
+  "queries": [
+   "rectoanal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_375a05c0137b20",
+  "name": "Duodeno — ligamento suspensorio",
+  "queries": [
+   "suspensory muscle of duodenum",
+   "ligament of Treitz",
+   "suspensory ligament of duodenum"
+  ],
+  "uberon": "UBERON:0000642",
+  "matchedText": "suspensory muscle of duodenum",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_51c048c830f132",
+  "name": "Ligamento(s) — hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_599b52a18b451b",
+  "name": "Ligamento(s) (cont.} — vísceras y pared abdominal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_5e09c915802f46",
+  "name": "Ligamento(s) — área desnuda hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6d2a7b1f6a1477",
+  "name": "Ligamento(s) — uréter femenino",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_79c3500ee76c89",
+  "name": "Ligamento(s) (cont.} — hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_7cfb9458bca015",
+  "name": "Hígado — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_c05cc64dce5421",
+  "name": "Ligamento(s) — porción hepatorrenal",
+  "queries": [
+   "hepatorenal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_df22993289999c",
+  "name": "Ligamento(s) (cont.} — redondo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_03c80bb0be90f1",
+  "name": "Pared — vasos y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_10871d68395fc8",
+  "name": "Nódulo(s) linfático(s) — sigmoideos",
+  "queries": [
+   "sigmoid lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_10ee71e8a9a4c3",
+  "name": "Atla — vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_1471a8bcc74232",
+  "name": "Nódulo(s) linfático(s) — prececales",
+  "queries": [
+   "prececal lymph node",
+   "precaecal lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_25b923fe639acc",
+  "name": "Nódulo(s) linfático(s) — rectales",
+  "queries": [
+   "rectal lymph node"
+  ],
+  "uberon": "UBERON:0037615",
+  "matchedText": "rectal lymph node",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2adbcbec5cb3e2",
+  "name": "Nódulo(s) linfático(s) — pilóricos",
+  "queries": [
+   "pyloric lymph node"
+  ],
+  "uberon": "UBERON:0015866",
+  "matchedText": "pyloric lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_329a6e7b6257a2",
+  "name": "Nódulo(s) linfático(s) — preaórticos",
+  "queries": [
+   "preaortic lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_3af448760d7fdd",
+  "name": "Nódulo(s) linfático(s) — subpilóricos",
+  "queries": [
+   "subpyloric lymph node"
+  ],
+  "uberon": "UBERON:0038952",
+  "matchedText": "subpyloric lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_45bfe85bce96ab",
+  "name": "Nódulo(s) linfático(s) — paracólicos",
+  "queries": [
+   "paracolic lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_491d9cf6ba35fc",
+  "name": "Yeyuno — nódulos linfáticos",
+  "queries": [
+   "jejunal lymph node"
+  ],
+  "uberon": "UBERON:0038093",
+  "matchedText": "jejunal lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_493717c29deb51",
+  "name": "Apéndice(s) — nodulillos linfáticos agregados",
+  "queries": [
+   "aggregated lymphoid follicles of appendix",
+   "aggregated lymphoid nodules of appendix",
+   "lymphoid follicle of appendix"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_59c767ac5a88cb",
+  "name": "Nódulo(s) linfático(s) — suprapilóricos",
+  "queries": [
+   "suprapyloric lymph node"
+  ],
+  "uberon": "UBERON:0038951",
+  "matchedText": "suprapyloric lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5f317afd9e2186",
+  "name": "Nódulo(s) linfático(s) — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_622bd3e166a795",
+  "name": "Nódulo(s) linfático(s) — mesentérico — superior",
+  "queries": [
+   "superior mesenteric lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_632052a5f46a72",
+  "name": "Cisterna — tronco linfático lumbar",
+  "queries": [
+   "lumbar lymph trunk",
+   "lumbar trunk"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_65cf382628d0a3",
+  "name": "Atlas de anatomía hun — vasos linfaticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_6671201151e24f",
+  "name": "Nódulo(s) linfático(s) — aórtico",
+  "queries": [
+   "aortic lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_75130c7c80a4f3",
+  "name": "Nódulo(s) linfático(s) — pared abdominal posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_79617f9911a8c9",
+  "name": "Atla — y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_8616d27563d4bd",
+  "name": "Nódulo(s) linfático(s) — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_89deb4fc410de1",
+  "name": "Nódulo(s) linfático(s) — sacros — medio",
+  "queries": [
+   "median sacral lymph node",
+   "middle sacral lymph node",
+   "sacral lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "solo existe la clase general de nódulos sacros, no la de los sacros medios"
+ },
+ {
+  "netterId": "ENT_a39718a8694f9e",
+  "name": "Nódulo(s) linfático(s) — poscava, laterales",
+  "queries": [
+   "postcaval lymph node",
+   "lateral postcaval lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_a8a1af173b9ce3",
+  "name": "Nódulo(s) linfático(s) — pancreáticos, superiores",
+  "queries": [
+   "superior pancreatic lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ac62c918e6d35d",
+  "name": "Nódulo(s) linfático(s) — retropilóricos",
+  "queries": [
+   "retropyloric lymph node"
+  ],
+  "uberon": "UBERON:0038953",
+  "matchedText": "retropyloric lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b452e32177489c",
+  "name": "Nódulo(s) linfático(s) — perianal",
+  "queries": [
+   "perianal lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ba5b512f1414ea",
+  "name": "Íleon — nodulillos linfáticos",
+  "queries": [
+   "ileal lymphoid follicle",
+   "lymphoid nodule of ileum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_bf42b88f92a099",
+  "name": "Nódulo(s) linfático(s) — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c042ba88cf5501",
+  "name": "Nódulo(s) linfático(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c392a56e82cbd4",
+  "name": "Nódulo(s) linfático(s) — mesentérico — inferior",
+  "queries": [
+   "inferior mesenteric lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d99fab1abe33d4",
+  "name": "Nódulo(s) linfático(s) — precava, lateral",
+  "queries": [
+   "precaval lymph node",
+   "lateral precaval lymph node"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_dd1bb17fb228b1",
+  "name": "Nódulo(s) linfático(s) — celiaco",
+  "queries": [
+   "celiac lymph node"
+  ],
+  "uberon": "UBERON:0002508",
+  "matchedText": "celiac lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e9a4e1e7040ebe",
+  "name": "Nódulo(s) linfático(s) — medio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_edacd65e7924db",
+  "name": "Nódulo(s) linfático(s) — pancreatoduodenales",
+  "queries": [
+   "pancreaticoduodenal lymph node"
+  ],
+  "uberon": "UBERON:0016401",
+  "matchedText": "pancreaticoduodenal lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f0e5a66ed14159",
+  "name": "Nódulo(s) linfático(s) — sacros — lateral",
+  "queries": [
+   "lateral sacral lymph node"
+  ],
+  "uberon": "UBERON:0039163",
+  "matchedText": "lateral sacral lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f6080730050458",
+  "name": "Yeyuno — vasos y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_f9acdc4877bea3",
+  "name": "Nódulo(s) linfático(s) — promontorio",
+  "queries": [
+   "promontory lymph node",
+   "promontorial lymph node"
+  ],
+  "uberon": "UBERON:0037536",
+  "matchedText": "promontory lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_238e495ccc8b0c",
+  "name": "Musculo(s) — recto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_243ae3aabac840",
+  "name": "Músculo(s) — origen — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_38d97013c264fc",
+  "name": "Apéndice(s) — músculo circular",
+  "queries": [
+   "circular muscle layer of appendix",
+   "appendix circular muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_3d87225da0ae1a",
+  "name": "Músculo(s) — grueso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_7936fc3811e4ef",
+  "name": "Colon — músculo circular",
+  "queries": [
+   "circular muscle layer of colon",
+   "colon circular muscle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_81e4891b95e236",
+  "name": "Cordón — musculo cremaster",
+  "queries": [
+   "cremaster muscle"
+  ],
+  "uberon": "UBERON:0008488",
+  "matchedText": "cremaster muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_833847e8476239",
+  "name": "Músculo(s) — intestino",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9d2e08adb5cc36",
+  "name": "Músculo(s) — origen — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a4547df0128d2e",
+  "name": "Musculo(s) — aponeurosis",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b2b8f2ea7e1978",
+  "name": "Músculo(s) — | delgado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_b8838abc663550",
+  "name": "Musculo(s) — imagen axial de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_c2ca46ecb49cef",
+  "name": "Músculo(s) — circular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c5a24b1714c45f",
+  "name": "Músculo(s) — erector columna",
+  "queries": [
+   "erector spinae muscle",
+   "erector spinae"
+  ],
+  "uberon": "UBERON:0002462",
+  "matchedText": "erector spinae",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d5e70c270eed6c",
+  "name": "Musculo(s) — aponeurosis",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_d8ef9215431e15",
+  "name": "Musculo(s) — transverso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_dfeded968d13a2",
+  "name": "Músculo(s) — apéndice vermiforme",
+  "queries": [
+   "muscle layer of vermiform appendix",
+   "muscularis externa of appendix"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_e873f72ee6f395",
+  "name": "Musculo(s) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_16369452018fe2",
+  "name": "Raíces — nervios espinales — anterior",
+  "queries": [
+   "ventral root of spinal nerve",
+   "anterior root of spinal nerve",
+   "ventral root of spinal cord",
+   "ventral root of spinal cord"
+  ],
+  "uberon": "UBERON:0002260",
+  "matchedText": "ventral root of spinal cord",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_21096d0242c4d1",
+  "name": "Nervio(s) — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_2aa8f62476713d",
+  "name": "Abdomen — nervios y ganglios autónomos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_354f762eae9db2",
+  "name": "Yeyuno — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_371bda4a6d60e8",
+  "name": "Estómago — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_382748c0c2a2b7",
+  "name": "Nervio(s) — celíaco",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_3ea03e453fc5ee",
+  "name": "Ebner) — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_43c25660172f7d",
+  "name": "Nervio(s) — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_576b8932b3270f",
+  "name": "Nervio(s) — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_5eba111ceb12a6",
+  "name": "Pared — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_5ecdd4bbaf4a2e",
+  "name": "Nervio(s) — obturador",
+  "queries": [
+   "obturator nerve"
+  ],
+  "uberon": "UBERON:0005465",
+  "matchedText": "obturator nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6034d69542b9c6",
+  "name": "Nervio(s) — genital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6a9b55154621c1",
+  "name": "Nervio(s) — hígado y tracto biliar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_6bc1cb0004fa9b",
+  "name": "Nervio(s) — estómago y duodeno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_6edaa33d196792",
+  "name": "Nervio(s) — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_79ebe888dea042",
+  "name": "Nervio(s) — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_7a0b0ee99b6dd1",
+  "name": "Vejiga urinaria — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_7dc6706b620157",
+  "name": "Nervio(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_7f87bf7a804500",
+  "name": "Nervio(s) — vasos testiculares y ramo genital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_81970a124cd485",
+  "name": "Nervio(s) — vejiga urinaria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_842200bc7bb3d3",
+  "name": "Tronco — nervio espinal",
+  "queries": [
+   "spinal nerve trunk",
+   "trunk of spinal nerve"
+  ],
+  "uberon": "UBERON:0005476",
+  "matchedText": "spinal nerve trunk",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_88cee20210a853",
+  "name": "Nervio(s) — cutáneo — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8a633283a4fcee",
+  "name": "Nervio(s) — abdominal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8d72428292ce4f",
+  "name": "Nervio(s) — ramo — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8e086ec64f6175",
+  "name": "Nervio(s) — accesorio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8f7e3f08cfe042",
+  "name": "Uréter — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_9281c85467713e",
+  "name": "Nervio(s) — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_964330ae7bae3a",
+  "name": "Pared — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_97e43c2ef5fd51",
+  "name": "Duodeno — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_97f024dc8bd944",
+  "name": "Nervio(s) — estómago y duodeno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_99f9eb74710f85",
+  "name": "Nervio(s) — uretérico medio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a040c95ee4a070",
+  "name": "Nervio(s) — ramos escrotales",
+  "queries": [
+   "scrotal nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_a69da720151d43",
+  "name": "Peritoneo — nervio frénico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_aa95af9a1518c3",
+  "name": "Yeyuno — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_aadcca8e208419",
+  "name": "Nervio(s) — menor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_ac6ede2cfeb4c6",
+  "name": "Nervio(s) — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b875dc1e2b9110",
+  "name": "Nervio(s) — mayor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c74517e1a1c982",
+  "name": "Atla — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_df103bb76af24c",
+  "name": "Nervio(s) — núcleo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e7fe2785d5f145",
+  "name": "Nervio(s) — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_efd9ddd1845bcf",
+  "name": "Nervio(s) — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f0700832f85a5d",
+  "name": "Nervio(s) — séptimo derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f8e8e875d8ab24",
+  "name": "Atla — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_f98af77e079344",
+  "name": "Atlas de anatomía hum — sensitivo nervio espinal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_06c3f745ce7571",
+  "name": "Hígado — quirúrgicos funcionales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_08672b0d00218b",
+  "name": "Atlas de anatomía hum — hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_0a87e1a06911e1",
+  "name": "Atlas de anatomía hum — estómago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_0b5d9f701e7c3b",
+  "name": "Submucosa — estómago",
+  "queries": [
+   "submucosa of stomach",
+   "gastric submucosa",
+   "stomach submucosa"
+  ],
+  "uberon": "UBERON:0001200",
+  "matchedText": "submucosa of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_0bd563ce545475",
+  "name": "Serosa — bazo",
+  "queries": [
+   "serosa of spleen",
+   "splenic serosa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0d7ecc923aae32",
+  "name": "Duodeno — pliegue longitudinal",
+  "queries": [
+   "longitudinal fold of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0f8bb6c4397d46",
+  "name": "Hígado — venosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_10cf0114d2a9b0",
+  "name": "Estómago — escotadura angular",
+  "queries": [
+   "angular incisure",
+   "incisura angularis",
+   "angular notch of stomach"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_138585267d14c4",
+  "name": "Duodeno — porción — superior",
+  "queries": [
+   "superior part of duodenum",
+   "first part of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_177d26ade16848",
+  "name": "Célula(s) — mucosas estómago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_198b6f96ac86c0",
+  "name": "Estómago — vasos y nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_1b09486b99c366",
+  "name": "Hígado — forma",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1d8076e126a5b9",
+  "name": "Piel — vaina recto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_1e1d07476d2d48",
+  "name": "Estómago — hipotónico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1f896385df71d4",
+  "name": "Plano — lateral recto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_212cac33d8326a",
+  "name": "Hígado — segmento(s)",
+  "queries": [
+   "hepatic segment",
+   "liver segment"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_222183aa3ab961",
+  "name": "Estómago — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_272c562b84e39a",
+  "name": "Vejiga urinaria — mucosa",
+  "queries": [
+   "mucosa of urinary bladder",
+   "urinary bladder mucosa"
+  ],
+  "uberon": "UBERON:0001259",
+  "matchedText": "mucosa of urinary bladder",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2780ed160908fb",
+  "name": "Hígado — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_292c9a57f2fc17",
+  "name": "Bazo",
+  "queries": [
+   "spleen"
+  ],
+  "uberon": "UBERON:0002106",
+  "matchedText": "spleen",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2b7158f99518df",
+  "name": "Estómago — cara posterior",
+  "queries": [
+   "posterior surface of stomach",
+   "posterior wall of stomach"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_2bb16dcff4827a",
+  "name": "Duodeno — longitudinal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_2deb1becd45ea8",
+  "name": "Hígado — lateral posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_34d1f97b04200d",
+  "name": "Duodeno — porción — inferior",
+  "queries": [
+   "inferior part of duodenum",
+   "horizontal part of duodenum",
+   "third part of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_365af2311927f5",
+  "name": "Estómago",
+  "queries": [
+   "stomach"
+  ],
+  "uberon": "UBERON:0000945",
+  "matchedText": "stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3a6bc34fb2490e",
+  "name": "Hígado — peritoneo visceral",
+  "queries": [
+   "serosa of liver",
+   "visceral peritoneum of liver"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_3c92b596e2af2c",
+  "name": "Hígado — proceso papilar",
+  "queries": [
+   "papillary process of caudate lobe",
+   "papillary process",
+   "liver papillary process",
+   "liver papillary process"
+  ],
+  "uberon": "UBERON:0005050",
+  "matchedText": "liver papillary process",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3cb6bde25f9a8a",
+  "name": "Duodeno — musculatura",
+  "queries": [
+   "muscle layer of duodenum",
+   "muscularis externa of duodenum"
+  ],
+  "uberon": "UBERON:0012488",
+  "matchedText": "muscle layer of duodenum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3cf564d0ba71a8",
+  "name": "Páncreas — áreas comunes dolor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "condición o manifestación clínica; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_3dad5628b00194",
+  "name": "Tejido(s) — vaina recto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_3e52467b58985a",
+  "name": "Bazo — imágenes axiales de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_3ed3c433592e27",
+  "name": "Corazón — saco pericárdico",
+  "queries": [
+   "pericardial sac"
+  ],
+  "uberon": "UBERON:0002406",
+  "matchedText": "pericardial sac",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_43c0b4c4f144f9",
+  "name": "Estómago — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_45aaa0d132704e",
+  "name": "Duodeno — porciones segunda-tercera",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_4938305ad1fe5f",
+  "name": "Estómago — reflejado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_49647bd8c2fbaa",
+  "name": "Bazo — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_4c019e69ab53cb",
+  "name": "Vejiga urinaria",
+  "queries": [
+   "urinary bladder"
+  ],
+  "uberon": "UBERON:0001255",
+  "matchedText": "urinary bladder",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4c57ce9d9d3f8e",
+  "name": "Estómago — submucosa",
+  "queries": [
+   "submucosa of stomach",
+   "gastric submucosa"
+  ],
+  "uberon": "UBERON:0001200",
+  "matchedText": "submucosa of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4d726c37a1bacc",
+  "name": "Duodeno — porción — descendente",
+  "queries": [
+   "descending part of duodenum",
+   "second part of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_4ebae807587548",
+  "name": "Hígado — vascular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_5170a1a0638b10",
+  "name": "Célula(s) — parénquima hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_519845341d5c4f",
+  "name": "Bazo — gástrica",
+  "queries": [
+   "gastric surface of spleen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_521cb6ed250fa3",
+  "name": "Bazo — diafragmática",
+  "queries": [
+   "diaphragmatic surface of spleen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_537607faea9d03",
+  "name": "Hígado — imágenes axiales de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_586fe4ea058974",
+  "name": "Estómago — curvatura — menor",
+  "queries": [
+   "lesser curvature of stomach"
+  ],
+  "uberon": "UBERON:0001163",
+  "matchedText": "lesser curvature of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_589c7806606725",
+  "name": "Estómago — variaciones posición y contorno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_58fcf744941c5c",
+  "name": "Esófago — curvatura mayor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_597696b3a04807",
+  "name": "Hígado — centrales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_5ca9da6b4cb239",
+  "name": "Hígado — patrón lobulillar normal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_60b4f4dcdb1855",
+  "name": "Atlas de anatomía hun — páncreas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_61b6b352150853",
+  "name": "Páncreas — cabeza",
+  "queries": [
+   "head of pancreas",
+   "pancreatic head"
+  ],
+  "uberon": "UBERON:0001069",
+  "matchedText": "head of pancreas",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_629a5714709ffd",
+  "name": "Estómago — imágenes axiales de TC",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_62b56dbcabf1a9",
+  "name": "Bazo — renal",
+  "queries": [
+   "renal surface of spleen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_62d922a4e65608",
+  "name": "Hígado — vénula",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6495943c749e1b",
+  "name": "Atla — hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_673d2ebc7b22bb",
+  "name": "Hígado — transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_67aa8edc5acc45",
+  "name": "Atla — intestino grueso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_6f1c053f038d29",
+  "name": "Estómago — hipertónico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_702fb7cd9f0372",
+  "name": "Hígado — borde inferior",
+  "queries": [
+   "inferior border of liver"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_7158e46e0e5095",
+  "name": "Duodeno — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_7180e1327b73c0",
+  "name": "Bolsa — estómago reflejado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_72857096d32908",
+  "name": "Hígado — bajo aumento",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_7302ecdfaa87bf",
+  "name": "Fundus estómago",
+  "queries": [
+   "fundus of stomach",
+   "gastric fundus",
+   "stomach fundus"
+  ],
+  "uberon": "UBERON:0001160",
+  "matchedText": "fundus of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_732fdca27a4f0f",
+  "name": "Estómago — musculares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_79a6f029ceeee1",
+  "name": "Estómago — cardíaca",
+  "queries": [
+   "cardia of stomach",
+   "cardiac part of stomach"
+  ],
+  "uberon": "UBERON:0001162",
+  "matchedText": "cardia of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7da9c08c82d734",
+  "name": "Hígado — cuadrado",
+  "queries": [
+   "quadrate lobe of liver"
+  ],
+  "uberon": "UBERON:0001116",
+  "matchedText": "quadrate lobe of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_804be4460926fe",
+  "name": "Páncreas — cuerpo",
+  "queries": [
+   "body of pancreas"
+  ],
+  "uberon": "UBERON:0001150",
+  "matchedText": "body of pancreas",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_83b086aa2b37a5",
+  "name": "Bazo — extremidad — anterior",
+  "queries": [
+   "anterior extremity of spleen",
+   "anterior pole of spleen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_85e629e1b43b63",
+  "name": "Estómago — parietales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_86a48eb80efdf2",
+  "name": "Bazo — pulpa",
+  "queries": [
+   "splenic pulp",
+   "pulp of spleen"
+  ],
+  "uberon": "UBERON:1000023",
+  "matchedText": "splenic pulp",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_881713612eeb3f",
+  "name": "Esófago — unión mucosa gástrica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8a33bd87b5ba92",
+  "name": "Hígado — portal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_8d0c2763ee092b",
+  "name": "Duodeno — suspensorio",
+  "queries": [
+   "suspensory muscle of duodenum",
+   "ligament of Treitz"
+  ],
+  "uberon": "UBERON:0000642",
+  "matchedText": "suspensory muscle of duodenum",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_8e110e2fa4254c",
+  "name": "Hígado — apéndice fibroso",
+  "queries": [
+   "fibrous appendix of liver",
+   "appendix fibrosa hepatis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_9170778420edb3",
+  "name": "Hígado",
+  "queries": [
+   "liver"
+  ],
+  "uberon": "UBERON:0002107",
+  "matchedText": "liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_93e02d32534f25",
+  "name": "Atla — estómago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_95fedbfc4b55e5",
+  "name": "Recto — varón",
+  "queries": [
+   "rectum"
+  ],
+  "uberon": "UBERON:0001052",
+  "matchedText": "rectum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_97f5c4b501a7c0",
+  "name": "Duodeno — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_988f3c06214775",
+  "name": "Hígado — estructura",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9931e5d6e6af90",
+  "name": "Páncreas — cola",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_99ffe32bd5702a",
+  "name": "Hígado — derecho",
+  "queries": [
+   "right lobe of liver"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«derecho» sin sustantivo; podría ser lóbulo, conducto u otra estructura"
+ },
+ {
+  "netterId": "ENT_9a70194b991fe7",
+  "name": "Estómago — cuerpo",
+  "queries": [
+   "body of stomach",
+   "gastric body"
+  ],
+  "uberon": "UBERON:0001161",
+  "matchedText": "body of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9adc32d024955a",
+  "name": "Hígado — redondo",
+  "queries": [
+   "round ligament of liver",
+   "ligamentum teres hepatis"
+  ],
+  "uberon": "UBERON:0006588",
+  "matchedText": "round ligament of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9edb876dd2f533",
+  "name": "Atla — vaginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_9f9c8916fb0a95",
+  "name": "Páncreas — ácinos",
+  "queries": [
+   "pancreatic acinus",
+   "pancreatic acinar",
+   "acinus of pancreas"
+  ],
+  "uberon": "UBERON:0001263",
+  "matchedText": "pancreatic acinus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9fd51f917bde53",
+  "name": "Folículo — estómago",
+  "queries": [
+   "gastric lymphoid follicle",
+   "lymphoid follicle of stomach"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_a04b26b1b3e310",
+  "name": "Bazo — área",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a0b7628577136a",
+  "name": "Hígado — periportal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a16dba6b99fa8f",
+  "name": "Páncreas — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a2988d8084031e",
+  "name": "Recto — mujer",
+  "queries": [
+   "rectum"
+  ],
+  "uberon": "UBERON:0001052",
+  "matchedText": "rectum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a50cc61b94a2b7",
+  "name": "Célula(s) — epitelial, estómago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a59ca087166ab3",
+  "name": "Hígado — sublobulillares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a5e4fc28f07e94",
+  "name": "Duodeno — circular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a727d0dbeb1d46",
+  "name": "Estómago — ortotónico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a77dcb615d417b",
+  "name": "Hígado — desnuda",
+  "queries": [
+   "bare area of liver"
+  ],
+  "uberon": "UBERON:0001149",
+  "matchedText": "bare area of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_af94aaff2dc4f3",
+  "name": "Estómago — área",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b048517abdf8bb",
+  "name": "Hígado — anatómicos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b103e7fd954ccf",
+  "name": "Estómago — mucosa",
+  "queries": [
+   "mucosa of stomach",
+   "gastric mucosa"
+  ],
+  "uberon": "UBERON:0001199",
+  "matchedText": "mucosa of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b4e716e843f50a",
+  "name": "Hígado — lecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b578c5c6783084",
+  "name": "Hígado — parietal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b5bc0514afbdeb",
+  "name": "Estómago — gástrica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b735f7e569d784",
+  "name": "Hígado — izquierdo",
+  "queries": [
+   "left lobe of liver"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "«izquierdo» sin sustantivo; podría ser lóbulo, conducto u otra estructura"
+ },
+ {
+  "netterId": "ENT_b7acbf0c585461",
+  "name": "Atla — intrínseco, páncreas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_baba5e49e69c5a",
+  "name": "Hígado — topografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_bdbc7054d3f6ab",
+  "name": "Duodeno — raíz mesenterio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_be04aa36c4ef95",
+  "name": "Hígado — caudado",
+  "queries": [
+   "caudate lobe of liver"
+  ],
+  "uberon": "UBERON:0001117",
+  "matchedText": "caudate lobe of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_bfe664627300d7",
+  "name": "Flexura — duodenoyeyunal",
+  "queries": [
+   "duodenojejunal flexure"
+  ],
+  "uberon": "UBERON:8410000",
+  "matchedText": "duodenojejunal flexure",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c1fbf840111809",
+  "name": "Duodeno — (primera)",
+  "queries": [
+   "superior part of duodenum",
+   "first part of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c249fa5e6fa366",
+  "name": "Estómago — epiteliales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c39feaa27e3a38",
+  "name": "Duodeno — superior",
+  "queries": [
+   "superior part of duodenum",
+   "first part of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c416307d5a3ba4",
+  "name": "Tejido(s) — hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c458949533ae58",
+  "name": "Páncreas — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_c98026248b4c35",
+  "name": "Hígado — lóbulo(s)",
+  "queries": [
+   "lobe of liver",
+   "liver lobe"
+  ],
+  "uberon": "UBERON:0001113",
+  "matchedText": "lobe of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cd4140bc70c935",
+  "name": "Estómago — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_cf161af717d359",
+  "name": "Duodeno — ascendente",
+  "queries": [
+   "ascending part of duodenum",
+   "fourth part of duodenum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_cf5cf98eabe3b9",
+  "name": "Atla — páncreas, duodeno y bazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_d589be7e407309",
+  "name": "Bazo — serosa",
+  "queries": [
+   "serosa of spleen",
+   "splenic serosa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d6ed754a8a0bfc",
+  "name": "Vaina — recto",
+  "queries": [
+   "rectus sheath"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_d8af015f2d9dc0",
+  "name": "Estómago — curvatura — mayor",
+  "queries": [
+   "greater curvature of stomach"
+  ],
+  "uberon": "UBERON:0001164",
+  "matchedText": "greater curvature of stomach",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d8efc0fd3e401c",
+  "name": "Hígado — falciforme",
+  "queries": [
+   "falciform ligament"
+  ],
+  "uberon": "UBERON:0001247",
+  "matchedText": "falciform ligament",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d93a13f56232d6",
+  "name": "Hígado — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_db656a6d8378c4",
+  "name": "Páncreas",
+  "queries": [
+   "pancreas"
+  ],
+  "uberon": "UBERON:0001264",
+  "matchedText": "pancreas",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dbfca9b1a392bc",
+  "name": "Mesenterio — intestino delgado",
+  "queries": [
+   "mesentery of small intestine",
+   "small intestine mesentery"
+  ],
+  "uberon": "UBERON:0001170",
+  "matchedText": "mesentery of small intestine",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_deca1591f093ab",
+  "name": "Hígado — triangular izquierdo",
+  "queries": [
+   "left triangular ligament",
+   "left triangular ligament of liver",
+   "triangular ligament of liver",
+   "triangular ligament of liver"
+  ],
+  "uberon": "UBERON:0035444",
+  "matchedText": "triangular ligament of liver",
+  "via": "label",
+  "matchKind": "laterality_dropped",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e1e79a4107e7de",
+  "name": "Hígado — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e33c3d60446e8b",
+  "name": "Estómago — atónico",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e6a585e9966b5b",
+  "name": "Bazo — visceral",
+  "queries": [
+   "visceral surface of spleen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_e783ca73bc0c04",
+  "name": "Duodeno",
+  "queries": [
+   "duodenum"
+  ],
+  "uberon": "UBERON:0002114",
+  "matchedText": "duodenum",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ea9ecc3dae7943",
+  "name": "Hígado — intralobulillar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_eb0c77bfdc1730",
+  "name": "Hígado — visceral",
+  "queries": [
+   "visceral surface of liver"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_ebfaf55dbb3ca8",
+  "name": "Duodeno — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_edb7a994d5d175",
+  "name": "Submucosa — intestino",
+  "queries": [
+   "submucosa of intestine",
+   "intestinal submucosa"
+  ],
+  "uberon": "UBERON:0009566",
+  "matchedText": "submucosa of intestine",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f393a47add06a5",
+  "name": "Bazo — cápsula fibrosa",
+  "queries": [
+   "capsule of spleen",
+   "splenic capsule",
+   "fibrous capsule of spleen"
+  ],
+  "uberon": "UBERON:0004641",
+  "matchedText": "capsule of spleen",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_f3963a350e03ee",
+  "name": "Hígado — área",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f54032a3d29cb9",
+  "name": "Páncreas — cuello",
+  "queries": [
+   "neck of pancreas"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f5ff6d9da7c8ba",
+  "name": "Hígado — coronario",
+  "queries": [
+   "coronary ligament of liver",
+   "coronary ligament"
+  ],
+  "uberon": "UBERON:0013138",
+  "matchedText": "coronary ligament of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fafe984b0f017e",
+  "name": "Hígado — cara",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_fbd1ab94f240b4",
+  "name": "Duodeno — mucosa",
+  "queries": [
+   "mucosa of duodenum",
+   "duodenal mucosa"
+  ],
+  "uberon": "UBERON:0000320",
+  "matchedText": "mucosa of duodenum",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_fc4a04a7f48279",
+  "name": "Bazo — cólica",
+  "queries": [
+   "colic surface of spleen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_fd286094d0453b",
+  "name": "Duodeno — unión colédoco",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_05e8e6d64dab89",
+  "name": "Plexo — intramuscular longitudinal",
+  "queries": [
+   "intramuscular plexus",
+   "longitudinal intramuscular plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_06328a08f79b78",
+  "name": "Plexo — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_07847336565a29",
+  "name": "Plexo — iliaco — derecho",
+  "queries": [
+   "iliac plexus",
+   "right iliac plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0a28a01e86deb6",
+  "name": "Plexo — cólico — medio",
+  "queries": [
+   "middle colic plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_0acf04640f0a29",
+  "name": "Plexo — ramos musculares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_0c7083a686d6c1",
+  "name": "Plexo — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_24e824e7025d89",
+  "name": "Plexo — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_275fb7ad55bc9d",
+  "name": "Plexo — cólico — derecho",
+  "queries": [
+   "right colic plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_28d6ea6f2d5856",
+  "name": "Plexo — ileocólico",
+  "queries": [
+   "ileocolic plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_2df827ac9f1c9d",
+  "name": "Plexo — pampiniforme",
+  "queries": [
+   "pampiniform plexus"
+  ],
+  "uberon": "UBERON:0001330",
+  "matchedText": "pampiniform plexus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_303f85d55fe6a1",
+  "name": "Plexo — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_315b210f4fe79a",
+  "name": "Yeyuno — plexos autónomos intrínsecos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_3d9c851913a796",
+  "name": "Plexo — subseroso",
+  "queries": [
+   "subserous plexus",
+   "subserosal plexus"
+  ],
+  "uberon": "UBERON:0012374",
+  "matchedText": "subserous plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3e89019c19a541",
+  "name": "Plexo — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_40994bb1db22db",
+  "name": "Plexo — pancreatoduodenal inferior",
+  "queries": [
+   "inferior pancreaticoduodenal plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_426a025f1b40eb",
+  "name": "Atlas de anatomía hun — plexo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_4747de1f392b28",
+  "name": "Plexo — ramos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_50904feef6fe93",
+  "name": "Plexo — iliaco — interno",
+  "queries": [
+   "internal iliac plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_520b15abf31842",
+  "name": "Plexo — asas periureterales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_5224ec833b1f9c",
+  "name": "Plexo — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_59b3f44923f43e",
+  "name": "Plexo — sigmoideo",
+  "queries": [
+   "sigmoid plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_5b4699e02d0f20",
+  "name": "Plexo — mientérico (de Auerbach)",
+  "queries": [
+   "myenteric plexus",
+   "Auerbach's plexus",
+   "myenteric nerve plexus"
+  ],
+  "uberon": "UBERON:0002439",
+  "matchedText": "myenteric plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5c314a7a6f5d06",
+  "name": "Plexo — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_5f17d0848ae1d2",
+  "name": "Plexo — suprarrenal — izquierdo",
+  "queries": [
+   "left adrenal plexus",
+   "adrenal plexus",
+   "suprarenal plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_5f763859b641e8",
+  "name": "Plexo — suprarrenal — derecho",
+  "queries": [
+   "right adrenal plexus",
+   "adrenal plexus",
+   "suprarenal plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_69738263ac7581",
+  "name": "Yeyuno — plexo entérico",
+  "queries": [
+   "enteric plexus of jejunum",
+   "jejunal enteric plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_6c6a70ace4cf99",
+  "name": "Plexo — periglandular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_6fc3cd1225cfaa",
+  "name": "Plexo — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_7b8ce79909908d",
+  "name": "Plexo — intermesentérico",
+  "queries": [
+   "intermesenteric plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_7dc38312ade3aa",
+  "name": "Plexo — apendicular",
+  "queries": [
+   "appendicular plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8279bbdeecea47",
+  "name": "Plexo — gastroduodenal",
+  "queries": [
+   "gastroduodenal plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_840e40fd8cb6b2",
+  "name": "Plexo — rectosigmoideo",
+  "queries": [
+   "rectosigmoid plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_8416c13f510ffa",
+  "name": "Plexo — rectal",
+  "queries": [
+   "rectal plexus",
+   "rectal nerve plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_887322ccfe46bb",
+  "name": "Plexo — cólico — izquierdo",
+  "queries": [
+   "left colic plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_89f8016d57c148",
+  "name": "Plexo — hepático",
+  "queries": [
+   "hepatic plexus",
+   "hepatic nerve plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_9005944d54b4e1",
+  "name": "Plexo — izquierdo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_92f1e895d6454b",
+  "name": "Plexo — perivascular nervio espinal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_96a87d4b6ac570",
+  "name": "Plexo — aórtico",
+  "queries": [
+   "aortic plexus",
+   "abdominal aortic plexus"
+  ],
+  "uberon": "UBERON:0035772",
+  "matchedText": "aortic plexus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_99dc3623a6e1c5",
+  "name": "Plexo — medio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9adde56de0787b",
+  "name": "Plexo — derecho",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9b4be21b77170e",
+  "name": "Plexo — celíaco",
+  "queries": [
+   "celiac plexus",
+   "coeliac plexus",
+   "celiac nerve plexus"
+  ],
+  "uberon": "UBERON:0002010",
+  "matchedText": "celiac plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a0d3e3c6db735b",
+  "name": "Plexo — medular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_ada9739a40b493",
+  "name": "Plexo — cecal",
+  "queries": [
+   "cecal plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_b4e7d3b7d517ce",
+  "name": "Plexo — areolar",
+  "queries": [
+   "areolar venous plexus",
+   "areolar plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_c57aaa3c152a45",
+  "name": "Atla — plexo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_cc2bcf96cdfdf4",
+  "name": "Plexo — mesentérico — inferior",
+  "queries": [
+   "inferior mesenteric plexus"
+  ],
+  "uberon": "UBERON:0035770",
+  "matchedText": "inferior mesenteric plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d7787ca215091b",
+  "name": "Plexo — sacro",
+  "queries": [
+   "sacral plexus",
+   "sacral nerve plexus"
+  ],
+  "uberon": "UBERON:0034986",
+  "matchedText": "sacral plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d7e9b7c1e25d2a",
+  "name": "Plexo — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_d7f3df400cfe3e",
+  "name": "Plexo — cardias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_ddb22ec33477c9",
+  "name": "Plexo — ramos renal y uretérico superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e0c2b5e4d2d467",
+  "name": "Plexo — común",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e178103107d65d",
+  "name": "Plexo — submucoso (de Meissner)",
+  "queries": [
+   "submucous plexus",
+   "Meissner's plexus",
+   "submucosal nerve plexus"
+  ],
+  "uberon": "UBERON:0005304",
+  "matchedText": "submucosal nerve plexus",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e17d4e8fc4590e",
+  "name": "Plexo — marginal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e31cd2e127d0be",
+  "name": "Plexo — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_e5bf9718fa47e2",
+  "name": "Plexo — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_f34579aaf862df",
+  "name": "Plexo — hepático",
+  "queries": [
+   "hepatic plexus",
+   "hepatic nerve plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f678ad306231be",
+  "name": "Plexo — vago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_fc54d0b42ce9bf",
+  "name": "Atlas de anatomía hun — plexo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_fea7003193a6a4",
+  "name": "Plexo — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_106a59a6e1c744",
+  "name": "Radiografía — apéndice vermiforme",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_32e8294c21bd5a",
+  "name": "Radiografía — estómago, duodeno y yeyuno — proximal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_39cf4eaa4286bf",
+  "name": "Duodeno — radiografía bario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_3fa290daf49ed7",
+  "name": "Estómago — radiografía bario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_495d654386a95e",
+  "name": "Radiografía — yeyuno",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_4bd11471efa50c",
+  "name": "Antro — radiografía bario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_68fe6cd02dadb7",
+  "name": "Tomografía computarizada (TC) — abdominal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_6f3a867c444946",
+  "name": "Apéndice(s) — radiografía bario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_9970128d69d673",
+  "name": "Piloro — radiografia bario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_d39f67b4d10ddd",
+  "name": "Ebner) — disección",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_efde37880463a1",
+  "name": "Íleon — radiografia bario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "procedimiento o imagen; no es una estructura anatómica"
+ },
+ {
+  "netterId": "ENT_b2768c819fc835",
+  "name": "Hipotálamo — simpático",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_b7d395cfc01228",
+  "name": "Hipotálamo — parasimpático",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_21cfd5fe2b000b",
+  "name": "Hoz — tendón conjunto",
+  "queries": [
+   "conjoint tendon",
+   "inguinal falx"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_06713a1d1d567c",
+  "name": "Vasos — riñones y vejiga urinaria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_1840b4a0cd6f38",
+  "name": "Vasos — izquierdos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_275e78de3b62e1",
+  "name": "Vasos — epigastricos — inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_3fa511c61c20e7",
+  "name": "Vasos — intercostales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_430629750bc61f",
+  "name": "Vasos — medulares (riñón)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_6a67c4f9230e63",
+  "name": "Vasos — epigastricos — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_6b334a847e8957",
+  "name": "Vasos — higado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_6ca52cd6337f3d",
+  "name": "Vasos — anastomóticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_6e5ac924c5dc9d",
+  "name": "Vasos — izquierdos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_750d8b6372deae",
+  "name": "Vasos — gástricos cortos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_78cd8206cb1af2",
+  "name": "Vasos — superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_7a914c592619d4",
+  "name": "Vasos — perineales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_7c1ae21d20b6fe",
+  "name": "Vasos — cremastéricos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_7e961be99ef8c6",
+  "name": "Vasos — rectales superiores",
+  "queries": [
+   "superior rectal vein",
+   "superior rectal artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de arterias y venas (vasos) sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_85c679def16bc7",
+  "name": "Vasos — estómago",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_936b4f822556d5",
+  "name": "Vasos — esplénicos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_9a6ae615b1be50",
+  "name": "Vasos — verdaderos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_a0e7f15234b7b7",
+  "name": "Vasos — derechos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a480bce2f1fe98",
+  "name": "Vasos — orificios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_a9b1ef69fc0518",
+  "name": "Vasos — testiculares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_b6120e3d24384b",
+  "name": "Vasos — unión omento mayor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_be2cbe68f78b5c",
+  "name": "Vasos — pared abdominal posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_d733b4e5ae27ae",
+  "name": "Vasos — internos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_d8f2bd09acda20",
+  "name": "Vasos — obturadores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_dd4775a343e101",
+  "name": "Vasos — epigastricos — superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_f0a844c7c0f0f5",
+  "name": "Vasos — sigmoideos, unión",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_f0fb7f718c5705",
+  "name": "Vasos — mesentéricos superiores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_f17e87788266e9",
+  "name": "Vasos — grueso",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_0054f31ab3ca8d",
+  "name": "Pared — venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_0c7b2b284af6c9",
+  "name": "Vena(s) — central",
+  "queries": [
+   "central vein of liver",
+   "central vein",
+   "hepatic central vein"
+  ],
+  "uberon": "UBERON:0006841",
+  "matchedText": "central vein of liver",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1389338d22cbc7",
+  "name": "Asa(s} — venas intestino delgado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_13901feff2dbf3",
+  "name": "Vena(s) — bazo",
+  "queries": [
+   "splenic vein"
+  ],
+  "uberon": "UBERON:0003713",
+  "matchedText": "splenic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_153a1b0a18bf6d",
+  "name": "Vena(s) — vena renal derecha",
+  "queries": [
+   "right renal vein",
+   "renal vein"
+  ],
+  "uberon": "UBERON:0001141",
+  "matchedText": "right renal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_163160678093a9",
+  "name": "Vena(s) — ovárica — derecha",
+  "queries": [
+   "right ovarian vein",
+   "ovarian vein"
+  ],
+  "uberon": "UBERON:0039856",
+  "matchedText": "right ovarian vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_16f9d30b6af4d6",
+  "name": "Vena(s) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_1c719683de3e29",
+  "name": "Mesenterio — vena mesentérica superior",
+  "queries": [
+   "superior mesenteric vein"
+  ],
+  "uberon": "UBERON:0001138",
+  "matchedText": "superior mesenteric vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_28c90356661dad",
+  "name": "Vena(s) — hepática",
+  "queries": [
+   "hepatic vein"
+  ],
+  "uberon": "UBERON:0001143",
+  "matchedText": "hepatic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_398961f6004640",
+  "name": "Vena(s) — pancreatoduodenal — superior",
+  "queries": [
+   "superior pancreaticoduodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_426e77018ee6fe",
+  "name": "Vena(s) — paraumbilical",
+  "queries": [
+   "paraumbilical vein"
+  ],
+  "uberon": "UBERON:0035655",
+  "matchedText": "paraumbilical vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_475087b32fe71c",
+  "name": "Vena(s) — ligamento redondo hígado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_4b43131fc78a83",
+  "name": "Vena(s) — apendicular",
+  "queries": [
+   "appendicular vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_4c33aa93a7110d",
+  "name": "Estómago — venas",
+  "queries": [
+   "gastric vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_4e30b768c05471",
+  "name": "Yeyuno — venas",
+  "queries": [
+   "jejunal vein"
+  ],
+  "uberon": "UBERON:0001216",
+  "matchedText": "jejunal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_548eb5b764b330",
+  "name": "Vena(s) — arqueada",
+  "queries": [
+   "arcuate vein",
+   "arcuate vein of kidney",
+   "kidney arcuate vein"
+  ],
+  "uberon": "UBERON:0004719",
+  "matchedText": "arcuate vein of kidney",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_598450387d691f",
+  "name": "Vena(s) — cólica — izquierda",
+  "queries": [
+   "left colic vein"
+  ],
+  "uberon": "UBERON:8410017",
+  "matchedText": "left colic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_59c694ad216e02",
+  "name": "Vena(s) — izquierda persistente",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_707aa835856495",
+  "name": "Vena(s) — cortical radiada",
+  "queries": [
+   "cortical radiate vein",
+   "interlobular vein of kidney",
+   "kidney interlobular vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_70d228b8b1a697",
+  "name": "Anastomosis — venas suprarrenal-frénica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_71f8048a57ed35",
+  "name": "Vena(s) — dorsal o superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_74ba330e7f7439",
+  "name": "Vena(s) — pancreática",
+  "queries": [
+   "pancreatic vein"
+  ],
+  "uberon": "UBERON:0001214",
+  "matchedText": "pancreatic vein",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_771f958468e5b3",
+  "name": "Yeyuno — venas",
+  "queries": [
+   "jejunal vein"
+  ],
+  "uberon": "UBERON:0001216",
+  "matchedText": "jejunal vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_783b97efcb82b0",
+  "name": "Bazo — venas",
+  "queries": [
+   "splenic vein"
+  ],
+  "uberon": "UBERON:0003713",
+  "matchedText": "splenic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7df270fca2fa95",
+  "name": "Vena(s) — pancreatoduodenal — posterior",
+  "queries": [
+   "posterior pancreaticoduodenal vein",
+   "posterior superior pancreaticoduodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_9109884d089ce4",
+  "name": "Vena(s) — pancreatoduodenal — inferior",
+  "queries": [
+   "inferior pancreaticoduodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_93d64db81afd6f",
+  "name": "Vena(s) — hígado",
+  "queries": [
+   "hepatic vein"
+  ],
+  "uberon": "UBERON:0001143",
+  "matchedText": "hepatic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_95119739808a8b",
+  "name": "Vena(s) — sección transversal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9729027c4dc55a",
+  "name": "Vena(s) — cava — inferior",
+  "queries": [
+   "inferior vena cava"
+  ],
+  "uberon": "UBERON:0001072",
+  "matchedText": "inferior vena cava",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9785f4b7fc271f",
+  "name": "Páncreas — venas",
+  "queries": [
+   "pancreatic vein"
+  ],
+  "uberon": "UBERON:0001214",
+  "matchedText": "pancreatic vein",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9a80802b4d4bde",
+  "name": "Vena(s) — anastomótica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_9f9a84a0456cfd",
+  "name": "Vena(s) — mayor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a074cd5f44d474",
+  "name": "Vena(s) — tributarias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_a336760c632924",
+  "name": "Vena(s) — mesentérica — inferior",
+  "queries": [
+   "inferior mesenteric vein"
+  ],
+  "uberon": "UBERON:0001215",
+  "matchedText": "inferior mesenteric vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a54e44e21253c1",
+  "name": "Duodeno — venas",
+  "queries": [
+   "duodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_aae7df20578aa4",
+  "name": "Vena(s) — cólica — derecha",
+  "queries": [
+   "right colic vein"
+  ],
+  "uberon": "UBERON:8410018",
+  "matchedText": "right colic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b2512fab62e868",
+  "name": "Vena(s) — cecal — posterior",
+  "queries": [
+   "posterior cecal vein",
+   "posterior caecal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_b3b3ba3f6684c8",
+  "name": "Pared — venas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "agrupación de varias estructuras sin clase única equivalente"
+ },
+ {
+  "netterId": "ENT_b5a8a745913488",
+  "name": "Vena(s) — capsular",
+  "queries": [
+   "capsular vein",
+   "renal capsular vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_b61b18e86976a4",
+  "name": "Atlas de anatomía hum — vena cava inferior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+ },
+ {
+  "netterId": "ENT_d14bb6b274cf1a",
+  "name": "Vena(s) — obturatriz",
+  "queries": [
+   "obturator vein"
+  ],
+  "uberon": "UBERON:0001321",
+  "matchedText": "obturator vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d853e50450c014",
+  "name": "Vena(s) — relaciones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+ },
+ {
+  "netterId": "ENT_db60847f19ac8f",
+  "name": "Vena(s) — pancreatoduodenal — posterior",
+  "queries": [
+   "posterior pancreaticoduodenal vein",
+   "posterior superior pancreaticoduodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_dbc399dbaa9150",
+  "name": "Diafragma — orificio vena cava",
+  "queries": [
+   "caval opening of diaphragm",
+   "vena caval foramen",
+   "caval foramen"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_de52827f3aee5b",
+  "name": "Pene — vena — dorsal profunda",
+  "queries": [
+   "deep dorsal vein of penis"
+  ],
+  "uberon": "UBERON:0006656",
+  "matchedText": "deep dorsal vein of penis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e8c932901dcc3d",
+  "name": "Vena(s) — cólica — media",
+  "queries": [
+   "middle colic vein"
+  ],
+  "uberon": "UBERON:0001218",
+  "matchedText": "middle colic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_eefecd777ab0e8",
+  "name": "Vena(s) — pancreatoduodenal — anterior",
+  "queries": [
+   "anterior pancreaticoduodenal vein",
+   "anterior superior pancreaticoduodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ },
+ {
+  "netterId": "ENT_f2247d43e6e46e",
+  "name": "Vena(s) — pancreatoduodenal — anterior",
+  "queries": [
+   "anterior pancreaticoduodenal vein",
+   "anterior superior pancreaticoduodenal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "sin coincidencia exacta en UBERON"
+ }
+]

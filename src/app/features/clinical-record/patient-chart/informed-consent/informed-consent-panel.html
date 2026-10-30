@@ -1,4 +1,4 @@
-<app-card variant="outlined" padding="lg" class="consentimiento" data-testid="consentimiento-panel">
+<app-card variant="outlined" padding="lg" class="consentimiento" data-testid="consent-panel">
   <!-- ─── Qué se consiente y cómo está ─────────────────────────────────
        La cabecera responde las dos preguntas que se hacen antes de leer nada:
        ¿a qué? y ¿ya está? Revocar vive acá, a la vista, igual de fácil de
@@ -6,7 +6,7 @@
   <header class="consentimiento__cabecera">
     <div class="consentimiento__titulos">
       <h2 class="consentimiento__titulo">Consentimiento informado</h2>
-      <p class="consentimiento__objeto" data-testid="consentimiento-objeto">
+      <p class="consentimiento__objeto" data-testid="consent-target">
         <span class="consentimiento__objeto-tipo">{{ nombreDelObjeto() }}:</span>
         {{ targetLabel() }}
       </p>
@@ -26,7 +26,7 @@
             variant="outline"
             size="sm"
             type="button"
-            data-testid="consentimiento-adjuntar-firma"
+            data-testid="consent-attach-signature"
             (clicked)="adjuntandoFirma.set(true)"
           >
             Adjuntar firma
@@ -37,7 +37,7 @@
           variant="outline"
           size="sm"
           type="button"
-          data-testid="consentimiento-revocar"
+          data-testid="consent-withdraw"
           [disabled]="revocacion().status === 'loading'"
           (clicked)="revocar()"
         >
@@ -58,18 +58,18 @@
        formulario sólo se ofrece con el historial a la vista. -->
   <app-view-state-host [state]="lectura()" (retry)="recargar()">
     @if (errorDeLaRevocacion(); as mensaje) {
-      <app-alert tone="error" data-testid="consentimiento-error-revocacion">{{ mensaje }}</app-alert>
+      <app-alert tone="error" data-testid="consent-withdraw-error">{{ mensaje }}</app-alert>
     }
     @if (errorDelInformePosterior(); as mensaje) {
       <app-alert tone="error">{{ mensaje }}</app-alert>
     }
 
     @if (recienRegistrado(); as creado) {
-      <app-alert tone="success" title="Decisión registrada" data-testid="consentimiento-registrado">
+      <app-alert tone="success" title="Decisión registrada" data-testid="consent-recorded">
         Quedó en el expediente
         {{ creado.decision === 'ACCEPTED' ? 'la aceptación' : 'el rechazo' }}.
         @if (creado.signatureStatus === 'PENDING') {
-          Próximo paso: adjuntá la firma de quien otorgó con «Adjuntar firma».
+          Próximo paso: adjunte la firma de quien otorgó con «Adjuntar firma».
         }
         @if (creado.channel === 'TELEHEALTH' && creado.signatureStatus === 'PENDING') {
           Por telesalud, conviene la firma electrónica o la constancia grabada.
@@ -77,14 +77,14 @@
       </app-alert>
     } @else if (vigente() === null && encuentro() !== null) {
       <!-- S3 con próxima acción: el vacío dice qué hacer. -->
-      <app-alert tone="info" title="Todavía no tiene consentimiento" data-testid="consentimiento-vacio">
-        Registrá la decisión de la persona antes de empezar. Completá las pestañas en orden:
+      <app-alert tone="info" title="Todavía no tiene consentimiento" data-testid="consent-empty">
+        Registre la decisión de la persona antes de empezar. Complete las pestañas en orden:
         información, quién otorga y decisión.
       </app-alert>
     }
 
     @if (resumenDeErrores().length > 0) {
-      <app-alert tone="error" title="Revisá antes de registrar" data-testid="consentimiento-resumen-errores">
+      <app-alert tone="error" title="Revise antes de registrar" data-testid="consent-error-summary">
         <ul class="consentimiento__errores">
           @for (error of resumenDeErrores(); track error.texto) {
             <li>
@@ -102,21 +102,21 @@
     }
 
     @if (errorDelRegistro(); as mensaje) {
-      <app-alert tone="error" data-testid="consentimiento-error">{{ mensaje }}</app-alert>
+      <app-alert tone="error" data-testid="consent-error">{{ mensaje }}</app-alert>
     }
 
     @if (encuentro() === null) {
       <!-- S3 con próxima acción: sin atención la API rechaza el registro
            (encounterId es obligatorio). Un formulario que siempre falla no se
            ofrece; se dice qué hacer y se deja ver y revocar lo que ya hay. -->
-      <app-view-state-host [state]="sinEncuentro" data-testid="consentimiento-sin-encuentro">
+      <app-view-state-host [state]="sinEncuentro" data-testid="consent-no-encounter">
         <app-empty-state
           vsh-empty
           title="Falta la atención"
           description="El consentimiento se registra dentro de una atención: es la que queda en el expediente como el momento en que se informó."
         >
           <p empty-actions class="consentimiento__proxima-accion">
-            Abrí un encuentro para registrar el consentimiento
+            Abra un encuentro para registrar el consentimiento
           </p>
         </app-empty-state>
       </app-view-state-host>
@@ -131,7 +131,7 @@
               label="Diagnóstico que lo motiva"
               hint="Opcional. Viene del ítem cuando lo tiene."
             >
-              <app-textarea [(value)]="diagnostico" [rows]="2" autoResize data-testid="consentimiento-diagnostico" />
+              <app-textarea [(value)]="diagnostico" [rows]="2" autoResize data-testid="consent-diagnosis" />
             </app-form-field>
 
             <app-form-field
@@ -148,7 +148,7 @@
                 autoResize
                 [hasError]="errorDe('proposito') !== ''"
                 placeholder="Ej.: Antibiótico por vía oral para tratar la infección urinaria"
-                data-testid="consentimiento-proposito"
+                data-testid="consent-purpose"
                 (blurred)="tocar('proposito')"
               />
             </app-form-field>
@@ -164,7 +164,7 @@
                 [rows]="3"
                 autoResize
                 [hasError]="errorDe('beneficios') !== ''"
-                data-testid="consentimiento-beneficios"
+                data-testid="consent-benefits"
                 (blurred)="tocar('beneficios')"
               />
             </app-form-field>
@@ -181,7 +181,7 @@
                 [rows]="3"
                 autoResize
                 [hasError]="errorDe('riesgos') !== ''"
-                data-testid="consentimiento-riesgos"
+                data-testid="consent-risks"
                 (blurred)="tocar('riesgos')"
               />
             </app-form-field>
@@ -223,7 +223,7 @@
         <app-tab [label]="rotulos()[1]">
           <div class="consentimiento__grilla app-form-grid">
             <app-form-field label="¿Quién otorga el consentimiento?" [required]="true">
-              <app-radio-group [(value)]="otorgante" data-testid="consentimiento-otorgante">
+              <app-radio-group [(value)]="otorgante" data-testid="consent-grantor">
                 @for (o of otorgantes; track o) {
                   <app-radio [value]="o" [label]="nombreDelOtorgante[o]" />
                 }
@@ -231,7 +231,7 @@
             </app-form-field>
 
             <app-form-field label="¿Cómo se informó?" [required]="true">
-              <app-radio-group [(value)]="canal" data-testid="consentimiento-canal">
+              <app-radio-group [(value)]="canal" data-testid="consent-channel">
                 <app-radio value="IN_PERSON" [label]="nombreDelCanal.IN_PERSON" />
                 <app-radio value="TELEHEALTH" [label]="nombreDelCanal.TELEHEALTH" />
               </app-radio-group>
@@ -248,7 +248,7 @@
                   [(value)]="representante"
                   autocomplete="off"
                   [hasError]="errorDe('representante') !== ''"
-                  testId="consentimiento-representante"
+                  testId="consent-representative"
                   (blurred)="tocar('representante')"
                 />
               </app-form-field>
@@ -264,7 +264,7 @@
                   autocomplete="off"
                   placeholder="Ej.: Madre, tutor judicial"
                   [hasError]="errorDe('parentesco') !== ''"
-                  testId="consentimiento-parentesco"
+                  testId="consent-relationship"
                   (blurred)="tocar('parentesco')"
                 />
               </app-form-field>
@@ -291,7 +291,7 @@
                 <app-radio-group
                   [(value)]="asentimiento"
                   [hasError]="errorDe('asentimiento') !== ''"
-                  data-testid="consentimiento-asentimiento"
+                  data-testid="consent-assent"
                   (focusout)="tocar('asentimiento')"
                 >
                   <app-radio [value]="true" label="Sí" />
@@ -326,12 +326,12 @@
         <!-- ─── 3 · Decisión y excepción ──────────────────────────────── -->
         <app-tab [label]="rotulos()[2]">
           <div class="consentimiento__grilla app-form-grid">
-            <app-form-field label="Idioma en que se informó" hint="Si no fue en castellano, anotá si hubo intérprete en las preguntas.">
+            <app-form-field label="Idioma en que se informó" hint="Si no fue en castellano, anote si hubo intérprete en las preguntas.">
               <app-select
                 [options]="idiomas"
                 [value]="idioma()"
                 (valueChange)="idioma.set($event)"
-                data-testid="consentimiento-idioma"
+                data-testid="consent-language"
               />
             </app-form-field>
 
@@ -345,7 +345,7 @@
               <app-checkbox
                 [(checked)]="conExcepcion"
                 label="No se pudo obtener antes: se aplica una excepción legal"
-                data-testid="consentimiento-con-excepcion"
+                data-testid="consent-with-exception"
               />
             </div>
 
@@ -356,7 +356,7 @@
                 [required]="true"
                 [errorMessage]="errorDe('excepcion')"
               >
-                <app-radio-group [(value)]="excepcion" data-testid="consentimiento-excepcion">
+                <app-radio-group [(value)]="excepcion" data-testid="consent-exception">
                   @for (e of excepciones; track e) {
                     <app-radio [value]="e" [label]="nombreDeLaExcepcion[e]" />
                   }
@@ -375,7 +375,7 @@
                   [rows]="3"
                   autoResize
                   [hasError]="errorDe('justificacion') !== ''"
-                  data-testid="consentimiento-justificacion"
+                  data-testid="consent-justification"
                   (blurred)="tocar('justificacion')"
                 />
               </app-form-field>
@@ -393,7 +393,7 @@
                 [(value)]="decision"
                 [hasError]="errorDe('decision') !== ''"
                 class="consentimiento__decision"
-                data-testid="consentimiento-decision"
+                data-testid="consent-decision"
                 (focusout)="tocar('decision')"
               >
                 <app-radio value="ACCEPTED" label="Acepta" />
@@ -406,7 +406,7 @@
                 [(checked)]="revocabilidadInformada"
                 [hasError]="errorDe('revocabilidad') !== ''"
                 label="Le informé que puede revocar su decisión cuando quiera, sin efecto sobre lo ya realizado"
-                data-testid="consentimiento-revocabilidad"
+                data-testid="consent-revocation-right"
               />
               @if (errorDe('revocabilidad'); as mensaje) {
                 <p class="consentimiento__error-suelto" role="alert">{{ mensaje }}</p>
@@ -418,7 +418,7 @@
                 app-button
                 variant="primary"
                 type="button"
-                data-testid="consentimiento-registrar"
+                data-testid="consent-record"
                 [isLoading]="registrando()"
                 [disabled]="registrando() || encuentro() === null"
                 (clicked)="registrar()"
@@ -455,13 +455,13 @@
     @if (urgenciaPorInformar()) {
       <app-alert tone="warning" title="Falta informar después de la urgencia">
         Se actuó sin consentimiento previo por urgencia. Cuando la persona o su familia estén en
-        condiciones, explicales lo que se hizo y registralo.
+        condiciones, explíqueles lo que se hizo y regístrelo.
         <button
           app-button
           variant="outline"
           size="sm"
           type="button"
-          data-testid="consentimiento-informar-posterior"
+          data-testid="consent-post-emergency"
           (clicked)="informarDespuesDeLaUrgencia()"
         >
           Registrar que se informó
@@ -477,7 +477,7 @@
       }
       </p>
     } @else {
-      <ol class="consentimiento__historial" data-testid="consentimiento-historial">
+      <ol class="consentimiento__historial" data-testid="consent-history">
         @for (c of historial(); track c.id) {
           <li class="consentimiento__registro">
             <div class="consentimiento__registro-cabecera">

@@ -1,14 +1,23 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { AccountIcon } from '../../../shared/components/atoms/account-icon/account-icon';
 import type { AccountIconName } from '../../../shared/components/atoms/account-icon/account-icon.types';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 
+/**
+ * El tono de una tarjeta. Son los cuatro tríos de estado del sistema
+ * (`--st-*-bg|fg|bd`), que ya traen su versión oscura y su contraste medido:
+ * cada tipo tiene su color sin que esta pantalla elija un solo valor. El ámbar
+ * no está a propósito: es el punto de acción único del producto.
+ */
+type TypeTone = 'primary' | 'secondary' | 'success' | 'info';
+
 /** Una tarjeta de la rejilla: a dónde lleva y qué promete. */
 interface TipoDeCuenta {
   readonly icono: AccountIconName;
+  readonly tone: TypeTone;
   readonly titulo: string;
   readonly detalle: string;
   readonly ruta: string;
@@ -16,7 +25,7 @@ interface TipoDeCuenta {
 }
 
 /**
- * Los cinco tipos de cuenta que se dan de alta solos.
+ * Las cuentas de persona que se dan de alta solas: paciente y médico.
  *
  * **No hay «Otro».** Cada tarjeta lleva a una pantalla de alta que existe. Una
  * que no llevara a ningún lado sería peor que no ofrecerla: quien la pulsa ya
@@ -40,47 +49,119 @@ interface TipoDeCuenta {
  * papeles distintos y equipos distintos. Una sola tarjeta «Laboratorio o centro
  * de estudios» obligaría a preguntar cuál de las dos es adentro del formulario,
  * que es la misma decisión movida a un peor lugar.
+ *
+ * **«Farmacia» es la sexta, y la primera que sí sale a la red** después de la
+ * aseguradora: `POST /iam/auth/register-organization` con
+ * `tenantType: 'PHARMACY'` — ver el JSDoc de `RegisterPharmacy`. Va última
+ * porque es la más nueva; no hay otro criterio de orden entre las seis.
  */
-const TIPOS: readonly TipoDeCuenta[] = [
+const CUENTAS_PERSONALES: readonly TipoDeCuenta[] = [
   {
     icono: 'patient',
+    tone: 'secondary',
     titulo: 'Paciente',
-    detalle: 'Tu historia clínica, tus turnos y tus estudios, siempre con vos.',
+    detalle: 'Su historia clínica, sus citas y sus estudios, siempre con usted.',
     ruta: '/auth/register/patient',
     testId: 'tipo-paciente',
   },
   {
     icono: 'practitioner',
+    tone: 'primary',
     titulo: 'Médico',
-    detalle: 'Atendé, recetá y llevá tu agenda. Necesitás matrícula y colegio.',
+    detalle: 'Atienda, recete y lleve su agenda. Necesita matrícula y colegio.',
     ruta: '/auth/register/practitioner',
     testId: 'tipo-profesional',
   },
+];
+
+/**
+ * Las organizaciones que se dan de alta solas. Cuelgan de «Registrá tu
+ * organización» en el acceso, **no** de «Crear cuenta»: una persona que busca
+ * su cuenta no tiene por qué leer «Aseguradora» ni «Farmacia», y quien viene a
+ * registrar la suya no debería tener que adivinar que está escondida entre las
+ * cuentas de paciente y de médico.
+ */
+const CUENTAS_DE_ORGANIZACION: readonly TipoDeCuenta[] = [
   {
     icono: 'insurer',
+    tone: 'primary',
     titulo: 'Aseguradora',
-    detalle: 'Registrá tu organización y administrá el padrón de tus afiliados.',
+    detalle: 'Registre su organización y administre el padrón de sus afiliados.',
     ruta: '/auth/register/organization',
     testId: 'tipo-aseguradora',
   },
   {
     icono: 'laboratory',
+    tone: 'info',
     titulo: 'Laboratorio',
-    detalle: 'Recibí las órdenes médicas de la red y entregá los resultados por la app.',
+    detalle: 'Reciba las órdenes médicas de la red y entregue los resultados por la app.',
     ruta: '/auth/register/laboratory',
     testId: 'tipo-laboratorio',
   },
   {
     icono: 'imaging',
+    tone: 'secondary',
     titulo: 'Imagenología',
-    detalle: 'Rayos X, ecografía, tomografía y resonancia. Recibí las órdenes de la red.',
+    detalle: 'Rayos X, ecografía, tomografía y resonancia. Reciba las órdenes de la red.',
     ruta: '/auth/register/imaging-center',
     testId: 'tipo-imagenologia',
   },
+  {
+    icono: 'pharmacy',
+    tone: 'success',
+    titulo: 'Farmacia',
+    detalle: 'Publique su catálogo, reciba pedidos con receta y atienda desde un solo lugar.',
+    ruta: '/auth/register/pharmacy',
+    testId: 'tipo-farmacia',
+  },
+  {
+    icono: 'clinic',
+    tone: 'primary',
+    titulo: 'Organización médica',
+    detalle:
+      'Hospitales, clínicas, consultorios y centros de enfermería: publique sus procedimientos y afilie a sus médicos.',
+    ruta: '/auth/register/medical-center',
+    testId: 'account-type-medical-center',
+  },
 ];
 
+/** Qué se está eligiendo: una cuenta de persona o el alta de una organización. */
+type Audiencia = 'people' | 'organizations';
+
+/** Lo que cambia entre las dos elecciones; la rejilla y su estilo son los mismos. */
+interface CatalogoDeAltas {
+  readonly claim: string;
+  readonly tagline: string;
+  readonly titulo: string;
+  readonly subtitulo: string;
+  readonly tipos: readonly TipoDeCuenta[];
+}
+
+const CATALOGOS: Readonly<Record<Audiencia, CatalogoDeAltas>> = {
+  people: {
+    claim: 'Su salud, en un solo lugar',
+    tagline: 'Cree su cuenta y empiece a usar AloVida en un par de minutos.',
+    titulo: 'Crear cuenta',
+    subtitulo: '¿Qué tipo de cuenta necesita?',
+    tipos: CUENTAS_PERSONALES,
+  },
+  organizations: {
+    claim: 'Su organización, dentro de la red',
+    tagline: 'Registre su organización y empiece a recibir a sus pacientes y afiliados.',
+    titulo: 'Registre su organización',
+    subtitulo: '¿Qué tipo de organización es?',
+    tipos: CUENTAS_DE_ORGANIZACION,
+  },
+};
+
+/** La ruta de organizaciones declara `data: { audience: 'organizations' }`; sin dato, personas. */
+function audienciaDe(valor: unknown): Audiencia {
+  return valor === 'organizations' ? 'organizations' : 'people';
+}
+
 /**
- * **Elegir tipo de cuenta** — la primera pantalla de «crear cuenta».
+ * **Elegir tipo de cuenta** — la primera pantalla de «crear cuenta» y, con
+ * `data.audience = 'organizations'`, la de «registrá tu organización».
  *
  * ## Por qué una rejilla y no las pestañas que había
  *
@@ -109,5 +190,17 @@ const TIPOS: readonly TipoDeCuenta[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterAccountType {
-  protected readonly tipos = TIPOS;
+  protected readonly catalogo =
+    CATALOGOS[audienciaDe(inject(ActivatedRoute).snapshot.data['audience'])];
+
+  /**
+   * Cuántas columnas tiene la rejilla en pantalla ancha.
+   *
+   * Sale de cuántas tarjetas hay y no de un número fijo: con tres columnas
+   * fijas, dos tarjetas dejaban la tercera vacía y la fila pegada a la
+   * izquierda, que es un hueco que se lee como «algo no cargó». Dos o cuatro se
+   * reparten de a dos —cuatro en 2×2, no 3+1—; el resto, de a tres.
+   */
+  protected readonly columns =
+    this.catalogo.tipos.length <= 2 || this.catalogo.tipos.length === 4 ? 2 : 3;
 }

@@ -158,13 +158,16 @@
 
           @switch (relaciones().estado) {
             @case ('cargando') {
-              <p class="ficha__vacio">Consultando las relaciones asistenciales…</p>
+              <app-loading-state
+                class="ficha__vacio"
+                message="Consultando las relaciones asistenciales…"
+              />
             }
             @case ('sin-permiso') {
               <!-- El 403 no tumba la ficha: es un bloque que esta sesión no puede
                    ver, y decirlo es más honesto que esconder que existe. -->
               <p class="ficha__vacio">
-                Tu sesión no puede consultar las relaciones asistenciales de esta persona.
+                Su sesión no puede consultar las relaciones asistenciales de esta persona.
               </p>
             }
             @case ('vacio') {

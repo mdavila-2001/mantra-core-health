@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthLayout } from './auth-layout';
@@ -11,9 +11,10 @@ import { AuthLayout } from './auth-layout';
       <nav auth-footer class="legales">Privacidad</nav>
     </app-auth-layout>
   `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 class HostComponent {
-  readonly title = signal('Ingresá a tu cuenta');
+  readonly title = signal('Ingrese a su cuenta');
   readonly subtitle = signal('');
   readonly showBrand = signal(true);
 }
@@ -38,7 +39,7 @@ describe('AuthLayout', () => {
       const encabezados = root().querySelectorAll('h1');
 
       expect(encabezados).toHaveLength(1);
-      expect(encabezados[0].textContent?.trim()).toBe('Ingresá a tu cuenta');
+      expect(encabezados[0].textContent?.trim()).toBe('Ingrese a su cuenta');
     });
 
     it('el contenido vive dentro de un main con una card', () => {
@@ -86,7 +87,7 @@ describe('AuthLayout', () => {
     it('el selector de tema está disponible antes de entrar', () => {
       const grupo = root().querySelector('[role="group"][aria-label="Tema de la interfaz"]');
 
-      expect(grupo?.querySelectorAll('button')).toHaveLength(3);
+      expect(grupo?.querySelectorAll('button')).toHaveLength(2);
     });
 
     it('el selector vive fuera del main: es chrome, no contenido', () => {

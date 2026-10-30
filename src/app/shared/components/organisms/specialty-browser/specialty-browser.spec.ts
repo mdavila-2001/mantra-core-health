@@ -5,6 +5,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { offline, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { SEARCH_PARAM, type FilterDef } from '../filter-bar/filter-bar';
+import { chooseSelectOption } from '../../../../../testing/select';
 import { SpecialtyBrowser } from './specialty-browser';
 import type { SpecialtyGroup } from './specialty-browser.types';
 
@@ -53,7 +54,7 @@ class VistaPrueba {}
       [hasMore]="hayMas()"
       [collapsible]="plegable()"
       [expandAll]="abrirTodos()"
-      noMatchesText="Nada coincide con lo que buscaste."
+      noMatchesText="Nada coincide con lo que buscó."
       (filtersChanged)="emisiones.push($event)"
       (retry)="reintentos = reintentos + 1"
       (moreRequested)="pedidosDeMas = pedidosDeMas + 1"
@@ -110,10 +111,9 @@ describe('SpecialtyBrowser', () => {
 
   /** Elegir la primera opción del único desplegable de filtro. */
   async function elegirOrigen(): Promise<void> {
-    const select = root().querySelector<HTMLSelectElement>('select');
+    const select = root().querySelector<HTMLElement>('app-select');
     if (select) {
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
+      await chooseSelectOption(fixture, select, 0);
     }
     await fixture.whenStable();
   }
@@ -194,7 +194,7 @@ describe('SpecialtyBrowser', () => {
 
       expect(
         root().querySelector('[data-testid="specialty-browser-empty"]')?.textContent,
-      ).toContain('Nada coincide con lo que buscaste.');
+      ).toContain('Nada coincide con lo que buscó.');
     });
 
     it('el término de búsqueda también cuenta como filtro puesto', async () => {

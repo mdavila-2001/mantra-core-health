@@ -4,7 +4,7 @@
      ficha. Un `403` acá no puede vaciar el expediente, así que cada mitad dice
      lo suyo en su tarjeta y la otra sigue en pie. -->
 @if (modo() !== 'odontologia') {
-<app-card variant="outlined" padding="lg" class="procedimientos">
+<app-card variant="outlined" [padding]="embedded() ? 'none' : 'lg'" class="procedimientos" [class.procedimientos--integrado]="embedded()">
   <h2 class="procedimientos__titulo">Cirugías</h2>
 
   @switch (quirurgico().status) {
@@ -14,8 +14,8 @@
     @case ('forbidden') {
       <!-- S5, y separado de S3 a propósito: «no hay cirugías» y «no podés ver
            las cirugías» son estados opuestos para quien mira. -->
-      <app-alert tone="info" title="No podés ver el histórico quirúrgico">
-        Tu rol no incluye el registro perioperatorio de esta persona. El resto de la ficha
+      <app-alert tone="info" title="No puede ver el histórico quirúrgico">
+        Su rol no incluye el registro perioperatorio de esta persona. El resto de la ficha
         sigue disponible.
       </app-alert>
     }
@@ -56,6 +56,7 @@
                 @if (caso.cuando) {
                   <span class="procedimientos__fecha">{{ caso.cuando | date: 'd MMM y' }}</span>
                 }
+                <app-informed-consent-badge [consent]="consent.consents.of('PROCEDURE', caso.id)" />
               </div>
 
               @if (caso.equipo.length > 0) {
@@ -100,6 +101,21 @@
                   }
                 </ul>
               }
+
+              <!-- El consentimiento de la cirugía: la API lo acepta con el id del
+                   caso quirúrgico (procedure_cases). -->
+              <div class="procedimientos__acciones">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="surgery-consent"
+                  (clicked)="consentToSurgery(caso)"
+                >
+                  Consentimiento informado
+                </button>
+              </div>
             </li>
           }
         </ol>
@@ -111,7 +127,7 @@
 
 <!-- ─── Odontología ─────────────────────────────────────────────────────── -->
 @if (modo() !== 'cirugia') {
-<app-card variant="outlined" padding="lg" class="procedimientos">
+<app-card variant="outlined" [padding]="embedded() ? 'none' : 'lg'" class="procedimientos" [class.procedimientos--integrado]="embedded()">
   <h2 class="procedimientos__titulo">Odontología</h2>
 
   @switch (odontologico().status) {
@@ -119,8 +135,8 @@
       <p class="procedimientos__secundario">Cargando el histórico odontológico…</p>
     }
     @case ('forbidden') {
-      <app-alert tone="info" title="No podés ver el histórico odontológico">
-        Tu rol no incluye el registro odontológico de esta persona.
+      <app-alert tone="info" title="No puede ver el histórico odontológico">
+        Su rol no incluye el registro odontológico de esta persona.
       </app-alert>
     }
     @case ('offline') {
@@ -139,20 +155,6 @@
       </app-alert>
     }
     @default {
-      <!-- El odontograma va primero: la boca entera de un vistazo, y de ahí se
-           baja al detalle. Sin catálogo no se dibuja —los conceptos de pieza
-           salen de ahí— y la lista de abajo sigue contándolo todo igual. -->
-      @if (opcionesDeSitio().length > 0) {
-        <app-odontogram
-          [marcas]="marcasPorPieza()"
-          [seleccionada]="piezaElegidaFdi()"
-          (pieza)="elegirPieza($event)"
-        />
-        <p class="procedimientos__secundario">
-          Elegí una pieza para cargarla en el formulario de abajo.
-        </p>
-      }
-
       @if (tratamientos().length === 0) {
         <p class="procedimientos__vacio" data-testid="sin-odontologia">
           Sin tratamientos odontológicos registrados para esta persona.
@@ -174,7 +176,7 @@
                     {{ tratamiento.cuando | date: 'd MMM y' }}
                   </span>
                 }
-                <app-informed-consent-badge [consent]="consentimientos.de('PROCEDURE', tratamiento.id)" />
+                <app-informed-consent-badge [consent]="consent.consents.of('PROCEDURE', tratamiento.id)" />
               </div>
               @if (tratamiento.piezas) {
                 <p class="procedimientos__secundario">
@@ -200,8 +202,8 @@
                   variant="ghost"
                   size="sm"
                   type="button"
-                  data-testid="odontologia-consentimiento"
-                  (clicked)="consentirTratamiento(tratamiento)"
+                  data-testid="dental-consent"
+                  (clicked)="consentToTreatment(tratamiento)"
                 >
                   Consentimiento informado
                 </button>
@@ -224,8 +226,8 @@
     }
 
     @if (sinOrganizacion()) {
-      <app-alert tone="info" title="Elegí una organización">
-        Un tratamiento queda bajo la custodia de una organización. Elegí una en el selector
+      <app-alert tone="info" title="Elija una organización">
+        Un tratamiento queda bajo la custodia de una organización. Elija una en el selector
         del encabezado para poder registrarlo.
       </app-alert>
     } @else if (opcionesDeCodigo().length === 0) {
@@ -258,6 +260,18 @@
           />
         </app-form-field>
 
+        @if (opcionesDeSitio().length > 0) {
+          <details class="procedimientos__odontograma">
+            <summary>Elegir la pieza en el odontograma</summary>
+            <app-odontogram
+              [marcas]="marcasPorPieza()"
+              [seleccionada]="piezaElegidaFdi()"
+              [showEmptyMessage]="false"
+              (pieza)="elegirPieza($event)"
+            />
+          </details>
+        }
+
         <!-- Deshabilitado hasta que haya pieza: el backend rechaza una cara sin
              pieza con un 422, y es mejor que el campo no se pueda llenar a que
              el formulario se envíe para que le digan que no. -->
@@ -274,7 +288,7 @@
           />
         </app-form-field>
 
-        <app-form-field label="Nota clínica" hint="Opcional.">
+        <app-form-field label="Nota médica" hint="Opcional.">
           <app-textarea
             [(value)]="nota"
             [rows]="3"
@@ -309,15 +323,15 @@
 }
 
 <!-- El consentimiento DIRIGIDO al procedimiento elegido. -->
-@if (consintiendo(); as objeto) {
+@if (consent.target(); as target) {
   <app-informed-consent-dialog
     [patientProfileId]="patientProfileId()"
-    [encounterId]="objeto.encuentroId ?? encounterId()"
+    [encounterId]="consent.encounterId()"
     targetType="PROCEDURE"
-    [targetId]="objeto.id"
-    [targetLabel]="objeto.etiqueta"
-    [defaults]="{ purposeText: objeto.etiqueta + '.' }"
-    (consentChanged)="consentimientos.incorporar($event)"
-    (closed)="consintiendo.set(null)"
+    [targetId]="target.id"
+    [targetLabel]="target.label"
+    [defaults]="{ purposeText: target.label + '.' }"
+    (consentChanged)="consent.consents.upsert($event)"
+    (closed)="consent.target.set(null)"
   />
 }

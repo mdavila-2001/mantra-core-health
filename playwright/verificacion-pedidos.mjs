@@ -96,7 +96,7 @@ async function main() {
     );
   }
 
-  /* ── 1b · /search/hospitals sigue con la fila plana (pendiente conocido) ── */
+  /* ── 1b · /search/hospitals con la fila plana ── */
   await pagina.goto(`${BASE}/search/hospitals`);
   await esperar(1500);
   const chipsHosp = await textos('.centros__chip');
@@ -184,7 +184,7 @@ async function main() {
   ok('mis verificaciones: la pantalla carga', !/no encontramos|404|no existe/i.test(cuerpoVerif));
   await capturar('mis-verificaciones', { fullPage: true });
 
-  /* ── 7 · Mensajería (pendiente del cherry-pick de pablo/chat-whatsapp) ── */
+  /* ── 7 · Mensajería ── */
   await pagina.goto(`${BASE}/messaging`);
   await esperar(2000);
   const whatsapp = await pagina.locator('[data-testid="mensajeria-consulta"]').count();

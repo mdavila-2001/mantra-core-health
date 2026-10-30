@@ -11,20 +11,31 @@ import {
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import {
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
-} from '../../../../core/mock/fixtures/pedidos-de-farmacia';
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
+} from '../../../../core/mock/fixtures/pharmacy-orders';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
 import { InboxOrder } from './inbox-order';
+
+/** Lo que el contrato devuelve para un pedido que sale a domicilio. */
+const DOMICILIO = { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' };
 
 describe('InboxOrder with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmWithReason: ReturnType<typeof vi.fn>;
   let toastInfo: ReturnType<typeof vi.fn>;
+  /**
+   * Maqueta (`true`) o API real (`false`). Se lee recién al crear la
+   * pantalla, así que un `beforeEach` anidado puede cambiarlo.
+   */
+  let sampleData: boolean;
 
   beforeEach(() => {
+    sampleData = true;
     confirmWithReason = vi.fn().mockResolvedValue('No trabajamos con esa presentación.');
     toastInfo = vi.fn();
     TestBed.configureTestingModule({
@@ -32,12 +43,17 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        // Ver el mismo comentario en `../pharmacy-inbox.spec.ts`: sin
+        // `userId`, el `effect()` de `CartStore` (construido igual por
+        // `PharmacyOrdersClient`, aunque esta pantalla no tenga carrito)
+        // revienta en un tick asíncrono y envenena al resto del worker.
+        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
         },
         { provide: ToastService, useValue: { info: toastInfo } },
+        { provide: SAMPLE_DATA_ENABLED, useFactory: () => sampleData },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -119,16 +135,29 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         { status: 404, statusText: 'Not Found' },
       );
     harness.detectChanges();
-    expect(text()).toContain('No encontramos lo que buscás');
-    expect(text()).toContain('Verificá la dirección o volvé al listado');
+    expect(text()).toContain('No encontramos lo que busca');
+    expect(text()).toContain('Verifique la dirección o vuelva al listado');
   });
 
   it('opens a submitted order via review and never renders pickupCode to staff', async () => {
     await mount(pharmacyOrderDtoFixture({ pickupCode: 'MUST-NOT-RENDER' }));
     expect(text()).toContain('Ana Paciente');
-    expect(text()).toContain('En revisión');
+    expect(text()).toContain('Revisión de receta');
     expect(text()).not.toContain('MUST-NOT-RENDER');
     expect(element('[data-testid="mostrador-decision-0"]')).not.toBeNull();
+  });
+
+  it('con más de una unidad, el renglón dice el precio por unidad y su subtotal', async () => {
+    const base = pharmacyOrderDtoFixture();
+    await mount(
+      pharmacyOrderDtoFixture({
+        // Ya en revisión: abrirlo no pasa por `review`, que respondería otro pedido.
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        totalAmount: '136.00',
+        lines: [{ ...base.lines[0]!, requestedQuantity: 2, reservedQuantity: 2 }],
+      }),
+    );
+    expect(text()).toContain('68.00 Bs c/u · 136.00 Bs');
   });
 
   it('confirms unchanged lines and reloads the canonical API representation', async () => {
@@ -207,14 +236,14 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     });
     harness.detectChanges();
 
-    const select = element<HTMLSelectElement>('[data-testid="mostrador-sustituto-0"] select');
+    const select = element<HTMLElement>('[data-testid="mostrador-sustituto-0"]');
     expect(select).not.toBeNull();
-    expect(select?.options).toHaveLength(2);
+    // Antes eran dos `<option>`: el placeholder oculto y el único sustituto.
+    const sustitutos = await selectOptionLabels(harness.fixture, select!);
+    expect(sustitutos).toHaveLength(1);
+    expect(sustitutos.join(' ')).not.toContain('Amoxicilina original');
     expect(text()).not.toContain('Amoxicilina original');
-    if (select !== null) {
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-    }
+    await chooseSelectOption(harness.fixture, select!, 0);
     harness.detectChanges();
     click('mostrador-confirmar');
 
@@ -340,7 +369,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
     );
     harness.detectChanges();
-    expect(text()).toContain('Entregado');
+    expect(text()).toContain('Finalizada');
   });
 
   it('renders the explicit 422 PICKUP_CODE_MISMATCH without closing the order', async () => {
@@ -385,10 +414,12 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(text()).not.toContain('Datos de ejemplo');
   });
 
-  it('el pedido de ejemplo se ve como delivery y muestra la dirección de entrega', async () => {
+  it('el pedido a domicilio se ve como delivery con la dirección que trae el contrato', async () => {
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: DOMICILIO,
+        deliveryAddressText: 'Av. Cristo Redentor km 4 · Edificio Aurora, dpto. 3B',
         status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       }),
     );
@@ -397,8 +428,31 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
     expect(detalle).toContain('Sale a la dirección de domicilio');
     expect(detalle).toContain('Cristo Redentor');
-    // Y se declara maqueta, porque el medio lo puso la pantalla.
-    expect(text()).toContain('Datos de ejemplo');
+    // Es del contrato, no de la maqueta: no se rotula como ejemplo.
+    expect(detalle).not.toContain('Datos de ejemplo');
+  });
+
+  it('nombra a quien prescribió, con su especialidad, cuando el pedido lo trae', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        medicationRequestId: '9e8d7c60-5b4a-4321-9876-0000000000c1',
+        prescriber: { name: 'Dra. Mariana Suárez Rivero', specialty: 'Cardiología' },
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+
+    expect(text()).toContain('prescribió Dra. Mariana Suárez Rivero · Cardiología');
+  });
+
+  it('sin prescriptor no inventa uno', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        prescriber: null,
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+
+    expect(text()).not.toContain('prescribió');
   });
 
   it('lo que sale a domicilio no ofrece prepararlo para retiro en mostrador', async () => {
@@ -406,7 +460,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // las dos salen de la misma respuesta.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
       }),
     );
@@ -415,7 +470,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).toBeNull();
     expect(text()).not.toContain('Marcar listo para retirar');
     // Y el texto tampoco se lo pide: no hay botón que respalde esa frase.
-    expect(text()).not.toContain('marcalo como listo');
+    expect(text()).not.toContain('márquelo como listo');
     expect(text()).toContain('sale por reparto, no se retira en el mostrador');
   });
 
@@ -431,7 +486,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
     expect(text()).toContain('Marcar listo para retirar');
     // Y sigue leyendo la frase de siempre, palabra por palabra.
-    expect(text()).toContain('Confirmado. Cuando esté armado, marcalo como listo.');
+    expect(text()).toContain('Confirmado. Cuando esté armado, márquelo como listo.');
   });
 
   it('un pedido sin cobertura no inventa un seguro', async () => {
@@ -498,7 +553,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // cerrado de los dos lados, no de uno.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
         pickupCode: null,
       }),
@@ -568,7 +624,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     );
     // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
     expect(
-      factura?.closest('app-resumen-de-factura')?.nextElementSibling?.textContent?.trim(),
+      factura?.closest('app-invoice-summary')?.nextElementSibling?.textContent?.trim(),
     ).toBe('Volver a la bandeja');
   });
 
@@ -580,6 +636,63 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
     expect(toastInfo).toHaveBeenCalledOnce();
     expect(toastInfo.mock.calls[0]?.[0]).toContain('módulo de facturación');
+  });
+
+  /* ─── Contra la API real: nada que la API no haya devuelto ──────────── */
+
+  describe('contra la API real (sin datos de ejemplo)', () => {
+    beforeEach(() => {
+      sampleData = false;
+    });
+
+    it('el pedido con seguro no dibuja cobertura: el contrato del mostrador no la trae', async () => {
+      await mount(pedidoConSeguro());
+
+      expect(element(byTestId('mostrador-seguro'))).toBeNull();
+      expect(element('.mostrador__cobertura')).toBeNull();
+      expect(text()).not.toContain('Aprobado por el seguro');
+      expect(text()).not.toContain('Datos de ejemplo');
+    });
+
+    it('el pedido entregado no muestra una factura que nadie emitió', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+      );
+
+      expect(element('[data-testid="mostrador-factura"]')).toBeNull();
+      expect(text()).not.toContain('Enviada al paciente');
+      expect(text()).toContain('Volver a la bandeja');
+    });
+
+    it('un pedido a domicilio sin dirección guardada dice el medio, sin dirección inventada', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({
+          id: ID_ORDER_WITH_DELIVERY,
+          deliveryMode: DOMICILIO,
+          deliveryAddressText: null,
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
+      );
+
+      expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+      const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+      expect(detalle).toContain('Sale a la dirección de domicilio');
+      expect(detalle).not.toContain('Cristo Redentor');
+      expect(text()).not.toContain('Datos de ejemplo');
+    });
+
+    it('un pedido a domicilio con dirección guardada la muestra', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({
+          deliveryMode: DOMICILIO,
+          deliveryAddressText: 'Calle Sucre 120, piso 2, Cochabamba',
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
+      );
+
+      const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+      expect(detalle).toContain('Calle Sucre 120, piso 2, Cochabamba');
+    });
   });
 
   /** `dd/MM/yyyy`, el formato con el que el comprobante pinta las fechas. */
@@ -594,7 +707,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const base = pharmacyOrderDtoFixture();
     return pharmacyOrderDtoFixture({
       // Lo que lo identifica como el pedido con seguro es su id, no el nombre.
-      id: ID_PEDIDO_CON_SEGURO,
+      id: ID_ORDER_WITH_INSURANCE,
       status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       patientName: 'Rosa Elena Quispe Vargas',
       lines: [
@@ -609,3 +722,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     });
   }
 });
+
+/** El selector de un `data-testid` ya existente en la plantilla. */
+function byTestId(id: string): string {
+  return `[data-testid="${id}"]`;
+}

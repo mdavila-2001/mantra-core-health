@@ -96,6 +96,14 @@ function montar(fichas: readonly PublicSearchResult[]): {
     totalHint: fichas.length,
     generatedAt: new Date().toISOString(),
   });
+  // P34 · la sección «Abiertas ahora» hace su propia lectura; acá no importa.
+  http.expectOne((peticion) => peticion.url.endsWith('/public/pharmacies/open-now')).flush({
+    items: [],
+    nextCursor: null,
+    asOf: new Date().toISOString(),
+    asOfLocal: '',
+    timeZone: 'America/La_Paz',
+  });
   fixture.detectChanges();
   return { fixture, parametros, http };
 }
@@ -190,5 +198,53 @@ describe('PublicDirectoryListing · el chip de categoría', () => {
 
     expect(filtros(fixture).some((filtro) => filtro.key === 'categoria')).toBe(false);
     expect(nombres(fixture).length).toBe(2);
+  });
+});
+
+// Propietario, 24/10/2026: todos los filtros que los datos permitan, y un
+// botón por tarjeta que lleve directo a lo que se compra.
+describe('PublicDirectoryListing · calificación, agenda y botón directo', () => {
+  afterEach(() => TestBed.inject(HttpTestingController).verify());
+
+  const BUENA = { ...ficha('Farmacia Buena', null), ratingAverage: 4.7, ratingCount: 12 };
+  const CON_AGENDA = { ...ficha('Farmacia Agenda', null), hasPublishedAgenda: true };
+  const SIMPLE = ficha('Farmacia Simple', null);
+
+  it('sin reseñas ni agenda no ofrece esos filtros: devolverían cero', () => {
+    const { fixture } = montar([SIMPLE]);
+    const claves = filtros(fixture).map((filtro) => filtro.key);
+    expect(claves).not.toContain('calificacion');
+    expect(claves).not.toContain('agenda');
+  });
+
+  it('ofrece sólo los topes de calificación que alguien alcanza', () => {
+    const { fixture } = montar([BUENA, SIMPLE]);
+    const nota = filtros(fixture).find((filtro) => filtro.key === 'calificacion');
+    expect(nota?.options.map((opcion) => opcion.label)).toEqual(['4,5 o más', '4 o más', '3 o más']);
+  });
+
+  it('la calificación y la agenda acotan la lista', () => {
+    const { fixture, parametros } = montar([BUENA, CON_AGENDA, SIMPLE]);
+
+    parametros.next({ calificacion: '4.5' });
+    fixture.detectChanges();
+    expect(nombres(fixture)).toEqual(['Farmacia Buena']);
+
+    parametros.next({ agenda: 'true' });
+    fixture.detectChanges();
+    expect(nombres(fixture)).toEqual(['Farmacia Agenda']);
+  });
+
+  it('cada tarjeta lleva un botón directo a los medicamentos y precios de su ficha', () => {
+    const { fixture } = montar([SIMPLE]);
+    const interno = fixture.componentInstance as unknown as Record<string, unknown>;
+    const [tramo] = (interno['tramos'] as () => readonly GrupoDeDirectorio[])();
+    const tarjeta = tramo!.resultados[0]!;
+    expect(tarjeta.action).toEqual({
+      label: 'Ver medicamentos y precios',
+      link: tarjeta.link,
+      fragment: 'medicamentos',
+      icon: 'pill',
+    });
   });
 });

@@ -1,0 +1,70 @@
+Using Vitest configuration file: C:\Users\leonardo\Repositories\Alovida\mantra-core-health\vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                         | Names                                                    |  Raw size
+spec-app-features-auth-register-patient-register-patient.js | spec-app-features-auth-register-patient-register-patient |   2.11 MB | 
+styles.css                                                  | styles                                                   | 182.76 kB | 
+chunk-JBWBLPNK.js                                           | -                                                        |   5.19 kB | 
+init-testbed.js                                             | init-testbed                                             |   1.21 kB | 
+setup-test-setup.js                                         | setup-test-setup                                         | 984 bytes | 
+vitest-mock-patch.js                                        | vitest-mock-patch                                        | 974 bytes | 
+
+                                                            | Initial total                                            |   2.30 MB
+
+Lazy chunk files                                            | Names                                                    |  Raw size
+chunk-QMSF3JFK.js                                           | bolivia-municipalities-geometry                          | 107.84 kB | 
+paciente.css                                                | paciente                                                 |  20.24 kB | 
+
+Application bundle generation complete. [166.324 seconds] - 2026-10-25T23:35:32.022Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+      135 │ ..., AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormF...
+          ╵                                 ~~~~
+
+
+
+ RUN  v4.1.10 C:/Users/leonardo/Repositories/Alovida/mantra-core-health
+
+
+ Test Files  1 passed (1)
+      Tests  140 passed (140)
+   Start at  19:35:33
+   Duration  26.63s (transform 2.61s, setup 818ms, import 3.11s, tests 20.08s, environment 2.23s)
+

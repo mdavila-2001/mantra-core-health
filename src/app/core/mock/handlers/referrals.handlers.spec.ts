@@ -1,195 +1,272 @@
 import { HttpHeaders } from '@angular/common/http';
 
+import { PACIENTE } from '../fixtures/people';
+import { isMockReply, MockRouter, type MockMethod } from '../mock-router';
+import { buscarUsuario, TENANT_HOSPITAL, TENANT_LABORATORIO, type MockUser } from '../mock-session';
+import { uuid } from '../mock-store';
 import { crearRouterSimulado } from './index';
-import { PACIENTES } from '../fixtures/personas';
-import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
-import { buscarUsuario } from '../mock-session';
+import { REFERRAL_STATUS, registerReferrals } from './referrals.handlers';
 
-/** Las reglas del contrato §2 (derivaciones) en el simulador. */
-describe('handlers de derivaciones', () => {
-  const router = crearRouterSimulado();
-  const medica = buscarUsuario('medica')!;
-  const paciente = buscarUsuario('paciente')!;
+/**
+ * Las derivaciones del simulador. Lo que se fija: que lo emitido se relee
+ * (la mutación se puede demostrar de punta a punta en `mockup`), que una
+ * equivalente es 409 como en la API, que sin destino no hay alta, y que sólo
+ * el rol clínico entra.
+ */
+describe('derivaciones en el mock', () => {
+  const router = new MockRouter();
+  registerReferrals(router);
+  const doctor = buscarUsuario('medica@alovida.mock')!;
+  const patientUser = buscarUsuario('paciente@alovida.mock')!;
 
-  function pedir(
-    method: MockMethod,
-    path: string,
-    user: typeof medica | null,
-    body: unknown = {},
-    query = new URLSearchParams(),
-  ) {
-    const match = router.match(method, path);
-    if (match === null) throw new Error(`No existe ${method} ${path}`);
-    return match.handler({
+  function send(method: MockMethod, path: string, body: unknown = null, user: MockUser = doctor) {
+    const url = new URL(path, 'http://localhost');
+    const route = router.match(method, url.pathname);
+    if (!route) throw new Error(`Falta ruta ${method} ${path}`);
+    const output = route.handler({
       method,
-      path,
-      params: match.params,
-      query,
+      path: url.pathname,
+      params: route.params,
+      query: url.searchParams,
       body,
       headers: new HttpHeaders(),
       user,
-    } satisfies MockRequest);
+    });
+    return isMockReply(output) ? output : { status: 200, body: output };
   }
 
-  const estado = (r: unknown): number => (isMockReply(r) ? r.status : 200);
-  const cuerpoDe = <T>(r: unknown): T => (isMockReply(r) ? r.body : r) as T;
+  it('busca organizaciones por nombre, sin tildes, desde dos letras', () => {
+    expect(send('GET', '/referrals/targets?q=s&kind=ORGANIZATION').status).toBe(400);
+    const { body } = send('GET', '/referrals/targets?q=lucas&kind=ORGANIZATION') as {
+      body: { items: { id: string; kind: string }[] };
+    };
+    expect(body.items.map((i) => i.id)).toEqual([TENANT_HOSPITAL]);
+    expect(body.items[0]?.kind).toBe('ORGANIZATION');
+  });
 
-  const valida = {
-    patientProfileId: PACIENTES[0]!.id,
-    referralType: 'TREATMENT',
+  it('no ofrece a quien busca entre los profesionales', () => {
+    const { body } = send('GET', '/referrals/targets?q=ro&kind=PRACTITIONER') as {
+      body: { items: { id: string }[] };
+    };
+    expect(body.items.some((i) => i.id === doctor.practitionerProfileId)).toBe(false);
+  });
+
+  it('un destino sin catálogo devuelve una lista vacía, no un error', () => {
+    const { status, body } = send('GET', `/referrals/target-services?targetTenantId=${TENANT_LABORATORIO}`) as {
+      status: number;
+      body: { items: unknown[] };
+    };
+    expect(status).toBe(200);
+    expect(body.items).toEqual([]);
+  });
+
+  it('emite, se relee en la lista y una equivalente es 409', () => {
+    const offered = send('GET', `/referrals/target-services?targetTenantId=${TENANT_HOSPITAL}`)
+      .body as { items: { id: string; name: string }[] };
+    const service = offered.items[0]!;
+    const payload = {
+      patientProfileId: PACIENTE.id,
+      sourceEncounterId: 'enc-prueba-derivacion',
+      targetTenantId: TENANT_HOSPITAL,
+      targetServiceCatalogId: service.id,
+      referralType: 'TREATMENT',
+      reasonText: 'Rehabilitación',
+    };
+
+    const createdReply = send('POST', '/referrals', payload) as {
+      status: number;
+      body: { id: string; statusConceptId: string };
+    };
+    expect(createdReply.status).toBe(201);
+    expect(createdReply.body.statusConceptId).toBe(REFERRAL_STATUS['REF_REQUESTED']);
+
+    const list = send('GET', `/referrals?patientProfileId=${PACIENTE.id}`).body as {
+      id: string;
+      referralType: string;
+      targetDisplayName: string;
+      targetServiceName: string;
+    }[];
+    const reread = list.find((d) => d.id === createdReply.body.id);
+    expect(reread?.referralType).toBe('TREATMENT');
+    expect(reread?.targetDisplayName).toBe('Hospital San Lucas');
+    expect(reread?.targetServiceName).toBe(service.name);
+    // La más reciente primero.
+    expect(list[0]?.id).toBe(createdReply.body.id);
+
+    expect(send('POST', '/referrals', payload).status).toBe(409);
+  });
+
+  it('sin destino no hay alta', () => {
+    expect(send('POST', '/referrals', { patientProfileId: PACIENTE.id }).status).toBe(400);
+  });
+
+  it('sólo el rol clínico entra', () => {
+    expect(send('GET', `/referrals?patientProfileId=${PACIENTE.id}`, null, patientUser).status).toBe(403);
+  });
+});
+
+/**
+ * v4266: destino sede o externo, servicio en texto y resumen clínico, leer
+ * una, responder desde el destino, contrarreferencia, anulación y el vínculo
+ * con el consentimiento dirigido. Con el router completo, porque el vínculo lo
+ * escribe el simulador de consentimientos.
+ */
+describe('derivaciones v4266 en el mock', () => {
+  const router = crearRouterSimulado();
+  const doctor = buscarUsuario('medica@alovida.mock')!;
+  const patientUser = buscarUsuario('paciente@alovida.mock')!;
+
+  function send(
+    method: MockMethod,
+    path: string,
+    body: unknown = {},
+    options: { user?: MockUser; tenant?: string | null } = {},
+  ) {
+    const url = new URL(path, 'http://localhost');
+    const route = router.match(method, url.pathname);
+    if (!route) throw new Error(`Falta ruta ${method} ${path}`);
+    const tenant = options.tenant === undefined ? TENANT_HOSPITAL : options.tenant;
+    const output = route.handler({
+      method,
+      path: url.pathname,
+      params: route.params,
+      query: url.searchParams,
+      body,
+      headers: tenant === null ? new HttpHeaders() : new HttpHeaders({ 'X-Tenant-Id': tenant }),
+      user: options.user ?? doctor,
+    });
+    return isMockReply(output) ? output : { status: 200, body: output };
+  }
+  const reasonOf = (r: { body: unknown }): string => (r.body as { reason: string }).reason;
+
+  const external = {
+    patientProfileId: PACIENTE.id,
+    referralType: 'THERAPY',
     targetExternalName: 'Centro de Hemodiálisis Norte',
+    targetExternalContact: '3 3334444',
     requestedServiceText: 'Hemodiálisis 3 veces por semana',
     clinicalSummary: 'ERC estadio 5.',
   };
-
-  it('lista las del paciente con estado legible y destino resuelto', () => {
-    const r = pedir('GET', '/referrals', medica, {}, new URLSearchParams({ patientProfileId: PACIENTES[0]!.id }));
-    const filas = cuerpoDe<{ status: string; targetTenantName: string | null }[]>(r);
-    expect(estado(r)).toBe(200);
-    expect(filas.length).toBeGreaterThanOrEqual(3);
-    expect(filas.some((f) => f.targetTenantName === 'Hospital San Lucas')).toBe(true);
-  });
-
-  it('un paciente no lista derivaciones ajenas por esta ruta', () => {
-    const r = pedir('GET', '/referrals', paciente, {}, new URLSearchParams({ patientProfileId: PACIENTES[0]!.id }));
-    expect(estado(r)).toBe(403);
-  });
-
-  const motivo = (r: unknown): string => cuerpoDe<{ reason: string }>(r).reason;
-
-  it('con referralType exige destino, servicio y resumen clínico (400 con reason)', () => {
-    const sinDestino = pedir('POST', '/referrals', medica, { ...valida, targetExternalName: '' });
-    expect(estado(sinDestino)).toBe(400);
-    expect(motivo(sinDestino)).toBe('REFERRAL_TARGET_REQUIRED');
-    const sinResumen = pedir('POST', '/referrals', medica, { ...valida, clinicalSummary: '' });
-    expect(motivo(sinResumen)).toBe('REFERRAL_SERVICE_INFORMATION_INCOMPLETE');
-    expect(cuerpoDe<{ details: { fields: string[] } }>(sinResumen).details.fields).toEqual(['clinicalSummary']);
-  });
-
-  it('sin referralType (legado) no aplica las reglas nuevas y responde 201', () => {
-    const r = pedir('POST', '/referrals', medica, { patientProfileId: PACIENTES[0]!.id, reasonText: 'x' });
-    expect(estado(r)).toBe(201);
-  });
-
   /** Una dirigida a la médica de la sesión: ella es el destino. */
-  const aLaMedica = (() => {
-    const { targetExternalName: _e, ...resto } = valida;
-    return { ...resto, targetProfileId: medica.practitionerProfileId };
-  })();
+  const toDoctor = {
+    patientProfileId: PACIENTE.id,
+    referralType: 'CONSULTATION',
+    targetProfileId: doctor.practitionerProfileId,
+    requestedServiceText: 'Interconsulta',
+    clinicalSummary: 'Resumen.',
+  };
 
-  it('emite, el destino responde con motivo obligatorio al rechazar y no responde dos veces', () => {
-    const alta = pedir('POST', '/referrals', medica, aLaMedica);
-    expect(estado(alta)).toBe(201);
-    const creada = cuerpoDe<{ id: string; status: string }>(alta);
-    expect(creada.status).toBe('PENDING');
-
-    const sinMotivo = pedir('PATCH', `/referrals/${creada.id}/respond`, medica, { decision: 'REJECT' });
-    expect(estado(sinMotivo)).toBe(400);
-    expect(motivo(sinMotivo)).toBe('REFERRAL_REJECT_REASON_REQUIRED');
-    const aceptada = pedir('PATCH', `/referrals/${creada.id}/respond`, medica, { decision: 'ACCEPT' });
-    expect(cuerpoDe<{ ok: boolean; status: string }>(aceptada)).toMatchObject({ ok: true, status: 'ACCEPTED' });
-    const otraVez = pedir('PATCH', `/referrals/${creada.id}/respond`, medica, { decision: 'ACCEPT' });
-    expect(estado(otraVez)).toBe(422);
-    expect(motivo(otraVez)).toBe('REFERRAL_NOT_PENDING');
-
-    expect(
-      estado(pedir('PATCH', `/referrals/${creada.id}/counter-referral`, medica, { counterReferralText: 'Alta.' })),
-    ).toBe(200);
-    // (la médica es el destino: contrarrefiere la aceptada)
-    const leida = cuerpoDe<{ status: string; counterReferralText: string }>(
-      pedir('GET', `/referrals/${creada.id}`, medica),
+  it('con tipo y sin servicio del catálogo exige servicio en texto y resumen clínico (400 con reason)', () => {
+    const noSummary = send('POST', '/referrals', { ...external, clinicalSummary: '' });
+    expect(noSummary.status).toBe(400);
+    expect(reasonOf(noSummary)).toBe('REFERRAL_SERVICE_INFORMATION_INCOMPLETE');
+    expect((noSummary.body as { details: { fields: string[] } }).details.fields).toEqual(['clinicalSummary']);
+    expect(reasonOf(send('POST', '/referrals', { ...external, targetExternalName: '' }))).toBe(
+      'REFERRAL_TARGET_REQUIRED',
     );
-    expect(leida.status).toBe('COMPLETED');
-    expect(leida.counterReferralText).toBe('Alta.');
   });
 
-  it('externa: no se responde en la plataforma (403 REFERRAL_RESPOND_FORBIDDEN)', () => {
-    const creada = cuerpoDe<{ id: string }>(pedir('POST', '/referrals', medica, valida));
-    const r = pedir('PATCH', `/referrals/${creada.id}/respond`, medica, { decision: 'ACCEPT' });
-    expect(estado(r)).toBe(403);
-    expect(motivo(r)).toBe('REFERRAL_RESPOND_FORBIDDEN');
-  });
-
-  it('quien no es destino no responde (403 REFERRAL_RESPOND_FORBIDDEN)', () => {
-    const { targetExternalName: _e, ...resto } = valida;
-    const creada = cuerpoDe<{ id: string }>(
-      pedir('POST', '/referrals', medica, { ...resto, targetProfileId: '00000000-0000-4000-a000-000000000777' }),
-    );
-    expect(motivo(pedir('PATCH', `/referrals/${creada.id}/respond`, medica, { decision: 'ACCEPT' }))).toBe(
-      'REFERRAL_RESPOND_FORBIDDEN',
-    );
+  it('a una sede: resuelve organización y nombre de la sede; una sede inexistente es 404', () => {
+    const created = send('POST', '/referrals', {
+      ...external,
+      targetExternalName: undefined,
+      targetExternalContact: undefined,
+      targetBranchId: uuid('branch-sanlucas-norte'),
+    });
+    expect(created.status).toBe(201);
+    expect(created.body).toMatchObject({
+      status: 'PENDING',
+      targetTenantId: TENANT_HOSPITAL,
+      targetTenantName: 'Hospital San Lucas',
+      targetBranchName: 'Anexo Norte',
+    });
+    const missing = send('POST', '/referrals', { ...external, targetBranchId: uuid('branch-que-no-existe') });
+    expect(missing.status).toBe(404);
+    expect(reasonOf(missing)).toBe('REFERRAL_TARGET_BRANCH_NOT_FOUND');
   });
 
   it('el alta no acepta informedConsentId (400 REFERRAL_CONSENT_LINK_NOT_ALLOWED)', () => {
-    const r = pedir('POST', '/referrals', medica, { ...valida, informedConsentId: 'c-1' });
-    expect(estado(r)).toBe(400);
-    expect(motivo(r)).toBe('REFERRAL_CONSENT_LINK_NOT_ALLOWED');
+    const r = send('POST', '/referrals', { ...external, informedConsentId: 'c-1' });
+    expect(r.status).toBe(400);
+    expect(reasonOf(r)).toBe('REFERRAL_CONSENT_LINK_NOT_ALLOWED');
   });
 
-  it('listar y emitir exigen acceso a la historia (403)', () => {
-    const ajeno = '00000000-0000-4000-a000-000000000555';
-    expect(estado(pedir('GET', '/referrals', medica, {}, new URLSearchParams({ patientProfileId: ajeno })))).toBe(403);
-    expect(estado(pedir('POST', '/referrals', medica, { ...valida, patientProfileId: ajeno }))).toBe(403);
+  it('el destino responde: exige organización activa, motivo al rechazar y no responde dos veces', () => {
+    const created = send('POST', '/referrals', toDoctor).body as { id: string };
+    const noTenant = send('PATCH', `/referrals/${created.id}/respond`, { decision: 'ACCEPT' }, { tenant: null });
+    expect(noTenant.status).toBe(422);
+    expect((noTenant.body as { details: { reason: string } }).details.reason).toBe('TENANT_REQUIRED');
+
+    const noReason = send('PATCH', `/referrals/${created.id}/respond`, { decision: 'REJECT' });
+    expect(reasonOf(noReason)).toBe('REFERRAL_REJECT_REASON_REQUIRED');
+    const accepted = send('PATCH', `/referrals/${created.id}/respond`, { decision: 'ACCEPT' });
+    expect(accepted.body).toMatchObject({ ok: true, status: 'ACCEPTED' });
+    expect(reasonOf(send('PATCH', `/referrals/${created.id}/respond`, { decision: 'ACCEPT' }))).toBe(
+      'REFERRAL_NOT_PENDING',
+    );
+
+    expect(send('PATCH', `/referrals/${created.id}/counter-referral`, { counterReferralText: 'Alta.' }).status).toBe(
+      200,
+    );
+    expect(send('GET', `/referrals/${created.id}`).body).toMatchObject({
+      status: 'COMPLETED',
+      counterReferralText: 'Alta.',
+    });
   });
 
-  it('el consentimiento ACEPTADO con targetType=REFERRAL se vincula; al revocarlo se desvincula', () => {
-    const creada = cuerpoDe<{ id: string; informedConsentId: string | null }>(
-      pedir('POST', '/referrals', medica, valida),
+  it('quien no es destino recibe 404 REFERRAL_NOT_FOUND al responder y al contrarreferir', () => {
+    const created = send('POST', '/referrals', {
+      ...toDoctor,
+      targetProfileId: '00000000-0000-4000-a000-000000000777',
+    }).body as { id: string };
+    const r = send('PATCH', `/referrals/${created.id}/respond`, { decision: 'ACCEPT' });
+    expect(r.status).toBe(404);
+    expect(reasonOf(r)).toBe('REFERRAL_NOT_FOUND');
+    expect(reasonOf(send('PATCH', `/referrals/${created.id}/counter-referral`, { counterReferralText: 'x' }))).toBe(
+      'REFERRAL_NOT_FOUND',
     );
-    expect(creada.informedConsentId).toBeNull();
-    const consent = cuerpoDe<{ id: string }>(
-      pedir('POST', '/consent/treatment-informed-consents', medica, {
-        patientProfileId: valida.patientProfileId,
-        encounterId: '00000000-0000-4000-a000-000000000321',
-        decision: 'ACCEPTED',
-        targetType: 'REFERRAL',
-        targetId: creada.id,
-        targetLabel: 'Derivación · Tratamiento',
-        purposeText: 'Hemodiálisis',
-        benefitsText: 'Depuración',
-        risksText: 'Hipotensión',
-        revocationRightInformed: true,
-      }),
-    );
-    const vinculada = cuerpoDe<{ informedConsentId: string | null }>(pedir('GET', `/referrals/${creada.id}`, medica));
-    expect(vinculada.informedConsentId).toBe(consent.id);
-
-    pedir('PATCH', `/consent/treatment-informed-consents/${consent.id}/withdraw`, medica, { reason: 'Cambió de idea' });
-    const desvinculada = cuerpoDe<{ informedConsentId: string | null }>(
-      pedir('GET', `/referrals/${creada.id}`, medica),
-    );
-    expect(desvinculada.informedConsentId).toBeNull();
   });
 
-  it('externa: la contrarreferencia se transcribe aun pendiente', () => {
-    const creada = cuerpoDe<{ id: string }>(pedir('POST', '/referrals', medica, valida));
-    expect(
-      estado(pedir('PATCH', `/referrals/${creada.id}/counter-referral`, medica, { counterReferralText: 'x' })),
-    ).toBe(200);
-  });
-
-  it('en la plataforma, sólo el destino contrarrefiere (403 con reason)', () => {
-    const { targetExternalName: _e, ...sinExterno } = valida;
-    const creada = cuerpoDe<{ id: string }>(
-      pedir('POST', '/referrals', medica, { ...sinExterno, targetTenantId: '00000000-0000-4000-a000-000000000999' }),
-    );
-    pedir('PATCH', `/referrals/${creada.id}/respond`, medica, { decision: 'ACCEPT' });
-    const r = pedir('PATCH', `/referrals/${creada.id}/counter-referral`, medica, { counterReferralText: 'x' });
-    expect(estado(r)).toBe(403);
-    expect(motivo(r)).toBe('REFERRAL_COUNTER_REFERRAL_FORBIDDEN');
+  it('externa: no se responde en la plataforma, pero la contrarreferencia se transcribe aun pendiente', () => {
+    const created = send('POST', '/referrals', external).body as { id: string };
+    expect(send('PATCH', `/referrals/${created.id}/respond`, { decision: 'ACCEPT' }).status).toBe(404);
+    expect(send('PATCH', `/referrals/${created.id}/counter-referral`, { counterReferralText: 'x' }).status).toBe(200);
   });
 
   it('anula una pendiente y no anula dos veces', () => {
-    const creada = cuerpoDe<{ id: string }>(pedir('POST', '/referrals', medica, valida));
-    const anulada = pedir('PATCH', `/referrals/${creada.id}/cancel`, medica);
-    expect(cuerpoDe<{ status: string }>(anulada).status).toBe('CANCELLED');
-    const otraVez = pedir('PATCH', `/referrals/${creada.id}/cancel`, medica);
-    expect(estado(otraVez)).toBe(422);
-    expect(motivo(otraVez)).toBe('REFERRAL_ALREADY_CLOSED');
+    const created = send('POST', '/referrals', external).body as { id: string };
+    expect((send('PATCH', `/referrals/${created.id}/cancel`).body as { status: string }).status).toBe('CANCELLED');
+    const again = send('PATCH', `/referrals/${created.id}/cancel`);
+    expect(again.status).toBe(422);
+    expect(reasonOf(again)).toBe('REFERRAL_ALREADY_CLOSED');
+  });
+
+  it('el consentimiento ACEPTADO con targetType=REFERRAL se vincula; al revocarlo se desvincula', () => {
+    const created = send('POST', '/referrals', external).body as { id: string; informedConsentId?: string | null };
+    expect(created.informedConsentId ?? null).toBeNull();
+    const consent = send('POST', '/consent/treatment-informed-consents', {
+      patientProfileId: PACIENTE.id,
+      encounterId: '00000000-0000-4000-a000-000000000321',
+      decision: 'ACCEPTED',
+      targetType: 'REFERRAL',
+      targetId: created.id,
+      targetLabel: 'Derivación · Terapia',
+      purposeText: 'Hemodiálisis',
+      benefitsText: 'Depuración',
+      risksText: 'Hipotensión',
+      revocationRightInformed: true,
+    }).body as { id: string };
+    expect((send('GET', `/referrals/${created.id}`).body as { informedConsentId: string }).informedConsentId).toBe(
+      consent.id,
+    );
+
+    send('PATCH', `/consent/treatment-informed-consents/${consent.id}/withdraw`, { reason: 'Cambió de idea' });
+    expect(
+      (send('GET', `/referrals/${created.id}`).body as { informedConsentId: string | null }).informedConsentId,
+    ).toBeNull();
   });
 
   it('GET /referrals/me devuelve las propias de la persona, como arreglo', () => {
-    const r = pedir('GET', '/referrals/me', paciente);
-    expect(Array.isArray(cuerpoDe(r))).toBe(true);
+    expect(Array.isArray(send('GET', '/referrals/me', {}, { user: patientUser }).body)).toBe(true);
   });
 });

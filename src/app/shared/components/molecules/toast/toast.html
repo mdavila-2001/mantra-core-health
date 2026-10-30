@@ -37,6 +37,11 @@
     <p class="toast__title">{{ toast().title }}</p>
   }
   <p class="toast__message" data-testid="toast-mensaje">{{ toast().message }}</p>
+  @if (toast().action; as action) {
+    <button type="button" class="toast__action" data-testid="toast-accion" (click)="act()">
+      {{ action.label }}
+    </button>
+  }
 </div>
 
 <button

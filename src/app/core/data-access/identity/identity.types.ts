@@ -5,7 +5,11 @@
  * archivos: acá sólo viaja su identificador.
  */
 export interface VerificationRequest {
-  readonly evidenceFileId: string;
+  readonly documentFrontFileId: string;
+  readonly documentBackFileId: string;
+  readonly livenessCenterFileId: string;
+  readonly livenessTurnLeftFileId: string;
+  readonly livenessTurnRightFileId: string;
 }
 
 /** Solicitud de verificación de matrícula: admite acotar la jurisdicción. */

@@ -1,5 +1,7 @@
 <!-- El velo. Cierra al tocarlo y con Escape, como el resto de las capas del
-     hilo; el `tabindex` es lo que hace que Escape llegue sin haber tabulado. -->
+     hilo; el `tabindex` es lo que hace que Escape llegue sin haber tabulado.
+     `Tab` no sale de la hoja y lo de atrás queda inerte mientras está abierta
+     (ver `handleKeydown` y el constructor). -->
 <div
   #hoja
   class="contacto"
@@ -9,7 +11,7 @@
   tabindex="-1"
   data-testid="hilo-contacto"
   (click)="closeIfBackdrop($event)"
-  (keydown.escape)="close()"
+  (keydown)="handleKeydown($event)"
 >
   <section class="contacto__hoja" role="document">
     <header class="contacto__cabecera">
@@ -35,11 +37,21 @@
 
       <p class="contacto__nombre" data-testid="hilo-contacto-nombre">
         {{ name() }}
-        @if (verified()) {
-          <span class="contacto__sello" data-testid="hilo-contacto-verificado" title="Perfil verificado">
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="m12 2.6 2.4 1.8 3-.2 1 2.8 2.4 1.7-1 2.8 1 2.8-2.4 1.7-1 2.8-3-.2L12 21.4 9.6 19.6l-3 .2-1-2.8-2.4-1.7 1-2.8-1-2.8L5.6 7l1-2.8 3 .2z" /><path d="m8.6 12.2 2.3 2.3 4.5-4.7" fill="none" stroke="var(--sup-tarjeta)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
-            <span class="solo-lectores">Perfil verificado</span>
-          </span>
+        <!-- El check azul (o el reloj de «en verificación»): la API decide, acá se
+             pinta. El span conserva el `data-testid` de siempre y sólo existe
+             cuando hay algo que decir. -->
+        @if (verificacion(); as v) {
+          @if (v.status !== 'UNVERIFIED') {
+            <span class="contacto__sello" data-testid="hilo-contacto-verificado">
+              <app-verification-badge
+                size="md"
+                [status]="v.status"
+                [verifiedAt]="v.verifiedAt"
+                [validUntil]="v.validUntil"
+                [subject]="name()"
+              />
+            </span>
+          }
         }
       </p>
 
@@ -48,7 +60,7 @@
       }
 
       @if (loading()) {
-        <p class="contacto__estado" role="status">Cargando el perfil…</p>
+        <app-loading-state class="contacto__estado" message="Cargando el perfil…" />
       }
 
       @if (failed()) {

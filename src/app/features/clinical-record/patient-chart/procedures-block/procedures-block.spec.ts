@@ -236,6 +236,24 @@ describe('ProceduresBlock', () => {
       expect(texto()).toContain('Adherencias');
     });
 
+    it('cada cirugía ofrece su consentimiento informado, atado a la atención abierta o a ninguna (S3)', () => {
+      arrancar({ casos: { items: [CASO], total: 1 }, detalles: [DETALLE] });
+      const pantalla = fixture.nativeElement as HTMLElement;
+      expect(pantalla.querySelector('[data-testid="surgery-consent"]')).not.toBeNull();
+
+      const componente = fixture.componentInstance as unknown as {
+        consentToSurgery(c: { id: string; numero: string }): void;
+        consent: { target: () => { id: string; label: string } | null; encounterId: () => string | null };
+      };
+      componente.consentToSurgery({ id: 'case-1', numero: 'CQ-000001' });
+      expect(componente.consent.target()).toEqual({ id: 'case-1', label: 'Cirugía · caso CQ-000001' });
+      // Sin atención abierta: el panel muestra el S3 «Falta la atención».
+      expect(componente.consent.encounterId()).toBeNull();
+
+      fixture.componentRef.setInput('encounterId', 'enc-abierto');
+      expect(componente.consent.encounterId()).toBe('enc-abierto');
+    });
+
     /** El lote es lo que permite responder a un retiro del mercado. */
     it('muestra el lote del implante', () => {
       arrancar({ casos: { items: [CASO], total: 1 }, detalles: [DETALLE] });
@@ -269,7 +287,7 @@ describe('ProceduresBlock', () => {
       });
 
       expect(texto()).toContain('CQ-000001');
-      expect(texto()).toContain('No podés ver el histórico odontológico');
+      expect(texto()).toContain('No puede ver el histórico odontológico');
     });
 
     it('sin registros, cada mitad dice lo suyo', () => {
@@ -309,7 +327,7 @@ describe('ProceduresBlock', () => {
 
       http.expectNone((r) => r.url === '/procedure-cases');
       expect(texto()).not.toContain('Cirugías');
-      expect(texto()).not.toContain('No podés ver el histórico quirúrgico');
+      expect(texto()).not.toContain('No puede ver el histórico quirúrgico');
 
       http.expectOne((r) => r.url === '/dental-procedures').flush({ items: [], total: 0 });
       http.expectOne((r) => r.url === '/dental-procedures/catalog').flush(CATALOGO);

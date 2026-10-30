@@ -1,0 +1,41 @@
+{
+  "label": "despues",
+  "route": "/auth/register/medical-center",
+  "theme": "dark",
+  "viewport": "1440x900",
+  "controles": [
+    {
+      "n": 0,
+      "cls": "select-wrapper.status-error.is-focused",
+      "borde": "rgb(195,115,97)",
+      "ancho": "1px",
+      "fondo": "rgb(10,43,61)",
+      "ratioComputado": 4.17,
+      "pixelBorde": "rgb(195,115,97)",
+      "ratioPixel": 4.17,
+      "foco": true
+    },
+    {
+      "n": 1,
+      "cls": "input-wrapper.status-error",
+      "borde": "rgb(195,115,97)",
+      "ancho": "1px",
+      "fondo": "rgb(10,43,61)",
+      "ratioComputado": 4.17,
+      "pixelBorde": "rgb(195,115,97)",
+      "ratioPixel": 4.17,
+      "foco": false
+    },
+    {
+      "n": 2,
+      "cls": "select-wrapper.status-error",
+      "borde": "rgb(195,115,97)",
+      "ancho": "1px",
+      "fondo": "rgb(10,43,61)",
+      "ratioComputado": 4.17,
+      "pixelBorde": "rgb(195,115,97)",
+      "ratioPixel": 4.17,
+      "foco": false
+    }
+  ]
+}

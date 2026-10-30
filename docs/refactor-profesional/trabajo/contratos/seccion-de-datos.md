@@ -57,7 +57,8 @@ catálogo. `FactList` está viva; `FactSection` no.
 
 ## Veredicto (Q-M2 / Q-D)
 
-**`fact-section` queda PENDIENTE con dueño Pablo, no se borra esta noche.**
+**`fact-section` no se adopta en este carril y no se borra.** Después lo adoptó la ficha de
+laboratorio (`features/laboratory-directory/laboratory-detail`).
 
 Motivo de no adoptarlo ahora: el único candidato razonable dentro del alcance de este carril es el
 modal de detalle de lectura del expediente (`patient-chart.html:299-341`), que hoy es un `<dl>` a mano

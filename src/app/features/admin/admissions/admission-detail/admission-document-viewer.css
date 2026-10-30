@@ -1,0 +1,162 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.visor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.visor__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.visor__espacio {
+  flex: 1 1 auto;
+}
+
+.visor__zoom {
+  min-inline-size: 3.5rem;
+  text-align: center;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.visor__paginas {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-inline-start: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.visor__enlace {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-block-size: 2rem;
+  padding-inline: var(--sp-3);
+  color: var(--text-link);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  border-radius: var(--r-sm);
+}
+
+.visor__enlace:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.visor__enlace app-nav-icon {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+.visor__escenario {
+  position: relative;
+  overflow: auto;
+  min-block-size: 16rem;
+  max-block-size: min(70vh, 44rem);
+  padding: var(--sp-2);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  cursor: grab;
+  touch-action: pan-x pan-y;
+}
+
+.visor__escenario:active {
+  cursor: grabbing;
+}
+
+.visor__escenario:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* El lienzo mide lo que mide la imagen ya girada: cuando está de costado cambia
+   la proporción, y la imagen se dibuja con las medidas intercambiadas para
+   que nada quede fuera del área que se desplaza. */
+.visor__lienzo {
+  position: relative;
+  inline-size: calc(var(--zoom, 1) * 100%);
+  container-type: size;
+  margin-inline: auto;
+}
+
+.visor__imagen {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  inline-size: 100cqw;
+  block-size: 100cqh;
+  object-fit: contain;
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+  user-select: none;
+}
+
+.visor__lienzo--lateral .visor__imagen {
+  inline-size: 100cqh;
+  block-size: 100cqw;
+}
+
+.visor__pdf {
+  display: block;
+  margin-inline: auto;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.visor__carga {
+  padding: var(--sp-3);
+}
+
+.visor__aviso {
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--st-warning-fg);
+  background: var(--st-warning-bg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-sm);
+}
+
+.visor__mensaje {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8, var(--sp-6));
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.visor__mensaje p {
+  margin: 0;
+}
+
+.visor__mensaje--error strong {
+  color: var(--text-danger);
+}
+
+.visor__pie {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visor__imagen {
+    transition: none;
+  }
+}

@@ -1,0 +1,78 @@
+$ (rama fc44b757) yarn ng test --watch=false --include=src/app/core/mock/handlers/clinical.handlers.spec.ts --include=src/app/core/mock/handlers/lab-orden-entrante.spec.ts --include=src/app/features/billing/representacion-grafica.spec.ts
+Using Vitest configuration file: /home/user/mantra-core-health/vitest.config.ts
+❯ Building...
+✔ Building...
+Initial chunk files                                 | Names                                            |  Raw size
+chunk-DURNIZMG.js                                   | -                                                |   2.15 MB | 
+spec-app-core-mock-handlers-clinical.handlers.js    | spec-app-core-mock-handlers-clinical.handlers    |   1.56 MB | 
+styles.css                                          | styles                                           | 179.14 kB | 
+spec-app-features-billing-representacion-grafica.js | spec-app-features-billing-representacion-grafica | 120.67 kB | 
+chunk-FWIYZBKS.js                                   | -                                                |  55.88 kB | 
+chunk-XXC7QQC2.js                                   | -                                                |  35.32 kB | 
+chunk-JBWBLPNK.js                                   | -                                                |   5.19 kB | 
+spec-app-core-mock-handlers-lab-orden-entrante.js   | spec-app-core-mock-handlers-lab-orden-entrante   |   3.63 kB | 
+init-testbed.js                                     | init-testbed                                     |   1.21 kB | 
+setup-test-setup.js                                 | setup-test-setup                                 | 984 bytes | 
+vitest-mock-patch.js                                | vitest-mock-patch                                | 974 bytes | 
+
+                                                    | Initial total                                    |   4.12 MB
+
+Lazy chunk files                                    | Names                                            |  Raw size
+paciente.css                                        | paciente                                         |  20.24 kB | 
+chunk-FJQD7MHK.js                                   | clinical-pdf                                     |  14.05 kB | 
+chunk-SFWSZEIV.js                                   | from-summary                                     |   7.26 kB | 
+
+Application bundle generation complete. [97.547 seconds] - 2026-10-24T02:50:43.230Z
+
+▲ [WARNING] NG8113: Alert is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:93:4:
+      93 │     Alert,
+         ╵     ~~~~~
+
+
+▲ [WARNING] NG8113: RouterLink is not used within the template of MedicalArticles [plugin angular-compiler]
+
+    src/app/features/account/my-profile/medical-articles/medical-articles.ts:105:4:
+      105 │     RouterLink,
+          ╵     ~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of Questionnaires [plugin angular-compiler]
+
+    src/app/features/account/questionnaires/questionnaires.ts:88:4:
+      88 │     AppButtonLink,
+         ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Link is not used within the template of Groups [plugin angular-compiler]
+
+    src/app/features/groups/groups.ts:59:4:
+      59 │     Link,
+         ╵     ~~~~
+
+
+▲ [WARNING] NG8113: AppButtonLink is not used within the template of SurveysHome [plugin angular-compiler]
+
+    src/app/features/questionnaires/questionnaires.ts:132:4:
+      132 │     AppButtonLink,
+          ╵     ~~~~~~~~~~~~~
+
+
+▲ [WARNING] NG8113: Card is not used within the template of SymptomCheck [plugin angular-compiler]
+
+    src/app/features/symptom-check/symptom-check.ts:135:46:
+      135 │ ..., AppButton, Badge, BodyMap, Card, Chip, EmergencyPanel, FormF...
+          ╵                                 ~~~~
+
+
+
+ RUN  v4.1.10 /home/user/mantra-core-health
+
+
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+   Start at  02:50:43
+   Duration  4.89s (transform 2.61s, setup 324ms, import 3.55s, tests 254ms, environment 570ms)
+
+EXIT=0

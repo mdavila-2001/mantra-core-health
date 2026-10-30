@@ -12,13 +12,13 @@
 
 /* ---- tema y estados ------------------------------------------------------ */
 
-/** Preferencia del usuario. 'system' delega en `@media (prefers-color-scheme)`. */
-export type ThemeMode = 'light' | 'dark' | 'system';
+/** Preferencia del usuario: claro u oscuro. */
+export type ThemeMode = 'light' | 'dark';
 
-/** Tema efectivamente pintado, ya resuelta la preferencia del sistema. */
-export type ResolvedTheme = Exclude<ThemeMode, 'system'>;
+/** Tema efectivamente pintado. */
+export type ResolvedTheme = ThemeMode;
 
-export const THEME_MODES = ['light', 'dark', 'system'] as const;
+export const THEME_MODES = ['light', 'dark'] as const;
 
 /** Semántica de producto de los `--st-*`. NO es severidad clínica (identidad-visual.md Parte 11.3). */
 export const STATUS_TYPES = ['success', 'warning', 'error', 'info'] as const;
@@ -53,6 +53,14 @@ export type RampToken = `--c-${RampFamily}-${RampStep}`;
 /* ---- tokens semánticos por tema ------------------------------------------ */
 
 export const SURFACE = {
+  /**
+   * El blanco puro de las superficies del tema claro: de él cuelgan `--bg-base`
+   * y `--bg-surface`. Es el valor de partida, no un token para pintar con él:
+   * en oscuro no cambia, así que quien lo escriba directo queda blanco sobre
+   * fondo oscuro. Se declara acá porque la prueba de fidelidad exige que todo
+   * lo que `styles.css` declara esté en el catálogo.
+   */
+  white: '--surface-white',
   base: '--bg-base',
   surface: '--bg-surface',
   surfaceAlt: '--bg-surface-alt',
@@ -70,7 +78,7 @@ export type SurfaceToken = (typeof SURFACE)[keyof typeof SURFACE];
 export const TEXT = {
   primary: '--text-primary',
   secondary: '--text-secondary',
-  /** Terciario: excepción WCAG E1 — jamás para información clínica. */
+  /** Terciario (AA desde que cerró la excepción E1) — jamás para información clínica. */
   muted: '--text-muted',
   inverse: '--text-inverse',
 } as const;
@@ -93,6 +101,8 @@ export const BORDER = {
   default: '--border-default',
   /** Borde que delimita: el único válido para bordes de control. */
   strong: '--border-strong',
+  /** Borde de control en estado de error: cambia con el tema (≥3:1 en ambos). */
+  danger: '--border-danger',
 } as const;
 export type BorderToken = (typeof BORDER)[keyof typeof BORDER];
 
@@ -102,10 +112,57 @@ export type StatusToken = `--st-${StatusType}-${StatusSlot}`;
  * Chips de marca: la MISMA receta tonal de los `--st-*` aplicada a las rampas
  * de marca. Comparten prefijo porque comparten recipe, pero **no son estados de
  * producto** — por eso viven aparte de `StatusType`.
+ *
+ * `tertiary` es la aguamarina: el tercer tono que pide la grilla del horario
+ * para «consultas y otros servicios», junto al primario y al secundario.
  */
-export const BRAND_TONES = ['primary', 'secondary'] as const;
+export const BRAND_TONES = ['primary', 'secondary', 'tertiary'] as const;
 export type BrandTone = (typeof BRAND_TONES)[number];
 export type BrandToneToken = `--st-${BrandTone}-${StatusSlot}`;
+
+/**
+ * Insignia de verificación (el check azul de `app-verification-badge`): el
+ * relleno del sello y la tinta del tilde. No es un estado de producto, por eso
+ * no entra en `StatusType`; es una marca de identidad comprobada.
+ */
+export const VERIFIED = {
+  bg: '--verified-bg',
+  fg: '--verified-fg',
+} as const;
+export type VerifiedToken = (typeof VERIFIED)[keyof typeof VERIFIED];
+
+/** Escala de cuatro niveles para la matriz de intensidad de consultas. */
+export const HEAT_LEVELS = [1, 2, 3, 4] as const;
+export type HeatLevel = (typeof HEAT_LEVELS)[number];
+export const HEAT_SLOTS = ['bg', 'fg'] as const;
+export type HeatSlot = (typeof HEAT_SLOTS)[number];
+export type HeatToken = `--heat-${HeatLevel}-${HeatSlot}`;
+
+
+/**
+ * Paleta de los gráficos del portal de reportería (ADR-0017). Ocho tonos
+ * categóricos en orden FIJO y cinco pasos de una rampa secuencial de un solo
+ * tono. Validados con el guion de la skill `dataviz` (`validate_palette.js`):
+ * la paleta de la marca es de croma bajo y no pasa como categórica (el verde
+ * agua y el gris leen casi igual), igual que el acento de Atlas Dashboards.
+ * Un hue no se reutiliza para un estado: éstos van aparte (`--st-*`).
+ */
+export const CHART = {
+  series1: '--chart-1',
+  series2: '--chart-2',
+  series3: '--chart-3',
+  series4: '--chart-4',
+  series5: '--chart-5',
+  series6: '--chart-6',
+  series7: '--chart-7',
+  series8: '--chart-8',
+  seq1: '--chart-seq-1',
+  seq2: '--chart-seq-2',
+  seq3: '--chart-seq-3',
+  seq4: '--chart-seq-4',
+  seq5: '--chart-seq-5',
+} as const;
+export type ChartToken = (typeof CHART)[keyof typeof CHART];
 
 export const EFFECT = {
   shadowSm: '--shadow-sm',
@@ -153,6 +210,29 @@ export type DurationToken = `--dur-${DurationName}`;
 export const EASING_NAMES = ['standard', 'out', 'spring'] as const;
 export type EasingName = (typeof EASING_NAMES)[number];
 export type EasingToken = `--ease-${EasingName}`;
+
+/**
+ * Muelles: curvas `linear()` de un muelle amortiguado real. Cada curva va con SU
+ * duración (`--spring-<nombre>-dur`): se usan siempre en pareja. `rebote` pasa
+ * del destino y vuelve, así que se reserva para confirmar un gesto.
+ */
+export const SPRING_NAMES = ['rapido', 'suave', 'rebote'] as const;
+export type SpringName = (typeof SPRING_NAMES)[number];
+export type SpringToken = `--spring-${SpringName}`;
+export type SpringDurationToken = `--spring-${SpringName}-dur`;
+
+/**
+ * Materiales (vidrio): tinte translúcido + desenfoque + trazo fino, con respaldo
+ * opaco donde no hay `backdrop-filter`. Se aplican con `.material-<nombre>`.
+ */
+export const MATERIAL_NAMES = ['fino', 'regular', 'grueso'] as const;
+export type MaterialName = (typeof MATERIAL_NAMES)[number];
+export type MaterialTintToken = `--material-${MaterialName}-tinte`;
+export type MaterialBlurToken = `--material-${MaterialName}-desenfoque`;
+export const MATERIAL_SHARED = {
+  trazo: '--material-trazo',
+  respaldo: '--material-respaldo',
+} as const;
 
 /* ---- apilamiento ---------------------------------------------------------
    Escala cerrada: un `z-index` suelto en un componente vuelve a abrir el
@@ -268,6 +348,9 @@ export type DesignToken =
   | BorderToken
   | StatusToken
   | BrandToneToken
+  | HeatToken
+  | ChartToken
+  | VerifiedToken
   | EffectToken
   | SpacingToken
   | RadiusToken
@@ -275,6 +358,11 @@ export type DesignToken =
   | LayerToken
   | DurationToken
   | EasingToken
+  | SpringToken
+  | SpringDurationToken
+  | MaterialTintToken
+  | MaterialBlurToken
+  | (typeof MATERIAL_SHARED)[keyof typeof MATERIAL_SHARED]
   | FontFamilyToken
   | FontSizeToken
   | LineHeightToken
@@ -294,6 +382,14 @@ export function statusToken<T extends StatusType, S extends StatusSlot>(
   slot: S,
 ): `--st-${T}-${S}` {
   return `--st-${status}-${slot}`;
+}
+
+/** Nombre del token de intensidad: `heatToken(2, 'bg')` → `--heat-2-bg`. */
+export function heatToken<L extends HeatLevel, S extends HeatSlot>(
+  level: L,
+  slot: S,
+): `--heat-${L}-${S}` {
+  return `--heat-${level}-${slot}`;
 }
 
 export function spacingToken<S extends SpacingStep>(step: S): `--sp-${S}` {
@@ -323,6 +419,9 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...BRAND_TONES.flatMap((tone) =>
     STATUS_SLOTS.map((slot): BrandToneToken => `--st-${tone}-${slot}`),
   ),
+  ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
+  ...Object.values(VERIFIED),
+  ...Object.values(CHART),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),
@@ -330,6 +429,11 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ...LAYER_NAMES.map((name): LayerToken => `--z-${name}`),
   ...DURATION_NAMES.map((name): DurationToken => `--dur-${name}`),
   ...EASING_NAMES.map((name): EasingToken => `--ease-${name}`),
+  ...SPRING_NAMES.map((name): SpringToken => `--spring-${name}`),
+  ...SPRING_NAMES.map((name): SpringDurationToken => `--spring-${name}-dur`),
+  ...MATERIAL_NAMES.map((name): MaterialTintToken => `--material-${name}-tinte`),
+  ...MATERIAL_NAMES.map((name): MaterialBlurToken => `--material-${name}-desenfoque`),
+  ...Object.values(MATERIAL_SHARED),
   ...Object.values(FONT_FAMILY),
   ...TYPE_ROLES.map((role): FontSizeToken => `--fs-${role}`),
   ...LINE_HEIGHT_ROLES.map((role): LineHeightToken => `--lh-${role}`),

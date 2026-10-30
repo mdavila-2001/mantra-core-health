@@ -150,7 +150,7 @@ describe('Textarea', () => {
       await setInputs({ maxLength: 10 });
       await escribir('123456789');
 
-      expect(avisoVivo()).toBe('Te estás acercando al límite de 10 caracteres.');
+      expect(avisoVivo()).toBe('Se está acercando al límite de 10 caracteres.');
     });
 
     it('las teclas intermedias de la misma banda no cambian el anuncio', async () => {
@@ -169,7 +169,7 @@ describe('Textarea', () => {
       await setInputs({ maxLength: 10 });
       await escribir('1234567890');
 
-      expect(avisoVivo()).toBe('Alcanzaste el límite de 10 caracteres.');
+      expect(avisoVivo()).toBe('Alcanzó el límite de 10 caracteres.');
     });
 
     it('el techo, que no cambia, es lo que describe al control', async () => {
@@ -210,6 +210,29 @@ describe('Textarea', () => {
       await escribir('linea\nlinea\nlinea');
 
       expect(textarea().style.height).toBe('120px');
+    });
+
+    it('encendido y sin caja (pestaña oculta), no lo aplasta a 0 px: deja el alto de rows', async () => {
+      await setInputs({ autoResize: true });
+      fijarScrollHeight(0);
+      await escribir('linea\nlinea\nlinea');
+
+      expect(textarea().style.height).toBe('');
+    });
+
+    it('encendido, también crece cuando el valor llega por la entrada y no por teclado', async () => {
+      await setInputs({ autoResize: true, readonly: true });
+      fijarScrollHeight(96);
+      await setInputs({ value: 'una dirección larga que no entra en una sola línea del campo' });
+
+      expect(textarea().style.height).toBe('96px');
+    });
+
+    it('apagado, un valor por la entrada tampoco toca el alto', async () => {
+      fijarScrollHeight(96);
+      await setInputs({ value: 'una dirección larga que no entra en una sola línea del campo' });
+
+      expect(textarea().style.height).toBe('');
     });
 
     it('el tope es declarativo: maxRows viaja al CSS como custom property', async () => {

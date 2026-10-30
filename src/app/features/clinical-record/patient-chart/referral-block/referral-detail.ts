@@ -1,35 +1,39 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import type { Observable } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
 import type { InformedConsent } from '../../../../core/data-access/informed-consents/informed-consents.types';
 import { ReferralsClient } from '../../../../core/data-access/referrals/referrals.client';
 import {
-  motivoDeDerivacion,
-  type MotivoDeDerivacion,
+  referralErrorDetail,
+  type ReferralErrorDetail,
 } from '../../../../core/data-access/referrals/referrals.errors';
-import {
-  REFERRAL_LIMITS,
-  REFERRAL_TYPES_WITH_CONSENT,
-  type Referral,
-} from '../../../../core/data-access/referrals/referrals.types';
+import { REFERRAL_LIMITS, type Referral } from '../../../../core/data-access/referrals/referrals.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+import { writeMessage } from '../../write-message';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { encuentroParaConsentir } from '../informed-consent/encuentro-para-consentir';
+import { consentEncounter } from '../informed-consent/consent-encounter';
 import { InformedConsentPanel } from '../informed-consent/informed-consent-panel';
-import { destinoDe, estadoDe, etiquetaDeTipo, vencida } from './referral-labels';
+import {
+  destinationOf,
+  isExpired,
+  offersConsent,
+  referralStatusOf,
+  referralTypeLabel,
+} from './referral-block.model';
 
 /**
  * **Una derivación, entera**: lo que se pidió, su estado, el consentimiento
- * dirigido a ella y lo que el destino puede hacer (responder, contrarreferir).
+ * dirigido a ella y lo que el destino puede hacer (responder, contrarreferir)
+ * o quien escribe la historia (anular).
  *
  * Vive dentro de un `app-content-dialog`: es el detalle de una fila, y las
  * acciones que piden datos van en modal (composition-rules §6).
@@ -38,15 +42,15 @@ import { destinoDe, estadoDe, etiquetaDeTipo, vencida } from './referral-labels'
  *
  * «Aceptar» y «Rechazar» se ofrecen sobre una pendiente; «Registrar
  * contrarreferencia», sobre una aceptada (o pendiente, si el destino es
- * externo); «Cancelar derivación», sobre una pendiente o aceptada. Quién puede hacerlo —el destino o su
- * organización— lo decide el servidor: si no corresponde, su 403 se muestra
- * acá tal cual. Ocultar el botón no sería seguridad; ofrecerlo a quien no
- * puede escribir en la historia sí sería una puerta cerrada, y por eso
- * `puedeEscribir` lo baja.
+ * externo); «Anular», sobre una pendiente o aceptada. Quién puede hacerlo lo
+ * decide el servidor: quien no es destino recibe 404 `REFERRAL_NOT_FOUND` y
+ * se muestra acá en palabras. Ocultar el botón no sería seguridad; ofrecerlo
+ * a quien no puede escribir en la historia sí sería una puerta cerrada, y por
+ * eso `canWrite` lo baja.
  */
 @Component({
   selector: 'app-referral-detail',
-  imports: [Alert, AppButton, Badge, DatePipe, InformedConsentPanel],
+  imports: [Alert, AppButton, DatePipe, InformedConsentPanel, StatusSeal],
   templateUrl: './referral-detail.html',
   styleUrl: './referral-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,51 +65,43 @@ export class ReferralDetail {
   readonly patientProfileId = input.required<string>();
   readonly encounterId = input<string | null>(null);
   /** Las citas de la persona: el consentimiento se ata a una atención. */
-  readonly citas = input<readonly CitaDelPaciente[]>([]);
-  readonly puedeEscribir = input(false);
+  readonly appointments = input<readonly CitaDelPaciente[]>([]);
+  readonly canWrite = input(true);
   /** Recién emitida: el detalle se abre para ofrecer el consentimiento. */
-  readonly recienEmitida = input(false);
+  readonly justIssued = input(false);
 
-  /** Hubo una respuesta o una contrarreferencia: hay que releer. */
-  readonly cambio = output<void>();
+  /** Hubo una respuesta, una contrarreferencia o una anulación: hay que releer. */
+  readonly changed = output<Referral>();
   readonly consentChanged = output<InformedConsent | null>();
 
   /**
-   * La atención del consentimiento: la de origen de la derivación, la del
-   * contexto, o la que elige `encuentroParaConsentir` entre las citas (igual
-   * que los demás bloques). Sin ninguna, el panel lo dice y no deja registrar.
+   * La atención del consentimiento: la de origen de la derivación, si no la
+   * abierta del contexto, si no la cita en curso. Sin ninguna, el panel
+   * muestra el S3 «Falta la atención» y no deja registrar.
    */
-  protected readonly encuentroDelConsentimiento = computed(() =>
-    encuentroParaConsentir(this.referral().sourceEncounterId, this.encounterId(), this.citas()),
+  protected readonly consentEncounterId = computed(() =>
+    consentEncounter(this.referral().sourceEncounterId, this.encounterId(), this.appointments()),
   );
 
-  protected readonly tipo = computed(() => etiquetaDeTipo(this.referral().referralType));
-  protected readonly destino = computed(() => destinoDe(this.referral()));
-  protected readonly estado = computed(() => estadoDe(this.referral()));
-  protected readonly vencida = computed(() => vencida(this.referral()));
+  protected readonly type = computed(() => referralTypeLabel(this.referral().referralType));
+  protected readonly destination = computed(() => destinationOf(this.referral()));
+  protected readonly status = computed(() => referralStatusOf(this.referral()));
+  protected readonly expired = computed(() => isExpired(this.referral()));
+  protected readonly offersConsent = computed(() => offersConsent(this.referral()));
 
-  /** Si el tipo admite el consentimiento dirigido y la derivación sigue viva. */
-  protected readonly ofreceConsentimiento = computed(() => {
+  protected readonly consentLabel = computed(() => {
     const r = this.referral();
-    return (
-      r.referralType !== undefined &&
-      REFERRAL_TYPES_WITH_CONSENT.has(r.referralType) &&
-      r.status !== 'REJECTED' &&
-      r.status !== 'CANCELLED'
-    );
-  });
-
-  protected readonly etiquetaParaConsentir = computed(() => {
-    const r = this.referral();
-    return `Derivación · ${this.tipo()}: ${r.requestedServiceText ?? 'servicio sin detallar'} → ${this.destino()}`;
+    const service = r.targetServiceName ?? r.requestedServiceText ?? 'servicio sin detallar';
+    return `Derivación · ${this.type()}: ${service} → ${this.destination()}`;
   });
 
   /** Lo que el panel prellena: lo que la derivación ya dice. */
-  protected readonly defaultsDelConsentimiento = computed(() => {
+  protected readonly consentDefaults = computed(() => {
     const r = this.referral();
+    const service = r.targetServiceName ?? r.requestedServiceText ?? '';
     return {
       ...(r.diagnosisText === undefined ? {} : { diagnosisText: r.diagnosisText }),
-      purposeText: `Derivación (${this.tipo().toLowerCase()}) a ${this.destino()} para: ${r.requestedServiceText ?? ''}`.trim(),
+      purposeText: `Derivación (${this.type().toLowerCase()}) a ${this.destination()} para: ${service}`.trim(),
     };
   });
 
@@ -113,13 +109,13 @@ export class ReferralDetail {
    * Quien emitió la derivación no la responde ni la contrarrefiere: eso es
    * del destino. Es sólo no ofrecer una puerta de más; la API vuelve a decidir.
    */
-  private readonly laEmitiYo = computed(() => {
-    const propio = this.auth.practitionerProfileId();
-    return propio !== null && this.referral().referringProfileId === propio;
+  private readonly issuedByMe = computed(() => {
+    const own = this.auth.practitionerProfileId();
+    return own !== null && this.referral().referringProfileId === own;
   });
 
   /** Destino sólo externo: nadie en la plataforma la responde. */
-  private readonly soloExterno = computed(() => {
+  private readonly externalOnly = computed(() => {
     const r = this.referral();
     return (
       r.targetExternalName !== undefined &&
@@ -129,12 +125,8 @@ export class ReferralDetail {
     );
   });
 
-  protected readonly puedeResponder = computed(
-    () =>
-      this.puedeEscribir() &&
-      !this.soloExterno() &&
-      !this.laEmitiYo() &&
-      this.referral().status === 'PENDING',
+  protected readonly canRespond = computed(
+    () => this.canWrite() && !this.externalOnly() && !this.issuedByMe() && this.referral().status === 'PENDING',
   );
 
   /**
@@ -142,49 +134,50 @@ export class ReferralDetail {
    * destino es externo, la transcribe quien escribe la historia —también sobre
    * una pendiente—: es la regla de la API.
    */
-  protected readonly puedeContrarreferir = computed(() => {
-    const estado = this.referral().status;
-    if (!this.puedeEscribir()) return false;
-    return this.soloExterno()
-      ? estado === 'PENDING' || estado === 'ACCEPTED'
-      : !this.laEmitiYo() && estado === 'ACCEPTED';
+  protected readonly canCounterRefer = computed(() => {
+    const status = this.referral().status;
+    if (!this.canWrite()) return false;
+    return this.externalOnly()
+      ? status === 'PENDING' || status === 'ACCEPTED'
+      : !this.issuedByMe() && status === 'ACCEPTED';
   });
 
   /** Se anula una pendiente o aceptada; la API exige escritura sobre la historia. */
-  protected readonly puedeAnular = computed(() => {
-    const estado = this.referral().status;
-    return this.puedeEscribir() && (estado === 'PENDING' || estado === 'ACCEPTED');
+  protected readonly canCancel = computed(() => {
+    const status = this.referral().status;
+    return this.canWrite() && (status === 'PENDING' || status === 'ACCEPTED');
   });
 
-  protected readonly trabajando = signal(false);
-  protected readonly escritura = signal<ViewState<null>>(ready(null));
-  private readonly motivo = signal<MotivoDeDerivacion | null>(null);
-  protected readonly errorDeLaAccion = computed(() =>
-    this.motivo()?.mensaje ??
-    mensajeDeEscritura(this.escritura(), {
-      accion: 'actualizar la derivación',
-      sinPermiso: 'Sólo el destino de la derivación o su organización puede responderla o contrarreferirla.',
-    }),
+  protected readonly working = signal(false);
+  protected readonly write = signal<ViewState<null>>(ready(null));
+  private readonly reason = signal<ReferralErrorDetail | null>(null);
+  protected readonly actionError = computed(
+    () =>
+      this.reason()?.message ??
+      writeMessage(this.write(), {
+        accion: 'actualizar la derivación',
+        sinPermiso: 'Sólo el destino de la derivación o su organización puede responderla o contrarreferirla.',
+      }),
   );
 
-  protected async aceptar(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
+  protected async accept(): Promise<void> {
+    const confirmed = await this.dialogs.confirm({
       title: 'Aceptar derivación',
-      message: `Quedará registrado que ${this.destino()} recibe a la persona para: ${this.referral().requestedServiceText ?? 'el servicio pedido'}.`,
+      message: `Quedará registrado que ${this.destination()} recibe a la persona para: ${this.referral().requestedServiceText ?? this.referral().targetServiceName ?? 'el servicio pedido'}.`,
       confirmLabel: 'Aceptar derivación',
       cancelLabel: 'Volver',
     });
-    if (confirmado) {
-      this.escribir(
+    if (confirmed) {
+      this.run(
         this.referrals.respond(this.referral().id, { decision: 'ACCEPT' }),
         'Derivación aceptada',
-        'Cuando termine la atención, registrá la contrarreferencia.',
+        'Cuando termine la atención, registre la contrarreferencia.',
       );
     }
   }
 
-  protected async rechazar(): Promise<void> {
-    const motivo = await this.dialogs.confirmWithReason(
+  protected async reject(): Promise<void> {
+    const reason = await this.dialogs.confirmWithReason(
       {
         title: 'Rechazar derivación',
         message: 'Quien derivó va a ver el motivo para buscar otro destino.',
@@ -200,17 +193,17 @@ export class ReferralDetail {
         maxLength: REFERRAL_LIMITS.rejectReason,
       },
     );
-    if (motivo !== null) {
-      this.escribir(
-        this.referrals.respond(this.referral().id, { decision: 'REJECT', rejectReason: motivo }),
+    if (reason !== null) {
+      this.run(
+        this.referrals.respond(this.referral().id, { decision: 'REJECT', rejectReason: reason }),
         'Derivación rechazada',
         'Quien derivó ya puede ver el motivo.',
       );
     }
   }
 
-  protected async contrarreferir(): Promise<void> {
-    const texto = await this.dialogs.confirmWithReason(
+  protected async counterRefer(): Promise<void> {
+    const text = await this.dialogs.confirmWithReason(
       {
         title: 'Registrar contrarreferencia',
         message: 'Lo que se hizo y lo que se indica al volver con quien derivó.',
@@ -225,50 +218,46 @@ export class ReferralDetail {
         maxLength: REFERRAL_LIMITS.counterReferralText,
       },
     );
-    if (texto !== null) {
-      this.escribir(
-        this.referrals.counterReferral(this.referral().id, texto),
+    if (text !== null) {
+      this.run(
+        this.referrals.counterReferral(this.referral().id, text),
         'Contrarreferencia registrada',
-        'Quien derivó la ve en esta misma pestaña.',
+        'Quien derivó la ve en esta misma lista.',
       );
     }
   }
 
-  protected async anular(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: 'Cancelar derivación',
-      message: `La derivación a ${this.destino()} queda anulada y el destino ya no debería recibirla. No se puede deshacer.`,
-      confirmLabel: 'Cancelar derivación',
+  protected async cancel(): Promise<void> {
+    const confirmed = await this.dialogs.confirm({
+      title: 'Anular derivación',
+      message: `La derivación a ${this.destination()} queda anulada y el destino ya no debería recibirla. No se puede deshacer.`,
+      confirmLabel: 'Anular derivación',
       cancelLabel: 'Volver',
       destructive: true,
     });
-    if (confirmado) {
-      this.escribir(
+    if (confirmed) {
+      this.run(
         this.referrals.cancel(this.referral().id),
-        'Derivación cancelada',
-        'Si la persona todavía necesita el servicio, emití una nueva.',
+        'Derivación anulada',
+        'Si la persona todavía necesita el servicio, emita una nueva.',
       );
     }
   }
 
-  private escribir(
-    peticion: ReturnType<ReferralsClient['respond']>,
-    titulo: string,
-    proximoPaso: string,
-  ): void {
-    this.trabajando.set(true);
-    this.motivo.set(null);
-    this.escritura.set(ready(null));
-    peticion.subscribe({
-      next: () => {
-        this.trabajando.set(false);
-        this.toasts.success(proximoPaso, titulo);
-        this.cambio.emit();
+  private run(request: Observable<Referral>, title: string, nextStep: string): void {
+    this.working.set(true);
+    this.reason.set(null);
+    this.write.set(ready(null));
+    request.subscribe({
+      next: (updated) => {
+        this.working.set(false);
+        this.toasts.success(nextStep, title);
+        this.changed.emit(updated);
       },
       error: (error: unknown) => {
-        this.trabajando.set(false);
-        this.motivo.set(motivoDeDerivacion(error));
-        this.escritura.set(errorToViewState<null>(error));
+        this.working.set(false);
+        this.reason.set(referralErrorDetail(error));
+        this.write.set(errorToViewState<null>(error));
       },
     });
   }

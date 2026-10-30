@@ -16,7 +16,7 @@ import type {
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { InformedConsentPanel } from './informed-consent-panel';
-import { NOMBRE_DEL_OBJETO } from './informed-consent.textos';
+import { TARGET_NAME } from './informed-consent.texts';
 
 /**
  * El panel de consentimiento dentro del modal del sistema, para abrirlo desde
@@ -40,7 +40,7 @@ import { NOMBRE_DEL_OBJETO } from './informed-consent.textos';
       description="Lo que se le explicó, quién decide y qué decidió."
       size="xl"
       closeLabel="Cerrar"
-      data-testid="consentimiento-dialogo"
+      data-testid="consent-dialog"
       [dismissible]="!(panel()?.tieneCambiosPendientes() ?? false)"
       (dismissAttempt)="pedirDescarte()"
       (closed)="closed.emit()"
@@ -75,7 +75,7 @@ export class InformedConsentDialog {
   private readonly dialogo = viewChild<ContentDialog>('dialogo');
 
   protected readonly titulo = computed(
-    () => `Consentimiento informado · ${NOMBRE_DEL_OBJETO[this.targetType()]}`,
+    () => `Consentimiento informado · ${TARGET_NAME[this.targetType()]}`,
   );
 
   protected async pedirDescarte(): Promise<void> {

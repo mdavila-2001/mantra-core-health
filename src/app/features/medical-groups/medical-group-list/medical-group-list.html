@@ -1,0 +1,75 @@
+<app-page-header
+  title="Grupos médicos"
+  subtitle="Arme el equipo de un servicio, con el cargo y el pago de cada integrante, y siga sus solicitudes."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="medical-group-list-new"
+    [routerLink]="newGroupRoute"
+  >
+    Crear grupo médico
+  </a>
+</app-page-header>
+
+<div class="grupos">
+  <app-tabs [(selectedIndex)]="selectedIndex">
+    @for (tab of tabs; track tab) {
+      <app-tab
+        [label]="
+          tab === 'historico'
+            ? 'Histórico de grupos'
+            : tab === 'enviadas'
+              ? 'Solicitudes enviadas'
+              : 'Solicitudes recibidas'
+        "
+      >
+        <app-data-table
+          [attr.data-testid]="'medical-group-list-' + tab"
+          [state]="stateOf(tab)"
+          [columns]="columns()"
+          [trackBy]="byId"
+          [rowLabel]="rowName"
+          [cursor]="cursorOf(tab)"
+          rowNavigable
+          stackedOnMobile
+          caption="Grupos médicos"
+          (rowActivated)="open($event)"
+          (cursorChanged)="goToCursor(tab, $event)"
+          (retry)="retry(tab)"
+        />
+      </app-tab>
+    }
+  </app-tabs>
+</div>
+
+<!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
+<!-- El nombre del servicio es el enlace: `rowNavigable` es sólo comodidad de
+     puntero, y este es el camino que también funciona con teclado. -->
+<ng-template #serviceCell let-group>
+  <a class="grupos__enlace" [routerLink]="detailRoute(group.id)" data-testid="medical-group-open">
+    {{ group.serviceName ?? 'Servicio sin nombre' }}
+  </a>
+</ng-template>
+
+<ng-template #dateCell let-group>
+  {{ format(group.scheduledAt) }}
+</ng-template>
+
+<ng-template #statusCell let-group>
+  <span class="grupos__estado">
+    <app-badge [variant]="statusOf(group).variant" [value]="statusOf(group).label" />
+    @if (group.pendingMembersCount > 0) {
+      <span class="grupos__pendientes">
+        {{ group.pendingMembersCount }}
+        {{
+          group.pendingMembersCount === 1
+            ? 'invitación sin responder'
+            : 'invitaciones sin responder'
+        }}
+      </span>
+    }
+  </span>
+</ng-template>

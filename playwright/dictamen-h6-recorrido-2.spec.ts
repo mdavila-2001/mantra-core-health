@@ -15,8 +15,8 @@ import { entrar, estable } from './support/sesion';
  */
 
 const SALIDA = join(
-  'docs',
-  'trabajo',
+  'artifacts',
+  'evidencia',
   '2026-09-20-notas-cuadricula-e-internacion',
   'evidencia',
   'dictamen',
@@ -59,10 +59,10 @@ test.describe('H6 · recorrido de #561 (Itzan, perfil médico)', () => {
     await abrirMiPerfil(page);
   });
 
-  test('C-01 · «Dónde atiendo» ya no tiene la sección «Cómo atendés»', async ({ page }) => {
+  test('C-01 · «Dónde atiendo» ya no tiene la sección «Cómo atiende»', async ({ page }) => {
     await page.getByRole('tab', { name: 'Dónde atiendo' }).click();
     await estable(page);
-    await expect(page.getByText('Cómo atendés', { exact: false })).toHaveCount(0);
+    await expect(page.getByText('Cómo atiende', { exact: false })).toHaveCount(0);
     await expect(page.getByTestId('perfil-sedes')).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: join(SALIDA, 'c01-sin-como-atendes.png') });
   });
@@ -271,7 +271,12 @@ test.describe('H6 · recorrido de #564 (Pablo, consultas)', () => {
     await page.screenshot({ path: join(SALIDA, 'd07-interruptor-de-tema-sin-globo.png') });
   });
 
-  test('C-12 · «Mis servicios» programa su horario y el rato queda como «Otros servicios»', async ({
+  // OBSOLETA desde 798d6623: el botón «Programar horario» de «Mis servicios» y
+  // sus `my-services-schedule*` ya no existen (el horario de cada servicio se
+  // marca en la columna «Atiendo» de «Cambiar mi horario»). Lo que el
+  // propietario pedía —una pestaña propia con los horarios de otros servicios,
+  // para médico y paciente— lo cubre `horarios-otros-servicios.spec.ts`.
+  test.skip('C-12 · «Mis servicios» programa su horario y el rato queda como «Otros servicios»', async ({
     page,
   }) => {
     await page.goto('/my-services', { waitUntil: 'commit' });

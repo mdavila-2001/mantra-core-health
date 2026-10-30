@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { TOAST_TYPE_LABEL, type ToastMessage } from './toast.types';
 
@@ -18,11 +19,15 @@ import { TOAST_TYPE_LABEL, type ToastMessage } from './toast.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'hostClasses()',
-    // Un error interrumpe la lectura; una confirmación espera su turno.
-    '[attr.role]': 'toast().type === "error" ? "alert" : "status"',
+    /* Sin `role` propio: la región viva es el contenedor, que existe antes que
+       el aviso (`app-toast-container`). Un `status`/`alert` que nace junto con
+       su texto no siempre se anuncia, y dentro de la región del contenedor
+       sería un anuncio doble. */
   },
 })
 export class Toast {
+  private readonly router = inject(Router);
+
   readonly toast = input.required<ToastMessage>();
 
   /** Emite el id del aviso que se cerró. */
@@ -35,5 +40,13 @@ export class Toast {
 
   dismiss(): void {
     this.dismissed.emit(this.toast().id);
+  }
+
+  /** Va a donde se resuelve el aviso y lo cierra: ya cumplió. */
+  act(): void {
+    const action = this.toast().action;
+    if (action === undefined) return;
+    void this.router.navigateByUrl(action.url);
+    this.dismiss();
   }
 }

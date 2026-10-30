@@ -37,13 +37,11 @@ COPY deploy/nginx.coolify.conf /etc/nginx/conf.d/default.conf
 COPY deploy/api-locations.conf /etc/nginx/api-locations.conf
 COPY deploy/api-proxy.conf     /etc/nginx/api-proxy.conf
 
-# ─── Lo único que SÍ se puede validar aquí ───────────────────────────────────
+# ─── Que cada `include` apunte a un archivo copiado ─────────────────────────
 #
-# `nginx -t` no sirve en el build: arranca la configuración y resuelve por DNS
-# los `server` de cada `upstream`, y aquí no existe ningún `api` (ver abajo).
-# Pero el fallo de arriba —un `include` que apunta a un archivo que no se copió—
-# no necesita ni red ni nginx para detectarse: basta comprobar que cada ruta
-# incluida existe. Es exactamente la comprobación que faltaba.
+# Un `include` que apunta a un archivo que no se copió (el fallo de arriba) se
+# detecta sin nginx: basta comprobar que cada ruta incluida existe. Va antes de
+# `nginx -t` para que el mensaje diga qué archivo falta.
 RUN set -eu; \
     faltan=0; \
     for f in $(grep -rhoE 'include[[:space:]]+/etc/nginx/[^;]+' \
@@ -53,20 +51,24 @@ RUN set -eu; \
     done; \
     [ "$faltan" -eq 0 ]
 
-# ─── Aquí NO se valida la configuración, y no por dejadez ────────────────────
+# ─── Validación de la configuración en el build ──────────────────────────────
 #
-# La primera versión traía un `RUN nginx -t` para que un `;` perdido rompiera el
-# build en vez de descubrirse con el contenedor ya reemplazando al anterior. No
-# puede ser: `nginx -t` no comprueba sintaxis, ARRANCA la configuración, y eso
-# incluye resolver por DNS los `server` de cada `upstream`. Dentro del
-# contenedor de construcción no existe ningún `api`, así que aborta con
+# `nginx -t` SÍ sirve aquí. `nginx.coolify.conf` declara los `upstream` con
+# `server api:3000 resolve;` y `server web:4000 resolve;` y un
+# `resolver 127.0.0.11`, así que nginx no resuelve `api` ni `web` al cargar la
+# configuración y la prueba funciona sin red, también dentro del contenedor de
+# construcción. (Sin `resolve`, `nginx -t` abortaba con
+# `host not found in upstream "api:3000"`; por eso la primera versión de este
+# archivo lo descartó.)
 #
-#   [emerg] host not found in upstream "api:3000"
-#
-# y el despliegue muere por una razón que no tiene nada que ver con el archivo
-# (despliegue 706, 17/09). Quien valida de verdad es el arranque del contenedor,
-# con la red `alovida` ya puesta: si la configuración está rota, nginx no
-# levanta, el healthcheck no pasa y Coolify deja en pie el contenedor anterior.
+# Importa porque Coolify despliega este front como docker-compose: apaga el
+# contenedor anterior y levanta el nuevo, de modo que un proxy con la
+# configuración rota tumba el sitio (`duplicate location` en el bucle de
+# reinicio, y un 503 hasta el siguiente despliegue). Lo que sí deja en pie el
+# contenedor anterior es que falle el BUILD, y esta línea convierte un error de
+# configuración en un fallo de build.
+RUN nginx -t
+
 EXPOSE 80
 
 # No pide `/` —que redirige al login— sino la comprobación del propio nginx:

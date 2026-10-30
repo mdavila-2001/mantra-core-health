@@ -18,21 +18,25 @@ import {
   listaDeTextos,
   valorDeTexto,
 } from '../../../../core/data-access/terminology/terminology.types';
+import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { loading, ready } from '../../../../core/view-state/view-state';
+import { fieldIssueOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AttachmentUploader } from '../../../../shared/components/organisms/attachment-uploader/attachment-uploader';
+import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
+import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Menu } from '../../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
 import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
@@ -43,12 +47,12 @@ import { StatusSeal } from '../../../../shared/components/organisms/status-seal/
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { consentimientosDelPaciente } from '../informed-consent/consentimientos-del-paciente';
+import { consentTargetState } from '../informed-consent/consent-target';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
 import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
-import { encuentroParaConsentir } from '../informed-consent/encuentro-para-consentir';
 
 /**
  * La columna que gobierna el medicamento.
@@ -112,15 +116,33 @@ const PROPIEDAD_FRECUENCIA_POR_DEFECTO = 'default_frequency';
  * no hay mapa de etiquetas ni petición de terminología que valga la pena
  * duplicar, y la lista ya está cargada del otro lado.
  */
-export interface DiagnosticoEnFicha {
+export interface DiagnosisOption {
   /** El `clinical.conditions.id`, que es lo que viaja como indicación. */
   readonly id: string;
   /** El diagnóstico en palabras. Nunca el uuid del concepto. */
   readonly etiqueta: string;
+  /**
+   * Cuándo se confirmó (C5, ADR-0015-adjacent), o `null`/ausente si el
+   * diagnóstico no está confirmado (provisional, diferencial o descartado).
+   * La receta sólo se liga a un diagnóstico **confirmado** (pedido literal
+   * del propietario) — ver `opcionesDeIndicacion()`.
+   *
+   * **Pendiente de integración real:** quien arma esta lista hoy
+   * (`patient-chart.ts:diagnosticosParaReceta`, fuera de mi alcance esta
+   * noche — reservado a C3) todavía no puebla este campo, aunque el
+   * `Condition` de origen sí trae `verificationStatusConceptId`. Hasta que
+   * se agregue esa línea, ningún diagnóstico real llega marcado como
+   * confirmado y el selector sólo ofrece «Otro motivo» — comportamiento
+   * seguro (nunca ofrece un presuntivo), documentado en el `REPORTE.md`.
+   */
+  readonly confirmadoEl?: string | null;
 }
 
+/** Alias de compatibilidad: `patient-chart.ts` (C3, fuera de mi alcance) sigue importando el nombre viejo. */
+export type DiagnosticoEnFicha = DiagnosisOption;
+
 /** Una receta del expediente, ya sin uuid y con su ciclo resuelto. */
-export interface RecetaEnFicha {
+export interface PrescriptionInChart {
   readonly id: string;
   /** El medicamento en palabras. Nunca el uuid del concepto. */
   readonly medicamento: string;
@@ -130,8 +152,24 @@ export interface RecetaEnFicha {
   readonly firmada: boolean;
   readonly emitida: boolean;
   /** La consulta en la que se prescribió, si la lectura la trae. Ata su consentimiento. */
-  readonly encuentroId?: string;
+  readonly encounterId?: string;
+  /**
+   * El diagnóstico o motivo de la receta, ya en palabras (C5). Opcional por
+   * la misma razón que `DiagnosisOption.confirmadoEl`: `patient-chart.ts`
+   * (C3, fuera de mi alcance) todavía no lo puebla en `recetasEnFicha`,
+   * aunque el `MedicationRequest` de origen ya trae `indicationConditionId`/
+   * `indicationText` (Patch v4.1.6). `undefined`/ausente = sin vínculo
+   * mostrado (recetas de antes de C5, o pendiente de esa línea en C3).
+   */
+  readonly vinculo?: string | null;
+  /** `true` si el vínculo es un diagnóstico confirmado; `false`/ausente si es un motivo escrito a mano. */
+  readonly vinculoEsDiagnostico?: boolean;
+  /** El id de la condición vinculada, si la hay — para "Vincular a un diagnóstico…" saber si ya hay una elegida. */
+  readonly indicationConditionId?: string | null;
 }
+
+/** Alias de compatibilidad: `patient-chart.ts` (C3, fuera de mi alcance) sigue importando el nombre viejo. */
+export type RecetaEnFicha = PrescriptionInChart;
 
 /**
  * **Medicación** del expediente: prescribir, firmar y emitir — V08-01.
@@ -205,7 +243,10 @@ export interface RecetaEnFicha {
 @Component({
   selector: 'app-medication-block',
   imports: [
+    FormResponsePicker,
     Alert,
+    Badge,
+    ContentDialog,
     AppButton,
     AppInput,
     Card,
@@ -218,6 +259,7 @@ export interface RecetaEnFicha {
     InformedConsentDialog,
     Menu,
     MenuItem,
+    NavIcon,
     MenuTrigger,
     ReferenceCombobox,
     Select,
@@ -248,8 +290,21 @@ export class MedicationBlock implements DraftBlock {
    */
   readonly encounterId = input<string | null>(null);
 
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
+
   /** Las recetas de la persona, ya traducidas por el expediente. */
-  readonly recetas = input.required<readonly RecetaEnFicha[]>();
+  readonly recetas = input.required<readonly PrescriptionInChart[]>();
 
   /**
    * Los diagnósticos de la persona, para elegir la indicación (Patch v4.1.6).
@@ -260,7 +315,7 @@ export class MedicationBlock implements DraftBlock {
    * selector no se ofrece, y la receta se guarda igual porque el campo es
    * opcional en el contrato.
    */
-  readonly diagnosticos = input<readonly DiagnosticoEnFicha[]>([]);
+  readonly diagnosticos = input<readonly DiagnosisOption[]>([]);
 
   /**
    * Las citas del paciente, para elegir de qué consulta es la receta.
@@ -316,7 +371,7 @@ export class MedicationBlock implements DraftBlock {
    * duplicar el modelo o a leer la pantalla — y un PDF que sale de leer la
    * pantalla dice lo que la pantalla muestra, no lo que está registrado.
    */
-  readonly descargar = output<RecetaEnFicha>();
+  readonly descargar = output<PrescriptionInChart>();
 
   protected readonly topeDelTexto = TOPE_DEL_TEXTO;
   protected readonly targetMedicamento = TARGET_MEDICAMENTO;
@@ -378,27 +433,40 @@ export class MedicationBlock implements DraftBlock {
   /**
    * El diagnóstico que motiva la receta, o `null` — «para qué es» (v4.1.6).
    *
-   * `null` es un valor legítimo y el de arranque, no un formulario a medio
-   * llenar: hay recetas sintomáticas y profilácticas, y obligar a elegir una
-   * condición para ellas empujaría a poner cualquiera.
+   * `null` es "todavía no se eligió nada" (C5: ya no es un valor guardable
+   * por sí solo — toda receta se liga a un diagnóstico confirmado o a un
+   * motivo escrito; ver `puedeRecetar`).
    */
   protected readonly indicacion = signal<string | null>(null);
 
   /**
-   * Las opciones del selector de indicación: los diagnósticos de la historia,
-   * la vacía, y la salida para escribir uno propio.
+   * Las opciones del selector de indicación: sólo los diagnósticos
+   * **confirmados** de la historia, y la salida para escribir un motivo.
    *
-   * La salida la pidió el cliente por su caso: «puede existir el caso que sólo
-   * se fue a hacer recetar y no necesitaría diagnóstico existente previo, sobre
-   * todo casos psiquiátricos».
+   * C5 (pedido literal del propietario, 2026-09-25): «en todo momento se
+   * puede linkear a un diagnóstico confirmado o por motivo plano» — ya no
+   * hay «Sin diagnóstico asociado». La salida de motivo la pidió el cliente
+   * por su caso: «puede existir el caso que sólo se fue a hacer recetar y no
+   * necesitaría diagnóstico existente previo, sobre todo casos
+   * psiquiátricos» — sigue vigente, sólo que ahora el motivo es obligatorio
+   * cuando se la elige, no una alternativa a no decir nada.
    */
   protected readonly opcionesDeIndicacion = computed<readonly SelectOption<string | null>[]>(
     () => [
-      { value: null, label: 'Sin diagnóstico asociado' },
-      ...this.diagnosticos().map((dx) => ({ value: dx.id, label: dx.etiqueta })),
+      ...this.diagnosticos()
+        .filter((dx) => dx.confirmadoEl !== undefined && dx.confirmadoEl !== null)
+        .map((dx) => ({
+          value: dx.id,
+          label: `${dx.etiqueta} · Confirmado el ${this.fechaCorta(dx.confirmadoEl!)}`,
+        })),
       { value: OTRO_MOTIVO, label: 'Otro motivo — escribirlo' },
     ],
   );
+
+  /** «Confirmado el 12/03/2026» — sin depender de un `Pipe` en un `computed`. */
+  private fechaCorta(iso: string): string {
+    return new Date(iso).toLocaleDateString('es', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
 
   /** El motivo escrito a mano cuando no se eligió un diagnóstico. */
   protected readonly motivoLibre = signal('');
@@ -422,10 +490,8 @@ export class MedicationBlock implements DraftBlock {
     this.recetaRecienCreada.set(null);
   }
 
-  /** Si no hay diagnóstico asociado, el motivo puede escribirse libremente. */
-  protected readonly motivoEsLibre = computed(
-    () => this.indicacion() === null || this.indicacion() === OTRO_MOTIVO,
-  );
+  /** Se eligió «Otro motivo»: el motivo se escribe a mano y es obligatorio. */
+  protected readonly motivoEsLibre = computed(() => this.indicacion() === OTRO_MOTIVO);
 
   /**
    * Guarda la indicación elegida, y limpia el texto al elegir un diagnóstico.
@@ -513,11 +579,10 @@ export class MedicationBlock implements DraftBlock {
    * lado: «esta receta necesita firma» sin señalar cuál es un aviso que obliga
    * a adivinar.
    */
-  private readonly recetaSinFirma = signal<RecetaEnFicha | null>(null);
+  private readonly recetaSinFirma = signal<PrescriptionInChart | null>(null);
 
   /**
-   * Si el último fallo vino de prescribir y no del ciclo de una receta ya
-   * cargada.
+   * Si el último fallo vino de prescribir y no del ciclo de una receta ya cargada.
    *
    * Existe porque `PRECONDITION_FAILED` cubre **dos cosas distintas**: emitir
    * sin firma o sobre algo que ya no es borrador —el ciclo—, y la indicación
@@ -526,6 +591,24 @@ export class MedicationBlock implements DraftBlock {
    * lado se recuerda de dónde salió en vez de leer el texto.
    */
   private readonly falloAlPrescribir = signal(false);
+  protected readonly issueOf = (field: string): string => fieldIssueOf(this.registro(), field);
+
+  /**
+   * La revisión de interacciones que **no se pudo hacer**, o `null`.
+   *
+   * El chequeo falla abierto (ver {@link sinInteraccionesOConfirmadas}), pero
+   * en silencio era indistinguible de «no hay interacciones». Este aviso es lo
+   * que los separa: dice qué medicamento quedó sin revisar, por qué —con el
+   * código de soporte— y que la revisión queda a cargo de quien prescribe.
+   *
+   * **No se borra al limpiar el formulario**: la receta recién creada es
+   * justamente la que hay que revisar antes de firmar. Se va cuando quien
+   * prescribe lo cierra o cuando el próximo chequeo sí responde.
+   */
+  protected readonly interaccionesSinRevisar = signal<{
+    readonly medicamento: string;
+    readonly causa: string;
+  } | null>(null);
 
   /** La cita elegida, o `null` por «sin cita asociada». */
   protected readonly citaElegida = signal<string | null>(null);
@@ -578,25 +661,15 @@ export class MedicationBlock implements DraftBlock {
     () => this.citaElegida() ?? this.encounterId(),
   );
 
-  /* -- Consentimiento informado dirigido a cada receta --------------------- */
+  /* -- Consentimiento informado dirigido a cada receta (Ley 1737: DCI + pauta) -- */
 
-  /** Los consentimientos de la persona, para la insignia de cada receta. */
-  protected readonly consentimientos = consentimientosDelPaciente(() => this.patientProfileId());
-
-  /** La receta cuyo consentimiento está abierto, o `null`. */
-  protected readonly consintiendo = signal<RecetaEnFicha | null>(null);
-
-  /**
-   * El encuentro al que se ata el consentimiento de la receta abierta: el de
-   * la propia receta, si no el del contexto, si no la cita en curso.
-   */
-  protected readonly encuentroDelConsentimiento = computed(() =>
-    encuentroParaConsentir(this.consintiendo()?.encuentroId, this.encuentroDeLaReceta(), this.citas()),
+  protected readonly consent = consentTargetState<PrescriptionInChart>(
+    () => this.patientProfileId(),
+    (rx) => [rx?.encounterId, this.encounterId(), this.citas()],
   );
 
-  /** Lo que se consiente, en palabras: el medicamento y su pauta (DCI + dosis, Ley 1737). */
-  protected etiquetaDeLaReceta(receta: RecetaEnFicha): string {
-    return receta.indicacion === '' ? receta.medicamento : `${receta.medicamento} · ${receta.indicacion}`;
+  protected prescriptionLabel(rx: PrescriptionInChart): string {
+    return rx.indicacion === '' ? rx.medicamento : `${rx.medicamento} · ${rx.indicacion}`;
   }
 
   /** Si el bloque puede prescribir sin encuentro abierto. */
@@ -610,17 +683,31 @@ export class MedicationBlock implements DraftBlock {
   protected readonly sinOrganizacion = computed(() => this.organizacion() === null);
 
   /**
+   * Si la indicación es válida: un diagnóstico confirmado elegido, o «Otro
+   * motivo» con texto no vacío (C5, pedido literal del propietario — la
+   * receta siempre se liga a uno de los dos).
+   */
+  protected readonly indicacionValida = computed(() => {
+    const valor = this.indicacion();
+    if (valor === null) return false;
+    if (valor === OTRO_MOTIVO) return this.motivoLibre().trim() !== '';
+    return true;
+  });
+
+  /**
    * Si el formulario puede enviarse.
    *
-   * Las cuatro condiciones son del contrato, no de prudencia: encuentro en
-   * curso (decisión de esta pantalla), organización activa y medicamento
-   * elegido (obligatorios del DTO), y nada en vuelo.
+   * Cinco condiciones del contrato, no de prudencia: encuentro en curso
+   * (decisión de esta pantalla), organización activa, medicamento elegido
+   * (obligatorios del DTO), la indicación resuelta (C5) y nada en vuelo.
    */
   protected readonly puedeRecetar = computed(
     () =>
+      !this.faltaRespuesta() &&
       (this.hayEncuentro() || this.sinExigirEncuentro()) &&
       !this.sinOrganizacion() &&
       this.medicamento() !== null &&
+      this.indicacionValida() &&
       !this.registrando(),
   );
 
@@ -637,7 +724,7 @@ export class MedicationBlock implements DraftBlock {
     if (receta === null) {
       return null;
     }
-    return `«${receta.medicamento}» necesita tu firma antes de emitirse.`;
+    return `«${receta.medicamento}» necesita su firma antes de emitirse.`;
   });
 
   /**
@@ -666,22 +753,22 @@ export class MedicationBlock implements DraftBlock {
         if (this.falloAlPrescribir()) {
           return (
             state.issues.map((issue) => issue.message).join(' ') ||
-            'El diagnóstico elegido no corresponde a esta persona. Elegí otro o dejá la receta sin diagnóstico.'
+            'El diagnóstico elegido no corresponde a esta persona. Elija otro o deje la receta sin diagnóstico.'
           );
         }
-        return 'Esa receta ya no está en borrador: alguien la emitió o la invalidó antes. Recargá el expediente.';
+        return 'Esa receta ya no está en borrador: alguien la emitió o la invalidó antes. Recargue el expediente.';
       }
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, {
+    return writeFailureMessage(state, {
       accion: 'recetar',
-      sinPermiso: 'Tu rol no permite recetar.',
-      yaNoExiste: 'La receta ya no existe. Recargá el expediente.',
+      sinPermiso: 'Su rol no permite recetar.',
+      yaNoExiste: 'La receta ya no existe. Recargue el expediente.',
     });
   });
 
   /** El sello de una receta según dónde esté del ciclo. */
-  protected selloDe(receta: RecetaEnFicha): 'pending' | 'in-review' | 'approved' {
+  protected selloDe(receta: PrescriptionInChart): 'pending' | 'in-review' | 'approved' {
     if (receta.emitida) {
       return 'approved';
     }
@@ -949,6 +1036,9 @@ export class MedicationBlock implements DraftBlock {
         patientProfileId,
         medicationConceptId,
         ...(encounterId === null ? {} : { encounterId }),
+        ...(this.respuestaDelFormulario() === null
+          ? {}
+          : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
         // Los opcionales vacíos se **omiten**: una dosis en blanco es una
         // indicación registrada que no dice nada, y se lee peor que su ausencia.
         ...(dosis === '' ? {} : { doseText: dosis }),
@@ -978,7 +1068,7 @@ export class MedicationBlock implements DraftBlock {
           // ofrecerse acá. No se cierra solo: elegir los archivos lleva su
           // tiempo, y cerrarlo por cuenta propia perdería la referencia.
           this.recetaRecienCreada.set(creada.id);
-          this.toasts.success('Queda en borrador hasta que la firmes.', 'Receta creada');
+          this.toasts.success('Queda en borrador hasta que la firme.', 'Receta creada');
           this.cambio.emit();
         },
         error: (error: unknown) => {
@@ -999,7 +1089,7 @@ export class MedicationBlock implements DraftBlock {
    * todavía puede no emitirse—. Lo que sí hace es habilitar la emisión, que es
    * el paso que se confirma.
    */
-  protected firmar(receta: RecetaEnFicha): void {
+  protected firmar(receta: PrescriptionInChart): void {
     if (this.accionEnCurso() !== null) {
       return;
     }
@@ -1030,7 +1120,7 @@ export class MedicationBlock implements DraftBlock {
    * del consultorio. Es el mismo criterio con el que se confirma el cierre de
    * un encuentro.
    */
-  protected async emitir(receta: RecetaEnFicha): Promise<void> {
+  protected async emitir(receta: PrescriptionInChart): Promise<void> {
     if (this.accionEnCurso() !== null) {
       return;
     }
@@ -1073,6 +1163,65 @@ export class MedicationBlock implements DraftBlock {
     });
   }
 
+  /* -- C5: vincular después una receta con motivo a un diagnóstico confirmado */
+
+  /** La receta cuyo diálogo de vínculo está abierto, o `null`. */
+  protected readonly vinculando = signal<PrescriptionInChart | null>(null);
+  protected readonly vinculandoEnCurso = signal(false);
+  protected readonly errorDeVincular = signal<string | null>(null);
+  protected readonly indicacionDeVinculo = signal<string | null>(null);
+  protected readonly motivoDeVinculo = signal('');
+
+  protected readonly puedeVincular = computed(() => {
+    const valor = this.indicacionDeVinculo();
+    if (valor === null || this.vinculandoEnCurso()) return false;
+    if (valor === OTRO_MOTIVO) return this.motivoDeVinculo().trim() !== '';
+    return true;
+  });
+
+  protected abrirVincular(receta: PrescriptionInChart): void {
+    this.vinculando.set(receta);
+    this.indicacionDeVinculo.set(null);
+    this.motivoDeVinculo.set('');
+    this.errorDeVincular.set(null);
+  }
+
+  protected cerrarVincular(): void {
+    if (this.vinculandoEnCurso()) return;
+    this.vinculando.set(null);
+  }
+
+  protected confirmarVincular(): void {
+    const receta = this.vinculando();
+    const valor = this.indicacionDeVinculo();
+    if (receta === null || valor === null || !this.puedeVincular()) return;
+
+    this.vinculandoEnCurso.set(true);
+    this.errorDeVincular.set(null);
+    const indicacion =
+      valor === OTRO_MOTIVO
+        ? { indicationText: this.motivoDeVinculo().trim() }
+        : { indicationConditionId: valor };
+
+    this.clinical.editMedicationRequestIndication(receta.id, indicacion).subscribe({
+      next: () => {
+        this.vinculandoEnCurso.set(false);
+        this.vinculando.set(null);
+        this.toasts.success('Queda registrado en la receta.', 'Vínculo actualizado');
+        this.cambio.emit();
+      },
+      error: (error: unknown) => {
+        this.vinculandoEnCurso.set(false);
+        const estado = errorToViewState<null>(error);
+        this.errorDeVincular.set(
+          estado.status === 'validation'
+            ? 'La receta sólo se liga a un diagnóstico confirmado.'
+            : 'No se pudo vincular. Pruebe de nuevo.',
+        );
+      },
+    });
+  }
+
   /**
    * Corre el chequeo de interacciones y, si encuentra algo, lo confirma antes
    * de dejar seguir. Devuelve `true` cuando no hay nada que confirmar —sin
@@ -1105,6 +1254,7 @@ export class MedicationBlock implements DraftBlock {
     }
 
     let chequeo;
+    this.interaccionesSinRevisar.set(null);
     try {
       chequeo = await firstValueFrom(
         this.clinical.checkInteractions({
@@ -1115,7 +1265,13 @@ export class MedicationBlock implements DraftBlock {
           ...(encounterId === null ? {} : { encounterId }),
         }),
       );
-    } catch {
+    } catch (error: unknown) {
+      // Falla abierta, pero a la vista: la decisión de no bloquear se mantiene
+      // y quien prescribe sabe que la revisión no corrió.
+      this.interaccionesSinRevisar.set({
+        medicamento: this.medicamentoElegido()?.label ?? 'este medicamento',
+        causa: describeApiFailure(error, 'El servicio que revisa interacciones no respondió.'),
+      });
       return true;
     }
 
@@ -1129,9 +1285,13 @@ export class MedicationBlock implements DraftBlock {
           ? 'Se detectó una interacción'
           : `Se detectaron ${chequeo.count} interacciones`,
       message:
-        'El motor de decisión clínica encontró interacción entre este medicamento y la medicación activa de la persona. Revisala antes de seguir.',
+        'El motor de decisión clínica encontró interacción entre este medicamento y la medicación activa de la persona. Revísela antes de seguir.',
       confirmLabel: 'Prescribir de todas formas',
     });
+  }
+
+  protected descartarAvisoDeInteracciones(): void {
+    this.interaccionesSinRevisar.set(null);
   }
 
   /** Vacía el formulario tras un alta. El siguiente medicamento arranca limpio. */

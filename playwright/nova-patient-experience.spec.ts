@@ -125,15 +125,15 @@ test.describe('NOVA · experiencia del paciente', () => {
 
   /* ---- FT-03 · «Tu próxima cita» ------------------------------------------ */
 
-  test('FT-03 · el panel dice «Tu próxima cita», con jerarquía y sin «turno»', async ({ page }) => {
+  test('FT-03 · el panel dice «Su próxima cita», con jerarquía y sin «turno»', async ({ page }) => {
     await irA(page, '/');
     await esperarCarga(page);
 
     const bloque = page.getByTestId('mi-salud-proxima-cita');
     await expect(bloque).toBeVisible();
-    await expect(bloque).toContainText('Tu próxima cita');
+    await expect(bloque).toContainText('Su próxima cita');
     // El texto viejo no puede quedar en ninguna parte de la pantalla.
-    await expect(page.locator('body')).not.toContainText('Tu próximo turno');
+    await expect(page.locator('body')).not.toContainText('Su próximo turno');
 
     // Alguno de los tres estados, siempre declarado: nunca una banda muda.
     const estado = await bloque.getAttribute('data-estado');
@@ -335,14 +335,16 @@ test.describe('NOVA · experiencia del paciente', () => {
     await esperarCarga(page);
 
     const pestañas = page.locator('[data-testid="historia-tabs"] [role="tab"]');
-    await expect(pestañas).toHaveCount(4);
+    // Cinco desde C6: se sumó «Diagnósticos», al final para no mover los
+    // enlaces `?seccion=` que ya circulan.
+    await expect(pestañas).toHaveCount(5);
     await expect(pestañas.first()).toHaveAttribute('aria-selected', 'true');
 
     const descargar = page.getByTestId('historia-descargar-todo');
     await expect(descargar).toBeVisible();
 
-    // Recorrer las cuatro: cada una pinta lo suyo y la descarga sigue a la vista.
-    for (let i = 0; i < 4; i++) {
+    // Recorrerlas todas: cada una pinta lo suyo y la descarga sigue a la vista.
+    for (let i = 0; i < 5; i++) {
       await pestañas.nth(i).click();
       await esperarCarga(page);
       await expect(pestañas.nth(i)).toHaveAttribute('aria-selected', 'true');

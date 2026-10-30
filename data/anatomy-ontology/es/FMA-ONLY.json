@@ -1,0 +1,994 @@
+{
+"BP3D:BP46": {
+"labelEs": "cabeza cubital del extensor cubital del carpo izquierdo",
+"definitionEs": null
+},
+"FMA:37465": {
+"labelEs": "cuadrado plantar derecho",
+"definitionEs": null
+},
+"FMA:38525": {
+"labelEs": "extensor del índice derecho",
+"definitionEs": null
+},
+"FMA:38639": {
+"labelEs": "cabeza humerocubital del flexor superficial de los dedos izquierdo",
+"definitionEs": null
+},
+"FMA:38640": {
+"labelEs": "cabeza radial del flexor superficial de los dedos derecho",
+"definitionEs": null
+},
+"FMA:42403": {
+"labelEs": "conjunto de interóseos palmares de la mano izquierda",
+"definitionEs": null
+},
+"FMA:46021": {
+"labelEs": "cabeza transversa del aductor del dedo gordo izquierdo",
+"definitionEs": null
+},
+"FMA:55692": {
+"labelEs": "segundo premolar inferior izquierdo",
+"definitionEs": null
+},
+"FMA:55700": {
+"labelEs": "segundo molar superior izquierdo",
+"definitionEs": null
+},
+"FMA:44250": {
+"labelEs": "ligamento plantar largo izquierdo",
+"definitionEs": null
+},
+"FMA:65198": {
+"labelEs": "cabeza superficial del flexor corto del pulgar derecho",
+"definitionEs": null
+},
+"FMA:71308": {
+"labelEs": "conjunto de interespinosos torácicos",
+"definitionEs": null
+},
+"FMA:55687": {
+"labelEs": "canino inferior izquierdo",
+"definitionEs": null
+},
+"FMA:7875": {
+"labelEs": "primer cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:71670": {
+"labelEs": "conjunto de ramas interventriculares septales de la arteria coronaria izquierda",
+"definitionEs": null
+},
+"FMA:13381": {
+"labelEs": "romboides mayor derecho",
+"definitionEs": null
+},
+"FMA:37471": {
+"labelEs": "flexor corto del dedo pequeño del pie derecho",
+"definitionEs": null
+},
+"FMA:65199": {
+"labelEs": "cabeza superficial del flexor corto del pulgar izquierdo",
+"definitionEs": null
+},
+"FMA:71309": {
+"labelEs": "conjunto de interespinosos cervicales",
+"definitionEs": null
+},
+"FMA:83740": {
+"labelEs": "fosa interpeduncular",
+"definitionEs": null
+},
+"FMA:55686": {
+"labelEs": "canino inferior derecho",
+"definitionEs": null
+},
+"FMA:22546": {
+"labelEs": "extensor largo del dedo gordo derecho",
+"definitionEs": null
+},
+"FMA:37485": {
+"labelEs": "tercer lumbrical del pie derecho",
+"definitionEs": null
+},
+"FMA:37720": {
+"labelEs": "segundo lumbrical del pie izquierdo",
+"definitionEs": null
+},
+"FMA:46782": {
+"labelEs": "porción orbitaria del orbicular del ojo derecho",
+"definitionEs": null
+},
+"FMA:71443": {
+"labelEs": "conjunto de intertransversos cervicales posteriores",
+"definitionEs": null
+},
+"FMA:55799": {
+"labelEs": "canino superior izquierdo",
+"definitionEs": null
+},
+"FMA:34685": {
+"labelEs": "porción espinal del deltoides izquierdo",
+"definitionEs": null
+},
+"FMA:37697": {
+"labelEs": "cabeza lateral del tríceps braquial derecho",
+"definitionEs": null
+},
+"FMA:37741": {
+"labelEs": "tercer interóseo plantar del pie derecho",
+"definitionEs": null
+},
+"FMA:46121": {
+"labelEs": "cabeza oblicua del aductor del pulgar derecho",
+"definitionEs": null
+},
+"FMA:46796": {
+"labelEs": "corrugador superciliar derecho",
+"definitionEs": null
+},
+"FMA:49025": {
+"labelEs": "cabeza superior del pterigoideo lateral izquierdo",
+"definitionEs": null
+},
+"FMA:13505": {
+"labelEs": "disco intervertebral de la octava vértebra torácica",
+"definitionEs": null
+},
+"FMA:16036": {
+"labelEs": "disco intervertebral de la cuarta vértebra lumbar",
+"definitionEs": null
+},
+"FMA:8194": {
+"labelEs": "sexto cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:8248": {
+"labelEs": "séptimo cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:22879": {
+"labelEs": "multífido izquierdo",
+"definitionEs": null
+},
+"FMA:33587": {
+"labelEs": "porción descendente del trapecio izquierdo",
+"definitionEs": null
+},
+"FMA:46288": {
+"labelEs": "porción oblicua inferior del largo del cuello izquierdo",
+"definitionEs": null
+},
+"FMA:46785": {
+"labelEs": "porción palpebral del orbicular del ojo derecho",
+"definitionEs": null
+},
+"FMA:71444": {
+"labelEs": "conjunto de músculos intertransversos lumbares laterales",
+"definitionEs": null
+},
+"FMA:81753": {
+"labelEs": "rotador cervical izquierdo",
+"definitionEs": null
+},
+"FMA:76892": {
+"labelEs": "tenia omental",
+"definitionEs": null
+},
+"FMA:46019": {
+"labelEs": "cabeza oblicua del aductor del dedo gordo izquierdo",
+"definitionEs": null
+},
+"FMA:46284": {
+"labelEs": "porción oblicua superior del largo del cuello izquierdo",
+"definitionEs": null
+},
+"FMA:46763": {
+"labelEs": "temporoparietal derecho",
+"definitionEs": null
+},
+"FMA:72702": {
+"labelEs": "giro corto accesorio izquierdo",
+"definitionEs": null
+},
+"FMA:55697": {
+"labelEs": "segundo molar superior derecho",
+"definitionEs": null
+},
+"FMA:55705": {
+"labelEs": "primer molar inferior derecho",
+"definitionEs": null
+},
+"FMA:8275": {
+"labelEs": "séptimo cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:71567": {
+"labelEs": "conjunto de venas cardíacas anteriores",
+"definitionEs": null
+},
+"BP3D:BP47": {
+"labelEs": "cabeza cubital del extensor cubital del carpo derecho",
+"definitionEs": null
+},
+"FMA:23090": {
+"labelEs": "rotador lumbar izquierdo",
+"definitionEs": null
+},
+"FMA:37464": {
+"labelEs": "abductor del dedo pequeño del pie izquierdo",
+"definitionEs": null
+},
+"FMA:38638": {
+"labelEs": "cabeza humerocubital del flexor superficial de los dedos derecho",
+"definitionEs": null
+},
+"FMA:38641": {
+"labelEs": "cabeza radial del flexor superficial de los dedos izquierdo",
+"definitionEs": null
+},
+"FMA:42402": {
+"labelEs": "conjunto de interóseos palmares de la mano derecha",
+"definitionEs": null
+},
+"FMA:46020": {
+"labelEs": "cabeza transversa del aductor del dedo gordo derecho",
+"definitionEs": null
+},
+"FMA:55693": {
+"labelEs": "primer premolar inferior izquierdo",
+"definitionEs": null
+},
+"FMA:59815": {
+"labelEs": "porción labial de la boca",
+"definitionEs": null
+},
+"FMA:34691": {
+"labelEs": "porción clavicular del pectoral mayor izquierdo",
+"definitionEs": null
+},
+"FMA:37463": {
+"labelEs": "abductor del dedo pequeño del pie derecho",
+"definitionEs": null
+},
+"FMA:42405": {
+"labelEs": "conjunto de interóseos dorsales de la mano izquierda",
+"definitionEs": null
+},
+"FMA:43886": {
+"labelEs": "aductor mínimo derecho",
+"definitionEs": null
+},
+"FMA:46287": {
+"labelEs": "porción oblicua inferior del largo del cuello derecho",
+"definitionEs": null
+},
+"FMA:74141": {
+"labelEs": "conjunto de interóseos dorsales del pie izquierdo",
+"definitionEs": null
+},
+"FMA:72701": {
+"labelEs": "giro corto accesorio derecho",
+"definitionEs": null
+},
+"FMA:55694": {
+"labelEs": "primer premolar inferior derecho",
+"definitionEs": null
+},
+"FMA:55706": {
+"labelEs": "segundo molar inferior derecho",
+"definitionEs": null
+},
+"FMA:44249": {
+"labelEs": "ligamento plantar largo derecho",
+"definitionEs": null
+},
+"FMA:3840": {
+"labelEs": "rama interventricular posterior de la arteria coronaria derecha",
+"definitionEs": null
+},
+"FMA:32534": {
+"labelEs": "oblicuo superior de la cabeza derecho",
+"definitionEs": null
+},
+"FMA:37717": {
+"labelEs": "primer lumbrical del pie derecho",
+"definitionEs": null
+},
+"FMA:46111": {
+"labelEs": "cabeza profunda del flexor corto del pulgar izquierdo",
+"definitionEs": null
+},
+"FMA:74077": {
+"labelEs": "conjunto de elevadores cortos de las costillas derechos",
+"definitionEs": null
+},
+"FMA:72800": {
+"labelEs": "porción anterior del giro temporal superior derecho",
+"definitionEs": null
+},
+"FMA:55681": {
+"labelEs": "incisivo central superior derecho",
+"definitionEs": null
+},
+"BP3D:BP24": {
+"labelEs": "cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:13508": {
+"labelEs": "disco intervertebral de la undécima vértebra torácica",
+"definitionEs": null
+},
+"FMA:8058": {
+"labelEs": "tercer cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:37719": {
+"labelEs": "segundo lumbrical del pie derecho",
+"definitionEs": null
+},
+"FMA:37742": {
+"labelEs": "tercer interóseo plantar del pie izquierdo",
+"definitionEs": null
+},
+"FMA:46122": {
+"labelEs": "cabeza oblicua del aductor del pulgar izquierdo",
+"definitionEs": null
+},
+"FMA:71704": {
+"labelEs": "conjunto de cartílagos nasales",
+"definitionEs": null
+},
+"FMA:13506": {
+"labelEs": "disco intervertebral de la novena vértebra torácica",
+"definitionEs": null
+},
+"FMA:16035": {
+"labelEs": "disco intervertebral de la tercera vértebra lumbar",
+"definitionEs": null
+},
+"FMA:8005": {
+"labelEs": "primer cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:8070": {
+"labelEs": "quinto cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:7260": {
+"labelEs": "músculo papilar anterior del ventrículo derecho",
+"definitionEs": null
+},
+"FMA:38617": {
+"labelEs": "cabeza humeral del flexor cubital del carpo derecho",
+"definitionEs": null
+},
+"FMA:46018": {
+"labelEs": "cabeza oblicua del aductor del dedo gordo derecho",
+"definitionEs": null
+},
+"FMA:46285": {
+"labelEs": "porción vertical intermedia del largo del cuello derecho",
+"definitionEs": null
+},
+"FMA:79980": {
+"labelEs": "porción esternocostal del pectoral mayor izquierdo",
+"definitionEs": null
+},
+"FMA:55704": {
+"labelEs": "primer molar inferior izquierdo",
+"definitionEs": null
+},
+"FMA:4685": {
+"labelEs": "tronco de la arteria coronaria izquierda",
+"definitionEs": null
+},
+"FMA:23089": {
+"labelEs": "rotador lumbar derecho",
+"definitionEs": null
+},
+"FMA:34683": {
+"labelEs": "porción acromial del deltoides izquierdo",
+"definitionEs": null
+},
+"FMA:38562": {
+"labelEs": "cabeza cubital del pronador redondo derecho",
+"definitionEs": null
+},
+"FMA:42398": {
+"labelEs": "conjunto de lumbricales de la mano derecha",
+"definitionEs": null
+},
+"FMA:49023": {
+"labelEs": "cabeza inferior del pterigoideo lateral izquierdo",
+"definitionEs": null
+},
+"FMA:86035": {
+"labelEs": "oponente del dedo pequeño del pie izquierdo",
+"definitionEs": null
+},
+"FMA:57143": {
+"labelEs": "incisivo central inferior izquierdo",
+"definitionEs": null
+},
+"FMA:13503": {
+"labelEs": "disco intervertebral de la sexta vértebra torácica",
+"definitionEs": null
+},
+"FMA:34684": {
+"labelEs": "porción espinal del deltoides derecho",
+"definitionEs": null
+},
+"FMA:37696": {
+"labelEs": "cabeza medial del tríceps braquial izquierdo",
+"definitionEs": null
+},
+"FMA:46797": {
+"labelEs": "corrugador superciliar izquierdo",
+"definitionEs": null
+},
+"FMA:49024": {
+"labelEs": "cabeza superior del pterigoideo lateral derecho",
+"definitionEs": null
+},
+"BP3D:BP28": {
+"labelEs": "cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:13504": {
+"labelEs": "disco intervertebral de la séptima vértebra torácica",
+"definitionEs": null
+},
+"FMA:16037": {
+"labelEs": "disco intervertebral de la quinta vértebra lumbar",
+"definitionEs": null
+},
+"FMA:7976": {
+"labelEs": "cuarto cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:7262": {
+"labelEs": "músculo papilar septal del ventrículo derecho",
+"definitionEs": null
+},
+"FMA:13382": {
+"labelEs": "romboides mayor izquierdo",
+"definitionEs": null
+},
+"FMA:37472": {
+"labelEs": "flexor corto del dedo pequeño del pie izquierdo",
+"definitionEs": null
+},
+"FMA:79979": {
+"labelEs": "porción esternocostal del pectoral mayor derecho",
+"definitionEs": null
+},
+"BP3D:BP51": {
+"labelEs": "giro recto de los giros orbitarios",
+"definitionEs": null
+},
+"FMA:72804": {
+"labelEs": "porción posterior del giro temporal superior derecho",
+"definitionEs": null
+},
+"FMA:34680": {
+"labelEs": "porción clavicular del deltoides derecho",
+"definitionEs": null
+},
+"FMA:37744": {
+"labelEs": "segundo interóseo plantar del pie izquierdo",
+"definitionEs": null
+},
+"FMA:38561": {
+"labelEs": "cabeza humeral del pronador redondo izquierdo",
+"definitionEs": null
+},
+"FMA:46124": {
+"labelEs": "cabeza transversa del aductor del pulgar izquierdo",
+"definitionEs": null
+},
+"FMA:58776": {
+"labelEs": "tracto iliotibial derecho",
+"definitionEs": null
+},
+"FMA:55689": {
+"labelEs": "primer premolar superior derecho",
+"definitionEs": null
+},
+"FMA:57140": {
+"labelEs": "incisivo lateral inferior derecho",
+"definitionEs": null
+},
+"FMA:13500": {
+"labelEs": "disco intervertebral de la tercera vértebra torácica",
+"definitionEs": null
+},
+"FMA:16033": {
+"labelEs": "disco intervertebral de la primera vértebra lumbar",
+"definitionEs": null
+},
+"FMA:35193": {
+"labelEs": "membrana interósea de la pierna izquierda",
+"definitionEs": null
+},
+"FMA:3802": {
+"labelEs": "tronco de la arteria coronaria derecha",
+"definitionEs": null
+},
+"FMA:7266": {
+"labelEs": "músculo papilar posterior del ventrículo izquierdo",
+"definitionEs": null
+},
+"FMA:32537": {
+"labelEs": "oblicuo inferior de la cabeza izquierdo",
+"definitionEs": null
+},
+"FMA:37699": {
+"labelEs": "cabeza larga del tríceps braquial derecho",
+"definitionEs": null
+},
+"FMA:45889": {
+"labelEs": "cabeza larga del bíceps femoral izquierdo",
+"definitionEs": null
+},
+"FMA:51145": {
+"labelEs": "extensor corto del dedo gordo izquierdo",
+"definitionEs": null
+},
+"FMA:76775": {
+"labelEs": "conjunto de músculos intertransversos lumbares mediales",
+"definitionEs": null
+},
+"FMA:55682": {
+"labelEs": "incisivo central superior izquierdo",
+"definitionEs": null
+},
+"FMA:8031": {
+"labelEs": "segundo cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:8112": {
+"labelEs": "quinto cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:23083": {
+"labelEs": "rotador torácico",
+"definitionEs": null
+},
+"FMA:32535": {
+"labelEs": "oblicuo superior de la cabeza izquierdo",
+"definitionEs": null
+},
+"FMA:46110": {
+"labelEs": "cabeza profunda del flexor corto del pulgar derecho",
+"definitionEs": null
+},
+"FMA:46442": {
+"labelEs": "arco tendinoso del elevador del ano",
+"definitionEs": null
+},
+"FMA:74076": {
+"labelEs": "conjunto de elevadores largos de las costillas izquierdos",
+"definitionEs": null
+},
+"FMA:72801": {
+"labelEs": "porción anterior del giro temporal superior izquierdo",
+"definitionEs": null
+},
+"FMA:55680": {
+"labelEs": "incisivo lateral superior derecho",
+"definitionEs": null
+},
+"FMA:13509": {
+"labelEs": "disco intervertebral de la duodécima vértebra torácica",
+"definitionEs": null
+},
+"FMA:76751": {
+"labelEs": "conjunto de venas posteriores del ventrículo izquierdo",
+"definitionEs": null
+},
+"BP3D:BP45": {
+"labelEs": "cabeza humeral del extensor cubital del carpo derecho",
+"definitionEs": null
+},
+"FMA:37390": {
+"labelEs": "oponente del pulgar derecho",
+"definitionEs": null
+},
+"FMA:37466": {
+"labelEs": "cuadrado plantar izquierdo",
+"definitionEs": null
+},
+"FMA:38526": {
+"labelEs": "extensor del índice izquierdo",
+"definitionEs": null
+},
+"FMA:45874": {
+"labelEs": "porción abdominal del pectoral mayor derecho",
+"definitionEs": null
+},
+"FMA:55691": {
+"labelEs": "segundo premolar superior izquierdo",
+"definitionEs": null
+},
+"FMA:55703": {
+"labelEs": "segundo molar inferior izquierdo",
+"definitionEs": null
+},
+"FMA:7913": {
+"labelEs": "tercer cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:13384": {
+"labelEs": "romboides menor izquierdo",
+"definitionEs": null
+},
+"FMA:32536": {
+"labelEs": "oblicuo inferior de la cabeza derecho",
+"definitionEs": null
+},
+"FMA:37698": {
+"labelEs": "cabeza lateral del tríceps braquial izquierdo",
+"definitionEs": null
+},
+"FMA:45888": {
+"labelEs": "cabeza larga del bíceps femoral derecho",
+"definitionEs": null
+},
+"FMA:51144": {
+"labelEs": "extensor corto del dedo gordo derecho",
+"definitionEs": null
+},
+"FMA:74075": {
+"labelEs": "conjunto de elevadores largos de las costillas derechos",
+"definitionEs": null
+},
+"FMA:55683": {
+"labelEs": "incisivo lateral superior izquierdo",
+"definitionEs": null
+},
+"FMA:76994": {
+"labelEs": "rama posterolateral derecha de la arteria coronaria derecha",
+"definitionEs": null
+},
+"FMA:34681": {
+"labelEs": "porción clavicular del deltoides izquierdo",
+"definitionEs": null
+},
+"FMA:37745": {
+"labelEs": "primer interóseo plantar del pie derecho",
+"definitionEs": null
+},
+"FMA:38560": {
+"labelEs": "cabeza humeral del pronador redondo derecho",
+"definitionEs": null
+},
+"FMA:58777": {
+"labelEs": "tracto iliotibial izquierdo",
+"definitionEs": null
+},
+"FMA:71307": {
+"labelEs": "conjunto de interespinosos lumbares",
+"definitionEs": null
+},
+"FMA:55688": {
+"labelEs": "segundo premolar superior derecho",
+"definitionEs": null
+},
+"FMA:57141": {
+"labelEs": "incisivo lateral inferior izquierdo",
+"definitionEs": null
+},
+"FMA:13501": {
+"labelEs": "disco intervertebral de la cuarta vértebra torácica",
+"definitionEs": null
+},
+"FMA:35192": {
+"labelEs": "membrana interósea de la pierna derecha",
+"definitionEs": null
+},
+"FMA:13383": {
+"labelEs": "romboides menor derecho",
+"definitionEs": null
+},
+"BP3D:BP50": {
+"labelEs": "precúneo del lobulillo parietal superior derecho",
+"definitionEs": null
+},
+"FMA:72805": {
+"labelEs": "porción posterior del giro temporal superior izquierdo",
+"definitionEs": null
+},
+"BP3D:BP44": {
+"labelEs": "cabeza humeral del extensor cubital del carpo izquierdo",
+"definitionEs": null
+},
+"FMA:37391": {
+"labelEs": "oponente del pulgar izquierdo",
+"definitionEs": null
+},
+"FMA:45875": {
+"labelEs": "porción abdominal del pectoral mayor izquierdo",
+"definitionEs": null
+},
+"FMA:46283": {
+"labelEs": "porción oblicua superior del largo del cuello derecho",
+"definitionEs": null
+},
+"FMA:46764": {
+"labelEs": "temporoparietal izquierdo",
+"definitionEs": null
+},
+"FMA:55690": {
+"labelEs": "primer premolar superior izquierdo",
+"definitionEs": null
+},
+"FMA:23707": {
+"labelEs": "membrana interósea del antebrazo derecho",
+"definitionEs": null
+},
+"FMA:8221": {
+"labelEs": "sexto cartílago costal izquierdo",
+"definitionEs": null
+},
+"FMA:33584": {
+"labelEs": "porción transversa del trapecio derecho",
+"definitionEs": null
+},
+"FMA:38619": {
+"labelEs": "cabeza cubital del flexor cubital del carpo derecho",
+"definitionEs": null
+},
+"FMA:40120": {
+"labelEs": "retináculo flexor de la muñeca derecha",
+"definitionEs": null
+},
+"FMA:45974": {
+"labelEs": "cabeza lateral del flexor corto del dedo gordo izquierdo",
+"definitionEs": null
+},
+"FMA:46786": {
+"labelEs": "porción palpebral del orbicular del ojo izquierdo",
+"definitionEs": null
+},
+"FMA:55698": {
+"labelEs": "primer molar superior derecho",
+"definitionEs": null
+},
+"FMA:76891": {
+"labelEs": "tenia mesocólica",
+"definitionEs": null
+},
+"FMA:38455": {
+"labelEs": "pronador cuadrado izquierdo",
+"definitionEs": null
+},
+"FMA:45972": {
+"labelEs": "cabeza medial del flexor corto del dedo gordo izquierdo",
+"definitionEs": null
+},
+"FMA:71669": {
+"labelEs": "conjunto de ramas interventriculares septales de la arteria coronaria derecha",
+"definitionEs": null
+},
+"FMA:22878": {
+"labelEs": "multífido derecho",
+"definitionEs": null
+},
+"FMA:33586": {
+"labelEs": "porción descendente del trapecio derecho",
+"definitionEs": null
+},
+"FMA:37483": {
+"labelEs": "cuarto lumbrical del pie derecho",
+"definitionEs": null
+},
+"FMA:37700": {
+"labelEs": "cabeza larga del tríceps braquial izquierdo",
+"definitionEs": null
+},
+"FMA:45891": {
+"labelEs": "cabeza corta del bíceps femoral derecho",
+"definitionEs": null
+},
+"FMA:81752": {
+"labelEs": "rotador cervical derecho",
+"definitionEs": null
+},
+"FMA:76893": {
+"labelEs": "tenia libre",
+"definitionEs": null
+},
+"FMA:7886": {
+"labelEs": "segundo cartílago costal derecho",
+"definitionEs": null
+},
+"FMA:33585": {
+"labelEs": "porción transversa del trapecio izquierdo",
+"definitionEs": null
+},
+"FMA:38618": {
+"labelEs": "cabeza humeral del flexor cubital del carpo izquierdo",
+"definitionEs": null
+},
+"FMA:40121": {
+"labelEs": "retináculo flexor de la muñeca izquierda",
+"definitionEs": null
+},
+"FMA:45892": {
+"labelEs": "cabeza corta del bíceps femoral izquierdo",
+"definitionEs": null
+},
+"FMA:55699": {
+"labelEs": "primer molar superior izquierdo",
+"definitionEs": null
+},
+"FMA:34690": {
+"labelEs": "porción clavicular del pectoral mayor derecho",
+"definitionEs": null
+},
+"FMA:42404": {
+"labelEs": "conjunto de interóseos dorsales de la mano derecha",
+"definitionEs": null
+},
+"FMA:43887": {
+"labelEs": "aductor mínimo izquierdo",
+"definitionEs": null
+},
+"FMA:46286": {
+"labelEs": "porción vertical intermedia del largo del cuello izquierdo",
+"definitionEs": null
+},
+"FMA:74140": {
+"labelEs": "conjunto de interóseos dorsales del pie derecho",
+"definitionEs": null
+},
+"FMA:55695": {
+"labelEs": "segundo premolar inferior derecho",
+"definitionEs": null
+},
+"FMA:264840": {
+"labelEs": "tendón intermedio izquierdo",
+"definitionEs": null
+},
+"FMA:37695": {
+"labelEs": "cabeza medial del tríceps braquial derecho",
+"definitionEs": null
+},
+"FMA:37718": {
+"labelEs": "primer lumbrical del pie izquierdo",
+"definitionEs": null
+},
+"FMA:37743": {
+"labelEs": "segundo interóseo plantar del pie derecho",
+"definitionEs": null
+},
+"FMA:46123": {
+"labelEs": "cabeza transversa del aductor del pulgar derecho",
+"definitionEs": null
+},
+"FMA:74078": {
+"labelEs": "conjunto de elevadores cortos de las costillas izquierdos",
+"definitionEs": null
+},
+"FMA:13507": {
+"labelEs": "disco intervertebral de la décima vértebra torácica",
+"definitionEs": null
+},
+"FMA:16034": {
+"labelEs": "disco intervertebral de la segunda vértebra lumbar",
+"definitionEs": null
+},
+"FMA:7261": {
+"labelEs": "músculo papilar posterior del ventrículo derecho",
+"definitionEs": null
+},
+"FMA:33583": {
+"labelEs": "porción ascendente del trapecio izquierdo",
+"definitionEs": null
+},
+"FMA:37486": {
+"labelEs": "tercer lumbrical del pie izquierdo",
+"definitionEs": null
+},
+"FMA:38454": {
+"labelEs": "pronador cuadrado derecho",
+"definitionEs": null
+},
+"FMA:45973": {
+"labelEs": "cabeza lateral del flexor corto del dedo gordo derecho",
+"definitionEs": null
+},
+"FMA:23708": {
+"labelEs": "membrana interósea del antebrazo izquierdo",
+"definitionEs": null
+},
+"FMA:34682": {
+"labelEs": "porción acromial del deltoides derecho",
+"definitionEs": null
+},
+"FMA:37746": {
+"labelEs": "primer interóseo plantar del pie izquierdo",
+"definitionEs": null
+},
+"FMA:38563": {
+"labelEs": "cabeza cubital del pronador redondo izquierdo",
+"definitionEs": null
+},
+"FMA:38620": {
+"labelEs": "cabeza cubital del flexor cubital del carpo izquierdo",
+"definitionEs": null
+},
+"FMA:42399": {
+"labelEs": "conjunto de lumbricales de la mano izquierda",
+"definitionEs": null
+},
+"FMA:49022": {
+"labelEs": "cabeza inferior del pterigoideo lateral derecho",
+"definitionEs": null
+},
+"FMA:86034": {
+"labelEs": "oponente del dedo pequeño del pie derecho",
+"definitionEs": null
+},
+"FMA:57142": {
+"labelEs": "incisivo central inferior derecho",
+"definitionEs": null
+},
+"FMA:13502": {
+"labelEs": "disco intervertebral de la quinta vértebra torácica",
+"definitionEs": null
+},
+"FMA:11336": {
+"labelEs": "línea alba",
+"definitionEs": null
+},
+"FMA:22547": {
+"labelEs": "extensor largo del dedo gordo izquierdo",
+"definitionEs": null
+},
+"FMA:258850": {
+"labelEs": "tendón intermedio derecho",
+"definitionEs": null
+},
+"FMA:33581": {
+"labelEs": "porción ascendente del trapecio derecho",
+"definitionEs": null
+},
+"FMA:37484": {
+"labelEs": "cuarto lumbrical del pie izquierdo",
+"definitionEs": null
+},
+"FMA:45971": {
+"labelEs": "cabeza medial del flexor corto del dedo gordo derecho",
+"definitionEs": null
+},
+"FMA:46783": {
+"labelEs": "porción orbitaria del orbicular del ojo izquierdo",
+"definitionEs": null
+},
+"FMA:71442": {
+"labelEs": "conjunto de intertransversos cervicales anteriores",
+"definitionEs": null
+},
+"BP3D:BP49": {
+"labelEs": "precúneo del lobulillo parietal superior izquierdo",
+"definitionEs": null
+},
+"FMA:55798": {
+"labelEs": "canino superior derecho",
+"definitionEs": null
+},
+"FMA:10458": {
+"labelEs": "disco intervertebral de la primera vértebra torácica",
+"definitionEs": null
+},
+"FMA:13495": {
+"labelEs": "disco intervertebral de la segunda vértebra torácica",
+"definitionEs": null
+},
+"FMA:8167": {
+"labelEs": "cuarto cartílago costal izquierdo",
+"definitionEs": null
+}
+}

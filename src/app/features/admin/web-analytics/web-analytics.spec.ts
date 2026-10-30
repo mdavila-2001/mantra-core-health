@@ -42,6 +42,47 @@ describe('WebAnalytics', () => {
       notMeasured: [{ metric: 'duplicates', reason: 'No se persisten.' }],
     });
     http.expectOne(url('/admin/analytics/sessions')).flush({ window: W, items: [], nextCursor: null, limit: 50 });
+    http.expectOne((r) => r.url === '/admin/analytics/onboarding/funnel').flush({
+      formType: 'patient',
+      totalStarted: 1420,
+      totalCompleted: 532,
+      overallConversion: 0.3746,
+      bottleneckStepNumber: 3,
+      averageCompletionMinutes: 5.4,
+      steps: [
+        {
+          stepNumber: 1,
+          stepKey: 'identidad',
+          stepTitle: 'Identidad personal',
+          reachedCount: 1420,
+          conversionFromStart: 1,
+          conversionFromPrevious: null,
+          droppedFromPrevious: null,
+          averageDwellSeconds: 45,
+        },
+      ],
+    });
+    http.expectOne((r) => r.url === '/admin/analytics/onboarding/heatmap').flush({
+      formType: 'patient',
+      metric: 'errors',
+      totalInteractions: 500,
+      totalErrors: 40,
+      totalAbandons: 10,
+      fields: [
+        {
+          fieldKey: 'nationalId',
+          fieldLabel: 'Cédula de identidad (CI)',
+          stepNumber: 1,
+          stepKey: 'identidad',
+          interactionCount: 500,
+          errorCount: 40,
+          abandonmentCount: 10,
+          averageTimeMs: 2500,
+          thermalScore: 35,
+          thermalLevel: 'low',
+        },
+      ],
+    });
     fixture.detectChanges();
   }
 
@@ -60,6 +101,23 @@ describe('WebAnalytics', () => {
       notMeasured: [],
     });
     http.expectOne(url('/admin/analytics/sessions')).flush({ window: W, items: [], nextCursor: null, limit: 50 });
+    http.expectOne((r) => r.url === '/admin/analytics/onboarding/funnel').flush({
+      formType: 'patient',
+      totalStarted: 0,
+      totalCompleted: 0,
+      overallConversion: 0,
+      bottleneckStepNumber: 1,
+      averageCompletionMinutes: 0,
+      steps: [],
+    });
+    http.expectOne((r) => r.url === '/admin/analytics/onboarding/heatmap').flush({
+      formType: 'patient',
+      metric: 'errors',
+      totalInteractions: 0,
+      totalErrors: 0,
+      totalAbandons: 0,
+      fields: [],
+    });
   });
 
   it('muestra los totales con la definición del servidor', () => {
@@ -67,6 +125,22 @@ describe('WebAnalytics', () => {
     const texto = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="analytics-totals"]')!.textContent!;
     expect(texto).toContain('1500'.replace(/(\d)(?=(\d{3})+$)/g, '$1.'));
     expect(texto).toContain('no usuarios únicos');
+  });
+
+  it('el filtro del embudo de altas no ofrece «medical-center»: ni el simulador ni la API tienen su embudo y caería al de paciente', () => {
+    responder();
+    const opciones = (
+      fixture.componentInstance as unknown as { opcionesTipoAlta: readonly { value: string }[] }
+    ).opcionesTipoAlta;
+
+    expect(opciones.map((o) => o.value)).toEqual([
+      'patient',
+      'practitioner',
+      'organization',
+      'laboratory',
+      'imaging-center',
+      'pharmacy',
+    ]);
   });
 
   it('elegir 24 h pide intervalo por hora', () => {
@@ -89,5 +163,36 @@ describe('WebAnalytics', () => {
       notMeasured: [],
     });
     http.expectOne(url('/admin/analytics/sessions')).flush({ window: W, items: [], nextCursor: null, limit: 50 });
+    http.expectOne((r) => r.url === '/admin/analytics/onboarding/funnel').flush({
+      formType: 'patient',
+      totalStarted: 0,
+      totalCompleted: 0,
+      overallConversion: 0,
+      bottleneckStepNumber: 1,
+      averageCompletionMinutes: 0,
+      steps: [],
+    });
+    http.expectOne((r) => r.url === '/admin/analytics/onboarding/heatmap').flush({
+      formType: 'patient',
+      metric: 'errors',
+      totalInteractions: 0,
+      totalErrors: 0,
+      totalAbandons: 0,
+      fields: [],
+    });
+  });
+
+  it('renderiza la sección de Altas y Deserción con embudo y mapa de calor', () => {
+    responder();
+    const nat = fixture.nativeElement as HTMLElement;
+    const tabButtons = Array.from(nat.querySelectorAll<HTMLButtonElement>('button[role="tab"]'));
+    const altasTab = tabButtons.find((btn) => btn.textContent?.includes('Altas y Deserción'));
+    altasTab?.click();
+    fixture.detectChanges();
+
+    expect(nat.querySelector('[data-testid="analytics-onboarding-toolbar"]')).not.toBeNull();
+    expect(nat.querySelector('[data-testid="onboarding-kpi-totals"]')).not.toBeNull();
+    expect(nat.querySelector('[data-testid="onboarding-funnel-steps"]')).not.toBeNull();
+    expect(nat.querySelector('[data-testid="onboarding-heatmap-grid"]')).not.toBeNull();
   });
 });

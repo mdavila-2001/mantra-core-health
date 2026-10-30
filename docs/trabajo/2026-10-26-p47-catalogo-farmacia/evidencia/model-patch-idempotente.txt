@@ -1,0 +1,2 @@
+aplicación 1: exit 0
+aplicación 2: exit 0

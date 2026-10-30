@@ -14,6 +14,8 @@
 .responder__aviso {
   display: block;
   margin-block-end: var(--sp-4);
+  /* Al desplazarlo a la vista no queda pegado al borde ni bajo la cabecera fija. */
+  scroll-margin-block: var(--sp-6);
 }
 
 .responder__form {
@@ -39,4 +41,38 @@
   display: flex;
   justify-content: flex-end;
   margin-block-start: var(--sp-2);
+}
+
+/* ---- Después de enviar: ofrecer la reseña pública ------------------------ */
+
+.responder__resena {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.responder__resena-titulo {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  margin: 0;
+}
+
+.responder__resena-texto {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* La frase de privacidad es la que decide si alguien acepta o no: va visible,
+   no escondida como letra chica. */
+.responder__resena-aviso {
+  color: var(--text-primary);
+  margin: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 3px solid var(--brand-primary);
+}
+
+.responder__resena-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
 }

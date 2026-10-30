@@ -21,8 +21,8 @@ import { InformedConsentsClient } from '../../../../core/data-access/informed-co
 import {
   INFORMED_CONSENT_EXCEPTIONS,
   INFORMED_CONSENT_GRANTORS,
-  violacionesDeLosCampos,
-  violacionesDelConsentimiento,
+  violationsFromFields,
+  consentRuleViolations,
   type CreateInformedConsentInput,
   type InformedConsent,
   type InformedConsentChannel,
@@ -55,39 +55,25 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { AttachmentDialog } from '../../../../shared/components/organisms/attachment-dialog/attachment-dialog';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { mensajeDeEscritura, mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeMessage, writeFailureMessage } from '../../write-message';
 import { InformedConsentBadge } from './informed-consent-badge';
 import {
-  AYUDA_DERIVACION,
-  AYUDA_EXPEDIENTE,
-  AYUDA_TESTIGO,
-  CITA_CPE_44,
-  estadoDelConsentimiento,
-  estadoDeLaFirma,
-  IDIOMAS_DE_LA_INFORMACION,
-  MENSAJE_DE_LA_REGLA,
-  NOMBRE_DE_LA_EXCEPCION,
-  NOMBRE_DEL_CANAL,
-  NOMBRE_DEL_OBJETO,
-  NOMBRE_DEL_OTORGANTE,
-  PESTANA_DE_LA_REGLA,
-} from './informed-consent.textos';
-
-/** Las cuatro pestañas, en el orden en que se recorre el consentimiento. */
-const PESTANAS = ['Información', 'Quién otorga', 'Decisión', 'Historial y revocación'] as const;
-
-/** Cada regla, con la clave del campo que señala (para el foco y el `tocado`). */
-const CAMPO_DE_LA_REGLA: Readonly<Record<InformedConsentRuleViolation, string>> = {
-  TARGET_PAIR_INCOMPLETE: 'proposito',
-  PURPOSE_REQUIRED: 'proposito',
-  BENEFITS_REQUIRED: 'beneficios',
-  RISKS_REQUIRED: 'riesgos',
-  REPRESENTATIVE_NAME_REQUIRED: 'representante',
-  REPRESENTATIVE_RELATIONSHIP_REQUIRED: 'parentesco',
-  ASSENT_REQUIRED: 'asentimiento',
-  EXCEPTION_JUSTIFICATION_REQUIRED: 'justificacion',
-  REVOCATION_RIGHT_REQUIRED: 'revocabilidad',
-};
+  REFERRAL_HELP,
+  CHART_HELP,
+  WITNESS_HELP,
+  CPE_44_QUOTE,
+  consentState,
+  signatureState,
+  INFORMATION_LANGUAGES,
+  RULE_MESSAGE,
+  EXCEPTION_NAME,
+  CHANNEL_NAME,
+  TARGET_NAME,
+  GRANTOR_NAME,
+  RULE_TAB,
+  CONSENT_TABS,
+  FIELD_BY_RULE,
+} from './informed-consent.texts';
 
 /**
  * **Consentimiento informado DIRIGIDO** a una indicación concreta: una receta,
@@ -113,7 +99,7 @@ const CAMPO_DE_LA_REGLA: Readonly<Record<InformedConsentRuleViolation, string>> 
  *
  * ## Validación igual a la de la API, y la API manda
  *
- * Las reglas son `violacionesDelConsentimiento`, la misma función que usa el
+ * Las reglas son `consentRuleViolations`, la misma función que usa el
  * simulador y la copia exacta del contrato §2. Se muestran al salir del campo
  * o al intentar registrar —no a cada tecla—; al intentar, el foco va al primer
  * error y su pestaña se abre. Si el servidor igual rechaza, su motivo se
@@ -171,14 +157,14 @@ export class InformedConsentPanel {
 
   /* -- Textos ------------------------------------------------------------- */
 
-  protected readonly citaCpe = CITA_CPE_44;
-  protected readonly ayudaExpediente = AYUDA_EXPEDIENTE;
-  protected readonly nombreDelCanal = NOMBRE_DEL_CANAL;
-  protected readonly nombreDelOtorgante = NOMBRE_DEL_OTORGANTE;
-  protected readonly nombreDeLaExcepcion = NOMBRE_DE_LA_EXCEPCION;
+  protected readonly citaCpe = CPE_44_QUOTE;
+  protected readonly ayudaExpediente = CHART_HELP;
+  protected readonly nombreDelCanal = CHANNEL_NAME;
+  protected readonly nombreDelOtorgante = GRANTOR_NAME;
+  protected readonly nombreDeLaExcepcion = EXCEPTION_NAME;
   protected readonly otorgantes = INFORMED_CONSENT_GRANTORS;
   protected readonly excepciones = INFORMED_CONSENT_EXCEPTIONS;
-  protected readonly nombreDelObjeto = computed(() => NOMBRE_DEL_OBJETO[this.targetType()]);
+  protected readonly nombreDelObjeto = computed(() => TARGET_NAME[this.targetType()]);
 
   /* -- Lectura ------------------------------------------------------------ */
 
@@ -187,7 +173,7 @@ export class InformedConsentPanel {
 
   protected readonly historial = computed(() => dataOf(this.lectura()) ?? []);
   protected readonly vigente = computed(() => this.historial()[0] ?? null);
-  protected readonly estado = computed(() => estadoDelConsentimiento(this.vigente()));
+  protected readonly estado = computed(() => consentState(this.vigente()));
   /** Sólo un consentimiento activo se revoca; uno ya revocado devolvería 409. */
   protected readonly revocable = computed(() => this.vigente()?.status === 'ACTIVE');
 
@@ -241,10 +227,10 @@ export class InformedConsentPanel {
     return elegido === 'OTRO' ? this.otroIdioma().trim() : elegido;
   });
 
-  protected readonly idiomas = IDIOMAS_DE_LA_INFORMACION;
-  protected readonly ayudaTestigo = AYUDA_TESTIGO;
-  protected readonly ayudaDerivacion = AYUDA_DERIVACION;
-  protected readonly firma = computed(() => estadoDeLaFirma(this.vigente()));
+  protected readonly idiomas = INFORMATION_LANGUAGES;
+  protected readonly ayudaTestigo = WITNESS_HELP;
+  protected readonly ayudaDerivacion = REFERRAL_HELP;
+  protected readonly firma = computed(() => signatureState(this.vigente()));
   /** Abre el adjuntador de la firma escaneada. */
   protected readonly adjuntandoFirma = signal(false);
   /** Liga el archivo subido como evidencia del consentimiento vigente. */
@@ -259,12 +245,12 @@ export class InformedConsentPanel {
   });
   protected readonly informePosterior = signal<ViewState<null>>(ready(null));
   protected readonly errorDelInformePosterior = computed(() =>
-    mensajeDeEscritura(this.informePosterior(), { accion: 'registrar que se informó' }),
+    writeMessage(this.informePosterior(), { accion: 'registrar que se informó' }),
   );
 
   /** S3 sin atención: la próxima acción es abrirla. */
   protected readonly sinEncuentro = empty(
-    { label: 'Abrí un encuentro para registrar el consentimiento' },
+    { label: 'Abra un encuentro para registrar el consentimiento' },
     'El consentimiento se registra dentro de una atención: es la que queda en el expediente como el momento en que se informó.',
   );
 
@@ -325,9 +311,9 @@ export class InformedConsentPanel {
   private readonly violacionesDelServidor = signal<readonly InformedConsentRuleViolation[]>([]);
 
   protected readonly violaciones = computed(() => {
-    const locales = violacionesDelConsentimiento(this.borrador());
-    const delServidor = this.violacionesDelServidor().filter((v) => !locales.includes(v));
-    return [...locales, ...delServidor];
+    const locales = consentRuleViolations(this.borrador());
+    const fromServer = this.violacionesDelServidor().filter((v) => !locales.includes(v));
+    return [...locales, ...fromServer];
   });
 
   /** Falta elegir cuál excepción: no es regla del servidor, es un control sin respuesta. */
@@ -340,12 +326,12 @@ export class InformedConsentPanel {
   /** El error de un campo, si ya se tocó o se intentó registrar. */
   protected errorDe(campo: string): string {
     if (!this.intento() && !this.tocados().has(campo)) return '';
-    if (campo === 'decision') return this.faltaDecision() ? 'Elegí si la persona acepta o no acepta.' : '';
+    if (campo === 'decision') return this.faltaDecision() ? 'Elija si la persona acepta o no acepta.' : '';
     if (campo === 'excepcion') {
-      return this.faltaTipoDeExcepcion() ? 'Elegí cuál excepción se aplica.' : '';
+      return this.faltaTipoDeExcepcion() ? 'Elija cuál excepción se aplica.' : '';
     }
-    const regla = this.violaciones().find((v) => CAMPO_DE_LA_REGLA[v] === campo);
-    return regla === undefined ? '' : MENSAJE_DE_LA_REGLA[regla];
+    const regla = this.violaciones().find((v) => FIELD_BY_RULE[v] === campo);
+    return regla === undefined ? '' : RULE_MESSAGE[regla];
   }
 
   protected tocar(campo: string): void {
@@ -357,29 +343,29 @@ export class InformedConsentPanel {
   protected readonly resumenDeErrores = computed<readonly { texto: string; pestana: number; campo: string }[]>(() => {
     if (!this.intento()) return [];
     const lista = this.violaciones().map((v) => ({
-      texto: MENSAJE_DE_LA_REGLA[v],
-      pestana: PESTANA_DE_LA_REGLA[v],
-      campo: CAMPO_DE_LA_REGLA[v],
+      texto: RULE_MESSAGE[v],
+      pestana: RULE_TAB[v],
+      campo: FIELD_BY_RULE[v],
     }));
     if (this.faltaTipoDeExcepcion()) {
-      lista.push({ texto: 'Elegí cuál excepción se aplica.', pestana: 2, campo: 'excepcion' });
+      lista.push({ texto: 'Elija cuál excepción se aplica.', pestana: 2, campo: 'excepcion' });
     }
     if (this.faltaDecision()) {
-      lista.push({ texto: 'Elegí si la persona acepta o no acepta.', pestana: 2, campo: 'decision' });
+      lista.push({ texto: 'Elija si la persona acepta o no acepta.', pestana: 2, campo: 'decision' });
     }
     return lista.sort((a, b) => a.pestana - b.pestana);
   });
 
   /** «completa» / «falta algo», por pestaña: el progreso sin contar pasos. */
   private readonly pestanaCompleta = computed(() => {
-    const porPestana = [true, true, true];
-    for (const v of this.violaciones()) porPestana[PESTANA_DE_LA_REGLA[v]] = false;
-    if (this.faltaDecision() || this.faltaTipoDeExcepcion()) porPestana[2] = false;
-    return porPestana;
+    const tabsComplete = [true, true, true];
+    for (const v of this.violaciones()) tabsComplete[RULE_TAB[v]] = false;
+    if (this.faltaDecision() || this.faltaTipoDeExcepcion()) tabsComplete[2] = false;
+    return tabsComplete;
   });
 
   protected readonly rotulos = computed(() =>
-    PESTANAS.map((nombre, i) => {
+    CONSENT_TABS.map((nombre, i) => {
       if (i === 3) return `${i + 1} · ${nombre} (${this.historial().length})`;
       return `${i + 1} · ${nombre} · ${this.pestanaCompleta()[i] ? 'lista' : 'falta'}`;
     }),
@@ -409,16 +395,16 @@ export class InformedConsentPanel {
   });
 
   protected readonly errorDelRegistro = computed(() =>
-    mensajeDeEscritura(this.registro(), { accion: 'registrar el consentimiento' }),
+    writeMessage(this.registro(), { accion: 'registrar el consentimiento' }),
   );
 
   protected readonly errorDeLaRevocacion = computed(() =>
-    mensajeDeEscritura(this.revocacion(), { accion: 'revocar el consentimiento' }),
+    writeMessage(this.revocacion(), { accion: 'revocar el consentimiento' }),
   );
 
   protected readonly errorDeLectura = computed(() => {
     const l = this.lectura();
-    return l.status === 'validation' ? null : mensajeDeFalloDeEscritura(l as ViewState<null>, {
+    return l.status === 'validation' ? null : writeFailureMessage(l as ViewState<null>, {
       accion: 'ver los consentimientos',
     });
   });
@@ -475,7 +461,7 @@ export class InformedConsentPanel {
     if (vigente === null) return;
     const ok = await this.dialogs.confirm({
       title: 'Registrar que se informó después de la urgencia',
-      message: 'Dejá constancia de que ya se le explicó a la persona o a su familia lo que se hizo y por qué. Queda con la fecha y hora de ahora.',
+      message: 'Deje constancia de que ya se le explicó a la persona o a su familia lo que se hizo y por qué. Queda con la fecha y hora de ahora.',
       confirmLabel: 'Registrar que se informó',
       cancelLabel: 'Todavía no',
     });
@@ -538,10 +524,10 @@ export class InformedConsentPanel {
           const cuerpo = error instanceof HttpErrorResponse ? readApiError(error) : null;
           const campos = cuerpo?.details?.['fields'];
           if (Array.isArray(campos)) {
-            const reglas = violacionesDeLosCampos(campos.filter((c): c is string => typeof c === 'string'));
+            const reglas = violationsFromFields(campos.filter((c): c is string => typeof c === 'string'));
             this.violacionesDelServidor.set(reglas);
             const primera = reglas[0];
-            if (primera !== undefined) this.irA(PESTANA_DE_LA_REGLA[primera], CAMPO_DE_LA_REGLA[primera]);
+            if (primera !== undefined) this.irA(RULE_TAB[primera], FIELD_BY_RULE[primera]);
           }
         },
       });
@@ -550,7 +536,7 @@ export class InformedConsentPanel {
   protected async revocar(): Promise<void> {
     const vigente = this.vigente();
     if (vigente === null || vigente.status !== 'ACTIVE') return;
-    const motivo = await this.dialogs.confirmWithReason(
+    const reason = await this.dialogs.confirmWithReason(
       {
         title: 'Revocar el consentimiento',
         message: `${this.nombreDelObjeto()}: ${this.targetLabel()}. La revocación no afecta lo ya realizado y queda en el expediente con su motivo.`,
@@ -566,9 +552,9 @@ export class InformedConsentPanel {
         maxLength: 1000,
       },
     );
-    if (motivo === null) return;
+    if (reason === null) return;
     this.revocacion.set(loading());
-    this.client.withdraw(vigente.id, motivo).subscribe({
+    this.client.withdraw(vigente.id, reason).subscribe({
       next: (revocado) => {
         this.revocacion.set(ready(null));
         this.consentChanged.emit(revocado);
@@ -593,11 +579,11 @@ export class InformedConsentPanel {
   }
 
   protected nombreDelOtorganteDe(c: InformedConsent): string {
-    return c.grantedBy === null ? '—' : NOMBRE_DEL_OTORGANTE[c.grantedBy];
+    return c.grantedBy === null ? '—' : GRANTOR_NAME[c.grantedBy];
   }
 
   protected estadoDe(c: InformedConsent) {
-    return estadoDelConsentimiento(c);
+    return consentState(c);
   }
 }
 

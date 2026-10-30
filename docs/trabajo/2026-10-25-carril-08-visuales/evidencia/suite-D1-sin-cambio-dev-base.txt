@@ -1,0 +1,6 @@
+# Salida recortada: resumen y líneas FAIL (la salida completa pesa 552381 bytes)
+ FAIL   mantra-core-health  src/app/core/mock/fixtures/standard-sheets.spec.ts > las fichas clínicas estándar del simulador > son tantas como los JSON que siembra el backend
+AssertionError: expected 374 to be 370 // Object.is equality
+ Test Files  1 failed | 896 passed (897)
+      Tests  1 failed | 12286 passed (12287)
+   Duration  143.32s (transform 206.33s, setup 9.56s, import 72.53s, tests 472.63s, environment 1585.63s)

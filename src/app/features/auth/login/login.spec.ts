@@ -19,6 +19,8 @@ function makeToken(claims: Record<string, unknown>): string {
 
 const UN_TENANT = makeToken({ sub: 'u-1', sid: 's-1', roles: ['USER'], tenants: ['t-1'] });
 const DOS_TENANTS = makeToken({ sub: 'u-1', sid: 's-1', roles: ['USER'], tenants: ['t-1', 't-2'] });
+const sessionWithRoles = (roles: string[], tenants: string[] = ['t-1']) =>
+  makeToken({ sub: 'u-1', sid: 's-1', roles, tenants });
 
 function tokens(accessToken: string) {
   return { accessToken, refreshToken: 'r-1', expiresAt: '2026-08-01T12:00:00.000Z' };
@@ -39,6 +41,15 @@ class AlmacenFalso {
   clear(): void {
     this.value = null;
   }
+
+  /** La organización recordada por persona (TX-11): el login la consulta al abrir. */
+  readSelectedTenant(): string | null {
+    return null;
+  }
+
+  writeSelectedTenant(): void {
+    /* no-op */
+  }
 }
 
 describe('Login', () => {
@@ -46,6 +57,7 @@ describe('Login', () => {
   let component: Login;
   let http: HttpTestingController;
   let navegaciones: string[];
+  let realNavigate: Router['navigateByUrl'];
 
   beforeEach(async () => {
     navegaciones = [];
@@ -57,12 +69,16 @@ describe('Login', () => {
         provideHttpClientTesting(),
         // Router real: la plantilla tiene `routerLink` y necesita su contexto.
         // Se espía `navigateByUrl` en vez de reemplazar el servicio entero.
-        provideRouter([]),
+        // Una ruta comodín: los casos de `returnUrl` navegan de verdad con el
+        // router real (antes de espiar `navigateByUrl`) para que el
+        // `ActivatedRoute` de la pantalla vea el query.
+        provideRouter([{ path: '**', children: [] }]),
         { provide: RefreshTokenStorage, useClass: AlmacenFalso },
       ],
     }).compileComponents();
 
     const router = TestBed.inject(Router);
+    realNavigate = router.navigateByUrl.bind(router);
     router.navigateByUrl = ((url: string) => {
       navegaciones.push(String(url));
       return Promise.resolve(true);
@@ -81,6 +97,45 @@ describe('Login', () => {
   function completar(identifier: string, password = 'secreto'): void {
     component.form.setValue({ identifier, password, mfaCode: '' });
   }
+
+  describe('cuenta de administración local (sólo desarrollo)', () => {
+    /** El recuadro se decide tras el primer render, en el navegador. */
+    async function mostrarCuentaLocal(): Promise<void> {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    it('muestra el correo y la contraseña escritos, para copiarlos', async () => {
+      await mostrarCuentaLocal();
+      const el = fixture.nativeElement as HTMLElement;
+
+      expect(el.querySelector('[data-testid="login-local-correo"]')?.textContent).toBe(
+        'admin@alovidasalud.com',
+      );
+      expect(el.querySelector('[data-testid="login-local-clave"]')?.textContent).toBe('12345678');
+    });
+
+    it('«Usar estas credenciales» rellena el formulario pero no envía nada', async () => {
+      await mostrarCuentaLocal();
+      (fixture.nativeElement.querySelector('[data-testid="login-local-usar"]') as HTMLElement).click();
+
+      expect(component.form.getRawValue()).toMatchObject({
+        identifier: 'admin@alovidasalud.com',
+        password: '12345678',
+      });
+      // `http.verify()` del afterEach falla si salió alguna petición.
+    });
+
+    it('con la cuenta rellenada, entrar manda correo y contraseña por la vía normal', async () => {
+      await mostrarCuentaLocal();
+      (fixture.nativeElement.querySelector('[data-testid="login-local-usar"]') as HTMLElement).click();
+      component.submit();
+
+      const req = http.expectOne('/iam/auth/login');
+      expect(req.request.body).toEqual({ email: 'admin@alovidasalud.com', password: '12345678' });
+    });
+  });
 
   describe('identificador dual', () => {
     it('lo que tiene arroba se manda como correo', () => {
@@ -126,6 +181,70 @@ describe('Login', () => {
       http.expectOne('/iam/auth/login').flush(tokens(DOS_TENANTS));
 
       expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+    });
+
+    describe('elegir portal (administración y reportería)', () => {
+      function loginWith(token: string): void {
+        completar('admin@mantra.test');
+        component.submit();
+        http.expectOne('/iam/auth/login').flush(tokens(token));
+      }
+
+      it('con acceso a administración Y a reportería va al selector de portal', () => {
+        loginWith(sessionWithRoles(['SECURITY_ADMIN', 'REPORTING_ADMIN']));
+
+        expect(navegaciones).toEqual(['/portal-selector']);
+      });
+
+      it('SUPERADMIN, que pasa por todo, también elige', () => {
+        loginWith(sessionWithRoles(['SUPERADMIN']));
+
+        expect(navegaciones).toEqual(['/portal-selector']);
+      });
+
+      it('solo administración va al inicio, sin pantalla de paso', () => {
+        loginWith(sessionWithRoles(['SECURITY_ADMIN']));
+
+        expect(navegaciones).toEqual(['/']);
+      });
+
+      it('solo reportería (sin rol de administración) entra derecho a su portal, sin pantalla de paso', () => {
+        loginWith(sessionWithRoles(['REPORT_VIEWER']));
+
+        expect(navegaciones).toEqual(['/reports']);
+      });
+
+      it('un paciente va al inicio', () => {
+        loginWith(sessionWithRoles(['PATIENT']));
+
+        expect(navegaciones).toEqual(['/']);
+      });
+
+      it('un returnUrl interno manda sobre el selector', async () => {
+        await realNavigate('/auth?returnUrl=%2Fp%2Fdra-rojas');
+        loginWith(sessionWithRoles(['SECURITY_ADMIN', 'REPORTING_ADMIN']));
+
+        expect(navegaciones).toEqual(['/p/dra-rojas']);
+      });
+
+      it('un returnUrl externo se ignora y se elige portal', async () => {
+        await realNavigate('/auth?returnUrl=%2F%2Fotro-sitio.example');
+        loginWith(sessionWithRoles(['SECURITY_ADMIN', 'REPORTING_ADMIN']));
+
+        expect(navegaciones).toEqual(['/portal-selector']);
+      });
+
+      it('sin organización el flujo existente queda intacto (no hay selector)', () => {
+        loginWith(sessionWithRoles(['SECURITY_ADMIN', 'REPORTING_ADMIN'], []));
+
+        expect(navegaciones).toEqual(['/administration/medical-organization?tab=memberships']);
+      });
+
+      it('con varias organizaciones por elegir, primero se elige organización', () => {
+        loginWith(sessionWithRoles(['SECURITY_ADMIN', 'REPORTING_ADMIN'], ['t-1', 't-2']));
+
+        expect(navegaciones).toEqual([TENANT_SELECTION_ROUTE]);
+      });
     });
   });
 

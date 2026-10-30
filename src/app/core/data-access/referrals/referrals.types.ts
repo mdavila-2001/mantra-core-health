@@ -1,28 +1,26 @@
 /* ============================================================================
-    Derivaciones (`clinical_ext.referrals`): mandar a la persona a otro
-    profesional, a otra organización o sede, o fuera de la plataforma, para
-    un servicio concreto.
+    Derivaciones (`/referrals`, módulo `clinical_ext`).
 
-    Tipos de la vista, no DTOs: las fechas ya son `Date` y lo opcional es
-    `undefined`, nunca `null` (se limpia en el cliente).
+    El médico deriva a la persona a otro profesional (pedido del propietario,
+    24/10/2026) o a una organización médica, por un servicio concreto de su
+    catálogo («derivación de servicios específicos… tipo tratamiento», pedido
+    del cliente, 28/10/2026).
 
-    La norma boliviana de referencia y contrarreferencia (Ministerio de Salud y
-    Deportes) pide que la referencia viaje con resumen clínico, diagnóstico y
-    tratamiento realizado, y que el destino devuelva la contrarreferencia. El
-    modelo lo refleja campo por campo; ver el contrato §1.2.
+    Son los tipos de la vista: el cliente normaliza en la frontera
+    (`core/data-access/wire.ts`) y acá no llegan ni `null` ni fechas en texto.
     ========================================================================== */
 
 /**
- * Qué clase de derivación es.
- *
- * El orden es el del formulario: de la consulta, que es lo más común, a la
- * internación, y «Otro» al final.
+ * Qué se le pide al destino. Los ocho códigos que acepta `POST /referrals`
+ * (`REFERRAL_TYPES` de `clinical_ext/dto/referral.dto.ts`, API v4266), en el
+ * orden en que se ofrecen. La API los guarda como conceptos `REF_TYPE_*`.
  */
 export const REFERRAL_TYPES = [
-  'CONSULTATION',
   'TREATMENT',
+  'CONSULTATION',
+  'DIAGNOSTIC_STUDY',
   'PROCEDURE',
-  'DIAGNOSTIC',
+  'SECOND_OPINION',
   'THERAPY',
   'HOSPITALIZATION',
   'OTHER',
@@ -34,18 +32,18 @@ export type ReferralType = (typeof REFERRAL_TYPES)[number];
  * Los tipos que **ofrecen** el consentimiento informado dirigido a la
  * derivación: los que llevan a un acto sobre el cuerpo o a un estudio.
  *
- * Una interconsulta no consiente nada por sí misma —lo que se decida ahí se
- * consiente ahí— y «Otro» no dice qué se va a hacer.
+ * Una interconsulta o una segunda opinión no consienten nada por sí mismas
+ * —lo que se decida ahí se consiente ahí— y «Otro» no dice qué se va a hacer.
  */
 export const REFERRAL_TYPES_WITH_CONSENT: ReadonlySet<ReferralType> = new Set<ReferralType>([
   'TREATMENT',
   'PROCEDURE',
+  'DIAGNOSTIC_STUDY',
   'THERAPY',
   'HOSPITALIZATION',
-  'DIAGNOSTIC',
 ]);
 
-/** Estado legible que la API deriva de `statusConceptId`. */
+/** Estado legible que la API deriva del concepto de estado (`ReferralResponseDto.status`). */
 export const REFERRAL_STATUSES = [
   'PENDING',
   'ACCEPTED',
@@ -56,98 +54,8 @@ export const REFERRAL_STATUSES = [
 
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 
-/** La decisión del destino. */
+/** La decisión del destino (`PATCH /referrals/:id/respond`). */
 export type ReferralDecision = 'ACCEPT' | 'REJECT';
-
-/** Una derivación, tal como la pinta la pantalla. */
-export interface Referral {
-  readonly id: string;
-  readonly patientProfileId: string;
-  readonly sourceEncounterId?: string;
-  readonly referringProfileId?: string;
-
-  /**
-   * `undefined` en las filas anteriores al patch v4263: la columna es
-   * nullable a propósito y la pantalla las rotula «Sin tipo».
-   */
-  readonly referralType?: ReferralType;
-
-  /* -- El destino: al menos uno de los cuatro (lo valida la API) ---------- */
-  readonly targetProfileId?: string;
-  readonly targetTenantId?: string;
-  readonly targetBranchId?: string;
-  readonly targetExternalName?: string;
-  readonly targetExternalContact?: string;
-  /** Resueltos por la API cuando es barato; si no, la pantalla no inventa. */
-  readonly targetProfileName?: string;
-  readonly targetTenantName?: string;
-  readonly targetBranchName?: string;
-
-  /* -- Qué se pide y por qué --------------------------------------------- */
-  readonly specialtyConceptId?: string;
-  readonly requestedServiceText?: string;
-  readonly requestedServiceConceptId?: string;
-  readonly reasonConceptId?: string;
-  readonly reasonText?: string;
-  readonly diagnosisText?: string;
-  readonly clinicalSummary?: string;
-  readonly treatmentGivenText?: string;
-
-  readonly priorityConceptId?: string;
-
-  /**
-   * El estado en palabras estables. `undefined` si la API todavía no lo deriva
-   * (la versión anterior sólo devolvía `statusConceptId`).
-   */
-  readonly status?: ReferralStatus;
-  readonly statusConceptId: string;
-
-  /** Día de vencimiento (fecha, no instante). */
-  readonly validUntil?: Date;
-  readonly respondedAt?: Date;
-  readonly rejectReason?: string;
-  readonly counterReferralText?: string;
-  readonly counterReferralAt?: Date;
-  /**
-   * El consentimiento ACEPTADO y vigente vinculado. Lo escribe la API al
-   * registrarlo con `targetType=REFERRAL`; al revocarlo vuelve a vacío.
-   */
-  readonly informedConsentId?: string;
-  readonly createdAt: Date;
-}
-
-/**
- * Lo que hace falta para emitir una derivación (`POST /referrals`).
- *
- * `referralType`, `requestedServiceText` y `clinicalSummary` son obligatorios
- * para toda derivación nueva —la API los exige juntos—, y el destino es al
- * menos uno de `targetProfileId` / `targetTenantId` / `targetBranchId` /
- * `targetExternalName`. Ver {@link problemasDeDerivacion}.
- */
-export interface CreateReferralInput {
-  readonly patientProfileId: string;
-  readonly referralType: ReferralType;
-  readonly sourceEncounterId?: string;
-  readonly referringProfileId?: string;
-  readonly targetProfileId?: string;
-  readonly targetTenantId?: string;
-  readonly targetBranchId?: string;
-  readonly targetExternalName?: string;
-  readonly targetExternalContact?: string;
-  readonly specialtyConceptId?: string;
-  readonly requestedServiceText: string;
-  readonly requestedServiceConceptId?: string;
-  readonly reasonText?: string;
-  readonly diagnosisText?: string;
-  readonly clinicalSummary: string;
-  readonly treatmentGivenText?: string;
-  readonly priorityConceptId?: string;
-  /** Viaja como `YYYY-MM-DD` del día local. */
-  readonly validUntil?: Date;
-  // Sin `informedConsentId`: la API lo rechaza en el alta (400
-  // REFERRAL_CONSENT_LINK_NOT_ALLOWED). El vínculo lo escribe la API al
-  // registrar un consentimiento ACCEPTED con targetType=REFERRAL.
-}
 
 /** Cuerpo de `PATCH /referrals/:id/respond`. */
 export interface RespondReferralInput {
@@ -161,7 +69,6 @@ export const REFERRAL_LIMITS = {
   requestedServiceText: 500,
   targetExternalName: 200,
   targetExternalContact: 200,
-  reasonText: 1000,
   diagnosisText: 4000,
   clinicalSummary: 8000,
   treatmentGivenText: 4000,
@@ -169,122 +76,266 @@ export const REFERRAL_LIMITS = {
   counterReferralText: 8000,
 } as const;
 
+/** Si el destino es una persona o una organización médica. */
+export type ReferralTargetKind = 'PRACTITIONER' | 'ORGANIZATION';
+
+/**
+ * Claves del alta que la API agrega con la derivación por servicio y que el
+ * `openapi.json` del que sale el contrato de la maqueta todavía no declara.
+ *
+ * **No** son «sólo simulador»: van también a la API real, que es la que las
+ * publica. Se registran en `core/mock/contract/simulator-extensions.ts` para
+ * que la maqueta no las rechace mientras tanto, y esa entrada se borra en
+ * cuanto `scripts/gen-mock-contract.mjs` regenere el contrato con ellas.
+ */
+export const REFERRAL_CONTRACT_PENDING_KEYS: readonly string[] = [
+  'referralType',
+  'targetServiceCatalogId',
+  'targetBranchId',
+  'targetExternalName',
+  'targetExternalContact',
+  'requestedServiceText',
+  'diagnosisText',
+  'clinicalSummary',
+  'treatmentGivenText',
+];
+
+/**
+ * Cuerpo de `POST /referrals`.
+ *
+ * `referringProfileId` no se manda: la API lo toma del token, porque un campo
+ * que el cliente puede falsear no dice quién recomienda.
+ *
+ * Al menos un destino —profesional u organización—: el servidor lo exige y la
+ * pantalla no deja enviar sin él. Los opcionales sin elegir se **omiten**,
+ * nunca viajan en `null`: el backend valida con `forbidNonWhitelisted`.
+ */
+export interface NewReferral {
+  /** La persona derivada. */
+  readonly patientProfileId: string;
+  /**
+   * El encuentro desde el que se deriva. Es lo que le permite a la API
+   * comprobar la relación asistencial y avisarle a la persona: sin encuentro la
+   * derivación se guarda, pero **no** se avisa.
+   */
+  readonly sourceEncounterId?: string;
+  /** El profesional recomendado (`profileId` del directorio de médicos). */
+  readonly targetProfileId?: string;
+  /** La organización médica destino. */
+  readonly targetTenantId?: string;
+  /** Una sede concreta de la organización destino. */
+  readonly targetBranchId?: string;
+  /** Doctor u organización **fuera** de la plataforma (no recibe aviso). */
+  readonly targetExternalName?: string;
+  /** Teléfono, correo o dirección del destino externo. */
+  readonly targetExternalContact?: string;
+  /** El servicio concreto del catálogo del destino. */
+  readonly targetServiceCatalogId?: string;
+  readonly referralType?: ReferralType;
+  /**
+   * El servicio pedido en texto libre. Con `referralType` y sin
+   * `targetServiceCatalogId`, la API lo exige junto con `clinicalSummary`.
+   */
+  readonly requestedServiceText?: string;
+  readonly diagnosisText?: string;
+  /** Resumen clínico: la norma de referencia lo pide para que el destino sepa a quién recibe. */
+  readonly clinicalSummary?: string;
+  /** Lo que se hizo antes de derivar. */
+  readonly treatmentGivenText?: string;
+  // Sin `informedConsentId`: la API lo rechaza en el alta (400
+  // REFERRAL_CONSENT_LINK_NOT_ALLOWED). El vínculo lo escribe la API al
+  // registrar un consentimiento ACCEPTED con targetType=REFERRAL.
+  /** Por qué se la recomienda; lo lee la persona en su aviso. */
+  readonly reasonText?: string;
+  /** Hasta cuándo vale. Viaja como `YYYY-MM-DD` del día local. */
+  readonly validUntil?: Date;
+  readonly priorityConceptId?: string;
+}
+
+/** Lo que responde `POST /referrals`. */
+export interface ReferralCreated {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly statusConceptId: string;
+  readonly createdAt: string;
+}
+
+/** Un destino posible — `GET /referrals/targets`. */
+export interface ReferralTarget {
+  readonly kind: ReferralTargetKind;
+  readonly id: string;
+  readonly displayName: string;
+  /** La organización del destino; `null` para quien no declara una. */
+  readonly tenantId: string | null;
+  /** Especialidad, ciudad o tipo de organización: lo que desambigua homónimos. */
+  readonly subtitle: string | null;
+}
+
+/** Un servicio concreto que el destino ofrece — `GET /referrals/target-services`. */
+export interface ReferralTargetService {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly description: string | null;
+  /**
+   * El arancel **tal como llega**. Un `numeric` de Postgres viaja como texto y
+   * no se convierte: se muestra, no se calcula con él.
+   */
+  readonly price: string | number | null;
+  readonly currency: string | null;
+  readonly tenantId: string | null;
+  readonly practiceName: string | null;
+}
+
+/**
+ * Una derivación de la persona — `GET /referrals?patientProfileId=` y
+ * `GET /referrals/:id` (`ReferralResponseDto`, API v4266).
+ */
+export interface Referral {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly statusConceptId: string;
+  /** Estado legible; ausente si la API todavía no lo deriva (versiones previas). */
+  readonly status?: ReferralStatus;
+  readonly createdAt: Date;
+  readonly sourceEncounterId?: string;
+  readonly referringProfileId?: string;
+  readonly targetProfileId?: string;
+  readonly targetTenantId?: string;
+  readonly targetTenantName?: string;
+  readonly targetBranchId?: string;
+  readonly targetBranchName?: string;
+  readonly targetExternalName?: string;
+  readonly targetExternalContact?: string;
+  readonly targetServiceCatalogId?: string;
+  readonly requestedServiceText?: string;
+  readonly diagnosisText?: string;
+  readonly clinicalSummary?: string;
+  readonly treatmentGivenText?: string;
+  readonly rejectReason?: string;
+  readonly counterReferralText?: string;
+  readonly counterReferralAt?: Date;
+  /**
+   * El consentimiento ACEPTADO y vigente vinculado. Lo escribe la API al
+   * registrarlo con `targetType=REFERRAL`; al revocarlo vuelve a vacío.
+   */
+  readonly informedConsentId?: string;
+  /** Ausente en las anteriores al tipo, o con un código que esta versión no conoce. */
+  readonly referralType?: ReferralType;
+  readonly reasonText?: string;
+  readonly validUntil?: Date;
+  readonly respondedAt?: Date;
+  /** El nombre del destino, resuelto por el servidor. */
+  readonly targetDisplayName?: string;
+  /** El nombre del servicio elegido, resuelto por el servidor. */
+  readonly targetServiceName?: string;
+}
+
 /** Un problema de validación, atado al campo que lo corrige. */
-export interface ProblemaDeDerivacion {
-  readonly campo:
-    | 'referralType'
-    | 'destino'
+export interface ReferralIssue {
+  readonly field:
+    | 'target'
     | 'targetExternalName'
     | 'targetExternalContact'
     | 'requestedServiceText'
     | 'clinicalSummary'
     | 'diagnosisText'
     | 'treatmentGivenText'
-    | 'reasonText'
     | 'validUntil';
-  readonly mensaje: string;
+  readonly message: string;
 }
 
 /**
- * Las mismas reglas que aplica la API, en el mismo orden que el formulario.
+ * Las mismas reglas que aplica la API (`assertTypedReferralRules`, v4266), en
+ * el orden del formulario.
  *
  * No reemplazan a la API —que vuelve a validar y es la que decide—: evitan
  * mandar algo que se sabe que va a volver rechazado y dicen **qué** corregir
  * junto al campo, en vez de un 400 que no señala ninguno.
  *
- * @param entrada - Lo cargado, ya recortado.
- * @param hoy - El día de referencia para la vigencia (inyectable en pruebas).
+ * Con un servicio del catálogo del destino (`targetServiceCatalogId`) el
+ * servicio ya está identificado y la API no exige ni el texto del servicio ni
+ * el resumen clínico; sin él, los dos.
+ *
+ * @param input - Lo cargado, ya recortado.
+ * @param today - El día de referencia para la vigencia (inyectable en pruebas).
  * @returns Los problemas, vacío si se puede emitir.
  */
-export function problemasDeDerivacion(
-  entrada: Partial<CreateReferralInput>,
-  hoy: Date = new Date(),
-): readonly ProblemaDeDerivacion[] {
-  const problemas: ProblemaDeDerivacion[] = [];
-  const lleno = (v: string | undefined): boolean => v !== undefined && v.trim() !== '';
+export function referralIssues(input: Partial<NewReferral>, today: Date = new Date()): readonly ReferralIssue[] {
+  const issues: ReferralIssue[] = [];
+  const filled = (v: string | undefined): boolean => v !== undefined && v.trim() !== '';
+  const tooLong = (v: string | undefined, max: number): boolean => (v ?? '').length > max;
 
-  if (entrada.referralType === undefined) {
-    problemas.push({ campo: 'referralType', mensaje: 'Elegí qué tipo de derivación es.' });
-  }
-
-  const tieneDestino =
-    lleno(entrada.targetProfileId) ||
-    lleno(entrada.targetTenantId) ||
-    lleno(entrada.targetBranchId) ||
-    lleno(entrada.targetExternalName);
-  if (!tieneDestino) {
-    problemas.push({
-      campo: 'destino',
-      mensaje: 'Indicá a quién derivás: un profesional, una organización o un destino externo.',
+  if (
+    !filled(input.targetProfileId) &&
+    !filled(input.targetTenantId) &&
+    !filled(input.targetBranchId) &&
+    !filled(input.targetExternalName)
+  ) {
+    issues.push({
+      field: 'target',
+      message: 'Indique a quién deriva: un profesional, una organización o un destino externo.',
     });
   }
-
-  if ((entrada.targetExternalName ?? '').length > REFERRAL_LIMITS.targetExternalName) {
-    problemas.push({
-      campo: 'targetExternalName',
-      mensaje: `El nombre del destino admite hasta ${REFERRAL_LIMITS.targetExternalName} caracteres.`,
+  if (tooLong(input.targetExternalName, REFERRAL_LIMITS.targetExternalName)) {
+    issues.push({
+      field: 'targetExternalName',
+      message: `El nombre del destino admite hasta ${REFERRAL_LIMITS.targetExternalName} caracteres.`,
     });
   }
-  if ((entrada.targetExternalContact ?? '').length > REFERRAL_LIMITS.targetExternalContact) {
-    problemas.push({
-      campo: 'targetExternalContact',
-      mensaje: `El contacto admite hasta ${REFERRAL_LIMITS.targetExternalContact} caracteres.`,
+  if (tooLong(input.targetExternalContact, REFERRAL_LIMITS.targetExternalContact)) {
+    issues.push({
+      field: 'targetExternalContact',
+      message: `El contacto admite hasta ${REFERRAL_LIMITS.targetExternalContact} caracteres.`,
     });
   }
 
-  if (!lleno(entrada.requestedServiceText)) {
-    problemas.push({
-      campo: 'requestedServiceText',
-      mensaje: 'Escribí qué servicio pedís, por ejemplo «Fisioterapia de rodilla, 10 sesiones».',
+  const describedByHand = input.referralType !== undefined && !filled(input.targetServiceCatalogId);
+  if (describedByHand && !filled(input.requestedServiceText)) {
+    issues.push({
+      field: 'requestedServiceText',
+      message: 'Escriba qué servicio pide, por ejemplo «Fisioterapia de rodilla, 10 sesiones», o elija uno del destino.',
     });
-  } else if ((entrada.requestedServiceText ?? '').length > REFERRAL_LIMITS.requestedServiceText) {
-    problemas.push({
-      campo: 'requestedServiceText',
-      mensaje: `El servicio pedido admite hasta ${REFERRAL_LIMITS.requestedServiceText} caracteres.`,
-    });
-  }
-
-  if (!lleno(entrada.clinicalSummary)) {
-    problemas.push({
-      campo: 'clinicalSummary',
-      mensaje: 'Escribí el resumen clínico: la norma de referencia lo exige para que el destino sepa a quién recibe.',
-    });
-  } else if ((entrada.clinicalSummary ?? '').length > REFERRAL_LIMITS.clinicalSummary) {
-    problemas.push({
-      campo: 'clinicalSummary',
-      mensaje: `El resumen clínico admite hasta ${REFERRAL_LIMITS.clinicalSummary} caracteres.`,
+  } else if (tooLong(input.requestedServiceText, REFERRAL_LIMITS.requestedServiceText)) {
+    issues.push({
+      field: 'requestedServiceText',
+      message: `El servicio pedido admite hasta ${REFERRAL_LIMITS.requestedServiceText} caracteres.`,
     });
   }
-
-  if ((entrada.diagnosisText ?? '').length > REFERRAL_LIMITS.diagnosisText) {
-    problemas.push({
-      campo: 'diagnosisText',
-      mensaje: `El diagnóstico admite hasta ${REFERRAL_LIMITS.diagnosisText} caracteres.`,
+  if (describedByHand && !filled(input.clinicalSummary)) {
+    issues.push({
+      field: 'clinicalSummary',
+      message: 'Escriba el resumen clínico: la norma de referencia lo exige para que el destino sepa a quién recibe.',
+    });
+  } else if (tooLong(input.clinicalSummary, REFERRAL_LIMITS.clinicalSummary)) {
+    issues.push({
+      field: 'clinicalSummary',
+      message: `El resumen clínico admite hasta ${REFERRAL_LIMITS.clinicalSummary} caracteres.`,
     });
   }
-  if ((entrada.treatmentGivenText ?? '').length > REFERRAL_LIMITS.treatmentGivenText) {
-    problemas.push({
-      campo: 'treatmentGivenText',
-      mensaje: `El tratamiento realizado admite hasta ${REFERRAL_LIMITS.treatmentGivenText} caracteres.`,
+  if (tooLong(input.diagnosisText, REFERRAL_LIMITS.diagnosisText)) {
+    issues.push({
+      field: 'diagnosisText',
+      message: `El diagnóstico admite hasta ${REFERRAL_LIMITS.diagnosisText} caracteres.`,
     });
   }
-
-  if ((entrada.reasonText ?? '').length > REFERRAL_LIMITS.reasonText) {
-    problemas.push({
-      campo: 'reasonText',
-      mensaje: `El motivo admite hasta ${REFERRAL_LIMITS.reasonText} caracteres.`,
+  if (tooLong(input.treatmentGivenText, REFERRAL_LIMITS.treatmentGivenText)) {
+    issues.push({
+      field: 'treatmentGivenText',
+      message: `El tratamiento realizado admite hasta ${REFERRAL_LIMITS.treatmentGivenText} caracteres.`,
     });
   }
-
-  if (entrada.validUntil !== undefined) {
-    const inicioDeHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
-    if (entrada.validUntil < inicioDeHoy) {
-      problemas.push({
-        campo: 'validUntil',
-        mensaje: 'La vigencia no puede terminar antes de hoy.',
-      });
+  if (input.validUntil !== undefined) {
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (input.validUntil < startOfToday) {
+      issues.push({ field: 'validUntil', message: 'La vigencia no puede terminar antes de hoy.' });
     }
   }
-
-  return problemas;
+  return issues;
 }
+
+/**
+ * Lo mismo para `PATCH /referrals/:id/respond`: el contrato generado sólo
+ * declara `decision`, y la API v4266 suma `rejectReason`.
+ */
+export const REFERRAL_RESPOND_CONTRACT_PENDING_KEYS: readonly string[] = ['rejectReason'];

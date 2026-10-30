@@ -37,7 +37,7 @@ class Anfitrion {
   readonly dato = signal<SearchResultItem>({
     id: 'r-1',
     title: 'Dra. Marisol Quispe Ticona',
-    link: '/buscar/perfil-profesional-detalle',
+    link: '/search/practitioner-profile-detail',
   });
 }
 
@@ -80,7 +80,7 @@ describe('SearchResult', () => {
     const enlace = titulo!.querySelector('a')!;
 
     expect(enlace.textContent!.trim()).toBe('Dra. Marisol Quispe Ticona');
-    expect(enlace.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle');
+    expect(enlace.getAttribute('href')).toBe('/search/practitioner-profile-detail');
   });
 
   // ─── Lo que desaparece cuando no hay dato ──────────────────────────────────
@@ -202,5 +202,54 @@ describe('SearchResult', () => {
 
     const lineas = todos('.app-resultado__meta span').map((s) => s.textContent!.trim());
     expect(lineas).toEqual(['Cardiología · 14 años', 'Clínica Los Olivos', 'Sopocachi · 1,2 km']);
+  });
+
+  // ─── La insignia de verificación de un profesional ─────────────────────────
+
+  describe('insignia de verificación', () => {
+    const insignia = (): HTMLElement | null => elemento('.app-resultado__titulo app-verification-badge');
+
+    it('sin `verification` no pinta insignia', () => {
+      expect(insignia()).toBeNull();
+    });
+
+    it('con VERIFIED pinta el sello junto al nombre, sin foco dentro del enlace de la tarjeta', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        verification: { status: 'VERIFIED', verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(insignia()).not.toBeNull();
+      expect(insignia()!.querySelector('.vb__check')).not.toBeNull();
+      expect(
+        insignia()!.querySelector('[role="img"]')!.getAttribute('aria-label'),
+      ).toBe('Dra. Marisol Quispe Ticona, profesional verificado');
+    });
+
+    it('con IN_REVIEW pinta el reloj, no el tilde', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        verification: { status: 'IN_REVIEW', verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(insignia()!.querySelector('.vb__check')).toBeNull();
+      expect(insignia()!.querySelector('.vb__glyph')).not.toBeNull();
+    });
+
+    it('con UNVERIFIED el host queda oculto y sin hijos visibles', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        verification: { status: 'UNVERIFIED', verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(insignia()!.classList.contains('vb-host--hidden')).toBe(true);
+      expect(insignia()!.querySelector('[role="img"]')).toBeNull();
+    });
   });
 });

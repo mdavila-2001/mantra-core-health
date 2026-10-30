@@ -55,10 +55,10 @@ describe('InformedConsentPanel', () => {
   let fixture: ComponentFixture<InformedConsentPanel>;
   let componente: InformedConsentPanel;
   let http: HttpTestingController;
-  let motivo: string | null;
+  let withdrawReason: string | null;
 
   beforeEach(async () => {
-    motivo = 'Prefiere otra opinión';
+    withdrawReason = 'Prefiere otra opinión';
     await TestBed.configureTestingModule({
       imports: [InformedConsentPanel],
       providers: [
@@ -76,7 +76,7 @@ describe('InformedConsentPanel', () => {
         {
           provide: DialogService,
           useValue: {
-            confirmWithReason: () => Promise.resolve(motivo),
+            confirmWithReason: () => Promise.resolve(withdrawReason),
             confirm: () => Promise.resolve(true),
             confirmarDescarte: () => Promise.resolve(true),
           },
@@ -162,9 +162,9 @@ describe('InformedConsentPanel', () => {
     interno<() => void>('registrar')();
     fixture.detectChanges();
 
-    expect(texto()).toContain('Revisá antes de registrar');
-    expect(texto()).toContain('Explicá en qué consiste y para qué se indica.');
-    expect(texto()).toContain('Elegí si la persona acepta o no acepta.');
+    expect(texto()).toContain('Revise antes de registrar');
+    expect(texto()).toContain('Explique en qué consiste y para qué se indica.');
+    expect(texto()).toContain('Elija si la persona acepta o no acepta.');
     expect(interno<() => number>('pestana')()).toBe(0);
     http.expectNone((r) => r.method === 'POST');
   });
@@ -184,7 +184,7 @@ describe('InformedConsentPanel', () => {
     señal<string | null>('decision').set('ACCEPTED');
     interno<() => void>('registrar')();
     fixture.detectChanges();
-    expect(texto()).toContain('Dejá constancia de que informaste que puede revocar su decisión.');
+    expect(texto()).toContain('Deje constancia de que informó que puede revocar su decisión.');
     http.expectNone((r) => r.method === 'POST');
   });
 
@@ -196,8 +196,8 @@ describe('InformedConsentPanel', () => {
     interno<() => void>('registrar')();
     fixture.detectChanges();
     expect(interno<() => number>('pestana')()).toBe(1);
-    expect(texto()).toContain('Indicá el nombre de quien otorga en representación.');
-    expect(texto()).toContain('Indicá si la persona representada dio su asentimiento.');
+    expect(texto()).toContain('Indique el nombre de quien otorga en representación.');
+    expect(texto()).toContain('Indique si la persona representada dio su asentimiento.');
   });
 
   it('registra con objeto, relee y avisa al ítem: UI → request → relectura', () => {
@@ -261,7 +261,7 @@ describe('InformedConsentPanel', () => {
     fixture.detectChanges();
     expect(texto()).toContain('Falta información obligatoria para consentir');
     // El campo queda señalado con su corrección, y la pestaña se abre ahí.
-    expect(interno<(c: string) => string>('errorDe')('riesgos')).toBe('Indicá los riesgos frecuentes y los graves.');
+    expect(interno<(c: string) => string>('errorDe')('riesgos')).toBe('Indique los riesgos frecuentes y los graves.');
     expect(interno<() => number>('pestana')()).toBe(0);
     expect(interno<() => string>('proposito')()).toBe('Antibiótico para la infección urinaria');
   });
@@ -270,8 +270,8 @@ describe('InformedConsentPanel', () => {
     fixture.componentRef.setInput('encounterId', null);
     cargar([]);
     const pantalla = fixture.nativeElement as HTMLElement;
-    expect(texto()).toContain('Abrí un encuentro para registrar el consentimiento');
-    expect(pantalla.querySelector('[data-testid="consentimiento-registrar"]')).toBeNull();
+    expect(texto()).toContain('Abra un encuentro para registrar el consentimiento');
+    expect(pantalla.querySelector('[data-testid="consent-record"]')).toBeNull();
     expect(pantalla.querySelector('app-tabs')).toBeNull();
   });
 
@@ -279,7 +279,7 @@ describe('InformedConsentPanel', () => {
     fixture.componentRef.setInput('encounterId', null);
     cargar([ACEPTADO]);
     expect(texto()).toContain('Revocar consentimiento');
-    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="consentimiento-historial"]')).not.toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="consent-history"]')).not.toBeNull();
   });
 
   it('el encuentro del ítem (defaults) alcanza para registrar', () => {
@@ -307,7 +307,7 @@ describe('InformedConsentPanel', () => {
   });
 
   it('cancelar la revocación no manda nada', async () => {
-    motivo = null;
+    withdrawReason = null;
     cargar([ACEPTADO]);
     await interno<() => Promise<void>>('revocar')();
     http.expectNone((r) => r.method === 'PATCH');
@@ -319,6 +319,6 @@ describe('InformedConsentPanel', () => {
       .expectOne((r) => r.url === URL)
       .flush({ code: 'FORBIDDEN', message: 'Sin permiso' }, { status: 403, statusText: 'Forbidden' });
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="consentimiento-registrar"]')).toBeNull();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="consent-record"]')).toBeNull();
   });
 });

@@ -58,7 +58,7 @@ export const SECCION_CLAVE_DE_FIRMA: SeccionDeFormulario = {
       hint: 'El `kid` con el que el proveedor la publica en su JWKS.',
       control: 'text',
       required: true,
-      mensajeDeError: 'Ingresá el identificador (hasta 200 caracteres).',
+      mensajeDeError: 'Ingrese el identificador (hasta 200 caracteres).',
     },
     {
       key: 'algorithm',
@@ -66,7 +66,7 @@ export const SECCION_CLAVE_DE_FIRMA: SeccionDeFormulario = {
       hint: 'Por ejemplo RS256 o ES256.',
       control: 'text',
       required: true,
-      mensajeDeError: 'Ingresá el algoritmo (hasta 50 caracteres).',
+      mensajeDeError: 'Ingrese el algoritmo (hasta 50 caracteres).',
     },
     {
       key: 'publicKey',
@@ -74,7 +74,7 @@ export const SECCION_CLAVE_DE_FIRMA: SeccionDeFormulario = {
       hint: 'El material público, en PEM o JWK.',
       control: 'textarea',
       required: true,
-      mensajeDeError: 'Pegá la clave pública.',
+      mensajeDeError: 'Pegue la clave pública.',
     },
     {
       key: 'certificate',

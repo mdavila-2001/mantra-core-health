@@ -1,0 +1,102 @@
+[
+  {
+    "name": "lista la sede elegida con sus procedimientos de ejemplo",
+    "pass": true,
+    "detail": "filas=2"
+  },
+  {
+    "name": "la fila sin precio dice «No aparece en búsquedas»",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "referencia con unidad al lado",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tarjeta centrada (holguras izq/der ≤ 2 px)",
+    "pass": true,
+    "detail": "izq=40.0 der=40.0"
+  },
+  {
+    "name": "tarjeta ≥ 85 % del área",
+    "pass": true,
+    "detail": "93.3 %"
+  },
+  {
+    "name": "al publicar la fila aparece sin recargar (3 filas)",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "la fila nueva muestra el precio propio",
+    "pass": true,
+    "detail": "10.02.02 Colonoscopia total Referencia: 24 UMA 600 Bs Cambiar precio"
+  },
+  {
+    "name": "sin precio: «No aparece en búsquedas»",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "409: «Este procedimiento ya está publicado en esta sede»",
+    "pass": true,
+    "detail": "Error:Este procedimiento ya está publicado en esta sede"
+  },
+  {
+    "name": "409 no pierde lo escrito (precio 650 sigue)",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "desactivar: la fila refleja active=false y deja de aparecer",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "tras recargar persisten las 4 filas",
+    "pass": true,
+    "detail": "filas=4"
+  },
+  {
+    "name": "tras recargar persiste el desactivado",
+    "pass": true,
+    "detail": "Endoscopía digestiva alta"
+  },
+  {
+    "name": "fijar precio: la fila pasa a visible con 480",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "una sede sin publicar muestra S3 con próxima acción",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "sin desborde horizontal a 390x844",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "sin desborde horizontal a 768x1024",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "sin desborde horizontal a 1024x768",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "sin desborde horizontal a 1920x1080",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "consola sin errores",
+    "pass": true,
+    "detail": ""
+  }
+]

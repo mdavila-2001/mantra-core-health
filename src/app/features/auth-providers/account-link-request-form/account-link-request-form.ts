@@ -83,7 +83,7 @@ export class AccountLinkRequestForm {
   protected readonly requested = signal<AccountLinkRequestResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la vinculación de cuentas.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la vinculación de cuentas.'),
   );
 
   protected submit(): void {

@@ -1,8 +1,9 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * Helpers compartidos del alta pública de paciente (`/auth/register/patient`),
- * usados por `registro-empresa-y-mapa.spec.ts` y `registro-persistencia.spec.ts`.
+ * usados por `registro-empresa-y-mapa.spec.ts`, `registro-persistencia.spec.ts`,
+ * `altas-sin-cobertura.spec.ts` y `auditoria-qa-mockup.spec.ts`.
  *
  * Viven en `support/` y no en un archivo `.spec.ts` porque un `.spec.ts`
  * importado por otro vuelve a registrar sus propios `test.describe` en quien
@@ -12,10 +13,57 @@ import { expect, type Page } from '@playwright/test';
  */
 
 /**
- * Completa la primera página —lo único obligatorio del alta— y avanza.
+ * Elige una opción de un `app-select` como lo haría la persona: toca el campo
+ * y toca la opción en el `<dialog>` que se abre. `app-select` ya no envuelve un
+ * `<select>` nativo (ver `atoms/select/select.ts`), así que `selectOption` no
+ * tiene dónde apoyarse.
  *
- * El motor valida de a una página, así que sin esto el «Siguiente» no mueve
- * nada y la prueba fallaría lejos de lo que quiere comprobar.
+ * `index` cuenta como el `<select>` de antes —el 0 era el placeholder—, así
+ * que `{ index: 1 }` sigue siendo «la primera opción de verdad».
+ */
+export async function elegirOpcion(
+  page: Page,
+  testId: string,
+  opcion: { readonly index: number } | { readonly label: string },
+): Promise<void> {
+  const campo = page.getByTestId(testId);
+  await campo.locator('.select-trigger').click();
+  const dialogo = campo.locator('dialog.select-dialog[open]');
+  await expect(dialogo).toBeVisible();
+  const fila =
+    'label' in opcion
+      ? dialogo.getByRole('option', { name: opcion.label, exact: true })
+      : dialogo.getByTestId(`select-opcion-${opcion.index - 1}`);
+  await fila.click();
+  await expect(dialogo).toHaveCount(0);
+}
+
+/** El texto que muestra un `app-select`: la opción elegida o el placeholder. */
+export function valorDelSelect(page: Page, testId: string): Locator {
+  return page.getByTestId(testId).locator('.select-value');
+}
+
+/**
+ * Los títulos de los cinco pasos del alta, tal como los rotula
+ * `paginasPaciente` (`register-patient.ts`). Desde el 2026-10-21 el alta es de
+ * cinco pasos y no de diez: los specs nombran el paso por acá, no con un texto
+ * suelto que se desfasa en silencio la próxima vez que se reagrupen.
+ */
+export const PASOS_DEL_ALTA = {
+  identidad: 'Identidad y ocupación',
+  residencia: 'Lugares donde vive',
+  contacto: 'Datos de contacto y emergencia',
+  trabajo: 'Empresa y lugar de trabajo',
+  resto: 'Resto de datos (acceso, seguros y facturación)',
+} as const;
+
+/**
+ * Completa el primer paso —identidad: nombre, apellido, documento y su
+ * departamento de emisión, fecha de nacimiento y sexo— y avanza. Deja la
+ * pantalla en «Lugares donde vive».
+ *
+ * El motor valida de a un paso, así que sin esto el «Siguiente» no mueve nada
+ * y la prueba fallaría lejos de lo que quiere comprobar.
  *
  * `documento` es parametrizable porque `registro-persistencia.spec.ts` envía
  * un alta real al backend y necesita un CI único por corrida (dos altas con
@@ -26,30 +74,13 @@ export async function empezarElAlta(page: Page, documento = '9876543'): Promise<
   await page.goto('/auth/register/patient');
   await expect(page.getByTestId('registro-form-paciente')).toBeVisible();
 
-  // Orden de la fuente literal de FT-03: nombres y apellidos primero,
-  // documento después. El motor valida de a una página, asi que sin completar
-  // el nombre el «Siguiente» no mueve nada y la prueba fallaria lejos de lo
-  // que quiere comprobar.
   await page.getByTestId('registro-nombre').fill('Ana');
   await page.getByTestId('registro-apellido-paterno').fill('Paz');
-  await page.getByTestId('paginated-form-continuar').click();
-
   await page.getByTestId('registro-documento').fill(documento);
-  // El departamento que expidió la cédula pasó a ser OBLIGATORIO (commit
-  // b300ade, «el departamento de emisión se ve —y es— obligatorio»). Sin esto
-  // el motor no deja pasar de página, y la suite se colgaba mucho más adelante
-  // esperando el campo de fecha de nacimiento, que nunca llegaba a dibujarse:
-  // un fallo que no decía nada de su causa.
-  await page
-    .getByTestId('registro-departamento-ci')
-    .locator('select')
-    .selectOption({ index: 1 });
-  await page.getByTestId('paginated-form-continuar').click();
+  // El departamento que expidió la cédula es OBLIGATORIO (commit b300ade):
+  // sin él el motor no deja pasar del primer paso.
+  await elegirOpcion(page, 'registro-departamento-ci', { index: 1 });
 
-  // La página «Contanos un poco sobre vos» exige fecha de nacimiento y sexo
-  // (FT-03-R03: son dos de los seis campos obligatorios del alta), así que el
-  // motor no deja avanzar sin llenarlos primero.
-  //
   // `app-date-picker` es un input enmascarado que arma DD/MM/AAAA dígito por
   // dígito según la posición del cursor (ver `handleDigitKey`): un `.fill()`
   // escribe el valor de un tirón sin pasar por esa máscara y deja el campo
@@ -63,13 +94,22 @@ export async function empezarElAlta(page: Page, documento = '9876543'): Promise<
   await page.keyboard.press('Control+A');
   await page.keyboard.press('Backspace');
   await fecha.pressSequentially('01011990', { delay: 20 });
-  await page.getByTestId('registro-genero').locator('select').selectOption({ label: 'Masculino' });
+  await elegirOpcion(page, 'registro-genero', { label: 'Masculino' });
   await page.getByTestId('paginated-form-continuar').click();
 
-  // «¿Cómo te contactamos?» exige el celular (también obligatorio); el
-  // contacto de emergencia es opcional y se deja vacío.
+  await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.residencia })).toBeVisible();
+}
+
+/**
+ * Completa el paso de contacto —el celular es lo único obligatorio; el
+ * contacto de emergencia y la ambulancia se dejan vacíos— y avanza al de
+ * trabajo. Se llama estando ya en «Datos de contacto y emergencia».
+ */
+export async function completarContacto(page: Page): Promise<void> {
+  await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.contacto })).toBeVisible();
   await page.getByTestId('registro-telefono').fill('70012345');
   await page.getByTestId('paginated-form-continuar').click();
+  await expect(page.getByRole('heading', { name: PASOS_DEL_ALTA.trabajo })).toBeVisible();
 }
 
 /**
@@ -94,27 +134,45 @@ export async function avanzarHasta(page: Page, titulo: string): Promise<void> {
 }
 
 /**
- * Completa la localidad de residencia —única obligatoria de «¿Dónde
- * vivís?»— eligiendo Santa Cruz en el mapa y su primera ciudad en el select
- * acotado (FT-03-R03/R06). Sin esto el motor no deja pasar a «¿Dónde
- * trabajás?»: `residenceMunicipalityConceptId` es `required`.
+ * La localidad de residencia ya no se elige a mano (pedido del cliente del
+ * 26/10/2026): sale del punto de la casa. Se deja el nombre para los specs que
+ * la llaman; el trabajo lo hace {@link marcarYConfirmarCasa}.
  */
 export async function elegirLocalidadDeResidencia(page: Page): Promise<void> {
-  await page.getByTestId('registration-residence-mapa-SC').click();
-  const municipio = page.getByTestId('registration-residence-municipio').locator('select');
-  await expect(municipio).toBeVisible();
-  await municipio.selectOption({ index: 1 });
+  await expect(page.getByTestId('registro-mapa-domicilio')).toBeVisible();
 }
 
 /**
- * Elige la localidad de TRABAJO — opcional, mismo componente que la de
- * residencia (`app-location-picker`), pero con `testId="registration-work"`
- * (FT-03-R07). A diferencia de la residencia, no bloquea el avance: se elige
- * igual para probar de forma simétrica que el mapa y el select responden.
+ * Toca el centro de un mapa de ubicación (abierto por defecto) y espera a que
+ * el selector deduzca la localidad del punto: la ficha con el municipio.
+ */
+async function marcarPuntoEnMapa(page: Page, testIdMapa: string): Promise<void> {
+  const mapa = page.getByTestId(testIdMapa);
+  await expect(mapa.locator('.leaflet-container')).toBeVisible({ timeout: 15_000 });
+  await mapa.locator('.leaflet-container').click();
+  await expect(page.getByTestId(`${testIdMapa}-localidad-ficha-municipio`)).toBeVisible({
+    timeout: 15_000,
+  });
+}
+
+/**
+ * Marca la casa en el mapa y la confirma. El punto de la casa es obligatorio y
+ * es lo único que se elige: la calle, el departamento, la provincia, el
+ * municipio y la zona salen de él. Toca el centro del plano, que es la vista
+ * por defecto.
+ */
+export async function marcarYConfirmarCasa(page: Page): Promise<void> {
+  await marcarPuntoEnMapa(page, 'registro-mapa-domicilio');
+  await page.getByTestId('registro-confirmar-direccion').click();
+  await expect(page.getByTestId('registro-direccion-confirmada')).toBeAttached();
+}
+
+/**
+ * Marca el lugar de TRABAJO —opcional— en su mapa y lo confirma: la localidad
+ * de trabajo sale del punto, igual que la de la casa.
  */
 export async function elegirLocalidadDeTrabajo(page: Page): Promise<void> {
-  await page.getByTestId('registration-work-mapa-SC').click();
-  const municipio = page.getByTestId('registration-work-municipio').locator('select');
-  await expect(municipio).toBeVisible();
-  await municipio.selectOption({ index: 1 });
+  await marcarPuntoEnMapa(page, 'registration-work-map');
+  await page.getByTestId('registration-work-location-confirm').click();
+  await expect(page.getByTestId('registration-work-location-confirmed')).toBeAttached();
 }

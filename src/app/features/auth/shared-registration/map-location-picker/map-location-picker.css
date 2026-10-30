@@ -1,0 +1,109 @@
+/* Las clases conservan el prefijo `registro__` de donde salieron: son las mismas
+   reglas que vivían en `register-patient.css`, movidas acá con el bloque. El
+   nombre no se cambió a propósito — un renombre cosmético en la misma pasada
+   que una extracción vuelve ilegible el diff de la extracción. */
+
+.registro__ubicacion {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* El mapa ocupa el ancho del campo y se apila con su texto y sus botones. */
+.registro__ubicacion:has(.registro__mapa) {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* El alto lo fija el organismo (`.mapa`, 320px) y acá no se pelea: su regla es
+   global —encapsulación None— y una de este componente, que es emulada, no la
+   alcanzaría. Se declara el ancho, que es lo que sí es de acá. */
+.registro__mapa {
+  inline-size: 100%;
+}
+
+.registro__ubicacion-estado {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.registro__ubicacion-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Nació como un `<span>` dentro del párrafo del botón; desde AC-03-9 también es
+   un `<p>` propio —el aviso de que la calle no se resuelve sola—, así que se le
+   quita el margen que trae por ser párrafo. */
+.registro__ubicacion-aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* «Escribir coordenadas»: el botón y, desplegados, los dos campos. Uno debajo
+   del otro en el teléfono; lado a lado cuando entran. */
+.registro__coordenadas {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+}
+
+.registro__coordenadas-campos {
+  display: grid;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+@media (min-width: 40rem) {
+  .registro__coordenadas-campos {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .registro__coordenadas-campos > button {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+/* Lo deducido del punto: la calle y la localidad, debajo del mapa. */
+.registro__deducido {
+  display: grid;
+  gap: var(--sp-3);
+  inline-size: 100%;
+  padding-block-start: var(--sp-2);
+}
+
+/* Opt-in (`disposicion`): la calle y el distrito en columnas por ancho, como el
+   resto de los formularios a lo ancho (`composition-rules.md` §5): dos desde
+   672 px; con `tres-columnas`, tres desde 1120 px. Esta última además dibuja
+   el bloque aun sin punto y deja proyectar con `[campo-previo]` un campo que va
+   primero en su rejilla (el nombre de una sucursal). Los avisos y la ficha de
+   la localidad cruzan todas las columnas. Por omisión (`apilada`) nada de esto
+   aplica: las demás altas quedan idénticas. */
+@media (min-width: 42rem) {
+  .registro__deducido--dos,
+  .registro__deducido--tres {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 70rem) {
+  .registro__deducido--tres {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.registro__deducido--dos > app-alert,
+.registro__deducido--dos > app-location-picker,
+.registro__deducido--tres > app-alert,
+.registro__deducido--tres > app-location-picker {
+  grid-column: 1 / -1;
+}

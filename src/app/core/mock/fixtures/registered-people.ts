@@ -1,5 +1,5 @@
-import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO, OCUPACION } from './conceptos';
-import type { PacienteSimulado, ProfesionalSimulado } from './personas';
+import { DEPARTMENT, SPECIALTY, MUNICIPALITY, OCCUPATION } from './concepts';
+import type { PacienteSimulado, ProfesionalSimulado } from './people.types';
 import {
   REGISTERED_PATIENTS,
   REGISTERED_PRACTITIONERS,
@@ -68,12 +68,12 @@ function especialidadesDe(p: RegisteredPerson): readonly string[] {
     if (codigo === undefined) {
       throw new Error(`Especialidad de USUARIO_MEDICOS sin mapear: «${p.specialty}».`);
     }
-    return [ESPECIALIDAD[codigo]!];
+    return [SPECIALTY[codigo]!];
   }
   // Un cirujano odontólogo sin especialidad declarada ejerce odontología, que
   // es su profesión. Un médico cirujano sin especialidad queda sin ninguna:
   // «Medicina general» sería una especialidad que la planilla no dice.
-  return p.occupation === 'CIRUJANO ODONTOLOGO' ? [ESPECIALIDAD['ODONTOLOGIA']!] : [];
+  return p.occupation === 'CIRUJANO ODONTOLOGO' ? [SPECIALTY['ODONTOLOGIA']!] : [];
 }
 
 function profesionalRegistrado(p: RegisteredPerson): ProfesionalSimulado {
@@ -97,8 +97,8 @@ function profesionalRegistrado(p: RegisteredPerson): ProfesionalSimulado {
     phone: '',
     especialidades: especialidadesDe(p),
     ciudad: 'Santa Cruz de la Sierra',
-    municipioId: MUNICIPIO['SC-SCZ']!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:SC']!,
+    municipioId: MUNICIPALITY['SC-SCZ']!,
+    departamentoId: DEPARTMENT['geo:bo:department:SC']!,
     tenantId: uuid(`tenant-${clave}`),
     // La planilla no dice dónde atiende: no se inventa un consultorio.
     organizacion: 'Usuario de AloVida',
@@ -144,10 +144,8 @@ const OCUPACION_DE_LA_PLANILLA: Readonly<Record<string, string>> = {
   'INGENIERIA INDUSTRIAL': 'occupation:bo:INGENIERO',
   'INGENIERO DE SISTEMAS': 'occupation:bo:INGENIERO',
   ODONTOLOGO: 'occupation:bo:ODONTOLOGO',
-  'ADMINISTRACION DE EMPRESAS': 'occupation:bo:ADMINISTRADOR',
   ARQUITECTO: 'occupation:bo:ARQUITECTO',
   CONTADORA: 'occupation:bo:CONTADOR',
-  AGRICULTOR: 'occupation:bo:AGRICULTOR',
   MECANICO: 'occupation:bo:MECANICO',
   'SECRETARIA EJECUTIVA': 'occupation:bo:SECRETARIO',
   PSICOLOGA: 'occupation:bo:PSICOLOGO',
@@ -165,7 +163,16 @@ const MUNICIPIO_DE_LA_PLANILLA: Readonly<Record<string, string>> = {
 function pacienteRegistrado(p: RegisteredPerson): PacienteSimulado {
   const clave = `usuario-paciente-${p.sourceRow}`;
   const ocupacion = p.occupation ?? null;
-  const codigo = ocupacion === null ? undefined : (OCUPACION_DE_LA_PLANILLA[ocupacion] ?? 'occupation:bo:OTRA');
+  // Sólo códigos que el catálogo trae: «Administración de empresas» es una
+  // carrera y «Agricultor» no tiene equivalente directo, así que van como
+  // «Otra ocupación» con su texto, no como un código que no existe.
+  const equivalente = ocupacion === null ? undefined : OCUPACION_DE_LA_PLANILLA[ocupacion];
+  const codigo =
+    ocupacion === null
+      ? undefined
+      : equivalente !== undefined && OCCUPATION[equivalente] !== undefined
+        ? equivalente
+        : 'occupation:bo:OTRA';
   const municipio = p.municipality === null || p.municipality === undefined ? undefined : MUNICIPIO_DE_LA_PLANILLA[p.municipality];
   if (p.municipality && municipio === undefined) {
     throw new Error(`Municipio de USUARIO_PACIENTES sin mapear: «${p.municipality}».`);
@@ -185,9 +192,9 @@ function pacienteRegistrado(p: RegisteredPerson): PacienteSimulado {
     nationalId: '',
     email: '',
     phone: '',
-    municipioId: municipio === undefined ? '' : MUNICIPIO[municipio]!,
-    departamentoId: p.department ? DEPARTAMENTO['geo:bo:department:SC']! : '',
-    ocupacionId: codigo === undefined ? '' : OCUPACION[codigo]!,
+    municipioId: municipio === undefined ? '' : MUNICIPALITY[municipio]!,
+    departamentoId: p.department ? DEPARTMENT['geo:bo:department:SC']! : '',
+    ocupacionId: codigo === undefined ? '' : OCCUPATION[codigo]!,
     ...(codigo === 'occupation:bo:OTRA' && ocupacion !== null ? { ocupacionTexto: titulo(ocupacion) } : {}),
     direccion: '',
     deceased: false,

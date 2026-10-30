@@ -18,7 +18,8 @@ export type Rol =
   | 'administrador'
   | 'doctora'
   | 'paciente'
-  | 'operadora de facturación';
+  | 'operadora de facturación'
+  | 'farmacia';
 
 export interface Actor {
   readonly rol: Rol;
@@ -90,6 +91,23 @@ export function operadoraDeFacturacion(): Actor {
       'facturacion.demo@alovida.test',
     clave: process.env['E2E_BILLING_OPERATOR_PASSWORD'] ?? 'D3mo-passw0rd!',
     nombre: 'Operadora de facturación',
+  };
+}
+
+/**
+ * La encargada de Farmacia Vida, de **la maqueta** (`mockBackend`): tenant
+ * `PHARMACY`, sin rol de plataforma. Es la cuenta con la que se recorre el
+ * portal de la farmacia (menú de ocho renglones, productos, inventario…).
+ *
+ * El simulador acepta cualquier clave no vacía (`core/mock/README.md`), así que
+ * esta cuenta **no sirve contra la API viva**: no existe ahí.
+ */
+export function farmacia(): Actor {
+  return {
+    rol: 'farmacia',
+    identificador: process.env['E2E_PHARMACY_EMAIL'] ?? 'farmacia@alovida.mock',
+    clave: process.env['E2E_PHARMACY_PASSWORD'] ?? CLAVE,
+    nombre: 'Mariela Céspedes · Farmacia Vida',
   };
 }
 
@@ -195,7 +213,7 @@ async function firstConceptIdOfValueSet(
   return primerMiembro.conceptId;
 }
 
-async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
+export async function firstMunicipalityConceptId(api: APIRequestContext): Promise<string> {
   return firstConceptIdOfValueSet(api, MUNICIPALITY_VALUE_SET);
 }
 
@@ -206,7 +224,7 @@ async function firstMunicipalityConceptId(api: APIRequestContext): Promise<strin
  * {@link firstMunicipalityConceptId}: se obtiene de la API, no se hardcodea
  * un uuid.
  */
-async function firstDepartmentConceptId(api: APIRequestContext): Promise<string> {
+export async function firstDepartmentConceptId(api: APIRequestContext): Promise<string> {
   return firstConceptIdOfValueSet(api, DEPARTMENT_VALUE_SET);
 }
 

@@ -42,8 +42,10 @@
 #
 # ## Instalación
 #
-# No hace falta hacer nada: el script `prepare` de `package.json` apunta
-# `core.hooksPath` a `.githooks/` en cada `yarn install`. Para comprobarlo:
+# No hace falta hacer nada: `core.hooksPath` apunta a `.githooks/` por el
+# script `postinstall` de `package.json` (yarn lo corre cuando cambian las
+# dependencias; `prepare` no lo corre) y por el arranque de sesión de Claude
+# Code (ver `docs/graphify.md`). Para comprobarlo:
 #
 #   git config core.hooksPath      # debe decir .githooks
 
@@ -112,7 +114,10 @@ echo "pre-push: construyendo en modo producción antes de empujar…"
 echo "          (para saltearlo: git push --no-verify)"
 echo ""
 
-if ! yarn build; then
+# El build de producción pasa del heap por defecto de Node y muere con
+# «JavaScript heap out of memory». Si quien empuja ya definió NODE_OPTIONS (su
+# propio tope, o el de un contenedor) se respeta tal cual; si no, se sube a 6 GB.
+if ! NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=6144}" yarn build; then
   echo ""
   echo "  ✗ La construcción falló. El empuje se cancela."
   echo ""

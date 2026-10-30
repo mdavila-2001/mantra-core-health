@@ -132,7 +132,7 @@ export class VisitorVisits {
   protected cancelar(request: VisitRequest): void {
     const motivo = this.motivo().trim();
     if (motivo === '') {
-      this.aviso.set('Escribí el motivo antes de cancelar.');
+      this.aviso.set('Escriba el motivo antes de cancelar.');
       return;
     }
     this.api.cancelVisit(request.id, motivo).subscribe({

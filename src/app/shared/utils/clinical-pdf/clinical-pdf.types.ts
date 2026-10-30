@@ -69,6 +69,22 @@ export interface DocumentoDeReceta {
   readonly medicamentos: readonly DocumentoMedicamento[];
   /** Indicaciones generales, si las hay. */
   readonly indicaciones?: string;
+  /**
+   * Para qué es la receta (C5): el diagnóstico confirmado, o el motivo
+   * escrito a mano cuando no hay diagnóstico registrado. Opcional porque
+   * quien arma este documento hoy (`patient-chart.ts`, `consultation.ts`,
+   * `medical-record.ts` — fuera de mi alcance esta noche) todavía no lo
+   * puebla, aunque la receta ya trae `indicationConditionId`/`indicationText`
+   * desde v4.1.6. Pendiente de que esos archivos agreguen el campo.
+   */
+  readonly porQueEs?: { readonly tipo: 'diagnostico' | 'motivo'; readonly texto: string };
+  /**
+   * Las alergias de la persona, ya en palabras —«Penicilina (reacción grave)»—.
+   * Van en un aviso destacado, antes de lo indicado: es lo primero que tiene que
+   * ver quien prescribe o dispensa. Opcional: quien arma el documento hoy
+   * todavía no la puebla, y ausente no se imprime nada (no es «sin alergias»).
+   */
+  readonly alergias?: readonly string[];
 }
 
 /** Una línea de un bloque de la historia: «Diagnóstico: Faringitis aguda». */
@@ -107,6 +123,13 @@ export interface DocumentoDeAtencion {
    * los leen siguen produciendo exactamente el mismo papel que antes.
    */
   readonly formularios?: readonly DocumentoDeFormulario[];
+  /**
+   * Las alergias de la persona, ya en palabras —«Penicilina (reacción grave)»—.
+   * Van en un aviso destacado, antes de lo indicado: es lo primero que tiene que
+   * ver quien prescribe o dispensa. Opcional: quien arma el documento hoy
+   * todavía no la puebla, y ausente no se imprime nada (no es «sin alergias»).
+   */
+  readonly alergias?: readonly string[];
 }
 
 /**
@@ -130,13 +153,19 @@ export interface RespuestaDeFormulario {
  * Un **formulario clínico respondido** dentro de un encuentro (carril de
  * consulta de formularios).
  *
- * Sin paciente ni profesional todavía: el bloque que hoy lo descarga vive
- * dentro del expediente y no conoce esos datos resueltos; cuando el documento
- * se arme desde una pantalla que los tenga, se agregan acá y el armador les da
- * la misma cabecera que a la receta y la atención.
+ * Paciente, profesional y organización son opcionales: el bloque que hoy lo
+ * descarga vive dentro del expediente y no conoce esos datos resueltos (sólo
+ * el identificador del perfil). Cuando llegan, el armador les da la misma
+ * cabecera que a la receta y la atención, y la organización firma el pie.
  */
 export interface DocumentoDeFormulario {
   readonly id: string;
+  /** A quién corresponde, si quien arma el documento lo sabe. */
+  readonly paciente?: DocumentoPaciente;
+  /** Quién lo registró, si se sabe. */
+  readonly profesional?: DocumentoProfesional;
+  /** La organización que emite la copia, si se sabe. */
+  readonly organizacion?: string;
   /** El nombre de la plantilla, o un título genérico si no se pudo resolver. */
   readonly titulo: string;
   /** Cuándo se completó, si la instancia registró el cierre. */
@@ -185,6 +214,13 @@ export interface DocumentoDeOrden {
 /** Una atención dentro de la historia, con lo que se registró en ella. */
 export interface HistoriaAtencion {
   readonly titulo: string;
+  /**
+   * Cuándo empezó y por qué, si se saben: la historia los usa para encabezar
+   * la atención en su tabla y ordenarlas de la más reciente a la más vieja.
+   * Sin ellos, la atención se encabeza con `titulo`.
+   */
+  readonly inicio?: Date;
+  readonly motivo?: string;
   readonly bloques: readonly DocumentoBloque[];
 }
 
@@ -203,8 +239,6 @@ export interface HistoriaAtencion {
  */
 export interface DocumentoDeHistoria {
   readonly paciente: DocumentoPaciente;
-  /** Advierte que alguna fuente quedó recortada o no pudo leerse. */
-  readonly avisoDeIntegridad?: string;
   /** Edad ya calculada, en palabras. La aritmética no se hace en el papel. */
   readonly edad?: string;
   /** Organización que emite la copia, si la sesión pertenece a una. */
@@ -215,4 +249,11 @@ export interface DocumentoDeHistoria {
   readonly ordenes: readonly DocumentoDeOrden[];
   /** Resultados liberados, ya en palabras. */
   readonly resultados: readonly DocumentoBloque[];
+  /**
+   * Las alergias de la persona, ya en palabras —«Penicilina (reacción grave)»—.
+   * Van en un aviso destacado, antes de lo indicado: es lo primero que tiene que
+   * ver quien prescribe o dispensa. Opcional: quien arma el documento hoy
+   * todavía no la puebla, y ausente no se imprime nada (no es «sin alergias»).
+   */
+  readonly alergias?: readonly string[];
 }

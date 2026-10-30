@@ -113,7 +113,7 @@ describe('SiteBankQrDialog — el QR bancario de una sede', () => {
    * El QR **está** configurado y lo que falló es dibujarlo. Decir «no tenés
    * ninguno» llevaría a cargar otro encima del que ya está.
    */
-  it('si la imagen no baja, no se confunde con «no tenés ninguno»', async () => {
+  it('si la imagen no baja, no se confunde con «no tiene ninguno»', async () => {
     const { fixture, http } = await montar({ ...SEDE, bankQrFileId: 'file-qr' });
 
     http.expectOne(CONTENIDO).error(new ProgressEvent('error'));

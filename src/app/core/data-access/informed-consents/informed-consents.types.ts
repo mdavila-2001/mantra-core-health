@@ -187,48 +187,48 @@ export type InformedConsentRuleViolation =
 
 /**
  * Las reglas del contrato §2 y de la enmienda 1 §4.2, en una función pura que comparten el panel y
- * el simulador. Devuelve las violaciones en el orden del formulario.
+ * el simulador. Devuelve las violations en el orden del formulario.
  */
-export function violacionesDelConsentimiento(
+export function consentRuleViolations(
   input: Partial<CreateInformedConsentInput>,
 ): InformedConsentRuleViolation[] {
-  const violaciones: InformedConsentRuleViolation[] = [];
-  const lleno = (valor: string | undefined): boolean => (valor ?? '').trim() !== '';
-  const conTipo = input.targetType !== undefined;
-  const conId = lleno(input.targetId);
-  if (conTipo !== conId) violaciones.push('TARGET_PAIR_INCOMPLETE');
+  const violations: InformedConsentRuleViolation[] = [];
+  const filled = (valor: string | undefined): boolean => (valor ?? '').trim() !== '';
+  const hasType = input.targetType !== undefined;
+  const hasId = filled(input.targetId);
+  if (hasType !== hasId) violations.push('TARGET_PAIR_INCOMPLETE');
 
   if (input.exceptionType === undefined) {
-    if (conTipo) {
-      if (!lleno(input.purposeText)) violaciones.push('PURPOSE_REQUIRED');
-      if (!lleno(input.benefitsText)) violaciones.push('BENEFITS_REQUIRED');
-      if (!lleno(input.risksText)) violaciones.push('RISKS_REQUIRED');
+    if (hasType) {
+      if (!filled(input.purposeText)) violations.push('PURPOSE_REQUIRED');
+      if (!filled(input.benefitsText)) violations.push('BENEFITS_REQUIRED');
+      if (!filled(input.risksText)) violations.push('RISKS_REQUIRED');
     }
-  } else if (!lleno(input.exceptionJustification)) {
-    violaciones.push('EXCEPTION_JUSTIFICATION_REQUIRED');
+  } else if (!filled(input.exceptionJustification)) {
+    violations.push('EXCEPTION_JUSTIFICATION_REQUIRED');
   }
 
   if (input.grantedBy !== undefined && input.grantedBy !== 'PATIENT') {
-    if (!lleno(input.representativeName)) violaciones.push('REPRESENTATIVE_NAME_REQUIRED');
-    if (!lleno(input.representativeRelationship)) {
-      violaciones.push('REPRESENTATIVE_RELATIONSHIP_REQUIRED');
+    if (!filled(input.representativeName)) violations.push('REPRESENTATIVE_NAME_REQUIRED');
+    if (!filled(input.representativeRelationship)) {
+      violations.push('REPRESENTATIVE_RELATIONSHIP_REQUIRED');
     }
     // Enmienda 1 §4.2: con representante, el asentimiento se declara (sí o
     // no); omitirlo es no haberlo preguntado.
-    if (input.assentObtained === undefined) violaciones.push('ASSENT_REQUIRED');
+    if (input.assentObtained === undefined) violations.push('ASSENT_REQUIRED');
   }
 
   // Enmienda 1 §4.2: aceptar algo concreto exige constancia de que se informó
   // que se puede revocar, salvo la urgencia (no hubo con quién conversarlo).
   if (
     input.decision === 'ACCEPTED' &&
-    conTipo &&
+    hasType &&
     input.exceptionType !== 'EMERGENCY' &&
     input.revocationRightInformed !== true
   ) {
-    violaciones.push('REVOCATION_RIGHT_REQUIRED');
+    violations.push('REVOCATION_RIGHT_REQUIRED');
   }
-  return violaciones;
+  return violations;
 }
 
 /**
@@ -238,7 +238,7 @@ export function violacionesDelConsentimiento(
  * escrituras del mismo segundo y un simulador que ordena distinto bastan para
  * pintar un estado viejo.
  */
-export function vigenteDe(
+export function currentConsentFor(
   consentimientos: readonly InformedConsent[],
   targetType: InformedConsentTargetType,
   targetId: string,
@@ -255,7 +255,7 @@ export function vigenteDe(
  * El `reason` estable con que la API rechaza cada regla (400,
  * `ConsentErrorReason` en `consent.error-reasons.ts`).
  */
-export const RAZON_DE_LA_API: Readonly<Record<InformedConsentRuleViolation, string>> = {
+export const API_REASON_BY_RULE: Readonly<Record<InformedConsentRuleViolation, string>> = {
   TARGET_PAIR_INCOMPLETE: 'INFORMED_CONSENT_TARGET_INCOMPLETE',
   PURPOSE_REQUIRED: 'INFORMED_CONSENT_INFORMATION_INCOMPLETE',
   BENEFITS_REQUIRED: 'INFORMED_CONSENT_INFORMATION_INCOMPLETE',
@@ -268,7 +268,7 @@ export const RAZON_DE_LA_API: Readonly<Record<InformedConsentRuleViolation, stri
 };
 
 /** El campo del DTO que la API nombra en `details.fields` para cada regla. */
-export const CAMPO_DE_LA_API: Readonly<Record<InformedConsentRuleViolation, string>> = {
+export const API_FIELD_BY_RULE: Readonly<Record<InformedConsentRuleViolation, string>> = {
   TARGET_PAIR_INCOMPLETE: 'targetId',
   PURPOSE_REQUIRED: 'purposeText',
   BENEFITS_REQUIRED: 'benefitsText',
@@ -284,8 +284,45 @@ export const CAMPO_DE_LA_API: Readonly<Record<InformedConsentRuleViolation, stri
  * De un 400 de la API (`details.fields`) a las reglas de la pantalla, para
  * señalar cada campo con su mensaje en vez de un aviso genérico.
  */
-export function violacionesDeLosCampos(fields: readonly string[]): InformedConsentRuleViolation[] {
-  return (Object.keys(CAMPO_DE_LA_API) as InformedConsentRuleViolation[]).filter((regla) =>
-    fields.includes(CAMPO_DE_LA_API[regla]),
+export function violationsFromFields(fields: readonly string[]): InformedConsentRuleViolation[] {
+  return (Object.keys(API_FIELD_BY_RULE) as InformedConsentRuleViolation[]).filter((regla) =>
+    fields.includes(API_FIELD_BY_RULE[regla]),
   );
 }
+
+/**
+ * Claves del alta (`POST /consent/treatment-informed-consents`) que la API
+ * v4266 ya declara en su DTO y en su `openapi.json` de `dev`, pero que el
+ * contrato generado de la maqueta (`api-contract.generated.ts`) todavía no
+ * trae. Van a la API real; se registran en `simulator-extensions.ts` para que
+ * la maqueta no las rechace, y la entrada se borra al regenerar el contrato
+ * con `scripts/gen-mock-contract.mjs`.
+ */
+export const INFORMED_CONSENT_CONTRACT_PENDING_KEYS: readonly string[] = [
+  'targetType',
+  'targetId',
+  'targetLabel',
+  'diagnosisText',
+  'purposeText',
+  'benefitsText',
+  'risksText',
+  'personalizedRisksText',
+  'alternativesText',
+  'refusalConsequencesText',
+  'patientQuestionsText',
+  'grantedBy',
+  'representativeName',
+  'representativeDocument',
+  'representativeRelationship',
+  'incapacityReason',
+  'informedByProfileId',
+  'channel',
+  'exceptionType',
+  'exceptionJustification',
+  'witnessName',
+  'witnessDocument',
+  'informationLanguage',
+  'assentObtained',
+  'assentNotes',
+  'revocationRightInformed',
+];

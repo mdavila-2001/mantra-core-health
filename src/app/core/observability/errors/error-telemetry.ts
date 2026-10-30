@@ -3,6 +3,7 @@ import { SpanStatusCode, trace } from '@opentelemetry/api';
 import { ATTR_ERROR_TYPE } from '@opentelemetry/semantic-conventions';
 
 import { TELEMETRY_CONFIG } from '../config/telemetry.token';
+import { sanitizeUrl } from '../privacy/sanitize-url';
 import { ATTR, SPAN_NAMES } from '../tracing/tracing.constants';
 import { TracingService } from '../tracing/tracing.service';
 import { ErrorDeduplicator } from './error-deduplicator';
@@ -71,7 +72,11 @@ export class ErrorTelemetry {
        * convierte en el estado de validación— no pasa por acá.
        */
       [ATTR.errorHandled]: false,
-      [ATTR.routeTemplate]: route,
+      /**
+       * Saneada acá y no en cada llamador: `AppErrorHandler` pasa
+       * `location.pathname` crudo, y en `/rx/<token>` eso es una credencial.
+       */
+      [ATTR.routeTemplate]: sanitizeUrl(route),
       'app.support.id': supportId,
       [ATTR.release]: this.config.version,
       [ATTR.buildId]: this.config.buildId,

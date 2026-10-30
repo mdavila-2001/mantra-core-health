@@ -1,0 +1,106 @@
+import { HttpBackend, HttpClient } from '@angular/common/http';
+import { inject, Injectable, InjectionToken } from '@angular/core';
+import { catchError, map, of, timeout, type Observable } from 'rxjs';
+
+import { environment } from '../../../../environments/environment';
+import { apiUrl } from '../api';
+import type { HallazgoIa, LecturaIa } from './triage-ia.types';
+
+/**
+ * Raíz del servicio de triage por IA. Ver `aiBaseUrl` en `environment.types.ts`.
+ *
+ * Token y no lectura directa por lo mismo que `API_BASE_URL`: las pruebas fijan
+ * otra raíz sin tocar el entorno.
+ */
+export const AI_BASE_URL = new InjectionToken<string>('AI_BASE_URL', {
+  providedIn: 'root',
+  factory: () => environment.aiBaseUrl,
+});
+
+/**
+ * Cuánto se espera al servicio antes de seguir sin él.
+ *
+ * La pantalla ya reconoció lo que pudo con el motor local mientras la persona
+ * escribía, y no se bloquea mientras espera. Desde que el servicio corre
+ * MedGemma en su propio servidor (CPU, sin proveedor externo), responde en
+ * menos de un segundo todo lo que su catálogo entiende y sólo consulta al
+ * modelo lo que nadie reconoció —«el corazón se me sale del pecho»—, que tarda
+ * 10–15 s. Por eso se espera más que su propio límite con el modelo (30 s):
+ * así siempre llega una respuesta del servicio, con o sin modelo, en vez de
+ * cortarla a mitad de camino.
+ */
+const ESPERA_MS = 35_000;
+
+/**
+ * Habla con AlovidaAIService: le manda el texto del paciente y recibe síntomas,
+ * partes del cuerpo y especialidades.
+ *
+ * ## Por qué un `HttpClient` propio, sin interceptores
+ *
+ * Se arma sobre `HttpBackend`, que es el `HttpClient` **sin** la cadena de
+ * interceptores de la aplicación, por dos razones:
+ *
+ * - `authInterceptor` le pone el JWT del paciente a toda petición que no
+ *   reconozca como pública. Este servicio no lo necesita —es público y no
+ *   autoriza nada— y mandárselo sería entregarle una credencial de más.
+ * - `mockBackendInterceptor` contesta en la rama `mockup` todo lo que parezca
+ *   de la API. El triage tiene que llegar al servicio de verdad, también ahí.
+ *
+ * ## Nunca falla hacia arriba
+ *
+ * Un error, un tiempo agotado o una respuesta con otra forma devuelven `null`:
+ * la pantalla sigue con lo que reconoció el motor local. El servicio mejora la
+ * lectura; su ausencia no la rompe.
+ */
+@Injectable({ providedIn: 'root' })
+export class TriageIaClient {
+  private readonly http = new HttpClient(inject(HttpBackend));
+  private readonly base = inject(AI_BASE_URL);
+
+  analizar(texto: string): Observable<LecturaIa | null> {
+    return this.http.post<unknown>(apiUrl(this.base, '/v1/triage/analyze'), { text: texto }).pipe(
+      timeout(ESPERA_MS),
+      map(leerLectura),
+      catchError(() => of(null)),
+    );
+  }
+}
+
+/** Valida la forma de lo que llegó; lo que no la tenga se trata como «sin lectura». */
+export function leerLectura(cuerpo: unknown): LecturaIa | null {
+  if (typeof cuerpo !== 'object' || cuerpo === null) {
+    return null;
+  }
+  const { symptoms, urgency, source, response } = cuerpo as {
+    symptoms?: unknown;
+    urgency?: unknown;
+    source?: unknown;
+    response?: unknown;
+  };
+  if (!Array.isArray(symptoms) || (urgency !== 'urgente' && urgency !== 'prioritaria' && urgency !== 'programada')) {
+    return null;
+  }
+  const lectura: LecturaIa = {
+    symptoms: symptoms.filter(esHallazgo),
+    urgency,
+    ...(typeof response === 'string' && response.trim().length > 0 && response.length <= 700
+      ? { response: response.trim() }
+      : {}),
+  };
+  return source === 'model' || source === 'semantic' || source === 'catalog' ? { ...lectura, source } : lectura;
+}
+
+function esHallazgo(valor: unknown): valor is HallazgoIa {
+  if (typeof valor !== 'object' || valor === null) {
+    return false;
+  }
+  const h = valor as Partial<HallazgoIa>;
+  return (
+    typeof h.code === 'string' &&
+    typeof h.label === 'string' &&
+    (h.kind === 'curated' || h.kind === 'anatomy') &&
+    Array.isArray(h.zones) &&
+    Array.isArray(h.especialidades) &&
+    typeof h.alarm === 'boolean'
+  );
+}

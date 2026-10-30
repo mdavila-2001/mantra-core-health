@@ -9,7 +9,6 @@
  *
  * La escala está **extraída** de lo que el código ya usaba, no inventada:
  * 780 px era el corte de facto con 30 usos y 1024 px el secundario con 2.
- * Pendiente de que el diseñador la confirme.
  */
 export const BREAKPOINTS = {
   /** Teléfono grande. */

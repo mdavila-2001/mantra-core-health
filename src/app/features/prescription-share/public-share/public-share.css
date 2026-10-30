@@ -1,0 +1,56 @@
+:host {
+  display: block;
+}
+
+/* Página pública fuera del armazón, como `verify/portability`: un aviso
+   centrado, no una ficha. */
+.shared-rx {
+  display: grid;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  max-inline-size: 60ch;
+  margin-inline: auto;
+  padding: var(--sp-8) var(--sp-4);
+}
+
+.shared-rx__title {
+  margin: 0;
+  font-size: var(--fs-h2);
+  text-align: center;
+}
+
+.shared-rx__panel {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.shared-rx__data {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--sp-3);
+  row-gap: var(--sp-1);
+  margin: var(--sp-3) 0 0;
+}
+
+.shared-rx__data dt {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.shared-rx__data dd {
+  margin: 0;
+}
+
+.shared-rx__note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.shared-rx__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: center;
+  margin: 0;
+}

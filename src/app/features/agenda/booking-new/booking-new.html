@@ -1,8 +1,8 @@
 <app-page-header
-  title="Reservar un turno"
+  title="Reservar una cita"
   [subtitle]="
     esAutoservicio
-      ? 'Se retiene el horario, se confirma, y el turno queda en tu lista.'
+      ? 'Se retiene el horario, se confirma, y el turno queda en su lista.'
       : 'Se retiene el cupo, se confirma, y la cita queda en la agenda.'
   "
   [breadcrumbs]="breadcrumbs()"
@@ -11,15 +11,15 @@
 @if (sinPerfilDePaciente) {
   <!-- Sesión válida, pero de una cuenta que no es de un paciente: no hay perfil
        a nombre de quién reservar. Se dice acá y no en el `confirm`. -->
-  <app-alert tone="warning" title="Tu cuenta no reserva turnos propios" class="reserva__alert">
-    Esta cuenta no tiene un perfil de paciente. Si atendés turnos, reservá desde la agenda de la
+  <app-alert tone="warning" title="Su cuenta no reserva turnos propios" class="reserva__alert">
+    Esta cuenta no tiene un perfil de paciente. Si atiende con cita, reserve desde la agenda de la
     organización.
   </app-alert>
   <a app-button variant="primary" [routerLink]="rutaDeAgenda">Ir a la agenda</a>
 } @else if (sinContexto) {
   <!-- Sin la franja en la URL no hay cómo reencontrar el cupo: no es un
        error de red, es que a esta pantalla se llega desde una fila. -->
-  <app-alert tone="warning" title="Elegí primero un horario" class="reserva__alert">
+  <app-alert tone="warning" title="Elija primero un horario" class="reserva__alert">
     @if (esAutoservicio) {
       La reserva se abre desde un horario concreto de la lista de disponibilidad.
     } @else {
@@ -38,7 +38,7 @@
 
   @if (retencionVencida()) {
     <app-alert appAnuncio tone="warning" title="La retención venció" class="reserva__alert">
-      El cupo se devolvió a la agenda antes de confirmar. Si sigue libre, retenelo de nuevo.
+      El cupo se devolvió a la agenda antes de confirmar. Si sigue libre, reténgalo de nuevo.
     </app-alert>
   }
 
@@ -61,6 +61,25 @@
             </div>
           }
 
+          <!-- Qué servicio es, cuánto dura y cuánto sale (v4.2.40). La duración
+               es un rango porque depende de cada paciente; el horario reserva el
+               máximo. Aparece sólo si se reserva un servicio. -->
+          @if (esServicio && servicio(); as s) {
+            <div class="reserva__dato" data-testid="reserva-servicio">
+              <dt>Servicio</dt>
+              <dd>
+                {{ s.serviceName }}
+                <span class="reserva__cifra" data-testid="reserva-duracion"
+                  >· dura {{ duracion() }}</span
+                >
+              </dd>
+            </div>
+            <div class="reserva__dato" data-testid="reserva-precio">
+              <dt>Precio de referencia</dt>
+              <dd class="reserva__cifra">{{ precio() }}</dd>
+            </div>
+          }
+
           <div class="reserva__dato">
             <dt>Fecha de reserva</dt>
             <dd>
@@ -68,10 +87,23 @@
               hasta <span class="reserva__cifra">{{ cupo.endAt | date: 'HH:mm' }}</span>
             </dd>
           </div>
-          <div class="reserva__dato">
-            <dt>Disponibilidad</dt>
-            <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
-          </div>
+          @if (!esServicio) {
+            <div class="reserva__dato">
+              <dt>Disponibilidad</dt>
+              <dd>{{ cupo.remainingCapacity }} de {{ cupo.capacity }} sin ocupar</dd>
+            </div>
+            <!-- FAC-01: el precio de la consulta viene con el turno. Sin precio
+                 publicado se dice así, nunca «0,00». Si la API no lo manda
+                 (\`undefined\`), el renglón no se dibuja. -->
+            @if (cupo.price !== undefined) {
+              <div class="reserva__dato" data-testid="reserva-precio-consulta">
+                <dt>Precio de la consulta</dt>
+                <dd [class.reserva__cifra]="!!precio()">
+                  {{ precio() || 'El consultorio todavía no publicó el precio' }}
+                </dd>
+              </div>
+            }
+          }
 
           <!-- Dónde es el turno. El renglón aparece sólo si el recurso tiene
                sede: uno vacío se leería como un dato que no cargó, y quien
@@ -89,11 +121,11 @@
                que queda es confirmar antes del vencimiento. -->
           <app-alert appAnuncio tone="success" title="Cupo retenido" class="reserva__alert">
             @if (esAutoservicio) {
-              Te lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirmá
-              antes de esa hora o el horario vuelve a quedar libre.
+              Se lo guardamos hasta las {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes
+              de esa hora o el horario vuelve a quedar libre.
             } @else {
               Retenido a nombre de {{ paciente()?.label }} hasta las
-              {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirmá antes de esa hora o el cupo
+              {{ retencion.expiresAt | date: 'HH:mm:ss' }}. Confirme antes de esa hora o el cupo
               vuelve a la agenda.
             }
           </app-alert>
@@ -120,9 +152,9 @@
               >
                 <app-form-field
                   label="Paciente"
-                  hint="Buscá por nombre o por código de paciente."
+                  hint="Busque por nombre o por código de paciente."
                   [required]="true"
-                  [errorMessage]="pacienteFaltante() ? 'Elegí para quién es el turno.' : ''"
+                  [errorMessage]="pacienteFaltante() ? 'Elija para quién es la cita.' : ''"
                 >
                   <app-reference-combobox
                     [selected]="paciente()"
@@ -143,7 +175,7 @@
                    admite 500 caracteres. -->
               <app-form-field
                 class="reserva__campo--ancho"
-                label="¿Qué te pasa o qué querés consultar?"
+                label="¿Qué le pasa o qué quiere consultar?"
                 [errorMessage]="
                   motivo.touched && motivo.invalid
                     ? 'El motivo no puede superar los 500 caracteres.'
@@ -152,6 +184,12 @@
               >
                 <app-textarea formControlName="motivo" [maxLength]="maxMotivo" [rows]="5" />
               </app-form-field>
+              @if (observacionPrecargada) {
+                <p class="reserva__nota" data-testid="reserva-observacion-precargada">
+                  Completamos el motivo con la observación de síntomas que guardó. Puede editarla
+                  antes de solicitar la cita.
+                </p>
+              }
             </app-form-section>
 
             <app-form-actions
@@ -175,7 +213,7 @@
     }
     @default {
       <app-alert appAnuncio tone="error" title="No se pudo leer el cupo" class="reserva__alert">
-        La agenda no respondió. Reintentá, o volvé y elegí el horario de nuevo.
+        La agenda no respondió. Reintente, o vuelva y elija el horario de nuevo.
       </app-alert>
       <div class="reserva__acciones">
         <button app-button variant="outline" (clicked)="cargarCupo()">Reintentar</button>

@@ -1,257 +1,225 @@
-import {
-  CAMPO_DE_LA_API,
-  RAZON_DE_LA_API,
-  violacionesDelConsentimiento,
-  type InformedConsentRuleViolation,
-  type CreateInformedConsentInput,
-  type InformedConsentTargetType,
-} from '../../data-access/informed-consents/informed-consents.types';
-import type { WireInformedConsent } from '../../data-access/informed-consents/informed-consents.client';
-import { recetas } from '../fixtures/clinica';
-import { MEDICA, PACIENTE } from '../fixtures/personas';
-import { notFound, reply, type MockRouter } from '../mock-router';
-import { ahora, Coleccion, cuerpo, iso, nuevoId, texto, uuid } from '../mock-store';
+import { encounterList } from '../fixtures/clinic';
+import { PACIENTE } from '../fixtures/people';
+import { forbidden, notFound, preconditionFailed, unauthorized, type MockRouter } from '../mock-router';
+import { TENANT_CLINICA } from '../mock-session';
+import { ahora, Coleccion, cuerpo, iso, nuevoId, uuid } from '../mock-store';
+import { relacionDelProfesional } from './misc.handlers';
 
 /* ============================================================================
-    Consentimiento informado DIRIGIDO (`src/modules/consent`, contrato §2).
+    Consent (M07): «Mi privacidad» y el consentimiento informado del encuentro.
 
-    Valida con las mismas reglas que la API —la función es la misma que usa el
-    panel— y responde 400 con `details.reason` estable, que es lo que la API
-    promete. Guarda en colección persistida: lo que el expediente hace después
-    de registrar es releer, y un consentimiento que no vuelve de la lectura se
-    ve igual que una escritura que falló.
-   ========================================================================== */
+    Mismas reglas de rol y misma forma que la API: las lecturas `me` resuelven la
+    persona por la sesión (nunca por un id del cuerpo), lo ajeno es 404, retirar
+    cierra la vigencia y **no borra la fila**, y el médico registra el
+    consentimiento informado por el encuentro (paciente y tenant salen de él).
+    ========================================================================== */
 
-type FilaDeConsentimiento = WireInformedConsent;
+type Estado = 'ACTIVE' | 'WITHDRAWN' | 'EXPIRED';
 
-interface EvidenciaSimulada {
+interface PropositoSimulado {
   readonly id: string;
-  readonly subjectId: string;
-  readonly documentFileId: string | null;
-  readonly evidenceTypeConceptId: string;
-  readonly capturedChannelConceptId: string | null;
-  readonly recordedAt: string;
+  readonly code: string;
+  readonly name: string;
 }
 
-const EVIDENCIA_FIRMA = uuid('concept-EVIDENCE_TYPE_SIGNATURE');
+const PROPOSITOS: readonly PropositoSimulado[] = [
+  { id: uuid('purpose-treatment'), code: 'TREATMENT', name: 'Tratamiento y atención médica' },
+  { id: uuid('purpose-research'), code: 'RESEARCH', name: 'Investigación con datos anonimizados' },
+  { id: uuid('purpose-marketing'), code: 'COMMUNICATIONS', name: 'Comunicaciones y recordatorios' },
+];
 
-const MENSAJES: Readonly<Record<string, string>> = {
-  TARGET_PAIR_INCOMPLETE: 'targetType y targetId van juntos: los dos o ninguno.',
-  PURPOSE_REQUIRED: 'Falta la naturaleza y el objetivo de lo que se propone.',
-  BENEFITS_REQUIRED: 'Faltan los beneficios esperados.',
-  RISKS_REQUIRED: 'Faltan los riesgos frecuentes y graves.',
-  EXCEPTION_JUSTIFICATION_REQUIRED: 'Una excepción al consentimiento exige su justificación.',
-  REPRESENTATIVE_NAME_REQUIRED: 'Falta el nombre de quien otorga en representación.',
-  REPRESENTATIVE_RELATIONSHIP_REQUIRED: 'Falta el parentesco o la calidad del representante.',
-  ASSENT_REQUIRED: 'Con representante, declará si hubo asentimiento de la persona representada.',
-  REVOCATION_RIGHT_REQUIRED: 'Falta la constancia de que se informó el derecho a revocar.',
-  DECISION_REQUIRED: 'Falta la decisión: acepta o no acepta.',
-  ENCOUNTER_REQUIRED: 'El consentimiento se registra dentro de una atención (encounterId).',
-};
-
-/** El 400 de la API: `reason` estable arriba y los campos en `details.fields`. */
-function rechazo(clave: string, reason: string, fields: readonly string[]) {
-  return reply(400, {
-    statusCode: 400,
-    code: 'VALIDATION_FAILED',
-    message: MENSAJES[clave] ?? 'El consentimiento no es válido.',
-    error: 'Bad Request',
-    reason,
-    details: { fields },
-  });
+interface ConsentimientoSimulado {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly purposeId: string;
+  readonly state: Estado;
+  readonly validFrom: string;
+  readonly validTo: string | null;
+  readonly withdrawnAt: string | null;
+  readonly policyVersion: string;
+  readonly createdAt: string;
 }
 
-/** Como la API: falla en la primera regla, con todos los campos de esa misma razón. */
-function rechazoDeLaRegla(violaciones: readonly InformedConsentRuleViolation[]) {
-  const primera = violaciones[0]!;
-  const reason = RAZON_DE_LA_API[primera];
-  const fields = violaciones.filter((v) => RAZON_DE_LA_API[v] === reason).map((v) => CAMPO_DE_LA_API[v]);
-  return rechazo(primera, reason, fields);
-}
-
-function fila(datos: Partial<FilaDeConsentimiento> & { id: string; patientProfileId: string; decision: 'ACCEPTED' | 'DECLINED'; createdAt: string }): FilaDeConsentimiento {
-  return {
-    encounterId: null,
-    targetType: null,
-    targetId: null,
-    targetLabel: null,
-    status: 'ACTIVE',
-    diagnosisText: null,
-    purposeText: null,
-    benefitsText: null,
-    risksText: null,
-    personalizedRisksText: null,
-    alternativesText: null,
-    refusalConsequencesText: null,
-    patientQuestionsText: null,
-    grantedBy: 'PATIENT',
-    representativeName: null,
-    representativeDocument: null,
-    representativeRelationship: null,
-    incapacityReason: null,
-    informedByProfileId: null,
-    channel: 'IN_PERSON',
-    exceptionType: null,
-    exceptionJustification: null,
-    withdrawalReason: null,
-    signedAt: datos.createdAt,
+const consentimientos = new Coleccion<ConsentimientoSimulado>([
+  {
+    id: uuid('consent-tratamiento'),
+    patientProfileId: PACIENTE.id,
+    purposeId: PROPOSITOS[0]!.id,
+    state: 'ACTIVE',
+    validFrom: iso(-200),
+    validTo: null,
     withdrawnAt: null,
-    ...datos,
-  };
+    policyVersion: '2026.1',
+    createdAt: iso(-200),
+  },
+  {
+    id: uuid('consent-comunicaciones'),
+    patientProfileId: PACIENTE.id,
+    purposeId: PROPOSITOS[2]!.id,
+    state: 'ACTIVE',
+    validFrom: iso(-90),
+    validTo: null,
+    withdrawnAt: null,
+    policyVersion: '2026.1',
+    createdAt: iso(-90),
+  },
+  {
+    id: uuid('consent-investigacion-retirado'),
+    patientProfileId: PACIENTE.id,
+    purposeId: PROPOSITOS[1]!.id,
+    state: 'WITHDRAWN',
+    validFrom: iso(-300),
+    validTo: iso(-120),
+    withdrawnAt: iso(-120),
+    policyVersion: '2025.2',
+    createdAt: iso(-300),
+  },
+]);
+
+interface InformadoSimulado {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly encounterId: string;
+  readonly tenantId: string;
+  readonly decision: 'ACCEPTED' | 'DECLINED';
+  readonly informationVersion: string | null;
+  readonly signedAt: string;
 }
 
-/** Una receta sembrada de la paciente de demostración ya trae su consentimiento aceptado. */
-const primeraReceta = recetas.filtrar((r) => r.patientProfileId === PACIENTE.id)[0];
+const informados = new Coleccion<InformadoSimulado>([]);
 
-const consentimientos = new Coleccion<FilaDeConsentimiento>(
-  primeraReceta === undefined
-    ? []
-    : [
-        fila({
-          id: uuid('consent-rx-paciente-0'),
-          patientProfileId: PACIENTE.id,
-          encounterId: primeraReceta.encounterId ?? null,
-          decision: 'ACCEPTED',
-          targetType: 'MEDICATION_REQUEST',
-          targetId: primeraReceta.id,
-          targetLabel: `Receta · ${primeraReceta.doseText ?? ''} ${primeraReceta.frequencyText ?? ''}`.trim(),
-          purposeText: 'Tratamiento farmacológico de la condición diagnosticada.',
-          benefitsText: 'Control de los síntomas y prevención de complicaciones.',
-          risksText: 'Molestias digestivas leves; reacción alérgica rara.',
-          informedByProfileId: MEDICA.id,
-          createdAt: iso(-20, 10, 5),
-        }),
-      ],
-);
-consentimientos.persistirEn('mock.consent.treatmentInformedConsents');
-
-/** La firma del consentimiento sembrado: sin ella, todo se vería «Firma pendiente». */
-const evidencias = new Coleccion<EvidenciaSimulada>(
-  primeraReceta === undefined
-    ? []
-    : [
-        {
-          id: uuid('consent-evidence-rx-paciente-0'),
-          subjectId: uuid('consent-rx-paciente-0'),
-          documentFileId: null,
-          evidenceTypeConceptId: EVIDENCIA_FIRMA,
-          capturedChannelConceptId: null,
-          recordedAt: iso(-20, 10, 6),
-        },
-      ],
-);
-evidencias.persistirEn('mock.consent.evidence');
-
-/** Lo que responde la API: la fila con su evidencia y el estado de firma derivado. */
-function vista(c: FilaDeConsentimiento): FilaDeConsentimiento {
-  const evidence = evidencias
-    .filtrar((e) => e.subjectId === c.id)
-    .map((e) => ({ id: e.id, evidenceTypeConceptId: e.evidenceTypeConceptId, capturedChannelConceptId: e.capturedChannelConceptId, recordedAt: e.recordedAt }));
-  return { ...c, evidence, signatureStatus: evidence.length > 0 ? 'SIGNED' : 'PENDING' };
+/** Quién es el titular de la sesión (`patientProfileId` del token; la médica-paciente es la demo). */
+function pacienteDeSesion(user: { patientProfileId?: string; key: string } | null): string {
+  return user?.patientProfileId ?? (user?.key === 'medica' ? PACIENTE.id : '');
 }
 
-const TIPOS: readonly InformedConsentTargetType[] = ['MEDICATION_REQUEST', 'SERVICE_REQUEST', 'REFERRAL', 'PROCEDURE', 'CARE_PLAN'];
+const visto = (p: PropositoSimulado | undefined, id: string) => p ?? { id, code: '', name: '' };
+
+const informadoVisible = (i: InformadoSimulado) => ({
+  id: i.id,
+  encounterId: i.encounterId,
+  decision: i.decision,
+  informationVersion: i.informationVersion ?? undefined,
+  signedAt: i.signedAt,
+});
 
 export function registrarConsentimientos(router: MockRouter): void {
-  router.get('/consent/treatment-informed-consents', ({ query }) => {
-    const paciente = texto(query, 'patientProfileId');
-    const tipo = texto(query, 'targetType');
-    const objeto = texto(query, 'targetId');
+  router.get('/consent/me/consents', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const pid = pacienteDeSesion(user);
+    if (pid === '') return forbidden('Esta sección es para pacientes');
     const items = consentimientos
-      .filtrar(
-        (c) =>
-          (paciente === null || c.patientProfileId === paciente) &&
-          (tipo === null || c.targetType === tipo) &&
-          (objeto === null || c.targetId === objeto),
-      )
+      .filtrar((c) => c.patientProfileId === pid)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .map(vista);
+      .map((c) => ({
+        id: c.id,
+        state: c.state,
+        purpose: visto(
+          PROPOSITOS.find((p) => p.id === c.purposeId),
+          c.purposeId,
+        ),
+        validFrom: c.validFrom,
+        validTo: c.validTo ?? undefined,
+        withdrawnAt: c.withdrawnAt ?? undefined,
+        policyVersion: c.policyVersion,
+        createdAt: c.createdAt,
+      }));
     return { items };
   });
 
-  router.get('/consent/treatment-informed-consents/:id', ({ params }) => {
+  router.get('/consent/me/hipaa-authorizations', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    if (pacienteDeSesion(user) === '') return forbidden('Esta sección es para pacientes');
+    return {
+      items: [
+        {
+          id: uuid('hipaa-1'),
+          state: 'ACTIVE',
+          purpose: PROPOSITOS[0],
+          recipientDescription: 'Seguros Andina — área de auditoría médica',
+          informationDescription: 'Resumen de la historia clínica para el reembolso',
+          expiresAt: iso(90),
+          signedAt: iso(-10),
+        },
+      ],
+    };
+  });
+
+  router.get('/consent/me/objections', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    if (pacienteDeSesion(user) === '') return forbidden('Esta sección es para pacientes');
+    return { items: [] };
+  });
+
+  router.get('/consent/me/treatment-informed-consents', ({ user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    const pid = pacienteDeSesion(user);
+    if (pid === '') return forbidden('Esta sección es para pacientes');
+    return {
+      items: informados
+        .filtrar((i) => i.patientProfileId === pid)
+        .sort((a, b) => b.signedAt.localeCompare(a.signedAt))
+        .map(informadoVisible),
+    };
+  });
+
+  /** Retirar cierra la vigencia y cambia el estado; la fila queda. Lo ajeno es 404. */
+  router.post('/consent/me/consents/:id/withdraw', ({ params, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
     const c = consentimientos.get(params['id']!);
-    return c === undefined ? notFound('Consentimiento no encontrado') : vista(c);
+    if (c === undefined || c.patientProfileId !== pacienteDeSesion(user)) return notFound('Consentimiento no encontrado');
+    if (c.state !== 'ACTIVE') return preconditionFailed('El consentimiento no está activo');
+    consentimientos.actualizar(c.id, { state: 'WITHDRAWN', withdrawnAt: ahora(), validTo: ahora() });
+    return { ok: true };
   });
 
-  router.post('/consent/treatment-informed-consents', (request) => {
-    const datos = cuerpo<CreateInformedConsentInput>(request);
-    // Las dos primeras las rechaza el `ValidationPipe` (DTO), no el servicio.
-    if ((datos.encounterId ?? '').trim() === '') return rechazo('ENCOUNTER_REQUIRED', 'VALIDATION_FAILED', ['encounterId']);
-    if (datos.decision !== 'ACCEPTED' && datos.decision !== 'DECLINED') return rechazo('DECISION_REQUIRED', 'VALIDATION_FAILED', ['decision']);
-    if (datos.targetType !== undefined && !TIPOS.includes(datos.targetType)) {
-      return rechazo('TARGET_PAIR_INCOMPLETE', 'VALIDATION_FAILED', ['targetType']);
+  /**
+   * El consentimiento informado, registrado por el médico desde su encuentro:
+   * paciente y tenant salen del encuentro (nunca del cuerpo), y sólo quien puede
+   * escribir la historia del paciente lo firma.
+   */
+  router.post('/consent/encounters/:encounterId/informed-consent', (request) => {
+    const user = request.user;
+    if (user === null) return unauthorized('Sesión vencida');
+    if (!user.roles.some((rol) => ['CLINICIAN', 'PRACTITIONER'].includes(rol))) {
+      return forbidden('Rol insuficiente para la operación');
     }
-    const violaciones = violacionesDelConsentimiento(datos);
-    if (violaciones.length > 0) return rechazoDeLaRegla(violaciones);
-
-    const instante = ahora();
-    const nuevo = consentimientos.agregar(
-      fila({
-        ...Object.fromEntries(Object.entries(datos).filter(([, v]) => v !== undefined)),
-        id: nuevoId('consent'),
-        patientProfileId: datos.patientProfileId ?? '',
-        decision: datos.decision,
-        grantedBy: datos.grantedBy ?? 'PATIENT',
-        informationLanguage: datos.informationLanguage ?? 'es',
-        channel: datos.channel ?? 'IN_PERSON',
-        informedByProfileId: datos.informedByProfileId ?? request.user?.practitionerProfileId ?? null,
-        createdAt: instante,
-        signedAt: instante,
-      }),
-    );
-    return reply(201, vista(nuevo));
-  });
-
-  router.patch('/consent/treatment-informed-consents/:id/withdraw', (request) => {
-    const actual = consentimientos.get(request.params['id']!);
-    if (actual === undefined) return notFound('Consentimiento no encontrado');
-    if (actual.status === 'WITHDRAWN') {
-      return reply(409, { statusCode: 409, code: 'CONFLICT', message: 'El consentimiento ya estaba revocado.', error: 'Conflict', reason: 'INFORMED_CONSENT_ALREADY_WITHDRAWN' });
+    const encuentro = encounterList.get(request.params['encounterId']!);
+    if (encuentro === undefined) return notFound('Encuentro no encontrado');
+    // Sin vínculo (o con vínculo revocado) no se escribe la historia.
+    if (relacionDelProfesional(user.practitionerProfileId, encuentro.patientProfileId) === 'REVOCADA') {
+      return forbidden('No tiene acceso a la historia de este paciente');
     }
-    const motivo = (cuerpo<{ reason: string }>(request).reason ?? '').trim();
-    if (motivo === '') {
-      return reply(400, {
-        statusCode: 400,
-        code: 'VALIDATION_FAILED',
-        message: 'La revocación exige su motivo.',
-        error: 'Bad Request',
-        details: { fields: ['reason'] },
-      });
+    const datos = cuerpo<{ decision?: 'ACCEPTED' | 'DECLINED'; informationVersion?: string }>(request);
+    if (datos.decision !== 'ACCEPTED' && datos.decision !== 'DECLINED') {
+      return preconditionFailed('La decisión es obligatoria');
     }
-    const revocado = consentimientos.actualizar(actual.id, {
-      status: 'WITHDRAWN',
-      withdrawnAt: ahora(),
-      withdrawalReason: motivo,
+    const nuevo = informados.agregar({
+      id: nuevoId('informed-consent'),
+      patientProfileId: encuentro.patientProfileId,
+      encounterId: encuentro.id,
+      tenantId: TENANT_CLINICA,
+      decision: datos.decision,
+      informationVersion: datos.informationVersion ?? null,
+      signedAt: ahora(),
     });
-    return revocado === undefined ? notFound('Consentimiento no encontrado') : vista(revocado);
+    return {
+      status: 201,
+      body: {
+        id: nuevo.id,
+        patientProfileId: nuevo.patientProfileId,
+        status: 'SIGNED',
+        decision: nuevo.decision,
+        createdAt: nuevo.signedAt,
+      },
+    };
   });
 
-  router.patch('/consent/treatment-informed-consents/:id/post-emergency-information', (request) => {
-    const actual = consentimientos.get(request.params['id']!);
-    if (actual === undefined) return notFound('Consentimiento no encontrado');
-    if (actual.exceptionType !== 'EMERGENCY') {
-      return reply(409, { statusCode: 409, code: 'CONFLICT', message: 'Sólo un consentimiento exceptuado por urgencia se informa a posteriori.', error: 'Conflict', reason: 'INFORMED_CONSENT_NOT_EMERGENCY' });
+  router.get('/consent/encounters/:encounterId/informed-consent', ({ params, user }) => {
+    if (user === null) return unauthorized('Sesión vencida');
+    if (!user.roles.some((rol) => ['CLINICIAN', 'PRACTITIONER'].includes(rol))) {
+      return forbidden('Rol insuficiente para la operación');
     }
-    const cuando = cuerpo<{ informedAt: string }>(request).informedAt ?? ahora();
-    const informado = consentimientos.actualizar(actual.id, { postEmergencyInformedAt: cuando });
-    return informado === undefined ? notFound('Consentimiento no encontrado') : vista(informado);
-  });
-
-  /* La evidencia: `POST …/:id/evidence`. La API reutiliza
-     `ConsentEvidenceService`; el sujeto lo pone la ruta. */
-  router.post('/consent/treatment-informed-consents/:id/evidence', (request) => {
-    const consentimiento = consentimientos.get(request.params['id']!);
-    if (consentimiento === undefined) return notFound('Consentimiento no encontrado');
-    const datos = cuerpo<{ documentFileId?: string; signatureId?: string; evidenceTypeConceptId?: string; capturedChannelConceptId?: string }>(request);
-    const nueva = evidencias.agregar({
-      id: nuevoId('consent-evidence'),
-      subjectId: consentimiento.id,
-      documentFileId: datos.documentFileId ?? null,
-      evidenceTypeConceptId: datos.evidenceTypeConceptId ?? EVIDENCIA_FIRMA,
-      capturedChannelConceptId: datos.capturedChannelConceptId ?? null,
-      recordedAt: ahora(),
-    });
-    return reply(201, { id: nueva.id, subjectId: nueva.subjectId, recordedAt: nueva.recordedAt });
+    return { items: informados.filtrar((i) => i.encounterId === params['encounterId']).map(informadoVisible) };
   });
 }

@@ -4,21 +4,21 @@
       <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
           <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><a aria-disabled="true" data-sin-destino="">Organizaciones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
-          <li><a routerLink="/directorio/membresias-listado">Membresías</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/provider-directory/memberships-list">Membresías</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><span aria-current="page">Roles</span></li>
       </ol>
         <div class="app-page-header__titulo"><h1>Cambiar el rol de la membresía</h1></div>
-        <p class="caption">Ajustá el rol y el alcance de Andrea Terceros Rojas en Clínica Los Olivos. Lo que no cambies queda como está, y la membresía tiene que estar activa.</p>
+        <p class="caption">Ajuste el rol y el alcance de Andrea Terceros Rojas en Clínica Los Olivos. Lo que no cambie queda como está, y la membresía tiene que estar activa.</p>
       </div>
       <div class="app-page-header__acciones">
 
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Membresías">
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/directorio/membresias-listado">Membresías</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/directorio/asignaciones-de-sucursal-formulario">Asignaciones de sucursal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/provider-directory/memberships-list">Membresías</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/provider-directory/branch-assignments-form">Asignaciones de sucursal</a>
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Roles</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/directorio/transferencias-formulario">Transferencias</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/provider-directory/transfers-form">Transferencias</a>
     </div>
     <div class="app-card app-card--inset" app-card="" style="padding:var(--e4);margin-bottom:var(--e6)">
       <p class="overline">Membresía</p>
@@ -30,9 +30,9 @@
       <div class="app-alert" app-alert="" data-tono="error" role="alert" data-solo-estado="error" hidden="">
         <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
         <div class="app-alert__cuerpo">
-          <strong>Revisá un campo antes de guardar.</strong>
+          <strong>Revise un campo antes de guardar.</strong>
           <ul>
-            <li>Rol: la organización ya tiene un titular; degradá al actual antes de nombrar otro.</li>
+            <li>Rol: la organización ya tiene un titular; degrade al actual antes de nombrar otro.</li>
           </ul>
         </div>
       </div>
@@ -44,7 +44,7 @@
           <label class="app-radio" app-radio=""><input type="radio" name="c-1" checked="">Administración</label>
           <label class="app-radio" app-radio=""><input type="radio" name="c-1">Equipo</label>
         </div>
-        <p class="app-form-field__ayuda" id="c-1-a">Si no lo tocás, conserva el que tiene. El titular es el único que puede transferir la organización.</p>
+        <p class="app-form-field__ayuda" id="c-1-a">Si no lo toca, conserva el que tiene. El titular es el único que puede transferir la organización.</p>
       </div>
       <div class="app-form-field" app-form-field="">
         <span class="app-form-field__label" id="c-2-l">Nuevo alcance de acceso</span>
@@ -56,8 +56,8 @@
       </div>
       </div>
       <div class="app-form-actions" app-form-actions="">
-        <p class="app-form-actions__nota">Se guarda con tu nombre y la hora: es una escritura auditada.</p>
-        <a app-button="" data-variante="secundario" routerLink="/directorio/membresias-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
+        <p class="app-form-actions__nota">Se guarda con su nombre y la hora: es una escritura auditada.</p>
+        <a app-button="" data-variante="secundario" routerLink="/provider-directory/memberships-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12"></path></svg>Cancelar</a>
         <button app-button="" data-variante="primario" type="button"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"></path></svg>Guardar el cambio</button>
       </div>
     </form>

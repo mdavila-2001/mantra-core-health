@@ -3,7 +3,8 @@
     {
       "codigo": "V02-08",
       "titulo": "V02-08·A · Registrar el resultado del escaneo",
-      "ruta": "/datos-compartidos/versiones-internas-escanear",
+      "ruta": "/shared-data/internal-versions-scan",
+      "rutaHeredada": "/datos-compartidos/versiones-internas-escanear",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -14,7 +15,8 @@
     {
       "codigo": "V02-08",
       "titulo": "V02-08·L · Versiones (archivos)",
-      "ruta": "/datos-compartidos/versiones-internas-listado",
+      "ruta": "/shared-data/internal-versions-list",
+      "rutaHeredada": "/datos-compartidos/versiones-internas-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -25,7 +27,8 @@
     {
       "codigo": "V02-01",
       "titulo": "V02-01·A · Eliminar el archivo",
-      "ruta": "/datos-compartidos/archivos-eliminar",
+      "ruta": "/shared-data/files-delete",
+      "rutaHeredada": "/datos-compartidos/archivos-eliminar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "sesion-autenticada",
@@ -36,7 +39,8 @@
     {
       "codigo": "V02-01",
       "titulo": "V02-01·F · Nuevo archivo",
-      "ruta": "/datos-compartidos/archivos-formulario",
+      "ruta": "/shared-data/files-form",
+      "rutaHeredada": "/datos-compartidos/archivos-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -47,7 +51,8 @@
     {
       "codigo": "V02-01",
       "titulo": "V02-01·L · Archivos",
-      "ruta": "/datos-compartidos/archivos-listado",
+      "ruta": "/shared-data/files-list",
+      "rutaHeredada": "/datos-compartidos/archivos-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -58,7 +63,8 @@
     {
       "codigo": "V02-01",
       "titulo": "V02-01·A · Obtener el enlace de descarga",
-      "ruta": "/datos-compartidos/archivos-obtener-enlace",
+      "ruta": "/shared-data/files-get-link",
+      "rutaHeredada": "/datos-compartidos/archivos-obtener-enlace",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "sesion-autenticada",
@@ -69,7 +75,8 @@
     {
       "codigo": "V02-01",
       "titulo": "V02-01·A · Subir el contenido de un archivo",
-      "ruta": "/datos-compartidos/archivos-subir",
+      "ruta": "/shared-data/files-upload",
+      "rutaHeredada": "/datos-compartidos/archivos-subir",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "sesion-autenticada",
@@ -80,7 +87,8 @@
     {
       "codigo": "V02-02",
       "titulo": "V02-02 · Contenido",
-      "ruta": "/datos-compartidos/contenido-detalle",
+      "ruta": "/shared-data/content-detail",
+      "rutaHeredada": "/datos-compartidos/contenido-detalle",
       "marco": "privado",
       "arquetipo": "detalle",
       "actor": "sesion-autenticada",
@@ -91,7 +99,8 @@
     {
       "codigo": "V02-03",
       "titulo": "V02-03·F · Nuevo vínculo",
-      "ruta": "/datos-compartidos/vinculos-formulario",
+      "ruta": "/shared-data/links-form",
+      "rutaHeredada": "/datos-compartidos/vinculos-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -102,7 +111,8 @@
     {
       "codigo": "V02-03",
       "titulo": "V02-03·L · Vínculos",
-      "ruta": "/datos-compartidos/vinculos-listado",
+      "ruta": "/shared-data/links-list",
+      "rutaHeredada": "/datos-compartidos/vinculos-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -113,7 +123,8 @@
     {
       "codigo": "V02-04",
       "titulo": "V02-04·F · Nueva versión",
-      "ruta": "/datos-compartidos/versiones-formulario",
+      "ruta": "/shared-data/versions-form",
+      "rutaHeredada": "/datos-compartidos/versiones-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -124,7 +135,8 @@
     {
       "codigo": "V02-04",
       "titulo": "V02-04·L · Versiones (archivos)",
-      "ruta": "/datos-compartidos/versiones-listado",
+      "ruta": "/shared-data/versions-list",
+      "rutaHeredada": "/datos-compartidos/versiones-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -135,7 +147,8 @@
     {
       "codigo": "V02-05",
       "titulo": "V02-05·F · Nuevo punto de contacto",
-      "ruta": "/datos-compartidos/puntos-de-contacto-formulario",
+      "ruta": "/shared-data/contact-points-form",
+      "rutaHeredada": "/datos-compartidos/puntos-de-contacto-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -146,7 +159,8 @@
     {
       "codigo": "V02-05",
       "titulo": "V02-05·L · Puntos de contacto",
-      "ruta": "/datos-compartidos/puntos-de-contacto-listado",
+      "ruta": "/shared-data/contact-points-list",
+      "rutaHeredada": "/datos-compartidos/puntos-de-contacto-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -157,7 +171,8 @@
     {
       "codigo": "V02-05",
       "titulo": "V02-05·A · Verificar el punto de contacto",
-      "ruta": "/datos-compartidos/puntos-de-contacto-verificar",
+      "ruta": "/shared-data/contact-points-verify",
+      "rutaHeredada": "/datos-compartidos/puntos-de-contacto-verificar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "sesion-autenticada",
@@ -168,7 +183,8 @@
     {
       "codigo": "V02-06",
       "titulo": "V02-06·F · Nueva dirección",
-      "ruta": "/datos-compartidos/direcciones-formulario",
+      "ruta": "/shared-data/addresses-form",
+      "rutaHeredada": "/datos-compartidos/direcciones-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -179,7 +195,8 @@
     {
       "codigo": "V02-06",
       "titulo": "V02-06·L · Direcciones",
-      "ruta": "/datos-compartidos/direcciones-listado",
+      "ruta": "/shared-data/addresses-list",
+      "rutaHeredada": "/datos-compartidos/direcciones-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -190,7 +207,8 @@
     {
       "codigo": "V02-07",
       "titulo": "V02-07·F · Nuevo identificador",
-      "ruta": "/datos-compartidos/identificadores-formulario",
+      "ruta": "/shared-data/identifiers-form",
+      "rutaHeredada": "/datos-compartidos/identificadores-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -201,7 +219,8 @@
     {
       "codigo": "V02-07",
       "titulo": "V02-07·L · Identificadores",
-      "ruta": "/datos-compartidos/identificadores-listado",
+      "ruta": "/shared-data/identifiers-list",
+      "rutaHeredada": "/datos-compartidos/identificadores-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -212,7 +231,8 @@
     {
       "codigo": "V02-09",
       "titulo": "V02-09·F · Nuevo derivado",
-      "ruta": "/datos-compartidos/derivados-formulario",
+      "ruta": "/shared-data/derivatives-form",
+      "rutaHeredada": "/datos-compartidos/derivados-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -223,7 +243,8 @@
     {
       "codigo": "V02-09",
       "titulo": "V02-09·L · Derivados",
-      "ruta": "/datos-compartidos/derivados-listado",
+      "ruta": "/shared-data/derivatives-list",
+      "rutaHeredada": "/datos-compartidos/derivados-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -234,7 +255,8 @@
     {
       "codigo": "V03-01",
       "titulo": "V03-01·A · Importar conceptos",
-      "ruta": "/terminologia/versiones-importar",
+      "ruta": "/vocabulary/versions-import",
+      "rutaHeredada": "/terminologia/versiones-importar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -245,7 +267,8 @@
     {
       "codigo": "V03-01",
       "titulo": "V03-01·L · Versiones de conjuntos de valor",
-      "ruta": "/terminologia/versiones-listado",
+      "ruta": "/vocabulary/versions-list",
+      "rutaHeredada": "/terminologia/versiones-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -256,7 +279,8 @@
     {
       "codigo": "V03-01",
       "titulo": "V03-01·A · Publicar la versión",
-      "ruta": "/terminologia/versiones-publicar",
+      "ruta": "/vocabulary/versions-publish",
+      "rutaHeredada": "/terminologia/versiones-publicar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -267,7 +291,8 @@
     {
       "codigo": "V03-04",
       "titulo": "V03-04·F · Expandir un conjunto de valores",
-      "ruta": "/terminologia/expansion-de-conjunto-de-valores-formulario",
+      "ruta": "/vocabulary/value-set-expansion-form",
+      "rutaHeredada": "/terminologia/expansion-de-conjunto-de-valores-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -278,7 +303,8 @@
     {
       "codigo": "V03-05",
       "titulo": "V03-05·F · Nuevo sistema de códigos",
-      "ruta": "/terminologia/sistemas-de-codigos-formulario",
+      "ruta": "/vocabulary/code-systems-form",
+      "rutaHeredada": "/terminologia/sistemas-de-codigos-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -289,7 +315,8 @@
     {
       "codigo": "V03-05",
       "titulo": "V03-05·L · Sistemas de códigos",
-      "ruta": "/terminologia/sistemas-de-codigos-listado",
+      "ruta": "/vocabulary/code-systems-list",
+      "rutaHeredada": "/terminologia/sistemas-de-codigos-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -300,7 +327,8 @@
     {
       "codigo": "V03-06",
       "titulo": "V03-06·F · Nueva versión del sistema de códigos",
-      "ruta": "/terminologia/versiones-de-sistema-formulario",
+      "ruta": "/vocabulary/system-versions-form",
+      "rutaHeredada": "/terminologia/versiones-de-sistema-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -311,7 +339,8 @@
     {
       "codigo": "V03-06",
       "titulo": "V03-06·L · Versiones del sistema de códigos",
-      "ruta": "/terminologia/versiones-de-sistema-listado",
+      "ruta": "/vocabulary/system-versions-list",
+      "rutaHeredada": "/terminologia/versiones-de-sistema-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -322,7 +351,8 @@
     {
       "codigo": "V03-08",
       "titulo": "V03-08·F · Retirar un concepto",
-      "ruta": "/terminologia/deprecacion-de-concepto-formulario",
+      "ruta": "/vocabulary/concept-deprecation-form",
+      "rutaHeredada": "/terminologia/deprecacion-de-concepto-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -333,7 +363,8 @@
     {
       "codigo": "V03-09",
       "titulo": "V03-09·F · Nueva designación",
-      "ruta": "/terminologia/designaciones-formulario",
+      "ruta": "/vocabulary/designations-form",
+      "rutaHeredada": "/terminologia/designaciones-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -344,7 +375,8 @@
     {
       "codigo": "V03-09",
       "titulo": "V03-09·L · Designaciones",
-      "ruta": "/terminologia/designaciones-listado",
+      "ruta": "/vocabulary/designations-list",
+      "rutaHeredada": "/terminologia/designaciones-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -355,7 +387,8 @@
     {
       "codigo": "V03-10",
       "titulo": "V03-10·F · Propiedades del concepto",
-      "ruta": "/terminologia/propiedades-formulario",
+      "ruta": "/vocabulary/properties-form",
+      "rutaHeredada": "/terminologia/propiedades-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -366,7 +399,8 @@
     {
       "codigo": "V03-10",
       "titulo": "V03-10·L · Propiedades",
-      "ruta": "/terminologia/propiedades-listado",
+      "ruta": "/vocabulary/properties-list",
+      "rutaHeredada": "/terminologia/propiedades-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -377,7 +411,8 @@
     {
       "codigo": "V03-11",
       "titulo": "V03-11·F · Nueva relación",
-      "ruta": "/terminologia/relaciones-formulario",
+      "ruta": "/vocabulary/relationships-form",
+      "rutaHeredada": "/terminologia/relaciones-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -388,7 +423,8 @@
     {
       "codigo": "V03-11",
       "titulo": "V03-11·L · Relaciones",
-      "ruta": "/terminologia/relaciones-listado",
+      "ruta": "/vocabulary/relationships-list",
+      "rutaHeredada": "/terminologia/relaciones-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -399,7 +435,8 @@
     {
       "codigo": "V03-12",
       "titulo": "V03-12·F · Política de catálogo",
-      "ruta": "/terminologia/politicas-de-catalogo-formulario",
+      "ruta": "/vocabulary/catalog-policies-form",
+      "rutaHeredada": "/terminologia/politicas-de-catalogo-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -410,7 +447,8 @@
     {
       "codigo": "V03-12",
       "titulo": "V03-12·L · Políticas de catálogo",
-      "ruta": "/terminologia/politicas-de-catalogo-listado",
+      "ruta": "/vocabulary/catalog-policies-list",
+      "rutaHeredada": "/terminologia/politicas-de-catalogo-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -421,7 +459,8 @@
     {
       "codigo": "V03-13",
       "titulo": "V03-13·F · Nuevo conjunto de valores",
-      "ruta": "/terminologia/conjuntos-de-valor-formulario",
+      "ruta": "/vocabulary/value-sets-form",
+      "rutaHeredada": "/terminologia/conjuntos-de-valor-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -432,7 +471,8 @@
     {
       "codigo": "V03-13",
       "titulo": "V03-13·L · Conjuntos de valor",
-      "ruta": "/terminologia/conjuntos-de-valor-listado",
+      "ruta": "/vocabulary/value-sets-list",
+      "rutaHeredada": "/terminologia/conjuntos-de-valor-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -443,7 +483,8 @@
     {
       "codigo": "V03-02",
       "titulo": "V03-02·L · Consulta de concepto",
-      "ruta": "/terminologia/consulta-de-concepto-listado",
+      "ruta": "/vocabulary/concept-lookup-list",
+      "rutaHeredada": "/terminologia/consulta-de-concepto-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -454,7 +495,8 @@
     {
       "codigo": "V03-03",
       "titulo": "V03-03·F · Traducción entre catálogos",
-      "ruta": "/terminologia/traduccion-entre-catalogos-formulario",
+      "ruta": "/vocabulary/catalog-translation-form",
+      "rutaHeredada": "/terminologia/traduccion-entre-catalogos-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -465,7 +507,8 @@
     {
       "codigo": "V03-07",
       "titulo": "V03-07·L · Conceptos",
-      "ruta": "/terminologia/conceptos-listado",
+      "ruta": "/vocabulary/concepts-list",
+      "rutaHeredada": "/terminologia/conceptos-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -476,7 +519,8 @@
     {
       "codigo": "V03-14",
       "titulo": "V03-14 · Expansión del conjunto de valores",
-      "ruta": "/terminologia/expansion-de-conjunto-de-valores-detalle",
+      "ruta": "/vocabulary/value-set-expansion-detail",
+      "rutaHeredada": "/terminologia/expansion-de-conjunto-de-valores-detalle",
       "marco": "privado",
       "arquetipo": "detalle",
       "actor": "sesion-autenticada",
@@ -487,7 +531,8 @@
     {
       "codigo": "V04-01",
       "titulo": "V04-01·L · Organizaciones",
-      "ruta": "/directorio/organizaciones-listado",
+      "ruta": "/provider-directory/organizations-list",
+      "rutaHeredada": "/directorio/organizaciones-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -498,7 +543,8 @@
     {
       "codigo": "V04-01",
       "titulo": "V04-01·A · Verificar la organización",
-      "ruta": "/directorio/organizaciones-verificar",
+      "ruta": "/provider-directory/organizations-verify",
+      "rutaHeredada": "/directorio/organizaciones-verificar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -509,7 +555,8 @@
     {
       "codigo": "V04-02",
       "titulo": "V04-02·A · Dar de baja la membresía",
-      "ruta": "/directorio/membresias-dar-de-baja",
+      "ruta": "/provider-directory/memberships-deactivate",
+      "rutaHeredada": "/directorio/membresias-dar-de-baja",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -520,7 +567,8 @@
     {
       "codigo": "V04-02",
       "titulo": "V04-02·F · Nueva membresía",
-      "ruta": "/directorio/membresias-formulario",
+      "ruta": "/provider-directory/memberships-form",
+      "rutaHeredada": "/directorio/membresias-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -531,7 +579,8 @@
     {
       "codigo": "V04-02",
       "titulo": "V04-02·L · Membresías",
-      "ruta": "/directorio/membresias-listado",
+      "ruta": "/provider-directory/memberships-list",
+      "rutaHeredada": "/directorio/membresias-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -542,7 +591,8 @@
     {
       "codigo": "V04-03",
       "titulo": "V04-03·F · Asignar la membresía a una sucursal",
-      "ruta": "/directorio/asignaciones-de-sucursal-formulario",
+      "ruta": "/provider-directory/branch-assignments-form",
+      "rutaHeredada": "/directorio/asignaciones-de-sucursal-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -553,7 +603,8 @@
     {
       "codigo": "V04-04",
       "titulo": "V04-04·F · Cambiar el rol de la membresía",
-      "ruta": "/directorio/roles-formulario",
+      "ruta": "/provider-directory/roles-form",
+      "rutaHeredada": "/directorio/roles-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -564,7 +615,8 @@
     {
       "codigo": "V04-05",
       "titulo": "V04-05·F · Transferir la membresía entre sucursales",
-      "ruta": "/directorio/transferencias-formulario",
+      "ruta": "/provider-directory/transfers-form",
+      "rutaHeredada": "/directorio/transferencias-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -575,7 +627,8 @@
     {
       "codigo": "V04-06",
       "titulo": "V04-06·F · Nueva sucursal",
-      "ruta": "/directorio/sucursales-formulario",
+      "ruta": "/provider-directory/branches-form",
+      "rutaHeredada": "/directorio/sucursales-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -586,7 +639,8 @@
     {
       "codigo": "V04-06",
       "titulo": "V04-06·L · Sucursales",
-      "ruta": "/directorio/sucursales-listado",
+      "ruta": "/provider-directory/branches-list",
+      "rutaHeredada": "/directorio/sucursales-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -597,7 +651,8 @@
     {
       "codigo": "V04-07",
       "titulo": "V04-07·F · Nueva organización hija",
-      "ruta": "/directorio/organizaciones-hijas-formulario",
+      "ruta": "/provider-directory/child-organizations-form",
+      "rutaHeredada": "/directorio/organizaciones-hijas-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -608,7 +663,8 @@
     {
       "codigo": "V04-01",
       "titulo": "V04-01·F · Nueva organización",
-      "ruta": "/directorio/organizaciones-formulario",
+      "ruta": "/provider-directory/organizations-form",
+      "rutaHeredada": "/directorio/organizaciones-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "superadmin",
@@ -619,7 +675,8 @@
     {
       "codigo": "V04-01",
       "titulo": "V04-01·A · Suspender la organización",
-      "ruta": "/directorio/organizaciones-suspender",
+      "ruta": "/provider-directory/organizations-suspend",
+      "rutaHeredada": "/directorio/organizaciones-suspender",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "superadmin",
@@ -630,7 +687,8 @@
     {
       "codigo": "V05-01",
       "titulo": "V05-01·F · Nuevo paciente",
-      "ruta": "/personas/pacientes-formulario",
+      "ruta": "/people/patients-form",
+      "rutaHeredada": "/personas/pacientes-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -641,7 +699,8 @@
     {
       "codigo": "V05-01",
       "titulo": "V05-01·A · Fusionar pacientes",
-      "ruta": "/personas/pacientes-fusionar",
+      "ruta": "/people/patients-merge",
+      "rutaHeredada": "/personas/pacientes-fusionar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -652,7 +711,8 @@
     {
       "codigo": "V05-01",
       "titulo": "V05-01·L · Pacientes",
-      "ruta": "/personas/pacientes-listado",
+      "ruta": "/people/patients-list",
+      "rutaHeredada": "/personas/pacientes-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -663,7 +723,8 @@
     {
       "codigo": "V05-01",
       "titulo": "V05-01·A · Revertir la fusión",
-      "ruta": "/personas/pacientes-revertir",
+      "ruta": "/people/patients-revert",
+      "rutaHeredada": "/personas/pacientes-revertir",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -674,7 +735,8 @@
     {
       "codigo": "V05-02",
       "titulo": "V05-02·F · Nuevo vínculo de identidad",
-      "ruta": "/personas/vinculos-de-identidad-formulario",
+      "ruta": "/people/identity-links-form",
+      "rutaHeredada": "/personas/vinculos-de-identidad-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -685,7 +747,8 @@
     {
       "codigo": "V05-02",
       "titulo": "V05-02·L · Vínculos de identidad",
-      "ruta": "/personas/vinculos-de-identidad-listado",
+      "ruta": "/people/identity-links-list",
+      "rutaHeredada": "/personas/vinculos-de-identidad-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -696,7 +759,8 @@
     {
       "codigo": "V05-04",
       "titulo": "V05-04·F · Nuevo apoderado de portal",
-      "ruta": "/personas/apoderados-de-portal-formulario",
+      "ruta": "/people/portal-proxies-form",
+      "rutaHeredada": "/personas/apoderados-de-portal-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -707,7 +771,8 @@
     {
       "codigo": "V05-04",
       "titulo": "V05-04·L · Apoderados de portal",
-      "ruta": "/personas/apoderados-de-portal-listado",
+      "ruta": "/people/portal-proxies-list",
+      "rutaHeredada": "/personas/apoderados-de-portal-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -718,7 +783,8 @@
     {
       "codigo": "V05-05",
       "titulo": "V05-05·F · Nueva persona relacionada",
-      "ruta": "/personas/personas-relacionadas-formulario",
+      "ruta": "/people/related-persons-form",
+      "rutaHeredada": "/personas/personas-relacionadas-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -729,7 +795,8 @@
     {
       "codigo": "V05-05",
       "titulo": "V05-05·L · Personas relacionadas",
-      "ruta": "/personas/personas-relacionadas-listado",
+      "ruta": "/people/related-persons-list",
+      "rutaHeredada": "/personas/personas-relacionadas-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -740,7 +807,8 @@
     {
       "codigo": "V05-06",
       "titulo": "V05-06·L · Credenciales",
-      "ruta": "/personas/credenciales-listado",
+      "ruta": "/people/credentials-list",
+      "rutaHeredada": "/personas/credenciales-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -751,7 +819,8 @@
     {
       "codigo": "V05-06",
       "titulo": "V05-06·A · Verificar la credencial",
-      "ruta": "/personas/credenciales-verificar",
+      "ruta": "/people/credentials-verify",
+      "rutaHeredada": "/personas/credenciales-verificar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -762,7 +831,8 @@
     {
       "codigo": "V05-07",
       "titulo": "V05-07·L · Personas",
-      "ruta": "/personas/personas-listado",
+      "ruta": "/people/persons-list",
+      "rutaHeredada": "/personas/personas-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -773,7 +843,8 @@
     {
       "codigo": "V05-07",
       "titulo": "V05-07·A · Registrar la defunción",
-      "ruta": "/personas/personas-registrar-defuncion",
+      "ruta": "/people/persons-record-death",
+      "rutaHeredada": "/personas/personas-registrar-defuncion",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -784,7 +855,8 @@
     {
       "codigo": "V05-08",
       "titulo": "V05-08·F · Nuevo vínculo de cuenta",
-      "ruta": "/personas/vinculos-de-cuenta-formulario",
+      "ruta": "/people/account-links-form",
+      "rutaHeredada": "/personas/vinculos-de-cuenta-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -795,7 +867,8 @@
     {
       "codigo": "V05-08",
       "titulo": "V05-08·L · Vínculos de cuenta",
-      "ruta": "/personas/vinculos-de-cuenta-listado",
+      "ruta": "/people/account-links-list",
+      "rutaHeredada": "/personas/vinculos-de-cuenta-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -806,7 +879,8 @@
     {
       "codigo": "V05-09",
       "titulo": "V05-09·F · Nuevo profesional",
-      "ruta": "/personas/profesionales-formulario",
+      "ruta": "/people/practitioners-form",
+      "rutaHeredada": "/personas/profesionales-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -817,7 +891,8 @@
     {
       "codigo": "V05-09",
       "titulo": "V05-09·L · Profesionales",
-      "ruta": "/personas/profesionales-listado",
+      "ruta": "/people/practitioners-list",
+      "rutaHeredada": "/personas/profesionales-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -828,7 +903,8 @@
     {
       "codigo": "V05-10",
       "titulo": "V05-10·F · Nueva autorización de jurisdicción",
-      "ruta": "/personas/autorizaciones-de-jurisdiccion-formulario",
+      "ruta": "/people/jurisdiction-authorizations-form",
+      "rutaHeredada": "/personas/autorizaciones-de-jurisdiccion-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -839,7 +915,8 @@
     {
       "codigo": "V05-10",
       "titulo": "V05-10·L · Autorizaciones de jurisdicción",
-      "ruta": "/personas/autorizaciones-de-jurisdiccion-listado",
+      "ruta": "/people/jurisdiction-authorizations-list",
+      "rutaHeredada": "/personas/autorizaciones-de-jurisdiccion-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -850,7 +927,8 @@
     {
       "codigo": "V05-11",
       "titulo": "V05-11·F · Nueva especialidad",
-      "ruta": "/personas/especialidades-formulario",
+      "ruta": "/people/specialties-form",
+      "rutaHeredada": "/personas/especialidades-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -861,7 +939,8 @@
     {
       "codigo": "V05-11",
       "titulo": "V05-11·L · Especialidades",
-      "ruta": "/personas/especialidades-listado",
+      "ruta": "/people/specialties-list",
+      "rutaHeredada": "/personas/especialidades-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -872,7 +951,8 @@
     {
       "codigo": "V05-03",
       "titulo": "V05-03·L · Resumen propio",
-      "ruta": "/personas/resumen-propio-listado",
+      "ruta": "/people/own-summary-list",
+      "rutaHeredada": "/personas/resumen-propio-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -883,7 +963,8 @@
     {
       "codigo": "V06-05",
       "titulo": "V06-05·F · Acceso de emergencia",
-      "ruta": "/accesos/acceso-de-emergencia-formulario",
+      "ruta": "/access-control/emergency-access-form",
+      "rutaHeredada": "/accesos/acceso-de-emergencia-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "clinical-approver",
@@ -894,7 +975,8 @@
     {
       "codigo": "V06-06",
       "titulo": "V06-06·F · Otorgar acceso clínico",
-      "ruta": "/accesos/accesos-clinicos-del-paciente-formulario",
+      "ruta": "/access-control/patient-clinical-access-form",
+      "rutaHeredada": "/accesos/accesos-clinicos-del-paciente-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "clinical-approver",
@@ -905,7 +987,8 @@
     {
       "codigo": "V06-06",
       "titulo": "V06-06·L · Accesos clínicos del paciente",
-      "ruta": "/accesos/accesos-clinicos-del-paciente-listado",
+      "ruta": "/access-control/patient-clinical-access-list",
+      "rutaHeredada": "/accesos/accesos-clinicos-del-paciente-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "clinical-approver",
@@ -916,7 +999,8 @@
     {
       "codigo": "V06-01",
       "titulo": "V06-01·F · Nueva relación de cuidado",
-      "ruta": "/accesos/relaciones-de-cuidado-formulario",
+      "ruta": "/access-control/care-relationships-form",
+      "rutaHeredada": "/accesos/relaciones-de-cuidado-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "clinician",
@@ -927,7 +1011,8 @@
     {
       "codigo": "V06-01",
       "titulo": "V06-01·L · Relaciones de cuidado",
-      "ruta": "/accesos/relaciones-de-cuidado-listado",
+      "ruta": "/access-control/care-relationships-list",
+      "rutaHeredada": "/accesos/relaciones-de-cuidado-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "clinician",
@@ -938,7 +1023,8 @@
     {
       "codigo": "V06-01",
       "titulo": "V06-01·A · Revocar la relación de cuidado",
-      "ruta": "/accesos/relaciones-de-cuidado-revocar",
+      "ruta": "/access-control/care-relationships-revoke",
+      "rutaHeredada": "/accesos/relaciones-de-cuidado-revocar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "clinician",
@@ -949,7 +1035,8 @@
     {
       "codigo": "V06-02",
       "titulo": "V06-02·F · Nueva representación legal",
-      "ruta": "/accesos/representaciones-legales-formulario",
+      "ruta": "/access-control/legal-representations-form",
+      "rutaHeredada": "/accesos/representaciones-legales-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -960,7 +1047,8 @@
     {
       "codigo": "V06-02",
       "titulo": "V06-02·L · Representaciones legales",
-      "ruta": "/accesos/representaciones-legales-listado",
+      "ruta": "/access-control/legal-representations-list",
+      "rutaHeredada": "/accesos/representaciones-legales-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -971,7 +1059,8 @@
     {
       "codigo": "V06-02",
       "titulo": "V06-02·A · Revocar la representación legal",
-      "ruta": "/accesos/representaciones-legales-revocar",
+      "ruta": "/access-control/legal-representations-revoke",
+      "rutaHeredada": "/accesos/representaciones-legales-revocar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -982,7 +1071,8 @@
     {
       "codigo": "V06-03",
       "titulo": "V06-03·L · Accesos clínicos",
-      "ruta": "/accesos/accesos-clinicos-listado",
+      "ruta": "/access-control/clinical-access-list",
+      "rutaHeredada": "/accesos/accesos-clinicos-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -993,7 +1083,8 @@
     {
       "codigo": "V06-03",
       "titulo": "V06-03·A · Revocar el acceso clínico",
-      "ruta": "/accesos/accesos-clinicos-revocar",
+      "ruta": "/access-control/clinical-access-revoke",
+      "rutaHeredada": "/accesos/accesos-clinicos-revocar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -1004,7 +1095,8 @@
     {
       "codigo": "V06-04",
       "titulo": "V06-04·A · Evaluar una decisión de autorización",
-      "ruta": "/accesos/decisiones-evaluar",
+      "ruta": "/access-control/decisions-evaluate",
+      "rutaHeredada": "/accesos/decisiones-evaluar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -1015,7 +1107,8 @@
     {
       "codigo": "V06-07",
       "titulo": "V06-07·A · Invalidar la caché del PDP",
-      "ruta": "/accesos/cache-invalidar",
+      "ruta": "/access-control/cache-invalidate",
+      "rutaHeredada": "/accesos/cache-invalidar",
       "marco": "privado",
       "arquetipo": "modal",
       "actor": "security-admin",
@@ -1026,7 +1119,8 @@
     {
       "codigo": "V06-08",
       "titulo": "V06-08·F · Nueva categoría de permiso",
-      "ruta": "/accesos/categorias-de-permiso-formulario",
+      "ruta": "/access-control/permission-categories-form",
+      "rutaHeredada": "/accesos/categorias-de-permiso-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1037,7 +1131,8 @@
     {
       "codigo": "V06-08",
       "titulo": "V06-08·L · Categorías de permiso",
-      "ruta": "/accesos/categorias-de-permiso-listado",
+      "ruta": "/access-control/permission-categories-list",
+      "rutaHeredada": "/accesos/categorias-de-permiso-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1048,7 +1143,8 @@
     {
       "codigo": "V06-09",
       "titulo": "V06-09·F · Nuevo permiso",
-      "ruta": "/accesos/permisos-formulario",
+      "ruta": "/access-control/permissions-form",
+      "rutaHeredada": "/accesos/permisos-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1059,7 +1155,8 @@
     {
       "codigo": "V06-09",
       "titulo": "V06-09·L · Permisos",
-      "ruta": "/accesos/permisos-listado",
+      "ruta": "/access-control/permissions-list",
+      "rutaHeredada": "/accesos/permisos-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1070,7 +1167,8 @@
     {
       "codigo": "V06-10",
       "titulo": "V06-10·F · Nueva concesión de alcance",
-      "ruta": "/accesos/alcance-de-recurso-formulario",
+      "ruta": "/access-control/resource-scope-form",
+      "rutaHeredada": "/accesos/alcance-de-recurso-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1081,7 +1179,8 @@
     {
       "codigo": "V06-10",
       "titulo": "V06-10·L · Concesiones de alcance de recurso",
-      "ruta": "/accesos/alcance-de-recurso-listado",
+      "ruta": "/access-control/resource-scope-list",
+      "rutaHeredada": "/accesos/alcance-de-recurso-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1092,7 +1191,8 @@
     {
       "codigo": "V06-11",
       "titulo": "V06-11·F · Nuevo rol",
-      "ruta": "/accesos/roles-formulario",
+      "ruta": "/access-control/roles-form",
+      "rutaHeredada": "/accesos/roles-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1103,7 +1203,8 @@
     {
       "codigo": "V06-11",
       "titulo": "V06-11·L · Roles",
-      "ruta": "/accesos/roles-listado",
+      "ruta": "/access-control/roles-list",
+      "rutaHeredada": "/accesos/roles-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1114,7 +1215,8 @@
     {
       "codigo": "V06-12",
       "titulo": "V06-12·F · Configurar el enmascaramiento de campos",
-      "ruta": "/accesos/permisos-de-campo-formulario",
+      "ruta": "/access-control/field-permissions-form",
+      "rutaHeredada": "/accesos/permisos-de-campo-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1125,7 +1227,8 @@
     {
       "codigo": "V06-12",
       "titulo": "V06-12·L · Permisos de campo",
-      "ruta": "/accesos/permisos-de-campo-listado",
+      "ruta": "/access-control/field-permissions-list",
+      "rutaHeredada": "/accesos/permisos-de-campo-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1136,7 +1239,8 @@
     {
       "codigo": "V06-13",
       "titulo": "V06-13·F · Asignar permisos al rol",
-      "ruta": "/accesos/permisos-del-rol-formulario",
+      "ruta": "/access-control/role-permissions-form",
+      "rutaHeredada": "/accesos/permisos-del-rol-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1147,7 +1251,8 @@
     {
       "codigo": "V06-13",
       "titulo": "V06-13·L · Permisos del rol",
-      "ruta": "/accesos/permisos-del-rol-listado",
+      "ruta": "/access-control/role-permissions-list",
+      "rutaHeredada": "/accesos/permisos-del-rol-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1158,7 +1263,8 @@
     {
       "codigo": "V06-14",
       "titulo": "V06-14·F · Nueva política de acceso",
-      "ruta": "/accesos/politicas-de-acceso-formulario",
+      "ruta": "/access-control/access-policies-form",
+      "rutaHeredada": "/accesos/politicas-de-acceso-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1169,7 +1275,8 @@
     {
       "codigo": "V06-14",
       "titulo": "V06-14·L · Políticas de acceso",
-      "ruta": "/accesos/politicas-de-acceso-listado",
+      "ruta": "/access-control/access-policies-list",
+      "rutaHeredada": "/accesos/politicas-de-acceso-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1180,7 +1287,8 @@
     {
       "codigo": "V06-15",
       "titulo": "V06-15·F · Nueva concesión de permiso",
-      "ruta": "/accesos/concesiones-de-permiso-formulario",
+      "ruta": "/access-control/permission-grants-form",
+      "rutaHeredada": "/accesos/concesiones-de-permiso-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1191,7 +1299,8 @@
     {
       "codigo": "V06-15",
       "titulo": "V06-15·L · Concesiones de permiso",
-      "ruta": "/accesos/concesiones-de-permiso-listado",
+      "ruta": "/access-control/permission-grants-list",
+      "rutaHeredada": "/accesos/concesiones-de-permiso-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1202,7 +1311,8 @@
     {
       "codigo": "V06-16",
       "titulo": "V06-16·F · Asignar un rol",
-      "ruta": "/accesos/asignaciones-de-rol-formulario",
+      "ruta": "/access-control/role-assignments-form",
+      "rutaHeredada": "/accesos/asignaciones-de-rol-formulario",
       "marco": "privado",
       "arquetipo": "formulario",
       "actor": "security-admin",
@@ -1213,7 +1323,8 @@
     {
       "codigo": "V06-16",
       "titulo": "V06-16·L · Asignaciones de rol",
-      "ruta": "/accesos/asignaciones-de-rol-listado",
+      "ruta": "/access-control/role-assignments-list",
+      "rutaHeredada": "/accesos/asignaciones-de-rol-listado",
       "marco": "privado",
       "arquetipo": "listado",
       "actor": "security-admin",
@@ -1224,7 +1335,8 @@
     {
       "codigo": "V65-01",
       "titulo": "V65-01·L · Buscador",
-      "ruta": "/buscar/buscador-listado",
+      "ruta": "/search/finder-list",
+      "rutaHeredada": "/buscar/buscador-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "publico",
@@ -1235,7 +1347,8 @@
     {
       "codigo": "V65-02",
       "titulo": "V65-02·L · Profesionales",
-      "ruta": "/buscar/profesionales-listado",
+      "ruta": "/search/practitioners-list",
+      "rutaHeredada": "/buscar/profesionales-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "publico",
@@ -1246,7 +1359,8 @@
     {
       "codigo": "V65-03",
       "titulo": "V65-03·L · Medicamentos y farmacias",
-      "ruta": "/buscar/medicamentos-listado",
+      "ruta": "/search/medications-list",
+      "rutaHeredada": "/buscar/medicamentos-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "publico",
@@ -1257,7 +1371,8 @@
     {
       "codigo": "V65-04",
       "titulo": "V65-04·L · Hospitales y clínicas",
-      "ruta": "/buscar/hospitales-listado",
+      "ruta": "/search/hospitals-list",
+      "rutaHeredada": "/buscar/hospitales-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "publico",
@@ -1268,7 +1383,8 @@
     {
       "codigo": "V65-05",
       "titulo": "V65-05·L · Laboratorios e imagen",
-      "ruta": "/buscar/laboratorios-listado",
+      "ruta": "/search/laboratories-list",
+      "rutaHeredada": "/buscar/laboratorios-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "publico",
@@ -1279,7 +1395,8 @@
     {
       "codigo": "V65-06",
       "titulo": "V65-06·L · Aseguradoras y convenios",
-      "ruta": "/buscar/aseguradoras-listado",
+      "ruta": "/search/insurers-list",
+      "rutaHeredada": "/buscar/aseguradoras-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "publico",
@@ -1290,7 +1407,8 @@
     {
       "codigo": "V65-07",
       "titulo": "V65-07·D · Perfil del profesional",
-      "ruta": "/buscar/perfil-profesional-detalle",
+      "ruta": "/search/practitioner-profile-detail",
+      "rutaHeredada": "/buscar/perfil-profesional-detalle",
       "marco": "publico",
       "arquetipo": "detalle",
       "actor": "publico",
@@ -1301,7 +1419,8 @@
     {
       "codigo": "V65-08",
       "titulo": "V65-08·D · Perfil de la organización",
-      "ruta": "/buscar/perfil-organizacion-detalle",
+      "ruta": "/search/organization-profile-detail",
+      "rutaHeredada": "/buscar/perfil-organizacion-detalle",
       "marco": "publico",
       "arquetipo": "detalle",
       "actor": "publico",
@@ -1312,7 +1431,8 @@
     {
       "codigo": "V65-09",
       "titulo": "V65-09·D · Perfil de la farmacia",
-      "ruta": "/buscar/perfil-farmacia-detalle",
+      "ruta": "/search/pharmacy-profile-detail",
+      "rutaHeredada": "/buscar/perfil-farmacia-detalle",
       "marco": "publico",
       "arquetipo": "detalle",
       "actor": "publico",
@@ -1323,7 +1443,8 @@
     {
       "codigo": "V65-10",
       "titulo": "V65-10·D · Perfil del laboratorio",
-      "ruta": "/buscar/perfil-laboratorio-detalle",
+      "ruta": "/search/laboratory-profile-detail",
+      "rutaHeredada": "/buscar/perfil-laboratorio-detalle",
       "marco": "publico",
       "arquetipo": "detalle",
       "actor": "publico",
@@ -1334,7 +1455,8 @@
     {
       "codigo": "V65-11",
       "titulo": "V65-11·D · Perfil de la aseguradora",
-      "ruta": "/buscar/perfil-aseguradora-detalle",
+      "ruta": "/search/insurer-profile-detail",
+      "rutaHeredada": "/buscar/perfil-aseguradora-detalle",
       "marco": "publico",
       "arquetipo": "detalle",
       "actor": "publico",
@@ -1345,7 +1467,8 @@
     {
       "codigo": "V65-12",
       "titulo": "V65-12·D · Cerca mío",
-      "ruta": "/buscar/cercania-detalle",
+      "ruta": "/search/nearby-detail",
+      "rutaHeredada": "/buscar/cercania-detalle",
       "marco": "publico",
       "arquetipo": "detalle",
       "actor": "publico",
@@ -1356,7 +1479,8 @@
     {
       "codigo": "V65-13",
       "titulo": "V65-13·L · Seguidos y guardados",
-      "ruta": "/buscar/seguidos-y-guardados-listado",
+      "ruta": "/search/followed-and-saved-list",
+      "rutaHeredada": "/buscar/seguidos-y-guardados-listado",
       "marco": "publico",
       "arquetipo": "listado",
       "actor": "sesion-autenticada",
@@ -1367,7 +1491,8 @@
     {
       "codigo": "V65-14",
       "titulo": "V65-14·F · Calificar la atención",
-      "ruta": "/buscar/calificar-la-atencion-formulario",
+      "ruta": "/search/rate-care-form",
+      "rutaHeredada": "/buscar/calificar-la-atencion-formulario",
       "marco": "publico",
       "arquetipo": "formulario",
       "actor": "sesion-autenticada",
@@ -1378,7 +1503,8 @@
     {
       "codigo": null,
       "titulo": "AloVida — la plataforma de operaciones de salud de Mantra Core",
-      "ruta": "/inicio",
+      "ruta": "/home",
+      "rutaHeredada": "/inicio",
       "marco": "lienzo",
       "arquetipo": null,
       "actor": null,

@@ -107,6 +107,41 @@ describe('ChatStore', () => {
     http.verify();
   });
 
+  it('varios adjuntos salen en el orden elegido aunque las subidas terminen al revés', async () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([mensaje('m-1')]);
+    TestBed.tick();
+
+    const primero = new File(['grande'], 'analisis.pdf', { type: 'application/pdf' });
+    const segundo = new File(['x'], 'foto.png', { type: 'image/png' });
+    store.enviarAdjunto(primero, 'El análisis');
+    store.enviarAdjunto(segundo, 'La foto');
+
+    const subidas = http.match((r) => r.url.endsWith('/common/files/upload'));
+    expect(subidas).toHaveLength(2);
+    // La foto chica termina primero, pero no sale antes que el PDF.
+    subidas[1].flush({ id: 'f-2' });
+    TestBed.tick();
+    await Promise.resolve();
+    await Promise.resolve();
+    const contenidosPedidosEnEspera = http.match((r) => r.url.includes('/attachments/f-2/content'));
+    expect(http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages')).toHaveLength(0);
+
+    subidas[0].flush({ id: 'f-1' });
+    await new Promise((listo) => setTimeout(listo, 0));
+    const [envioPdf] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    expect(envioPdf.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-1', bodyText: 'El análisis' }));
+
+    envioPdf.flush({ id: 'm-pdf', conversationId: 'c-1', sentAt: '2026-09-08T10:01:00.000Z' });
+    await new Promise((listo) => setTimeout(listo, 0));
+    const [envioFoto] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    expect(envioFoto.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-2', bodyText: 'La foto' }));
+    envioFoto.flush({ id: 'm-foto', conversationId: 'c-1', sentAt: '2026-09-08T10:01:01.000Z' });
+    // Mientras esperaban turno no se pidió su contenido: no existían todavía.
+    expect(contenidosPedidosEnEspera).toHaveLength(0);
+  });
+
   it('resuelve adjuntos del hilo sólo por la ruta contextual', () => {
     encender();
     store.abrir('c-1');
@@ -372,13 +407,39 @@ describe('ChatStore', () => {
       http
         .expectOne((r) => r.url === '/community/conversations/c-1/messages/m-1')
         .flush(
-          { statusCode: 422, message: 'Fuera de ventana' },
+          {
+            code: 'PRECONDITION_FAILED',
+            message: 'Pasaron más de 5 minutos: el mensaje ya no se puede editar',
+            correlationId: 'corr-edit',
+            timestamp: '',
+            path: '',
+          },
           { status: 422, statusText: 'Unprocessable Entity' },
         );
 
       expect(store.enOrden()[0].bodyText).toBe('Original');
       expect(store.enOrden()[0].isEdited).toBe(false);
-      expect(store.error()).toContain('5 minutos');
+      // El plazo lo dice la API, no la pantalla.
+      expect(store.error()).toBe(
+        'Pasaron más de 5 minutos: el mensaje ya no se puede editar (Código de soporte: corr-edit)',
+      );
+    });
+
+    it('un fallo del servidor al editar no se presenta como plazo vencido', () => {
+      conHilo([propio('m-1', 60_000, 'Original')]);
+      store.editar(store.enOrden()[0]);
+      store.confirmarEdicion('Cambiado');
+
+      http
+        .expectOne((r) => r.url === '/community/conversations/c-1/messages/m-1')
+        .flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-500', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        );
+
+      expect(store.enOrden()[0].bodyText).toBe('Original');
+      expect(store.error()).toBe('No pudimos editar el mensaje. Intente de nuevo. (Código de soporte: corr-500)');
+      expect(store.error()).not.toContain('5 minutos');
     });
 
     it('sin cambios no manda nada: no marca editado lo que nadie editó', () => {
@@ -459,7 +520,7 @@ describe('ChatStore', () => {
         conversationId: 'c-1',
         senderProfileId,
         contentTypeConceptId: 'c-text',
-        bodyText: 'Hola, ¿estás?',
+        bodyText: 'Hola, ¿está?',
         sentAt: new Date(),
       });
     };
@@ -498,6 +559,36 @@ describe('ChatStore', () => {
         senderProfileId: 'pp-1',
         bodyText: 'Vuelvo a las 18.',
       });
+      enviado.flush({ id: 'm-auto', conversationId: 'c-1', sentAt: new Date().toISOString() });
+    });
+
+    it('con IA guardada en el servidor el navegador no contesta: la redacta el servidor y saldrían dos', () => {
+      encender();
+      vi.spyOn(autoReply, 'iaDisponible').mockReturnValue(true);
+      autoReply.guardar({ activa: true, conIa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
+      autoReply.enElServidor.set(true);
+      localStorage.setItem('alovida.chat-ultima-actividad', String(Date.now() - 2 * 3_600_000));
+
+      llega('pp-2');
+
+      http.expectNone(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+    });
+
+    it('con IA pero sin el servidor sabiéndolo, el navegador manda el respaldo', () => {
+      encender();
+      vi.spyOn(autoReply, 'iaDisponible').mockReturnValue(true);
+      autoReply.guardar({ activa: true, conIa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
+      autoReply.enElServidor.set(false);
+      localStorage.setItem('alovida.chat-ultima-actividad', String(Date.now() - 2 * 3_600_000));
+
+      llega('pp-2');
+
+      const enviado = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      expect(enviado.request.body).toMatchObject({ bodyText: 'Vuelvo a las 18.' });
       enviado.flush({ id: 'm-auto', conversationId: 'c-1', sentAt: new Date().toISOString() });
     });
 
@@ -652,11 +743,14 @@ describe('ChatStore', () => {
       store.exportarConversacion((salida) => (json = salida));
       http
         .expectOne((r) => r.url === '/community/conversations/c-1/messages')
-        .error(new ProgressEvent('error'));
+        .flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-exp', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        );
 
       expect(json).toBeNull();
       expect(store.exportando()).toBe(false);
-      expect(store.error()).toContain('descargar la conversación');
+      expect(store.error()).toBe('No pudimos descargar la conversación. (Código de soporte: corr-exp)');
     });
   });
 
@@ -767,16 +861,70 @@ describe('ChatStore', () => {
     });
   });
 
-  it('un tic fallido no vacía la bandeja que estabas mirando', () => {
+  it('un tic fallido no vacía la bandeja que estaba mirando', () => {
     encender();
     expect(store.conversaciones().length).toBe(1);
 
     store.recargarBandeja();
     http
       .expectOne((r) => r.url === '/community/conversations')
-      .error(new ProgressEvent('error'));
+      .flush(
+        { code: 'DEPENDENCY_UNAVAILABLE', message: '', correlationId: 'corr-bandeja', timestamp: '', path: '' },
+        { status: 503, statusText: 'Service Unavailable' },
+      );
 
     expect(store.conversaciones().length).toBe(1);
-    expect(store.error()).toBe('No pudimos cargar tus conversaciones.');
+    expect(store.error()).toBe('No pudimos cargar sus conversaciones. (Código de soporte: corr-bandeja)');
+  });
+
+  it('sin conexión, el aviso lo dice en vez de culpar a la conversación', () => {
+    encender();
+
+    store.recargarBandeja();
+    http
+      .expectOne((r) => r.url === '/community/conversations')
+      .error(new ProgressEvent('error'));
+
+    expect(store.error()).toBe('No hay conexión con el servidor. Revise su conexión e intente de nuevo.');
+  });
+
+  it('si falla la lectura de bloqueos, la lista vacía no se confunde con «no bloqueó a nadie»', () => {
+    encender();
+
+    http
+      .match((r) => r.url === '/community/blocks')
+      .forEach((pedido) =>
+        pedido.flush(
+          { code: 'INTERNAL', message: 'Internal server error', correlationId: 'corr-blk', timestamp: '', path: '' },
+          { status: 500, statusText: 'Server Error' },
+        ),
+      );
+
+    expect(store.bloqueados()).toEqual([]);
+    expect(store.bloqueosFallaron()).toBe(true);
+    expect(store.error()).toBe('No pudimos leer las personas que bloqueó. (Código de soporte: corr-blk)');
+  });
+
+  it('un envío que falla dice por qué, y reintentar limpia el aviso', () => {
+    encender();
+    store.abrir('c-1');
+    contestarHilo([]);
+
+    store.enviar('Hola');
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
+      .flush(
+        { code: 'FORBIDDEN', message: 'Esta persona no recibe mensajes suyos.', correlationId: 'corr-env', timestamp: '', path: '' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+
+    expect(store.enOrden()[0].estado).toBe('fallado');
+    expect(store.error()).toBe('Esta persona no recibe mensajes suyos. (Código de soporte: corr-env)');
+
+    store.reintentar(store.enOrden()[0].pendiente!);
+    expect(store.error()).toBe('');
+    http
+      .expectOne((r) => r.method === 'POST' && r.url.endsWith('/messages'))
+      .flush({ id: 'm-9', conversationId: 'c-1', sentAt: '2026-09-08T11:00:00.000Z' });
   });
 });

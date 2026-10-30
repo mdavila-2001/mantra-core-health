@@ -71,7 +71,7 @@ export const seccionRolesGuard: CanActivateFn = tracedGuard('seccionRolesGuard',
   const session = inject(SessionStore);
   const router = inject(Router);
 
-  if (alcanza(route, state.url, session.roles(), session.tenants())) {
+  if (alcanza(route, state.url, session.roles(), session.tenants(), session.activeTenantType())) {
     return true;
   }
 
@@ -83,6 +83,7 @@ function alcanza(
   url: string,
   roles: readonly string[],
   tenants: readonly string[],
+  activeTenantType: string | null,
 ): boolean {
   const propios = rolesDeLaRuta(route);
   if (propios !== undefined) {
@@ -90,7 +91,7 @@ function alcanza(
   }
 
   const seccion = seccionDe(url);
-  return seccion === null || isVisibleTo(seccion, roles, tenants);
+  return seccion === null || isVisibleTo(seccion, roles, tenants, activeTenantType);
 }
 
 /**

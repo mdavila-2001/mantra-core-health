@@ -36,11 +36,12 @@
           <div [formGroup]="fila">
             <div class="m13__datos">
               <app-form-field
+                icon="pin"
                 label="Latitud (punto {{ indice + 1 }})"
                 [required]="true"
                 [errorMessage]="
                   fila.controls.latitude.touched && fila.controls.latitude.invalid
-                    ? 'Ingresá la latitud en grados decimales, como -34.603765.'
+                    ? 'Ingrese la latitud en grados decimales, como -34.603765.'
                     : ''
                 "
               >
@@ -48,11 +49,12 @@
               </app-form-field>
 
               <app-form-field
+                icon="pin"
                 label="Longitud"
                 [required]="true"
                 [errorMessage]="
                   fila.controls.longitude.touched && fila.controls.longitude.invalid
-                    ? 'Ingresá la longitud en grados decimales, como -58.381592.'
+                    ? 'Ingrese la longitud en grados decimales, como -58.381592.'
                     : ''
                 "
               >
@@ -60,17 +62,18 @@
               </app-form-field>
 
               <app-form-field
+                icon="sliders"
                 label="Precisión (metros)"
                 [errorMessage]="
                   fila.controls.accuracyM.touched && fila.controls.accuracyM.invalid
-                    ? 'Ingresá un número, como 12.5.'
+                    ? 'Ingrese un número, como 12.5.'
                     : ''
                 "
               >
                 <app-input formControlName="accuracyM" type="text" />
               </app-form-field>
 
-              <app-form-field label="Capturado (ISO 8601)" hint="Como 2026-08-11T10:15:00Z.">
+              <app-form-field icon="calendar" label="Capturado (ISO 8601)" hint="Como 2026-08-11T10:15:00Z.">
                 <app-input formControlName="capturedAt" type="text" />
               </app-form-field>
             </div>

@@ -7,6 +7,7 @@ import { CommunityClient } from './community.client';
 import type {
   CommentThreadPage,
   ConversationPage,
+  DirectMessagePage,
   FeedPage,
   GroupDetail,
   GroupWallPage,
@@ -73,6 +74,19 @@ describe('CommunityClient', () => {
    * `undefined` viaja como clave declarada y la petición vuelve con 400. Es el
    * defecto más fácil de introducir y el más difícil de ver en una captura.
    */
+  it('createConversation manda sólo lo que declara CreateConversationDto', () => {
+    // Informe B: una clave de más es un 400 de la API. El tipo ya no admite
+    // `groupId`, y el objeto se copia clave por clave por si llega algo más.
+    const datos = { participantProfileIds: ['p-1', 'p-2'], groupId: 'g-1' } as unknown as Parameters<
+      CommunityClient['createConversation']
+    >[0];
+    client.createConversation(datos).subscribe();
+
+    const req = http.expectOne('/community/conversations');
+    expect(req.request.body).toEqual({ participantProfileIds: ['p-1', 'p-2'] });
+    req.flush({ id: 'c-1' });
+  });
+
   it('listProfilePosts no manda cursor, limit ni actor cuando no vinieron', () => {
     client.listProfilePosts('p-1').subscribe();
 
@@ -459,6 +473,80 @@ describe('CommunityClient', () => {
     req.flush(paginaVacia);
   });
 
+  it('AG-20: un mensaje borrado trae deletedAt como Date, y uno vivo no trae la clave', () => {
+    let pagina: DirectMessagePage | undefined;
+    client.listMessages('conv-1', { profileId: 'p-1' }).subscribe((p) => (pagina = p));
+
+    http.expectOne((r) => r.url === '/community/conversations/conv-1/messages').flush({
+      items: [
+        {
+          id: 'm-1',
+          conversationId: 'conv-1',
+          senderProfileId: 'p-1',
+          contentTypeConceptId: 'c-text',
+          bodyText: null,
+          attachmentFileId: null,
+          isEdited: false,
+          sentAt: '2026-08-13T13:00:00.000Z',
+          deletedAt: '2026-08-13T13:05:00.000Z',
+        },
+        {
+          id: 'm-2',
+          conversationId: 'conv-1',
+          senderProfileId: 'p-1',
+          contentTypeConceptId: 'c-text',
+          bodyText: 'sigue vivo',
+          attachmentFileId: null,
+          isEdited: false,
+          sentAt: '2026-08-13T13:01:00.000Z',
+          deletedAt: null,
+        },
+      ],
+      count: 2,
+      limit: 20,
+      nextCursor: null,
+    });
+
+    const [borrado, vivo] = pagina!.items;
+    expect(borrado!.deletedAt).toEqual(new Date('2026-08-13T13:05:00.000Z'));
+    expect('deletedAt' in vivo!).toBe(false);
+  });
+
+  it('AG-18: listMyModerationDecisions manda profileId y convierte decidedAt', () => {
+    let pagina: import('./community.types').MyModerationDecisionPage | undefined;
+    client
+      .listMyModerationDecisions('pp-1', { cursor: 'c-1', limit: 10 })
+      .subscribe((p) => (pagina = p));
+
+    const req = http.expectOne(
+      (r) => r.url === '/community/moderation/decisions/mine',
+    );
+    expect(req.request.params.get('profileId')).toBe('pp-1');
+    expect(req.request.params.get('cursor')).toBe('c-1');
+    expect(req.request.params.get('limit')).toBe('10');
+
+    req.flush({
+      items: [
+        {
+          decisionId: 'dec-1',
+          policyConceptId: 'c-policy',
+          decisionConceptId: 'c-removed',
+          rationaleText: 'Viola las normas',
+          decidedAt: '2026-08-12T15:00:00.000Z',
+          appealable: true,
+        },
+      ],
+      count: 1,
+      limit: 10,
+      nextCursor: null,
+    });
+
+    expect(pagina!.items[0]!.decidedAt).toEqual(
+      new Date('2026-08-12T15:00:00.000Z'),
+    );
+    expect(pagina!.items[0]!.appealable).toBe(true);
+  });
+
   it('listReviews conserva las dimensiones y las respuestas', () => {
     let resenas: ServiceReviewPage | undefined;
     client.listReviews('p-1').subscribe((r) => (resenas = r));
@@ -507,7 +595,7 @@ describe('CommunityClient', () => {
     req.flush({
       id: 'poll-1',
       postId: 'post-1',
-      question: '¿Cuál preferís?',
+      question: '¿Cuál prefiere?',
       allowsMultiple: false,
       closesAt: null,
       statusConceptId: 'c-abierta',
@@ -805,5 +893,78 @@ describe('CommunityClient', () => {
 
     const req = http.expectOne((r) => r.url === '/community/topics');
     req.flush({ items: [], count: 0, limit: 200 });
+  });
+  // ─── El puente encuesta → reseña pública ───────────────────────────────────
+
+  describe('getReviewableCare', () => {
+    it('pregunta por la RESERVA de la invitación, con la sesión como paciente (nada más viaja)', () => {
+      client.getReviewableCare('bk 1&x=1').subscribe();
+
+      const req = http.expectOne((r) => r.url === '/patients/me/reviewable-care');
+      expect(req.request.method).toBe('GET');
+      // Un solo parámetro, y codificado por HttpParams: ni paciente ni encuesta.
+      expect(req.request.params.keys()).toEqual(['appointmentBookingId']);
+      expect(req.request.params.get('appointmentBookingId')).toBe('bk 1&x=1');
+      // El `&` viaja codificado: no se cuela un segundo parámetro.
+      expect(req.request.urlWithParams).not.toContain('&x=1');
+      req.flush({
+        encounterId: 'enc-1',
+        appointmentBookingId: 'bk 1&x=1',
+        practitionerDisplayName: 'Dra. Rojas',
+        startAt: '2026-10-20T14:00:00.000Z',
+        alreadyReviewed: false,
+        canReview: true,
+      });
+    });
+
+    it('convierte la fecha en texto a Date y deja los booleanos tal cual', async () => {
+      const lectura = firstValueFrom(client.getReviewableCare('bk-1'));
+      http.expectOne((r) => r.url === '/patients/me/reviewable-care').flush({
+        encounterId: 'enc-1',
+        appointmentBookingId: 'bk-1',
+        practitionerDisplayName: 'Dra. Rojas',
+        startAt: '2026-10-20T14:00:00.000Z',
+        alreadyReviewed: false,
+        canReview: true,
+      });
+
+      const atencion = await lectura;
+      expect(atencion.startAt).toEqual(new Date('2026-10-20T14:00:00.000Z'));
+      expect(atencion).toMatchObject({
+        encounterId: 'enc-1',
+        appointmentBookingId: 'bk-1',
+        practitionerDisplayName: 'Dra. Rojas',
+        alreadyReviewed: false,
+        canReview: true,
+      });
+    });
+
+    it('los `null` del cable no se cuelan: sin fecha es null, sin reserva no hay clave', async () => {
+      const lectura = firstValueFrom(client.getReviewableCare('bk-1'));
+      http.expectOne((r) => r.url === '/patients/me/reviewable-care').flush({
+        encounterId: 'enc-1',
+        appointmentBookingId: null,
+        practitionerDisplayName: 'Dra. Rojas',
+        startAt: null,
+        alreadyReviewed: true,
+        canReview: false,
+      });
+
+      const atencion = await lectura;
+      expect(atencion.startAt).toBeNull();
+      expect('appointmentBookingId' in atencion).toBe(false);
+      expect(atencion.canReview).toBe(false);
+      expect(atencion.alreadyReviewed).toBe(true);
+    });
+
+    it('un `canReview` ausente es NO: ante la duda no se ofrece una reseña', async () => {
+      const lectura = firstValueFrom(client.getReviewableCare('bk-1'));
+      http.expectOne((r) => r.url === '/patients/me/reviewable-care').flush({
+        encounterId: 'enc-1',
+        practitionerDisplayName: 'Dra. Rojas',
+      });
+
+      expect((await lectura).canReview).toBe(false);
+    });
   });
 });

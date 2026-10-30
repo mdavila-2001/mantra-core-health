@@ -147,7 +147,7 @@
 }
 
 .cuadricula--error .cuadricula__marca {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 /* Apagada: o la cuadrícula entera, o la columna que otra fila ya se llevó. */

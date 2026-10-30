@@ -15,15 +15,15 @@ import type {
  *
  * La API **omite** las claves sin valor en vez de mandarlas en `null`, y los
  * instantes llegan como texto ISO. Por eso todo lo opcional es opcional acá y
- * {@link desdeElCable} lo normaliza a `null`.
+ * {@link fromWire} lo normaliza a `null`.
  */
 export type WireInformedConsent = {
-  readonly [K in keyof SinEvidencia as K extends ClavesObligatorias ? K : never]: SinEvidencia[K] extends Date
+  readonly [K in keyof WithoutEvidence as K extends RequiredKeys ? K : never]: WithoutEvidence[K] extends Date
     ? string
-    : SinEvidencia[K];
+    : WithoutEvidence[K];
 } & {
-  readonly [K in keyof SinEvidencia as K extends ClavesObligatorias ? never : K]?:
-    | (NonNullable<SinEvidencia[K]> extends Date ? string : SinEvidencia[K])
+  readonly [K in keyof WithoutEvidence as K extends RequiredKeys ? never : K]?:
+    | (NonNullable<WithoutEvidence[K]> extends Date ? string : WithoutEvidence[K])
     | null;
 } & {
   readonly statusConceptId?: string;
@@ -31,9 +31,9 @@ export type WireInformedConsent = {
   readonly evidence?: readonly WireEvidence[];
 };
 
-type SinEvidencia = Omit<InformedConsent, 'evidence'>;
+type WithoutEvidence = Omit<InformedConsent, 'evidence'>;
 
-type ClavesObligatorias = 'id' | 'patientProfileId' | 'decision' | 'status' | 'createdAt';
+type RequiredKeys = 'id' | 'patientProfileId' | 'decision' | 'status' | 'createdAt';
 
 interface WireEvidence {
   readonly id: string;
@@ -70,7 +70,7 @@ export class InformedConsentsClient {
     if (filtro.targetId !== undefined) params = params.set('targetId', filtro.targetId);
     return this.http
       .get<WireList>(this.url('/consent/treatment-informed-consents'), { params })
-      .pipe(map((cuerpo) => cuerpo.items.map(desdeElCable)));
+      .pipe(map((cuerpo) => cuerpo.items.map(fromWire)));
   }
 
   /** `GET /consent/treatment-informed-consents/:id`. */
@@ -79,7 +79,7 @@ export class InformedConsentsClient {
       .get<WireInformedConsent>(
         this.url(`/consent/treatment-informed-consents/${encodeURIComponent(id)}`),
       )
-      .pipe(map(desdeElCable));
+      .pipe(map(fromWire));
   }
 
   /** `POST /consent/treatment-informed-consents` — aceptación o rechazo. */
@@ -87,9 +87,9 @@ export class InformedConsentsClient {
     return this.http
       .post<WireInformedConsent>(
         this.url('/consent/treatment-informed-consents'),
-        sinVacios(input),
+        withoutBlanks(input),
       )
-      .pipe(map(desdeElCable));
+      .pipe(map(fromWire));
   }
 
   /**
@@ -102,7 +102,7 @@ export class InformedConsentsClient {
         this.url(`/consent/treatment-informed-consents/${encodeURIComponent(id)}/withdraw`),
         { reason },
       )
-      .pipe(map(desdeElCable));
+      .pipe(map(fromWire));
   }
 
   /**
@@ -128,7 +128,7 @@ export class InformedConsentsClient {
         ),
         { informedAt: informedAt.toISOString() },
       )
-      .pipe(map(desdeElCable));
+      .pipe(map(fromWire));
   }
 
   private url(path: string): string {
@@ -137,8 +137,8 @@ export class InformedConsentsClient {
 }
 
 /** Del cable al dominio: los instantes como `Date`, lo omitido como `null`. */
-export function desdeElCable(c: WireInformedConsent): InformedConsent {
-  const fecha = (v: string | null | undefined): Date | null =>
+export function fromWire(c: WireInformedConsent): InformedConsent {
+  const toDate = (v: string | null | undefined): Date | null =>
     v === null || v === undefined ? null : new Date(v);
   const evidence = (c.evidence ?? []).map((e) => ({
     id: e.id,
@@ -179,12 +179,12 @@ export function desdeElCable(c: WireInformedConsent): InformedConsent {
     assentObtained: c.assentObtained ?? null,
     assentNotes: c.assentNotes ?? null,
     revocationRightInformed: c.revocationRightInformed ?? null,
-    postEmergencyInformedAt: fecha(c.postEmergencyInformedAt),
+    postEmergencyInformedAt: toDate(c.postEmergencyInformedAt),
     evidence,
     // La API lo deriva; si una versión vieja no lo manda, se deriva igual.
     signatureStatus: c.signatureStatus ?? (evidence.length > 0 ? 'SIGNED' : 'PENDING'),
-    signedAt: fecha(c.signedAt),
-    withdrawnAt: fecha(c.withdrawnAt),
+    signedAt: toDate(c.signedAt),
+    withdrawnAt: toDate(c.withdrawnAt),
     createdAt: new Date(c.createdAt),
   };
 }
@@ -194,7 +194,7 @@ export function desdeElCable(c: WireInformedConsent): InformedConsent {
  * textos: una clave en `undefined` o un texto en blanco se omite en vez de
  * viajar como «dato» vacío.
  */
-function sinVacios<T extends object>(valor: T): Partial<T> {
+function withoutBlanks<T extends object>(valor: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(valor)
       .filter(([, v]) => v !== undefined && v !== null)

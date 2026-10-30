@@ -21,11 +21,11 @@
     @if (indeterminate()) {
       <!-- Parcial: ni tildada ni vacía. El guion lo dice sin ambigüedad. -->
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-        <line x1="6" y1="12" x2="18" y2="12" />
+        <line x1="6" y1="12" x2="18" y2="12" pathLength="1" />
       </svg>
     } @else if (checked()) {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 6 9 17 4 12" />
+        <polyline points="20 6 9 17 4 12" pathLength="1" />
       </svg>
     }
   </span>

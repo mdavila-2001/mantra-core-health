@@ -38,7 +38,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard), transform var(--spring-rapido-dur) var(--spring-rapido);
   flex-shrink: 0;
 }
 
@@ -48,6 +48,23 @@
   height: 10px;
   border-radius: 50%;
   background-color: var(--brand-primary);
+}
+
+/* El punto nace con el muelle `rápido`, desde el centro. */
+.radio-dot {
+  animation: radio-dot-in var(--spring-rapido-dur) var(--spring-rapido) both;
+}
+
+@keyframes radio-dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+/* Responde al toque antes de soltar. */
+.radio-container:not(.is-disabled):active .radio-circle {
+  transform: scale(0.9);
 }
 
 /* Base = móvil (área táctil 44px, círculo 22px, punto 10px).
@@ -81,7 +98,7 @@
 
 /* Estado Error */
 .radio-container.has-error .radio-circle {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 /* Estado Deshabilitado */

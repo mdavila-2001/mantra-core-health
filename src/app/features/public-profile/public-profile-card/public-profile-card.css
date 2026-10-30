@@ -123,6 +123,14 @@
   block-size: 22px;
 }
 
+.perfil__cola {
+  white-space: nowrap;
+}
+
+.perfil__insignia {
+  margin-inline-start: var(--e1);
+}
+
 .perfil__titular {
   margin: var(--e2) 0 0;
   font-size: var(--fs-body-lg);
@@ -166,6 +174,15 @@
   inline-size: 15px;
   block-size: 15px;
   color: var(--ambar);
+}
+
+.profile-rating__stars {
+  display: inline-flex;
+  gap: var(--sp-1);
+}
+
+.perfil__estrella .profile-rating__star--empty {
+  color: var(--border-subtle);
 }
 
 /* Las acciones, en su propio renglón debajo de la identidad. */

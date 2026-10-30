@@ -26,6 +26,14 @@ describe('security-headers', () => {
     expect(policy).toContain("frame-ancestors 'none'");
   });
 
+  it('enmarca URL locales y los videos de YouTube sin cookies, no otros terceros', () => {
+    const policy = contentSecurityPolicy();
+    expect(policy).toContain("frame-src 'self' blob: https://www.youtube-nocookie.com");
+    expect(policy).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
+    expect(policy).not.toContain('https://www.youtube.com');
+    expect(policy).not.toContain('https://player.vimeo.com');
+  });
+
   describe('hashes de scripts en línea', () => {
     it('el hash es el sha256 del contenido exacto, en formato CSP', () => {
       // Vector conocido: sha256 de la cadena vacía.
@@ -132,21 +140,50 @@ describe('security-headers', () => {
       expect(contentSecurityPolicy()).not.toContain('fonts.googleapis.com');
     });
 
-    it('abre imágenes SOLO a los tiles del proveedor del mapa, y nada más sale a terceros', () => {
+    it('abre imágenes del glosario SOLO a Wikimedia (original y miniatura) y CIMA, host exacto y sólo como imagen', () => {
+      const csp = contentSecurityPolicy();
+      const directiva = csp.split('; ').find((d) => d.startsWith('img-src '));
+
+      expect(directiva).toBe(
+        "img-src 'self' data: blob: https://tile.openstreetmap.org https://upload.wikimedia.org https://thumb.wikimedia.org https://cima.aemps.es https://i.ytimg.com",
+      );
+      for (const host of [
+        'https://upload.wikimedia.org',
+        'https://thumb.wikimedia.org',
+        'https://cima.aemps.es',
+      ]) {
+        const otras = csp.split('; ').filter((d) => !d.startsWith('img-src '));
+        expect(otras.some((d) => d.includes(host))).toBe(false);
+      }
+      expect(csp).not.toMatch(/\*\.wikimedia\.org|\*\.aemps\.es/);
+    });
+
+    it('abre imágenes a los tiles del proveedor del mapa (y a nada más que no esté declarado)', () => {
       const csp = contentSecurityPolicy();
 
       // El mapa (Leaflet sin clave de API) pide sus tiles directo del
       // navegador; sin este origen queda un rectángulo gris.
-      expect(csp).toContain("img-src 'self' data: https://tile.openstreetmap.org");
+      expect(csp).toContain("img-src 'self' data: blob: https://tile.openstreetmap.org");
       // El permiso es de imágenes: scripts y conexiones no se abren con él.
-      expect(csp).not.toContain('script-src \'self\' https://tile.openstreetmap.org');
-      expect(csp).not.toContain('connect-src \'self\' https://tile.openstreetmap.org');
+      expect(csp).not.toContain("script-src 'self' https://tile.openstreetmap.org");
+      expect(csp).not.toContain("connect-src 'self' https://tile.openstreetmap.org");
       // CARTO quedó cerrado: sus mosaicos llegan con marca de agua.
       expect(csp).not.toContain('cartocdn');
     });
 
-    it('con la API en el mismo origen, `connect-src` se queda en `self`', () => {
-      expect(contentSecurityPolicy({ apiBaseUrl: '' })).toContain("connect-src 'self';");
+    it('con la API en el mismo origen, `connect-src` es `self` y sólo Nominatim', () => {
+      expect(contentSecurityPolicy({ apiBaseUrl: '' })).toContain(
+        "connect-src 'self' https://nominatim.openstreetmap.org;",
+      );
+    });
+
+    it('Nominatim se abre sólo para conexiones: ni scripts, ni imágenes, ni marcos', () => {
+      const csp = contentSecurityPolicy();
+      const otras = csp.split('; ').filter((d) => !d.startsWith('connect-src '));
+
+      expect(otras.some((d) => d.includes('nominatim'))).toBe(false);
+      expect(csp).not.toContain('photon.komoot.io');
+      expect(csp).not.toMatch(/\*\.openstreetmap\.org/);
     });
 
     it('con la API en otro dominio agrega SOLO su origen, no la ruta', () => {
@@ -156,9 +193,27 @@ describe('security-headers', () => {
       expect(csp).not.toContain('/v1');
     });
 
+    it('con el servicio de IA en otro dominio permite su origen en connect-src', () => {
+      const csp = contentSecurityPolicy({ aiBaseUrl: 'https://demo.alovidasalud.arauzsoftware.com/ai' });
+
+      expect(csp).toContain("connect-src 'self' https://demo.alovidasalud.arauzsoftware.com");
+      expect(csp).not.toContain('/ai');
+    });
+
+    it('deduplica el origen cuando API y AI comparten dominio', () => {
+      const csp = contentSecurityPolicy({
+        apiBaseUrl: 'https://gateway.ejemplo.com/api',
+        aiBaseUrl: 'https://gateway.ejemplo.com/ai',
+      });
+
+      expect(csp).toContain(
+        "connect-src 'self' https://gateway.ejemplo.com https://nominatim.openstreetmap.org;",
+      );
+    });
+
     it('una raíz de API ilegible no rompe la política', () => {
       expect(contentSecurityPolicy({ apiBaseUrl: 'no-es-una-url' })).toContain(
-        "connect-src 'self';",
+        "connect-src 'self' https://nominatim.openstreetmap.org;",
       );
     });
 
@@ -224,9 +279,9 @@ describe('security-headers', () => {
     });
 
     it('`securityHeaders` la propaga a la cabecera que se emite', () => {
-      expect(securityHeaders({ upgradeInsecureRequests: false })['Content-Security-Policy']).not.toContain(
-        'upgrade-insecure-requests',
-      );
+      expect(
+        securityHeaders({ upgradeInsecureRequests: false })['Content-Security-Policy'],
+      ).not.toContain('upgrade-insecure-requests');
     });
   });
 });

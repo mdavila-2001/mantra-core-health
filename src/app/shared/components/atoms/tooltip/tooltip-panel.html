@@ -1,1 +1,5 @@
-{{ text() }}
+@if (template(); as content) {
+  <ng-container [ngTemplateOutlet]="content" />
+} @else {
+  {{ text() }}
+}

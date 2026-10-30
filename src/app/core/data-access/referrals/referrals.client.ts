@@ -3,71 +3,49 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
-import { maybeDate, maybeDateOnly } from '../wire';
+import * as wire from '../wire';
 import {
   REFERRAL_STATUSES,
   REFERRAL_TYPES,
-  type CreateReferralInput,
+  type NewReferral,
   type Referral,
+  type ReferralCreated,
+  type ReferralTarget,
+  type ReferralTargetKind,
+  type ReferralTargetService,
   type ReferralStatus,
   type ReferralType,
   type RespondReferralInput,
 } from './referrals.types';
 
-/**
- * Una derivación como viaja: fechas en texto y opcionales en `null` (así
- * serializa el backend). Todo lo que no es `id`/`patientProfileId`/estado/alta
- * es opcional porque las filas anteriores al patch v4263 no lo traen.
- */
-interface WireReferral {
-  readonly id: string;
-  readonly patientProfileId: string;
-  readonly statusConceptId: string;
+/** Cuántas letras pide el servidor antes de buscar un destino. */
+export const REFERRAL_TARGET_MIN_QUERY = 2;
+
+/** La fila de la lista tal como viaja: fechas en texto y opcionales en `null`. */
+type WireReferral = wire.ConNulos<
+  Omit<Referral, 'createdAt' | 'validUntil' | 'respondedAt' | 'counterReferralAt' | 'referralType' | 'status'>
+> & {
   readonly createdAt: string;
-  readonly [campo: string]: unknown;
-}
-
-/** El listado puede llegar como arreglo (versión anterior) o con sobre. */
-type WireReferralList = readonly WireReferral[] | { readonly items: readonly WireReferral[] };
-
-/** Los campos de texto que se copian tal cual, si vienen con algo. */
-const CAMPOS_DE_TEXTO = [
-  'sourceEncounterId',
-  'referringProfileId',
-  'targetProfileId',
-  'targetTenantId',
-  'targetBranchId',
-  'targetExternalName',
-  'targetExternalContact',
-  'targetProfileName',
-  'targetTenantName',
-  'targetBranchName',
-  'specialtyConceptId',
-  'requestedServiceText',
-  'requestedServiceConceptId',
-  'reasonConceptId',
-  'reasonText',
-  'diagnosisText',
-  'clinicalSummary',
-  'treatmentGivenText',
-  'priorityConceptId',
-  'rejectReason',
-  'counterReferralText',
-  'informedConsentId',
-] as const;
+  readonly validUntil?: string | null;
+  readonly respondedAt?: string | null;
+  readonly counterReferralAt?: string | null;
+  readonly referralType?: string | null;
+  readonly status?: string | null;
+};
 
 /**
- * Cliente de **derivaciones** (`/referrals`, módulo `clinical_ext`).
+ * Derivaciones: el médico recomienda a la persona que consulte con otro
+ * profesional, o la deriva a una organización médica, por un servicio
+ * concreto de su catálogo.
  *
- * Emitir (UC-18-07), listar las de un paciente, leer una, responder desde el
- * destino (UC-18-08), registrar la contrarreferencia y anular. Contrato: API
- * `b19cc52d` (`ReferralResponseDto`; errores con `reason` en
- * `referrals.errors.ts`).
+ * La derivación **no reserva nada**: la API le avisa a la persona en su
+ * campana, con un enlace a la ficha del profesional recomendado, y ahí reserva
+ * con la reserva de siempre. Elegir otro profesional de la misma especialidad
+ * sigue siendo posible.
  *
- * ## La autoridad es la API
- *
- * Quién puede responder o contrarreferir lo decide el servidor (el destino o
- * su organización). El cliente no lo deduce: manda y muestra el 403 si llega.
+ * Quién puede recibir una derivación y qué servicios ofrece lo resuelve la API
+ * (`/referrals/targets` y `/referrals/target-services`), no el directorio
+ * público: el destino puede ser una organización de otro tenant.
  */
 @Injectable({ providedIn: 'root' })
 export class ReferralsClient {
@@ -75,17 +53,65 @@ export class ReferralsClient {
   private readonly baseUrl = inject(API_BASE_URL);
 
   /**
-   * `GET /referrals?patientProfileId=` — las derivaciones de una persona, de la
-   * más reciente a la más antigua.
+   * `POST /referrals` — emite la derivación. 404 si el encuentro no es de esa
+   * persona o de la organización de quien deriva; 409 si ya existe una
+   * equivalente.
    */
-  listByPatient(patientProfileId: string): Observable<readonly Referral[]> {
-    const params = new HttpParams().set('patientProfileId', patientProfileId);
-    return this.http
-      .get<WireReferralList>(this.url('/referrals'), { params })
-      .pipe(map((body) => (Array.isArray(body) ? body : (body as { items: readonly WireReferral[] }).items).map(toReferral)));
+  create(body: NewReferral): Observable<ReferralCreated> {
+    const { validUntil, ...rest } = body;
+    return this.http.post<ReferralCreated>(this.url('/referrals'), {
+      ...rest,
+      ...(validUntil === undefined ? {} : { validUntil: toLocalDay(validUntil) }),
+    });
   }
 
-  /** `GET /referrals/:id`. */
+  /**
+   * `GET /referrals/targets` — destinos posibles por nombre.
+   *
+   * @param q - Lo escrito. El servidor exige {@link REFERRAL_TARGET_MIN_QUERY} letras.
+   * @param kind - Profesional u organización médica.
+   */
+  searchTargets(q: string, kind: ReferralTargetKind): Observable<readonly ReferralTarget[]> {
+    return this.http
+      .get<{ readonly items: readonly ReferralTarget[] }>(this.url('/referrals/targets'), {
+        params: new HttpParams().set('q', q).set('kind', kind),
+      })
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `GET /referrals/target-services` — los servicios concretos de un destino.
+   *
+   * Se pide por **uno** de los dos: una unión y no dos opcionales, para que no
+   * se pueda armar la petición con los dos o con ninguno.
+   */
+  listTargetServices(
+    target: { readonly targetProfileId: string } | { readonly targetTenantId: string },
+  ): Observable<readonly ReferralTargetService[]> {
+    const params =
+      'targetProfileId' in target
+        ? new HttpParams().set('targetProfileId', target.targetProfileId)
+        : new HttpParams().set('targetTenantId', target.targetTenantId);
+    return this.http
+      .get<{
+        readonly items: readonly ReferralTargetService[];
+      }>(this.url('/referrals/target-services'), { params })
+      .pipe(map((body) => body.items));
+  }
+
+  /**
+   * `GET /referrals?patientProfileId=` — las derivaciones de la persona, de la
+   * más reciente a la más vieja (el orden lo pone el servidor).
+   */
+  listByPatient(patientProfileId: string): Observable<readonly Referral[]> {
+    return this.http
+      .get<readonly WireReferral[]>(this.url('/referrals'), {
+        params: new HttpParams().set('patientProfileId', patientProfileId),
+      })
+      .pipe(map((rows) => rows.map(toReferral)));
+  }
+
+  /** `GET /referrals/:id`. 404 `REFERRAL_NOT_FOUND` también para quien no la puede ver. */
   get(id: string): Observable<Referral> {
     return this.http
       .get<WireReferral>(this.url(`/referrals/${encodeURIComponent(id)}`))
@@ -93,44 +119,33 @@ export class ReferralsClient {
   }
 
   /**
-   * `POST /referrals` — emite la derivación.
-   *
-   * Los opcionales vacíos se **omiten**: el backend valida con
-   * `forbidNonWhitelisted` y una clave en `undefined` o `''` no es «sin dato».
-   */
-  create(entrada: CreateReferralInput): Observable<Referral> {
-    const cuerpo = sinVacios({
-      ...entrada,
-      validUntil: diaDe(entrada.validUntil),
-    });
-    return this.http
-      .post<WireReferral>(this.url('/referrals'), cuerpo)
-      .pipe(map((body) => toReferral({ ...cuerpoComoWire(cuerpo), ...body })));
-  }
-
-  /**
    * `PATCH /referrals/:id/respond` — el destino acepta o rechaza (con motivo).
+   *
+   * Exige organización activa (`X-Tenant-Id`, lo pone el interceptor; sin
+   * ella, 422 `TENANT_REQUIRED`). Quien no es destino recibe 404
+   * `REFERRAL_NOT_FOUND`: la API no confirma que la derivación exista.
    *
    * @returns La derivación ya respondida (`{ ok, ...ReferralResponseDto }`).
    */
-  respond(id: string, entrada: RespondReferralInput): Observable<Referral> {
+  respond(id: string, body: RespondReferralInput): Observable<Referral> {
+    const rejectReason = body.rejectReason?.trim();
     return this.http
-      .patch<WireReferral>(
-        this.url(`/referrals/${encodeURIComponent(id)}/respond`),
-        sinVacios({ ...entrada }),
-      )
+      .patch<WireReferral>(this.url(`/referrals/${encodeURIComponent(id)}/respond`), {
+        decision: body.decision,
+        ...(rejectReason === undefined || rejectReason === '' ? {} : { rejectReason }),
+      })
       .pipe(map(toReferral));
   }
 
   /**
-   * `PATCH /referrals/:id/counter-referral` — lo que el destino devuelve. Cierra
-   * la derivación (`COMPLETED`). Si el destino es sólo externo, la transcribe
-   * quien puede escribir la historia.
+   * `PATCH /referrals/:id/counter-referral` — lo que el destino devuelve.
+   * Cierra la derivación (`COMPLETED`). Si el destino es sólo externo, la
+   * transcribe quien puede escribir la historia.
    */
   counterReferral(id: string, counterReferralText: string): Observable<Referral> {
     return this.http
       .patch<WireReferral>(this.url(`/referrals/${encodeURIComponent(id)}/counter-referral`), {
-        counterReferralText,
+        counterReferralText: counterReferralText.trim(),
       })
       .pipe(map(toReferral));
   }
@@ -142,82 +157,48 @@ export class ReferralsClient {
       .pipe(map(toReferral));
   }
 
-  /** `GET /referrals/me` — las derivaciones de la persona autenticada (rol paciente). */
-  listMine(): Observable<readonly Referral[]> {
-    return this.http
-      .get<readonly WireReferral[]>(this.url('/referrals/me'))
-      .pipe(map((body) => body.map(toReferral)));
-  }
-
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
 }
 
-/** El cable a la vista: `null` fuera, fechas a `Date`, enums sólo si se conocen. */
-export function toReferral(body: WireReferral): Referral {
-  const textos: Record<string, string> = {};
-  for (const campo of CAMPOS_DE_TEXTO) {
-    const valor = body[campo];
-    if (typeof valor === 'string' && valor !== '') {
-      textos[campo] = valor;
-    }
-  }
-  const tipo = body['referralType'];
-  const estado = body['status'];
-  const validUntil = maybeDateOnly(texto(body['validUntil'])?.slice(0, 10));
-  const respondedAt = maybeDate(texto(body['respondedAt']));
-  const counterReferralAt = maybeDate(texto(body['counterReferralAt']));
+function toReferral(row: WireReferral): Referral {
+  const { createdAt, validUntil, respondedAt, counterReferralAt, referralType, status, ...rest } = row;
+  // `respond` devuelve además `ok`: no es parte de la derivación.
+  const { ok: _ok, ...fields } = rest as typeof rest & { readonly ok?: unknown };
+  const clean = wire.sinNulos(fields as wire.ConNulos<Omit<Referral, 'createdAt'>>);
+  const knownType = isKnownType(referralType) ? referralType : undefined;
+  const knownStatus = isKnownStatus(status) ? status : undefined;
+  const validDay = wire.maybeDateOnly(validUntil);
+  const responded = wire.maybeDate(respondedAt);
+  const countered = wire.maybeDate(counterReferralAt);
   return {
-    ...textos,
-    id: body.id,
-    patientProfileId: body.patientProfileId,
-    statusConceptId: body.statusConceptId,
-    createdAt: new Date(body.createdAt),
-    ...(esTipo(tipo) ? { referralType: tipo } : {}),
-    ...(esEstado(estado) ? { status: estado } : {}),
-    ...(validUntil === undefined ? {} : { validUntil }),
-    ...(respondedAt === undefined ? {} : { respondedAt }),
-    ...(counterReferralAt === undefined ? {} : { counterReferralAt }),
+    ...clean,
+    createdAt: new Date(createdAt),
+    ...(knownType === undefined ? {} : { referralType: knownType }),
+    ...(knownStatus === undefined ? {} : { status: knownStatus }),
+    ...(validDay === undefined ? {} : { validUntil: validDay }),
+    ...(responded === undefined ? {} : { respondedAt: responded }),
+    ...(countered === undefined ? {} : { counterReferralAt: countered }),
   };
 }
 
-function texto(valor: unknown): string | undefined {
-  return typeof valor === 'string' && valor !== '' ? valor : undefined;
+/** Un estado que esta versión no conoce no se inventa: queda sin estado legible. */
+function isKnownStatus(value: string | null | undefined): value is ReferralStatus {
+  return (REFERRAL_STATUSES as readonly string[]).includes(value ?? '');
 }
 
-function esTipo(valor: unknown): valor is ReferralType {
-  return typeof valor === 'string' && (REFERRAL_TYPES as readonly string[]).includes(valor);
-}
-
-function esEstado(valor: unknown): valor is ReferralStatus {
-  return typeof valor === 'string' && (REFERRAL_STATUSES as readonly string[]).includes(valor);
+/** Un código que esta versión no conoce no se inventa: queda sin tipo. */
+function isKnownType(value: string | null | undefined): value is ReferralType {
+  return (REFERRAL_TYPES as readonly string[]).includes(value ?? '');
 }
 
 /**
- * La respuesta del alta puede ser angosta (`id`, estado, alta): se completa
- * con lo enviado para que la pantalla pueda ofrecer el consentimiento dirigido
- * sin una segunda lectura.
+ * La fecha en `YYYY-MM-DD`, en el día **local**: `toISOString()` correría al
+ * día anterior todo lo elegido después de las 20:00 en Bolivia.
  */
-function cuerpoComoWire(cuerpo: Record<string, unknown>): WireReferral {
-  return cuerpo as unknown as WireReferral;
-}
-
-/** La fecha en `YYYY-MM-DD` del día local, no en UTC. */
-function diaDe(fecha: Date | undefined): string | undefined {
-  if (fecha === undefined) {
-    return undefined;
-  }
-  const mes = `${fecha.getMonth() + 1}`.padStart(2, '0');
-  const dia = `${fecha.getDate()}`.padStart(2, '0');
-  return `${fecha.getFullYear()}-${mes}-${dia}`;
-}
-
-/** Fuera las claves en `undefined` y los textos vacíos o en blanco. */
-function sinVacios(valor: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(valor)
-      .filter(([, v]) => v !== undefined && !(typeof v === 'string' && v.trim() === ''))
-      .map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]),
-  );
+function toLocalDay(date: Date): string {
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
 }

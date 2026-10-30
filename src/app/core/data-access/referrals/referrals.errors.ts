@@ -1,12 +1,15 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
 /**
- * Los sub-códigos estables de `clinical_ext.error-reasons.ts` (API b19cc52d + 415f1fe4).
+ * Los sub-códigos estables de `ClinicalExtErrorReason` que la API devuelve en
+ * `/referrals` (v4266, mergeada en `dev` y `test`).
  *
  * Viajan en `reason`, al lado de `code`. `readApiError` no los conserva —es
  * genérico—, así que se leen acá del cuerpo crudo: son lo único que distingue
- * «ya está cerrada» de «ya no está pendiente»,
- * que comparten el mismo código.
+ * «ya está cerrada» de «ya no está pendiente», que comparten el mismo código.
+ *
+ * No hay un «prohibido» por ser otro: quien no es destino recibe 404
+ * `REFERRAL_NOT_FOUND`, igual que si no existiera (S6 no filtra existencia).
  */
 export const REFERRAL_ERROR_REASONS = [
   'REFERRAL_TARGET_REQUIRED',
@@ -16,65 +19,62 @@ export const REFERRAL_ERROR_REASONS = [
   'REFERRAL_NOT_FOUND',
   'REFERRAL_NOT_PENDING',
   'REFERRAL_REJECT_REASON_REQUIRED',
-  'REFERRAL_RESPOND_FORBIDDEN',
-  'REFERRAL_COUNTER_REFERRAL_FORBIDDEN',
   'REFERRAL_COUNTER_REFERRAL_NOT_ALLOWED',
   'REFERRAL_ALREADY_CLOSED',
+  'TENANT_REQUIRED',
 ] as const;
 
 export type ReferralErrorReason = (typeof REFERRAL_ERROR_REASONS)[number];
 
-/** Qué decirle a quien deriva, por sub-código. Dice qué pasó y qué hacer. */
-export const MENSAJE_DEL_MOTIVO: Readonly<Record<ReferralErrorReason, string>> = {
+/** Qué decirle a quien deriva o responde, por sub-código. Dice qué pasó y qué hacer. */
+export const REFERRAL_REASON_MESSAGE: Readonly<Record<ReferralErrorReason, string>> = {
   REFERRAL_TARGET_REQUIRED:
-    'Falta el destino: elegí un profesional, una organización o escribí el destino externo.',
+    'Falta el destino: elija un profesional o una organización, o escriba el destino externo.',
   REFERRAL_SERVICE_INFORMATION_INCOMPLETE:
-    'Faltan el servicio pedido o el resumen clínico: los dos son obligatorios para derivar.',
+    'Faltan el servicio pedido o el resumen clínico: sin un servicio del destino, los dos son obligatorios.',
   REFERRAL_TARGET_BRANCH_NOT_FOUND:
-    'La sede elegida ya no existe en esa organización. Elegí otra o dejá «Cualquier sede».',
+    'La sede elegida ya no existe en esa organización. Elija otra o deje «Cualquier sede».',
   REFERRAL_CONSENT_LINK_NOT_ALLOWED:
     'El consentimiento no se adjunta al emitir: se registra después, sobre la derivación ya emitida.',
-  REFERRAL_NOT_FOUND: 'La derivación ya no existe. Recargá la lista.',
-  REFERRAL_NOT_PENDING:
-    'La derivación ya fue respondida. Recargá para ver su estado actual.',
-  REFERRAL_REJECT_REASON_REQUIRED: 'Para rechazar, escribí el motivo.',
-  REFERRAL_RESPOND_FORBIDDEN:
-    'Sólo el destino de la derivación (el profesional o su organización) puede aceptarla o rechazarla.',
-  REFERRAL_COUNTER_REFERRAL_FORBIDDEN:
-    'Sólo el destino de la derivación (o su organización) registra la contrarreferencia.',
+  REFERRAL_NOT_FOUND:
+    'No encontramos esta derivación entre las que usted puede responder. Recargue la lista.',
+  REFERRAL_NOT_PENDING: 'La derivación ya fue respondida. Recargue para ver su estado actual.',
+  REFERRAL_REJECT_REASON_REQUIRED: 'Para rechazar, escriba el motivo.',
   REFERRAL_COUNTER_REFERRAL_NOT_ALLOWED:
     'En su estado actual la derivación no admite contrarreferencia: primero tiene que ser aceptada.',
   REFERRAL_ALREADY_CLOSED: 'La derivación ya está cerrada: no se puede anular.',
+  TENANT_REQUIRED:
+    'Para responder una derivación elija primero la organización desde la que atiende.',
 };
 
 /** Lo que el error de una derivación trae además del `code`. */
-export interface MotivoDeDerivacion {
+export interface ReferralErrorDetail {
   readonly reason: ReferralErrorReason;
-  readonly mensaje: string;
+  readonly message: string;
   /** `details.fields` de un 400: los campos que la API señaló. */
-  readonly campos: readonly string[];
+  readonly fields: readonly string[];
 }
 
 /**
  * El sub-código de un error de `/referrals`, ya en palabras, o `null` si el
  * error no trae uno conocido (entonces vale el mensaje genérico de S4–S9).
  */
-export function motivoDeDerivacion(error: unknown): MotivoDeDerivacion | null {
+export function referralErrorDetail(error: unknown): ReferralErrorDetail | null {
   if (!(error instanceof HttpErrorResponse)) return null;
-  const cuerpo: unknown = error.error;
-  if (typeof cuerpo !== 'object' || cuerpo === null) return null;
-  const reason = (cuerpo as Record<string, unknown>)['reason'];
+  const body: unknown = error.error;
+  if (typeof body !== 'object' || body === null) return null;
+  const details = (body as Record<string, unknown>)['details'];
+  const detailsRecord =
+    typeof details === 'object' && details !== null ? (details as Record<string, unknown>) : undefined;
+  // Los de `clinical_ext` viajan arriba; el de tenant (`TENANT_REQUIRED`), en `details`.
+  const reason = (body as Record<string, unknown>)['reason'] ?? detailsRecord?.['reason'];
   if (typeof reason !== 'string' || !(REFERRAL_ERROR_REASONS as readonly string[]).includes(reason)) {
     return null;
   }
-  const details = (cuerpo as Record<string, unknown>)['details'];
-  const fields =
-    typeof details === 'object' && details !== null
-      ? (details as Record<string, unknown>)['fields']
-      : undefined;
+  const fields = detailsRecord?.['fields'];
   return {
     reason: reason as ReferralErrorReason,
-    mensaje: MENSAJE_DEL_MOTIVO[reason as ReferralErrorReason],
-    campos: Array.isArray(fields) ? fields.filter((f): f is string => typeof f === 'string') : [],
+    message: REFERRAL_REASON_MESSAGE[reason as ReferralErrorReason],
+    fields: Array.isArray(fields) ? fields.filter((f): f is string => typeof f === 'string') : [],
   };
 }

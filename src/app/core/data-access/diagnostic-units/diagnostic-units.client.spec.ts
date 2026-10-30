@@ -84,3 +84,46 @@ describe('DiagnosticUnitsClient', () => {
     expect(detail?.accreditations[0].validFrom).toBeInstanceOf(Date);
   });
 });
+
+describe('DiagnosticUnitsClient.searchCoverage', () => {
+  let client: DiagnosticUnitsClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(DiagnosticUnitsClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('pide todos los estudios en una sola petición, con el origen elegido', () => {
+    client
+      .searchCoverage({
+        studyConceptIds: ['c-rx', 'c-eco'],
+        kind: 'IMAGING',
+        origin: { lat: -17.78, lng: -63.18 },
+        limit: 20,
+      })
+      .subscribe();
+
+    const req = http.expectOne((r) => r.url === '/diagnostic-units/search');
+    expect(req.request.params.get('studyConceptIds')).toBe('c-rx,c-eco');
+    expect(req.request.params.get('kind')).toBe('IMAGING');
+    expect(req.request.params.get('lat')).toBe('-17.78');
+    expect(req.request.params.get('lng')).toBe('-63.18');
+    expect(req.request.params.get('limit')).toBe('20');
+    req.flush({ items: [], total: 0, limit: 20, offset: 0 });
+  });
+
+  it('sin origen no manda coordenadas', () => {
+    client.searchCoverage({ studyConceptIds: ['c-ecg'] }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/diagnostic-units/search');
+    expect(req.request.params.has('lat')).toBe(false);
+    expect(req.request.params.has('lng')).toBe(false);
+    req.flush({ items: [], total: 0, limit: 20, offset: 0 });
+  });
+});

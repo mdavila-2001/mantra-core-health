@@ -84,6 +84,14 @@ services:
         # la red—, y vacía deja la CSP en `connect-src 'self'`, que es lo mismo
         # que en producción.
         PUBLIC_API_BASE_URL: ''
+        # Explícito, con el mismo valor que el Dockerfile toma si no se le pasa:
+        # `production` es la maqueta (`mockBackend: true`), que es lo que este
+        # archivo despliega. `production-api` NO sirve acá: apaga el simulador
+        # y este compose no trae el proxy que lleva los prefijos a la API, así
+        # que cada llamada caería en el SSR. El front real de `test` se
+        # construye con `deploy/docker-compose.coolify.yml`, que ya fija
+        # `production-api`. La variable queda para una prueba local a propósito.
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-production}
     image: mantra-core-health-mockup
     restart: unless-stopped
     environment:
@@ -104,6 +112,8 @@ services:
       # abierto a internet, sin TLS y saltándose el proxy, creyendo que está
       # cerrado.
       #
+      # Traefik corre en esta misma máquina y alcanza el bucle local igual de
+      # bien, así que no se pierde nada.
       #
       # Si Coolify tiene activado el despliegue sin cortes —levanta el
       # contenedor nuevo antes de bajar el viejo—, este bloque sobra entero:

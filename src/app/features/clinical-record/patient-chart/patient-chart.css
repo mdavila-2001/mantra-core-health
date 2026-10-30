@@ -26,69 +26,6 @@
   margin-block-start: var(--sp-6);
 }
 
-/* ── Banda de contexto ─────────────────────────────────────────────────────
-   Las alergias primero y fuera de las pestañas. La lista va en línea: son
-   pocas y una lista con viñetas dentro de un aviso lo convierte en un bloque
-   de texto que se saltea. */
-
-.expediente__alergias-lista {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2) var(--sp-5);
-  margin: var(--sp-2) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.expediente__alergias-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-}
-
-.expediente__contexto {
-  padding: var(--sp-4) var(--sp-5);
-  background: var(--bg-inset);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-}
-
-/* Mínimo chico: son cinco cifras de una línea y con un mínimo grande entran de
-   a dos, dejando la última fila a medias. */
-.expediente__cifras {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: var(--sp-4);
-  margin: 0;
-}
-
-.expediente__cifra-rotulo {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-secondary);
-}
-
-/* Tabular: cinco cifras en fila se comparan de un vistazo sólo si los dígitos
-   ocupan lo mismo. */
-.expediente__cifra-valor {
-  margin: var(--sp-1) 0 0;
-  font-family: var(--font-display);
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-/* La fecha no es una cifra que se compare: no necesita el peso de las otras y
-   con él competía con ellas. */
-.expediente__cifra-valor--fecha {
-  font-family: var(--font-body);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
 /* ── La historia ───────────────────────────────────────────────────────────
    `min-inline-size: 0` es obligatorio: sin él, una tabla ancha estira la celda
    de la rejilla en vez de desplazarse dentro de ella, y se lleva puesta la
@@ -258,4 +195,117 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-1) var(--sp-2);
+}
+
+/* «Enfermedades activas» (C3): una tarjeta por enfermedad, dos columnas desde
+   tablet para no dejar la lista angosta y larga en pantallas anchas. */
+.expediente__activas-titulo {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+}
+
+.expediente__activas-lista {
+  display: grid;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.expediente__activas-item {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) 0;
+  /* Fila con separador y sin recuadro: ya está dentro de la tarjeta de la ficha. */
+  background-color: transparent;
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.expediente__activas-nombre {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Tantas columnas como quepan de 18 rem: con UNA sola enfermedad la ficha se
+   estira a todo el ancho (con dos columnas fijas quedaba en media tarjeta, pegada
+   a la izquierda). */
+.expediente__activas-lista {
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+
+/* Sin caja alrededor: las fichas de adentro son lo único con superficie. */
+app-card.expediente__activas {
+  background: transparent;
+  margin-block-end: var(--sp-6);
+}
+
+/* Los archivos de un documento, uno por renglón, debajo del detalle. */
+.expediente__archivos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ── Las tres lecturas: selector de vista y filtro por tipo ──────────────
+   El selector arriba y a la izquierda, el filtro a continuación: primero se
+   elige cómo leer y después qué. En teléfono el filtro baja a su propia
+   línea y se desplaza dentro de ella en vez de apilar ocho chips. */
+
+.expediente__vistas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-4);
+  margin-block-end: var(--sp-4);
+}
+
+/* Sin esto el flex lo encoge y el control recorta sus rótulos. En angosto
+   toma la fila entera, que es lo que el control espera (su corte de 30rem). */
+.expediente__vistas app-segmented-control {
+  flex: none;
+}
+
+@media (max-width: 30rem) {
+  .expediente__vistas app-segmented-control {
+    flex: 1 1 100%;
+  }
+}
+
+.expediente__filtro {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+@media (max-width: 649px) {
+  .expediente__filtro {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    inline-size: 100%;
+    padding-block-end: var(--sp-1);
+  }
+
+  .expediente__filtro app-chip {
+    flex: none;
+  }
+
+  /* El borde derecho se desvanece: sin esa señal, una fila de chips cortada
+     contra el borde no dice que sigue. */
+  .expediente__filtro {
+    mask-image: linear-gradient(to right, #000 calc(100% - var(--sp-8)), transparent);
+  }
+}
+
+/* Qué deja afuera el filtro, o qué no exporta el recorrido. Texto y no un
+   aviso de color: informa, no alarma. */
+.expediente__aviso-filtro {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
 }

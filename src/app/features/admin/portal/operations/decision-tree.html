@@ -1,0 +1,54 @@
+<section class="tree" aria-label="Árbol de decisión" data-testid="portal-decision-tree">
+  @if (truncated()) {
+    <p class="tree__note">El árbol es largo y el generador lo recortó: lo que sigue es su comienzo.</p>
+  }
+
+  <ng-container [ngTemplateOutlet]="branch" [ngTemplateOutletContext]="{ $implicit: nodes() }" />
+
+  @if (responses().length > 0) {
+    <h3 class="tree__title">Con qué puede terminar</h3>
+    <ul class="tree__responses">
+      @for (r of responses(); track $index) {
+        <li>
+          <strong>{{ r.estado }}{{ r.codigo ? ' ' + r.codigo : '' }}</strong>
+          @if (r.causas.length > 0) {
+            <span class="tree__muted"> · {{ r.causas.join(' · ') }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+<ng-template #branch let-list>
+  <ol class="tree__list">
+    @for (node of list; track $index) {
+      <li class="tree__node">
+        <span class="tree__head">
+          <app-badge size="sm" [variant]="step(node).tone">{{ step(node).label }}</app-badge>
+          <span class="tree__text">{{ text(node) }}</span>
+        </span>
+        @if (node.detalle) {
+          <span class="tree__muted">{{ node.detalle }}</span>
+        }
+        @if (outcome(node); as result) {
+          <span class="tree__outcome">{{ result }}</span>
+        }
+        @if (node.f) {
+          <span class="tree__source">{{ node.f }}</span>
+        }
+        @if (node.hijos?.length) {
+          <ng-container [ngTemplateOutlet]="branch" [ngTemplateOutletContext]="{ $implicit: node.hijos }" />
+        }
+        @if (node.entonces?.length) {
+          <p class="tree__branch-label">Si se cumple</p>
+          <ng-container [ngTemplateOutlet]="branch" [ngTemplateOutletContext]="{ $implicit: node.entonces }" />
+        }
+        @if (node.sino?.length) {
+          <p class="tree__branch-label">Si no se cumple</p>
+          <ng-container [ngTemplateOutlet]="branch" [ngTemplateOutletContext]="{ $implicit: node.sino }" />
+        }
+      </li>
+    }
+  </ol>
+</ng-template>

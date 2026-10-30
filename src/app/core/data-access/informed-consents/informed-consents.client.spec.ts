@@ -4,9 +4,9 @@ import { TestBed } from '@angular/core/testing';
 
 import { InformedConsentsClient, type WireInformedConsent } from './informed-consents.client';
 import {
-  violacionesDeLosCampos,
-  violacionesDelConsentimiento,
-  vigenteDe,
+  violationsFromFields,
+  consentRuleViolations,
+  currentConsentFor,
   type InformedConsent,
 } from './informed-consents.types';
 
@@ -126,8 +126,8 @@ describe('InformedConsentsClient', () => {
   });
 
   it('informPostEmergency manda el instante en ISO', () => {
-    const cuando = new Date('2026-10-03T12:00:00.000Z');
-    client.informPostEmergency('c-1', cuando).subscribe();
+    const informedAt = new Date('2026-10-03T12:00:00.000Z');
+    client.informPostEmergency('c-1', informedAt).subscribe();
     const req = http.expectOne('/consent/treatment-informed-consents/c-1/post-emergency-information');
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ informedAt: '2026-10-03T12:00:00.000Z' });
@@ -156,24 +156,24 @@ describe('InformedConsentsClient', () => {
   });
 });
 
-describe('violacionesDelConsentimiento (contrato §2 + enmienda 1)', () => {
+describe('consentRuleViolations (contrato §2 + enmienda 1)', () => {
   const base = { patientProfileId: 'p-1', encounterId: 'e-1' } as const;
 
   it('objeto a medias: tipo sin id', () => {
-    expect(violacionesDelConsentimiento({ ...base, targetType: 'CARE_PLAN' })).toContain(
+    expect(consentRuleViolations({ ...base, targetType: 'CARE_PLAN' })).toContain(
       'TARGET_PAIR_INCOMPLETE',
     );
   });
 
   it('con objeto y sin excepción exige propósito, beneficios y riesgos', () => {
     expect(
-      violacionesDelConsentimiento({ ...base, decision: 'DECLINED', targetType: 'PROCEDURE', targetId: 'x' }),
+      consentRuleViolations({ ...base, decision: 'DECLINED', targetType: 'PROCEDURE', targetId: 'x' }),
     ).toEqual(['PURPOSE_REQUIRED', 'BENEFITS_REQUIRED', 'RISKS_REQUIRED']);
   });
 
   it('una excepción exime de los textos pero exige su justificación', () => {
     expect(
-      violacionesDelConsentimiento({
+      consentRuleViolations({
         ...base,
         decision: 'DECLINED',
         targetType: 'PROCEDURE',
@@ -184,14 +184,14 @@ describe('violacionesDelConsentimiento (contrato §2 + enmienda 1)', () => {
   });
 
   it('con representante exige nombre, parentesco y que se declare el asentimiento', () => {
-    expect(violacionesDelConsentimiento({ ...base, grantedBy: 'GUARDIAN' })).toEqual([
+    expect(consentRuleViolations({ ...base, grantedBy: 'GUARDIAN' })).toEqual([
       'REPRESENTATIVE_NAME_REQUIRED',
       'REPRESENTATIVE_RELATIONSHIP_REQUIRED',
       'ASSENT_REQUIRED',
     ]);
     // «No» también es una respuesta: lo que no vale es omitirla.
     expect(
-      violacionesDelConsentimiento({
+      consentRuleViolations({
         ...base,
         grantedBy: 'GUARDIAN',
         representativeName: 'Ana',
@@ -211,10 +211,10 @@ describe('violacionesDelConsentimiento (contrato §2 + enmienda 1)', () => {
       benefitsText: 'b',
       risksText: 'c',
     };
-    expect(violacionesDelConsentimiento(aceptado)).toEqual(['REVOCATION_RIGHT_REQUIRED']);
-    expect(violacionesDelConsentimiento({ ...aceptado, revocationRightInformed: true })).toEqual([]);
+    expect(consentRuleViolations(aceptado)).toEqual(['REVOCATION_RIGHT_REQUIRED']);
+    expect(consentRuleViolations({ ...aceptado, revocationRightInformed: true })).toEqual([]);
     expect(
-      violacionesDelConsentimiento({
+      consentRuleViolations({
         ...aceptado,
         exceptionType: 'EMERGENCY',
         exceptionJustification: 'Inconsciente',
@@ -223,20 +223,20 @@ describe('violacionesDelConsentimiento (contrato §2 + enmienda 1)', () => {
   });
 });
 
-describe('violacionesDeLosCampos', () => {
+describe('violationsFromFields', () => {
   it('traduce `details.fields` del 400 a las reglas de la pantalla', () => {
-    expect(violacionesDeLosCampos(['purposeText', 'risksText'])).toEqual(['PURPOSE_REQUIRED', 'RISKS_REQUIRED']);
-    expect(violacionesDeLosCampos(['assentObtained'])).toEqual(['ASSENT_REQUIRED']);
-    expect(violacionesDeLosCampos(['otroCampo'])).toEqual([]);
+    expect(violationsFromFields(['purposeText', 'risksText'])).toEqual(['PURPOSE_REQUIRED', 'RISKS_REQUIRED']);
+    expect(violationsFromFields(['assentObtained'])).toEqual(['ASSENT_REQUIRED']);
+    expect(violationsFromFields(['otroCampo'])).toEqual([]);
   });
 });
 
-describe('vigenteDe', () => {
+describe('currentConsentFor', () => {
   it('elige el más reciente del objeto, sin confiar en el orden', () => {
     const viejo = { ...CABLE, id: 'a', createdAt: new Date('2026-01-01') } as unknown as InformedConsent;
-    const nuevo = { ...CABLE, id: 'b', createdAt: new Date('2026-02-01') } as unknown as InformedConsent;
+    const newest = { ...CABLE, id: 'b', createdAt: new Date('2026-02-01') } as unknown as InformedConsent;
     const otro = { ...CABLE, id: 'c', targetId: 'rx-2', createdAt: new Date('2026-03-01') } as unknown as InformedConsent;
-    expect(vigenteDe([viejo, otro, nuevo], 'MEDICATION_REQUEST', 'rx-1')?.id).toBe('b');
-    expect(vigenteDe([viejo], 'CARE_PLAN', 'rx-1')).toBeNull();
+    expect(currentConsentFor([viejo, otro, newest], 'MEDICATION_REQUEST', 'rx-1')?.id).toBe('b');
+    expect(currentConsentFor([viejo], 'CARE_PLAN', 'rx-1')).toBeNull();
   });
 });

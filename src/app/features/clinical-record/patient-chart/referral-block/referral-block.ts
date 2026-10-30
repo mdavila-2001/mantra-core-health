@@ -2,312 +2,589 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   input,
+  output,
   signal,
   untracked,
-  viewChild,
-  type TemplateRef,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, of } from 'rxjs';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { of, Subject } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { ReferralsClient } from '../../../../core/data-access/referrals/referrals.client';
-import type { InformedConsent } from '../../../../core/data-access/informed-consents/informed-consents.types';
-import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import { REFERRAL_TYPES_WITH_CONSENT } from '../../../../core/data-access/referrals/referrals.types';
-import { SystemContextClient } from '../../../../core/data-access/system-context/system-context.client';
-import type { DynamicEnumOption } from '../../../../core/data-access/system-context/system-context.types';
+import { AuthService } from '../../../../core/auth/auth.service';
+import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
+import type { BranchListItem } from '../../../../core/data-access/directory/directory.types';
+import {
+  REFERRAL_TARGET_MIN_QUERY,
+  ReferralsClient,
+} from '../../../../core/data-access/referrals/referrals.client';
+import { referralErrorDetail } from '../../../../core/data-access/referrals/referrals.errors';
+import {
+  REFERRAL_LIMITS,
+  REFERRAL_TYPES_WITH_CONSENT,
+  referralIssues,
+  type NewReferral,
+  type Referral,
+  type ReferralIssue,
+  type ReferralTarget,
+  type ReferralTargetService,
+  type ReferralType,
+} from '../../../../core/data-access/referrals/referrals.types';
+import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
+import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { empty, loading, ready } from '../../../../core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Divider } from '../../../../shared/components/atoms/divider/divider';
+import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { Select } from '../../../../shared/components/atoms/select/select';
+import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
+import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
+import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
-import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
-import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
-import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
+import { ReferenceCombobox } from '../../../../shared/components/molecules/reference-combobox/reference-combobox';
+import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { SegmentedControl } from '../../../../shared/components/molecules/segmented-control/segmented-control';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
-import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
-import type { DiagnosticoDelPlan } from '../care-plan-block/care-plan-block';
+import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
+import { writeFailureMessage } from '../../write-message';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
-import { consentimientosDelPaciente } from '../informed-consent/consentimientos-del-paciente';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { patientConsents } from '../informed-consent/patient-consents';
+import {
+  buildNewReferral,
+  DEFAULT_REFERRAL_TYPE,
+  REFERRAL_TYPE_OPTIONS,
+  SERVICE_EXAMPLE,
+  serviceOptions as toServiceOptions,
+  TARGET_KIND_OPTIONS,
+  toReferralRow,
+  type ReferralDestinationKind,
+  type ReferralRow,
+} from './referral-block.model';
 import { ReferralDetail } from './referral-detail';
-import { ReferralForm, TARGET_PRIORIDAD } from './referral-form';
-import { destinoDe, estadoDe, etiquetaDePrioridad, etiquetaDeTipo, vencida } from './referral-labels';
+import { referralDetailState } from './referral-detail-state';
 
-/** Una fila de la lista, ya en palabras. */
-export interface FilaDeDerivacion {
-  readonly id: string;
-  readonly tipo: string;
-  readonly destino: string;
-  readonly servicio: string;
-  readonly prioridad: string;
-  readonly estado: { readonly etiqueta: string; readonly tono: ReturnType<typeof estadoDe>['tono'] };
-  readonly vigencia: Date | undefined;
-  readonly vencida: boolean;
-  readonly admiteConsentimiento: boolean;
-  /** Lo que dice la API: hay un consentimiento ACEPTADO vinculado. */
-  readonly consentimientoVinculado: boolean;
-}
+/** El motivo cabe en el aviso de la persona: el servidor lo corta a este largo. */
+const REASON_MAX_LENGTH = 500;
 
 /**
- * **Derivaciones** del expediente: las que tiene la persona y la emisión de una
- * nueva, a un profesional, a una organización o sede, o fuera de la plataforma.
+ * **Derivar** — el médico recomienda a la persona que consulte con otro
+ * profesional (pedido del propietario, 24/10/2026), o la deriva a una
+ * organización médica, por **un servicio concreto** de su catálogo («tipo
+ * tratamiento», pedido del cliente, 28/10/2026).
  *
  * ```html
- * <app-referral-block [patientProfileId]="id" [puedeEscribir]="true" [diagnosticos]="dx()" />
+ * <app-referral-block
+ *   [patientProfileId]="id"
+ *   [encounterId]="encuentroActual()"
+ *   [referrals]="referrals.state()"
+ *   (cambio)="referrals.reload()"
+ *   (retry)="referrals.reload()"
+ * />
  * ```
  *
- * ## Una tarjeta, dos pestañas
+ * ## El recorrido
  *
- * «Derivaciones» (la lista) y «Nueva derivación» (el formulario), en UNA
- * `app-card` con `app-tabs` (composition-rules §5). Lo escrito en el
- * formulario vive en señales del componente del formulario, que sigue vivo al
- * cambiar de pestaña.
+ * Profesional u organización → buscar por nombre en la API → (opcional) uno
+ * de sus servicios, con el arancel a la vista → tipo (Tratamiento por defecto)
+ * → motivo y vigencia. La API le avisa a la persona en su campana. **No
+ * reserva nada**.
  *
- * ## Emitida, se ofrece el consentimiento
+ * ## Sin encuentro no hay derivación con aviso
  *
- * Al emitir una de tratamiento, procedimiento, estudio, terapia o internación,
- * se vuelve a la lista y se abre su detalle con el consentimiento informado
- * dirigido a ella: es el próximo paso, y la norma lo pide antes de enviar.
+ * El encuentro es lo que demuestra que quien deriva atendió a esa persona; sin
+ * él la API guarda la derivación pero no avisa, y un formulario que parece
+ * funcionar y no avisa a nadie es peor que uno que dice qué falta. Sin
+ * encuentro abierto el bloque lo dice y no ofrece el formulario; la lista de
+ * lo ya derivado se sigue viendo.
+ *
+ * ## La lista la lee quien monta el bloque
+ *
+ * Igual que las recetas: la consulta la necesita para el contador de la
+ * casilla, y dos lecturas de la misma lista pueden discrepar. Sin `referrals`
+ * el bloque no dibuja la lista.
+ *
+ * ## v4266: sede, externo, lo clínico, detalle y consentimiento
+ *
+ * Con una organización se ofrecen sus sedes (`targetBranchId`); «Externo» no
+ * se busca, se escribe (`targetExternalName`/`Contact`) y no recibe aviso. Sin
+ * un servicio del catálogo, la API exige el servicio en texto y el resumen
+ * clínico (`referralIssues`, al enviar, con el error junto al campo). Cada
+ * fila abre su detalle en modal (`app-referral-detail`): responder, contra-
+ * rreferir y anular. Emitida una que lo pide, el detalle se abre solo con el
+ * consentimiento dirigido; el vínculo lo escribe la API (`informedConsentId`).
+ *
+ * ## Por qué pasa de 300 líneas
+ *
+ * Es un solo flujo —buscar, elegir servicio, derivar, ver lo derivado— y lo
+ * traducible ya vive aparte (`referral-block.model.ts`). Partirlo en piezas
+ * obligaría a pasar entre ellas el destino elegido y el estado del envío, que
+ * es justamente lo que el bloque coordina. Un tercio son comentarios.
  */
 @Component({
   selector: 'app-referral-block',
   imports: [
+    Alert,
     AppButton,
-    Badge,
+    AppInput,
     Card,
     ContentDialog,
-    DataTable,
+    DatePicker,
     DatePipe,
+    Divider,
+    FormField,
     InformedConsentBadge,
+    NgTemplateOutlet,
+    ReferenceCombobox,
     ReferralDetail,
-    ReferralForm,
-    Tab,
-    Tabs,
+    SegmentedControl,
+    Select,
+    StatusSeal,
+    Textarea,
+    ViewStateHost,
   ],
   templateUrl: './referral-block.html',
   styleUrl: './referral-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReferralBlock {
-  private readonly referrals = inject(ReferralsClient);
-  private readonly toasts = inject(ToastService);
-  private readonly profiles = inject(ProfilesClient);
+  private readonly referralsClient = inject(ReferralsClient);
+  private readonly terminology = inject(TerminologyClient);
+  private readonly auth = inject(AuthService);
+  private readonly directory = inject(DirectoryClient);
+  private readonly destroyRef = inject(DestroyRef);
 
+  /** La persona que se deriva. */
   readonly patientProfileId = input.required<string>();
+
+  /** El encuentro en curso, o `null` si no hay uno abierto. */
   readonly encounterId = input<string | null>(null);
-  /** Si esta sesión puede escribir en la historia (la API vuelve a decidir). */
-  readonly puedeEscribir = input(false);
-  readonly diagnosticos = input<readonly DiagnosticoDelPlan[]>([]);
-  /** Las citas de la persona, para atar el consentimiento a una atención. */
-  readonly citas = input<readonly CitaDelPaciente[]>([]);
 
-  protected readonly pestana = signal(0);
+  /** Las derivaciones de la persona, leídas por quien monta el bloque; `null` no dibuja la lista. */
+  readonly referrals = input<ViewState<readonly Referral[]> | null>(null);
 
-  /* -- La lista -------------------------------------------------------------- */
+  /** Avisa que se emitió una derivación, para que quien monta el bloque relea. */
+  readonly cambio = output<void>();
 
-  private readonly version = signal(0);
-  protected readonly lectura = signal<ViewState<readonly Referral[]>>(loading());
-
-  constructor() {
-    effect((onCleanup) => {
-      const paciente = this.patientProfileId();
-      this.version();
-      if (paciente === '') return;
-      untracked(() => this.lectura.set(loading()));
-      const sub = this.referrals.listByPatient(paciente).subscribe({
-        next: (filas) => {
-          this.lectura.set(ready(filas));
-          this.resolverNombres(filas);
-        },
-        error: (error: unknown) => this.lectura.set(errorToViewState(error)),
-      });
-      onCleanup(() => sub.unsubscribe());
-    });
-  }
+  /** La lista falló y la persona pidió reintentar. */
+  readonly retry = output<void>();
 
   /**
-   * Los nombres de los profesionales destino.
-   *
-   * `ReferralResponseDto` resuelve organización y sede pero no al profesional:
-   * se leen acá, uno por id distinto y una sola vez
-   * (`GET /profiles/practitioners/:id/summary`). Si no se puede, la fila dice
-   * «Profesional de la plataforma» — nunca el uuid.
+   * Si esta sesión puede escribir en la historia. En la consulta, siempre; en
+   * el expediente lo dice el anfitrión. La API vuelve a decidir.
    */
-  private readonly nombresDeProfesional = signal<ReadonlyMap<string, string>>(new Map());
-  private readonly pedidos = new Set<string>();
+  readonly canWrite = input(true);
 
-  private resolverNombres(filas: readonly Referral[]): void {
-    for (const id of new Set(filas.map((r) => r.targetProfileId).filter((v): v is string => v !== undefined))) {
-      if (this.pedidos.has(id)) continue;
-      this.pedidos.add(id);
-      this.profiles
-        .getPractitionerProfile(id)
-        .pipe(catchError(() => of(null)))
-        .subscribe((perfil) => {
-          const nombre = perfil?.displayName;
-          if (nombre) {
-            this.nombresDeProfesional.update((m) => new Map([...m, [id, nombre]]));
-          }
-        });
-    }
-  }
+  /** Las citas de la persona: el consentimiento de una derivación se ata a una atención. */
+  readonly appointments = input<readonly CitaDelPaciente[]>([]);
 
-  protected recargar(): void {
-    this.version.update((v) => v + 1);
-    this.consentimientos.recargar();
-  }
+  protected readonly targetKindOptions = TARGET_KIND_OPTIONS;
+  protected readonly typeOptions = REFERRAL_TYPE_OPTIONS;
+  protected readonly minQueryLength = REFERRAL_TARGET_MIN_QUERY;
+  protected readonly reasonMaxLength = REASON_MAX_LENGTH;
+  protected readonly limits = REFERRAL_LIMITS;
+  protected readonly today = new Date();
 
-  protected readonly consentimientos = consentimientosDelPaciente(() => this.patientProfileId());
+  protected readonly noEncounter = computed(() => this.encounterId() === null);
 
-  private readonly prioridades = toSignal(
-    inject(SystemContextClient)
-      .dynamicEnum(TARGET_PRIORIDAD)
-      .pipe(
-        map((e) => new Map(e.options.map((o) => [o.conceptId, o] as const))),
-        catchError(() => of(new Map<string, DynamicEnumOption>())),
-      ),
-    { initialValue: new Map<string, DynamicEnumOption>() },
+  /* -- El destino ---------------------------------------------------------- */
+
+  protected readonly kind = signal<ReferralDestinationKind>('PRACTITIONER');
+  protected readonly target = signal<ReferralTarget | null>(null);
+  protected readonly searching = signal(false);
+  private readonly results = signal<readonly ReferralTarget[]>([]);
+  protected readonly searchError = signal<string | null>(null);
+  private readonly searches = new Subject<{ q: string; kind: 'PRACTITIONER' | 'ORGANIZATION' }>();
+
+  /**
+   * Alterna en cada derivación para volver a montar el buscador. El combobox
+   * guarda su propio texto y no lo borra cuando el valor vuelve a `null`; sin
+   * esto quedaría escrito el nombre de alguien que ya no está elegido.
+   */
+  protected readonly remountToggle = signal(true);
+
+  protected readonly targetOptions = computed<readonly ReferenceOption[]>(() =>
+    this.results().map((r) => ({
+      value: r.id,
+      label: r.displayName,
+      ...(r.subtitle === null ? {} : { hint: r.subtitle }),
+    })),
   );
 
-  private readonly derivaciones = computed<readonly Referral[]>(() => {
-    const estado = this.lectura();
-    const filas = estado.status === 'ready' || estado.status === 'stale' ? estado.data : [];
-    const nombres = this.nombresDeProfesional();
-    return filas.map((r) =>
-      r.targetProfileId !== undefined && r.targetProfileName === undefined && nombres.has(r.targetProfileId)
-        ? { ...r, targetProfileName: nombres.get(r.targetProfileId) }
-        : r,
-    );
+  /* -- La sede (organización) o el destino externo ----------------------- */
+
+  /** Las sedes de la organización elegida; vacía si no tiene o no se pudieron leer. */
+  private readonly branches = signal<readonly BranchListItem[]>([]);
+  protected readonly selectedBranch = signal<string | null>(null);
+  protected readonly branchOptions = computed<readonly SelectOption<string | null>[]>(() => [
+    { value: null, label: 'Cualquier sede (la organización decide)' },
+    ...this.branches().map((b) => ({ value: b.id, label: b.name })),
+  ]);
+  protected readonly hasBranches = computed(() => this.branches().length > 0);
+
+  protected readonly externalName = signal<string | number | null>('');
+  protected readonly externalContact = signal<string | number | null>('');
+
+  /* -- Los servicios del destino ------------------------------------------ */
+
+  protected readonly services = signal<ViewState<readonly ReferralTargetService[]>>(loading());
+  protected readonly selectedService = signal<string | null>(null);
+
+  protected readonly serviceOptions = computed(() => toServiceOptions(dataOf(this.services()) ?? []));
+
+  /** La descripción del servicio elegido, para no elegir a ciegas por el nombre. */
+  protected readonly serviceHint = computed(() => {
+    const chosen = (dataOf(this.services()) ?? []).find((s) => s.id === this.selectedService());
+    if (chosen === undefined) {
+      return 'Opcional. Uno de los servicios que ofrece el destino, con su arancel.';
+    }
+    return chosen.description ?? 'El servicio que se le pide al destino.';
   });
 
-  protected readonly cantidad = computed(() => this.derivaciones().length);
+  /* -- El resto del formulario -------------------------------------------- */
 
-  private filaDe(r: Referral): FilaDeDerivacion {
-    const prioridad = r.priorityConceptId === undefined ? undefined : this.prioridades().get(r.priorityConceptId);
-    return {
-      id: r.id,
-      tipo: etiquetaDeTipo(r.referralType),
-      destino: destinoDe(r),
-      servicio: r.requestedServiceText ?? r.reasonText ?? 'Sin detallar',
-      prioridad: prioridad === undefined ? 'Rutina' : etiquetaDePrioridad(prioridad.code, prioridad.display),
-      estado: estadoDe(r),
-      vigencia: r.validUntil,
-      vencida: vencida(r),
-      admiteConsentimiento:
-        r.referralType !== undefined && REFERRAL_TYPES_WITH_CONSENT.has(r.referralType),
-      consentimientoVinculado: r.informedConsentId !== undefined,
-    };
+  protected readonly referralType = signal<ReferralType | null>(DEFAULT_REFERRAL_TYPE);
+  protected readonly reason = signal('');
+  protected readonly validUntil = signal<Date | null>(null);
+
+  /* -- Lo clínico (norma de referencia) ------------------------------------ */
+
+  protected readonly requestedService = signal('');
+  protected readonly clinicalSummary = signal('');
+  protected readonly diagnosis = signal('');
+  protected readonly treatmentGiven = signal('');
+
+  /** El ejemplo del servicio, según el tipo elegido. */
+  protected readonly serviceExample = computed(() => SERVICE_EXAMPLE[this.referralType() ?? DEFAULT_REFERRAL_TYPE]);
+
+  /** Sin un servicio del catálogo, el texto y el resumen son obligatorios (regla de la API). */
+  protected readonly describedByHand = computed(
+    () => this.referralType() !== null && this.selectedService() === null,
+  );
+
+  /** Se intentó enviar: desde ahí los errores se muestran junto a cada campo. */
+  protected readonly attempted = signal(false);
+  protected readonly issues = computed<readonly ReferralIssue[]>(() => referralIssues(this.body() ?? {}));
+  protected issueFor(field: ReferralIssue['field']): string {
+    if (!this.attempted()) return '';
+    return this.issues().find((issue) => issue.field === field)?.message ?? '';
   }
 
-  /** S2/S4–S9 los resuelve la tabla; el vacío trae su próxima acción (S3). */
-  protected readonly estadoDeLaTabla = computed<ViewState<readonly FilaDeDerivacion[]>>(() => {
-    const estado = this.lectura();
-    if (estado.status !== 'ready' && estado.status !== 'stale') {
-      return estado as ViewState<readonly FilaDeDerivacion[]>;
+  protected readonly sending = signal(false);
+  protected readonly submission = signal<ViewState<null>>(ready(null));
+  protected readonly referredTo = signal<string | null>(null);
+  protected readonly duplicate = signal(false);
+
+  /** Hay destino: uno de la plataforma elegido, o el nombre del externo escrito. */
+  protected readonly hasTarget = computed(() =>
+    this.kind() === 'EXTERNAL' ? String(this.externalName() ?? '').trim() !== '' : this.target() !== null,
+  );
+
+  protected readonly canSubmit = computed(
+    () =>
+      this.canWrite() &&
+      !this.noEncounter() &&
+      this.hasTarget() &&
+      !this.sending() &&
+      this.reason().length <= REASON_MAX_LENGTH,
+  );
+
+  /**
+   * El cuerpo de `POST /referrals`, ya recortado. Los opcionales sin elegir se
+   * **omiten**: el backend valida con `forbidNonWhitelisted`.
+   */
+  private readonly body = computed<NewReferral | null>(() => {
+    const encounter = this.encounterId();
+    return encounter === null
+      ? null
+      : buildNewReferral({
+          patientProfileId: this.patientProfileId(),
+          sourceEncounterId: encounter,
+          kind: this.kind(),
+          target: this.target(),
+          branchId: this.selectedBranch(),
+          serviceId: this.selectedService(),
+          referralType: this.referralType(),
+          externalName: this.externalName(),
+          externalContact: this.externalContact(),
+          requestedService: this.requestedService(),
+          clinicalSummary: this.clinicalSummary(),
+          diagnosis: this.diagnosis(),
+          treatmentGiven: this.treatmentGiven(),
+          reason: this.reason(),
+          validUntil: this.validUntil(),
+        });
+  });
+
+  protected readonly submissionError = computed<string | null>(() => {
+    const state = this.submission();
+    if (state.status === 'validation') {
+      // El sub-código de la API dice qué falta; si no lo trae, el mensaje tal cual.
+      return this.serverReason() ?? (state.issues.map((issue) => issue.message).join(' ') || null);
     }
-    if (estado.data.length === 0) {
+    return writeFailureMessage(state, {
+      accion: 'derivar',
+      sinPermiso: 'Sólo puede derivar a quien atiende desde su propia organización.',
+      yaNoExiste:
+        'No encontramos este encuentro entre los de esta persona. Vuelva a abrirlo y pruebe de nuevo.',
+    });
+  });
+
+  /** El `reason` del último 400/404/422 de la API, ya en palabras. */
+  private readonly serverReason = signal<string | null>(null);
+
+  /* -- La lista ------------------------------------------------------------ */
+
+  private readonly labels = signal<ConceptLabels>(new Map());
+
+  /** Los estados ya consultados, con respuesta o sin ella: no se espera dos veces. */
+  private readonly lookedUp = signal<ReadonlySet<string>>(new Set());
+
+  /** S3 con su próxima acción cuando no hay ninguna; el resto, tal cual llega. */
+  protected readonly list = computed<ViewState<readonly ReferralRow[]> | null>(() => {
+    const state = this.referrals();
+    if (state === null || (state.status !== 'ready' && state.status !== 'stale')) {
+      return state;
+    }
+    if (state.data.length === 0) {
       return empty(
         {
-          label: this.puedeEscribir()
-            ? 'Emití la primera en la pestaña «Nueva derivación»'
-            : 'Las derivaciones que se emitan aparecen acá',
+          label: this.noEncounter()
+            ? 'Abra el encuentro y derive desde el formulario'
+            : 'Derive desde el formulario de arriba',
         },
         'Esta persona todavía no tiene derivaciones.',
       );
     }
-    return ready(this.derivaciones().map((r) => this.filaDe(r)));
+    // S2 hasta saber cómo se llama cada estado: un «Sin registrar» que al
+    // instante pasa a «Solicitada» es un dato falso, aunque dure poco.
+    const lookedUp = this.lookedUp();
+    if (state.data.some((r) => !lookedUp.has(r.statusConceptId))) {
+      return loading();
+    }
+    const labels = this.labels();
+    return ready(state.data.map((r) => toReferralRow(r, labels)));
   });
 
-  private readonly celdaEstado = viewChild.required<TemplateRef<{ $implicit: FilaDeDerivacion }>>('celdaEstado');
-  private readonly celdaVigencia = viewChild.required<TemplateRef<{ $implicit: FilaDeDerivacion }>>('celdaVigencia');
-  private readonly celdaConsentimiento =
-    viewChild.required<TemplateRef<{ $implicit: FilaDeDerivacion }>>('celdaConsentimiento');
-  private readonly celdaVer = viewChild.required<TemplateRef<{ $implicit: FilaDeDerivacion }>>('celdaVer');
+  protected readonly rows = computed(() => {
+    const list = this.list();
+    return list === null ? [] : (dataOf(list) ?? []);
+  });
 
-  protected readonly columnas = computed<readonly ColumnDef<FilaDeDerivacion>[]>(() => [
-    { key: 'tipo', header: 'Tipo', priority: 1 },
-    { key: 'destino', header: 'Destino', priority: 1 },
-    { key: 'servicio', header: 'Servicio pedido', priority: 2 },
-    { key: 'prioridad', header: 'Prioridad', priority: 3 },
-    { key: 'estado', header: 'Estado', priority: 1, cell: this.celdaEstado() },
-    { key: 'vigencia', header: 'Vigencia', priority: 3, cell: this.celdaVigencia() },
-    { key: 'consentimiento', header: 'Consentimiento', priority: 2, cell: this.celdaConsentimiento() },
-    { key: 'ver', header: '', priority: 1, align: 'end', cell: this.celdaVer() },
-  ]);
+  /* -- El consentimiento y el detalle ------------------------------------- */
 
-  protected readonly porFila = (fila: FilaDeDerivacion): string => fila.id;
+  /** Los consentimientos de la persona, para la insignia de cada fila. */
+  protected readonly consents = patientConsents(() => this.patientProfileId());
 
-  /* -- El detalle ------------------------------------------------------------ */
+  /** El detalle abierto, con la respuesta, la contrarreferencia y su consentimiento. */
+  protected readonly detail = referralDetailState(this.consents, () => this.cambio.emit());
 
-  protected readonly abiertaId = signal<string | null>(null);
-  protected readonly recienEmitida = signal(false);
-  protected readonly abierta = computed(
-    () => this.derivaciones().find((r) => r.id === this.abiertaId()) ?? this.pendienteDeLista(),
-  );
+  constructor() {
+    this.searches
+      .pipe(
+        switchMap(({ q, kind }) =>
+          this.referralsClient.searchTargets(q, kind).pipe(
+            map((items) => ({ items, failure: null })),
+            catchError((error: unknown) =>
+              of({
+                items: [] as readonly ReferralTarget[],
+                failure:
+                  writeFailureMessage(errorToViewState<null>(error), {
+                    accion: 'buscar destinos',
+                  }) ?? 'No pudimos buscar. Pruebe de nuevo.',
+              }),
+            ),
+          ),
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(({ items, failure }) => {
+        // Quien deriva no se ofrece a sí mismo, aunque la API lo devuelva.
+        const self = this.auth.practitionerProfileId();
+        this.searching.set(false);
+        this.results.set(items.filter((r) => !(r.kind === 'PRACTITIONER' && r.id === self)));
+        this.searchError.set(failure);
+      });
 
-  /** La recién emitida, hasta que la relectura la traiga. */
-  private readonly pendienteDeLista = signal<Referral | null>(null);
-
-  protected ver(fila: FilaDeDerivacion): void {
-    this.recienEmitida.set(false);
-    this.pendienteDeLista.set(null);
-    this.abiertaId.set(fila.id);
-  }
-
-  protected cerrarDetalle(): void {
-    this.abiertaId.set(null);
-    this.pendienteDeLista.set(null);
-    this.recienEmitida.set(false);
-  }
-
-  /**
-   * El panel registró o revocó un consentimiento de ESTA derivación.
-   *
-   * El vínculo lo escribe la API (`informedConsentId`): se relee la derivación
-   * (`GET /referrals/:id`) y la fila muestra lo que el servidor dice, no lo que
-   * el panel supone.
-   */
-  protected alCambiarConsentimiento(referralId: string, consent: InformedConsent | null): void {
-    this.consentimientos.incorporar(consent);
-    this.referrals.get(referralId).subscribe({
-      next: (releida) => {
-        this.lectura.update((estado) =>
-          estado.status === 'ready'
-            ? ready(estado.data.map((r) => (r.id === releida.id ? releida : r)))
-            : estado,
-        );
-        if (this.pendienteDeLista()?.id === releida.id) {
-          this.pendienteDeLista.set(releida);
-        }
-      },
-      // Si la relectura falla, la lista se relee entera: no se inventa el vínculo.
-      error: () => this.recargar(),
+    // El estado se traduce por código: la lista trae el uuid del concepto.
+    // Sólo se piden los que faltan y se suman a los ya conocidos: al releer,
+    // la lista pasa por `loading`, y vaciar las etiquetas ahí pintaba
+    // «Sin registrar» en cada fila hasta que volvía la traducción.
+    effect(() => {
+      const state = this.referrals();
+      const known = untracked(() => this.lookedUp());
+      const missing = [
+        ...new Set((state === null ? [] : (dataOf(state) ?? [])).map((r) => r.statusConceptId)),
+      ].filter((id) => !known.has(id));
+      if (missing.length === 0) return;
+      untracked(() =>
+        this.terminology
+          .readConceptLabels(missing)
+          // Sin catálogo la lista igual se muestra, con «Sin registrar».
+          .pipe(catchError(() => of<ConceptLabels>(new Map())))
+          .subscribe((incoming) => {
+            this.labels.update((previous) => new Map([...previous, ...incoming]));
+            this.lookedUp.update((previous) => new Set([...previous, ...missing]));
+          }),
+      );
     });
   }
 
-  protected alEmitir(creada: Referral): void {
-    this.pestana.set(0);
-    this.recargar();
-    const conConsentimiento =
-      creada.referralType !== undefined && REFERRAL_TYPES_WITH_CONSENT.has(creada.referralType);
-    this.toasts.success(
-      conConsentimiento
-        ? 'Próximo paso: registrá el consentimiento informado de la persona.'
-        : 'Queda en la lista de derivaciones, pendiente de respuesta del destino.',
-      'Derivación emitida',
-    );
-    if (conConsentimiento) {
-      this.pendienteDeLista.set(creada);
-      this.recienEmitida.set(true);
-      this.abiertaId.set(creada.id);
-    }
+  protected chooseKind(kind: ReferralDestinationKind): void {
+    if (kind === this.kind()) return;
+    this.kind.set(kind);
+    this.forgetTarget();
   }
+
+  protected search(text: string): void {
+    const q = text.trim();
+    const kind = this.kind();
+    if (q.length < REFERRAL_TARGET_MIN_QUERY || kind === 'EXTERNAL') {
+      this.results.set([]);
+      return;
+    }
+    this.searching.set(true);
+    this.searches.next({ q, kind });
+  }
+
+  protected choose(option: ReferenceOption | null): void {
+    this.referredTo.set(null);
+    this.duplicate.set(false);
+    const target = option === null ? undefined : this.results().find((r) => r.id === option.value);
+    if (target === undefined) {
+      this.forgetTarget();
+      return;
+    }
+    this.target.set(target);
+    this.loadServices();
+    this.loadBranches(target);
+  }
+
+  /** Las sedes de una organización. Si no se pueden leer, se deriva a «cualquier sede». */
+  private loadBranches(target: ReferralTarget): void {
+    this.selectedBranch.set(null);
+    this.branches.set([]);
+    if (target.kind !== 'ORGANIZATION') return;
+    this.directory
+      .listBranches(target.id)
+      .pipe(catchError(() => of({ items: [] as readonly BranchListItem[], count: 0 })))
+      .subscribe((list) => {
+        if (this.target()?.id === target.id) this.branches.set(list.items);
+      });
+  }
+
+  protected loadServices(): void {
+    const target = this.target();
+    if (target === null) return;
+    this.selectedService.set(null);
+    this.services.set(loading());
+    this.referralsClient
+      .listTargetServices(
+        target.kind === 'PRACTITIONER' ? { targetProfileId: target.id } : { targetTenantId: target.id },
+      )
+      .subscribe({
+        next: (items) => {
+          // Una respuesta tardía de un destino ya descartado no pisa al nuevo.
+          if (this.target()?.id !== target.id) return;
+          this.services.set(
+            items.length === 0
+              ? empty(
+                  { label: 'Derive sin un servicio en particular o busque otro destino' },
+                  `${target.displayName} no tiene servicios publicados para recibir derivaciones.`,
+                )
+              : ready(items),
+          );
+        },
+        error: (error: unknown) => {
+          if (this.target()?.id === target.id) {
+            this.services.set(errorToViewState(error));
+          }
+        },
+      });
+  }
+
+  protected submit(): void {
+    const body = this.body();
+    if (!this.canSubmit() || body === null) return;
+    this.attempted.set(true);
+    if (this.issues().length > 0) {
+      // Los errores ya están junto a cada campo; el resumen va arriba.
+      return;
+    }
+    const targetName =
+      this.kind() === 'EXTERNAL' ? String(this.externalName() ?? '').trim() : (this.target()?.displayName ?? '');
+    const offersConsent = body.referralType !== undefined && REFERRAL_TYPES_WITH_CONSENT.has(body.referralType);
+
+    this.sending.set(true);
+    this.submission.set(loading());
+    this.duplicate.set(false);
+    this.serverReason.set(null);
+
+    this.referralsClient.create(body).subscribe({
+      next: (created) => {
+        this.sending.set(false);
+        this.submission.set(ready(null));
+        this.referredTo.set(targetName);
+        this.reset();
+        this.cambio.emit();
+        // Próximo paso de una derivación que lo pide: su consentimiento.
+        if (offersConsent) this.detail.open(created.id, true);
+      },
+      error: (error: unknown) => {
+        this.sending.set(false);
+        // 409: la misma derivación ya existe. No es un error del médico:
+        // es un aviso, y se dice con palabras de aviso.
+        if (isConflict(error)) {
+          this.submission.set(ready(null));
+          this.duplicate.set(true);
+          return;
+        }
+        this.serverReason.set(referralErrorDetail(error)?.message ?? null);
+        this.submission.set(errorToViewState<null>(error));
+      },
+    });
+  }
+
+  private forgetTarget(): void {
+    this.target.set(null);
+    this.results.set([]);
+    this.selectedService.set(null);
+    this.services.set(loading());
+    this.searchError.set(null);
+    this.branches.set([]);
+    this.selectedBranch.set(null);
+  }
+
+  private reset(): void {
+    this.forgetTarget();
+    this.remountToggle.update((value) => !value);
+    this.referralType.set(DEFAULT_REFERRAL_TYPE);
+    this.reason.set('');
+    this.validUntil.set(null);
+    this.externalName.set('');
+    this.externalContact.set('');
+    this.requestedService.set('');
+    this.clinicalSummary.set('');
+    this.diagnosis.set('');
+    this.treatmentGiven.set('');
+    this.attempted.set(false);
+  }
+}
+
+function isConflict(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status: unknown }).status === 409
+  );
 }

@@ -1,0 +1,234 @@
+<app-page-header
+  title="Registrar médico"
+  subtitle="Para quien no puede registrarse por sí mismo. Usted no fija su contraseña: la elige él con un código de un solo uso."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="medico">
+  @if (result(); as alta) {
+    <app-card variant="outlined" padding="md">
+      <div class="medico__resultado" data-testid="alta-medico-exito">
+        <h2 appAnuncio [asertivo]="false" class="medico__resultado-title">
+          La cuenta quedó creada, falta que la active el médico
+        </h2>
+
+        <!-- El código es lo único que esta pantalla muestra una sola vez: va
+             primero y con el aviso pegado. -->
+        <app-alert tone="warning" class="medico__aviso">
+          Este código se muestra una sola vez y sirve una sola vez. Entrégueselo al médico por un
+          canal seguro: con él elige su propia contraseña. No es una contraseña ni la reemplaza.
+        </app-alert>
+
+        <div class="medico__token">
+          <p class="medico__token-label" id="medico-token-rotulo">Código de activación</p>
+          <code class="medico__token-valor" data-testid="alta-medico-token">{{
+            alta.activationToken
+          }}</code>
+          <div class="medico__token-acciones">
+            <button
+              app-button
+              variant="outline"
+              size="sm"
+              aria-describedby="medico-token-rotulo"
+              data-testid="alta-medico-copiar"
+              (clicked)="copiarToken()"
+            >
+              Copiar código
+            </button>
+            @if (copied()) {
+              <span appAnuncio [asertivo]="false" class="medico__copiado">Copiado</span>
+            }
+          </div>
+        </div>
+
+        <dl class="medico__datos">
+          <div>
+            <dt>Vence</dt>
+            <dd>{{ alta.activationExpiresAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          </div>
+          <div>
+            <dt>Código de profesional</dt>
+            <dd data-testid="alta-medico-codigo">{{ alta.practitionerCode }}</dd>
+          </div>
+          <div>
+            <dt>Matrícula</dt>
+            <dd data-testid="alta-medico-matricula">{{ alta.verificationStatus }}</dd>
+          </div>
+          <div>
+            <dt>Roles concedidos</dt>
+            <dd>{{ alta.clinicalRoles.length > 0 ? alta.clinicalRoles.join(', ') : 'Ninguno' }}</dd>
+          </div>
+          <div>
+            <dt>Identificador de la cuenta</dt>
+            <dd class="medico__id">{{ alta.userId }}</dd>
+          </div>
+        </dl>
+
+        <app-alert tone="info" class="medico__aviso">
+          La matrícula queda pendiente de verificación: dar de alta no habilita al médico a recetar.
+          Eso se resuelve al verificar su matrícula.
+        </app-alert>
+
+        <p class="medico__donde" data-testid="alta-medico-donde-activar">
+          El médico lo usa en <a app-link routerLink="/auth/activate">Activar cuenta</a> para elegir
+          su contraseña.
+        </p>
+
+        <button app-button variant="primary" data-testid="alta-medico-otra" (clicked)="altaNueva()">
+          Registrar otro médico
+        </button>
+      </div>
+    </app-card>
+  } @else {
+    @if (errorMessage(); as mensaje) {
+      <app-alert appAnuncio tone="error" class="medico__alert" data-testid="alta-medico-error">{{
+        mensaje
+      }}</app-alert>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="alta-medico-form">
+      <app-card variant="outlined" padding="md">
+        <app-tabs [(selectedIndex)]="pestana" data-testid="alta-medico-tabs">
+          <app-tab [label]="pestanas[0]">
+            <app-form-section
+              legend="Quién es"
+              description="Como figura en su documento de identidad."
+            >
+              <app-inline-name-fields
+                [grupo]="form.controls.doctorName"
+                [obligatorio]="true"
+                prefijoTestId="alta-medico"
+              />
+              <app-form-field
+                label="Correo"
+                hint="Con este correo activa la cuenta e inicia sesión."
+                [required]="true"
+                [errorMessage]="errorOf(form.controls.email, 'Ingrese un correo válido.', 'email')"
+              >
+                <app-input formControlName="email" type="email" testId="alta-medico-correo" />
+              </app-form-field>
+            </app-form-section>
+          </app-tab>
+
+          <app-tab [label]="pestanas[1]">
+            <app-form-section
+              legend="Documento y matrícula"
+              description="La matrícula queda pendiente de verificación hasta que se la revise."
+            >
+              <app-form-field
+                label="Cédula de identidad"
+                [required]="true"
+                [errorMessage]="errorOf(form.controls.nationalId, 'Escriba la cédula de identidad.', 'nationalId')"
+              >
+                <app-input formControlName="nationalId" type="text" testId="alta-medico-cedula" />
+              </app-form-field>
+
+              <app-form-field
+                label="Departamento que la emitió"
+                [required]="true"
+                [hint]="catalogoDepartamentosCaido() ? 'No pudimos leer el catálogo de departamentos. Recargue la página.' : ''"
+                [errorMessage]="errorOf(form.controls.issuerDepartment, 'Elija el departamento emisor.', 'issuerAdministrativeAreaConceptId')"
+              >
+                <app-select
+                  formControlName="issuerDepartment"
+                  [options]="opcionesDepartamento()"
+                  placeholder="Elija un departamento"
+                />
+              </app-form-field>
+
+              <app-form-field
+                label="Matrícula profesional"
+                [required]="true"
+                [errorMessage]="errorOf(form.controls.licenseNumber, 'Escriba el número de matrícula.', 'licenseNumber')"
+              >
+                <app-input formControlName="licenseNumber" type="text" testId="alta-medico-matricula-numero" />
+              </app-form-field>
+
+              <!-- Las especialidades, todas iguales y hasta cuatro: el mismo patrón que
+                   el registro del médico (selectores que se agregan y se quitan). -->
+              @for (elegida of especialidades(); track $index) {
+                <app-form-field [label]="'Especialidad ' + ($index + 1)">
+                  <div class="medico__especialidad">
+                    <app-select
+                      [attr.data-testid]="'alta-medico-especialidad-' + $index"
+                      [options]="opcionesEspecialidad()"
+                      placeholder="Sin especificar"
+                      [value]="elegida === '' ? null : elegida"
+                      (valueChange)="elegirEspecialidad($index, $event)"
+                    />
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      [iconOnly]="true"
+                      [attr.aria-label]="'Quitar la especialidad ' + ($index + 1)"
+                      [appTooltip]="'Quitar la especialidad ' + ($index + 1)"
+                      [attr.data-testid]="'alta-medico-quitar-especialidad-' + $index"
+                      (clicked)="quitarEspecialidad($index)"
+                    >
+                      <app-nav-icon name="remove" />
+                    </button>
+                  </div>
+                </app-form-field>
+              }
+              @if (catalogoEspecialidadesCaido()) {
+                <p class="medico__aviso-catalogo">
+                  No pudimos leer el catálogo de especialidades. Se pueden agregar después en su perfil.
+                </p>
+              } @else if (especialidades().length < MAX_ESPECIALIDADES) {
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="alta-medico-agregar-especialidad"
+                  (clicked)="agregarEspecialidad()"
+                >
+                  {{ especialidades().length === 0 ? '+ Agregar una especialidad' : '+ Agregar otra especialidad' }}
+                </button>
+              }
+            </app-form-section>
+          </app-tab>
+
+          <app-tab [label]="pestanas[2]">
+            <app-form-section
+              legend="Habilitación y motivo"
+              description="Está creando una cuenta a nombre de otra persona: queda registrado quién y por qué."
+            >
+              <app-form-field
+                label="Roles"
+                hint="Sin el rol asistencial el médico no puede operar. Se pueden ajustar después."
+                [errorMessage]="issueOf('clinicalRoles')"
+              >
+                <app-checkbox-group formControlName="clinicalRoles" [options]="opcionesRol" />
+              </app-form-field>
+
+              <app-form-field
+                label="Motivo del registro asistido"
+                [hint]="'Queda en la trazabilidad. Máximo ' + MAX_MOTIVO + ' caracteres.'"
+                [required]="true"
+                [errorMessage]="errorOf(form.controls.reason, 'Explique por qué el médico no puede registrarse por sí mismo (máximo ' + MAX_MOTIVO + ' caracteres).', 'reason')"
+              >
+                <app-textarea formControlName="reason" [rows]="4" [maxLength]="MAX_MOTIVO" />
+              </app-form-field>
+            </app-form-section>
+          </app-tab>
+        </app-tabs>
+
+        <!-- Un solo envío, fuera de las pestañas: se ve igual desde cualquiera. -->
+        <div class="medico__acciones">
+          <button
+            app-button
+            type="submit"
+            variant="primary"
+            [isLoading]="enviando()"
+            data-testid="alta-medico-enviar"
+          >
+            Registrar médico
+          </button>
+        </div>
+      </app-card>
+    </form>
+  }
+</div>
