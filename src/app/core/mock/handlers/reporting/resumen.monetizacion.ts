@@ -203,14 +203,14 @@ interface Termino {
 /** Glosario en palabras simples. Donde el KPI ya declara su fórmula, se cita esa: una sola definición. */
 export function construirGlosario(base: BaseResumen): TablaReporte {
   const susc = base.lecturas.suscripciones.pestana;
-  const formulaDe = (id: string, respaldo: string): string => buscarKpi(susc, id)?.info?.formula ?? respaldo;
+  const formulaOf = (id: string, respaldo: string): string => buscarKpi(susc, id)?.info?.formula ?? respaldo;
   const terminos: Termino[] = [
     { termino: 'Ingreso', significado: 'La plata que Alovida gana en el periodo, sumando sus tres fuentes.', calculo: 'Suscripciones + Publicidad + Comisiones', donde: 'Resumen ejecutivo' },
-    { termino: 'MRR', significado: 'Lo que Alovida cobra cada mes, de forma recurrente, por los planes de los doctores.', calculo: formulaDe('mrr', 'Suma del precio mensual de las suscripciones activas'), donde: 'Suscripciones de doctores' },
-    { termino: 'ARR', significado: 'El MRR llevado a un año: lo que se cobraría en doce meses si nada cambiara.', calculo: formulaDe('arr', 'MRR × 12'), donde: 'Suscripciones de doctores' },
-    { termino: 'ARPU', significado: 'Cuánto aporta, en promedio, cada cuenta por mes.', calculo: formulaDe('arpu', 'MRR ÷ cuentas activas'), donde: 'Suscripciones de doctores' },
-    { termino: 'Churn', significado: 'El porcentaje de cuentas que se va. Cuanto más alto, más ingreso se fuga.', calculo: formulaDe('churn-cuentas', 'Cuentas que se fueron ÷ cuentas al inicio'), donde: 'Suscripciones de doctores' },
-    { termino: 'LTV', significado: 'Cuánto dinero deja una cuenta durante toda su vida con Alovida.', calculo: formulaDe('ltv', 'Ingreso por cuenta ÷ churn'), donde: 'Suscripciones de doctores' },
+    { termino: 'MRR', significado: 'Lo que Alovida cobra cada mes, de forma recurrente, por los planes de los doctores.', calculo: formulaOf('mrr', 'Suma del precio mensual de las suscripciones activas'), donde: 'Suscripciones de doctores' },
+    { termino: 'ARR', significado: 'El MRR llevado a un año: lo que se cobraría en doce meses si nada cambiara.', calculo: formulaOf('arr', 'MRR × 12'), donde: 'Suscripciones de doctores' },
+    { termino: 'ARPU', significado: 'Cuánto aporta, en promedio, cada cuenta por mes.', calculo: formulaOf('arpu', 'MRR ÷ cuentas activas'), donde: 'Suscripciones de doctores' },
+    { termino: 'Churn', significado: 'El porcentaje de cuentas que se va. Cuanto más alto, más ingreso se fuga.', calculo: formulaOf('churn-cuentas', 'Cuentas que se fueron ÷ cuentas al inicio'), donde: 'Suscripciones de doctores' },
+    { termino: 'LTV', significado: 'Cuánto dinero deja una cuenta durante toda su vida con Alovida.', calculo: formulaOf('ltv', 'Ingreso por cuenta ÷ churn'), donde: 'Suscripciones de doctores' },
     { termino: 'CAC', significado: 'Cuánto cuesta conseguir una cuenta nueva.', calculo: 'Gasto de adquisición ÷ cuentas nuevas', donde: 'Adquisición y cuentas' },
     { termino: 'Take rate', significado: 'La parte de cada pago procesado que se queda Alovida.', calculo: 'Comisión de la plataforma ÷ monto procesado', donde: 'Comisiones y actores' },
     { termino: 'Comisión devengada, liquidada y pendiente', significado: 'Devengada: ya se ganó. Liquidada: ya se le pagó al actor. Pendiente: se ganó y falta pagarla.', calculo: 'Devengada = liquidada + pendiente', donde: 'Comisiones y actores' },
