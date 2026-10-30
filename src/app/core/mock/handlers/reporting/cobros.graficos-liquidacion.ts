@@ -140,7 +140,7 @@ function facturacionSiat(m: ModeloCobros): ChartSpec {
     }),
     velas: null,
     velasMotivo: 'Es un conteo de comprobantes por estado, no una serie de saldo ni de razón.',
-    sinDatoMotivo: `La emisión SIAT está conectada desde el 01/07/2026 y el periodo elegido empieza antes (máximo ${SIAT_COVERED_DAYS} días). Elige 90 días o menos.`,
+    sinDatoMotivo: `La emisión SIAT está conectada desde el 01/07/2026 y el periodo elegido empieza antes (máximo ${SIAT_COVERED_DAYS} días). Elija 90 días o menos.`,
     alto: 300,
   };
 }

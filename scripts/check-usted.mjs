@@ -62,6 +62,7 @@ const EXCLUIDOS = [
 const FORMAS = new Set(
   `
   tu tus te vos contigo tuyo tuya tuyos tuyas tú sos vas ves tienes
+  puedes quieres pregúntame preguntame dime
   abrí acabás aceptá aceptás activá activás actualizá adjuntá administrá administrás agendás agregá
   agregás ahorrás ajustá ampliá andá apagá apagás aparecés aprendé apretá aprobá armá arrastrá
   atendé atendés autorizá autorizás avisá bajá basás buscá buscás cambiá cambiás cancelá cargá

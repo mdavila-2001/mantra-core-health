@@ -121,6 +121,13 @@ describe('resolverPregunta', () => {
       expect(Date.now() - inicio).toBeLessThan(1500);
     });
 
+    it.each(['¿Cuánto ingreso aportan las clínicas?', 'gasto de la clínica en publicidad', 'ranking de clínicas y farmacias'])(
+      '«%s» no se rechaza: una clínica es una organización, no un dato de persona',
+      (pregunta) => {
+        expect(ask(pregunta).tipo).not.toBe('personas');
+      },
+    );
+
     it('con el catálogo vacío no inventa nada', () => {
       expect(resolverPregunta('cuál es el mrr', [])).toEqual({ tipo: 'sin-medida', sugerencias: [] });
     });
@@ -136,6 +143,7 @@ describe('resolverPregunta', () => {
       'el teléfono de Maria',
       'MRR por paciente',
       'datos personales de los doctores',
+      'los datos clínicos de la consulta',
     ])('«%s» se rechaza: no hay datos de personas en los reportes comerciales', (pregunta) => {
       expect(ask(pregunta)).toEqual({ tipo: 'personas' });
     });

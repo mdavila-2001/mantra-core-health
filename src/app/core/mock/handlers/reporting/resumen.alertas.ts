@@ -53,7 +53,7 @@ export function construirAlertas(base: BaseResumen, concentracionPct: number | n
     { indicador: 'Comisión pendiente sobre el ingreso total', valor: pesoPendiente, unidad: pct, atencion: 25, critico: 40, malo: 'alto', umbral: 'Atención desde 25 %, crítica desde 40 %', sinDato: 'Falta la comisión pendiente o el ingreso total.', accion: 'Revisar el aging de lo pendiente en Comisiones.' },
     { indicador: 'Conciliación con el gateway', valor: pctOf(reconciliationKpi(base.lecturas.comisiones.pestana)), unidad: pct, atencion: 98, critico: 95, malo: 'bajo', umbral: 'Atención bajo 98 %, crítica bajo 95 %', sinDato: 'La pestaña de Comisiones no entregó un indicador de conciliación.', accion: 'Revisar los descuadres abiertos en Comisiones.' },
     { indicador: 'Concentración en los 10 mayores', valor: concentracionPct, unidad: pct, atencion: 40, critico: 55, malo: 'alto', umbral: 'Atención desde 40 %, crítica desde 55 %', sinDato: 'Falta el ingreso total.', accion: 'Revisar la dependencia de los mayores clientes.' },
-    { indicador: 'Cambio del ingreso total', valor: cambio, unidad: pct, atencion: -5, critico: -15, malo: 'bajo', umbral: 'Atención bajo −5 %, crítica bajo −15 %', sinDato: base.ctx.comparar === 'ninguna' ? 'Elige comparar con otro periodo.' : 'Falta el comparativo.', accion: 'Ver qué vertical lo explica en la cascada.' },
+    { indicador: 'Cambio del ingreso total', valor: cambio, unidad: pct, atencion: -5, critico: -15, malo: 'bajo', umbral: 'Atención bajo −5 %, crítica bajo −15 %', sinDato: base.ctx.comparar === 'ninguna' ? 'Elija comparar con otro periodo.' : 'Falta el comparativo.', accion: 'Ver qué vertical lo explica en la cascada.' },
   ];
 
   const filas = reglas
