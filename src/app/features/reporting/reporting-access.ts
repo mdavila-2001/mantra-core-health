@@ -56,9 +56,9 @@ export const ROLES_ADMINISTRACION: readonly string[] = [
 ];
 
 /**
- * Los roles que abren AloVida Insights (inteligencia de marketing). Son los mismos de la sección
- * `administration/marketing-insights` del registro de navegación. Es una tercera tarjeta del selector:
- * no cambia `AccesoAPortales`, así que el login y el selector de dos portales siguen igual.
+ * Los roles que abren AloVida Insights (inteligencia de marketing). Es el portal de marketing, de alcance
+ * plataforma: nunca `BUSINESS_ADMIN`. Es la tercera tarjeta del selector y cuenta como un acceso más
+ * para el login.
  */
 export const ROLES_INSIGHTS: readonly string[] = [
   'SUPERADMIN',
@@ -71,6 +71,7 @@ export const ROLES_INSIGHTS: readonly string[] = [
 export interface AccesoAPortales {
   readonly administracion: boolean;
   readonly reporteria: boolean;
+  readonly insights: boolean;
 }
 
 /** Si los roles de la sesión abren el portal de reportería. */
@@ -95,30 +96,39 @@ export function puedeVerPlataforma(roles: readonly string[]): boolean {
   return rolesAlcanzan(ROLES_PLATAFORMA, roles);
 }
 
-/** Los dos accesos de una sesión, juntos. */
+/** Los tres accesos de una sesión, juntos. */
 export function accesoAPortales(roles: readonly string[]): AccesoAPortales {
   return {
     administracion: puedeVerAdministracion(roles),
     reporteria: puedeVerReporteria(roles),
+    insights: puedeVerInsights(roles),
   };
 }
 
+/** Cuántos portales abre la sesión. Con dos o más hay algo que elegir. */
+export function cantidadDePortales(acceso: AccesoAPortales): number {
+  return [acceso.administracion, acceso.reporteria, acceso.insights].filter(Boolean).length;
+}
+
 /**
- * A dónde entra una sesión recién abierta. Con los dos accesos hay que elegir; con uno solo
- * no se agrega una pantalla de paso: quien solo ve reportería entra a su portal y todos los
- * demás, a la aplicación de siempre. Que una tarjeta exista o no no autoriza nada: cada
- * portal vuelve a validar el rol en su ruta y la API en cada petición.
+ * A dónde entra una sesión recién abierta. Con dos o más accesos hay que elegir; con uno solo
+ * no se agrega una pantalla de paso: quien solo ve reportería entra a su portal, quien solo ve
+ * Insights entra a Insights y todos los demás, a la aplicación de siempre. Que una tarjeta exista
+ * o no no autoriza nada: cada portal vuelve a validar el rol en su ruta y la API en cada petición.
  */
 export function entryDestination(roles: readonly string[]): string {
   const acceso = accesoAPortales(roles);
-  if (acceso.administracion && acceso.reporteria) {
+  if (cantidadDePortales(acceso) >= 2) {
     return PORTAL_SELECTOR_ROUTE;
   }
-  return acceso.reporteria ? PORTAL_REPORTERIA_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
+  if (acceso.reporteria) {
+    return PORTAL_REPORTERIA_ROUTE;
+  }
+  return acceso.insights ? PORTAL_INSIGHTS_ROUTE : PORTAL_ADMINISTRACION_ROUTE;
 }
 
 /** Las direcciones de destino, para que nadie las escriba a mano. */
 export const PORTAL_ADMINISTRACION_ROUTE = '/';
 export const PORTAL_REPORTERIA_ROUTE = '/reports';
-export const PORTAL_INSIGHTS_ROUTE = '/administration/marketing-insights';
+export const PORTAL_INSIGHTS_ROUTE = '/insights';
 export const PORTAL_SELECTOR_ROUTE = '/portal-selector';

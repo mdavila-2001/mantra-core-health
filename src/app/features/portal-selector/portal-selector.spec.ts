@@ -148,10 +148,24 @@ describe('PortalSelector · tercera tarjeta (AloVida Insights)', () => {
 
     const insights = el.querySelector<HTMLAnchorElement>('[data-testid="portal-insights"]');
     expect(el.querySelectorAll('a.opcion').length).toBe(3);
-    expect(insights?.getAttribute('href')).toBe('/administration/marketing-insights');
+    expect(insights?.getAttribute('href')).toBe('/insights');
     expect(insights?.querySelector('h2')?.textContent).toContain('AloVida Insights');
     expect(insights?.textContent).toContain('Datos de ejemplo');
     expect(el.querySelector('.selector__ayuda')?.textContent).toContain('a los tres');
+  });
+
+  it('NEGATIVO: BUSINESS_ADMIN no ve la tarjeta de Insights (es de plataforma)', async () => {
+    const el = await montarCon(['BUSINESS_ADMIN']);
+
+    expect(el.querySelector('[data-testid="portal-insights"]')).toBeNull();
+  });
+
+  it('administración e Insights sin reportería: dos tarjetas, sin la de reportería', async () => {
+    const el = await montarCon(['DATA_PLATFORM_ADMIN']);
+
+    expect(el.querySelector('[data-testid="portal-reporteria"]')).toBeNull();
+    expect(el.querySelector('[data-testid="portal-insights"]')).not.toBeNull();
+    expect(el.querySelectorAll('a.opcion').length).toBe(2);
   });
 
   it('SUPERADMIN también la ve', async () => {

@@ -8,11 +8,8 @@
   --side-w: 264px;
   display: grid;
   grid-template-columns: var(--side-w) minmax(0, 1fr);
-  min-block-size: 70vh;
+  min-block-size: 100dvh;
   background: var(--bg-base);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-lg);
-  overflow: clip;
 }
 
 .ins--collapsed {
@@ -29,7 +26,7 @@
   position: sticky;
   inset-block-start: 0;
   align-self: start;
-  max-block-size: 100vh;
+  max-block-size: 100dvh;
   overflow-y: auto;
 }
 

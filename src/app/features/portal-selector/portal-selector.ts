@@ -9,6 +9,7 @@ import { EmptyState } from '../../shared/components/molecules/empty-state/empty-
 import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 import {
   accesoAPortales,
+  cantidadDePortales,
   PORTAL_ADMINISTRACION_ROUTE,
   PORTAL_INSIGHTS_ROUTE,
   PORTAL_REPORTERIA_ROUTE,
@@ -24,7 +25,7 @@ export type SelectorView = 'elegir' | 'redirigiendo' | 'sin-permiso';
  *
  * ## Quién la ve
  *
- * Solo quien tiene los dos accesos. Con uno solo no hay nada que elegir: se
+ * Solo quien tiene dos o más accesos. Con uno solo no hay nada que elegir: se
  * redirige directo, sin mostrar una pantalla de paso (se reemplaza la entrada
  * del historial para que «Atrás» no devuelva a una pantalla que solo redirige).
  * Sin ninguno, el estado «sin permiso» orienta a quién pedirlo.
@@ -53,8 +54,11 @@ export class PortalSelector {
 
   protected readonly acceso = computed(() => accesoAPortales(this.auth.roles()));
 
-  /** Tercera tarjeta: AloVida Insights. Solo se ofrece a quien ya elige entre los otros dos. */
+  /** Tarjeta de AloVida Insights: el portal de marketing, de alcance plataforma. */
   protected readonly insights = computed(() => puedeVerInsights(this.auth.roles()));
+
+  /** Cuántas tarjetas se ofrecen; con dos o más hay algo que elegir. */
+  protected readonly cantidad = computed(() => cantidadDePortales(this.acceso()));
 
   /** Primer nombre si la sesión lo trae; sin nombre el saludo es genérico. */
   protected readonly nombre = computed(() => {
@@ -63,20 +67,23 @@ export class PortalSelector {
   });
 
   readonly view = computed<SelectorView>(() => {
-    const { administracion, reporteria } = this.acceso();
-    if (administracion && reporteria) {
+    const cantidad = this.cantidad();
+    if (cantidad >= 2) {
       return 'elegir';
     }
-    return administracion || reporteria ? 'redirigiendo' : 'sin-permiso';
+    return cantidad === 1 ? 'redirigiendo' : 'sin-permiso';
   });
 
   /** A dónde va quien tiene un solo acceso. `null` cuando hay que elegir o no hay nada. */
   readonly destinoDirecto = computed<string | null>(() => {
-    const { administracion, reporteria } = this.acceso();
-    if (administracion === reporteria) {
+    const { administracion, reporteria, insights } = this.acceso();
+    if (this.cantidad() !== 1) {
       return null;
     }
-    return administracion ? PORTAL_ADMINISTRACION_ROUTE : PORTAL_REPORTERIA_ROUTE;
+    if (administracion) {
+      return PORTAL_ADMINISTRACION_ROUTE;
+    }
+    return reporteria ? PORTAL_REPORTERIA_ROUTE : insights ? PORTAL_INSIGHTS_ROUTE : null;
   });
 
   constructor() {

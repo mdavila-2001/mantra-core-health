@@ -44,13 +44,15 @@
           <a class="rep__enlace" [routerLink]="selectorRoute" data-testid="reporting-cambiar-portal">
             Cambiar de portal
           </a>
-          <a
-            class="rep__enlace"
-            [routerLink]="administracionRoute"
-            data-testid="reporting-ir-administracion"
-          >
-            Portal de administración
-          </a>
+          @if (puedeIrAAdministracion()) {
+            <a
+              class="rep__enlace"
+              [routerLink]="administracionRoute"
+              data-testid="reporting-ir-administracion"
+            >
+              Portal de administración
+            </a>
+          }
         </nav>
       }
 

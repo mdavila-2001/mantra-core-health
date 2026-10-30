@@ -89,3 +89,8 @@ Por pedido del usuario (30/10/2026) para el portal de reportería
 paralelo, cada uno dueño de archivos **disjuntos** (una pestaña por agente). Se
 mantiene: **un solo navegador de pruebas a la vez** y capturas en serie, y quien
 implementa no aprueba su propio trabajo.
+
+También por pedido del usuario (30/10/2026) para **AloVida Insights** como portal propio
+(`docs/trabajo/2026-10-30-alovida-insights-portal/`): la misma relajación, en archivos disjuntos
+entre el front, el API y el modelo. Mismas reservas: un solo navegador de pruebas y quien implementa
+no aprueba su propio trabajo.
