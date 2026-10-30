@@ -342,6 +342,20 @@
     position: absolute;
     inset: -12px;
   }
+
+  /* Encima de la miniatura vecina, que viene después en el DOM y se pintaría
+     arriba robando el toque del borde derecho. */
+  .vista__quitar {
+    z-index: 1;
+  }
+
+  /* La tira desplaza en horizontal (`overflow-x: auto`), así que recorta lo
+     que se sale de la caja: el área de 44 del «quitar» (6 px de la esquina +
+     12 del `::before`) quedaba en 20×18. Este aire la deja entera. */
+  .vista__tira {
+    padding-block-start: var(--e5);
+    padding-inline-end: var(--e5);
+  }
 }
 
 .vista__sumar {

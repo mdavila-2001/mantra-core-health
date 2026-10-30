@@ -178,13 +178,16 @@ async function imagen(
   return { name: nombre, mimeType: tipo, buffer: Buffer.from(base64, 'base64') };
 }
 
-/** Espera a que la cola del composer termine de preparar las fotos. */
+/**
+ * Espera a que la vista previa de adjuntos (la de dev, estilo WhatsApp Web)
+ * esté abierta con `cuantas` miniaturas y sin fotos preparándose (achicado y
+ * limpieza de EXIF de `AttachmentPreparer`).
+ */
 async function colaLista(cuantas: number): Promise<void> {
-  await expect(page.getByTestId('composer-miniatura')).toHaveCount(cuantas);
-  await expect(page.locator('[data-testid="composer-miniatura"].is-preparando')).toHaveCount(0, {
-    timeout: 30_000,
-  });
-  await expect(page.getByTestId('hilo-enviar')).toBeEnabled();
+  await expect(page.getByTestId('composer-vista-previa')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId('vista-miniatura')).toHaveCount(cuantas);
+  await expect(page.getByTestId('composer-preparando')).toHaveText('', { timeout: 30_000 });
+  await expect(page.getByTestId('vista-enviar')).toBeEnabled();
 }
 
 /**
@@ -348,13 +351,16 @@ test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, gril
     await imagen('receta-2.jpg', 'image/jpeg', '#b45309'),
     await imagen('receta-3.png', 'image/png', '#7c3aed'),
   ];
-  await page.getByTestId('composer-input-archivos').setInputFiles(archivos);
-  await colaLista(3);
-  await expect(page.getByTestId('hilo-enviar')).toHaveAttribute('aria-label', 'Enviar 3 archivos');
+  // Lo escrito antes de adjuntar pasa a ser el pie de la primera foto.
   const leyenda = `Estas son las recetas ${MARCA}`;
   await page.getByTestId('hilo-texto').fill(leyenda);
+  await page.getByTestId('composer-input-archivos').setInputFiles(archivos);
+  await colaLista(3);
+  await expect(page.getByTestId('vista-comentario')).toHaveValue(leyenda);
+  await expect(page.getByTestId('vista-enviar')).toHaveAttribute('aria-label', 'Enviar 3 archivos');
   await foto('04a-cola-con-tres-fotos');
-  await page.getByTestId('hilo-enviar').click();
+  await page.getByTestId('vista-enviar').click();
+  await expect(page.getByTestId('composer-vista-previa')).toHaveCount(0);
 
   const comprobar = async (): Promise<void> => {
     // La primera, con su leyenda, va sola: «una leyenda es de esa foto».
@@ -392,7 +398,7 @@ test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, gril
   await foto('04a-tres-fotos-tras-recargar');
 });
 
-test('4b · pegar una imagen desde el portapapeles la suma a la cola y sale', async () => {
+test('4b · pegar una imagen desde el portapapeles abre la vista previa y sale', async () => {
   await page.goto(hiloSinTarjeta);
   await esperarAplicacionLista(page);
   await hiloListo();
@@ -416,7 +422,7 @@ test('4b · pegar una imagen desde el portapapeles la suma a la cola y sale', as
 
   await colaLista(1);
   await foto('04b-imagen-pegada-en-la-cola');
-  await page.getByTestId('hilo-enviar').click();
+  await page.getByTestId('vista-enviar').click();
   await expect(page.getByTestId('hilo-imagen')).toHaveCount(antes + 1, { timeout: 30_000 });
 
   await recargar();
@@ -424,19 +430,19 @@ test('4b · pegar una imagen desde el portapapeles la suma a la cola y sale', as
   await expect(page.getByTestId('hilo-imagen')).toHaveCount(antes + 1);
 });
 
-test('4c · un .txt se rechaza con un mensaje y no entra a la cola', async () => {
+test('4c · lo que la API no guarda (un video) se rechaza con un mensaje y no abre la vista previa', async () => {
   await page.goto(hiloSinTarjeta);
   await esperarAplicacionLista(page);
   await hiloListo();
   await page.getByTestId('composer-input-archivos').setInputFiles({
-    name: 'notas.txt',
-    mimeType: 'text/plain',
+    name: 'clip.mp4',
+    mimeType: 'video/mp4',
     buffer: Buffer.from('no soy una foto'),
   });
   const aviso = page.locator('.composer__error[role="alert"]');
-  await expect(aviso).toContainText('«notas.txt» no se puede mandar');
-  await expect(page.getByTestId('composer-miniatura')).toHaveCount(0);
-  await foto('04c-txt-rechazado');
+  await expect(aviso).toContainText('«clip.mp4» no se puede mandar');
+  await expect(page.getByTestId('composer-vista-previa')).toHaveCount(0);
+  await foto('04c-video-rechazado');
   await aviso.getByRole('button', { name: 'Entendido' }).click();
   await expect(aviso).toHaveCount(0);
 });
@@ -524,7 +530,7 @@ test('6 · farmacia: «Escribiendo como», responde desde el mostrador con texto
     .getByTestId('composer-input-archivos')
     .setInputFiles([await imagen('caja.jpg', 'image/jpeg', '#16a34a')]);
   await colaLista(1);
-  await page.getByTestId('hilo-enviar').click();
+  await page.getByTestId('vista-enviar').click();
   await expect(page.getByTestId('hilo-imagen')).toHaveCount(antes + 1, { timeout: 30_000 });
   await expect(page.getByTestId('hilo-imagen-subiendo')).toHaveCount(0, { timeout: 30_000 });
   expect(await guardado('mock.comunidad.mensajes')).toContain(MARCA);
@@ -561,40 +567,73 @@ test('6 · farmacia: «Escribiendo como», responde desde el mostrador con texto
   await foto('06d-paciente-tras-recargar');
 });
 
-test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horizontal', async () => {
+test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horizontal', async ({ browser }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(hiloSinTarjeta);
   await esperarAplicacionLista(page);
   await hiloListo();
 
-  // «Quitar» y «enviar» sólo existen con algo en la cola.
-  await page
-    .getByTestId('composer-input-archivos')
-    .setInputFiles([await imagen('movil.png', 'image/png', '#0891b2')]);
-  await colaLista(1);
-  await foto('07-movil-390-con-cola');
-
-  const objetivos: [string, Locator][] = [
+  // Fase 1, el hilo: «enviar» aparece con algo escrito.
+  await page.getByTestId('hilo-texto').fill('Hola');
+  const delHilo: [string, Locator][] = [
     ['volver', page.getByRole('link', { name: 'Volver a los chats' })],
     ['opciones', page.getByTestId('hilo-menu')],
     ['enviar', page.getByTestId('hilo-enviar')],
     ['foto', page.getByTestId('composer-foto')],
-    ['quitar', page.getByTestId('composer-miniatura-quitar').first()],
+    ['adjuntar', page.getByTestId('composer-adjuntar')],
   ];
   const medidas: Record<string, { ancho: number; alto: number }> = {};
   const conAviso: Record<string, { ancho: number; alto: number }> = {};
-  for (const [nombre, objetivo] of objetivos) {
-    await expect(objetivo, `${nombre} visible`).toBeVisible();
-    medidas[nombre] = await zonaTocable(objetivo, true);
-    conAviso[nombre] = await zonaTocable(objetivo, false);
+  const medir = async (objetivos: [string, Locator][]): Promise<void> => {
+    for (const [nombre, objetivo] of objetivos) {
+      await expect(objetivo, `${nombre} visible`).toBeVisible();
+      medidas[nombre] = await zonaTocable(objetivo, true);
+      conAviso[nombre] = await zonaTocable(objetivo, false);
+    }
+  };
+  await medir(delHilo);
+  await page.getByTestId('hilo-texto').fill('');
+
+  // La vista previa se mide en un teléfono de verdad (`hasTouch`): el «quitar»
+  // de cada miniatura crece a 44 sólo con `(hover: none)`, y con mouse queda
+  // de 20 a propósito (un área invisible quitaría archivos sin querer).
+  const deEscritorio = page;
+  const telefono = await browser.newPage({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  page = telefono;
+  try {
+    await entrar(PACIENTE);
+    await page.goto('/messaging');
+    await esperarAplicacionLista(page);
+    await page.getByTestId('conversacion').first().click();
+    await hiloListo();
+    expect(await page.evaluate(() => matchMedia('(hover: none)').matches)).toBe(true);
+    await page
+      .getByTestId('composer-input-archivos')
+      .setInputFiles([await imagen('movil.png', 'image/png', '#0891b2')]);
+    await colaLista(1);
+    await foto('07-movil-390-con-vista-previa');
+    // Fase 2, la vista previa: abierta, deja inerte lo de atrás.
+    await medir([
+      ['enviar-adjuntos', page.getByTestId('vista-enviar')],
+      ['quitar', page.getByTestId('vista-quitar').first()],
+    ]);
+    // Quitar la única es descartar: la vista previa se cierra.
+    await page.getByTestId('vista-quitar').first().click();
+    await expect(page.getByTestId('composer-vista-previa')).toHaveCount(0);
+  } finally {
+    page = deEscritorio;
+    await telefono.close();
   }
   // Lo que el producto ofrece: sin el aviso de la maqueta encima.
   const chicos = Object.entries(medidas).filter(([, m]) => m.ancho < 44 || m.alto < 44);
   expect(chicos, `táctiles por debajo de 44×44: ${JSON.stringify(medidas)}`).toEqual([]);
   // Lo que se siente en la maqueta desplegada, con la pastilla «Demo» de
-  // `mock-banner.ts`. Medido, no supuesto: a 390 tapa la franja de arriba de
-  // «Opciones» (44×34 en la corrida del 28/10). Queda anotado como hallazgo de
-  // la maqueta en vez de hacer fallar la prueba del producto.
+  // `mock-banner.ts`: queda anotado como hallazgo de la maqueta en vez de
+  // hacer fallar la prueba del producto.
   const tapadosPorElAviso = Object.entries(conAviso).filter(([, m]) => m.ancho < 44 || m.alto < 44);
   if (tapadosPorElAviso.length > 0) {
     test.info().annotations.push({
@@ -608,8 +647,6 @@ test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horiz
   );
   expect(desbordaX, 'hay scroll horizontal a 390').toBe(false);
 
-  await page.getByTestId('composer-miniatura-quitar').first().click();
-  await expect(page.getByTestId('composer-miniatura')).toHaveCount(0);
   await page.setViewportSize({ width: 1440, height: 900 });
 });
 
@@ -663,6 +700,14 @@ test('9 · la consola quedó limpia en toda la corrida', () => {
       String.raw`^WebSocket connection to '[^']*socket\.io[^']*' failed`,
       String.raw`^Executing inline script violates the following Content Security Policy directive 'script-src 'self' `,
       String.raw`^Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED$`,
+      // `withViewTransitions` (dev): abrir un chat navega dos veces seguidas
+      // (`?pedido=` y enseguida `/messaging/<id>` con `replaceUrl`), y Chrome
+      // descarta la primera transición. No es un fallo: la navegación llega.
+      String.raw`^AbortError: Transition was skipped\. New ViewTransition started$`,
+      // Los dos fallos que el test 8 inyecta a propósito (`mock:fallos`), tal
+      // como los registra `core/http/api-failure.ts` de dev.
+      String.raw`^\[API\] GET /community/conversations → sin respuesta \(red, CORS o servidor caído\)`,
+      String.raw`^\[API\] GET /community/conversations → 500 · INTERNAL · «Simulado: fallo del servidor\.» · correlationId=mock-fallo`,
     ].join('|'),
     'u',
   );
