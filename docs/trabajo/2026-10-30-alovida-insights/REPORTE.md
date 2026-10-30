@@ -1,11 +1,11 @@
-> **AVANCE: 8 / 24 — 33,3 %.** (microtareas `HECHO` / total; las 14 `A MEDIAS` y las 2 `BLOQUEADO` no suman). Los 8 módulos existen y se ven en el navegador; lo que no está cerrado es la prueba de interfaz (ver «A medias»).
+> **AVANCE: 9 / 24 — 37,5 %.** (microtareas `HECHO` / total; las 14 `A MEDIAS` y la 1 `BLOQUEADO` no suman). Los 8 módulos existen y se ven en el navegador; lo que no está cerrado es la prueba de interfaz (ver «A medias»).
 
 # Reporte — AloVida Insights (plataforma de inteligencia de marketing)
 
 - Fecha: 2026-10-30 · Plan: [PLAN.md](./PLAN.md) · Rama: `claude/laughing-cori-5afynm` (`mantra-core-health`)
 - Peldaño de evidencia alcanzado, **por área** (regla 30):
   - Dominio (cálculo, datos sintéticos, benchmarks, alertas, informe): `TESTED` — 59 pruebas en verde.
-  - Plantillas y tipos de toda la interfaz: `RUNS` — `ngc` y `eslint` con código de salida 0.
+  - Plantillas y tipos de toda la interfaz: `RUNS` — `ngc`, `eslint` y `ng build` de producción con código de salida 0.
   - Interfaz de los 8 módulos: `VERIFIED_FUNCTIONAL_ONLY` **parcial** — se miraron capturas y se ejercitaron 3 flujos, pero no están las tres anchuras × dos temas de cada módulo ni hay prueba de componente.
   - **El trabajo, por la regla del peldaño más bajo de sus áreas en alcance: `RUNS`.** No se usa «listo», «cerrado» ni «hecho» para este trabajo.
 
@@ -37,6 +37,7 @@ Transversal: recomendador de visualización con razón escrita (línea para tend
 | H1.S2.M2 | Recomendador de visualización con razón | ídem | PASS |
 | H1.S3.M1 | Detección de cambios y alertas de campaña, opinión y oportunidad (`report.spec.ts` comprueba IDs únicos, causa como hipótesis y evidencia en toda alerta) | ídem | PASS |
 | H5.S1.M1 | `ngc` exit 0, `eslint` exit 0, gates de diseño sin hallazgos propios | ver «Evidencia» | PASS |
+| H5.S1.M2 | `ng build` de producción | `node_modules/.bin/ng build` | exit 0 · [build-produccion.txt](./evidencia/build-produccion.txt); sin avisos de presupuesto de archivos de Insights |
 | H5.S1.M4 | Este reporte | — | archivo en disco |
 
 ## A medias
@@ -65,14 +66,14 @@ Las 14 comparten el mismo vacío: **no hay prueba de componente y la prueba visu
 
 | ID | Estado | Qué lo destraba |
 |---|---|---|
-| H5.S1.M2 `ng build` | BLOQUEADO (ENVIRONMENT) | el build de esbuild se cuelga en este contenedor; destraba un entorno con más memoria. Se compensó con `ng serve --configuration demo` (compila el mismo código) |
-| H5.S1.M3 `ng test` completo | BLOQUEADO (ENVIRONMENT) | sin memoria para 4985 pruebas; destraba un entorno con más memoria. Los specs de Insights corrieron con un Vitest suelto, no con el arnés del repo |
+| H5.S1.M3 `ng test` completo | BLOQUEADO (ENVIRONMENT) | `ng test` se queda sin memoria en este contenedor (4985 pruebas); destraba un entorno con más memoria. Los specs de Insights corrieron con un Vitest suelto, no con el arnés del repo |
 
 ## Evidencia
 
 Todo en [evidencia/](./evidencia/):
 
 ```text
+build-produccion.txt  ng build de producción → exit 0
 vitest.txt            59 pruebas pasan (4 archivos: domain, opinion, report, chart-math)
 ngc.txt               ngc -p tsconfig.app.json --noEmit → exit 0 (avisos ajenos a Insights)
 eslint.txt            eslint src/app/features/insights + navigation.insights.ts → exit 0
@@ -89,7 +90,7 @@ Gates de diseño: `check-css-tokens` ✓ (529 tokens, sin huérfanos), `check-to
 - Pruebas de componente y de integración con el arnés de Angular; teclado y lector de pantalla.
 - 768 px, 390 px y tema oscuro de la mayoría de los módulos **mirados**; estados de error, carga y sin permiso fotografiados.
 - Impresión real a PDF (la regla `@media print` está escrita; no se abrió el diálogo de impresión).
-- `ng build` de producción y SSR (la ruta usa `localStorage` y `window` con guardas, pero no se ejercitó el render en servidor).
+- Render en servidor (SSR) de la ruta: el build de producción pasa, pero no se pidió la página al servidor SSR (la ruta usa `localStorage` y `window` con guardas).
 - Peticiones reales: **no hay backend**; todo el dato es sintético. Nada demuestra persistencia `UI → request → response → recarga` (regla del repo) porque no hay petición; lo único persistente es `localStorage` (vistas guardadas, estado de alertas), y solo se ejercitó el de alertas.
 - Matriz de autorización negativa: la restricción por rol es del mapa de navegación; no se probó con un usuario sin rol.
 - Dos PRs (a `dev` y a `test`): no se abrieron; la instrucción del repo los pide al terminar un cambio y este no está terminado.
