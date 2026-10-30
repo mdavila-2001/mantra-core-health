@@ -83,6 +83,7 @@ async function newSession(
   viewState?: string,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext({
+    baseURL: process.env['E2E_BASE_URL'] ?? 'http://localhost:4200',
     viewport: { width: ancho, height: alto },
     locale: 'es-BO',
     timezoneId: 'America/La_Paz',
@@ -220,24 +221,27 @@ for (const tema of TEMAS) {
       const kpiAntes = (await page.getByTestId('kpi-mrr').first().innerText()).trim();
       const filtrable = panelWith(page, { hasText: 'Haga clic en un elemento del gráfico' });
       await filtrable.scrollIntoViewIfNeeded();
-      const indice = await filtrable.locator('[role="img"] svg path').evaluateAll((els) => {
-        const svg = els[0]?.closest('svg');
-        const total = svg ? svg.getBoundingClientRect().width * svg.getBoundingClientRect().height : 0;
-        let mejor = -1;
-        let area = 0;
-        els.forEach((e, i) => {
+      const objetivo = await filtrable.locator('[role="img"] svg path').evaluateAll((els) => {
+        // Una marca del gráfico cuyo centro de verdad recibe el clic (no un fondo ni un adorno).
+        for (const e of els) {
           const r = e.getBoundingClientRect();
-          const a = r.width * r.height;
           const fill = e.getAttribute('fill');
-          if (fill && fill !== 'none' && fill !== 'transparent' && a > 150 && a < total * 0.6 && a > area) {
-            area = a;
-            mejor = i;
+          if (!fill || fill === 'none' || fill === 'transparent' || r.width < 8 || r.height < 8) {
+            continue;
           }
-        });
-        return mejor;
+          const x = r.x + r.width / 2;
+          const y = r.y + r.height / 2;
+          if (document.elementFromPoint(x, y) === e || e.contains(document.elementFromPoint(x, y))) {
+            return { x, y };
+          }
+        }
+        return null;
       });
-      expect(indice, 'no se encontró un elemento clicable en el gráfico filtrable').toBeGreaterThanOrEqual(0);
-      await filtrable.locator('[role="img"] svg path').nth(indice).click({ force: true });
+      expect(objetivo, 'no se encontró un elemento clicable en el gráfico filtrable').not.toBeNull();
+      if (objetivo !== null) {
+        await page.mouse.move(objetivo.x, objetivo.y);
+        await page.mouse.click(objetivo.x, objetivo.y);
+      }
       await expect(page.getByTestId('filter-chip').first()).toBeVisible({ timeout: 15_000 });
       await page.waitForTimeout(600);
       const kpiDespues = (await page.getByTestId('kpi-mrr').first().innerText()).trim();

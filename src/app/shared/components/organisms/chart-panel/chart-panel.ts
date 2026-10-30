@@ -78,7 +78,7 @@ export class ChartPanel {
   protected readonly tablaAbierta = signal(false);
   protected readonly enGrande = signal(false);
   private readonly tema = signal<ChartTheme | null>(null);
-  private readonly botonMenu = viewChild<ElementRef<HTMLButtonElement>>('botonMenu');
+  private readonly botonMenu = viewChild('botonMenu', { read: ElementRef<HTMLElement> });
 
   protected readonly violaciones = computed(() => getContractViolations(this.spec()));
   protected readonly modoEfectivo = computed<ModoGrafico>(() =>
