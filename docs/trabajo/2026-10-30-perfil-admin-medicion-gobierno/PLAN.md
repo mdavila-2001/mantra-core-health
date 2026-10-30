@@ -68,7 +68,7 @@
 
 ## H1 — El rol admin ve solo gestión y medición
 
-> **Estado real (30/10/2026): peldaño `TESTED`, no `VERIFIED`.** Falta prueba de navegador (3 viewports × 2 temas, doble revisión) y sesión contra la API real; hasta entonces H1 no se declara hecho. Desvío: «Glosario» sale del menú de gestión hasta que H3 entregue su editor global (sigue accesible por URL).
+> **Estado real (30/10/2026): `VERIFIED_FUNCTIONAL_ONLY` contra el simulador.** Capturas reales en `evidencia/capturas-h1/` (superadmin, administradora y paciente × claro/oscuro × escritorio/tablet/móvil; consola y red sin errores en `consola-y-red.txt`), mirada una vez. **Faltan:** la segunda pasada adversarial (`critical-double-review`, por otro agente) y una sesión contra la API real con Postgres; hasta entonces H1 no se declara hecho. Hallazgo para H2: el panel de inicio del admin sigue mostrando «Últimos pacientes». Desvío: «Glosario» sale del menú de gestión hasta que H3 entregue su editor global (sigue accesible por URL).
 
 **CA:** Dado un usuario `PLATFORM_ADMIN`, cuando abre la app, entonces el menú contiene únicamente dominios de gestión (medición, catálogos, gobernanza, usuarios y permisos) y ninguna entrada «Mis …»/autoservicio; y un admin que escribe a mano la URL de un autoservicio recibe la respuesta de la API, no un acceso nuevo.
 **DoD:** specs de navegación en verde · `yarn lint`/`typecheck`/`build` exit 0 · captura del menú en 3 viewports y 2 temas, mirada y revisada dos veces · cero errores de consola/red.
