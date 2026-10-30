@@ -47,7 +47,7 @@ const TEMAS = [
   { nombre: 'oscuro', valor: 'dark' },
 ] as const;
 const THEME_STORAGE_KEY = 'mantra-core-health.theme';
-const LLAVE_ESTADO = 'mock:reporting:estado';
+const STATE_KEY = 'mock:reporting:estado';
 
 interface Hallazgo {
   readonly pantalla: string;
@@ -75,12 +75,12 @@ function vigilar(page: Page, pantalla: () => string): void {
   });
 }
 
-async function nuevaSesion(
+async function newSession(
   browser: import('@playwright/test').Browser,
   ancho: number,
   alto: number,
   tema: 'light' | 'dark',
-  estado?: string,
+  viewState?: string,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext({
     viewport: { width: ancho, height: alto },
@@ -99,13 +99,13 @@ async function nuevaSesion(
         /* sin almacenamiento */
       }
     },
-    [THEME_STORAGE_KEY, tema, LLAVE_ESTADO, estado ?? ''],
+    [THEME_STORAGE_KEY, tema, STATE_KEY, viewState ?? ''],
   );
   const page = await context.newPage();
   return { context, page };
 }
 
-async function entrarComoAdmin(page: Page): Promise<void> {
+async function signInAsAdmin(page: Page): Promise<void> {
   await page.goto('/auth');
   await page.getByTestId('login-identifier').fill('admin@alovida.mock');
   await page.getByTestId('login-password').fill('password123');
@@ -135,11 +135,11 @@ async function capturar(page: Page, nombre: string): Promise<void> {
 for (const vp of VIEWPORTS) {
   for (const tema of TEMAS) {
     test(`recorrido ${vp.nombre} · ${tema.nombre}`, async ({ browser }) => {
-      const { context, page } = await nuevaSesion(browser, vp.ancho, vp.alto, tema.valor);
+      const { context, page } = await newSession(browser, vp.ancho, vp.alto, tema.valor);
       let pantalla = 'login';
       vigilar(page, () => `${vp.nombre}-${tema.nombre}-${pantalla}`);
       try {
-        await entrarComoAdmin(page);
+        await signInAsAdmin(page);
 
         pantalla = 'selector';
         await expect(page.getByTestId('portal-reporteria')).toBeVisible({ timeout: 30_000 });
@@ -168,17 +168,17 @@ for (const vp of VIEWPORTS) {
 }
 
 /** El panel de un gráfico que cumple la condición, o falla con un mensaje claro. */
-function panelCon(page: Page, filtro: { hasText?: string; has?: Locator }): Locator {
+function panelWith(page: Page, filtro: { hasText?: string; has?: Locator }): Locator {
   return page.locator('app-chart-panel', filtro).first();
 }
 
 for (const tema of TEMAS) {
   test(`interacciones de los gráficos · escritorio · ${tema.nombre}`, async ({ browser }) => {
-    const { context, page } = await nuevaSesion(browser, 1440, 900, tema.valor);
+    const { context, page } = await newSession(browser, 1440, 900, tema.valor);
     let pantalla = 'login';
     vigilar(page, () => `interaccion-${tema.nombre}-${pantalla}`);
     try {
-      await entrarComoAdmin(page);
+      await signInAsAdmin(page);
       await page.getByTestId('portal-reporteria').click();
       await page.goto(`${REPORTS}/commercial/suscripciones`);
       await esperarGraficos(page);
@@ -200,25 +200,25 @@ for (const tema of TEMAS) {
 
       // 6) Cómo se calcula.
       pantalla = 'como-se-calcula';
-      const conInfo = panelCon(page, { has: page.getByTestId('chart-how-calculated') });
-      await conInfo.getByTestId('chart-how-calculated').click();
-      await expect(conInfo.getByTestId('chart-info')).toBeVisible();
-      await conInfo.screenshot({ path: join(CAPTURAS, `${prefijo}-02-como-se-calcula.png`) });
+      const withInfo = panelWith(page, { has: page.getByTestId('chart-how-calculated') });
+      await withInfo.getByTestId('chart-how-calculated').click();
+      await expect(withInfo.getByTestId('chart-info')).toBeVisible();
+      await withInfo.screenshot({ path: join(CAPTURAS, `${prefijo}-02-como-se-calcula.png`) });
 
       // 7) Velas.
       pantalla = 'velas';
-      const conVelas = panelCon(page, { has: page.getByRole('radio', { name: 'Velas' }) });
-      await conVelas.scrollIntoViewIfNeeded();
-      await conVelas.getByRole('radio', { name: 'Velas' }).click();
-      await expect(conVelas.getByTestId('chart-candles-note')).toBeVisible();
+      const withCandles = panelWith(page, { has: page.getByRole('radio', { name: 'Velas' }) });
+      await withCandles.scrollIntoViewIfNeeded();
+      await withCandles.getByRole('radio', { name: 'Velas' }).click();
+      await expect(withCandles.getByTestId('chart-candles-note')).toBeVisible();
       await page.waitForTimeout(400);
-      await conVelas.screenshot({ path: join(CAPTURAS, `${prefijo}-03-velas.png`) });
-      await conVelas.getByRole('radio', { name: 'Gráfico' }).click();
+      await withCandles.screenshot({ path: join(CAPTURAS, `${prefijo}-03-velas.png`) });
+      await withCandles.getByRole('radio', { name: 'Gráfico' }).click();
 
       // 5) Clic que filtra: el KPI de MRR cambia y aparece la ficha del filtro.
       pantalla = 'filtro-por-clic';
       const kpiAntes = (await page.getByTestId('kpi-mrr').first().innerText()).trim();
-      const filtrable = panelCon(page, { hasText: 'Haga clic en un elemento del gráfico' });
+      const filtrable = panelWith(page, { hasText: 'Haga clic en un elemento del gráfico' });
       await filtrable.scrollIntoViewIfNeeded();
       const indice = await filtrable.locator('[role="img"] svg path').evaluateAll((els) => {
         const svg = els[0]?.closest('svg');
@@ -280,22 +280,22 @@ for (const tema of TEMAS) {
 }
 
 const ESTADOS = ['vacio', 'error', 'sin-permiso', 'atrasado'] as const;
-for (const estado of ESTADOS) {
+for (const viewState of ESTADOS) {
   for (const vp of [VIEWPORTS[0], VIEWPORTS[2]]) {
-    test(`estado ${estado} · ${vp.nombre} · claro`, async ({ browser }) => {
-      const { context, page } = await nuevaSesion(browser, vp.ancho, vp.alto, 'light', estado);
+    test(`estado ${viewState} · ${vp.nombre} · claro`, async ({ browser }) => {
+      const { context, page } = await newSession(browser, vp.ancho, vp.alto, 'light', viewState);
       let pantalla = 'login';
-      vigilar(page, () => `estado-${estado}-${vp.nombre}-${pantalla}`);
+      vigilar(page, () => `estado-${viewState}-${vp.nombre}-${pantalla}`);
       try {
-        await entrarComoAdmin(page);
+        await signInAsAdmin(page);
         await page.getByTestId('portal-reporteria').click();
         pantalla = 'grid';
         await page.waitForTimeout(1500);
-        await capturar(page, `${vp.nombre}-claro-estado-${estado}-grid`);
+        await capturar(page, `${vp.nombre}-claro-estado-${viewState}-grid`);
         pantalla = 'dashboard';
         await page.goto(`${REPORTS}/commercial/suscripciones`);
         await page.waitForTimeout(1800);
-        await capturar(page, `${vp.nombre}-claro-estado-${estado}-dashboard`);
+        await capturar(page, `${vp.nombre}-claro-estado-${viewState}-dashboard`);
       } finally {
         await context.close();
       }
@@ -304,7 +304,7 @@ for (const estado of ESTADOS) {
 }
 
 test('autorización negativa · una cuenta sin reportería no entra al portal', async ({ browser }) => {
-  const { context, page } = await nuevaSesion(browser, 1440, 900, 'light');
+  const { context, page } = await newSession(browser, 1440, 900, 'light');
   vigilar(page, () => 'sin-permiso-ruta');
   try {
     await page.goto('/auth');
