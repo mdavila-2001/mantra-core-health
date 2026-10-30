@@ -92,7 +92,7 @@ export function accesoAPortales(roles: readonly string[]): AccesoAPortales {
  * demás, a la aplicación de siempre. Que una tarjeta exista o no no autoriza nada: cada
  * portal vuelve a validar el rol en su ruta y la API en cada petición.
  */
-export function destinoDeEntrada(roles: readonly string[]): string {
+export function entryDestination(roles: readonly string[]): string {
   const acceso = accesoAPortales(roles);
   if (acceso.administracion && acceso.reporteria) {
     return PORTAL_SELECTOR_ROUTE;

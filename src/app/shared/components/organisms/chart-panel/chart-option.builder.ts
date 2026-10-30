@@ -1,9 +1,9 @@
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { formatearFecha, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
+import { formatDate, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type { ConfigFiltro, DatosGrafico } from '@core/data-access/reporting/reporting.types';
 import { rampColorAt, readableOn } from './chart-color';
-import { construirCascada, construirVelas } from './chart-option.cascada';
+import { construirCascada, construirVelas, etiquetaCascada } from './chart-option.cascada';
 import { base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase, unitOf } from './chart-option.common';
 
 export { escapar, type ModoGrafico, type OpcionesBuild } from './chart-option.common';
@@ -21,12 +21,12 @@ function construirCartesiano(
 ): EChartsCoreOption {
   const { tema, spec, seleccion } = o;
   const horizontal = d.horizontal === true;
-  const porSerie = spec.filtro?.valorDe === 'serie';
-  const idxSel = seleccion === null || porSerie ? -1 : d.categorias.indexOf(seleccion);
+  const bySeries = spec.filtro?.valorDe === 'serie';
+  const idxSel = seleccion === null || bySeries ? -1 : d.categorias.indexOf(seleccion);
 
   const series = d.series.map((s) => {
     // Filtro por serie: las demás series se atenúan, como las demás barras cuando se filtra por categoría.
-    const atenuada = porSerie && seleccion !== null && s.nombre !== seleccion;
+    const atenuada = bySeries && seleccion !== null && s.nombre !== seleccion;
     const tipo = s.forma === 'barra' ? 'bar' : 'line';
     const datos = s.valores.map((v, i) =>
       v === null
@@ -62,7 +62,7 @@ function construirCartesiano(
     };
   });
 
-  const sinDato = new Set(d.categorias.filter((_, i) => d.series.every((s) => s.valores[i] === null || s.valores[i] === undefined)));
+  const emptyCategories = new Set(d.categorias.filter((_, i) => d.series.every((s) => s.valores[i] === null || s.valores[i] === undefined)));
   const categoria = {
     type: 'category',
     data: d.categorias,
@@ -85,7 +85,7 @@ function construirCartesiano(
         : {}),
       // Una categoría sin ningún valor no dibuja barra: el eje lo dice en vez de hacerla desaparecer.
       formatter: (nombre: string) =>
-        sinDato.has(nombre) ? `${formatearFecha(nombre)}\n(sin dato)` : formatearFecha(nombre),
+        emptyCategories.has(nombre) ? `${formatDate(nombre)}\n(sin dato)` : formatDate(nombre),
     },
     axisTick: { alignWithLabel: true },
   };
@@ -119,7 +119,7 @@ function construirCartesiano(
             return `<div style="display:flex;justify-content:space-between;gap:16px"><span>${p.marker ?? ''}${escapar(p.seriesName ?? '')}</span><b>${escapar(formatearValor(v, unitOf(serie, spec.unidad)))}</b></div>`;
           })
           .join('');
-        return `<div style="font-weight:600;margin-bottom:4px">${escapar(formatearFecha(lista[0]?.axisValueLabel ?? lista[0]?.name ?? '', true))}</div>${filas}`;
+        return `<div style="font-weight:600;margin-bottom:4px">${escapar(formatDate(lista[0]?.axisValueLabel ?? lista[0]?.name ?? '', true))}</div>${filas}`;
       },
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
@@ -180,7 +180,7 @@ function construirPartes(
               lineHeight: 16,
               formatter: (p: ParamEje) => `${p.name ?? ''}\n${formatearValor(readValue(p), spec.unidad, true)}`,
             },
-            labelLine: { show: true, length: 24, lineStyle: { color: tema.linea } },
+            labelLine: { show: true, length: 36, lineStyle: { color: tema.linea } },
             data: datos,
           }
         : {
@@ -230,8 +230,8 @@ function construirMapaCalor(
         const v = Array.isArray(p.value) ? p.value : [];
         const col = d.columnas[Number(v[0])] ?? '';
         const fila = d.filas[Number(v[1])] ?? '';
-        const sinDato = (p.data as { sinDato?: boolean } | undefined)?.sinDato === true;
-        const val = !sinDato && typeof v[2] === 'number' ? formatearValor(v[2], spec.unidad) : NO_DATA;
+        const isEmptyCell = (p.data as { sinDato?: boolean } | undefined)?.sinDato === true;
+        const val = !isEmptyCell && typeof v[2] === 'number' ? formatearValor(v[2], spec.unidad) : NO_DATA;
         return `<div style="font-weight:600">${escapar(fila)} · ${escapar(col)}</div><div>${escapar(d.nombreValor)}: <b>${escapar(val)}</b></div>`;
       },
     },
@@ -251,7 +251,8 @@ function construirMapaCalor(
                 value: [c[0], c[1], min],
                 sinDato: true,
                 itemStyle: { color: tema.rejilla },
-                label: { show: d.columnas.length <= 14 && d.filas.length <= 14, formatter: 'Sin dato', color: tema.textoSuave },
+                // Sin `show` propio: hereda el de la serie, que en un lienzo angosto se apaga (si no, «Sin dato» se amontona).
+                label: { formatter: 'Sin dato', color: tema.textoSuave },
               }
             : {
                 value: [c[0], c[1], c[2]],
@@ -336,7 +337,7 @@ function construirMedidor(
  * unos sobre otros: ECharts decide por el ancho real del lienzo (`media`), no por la ventana,
  * así que sigue valiendo dentro de un panel estrecho en una pantalla grande.
  */
-function conMovil(option: EChartsCoreOption, angosto?: Record<string, unknown>): EChartsCoreOption {
+function withNarrow(option: EChartsCoreOption, angosto?: Record<string, unknown>): EChartsCoreOption {
   return {
     baseOption: option,
     media: [
@@ -361,36 +362,41 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
       // Solo con pocas categorías (las que se rotulan todas): una serie diaria se aclara sola por intervalo.
       if (d.horizontal === true) {
         // Con el nombre ocupando el 70 % del ancho la barra no tenía área útil: en angosto se trunca y el tooltip lo dice entero.
-        return conMovil(construirCartesiano(o, d), {
-          yAxis: { axisLabel: { width: 84, overflow: 'truncate' } },
+        return withNarrow(construirCartesiano(o, d), {
+          yAxis: { axisLabel: { width: 110, overflow: 'truncate' } },
           grid: { left: 8 },
         });
       }
       if (d.categorias.length >= 2 && d.categorias.length <= 3 && d.categorias.some((c) => c.length > 10)) {
         // Con 2 o 3 categorías de nombre largo («Notificación push»), en un lienzo angosto cada nombre se parte
         // dentro de su casilla; si no, ECharts oculta el del medio por solaparse y parece una barra sin nombre.
-        return conMovil(construirCartesiano(o, d), {
+        return withNarrow(construirCartesiano(o, d), {
           xAxis: { axisLabel: { width: Math.floor(240 / d.categorias.length), overflow: 'break', hideOverlap: false } },
         });
       }
       return d.categorias.length >= 4 && d.categorias.length <= 12
-        ? conMovil(construirCartesiano(o, d))
+        ? withNarrow(construirCartesiano(o, d))
         : construirCartesiano(o, d);
     case 'partes':
       // En un teléfono la leyenda se parte en dos líneas y pisaba la última etapa; la etiqueta de «En prueba o
       // con campaña creada» salía cortada: se deja más sitio abajo y a la derecha y la etiqueta se parte.
       return d.forma === 'embudo'
-        ? conMovil(construirPartes(o, d), {
+        ? withNarrow(construirPartes(o, d), {
             series: [{ right: '46%', bottom: 110, label: { width: 110, overflow: 'break' }, labelLine: { length: 14 } }],
           })
         : construirPartes(o, d);
     case 'mapa-calor':
       // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
-      return conMovil(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
+      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
     case 'medidor':
       return construirMedidor(o, d);
     case 'cascada':
-      return conMovil(construirCascada(o, d));
+      return withNarrow(construirCascada(o, d), {
+        xAxis: {
+          axisLabel: { rotate: 40, width: 220, overflow: 'none', hideOverlap: false, formatter: etiquetaCascada(d, o.spec.unidad, ' ') },
+        },
+        grid: { left: 28, bottom: 110 },
+      });
   }
 }
 

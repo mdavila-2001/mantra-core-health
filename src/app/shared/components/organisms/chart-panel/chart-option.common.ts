@@ -25,7 +25,7 @@ export function escapar(texto: string): string {
     .replace(/"/g, '&quot;');
 }
 
-export function prefersMoreContrast(): boolean {
+function prefersMoreContrast(): boolean {
   return (
     typeof window.matchMedia === 'function' &&
     (window.matchMedia('(prefers-contrast: more)').matches || window.matchMedia('(forced-colors: active)').matches)

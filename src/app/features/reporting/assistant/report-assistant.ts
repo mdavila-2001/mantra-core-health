@@ -44,7 +44,7 @@ import {
 } from './question-resolver';
 
 /**
- * «Pregúntale a tus reportes» (MAQUETA). Un chat dentro del portal de
+ * «Pregunte a sus reportes» (MAQUETA). Un chat dentro del portal de
  * reportería: no es el centro, es un atajo hacia la medida que ya vive en una
  * pestaña.
  *
