@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -1437,9 +1438,13 @@ export class SpecialtyFormBlock {
   ): readonly string[] {
     const estado = errorToViewState<null>(error);
     const motivo =
-      estado.status === 'validation'
-        ? estado.issues.map((issue) => issue.message).join(' ')
-        : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
+      // Un fallo que no es de la API —el catálogo que no publica el concepto presuntivo— dice su
+      // causa: «error inesperado (sin-id)» no le sirve a quien atiende.
+      error instanceof Error && !(error instanceof HttpErrorResponse)
+        ? error.message
+        : estado.status === 'validation'
+          ? estado.issues.map((issue) => issue.message).join(' ')
+          : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
     const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
     this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo el cierre');
     return [

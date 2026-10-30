@@ -1332,14 +1332,18 @@ export class PatientChart {
    * secas, que saltearía la restauración de foco del organismo.
    */
   protected async pedirDescarteDelAlta(): Promise<void> {
+    // Si el borrador ya dejó algo registrado el aviso es otro, y al descartar se relee.
+    const yaRegistrado = this.bloqueDelAlta()?.mensajeDeDescarte?.() ?? null;
     const descartar = await this.dialogs.confirm({
       title: '¿Descartar lo escrito?',
-      message: 'Todavía no se registró. Si cierra, lo que cargó en este formulario se pierde.',
+      message:
+        yaRegistrado ?? 'Todavía no se registró. Si cierra, lo que cargó en este formulario se pierde.',
       confirmLabel: 'Descartar',
       cancelLabel: 'Seguir escribiendo',
       destructive: true,
     });
     if (descartar) {
+      if (yaRegistrado !== null) this.recargar();
       this.dialogoDelAlta()?.close();
     }
   }
