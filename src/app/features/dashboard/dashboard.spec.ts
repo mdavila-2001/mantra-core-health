@@ -178,7 +178,7 @@ describe('Dashboard', () => {
     });
 
     it('a una cuenta administrativa no se le habla de su jornada', () => {
-      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
       http
         .expectOne((request) => request.url.includes('/profiles/patients'))
         .flush({ items: [], count: 0, limit: 5, nextCursor: null });
@@ -199,7 +199,7 @@ describe('Dashboard', () => {
   });
 
   it('con SECURITY_ADMIN pide el listado y toma el total de `count`, no de las filas', () => {
-    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
 
     http
       .expectOne((request) => request.url.includes('/profiles/patients'))
@@ -227,8 +227,26 @@ describe('Dashboard', () => {
     );
   });
 
+  describe('quien sólo gestiona la plataforma', () => {
+    it('entra por su portada y NO pide el listado de pacientes', () => {
+      crear({ sub: 'u-1', roles: ['SUPERADMIN', 'SECURITY_ADMIN'], tenants: ['t-1'] });
+
+      const componente = fixture.componentInstance as unknown as { esGestion: () => boolean };
+      expect(componente.esGestion()).toBe(true);
+      http.expectNone((request) => request.url.includes('/profiles/patients'));
+    });
+
+    it('con un rol clínico además, conserva el panel clínico y su listado', () => {
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
+
+      const componente = fixture.componentInstance as unknown as { esGestion: () => boolean };
+      expect(componente.esGestion()).toBe(false);
+      http.expectOne((request) => request.url.includes('/profiles/patients'));
+    });
+  });
+
   it('el listado vacío es S3, no una lista de cero filas', () => {
-    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+    crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
 
     http
       .expectOne((request) => request.url.includes('/profiles/patients'))
@@ -243,10 +261,12 @@ describe('Dashboard', () => {
   describe('Sus herramientas', () => {
     it.each([
       [['PRACTITIONER', 'CLINICIAN']],
-      [['SECURITY_ADMIN']],
+      [['SECURITY_ADMIN', 'CLINICIAN']],
+      [['SUPERADMIN', 'SECURITY_ADMIN']],
     ])('con %j el panel ya no dibuja el árbol de accesos', (roles) => {
       crear({ sub: 'u-1', roles, tenants: ['t-1'] });
-      if (roles.includes('SECURITY_ADMIN')) {
+      // Quien sólo gestiona la plataforma entra por su portada y no lista pacientes.
+      if (roles.includes('SECURITY_ADMIN') && roles.includes('CLINICIAN')) {
         http
           .expectOne((request) => request.url.includes('/profiles/patients'))
           .flush({ items: [], count: 0, limit: 5, nextCursor: null });
@@ -305,7 +325,7 @@ describe('Dashboard', () => {
     });
 
     it('a quien no atiende no se le pregunta siquiera', () => {
-      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN'], tenants: ['t-1'] });
+      crear({ sub: 'u-1', roles: ['SECURITY_ADMIN', 'CLINICIAN'], tenants: ['t-1'] });
       // Este rol sí lista pacientes; se responde para que el `verify()` del
       // teardown hable sólo de lo que esta prueba mira.
       http

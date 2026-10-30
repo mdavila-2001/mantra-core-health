@@ -5,6 +5,13 @@
      ninguno de los dos: se separan. -->
 @if (esPaciente()) {
   <app-patient-home />
+} @else if (esGestion()) {
+  <!-- Quien administra la plataforma entra por su portada: las dos puertas —portal
+       administrativo y de reportería— y el estado de todo. Diferido por la misma
+       razón que el aviso de abajo: este panel viaja en el paquete inicial. -->
+  @defer (on immediate) {
+    <app-platform-home />
+  }
 } @else {
   <!-- TJ-1 · el aviso del alta incompleta. Va arriba de todo porque es lo único
      de este panel que le impide al médico recibir pacientes.
