@@ -15,8 +15,14 @@ Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `de
 | `yarn typecheck` · `yarn build` · `eslint` de las pruebas | 0 · 0 · 0 |
 | `check-contrast` · `check-css-tokens` | 0 · 0; `check-colores-sueltos` falla en archivos no tocados |
 
-No se pudo abrir en el simulador: «Ingreso por mostrador», «Nueva cuenta» de contabilidad y
-«Editar la pregunta»; no se les cambió nada. Capturas: `capturas/antes/modales-2026-10-28/` y
+**Los que no se habían podido abrir (30/10/2026, segunda vuelta).** Los botones habían cambiado
+de lugar: transacciones y cuentas viven dentro de «Registros», las encuestas son una lista con su
+«Abrir», el mostrador es `agenda-ingreso-mostrador` y la aprobación parcial se pide desde el
+detalle. Abiertos los cinco en 1440 y 390: mostrador, nueva cuenta, nueva transacción y aprobar
+parcialmente están bien y no se tocan. «Editar la pregunta» era el único con los botones dentro
+del cuerpo y «Listo» a la izquierda: pasan al pie (`antes-despues-editar-pregunta.png`); en
+teléfono «Cancelar» y «Listo» bajan juntos. Medidas de los tres usuarios antes/después: sólo
+cambian los modales ya corregidos. `ng test` de encuestas: 144/144. Capturas: `capturas/antes/modales-2026-10-28/` y
 `capturas/despues/modales-2026-10-28/antes-despues-*.png`.
 
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27

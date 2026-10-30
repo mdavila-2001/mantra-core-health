@@ -223,19 +223,23 @@
       >
         Borrar pregunta
       </button>
-      <button app-button variant="ghost" type="button" (click)="cancelar()">
-        Cancelar
-      </button>
-      <button
-        app-button
-        variant="primary"
-        type="button"
-        [disabled]="problema() !== null || guardando()"
-        (click)="confirmar()"
-        data-testid="editor-guardar"
-      >
-        {{ guardando() ? 'Guardando…' : 'Listo' }}
-      </button>
+      <!-- Cancelar y Listo bajan juntos cuando no entra la fila: en un
+           teléfono «Listo» quedaba solo en un renglón. -->
+      <span class="editor-pregunta__confirmar">
+        <button app-button variant="ghost" type="button" (click)="cancelar()">
+          Cancelar
+        </button>
+        <button
+          app-button
+          variant="primary"
+          type="button"
+          [disabled]="problema() !== null || guardando()"
+          (click)="confirmar()"
+          data-testid="editor-guardar"
+        >
+          {{ guardando() ? 'Guardando…' : 'Listo' }}
+        </button>
+      </span>
     </div>
   </app-content-dialog>
 }
