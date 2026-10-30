@@ -77,6 +77,16 @@ export class ReportPrefsStore {
     this.persist();
   }
 
+  /**
+   * Vacía lo que está en memoria al cerrar sesión, para que quien entre después no vea ni un
+   * cuadro con los favoritos del anterior antes de que `load()` lea los suyos. Lo guardado
+   * (clave por usuario) no se toca: pertenece a quien lo marcó.
+   */
+  reset(): void {
+    this.favorites.set([]);
+    this.recents.set([]);
+  }
+
   private persist(): void {
     try {
       const value: StoredPrefs = { favorites: this.favorites(), recents: this.recents() };

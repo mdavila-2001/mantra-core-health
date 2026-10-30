@@ -74,4 +74,13 @@ export class ReportContextStore {
   limpiarFiltros(): void {
     this.filtros.set([]);
   }
+
+  /** Vuelve a los valores de fábrica: al cerrar sesión la persona siguiente no hereda alcance, moneda ni filtros. */
+  restablecer(): void {
+    this.periodo.set('30d');
+    this.comparar.set('periodo-anterior');
+    this.moneda.set('BOB');
+    this.alcance.set('plataforma');
+    this.filtros.set([]);
+  }
 }

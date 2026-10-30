@@ -19,12 +19,14 @@ export function agregarAlHistorial(historial: readonly string[], pregunta: strin
 }
 
 /**
- * El historial vive solo en este navegador y es una comodidad: si el
- * almacenamiento está bloqueado o roto, el panel sigue funcionando sin él.
+ * El historial vive en `sessionStorage`: solo en esta pestaña y hasta que se cierre. Una pregunta
+ * libre puede nombrar a una persona («¿cuánto cobró el Dr. …?»), así que no se deja en disco
+ * más tiempo del que dura el trabajo. Es una comodidad: si el almacenamiento está bloqueado o
+ * roto, el panel sigue funcionando sin él.
  */
 export function leerHistorial(userId: string | null): string[] {
   try {
-    const bruto = globalThis.localStorage?.getItem(clave(userId));
+    const bruto = globalThis.sessionStorage?.getItem(clave(userId));
     if (bruto == null) {
       return [];
     }
@@ -39,7 +41,7 @@ export function leerHistorial(userId: string | null): string[] {
 
 export function guardarHistorial(userId: string | null, historial: readonly string[]): void {
   try {
-    globalThis.localStorage?.setItem(clave(userId), JSON.stringify(historial));
+    globalThis.sessionStorage?.setItem(clave(userId), JSON.stringify(historial));
   } catch {
     /* sin almacenamiento: el historial queda solo en memoria */
   }
@@ -47,7 +49,7 @@ export function guardarHistorial(userId: string | null, historial: readonly stri
 
 export function borrarHistorialGuardado(userId: string | null): void {
   try {
-    globalThis.localStorage?.removeItem(clave(userId));
+    globalThis.sessionStorage?.removeItem(clave(userId));
   } catch {
     /* nada que borrar */
   }
@@ -57,22 +59,25 @@ export function borrarHistorialGuardado(userId: string | null): void {
  * Al cerrar sesión se olvidan los historiales de TODOS los usuarios de este
  * navegador (TX-31): una pregunta sobre reportes comerciales puede revelar qué
  * le preocupa a un directivo, y el siguiente en el equipo no debe leerla.
+ * Se limpian los dos almacenes: la versión anterior los guardaba en `localStorage`
+ * y esas claves no pueden quedar vivas.
  */
 export function clearBrowserHistories(): void {
-  try {
-    const almacen = globalThis.localStorage;
-    if (almacen == null) {
-      return;
-    }
-    const claves: string[] = [];
-    for (let i = 0; i < almacen.length; i++) {
-      const k = almacen.key(i);
-      if (k === LLAVE_ANTIGUA || k?.startsWith(PREFIJO)) {
-        claves.push(k);
+  for (const almacen of [globalThis.sessionStorage, globalThis.localStorage]) {
+    try {
+      if (almacen == null) {
+        continue;
       }
+      const claves: string[] = [];
+      for (let i = 0; i < almacen.length; i++) {
+        const k = almacen.key(i);
+        if (k === LLAVE_ANTIGUA || k?.startsWith(PREFIJO)) {
+          claves.push(k);
+        }
+      }
+      claves.forEach((k) => almacen.removeItem(k));
+    } catch {
+      /* nada que olvidar */
     }
-    claves.forEach((k) => almacen.removeItem(k));
-  } catch {
-    /* nada que olvidar */
   }
 }

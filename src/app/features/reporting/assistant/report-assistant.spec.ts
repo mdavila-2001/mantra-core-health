@@ -100,7 +100,7 @@ describe('ReportAssistant', () => {
   }
 
   beforeEach(() => {
-    globalThis.localStorage.clear();
+    globalThis.sessionStorage.clear();
   });
 
   describe('vacío con sugerencias', () => {
@@ -349,12 +349,12 @@ describe('ReportAssistant', () => {
       await preguntar('mrr');
       await esperar(() => texto().includes(MRR_TEXTO));
       expect(texto()).toContain('Preguntas recientes (1)');
-      expect(JSON.parse(globalThis.localStorage.getItem('alovida:reportes:asistente:historial:anonymous') ?? '[]')).toEqual(['mrr']);
+      expect(JSON.parse(globalThis.sessionStorage.getItem('alovida:reportes:asistente:historial:anonymous') ?? '[]')).toEqual(['mrr']);
 
       boton('Borrar historial').click();
       fixture.detectChanges();
       expect(texto()).not.toContain('Preguntas recientes');
-      expect(globalThis.localStorage.getItem('alovida:reportes:asistente:historial:anonymous')).toBeNull();
+      expect(globalThis.sessionStorage.getItem('alovida:reportes:asistente:historial:anonymous')).toBeNull();
     });
 
     it('pulsar una pregunta del historial la vuelve a hacer', async () => {
@@ -368,7 +368,7 @@ describe('ReportAssistant', () => {
       const roto = (): never => {
         throw new Error('bloqueado');
       };
-      vi.stubGlobal('localStorage', { getItem: roto, setItem: roto, removeItem: roto });
+      vi.stubGlobal('sessionStorage', { getItem: roto, setItem: roto, removeItem: roto });
       try {
         await preguntar('mrr');
         await esperar(() => texto().includes(MRR_TEXTO));
@@ -381,7 +381,7 @@ describe('ReportAssistant', () => {
 
   describe('historial previo', () => {
     it('al abrir recupera lo que había guardado', async () => {
-      globalThis.localStorage.setItem('alovida:reportes:asistente:historial:anonymous', JSON.stringify(['cac', 'mrr']));
+      globalThis.sessionStorage.setItem('alovida:reportes:asistente:historial:anonymous', JSON.stringify(['cac', 'mrr']));
       await montar();
       await esperar(() => texto().includes('Preguntas recientes (2)'));
     });

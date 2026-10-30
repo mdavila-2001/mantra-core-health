@@ -4,6 +4,8 @@ import { ChatAutoReply } from './core/messaging/chat-auto-reply';
 import { MessageTemplates } from './core/messaging/message-templates';
 import { ReportAssistantData } from './features/reporting/assistant/assistant-data';
 import { clearBrowserHistories } from './features/reporting/assistant/assistant-history';
+import { ReportPrefsStore } from './features/reporting/pages/report-grid/report-prefs.store';
+import { ReportContextStore } from './features/reporting/state/report-context.store';
 import { RememberedPriceLists } from './features/admin/medical-laboratory/remembered-price-lists';
 
 /**
@@ -24,4 +26,7 @@ export function olvidarLoSensibleDelNavegador(injector: Injector): void {
   // Portal de reportería: lo que el asistente trajo y las preguntas que se hicieron.
   injector.get(ReportAssistantData).limpiar();
   clearBrowserHistories();
+  // Y lo que el portal tiene en memoria: filtros, moneda, alcance, favoritos y recientes.
+  injector.get(ReportContextStore).restablecer();
+  injector.get(ReportPrefsStore).reset();
 }

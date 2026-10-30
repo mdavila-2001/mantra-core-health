@@ -38,11 +38,11 @@ describe('historial del asistente', () => {
   });
 
   it('un contenido corrupto o de otro tipo se lee como vacío', () => {
-    globalThis.localStorage.setItem('alovida:reportes:asistente:historial:u1', '{no es json');
+    globalThis.sessionStorage.setItem('alovida:reportes:asistente:historial:u1', '{no es json');
     expect(leerHistorial('u1')).toEqual([]);
-    globalThis.localStorage.setItem('alovida:reportes:asistente:historial:u1', '{"a":1}');
+    globalThis.sessionStorage.setItem('alovida:reportes:asistente:historial:u1', '{"a":1}');
     expect(leerHistorial('u1')).toEqual([]);
-    globalThis.localStorage.setItem('alovida:reportes:asistente:historial:u1', '["ok", 3, "", null]');
+    globalThis.sessionStorage.setItem('alovida:reportes:asistente:historial:u1', '["ok", 3, "", null]');
     expect(leerHistorial('u1')).toEqual(['ok']);
   });
 
@@ -50,7 +50,7 @@ describe('historial del asistente', () => {
     const roto = (): never => {
       throw new Error('almacenamiento bloqueado');
     };
-    vi.stubGlobal('localStorage', { getItem: roto, setItem: roto, removeItem: roto });
+    vi.stubGlobal('sessionStorage', { getItem: roto, setItem: roto, removeItem: roto });
     expect(() => guardarHistorial('u1', ['x'])).not.toThrow();
     expect(leerHistorial('u1')).toEqual([]);
     expect(() => borrarHistorialGuardado('u1')).not.toThrow();
@@ -73,11 +73,30 @@ describe('historial del asistente', () => {
   });
 
   it('olvidar no toca claves ajenas del almacenamiento', () => {
-    localStorage.setItem('otra-cosa', 'x');
+    sessionStorage.setItem('otra-cosa', 'x');
+    localStorage.setItem('otra-cosa', 'y');
     guardarHistorial('u1', ['a']);
     clearBrowserHistories();
-    expect(localStorage.getItem('otra-cosa')).toBe('x');
+    expect(sessionStorage.getItem('otra-cosa')).toBe('x');
+    expect(localStorage.getItem('otra-cosa')).toBe('y');
+    sessionStorage.removeItem('otra-cosa');
     localStorage.removeItem('otra-cosa');
+  });
+
+  it('el historial no se escribe en localStorage: no sobrevive a la pestaña', () => {
+    guardarHistorial('u1', ['¿Cuánto cobró el Dr. Gómez?']);
+    expect(localStorage.getItem('alovida:reportes:asistente:historial:u1')).toBeNull();
+    expect(sessionStorage.getItem('alovida:reportes:asistente:historial:u1')).not.toBeNull();
+  });
+
+  it('cerrar sesión borra el historial de todos los usuarios, y también las claves que la versión anterior dejó en localStorage', () => {
+    guardarHistorial('u1', ['a']);
+    guardarHistorial('u2', ['b']);
+    localStorage.setItem('alovida:reportes:asistente:historial:u3', JSON.stringify(['vieja de disco']));
+    clearBrowserHistories();
+    expect(leerHistorial('u1')).toEqual([]);
+    expect(leerHistorial('u2')).toEqual([]);
+    expect(localStorage.getItem('alovida:reportes:asistente:historial:u3')).toBeNull();
   });
 
   it('cerrar sesión también olvida la llave de la versión previa', () => {
