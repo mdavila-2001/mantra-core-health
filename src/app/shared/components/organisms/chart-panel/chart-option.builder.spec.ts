@@ -156,6 +156,13 @@ describe('construirOpciones', () => {
       expect(at(muchasBarras, 'media.0.option.yAxis.axisLabel.overflow')).toBe('truncate');
     });
 
+    it('la dona sube y se achica en un lienzo angosto para que la leyenda no la pise', () => {
+      const raw = buildRaw({ tipo: 'partes', forma: 'dona', partes: [{ nombre: 'A', valor: 1 }, { nombre: 'B', valor: 2 }] });
+      expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
+      expect(at(raw, 'media.0.option.series.0.center.1')).toBe('33%');
+      expect(at(raw, 'baseOption.series.0.center.1')).toBe('40%');
+    });
+
     it('con pocas categorías se rotulan todas', () => {
       media({});
       const o = build({ tipo: 'cartesiano', categorias: ['A', 'B', 'C'], series: [{ nombre: 'S', valores: [1, 2, 3], forma: 'barra' }] });

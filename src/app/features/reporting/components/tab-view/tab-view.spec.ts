@@ -95,6 +95,24 @@ describe('TabView', () => {
     expect(root.textContent).toContain('Mayores clientes');
   });
 
+  it('con más de seis indicadores muestra seis y deja el resto a un clic, sin perderlos', async () => {
+    const muchos = Array.from({ length: 9 }, (_, i) => ({ id: `k${i}`, titulo: `K${i}`, valor: i, unidad: { tipo: 'numero' as const }, variacionPct: 1, info: INFO }));
+    const fixture = mount(data({ kpis: muchos }));
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const mas = root.querySelector('[data-testid="more-kpis"]') as HTMLDetailsElement;
+    expect(mas.open).toBe(false);
+    expect(mas.querySelectorAll('app-kpi-tile')).toHaveLength(3);
+    expect(root.querySelectorAll('.tv__section > .tv__kpis app-kpi-tile')).toHaveLength(6);
+    expect(mas.querySelector('summary')?.textContent).toContain('Más indicadores (3)');
+  });
+
+  it('con seis indicadores o menos no ofrece «Más indicadores»', async () => {
+    const fixture = mount(data());
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="more-kpis"]')).toBeNull();
+  });
+
   it('un gráfico de ancho completo ocupa toda la fila', async () => {
     // Dos de media columna y uno completo: ninguno queda huérfano, así que solo el completo ocupa la fila.
     const fixture = mount(data({ graficos: [chart('g1'), chart('g2', { ancho: 'completo' }), chart('g3')] }));

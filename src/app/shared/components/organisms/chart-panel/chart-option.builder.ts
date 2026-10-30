@@ -404,7 +404,10 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
         ? withNarrow(construirPartes(o, d), {
             series: [{ right: '46%', bottom: 110, label: { width: 110, overflow: 'break' }, labelLine: { length: 14 } }],
           })
-        : construirPartes(o, d);
+        : withNarrow(construirPartes(o, d), {
+            // La leyenda se parte en varias líneas en un teléfono: el anillo sube y se achica para no quedar pisado.
+            series: [{ center: ['50%', '33%'], radius: ['28%', '48%'] }],
+          });
     case 'mapa-calor':
       // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
       return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
