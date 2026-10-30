@@ -50,7 +50,7 @@ import { OtherRadio } from '../../molecules/other-radio/other-radio';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { Stepper } from '../../molecules/stepper/stepper';
-import type { StepperStep } from '../../molecules/stepper/stepper.types';
+import { porcentajeDelRecorrido, type StepperStep } from '../../molecules/stepper/stepper.types';
 import { DatePicker } from '../date-picker/date-picker';
 import type { DateTextProblem } from '../date-picker/date-picker.types';
 import { CustomField } from './custom-field';
@@ -125,9 +125,14 @@ type RespuestaSiNo = 'si' | 'no' | '';
  *   tres páginas atrás; validar todo al entrar pintaría de rojo lo que aún no
  *   escribió.
  *
- * - **La barra cuenta páginas terminadas, no la actual.** En el paso 1 de 4 dice
- *   0%: no hay nada hecho todavía. Empezar en 25% por haber abierto la pantalla
- *   es una barra que miente, y una barra que miente no se vuelve a mirar.
+ * - **La barra mide el recorrido, igual que el stepper.** En la primera página
+ *   dice 0 %, sobre el primer marcador; en la última, 100 %, sobre el último;
+ *   en el medio, la posición entre los dos (`posición / (páginas − 1)`). No
+ *   empieza en 25 % por haber abierto la pantalla. La cuenta no es propia: sale
+ *   de la misma lista de pasos que dibuja el stepper (`porcentajeDelRecorrido`),
+ *   así que la barra y el riel no pueden dar dos avances distintos. Antes
+ *   contaba «páginas terminadas sobre el total» y el stepper otra cosa
+ *   (issue #1448).
  *
  * - **El foco viaja con la página.** Al cambiar de paso, el título recibe el
  *   foco y una región viva anuncia «Paso 2 de 4: Datos de contacto». Sin eso,
@@ -415,10 +420,15 @@ export class PaginatedForm {
    */
   protected readonly nextAsIcon = computed(() => this.iconOnlyNav() && !this.esUltima());
 
-  /** Páginas terminadas sobre el total, en tanto por ciento. */
-  readonly avance = computed(() =>
-    this.total() === 0 ? 0 : Math.round((this.indice() / this.total()) * 100),
-  );
+  /**
+   * Dónde va la persona en el recorrido, en tanto por ciento: 0 % en la primera
+   * página y 100 % en la última.
+   *
+   * Sale de `pasos()` —la misma lista que dibuja el stepper— y no de un cálculo
+   * propio sobre `indice()`: la barra y el riel del stepper cuentan lo mismo
+   * porque leen lo mismo. Ver {@link porcentajeDelRecorrido}.
+   */
+  readonly avance = computed(() => porcentajeDelRecorrido(this.pasos()));
 
   /** «Crear cuenta: paso 2 de 4, Datos de contacto». */
   readonly resumen = computed(() => {

@@ -1,0 +1,69 @@
+<article class="kpi" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'kpi-' + kpi().id">
+  <h3 class="kpi__title" [id]="ids + '-t'">{{ kpi().titulo }}</h3>
+
+  <p class="kpi__value" [class.kpi__value--empty]="noData()" data-testid="kpi-value">{{ valueText() }}</p>
+
+  @if (noData()) {
+    <!-- Sin dato: el motivo va siempre, y no hay variación ni tendencia que inventar. -->
+    <p class="kpi__reason" data-testid="kpi-reason">{{ reason() }}</p>
+  } @else {
+    <p class="kpi__delta" [attr.data-verdict]="delta().verdict" data-testid="kpi-delta">
+      <span class="kpi__pill">
+        @if (arrow(); as glyph) {
+          <span class="kpi__arrow" aria-hidden="true">{{ glyph }}</span>
+        }
+        <span class="kpi__delta-num">{{ delta().text }}</span>
+      </span>
+      @if (delta().word) {
+        <span class="kpi__delta-word">{{ delta().word }}</span>
+      }
+      @if (comparison(); as against) {
+        @if (delta().direction !== 'none') {
+          <span class="kpi__delta-vs">{{ against }}</span>
+        }
+      }
+    </p>
+
+    @if (fraction(); as parts) {
+      <p class="kpi__fraction" data-testid="kpi-fraction">{{ parts }}</p>
+    }
+
+    @if (showTrend()) {
+      @if (trendOptions(); as options) {
+        <div
+          class="kpi__spark"
+          echarts
+          [options]="options"
+          [initOpts]="{ renderer: 'svg' }"
+          role="img"
+          [attr.aria-label]="trendLabel()"
+          data-testid="kpi-trend"
+        ></div>
+      } @else {
+        <div class="kpi__spark kpi__spark--wait" aria-hidden="true"></div>
+      }
+    }
+  }
+
+  <div class="kpi__foot">
+    @if (kpi().info; as info) {
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        [attr.aria-expanded]="infoOpen()"
+        [attr.aria-controls]="ids + '-info'"
+        data-testid="kpi-how"
+        (click)="infoOpen.set(!infoOpen())"
+      >
+        <app-nav-icon name="note" /> Cómo se calcula
+      </button>
+      @if (infoOpen()) {
+        <app-calc-info class="kpi__info" [id]="ids + '-info'" [info]="info" [label]="kpi().titulo" />
+      }
+    } @else if (kpi().infoMotivo; as why) {
+      <p class="kpi__note" data-testid="kpi-no-info">Sin ficha de cálculo: {{ why }}</p>
+    }
+  </div>
+</article>

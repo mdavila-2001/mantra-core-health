@@ -13,6 +13,13 @@ const RESEÑA = '/patients/me/reviews';
 
 const DIA_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Un solo «ahora» para todo el archivo: la lista ordena por vencimiento, y con
+ * un `Date.now()` por invitación dos tarjetas armadas seguidas difieren por
+ * milisegundos y el orden esperado dependía del reloj.
+ */
+const AHORA = Date.now();
+
 /** Una invitación como viaja: fechas en texto y opcionales en `null`. */
 function enElCable(id: string, status: 'PENDING' | 'ANSWERED' | 'EXPIRED', diasDeRespuesta = 2) {
   return {
@@ -20,10 +27,10 @@ function enElCable(id: string, status: 'PENDING' | 'ANSWERED' | 'EXPIRED', diasD
     title: `Encuesta ${id}`,
     description: null,
     status,
-    issuedAt: new Date(Date.now() - 5 * DIA_MS).toISOString(),
-    expiresAt: new Date(Date.now() + 3 * DIA_MS).toISOString(),
+    issuedAt: new Date(AHORA - 5 * DIA_MS).toISOString(),
+    expiresAt: new Date(AHORA + 3 * DIA_MS).toISOString(),
     answeredAt:
-      status === 'ANSWERED' ? new Date(Date.now() - diasDeRespuesta * DIA_MS).toISOString() : null,
+      status === 'ANSWERED' ? new Date(AHORA - diasDeRespuesta * DIA_MS).toISOString() : null,
     appointmentBookingId: `bk-${id}`,
   };
 }
@@ -165,5 +172,76 @@ describe('Questionnaires (Mis cuestionarios)', () => {
 
     expect(raiz().querySelector('app-rate-encounter-dialog')).toBeNull();
     expect(raiz().querySelector('[data-testid="resenar-i-1"]')).toBeNull();
+  });
+
+  describe('de qué atención es cada encuesta', () => {
+    const ATENDIDA = '2026-10-20T14:00:00.000Z';
+
+    function contextos(): string[] {
+      return Array.from(
+        raiz().querySelectorAll('[data-testid="cuestionario-contexto"]'),
+        (el) => (el.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      );
+    }
+
+    it('una consulta dice «Consulta con <médico> · <fecha>» y un servicio «<servicio> · <fecha>»', () => {
+      cargar([
+        {
+          ...enElCable('i-1', 'PENDING'),
+          kind: 'CONSULTATION',
+          practitionerDisplayName: 'Dra. Rojas',
+          attendedAt: ATENDIDA,
+        },
+        {
+          ...enElCable('i-2', 'PENDING'),
+          kind: 'SERVICE',
+          serviceName: 'Ecografía abdominal',
+          attendedAt: ATENDIDA,
+        },
+      ]);
+
+      const [consulta, servicio] = contextos();
+      expect(consulta).toMatch(/^Consulta con Dra\. Rojas · .*2026$/);
+      expect(servicio).toMatch(/^Ecografía abdominal · .*2026$/);
+    });
+
+    it('con el contexto presente no repite la consigna larga en cada tarjeta', () => {
+      cargar([
+        {
+          ...enElCable('i-1', 'PENDING'),
+          description: 'Le pedimos un minuto para contarnos cómo fue su consulta.',
+          kind: 'CONSULTATION',
+          practitionerDisplayName: 'Dra. Rojas',
+          attendedAt: ATENDIDA,
+        },
+      ]);
+
+      expect(raiz().querySelector('.cuestionarios__consigna')).toBeNull();
+      expect(raiz().textContent).not.toContain('Le pedimos un minuto');
+    });
+
+    it('sin los campos nuevos (API anterior) degrada al texto de siempre, sin romper', () => {
+      cargar([
+        {
+          ...enElCable('i-1', 'PENDING'),
+          description: 'Le pedimos un minuto para contarnos cómo fue su consulta.',
+        },
+      ]);
+
+      expect(contextos()).toEqual([]);
+      expect(raiz().querySelector('.cuestionarios__consigna')?.textContent).toContain(
+        'Le pedimos un minuto',
+      );
+      expect(raiz().querySelector('[data-testid="responder-i-1"]')).not.toBeNull();
+    });
+
+    it('con kind pero sin nombre ni fecha dice sólo lo que sabe, sin inventar', () => {
+      cargar([
+        { ...enElCable('i-1', 'PENDING'), kind: 'CONSULTATION', practitionerDisplayName: null },
+        { ...enElCable('i-2', 'PENDING'), kind: 'SERVICE', serviceName: null, attendedAt: null },
+      ]);
+
+      expect(contextos()).toEqual(['Consulta', 'Servicio de salud']);
+    });
   });
 });

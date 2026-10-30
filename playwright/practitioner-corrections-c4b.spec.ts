@@ -79,7 +79,10 @@ function watchForProblems(page: Page): string[] {
     const text = message.text();
     const isEventReplay =
       /Content Security Policy/.test(text) && EVENT_REPLAY_CSP_HASHES.some((h) => text.includes(h));
-    if (!isEventReplay) problems.push(`console: ${text}`);
+    // Una navegación que interrumpe una transición de vista del router la aborta;
+    // el navegador lo anuncia así y no es un fallo de la pantalla.
+    const isSkippedTransition = text.includes('AbortError: Transition was skipped');
+    if (!isEventReplay && !isSkippedTransition) problems.push(`console: ${text}`);
   });
   page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`));
   page.on('response', (response) => {
@@ -301,7 +304,7 @@ test('médica · una cita sin comprobantes lo dice y ofrece marcar el pago sin c
   await expect(dialog).toContainText('El paciente todavía no subió comprobantes');
   await snapshotMatrix(page, () => dialog, 'practitioner-receipts-dialog-empty');
 
-  await dialog.getByTestId('payment-receipts-empty-manual').click();
+  await dialog.getByTestId('payment-receipts-manual-toggle').click();
   await expect(dialog.getByTestId('payment-manual')).toBeVisible();
   await snapshot(dialog, 'practitioner-manual-payment-1280-light');
 

@@ -60,18 +60,6 @@ interface ArchivoSimulado {
  */
 const TOPE_PERSISTIBLE = 1_500_000;
 
-/** Un `data:` URL de vuelta a `Blob`, con su tipo. */
-function blobDeDataUrl(dataUrl: string): Blob | null {
-  const partes = /^data:([^;,]*)(;base64)?,(.*)$/su.exec(dataUrl);
-  if (partes === null || typeof Blob === 'undefined') return null;
-  const [, tipo, base64, datos] = partes;
-  if (base64 === undefined) return new Blob([decodeURIComponent(datos!)], { type: tipo });
-  const binario = atob(datos!);
-  const bytes = new Uint8Array(binario.length);
-  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
-  return new Blob([bytes], { type: tipo });
-}
-
 /** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
 const LABORATORIO_UPLOADER = uuid('user-laboratorio-central');
 
@@ -84,7 +72,7 @@ function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: stri
 
 /** Un archivo subido hace menos de 5 s sigue «en análisis» (`SCAN_PENDING`). */
 function escaneoPendiente(archivo: ArchivoSimulado): boolean {
-  return archivo.bytes !== undefined && Date.now() - Date.parse(archivo.createdAt) < 5000;
+  return archivo.bytes instanceof Blob && Date.now() - Date.parse(archivo.createdAt) < 5000;
 }
 
 /**
@@ -236,12 +224,19 @@ export function fileContent(fileId: string): unknown {
   const a = archivos.get(fileId);
   if (a === undefined) return undefined;
   // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-  // Tras una recarga `bytes` llega como `{}` (un `Blob` no se serializa): por
-  // eso se pregunta si es un `Blob` de verdad, y si no, se rearma desde la
-  // copia en `data:` (`dataUrlReal`).
-  if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
-  const recuperado = a.dataUrlReal === undefined ? null : blobDeDataUrl(a.dataUrlReal);
-  if (recuperado !== null) return recuperado;
+  //
+  // `instanceof` y no `!== undefined`: la colección se guarda en
+  // `sessionStorage` como JSON, y un `Blob` no sobrevive a eso — tras recargar
+  // vuelve como `{}`. Ahí queda la copia `data:` de la imagen, que sí se guarda.
+  if (a.bytes instanceof Blob) return a.bytes;
+  if (a.dataUrlReal !== undefined) {
+    return {
+      body: a.dataUrlReal,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
+  }
   // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
   // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
   // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía

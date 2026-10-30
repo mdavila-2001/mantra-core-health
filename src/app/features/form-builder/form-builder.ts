@@ -34,6 +34,7 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { familiaDe } from '../../shared/components/atoms/data-type-icon/data-type-icon';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
@@ -65,6 +66,13 @@ import {
   selectionValidator,
 } from '../../shared/forms/paginated/selection-validators';
 import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
+
+/**
+ * Los formularios que «Mis formularios» muestra siempre, aunque la
+ * organización no les haya agregado campos: la ficha estándar de la cita
+ * médica (`TRANSV_CITA_MEDICA`, del catálogo que siembra la API).
+ */
+const FORMULARIOS_POR_DEFECTO: readonly string[] = ['TRANSV_CITA_MEDICA'];
 
 /**
  * Cómo se dibuja cada tipo de dato cuando el formulario se sirve.
@@ -155,6 +163,7 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
   imports: [
     Alert,
     AppButton,
+    Badge,
     Card,
     EmptyState,
     FieldEditor,
@@ -297,10 +306,21 @@ export class FormBuilder {
   protected readonly misFormularios = computed<readonly ChartTemplate[] | null>(() => {
     const lista = this.listado();
     if (lista === null) return null;
-    return lista
-      .filter((plantilla) => this.cuantosPropios(plantilla) > 0)
+    const porDefecto = lista.filter((plantilla) => this.esPorDefecto(plantilla));
+    const propios = lista
+      .filter((plantilla) => !this.esPorDefecto(plantilla) && this.cuantosPropios(plantilla) > 0)
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    return [...porDefecto, ...propios];
   });
+
+  /**
+   * Si es uno de los formularios que toda organización tiene por defecto: la
+   * ficha estándar de la cita médica. Está en la lista aunque no le hayan
+   * agregado nada, y va primero.
+   */
+  protected esPorDefecto(plantilla: ChartTemplate): boolean {
+    return FORMULARIOS_POR_DEFECTO.includes(plantilla.code);
+  }
 
   /** «Cargar formulario»: abre el catálogo, ya puesto en la especialidad propia. */
   protected cargarFormulario(): void {

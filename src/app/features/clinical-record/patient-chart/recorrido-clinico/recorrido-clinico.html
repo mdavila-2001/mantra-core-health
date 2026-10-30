@@ -1,0 +1,261 @@
+<!-- Fuera del PDF: el extractor lee el DOM, y un lienzo posicionado sale como
+     párrafos con el texto de cada columna pegado, sin tipo ni vínculos. El
+     expediente avisa arriba qué se exporta desde esta vista. -->
+<div class="recorrido" data-testid="expediente-recorrido" data-pdf-ignore>
+  <!-- La leyenda va arriba y no al pie: sin ella, los colores y las dos clases
+       de línea son un código que hay que adivinar. Sólo en horizontal: en
+       vertical no hay líneas que explicar (la indicación va en texto) ni
+       extremos a los que saltar. -->
+  @if (!angosto()) {
+    <div class="recorrido__barra">
+      <ul class="recorrido__leyenda" aria-label="Qué significa cada marca">
+        <li class="recorrido__leyenda-item">
+          <svg class="recorrido__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
+            <path class="recorrido__arista recorrido__arista--atencion" d="M 1 4 H 27" />
+          </svg>
+          Se decidió en esa atención
+        </li>
+        @if (hayIndicaciones()) {
+          <li class="recorrido__leyenda-item">
+            <svg class="recorrido__muestra" viewBox="0 0 28 8" aria-hidden="true" focusable="false">
+              <path class="recorrido__arista recorrido__arista--indicacion" d="M 1 4 H 25" />
+              <path class="recorrido__punta" d="M 22 1 L 27 4 L 22 7 Z" />
+            </svg>
+            Se indicó para ese diagnóstico
+          </li>
+        }
+      </ul>
+
+      <div class="recorrido__saltos">
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="irA('inicio')">
+          <app-nav-icon name="arrow-left" />
+          Lo más antiguo
+        </button>
+        <button app-button variant="ghost" size="sm" type="button" (clicked)="irA('final')">
+          Lo más reciente
+          <app-nav-icon name="arrow-right" />
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (angosto()) {
+    <!-- En el teléfono el tiempo corre hacia abajo y lo más reciente va
+         primero. Un lienzo horizontal en 390 px mostraba columna y cuarto, con
+         carriles casi vacíos: había que desplazar en dos ejes para leer una
+         consulta. Acá cada momento es un bloque con sus registros debajo, y el
+         tronco de la izquierda es el mismo eje del tiempo. -->
+    <ol class="recorrido-v" aria-label="Recorrido clínico, de lo más reciente a lo más antiguo">
+      @for (columna of columnasRecientesPrimero(); track columna.clave) {
+        <li class="recorrido-v__momento" [attr.aria-label]="rotuloDeColumna(columna)">
+          <div class="recorrido-v__cabecera">
+            <span
+              class="recorrido__hito recorrido-v__hito"
+              [class.recorrido__hito--atencion]="columna.contexto === 'atencion'"
+              aria-hidden="true"
+            ></span>
+            <p class="recorrido__fecha">
+              {{ columna.fecha ? (columna.fecha | date: 'd MMM y') : 'Sin fecha' }}
+            </p>
+            <p class="recorrido__contexto">{{ contextoDe(columna) }}</p>
+          </div>
+          <ul class="recorrido__nodos recorrido-v__nodos">
+            @for (nodo of columna.nodos; track nodo.id) {
+              <li>
+                <ng-container
+                  [ngTemplateOutlet]="plantillaDelNodo"
+                  [ngTemplateOutletContext]="{ $implicit: nodo, columna: columna, vertical: true }"
+                />
+              </li>
+            }
+          </ul>
+        </li>
+      }
+    </ol>
+  } @else {
+    <!-- El desplazamiento horizontal vive acá adentro y nunca en la página: el
+         recorrido puede tener cuarenta atenciones. -->
+    <div
+      #lienzo
+      class="recorrido__lienzo"
+      role="region"
+      aria-label="Recorrido clínico, de lo más antiguo a lo más reciente"
+      tabindex="0"
+    >
+      <div
+        class="recorrido__plano"
+        [style.width.px]="plano().ancho"
+        [style.height.px]="plano().alto"
+      >
+        <!-- Los carriles: bandas de fondo con su rótulo pegado al borde visible. -->
+        @for (carril of plano().carriles; track carril.tipo) {
+          <div
+            class="recorrido__carril"
+            [class]="'tono--' + tonoDe(carril.tipo)"
+            [style.top.px]="carril.y"
+            [style.height.px]="carril.alto"
+            aria-hidden="true"
+          >
+            <span class="recorrido__carril-rotulo">
+              <app-nav-icon [name]="aspecto[carril.tipo].icono" />
+              {{ aspecto[carril.tipo].plural }}
+              <span class="recorrido__carril-cuenta">{{ carril.cantidad }}</span>
+            </span>
+          </div>
+        }
+
+        <!-- El eje y las conexiones, en una sola capa por debajo de los nodos. -->
+        <svg
+          class="recorrido__trazos"
+          [attr.width]="plano().ancho"
+          [attr.height]="plano().alto"
+          [attr.viewBox]="'0 0 ' + plano().ancho + ' ' + plano().alto"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <defs>
+            <marker
+              id="recorrido-punta"
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path class="recorrido__punta" d="M 0 0 L 10 5 L 0 10 Z" />
+            </marker>
+          </defs>
+          @if (plano().columnas.length > 1) {
+            <line
+              class="recorrido__eje"
+              [attr.x1]="plano().columnas[0].x + medidas.anchoColumna / 2"
+              [attr.x2]="plano().columnas[plano().columnas.length - 1].x + medidas.anchoColumna / 2"
+              [attr.y1]="medidas.altoCabecera - 14"
+              [attr.y2]="medidas.altoCabecera - 14"
+            />
+          }
+          @for (arista of plano().aristas; track arista.clave) {
+            <!-- El halo: un trazo ancho del color del fondo por debajo de cada
+                 indicación. Donde dos se cruzan, la de arriba corta a la de
+                 abajo y el cruce se lee como un puente, no como un empalme. -->
+            @if (arista.motivo === 'indicacion') {
+              <path
+                class="recorrido__halo"
+                [class.recorrido__arista--atenuada]="aristaAtenuada(arista.clave)"
+                [attr.d]="arista.trazo"
+              />
+            }
+            <path
+              class="recorrido__arista"
+              [class.recorrido__arista--atencion]="arista.motivo === 'atencion'"
+              [class.recorrido__arista--indicacion]="arista.motivo === 'indicacion'"
+              [class.recorrido__arista--iluminada]="iluminada(arista.clave)"
+              [class.recorrido__arista--atenuada]="aristaAtenuada(arista.clave)"
+              [attr.d]="arista.trazo"
+              [attr.marker-end]="arista.motivo === 'indicacion' ? 'url(#recorrido-punta)' : null"
+            />
+          }
+        </svg>
+
+        <!-- Las columnas, en orden cronológico: es también el orden de lectura. -->
+        <ol class="recorrido__columnas">
+          @for (columna of plano().columnas; track columna.clave) {
+            <li
+              class="recorrido__columna"
+              [style.left.px]="columna.x"
+              [style.width.px]="medidas.anchoColumna"
+              [attr.aria-label]="rotuloDeColumna(columna)"
+            >
+              <div class="recorrido__cabecera" [style.height.px]="medidas.altoCabecera">
+                @if (columna.intervalo !== '') {
+                  <span
+                    class="recorrido__intervalo"
+                    [style.inset-inline-start.px]="-columna.hueco / 2"
+                    aria-hidden="true"
+                  >
+                    {{ columna.intervalo === 'el mismo día' ? columna.intervalo : '+ ' + columna.intervalo }}
+                  </span>
+                }
+                <p class="recorrido__fecha">
+                  {{ columna.fecha ? (columna.fecha | date: 'd MMM y') : 'Sin fecha' }}
+                </p>
+                <p class="recorrido__contexto">{{ contextoDe(columna) }}</p>
+                <span
+                  class="recorrido__hito"
+                  [class.recorrido__hito--atencion]="columna.contexto === 'atencion'"
+                  aria-hidden="true"
+                ></span>
+              </div>
+
+              <ul class="recorrido__nodos">
+                @for (nodo of columna.nodos; track nodo.id) {
+                  <li>
+                    <ng-container
+                      [ngTemplateOutlet]="plantillaDelNodo"
+                      [ngTemplateOutletContext]="{ $implicit: nodo, columna: columna, vertical: false }"
+                    />
+                  </li>
+                }
+              </ul>
+            </li>
+          }
+        </ol>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- El nodo, una sola vez para las dos disposiciones: lo que cambia es dónde
+     va, no qué dice ni qué hace. -->
+<ng-template #plantillaDelNodo let-nodo let-columna="columna" let-vertical="vertical">
+  <button
+    type="button"
+    class="recorrido__nodo"
+    [class]="'tono--' + tonoDe(nodo.tipo)"
+    [class.recorrido__nodo--atenuado]="atenuado(nodo.id)"
+    [class.recorrido__nodo--enfocado]="enfocado() === nodo.id"
+    [class.recorrido__nodo--grupo]="nodo.grupo !== undefined"
+    [style.top.px]="vertical ? null : nodo.y"
+    [style.height.px]="vertical ? null : medidas.altoNodo"
+    [attr.aria-label]="nombres().get(nodo.id)"
+    [attr.aria-expanded]="nodo.grupo ? nodo.grupo.accion === 'contraer' : null"
+    [attr.title]="nodo.grupo ? nodo.secundario : nodo.principal"
+    data-testid="recorrido-nodo"
+    [attr.data-tipo]="nodo.tipo"
+    (mouseenter)="apuntar(nodo)"
+    (mouseleave)="apuntar(null)"
+    (focus)="enfocar(nodo)"
+    (blur)="enfocar(null)"
+    (click)="activar(nodo)"
+  >
+    <span class="recorrido__nodo-cabeza">
+      <span class="recorrido__marca">
+        <app-nav-icon [name]="iconoDe(nodo.tipo)" />
+      </span>
+      <span class="recorrido__nodo-principal">{{ nodo.principal }}</span>
+    </span>
+    <span class="recorrido__nodo-pie">
+      @if (nodo.estado !== '') {
+        <span [class]="'recorrido__nodo-estado tono--' + (nodo.tonoDelEstado ?? 'info')">{{
+          nodo.estado
+        }}</span>
+      }
+      <!-- La fecha propia, cuando no es la de la columna: un diagnóstico que
+           empezó hace un año se decidió hoy, y la tarjeta tiene que decir las
+           dos cosas para no afirmar una cronología falsa. -->
+      @if (fechaPropia(nodo, columna); as propia) {
+        <span class="recorrido__nodo-fecha" [attr.title]="propia.rotulo + ' ' + (propia.fecha | date: 'd MMMM y')"
+          >{{ propia.rotulo }} {{ propia.fecha | date: propia.formato }}</span
+        >
+      }
+      @if (nodo.grupo || nodo.secundario !== '') {
+        <span class="recorrido__nodo-secundario">{{ nodo.secundario }}</span>
+      }
+    </span>
+    @if (vertical && indicaciones().get(nodo.id); as diagnostico) {
+      <!-- Sin la flecha del lienzo, la indicación se dice en texto. -->
+      <span class="recorrido__nodo-para">Para {{ diagnostico }}</span>
+    }
+  </button>
+</ng-template>

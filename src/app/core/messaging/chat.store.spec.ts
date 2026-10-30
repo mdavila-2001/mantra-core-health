@@ -574,6 +574,36 @@ describe('ChatStore', () => {
       enviado.flush({ id: 'm-auto', conversationId: 'c-1', sentAt: new Date().toISOString() });
     });
 
+    it('con IA guardada en el servidor el navegador no contesta: la redacta el servidor y saldrían dos', () => {
+      encender();
+      vi.spyOn(autoReply, 'iaDisponible').mockReturnValue(true);
+      autoReply.guardar({ activa: true, conIa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
+      autoReply.enElServidor.set(true);
+      localStorage.setItem('alovida.chat-ultima-actividad', String(Date.now() - 2 * 3_600_000));
+
+      llega('pp-2');
+
+      http.expectNone(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+    });
+
+    it('con IA pero sin el servidor sabiéndolo, el navegador manda el respaldo', () => {
+      encender();
+      vi.spyOn(autoReply, 'iaDisponible').mockReturnValue(true);
+      autoReply.guardar({ activa: true, conIa: true, minutosDeInactividad: 1, texto: 'Vuelvo a las 18.' });
+      autoReply.enElServidor.set(false);
+      localStorage.setItem('alovida.chat-ultima-actividad', String(Date.now() - 2 * 3_600_000));
+
+      llega('pp-2');
+
+      const enviado = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      expect(enviado.request.body).toMatchObject({ bodyText: 'Vuelvo a las 18.' });
+      enviado.flush({ id: 'm-auto', conversationId: 'c-1', sentAt: new Date().toISOString() });
+    });
+
     it('no se contesta a sí misma', () => {
       encender();
       autoReply.guardar({ activa: true, minutosDeInactividad: 1 });

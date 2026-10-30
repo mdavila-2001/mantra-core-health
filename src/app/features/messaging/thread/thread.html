@@ -5,7 +5,18 @@
   </a>
   <app-avatar [src]="avatar()" [name]="conQuien()" size="md" />
   <div class="hilo__cabecera-texto">
-    <h1 class="hilo__nombre">{{ conQuien() }}</h1>
+    <div class="hilo__nombre-fila">
+      <h1 class="hilo__nombre">{{ conQuien() }}</h1>
+      @if (verificacion(); as v) {
+        <app-verification-badge
+          size="md"
+          [status]="v.status"
+          [verifiedAt]="v.verifiedAt"
+          [validUntil]="v.validUntil"
+          [subject]="conQuien()"
+        />
+      }
+    </div>
     @if (subtitulo(); as estado) {
       <p class="hilo__estado">{{ estado }}</p>
     }
@@ -368,6 +379,18 @@
                 }
               }
 
+              <!-- La respuesta que redactó la IA se rotula: quien la recibe tiene
+                   que saber que no la escribió una persona. -->
+              @if (esRespuestaDeIa(linea.mensaje)) {
+                <span class="hilo__etiqueta-ia" data-testid="hilo-etiqueta-ia">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
+                  Respuesta automática generada por IA
+                </span>
+              }
+
+              <!-- Un aviso de agenda trae el enlace a su cita: se saca del
+                   texto y se ofrece como botón, a la pantalla de quien mira. -->
+              @let cita = appointmentOf(linea.mensaje.bodyText, linea.propio);
               @if (linea.contexto; as contexto) {
                 <!-- La tarjeta de contexto: lo que el texto de tres líneas
                      quería decir, dibujado como el resumen de un pedido. Un
@@ -392,11 +415,23 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
                   </a>
                 }
-              } @else if (linea.mensaje.bodyText; as texto) {
+              } @else if (cita?.texto ?? linea.mensaje.bodyText; as texto) {
                 <!-- En trozos: los enlaces se pueden tocar y, buscando, las
                      coincidencias se marcan. Todo en una línea de plantilla
                      para no meterle espacios a un `pre-wrap`. -->
                 <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
+              }
+
+              @if (cita) {
+                <a
+                  class="hilo__ir-cita"
+                  data-testid="hilo-ir-cita"
+                  [routerLink]="cita.ruta"
+                  [queryParams]="cita.parametros"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="m9 15 2 2 4-4" /></svg>
+                  <span>Ir a la cita</span>
+                </a>
               }
 
               <!-- La hora flota a la derecha de la última línea: es lo que hace

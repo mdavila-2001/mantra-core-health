@@ -18,6 +18,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore, editable, type MensajeDelHilo } from '../../../core/messaging/chat.store';
 import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
+import { appointmentLinkOf, type MessageAppointment } from '../../../core/messaging/appointment-link';
 import type {
   ConversationListItem,
   MessageReaction,
@@ -26,9 +27,11 @@ import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import {
   conversationAvatar as avatarDeConQuienDe,
   conversationLabel as conQuienDe,
+  conversationVerification as verificacionDe,
 } from '../../../core/messaging/conversation-label';
 import { dayLabel, clockTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -293,6 +296,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
   imports: [
     AppButton,
     Avatar,
+    VerificationBadge,
     Composer,
     ContactPanel,
     ContentDialog,
@@ -416,6 +420,12 @@ export class Thread {
   protected readonly conQuien = computed(() => {
     const activa = this.store.conversacionActiva();
     return activa === undefined ? 'Conversación' : conQuienDe(activa);
+  });
+
+  /** La verificación del otro lado, si la API la dijo (sólo en una conversación directa). */
+  protected readonly verificacion = computed(() => {
+    const activa = this.store.conversacionActiva();
+    return activa === undefined ? null : verificacionDe(activa);
   });
 
   protected readonly avatar = computed(() => {
@@ -1078,6 +1088,11 @@ export class Thread {
     return mensaje.contentType === 'STICKER' || stickerDe(mensaje.attachmentFileId) !== undefined;
   }
 
+  /** Respuesta automática de la IA, si nadie la editó después (editada, la etiqueta mentiría). */
+  protected esRespuestaDeIa(mensaje: MensajeDelHilo): boolean {
+    return mensaje.contentType === 'AUTO_REPLY_AI' && mensaje.isEdited !== true;
+  }
+
   /** Cómo se anuncia el sticker a quien no lo ve. */
   protected nombreDelSticker(mensaje: MensajeDelHilo): string {
     return stickerDe(mensaje.attachmentFileId)?.nombre ?? 'Sticker';
@@ -1109,6 +1124,11 @@ export class Thread {
       url !== null &&
       (/^data:audio\//i.test(url) || /\.(webm|mp3|m4a|ogg|wav)(\?|$)/i.test(url))
     );
+  }
+
+  /** La cita a la que apunta un aviso de agenda, si apunta a una. */
+  protected appointmentOf(texto: string | undefined, propio: boolean): MessageAppointment | null {
+    return appointmentLinkOf(texto, propio);
   }
 
   /** El texto de una burbuja, en trozos: enlaces y coincidencias. */

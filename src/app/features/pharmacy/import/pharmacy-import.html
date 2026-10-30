@@ -1,7 +1,9 @@
-<app-page-header
-  title="Importación masiva"
-  subtitle="Cargue o actualice de a cientos los productos de su farmacia con un archivo CSV. Revisa todo antes de que se publique nada."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Importación masiva"
+    subtitle="Cargue o actualice de a cientos los productos de su farmacia con un archivo CSV. Revisa todo antes de que se publique nada."
+  />
+}
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {
@@ -274,6 +276,48 @@
               </section>
             }
 
+            <section class="import__server" aria-labelledby="import-server-title" data-testid="import-server-preview">
+              <h2 id="import-server-title" class="import__subtitle">Vista previa del servidor</h2>
+              @switch (serverPreview().status) {
+                @case ('loading') {
+                  <p class="import__secondary" role="status">
+                    Consultando al servidor qué pasaría con cada fila lista. Todavía no se guarda nada.
+                  </p>
+                }
+                @case ('failed') {
+                  <app-alert tone="error" title="No pudimos pedir la vista previa" data-testid="import-preview-error">
+                    {{ previewFailure() }}
+                    <button app-button variant="outline" size="sm" type="button" (clicked)="requestPreview()">
+                      Reintentar
+                    </button>
+                  </app-alert>
+                }
+                @case ('ready') {
+                  <div class="import__figures" role="status" data-testid="import-preview-figures">
+                    <p><strong>{{ previewCounts().created }}</strong> se crearían</p>
+                    <p><strong>{{ previewCounts().updated }}</strong> se actualizarían</p>
+                    <p><strong>{{ previewCounts().unchanged }}</strong> sin cambios</p>
+                    <p><strong>{{ previewCounts().rejected }}</strong> rechazadas por el servidor</p>
+                  </div>
+                  @if (previewCounts().rejected > 0) {
+                    <app-data-table
+                      caption="Filas que el servidor rechazaría, con el motivo"
+                      [state]="previewRejected()"
+                      [columns]="resultColumns()"
+                      [trackBy]="resultKey"
+                      maxHeight="28rem"
+                      data-testid="import-preview-rejected"
+                    />
+                  } @else {
+                    <p class="import__secondary">El servidor acepta todas las filas listas. Nada se guardó todavía.</p>
+                  }
+                }
+                @default {
+                  <p class="import__secondary">No hay filas listas para consultar.</p>
+                }
+              }
+            </section>
+
             @if (nothingToLoad()) {
               <app-alert tone="error" title="No hay nada para cargar" data-testid="import-nothing">
                 Ninguna fila del archivo se puede cargar con «{{ modeLabel() }}». Corrija las de
@@ -312,7 +356,7 @@
               <button
                 app-button
                 type="button"
-                [disabled]="readyRows().length === 0"
+                [disabled]="readyRows().length === 0 || serverPreview().status === 'loading'"
                 (clicked)="publish()"
                 data-testid="import-publish"
               >
@@ -339,7 +383,7 @@
                 (clicked)="stop()"
                 data-testid="import-stop"
               >
-                {{ stopping() ? 'Deteniendo después de esta fila…' : 'Detener' }}
+                {{ stopping() ? 'Deteniendo después de este lote…' : 'Detener' }}
               </button>
             </div>
           }
@@ -348,15 +392,18 @@
           @case ('result') {
             <div class="import__figures" role="status" data-testid="import-result">
               <p>
-                <strong>{{ created() }}</strong>
-                {{ created() === 1 ? 'producto publicado' : 'productos publicados' }}
+                <strong>{{ counts().created }}</strong>
+                {{ counts().created === 1 ? 'producto publicado' : 'productos publicados' }}
               </p>
               <p>
-                <strong>{{ updated() }}</strong>
-                {{ updated() === 1 ? 'actualizado' : 'actualizados' }}
+                <strong>{{ counts().updated }}</strong>
+                {{ counts().updated === 1 ? 'actualizado' : 'actualizados' }}
               </p>
+              @if (counts().unchanged > 0) {
+                <p><strong>{{ counts().unchanged }}</strong> sin cambios</p>
+              }
               <p>
-                <strong>{{ rejectedByApi() }}</strong>
+                <strong>{{ counts().rejected }}</strong>
                 rechazados por la API
               </p>
               @if (withProblems() > 0) {
@@ -369,17 +416,17 @@
 
             @if (generalFailure(); as failure) {
               <app-alert tone="error" title="La carga se cortó" data-testid="import-general-failure">
-                {{ failure }} No es un problema de una fila: las demás iban a fallar igual, así
-                que no se enviaron. Resuélvalo y suba el archivo de nuevo; lo ya cargado se va a
-                marcar como repetido.
+                {{ failure }} No es un problema de una fila: las que faltaban iban a fallar igual,
+                así que no se enviaron. Resuélvalo y suba el archivo de nuevo; lo ya cargado se
+                reconoce por su código y no se duplica.
               </app-alert>
             }
 
             @if (stopped()) {
               <app-alert tone="warning" title="Detuvo la carga" data-testid="import-stopped">
-                La fila que estaba en camino terminó y se cuenta arriba; las que faltaban no se
-                enviaron. Suba el archivo de nuevo y las ya cargadas se van a marcar como
-                repetidas.
+                El lote que estaba en camino terminó y se cuenta arriba; las filas que faltaban no
+                se enviaron. Suba el archivo de nuevo: las ya cargadas se reconocen por su código
+                y no se duplican.
               </app-alert>
             }
 
@@ -393,7 +440,7 @@
             />
 
             <div class="import__footer">
-              @if (withProblems() > 0 || rejectedByApi() > 0) {
+              @if (withProblems() > 0 || counts().rejected > 0) {
                 <button
                   app-button
                   variant="outline"

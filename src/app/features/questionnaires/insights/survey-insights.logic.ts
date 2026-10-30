@@ -152,6 +152,9 @@ const ROTULO_DIMENSION: Readonly<Record<string, string>> = {
   comunicacion: 'Escucha',
   claridad_explicacion: 'Claridad de la explicación',
   trato_respetuoso: 'Trato respetuoso',
+  tiempo_suficiente: 'Tiempo dedicado',
+  inquietudes_resueltas: 'Dudas resueltas',
+  revision_medicacion: 'Revisión de medicamentos',
   seguridad_percibida: 'Seguridad y trato',
   satisfaccion_global: 'Satisfacción global',
   recomendacion_nps: 'Recomendación',
@@ -180,11 +183,52 @@ export function preguntasGraficables(preguntas: readonly InsightsQuestion[]): re
     .map(({ p }) => p);
 }
 
-/** Una pregunta a graficar; `combinada` si junta las de consulta y las de servicio. */
+/**
+ * La pregunta de cada dimensión **sin hablar ni de «esta consulta» ni de «este
+ * servicio»**. Es lo que se lee cuando la dimensión reúne las dos fuentes: el
+ * enunciado de cualquiera de las dos le diría «servicio» a quien está mirando
+ * consultas (o al revés).
+ */
+const PREGUNTA_NEUTRA: Readonly<Record<string, string>> = {
+  esfuerzo_acceso: '¿Qué tan fácil le resultó acceder a la atención?',
+  tiempo_espera: '¿Cuánto tiempo esperó hasta que comenzó la atención?',
+  comunicacion: '¿Con qué frecuencia el profesional le escuchó con atención?',
+  claridad_explicacion: '¿Con qué claridad le explicaron las cosas?',
+  trato_respetuoso: '¿Con qué frecuencia le trataron con cortesía y respeto?',
+  tiempo_suficiente: '¿Con qué frecuencia el profesional pasó suficiente tiempo con usted?',
+  inquietudes_resueltas: '¿Salió sintiendo que todas sus inquietudes o preguntas habían sido contestadas?',
+  revision_medicacion: '¿Hablaron sobre todas las medicinas recetadas que estaba tomando?',
+  seguridad_percibida: '¿Tuvo algún problema de seguridad o de trato que quiera reportar?',
+  satisfaccion_global: 'En general, ¿cómo calificaría su experiencia?',
+  recomendacion_nps: '¿Qué tan probable es que lo recomiende a un familiar o a un amigo?',
+};
+
+/** El enunciado neutro de una dimensión; sin él, el rótulo mismo. */
+export function preguntaNeutraDeDimension(dimension: string | null): string {
+  return (dimension !== null && PREGUNTA_NEUTRA[dimension]) || rotuloDeDimension(dimension);
+}
+
+/**
+ * Una pregunta a graficar. `combinada` si suma las de consulta y las de
+ * servicio. `neutra` si el enunciado que se lee es el neutro de la dimensión:
+ * sucede siempre que la dimensión reúne las dos fuentes, aunque una sola tenga
+ * datos para mostrar.
+ */
 export interface PreguntaGraficable {
   readonly pregunta: InsightsQuestion;
   readonly combinada: boolean;
+  readonly neutra: boolean;
 }
+
+/**
+ * Cómo se lee la dimensión según lo que se está mirando.
+ *
+ * - `todo` (sin filtro de servicio): consultas y servicios entran juntos, así que
+ *   una dimensión que existe en las dos fuentes nunca muestra el enunciado de una.
+ * - `servicio` (un servicio elegido): lo que llega es de ese servicio y su
+ *   propio enunciado es el correcto.
+ */
+export type AlcanceDelResumen = 'todo' | 'servicio';
 
 /**
  * Junta las preguntas base que miden lo mismo en la consulta y en el servicio
@@ -193,22 +237,32 @@ export interface PreguntaGraficable {
  *
  * Suma los conteos, pondera el promedio por `n` y, como el enunciado de una
  * habla de «esta consulta» y el de la otra de «este servicio», **no conserva
- * ninguno**: la pregunta combinada se titula con la dimensión. Las preguntas
+ * ninguno**: la pregunta combinada lleva el rótulo de la dimensión y su
+ * enunciado neutro (`preguntaNeutraDeDimension`). Las preguntas
  * propias (sin dimensión) y las que están solas pasan tal cual.
  */
-export function combinarPorDimension(preguntas: readonly InsightsQuestion[]): readonly PreguntaGraficable[] {
+export function combinarPorDimension(
+  preguntas: readonly InsightsQuestion[],
+  alcance: AlcanceDelResumen = 'todo',
+): readonly PreguntaGraficable[] {
   const salida: PreguntaGraficable[] = [];
   const porClave = new Map<string, number>();
+  /** Una dimensión con dos fuentes se lee con el enunciado neutro, si se mira todo. */
+  const neutro = alcance === 'todo';
+  const conTextoNeutro = (q: InsightsQuestion): InsightsQuestion => ({
+    ...q,
+    text: preguntaNeutraDeDimension(q.dimension),
+  });
   for (const p of preguntas) {
     if (p.dimension === null) {
-      salida.push({ pregunta: p, combinada: false });
+      salida.push({ pregunta: p, combinada: false, neutra: false });
       continue;
     }
     const clave = `${p.dimension}|${p.answerType}`;
     const indice = porClave.get(clave);
     if (indice === undefined) {
       porClave.set(clave, salida.length);
-      salida.push({ pregunta: p, combinada: false });
+      salida.push({ pregunta: p, combinada: false, neutra: false });
       continue;
     }
     const previa = salida[indice]!.pregunta;
@@ -217,7 +271,12 @@ export function combinarPorDimension(preguntas: readonly InsightsQuestion[]): re
     // reconstruiría lo que escondió. Gana la que sí tiene datos; si ninguna los
     // tiene, queda una sola fila suprimida.
     if (previa.suppressed || p.suppressed) {
-      if (previa.suppressed && !p.suppressed) salida[indice] = { pregunta: p, combinada: false };
+      const ganadora = previa.suppressed && !p.suppressed ? p : previa;
+      // La dimensión tiene dos fuentes aunque sólo una se vea: el enunciado de
+      // la que quedó diría «servicio» (o «consulta») de más.
+      salida[indice] = neutro
+        ? { pregunta: conTextoNeutro(ganadora), combinada: false, neutra: true }
+        : { pregunta: ganadora, combinada: false, neutra: false };
       continue;
     }
     const n = previa.n + p.n;
@@ -229,10 +288,11 @@ export function combinarPorDimension(preguntas: readonly InsightsQuestion[]): re
     const pesoTotal = conPromedio.reduce((suma, q) => suma + q.n, 0);
     salida[indice] = {
       combinada: true,
+      neutra: true,
       pregunta: {
         ...previa,
         questionId: `${previa.questionId}+${p.questionId}`,
-        text: rotuloDeDimension(p.dimension),
+        text: preguntaNeutraDeDimension(p.dimension),
         n,
         average:
           pesoTotal === 0 ? null : conPromedio.reduce((suma, q) => suma + (q.average ?? 0) * q.n, 0) / pesoTotal,

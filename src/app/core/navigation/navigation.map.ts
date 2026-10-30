@@ -2,6 +2,7 @@ import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.t
 import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
 import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
+import { INSIGHTS_SECTIONS } from './navigation.insights';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import type { AppSection } from './navigation.types';
 
@@ -746,6 +747,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M05 profiles',
   },
   {
+    // El alta de un médico queda como una solicitud que una persona con rol de
+    // revisión resuelve requisito por requisito. La bandeja es genérica: hoy
+    // trae `ALTA_DE_DOCTOR`. El guard de sección evita la pantalla que daría
+    // 403, pero la autoridad es la API: cada acción exige su rol allá.
+    path: 'administration/admissions',
+    label: 'Admisiones',
+    group: 'Administración',
+    icon: 'clipboard',
+    roles: ['SECURITY_ADMIN', 'ADMISSIONS_REVIEWER', 'ADMISSIONS_APPROVER'],
+    availability: 'disponible',
+    summary: 'Revise y resuelva las solicitudes de ingreso, como el alta de un médico.',
+    module: 'M05 profiles',
+  },
+  {
     path: 'administration/users',
     label: 'Usuarios',
     group: 'Administración',
@@ -1022,6 +1037,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M19 community',
   },
   ...SECCIONES_DE_PLATAFORMA,
+  ...INSIGHTS_SECTIONS,
   {
     // W5/M44. El backend tiene **una** lectura —`GET /health-context/contexts/
     // resolve`— y doce comandos, así que la sección entra como panel de
@@ -1682,6 +1698,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // La sirve `GET /insurance/my-claims`, sobre la misma tabla que dictamina
     // la aseguradora en «Solicitudes recibidas» (P56).
+    //
+    // **No existe para la farmacia** (propietario, 30/10/2026: «arreglá el
+    // menú de la farmacia»). La lista del pedido no la incluye y una farmacia
+    // no presenta solicitudes de seguro: el paraguas en su barra era una
+    // sección de paciente colgada en su cuenta. Se oculta por el tipo de la
+    // organización activa, así que admin y superadmin no cambian.
+    hiddenForTenantTypes: ['PHARMACY'],
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/requests',
     label: 'Mis solicitudes',
@@ -1721,7 +1744,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // herramientas» del panel, su otra puerta, se retiró el 28/10/2026).
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
+    summary: 'Cree y edite su consultorio: dirección, mapa, teléfono y horario.',
     module: 'M14 practice',
   },
   {
@@ -1799,10 +1822,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M24 pharmacy',
   },
   {
-    // El catálogo de la farmacia: la empresa sube sus productos, uno por uno o de a
-    // cientos, y retira los que ya no vende. Quien de verdad autoriza el alta es la
-    // API (`@Roles` en `pharmacy.controller.ts`); el menú sólo no ofrece puertas
-    // ajenas.
+    // El catálogo de la farmacia, en pestañas: productos, categorías, precios,
+    // inventario e importación. Las cuatro rutas sueltas redirigen a su pestaña
+    // (`app.routes.ts`). Quien de verdad autoriza el alta es la API (`@Roles` en
+    // `pharmacy.controller.ts`); el menú sólo no ofrece puertas ajenas.
     path: 'administration/pharmacy-catalog',
     // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
     // es plano y cerrado, así que la sección no existe para otro tipo de
@@ -1813,93 +1836,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // administra.
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Productos',
+    label: 'Catálogo',
     // `General` y no `Administración`: es un dominio aplanado, así que los
     // ocho renglones van sueltos, sin encabezado ni desplegable.
     group: 'General',
     icon: 'package',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Los productos que vende su farmacia: alta, edición, publicación y retiro.',
-    module: 'M24 pharmacy',
-  },
-  {
-    path: 'administration/pharmacy-categories',
-    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
-    // es plano y cerrado, así que la sección no existe para otro tipo de
-    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
-    onlyForTenantTypes: ['PHARMACY'],
-    roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
-    // administra.
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Categorías',
-    // `General` y no `Administración`: es un dominio aplanado, así que los
-    // ocho renglones van sueltos, sin encabezado ni desplegable.
-    group: 'General',
-    icon: 'tag',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Las categorías con las que ordena sus productos.',
-    module: 'M24 pharmacy',
-  },
-  {
-    path: 'administration/pharmacy-import',
-    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
-    // es plano y cerrado, así que la sección no existe para otro tipo de
-    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
-    onlyForTenantTypes: ['PHARMACY'],
-    roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
-    // administra.
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Importación masiva',
-    // `General` y no `Administración`: es un dominio aplanado, así que los
-    // ocho renglones van sueltos, sin encabezado ni desplegable.
-    group: 'General',
-    icon: 'clipboard',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Cargue o actualice sus productos de a cientos con un archivo CSV.',
-    module: 'M24 pharmacy',
-  },
-  {
-    path: 'administration/pharmacy-inventory',
-    // Sólo la cuenta de farmacia (D3/D4 del 29/09/2026): el menú del mostrador
-    // es plano y cerrado, así que la sección no existe para otro tipo de
-    // organización. La autoridad sigue siendo la API (`@Roles` del controller).
-    onlyForTenantTypes: ['PHARMACY'],
-    roles: [ANY_ROLE],
-    // §4.H · fuera del menú del médico. El paciente compra del catálogo, no lo
-    // administra.
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Inventario',
-    // `General` y no `Administración`: es un dominio aplanado, así que los
-    // ocho renglones van sueltos, sin encabezado ni desplegable.
-    group: 'General',
-    icon: 'orders',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'Existencias y umbral de alerta de cada producto.',
-    module: 'M24 pharmacy',
-  },
-  {
-    // Los precios de la farmacia (01/10/2026): el de cada producto, editable en
-    // una tabla y guardado junto. El alta y la edición completa siguen en «Productos».
-    path: 'administration/pharmacy-prices',
-    onlyForTenantTypes: ['PHARMACY'],
-    roles: [ANY_ROLE],
-    fueraDelMenuPara: ['PRACTITIONER'],
-    hiddenFor: ['PATIENT'],
-    label: 'Precios',
-    group: 'General',
-    icon: 'tag',
-    requiresTenant: true,
-    availability: 'disponible',
-    summary: 'El precio de venta de cada producto, tal como lo ven los pacientes.',
+    summary: 'Productos, categorías, precios, inventario e importación, en una sola pantalla.',
     module: 'M24 pharmacy',
   },
   {

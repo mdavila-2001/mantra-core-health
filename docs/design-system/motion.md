@@ -139,6 +139,12 @@ View Transitions API (`withViewTransitions` del router) con respaldo: sin la API
 `prefers-reduced-motion`, la ruta cambia sin animación. Es un fundido corto de
 `--dur-base`; nunca desplazamiento del contenido clínico.
 
+Con `prefers-reduced-motion` la transición se crea igual y `styles.css` apaga la animación de
+sus pseudo-capas (`::view-transition-*`). **No se salta con `transition.skipTransition()`**:
+eso rechaza `ready` con `AbortError: Transition was skipped` y el router lo escribe en la
+consola en cada navegación (#1449). Las opciones viven en
+`src/app/shared/motion/route-transition.ts`.
+
 El detalle de la migración y la matriz de transiciones del piloto están en
 `docs/refactor-profesional/trabajo/MATRIZ_MOVIMIENTO.md`.
 

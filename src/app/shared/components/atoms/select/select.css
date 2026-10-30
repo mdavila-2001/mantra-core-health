@@ -133,7 +133,7 @@
 }
 
 .select-wrapper.status-error {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 .select-wrapper.is-disabled {

@@ -272,6 +272,67 @@ describe('SurveyInsightsPanel · «Cómo le va»', () => {
     expect(suprimida.textContent).not.toMatch(/n\s=\s\d/);
   });
 
+  it('las preguntas suprimidas van al final, después de todas las que tienen datos', () => {
+    responderServicios();
+    const base = cuerpo();
+    const preguntas = base['byQuestion'] as Record<string, unknown>[];
+    // La suprimida llega PRIMERA: sin reordenar, abriría la lista y dejaría un hueco al lado.
+    preguntas.unshift({
+      questionId: 'q-suprimida',
+      text: 'En esta consulta, ¿con qué frecuencia el profesional le escuchó con atención?',
+      dimension: 'comunicacion',
+      answerType: 'SCALE',
+      suppressed: true,
+    });
+    responderResumen(base);
+
+    const items = Array.from(raiz().querySelectorAll('[data-testid="resumen-pregunta"]')) as HTMLElement[];
+    expect(items).toHaveLength(3);
+    expect(items.map((i) => i.querySelector('[data-testid="resumen-pregunta-suprimida"]') !== null)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+    expect(items[2]!.classList.contains('pregunta--suprimida')).toBe(true);
+  });
+
+  it('sin filtro de servicio ninguna lectura dice «servicio» ni «consulta»: rótulo y pregunta neutra', () => {
+    responderServicios();
+    const base = cuerpo();
+    const preguntas = base['byQuestion'] as Record<string, unknown>[];
+    // La consulta quedó suprimida y gana la del servicio: antes se leía «Durante este servicio…».
+    preguntas.push(
+      {
+        questionId: 'q-trato-consulta',
+        text: 'En esta consulta, ¿con qué frecuencia el profesional le trató con cortesía y respeto?',
+        dimension: 'trato_respetuoso',
+        answerType: 'SCALE',
+        suppressed: true,
+      },
+      {
+        questionId: 'q-trato-servicio',
+        text: 'Durante este servicio, ¿con qué frecuencia le trataron con cortesía y respeto?',
+        dimension: 'trato_respetuoso',
+        answerType: 'SCALE',
+        suppressed: false,
+        n: 6,
+        average: 4.5,
+        distribution: [{ value: 4, count: 3 }, { value: 5, count: 3 }],
+      },
+    );
+    responderResumen(base);
+
+    const trato = (Array.from(raiz().querySelectorAll('[data-testid="resumen-pregunta"]')) as HTMLElement[]).find((i) =>
+      i.textContent!.includes('Trato respetuoso'),
+    )!;
+    expect(trato).toBeDefined();
+    const lectura = trato.textContent!.replace(/\s+/g, ' ');
+    expect(lectura).toContain('n = 6');
+    expect(lectura).not.toMatch(/servicio/i);
+    expect(lectura).not.toMatch(/consulta/i);
+    expect(trato.querySelector('.pregunta__texto')?.textContent).toContain('cortesía y respeto');
+  });
+
   it('sin 5 comentarios el servidor no manda ninguno y se dice por qué, sin un bloque vacío engañoso', () => {
     responderServicios();
     responderResumen(cuerpo({ comments: [] }));

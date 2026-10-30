@@ -1,4 +1,4 @@
-import { splitUpcomingAndPast, type TimedItem } from './upcoming-and-past';
+import { hasEnded, splitUpcomingAndPast, type TimedItem } from './upcoming-and-past';
 
 interface Cita extends TimedItem {
   readonly id: string;
@@ -89,5 +89,18 @@ describe('splitUpcomingAndPast', () => {
       NOW,
     );
     expect(ids(upcoming)).toEqual(['primera', 'segunda']);
+  });
+});
+
+describe('hasEnded', () => {
+  it('terminó si el fin (o el inicio, sin fin) es anterior a now', () => {
+    expect(hasEnded(cita('a', '2026-09-18T08:00:00-04:00', '2026-09-18T08:30:00-04:00'), NOW)).toBe(true);
+    expect(hasEnded(cita('b', '2026-09-17T09:00:00-04:00'), NOW)).toBe(true);
+  });
+
+  it('una consulta en curso, una futura o una sin horario no terminaron', () => {
+    expect(hasEnded(cita('a', '2026-09-18T09:45:00-04:00', '2026-09-18T10:15:00-04:00'), NOW)).toBe(false);
+    expect(hasEnded(cita('b', '2026-09-19T09:00:00-04:00'), NOW)).toBe(false);
+    expect(hasEnded(cita('c', null), NOW)).toBe(false);
   });
 });

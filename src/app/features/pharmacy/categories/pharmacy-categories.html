@@ -1,7 +1,9 @@
-<app-page-header
-  title="Categorías"
-  subtitle="Con qué categorías ordena sus productos. Al renombrar una, los productos que la usan la siguen."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Categorías"
+    subtitle="Con qué categorías ordena sus productos. Al renombrar una, los productos que la usan la siguen."
+  />
+}
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {

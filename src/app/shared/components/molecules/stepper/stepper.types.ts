@@ -54,3 +54,34 @@ export interface StepperStep {
    */
   readonly disabledReason?: string;
 }
+
+/**
+ * Dónde va quien recorre los pasos, en tanto por ciento **del recorrido**:
+ * 0 % sobre el primer marcador y 100 % sobre el último.
+ *
+ * Es la **única** definición de «cuánto avanzó» que tiene el sistema para un
+ * recorrido por fases. El stepper la dibuja con sus marcadores y su riel (el
+ * riel se llena hasta el marcador actual, ni un tramo más), y quien monta
+ * además una barra de progreso —`app-paginated-form`— la deriva de esta misma
+ * lista en vez de calcularla desde otro número: así las dos cosas no se pueden
+ * separar, que es lo que pasaba cuando la barra contaba «páginas terminadas
+ * sobre el total» y el stepper «posición sobre los tramos».
+ *
+ * - Un solo paso (o ninguno): 0 %, no hay recorrido que medir.
+ * - Con paso actual: `posición / (pasos − 1)`, redondeado.
+ * - Sin paso actual: 100 % si todos están completados, 0 % si no.
+ *
+ * Por qué sobre `pasos − 1` y no sobre `pasos`: el riel une marcadores, y
+ * entre N marcadores hay N − 1 tramos. Medir sobre N dejaba al último paso en
+ * (N − 1)/N: una barra que nunca llegaba al final del riel.
+ */
+export function porcentajeDelRecorrido(steps: readonly StepperStep[]): number {
+  if (steps.length < 2) {
+    return 0;
+  }
+  const actual = steps.findIndex((step) => step.status === 'current');
+  if (actual === -1) {
+    return steps.every((step) => step.status === 'complete') ? 100 : 0;
+  }
+  return Math.round((actual / (steps.length - 1)) * 100);
+}

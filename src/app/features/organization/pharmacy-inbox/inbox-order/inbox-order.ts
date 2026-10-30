@@ -58,6 +58,7 @@ import {
 } from '../pharmacy-inbox.fixtures';
 import { InvoiceSummary } from './invoice-summary/invoice-summary';
 import { displayCurrency } from '../../../../core/money/display-currency';
+import { lineAmount } from './line-amount';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
@@ -162,9 +163,8 @@ export class InboxOrder {
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
    */
-  protected moneda(code?: string | null): string {
-    return displayCurrency(code);
-  }
+  protected readonly moneda = displayCurrency;
+  protected readonly importeDeLinea = lineAmount;
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly pharmacyClient = inject(PharmacyClient);
   private readonly destroyRef = inject(DestroyRef);

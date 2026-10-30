@@ -152,6 +152,12 @@ export interface InvitationsIssued {
   readonly alreadyIssued: number;
 }
 
+/**
+ * De qué atención salió la invitación: una consulta médica o un servicio de
+ * salud (laboratorio, imagenología, procedimiento…).
+ */
+export type InvitationKind = 'CONSULTATION' | 'SERVICE';
+
 /** Un cuestionario repartido al paciente. */
 export interface PatientInvitation {
   readonly id: string;
@@ -162,6 +168,18 @@ export interface PatientInvitation {
   readonly expiresAt: Date | null;
   readonly answeredAt: Date | null;
   readonly appointmentBookingId: string;
+  /**
+   * Campos aditivos y OPCIONALES con los que la API dice a qué atención
+   * corresponde la invitación. Una API que todavía no los manda los deja
+   * ausentes: la pantalla degrada al texto genérico de la encuesta.
+   */
+  readonly kind?: InvitationKind;
+  /** Nombre del servicio, si `kind` es `SERVICE`. */
+  readonly serviceName?: string | null;
+  /** Nombre público de quien atendió, si `kind` es `CONSULTATION`. */
+  readonly practitionerDisplayName?: string | null;
+  /** Cuándo fue la atención. */
+  readonly attendedAt?: Date | null;
 }
 
 /** El cuestionario a responder, con sus preguntas. */
@@ -198,7 +216,17 @@ export interface SurveyAnswer {
 export interface SurveyResponse {
   readonly id: string;
   readonly invitationId: string;
-  readonly appointmentBookingId: string;
+  /**
+   * La reserva de origen. **Opcional y en retirada**: la API deja de devolverla
+   * al profesional, porque con ella (y la fecha) una respuesta se atribuye a una
+   * cita concreta. Ningún código debe depender de que esté.
+   */
+  readonly appointmentBookingId?: string;
+  /**
+   * Cuándo se envió, **redondeado al día** (medianoche UTC): la hora exacta no
+   * viaja. Para mostrarlo hay que formatear en UTC, o el día retrocede al oeste
+   * de Greenwich.
+   */
   readonly submittedAt: Date | null;
   readonly answers: readonly SurveyAnswer[];
 }

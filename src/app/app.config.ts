@@ -30,7 +30,7 @@ import { provideDependentLinkNotificationActions } from './features/account/depe
 import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
 import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
 import { environment } from '../environments/environment';
-import { prefersReducedMotion } from './shared/motion/motion-tokens';
+import { ROUTE_VIEW_TRANSITION_OPTIONS } from './shared/motion/route-transition';
 
 /**
  * Datos de formato del idioma de la aplicación.
@@ -71,19 +71,15 @@ export const appConfig: ApplicationConfig = {
     // fragmento cambia en la URL y la página no se mueve.
     // Transición entre rutas con la View Transitions API: sólo el contenido
     // (`view-transition-name: contenido`) hace un fundido corto; el menú y la
-    // barra se quedan quietos. Sin la API el router navega igual, y con
-    // `prefers-reduced-motion` no se crea la transición.
+    // barra se quedan quietos. Sin la API el router navega igual. Con
+    // `prefers-reduced-motion` la transición se crea igual pero `styles.css`
+    // apaga su animación: saltarla con `skipTransition()` rechaza `ready` con
+    // `AbortError` y el router lo escribe en la consola (#1449). Ver
+    // `shared/motion/route-transition.ts`.
     provideRouter(
       routes,
       withInMemoryScrolling({ anchorScrolling: 'enabled' }),
-      withViewTransitions({
-        skipInitialTransition: true,
-        onViewTransitionCreated: ({ transition }) => {
-          if (prefersReducedMotion()) {
-            transition.skipTransition();
-          }
-        },
-      }),
+      withViewTransitions(ROUTE_VIEW_TRANSITION_OPTIONS),
     ),
     provideClientHydration(withEventReplay()),
     // `withFetch` no es opcional bajo SSR: sin él el cliente usa XHR, que en el
@@ -145,9 +141,11 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./session-cleanup.lazy').then((m) =>
-            m.olvidarLoSensibleDelNavegador(injector),
-          );
+          void import('./session-cleanup.lazy')
+            .then((m) => m.olvidarLoSensibleDelNavegador(injector))
+            // Sin red o con un despliegue nuevo el chunk puede no cargar: la sesión ya se cerró, y un rechazo
+            // sin capturar solo ensuciaría la consola de quien se va.
+            .catch(() => undefined);
       },
     },
     // Los avisos push de la cuenta que se va no deben seguir llegando a este
@@ -159,9 +157,10 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./core/notifications/web-push.service').then((m) =>
-            injector.get(m.WebPushService).forgetBrowser(),
-          );
+          void import('./core/notifications/web-push.service')
+            .then((m) => injector.get(m.WebPushService).forgetBrowser())
+            // Mismo criterio que el limpiador de arriba: sin red el chunk puede no cargar y la sesión ya se cerró.
+            .catch(() => undefined);
       },
     },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se

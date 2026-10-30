@@ -104,6 +104,23 @@ export function unauthorized(message = 'Credenciales inválidas'): MockReply {
   });
 }
 
+/**
+ * El rechazo del `ValidationPipe` de la API: una query o un cuerpo que no pasa
+ * `class-validator` vuelve con **400**, no con 422 (TAREA-41 §5, medido contra
+ * la API real el 2026-10-25). El 422 de `validation()` es el de las reglas de
+ * negocio que la API valida a mano.
+ */
+export function validationPipeRejected(message: string): MockReply {
+  return reply(400, {
+    statusCode: 400,
+    code: 'VALIDATION_FAILED',
+    message,
+    error: 'Bad Request',
+    reason: 'VALIDATION_PIPE_REJECTED',
+    details: { violations: [message] },
+  });
+}
+
 /** Un problema puntual de validación, como lo siguen pasando los manejadores. */
 export interface ValidationIssue {
   readonly field?: string;

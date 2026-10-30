@@ -25,6 +25,7 @@ import { reservas } from '../fixtures/agenda';
 import { encounterList } from '../fixtures/clinic';
 import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';
 import { STATUS } from '../fixtures/concepts';
+import { showcaseVerification } from '../fixtures/verification-body';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
 import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockReply, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
@@ -152,6 +153,7 @@ function perfilPublico(v: SimulatedShowcase) {
     verificationStatusConceptId: v.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-UNVERIFIED']!,
     acceptsReviews: v.acceptsReviews,
     statusConceptId: STATUS['ST-ACTIVE']!,
+    ...showcaseVerification(v),
     badges: v.verified ? [{ id: uuid(`badge-${v.id}`), badgeTypeConceptId: CONCEPT.badgeVerified, verificationMethodConceptId: CONCEPT.badgeMethod, validFrom: iso(-300), validTo: null }] : [],
     prestige: v.kind === 'PRACTITIONER' ? { totalPoints: String(120 + v.seguidores * 3), levelConceptId: CONCEPT.prestigeLevel, rankPosition: 1 + (v.seguidores % 40), calculatedAt: iso(-1) } : null,
   };
@@ -250,9 +252,43 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
       .map((p) => {
         if (p === SUPPORT_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
         const v = showcases.get(p);
-        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null };
+        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null, ...(v === undefined ? {} : showcaseVerification(v)) };
       }),
   };
+}
+
+/**
+ * Deja un aviso de agenda en el chat de «Soporte AloVida» de un paciente, como
+ * hace la API (`SupportAdminNoticeAdapter`). Sin esto la maqueta mostraba la
+ * demora en la campana y nunca en el chat, que es lo que el cliente mira.
+ *
+ * @param titularIds - Ids con los que el paciente puede figurar como titular
+ *   de su vitrina (perfil, cuenta o persona).
+ * @returns `true` si el paciente tiene vitrina y el mensaje quedó escrito.
+ */
+export function writeFromSupport(titularIds: readonly string[], texto: string): boolean {
+  const vitrina = showcases.todos().find((v) => titularIds.includes(v.targetId));
+  if (vitrina === undefined) return false;
+  let hilo = conversationList
+    .todos()
+    .find((c) => c.groupId === null && c.participantes.includes(SUPPORT_ID) && c.participantes.includes(vitrina.id));
+  if (hilo === undefined) {
+    hilo = { id: nuevoId('conv-soporte'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [vitrina.id, SUPPORT_ID], noLeidosPor: {} };
+    conversationList.agregar(hilo);
+  }
+  messageList.agregar({
+    id: nuevoId('msg-soporte'),
+    conversationId: hilo.id,
+    senderProfileId: SUPPORT_ID,
+    replyToMessageId: null,
+    contentTypeConceptId: CONCEPT.messageText,
+    bodyText: texto,
+    attachmentFileId: null,
+    isEdited: false,
+    sentAt: ahora(),
+  });
+  conversationList.actualizar(hilo.id, { noLeidosPor: { ...hilo.noLeidosPor, [vitrina.id]: (hilo.noLeidosPor[vitrina.id] ?? 0) + 1 } });
+  return true;
 }
 
 export function registrarComunidad(router: MockRouter): void {
@@ -1052,7 +1088,15 @@ export function registrarComunidad(router: MockRouter): void {
       (m) => m.conversationId === c.id && m.attachmentFileId === fileId,
     ).length > 0;
     if (!isAttachedHere) return notFoundReply();
-    return fileContent(fileId) ?? notFoundReply();
+    const contenido = fileContent(fileId);
+    if (contenido === undefined) return notFoundReply();
+    // Tras recargar, `fileContent` entrega la copia `data:` como
+    // `{ body, headers }`, que sin `status` el interceptor no reconoce como
+    // respuesta: el hilo recibía ese JSON y pintaba la foto como un archivo
+    // `octet-stream`. Mismo arreglo que `GET /common/files/:id/content`.
+    return contenido instanceof Blob
+      ? contenido
+      : { status: 200, ...(contenido as { body: unknown; headers: Record<string, string> }) };
   });
 
   router.post('/community/conversations/:id/read', (request) => {

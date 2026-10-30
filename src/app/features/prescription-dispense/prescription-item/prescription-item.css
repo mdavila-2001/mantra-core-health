@@ -1,0 +1,98 @@
+/* Mobile-first: todo apilado; desde --bp-md (780 px) la fila de cada sede pone los
+   datos a la izquierda y el interruptor a la derecha. */
+
+.rx-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.rx-item__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.rx-item__title {
+  margin: 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.rx-item__secondary {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.rx-item__quantities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.rx-item__products,
+.rx-product__sites {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rx-product {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.rx-product__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.rx-product__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rx-product__price {
+  color: var(--text-primary);
+}
+
+.rx-site {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.rx-site__data {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.rx-site__name {
+  color: var(--text-primary);
+}
+
+@media (min-width: 780px) {
+  .rx-site {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+  }
+}

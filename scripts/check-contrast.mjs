@@ -195,6 +195,12 @@ const PARES = [
   { tinta: '--focus-ring', fondo: '--bg-inset', nivel: 3 },
   { tinta: '--focus-ring', fondo: MARFIL, nivel: 3, soloEn: 'claro' },
   { tinta: '--brand-primary', fondo: '--bg-surface', nivel: 4.5 },
+  // Texto de peligro (error de campo, asterisco de obligatorio) sobre las
+  // superficies donde vive un formulario. Lo pintaba la rampa fija
+  // `--c-error-500` (2,99:1 en oscuro); el token semántico cambia con el tema.
+  { tinta: '--text-danger', fondo: '--bg-surface', nivel: 4.5 },
+  { tinta: '--text-danger', fondo: '--bg-surface-alt', nivel: 4.5 },
+  { tinta: '--text-danger', fondo: '--bg-inset', nivel: 4.5 },
   // Borde de control: 3:1 (WCAG 1.4.11) contra TODA superficie donde vive un
   // campo. Era la excepción E3 en oscuro (velo al 24 %, 2,15:1); se cerró
   // subiendo el velo al 40 %, y se mide también la superficie alta (peor caso).
@@ -202,6 +208,12 @@ const PARES = [
   { tinta: '--border-strong', fondo: '--bg-surface', nivel: 3 },
   { tinta: '--border-strong', fondo: '--bg-surface-alt', nivel: 3 },
   { tinta: '--border-strong', fondo: '--bg-inset', nivel: 3 },
+  // Borde de control en error: 3:1 (WCAG 1.4.11) contra toda superficie donde
+  // vive un campo. Lo pintaba la rampa fija `--c-error-500` (2,99:1 en oscuro).
+  { tinta: '--border-danger', fondo: '--bg-base', nivel: 3 },
+  { tinta: '--border-danger', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--border-danger', fondo: '--bg-surface-alt', nivel: 3 },
+  { tinta: '--border-danger', fondo: '--bg-inset', nivel: 3 },
   { tinta: '--st-success-fg', fondo: '--st-success-bg', nivel: 4.5 },
   { tinta: '--st-warning-fg', fondo: '--st-warning-bg', nivel: 4.5 },
   { tinta: '--st-error-fg', fondo: '--st-error-bg', nivel: 4.5 },
@@ -209,6 +221,16 @@ const PARES = [
   { tinta: '--st-primary-fg', fondo: '--st-primary-bg', nivel: 4.5 },
   { tinta: '--st-secondary-fg', fondo: '--st-secondary-bg', nivel: 4.5 },
   { tinta: '--st-tertiary-fg', fondo: '--st-tertiary-bg', nivel: 4.5 },
+  // Insignia de verificación: el tilde sobre el relleno (4,5:1 aunque el WCAG
+  // pida 3:1 a un pictograma: a 16 px el trazo mide 1,5 px) y el relleno contra
+  // TODA superficie donde vive el sello, incluido el chip `primary` que lo
+  // lleva en la variante con texto.
+  { tinta: '--verified-fg', fondo: '--verified-bg', nivel: 4.5 },
+  { tinta: '--verified-bg', fondo: '--bg-base', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--bg-surface-alt', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--bg-inset', nivel: 3 },
+  { tinta: '--verified-bg', fondo: '--st-primary-bg', nivel: 3 },
 ];
 
 const TEMAS = [

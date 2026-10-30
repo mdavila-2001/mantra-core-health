@@ -17,10 +17,6 @@ import {
   NO_ACTIVE_PRACTICE,
 } from '../../../core/data-access/accounting/accounting-practices';
 import { SessionStore } from '../../../core/auth/session.store';
-import {
-  simulatorAvailable,
-  unavailableMessage,
-} from '../../../core/data-access/simulator-only';
 import { CashFlow } from '../cash-flow/cash-flow';
 import { SimpleAccounting } from '../records/records';
 import {
@@ -289,9 +285,6 @@ export class Summary {
     this.version.set(version);
     saveVersion(version);
   }
-  /** La contabilidad simple no está en la API real: sólo en la maqueta. */
-  protected readonly simpleAccountingAvailable = simulatorAvailable();
-  protected readonly simpleAccountingUnavailable = unavailableMessage('Los registros de la contabilidad simple');
   readonly chosenPractice = signal<string | null>(null);
   private readonly practices = signal<ViewState<readonly Practice[]>>(loading());
   private readonly dinero = signal<ViewState<Dinero>>(loading());

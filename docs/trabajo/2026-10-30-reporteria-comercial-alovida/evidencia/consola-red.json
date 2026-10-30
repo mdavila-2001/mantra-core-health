@@ -1,0 +1,157 @@
+{
+  "generadoEn": "2026-10-30T16:14:17.291Z",
+  "pruebasEjecutadas": [
+    "interacciones de los gráficos · escritorio · claro → passed",
+    "interacciones de los gráficos · escritorio · oscuro → passed",
+    "estado vacio · movil · claro → passed",
+    "estado vacio · movil · oscuro → passed",
+    "estado vacio · tableta · claro → passed",
+    "estado vacio · tableta · oscuro → passed",
+    "estado vacio · escritorio · claro → passed",
+    "estado vacio · escritorio · oscuro → passed",
+    "estado error · movil · claro → passed",
+    "estado error · movil · oscuro → passed",
+    "estado error · tableta · claro → passed",
+    "estado error · tableta · oscuro → passed",
+    "estado error · escritorio · claro → passed",
+    "estado error · escritorio · oscuro → passed",
+    "estado sin-permiso · movil · claro → passed",
+    "estado sin-permiso · movil · oscuro → passed",
+    "estado sin-permiso · tableta · claro → passed",
+    "estado sin-permiso · tableta · oscuro → passed",
+    "estado sin-permiso · escritorio · claro → passed",
+    "estado sin-permiso · escritorio · oscuro → passed",
+    "estado atrasado · movil · claro → passed",
+    "estado atrasado · movil · oscuro → passed",
+    "estado atrasado · tableta · claro → passed",
+    "estado atrasado · tableta · oscuro → passed",
+    "estado atrasado · escritorio · claro → passed",
+    "estado atrasado · escritorio · oscuro → passed",
+    "teclado · foco visible y Escape que no cierra de más · escritorio · claro → passed",
+    "asistente como hoja superpuesta · móvil · claro: el fondo queda inerte → passed",
+    "autorización negativa · una cuenta sin reportería no entra al portal → passed"
+  ],
+  "nota": "Solo se recolectan los hallazgos de las pruebas listadas. Los de los estados error y sin-permiso son errores forzados a propósito.",
+  "hallazgos": [
+    {
+      "pantalla": "estado-error-movil-claro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-movil-claro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-movil-oscuro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-movil-oscuro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-tableta-claro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-tableta-claro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-tableta-oscuro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-tableta-oscuro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-escritorio-claro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-escritorio-claro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-escritorio-oscuro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-error-escritorio-oscuro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 500 · INTERNAL · «Falla simulada del servidor de reportes» · correlationId=mock-reportes-500 {status: 500, code: INTERNAL, message: Falla simulada del servidor de reportes, correlationId: mock-reportes-500}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-movil-claro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-movil-claro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-movil-oscuro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-movil-oscuro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-tableta-claro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-tableta-claro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-tableta-oscuro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-tableta-oscuro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-escritorio-claro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-escritorio-claro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-escritorio-oscuro-grid",
+      "tipo": "consola",
+      "detalle": "[API] GET /reporting/catalog → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    },
+    {
+      "pantalla": "estado-sin-permiso-escritorio-oscuro-dashboard",
+      "tipo": "consola",
+      "detalle": "[API] POST /reporting/commercial/suscripciones → 403 · FORBIDDEN · «Su rol no puede ver este reporte.» {status: 403, code: FORBIDDEN, message: Su rol no puede ver este reporte.}"
+    }
+  ]
+}

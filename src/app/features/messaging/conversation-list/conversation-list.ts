@@ -10,10 +10,15 @@ import {
 import { RouterLink } from '@angular/router';
 
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { conversationAvatar, conversationLabel } from '../../../core/messaging/conversation-label';
+import {
+  conversationAvatar,
+  conversationLabel,
+  conversationVerification,
+} from '../../../core/messaging/conversation-label';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import { chatTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
@@ -62,7 +67,7 @@ export interface AccionDeFila {
  */
 @Component({
   selector: 'app-conversation-list',
-  imports: [AppButton, AppButtonLink, Avatar, EmptyState, RouterLink, Skeleton, ViewStateHost],
+  imports: [AppButton, AppButtonLink, Avatar, EmptyState, RouterLink, Skeleton, VerificationBadge, ViewStateHost],
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,6 +123,7 @@ export class ConversationList {
 
   protected readonly conQuien = conversationLabel;
   protected readonly avatarDeConQuien = conversationAvatar;
+  protected readonly verificacionDe = conversationVerification;
 
   protected esFavorito(id: string): boolean {
     return this.preferencias.isFavorite(id);

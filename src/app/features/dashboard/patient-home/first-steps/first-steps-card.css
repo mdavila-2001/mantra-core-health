@@ -265,13 +265,13 @@
 .primeros-pasos__chispa {
   position: absolute;
   inset-block-start: -10px;
-  inset-inline-start: calc(var(--n) * 8% - 2%);
+  inset-inline-start: calc(var(--n, 0) * 8% - 2%);
   inline-size: 8px;
   block-size: 14px;
   border-radius: 2px;
   background: var(--c-aqua-400);
   opacity: 0;
-  animation: primeros-pasos-chispa 1.6s ease-in calc(var(--n) * 70ms) 2 both;
+  animation: primeros-pasos-chispa 1.6s ease-in calc(var(--n, 0) * 70ms) 2 both;
 }
 
 .primeros-pasos__chispa:nth-child(3n) { background: var(--c-amber-400); }

@@ -75,14 +75,14 @@ describe('PharmacySummaryPage', () => {
     expect(rows[0]!.textContent).toContain('30');
   });
 
-  it('los tres atajos llevan a Productos filtrado, a Inventario con alertas y a Importación', () => {
+  it('los tres atajos llevan al catálogo: Productos filtrado, Inventario con alertas e Importación', () => {
     mount();
 
     const hrefs = [...root().querySelectorAll('a.summary__shortcut')].map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual([
       '/administration/pharmacy-catalog?status=DRAFT',
-      '/administration/pharmacy-inventory?alerts=true',
-      '/administration/pharmacy-import',
+      '/administration/pharmacy-catalog?tab=inventory&alerts=true',
+      '/administration/pharmacy-catalog?tab=import',
     ]);
   });
 
