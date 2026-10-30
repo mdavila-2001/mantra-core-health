@@ -1,0 +1,62 @@
+/* ============================================================================
+    Tema de los gráficos: lee en ejecución los tokens del sistema de diseño.
+    Ningún color se escribe a mano (regla 95.1.5): ECharts no entiende `var()`,
+    así que se resuelven con `getComputedStyle` y el panel reconstruye las
+    opciones cuando cambia el tema.
+    ========================================================================== */
+
+export interface ChartTheme {
+  readonly serie: readonly string[];
+  readonly texto: string;
+  readonly textoSuave: string;
+  readonly linea: string;
+  readonly rejilla: string;
+  readonly fondoTooltip: string;
+  readonly bordeTooltip: string;
+  readonly bueno: string;
+  readonly malo: string;
+  readonly superficie: string;
+  readonly rampa: readonly string[];
+}
+
+/** Paleta categórica en orden FIJO (validada, ADR-0017); cambia por tema en `styles.css`. */
+const SERIE_TOKENS = [
+  '--chart-1',
+  '--chart-2',
+  '--chart-3',
+  '--chart-4',
+  '--chart-5',
+  '--chart-6',
+  '--chart-7',
+  '--chart-8',
+] as const;
+
+const RAMPA_TOKENS = [
+  '--chart-seq-1',
+  '--chart-seq-2',
+  '--chart-seq-3',
+  '--chart-seq-4',
+  '--chart-seq-5',
+] as const;
+
+function leer(estilo: CSSStyleDeclaration, token: string, respaldo: string): string {
+  const v = estilo.getPropertyValue(token).trim();
+  return v === '' ? respaldo : v;
+}
+
+export function leerTemaGraficos(): ChartTheme {
+  const estilo = getComputedStyle(document.documentElement);
+  return {
+    serie: SERIE_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
+    texto: leer(estilo, '--text-primary', 'currentColor'),
+    textoSuave: leer(estilo, '--text-secondary', 'currentColor'),
+    linea: leer(estilo, '--border-strong', 'currentColor'),
+    rejilla: leer(estilo, '--border-default', 'currentColor'),
+    fondoTooltip: leer(estilo, '--bg-surface', 'Canvas'),
+    bordeTooltip: leer(estilo, '--border-strong', 'currentColor'),
+    bueno: leer(estilo, '--st-success-fg', 'currentColor'),
+    malo: leer(estilo, '--st-error-fg', 'currentColor'),
+    superficie: leer(estilo, '--bg-surface', 'Canvas'),
+    rampa: RAMPA_TOKENS.map((t) => leer(estilo, t, 'currentColor')),
+  };
+}
