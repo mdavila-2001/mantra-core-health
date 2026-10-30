@@ -18,3 +18,25 @@ prices    200 · UPSERT · true  · 3 · UPDATED 1, UNCHANGED 1, REJECTED 1 (pro
 prices    200 · UPSERT · (sin) · 3 · UPDATED 1, UNCHANGED 1, REJECTED 1
 sites     200 · UPSERT · true  · 2 · CREATED 1, REJECTED 1 (longitude COORDINATES_INCOMPLETE)
 sites     200 · UPSERT · (sin) · 2 · CREATED 1, REJECTED 1
+
+## Cierre (30/10/2026) — R2 y «Motivo» a 390
+categoría «Evidencia 495297» creada y tras recargar: 1 fila(s)  [POST /pharmacies/:id/categories → 201]
+renombrada a «Evidencia 495297 b» y tras recargar: 1 fila(s)  [PATCH /pharmacies/:id/categories/:id → 200]
+eliminada y tras recargar: 0 fila(s)  [DELETE /pharmacies/:id/categories/:id → 200]
+alta · búsqueda del catálogo oficial → 200 con 0 resultado(s)
+tras editar el precio a 13,75 desde el modal y recargar, la fila: Cierre 113533 — CIERRE-113533 Sin categoría Bs 13,75 Publicado Disponible  [PATCH /pharmacies/:id/products/:id → 200]
+precio de CIERRE-113533 tras guardar y recargar: 17.25
+[claro 390] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[claro 1440] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[oscuro 390] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[oscuro 1440] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[motivo claro 390] POST /pharmacies/:id/categories/bulk → 200
+[motivo claro 1440] POST /pharmacies/:id/categories/bulk → 200
+[motivo oscuro 390] POST /pharmacies/:id/categories/bulk → 200
+[motivo oscuro 1440] POST /pharmacies/:id/categories/bulk → 200
+Nota: el texto del motivo de la fila 3 («Falta el dato que identifica la fila») se ve en la ficha apilada sin desplegar nada (capturas de 390); la tabla no tiene botón de detalle.
+Repetido sobre el código final (tras fusionar dev):
+[claro 390] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[claro 1440] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[oscuro 390] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true
+[oscuro 1440] vista previa: 2 Vitaminas evidencia Creado / 3 — RechazadoFalta el dato que identifica la fila · sin desborde: true

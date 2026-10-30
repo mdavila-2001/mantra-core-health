@@ -167,7 +167,9 @@ export class EntityImport {
     { key: 'number', header: 'Línea', priority: 1 },
     { key: 'code', header: this.copy().keyHeader, priority: 1 },
     { key: 'outcome', header: this.applied() ? 'Resultado' : 'Qué pasaría', priority: 1, cell: this.outcomeCell() },
-    { key: 'message', header: 'Motivo', priority: 2, cell: this.messageCell() },
+    // El motivo es lo que hay que corregir en el archivo: en el teléfono va en la
+    // ficha de cada fila, no detrás del botón de detalle.
+    { key: 'message', header: 'Motivo', priority: 1, cell: this.messageCell() },
   ]);
   protected readonly rowKey = (row: ResultRow): string => String(row.number);
 

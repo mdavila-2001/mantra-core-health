@@ -379,13 +379,15 @@ describe('PharmacyInventory', () => {
       expect(root().querySelector('app-site-stock-panel')).toBeNull();
     });
 
-    it('con «Todas», avisa qué sede lleva su propio stock', () => {
+    it('con «Todas», avisa qué sede tiene stock propio', () => {
       mount([product({})], SITES);
       flushSiteStock('s-1', ['p-1']);
       flushSiteStock('s-2', []);
 
       const notice = root().querySelector('[data-testid="inventory-ledger-notice"]')?.textContent ?? '';
-      expect(notice).toContain('Casa central lleva su propio stock: lo que cambie en "Todas" no la afecta');
+      expect(notice).toContain(
+        'Casa central tiene stock propio en algunos productos: en esos, lo que cambie en "Todas" no la afecta',
+      );
       expect(notice).not.toContain('Sucursal Norte');
     });
 

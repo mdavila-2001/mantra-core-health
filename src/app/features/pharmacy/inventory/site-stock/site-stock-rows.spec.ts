@@ -65,13 +65,16 @@ describe('siteStockRows', () => {
     ]);
   });
 
-  it('sin posición en una sede que lleva su stock: «sin registrar», no se ofrece', () => {
-    const rows = siteStockRows([product({ id: 'p-a' }), product({ id: 'p-g', productCode: 'G' })], stock([item('p-a', 1)]));
+  it('sin posición, aunque la sede tenga stock propio de otros: sigue el catálogo', () => {
+    const rows = siteStockRows(
+      [product({ id: 'p-a' }), product({ id: 'p-g', productCode: 'G', stock: 2 })],
+      stock([item('p-a', 1)]),
+    );
 
-    expect(rows[1]).toMatchObject({ productId: 'p-g', kind: 'UNTRACKED', available: false, quantity: null });
+    expect(rows[1]).toMatchObject({ productId: 'p-g', kind: 'CATALOG', available: true, quantity: 2 });
   });
 
-  it('sede en modo catálogo: lo declarado en el catálogo, con «sin conteo» como null', () => {
+  it('sede sin ninguna posición: lo declarado en el catálogo, con «sin conteo» como null', () => {
     const rows = siteStockRows(
       [product({ id: 'p-a', stock: 5 }), product({ id: 'p-b', stock: null }), product({ id: 'p-c', stock: 0, inStock: false })],
       stock([]),
@@ -85,7 +88,7 @@ describe('siteStockRows', () => {
   });
 
   it('marcado sin stock en toda la farmacia gana, lleve o no la sede su stock', () => {
-    const declared = product({ id: 'p-d', stock: 4, inStock: false });
+    const declared = product({ id: 'p-d', stock: 4, inStock: false, outOfStockDeclared: true });
 
     expect(siteStockRows([declared], stock([item('p-d', 4)]))[0]?.kind).toBe('DECLARED_OUT');
     expect(siteStockRows([declared], stock([]))[0]?.kind).toBe('DECLARED_OUT');
@@ -107,11 +110,11 @@ describe('modo de la sede y marca de la farmacia', () => {
     expect(isLedgerSite(stock([]))).toBe(false);
   });
 
-  it('«no lo tengo» de la farmacia se deduce de inStock false con existencias distintas de 0', () => {
-    expect(declaredOutOfStock(product({ inStock: false, stock: 4 }))).toBe(true);
-    expect(declaredOutOfStock(product({ inStock: false, stock: null }))).toBe(true);
-    expect(declaredOutOfStock(product({ inStock: false, stock: 0 }))).toBe(false);
-    expect(declaredOutOfStock(product({ inStock: true, stock: 3 }))).toBe(false);
+  it('«no lo tengo» de la farmacia es la marca que sirve la API, no se deduce del conteo', () => {
+    expect(declaredOutOfStock(product({ inStock: false, stock: 0, outOfStockDeclared: true }))).toBe(true);
+    expect(declaredOutOfStock(product({ inStock: false, stock: 4, outOfStockDeclared: true }))).toBe(true);
+    expect(declaredOutOfStock(product({ inStock: false, stock: 0, outOfStockDeclared: false }))).toBe(false);
+    expect(declaredOutOfStock(product({ inStock: false, stock: 4 }))).toBe(false);
   });
 });
 

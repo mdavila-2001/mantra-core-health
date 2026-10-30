@@ -107,30 +107,35 @@ describe('SiteStockPanel', () => {
 
   afterEach(() => http.verify());
 
-  it('sede que lleva su stock: lo dice, y muestra la marca del catálogo y lo sin registrar', () => {
+  it('sede con stock propio: lo dice, muestra la marca del catálogo y qué fila sigue el catálogo', () => {
     mount(
-      [product('a'), product('d', { inStock: false, stock: 4 }), product('g')],
+      [product('a'), product('d', { inStock: false, stock: 4, outOfStockDeclared: true }), product('g')],
       [item('a', 3), item('d', 4)],
     );
 
     expect(root().querySelector('[data-testid="site-stock-ledger-notice"]')?.textContent).toContain(
-      'Esta sucursal lleva su propio stock: lo que cambie en "Todas" no la afecta.',
+      'Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"',
     );
     const declared = root().querySelector('[data-testid="site-stock-row-D"]');
     expect(declared?.textContent).toContain('Marcado sin stock en el catálogo');
     expect(declared?.querySelector('app-switch')).toBeNull();
-    const untracked = root().querySelector('[data-testid="site-stock-row-G"]');
-    expect(untracked?.textContent).toContain('Sin registrar en esta sucursal');
-    expect(untracked?.querySelector('[data-testid="site-stock-register-G"]')?.textContent).toContain('Lo tengo');
+    const fromCatalog = root().querySelector('[data-testid="site-stock-row-G"]');
+    expect(fromCatalog?.querySelector('[data-testid="site-stock-catalog-G"]')?.textContent).toContain(
+      'Como en el catálogo',
+    );
+    expect(fromCatalog?.querySelector('app-switch')).not.toBeNull();
+    expect(row('g')).toMatchObject({ kind: 'CATALOG', available: true, quantity: 5 });
+    expect(root().querySelector('[data-testid="site-stock-catalog-A"]')).toBeNull();
   });
 
-  it('sede en modo catálogo: avisa que el primer guardado la pasa a su propio stock', () => {
+  it('sede sin stock propio: avisa que el producto que se cambie pasa a llevar el suyo', () => {
     mount([product('a')], []);
 
     expect(root().querySelector('[data-testid="site-stock-catalog-notice"]')?.textContent).toContain(
-      'pasa a llevar su propio stock',
+      'pasa a llevar su propio stock en esta sucursal',
     );
     expect(row('a')).toMatchObject({ kind: 'CATALOG', available: true, quantity: 5 });
+    expect(root().querySelector('[data-testid="site-stock-catalog-A"]')).toBeNull();
   });
 
   it('guarda sólo las filas cambiadas, un PUT por fila y en serie, y relee el stock', () => {
@@ -206,15 +211,15 @@ describe('SiteStockPanel', () => {
     expect(internal().rowErrors()['a']).toContain('al menos 1');
   });
 
-  it('«Lo tengo» de un producto sin registrar manda el PUT sin cantidad', () => {
+  it('«No lo tengo» de un producto que sigue el catálogo manda el PUT solo de ese producto', () => {
     mount([product('a'), product('g')], [item('a', 3)]);
 
-    (root().querySelector('[data-testid="site-stock-register-G"]') as HTMLButtonElement).click();
-    fixture.detectChanges();
+    internal().setAvailable(row('g'), false);
     expect(internal().dirtyCount()).toBe(1);
     internal().save();
 
-    expect(http.expectOne(putUrl('g')).request.body).toEqual({ available: true });
+    expect(http.expectOne(putUrl('g')).request.body).toEqual({ available: false });
+    http.expectNone(putUrl('a'));
   });
 
   it('volver a lo guardado deja la fila sin cambios y no hay nada que mandar', () => {
