@@ -112,6 +112,10 @@ export const IDS = {
     userId: uuid('user-visitador'),
     personId: uuid('person-visitador'),
   },
+  marketing: {
+    userId: uuid('user-marketing'),
+    personId: uuid('person-marketing'),
+  },
   aseguradora: {
     userId: uuid('user-aseguradora-owner'),
     personId: uuid('person-aseguradora-owner'),
@@ -251,6 +255,22 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.visitador.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Gerencia de marketing de la plataforma: entra directo a AloVida Insights. En la API
+    // `MARKETING_MANAGER` es un rol con ámbito de tenant (`scopedRoles`), así que el
+    // simulador lo firma igual: el dato de Insights es de plataforma, el rol vale en su tenant.
+    key: 'marketing',
+    id: IDS.marketing.userId,
+    email: 'marketing@alovida.mock',
+    nationalId: '5557778',
+    displayName: 'Mateo Rojas Arce',
+    roles: ['MARKETING_MANAGER'],
+    tenants: [TENANT_PLATAFORMA],
+    tenantNames: TENANT_NAMES,
+    scopedRoles: { [TENANT_PLATAFORMA]: ['MARKETING_MANAGER'] },
+    personId: IDS.marketing.personId,
     accountKind: 'PERSON',
   },
   {

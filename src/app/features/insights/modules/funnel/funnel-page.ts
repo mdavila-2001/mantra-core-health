@@ -23,7 +23,7 @@ import { selectFacts } from '../../domain/kpi';
 import { confidenceFor } from '../../domain/campaign-insights';
 import { campaignName } from '../../domain/campaigns.data';
 import { InsightsContext } from '../../insights-context';
-import { MODULE_BY_ID } from '../../insights-nav';
+import { MODULE_BY_ID, INSIGHTS_BASE } from '../../insights-nav';
 
 /**
  * Módulo 02 · ¿Estamos convirtiendo y entregando una buena experiencia?
@@ -45,7 +45,7 @@ export class FunnelPage {
   protected readonly stageId = signal<string | null>(null);
   protected readonly segment = signal('all');
   protected readonly segmentOptions: readonly SelectOption<string>[] = JOURNEY_SEGMENTS.map((s) => ({ value: s.id, label: s.label }));
-  protected readonly campaignsLink = ['/administration/marketing-insights', MODULE_BY_ID.get('campaigns')?.path ?? 'campaigns'];
+  protected readonly campaignsLink = [INSIGHTS_BASE, MODULE_BY_ID.get('campaigns')?.path ?? 'campaigns'];
 
   protected readonly state = computed<ViewState<ReturnType<typeof acquisitionFunnel>>>(() => {
     if (selectFacts(this.filter()).length === 0) return empty({ label: 'Amplíe el periodo o elija otra campaña.' }, 'No hay datos de embudo para esta selección.');

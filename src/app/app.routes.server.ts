@@ -98,6 +98,11 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    // AloVida Insights: portal de marketing con sesión y gráficos en el cliente.
+    path: 'insights/**',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'design-system',
     renderMode: RenderMode.Prerender,
   },

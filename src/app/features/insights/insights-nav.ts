@@ -2,7 +2,7 @@ import type { NavIconName } from '../../shared/components/atoms/nav-icon/nav-ico
 import type { InsightModuleId } from './domain/insights.types';
 
 /** Base de las rutas de AloVida Insights. */
-export const INSIGHTS_BASE = '/administration/marketing-insights';
+export const INSIGHTS_BASE = '/insights';
 
 export interface InsightsModule {
   readonly id: InsightModuleId;
