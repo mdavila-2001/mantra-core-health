@@ -1466,7 +1466,7 @@
         </app-form-field>
       }
 
-      <app-form-field label="Fecha de emisión (opcional)" [errorMessage]="errorDelServidor('issueDate')">
+      <app-form-field class="edicion__campo-ancho" label="Fecha de emisión (opcional)" [errorMessage]="errorDelServidor('issueDate')">
         <app-date-picker [(value)]="nuevaFechaEmisionCredencial" placeholder="Seleccionar fecha" />
       </app-form-field>
 
@@ -1557,6 +1557,7 @@
       </app-form-field>
 
       <app-form-field
+        class="edicion__campo-ancho"
         label="Fecha de inscripción (opcional)"
         [errorMessage]="errorDelServidor('validFrom')"
         hint="Cuándo se registró, no cuándo vence."

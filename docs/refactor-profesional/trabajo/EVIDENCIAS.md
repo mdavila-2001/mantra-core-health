@@ -1,5 +1,30 @@
 # Evidencias
 
+## Modales fuera de la consulta: pie, fechas y campos sueltos · 2026-10-30
+
+Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, Chromium, base `dev` en `c5f2363f2`.
+`playwright/modales-fuera-de-consulta.spec.ts` abre 31 modales con los seis usuarios del simulador, en
+1440 y 390, y mide columnas de campos, hueco a la derecha del último campo y desborde lateral.
+
+| Comprobación | Resultado |
+|---|---|
+| Medidas antes/después (31 modales × 2 anchos) | Cambian sólo los tres tocados a propósito: historial (1→2 columnas, hueco 16→0), nuevo lugar (hueco 16→0), confirmar diagnóstico (1→2 columnas). El resto, idéntico. |
+| Página «Trayectoria» (aloja el modal del historial) | idéntica píxel a píxel a la de `dev` |
+| Regresión propia encontrada y corregida | `.historial__periodo` chocaba con la clase de la lista; renombrada a `.historial__rango` (`a816bb592`) |
+| `yarn test` completo, por tramos (el proceso entero muere con 129 en este entorno) | 15 586 pasan, 3 fallan; las 3 fallan igual con el código de `dev` (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+| `yarn typecheck` · `yarn build` · `eslint` de las pruebas | 0 · 0 · 0 |
+| `check-contrast` · `check-css-tokens` | 0 · 0; `check-colores-sueltos` falla en archivos no tocados |
+
+**Los que no se habían podido abrir (30/10/2026, segunda vuelta).** Los botones habían cambiado
+de lugar: transacciones y cuentas viven dentro de «Registros», las encuestas son una lista con su
+«Abrir», el mostrador es `agenda-ingreso-mostrador` y la aprobación parcial se pide desde el
+detalle. Abiertos los cinco en 1440 y 390: mostrador, nueva cuenta, nueva transacción y aprobar
+parcialmente están bien y no se tocan. «Editar la pregunta» era el único con los botones dentro
+del cuerpo y «Listo» a la izquierda: pasan al pie (`antes-despues-editar-pregunta.png`); en
+teléfono «Cancelar» y «Listo» bajan juntos. Medidas de los tres usuarios antes/después: sólo
+cambian los modales ya corregidos. `ng test` de encuestas: 144/144. Capturas: `capturas/antes/modales-2026-10-28/` y
+`capturas/despues/modales-2026-10-28/antes-despues-*.png`.
+
 ## Modales de la consulta: tarjeta doble, título repetido y tres columnas · 2026-10-27
 
 Entorno: Linux, `yarn start:demo` en `http://localhost:4300`, sesión médica simulada, Chromium.
@@ -256,3 +281,46 @@ Sin cambio: L-2 (las imágenes `geometria-*.png` siguen sin atenciones ni tema o
 oscuro se comprueban en las capturas de la app).
 
 Capturas: `capturas/recorrido-clinico/`.
+
+## WEB-F0 · Ficha de organización y vecinos — 2026-10-30
+
+Entorno: contenedor Linux · Node 22.22 · Yarn 4.18 (corepack, `COREPACK_NPM_REGISTRY` a npm) ·
+`ng serve --port 4310` · backend simulado · Chromium 1243 (`PW_CHROMIUM_PATH`) · cuenta
+`superadmin@alovida.mock`.
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 1 · 258 errores; base 256. Los 2 nuevos se corrigieron (`f1b27a86`); el `eslint` de los archivos tocados sólo marca `tutorial.engine.spec.ts:33`, preexistente |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · inicial 1,29 MB / 363 kB transferido · avisos de presupuesto (inicial 667 kB > 620 kB y CSS > 4 kB), no se midió la base |
+| `yarn test` (completo) | exit 1 · 7 563 ✅ · 5 ❌. Aislados: 3 deterministas **iguales en la base `8c695ed5`** (`fichas-estandar`, `pestanas-del-perfil-medico`, `appointment-calendar`); 2 (`diagnosis-block`, `documentos-legales`) pasan solos: dependían de la memoria saturada (Playwright + `ng serve` en paralelo). Los 9 de work-history/instituciones citados antes no aparecieron |
+| Specs tocados (12 archivos) | verdes; **kill-test**: los mismos specs sobre la base `8c695ed5` → 131 rojos, entre ellos todas las pruebas nuevas |
+| `E2E_BASE_URL=http://localhost:4310 yarn pw playwright/infra-f0-ficha-organizacion.spec.ts` | **8/8** (24,8 s) |
+
+Medido en el navegador (spec nuevo): sin desborde horizontal en 1440/768/390 en los seis estados;
+tarjeta centrada (holgura ≤ 2 px) y ≥ 85 % del área (§5); la plantilla no muestra uuid; «Asignar
+sede» → relectura muestra la sede → **F5** → la sede sigue asignada; sin `pageerror`.
+
+Capturas: `capturas/infra-f0/` — `listado-*`, `ficha-{ready,ready-plantilla,forbidden,not-found,error,vacio}-{1440,768,390}.png`,
+`ficha-asignar-sede-1440.png`.
+
+### WEB-F0 · integración de `origin/dev` (merge, 2026-10-30)
+
+`git merge origin/dev` sobre `85c8cee5` (25 conflictos). Criterio: se conserva lo de `dev` y se
+reaplica sólo lo propio de F0; donde `dev` ya lo resolvía igual, gana `dev` (pantalla
+`my-organizations` borrada y trasladada a la pestaña «Mis vinculaciones», su redirección con
+`?tab=memberships`, el buscador de personas `people-search` que ya no traga errores). Textos de F0
+pasados al «usted» que `dev` adoptó.
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · avisos de presupuesto, ninguno de los archivos tocados |
+| Specs en conflicto o tocados por F0 (17 archivos) | verdes |
+| Suite completa, por tramos (`ng test` entero muere con un *deadlock* de esbuild en este contenedor) | 1 096 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+
+`schedule-change.spec.ts` (de `dev`) dependía del `|| true` que F0 quitó del simulador: pedía la
+agenda de la clínica con la organización «Mi consultorio». Se le pone la organización dueña de esa
+agenda y el simulador de prácticas; la aserción no cambia. Navegador: **no se re-ejecutó** el spec
+de Playwright tras el merge.

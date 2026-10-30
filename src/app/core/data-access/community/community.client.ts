@@ -62,6 +62,7 @@ import type {
   NewComment,
   NewConversation,
   NewDirectMessage,
+  OrganizationShowcase,
   UpsertChatAutoReply,
   NewFollow,
   NewModerationDecision,
@@ -160,6 +161,19 @@ export class CommunityClient {
     return this.http
       .get<WireOwnProfile | null>(this.url('/community/profiles/me'))
       .pipe(map((body) => (body === null ? null : sinNulos(body))));
+  }
+
+  /**
+   * `GET /community/profiles/organization-showcases/me` — las vitrinas de
+   * organización (farmacia, clínica) con las que la sesión puede atender la
+   * mensajería. Vacía para quien no atiende ninguna.
+   */
+  listOwnOrganizationShowcases(): Observable<readonly OrganizationShowcase[]> {
+    return this.http
+      .get<{ items: ConNulos<OrganizationShowcase>[] }>(
+        this.url('/community/profiles/organization-showcases/me'),
+      )
+      .pipe(map((body) => body.items.map((item) => sinNulos<OrganizationShowcase>(item))));
   }
 
   /**

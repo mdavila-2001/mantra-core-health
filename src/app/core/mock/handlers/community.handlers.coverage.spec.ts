@@ -157,17 +157,21 @@ describe('comunidad demo: publicaciones, grupos y conversación', () => {
     }));
     expect(data<{ items: { id: string }[] }>(request('GET', `${path}/messages`)).items)
       .toEqual(expect.arrayContaining([expect.objectContaining({ id: sent.id })]));
+    // Firmar con un perfil que no es propio es 403 (NOT_OWN_PROFILE), como en
+    // la API (`assertOwnMessagingProfile`): ni siquiera se mira el mensaje.
     expect(status(request('PATCH', `${path}/messages/${sent.id}`, {
       senderProfileId: 'synthetic-peer', bodyText: 'Edición ajena',
-    }))).toBe(400);
+    }))).toBe(403);
     expect(status(request('PATCH', `${path}/messages/${sent.id}`, {
       senderProfileId: medicalProfileId, bodyText: ' ',
     }))).toBe(400);
     expect(data<{ bodyText: string; isEdited: boolean }>(request('PATCH', `${path}/messages/${sent.id}`, {
       senderProfileId: medicalProfileId, bodyText: '  Texto corregido  ',
     }))).toMatchObject({ bodyText: 'Texto corregido', isEdited: true });
+    // Se marca leído con un perfil propio; con uno ajeno es 403, como en la API.
+    expect(status(request('POST', `${path}/read`, { recipientProfileId: 'synthetic-peer' }))).toBe(403);
     expect(data<{ receiptsRecorded: number; lastReadMessageId: string }>(request(
-      'POST', `${path}/read`, { readerProfileId: 'synthetic-peer' },
+      'POST', `${path}/read`, { recipientProfileId: medicalProfileId },
     )).lastReadMessageId).toBe(sent.id);
     expect(status(request('PATCH', `${path}/messages/missing`, { bodyText: 'Nada' }))).toBe(404);
     expect(status(request('POST', '/community/conversations/missing/messages', { bodyText: 'Nada' }))).toBe(404);
