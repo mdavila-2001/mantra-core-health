@@ -1,3 +1,4 @@
+import type { VerificationInfo } from '../../../../../core/verification/verification-status';
 import type { StatusSealVariant } from '../../../../../shared/components/organisms/status-seal/status-seal.types';
 
 /* ============================================================================
@@ -203,6 +204,13 @@ export interface SeguroVisible {
 export interface VerificacionVisible {
   readonly label: string;
   readonly variant: StatusSealVariant;
+  /**
+   * La verificación para la insignia (el check azul junto al nombre). La decide
+   * la API: viene de `verification.status` y, si la API todavía no lo envía, del
+   * mismo concepto que ya produjo `variant`. Ausente en construcciones de
+   * prueba anteriores a la insignia: entonces no se pinta.
+   */
+  readonly insignia?: VerificationInfo;
 }
 
 /**

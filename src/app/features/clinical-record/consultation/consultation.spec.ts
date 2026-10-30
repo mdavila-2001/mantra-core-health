@@ -8,6 +8,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
 import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
 import { Consultation } from './consultation';
+import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
 
 /**
  * La consulta — la rejilla de todo lo que se registra mientras se atiende.
@@ -74,6 +75,17 @@ const TITULOS = [
   'Pagos',
 ];
 
+/** Una derivación ya emitida, tal como la lista la API. */
+const REFERRAL = {
+  id: 'ref-1',
+  patientProfileId: 'p-1',
+  statusConceptId: 'st-solicitada',
+  createdAt: '2026-10-20T12:00:00.000Z',
+  referralType: 'TREATMENT',
+  targetDisplayName: 'Hospital San Lucas',
+  targetServiceName: 'Fisioterapia',
+};
+
 describe('Consultation', () => {
   let harness: RouterTestingHarness;
   let componente: Consultation;
@@ -87,7 +99,12 @@ describe('Consultation', () => {
     resumen: Record<string, unknown> = {},
     chart: Record<string, unknown> = {},
     conceptos: readonly object[] = [],
+    referrals: readonly object[] = [REFERRAL],
   ): Promise<void> {
+    // Las derivaciones van por su lado: la casilla las cuenta.
+    http
+      .expectOne((r) => r.url === '/referrals' && r.params.get('patientProfileId') === 'p-1')
+      .flush(referrals);
     http
       .expectOne((r) => r.url === '/profiles/patients/p-1')
       .flush({ profileId: 'p-1', displayName: 'Ana Pérez', patientCode: 'P1' });
@@ -101,6 +118,19 @@ describe('Consultation', () => {
     http
       .match((r) => r.url === '/terminology/concepts')
       .forEach((req) => req.flush({ items: conceptos, count: conceptos.length, limit: 200 }));
+    await harness.fixture.whenStable();
+  }
+
+  /** La lectura del expediente cuando las derivaciones ya se respondieron aparte. */
+  async function flushChartReadsOnly(): Promise<void> {
+    http
+      .expectOne((r) => r.url === '/profiles/patients/p-1')
+      .flush({ profileId: 'p-1', displayName: 'Ana Pérez', patientCode: 'P1' });
+    http.expectOne((r) => r.url === '/clinical/patients/p-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/charts/patients/p-1/chart').flush(CHART);
+    http
+      .match((r) => r.url === '/terminology/concepts')
+      .forEach((req) => req.flush({ items: [], count: 0, limit: 200 }));
     await harness.fixture.whenStable();
   }
 
@@ -131,8 +161,8 @@ describe('Consultation', () => {
     expect(casillas.map((c) => c.titulo)).toEqual(TITULOS);
     expect(casillas.find((c) => c.clave === 'ordenes')?.cantidad).toBeNull();
     expect(casillas.find((c) => c.clave === 'reconsulta')?.cantidad).toBeNull();
-    // Una derivación es un aviso a la persona, no una fila de su historia.
-    expect(casillas.find((c) => c.clave === 'derivacion')?.cantidad).toBeNull();
+    // Las derivaciones se leen aparte, y la casilla dice cuántas hay.
+    expect(casillas.find((c) => c.clave === 'derivacion')?.cantidad).toBe(1);
     expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
     expect(casillas.find((c) => c.clave === 'formulario')?.cantidad).toBeNull();
     // Pagos no lleva cifra: son de la caja y no de las dos lecturas del
@@ -152,9 +182,97 @@ describe('Consultation', () => {
     (componente as unknown as { abrir(clave: string): void }).abrir('derivacion');
     harness.detectChanges();
 
-    expect(interno<() => string>('tituloDelModal')()).toBe('Derivar a otro profesional');
+    expect(interno<() => string>('tituloDelModal')()).toBe(
+      'Derivar a otro profesional u organización',
+    );
     expect(interno<() => string>('descripcionDelModal')()).toContain('Le avisamos en su campana');
+    expect(interno<() => string>('descripcionDelModal')()).toContain('organización médica');
     expect(harness.routeNativeElement!.querySelector('app-referral-block')).not.toBeNull();
+    // El bloque recibe la misma lectura que cuenta la casilla.
+    http
+      .match((r) => r.url === '/terminology/concepts')
+      .forEach((req) => req.flush({ items: [], count: 0, limit: 200 }));
+    harness.detectChanges();
+    expect(
+      harness.routeNativeElement!.querySelectorAll('[data-testid="referral-row"]'),
+    ).toHaveLength(1);
+  });
+
+  it('H07: un 403 al leer la historia deja S5 con el texto del profesional y «Pedir acceso a su historia»', async () => {
+    http.expectOne((r) => r.url === '/referrals').flush([]);
+    http
+      .expectOne((r) => r.url === '/profiles/patients/p-1')
+      .flush({ profileId: 'p-1', displayName: 'Ana Pérez', patientCode: 'P1' });
+    http
+      .expectOne((r) => r.url === '/clinical/patients/p-1/summary')
+      .flush(
+        {
+          code: 'FORBIDDEN',
+          message: 'Sólo puede consultar su propia historia clínica.',
+          correlationId: 'req-403',
+        },
+        { status: 403, statusText: 'Forbidden' },
+      );
+    // forkJoin cancela la lectura del chart al fallar el resumen.
+    http
+      .match((r) => r.url === '/charts/patients/p-1/chart')
+      .forEach((req) => {
+        if (!req.cancelled) req.flush(CHART);
+      });
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    const state = interno<
+      () => {
+        status: string;
+        message?: string;
+        requestId?: string;
+        nextAction?: { label: string; route?: string };
+      }
+    >('consulta')();
+    expect(state.status).toBe('forbidden');
+    expect(state.message).toBe(CONSULTATION_FORBIDDEN_MESSAGE);
+    expect(state.requestId).toBe('req-403');
+    expect(state.nextAction).toEqual({
+      label: 'Pedir acceso a su historia',
+      route: '/medical-records/p-1/request-access',
+    });
+
+    const text = harness.routeNativeElement!.textContent ?? '';
+    expect(text).toContain(CONSULTATION_FORBIDDEN_MESSAGE);
+    expect(text).toContain('Pedir acceso a su historia');
+    expect(text).not.toContain('Sólo puede consultar su propia historia clínica');
+  });
+
+  it('si las derivaciones no se pueden leer, la casilla no inventa un cero y la rejilla sigue', async () => {
+    http
+      .expectOne((r) => r.url === '/referrals')
+      .flush({ code: 'FORBIDDEN', message: '' }, { status: 403, statusText: 'Forbidden' });
+    await flushChartReadsOnly();
+
+    const casillas = interno<() => readonly { clave: string; cantidad: number | null }[]>(
+      'casillas',
+    )();
+    expect(casillas.find((c) => c.clave === 'derivacion')?.cantidad).toBeNull();
+    expect(casillas.find((c) => c.clave === 'diagnosticos')?.cantidad).toBe(2);
+  });
+
+  it('tras derivar relee las derivaciones, y el contador sale de la relectura', async () => {
+    await responderLectura({}, {}, [], []);
+    expect(
+      interno<() => readonly { clave: string; cantidad: number | null }[]>('casillas')().find(
+        (c) => c.clave === 'derivacion',
+      )?.cantidad,
+    ).toBe(0);
+
+    interno<{ reload(): void }>('referrals').reload();
+    http.expectOne((r) => r.url === '/referrals').flush([REFERRAL, { ...REFERRAL, id: 'ref-2' }]);
+
+    expect(
+      interno<() => readonly { clave: string; cantidad: number | null }[]>('casillas')().find(
+        (c) => c.clave === 'derivacion',
+      )?.cantidad,
+    ).toBe(2);
   });
 
   /**

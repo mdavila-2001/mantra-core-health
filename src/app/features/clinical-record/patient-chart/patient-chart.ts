@@ -114,6 +114,25 @@ import {
 } from './specialty-form-block/form-reading';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
 import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
+import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import type { SortState } from '../../../shared/components/organisms/data-table/data-table.types';
+import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
+import {
+  aristasDelHistorial,
+  atencionDeCadaRegistro,
+  compararFilas,
+  type FuenteDelHistorial,
+} from './recorrido-clinico/historial-del-expediente';
+import {
+  ASPECTO_DEL_TIPO,
+  TIPOS_DEL_RECORRIDO,
+  type AristaDelRecorrido,
+  type AspectoDelTipo,
+  type NodoDelRecorrido,
+  type TipoDelRecorrido,
+} from './recorrido-clinico/recorrido-clinico.model';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -300,6 +319,26 @@ export interface ArchivoDeFila {
 }
 
 /**
+ * Las tres maneras de leer la misma historia.
+ *
+ * - `secciones`: una pestaña por bloque, con sus altas y acciones. La de
+ *   siempre, y la que abre la pantalla: es donde se escribe.
+ * - `tabla`: todos los registros en una sola tabla cronológica, con su tipo.
+ *   Responde «¿qué pasó últimamente?» sin abrir ocho pestañas.
+ * - `recorrido`: la línea de tiempo de atenciones, con cada registro conectado
+ *   a la atención en que se decidió y cada receta al diagnóstico que trata.
+ */
+export type VistaDelExpediente = 'secciones' | 'tabla' | 'recorrido';
+
+/** Una fila de la tabla unificada: la fila del bloque más su tipo y sus vínculos. */
+export interface FilaDelHistorial extends FilaClinica {
+  readonly tipo: TipoDelRecorrido;
+  readonly aspecto: AspectoDelTipo;
+  /** Con qué se relaciona, en palabras: la atención y, si es receta, para qué. */
+  readonly relacion: string;
+}
+
+/**
  * Un formulario clínico completado en un encuentro, ya listo para leerse.
  *
  * El formulario de la consulta (ficha de la especialidad, odontograma) se
@@ -395,6 +434,7 @@ interface Expediente {
     Badge,
     Card,
     CarePlanBlock,
+    Chip,
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
@@ -414,6 +454,8 @@ interface Expediente {
     PageHeader,
     ReceivedServicesPanel,
     Progress,
+    RecorridoClinico,
+    SegmentedControl,
     Tab,
     Tabs,
     TutorialTarget,
@@ -472,6 +514,9 @@ export class PatientChart {
   /** El botón de adjuntos de los bloques que no tienen menú propio. */
   private readonly celdaAdjuntos =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAdjuntos');
+  /** El tipo de registro, en la tabla unificada. */
+  private readonly celdaTipo =
+    viewChild.required<TemplateRef<{ $implicit: FilaDelHistorial }>>('celdaTipo');
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -808,7 +853,13 @@ export class PatientChart {
   protected readonly notas = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.chart.notes ?? []).map((fila) => ({
       id: fila.noteId,
-      principal: fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId),
+      // `||` y no `??`: el motivo puede llegar como texto vacío, y una fila sin
+      // nombre en la tabla no dice qué es. Sin motivo, el tipo de nota.
+      principal:
+        fila.chiefComplaintText?.trim() ||
+        (this.label(fila.noteTypeConceptId) === SIN_DATO
+          ? 'Nota clínica'
+          : this.label(fila.noteTypeConceptId)),
       secundario: fila.assessmentText ?? fila.subjectiveText ?? '',
       estado: this.label(fila.lifecycleStatusConceptId),
       cuando: fila.signedAt ?? fila.createdAt,
@@ -982,6 +1033,235 @@ export class PatientChart {
       columnas: this.columnasPara(bloque.filas, bloque.clave),
     })),
   );
+
+  /* -- Las otras dos lecturas: tabla unificada y recorrido -----------------
+     Las dos se arman de los mismos bloques —no se pide nada nuevo— y comparten
+     el filtro por tipo: ocultar las notas en la tabla y encontrarlas en el
+     recorrido sería dos pantallas con dos verdades. */
+
+  protected readonly vista = signal<VistaDelExpediente>('secciones');
+
+  /**
+   * Sin íconos: con ellos, las tres opciones no entran en 390 px y el control
+   * recorta los rótulos («Seccio…», «Recorr…»). El rótulo solo ya dice la vista.
+   */
+  protected readonly opcionesDeVista: readonly SegmentedOption<VistaDelExpediente>[] = [
+    { value: 'secciones', label: 'Secciones' },
+    { value: 'tabla', label: 'Tabla' },
+    {
+      value: 'recorrido',
+      label: 'Recorrido',
+      description: 'Recorrido: línea de tiempo de atenciones y lo que se decidió en cada una',
+    },
+  ];
+
+  protected elegirVista(vista: VistaDelExpediente): void {
+    this.vista.set(vista);
+  }
+
+  protected readonly aspectoDelTipo = ASPECTO_DEL_TIPO;
+
+  /** Los tipos que el filtro oculta. Vacío: se ve todo. */
+  protected readonly tiposOcultos = signal<ReadonlySet<TipoDelRecorrido>>(new Set());
+
+  /** Los tipos con al menos un registro, en el orden del recorrido, con su cuenta. */
+  protected readonly tiposDelFiltro = computed(() => {
+    const cuentas = new Map(this.bloques().map((b) => [b.clave, b.filas.length]));
+    return TIPOS_DEL_RECORRIDO.filter((tipo) => (cuentas.get(tipo) ?? 0) > 0).map((tipo) => ({
+      tipo,
+      cantidad: cuentas.get(tipo) ?? 0,
+      aspecto: ASPECTO_DEL_TIPO[tipo],
+    }));
+  });
+
+  protected alternarTipo(tipo: TipoDelRecorrido, visible: boolean): void {
+    this.tiposOcultos.update((actual) => {
+      const siguiente = new Set(actual);
+      if (visible) {
+        siguiente.delete(tipo);
+      } else {
+        siguiente.add(tipo);
+      }
+      return siguiente;
+    });
+  }
+
+  protected mostrarTodosLosTipos(): void {
+    this.tiposOcultos.set(new Set());
+  }
+
+  /** Las dos lecturas, en la forma que piden las funciones del historial. */
+  private readonly fuenteDelHistorial = computed<FuenteDelHistorial | null>(() => {
+    const datos = this.datos();
+    return datos === null
+      ? null
+      : {
+          encounters: datos.resumen.encounters,
+          conditions: datos.resumen.conditions,
+          medicationRequests: datos.resumen.medicationRequests,
+          observations: datos.resumen.observations,
+          notes: datos.chart.notes,
+        };
+  });
+
+  /** La atención que declara cada registro, haya llegado o no en esta lectura. */
+  private readonly atencionDeCadaRegistro = computed(() => {
+    const fuente = this.fuenteDelHistorial();
+    return fuente === null ? new Map<string, string>() : atencionDeCadaRegistro(fuente);
+  });
+
+  /** Los bloques de los tipos que el filtro deja ver. */
+  private readonly bloquesVisibles = computed(() => {
+    const ocultos = this.tiposOcultos();
+    return this.bloques().filter((bloque) => !ocultos.has(bloque.clave as TipoDelRecorrido));
+  });
+
+  /** Los registros de los tipos visibles, como nodos del recorrido. */
+  protected readonly nodosDelRecorrido = computed<readonly NodoDelRecorrido[]>(() => {
+    const atencionDe = this.atencionDeCadaRegistro();
+    return this.bloquesVisibles().flatMap((bloque) => {
+      const tipo = bloque.clave as TipoDelRecorrido;
+      return bloque.filas.map((fila) => ({
+        id: fila.id,
+        tipo,
+        // Un nodo sin título es una caja muda: si el registro no trae nombre,
+        // al menos dice qué es.
+        principal:
+          fila.principal.trim() === '' || fila.principal === SIN_DATO
+            ? ASPECTO_DEL_TIPO[tipo].singular
+            : fila.principal,
+        // Lo que se decidió sobre un diagnóstico (por qué se confirmó o se
+        // descartó) es justo lo que el recorrido viene a contar.
+        // «Sin registrar» como dato secundario es ruido en una tarjeta chica: la
+        // tabla de cada bloque tampoco lo muestra.
+        secundario: fila.decision
+          ? `Decisión: ${fila.decision}`
+          : fila.secundario === SIN_DATO
+            ? ''
+            : fila.secundario,
+        estado: fila.estado === SIN_DATO ? '' : fila.estado,
+        tonoDelEstado: fila.estadoTono ?? 'info',
+        cuando: fila.cuando,
+        encuentroId: atencionDe.get(fila.id),
+      }));
+    });
+  });
+
+  /** Las conexiones del recorrido: ver {@link aristasDelHistorial}. */
+  protected readonly aristasDelRecorrido = computed<readonly AristaDelRecorrido[]>(() => {
+    const fuente = this.fuenteDelHistorial();
+    return fuente === null ? [] : aristasDelHistorial(fuente);
+  });
+
+  /** El estado del recorrido: el vacío con su salida, o los nodos. */
+  protected readonly estadoDelRecorrido = computed(() =>
+    this.estadoDelLibro(this.nodosDelRecorrido()),
+  );
+
+  /**
+   * Hay registros pero el filtro los ocultó todos. No es el vacío del M34
+   * —la persona sí tiene historia— y su salida no es elegir a otra persona
+   * sino volver a mostrar lo que se ocultó.
+   */
+  protected readonly filtroOcultaTodo = computed(
+    () =>
+      this.tiposDelFiltro().length > 0 &&
+      this.tiposDelFiltro().every(({ tipo }) => this.tiposOcultos().has(tipo)),
+  );
+
+  /**
+   * Los tipos ocultos, en palabras, para avisarlo arriba de la tabla. Es lo
+   * que hace honesto al PDF: exportado desde «Tabla», el papel dice qué quedó
+   * afuera en vez de pasar por el expediente completo.
+   */
+  protected readonly tiposOcultosEnPalabras = computed(() =>
+    this.tiposDelFiltro()
+      .filter(({ tipo }) => this.tiposOcultos().has(tipo))
+      .map(({ aspecto }) => aspecto.plural.toLowerCase())
+      .join(', '),
+  );
+
+  /** Abre el detalle de un registro elegido en el recorrido. */
+  protected abrirDesdeElRecorrido(id: string): void {
+    const fila = this.bloques()
+      .flatMap((bloque) => bloque.filas)
+      .find((candidata) => candidata.id === id);
+    if (fila !== undefined) {
+      this.verDetalle(fila);
+    }
+  }
+
+  /** Cómo está ordenada la tabla unificada. De lo más reciente a lo más viejo. */
+  protected readonly ordenDelHistorial = signal<SortState>({ key: 'cuando', direction: 'desc' });
+
+  protected ordenarHistorial(orden: SortState): void {
+    this.ordenDelHistorial.set(orden);
+  }
+
+  /** Las filas de los tipos visibles, sin ordenar todavía. */
+  private readonly filasSinOrden = computed<readonly FilaDelHistorial[]>(() => {
+    const atencionDe = this.atencionDeCadaRegistro();
+    return this.bloquesVisibles().flatMap((bloque) => {
+      const tipo = bloque.clave as TipoDelRecorrido;
+      return bloque.filas.map((fila) => {
+        const atencion = atencionDe.get(fila.id);
+        const relacion = [
+          atencion === undefined ? '' : this.describirEncuentro(atencion),
+          fila.diagnostico ? `Para ${fila.diagnostico}` : '',
+        ]
+          .filter((parte) => parte !== '')
+          .join(' · ');
+        return { ...fila, tipo, aspecto: ASPECTO_DEL_TIPO[tipo], relacion };
+      });
+    });
+  });
+
+  /** Todas las filas de los tipos visibles, en una sola tabla y ordenadas. */
+  protected readonly filasDelHistorial = computed<readonly FilaDelHistorial[]>(() =>
+    [...this.filasSinOrden()].sort(compararFilas<FilaDelHistorial>(this.ordenDelHistorial())),
+  );
+
+  protected readonly estadoDelHistorial = computed(() =>
+    this.estadoDelLibro(this.filasDelHistorial()),
+  );
+
+  /**
+   * El vacío de las dos lecturas nuevas. Propio y no el de {@link estadoDe},
+   * que arma «Sin <bloque> registrados» y acá daría «Sin registros registrados».
+   */
+  private estadoDelLibro<Fila>(filas: readonly Fila[]): ViewState<readonly Fila[]> {
+    return filas.length > 0
+      ? ready(filas)
+      : empty(
+          { label: 'Elegir otra persona', route: CLINICAL_RECORD_ROUTE },
+          'Esta persona todavía no tiene nada asentado en su historia clínica.',
+        );
+  }
+
+  /**
+   * Las columnas de la tabla unificada, con las MISMAS plantillas de celda que
+   * las tablas de cada bloque: una fecha o un estado no se dibujan distinto
+   * según desde qué vista se mire. Dependen de las filas sin ordenar: cambiar
+   * el orden no tiene por qué rearmar las columnas.
+   */
+  protected readonly columnasDelHistorial = computed<readonly ColumnDef<FilaDelHistorial>[]>(() => [
+    { key: 'cuando', header: 'Fecha', priority: 1, sortable: true, cell: celdaDe(this.celdaCuando()) },
+    { key: 'tipo', header: 'Tipo', priority: 1, sortable: true, cell: this.celdaTipo() },
+    {
+      key: 'principal',
+      header: 'Registro',
+      priority: 1,
+      sortable: true,
+      cell: celdaDe(this.celdaPrincipal()),
+    },
+    { key: 'estado', header: 'Estado', priority: 2, cell: celdaDe(this.celdaEstado()) },
+    ...(this.filasSinOrden().some((fila) => fila.relacion !== '')
+      ? [{ key: 'relacion', header: 'Relacionado con', priority: 3 } satisfies ColumnDef<FilaDelHistorial>]
+      : []),
+    { key: 'ver', header: 'Ver', priority: 1, accion: true, cell: celdaDe(this.celdaVer()) },
+  ]);
+
+  protected readonly porFilaDelHistorial = (fila: FilaDelHistorial): string => fila.id;
 
   /* -- El alta de diagnóstico y de alergia desde el expediente -------------
      «Primero debería poder crear un diagnóstico nuevo sobre el expediente del
@@ -1282,7 +1562,7 @@ export class PatientChart {
   protected notasDelEncuentro(encounterId: string): string {
     const notas = (this.datos()?.chart.notes ?? [])
       .filter((fila) => fila.encounterId === encounterId)
-      .map((fila) => fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId));
+      .map((fila) => fila.chiefComplaintText?.trim() || this.label(fila.noteTypeConceptId));
     return notas.length === 0 ? 'Sin notas en este encuentro' : notas.join(', ');
   }
 
@@ -1910,10 +2190,7 @@ export class PatientChart {
   protected readonly porFila = (fila: FilaClinica): string => fila.id;
 
   /** El estado del bloque: hay filas, o el vacío con su explicación propia. */
-  protected estadoDe(
-    filas: readonly FilaClinica[],
-    titulo: string,
-  ): ViewState<readonly FilaClinica[]> {
+  protected estadoDe<Fila>(filas: readonly Fila[], titulo: string): ViewState<readonly Fila[]> {
     if (filas.length > 0) {
       return ready(filas);
     }
@@ -1933,6 +2210,11 @@ export class PatientChart {
     // parámetro, el segundo seguiría mostrando los datos del primero.
     effect(() => {
       this.profileId();
+      // El filtro por tipo es de ESTA persona: arrastrarlo a la siguiente le
+      // escondería, por ejemplo, la medicación desde el primer momento, y lo
+      // único que lo delataría sería un chip apagado. La vista elegida sí se
+      // conserva: es una preferencia de lectura, no un dato del paciente.
+      untracked(() => this.tiposOcultos.set(new Set()));
       untracked(() => this.cargar());
     });
 
@@ -2233,6 +2515,18 @@ export class PatientChart {
     }
     return SIN_DATO;
   }
+}
+
+/**
+ * Una plantilla de celda de {@link FilaClinica}, ofrecida a una tabla de
+ * {@link FilaDelHistorial}. `TemplateRef` es invariante en su contexto, pero la
+ * plantilla sólo lee campos de `FilaClinica`, que `FilaDelHistorial` extiende:
+ * el ensanchamiento es seguro y queda dicho en un solo lugar.
+ */
+function celdaDe(
+  plantilla: TemplateRef<{ $implicit: FilaClinica }>,
+): TemplateRef<{ $implicit: FilaDelHistorial }> {
+  return plantilla as unknown as TemplateRef<{ $implicit: FilaDelHistorial }>;
 }
 
 /**

@@ -140,17 +140,26 @@
    detalle, no el protagonista. Los trazos no escalan con el `viewBox`; si no,
    en un municipio chico serían diez veces más gruesos que en uno grande. */
 .department-map__acercamiento {
+  /* La paleta del plano, en variables locales para que el tema la cambie en un
+     solo lugar (ver el bloque «oscuro» al final de la hoja). Los valores de
+     abajo son los del modo claro y no se tocaron: pedido del cliente
+     (26/10/2026), el cuadrado de fondo gris, las líneas negras, el municipio
+     en azul petróleo. */
+  --plano-fondo: var(--c-neutral-50);
+  --plano-marco: var(--c-neutral-300);
+  --plano-otro: var(--c-neutral-50);
+  --plano-departamento: var(--c-neutral-100);
+  --plano-trazo: var(--c-neutral-900);
+  --plano-municipio: var(--c-petrol-500);
+
   display: block;
   width: 14rem;
   height: auto;
   aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid var(--c-neutral-300);
+  border: 1px solid var(--plano-marco);
   border-radius: var(--r-lg);
-  /* Pedido del cliente (26/10/2026): el cuadrado, de fondo gris. Es fijo y no
-     sigue al tema a propósito: es un plano, y un plano se lee igual de día y
-     de noche; el negro y el petróleo de adentro contrastan con él en los dos. */
-  background: var(--c-neutral-50);
+  background: var(--plano-fondo);
 }
 
 .department-map__acercamiento path {
@@ -158,35 +167,34 @@
   stroke-linejoin: round;
 }
 
-/* Pedido del cliente (26/10/2026): el cuadrado gris, las líneas negras, el
-   municipio en azul petróleo y el punto rojo. Lo único con color es lo
-   elegido; todo lo demás es gris con trazo negro, para que el resaltado
-   resalte. Los de alrededor, un gris más claro que el elegido. */
+/* Lo único con color es lo elegido; todo lo demás es gris con trazo oscuro,
+   para que el resaltado resalte. Los de alrededor, un gris más claro que el
+   departamento elegido. */
 .department-map__acercamiento-otro {
-  fill: var(--c-neutral-50);
-  stroke: var(--c-neutral-900);
+  fill: var(--plano-otro);
+  stroke: var(--plano-trazo);
   stroke-width: 1.5;
 }
 
 .department-map__acercamiento-departamento {
-  fill: var(--c-neutral-100);
-  stroke: var(--c-neutral-900);
+  fill: var(--plano-departamento);
+  stroke: var(--plano-trazo);
   stroke-width: 2.5;
 }
 
-/* Los municipios vecinos: líneas negras finas. */
+/* Los municipios vecinos: líneas finas. */
 .department-map__acercamiento-vecino {
   fill: none;
-  stroke: var(--c-neutral-900);
+  stroke: var(--plano-trazo);
   stroke-width: 0.75;
 }
 
-/* El resaltado: azul petróleo pleno con trazo negro grueso. No depende sólo
-   del color: el trazo lo separa aunque no se distingan los tonos, y el nombre
-   va abajo en palabras. */
+/* El resaltado: color pleno con trazo grueso. No depende sólo del color: el
+   trazo lo separa aunque no se distingan los tonos, y el nombre va abajo en
+   palabras. */
 .department-map__acercamiento-municipio {
-  fill: var(--c-petrol-500);
-  stroke: var(--c-neutral-900);
+  fill: var(--plano-municipio);
+  stroke: var(--plano-trazo);
   stroke-width: 2.5;
 }
 
@@ -237,4 +245,36 @@
     animation: none;
     opacity: 0.6;
   }
+}
+
+/* ---- oscuro: el plano sigue al tema ------------------------------------- */
+
+/* Antes el cuadrado era fijo (gris claro y trazo negro) y en tema oscuro quedaba
+   como una mancha clara junto al mapa de departamentos. Ahora el plano toma las
+   superficies del tema —petróleo hondo— y el trazo pasa a marfil, como el
+   elegido del mapa grande; el municipio toma la aguamarina de la acción
+   primaria, que sobre el petróleo conserva el contraste del resaltado.
+
+   `:host-context(html…)` y no `:root …`: el encapsulado de Angular reescribe
+   `:root` como `[_ngcontent-…]:root`, que no coincide nunca. Las dos formas del
+   tema oscuro —preferencia del sistema y `data-theme='dark'` explícito— llevan
+   el mismo bloque, igual que `styles.css`. */
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .department-map__acercamiento {
+    --plano-fondo: var(--bg-inset);
+    --plano-marco: var(--border-strong);
+    --plano-otro: var(--bg-surface);
+    --plano-departamento: var(--bg-surface-alt);
+    --plano-trazo: var(--text-primary);
+    --plano-municipio: var(--brand-primary);
+  }
+}
+
+:host-context(html[data-theme='dark']) .department-map__acercamiento {
+  --plano-fondo: var(--bg-inset);
+  --plano-marco: var(--border-strong);
+  --plano-otro: var(--bg-surface);
+  --plano-departamento: var(--bg-surface-alt);
+  --plano-trazo: var(--text-primary);
+  --plano-municipio: var(--brand-primary);
 }

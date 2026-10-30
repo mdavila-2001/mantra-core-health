@@ -2,7 +2,7 @@
     Las fichas clínicas estándar, portadas del backend.
 
     **GENERADO por `scripts/gen-chart-templates-fixture.mjs`. No editar a mano.**
-    La fuente son los 374 JSON de
+    La fuente son los 375 JSON de
     `mantra-core-health-api/src/common/seed/data/clinical-forms/`, con su
     procedencia —norma, organismo, URL y licencia— tal como la declara cada uno.
 
@@ -71406,84 +71406,665 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
     ]
   },
   {
-    "code": "TRANSV_CONSENTIMIENTO_INFORMADO",
-    "name": "Consentimiento informado",
-    "version": 2,
+    "code": "TRANSV_CITA_MEDICA",
+    "name": "Cita médica — registro estándar de la consulta",
+    "version": 1,
     "kind": "GENERAL",
     "specialty": "TRANSVERSAL",
     "provenance": {
-      "sourceTitle": "Modelo de consentimiento informado — Resolución 1738",
-      "organization": "Ministerio de Salud y Protección Social de Colombia",
-      "url": "https://www.minsalud.gov.co/sites/rid/Lists/BibliotecaDigital/RIDE/VS/ED/VSP/modelo-consentimiento-informado-resolucion-1738.pdf",
-      "license": "Documento oficial de acceso público",
-      "sourceVersion": "Resolución 1738",
-      "retrievedAt": "2026-08-14",
-      "note": "Transcripción de los campos del modelo oficial. El texto legal de cada procedimiento lo aporta la organización. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+      "sourceTitle": "Norma Técnica de Salud para la Gestión de la Historia Clínica — NT N.º 022-MINSA/DGSP-V.02, formato de atención en consulta externa",
+      "organization": "Ministerio de Salud del Perú (MINSA)",
+      "url": "https://bvs.minsa.gob.pe/local/dgsp/NT022hist.pdf",
+      "license": "Norma técnica estatal de acceso público",
+      "sourceVersion": "V.02",
+      "retrievedAt": "2026-10-29",
+      "note": "La ficha por defecto de toda cita, para cualquier especialidad. De la norma salen el orden de la consulta externa (motivo, tiempo de enfermedad, relato, antecedentes, funciones vitales, examen dirigido, diagnóstico con su tipo P/D/R y plan). Agregados propios, comunes a cualquier consulta: tipo y modalidad de la cita, quién informa, dolor con escala numérica 0–10, la pregunta de embarazo antes de indicar medicamentos o estudios con radiación, signos de alarma explicados, verificación de la comprensión por «teach-back» (AHRQ, Health Literacy Universal Precautions Toolkit, herramienta 5, dominio público; traducción propia), reposo y destino de la cita con fecha de control o motivo de referencia. Lo propio de cada especialidad queda en su ficha base."
     },
     "fields": [
       {
-        "code": "procedimiento_propuesto",
-        "name": "Procedimiento propuesto",
+        "code": "tipo_de_consulta",
+        "name": "Tipo de consulta",
+        "dataType": "string",
+        "required": true,
+        "section": "Datos de la cita",
+        "options": [
+          "Primera vez",
+          "Control o seguimiento",
+          "Reconsulta por el mismo problema",
+          "Consulta de urgencia"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "modalidad",
+        "name": "Modalidad",
+        "dataType": "string",
+        "required": true,
+        "section": "Datos de la cita",
+        "options": [
+          "Presencial",
+          "Telemedicina (videollamada)",
+          "Visita domiciliaria"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "quien_informa",
+        "name": "¿Quién da la información?",
+        "dataType": "string",
+        "required": false,
+        "section": "Datos de la cita",
+        "options": [
+          "El paciente",
+          "Un familiar o acompañante",
+          "El paciente y su acompañante"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "acompanante_parentesco",
+        "name": "Parentesco o relación del acompañante",
+        "dataType": "string",
+        "required": false,
+        "section": "Datos de la cita",
+        "description": "Por ejemplo: madre, hijo, cuidador.",
+        "showWhen": {
+          "field": "quien_informa",
+          "equals": [
+            "Un familiar o acompañante",
+            "El paciente y su acompañante"
+          ]
+        }
+      },
+      {
+        "code": "motivo_consulta",
+        "name": "Motivo de consulta",
         "dataType": "text",
         "required": true,
-        "section": "Procedimiento"
+        "section": "Motivo de consulta",
+        "description": "Con las palabras del paciente."
+      },
+      {
+        "code": "tiempo_de_evolucion",
+        "name": "Tiempo de evolución",
+        "dataType": "string",
+        "required": true,
+        "section": "Motivo de consulta",
+        "description": "Por ejemplo: 3 días, 2 semanas, 6 meses."
+      },
+      {
+        "code": "enfermedad_actual",
+        "name": "Relato de la enfermedad actual",
+        "dataType": "text",
+        "required": true,
+        "section": "Motivo de consulta",
+        "description": "Inicio, curso y síntomas acompañantes, en orden cronológico."
+      },
+      {
+        "code": "tiene_dolor",
+        "name": "¿Tiene dolor?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Motivo de consulta"
+      },
+      {
+        "code": "dolor_localizacion",
+        "name": "Dolor — ¿dónde se localiza?",
+        "dataType": "string",
+        "required": true,
+        "section": "Motivo de consulta",
+        "showWhen": {
+          "field": "tiene_dolor",
+          "equals": true
+        }
+      },
+      {
+        "code": "dolor_intensidad",
+        "name": "Dolor — intensidad (0 a 10, escala numérica)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Motivo de consulta",
+        "description": "0 = sin dolor; 10 = el peor dolor imaginable.",
+        "showWhen": {
+          "field": "tiene_dolor",
+          "equals": true
+        }
+      },
+      {
+        "code": "antecedentes_cronicos",
+        "name": "Enfermedades crónicas conocidas",
+        "dataType": "json",
+        "required": false,
+        "section": "Antecedentes relevantes",
+        "options": [
+          "Hipertensión arterial",
+          "Diabetes mellitus",
+          "Asma",
+          "EPOC",
+          "Cardiopatía",
+          "Enfermedad renal crónica",
+          "Enfermedad tiroidea",
+          "Cáncer",
+          "Tuberculosis",
+          "Enfermedad de Chagas",
+          "Epilepsia",
+          "VIH",
+          "Ninguna"
+        ],
+        "multiple": true,
+        "allowOther": true
+      },
+      {
+        "code": "antecedentes_patologicos",
+        "name": "Antecedentes patológicos — detalle",
+        "dataType": "text",
+        "required": false,
+        "section": "Antecedentes relevantes",
+        "description": "Año de diagnóstico, tratamiento y si está controlada."
+      },
+      {
+        "code": "tiene_alergias",
+        "name": "¿Tiene alergias conocidas?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Antecedentes relevantes"
+      },
+      {
+        "code": "tipo_de_alergia",
+        "name": "¿A qué es alérgico?",
+        "dataType": "json",
+        "required": true,
+        "section": "Antecedentes relevantes",
+        "options": [
+          "Medicamentos",
+          "Alimentos",
+          "Látex",
+          "Picadura de insectos",
+          "Polen, polvo o ácaros"
+        ],
+        "multiple": true,
+        "allowOther": true,
+        "showWhen": {
+          "field": "tiene_alergias",
+          "equals": true
+        }
+      },
+      {
+        "code": "alergias",
+        "name": "¿Cuál exactamente y qué reacción le produjo?",
+        "dataType": "text",
+        "required": false,
+        "section": "Antecedentes relevantes",
+        "description": "Por ejemplo: penicilina → urticaria; AINE → broncoespasmo.",
+        "showWhen": {
+          "field": "tiene_alergias",
+          "equals": true
+        }
+      },
+      {
+        "code": "toma_medicacion",
+        "name": "¿Toma algún medicamento de forma habitual?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Antecedentes relevantes"
+      },
+      {
+        "code": "medicacion_habitual",
+        "name": "¿Cuál? Nombre, dosis y frecuencia",
+        "dataType": "text",
+        "required": true,
+        "section": "Antecedentes relevantes",
+        "showWhen": {
+          "field": "toma_medicacion",
+          "equals": true
+        }
+      },
+      {
+        "code": "embarazo_posible",
+        "name": "¿Está embarazada o podría estarlo?",
+        "dataType": "string",
+        "required": false,
+        "section": "Antecedentes relevantes",
+        "options": [
+          "No",
+          "Sí",
+          "No sabe",
+          "No corresponde"
+        ],
+        "multiple": false,
+        "description": "Antes de indicar medicamentos o estudios con radiación. «No corresponde»: varón o fuera de la edad fértil."
+      },
+      {
+        "code": "semanas_de_gestacion",
+        "name": "Semanas de gestación",
+        "dataType": "integer",
+        "required": true,
+        "section": "Antecedentes relevantes",
+        "showWhen": {
+          "field": "embarazo_posible",
+          "equals": "Sí"
+        }
+      },
+      {
+        "code": "presion_arterial_sistolica",
+        "name": "Presión arterial sistólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "presion_arterial_diastolica",
+        "name": "Presión arterial diastólica (mmHg)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "frecuencia_cardiaca",
+        "name": "Frecuencia cardíaca (lpm)",
+        "dataType": "integer",
+        "required": true,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "frecuencia_respiratoria",
+        "name": "Frecuencia respiratoria (rpm)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "temperatura",
+        "name": "Temperatura axilar (°C)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "saturacion_de_oxigeno",
+        "name": "Saturación de oxígeno (%)",
+        "dataType": "integer",
+        "required": false,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "peso_kg",
+        "name": "Peso (kg)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "talla_cm",
+        "name": "Talla (cm)",
+        "dataType": "decimal",
+        "required": false,
+        "section": "Signos vitales"
+      },
+      {
+        "code": "estado_general",
+        "name": "Estado general",
+        "dataType": "string",
+        "required": false,
+        "section": "Examen físico",
+        "options": [
+          "Bueno",
+          "Regular",
+          "Malo"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "examen_fisico_dirigido",
+        "name": "Examen físico dirigido",
+        "dataType": "text",
+        "required": true,
+        "section": "Examen físico",
+        "description": "Lo explorado según el motivo de consulta: hallazgos positivos y negativos relevantes."
+      },
+      {
+        "code": "diagnostico",
+        "name": "Diagnóstico (con código CIE-10 si se conoce)",
+        "dataType": "text",
+        "required": true,
+        "section": "Diagnóstico"
+      },
+      {
+        "code": "tipo_de_diagnostico",
+        "name": "Tipo de diagnóstico",
+        "dataType": "string",
+        "required": true,
+        "section": "Diagnóstico",
+        "options": [
+          "Presuntivo",
+          "Definitivo",
+          "Repetido (ya registrado antes)"
+        ],
+        "multiple": false,
+        "description": "Clasificación P / D / R de la NT 022."
+      },
+      {
+        "code": "diagnosticos_secundarios",
+        "name": "Otros diagnósticos o problemas activos",
+        "dataType": "text",
+        "required": false,
+        "section": "Diagnóstico"
+      },
+      {
+        "code": "tratamiento_indicado",
+        "name": "Tratamiento indicado",
+        "dataType": "text",
+        "required": false,
+        "section": "Plan e indicaciones",
+        "description": "Medicamento, dosis, vía, frecuencia y duración; o medidas no farmacológicas."
+      },
+      {
+        "code": "examenes_solicitados",
+        "name": "Exámenes solicitados",
+        "dataType": "json",
+        "required": false,
+        "section": "Plan e indicaciones",
+        "options": [
+          "Laboratorio",
+          "Imagenología",
+          "Electrocardiograma",
+          "Anatomía patológica",
+          "Ninguno"
+        ],
+        "multiple": true,
+        "allowOther": true
+      },
+      {
+        "code": "examenes_detalle",
+        "name": "¿Cuáles?",
+        "dataType": "text",
+        "required": true,
+        "section": "Plan e indicaciones",
+        "showWhen": {
+          "field": "examenes_solicitados",
+          "equals": [
+            "Laboratorio",
+            "Imagenología",
+            "Electrocardiograma",
+            "Anatomía patológica"
+          ]
+        }
+      },
+      {
+        "code": "requiere_interconsulta",
+        "name": "¿Requiere interconsulta?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Plan e indicaciones"
+      },
+      {
+        "code": "interconsulta_especialidad",
+        "name": "¿Con qué especialidad y por qué?",
+        "dataType": "string",
+        "required": true,
+        "section": "Plan e indicaciones",
+        "showWhen": {
+          "field": "requiere_interconsulta",
+          "equals": true
+        }
+      },
+      {
+        "code": "signos_de_alarma_explicados",
+        "name": "Se explicaron los signos de alarma y cuándo volver antes",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Plan e indicaciones"
+      },
+      {
+        "code": "comprension_verificada",
+        "name": "El paciente repitió con sus palabras las indicaciones (método «teach-back»)",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Plan e indicaciones",
+        "description": "Herramienta 5 del Health Literacy Universal Precautions Toolkit (AHRQ, dominio público). Traducción propia, no oficial."
+      },
+      {
+        "code": "requiere_reposo",
+        "name": "¿Requiere reposo o certificado médico?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Plan e indicaciones"
+      },
+      {
+        "code": "dias_de_reposo",
+        "name": "Días de reposo",
+        "dataType": "integer",
+        "required": true,
+        "section": "Plan e indicaciones",
+        "showWhen": {
+          "field": "requiere_reposo",
+          "equals": true
+        }
+      },
+      {
+        "code": "destino",
+        "name": "Destino al terminar la cita",
+        "dataType": "string",
+        "required": true,
+        "section": "Plan e indicaciones",
+        "options": [
+          "Alta, sin control",
+          "Control programado",
+          "Referencia a otro establecimiento",
+          "Derivación a emergencia",
+          "Internación"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "fecha_de_control",
+        "name": "Fecha del próximo control",
+        "dataType": "date",
+        "required": true,
+        "section": "Plan e indicaciones",
+        "showWhen": {
+          "field": "destino",
+          "equals": "Control programado"
+        }
+      },
+      {
+        "code": "motivo_de_referencia",
+        "name": "Motivo de la referencia",
+        "dataType": "text",
+        "required": true,
+        "section": "Plan e indicaciones",
+        "showWhen": {
+          "field": "destino",
+          "equals": [
+            "Referencia a otro establecimiento",
+            "Derivación a emergencia"
+          ]
+        }
+      },
+      {
+        "code": "observaciones",
+        "name": "Observaciones",
+        "dataType": "text",
+        "required": false,
+        "section": "Plan e indicaciones"
+      }
+    ]
+  },
+  {
+    "code": "TRANSV_CONSENTIMIENTO_INFORMADO",
+    "name": "Consentimiento informado",
+    "version": 3,
+    "kind": "GENERAL",
+    "specialty": "TRANSVERSAL",
+    "provenance": {
+      "sourceTitle": "Constitución Política del Estado (2009), art. 44; Ley 3131 de Ejercicio Profesional Médico (2005) y su reglamento DS 28562",
+      "organization": "Estado Plurinacional de Bolivia — Ministerio de Salud y Deportes",
+      "url": "https://www.minsalud.gob.bo/",
+      "license": "Normativa oficial de acceso público",
+      "sourceVersion": "CPE 2009; Ley 3131 (2005); DS 28562 (2005)",
+      "retrievedAt": "2026-10-28",
+      "note": "Reorientada 2026-10-28 al consentimiento DIRIGIDO a una receta, orden de análisis o estudio, derivación, procedimiento o plan de cuidados. Cita literal: CPE art. 44.I. Paráfrasis (texto oficial no verificado en línea, sin número de artículo): la Ley 3131 y el DS 28562 hacen del consentimiento informado un documento del expediente clínico, escrito y firmado por el paciente o su representante, también cuando rechaza; el Código de Ética y Deontología Médica pide testigos cuando el paciente no puede consentir; la Norma Nacional de Referencia y Contrarreferencia (2013) trata la firma de la referencia como parte del consentimiento. Respaldo regional: el modelo de la Resolución 1738 del Ministerio de Salud y Protección Social de Colombia, fuente de la versión anterior. v2 (2026-10-02): reorganizada en secciones (motivo, antecedentes, examen, diagnóstico presuntivo, plan); las clasificaciones con categorías finitas pasan a lista cerrada; cada sí/no que tiene detalle pregunta «¿cuál?»; el diagnóstico presuntivo abre las observaciones que ese cuadro exige registrar."
+    },
+    "fields": [
+      {
+        "code": "tipo_de_indicacion",
+        "name": "¿A qué se consiente?",
+        "dataType": "string",
+        "required": true,
+        "section": "Qué se consiente",
+        "options": [
+          "Receta o tratamiento farmacológico",
+          "Orden de análisis o estudio",
+          "Derivación a otro profesional o establecimiento",
+          "Procedimiento",
+          "Plan de cuidados"
+        ],
+        "multiple": false,
+        "description": "CPE, art. 44.I: ninguna persona será sometida a intervención quirúrgica, examen médico o de laboratorio sin su consentimiento o el de terceros legalmente autorizados, salvo peligro inminente de su vida."
+      },
+      {
+        "code": "procedimiento_propuesto",
+        "name": "Tratamiento, receta, orden o derivación a la que se consiente",
+        "dataType": "text",
+        "required": true,
+        "section": "Qué se consiente",
+        "description": "Lo concreto: el fármaco por su denominación común y su dosis, el estudio pedido, el servicio y el destino de la derivación, o el procedimiento."
       },
       {
         "code": "diagnostico_que_lo_motiva",
         "name": "Diagnóstico que lo motiva",
         "dataType": "text",
         "required": true,
-        "section": "Procedimiento"
+        "section": "Información"
       },
       {
         "code": "beneficios_esperados",
         "name": "Beneficios esperados",
         "dataType": "text",
         "required": true,
-        "section": "Procedimiento"
+        "section": "Información"
       },
       {
         "code": "riesgos_y_complicaciones",
         "name": "Riesgos y complicaciones frecuentes y graves",
         "dataType": "text",
         "required": true,
-        "section": "Procedimiento"
+        "section": "Información"
+      },
+      {
+        "code": "riesgos_personalizados",
+        "name": "Riesgos personalizados",
+        "dataType": "text",
+        "required": false,
+        "section": "Información",
+        "description": "Los que dependen de esta persona: edad, embarazo, comorbilidades, otros medicamentos."
       },
       {
         "code": "alternativas_disponibles",
         "name": "Alternativas disponibles",
         "dataType": "text",
         "required": false,
-        "section": "Procedimiento"
+        "section": "Información",
+        "description": "Incluida la de no tratar. La persona puede pedir otra opinión médica (Ley 3131)."
       },
       {
         "code": "consecuencias_de_no_aceptar",
         "name": "Consecuencias de no aceptar",
         "dataType": "text",
         "required": false,
-        "section": "Procedimiento"
+        "section": "Información"
       },
       {
         "code": "hubo_preguntas",
         "name": "¿El paciente hizo preguntas?",
         "dataType": "boolean",
         "required": false,
-        "section": "Procedimiento"
+        "section": "Información"
       },
       {
         "code": "preguntas_del_paciente",
         "name": "¿Cuáles y qué se respondió?",
         "dataType": "text",
         "required": true,
-        "section": "Procedimiento",
+        "section": "Información",
         "showWhen": {
           "field": "hubo_preguntas",
           "equals": true
         }
       },
       {
+        "code": "profesional_que_informa",
+        "name": "Profesional que informa",
+        "dataType": "string",
+        "required": true,
+        "section": "Quién informa y cómo"
+      },
+      {
+        "code": "canal_de_informacion",
+        "name": "Canal",
+        "dataType": "string",
+        "required": true,
+        "section": "Quién informa y cómo",
+        "options": [
+          "En persona",
+          "Por telesalud"
+        ],
+        "multiple": false
+      },
+      {
+        "code": "idioma_de_la_informacion",
+        "name": "Idioma en que se informó",
+        "dataType": "string",
+        "required": false,
+        "section": "Quién informa y cómo",
+        "options": [
+          "Castellano",
+          "Quechua",
+          "Aymara",
+          "Guaraní"
+        ],
+        "multiple": false,
+        "allowOther": true
+      },
+      {
+        "code": "aplica_excepcion",
+        "name": "¿Se actuó sin consentimiento previo por una excepción legal?",
+        "dataType": "boolean",
+        "required": false,
+        "section": "Excepción legal"
+      },
+      {
+        "code": "tipo_de_excepcion",
+        "name": "Excepción",
+        "dataType": "string",
+        "required": true,
+        "section": "Excepción legal",
+        "options": [
+          "Urgencia con peligro inminente para la vida",
+          "Riesgo para la salud pública",
+          "La persona renunció a recibir la información"
+        ],
+        "multiple": false,
+        "showWhen": {
+          "field": "aplica_excepcion",
+          "equals": true
+        }
+      },
+      {
+        "code": "justificacion_de_la_excepcion",
+        "name": "Justificación",
+        "dataType": "text",
+        "required": true,
+        "section": "Excepción legal",
+        "description": "En una urgencia, después se informa a la persona o a su familia y se deja constancia.",
+        "showWhen": {
+          "field": "aplica_excepcion",
+          "equals": true
+        }
+      },
+      {
         "code": "acepta_el_procedimiento",
-        "name": "Acepta el procedimiento",
+        "name": "Acepta la indicación",
         "dataType": "boolean",
         "required": true,
         "section": "Decisión"
@@ -71511,6 +72092,17 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
         "name": "Nombre del representante",
         "dataType": "string",
         "required": true,
+        "section": "Decisión",
+        "showWhen": {
+          "field": "otorgado_por_representante",
+          "equals": true
+        }
+      },
+      {
+        "code": "documento_del_representante",
+        "name": "CI del representante",
+        "dataType": "string",
+        "required": false,
         "section": "Decisión",
         "showWhen": {
           "field": "otorgado_por_representante",
@@ -71552,6 +72144,39 @@ export const FICHAS_ESTANDAR: readonly FichaEstandar[] = [
           "field": "otorgado_por_representante",
           "equals": true
         }
+      },
+      {
+        "code": "asentimiento_de_la_persona",
+        "name": "¿La persona representada dio su asentimiento?",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Decisión",
+        "showWhen": {
+          "field": "otorgado_por_representante",
+          "equals": true
+        }
+      },
+      {
+        "code": "nombre_del_testigo",
+        "name": "Testigo",
+        "dataType": "string",
+        "required": false,
+        "section": "Decisión",
+        "description": "Cuando la persona no puede consentir o no sabe firmar, el Código de Ética y Deontología Médica recomienda hacerlo ante testigos."
+      },
+      {
+        "code": "documento_del_testigo",
+        "name": "CI del testigo",
+        "dataType": "string",
+        "required": false,
+        "section": "Decisión"
+      },
+      {
+        "code": "derecho_a_revocar_informado",
+        "name": "Se informó que puede revocar su decisión en cualquier momento, sin efecto sobre lo ya realizado",
+        "dataType": "boolean",
+        "required": true,
+        "section": "Decisión"
       },
       {
         "code": "fecha_de_otorgamiento",

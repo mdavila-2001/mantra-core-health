@@ -332,6 +332,16 @@
   }
 }
 
+<!-- ─── Su médico de cabecera (28/10/2026) ──────────────────────────────────
+     Después de lo suyo —síntomas, cita, receta— y antes de lo que es para
+     aprender. En `@defer` por el presupuesto del paquete inicial, como el resto
+     de las tarjetas de abajo. -->
+@defer (on idle) {
+  <app-primary-practitioner-card />
+} @placeholder {
+  <div class="mi-salud__cabecera-hueco" aria-hidden="true"></div>
+}
+
 <!-- ─── Para entretenerse y aprender (rediseño del 22/10/2026) ─────────────────
      Los primeros pasos y un consejo. Van **después** de lo suyo —síntomas, cita,
      receta— porque son para quien tiene un rato, no para quien entró apurado. -->

@@ -13,6 +13,7 @@ import { filter } from 'rxjs';
 
 import { AppButtonLink } from '../../atoms/button/button-link';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import { VerificationBadge } from '../../atoms/verification-badge/verification-badge';
 import type {
   SearchResultAction,
   SearchResultItem,
@@ -30,7 +31,7 @@ import { ratingOf } from './rating-of';
  */
 @Component({
   selector: 'li[app-result-card]',
-  imports: [AppButtonLink, NavIcon],
+  imports: [AppButtonLink, NavIcon, VerificationBadge],
   templateUrl: './result-card.html',
   styleUrl: './result-card.css',
   host: { class: 'tarjeta-resultado', '[class.tarjeta-resultado--lista]': "vista() === 'lista'" },
@@ -100,8 +101,15 @@ export class ResultCard {
     return `${media} de 5 estrellas, ${nota.count} ${nota.count === 1 ? 'opinión' : 'opiniones'}`;
   });
 
-  /** Si cuenta con sello de verificación activa. */
+  /**
+   * Si cuenta con sello de verificación activa — para quien NO es un
+   * profesional (clínica, farmacia…): su marca es la del rincón de la foto.
+   * Un profesional lleva `verification` y su check va junto al nombre.
+   */
   protected readonly verificado = computed(() => {
+    if (this.resultado().verification !== undefined) {
+      return false;
+    }
     return (this.resultado().seals ?? []).some(
       (s) => s.label.toLowerCase().includes('verificad') && s.tone === 'ok',
     );

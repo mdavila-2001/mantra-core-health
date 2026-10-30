@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { TOAST_TYPE_LABEL, type ToastMessage } from './toast.types';
 
@@ -25,6 +26,8 @@ import { TOAST_TYPE_LABEL, type ToastMessage } from './toast.types';
   },
 })
 export class Toast {
+  private readonly router = inject(Router);
+
   readonly toast = input.required<ToastMessage>();
 
   /** Emite el id del aviso que se cerró. */
@@ -37,5 +40,13 @@ export class Toast {
 
   dismiss(): void {
     this.dismissed.emit(this.toast().id);
+  }
+
+  /** Va a donde se resuelve el aviso y lo cierra: ya cumplió. */
+  act(): void {
+    const action = this.toast().action;
+    if (action === undefined) return;
+    void this.router.navigateByUrl(action.url);
+    this.dismiss();
   }
 }

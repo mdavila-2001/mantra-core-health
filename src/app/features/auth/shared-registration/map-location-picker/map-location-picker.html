@@ -175,76 +175,85 @@
        su zona y la localidad completa salen de él y van en sólo lectura: un
        campo editable invitaría a contradecir al mapa. Para corregir algo se
        mueve el pin. -->
-  @if (detallar() && punto() !== null) {
-    <div class="registro__deducido" [attr.data-testid]="ids().mapa + '-deducido'">
-      <!-- Textarea en sólo lectura y no input: en 375 px una calle larga o el
-           aviso de que no llegó se cortaban dentro de una sola línea. -->
-      <app-form-field label="Calle" hint="Sale del punto del mapa. Para cambiarla, mueva el pin.">
-        <app-textarea
-          [value]="streetText()"
-          [readonly]="true"
-          [rows]="1"
-          [autoResize]="true"
-          [attr.data-testid]="ids().avisoGeocodificacion"
-        />
-      </app-form-field>
-      <app-form-field label="Distrito o zona" hint="Sale del punto del mapa.">
-        <app-textarea
-          [value]="zoneText()"
-          [readonly]="true"
-          [rows]="1"
-          [autoResize]="true"
-          [attr.data-testid]="ids().mapa + '-distrito'"
-        />
-      </app-form-field>
-      @if (streetState() === 'caida') {
-        <app-alert
-          tone="warning"
-          title="No pudimos traer la calle ni el distrito"
-          [attr.data-testid]="ids().mapa + '-calle-caida'"
-        >
-          El punto se guarda igual. Puede volver a buscarlos ahora o seguir sin ellos.
-          <button
-            alert-actions
-            app-button
-            variant="secondary"
-            size="sm"
-            type="button"
-            [attr.data-testid]="ids().mapa + '-reintentar-calle'"
-            (clicked)="retryStreet()"
+  @if (detallar() && (punto() !== null || disposicion() === 'tres-columnas')) {
+    <div
+      class="registro__deducido"
+      [class.registro__deducido--dos]="disposicion() === 'dos-columnas'"
+      [class.registro__deducido--tres]="disposicion() === 'tres-columnas'"
+      [attr.data-testid]="ids().mapa + '-deducido'"
+    >
+      <!-- Sólo con `tres-columnas`: el campo que la pantalla quiere junto a la calle. -->
+      <ng-content select="[campo-previo]" />
+      @if (punto() !== null) {
+        <!-- Textarea en sólo lectura y no input: en 375 px una calle larga o el
+             aviso de que no llegó se cortaban dentro de una sola línea. -->
+        <app-form-field label="Calle" hint="Sale del punto del mapa. Para cambiarla, mueva el pin.">
+          <app-textarea
+            [value]="streetText()"
+            [readonly]="true"
+            [rows]="1"
+            [autoResize]="true"
+            [attr.data-testid]="ids().avisoGeocodificacion"
+          />
+        </app-form-field>
+        <app-form-field label="Distrito o zona" hint="Sale del punto del mapa.">
+          <app-textarea
+            [value]="zoneText()"
+            [readonly]="true"
+            [rows]="1"
+            [autoResize]="true"
+            [attr.data-testid]="ids().mapa + '-distrito'"
+          />
+        </app-form-field>
+        @if (streetState() === 'caida') {
+          <app-alert
+            tone="warning"
+            title="No pudimos traer la calle ni el distrito"
+            [attr.data-testid]="ids().mapa + '-calle-caida'"
           >
-            Volver a buscar la calle y el distrito
-          </button>
-        </app-alert>
-      }
-      @if (outsideOperatingCountries()) {
-        <!-- Fuera de donde se opera no hay municipio del catálogo que deducir,
-             y el mapa de Bolivia no tiene dónde dibujar el punto: se dice, en
-             vez de pintar el pin fuera del plano. Pedido del cliente
-             (27/10/2026): por ahora sólo se opera en Bolivia, y eso es lo que
-             el aviso tiene que decir. La calle y el distrito igual se muestran:
-             la arquitectura ya sirve para cualquier país. -->
-        <app-alert
-          tone="warning"
-          [title]="'Por el momento sólo operamos en ' + operatingCountriesName"
-          [id]="outsideNoticeId"
-          [attr.data-testid]="ids().mapa + '-fuera-de-bolivia'"
-        >
-          El punto que marcó está fuera de {{ operatingCountriesName }}. Mueva el pin a una dirección
-          en {{ operatingCountriesName }} para continuar.
-        </app-alert>
-      } @else {
-        <app-location-picker
-          [ramas]="branches()"
-          [value]="municipality()"
-          (valueChange)="chooseMunicipality($event)"
-          [punto]="punto()"
-          [desdePunto]="true"
-          [ficha]="true"
-          [fichaTitulo]="etiquetaFicha()"
-          mapLabel="Mapa de Bolivia acercado al punto elegido"
-          [testId]="ids().mapa + '-localidad'"
-        />
+            El punto se guarda igual. Puede volver a buscarlos ahora o seguir sin ellos.
+            <button
+              alert-actions
+              app-button
+              variant="secondary"
+              size="sm"
+              type="button"
+              [attr.data-testid]="ids().mapa + '-reintentar-calle'"
+              (clicked)="retryStreet()"
+            >
+              Volver a buscar la calle y el distrito
+            </button>
+          </app-alert>
+        }
+        @if (outsideOperatingCountries()) {
+          <!-- Fuera de donde se opera no hay municipio del catálogo que deducir,
+               y el mapa de Bolivia no tiene dónde dibujar el punto: se dice, en
+               vez de pintar el pin fuera del plano. Pedido del cliente
+               (27/10/2026): por ahora sólo se opera en Bolivia, y eso es lo que
+               el aviso tiene que decir. La calle y el distrito igual se muestran:
+               la arquitectura ya sirve para cualquier país. -->
+          <app-alert
+            tone="warning"
+            [title]="'Por el momento sólo operamos en ' + operatingCountriesName"
+            [id]="outsideNoticeId"
+            [attr.data-testid]="ids().mapa + '-fuera-de-bolivia'"
+          >
+            El punto que marcó está fuera de {{ operatingCountriesName }}. Mueva el pin a una dirección
+            en {{ operatingCountriesName }} para continuar.
+          </app-alert>
+        } @else {
+          <app-location-picker
+            [ramas]="branches()"
+            [value]="municipality()"
+            (valueChange)="chooseMunicipality($event)"
+            [punto]="punto()"
+            [desdePunto]="true"
+            [ficha]="true"
+            [fichaTitulo]="etiquetaFicha()"
+            mapLabel="Mapa de Bolivia acercado al punto elegido"
+            [testId]="ids().mapa + '-localidad'"
+          />
+        }
       }
     </div>
   }

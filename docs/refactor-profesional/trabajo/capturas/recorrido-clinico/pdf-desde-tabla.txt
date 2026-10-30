@@ -1,0 +1,183 @@
+           AloVida
+
+
+EXPEDIENTE CLÍNICO                                                                                FECHA DE GENERACIÓN
+                                                                                                     28/10/2026, 15:44
+Ana Lucía Pérez Quiroga
+Historia clínica y expediente.
+
+
+
+
+   Enfermedades activas
+
+
+Hipertensión arterial esencialDesde 23 sept 2025 Duración Crónica · seguimiento continuo
+
+
+  FECHA         TI PO              REGISTRO                              EST ADO      R ELACIONADO CON                VER
+
+
+  26 oct        Observación        Glucemia en ayunas88 mg               Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Saturación de oxígeno96 mg            Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Temperatura corporal36.4 mg           Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Talla158 mg                           Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Peso58 mg                             Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Frecuencia cardíaca64 mg              Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Presión arterial diastólica76 mg      Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Observación        Presión arterial sistólica118 mg      Completado   Ambulatorio · 26 oct 2026       Ver
+  2026
+
+  26 oct        Atención           AmbulatorioControl de rutina          Finalizado                                   Ver
+  2026
+
+  26 oct        Documento          Electrocardiograma de reposoValeria   Publicado                                    Ver
+  2026                             Rojas Mendoza
+
+  8 oct         Medicación         Enalapril 10 mg comprimidos10 mg ·    Vigente      Ambulatorio · 26 oct 2026 ·     Ver
+  2026                             Una vez al día por la mañana                       Para Hipertensión arterial
+                                                                                      esencial
+
+  5 oct         Medicación         Atorvastatina 20 mg comprimidos20     Vigente      Para Control sintomático        Ver
+  2026                             mg · Una vez al día por la noche
+
+                                                                                            Continúa en la página siguiente
+
+
+
+
+AloVida                                                                                                     Página 1 de 3
+Documento confidencial · Generado el 28/10/2026, 15:44
+      AloVida                                                                                              Ana Lucía Pérez Quiroga
+
+
+
+
+  FECHA         TI PO              REGISTRO                                  EST ADO      R ELACIONADO CON                 VER
+
+
+  11 sept       Observación        Glucemia en ayunas89 mg                   Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Saturación de oxígeno94.5 mg              Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Temperatura corporal37.4 mg               Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Talla156.5 mg                             Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Peso59 mg                                 Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Frecuencia cardíaca62.5 mg                Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Presión arterial diastólica77 mg          Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Nota clínica                                                 Completado   Ambulatorio · 26 oct 2026        Ver
+  2026
+
+  11 sept       Nota clínica                                                 Borrador     Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Observación        Presión arterial sistólica116.5 mg        Completado   Teleconsulta · 11 sept 2026      Ver
+  2026
+
+  11 sept       Atención           TeleconsultaLectura de resultados         Finalizado                                    Ver
+  2026
+
+  10 sept       Documento          Laboratorio completoLaboratorio           Publicado                                     Ver
+  2026                             Central
+
+  29 ago        Plan de            Presión arterial por debajo de 130/80 y   Activo                                        Ver
+  2026          cuidados           LDL menor a 100 en 6 meses.4
+                                   actividades
+
+  28 jul        Observación        Glucemia en ayunas90 mg                   Completado   Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Observación        Saturación de oxígeno93 mg                Completado   Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Observación        Temperatura corporal38.4 mg               Completado   Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Observación        Talla155 mg                               Completado   Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Observación        Peso60 mg                                 Completado   Ambulatorio · 28 jul 2026        Ver
+  2026
+
+                                                                                                Continúa en la página siguiente
+
+
+
+
+AloVida                                                                                                         Página 2 de 3
+Documento confidencial · Generado el 28/10/2026, 15:44
+      AloVida                                                                                                 Ana Lucía Pérez Quiroga
+
+
+
+
+  FECHA         TI PO              REGISTRO                                 EST ADO          R ELACIONADO CON                 VER
+
+
+  28 jul        Observación        Frecuencia cardíaca61 mg                 Completado       Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Observación        Presión arterial diastólica78 mg         Completado       Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Observación        Presión arterial sistólica115 mg         Completado       Ambulatorio · 28 jul 2026        Ver
+  2026
+
+  28 jul        Atención           AmbulatorioConsulta por síntomas         Finalizado                                        Ver
+  2026
+
+  20 jul        Documento          Radiografía de tórax — informeCentro     Borrador                                          Ver
+  2026                             de Imagen Sur
+
+  30 jun        Medicación         Paracetamol 500 mg comprimidos500        Completada       Para Control sintomático         Ver
+  2026                             mg · Cada 8 horas si hay dolor, máximo
+                                   3 días
+
+  22 mar        Diagnóstico        Infección respiratoria aguda             En estudio       Ambulatorio · 26 oct 2026        Ver
+  2026
+
+  22 dic        Diagnóstico        Dislipidemia                             En estudio       Ambulatorio · 26 oct 2026        Ver
+  2025
+
+  23 sept       Diagnóstico        Hipertensión arterial esencial           Enfermedad       Ambulatorio · 26 oct 2026        Ver
+  2025                                                                      activa
+
+
+
+
+                                                                                         Valeria Rojas Mendoza
+                                                                                            Matrícula MP-2400
+                                                                                              FIRMA Y SELLO
+
+
+
+
+AloVida                                                                                                            Página 3 de 3
+Documento confidencial · Generado el 28/10/2026, 15:44
+

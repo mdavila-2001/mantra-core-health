@@ -51,3 +51,9 @@
 .logo-organizacion__error {
   color: var(--text-danger);
 }
+
+/* Sin marco: vive en la pestaña de una ficha que ya es la tarjeta. */
+app-card.sin-marco {
+  background: transparent;
+  border-color: transparent;
+}

@@ -4,6 +4,13 @@
 <p class="contacto__nombre">{{ contacto().nombre }}</p>
 
 <dl class="contacto__datos">
+  @if (contacto().documento; as documento) {
+    <div class="contacto__dato">
+      <dt class="contacto__etiqueta">Documento de identidad</dt>
+      <dd class="contacto__valor">{{ documento }}</dd>
+    </div>
+  }
+
   @if (contacto().celular; as celular) {
     <div class="contacto__dato">
       <dt class="contacto__etiqueta">Celular</dt>

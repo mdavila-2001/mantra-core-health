@@ -73,10 +73,14 @@ export function entrar(actor: Actor): void {
     }
   });
 
-  // Dos destinos legítimos: el panel, o la elección de organización cuando la
-  // sesión pertenece a más de una. Esperar sólo el panel dejaría la suite roja
-  // para cualquiera con dos organizaciones, que es normal.
-  cy.location('pathname', { timeout: 30_000 }).should('match', /^\/(dashboard|auth\/organization)/);
+  // Tres destinos legítimos: el panel, la elección de organización cuando la sesión
+  // pertenece a más de una, o la elección de portal cuando la cuenta administra Y tiene
+  // reportería. Esperar sólo el panel dejaría la suite roja para cualquiera con dos
+  // organizaciones o con ambos accesos, que es normal.
+  cy.location('pathname', { timeout: 30_000 }).should(
+    'match',
+    /^\/(dashboard|auth\/organization|portal-selector)/,
+  );
 
   cy.location('pathname').then((ruta) => {
     if (!ruta.includes('/auth/organization')) {
@@ -84,7 +88,15 @@ export function entrar(actor: Actor): void {
     }
     capturar({ carpeta: 'sesion', titulo: 'Elegir organización' }, 'elegir-organizacion');
     cy.porTestId('tenant-opcion').first().click();
-    cy.location('pathname', { timeout: 30_000 }).should('match', /\/dashboard/);
+    cy.location('pathname', { timeout: 30_000 }).should('match', /\/(dashboard|portal-selector)/);
+  });
+
+  // Estas pruebas recorren la aplicación de administración: se elige ese portal.
+  cy.location('pathname').then((ruta) => {
+    if (ruta.includes('/portal-selector')) {
+      cy.contains('a', 'Portal de administración').click();
+      cy.location('pathname', { timeout: 30_000 }).should('match', /\/dashboard/);
+    }
   });
 }
 

@@ -122,7 +122,7 @@ describe('APP_SECTIONS', () => {
     expect(practice?.roles).toEqual(['PRACTITIONER']);
     expect(isVisibleTo(practice!, ['PRACTITIONER'])).toBe(true);
     expect(isVisibleTo(practice!, ['PATIENT'])).toBe(false);
-    expect(practice?.summary).toBe('Creá y editá tu consultorio: dirección, mapa, teléfono y horario.');
+    expect(practice?.summary).toBe('Cree y edite su consultorio: dirección, mapa, teléfono y horario.');
   });
 
   it('el panel es la primera sección: el breadcrumb lo usa como raíz', () => {
@@ -398,7 +398,7 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('las secciones reales son las del laboratorio, las diez de la farmacia y la del centro médico, y nada más la usa', () => {
+  it('las secciones reales son las del laboratorio, las siete de la farmacia y la del centro médico, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
@@ -406,15 +406,13 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
     // «Configurar práctica», sólo para una organización médica: los
     // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
-    // P34 (26/10/2026) suma «Horario y turnos» a la farmacia.
+    // P34 (26/10/2026) suma «Horario y turnos» a la farmacia. Productos,
+    // categorías, precios, inventario e importación son desde el 30/10/2026
+    // una sola sección: «Catálogo», con pestañas.
     expect(flagged.map((s) => s.path)).toEqual([
       'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
-      'administration/pharmacy-categories',
-      'administration/pharmacy-import',
-      'administration/pharmacy-inventory',
-      'administration/pharmacy-prices',
       'administration/pharmacy-hours',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',

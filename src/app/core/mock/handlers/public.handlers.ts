@@ -2,9 +2,14 @@ import { OfficialDirectory, SOURCE_NAME, type OfficialClass, type OfficialSheet 
 import { PRECISION_LABEL, CORPUS_PHARMACIES } from '../fixtures/bolivia-central-axis';
 import { categoryByCode } from '../fixtures/public-categories';
 import { CATALOGO_MEDICAMENTOS } from '../fixtures/medication-catalog.generated';
-import { commentList, CONCEPT, postList, reviewList, showcaseBySlug, showcases, type SimulatedShowcase } from '../fixtures/community';
+import { calificacionDe, commentList, CONCEPT, postList, reviewList, showcaseBySlug, showcases, type SimulatedShowcase } from '../fixtures/community';
 import { MEDICAMENTO, displayOf } from '../fixtures/concepts';
-import { affiliationList, PROFESSIONALS, professionalById } from '../fixtures/people';
+import {
+  affiliationList,
+  PROFESSIONALS,
+  professionalById,
+} from '../fixtures/people';
+import { showcaseVerification } from '../fixtures/verification-body';
 import { sedesDe, serviciosPublicadosDe } from './practice.handlers';
 import { addDecimalStrings } from '../../money/decimal-strings';
 import { notFound, validation, type MockRouter } from '../mock-router';
@@ -26,8 +31,9 @@ function resultado(v: SimulatedShowcase) {
     city: v.city,
     avatarUrl: v.avatarUrl,
     verified: v.verified,
-    ratingAverage: v.ratingAverage,
-    ratingCount: v.ratingCount,
+    ...showcaseVerification(v),
+    ratingAverage: calificacionDe(v).average,
+    ratingCount: calificacionDe(v).count,
     coverUrl: v.coverUrl,
     address: v.address === '' ? null : v.address,
     location: { lat: v.lat, lng: v.lng },
@@ -571,6 +577,7 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
       avatarUrl: v.avatarUrl,
       coverUrl: v.coverUrl,
       verified: v.verified,
+      ...showcaseVerification(v),
       city: v.city,
       address: v.address === '' ? null : v.address,
       location: { lat: v.lat, lng: v.lng },
@@ -596,8 +603,8 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
                   : { lat: sede.latitude, lng: sede.longitude },
               isOwn: sede.isOwnSite,
             })),
-      ratingAverage: v.ratingAverage,
-      ratingCount: v.ratingCount,
+      ratingAverage: calificacionDe(v).average,
+      ratingCount: calificacionDe(v).count,
       acceptsReviews: v.acceptsReviews,
       posts: postList
         .filtrar((p) => p.authorPublicProfileId === v.id)
@@ -616,7 +623,7 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
     const v = showcaseBySlug(params['slug']!);
     if (v === undefined && (await directorio.bySlug(params['slug']!)) !== undefined) {
       // Una ficha del directorio oficial todavía no tiene opiniones.
-      return paginaPublica([], query);
+      return { ...paginaPublica([], query), ratingAverage: null, ratingCount: 0 };
     }
     if (v === undefined || v.kind === 'PATIENT') return notFound('Ficha no encontrada');
     const items = reviewList
@@ -625,26 +632,30 @@ export function registrarPublico(router: MockRouter, directorio: OfficialDirecto
       .map((r) => {
         const anonima = r.reviewerDisplayModeConceptId === CONCEPT.reviewDisplayAnon;
         const conFicha = showcases.get(r.reviewerProfileId);
-        const publica = conFicha !== undefined && conFicha.kind !== 'PATIENT' && conFicha.visibility === 'PUBLIC';
-        const respuesta = r.responses[0];
         return {
           id: r.id,
-          rating: r.overallRating,
-          text: r.reviewText === '' ? null : r.reviewText,
-          publishedAt: r.publishedAt,
-          reviewer: anonima
-            ? { displayName: 'Paciente verificado', headline: 'Eligió no mostrar su nombre', avatarUrl: null, slug: null, kind: null }
-            : {
-                displayName: r.reviewerDisplayName ?? conFicha?.displayName ?? 'Paciente',
-                headline: publica ? conFicha.headline : 'Paciente',
-                avatarUrl: r.reviewerAvatarUrl ?? conFicha?.avatarUrl ?? null,
-                slug: publica ? conFicha.slug : null,
-                kind: publica ? (conFicha.kind as ClasePublica) : null,
-              },
-          response: respuesta === undefined ? null : { text: respuesta.responseText, publishedAt: respuesta.publishedAt },
+          overallRating: r.overallRating,
+          reviewText: r.reviewText === '' ? null : r.reviewText,
+          // La API redondea la fecha al DÍA en la lectura pública: la hora exacta
+          // de una reseña «anónima» permitiría emparejarla con la encuesta (o
+          // con la consulta) de quien la escribió. Al mediodía UTC para que
+          // ningún huso la corra de día al mostrarla.
+          publishedAt: `${r.publishedAt.slice(0, 10)}T12:00:00.000Z`,
+          editedAt: null,
+          // `null` es la decisión de quien opinó (anónima), no un nombre sin
+          // resolver: la ficha lo dice con palabras («Paciente verificado»).
+          reviewerDisplayName: anonima ? null : (r.reviewerDisplayName ?? conFicha?.displayName ?? 'Paciente'),
+          responses: r.responses.map((respuesta) => ({
+            id: respuesta.id,
+            responseText: respuesta.responseText,
+            publishedAt: `${respuesta.publishedAt.slice(0, 10)}T12:00:00.000Z`,
+          })),
         };
       });
-    return paginaPublica(items, query, 20);
+    // Promedio y total son los del PERFIL, no los de la página: los mismos que
+    // la cabecera de la ficha (y que `POST /patients/me/reviews` actualiza).
+    const { average, count } = calificacionDe(v);
+    return { ...paginaPublica(items, query, 20), ratingAverage: average, ratingCount: count };
   });
 
   /* ---- lo que cada ficha OFRECE (P30 y P31) ---------------------------------

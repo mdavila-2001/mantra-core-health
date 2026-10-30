@@ -1,0 +1,65 @@
+@import './chart-tokens.css';
+
+:host {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.sc__svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.sc__grid {
+  stroke: var(--ins-grid);
+}
+
+.sc__tick,
+.sc__axis {
+  fill: var(--ins-axis);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc__axis {
+  fill: var(--text-secondary);
+  font-weight: 600;
+}
+
+.sc__trend {
+  stroke: var(--st-warning-fg);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+}
+
+.sc__dot {
+  fill-opacity: 0.8;
+  stroke: var(--bg-surface);
+  stroke-width: 1.5;
+  cursor: default;
+  outline: none;
+}
+
+.sc__dot--hover,
+.sc__dot:focus-visible {
+  fill-opacity: 1;
+  stroke: var(--text-primary);
+  stroke-width: 2.5;
+}
+
+.sc__hint {
+  fill: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--bg-surface);
+  stroke-width: 4px;
+}
+
+.sc__verdict {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

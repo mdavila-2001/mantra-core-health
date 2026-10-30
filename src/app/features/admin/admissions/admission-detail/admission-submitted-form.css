@@ -1,0 +1,150 @@
+:host {
+  display: block;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.formulario__seccion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.formulario__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+}
+
+.formulario__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-5);
+  margin: 0;
+}
+
+@media (min-width: 780px) {
+  .formulario__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .formulario__campos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.campo {
+  min-inline-size: 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-sm);
+}
+
+.campo--falta {
+  border-color: var(--st-warning-bd);
+  background: var(--st-warning-bg);
+}
+
+.campo__rotulo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.campo__obligatorio {
+  font-size: var(--fs-overline);
+  color: var(--text-secondary);
+}
+
+.campo__valor {
+  margin: var(--sp-1) 0 0;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.campo__vacio {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.campo--falta .campo__vacio {
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}
+
+.campo__mapa,
+.vinculo__enlace {
+  margin-inline-start: var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-link);
+}
+
+.vinculo__enlace {
+  padding: var(--sp-1) 0;
+  font-family: inherit;
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.vinculo__enlace:focus-visible,
+.campo__mapa:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.formulario__requisitos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: var(--sp-3) 0 0;
+  list-style: none;
+  border-block-start: 1px dashed var(--border-strong);
+}
+
+.vinculo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-sm);
+}
+
+.vinculo--resaltado {
+  box-shadow: 0 0 0 2px var(--brand-primary);
+}
+
+.vinculo__nombre {
+  font-weight: 600;
+}
+
+.vinculo__huella {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.vinculo__acciones {
+  display: inline-flex;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}

@@ -1,8 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+  type TestRequest,
+} from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
+import type { BulkRowResult } from '../../../core/data-access/pharmacy/pharmacy-bulk.types';
 import type {
   PharmacyCategoryPage,
   PharmacyDirectoryPage,
@@ -36,6 +41,11 @@ import { environment } from '../../../../environments/environment';
  * - Terminada la carga ya **no** se relee el catálogo ni se cambia de pestaña:
  *   la lista de productos es otra ruta. Esa parte del original (`esperarListado`
  *   tras publicar) no tiene equivalente; en su lugar se prueba «Ver productos».
+ * - FAR-05: ya no hay un `POST`/`PATCH` por fila. «Revisar datos» pide la vista
+ *   previa del servidor (`POST …/products/bulk` con `dryRun: true`) y «Cargar»
+ *   manda lo mismo sin `dryRun`, en lotes de 250. Los casos de publicación de
+ *   antes se conservan con sus mismas afirmaciones de resultado; lo que cambió
+ *   es por dónde viaja cada fila.
  */
 const PHARMACY = { id: '7f1c9a52-6d3e-4b18-9c47-2a5e8f0b1d63', name: 'Farmacia del Centro' };
 const OTHER_PHARMACY = { id: '2b9e6c10-4a7d-4f3b-8d15-9c0e7a1f5b22', name: 'Farmacia Sur' };
@@ -113,6 +123,37 @@ describe('PharmacyImport', () => {
 
   const categoriesUrl = (pharmacyId: string): string => `/pharmacies/${pharmacyId}/categories`;
   const productsUrl = (pharmacyId: string): string => `/pharmacies/${pharmacyId}/products`;
+  const bulkUrl = (pharmacyId: string): string => `/pharmacies/${pharmacyId}/products/bulk`;
+
+  /** Una respuesta de la carga masiva: `CREATED` salvo lo que diga `outcomes` por fila. */
+  function bulkAnswer(
+    request: TestRequest,
+    outcomes: (row: { productCode: string }, index: number) => Partial<BulkRowResult> = () => ({}),
+  ): void {
+    const body = request.request.body as { dryRun?: boolean; rows: { productCode: string }[] };
+    request.flush({
+      dryRun: body.dryRun === true,
+      results: body.rows.map((row, index) => ({ row: index + 1, outcome: 'CREATED', ...outcomes(row, index) })),
+    });
+  }
+
+  /**
+   * Contesta la vista previa del servidor (`dryRun`), lote por lote: devuelve
+   * los pedidos que salieron, para mirar su cuerpo.
+   */
+  function answerPreview(
+    outcomes?: (row: { productCode: string }, index: number) => Partial<BulkRowResult>,
+  ): TestRequest[] {
+    const seen: TestRequest[] = [];
+    for (let pending = http.match(bulkUrl(PHARMACY.id)); pending.length > 0; pending = http.match(bulkUrl(PHARMACY.id))) {
+      expect(pending).toHaveLength(1);
+      expect(pending[0]!.request.body.dryRun).toBe(true);
+      seen.push(pending[0]!);
+      bulkAnswer(pending[0]!, outcomes);
+      fixture.detectChanges();
+    }
+    return seen;
+  }
 
   /** Monta la pantalla con una sola farmacia: queda elegida sola y pide sus categorías. */
   function mount(categories: PharmacyCategoryPage = CATEGORIES): void {
@@ -147,10 +188,13 @@ describe('PharmacyImport', () => {
     expectCatalogRead(catalog);
   }
 
-  /** Avanza de «Asignar columnas» a «Revisar datos» con el botón «Continuar». */
-  function review(): void {
+  /** Avanza de «Asignar columnas» a «Revisar datos» con «Continuar» y contesta la vista previa. */
+  function review(
+    outcomes?: (row: { productCode: string }, index: number) => Partial<BulkRowResult>,
+  ): TestRequest[] {
     (byId('import-continue-columns') as HTMLButtonElement).click();
     fixture.detectChanges();
+    return answerPreview(outcomes);
   }
 
   function publishByClick(): void {
@@ -182,6 +226,17 @@ describe('PharmacyImport', () => {
   afterEach(() => http.verify());
 
   describe('la pantalla', () => {
+    it('montada como pestaña de «Catálogo» (`embedded`) no dibuja su membrete', () => {
+      mount();
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('app-page-header')).not.toBeNull();
+
+      fixture.componentRef.setInput('embedded', true);
+      fixture.detectChanges();
+
+      expect(host.querySelector('app-page-header')).toBeNull();
+    });
+
     it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos en una sola tarjeta', () => {
       mount();
 
@@ -491,12 +546,16 @@ describe('PharmacyImport', () => {
       expect(textOf('import-not-in-catalog')).toMatch(/1\s+fila no se actualiza/);
 
       publishByClick();
-      // Nada se da de alta: sólo sale la actualización.
+      // Nada se da de alta: sólo viaja la actualización, en modo `UPDATE`.
       http.expectNone(productsUrl(PHARMACY.id));
-      const patch = http.expectOne(`${productsUrl(PHARMACY.id)}/p-1`);
-      expect(patch.request.method).toBe('PATCH');
-      expect(patch.request.body).toEqual({ brandName: 'Ya está', inStock: true });
-      patch.flush(product({ brandName: 'Ya está' }));
+      http.expectNone(`${productsUrl(PHARMACY.id)}/p-1`);
+      const bulk = http.expectOne(bulkUrl(PHARMACY.id));
+      expect(bulk.request.method).toBe('POST');
+      expect(bulk.request.body).toEqual({
+        mode: 'UPDATE',
+        rows: [{ productCode: 'PAR-500', brandName: 'Ya está', inStock: true }],
+      });
+      bulkAnswer(bulk, () => ({ outcome: 'UPDATED', id: 'p-1' }));
       fixture.detectChanges();
 
       expect(textOf('import-result')).toMatch(/1\s+actualizado/);
@@ -522,6 +581,11 @@ describe('PharmacyImport', () => {
       expect(textOf('import-review')).toMatch(/1\s+se actualiza/);
 
       internal().setMode('SOLO_CREAR');
+      fixture.detectChanges();
+      // La vista previa del servidor se vuelve a pedir, con el modo nuevo.
+      const [again] = http.match(bulkUrl(PHARMACY.id));
+      expect(again!.request.body.mode).toBe('CREATE');
+      bulkAnswer(again!);
       fixture.detectChanges();
 
       expect(textOf('import-review')).toMatch(/1\s+producto nuevo/);
@@ -559,12 +623,12 @@ describe('PharmacyImport', () => {
       review();
 
       publishByClick();
-      const first = http.expectOne(productsUrl(PHARMACY.id));
-      expect(first.request.body).toMatchObject({ productCode: 'C-1', category: 'Ortopedia' });
-      first.flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
-      const second = http.expectOne(productsUrl(PHARMACY.id));
-      expect(second.request.body).toMatchObject({ productCode: 'C-3', category: 'Óptica' });
-      second.flush({ id: 'n-3' }, { status: 201, statusText: 'Created' });
+      const bulk = http.expectOne(bulkUrl(PHARMACY.id));
+      expect(bulk.request.body.rows).toEqual([
+        expect.objectContaining({ productCode: 'C-1', category: 'Ortopedia' }),
+        expect.objectContaining({ productCode: 'C-3', category: 'Óptica' }),
+      ]);
+      bulkAnswer(bulk);
     });
 
     it('con una farmacia sin categorías, poner una es error de fila y dejarla vacía no', async () => {
@@ -577,8 +641,90 @@ describe('PharmacyImport', () => {
     });
   });
 
+  describe('vista previa del servidor', () => {
+    it('«Revisar datos» manda las filas listas con dryRun y muestra lo que el servidor rechazaría, con su motivo', async () => {
+      mount();
+      await upload(CSV);
+
+      const [preview] = review((row) =>
+        row.productCode === 'A-2'
+          ? {
+              outcome: 'REJECTED',
+              errors: [{ field: 'productCode', reason: 'PRODUCT_RETIRED', message: 'El producto de ese código está retirado' }],
+            }
+          : row.productCode === 'PAR-500'
+            ? { outcome: 'UNCHANGED' }
+            : {},
+      );
+
+      // Sólo las tres filas listas; la que no tiene código no viaja.
+      expect(preview!.request.body).toEqual({
+        mode: 'UPSERT',
+        dryRun: true,
+        rows: [
+          { productCode: 'A-1', brandName: 'Uno', requiresPrescription: false, inStock: true },
+          { productCode: 'A-2', genericName: 'Dos', requiresPrescription: true, inStock: true },
+          { productCode: 'PAR-500', brandName: 'Ya está', requiresPrescription: false, inStock: true },
+        ],
+      });
+      const figures = textOf('import-preview-figures');
+      expect(figures).toMatch(/1\s+se crearían/);
+      expect(figures).toMatch(/1\s+sin cambios/);
+      expect(figures).toMatch(/1\s+rechazadas por el servidor/);
+      const rejected = textOf('import-preview-rejected');
+      expect(rejected).toContain('A-2');
+      expect(rejected).toContain('El producto de ese código está retirado');
+      // La revisión local sigue ahí, arriba de la del servidor.
+      expect(textOf('import-review')).toMatch(/1\s+fila a corregir/);
+      // Nada se publicó: ni un alta ni un cambio por fila.
+      http.expectNone(productsUrl(PHARMACY.id));
+    });
+
+    it('300 filas: la vista previa sale en dos pedidos en serie, de 250 y 50', async () => {
+      mount();
+      const rows = Array.from({ length: 300 }, (_, i) => `M-${i + 1};Producto ${i + 1}`);
+      await upload(['codigo;marca', ...rows].join('\n'), []);
+
+      const sent = review();
+
+      expect(sent.map((request) => request.request.body.rows.length)).toEqual([250, 50]);
+      expect(sent[1]!.request.body.rows[0].productCode).toBe('M-251');
+      expect(textOf('import-preview-figures')).toMatch(/300\s+se crearían/);
+    });
+
+    it('si la vista previa falla lo dice en pantalla (un 413 como tamaño) y «Reintentar» la vuelve a pedir', async () => {
+      mount();
+      await upload('codigo;marca\nA-1;Uno\n', []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      http
+        .expectOne(bulkUrl(PHARMACY.id))
+        .flush({ message: 'request entity too large' }, { status: 413, statusText: 'Payload Too Large' });
+      fixture.detectChanges();
+
+      expect(textOf('import-preview-error')).toContain('pasó de 1 MB');
+      (byId('import-preview-error')?.querySelector('button') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      answerPreview();
+      expect(byId('import-preview-error')).toBeNull();
+      expect(textOf('import-preview-figures')).toMatch(/1\s+se crearían/);
+    });
+
+    it('mientras el servidor no contestó la vista previa no deja cargar', async () => {
+      mount();
+      await upload('codigo;marca\nA-1;Uno\n', []);
+      (byId('import-continue-columns') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).toBe('true');
+      answerPreview();
+      expect((byId('import-publish') as HTMLButtonElement).getAttribute('aria-disabled')).not.toBe('true');
+    });
+  });
+
   describe('paso 4 · publicar y resultado', () => {
-    it('publica fila por fila, en serie, y cuenta lo que la API rechazó', async () => {
+    it('publica las filas listas en un pedido masivo, sin dryRun ni llamadas por fila, y cuenta lo que la API rechazó', async () => {
       mount();
       await upload(CSV);
       review();
@@ -586,41 +732,33 @@ describe('PharmacyImport', () => {
       publishByClick();
       expect(root().querySelector('[aria-current="step"]')?.textContent).toContain('Resultado');
 
-      // Una sola en vuelo: la segunda sale cuando vuelve la primera.
-      const first = http.expectOne(productsUrl(PHARMACY.id));
-      expect(first.request.body).toEqual({
-        productCode: 'A-1',
-        brandName: 'Uno',
-        requiresPrescription: false,
-        inStock: true,
+      const bulk = http.expectOne(bulkUrl(PHARMACY.id));
+      expect(bulk.request.method).toBe('POST');
+      // El código que ya estaba va como cambio: lo vacío de la fila no pisa lo
+      // que el producto ya tenía.
+      expect(bulk.request.body).toEqual({
+        mode: 'UPSERT',
+        rows: [
+          { productCode: 'A-1', brandName: 'Uno', requiresPrescription: false, inStock: true },
+          { productCode: 'A-2', genericName: 'Dos', requiresPrescription: true, inStock: true },
+          { productCode: 'PAR-500', brandName: 'Ya está', requiresPrescription: false, inStock: true },
+        ],
       });
-      first.flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
-
-      const second = http.expectOne(productsUrl(PHARMACY.id));
-      expect(second.request.body).toEqual({
-        productCode: 'A-2',
-        genericName: 'Dos',
-        requiresPrescription: true,
-        inStock: true,
-      });
-      second.flush(
-        { statusCode: 409, code: 'CONFLICT', message: 'Ya existe un producto con ese código en la farmacia' },
-        { status: 409, statusText: 'Conflict' },
+      bulkAnswer(bulk, (_, index) =>
+        index === 1
+          ? {
+              outcome: 'REJECTED',
+              errors: [{ field: 'productCode', reason: 'ALREADY_EXISTS', message: 'Ya existe un producto con ese código en la farmacia' }],
+            }
+          : index === 2
+            ? { outcome: 'UPDATED', id: 'p-1' }
+            : { id: 'n-1' },
       );
-
-      // El código que ya estaba no se da de alta: se actualiza, y lo vacío
-      // de la fila no pisa lo que el producto ya tenía.
-      const third = http.expectOne(`${productsUrl(PHARMACY.id)}/p-1`);
-      expect(third.request.method).toBe('PATCH');
-      expect(third.request.body).toEqual({
-        brandName: 'Ya está',
-        requiresPrescription: false,
-        inStock: true,
-      });
-      third.flush(product({ brandName: 'Ya está' }));
       fixture.detectChanges();
 
-      // Cambia respecto del original: ya no se relee el catálogo (es otra ruta).
+      // Ni un alta ni un cambio sueltos, y no se relee el catálogo.
+      http.expectNone(productsUrl(PHARMACY.id));
+      http.expectNone(`${productsUrl(PHARMACY.id)}/p-1`);
       http.expectNone((r) => r.url.endsWith('/pharmacy/products'));
 
       const result = textOf('import-result');
@@ -636,63 +774,77 @@ describe('PharmacyImport', () => {
       await upload(CSV);
       review();
       publishByClick();
-      http.expectOne(productsUrl(PHARMACY.id)).flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
-      http
-        .expectOne(productsUrl(PHARMACY.id))
-        .flush(
-          { statusCode: 409, code: 'CONFLICT', message: 'Ya existe un producto con ese código en la farmacia' },
-          { status: 409, statusText: 'Conflict' },
-        );
-      http.expectOne(`${productsUrl(PHARMACY.id)}/p-1`).flush(product({}));
+      bulkAnswer(http.expectOne(bulkUrl(PHARMACY.id)), (_, index) =>
+        index === 1
+          ? { outcome: 'REJECTED', errors: [{ field: 'productCode', reason: 'PRODUCT_RETIRED' }] }
+          : index === 2
+            ? { outcome: 'UNCHANGED' }
+            : {},
+      );
       fixture.detectChanges();
 
       const table = textOf('import-results');
-      for (const outcome of ['Creado', 'Rechazado', 'Actualizado', 'No enviada']) {
+      for (const outcome of ['Creado', 'Rechazado', 'Sin cambios', 'No enviada']) {
         expect(table).toContain(outcome);
       }
       expect(table).toContain('Falta el código del producto.');
-      expect(table).toContain('Un código retirado también sigue reservado');
+      // Sin `message` de la API, el motivo se dice con su código conocido.
+      expect(table).toContain('El producto de ese código está retirado.');
+      expect(textOf('import-result')).toMatch(/1\s+sin cambios/);
     });
 
-    it('un 403 no es de la fila: corta la carga en vez de mandar las demás', async () => {
+    it('un 403 no es de una fila: corta la carga y lo que no salió queda «sin enviar»', async () => {
       mount();
       await upload(CSV);
       review();
 
       publishByClick();
       http
-        .expectOne(productsUrl(PHARMACY.id))
+        .expectOne(bulkUrl(PHARMACY.id))
         .flush(
           { statusCode: 403, code: 'FORBIDDEN', message: 'Forbidden resource' },
           { status: 403, statusText: 'Forbidden' },
         );
       fixture.detectChanges();
 
-      // La segunda fila lista no salió.
-      http.expectNone(productsUrl(PHARMACY.id));
+      http.expectNone(bulkUrl(PHARMACY.id));
       expect(byId('import-general-failure')).not.toBeNull();
-      // Lo que no salió se ve como «sin enviar», no desaparece de la tabla.
       expect(textOf('import-results')).toContain('Sin enviar');
     });
 
-    it('detener espera a que vuelva la fila en camino y no manda la siguiente', async () => {
+    it('un error de red al publicar se dice en pantalla', async () => {
       mount();
-      await upload(CSV);
+      await upload('codigo;marca\nA-1;Uno\n', []);
       review();
 
       publishByClick();
-      const inFlight = http.expectOne(productsUrl(PHARMACY.id));
-      (byId('import-stop') as HTMLButtonElement).click();
-      fixture.detectChanges();
-      expect(textOf('import-stop')).toContain('Deteniendo después de esta fila');
-      // La fila en vuelo no se cancela: puede haberse guardado en el servidor.
-      expect(inFlight.cancelled).toBe(false);
-      inFlight.flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
+      http.expectOne(bulkUrl(PHARMACY.id)).error(new ProgressEvent('error'), { status: 0 });
       fixture.detectChanges();
 
-      http.expectNone(productsUrl(PHARMACY.id));
-      expect(textOf('import-result')).toMatch(/1\s+producto publicado/);
+      expect(textOf('import-general-failure')).toContain('Sin conexión con el servidor');
+    });
+
+    it('detener espera a que vuelva el lote en camino y no manda el siguiente', async () => {
+      mount();
+      const rows = Array.from({ length: 260 }, (_, i) => `M-${i + 1};Producto ${i + 1}`);
+      await upload(['codigo;marca', ...rows].join('\n'), []);
+      review();
+
+      publishByClick();
+      const inFlight = http.expectOne(bulkUrl(PHARMACY.id));
+      expect(inFlight.request.body.rows).toHaveLength(250);
+      (byId('import-stop') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(textOf('import-stop')).toContain('Deteniendo después de este lote');
+      // El lote en vuelo no se cancela: puede haberse guardado en el servidor.
+      expect(inFlight.cancelled).toBe(false);
+      bulkAnswer(inFlight);
+      fixture.detectChanges();
+
+      http.expectNone(bulkUrl(PHARMACY.id));
+      expect(textOf('import-result')).toMatch(/250\s+productos publicados/);
       expect(byId('import-stopped')).not.toBeNull();
+      expect(textOf('import-results')).toContain('Sin enviar');
     });
 
     it('mientras carga avisa al cerrar la pestaña, y después ya no', async () => {
@@ -711,7 +863,7 @@ describe('PharmacyImport', () => {
       expect(loading.defaultPrevented).toBe(true);
 
       internal().stop();
-      http.expectOne(productsUrl(PHARMACY.id)).flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
+      bulkAnswer(http.expectOne(bulkUrl(PHARMACY.id)));
       fixture.detectChanges();
       const done = event();
       window.dispatchEvent(done);
@@ -724,7 +876,7 @@ describe('PharmacyImport', () => {
       await upload('codigo;marca\nA-1;Uno\n', []);
       review();
       publishByClick();
-      http.expectOne(productsUrl(PHARMACY.id)).flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
+      bulkAnswer(http.expectOne(bulkUrl(PHARMACY.id)));
       fixture.detectChanges();
 
       (byId('import-view-products') as HTMLButtonElement).click();
@@ -737,7 +889,7 @@ describe('PharmacyImport', () => {
       await upload('codigo;marca\nA-1;Uno\n', []);
       review();
       publishByClick();
-      http.expectOne(productsUrl(PHARMACY.id)).flush({ id: 'n-1' }, { status: 201, statusText: 'Created' });
+      bulkAnswer(http.expectOne(bulkUrl(PHARMACY.id)));
       fixture.detectChanges();
 
       const buttons = Array.from(root().querySelectorAll('.import__footer button'));

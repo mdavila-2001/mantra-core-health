@@ -341,13 +341,18 @@ test('aceptar persiste y una segunda aceptación la rechaza el servidor', async 
 
 test('el estado de pago se marca aparte y persiste tras recargar', async ({ page }) => {
   const dialogo = await abrirDetalle(page, 'Ana');
+  // Corrección 11 · «Estado del pago» abre los comprobantes de la cita; el
+  // marcado a mano sigue adentro, en «Marcar sin comprobante…».
+  await dialogo.getByTestId('agenda-pago-detalle').getByTestId('agenda-pago').click();
+  const comprobantes = page.getByRole('dialog', { name: 'Comprobantes de pago' });
+  await comprobantes.getByTestId('payment-receipts-manual-toggle').click();
   const [pago] = await Promise.all([
     page.waitForResponse(
       (r) =>
         r.url().includes(`/scheduling/bookings/${escenario.aAceptar}/payment-state`) &&
         r.request().method() !== 'GET',
     ),
-    dialogo.getByTestId('agenda-pago-PAID').click(),
+    comprobantes.getByTestId('payment-manual-PAID').click(),
   ]);
   expect(pago.status(), await pago.text()).toBeLessThan(300);
 

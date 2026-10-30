@@ -10,6 +10,8 @@ import { of, throwError } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { SessionStore } from '../../../core/auth/session.store';
+import { FilesClient } from '../../../core/data-access/files/files.client';
+import { PaymentReceiptsClient } from '../../../core/data-access/scheduling/payment-receipts.client';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { AgendaResource, AgendaSlot } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
@@ -278,6 +280,79 @@ describe('Appointments', () => {
           .querySelector('[data-testid="turnos-filtros"]')
           .classList.contains('turnos__filtros--abiertos'),
       ).toBe(true);
+    });
+  });
+
+  /* ---- H03 · el pago en la lista ------------------------------------------ */
+
+  describe('H03: la fila de «Mis citas» muestra el pago', () => {
+    const PAID_STATE = {
+      state: 'PAID',
+      label: 'Pagada',
+      conceptId: 'c-pagada',
+      insuranceUsed: false,
+      markedByUserId: 'u-medica',
+      markedAt: '2026-10-28T10:00:00.000Z',
+    };
+
+    /** La fila de la lista, por el motivo de la cita (lo único que la distingue en pantalla). */
+    function rowWith(reason: string): HTMLElement | null {
+      const rows = [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.turnos__item'),
+      ];
+      return rows.find((li) => li.textContent?.includes(reason)) ?? null;
+    }
+
+    function start(bookings: unknown[]): void {
+      montar();
+      responderArranque(bookings);
+      responderTerminologia([
+        { conceptId: CONFIRMADO, code: 'BOOKING_CONFIRMED', display: 'Booking confirmed' },
+      ]);
+    }
+
+    it('una cita PAID lleva la insignia con la etiqueta de la API; otra sin paymentState, ninguna', () => {
+      start([
+        { ...cita('b-1', CONFIRMADO), reasonText: 'pagada-b1', paymentState: PAID_STATE },
+        { ...cita('b-2', CONFIRMADO), reasonText: 'sin-pago-b2' },
+      ]);
+
+      const paidRow = rowWith('pagada-b1');
+      const unpaidRow = rowWith('sin-pago-b2');
+      expect(
+        paidRow?.querySelector('[data-testid="appointment-payment-badge"]')?.textContent?.trim(),
+      ).toBe('Pagada');
+      expect(unpaidRow?.querySelector('[data-testid="appointment-payment-badge"]')).toBeNull();
+      // Sin monto en la respuesta, ningún monto en pantalla.
+      expect(paidRow?.textContent).not.toContain('Bs');
+    });
+
+    it('una cita aceptada y sin pagar ofrece «Subir comprobante»; la pagada, no', () => {
+      start([
+        { ...cita('b-1', CONFIRMADO), reasonText: 'pagada-b1', paymentState: PAID_STATE },
+        { ...cita('b-2', CONFIRMADO), reasonText: 'sin-pago-b2' },
+      ]);
+
+      expect(
+        rowWith('pagada-b1')?.querySelector('[data-testid="appointment-receipt-upload-toggle"]'),
+      ).toBeNull();
+      const upload = rowWith('sin-pago-b2')?.querySelector<HTMLElement>(
+        '[data-testid="appointment-receipt-upload-toggle"]',
+      );
+      expect(upload?.textContent?.trim()).toBe('Subir comprobante');
+      expect(rowWith('sin-pago-b2')?.querySelector('app-booking-payment-receipts')).toBeNull();
+
+      upload!.click();
+      fixture.detectChanges();
+
+      // El mismo bloque del calendario, montado a pedido: lee sus comprobantes y la cita.
+      expect(rowWith('sin-pago-b2')?.querySelector('app-booking-payment-receipts')).not.toBeNull();
+      http.expectOne((r) => r.url === '/scheduling/bookings/b-2/payment-receipts').flush([]);
+      http.expectOne((r) => r.url === '/scheduling/bookings/b-2').flush({ id: 'b-2' });
+      fixture.detectChanges();
+      expect(
+        rowWith('sin-pago-b2')?.querySelector('[data-testid="booking-receipts-form"]'),
+      ).not.toBeNull();
     });
   });
 
@@ -1594,6 +1669,19 @@ function citaMock(
   };
 }
 
+/**
+ * Fija el reloj antes de los turnos de `citaMock` (12/08/2026, 12:00 UTC), para
+ * que esas citas sean «próximas» y se puedan cancelar sin depender del día en
+ * que corre la prueba. Solo se finge `Date`; los temporizadores siguen reales.
+ */
+function pinClockBeforeBookings(): void {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-08-10T12:00:00.000Z'));
+  });
+  afterEach(() => vi.useRealTimers());
+}
+
 function etiqueta(conceptId: string, code: string, display = code): [string, unknown] {
   return [conceptId, { conceptId, code, display, codeSystemVersionId: 'csv-1' }];
 }
@@ -1662,9 +1750,15 @@ function montarCancelacion(opts: Opciones) {
           rescheduleBooking,
           listWaitlist,
           enrollWaitlist,
+          // Corrección 11 · el bloque «Comprobante de pago» lee el pago de la cita.
+          getBooking: vi.fn((id: string) => of({ id })),
         },
       },
       { provide: TerminologyClient, useValue: { readConceptLabels } },
+      // Corrección 11 · el detalle trae «Comprobante de pago», que lee los
+      // comprobantes de la cita: sin ninguno, para que el resto mida lo suyo.
+      { provide: PaymentReceiptsClient, useValue: { list: vi.fn().mockReturnValue(of([])) } },
+      { provide: FilesClient, useValue: { upload: vi.fn() } },
       // Sin token de paciente del seed, se inyecta el mínimo que la pantalla usa:
       // el perfil (para pedir sus turnos) y la organización, que por omisión no
       // hay — los casos de la grilla la declaran.
@@ -1713,6 +1807,8 @@ function api(comp: Appointments) {
 }
 
 describe('Appointments · cancelar turno propio', () => {
+  pinClockBeforeBookings();
+
   it('muestra "Cancelar" solo en turnos cancelables (gate por código normalizado)', () => {
     const { fixture } = montarCancelacion({
       bookings: [
@@ -1733,6 +1829,22 @@ describe('Appointments · cancelar turno propio', () => {
     // Confirmado y solicitado sí; cancelado y completado no.
     const botones = fixture.nativeElement.querySelectorAll('.turnos__cancelar');
     expect(botones.length).toBe(2);
+  });
+
+  it('una cita confirmada que ya terminó no ofrece «Cancelar»', () => {
+    const ended = {
+      ...citaMock('b-pasada', 's-conf'),
+      startAt: new Date('2026-08-05T12:00:00.000Z'),
+      endAt: new Date('2026-08-05T12:30:00.000Z'),
+    };
+    const { fixture } = montarCancelacion({
+      bookings: [citaMock('b-conf', 's-conf'), ended],
+      labels: [etiqueta('s-conf', 'BOOKING_CONFIRMED')],
+    });
+    fixture.detectChanges();
+
+    // La próxima sí; la que ya pasó, confirmada y todo, no.
+    expect(fixture.nativeElement.querySelectorAll('.turnos__cancelar').length).toBe(1);
   });
 
   it('no ofrece cancelar para cancelado, completado, no-show, reprogramado ni desconocido', () => {
@@ -1877,6 +1989,8 @@ describe('Appointments · cancelar turno propio', () => {
  * reconocer que es la suya movida y no una ajena.
  */
 describe('Appointments · el paciente no reprograma', () => {
+  pinClockBeforeBookings();
+
   it('ninguna cita vigente ofrece «Reprogramar»', () => {
     const { fixture } = montarCancelacion({
       bookings: [citaMock('b-conf', 's-conf'), citaMock('b-in', 's-in')],
@@ -1973,6 +2087,8 @@ describe('booking-status · presentación por código normalizado', () => {
  * está el control en vez de dejar a la persona buscándolo.
  */
 describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
+  pinClockBeforeBookings();
+
   it('un turno solicitado dice «Pedido», se puede cancelar y no se puede mover', () => {
     const { fixture, comp } = montarCancelacion({
       bookings: [citaMock('b-req', 's-req')],
@@ -2019,6 +2135,8 @@ describe('Appointments · estados con palabra y avisos con salida (E3)', () => {
 // Carril 06 — vista dual (corrección #10) y motivo visible (corrección #14).
 
 describe('Appointments · lista y calendario', () => {
+  pinClockBeforeBookings();
+
   it('arranca en lista y el calendario no está dibujado', () => {
     const { fixture } = montarCancelacion({
       bookings: [citaMock('b1', 's1')],
@@ -2064,6 +2182,29 @@ describe('Appointments · lista y calendario', () => {
     const detalle = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
     expect(detalle).not.toBeNull();
     expect(detalle.textContent).toContain('Cancelar');
+  });
+
+  it('el detalle trae el bloque «Comprobante de pago» de esa cita', async () => {
+    const { fixture, comp } = montarCancelacion({
+      bookings: [citaMock('b1', 's1')],
+      labels: [etiqueta('s1', 'BOOKING_CONFIRMED')],
+    });
+    const receipts = TestBed.inject(PaymentReceiptsClient) as unknown as { list: ReturnType<typeof vi.fn> };
+    const scheduling = TestBed.inject(SchedulingClient) as unknown as { getBooking: ReturnType<typeof vi.fn> };
+
+    vista(comp).elegirVista('calendario');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    vista(comp).abrirDetalle('b1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const detail = fixture.nativeElement.querySelector('[data-testid="turnos-detalle"]');
+    expect(detail.querySelector('[data-testid="booking-receipts"]')?.textContent).toContain('Comprobante de pago');
+    expect(receipts.list).toHaveBeenCalledWith('b1');
+    // El pago lo lee el bloque: la pantalla no lo arrastra en su modelo de turno.
+    expect(scheduling.getBooking).toHaveBeenCalledWith('b1');
   });
 });
 

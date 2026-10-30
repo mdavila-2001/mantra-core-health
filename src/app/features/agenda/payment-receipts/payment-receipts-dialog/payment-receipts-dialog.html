@@ -1,0 +1,130 @@
+<app-content-dialog
+  heading="Comprobantes de pago"
+  size="lg"
+  [description]="description()"
+  (closed)="closed.emit()"
+>
+  <div class="receipts" data-testid="payment-receipts-dialog">
+    @if (viewing(); as receipt) {
+      <app-payment-receipt-viewer
+        [receipt]="receipt"
+        [file]="files.stateOf(receipt.id)"
+        (back)="closeViewer()"
+        (retry)="retryFile(receipt)"
+      />
+    } @else {
+      <!-- El estado de pago de la cita, arriba y siempre: es lo que confirmar
+           cambia, y tiene que verse cambiar. La etiqueta la manda el servidor. -->
+      <p class="receipts__payment" data-testid="payment-receipts-payment-state">
+        <span class="receipts__payment-label">Estado del pago de la cita</span>
+        @if (currentPaymentState(); as state) {
+          <app-badge [variant]="state.state === 'PAID' ? 'success' : 'warning'">{{ state.label }}</app-badge>
+          @if (state.insuranceUsed) {
+            <span class="receipts__payment-note">con seguro</span>
+          }
+        } @else {
+          <span class="receipts__payment-note">Sin registrar</span>
+        }
+      </p>
+
+      @if (review.notice(); as notice) {
+        <app-alert
+          class="receipts__notice"
+          data-testid="payment-receipts-notice"
+          [tone]="notice.tone"
+          [title]="notice.title"
+        >
+          {{ notice.message }}
+        </app-alert>
+      }
+
+      <app-view-state-host [state]="review.receipts()" (retry)="reload()">
+        <div vsh-skeleton class="receipts__skeleton" data-testid="payment-receipts-loading">
+          @for (row of [1, 2]; track row) {
+            <div class="receipts__skeleton-row">
+              <app-skeleton variant="rect" class="receipts__skeleton-thumbnail" />
+              <app-skeleton variant="text" [lines]="3" />
+            </div>
+          }
+        </div>
+
+        <!-- S3 con su próxima acción: sin comprobante, el pago se marca a mano
+             con «Marcar sin comprobante…» del pie, el único control que lo abre
+             (H04: el vacío repetía el botón). Si ya figura pagada, el pago se
+             marcó a mano y no hay nada que pedirle al paciente. -->
+        <div vsh-empty>
+          @if (paidWithoutReceipt()) {
+            <app-empty-state
+              data-testid="payment-receipts-empty-paid"
+              title="El pago se registró sin comprobante"
+              description="Se marcó a mano. Si el paciente sube un comprobante, va a aparecer acá."
+            />
+          } @else {
+            <app-empty-state
+              data-testid="payment-receipts-empty-unpaid"
+              title="El paciente todavía no subió comprobantes"
+              description="Cuando suba uno va a aparecer acá para que lo revise. Si le pagó en efectivo, márquelo sin comprobante."
+            />
+          }
+        </div>
+
+        @if (receipts(); as list) {
+          <ul class="receipts__list" aria-label="Comprobantes que subió el paciente">
+            @for (receipt of list; track receipt.id) {
+              <li class="receipts__item">
+                <app-payment-receipt-row
+                  [receipt]="receipt"
+                  [file]="files.stateOf(receipt.id)"
+                  [reviewable]="rejecting() !== receipt.id"
+                  [disabled]="review.busy()"
+                  [confirming]="isConfirming(receipt.id)"
+                  [paymentState]="currentPaymentState()"
+                  (viewRequested)="openViewer(receipt)"
+                  (confirmRequested)="confirm(receipt)"
+                  (rejectRequested)="startRejecting(receipt)"
+                />
+                @if (rejecting() === receipt.id && receipt.status === 'PENDING') {
+                  <!-- Mientras otra operación corre, el envío espera: el modal
+                       hace una a la vez, y uno que saliera ahora se perdería. -->
+                  <app-payment-receipt-rejection-form
+                    [receiptLabel]="summaryOf(receipt)"
+                    [submitting]="isRejecting(receipt.id)"
+                    [blocked]="review.busy()"
+                    (submitted)="reject(receipt, $event)"
+                    (cancelled)="cancelRejecting(receipt.id)"
+                  />
+                }
+              </li>
+            }
+          </ul>
+        }
+      </app-view-state-host>
+
+      @if (manualOpen()) {
+        <app-manual-payment-state
+          [id]="manualPanelId"
+          [bookingId]="bookingId()"
+          [current]="currentPaymentState()"
+          [disabled]="review.busy()"
+          (changed)="markManually($event)"
+        />
+      }
+    }
+  </div>
+
+  <!-- Al pie, fuera del cuerpo que se recorre: la salida para el efectivo
+       tiene que estar a mano aunque la lista sea larga. -->
+  @if (viewing() === null) {
+    <button
+      dialog-actions
+      app-button
+      variant="ghost"
+      data-testid="payment-receipts-manual-toggle"
+      [attr.aria-expanded]="manualOpen()"
+      [attr.aria-controls]="manualOpen() ? manualPanelId : null"
+      (clicked)="toggleManual()"
+    >
+      {{ manualOpen() ? 'Ocultar el marcado sin comprobante' : 'Marcar sin comprobante…' }}
+    </button>
+  }
+</app-content-dialog>

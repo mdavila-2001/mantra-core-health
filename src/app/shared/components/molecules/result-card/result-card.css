@@ -141,6 +141,11 @@
 }
 
 .tarjeta-resultado__titulo {
+  /* flex para que la insignia de verificación quede junto al nombre y no
+     debajo: el enlace del título es un `-webkit-box` de bloque (grilla). */
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0;
   font-size: var(--fs-h4, 1.15rem);
   line-height: var(--lh-body-lg);
@@ -149,6 +154,7 @@
 }
 
 .tarjeta-resultado__titulo a {
+  min-inline-size: 0;
   color: var(--text-primary);
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease-standard);

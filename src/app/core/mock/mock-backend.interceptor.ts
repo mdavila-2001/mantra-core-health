@@ -180,7 +180,56 @@ function emitirFallo(
   return emitir(request, { status, body });
 }
 
+/** Una petición que el simulador atendió, tal como la deja `window.__mockRequests`. */
+export interface PeticionAtendida {
+  readonly method: string;
+  /** Ruta y query, sin el origen: `/surveys/insights?from=…&to=…`. */
+  readonly url: string;
+  readonly status: number;
+  /** El cuerpo JSON enviado, o `null` si no lo había o no era JSON. */
+  readonly body: unknown;
+  /** Lo que respondió, resumido: estado de la admisión, no el cuerpo entero. Solo JSON. */
+  readonly respuesta?: unknown;
+}
+
+/** Cuántas peticiones recuerda `window.__mockRequests`: las últimas. */
+const PETICIONES_RECORDADAS = 300;
+
+/**
+ * Anota la petición en `window.__mockRequests`.
+ *
+ * El simulador contesta dentro del navegador: no hay tráfico de red, y
+ * `page.on('request')` de Playwright no ve nada. Sin este registro una prueba de
+ * extremo a extremo contra el simulador no puede demostrar la mitad de «UI →
+ * request → response → persistencia → recarga → UI»: qué se mandó y qué se
+ * contestó. Sólo existe en el navegador y no cambia lo que recibe la pantalla.
+ */
+/** El cuerpo como JSON puro, o `null` si no había, era un archivo o no se pudo copiar. */
+function cuerpoComoJson(cuerpo: unknown): unknown {
+  if (cuerpo === null || cuerpo === undefined || cuerpo instanceof FormData) return null;
+  try {
+    return JSON.parse(JSON.stringify(cuerpo));
+  } catch {
+    return null;
+  }
+}
+
+function anotarPeticion(request: HttpRequest<unknown>, status: number, cuerpoRespuesta?: unknown): void {
+  if (typeof window === 'undefined') return;
+  const global = window as unknown as { __mockRequests?: PeticionAtendida[] };
+  const registro = (global.__mockRequests ??= []);
+  const body = cuerpoComoJson(request.body);
+  const base = environment.apiBaseUrl.replace(/\/$/, '');
+  const url = base !== '' && request.urlWithParams.startsWith(base) ? request.urlWithParams.slice(base.length) : request.urlWithParams;
+  // Solo lo chico: guardar cada catálogo entero haría de esta lista un problema de memoria.
+  const completa = cuerpoRespuesta instanceof Blob ? null : cuerpoComoJson(cuerpoRespuesta);
+  const respuesta = completa !== null && JSON.stringify(completa).length <= 400_000 ? completa : null;
+  registro.push({ method: request.method.toUpperCase(), url, status, body, ...(respuesta === null ? {} : { respuesta }) });
+  if (registro.length > PETICIONES_RECORDADAS) registro.shift();
+}
+
 function emitir(request: HttpRequest<unknown>, respuesta: MockReply): Observable<HttpEvent<unknown>> {
+  anotarPeticion(request, respuesta.status, respuesta.body);
   const headers = new HttpHeaders({ 'x-mock-backend': '1', ...(respuesta.headers ?? {}) });
   if (respuesta.status >= 400) {
     return throwError(

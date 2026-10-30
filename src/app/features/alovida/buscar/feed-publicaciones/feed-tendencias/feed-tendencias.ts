@@ -3,7 +3,9 @@ import { RouterLink } from '@angular/router';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type { PublicSearchResult } from '@core/data-access/public-directory/public-directory.types';
+import { VerificationBadge } from '@shared/components/atoms/verification-badge/verification-badge';
 import { initialsOf } from '@shared/text/initials';
+import { verificationOf } from '@core/verification/verification-status';
 
 /** Cuántos profesionales se muestran. Cinco: los que entran sin scroll. */
 const CUANTOS = 5;
@@ -52,7 +54,7 @@ export function enTendencia(
  */
 @Component({
   selector: 'app-feed-tendencias',
-  imports: [RouterLink],
+  imports: [RouterLink, VerificationBadge],
   templateUrl: './feed-tendencias.html',
   styleUrl: './feed-tendencias.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,6 +76,11 @@ export class FeedTendencias {
 
   constructor() {
     this.cargar();
+  }
+
+  /** El estado de verificación lo decide la API; acá sólo se traduce para el sello. */
+  protected verificacion(d: PublicSearchResult) {
+    return verificationOf(d);
   }
 
   protected iniciales(d: PublicSearchResult): string {

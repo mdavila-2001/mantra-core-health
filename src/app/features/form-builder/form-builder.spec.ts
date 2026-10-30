@@ -769,6 +769,37 @@ describe('FormBuilder', () => {
       expect(harness.routeNativeElement?.querySelector('app-specialty-browser')).toBeNull();
     });
 
+    it('la ficha de la cita médica está por defecto: primera, marcada y sin campos propios', () => {
+      const CITA: ChartTemplate = {
+        ...PLANTILLA,
+        id: 'tpl-cita',
+        code: 'TRANSV_CITA_MEDICA',
+        name: 'Cita médica — registro estándar de la consulta',
+        version: 1,
+        fields: [estandar(1)],
+      };
+      listar([EXTENDIDA, PLANTILLA, CITA]);
+
+      const filas = harness.routeNativeElement?.querySelectorAll('[data-testid="mi-formulario"]');
+      expect(filas?.length).toBe(2);
+      const primera = filas?.[0]?.textContent ?? '';
+      expect(primera).toContain('Cita médica — registro estándar de la consulta');
+      expect(primera).toContain('Por defecto');
+      expect(primera).not.toContain('campos propios');
+      // Su especialidad (la transversal) no está entre las resueltas: no dice
+      // «sin nombre», que haría pensar que la ficha está rota.
+      expect(primera).toContain('Para todas las especialidades');
+      expect(primera).not.toContain('Especialidad sin nombre');
+      expect(filas?.[1]?.textContent ?? '').toContain('Ficha cardiológica');
+      expect(
+        harness.routeNativeElement?.querySelectorAll('[data-testid="mi-formulario-por-defecto"]')
+          .length,
+      ).toBe(1);
+      expect(harness.routeNativeElement?.textContent).not.toContain(
+        'Todavía no tiene formularios propios',
+      );
+    });
+
     it('la fila entera abre la edición del formulario', () => {
       listar([EXTENDIDA]);
 

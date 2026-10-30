@@ -81,7 +81,17 @@ export interface QuotationListItem {
   readonly patientProfileId: string;
   readonly serviceNameSnapshot: string;
   readonly offeredPrice: number;
+  /**
+   * La API nunca lo manda (`quotation-response.dto.ts` trae `statusConceptId`);
+   * queda porque lo lee el panel de la consulta, que lo arregla otro carril.
+   */
   readonly status: QuotationStatus;
+  /** El estado, como concepto de terminología: lo que la API sí manda. */
+  readonly statusConceptId: string;
+  /** El código de ese concepto, cuando la API lo publique (contrato §5). */
+  readonly statusCode?: string;
+  /** La moneda del precio, como concepto de terminología. */
+  readonly currencyConceptId?: string;
   /** ISO `YYYY-MM-DD`. */
   readonly attentionDate: string;
   /** ISO `YYYY-MM-DD`. */

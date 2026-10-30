@@ -21,10 +21,13 @@ import {
   type SimulatedPost,
   type SimulatedShowcase,
 } from '../fixtures/community';
+import { reservas } from '../fixtures/agenda';
 import { encounterList } from '../fixtures/clinic';
+import { encuentroDeReserva, profesionalDeReserva } from '../fixtures/atencion-resenable';
 import { STATUS } from '../fixtures/concepts';
+import { showcaseVerification } from '../fixtures/verification-body';
 import { PERFIL_PUBLICO_REQUERIDO } from '../../data-access/community/community.types';
-import { conflict, forbidden, notFound, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
 // La ventana de edición es una sola regla: la maqueta la aplica con la misma
 // constante que la pantalla, para que no puedan separarse.
 import { VENTANA_DE_EDICION_MS } from '../../messaging/chat.store';
@@ -114,6 +117,7 @@ function perfilPublico(v: SimulatedShowcase) {
     verificationStatusConceptId: v.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-UNVERIFIED']!,
     acceptsReviews: v.acceptsReviews,
     statusConceptId: STATUS['ST-ACTIVE']!,
+    ...showcaseVerification(v),
     badges: v.verified ? [{ id: uuid(`badge-${v.id}`), badgeTypeConceptId: CONCEPT.badgeVerified, verificationMethodConceptId: CONCEPT.badgeMethod, validFrom: iso(-300), validTo: null }] : [],
     prestige: v.kind === 'PRACTITIONER' ? { totalPoints: String(120 + v.seguidores * 3), levelConceptId: CONCEPT.prestigeLevel, rankPosition: 1 + (v.seguidores % 40), calculatedAt: iso(-1) } : null,
   };
@@ -212,9 +216,43 @@ function conversacion(c: { id: string; conversationTypeConceptId: string; groupI
       .map((p) => {
         if (p === SUPPORT_ID) return { profileId: p, displayName: 'Soporte AloVida', avatarUrl: null };
         const v = showcases.get(p);
-        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null };
+        return { profileId: p, displayName: v?.displayName ?? 'Participante', avatarUrl: v?.avatarUrl ?? null, ...(v === undefined ? {} : showcaseVerification(v)) };
       }),
   };
+}
+
+/**
+ * Deja un aviso de agenda en el chat de «Soporte AloVida» de un paciente, como
+ * hace la API (`SupportAdminNoticeAdapter`). Sin esto la maqueta mostraba la
+ * demora en la campana y nunca en el chat, que es lo que el cliente mira.
+ *
+ * @param titularIds - Ids con los que el paciente puede figurar como titular
+ *   de su vitrina (perfil, cuenta o persona).
+ * @returns `true` si el paciente tiene vitrina y el mensaje quedó escrito.
+ */
+export function writeFromSupport(titularIds: readonly string[], texto: string): boolean {
+  const vitrina = showcases.todos().find((v) => titularIds.includes(v.targetId));
+  if (vitrina === undefined) return false;
+  let hilo = conversationList
+    .todos()
+    .find((c) => c.groupId === null && c.participantes.includes(SUPPORT_ID) && c.participantes.includes(vitrina.id));
+  if (hilo === undefined) {
+    hilo = { id: nuevoId('conv-soporte'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [vitrina.id, SUPPORT_ID], noLeidosPor: {} };
+    conversationList.agregar(hilo);
+  }
+  messageList.agregar({
+    id: nuevoId('msg-soporte'),
+    conversationId: hilo.id,
+    senderProfileId: SUPPORT_ID,
+    replyToMessageId: null,
+    contentTypeConceptId: CONCEPT.messageText,
+    bodyText: texto,
+    attachmentFileId: null,
+    isEdited: false,
+    sentAt: ahora(),
+  });
+  conversationList.actualizar(hilo.id, { noLeidosPor: { ...hilo.noLeidosPor, [vitrina.id]: (hilo.noLeidosPor[vitrina.id] ?? 0) + 1 } });
+  return true;
 }
 
 export function registrarComunidad(router: MockRouter): void {
@@ -564,12 +602,18 @@ export function registrarComunidad(router: MockRouter): void {
     if (actor !== undefined && actor.id !== atencion.patientProfileId && showcaseOf(atencion.patientProfileId)?.id !== actor.id) {
       return forbidden('Esa atención no es suya');
     }
-    const yaCalificada = reviewList.filtrar(
-      (r) => r.targetPublicProfileId === destino.id && r.reviewerProfileId === (actor?.id ?? ''),
-    );
-    if (yaCalificada.length > 0) return conflict('Ya calificó esta atención');
+    if (destino.acceptsReviews !== true) {
+      return preconditionFailed('Este profesional no acepta reseñas');
+    }
+    // Una reseña por ATENCIÓN (como el servidor: 409 por encuentro), no una por
+    // médico: quien se atendió dos veces con la misma doctora puede opinar de
+    // cada visita.
+    if (reviewList.filtrar((r) => r.encounterId === atencion.id).length > 0) {
+      return conflict('Ya calificó esta atención');
+    }
     const nueva = reviewList.agregar({
       id: nuevoId('review'),
+      encounterId: atencion.id,
       targetPublicProfileId: destino.id,
       reviewerProfileId: actor?.id ?? '',
       overallRating: datos.overallRating ?? 5,
@@ -580,7 +624,45 @@ export function registrarComunidad(router: MockRouter): void {
       dimensionScores: [],
       responses: [],
     });
+    // El promedio y el total de la ficha pública se calculan al leer (`calificacionDe`).
     return { status: 201, body: { id: nueva.id, overallRating: nueva.overallRating, verified: true, dimensionCount: 0 } };
+  });
+
+  /**
+   * `GET /patients/me/reviewable-care?appointmentBookingId=` — el puente entre
+   * la encuesta y la reseña pública.
+   *
+   * La invitación de encuesta nombra una reserva; la reseña exige un encuentro
+   * terminado. Igual que el servidor: reserva → encuentro, y `canReview` es
+   * "encuentro terminado + la vitrina del médico acepta reseñas + todavía no
+   * hay reseña de ese encuentro". `canReview: false` es una respuesta normal.
+   *
+   * Es de la paciente de la sesión: la reserva de otra persona no existe para
+   * ella (404, sin decir de quién es). Nada de la encuesta entra ni sale.
+   */
+  router.get('/patients/me/reviewable-care', ({ query, user }) => {
+    const reservaId = texto(query, 'appointmentBookingId');
+    if (reservaId === null) return validation('Falta appointmentBookingId');
+    const reserva = reservas.get(reservaId);
+    const paciente = user?.patientProfileId;
+    if (reserva === undefined || paciente === undefined || reserva.patientProfileId !== paciente) {
+      return notFound('Reserva no encontrada');
+    }
+    const profesional = profesionalDeReserva(reserva);
+    const atencion = encuentroDeReserva(reserva);
+    if (profesional === undefined || atencion === undefined) {
+      return notFound('Esa reserva no tiene una atención terminada');
+    }
+    const vitrina = showcaseOf(profesional.id);
+    const yaCalificada = reviewList.filtrar((r) => r.encounterId === atencion.id).length > 0;
+    return {
+      encounterId: atencion.id,
+      appointmentBookingId: reserva.id,
+      practitionerDisplayName: vitrina?.displayName ?? profesional.displayName,
+      startAt: atencion.startAt,
+      alreadyReviewed: yaCalificada,
+      canReview: vitrina?.acceptsReviews === true && !yaCalificada,
+    };
   });
 
   router.post('/community/profiles/:id/reviews/:reviewId/responses', (request) => {

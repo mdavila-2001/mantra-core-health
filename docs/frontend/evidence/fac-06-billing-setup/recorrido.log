@@ -1,0 +1,28 @@
+resumen: enlace «Configuración para facturar» → /administration/accounting/billing-setup
+[1440] 404 GET /accounting/fiscal-years
+vista contable: «Esta práctica todavía no tiene un ejercicio fiscalSe abre en «Configuración para facturar»; cuando exista, el tablero lo muestra acá.Abrir el ejercicio Volver a»
+el enlace de la vista contable abre /administration/accounting/billing-setup
+[1440] 200 GET /billing/simulated/status
+[1440] 404 GET /accounting/fiscal-years
+[1440] 200 GET /billing/service-catalog
+antes · ejercicio: «Esta práctica todavía no tiene un ejercicio fiscal. Sin él no se pueden registrar las ventas en la contabilidad. Se abre del 1 de enero al 3»
+antes · precio: «Es lo que se cobra por una consulta en esta práctica. Lo ve el paciente al reservar y es el importe de la factura cuando se confirma el pago. Cita médicaDefina el precio Precio nuevo En bolivianos, co»
+[1440] 422 PATCH /billing/service-catalog/:id
+precio 0 → 422 · junto al campo: «El precio tiene que ser mayor que 0»
+[1440] 200 PATCH /billing/service-catalog/:id
+precio 150 → 200 · «150,00 Bs»
+[1440] 201 POST /accounting/fiscal-years
+[1440] 200 GET /accounting/fiscal-years
+abrir ejercicio → 201 · «EjercicioFY2026Desde01/01/2026Hasta31/12/2026Mes en curso2026-10Meses12»
+[1440] 200 GET /billing/service-catalog
+[1440] 200 GET /billing/simulated/status
+[1440] 200 GET /accounting/fiscal-years
+tras recargar · ejercicio: «EjercicioFY2026Desde01/01/2026Hasta31/12/2026Mes en curso2026-10Meses12»
+tras recargar · precio: «150,00 Bs»
+emisor: «Emisor de prueba Las facturas salen de un emisor simulado: tienen todos los datos de una factura, pero no se envían al SIN. Su práctica todavía no tiene emisor. Aparece cuando la práctica registra su primera consulta.»
+[390] 200 GET /billing/simulated/status
+[390] 200 GET /billing/service-catalog
+[390] 200 GET /accounting/fiscal-years
+390 · desborde horizontal: 0 px
+390 · precio: desborde 0 px
+390 · emisor: desborde 0 px

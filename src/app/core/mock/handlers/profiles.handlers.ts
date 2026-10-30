@@ -27,6 +27,7 @@ import {
   type PacienteSimulado,
   type ProfesionalSimulado,
 } from '../fixtures/people';
+import { verificationBodyOf } from '../fixtures/verification-body';
 import {
   conflict,
   forbidden,
@@ -601,6 +602,7 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     },
     practitionerCategoryConceptId: DOCTOR_CATEGORY,
     verificationStatusConceptId: p.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-PENDING']!,
+    verification: verificationBodyOf(p),
     practiceStatusConceptId: STATUS['ST-ACTIVE']!,
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
@@ -615,12 +617,9 @@ function perfilProfesionalBase(p: ProfesionalSimulado) {
     // meses en cero dice menos que no dibujarlo.
     activity:
       p.origen !== undefined
-        ? { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 }
+        ? cuentasDeActividad(p)
         : {
-            encounters: 312,
-            medicationRequests: 208,
-            clinicalNotes: 275,
-            documents: 41,
+            ...cuentasDeActividad(p),
             // Datos sinteticos solo en demo explicita. ID-14 conserva el
             // estado vacio cuando se inspecciona el contrato de API real.
             ...(environment.mockBackend
@@ -640,6 +639,7 @@ function itemDeGuia(p: ProfesionalSimulado) {
     photoFileId: p.photoFileId,
     verificationStatusConceptId: p.verified ? STATUS['ST-VERIFIED']! : STATUS['ST-PENDING']!,
     verified: p.verified,
+    verification: verificationBodyOf(p),
     acceptsNewPatients: p.acceptsNewPatients,
     telehealthAvailable: p.telehealthAvailable,
     specialties: p.especialidades.map((specialtyConceptId, i) => ({
@@ -652,7 +652,18 @@ function itemDeGuia(p: ProfesionalSimulado) {
       p.origen !== undefined
         ? [p.organizacion, p.direccion].filter((x) => x !== '')
         : [p.organizacion, `Consultorio ${p.lastName}`],
+    // Las mismas cuentas que la ficha simulada (más abajo): la guía ordena por
+    // ellas, y el primero de «más encuentros» tiene que decir lo mismo al
+    // abrirlo.
+    activity: cuentasDeActividad(p),
   };
+}
+
+/** Las cuatro cuentas de la actividad simulada; cero para los de la red. */
+function cuentasDeActividad(p: ProfesionalSimulado) {
+  return p.origen !== undefined
+    ? { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 }
+    : { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 };
 }
 
 /* ---- dependientes (B.1) ---------------------------------------------------

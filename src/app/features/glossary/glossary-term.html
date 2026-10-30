@@ -1,9 +1,24 @@
 <app-page-header [title]="titulo()" subtitle="Término del glosario" [breadcrumbs]="breadcrumbs()" />
 
 <div class="termino">
-  <p class="termino__volver">
+  <div class="termino__acciones">
     <a class="termino__enlace" routerLink="/glossary">← Volver al glosario</a>
-  </p>
+    @if (ficha()) {
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        [isLoading]="pdfOcupado()"
+        [disabled]="!articuloCargado()"
+        (clicked)="descargarPdf()"
+      >
+        Descargar ficha en PDF
+      </button>
+    }
+  </div>
+  @if (pdfError()) {
+    <p class="termino__pdf-error" role="alert">{{ pdfError() }}</p>
+  }
 
   <app-view-state-host [state]="termino()" (retry)="recargar()">
     @if (ficha(); as termino) {
@@ -399,10 +414,30 @@
               @if (origen.licencia; as licencia) {
                 <p class="termino__medicamento-fuente">Condición de uso: {{ licencia }}</p>
               }
-            } @else {
+            } @else if (editorialReferences().length === 0) {
               <p class="termino__definicion termino__definicion--ausente">
                 Este término no declara su fuente.
               </p>
+            }
+
+            @if (editorialReferences().length > 0) {
+              <h2 class="termino__subtitulo">Fuentes editoriales</h2>
+              <ul class="termino__fuentes-editoriales">
+                @for (reference of editorialReferences(); track reference.source + reference.recordId + reference.language) {
+                  <li>
+                    <a [href]="reference.url" target="_blank" rel="noopener noreferrer">
+                      {{ reference.source }} · {{ reference.recordId }}
+                    </a>
+                    <span class="termino__idioma">
+                      {{ reference.language === 'es' ? 'Español' : 'Inglés' }} · versión {{ reference.version }} ·
+                      {{ sourceRoleLabel(reference.role) }}
+                    </span>
+                    <p class="termino__fuente-derechos">
+                      {{ reference.attribution }} {{ reference.rights }}
+                    </p>
+                  </li>
+                }
+              </ul>
             }
 
             <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica

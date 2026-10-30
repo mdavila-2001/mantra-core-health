@@ -104,22 +104,42 @@ describe('SpecialtyBadge', () => {
     });
   });
 
-  describe('el sello del estado', () => {
-    it('se dibuja con la variante y el texto juntos', async () => {
+  describe('el estado de la especialidad (una sola fuente visual: el átomo)', () => {
+    it('se dibuja con la variante y el texto juntos, con la palabra del átomo', async () => {
       await setInputs({ sello: 'approved', estado: 'Certificada por el colegio' });
-      const sello = host().querySelector('app-status-seal');
-      expect(sello).not.toBeNull();
-      expect(texto()).toContain('Certificada por el colegio');
+      expect(host().querySelector('app-verification-badge')).not.toBeNull();
+      expect(host().querySelector('app-status-seal')).toBeNull();
+      expect(texto()).toContain('Verificado');
+    });
+
+    it('en trámite se dice «En verificación», no «Verificado»', async () => {
+      await setInputs({ sello: 'pending', estado: 'En revisión' });
+      expect(texto()).toContain('En verificación');
+      expect(host().querySelector('.vb__check')).toBeNull();
+    });
+
+    it('un rechazo sigue siendo el sello del trámite: no es una verificación', async () => {
+      await setInputs({ sello: 'rejected', estado: 'Rechazada' });
+      expect(host().querySelector('app-status-seal')).not.toBeNull();
+      expect(host().querySelector('app-verification-badge')).toBeNull();
+    });
+
+    it('un estado que no se pudo leer no se inventa como «Verificado»', async () => {
+      await setInputs({ sello: 'unknown', estado: 'Sin determinar' });
+      expect(host().querySelector('app-verification-badge')).toBeNull();
+      expect(host().querySelector('app-status-seal')).toBeNull();
     });
 
     it('con variante pero sin texto NO se dibuja: sería estado dicho por color', async () => {
       await setInputs({ sello: 'approved', estado: '   ' });
       expect(host().querySelector('app-status-seal')).toBeNull();
+      expect(host().querySelector('app-verification-badge')).toBeNull();
     });
 
     it('con texto pero sin variante tampoco', async () => {
       await setInputs({ sello: null, estado: 'Vigente' });
       expect(host().querySelector('app-status-seal')).toBeNull();
+      expect(host().querySelector('app-verification-badge')).toBeNull();
     });
   });
 });

@@ -1222,6 +1222,39 @@ a nadie. Se pide una vez por sesión y se comparte.
 |---|---|---|
 | `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
 
+### `AdmissionsClient` — 16 operaciones · «Admisiones» (alta de doctor)
+
+La bandeja de quien revisa y la lectura del propio médico. La autoridad es la API:
+cada ruta exige su rol (`ADMISSIONS_REVIEWER`, `ADMISSIONS_APPROVER` o
+`SECURITY_ADMIN` para leer) y toda escritura manda `expectedRowVersion`. Los
+códigos de estado son estables y en inglés (`IN_REVIEW`); el cliente acepta el
+vocabulario heredado en español y lo traduce en la frontera.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/admissions` | `AdmissionsQueue` (sin texto de búsqueda) |
+| `POST` | `/admissions/search` | `AdmissionsQueue` (con texto: la cédula no viaja en la dirección) |
+| `GET` | `/admissions/:id` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/claim` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/release` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/reassign` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/request-info` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/items/:itemId/review` | `AdmissionDetail` · lleva `evidenceSha256` |
+| `POST` | `/admissions/:id/decision` | `AdmissionDetail` · sin `items[]`: el servidor deriva el estado de las revisiones |
+| `POST` | `/admissions/:id/suspend` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/reinstate` | `AdmissionDetail` |
+| `GET` | `/admissions/:id/documents/:fileId` | `AdmissionDocumentViewer` · acceso auditado, devuelve una dirección firmada de vida corta |
+| `GET` | `/profiles/practitioners/me/admission` | `AdmissionStatusCard` (404 si no hay solicitud) |
+| `POST` | `/profiles/practitioners/me/admission/resubmit` | `AdmissionStatusCard` · con atestación |
+
+Errores propios, en `details.reason` (o como `code`): `ADMISSION_STALE` (409),
+`ADMISSION_EVIDENCE_CHANGED` (409), `ADMISSION_ITEM_REQUIRES_SOURCE`,
+`ADMISSION_REASON_REQUIRED`, `ADMISSION_REQUIREMENTS_PENDING`,
+`ADMISSION_INVALID_TRANSITION` (412), `ADMISSION_FOUR_EYES`,
+`ADMISSION_NOT_ASSIGNED`, `ADMISSION_SELF_ACCESS`, `ADMISSION_ROLE_REQUIRED` (403).
+`readAdmissionError` los lee sin pasar por `readApiError`, que descarta los
+códigos que no conoce.
+
 ### Operaciones que suman otros carriles
 
 Entradas sueltas que amplían clientes ya documentados más arriba.
@@ -1432,6 +1465,14 @@ alcanzable desde este repositorio.
 | `GET` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 | `PUT` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 
+### `PharmacyBulkClient` — 1 operación
+
+Carga masiva del catálogo, con vista previa (`dryRun`); `:entity` es `categories`, `products`, `prices` o `sites`. El cliente parte las filas en lotes de 250 y los manda en serie.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/pharmacies/:pharmacyId/:entity/bulk` | `PharmacyImport`, `EntityImport` | No |
+
 ### `PharmacyClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1442,6 +1483,20 @@ alcanzable desde este repositorio.
 | `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
 | `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
+### `PharmacyIntegrationClient` — 7 operaciones
+
+La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/pharmacies/:pharmacyId/integration-connections` | `PharmacyIntegration` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections` | `PharmacyIntegration` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings` | `IntegrationMappings` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings` | `IntegrationMappings` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-products` | `IntegrationMappings` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync-batches` | `IntegrationSync` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync` | `IntegrationSync` | No |
+
 ### `PharmacyOrdersClient` — 4 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1450,6 +1505,15 @@ alcanzable desde este repositorio.
 | `GET` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
 | `POST` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
 | `GET` | `/pharmacy/orders/me` | `InboxOrder` y 6 pantallas más | No |
+
+### `PharmacySiteStockClient` — 2 operaciones
+
+Stock por sucursal en la pestaña Inventario: «Lo tengo / No lo tengo» por sede y la relectura de sus posiciones.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `PUT` | `/pharmacies/:pharmacyId/sites/:siteId/products/:productId/availability` | `SiteStockPanel` | No |
+| `GET` | `/pharmacy-inventory/sites/:siteId/stock` | `SiteStockPanel` | No |
 
 ### `PracticeSitesClient` — 4 operaciones
 
@@ -1464,6 +1528,21 @@ alcanzable desde este repositorio.
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
+
+### `ReferralsClient` — 4 operaciones
+
+Derivar a otro profesional o a una organización médica, por un servicio
+concreto de su catálogo (`clinical_ext`). `referralType` y
+`targetServiceCatalogId` del alta todavía no están en el `openapi.json` del que
+sale el contrato de la maqueta: se aceptan por `REFERRAL_CONTRACT_PENDING_KEYS`
+y se mandan también a la API real.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/referrals` | `ReferralBlock` | No |
+| `GET` | `/referrals` | `Consultation` (`ConsultationReferrals`) | No |
+| `GET` | `/referrals/targets` | `ReferralBlock` | No |
+| `GET` | `/referrals/target-services` | `ReferralBlock` | No |
 
 ### `QuotationsClient` — 4 operaciones
 

@@ -1,0 +1,61 @@
+/* Lo que comparten los tres bloques de «Configuración para facturar». */
+.billing-setup__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  padding-block-start: var(--e4);
+}
+
+.billing-setup__lead {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.billing-setup__facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e3) var(--e5);
+  margin: 0;
+}
+
+@media (min-width: 780px) {
+  .billing-setup__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .billing-setup__facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.billing-setup__facts dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.billing-setup__facts dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.billing-setup__warning {
+  margin: 0;
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}
+
+.billing-setup__ok {
+  margin: 0;
+  color: var(--st-success-fg);
+}
+
+.billing-setup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--e3);
+}

@@ -99,13 +99,13 @@
     </div>
 
     <!-- Emergencia, arriba del menú (propietario, 27/10/2026). Vivía en la
-         cabecera; se mudó acá para despejarla sin dejar de estar en todas las
-         pantallas. Primera cosa del menú, antes que cualquier destino: una
-         urgencia no compite. Con la barra recogida se queda en el ícono —el
-         nombre accesible ya dice «Emergencia» y a quién llama—. Sólo para
-         quien viene a atenderse (27/10/2026): ver `ofreceEmergencia`. -->
+         cabecera; se mudó acá para despejarla. Primera cosa del menú, antes que
+         cualquier destino: una urgencia no compite. Sólo en la versión
+         responsive (propietario, 28/10/2026): en el escritorio la esconde
+         `shell-layout.css`. Sólo para quien viene a atenderse (27/10/2026): ver
+         `ofreceEmergencia`. -->
     @if (ofreceEmergencia()) {
-      <div class="app-side-nav__emergencia" appTutorialTarget="nav-emergencia">
+      <div class="app-side-nav__emergencia">
         <app-panic-button [compacto]="navRecogido()" />
       </div>
     }
@@ -288,13 +288,19 @@
              información nueva: las otras dos son preferencias, y una preferencia
              no compite por la atención con «tu receta está lista». -->
         <!-- Emergencia salió de la cabecera (propietario, 27/10/2026): vive
-             arriba del menú lateral, en todas las pantallas (ver
-             `app-side-nav__emergencia`). En el teléfono el menú es un cajón y
-             quedaba a dos toques, así que ahí vuelve como ícono: una urgencia
-             tiene que estar a uno (propietario, 27/10/2026). Fuera de esos
-             anchos lo esconde `shell-layout.css`. Mismo filtro que en el menú. -->
+             arriba del menú lateral, y sólo en la versión responsive
+             (propietario, 28/10/2026; ver `app-side-nav__emergencia`). En el
+             teléfono el menú es un cajón y quedaba a dos toques, así que ahí
+             vuelve como ícono: una urgencia tiene que estar a uno. Fuera de
+             esos anchos lo esconde `shell-layout.css`. Mismo filtro que en el
+             menú. El tutorial la señala acá, que es donde se ve. -->
         @if (ofreceEmergencia()) {
-          <app-panic-button class="app-header__emergencia" data-testid="header-emergencia" compacto />
+          <app-panic-button
+            class="app-header__emergencia"
+            data-testid="header-emergencia"
+            [appTutorialTarget]="objetivoEmergencia()"
+            compacto
+          />
         }
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
@@ -412,6 +418,26 @@
             aria-label="Accesos rápidos"
             appTutorialTarget="header-atajos"
           >
+            <!-- Mis organizaciones (propietario, 28/10/2026): antes «Organización
+                 médica» en el menú lateral. Va primera porque es el contexto
+                 de las demás —dónde se trabaja— y se ofrece sólo a quien la
+                 sección deja entrar (`visibleSections()`, igual que el guard). -->
+            @if (ofreceMisOrganizaciones()) {
+              <a
+                class="app-header__ajustes"
+                routerLinkActive="is-activo"
+                ariaCurrentWhenActive="page"
+                routerLink="/administration/medical-organization"
+                data-testid="header-mis-organizaciones"
+                appTooltip="Mis organizaciones"
+                appTooltipPosition="bottom"
+                aria-label="Mis organizaciones"
+              >
+                <app-nav-icon name="hospital" />
+                <span class="app-header__rapidos-label">Mis organizaciones</span>
+              </a>
+            }
+
             <a
               app-button
               data-variante="secundario"
@@ -459,6 +485,48 @@
           }
         </a>
 
+        <!-- Mis encuestas (propietario, 28/10/2026): la bandeja del paciente.
+             Sólo se ofrece cuando una atención terminada le generó una
+             encuesta (`GET /surveys/me/invitations` devolvió alguna); el número
+             son las pendientes dentro del plazo. Se marca en toda la pantalla
+             «Mis cuestionarios», no sólo con la pestaña de encuestas abierta:
+             por eso ignora los parámetros de consulta. -->
+        @if (ofreceMisEncuestas()) {
+          <a
+            class="app-header__ajustes"
+            routerLinkActive="is-activo"
+            [routerLinkActiveOptions]="{
+              exact: false,
+              paths: 'subset',
+              queryParams: 'ignored',
+              fragment: 'ignored',
+              matrixParams: 'ignored',
+            }"
+            ariaCurrentWhenActive="page"
+            [routerLink]="rutaDeEncuestas"
+            [queryParams]="parametrosDeEncuestas"
+            data-testid="header-encuestas"
+            appTooltip="Mis encuestas"
+            appTooltipPosition="bottom"
+            [attr.aria-label]="etiquetaEncuestas()"
+          >
+            <app-nav-icon name="survey" />
+            <span class="app-header__rapidos-label">Mis encuestas</span>
+            @if (encuestasPendientes() > 0) {
+              <!-- Sin «0» permanente, igual que Chats. Fuera del árbol
+                   accesible: el número ya viaja en el nombre del enlace. -->
+              <app-badge
+                class="app-header__chats-badge"
+                variant="error"
+                size="sm"
+                [value]="encuestasPendientes()"
+                aria-hidden="true"
+                data-testid="header-encuestas-badge"
+              />
+            }
+          </a>
+        }
+
         <!-- Mis facturas (propietario, 30/09/2026): las facturas emitidas, para
              TODAS las cuentas —paciente, médico y organizaciones—, por eso va
              fuera del bloque del paciente. Qué facturas ve cada una (las que
@@ -489,20 +557,23 @@
              aseguradora, para TODAS las cuentas —paciente, médico,
              laboratorio e imagenología—, como «Mis facturas». Qué
              solicitudes ve cada una lo decide el backend con la sesión.
-             Paraguas: el mismo ícono que dice «seguro» en el resto del menú. -->
-        <a
-          class="app-header__ajustes"
-          routerLinkActive="is-activo"
-          ariaCurrentWhenActive="page"
-          routerLink="/my-account/requests"
-          data-testid="header-solicitudes"
-          appTooltip="Mis solicitudes"
-          appTooltipPosition="bottom"
-          aria-label="Mis solicitudes"
-        >
-          <app-nav-icon name="umbrella" />
-          <span class="app-header__rapidos-label">Mis solicitudes</span>
-        </a>
+             Paraguas: el mismo ícono que dice «seguro» en el resto del menú.
+             La farmacia no la tiene (30/10/2026): se pregunta a la sección. -->
+        @if (ofreceMisSolicitudes()) {
+          <a
+            class="app-header__ajustes"
+            routerLinkActive="is-activo"
+            ariaCurrentWhenActive="page"
+            routerLink="/my-account/requests"
+            data-testid="header-solicitudes"
+            appTooltip="Mis solicitudes"
+            appTooltipPosition="bottom"
+            aria-label="Mis solicitudes"
+          >
+            <app-nav-icon name="umbrella" />
+            <span class="app-header__rapidos-label">Mis solicitudes</span>
+          </a>
+        }
 
         <!-- El carrito de farmacia (H4.S1, carril 41/46). Es la compra del
              paciente, no una herramienta de la médica ni de otro rol: sólo se

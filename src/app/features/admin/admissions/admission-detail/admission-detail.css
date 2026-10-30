@@ -1,0 +1,171 @@
+:host {
+  display: block;
+}
+
+.admision {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.admision__esqueleto {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.admision__esqueleto-bloque {
+  block-size: 6rem;
+  background: var(--bg-inset);
+  border-radius: var(--r-md);
+}
+
+.admision__esqueleto-bloque--alto {
+  block-size: 18rem;
+}
+
+.admision__cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.admision__identidad {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.admision__tipo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.admision__vencida {
+  padding: 0 var(--sp-2);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: var(--st-error-fg);
+  background: var(--st-error-bg);
+  border: 1px solid var(--st-error-bd);
+  border-radius: var(--r-sm);
+}
+
+.admision__datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: var(--sp-3) var(--sp-5);
+  margin: 0;
+}
+
+.admision__datos dt,
+.admision__resumen dt {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.admision__datos dd,
+.admision__resumen dd {
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.admision__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-3);
+  padding-block: var(--sp-3);
+  border-block: 1px solid var(--border-default);
+}
+
+.admision__bloqueos {
+  margin: 0 0 var(--sp-4);
+  padding-inline-start: var(--sp-5);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.admision__nota {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.admision__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.admision__resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--sp-3) var(--sp-5);
+  margin: 0;
+}
+
+.admision__falta {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.admision__enlace {
+  margin-inline-start: var(--sp-2);
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text-link);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.admision__enlace:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.historial {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historial__evento {
+  padding-inline-start: var(--sp-4);
+  border-inline-start: 3px solid var(--border-strong);
+}
+
+.historial__titulo,
+.historial__meta,
+.historial__detalle {
+  margin: 0;
+}
+
+.historial__meta {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.historial__detalle {
+  margin-block-start: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.historial__nota {
+  padding: var(--sp-1) var(--sp-2);
+  background: var(--st-info-bg);
+  border-radius: var(--r-sm);
+}

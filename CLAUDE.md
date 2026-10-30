@@ -75,3 +75,17 @@ lugar (`trabajo/DECISIONES.md` D-01).
 El merge a `dev` exige revisión humana: `gh pr merge` y el auto-merge están
 bloqueados. El flujo termina en **abrir el PR**. El CI propio está caído; los
 `check-*.mjs` se corren a mano.
+
+**Dos PRs por cambio terminado: uno hacia `dev` y otro hacia `test`** (pedido
+del usuario, 28/10/2026; ejemplo: #1526 y #1543). El de `test` sale de una rama
+propia creada desde `test` con solo los commits del cambio (cherry-pick); nunca
+desde la rama de `dev`, que arrastraría lo que `test` todavía no tiene.
+
+## Trabajo en paralelo (autorización explícita)
+
+Por pedido del usuario (30/10/2026) para el portal de reportería
+(`docs/trabajo/2026-10-30-reporteria-comercial-alovida/`), la regla 70 de la casa
+(1 subagente, sin background) se relaja **sólo para esa tarea**: varios agentes en
+paralelo, cada uno dueño de archivos **disjuntos** (una pestaña por agente). Se
+mantiene: **un solo navegador de pruebas a la vez** y capturas en serie, y quien
+implementa no aprueba su propio trabajo.

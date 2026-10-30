@@ -4,7 +4,10 @@
 <app-page-header
   title="Contabilidad"
   subtitle="Cuánto ingresó, en qué gastó, qué le deben y qué tiene que pagar."
-/>
+>
+  <a app-button page-actions variant="outline" routerLink="/administration/accounting/billing-setup"
+    data-testid="billing-setup-link"><app-nav-icon name="wallet" /> Configuración para facturar</a>
+</app-page-header>
 
 <!-- Una sola barra arriba (27/10/2026): de qué consultorio son las cifras y
      cómo se leen. Antes eran dos bloques apilados —«Versión» y «Consultorio»—
@@ -72,12 +75,8 @@
   <app-tab label="Resumen" icon="chart">
     @if (tab() === 0) {
       <div class="pestana">
-        <!-- La contabilidad simple sólo existe en la maqueta: contra la API real
-             su lectura da 404 y el recuadro decía «No encontramos lo que busca». -->
-        @if (simpleAccountingAvailable) {
-          @if (chosenPractice(); as practica) {
-            <app-simple-accounting class="contabilidad-simple" parte="numeros" [version]="version()" [practiceId]="practica" (anotado)="recargar()" />
-          }
+        @if (chosenPractice(); as practica) {
+          <app-simple-accounting class="contabilidad-simple" parte="numeros" [version]="version()" [practiceId]="practica" (anotado)="recargar()" />
         }
 
         <app-view-state-host [state]="dineroStatus()" (retry)="recargar()" (refresh)="recargar()">
@@ -481,14 +480,8 @@
   <app-tab [label]="isAccountant() ? 'Registros' : 'Anotar gastos, equipos y deudas'" icon="note">
     @if (tab() === 1) {
       <div class="pestana">
-        @if (!simpleAccountingAvailable) {
-          <app-alert tone="info" data-testid="simple-accounting-unavailable">
-            <p>{{ simpleAccountingUnavailable }}</p>
-          </app-alert>
-        } @else {
-          @if (chosenPractice(); as practica) {
-            <app-simple-accounting class="contabilidad-simple" parte="registros" [version]="version()" [practiceId]="practica" />
-          }
+        @if (chosenPractice(); as practica) {
+          <app-simple-accounting class="contabilidad-simple" parte="registros" [version]="version()" [practiceId]="practica" />
         }
       </div>
     }

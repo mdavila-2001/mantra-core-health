@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { DirectoryClient } from './directory.client';
-import type { TenantCreated, TenantListItem } from './directory.types';
+import type { MyOrganization, TenantCreated, TenantListItem } from './directory.types';
 
 describe('DirectoryClient', () => {
   let client: DirectoryClient;
@@ -73,6 +73,55 @@ describe('DirectoryClient', () => {
     expect(filas[0].createdAt).toBeInstanceOf(Date);
     expect('tradeName' in filas[0]).toBe(false);
     expect('parentTenantId' in filas[0]).toBe(false);
+  });
+
+  it('listMyOrganizations lee la carpeta legal: fechas sin hora y sin los null del transporte', () => {
+    let organizaciones: readonly MyOrganization[] = [];
+    client.listMyOrganizations().subscribe((items) => (organizaciones = items));
+
+    http
+      .expectOne((r) => r.url === '/tenants/me')
+      .flush({
+        items: [
+          {
+            id: 't-1',
+            code: 'ERBOL',
+            legalName: 'ERBOL SRL',
+            tenantTypeConceptId: 'c-lab',
+            statusConceptId: 'c-activo',
+            verificationStatusConceptId: 'c-verificada',
+            createdAt: '2026-05-02T14:00:00.000Z',
+            myRoleConceptId: 'c-owner',
+            canAdminister: true,
+            isVerified: true,
+            legalEntityType: 'SRL',
+            taxIdentifier: '1023456029',
+            legalDocuments: [
+              {
+                role: 'TAX_IDENTIFIER_DOC',
+                verificationStatus: 'VERIFICADO',
+                documentNumber: '1023456029',
+                // Una columna sin hora que el servidor serializa como instante UTC:
+                // al oeste de Greenwich no puede retroceder al 1 de mayo.
+                registeredAt: '2026-05-02T00:00:00.000Z',
+                validTo: null,
+              },
+              { role: 'CONSTITUTION_DOC', verificationStatus: 'PENDIENTE', documentNumber: null },
+            ],
+          },
+        ],
+      });
+
+    const [org] = organizaciones;
+    expect(org?.legalEntityType).toBe('SRL');
+    expect(org?.taxIdentifier).toBe('1023456029');
+    const [nit, constitucion] = org?.legalDocuments ?? [];
+    expect(nit?.registeredAt?.getFullYear()).toBe(2026);
+    expect(nit?.registeredAt?.getMonth()).toBe(4);
+    expect(nit?.registeredAt?.getDate()).toBe(2);
+    expect(nit && 'validTo' in nit).toBe(false);
+    expect(constitucion && 'documentNumber' in constitucion).toBe(false);
+    expect(constitucion && 'registeredAt' in constitucion).toBe(false);
   });
 
   it('verifyTenant declara como organización la que se verifica, no la activa (A2)', () => {

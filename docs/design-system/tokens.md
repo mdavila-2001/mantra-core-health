@@ -17,6 +17,7 @@ que el sistema necesita y vigila.
 | Estados | 4 × 3 = **12** | `--st-<estado>-<bg\|fg\|bd>` | **Sí** |
 | Tonos de marca | 2 × 3 = **6** | `--st-<primary\|secondary>-*` | **Sí** |
 | Escala de intensidad | 4 × 2 = **8** | `--heat-<1…4>-<bg\|fg>` | **Sí** |
+| Insignia de verificación | 2 | `--verified-bg`, `--verified-fg` | **Sí** |
 | Efectos | 4 | `--shadow-*`, `--focus-ring` | **Sí** |
 | Capas | 8 | `--z-*` | No |
 | Duraciones | 3 | `--dur-*` | No |
@@ -31,7 +32,7 @@ que el sistema necesita y vigila.
 | Materiales | 3 × 2 + 2 = **8** | `--material-<fino\|regular\|grueso>-<tinte\|desenfoque>`, `--material-trazo\|respaldo` | **Sí** (tinte, trazo, respaldo) |
 | Alias de compatibilidad | 7 | `--surface-*`, `--text-*`, `--border-*`, `--accent` | **Sí** |
 
-**234 tokens** (220 + 6 muelles + 8 materiales, 2026-10-12). `DESIGN_TOKENS` los enumera en tiempo de ejecución.
+**247 tokens** (234 + 13 de gráficos `--chart-*`, 2026-10-30; ver ADR-0017). `DESIGN_TOKENS` los enumera en tiempo de ejecución.
 
 Los PDF del sistema toman de acá sus colores y sus dos familias tipográficas,
 copiados en RGB y TTF porque `jsPDF` no lee CSS; cómo y con qué prueba de
@@ -133,7 +134,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([…]);
 > *«Existe para que la deriva CSS ↔ TS sea detectable, **no para iterarlo en la
 > UI**.»*
 
-La advertencia importa: pintar 234 tokens en una pantalla no es documentación, es
+La advertencia importa: pintar 247 tokens en una pantalla no es documentación, es
 un volcado. La vitrina exhibe los que tienen significado, no todos.
 
 ## Tokens que **no** existen
@@ -146,6 +147,35 @@ un volcado. La vitrina exhibe los que tienen significado, no todos.
 
 Las tres primeras son las que más se notarían al crecer. Anotadas como `LOW`.
 
+
+## Texto de peligro: `--text-danger`, no la rampa `--c-error-*`
+
+Corrección del 2026-10-29. El mensaje de error de un campo y el asterisco de
+obligatorio (`app-form-field`) se pintaban con `--c-error-500`. Es un escalón de
+**rampa**: no cambia con el tema. En claro rinde 4,92:1 sobre blanco; en oscuro,
+**2,99:1** sobre `rgb(10, 43, 61)` (AA pide 4,5:1). Se midió por muestreo de
+píxeles en `/auth/register/medical-center` y `/auth/register/imaging-center`.
+
+El token no estaba mal: `--text-danger` (→ `--st-error-fg`) ya valía
+`--c-error-700` en claro (9,22:1) y `--c-error-200` en oscuro (7,89:1). El defecto
+era usar el escalón en vez del token. **No cambió ningún valor de token**; los
+consumidores pasaron a `var(--text-danger)`: `form-field.css` (error y
+asterisco) y los textos `.datos__error` / `.edicion__error` de los editores de
+perfil.
+
+Regla: el **texto** de peligro va con `--text-danger`; un escalón `--c-error-*`
+sólo es válido para un relleno o un borde cuyo contraste no dependa del tema.
+`scripts/check-contrast.mjs` mide ahora `--text-danger` sobre `--bg-surface`,
+`--bg-surface-alt` y `--bg-inset` en claro y en los dos oscuros.
+
+Los bordes de control en error tenían el mismo defecto (`--c-error-500`: 2,99:1
+contra la superficie oscura, a una centésima del 3:1 de WCAG 1.4.11). Se resolvió
+con un token de borde que **sí** cambia con el tema, `--border-danger`
+(catalogado en `BORDER`): `--c-error-500` en claro (4,92:1 sobre blanco, sin
+cambio visual) y `--c-error-400` en oscuro (4,17:1 sobre la tarjeta; 3,45:1 en el
+peor caso, `--bg-surface-alt`). Lo usan `input`, `select`, `textarea`,
+`checkbox`, `radio`, `grid-group`, `tree-select` y `date-picker`.
+`check-contrast.mjs` lo mide a 3:1 sobre las cuatro superficies.
 
 ## Radios y sombras: cuál va en qué
 

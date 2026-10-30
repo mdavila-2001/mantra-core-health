@@ -1,0 +1,49 @@
+# FAR-04 · registro de la corrida de navegador (30/10/2026)
+
+## f04views — hechos
+[claro 390] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: true · primera cortada: false · sin desborde de página: true
+[claro 390] menú de la farmacia: Mi perfil | Notificaciones | Resumen | Catálogo | Horario y turnos | Solicitudes de retiro | Promociones | Sucursales
+[claro 768] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: false · primera cortada: false · sin desborde de página: true
+[claro 1024] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: false · primera cortada: false · sin desborde de página: true
+[claro 1440] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: false · primera cortada: false · sin desborde de página: true
+[claro 1440] menú de la farmacia: Mi perfil | Notificaciones | Resumen | Catálogo | Horario y turnos | Solicitudes de retiro | Promociones | Sucursales
+[claro 1920] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: false · primera cortada: false · sin desborde de página: true
+[oscuro 390] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: true · primera cortada: false · sin desborde de página: true
+[oscuro 390] menú de la farmacia: Mi perfil | Notificaciones | Resumen | Catálogo | Horario y turnos | Solicitudes de retiro | Promociones | Sucursales
+[oscuro 1440] pestañas: Productos | Categorías | Precios | Inventario | Importación | Integración · tira desplazable: false · primera cortada: false · sin desborde de página: true
+[oscuro 1440] menú de la farmacia: Mi perfil | Notificaciones | Resumen | Catálogo | Horario y turnos | Solicitudes de retiro | Promociones | Sucursales
+## f04views — consola, pageerror, peticiones fallidas y escrituras
+(ninguno)
+
+## f04tabs — hechos
+pestaña «Categorías» → /administration/pharmacy-catalog?tab=categories · membretes dentro de la tarjeta: 0
+pestaña «Precios» → /administration/pharmacy-catalog?tab=prices · membretes dentro de la tarjeta: 0
+pestaña «Inventario» → /administration/pharmacy-catalog?tab=inventory · membretes dentro de la tarjeta: 0
+pestaña «Importación» → /administration/pharmacy-catalog?tab=import · membretes dentro de la tarjeta: 0
+pestaña «Integración» → /administration/pharmacy-catalog?tab=integration · membretes dentro de la tarjeta: 0
+pestaña «Productos» → /administration/pharmacy-catalog?tab=products · membretes dentro de la tarjeta: 0
+Atrás después de seis pestañas → /administration/pharmacy
+## f04tabs — consola, pageerror, peticiones fallidas y escrituras
+(ninguno)
+
+## f04links — hechos
+/administration/pharmacy-inventory?alerts=true → /administration/pharmacy-catalog?alerts=true&tab=inventory · pestaña abierta: Inventario · «solo alertas» marcado: true
+/administration/pharmacy-categories → /administration/pharmacy-catalog?tab=categories · pestaña abierta: Categorías
+/administration/pharmacy-prices → /administration/pharmacy-catalog?tab=prices · pestaña abierta: Precios
+/administration/pharmacy-import → /administration/pharmacy-catalog?tab=import · pestaña abierta: Importación
+Resumen → «Revisar inventario» → /administration/pharmacy-catalog?tab=inventory&alerts=true · pestaña abierta: Inventario
+Resumen → «Actualizar en lote» → /administration/pharmacy-catalog?tab=import · pestaña abierta: Importación
+## f04links — consola, pageerror, peticiones fallidas y escrituras
+(ninguno)
+
+## f04patient — hechos
+[paciente 1440] /administration/pharmacy-catalog → /dashboard · tarjeta del catálogo: 0
+[paciente 1440] «Catálogo» en el menú: false
+[paciente 390] /administration/pharmacy-catalog → /dashboard · tarjeta del catálogo: 0
+[paciente 390] «Catálogo» en el menú: false
+## f04patient — consola, pageerror, peticiones fallidas y escrituras
+(ninguno)
+
+## precios (caso 8)
+precio de CIERRE-113533 tras guardar y recargar: 17.25
+[crud] PATCH /pharmacies/:id/products/:id → 200

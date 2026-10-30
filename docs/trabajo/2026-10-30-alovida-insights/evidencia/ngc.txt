@@ -1,0 +1,36 @@
+[96msrc/app/features/symptom-check/symptom-check.ts[0m:[93m142[0m:[93m5[0m - [93mwarning[0m[90m NG8113: [0mCard is not used within the template of SymptomCheck
+
+[7m142[0m     Card,
+[7m   [0m [93m    ~~~~[0m
+[96msrc/app/features/admin/portal/governance/filter-form.ts[0m:[93m50[0m:[93m26[0m - [93mwarning[0m[90m NG8102: [0mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102
+
+[7m50[0m                 [value]="draft()[field.key] ?? ''"
+[7m  [0m [93m                         ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/app/features/admin/portal/governance/filter-form.ts[0m:[93m58[0m:[93m26[0m - [93mwarning[0m[90m NG8102: [0mNG8102: The left side of this nullish coalescing operation does not include 'null' or 'undefined' in its type, therefore the '??' operator can be safely removed. Find more at https://v21.angular.dev/extended-diagnostics/NG8102
+
+[7m58[0m                 [value]="draft()[field.key] ?? ''"
+[7m  [0m [93m                         ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/app/features/admin/portal/hub/portal-hub.ts[0m:[93m19[0m:[93m13[0m - [93mwarning[0m[90m NG8113: [0mDatePipe is not used within the template of PortalHub
+
+[7m19[0m   imports: [DatePipe, RouterLink, MetricCard, PageHeader, ViewStateHost],
+[7m  [0m [93m            ~~~~~~~~[0m
+[96msrc/app/features/groups/groups.ts[0m:[93m59[0m:[93m5[0m - [93mwarning[0m[90m NG8113: [0mLink is not used within the template of Groups
+
+[7m59[0m     Link,
+[7m  [0m [93m    ~~~~[0m
+[96msrc/app/features/accounting/summary/summary.ts[0m:[93m229[0m:[93m5[0m - [93mwarning[0m[90m NG8113: [0mAlert is not used within the template of Summary
+
+[7m229[0m     Alert,
+[7m   [0m [93m    ~~~~~[0m
+[96msrc/app/features/account/my-profile/medical-articles/medical-articles.ts[0m:[93m93[0m:[93m5[0m - [93mwarning[0m[90m NG8113: [0mAlert is not used within the template of MedicalArticles
+
+[7m93[0m     Alert,
+[7m  [0m [93m    ~~~~~[0m
+[96msrc/app/features/account/my-profile/medical-articles/medical-articles.ts[0m:[93m105[0m:[93m5[0m - [93mwarning[0m[90m NG8113: [0mRouterLink is not used within the template of MedicalArticles
+
+[7m105[0m     RouterLink,
+[7m   [0m [93m    ~~~~~~~~~~[0m
+
+ngc exit=0

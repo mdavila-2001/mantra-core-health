@@ -145,7 +145,50 @@ for (const tema of TEMAS) {
         await capturar(page, `fuera-${tema}-${vp.nombre}`);
       });
 
+      test('si la API cae, la calle sale del respaldo del navegador (Nominatim)', async ({
+        page,
+      }) => {
+        // Nominatim no se alcanza desde el entorno de prueba: se responde acá,
+        // con la forma real de su `jsonv2`. Que el pedido salga del navegador
+        // es justo lo que se prueba.
+        const pedidos: string[] = [];
+        await page.route('https://nominatim.openstreetmap.org/reverse**', (route) => {
+          pedidos.push(route.request().url());
+          return route.fulfill({
+            json: {
+              address: {
+                road: 'Avenida Virgen de Cotoca',
+                neighbourhood: 'Condominio Kerana I',
+                city: 'Santa Cruz de la Sierra',
+                state: 'Santa Cruz',
+                country_code: 'bo',
+              },
+            },
+          });
+        });
+        await empezarElAlta(page);
+        await page.evaluate(() =>
+          sessionStorage.setItem(
+            'mock:fallos',
+            JSON.stringify([{ patron: '/public/geo/reverse', modo: 'error' }]),
+          ),
+        );
+        await ponerPinEnCoordenadas(page, '-17,7605', '-63,13');
+
+        await expect(campo(page, 'registration-home-geocoding-notice')).toHaveValue(
+          'Avenida Virgen de Cotoca, Condominio Kerana I',
+        );
+        await expect(page.getByTestId(`${MAPA}-calle-caida`)).toHaveCount(0);
+        expect(pedidos).toHaveLength(1);
+        expect(pedidos[0]).toContain('lat=-17.7605');
+        await capturar(page, `respaldo-${tema}-${vp.nombre}`);
+      });
+
       test('si la API cae, lo dice y deja volver a buscar', async ({ page }) => {
+        // Caído es caído también para el respaldo del navegador.
+        await page.route('https://nominatim.openstreetmap.org/reverse**', (route) =>
+          route.fulfill({ status: 503, body: '' }),
+        );
         await empezarElAlta(page);
         await page.evaluate(() =>
           sessionStorage.setItem(

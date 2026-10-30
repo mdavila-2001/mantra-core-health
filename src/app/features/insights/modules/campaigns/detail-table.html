@@ -1,0 +1,54 @@
+<app-ins-panel title="Detalle por campaña y canal" question="Nivel de exploración: los números exactos detrás de los gráficos.">
+  <div panel-tools class="dt__tools">
+    <label class="dt__search">
+      <span class="dt__sr">Buscar en el detalle</span>
+      <input type="search" placeholder="Buscar campaña o canal" [value]="query()" (input)="search($event)" />
+    </label>
+    <button type="button" class="dt__export" (click)="exportCsv()">Exportar CSV</button>
+  </div>
+
+  @if (filtered().length === 0) {
+    <p class="dt__empty">No hay filas con ese criterio. Borre la búsqueda o amplíe el periodo.</p>
+  } @else {
+    <div class="dt__wrap">
+      <table class="dt__table">
+        <caption class="dt__sr">Detalle por campaña y canal</caption>
+        <thead>
+          <tr>
+            <th scope="col" [attr.aria-sort]="ariaSort('campaign')"><button type="button" (click)="sort('campaign')">Campaña</button></th>
+            <th scope="col" [attr.aria-sort]="ariaSort('channel')"><button type="button" (click)="sort('channel')">Canal</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('impressions')"><button type="button" (click)="sort('impressions')">Impresiones</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('clicks')"><button type="button" (click)="sort('clicks')">Clics</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('ctr')"><button type="button" (click)="sort('ctr')">CTR</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('spend')"><button type="button" (click)="sort('spend')">Inversión</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('conversions')"><button type="button" (click)="sort('conversions')">Conversiones</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('cpa')"><button type="button" (click)="sort('cpa')">CPA</button></th>
+            <th scope="col" class="dt__n" [attr.aria-sort]="ariaSort('roas')"><button type="button" (click)="sort('roas')">ROAS</button></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of visible(); track r.id) {
+            <tr>
+              <th scope="row" class="dt__camp">{{ r.campaign }}</th>
+              <td>{{ r.channel }}</td>
+              <td class="dt__n">{{ int(r.impressions) }}</td>
+              <td class="dt__n">{{ int(r.clicks) }}</td>
+              <td class="dt__n">{{ pct(r.ctr) }}</td>
+              <td class="dt__n">{{ r.spend ? money(r.spend) : '—' }}</td>
+              <td class="dt__n">{{ int(r.conversions) }}</td>
+              <td class="dt__n">{{ money(r.cpa) }}</td>
+              <td class="dt__n">{{ ratio(r.roas) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="dt__pager">
+      <span>{{ filtered().length }} filas · página {{ page() + 1 }} de {{ pages() }}</span>
+      <span class="dt__pager-btns">
+        <button type="button" [disabled]="page() === 0" (click)="go(-1)">Anterior</button>
+        <button type="button" [disabled]="page() >= pages() - 1" (click)="go(1)">Siguiente</button>
+      </span>
+    </div>
+  }
+</app-ins-panel>
