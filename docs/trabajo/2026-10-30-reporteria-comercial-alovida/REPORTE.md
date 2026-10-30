@@ -8,7 +8,7 @@
   - Build de producción: `RUNS` (el pre-push compiló con salida 0 en cada push).
   - Comportamiento en navegador de lo capturado: `VERIFIED_FUNCTIONAL_ONLY` en lo que se observó; **no** `REGRESSION_VERIFIED`.
   - Revisión independiente, tres pasadas (visual, código, regresión). **Ninguna ha aprobado este estado:**
-    - Visual: FAIL 67 → 74 → 82/100. La última tuvo un alto (cascadas móviles aplastadas) que resultó ser evidencia vieja (las capturas claras no se habían regenerado tras el ajuste); se corrigió y se vio en la recaptura, pero **no** se repitió la revisión independiente. Siguen abiertos como medios: etiquetas partidas a media palabra en la cascada de referidos de escritorio, nombres truncados en barras horizontales móviles y texto de leyenda sobre el aro de un donut móvil.
+    - Visual: FAIL 67 → 74 → 82/100. La última tuvo un alto (cascadas móviles aplastadas) que resultó ser evidencia vieja (las capturas claras no se habían regenerado tras el ajuste); se corrigió y se vio en la recaptura, pero **no** se repitió la revisión independiente. Los tres medios que quedaban se revisaron después, **sin nueva revisión independiente** (la mirada es mía): (1) nombres truncados en barras horizontales móviles: **corregido** (con 7 categorías o menos el nombre se parte en dos líneas; con más se trunca con 130 px en vez de 110 y el tooltip lo dice entero); recaptura móvil claro de «CAC por canal», «Costo de cada promoción» y «Los 10 clientes»: los nombres se leen enteros salvo dos de los diez clientes, que siguen truncados; tableta sin cambios visibles. (2) etiquetas partidas en la cascada de referidos de escritorio: **no reproducido** en la recaptura (rótulos inclinados y legibles). (3) leyenda sobre el aro de un donut móvil: **no reproducido** en ocho donuts revisados en móvil claro y oscuro (no se revisaron todos).
     - Código: aprobable, sin bloqueantes; tres medios (cabecera tabulable bajo la hoja, Tab del menú, afirmación excesiva en este reporte) corregidos.
     - Regresión: no emite REGRESSION_VERIFIED. En el árbol de esa pasada: tipos, lint, 3108 pruebas y `ng build` pasaron; falló `check-english-identifiers` por una prueba mía (ya corregida) y `app.routes.ts` creció; `pw:rutas` y `pw:accesos` quedaron **bloqueados**: exigen la API real viva y aquí solo hay la maqueta.
 - Alcance: **maqueta con datos de EJEMPLO declarados en pantalla**. No hay API de reportería real conectada.
@@ -60,7 +60,9 @@
 
 ## Riesgos residuales y deuda
 
-- Datos de ejemplo con inconsistencias entre tarjetas (el MRR del resumen y el total de «Resumen por plan» no coinciden; la tabla «Alertas» solo lista filas «Normal»).
+- MRR de los datos de ejemplo, **corregido y medido** (30 d y 12 m, BOB y USD): la tarjeta MRR de Suscripciones, la del Resumen, el último punto de ambos gráficos, el «MRR final» de la cascada y el total de «Resumen por plan» dan la misma cifra. Dos defectos reales: (1) el total de «Resumen por plan» difería de la tarjeta por un centavo en 30 d (490.068,66 frente a 490.068,67) porque sumaba filas redondeadas, y la prueba lo toleraba con 0,05; ahora el residuo se asigna a la fila mayor y la prueba exige igualdad exacta y que las filas sumen el total. (2) El gráfico de MRR del Resumen dibujaba una trayectoria inventada distinta de la de su propia tarjeta (día 29: 487.714 frente a 490.294); ahora reutiliza la serie y las velas de Suscripciones (si esa pestaña no la trae o no cierra en el KPI, cae a la trayectoria propia, que ya estaba probada). Sin las correcciones las pruebas nuevas fallan (7 casos); con ellas pasan. Capturas de escritorio claro: ambos paneles idénticos. **Alcance de la verificación:** la prueba de la tabla recorre 12 contextos (los de 7 d, con las dos monedas y los dos alcances); 30 d y 12 m los medí con una sonda descartable (alcance plataforma, sin filtros). **No medido:** contextos con filtros activos, y 90 d / año a la fecha.
+- Sigue abierto: la tabla «Alertas» solo lista filas «Normal».
+- El «Ingreso» de suscripciones del Resumen (481.682,17 en 30 d) es ingreso reconocido (Σ MRR diario ÷ 30), no MRR: es otra cifra y se rotula distinto; no se tocó.
 - `ChartThemeService` duplicado con la lectura de tema dentro de cada panel de gráficos; cada panel observa el `<html>`.
 - `app.routes.ts` ya estaba sobre el techo de líneas (2273) y creció de 2398 a 2435 por las rutas `portal-selector` y `reports`.
 - Un servidor de desarrollo con una reconstrucción fallida sigue sirviendo el bundle anterior sin avisar: parte de las capturas intermedias se tomaron así y se repitieron; la evidencia vigente se tomó tras comprobar en el log que la compilación terminó sin errores.
@@ -71,3 +73,31 @@
 - **A-2, A-3, A-4, A-6, A-7** del PLAN siguen abiertas; supuestos tomados: ver `PLAN.md` §7.
 - `REPORTING_ADMIN` **no** ve el alcance «Plataforma» (supuesto; confirmar con negocio).
 - Los administradores con los dos accesos aterrizan en el selector de portal en vez de `/dashboard`; hay que confirmarlo con producto.
+
+## Ronda de cierre (30/10, tarde): revisión independiente y correcciones
+
+Peldaño alcanzado: **`TESTED` + `VERIFIED_FUNCTIONAL_ONLY` sobre la maqueta** (datos de EJEMPLO, sin API real). No es `REGRESSION_VERIFIED`: la suite completa no terminó en dos intentos (ver más abajo).
+
+**Cambios de esta ronda.** Resumen explicado para entender la monetización (secciones por pregunta, mapa «quién paga, por qué y cuánto aporta», economía unitaria, glosario); seis indicadores a la vista y el resto en «Más indicadores»; tablas de pocas filas en tarjetas en móvil; mapa de calor con todas sus etiquetas; cascada angosta con la leyenda arriba; «Resumen por plan» con cuentas y MRR del mismo corte y total igual a la tarjeta (sin filtro de plan).
+
+**Revisión independiente (quien implementa no aprueba).**
+| Ronda | Revisor | Veredicto | Qué se corrigió después |
+|---|---|---|---|
+| 1 | Visual | REJECT móvil (3 altos) | Tablas con cifras fuera de pantalla, mapa de calor sin etiquetas, cascada pisando la leyenda |
+| 1 | Código | REJECT (1 alto) | «Resumen por plan» se contradecía con un filtro de plan; lectura rápida con comparación y «más cae» incorrectos; pruebas que no probaban lo que decían |
+| 1 | Regresión | NOT_VERIFIED (sin regresión hallada) | Faltó navegador y suite completa (ver No cubierto) |
+| 2 | Código | APPROVE_WITH_NOTES | Total del plan filtrado rotulado; roles de tabla y foco en el modo tarjeta; pruebas de `report-table`, de la lectura con una sola fuente y de las fórmulas del glosario |
+| 2 | Visual | Móvil APPROVE_WITH_NOTES · escritorio REJECT (1 alto) | Alto corregido: las celdas de texto ya no se parten en tablas de 8 columnas o más (la clave no queda fuera de vista) y se avisa del desplazamiento; las tablas en tarjetas no se cortan en vertical; tarjetas solo si filas ≤ 12 y filas × columnas ≤ 60; rótulos de mapas de muchas columnas |
+
+**Tras la última corrección no hubo una tercera revisión independiente.** Lo corregido se verificó con pruebas y con capturas que miré yo; eso no es aprobación de un tercero.
+
+**Evidencia de esta ronda.** `tsc` (app y spec) sin salida; ESLint de reportería sin salida; 677 pruebas dirigidas en verde (32 archivos); `check-css-tokens` y `check-english-identifiers` (base 2a7afe19) en verde; recaptura completa de las 35 pruebas de `playwright/reporteria-capturas.spec.ts` contra la maqueta en modo demo (6 recorridos incluida tableta, 2 de interacciones, 20 de estados, teclado, asistente, autorización negativa). Build de producción del pre-push en cada push anterior.
+
+**No cubierto (se suma a lo anterior).**
+- Suite completa de `ng test`: en la auditoría de regresión terminó con el servicio de esbuild muerto (ENVIRONMENT) tras ~5 min, dos intentos; los fallos que mostró antes de morir son de otros features y no se reprodujeron en aislado. `pdf-theme.spec` falla y no toca este cambio.
+- Gates rojos de otros módulos (`check-colores-sueltos`, `check-usted`, `check-max-lines`): preexistentes por inferencia (ningún archivo señalado está en el diff); no se corrieron contra la base.
+- Tablas con muchas columnas (Campañas, Anuncios con peor costo, Catálogo de indicadores) siguen necesitando desplazamiento lateral; hay aviso, pero la columna clave no siempre se ve sin deslizar.
+- Con un filtro de plan activo, la tarjeta «MRR» y la tabla «Resumen por plan» no coinciden (la tabla muestra solo ese plan; la fila se llama «Total del plan filtrado»). La causa está en el modelo de suscripciones, no en este cambio.
+- Lectores de pantalla (VoiceOver, NVDA) y el comportamiento real de `display: block` sobre tablas en el modo tarjeta: no se probaron.
+- Sin API real: nada de esto prueba persistencia ni autorización del servidor. Siguen abiertas las decisiones de negocio A-2 (publicidad), A-4 (comisiones), alcance de `REPORTING_ADMIN` y destino del administrador tras el login.
+- Los 11 KPI del Resumen están en datos; la pantalla muestra 6 y el resto en «Más indicadores». Los sparklines de las tarjetas dentro del `<details>` cerrado no se verificaron al abrirlos.

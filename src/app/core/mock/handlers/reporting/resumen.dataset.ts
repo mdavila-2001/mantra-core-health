@@ -47,7 +47,7 @@ export function buildSummaryWith(ctx: ContextoReporte, fuentes: FuentesResumen):
         graficos: ['ingreso-vertical-tiempo', 'avance-meta', 'cascada-ingreso', 'mrr-total'],
       },
       {
-        titulo: '¿De dónde sale la plata y por qué nos la pagan?',
+        titulo: '¿De dónde sale el ingreso y por qué se paga?',
         descripcion: 'Alovida tiene tres fuentes de ingreso. La tabla dice quién paga cada una y por qué; los gráficos, cuánto aporta cada una mes a mes.',
         tablas: ['mapa-monetizacion'],
         graficos: ['mix-ingresos', 'calor-vertical-mes'],

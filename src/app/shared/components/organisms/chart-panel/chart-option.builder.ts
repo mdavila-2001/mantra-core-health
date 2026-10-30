@@ -193,7 +193,7 @@ function construirPartes(
               show: true,
               position: 'right',
               // Sin distancia, el rótulo del primer paso (el más ancho) arrancaba bajo el borde oblicuo del trapecio.
-              distance: 16,
+              distance: 28,
               color: tema.texto,
               lineHeight: 16,
               formatter: (p: ParamEje) => `${p.name ?? ''}\n${formatearValor(readValue(p), spec.unidad, true)}`,
@@ -254,7 +254,7 @@ function construirMapaCalor(
       },
     },
     grid: { left: 8, right: 16, top: 12, bottom: 60, containLabel: true },
-    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: true } },
+    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: d.columnas.length > 8, width: 120, overflow: 'break' } },
     yAxis: { type: 'category', data: d.filas, inverse: true, axisLabel: { color: tema.textoSuave, interval: 0 } },
     series: [
       {
@@ -379,9 +379,11 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
     case 'cartesiano':
       // Solo con pocas categorías (las que se rotulan todas): una serie diaria se aclara sola por intervalo.
       if (d.horizontal === true) {
-        // Con el nombre ocupando el 70 % del ancho la barra no tenía área útil: en angosto se trunca y el tooltip lo dice entero.
+        // Con el nombre ocupando el 70 % del ancho la barra no tenía área útil: en angosto el nombre se limita a
+        // ~130 px. Con pocas barras sobra alto para partirlo en dos líneas y se lee entero; con muchas, dos líneas
+        // por barra se pisarían y se trunca (el tooltip y la tabla lo dicen entero).
         return withNarrow(construirCartesiano(o, d), {
-          yAxis: { axisLabel: { width: 110, overflow: 'truncate' } },
+          yAxis: { axisLabel: { width: 130, overflow: d.categorias.length <= 7 ? 'break' : 'truncate' } },
           grid: { left: 8 },
         });
       }
@@ -402,10 +404,13 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
         ? withNarrow(construirPartes(o, d), {
             series: [{ right: '46%', bottom: 110, label: { width: 110, overflow: 'break' }, labelLine: { length: 14 } }],
           })
-        : construirPartes(o, d);
+        : withNarrow(construirPartes(o, d), {
+            // La leyenda se parte en varias líneas en un teléfono: el anillo sube y se achica para no quedar pisado.
+            series: [{ center: ['50%', '33%'], radius: ['28%', '48%'] }],
+          });
     case 'mapa-calor':
       // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
-      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
+      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: d.columnas.length > 8, overflow: 'none' } } });
     case 'medidor':
       return construirMedidor(o, d);
     case 'cascada':
@@ -416,7 +421,9 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
         },
         // `containLabel` ya reserva el sitio de los rótulos inclinados: un margen inferior grande encima los
         // suma y aplasta el trazado (el eje Y se amontonaba en ~55 px).
-        grid: { left: 8, right: 12, top: 16, bottom: 8 },
+        // La leyenda sube: abajo la pisaban los rótulos inclinados.
+        legend: { top: 0, bottom: 'auto' },
+        grid: { left: 8, right: 12, top: 40, bottom: 8 },
       });
   }
 }

@@ -4,7 +4,7 @@ import { redondear } from './reporting-dataset.util';
 import { buscarKpi, infoEjemplo, ORDEN, type BaseResumen, type ClaveVertical } from './resumen.base';
 
 /* ============================================================================
-    «¿Cómo gana plata Alovida?» — lo que necesita leer quien debe ENTENDER la
+    «¿Cómo gana dinero Alovida?» — lo que necesita leer quien debe ENTENDER la
     monetización antes de mirar un solo gráfico.
 
     Nada de esto calcula un número nuevo: cada cifra sale de los mismos KPI de
@@ -114,17 +114,30 @@ export function lecturaRapida(base: BaseResumen): string {
   const frases: string[] = [];
   const cambio = anterior !== null && anterior > 0 ? redondear(((total - anterior) / anterior) * 100, 1) : null;
   const enPalabras = cambioEnPalabras(cambio);
+  const frente = base.ctx.comparar === 'mismo-periodo-ano-anterior' ? 'frente al mismo periodo del año pasado' : 'frente al periodo anterior';
   frases.push(
-    `En el periodo entraron ${dinero(total)}${enPalabras === null ? '' : ` y el ingreso ${enPalabras} frente al periodo anterior`}.`,
+    `En el periodo entraron ${dinero(total)}${enPalabras === null ? '' : ` y el ingreso ${enPalabras} ${frente}`}.`,
   );
   const ordenadas = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.ingreso !== null).sort((a, b) => (b.ingreso ?? 0) - (a.ingreso ?? 0));
   const mayor = ordenadas[0];
   if (mayor !== undefined) {
     frases.push(`${mayor.nombre} es la fuente más grande: aporta ${formatearValor(shareOfTotal(mayor.ingreso, total) ?? 0, { tipo: 'porcentaje' })} del ingreso.`);
   }
-  const creciendo = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.variacionPct !== null).sort((a, b) => (b.variacionPct ?? 0) - (a.variacionPct ?? 0))[0];
-  if (creciendo !== undefined && creciendo.variacionPct !== null) {
-    frases.push(`La que más ${creciendo.variacionPct >= 0 ? 'crece' : 'cae'} es ${creciendo.nombre} (${formatearVariacion(creciendo.variacionPct)}).`);
+  const withChange = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.variacionPct !== null);
+  const sube = [...withChange].sort((a, b) => (b.variacionPct ?? 0) - (a.variacionPct ?? 0))[0];
+  const baja = [...withChange].sort((a, b) => (a.variacionPct ?? 0) - (b.variacionPct ?? 0))[0];
+  if (sube !== undefined && sube.variacionPct !== null && baja !== undefined && baja.variacionPct !== null) {
+    const isSingle = sube === baja;
+    if (sube.variacionPct < 0) {
+      // Si todas caen, «la que más cae» no es la que cae menos.
+      frases.push(
+        isSingle
+          ? `${sube.nombre} cae ${formatearVariacion(Math.abs(sube.variacionPct)).replace('+', '')}.`
+          : `Ninguna fuente crece; la que menos cae es ${sube.nombre} (${formatearVariacion(sube.variacionPct)}) y la que más cae, ${baja.nombre} (${formatearVariacion(baja.variacionPct)}).`,
+      );
+    } else {
+      frases.push(`La que más crece es ${sube.nombre} (${formatearVariacion(sube.variacionPct)})${!isSingle && baja.variacionPct < 0 ? ` y la que más cae, ${baja.nombre} (${formatearVariacion(baja.variacionPct)})` : ''}.`);
+    }
   }
   return frases.join(' ');
 }
@@ -164,14 +177,14 @@ export function construirEconomiaUnitaria(base: BaseResumen): TablaReporte {
     {
       indicador: 'Retorno de la publicidad (ROAS)',
       valor: valorTexto(pub.kpis.find((k) => k.id.includes('roas'))),
-      responde: 'Por cada boliviano que un anunciante gasta, ¿cuánto obtiene a cambio?',
-      lectura: 'Si es bajo, el anunciante no va a renovar; la publicidad depende de que le funcione a él.',
+      responde: 'Por cada unidad de moneda que un anunciante gasta, ¿cuánto obtiene a cambio?',
+      lectura: 'Si es bajo, es probable que el anunciante no renueve; la publicidad depende de que le funcione a él (supuesto de la maqueta).',
     },
     {
       indicador: 'Parte que se queda la plataforma (take rate)',
       valor: valorTexto(com.kpis.find((k) => k.id.includes('take'))),
       responde: 'De cada pago procesado, ¿qué parte es ingreso de Alovida?',
-      lectura: 'El resto se liquida a los actores. Subirlo sin explicar el motivo suele costar actores.',
+      lectura: 'El resto se liquida a los actores. Subirlo sin explicar el motivo puede hacer que algunos se vayan (supuesto de la maqueta).',
     },
   ];
   return {
@@ -205,16 +218,16 @@ export function construirGlosario(base: BaseResumen): TablaReporte {
   const susc = base.lecturas.suscripciones.pestana;
   const formulaOf = (id: string, respaldo: string): string => buscarKpi(susc, id)?.info?.formula ?? respaldo;
   const terminos: Termino[] = [
-    { termino: 'Ingreso', significado: 'La plata que Alovida gana en el periodo, sumando sus tres fuentes.', calculo: 'Suscripciones + Publicidad + Comisiones', donde: 'Resumen ejecutivo' },
+    { termino: 'Ingreso', significado: 'Lo que Alovida gana en el periodo, sumando sus tres fuentes.', calculo: 'Suscripciones + Publicidad + Comisiones', donde: 'Resumen ejecutivo' },
     { termino: 'MRR', significado: 'Lo que Alovida cobra cada mes, de forma recurrente, por los planes de los doctores.', calculo: formulaOf('mrr', 'Suma del precio mensual de las suscripciones activas'), donde: 'Suscripciones de doctores' },
     { termino: 'ARR', significado: 'El MRR llevado a un año: lo que se cobraría en doce meses si nada cambiara.', calculo: formulaOf('arr', 'MRR × 12'), donde: 'Suscripciones de doctores' },
     { termino: 'ARPU', significado: 'Cuánto aporta, en promedio, cada cuenta por mes.', calculo: formulaOf('arpu', 'MRR ÷ cuentas activas'), donde: 'Suscripciones de doctores' },
     { termino: 'Churn', significado: 'El porcentaje de cuentas que se va. Cuanto más alto, más ingreso se fuga.', calculo: formulaOf('churn-cuentas', 'Cuentas que se fueron ÷ cuentas al inicio'), donde: 'Suscripciones de doctores' },
     { termino: 'LTV', significado: 'Cuánto dinero deja una cuenta durante toda su vida con Alovida.', calculo: formulaOf('ltv', 'Ingreso por cuenta ÷ churn'), donde: 'Suscripciones de doctores' },
     { termino: 'CAC', significado: 'Cuánto cuesta conseguir una cuenta nueva.', calculo: 'Gasto de adquisición ÷ cuentas nuevas', donde: 'Adquisición y cuentas' },
-    { termino: 'Take rate', significado: 'La parte de cada pago procesado que se queda Alovida.', calculo: 'Comisión de la plataforma ÷ monto procesado', donde: 'Comisiones y actores' },
+    { termino: 'Take rate', significado: 'La parte de cada pago procesado que se queda Alovida.', calculo: buscarKpi(base.lecturas.comisiones.pestana, 'take-rate')?.info?.formula ?? 'Ingreso neto de la plataforma ÷ volumen transaccionado', donde: 'Comisiones y actores' },
     { termino: 'Comisión devengada, liquidada y pendiente', significado: 'Devengada: ya se ganó. Liquidada: ya se le pagó al actor. Pendiente: se ganó y falta pagarla.', calculo: 'Devengada = liquidada + pendiente', donde: 'Comisiones y actores' },
-    { termino: 'ROAS', significado: 'Por cada boliviano que un anunciante gasta, cuántos obtiene de resultado.', calculo: 'Resultado atribuido ÷ gasto del anunciante', donde: 'Publicidad push y pauteo' },
+    { termino: 'ROAS', significado: 'Por cada unidad de moneda que un anunciante gasta, cuántas obtiene de resultado.', calculo: buscarKpi(base.lecturas.publicidad.pestana, 'roas')?.info?.formula ?? 'Resultado atribuido ÷ gasto del anunciante', donde: 'Publicidad push y pauteo' },
   ];
   return {
     id: 'glosario-monetizacion',
