@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { toObservable, toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   afterRenderEffect,
@@ -14,7 +15,6 @@ import { catchError, map, type Observable, of, switchMap, tap } from 'rxjs';
 import { ReportingClient } from '@core/data-access/reporting/reporting.client';
 import { ETIQUETA_VERTICAL, VERTICALES } from '@core/data-access/reporting/reporting-labels';
 import type { ContextoReporte, PestanaReporte, VerticalReporte } from '@core/data-access/reporting/reporting.types';
-import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, notFound, ready, stale } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -26,6 +26,7 @@ import { ViewStateHost } from '@shared/components/organisms/view-state-host/view
 import { ReportFilterBar } from '../../components/filter-bar/report-filter-bar';
 import { TabView } from '../../components/tab-view/tab-view';
 import { ReportContextStore } from '../../state/report-context.store';
+import { reportErrorState } from '../../state/report-error-state';
 
 const SKELETON_KPIS = [0, 1, 2, 3] as const;
 const SKELETON_CHARTS = [0, 1] as const;
@@ -38,6 +39,8 @@ const DESIGN_FALLBACK =
 interface LastGood {
   readonly tab: VerticalReporte;
   readonly data: PestanaReporte;
+  /** Con qué filtros se calcularon estas cifras: si ya no son los de la pantalla, hay que decirlo. */
+  readonly context: ContextoReporte;
 }
 
 interface Request {
@@ -68,6 +71,7 @@ const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 @Component({
   selector: 'app-commercial-dashboard',
   imports: [
+    DatePipe,
     RouterLink,
     AppButton,
     Skeleton,
@@ -113,12 +117,19 @@ export class CommercialDashboard {
   protected readonly state = signal<ViewState<PestanaReporte>>(loading());
   /** Hay datos de esta pestaña en pantalla y se están recalculando. */
   protected readonly refreshing = signal(false);
+  /** Las cifras atrasadas que se ven se calcularon con filtros distintos de los actuales. */
+  protected readonly staleOtherFilters = signal(false);
   private readonly attempt = signal(0);
   private lastGood: LastGood | null = null;
 
   protected readonly data = computed<PestanaReporte | null>(() => {
     const state = this.state();
     return state.status === 'ready' || state.status === 'stale' ? state.data : null;
+  });
+  /** Desde cuándo son los datos que se están viendo, solo cuando están atrasados (S7). */
+  protected readonly staleAsOf = computed(() => {
+    const state = this.state();
+    return state.status === 'stale' ? state.asOf : null;
   });
   protected readonly generatedLabel = computed(() => {
     const iso = this.data()?.generadoEn;
@@ -195,7 +206,10 @@ export class CommercialDashboard {
       this.state.set(loading());
     }
     return this.client.pestana(request.tab, request.context).pipe(
-      tap((data) => (this.lastGood = { tab: request.tab, data })),
+      tap((data) => {
+        this.lastGood = { tab: request.tab, data, context: request.context };
+        this.staleOtherFilters.set(false);
+      }),
       map((data): ViewState<PestanaReporte> => {
         const hasContent = data.kpis.length > 0 || data.graficos.length > 0 || data.tablas.length > 0;
         const generated = new Date(data.generadoEn);
@@ -211,15 +225,18 @@ export class CommercialDashboard {
               'No hay datos para este periodo y estos filtros.',
             );
       }),
-      catchError((error: unknown) => of(this.failure(error, request.tab))),
+      catchError((error: unknown) => of(this.failure(error, request))),
     );
   }
 
-  private failure(error: unknown, tab: VerticalReporte): ViewState<PestanaReporte> {
-    const failed = errorToViewState<PestanaReporte>(error);
+  private failure(error: unknown, request: Request): ViewState<PestanaReporte> {
+    const failed = reportErrorState<PestanaReporte>(error);
     const previous = this.lastGood;
-    // Sin red o con el servidor caído, lo último que se vio vale más que una pantalla vacía.
-    if (previous !== null && previous.tab === tab && (failed.status === 'offline' || failed.status === 'error')) {
+    // Sin red o con el servidor caído, lo último que se vio vale más que una pantalla vacía —pero si
+    // la persona acababa de cambiar de moneda, periodo o filtro, esas cifras son de OTROS filtros y la
+    // pantalla lo dice: mostrarlas en silencio bajo el selector nuevo sería mentir.
+    if (previous !== null && previous.tab === request.tab && (failed.status === 'offline' || failed.status === 'error')) {
+      this.staleOtherFilters.set(JSON.stringify(previous.context) !== JSON.stringify(request.context));
       const generated = new Date(previous.data.generadoEn);
       return stale(previous.data, Number.isNaN(generated.getTime()) ? new Date() : generated);
     }

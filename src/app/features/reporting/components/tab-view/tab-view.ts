@@ -57,6 +57,13 @@ export class TabView {
 
   readonly data = input.required<PestanaReporte>();
   protected readonly ids = nextControlId('tv');
+  /**
+   * Los avisos del servidor, sin el que solo repite «Datos de EJEMPLO»: el sello de la cabecera ya lo dice
+   * en todas las pestañas, y un segundo banner igual no añade nada.
+   */
+  protected readonly notices = computed(() =>
+    (this.data().avisos ?? []).filter((aviso) => !/^datos de ejemplo\.?$/i.test(aviso.trim())),
+  );
   protected readonly comparison = computed(() => COMPARISON_TEXT[this.store.comparar()]);
 
   protected readonly sections = computed<readonly TabSection[]>(() => {

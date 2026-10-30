@@ -1,12 +1,12 @@
 <div class="tv" data-testid="tab-view">
-  @if ((data().avisos ?? []).length === 1) {
-    <app-alert tone="info" data-testid="tab-notice">{{ data().avisos![0] }}</app-alert>
-  } @else if ((data().avisos ?? []).length > 1) {
+  @if (notices().length === 1) {
+    <app-alert tone="info" data-testid="tab-notice">{{ notices()[0] }}</app-alert>
+  } @else if (notices().length > 1) {
     <!-- Varios avisos: un solo bloque con lista. Cuatro alertas apiladas empujan los números fuera de la pantalla. -->
     <app-alert tone="info" data-testid="tab-notice">
       <p class="tv__notice-title">Antes de leer esta pestaña</p>
       <ul class="tv__notices">
-        @for (notice of data().avisos; track notice) {
+        @for (notice of notices(); track notice) {
           <li data-testid="tab-notice-item">{{ notice }}</li>
         }
       </ul>

@@ -112,6 +112,20 @@ describe('TabView', () => {
     expect(cells[0]?.classList.contains('tv__cell--full')).toBe(true);
   });
 
+  it('no repite «Datos de EJEMPLO» como aviso: el sello de la cabecera ya lo dice', async () => {
+    const fixture = mount(data({ avisos: ['Datos de EJEMPLO'] }));
+    await fixture.whenStable();
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="tab-notice"]')).toBeNull();
+  });
+
+  it('varios avisos van en un solo bloque con lista, no apilados', async () => {
+    const fixture = mount(data({ avisos: ['Primero.', 'Segundo.', 'Datos de EJEMPLO'] }));
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelectorAll('[data-testid="tab-notice"]')).toHaveLength(1);
+    expect(Array.from(root.querySelectorAll('[data-testid="tab-notice-item"]')).map((e) => e.textContent?.trim())).toEqual(['Primero.', 'Segundo.']);
+  });
+
   it('muestra los avisos del servidor', async () => {
     const fixture = mount(data({ avisos: ['Datos de EJEMPLO para la maqueta.'] }));
     await fixture.whenStable();

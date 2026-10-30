@@ -48,11 +48,11 @@ async function mount(
     ],
   });
   const harness = await RouterTestingHarness.create();
-  await harness.navigateByUrl(url, CommercialDashboard);
+  const component = await harness.navigateByUrl(url, CommercialDashboard);
   await harness.fixture.whenStable();
   const root = harness.routeNativeElement as HTMLElement;
   const store = TestBed.inject(ReportContextStore);
-  return { harness, root, calls, client, store };
+  return { harness, root, calls, client, store, component };
 }
 
 describe('CommercialDashboard', () => {
@@ -114,7 +114,9 @@ describe('CommercialDashboard', () => {
     it('un reporte generado hace más de un día se muestra atrasado, con su antigüedad y con los datos a la vista', async () => {
       const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { generadoEn: hoursAgo(72) })));
       const text = root.textContent ?? '';
-      expect(text).toContain('Está viendo datos que pueden estar atrasados');
+      expect(text).toContain('Está viendo datos atrasados');
+      // Se lee como advertencia (no como un aviso informativo más) y con la antigüedad a la vista.
+      expect(root.querySelector('[data-testid="dashboard-stale"]')?.getAttribute('tone')).toBe('warning');
       expect(text).toContain('Información al');
       expect(root.querySelector('[data-testid="tab-view"]')).not.toBeNull();
       expect(Array.from(root.querySelectorAll('button')).some((b) => b.textContent?.includes('Actualizar'))).toBe(true);
@@ -122,12 +124,12 @@ describe('CommercialDashboard', () => {
 
     it('uno reciente se presenta como vigente', async () => {
       const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { generadoEn: hoursAgo(1) })));
-      expect(root.textContent).not.toContain('pueden estar atrasados');
+      expect(root.textContent).not.toContain('datos atrasados');
     });
 
     it('una fecha ilegible no lo marca atrasado: sin fecha no se inventa una antigüedad', async () => {
       const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { generadoEn: 'ayer' })));
-      expect(root.textContent).not.toContain('pueden estar atrasados');
+      expect(root.textContent).not.toContain('datos atrasados');
     });
   });
 
@@ -234,9 +236,31 @@ describe('CommercialDashboard', () => {
       );
       store.periodo.set('7d');
       await harness.fixture.whenStable();
-      expect(root.textContent).toContain('pueden estar atrasados');
+      expect(root.textContent).toContain('Está viendo datos atrasados');
       expect(root.textContent).toContain('KPI de resumen');
       expect(root.textContent).toMatch(/Información al \d{2}\/\d{2}\/\d{4}/);
+      // Cambió el periodo y la recarga falló: esas cifras son del periodo anterior y la pantalla lo dice.
+      expect(root.querySelector('[data-testid="dashboard-stale-filters"]')?.textContent).toContain('filtros anteriores');
+    });
+
+    it('si falla un reintento con los mismos filtros, las cifras atrasadas no se rotulan como de otros filtros', async () => {
+      let n = 0;
+      const { harness, root, component } = await mount('/reports/commercial/resumen', (tab) =>
+        ++n === 1 ? of(pestana(tab)) : throwError(() => new HttpErrorResponse({ status: 0 })),
+      );
+      expect(root.querySelector('[data-testid="dashboard-stale"]')).toBeNull();
+      (component as unknown as { reload(): void }).reload();
+      await harness.fixture.whenStable();
+      expect(root.querySelector('[data-testid="dashboard-stale"]')).not.toBeNull();
+      expect(root.querySelector('[data-testid="dashboard-stale-filters"]')).toBeNull();
+    });
+
+    it('un 403 no deja un muro: dice a quién pedir acceso y ofrece volver al inicio', async () => {
+      const { root } = await mount('/reports/commercial/resumen', () =>
+        throwError(() => new HttpErrorResponse({ status: 403, error: { code: 'FORBIDDEN', message: 'Su rol no puede ver este reporte.' } })),
+      );
+      expect(root.textContent).toContain('Pida acceso a quien administra su organización');
+      expect(Array.from(root.querySelectorAll('a')).some((a) => a.textContent?.includes('Volver al inicio'))).toBe(true);
     });
 
     it('sin cifras para el filtro, orienta y ofrece limpiar los filtros', async () => {
