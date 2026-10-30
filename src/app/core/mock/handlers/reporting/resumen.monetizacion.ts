@@ -31,7 +31,7 @@ const MODELO: Readonly<Record<ClaveVertical, { quienPaga: string; porQue: string
   },
 };
 
-function porcentajeDelTotal(ingreso: number | null, total: number | null): number | null {
+function shareOfTotal(ingreso: number | null, total: number | null): number | null {
   return ingreso !== null && total !== null && total > 0 ? redondear((ingreso / total) * 100, 1) : null;
 }
 
@@ -47,7 +47,7 @@ export function construirMapaMonetizacion(base: BaseResumen): TablaReporte {
       porQue: MODELO[c].porQue,
       comoSeCobra: MODELO[c].comoSeCobra,
       ingreso: l.ingreso,
-      parte: porcentajeDelTotal(l.ingreso, base.total),
+      parte: shareOfTotal(l.ingreso, base.total),
       cambio: l.variacionPct,
     };
   });
@@ -120,7 +120,7 @@ export function lecturaRapida(base: BaseResumen): string {
   const ordenadas = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.ingreso !== null).sort((a, b) => (b.ingreso ?? 0) - (a.ingreso ?? 0));
   const mayor = ordenadas[0];
   if (mayor !== undefined) {
-    frases.push(`${mayor.nombre} es la fuente más grande: aporta ${formatearValor(porcentajeDelTotal(mayor.ingreso, total) ?? 0, { tipo: 'porcentaje' })} del ingreso.`);
+    frases.push(`${mayor.nombre} es la fuente más grande: aporta ${formatearValor(shareOfTotal(mayor.ingreso, total) ?? 0, { tipo: 'porcentaje' })} del ingreso.`);
   }
   const creciendo = ORDEN.map((c) => base.lecturas[c]).filter((l) => l.variacionPct !== null).sort((a, b) => (b.variacionPct ?? 0) - (a.variacionPct ?? 0))[0];
   if (creciendo !== undefined && creciendo.variacionPct !== null) {
