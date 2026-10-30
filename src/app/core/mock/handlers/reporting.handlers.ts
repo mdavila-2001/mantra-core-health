@@ -4,7 +4,7 @@ import type {
   ReporteCatalogo,
   VerticalReporte,
 } from '../../data-access/reporting/reporting.types';
-import { notFound, validation, type MockRouter } from '../mock-router';
+import { forbidden, notFound, reply, validation, type MockRouter } from '../mock-router';
 import { construirAdquisicion } from './reporting/adquisicion.dataset';
 import { construirCalidad } from './reporting/calidad.dataset';
 import { construirCobros } from './reporting/cobros.dataset';
@@ -45,8 +45,39 @@ const CATALOGO: readonly ReporteCatalogo[] = [
 
 const PESTANAS = new Set<string>(Object.keys(CONSTRUCTORES));
 
+/**
+ * Para poder VER los estados que de otro modo no se ven (vacío, error, sin
+ * permiso, atrasado) sin romper nada: un valor en `localStorage` —solo existe
+ * en la rama de maqueta— fuerza la respuesta. Sin la llave, todo es normal.
+ * Lo usan las capturas (`playwright/reporteria-capturas.spec.ts`).
+ */
+export const LLAVE_ESTADO_FORZADO = 'mock:reporting:estado';
+type EstadoForzado = 'error' | 'vacio' | 'sin-permiso' | 'atrasado' | null;
+
+function estadoForzado(): EstadoForzado {
+  try {
+    const v = globalThis.localStorage?.getItem(LLAVE_ESTADO_FORZADO);
+    return v === 'error' || v === 'vacio' || v === 'sin-permiso' || v === 'atrasado' ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function respuestaForzada(estado: EstadoForzado) {
+  if (estado === 'error') {
+    return reply(500, { statusCode: 500, code: 'INTERNAL', message: 'Falla simulada del servidor de reportes', error: 'Internal Server Error' });
+  }
+  if (estado === 'sin-permiso') {
+    return forbidden('Tu rol no puede ver este reporte.');
+  }
+  return null;
+}
+
 export function registrarReporteria(router: MockRouter): void {
-  router.get('/reporting/catalog', () => CATALOGO);
+  router.get('/reporting/catalog', () => {
+    const estado = estadoForzado();
+    return respuestaForzada(estado) ?? (estado === 'vacio' ? [] : CATALOGO);
+  });
   router.post('/reporting/commercial/:pestana', (req) => {
     const pestana = req.params['pestana'] ?? '';
     if (!PESTANAS.has(pestana)) {
@@ -58,6 +89,18 @@ export function registrarReporteria(router: MockRouter): void {
         { field: 'periodo', message: 'es obligatorio' },
       ]);
     }
-    return CONSTRUCTORES[pestana as VerticalReporte](ctx);
+    const estado = estadoForzado();
+    const forzada = respuestaForzada(estado);
+    if (forzada !== null) {
+      return forzada;
+    }
+    const datos = CONSTRUCTORES[pestana as VerticalReporte](ctx);
+    if (estado === 'vacio') {
+      return { ...datos, kpis: [], graficos: [], tablas: [], secciones: undefined };
+    }
+    if (estado === 'atrasado') {
+      return { ...datos, generadoEn: '2026-10-27T09:00:00-04:00', avisos: [...(datos.avisos ?? []), 'Los datos tienen más de 3 días.'] };
+    }
+    return datos;
   });
 }
