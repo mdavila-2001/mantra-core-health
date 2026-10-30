@@ -117,6 +117,26 @@ describe('construirOpciones', () => {
       expect(at(tres, 'xAxis.axisLabel.overflow')).toBeUndefined();
     });
 
+    it('con 2 o 3 categorías de nombre largo se parten en su casilla y no se ocultan por solaparse', () => {
+      media({});
+      const raw = buildRaw({ tipo: 'cartesiano', categorias: ['Notificación push', 'Banner en la app', 'Listado destacado'], series: [{ nombre: 'S', valores: [1, 2, 3], forma: 'barra' }] });
+      expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
+      expect(at(raw, 'media.0.option.xAxis.axisLabel.overflow')).toBe('break');
+      expect(at(raw, 'media.0.option.xAxis.axisLabel.hideOverlap')).toBe(false);
+      expect(at(raw, 'media.0.option.xAxis.axisLabel.width')).toBe(80);
+    });
+
+    it('un panel de ancho completo reparte más ancho a cada nombre que uno de media columna', () => {
+      media({});
+      const nombres = ['Visitador médico', 'Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma'];
+      const datos: DatosGrafico = { tipo: 'cartesiano', categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] };
+      const ancho = (anchoSpec: 'completo' | 'medio') => {
+        const o = construirOpciones({ spec: { ...spec(datos), ancho: anchoSpec }, tema: TEMA, modo: 'normal', seleccion: null });
+        return at((o as { baseOption?: unknown }).baseOption ?? o, 'xAxis.axisLabel.width') as number;
+      };
+      expect(ancho('completo')).toBeGreaterThan(ancho('medio'));
+    });
+
     it('en un lienzo angosto los nombres rotan en vez de montarse (media del propio ECharts)', () => {
       media({});
       const nombres = ['Visitador médico', 'Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma'];
@@ -267,6 +287,16 @@ describe('correcciones de lectura (revisión visual)', () => {
     const formatter = at(o, 'xAxis.axisLabel.formatter') as (v: string) => string;
     expect(formatter('Sin nada')).toBe('Sin nada\n(sin dato)');
     expect(formatter('Con dato')).toBe('Con dato');
+  });
+
+  it('el eje y el tooltip escriben las fechas ISO como «6 oct» y «6 oct 2026»; las demás categorías quedan igual', () => {
+    media({});
+    const o = build({ tipo: 'cartesiano', categorias: ['2026-10-06', 'Esencial'], series: [{ nombre: 'S', valores: [1, 2], forma: 'barra' }] });
+    const eje = at(o, 'xAxis.axisLabel.formatter') as (v: string) => string;
+    expect(eje('2026-10-06')).toBe('6 oct');
+    expect(eje('Esencial')).toBe('Esencial');
+    const tip = at(o, 'tooltip.formatter') as (p: unknown) => string;
+    expect(tip([{ seriesName: 'S', axisValueLabel: '2026-10-06', name: '2026-10-06', value: 1, dataIndex: 0 }])).toContain('6 oct 2026');
   });
 
   it('un mapa de calor oculta las cifras de las celdas en un lienzo angosto', () => {

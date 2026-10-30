@@ -95,3 +95,21 @@ export function formatearFrescura(minutos: number): string {
   }
   return `hace ${Math.round(minutos / 1440)} d`;
 }
+
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'] as const;
+const FECHA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/**
+ * «2026-10-06» → «6 oct» (o «6 oct 2026» con `conAnio`). Cualquier otro texto vuelve igual: una
+ * categoría que no es una fecha («Esencial», «T1») no se toca. Se parte el texto a mano, sin `Date`,
+ * para que la zona horaria del navegador no mueva el día.
+ */
+export function formatearFecha(texto: string, conAnio = false): string {
+  const m = FECHA_ISO.exec(texto);
+  const mes = m === null ? undefined : MESES[Number(m[2]) - 1];
+  if (m === null || mes === undefined) {
+    return texto;
+  }
+  const dia = String(Number(m[3]));
+  return conAnio ? `${dia} ${mes} ${m[1]}` : `${dia} ${mes}`;
+}

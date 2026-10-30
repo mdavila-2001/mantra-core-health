@@ -1,6 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
+import { formatearFecha, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type {
   ConfigFiltro,
   ChartSpec,
@@ -164,11 +164,18 @@ function construirCartesiano(
       ...(d.categorias.length <= 12 ? { interval: 0 } : {}),
       // Entre 4 y 12 categorías en el eje horizontal los nombres largos se parten en vez de taparse:
       // el ancho de cada nombre es lo que le toca de un panel de media columna (~330 px).
+      // Un panel de ancho completo reparte ~880 px, no 330: sin esto «Organización afiliada» se partía en
+      // «Organizaci / ón afiliada» con sitio de sobra.
       ...(!horizontal && d.categorias.length >= 4 && d.categorias.length <= 12
-        ? { width: Math.max(44, Math.min(96, Math.floor(330 / d.categorias.length))), overflow: 'break' }
+        ? {
+            width: Math.max(44, Math.min(spec.ancho === 'completo' ? 160 : 96, Math.floor((spec.ancho === 'completo' ? 880 : 330) / d.categorias.length))),
+            overflow: 'break',
+            hideOverlap: false,
+          }
         : {}),
       // Una categoría sin ningún valor no dibuja barra: el eje lo dice en vez de hacerla desaparecer.
-      formatter: (nombre: string) => (sinDato.has(nombre) ? `${nombre}\n(sin dato)` : nombre),
+      formatter: (nombre: string) =>
+        sinDato.has(nombre) ? `${formatearFecha(nombre)}\n(sin dato)` : formatearFecha(nombre),
     },
     axisTick: { alignWithLabel: true },
   };
@@ -202,7 +209,7 @@ function construirCartesiano(
             return `<div style="display:flex;justify-content:space-between;gap:16px"><span>${p.marker ?? ''}${escapar(p.seriesName ?? '')}</span><b>${escapar(formatearValor(v, unitOf(serie, spec.unidad)))}</b></div>`;
           })
           .join('');
-        return `<div style="font-weight:600;margin-bottom:4px">${escapar(lista[0]?.axisValueLabel ?? lista[0]?.name ?? '')}</div>${filas}`;
+        return `<div style="font-weight:600;margin-bottom:4px">${escapar(formatearFecha(lista[0]?.axisValueLabel ?? lista[0]?.name ?? '', true))}</div>${filas}`;
       },
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
@@ -386,7 +393,7 @@ function construirMedidor(
         endAngle: -30,
         radius: '84%',
         center: ['50%', '58%'],
-        splitNumber: 4,
+        splitNumber: 2,
         progress: { show: true, width: 16 },
         axisLine: {
           lineStyle: {
@@ -560,6 +567,13 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
   switch (d.tipo) {
     case 'cartesiano':
       // Solo con pocas categorías (las que se rotulan todas): una serie diaria se aclara sola por intervalo.
+      if (d.horizontal !== true && d.categorias.length >= 2 && d.categorias.length <= 3 && d.categorias.some((c) => c.length > 10)) {
+        // Con 2 o 3 categorías de nombre largo («Notificación push»), en un lienzo angosto cada nombre se parte
+        // dentro de su casilla; si no, ECharts oculta el del medio por solaparse y parece una barra sin nombre.
+        return conMovil(construirCartesiano(o, d), {
+          xAxis: { axisLabel: { width: Math.floor(240 / d.categorias.length), overflow: 'break', hideOverlap: false } },
+        });
+      }
       return d.horizontal !== true && d.categorias.length >= 4 && d.categorias.length <= 12
         ? conMovil(construirCartesiano(o, d))
         : construirCartesiano(o, d);

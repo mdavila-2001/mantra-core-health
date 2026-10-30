@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatearValor, formatearVariacion, NO_DATA } from './reporting-format';
+import { formatearFecha, formatearValor, formatearVariacion, NO_DATA } from './reporting-format';
 
 const BOB = { tipo: 'moneda', moneda: 'BOB' } as const;
 const USD = { tipo: 'moneda', moneda: 'USD' } as const;
@@ -48,5 +48,19 @@ describe('formatearVariacion', () => {
     expect(formatearVariacion(4.2)).toBe('+4,2 %');
     expect(formatearVariacion(-1)).toBe('−1,0 %');
     expect(formatearVariacion(null)).toBe('Sin comparativo');
+  });
+});
+
+describe('formatearFecha', () => {
+  it('escribe la fecha como se lee en Bolivia, sin ceros a la izquierda', () => {
+    expect(formatearFecha('2026-10-06')).toBe('6 oct');
+    expect(formatearFecha('2026-01-31', true)).toBe('31 ene 2026');
+    expect(formatearFecha('2026-12-01')).toBe('1 dic');
+  });
+
+  it('lo que no es una fecha ISO vuelve igual: una categoría no se inventa', () => {
+    for (const texto of ['Esencial', 'T1', '2026-13-01', '2026-10', '']) {
+      expect(formatearFecha(texto)).toBe(texto);
+    }
   });
 });

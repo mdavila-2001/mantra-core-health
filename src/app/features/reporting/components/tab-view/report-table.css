@@ -17,7 +17,19 @@
 .rt__note, .rt__empty { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
 .rt__empty { padding: var(--sp-4); text-align: center; background: var(--bg-surface-alt); border: 1px dashed var(--border-strong); border-radius: var(--r-md); }
 
-.rt__scroll { overflow: auto; max-height: 24rem; border: 1px solid var(--border-default); border-radius: var(--r-md); }
+/* Sombras de desplazamiento: solo del lado donde aún quedan columnas por leer. Sin ellas, una tabla
+   cortada a la derecha («Plan sugerido») parece completa. */
+.rt__scroll {
+  overflow: auto;
+  max-height: 24rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background:
+    linear-gradient(to right, var(--bg-surface) 30%, transparent) left center / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--bg-surface) 30%, transparent) right center / 2rem 100% no-repeat local,
+    linear-gradient(to right, color-mix(in srgb, var(--text-primary) 18%, transparent), transparent) left center / 0.75rem 100% no-repeat scroll,
+    linear-gradient(to left, color-mix(in srgb, var(--text-primary) 18%, transparent), transparent) right center / 0.75rem 100% no-repeat scroll;
+}
 .rt__scroll:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
 .rt__table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
 .rt__table th, .rt__table td { padding: var(--sp-2) var(--sp-3); text-align: left; border-bottom: 1px solid var(--border-default); white-space: nowrap; }
