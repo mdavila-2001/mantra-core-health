@@ -1,0 +1,65 @@
+<div class="rp">
+  <ol class="rp__steps">
+    <li class="rp__step">
+      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">1</span> Tipo de informe</h2>
+      <app-segmented-control ariaLabel="Tipo de informe" [options]="typeOptions" [value]="type()" (valueChange)="setType($event)" />
+      <p class="rp__hint">{{ typeHint() }}</p>
+    </li>
+    <li class="rp__step">
+      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">2</span> Alcance</h2>
+      <ins-filter-bar [controls]="['campaign', 'period']" />
+    </li>
+    <li class="rp__step">
+      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">3</span> Audiencia</h2>
+      <app-segmented-control ariaLabel="Audiencia del informe" [options]="audienceOptions" [value]="audience()" (valueChange)="setAudience($event)" />
+      <p class="rp__hint">La audiencia propone el contenido; usted puede cambiarlo en el paso siguiente.</p>
+    </li>
+    <li class="rp__step">
+      <h2 class="rp__h"><span class="rp__n" aria-hidden="true">4</span> Contenido</h2>
+      <p class="rp__hint">Portada, resumen, método y limitaciones siempre se incluyen: un informe sin sus límites se lee como más cierto de lo que es.</p>
+      <ul class="rp__checks">
+        @for (c of choices(); track c.id) {
+          <li><app-checkbox [label]="c.label" [checked]="c.on" (checkedChange)="toggle(c.id, $event)" /></li>
+        }
+      </ul>
+      <button type="button" class="rp__btn" (click)="reset()">Restablecer la propuesta</button>
+    </li>
+  </ol>
+
+  <ins-panel title="5 · Vista previa y exportación" question="¿Cómo quedará el informe? Revíselo antes de enviarlo.">
+    <div panel-tools class="rp__export">
+      <button type="button" class="rp__btn rp__btn--main" (click)="print()">Imprimir o guardar como PDF</button>
+      <button type="button" class="rp__btn" (click)="exportCsv()">Descargar datos (CSV)</button>
+      <button type="button" class="rp__btn" disabled aria-describedby="rp-ppt">PowerPoint</button>
+      <span id="rp-ppt" class="rp__hint">Próximamente</span>
+    </div>
+
+    <article class="rp__doc" aria-label="Vista previa del informe">
+      <header class="rp__cover">
+        <p class="rp__brand">AloVida Insights</p>
+        <h2 class="rp__title">{{ doc().title }}</h2>
+        <p class="rp__sub">{{ doc().subtitle }}</p>
+        <p class="rp__gen">Generado el {{ doc().generatedOn }}</p>
+      </header>
+      @for (s of doc().sections; track s.id; let i = $index) {
+        <section class="rp__sec">
+          <h3 class="rp__sec-h">{{ i + 1 }}. {{ s.title }}</h3>
+          @for (p of s.paragraphs; track $index) { <p>{{ p }}</p> }
+          @if (s.bullets.length) {
+            <ul class="rp__list">@for (b of s.bullets; track $index) { <li>{{ b }}</li> }</ul>
+          }
+          @if (s.table; as t) {
+            <div class="rp__wrap">
+              <table class="rp__table">
+                <caption class="rp__sr">{{ s.title }}</caption>
+                <thead><tr>@for (c of t.columns; track $index) { <th scope="col">{{ c }}</th> }</tr></thead>
+                <tbody>@for (r of t.rows; track $index) { <tr>@for (c of r; track $index; let j = $index) { @if (j === 0) { <th scope="row">{{ c }}</th> } @else { <td>{{ c }}</td> } }</tr> }</tbody>
+              </table>
+            </div>
+          }
+          @if (s.note) { <p class="rp__note">{{ s.note }}</p> }
+        </section>
+      }
+    </article>
+  </ins-panel>
+</div>

@@ -5,6 +5,7 @@ import { formatChange, formatMoney, formatPercent } from './format';
 import type { Channel, MarketingAlert, MetricId } from './insights.types';
 import { CHANNEL_LABELS, CHANNELS } from './insights.types';
 import { timeSeries } from './kpi';
+import { signalAlerts } from './alerts.signals';
 
 /* ============================================================================
     Alertas de marketing.
@@ -158,7 +159,7 @@ const SEVERITY_ORDER = { critical: 0, risk: 1, anomaly: 2, opportunity: 3 } as c
 
 /** Todas las alertas, ordenadas por gravedad y por fecha. */
 export function buildAlerts(): MarketingAlert[] {
-  return [...campaignAlerts()].sort(
+  return [...campaignAlerts(), ...signalAlerts()].sort(
     (a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] || b.detectedAt.localeCompare(a.detectedAt),
   );
 }

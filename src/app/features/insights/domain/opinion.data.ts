@@ -99,7 +99,7 @@ function topicWeight(topic: TopicDef, date: string): number {
 /** Proporción [positiva, negativa] del tema ese día, con los hechos inyectados. */
 function shares(topic: TopicDef, date: string): readonly [number, number] {
   if (topic.id === 'verification' && date >= '2026-10-22') return [0.3, 0.6];
-  if (topic.id === 'app' && date >= '2026-10-20') return [0.2, 0.62];
+  if (topic.id === 'app' && date >= '2026-10-20') return [0.15, 0.7];
   return [topic.positive, topic.negative];
 }
 
