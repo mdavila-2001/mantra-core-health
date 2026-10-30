@@ -29,7 +29,7 @@ import type {
   CriterioDeOrden,
   SustantivoDelDirectorio,
 } from '../../../shared/components/organisms/directory-page/directory-page.types';
-import { CONTADORES_DE_ACTIVIDAD } from '../../account/my-profile/contadores-de-actividad';
+import { ACTIVITY_COUNTERS } from '../../account/my-profile/activity-counters';
 import {
   SEARCH_PARAM,
   type FilterDef,
@@ -250,7 +250,7 @@ export class PractitionersDirectory {
    * cuatro contadores de la ficha, de mayor a menor. Las claves son las de
    * `cifrasDe` en la tarjeta.
    */
-  protected readonly criteriosDeOrden: readonly CriterioDeOrden[] = CONTADORES_DE_ACTIVIDAD.map(
+  protected readonly criteriosDeOrden: readonly CriterioDeOrden[] = ACTIVITY_COUNTERS.map(
     (contador) => ({ clave: contador.clave, etiqueta: `Más ${contador.rotulo.toLowerCase()}` }),
   );
 
