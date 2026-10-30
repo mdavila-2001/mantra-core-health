@@ -1,7 +1,10 @@
 {
-  "generadoEn": "2026-10-30T12:38:45.881Z",
+  "generadoEn": "2026-10-30T13:35:03.420Z",
   "pruebasEjecutadas": [
-    "recorrido escritorio · claro → passed"
+    "recorrido movil · claro → passed",
+    "recorrido movil · oscuro → passed",
+    "recorrido escritorio · claro → passed",
+    "recorrido escritorio · oscuro → passed"
   ],
   "nota": "Solo se recolectan los hallazgos de las pruebas listadas. Los de los estados error y sin-permiso son errores forzados a propósito.",
   "hallazgos": []
