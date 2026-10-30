@@ -4,6 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
 
 import { ChatStore } from './chat.store';
 import { ChatAutoReply } from './chat-auto-reply';
@@ -107,7 +108,11 @@ describe('ChatStore', () => {
     http.verify();
   });
 
-  it('varios adjuntos salen en el orden elegido aunque las subidas terminen al revés', async () => {
+  // Las subidas van de a una (fila del store, ver `enviarAdjuntos`): la
+  // segunda no puede «terminar antes». Lo que esta prueba fija sigue siendo el
+  // orden de los MENSAJES: el de la segunda espera a que el de la primera
+  // conteste, aunque su archivo ya esté subido.
+  it('varios adjuntos salen en el orden elegido: suben de a una y cada mensaje espera al anterior', () => {
     encender();
     store.abrir('c-1');
     contestarHilo([mensaje('m-1')]);
@@ -118,24 +123,31 @@ describe('ChatStore', () => {
     store.enviarAdjunto(primero, 'El análisis');
     store.enviarAdjunto(segundo, 'La foto');
 
-    const subidas = http.match((r) => r.url.endsWith('/common/files/upload'));
-    expect(subidas).toHaveLength(2);
-    // La foto chica termina primero, pero no sale antes que el PDF.
-    subidas[1].flush({ id: 'f-2' });
-    TestBed.tick();
-    await Promise.resolve();
-    await Promise.resolve();
-    const contenidosPedidosEnEspera = http.match((r) => r.url.includes('/attachments/f-2/content'));
-    expect(http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages')).toHaveLength(0);
+    const envios = () =>
+      http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    const subidas = () => http.match((r) => r.url.endsWith('/common/files/upload'));
 
-    subidas[0].flush({ id: 'f-1' });
-    await new Promise((listo) => setTimeout(listo, 0));
-    const [envioPdf] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    // Aunque sean dos llamadas, sube una sola por vez.
+    const subidaPdf = subidas();
+    expect(subidaPdf).toHaveLength(1);
+    expect(((subidaPdf[0].request.body as FormData).get('file') as File).name).toBe('analisis.pdf');
+    subidaPdf[0].flush({ id: 'f-1' });
+
+    const [envioPdf, ...otros] = envios();
+    expect(otros).toHaveLength(0);
     expect(envioPdf.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-1', bodyText: 'El análisis' }));
 
+    // La foto sube mientras el mensaje del PDF sigue en vuelo, pero su mensaje
+    // no sale antes de que el del PDF conteste.
+    const subidaFoto = subidas();
+    expect(subidaFoto).toHaveLength(1);
+    subidaFoto[0].flush({ id: 'f-2' });
+    TestBed.tick();
+    const contenidosPedidosEnEspera = http.match((r) => r.url.includes('/attachments/f-2/content'));
+    expect(envios()).toHaveLength(0);
+
     envioPdf.flush({ id: 'm-pdf', conversationId: 'c-1', sentAt: '2026-09-08T10:01:00.000Z' });
-    await new Promise((listo) => setTimeout(listo, 0));
-    const [envioFoto] = http.match((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+    const [envioFoto] = envios();
     expect(envioFoto.request.body).toEqual(expect.objectContaining({ attachmentFileId: 'f-2', bodyText: 'La foto' }));
     envioFoto.flush({ id: 'm-foto', conversationId: 'c-1', sentAt: '2026-09-08T10:01:01.000Z' });
     // Mientras esperaban turno no se pidió su contenido: no existían todavía.
@@ -874,18 +886,200 @@ describe('ChatStore', () => {
       );
 
     expect(store.conversaciones().length).toBe(1);
-    expect(store.error()).toBe('No pudimos cargar sus conversaciones. (Código de soporte: corr-bandeja)');
+    // Queda en S7 (con filas y su antigüedad), no en el aviso global: la
+    // bandeja tiene su propio estado.
+    expect(store.bandeja().status).toBe('stale');
+    expect(store.error()).toBe('');
   });
 
-  it('sin conexión, el aviso lo dice en vez de culpar a la conversación', () => {
-    encender();
+  describe('escribirA con contexto', () => {
+    const fichaDeFarmacia = {
+      id: 'pp-f',
+      slug: 'farmacia-vida',
+      tenantId: 't-f',
+      targetId: 'ph-1',
+      displayName: 'Farmacia Vida',
+      headline: null,
+      biography: null,
+      acceptsReviews: null,
+      badges: [],
+      prestige: null,
+    };
+
+    const pedido = {
+      tipo: 'pedido',
+      titulo: 'Farmacia Vida · Sucursal Central',
+      detalle: '2 productos · 69,00 Bs',
+      ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+    } as const;
+
+    const tarjeta =
+      'Pedido: Farmacia Vida · Sucursal Central\n2 productos · 69,00 Bs\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6';
+
+    /** Resuelve el perfil, la ficha y la conversación `c-1`. */
+    const hastaElHilo = (): void => {
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      http.expectOne('/community/profiles/by-slug/farmacia-vida').flush(fichaDeFarmacia);
+      const crear = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations',
+      );
+      expect(crear.request.body).toEqual({ participantProfileIds: ['pp-1', 'pp-f'] });
+      crear.flush({ id: 'c-1' });
+    };
+
+    const pagina = (items: unknown[]) => ({ items, count: items.length, limit: 30, nextCursor: null });
+
+    it('en frío espera al perfil propio en vez de no hacer nada', () => {
+      const abierto = vi.fn();
+      // Sin `iniciar()`: así llega quien toca «Chatear» desde el marketplace.
+      store.escribirA('farmacia-vida', abierto);
+      hastaElHilo();
+      expect(abierto).toHaveBeenCalledWith('c-1');
+    });
+
+    it('manda UNA tarjeta de contexto y recién después abre el hilo', () => {
+      const abierto = vi.fn();
+      store.escribirA('farmacia-vida', abierto, pedido);
+      hastaElHilo();
+
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .flush(pagina([mensaje('m-1', 'pp-f', 'Hola, ¿en qué te ayudamos?')]));
+      expect(abierto).not.toHaveBeenCalled();
+
+      const envio = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      expect(envio.request.body).toEqual({ senderProfileId: 'pp-1', bodyText: tarjeta });
+      envio.flush({ id: 'm-2', conversationId: 'c-1', sentAt: '2026-09-08T10:05:00.000Z' });
+
+      expect(abierto).toHaveBeenCalledTimes(1);
+      expect(abierto).toHaveBeenCalledWith('c-1');
+    });
+
+    it('no la repite si la última tarjeta del hilo ya es la misma', () => {
+      const abierto = vi.fn();
+      store.escribirA('farmacia-vida', abierto, pedido);
+      hastaElHilo();
+
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .flush(
+          pagina([
+            // Más nuevo que la tarjeta, pero texto común: no cuenta.
+            { ...mensaje('m-3', 'pp-f', 'Sí, lo tenemos'), sentAt: '2026-09-08T11:00:00.000Z' },
+            { ...mensaje('m-2', 'pp-1', tarjeta), sentAt: '2026-09-08T10:05:00.000Z' },
+          ]),
+        );
+
+      http.expectNone((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+      expect(abierto).toHaveBeenCalledWith('c-1');
+    });
+
+    it('sí la manda si la última tarjeta es de otro pedido, aunque una vieja sea de éste', () => {
+      const otro = tarjeta.replace(
+        '/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+        '/0b1c2d3e-4f50-4a6b-8c7d-8e9fa0b1c2d3',
+      );
+      expect(otro).not.toBe(tarjeta);
+      store.escribirA('farmacia-vida', vi.fn(), pedido);
+      hastaElHilo();
+
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .flush(
+          pagina([
+            // El orden de la página no importa: decide `sentAt`.
+            { ...mensaje('m-1', 'pp-1', tarjeta), sentAt: '2026-09-01T10:00:00.000Z' },
+            { ...mensaje('m-2', 'pp-1', otro), sentAt: '2026-09-08T10:00:00.000Z' },
+          ]),
+        );
+
+      const envio = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      expect(envio.request.body).toEqual({ senderProfileId: 'pp-1', bodyText: tarjeta });
+    });
+
+    it('misma ruta pero otra cosa (un producto de esa farmacia) sí manda tarjeta', () => {
+      const farmacia = 'Farmacia: Farmacia Vida\n/pharmacies-directory/farmacia-vida';
+      store.escribirA('farmacia-vida', vi.fn(), {
+        tipo: 'producto',
+        titulo: 'Enalapril',
+        detalle: '10 mg · 8,00 Bs',
+        ruta: '/pharmacies-directory/farmacia-vida',
+      });
+      hastaElHilo();
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .flush(pagina([mensaje('m-1', 'pp-1', farmacia)]));
+      const envio = http.expectOne(
+        (r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages',
+      );
+      expect(envio.request.body.bodyText).toBe(
+        'Producto: Enalapril\n10 mg · 8,00 Bs\n/pharmacies-directory/farmacia-vida',
+      );
+    });
+
+    it('si no puede leer el hilo no manda nada, pero lo abre igual', () => {
+      const abierto = vi.fn();
+      store.escribirA('farmacia-vida', abierto, pedido);
+      hastaElHilo();
+
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .error(new ProgressEvent('error'));
+
+      http.expectNone((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages');
+      expect(abierto).toHaveBeenCalledWith('c-1');
+      expect(store.error()).toBe('Abrimos el chat, pero no pudimos agregar de qué se trata.');
+    });
+
+    it('abrirConversacion: el hilo lo resuelve otro (el pedido) y la tarjeta va igual', () => {
+      const abierto = vi.fn();
+      store.abrirConversacion(of('c-1'), abierto, pedido);
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      // No crea conversaciones por su cuenta: la abrió quien resolvió.
+      http.expectNone((r) => r.method === 'POST' && r.url === '/community/conversations');
+      http
+        .expectOne((r) => r.method === 'GET' && r.url === '/community/conversations/c-1/messages')
+        .flush(pagina([]));
+      http
+        .expectOne((r) => r.method === 'POST' && r.url === '/community/conversations/c-1/messages')
+        .flush({ id: 'm-9', conversationId: 'c-1', sentAt: '2026-09-08T10:05:00.000Z' });
+      expect(abierto).toHaveBeenCalledWith('c-1');
+    });
+
+    it('abrirConversacion: si la API se niega, no abre nada y lo dice', () => {
+      const abierto = vi.fn();
+      store.abrirConversacion(throwError(() => new Error('403')), abierto, pedido);
+      http.expectOne('/community/profiles/me').flush(perfilPropio);
+      expect(abierto).not.toHaveBeenCalled();
+      expect(store.error()).toBe('No pudimos abrir la conversación.');
+    });
+
+    it('dos toques seguidos abren un solo hilo', () => {
+      const abierto = vi.fn();
+      store.escribirA('farmacia-vida', abierto);
+      store.escribirA('farmacia-vida', abierto);
+      hastaElHilo();
+      http.expectNone('/community/profiles/by-slug/farmacia-vida');
+      expect(abierto).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('sin conexión, la bandeja lo dice (S8) en vez de culpar a la conversación', () => {
+    // Sin filas que conservar: con filas sería S7 (ver la prueba anterior).
+    encender([]);
 
     store.recargarBandeja();
     http
       .expectOne((r) => r.url === '/community/conversations')
       .error(new ProgressEvent('error'));
 
-    expect(store.error()).toBe('No hay conexión con el servidor. Revise su conexión e intente de nuevo.');
+    // La bandeja lo dice en su propio estado (S8), no en el aviso global.
+    expect(store.bandeja().status).toBe('offline');
+    expect(store.error()).toBe('');
   });
 
   it('si falla la lectura de bloqueos, la lista vacía no se confunde con «no bloqueó a nadie»', () => {

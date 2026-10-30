@@ -31,14 +31,7 @@
           [description]="vacio.message ?? ''"
         >
           @if (vacio.nextAction.route) {
-            <!-- Con `queryParams` declarados, la ruta va tal cual; sin ellos se
-                 parsea, porque puede traer su query en el texto. -->
-            <a
-              app-link
-              empty-actions
-              [routerLink]="vacio.nextAction.queryParams ? vacio.nextAction.route : enlace(vacio.nextAction.route)"
-              [queryParams]="vacio.nextAction.queryParams"
-            >
+            <a app-link empty-actions [routerLink]="enlace(vacio.nextAction.route, vacio.nextAction.queryParams)">
               {{ vacio.nextAction.label }}
             </a>
           } @else {

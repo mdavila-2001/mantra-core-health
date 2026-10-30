@@ -30,6 +30,8 @@ import { dataOf, loading, notFound, ready } from '../../../../core/view-state/vi
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { usarIrAlChat } from '../../../../core/messaging/chat-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
@@ -47,6 +49,7 @@ import {
 } from '../order-status';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 /** A dónde vuelve quien llegó a un pedido que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';
@@ -123,6 +126,7 @@ interface AvisoDelPedido {
     AppButtonLink,
     Badge,
     DatePipe,
+    NavIcon,
     PageHeader,
     RouterLink,
     Stepper,
@@ -257,6 +261,8 @@ export class OrderDetail {
   private pedidoEnVuelo: Subscription | null = null;
   private avisosEnVuelo: Subscription | null = null;
 
+  private readonly irAlChat = usarIrAlChat();
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.orderId = params.get('orderId');
@@ -276,6 +282,23 @@ export class OrderDetail {
       );
     });
 
+  }
+
+  /**
+   * «Chatear con la farmacia»: abre el chat **del pedido** —lo abre la API con
+   * `POST /pharmacy/orders/:id/conversation`, que sabe quién es la farmacia y
+   * si quien pide puede abrirlo—, con la
+   * tarjeta del pedido puesta —«Pedido: Farmacia Vida · Sucursal Central /
+   * 2 productos · 69,00 Bs»— para que del otro lado sepan de qué se habla
+   * sin preguntar. Nada clínico: lo mismo que dice el encabezado del pedido.
+   */
+  protected chatearConLaFarmacia(): void {
+    const pedido = this.pedido();
+    if (pedido === null || pedido.slugDeFarmacia === undefined) {
+      return;
+    }
+    // La misma tarjeta que pone el mostrador: ver `contextoDePedido`.
+    this.irAlChat({ pedido: pedido.id }, contextoDePedido(pedido));
   }
 
   /**

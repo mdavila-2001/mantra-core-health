@@ -347,15 +347,14 @@ Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-aud
 `git merge claude/trusting-hawking-q3p12v` (que ya trae `origin/dev`), 8 conflictos. Criterio: lo de
 `dev` y F0 se conserva; de F1 sólo lo suyo.
 
+- En paralelo, `origin/infra-f1-web` recibió otro merge de `dev` (`b7e9c3d0`, 26 commits más nuevo).
+  Se integró con un segundo merge y, en los siete archivos donde las dos resoluciones chocaban
+  (proxies, `view-state-host`, consola, ficha de espacio, simulador de infraestructura), **gana la
+  de `b7e9c3d0`**: `ofrecerEscritura` sólo con roles, la propiedad del simulador por el primer tenant
+  de la cuenta y `enlace(ruta, queryParams)`.
 - Consola: pestañas por clave (`PESTANAS`) e Infraestructura/Establecimiento de F1, con el selector
   `app-select` y la pestaña `MembershipsTab` de `dev`; el estado M34 queda en `app-view-state-host`.
-- `view-state-host`: el vacío acepta los `queryParams` de `dev` y, sin ellos, parsea la ruta con
-  query de F1.
-- Simulador: `GET /practices` sigue filtrando por tenant (F1) y suma siempre los centros de CM-07
-  (`dev`); `/practices/:id/organization` usa el árbol de F1 con los símbolos renombrados de `dev`.
-- `ownTenantId` ya no existe en `dev` (TX-11, la API no lo firma): el reflejo de escritura se ofrece
-  a `SECURITY_ADMIN` y la API decide. **Pendiente:** leer dueño/admin de la membresía.
-- Proxies: las rutas de F1 junto a las de `dev`.
+- Simulador: `GET /practices` filtra por tenant (F1) y suma siempre los centros de CM-07 (`dev`).
 
 | Comando | Resultado |
 |---|---|
@@ -363,7 +362,7 @@ Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-aud
 | `yarn typecheck` | exit 0 |
 | `yarn build` | exit 0 |
 | Specs de F1 y de los archivos en conflicto (16 archivos) | verdes |
-| Suite completa, por tramos | 1 104 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+| Suite completa, por tramos (tras los dos merges) | 1 116 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
 
 Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
 textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.

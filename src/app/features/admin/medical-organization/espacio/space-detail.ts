@@ -157,9 +157,7 @@ export class SpaceDetail {
 
   protected readonly puedeEscribir = computed(
     () =>
-      // Sin organización propia: `dev` retiró `ownTenantId` (la API no lo
-      // firma, TX-11). Se ofrece a la plataforma; la API decide igual.
-      ofrecerEscritura(this.session.roles(), this.session.activeTenantId(), null) &&
+      ofrecerEscritura(this.session.roles()) &&
       this.espacio()?.status.code !== 'SPACE_RETIRED',
   );
 

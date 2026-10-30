@@ -81,10 +81,15 @@ export class ViewStateHost<T> {
    * cual a `routerLink`, Angular lo trata como **un solo segmento** y escapa
    * el `?` (`%3F`): el enlace iba a una ruta inexistente. Parsearlo primero
    * conserva el comportamiento de las rutas sin query y arregla las que la
-   * traen.
+   * traen. Los `queryParams` declarados aparte se suman a los del texto
+   * (un `routerLink` con `UrlTree` ignora su propio input `queryParams`).
    */
-  protected enlace(route: string): UrlTree {
-    return this.router.parseUrl(route);
+  protected enlace(route: string, queryParams?: Readonly<Record<string, string>>): UrlTree {
+    const tree = this.router.parseUrl(route);
+    if (queryParams !== undefined) {
+      tree.queryParams = { ...tree.queryParams, ...queryParams };
+    }
+    return tree;
   }
 
   /**

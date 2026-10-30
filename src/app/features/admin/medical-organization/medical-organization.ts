@@ -29,9 +29,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SessionStore } from '../../../core/auth/session.store';
 import { ofrecerEscritura } from '../../../core/data-access/infrastructure/infrastructure.rules';
 import { NavigationService } from '../../../core/navigation/navigation.service';
-import { MembershipsTab } from './memberships-tab/memberships-tab';
 import { EstablecimientoTab } from './establecimiento/establecimiento-tab';
 import { InfraestructuraTab, type SitioElegible } from './infraestructura/infraestructura-tab';
+import { MembershipsTab } from './memberships-tab/memberships-tab';
 import { dataOf, empty, hasData, loading, ready, stale } from '../../../core/view-state/view-state';
 import type {
   ViewState,
@@ -198,9 +198,7 @@ export class MedicalOrganization {
    * Reflejo, no autorización: la API responde 403 a quien no administra.
    */
   protected readonly puedeEscribir = computed(() =>
-    // Sin organización propia: `dev` retiró `ownTenantId` (la API no lo
-      // firma, TX-11). Se ofrece a la plataforma; la API decide igual.
-      ofrecerEscritura(this.session.roles(), this.session.activeTenantId(), null),
+    ofrecerEscritura(this.session.roles()),
   );
 
   private readonly celdaSede =
