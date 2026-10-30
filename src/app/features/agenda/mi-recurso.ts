@@ -52,6 +52,16 @@ export function miRecursoDeAgenda(
  *
  * El orden es el que devuelve la API, y es estable: sin un criterio explícito,
  * «la primera» al menos no cambia entre dos cargas.
+ *
+ * ## No hay «primera página» que se quede corta
+ *
+ * `GET /scheduling/resources` **no pagina**: el DTO de la API no tiene `cursor`
+ * ni `limit` y `SchedulingAgendaRepository.findResources` trae todas las del
+ * tenant (verificado en `mantra-core-health-api`, 2026-10-29). Tampoco filtra
+ * por `resourceRefId`, así que el filtro por perfil tiene que ser de acá. No se
+ * acota por `resourceType=PRACTITIONER` a propósito: el backend decide «es
+ * suya» por `resourceRefId` (`assertRecursoDelActor`), no por el tipo, y
+ * acotar por tipo podría esconder una agenda que el servidor sí le atribuye.
  */
 export function misRecursosDeAgenda(
   scheduling: SchedulingClient,
