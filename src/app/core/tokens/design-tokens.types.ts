@@ -101,6 +101,8 @@ export const BORDER = {
   default: '--border-default',
   /** Borde que delimita: el único válido para bordes de control. */
   strong: '--border-strong',
+  /** Borde de control en estado de error: cambia con el tema (≥3:1 en ambos). */
+  danger: '--border-danger',
 } as const;
 export type BorderToken = (typeof BORDER)[keyof typeof BORDER];
 

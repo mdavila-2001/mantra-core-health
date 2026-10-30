@@ -208,6 +208,12 @@ const PARES = [
   { tinta: '--border-strong', fondo: '--bg-surface', nivel: 3 },
   { tinta: '--border-strong', fondo: '--bg-surface-alt', nivel: 3 },
   { tinta: '--border-strong', fondo: '--bg-inset', nivel: 3 },
+  // Borde de control en error: 3:1 (WCAG 1.4.11) contra toda superficie donde
+  // vive un campo. Lo pintaba la rampa fija `--c-error-500` (2,99:1 en oscuro).
+  { tinta: '--border-danger', fondo: '--bg-base', nivel: 3 },
+  { tinta: '--border-danger', fondo: '--bg-surface', nivel: 3 },
+  { tinta: '--border-danger', fondo: '--bg-surface-alt', nivel: 3 },
+  { tinta: '--border-danger', fondo: '--bg-inset', nivel: 3 },
   { tinta: '--st-success-fg', fondo: '--st-success-bg', nivel: 4.5 },
   { tinta: '--st-warning-fg', fondo: '--st-warning-bg', nivel: 4.5 },
   { tinta: '--st-error-fg', fondo: '--st-error-bg', nivel: 4.5 },
