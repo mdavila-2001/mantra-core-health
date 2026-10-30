@@ -1867,6 +1867,24 @@ export const routes: Routes = [
           (m) => m.ProcedureImport,
         ),
       ),
+      // Infraestructura hospitalaria (F1): la ficha de un espacio y sus
+      // formularios cuelgan de la consola de la organización médica. Las
+      // literales van antes que `spaces/:id` para que «new» no se lea como id.
+      pantallaDeOperacion('administration/medical-organization', 'spaces/new', 'Registrar un espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-form').then((m) => m.SpaceForm),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/bulk', 'Alta masiva de espacios', () =>
+        import('./features/admin/medical-organization/espacio/space-bulk').then((m) => m.SpaceBulk),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/import', 'Importar espacios', () =>
+        import('./features/admin/medical-organization/espacio/space-import').then((m) => m.SpaceImport),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/:id/edit', 'Editar un espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-form').then((m) => m.SpaceForm),
+      ),
+      pantallaDeOperacion('administration/medical-organization', 'spaces/:id', 'Ficha del espacio', () =>
+        import('./features/admin/medical-organization/espacio/space-detail').then((m) => m.SpaceDetail),
+      ),
       pantallaDeOperacion('schedule', 'appointment/new', 'Agendar una cita', () =>
         import('./features/agenda/appointment-new/appointment-new').then((m) => m.AppointmentNew),
       ),

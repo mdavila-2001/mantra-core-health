@@ -324,3 +324,74 @@ pasados al «usted» que `dev` adoptó.
 agenda de la clínica con la organización «Mi consultorio». Se le pone la organización dueña de esa
 agenda y el simulador de prácticas; la aserción no cambia. Navegador: **no se re-ejecutó** el spec
 de Playwright tras el merge.
+
+## Infraestructura F1 (web) — 2026-10-30
+
+Entorno: contenedor Linux · Node 22.22 · Yarn 4.18 (corepack) · `ng serve --port 4371` · backend simulado ·
+Chromium 1243 del sistema (`PW_CHROMIUM_PATH`, sin red para `playwright install`) · cuenta
+`superadmin@alovida.mock`, tenant «Hospital San Lucas». Rama `infra-f1-web`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn lint` | exit 1 · **256 errores, los mismos 256 de la base** (`8c695ed5`); 0 en archivos tocados |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 · ningún CSS nuevo pasa el presupuesto de 4 kB |
+| `ng test` de lo tocado (infraestructura, consola, `app-tree`, maqueta, view-state-host) | 11 archivos · todos verdes |
+| `yarn test` completo | 596/600 archivos · 7 630/7 634 pruebas · 4 rojas **ajenas**: `fichas-estandar`, `appointment-calendar` (fecha), `pestanas-del-perfil-medico` — rojas también en la base —, e `insurance-analytics.handlers` — verde aislada en la rama y en la base: depende del orden de la corrida |
+| `check-client-prefixes` / `check-route-prefixes` | los 23 endpoints nuevos ruteados (proxy, docker, nginx); 1 rojo previo ajeno (`CommunityClient`) · 242 rutas sin colisión |
+| `check-architecture` | rojo previo ajeno (3 ciclos en fixtures/agenda, 1 capa, 1 red); nada de F1 |
+| `E2E_BASE_URL=… yarn pw infra-f1-infraestructura --workers=1` | **6/6** (2,7 min) · 1440 / 768 / 390 |
+
+Mediciones del navegador (`evidencias/infra-f1/resultados.json`):
+
+| Qué | 1440 | 768 | 390 |
+|---|---|---|---|
+| Desborde horizontal en árbol, ficha (5 pestañas) y Establecimiento | 0 | 0 | 0 |
+| Regla 6, ficha: holgura izq./der. y ancho vs. `.app-main__inner` | 0 / 0 · 100 % | 0 / 0 · 100 % | 0 / 0 · 100 % |
+| `aria-level` de «Cama 301-A» (6.º nivel) | 6 | 6 | 6 |
+| Alta: POST `/sites/:id/care-spaces` → 201 → persistido en `mock.infra.espacios` → F5 → la ficha lo muestra | sí | sí | sí |
+| Edición: PATCH `/care-spaces/:id` con `If-Match: 1` → 200 → F5 → nombre nuevo | sí | sí | sí |
+| Errores de consola fuera del CSP de `/auth` (previo) | 0 | 0 | 0 |
+
+La cadena se lee del registro de escrituras de la maqueta (`sessionStorage['mock:registrar']`, nuevo y apagado
+por defecto): la maqueta responde dentro de Angular y Playwright no ve red. **Contra la API real no se ejecutó**
+(otra franja).
+
+Capturas (`evidencias/infra-f1/`, 66): árbol físico expandido y organizativo; ficha en sus 5 pestañas; alta (pasos
+1 y 2, creada tras recarga), edición; alta masiva con vista previa y códigos repetidos; importación con errores de
+forma, dry-run con errores por línea y confirmada; retiro bloqueado con la lista y su próxima acción;
+Establecimiento con brechas y habilitación vencida; S3, S5, S6, S9 con `mock-fallo` y S9 de la consola una sola vez.
+
+Hallazgo previo, no de F1: en las capturas de página completa a 1440/768 el riel de navegación se dibuja encima
+del borde izquierdo del contenido; pasa igual en `capturas/recorrido-clinico/recorrido-1440.png` (anterior).
+
+Revisión independiente (`visual-reviewer`, `frontend-reviewer`, `regression-auditor`): **pendiente**.
+
+### Infraestructura F1 · integración de WEB-F0 + `origin/dev` (merge, 2026-10-30)
+
+`git merge claude/trusting-hawking-q3p12v` (que ya trae `origin/dev`), 8 conflictos. Criterio: lo de
+`dev` y F0 se conserva; de F1 sólo lo suyo.
+
+- En paralelo, `origin/infra-f1-web` recibió otro merge de `dev` (`b7e9c3d0`, 26 commits más nuevo).
+  Se integró con un segundo merge y, en los siete archivos donde las dos resoluciones chocaban
+  (proxies, `view-state-host`, consola, ficha de espacio, simulador de infraestructura), **gana la
+  de `b7e9c3d0`**: `ofrecerEscritura` sólo con roles, la propiedad del simulador por el primer tenant
+  de la cuenta y `enlace(ruta, queryParams)`.
+- Consola: pestañas por clave (`PESTANAS`) e Infraestructura/Establecimiento de F1, con el selector
+  `app-select` y la pestaña `MembershipsTab` de `dev`; el estado M34 queda en `app-view-state-host`.
+- Simulador: `GET /practices` filtra por tenant (F1) y suma siempre los centros de CM-07 (`dev`).
+
+| Comando | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` | exit 0 |
+| `yarn build` | exit 0 |
+| Specs de F1 y de los archivos en conflicto (16 archivos) | verdes |
+| Suite completa, por tramos (tras los dos merges) | 1 116 archivos · 3 rojos, **los tres iguales en `origin/dev`** (`standard-sheets`, `pdf-theme`, `follow-up-block`) |
+
+Las cifras de arriba son del árbol `4a7ad084`. Después, `origin/infra-f1-web` recibió otro merge de `dev`
+(`c8071f27`, con WEB-F0 ya en `dev` por #1717); el tercer merge sólo aporta esta nota, el comentario de
+`GET /practices` y los dos textos del e2e, y sobre él se corrieron `yarn typecheck` y `yarn lint`.
+
+Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
+textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.

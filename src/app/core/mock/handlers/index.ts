@@ -22,6 +22,7 @@ import { registrarFinanzas } from './finance.handlers';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
+import { registrarInfraestructura } from './infrastructure.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
@@ -82,6 +83,7 @@ export function crearRouterSimulado(): MockRouter {
   registerHealthcareServices(router);
   registerRoleAssignments(router);
   registrarPracticas(router);
+  registrarInfraestructura(router);
   registrarClinica(router);
   // FAR-01 · el enlace para compartir una receta (`/clinical/prescription-shares`, `/public/prescription-shares`).
   registerPrescriptionShares(router);
