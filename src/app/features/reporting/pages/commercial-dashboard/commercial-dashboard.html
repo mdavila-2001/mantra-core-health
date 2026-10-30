@@ -1,0 +1,79 @@
+<div class="cd" data-testid="commercial-dashboard">
+  <app-page-header
+    title="Dashboard comercial"
+    subtitle="Ventas de suscripciones de doctores, publicidad y comisiones a actores, con cobros, adquisición y calidad del dato."
+  >
+    <div page-meta class="cd__meta">
+      @if (isSample()) {
+        <span class="cd__seal" data-testid="sample-seal">
+          <strong>DATOS DE EJEMPLO</strong>
+          <span>Las cifras son inventadas para esta maqueta.</span>
+        </span>
+      }
+      @if (generatedLabel(); as generated) {
+        <span class="cd__generated">Generado: {{ generated }}</span>
+      }
+    </div>
+  </app-page-header>
+
+  <app-report-filter-bar />
+
+  <nav class="cd__nav" aria-label="Secciones del dashboard comercial">
+    <ul class="cd__tabs">
+      @for (item of tabs; track item.vertical) {
+        <li>
+          <a
+            class="cd__tab"
+            [routerLink]="item.link"
+            [attr.aria-current]="item.vertical === tab() ? 'page' : null"
+            [attr.data-testid]="'tab-' + item.vertical"
+          >{{ item.label }}</a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <div class="cd__body" [attr.aria-busy]="refreshing()" [class.is-refreshing]="refreshing()">
+    @if (refreshing()) {
+      <p class="cd__refreshing" role="status" data-testid="refreshing">Actualizando las cifras con los filtros elegidos…</p>
+    }
+
+    @if (designNotice(); as notice) {
+      <app-alert tone="warning" [title]="designTitle" data-testid="design-banner">{{ notice }}</app-alert>
+    }
+
+    <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
+      <div vsh-skeleton class="cd__skeleton" aria-hidden="true" data-testid="dashboard-loading">
+        <div class="cd__skeleton-kpis">
+          @for (n of skeletonKpis; track n) {
+            <app-skeleton variant="rect" height="8.5rem" />
+          }
+        </div>
+        <div class="cd__skeleton-charts">
+          @for (n of skeletonCharts; track n) {
+            <app-skeleton variant="rect" height="18rem" />
+          }
+        </div>
+      </div>
+
+      <app-empty-state
+        vsh-empty
+        variant="no-results"
+        title="Sin datos para mostrar"
+        description="No hay cifras para este periodo y estos filtros."
+        data-testid="dashboard-empty"
+      >
+        <div empty-actions class="cd__empty-actions">
+          @if (store.filtros().length > 0) {
+            <button app-button type="button" variant="outline" size="sm" (click)="clearFilters()">Limpiar filtros</button>
+          }
+          <span>Pruebe con un periodo más largo.</span>
+        </div>
+      </app-empty-state>
+
+      @if (body(); as content) {
+        <app-tab-view [data]="content" />
+      }
+    </app-view-state-host>
+  </div>
+</div>

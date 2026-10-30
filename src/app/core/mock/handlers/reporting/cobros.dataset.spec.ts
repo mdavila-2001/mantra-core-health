@@ -8,7 +8,7 @@ import type {
   Moneda,
   PeriodoReporte,
 } from '../../../data-access/reporting/reporting.types';
-import { violacionesDelContrato } from '@shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import { construirCobros } from './cobros.dataset';
 import { BOB_POR_USD } from './reporting-dataset.util';
 
@@ -50,7 +50,7 @@ describe('pestaña Cobros y caja (datos de ejemplo)', () => {
   it('cumple el contrato de gráfico en todas las combinaciones de contexto', () => {
     for (const c of todasLasCombinaciones()) {
       for (const g of construirCobros(c).graficos) {
-        expect(violacionesDelContrato(g), `${g.id} con ${JSON.stringify(c)}`).toEqual([]);
+        expect(getContractViolations(g), `${g.id} con ${JSON.stringify(c)}`).toEqual([]);
       }
     }
   });

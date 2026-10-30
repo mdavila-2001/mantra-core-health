@@ -1,4 +1,4 @@
-import { violacionesDelContrato } from '@shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import type {
   AlcanceReporte,
   ChartSpec,
@@ -55,7 +55,7 @@ describe('construirAdquisicion (datos de EJEMPLO)', () => {
     for (const ctx of todosLosContextos()) {
       const p = construirAdquisicion(ctx);
       for (const g of p.graficos) {
-        expect(violacionesDelContrato(g), `${g.id} con ${JSON.stringify(ctx)}`).toEqual([]);
+        expect(getContractViolations(g), `${g.id} con ${JSON.stringify(ctx)}`).toEqual([]);
       }
     }
   });

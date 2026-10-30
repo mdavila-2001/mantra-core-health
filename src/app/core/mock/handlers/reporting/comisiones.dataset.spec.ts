@@ -1,4 +1,4 @@
-import { violacionesDelContrato } from '../../../../shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type {
   ChartSpec,
@@ -74,7 +74,7 @@ describe('comisiones.dataset', () => {
       for (const c of todosLosContextos()) {
         const p = construirComisiones(c);
         for (const g of p.graficos) {
-          expect(violacionesDelContrato(g), `${g.id} ${JSON.stringify(c)}`).toEqual([]);
+          expect(getContractViolations(g), `${g.id} ${JSON.stringify(c)}`).toEqual([]);
           expect(huecosDelContrato(g), `${g.id}`).toEqual([]);
         }
       }
@@ -85,7 +85,7 @@ describe('comisiones.dataset', () => {
         for (const periodo of PERIODOS) {
           const p = construirComisiones(ctx({ periodo, filtros: [actor(nombre)] }));
           for (const g of p.graficos) {
-            expect(violacionesDelContrato(g), `${g.id} ${nombre} ${periodo}`).toEqual([]);
+            expect(getContractViolations(g), `${g.id} ${nombre} ${periodo}`).toEqual([]);
           }
         }
       }

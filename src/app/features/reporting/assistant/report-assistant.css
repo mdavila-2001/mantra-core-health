@@ -1,0 +1,298 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+}
+
+.asistente {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.asistente__nota {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* ---- registro de la conversación ----------------------------------------- */
+
+.asistente__registro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-block-size: 12rem;
+  max-block-size: min(32rem, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.asistente__registro:focus-visible,
+.asistente__historial-item:focus-visible,
+.asistente__historial summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.asistente__inicio-texto {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-primary);
+}
+
+.asistente__sugerencias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Las etiquetas largas se parten en vez de desbordar el panel. */
+.asistente__sugerencia {
+  max-inline-size: 100%;
+  min-block-size: 32px;
+  white-space: normal;
+  text-align: start;
+}
+
+.asistente__pestana {
+  color: var(--text-secondary);
+}
+
+/* ---- mensajes ---------------------------------------------------------------- */
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+/* La diferencia entre quién habla va en el rótulo y en el borde, no solo en el tono. */
+.msg--usuario {
+  align-self: flex-end;
+  max-inline-size: 90%;
+  border-color: var(--border-strong);
+  background: var(--bg-inset);
+}
+
+.msg__autor {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.msg__texto {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+}
+
+.msg__aviso,
+.msg__codigo {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.msg__codigo {
+  display: block;
+  margin-block-start: var(--sp-1);
+  overflow-wrap: anywhere;
+}
+
+/* ---- tarjeta de respuesta ------------------------------------------------------ */
+
+.respuesta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.respuesta__titulo {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.respuesta__contexto {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.respuesta__valor {
+  margin: 0;
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* «Sin dato» se dice con palabras y con otro peso: nunca parece un cero. */
+.respuesta__valor--vacio {
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.respuesta__motivo,
+.respuesta__variacion {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+}
+
+.respuesta__variacion--favorable strong {
+  color: var(--st-success-fg);
+}
+
+.respuesta__variacion--desfavorable strong {
+  color: var(--st-error-fg);
+}
+
+.respuesta__ficha {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.respuesta__ficha dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.respuesta__ficha dd {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.respuesta__pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* ---- buscando ---------------------------------------------------------------------- */
+
+.asistente__buscando {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ---- entrada ------------------------------------------------------------------------ */
+
+.asistente__entrada {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.asistente__campo {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.asistente__enviar {
+  flex: 0 0 auto;
+}
+
+.asistente__aviso {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+/* ---- historial ------------------------------------------------------------------------ */
+
+.asistente__historial {
+  border-block-start: 1px solid var(--border-default);
+  padding-block-start: var(--sp-2);
+}
+
+.asistente__historial summary {
+  display: flex;
+  align-items: center;
+  min-block-size: 32px;
+  cursor: pointer;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+}
+
+.asistente__historial-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: var(--sp-2) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.asistente__historial-item {
+  inline-size: 100%;
+  min-block-size: 32px;
+  padding: var(--sp-1) var(--sp-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-link);
+  font: inherit;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.asistente__historial-item:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.asistente__historial-item:disabled {
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .asistente__entrada {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .msg--usuario {
+    max-inline-size: 100%;
+  }
+}

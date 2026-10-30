@@ -1,7 +1,7 @@
 import type { UnidadValor } from './reporting.types';
 
 /** Lo que se escribe cuando no hay dato. Nunca «0», nunca un guion suelto. */
-export const SIN_DATO = 'Sin dato';
+export const NO_DATA = 'Sin dato';
 
 const FORMATOS = new Map<string, Intl.NumberFormat>();
 
@@ -25,7 +25,7 @@ export function formatearValor(
   compacto = false,
 ): string {
   if (valor === null || valor === undefined || Number.isNaN(valor)) {
-    return SIN_DATO;
+    return NO_DATA;
   }
   switch (unidad.tipo) {
     case 'moneda':

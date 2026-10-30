@@ -23,10 +23,10 @@ import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
 import { ContentDialog } from '../content-dialog/content-dialog';
-import { violacionesDelContrato, tieneDatos } from './chart-contract';
+import { getContractViolations, hasData } from '@core/data-access/reporting/reporting-contract';
 import { provideGraficos } from './chart-echarts.setup';
-import { construirOpciones, valorDelClic, type ModoGrafico } from './chart-option.builder';
-import { csvDeTabla, tablaDeGrafico } from './chart-table';
+import { construirOpciones, clickedValue, type ModoGrafico } from './chart-option.builder';
+import { tableToCsv, buildChartTable } from './chart-table';
 import { leerTemaGraficos, type ChartTheme } from './chart-theme';
 
 const MODOS: readonly SegmentedOption<ModoGrafico>[] = [
@@ -80,12 +80,12 @@ export class ChartPanel {
   private readonly tema = signal<ChartTheme | null>(null);
   private readonly botonMenu = viewChild<ElementRef<HTMLButtonElement>>('botonMenu');
 
-  protected readonly violaciones = computed(() => violacionesDelContrato(this.spec()));
+  protected readonly violaciones = computed(() => getContractViolations(this.spec()));
   protected readonly modoEfectivo = computed<ModoGrafico>(() =>
     this.spec().velas === null ? 'normal' : this.modo(),
   );
   protected readonly hayDatos = computed(() =>
-    this.modoEfectivo() === 'velas' ? (this.spec().velas?.velas.length ?? 0) > 0 : tieneDatos(this.spec().datos),
+    this.modoEfectivo() === 'velas' ? (this.spec().velas?.velas.length ?? 0) > 0 : hasData(this.spec().datos),
   );
   protected readonly opciones = computed(() => {
     const tema = this.tema();
@@ -99,7 +99,7 @@ export class ChartPanel {
       seleccion: this.seleccion(),
     });
   });
-  protected readonly tabla = computed(() => tablaDeGrafico(this.spec(), this.modoEfectivo()));
+  protected readonly tabla = computed(() => buildChartTable(this.spec(), this.modoEfectivo()));
   protected readonly alto = computed(() => (this.grande() ? 520 : (this.spec().alto ?? 300)));
   protected readonly etiquetaFiltro = computed(() => {
     const f = this.spec().filtro;
@@ -151,7 +151,7 @@ export class ChartPanel {
     if (spec.filtro === null || this.modoEfectivo() === 'velas') {
       return;
     }
-    const valor = valorDelClic(spec.datos, evento as { name?: string; value?: unknown });
+    const valor = clickedValue(spec.datos, evento as { name?: string; value?: unknown });
     if (valor !== null) {
       this.filtroCambia.emit({ dimension: spec.filtro.dimension, valor });
     }
@@ -165,7 +165,7 @@ export class ChartPanel {
   }
 
   protected exportarCsv(): void {
-    const blob = new Blob([csvDeTabla(this.tabla())], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([tableToCsv(this.tabla())], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = this.documento.createElement('a');
     a.href = url;

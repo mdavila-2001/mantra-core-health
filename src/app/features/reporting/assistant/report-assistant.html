@@ -1,0 +1,269 @@
+<section class="asistente" aria-label="Asistente de reportes">
+  <p class="asistente__nota">
+    <app-badge variant="warning" size="sm">Respuestas de ejemplo</app-badge>
+    Busco en el catálogo la medida que más se parece a tu pregunta; no entiendo cualquier frase.
+    Las cifras son datos de ejemplo y salen del mismo reporte que ves en pantalla.
+  </p>
+
+  <div
+    #registro
+    class="asistente__registro"
+    role="log"
+    aria-live="polite"
+    aria-relevant="additions"
+    aria-label="Conversación con el asistente"
+    [attr.aria-busy]="respondiendo()"
+    tabindex="0"
+  >
+    @if (!hayMensajes()) {
+      <div class="asistente__inicio">
+        <p class="asistente__inicio-texto">
+          Pregunta por una medida de tus reportes y te digo su valor, qué significa y dónde verla. Prueba con
+          una de estas:
+        </p>
+        <ul class="asistente__sugerencias" aria-label="Preguntas sugeridas">
+          @for (sugerencia of sugerenciasIniciales; track sugerencia) {
+            <li>
+              <button
+                app-button
+                type="button"
+                variant="outline"
+                size="sm"
+                class="asistente__sugerencia"
+                [disabled]="respondiendo()"
+                (clicked)="preguntarSugerencia(sugerencia)"
+              >
+                {{ sugerencia }}
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    @for (mensaje of mensajes(); track mensaje.id) {
+      @if (mensaje.rol === 'usuario') {
+        <div class="msg msg--usuario" data-mensaje>
+          <p class="msg__autor">Tú</p>
+          <p class="msg__texto">{{ mensaje.texto }}</p>
+        </div>
+      } @else {
+        <div class="msg msg--asistente" data-mensaje>
+          <p class="msg__autor">Asistente</p>
+
+          @if (mensaje.tipo === 'ambigua' || mensaje.tipo === 'sin-medida') {
+            <p class="msg__texto">
+              @if (mensaje.tipo === 'ambigua') {
+                Encontré más de una medida parecida. ¿Cuál quieres ver?
+              } @else {
+                No tengo esa medida en el catálogo.
+                @if (mensaje.medidas.length > 0) {
+                  Estas son las más cercanas:
+                }
+              }
+            </p>
+            @if (mensaje.medidas.length > 0) {
+              <ul class="asistente__sugerencias" aria-label="Medidas posibles">
+                @for (opcion of mensaje.medidas; track opcion.pestana + opcion.kpiId) {
+                  <li>
+                    <button
+                      app-button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="asistente__sugerencia"
+                      [disabled]="respondiendo()"
+                      (clicked)="elegirMedida(opcion)"
+                    >
+                      {{ opcion.titulo }}
+                      <span class="asistente__pestana">· {{ opcion.etiquetaPestana }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+
+          @switch (mensaje.tipo) {
+            @case ('respuesta') {
+              <article class="respuesta" [attr.aria-label]="'Respuesta: ' + mensaje.respuesta.titulo">
+                <p class="respuesta__titulo">{{ mensaje.respuesta.titulo }}</p>
+                <p class="respuesta__contexto">
+                  {{ mensaje.respuesta.ambito }} · {{ mensaje.respuesta.periodo }}
+                  @for (filtro of mensaje.respuesta.filtros; track filtro) {
+                    · {{ filtro }}
+                  }
+                </p>
+                <p class="respuesta__valor" [class.respuesta__valor--vacio]="mensaje.respuesta.sinDato">
+                  <span class="sr-only">Valor: </span>{{ mensaje.respuesta.valorTexto }}
+                </p>
+                @if (mensaje.respuesta.sinDato) {
+                  <p class="respuesta__motivo">
+                    <strong>Por qué no hay dato:</strong> {{ mensaje.respuesta.motivoSinDato }}
+                  </p>
+                }
+                @if (mensaje.respuesta.variacion; as variacion) {
+                  <p
+                    class="respuesta__variacion"
+                    [class.respuesta__variacion--favorable]="variacion.favorable === true"
+                    [class.respuesta__variacion--desfavorable]="variacion.favorable === false"
+                  >
+                    <strong>{{ variacion.texto }}</strong> · {{ variacion.descripcion }}
+                  </p>
+                }
+                <dl class="respuesta__ficha">
+                  <div>
+                    <dt>Qué es</dt>
+                    <dd>{{ mensaje.respuesta.definicion }}</dd>
+                  </div>
+                  @if (mensaje.respuesta.formula) {
+                    <div>
+                      <dt>Cómo se calcula</dt>
+                      <dd>{{ mensaje.respuesta.formula }}</dd>
+                    </div>
+                  }
+                  <div>
+                    <dt>Fuente</dt>
+                    <dd>{{ mensaje.respuesta.fuente }}</dd>
+                  </div>
+                  <div>
+                    <dt>Frescura</dt>
+                    <dd>
+                      {{ mensaje.respuesta.frescura }}
+                      @if (mensaje.respuesta.generadoEn) {
+                        · calculado el {{ mensaje.respuesta.generadoEn }}
+                      }
+                    </dd>
+                  </div>
+                </dl>
+                <div class="respuesta__pie">
+                  @if (mensaje.respuesta.esEjemplo) {
+                    <app-badge variant="warning" size="sm">Datos de ejemplo</app-badge>
+                  }
+                  <a
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    [routerLink]="mensaje.respuesta.ruta"
+                    [attr.aria-label]="'Abrir en el reporte: ' + mensaje.respuesta.titulo"
+                  >
+                    Abrir en el reporte
+                  </a>
+                </div>
+              </article>
+            }
+
+            @case ('personas') {
+              <p class="msg__texto">
+                Los reportes comerciales no tienen datos de pacientes ni de personas: solo cifras agregadas de
+                ventas, cobros y publicidad. Puedes preguntarme, por ejemplo, por el MRR o por las bajas de
+                suscripciones.
+              </p>
+            }
+
+            @case ('sin-pregunta') {
+              <p class="msg__texto">No vi ninguna pregunta. Escribe una medida, por ejemplo «MRR».</p>
+            }
+
+            @case ('catalogo-vacio') {
+              <p class="msg__texto">
+                Todavía no hay medidas cargadas en los reportes para este periodo, así que no tengo nada que
+                consultar. Cuando haya reportes publicados podrás preguntarme por ellos.
+              </p>
+            }
+
+            @case ('error') {
+              <app-alert
+                [tone]="mensaje.estado === 'error' ? 'error' : 'warning'"
+                [title]="
+                  mensaje.estado === 'forbidden'
+                    ? 'Sin permiso'
+                    : mensaje.estado === 'offline'
+                      ? 'Sin conexión'
+                      : 'No se pudo responder'
+                "
+              >
+                {{ mensaje.mensaje }}
+                @if (mensaje.requestId) {
+                  <span class="msg__codigo">Código de la petición: {{ mensaje.requestId }}</span>
+                }
+                @if (mensaje.reintento) {
+                  <div alert-actions>
+                    <button app-button type="button" size="sm" variant="outline" [disabled]="respondiendo()" (clicked)="reintentar(mensaje)">
+                      Reintentar
+                    </button>
+                  </div>
+                }
+              </app-alert>
+            }
+          }
+
+          @if (mensaje.noRevisadas?.length) {
+            <p class="msg__aviso">
+              No pude revisar: {{ nombres(mensaje.noRevisadas) }}. La respuesta puede estar incompleta.
+            </p>
+          }
+        </div>
+      }
+    }
+
+    @if (respondiendo()) {
+      <p class="asistente__buscando">
+        <app-spinner size="sm" decorative />
+        Buscando en tus reportes…
+      </p>
+    }
+  </div>
+
+  <div class="asistente__entrada">
+    <div class="asistente__campo">
+      <app-input
+        ariaLabel="Escribe tu pregunta sobre los reportes"
+        placeholder="Ej.: ¿cuál es el churn?"
+        autocomplete="off"
+        [value]="borrador()"
+        (valueChange)="alEscribir($event)"
+      />
+    </div>
+    <button
+      app-button
+      type="button"
+      class="asistente__enviar"
+      [disabled]="respondiendo()"
+      [isLoading]="respondiendo()"
+      (clicked)="enviar()"
+    >
+      Enviar
+    </button>
+  </div>
+  <p class="asistente__aviso" role="status">
+    @if (avisoEntrada()) {
+      {{ avisoEntrada() }}
+    } @else {
+      Enter envía tu pregunta.
+    }
+  </p>
+
+  @if (historial().length > 0) {
+    <details class="asistente__historial">
+      <summary>Preguntas recientes ({{ historial().length }})</summary>
+      <ul class="asistente__historial-lista">
+        @for (pregunta of historial(); track pregunta) {
+          <li>
+            <button
+              type="button"
+              class="asistente__historial-item"
+              [disabled]="respondiendo()"
+              (click)="preguntarSugerencia(pregunta)"
+            >
+              {{ pregunta }}
+            </button>
+          </li>
+        }
+      </ul>
+      <button app-button type="button" size="sm" variant="ghost" (clicked)="borrarHistorial()">
+        Borrar historial
+      </button>
+    </details>
+  }
+</section>

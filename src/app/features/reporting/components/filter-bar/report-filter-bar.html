@@ -1,0 +1,62 @@
+<section class="fb" aria-label="Filtros del reporte" data-testid="report-filter-bar">
+  <div class="fb__controls">
+    <div class="fb__field">
+      <span class="fb__label" aria-hidden="true">Periodo</span>
+      <app-select
+        ariaLabel="Periodo"
+        [options]="periods"
+        [value]="store.periodo()"
+        (valueChange)="setPeriod($event)"
+      />
+    </div>
+    <div class="fb__field fb__field--wide">
+      <span class="fb__label" aria-hidden="true">Comparar</span>
+      <app-select
+        ariaLabel="Comparar con"
+        [options]="comparisons"
+        [value]="store.comparar()"
+        (valueChange)="setComparison($event)"
+      />
+    </div>
+    <div class="fb__field">
+      <span class="fb__label" aria-hidden="true">Moneda</span>
+      <app-segmented-control
+        ariaLabel="Moneda"
+        [options]="currencies"
+        [value]="store.moneda()"
+        (valueChange)="store.moneda.set($event)"
+      />
+    </div>
+    <div class="fb__field">
+      <span class="fb__label" aria-hidden="true">Alcance</span>
+      <app-segmented-control
+        ariaLabel="Alcance de los datos"
+        [options]="scopes"
+        [value]="store.alcance()"
+        (valueChange)="store.alcance.set($event)"
+      />
+    </div>
+  </div>
+
+  @if (chips().length > 0) {
+    <div class="fb__active">
+      <span class="fb__active-title">Filtros activos:</span>
+      <ul class="fb__chips">
+        @for (chip of chips(); track chip.dimension) {
+          <li class="fb__chip" data-testid="filter-chip">
+            <span>{{ chip.label }}</span>
+            <button type="button" class="fb__chip-remove" [attr.aria-label]="chip.removeLabel" (click)="remove(chip.dimension)">
+              <span aria-hidden="true">✕</span> Quitar
+            </button>
+          </li>
+        }
+      </ul>
+      <button app-button type="button" variant="ghost" size="sm" data-testid="filters-clear" (click)="store.limpiarFiltros()">
+        Limpiar filtros
+      </button>
+    </div>
+  }
+
+  <!-- Anuncio para lector de pantalla: cada cambio del contexto se dice, sin mover el foco. -->
+  <p class="fb__live" role="status" aria-live="polite" data-testid="filters-live">{{ announcement() }}</p>
+</section>

@@ -1,6 +1,6 @@
 import type { EChartsCoreOption } from 'echarts/core';
 
-import { formatearValor, SIN_DATO } from '@core/data-access/reporting/reporting-format';
+import { formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type {
   ChartSpec,
   DatosGrafico,
@@ -39,7 +39,7 @@ function base(tema: ChartTheme): Record<string, unknown> {
     color: tema.serie,
     textStyle: { color: tema.texto, fontFamily: 'inherit' },
     aria: { enabled: true, decal: { show: true } },
-    animation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    animation: !(typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
   };
 }
 
@@ -65,7 +65,7 @@ function tooltipBase(tema: ChartTheme): Record<string, unknown> {
     borderWidth: 1,
     padding: [8, 10],
     textStyle: { color: tema.texto, fontSize: 12 },
-    extraCssText: 'box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,.18));',
+    extraCssText: 'box-shadow: var(--shadow-md);',
   };
 }
 
@@ -80,7 +80,7 @@ interface ParamEje {
 
 const num = (v: unknown): number | null => (typeof v === 'number' && !Number.isNaN(v) ? v : null);
 
-function valorDe(p: ParamEje): number | null {
+function readValue(p: ParamEje): number | null {
   if (Array.isArray(p.value)) {
     return num(p.value[p.value.length - 1]);
   }
@@ -90,7 +90,7 @@ function valorDe(p: ParamEje): number | null {
   return num(p.value);
 }
 
-function unidadDe(serie: SerieCartesiana | undefined, general: UnidadValor): UnidadValor {
+function unitOf(serie: SerieCartesiana | undefined, general: UnidadValor): UnidadValor {
   return serie?.unidad ?? general;
 }
 
@@ -165,8 +165,8 @@ function construirCartesiano(
         const filas = lista
           .map((p) => {
             const serie = d.series.find((s) => s.nombre === p.seriesName);
-            const v = valorDe(p);
-            return `<div style="display:flex;justify-content:space-between;gap:16px"><span>${p.marker ?? ''}${escapar(p.seriesName ?? '')}</span><b>${escapar(formatearValor(v, unidadDe(serie, spec.unidad)))}</b></div>`;
+            const v = readValue(p);
+            return `<div style="display:flex;justify-content:space-between;gap:16px"><span>${p.marker ?? ''}${escapar(p.seriesName ?? '')}</span><b>${escapar(formatearValor(v, unitOf(serie, spec.unidad)))}</b></div>`;
           })
           .join('');
         return `<div style="font-weight:600;margin-bottom:4px">${escapar(lista[0]?.axisValueLabel ?? lista[0]?.name ?? '')}</div>${filas}`;
@@ -199,7 +199,7 @@ function construirPartes(
       ...tooltipBase(tema),
       trigger: 'item',
       formatter: (p: ParamEje) => {
-        const v = valorDe(p);
+        const v = readValue(p);
         const extra = embudo
           ? primero !== null && primero > 0 && v !== null
             ? `<div>${escapar(`${((v / primero) * 100).toFixed(1)} % del primer paso`)}</div>`
@@ -225,7 +225,7 @@ function construirPartes(
               show: true,
               position: 'inside',
               color: tema.texto,
-              formatter: (p: ParamEje) => `${p.name ?? ''}: ${formatearValor(valorDe(p), spec.unidad, true)}`,
+              formatter: (p: ParamEje) => `${p.name ?? ''}: ${formatearValor(readValue(p), spec.unidad, true)}`,
             },
             data: datos,
           }
@@ -276,7 +276,7 @@ function construirMapaCalor(
         const v = Array.isArray(p.value) ? p.value : [];
         const col = d.columnas[Number(v[0])] ?? '';
         const fila = d.filas[Number(v[1])] ?? '';
-        const val = typeof v[2] === 'number' ? formatearValor(v[2], spec.unidad) : SIN_DATO;
+        const val = typeof v[2] === 'number' ? formatearValor(v[2], spec.unidad) : NO_DATA;
         return `<div style="font-weight:600">${escapar(fila)} · ${escapar(col)}</div><div>${escapar(d.nombreValor)}: <b>${escapar(val)}</b></div>`;
       },
     },
@@ -386,7 +386,7 @@ function construirCascada(
   }
   const nombres = d.pasos.map((p) => p.nombre);
   const idxSel = seleccion === null ? -1 : nombres.indexOf(seleccion);
-  const conOpacidad = (arr: (number | null)[]) =>
+  const withOpacity = (arr: (number | null)[]) =>
     arr.map((v, i) => (v === null ? null : idxSel >= 0 && i !== idxSel ? { value: v, itemStyle: { opacity: 0.35 } } : v));
   return {
     ...base(tema),
@@ -396,7 +396,7 @@ function construirCascada(
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
       formatter: (params: ParamEje | ParamEje[]) => {
-        const lista = (Array.isArray(params) ? params : [params]).filter((p) => p.seriesName !== 'Base' && valorDe(p) !== null);
+        const lista = (Array.isArray(params) ? params : [params]).filter((p) => p.seriesName !== 'Base' && readValue(p) !== null);
         const paso = d.pasos[nombres.indexOf(lista[0]?.name ?? '')];
         const v = paso?.valor ?? null;
         return `<div style="font-weight:600">${escapar(lista[0]?.name ?? '')}</div><div>${paso?.total === true ? 'Total' : v !== null && v < 0 ? 'Disminución' : 'Aumento'}: <b>${escapar(formatearValor(v, spec.unidad))}</b></div>`;
@@ -407,9 +407,9 @@ function construirCascada(
     yAxis: { type: 'value', splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
     series: [
       { name: 'Base', type: 'bar', stack: 'cascada', silent: true, itemStyle: { color: 'transparent' }, data: base0, tooltip: { show: false } },
-      { name: 'Aumento', type: 'bar', stack: 'cascada', data: conOpacidad(sube), itemStyle: { color: tema.bueno }, barMaxWidth: 40 },
-      { name: 'Disminución', type: 'bar', stack: 'cascada', data: conOpacidad(baja), itemStyle: { color: tema.malo }, barMaxWidth: 40 },
-      { name: 'Total', type: 'bar', stack: 'cascada', data: conOpacidad(total), itemStyle: { color: tema.serie[0] }, barMaxWidth: 40 },
+      { name: 'Aumento', type: 'bar', stack: 'cascada', data: withOpacity(sube), itemStyle: { color: tema.bueno }, barMaxWidth: 40 },
+      { name: 'Disminución', type: 'bar', stack: 'cascada', data: withOpacity(baja), itemStyle: { color: tema.malo }, barMaxWidth: 40 },
+      { name: 'Total', type: 'bar', stack: 'cascada', data: withOpacity(total), itemStyle: { color: tema.serie[0] }, barMaxWidth: 40 },
     ],
   };
 }
@@ -417,10 +417,10 @@ function construirCascada(
 function construirVelas(o: OpcionesBuild): EChartsCoreOption {
   const { tema, spec } = o;
   const velas = spec.velas?.velas ?? [];
-  const nombre = 'Velas (apertura–cierre)';
+  const seriesName = 'Velas (apertura–cierre)';
   return {
     ...base(tema),
-    legend: leyenda(tema, [nombre]),
+    legend: leyenda(tema, [seriesName]),
     tooltip: {
       ...tooltipBase(tema),
       trigger: 'axis',
@@ -436,7 +436,7 @@ function construirVelas(o: OpcionesBuild): EChartsCoreOption {
         return `<div style="font-weight:600;margin-bottom:4px">${escapar(v.fecha)}</div>
           <div>Apertura: <b>${f(v.apertura)}</b></div><div>Cierre: <b>${f(v.cierre)}</b></div>
           <div>Mínimo: <b>${f(v.minimo)}</b></div><div>Máximo: <b>${f(v.maximo)}</b></div>
-          <div>Variación: <b>${cambio === null ? SIN_DATO : `${cambio >= 0 ? '+' : '−'}${Math.abs(cambio).toFixed(1)} %`}</b> · ${cambio === null ? '' : (cambio >= 0) === (spec.velas?.subirEsMalo !== true) ? 'Mejora' : 'Empeora'}</div>`;
+          <div>Variación: <b>${cambio === null ? NO_DATA : `${cambio >= 0 ? '+' : '−'}${Math.abs(cambio).toFixed(1)} %`}</b> · ${cambio === null ? '' : (cambio >= 0) === (spec.velas?.subirEsMalo !== true) ? 'Mejora' : 'Empeora'}</div>`;
       },
     },
     grid: { left: 8, right: 16, top: 20, bottom: 84, containLabel: true },
@@ -445,7 +445,7 @@ function construirVelas(o: OpcionesBuild): EChartsCoreOption {
     yAxis: { type: 'value', scale: true, splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
     series: [
       {
-        name: nombre,
+        name: seriesName,
         type: 'candlestick',
         // [apertura, cierre, mínimo, máximo]
         data: velas.map((v) => [v.apertura, v.cierre, v.minimo, v.maximo]),
@@ -482,7 +482,7 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
 }
 
 /** Qué valor de la dimensión representa un clic en el gráfico, o `null` si no filtra. */
-export function valorDelClic(
+export function clickedValue(
   datos: DatosGrafico,
   evento: { name?: string; value?: unknown; seriesName?: string },
 ): string | null {

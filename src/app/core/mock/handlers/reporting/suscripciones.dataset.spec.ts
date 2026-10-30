@@ -8,7 +8,7 @@ import type {
   AlcanceReporte,
   PestanaReporte,
 } from '@core/data-access/reporting/reporting.types';
-import { violacionesDelContrato } from '@shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 
 import { BOB_POR_USD } from './reporting-dataset.util';
 import { construirSuscripciones } from './suscripciones.dataset';
@@ -52,7 +52,7 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
     const violaciones: string[] = [];
     for (const ctx of contextos()) {
       for (const g of construirSuscripciones(ctx).graficos) {
-        for (const v of violacionesDelContrato(g)) violaciones.push(`${g.id} con ${JSON.stringify(ctx)}: ${v}`);
+        for (const v of getContractViolations(g)) violaciones.push(`${g.id} con ${JSON.stringify(ctx)}: ${v}`);
       }
     }
     expect(violaciones).toEqual([]);

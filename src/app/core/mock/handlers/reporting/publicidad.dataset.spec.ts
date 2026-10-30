@@ -1,4 +1,4 @@
-import { violacionesDelContrato } from '../../../../shared/components/organisms/chart-panel/chart-contract';
+import { getContractViolations } from '@core/data-access/reporting/reporting-contract';
 import type {
   ChartSpec,
   ComparacionReporte,
@@ -79,7 +79,7 @@ describe('Pestaña publicidad (datos de EJEMPLO)', () => {
       expect(p.pestana).toBe('publicidad');
       expect(p.origen).toBe('ejemplo');
       for (const g of p.graficos) {
-        expect(violacionesDelContrato(g), `${etiqueta} ${g.id}`).toEqual([]);
+        expect(getContractViolations(g), `${etiqueta} ${g.id}`).toEqual([]);
         expect(huecosDelContrato(g), `${etiqueta} ${g.id}`).toEqual([]);
       }
       for (const k of p.kpis) {
@@ -246,7 +246,7 @@ describe('Pestaña publicidad (datos de EJEMPLO)', () => {
       expect(grafico(p, 'pub-gasto-diario').velas).toBeNull();
       expect(grafico(p, 'pub-gasto-diario').velasMotivo).toBeTruthy();
       for (const g of p.graficos) {
-        expect(violacionesDelContrato(g), `${valor} ${g.id}`).toEqual([]);
+        expect(getContractViolations(g), `${valor} ${g.id}`).toEqual([]);
       }
       expect(numerosNoFinitos(p)).toEqual([]);
     }

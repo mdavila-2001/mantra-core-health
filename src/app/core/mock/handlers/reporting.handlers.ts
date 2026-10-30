@@ -51,32 +51,32 @@ const PESTANAS = new Set<string>(Object.keys(CONSTRUCTORES));
  * en la rama de maqueta— fuerza la respuesta. Sin la llave, todo es normal.
  * Lo usan las capturas (`playwright/reporteria-capturas.spec.ts`).
  */
-export const LLAVE_ESTADO_FORZADO = 'mock:reporting:estado';
-type EstadoForzado = 'error' | 'vacio' | 'sin-permiso' | 'atrasado' | null;
+export const FORCED_STATE_KEY = 'mock:reporting:estado';
+type ForcedState = 'error' | 'vacio' | 'sin-permiso' | 'atrasado' | null;
 
-function estadoForzado(): EstadoForzado {
+function forcedState(): ForcedState {
   try {
-    const v = globalThis.localStorage?.getItem(LLAVE_ESTADO_FORZADO);
+    const v = globalThis.localStorage?.getItem(FORCED_STATE_KEY);
     return v === 'error' || v === 'vacio' || v === 'sin-permiso' || v === 'atrasado' ? v : null;
   } catch {
     return null;
   }
 }
 
-function respuestaForzada(estado: EstadoForzado) {
+function forcedResponse(estado: ForcedState) {
   if (estado === 'error') {
     return reply(500, { statusCode: 500, code: 'INTERNAL', message: 'Falla simulada del servidor de reportes', error: 'Internal Server Error' });
   }
   if (estado === 'sin-permiso') {
-    return forbidden('Tu rol no puede ver este reporte.');
+    return forbidden('Su rol no puede ver este reporte.');
   }
   return null;
 }
 
 export function registrarReporteria(router: MockRouter): void {
   router.get('/reporting/catalog', () => {
-    const estado = estadoForzado();
-    return respuestaForzada(estado) ?? (estado === 'vacio' ? [] : CATALOGO);
+    const estado = forcedState();
+    return forcedResponse(estado) ?? (estado === 'vacio' ? [] : CATALOGO);
   });
   router.post('/reporting/commercial/:pestana', (req) => {
     const pestana = req.params['pestana'] ?? '';
@@ -89,8 +89,8 @@ export function registrarReporteria(router: MockRouter): void {
         { field: 'periodo', message: 'es obligatorio' },
       ]);
     }
-    const estado = estadoForzado();
-    const forzada = respuestaForzada(estado);
+    const estado = forcedState();
+    const forzada = forcedResponse(estado);
     if (forzada !== null) {
       return forzada;
     }

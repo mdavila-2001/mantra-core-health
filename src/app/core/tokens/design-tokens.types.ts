@@ -147,14 +147,22 @@ export type HeatToken = `--heat-${HeatLevel}-${HeatSlot}`;
  * agua y el gris leen casi igual), igual que el acento de Atlas Dashboards.
  * Un hue no se reutiliza para un estado: éstos van aparte (`--st-*`).
  */
-export const CHART_SERIES_COUNT = 8;
-export const CHART_SEQ_STEPS = [1, 2, 3, 4, 5] as const;
-export type ChartSeriesToken = `--chart-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8}`;
-export type ChartSeqToken = `--chart-seq-${(typeof CHART_SEQ_STEPS)[number]}`;
-export const CHART_TOKENS: readonly (ChartSeriesToken | ChartSeqToken)[] = Object.freeze([
-  ...Array.from({ length: CHART_SERIES_COUNT }, (_, i) => `--chart-${i + 1}` as ChartSeriesToken),
-  ...CHART_SEQ_STEPS.map((n): ChartSeqToken => `--chart-seq-${n}`),
-]);
+export const CHART = {
+  series1: '--chart-1',
+  series2: '--chart-2',
+  series3: '--chart-3',
+  series4: '--chart-4',
+  series5: '--chart-5',
+  series6: '--chart-6',
+  series7: '--chart-7',
+  series8: '--chart-8',
+  seq1: '--chart-seq-1',
+  seq2: '--chart-seq-2',
+  seq3: '--chart-seq-3',
+  seq4: '--chart-seq-4',
+  seq5: '--chart-seq-5',
+} as const;
+export type ChartToken = (typeof CHART)[keyof typeof CHART];
 
 export const EFFECT = {
   shadowSm: '--shadow-sm',
@@ -341,8 +349,7 @@ export type DesignToken =
   | StatusToken
   | BrandToneToken
   | HeatToken
-  | ChartSeriesToken
-  | ChartSeqToken
+  | ChartToken
   | VerifiedToken
   | EffectToken
   | SpacingToken
@@ -414,7 +421,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ),
   ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
   ...Object.values(VERIFIED),
-  ...CHART_TOKENS,
+  ...Object.values(CHART),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),

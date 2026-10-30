@@ -1,4 +1,4 @@
-import { formatearValor, SIN_DATO } from '@core/data-access/reporting/reporting-format';
+import { formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type { ChartSpec } from '@core/data-access/reporting/reporting.types';
 import type { ModoGrafico } from './chart-option.builder';
 
@@ -8,7 +8,7 @@ import type { ModoGrafico } from './chart-option.builder';
  * la superficie clara y la regla de relevo exige la tabla. De ella sale también
  * el CSV, para que lo exportado y lo visto no puedan discrepar.
  */
-export interface TablaDeGrafico {
+export interface ChartTableData {
   readonly columnas: readonly string[];
   /** Texto ya formateado, para mostrar. */
   readonly filas: readonly (readonly string[])[];
@@ -16,8 +16,8 @@ export interface TablaDeGrafico {
   readonly crudo: readonly (readonly (string | number | null)[])[];
 }
 
-export function tablaDeGrafico(spec: ChartSpec, modo: ModoGrafico): TablaDeGrafico {
-  const f = (v: number | null) => (v === null ? SIN_DATO : formatearValor(v, spec.unidad));
+export function buildChartTable(spec: ChartSpec, modo: ModoGrafico): ChartTableData {
+  const f = (v: number | null) => (v === null ? NO_DATA : formatearValor(v, spec.unidad));
   if (modo === 'velas' && spec.velas !== null) {
     const columnas = ['Fecha', 'Apertura', 'Cierre', 'Mínimo', 'Máximo'];
     const crudo = spec.velas.velas.map((v) => [v.fecha, v.apertura, v.cierre, v.minimo, v.maximo]);
@@ -65,7 +65,7 @@ export function celdaCsv(valor: string | number | null): string {
   return /[",\n;]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
 }
 
-export function csvDeTabla(tabla: TablaDeGrafico): string {
+export function tableToCsv(tabla: ChartTableData): string {
   const lineas = [tabla.columnas.map(celdaCsv).join(','), ...tabla.crudo.map((r) => r.map(celdaCsv).join(','))];
   return `﻿${lineas.join('\r\n')}\r\n`;
 }

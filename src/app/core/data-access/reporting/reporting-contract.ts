@@ -1,4 +1,4 @@
-import type { ChartSpec, DatosGrafico } from '@core/data-access/reporting/reporting.types';
+import type { ChartSpec, DatosGrafico } from './reporting.types';
 
 /**
  * El contrato de todo gráfico del portal (ADR-0017):
@@ -6,7 +6,7 @@ import type { ChartSpec, DatosGrafico } from '@core/data-access/reporting/report
  * 6 cómo se calcula · 7 velas. Los puntos 5–7 pueden faltar **solo** con motivo
  * escrito. Devuelve las violaciones; vacío = cumple.
  */
-export function violacionesDelContrato(spec: ChartSpec): string[] {
+export function getContractViolations(spec: ChartSpec): string[] {
   const v: string[] = [];
   if (spec.titulo.trim() === '') v.push('1) falta el título');
   if (spec.resumenAccesible.trim() === '') v.push('falta el resumen accesible');
@@ -17,13 +17,13 @@ export function violacionesDelContrato(spec: ChartSpec): string[] {
   if (spec.info !== null && (spec.info.formula.trim() === '' || spec.info.fuente.trim() === '')) {
     v.push('6) la información no trae fórmula o fuente');
   }
-  if (!tieneDatos(spec.datos)) {
+  if (!hasData(spec.datos)) {
     if (!spec.sinDatoMotivo?.trim()) v.push('sin datos y sin motivo de «Sin dato»');
   }
   return v;
 }
 
-export function tieneDatos(datos: DatosGrafico): boolean {
+export function hasData(datos: DatosGrafico): boolean {
   switch (datos.tipo) {
     case 'cartesiano':
       return datos.series.some((s) => s.valores.some((x) => x !== null));
