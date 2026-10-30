@@ -14,6 +14,20 @@ function formato(clave: string, crear: () => Intl.NumberFormat): Intl.NumberForm
   return f;
 }
 
+/** `12,5 k`, `1,2 M`, `3 mil M`: el sufijo no depende del idioma del navegador, para que un eje no mezcle `3 K` con `12 k`. */
+function abreviar(valor: number): string {
+  const abs = Math.abs(valor);
+  const [n, sufijo] =
+    abs >= 1e9 ? [valor / 1e9, ' mil M'] : abs >= 1e6 ? [valor / 1e6, ' M'] : abs >= 1e3 ? [valor / 1e3, ' k'] : [valor, ''];
+  return `${formato('c', () => new Intl.NumberFormat('es-BO', { maximumFractionDigits: 1 })).format(n)}${sufijo}`;
+}
+
+function simboloMoneda(moneda: string): string {
+  return formato(`s:${moneda}`, () => new Intl.NumberFormat('es-BO', { style: 'currency', currency: moneda }))
+    .formatToParts(0)
+    .find((p) => p.type === 'currency')?.value ?? moneda;
+}
+
 /**
  * Da formato a un valor según su unidad. `null` y `NaN` salen como «Sin dato»:
  * un reporte que convierte la ausencia en cero miente (CLAUDE.md, regla de la
@@ -29,6 +43,9 @@ export function formatearValor(
   }
   switch (unidad.tipo) {
     case 'moneda':
+      if (compacto) {
+        return `${simboloMoneda(unidad.moneda)} ${abreviar(valor)}`;
+      }
       return formato(`m:${unidad.moneda}:${compacto}`, () =>
         new Intl.NumberFormat('es-BO', {
           style: 'currency',
@@ -44,6 +61,9 @@ export function formatearValor(
     case 'razon':
       return `${formato('r', () => new Intl.NumberFormat('es-BO', { maximumFractionDigits: 2 })).format(valor)}${unidad.sufijo}`;
     case 'numero':
+      if (compacto) {
+        return abreviar(valor);
+      }
       return formato(`n:${compacto}`, () =>
         new Intl.NumberFormat('es-BO', {
           notation: compacto ? 'compact' : 'standard',

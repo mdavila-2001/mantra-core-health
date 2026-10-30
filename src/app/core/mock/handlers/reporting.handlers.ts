@@ -39,8 +39,8 @@ const CATALOGO: readonly ReporteCatalogo[] = [
   { id: 'rep-cobros', nombre: 'Cobros y caja', vertical: 'cobros', descripcion: 'Éxito de pago, reembolsos, disputas, rezago de liquidación y costo del gateway.', responsable: 'Finanzas', certificado: true, frescuraMin: 20, ruta: '/reports/commercial/cobros' },
   { id: 'rep-adquisicion', nombre: 'Adquisición y cuentas', vertical: 'adquisicion', descripcion: 'Embudo lead → activación, rendimiento por canal, cupones y salud de cuenta.', responsable: 'Crecimiento', certificado: false, frescuraMin: 180, ruta: '/reports/commercial/adquisicion' },
   { id: 'rep-calidad', nombre: 'Calidad del dato y definiciones', vertical: 'calidad', descripcion: 'Catálogo de KPI con fórmula, dueño, fuente y frescura; reglas de calidad.', responsable: 'Gobierno de datos', certificado: true, frescuraMin: 5, ruta: '/reports/commercial/calidad' },
-  { id: 'rep-contable', nombre: 'Vista contable', vertical: 'cobros', descripcion: 'Resultado del periodo, documentos pendientes y cartera de la práctica. Pantalla existente conectada a la API.', responsable: 'Finanzas', certificado: true, frescuraMin: 30, ruta: '/administration/accounting/cockpit' },
-  { id: 'rep-seguros', nombre: 'Analítica de seguros', vertical: 'comisiones', descripcion: 'Reclamos, corredores y campañas de aseguradoras. Pantalla existente conectada a la API.', responsable: 'Seguros', certificado: false, frescuraMin: 90, ruta: '/administration/insurance-analytics' },
+  { id: 'rep-contable', nombre: 'Vista contable', vertical: 'existentes', descripcion: 'Resultado del periodo, documentos pendientes y cartera de la práctica. Pantalla existente conectada a la API.', responsable: 'Finanzas', certificado: true, frescuraMin: 30, ruta: '/administration/accounting/cockpit' },
+  { id: 'rep-seguros', nombre: 'Analítica de seguros', vertical: 'existentes', descripcion: 'Reclamos, corredores y campañas de aseguradoras. Pantalla existente conectada a la API.', responsable: 'Seguros', certificado: false, frescuraMin: 90, ruta: '/administration/insurance-analytics' },
 ];
 
 const PESTANAS = new Set<string>(Object.keys(CONSTRUCTORES));

@@ -7,6 +7,7 @@ import type {
   SerieCartesiana,
   UnidadValor,
 } from '@core/data-access/reporting/reporting.types';
+import { rampColorAt, readableOn } from './chart-color';
 import type { ChartTheme } from './chart-theme';
 
 /* ============================================================================
@@ -33,12 +34,21 @@ export function escapar(texto: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function prefersMoreContrast(): boolean {
+  return (
+    typeof window.matchMedia === 'function' &&
+    (window.matchMedia('(prefers-contrast: more)').matches || window.matchMedia('(forced-colors: active)').matches)
+  );
+}
+
 function base(tema: ChartTheme): Record<string, unknown> {
   return {
     backgroundColor: 'transparent',
     color: tema.serie,
-    textStyle: { color: tema.texto, fontFamily: 'inherit' },
-    aria: { enabled: true, decal: { show: true } },
+    textStyle: { color: tema.texto, fontFamily: tema.fuente },
+    // Los patrones de relleno son para quien pide más contraste (ADR-0017): por defecto
+    // ensucian marcas pequeñas y las etiquetas; la leyenda, el tooltip y la tabla ya llevan la identidad.
+    aria: { enabled: true, decal: { show: prefersMoreContrast() } },
     animation: !(typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
   };
 }
@@ -46,12 +56,12 @@ function base(tema: ChartTheme): Record<string, unknown> {
 function leyenda(tema: ChartTheme, nombres?: readonly string[]): Record<string, unknown> {
   return {
     show: true,
-    type: 'scroll',
+    type: 'plain',
     bottom: 0,
     left: 'center',
+    width: '92%',
     itemGap: 14,
     textStyle: { color: tema.texto, fontSize: 12 },
-    pageTextStyle: { color: tema.textoSuave },
     ...(nombres === undefined ? {} : { data: nombres }),
   };
 }
@@ -141,14 +151,18 @@ function construirCartesiano(
     type: 'category',
     data: d.categorias,
     axisLine: { lineStyle: { color: tema.linea } },
-    axisLabel: { color: tema.textoSuave, hideOverlap: true },
+    // Pocas categorías: se rotulan todas (si no, «Visitador / Referidor / Plataforma» salta una de cada dos).
+    axisLabel: { color: tema.textoSuave, hideOverlap: true, ...(d.categorias.length <= 12 ? { interval: 0 } : {}) },
     axisTick: { alignWithLabel: true },
   };
   const valor = {
     type: 'value',
+    // Una línea no necesita el cero: con el eje desde 0 una serie que se mueve 10 % queda plana.
+    scale: d.series.every((s) => s.forma === 'linea'),
     splitLine: { lineStyle: { color: tema.rejilla } },
     axisLabel: {
       color: tema.textoSuave,
+      hideOverlap: true,
       formatter: (v: number) => formatearValor(v, spec.unidad, true),
     },
   };
@@ -215,25 +229,27 @@ function construirPartes(
         ? {
             type: 'funnel',
             name: spec.titulo,
-            left: '8%',
-            right: '8%',
+            left: '4%',
+            right: '38%',
             top: 12,
-            bottom: 52,
+            bottom: 64,
             sort: 'none',
             gap: 3,
             label: {
               show: true,
-              position: 'inside',
+              position: 'right',
               color: tema.texto,
-              formatter: (p: ParamEje) => `${p.name ?? ''}: ${formatearValor(readValue(p), spec.unidad, true)}`,
+              lineHeight: 16,
+              formatter: (p: ParamEje) => `${p.name ?? ''}\n${formatearValor(readValue(p), spec.unidad, true)}`,
             },
+            labelLine: { show: true, length: 14, lineStyle: { color: tema.linea } },
             data: datos,
           }
         : {
             type: 'pie',
             name: spec.titulo,
-            radius: ['46%', '70%'],
-            center: ['50%', '44%'],
+            radius: ['36%', '58%'],
+            center: ['50%', '40%'],
             avoidLabelOverlap: true,
             label: { show: false },
             emphasis: { scale: true, label: { show: false } },
@@ -281,13 +297,31 @@ function construirMapaCalor(
       },
     },
     grid: { left: 8, right: 16, top: 12, bottom: 60, containLabel: true },
-    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave } },
-    yAxis: { type: 'category', data: d.filas, inverse: true, axisLabel: { color: tema.textoSuave } },
+    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: true } },
+    yAxis: { type: 'category', data: d.filas, inverse: true, axisLabel: { color: tema.textoSuave, interval: 0 } },
     series: [
       {
         type: 'heatmap',
         name: d.nombreValor,
-        data: d.celdas.map((c) => (c[2] === null ? [c[0], c[1], '-'] : [c[0], c[1], c[2]])),
+        data: d.celdas.map((c) =>
+          c[2] === null
+            ? {
+                // Sin dato no es cero ni un hueco: se pinta neutro y lo dice.
+                value: [c[0], c[1], '-'],
+                itemStyle: { color: tema.rejilla },
+                label: { show: d.columnas.length <= 14 && d.filas.length <= 14, formatter: 'Sin dato', color: tema.textoSuave },
+              }
+            : {
+                value: [c[0], c[1], c[2]],
+                label: {
+                  color: readableOn(
+                    rampColorAt(tema.rampa, max === min ? 0 : (c[2] - min) / (max - min)),
+                    tema.texto,
+                    tema.superficie,
+                  ),
+                },
+              },
+        ),
         label: {
           show: d.columnas.length <= 14 && d.filas.length <= 14,
           color: tema.texto,
@@ -325,8 +359,9 @@ function construirMedidor(
         max: d.maximo,
         startAngle: 210,
         endAngle: -30,
-        radius: '88%',
+        radius: '84%',
         center: ['50%', '58%'],
+        splitNumber: 4,
         progress: { show: true, width: 16 },
         axisLine: {
           lineStyle: {
@@ -403,7 +438,7 @@ function construirCascada(
       },
     },
     grid: { left: 8, right: 16, top: 20, bottom: 56, containLabel: true },
-    xAxis: { type: 'category', data: nombres, axisLabel: { color: tema.textoSuave, hideOverlap: true }, axisLine: { lineStyle: { color: tema.linea } } },
+    xAxis: { type: 'category', data: nombres, axisLabel: { color: tema.textoSuave, interval: 0, width: 96, overflow: 'break' }, axisLine: { lineStyle: { color: tema.linea } } },
     yAxis: { type: 'value', splitLine: { lineStyle: { color: tema.rejilla } }, axisLabel: { color: tema.textoSuave, formatter: (v: number) => formatearValor(v, spec.unidad, true) } },
     series: [
       { name: 'Base', type: 'bar', stack: 'cascada', silent: true, itemStyle: { color: 'transparent' }, data: base0, tooltip: { show: false } },

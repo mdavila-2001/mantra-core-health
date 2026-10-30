@@ -1,6 +1,16 @@
 <div class="tv" data-testid="tab-view">
-  @for (notice of data().avisos ?? []; track notice) {
-    <app-alert tone="info" data-testid="tab-notice">{{ notice }}</app-alert>
+  @if ((data().avisos ?? []).length === 1) {
+    <app-alert tone="info" data-testid="tab-notice">{{ data().avisos![0] }}</app-alert>
+  } @else if ((data().avisos ?? []).length > 1) {
+    <!-- Varios avisos: un solo bloque con lista. Cuatro alertas apiladas empujan los números fuera de la pantalla. -->
+    <app-alert tone="info" data-testid="tab-notice">
+      <p class="tv__notice-title">Antes de leer esta pestaña</p>
+      <ul class="tv__notices">
+        @for (notice of data().avisos; track notice) {
+          <li data-testid="tab-notice-item">{{ notice }}</li>
+        }
+      </ul>
+    </app-alert>
   }
 
   @if (data().kpis.length > 0) {
@@ -26,7 +36,7 @@
       @if (section.charts.length > 0) {
         <div class="tv__charts">
           @for (spec of section.charts; track spec.id) {
-            <div class="tv__cell" [class.tv__cell--full]="spec.ancho === 'completo'">
+            <div class="tv__cell" [class.tv__cell--full]="spec.ancho === 'completo' || section.stretched.has(spec.id)">
               <app-chart-panel
                 [spec]="spec"
                 [seleccion]="store.seleccionDe(spec.filtro?.dimension)"

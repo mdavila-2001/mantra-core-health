@@ -12,12 +12,19 @@ import { ChartPanel } from '@shared/components/organisms/chart-panel';
 import { ReportContextStore } from '../../state/report-context.store';
 import { KpiTile } from '../kpi-tile/kpi-tile';
 import { ReportTable } from './report-table';
+import { orphanCharts } from './tab-layout';
 
 interface TabSection {
   readonly title: string | null;
   readonly description: string | null;
   readonly charts: readonly ChartSpec[];
   readonly tables: readonly TablaReporte[];
+  /** Gráficos de media columna que quedarían solos en su fila y pasan a ancho completo. */
+  readonly stretched: ReadonlySet<string>;
+}
+
+function withLayout(section: Omit<TabSection, 'stretched'>): TabSection {
+  return { ...section, stretched: orphanCharts(section.charts) };
 }
 
 const COMPARISON_TEXT: Readonly<Record<ComparacionReporte, string | null>> = {
@@ -56,8 +63,8 @@ export class TabView {
     const { graficos, tablas, secciones } = this.data();
     if (secciones === undefined || secciones.length === 0) {
       return [
-        { title: 'Gráficos', description: null, charts: graficos, tables: [] },
-        { title: 'Tablas de detalle', description: null, charts: [], tables: tablas },
+        withLayout({ title: 'Gráficos', description: null, charts: graficos, tables: [] }),
+        withLayout({ title: 'Tablas de detalle', description: null, charts: [], tables: tablas }),
       ].filter((s) => s.charts.length > 0 || s.tables.length > 0);
     }
     const chartsById = new Map(graficos.map((g) => [g.id, g]));
@@ -67,12 +74,12 @@ export class TabView {
       const charts = (section.graficos ?? []).flatMap((id) => chartsById.get(id) ?? []);
       const tables = (section.tablas ?? []).flatMap((id) => tablesById.get(id) ?? []);
       [...charts, ...tables].forEach((item) => used.add(item.id));
-      return { title: section.titulo, description: section.descripcion ?? null, charts, tables };
+      return withLayout({ title: section.titulo, description: section.descripcion ?? null, charts, tables });
     });
     const leftoverCharts = graficos.filter((g) => !used.has(g.id));
     const leftoverTables = tablas.filter((t) => !used.has(t.id));
     if (leftoverCharts.length > 0 || leftoverTables.length > 0) {
-      result.push({ title: 'Más detalle', description: null, charts: leftoverCharts, tables: leftoverTables });
+      result.push(withLayout({ title: 'Más detalle', description: null, charts: leftoverCharts, tables: leftoverTables }));
     }
     return result.filter((s) => s.charts.length > 0 || s.tables.length > 0);
   });

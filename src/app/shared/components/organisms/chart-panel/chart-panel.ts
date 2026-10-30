@@ -133,6 +133,9 @@ export class ChartPanel {
       if (ventana === null) {
         return;
       }
+      // ECharts mide el texto al dibujar: si la fuente web llega después, leyendas y ejes quedan
+      // calculados con la de respaldo (se pisan o se cortan). Al terminar de cargar se reconstruye.
+      void ventana.document.fonts?.ready.then(() => this.tema.set(leerTemaGraficos()));
       // El tema cambia por el atributo `data-theme` o por la preferencia del sistema.
       const releer = () => this.tema.set(leerTemaGraficos());
       const observador = new MutationObserver(releer);
