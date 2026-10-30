@@ -354,6 +354,13 @@ for (const tema of TEMAS) {
 }
 
 const ESTADOS = ['vacio', 'error', 'sin-permiso', 'atrasado'] as const;
+/** Nombre en inglés para el archivo de la captura (regla 29); la clave del mock sigue siendo la del estado. */
+const STATE_FILE: Record<(typeof ESTADOS)[number], string> = {
+  vacio: 'empty',
+  error: 'error',
+  'sin-permiso': 'forbidden',
+  atrasado: 'stale',
+};
 for (const viewState of ESTADOS) {
   for (const vp of VIEWPORTS) {
     for (const tema of TEMAS) {
@@ -372,11 +379,14 @@ for (const viewState of ESTADOS) {
           await page.getByTestId('portal-reporteria').click();
           pantalla = 'grid';
           await page.waitForTimeout(1500);
-          await capturar(page, `${vp.nombre}-${tema.nombre}-state-${viewState}-grid`);
+          await capturar(page, `${vp.nombre}-${tema.nombre}-state-${STATE_FILE[viewState]}-grid`);
           pantalla = 'dashboard';
           await page.goto(`${REPORTS}/commercial/suscripciones`);
           await page.waitForTimeout(1800);
-          await capturar(page, `${vp.nombre}-${tema.nombre}-state-${viewState}-dashboard`);
+          await capturar(
+            page,
+            `${vp.nombre}-${tema.nombre}-state-${STATE_FILE[viewState]}-dashboard`,
+          );
         } finally {
           await context.close();
         }
@@ -455,7 +465,7 @@ test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte'
     await expect(page.locator('.rep__cabecera [inert]').first()).toBeAttached();
     // Ida y vuelta con Tab y Shift+Tab: el foco solo puede estar en la hoja o fuera de la página, nunca en un
     // control escondido detrás de ella (cabecera, navegación, contenido).
-    const enLaHojaOFuera = (): Promise<{ dentro: boolean; quien: string }> =>
+    const focusInSheetOrOutside = (): Promise<{ dentro: boolean; quien: string }> =>
       page.evaluate(() => {
         const activo = document.activeElement;
         const dentro =
@@ -469,12 +479,12 @@ test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte'
       });
     for (let i = 0; i < 8; i += 1) {
       await page.keyboard.press('Shift+Tab');
-      const f = await enLaHojaOFuera();
+      const f = await focusInSheetOrOutside();
       expect(f.dentro, `Shift+Tab #${i + 1} → ${f.quien}`).toBe(true);
     }
     for (let i = 0; i < 12; i += 1) {
       await page.keyboard.press('Tab');
-      const f = await enLaHojaOFuera();
+      const f = await focusInSheetOrOutside();
       expect(f.dentro, `Tab #${i + 1} → ${f.quien}`).toBe(true);
     }
     await capturar(page, 'movil-claro-interaccion-asistente-abierto');
