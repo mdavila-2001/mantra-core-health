@@ -1465,6 +1465,14 @@ alcanzable desde este repositorio.
 | `GET` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 | `PUT` | `/notifications/preferences/me` | `AvisoDeHuecoLibre` y 3 pantallas más | No |
 
+### `PharmacyBulkClient` — 1 operación
+
+Carga masiva del catálogo, con vista previa (`dryRun`); `:entity` es `categories`, `products`, `prices` o `sites`. El cliente parte las filas en lotes de 250 y los manda en serie.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/pharmacies/:pharmacyId/:entity/bulk` | `PharmacyImport`, `EntityImport` | No |
+
 ### `PharmacyClient` — 5 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1475,6 +1483,20 @@ alcanzable desde este repositorio.
 | `GET` | `/pharmacy/products` | `InboxOrder` y 3 pantallas más | No |
 | `POST` | `/pharmacies/:pharmacyId/products` | `PharmacyCatalog` | No |
 
+### `PharmacyIntegrationClient` — 7 operaciones
+
+La pestaña Integración del catálogo: la conexión con el sistema de la farmacia, sus vínculos de productos y «Sincronizar ahora». `422 PHARMACY_INTEGRATION_NOT_CONFIGURED` y `502 PHARMACY_INTEGRATION_UNAVAILABLE` se dicen en pantalla por su `reason`.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/pharmacies/:pharmacyId/integration-connections` | `PharmacyIntegration` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections` | `PharmacyIntegration` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings` | `IntegrationMappings` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/product-mappings` | `IntegrationMappings` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/external-products` | `IntegrationMappings` | No |
+| `GET` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync-batches` | `IntegrationSync` | No |
+| `POST` | `/pharmacies/:pharmacyId/integration-connections/:connectionId/sync` | `IntegrationSync` | No |
+
 ### `PharmacyOrdersClient` — 4 operaciones
 
 | Método | Ruta | Consumidor | Pública |
@@ -1483,6 +1505,15 @@ alcanzable desde este repositorio.
 | `GET` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
 | `POST` | `/pharmacy/orders` | `InboxOrder` y 6 pantallas más | No |
 | `GET` | `/pharmacy/orders/me` | `InboxOrder` y 6 pantallas más | No |
+
+### `PharmacySiteStockClient` — 2 operaciones
+
+Stock por sucursal en la pestaña Inventario: «Lo tengo / No lo tengo» por sede y la relectura de sus posiciones.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `PUT` | `/pharmacies/:pharmacyId/sites/:siteId/products/:productId/availability` | `SiteStockPanel` | No |
+| `GET` | `/pharmacy-inventory/sites/:siteId/stock` | `SiteStockPanel` | No |
 
 ### `PracticeSitesClient` — 4 operaciones
 
