@@ -28,7 +28,7 @@ export const PDF_TOKENS = {
   petroleo: [11, 85, 126],
   'petroleo-h': [11, 71, 104],
   'petroleo-p': [11, 57, 83],
-  'tinta-marca': [10, 62, 92],
+  'tinta-marca': [36, 40, 40],
   'petroleo-x': [7, 47, 69],
   'petroleo-xx': [5, 34, 50],
   aguamarina: [79, 179, 169],
