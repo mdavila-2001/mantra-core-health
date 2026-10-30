@@ -23,6 +23,7 @@ import {
   loadAdmissionDetail,
 } from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import { INSIGHTS_RUTAS } from './features/insights/insights.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -222,6 +223,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
   'superadmin/portal': () =>
     import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
+  'administration/marketing-insights': () =>
+    import('./features/insights/insights-shell').then((m) => m.InsightsShell),
   'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
   'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
@@ -1208,6 +1211,7 @@ function pantallaDeGeolocalizacion(
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
   'superadmin/portal': PORTAL_RUTAS,
+  'administration/marketing-insights': INSIGHTS_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
