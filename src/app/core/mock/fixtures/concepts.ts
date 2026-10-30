@@ -999,10 +999,7 @@ export const ENCOUNTER_STATUS = define('VS_ENCOUNTER_STATUS', [
   ['ENCST-CANCELLED', 'Cancelado'],
 ]);
 
-conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.');
-// Los códigos son los de la API (`clinical.concepts.ts`, `MEDICATION_REQUEST_*`):
-// el front decide qué receta se puede pedir por el código (`MR_ISSUED`, FAR-03),
-// así que el simulador no puede inventar los suyos.
+conjunto('VS_MEDICATION_REQUEST_STATUS', 'Estado de la receta', 'Estado de una prescripción.'); // códigos de la API (FAR-03)
 export const PRESCRIPTION_STATUS = define('VS_MEDICATION_REQUEST_STATUS', [
   ['MR_ISSUED', 'Vigente'],
   ['MR_COMPLETED', 'Completada'],

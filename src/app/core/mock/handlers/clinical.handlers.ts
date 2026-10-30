@@ -312,9 +312,7 @@ export function registrarClinica(router: MockRouter): void {
       doseText: datos.doseText ?? '',
       frequencyText: datos.frequencyText ?? '',
       validFrom: datos.validFrom ?? ahora(),
-      // Sin `validTo` la receta no vence, como en la API (columna nullable):
-      // inventarle un fin la daría por vencida apenas se emite.
-      validTo: datos.validTo ?? null,
+      validTo: datos.validTo ?? null, // sin `validTo` no vence, como en la API
       patientInstructionsText: datos.patientInstructionsText ?? '',
       // El «para qué es» de la receta. El concepto gana sobre el texto libre,
       // igual que la ocupación del alta de paciente: el texto sólo tenía
@@ -362,9 +360,7 @@ export function registrarClinica(router: MockRouter): void {
   router.post('/clinical/medication-requests/:id/sign', ({ params }) => {
     const r = prescriptionList.get(params['id']!);
     if (r === undefined) return notFound();
-    // Firmar sólo sella `signedAt`: la receta sigue en borrador hasta emitirse,
-    // como en la API (`medications.service.ts`, `sign` no cambia el estado).
-    return registroReceta(prescriptionList.actualizar(r.id, { signedAt: ahora() })!);
+    return registroReceta(prescriptionList.actualizar(r.id, { signedAt: ahora() })!); // firmar no emite, como en la API
   });
 
   router.post('/clinical/medication-requests/:id/issue', ({ params }) => {
