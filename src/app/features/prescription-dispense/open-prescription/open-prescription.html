@@ -1,0 +1,64 @@
+<app-page-header
+  title="Abrir receta"
+  subtitle="La receta que le compartió el paciente, cruzada con su catálogo y sus sedes."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="open-rx" [attr.data-testid]="testids.page">
+  <app-view-state-host [state]="state()" (retry)="load()">
+    <div vsh-not-found [attr.data-testid]="testids.notFound">
+      @if (failureCopy(); as copy) {
+        <app-alert tone="warning" [title]="copy.title">
+          {{ copy.body }}
+          <div alert-actions>
+            <a app-link [routerLink]="inboxRoute">Ir a la bandeja</a>
+          </div>
+        </app-alert>
+      }
+    </div>
+
+    <div vsh-forbidden [attr.data-testid]="testids.closed">
+      @if (failureCopy(); as copy) {
+        <app-alert tone="warning" [title]="copy.title">
+          {{ copy.body }}
+          @if (deniedRequestId(); as requestId) {
+            <p class="open-rx__request-id">
+              Código de soporte: <code class="tabular-nums">{{ requestId }}</code>
+            </p>
+          }
+          <div alert-actions>
+            <a app-link [routerLink]="inboxRoute">Ir a la bandeja</a>
+          </div>
+        </app-alert>
+      }
+    </div>
+
+    @if (share(); as rx) {
+      <app-card>
+        <h2 card-header class="open-rx__title">Receta compartida</h2>
+        <div class="open-rx__body">
+          <app-fact-list
+            etiqueta="Datos de la receta"
+            disposicion="filas"
+            [hechos]="facts()"
+            [attr.data-testid]="testids.header"
+          />
+
+          <app-tabs [(selectedIndex)]="selectedItem">
+            @for (item of rx.items; track item.medicationRequestId; let i = $index) {
+              <app-tab [label]="tabLabels()[i]">
+                <app-prescription-item
+                  [item]="item"
+                  [sameDrug]="sameDrug()[i]"
+                  [pendingKeys]="pending()"
+                  [failures]="failures()"
+                  (availabilityRequested)="setAvailability($event)"
+                />
+              </app-tab>
+            }
+          </app-tabs>
+        </div>
+      </app-card>
+    }
+  </app-view-state-host>
+</div>
