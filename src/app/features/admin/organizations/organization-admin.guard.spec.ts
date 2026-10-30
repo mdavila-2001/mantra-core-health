@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
@@ -13,7 +13,7 @@ import { organizacionAdministrableGuard } from './organization-admin.guard';
  * las cerraba el guard de sección con `SECURITY_ADMIN`, y el dueño de una
  * clínica no podía abrir la sucursal de su propia clínica.
  */
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class Pantalla {}
 
 function jwt(payload: Record<string, unknown>): string {

@@ -126,7 +126,12 @@ describe('OrgAssignmentForm', () => {
   });
   describe('nodos de alcance elegidos, no pegados', () => {
     type Opcion = readonly { value: string; label: string }[];
-    type Opciones = { practiceId: Opcion; practiceSiteId: Opcion; clinicalUnitId: Opcion; careSpaceId: Opcion };
+    interface Opciones {
+      practiceId: Opcion;
+      practiceSiteId: Opcion;
+      clinicalUnitId: Opcion;
+      careSpaceId: Opcion;
+    }
 
     it('la práctica se elige de GET /practices y sus sedes y áreas del árbol de la práctica', () => {
       expect(interno<() => Opciones>('opcionesDeNodo')().practiceId).toEqual([
