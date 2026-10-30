@@ -1,5 +1,8 @@
 <!-- Un solo `keydown` para todo el árbol: las filas no escuchan teclas por su
      cuenta, así el tabindex itinerante y el type-ahead viven en un lugar. -->
+<!-- El foco lo llevan los `treeitem` (tabindex itinerante); el `ul` sólo escucha
+     las teclas que burbujean desde ellos. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
 <ul class="tree" role="tree" [attr.aria-label]="label()" (keydown)="alPresionar($event)">
   <ng-container *ngTemplateOutlet="nivel; context: { $implicit: items(), level: 1 }" />
 </ul>
@@ -20,7 +23,9 @@
       [attr.tabindex]="tabulable() === nodo.id ? 0 : -1"
       (focus)="alEnfocar(nodo.id)"
     >
-      <!-- La fila es lo que se pulsa; el `li` lleva el foco y la semántica. -->
+      <!-- La fila es lo que se pulsa; el `li` lleva el foco y la semántica, y
+           Enter/Espacio sobre él eligen (los maneja el `keydown` del árbol). -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
       <div
         class="tree__fila"
         [class.tree__fila--elegida]="selectedId() === nodo.id"

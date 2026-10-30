@@ -31,7 +31,7 @@
           [description]="vacio.message ?? ''"
         >
           @if (vacio.nextAction.route) {
-            <a app-link empty-actions [routerLink]="vacio.nextAction.route">
+            <a app-link empty-actions [routerLink]="enlace(vacio.nextAction.route)">
               {{ vacio.nextAction.label }}
             </a>
           } @else {
@@ -90,7 +90,7 @@
           @if (prohibido.nextAction; as accion) {
             <div alert-actions>
               @if (accion.route) {
-                <a app-link [routerLink]="accion.route">{{ accion.label }}</a>
+                <a app-link [routerLink]="enlace(accion.route)">{{ accion.label }}</a>
               } @else {
                 <span>{{ accion.label }}</span>
               }
@@ -116,7 +116,7 @@
                anidado se proyecta al slot por defecto —que app-empty-state no
                tiene— y la salida desaparecía del DOM. -->
           @if (ausente.nextAction?.route; as ruta) {
-            <a app-link empty-actions [routerLink]="ruta">{{ ausente.nextAction?.label }}</a>
+            <a app-link empty-actions [routerLink]="enlace(ruta)">{{ ausente.nextAction?.label }}</a>
           }
         </app-empty-state>
       </ng-content>

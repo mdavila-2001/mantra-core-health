@@ -39,7 +39,6 @@ import type {
 } from '../../../core/view-state/view-state.types';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
-import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -134,7 +133,6 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
 @Component({
   selector: 'app-medical-organization',
   imports: [
-    AppButton,
     Badge,
     DataTable,
     EstablecimientoTab,

@@ -11,7 +11,7 @@ import {
   type TemplateRef,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, type UrlTree } from '@angular/router';
 import { catchError, firstValueFrom, map, of } from 'rxjs';
 
 import { SessionStore } from '../../../../core/auth/session.store';
@@ -316,6 +316,11 @@ export class SpaceDetail {
 
   protected recargar(): void {
     this.cargar(this.id());
+  }
+
+  /** Una próxima acción con query (`?tab=children`) como `UrlTree`, no como segmento. */
+  protected enlace(ruta: string): UrlTree {
+    return this.router.parseUrl(ruta);
   }
 
   protected rutaDeEdicion(): string {

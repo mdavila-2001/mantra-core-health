@@ -18,7 +18,7 @@ import { Alert } from '../../molecules/alert/alert';
 import { AppButton } from '../../atoms/button/button';
 import { EmptyState } from '../../molecules/empty-state/empty-state';
 import { Link } from '../../atoms/link/link';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink, type UrlTree } from '@angular/router';
 import { Skeleton } from '../../atoms/skeleton/skeleton';
 import { Spinner } from '../../atoms/spinner/spinner';
 
@@ -61,6 +61,7 @@ import { Spinner } from '../../atoms/spinner/spinner';
 export class ViewStateHost<T> {
   private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly router = inject(Router);
 
   readonly state = input.required<ViewState<T>>();
 
@@ -71,6 +72,20 @@ export class ViewStateHost<T> {
   readonly refresh = output<void>();
 
   protected readonly status = computed(() => this.state().status);
+
+  /**
+   * La ruta de una próxima acción como `UrlTree`.
+   *
+   * `nextAction.route` es un texto que puede traer query
+   * (`/administration/medical-organization?tab=infrastructure`). Pasado tal
+   * cual a `routerLink`, Angular lo trata como **un solo segmento** y escapa
+   * el `?` (`%3F`): el enlace iba a una ruta inexistente. Parsearlo primero
+   * conserva el comportamiento de las rutas sin query y arregla las que la
+   * traen.
+   */
+  protected enlace(route: string): UrlTree {
+    return this.router.parseUrl(route);
+  }
 
   /**
    * S4 mueve el foco al mensaje: la persona tiene que corregir y el error

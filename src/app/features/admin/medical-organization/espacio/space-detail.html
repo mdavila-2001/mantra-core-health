@@ -1,36 +1,36 @@
 @let estado = ficha();
 
 <app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
-  @if (espacio(); as e) {
-    <span page-meta class="ficha-espacio__meta">
+  <span page-meta class="ficha-espacio__meta">
+    @if (espacio(); as e) {
       <app-badge [variant]="varianteDe(e.status)" data-testid="ficha-estado">{{ e.status.display }}</app-badge>
       @if (e.operationalStatus; as op) {
         <app-badge [variant]="varianteDe(op)">{{ op.display }}</app-badge>
       }
-    </span>
-    <div page-actions class="ficha-espacio__acciones">
-      <a app-button variant="ghost" size="sm" [routerLink]="rutaDeConsola" [queryParams]="volver()">Volver al árbol</a>
-      @if (puedeEscribir()) {
-        <a app-button size="sm" variant="outline" [routerLink]="rutaDeEdicion()" data-testid="ficha-editar">Editar</a>
-        <button app-button size="sm" variant="outline" type="button" [disabled]="trabajando() || !catalogo()" (clicked)="abrirDialogo('mover')" data-testid="ficha-mover">
-          Mover
+    }
+  </span>
+  <div page-actions class="ficha-espacio__acciones">
+    <a app-button variant="ghost" size="sm" [routerLink]="rutaDeConsola" [queryParams]="volver()">Volver al árbol</a>
+    @if (espacio() && puedeEscribir()) {
+      <a app-button size="sm" variant="outline" [routerLink]="rutaDeEdicion()" data-testid="ficha-editar">Editar</a>
+      <button app-button size="sm" variant="outline" type="button" [disabled]="trabajando() || !catalogo()" (clicked)="abrirDialogo('mover')" data-testid="ficha-mover">
+        Mover
+      </button>
+      @for (accion of acciones(); track accion) {
+        <button
+          app-button
+          size="sm"
+          type="button"
+          [variant]="textoDeAccion[accion].destructiva ? 'danger' : 'secondary'"
+          [disabled]="trabajando()"
+          [attr.data-testid]="'ficha-ciclo-' + accion"
+          (clicked)="cambiarCiclo(accion)"
+        >
+          {{ textoDeAccion[accion].boton }}
         </button>
-        @for (accion of acciones(); track accion) {
-          <button
-            app-button
-            size="sm"
-            type="button"
-            [variant]="textoDeAccion[accion].destructiva ? 'danger' : 'secondary'"
-            [disabled]="trabajando()"
-            [attr.data-testid]="'ficha-ciclo-' + accion"
-            (clicked)="cambiarCiclo(accion)"
-          >
-            {{ textoDeAccion[accion].boton }}
-          </button>
-        }
       }
-    </div>
-  }
+    }
+  </div>
 </app-page-header>
 
 <!-- El resultado de la última mutación fallida, una vez y arriba de la ficha:
@@ -179,7 +179,7 @@
                 {{ etiquetaDeBloqueo[b.kind]?.titulo ?? b.kind }}
               </p>
               @if (b.nextAction.route) {
-                <a app-link [routerLink]="b.nextAction.route" (click)="bloqueos.set(null)">{{ b.nextAction.label }}</a>
+                <a app-link [routerLink]="enlace(b.nextAction.route)" (click)="bloqueos.set(null)">{{ b.nextAction.label }}</a>
               } @else {
                 <p class="ficha-espacio__secundario">Próxima acción: {{ b.nextAction.label }}</p>
               }

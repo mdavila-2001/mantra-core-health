@@ -385,7 +385,7 @@ export function partirLineaCsv(linea: string, separador: string): string[] {
  * numérico sea número. Padres, reglas y unicidad los valida el dry-run.
  */
 export function parsearCsv(texto: string): ResultadoDeParseo {
-  const lineas = texto.replace(/^﻿/, '').split(/\r?\n/);
+  const lineas = texto.replace(/^\uFEFF/, '').split(/\r?\n/);
   const errores: ErrorDeParseo[] = [];
   const filas: ImportRow[] = [];
   const indiceEncabezado = lineas.findIndex((l) => l.trim() !== '');

@@ -7,7 +7,7 @@
         <span>Establecimiento</span>
         <select
           data-testid="infra-sitio"
-          [value]="sitioId() ?? ''"
+          [value]="sitioId()"
           (change)="elegirSitio($any($event.target).value)"
         >
           @for (sitio of sitios(); track sitio.id) {
@@ -49,7 +49,7 @@
     @if (datos(); as d) {
       @if (resumen(); as r) {
         <p class="infra__resumen" data-testid="infra-resumen">
-          <strong>{{ r.espacios }}</strong> espacios · <strong>{{ r.camas }}</strong> camas activas ·
+          <strong>{{ r.espacios }}</strong> espacios · <strong>{{ r.camas }}</strong> camas y puestos activos ·
           <strong>{{ r.unidades }}</strong> unidades · actualizado {{ r.actualizado }}
           <button type="button" class="infra__refrescar" (click)="recargar()">Actualizar</button>
         </p>
