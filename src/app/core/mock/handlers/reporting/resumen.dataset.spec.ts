@@ -113,11 +113,11 @@ function kpi(p: PestanaReporte, id: string): KpiSpec {
   return k;
 }
 
-function conVariacion(p: PestanaReporte, pct: number): PestanaReporte {
+function withVariation(p: PestanaReporte, pct: number): PestanaReporte {
   return { ...p, kpis: p.kpis.map((k) => (k.id === 'ingreso-periodo' ? { ...k, variacionPct: pct } : k)) };
 }
 
-function sinVariacion(p: PestanaReporte): PestanaReporte {
+function withoutVariation(p: PestanaReporte): PestanaReporte {
   return { ...p, kpis: p.kpis.map((k) => (k.id === 'ingreso-periodo' ? { ...k, variacionPct: null } : k)) };
 }
 
@@ -446,22 +446,22 @@ describe('Resumen: contra las verticales reales', () => {
       const anioPasado = buildSummaryWith({ ...CTX, comparar: 'mismo-periodo-ano-anterior' }, COMPLETAS).secciones![0]!.descripcion ?? '';
       expect(anioPasado).toContain('mismo periodo del año pasado');
       expect(anioPasado).not.toContain('frente al periodo anterior');
-      const todasCaen: FuentesResumen = {
-        suscripciones: (c) => conVariacion(COMPLETAS.suscripciones(c), -1),
-        publicidad: (c) => conVariacion(COMPLETAS.publicidad(c), -5),
-        comisiones: (c) => conVariacion(COMPLETAS.comisiones(c), -10),
+      const allFall: FuentesResumen = {
+        suscripciones: (c) => withVariation(COMPLETAS.suscripciones(c), -1),
+        publicidad: (c) => withVariation(COMPLETAS.publicidad(c), -5),
+        comisiones: (c) => withVariation(COMPLETAS.comisiones(c), -10),
       };
-      const texto = buildSummaryWith(CTX, todasCaen).secciones![0]!.descripcion ?? '';
+      const texto = buildSummaryWith(CTX, allFall).secciones![0]!.descripcion ?? '';
       expect(texto).toMatch(/Ninguna fuente crece; la que menos cae es Suscripciones/);
     });
 
     it('con una sola fuente que cae no se llama «la que más» y «la que menos» a la misma', () => {
-      const una: FuentesResumen = {
-        suscripciones: (c) => conVariacion(COMPLETAS.suscripciones(c), -3),
-        publicidad: (c) => sinVariacion(COMPLETAS.publicidad(c)),
-        comisiones: (c) => sinVariacion(COMPLETAS.comisiones(c)),
+      const single: FuentesResumen = {
+        suscripciones: (c) => withVariation(COMPLETAS.suscripciones(c), -3),
+        publicidad: (c) => withoutVariation(COMPLETAS.publicidad(c)),
+        comisiones: (c) => withoutVariation(COMPLETAS.comisiones(c)),
       };
-      const texto = buildSummaryWith(CTX, una).secciones![0]!.descripcion ?? '';
+      const texto = buildSummaryWith(CTX, single).secciones![0]!.descripcion ?? '';
       expect(texto).not.toMatch(/la que menos cae/);
       expect(texto).toMatch(/Suscripciones cae/);
     });
