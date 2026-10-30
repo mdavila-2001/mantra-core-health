@@ -40,6 +40,7 @@ import {
   rutasHeredadasConParametro,
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
 import {
   ROLES_ADMINISTRACION,
   ROLES_REPORTERIA,
@@ -1019,18 +1020,23 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
+    // Guard propio y no el de sección (que pide SECURITY_ADMIN): la API abre
+    // esta alta al OWNER/ADMIN de la organización además de a la plataforma
+    // (`assertCanAdminister`), y el guard no niega lo que la API permite.
     path: 'administration/organizations/:tenantId/branches/new',
     title: `${APP_TITLE} - Nueva sucursal`,
-    canActivate: [seccionRolesGuard],
+    canActivate: [organizacionAdministrableGuard],
     loadComponent: () =>
       import('./features/admin/organizations/branch-new/branch-new')
         .then((m) => m.BranchNew)
         .catch(() => chunkFallido()),
   },
   {
+    // Mismo criterio que el alta de sucursal: `POST /tenants/{id}/memberships`
+    // también pasa por `assertCanAdminister`.
     path: 'administration/organizations/:tenantId/memberships/new',
     title: `${APP_TITLE} - Sumar a la organización`,
-    canActivate: [seccionRolesGuard],
+    canActivate: [organizacionAdministrableGuard],
     loadComponent: () =>
       import('./features/admin/organizations/membership-new/membership-new')
         .then((m) => m.MembershipNew)
