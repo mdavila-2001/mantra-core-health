@@ -10,6 +10,7 @@ import { registrarEncuestas } from './surveys-forms.handlers';
 import { registrarFarmacia } from './pharmacy.handlers';
 import { registrarFinanzas } from './finance.handlers';
 import { registrarIdentidad } from './identity.handlers';
+import { registrarInfraestructura } from './infrastructure.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -36,6 +37,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarPerfiles(router);
   registrarAgenda(router);
   registrarPracticas(router);
+  registrarInfraestructura(router);
   registrarClinica(router);
   registrarComunidad(router);
   registrarPublico(router);

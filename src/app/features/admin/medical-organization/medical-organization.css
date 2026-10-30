@@ -153,3 +153,9 @@
 .organizacion-medica__cobertura dd {
   margin: var(--sp-1) 0 0;
 }
+
+.organizacion-medica__sin-consola {
+  margin: var(--sp-4) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

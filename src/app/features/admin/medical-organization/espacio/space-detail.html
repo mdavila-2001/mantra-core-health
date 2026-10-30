@@ -1,0 +1,213 @@
+@let estado = ficha();
+
+<app-page-header [title]="titulo()" [subtitle]="subtitulo()" [breadcrumbs]="breadcrumbs()">
+  @if (espacio(); as e) {
+    <span page-meta class="ficha-espacio__meta">
+      <app-badge [variant]="varianteDe(e.status)" data-testid="ficha-estado">{{ e.status.display }}</app-badge>
+      @if (e.operationalStatus; as op) {
+        <app-badge [variant]="varianteDe(op)">{{ op.display }}</app-badge>
+      }
+    </span>
+    <div page-actions class="ficha-espacio__acciones">
+      <a app-button variant="ghost" size="sm" [routerLink]="rutaDeConsola" [queryParams]="volver()">Volver al árbol</a>
+      @if (puedeEscribir()) {
+        <a app-button size="sm" variant="outline" [routerLink]="rutaDeEdicion()" data-testid="ficha-editar">Editar</a>
+        <button app-button size="sm" variant="outline" type="button" [disabled]="trabajando() || !catalogo()" (clicked)="abrirDialogo('mover')" data-testid="ficha-mover">
+          Mover
+        </button>
+        @for (accion of acciones(); track accion) {
+          <button
+            app-button
+            size="sm"
+            type="button"
+            [variant]="textoDeAccion[accion].destructiva ? 'danger' : 'secondary'"
+            [disabled]="trabajando()"
+            [attr.data-testid]="'ficha-ciclo-' + accion"
+            (clicked)="cambiarCiclo(accion)"
+          >
+            {{ textoDeAccion[accion].boton }}
+          </button>
+        }
+      }
+    </div>
+  }
+</app-page-header>
+
+<!-- El resultado de la última mutación fallida, una vez y arriba de la ficha:
+     412 «alguien lo cambió», 422 de regla, 403, sin conexión, o S9 con su código. -->
+@if (falloDeAccion(); as fallo) {
+  <app-view-state-host class="ficha-espacio__fallo" data-testid="ficha-fallo" [state]="fallo" (retry)="recargar()" />
+}
+
+<app-view-state-host [state]="estado" (retry)="recargar()" (refresh)="recargar()">
+  @if (espacio(); as e) {
+    @if (aislamientoSinValidar()) {
+      <app-alert tone="warning" title="No apto para aislamiento">
+        Es un local de aislamiento sin validación de climatización registrada. Cargá la fecha de validación en «Atributos técnicos».
+      </app-alert>
+    }
+
+    <!-- UNA tarjeta, centrada y a lo ancho, con las cinco pestañas (composition-rules §5). -->
+    <app-card class="ficha-espacio" padding="lg" data-testid="ficha-espacio">
+      <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="cambiarPestana($event)">
+        <app-tab label="General">
+          <div class="ficha-espacio__panel">
+            <app-fact-list [hechos]="hechosGenerales()" etiqueta="Datos generales" />
+            <nav class="ficha-espacio__camino" aria-label="Ubicación del espacio">
+              <ol>
+                @for (paso of e.path; track paso.id; let ultimo = $last) {
+                  <li>
+                    @if (ultimo) {
+                      <span aria-current="page">{{ paso.name }}</span>
+                    } @else {
+                      <a [routerLink]="rutaDeEspacio(paso.id)">{{ paso.name }}</a>
+                    }
+                    <span class="ficha-espacio__forma">{{ paso.form.display }}</span>
+                  </li>
+                }
+              </ol>
+            </nav>
+          </div>
+        </app-tab>
+
+        <app-tab label="Atributos técnicos">
+          <div class="ficha-espacio__panel">
+            <app-fact-list [hechos]="hechosTecnicos()" etiqueta="Atributos técnicos" />
+            @if (comportamiento().length > 0) {
+              <div>
+                <h3 class="ficha-espacio__subtitulo">Lo que la función «{{ e.function.display }}» implica</h3>
+                <ul class="ficha-espacio__chips">
+                  @for (rasgo of comportamiento(); track rasgo) {
+                    <li><app-badge variant="secondary">{{ rasgo }}</app-badge></li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </app-tab>
+
+        <app-tab label="Unidades">
+          <div class="ficha-espacio__panel">
+            @if (puedeEscribir() && catalogo()) {
+              <div class="ficha-espacio__barra">
+                <button app-button size="sm" variant="outline" type="button" (clicked)="abrirDialogo('vincular')" data-testid="ficha-vincular">
+                  Vincular unidad
+                </button>
+              </div>
+            }
+            <app-data-table
+              data-testid="ficha-unidades"
+              [state]="vinculos()"
+              [columns]="columnasDeVinculos()"
+              [trackBy]="porId"
+              caption="Unidades que usan este espacio"
+              (retry)="recargar()"
+            />
+          </div>
+        </app-tab>
+
+        <app-tab label="Hijos">
+          <div class="ficha-espacio__panel">
+            @if (puedeEscribir() && e.form.code !== 'LOC_FORM_BED') {
+              <div class="ficha-espacio__barra">
+                <a app-button size="sm" variant="outline" [routerLink]="rutaDeAlta" [queryParams]="{ site: e.siteId, parent: e.id }">Agregar uno</a>
+                <a app-button size="sm" variant="outline" [routerLink]="rutaDeAltaMasiva" [queryParams]="{ site: e.siteId, parent: e.id }" data-testid="ficha-alta-masiva">Alta masiva</a>
+              </div>
+            }
+            <app-data-table
+              data-testid="ficha-hijos"
+              [state]="hijos()"
+              [columns]="columnasDeHijos()"
+              [trackBy]="porId"
+              caption="Espacios que cuelgan de este"
+              (retry)="recargar()"
+            />
+          </div>
+        </app-tab>
+
+        <app-tab label="Historial">
+          <div class="ficha-espacio__panel">
+            <app-view-state-host [state]="historial()" (retry)="recargar()">
+              @if (historial().status === 'ready') {
+                <ol class="ficha-espacio__historial" data-testid="ficha-historial">
+                  @for (evento of $any(historial()).data; track evento.id) {
+                    <li>
+                      <time [attr.datetime]="evento.at">{{ evento.at.slice(0, 16).replace('T', ' ') }}</time>
+                      <p class="ficha-espacio__evento">{{ evento.summary }}</p>
+                      <p class="ficha-espacio__secundario">
+                        {{ evento.actorName ?? 'Sistema' }} · versión {{ evento.rowVersion }}
+                        @if (evento.reason) {
+                          · motivo: «{{ evento.reason }}»
+                        }
+                      </p>
+                    </li>
+                  }
+                </ol>
+              }
+            </app-view-state-host>
+          </div>
+        </app-tab>
+      </app-tabs>
+    </app-card>
+
+    @if (catalogo(); as cat) {
+      @switch (dialogo()) {
+        @case ('mover') {
+          <app-mover-dialog [espacio]="e" [estructura]="estructuraCargada()" [catalogo]="cat" (guardado)="alGuardarEnDialogo()" (cerrado)="dialogo.set(null)" />
+        }
+        @case ('vincular') {
+          <app-vincular-unidad-dialog [espacio]="e" [estructura]="estructuraCargada()" [catalogo]="cat" (guardado)="alGuardarEnDialogo()" (cerrado)="dialogo.set(null)" />
+        }
+      }
+    }
+
+    <!-- Retiro bloqueado: la lista, cada bloqueo con su próxima acción (S3). No
+         se ofrece confirmar: no hay nada que confirmar hasta destrabarlo. -->
+    @if (bloqueos(); as lista) {
+      <app-content-dialog
+        size="lg"
+        heading="Todavía no se puede retirar"
+        [description]="e.name + ' tiene dependencias vigentes. Resolvé cada una y volvé a intentarlo.'"
+        closeLabel="Entendido"
+        (closed)="bloqueos.set(null)"
+      >
+        <ul class="ficha-espacio__bloqueos" data-testid="ficha-bloqueos">
+          @for (b of lista; track b.kind) {
+            <li>
+              <p class="ficha-espacio__bloqueo-titulo">
+                <app-badge variant="warning">{{ b.count }}</app-badge>
+                {{ etiquetaDeBloqueo[b.kind]?.titulo ?? b.kind }}
+              </p>
+              @if (b.nextAction.route) {
+                <a app-link [routerLink]="b.nextAction.route" (click)="bloqueos.set(null)">{{ b.nextAction.label }}</a>
+              } @else {
+                <p class="ficha-espacio__secundario">Próxima acción: {{ b.nextAction.label }}</p>
+              }
+            </li>
+          }
+        </ul>
+      </app-content-dialog>
+    }
+  }
+</app-view-state-host>
+
+<ng-template #celdaHijo let-hijo>
+  <a [routerLink]="rutaDeEspacio(hijo.id)" class="ficha-espacio__enlace">{{ hijo.name }}</a>
+  <span class="ficha-espacio__secundario">{{ hijo.code }} · {{ hijo.form.display }}</span>
+</ng-template>
+
+<ng-template #celdaFuncionHijo let-hijo>{{ funcionDe(hijo) }}</ng-template>
+
+<ng-template #celdaEstadoHijo let-hijo>
+  <app-badge [variant]="varianteDe(hijo.status)">{{ hijo.status.display }}</app-badge>
+</ng-template>
+
+<ng-template #celdaUnidad let-v>{{ nombreDeUnidad(v.clinicalUnitId) }}</ng-template>
+
+<ng-template #celdaRol let-v>
+  <app-badge [variant]="v.role.code === 'SPACE_UNIT_ROLE_OWNER' ? 'primary' : 'secondary'">{{ v.role.display }}</app-badge>
+</ng-template>
+
+<ng-template #celdaAccionVinculo let-v>
+  <button app-button size="sm" variant="ghost" type="button" (clicked)="desvincular(v)">Desvincular</button>
+</ng-template>

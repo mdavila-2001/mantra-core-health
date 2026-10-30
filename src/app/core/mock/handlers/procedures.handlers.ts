@@ -61,6 +61,24 @@ const casos = new Coleccion<CasoSimulado>([
   caso(7, PACIENTES[10]!.id, -5, 8, 'CANCELADO', PROCEDIMIENTO['PROC-ENDOSCOPIA']!, PROFESIONALES[10]!.id),
 ]);
 
+/**
+ * Casos todavía por operar en un quirófano: bloquean su retiro.
+ *
+ * Lo consulta la infraestructura (F1, `FUTURE_PROCEDURE` en `retire-check`):
+ * los ids de `QUIROFANO` son los mismos espacios que siembra
+ * `fixtures/infraestructura.ts`, así que el bloqueo sale de los casos reales
+ * del simulador y no de un número escrito a mano.
+ */
+export function casosFuturosEnQuirofano(careSpaceId: string): string[] {
+  const ahoraMs = Date.now();
+  return casos
+    .todos()
+    .filter((c) => c.operatingRoomId === careSpaceId)
+    .filter((c) => c.statusConceptId === ESTADO_CASO.PROGRAMADO || c.statusConceptId === ESTADO_CASO.PENDIENTE_EQUIPO)
+    .filter((c) => Date.parse(c.scheduledStartAt) > ahoraMs)
+    .map((c) => c.id);
+}
+
 function vista(c: CasoSimulado) {
   return { id: c.id, caseNumber: c.caseNumber, patientProfileId: c.patientProfileId, primarySurgeonProfileId: c.primarySurgeonProfileId, operatingRoomId: c.operatingRoomId, statusConceptId: c.statusConceptId, scheduledStartAt: c.scheduledStartAt, scheduledEndAt: c.scheduledEndAt };
 }
