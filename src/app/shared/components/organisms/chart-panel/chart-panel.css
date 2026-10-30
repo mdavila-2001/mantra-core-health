@@ -56,7 +56,19 @@
 .gp__chip[aria-pressed='true'] { background: var(--brand-primary); color: var(--text-inverse); border-color: var(--brand-primary); }
 .gp__chip:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
 
-.gp__tabla-caja { overflow: auto; max-height: 22rem; border: 1px solid var(--border-default); border-radius: var(--r-md); }
+/* Sombras de desplazamiento: se ven solo del lado donde aún hay columnas por leer (las de `local` tapan
+   a las de `scroll` cuando se llega al borde). Sin ellas, una tabla cortada a la derecha parece completa. */
+.gp__tabla-caja {
+  overflow: auto;
+  max-height: 22rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background:
+    linear-gradient(to right, var(--bg-surface) 30%, transparent) left center / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--bg-surface) 30%, transparent) right center / 2rem 100% no-repeat local,
+    linear-gradient(to right, color-mix(in srgb, var(--text-primary) 18%, transparent), transparent) left center / 0.75rem 100% no-repeat scroll,
+    linear-gradient(to left, color-mix(in srgb, var(--text-primary) 18%, transparent), transparent) right center / 0.75rem 100% no-repeat scroll;
+}
 .gp__tabla { width: 100%; border-collapse: collapse; font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
 .gp__tabla th, .gp__tabla td { padding: var(--sp-2) var(--sp-3); text-align: right; border-bottom: 1px solid var(--border-default); white-space: nowrap; }
 .gp__tabla th:first-child, .gp__tabla td:first-child { text-align: left; }
