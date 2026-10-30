@@ -145,14 +145,63 @@ describe('ChartPanel · menú Más', () => {
     expect(document.activeElement).toBe(m.item('Exportar CSV'));
   });
 
+  it('Tab saca el foco del menú y lo cierra, sin devolver el foco al botón', async () => {
+    const m = await mount();
+    await openMenu(m);
+    m.root.querySelector('[role="menu"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    await m.fixture.whenStable();
+    expect(m.root.querySelector('[role="menu"]')).toBeNull();
+    expect(m.byId('chart-more')?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('Home y End van a la primera y a la última opción; la flecha hacia arriba desde el contenedor va a la última', async () => {
+    const m = await mount();
+    await openMenu(m);
+    const menu = m.root.querySelector('[role="menu"]');
+    const tecla = (key: string) => menu?.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+    tecla('End');
+    expect(document.activeElement).toBe(m.item('Exportar CSV'));
+    tecla('Home');
+    expect(document.activeElement).toBe(m.item('Ver en grande'));
+    (document.activeElement as HTMLElement).blur();
+    tecla('ArrowUp');
+    expect(document.activeElement).toBe(m.item('Exportar CSV'));
+  });
+
+  it('«Exportar CSV» cierra el menú y devuelve el foco al botón «Más» (no se pierde en el body)', async () => {
+    vi.stubGlobal('URL', { createObjectURL: () => 'blob:x', revokeObjectURL: vi.fn() });
+    const m = await mount();
+    await openMenu(m);
+    m.item('Exportar CSV')?.click();
+    await m.fixture.whenStable();
+    expect(m.root.querySelector('[role="menu"]')).toBeNull();
+    expect(document.activeElement).toBe(m.byId('chart-more'));
+  });
+
+  it('un clic fuera del panel cierra el menú, y el oyente del documento solo existe mientras está abierto', async () => {
+    const alta = vi.spyOn(document, 'addEventListener');
+    const baja = vi.spyOn(document, 'removeEventListener');
+    const m = await mount();
+    const clicsAntes = alta.mock.calls.filter(([t]) => t === 'click').length;
+    expect(clicsAntes).toBe(0);
+    await openMenu(m);
+    expect(alta.mock.calls.filter(([t]) => t === 'click').length).toBe(1);
+    document.body.click();
+    await m.fixture.whenStable();
+    expect(m.root.querySelector('[role="menu"]')).toBeNull();
+    expect(baja.mock.calls.filter(([t]) => t === 'click').length).toBeGreaterThanOrEqual(1);
+    alta.mockRestore();
+    baja.mockRestore();
+  });
+
   describe('lo que el gráfico no trae, dicho por escrito', () => {
     it('muestra el motivo de no tener velas y el de no tener explicación de cálculo', async () => {
       const fixture = TestBed.createComponent(ChartPanel);
       fixture.componentRef.setInput('spec', { ...SPEC, info: null, infoMotivo: 'Es un dato de ejemplo.' });
       await fixture.whenStable();
       const root = fixture.nativeElement as HTMLElement;
-      expect(root.querySelector('[data-testid="chart-no-candles"]')?.textContent).toContain(SPEC.velasMotivo);
-      expect(root.querySelector('[data-testid="chart-no-info"]')?.textContent).toContain('Es un dato de ejemplo.');
+      expect(root.querySelector('[data-testid="chart-no-candles"]')?.textContent).toContain('el ingreso es un flujo que se suma, no un saldo.');
+      expect(root.querySelector('[data-testid="chart-no-info"]')?.textContent).toContain('es un dato de ejemplo.');
     });
 
     it('no escribe ninguno de los dos motivos cuando el gráfico sí trae la función', async () => {

@@ -16,6 +16,7 @@ import {
 import type { ECElementEvent } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 
+import { formatearFecha } from '@core/data-access/reporting/reporting-format';
 import { ETIQUETA_DIMENSION } from '@core/data-access/reporting/reporting-labels';
 import type { ChartSpec, FiltroActivo } from '@core/data-access/reporting/reporting.types';
 import { nextControlId } from '@shared/forms/form-control.context';
@@ -55,7 +56,7 @@ const MODOS: readonly SegmentedOption<ModoGrafico>[] = [
   templateUrl: './chart-panel.html',
   styleUrl: './chart-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { class: 'gp-host', '(document:click)': 'cerrarMenuFuera($event)' },
+  host: { class: 'gp-host' },
 })
 export class ChartPanel {
   private readonly documento = inject(DOCUMENT);
@@ -145,6 +146,7 @@ export class ChartPanel {
       const media = ventana.matchMedia('(prefers-color-scheme: dark)');
       media.addEventListener('change', releer);
       this.destroyRef.onDestroy(() => {
+        this.documento.removeEventListener('click', this.cerrarMenuFuera);
         observador.disconnect();
         media.removeEventListener('change', releer);
       });
@@ -169,6 +171,16 @@ export class ChartPanel {
     }
   }
 
+  /** Las fechas ISO de la primera columna se leen «6 oct 2026»; el CSV conserva el ISO. */
+  protected fecha(celda: string): string {
+    return formatearFecha(celda, true);
+  }
+
+  /** «Sin filtro por clic: Es una serie…» se lee mal con mayúscula tras los dos puntos. */
+  protected minusculaInicial(texto: string): string {
+    return texto.charAt(0).toLowerCase() + texto.slice(1);
+  }
+
   protected exportarCsv(): void {
     const blob = new Blob([tableToCsv(this.tabla(), this.spec().unidad)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -176,8 +188,9 @@ export class ChartPanel {
     a.href = url;
     a.download = `${this.spec().id}.csv`;
     a.click();
-    URL.revokeObjectURL(url);
-    this.menuAbierto.set(false);
+    // Revocar al instante cancela la descarga en algunos navegadores (Safari): se le da tiempo de empezar.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    this.cerrarMenu(true);
   }
 
   protected elegir(accion: 'grande' | 'csv' | 'tabla'): void {
@@ -185,8 +198,7 @@ export class ChartPanel {
       this.exportarCsv();
       return;
     }
-    this.menuAbierto.set(false);
-    this.botonMenu()?.nativeElement.focus();
+    this.cerrarMenu(true);
     if (accion === 'grande') {
       this.enGrande.set(true);
     } else {
@@ -197,34 +209,64 @@ export class ChartPanel {
   protected tecladoMenu(evento: KeyboardEvent): void {
     if (evento.key === 'Escape') {
       evento.stopPropagation();
-      this.menuAbierto.set(false);
-      this.botonMenu()?.nativeElement.focus();
+      this.cerrarMenu(true);
       return;
     }
-    if (evento.key !== 'ArrowDown' && evento.key !== 'ArrowUp') {
+    if (evento.key === 'Tab') {
+      // Tab saca el foco del menú: se cierra, sin devolver el foco (seguiría a donde iba la persona).
+      this.cerrarMenu(false);
+      return;
+    }
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(evento.key)) {
       return;
     }
     evento.preventDefault();
     const items = Array.from(this.host.nativeElement.querySelectorAll<HTMLElement>('[role="menuitem"]'));
+    if (items.length === 0) {
+      return;
+    }
     const i = items.indexOf(this.documento.activeElement as HTMLElement);
-    const sig = evento.key === 'ArrowDown' ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
-    items[sig]?.focus();
+    // Con el foco en el contenedor (`i === -1`) la flecha hacia arriba va a la última opción, no a la penúltima.
+    const ultimo = items.length - 1;
+    let siguiente: number;
+    if (evento.key === 'Home') {
+      siguiente = 0;
+    } else if (evento.key === 'End' || (evento.key === 'ArrowUp' && i === -1)) {
+      siguiente = ultimo;
+    } else if (evento.key === 'ArrowDown') {
+      siguiente = (i + 1) % items.length;
+    } else {
+      siguiente = (i - 1 + items.length) % items.length;
+    }
+    items[siguiente]?.focus();
   }
 
   protected alternarMenu(): void {
-    const abrir = !this.menuAbierto();
-    this.menuAbierto.set(abrir);
-    if (abrir) {
-      // Sin zone.js el menú se dibuja después de esta línea, no antes: el foco espera al render.
-      afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>('[role="menuitem"]')?.focus(), {
-        injector: this.injector,
-      });
+    if (this.menuAbierto()) {
+      this.cerrarMenu(false);
+      return;
+    }
+    this.menuAbierto.set(true);
+    // Solo mientras el menú está abierto se escucha el clic en el resto de la app: con decenas de paneles
+    // por dashboard, un oyente permanente en cada uno revisaría todos los clics para nada.
+    this.documento.addEventListener('click', this.cerrarMenuFuera);
+    // Sin zone.js el menú se dibuja después de esta línea, no antes: el foco espera al render.
+    afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>('[role="menuitem"]')?.focus(), {
+      injector: this.injector,
+    });
+  }
+
+  private cerrarMenu(devolverFoco: boolean): void {
+    this.menuAbierto.set(false);
+    this.documento.removeEventListener('click', this.cerrarMenuFuera);
+    if (devolverFoco) {
+      this.botonMenu()?.nativeElement.focus();
     }
   }
 
-  protected cerrarMenuFuera(evento: Event): void {
+  private readonly cerrarMenuFuera = (evento: Event): void => {
     if (this.menuAbierto() && !this.host.nativeElement.contains(evento.target as Node)) {
-      this.menuAbierto.set(false);
+      this.cerrarMenu(false);
     }
-  }
+  };
 }
