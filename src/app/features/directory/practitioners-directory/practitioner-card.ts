@@ -1,5 +1,5 @@
 import type { PractitionerListItem } from '../../../core/data-access/profiles/profiles.types';
-import { CONTADORES_DE_ACTIVIDAD } from '../../account/my-profile/contadores-de-actividad';
+import { ACTIVITY_COUNTERS } from '../../account/my-profile/activity-counters';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { initialsOf } from '../../../shared/text/initials';
@@ -50,7 +50,7 @@ function especialidadesDe(
 
 /**
  * Las cifras por las que la guía ordena, con las mismas claves que
- * {@link CONTADORES_DE_ACTIVIDAD}: el orden y la ficha hablan de lo mismo.
+ * {@link ACTIVITY_COUNTERS}: el orden y la ficha hablan de lo mismo.
  * Sin `activity` —una API que todavía no la manda— no hay cifras, y esas
  * tarjetas van al final de cualquier orden por actividad.
  */
@@ -60,7 +60,7 @@ function cifrasDe(fila: PractitionerListItem): Readonly<Record<string, number>> 
     return undefined;
   }
   return Object.fromEntries(
-    CONTADORES_DE_ACTIVIDAD.map((contador) => [contador.clave, actividad[contador.campo]]),
+    ACTIVITY_COUNTERS.map((contador) => [contador.clave, actividad[contador.campo]]),
   );
 }
 
