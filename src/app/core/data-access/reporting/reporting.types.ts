@@ -234,7 +234,13 @@ export interface PestanaReporte {
 export interface TablaReporte {
   readonly id: string;
   readonly titulo: string;
-  readonly columnas: readonly { readonly clave: string; readonly etiqueta: string; readonly alinear?: 'der' }[];
+  readonly columnas: readonly {
+    readonly clave: string;
+    readonly etiqueta: string;
+    readonly alinear?: 'der';
+    /** Si viene, los valores numéricos de la columna se formatean con ella y se ordenan como número. */
+    readonly unidad?: UnidadValor;
+  }[];
   readonly filas: readonly Readonly<Record<string, string | number | null>>[];
   readonly info: InfoCalculo | null;
   readonly infoMotivo?: string;
