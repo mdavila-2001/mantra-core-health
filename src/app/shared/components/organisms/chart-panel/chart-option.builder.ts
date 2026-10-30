@@ -193,7 +193,7 @@ function construirPartes(
               show: true,
               position: 'right',
               // Sin distancia, el rótulo del primer paso (el más ancho) arrancaba bajo el borde oblicuo del trapecio.
-              distance: 16,
+              distance: 28,
               color: tema.texto,
               lineHeight: 16,
               formatter: (p: ParamEje) => `${p.name ?? ''}\n${formatearValor(readValue(p), spec.unidad, true)}`,
@@ -254,7 +254,7 @@ function construirMapaCalor(
       },
     },
     grid: { left: 8, right: 16, top: 12, bottom: 60, containLabel: true },
-    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: true } },
+    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: false, width: 120, overflow: 'break' } },
     yAxis: { type: 'category', data: d.filas, inverse: true, axisLabel: { color: tema.textoSuave, interval: 0 } },
     series: [
       {
@@ -410,7 +410,7 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
           });
     case 'mapa-calor':
       // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
-      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: true } } });
+      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: false, overflow: 'none' } } });
     case 'medidor':
       return construirMedidor(o, d);
     case 'cascada':
@@ -421,7 +421,9 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
         },
         // `containLabel` ya reserva el sitio de los rótulos inclinados: un margen inferior grande encima los
         // suma y aplasta el trazado (el eje Y se amontonaba en ~55 px).
-        grid: { left: 8, right: 12, top: 16, bottom: 8 },
+        // La leyenda sube: abajo la pisaban los rótulos inclinados.
+        legend: { top: 0, bottom: 'auto' },
+        grid: { left: 8, right: 12, top: 40, bottom: 8 },
       });
   }
 }

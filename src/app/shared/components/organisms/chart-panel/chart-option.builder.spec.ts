@@ -163,6 +163,14 @@ describe('construirOpciones', () => {
       expect(at(raw, 'baseOption.series.0.center.1')).toBe('40%');
     });
 
+    it('el mapa de calor rotula todas sus columnas y la cascada angosta sube la leyenda', () => {
+      const calor = buildRaw({ tipo: 'mapa-calor', columnas: ['a', 'b', 'c', 'd', 'e'], filas: ['f1'], celdas: [[0, 0, 1], [1, 0, 2], [2, 0, 3], [3, 0, 4], [4, 0, 5]], nombreValor: 'V' });
+      expect(at(calor, 'baseOption.xAxis.axisLabel.hideOverlap')).toBe(false);
+      expect(at(calor, 'media.0.option.xAxis.axisLabel.hideOverlap')).toBe(false);
+      const cascada = buildRaw({ tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 10, total: true }, { nombre: 'Resta', valor: -3 }, { nombre: 'Fin', valor: 7, total: true }] });
+      expect(at(cascada, 'media.0.option.legend.top')).toBe(0);
+    });
+
     it('con pocas categorías se rotulan todas', () => {
       media({});
       const o = build({ tipo: 'cartesiano', categorias: ['A', 'B', 'C'], series: [{ nombre: 'S', valores: [1, 2, 3], forma: 'barra' }] });

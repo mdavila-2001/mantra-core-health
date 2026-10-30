@@ -7,7 +7,7 @@
 .tv__heading { margin: 0; font-size: var(--fs-h2); line-height: var(--lh-h2); font-weight: 600; color: var(--text-primary); }
 .tv__lead { margin: calc(var(--sp-1) * -1) 0 0; font-size: var(--fs-body); color: var(--text-secondary); max-width: 70ch; }
 
-.tv__kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: var(--sp-3); }
+.tv__kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(21rem, 100%), 1fr)); gap: var(--sp-3); }
 
 .tv__charts { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-4); }
 .tv__notice-title { margin: 0 0 var(--sp-1); font-weight: 600; }
