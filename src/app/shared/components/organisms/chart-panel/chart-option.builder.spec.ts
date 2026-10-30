@@ -35,7 +35,13 @@ function spec(datos: DatosGrafico): ChartSpec {
   };
 }
 
+/** La opción base: `construirOpciones` la envuelve en `baseOption` + `media` cuando el eje horizontal rotula categorías. */
 function build(datos: DatosGrafico): unknown {
+  const o = construirOpciones({ spec: spec(datos), tema: TEMA, modo: 'normal', seleccion: null });
+  return (o as { baseOption?: unknown }).baseOption ?? o;
+}
+
+function buildRaw(datos: DatosGrafico): unknown {
   return construirOpciones({ spec: spec(datos), tema: TEMA, modo: 'normal', seleccion: null });
 }
 
@@ -49,7 +55,8 @@ function media(matches: Record<string, boolean>): void {
 }
 
 interface HeatCell {
-  value: [number, number, number | string];
+  value: [number, number, number];
+  sinDato?: boolean;
   itemStyle?: { color: string };
   label: { show: boolean; formatter?: unknown; color: string };
 }
@@ -100,6 +107,28 @@ describe('construirOpciones', () => {
       expect(at(barras, 'yAxis.scale')).toBe(false);
     });
 
+    it('entre 4 y 12 categorías los nombres largos se parten en vez de taparse', () => {
+      media({});
+      const nombres = ['Visitador médico', 'Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma'];
+      const o = build({ tipo: 'cartesiano', categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] });
+      expect(at(o, 'xAxis.axisLabel.overflow')).toBe('break');
+      expect(at(o, 'xAxis.axisLabel.width')).toBeDefined();
+      const tres = build({ tipo: 'cartesiano', categorias: ['A', 'B', 'C'], series: [{ nombre: 'S', valores: [1, 2, 3], forma: 'barra' }] });
+      expect(at(tres, 'xAxis.axisLabel.overflow')).toBeUndefined();
+    });
+
+    it('en un lienzo angosto los nombres rotan en vez de montarse (media del propio ECharts)', () => {
+      media({});
+      const nombres = ['Visitador médico', 'Corredor de seguros', 'Referidor', 'Organización afiliada', 'Plataforma'];
+      const raw = buildRaw({ tipo: 'cartesiano', categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] });
+      expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
+      expect(at(raw, 'media.0.option.xAxis.axisLabel.rotate')).toBe(35);
+      // Una serie diaria (muchas categorías) o un eje horizontal no se envuelven: no los necesitan.
+      const dias = Array.from({ length: 30 }, (_, i) => `D${i}`);
+      expect(at(buildRaw({ tipo: 'cartesiano', categorias: dias, series: [{ nombre: 'S', valores: dias.map(() => 1), forma: 'barra' }] }), 'media')).toBeUndefined();
+      expect(at(buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] }), 'media')).toBeUndefined();
+    });
+
     it('con pocas categorías se rotulan todas', () => {
       media({});
       const o = build({ tipo: 'cartesiano', categorias: ['A', 'B', 'C'], series: [{ nombre: 'S', valores: [1, 2, 3], forma: 'barra' }] });
@@ -127,10 +156,19 @@ describe('construirOpciones', () => {
 
     it('una celda sin dato dice «Sin dato» y se pinta neutra; no es un hueco ni un cero', () => {
       media({});
-      const vacia = cells(HEAT).find((d) => d.value[2] === '-');
+      const vacia = cells(HEAT).find((d) => d.sinDato === true);
       expect(vacia?.itemStyle?.color).toBe(TEMA.rejilla);
       expect(vacia?.label.formatter).toBe('Sin dato');
       expect(vacia?.label.show).toBe(true);
+    });
+
+    it('el tooltip de una celda sin dato dice «Sin dato» y no el número de relleno', () => {
+      media({});
+      const vacia = cells(HEAT).find((d) => d.sinDato === true);
+      const formatter = at(build(HEAT), 'tooltip.formatter') as (p: unknown) => string;
+      const html = formatter({ value: vacia?.value, data: vacia });
+      expect(html).toContain('Sin dato');
+      expect(html).not.toContain('10');
     });
 
     it('la etiqueta de cada celda es legible sobre su relleno: oscura sobre clara y clara sobre oscura', () => {

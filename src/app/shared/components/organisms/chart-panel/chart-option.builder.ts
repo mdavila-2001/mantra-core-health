@@ -152,7 +152,13 @@ function construirCartesiano(
     data: d.categorias,
     axisLine: { lineStyle: { color: tema.linea } },
     // Pocas categorías: se rotulan todas (si no, «Visitador / Referidor / Plataforma» salta una de cada dos).
-    axisLabel: { color: tema.textoSuave, hideOverlap: true, ...(d.categorias.length <= 12 ? { interval: 0 } : {}) },
+    axisLabel: {
+      color: tema.textoSuave,
+      hideOverlap: true,
+      ...(d.categorias.length <= 12 ? { interval: 0 } : {}),
+      // Entre 4 y 12 categorías en el eje horizontal los nombres largos se parten en vez de taparse.
+      ...(!horizontal && d.categorias.length >= 4 && d.categorias.length <= 12 ? { width: 84, overflow: 'break' } : {}),
+    },
     axisTick: { alignWithLabel: true },
   };
   const valor = {
@@ -292,7 +298,8 @@ function construirMapaCalor(
         const v = Array.isArray(p.value) ? p.value : [];
         const col = d.columnas[Number(v[0])] ?? '';
         const fila = d.filas[Number(v[1])] ?? '';
-        const val = typeof v[2] === 'number' ? formatearValor(v[2], spec.unidad) : NO_DATA;
+        const sinDato = (p.data as { sinDato?: boolean } | undefined)?.sinDato === true;
+        const val = !sinDato && typeof v[2] === 'number' ? formatearValor(v[2], spec.unidad) : NO_DATA;
         return `<div style="font-weight:600">${escapar(fila)} · ${escapar(col)}</div><div>${escapar(d.nombreValor)}: <b>${escapar(val)}</b></div>`;
       },
     },
@@ -306,8 +313,11 @@ function construirMapaCalor(
         data: d.celdas.map((c) =>
           c[2] === null
             ? {
-                // Sin dato no es cero ni un hueco: se pinta neutro y lo dice.
-                value: [c[0], c[1], '-'],
+                // Sin dato no es cero ni un hueco: se pinta neutro y lo dice. ECharts no dibuja un
+                // valor ausente, así que la celda lleva un número de relleno (el mínimo de la
+                // escala) y la marca `sinDato`; el tooltip y el color mandan sobre ese número.
+                value: [c[0], c[1], min],
+                sinDato: true,
                 itemStyle: { color: tema.rejilla },
                 label: { show: d.columnas.length <= 14 && d.filas.length <= 14, formatter: 'Sin dato', color: tema.textoSuave },
               }
@@ -497,6 +507,26 @@ function construirVelas(o: OpcionesBuild): EChartsCoreOption {
   };
 }
 
+/**
+ * En un lienzo angosto (teléfono) cinco nombres de categoría no caben en horizontal y se montan
+ * unos sobre otros: ECharts decide por el ancho real del lienzo (`media`), no por la ventana,
+ * así que sigue valiendo dentro de un panel estrecho en una pantalla grande.
+ */
+function conMovil(option: EChartsCoreOption): EChartsCoreOption {
+  return {
+    baseOption: option,
+    media: [
+      {
+        query: { maxWidth: 520 },
+        option: {
+          xAxis: { axisLabel: { rotate: 35, width: 160, overflow: 'none', hideOverlap: false } },
+          grid: { bottom: 84 },
+        },
+      },
+    ],
+  };
+}
+
 export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
   if (o.modo === 'velas' && o.spec.velas !== null) {
     return construirVelas(o);
@@ -504,7 +534,10 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
   const d = o.spec.datos;
   switch (d.tipo) {
     case 'cartesiano':
-      return construirCartesiano(o, d);
+      // Solo con pocas categorías (las que se rotulan todas): una serie diaria se aclara sola por intervalo.
+      return d.horizontal !== true && d.categorias.length >= 4 && d.categorias.length <= 12
+        ? conMovil(construirCartesiano(o, d))
+        : construirCartesiano(o, d);
     case 'partes':
       return construirPartes(o, d);
     case 'mapa-calor':
@@ -512,7 +545,7 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
     case 'medidor':
       return construirMedidor(o, d);
     case 'cascada':
-      return construirCascada(o, d);
+      return conMovil(construirCascada(o, d));
   }
 }
 
