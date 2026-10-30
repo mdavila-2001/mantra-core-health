@@ -1735,7 +1735,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // herramientas» del panel, su otra puerta, se retiró el 28/10/2026).
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
+    summary: 'Cree y edite su consultorio: dirección, mapa, teléfono y horario.',
     module: 'M14 practice',
   },
   {
