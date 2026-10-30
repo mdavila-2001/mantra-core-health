@@ -182,6 +182,17 @@ describe('PharmacyImport', () => {
   afterEach(() => http.verify());
 
   describe('la pantalla', () => {
+    it('montada como pestaña de «Catálogo» (`embedded`) no dibuja su membrete', () => {
+      mount();
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelector('app-page-header')).not.toBeNull();
+
+      fixture.componentRef.setInput('embedded', true);
+      fixture.detectChanges();
+
+      expect(host.querySelector('app-page-header')).toBeNull();
+    });
+
     it('con una sola farmacia no pregunta cuál y muestra los cuatro pasos en una sola tarjeta', () => {
       mount();
 

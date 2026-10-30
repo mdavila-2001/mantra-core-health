@@ -296,22 +296,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
     ),
-  // Productos de la farmacia: el listado con filtros y, en un modal con
-  // pestañas, el alta y la edición. Ruta hermana por el mismo motivo que las
-  // promociones. La carga masiva y las demás pantallas del portal de la farmacia
-  // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
+  // El catálogo de la farmacia: cinco pantallas en pestañas (`features/pharmacy/catalog/`).
   'administration/pharmacy-catalog': () =>
-    import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts),
+    import('./features/pharmacy/catalog/pharmacy-catalog-hub').then((m) => m.PharmacyCatalogHub),
   'administration/pharmacy': () =>
     import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
-  'administration/pharmacy-categories': () =>
-    import('./features/pharmacy/categories/pharmacy-categories').then((m) => m.PharmacyCategories),
-  'administration/pharmacy-import': () =>
-    import('./features/pharmacy/import/pharmacy-import').then((m) => m.PharmacyImport),
-  'administration/pharmacy-inventory': () =>
-    import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
-  'administration/pharmacy-prices': () =>
-    import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
   // P34 · 24 h y turnos de guardia de cada sucursal (26/10/2026).
   'administration/pharmacy-hours': () =>
     import('./features/pharmacy/opening-hours/pharmacy-opening-hours').then(
@@ -769,6 +758,12 @@ const PANTALLAS_HIJAS: Routes = [
     pathMatch: 'full',
     redirectTo: redireccionConQuery({ ruta: '/my-account/identity', query: { tab: 'cases' } }),
   },
+  // Las pantallas sueltas del catálogo de la farmacia son pestañas de `pharmacy-catalog`.
+  ...(['categories', 'prices', 'inventory', 'import'] as const).map((tab) => ({
+    path: `administration/pharmacy-${tab}`,
+    pathMatch: 'full' as const,
+    redirectTo: redireccionConQuery({ ruta: '/administration/pharmacy-catalog', query: { tab } }),
+  })),
   {
     // Ruta anterior a la unión de identidad. Conserva el enlace profundo y lo
     // abre como diálogo dentro de la pestaña «Mis trámites».

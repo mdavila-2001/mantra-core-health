@@ -133,8 +133,8 @@ describe('Menú de la cuenta de laboratorio', () => {
     }
   });
 
-  it('la farmacia conserva sus diez renglones (P34 sumó «Horario y turnos»)', () => {
+  it('la farmacia conserva sus seis renglones («Catálogo» junta cinco pantallas en pestañas)', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
-    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(10);
+    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(6);
   });
 });

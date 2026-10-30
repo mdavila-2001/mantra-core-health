@@ -91,6 +91,16 @@ describe('PharmacyPrices', () => {
     fixture.detectChanges();
   });
 
+  it('montada como pestaña de «Catálogo» (`embedded`) no dibuja su membrete', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-page-header')).not.toBeNull();
+
+    fixture.componentRef.setInput('embedded', true);
+    fixture.detectChanges();
+
+    expect(host.querySelector('app-page-header')).toBeNull();
+  });
+
   it('lista los productos vivos con su precio publicado, sin los retirados', () => {
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
     expect(text).toContain('Paracetamol');
