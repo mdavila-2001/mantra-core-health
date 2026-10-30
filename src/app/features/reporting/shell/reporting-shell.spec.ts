@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { DeferBlockBehavior, TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { afterEach, vi } from 'vitest';
 
 import { ETIQUETA_VERTICAL, VERTICALES } from '@core/data-access/reporting/reporting-labels';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -92,8 +93,26 @@ describe('ReportingShell', () => {
     });
   });
 
+  describe('el alcance de quien no es de plataforma', () => {
+    it('solo ve «Mi organización»: no se le ofrece un alcance que la API le va a negar', async () => {
+      await montar(['REPORT_VIEWER']);
+
+      expect(contexto.alcance()).toBe('organizacion');
+      expect(byTestId('segmentado-plataforma')).toBeNull();
+      expect(byTestId('reporting-alcance-fijo')?.textContent).toContain('Mi organización');
+    });
+
+    it('un rol de plataforma conserva el conmutador y el alcance que traía', async () => {
+      await montar(['PLATFORM_ADMIN']);
+
+      expect(contexto.alcance()).toBe('plataforma');
+      expect(byTestId('segmentado-plataforma')).not.toBeNull();
+      expect(byTestId('reporting-alcance-fijo')).toBeNull();
+    });
+  });
+
   describe('el conmutador de alcance', () => {
-    beforeEach(async () => montar(['REPORTING_ADMIN']));
+    beforeEach(async () => montar(['PLATFORM_ADMIN']));
 
     it('arranca en el alcance del almacén (plataforma)', () => {
       expect(contexto.alcance()).toBe('plataforma');
@@ -213,11 +232,51 @@ describe('ReportingShell', () => {
       expect(shell.asistenteAbierto()).toBe(true);
     });
 
+    it('un Escape que sale de un <dialog> nativo («Ver en grande») no cierra el asistente', async () => {
+      await pulsar(byTestId('reporting-asistente-boton'));
+      const dialogo = document.createElement('dialog');
+      dialogo.setAttribute('open', '');
+      const boton = document.createElement('button');
+      dialogo.appendChild(boton);
+      raiz().appendChild(dialogo);
+
+      boton.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(shell.asistenteAbierto()).toBe(true);
+    });
+
     it('abrirlo no cambia lo que hay en el centro', async () => {
       await pulsar(byTestId('reporting-asistente-boton'));
 
       expect(q('main#reporting-contenido')).not.toBeNull();
       expect(q('.rep')?.classList).toContain('rep--con-asistente');
+    });
+  });
+
+  describe('el asistente como hoja superpuesta (≤ 1024 px)', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('mientras está abierto, el contenido y la navegación no reciben foco (inert); al cerrarlo vuelven', async () => {
+      const consulta = { matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() };
+      vi.stubGlobal('matchMedia', () => consulta);
+      await montar(['REPORTING_ADMIN']);
+      expect(q('main')?.hasAttribute('inert')).toBe(false);
+
+      await pulsar(byTestId('reporting-asistente-boton'));
+      expect(q('main')?.hasAttribute('inert')).toBe(true);
+      expect(q('nav#reporting-nav')?.hasAttribute('inert')).toBe(true);
+
+      await pulsar(byTestId('reporting-asistente-cerrar'));
+      expect(q('main')?.hasAttribute('inert')).toBe(false);
+    });
+
+    it('con el asistente al lado (pantalla ancha) nada queda inerte', async () => {
+      const consulta = { matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() };
+      vi.stubGlobal('matchMedia', () => consulta);
+      await montar(['REPORTING_ADMIN']);
+      await pulsar(byTestId('reporting-asistente-boton'));
+      expect(q('main')?.hasAttribute('inert')).toBe(false);
     });
   });
 

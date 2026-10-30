@@ -27,6 +27,13 @@ export const ROLES_REPORTERIA: readonly string[] = [
 ];
 
 /**
+ * Los roles que pueden consultar el alcance «Plataforma» (todas las organizaciones). El resto de los
+ * roles de reportería solo ve «Mi organización». Es lo que se ofrece, no lo que se autoriza: la API
+ * decide qué devuelve para cada alcance.
+ */
+export const ROLES_PLATAFORMA: readonly string[] = ['SUPERADMIN', 'PLATFORM_ADMIN'];
+
+/**
  * Los roles de administración que dan acceso al portal de administración.
  *
  * Salen de las secciones del registro de navegación que cuelgan de
@@ -64,6 +71,11 @@ export function puedeVerReporteria(roles: readonly string[]): boolean {
 /** Si los roles de la sesión abren el portal de administración. */
 export function puedeVerAdministracion(roles: readonly string[]): boolean {
   return rolesAlcanzan(ROLES_ADMINISTRACION, roles);
+}
+
+/** Si los roles de la sesión pueden elegir el alcance «Plataforma». */
+export function puedeVerPlataforma(roles: readonly string[]): boolean {
+  return rolesAlcanzan(ROLES_PLATAFORMA, roles);
 }
 
 /** Los dos accesos de una sesión, juntos. */
