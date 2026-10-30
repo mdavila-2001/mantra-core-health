@@ -1,0 +1,26 @@
+/* Regla 6 de CLAUDE.md (composition-rules §5): la ficha va centrada y a lo
+   ancho del área de contenido, en UNA tarjeta; cada ítem de la receta es una
+   pestaña. Sin tope de ancho propio: lo pone `.app-main__inner`. */
+
+.open-rx {
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.open-rx__title {
+  margin: 0;
+  font-size: var(--fs-h2);
+  color: var(--text-primary);
+}
+
+.open-rx__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.open-rx__request-id {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
