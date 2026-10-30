@@ -45,6 +45,9 @@ const EXCLUIDOS = [
   // El motor de lenguaje del triaje: sus listas («te», «tu», «tus») son palabras
   // que escribe el paciente, no texto de AloVida. Cambiarlas rompe el motor.
   /symptom-check\/texto\.ts$/,
+  // El léxico del asistente de reportería: «tu», «tus», «te» son palabras que
+  // ESCRIBE quien pregunta (se descartan al buscar la medida), no texto de AloVida.
+  /reporting\/assistant\/question-lexicon\.ts$/,
   /corpus\.fixture/,
   /universidades/,
   /instituciones-educativas/,
@@ -59,6 +62,7 @@ const EXCLUIDOS = [
 const FORMAS = new Set(
   `
   tu tus te vos contigo tuyo tuya tuyos tuyas tú sos vas ves tienes
+  puedes quieres pregúntame preguntame dime
   abrí acabás aceptá aceptás activá activás actualizá adjuntá administrá administrás agendás agregá
   agregás ahorrás ajustá ampliá andá apagá apagás aparecés aprendé apretá aprobá armá arrastrá
   atendé atendés autorizá autorizás avisá bajá basás buscá buscás cambiá cambiás cancelá cargá

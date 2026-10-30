@@ -195,6 +195,9 @@ export const MOCK_USERS: readonly MockUser[] = [
       // Revisa las admisiones; la decisión final la toma otra persona
       // (`aprobador@alovida.mock`): cuatro ojos.
       'ADMISSIONS_REVIEWER',
+      // Portal de reportería (30/10/2026): administra los reportes. Además de
+      // éste, `BUSINESS_ADMIN` y `PLATFORM_ADMIN` ya lo abren por sí solos.
+      'REPORTING_ADMIN',
     ],
     tenants: [TENANT_CLINICA],
     tenantNames: TENANT_NAMES,
@@ -206,7 +209,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'superadmin@alovida.mock',
     nationalId: '9998887',
     displayName: 'Soporte AloVida',
-    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN'],
+    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN', 'REPORTING_ADMIN'],
     tenants: [TENANT_PLATAFORMA, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: TENANT_NAMES,
     personId: IDS.superadmin.personId,

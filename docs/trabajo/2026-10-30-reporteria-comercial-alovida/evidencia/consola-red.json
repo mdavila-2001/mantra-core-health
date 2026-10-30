@@ -1,0 +1,8 @@
+{
+  "generadoEn": "2026-10-30T12:38:45.881Z",
+  "pruebasEjecutadas": [
+    "recorrido escritorio · claro → passed"
+  ],
+  "nota": "Solo se recolectan los hallazgos de las pruebas listadas. Los de los estados error y sin-permiso son errores forzados a propósito.",
+  "hallazgos": []
+}
