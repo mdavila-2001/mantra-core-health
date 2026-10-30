@@ -35,7 +35,7 @@ const PART_ORDER = ['madrugada', 'mañana', 'tarde', 'noche'] as const;
  * gráfico de abajo.
  */
 @Component({
-  selector: 'ins-main-analysis',
+  selector: 'app-ins-main-analysis',
   imports: [NgTemplateOutlet, Panel, ChartPicker, LineChart, BarChart, StackedChart, HeatmapChart, ScatterChart, DistributionChart, SegmentedControl, Select],
   templateUrl: './main-analysis.html',
   styleUrl: './main-analysis.css',

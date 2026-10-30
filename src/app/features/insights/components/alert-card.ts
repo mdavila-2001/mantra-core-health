@@ -15,7 +15,7 @@ const SEVERITY_ICON = { critical: '■', risk: '▲', anomaly: '◆', opportunit
  * comunica con ícono, texto y color.
  */
 @Component({
-  selector: 'ins-alert-card',
+  selector: 'app-ins-alert-card',
   imports: [RouterLink, Sparkline],
   templateUrl: './alert-card.html',
   styleUrl: './alert-card.css',

@@ -20,7 +20,7 @@ export interface HeatCell {
  * Una celda sin dato suficiente se rotula y se raya: no se pinta como la más baja.
  */
 @Component({
-  selector: 'ins-heatmap-chart',
+  selector: 'app-ins-heatmap-chart',
   templateUrl: './heatmap-chart.html',
   styleUrl: './heatmap-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -47,7 +47,6 @@ const COVERED_BY_CAMPAIGN: Readonly<Record<string, boolean>> = Object.fromEntrie
 
 export function signalAlerts(): MarketingAlert[] {
   const out: MarketingAlert[] = [];
-  const total = select(FILTER).length;
   const base = { detectedAt: LAST_DAY, status: 'open' as const, module: 'opinion' as const, query: {} as Record<string, string> };
 
   for (const shift of topicShifts(FILTER, 40).filter((s) => s.delta <= -0.2)) {

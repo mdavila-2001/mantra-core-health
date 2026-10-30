@@ -14,7 +14,7 @@ export interface MultiOption {
  * sobre `app-checkbox`. Foco, Escape y clic fuera cierran el panel.
  */
 @Component({
-  selector: 'ins-multi-select',
+  selector: 'app-ins-multi-select',
   imports: [Checkbox],
   templateUrl: './multi-select.html',
   styleUrl: './multi-select.css',

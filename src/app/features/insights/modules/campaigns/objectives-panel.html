@@ -1,4 +1,4 @@
-<ins-panel title="Objetivo frente a resultado" question="¿Cumple la campaña lo que se propuso?">
+<app-ins-panel title="Objetivo frente a resultado" question="¿Cumple la campaña lo que se propuso?">
   @if (campaign(); as c) {
     <div class="ob__table-wrap">
       <table class="ob__table">
@@ -20,7 +20,7 @@
                   <span class="ob__gap" [title]="r.gap ?? r.reason">Sin cálculo</span>
                 }
               </td>
-              <td><ins-status [status]="r.status" [short]="true" /></td>
+              <td><app-ins-status [status]="r.status" [short]="true" /></td>
             </tr>
           }
         </tbody>
@@ -39,4 +39,4 @@
   } @else {
     <p class="ob__none">El objetivo es propio de cada campaña. Seleccione <strong>una sola campaña</strong> en el filtro para ver su cumplimiento y el ritmo de su inversión.</p>
   }
-</ins-panel>
+</app-ins-panel>

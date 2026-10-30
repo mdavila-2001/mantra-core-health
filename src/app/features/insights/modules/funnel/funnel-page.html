@@ -1,25 +1,25 @@
 <div class="fn">
-  <ins-filter-bar [controls]="['campaign', 'period', 'channel']" />
+  <app-ins-filter-bar [controls]="['campaign', 'period', 'channel']" />
 
   <app-view-state-host [state]="state()">
     @if (model(); as m) {
       <div class="fn__stack">
         <section class="fn__tiles" aria-label="Indicadores del embudo">
           @for (t of tiles(); track t.label) {
-            <ins-stat [label]="t.label" [value]="t.value" [hint]="t.hint" [delta]="t.delta" />
+            <app-ins-stat [label]="t.label" [value]="t.value" [hint]="t.hint" [delta]="t.delta" />
           }
         </section>
 
-        <ins-panel title="A. Embudo de adquisición" question="¿Dónde estamos perdiendo usuarios entre ver un anuncio y quedarse en AloVida?">
-          <ins-funnel-chart [stages]="m.stages" [selectedId]="stageId()" ariaLabel="Embudo de adquisición, de la impresión a la retención" (picked)="setStage($event)" />
+        <app-ins-panel title="A. Embudo de adquisición" question="¿Dónde estamos perdiendo usuarios entre ver un anuncio y quedarse en AloVida?">
+          <app-ins-funnel-chart [stages]="m.stages" [selectedId]="stageId()" ariaLabel="Embudo de adquisición, de la impresión a la retención" (picked)="setStage($event)" />
           <p class="fn__note">Las cifras salen de los mismos hechos que el módulo <a [routerLink]="campaignsLink" [queryParams]="ctx.carry()">Resumen de campañas</a>: las conversiones de aquí son las de allí.</p>
-        </ins-panel>
+        </app-ins-panel>
 
         @if (insight(); as i) {
-          <ins-insight [insight]="i" />
+          <app-ins-insight [insight]="i" />
         }
 
-        <ins-panel title="Embudo por canal y cohortes" question="¿Qué canal convierte mejor y cómo se comportan los usuarios según su semana de llegada?">
+        <app-ins-panel title="Embudo por canal y cohortes" question="¿Qué canal convierte mejor y cómo se comportan los usuarios según su semana de llegada?">
           <app-tabs appearance="underline">
             <app-tab label="Por canal">
               <div class="fn__wrap">
@@ -45,16 +45,16 @@
               </div>
             </app-tab>
             <app-tab label="Cohortes de retención">
-              <ins-heatmap-chart [rows]="cohort().rows" [cols]="cohort().cols" [cells]="cohort().cells" unit="percent" [rowMeta]="cohort().meta" rowMetaLabel="Activados" valueName="Retención" [minCell]="52" ariaLabel="Retención por cohorte semanal" />
+              <app-ins-heatmap-chart [rows]="cohort().rows" [cols]="cohort().cols" [cells]="cohort().cells" unit="percent" [rowMeta]="cohort().meta" rowMetaLabel="Activados" valueName="Retención" [minCell]="52" ariaLabel="Retención por cohorte semanal" />
               <p class="fn__note">Las celdas rayadas son semanas que todavía no terminan: no se pueden medir y no equivalen a 0 %.</p>
             </app-tab>
           </app-tabs>
-        </ins-panel>
+        </app-ins-panel>
       </div>
     }
   </app-view-state-host>
 
-  <ins-panel title="B. Recorrido del paciente" question="¿La experiencia que prometimos realmente funciona?">
+  <app-ins-panel title="B. Recorrido del paciente" question="¿La experiencia que prometimos realmente funciona?">
     <div panel-tools class="fn__seg">
       <app-select ariaLabel="Segmento del recorrido" [value]="segment()" [options]="segmentOptions" (valueChange)="setSegment($event)" />
     </div>
@@ -62,11 +62,11 @@
       <p class="fn__scope" role="note">{{ journey().scopeNote }}</p>
     }
     <div class="fn__csat">
-      <ins-stat label="Satisfacción (1 a 5)" [value]="journey().csat.toFixed(1).replace('.', ',')" hint="Encuesta posterior a la consulta" />
-      <ins-stat label="Recomendación (NPS)" [value]="journey().nps.toString()" hint="De −100 a 100; es una estimación del prototipo" />
-      <ins-stat label="Personas que entran al recorrido" [value]="int(journey().registered)" hint="Registros de pacientes en el periodo" />
+      <app-ins-stat label="Satisfacción (1 a 5)" [value]="journey().csat.toFixed(1).replace('.', ',')" hint="Encuesta posterior a la consulta" />
+      <app-ins-stat label="Recomendación (NPS)" [value]="journey().nps.toString()" hint="De −100 a 100; es una estimación del prototipo" />
+      <app-ins-stat label="Personas que entran al recorrido" [value]="int(journey().registered)" hint="Registros de pacientes en el periodo" />
     </div>
-    <ins-funnel-chart [stages]="journeyFunnel()" [selectedId]="stageId()" ariaLabel="Recorrido del paciente, del registro a la retención" (picked)="setStage($event)" />
+    <app-ins-funnel-chart [stages]="journeyFunnel()" [selectedId]="stageId()" ariaLabel="Recorrido del paciente, del registro a la retención" (picked)="setStage($event)" />
 
     <ol class="fn__journey" aria-label="Etapas del recorrido">
       @for (s of journey().stages; track s.id) {
@@ -94,5 +94,5 @@
     } @else if (worstJourney(); as w) {
       <p class="fn__note">Donde más personas se pierden: <strong>{{ w.label }}</strong> ({{ pct(w.rate ?? 0) }} continúa). Haga clic en una etapa para ver su tiempo típico y la fricción reportada.</p>
     }
-  </ins-panel>
+  </app-ins-panel>
 </div>

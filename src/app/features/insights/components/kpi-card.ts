@@ -15,7 +15,7 @@ import { StatusPill } from './status-pill';
  * Un KPI sin cifra no dice «0»: dice por qué no hay cifra.
  */
 @Component({
-  selector: 'ins-kpi',
+  selector: 'app-ins-kpi',
   imports: [StatusPill, Sparkline],
   templateUrl: './kpi-card.html',
   styleUrl: './kpi-card.css',

@@ -13,7 +13,7 @@ import { seriesVar, trackWidth, type StackRow, type StackSegment } from './chart
  * ángulo, y cada segmento se rotula con su cifra cuando cabe.
  */
 @Component({
-  selector: 'ins-stacked-chart',
+  selector: 'app-ins-stacked-chart',
   templateUrl: './stacked-chart.html',
   styleUrl: './stacked-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

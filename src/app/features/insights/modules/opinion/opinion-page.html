@@ -1,5 +1,5 @@
 <div class="op">
-  <ins-filter-bar [controls]="['period']" />
+  <app-ins-filter-bar [controls]="['period']" />
   <div class="op__src">
     <span class="op__label">Fuente (esta pantalla)</span>
     <app-select ariaLabel="Fuente de las menciones" [value]="source()" [options]="sourceOptions" (valueChange)="setSource($event ?? 'all')" />
@@ -10,7 +10,7 @@
       <div class="op__stack">
         <section class="op__tiles" aria-label="Indicadores de opinión">
           @for (t of tiles(); track t.label) {
-            <ins-stat [label]="t.label" [value]="t.value" [delta]="t.delta" [good]="t.good" [hint]="t.hint" />
+            <app-ins-stat [label]="t.label" [value]="t.value" [delta]="t.delta" [good]="t.good" [hint]="t.hint" />
           }
         </section>
 
@@ -18,21 +18,21 @@
 
         @if (insights().length) {
           <section class="op__insights" aria-label="Hallazgos de la capa de interpretación">
-            @for (i of insights(); track i.id) { <ins-insight [insight]="i" /> }
+            @for (i of insights(); track i.id) { <app-ins-insight [insight]="i" /> }
           </section>
         }
 
-        <ins-panel title="Sentimiento en el tiempo" question="¿Está mejorando o empeorando lo que se dice de nosotros?">
-          <ins-stacked-chart [rows]="stackRows()" [segments]="segments" unit="percent" [proportion]="true" [ariaLabel]="'Composición del sentimiento ' + (weekly() ? 'por semana' : 'por día')" />
+        <app-ins-panel title="Sentimiento en el tiempo" question="¿Está mejorando o empeorando lo que se dice de nosotros?">
+          <app-ins-stacked-chart [rows]="stackRows()" [segments]="segments" unit="percent" [proportion]="true" [ariaLabel]="'Composición del sentimiento ' + (weekly() ? 'por semana' : 'por día')" />
           <p class="op__foot">Cada columna suma 100 %. Los {{ weekly() ? 'semanas' : 'días' }} sin muestra suficiente no se dibujan: un hueco no es un cero.</p>
-        </ins-panel>
+        </app-ins-panel>
 
         <div class="op__two">
-          <ins-panel title="Mapa de atributos" question="¿De qué se habla más y con qué ánimo? Cada punto es un tema.">
-            <ins-scatter-chart [points]="topicPoints()" xUnit="count" yUnit="count" xLabel="Menciones" yLabel="Sentimiento neto (pts)" ariaLabel="Mapa de atributos: volumen de menciones frente a sentimiento neto por tema" />
+          <app-ins-panel title="Mapa de atributos" question="¿De qué se habla más y con qué ánimo? Cada punto es un tema.">
+            <app-ins-scatter-chart [points]="topicPoints()" xUnit="count" yUnit="count" xLabel="Menciones" yLabel="Sentimiento neto (pts)" ariaLabel="Mapa de atributos: volumen de menciones frente a sentimiento neto por tema" />
             <p class="op__foot">Arriba y a la derecha: mucho volumen y buen ánimo (fortaleza). Abajo y a la derecha: mucho volumen y mal ánimo (prioridad). Los temas emergentes aparecen en otro color.</p>
-          </ins-panel>
-          <ins-panel title="Temas" question="¿Qué temas dominan y cuáles están creciendo?">
+          </app-ins-panel>
+          <app-ins-panel title="Temas" question="¿Qué temas dominan y cuáles están creciendo?">
             <div class="op__wrap">
               <table class="op__table">
                 <caption class="op__sr">Temas de conversación</caption>
@@ -49,21 +49,21 @@
                 </tbody>
               </table>
             </div>
-          </ins-panel>
+          </app-ins-panel>
         </div>
 
-        <ins-panel title="Interés, opinión e intención" question="¿Buscan información, evalúan la marca o están listos para actuar? Son tres señales distintas.">
+        <app-ins-panel title="Interés, opinión e intención" question="¿Buscan información, evalúan la marca o están listos para actuar? Son tres señales distintas.">
           <div class="op__signals">
             @for (s of signals(); track s.id) {
-              <ins-stat [label]="s.label" [value]="s.index.toFixed(0)" [delta]="s.change === null ? '' : change(s.change)" [good]="true" [hint]="s.meaning" />
+              <app-ins-stat [label]="s.label" [value]="s.index.toFixed(0)" [delta]="s.change === null ? '' : change(s.change)" [good]="true" [hint]="s.meaning" />
             }
           </div>
-          <ins-line-chart [labels]="signalLines().labels" [series]="signalLines().series" unit="count" ariaLabel="Índice relativo de búsquedas de interés, opinión e intención" />
+          <app-ins-line-chart [labels]="signalLines().labels" [series]="signalLines().series" unit="count" ariaLabel="Índice relativo de búsquedas de interés, opinión e intención" />
           <p class="op__foot">Índice relativo de 0 a 100 (datos de demostración): sirve para comparar la tendencia, no para contar búsquedas.</p>
-        </ins-panel>
+        </app-ins-panel>
 
         <div class="op__two">
-          <ins-panel title="Por departamento" question="¿Dónde se habla y con qué ánimo? Cada cifra declara su representatividad.">
+          <app-ins-panel title="Por departamento" question="¿Dónde se habla y con qué ánimo? Cada cifra declara su representatividad.">
             <div class="op__wrap">
               <table class="op__table">
                 <caption class="op__sr">Menciones por departamento</caption>
@@ -82,10 +82,10 @@
               </table>
             </div>
             <p class="op__foot">Con representatividad baja la cifra es una pista, no una conclusión sobre el departamento. «—» significa menos de {{ 30 }} menciones.</p>
-          </ins-panel>
+          </app-ins-panel>
 
-          <ins-panel title="Cuota de voz" question="¿Cuánto de la conversación del sector es nuestra, y cuánta de la positiva y de la negativa?">
-            <ins-bar-chart [data]="voiceBars()" unit="percent" orientation="h" [sorted]="false" ariaLabel="Cuota de voz: porcentaje de menciones del sector por marca" />
+          <app-ins-panel title="Cuota de voz" question="¿Cuánto de la conversación del sector es nuestra, y cuánta de la positiva y de la negativa?">
+            <app-ins-bar-chart [data]="voiceBars()" unit="percent" orientation="h" [sorted]="false" ariaLabel="Cuota de voz: porcentaje de menciones del sector por marca" />
             <div class="op__wrap">
               <table class="op__table">
                 <caption class="op__sr">Cuota de voz positiva y negativa</caption>
@@ -98,10 +98,10 @@
               </table>
             </div>
             <p class="op__foot">Los competidores son genéricos (datos de demostración): sin una fuente de monitoreo real, un nombre propio sería inventar un hecho.</p>
-          </ins-panel>
+          </app-ins-panel>
         </div>
 
-        <ins-panel title="Menciones por fuente" question="¿Dónde ocurre la conversación y cómo se siente en cada lugar?">
+        <app-ins-panel title="Menciones por fuente" question="¿Dónde ocurre la conversación y cómo se siente en cada lugar?">
           <div class="op__wrap">
             <table class="op__table">
               <caption class="op__sr">Menciones por fuente</caption>
@@ -113,9 +113,9 @@
               </tbody>
             </table>
           </div>
-        </ins-panel>
+        </app-ins-panel>
 
-        <ins-panel title="Cola de respuesta" question="¿Qué menciones piden una respuesta y todavía no la tienen? Ordenadas por alcance y gravedad.">
+        <app-ins-panel title="Cola de respuesta" question="¿Qué menciones piden una respuesta y todavía no la tienen? Ordenadas por alcance y gravedad.">
           <app-segmented-control panel-tools ariaLabel="Filtrar la cola por sentimiento" [options]="viewOptions" [value]="sentimentView()" (valueChange)="setView($event)" />
           @if (queue().length === 0) {
             <p class="op__empty">No hay menciones pendientes con este filtro. La cola está al día.</p>
@@ -134,10 +134,10 @@
             </ul>
             <p class="op__foot">Los textos son plantillas de demostración. Marcar una mención como atendida solo se guarda en esta sesión: la respuesta real se gestiona en cada red.</p>
           }
-        </ins-panel>
+        </app-ins-panel>
 
         @if (media().length) {
-          <ins-panel title="Prensa y medios" question="¿Qué se publica sobre nosotros y con qué tono?">
+          <app-ins-panel title="Prensa y medios" question="¿Qué se publica sobre nosotros y con qué tono?">
             <ul class="op__queue">
               @for (m of media(); track m.id) {
                 <li class="op__item">
@@ -147,7 +147,7 @@
               }
             </ul>
             <p class="op__foot">Notas y medios de demostración.</p>
-          </ins-panel>
+          </app-ins-panel>
         }
       </div>
     }

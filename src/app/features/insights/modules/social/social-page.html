@@ -1,5 +1,5 @@
 <div class="so">
-  <ins-filter-bar [controls]="['period']" />
+  <app-ins-filter-bar [controls]="['period']" />
   <div class="so__plat">
     <span class="so__plat-label">Plataforma</span>
     <app-segmented-control ariaLabel="Plataforma" [options]="platformOptions" [value]="platform()" (valueChange)="setPlatform($event)" />
@@ -12,7 +12,7 @@
           @for (k of kpis; track k.metric) {
             <article class="so__tile" [class.so__tile--on]="metric() === k.metric">
               <button type="button" class="so__tile-btn" [attr.aria-pressed]="metric() === k.metric" (click)="setMetric(k.metric)">
-                <span class="so__top"><span class="so__label">{{ k.label }}</span><ins-status [status]="k.status" [short]="true" /></span>
+                <span class="so__top"><span class="so__label">{{ k.label }}</span><app-ins-status [status]="k.status" [short]="true" /></span>
                 @if (k.value !== null) {
                   <span class="so__value">{{ fmt(k.value, k) }}</span>
                   <span class="so__delta" [class.so__delta--good]="goodChange(k) === true" [class.so__delta--bad]="goodChange(k) === false">
@@ -32,22 +32,22 @@
           }
         </section>
 
-        <ins-panel [title]="metricDef().label + ' · ' + names[platform()]" [question]="'¿Cómo evoluciona? ' + metricDef().definition">
+        <app-ins-panel [title]="metricDef().label + ' · ' + names[platform()]" [question]="'¿Cómo evoluciona? ' + metricDef().definition">
           <div panel-tools class="so__metric"><app-select ariaLabel="Métrica del gráfico (solo este gráfico)" [value]="metric()" [options]="metricOptions()" (valueChange)="setMetric($event)" /></div>
-          <ins-line-chart [labels]="evolution().labels" [series]="evolution().series" [refs]="evolution().refs" [compare]="evolution().compare" [unit]="metricDef().unit" [ariaLabel]="metricDef().label + ' de ' + names[platform()] + (weekly() ? ', por semana' : ', por día')" />
+          <app-ins-line-chart [labels]="evolution().labels" [series]="evolution().series" [refs]="evolution().refs" [compare]="evolution().compare" [unit]="metricDef().unit" [ariaLabel]="metricDef().label + ' de ' + names[platform()] + (weekly() ? ', por semana' : ', por día')" />
           @if (weekly()) { <p class="so__foot">Periodo largo: cada punto resume una semana.</p> }
-        </ins-panel>
+        </app-ins-panel>
 
         <div class="so__two">
-          <ins-panel title="Interacción por plataforma" question="¿Qué plataforma conecta mejor con su audiencia? La tasa es comparable porque parte de impresiones.">
-            <ins-bar-chart [data]="erBars()" unit="percent" orientation="h" [ref]="erRef()" ariaLabel="Tasa de interacción por plataforma" />
-          </ins-panel>
-          <ins-panel title="Crecimiento de la comunidad" question="¿Cuál cuenta crece más rápido? Seguidores indexados a 100 al inicio, para comparar cuentas de distinto tamaño.">
-            <ins-line-chart [labels]="growth().labels" [series]="growth().series" unit="ratio" [ariaLabel]="'Crecimiento relativo de seguidores por plataforma'" />
-          </ins-panel>
+          <app-ins-panel title="Interacción por plataforma" question="¿Qué plataforma conecta mejor con su audiencia? La tasa es comparable porque parte de impresiones.">
+            <app-ins-bar-chart [data]="erBars()" unit="percent" orientation="h" [ref]="erRef()" ariaLabel="Tasa de interacción por plataforma" />
+          </app-ins-panel>
+          <app-ins-panel title="Crecimiento de la comunidad" question="¿Cuál cuenta crece más rápido? Seguidores indexados a 100 al inicio, para comparar cuentas de distinto tamaño.">
+            <app-ins-line-chart [labels]="growth().labels" [series]="growth().series" unit="ratio" [ariaLabel]="'Crecimiento relativo de seguidores por plataforma'" />
+          </app-ins-panel>
         </div>
 
-        <ins-panel title="Contenido destacado" question="Nivel de exploración: qué publicaciones tuvieron más alcance e interacción.">
+        <app-ins-panel title="Contenido destacado" question="Nivel de exploración: qué publicaciones tuvieron más alcance e interacción.">
           <div class="so__wrap">
             <table class="so__table">
               <caption class="so__sr">Publicaciones destacadas</caption>
@@ -59,7 +59,7 @@
               </tbody>
             </table>
           </div>
-        </ins-panel>
+        </app-ins-panel>
       </div>
     }
   </app-view-state-host>

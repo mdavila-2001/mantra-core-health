@@ -18,16 +18,16 @@ const METRICS: readonly MetricId[] = ['ctr', 'conversionRate', 'clicks', 'cpc', 
  * modelado en el prototipo y así se declara.
  */
 @Component({
-  selector: 'ins-timing-panel',
+  selector: 'app-ins-timing-panel',
   imports: [Panel, HeatmapChart, Select],
   template: `
-    <ins-panel title="Mejor momento para pautar" question="¿En qué día y hora rinde mejor la campaña?">
+    <app-ins-panel title="Mejor momento para pautar" question="¿En qué día y hora rinde mejor la campaña?">
       <div panel-tools class="tp__metric">
         <app-select ariaLabel="Métrica del mapa de horario" [value]="metric()" [options]="options" (valueChange)="set($event)" />
       </div>
-      <ins-heatmap-chart [rows]="rows" [cols]="cols" [cells]="cells()" [unit]="def().unit" [valueName]="def().label" [best]="best()" [colLabelEvery]="2" [minCell]="30" [showValues]="false" [ariaLabel]="def().label + ' por día de la semana y hora'" />
+      <app-ins-heatmap-chart [rows]="rows" [cols]="cols" [cells]="cells()" [unit]="def().unit" [valueName]="def().label" [best]="best()" [colLabelEvery]="2" [minCell]="30" [showValues]="false" [ariaLabel]="def().label + ' por día de la semana y hora'" />
       <p class="tp__note">{{ summary() }} Reparto horario modelado a partir de datos diarios (prototipo).</p>
-    </ins-panel>
+    </app-ins-panel>
   `,
   styles: `
     :host { display: block; }

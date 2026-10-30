@@ -1,5 +1,5 @@
 <div class="cm">
-  <ins-filter-bar [controls]="['campaign', 'period', 'channel', 'metric', 'grain']" />
+  <app-ins-filter-bar [controls]="['campaign', 'period', 'channel', 'metric', 'grain']" />
 
   <nav class="cm__drill" aria-label="Nivel de detalle">
     <span class="cm__drill-label">Nivel de detalle</span>
@@ -18,31 +18,31 @@
       <div class="cm__stack">
       <section class="cm__kpis" aria-label="Indicadores principales">
         @for (k of m.kpis; track k.assessment.kpi.metric) {
-          <ins-kpi [assessment]="k.assessment" [series]="k.series" [selected]="k.assessment.kpi.metric === filter().metric" (opened)="setMetric(k.assessment.kpi.metric)" />
+          <app-ins-kpi [assessment]="k.assessment" [series]="k.series" [selected]="k.assessment.kpi.metric === filter().metric" (opened)="setMetric(k.assessment.kpi.metric)" />
         }
       </section>
 
-      <ins-main-analysis [filter]="filter()" (channelPicked)="drillTo($event)" />
+      <app-ins-main-analysis [filter]="filter()" (channelPicked)="drillTo($event)" />
 
       @if (m.insights.length) {
         <section class="cm__insights" aria-label="Hallazgos">
           <h2 class="cm__h2">Qué está pasando y qué conviene mirar</h2>
           <div class="cm__insights-grid">
             @for (i of m.insights; track i.id) {
-              <ins-insight [insight]="i" />
+              <app-ins-insight [insight]="i" />
             }
           </div>
         </section>
       }
 
       <div class="cm__two">
-        <ins-timing-panel [filter]="filter()" />
-        <ins-objectives-panel [filter]="filter()" />
+        <app-ins-timing-panel [filter]="filter()" />
+        <app-ins-objectives-panel [filter]="filter()" />
       </div>
 
-      <ins-dimension-panel [filter]="filter()" />
-      <ins-comparison-panel [channels]="filter().channels" [initial]="ctx.state().campaignIds" />
-      <ins-detail-table [filter]="filter()" />
+      <app-ins-dimension-panel [filter]="filter()" />
+      <app-ins-comparison-panel [channels]="filter().channels" [initial]="ctx.state().campaignIds" />
+      <app-ins-detail-table [filter]="filter()" />
       </div>
     }
   </app-view-state-host>

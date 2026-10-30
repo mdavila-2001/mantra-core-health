@@ -1,10 +1,11 @@
 <div class="cp">
   <p class="cp__title" id="cp-title">Visualización</p>
-  <div class="cp__list" role="radiogroup" aria-labelledby="cp-title" (keydown)="onKey($event)">
+  <div class="cp__list" role="radiogroup" aria-labelledby="cp-title">
     @for (o of options(); track o.chart) {
       <button
         type="button"
         role="radio"
+        (keydown)="onKey($event)"
         class="cp__opt"
         [class.cp__opt--on]="o.chart === value()"
         [class.cp__opt--rec]="o.recommended"

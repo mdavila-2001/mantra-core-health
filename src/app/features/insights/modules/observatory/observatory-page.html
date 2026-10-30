@@ -28,7 +28,7 @@
           @if (opened() === o.id) {
             <div class="ob__body" [id]="'ob-' + o.id">
               <p class="ob__summary-text">{{ o.summary }}</p>
-              <div class="ob__trend"><span class="ob__label">Atención al tema, últimos 30 días (índice relativo)</span><ins-spark [values]="o.trend" /></div>
+              <div class="ob__trend"><span class="ob__label">Atención al tema, últimos 30 días (índice relativo)</span><app-ins-spark [values]="o.trend" /></div>
               <dl class="ob__qa">
                 @for (q of questions; track q.key) {
                   <div><dt>{{ q.label }}</dt><dd>{{ o.answers[q.key] }}</dd></div>
