@@ -1,5 +1,22 @@
 # Estado
 
+**Última tarea verificada:** rama `infra-f1-web` · 2026-10-30 · **Infraestructura hospitalaria F1 (web)**
+(contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F0-F1.md` §4). Detalle en
+`EVIDENCIAS.md` § «Infraestructura F1». Revisión independiente (`visual-reviewer`, `frontend-reviewer`,
+`regression-auditor`): **pendiente** — quien implementa no aprueba.
+
+| Pantalla | Qué quedó |
+|---|---|
+| Consola «Organización médica» | pestañas Infraestructura (árbol N niveles + panel, físico/organizativo) y Establecimiento (regulatorio, habilitaciones, capacidad declarada vs. real); estado M34 una sola vez en la cabecera con requestId; pestaña, sede, espacio y vista en la URL; vacíos con ruta |
+| `spaces/:id` | una tarjeta centrada con 5 pestañas; editar, mover, activar/suspender/reactivar/retirar con `confirmWithReason` y lista de bloqueos |
+| `spaces/new`, `spaces/:id/edit` | `PaginatedForm` con páginas según el perfil de función |
+| `spaces/bulk`, `spaces/import` | alta masiva con vista previa; CSV parseado en el cliente, dry-run, tabla por línea, confirmación |
+| `app-tree` (organismo nuevo) | `role=tree`, flechas, Home/End, `*`, type-ahead, tabindex itinerante |
+
+Pendientes declarados: edición de unidades clínicas (sólo cliente y maqueta); prueba contra API real (otra franja).
+
+## Antes (2026-09-18)
+
 **Última tarea verificada:** rama `justin/refac-ux-todo` · 2026-09-18 (tercera tanda: «todo pasa por el rediseño»).
 **Alcance:** las 139 (médica) + 151 (paciente) + 275 (superadmin) combinaciones ruta × ancho del barrido
 `playwright/refac-ux-barrido.spec.ts`, en 1440/768/390. Barrido fresco: médica 5/5, paciente 6/6,

@@ -95,7 +95,39 @@ function atender(router: MockRouter, request: HttpRequest<unknown>, path: string
     respuesta = { status: 500, body: { statusCode: 500, message: 'Fallo del backend simulado' } };
   }
 
+  anotarEnElRegistro(method, path, request, respuesta);
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
+}
+
+/**
+ * Registro de peticiones de la maqueta, **sólo si la sesión lo pide**
+ * (`sessionStorage['mock:registrar'] = '1'`).
+ *
+ * La maqueta responde dentro de Angular, así que Playwright no ve ninguna
+ * petición de red: sin esto, la cadena «UI → petición → respuesta» de una
+ * prueba de mutación sólo se podía afirmar, no mostrar. Escrituras nada más
+ * (las lecturas son ruido), con método, ruta, `If-Match`, cuerpo y estado.
+ * Apagado por defecto y muere con la pestaña, igual que `mock:fallos`.
+ */
+function anotarEnElRegistro(method: MockMethod, path: string, request: HttpRequest<unknown>, respuesta: MockReply): void {
+  if (method === 'GET' || typeof sessionStorage === 'undefined') return;
+  try {
+    if (sessionStorage.getItem('mock:registrar') !== '1') return;
+    const previo: unknown = JSON.parse(sessionStorage.getItem('mock:registro') ?? '[]');
+    const lista = Array.isArray(previo) ? previo.slice(-49) : [];
+    lista.push({
+      method,
+      path,
+      query: request.params.toString(),
+      ifMatch: request.headers.get('If-Match'),
+      body: request.body,
+      status: respuesta.status,
+      at: new Date().toISOString(),
+    });
+    sessionStorage.setItem('mock:registro', JSON.stringify(lista));
+  } catch {
+    // Almacenamiento lleno o bloqueado: el registro es una ayuda, no un requisito.
+  }
 }
 
 /**

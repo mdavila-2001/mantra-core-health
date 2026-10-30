@@ -1,6 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -12,7 +12,7 @@ import { SpaceForm } from './space-form';
 
 const SAN_LUCAS = SITIOS_INFRA[0]!;
 
-@Component({ template: 'ficha' })
+@Component({ template: 'ficha', changeDetection: ChangeDetectionStrategy.OnPush })
 class FichaFalsa {}
 
 describe('SpaceForm', () => {

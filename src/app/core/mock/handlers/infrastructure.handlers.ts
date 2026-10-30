@@ -1026,7 +1026,9 @@ export function registrarInfraestructura(router: MockRouter): void {
       return validacion(['snisCode must be 6 to 12 digits']);
     }
     if (typeof snis === 'string' && snis !== '' && sitiosInfra.todos().some((s) => s.id !== sitio.id && s.snisCode === snis)) {
-      return fallo(409, 'CONFLICT', 'SNIS_CODE_TAKEN', 'Otro establecimiento ya tiene ese código SNIS.', { field: 'snisCode' });
+      // Genérico a propósito (Desvíos del modelo v4.2.67b): no dice de quién es
+      // el código ni si existe en otro tenant.
+      return fallo(409, 'CONFLICT', 'SNIS_CODE_UNAVAILABLE', 'Ese código SNIS no está disponible.', { field: 'snisCode' });
     }
     const tipologia = datos['typologyCode'] ?? null;
     if (tipologia !== null && tipologia !== sitio.typologyCode) {
