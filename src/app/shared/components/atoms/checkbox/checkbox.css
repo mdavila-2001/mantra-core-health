@@ -112,7 +112,7 @@
 
 /* Estado Error */
 .checkbox-container.has-error .checkbox-box {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 /* Estado Deshabilitado */
