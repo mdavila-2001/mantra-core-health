@@ -73,6 +73,22 @@ export function describeApiFailure(error: unknown, fallback: string): string {
 }
 
 /**
+ * `true` si la API explicó el fallo con palabras para la persona (el mismo
+ * criterio con que {@link describeApiFailure} prefiere su `message` al texto
+ * de la pantalla).
+ *
+ * Sirve a quien ya muestra el fallo de otra forma —la burbuja «no se envió»
+ * del chat— y sólo quiere sumar un aviso cuando hay un motivo que contar.
+ */
+export function apiExplainedFailure(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse) || error.status === 0) {
+    return false;
+  }
+  const body = readApiError(error);
+  return body !== null && MESSAGE_FOR_PEOPLE.has(body.code) && body.message.trim() !== '';
+}
+
+/**
  * El primer mensaje de cada campo rechazado, indexado por la ruta que mandó la
  * API (`email`, `address.city`, `items.0.quantity`).
  *

@@ -214,8 +214,10 @@
       var(--bg-surface);
   }
 
+  /* Igual que con el oscuro elegido a mano: tinta, no aguamarina. El tema
+     «sistema» pintaba el título de otro color que el oscuro manual. */
   :root:not([data-theme='light']) .app-shell--redesign .app-main app-page-header .page-header__title {
-    color: var(--c-aqua-300);
+    color: var(--text-primary);
   }
 }
 

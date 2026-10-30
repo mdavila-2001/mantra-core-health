@@ -1,3 +1,5 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { ChatPreferences } from './chat-preferences';
@@ -78,7 +80,9 @@ describe('ChatPreferences', () => {
     const cargar = vi.spyOn(autoReply, 'cargar').mockImplementation(() => undefined);
     const chat = TestBed.inject(ChatStore);
 
+    // Sin escribir como una vitrina, el perfil con el que se actúa es el propio.
     chat.perfil.set('pp-1');
+    chat.perfilPropio.set('pp-1');
     chat.perfilResuelto.set(true);
     fixture.detectChanges();
     TestBed.tick();
@@ -345,5 +349,63 @@ describe('ChatPreferences', () => {
     fixture.detectChanges();
 
     expect(consultar('chat-prefs-quitar-plantilla')).toBeNull();
+  });
+});
+
+/**
+ * M-2. Escribiendo como la farmacia, la pantalla sigue configurando la
+ * respuesta automática **personal**: lee y escribe la del perfil propio, nunca
+ * la de la vitrina, y lo dice.
+ */
+describe('ChatPreferences · escribiendo como la farmacia', () => {
+  const PROPIO = 'pp-propio';
+  const FARMACIA = 'pp-farmacia';
+
+  afterEach(() => {
+    TestBed.inject(ChatStore).detener();
+    localStorage.clear();
+  });
+
+  it('lee y guarda la respuesta automática del perfil propio, no la de la vitrina', async () => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      imports: [ChatPreferences],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    const http = TestBed.inject(HttpTestingController);
+    const store = TestBed.inject(ChatStore);
+    store.perfilResuelto.set(true);
+    store.perfilPropio.set(PROPIO);
+    store.vitrinasDeOrganizacion.set([{ profileId: FARMACIA, nombre: 'Farmacia Vida' }]);
+    store.perfil.set(FARMACIA);
+
+    const fixture = TestBed.createComponent(ChatPreferences);
+    fixture.detectChanges();
+    await Promise.resolve();
+
+    http.expectNone(`/community/profiles/${FARMACIA}/auto-reply`);
+    http.expectOne(`/community/profiles/${PROPIO}/auto-reply`).flush(null);
+
+    const aviso = fixture.nativeElement.querySelector('[data-testid="chat-prefs-personal"]') as HTMLElement | null;
+    expect(aviso?.textContent).toContain('personal');
+    expect(aviso?.textContent).toContain('Farmacia Vida');
+
+    // Activa una respuesta fija y la guarda, como lo haría la persona.
+    (fixture.nativeElement.querySelector('[data-testid="chat-prefs-modo-fijo"]') as HTMLInputElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const area = fixture.nativeElement.querySelector('[data-testid="chat-prefs-texto"]') as HTMLTextAreaElement;
+    area.value = 'Estoy de vacaciones hasta el lunes.';
+    area.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement.querySelector('[data-testid="chat-prefs-guardar"]') as HTMLElement).click();
+    fixture.detectChanges();
+
+    http.expectNone((r) => r.method === 'PUT' && r.url === `/community/profiles/${FARMACIA}/auto-reply`);
+    const subida = http.expectOne((r) => r.method === 'PUT' && r.url === `/community/profiles/${PROPIO}/auto-reply`);
+    expect(subida.request.body.isActive).toBe(true);
+    subida.flush({});
+    http.match(() => true).forEach((r) => r.flush(null));
   });
 });

@@ -44,6 +44,23 @@
             · Llegó el {{ abierto.creadoEl | date: 'dd/MM HH:mm' }} ·
             {{ abierto.sede }}
           </p>
+          <!-- El chat del pedido, como la farmacia. Si la API no lo abre, el
+               motivo se dice acá, junto al botón que lo pidió. -->
+          <div class="mostrador__chat">
+            <button
+              app-button
+              variant="secondary"
+              type="button"
+              data-testid="mostrador-chatear"
+              [isLoading]="abriendoChat()"
+              (clicked)="chatearConElPaciente()"
+            >
+              Chatear con el paciente
+            </button>
+            @if (errorDeChat(); as motivo) {
+              <app-alert tone="warning" data-testid="mostrador-chat-error">{{ motivo }}</app-alert>
+            }
+          </div>
         </section>
       }
 

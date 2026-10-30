@@ -265,7 +265,13 @@
            ingreso se lee como haber cerrado la sesión—. Pedido del cliente del
            13/09/2026. -->
       @if (!enElPanel()) {
-        <app-back-link class="app-header__volver" fallback="/dashboard" label="Volver" iconOnly />
+        <app-back-link
+          class="app-header__volver"
+          [class.app-header__volver--hilo]="enUnHilo()"
+          fallback="/dashboard"
+          label="Volver"
+          iconOnly
+        />
       }
 
       <!-- Acá había un buscador «en toda la organización» **sin un solo
