@@ -145,6 +145,8 @@ function buildKpis(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       subirEsMalo: true,
       numerador: aMoneda(ctx, m.gasto),
       denominador: m.impresiones,
+      unidadNumerador: moneda,
+      unidadDenominador: { tipo: 'numero' },
       motivoSinDato: cpm === null ? NO_DELIVERY : undefined,
       tendencia: muestrear(m.cpmDia?.map((v) => aMoneda(ctx, v)) ?? null),
       info: info({
@@ -178,6 +180,8 @@ function buildKpis(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       subirEsMalo: true,
       numerador: aMoneda(ctx, m.gastoCitas),
       denominador: m.citas,
+      unidadNumerador: moneda,
+      unidadDenominador: { tipo: 'numero' },
       motivoSinDato: cpaBob === null ? NO_APPOINTMENTS : undefined,
       tendencia: muestrear(m.cpaDia?.map((v) => aMoneda(ctx, v)) ?? null),
       info: info({
@@ -196,6 +200,8 @@ function buildKpis(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       variacionPct: variacion('roas', roas),
       numerador: m.valor === null ? null : aMoneda(ctx, m.valor),
       denominador: aMoneda(ctx, m.gastoCitas),
+      unidadNumerador: moneda,
+      unidadDenominador: moneda,
       motivoSinDato: roas === null ? NO_APPOINTMENTS : undefined,
       tendencia: muestrear(m.roasDia),
       info: info({

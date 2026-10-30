@@ -68,6 +68,8 @@ export function construirKpis(ctx: ContextoReporte, m: ModeloComisiones, tendenc
       variacionPct: variacion(ctx, 'take-rate', take),
       numerador: aMonto(a.ingresoNetoC),
       denominador: aMonto(a.volumenC),
+      unidadNumerador: dinero,
+      unidadDenominador: dinero,
       ...(take === null ? { motivoSinDato: actorReason ?? 'Sin volumen transaccionado en el periodo' } : {}),
       tendencia: tendencia.takeRate,
       info: info({
@@ -112,6 +114,8 @@ export function construirKpis(ctx: ContextoReporte, m: ModeloComisiones, tendenc
       variacionPct: variacion(ctx, 'conciliado-pct', conciliado),
       numerador: aMonto(a.volumenC - a.descuadreC),
       denominador: aMonto(a.volumenC),
+      unidadNumerador: dinero,
+      unidadDenominador: dinero,
       ...(conciliado === null ? { motivoSinDato: 'Sin volumen transaccionado en el periodo' } : {}),
       info: info({
         definicion: 'Qué parte del dinero cobrado coincide entre el gateway y el libro.',
