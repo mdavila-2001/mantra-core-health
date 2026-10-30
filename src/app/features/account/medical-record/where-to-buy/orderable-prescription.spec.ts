@@ -1,5 +1,7 @@
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { prescriptionList, type SimulatedPrescription } from '../../../../core/mock/fixtures/clinic';
+import { record } from '../../../../core/mock/fixtures/concepts';
 import { isOrderableRow, orderablePrescriptionOf } from './orderable-prescription';
 
 /** Una fila del resumen clínico de la receta `enc-a`, con lo mínimo que se mira. */
@@ -99,5 +101,58 @@ describe('orderablePrescriptionOf (FAR-03)', () => {
       rows: [],
       requestId: null,
     });
+  });
+});
+
+/**
+ * El backend simulado (`environment.mockBackend`) tiene que hablar los mismos
+ * códigos de estado que la API: si inventara los suyos, en modo demo ninguna
+ * receta sería pedible y «Dónde comprar» quedaría vacía.
+ */
+describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
+  /** Las etiquetas por id, desde el mismo catálogo que sirve la terminología simulada. */
+  const mockLabels: ConceptLabels = new Map(
+    [...record.values()].map((concept) => [
+      concept.id,
+      { conceptId: concept.id, code: concept.code, display: concept.display, codeSystemVersionId: 'v1' },
+    ]),
+  );
+
+  /** La fila sembrada, como la deja el cliente clínico (fechas a `Date`, `null` omitido). */
+  function asRequest(rx: SimulatedPrescription): MedicationRequest {
+    return {
+      id: rx.id,
+      medicationConceptId: rx.medicationConceptId,
+      statusConceptId: rx.statusConceptId,
+      createdAt: new Date(rx.createdAt),
+      validTo: new Date(rx.validTo),
+      ...(rx.issuedAt === null ? {} : { issuedAt: new Date(rx.issuedAt) }),
+      ...(rx.encounterId === undefined ? {} : { encounterId: rx.encounterId }),
+    };
+  }
+
+  const seededWithStatus = (display: string) =>
+    prescriptionList.todos().filter((rx) => mockLabels.get(rx.statusConceptId)?.display === display);
+
+  it('una receta «Vigente» sembrada pasa la regla; una «Completada» no', () => {
+    const now = new Date();
+    const current = seededWithStatus('Vigente');
+    const completed = seededWithStatus('Completada');
+    expect(current.length).toBeGreaterThan(0);
+    expect(completed.length).toBeGreaterThan(0);
+
+    for (const rx of current) {
+      expect(isOrderableRow(asRequest(rx), mockLabels, now)).toBe(true);
+    }
+    for (const rx of completed) {
+      expect(isOrderableRow(asRequest(rx), mockLabels, now)).toBe(false);
+    }
+  });
+
+  it('el catálogo simulado ya no tiene los códigos propios del simulador', () => {
+    for (const code of ['RX-ACTIVE', 'RX-DRAFT', 'RX-COMPLETED', 'RX-CANCELLED']) {
+      expect(record.has(code)).toBe(false);
+    }
+    expect(record.get('MR_ISSUED')?.display).toBe('Vigente');
   });
 });
