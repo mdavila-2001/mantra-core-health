@@ -89,6 +89,17 @@ describe('PharmacyInventory', () => {
 
   afterEach(() => http.verify());
 
+  it('montada como pestaña de «Catálogo» (`embedded`) no dibuja su membrete', () => {
+    mount([]);
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-page-header')).not.toBeNull();
+
+    fixture.componentRef.setInput('embedded', true);
+    fixture.detectChanges();
+
+    expect(host.querySelector('app-page-header')).toBeNull();
+  });
+
   it('avisa que con la sincronización pasará a sólo lectura', () => {
     mount([product({})]);
 
