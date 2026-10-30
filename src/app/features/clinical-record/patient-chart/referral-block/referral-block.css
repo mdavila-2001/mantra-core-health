@@ -88,3 +88,8 @@
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }
+
+/* «Ver detalle» siempre al final del renglón, haya o no insignia de consentimiento. */
+.referral__row-actions > :last-child {
+  margin-inline-start: auto;
+}

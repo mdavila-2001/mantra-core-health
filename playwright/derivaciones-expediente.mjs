@@ -83,7 +83,11 @@ const stored = (key) =>
 const REFERRALS = 'mock.clinical.derivaciones';
 const CONSENTS = 'mock.consent.treatmentInformedConsents';
 const storedReferral = async (service) => (await stored(REFERRALS)).find((f) => f.requestedServiceText === service);
-const captura = (nombre, opciones = {}) => pg.screenshot({ path: `${SALIDA}/${nombre}.png`, ...opciones });
+/** Espera a que terminen las transiciones de los modales antes de capturar. */
+const captura = async (nombre, opciones = {}) => {
+  await pg.waitForTimeout(700);
+  await pg.screenshot({ path: `${SALIDA}/${nombre}.png`, ...opciones });
+};
 
 await pg.goto(`${BASE}/auth`, { waitUntil: 'domcontentloaded', timeout: 240_000 });
 await pg.getByTestId('login-identifier').fill('medica@alovida.mock');
@@ -144,7 +148,8 @@ await captura('02-errores-junto-al-campo', { fullPage: true });
 /* 3 · Emitir a un destino externo ---------------------------------------- */
 const servicio = `Fisioterapia de hombro, 8 sesiones (${Date.now() % 100000})`;
 await pg.getByTestId('referral-external-contact').fill('3 3345678');
-await pg.getByTestId('referral-type').locator('select').selectOption({ label: 'Terapia' });
+await pg.getByTestId('referral-type').locator('button.select-trigger').click();
+await pg.getByRole('option', { name: 'Terapia', exact: true }).click();
 await pg.getByTestId('referral-requested-service').locator('textarea').fill(servicio);
 await pg
   .getByTestId('referral-clinical-summary')
@@ -177,9 +182,9 @@ await panel.getByRole('tab', { name: /Decisión/ }).click();
 const decision = pg.getByTestId('consent-decision');
 const marcadas = await decision.locator('input:checked').count();
 ok('la decisión no viene premarcada', marcadas === 0, String(marcadas));
-await captura('05-decision-sin-premarcar');
+await panel.screenshot({ path: `${SALIDA}/05-decision-sin-premarcar.png` });
 await decision.getByText('Acepta', { exact: true }).click();
-await pg.getByTestId('consent-revocation-right').locator('input').first().check();
+await pg.getByTestId('consent-revocation-right').getByText(/Le informé que puede revocar/).click();
 await pg.getByTestId('consent-record').click();
 await pg.getByTestId('referral-detail-consent').filter({ hasText: 'Aceptado y vinculado' }).waitFor({ timeout: 15_000 });
 const consentimiento = (await stored(CONSENTS)).find((c) => c.targetType === 'REFERRAL' && c.targetId === emitida?.id);

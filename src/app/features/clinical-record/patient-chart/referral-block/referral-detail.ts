@@ -92,7 +92,7 @@ export class ReferralDetail {
   protected readonly consentLabel = computed(() => {
     const r = this.referral();
     const service = r.targetServiceName ?? r.requestedServiceText ?? 'servicio sin detallar';
-    return `Derivación · ${this.type()}: ${service} → ${this.destination()}`;
+    return `${this.type()}: ${service} → ${this.destination()}`;
   });
 
   /** Lo que el panel prellena: lo que la derivación ya dice. */

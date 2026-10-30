@@ -44,7 +44,7 @@ describe('ReferralDetail', () => {
     fixture.detectChanges();
   }
 
-  function el(testId: string): HTMLElement | null {
+  function byTestId(testId: string): HTMLElement | null {
     return (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`);
   }
 
@@ -92,19 +92,19 @@ describe('ReferralDetail', () => {
 
   it('al destino de una pendiente le ofrece aceptar y rechazar con el mismo peso, y anular', () => {
     create(INCOMING);
-    const accept = el('referral-accept');
-    const reject = el('referral-reject');
+    const accept = byTestId('referral-accept');
+    const reject = byTestId('referral-reject');
     expect(accept).not.toBeNull();
     expect(reject).not.toBeNull();
     expect(accept!.getAttribute('variant')).toBe(reject!.getAttribute('variant'));
-    expect(el('referral-cancel')).not.toBeNull();
-    expect(el('referral-counter')).toBeNull();
+    expect(byTestId('referral-cancel')).not.toBeNull();
+    expect(byTestId('referral-counter')).toBeNull();
   });
 
   it('a quien la emitió no le ofrece responderla (es del destino), sí anularla', () => {
     create({ ...INCOMING, referringProfileId: 'hp-yo', targetProfileId: 'hp-otro' });
-    expect(el('referral-accept')).toBeNull();
-    expect(el('referral-cancel')).not.toBeNull();
+    expect(byTestId('referral-accept')).toBeNull();
+    expect(byTestId('referral-cancel')).not.toBeNull();
   });
 
   it('aceptar manda ACCEPT y avisa con la derivación del servidor', async () => {
@@ -151,12 +151,12 @@ describe('ReferralDetail', () => {
         { status: 404, statusText: 'Not Found' },
       );
     fixture.detectChanges();
-    expect(el('referral-action-error')?.textContent).toContain('No encontramos esta derivación');
+    expect(byTestId('referral-action-error')?.textContent).toContain('No encontramos esta derivación');
   });
 
   it('una aceptada ofrece la contrarreferencia al destino', async () => {
     create({ ...INCOMING, status: 'ACCEPTED' });
-    expect(el('referral-counter')).not.toBeNull();
+    expect(byTestId('referral-counter')).not.toBeNull();
     await member<() => Promise<void>>('counterRefer')();
     const req = http.expectOne((r) => r.url === '/referrals/r-1/counter-referral');
     expect(req.request.body).toEqual({ counterReferralText: 'Sin cupo hasta diciembre' });
@@ -165,12 +165,12 @@ describe('ReferralDetail', () => {
 
   it('el consentimiento sólo para los tipos que lo piden, atado al origen o a la atención abierta', () => {
     create(INCOMING);
-    expect(el('referral-detail-consent')).toBeNull();
+    expect(byTestId('referral-detail-consent')).toBeNull();
     expect((fixture.nativeElement as HTMLElement).querySelector('app-informed-consent-panel')).toBeNull();
 
     fixture.componentRef.setInput('referral', { ...INCOMING, referralType: 'THERAPY', informedConsentId: 'c-1' });
     fixture.detectChanges();
-    expect(el('referral-detail-consent')?.textContent).toContain('Aceptado y vinculado');
+    expect(byTestId('referral-detail-consent')?.textContent).toContain('Aceptado y vinculado');
     expect((fixture.nativeElement as HTMLElement).querySelector('app-informed-consent-panel')).not.toBeNull();
     expect(member<() => string | null>('consentEncounterId')()).toBe('enc-abierto');
 

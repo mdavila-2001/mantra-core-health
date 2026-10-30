@@ -70,6 +70,8 @@ export function referralDetailState(consents: PatientConsents, onChange: () => v
       onChange();
     },
     consentChanged: (referralId, consent) => {
+      // Registrado el consentimiento, el «próximo paso» ya se dio.
+      justIssued.set(false);
       consents.upsert(consent);
       client.get(referralId).subscribe({
         next: (reread) => {
