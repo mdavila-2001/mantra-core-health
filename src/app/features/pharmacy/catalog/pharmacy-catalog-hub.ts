@@ -7,7 +7,7 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PharmacyCategories } from '../categories/pharmacy-categories';
-import { PharmacyImport } from '../import/pharmacy-import';
+import { ImportTargetPicker } from '../import/import-target/import-target';
 import { PharmacyInventory } from '../inventory/pharmacy-inventory';
 import { PharmacyIntegration } from '../integration/pharmacy-integration';
 import { PharmacyPrices } from '../prices/pharmacy-prices';
@@ -44,9 +44,9 @@ import { CATALOG_TABS, CATALOG_TAB_LABELS, tabIndexOf, tabKeyOf } from './catalo
   selector: 'app-pharmacy-catalog-hub',
   imports: [
     Card,
+    ImportTargetPicker,
     PageHeader,
     PharmacyCategories,
-    PharmacyImport,
     PharmacyIntegration,
     PharmacyInventory,
     PharmacyPrices,

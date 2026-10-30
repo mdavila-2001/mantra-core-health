@@ -1,0 +1,20 @@
+Errores de consola, pageerror, peticiones fallidas y respuestas HTTP >= 400 de la API
+durante todos los casos de este directorio (farmacia y paciente):
+
+console.error: 0
+pageerror: 0
+requestfailed: 0
+HTTP >= 400: 0
+
+Peticiones POST .../bulk observadas (estado · modo · dryRun · filas · resultado):
+products  200 · UPSERT · true  · 250 · CREATED 250
+products  200 · UPSERT · true  ·  50 · CREATED 50
+products  200 · UPSERT · (sin) · 250 · CREATED 250
+products  200 · UPSERT · (sin) ·  50 · CREATED 50
+products  (reimportar el mismo archivo) 4 pedidos 250+50 con y sin dryRun · UNCHANGED 300
+categories 200 · UPSERT · true  · 3 · CREATED 2, REJECTED 1 (name REQUIRED)
+categories 200 · UPSERT · (sin) · 3 · CREATED 2, REJECTED 1
+prices    200 · UPSERT · true  · 3 · UPDATED 1, UNCHANGED 1, REJECTED 1 (productCode PRODUCT_NOT_FOUND)
+prices    200 · UPSERT · (sin) · 3 · UPDATED 1, UNCHANGED 1, REJECTED 1
+sites     200 · UPSERT · true  · 2 · CREATED 1, REJECTED 1 (longitude COORDINATES_INCOMPLETE)
+sites     200 · UPSERT · (sin) · 2 · CREATED 1, REJECTED 1
