@@ -83,7 +83,7 @@ Embudo y Journey · Uso de la app · Redes · Opinión pública · Informes · O
 | ID | Microtarea | DoD | Estado |
 |---|---|---|---|
 | H5.S1.M1 | `ngc` + `eslint` + gates de diseño sobre lo tocado | salidas en `evidencia/` | HECHO |
-| H5.S1.M2 | `ng build` de producción | exit 0 | BLOQUEADO (ENVIRONMENT: el build de esbuild se cuelga en este contenedor; se verificó con `ng serve --configuration demo`) |
+| H5.S1.M2 | `ng build` de producción | exit 0 | HECHO ([build-produccion.txt](./evidencia/build-produccion.txt); lo repitió el hook de pre-push) |
 | H5.S1.M3 | `ng test` completo del repo | exit 0 | BLOQUEADO (ENVIRONMENT: sin memoria en el contenedor; se corrieron los specs de Insights con Vitest suelto) |
 | H5.S1.M4 | `REPORTE.md` con evidencia | archivo en disco | HECHO |
 
