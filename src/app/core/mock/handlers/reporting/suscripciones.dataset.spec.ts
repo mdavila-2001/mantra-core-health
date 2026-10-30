@@ -272,18 +272,18 @@ describe('la tabla «Resumen por plan» cuadra con las tarjetas de la misma pest
 describe('la tabla «Resumen por plan» con un filtro de plan activo no se contradice', () => {
   for (const plan of ['Esencial', 'Profesional', 'Clínica']) {
     it(`filtrado por ${plan}: el ingreso por cuenta sigue siendo del orden del precio del plan, no una fracción`, () => {
-      const sin = construirSuscripciones(BASE).tablas.find((t) => t.id === 'resumen-planes')!;
-      const con = construirSuscripciones({ ...BASE, filtros: [{ dimension: 'plan', valor: plan }] }).tablas.find((t) => t.id === 'resumen-planes')!;
-      const fila = (t: typeof sin) => t.filas.find((f) => f['plan'] === plan)!;
-      const arpuSin = fila(sin)['arpu'] as number;
-      const arpuCon = fila(con)['arpu'] as number;
+      const unfiltered = construirSuscripciones(BASE).tablas.find((t) => t.id === 'resumen-planes')!;
+      const filtered = construirSuscripciones({ ...BASE, filtros: [{ dimension: 'plan', valor: plan }] }).tablas.find((t) => t.id === 'resumen-planes')!;
+      const fila = (t: typeof unfiltered) => t.filas.find((f) => f['plan'] === plan)!;
+      const arpuUnfiltered = fila(unfiltered)['arpu'] as number;
+      const arpuFiltered = fila(filtered)['arpu'] as number;
       // Antes salía entre el 18 % y el 58 % del valor sin filtrar; con las cuentas del mismo corte vuelve al orden del precio.
-      expect(arpuCon / arpuSin).toBeGreaterThan(0.85);
-      expect(arpuCon / arpuSin).toBeLessThan(1.15);
-      expect(fila(con)['cuentas'] as number).toBeLessThanOrEqual(fila(sin)['cuentas'] as number);
+      expect(arpuFiltered / arpuUnfiltered).toBeGreaterThan(0.85);
+      expect(arpuFiltered / arpuUnfiltered).toBeLessThan(1.15);
+      expect(fila(filtered)['cuentas'] as number).toBeLessThanOrEqual(fila(unfiltered)['cuentas'] as number);
       // Con un filtro de plan la tabla muestra solo ese plan: su total no es el de la tarjeta y la fila lo dice.
-      expect(con.filas.some((f) => f['plan'] === 'Total del plan filtrado')).toBe(true);
-      expect(con.filas.some((f) => f['plan'] === 'Total')).toBe(false);
+      expect(filtered.filas.some((f) => f['plan'] === 'Total del plan filtrado')).toBe(true);
+      expect(filtered.filas.some((f) => f['plan'] === 'Total')).toBe(false);
     });
   }
 });
