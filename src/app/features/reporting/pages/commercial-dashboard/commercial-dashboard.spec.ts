@@ -18,7 +18,7 @@ import { CommercialDashboard } from './commercial-dashboard';
 function pestana(tab: VerticalReporte, overrides: Partial<PestanaReporte> = {}): PestanaReporte {
   return {
     pestana: tab,
-    generadoEn: '2026-10-30T10:00:00Z',
+    generadoEn: new Date().toISOString(),
     origen: 'ejemplo',
     kpis: [{ id: `${tab}-k`, titulo: `KPI de ${tab}`, valor: 10, unidad: { tipo: 'numero' }, variacionPct: 1, info: null, infoMotivo: 'x' }],
     graficos: [],
@@ -105,6 +105,29 @@ describe('CommercialDashboard', () => {
     it('no se pone sobre datos que no lo son', async () => {
       const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { origen: 'api' })));
       expect(root.querySelector('[data-testid="sample-seal"]')).toBeNull();
+    });
+  });
+
+  describe('datos atrasados (S7)', () => {
+    const hoursAgo = (h: number): string => new Date(Date.now() - h * 3_600_000).toISOString();
+
+    it('un reporte generado hace más de un día se muestra atrasado, con su antigüedad y con los datos a la vista', async () => {
+      const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { generadoEn: hoursAgo(72) })));
+      const text = root.textContent ?? '';
+      expect(text).toContain('Está viendo datos que pueden estar atrasados');
+      expect(text).toContain('Información al');
+      expect(root.querySelector('[data-testid="tab-view"]')).not.toBeNull();
+      expect(Array.from(root.querySelectorAll('button')).some((b) => b.textContent?.includes('Actualizar'))).toBe(true);
+    });
+
+    it('uno reciente se presenta como vigente', async () => {
+      const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { generadoEn: hoursAgo(1) })));
+      expect(root.textContent).not.toContain('pueden estar atrasados');
+    });
+
+    it('una fecha ilegible no lo marca atrasado: sin fecha no se inventa una antigüedad', async () => {
+      const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { generadoEn: 'ayer' })));
+      expect(root.textContent).not.toContain('pueden estar atrasados');
     });
   });
 

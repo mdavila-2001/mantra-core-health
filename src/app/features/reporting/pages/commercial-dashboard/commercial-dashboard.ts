@@ -46,6 +46,9 @@ interface Request {
   readonly attempt: number;
 }
 
+/** Pasado este tiempo desde que se generó un reporte, deja de presentarse como vigente. */
+const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
+
 /**
  * El dashboard comercial: una pestaña por vertical de negocio, con filtros
  * globales arriba. La pestaña activa sale de la URL (`reports/commercial/:pestana`),
@@ -195,8 +198,14 @@ export class CommercialDashboard {
       tap((data) => (this.lastGood = { tab: request.tab, data })),
       map((data): ViewState<PestanaReporte> => {
         const hasContent = data.kpis.length > 0 || data.graficos.length > 0 || data.tablas.length > 0;
+        const generated = new Date(data.generadoEn);
+        // Un reporte que el propio servidor generó hace más de un día es «datos atrasados» (S7):
+        // se ve con su antigüedad y un botón para reintentar, no se hace pasar por vigente.
+        const isOld = !Number.isNaN(generated.getTime()) && Date.now() - generated.getTime() > STALE_AFTER_MS;
         return hasContent
-          ? ready(data)
+          ? isOld
+            ? stale(data, generated)
+            : ready(data)
           : empty(
               { label: 'Quite un filtro o amplíe el periodo.' },
               'No hay datos para este periodo y estos filtros.',
