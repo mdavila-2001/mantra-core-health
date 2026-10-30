@@ -18,11 +18,12 @@ export interface InventorySite {
 type SitesLoad = 'loading' | 'ready' | 'failed';
 
 /**
- * **Las sucursales de la pestaña Inventario** y cuáles llevan su propio stock.
+ * **Las sucursales de la pestaña Inventario** y cuáles tienen stock propio.
  *
  * Las sedes salen de `GET /pharmacies/:pharmacyId/opening-hours`; el modo de
  * cada una, de su `GET /pharmacy-inventory/sites/:siteId/stock` (con alguna
- * posición, lleva su propio stock). Una lectura de stock que falla no tumba
+ * posición, tiene stock propio de ese producto; el resto sigue el catálogo).
+ * Una lectura de stock que falla no tumba
  * el selector: esa sede queda sin aviso hasta que se la elija.
  *
  * Lo provee la pestaña y muere con ella, como `PharmacyScope`.
@@ -34,7 +35,7 @@ export class InventorySites {
 
   readonly status = signal<SitesLoad>('loading');
   readonly sites = signal<readonly InventorySite[]>([]);
-  /** Las sedes que llevan su propio stock, por id. */
+  /** Las sedes con stock propio de algún producto, por id. */
   private readonly ledger = signal<ReadonlySet<string>>(new Set());
   /** Cuenta las cargas: la respuesta de una farmacia anterior no pisa la actual. */
   private generation = 0;
@@ -44,11 +45,11 @@ export class InventorySites {
     ...this.sites().map((site) => ({
       value: site.siteId,
       label: site.siteName,
-      description: this.ledger().has(site.siteId) ? 'Lleva su propio stock' : undefined,
+      description: this.ledger().has(site.siteId) ? 'Con stock propio' : undefined,
     })),
   ]);
 
-  /** Los nombres de las sedes que llevan su propio stock, en el orden de la lista. */
+  /** Los nombres de las sedes con stock propio de algún producto, en el orden de la lista. */
   readonly ledgerNames = computed(() =>
     this.sites()
       .filter((site) => this.ledger().has(site.siteId))

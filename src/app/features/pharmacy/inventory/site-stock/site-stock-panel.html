@@ -1,12 +1,13 @@
 <div class="site-stock" data-testid="site-stock-panel">
   @if (ledger() === true) {
     <p class="site-stock__note" data-testid="site-stock-ledger-notice">
-      Esta sucursal lleva su propio stock: lo que cambie en "Todas" no la afecta.
+      Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"; los demás muestran lo
+      declarado en el catálogo.
     </p>
   } @else if (ledger() === false) {
     <p class="site-stock__note" data-testid="site-stock-catalog-notice">
-      Esta sucursal todavía muestra lo declarado en el catálogo ("Todas"). Al guardar el primer cambio pasa a llevar
-      su propio stock, empezando por lo declarado hoy en cada producto.
+      Esta sucursal muestra lo declarado en el catálogo ("Todas"). El producto que cambie acá pasa a llevar su propio
+      stock en esta sucursal; los demás siguen el catálogo.
     </p>
   }
 
@@ -63,30 +64,18 @@
     @if (row.kind === 'DECLARED_OUT') {
       <app-badge variant="error">Marcado sin stock en el catálogo</app-badge>
     } @else {
-      @if (row.kind === 'UNTRACKED') {
-        <app-badge variant="warning">Sin registrar en esta sucursal</app-badge>
-      }
-      @if (row.kind === 'UNTRACKED' && !isEdited(row)) {
-        <button
-          app-button
-          variant="outline"
-          size="sm"
-          type="button"
-          [disabled]="saving()"
-          (clicked)="setAvailable(row, true)"
-          [attr.data-testid]="'site-stock-register-' + row.productCode"
-        >
-          Lo tengo
-        </button>
-      } @else {
-        <app-switch
-          [label]="editOf(row).available ? 'Lo tengo' : 'No lo tengo'"
-          [ariaLabel]="'¿Tiene ' + row.name + ' en ' + siteName() + '?'"
-          [checked]="editOf(row).available"
-          [disabled]="saving()"
-          (checkedChange)="setAvailable(row, $event)"
-          [attr.data-testid]="'site-stock-has-' + row.productCode"
-        />
+      <app-switch
+        [label]="editOf(row).available ? 'Lo tengo' : 'No lo tengo'"
+        [ariaLabel]="'¿Tiene ' + row.name + ' en ' + siteName() + '?'"
+        [checked]="editOf(row).available"
+        [disabled]="saving()"
+        (checkedChange)="setAvailable(row, $event)"
+        [attr.data-testid]="'site-stock-has-' + row.productCode"
+      />
+      @if (row.kind === 'CATALOG' && ledger() === true) {
+        <span class="site-stock__source" [attr.data-testid]="'site-stock-catalog-' + row.productCode">
+          Como en el catálogo
+        </span>
       }
     }
     @if (rowErrors()[row.productId]; as problem) {
@@ -102,7 +91,7 @@
       inputMode="numeric"
       [ariaLabel]="'Cantidad de ' + row.name + ' en ' + siteName()"
       [value]="editOf(row).quantity"
-      placeholder="La del catálogo"
+      placeholder="Del catálogo"
       [disabled]="saving()"
       [hasError]="rowErrors()[row.productId] !== undefined"
       (valueChange)="setQuantity(row, $event)"

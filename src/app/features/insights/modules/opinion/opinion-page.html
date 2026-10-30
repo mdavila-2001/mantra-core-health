@@ -1,0 +1,155 @@
+<div class="op">
+  <app-ins-filter-bar [controls]="['period']" />
+  <div class="op__src">
+    <span class="op__label">Fuente (esta pantalla)</span>
+    <app-select ariaLabel="Fuente de las menciones" [value]="source()" [options]="sourceOptions" (valueChange)="setSource($event ?? 'all')" />
+  </div>
+
+  <app-view-state-host [state]="state()">
+    @if (loaded()) {
+      <div class="op__stack">
+        <section class="op__tiles" aria-label="Indicadores de opinión">
+          @for (t of tiles(); track t.label) {
+            <app-ins-stat [label]="t.label" [value]="t.value" [delta]="t.delta" [good]="t.good" [hint]="t.hint" />
+          }
+        </section>
+
+        <p class="op__caveat">El sentimiento lo estima un clasificador automático y puede equivocarse en ironía o jerga local. Las redes no son una encuesta: reflejan a quien opina, no a toda la población.</p>
+
+        @if (insights().length) {
+          <section class="op__insights" aria-label="Hallazgos de la capa de interpretación">
+            @for (i of insights(); track i.id) { <app-ins-insight [insight]="i" /> }
+          </section>
+        }
+
+        <app-ins-panel title="Sentimiento en el tiempo" question="¿Está mejorando o empeorando lo que se dice de nosotros?">
+          <app-ins-stacked-chart [rows]="stackRows()" [segments]="segments" unit="percent" [proportion]="true" [ariaLabel]="'Composición del sentimiento ' + (weekly() ? 'por semana' : 'por día')" />
+          <p class="op__foot">Cada columna suma 100 %. Los {{ weekly() ? 'semanas' : 'días' }} sin muestra suficiente no se dibujan: un hueco no es un cero.</p>
+        </app-ins-panel>
+
+        <div class="op__two">
+          <app-ins-panel title="Mapa de atributos" question="¿De qué se habla más y con qué ánimo? Cada punto es un tema.">
+            <app-ins-scatter-chart [points]="topicPoints()" xUnit="count" yUnit="count" xLabel="Menciones" yLabel="Sentimiento neto (pts)" ariaLabel="Mapa de atributos: volumen de menciones frente a sentimiento neto por tema" />
+            <p class="op__foot">Arriba y a la derecha: mucho volumen y buen ánimo (fortaleza). Abajo y a la derecha: mucho volumen y mal ánimo (prioridad). Los temas emergentes aparecen en otro color.</p>
+          </app-ins-panel>
+          <app-ins-panel title="Temas" question="¿Qué temas dominan y cuáles están creciendo?">
+            <div class="op__wrap">
+              <table class="op__table">
+                <caption class="op__sr">Temas de conversación</caption>
+                <thead><tr><th scope="col">Tema</th><th scope="col" class="op__n">Menciones</th><th scope="col" class="op__n">Cambio</th><th scope="col" class="op__n">Neto</th></tr></thead>
+                <tbody>
+                  @for (t of topics(); track t.id) {
+                    <tr [class.op__hot]="t.emerging">
+                      <th scope="row">{{ t.label }} @if (t.emerging) { <span class="op__chip">Emergente</span> }</th>
+                      <td class="op__n">{{ int(t.volume) }}</td>
+                      <td class="op__n">{{ change(t.growth) }}</td>
+                      <td class="op__n" [class.op__bad]="t.summary.net !== null && t.summary.net < -0.1">{{ net(t.summary.net) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </app-ins-panel>
+        </div>
+
+        <app-ins-panel title="Interés, opinión e intención" question="¿Buscan información, evalúan la marca o están listos para actuar? Son tres señales distintas.">
+          <div class="op__signals">
+            @for (s of signals(); track s.id) {
+              <app-ins-stat [label]="s.label" [value]="s.index.toFixed(0)" [delta]="s.change === null ? '' : change(s.change)" [good]="true" [hint]="s.meaning" />
+            }
+          </div>
+          <app-ins-line-chart [labels]="signalLines().labels" [series]="signalLines().series" unit="count" ariaLabel="Índice relativo de búsquedas de interés, opinión e intención" />
+          <p class="op__foot">Índice relativo de 0 a 100 (datos de demostración): sirve para comparar la tendencia, no para contar búsquedas.</p>
+        </app-ins-panel>
+
+        <div class="op__two">
+          <app-ins-panel title="Por departamento" question="¿Dónde se habla y con qué ánimo? Cada cifra declara su representatividad.">
+            <div class="op__wrap">
+              <table class="op__table">
+                <caption class="op__sr">Menciones por departamento</caption>
+                <thead><tr><th scope="col">Departamento</th><th scope="col" class="op__n">Menciones</th><th scope="col" class="op__n">Neto</th><th scope="col">Tema principal</th><th scope="col">Representatividad</th></tr></thead>
+                <tbody>
+                  @for (d of departments(); track d.id) {
+                    <tr [class.op__muted]="d.representativity === 'low'">
+                      <th scope="row">{{ d.label }}</th>
+                      <td class="op__n">{{ int(d.mentions) }}</td>
+                      <td class="op__n">{{ d.summary.net === null ? '—' : net(d.summary.net) }}</td>
+                      <td>{{ d.topTopic ?? '—' }}</td>
+                      <td><span class="op__rep op__rep--{{ d.representativity }}">{{ representativity[d.representativity] }}</span></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="op__foot">Con representatividad baja la cifra es una pista, no una conclusión sobre el departamento. «—» significa menos de {{ 30 }} menciones.</p>
+          </app-ins-panel>
+
+          <app-ins-panel title="Cuota de voz" question="¿Cuánto de la conversación del sector es nuestra, y cuánta de la positiva y de la negativa?">
+            <app-ins-bar-chart [data]="voiceBars()" unit="percent" orientation="h" [sorted]="false" ariaLabel="Cuota de voz: porcentaje de menciones del sector por marca" />
+            <div class="op__wrap">
+              <table class="op__table">
+                <caption class="op__sr">Cuota de voz positiva y negativa</caption>
+                <thead><tr><th scope="col">Marca</th><th scope="col" class="op__n">Cuota</th><th scope="col" class="op__n">Voz positiva</th><th scope="col" class="op__n">Voz negativa</th></tr></thead>
+                <tbody>
+                  @for (v of voice(); track v.name) {
+                    <tr [class.op__own]="v.own"><th scope="row">{{ v.name }}</th><td class="op__n">{{ pct(v.share) }}</td><td class="op__n">{{ pct(v.positiveShare) }}</td><td class="op__n">{{ pct(v.negativeShare) }}</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            <p class="op__foot">Los competidores son genéricos (datos de demostración): sin una fuente de monitoreo real, un nombre propio sería inventar un hecho.</p>
+          </app-ins-panel>
+        </div>
+
+        <app-ins-panel title="Menciones por fuente" question="¿Dónde ocurre la conversación y cómo se siente en cada lugar?">
+          <div class="op__wrap">
+            <table class="op__table">
+              <caption class="op__sr">Menciones por fuente</caption>
+              <thead><tr><th scope="col">Fuente</th><th scope="col" class="op__n">Menciones</th><th scope="col" class="op__n">Sentimiento neto</th></tr></thead>
+              <tbody>
+                @for (s of sources(); track s.source) {
+                  <tr><th scope="row">{{ sourceNames[s.source] }}</th><td class="op__n">{{ int(s.mentions) }}</td><td class="op__n">{{ net(s.net) }}</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-ins-panel>
+
+        <app-ins-panel title="Cola de respuesta" question="¿Qué menciones piden una respuesta y todavía no la tienen? Ordenadas por alcance y gravedad.">
+          <app-segmented-control panel-tools ariaLabel="Filtrar la cola por sentimiento" [options]="viewOptions" [value]="sentimentView()" (valueChange)="setView($event)" />
+          @if (queue().length === 0) {
+            <p class="op__empty">No hay menciones pendientes con este filtro. La cola está al día.</p>
+          } @else {
+            <ul class="op__queue">
+              @for (m of queue(); track m.id) {
+                <li class="op__item">
+                  <div class="op__item-head">
+                    <span class="op__sent op__sent--{{ m.sentiment }}"><span aria-hidden="true">{{ m.sentiment === 'negative' ? '▲' : m.sentiment === 'positive' ? '●' : '◆' }}</span> {{ sentimentLabels[m.sentiment] }}</span>
+                    <span class="op__meta">{{ kindLabels[m.kind] }} · {{ sourceNames[m.source] }} · {{ topicName(m.topic) }} · {{ shortDate(m.date) }} · alcance {{ int(m.reach) }}</span>
+                  </div>
+                  <p class="op__text">«{{ m.text }}»</p>
+                  <button type="button" class="op__btn" (click)="markAttended(m.id)">Marcar como atendida</button>
+                </li>
+              }
+            </ul>
+            <p class="op__foot">Los textos son plantillas de demostración. Marcar una mención como atendida solo se guarda en esta sesión: la respuesta real se gestiona en cada red.</p>
+          }
+        </app-ins-panel>
+
+        @if (media().length) {
+          <app-ins-panel title="Prensa y medios" question="¿Qué se publica sobre nosotros y con qué tono?">
+            <ul class="op__queue">
+              @for (m of media(); track m.id) {
+                <li class="op__item">
+                  <div class="op__item-head"><span class="op__sent op__sent--{{ m.tone }}"><span aria-hidden="true">{{ m.tone === 'negative' ? '▲' : m.tone === 'positive' ? '●' : '◆' }}</span> {{ sentimentLabels[m.tone] }}</span><span class="op__meta">{{ m.outlet }} · {{ shortDate(m.date) }} · alcance {{ int(m.reach) }}</span></div>
+                  <p class="op__text">{{ m.title }}</p>
+                </li>
+              }
+            </ul>
+            <p class="op__foot">Notas y medios de demostración.</p>
+          </app-ins-panel>
+        }
+      </div>
+    }
+  </app-view-state-host>
+</div>

@@ -15,3 +15,63 @@ GET /pharmacy-inventory/sites/<Sucursal Sur 2>/stock -> 310 posiciones; FAR06-A 
 Disponibilidad vista por el paciente (tienda «Farmacia», búsqueda FAR06, Farmacia FAR Uno):
 antes:   Casa central=A,B,G ; Sucursal Norte=A,B,G ; Sucursal Oeste 31=A,B,G ; Sucursal Oeste 35=A,B,G ; Sucursal Sur 2=A,B,G
 despues: Casa central=A,B,G ; Sucursal Norte=A,B,G ; Sucursal Oeste 31=A,B,G ; Sucursal Oeste 35=A,B,G ; Sucursal Sur 2=B,G
+
+## Cierre (30/10/2026) — casos 6 a 11
+### f06views
+[claro 1440] Casa central · aviso: Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"; los demás muestran lo declarado en el catálogo.
+[claro 1440] Casa central «CIERRE»: Cierre 113533 CIERRE-113533 Lo tengo Como en el catálogo
+[claro 1440] Casa central «FAR06»: Producto A FAR06-A Lo tengo / Producto B FAR06-B Lo tengo / Producto C FAR06-C Lo tengo / Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad / Producto G FAR06-G Lo tengo / Producto H FAR06-H Lo tengo · sin desborde: true
+[oscuro 1440] Casa central · aviso: Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"; los demás muestran lo declarado en el catálogo.
+[oscuro 1440] Casa central «CIERRE»: Cierre 113533 CIERRE-113533 Lo tengo Como en el catálogo
+[oscuro 1440] Casa central «FAR06»: Producto A FAR06-A Lo tengo / Producto B FAR06-B Lo tengo / Producto C FAR06-C Lo tengo / Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad / Producto G FAR06-G Lo tengo / Producto H FAR06-H Lo tengo · sin desborde: true
+[claro 390] Casa central · aviso: Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"; los demás muestran lo declarado en el catálogo.
+[claro 390] Casa central «CIERRE»: Cierre 113533 CIERRE-113533 Lo tengo Como en el catálogo
+[claro 390] Casa central «FAR06»: Producto A FAR06-A Lo tengo / Producto B FAR06-B Lo tengo / Producto C FAR06-C Lo tengo / Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad / Producto G FAR06-G Lo tengo / Producto H FAR06-H Lo tengo · sin desborde: true
+[oscuro 390] Casa central · aviso: Los productos con stock propio en esta sucursal no siguen lo que cambie en "Todas"; los demás muestran lo declarado en el catálogo.
+[oscuro 390] Casa central «CIERRE»: Cierre 113533 CIERRE-113533 Lo tengo Como en el catálogo
+[oscuro 390] Casa central «FAR06»: Producto A FAR06-A Lo tengo / Producto B FAR06-B Lo tengo / Producto C FAR06-C Lo tengo / Producto D FAR06-D Marcado sin stock en el catálogo — Sin cantidad / Producto G FAR06-G Lo tengo / Producto H FAR06-H Lo tengo · sin desborde: true
+(sin errores de consola ni escrituras)
+### f06back
+Sur 2 antes: Producto A FAR06-A No lo tengo — Sin cantidad
+PUT availability 200 · cuerpo enviado {"available":true,"quantity":3} · respuesta {"siteId":":id","productId":":id","available":true,"quantity":3,"stockUpdatedAt":"2026-10-30T12:18:26.593Z"}
+Sur 2 tras recargar: Producto A FAR06-A Lo tengo
+[paciente 1440] Producto A en FAR Uno: Casa central, Sucursal Norte, Sucursal Oeste 31, Sucursal Oeste 35, Sucursal Sur 2
+[paciente 390] Producto A en FAR Uno: Casa central, Sucursal Norte, Sucursal Oeste 31, Sucursal Oeste 35, Sucursal Sur 2
+[f06 lo tengo] PUT /pharmacies/:id/sites/:id/products/:id/availability → 200
+### f06reject
+C en Sur 2 al abrir: Producto C FAR06-C No lo tengo — Sin cantidad · PATCH inStock:false (otra pestaña) → 200
+PUT availability → 422 {"code":"PRECONDITION_FAILED","message":"El producto está marcado sin stock en el catálogo de la farmacia: esa marca se quita desde el catálogo","correlationId":"84595903-f99b-4dcd-9a54-0e51f4ea7f47",
+motivo en la fila de C: El producto está marcado sin stock en el catálogo de la farmacia: esa marca se quita desde el catálogo (Código de soporte: 84595903-f99b-4dcd-9a54-0e51f4ea7f47)
+PATCH stock:0 (deshacer la marca, conteo como estaba) → 200
+[f06 422] PUT /pharmacies/:id/sites/:id/products/:id/availability → 422
+[f06 422] console.error: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)
+### f06radius
+radio · prices: tabla visible, filas 10
+radio · products: tabla visible, filas 10
+radio · «Subir CSV» abre: Subir inventario por CSV Se revisa el archivo antes de tocar nada: va a ver qué 
+(sin errores de consola ni escrituras)
+### API (mismo cierre)
+== sedes de la farmacia 1
+200 
+== stock propio de Casa central y Sur 2 (cantidad de posiciones)
+200 
+311
+200 
+310
+== alta de un producto nuevo (publicado, sin conteo)
+201 {"id":":id","pharmacyId":":id","productCode":"CIERRE-113533","status":":id","identifierCount":0,"
+N=:id
+== disponibilidad del producto nuevo y de A (paciente)
+200 
+Casa central: A=1, NUEVO=s/c
+Sucursal Norte: A=5, NUEVO=s/c
+Sucursal Oeste 31: A=5, NUEVO=s/c
+Sucursal Oeste 35: A=5, NUEVO=s/c
+Sucursal Sur 2: NUEVO=s/c
+== lectura de gestión: marca outOfStockDeclared de D y del nuevo
+200 
+== «No lo tengo» del nuevo en Sur 2
+200 {"siteId":":id","productId":":id","available":false,"quantity":0,"stockUpdatedAt":"2026-10-30T11:35:36.073Z"}
+200 
+311
+200 {"requestedProductIds":[":id"],"items":[{"siteId":":id","siteName":"Casa central","pharmacyId":":id","pharmacyName":"Farmacia FAR Uno","addressText":"Av. Sintética FAR Uno, La Paz","latitude":-16

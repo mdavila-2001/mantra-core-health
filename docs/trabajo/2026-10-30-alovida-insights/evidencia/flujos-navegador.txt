@@ -1,0 +1,7 @@
+alertas antes/después/recarga 9 8 8
+reabrir visibles (esperado 0 en abiertas) 0
+solo críticas: 1 pressed= true
+informe secciones antes 7 después 8 true
+mensual completo secciones 8
+cola tras atender 15 -> 15
+errores: ninguno

@@ -1,0 +1,19 @@
+:host { display: block; min-width: 0; }
+
+.ci {
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+.ci dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--sp-1) var(--sp-4); margin: 0; }
+.ci dt { font-weight: 600; color: var(--text-secondary); }
+.ci dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ci ul { margin: 0; padding-left: var(--sp-4); }
+.ci__formula { font-family: var(--font-mono); }
+
+@media (max-width: 480px) {
+  .ci dl { grid-template-columns: 1fr; }
+}

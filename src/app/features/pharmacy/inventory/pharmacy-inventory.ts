@@ -149,14 +149,14 @@ export class PharmacyInventory {
   /** La sucursal elegida, o «Todas». */
   protected readonly site = signal<string>(ALL_SITES);
 
-  /** Con «Todas»: qué sedes ya no leen lo que se cambie acá. */
+  /** Con «Todas»: qué sedes tienen productos que ya no leen lo que se cambie acá. */
   protected readonly ledgerNotice = computed(() => {
     const names = this.sites.ledgerNames();
     if (names.length === 0) {
       return '';
     }
     const one = names.length === 1;
-    return `${joinNames(names)} ${one ? 'lleva' : 'llevan'} su propio stock: lo que cambie en "Todas" no ${one ? 'la' : 'las'} afecta, tampoco lo que suba por CSV.`;
+    return `${joinNames(names)} ${one ? 'tiene' : 'tienen'} stock propio en algunos productos: en esos, lo que cambie en "Todas" no ${one ? 'la' : 'las'} afecta, tampoco lo que suba por CSV.`;
   });
 
   protected readonly products = signal<ViewState<readonly PharmacyProduct[]>>(loading());
