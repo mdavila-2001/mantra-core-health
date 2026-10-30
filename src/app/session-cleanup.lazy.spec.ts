@@ -1,6 +1,6 @@
 import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatAutoReply } from './core/messaging/chat-auto-reply';
 import { MessageTemplates } from './core/messaging/message-templates';
@@ -15,6 +15,12 @@ describe('olvidarLoSensibleDelNavegador (cerrar sesión)', () => {
   const olvidarPlantillas = vi.fn();
   const olvidarRespuesta = vi.fn();
   const olvidarTarifarios = vi.fn();
+
+  // En `afterEach` y no al final de un test: si uno falla a medias, lo que dejó en el storage no contamina al siguiente.
+  afterEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  });
 
   beforeEach(() => {
     olvidarPlantillas.mockClear();
@@ -61,8 +67,6 @@ describe('olvidarLoSensibleDelNavegador (cerrar sesión)', () => {
     olvidarLoSensibleDelNavegador(TestBed.inject(Injector));
     prefs.load();
     expect(prefs.favorites()).toEqual(['rep-cobros']);
-    sessionStorage.clear();
-    localStorage.clear();
   });
 
   it('inyecta el asistente solo para limpiarlo (el dato que trajo no sobrevive)', () => {

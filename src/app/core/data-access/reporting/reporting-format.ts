@@ -46,13 +46,8 @@ export function formatearValor(
       if (compacto) {
         return `${simboloMoneda(unidad.moneda)} ${abreviar(valor)}`;
       }
-      return formato(`m:${unidad.moneda}:${compacto}`, () =>
-        new Intl.NumberFormat('es-BO', {
-          style: 'currency',
-          currency: unidad.moneda,
-          notation: compacto ? 'compact' : 'standard',
-          maximumFractionDigits: compacto ? 1 : 2,
-        }),
+      return formato(`m:${unidad.moneda}`, () =>
+        new Intl.NumberFormat('es-BO', { style: 'currency', currency: unidad.moneda, maximumFractionDigits: 2 }),
       ).format(valor);
     case 'porcentaje':
       return `${formato(`p:${compacto}`, () =>
@@ -64,12 +59,7 @@ export function formatearValor(
       if (compacto) {
         return abreviar(valor);
       }
-      return formato(`n:${compacto}`, () =>
-        new Intl.NumberFormat('es-BO', {
-          notation: compacto ? 'compact' : 'standard',
-          maximumFractionDigits: compacto ? 1 : 0,
-        }),
-      ).format(valor);
+      return formato('n', () => new Intl.NumberFormat('es-BO', { maximumFractionDigits: 0 })).format(valor);
   }
 }
 

@@ -24,7 +24,7 @@
     </section>
   }
 
-  @for (section of sections(); track $index) {
+  @for (section of sections(); track (section.title ?? '') + ':' + $index) {
     <section class="tv__section" [attr.aria-labelledby]="section.title ? ids + '-s' + $index : null">
       @if (section.title; as title) {
         <h2 class="tv__heading" [id]="ids + '-s' + $index">{{ title }}</h2>
