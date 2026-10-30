@@ -219,6 +219,28 @@
   color: var(--text-secondary);
 }
 
+/* ---- navegación y asistente fijos bajo la cabecera ------------------------
+   Si se desplazaran con la página, el asistente respondería fuera de la vista y la
+   navegación desaparecería a media pantalla. La cabecera mide una fila (≈ 4,1 rem). */
+
+@media (min-width: 781px) {
+  .rep__nav {
+    position: sticky;
+    inset-block-start: 4.1rem;
+    align-self: start;
+    max-block-size: calc(100dvh - 4.1rem);
+  }
+}
+
+@media (min-width: 1025px) {
+  .rep__asistente {
+    position: sticky;
+    inset-block-start: 4.1rem;
+    align-self: start;
+    block-size: calc(100dvh - 4.1rem);
+  }
+}
+
 /* ---- tablet y teléfono: la navegación pasa a cajón ------------------------ */
 
 @media (max-width: 780px) {

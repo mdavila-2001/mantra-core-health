@@ -250,6 +250,8 @@ for (const tema of TEMAS) {
         await page.mouse.click(objetivo.x, objetivo.y);
       }
       await expect(page.getByTestId('filter-chip').first()).toBeVisible({ timeout: 15_000 });
+      // La ficha nombra un plan real, no la fecha del eje (regresión: salía «Plan: 2026-10-01»).
+      await expect(page.getByTestId('filter-chip').first()).toContainText(/Plan: (Esencial|Profesional|Clínica)/);
       await page.waitForTimeout(600);
       const kpiDespues = (await page.getByTestId('kpi-mrr').first().innerText()).trim();
       expect(kpiDespues, 'el filtro no movió el MRR').not.toBe(kpiAntes);

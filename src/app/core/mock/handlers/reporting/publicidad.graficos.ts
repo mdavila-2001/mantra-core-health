@@ -31,7 +31,8 @@ export function graficoGastoDiario(ctx: ContextoReporte, m: Modelo): ChartSpec {
     resumenAccesible: m.noDelivery
       ? 'Sin gasto en el periodo para la selección actual.'
       : 'Barras apiladas del gasto de los anunciantes por ubicación; la notificación push concentra la mayor parte. Las velas muestran cómo se movió el CPM.',
-    filtro: { dimension: 'canal' },
+    // Cada barra es un día y las series son las ubicaciones: el clic filtra la ubicación, no la fecha.
+    filtro: { dimension: 'canal', valorDe: 'serie' },
     info: info({
       definicion: 'Lo que los anunciantes gastaron en Alovida: es el ingreso publicitario de la plataforma.',
       formula: 'Σ gasto diario de todas las campañas, repartido por ubicación',

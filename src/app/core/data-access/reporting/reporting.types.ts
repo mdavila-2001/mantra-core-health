@@ -59,6 +59,13 @@ export interface FiltroActivo {
 
 export interface ConfigFiltro {
   readonly dimension: DimensionFiltro;
+  /**
+   * Qué valor de la dimensión representa un clic. Por omisión, la categoría del eje (la barra
+   * «Pro» filtra el plan Pro). Cuando el eje es el tiempo y la dimensión son las SERIES (ingreso
+   * por día apilado por plan), el clic debe filtrar por la serie: filtrar «plan = 2026-10-01»
+   * no significa nada.
+   */
+  readonly valorDe?: 'categoria' | 'serie';
 }
 
 /* ---- velas -------------------------------------------------------------------- */
