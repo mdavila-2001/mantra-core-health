@@ -7,7 +7,10 @@
   - Lógica, estado y presentación de lo tocado: `TESTED` (pruebas dirigidas).
   - Build de producción: `RUNS` (el pre-push compiló con salida 0 en cada push).
   - Comportamiento en navegador de lo capturado: `VERIFIED_FUNCTIONAL_ONLY` en lo que se observó; **no** `REGRESSION_VERIFIED`.
-  - Dos revisiones independientes por pasada (visual, código, regresión): la visual dio FAIL en las dos pasadas; la de regresión dio «no verificado» porque no se corrió el build ni Playwright de rutas y accesos. **Nadie ha aprobado este estado.**
+  - Revisión independiente, tres pasadas (visual, código, regresión). **Ninguna ha aprobado este estado:**
+    - Visual: FAIL 67 → 74 → 82/100. La última tuvo un alto (cascadas móviles aplastadas) que resultó ser evidencia vieja (las capturas claras no se habían regenerado tras el ajuste); se corrigió y se vio en la recaptura, pero **no** se repitió la revisión independiente. Siguen abiertos como medios: etiquetas partidas a media palabra en la cascada de referidos de escritorio, nombres truncados en barras horizontales móviles y texto de leyenda sobre el aro de un donut móvil.
+    - Código: aprobable, sin bloqueantes; tres medios (cabecera tabulable bajo la hoja, Tab del menú, afirmación excesiva en este reporte) corregidos.
+    - Regresión: no emite REGRESSION_VERIFIED. En el árbol de esa pasada: tipos, lint, 3108 pruebas y `ng build` pasaron; falló `check-english-identifiers` por una prueba mía (ya corregida) y `app.routes.ts` creció; `pw:rutas` y `pw:accesos` quedaron **bloqueados**: exigen la API real viva y aquí solo hay la maqueta.
 - Alcance: **maqueta con datos de EJEMPLO declarados en pantalla**. No hay API de reportería real conectada.
 
 ## Completado (con evidencia)
@@ -45,7 +48,7 @@
 - Los scripts e2e `.mjs` y los de Cypress que adapté para aceptar `/portal-selector` solo se comprobaron con `node --check` y `tsc`; **no se ejecutaron**.
 - Teclado completo de todo el portal y lector de pantalla: solo los casos del recorrido de teclado. Contraste: medido con cálculo para las celdas del mapa de calor (≥ 4,5:1); el resto, a ojo.
 - Capturas de interacciones en tableta y móvil (salvo el asistente en móvil), y teclado fuera de escritorio claro.
-- `yarn pw:rutas`, `yarn pw:accesos`, Cypress y el build con `ng build` fuera del pre-push: no se ejecutaron.
+- `yarn pw:rutas` y `yarn pw:accesos`: **BLOQUEADOS** (intentados contra la maqueta: ambos exigen la API real viva). Cypress no se ejecutó. `ng build` lo corrió el auditor (salida 0) y el pre-push en cada push.
 - Gráficos con muchas categorías en móvil (p. ej. «Del cobro al neto a recibir»): etiquetas inclinadas ajustadas, no reverificadas una por una.
 - Integración real: todo es mock.
 - Texto de las fechas de cohorte («2026-05») sigue en ISO.
