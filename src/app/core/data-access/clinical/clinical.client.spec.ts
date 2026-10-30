@@ -513,6 +513,111 @@ describe('ClinicalClient', () => {
     expect(condicion?.createdAt).toBeInstanceOf(Date);
   });
 
+  /**
+   * El contrato recibe `verificationStatusConceptId` (un UUID), no la palabra
+   * `PROVISIONAL`: la API rechaza con 400 lo que su DTO no declara. El cliente
+   * traduce, resolviendo el concepto por su código en el catálogo.
+   */
+  describe('createCondition y el estado de verificación', () => {
+    const BUSQUEDA = {
+      items: [
+        { conceptId: 'ajeno', code: 'COND_PROVISIONAL_X', display: 'Otro', codeSystemVersionId: 'v' },
+        { conceptId: 'cid-prov', code: 'clinical:COND_PROVISIONAL', display: 'Provisional', codeSystemVersionId: 'v' },
+      ],
+      count: 2,
+      limit: 50,
+    };
+
+    const buscar = () =>
+      http.expectOne((r) => r.url === '/terminology/concepts' && r.params.get('q') === 'COND_PROVISIONAL');
+
+    it('traduce PROVISIONAL al concepto del catálogo y no manda la palabra', () => {
+      client
+        .createCondition({
+          custodianTenantId: 't-1',
+          patientProfileId: 'p-1',
+          codeConceptId: 'cod-1',
+          verificationStatus: 'PROVISIONAL',
+        })
+        .subscribe();
+
+      buscar().flush(BUSQUEDA);
+      const req = http.expectOne('/clinical/conditions');
+      expect(req.request.body).toEqual({
+        custodianTenantId: 't-1',
+        patientProfileId: 'p-1',
+        codeConceptId: 'cod-1',
+        verificationStatusConceptId: 'cid-prov',
+      });
+      expect('verificationStatus' in (req.request.body as object)).toBe(false);
+      req.flush(CONDICION_REGISTRADA);
+    });
+
+    it('acepta el código prefijado por módulo pero no uno que sólo se le parece', () => {
+      let falla: unknown;
+      client
+        .createCondition({
+          custodianTenantId: 't-1',
+          patientProfileId: 'p-1',
+          codeConceptId: 'cod-1',
+          verificationStatus: 'PROVISIONAL',
+        })
+        .subscribe({ error: (e: unknown) => (falla = e) });
+
+      buscar().flush({ items: [BUSQUEDA.items[0]], count: 1, limit: 50 });
+
+      expect(falla).toBeInstanceOf(Error);
+    });
+
+    it('si el catálogo no lo publica FALLA: nunca baja en silencio a confirmado', () => {
+      let falla: unknown;
+      client
+        .createCondition({
+          custodianTenantId: 't-1',
+          patientProfileId: 'p-1',
+          codeConceptId: 'cod-1',
+          verificationStatus: 'PROVISIONAL',
+        })
+        .subscribe({ error: (e: unknown) => (falla = e) });
+
+      buscar().flush({ items: [], count: 0, limit: 50 });
+
+      http.expectNone('/clinical/conditions');
+      expect((falla as Error).message).toContain('COND_PROVISIONAL');
+    });
+
+    it('resuelve el concepto una sola vez por código', () => {
+      const alta = () =>
+        client
+          .createCondition({
+            custodianTenantId: 't-1',
+            patientProfileId: 'p-1',
+            codeConceptId: 'cod-1',
+            verificationStatus: 'PROVISIONAL',
+          })
+          .subscribe();
+
+      alta();
+      buscar().flush(BUSQUEDA);
+      http.expectOne('/clinical/conditions').flush(CONDICION_REGISTRADA);
+
+      alta();
+      http.expectNone((r) => r.url === '/terminology/concepts');
+      http.expectOne('/clinical/conditions').flush(CONDICION_REGISTRADA);
+    });
+
+    it('sin estado declarado no consulta el catálogo: la API lo registra confirmado', () => {
+      client
+        .createCondition({ custodianTenantId: 't-1', patientProfileId: 'p-1', codeConceptId: 'cod-1' })
+        .subscribe();
+
+      http.expectNone((r) => r.url === '/terminology/concepts');
+      const req = http.expectOne('/clinical/conditions');
+      expect('verificationStatusConceptId' in (req.request.body as object)).toBe(false);
+      req.flush(CONDICION_REGISTRADA);
+    });
+  });
+
   it('verifyCondition pega contra el segmento `verification`, omite lo ausente y devuelve la condición con fechas', () => {
     let condicion: Condition | undefined;
     client

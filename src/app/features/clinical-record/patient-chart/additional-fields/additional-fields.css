@@ -16,8 +16,10 @@
 
 .adicionales__titulo {
   margin: 0;
-  font-size: var(--fs-h3);
-  line-height: var(--lh-h3);
+  /* Quien la reutiliza dentro de otra sección baja el título para no pesar más
+     que el de la sección que lo contiene (p. ej. el alta de un presuntivo). */
+  font-size: var(--adicionales-titulo-fs, var(--fs-h3));
+  line-height: var(--adicionales-titulo-lh, var(--lh-h3));
   font-weight: 600;
 }
 
@@ -57,6 +59,12 @@
   border-radius: var(--r-md);
 }
 
+/* Sin archivos: sólo campo, valor y quitar. Sin esto la columna de archivos
+   quedaba reservada y en blanco. */
+.adicionales__filas--sin-archivos .adicionales__fila {
+  grid-template-columns: minmax(10rem, 1fr) minmax(0, 2fr) auto;
+}
+
 .adicionales__campo,
 .adicionales__valor,
 .adicionales__archivos {
@@ -68,7 +76,8 @@
 }
 
 @container (max-width: 56rem) {
-  .adicionales__fila {
+  .adicionales__fila,
+  .adicionales__filas--sin-archivos .adicionales__fila {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
   }
 
@@ -83,8 +92,23 @@
 }
 
 @container (max-width: 36rem) {
-  .adicionales__fila {
+  .adicionales__fila,
+  .adicionales__filas--sin-archivos .adicionales__fila {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Sin archivos sólo hay campo y valor: en anchos medios (un modal en tablet) el
+   campo quedaba en un tercio y cortaba nombres largos como «Relato de la
+   enfermedad actual». Se apilan antes, para que el nombre se lea entero. */
+@container (max-width: 44rem) {
+  .adicionales__filas--sin-archivos .adicionales__fila {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .adicionales__filas--sin-archivos .adicionales__quitar {
+    grid-column: auto;
+    justify-self: end;
   }
 }
 

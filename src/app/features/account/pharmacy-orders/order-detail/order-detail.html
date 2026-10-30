@@ -11,9 +11,30 @@
       @if (presentacion(); as estado) {
         <section class="pedido__estado" aria-labelledby="pedido-estado">
           <!-- tabindex -1: recibe el foco por código tras decidir o cancelar. -->
-          <h2 id="pedido-estado" class="pedido__titulo" tabindex="-1">
-            {{ abierto.farmacia }} · {{ abierto.sede }}
-          </h2>
+          <!-- La farmacia y, a su lado, cómo hablarle: donde PedidosYa pone
+               «Ayuda / Chat con el local». Secundario a propósito: lo primario
+               de esta pantalla es la decisión que el pedido espera, si hay una.
+               Sólo si el pedido dice con qué ficha pública hablar
+               (`pharmacySlug`): un «Chatear» que no puede abrir el chat es peor
+               que no tenerlo. -->
+          <div class="pedido__cabecera">
+            <h2 id="pedido-estado" class="pedido__titulo" tabindex="-1">
+              {{ abierto.farmacia }} · {{ abierto.sede }}
+            </h2>
+            @if (abierto.slugDeFarmacia) {
+              <button
+                app-button
+                variant="secondary"
+                type="button"
+                class="pedido__chat"
+                data-testid="pedido-chatear"
+                (clicked)="chatearConLaFarmacia()"
+              >
+                <app-nav-icon name="chat" />
+                Chatear con la farmacia
+              </button>
+            }
+          </div>
           <p class="pedido__estado-fila">
             <app-badge [variant]="estado.tone" data-testid="pedido-estado-badge">
               {{ estado.label }}

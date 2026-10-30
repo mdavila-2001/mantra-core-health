@@ -44,7 +44,7 @@ export function nombreDeCategoria(categoria: string | undefined): string {
     case 'CLINICAL':
       return 'Clínico';
     case 'SCHEDULING':
-      return 'Turnos';
+      return 'Citas';
     case 'MESSAGES':
       return 'Mensajes';
     case 'SOCIAL':
