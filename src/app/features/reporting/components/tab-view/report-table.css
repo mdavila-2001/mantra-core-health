@@ -58,3 +58,7 @@
 .rt__sort:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; border-radius: var(--r-xs); }
 .rt__arrow { font-size: var(--fs-overline); }
 .rt__num .rt__sort { flex-direction: row-reverse; }
+
+/* Solo en pantallas angostas, donde la tabla casi siempre se corta: la sombra avisa, la frase lo dice. */
+.rt__hint { display: none; margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+@media (max-width: 780px) { .rt__hint { display: block; } }

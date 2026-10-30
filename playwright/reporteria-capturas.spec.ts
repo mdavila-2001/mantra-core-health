@@ -137,7 +137,45 @@ async function capturar(page: Page, nombre: string): Promise<void> {
     await document.fonts.ready;
     await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
   });
+  await esperarLayoutEstable(page);
   await page.screenshot({ path: join(CAPTURAS, `${nombre}.png`), fullPage: true });
+}
+
+/**
+ * Espera a que la geometría de la página deje de cambiar durante varios cuadros seguidos. Cubre lo que
+ * `getAnimations()` no ve: una tarjeta que sigue escalándose por una transición de ruta, o un gráfico que
+ * se redimensiona tras abrir un panel. Sin esto, la evidencia salía a media transición.
+ */
+async function esperarLayoutEstable(page: Page): Promise<void> {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolver) => {
+        const firma = (): string =>
+          [
+            document.documentElement.scrollHeight,
+            ...Array.from(document.querySelectorAll('main, [data-testid="portal-reporteria"], app-chart-panel')).map((e) => {
+              const r = e.getBoundingClientRect();
+              return `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}`;
+            }),
+          ].join('|');
+        let anterior = firma();
+        let iguales = 0;
+        let cuadros = 0;
+        const paso = (): void => {
+          const actual = firma();
+          iguales = actual === anterior ? iguales + 1 : 0;
+          anterior = actual;
+          cuadros += 1;
+          // 8 cuadros iguales seguidos; tope de 240 para no colgar la prueba si algo nunca se aquieta.
+          if (iguales >= 8 || cuadros >= 240) {
+            resolver();
+          } else {
+            requestAnimationFrame(paso);
+          }
+        };
+        requestAnimationFrame(paso);
+      }),
+  );
 }
 
 for (const vp of VIEWPORTS) {
@@ -316,6 +354,65 @@ for (const viewState of ESTADOS) {
   }
 }
 
+test('teclado · foco visible y Escape que no cierra de más · escritorio · claro', async ({ browser }) => {
+  const { context, page } = await newSession(browser, 1440, 900, 'light');
+  let pantalla = 'login';
+  vigilar(page, () => `teclado-${pantalla}`);
+  try {
+    await signInAsAdmin(page);
+    await page.getByTestId('portal-reporteria').click();
+    await page.goto(`${REPORTS}/commercial/suscripciones`);
+    await esperarGraficos(page);
+
+    // El asistente abre con el foco en el campo de la pregunta, con indicador visible.
+    pantalla = 'asistente';
+    await page.getByTestId('reporting-asistente-boton').click();
+    const entrada = page.getByTestId('reporting-asistente').getByRole('textbox');
+    await expect(entrada).toBeFocused();
+    await capturar(page, 'escritorio-claro-teclado-01-foco-en-el-asistente');
+
+    // El menú «Más» se opera con teclado: Enter lo abre y el foco entra en la primera opción.
+    pantalla = 'menu-mas';
+    const panel = page.locator('app-chart-panel').first();
+    await panel.scrollIntoViewIfNeeded();
+    await panel.getByTestId('chart-more').focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menuitem', { name: 'Ver en grande' })).toBeFocused();
+    await page.screenshot({ path: join(CAPTURAS, 'escritorio-claro-teclado-02-menu-mas.png') });
+
+    // «Ver en grande» y Escape: se cierra el diálogo, NO el asistente, y el foco vuelve al botón «Más».
+    pantalla = 'escape';
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('content-dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('content-dialog')).toBeHidden();
+    await expect(page.getByTestId('reporting-asistente')).toBeVisible();
+    await expect(panel.getByTestId('chart-more')).toBeFocused();
+    await page.screenshot({ path: join(CAPTURAS, 'escritorio-claro-teclado-03-escape-conserva-el-asistente.png') });
+  } finally {
+    await context.close();
+  }
+});
+
+test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte', async ({ browser }) => {
+  const { context, page } = await newSession(browser, 390, 844, 'light');
+  let pantalla = 'login';
+  vigilar(page, () => `asistente-movil-${pantalla}`);
+  try {
+    await signInAsAdmin(page);
+    await page.getByTestId('portal-reporteria').click();
+    await page.goto(`${REPORTS}/commercial/suscripciones`);
+    await esperarGraficos(page);
+    pantalla = 'asistente';
+    await page.getByTestId('reporting-asistente-boton').click();
+    await expect(page.getByTestId('reporting-asistente')).toBeVisible();
+    await expect(page.locator('main')).toHaveAttribute('inert', '');
+    await capturar(page, 'movil-claro-interaccion-asistente-abierto');
+  } finally {
+    await context.close();
+  }
+});
+
 test('autorización negativa · una cuenta sin reportería no entra al portal', async ({ browser }) => {
   const { context, page } = await newSession(browser, 1440, 900, 'light');
   vigilar(page, () => 'sin-permiso-ruta');
@@ -327,15 +424,33 @@ test('autorización negativa · una cuenta sin reportería no entra al portal', 
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
     await page.goto(REPORTS);
     await expect(page).not.toHaveURL(new RegExp(`${REPORTS}$`));
+    // Una captura en blanco no prueba nada: se espera a que la pantalla a la que lo mandaron esté pintada.
+    await expect(page.locator('main').first()).toBeVisible();
     await capturar(page, 'negativo-paciente-intenta-reportes');
     await page.goto('/portal-selector');
+    await expect(page).not.toHaveURL(/\/portal-selector/);
     await expect(page.getByTestId('portal-reporteria')).toHaveCount(0);
+    await expect(page.locator('main').first()).toBeVisible();
     await capturar(page, 'negativo-paciente-intenta-selector');
   } finally {
     await context.close();
   }
 });
 
+const ejecutadas: string[] = [];
+
+test.afterEach((_fixtures, info) => {
+  ejecutadas.push(`${info.title} → ${info.status}`);
+});
+
 test.afterAll(() => {
-  writeFileSync(join(EVIDENCIA, 'consola-red.json'), JSON.stringify(hallazgos, null, 2), 'utf-8');
+  // Con metadatos: un `[]` pelado no distingue «consola y red limpias» de «no se recolectó», y una corrida
+  // parcial (`-g`) no debe poder hacerse pasar por la completa.
+  const informe = {
+    generadoEn: new Date().toISOString(),
+    pruebasEjecutadas: ejecutadas,
+    nota: 'Solo se recolectan los hallazgos de las pruebas listadas. Los de los estados error y sin-permiso son errores forzados a propósito.',
+    hallazgos,
+  };
+  writeFileSync(join(EVIDENCIA, 'consola-red.json'), JSON.stringify(informe, null, 2), 'utf-8');
 });
