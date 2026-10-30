@@ -329,6 +329,8 @@ describe('correcciones de lectura (revisión visual)', () => {
     // Y el `media` no intenta reemplazar la función: no serviría.
     const raw = buildRaw(datos);
     expect(at(raw, 'media.0.option.xAxis.axisLabel.formatter')).toBeUndefined();
+    // El margen inferior no suma al de `containLabel` (si no, el trazado queda en ~55 px).
+    expect(at(raw, 'media.0.option.grid.bottom') as number).toBeLessThanOrEqual(16);
   });
 
   it('con 7 pasos la cascada reparte el ancho: cada nombre mide menos que con 3', () => {
