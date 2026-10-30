@@ -297,6 +297,15 @@
     --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
     --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
 
+    /* insignia de verificación (check azul, estilo Twitter/Instagram). Relleno
+       del sello y tinta del tilde: NO es un estado de producto sino una marca de
+       identidad comprobada, por eso no vive en la receta 50/700/200. En claro,
+       petróleo-500 con tilde blanco (8,03:1); en oscuro sube a petróleo-300 con
+       tilde petróleo-900 (5,38:1) y el sello se mide ≥3:1 contra TODA superficie
+       donde vive, incluido el fondo del chip `primary` (petróleo-600, 3,07:1). */
+    --verified-bg: var(--c-petrol-500);
+    --verified-fg: var(--surface-white);
+
     /* alias semánticos de compatibilidad para superficies y enlaces */
     --surface-raised: var(--bg-surface);
     --surface-hover: var(--bg-hover);
@@ -370,6 +379,10 @@
         --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
         --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
         --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+        /* insignia de verificación en oscuro: ver el comentario del bloque claro */
+        --verified-bg: var(--c-petrol-300);
+        --verified-fg: var(--c-petrol-900);
     }
 }
 
@@ -423,6 +436,9 @@
     --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
     --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
     --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+    --verified-bg: var(--c-petrol-300);
+    --verified-fg: var(--c-petrol-900);
 }
 
 /* ---- base ---- */

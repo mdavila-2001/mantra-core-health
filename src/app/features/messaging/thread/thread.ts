@@ -25,9 +25,11 @@ import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import {
   conversationAvatar as avatarDeConQuienDe,
   conversationLabel as conQuienDe,
+  conversationVerification as verificacionDe,
 } from '../../../core/messaging/conversation-label';
 import { dayLabel, clockTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -198,6 +200,7 @@ function resaltar(texto: string, termino: string): readonly TrozoDeTexto[] {
   imports: [
     AppButton,
     Avatar,
+    VerificationBadge,
     Composer,
     ContactPanel,
     ContentDialog,
@@ -314,6 +317,12 @@ export class Thread {
   protected readonly conQuien = computed(() => {
     const activa = this.store.conversacionActiva();
     return activa === undefined ? 'Conversación' : conQuienDe(activa);
+  });
+
+  /** La verificación del otro lado, si la API la dijo (sólo en una conversación directa). */
+  protected readonly verificacion = computed(() => {
+    const activa = this.store.conversacionActiva();
+    return activa === undefined ? null : verificacionDe(activa);
   });
 
   protected readonly avatar = computed(() => {

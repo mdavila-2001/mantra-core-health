@@ -94,10 +94,10 @@ describe('AdmissionReviewDialog', () => {
       expect(el().textContent).toContain('no puede ser futura');
     });
 
-    it('ofrece las seis fuentes, sin inventar una dirección', () => {
+    it('ofrece las siete fuentes del contrato, sin inventar una dirección', () => {
       const opciones = [...q<HTMLSelectElement>('admission-review-source-type')!.options].map((o) => o.textContent?.trim());
       expect(opciones).toEqual([
-        'Elija una fuente…', 'Registro del Ministerio de Salud', 'Colegio Médico', 'SEDES', 'SEGIP',
+        'Elija una fuente…', 'Registro del Ministerio de Salud', 'Colegio Médico', 'Colegio de Odontólogos', 'SEDES', 'SEGIP',
         'Documento aportado por el médico', 'Otra fuente',
       ]);
     });
