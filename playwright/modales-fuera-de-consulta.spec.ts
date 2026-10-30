@@ -95,7 +95,8 @@ const CASOS: Readonly<Record<string, readonly Caso[]>> = {
       nombre: 'contabilidad-transaccion',
       ruta: '/administration/accounting',
       abrir: async (p) => {
-        await p.locator('[data-testid="contabilidad-version"] [role=radio]', { hasText: 'Contador' }).click();
+        await p.getByTestId('segmentado-contador').click();
+        await pestana(p, /^Registros$/);
         await pestana(p, /^Transacciones/);
         await p.getByTestId('nueva-transaccion').click();
       },
@@ -104,7 +105,8 @@ const CASOS: Readonly<Record<string, readonly Caso[]>> = {
       nombre: 'contabilidad-cuenta',
       ruta: '/administration/accounting',
       abrir: async (p) => {
-        await p.locator('[data-testid="contabilidad-version"] [role=radio]', { hasText: 'Contador' }).click();
+        await p.getByTestId('segmentado-contador').click();
+        await pestana(p, /^Registros$/);
         await pestana(p, /^Cuentas/);
         await p.getByTestId('nueva-cuenta').click();
       },
@@ -149,11 +151,8 @@ const CASOS: Readonly<Record<string, readonly Caso[]>> = {
       nombre: 'encuesta-editar-pregunta',
       ruta: '/questionnaires',
       abrir: async (p) => {
-        await p
-          .getByRole('row', { name: /Encuesta post-cirugía/ })
-          .getByRole('link', { name: /Abrir/ })
-          .first()
-          .click();
+        // Las encuestas son una lista, no una tabla: cada una tiene su «Abrir».
+        await p.getByRole('link', { name: /^Abrir: Encuesta post-cirugía/ }).click();
         await p.getByTestId('editor-pregunta-abrir').first().click();
       },
     },
@@ -162,7 +161,7 @@ const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     {
       nombre: 'agenda-ingreso-mostrador',
       ruta: '/schedule',
-      abrir: (p) => p.getByTestId('dia-ingreso-mostrador').click(),
+      abrir: (p) => p.getByTestId('agenda-ingreso-mostrador').click(),
     },
   ],
   aseguradora: [
@@ -196,9 +195,10 @@ const CASOS: Readonly<Record<string, readonly Caso[]>> = {
     {
       nombre: 'solicitud-aprobar-parcial',
       ruta: '/administration/received-claims',
+      // Desde el detalle: en teléfono la fila no trae el menú de acciones.
       abrir: async (p) => {
-        await p.getByTestId('received-claim-actions').first().getByTestId('row-actions-trigger').click();
-        await p.getByRole('menuitem', { name: /Aprobar parcialmente/ }).click();
+        await p.getByTestId('received-claim-open').first().click();
+        await dialogo(p).getByRole('button', { name: /^Aprobar parcialmente/ }).click();
       },
     },
     {
