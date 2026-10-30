@@ -5,7 +5,7 @@
  * redirigida (`app.routes.ts`) abre la pestaña por su nombre y no por su
  * posición, así que reordenarlas no rompe ningún enlace.
  */
-export const CATALOG_TABS = ['products', 'categories', 'prices', 'inventory', 'import'] as const;
+export const CATALOG_TABS = ['products', 'categories', 'prices', 'inventory', 'import', 'integration'] as const;
 
 export type CatalogTab = (typeof CATALOG_TABS)[number];
 
@@ -16,12 +16,12 @@ export const CATALOG_TAB_LABELS: Readonly<Record<CatalogTab, string>> = {
   prices: 'Precios',
   inventory: 'Inventario',
   import: 'Importación',
+  integration: 'Integración',
 };
 
 /**
- * El índice de la pestaña que pide `?tab=`. Sin valor, con uno desconocido o
- * con uno que todavía no tiene pestaña (`integration`), abre la primera:
- * Productos.
+ * El índice de la pestaña que pide `?tab=`. Sin valor o con uno desconocido,
+ * abre la primera: Productos.
  */
 export function tabIndexOf(raw: string | null | undefined): number {
   const index = CATALOG_TABS.indexOf(raw as CatalogTab);
