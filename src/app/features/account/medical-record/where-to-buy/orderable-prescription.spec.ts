@@ -1,0 +1,103 @@
+import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
+import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { isOrderableRow, orderablePrescriptionOf } from './orderable-prescription';
+
+/** Una fila del resumen clínico de la receta `enc-a`, con lo mínimo que se mira. */
+function row(id: string): MedicationRequest {
+  return {
+    id,
+    medicationConceptId: `concepto-${id}`,
+    statusConceptId: 'st-emitida',
+    encounterId: 'enc-a',
+    createdAt: new Date('2026-03-01T10:30:00.000Z'),
+  };
+}
+
+const NOW = new Date('2026-10-30T12:00:00.000Z');
+
+/** Los estados de un ítem de receta, con los códigos del catálogo de la API. */
+const STATUS_LABELS: ConceptLabels = new Map(
+  (
+    [
+      ['st-emitida', 'MR_ISSUED'],
+      ['st-borrador', 'MR_DRAFT'],
+      ['st-anulada', 'MR_INVALIDATED'],
+      ['st-reemplazada', 'MR_REPLACED'],
+      ['st-completada', 'MR_COMPLETED'],
+    ] as const
+  ).map(([conceptId, code]) => [
+    conceptId,
+    { conceptId, code, display: code, codeSystemVersionId: 'v1' },
+  ]),
+);
+
+/** Una fila en un estado, emitida salvo el borrador, y con el vencimiento que se pida. */
+function rowIn(id: string, status: string, validTo?: Date): MedicationRequest {
+  return {
+    ...row(id),
+    statusConceptId: status,
+    ...(status === 'st-borrador' ? {} : { issuedAt: new Date('2026-03-01T11:00:00.000Z') }),
+    ...(validTo === undefined ? {} : { validTo }),
+  };
+}
+
+/** Lo mismo que aplica la API al crear el pedido (FAR-03): emitida y sin vencer. */
+describe('isOrderableRow (FAR-03)', () => {
+  it('emitida y sin vencer, o sin vencimiento: se puede pedir', () => {
+    expect(isOrderableRow(rowIn('rx', 'st-emitida'), STATUS_LABELS, NOW)).toBe(true);
+    expect(
+      isOrderableRow(rowIn('rx', 'st-emitida', new Date('2026-11-30T00:00:00.000Z')), STATUS_LABELS, NOW),
+    ).toBe(true);
+  });
+
+  it.each(['st-borrador', 'st-anulada', 'st-reemplazada', 'st-completada'])(
+    '%s no se puede pedir, aunque conserve su `issuedAt`',
+    (status) => {
+      expect(isOrderableRow(rowIn('rx', status), STATUS_LABELS, NOW)).toBe(false);
+    },
+  );
+
+  it('vencida no se puede pedir, y el instante exacto de `validTo` ya cuenta como vencida', () => {
+    expect(
+      isOrderableRow(rowIn('rx', 'st-emitida', new Date('2026-10-01T00:00:00.000Z')), STATUS_LABELS, NOW),
+    ).toBe(false);
+    expect(isOrderableRow(rowIn('rx', 'st-emitida', NOW), STATUS_LABELS, NOW)).toBe(false);
+  });
+
+  it('sin el código del estado en el catálogo, decide `issuedAt`', () => {
+    const noLabels: ConceptLabels = new Map();
+    expect(isOrderableRow(rowIn('rx', 'st-emitida'), noLabels, NOW)).toBe(true);
+    expect(isOrderableRow(rowIn('rx', 'st-borrador'), noLabels, NOW)).toBe(false);
+    // La API manda `issuedAt: null` en el borrador; el doble lo fuerza.
+    const wireDraft = { ...rowIn('rx', 'st-borrador'), issuedAt: null } as unknown as MedicationRequest;
+    expect(isOrderableRow(wireDraft, noLabels, NOW)).toBe(false);
+  });
+});
+
+describe('orderablePrescriptionOf (FAR-03)', () => {
+  const rows = [
+    rowIn('rx-renovacion', 'st-borrador'),
+    rowIn('rx-anulada', 'st-anulada'),
+    rowIn('rx-emitida', 'st-emitida'),
+    rowIn('rx-otra-emitida', 'st-emitida'),
+  ];
+
+  it('la elegida se puede pedir: viaja ella, con sus hermanas vigentes', () => {
+    expect(orderablePrescriptionOf(rows, 'rx-otra-emitida', STATUS_LABELS, NOW)).toEqual({
+      rows: [rows[2], rows[3]],
+      requestId: 'rx-otra-emitida',
+    });
+  });
+
+  it('la elegida es el borrador o la anulada: viaja la primera fila vigente de la receta', () => {
+    expect(orderablePrescriptionOf(rows, 'rx-renovacion', STATUS_LABELS, NOW).requestId).toBe('rx-emitida');
+    expect(orderablePrescriptionOf(rows, 'rx-anulada', STATUS_LABELS, NOW).requestId).toBe('rx-emitida');
+  });
+
+  it('ninguna fila vigente: nada que pedir', () => {
+    expect(orderablePrescriptionOf(rows.slice(0, 2), 'rx-renovacion', STATUS_LABELS, NOW)).toEqual({
+      rows: [],
+      requestId: null,
+    });
+  });
+});
