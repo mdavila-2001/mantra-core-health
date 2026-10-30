@@ -54,7 +54,7 @@
           @if (mensaje.tipo === 'ambigua' || mensaje.tipo === 'sin-medida') {
             <p class="msg__texto">
               @if (mensaje.tipo === 'ambigua') {
-                Encontré más de una medida parecida. ¿Cuál quieres ver?
+                Encontré más de una medida parecida. ¿Cuál desea ver?
               } @else {
                 No tengo esa medida en el catálogo.
                 @if (mensaje.medidas.length > 0) {
@@ -76,7 +76,7 @@
                       (clicked)="elegirMedida(opcion)"
                     >
                       {{ opcion.titulo }}
-                      <span class="asistente__pestana">· {{ opcion.etiquetaPestana }}</span>
+                      <span class="asistente__pestana">{{ opcion.etiquetaPestana }}</span>
                     </button>
                   </li>
                 }
