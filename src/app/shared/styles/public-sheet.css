@@ -83,9 +83,19 @@
 /* El nombre y el distintivo comparten renglón; el distintivo no lo estira. */
 .ficha-publica__titular {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--sp-2);
+}
+
+/* El nombre pide un ancho legible y crece; si con el grupo al lado no entra,
+   el grupo baja a la línea de abajo. Antes el grupo (que no encoge) se comía
+   el ancho y el nombre se partía letra por letra («Am / oxic / ilin / a»)
+   con los grupos largos del catálogo ATC. */
+.ficha-publica__titular > .rejilla__nombre {
+  flex: 1 1 9rem;
+  min-inline-size: 0;
 }
 
 /* Empuja el precio al pie: las tarjetas de una fila terminan a la misma
