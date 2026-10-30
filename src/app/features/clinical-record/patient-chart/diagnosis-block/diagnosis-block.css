@@ -1,6 +1,6 @@
-/* Bloque de diagnóstico: sólo la tabla de presuntivos (C3) y el diálogo de
-   verificación que sus acciones abren. El formulario de alta que este bloque
-   tenía se sacó entero (ver el comentario de la clase en diagnosis-block.ts). */
+/* Bloque de diagnóstico: el alta corta de un presuntivo (`presuntivo-form`) arriba y, debajo, la
+   tabla de presuntivos (C3) con el diálogo de verificación que sus acciones abren (ver el
+   comentario de la clase en diagnosis-block.ts). */
 
 :host {
   display: block;

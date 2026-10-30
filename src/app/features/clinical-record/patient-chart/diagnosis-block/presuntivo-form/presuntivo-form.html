@@ -1,0 +1,166 @@
+<!-- El alta de un presuntivo (2026-10-30): corto a propósito. Diagnóstico,
+     motivos «campo: valor» —escritos acá o traídos de un formulario médico ya
+     llenado— y hallazgos. Nace «En estudio» y se decide en la tabla de abajo.
+     Ver el comentario de la clase en diagnosis-block.ts. -->
+<section
+  class="presuntivo"
+  aria-labelledby="diagnostico-alta-titulo"
+  data-testid="diagnostico-alta"
+>
+  <h3 id="diagnostico-alta-titulo" class="presuntivo__subtitulo">
+    Registrar un diagnóstico presuntivo
+  </h3>
+  <p class="presuntivo__ayuda">
+    Nace «En estudio»: usted lo confirma o lo rechaza desde la tabla de abajo. Anote los motivos
+    acá mismo o parta de un formulario médico ya llenado.
+  </p>
+
+  <form
+    class="app-form-grid"
+    novalidate
+    (submit)="$event.preventDefault()"
+    (keydown.enter)="alApretarEnter($event)"
+  >
+    @if (sinOrganizacion()) {
+      <app-alert
+        tone="warning"
+        class="app-form-grid__ancho"
+        data-testid="diagnostico-sin-organizacion"
+      >
+        Para registrar un diagnóstico elija una organización en el encabezado.
+      </app-alert>
+    }
+
+    <app-form-field
+      class="app-form-grid__ancho"
+      icon="stethoscope"
+      label="Diagnóstico"
+      hint="Busque por nombre o por código CIE-10."
+      [required]="true"
+      [errorMessage]="erroresDelRegistro().diagnostico"
+    >
+      <app-concept-select
+        [target]="targetDiagnostico"
+        [value]="diagnostico()"
+        [disabled]="enviando() || registrado() !== null"
+        [clearable]="false"
+        placeholder="Elija un diagnóstico"
+        (valueChange)="elegirDiagnostico($event)"
+      />
+    </app-form-field>
+
+    @if (encounterId() !== null) {
+      <!-- Sólo con encuentro: las respuestas de formulario son de un encuentro. -->
+      <app-form-field
+        class="app-form-grid__ancho"
+        icon="survey"
+        label="Formulario médico ya llenado"
+        hint="Opcional. Trae sus respuestas como motivos, que puede editar."
+      >
+        <app-select
+          data-testid="diagnostico-formulario"
+          [options]="opcionesDeRespuesta()"
+          [value]="respuestaElegida()"
+          [disabled]="enviando() || importando() || respuestasDelEncuentro().length === 0"
+          placeholder="Ninguno: escribo los motivos"
+          (valueChange)="elegirRespuesta($event)"
+        />
+      </app-form-field>
+
+      @if (respuestasDelEncuentro().length === 0) {
+        <p class="presuntivo__estado" data-testid="diagnostico-sin-formularios">
+          Esta consulta todavía no tiene un formulario médico completado: escriba los motivos acá.
+        </p>
+      }
+      @if (importando()) {
+        <p class="presuntivo__estado" role="status" data-testid="diagnostico-importando">
+          Trayendo las respuestas del formulario…
+        </p>
+      }
+      @if (avisoDeImportacion(); as aviso) {
+        <p class="presuntivo__estado" role="status" data-testid="diagnostico-aviso-importacion">
+          {{ aviso }}
+        </p>
+      }
+      @if (falloAlImportar()) {
+        <app-alert
+          tone="warning"
+          class="app-form-grid__ancho"
+          data-testid="diagnostico-fallo-importacion"
+        >
+          No pudimos traer las respuestas del formulario. Puede escribir los motivos a mano.
+        </app-alert>
+      }
+    }
+
+    <app-additional-fields
+      class="app-form-grid__ancho"
+      titulo="Motivos del diagnóstico"
+      [subseccion]="true"
+      ayuda="Opcional. Cada fila es un campo y su valor, por ejemplo «Fiebre»: «39 °C desde hace dos días». Quedan como nota médica."
+      [conArchivos]="false"
+      [conTextoLibre]="false"
+      [encabezadoDeLaNota]="encabezadoDeLaNota()"
+      [patientProfileId]="patientProfileId()"
+      [disabled]="enviando()"
+    />
+
+    <app-form-field
+      class="app-form-grid__ancho"
+      icon="note"
+      label="Hallazgos y justificación"
+      hint="Opcional. Texto libre que queda en el diagnóstico."
+    >
+      <app-textarea
+        data-testid="diagnostico-hallazgos"
+        [rows]="3"
+        [value]="hallazgos()"
+        [disabled]="enviando() || registrado() !== null"
+        placeholder="Cuadro febril de dos días con tos productiva."
+        (valueChange)="hallazgos.set($event)"
+      />
+    </app-form-field>
+
+    @if (erroresDelRegistro().general; as mensaje) {
+      <app-alert tone="error" class="app-form-grid__ancho" data-testid="diagnostico-error">
+        {{ mensaje }}
+      </app-alert>
+    }
+
+    @if (falloDeLosMotivos(); as fallo) {
+      <!-- El diagnóstico YA existe: lo escrito se conserva y «Reintentar»
+           sólo repite la nota. -->
+      <app-alert
+        tone="warning"
+        class="app-form-grid__ancho"
+        title="El diagnóstico quedó registrado"
+        data-testid="diagnostico-fallo-motivos"
+      >
+        <p class="presuntivo__alerta-texto">{{ fallo }}</p>
+        <p class="presuntivo__alerta-texto">
+          Sus filas siguen acá: reintente, o déjelas sin guardar.
+        </p>
+        <div alert-actions>
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            data-testid="diagnostico-dejar-sin-guardar"
+            [disabled]="enviando()"
+            (clicked)="dejarSinGuardar()"
+          >
+            Dejar los motivos sin guardar
+          </button>
+        </div>
+      </app-alert>
+    }
+
+    <app-form-actions
+      [submitLabel]="rotuloDelEnvio()"
+      [pending]="enviando()"
+      [disabled]="!puedeRegistrar()"
+      (submitted)="registrar()"
+    />
+  </form>
+</section>

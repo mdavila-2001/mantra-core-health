@@ -471,6 +471,38 @@ describe('FollowUpBlock', () => {
 
 /* ---- la partición de la jornada, como función pura ------------------------ */
 
+/**
+ * Cambio de requisito (30/10/2026): la reconsulta se agenda sin formulario médico.
+ * La respuesta se ofrece; sólo con `exigeRespuesta` bloquea, como antes.
+ */
+describe('FollowUpBlock · la respuesta del formulario médico', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('ofrecerla no bloquea el agendado; exigirla sí, hasta que se elige una', async () => {
+    const { fixture, http } = await montar({});
+    const bloque = fixture.componentInstance as unknown as Record<string, () => boolean>;
+
+    fixture.componentRef.setInput('ofreceRespuesta', true);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(false);
+
+    fixture.componentRef.setInput('exigeRespuesta', true);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(true);
+
+    // Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo.
+    fixture.componentRef.setInput('exigeRespuesta', false);
+    fixture.componentRef.setInput('encounterId', null);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(true);
+    // El selector de la respuesta lee las del encuentro al dibujarse.
+    for (const lectura of http.match((r) => r.url === '/forms/instances')) {
+      lectura.flush({ encounterId: 'enc-1', items: [], limit: 50, truncated: false });
+    }
+    http.verify();
+  });
+});
+
 describe('enFranjas', () => {
   const recurso = RECURSO as never;
 

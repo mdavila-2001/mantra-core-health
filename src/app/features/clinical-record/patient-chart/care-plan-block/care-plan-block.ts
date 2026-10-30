@@ -130,11 +130,17 @@ export class CarePlanBlock implements DraftBlock {
    */
   readonly exigeRespuesta = input(false);
 
+  /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
+  readonly ofreceRespuesta = input(false);
+
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
   protected readonly faltaRespuesta = computed(
-    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+    () =>
+      (this.exigeRespuesta() && this.respuestaDelFormulario() === null) ||
+      // Sin formulario se emite, pero el encuentro abierto sigue siendo necesario.
+      (this.ofreceRespuesta() && this.encounterId() === null),
   );
 
   /**
@@ -261,6 +267,14 @@ export class CarePlanBlock implements DraftBlock {
     vigencia: (this.desde() !== null || this.hasta() !== null) && !this.vigenciaInvalida(),
     pasos: this.actividadesEscritas().length > 0,
   }));
+
+  /**
+   * El tramo «Origen» se ve resuelto cuando hay con qué: si es obligatorio,
+   * cuando no falta; si es opcional, sólo con una respuesta elegida.
+   */
+  protected readonly origenListo = computed(() =>
+    this.exigeRespuesta() ? this.tramos().origen : this.respuestaDelFormulario() !== null,
+  );
 
   /** Lo que falta para poder abrir el plan, contado: cuántos obligatorios quedan. */
   protected readonly obligatoriosPendientes = computed(() => {

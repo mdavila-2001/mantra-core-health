@@ -28,6 +28,7 @@ import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Input } from '../../../shared/components/atoms/input/input';
 import { Select } from '../../../shared/components/atoms/select/select';
@@ -77,6 +78,7 @@ const MAX_NOMBRE = 200;
 @Component({
   selector: 'app-services-catalog',
   imports: [
+    AppButtonLink,
     Alert,
     AnnounceOnAppear,
     AppButton,

@@ -171,6 +171,9 @@ export class AnalysisOrderBlock {
    */
   readonly exigeRespuesta = input(false);
 
+  /** Ofrece la respuesta sin exigirla (30/10/2026): se emite sin formulario, no sin encuentro. */
+  readonly ofreceRespuesta = input(false);
+
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
@@ -186,9 +189,11 @@ export class AnalysisOrderBlock {
 
   protected readonly faltaRespuesta = computed(
     () =>
-      this.exigeRespuesta() &&
-      this.respuestaDelFormulario() === null &&
-      this.notaDelFormularioLibre() === null,
+      (this.exigeRespuesta() &&
+        this.respuestaDelFormulario() === null &&
+        this.notaDelFormularioLibre() === null) ||
+      // Sin formulario se pide, pero el encuentro abierto sigue siendo necesario.
+      (this.ofreceRespuesta() && this.encounterId() === null),
   );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;

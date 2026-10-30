@@ -1,0 +1,38 @@
+/* El alta de un presuntivo (2026-10-30). Ver el comentario de la clase en presuntivo-form.ts. */
+
+:host {
+  display: block;
+}
+
+.presuntivo {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
+}
+
+/* Los motivos van dentro de esta sección: su título no puede pesar más que el de ella. */
+.presuntivo app-additional-fields {
+  --adicionales-titulo-fs: var(--fs-body);
+  --adicionales-titulo-lh: var(--lh-body);
+}
+
+.presuntivo__ayuda,
+.presuntivo__estado {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+
+.presuntivo__subtitulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.presuntivo__alerta-texto {
+  margin: 0;
+}
