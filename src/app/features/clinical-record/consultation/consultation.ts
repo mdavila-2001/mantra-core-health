@@ -7,6 +7,7 @@ import {
   inject,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -66,6 +67,7 @@ import {
   type CitaDelPaciente,
 } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analysis-order-block';
+import { DRAFT_BLOCK } from '../patient-chart/draft-block';
 import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
 import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
 import { ConsultationReferrals } from './consultation-referrals';
@@ -545,6 +547,35 @@ export class Consultation {
     if (destination !== undefined && event.target === boundary) {
       event.preventDefault();
       destination.focus();
+    }
+  }
+
+  /** El bloque montado en el modal: guarda de borrador, como en el expediente (`patient-chart`). */
+  private readonly bloqueDeLaCasilla = viewChild(DRAFT_BLOCK);
+
+  /** El `<dialog>` de la casilla, para cerrarlo tras confirmar el descarte. */
+  private readonly dialogoDeLaCasilla = viewChild<ContentDialog>('dialogoDeLaCasilla');
+
+  /** Se cierra solo si no hay bloque montado o no tiene nada escrito. */
+  protected readonly casillaSinCambios = computed(
+    () => !(this.bloqueDeLaCasilla()?.tieneCambiosPendientes() ?? false),
+  );
+
+  /** Intento de cerrar con algo sin registrar: se pregunta; si se confirma, se cierra por `close()`. */
+  protected async pedirDescarteDeLaCasilla(): Promise<void> {
+    const yaRegistrado = this.bloqueDeLaCasilla()?.mensajeDeDescarte?.() ?? null;
+    const descartar = await this.dialogs.confirm({
+      title: '¿Descartar lo escrito?',
+      message:
+        yaRegistrado ?? 'Todavía no se registró. Si cierra, lo que cargó en este formulario se pierde.',
+      confirmLabel: 'Descartar',
+      cancelLabel: 'Seguir escribiendo',
+      destructive: true,
+    });
+    if (descartar) {
+      // Algo ya quedó registrado: la consulta relee sus contadores.
+      if (yaRegistrado !== null) this.cargar();
+      this.dialogoDeLaCasilla()?.close();
     }
   }
 
