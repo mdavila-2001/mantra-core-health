@@ -9,6 +9,8 @@ import type {
   PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '@core/http/error-to-view-state';
+import type { ContextoDeChat } from '@core/messaging/chat-context';
+import { usarIrAlChat } from '@core/messaging/chat-link';
 import { dataOf, loading, notFound, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import type { BreadcrumbItem } from '@shared/components/molecules/breadcrumb/breadcrumb.types';
@@ -193,6 +195,21 @@ export abstract class PublicCatalogDetail<T> implements OnInit {
     if (perfil.ratingAverage === null || perfil.ratingCount === 0) return null;
     const media = perfil.ratingAverage.toFixed(1).replace('.', ',');
     return `${media} · ${perfil.ratingCount} ${perfil.ratingCount === 1 ? 'reseña' : 'reseñas'}`;
+  }
+
+  private readonly irAlChat = usarIrAlChat();
+
+  /**
+   * «Chatear» / «Consultar por chat»: abre el chat con el establecimiento de
+   * esta ficha, con la tarjeta de lo que se está mirando.
+   *
+   * Con el slug **de la ficha ya leída**, no el de la ruta: si la ficha no
+   * cargó no hay con quién hablar, y la plantilla no muestra el botón.
+   */
+  protected chatear(contexto: Omit<ContextoDeChat, 'ruta'>): void {
+    const ficha = this.ficha();
+    if (ficha === null) return;
+    this.irAlChat({ escribirA: ficha.slug }, { ...contexto, ruta: `${this.rutaDelDirectorio}/${ficha.slug}` });
   }
 
   /**

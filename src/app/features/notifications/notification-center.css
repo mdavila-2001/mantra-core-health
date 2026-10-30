@@ -19,6 +19,14 @@
   margin-inline: auto;
 }
 
+/* La lista arranca pegada a la línea de las pestañas. El panel trae 16 px
+   arriba para contenido suelto; acá el primer renglón ya es el encabezado del
+   día, con su propio aire, y ese hueco quedaba como una franja vacía entre la
+   tira y «HOY» (en oscuro, de otro tono que la tarjeta). */
+.avisos__tarjeta app-tab {
+  padding-block: 0;
+}
+
 .avisos__vacio {
   padding: var(--e6) var(--e4);
 }
@@ -28,7 +36,7 @@
    larga sin perder de vista de cuándo es lo que se está leyendo. */
 
 .avisos__dia + .avisos__dia {
-  border-block-start: 1px solid var(--filete-2);
+  border-block-start: 1px solid var(--border-default);
 }
 
 .avisos__dia-titulo {
@@ -37,8 +45,11 @@
   z-index: 1;
   margin: 0;
   padding: var(--e3) var(--e4);
-  background: var(--sup-tarjeta);
-  border-block-end: 1px solid var(--filete-2);
+  /* La superficie de la tarjeta (`--bg-surface`, la que pinta `app-card`) y no
+     `--sup-tarjeta`: en oscuro son dos tonos distintos y cada encabezado de día
+     se leía como una banda más oscura que la tarjeta. */
+  background: var(--bg-surface);
+  border-block-end: 1px solid var(--border-default);
   font-size: var(--fs-caption, 0.8rem);
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -57,7 +68,7 @@
 }
 
 .avisos__fila + .avisos__fila {
-  border-block-start: 1px solid var(--filete-2);
+  border-block-start: 1px solid var(--border-default);
 }
 
 /* Sin leer se marca con una barra Y con peso, no sólo con color: el color solo
@@ -86,7 +97,7 @@ button.avisos__item {
 
 button.avisos__item:hover,
 button.avisos__item:focus-visible {
-  background: var(--sup-hover, var(--sup-inset));
+  background: var(--bg-hover);
 }
 
 /* Alineados con el texto de la fila, no con el dibujo: sangría del padding, el
@@ -111,8 +122,8 @@ button.avisos__item:focus-visible {
   block-size: 2.25rem;
   flex-shrink: 0;
   border-radius: var(--r-full, 999px);
-  background: var(--sup-inset);
-  color: var(--tinta-2);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
 }
 
 .avisos__texto {
