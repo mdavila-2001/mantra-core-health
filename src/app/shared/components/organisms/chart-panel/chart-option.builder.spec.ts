@@ -146,10 +146,14 @@ describe('construirOpciones', () => {
       // Una serie diaria (muchas categorías) o un eje horizontal no se envuelven: no los necesitan.
       const dias = Array.from({ length: 30 }, (_, i) => `D${i}`);
       expect(at(buildRaw({ tipo: 'cartesiano', categorias: dias, series: [{ nombre: 'S', valores: dias.map(() => 1), forma: 'barra' }] }), 'media')).toBeUndefined();
-      // Las horizontales sí tienen media, pero distinta: truncan el nombre en vez de rotarlo.
+      // Las horizontales sí tienen media, pero distinta: no rotan el nombre. Con pocas barras lo parten en dos líneas
+      // (se lee entero); con muchas, dos líneas por barra se pisarían y lo truncan.
       const horizontal = buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] });
-      expect(at(horizontal, 'media.0.option.yAxis.axisLabel.overflow')).toBe('truncate');
+      expect(at(horizontal, 'media.0.option.yAxis.axisLabel.overflow')).toBe('break');
       expect(at(horizontal, 'media.0.option.xAxis.axisLabel.rotate')).toBeUndefined();
+      const diez = Array.from({ length: 10 }, (_, i) => `Organización número ${i}`);
+      const muchasBarras = buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: diez, series: [{ nombre: 'S', valores: diez.map(() => 1), forma: 'barra' }] });
+      expect(at(muchasBarras, 'media.0.option.yAxis.axisLabel.overflow')).toBe('truncate');
     });
 
     it('con pocas categorías se rotulan todas', () => {
