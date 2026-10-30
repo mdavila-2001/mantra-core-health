@@ -369,8 +369,8 @@ describe('Resumen: contra las verticales reales', () => {
     });
 
     it('sin una fuente no hay total ni partes: el mapa lo deja en «sin dato» y no suma a medias', () => {
-      const sinPublicidad = { ...COMPLETAS, publicidad: vacia('publicidad') };
-      const mapa = buildSummaryWith(CTX, sinPublicidad).tablas.find((t) => t.id === 'mapa-monetizacion')!;
+      const withoutAds = { ...COMPLETAS, publicidad: vacia('publicidad') };
+      const mapa = buildSummaryWith(CTX, withoutAds).tablas.find((t) => t.id === 'mapa-monetizacion')!;
       const total = mapa.filas.find((f) => f['fuente'] === 'Total')!;
       expect(total['ingreso']).toBeNull();
       expect(total['parte']).toBeNull();
@@ -384,8 +384,8 @@ describe('Resumen: contra las verticales reales', () => {
     });
 
     it('la lectura rápida no inventa un total cuando falta una fuente: dice qué falta', () => {
-      const sinComisiones = { ...COMPLETAS, comisiones: vacia('comisiones') };
-      const texto = buildSummaryWith(CTX, sinComisiones).secciones![0]!.descripcion ?? '';
+      const withoutCommissions = { ...COMPLETAS, comisiones: vacia('comisiones') };
+      const texto = buildSummaryWith(CTX, withoutCommissions).secciones![0]!.descripcion ?? '';
       expect(texto).not.toMatch(/entraron/);
       expect(texto).toMatch(/Falta/);
     });
