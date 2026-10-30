@@ -148,13 +148,13 @@ export class PatientMerge {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No tenés permiso para fusionar pacientes.';
+      return state.message ?? 'No tiene permiso para fusionar pacientes.';
     }
     if (state.status === 'not-found') {
-      return 'Alguno de los dos perfiles ya no existe. Volvé a buscarlos.';
+      return 'Alguno de los dos perfiles ya no existe. Vuelva a buscarlos.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;

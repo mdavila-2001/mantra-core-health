@@ -77,6 +77,10 @@ export const NAV_ICON_NAMES = [
 
   // Dinero.
   'chart',
+  /** Billetera: lo que el paciente gastó en su salud («Mis gastos»). */
+  'wallet',
+  /** Comprobante con el borde dentado: las facturas emitidas («Mis facturas»). */
+  'receipt',
   'star',
 
   // Confianza y llaves.
@@ -155,6 +159,38 @@ export const NAV_ICON_NAMES = [
   'sun',
   'moon',
   'camera',
+
+  // Acciones de desplegable (2026-09-24). Pedido del propietario: **toda**
+  // opción de un desplegable lleva ícono, porque en una lista de cinco una sin
+  // dibujo se lee como un rótulo y no como algo que se puede tocar. Igual que
+  // `remove` y `edit`, responden «¿qué le hace este botón a lo que está al
+  // lado?» y nunca nombran una sección.
+  'eye',
+  'eye-off',
+  'check',
+  'check-circle',
+  'close',
+  'arrive',
+  'logout',
+  'paperclip',
+  'refresh',
+  'share',
+  'qr',
+  'print',
+  'download',
+  'merge',
+  'clock',
+
+  // Vistas y herramientas del glosario (26/10/2026). Pedido del cliente: los
+  // botones del glosario —el selector «Tarjetas / Tabla» y los accesos al mapa
+  // de relaciones y al atlas 3D— van con ícono y texto. `grid` y `table`
+  // nombran una forma de ver resultados; `network` es un grafo con un nodo al
+  // centro (no `share`, que ya significa compartir) y `cube`, el volumen del
+  // atlas en tres dimensiones.
+  'grid',
+  'table',
+  'network',
+  'cube',
 ] as const;
 
 export type NavIconName = (typeof NAV_ICON_NAMES)[number];

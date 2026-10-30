@@ -33,7 +33,24 @@
        paso que falta, y su salida —firmar— está en la lista de abajo. -->
   @if (avisoDePrecondicion(); as aviso) {
     <app-alert tone="warning" title="Falta la firma" data-testid="receta-precondicion">
-      {{ aviso }} Firmala con el botón «Firmar» y volvé a emitirla.
+      {{ aviso }} Fírmela con el botón «Firmar» y vuelva a emitirla.
+    </app-alert>
+  }
+
+  <!-- La revisión de interacciones falla abierta (no bloquea la receta), pero
+       nunca en silencio: sin este aviso, un chequeo caído se leía igual que
+       «sin interacciones». Persiste hasta que se cierre o el próximo chequeo
+       responda. -->
+  @if (interaccionesSinRevisar(); as aviso) {
+    <app-alert
+      tone="warning"
+      title="No se pudieron revisar las interacciones"
+      dismissible
+      data-testid="receta-interacciones-sin-revisar"
+      (dismissed)="descartarAvisoDeInteracciones()"
+    >
+      La receta de {{ aviso.medicamento }} no pasó por la revisión de interacciones con la
+      medicación activa de la persona. Compruébelas usted antes de firmarla. {{ aviso.causa }}
     </app-alert>
   }
 
@@ -53,6 +70,16 @@
             <span class="receta__principal">{{ receta.medicamento }}</span>
             @if (receta.indicacion) {
               <span class="receta__secundario">{{ receta.indicacion }}</span>
+            }
+            <!-- C5: el vínculo de la receta. Ausente = pendiente de que
+                 patient-chart.ts (fuera de mi alcance) lo empiece a mandar. -->
+            @if (receta.vinculo) {
+              <app-badge
+                [variant]="receta.vinculoEsDiagnostico ? 'info' : 'secondary'"
+                data-testid="receta-vinculo"
+              >
+                {{ receta.vinculoEsDiagnostico ? 'Diagnóstico: ' : 'Motivo: ' }}{{ receta.vinculo }}
+              </app-badge>
             }
           </div>
 
@@ -79,10 +106,7 @@
                     [disabled]="accionEnCurso() !== null"
                     (selected)="firmar(receta)"
                   >
-                    <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                      <path d="M5 12l4 4L19 6" />
-                    </svg>
+                    <app-nav-icon slot="icon" name="check" />
                     Firmar
                   </app-menu-item>
                 }
@@ -90,12 +114,22 @@
                   [disabled]="accionEnCurso() !== null"
                   (selected)="emitir(receta)"
                 >
-                  <svg slot="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M6 2h12v20l-6-4-6 4z" />
-                  </svg>
+                  <app-nav-icon slot="icon" name="check-circle" />
                   Emitir
                 </app-menu-item>
+                <!-- C5: sólo si todavía no está ligada a un diagnóstico
+                     confirmado (un motivo puede pasar a diagnóstico; un
+                     diagnóstico ya confirmado no se "reemplaza" desde acá). -->
+                @if (!receta.vinculoEsDiagnostico) {
+                  <app-menu-item
+                    data-testid="receta-vincular"
+                    [disabled]="accionEnCurso() !== null"
+                    (selected)="abrirVincular(receta)"
+                  >
+                    <app-nav-icon slot="icon" name="heart" />
+                    Vincular a un diagnóstico…
+                  </app-menu-item>
+                }
               </app-menu>
             </div>
           }
@@ -108,13 +142,13 @@
        Tres condiciones antes del formulario, y cada una se dice con su propia
        explicación: «no se puede» sin decir qué falta obliga a adivinar. -->
   @if (sinOrganizacion()) {
-    <app-alert tone="info" title="Elegí una organización">
-      Una receta queda bajo la custodia de una organización. Elegí una en el selector del encabezado
+    <app-alert tone="info" title="Elija una organización">
+      Una receta queda bajo la custodia de una organización. Elija una en el selector del encabezado
       para poder prescribir.
     </app-alert>
   } @else if (!hayEncuentro() && !sinExigirEncuentro()) {
-    <app-alert tone="info" title="Abrí el encuentro para recetar">
-      La receta se registra dentro de la consulta que la motivó. Registrá el encuentro acá abajo y
+    <app-alert tone="info" title="Abra el encuentro para recetar">
+      La receta se registra dentro de la consulta que la motivó. Registre el encuentro acá abajo y
       el formulario aparece.
     </app-alert>
   } @else if (catalogoListo() === false) {
@@ -123,18 +157,28 @@
          catálogo no está, lo honesto es no ofrecer el formulario y decir por qué. -->
     <app-alert tone="warning" title="El catálogo de medicamentos no está publicado">
       El medicamento se elige del catálogo y esa columna todavía no tiene un conjunto de valores
-      declarado, así que no se puede prescribir desde acá. No es algo que puedas resolver en esta
+      declarado, así que no se puede prescribir desde acá. No es algo que pueda resolver en esta
       pantalla: hay que declarar el catálogo del lado del servidor. Firmar y emitir las recetas ya
       cargadas sí funciona.
     </app-alert>
   } @else {
     <form class="receta__formulario app-form-grid" (submit)="$event.preventDefault()">
+      <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
+           cargada; con una sola respuesta el selector queda deshabilitado. -->
+      @if (exigeRespuesta()) {
+        <app-form-response-picker
+          class="app-form-grid__ancho"
+          [encounterId]="encounterId()"
+          [(seleccionada)]="respuestaDelFormulario"
+        />
+      }
       <!-- «Una cita ya existente y/o finalizada», textual del cliente. Sólo se
            dibuja si hay citas que ofrecer: un desplegable con una única opción
            vacía es una pregunta que no existe. En «Atención» no aparece —el
            encuentro en curso ya es el contexto— porque ahí la lista baja vacía. -->
       @if (opcionesDeCita().length > 1) {
         <app-form-field icon="calendar"
+          class="app-form-grid__ancho"
           label="¿De qué consulta es la receta?"
           hint="La cita que la motiva, incluidas las ya finalizadas."
         >
@@ -152,16 +196,18 @@
            como se elige un medicamento. Sigue sin haber texto libre: lo que se
            guarda es el `conceptId` de lo elegido. -->
       <app-form-field icon="pill"
+        class="app-form-grid__ancho"
         label="Medicamento"
-        hint="Buscá por nombre o código. Es lo único obligatorio."
+        hint="Busque por nombre o código. Es lo único obligatorio."
         [required]="true"
+        [errorMessage]="issueOf('medicationConceptId')"
       >
         <app-reference-combobox
           [(value)]="medicamento"
           [selected]="medicamentoElegido()"
           [options]="opcionesDeMedicamento()"
           [loading]="buscandoMedicamento()"
-          placeholder="Buscá un medicamento"
+          placeholder="Busque un medicamento"
           emptyMessage="Ningún medicamento coincide"
           (searched)="buscarMedicamento($event)"
           (selectionChange)="onMedicamentoElegido($event)"
@@ -195,7 +241,7 @@
         }
       }
 
-      <app-form-field icon="pill" label="Dosis" hint="Opcional. En tus palabras: «500 mg».">
+      <app-form-field icon="pill" label="Dosis" hint="Opcional. En sus palabras: «500 mg».">
         <app-input
           type="text"
           autocomplete="off"
@@ -205,7 +251,7 @@
         />
       </app-form-field>
 
-      <app-form-field icon="history" label="Frecuencia" hint="Opcional. En tus palabras: «cada 8 horas».">
+      <app-form-field icon="history" label="Frecuencia" hint="Opcional. En sus palabras: «cada 8 horas».">
         <app-input
           type="text"
           autocomplete="off"
@@ -217,7 +263,7 @@
         <app-select
           [value]="frecuencia()"
           [options]="opcionesFrecuenciaRapida"
-          placeholder="Elegí una pauta frecuente"
+          placeholder="Elija una pauta frecuente"
           (valueChange)="fijarFrecuenciaRapida($event ?? '')"
         />
       </app-form-field>
@@ -242,19 +288,22 @@
         />
       </app-form-field>
 
-      <app-form-field icon="history"
-        label="Duración del tratamiento"
-        hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
-      >
-        <app-select
-          [value]="duracionRapidaElegida()"
-          [options]="opcionesDuracionRapida"
-          placeholder="Elegí una duración"
-          (valueChange)="elegirDuracionRapida($event)"
-        />
-      </app-form-field>
+      <!-- La duración va en la misma fila que las dos fechas porque es lo que
+           las deriva: sola en la rejilla de dos columnas quedaba con un hueco
+           al lado y lejos del fin de vigencia que calcula. -->
+      <div class="receta__vigencia">
+        <app-form-field icon="history"
+          label="Duración del tratamiento"
+          hint="Opcional. Días previstos de toma, o tratamiento continuo. Deriva el fin de vigencia y sugiere la cantidad."
+        >
+          <app-select
+            [value]="duracionRapidaElegida()"
+            [options]="opcionesDuracionRapida"
+            placeholder="Elija una duración"
+            (valueChange)="elegirDuracionRapida($event)"
+          />
+        </app-form-field>
 
-      <div class="receta__fechas-grid app-form-grid">
         <app-form-field icon="calendar" label="Inicio de vigencia" hint="Desde cuándo es válida la receta.">
           <app-date-picker [(value)]="validFrom" />
         </app-form-field>
@@ -277,39 +326,47 @@
         />
       </app-form-field>
 
-      <!-- Para qué es la receta (v4.1.6). Opcional de verdad: una prescripción
-           sintomática o profiláctica no tiene diagnóstico detrás, y por eso la
-           opción vacía es la primera y la de por omisión. -->
+      <!-- Para qué es la receta (C5, pedido literal del propietario): en todo
+           momento se liga a un diagnóstico confirmado o a un motivo escrito.
+           Ya no hay opción vacía. -->
       <app-form-field icon="heart"
+        class="app-form-grid__ancho"
         label="¿Para qué es esta receta?"
-        hint="Opcional. Elegí un diagnóstico o escribí el motivo libremente."
+        hint="Elija un diagnóstico confirmado o «Otro motivo» para escribirlo."
       >
         <app-select
-          data-testid="receta-indicacion"
+          data-testid="receta-diagnostico"
           [value]="indicacion()"
           (valueChange)="elegirIndicacion($event)"
           [options]="opcionesDeIndicacion()"
+          placeholder="Elija un diagnóstico o un motivo"
         />
       </app-form-field>
 
-      <!-- El motivo escrito, para cuando no hay diagnóstico registrado detrás:
-           «sólo se fue a hacer recetar», que en psiquiatría es lo corriente.
-           Entra y sale del DOM en vez de esconderse: un campo escondido igual
-           se tabula. -->
+      <!-- El motivo escrito, para cuando no hay diagnóstico confirmado
+           detrás: «sólo se fue a hacer recetar», que en psiquiatría es lo
+           corriente. Entra y sale del DOM en vez de esconderse: un campo
+           escondido igual se tabula. Obligatorio y con tope de 200
+           caracteres (C5 §4). -->
       @if (motivoEsLibre()) {
         <app-form-field
           icon="note"
           label="¿Cuál es el motivo?"
-          hint="Opcional. Se imprime en la receta junto al diagnóstico, si lo elegiste."
+          hint="Obligatorio. Se imprime en la receta."
         >
-          <app-input
-            data-testid="receta-motivo-libre"
+          <app-textarea
+            data-testid="receta-motivo"
             [(value)]="motivoLibre"
+            [maxLength]="200"
+            [rows]="2"
             placeholder="Trastorno de ansiedad generalizada"
           />
         </app-form-field>
       }
 
+      <!-- `app-form-actions` no tiene forma de recibir un testid en su botón
+           (pieza de la casa, no se toca — PLAN.md). El E2E ubica el envío
+           por rol + nombre accesible («Prescribir»), no por testid. -->
       <app-form-actions
         submitLabel="Prescribir"
         [pending]="registrando()"
@@ -319,3 +376,40 @@
     </form>
   }
 </app-card>
+
+<!-- C5: vincular después una receta con motivo plano a un diagnóstico
+     confirmado. Mismo selector que el alta, dentro de un diálogo propio. -->
+@if (vinculando(); as receta) {
+  <app-content-dialog
+    heading="Vincular a un diagnóstico"
+    [description]="receta.medicamento"
+    data-testid="receta-vincular-dialog"
+    [dismissible]="!vinculandoEnCurso()"
+    (dismissAttempt)="cerrarVincular()"
+    (closed)="cerrarVincular()"
+  >
+    @if (errorDeVincular(); as mensaje) {
+      <app-alert tone="error">{{ mensaje }}</app-alert>
+    }
+    <app-form-field icon="heart" label="¿Para qué es esta receta?">
+      <app-select
+        [value]="indicacionDeVinculo()"
+        (valueChange)="indicacionDeVinculo.set($event)"
+        [options]="opcionesDeIndicacion()"
+      />
+    </app-form-field>
+    @if (indicacionDeVinculo() === '__otro_motivo__') {
+      <app-form-field icon="note" label="¿Cuál es el motivo?">
+        <app-textarea [(value)]="motivoDeVinculo" [maxLength]="200" [rows]="2" />
+      </app-form-field>
+    }
+    <app-form-actions
+      submitLabel="Vincular"
+      cancelLabel="Cancelar"
+      [pending]="vinculandoEnCurso()"
+      [disabled]="!puedeVincular()"
+      (submitted)="confirmarVincular()"
+      (cancelled)="cerrarVincular()"
+    />
+  </app-content-dialog>
+}

@@ -1,9 +1,9 @@
 <app-page-header
   title="Artículos médicos"
-  subtitle="Publicá, revisá lo que ya publicaste y respondé los comentarios."
+  subtitle="Publique, revise lo que ya publicó y responda los comentarios."
   [breadcrumbs]="breadcrumbs()"
 >
-  <app-back-link page-actions fallback="/my-account" label="Volver a tu perfil" />
+  <app-back-link page-actions fallback="/my-account" label="Volver a su perfil" />
 </app-page-header>
 
 <div class="articulos">
@@ -12,8 +12,8 @@
          «pedíselo a quien administra tu organización», y nadie podía: el
          contrato sólo sabe de la vitrina propia. Ahora se crea acá mismo, con
          lo mínimo que el servidor exige — no vuelve al perfil, que es de donde
-         el propietario la mandó sacar. Ver `docs/progress/BLOCKERS.md`. -->
-    <app-vitrina-minima motivo="articulos" (creada)="alCrearLaVitrina()" />
+         el propietario la mandó sacar. -->
+    <app-minimal-showcase motivo="articulos" (creada)="alCrearLaVitrina()" />
   } @else {
     <!-- ─── Publicar ────────────────────────────────────────────────────── -->
     <app-card variant="outlined" padding="lg" class="articulos__publicar">
@@ -32,7 +32,7 @@
             [src]="autorFoto()"
             [name]="autorNombre()"
             size="lg"
-            [alt]="'Tu foto de vitrina'"
+            [alt]="'Su foto de vitrina'"
           />
           <div class="compositor__identidad">
             <p class="compositor__nombre">{{ autorNombre() }}</p>
@@ -42,26 +42,21 @@
                  privado sería mentirle a quien publica. -->
             <p class="compositor__alcance">
               <app-nav-icon [name]="vitrinaEsPublica() ? 'globe' : 'lock'" class="compositor__alcance-icono" />
-              {{ vitrinaEsPublica() ? 'Se publica en tu vitrina pública, con tu firma.' : 'Tu vitrina está en privado: sólo vos vas a ver lo que publiques.' }}
+              {{ vitrinaEsPublica() ? 'Se publica en su vitrina pública, con su firma.' : 'Su vitrina está en privado: sólo usted va a ver lo que publique.' }}
             </p>
           </div>
         </header>
 
         <!-- ── Escritura ──────────────────────────────────────────────────
-             El `app-form-field` SE QUEDA: es quien asocia el rótulo al control
-             por `for`/`id`, y sacarlo dejaría el área de escritura sin nombre
-             accesible. Lo que se va es su PESO VISUAL: el rótulo se oculta sólo
-             para la vista y la ayuda se mudó a la cabecera, que es donde dice
-             dónde va a parar lo que se escriba. -->
-        <app-form-field class="compositor__campo" label="Contenido del artículo">
-          <app-textarea
-            [(value)]="nuevoCuerpo"
-            [rows]="10"
-            [maxLength]="cuerpoMaximo"
-            [autoResize]="true"
-            placeholder="Escribí tu artículo médico…"
-          />
-        </app-form-field>
+             Títulos y subtítulos (que el lector despliega), listas, negrita,
+             cursiva, emojis e imágenes intercaladas. El compositor arma el
+             borrador; publicar —subir imágenes y mandar el post— es de acá. -->
+        <app-article-composer
+          #compositor
+          [maxLength]="cuerpoMaximo"
+          [disabled]="publicando()"
+          [draftKey]="claveDelBorrador()"
+        />
 
         <!-- ── Pie ────────────────────────────────────────────────────────
              La acción a la derecha, separada por una línea tenue. -->
@@ -70,27 +65,46 @@
           submitLabel="Publicar artículo"
           [pending]="publicando()"
           [disabled]="!puedePublicar()"
-          (submitted)="publicar()"
+          (submitted)="publicar(compositor.draft())"
         />
       </form>
     </app-card>
 
     <!-- ─── Lo ya publicado ────────────────────────────────────────────── -->
-    <section class="articulos__lista" aria-label="Tus artículos publicados">
-      <h2 class="articulos__titulo">Tus artículos</h2>
+    <section class="articulos__lista" aria-label="Sus artículos publicados">
+      <h2 class="articulos__titulo">Sus artículos</h2>
 
       <app-view-state-host [state]="articulos()" (retry)="recargar()">
         @if (articulos(); as estado) {
           @if (estado.status === 'ready') {
             @for (articulo of estado.data; track articulo.post.id) {
             <app-card variant="outlined" padding="lg" class="articulos__tarjeta">
-              <p class="articulos__cuerpo">{{ articulo.resumen }}</p>
+              @if (leyendo() === articulo.post.id) {
+                <app-article-body
+                  [body]="articulo.post.bodyText"
+                  [images]="imagenesDelArticulo()"
+                  [headingLevel]="3"
+                />
+              } @else {
+                <p class="articulos__cuerpo">{{ articulo.resumen }}</p>
+              }
 
               <p class="articulos__fecha">
                 @if (articulo.post.publishedAt) {
                   Publicado el {{ articulo.post.publishedAt | date: 'dd/MM/yyyy' }}
                 }
               </p>
+
+              <button
+                app-button
+                variant="ghost"
+                type="button"
+                data-testid="article-read"
+                [attr.aria-expanded]="leyendo() === articulo.post.id"
+                (clicked)="alternarLectura(articulo)"
+              >
+                {{ leyendo() === articulo.post.id ? 'Mostrar resumen' : 'Leer artículo' }}
+              </button>
 
               <button
                 app-button
@@ -130,7 +144,7 @@
                         [(value)]="nuevoComentario"
                         [rows]="2"
                         [autoResize]="true"
-                        placeholder="Escribí un comentario…"
+                        placeholder="Escriba un comentario…"
                       />
                     </app-form-field>
                     <app-form-actions
@@ -144,7 +158,7 @@
               }
             </app-card>
             } @empty {
-              <p class="articulos__vacio">Todavía no publicaste ningún artículo médico.</p>
+              <p class="articulos__vacio">Todavía no publicó ningún artículo médico.</p>
             }
           }
         }

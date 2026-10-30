@@ -1,0 +1,178 @@
+/* ============================================================================
+    Las URL en inglés de las pantallas portadas desde la bóveda (TAREA-29).
+
+    La bóveda nombra cada maqueta en castellano —«V04-01-organizaciones-
+    listado»— y no se toca: es el pensamiento del equipo. Lo que cambia es la
+    dirección que el front le da. La carpeta y la clase del componente siguen
+    saliendo del nombre de la maqueta; sólo el segmento de la URL sale de acá.
+
+    Una maqueta nueva sin traducción hace fallar al generador en vez de
+    publicar una ruta en castellano: la tabla se completa a mano, una vez.
+    ========================================================================== */
+
+/**
+ * Segmento de primer nivel de cada módulo.
+ *
+ * Ninguno puede empezar como un prefijo de la API (`proxy.conf.json`): el
+ * proxy compara por inicio de texto. Por eso Terminología es `vocabulary` y no
+ * `terminology` (la API sirve `/terminology`), y Organizaciones es
+ * `provider-directory` y no `organizations` ni `directory` (`/org` es de la
+ * API y `directory/:profileId` ya es una pantalla real).
+ */
+export const SEGMENTO_DE_MODULO = {
+  'datos-compartidos': 'shared-data',
+  terminologia: 'vocabulary',
+  directorio: 'provider-directory',
+  personas: 'people',
+  accesos: 'access-control',
+  buscar: 'search',
+  inicio: 'home',
+};
+
+/** Slug de la maqueta (sin código ni tildes) → segmento de la URL. */
+export const SEGMENTO_DE_SLUG = {
+  // V02 · Datos compartidos
+  'versiones-internas-escanear': 'internal-versions-scan',
+  'versiones-internas-listado': 'internal-versions-list',
+  'archivos-eliminar': 'files-delete',
+  'archivos-formulario': 'files-form',
+  'archivos-listado': 'files-list',
+  'archivos-obtener-enlace': 'files-get-link',
+  'archivos-subir': 'files-upload',
+  'contenido-detalle': 'content-detail',
+  'vinculos-formulario': 'links-form',
+  'vinculos-listado': 'links-list',
+  'versiones-formulario': 'versions-form',
+  'versiones-listado': 'versions-list',
+  'puntos-de-contacto-formulario': 'contact-points-form',
+  'puntos-de-contacto-listado': 'contact-points-list',
+  'puntos-de-contacto-verificar': 'contact-points-verify',
+  'direcciones-formulario': 'addresses-form',
+  'direcciones-listado': 'addresses-list',
+  'identificadores-formulario': 'identifiers-form',
+  'identificadores-listado': 'identifiers-list',
+  'derivados-formulario': 'derivatives-form',
+  'derivados-listado': 'derivatives-list',
+
+  // V03 · Terminología
+  'versiones-importar': 'versions-import',
+  'versiones-publicar': 'versions-publish',
+  'expansion-de-conjunto-de-valores-formulario': 'value-set-expansion-form',
+  'expansion-de-conjunto-de-valores-detalle': 'value-set-expansion-detail',
+  'sistemas-de-codigos-formulario': 'code-systems-form',
+  'sistemas-de-codigos-listado': 'code-systems-list',
+  'versiones-de-sistema-formulario': 'system-versions-form',
+  'versiones-de-sistema-listado': 'system-versions-list',
+  'deprecacion-de-concepto-formulario': 'concept-deprecation-form',
+  'designaciones-formulario': 'designations-form',
+  'designaciones-listado': 'designations-list',
+  'propiedades-formulario': 'properties-form',
+  'propiedades-listado': 'properties-list',
+  'relaciones-formulario': 'relationships-form',
+  'relaciones-listado': 'relationships-list',
+  'politicas-de-catalogo-formulario': 'catalog-policies-form',
+  'politicas-de-catalogo-listado': 'catalog-policies-list',
+  'conjuntos-de-valor-formulario': 'value-sets-form',
+  'conjuntos-de-valor-listado': 'value-sets-list',
+  'consulta-de-concepto-listado': 'concept-lookup-list',
+  'traduccion-entre-catalogos-formulario': 'catalog-translation-form',
+  'conceptos-listado': 'concepts-list',
+
+  // V04 · Organizaciones
+  'organizaciones-listado': 'organizations-list',
+  'organizaciones-verificar': 'organizations-verify',
+  'organizaciones-formulario': 'organizations-form',
+  'organizaciones-suspender': 'organizations-suspend',
+  'organizaciones-hijas-formulario': 'child-organizations-form',
+  'membresias-dar-de-baja': 'memberships-deactivate',
+  'membresias-formulario': 'memberships-form',
+  'membresias-listado': 'memberships-list',
+  'asignaciones-de-sucursal-formulario': 'branch-assignments-form',
+  'roles-formulario': 'roles-form',
+  'transferencias-formulario': 'transfers-form',
+  'sucursales-formulario': 'branches-form',
+  'sucursales-listado': 'branches-list',
+
+  // V05 · Personas
+  'pacientes-formulario': 'patients-form',
+  'pacientes-fusionar': 'patients-merge',
+  'pacientes-listado': 'patients-list',
+  'pacientes-revertir': 'patients-revert',
+  'vinculos-de-identidad-formulario': 'identity-links-form',
+  'vinculos-de-identidad-listado': 'identity-links-list',
+  'apoderados-de-portal-formulario': 'portal-proxies-form',
+  'apoderados-de-portal-listado': 'portal-proxies-list',
+  'personas-relacionadas-formulario': 'related-persons-form',
+  'personas-relacionadas-listado': 'related-persons-list',
+  'credenciales-listado': 'credentials-list',
+  'credenciales-verificar': 'credentials-verify',
+  'personas-listado': 'persons-list',
+  'personas-registrar-defuncion': 'persons-record-death',
+  'vinculos-de-cuenta-formulario': 'account-links-form',
+  'vinculos-de-cuenta-listado': 'account-links-list',
+  'profesionales-formulario': 'practitioners-form',
+  'profesionales-listado': 'practitioners-list',
+  'autorizaciones-de-jurisdiccion-formulario': 'jurisdiction-authorizations-form',
+  'autorizaciones-de-jurisdiccion-listado': 'jurisdiction-authorizations-list',
+  'especialidades-formulario': 'specialties-form',
+  'especialidades-listado': 'specialties-list',
+  'resumen-propio-listado': 'own-summary-list',
+
+  // V06 · Identidad y accesos
+  'acceso-de-emergencia-formulario': 'emergency-access-form',
+  'accesos-clinicos-del-paciente-formulario': 'patient-clinical-access-form',
+  'accesos-clinicos-del-paciente-listado': 'patient-clinical-access-list',
+  'relaciones-de-cuidado-formulario': 'care-relationships-form',
+  'relaciones-de-cuidado-listado': 'care-relationships-list',
+  'relaciones-de-cuidado-revocar': 'care-relationships-revoke',
+  'representaciones-legales-formulario': 'legal-representations-form',
+  'representaciones-legales-listado': 'legal-representations-list',
+  'representaciones-legales-revocar': 'legal-representations-revoke',
+  'accesos-clinicos-listado': 'clinical-access-list',
+  'accesos-clinicos-revocar': 'clinical-access-revoke',
+  'decisiones-evaluar': 'decisions-evaluate',
+  'cache-invalidar': 'cache-invalidate',
+  'categorias-de-permiso-formulario': 'permission-categories-form',
+  'categorias-de-permiso-listado': 'permission-categories-list',
+  'permisos-formulario': 'permissions-form',
+  'permisos-listado': 'permissions-list',
+  'alcance-de-recurso-formulario': 'resource-scope-form',
+  'alcance-de-recurso-listado': 'resource-scope-list',
+  'roles-listado': 'roles-list',
+  'permisos-de-campo-formulario': 'field-permissions-form',
+  'permisos-de-campo-listado': 'field-permissions-list',
+  'permisos-del-rol-formulario': 'role-permissions-form',
+  'permisos-del-rol-listado': 'role-permissions-list',
+  'politicas-de-acceso-formulario': 'access-policies-form',
+  'politicas-de-acceso-listado': 'access-policies-list',
+  'concesiones-de-permiso-formulario': 'permission-grants-form',
+  'concesiones-de-permiso-listado': 'permission-grants-list',
+  'asignaciones-de-rol-formulario': 'role-assignments-form',
+  'asignaciones-de-rol-listado': 'role-assignments-list',
+
+  // V65 · Buscador
+  'buscador-listado': 'finder-list',
+  'medicamentos-listado': 'medications-list',
+  'hospitales-listado': 'hospitals-list',
+  'laboratorios-listado': 'laboratories-list',
+  'aseguradoras-listado': 'insurers-list',
+  'perfil-profesional-detalle': 'practitioner-profile-detail',
+  'perfil-organizacion-detalle': 'organization-profile-detail',
+  'perfil-farmacia-detalle': 'pharmacy-profile-detail',
+  'perfil-laboratorio-detalle': 'laboratory-profile-detail',
+  'perfil-aseguradora-detalle': 'insurer-profile-detail',
+  'cercania-detalle': 'nearby-detail',
+  'seguidos-y-guardados-listado': 'followed-and-saved-list',
+  'calificar-la-atencion-formulario': 'rate-care-form',
+};
+
+/** Traduce un valor de la tabla; si falta, el generador se detiene. */
+export function traducir(tabla, clave, que) {
+  const valor = tabla[clave];
+  if (!valor) {
+    throw new Error(
+      `${que} sin traducción: «${clave}». Agregalo a scripts/port-vistas-alovida.rutas.mjs.`,
+    );
+  }
+  return valor;
+}

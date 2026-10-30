@@ -1,26 +1,91 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { DiagnosticOrders } from './diagnostic-orders';
+import type { AnalysisCategory, PatientOrderRow } from './diagnostic-orders.types';
+import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
+import type { ViewState } from '../../../core/view-state/view-state.types';
+
+/** Acceso a lo `protected`, igual que `work-history.spec.ts` (regla: no exponer sólo para testear). */
+interface Interno {
+  readonly onFiltrosCambiaron: (activos: Readonly<Record<string, string>>) => void;
+  readonly limpiarFiltros: () => void;
+  readonly filasFiltradas: () => readonly PatientOrderRow[];
+  readonly filasDeTabla: () => ViewState<readonly PatientOrderRow[]>;
+  readonly accionesDe: (fila: PatientOrderRow) => readonly RowAction[];
+  readonly ejecutarAccion: (codigo: string, fila: PatientOrderRow) => void;
+  readonly tab: () => AnalysisCategory | null;
+  readonly q: () => string;
+}
+
+function api(componente: DiagnosticOrders): Interno {
+  return componente as unknown as Interno;
+}
 
 const PROFILE_ID = '44444444-4444-4444-8444-444444444444';
-const ORDER_ID = '66666666-6666-4666-8666-666666666666';
-const REPORT_ID = '11111111-1111-4111-8111-111111111111';
+const RUTA = '/my-account/diagnostic-orders';
 
-const ORDEN = {
-  id: ORDER_ID,
-  encounterId: '77777777-7777-4777-8777-777777777777',
-  codeConceptId: 'concept-code',
-  categoryConceptId: 'concept-cat',
-  statusConceptId: 'concept-status',
-  priorityConceptId: 'concept-prio',
-  createdAt: '2026-08-14T10:00:00.000Z',
-  hasReleasedResult: false,
-};
+let contador = 0;
+/** Un id con forma de uuid real, para que el chequeo anti-uuid del final valga algo. */
+function id(_prefijo: string): string {
+  contador += 1;
+  const n = String(contador).padStart(12, '0');
+  return `00000000-0000-4000-8000-${n}`;
+}
+
+interface OrdenDeApi {
+  readonly id: string;
+  readonly encounterId?: string;
+  readonly codeConceptId: string;
+  readonly categoryConceptId?: string;
+  /** P40: la categoría textual que la API deriva de `categoryConceptId`. */
+  readonly category?: 'LAB' | 'IMAGING' | 'OTHER';
+  readonly statusConceptId: string;
+  readonly createdAt: string;
+  readonly hasReleasedResult: boolean;
+  readonly reportId?: string;
+  readonly preparationInstructions?: string;
+  readonly insuranceSettlement?: unknown;
+  readonly insuranceSettlementAvailability?: string;
+  readonly performerSelectionConceptId?: string;
+  readonly performerPractitionerProfileId?: string;
+  readonly suggestedPracticeSiteId?: string;
+  readonly suggestedPracticeSiteName?: string | null;
+}
+
+/**
+ * La `category` que la API sirve para cada concepto de categoría de estas
+ * pruebas (P40): laboratorio e imagen se nombran, cualquier otra es `OTHER`.
+ */
+function categoriaDeApi(categoryConceptId: string | undefined): OrdenDeApi['category'] {
+  if (categoryConceptId === undefined) return undefined;
+  if (categoryConceptId === 'cat-lab') return 'LAB';
+  if (categoryConceptId === 'cat-img') return 'IMAGING';
+  return 'OTHER';
+}
+
+function orden(overrides: Partial<OrdenDeApi> = {}): OrdenDeApi {
+  const category = categoriaDeApi(overrides.categoryConceptId);
+  return {
+    id: id('order'),
+    codeConceptId: id('concept-code'),
+    statusConceptId: id('concept-status'),
+    createdAt: '2026-08-14T10:00:00.000Z',
+    hasReleasedResult: false,
+    ...(category === undefined ? {} : { category }),
+    ...overrides,
+  };
+}
+
+/** Un concepto del catálogo, tal como responde `/terminology/concepts`. */
+function concepto(conceptId: string, code: string, display: string) {
+  return { conceptId, code, display };
+}
 
 /** Doble mínimo de la sesión: lo único que la pantalla le pide es el perfil. */
 function authDoble(patientProfileId: string | null) {
@@ -28,21 +93,26 @@ function authDoble(patientProfileId: string | null) {
 }
 
 /**
- * «Mis órdenes» — carril J1, tarea 2.
+ * «Mis órdenes» — C9 (ADR-0015): reescritura completa sobre el diseño
+ * anterior (agrupado por atención). Lo que fijan estas pruebas:
  *
- * Lo que estas pruebas fijan:
+ * 1. El tipo es la `category` que sirve la API (P40); el código del concepto
+ *    sólo separa los procedimientos. Sin categoría, «Otros».
+ * 2. Los conteos de pestaña son consistentes: Todas = suma de las tres.
+ * 3. Buscador y filtros son en cliente, y la URL va y vuelve.
+ * 4. Ninguna acción de fila es sólo un ícono, y ninguna aparece sin su
+ *    condición (resultado liberado / preparación publicada / liquidación).
+ * 5. Ningún uuid llega al DOM.
  *
- * 1. **No hay id de paciente en la petición.** Sin parámetro no hay
- *    comparación que olvidar; el vínculo lo resuelve el servidor.
- * 2. **La preparación se muestra cuando la hay y se calla cuando no.** Un
- *    «no requiere preparación» inventado manda a alguien desayunado a un
- *    estudio en ayunas.
- * 3. **«Ver resultado» sólo aparece si el servidor dijo que hay uno liberado.**
- *    La pantalla no recalcula esa regla.
- * 4. **Sin perfil de paciente no se pide nada**, y se explica por qué.
+ * Se monta con `RouterTestingHarness` (no `TestBed.createComponent` suelto):
+ * la sincronización con la URL usa `ActivatedRoute`/`Router.navigate([],
+ * {relativeTo})`, que sólo queda bien resuelto si el componente se alcanza
+ * por una navegación real — con `createComponent` a secas, `relativeTo`
+ * apunta a un `ActivatedRoute` no adjunto a ningún outlet y la escritura a la
+ * URL queda muda.
  */
 describe('DiagnosticOrders', () => {
-  let fixture: ComponentFixture<DiagnosticOrders>;
+  let harness: RouterTestingHarness;
   let http: HttpTestingController;
 
   function configurar(perfil: string | null): void {
@@ -51,196 +121,451 @@ describe('DiagnosticOrders', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([]),
+        provideRouter([{ path: 'my-account/diagnostic-orders', component: DiagnosticOrders }]),
         { provide: AuthService, useValue: authDoble(perfil) },
       ],
     });
     http = TestBed.inject(HttpTestingController);
   }
 
-  function mount(): void {
-    fixture = TestBed.createComponent(DiagnosticOrders);
-    fixture.detectChanges();
+  async function mount(url: string = RUTA): Promise<DiagnosticOrders> {
+    harness = await RouterTestingHarness.create();
+    const componente = await harness.navigateByUrl(url, DiagnosticOrders);
+    harness.detectChanges();
+    return componente;
   }
 
-  /** Responde la lectura de órdenes y descarta la de terminología. */
-  function responderOrdenes(items: readonly unknown[]): void {
+  function texto(): string {
+    return harness.routeNativeElement?.textContent ?? '';
+  }
+
+  /** Responde la lectura de órdenes y, si hace falta, el catálogo de conceptos. */
+  function responder(items: readonly OrdenDeApi[], conceptos: readonly ReturnType<typeof concepto>[] = []): void {
     http
       .expectOne((request) => request.url === '/diagnostic-results/me/orders')
       .flush({ patientProfileId: PROFILE_ID, items, limit: 50, truncated: false });
-    for (const pedido of http.match((request) => request.url.startsWith('/terminology'))) {
-      pedido.flush({ items: [] });
+    if (items.length > 0) {
+      http
+        .expectOne((request) => request.url.startsWith('/terminology/concepts'))
+        .flush({ items: conceptos });
     }
-    fixture.detectChanges();
+    harness.detectChanges();
+  }
+
+  /**
+   * Los botones visibles de las pestañas los dibuja `Tabs` (`role="tab"`), no
+   * `Tab`: el `data-testid` puesto en `<app-tab>` cae en el panel, no en el
+   * botón. Sin forma de pasarle un id al botón desde afuera (pieza de la
+   * casa, no se toca — ver `PLAN.md`), se ubica por rol + texto.
+   */
+  function botonDePestana(texto_: string): HTMLElement | null {
+    return [...(harness.routeNativeElement?.querySelectorAll('[role="tab"]') ?? [])].find((el) =>
+      el.textContent?.includes(texto_),
+    ) as HTMLElement | null;
   }
 
   afterEach(() => http.verify());
 
-  it('no pregunta por nadie más: no hay id de paciente en la petición', () => {
+  it('no pregunta por nadie más: no hay id de paciente en la petición', async () => {
     configurar(PROFILE_ID);
-    mount();
+    await mount();
 
     const pedido = http.expectOne((request) => request.url === '/diagnostic-results/me/orders');
     expect(pedido.request.url).not.toContain(PROFILE_ID);
     pedido.flush({ patientProfileId: PROFILE_ID, items: [], limit: 50, truncated: false });
   });
 
-  it('no lee nada para una cuenta sin perfil de paciente', () => {
+  it('no lee nada para una cuenta sin perfil de paciente', async () => {
     configurar(null);
-    mount();
+    await mount();
 
     http.expectNone(() => true);
-    expect(fixture.nativeElement.textContent).toContain('Esta sección es para pacientes');
+    expect(texto()).toContain('Esta sección es para pacientes');
   });
 
-  it('sin órdenes explica de dónde sale una, en vez de dejar la pantalla en blanco', () => {
+  it('sin órdenes explica de dónde sale una', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([]);
+    await mount();
+    responder([]);
 
-    expect(fixture.nativeElement.textContent).toContain('te pida un estudio en una consulta');
+    expect(texto()).toContain('Cuando un médico le pida un estudio');
   });
 
-  it('muestra la preparación cuando el catálogo la trae', () => {
-    configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([{ ...ORDEN, preparationInstructions: 'Ayuno de 8 horas.' }]);
+  /* ---- C9.H2.M1: derivación del tipo, con y sin category ------------------- */
 
-    const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Cómo prepararte');
-    expect(texto).toContain('Ayuno de 8 horas.');
+  it('con categoría SRQ-LAB, la orden entra a Laboratorio', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    const o = orden({ categoryConceptId: 'cat-lab' });
+    responder([o], [concepto('cat-lab', 'SRQ-LAB', 'Laboratorio')]);
+
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Laboratorio');
   });
 
-  it('sin preparación publicada no inventa un texto tranquilizador', () => {
+  it('P40: la pestaña sale de la category que manda la API, no del código del concepto', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([ORDEN]);
-
-    const texto: string = fixture.nativeElement.textContent;
-    expect(texto).not.toContain('Cómo prepararte');
-    expect(texto).not.toContain('No requiere preparación');
-  });
-
-  it('no ofrece «ver resultado» sobre una orden sin resultado liberado', () => {
-    configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([ORDEN]);
-
-    expect(fixture.nativeElement.textContent).not.toContain('Ver resultado');
-  });
-
-  it('enlaza el resultado cuando el servidor dice que está liberado', () => {
-    configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([{ ...ORDEN, hasReleasedResult: true, reportId: REPORT_ID }]);
-
-    const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Ver resultado');
-    expect(texto).toContain('Con resultado');
-  });
-
-  it('refactor UX: «Reservar hora» lleva a Mis citas en modo laboratorio y dice de qué estudio', () => {
-    configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([{ ...ORDEN, hasReleasedResult: true, reportId: REPORT_ID }]);
-
-    const raiz = fixture.nativeElement as HTMLElement;
-    const reservar = raiz.querySelector('[data-testid="orden-reservar"]') as HTMLAnchorElement;
-    const estudio = raiz.querySelector('.ordenes__titulo')?.textContent?.trim() ?? '';
-    // Antes: botón deshabilitado con «Próximamente», aunque la reserva existía.
-    expect(reservar.tagName).toBe('A');
-    expect(reservar.getAttribute('aria-disabled')).not.toBe('true');
-    expect(reservar.getAttribute('href')).toBe('/my-account/appointments?resource=lab');
-    expect(reservar.getAttribute('aria-label')).toBe(`Reservar hora en un laboratorio: ${estudio}`);
-    expect(raiz.textContent).not.toContain('Próximamente');
-    const verResultado = [...raiz.querySelectorAll('a')].find((a) =>
-      a.textContent?.includes('Ver resultado'),
+    await mount();
+    // Un código que la heurística vieja no conocía: igual es laboratorio,
+    // porque lo dice el servidor.
+    responder(
+      [orden({ categoryConceptId: 'cat-x', category: 'LAB' })],
+      [concepto('cat-x', 'CODIGO-NUEVO', 'Análisis de laboratorio')],
     );
-    expect(verResultado?.getAttribute('aria-label')).toBe(`Ver resultado: ${estudio}`);
+
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Laboratorio');
   });
 
-  it('agrupa por atención: tres estudios de una consulta son un pedido, no tres', () => {
+  it('P40: un código de laboratorio sin category no se adivina: cae en Otros', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([
-      { ...ORDEN, id: 'o-1' },
-      { ...ORDEN, id: 'o-2' },
-      { ...ORDEN, id: 'o-3' },
-    ]);
+    await mount();
+    const o = orden({ categoryConceptId: 'cat-lab' });
+    const { category: _sinCategoria, ...sinCategoria } = o;
+    responder([sinCategoria], [concepto('cat-lab', 'SRQ-LAB', 'Laboratorio')]);
 
-    const grupos = fixture.nativeElement.querySelectorAll('.ordenes__grupo');
-    const filas = fixture.nativeElement.querySelectorAll('.ordenes__item');
-    expect(grupos).toHaveLength(1);
-    expect(filas).toHaveLength(3);
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Otros');
   });
 
-  it('separa las atenciones distintas', () => {
+  it('sin categoryConceptId (C2 no corrió), la orden cae en Otros', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([
-      { ...ORDEN, id: 'o-1', encounterId: 'enc-a' },
-      { ...ORDEN, id: 'o-2', encounterId: 'enc-b' },
-    ]);
+    await mount();
+    responder([orden()]);
 
-    expect(fixture.nativeElement.querySelectorAll('.ordenes__grupo')).toHaveLength(2);
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Otros');
   });
 
-  it('el encabezado del grupo es la fecha, no el identificador de la atención', () => {
+  it('los conteos de pestaña son consistentes: Todas = Laboratorio + Imagenología + Otros', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([ORDEN]);
-
-    const titulo: string =
-      fixture.nativeElement.querySelector('.ordenes__grupo-titulo').textContent;
-    expect(titulo).toContain('Atención del');
-    expect(titulo).not.toContain(ORDEN.encounterId);
-  });
-
-  it('una orden pedida fuera de una consulta se agrupa aparte y lo dice', () => {
-    configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([{ ...ORDEN, encounterId: undefined }]);
-
-    expect(fixture.nativeElement.querySelector('.ordenes__grupo-titulo').textContent).toContain(
-      'fuera de una consulta',
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+      ],
+      [concepto('cat-lab', 'SRQ-LAB', 'Laboratorio'), concepto('cat-img', 'SRQ-IMAGING', 'Imagenología')],
     );
+
+    expect(botonDePestana('Todas')?.textContent).toContain('4');
+    expect(botonDePestana('Laboratorio')?.textContent).toContain('2');
+    expect(botonDePestana('Imagenología')?.textContent).toContain('1');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
   });
 
-  it('el estado vacío ofrece su salida, no sólo el texto (contrato S3)', () => {
-    configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([]);
+  /* ---- C9.H2.M2: filtrado y URL --------------------------------------------- */
 
-    const salida = fixture.nativeElement.querySelector('a[app-link]');
-    expect(salida).not.toBeNull();
-    expect(salida.textContent).toContain('Ver mis turnos');
+  it('el buscador reduce a las filas que contienen el término, sin distinguir mayúsculas ni acentos', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder(
+      [orden({ codeConceptId: 'c-hemo' }), orden({ codeConceptId: 'c-rx' })],
+      [concepto('c-hemo', 'STUDY-HEMO', 'Hemograma'), concepto('c-rx', 'STUDY-RX', 'Radiografía')],
+    );
+
+    api(componente).onFiltrosCambiaron({ q: 'HEMO' });
+    harness.detectChanges();
+
+    expect(api(componente).filasFiltradas().length).toBe(1);
+    expect(api(componente).filasFiltradas()[0].studyLabel).toBe('Hemograma');
   });
 
-  it('reservar es enfocable y el lector lo anuncia: nunca un control apagado en nativo', () => {
-    // Invariante original (carril J1): el camino a reservar no se esconde ni
-    // deja de ser enfocable. Mientras la reserva no existía se apagaba con
-    // aria-disabled; desde el refactor UX es un enlace activo (ver el caso
-    // «Reservar hora lleva a Mis citas en modo laboratorio»).
+  it('lo que la tabla pinta refleja el buscador, no sólo el resumen (regresión: quedaban atados a estado() sin filtrar)', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([ORDEN]);
+    const componente = await mount();
+    responder(
+      [orden({ codeConceptId: 'c-hemo' }), orden({ codeConceptId: 'c-rx' })],
+      [concepto('c-hemo', 'STUDY-HEMO', 'Hemograma'), concepto('c-rx', 'STUDY-RX', 'Radiografía')],
+    );
 
-    const reservar = fixture.nativeElement.querySelector(
-      '[data-testid="orden-reservar"]',
-    ) as HTMLAnchorElement;
-    expect(reservar.hasAttribute('href')).toBe(true);
-    expect(reservar.hasAttribute('disabled')).toBe(false);
-    expect(reservar.tabIndex).not.toBe(-1);
+    api(componente).onFiltrosCambiaron({ q: 'HEMO' });
+    harness.detectChanges();
+
+    const filasDeTabla = api(componente).filasDeTabla();
+    expect(filasDeTabla.status).toBe('ready');
+    if (filasDeTabla.status === 'ready') {
+      expect(filasDeTabla.data.length).toBe(1);
+      expect(filasDeTabla.data[0].studyLabel).toBe('Hemograma');
+    }
   });
 
-  it('no muestra ningún uuid en pantalla', () => {
+  it('el filtro «Con resultado» deja sólo las que enlazan a un resultado', async () => {
     configurar(PROFILE_ID);
-    mount();
-    responderOrdenes([{ ...ORDEN, hasReleasedResult: true, reportId: REPORT_ID }]);
+    const componente = await mount();
+    responder([orden({ hasReleasedResult: true }), orden({ hasReleasedResult: false })]);
 
-    const texto: string = fixture.nativeElement.textContent;
-    expect(texto).not.toContain(ORDER_ID);
-    expect(texto).not.toContain(REPORT_ID);
-    expect(texto).not.toContain('concept-code');
+    api(componente).onFiltrosCambiaron({ resultado: 'con' });
+    harness.detectChanges();
+
+    expect(api(componente).filasFiltradas().every((f) => f.hasResult)).toBe(true);
+    expect(api(componente).filasFiltradas().length).toBe(1);
+  });
+
+  it('«Limpiar filtros» vuelve al total', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden(), orden()]);
+
+    api(componente).onFiltrosCambiaron({ q: 'algo-que-no-existe' });
+    harness.detectChanges();
+    expect(api(componente).filasFiltradas().length).toBe(0);
+
+    api(componente).limpiarFiltros();
+    harness.detectChanges();
+    expect(api(componente).filasFiltradas().length).toBe(2);
+  });
+
+  it('cambiar un filtro actualiza la URL', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden()]);
+
+    api(componente).onFiltrosCambiaron({ q: 'hemograma' });
+    harness.detectChanges();
+    // El `effect()` dispara `Router.navigate()`, que es async: hay que
+    // esperar la promesa antes de leer `Router.url`.
+    await harness.fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toContain('q=hemograma');
+  });
+
+  it('entrar por una URL con filtros restaura la vista', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount(`${RUTA}?tab=LAB&q=hemo`);
+    responder([orden({ categoryConceptId: 'cat-lab' })], [concepto('cat-lab', 'SRQ-LAB', 'Laboratorio')]);
+
+    expect(api(componente).tab()).toBe('LAB');
+    expect(api(componente).q()).toBe('hemo');
+  });
+
+  /* ---- C9.H3.M2: acciones de fila ------------------------------------------- */
+
+  it('«Ver resultado» sólo aparece si la orden tiene un resultado liberado', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    const conResultado = orden({ hasReleasedResult: true, reportId: id('report') });
+    const sinResultado = orden({ hasReleasedResult: false });
+    responder([conResultado, sinResultado]);
+
+    const filas = api(componente).filasFiltradas();
+    const accionesCon = api(componente).accionesDe(filas[0]).map((a) => a.code);
+    const accionesSin = api(componente).accionesDe(filas[1]).map((a) => a.code);
+    expect(accionesCon).toContain('ver-resultado');
+    expect(accionesSin).not.toContain('ver-resultado');
+  });
+
+  it('«Ver preparación» sólo aparece si el catálogo publicó una', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden({ preparationInstructions: 'Ayuno de 8 horas' }), orden()]);
+
+    const filas = api(componente).filasFiltradas();
+    expect(api(componente).accionesDe(filas[0]).map((a) => a.code)).toContain('ver-preparacion');
+    expect(api(componente).accionesDe(filas[1]).map((a) => a.code)).not.toContain('ver-preparacion');
+  });
+
+  it('todas las acciones de fila llevan texto, ninguna es sólo un ícono', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden({ hasReleasedResult: true, reportId: id('report'), preparationInstructions: 'Ayuno' })]);
+
+    const acciones = api(componente).accionesDe(api(componente).filasFiltradas()[0]);
+    for (const accion of acciones) {
+      expect(accion.label.trim().length).toBeGreaterThan(0);
+    }
+  });
+
+  it('«Ver preparación» abre el diálogo con el texto de la orden', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden({ preparationInstructions: 'Ayuno de 8 horas' })]);
+
+    api(componente).ejecutarAccion('ver-preparacion', api(componente).filasFiltradas()[0]);
+    harness.detectChanges();
+
+    expect(texto()).toContain('Ayuno de 8 horas');
+  });
+
+  /* ---- CM-10: «Procedimientos» y el ejecutor visto por el paciente ----------- */
+
+  const CATEGORIAS = [
+    concepto('cat-lab', 'SRQ-LAB', 'Laboratorio'),
+    concepto('cat-img', 'SRQ-IMAGING', 'Imagenología'),
+    concepto('cat-proc', 'SRQ-PROCEDURE', 'Procedimiento'),
+  ];
+
+  it('aparece la pestaña «Procedimientos» con su conteo y la orden no cae en Otros', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-proc' }),
+        orden({ categoryConceptId: 'cat-proc' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+      ],
+      CATEGORIAS,
+    );
+
+    expect(botonDePestana('Procedimientos')?.textContent).toContain('2');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
+    expect(botonDePestana('Todas')?.textContent).toContain('5');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="my-orders-tab-PROCEDURE"]')).not.toBeNull();
+  });
+
+  it('Laboratorio, Imagenología y Otros dan lo mismo con o sin órdenes de procedimiento', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+        orden({ categoryConceptId: 'cat-proc' }),
+      ],
+      CATEGORIAS,
+    );
+
+    expect(botonDePestana('Laboratorio')?.textContent).toContain('2');
+    expect(botonDePestana('Imagenología')?.textContent).toContain('1');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
+  });
+
+  it('entrar por ?tab=PROCEDURE deja sólo las órdenes de procedimiento', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount(`${RUTA}?tab=PROCEDURE`);
+    responder([orden({ categoryConceptId: 'cat-proc' }), orden({ categoryConceptId: 'cat-lab' })], CATEGORIAS);
+
+    expect(api(componente).tab()).toBe('PROCEDURE');
+    expect(api(componente).filasFiltradas().map((f) => f.type)).toEqual(['PROCEDURE']);
+  });
+
+  it('un procedimiento no ofrece cotizar ni reservar en un laboratorio', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden({ categoryConceptId: 'cat-proc' })], CATEGORIAS);
+
+    const fila = api(componente).filasFiltradas()[0];
+    const codigos = api(componente).accionesDe(fila).map((a) => a.code);
+    expect(codigos).not.toContain('reservar');
+    expect(codigos).not.toContain('cotizar');
+  });
+
+  it('ORGANIZATION: dice que su médico sugirió un centro, nombra la sede y avisa que es una recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-org',
+          suggestedPracticeSiteId: id('site'),
+          suggestedPracticeSiteName: 'Centro Médico Sur — Sede Central',
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-org', 'SR_PERF_ORGANIZATION', 'En un centro')],
+    );
+
+    expect(texto()).toContain('Su médico sugirió un centro');
+    expect(texto()).toContain('Centro Médico Sur — Sede Central');
+    expect(texto()).toContain('Es una recomendación: puede elegir otro centro.');
+  });
+
+  it('SELF: dice que su médico se ofreció a hacerlo y avisa que es una recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: id('practitioner'),
+          suggestedPracticeSiteId: id('site'),
+          suggestedPracticeSiteName: 'Centro Médico Norte — Sede Central',
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-self', 'clinical:SR_PERF_SELF', 'Lo hace él')],
+    );
+
+    expect(texto()).toContain('Su médico se ofreció a hacerlo');
+    expect(texto()).toContain('Es una recomendación: puede elegir otro centro.');
+  });
+
+  it('PATIENT_CHOICE: dice que puede elegir dónde hacérselo, sin recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [orden({ categoryConceptId: 'cat-proc', performerSelectionConceptId: 'perf-pc' })],
+      [...CATEGORIAS, concepto('perf-pc', 'SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente')],
+    );
+
+    expect(texto()).toContain('Puede elegir dónde hacérselo');
+    expect(texto()).not.toContain('Es una recomendación');
+  });
+
+  it('sin performerSelectionConceptId no pinta ninguna línea de ejecutor', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder([orden({ categoryConceptId: 'cat-proc' })], CATEGORIAS);
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="order-performer-summary"]')).toBeNull();
+  });
+
+  it('un modo con un código desconocido no pinta nada: no se inventa un modo', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [orden({ categoryConceptId: 'cat-proc', performerSelectionConceptId: 'perf-x' })],
+      [...CATEGORIAS, concepto('perf-x', 'SR_PERF_OTRO', 'Otro')],
+    );
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="order-performer-summary"]')).toBeNull();
+  });
+
+  it('la sede sin nombre no se pinta, y nunca se muestra el uuid de la sede ni del médico', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    const sede = id('site');
+    const practitioner = id('practitioner');
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: practitioner,
+          suggestedPracticeSiteId: sede,
+          suggestedPracticeSiteName: null,
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-self', 'SR_PERF_SELF', 'Lo hace él')],
+    );
+
+    expect(texto()).toContain('Su médico se ofreció a hacerlo');
+    expect(texto()).not.toContain('Sede sugerida');
+    expect(texto()).not.toContain(sede);
+    expect(texto()).not.toContain(practitioner);
+  });
+
+  /* ---- Sin uuids en pantalla -------------------------------------------------- */
+
+  it('no muestra ningún uuid en pantalla', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [orden({ categoryConceptId: 'cat-lab', codeConceptId: 'c-hemo', statusConceptId: 'st-1' })],
+      [
+        concepto('cat-lab', 'SRQ-LAB', 'Laboratorio'),
+        concepto('c-hemo', 'STUDY-HEMO', 'Hemograma'),
+        concepto('st-1', 'ST-COMPLETED', 'Completado'),
+      ],
+    );
+
+    const UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+    expect(UUID.test(texto())).toBe(false);
   });
 });

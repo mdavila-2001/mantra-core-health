@@ -1,0 +1,9 @@
+         ╵             [32m~~~~~~~~[0m
+    src/app/features/groups/groups.ts:59:4:
+[37m      59 │     [32mLink[37m,
+         ╵     [32m~~~~[0m
+    src/app/features/symptom-check/symptom-check.ts:142:4:
+[37m      142 │     [32mCard[37m,
+          ╵     [32m~~~~[0m
+Output location: /tmp/claude-0/-home-user/1e928d00-f826-5f5b-8b9f-a2fd61762171/scratchpad/dist-check
+build-exit=0 (ng build, configuración de producción por omisión; el pre-push del repo lo repitió y pasó)

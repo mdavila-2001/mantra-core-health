@@ -1,0 +1,147 @@
+<app-page-header
+  title="Comparar dos términos"
+  subtitle="Vea qué hallazgos comparten dos enfermedades, cuáles las distinguen y qué estudios ayudan a diferenciarlas."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<main class="comparar">
+  <app-card variant="outlined" padding="md">
+    <div class="comparar__buscadores">
+      <app-form-field label="Primer término" hint="Por ejemplo, la enfermedad que se sospecha.">
+        <app-reference-combobox
+          label="Primer término"
+          placeholder="Por ejemplo: neumonía"
+          emptyMessage="No encontramos términos con ese nombre"
+          [options]="searchA.options()"
+          [loading]="searchA.searching()"
+          [selected]="selectedA()"
+          (searched)="searchA.search($event)"
+          (selectionChange)="choose('a', $event)"
+        />
+      </app-form-field>
+      <app-form-field label="Segundo término" hint="La enfermedad con la que se la quiere diferenciar.">
+        <app-reference-combobox
+          label="Segundo término"
+          placeholder="Por ejemplo: bronquitis"
+          emptyMessage="No encontramos términos con ese nombre"
+          [options]="searchB.options()"
+          [loading]="searchB.searching()"
+          [selected]="selectedB()"
+          (searched)="searchB.search($event)"
+          (selectionChange)="choose('b', $event)"
+        />
+      </app-form-field>
+    </div>
+
+    @if (missingTerm()) {
+      <app-empty-state
+        title="Elija dos términos para compararlos"
+        description="La comparación muestra los hallazgos que comparten, los que distinguen a cada uno y los estudios que sólo pide uno de los dos."
+      />
+    } @else if (sameTerm()) {
+      <app-empty-state
+        title="Elija dos términos distintos"
+        description="Para comparar hace falta un segundo término diferente del primero."
+      />
+    } @else {
+      <app-view-state-host [state]="pair()" (retry)="reload()">
+        @if (data(); as pair) {
+          @if (comparison(); as comparison) {
+            <div class="comparar__terminos">
+              @for (side of [pair.a, pair.b]; track side.focus.conceptId) {
+                <section class="comparar__termino" [attr.aria-label]="side.focus.display">
+                  @if (side.focus.category) {
+                    <p class="comparar__categoria">{{ side.focus.category.name }}</p>
+                  }
+                  <p class="comparar__nombre">{{ side.focus.display }}</p>
+                  <p class="comparar__enlaces">
+                    <a [routerLink]="['/glossary', side.focus.conceptId]">Abrir la ficha</a>
+                    <a [routerLink]="['/glossary/network']" [queryParams]="{ focus: side.focus.conceptId }">Ver su mapa</a>
+                  </p>
+                </section>
+              }
+            </div>
+
+            @if (comparison.truncated) {
+              <p class="comparar__aviso" role="note">
+                Alguno de los dos términos tiene más de {{ perGroupLimit }} relaciones de un mismo tipo. Se compararon
+                las primeras; puede haber coincidencias que no aparezcan aquí.
+              </p>
+            }
+
+            <section class="comparar__bloque" aria-labelledby="comparar-compartidos">
+              <h2 class="comparar__titulo" id="comparar-compartidos">
+                Hallazgos en común
+                <span class="comparar__total">{{ comparison.findings.shared.length }}</span>
+              </h2>
+              @if (comparison.findings.shared.length === 0) {
+                <p class="comparar__vacio">No comparten síntomas ni criterios diagnósticos registrados.</p>
+              } @else {
+                <ul class="comparar__compartidos">
+                  @for (item of comparison.findings.shared; track item.conceptId) {
+                    <li class="comparar__compartido">
+                      <a class="comparar__compartido-nombre" [routerLink]="['/glossary', item.conceptId]">{{ item.display }}</a>
+                      <dl class="comparar__lados">
+                        <div class="comparar__lado">
+                          <dt>En {{ pair.a.focus.display }}</dt>
+                          <dd>
+                            <app-relation-evidence [neighbor]="item.inA" />
+                            @if (hasNoEvidence(item.inA)) {
+                              <span class="comparar__sin-evidencia">Sin datos de evidencia</span>
+                            }
+                          </dd>
+                        </div>
+                        <div class="comparar__lado">
+                          <dt>En {{ pair.b.focus.display }}</dt>
+                          <dd>
+                            <app-relation-evidence [neighbor]="item.inB" />
+                            @if (hasNoEvidence(item.inB)) {
+                              <span class="comparar__sin-evidencia">Sin datos de evidencia</span>
+                            }
+                          </dd>
+                        </div>
+                      </dl>
+                    </li>
+                  }
+                </ul>
+              }
+            </section>
+
+            <app-relation-groups
+              class="comparar__bloque"
+              heading="Hallazgos que los distinguen"
+              headingId="comparar-hallazgos"
+              [headingLevel]="2"
+              tone="findings"
+              [columns]="findingColumns()"
+              emptyColumnText="Ningún hallazgo propio registrado."
+            />
+
+            <div class="comparar__bloque">
+              <app-relation-groups
+                heading="Estudios que los diferencian"
+                headingId="comparar-estudios"
+                [headingLevel]="2"
+                tone="next"
+                [columns]="studyColumns()"
+                emptyColumnText="Ningún estudio propio registrado."
+              />
+              <p class="comparar__vacio">
+                @if (comparison.studies.shared.length === 0) {
+                  No hay estudios que pidan los dos.
+                } @else {
+                  Estudios que piden los dos, y por eso no los diferencian: {{ sharedNames(comparison.studies) }}.
+                }
+              </p>
+            </div>
+          }
+        }
+      </app-view-state-host>
+    }
+
+    <p class="comparar__aviso">
+      La comparación refleja sólo las relaciones publicadas en los catálogos. Orienta la lectura,
+      pero no reemplaza el juicio clínico ni establece un diagnóstico.
+    </p>
+  </app-card>
+</main>

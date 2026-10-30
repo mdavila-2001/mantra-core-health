@@ -60,7 +60,8 @@
       "etiqueta": "Directorio de médicos",
       "grupo": "General",
       "roles": [
-        "PATIENT"
+        "PATIENT",
+        "PRACTITIONER"
       ],
       "rolesExclusivos": true,
       "componente": "PractitionersDirectory",
@@ -72,28 +73,35 @@
       "parametrizada": false
     },
     {
-      "ruta": "/nearby-places",
-      "etiqueta": "Lugares cercanos",
+      "ruta": "/psychological-help",
+      "etiqueta": "Ayuda psicológica",
       "grupo": "General",
       "roles": [
         "PATIENT"
       ],
-      "rolesExclusivos": false,
-      "componente": "NearbyPlaces",
-      "apis": [
-        "ClinicalClient",
-        "ProfilesClient",
-        "PublicDirectoryClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada",
+      "rolesExclusivos": true,
+      "componente": "PsychologicalHelp",
+      "apis": [],
+      "estado": "presentacional",
       "parametrizada": false
     },
     {
       "ruta": "/groups",
       "etiqueta": "Grupos y foros",
       "grupo": "General",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "rolesExclusivos": false,
       "componente": "Groups",
       "apis": [
@@ -123,6 +131,7 @@
       "rolesExclusivos": false,
       "componente": "ClinicsDirectory",
       "apis": [
+        "InsuranceClient",
         "PublicCatalogClient",
         "PublicDirectoryClient"
       ],
@@ -137,6 +146,22 @@
       "rolesExclusivos": false,
       "componente": "PharmaciesDirectory",
       "apis": [
+        "InsuranceClient",
+        "PublicCatalogClient",
+        "PublicDirectoryClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/insurers-directory",
+      "etiqueta": "Directorio de aseguradoras",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsurersDirectory",
+      "apis": [
+        "InsuranceClient",
         "PublicCatalogClient",
         "PublicDirectoryClient"
       ],
@@ -155,11 +180,13 @@
       "rolesExclusivos": false,
       "componente": "Agenda",
       "apis": [
+        "ClinicalClient",
+        "PharmaLabClient",
         "ProfilesClient",
         "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -175,38 +202,26 @@
       "apis": [
         "AccountingClient",
         "AuthzClient",
+        "BillingSimulatedClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
         "ChartNotesClient",
         "ChartTemplatesClient",
         "ClinicalClient",
+        "ConsentClient",
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
-        "PrescriptionFavoritesClient",
+        "MedicalCentersClient",
+        "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
         "QuotationsClient",
-        "SystemContextClient",
-        "TerminologyClient"
-      ],
-      "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/progress-notes",
-      "etiqueta": "Evoluciones",
-      "grupo": "Atención",
-      "roles": [
-        "CLINICIAN",
-        "PRACTITIONER"
-      ],
-      "rolesExclusivos": false,
-      "componente": "ProgressNotes",
-      "apis": [
-        "ClinicalClient",
+        "ReferralsClient",
         "SchedulingClient",
-        "TerminologyClient"
+        "SystemContextClient",
+        "TerminologyClient",
+        "DiagnosisIaClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -283,10 +298,23 @@
       "ruta": "/glossary",
       "etiqueta": "Glosario",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "rolesExclusivos": false,
       "componente": "Glossary",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -296,12 +324,16 @@
       "ruta": "/form-builder",
       "etiqueta": "Formularios",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "rolesExclusivos": true,
       "componente": "FormBuilder",
       "apis": [
         "ChartTemplatesClient",
         "FormsClient",
+        "ProfilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada con deuda",
@@ -311,10 +343,14 @@
       "ruta": "/my-services",
       "etiqueta": "Mis servicios",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "rolesExclusivos": false,
       "componente": "MyServices",
       "apis": [
+        "SchedulingClient",
         "ServicesCatalogClient"
       ],
       "estado": "conectada",
@@ -324,12 +360,31 @@
       "ruta": "/my-quotations",
       "etiqueta": "Cotizaciones",
       "grupo": "Atención",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "rolesExclusivos": false,
       "componente": "QuotationList",
       "apis": [
         "ProfilesClient",
         "QuotationsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-medical-groups",
+      "etiqueta": "Grupos médicos",
+      "grupo": "Atención",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN"
+      ],
+      "rolesExclusivos": false,
+      "componente": "MedicalGroupList",
+      "apis": [
+        "MedicalGroupsClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -360,9 +415,10 @@
       "rolesExclusivos": false,
       "componente": "PatientList",
       "apis": [
-        "ProfilesClient"
+        "ProfilesClient",
+        "SystemContextClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -398,13 +454,14 @@
     },
     {
       "ruta": "/administration/insurance",
-      "etiqueta": "Aseguradora",
+      "etiqueta": "Mis productos",
       "grupo": "Administración",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "InsuranceCatalog",
       "apis": [
-        "InsuranceClient"
+        "InsuranceClient",
+        "ServicesCatalogClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -449,6 +506,46 @@
       "componente": "InsuranceAnalytics",
       "apis": [
         "InsuranceAnalyticsClient",
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/received-claims",
+      "etiqueta": "Solicitudes recibidas",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "ReceivedClaims",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-patients",
+      "etiqueta": "Pacientes de la aseguradora",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsurancePatients",
+      "apis": [
+        "InsuranceClient",
+        "SystemContextClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/insurance-campaigns",
+      "etiqueta": "Campañas preventivas",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "InsuranceCampaigns",
+      "apis": [
         "InsuranceClient"
       ],
       "estado": "conectada",
@@ -505,7 +602,7 @@
       "apis": [
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -578,6 +675,7 @@
       "rolesExclusivos": false,
       "componente": "ServicesCatalog",
       "apis": [
+        "HealthcareServicesClient",
         "ServicesCatalogClient"
       ],
       "estado": "conectada",
@@ -595,9 +693,23 @@
       "rolesExclusivos": false,
       "componente": "MedicalOrganization",
       "apis": [
-        "MedicalOrganizationClient"
+        "AccountingClient",
+        "MedicalOrganizationClient",
+        "PracticeSitesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/medical-center-setup",
+      "etiqueta": "Configurar centro médico",
+      "grupo": "Administración",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "SectionPlaceholder",
+      "apis": [],
+      "estado": "sin pantalla",
       "parametrizada": false
     },
     {
@@ -643,9 +755,11 @@
         "PAYMENTS_ADMIN"
       ],
       "rolesExclusivos": false,
-      "componente": "SectionPlaceholder",
-      "apis": [],
-      "estado": "placeholder",
+      "componente": "Billing",
+      "apis": [
+        "BillingSimulatedClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -675,11 +789,11 @@
         "PRACTITIONER"
       ],
       "rolesExclusivos": false,
-      "componente": "Resumen",
+      "componente": "Summary",
       "apis": [
         "AccountingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -701,17 +815,52 @@
       "grupo": "Mi cuenta",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "MyProfile",
-      "apis": [
-        "CommunityClient",
-        "FilesClient",
-        "IdentityClient",
-        "InsurancePortabilityClient",
-        "PracticeSitesClient",
-        "ProfilesClient",
-        "TerminologyClient"
+      "componente": "MyAccount",
+      "apis": [],
+      "estado": "presentacional",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/privacy",
+      "etiqueta": "Mi privacidad",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
       ],
-      "estado": "conectada con deuda",
+      "rolesExclusivos": false,
+      "componente": "AccountPrivacy",
+      "apis": [
+        "ConsentClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/clinical-access",
+      "etiqueta": "Quién ve mi historia",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "AccountClinicalAccess",
+      "apis": [
+        "AuthzClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/security",
+      "etiqueta": "Seguridad",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "AccountSecurity",
+      "apis": [
+        "AccountSecurityClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -737,15 +886,19 @@
       "componente": "MedicalRecord",
       "apis": [
         "ClinicalClient",
+        "DiagnosticUnitsClient",
         "DiagnosticsClient",
         "FormsClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",
+        "ProcedureCentersClient",
         "ProfilesClient",
+        "ReceivedServicesClient",
+        "SchedulingClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -756,8 +909,8 @@
       "rolesExclusivos": false,
       "componente": "DiagnosticResults",
       "apis": [
+        "AuthzClient",
         "DiagnosticsClient",
-        "FilesClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -774,7 +927,23 @@
         "DiagnosticsClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/quotations",
+      "etiqueta": "Cotizaciones",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Quotations",
+      "apis": [
+        "DiagnosticUnitsClient",
+        "PharmacyClient",
+        "ProfilesClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -827,6 +996,22 @@
       "parametrizada": false
     },
     {
+      "ruta": "/my-account/pharmacy",
+      "etiqueta": "Farmacia",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "StoreFront",
+      "apis": [
+        "PharmacyOrdersClient",
+        "ProfilesClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-account/pharmacy-orders",
       "etiqueta": "Mis pedidos",
       "grupo": "Mi cuenta",
@@ -840,7 +1025,7 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -851,11 +1036,9 @@
         "PATIENT"
       ],
       "rolesExclusivos": false,
-      "componente": "Loyalty",
-      "apis": [
-        "LoyaltyClient"
-      ],
-      "estado": "conectada",
+      "componente": "SectionPlaceholder",
+      "apis": [],
+      "estado": "sin pantalla",
       "parametrizada": false
     },
     {
@@ -867,13 +1050,56 @@
       ],
       "rolesExclusivos": false,
       "componente": "Promotions",
-      "apis": [],
-      "estado": "presentacional",
+      "apis": [
+        "PromotionsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/spending",
+      "etiqueta": "Mis gastos",
+      "grupo": "Mi cuenta",
+      "roles": [
+        "PATIENT"
+      ],
+      "rolesExclusivos": false,
+      "componente": "Spending",
+      "apis": [
+        "PatientSpendingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/invoices",
+      "etiqueta": "Mis facturas",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MyInvoices",
+      "apis": [
+        "BillingSimulatedClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/requests",
+      "etiqueta": "Mis solicitudes",
+      "grupo": "Mi cuenta",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "MyRequests",
+      "apis": [
+        "InsuranceClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
       "ruta": "/administration/my-practice",
-      "etiqueta": "Mis organizaciones",
+      "etiqueta": "Mi consultorio propio",
       "grupo": "Administración",
       "roles": [
         "PRACTITIONER"
@@ -886,24 +1112,109 @@
     },
     {
       "ruta": "/administration/my-organization",
-      "etiqueta": "Tu organización",
+      "etiqueta": "Mi organización",
       "grupo": "Administración",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "OrganizationPanel",
       "apis": [
         "DirectoryClient",
+        "OrganizationLogoClient",
+        "HealthcareServicesClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
+        "PharmacyClient",
+        "PracticeOnboardingClient",
+        "ProfilesClient",
+        "RoleAssignmentsClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy",
+      "etiqueta": "Resumen",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacySummaryPage",
+      "apis": [
         "PharmacyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-catalog",
+      "etiqueta": "Productos",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyProducts",
+      "apis": [
+        "FilesClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-categories",
+      "etiqueta": "Categorías",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyCategories",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-import",
+      "etiqueta": "Importación masiva",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyImport",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-inventory",
+      "etiqueta": "Inventario",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyInventory",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/pharmacy-prices",
+      "etiqueta": "Precios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "PharmacyPrices",
+      "apis": [
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
       "ruta": "/administration/pharmacy-orders",
-      "etiqueta": "Pedidos de farmacia",
-      "grupo": "Administración",
+      "etiqueta": "Solicitudes de retiro",
+      "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "PharmacyInbox",
@@ -911,13 +1222,13 @@
         "PharmacyOrdersClient",
         "PharmacyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
       "ruta": "/administration/pharmacy-campaigns",
       "etiqueta": "Promociones",
-      "grupo": "Administración",
+      "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
       "componente": "PharmacyCampaigns",
@@ -931,12 +1242,93 @@
     {
       "ruta": "/administration/pharmacy-profile",
       "etiqueta": "Ficha de la farmacia",
-      "grupo": "Administración",
+      "grupo": "General",
       "roles": [],
       "rolesExclusivos": false,
-      "componente": "PharmacyProfile",
+      "componente": "SectionPlaceholder",
       "apis": [],
-      "estado": "con deuda",
+      "estado": "sin pantalla",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory",
+      "etiqueta": "Resumen",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratorySummaryPage",
+      "apis": [
+        "LabPortalClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/laboratory/reception",
+      "etiqueta": "Recepción de muestras",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LabReception",
+      "apis": [
+        "DiagnosticsLabClient",
+        "SystemContextClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/laboratory/queue",
+      "etiqueta": "Cola de trabajo",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "Diagnostics",
+      "apis": [
+        "DiagnosticsClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory-results",
+      "etiqueta": "Resultados",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratoryResults",
+      "apis": [
+        "LabPortalClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory-prices",
+      "etiqueta": "Precios",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "LaboratoryPrices",
+      "apis": [
+        "LabPortalClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/administration/laboratory-branches",
+      "etiqueta": "Sucursales",
+      "grupo": "General",
+      "roles": [],
+      "rolesExclusivos": false,
+      "componente": "OrganizationBranches",
+      "apis": [
+        "DirectoryClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     }
   ],
@@ -958,6 +1350,22 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/accounting/books",
+      "seccion": "Contabilidad",
+      "roles": [
+        "SECURITY_ADMIN",
+        "ACCOUNTING_APPROVER",
+        "PRACTITIONER"
+      ],
+      "componente": "Accounting",
+      "apis": [
+        "AccountingClient",
+        "SimpleAccountingClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/accounting/cockpit",
       "seccion": "Contabilidad",
       "roles": [
@@ -970,21 +1378,6 @@
         "AccountingClient"
       ],
       "estado": "conectada",
-      "parametrizada": false
-    },
-    {
-      "ruta": "/administration/accounting/libros",
-      "seccion": "Contabilidad",
-      "roles": [
-        "SECURITY_ADMIN",
-        "ACCOUNTING_APPROVER",
-        "PRACTITIONER"
-      ],
-      "componente": "Accounting",
-      "apis": [
-        "AccountingClient"
-      ],
-      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -1555,6 +1948,20 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/identity-assurance/cases/:caseId",
+      "seccion": "Verificación de identidad",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "CaseDetail",
+      "apis": [
+        "FilesClient",
+        "IdentityAdminClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
       "ruta": "/administration/identity-assurance/cases/checks",
       "seccion": "Verificación de identidad",
       "roles": [
@@ -2008,7 +2415,7 @@
     },
     {
       "ruta": "/administration/pharmacy-orders/:orderId",
-      "seccion": "Pedidos de farmacia",
+      "seccion": "Solicitudes de retiro",
       "roles": [],
       "componente": "InboxOrder",
       "apis": [
@@ -2032,6 +2439,20 @@
       "parametrizada": false
     },
     {
+      "ruta": "/administration/services-catalog/procedure-offers",
+      "seccion": "Catálogo de servicios",
+      "roles": [
+        "SECURITY_ADMIN"
+      ],
+      "componente": "ProcedureOffers",
+      "apis": [
+        "HealthcareServicesClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/administration/terminology/import",
       "seccion": "Terminología",
       "roles": [
@@ -2041,7 +2462,7 @@
       "apis": [
         "TerminologyClient"
       ],
-      "estado": "conectada",
+      "estado": "conectada con deuda",
       "parametrizada": false
     },
     {
@@ -2056,38 +2477,107 @@
       "parametrizada": true
     },
     {
-      "ruta": "/directory/:profileId",
-      "seccion": "Directorio de médicos",
+      "ruta": "/glossary/:conceptId",
+      "seccion": "Glosario",
       "roles": [
-        "PATIENT"
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
       ],
-      "componente": "PractitionerDetail",
+      "componente": "GlossaryTerm",
       "apis": [
-        "FilesClient",
-        "ProfilesClient",
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
     },
     {
-      "ruta": "/glossary/:conceptId",
+      "ruta": "/glossary/anatomy-atlas",
       "seccion": "Glosario",
-      "roles": [],
-      "componente": "GlossaryTerm",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GlossaryAnatomyAtlas",
       "apis": [
+        "AnatomyAtlasClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
-      "parametrizada": true
+      "parametrizada": false
+    },
+    {
+      "ruta": "/glossary/network",
+      "seccion": "Glosario",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
+      "componente": "GlossaryNetwork",
+      "apis": [
+        "AnatomyAtlasClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
     },
     {
       "ruta": "/groups/:groupId",
       "seccion": "Grupos y foros",
-      "roles": [],
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN",
+        "SCHEDULING_ADMIN",
+        "SCHEDULING_AGENT",
+        "SURGEON",
+        "ANESTHESIOLOGIST",
+        "PERIOP_NURSE",
+        "SURGERY_SCHEDULER",
+        "PERIOP_ADMIN",
+        "MEDICAL_VISITOR",
+        "SECURITY_ADMIN"
+      ],
       "componente": "GroupDetail",
       "apis": [
         "CommunityClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/insurers-directory/:slug",
+      "seccion": "Directorio de aseguradoras",
+      "roles": [],
+      "componente": "InsurerDetail",
+      "apis": [
+        "InsuranceClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2113,6 +2603,8 @@
       "componente": "PatientChart",
       "apis": [
         "AccountingClient",
+        "AuthzClient",
+        "BillingSimulatedClient",
         "ChartCarePlansClient",
         "ChartDocumentsClient",
         "ChartNotesClient",
@@ -2121,11 +2613,15 @@
         "DiagnosticsClient",
         "FilesClient",
         "FormsClient",
-        "PrescriptionFavoritesClient",
+        "MedicalCentersClient",
+        "PracticeSitesClient",
         "ProceduresClient",
         "ProfilesClient",
+        "ReferralsClient",
+        "SchedulingClient",
         "SystemContextClient",
-        "TerminologyClient"
+        "TerminologyClient",
+        "DiagnosisIaClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2140,6 +2636,7 @@
       "componente": "Consultation",
       "apis": [
         "ClinicalClient",
+        "ConsentClient",
         "ProfilesClient",
         "QuotationsClient",
         "TerminologyClient"
@@ -2192,7 +2689,8 @@
       "roles": [],
       "componente": "MedicalArticles",
       "apis": [
-        "CommunityClient"
+        "CommunityClient",
+        "FilesClient"
       ],
       "estado": "conectada",
       "parametrizada": false
@@ -2204,7 +2702,9 @@
       "componente": "PractitionerProfileEdit",
       "apis": [
         "FilesClient",
+        "PracticeLogoClient",
         "ProfilesClient",
+        "SignatureAndSealClient",
         "TerminologyClient"
       ],
       "estado": "conectada",
@@ -2214,9 +2714,11 @@
       "ruta": "/my-account/identity/cases/:caseId",
       "seccion": "Mi identidad",
       "roles": [],
-      "componente": "VerificationCaseDetail",
+      "componente": "PractitionerDetail",
       "apis": [
-        "IdentityClient"
+        "FilesClient",
+        "ProfilesClient",
+        "TerminologyClient"
       ],
       "estado": "conectada",
       "parametrizada": true
@@ -2228,13 +2730,16 @@
       "componente": "WhereToBuy",
       "apis": [
         "ClinicalClient",
+        "DiagnosticUnitsClient",
+        "DiagnosticsClient",
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient",
         "PharmacyClient",
+        "ProcedureCentersClient",
         "ProfilesClient",
         "TerminologyClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": true
     },
     {
@@ -2261,7 +2766,7 @@
       "apis": [
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": true
     },
     {
@@ -2302,7 +2807,35 @@
         "PharmacyCampaignsClient",
         "PharmacyOrdersClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/pharmacy/cart",
+      "seccion": "Farmacia",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "CartPage",
+      "apis": [
+        "PharmacyOrdersClient",
+        "PharmacyClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-account/pharmacy/prescriptions",
+      "seccion": "Farmacia",
+      "roles": [
+        "PATIENT"
+      ],
+      "componente": "PrescriptionsPage",
+      "apis": [
+        "ClinicalClient",
+        "TerminologyClient"
+      ],
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2313,7 +2846,7 @@
       "apis": [
         "ProfilesClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2328,14 +2861,61 @@
       "parametrizada": true
     },
     {
+      "ruta": "/my-medical-groups/:id",
+      "seccion": "Grupos médicos",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN"
+      ],
+      "componente": "MedicalGroupDetail",
+      "apis": [
+        "MedicalGroupsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/my-medical-groups/new",
+      "seccion": "Grupos médicos",
+      "roles": [
+        "PRACTITIONER",
+        "CLINICIAN"
+      ],
+      "componente": "MedicalGroupForm",
+      "apis": [
+        "MedicalGroupsClient",
+        "ProfilesClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
       "ruta": "/my-quotations/new",
       "seccion": "Cotizaciones",
-      "roles": [],
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
       "componente": "QuotationForm",
       "apis": [
         "ProfilesClient",
         "QuotationsClient",
         "SchedulingClient",
+        "ServicesCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": false
+    },
+    {
+      "ruta": "/my-services/import",
+      "seccion": "Mis servicios",
+      "roles": [
+        "CLINICIAN",
+        "PRACTITIONER"
+      ],
+      "componente": "ProcedureImport",
+      "apis": [
         "ServicesCatalogClient"
       ],
       "estado": "conectada",
@@ -2405,7 +2985,7 @@
       "apis": [
         "SchedulingClient"
       ],
-      "estado": "conectada con deuda",
+      "estado": "conectada",
       "parametrizada": false
     },
     {
@@ -2453,11 +3033,44 @@
       ],
       "estado": "conectada",
       "parametrizada": false
+    },
+    {
+      "ruta": "/superadmin/data-catalog/:objectId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "CatalogObjectDetail",
+      "apis": [
+        "DataCatalogClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/flows/:flowId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "FlowDetailPage",
+      "apis": [
+        "FlowsClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
+    },
+    {
+      "ruta": "/superadmin/qa-lab/plans/:planId",
+      "seccion": "—",
+      "roles": [],
+      "componente": "QaPlanDetail",
+      "apis": [
+        "QaLabClient"
+      ],
+      "estado": "conectada",
+      "parametrizada": true
     }
   ],
   "portadas": [
     {
-      "ruta": "/datos-compartidos/versiones-internas-escanear",
+      "ruta": "/shared-data/internal-versions-scan",
       "codigo": "V02-08",
       "actor": "security-admin",
       "componente": "DatosCompartidosVersionesInternasEscanear",
@@ -2465,7 +3078,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/versiones-internas-listado",
+      "ruta": "/shared-data/internal-versions-list",
       "codigo": "V02-08",
       "actor": "security-admin",
       "componente": "DatosCompartidosVersionesInternasListado",
@@ -2473,7 +3086,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-eliminar",
+      "ruta": "/shared-data/files-delete",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosEliminar",
@@ -2481,7 +3094,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-formulario",
+      "ruta": "/shared-data/files-form",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosFormulario",
@@ -2489,7 +3102,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-listado",
+      "ruta": "/shared-data/files-list",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosListado",
@@ -2497,7 +3110,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-obtener-enlace",
+      "ruta": "/shared-data/files-get-link",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosObtenerEnlace",
@@ -2505,7 +3118,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/archivos-subir",
+      "ruta": "/shared-data/files-upload",
       "codigo": "V02-01",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosArchivosSubir",
@@ -2513,7 +3126,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/contenido-detalle",
+      "ruta": "/shared-data/content-detail",
       "codigo": "V02-02",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosContenidoDetalle",
@@ -2521,7 +3134,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/vinculos-formulario",
+      "ruta": "/shared-data/links-form",
       "codigo": "V02-03",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVinculosFormulario",
@@ -2529,7 +3142,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/vinculos-listado",
+      "ruta": "/shared-data/links-list",
       "codigo": "V02-03",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVinculosListado",
@@ -2537,7 +3150,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/versiones-formulario",
+      "ruta": "/shared-data/versions-form",
       "codigo": "V02-04",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVersionesFormulario",
@@ -2545,7 +3158,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/versiones-listado",
+      "ruta": "/shared-data/versions-list",
       "codigo": "V02-04",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosVersionesListado",
@@ -2553,7 +3166,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/puntos-de-contacto-formulario",
+      "ruta": "/shared-data/contact-points-form",
       "codigo": "V02-05",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosPuntosDeContactoFormulario",
@@ -2561,7 +3174,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/puntos-de-contacto-listado",
+      "ruta": "/shared-data/contact-points-list",
       "codigo": "V02-05",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosPuntosDeContactoListado",
@@ -2569,7 +3182,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/puntos-de-contacto-verificar",
+      "ruta": "/shared-data/contact-points-verify",
       "codigo": "V02-05",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosPuntosDeContactoVerificar",
@@ -2577,7 +3190,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/direcciones-formulario",
+      "ruta": "/shared-data/addresses-form",
       "codigo": "V02-06",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDireccionesFormulario",
@@ -2585,7 +3198,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/direcciones-listado",
+      "ruta": "/shared-data/addresses-list",
       "codigo": "V02-06",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDireccionesListado",
@@ -2593,7 +3206,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/identificadores-formulario",
+      "ruta": "/shared-data/identifiers-form",
       "codigo": "V02-07",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosIdentificadoresFormulario",
@@ -2601,7 +3214,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/identificadores-listado",
+      "ruta": "/shared-data/identifiers-list",
       "codigo": "V02-07",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosIdentificadoresListado",
@@ -2609,7 +3222,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/derivados-formulario",
+      "ruta": "/shared-data/derivatives-form",
       "codigo": "V02-09",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDerivadosFormulario",
@@ -2617,7 +3230,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/datos-compartidos/derivados-listado",
+      "ruta": "/shared-data/derivatives-list",
       "codigo": "V02-09",
       "actor": "sesion-autenticada",
       "componente": "DatosCompartidosDerivadosListado",
@@ -2625,7 +3238,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-importar",
+      "ruta": "/vocabulary/versions-import",
       "codigo": "V03-01",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesImportar",
@@ -2633,7 +3246,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-listado",
+      "ruta": "/vocabulary/versions-list",
       "codigo": "V03-01",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesListado",
@@ -2641,7 +3254,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-publicar",
+      "ruta": "/vocabulary/versions-publish",
       "codigo": "V03-01",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesPublicar",
@@ -2649,7 +3262,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/expansion-de-conjunto-de-valores-formulario",
+      "ruta": "/vocabulary/value-set-expansion-form",
       "codigo": "V03-04",
       "actor": "security-admin",
       "componente": "TerminologiaExpansionDeConjuntoDeValoresFormulario",
@@ -2657,7 +3270,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/sistemas-de-codigos-formulario",
+      "ruta": "/vocabulary/code-systems-form",
       "codigo": "V03-05",
       "actor": "security-admin",
       "componente": "TerminologiaSistemasDeCodigosFormulario",
@@ -2665,7 +3278,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/sistemas-de-codigos-listado",
+      "ruta": "/vocabulary/code-systems-list",
       "codigo": "V03-05",
       "actor": "security-admin",
       "componente": "TerminologiaSistemasDeCodigosListado",
@@ -2673,7 +3286,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-de-sistema-formulario",
+      "ruta": "/vocabulary/system-versions-form",
       "codigo": "V03-06",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesDeSistemaFormulario",
@@ -2681,7 +3294,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/versiones-de-sistema-listado",
+      "ruta": "/vocabulary/system-versions-list",
       "codigo": "V03-06",
       "actor": "security-admin",
       "componente": "TerminologiaVersionesDeSistemaListado",
@@ -2689,7 +3302,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/deprecacion-de-concepto-formulario",
+      "ruta": "/vocabulary/concept-deprecation-form",
       "codigo": "V03-08",
       "actor": "security-admin",
       "componente": "TerminologiaDeprecacionDeConceptoFormulario",
@@ -2697,7 +3310,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/designaciones-formulario",
+      "ruta": "/vocabulary/designations-form",
       "codigo": "V03-09",
       "actor": "security-admin",
       "componente": "TerminologiaDesignacionesFormulario",
@@ -2705,7 +3318,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/designaciones-listado",
+      "ruta": "/vocabulary/designations-list",
       "codigo": "V03-09",
       "actor": "security-admin",
       "componente": "TerminologiaDesignacionesListado",
@@ -2713,7 +3326,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/propiedades-formulario",
+      "ruta": "/vocabulary/properties-form",
       "codigo": "V03-10",
       "actor": "security-admin",
       "componente": "TerminologiaPropiedadesFormulario",
@@ -2721,7 +3334,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/propiedades-listado",
+      "ruta": "/vocabulary/properties-list",
       "codigo": "V03-10",
       "actor": "security-admin",
       "componente": "TerminologiaPropiedadesListado",
@@ -2729,7 +3342,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/relaciones-formulario",
+      "ruta": "/vocabulary/relationships-form",
       "codigo": "V03-11",
       "actor": "security-admin",
       "componente": "TerminologiaRelacionesFormulario",
@@ -2737,7 +3350,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/relaciones-listado",
+      "ruta": "/vocabulary/relationships-list",
       "codigo": "V03-11",
       "actor": "security-admin",
       "componente": "TerminologiaRelacionesListado",
@@ -2745,7 +3358,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/politicas-de-catalogo-formulario",
+      "ruta": "/vocabulary/catalog-policies-form",
       "codigo": "V03-12",
       "actor": "security-admin",
       "componente": "TerminologiaPoliticasDeCatalogoFormulario",
@@ -2753,7 +3366,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/politicas-de-catalogo-listado",
+      "ruta": "/vocabulary/catalog-policies-list",
       "codigo": "V03-12",
       "actor": "security-admin",
       "componente": "TerminologiaPoliticasDeCatalogoListado",
@@ -2761,7 +3374,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/conjuntos-de-valor-formulario",
+      "ruta": "/vocabulary/value-sets-form",
       "codigo": "V03-13",
       "actor": "security-admin",
       "componente": "TerminologiaConjuntosDeValorFormulario",
@@ -2769,7 +3382,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/conjuntos-de-valor-listado",
+      "ruta": "/vocabulary/value-sets-list",
       "codigo": "V03-13",
       "actor": "security-admin",
       "componente": "TerminologiaConjuntosDeValorListado",
@@ -2777,7 +3390,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/consulta-de-concepto-listado",
+      "ruta": "/vocabulary/concept-lookup-list",
       "codigo": "V03-02",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaConsultaDeConceptoListado",
@@ -2785,7 +3398,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/traduccion-entre-catalogos-formulario",
+      "ruta": "/vocabulary/catalog-translation-form",
       "codigo": "V03-03",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaTraduccionEntreCatalogosFormulario",
@@ -2793,7 +3406,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/conceptos-listado",
+      "ruta": "/vocabulary/concepts-list",
       "codigo": "V03-07",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaConceptosListado",
@@ -2801,7 +3414,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/terminologia/expansion-de-conjunto-de-valores-detalle",
+      "ruta": "/vocabulary/value-set-expansion-detail",
       "codigo": "V03-14",
       "actor": "sesion-autenticada",
       "componente": "TerminologiaExpansionDeConjuntoDeValoresDetalle",
@@ -2809,7 +3422,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-listado",
+      "ruta": "/provider-directory/organizations-list",
       "codigo": "V04-01",
       "actor": "security-admin",
       "componente": "DirectorioOrganizacionesListado",
@@ -2817,7 +3430,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-verificar",
+      "ruta": "/provider-directory/organizations-verify",
       "codigo": "V04-01",
       "actor": "security-admin",
       "componente": "DirectorioOrganizacionesVerificar",
@@ -2825,7 +3438,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/membresias-dar-de-baja",
+      "ruta": "/provider-directory/memberships-deactivate",
       "codigo": "V04-02",
       "actor": "security-admin",
       "componente": "DirectorioMembresiasDarDeBaja",
@@ -2833,7 +3446,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/membresias-formulario",
+      "ruta": "/provider-directory/memberships-form",
       "codigo": "V04-02",
       "actor": "security-admin",
       "componente": "DirectorioMembresiasFormulario",
@@ -2841,7 +3454,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/membresias-listado",
+      "ruta": "/provider-directory/memberships-list",
       "codigo": "V04-02",
       "actor": "security-admin",
       "componente": "DirectorioMembresiasListado",
@@ -2849,7 +3462,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/asignaciones-de-sucursal-formulario",
+      "ruta": "/provider-directory/branch-assignments-form",
       "codigo": "V04-03",
       "actor": "security-admin",
       "componente": "DirectorioAsignacionesDeSucursalFormulario",
@@ -2857,7 +3470,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/roles-formulario",
+      "ruta": "/provider-directory/roles-form",
       "codigo": "V04-04",
       "actor": "security-admin",
       "componente": "DirectorioRolesFormulario",
@@ -2865,7 +3478,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/transferencias-formulario",
+      "ruta": "/provider-directory/transfers-form",
       "codigo": "V04-05",
       "actor": "security-admin",
       "componente": "DirectorioTransferenciasFormulario",
@@ -2873,7 +3486,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/sucursales-formulario",
+      "ruta": "/provider-directory/branches-form",
       "codigo": "V04-06",
       "actor": "security-admin",
       "componente": "DirectorioSucursalesFormulario",
@@ -2881,7 +3494,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/sucursales-listado",
+      "ruta": "/provider-directory/branches-list",
       "codigo": "V04-06",
       "actor": "security-admin",
       "componente": "DirectorioSucursalesListado",
@@ -2889,7 +3502,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-hijas-formulario",
+      "ruta": "/provider-directory/child-organizations-form",
       "codigo": "V04-07",
       "actor": "security-admin",
       "componente": "DirectorioOrganizacionesHijasFormulario",
@@ -2897,7 +3510,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-formulario",
+      "ruta": "/provider-directory/organizations-form",
       "codigo": "V04-01",
       "actor": "superadmin",
       "componente": "DirectorioOrganizacionesFormulario",
@@ -2905,7 +3518,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/directorio/organizaciones-suspender",
+      "ruta": "/provider-directory/organizations-suspend",
       "codigo": "V04-01",
       "actor": "superadmin",
       "componente": "DirectorioOrganizacionesSuspender",
@@ -2913,7 +3526,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-formulario",
+      "ruta": "/people/patients-form",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesFormulario",
@@ -2921,7 +3534,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-fusionar",
+      "ruta": "/people/patients-merge",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesFusionar",
@@ -2929,7 +3542,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-listado",
+      "ruta": "/people/patients-list",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesListado",
@@ -2937,7 +3550,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/pacientes-revertir",
+      "ruta": "/people/patients-revert",
       "codigo": "V05-01",
       "actor": "security-admin",
       "componente": "PersonasPacientesRevertir",
@@ -2945,7 +3558,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-identidad-formulario",
+      "ruta": "/people/identity-links-form",
       "codigo": "V05-02",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeIdentidadFormulario",
@@ -2953,7 +3566,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-identidad-listado",
+      "ruta": "/people/identity-links-list",
       "codigo": "V05-02",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeIdentidadListado",
@@ -2961,7 +3574,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/apoderados-de-portal-formulario",
+      "ruta": "/people/portal-proxies-form",
       "codigo": "V05-04",
       "actor": "security-admin",
       "componente": "PersonasApoderadosDePortalFormulario",
@@ -2969,7 +3582,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/apoderados-de-portal-listado",
+      "ruta": "/people/portal-proxies-list",
       "codigo": "V05-04",
       "actor": "security-admin",
       "componente": "PersonasApoderadosDePortalListado",
@@ -2977,7 +3590,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-relacionadas-formulario",
+      "ruta": "/people/related-persons-form",
       "codigo": "V05-05",
       "actor": "security-admin",
       "componente": "PersonasRelacionadasFormulario",
@@ -2985,7 +3598,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-relacionadas-listado",
+      "ruta": "/people/related-persons-list",
       "codigo": "V05-05",
       "actor": "security-admin",
       "componente": "PersonasRelacionadasListado",
@@ -2993,7 +3606,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/credenciales-listado",
+      "ruta": "/people/credentials-list",
       "codigo": "V05-06",
       "actor": "security-admin",
       "componente": "PersonasCredencialesListado",
@@ -3001,7 +3614,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/credenciales-verificar",
+      "ruta": "/people/credentials-verify",
       "codigo": "V05-06",
       "actor": "security-admin",
       "componente": "PersonasCredencialesVerificar",
@@ -3009,7 +3622,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-listado",
+      "ruta": "/people/persons-list",
       "codigo": "V05-07",
       "actor": "security-admin",
       "componente": "PersonasListado",
@@ -3017,7 +3630,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/personas-registrar-defuncion",
+      "ruta": "/people/persons-record-death",
       "codigo": "V05-07",
       "actor": "security-admin",
       "componente": "PersonasRegistrarDefuncion",
@@ -3025,7 +3638,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-cuenta-formulario",
+      "ruta": "/people/account-links-form",
       "codigo": "V05-08",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeCuentaFormulario",
@@ -3033,7 +3646,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/vinculos-de-cuenta-listado",
+      "ruta": "/people/account-links-list",
       "codigo": "V05-08",
       "actor": "security-admin",
       "componente": "PersonasVinculosDeCuentaListado",
@@ -3041,7 +3654,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/profesionales-formulario",
+      "ruta": "/people/practitioners-form",
       "codigo": "V05-09",
       "actor": "security-admin",
       "componente": "PersonasProfesionalesFormulario",
@@ -3049,7 +3662,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/profesionales-listado",
+      "ruta": "/people/practitioners-list",
       "codigo": "V05-09",
       "actor": "security-admin",
       "componente": "PersonasProfesionalesListado",
@@ -3057,7 +3670,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/autorizaciones-de-jurisdiccion-formulario",
+      "ruta": "/people/jurisdiction-authorizations-form",
       "codigo": "V05-10",
       "actor": "security-admin",
       "componente": "PersonasAutorizacionesDeJurisdiccionFormulario",
@@ -3065,7 +3678,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/autorizaciones-de-jurisdiccion-listado",
+      "ruta": "/people/jurisdiction-authorizations-list",
       "codigo": "V05-10",
       "actor": "security-admin",
       "componente": "PersonasAutorizacionesDeJurisdiccionListado",
@@ -3073,7 +3686,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/especialidades-formulario",
+      "ruta": "/people/specialties-form",
       "codigo": "V05-11",
       "actor": "security-admin",
       "componente": "PersonasEspecialidadesFormulario",
@@ -3081,7 +3694,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/especialidades-listado",
+      "ruta": "/people/specialties-list",
       "codigo": "V05-11",
       "actor": "security-admin",
       "componente": "PersonasEspecialidadesListado",
@@ -3089,7 +3702,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/personas/resumen-propio-listado",
+      "ruta": "/people/own-summary-list",
       "codigo": "V05-03",
       "actor": "sesion-autenticada",
       "componente": "PersonasResumenPropioListado",
@@ -3097,7 +3710,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/acceso-de-emergencia-formulario",
+      "ruta": "/access-control/emergency-access-form",
       "codigo": "V06-05",
       "actor": "clinical-approver",
       "componente": "AccesosAccesoDeEmergenciaFormulario",
@@ -3105,7 +3718,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-del-paciente-formulario",
+      "ruta": "/access-control/patient-clinical-access-form",
       "codigo": "V06-06",
       "actor": "clinical-approver",
       "componente": "AccesosClinicosDelPacienteFormulario",
@@ -3113,7 +3726,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-del-paciente-listado",
+      "ruta": "/access-control/patient-clinical-access-list",
       "codigo": "V06-06",
       "actor": "clinical-approver",
       "componente": "AccesosClinicosDelPacienteListado",
@@ -3121,7 +3734,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/relaciones-de-cuidado-formulario",
+      "ruta": "/access-control/care-relationships-form",
       "codigo": "V06-01",
       "actor": "clinician",
       "componente": "AccesosRelacionesDeCuidadoFormulario",
@@ -3129,7 +3742,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/relaciones-de-cuidado-listado",
+      "ruta": "/access-control/care-relationships-list",
       "codigo": "V06-01",
       "actor": "clinician",
       "componente": "AccesosRelacionesDeCuidadoListado",
@@ -3137,7 +3750,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/relaciones-de-cuidado-revocar",
+      "ruta": "/access-control/care-relationships-revoke",
       "codigo": "V06-01",
       "actor": "clinician",
       "componente": "AccesosRelacionesDeCuidadoRevocar",
@@ -3145,7 +3758,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/representaciones-legales-formulario",
+      "ruta": "/access-control/legal-representations-form",
       "codigo": "V06-02",
       "actor": "security-admin",
       "componente": "AccesosRepresentacionesLegalesFormulario",
@@ -3153,7 +3766,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/representaciones-legales-listado",
+      "ruta": "/access-control/legal-representations-list",
       "codigo": "V06-02",
       "actor": "security-admin",
       "componente": "AccesosRepresentacionesLegalesListado",
@@ -3161,7 +3774,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/representaciones-legales-revocar",
+      "ruta": "/access-control/legal-representations-revoke",
       "codigo": "V06-02",
       "actor": "security-admin",
       "componente": "AccesosRepresentacionesLegalesRevocar",
@@ -3169,7 +3782,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-listado",
+      "ruta": "/access-control/clinical-access-list",
       "codigo": "V06-03",
       "actor": "security-admin",
       "componente": "AccesosClinicosListado",
@@ -3177,7 +3790,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/accesos-clinicos-revocar",
+      "ruta": "/access-control/clinical-access-revoke",
       "codigo": "V06-03",
       "actor": "security-admin",
       "componente": "AccesosClinicosRevocar",
@@ -3185,7 +3798,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/decisiones-evaluar",
+      "ruta": "/access-control/decisions-evaluate",
       "codigo": "V06-04",
       "actor": "security-admin",
       "componente": "AccesosDecisionesEvaluar",
@@ -3193,7 +3806,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/cache-invalidar",
+      "ruta": "/access-control/cache-invalidate",
       "codigo": "V06-07",
       "actor": "security-admin",
       "componente": "AccesosCacheInvalidar",
@@ -3201,7 +3814,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/categorias-de-permiso-formulario",
+      "ruta": "/access-control/permission-categories-form",
       "codigo": "V06-08",
       "actor": "security-admin",
       "componente": "AccesosCategoriasDePermisoFormulario",
@@ -3209,7 +3822,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/categorias-de-permiso-listado",
+      "ruta": "/access-control/permission-categories-list",
       "codigo": "V06-08",
       "actor": "security-admin",
       "componente": "AccesosCategoriasDePermisoListado",
@@ -3217,7 +3830,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-formulario",
+      "ruta": "/access-control/permissions-form",
       "codigo": "V06-09",
       "actor": "security-admin",
       "componente": "AccesosPermisosFormulario",
@@ -3225,7 +3838,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-listado",
+      "ruta": "/access-control/permissions-list",
       "codigo": "V06-09",
       "actor": "security-admin",
       "componente": "AccesosPermisosListado",
@@ -3233,7 +3846,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/alcance-de-recurso-formulario",
+      "ruta": "/access-control/resource-scope-form",
       "codigo": "V06-10",
       "actor": "security-admin",
       "componente": "AccesosAlcanceDeRecursoFormulario",
@@ -3241,7 +3854,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/alcance-de-recurso-listado",
+      "ruta": "/access-control/resource-scope-list",
       "codigo": "V06-10",
       "actor": "security-admin",
       "componente": "AccesosAlcanceDeRecursoListado",
@@ -3249,7 +3862,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/roles-formulario",
+      "ruta": "/access-control/roles-form",
       "codigo": "V06-11",
       "actor": "security-admin",
       "componente": "AccesosRolesFormulario",
@@ -3257,7 +3870,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/roles-listado",
+      "ruta": "/access-control/roles-list",
       "codigo": "V06-11",
       "actor": "security-admin",
       "componente": "AccesosRolesListado",
@@ -3265,7 +3878,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-de-campo-formulario",
+      "ruta": "/access-control/field-permissions-form",
       "codigo": "V06-12",
       "actor": "security-admin",
       "componente": "AccesosPermisosDeCampoFormulario",
@@ -3273,7 +3886,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-de-campo-listado",
+      "ruta": "/access-control/field-permissions-list",
       "codigo": "V06-12",
       "actor": "security-admin",
       "componente": "AccesosPermisosDeCampoListado",
@@ -3281,7 +3894,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-del-rol-formulario",
+      "ruta": "/access-control/role-permissions-form",
       "codigo": "V06-13",
       "actor": "security-admin",
       "componente": "AccesosPermisosDelRolFormulario",
@@ -3289,7 +3902,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/permisos-del-rol-listado",
+      "ruta": "/access-control/role-permissions-list",
       "codigo": "V06-13",
       "actor": "security-admin",
       "componente": "AccesosPermisosDelRolListado",
@@ -3297,7 +3910,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/politicas-de-acceso-formulario",
+      "ruta": "/access-control/access-policies-form",
       "codigo": "V06-14",
       "actor": "security-admin",
       "componente": "AccesosPoliticasDeAccesoFormulario",
@@ -3305,7 +3918,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/politicas-de-acceso-listado",
+      "ruta": "/access-control/access-policies-list",
       "codigo": "V06-14",
       "actor": "security-admin",
       "componente": "AccesosPoliticasDeAccesoListado",
@@ -3313,7 +3926,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/concesiones-de-permiso-formulario",
+      "ruta": "/access-control/permission-grants-form",
       "codigo": "V06-15",
       "actor": "security-admin",
       "componente": "AccesosConcesionesDePermisoFormulario",
@@ -3321,7 +3934,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/concesiones-de-permiso-listado",
+      "ruta": "/access-control/permission-grants-list",
       "codigo": "V06-15",
       "actor": "security-admin",
       "componente": "AccesosConcesionesDePermisoListado",
@@ -3329,7 +3942,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/asignaciones-de-rol-formulario",
+      "ruta": "/access-control/role-assignments-form",
       "codigo": "V06-16",
       "actor": "security-admin",
       "componente": "AccesosAsignacionesDeRolFormulario",
@@ -3337,7 +3950,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/accesos/asignaciones-de-rol-listado",
+      "ruta": "/access-control/role-assignments-list",
       "codigo": "V06-16",
       "actor": "security-admin",
       "componente": "AccesosAsignacionesDeRolListado",
@@ -3345,7 +3958,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/buscador-listado",
+      "ruta": "/search/finder-list",
       "codigo": "V65-01",
       "actor": "publico",
       "componente": "BuscarBuscadorListado",
@@ -3353,7 +3966,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/profesionales-listado",
+      "ruta": "/search/practitioners-list",
       "codigo": "V65-02",
       "actor": "publico",
       "componente": "BuscarProfesionalesListado",
@@ -3361,7 +3974,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/medicamentos-listado",
+      "ruta": "/search/medications-list",
       "codigo": "V65-03",
       "actor": "publico",
       "componente": "BuscarMedicamentosListado",
@@ -3369,7 +3982,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/hospitales-listado",
+      "ruta": "/search/hospitals-list",
       "codigo": "V65-04",
       "actor": "publico",
       "componente": "BuscarHospitalesListado",
@@ -3377,7 +3990,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/laboratorios-listado",
+      "ruta": "/search/laboratories-list",
       "codigo": "V65-05",
       "actor": "publico",
       "componente": "BuscarLaboratoriosListado",
@@ -3385,7 +3998,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/aseguradoras-listado",
+      "ruta": "/search/insurers-list",
       "codigo": "V65-06",
       "actor": "publico",
       "componente": "BuscarAseguradorasListado",
@@ -3393,7 +4006,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-profesional-detalle",
+      "ruta": "/search/practitioner-profile-detail",
       "codigo": "V65-07",
       "actor": "publico",
       "componente": "BuscarPerfilProfesionalDetalle",
@@ -3401,7 +4014,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-organizacion-detalle",
+      "ruta": "/search/organization-profile-detail",
       "codigo": "V65-08",
       "actor": "publico",
       "componente": "BuscarPerfilOrganizacionDetalle",
@@ -3409,7 +4022,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-farmacia-detalle",
+      "ruta": "/search/pharmacy-profile-detail",
       "codigo": "V65-09",
       "actor": "publico",
       "componente": "BuscarPerfilFarmaciaDetalle",
@@ -3417,7 +4030,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-laboratorio-detalle",
+      "ruta": "/search/laboratory-profile-detail",
       "codigo": "V65-10",
       "actor": "publico",
       "componente": "BuscarPerfilLaboratorioDetalle",
@@ -3425,7 +4038,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/perfil-aseguradora-detalle",
+      "ruta": "/search/insurer-profile-detail",
       "codigo": "V65-11",
       "actor": "publico",
       "componente": "BuscarPerfilAseguradoraDetalle",
@@ -3433,7 +4046,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/cercania-detalle",
+      "ruta": "/search/nearby-detail",
       "codigo": "V65-12",
       "actor": "publico",
       "componente": "BuscarCercaniaDetalle",
@@ -3441,7 +4054,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/seguidos-y-guardados-listado",
+      "ruta": "/search/followed-and-saved-list",
       "codigo": "V65-13",
       "actor": "sesion-autenticada",
       "componente": "BuscarSeguidosYGuardadosListado",
@@ -3449,7 +4062,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/buscar/calificar-la-atencion-formulario",
+      "ruta": "/search/rate-care-form",
       "codigo": "V65-14",
       "actor": "sesion-autenticada",
       "componente": "BuscarCalificarLaAtencionFormulario",
@@ -3457,7 +4070,7 @@
       "parametrizada": false
     },
     {
-      "ruta": "/inicio",
+      "ruta": "/home",
       "codigo": null,
       "actor": null,
       "componente": "InicioPortada",

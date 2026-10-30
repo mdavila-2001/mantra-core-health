@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Acordate del remedio">
-  <title>Acordate del remedio</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240" role="img" aria-label="Recuerde su medicamento">
+  <title>Recuerde su medicamento</title>
   <!-- Ilustración: OpenMoji 15.0.0 (1F552), CC BY-SA 4.0 — https://openmoji.org -->
   <g transform="translate(48 24) scale(2)">
 <g id="color">
@@ -17,7 +17,7 @@
   </g>
   </g>
   <g>
-    <text x="120" y="194" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">Acordate</text>
-    <text x="120" y="217" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">del remedio</text>
+    <text x="120" y="194" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">Recuerde su</text>
+    <text x="120" y="217" text-anchor="middle" font-family="Poppins, 'Segoe UI', system-ui, sans-serif" font-size="19" font-weight="600" fill="#0B3953">medicamento</text>
   </g>
 </svg>

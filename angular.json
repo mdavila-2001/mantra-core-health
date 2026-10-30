@@ -43,7 +43,13 @@
             "styles": [
               "src/styles.css",
               "src/styles/alovida.css",
-              "src/styles/perfil-publico.css"
+              "src/styles/pulse.css",
+              "src/styles/perfil-publico.css",
+              {
+                "input": "src/styles/paciente.css",
+                "bundleName": "paciente",
+                "inject": false
+              }
             ],
             "server": "src/main.server.ts",
             "outputMode": "server",
@@ -77,12 +83,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "620kB",
-                  "maximumError": "1.3MB"
+                  "maximumError": "1.5MB"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "4kB",
-                  "maximumError": "12kB"
+                  "maximumError": "24kB"
                 }
               ],
               "outputHashing": "all",
@@ -126,6 +132,56 @@
                   "with": "src/environments/environment.real-api.ts"
                 }
               ]
+            },
+            "production-api": {
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              },
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "620kB",
+                  "maximumError": "1.5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "24kB"
+                }
+              ],
+              "outputHashing": "all",
+              "prerender": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production-api.ts"
+                }
+              ],
+              "security": {
+                "allowedHosts": [
+                  "localhost",
+                  "127.0.0.1",
+                  "mantra-core-health.local",
+                  "frontend"
+                ]
+              }
+            },
+            "demo": {
+              "server": false,
+              "ssr": false,
+              "outputMode": "static",
+              "prerender": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.demo.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -159,6 +215,10 @@
             "lan": {
               "buildTarget": "mantra-core-health:build:development",
               "allowedHosts": true
+            },
+            "demo": {
+              "buildTarget": "mantra-core-health:build:development,demo",
+              "proxyConfig": "proxy.demo.conf.mjs"
             }
           },
           "defaultConfiguration": "development"

@@ -1,3 +1,6 @@
+import type { VerificationInfo } from '../../../../core/verification/verification-status';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
+
 /* ============================================================================
     La forma de un resultado del buscador público.
 
@@ -90,6 +93,14 @@ export interface SearchResultItem {
   /** Imagen del cuadrado. Gana sobre `figureText` si viene. */
   readonly figureImageUrl?: string;
   /**
+   * Foto de la tarjeta, distinta de la figura de 56 px.
+   *
+   * La figura es la identidad —iniciales o logo— y esta es la **imagen** con la
+   * que un directorio se hojea: en grilla va arriba, a todo el ancho; en lista,
+   * a la izquierda. Opcional: sin ella la tarjeta es la de siempre.
+   */
+  readonly photoUrl?: string;
+  /**
    * Qué es esto, en una línea: «Hospital público de segundo nivel», «Farmacia ·
    * entrega a domicilio», «Cardióloga · Clínica Los Olivos».
    *
@@ -116,6 +127,15 @@ export interface SearchResultItem {
    * `aTarjeta`, que la omite en esos casos.
    */
   readonly kind?: SearchResultSeal;
+  /**
+   * La verificación de un PROFESIONAL, para el check azul junto al nombre.
+   *
+   * La decide la API (`verificationOf` la normaliza); la tarjeta sólo la pinta.
+   * **Sólo la declaran los resultados de profesionales**: una clínica o una
+   * farmacia no es «un profesional verificado», y esas tarjetas conservan su
+   * sello textual. Ausente, no se pinta insignia.
+   */
+  readonly verification?: VerificationInfo;
   /** Las líneas de contexto, en el orden en que se muestran. */
   readonly meta?: readonly SearchResultMeta[];
   /** Los sellos, bajo las líneas de contexto. */
@@ -129,6 +149,25 @@ export interface SearchResultItem {
    * mismo destino. Los directorios que no la declaran no cambian en nada.
    */
   readonly action?: SearchResultAction;
+  /** Calificación y número de valoraciones o reseñas. */
+  readonly rating?: SearchResultRating;
+  /**
+   * Cifras por las que el directorio puede ordenar: «encuentros atendidos»,
+   * «recetas emitidas»…
+   *
+   * La tarjeta no las dibuja: son la clave de un orden, y cuál de ellas se
+   * muestra lo decide quien traduce su dominio (en `meta`, como cualquier otra
+   * línea). Las claves las declara el directorio en sus
+   * `criteriosDeOrden`; una que falta se lee como «sin dato» y va al final.
+   */
+  readonly stats?: Readonly<Record<string, number>>;
+}
+
+/** Calificación y número de valoraciones de un resultado. */
+export interface SearchResultRating {
+  readonly average: number;
+  readonly count: number;
+  readonly label?: string;
 }
 
 /** Un enlace de acción dentro de la tarjeta. */
@@ -138,4 +177,9 @@ export interface SearchResultAction {
   readonly link: string;
   /** Ancla dentro de esa ruta, para caer en la sección que importa. */
   readonly fragment?: string;
+  /**
+   * El ícono del botón. Sin él, el calendario cuando hay ancla (los horarios)
+   * y la flecha cuando no. Un botón, un ícono: nunca dos.
+   */
+  readonly icon?: NavIconName;
 }

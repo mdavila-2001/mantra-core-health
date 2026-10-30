@@ -151,17 +151,3 @@ que se pierde de un vistazo.
   otros dueños.
 - Cada dueño aplica esta decisión **en sus archivos reservados**. El inventario
   con el número de cada uno está en el reparto del turno.
-
-## Lo que queda sin confirmar
-
-**La corrección, leída al pie de la letra, contradice un pedido anterior del
-mismo cliente que ya está implementado.** C-21 dice «todo lo que sean opciones
-deben ser selects»; el pedido del 22/08 pide chips de filtro en los cuatro
-directorios, y esos chips **son** opciones. Acá se resolvió que el pedido del
-22/08 sobrevive como excepción declarada, porque su argumento —esconder las
-opciones hace que nadie sepa que existen— sigue siendo cierto y porque
-retirarlo no es lo que C-21 buscaba corregir.
-
-**Es un supuesto de lectura, no un hecho**, y hay que confirmárselo al
-propietario. Si la respuesta es que C-21 también alcanza a los directorios, son
-dos pantallas de otros dueños y el cambio es quitar un `asChips`.

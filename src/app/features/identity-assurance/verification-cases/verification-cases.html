@@ -1,7 +1,7 @@
 @if (!embedded()) {
   <app-page-header
     title="Mis verificaciones"
-    subtitle="El estado de tus trámites de verificación de identidad, y el detalle de cada uno."
+    subtitle="El estado de sus trámites de verificación de identidad, y el detalle de cada uno."
     [breadcrumbs]="breadcrumbs()"
   />
 }
@@ -12,7 +12,7 @@
       [state]="state()"
       [columns]="columns()"
       [trackBy]="byId"
-      caption="Tus casos de verificación de identidad"
+      caption="Sus casos de verificación de identidad"
     />
   </app-view-state-host>
 </div>
@@ -20,25 +20,16 @@
 <!-- Celdas con presentación propia. Un ng-template no renderiza nada por sí
      solo: la tabla las instancia por fila. -->
 <ng-template #idCell let-caso>
-  @if (caso.sinVeredicto) {
-    <!-- FT-32-R06/R07: sin veredicto no hay detalle que abrir. Es un botón y
-         no un enlace desactivado porque sí hace algo: explica en qué punto
-         está el trámite. -->
-    <button
-      app-button
-      variant="ghost"
-      size="sm"
-      class="tabular-nums"
-      [attr.data-testid]="'case-pending-' + caso.id"
-      (clicked)="abrirAviso(caso)"
-    >
-      {{ caso.id }}
-    </button>
-  } @else {
-    <a app-link class="tabular-nums" [routerLink]="['/my-account/identity/cases', caso.id]">
-      {{ caso.id }}
-    </a>
-  }
+  <button
+    app-button
+    variant="ghost"
+    size="sm"
+    class="tabular-nums"
+    [attr.data-testid]="'case-detail-' + caso.id"
+    (clicked)="abrirDetalle(caso)"
+  >
+    {{ caso.id }}
+  </button>
 </ng-template>
 
 <ng-template #typeCell let-caso>
@@ -109,17 +100,19 @@
   <p class="casos__error" role="alert" data-testid="cases-download-error">{{ mensaje }}</p>
 }
 
-<!-- FT-32-R06/R07: lo que se abre en lugar del detalle. -->
-@if (avisoDe(); as caso) {
+@if (detalleDe(); as caso) {
   <app-content-dialog
-    heading="Todavía no hay un veredicto"
-    [description]="'Tu trámite ' + caso.id + ' está en ' + caso.statusLabel + '.'"
-    closeLabel="Entendido"
-    (closed)="cerrarAviso()"
+    heading="Detalle del trámite"
+    [description]="caso.typeLabel + ' · ' + caso.statusLabel"
+    closeLabel="Cerrar"
+    (closed)="cerrarDetalle()"
   >
-    <p>
-      Cuando termine de revisarse vas a poder abrir el detalle con el resultado y, si
-      corresponde, la evidencia que quedó registrada. No hace falta que hagas nada.
-    </p>
+    <dl class="casos__detalle">
+      <dt>Identificador</dt><dd><code class="tabular-nums">{{ caso.id }}</code></dd>
+      <dt>Estado</dt><dd><app-badge [variant]="caso.statusVariant">{{ caso.statusLabel }}</app-badge></dd>
+      @if (caso.openedAt) { <dt>Fecha de apertura</dt><dd>{{ caso.openedAt | date: 'dd/MM/yyyy HH:mm' }}</dd> }
+      @if (caso.completedAt) { <dt>Fecha de finalización</dt><dd>{{ caso.completedAt | date: 'dd/MM/yyyy HH:mm' }}</dd> }
+      <dt>Evidencia</dt><dd>{{ caso.evidenceFileId ? 'Adjunta' : 'Sin evidencia adjunta' }}</dd>
+    </dl>
   </app-content-dialog>
 }

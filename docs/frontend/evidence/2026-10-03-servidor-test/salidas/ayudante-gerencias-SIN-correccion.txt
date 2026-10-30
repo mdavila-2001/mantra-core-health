@@ -1,0 +1,5 @@
+# Spec «el alta se completa hasta la confirmación» (maqueta) — SIN la corrección (ayudante viejo de origin/test)
+  ✘  1 [chromium] › playwright/carril-registro-aseguradora-representante.spec.ts:275:7 › alta pública de aseguradora — representante legal y gerencias (subtarea 1.4) › el alta se completa hasta la confirmación (3.0m)
+      - waiting for getByTestId('registro-organizacion-executives-general-manager-name')
+    artifacts/playwright/salida/carril-registro-asegurador-5d289-pleta-hasta-la-confirmación-chromium/test-failed-1.png
+  1 failed

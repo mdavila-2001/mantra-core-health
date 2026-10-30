@@ -29,14 +29,14 @@
     </div>
   }
   @case ('carga') {
-    <p class="stored-file__estado" role="status">Preparando el archivo…</p>
+    <app-loading-state class="stored-file__estado" message="Preparando el archivo…" />
   }
   @case ('error') {
     <!-- Un 403 por adjunto ajeno y un archivo borrado llegan igual: no se
          distingue en pantalla lo que el backend decidió no distinguir. -->
     <p class="stored-file__estado stored-file__estado--error" role="status">
       No pudimos abrir este archivo. Puede que ya no esté disponible o que no
-      tengas permiso para verlo.
+      tenga permiso para verlo.
     </p>
   }
 }

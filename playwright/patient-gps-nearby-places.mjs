@@ -198,7 +198,7 @@ async function recorridoDeEscritorio(navegador) {
   );
   if (receta) {
     await verFarmacias.click();
-    const origen = pagina.getByTestId('compra-origen');
+    const origen = pagina.getByTestId('where-to-buy-origin');
     await origen.waitFor({ timeout: 30_000 });
     ok(
       '«Dónde comprar» mide desde tu casa sin pedir nada',

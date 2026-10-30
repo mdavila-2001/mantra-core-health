@@ -5,6 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { OrganizationNew } from './organization-new';
+import { environment } from '../../../../../environments/environment';
 
 /**
  * El alta es una sola petición contra `POST /admin/tenants`: organización y
@@ -26,6 +27,14 @@ const RESPUESTA = {
 const OWNER: ReferenceOption = { value: 'u-1', label: 'María Condori' };
 const PAIS: ReferenceOption = { value: 'c-pe', label: 'Peru', hint: 'PE' };
 const JURISDICCION: ReferenceOption = { value: 'c-jur-bo', label: 'Bolivia', hint: 'JUR_BO' };
+
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
 
 describe('OrganizationNew', () => {
   let fixture: ComponentFixture<OrganizationNew>;
@@ -70,15 +79,37 @@ describe('OrganizationNew', () => {
       timeZone: '',
     });
     interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PHARMACY' });
-    crudo<{ set: (v: unknown) => void }>('owner').set(OWNER);
+    // Owner, país y jurisdicción se eligen en buscadores, pero viven en el
+    // grupo: es lo que deja al motor validarlos página por página.
     // Una farmacia es territorial: sin país y jurisdicción el backend la
     // rechaza con 422, así que el formulario los exige.
-    crudo<{ set: (v: unknown) => void }>('pais').set(PAIS);
-    crudo<{ set: (v: unknown) => void }>('jurisdiccion').set(JURISDICCION);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      owner: OWNER,
+      pais: PAIS,
+      jurisdiccion: JURISDICCION,
+    });
+  }
+
+  /** Un control del grupo, por nombre. */
+  function control(nombre: string): { valid: boolean; enabled: boolean; touched: boolean; errors: object | null } {
+    return interno<{ get: (n: string) => { valid: boolean; enabled: boolean; touched: boolean; errors: object | null } }>(
+      'form',
+    ).get(nombre);
   }
 
   function enviar() {
     interno<() => void>('submit')();
+  }
+
+  /** Pulsa «Siguiente» hasta la página con ese título (o hasta que no avance). */
+  function irALaPagina(titulo: string): void {
+    const raiz = fixture.nativeElement as HTMLElement;
+    for (let intento = 0; intento < 6; intento += 1) {
+      fixture.detectChanges();
+      if (raiz.querySelector('.paginated-form__titulo')?.textContent?.trim() === titulo) return;
+      raiz.querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')?.click();
+    }
+    fixture.detectChanges();
   }
 
   it('sin tipo o sin owner no se envía nada: los dos son obligatorios', () => {
@@ -87,7 +118,7 @@ describe('OrganizationNew', () => {
     enviar();
 
     interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'PHARMACY' });
-    crudo<{ set: (v: unknown) => void }>('owner').set(null);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ owner: null });
     enviar();
 
     // El `http.verify()` del afterEach falla si algo salió a la red.
@@ -116,11 +147,12 @@ describe('OrganizationNew', () => {
 
   it('un tipo territorial sin país no se envía', () => {
     completar();
-    crudo<{ set: (v: unknown) => void }>('pais').set(null);
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ pais: null });
     enviar();
 
     expect(interno<() => { status: string }>('state')().status).toBe('ready');
-    expect(interno<() => boolean>('paisFaltante')()).toBe(true);
+    expect(control('pais').touched).toBe(true);
+    expect(control('pais').errors).toEqual({ required: true });
   });
 
   it('una aseguradora exige su bloque: sin él no se envía', () => {
@@ -211,9 +243,9 @@ describe('OrganizationNew', () => {
   });
 
   it('la búsqueda de owner traduce usuarios a opciones con su aviso', () => {
-    interno<(t: string) => void>('buscarOwner')('maria');
+    crudo<{ buscar: (t: string) => void }>('owners').buscar('maria');
 
-    http.expectOne((r) => r.url === '/iam/users').flush({
+    http.expectOne((r) => r.url === '/iam/users/search').flush({
       items: [
         {
           id: 'u-1',
@@ -229,10 +261,28 @@ describe('OrganizationNew', () => {
       nextCursor: null,
     });
 
-    const opciones = interno<() => readonly ReferenceOption[]>('candidatosOwner')();
+    const opciones = crudo<{ candidatos: () => readonly ReferenceOption[] }>('owners').candidatos();
     expect(opciones).toEqual([
       { value: 'u-1', label: 'María Condori', hint: 'Correo sin verificar' },
     ]);
+  });
+
+  it('un fallo de la búsqueda de owner se dice en la pantalla, no como «ningún usuario coincide»', () => {
+    crudo<{ buscar: (t: string) => void }>('owners').buscar('maria');
+    http
+      .expectOne((r) => r.url === '/iam/users/search')
+      .flush(
+        { code: 'INTERNAL', message: 'boom', correlationId: 'req-77' },
+        { status: 500, statusText: 'Server Error' },
+      );
+    fixture.detectChanges();
+
+    const buscador = crudo<{ candidatos: () => readonly ReferenceOption[]; error: () => string | null }>(
+      'owners',
+    );
+    expect(buscador.candidatos()).toEqual([]);
+    expect(buscador.error()).toContain('No pudimos buscar personas');
+    expect(buscador.error()).toContain('req-77');
   });
 
   it('no se envía dos veces mientras la primera está en vuelo', () => {
@@ -243,6 +293,105 @@ describe('OrganizationNew', () => {
     // `expectOne` falla si hubo dos.
     http.expectOne('/admin/tenants').flush(RESPUESTA);
   });
+  /**
+   * `CLINIC` (Clínica) llegó con la API que lo agrega a `CreateTenantDto` y lo
+   * declara territorial: se ofrece después de «Hospital», como en el alta
+   * pública, y viaja con país y jurisdicción.
+   */
+  it('ofrece «Clínica» después de «Hospital» en el selector de tipo', () => {
+    const opciones = crudo<readonly { value: string; label: string }[]>('opcionesDeTipo');
+    const valores = opciones.map((o) => o.value);
+
+    expect(opciones).toContainEqual({ value: 'CLINIC', label: 'Clínica' });
+    expect(valores.indexOf('CLINIC')).toBe(valores.indexOf('HOSPITAL') + 1);
+  });
+
+  it('una clínica viaja con tenantType CLINIC, país y jurisdicción', () => {
+    completar({ code: 'CLINICA-NORTE', legalName: 'Clínica Norte S.R.L.' });
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({ tipo: 'CLINIC' });
+    enviar();
+
+    const req = http.expectOne('/admin/tenants');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      code: 'CLINICA-NORTE',
+      legalName: 'Clínica Norte S.R.L.',
+      ownerUserId: 'u-1',
+      tenantType: 'CLINIC',
+      countryConceptId: 'c-pe',
+      jurisdictionConceptId: 'c-jur-bo',
+    });
+
+    req.flush({ ...RESPUESTA, code: 'CLINICA-NORTE', legalName: 'Clínica Norte S.R.L.' });
+  });
+
+  it('una clínica sin jurisdicción no se envía y el campo dice qué falta', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      tipo: 'CLINIC',
+      jurisdiccion: null,
+    });
+    enviar();
+
+    // `http.verify()` del afterEach: nada salió a la red.
+    expect(interno<() => { status: string }>('state')().status).toBe('ready');
+    // El control vive en el grupo y está encendido para un tipo territorial:
+    // es lo que hace que el motor bloquee «Siguiente» en «Dónde opera».
+    expect(control('jurisdiccion').enabled).toBe(true);
+    expect(control('jurisdiccion').errors).toEqual({ required: true });
+
+    const wherePage = interno<() => readonly { titulo: string; campos: readonly { key: string; mensajeDeError?: string }[] }[]>(
+      'paginas',
+    )().find((p) => p.titulo === 'Dónde opera');
+    expect(wherePage?.campos.find((c) => c.key === 'jurisdiccion')?.mensajeDeError).toBe(
+      'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
+    );
+  });
+
+  it('una clínica sin jurisdicción: «Siguiente» no pasa de «Dónde opera» y el mensaje se ve', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      tipo: 'CLINIC',
+      jurisdiccion: null,
+    });
+    irALaPagina('Dónde opera');
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="paginated-form-continuar"]')!
+      .click();
+    fixture.detectChanges();
+
+    const raiz = fixture.nativeElement as HTMLElement;
+    expect(raiz.querySelector('.paginated-form__titulo')?.textContent?.trim()).toBe('Dónde opera');
+    expect(raiz.textContent).toContain(
+      'Elija la jurisdicción: sin ella este tipo de organización no se puede registrar.',
+    );
+  });
+
+  it('un tipo no territorial apaga país y jurisdicción: no lo bloquean ni viajan', () => {
+    completar();
+    interno<{ patchValue: (v: object) => void }>('form').patchValue({
+      tipo: 'BROKER',
+      pais: null,
+      jurisdiccion: null,
+      brokerCode: 'CORR-1',
+      licenseNumber: 'LIC-9',
+    });
+
+    expect(control('pais').enabled).toBe(false);
+    expect(control('jurisdiccion').enabled).toBe(false);
+
+    enviar();
+    const req = http.expectOne('/admin/tenants');
+    expect(req.request.body).toEqual({
+      code: 'FARMACIA-SUR',
+      legalName: 'Farmacia del Sur S.R.L.',
+      ownerUserId: 'u-1',
+      tenantType: 'BROKER',
+      broker: { brokerCode: 'CORR-1', licenseNumber: 'LIC-9' },
+    });
+    req.flush(RESPUESTA);
+  });
+
   it('un 404 del envío se dice, no deja el formulario mudo (S6)', () => {
     // Antes `errorMessage` no tenía rama `not-found`: el estado quedaba en S6,
     // el botón volvía a habilitarse y la pantalla no decía nada.
@@ -251,7 +400,7 @@ describe('OrganizationNew', () => {
     fixture.detectChanges();
 
     const mensaje = (instancia['errorMessage'] as () => string | null).call(instancia);
-    expect(mensaje).toContain('No encontramos la cuenta que elegiste como owner');
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos la cuenta que elegiste como owner');
+    expect(mensaje).toContain('No encontramos la cuenta que eligió como owner');
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos la cuenta que eligió como owner');
   });
 });

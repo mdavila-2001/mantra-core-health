@@ -45,13 +45,11 @@
   }
 </ng-template>
 
-<!-- El id viaja en la query para que el formulario abra con el caso ya puesto:
-     una cola desde la que hay que copiar un uuid a mano no resuelve nada. -->
+<!-- La revisión abre el expediente persistido; no obliga a copiar uuids. -->
 <ng-template #actionCell let-caso>
   <a
     app-link
-    [routerLink]="escalateRoute"
-    [queryParams]="{ caseId: caso.id }"
+    [routerLink]="detailRoute + '/' + caso.id"
     [attr.aria-label]="'Revisar el caso ' + caso.id"
   >
     Revisar

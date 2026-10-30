@@ -6,14 +6,15 @@
     aplica acá: quien lee su propia historia lee poco y de a una cosa.
     ========================================================================== */
 
-/* FT-20 · el cuerpo y la barra lateral.
-   En teléfono la descarga va PRIMERO —es la acción por la que mucha gente entra
-   y no puede quedar al final de una lista larga—; en escritorio pasa al costado
-   y queda pegada, visible desde cualquier pestaña. */
+/* FT-20 · la descarga arriba y el cuerpo a todo el ancho.
+   Una sola columna en cualquier ancho: la descarga va PRIMERO —es la acción por
+   la que mucha gente entra— y la tarjeta con pestañas ocupa el área entera.
+   Antes, en escritorio, la descarga iba en una columna lateral de 18rem que le
+   quitaba ese ancho a la tabla (pedido del cliente, 25/09/2026). */
 .historia {
   display: flex;
-  flex-direction: column-reverse;
-  gap: var(--sp-6);
+  flex-direction: column;
+  gap: var(--sp-4);
 }
 
 .historia__cuerpo {
@@ -28,26 +29,8 @@
   min-inline-size: 0;
 }
 
-.historia__lateral {
+.historia__barra {
   min-inline-size: 0;
-}
-
-/* FT-20-R07 · desde 64rem la descarga vive al costado y acompaña el scroll:
-   «Descargar todo» tiene que poder alcanzarse desde cualquier pestaña sin
-   volver arriba. */
-@media (min-width: 64rem) {
-  .historia {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 18rem;
-    align-items: start;
-    gap: var(--sp-6);
-  }
-
-  .historia__lateral {
-    position: sticky;
-    /* Bajo el encabezado de la página, no pegado al borde de la ventana. */
-    inset-block-start: var(--sp-6);
-  }
 }
 
 .historia__bloque {
@@ -134,11 +117,12 @@
 
 /* La descarga completa encabeza la pantalla: es lo que el registro del cliente
    pide poder hacer, y quien viene a eso no debería recorrer todo primero. */
+/* El botón y su nota en una fila; en teléfono la nota baja sola. */
 .historia__descarga-total {
-  display: grid;
-  gap: var(--sp-2);
-  justify-items: start;
-  margin-block-end: var(--sp-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
 }
 
 .historia__descarga-nota {
@@ -147,33 +131,173 @@
   margin: 0;
 }
 
-.historia__item--receta {
-  border-inline-start: 3px solid var(--color-primary, #0b557e);
+/* ---- C6 · la tarjeta única, las atenciones y los diagnósticos ------------- */
+
+/* Regla 8: una sola tarjeta con las pestañas dentro, a lo ancho del área de
+   contenido. Sin `max-inline-size` propio — el tope lo pone `.app-main__inner`
+   y nadie más. */
+.historia__tarjeta {
+  display: block;
+  inline-size: 100%;
+}
+
+.historia__atenciones {
+  display: block;
+}
+
+/* El cuerpo de una atención desplegada: primero sus acciones, después la línea.
+   Las acciones arriba porque «Descargar PDF» es sobre la atención entera, y
+   debajo de la línea se leería como si fuera del último hecho. */
+.historia__atencion {
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-4);
-  box-shadow: 0 2px 10px rgb(11 85 126 / 6%);
 }
 
-.historia__item--receta .historia__principal {
-  font-size: var(--fs-h4, 1.05rem);
+/* Cada bloque de diagnósticos con su propio aire: en móvil son tres listas
+   seguidas y sin separación se leen como una sola. */
+.historia__dx-bloque {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-block-end: var(--sp-6);
 }
 
-.historia__descarga-recetas {
-  display: grid;
+.historia__dx-bloque:last-child {
+  margin-block-end: 0;
+}
+
+.historia__dx-titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* El diagnóstico apila su cabecera y su tabla de datos: el badge tiene que
+   quedar al lado del nombre, no al final de la ficha. */
+.historia__dx {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  align-items: stretch;
+}
+
+.historia__dx-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--sp-2);
-  justify-items: start;
-  padding: var(--sp-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+}
+
+/* ════ Rediseño del paciente, tercera vuelta (22/10/2026) ════
+   Va en la hoja del componente y no en `styles/paciente.css`: esa hoja cuenta
+   en el paquete inicial, que está al ras de su presupuesto, y estas reglas
+   sólo hacen falta al abrir esta pantalla. `:host-context` las sigue atando a
+   la sesión de paciente, igual que la capa global. */
+
+/* Cada atención, una tarjeta que se abre. */
+:host-context(.app-shell--paciente) .historia__atenciones {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel {
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition:
+    box-shadow var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel:hover,
+:host-context(.app-shell--paciente) .historia__atenciones app-accordion-panel.is-expanded {
+  border-color: var(--c-aqua-300);
+  box-shadow: var(--shadow-md);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__trigger {
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: 0;
+}
+
+/* A la izquierda, un círculo de color (el `::before` del botón) con una
+   carpeta clínica encima (el del encabezado), como máscara para que tome el
+   color del tema. */
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
+  content: '';
+  flex-shrink: 0;
+  inline-size: 2.75rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--c-aqua-100);
+  box-shadow: inset 0 0 0 1px var(--c-aqua-200);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__heading {
+  position: relative;
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__heading::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(var(--sp-5) + 1.375rem);
+  inline-size: 1.35rem;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: var(--brand-primary);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='4' width='14' height='17' rx='2'/%3E%3Cpath d='M9 4V3h6v1'/%3E%3Cpath d='M12 9v6M9 12h6'/%3E%3C/svg%3E") center / contain no-repeat;
+  pointer-events: none;
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__label {
+  flex: 1;
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__chevron {
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: var(--sp-1);
+  border-radius: 50%;
+  background: var(--bg-inset);
+  color: var(--brand-primary);
+}
+
+:host-context(.app-shell--paciente) .historia__atenciones ::ng-deep .accordion-panel__region {
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-block-start: 1px solid var(--border-default);
+}
+
+/* Recetas, alergias, resultados y diagnósticos: filas separadas, con el
+   mismo borde redondo que las atenciones. */
+:host-context(.app-shell--paciente) .historia__lista {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+:host-context(.app-shell--paciente) .historia__item {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xl);
   background: var(--bg-surface);
 }
 
-@media (max-width: 47.99rem) {
-  .historia__descarga-recetas {
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: stretch;
-  }
+/* En oscuro el círculo claro apagaba la carpeta aguamarina. */
+:host-context([data-theme='dark']) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
+  background: var(--bg-inset);
+  box-shadow: inset 0 0 0 1px var(--border-default);
+}
 
-  .historia__descarga-recetas button {
-    inline-size: 100%;
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .historia__atenciones ::ng-deep .accordion-panel__trigger::before {
+    background: var(--bg-inset);
+    box-shadow: inset 0 0 0 1px var(--border-default);
   }
 }

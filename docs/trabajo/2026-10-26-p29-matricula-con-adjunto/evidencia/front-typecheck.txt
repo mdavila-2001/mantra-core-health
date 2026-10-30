@@ -1,0 +1,2 @@
+  acreditación: descubiertos 697/697 · con escenario 3/697 · verificados visualmente 0/697 · bloqueados 101/697 · montó e interactuó: se miden en el banco (runtime)
+TSC_EXIT=0

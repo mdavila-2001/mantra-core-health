@@ -1,11 +1,13 @@
 import { uuid } from './mock-store';
+import type { TenantTypeCode } from '../data-access/directory/directory.types';
 
 /* ============================================================================
     Las cuentas del backend simulado y sus tokens.
 
     El token de acceso es un JWT «de utilería»: tres segmentos, con un payload
-    real que `decodeAccessToken` lee tal cual (sub, roles, tenants, name, pid,
-    hpid, exp). La firma es decorativa: nadie la verifica en esta rama.
+    real que `decodeAccessToken` lee tal cual (sub, roles, tenants, name,
+    tenantNames, tenantTypes, scopedRoles, pid, hpid, exp). La firma es
+    decorativa: nadie la verifica en esta rama.
     ========================================================================== */
 
 export interface MockUser {
@@ -18,11 +20,21 @@ export interface MockUser {
   readonly roles: readonly string[];
   readonly tenants: readonly string[];
   readonly tenantNames: Readonly<Record<string, string>>;
-  /** Su organización propia, la que se activa por defecto («Mi consultorio»). */
-  readonly ownTenantId?: string;
+  /**
+   * Roles con ámbito de organización, por tenant: el claim `scopedRoles` que firma
+   * la API (un código que figura acá sólo vale en esos tenants; uno que no, es
+   * global). El simulador firma exactamente las claves de la API: no hay
+   * `ownTenantId`.
+   */
+  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
   readonly patientProfileId?: string;
   readonly practitionerProfileId?: string;
   readonly personId: string;
+  /**
+   * Clase de cuenta que firmaría la API. Sin valor, el token no trae el claim y
+   * la sesión lo deduce (cuentas de paciente, que no pasan por esta lista).
+   */
+  readonly accountKind?: 'PERSON' | 'ORGANIZATION';
 }
 
 export const TENANT_CLINICA = uuid('tenant-clinica-los-olivos');
@@ -42,6 +54,37 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_FARMACIA]: 'Farmacia Vida',
   [TENANT_LABORATORIO]: 'Laboratorio Central',
   [TENANT_ASEGURADORA]: 'Seguros Andina',
+};
+
+/**
+ * El tipo de cada tenant del simulador, para el claim `tenantTypes` — el
+ * mismo dato que la API real firmaría a partir de `tenant_type_concept_id`.
+ *
+ * Sigue al fixture de `directory.handlers.ts` (`TIPO_ORGANIZACION`) para que
+ * el token y `GET /admin/tenants` digan lo mismo de un mismo tenant: el
+ * consultorio, la clínica y la plataforma son `ORG-CLINICA` ahí, y acá
+ * `'PROVIDER'`; el laboratorio también es `ORG-CLINICA` en el fixture —el
+ * simulador no distingue un centro de diagnóstico de un prestador genérico—,
+ * y se deja anotado que la API real emitiría `'DIAGNOSTIC_CENTER'`, un código
+ * que `TenantTypeCode` (front) todavía no declara.
+ *
+ * Sin campo por cuenta en {@link MockUser}: a diferencia del nombre —que la
+ * médica reescribe para «Mi consultorio»—, el tipo de un tenant no varía
+ * según quién entra, así que basta una tabla y `emitirAccessToken` la
+ * consulta por cada tenant de la cuenta.
+ */
+export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_CENTER'>> = {
+  [TENANT_CONSULTORIO]: 'PROVIDER',
+  [TENANT_CLINICA]: 'PROVIDER',
+  [TENANT_HOSPITAL]: 'HOSPITAL',
+  [TENANT_PLATAFORMA]: 'PROVIDER',
+  [TENANT_FARMACIA]: 'PHARMACY',
+  // Lo que emite la API para un laboratorio dado de alta por
+  // `register-organization` (directory.concepts.ts:169 de la API). No está en
+  // `TENANT_TYPE_CODES` —esa lista es la del alta administrativa— pero sí en el
+  // claim, y es lo que abre «Recepción de muestras» en el menú.
+  [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
+  [TENANT_ASEGURADORA]: 'PAYER',
 };
 
 /** Perfiles que aparecen en toda la aplicación (agenda, expediente, red). */
@@ -77,6 +120,23 @@ export const IDS = {
     userId: uuid('user-aseguradora-staff'),
     personId: uuid('person-aseguradora-staff'),
   },
+  laboratorio: {
+    userId: uuid('user-laboratorio-staff'),
+    personId: uuid('person-laboratorio-staff'),
+  },
+  farmacia: {
+    userId: uuid('user-farmacia-vida'),
+    personId: uuid('person-farmacia-vida'),
+  },
+  aprobador: {
+    userId: uuid('user-aprobador'),
+    personId: uuid('person-aprobador'),
+  },
+  medicoNuevo: {
+    userId: uuid('user-sinespecialidad'),
+    personId: uuid('person-sinespecialidad'),
+    practitionerProfileId: uuid('hpid-sinespecialidad'),
+  },
 } as const;
 
 export const MOCK_USERS: readonly MockUser[] = [
@@ -86,12 +146,16 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'medica@alovida.mock',
     nationalId: '4567890',
     displayName: 'Dra. Valeria Rojas Mendoza',
-    roles: ['PRACTITIONER', 'CLINICIAN', 'SCHEDULING_ADMIN'],
-    // «Mi consultorio» primero y como organización propia: entra ahí sin pasar
-    // por el selector, y las clínicas quedan a un cambio de distancia.
+    roles: ['PRACTITIONER'],
+    // Tres organizaciones: elige la primera vez y el dispositivo la recuerda
+    // (`AuthService`), como con la API real, que no firma ninguna «propia».
+    // Sólo PRACTITIONER (H2.S1.M3, 2026-09-26): es lo único que la API le da a
+    // un médico autorregistrado; el rol de agenda es de la clínica (`scopedRoles`).
     tenants: [TENANT_CONSULTORIO, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: { ...TENANT_NAMES, [TENANT_CONSULTORIO]: 'Mi consultorio' },
-    ownTenantId: TENANT_CONSULTORIO,
+    // La administración de agenda se la dio la clínica, no su consultorio: en
+    // las otras organizaciones ese rol no vale (misma regla que `RolesGuard`).
+    scopedRoles: { [TENANT_CLINICA]: ['SCHEDULING_ADMIN'] },
     practitionerProfileId: IDS.medica.practitionerProfileId,
     personId: IDS.medica.personId,
   },
@@ -128,6 +192,12 @@ export const MOCK_USERS: readonly MockUser[] = [
       'CASHIER',
       'PERIOP_ADMIN',
       'CLINICAL_INFORMATICIAN',
+      // Revisa las admisiones; la decisión final la toma otra persona
+      // (`aprobador@alovida.mock`): cuatro ojos.
+      'ADMISSIONS_REVIEWER',
+      // Portal de reportería (30/10/2026): administra los reportes. Además de
+      // éste, `BUSINESS_ADMIN` y `PLATFORM_ADMIN` ya lo abren por sí solos.
+      'REPORTING_ADMIN',
     ],
     tenants: [TENANT_CLINICA],
     tenantNames: TENANT_NAMES,
@@ -139,10 +209,37 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'superadmin@alovida.mock',
     nationalId: '9998887',
     displayName: 'Soporte AloVida',
-    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN'],
+    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN', 'REPORTING_ADMIN'],
     tenants: [TENANT_PLATAFORMA, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: TENANT_NAMES,
     personId: IDS.superadmin.personId,
+  },
+  {
+    // Quien decide las admisiones que otro revisó. Sin `SECURITY_ADMIN`: ve la
+    // bandeja por su rol de aprobador y no puede tomar revisiones.
+    key: 'aprobador',
+    id: IDS.aprobador.userId,
+    email: 'aprobador@alovida.mock',
+    nationalId: '6667778',
+    displayName: 'Sandra Mamani Quispe',
+    roles: ['ADMISSIONS_APPROVER'],
+    tenants: [TENANT_CLINICA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.aprobador.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Un médico recién registrado: su admisión espera que corrija y reenvíe.
+    key: 'medico_nuevo',
+    id: IDS.medicoNuevo.userId,
+    email: 'medico.nuevo@alovida.mock',
+    nationalId: '3172830',
+    displayName: 'Ramiro Céspedes Villca',
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_CLINICA],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.medicoNuevo.practitionerProfileId,
+    personId: IDS.medicoNuevo.personId,
   },
   {
     key: 'visitador',
@@ -154,17 +251,19 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.visitador.personId,
+    accountKind: 'PERSON',
   },
   {
     key: 'aseguradora',
     id: IDS.aseguradora.userId,
     email: 'aseguradora@alovida.mock',
     nationalId: '7001001',
-    displayName: 'Patricia Suárez · Seguros Andina',
+    displayName: 'Seguros Andina',
     roles: ['USER'],
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradora.personId,
+    accountKind: 'ORGANIZATION',
   },
   {
     key: 'aseguradora_staff',
@@ -176,22 +275,75 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_ASEGURADORA],
     tenantNames: TENANT_NAMES,
     personId: IDS.aseguradoraStaff.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // El personal del laboratorio: `USER` y nada más, como el dueño de un
+    // centro de diagnóstico que se registró solo. Su autoridad es la membresía
+    // del tenant `DIAGNOSTIC_CENTER` —la API la mira en `LabStaffGuard`—, y
+    // es la cuenta con la que la maqueta recorre la recepción de muestras.
+    key: 'laboratorio',
+    id: IDS.laboratorio.userId,
+    email: 'laboratorio@alovida.mock',
+    nationalId: '7002001',
+    displayName: 'Laboratorio Central',
+    roles: ['USER'],
+    tenants: [TENANT_LABORATORIO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.laboratorio.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
+    // La encargada de Farmacia Vida: `USER` y la membresía del tenant
+    // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
+    // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    key: 'farmacia',
+    id: IDS.farmacia.userId,
+    email: 'farmacia@alovida.mock',
+    nationalId: '7003001',
+    displayName: 'Farmacia Vida',
+    roles: ['USER'],
+    tenants: [TENANT_FARMACIA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.farmacia.personId,
+    accountKind: 'ORGANIZATION',
   },
 ];
 
+/**
+ * Las cuentas de los pacientes del padrón, que no están en {@link MOCK_USERS}.
+ *
+ * Las resuelve quien conoce el padrón (`auth.handlers`), inyectándolo acá: este
+ * archivo no puede importar los fixtures de personas sin armar un ciclo. Hace
+ * falta para que un dependiente con cuenta pueda entrar a aceptar la solicitud.
+ */
+type ResolverDeCuentas = (criterio: {
+  readonly identificador?: string;
+  readonly id?: string;
+  readonly key?: string;
+}) => MockUser | undefined;
+
+let cuentaDePaciente: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
+  cuentaDePaciente = resolver;
+}
+
 export function buscarUsuario(identificador: string): MockUser | undefined {
   const limpio = identificador.trim().toLocaleLowerCase('es');
-  return MOCK_USERS.find(
-    (u) =>
-      u.email === limpio ||
-      u.nationalId === limpio ||
-      u.key === limpio ||
-      u.key === limpio.replace(/@.*$/, ''),
+  return (
+    MOCK_USERS.find(
+      (u) =>
+        u.email === limpio ||
+        u.nationalId === limpio ||
+        u.key === limpio ||
+        u.key === limpio.replace(/@.*$/, ''),
+    ) ?? cuentaDePaciente({ identificador: limpio })
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId);
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -200,6 +352,15 @@ const VIDA_TOKEN_SEGUNDOS = 60 * 60 * 8;
 
 export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
   const header = base64url(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+  // Sólo los tenants de la cuenta, y sólo los que tienen tipo conocido: mismo
+  // criterio que usaría la API real (`TENANT_TYPE_CODE_BY_CONCEPT_ID`), donde
+  // un `tenant_type_concept_id` fuera del catálogo tampoco entra al mapa.
+  const tenantTypes = Object.fromEntries(
+    user.tenants.flatMap((tenantId) => {
+      const tipo = TENANT_TYPES[tenantId];
+      return tipo === undefined ? [] : [[tenantId, tipo]];
+    }),
+  );
   const payload = base64url(
     JSON.stringify({
       sub: user.id,
@@ -208,7 +369,9 @@ export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
       roles: user.roles,
       tenants: user.tenants,
       tenantNames: user.tenantNames,
-      ...(user.ownTenantId === undefined ? {} : { ownTenantId: user.ownTenantId }),
+      ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
+      ...(user.scopedRoles === undefined ? {} : { scopedRoles: user.scopedRoles }),
+      ...(user.accountKind === undefined ? {} : { accountKind: user.accountKind }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),
@@ -225,7 +388,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key);
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

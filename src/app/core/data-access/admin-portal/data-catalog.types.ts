@@ -14,8 +14,38 @@ export type ObjectKind =
   | 'MATERIALIZED_VIEW'
   | 'FOREIGN_TABLE';
 export type ObservationStatus = 'OBSERVED' | 'NOT_OBSERVED' | 'RETIRED';
-export type ReviewStatus = 'DRAFT' | 'NEEDS_REVIEW' | 'APPROVED' | 'REJECTED';
-export type Sensitivity = 'UNKNOWN' | 'NONE' | 'INTERNAL' | 'PII' | 'PHI' | 'SECRET';
+/**
+ * Estados de una ficha (`REVIEW_STATUSES` de la API). `AUTO_DETECTED` es lo
+ * que la clasificación automática detectó y nadie curó; `DRAFT` es el borrador
+ * que una persona guardó sin enviar. No son lo mismo y no se confunden.
+ */
+export const REVIEW_STATUSES = [
+  'AUTO_DETECTED',
+  'DRAFT',
+  'NEEDS_REVIEW',
+  'APPROVED',
+  'REJECTED',
+] as const;
+export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
+
+/**
+ * Niveles de sensibilidad (`SENSITIVITIES` de la API), de menos a más
+ * sensible. Son los `code` de `system_ops.data_classifications`. `UNKNOWN`
+ * significa «sin clasificar» y no es un nivel.
+ */
+export const SENSITIVITIES = [
+  'UNKNOWN',
+  'ANONYMIZED',
+  'PUBLIC',
+  'INTERNAL',
+  'PSEUDONYMIZED',
+  'PERSONAL',
+  'PHI_IDENTIFIER',
+  'PHI_SENSITIVE',
+  'PHI_SPECIAL',
+  'CREDENTIAL',
+] as const;
+export type Sensitivity = (typeof SENSITIVITIES)[number];
 export type ScanStatus = 'QUEUED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
 export type EvidenceKind =
   | 'SCHEMA_COMMENT'
@@ -117,12 +147,31 @@ export interface CatalogObjectsQuery {
   readonly limit?: number;
 }
 
+/**
+ * Lo que la bóveda SALUD dice del módulo dueño de un schema. Es lectura del modelo,
+ * no una ficha revisable.
+ */
+export interface SchemaDescription {
+  readonly moduleNumber: number;
+  readonly moduleCode: string;
+  readonly title: string;
+  readonly domain: string | null;
+  /** `null` si la nota del módulo no trae «Propósito de negocio»: no se inventa uno. */
+  readonly business: string | null;
+  /** Armada sólo con las métricas de la nota; `null` si no las trae. */
+  readonly system: string | null;
+  /** Ruta de la nota en la bóveda. */
+  readonly source: string;
+}
+
 export interface SchemaSummary {
   readonly schemaName: string;
   readonly objects: number;
   readonly notObserved: number;
   readonly annotated: number;
   readonly approved: number;
+  /** `null` si ningún módulo de la bóveda declara el schema. */
+  readonly description: SchemaDescription | null;
 }
 
 export interface Governance {
@@ -311,6 +360,12 @@ export interface AnnotationPatch {
   readonly existenceRationale?: string | null;
   readonly rowGrain?: string | null;
   readonly alternativesRationale?: string | null;
+  // AG-44: el backend ya acepta estos tres campos en `UpsertAnnotationDto`;
+  // faltaban acá, así que ningún formulario podía editarlos sin que la API
+  // devolviera 400 por campo desconocido.
+  readonly processSupported?: string | null;
+  readonly sourceOfTruth?: string | null;
+  readonly producers?: readonly string[];
   readonly deletionImpact?: string | null;
   readonly businessOwner?: string | null;
   readonly dataSteward?: string | null;
@@ -334,4 +389,44 @@ export interface ReviewInput {
   readonly decision: 'APPROVED' | 'REJECTED';
   readonly expectedRevisionNo: number;
   readonly comment?: string;
+}
+
+/* ---- Deriva de permisos (`GET /admin/catalog/permission-drift`) ---------- */
+
+/** Una ruta de la API, tal como la lee la deriva al arrancar. */
+export interface DriftRouteRef {
+  readonly method: string;
+  readonly template: string;
+  readonly controller: string;
+  readonly handler: string;
+}
+
+/** Un rol que alguna ruta exige y la API no siembra. */
+export interface UsedNotSeededRole {
+  readonly role: string;
+  /** Cuántas rutas lo exigen. */
+  readonly routeCount: number;
+  /** Si hay fila en `authz.roles`; `null` si la API no consultó la base. */
+  readonly inDatabase: boolean | null;
+  /** Algunas de las rutas que lo exigen. */
+  readonly sample: readonly DriftRouteRef[];
+}
+
+/** Lo que las rutas exigen contra lo que existe para asignarse. */
+export interface PermissionDrift {
+  readonly generatedAt: Date;
+  readonly routes: {
+    readonly total: number;
+    readonly public: number;
+    readonly withRoles: number;
+    /** Autenticadas sin `@Roles`: las pasa cualquier sesión. */
+    readonly withoutRoles: number;
+  };
+  readonly usedNotSeeded: readonly UsedNotSeededRole[];
+  /** Roles sembrados que ninguna ruta exige. */
+  readonly seededNotUsed: readonly string[];
+  /** Rutas autenticadas sin `@Roles` ni `@Public` (recortada). */
+  readonly routesWithoutRoles: readonly DriftRouteRef[];
+  /** `true` si la lista de arriba se recortó; el total está en `routes.withoutRoles`. */
+  readonly routesWithoutRolesTruncated: boolean;
 }

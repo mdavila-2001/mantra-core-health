@@ -1,9 +1,9 @@
-import { DEPARTAMENTO, ESPECIALIDAD, MUNICIPIO } from './conceptos';
+import { DEPARTMENT, SPECIALTY, MUNICIPALITY } from './concepts';
 import {
   INSURER_NETWORK_PRACTITIONERS,
   type InsurerNetworkPractitioner,
 } from './insurer-network.generated';
-import type { ProfesionalSimulado } from './personas';
+import type { ProfesionalSimulado } from './people.types';
 import { uuid } from '../mock-store';
 
 /* ============================================================================
@@ -150,7 +150,7 @@ const MUNICIPIO_DE_CIUDAD: Readonly<Record<string, string>> = {
 function especialidadDeLaRed(rotulo: string) {
   const fila = ESPECIALIDADES_DE_LA_RED[rotulo];
   if (fila === undefined) {
-    throw new Error(`Especialidad de la red sin mapear: «${rotulo}». Agregala a ESPECIALIDADES_DE_LA_RED.`);
+    throw new Error(`Especialidad de la red sin mapear: «${rotulo}». Agréguela a ESPECIALIDADES_DE_LA_RED.`);
   }
   return fila;
 }
@@ -204,10 +204,10 @@ function profesionalDeLaRed(p: InsurerNetworkPractitioner, indice: number): Prof
     // Dominio `.mock`: no es su correo y no lo pretende. La fuente no publica ninguno.
     email: `${slug}@red.alovida.mock`,
     phone: telefono === undefined ? '' : `+591 ${telefono}`,
-    especialidades: codigos.map((c) => ESPECIALIDAD[c]!),
+    especialidades: codigos.map((c) => SPECIALTY[c]!),
     ciudad: consultorio.city,
-    municipioId: MUNICIPIO[municipio]!,
-    departamentoId: DEPARTAMENTO['geo:bo:department:SC']!,
+    municipioId: MUNICIPALITY[municipio]!,
+    departamentoId: DEPARTMENT['geo:bo:department:SC']!,
     tenantId: uuid(`tenant-red-${p.id}`),
     organizacion: p.networks.map((r) => r.insurer).join(' · '),
     verified: false,
@@ -224,6 +224,7 @@ function profesionalDeLaRed(p: InsurerNetworkPractitioner, indice: number): Prof
     lng: consultorio.lng,
     direccion: consultorio.address,
     origen: 'RED_ASEGURADORA',
+    insurerNetworks: p.networks,
   };
 }
 

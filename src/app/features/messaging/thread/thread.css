@@ -63,6 +63,13 @@
   min-inline-size: 0;
 }
 
+.hilo__nombre-fila {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  min-inline-size: 0;
+}
+
 .hilo__nombre {
   margin: 0;
   font-family: var(--f-titulo);
@@ -268,7 +275,14 @@
 
 /* En el flujo, no pegado arriba: un separador marca dónde empieza un día, y si
    se despega de ahí deja de marcar nada. */
-.hilo__dia,
+/* El `li` del día no lleva pastilla: la lleva su `span`. Con las dos, el
+   `li` —estirado por la columna flex— se pintaba como una barra blanca de
+   lado a lado con la pastilla adentro, pegada a la izquierda. */
+.hilo__dia {
+  align-self: center;
+  margin-block: var(--e2);
+}
+
 .hilo__dia span,
 .hilo__no-leidos span {
   display: inline-block;
@@ -586,6 +600,37 @@
   font-size: var(--fs-caption);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.hilo__ir-cita {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  margin-block: var(--e2) var(--e1);
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-pill);
+  background: var(--petroleo);
+  color: #fff;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: none;
+  transition: filter var(--mov-rapido) var(--curva);
+}
+
+.hilo__ir-cita:hover {
+  filter: brightness(1.12);
+}
+
+.hilo__ir-cita:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.hilo__ir-cita svg {
+  inline-size: 1.15em;
+  block-size: 1.15em;
+  flex: none;
 }
 
 .hilo__documento-preview {

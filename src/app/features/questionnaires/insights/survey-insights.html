@@ -1,0 +1,291 @@
+<app-card variant="outlined" padding="md" class="resumen" data-testid="resumen-medico">
+  <div card-header class="resumen__cabecera">
+    <div>
+      <h2 class="resumen__titulo">Cómo le va</h2>
+      <p class="resumen__bajada">
+        El resumen de todas sus encuestas juntas. No muestra quién respondió.
+      </p>
+    </div>
+  </div>
+
+  <!-- Los filtros viven FUERA del anfitrión de estados: mientras carga, o si
+       no hay nada, se tienen que poder aflojar. -->
+  <div class="resumen__filtros" data-testid="resumen-filtros">
+    <div class="resumen__periodo" data-testid="resumen-periodo">
+      <app-segmented-control
+        [options]="periodos"
+        [value]="periodo()"
+        ariaLabel="Período del resumen"
+        (valueChange)="elegirPeriodo($event)"
+      />
+    </div>
+    <div class="resumen__servicio" data-testid="resumen-servicio">
+      <app-select
+        [options]="opcionesServicio()"
+        [value]="servicio()"
+        ariaLabel="Servicio del resumen"
+        (valueChange)="elegirServicio($event)"
+      />
+    </div>
+  </div>
+
+  <app-view-state-host [state]="vista()" (retry)="cargar()" (refresh)="cargar()">
+    <!-- S2 · Con la forma del contenido: una fila de cifras y dos bloques. -->
+    <div vsh-skeleton class="resumen__esqueleto" data-testid="resumen-cargando">
+      <div class="resumen__esqueleto-kpis">
+        <app-skeleton variant="rect" height="5.5rem" />
+        <app-skeleton variant="rect" height="5.5rem" />
+        <app-skeleton variant="rect" height="5.5rem" />
+      </div>
+      <app-skeleton variant="text" [lines]="4" />
+    </div>
+
+    <!-- S3 · Sin `@if` alrededor (un bloque de control manda el nodo proyectado
+         al slot por defecto). -->
+    <app-empty-state
+      vsh-empty
+      variant="empty"
+      title="Todavía no recibió respuestas"
+      [description]="mensajeVacio()"
+      data-testid="resumen-vacio"
+    >
+      <button
+        app-button
+        empty-actions
+        type="button"
+        variant="outline"
+        (click)="ejecutarAccionVacia()"
+        data-testid="resumen-vacio-accion"
+      >
+        {{ vacio().etiqueta }}
+      </button>
+    </app-empty-state>
+
+    @if (datos(); as d) {
+      @if (suprimido()) {
+        <!-- Suprimido por el servidor (menos de `minCohort` respuestas): sólo hay
+             totales. Se dice por qué, cuántas lleva y cómo ampliarlo; NO se
+             dibujan gráficos vacíos que parezcan un resultado. -->
+        <div class="resumen__cuerpo" data-testid="resumen-suprimido">
+          <div class="resumen__kpis" data-testid="resumen-kpis">
+            @for (kpi of kpis(); track kpi.clave) {
+              <app-metric-card
+                [label]="kpi.label"
+                [value]="kpi.valor"
+                [hint]="kpi.hint"
+                [tone]="kpi.tono"
+                [icon]="kpi.icono"
+                [attr.data-testid]="'kpi-' + kpi.clave"
+              />
+            }
+          </div>
+          <app-empty-state
+            variant="empty"
+            title="El resumen todavía no se muestra"
+            [description]="mensajeSuprimido()"
+            data-testid="resumen-suprimido-aviso"
+          >
+            <button
+              app-button
+              empty-actions
+              type="button"
+              variant="outline"
+              (click)="ejecutarAccionVacia()"
+              data-testid="resumen-suprimido-accion"
+            >
+              {{ vacio().etiqueta }}
+            </button>
+          </app-empty-state>
+        </div>
+      } @else {
+      <div class="resumen__cuerpo" data-testid="resumen-contenido">
+        <div class="resumen__kpis" data-testid="resumen-kpis">
+          @for (kpi of kpis(); track kpi.clave) {
+            <app-metric-card
+              [label]="kpi.label"
+              [value]="kpi.valor"
+              [hint]="kpi.hint"
+              [tone]="kpi.tono"
+              [icon]="kpi.icono"
+              [attr.data-testid]="'kpi-' + kpi.clave"
+            />
+          }
+        </div>
+
+        <!-- Recomendación -->
+        <section class="resumen__seccion" aria-labelledby="resumen-nps-titulo" data-testid="resumen-nps">
+          <h3 id="resumen-nps-titulo" class="resumen__subtitulo">
+            Recomendación
+            @if (!npsSinDatos()) {
+              <span class="resumen__n">n&nbsp;=&nbsp;{{ d.nps.n }}</span>
+            }
+          </h3>
+          @if (npsSinDatos()) {
+            <p class="resumen__nota" data-testid="resumen-nps-sin-datos">
+              Sin datos suficientes: la recomendación se muestra cuando hay al menos
+              {{ d.privacy.minCohort }} respuestas a esa pregunta, para proteger la privacidad de
+              sus pacientes.
+            </p>
+          } @else {
+            <div class="nps" role="img" [attr.aria-label]="npsDescripcion()">
+              @for (seg of segmentos(); track seg.clave) {
+                @if (seg.cantidad > 0) {
+                  <span
+                    class="nps__tramo nps__tramo--{{ seg.clave }}"
+                    [style.flex-grow]="seg.cantidad"
+                  ></span>
+                }
+              }
+            </div>
+            <ul class="nps__leyenda" data-testid="resumen-nps-desglose">
+              @for (seg of segmentos(); track seg.clave) {
+                <li class="nps__item">
+                  <span class="nps__marca nps__marca--{{ seg.clave }}" aria-hidden="true"></span>
+                  <span class="nps__nombre">{{ seg.etiqueta }}</span>
+                  <span class="nps__regla">{{ seg.descripcion }}</span>
+                  <span class="nps__cifra">{{ seg.cantidad }} · {{ seg.porcentaje }}%</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <!-- Por pregunta -->
+        <section class="resumen__seccion" aria-labelledby="resumen-preguntas-titulo" data-testid="resumen-preguntas">
+          <h3 id="resumen-preguntas-titulo" class="resumen__subtitulo">Por pregunta</h3>
+          <ul class="preguntas">
+            @for (item of preguntas(); track item.pregunta.questionId) {
+              <li
+                class="pregunta"
+                [class.pregunta--suprimida]="item.suprimida"
+                [attr.data-testid]="'resumen-pregunta'"
+              >
+                <p class="pregunta__rotulo">{{ item.rotulo }}</p>
+                <p class="pregunta__texto">{{ item.pregunta.text }}</p>
+                @if (item.resumen; as resumen) {
+                  <p class="pregunta__meta">
+                    n&nbsp;=&nbsp;{{ resumen.totalRespondida }}
+                    @if (item.combinada) {
+                      · consultas y servicios juntos
+                    }
+                    @if (resumen.promedio !== null) {
+                      · promedio {{ promedioTexto(resumen.promedio) }}
+                      {{ resumen.escala === '0-10' ? 'de 10' : 'de 5' }}
+                    }
+                  </p>
+                }
+                @if (item.resumen === null) {
+                  <p class="resumen__nota" data-testid="resumen-pregunta-suprimida">
+                    Sin datos suficientes: menos de {{ d.privacy.minCohort }} respuestas a esta
+                    pregunta en el período.
+                  </p>
+                } @else if (item.resumen.totalRespondida === 0) {
+                  <p class="resumen__nota">Nadie respondió esta pregunta en el período.</p>
+                } @else {
+                  <ul class="barras">
+                    @for (barra of item.resumen.barras; track barra.etiqueta) {
+                      <li class="barras__fila">
+                        <span class="barras__etiqueta">{{ barra.etiqueta }}</span>
+                        <span class="barras__pista" aria-hidden="true">
+                          <span class="barras__relleno" [style.inline-size.%]="barra.porcentaje"></span>
+                        </span>
+                        <span class="barras__cifra">{{ barra.cantidad }} · {{ barra.porcentaje }}%</span>
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+          @if (totalPreguntas() > preguntasVisibles) {
+            <button
+              app-button
+              class="resumen__ver-mas"
+              type="button"
+              variant="outline"
+              size="sm"
+              (click)="alternarPreguntas()"
+              data-testid="resumen-ver-preguntas"
+            >
+              {{ verTodas() ? 'Ver menos preguntas' : 'Ver las ' + totalPreguntas() + ' preguntas' }}
+            </button>
+          }
+        </section>
+
+        <!-- Tendencia -->
+        <section class="resumen__seccion" aria-labelledby="resumen-tendencia-titulo" data-testid="resumen-tendencia">
+          <h3 id="resumen-tendencia-titulo" class="resumen__subtitulo">
+            Respuestas en el tiempo
+          </h3>
+          @if (tendencia().length === 0) {
+            <p class="resumen__nota">No hay suficientes períodos para mostrar una tendencia.</p>
+          } @else {
+            <div class="tendencia" tabindex="0" role="region" aria-label="Respuestas por período, con desplazamiento">
+              <ol class="tendencia__columnas">
+                @for (col of tendencia(); track col.periodo) {
+                  <li class="tendencia__col" [attr.title]="col.larga">
+                    <span class="tendencia__cantidad">{{ col.answered }}</span>
+                    <span class="tendencia__pista" aria-hidden="true">
+                      <span class="tendencia__barra" [style.block-size.%]="col.alturaPct"></span>
+                    </span>
+                    <span class="tendencia__etiqueta">{{ col.corta }}</span>
+                    <span class="tendencia__promedio">
+                      {{ col.average === null ? '—' : promedioTexto(col.average) }}
+                    </span>
+                  </li>
+                }
+              </ol>
+            </div>
+            <p class="resumen__nota">
+              Barras: cantidad de respuestas. Debajo de cada fecha, la satisfacción global
+              promedio de 1 a 5.
+            </p>
+            <details class="tendencia__tabla">
+              <summary>Ver como tabla</summary>
+              <table>
+                <caption class="sr-only">Respuestas y satisfacción promedio por período</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Período</th>
+                    <th scope="col">Respuestas</th>
+                    <th scope="col">Satisfacción promedio</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (col of tendencia(); track col.periodo) {
+                    <tr>
+                      <th scope="row">{{ col.larga }}</th>
+                      <td>{{ col.answered }}</td>
+                      <td>{{ col.average === null ? '—' : promedioTexto(col.average) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </details>
+          }
+        </section>
+
+        <!-- Comentarios -->
+        <section class="resumen__seccion" aria-labelledby="resumen-comentarios-titulo" data-testid="resumen-comentarios">
+          <h3 id="resumen-comentarios-titulo" class="resumen__subtitulo">Comentarios del período</h3>
+          @if (comentarios().length === 0) {
+            <p class="resumen__nota" data-testid="resumen-comentarios-reservados">
+              Se muestran cuando hay al menos 5 comentarios en el período, para proteger la
+              privacidad de sus pacientes.
+            </p>
+          } @else {
+            <ul class="comentarios">
+              @for (c of comentarios(); track $index) {
+                <li class="comentario">
+                  <blockquote class="comentario__texto">{{ c.texto }}</blockquote>
+                </li>
+              }
+            </ul>
+            <p class="resumen__nota">Van mezclados: sin nombre, sin fecha, sin consulta y sin un orden que indique cuál es más reciente.</p>
+          }
+        </section>
+      </div>
+      }
+    }
+  </app-view-state-host>
+</app-card>

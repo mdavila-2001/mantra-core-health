@@ -20,11 +20,12 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { searchConceptOptions } from '../concept-search';
 import { errorMessageOf } from '../../../../shared/forms/form-support';
 
 /** S6 del envío: la organización de la ruta no está (o no se puede ver). */
 const ORGANIZACION_NO_ENCONTRADA =
-  'No encontramos esta organización: puede que ya no exista. Volvé al listado de organizaciones.';
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Cuántos candidatos trae cada búsqueda de concepto. */
 const CANDIDATOS_POR_BUSQUEDA = 10;
@@ -143,47 +144,23 @@ export class OrganizationVerify {
   );
 
   protected buscarPais(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosPais, this.buscandoPais);
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosPais,
+      this.buscandoPais,
+    );
   }
 
   protected buscarJurisdiccion(texto: string): void {
-    this.buscarConcepto(texto, this.candidatosJurisdiccion, this.buscandoJurisdiccion);
-  }
-
-  /**
-   * Busca conceptos y los traduce a opciones, con el código como pista.
-   *
-   * @param texto - Lo que se escribió en el buscador.
-   * @param destino - Dónde dejar los candidatos.
-   * @param cargando - Bandera de búsqueda en curso.
-   */
-  private buscarConcepto(
-    texto: string,
-    destino: { set: (opciones: readonly ReferenceOption[]) => void },
-    cargando: { set: (valor: boolean) => void },
-  ): void {
-    if (texto === '') {
-      destino.set([]);
-      return;
-    }
-
-    cargando.set(true);
-    this.terminology.searchConcepts({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        destino.set(
-          pagina.items.map((concepto) => ({
-            value: concepto.conceptId,
-            label: concepto.display,
-            hint: concepto.code,
-          })),
-        );
-        cargando.set(false);
-      },
-      error: () => {
-        destino.set([]);
-        cargando.set(false);
-      },
-    });
+    searchConceptOptions(
+      this.terminology,
+      texto,
+      CANDIDATOS_POR_BUSQUEDA,
+      this.candidatosJurisdiccion,
+      this.buscandoJurisdiccion,
+    );
   }
 
   protected submit(): void {

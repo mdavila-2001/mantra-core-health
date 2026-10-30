@@ -4,7 +4,8 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import { CarePlanBlock, TARGET_INTENCION } from './care-plan-block';
+import { CarePlanBlock } from './care-plan-block';
+import { environment } from '../../../../../environments/environment';
 
 /** Una expansión de catálogo con la forma que sirve `system-context`. */
 const CATALOGO = {
@@ -33,6 +34,14 @@ const RESPUESTA = {
  * contrato la acepte vacía, los pasos sin detalle no viajan, y las fechas
  * salen como día local y no como instante UTC.
  */
+
+// Estas pruebas ejercitan funciones que hoy sólo existen en la maqueta (informe B):
+// contra la API real sus claves no viajan, y eso lo cubren simulator-only.spec y
+// contract-drift.spec. En esta rama la maqueta viene apagada: se enciende acá.
+const mockBackendOriginal = environment.mockBackend;
+beforeAll(() => Object.assign(environment, { mockBackend: true }));
+afterAll(() => Object.assign(environment, { mockBackend: mockBackendOriginal }));
+
 describe('CarePlanBlock', () => {
   let fixture: ComponentFixture<CarePlanBlock>;
   let componente: CarePlanBlock;
@@ -86,13 +95,6 @@ describe('CarePlanBlock', () => {
     fixture.detectChanges();
   }
 
-  it('pide el catálogo de intenciones por su target', () => {
-    fixture.detectChanges();
-    const req = http.expectOne((r) => r.params.get('target') === TARGET_INTENCION);
-    req.flush(CATALOGO);
-    fixture.detectChanges();
-  });
-
   /**
    * El contrato sólo exige el paciente. Un plan sin objetivo escrito es un
    * registro que nadie sabe para qué se creó: no se evalúa, no se cierra y no
@@ -100,15 +102,61 @@ describe('CarePlanBlock', () => {
    */
   it('la meta se exige aunque el contrato la acepte vacía', () => {
     dibujar();
+    señal<string>('motivo').set('Hipertensión sin diagnóstico cerrado.');
     expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
 
     señal<string>('meta').set('Presión por debajo de 130/80 en seis meses.');
     expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
   });
 
+  /**
+   * Un plan de cuidados sin decir por qué se abre no se puede evaluar ni
+   * cerrar. Vale el diagnóstico ya registrado o el motivo escrito a mano.
+   */
+  it('el motivo se exige: un diagnóstico elegido o uno escrito', () => {
+    dibujar();
+    señal<string>('meta').set('Bajar la presión.');
+    expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+
+    señal<string>('motivo').set('  Control de presión  ');
+    expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
+
+    señal<string>('motivo').set('');
+    señal<string | null>('diagnosticoElegido').set('cond-1');
+    expect(interno<() => boolean>('puedeRegistrar')()).toBe(true);
+  });
+
+  it('el motivo escrito viaja como `reasonText`', () => {
+    dibujar();
+    señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('  Control de presión  ');
+
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/charts/care-plans');
+    expect(req.request.body.reasonText).toBe('Control de presión');
+    req.flush(RESPUESTA);
+  });
+
+  /** El diagnóstico ya **es** el motivo: mandar los dos duplicaría el dato. */
+  it('con un diagnóstico elegido, el motivo escrito no viaja', () => {
+    dibujar();
+    señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Algo escrito antes de elegir');
+    señal<string | null>('diagnosticoElegido').set('cond-1');
+
+    interno<() => void>('registrar')();
+
+    const req = http.expectOne('/charts/care-plans');
+    expect('reasonText' in (req.request.body as object)).toBe(false);
+    expect(req.request.body.conditionId).toBe('cond-1');
+    req.flush(RESPUESTA);
+  });
+
   it('el fin no puede caer antes del inicio', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
     señal<Date | null>('desde').set(new Date(2026, 8, 10));
     señal<Date | null>('hasta').set(new Date(2026, 8, 1));
 
@@ -123,9 +171,13 @@ describe('CarePlanBlock', () => {
   it('los pasos sin detalle no viajan', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
     interno<() => void>('agregarActividad')();
     const primera = interno<() => readonly { clave: number }[]>('actividades')()[0]!;
-    interno<(clave: number, v: string) => void>('fijarDetalle')(primera.clave, '  Caminar 30 min  ');
+    interno<(clave: number, v: string) => void>('fijarDetalle')(
+      primera.clave,
+      '  Caminar 30 min  ',
+    );
 
     interno<() => void>('registrar')();
 
@@ -137,6 +189,7 @@ describe('CarePlanBlock', () => {
   it('sin ningún paso con detalle, `activities` se omite', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
 
@@ -152,6 +205,7 @@ describe('CarePlanBlock', () => {
   it('las fechas viajan como día local, no como instante UTC', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
     señal<Date | null>('desde').set(new Date(2026, 8, 10, 22, 30));
 
     interno<() => void>('registrar')();
@@ -164,6 +218,7 @@ describe('CarePlanBlock', () => {
   it('los opcionales sin elegir se omiten, no viajan en null', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
 
@@ -172,36 +227,22 @@ describe('CarePlanBlock', () => {
       'authorProfileId',
       'goalText',
       'patientProfileId',
+      'reasonText',
     ]);
-    req.flush(RESPUESTA);
-  });
-
-  /** La cita elegida gana sobre el encuentro que pase el anfitrión. */
-  it('manda la cita elegida y no el encuentro en curso', () => {
-    fixture.componentRef.setInput('encounterId', 'enc-en-curso');
-    fixture.componentRef.setInput('citas', [
-      { id: 'enc-9', etiqueta: '7 sept 2026 · Control', enCurso: false },
-    ]);
-    dibujar();
-    señal<string>('meta').set('Bajar la presión.');
-    señal<string | null>('citaElegida').set('enc-9');
-
-    interno<() => void>('registrar')();
-
-    const req = http.expectOne('/charts/care-plans');
-    expect(req.request.body.encounterId).toBe('enc-9');
     req.flush(RESPUESTA);
   });
 
   it('tras abrir el plan, el formulario queda vacío', () => {
     dibujar();
     señal<string>('meta').set('Bajar la presión.');
+    señal<string>('motivo').set('Control de presión.');
 
     interno<() => void>('registrar')();
     http.expectOne('/charts/care-plans').flush(RESPUESTA);
     fixture.detectChanges();
 
     expect(señal<string>('meta')()).toBe('');
+    expect(señal<string>('motivo')()).toBe('');
     expect(interno<() => readonly unknown[]>('actividades')().length).toBe(1);
   });
 
@@ -227,6 +268,87 @@ describe('CarePlanBlock', () => {
       dibujar();
       interno<(clave: number, valor: string) => void>('fijarDetalle')(0, 'Caminar 30 minutos');
       expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
+
+  describe('la hoja de ruta', () => {
+    function texto(testId: string): string {
+      return (
+        (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${testId}"]`)
+          ?.textContent ?? ''
+      ).trim();
+    }
+
+    it('dibuja sólo los pasos escritos y cuenta «n de m»', () => {
+      dibujar();
+      interno<() => void>('agregarActividad')();
+      interno<() => void>('agregarActividad')();
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(0, 'Caminar');
+      interno<(clave: number, valor: string) => void>('fijarDetalle')(2, 'Reconsulta');
+      fixture.detectChanges();
+
+      const vista = fixture.nativeElement as HTMLElement;
+      expect(vista.querySelectorAll('[data-testid="plan-vista-paso"]').length).toBe(2);
+      expect(texto('plan-contador-pasos')).toBe('2 de 3');
+    });
+
+    it('cuenta los datos obligatorios que faltan, el origen incluido en la cita', () => {
+      fixture.componentRef.setInput('exigeRespuesta', true);
+      dibujar();
+      expect(texto('plan-pendientes')).toBe('Faltan 3 datos obligatorios');
+
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
+      fixture.detectChanges();
+      expect(texto('plan-pendientes')).toBe('Falta 1 dato obligatorio');
+
+      señal<string | null>('respuestaDelFormulario').set('fi-1');
+      fixture.detectChanges();
+      expect(texto('plan-pendientes')).toBe('Lista para abrir');
+    });
+
+    /**
+     * La insignia sigue la regla del botón: con la vigencia invertida el plan
+     * no se puede abrir, y decir «Lista para abrir» sería una promesa falsa.
+     */
+    it('con la vigencia invertida no dice «Lista para abrir»', () => {
+      dibujar();
+      señal<string>('meta').set('Bajar la presión.');
+      señal<string>('motivo').set('Control de presión');
+      señal<Date | null>('desde').set(new Date(2026, 6, 1));
+      señal<Date | null>('hasta').set(new Date(2026, 0, 1));
+      fixture.detectChanges();
+
+      expect(texto('plan-pendientes')).toBe('Revisar la vigencia');
+      expect(interno<() => boolean>('puedeRegistrar')()).toBe(false);
+    });
+
+    it('el tramo resuelto se marca y lo dice dentro de su encabezado', () => {
+      dibujar();
+      const titulos = () =>
+        Array.from(
+          (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.ruta__tramo'),
+        );
+      const objetivo = () => titulos().find((t) => t.textContent?.includes('Objetivo'));
+
+      expect(objetivo()?.classList).not.toContain('ruta__tramo--listo');
+      expect(objetivo()?.querySelector('h3 .sr-only')?.textContent).toContain('falta, obligatorio');
+
+      señal<string>('meta').set('Bajar la presión.');
+      fixture.detectChanges();
+      expect(objetivo()?.classList).toContain('ruta__tramo--listo');
+      expect(objetivo()?.querySelector('h3 .sr-only')?.textContent).toContain('completo');
+    });
+
+    it('con un diagnóstico elegido, la ruta muestra su nombre como motivo', () => {
+      fixture.componentRef.setInput('diagnosticos', [{ id: 'cond-1', etiqueta: 'Hipertensión' }]);
+      dibujar();
+      señal<string | null>('diagnosticoElegido').set('cond-1');
+      fixture.detectChanges();
+
+      expect((fixture.nativeElement as HTMLElement).querySelector('.vista')?.textContent).toContain(
+        'Por Hipertensión',
+      );
     });
   });
 });

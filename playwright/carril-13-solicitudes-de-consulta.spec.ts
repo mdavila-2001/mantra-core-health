@@ -1,401 +1,401 @@
-import { test, expect, type APIRequestContext, type Page } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { apiViva, contextoDeApi, doctora } from './support/actores';
-import { entrar, irA, estable } from './support/sesion';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
+
+import { apiViva, contextoDeApi, urlDeApi } from './support/actores';
+import { entrar, estable, irA } from './support/sesion';
 
 /**
- * TAREA-13 · Carril de revisión visual y de accesibilidad de la solapa
- * «Solicitudes de consulta».
+ * Carril 13 · solicitudes de consulta, sobre la pantalla de hoy.
  *
- * ## Dónde vive la pantalla
+ * ## Dónde viven las solicitudes ahora
  *
- * No hay ruta propia `/schedule/requests`: la ficha la deja «pendiente de
- * P-13-1» y lo que se mergeó (TAREA-13 S1/S2/§5, PRs #277-#281) resolvió esa
- * pregunta abierta con una **solapa** dentro de `/schedule`
- * (`src/app/features/agenda/agenda.ts` + `agenda.html`), no con una pantalla
- * separada. La solapa «Solicitudes» es la primera y la que arranca
- * seleccionada (`pestana()` por defecto en 0), lista sólo
- * `BOOKING_REQUESTED` / `BOOKING_PENDING_CONFIRMATION`, con las cinco
- * columnas del punto 1 (`columnasDeSolicitudes`), «Ver detalle» en un modal
- * compartido (`DialogService.confirm()` con `details`), aceptar/rechazar en
- * la fila, «Ver historial» y el estado de pago (§5) en la solapa «Citas».
+ * La tabla «Solicitudes» de `/schedule` se retiró con C-07/C-08 (propietario,
+ * 18–20/09): quien tiene agenda propia atiende todo desde el calendario
+ * («Consultas»), y las acciones de una solicitud —ver detalle, historial del
+ * paciente, aceptar, rechazar, estado del pago— son las MISMAS de la celda de
+ * la tabla, montadas sobre la cita del día y, en la semana, dentro del modal
+ * «Detalle de la cita» (`agenda.html`, `#accionesDeLaCitaDelDia`). La tabla
+ * sólo sobrevive para quien no tiene agenda propia.
  *
- * Este spec no vuelve a probar el contrato de datos (ya cubierto por
- * `carril-ag6-agenda-convivencia.spec.ts` y las unitarias de `agenda.spec.ts`):
- * mide lo visual y la accesibilidad del modal, con capturas reales.
+ * La versión anterior de esta prueba buscaba esa solapa y dependía de la
+ * médica demo, que nace sin horario; por eso fallaba. Se reescribió el
+ * 2026-10-25 para la pantalla vigente.
+ *
+ * ## Qué cubre (criterios de la ficha)
+ *
+ * - La solicitud del paciente aparece y su detalle muestra paciente y motivo.
+ * - Ofrece «Ver el historial del paciente», «Aceptar» y «Rechazar».
+ * - Aceptar persiste: tras recargar, la cita figura confirmada (UI y API).
+ * - Una segunda aceptación de la misma solicitud la rechaza el servidor.
+ * - El estado de pago se marca aparte y persiste tras recargar.
+ * - Una solicitud rechazada ya no ofrece estado de pago.
+ *
+ * Datos propios por el camino real (médica, horario, paciente, pedido).
+ * Exige el front en `start:real-api` y la API levantada:
+ *   E2E_API_REAL=1 E2E_API_URL=http://localhost:3000 E2E_BASE_URL=http://localhost:4200
  */
 
-const VIEWPORTS = [
-  { nombre: 'movil-390x844', width: 390, height: 844 },
-  { nombre: 'tablet-768x1024', width: 768, height: 1024 },
-  { nombre: 'escritorio-1440x900', width: 1440, height: 900 },
-] as const;
+const API_REAL = process.env['E2E_API_REAL'] === '1';
+/** `VS_BO_DEPARTMENT · Santa Cruz`: la API exige la expedición del documento. */
+const DEPARTAMENTO_SC = '16fe92e8-bec7-577d-9e63-4a0d8ff3b0e4';
+/** Municipio sembrado (Sucre). */
+const MUNICIPIO = '5132db42-8cb1-52d6-88f5-0e9a04bdc94c';
+const CAPTURAS = join(__dirname, '..', 'artifacts', 'playwright', 'tarea-13');
 
-const CARPETA_CAPTURAS = 'artifacts/playwright/tarea-13';
+test.describe.configure({ mode: 'serial' });
+test.skip(
+  !API_REAL,
+  'Omitido: hace falta E2E_API_REAL=1 con la API y el front en modo real-api. No es un verde.',
+);
 
-/** `document.documentElement.scrollWidth <= clientWidth`, sin scroll horizontal de página. */
-async function sinScrollHorizontal(page: Page): Promise<{ scrollWidth: number; clientWidth: number }> {
-  return page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    clientWidth: document.documentElement.clientWidth,
-  }));
+interface Escenario {
+  readonly medica: { identificador: string; clave: string };
+  readonly tokenMedica: string;
+  readonly aAceptar: string;
+  readonly aRechazar: string;
 }
 
-/** Decodifica el cuerpo de un JWT (sin validar la firma: es de prueba). */
-function decodificarJwt(token: string): Record<string, unknown> {
-  const cuerpo = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+function claims(token: string): Record<string, unknown> {
+  const cuerpo = token.split('.')[1]!.replace(/-/g, '+').replace(/_/g, '/');
   return JSON.parse(
     Buffer.from(cuerpo + '='.repeat((4 - (cuerpo.length % 4)) % 4), 'base64').toString('utf8'),
   ) as Record<string, unknown>;
 }
 
-/** El `tenantId` viaja en el JWT: se decodifica en vez de pedirlo aparte. */
-function tenantDelToken(token: string): string {
-  const { tenants } = decodificarJwt(token) as { tenants?: string[] };
-  const [primero] = tenants ?? [];
-  if (primero === undefined) {
-    throw new Error('El token de la médica no declara ninguna organización.');
-  }
-  return primero;
+async function json<T>(
+  paso: string,
+  respuesta: Awaited<ReturnType<APIRequestContext['post']>>,
+): Promise<T> {
+  expect(respuesta.ok(), `${paso}: ${respuesta.status()} ${await respuesta.text()}`).toBe(true);
+  return (await respuesta.json()) as T;
 }
 
-/**
- * Deja UNA solicitud pendiente (`BOOKING_REQUESTED`) contra la agenda propia
- * de la médica, para poder medir el modal de detalle y no sólo el estado
- * vacío. Un paciente nuevo retiene el primer cupo libre de los próximos 7 días
- * y lo **pide** (`POST /scheduling/holds/:token/request`, no `/confirm`): esa
- * es la puerta que deja la cita en `BOOKING_REQUESTED`, la misma que usa
- * cualquier paciente real desde el portal.
- *
- * Si algo falla —sin cupos libres, sin API— se devuelve `false` y el spec
- * documenta el estado vacío en vez de fallar: no es lo que se está probando.
- */
-async function sembrarUnaSolicitudPendiente(): Promise<boolean> {
-  const api: APIRequestContext = await contextoDeApi();
-  const paso = async (
-    etiqueta: string,
-    respuesta: { ok(): boolean; status(): number; text(): Promise<string> },
-  ): Promise<boolean> => {
-    if (respuesta.ok()) return true;
-    console.log(`[siembra] ${etiqueta} → ${respuesta.status()}: ${await respuesta.text()}`);
-    return false;
-  };
-  try {
-    if (!(await apiViva(api))) {
-      console.log('[siembra] la API no respondió /health');
-      return false;
-    }
-
-    const sesionDoctora = await api.post('/iam/auth/login', {
-      data: { email: doctora().identificador, password: doctora().clave },
-    });
-    if (!(await paso('login médica', sesionDoctora))) return false;
-    const { accessToken } = (await sesionDoctora.json()) as { accessToken: string };
-    const authDoctora = { Authorization: `Bearer ${accessToken}` };
-    const tenantId = tenantDelToken(accessToken);
-
-    // `GET /scheduling/resources` devuelve TODOS los recursos del tenant, no
-    // sólo el propio: hay que elegir el que corresponde a esta médica, o la
-    // solicitud sembrada cae en la agenda de un colega y nunca aparece en la
-    // pantalla que se está midiendo. `hpid` del JWT es el mismo
-    // `resourceRefId` que expone cada recurso.
-    const { hpid } = decodificarJwt(accessToken) as { hpid?: string };
-    const recursos = await api.get(`/scheduling/resources?tenantId=${tenantId}`, {
-      headers: authDoctora,
-    });
-    if (!(await paso('listar recursos', recursos))) return false;
-    const { items: listaRecursos = [] } = (await recursos.json()) as {
-      items?: { id: string; resourceRefId?: string }[];
-    };
-    const recurso = listaRecursos.find((r) => r.resourceRefId === hpid) ?? listaRecursos.at(0);
-    if (recurso === undefined) {
-      console.log('[siembra] la organización no tiene ningún recurso agendable');
-      return false;
-    }
-
-    const desde = new Date();
-    const hasta = new Date(desde);
-    hasta.setUTCDate(hasta.getUTCDate() + 7);
-    const cupos = await api.get(
-      `/scheduling/slots?resourceId=${recurso.id}&from=${desde.toISOString()}&to=${hasta.toISOString()}&onlyAvailable=true`,
-      { headers: authDoctora },
-    );
-    if (!(await paso('listar cupos libres', cupos))) return false;
-    const { items: listaCupos = [] } = (await cupos.json()) as { items?: { id: string }[] };
-    const [cupo] = listaCupos;
-    if (cupo === undefined) {
-      console.log('[siembra] no hay cupos libres en los próximos 7 días para este recurso');
-      return false;
-    }
-
-    // NO se usa `crearPaciente()` de `support/actores.ts`: contra la API de
-    // hoy responde 400 — `POST /iam/auth/register-patient` ahora exige
-    // `birthDate` y `residenceMunicipalityConceptId` (UUID de
-    // `VS_BO_MUNICIPALITY`), y ese helper compartido no los manda. Se reporta
-    // aparte; acá se registra con el payload que la API de hoy sí acepta, sin
-    // tocar un archivo que usan otros specs.
-    const sufijo = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-    const altaPaciente = await api.post('/iam/auth/register-patient', {
+async function registrarPaciente(
+  api: APIRequestContext,
+  corrida: string,
+  sufijo: string,
+  clave: string,
+  nombre: string,
+): Promise<{ token: string; pid: string }> {
+  const nationalId = `PS13${sufijo}${corrida}`;
+  await json(
+    `alta de ${nombre}`,
+    await api.post('/iam/auth/register-patient', {
       data: {
-        nationalId: `CI-T13-${sufijo}`,
-        password: doctora().clave,
-        name: 'Ana',
-        middleName: 'Lucía',
+        nationalId,
+        issuerAdministrativeAreaConceptId: DEPARTAMENTO_SC,
+        residenceMunicipalityConceptId: MUNICIPIO,
+        password: clave,
+        email: `paciente.s13.${sufijo}.${corrida}@alovida.test`,
+        name: nombre,
         lastName: 'Quispe',
-        motherLastName: 'Mamani',
-        email: `paciente-t13-${sufijo}@example.test`,
-        phone: '+591 70055555',
-        gender: 'FEMALE',
-        sexAtBirth: 'FEMALE',
         birthDate: '1995-05-20',
-        // Sucre (VS_BO_MUNICIPALITY, geo:bo:municipality:010101) — cualquier
-        // municipio válido sirve, sólo hace falta que el uuid exista.
-        residenceMunicipalityConceptId: '5132db42-8cb1-52d6-88f5-0e9a04bdc94c',
+        phone: '70055555',
+        sexAtBirth: 'FEMALE',
       },
-    });
-    if (!(await paso('alta del paciente', altaPaciente))) return false;
-    const paciente = { identificador: `CI-T13-${sufijo}`, clave: doctora().clave };
-    const sesionPaciente = await api.post('/iam/auth/login', {
-      data: { nationalId: paciente.identificador, password: paciente.clave },
-    });
-    if (!(await paso('login paciente', sesionPaciente))) return false;
-    const { accessToken: tokenPaciente } = (await sesionPaciente.json()) as { accessToken: string };
-    const authPaciente = { Authorization: `Bearer ${tokenPaciente}` };
-    const patientProfileId = tokenPacienteAPerfil(tokenPaciente);
+    }),
+  );
+  const { accessToken } = await json<{ accessToken: string }>(
+    `login de ${nombre}`,
+    await api.post('/iam/auth/login', { data: { nationalId, password: clave } }),
+  );
+  const { pid } = claims(accessToken) as { pid?: string };
+  expect(pid, `el token de ${nombre} no trae su perfil de paciente`).toBeTruthy();
+  return { token: accessToken, pid: pid! };
+}
 
-    const hold = await api.post(`/scheduling/slots/${cupo.id}/holds`, {
-      headers: authPaciente,
-      data: { patientProfileId },
-    });
-    if (!(await paso('retener cupo', hold))) return false;
-    const { holdToken } = (await hold.json()) as { holdToken: string };
+/** Un paciente retiene un cupo y lo PIDE: queda en `BOOKING_REQUESTED`. */
+async function pedirCita(
+  api: APIRequestContext,
+  tenantId: string,
+  cupoId: string,
+  paciente: { token: string; pid: string },
+  motivo: string,
+): Promise<string> {
+  const auth = { Authorization: `Bearer ${paciente.token}` };
+  const { holdToken } = await json<{ holdToken: string }>(
+    'retener el cupo',
+    await api.post(`/scheduling/slots/${cupoId}/holds`, {
+      headers: auth,
+      data: { patientProfileId: paciente.pid },
+    }),
+  );
+  const pedido = await json<{ id?: string; bookingId?: string }>(
+    'pedir la cita',
+    await api.post(`/scheduling/holds/${holdToken}/request`, {
+      headers: auth,
+      data: { tenantId, patientProfileId: paciente.pid, channel: 'PORTAL', reasonText: motivo },
+    }),
+  );
+  const id = pedido.id ?? pedido.bookingId;
+  expect(id, 'el pedido no devolvió el id de la reserva').toBeTruthy();
+  return id!;
+}
 
-    const pedido = await api.post(`/scheduling/holds/${holdToken}/request`, {
-      headers: authPaciente,
+async function prepararEscenario(api: APIRequestContext): Promise<Escenario> {
+  const corrida = Date.now().toString(36);
+  const clave = `Solicitud-${corrida}-2026!`;
+  const medica = { identificador: `medica.s13.${corrida}@alovida.test`, clave };
+
+  await json(
+    'alta de la médica',
+    await api.post('/iam/auth/register-practitioner', {
+      data: {
+        email: medica.identificador,
+        password: clave,
+        name: 'Paula',
+        lastName: 'Arce',
+        licenseNumber: `MP-S13-${corrida}`,
+        sedesLicenseNumber: `SEDES-${corrida}`,
+        professionalTitle: 'Médico',
+        nationalId: `S13${corrida}`,
+        issuerAdministrativeAreaConceptId: DEPARTAMENTO_SC,
+        residenceMunicipalityConceptId: MUNICIPIO,
+      },
+    }),
+  );
+  const { accessToken: tokenMedica } = await json<{ accessToken: string }>(
+    'login de la médica',
+    await api.post('/iam/auth/login', { data: { email: medica.identificador, password: clave } }),
+  );
+  const auth = { Authorization: `Bearer ${tokenMedica}` };
+  const { tenants, hpid } = claims(tokenMedica) as { tenants?: string[]; hpid?: string };
+  expect(tenants?.[0] && hpid, 'el token de la médica no trae tenant ni perfil').toBeTruthy();
+  const tenantId = tenants![0]!;
+
+  const agenda = await json<{ id: string }>(
+    'agenda de la médica',
+    await api.post('/scheduling/resources', {
+      headers: auth,
       data: {
         tenantId,
-        patientProfileId,
-        channel: 'PORTAL',
-        reasonText: 'TAREA-13 · solicitud sembrada para medir el modal de detalle',
+        resourceType: 'PRACTITIONER',
+        resourceRefType: 'health_practitioner_profiles',
+        resourceRefId: hpid,
+        name: 'Consultorio Paula Arce',
       },
-    });
-    return await paso('pedir la cita (request)', pedido);
-  } catch (fallo) {
-    console.log('[siembra] excepción:', fallo);
-    return false;
-  } finally {
-    await api.dispose();
-  }
+    }),
+  );
+  const plantilla = await json<{ id: string }>(
+    'horario de la médica',
+    await api.post(`/scheduling/resources/${agenda.id}/templates`, {
+      headers: auth,
+      data: {
+        name: 'Horario de Paula Arce',
+        slotMinutes: 30,
+        rules: [0, 1, 2, 3, 4, 5, 6].map((dayOfWeek) => ({
+          dayOfWeek,
+          startTime: '09:00',
+          endTime: '11:00',
+          slotMinutes: 30,
+        })),
+      },
+    }),
+  );
+
+  // Los cupos de MAÑANA, para que las dos solicitudes caigan en el mismo día.
+  const desde = new Date();
+  desde.setDate(desde.getDate() + 1);
+  desde.setHours(0, 0, 0, 0);
+  const hasta = new Date(desde);
+  hasta.setDate(hasta.getDate() + 1);
+  await json(
+    'cupos del horario',
+    await api.post(`/scheduling/templates/${plantilla.id}/generate-slots`, {
+      headers: auth,
+      data: { from: desde.toISOString(), to: hasta.toISOString() },
+    }),
+  );
+  const libres = await json<{ items?: { id: string }[] }>(
+    'cupos libres de mañana',
+    await api.get(
+      `/scheduling/slots?resourceId=${agenda.id}&from=${desde.toISOString()}&to=${hasta.toISOString()}&onlyAvailable=true`,
+      { headers: auth },
+    ),
+  );
+  const cupos = libres.items ?? [];
+  expect(cupos.length, 'el horario no generó dos cupos libres para mañana').toBeGreaterThanOrEqual(
+    2,
+  );
+
+  const ana = await registrarPaciente(api, corrida, 'a', clave, 'Ana');
+  const rosa = await registrarPaciente(api, corrida, 'b', clave, 'Rosa');
+  const aAceptar = await pedirCita(api, tenantId, cupos[0]!.id, ana, 'Dolor de cabeza frecuente');
+  const aRechazar = await pedirCita(api, tenantId, cupos[1]!.id, rosa, 'Control de rutina');
+
+  return { medica, tokenMedica, aAceptar, aRechazar };
 }
 
-/**
- * El `patientProfileId` viaja en el JWT del paciente bajo la clave `pid`
- * —comprobado contra un alta real: NO es `sub` (ese es el `userId`) ni
- * `patientProfileId` a secas. Usar `sub` como si fuera el perfil produce un
- * `patientProfileId` que no existe y el hold responde 422
- * `PRECONDITION_FAILED` — así se encontró el error.
- */
-function tokenPacienteAPerfil(token: string): string {
-  const { pid } = decodificarJwt(token) as { pid?: string };
-  if (pid === undefined) {
-    throw new Error('El token del paciente no declara `pid` (su perfil).');
-  }
-  return pid;
+async function capturar(page: Page, nombre: string): Promise<void> {
+  mkdirSync(CAPTURAS, { recursive: true });
+  await page.screenshot({ path: join(CAPTURAS, `${nombre}.png`), fullPage: true });
 }
 
-test.describe('TAREA-13 · Solicitudes de consulta (solapa en /schedule)', () => {
-  test.beforeAll(async () => {
-    const sembrada = await sembrarUnaSolicitudPendiente();
-    console.log(
-      sembrada
-        ? 'Se sembró una solicitud pendiente para medir el modal de detalle.'
-        : 'No se pudo sembrar una solicitud pendiente (sin cupos libres o la API no respondió); el spec sigue y documenta lo que encuentre.',
-    );
+/** Abre la semana que contiene mañana y el detalle de la cita de `paciente`. */
+async function abrirDetalle(page: Page, paciente: string) {
+  await irA(page, '/schedule');
+  await estable(page);
+  await expect(page.getByTestId('agenda-calendario')).toBeVisible();
+  await page.getByTestId('ver-semana').click();
+  await expect(page.locator('.semana__dias')).toBeVisible();
+
+  // La semana empieza el lunes: si hoy es domingo, mañana cae en la siguiente.
+  // Se decide por la fecha y no por si ya se ve la cita, que depende de cuándo
+  // termina de cargar.
+  if (new Date().getDay() === 0) {
+    const titulo = await page.locator('.semana__titulo').textContent();
+    await page.getByTestId('semana-siguiente').click();
+    await expect(page.locator('.semana__titulo')).not.toHaveText(titulo ?? '');
+  }
+  const cita = page.getByTestId('semana-cita').filter({ hasText: paciente });
+  await expect(cita.first(), `la solicitud de ${paciente} no aparece en la semana`).toBeVisible();
+  await cita.first().click();
+  const dialogo = page.getByRole('dialog', { name: 'Detalle de la cita' });
+  await expect(dialogo).toBeVisible();
+  return dialogo;
+}
+
+interface ReservaLeida {
+  readonly statusConceptId: string;
+  readonly confirmedAt: string | null;
+}
+
+/** La reserva tal como la guarda la base (el estado viaja como concepto). */
+async function leerReserva(
+  api: APIRequestContext,
+  token: string,
+  id: string,
+): Promise<ReservaLeida> {
+  const respuesta = await api.get(`/scheduling/bookings/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  expect(respuesta.ok(), `leer la reserva: ${respuesta.status()}`).toBe(true);
+  return (await respuesta.json()) as ReservaLeida;
+}
 
-  test('la tabla de solicitudes, el modal de detalle y los tres anchos', async ({ page }) => {
-    await entrar(page, doctora());
-    await irA(page, '/schedule');
-    await estable(page);
+let api: APIRequestContext;
+let escenario: Escenario;
 
-    // ─── La solapa arranca en «Solicitudes» ────────────────────────────────
-    await expect(page.getByText(/^Solicitudes/).first()).toBeVisible({ timeout: 20_000 });
+test.beforeAll(async () => {
+  test.setTimeout(120_000);
+  api = await contextoDeApi();
+  expect(await apiViva(api), `La API no responde en ${urlDeApi()}.`).toBe(true);
+  escenario = await prepararEscenario(api);
+});
 
-    const tabla = page.getByTestId('tabla').first();
-    await expect(tabla).toBeVisible({ timeout: 20_000 });
+test.afterAll(async () => {
+  await api?.dispose();
+});
 
-    // ─── Columnas del punto 1: estado, solicitada, cita, paciente, profesional ──
-    const encabezados = await tabla.locator('thead th').allTextContents();
-    const encabezadosNormalizados = encabezados.map((h) => h.trim()).filter((h) => h.length > 0);
-    console.log('Encabezados de la tabla de solicitudes:', encabezadosNormalizados);
-
-    for (const esperado of ['Estado', 'Solicitada', 'Cita', 'Paciente']) {
-      expect(
-        encabezadosNormalizados.some((h) => h.toLowerCase().includes(esperado.toLowerCase())),
-        `Falta la columna «${esperado}» en la tabla de solicitudes. Encabezados vistos: ${encabezadosNormalizados.join(', ')}`,
-      ).toBe(true);
-    }
-
-    // ─── Estado vacío o filas: se documentan las dos posibilidades ─────────
-    const filas = page.getByTestId('tabla-fila');
-    const cantidadFilas = await filas.count();
-    console.log(`Filas visibles en «Solicitudes»: ${cantidadFilas}`);
-
-    // ─── Capturas en los tres anchos, tabla primero ────────────────────────
-    for (const vp of VIEWPORTS) {
-      await page.setViewportSize({ width: vp.width, height: vp.height });
-      await estable(page);
-      // Un respiro extra para que el CSS de anchos termine de acomodar la tabla.
-      await page.waitForTimeout(300);
-
-      const medidas = await sinScrollHorizontal(page);
-      console.log(
-        `[${vp.nombre}] scrollWidth=${medidas.scrollWidth} clientWidth=${medidas.clientWidth}`,
-      );
-      if (medidas.scrollWidth > medidas.clientWidth) {
-        // Encuentra el elemento que REALMENTE desborda: el suyo, no uno
-        // heredado. `scrollWidth > clientWidth` en el propio elemento (no en
-        // `document`) descarta los que sólo ocupan el 100% de un contenedor ya
-        // estirado por otro.
-        const culpables = await page.evaluate(() => {
-          const hallazgos: {
-            tag: string;
-            class: string;
-            testid: string | null;
-            texto: string | undefined;
-            ownScrollWidth: number;
-            ownClientWidth: number;
-            rect: DOMRect;
-          }[] = [];
-          for (const el of document.querySelectorAll<HTMLElement>('body *')) {
-            if (el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0) {
-              hallazgos.push({
-                tag: el.tagName,
-                class: el.className,
-                testid: el.getAttribute('data-testid'),
-                texto: el.textContent?.trim().slice(0, 100),
-                ownScrollWidth: el.scrollWidth,
-                ownClientWidth: el.clientWidth,
-                rect: el.getBoundingClientRect(),
-              });
-            }
-          }
-          // De más específico (menos descendientes con el mismo problema) a
-          // más general: los primeros son los candidatos reales.
-          return hallazgos.slice(0, 15);
-        });
-        console.log(`[${vp.nombre}] elementos que desbordan su propia caja:`, JSON.stringify(culpables));
-
-        const cadena = await page.evaluate(() => {
-          const selectores = [
-            '.agenda',
-            'app-tabs',
-            '.tabs__panels',
-            'app-tab',
-            'app-data-table',
-            '.data-table__scroll',
-            '.data-table__table',
-          ];
-          return selectores.map((sel) => {
-            const el = document.querySelector(sel) as HTMLElement | null;
-            if (el === null) return { sel, encontrado: false };
-            const estilo = getComputedStyle(el);
-            return {
-              sel,
-              encontrado: true,
-              width: estilo.width,
-              minWidth: estilo.minWidth,
-              display: estilo.display,
-              offsetWidth: el.offsetWidth,
-              scrollWidth: el.scrollWidth,
-            };
-          });
-        });
-        console.log(`[${vp.nombre}] cadena de anchos:`, JSON.stringify(cadena, null, 0));
-      }
-      expect
-        .soft(
-          medidas.scrollWidth,
-          `Scroll horizontal de página en ${vp.nombre}: scrollWidth ${medidas.scrollWidth} > clientWidth ${medidas.clientWidth}`,
-        )
-        .toBeLessThanOrEqual(medidas.clientWidth);
-
-      await page.screenshot({
-        path: `${CARPETA_CAPTURAS}/${vp.nombre}-tabla-solicitudes.png`,
-        fullPage: true,
-      });
-    }
-
-    // ─── «Ver detalle»: el modal, medido, no supuesto ──────────────────────
-    const botonDetalle = page.getByTestId('agenda-detalle').first();
-    const hayDetalle = (await botonDetalle.count()) > 0;
-
-    if (!hayDetalle) {
-      console.log(
-        'No hay ninguna solicitud pendiente en los datos sembrados: no se pudo abrir el modal de detalle. Se documenta el estado vacío en las capturas ya tomadas.',
-      );
-      return;
-    }
-
-    for (const vp of VIEWPORTS) {
-      await page.setViewportSize({ width: vp.width, height: vp.height });
-      await estable(page);
-      await page.waitForTimeout(300);
-
-      const boton = page.getByTestId('agenda-detalle').first();
-      await expect(boton).toBeVisible();
-      await boton.focus();
-      await boton.click();
-
-      const dialogo = page.getByTestId('dialogo');
-      await expect(dialogo).toBeVisible({ timeout: 10_000 });
-
-      // ¿Es un <dialog> nativo, realmente abierto y modal?
-      const infoDialogo = await dialogo.evaluate((el) => {
-        const nativo = el as HTMLDialogElement;
-        return {
-          tag: nativo.tagName,
-          open: nativo.open,
-          ariaLabelledby: nativo.getAttribute('aria-labelledby'),
-          ariaDescribedby: nativo.getAttribute('aria-describedby'),
-        };
-      });
-      console.log(`[${vp.nombre}] modal:`, infoDialogo);
-      expect(infoDialogo.tag).toBe('DIALOG');
-      expect(infoDialogo.open).toBe(true);
-      expect(infoDialogo.ariaLabelledby, 'El modal debería tener aria-labelledby con el título').toBeTruthy();
-
-      // ¿El foco entró al modal?
-      const focoDentro = await page.evaluate(() => {
-        const activo = document.activeElement;
-        const dialogo = document.querySelector('dialog[data-testid="dialogo"]');
-        return dialogo !== null && activo !== null && dialogo.contains(activo);
-      });
-      console.log(`[${vp.nombre}] foco dentro del modal: ${focoDentro}`);
-      expect(focoDentro, 'El foco debería entrar al modal al abrirlo').toBe(true);
-
-      const medidasConModal = await sinScrollHorizontal(page);
-      console.log(
-        `[${vp.nombre}] con modal abierto: scrollWidth=${medidasConModal.scrollWidth} clientWidth=${medidasConModal.clientWidth}`,
-      );
-
-      await page.screenshot({
-        path: `${CARPETA_CAPTURAS}/${vp.nombre}-modal-detalle.png`,
-        fullPage: true,
-      });
-
-      // ¿Escape cierra, y el foco vuelve a la fila que lo abrió?
-      await page.keyboard.press('Escape');
-      await expect(dialogo).toBeHidden({ timeout: 10_000 });
-
-      const focoVolvio = await page.evaluate(
-        (testId) => document.activeElement?.getAttribute('data-testid') === testId,
-        'agenda-detalle',
-      );
-      console.log(`[${vp.nombre}] foco volvió al botón que abrió el modal: ${focoVolvio}`);
-      expect(focoVolvio, 'Al cerrar con Escape, el foco debería volver al botón «Ver detalle»').toBe(
-        true,
-      );
-    }
+test.beforeEach(async ({ page }) => {
+  await entrar(page, {
+    rol: 'doctora',
+    identificador: escenario.medica.identificador,
+    clave: escenario.medica.clave,
+    nombre: 'médica de las solicitudes',
   });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+});
+
+test('la solicitud se ve con su detalle y ofrece historial, aceptar y rechazar', async ({
+  page,
+}) => {
+  const dialogo = await abrirDetalle(page, 'Ana');
+  await expect(dialogo).toContainText('Ana Quispe');
+  await expect(dialogo).toContainText('Dolor de cabeza frecuente');
+  await expect(dialogo.locator('[data-action="agenda-historial"]')).toBeVisible();
+  await expect(dialogo.locator('[data-action="agenda-aceptar"]')).toBeVisible();
+  await expect(dialogo.locator('[data-action="agenda-rechazar"]')).toBeVisible();
+  await capturar(page, 'detalle-solicitud-1440');
+});
+
+test('aceptar persiste y una segunda aceptación la rechaza el servidor', async ({ page }) => {
+  const dialogo = await abrirDetalle(page, 'Ana');
+  const [aceptada] = await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        r.url().includes(`/scheduling/bookings/${escenario.aAceptar}/accept`) &&
+        r.request().method() === 'POST',
+    ),
+    dialogo.locator('[data-action="agenda-aceptar"]').click(),
+  ]);
+  expect(aceptada.status(), await aceptada.text()).toBeLessThan(300);
+
+  // Recargar: no es estado de la pantalla, es de la base.
+  await page.reload();
+  const otraVez = await abrirDetalle(page, 'Ana');
+  await expect(otraVez).toContainText('Confirmada');
+  await expect(otraVez.locator('[data-action="agenda-aceptar"]')).toHaveCount(0);
+  const leida = await leerReserva(api, escenario.tokenMedica, escenario.aAceptar);
+  expect(leida.confirmedAt, 'la base no registró la confirmación').not.toBeNull();
+
+  const doble = await api.post(`/scheduling/bookings/${escenario.aAceptar}/accept`, {
+    headers: { Authorization: `Bearer ${escenario.tokenMedica}` },
+    data: {},
+  });
+  expect(doble.status(), 'una segunda aceptación no debería pasar').toBeGreaterThanOrEqual(400);
+  expect(doble.status()).toBeLessThan(500);
+});
+
+test('el estado de pago se marca aparte y persiste tras recargar', async ({ page }) => {
+  const dialogo = await abrirDetalle(page, 'Ana');
+  // Corrección 11 · «Estado del pago» abre los comprobantes de la cita; el
+  // marcado a mano sigue adentro, en «Marcar sin comprobante…».
+  await dialogo.getByTestId('agenda-pago-detalle').getByTestId('agenda-pago').click();
+  const comprobantes = page.getByRole('dialog', { name: 'Comprobantes de pago' });
+  await comprobantes.getByTestId('payment-receipts-manual-toggle').click();
+  const [pago] = await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        r.url().includes(`/scheduling/bookings/${escenario.aAceptar}/payment-state`) &&
+        r.request().method() !== 'GET',
+    ),
+    comprobantes.getByTestId('payment-manual-PAID').click(),
+  ]);
+  expect(pago.status(), await pago.text()).toBeLessThan(300);
+
+  await page.reload();
+  const otraVez = await abrirDetalle(page, 'Ana');
+  await expect(otraVez.getByTestId('agenda-pago-detalle')).toContainText('Pagada');
+  // El pago no movió el estado de la cita.
+  await expect(otraVez).toContainText('Confirmada');
+  await capturar(page, 'detalle-pagada-1440');
+});
+
+test('rechazar pide motivo, persiste y la rechazada no ofrece estado de pago', async ({ page }) => {
+  const antes = await leerReserva(api, escenario.tokenMedica, escenario.aRechazar);
+  const dialogo = await abrirDetalle(page, 'Rosa');
+  await dialogo.locator('[data-action="agenda-rechazar"]').click();
+
+  const motivo = page.getByLabel('Motivo del rechazo');
+  await expect(motivo).toBeVisible();
+  await motivo.fill('La médica no atiende ese día por un congreso.');
+  const [rechazo] = await Promise.all([
+    page.waitForResponse(
+      (r) =>
+        r.url().includes(`/scheduling/bookings/${escenario.aRechazar}/reject`) &&
+        r.request().method() === 'POST',
+    ),
+    page.getByTestId('dialogo-confirmar').click(),
+  ]);
+  expect(rechazo.status(), await rechazo.text()).toBeLessThan(300);
+
+  const despues = await leerReserva(api, escenario.tokenMedica, escenario.aRechazar);
+  expect(despues.statusConceptId, 'el rechazo no cambió el estado en la base').not.toBe(
+    antes.statusConceptId,
+  );
+  expect(despues.confirmedAt).toBeNull();
+  const pagoDeRechazada = await api.put(
+    `/scheduling/bookings/${escenario.aRechazar}/payment-state`,
+    {
+      headers: { Authorization: `Bearer ${escenario.tokenMedica}` },
+      data: { state: 'PAID' },
+    },
+  );
+  expect(
+    pagoDeRechazada.status(),
+    'una solicitud rechazada no admite estado de pago',
+  ).toBeGreaterThanOrEqual(400);
 });

@@ -1,7 +1,7 @@
 import { computed, DestroyRef, Directive, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, type Params } from '@angular/router';
-import { of, switchMap, type Observable } from 'rxjs';
+import type { Observable } from 'rxjs';
 
 import type {
   PublicPage,
@@ -17,30 +17,17 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '@core/data-access/terminology/bo-municipalities.service';
-import type { DepartamentoElegible } from '@shared/components/organisms/department-map/department-map';
 
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import { departmentByCity, normalizePlace } from '@shared/geo/city-department';
 
 import { aTarjeta } from '../alovida/buscar/public-result.mapper';
 
-/** Tope por página que acepta el contrato público (`limit` se recorta a 50). */
-const POR_PAGINA = 50;
+import * as placeCuts from '@shared/directory/public-directory-cuts';
 
-/**
- * Cuántas páginas se recorren como máximo.
- *
- * El mismo techo y por el mismo motivo que el directorio de médicos: un
- * directorio se hojea entero, y el tope existe para que un catálogo que crezca
- * sin control no encadene peticiones indefinidamente. Cuando se llega, la
- * pantalla **lo dice** en vez de seguir pidiendo en silencio.
- */
-const MAX_PAGINAS = 10;
+import * as cortes from './public-directory-filters';
 
 /** Clave del chip de ciudad en la URL. */
 const PARAM_CIUDAD = 'ciudad';
-
-/** Clave del chip de verificación en la URL. */
-const PARAM_VERIFICADO = 'verificado';
 
 /** Clave del departamento elegido en el mapa, en la URL. */
 const PARAM_DEPARTAMENTO = 'departamento';
@@ -111,14 +98,20 @@ export abstract class PublicDirectoryListing {
    */
   protected abstract readonly rutaDeLaFicha: string;
 
+  /** El botón de cada tarjeta; `null` deja la tarjeta sin botón. */
+  protected readonly accionDeLaFicha: cortes.AccionDeLaFicha | null = null;
+
+  private tarjetaDe(fila: PublicSearchResult) {
+    return cortes.conAccion(aTarjeta(fila, this.opcionesDeTarjeta), this.accionDeLaFicha);
+  }
+
   /**
    * Cómo se dibuja cada tarjeta: sin la insignia del vertical —este directorio
    * es de una sola clase— y con el destino de arriba.
    */
   private readonly opcionesDeTarjeta = {
     mostrarTipo: false,
-    ruta: (fila: PublicSearchResult) =>
-      `${this.rutaDeLaFicha}/${encodeURIComponent(fila.slug)}`,
+    ruta: (fila: PublicSearchResult) => `${this.rutaDeLaFicha}/${encodeURIComponent(fila.slug)}`,
   } as const;
 
   protected readonly estado = signal<ViewState<readonly PublicSearchResult[]>>(loading());
@@ -142,27 +135,8 @@ export abstract class PublicDirectoryListing {
   /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
   protected readonly catalogoGeoCaido = signal(false);
 
-  /**
-   * Los nueve departamentos, para el mapa.
-   *
-   * **Todos**, no sólo los que tienen algo publicado, al revés que los chips de
-   * ciudad. No es una inconsistencia: un chip que siempre devuelve cero es un
-   * botón inútil, pero un mapa de Bolivia al que le faltan seis departamentos
-   * no es un filtro honesto, es un dibujo roto — y quien lo mira no sabría si
-   * Pando no está porque no hay farmacias o porque el mapa está mal. Se dibuja
-   * el país entero y cada departamento dice **cuántos** tiene, que es la
-   * información que el chip escondía.
-   */
-  protected readonly departamentos = computed<readonly DepartamentoElegible[]>(() =>
-    this.ramas().map((rama) => ({
-      conceptId: rama.conceptId,
-      sigla: rama.sigla,
-      nombre: rama.nombre,
-    })),
-  );
-
   /** De cada ciudad publicada al `conceptId` de su departamento. */
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Los parámetros de la URL, que son **la** fuente de los tres cortes en
@@ -188,10 +162,25 @@ export abstract class PublicDirectoryListing {
   /** El departamento elegido en el mapa. */
   protected readonly departamentoElegido = computed(() => this.parametro(PARAM_DEPARTAMENTO));
 
-  /** La ciudad elegida por chip, dentro del departamento. */
-  protected readonly ciudad = computed(() => this.parametro(PARAM_CIUDAD));
+  /**
+   * La ciudad elegida por chip, dentro del departamento.
+   *
+   * Una ciudad que no es del departamento elegido no cuenta: el departamento
+   * se cambia desde la columna de facetas, que no sabe soltar la ciudad, y
+   * Cochabamba dentro de La Paz dejaría la lista en cero sin nada que lo
+   * explique.
+   */
+  protected readonly ciudad = computed(() => {
+    const ciudad = this.parametro(PARAM_CIUDAD);
+    const departamento = this.departamentoElegido();
+    if (ciudad === null || departamento === null) {
+      return ciudad;
+    }
+    return this.porCiudad().get(normalizePlace(ciudad)) === departamento ? ciudad : null;
+  });
 
-  protected readonly soloVerificados = computed(() => this.parametro(PARAM_VERIFICADO) === 'true');
+  /** Los cortes comunes puestos: verificación, nota y agenda. */
+  private readonly cortesComunes = computed(() => cortes.cortesComunesDe((c) => this.parametro(c)));
 
   /**
    * La categoría elegida por chip: el código, nunca la etiqueta.
@@ -211,37 +200,9 @@ export abstract class PublicDirectoryListing {
    * cero, o sea el mapa diciendo que sólo hay centros donde uno acaba de
    * pulsar. La cuenta que sirve es la de «cuánto hay ahí si voy».
    */
-  protected readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() => {
-    const porCiudad = this.porCiudad();
-    const cuenta = new Map<string, number>();
-    for (const fila of this.paraElMapa()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
-      if (conceptId === undefined) continue;
-      cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
-    }
-    return cuenta;
-  });
-
-  /**
-   * El resumen que acompaña al mapa: cuántos hay y cómo se vuelve.
-   *
-   * `null` cuando no hay departamento elegido, y no un «tocá un departamento»:
-   * el propio mapa ya escribe «Todavía no elegiste departamento» en su línea
-   * viva —es la tercera señal de su estado, la que no depende del color— y dos
-   * renglones seguidos diciendo lo mismo se leen como un error de la pantalla.
-   */
-  protected readonly resumenDelMapa = computed<string | null>(() => {
-    const elegido = this.departamentoElegido();
-    if (elegido === null) {
-      return null;
-    }
-    const nombre = this.ramas().find((rama) => rama.conceptId === elegido)?.nombre ?? '';
-    const cuantos = this.cuentaPorDepartamento().get(elegido) ?? 0;
-    if (cuantos === 0) {
-      return `Todavía no hay nada publicado en ${nombre}.`;
-    }
-    return `${cuantos} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
-  });
+  protected readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() =>
+    placeCuts.countByDepartment(this.paraElMapa(), this.porCiudad()),
+  );
 
   /**
    * Elegir en el mapa va a la URL, como los chips.
@@ -292,7 +253,7 @@ export abstract class PublicDirectoryListing {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? `Se muestran los primeros resultados. Usá el buscador para encontrar ${this.queSonEnSingular} que no aparezca en la lista.`
+      ? `Se muestran los primeros resultados. Use el buscador para encontrar ${this.queSonEnSingular} que no aparezca en la lista.`
       : null,
   );
 
@@ -308,11 +269,10 @@ export abstract class PublicDirectoryListing {
    * siendo la de «cuánto hay ahí si voy».
    */
   private readonly paraElMapa = computed(() => {
-    const soloVerificados = this.soloVerificados();
     const categoria = this.categoria();
     return (dataOf(this.estado()) ?? []).filter(
       (fila) =>
-        (!soloVerificados || fila.verified) &&
+        cortes.pasaLosCortesComunes(fila, this.cortesComunes()) &&
         (categoria === null || fila.category?.code === categoria),
     );
   });
@@ -325,30 +285,14 @@ export abstract class PublicDirectoryListing {
    * tocar «Sucre» dejaría un solo chip en la barra y no habría cómo pasar a
    * otra ciudad sin quitar el filtro primero.
    */
-  private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() => {
-    const departamento = this.departamentoElegido();
-    const todas = dataOf(this.estado()) ?? [];
-    if (departamento === null) {
-      return todas;
-    }
-    const porCiudad = this.porCiudad();
-    return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
-    );
-  });
+  private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() =>
+    placeCuts.byDepartment(dataOf(this.estado()) ?? [], this.departamentoElegido(), this.porCiudad()),
+  );
 
   /** Las filas que quedan después de los tres cortes en memoria. */
-  private readonly filtradas = computed(() => {
-    const ciudad = this.ciudad();
-    const soloVerificados = this.soloVerificados();
-    const categoria = this.categoria();
-    return this.delDepartamento().filter(
-      (fila) =>
-        (ciudad === null || fila.city === ciudad) &&
-        (!soloVerificados || fila.verified) &&
-        (categoria === null || fila.category?.code === categoria),
-    );
-  });
+  private readonly filtradas = computed(() =>
+    placeCuts.byCategory(this.paraLasCategorias(), this.categoria()),
+  );
 
   /**
    * Los tramos del directorio: uno por ciudad, y uno final para las fichas que
@@ -378,7 +322,7 @@ export abstract class PublicDirectoryListing {
         // repetirla en cada tarjeta le roba el renglón al subtítulo. Ver
         // `OpcionesDeTarjeta`.
         resultados: filas
-          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
+          .map((fila) => this.tarjetaDe(fila))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       }))
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
@@ -388,7 +332,7 @@ export abstract class PublicDirectoryListing {
         id: 'sin-ciudad',
         nombre: 'Sin ciudad declarada',
         resultados: sinCiudad
-          .map((fila) => aTarjeta(fila, this.opcionesDeTarjeta))
+          .map((fila) => this.tarjetaDe(fila))
           .sort((a, b) => a.title.localeCompare(b.title, 'es')),
       });
     }
@@ -404,13 +348,11 @@ export abstract class PublicDirectoryListing {
    * pasar a «Hospital público» sin quitar el filtro primero. Es la misma razón
    * por la que `delDepartamento` no lleva el corte de ciudad.
    */
-  private readonly paraLasCategorias = computed<readonly PublicSearchResult[]>(() => {
-    const ciudad = this.ciudad();
-    const soloVerificados = this.soloVerificados();
-    return this.delDepartamento().filter(
-      (fila) => (ciudad === null || fila.city === ciudad) && (!soloVerificados || fila.verified),
-    );
-  });
+  private readonly paraLasCategorias = computed<readonly PublicSearchResult[]>(() =>
+    placeCuts
+      .byCity(this.delDepartamento(), this.ciudad())
+      .filter((fila) => cortes.pasaLosCortesComunes(fila, this.cortesComunes())),
+  );
 
   /**
    * Las categorías que de verdad hay delante, de la que más tiene a la que
@@ -425,21 +367,7 @@ export abstract class PublicDirectoryListing {
    */
   protected readonly categoriasDisponibles = computed<
     readonly { readonly code: string; readonly label: string }[]
-  >(() => {
-    const cuenta = new Map<string, { label: string; total: number }>();
-    for (const fila of this.paraLasCategorias()) {
-      const categoria = fila.category;
-      if (categoria === null) continue;
-      const anterior = cuenta.get(categoria.code);
-      cuenta.set(categoria.code, {
-        label: categoria.label,
-        total: (anterior?.total ?? 0) + 1,
-      });
-    }
-    return [...cuenta.entries()]
-      .sort(([, a], [, b]) => b.total - a.total || a.label.localeCompare(b.label, 'es'))
-      .map(([code, { label }]) => ({ code, label }));
-  });
+>(() => placeCuts.publishedCategories(this.paraLasCategorias()));
 
   /**
    * Los chips: las ciudades **del departamento elegido**, y la verificación.
@@ -464,14 +392,8 @@ export abstract class PublicDirectoryListing {
    * que siempre devuelve cero es peor que no tenerlo.
    */
   protected readonly filtros = computed<readonly FilterDef[]>(() => {
-    const filtros: FilterDef[] = [
-      {
-        key: PARAM_VERIFICADO,
-        label: 'Verificación',
-        asChips: true,
-        options: [{ value: 'true', label: 'Sólo verificadas' }],
-      },
-    ];
+    // Verificación, nota y agenda: ver `public-directory-filters.ts`.
+    const filtros = [...cortes.filtrosComunes(dataOf(this.estado()) ?? [], this.cortesComunes())];
 
     /* ---- la categoría, que es el corte de arriba de todos --------------- */
     const categorias = this.categoriasDisponibles();
@@ -483,30 +405,54 @@ export abstract class PublicDirectoryListing {
       filtros.unshift({
         key: PARAM_CATEGORIA,
         label: 'Categoría',
+        icon: 'tag',
         asChips: true,
         options: categorias.map(({ code, label }) => ({ value: code, label })),
       });
     }
 
-    if (this.departamentoElegido() === null) {
+    /* ---- el departamento, en lugar del mapa (propietario, 23/10/2026) ---
+       Sólo los que tienen algo, con cuántos: una opción que devuelve cero es
+       un botón inútil. */
+    const cuentas = this.cuentaPorDepartamento();
+    const conFichas = this.ramas()
+      .filter((rama) => (cuentas.get(rama.conceptId) ?? 0) > 0)
+      .map((rama) => ({
+        value: rama.conceptId,
+        label: `${rama.nombre} (${cuentas.get(rama.conceptId)})`,
+      }));
+    const elegido = this.departamentoElegido();
+    if (conFichas.length > 1 || elegido !== null) {
+      filtros.unshift({
+        key: PARAM_DEPARTAMENTO,
+        label: 'Departamento',
+        icon: 'pin',
+        asChips: true,
+        options: conFichas,
+      });
+    }
+
+    if (elegido === null) {
       return filtros;
     }
 
-    const cuentaPorCiudad = new Map<string, number>();
-    for (const fila of this.delDepartamento()) {
-      if (fila.city !== null && fila.city !== '') {
-        cuentaPorCiudad.set(fila.city, (cuentaPorCiudad.get(fila.city) ?? 0) + 1);
-      }
-    }
-
-    const ciudades = [...cuentaPorCiudad.entries()]
-      .sort(([a, cuentaA], [b, cuentaB]) => cuentaB - cuentaA || a.localeCompare(b, 'es'))
-      .map(([ciudad]) => ({ value: ciudad, label: ciudad }));
+    const ciudades = placeCuts
+      .publishedCities(this.delDepartamento())
+      .map((ciudad) => ({ value: ciudad, label: ciudad }));
 
     if (ciudades.length > 1) {
       // Con una sola ciudad el chip no acota nada: sería un botón que no hace
-      // nada, dibujado con la misma pinta que los que sí.
-      filtros.unshift({ key: PARAM_CIUDAD, label: 'Ciudad', asChips: true, options: ciudades });
+      // nada, dibujado con la misma pinta que los que sí. Va debajo del
+      // departamento: acota dentro de él.
+      const despuesDelDepartamento =
+        filtros.findIndex((filtro) => filtro.key === PARAM_DEPARTAMENTO) + 1;
+      filtros.splice(despuesDelDepartamento, 0, {
+        key: PARAM_CIUDAD,
+        label: 'Ciudad',
+        icon: 'building',
+        asChips: true,
+        options: ciudades,
+      });
     }
     return filtros;
   });
@@ -516,8 +462,8 @@ export abstract class PublicDirectoryListing {
       return null;
     }
     return this.departamentoElegido() === null
-      ? 'Ninguno de los resultados coincide con los filtros que pusiste. Probá quitando alguno.'
-      : 'No hay nada publicado en ese departamento con los filtros que pusiste. Tocalo otra vez en el mapa para ver todo el país.';
+      ? 'Ninguno de los resultados coincide con los filtros que puso. Pruebe quitando alguno.'
+      : 'No hay nada publicado en ese departamento con los filtros que puso. Quite el departamento para ver todo el país.';
   });
 
   /**
@@ -526,7 +472,7 @@ export abstract class PublicDirectoryListing {
    * El texto **vuelve a pedirle al servidor** —es el único filtro que el
    * controlador público aplica de verdad—. Los chips no se copian acá: la
    * barra ya los escribió en la URL antes de emitir, y de la URL los leen
-   * `ciudad` y `soloVerificados`.
+   * `ciudad` y los cortes comunes.
    */
   protected filtrar(activos: Readonly<Record<string, string>>): void {
     const termino = activos[SEARCH_PARAM] ?? '';
@@ -543,8 +489,9 @@ export abstract class PublicDirectoryListing {
     const termino = this.termino();
     const consulta: PublicSearchQuery = termino === '' ? {} : { q: termino };
 
-    this.leerTodo(consulta, [], undefined, 0).subscribe({
-      next: (filas) =>
+    placeCuts.readWholeDirectory((filtros) => this.buscar(filtros), consulta).subscribe({
+      next: ({ rows: filas, truncated }) => {
+        this.recortada.set(truncated);
         this.estado.set(
           filas.length === 0
             ? empty(
@@ -554,37 +501,10 @@ export abstract class PublicDirectoryListing {
                   : `No encontramos ${this.queSonEnSingular} que coincida con «${termino}».`,
               )
             : ready(filas),
-        ),
+        );
+      },
       error: (error: unknown) =>
         this.estado.set(errorToViewState<readonly PublicSearchResult[]>(error)),
     });
-  }
-
-  /**
-   * Recorre el cursor hasta agotarlo, o hasta el techo de páginas.
-   *
-   * Recursivo y no un bucle porque cada página depende del cursor de la
-   * anterior: no se pueden pedir en paralelo. Es el mismo recorrido que ya hace
-   * el directorio de médicos.
-   */
-  private leerTodo(
-    consulta: PublicSearchQuery,
-    acumulado: readonly PublicSearchResult[],
-    cursor: string | undefined,
-    pagina: number,
-  ): Observable<readonly PublicSearchResult[]> {
-    return this.buscar({ ...consulta, limit: POR_PAGINA, ...(cursor ? { cursor } : {}) }).pipe(
-      switchMap((respuesta) => {
-        const filas = [...acumulado, ...respuesta.items];
-        if (respuesta.nextCursor === null) {
-          return of(filas);
-        }
-        if (pagina + 1 >= MAX_PAGINAS) {
-          this.recortada.set(true);
-          return of(filas);
-        }
-        return this.leerTodo(consulta, filas, respuesta.nextCursor, pagina + 1);
-      }),
-    );
   }
 }

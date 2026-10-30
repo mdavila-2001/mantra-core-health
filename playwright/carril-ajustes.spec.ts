@@ -95,6 +95,8 @@ test.describe('Ajustes', () => {
   test('el panel de avisos carga las preferencias de verdad, contra la API', async () => {
     await irA(page, '/settings');
     await esperarAplicacionLista(page);
+    // La solapa activa sobrevive a `irA`: se pide la de Avisos, que es la que se mide.
+    await page.getByRole('tab', { name: 'Avisos' }).click();
 
     // Las cuatro categorías en lenguaje llano, que es lo que la pantalla
     // promete: si la llamada fallara, acá diría «No pudimos cargar…».
@@ -123,9 +125,6 @@ test.describe('Ajustes', () => {
     await expect(html).toHaveAttribute('data-theme', 'dark');
     // El del encabezado es el mismo estado: se movió con éste.
     await expect(page.getByTestId('header-theme-toggle')).toHaveAttribute('aria-checked', 'true');
-
-    await page.getByTestId('theme-use-system').click();
-    await expect(page.getByTestId('theme-use-system')).toHaveCount(0);
   });
 
   test('los permisos del navegador se muestran con su estado real', async () => {
@@ -151,9 +150,7 @@ test.describe('Ajustes', () => {
     await expect(page.getByTestId('settings-roles')).toBeVisible();
     // Acotado al contenido: el menú lateral también ofrece «Acceso delegado» a
     // este rol, y sin acotar el localizador encuentra los dos.
-    await expect(
-      page.locator('main a[href="/administration/delegated-access"]'),
-    ).toBeVisible();
+    await expect(page.locator('main a[href="/administration/delegated-access"]')).toBeVisible();
   });
 
   test('la dirección vieja de las preferencias sigue llevando a algún lado', async () => {
@@ -181,15 +178,17 @@ test.describe('Ajustes', () => {
   test('alternar un aviso y recargar lo muestra cambiado — es de la cuenta, no de la sesión', async () => {
     await irA(page, '/settings');
     await esperarAplicacionLista(page);
+    // La solapa activa sobrevive a `irA`: se pide la de Avisos, que es la que se mide.
+    await page.getByRole('tab', { name: 'Avisos' }).click();
 
     const social = page.getByTestId('pref-SOCIAL').locator('input[role="switch"]');
-    await expect(social).toBeVisible({ timeout: 30_000 });
+    await expect(social).toBeAttached({ timeout: 30_000 });
     const before = await social.isChecked();
 
-    await social.click();
+    await social.locator('xpath=ancestor::label').click();
     await expect(social).toBeChecked({ checked: !before });
     await page.getByTestId('pref-save').click();
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
 
     // `page.reload()` canjea el refresh token — el mismo cupo de 10/min que el
     // login (ver `sesion.ts`) — así que se recarga una sola vez acá.
@@ -202,9 +201,13 @@ test.describe('Ajustes', () => {
 
     // Se deja como estaba: esta prueba no puede alterar el estado para las que
     // corren después de ella (mode: 'serial', misma sesión).
-    await page.getByTestId('pref-SOCIAL').locator('input[role="switch"]').click();
+    await page
+      .getByTestId('pref-SOCIAL')
+      .locator('input[role="switch"]')
+      .locator('xpath=ancestor::label')
+      .click();
     await page.getByTestId('pref-save').click();
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
   });
 
   test('un switch se alterna con Espacio desde el teclado, con foco visible', async () => {
@@ -212,7 +215,7 @@ test.describe('Ajustes', () => {
     await esperarAplicacionLista(page);
 
     const messages = page.getByTestId('pref-MESSAGES').locator('input[role="switch"]');
-    await expect(messages).toBeVisible({ timeout: 30_000 });
+    await expect(messages).toBeAttached({ timeout: 30_000 });
     const before = await messages.isChecked();
 
     await messages.focus();
@@ -231,7 +234,7 @@ test.describe('Ajustes', () => {
     await esperarAplicacionLista(page);
 
     const clinical = page.getByTestId('pref-CLINICAL').locator('input[role="switch"]');
-    await expect(clinical).toBeVisible({ timeout: 30_000 });
+    await expect(clinical).toBeAttached({ timeout: 30_000 });
     const before = await clinical.isChecked();
 
     await page.route('**/notifications/preferences/me', (route) => {
@@ -241,11 +244,11 @@ test.describe('Ajustes', () => {
       return route.continue();
     });
 
-    await clinical.click();
+    await clinical.locator('xpath=ancestor::label').click();
     await expect(clinical).toBeChecked({ checked: !before });
     await page.getByTestId('pref-save').click();
 
-    await expect(page.getByText('No pudimos guardar tus preferencias.')).toBeVisible({
+    await expect(page.getByText('No pudimos guardar sus preferencias.')).toBeVisible({
       timeout: 30_000,
     });
     // Nada quedó guardado (el PUT es todo-o-nada): vuelve a lo último
@@ -260,8 +263,8 @@ test.describe('Ajustes', () => {
     await esperarAplicacionLista(page);
 
     const scheduling = page.getByTestId('pref-SCHEDULING').locator('input[role="switch"]');
-    await expect(scheduling).toBeVisible({ timeout: 30_000 });
-    await scheduling.click();
+    await expect(scheduling).toBeAttached({ timeout: 30_000 });
+    await scheduling.locator('xpath=ancestor::label').click();
 
     let puts = 0;
     page.on('request', (request) => {
@@ -276,37 +279,18 @@ test.describe('Ajustes', () => {
     // con `isLoading` lo intercepta (AC-17-8), así que no debería sumar otro.
     await saveButton.click({ force: true });
 
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
     expect(puts).toBe(1);
 
     // Se deja como estaba.
-    await scheduling.click();
+    await scheduling.locator('xpath=ancestor::label').click();
     await saveButton.click();
-    await expect(page.getByText('Guardamos tus preferencias.')).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText('Guardamos sus preferencias.')).toBeVisible({ timeout: 30_000 });
   });
 
-  test('«el de mi dispositivo» recarga sin parpadeo, en claro y en oscuro', async () => {
-    await irA(page, '/settings');
-    await esperarAplicacionLista(page);
-    await page.getByRole('tab', { name: 'Apariencia' }).click();
-    await page.getByTestId('theme-system').click();
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
-
-    // `page.reload()` de nuevo: la tercera y última de esta suite (ver la nota
-    // de cupo de arriba).
-    await page.reload();
-    await esperarAplicacionLista(page);
-    // El anti-parpadeo es exactamente esto: bajo «el de mi dispositivo»
-    // `data-theme` no se escribe nunca, ni antes ni después de hidratar — lo
-    // resuelve `@media (prefers-color-scheme)` en la hoja de estilos.
-    await expect(page.locator('html')).not.toHaveAttribute('data-theme', /.+/);
-
-    await irA(page, '/settings');
-    await esperarAplicacionLista(page);
-    await page.getByRole('tab', { name: 'Apariencia' }).click();
-    await page.getByTestId('theme-light').click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  });
+  // Retirada: «el de mi dispositivo» (tercera opción de tema) se quitó del
+  // producto en 65985b534 (11/10/2026). Ya no hay nada que probar de esa
+  // opción; el interruptor claro/oscuro lo cubre la prueba de Apariencia.
 
   test('un permiso denegado no ofrece un switch que prometa revertirlo', async () => {
     await irA(page, '/settings');
@@ -325,6 +309,10 @@ test.describe('Ajustes', () => {
         await expect(page.getByTestId(`request-${key}`)).toHaveCount(0);
       }
     }
-    await expect(page.locator('[role="switch"]')).toHaveCount(0);
+    // Sólo dentro del panel de Permisos: el encabezado tiene su propio
+    // interruptor de tema, que es de la cuenta del dispositivo y no un permiso.
+    await expect(
+      page.getByRole('tabpanel', { name: 'Permisos' }).locator('[role="switch"]'),
+    ).toHaveCount(0);
   });
 });

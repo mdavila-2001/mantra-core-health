@@ -1,8 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import type { Observable } from 'rxjs';
 
 import { SchedulingClient } from './scheduling.client';
+import { esReconsulta, motivoDeReconsulta } from './scheduling.types';
+import type { TenantScope } from './tenant-scope';
 import type {
   AgendaResourceCreated,
   AgendaSlot,
@@ -479,6 +482,104 @@ describe('SchedulingClient', () => {
     expect(creada?.id).toBe('tpl-1');
   });
 
+  describe('horario flexible (P36)', () => {
+    it('createTemplate manda flexibleHours a la API real y el tiempo por paciente en la plantilla', () => {
+      client
+        .createTemplate('res-1', {
+          name: 'Lunes flexible',
+          rules: [{ dayOfWeek: 1, startTime: '08:00', endTime: '12:00' }],
+          slotMinutes: 20,
+          flexibleHours: true,
+        })
+        .subscribe();
+
+      const req = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(req.request.body).toEqual({
+        name: 'Lunes flexible',
+        rules: [{ dayOfWeek: 1, startTime: '08:00', endTime: '12:00' }],
+        slotMinutes: 20,
+        flexibleHours: true,
+      });
+      req.flush({
+        id: 'tpl-1',
+        name: 'Lunes flexible',
+        ruleCount: 1,
+        statusConceptId: 'c',
+        flexibleHours: true,
+      });
+    });
+
+    it('v4.2.64 · createTemplate manda flexibleHours en la franja flexible de una semana mixta', () => {
+      client
+        .createTemplate('res-1', {
+          name: 'Semana mixta',
+          rules: [
+            { dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotMinutes: 30, gapMinutes: 10 },
+            { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', flexibleHours: true },
+          ],
+          slotMinutes: 20,
+        })
+        .subscribe();
+
+      const req = http.expectOne('/scheduling/resources/res-1/templates');
+      expect(req.request.body).toStrictEqual({
+        name: 'Semana mixta',
+        rules: [
+          { dayOfWeek: 1, startTime: '08:00', endTime: '12:00', slotMinutes: 30, gapMinutes: 10 },
+          { dayOfWeek: 2, startTime: '08:00', endTime: '12:00', flexibleHours: true },
+        ],
+        slotMinutes: 20,
+      });
+      req.flush({ id: 'tpl-1', name: 'Semana mixta', ruleCount: 2, statusConceptId: 'c' });
+    });
+
+    it('getFlexibleAvailability pide la ventana en ISO y devuelve fechas', () => {
+      let horas: Date[] = [];
+      client
+        .getFlexibleAvailability('res/1', { from: DESDE, to: HASTA })
+        .subscribe((d) => (horas = d.items.map((i) => i.endAt)));
+
+      const req = http.expectOne(
+        (r) => r.url === '/scheduling/resources/res%2F1/flexible-availability',
+      );
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('from')).toBe(DESDE.toISOString());
+      expect(req.request.params.get('to')).toBe(HASTA.toISOString());
+      req.flush({
+        resourceId: 'res/1',
+        stepMinutes: 15,
+        items: [
+          {
+            templateId: 'tpl-1',
+            startAt: '2026-08-10T12:00:00.000Z',
+            endAt: '2026-08-10T12:20:00.000Z',
+          },
+        ],
+      });
+      expect(horas).toEqual([new Date('2026-08-10T12:20:00.000Z')]);
+    });
+
+    it('placeFlexibleHold manda la hora y el paciente, sin opcionales en undefined', () => {
+      let token = '';
+      client
+        .placeFlexibleHold('res-1', { startAt: new Date('2026-08-10T12:10:00.000Z') })
+        .subscribe((h) => (token = h.holdToken));
+
+      const req = http.expectOne('/scheduling/resources/res-1/flexible-holds');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ startAt: '2026-08-10T12:10:00.000Z' });
+      req.flush({
+        id: 'hold-1',
+        holdToken: 'tok',
+        expiresAt: '2026-08-10T12:05:00.000Z',
+        bookableSlotId: 'slot-1',
+        startAt: '2026-08-10T12:10:00.000Z',
+        endAt: '2026-08-10T12:30:00.000Z',
+      });
+      expect(token).toBe('tok');
+    });
+  });
+
   it('generateSlots escapa la plantilla y manda sólo la ventana', () => {
     let resultado: SlotsGenerated | undefined;
     client
@@ -661,5 +762,455 @@ describe('SchedulingClient', () => {
     });
 
     expect(recibida?.delayNotice).toBeUndefined();
+  });
+});
+
+describe('SchedulingClient · walk-in idempotente', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const TURNO = {
+    patient: { name: 'Ana', lastName: 'Rojas', nationalId: '1234567', phone: '+59170000000' },
+    resourceId: 'r-1',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+  } as const;
+
+  /**
+   * El doble clic o el reintento tras un timeout no pueden registrar dos veces
+   * al paciente: el reintento del mismo envío viaja con la misma clave.
+   */
+  it('reintentar el mismo envío repite la Idempotency-Key; el siguiente turno lleva otra', () => {
+    client.createWalkInAppointment(TURNO).subscribe({ error: () => undefined });
+    const primera = http.expectOne('/scheduling/appointments/walk-in');
+    const clave = primera.request.headers.get('Idempotency-Key');
+    expect(clave).toBeTruthy();
+    primera.flush(null, { status: 502, statusText: 'Bad Gateway' });
+
+    client.createWalkInAppointment(TURNO).subscribe();
+    const reintento = http.expectOne('/scheduling/appointments/walk-in');
+    expect(reintento.request.headers.get('Idempotency-Key')).toBe(clave);
+    reintento.flush({ bookingId: 'b-1' });
+
+    client.createWalkInAppointment(TURNO).subscribe();
+    const siguiente = http.expectOne('/scheduling/appointments/walk-in');
+    expect(siguiente.request.headers.get('Idempotency-Key')).not.toBe(clave);
+    siguiente.flush({ bookingId: 'b-2' });
+  });
+});
+
+/**
+ * Publicar la agenda en **otra organización** que la activa.
+ *
+ * La API resuelve la organización con `X-Tenant-Id`: rechaza con 403 el
+ * `tenantId` del cuerpo o de la query que no es ése (`TENANT_SCOPE_CONFLICT`)
+ * y no ve el recurso de otra. El interceptor pone el de la sesión salvo que la
+ * petición ya traiga uno, así que lo que se fija acá es que cada paso de la
+ * publicación lo declare **sólo** cuando se le pide, sin tocar lo que ya manda.
+ */
+describe('SchedulingClient · publicar en otra organización', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const OLIVOS = { tenantId: 't-olivos' } as const;
+
+  /** Cada paso de la publicación y la lectura del horario vigente, con o sin organización. */
+  const STEPS: readonly {
+    readonly step: string;
+    readonly method: string;
+    readonly url: string;
+    readonly call: (scope?: TenantScope) => Observable<unknown>;
+  }[] = [
+    {
+      step: 'createResource',
+      method: 'POST',
+      url: '/scheduling/resources',
+      call: (scope) =>
+        client.createResource(
+          {
+            tenantId: 't-olivos',
+            resourceType: 'PRACTITIONER',
+            resourceRefType: 'practitioner_profiles',
+            resourceRefId: 'pp-1',
+            name: 'Agenda',
+          },
+          scope,
+        ),
+    },
+    {
+      step: 'createPolicy',
+      method: 'POST',
+      url: '/scheduling/booking-policies',
+      call: (scope) =>
+        client.createPolicy({ tenantId: 't-olivos', code: 'C', name: 'Reglas' }, scope),
+    },
+    {
+      step: 'createTemplate',
+      method: 'POST',
+      url: '/scheduling/resources/r-olivos/templates',
+      call: (scope) =>
+        client.createTemplate(
+          'r-olivos',
+          { name: 'Horario', rules: [{ dayOfWeek: 1, startTime: '09:00', endTime: '13:00' }] },
+          scope,
+        ),
+    },
+    {
+      step: 'generateSlots',
+      method: 'POST',
+      url: '/scheduling/templates/tpl-olivos/generate-slots',
+      call: (scope) =>
+        client.generateSlots(
+          'tpl-olivos',
+          { from: DESDE.toISOString(), to: HASTA.toISOString() },
+          scope,
+        ),
+    },
+    {
+      step: 'listTemplates',
+      method: 'GET',
+      url: '/scheduling/resources/r-olivos/templates',
+      call: (scope) => client.listTemplates('r-olivos', scope),
+    },
+    {
+      step: 'listTemplateLiveBookings',
+      method: 'GET',
+      url: '/scheduling/templates/tpl-olivos/live-bookings',
+      call: (scope) => client.listTemplateLiveBookings('tpl-olivos', scope),
+    },
+    {
+      step: 'retireTemplate',
+      method: 'DELETE',
+      url: '/scheduling/templates/tpl-olivos',
+      call: (scope) => client.retireTemplate('tpl-olivos', 'keep', scope),
+    },
+  ];
+
+  it.each(STEPS)(
+    '$step con organización declarada manda su X-Tenant-Id',
+    ({ call, method, url }) => {
+      call(OLIVOS).subscribe();
+
+      const req = http.expectOne((r) => r.url === url);
+      expect(req.request.method).toBe(method);
+      expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+      req.flush({});
+    },
+  );
+
+  it.each(STEPS)(
+    '$step sin organización declarada no manda X-Tenant-Id: lo pone la sesión',
+    ({ call, url }) => {
+      call().subscribe();
+
+      const req = http.expectOne((r) => r.url === url);
+      expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+      req.flush({});
+    },
+  );
+
+  it.each(STEPS)(
+    '$step manda el mismo cuerpo y la misma query con o sin organización',
+    ({ call, url }) => {
+      call().subscribe();
+      const unscoped = http.expectOne((r) => r.url === url);
+      call(OLIVOS).subscribe();
+      const scoped = http.expectOne((r) => r.url === url);
+
+      expect(scoped.request.body).toEqual(unscoped.request.body);
+      expect(scoped.request.params.keys()).toEqual(unscoped.request.params.keys());
+      unscoped.flush({});
+      scoped.flush({});
+    },
+  );
+
+  it('retireTemplate cancelando las citas conserva affectedBookings además de la organización', () => {
+    client.retireTemplate('tpl-olivos', 'cancel', OLIVOS).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/templates/tpl-olivos');
+    expect(req.request.params.get('affectedBookings')).toBe('cancel');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    req.flush({});
+  });
+});
+
+/**
+ * `createDirectAppointment` con `followUpOf` (C4).
+ *
+ * El cuerpo de este cliente se arma **campo por campo**, así que lo que el
+ * contrato declare y la lista no repita se descarta en silencio: la petición
+ * sale sin el campo y nada falla. Es el defecto que ya dejó la modalidad sin
+ * escribir, y por eso acá se afirma el cuerpo completo con `toEqual` y no la
+ * presencia de una clave.
+ */
+describe('SchedulingClient · reconsulta', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const CITA = {
+    patientProfileId: 'pp-1',
+    resourceId: 'r-1',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+    reasonText: 'Reconsulta: control de presión',
+  } as const;
+
+  it('manda followUpOf con sus dos campos y nada más', () => {
+    client
+      .createDirectAppointment({
+        ...CITA,
+        followUpOf: { bookingId: 'b-origen', encounterId: 'enc-1' },
+      })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({
+      patientProfileId: 'pp-1',
+      resourceId: 'r-1',
+      startAt: '2026-10-08T13:00:00.000Z',
+      durationMinutes: 30,
+      reasonText: 'Reconsulta: control de presión',
+      followUpOf: { bookingId: 'b-origen', encounterId: 'enc-1' },
+    });
+
+    req.flush({
+      bookingId: 'b-nueva',
+      bookableSlotId: 's-nuevo',
+      statusConceptId: 'c-conf',
+      retractedSlots: 0,
+    });
+  });
+
+  it('un encuentro ausente viaja como null explícito, que es lo que el contrato declara', () => {
+    client
+      .createDirectAppointment({ ...CITA, followUpOf: { bookingId: 'b-origen', encounterId: null } })
+      .subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.body).toMatchObject({
+      followUpOf: { bookingId: 'b-origen', encounterId: null },
+    });
+
+    req.flush({
+      bookingId: 'b-nueva',
+      bookableSlotId: 's-nuevo',
+      statusConceptId: 'c-conf',
+      retractedSlots: 0,
+    });
+  });
+
+  it('sin followUpOf la clave NO se declara: una cita puntual sigue siendo la de antes', () => {
+    client.createDirectAppointment(CITA).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect('followUpOf' in (req.request.body as object)).toBe(false);
+
+    req.flush({
+      bookingId: 'b-nueva',
+      bookableSlotId: 's-nuevo',
+      statusConceptId: 'c-conf',
+      retractedSlots: 0,
+    });
+  });
+
+  it('searchBookings devuelve followUpOf y followUpBookingId tal como llegan', () => {
+    let citas: readonly Booking[] = [];
+    client.searchBookings().subscribe((p) => (citas = p.items));
+
+    http.expectOne((r) => r.url === '/scheduling/bookings').flush({
+      items: [
+        {
+          id: 'b-reconsulta',
+          statusConceptId: 'c-conf',
+          createdAt: '2026-09-25T10:00:00.000Z',
+          followUpOf: { bookingId: 'b-origen', encounterId: null },
+          followUpBookingId: null,
+        },
+        {
+          id: 'b-origen',
+          statusConceptId: 'c-done',
+          createdAt: '2026-09-01T10:00:00.000Z',
+          followUpOf: null,
+          followUpBookingId: 'b-reconsulta',
+        },
+      ],
+      count: 2,
+      limit: 100,
+      truncated: false,
+    });
+
+    expect(citas[0].followUpOf).toEqual({ bookingId: 'b-origen', encounterId: null });
+    expect(citas[1].followUpBookingId).toBe('b-reconsulta');
+    // Y las fechas siguen convirtiéndose: los campos nuevos no atropellan nada.
+    expect(citas[0].createdAt).toBeInstanceOf(Date);
+  });
+
+  it('getBooking también los devuelve, y esReconsulta los interpreta', () => {
+    let cita: Booking | undefined;
+    client.getBooking('b-reconsulta').subscribe((b) => (cita = b));
+
+    http.expectOne('/scheduling/bookings/b-reconsulta').flush({
+      id: 'b-reconsulta',
+      statusConceptId: 'c-conf',
+      createdAt: '2026-09-25T10:00:00.000Z',
+      followUpOf: { bookingId: 'b-origen', encounterId: 'enc-1' },
+      followUpBookingId: null,
+    });
+
+    expect(esReconsulta(cita!)).toBe(true);
+    expect(cita!.followUpOf?.encounterId).toBe('enc-1');
+  });
+
+  it('una cita sin el campo no es una reconsulta, y eso no es un dato faltante', () => {
+    let cita: Booking | undefined;
+    client.getBooking('b-comun').subscribe((b) => (cita = b));
+
+    http
+      .expectOne('/scheduling/bookings/b-comun')
+      .flush({ id: 'b-comun', statusConceptId: 'c-conf', createdAt: '2026-09-25T10:00:00.000Z' });
+
+    expect(esReconsulta(cita!)).toBe(false);
+  });
+});
+
+describe('motivoDeReconsulta', () => {
+  it('antepone «Reconsulta: » al motivo de la consulta de origen', () => {
+    expect(motivoDeReconsulta('Control de presión arterial')).toBe(
+      'Reconsulta: Control de presión arterial',
+    );
+  });
+
+  it('no duplica el prefijo cuando el origen ya era una reconsulta', () => {
+    expect(motivoDeReconsulta('Reconsulta: Control de presión arterial')).toBe(
+      'Reconsulta: Control de presión arterial',
+    );
+  });
+
+  it('sin motivo de origen deja la palabra sola, que igual dice algo', () => {
+    expect(motivoDeReconsulta(null)).toBe('Reconsulta');
+    expect(motivoDeReconsulta(undefined)).toBe('Reconsulta');
+    expect(motivoDeReconsulta('   ')).toBe('Reconsulta');
+  });
+});
+
+/**
+ * La organización **como la que se habla**, cuando no es la activa.
+ *
+ * El modal del día agenda en otra organización donde el médico está afiliado.
+ * La API resuelve la organización con `X-Tenant-Id` y rechaza con 403 la
+ * agenda de otra (`assertResourceInActiveTenant`) y el `?tenantId=` de otra
+ * (`TENANT_SCOPE_CONFLICT`). El interceptor pone el de la sesión salvo que la
+ * petición ya traiga uno, así que lo que fijan estas pruebas es que el cliente
+ * lo declare **sólo** cuando se le pide.
+ */
+describe('SchedulingClient · organización declarada', () => {
+  let client: SchedulingClient;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    client = TestBed.inject(SchedulingClient);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  const APPOINTMENT = {
+    patientProfileId: 'pp-1',
+    resourceId: 'r-olivos',
+    startAt: '2026-10-08T13:00:00.000Z',
+    durationMinutes: 30,
+  } as const;
+
+  const BUSY_TIME = {
+    exceptionType: 'ABSENCE',
+    startAt: '2026-10-08T13:00:00.000Z',
+    endAt: '2026-10-08T14:00:00.000Z',
+    reason: 'Reunión',
+  } as const;
+
+  it('listResources con organización declarada manda su X-Tenant-Id', () => {
+    client.listResources({ tenantId: 't-olivos' }, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    expect(req.request.params.get('tenantId')).toBe('t-olivos');
+    req.flush({ items: [], count: 0 });
+  });
+
+  it('listResources sin organización declarada no manda X-Tenant-Id: lo pone la sesión', () => {
+    client.listResources({ tenantId: 't-1' }).subscribe();
+
+    const req = http.expectOne((r) => r.url === '/scheduling/resources');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ items: [], count: 0 });
+  });
+
+  it('createDirectAppointment con organización declarada manda su X-Tenant-Id', () => {
+    client.createDirectAppointment(APPOINTMENT, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    // El encabezado no cambia el cuerpo: sigue armado campo por campo.
+    expect(req.request.body).toEqual(APPOINTMENT);
+    req.flush({ bookingId: 'b-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+  });
+
+  it('createDirectAppointment sin organización declarada no manda X-Tenant-Id', () => {
+    client.createDirectAppointment(APPOINTMENT).subscribe();
+
+    const req = http.expectOne('/scheduling/appointments/direct');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ bookingId: 'b-1', bookableSlotId: 's-1', statusConceptId: 'c', retractedSlots: 0 });
+  });
+
+  it('createException con organización declarada manda su X-Tenant-Id', () => {
+    client.createException('r-olivos', BUSY_TIME, { tenantId: 't-olivos' }).subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-olivos/exceptions');
+    expect(req.request.headers.get('X-Tenant-Id')).toBe('t-olivos');
+    expect(req.request.body).toEqual(BUSY_TIME);
+    req.flush({ id: 'exc-1', blockedSlots: 0 });
+  });
+
+  it('createException sin organización declarada no manda X-Tenant-Id', () => {
+    client.createException('r-1', BUSY_TIME).subscribe();
+
+    const req = http.expectOne('/scheduling/resources/r-1/exceptions');
+    expect(req.request.headers.has('X-Tenant-Id')).toBe(false);
+    req.flush({ id: 'exc-1', blockedSlots: 0 });
   });
 });

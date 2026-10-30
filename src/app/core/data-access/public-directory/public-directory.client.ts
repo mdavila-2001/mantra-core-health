@@ -65,8 +65,8 @@ type WireProfile = Omit<PublicProfileDetail, 'posts' | 'updatedAt' | 'practiceSi
   readonly posts: readonly WirePost[];
   readonly updatedAt: string;
   /**
-   * **Opcional en el cable y obligatorio en la vista.** La API todavía no lo
-   * manda (P16 de `PENDIENTES-BACKEND.md`); el simulador sí. Que el contrato de
+   * **Opcional en el cable y obligatorio en la vista.** La API lo manda en la
+   * ficha (P16), y una respuesta vieja puede no traerlo. Que el contrato de
    * la pantalla prometa siempre un arreglo es lo que evita que cada consumidor
    * tenga que acordarse de que puede faltar — {@link toProfile} lo garantiza.
    */

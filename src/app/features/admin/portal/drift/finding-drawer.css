@@ -1,0 +1,47 @@
+.finding {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.finding__todo,
+.finding__count {
+  margin: 0;
+}
+
+.finding__count {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.finding__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}
+
+.finding__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.finding__title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  overflow-wrap: anywhere;
+}
+
+.finding__detail {
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.finding__source {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}

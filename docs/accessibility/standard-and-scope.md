@@ -26,7 +26,7 @@ No están escondidas: viven anotadas en el CSS con el número que las mide.
 |---|---|---|---|
 | **E1** | `--text-muted` en claro | 3,86–4,27:1 | Solo texto terciario. **Jamás información clínica** |
 | **E2** | `--text-muted` en oscuro | 4,45:1 en la superficie más alta | Ídem |
-| **E3** | `--border-strong` en oscuro | <3:1 | Sin foco. Con foco manda el anillo |
+| ~~E3~~ | `--border-strong` en oscuro — cerrada el 2026-10-11 | 3,27:1 peor caso | Velo al 40 %; ya cumple 3:1 |
 | **E4** | Ver `identidad-visual.md` Parte 8.2 | — | Fuera de este repositorio |
 
 `design-tokens.types.ts` repite la regla junto al token, para que quien
@@ -89,8 +89,8 @@ Los hallazgos están en [el informe de auditoría](audit-report.md).
 | Criterio | Dónde se resuelve |
 |---|---|
 | 1.3.1 Información y relaciones | `FORM_CONTROL_CONTEXT`, `<dl>` del panel, `<th scope>` de la tabla |
-| 1.4.3 Contraste (mínimo) | Tokens semánticos, con E1–E3 declaradas |
-| 1.4.11 Contraste de elementos no textuales | `--border-strong`, con E3 declarada |
+| 1.4.3 Contraste (mínimo) | Tokens semánticos, con E2 declarada (E1, E3, R1–R3 cerradas) |
+| 1.4.11 Contraste de elementos no textuales | `--border-strong` y `--borde-ctrl` ≥3:1 en claro y oscuro, sin excepción |
 | 1.4.12 Espaciado de texto | Interlineados de la escala ALOVIDA |
 | 2.1.1 Teclado | Controles nativos (`<button>`, `<a>`, `<dialog>`) |
 | 2.1.2 Sin trampa de teclado | `app-menu` no atrapa; `app-dialog` sí, y es correcto |

@@ -1,0 +1,108 @@
+<app-page-header
+  title="Médicos del centro"
+  subtitle="Invite a médicos a su sede, o apruebe a quienes piden sumarse, procedimiento por procedimiento. Nadie figura como activo hasta que la otra parte acepta."
+/>
+
+<app-card class="affiliations" padding="lg" data-testid="affiliations-card">
+  <div class="affiliations__panel">
+    @if (loadError(); as message) {
+      <app-alert tone="error" data-testid="affiliations-load-error">{{ message }}</app-alert>
+    }
+
+    <div class="affiliations__filters">
+      <app-form-field label="Práctica">
+        <app-select
+          [options]="practiceOptions()"
+          [value]="practiceId()"
+          (valueChange)="selectPractice($event)"
+          [searchable]="false"
+          placeholder="Elija la práctica"
+          ariaLabel="Práctica"
+          data-testid="affiliations-practice"
+        />
+      </app-form-field>
+      <app-form-field label="Sede">
+        <app-select
+          [options]="siteOptions()"
+          [value]="siteId()"
+          (valueChange)="selectSite($event)"
+          [searchable]="false"
+          placeholder="Elija la sede"
+          ariaLabel="Sede"
+          data-testid="affiliations-site"
+        />
+      </app-form-field>
+      <div class="affiliations__invite">
+        <button
+          app-button
+          type="button"
+          size="sm"
+          [disabled]="siteId() === null || inviting()"
+          data-testid="affiliations-invite-open"
+          (clicked)="inviting.set(true)"
+        >
+          Invitar a un médico
+        </button>
+      </div>
+    </div>
+
+    @if (inviting() && practiceId() !== null && siteId() !== null) {
+      <app-practitioner-invite-form
+        [practiceId]="practiceId()!"
+        [practiceSiteId]="siteId()!"
+        (invited)="onInvited($event)"
+        (cancelled)="inviting.set(false)"
+      />
+    }
+
+    <app-data-table
+      caption="Médicos afiliados a la sede"
+      [state]="siteRows()"
+      [columns]="columns()"
+      [trackBy]="rowId"
+      [rowLabel]="rowLabel"
+      (retry)="reload()"
+      (refresh)="reload()"
+      data-testid="affiliations-table"
+    />
+  </div>
+</app-card>
+
+<ng-template #practitionerCell let-row>
+  <span class="affiliations__main" [attr.data-testid]="'affiliation-name-' + row.id">{{ row.practitionerName }}</span>
+  <span class="affiliations__service" [attr.data-testid]="'affiliation-service-' + row.id">{{ row.serviceDisplay }}</span>
+  <span class="affiliations__state">
+    <app-badge [variant]="statusTone(row)" [attr.data-testid]="'affiliation-status-' + row.id">{{ statusText(row) }}</app-badge>
+  </span>
+  @if (awaitsPractice(row)) {
+    <span class="affiliations__actions">
+      <button
+        app-button
+        type="button"
+        size="sm"
+        [disabled]="busyRowId() !== null"
+        [attr.aria-label]="'Aprobar a ' + row.practitionerName + ' para ' + row.serviceDisplay"
+        [attr.data-testid]="'affiliation-approve-' + row.id"
+        (clicked)="approve(row)"
+      >
+        Aprobar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        size="sm"
+        [disabled]="busyRowId() !== null"
+        [attr.aria-label]="'Rechazar a ' + row.practitionerName + ' para ' + row.serviceDisplay"
+        [attr.data-testid]="'affiliation-reject-' + row.id"
+        (clicked)="reject(row)"
+      >
+        Rechazar
+      </button>
+    </span>
+  }
+</ng-template>
+
+<ng-template #initiatorCell let-row>
+  <span class="affiliations__muted" [attr.data-testid]="'affiliation-initiator-' + row.id">{{ initiatorText(row) }}</span>
+</ng-template>

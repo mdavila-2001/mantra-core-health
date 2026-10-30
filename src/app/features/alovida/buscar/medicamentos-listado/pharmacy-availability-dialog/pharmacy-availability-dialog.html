@@ -1,9 +1,58 @@
 <app-content-dialog
   [heading]="'Dónde conseguir ' + medicationName()"
-  description="Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ves y que llegás. Si el viaje es largo, llamá antes."
+  description="Cada farmacia reporta su precio y su stock, y pueden cambiar entre que lo ve y que llega. Si el viaje es largo, llame antes."
   (opened)="handleOpened()"
   (closed)="handleClosed()"
 >
+  <!-- Lo que hay que saber antes de salir a comprarlo. -->
+  <section class="ficha-medicamento" aria-label="Condiciones de venta y dosis">
+    @if (requiresPrescription() === true) {
+      <div
+        class="app-alert ficha-medicamento__receta"
+        app-alert=""
+        data-tono="aviso"
+        data-testid="ficha-receta-obligatoria"
+      >
+        <svg
+          class="icono"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d="M7 3.5h7l4 4v13H7z"></path>
+          <path d="M14 3.5v4h4"></path>
+          <path d="M10 12h5M10 15.5h5"></path>
+        </svg>
+        <div class="app-alert__cuerpo">
+          <strong>Receta médica obligatoria</strong>
+          <p>
+            La farmacia sólo lo dispensa contra la receta de un médico. Llevala al ir a comprarlo.
+          </p>
+        </div>
+      </div>
+    } @else if (requiresPrescription() === false) {
+      <p class="ficha-medicamento__libre" data-testid="ficha-venta-libre">
+        <app-badge variant="success" size="sm">Venta libre</app-badge>
+        Ninguna farmacia de la red lo publica como venta bajo receta.
+      </p>
+    }
+
+    <dl class="ficha-medicamento__datos">
+      <div class="ficha-medicamento__dato">
+        <dt>Dosis máxima recomendada</dt>
+        <dd data-testid="ficha-dosis-maxima">
+          <span class="ficha-medicamento__sin-fuente">Sin fuente oficial cargada todavía.</span>
+          Se mostrará la de la ficha técnica, con su cita. Mientras, siga las indicaciones de su
+          médico o del prospecto.
+        </dd>
+      </div>
+    </dl>
+  </section>
+
   @if (loading()) {
     <div class="app-skeleton-grupo" aria-live="polite" aria-busy="true">
       <span class="solo-lectores">Buscando farmacias…</span>
@@ -15,13 +64,13 @@
     <div class="app-alert" app-alert="" data-tono="error" role="alert">
       <div class="app-alert__cuerpo">
         <strong>No pudimos consultar las farmacias.</strong>
-        <p>Volvé a intentarlo en un momento.</p>
+        <p>Vuelva a intentarlo en un momento.</p>
       </div>
     </div>
   } @else if (visibleOffers().length === 0) {
     <p class="farmacias__vacio">
       Ninguna farmacia de la red publicó este medicamento hoy. Puede que alguna lo tenga sin
-      publicar su inventario: preguntá por el principio activo, que es como figura en tu receta.
+      publicar su inventario: pregunte por el principio activo, que es como figura en su receta.
     </p>
   } @else {
     <!-- El mapa. Se monta recién con el diálogo abierto: Leaflet mide el
@@ -37,8 +86,8 @@
           (pinElegido)="focusPharmacy($event)"
         />
         <figcaption class="farmacias__pie">
-          Mapa de OpenStreetMap. Las distancias son en línea recta, no de recorrido: el tiempo
-          real de viaje depende del tráfico.
+          Mapa de OpenStreetMap. Las distancias son en línea recta, no de recorrido: el tiempo real
+          de viaje depende del tráfico.
         </figcaption>
       </figure>
     }
@@ -73,7 +122,8 @@
 
             @if (oferta.addressText !== null) {
               <span class="farmacia__direccion">
-                {{ oferta.addressText }}@if (oferta.city !== null) {
+                {{ oferta.addressText }}
+                @if (oferta.city !== null) {
                   , {{ oferta.city }}
                 }
               </span>
@@ -92,9 +142,6 @@
               @if (oferta.pickup) {
                 Retiro en farmacia
               }
-              @if (oferta.homeDelivery) {
-                · Envío a domicilio
-              }
             </span>
 
             @if (!isLocatable(oferta)) {
@@ -110,6 +157,9 @@
             <app-badge [variant]="oferta.inStock ? 'success' : 'warning'">
               {{ oferta.inStock ? 'Disponible hoy' : 'Sin stock hoy' }}
             </app-badge>
+            @if (oferta.requiresPrescription) {
+              <app-badge variant="warning" size="sm">Con receta</app-badge>
+            }
           </div>
         </li>
       }

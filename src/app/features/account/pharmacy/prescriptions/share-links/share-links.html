@@ -1,0 +1,53 @@
+<app-view-state-host [state]="state()" (retry)="load()">
+  <ul class="links" [attr.data-testid]="testids.linksList">
+    @for (row of rows(); track byId(row)) {
+      <li
+        class="link"
+        [class.link--highlight]="row.shareId === highlightShareId()"
+        [attr.aria-current]="row.shareId === highlightShareId() ? 'true' : null"
+        [attr.data-testid]="testids.linkRow"
+      >
+        <div class="link__summary">
+          <p class="link__title">
+            @if (dateOf(row); as prescribedOn) {
+              Receta del {{ prescribedOn | date: 'd MMMM y' }}
+            } @else {
+              Receta compartida
+            }
+          </p>
+          <app-badge [variant]="statusOf(row).variant" size="sm" [attr.data-testid]="testids.linkStatus">
+            {{ statusOf(row).label }}
+          </app-badge>
+          @if (row.shareId === highlightShareId()) {
+            <!-- Dicho en palabras, no solo con el borde: quien no distingue el
+                 color también tiene que saber cuál es. -->
+            <span class="link__marker" [attr.data-testid]="testids.linkHighlight">
+              El enlace que acaba de abrir
+            </span>
+          }
+        </div>
+
+        <p class="link__meta">
+          Creado el {{ row.createdAt | date: 'd/MM/y' }} · vence el {{ row.expiresAt | date: 'd/MM/y' }} ·
+          {{ row.uses }} {{ row.uses === 1 ? 'apertura' : 'aperturas' }} de farmacia
+        </p>
+
+        @if (row.status !== 'REVOKED') {
+          <button
+            app-button
+            type="button"
+            variant="danger"
+            size="sm"
+            class="link__revoke"
+            [isLoading]="revoking() === row.shareId"
+            [disabled]="revoking() !== null"
+            [attr.data-testid]="testids.linkRevoke"
+            (clicked)="revoke(row)"
+          >
+            Revocar
+          </button>
+        }
+      </li>
+    }
+  </ul>
+</app-view-state-host>

@@ -1,0 +1,175 @@
+:host {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  background: var(--bg-surface);
+}
+
+.psychological-help {
+  display: grid;
+  gap: var(--sp-6, 1.5rem);
+  inline-size: 100%;
+  margin-inline: auto;
+  padding-block-end: var(--sp-8, 2rem);
+}
+
+.psychological-help section,
+.psychological-help app-card {
+  min-inline-size: 0;
+}
+
+.psychological-help h2,
+.psychological-help h3,
+.psychological-help p {
+  margin-block-start: 0;
+}
+
+.psychological-help h2 {
+  margin-block-end: var(--sp-3, 0.75rem);
+}
+
+.psychological-help h3 {
+  margin-block-end: var(--sp-2, 0.5rem);
+}
+
+.psychological-help p,
+.psychological-help li {
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+.welcome-copy {
+  max-inline-size: 56rem;
+}
+
+.welcome-copy__eyebrow {
+  color: var(--text-link);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: 700;
+}
+
+.welcome-copy h2 {
+  margin-block: var(--sp-2, 0.5rem);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
+.section-heading {
+  margin-block-end: var(--sp-4, 1rem);
+}
+
+.section-heading p {
+  margin-block-end: 0;
+}
+
+.video-grid,
+.support-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4, 1rem);
+}
+
+.video-frame {
+  position: relative;
+  overflow: hidden;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  margin-block: var(--sp-3, 0.75rem);
+  border-radius: var(--r-md, 0.75rem);
+  background: var(--bg-surface-alt);
+}
+
+.video-frame--mental-health {
+  background-image: url('https://i.ytimg.com/vi/nY66tl39PkE/hqdefault.jpg');
+  background-position: center;
+  background-size: cover;
+}
+
+.video-frame--adolescents {
+  background-image: url('https://i.ytimg.com/vi/T1ysvMHuV-Y/hqdefault.jpg');
+  background-position: center;
+  background-size: cover;
+}
+
+.video-frame iframe {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  border: 0;
+}
+
+.source-link,
+.content-source a {
+  color: var(--text-link);
+  font-weight: 600;
+  text-underline-offset: 0.2em;
+}
+
+.help-link {
+  display: inline-flex;
+  min-block-size: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--sp-4, 1rem);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md, 0.75rem);
+  color: var(--text-link);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.help-link:hover,
+.help-link:focus-visible {
+  background: var(--bg-surface-alt);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.help-link--primary {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.professional-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3, 0.75rem);
+}
+
+.support-note {
+  margin-block-end: 0;
+  font-weight: 600;
+}
+
+.urgent-support {
+  padding: var(--sp-5, 1.25rem);
+  border-inline-start: 4px solid var(--st-error-bd);
+  border-radius: var(--r-md, 0.75rem);
+  background: var(--st-error-bg);
+}
+
+.urgent-support h2 {
+  color: var(--st-error-fg);
+}
+
+.urgent-support p {
+  margin-block-end: 0;
+  color: var(--text-primary);
+}
+
+.content-source {
+  margin-block: 0;
+  font-size: var(--text-sm, 0.875rem);
+}
+
+@media (max-width: 48rem) {
+  .video-grid,
+  .support-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .professional-links {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

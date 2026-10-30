@@ -20,7 +20,9 @@
 
 .mensajeria {
   display: grid;
-  grid-template-columns: minmax(20rem, 30%) 1fr;
+  /* `minmax(0, …)`: una columna `1fr` a secas se estira con el texto más
+     largo de la bandeja y en el teléfono empujaba las filas fuera del panel. */
+  grid-template-columns: minmax(20rem, 30%) minmax(0, 1fr);
   block-size: 100%;
   min-block-size: 0;
   overflow: hidden;
@@ -33,6 +35,7 @@
   display: flex;
   flex-direction: column;
   min-block-size: 0;
+  min-inline-size: 0;
   border-inline-end: 1px solid var(--filete);
   background: var(--sup-tarjeta);
 }
@@ -127,12 +130,57 @@
 
 /* --- Los filtros --------------------------------------------------------- */
 
-.mensajeria__chips {
+/* El carril: flecha, chips que se deslizan y flecha. Las flechas pasan de a
+   una «página» y se apagan en los extremos. */
+.mensajeria__filtros {
   flex: none;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: var(--e1);
+  padding: 0 var(--e2) var(--e2);
+}
+
+.mensajeria__flecha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  padding: 0;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.mensajeria__flecha svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.mensajeria__flecha:hover:not(:disabled) {
+  background: var(--sup-inset);
+}
+
+.mensajeria__flecha:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.mensajeria__flecha:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+}
+
+.mensajeria__chips {
   display: flex;
   gap: var(--e2);
-  padding: 0 var(--e3) var(--e2);
+  min-inline-size: 0;
   overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--e1);
   scrollbar-width: none;
 }
 
@@ -142,6 +190,7 @@
 
 .mensajeria__chip {
   flex: none;
+  scroll-snap-align: start;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -178,48 +227,6 @@
   min-block-size: 0;
   overflow-y: auto;
   border-block-start: 1px solid var(--filete-2);
-}
-
-.mensajeria__archivados {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e3) var(--e4);
-  border: 0;
-  border-block-end: 1px solid var(--filete-2);
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.mensajeria__archivados:hover,
-.mensajeria__archivados.is-activo {
-  background: var(--sup-inset);
-}
-
-.mensajeria__archivados-icono {
-  display: inline-flex;
-  color: var(--tinta-2);
-}
-
-.mensajeria__archivados-icono svg {
-  inline-size: 20px;
-  block-size: 20px;
-}
-
-.mensajeria__archivados-texto {
-  flex: 1 1 auto;
-  text-align: start;
-  font-weight: 600;
-  font-size: var(--fs-body);
-}
-
-.mensajeria__archivados-cuenta {
-  color: var(--tinta-3);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
 }
 
 .mensajeria__rotulo {
@@ -304,15 +311,59 @@
   color: var(--tinta-2);
 }
 
-.mensajeria__vacio-icono {
-  margin: 0 0 var(--e2);
-  color: var(--aguamarina);
-  opacity: .55;
+/* El sello del panel vacío: el logo de AloVida en un círculo blanco y, en la
+   esquina, el globo de chat como insignia. Entra una vez, con un rebote corto. */
+.mensajeria__vacio-sello {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 7.5rem;
+  aspect-ratio: 1;
+  margin-block-end: var(--e3);
+  border-radius: 50%;
+  background: var(--sup-tarjeta);
+  box-shadow:
+    0 16px 36px -18px color-mix(in srgb, var(--petroleo) 45%, transparent),
+    0 0 0 8px color-mix(in srgb, var(--sup-tarjeta) 55%, transparent);
+  animation: mensajeria-sello var(--pulse-dur-moment, 420ms) var(--pulse-ease, ease-out) 80ms backwards;
 }
 
-.mensajeria__vacio-icono svg {
-  inline-size: 88px;
-  block-size: 88px;
+.mensajeria__vacio-sello img {
+  inline-size: 4.5rem;
+  block-size: auto;
+  translate: 0 4%;
+}
+
+.mensajeria__vacio-insignia {
+  position: absolute;
+  inset-block-end: 0.25rem;
+  inset-inline-end: 0.25rem;
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--petroleo);
+  color: var(--text-inverse);
+  box-shadow: 0 0 0 3px var(--sup-tarjeta);
+}
+
+.mensajeria__vacio-insignia svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+}
+
+@keyframes mensajeria-sello {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mensajeria__vacio-sello {
+    animation: none;
+  }
 }
 
 .mensajeria__vacio-titulo {
@@ -331,7 +382,7 @@
 
 @media (max-width: 60rem) {
   .mensajeria {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mensajeria__panel {
@@ -347,4 +398,59 @@
   .mensajeria:not(.is-hilo-abierto) .mensajeria__conversacion {
     display: none;
   }
+}
+
+/* --- Bloqueados ----------------------------------------------------------- */
+
+.mensajeria__bloqueados {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mensajeria__bloqueado {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4);
+}
+
+.mensajeria__bloqueado-texto {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.mensajeria__bloqueado-nombre {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mensajeria__bloqueado-detalle {
+  color: var(--tinta-3);
+  font-size: var(--fs-caption);
+}
+
+.mensajeria__desbloquear {
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mensajeria__desbloquear:hover {
+  background: var(--sup-inset);
+}
+
+.mensajeria__desbloquear:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
 }

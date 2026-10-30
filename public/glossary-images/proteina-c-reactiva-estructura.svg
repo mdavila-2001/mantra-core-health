@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Estructura pentamérica de la proteína C reactiva</title>
+  <desc id="d">A la izquierda, la proteína vista desde arriba: cinco subunidades idénticas en anillo alrededor de un poro central, con calcio en cada una. En el centro, una vista lateral: la cara de reconocimiento se une a la fosfocolina de una membrana bacteriana o dañada con ayuda del calcio y la cara efectora une C1q y receptores Fc. A la derecha, la disociación irreversible del pentámero en cinco monómeros en los sitios de inflamación.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --sub:#8fb7e0; --sub-d:#2a6fb0; --ca:#e0a526; --mem:#c9705f; --mem-l:#e7a79a; --eff:#1f8a5b; --bad:#c0392b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --sub:#3f6a96; --sub-d:#8fc0f0; --ca:#f0bd45; --mem:#e08a7a; --mem-l:#b9695c; --eff:#4cc38a; --bad:#ef7467; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 18px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <!-- Panel A: vista superior -->
+  <rect x="16" y="16" width="240" height="420" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="136" y="46" text-anchor="middle" class="title">Vista desde arriba</text>
+  <g fill="var(--sub)" stroke="var(--sub-d)" stroke-width="3">
+    <circle cx="136" cy="168" r="38"/>
+    <circle cx="210" cy="222" r="38"/>
+    <circle cx="182" cy="308" r="38"/>
+    <circle cx="90" cy="308" r="38"/>
+    <circle cx="62" cy="222" r="38"/>
+  </g>
+  <circle cx="136" cy="256" r="20" fill="var(--panel)" stroke="var(--sub-d)" stroke-width="2" stroke-dasharray="4 3"/>
+  <g fill="var(--ca)">
+    <circle cx="136" cy="152" r="6"/><circle cx="227" cy="222" r="6"/><circle cx="196" cy="324" r="6"/><circle cx="76" cy="324" r="6"/><circle cx="45" cy="222" r="6"/>
+  </g>
+  <text x="136" y="260" text-anchor="middle" class="s muted">poro</text>
+  <text x="136" y="378" text-anchor="middle" class="h">5 subunidades idénticas</text>
+  <text x="136" y="398" text-anchor="middle" class="s muted">≈ 23 kDa cada una</text>
+  <circle cx="60" cy="420" r="6" fill="var(--ca)"/>
+  <text x="74" y="424" class="s muted">ion calcio (Ca²⁺)</text>
+
+  <!-- Panel B: vista lateral -->
+  <rect x="268" y="16" width="304" height="420" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="420" y="46" text-anchor="middle" class="title">Vista lateral</text>
+  <!-- C1q arriba -->
+  <g stroke="var(--eff)" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M326 150 v34"/><path d="M326 150 l-22 -26"/><path d="M326 150 l22 -26"/>
+  </g>
+  <g fill="var(--eff)"><circle cx="304" cy="120" r="8"/><circle cx="348" cy="120" r="8"/><circle cx="326" cy="150" r="5"/></g>
+  <text x="326" y="98" text-anchor="middle" class="s" style="fill:var(--eff)">C1q</text>
+  <!-- Fc receptor -->
+  <g stroke="var(--eff)" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M402 188 v-40"/><path d="M402 148 l-12 -18"/><path d="M402 148 l12 -18"/>
+  </g>
+  <text x="402" y="116" text-anchor="middle" class="s" style="fill:var(--eff)">receptor Fcγ</text>
+  <!-- disco PCR -->
+  <rect x="284" y="190" width="150" height="46" rx="14" fill="var(--sub)" stroke="var(--sub-d)" stroke-width="3"/>
+  <text x="359" y="219" text-anchor="middle" class="h">Pentámero</text>
+  <text x="446" y="208" class="s" style="fill:var(--eff)">◂ cara efectora</text>
+  <text x="446" y="252" class="s" style="fill:var(--sub-d)">◂ cara de</text>
+  <text x="446" y="268" class="s" style="fill:var(--sub-d)">reconocimiento</text>
+  <!-- calcio -->
+  <g fill="var(--ca)"><circle cx="314" cy="246" r="6"/><circle cx="359" cy="246" r="6"/><circle cx="404" cy="246" r="6"/></g>
+  <!-- membrana -->
+  <g fill="var(--mem-l)" stroke="var(--mem)" stroke-width="2">
+    <circle cx="296" cy="300" r="9"/><circle cx="322" cy="300" r="9"/><circle cx="348" cy="300" r="9"/><circle cx="374" cy="300" r="9"/><circle cx="400" cy="300" r="9"/><circle cx="426" cy="300" r="9"/>
+  </g>
+  <g stroke="var(--mem)" stroke-width="3" stroke-linecap="round">
+    <path d="M296 309 v22"/><path d="M322 309 v22"/><path d="M348 309 v22"/><path d="M374 309 v22"/><path d="M400 309 v22"/><path d="M426 309 v22"/>
+  </g>
+  <g stroke="var(--ca)" stroke-width="2" stroke-dasharray="3 3"><path d="M314 252 L320 291"/><path d="M359 252 L362 291"/><path d="M404 252 L400 291"/></g>
+  <text x="420" y="358" text-anchor="middle" class="h">Fosfocolina</text>
+  <text x="420" y="378" text-anchor="middle" class="s muted">en bacterias, células dañadas</text>
+  <text x="420" y="396" text-anchor="middle" class="s muted">o apoptóticas (requiere calcio)</text>
+
+  <!-- Panel C: disociación -->
+  <rect x="584" y="16" width="200" height="420" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="684" y="46" text-anchor="middle" class="title">En la inflamación</text>
+  <g fill="var(--sub)" stroke="var(--sub-d)" stroke-width="3">
+    <circle cx="684" cy="112" r="17"/><circle cx="716" cy="136" r="17"/><circle cx="704" cy="172" r="17"/><circle cx="664" cy="172" r="17"/><circle cx="652" cy="136" r="17"/>
+  </g>
+  <circle cx="684" cy="148" r="8" fill="var(--panel)" stroke="var(--sub-d)" stroke-width="2" stroke-dasharray="3 2"/>
+  <text x="684" y="214" text-anchor="middle" class="s">pentámero (nPCR)</text>
+  <path d="M684 224 v34 m-8 -9 l8 11 l8 -11" stroke="var(--bad)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="684" y="276" text-anchor="middle" class="s" style="fill:var(--bad)">disociación irreversible</text>
+  <g fill="var(--sub)" stroke="var(--sub-d)" stroke-width="3">
+    <circle cx="632" cy="316" r="13"/><circle cx="668" cy="332" r="13"/><circle cx="704" cy="316" r="13"/><circle cx="650" cy="362" r="13"/><circle cx="694" cy="366" r="13"/>
+  </g>
+  <text x="684" y="396" text-anchor="middle" class="s">monómeros (mPCR)</text>
+  <text x="684" y="412" text-anchor="middle" class="s muted">menos solubles; se unen</text>
+  <text x="684" y="428" text-anchor="middle" class="s muted">a membranas</text>
+
+  <text x="400" y="464" text-anchor="middle" class="s muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

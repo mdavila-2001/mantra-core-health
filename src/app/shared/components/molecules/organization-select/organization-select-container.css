@@ -1,0 +1,5 @@
+/* El aviso de carga fallida va debajo del desplegable, sin pegarse a él. */
+:host {
+  display: grid;
+  gap: var(--sp-2);
+}

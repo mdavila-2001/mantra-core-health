@@ -165,11 +165,19 @@
 .publicacion__imagen {
   display: block;
   inline-size: 100%;
-  /* A lo ancho de la columna del feed la imagen es protagonista: con 18rem
-     quedaba una franja que obligaba a abrir la publicación para verla. */
-  max-block-size: 30rem;
+  /* En móvil/tablet a columna única, 4/3 haría 480 px a 640 px de ancho —demasiado.
+     Se limita a 20rem (320 px) hasta el quiebre de dos columnas. */
+  max-block-size: 20rem;
   aspect-ratio: 4 / 3;
   object-fit: cover;
+}
+
+@media (min-width: 900px) {
+  .publicacion__imagen {
+    /* A lo ancho de la columna del feed la imagen es protagonista: con 18rem
+       quedaba una franja que obligaba a abrir la publicación para verla. */
+    max-block-size: 30rem;
+  }
 }
 
 .publicacion__medios[data-cantidad='una'] .publicacion__imagen {
@@ -278,6 +286,13 @@
 
 /* Cuatro verbos repartidos a lo ancho, con ícono y rótulo, como en cualquier
    red profesional. El filete de arriba la separa del resumen de contadores. */
+.publicacion__fallo {
+  margin: 0;
+  padding: 0 var(--e2) var(--e2);
+  color: var(--st-error-fg, var(--tinta));
+  font-size: var(--fs-caption);
+}
+
 .publicacion__acciones {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

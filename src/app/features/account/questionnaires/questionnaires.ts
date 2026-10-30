@@ -2,7 +2,11 @@ import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, forkJoin, map, of, timeout } from 'rxjs';
 
+import { CommunityClient } from '../../../core/data-access/community/community.client';
+import type { ReviewableCare } from '../../../core/data-access/community/community.types';
+import { PatientSurveyInbox } from '../../../core/patient-surveys/patient-survey-inbox';
 import { SurveysClient } from '../../../core/data-access/surveys/surveys.client';
 import type {
   InvitationStatus,
@@ -21,6 +25,8 @@ import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { RateEncounterDialog } from '../../public-profile/rate-encounter-dialog/rate-encounter-dialog';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
 import { MedicalAspects } from './medical-aspects/medical-aspects';
 import { responderCuestionarioRoute } from './questionnaires.routes';
@@ -40,6 +46,17 @@ const PARAM_DE_SECCION = 'seccion';
  */
 const SECCIONES = ['aspectos', 'encuestas'] as const;
 
+/**
+ * Cuántas encuestas respondidas se consultan, como mucho, para ofrecer
+ * «Dejar reseña pública». La pregunta es una por reserva (no hay lectura en
+ * lote), así que se acota a las más recientes: quien tiene muchas respondidas
+ * no dispara una ráfaga de peticiones al abrir la pantalla.
+ */
+const MAX_CONSULTAS_DE_RESENA = 5;
+
+/** Cuánto se espera la respuesta de cada una; es un extra de la lista. */
+const ESPERA_DE_RESENA_MS = 5_000;
+
 /** Cómo se pinta cada estado del cuestionario. */
 const PRESENTACION: Readonly<
   Record<InvitationStatus, { readonly palabra: string; readonly tono: BadgeVariant }>
@@ -48,6 +65,35 @@ const PRESENTACION: Readonly<
   ANSWERED: { palabra: 'Respondido', tono: 'success' },
   EXPIRED: { palabra: 'Vencido', tono: 'secondary' },
 };
+
+/** Lo que identifica la atención de una invitación: qué fue y cuándo. */
+export interface ContextoDeAtencion {
+  readonly etiqueta: string;
+  readonly fecha: Date | null;
+}
+
+/**
+ * La línea «Consulta con <médico> · <fecha>» / «<servicio> · <fecha>».
+ *
+ * Los campos son aditivos y opcionales en la API: sin `kind` ni médico ni
+ * servicio no hay nada fiable que decir y devuelve `null` (la tarjeta muestra
+ * entonces el texto genérico de siempre). Con `kind` pero sin el nombre, dice
+ * lo que sí sabe («Consulta», «Servicio de salud»), nunca inventa un nombre.
+ */
+export function contextoDeAtencion(invitacion: PatientInvitation): ContextoDeAtencion | null {
+  const medico = invitacion.practitionerDisplayName?.trim() || null;
+  const servicio = invitacion.serviceName?.trim() || null;
+  const tipo = invitacion.kind ?? (servicio ? 'SERVICE' : medico ? 'CONSULTATION' : null);
+  if (tipo === null) return null;
+  const fecha = invitacion.attendedAt ?? null;
+  const etiqueta =
+    tipo === 'SERVICE'
+      ? (servicio ?? 'Servicio de salud')
+      : medico
+        ? `Consulta con ${medico}`
+        : 'Consulta';
+  return { etiqueta, fecha };
+}
 
 /** Un cuestionario del paciente, listo para mostrarse. */
 interface CuestionarioVisible {
@@ -59,6 +105,13 @@ interface CuestionarioVisible {
   readonly tono: BadgeVariant;
   readonly vence: Date | null;
   readonly respondido: Date | null;
+  /**
+   * De qué atención salió: «Consulta con Dra. Rojas» / «Ecografía». `null` si la
+   * API todavía no lo informa; la tarjeta cae entonces al texto genérico.
+   */
+  readonly contexto: ContextoDeAtencion | null;
+  /** La reserva de la atención: con ella se pregunta si se puede reseñar. */
+  readonly reservaId: string;
   /** Solo los pendientes se pueden abrir para responder. */
   readonly sePuedeResponder: boolean;
   readonly ruta: string;
@@ -85,12 +138,14 @@ interface CuestionarioVisible {
 @Component({
   selector: 'app-questionnaires',
   imports: [
+    AppButton,
     AppButtonLink,
     Badge,
     Card,
     DatePipe,
     MedicalAspects,
     PageHeader,
+    RateEncounterDialog,
     RouterLink,
     Skeleton,
     Tab,
@@ -106,6 +161,8 @@ export class Questionnaires {
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly community = inject(CommunityClient);
+  private readonly bandeja = inject(PatientSurveyInbox);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -142,6 +199,40 @@ export class Questionnaires {
 
   protected readonly vista = this.estado.asReadonly();
 
+  /**
+   * Las atenciones que se pueden reseñar, por invitación respondida.
+   *
+   * Sólo entran las que el servidor dijo `canReview`: ya terminadas, con un
+   * médico que acepta reseñas y sin reseña previa. Quien dijo «Ahora no» en
+   * la encuesta vuelve a verla acá.
+   */
+  protected readonly resenables = signal<ReadonlyMap<string, ReviewableCare>>(new Map());
+
+  /** La atención cuyo diálogo de reseña está abierto, si lo hay. */
+  protected readonly resenando = signal<ReviewableCare | null>(null);
+
+  protected abrirResena(invitacionId: string): void {
+    this.resenando.set(this.resenables().get(invitacionId) ?? null);
+  }
+
+  protected cerrarResena(): void {
+    this.resenando.set(null);
+  }
+
+  /** Quedó publicada: la acción desaparece (una reseña por atención). */
+  protected resenaPublicada(): void {
+    const publicada = this.resenando();
+    this.resenando.set(null);
+    if (publicada === null) return;
+    this.resenables.update((actuales) => {
+      const siguientes = new Map(actuales);
+      for (const [id, atencion] of actuales) {
+        if (atencion.encounterId === publicada.encounterId) siguientes.delete(id);
+      }
+      return siguientes;
+    });
+  }
+
   /** Cuántos quedan por responder, para el resumen de la cabecera. */
   protected readonly pendientes = computed(() => {
     const actual = this.estado();
@@ -158,11 +249,15 @@ export class Questionnaires {
     this.estado.set(loading());
     this.surveys.listMyQuestionnaires().subscribe({
       next: (invitaciones) => {
+        // El ícono de la barra superior cuenta con lo que acaba de leerse: no
+        // hace falta una segunda petición para saber cuántas esperan.
+        this.bandeja.sincronizar(invitaciones);
+        this.consultarResenas(invitaciones);
         if (invitaciones.length === 0) {
           this.estado.set(
             empty(
-              { label: 'Ver mis turnos', route: this.rutaDeTurnos },
-              'Todavía no tenés cuestionarios. Aparecen acá cuando el profesional cierra una consulta que tiene encuesta asociada.',
+              { label: 'Ver mis citas', route: this.rutaDeTurnos },
+              'Todavía no tiene cuestionarios. Aparecen acá cuando el profesional cierra una consulta que tiene encuesta asociada.',
             ),
           );
           return;
@@ -184,6 +279,45 @@ export class Questionnaires {
     });
   }
 
+  /**
+   * Pregunta, por cada encuesta respondida reciente, si su atención se puede
+   * reseñar. Un fallo de una consulta la descarta sin ruido: la lista no
+   * depende de esto.
+   */
+  private consultarResenas(invitaciones: readonly PatientInvitation[]): void {
+    const reservas = new Map<string, string>();
+    [...invitaciones]
+      .filter((invitacion) => invitacion.status === 'ANSWERED')
+      .sort((a, b) => (b.answeredAt?.getTime() ?? 0) - (a.answeredAt?.getTime() ?? 0))
+      .forEach((invitacion) => {
+        if (!reservas.has(invitacion.appointmentBookingId)) {
+          reservas.set(invitacion.appointmentBookingId, invitacion.id);
+        }
+      });
+
+    const consultas = [...reservas.entries()].slice(0, MAX_CONSULTAS_DE_RESENA).map(
+      ([reservaId, invitacionId]) =>
+        this.community.getReviewableCare(reservaId).pipe(
+          timeout(ESPERA_DE_RESENA_MS),
+          map((atencion) => [invitacionId, atencion] as const),
+          catchError(() => of(null)),
+        ),
+    );
+    if (consultas.length === 0) {
+      this.resenables.set(new Map());
+      return;
+    }
+    forkJoin(consultas).subscribe((resultados) => {
+      const siguientes = new Map<string, ReviewableCare>();
+      for (const resultado of resultados) {
+        if (resultado !== null && resultado[1].canReview) {
+          siguientes.set(resultado[0], resultado[1]);
+        }
+      }
+      this.resenables.set(siguientes);
+    });
+  }
+
   /** Proyecta el contrato de la API a lo que la plantilla necesita. */
   private aVisible(invitacion: PatientInvitation): CuestionarioVisible {
     const presentacion = PRESENTACION[invitacion.status];
@@ -196,6 +330,8 @@ export class Questionnaires {
       tono: presentacion.tono,
       vence: invitacion.expiresAt,
       respondido: invitacion.answeredAt,
+      contexto: contextoDeAtencion(invitacion),
+      reservaId: invitacion.appointmentBookingId,
       sePuedeResponder: invitacion.status === 'PENDING',
       ruta: responderCuestionarioRoute(invitacion.id),
     };

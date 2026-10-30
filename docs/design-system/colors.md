@@ -38,7 +38,9 @@ información **es** la aguamarina. Tener dos rampas distintas para el mismo rol
 sería invitar a que se separaran.
 
 `success` y `error` sí tienen rampa propia (`#2E8B6E` y `#B5533C`): son colores
-que el sistema no usa para nada más.
+que el sistema no usa para nada más. Son rampas: **no cambian con el tema**, así
+que no se usan para pintar texto (`--c-error-500` da 2,99:1 sobre la tarjeta
+oscura); el texto de peligro va con `--text-danger` (ver `tokens.md`).
 
 ## Tokens semánticos
 
@@ -64,7 +66,7 @@ marca y pasa a ser estructura.
 |---|---|---|---|---|
 | `--text-primary` | `--c-neutral-500` | 13,46 AAA | `--c-ivory-500` | — |
 | `--text-secondary` | `--c-neutral-400` | 7,24 AAA | `--c-sage-200` | — |
-| `--text-muted` | `--c-neutral-300` | **3,86–4,27 · E1** | `--c-sage-600` | **4,45 · E2** |
+| `--text-muted` | `--c-ivory-800` | 5,13–5,69 AA | `--c-sage-600` | **4,45 · E2** |
 | `--text-inverse` | `#FFFFFF` | — | `--c-petrol-900` | — |
 
 **El marfil pasa de papel a tinta** entre los dos temas.
@@ -84,7 +86,7 @@ marca y pasa a ser estructura.
 | Token | Uso | Nota |
 |---|---|---|
 | `--border-default` | Divisor **decorativo** | **No delimita controles** |
-| `--border-strong` | El único válido para el borde de un control | 3,34:1 en claro · **E3 en oscuro** |
+| `--border-strong` | El único válido para el borde de un control | 3,34:1 en claro · 3,27:1 en oscuro (peor caso; E3 cerrada el 2026-10-11) |
 
 Confundirlos es el error más fácil de cometer: un `<input>` con
 `--border-default` se ve bien y no cumple el mínimo de 3:1 para componentes de
@@ -151,7 +153,7 @@ Los dos números están en `styles.css` junto al token.
 
 | Token | Claro | Oscuro |
 |---|---|---|
-| `--focus-ring` | `rgba(79,179,169,.45)` — aguamarina | `rgba(159,216,208,.45)` — menta |
+| `--focus-ring` | `--c-aqua-700` sólido (5,71:1 · 5,16 sobre marfil) | `--c-mint-500` sólido |
 | `--shadow-sm/md/lg` | Tintadas de petróleo | Negro puro, más opacas |
 
 Las sombras en claro **no son grises**: llevan `rgba(11,85,126,…)`, el propio

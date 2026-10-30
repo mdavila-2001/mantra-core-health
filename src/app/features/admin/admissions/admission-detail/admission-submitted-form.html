@@ -1,0 +1,78 @@
+<div class="formulario" data-testid="admission-submitted-form">
+  @if (sections().length === 0) {
+    <app-empty-state
+      title="No hay formulario enviado"
+      description="Esta admisión no trae los datos que el médico llenó al registrarse."
+    />
+  } @else {
+    @if (missingRequired().length > 0) {
+      <app-alert tone="warning" title="Faltan datos obligatorios" data-testid="form-missing">
+        El médico no declaró: {{ missingRequired().join(', ') }}. Pídaselo con «Pedir información» antes de verificar.
+      </app-alert>
+    }
+
+    @for (view of views(); track view.section.key) {
+      <section class="formulario__seccion" [attr.aria-labelledby]="'seccion-' + view.section.key" data-testid="form-section">
+        <h3 class="formulario__titulo" [id]="'seccion-' + view.section.key">{{ view.section.title }}</h3>
+
+        <dl class="formulario__campos">
+          @for (campo of view.section.fields; track campo.key) {
+            <div class="campo" [class.campo--falta]="campo.required && isEmpty(campo)" data-testid="form-field">
+              <dt class="campo__rotulo">
+                {{ campo.label }}
+                @if (campo.required) {
+                  <span class="campo__obligatorio">Obligatorio</span>
+                }
+              </dt>
+              <dd class="campo__valor">
+                @if (isEmpty(campo)) {
+                  <span class="campo__vacio">
+                    {{ campo.required ? 'Falta este dato obligatorio' : 'No declarado' }}
+                  </span>
+                } @else if (campo.kind === 'COORDINATES') {
+                  {{ campo.value }}
+                  @if (mapUrl(campo.value); as url) {
+                    <a class="campo__mapa" [href]="url" target="_blank" rel="noopener noreferrer">Ver en el mapa</a>
+                  }
+                } @else {
+                  {{ campo.value }}
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+
+        @if (view.linked.length > 0) {
+          <ul class="formulario__requisitos" aria-label="Requisitos que verifican esta sección">
+            @for (enlace of view.linked; track enlace.requirement.code) {
+              <li class="vinculo" [class.vinculo--resaltado]="highlight() === enlace.requirement.code" data-testid="form-requirement">
+                <span class="vinculo__nombre">{{ enlace.requirement.label }}</span>
+                <app-badge [variant]="variant(enlace.requirement)" size="sm">{{ statusLabel(enlace.requirement) }}</app-badge>
+                @if (singleItem(enlace.requirement); as ficha) {
+                  <span class="vinculo__huella" [attr.title]="ficha.evidenceSha256" data-testid="form-hash">Huella {{ hash(ficha) }}</span>
+                }
+                @if (enlace.documents > 0) {
+                  <button type="button" class="vinculo__enlace" data-testid="form-view-evidence" (click)="viewEvidence.emit(enlace.requirement.code)">
+                    Ver evidencia ({{ enlace.documents }})
+                  </button>
+                }
+                @if (canReview()) {
+                  @if (singleItem(enlace.requirement); as ficha) {
+                    <span class="vinculo__acciones">
+                      <button app-button type="button" variant="secondary" size="sm" [disabled]="busy() || !reviewable(ficha) || ficha.state === 'VERIFIED'" [attr.aria-label]="'Verificar ' + enlace.requirement.label" (clicked)="decide(enlace.requirement, 'VERIFIED')">Verificar</button>
+                      <button app-button type="button" variant="ghost" size="sm" [disabled]="busy() || !reviewable(ficha) || ficha.state === 'REJECTED'" [attr.aria-label]="'Rechazar ' + enlace.requirement.label" (clicked)="decide(enlace.requirement, 'REJECTED')">Rechazar</button>
+                    </span>
+                  } @else if (enlace.requirement.items.length > 1) {
+                    <button type="button" class="vinculo__enlace" data-testid="form-review-items" (click)="viewRequirement.emit(enlace.requirement.code)">
+                      Revisar las {{ enlace.requirement.items.length }} fichas
+                    </button>
+                  }
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</div>

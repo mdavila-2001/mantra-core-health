@@ -24,9 +24,23 @@ import type {
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { AGENDA_ROUTE } from '../agenda.routes';
 import type { AgendaResource } from '@core/data-access/scheduling/scheduling.types';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { agendaResourcesMy } from '../my-resource';
 import { ScheduleGrid } from '../my-agenda/schedule-grid/schedule-grid';
-import { calcularTurnos, type Calculo, type DiaCalculado } from './agenda-turnos';
+import { OrganizationField } from '../organization-field/organization-field';
+import { calculateSlots, type Calculation, type CalculatedDay } from './agenda-slots';
+import { PublicationAttempt, PublicationPlace, type PublicationTarget } from './publication-target';
+import { ScheduleDayRow } from './schedule-day-row/schedule-day-row';
+import {
+  createScheduleDay,
+  DURATION_OPTIONS,
+  FLEXIBLE_DAY_FIELDS,
+  fixedTurnFields,
+  MODE_OPTIONS,
+  TIME_STEP_SECONDS,
+  YES_NO,
+  type ScheduleDayForm,
+  type ScheduleDayValue,
+} from './schedule-day-row/schedule-day';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -40,8 +54,9 @@ import { Switch } from '../../../shared/components/atoms/switch/switch';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Router } from '@angular/router';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { BlockCancellations } from '../block-cancellations';
 import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
@@ -76,19 +91,6 @@ const TABLA_DE_PERFIL_PROFESIONAL = 'practitioner_profiles';
  */
 const HORIZONTE_MESES = 3;
 
-/** Duraciones ofrecidas como fichas. La séptima opción es escribirla. */
-const DURACIONES = [15, 20, 30, 45, 60, 90] as const;
-
-/**
- * Respiros ofrecidos como fichas, en minutos.
- *
- * Empieza en **cero** y cero viene marcado: la mayoría de las agendas no
- * declara respiro, y obligar a elegir uno convertiría una comodidad en un
- * trámite. Cuando queda en cero no se manda nada — la columna es anulable y
- * «no lo dijo» y «dijo que no hay» no significan lo mismo.
- */
-const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
-
 /**
  * A cuánto se cae la duración cuando el horario vigente no la declara.
  *
@@ -97,26 +99,11 @@ const RESPIROS = [0, 5, 10, 15, 20, 30] as const;
  */
 const DURACION_POR_OMISION = 30;
 
-/**
- * Las dos respuestas de todo interruptor de esta pantalla.
- *
- * Eran casillas de verificación y el propietario las pidió como botones de
- * «Sí / No» (18/09): una casilla sola no dice qué pasa si no la marcás, y dos
- * botones dicen las dos cosas.
- */
-const SI_NO: readonly SegmentedOption<'si' | 'no'>[] = [
-  { value: 'si', label: 'Sí' },
-  { value: 'no', label: 'No' },
-];
-
 /** El almuerzo que se propone al encenderlo: una hora, al mediodía. */
 const ALMUERZO_POR_OMISION = { desde: '13:00', hasta: '14:00' } as const;
 
 /** Entero positivo o vacío: los numéricos opcionales viajan como texto. */
 const ENTERO_POSITIVO = /^\d+$/;
-
-/** Hora `HH:MM` o `HH:MM:SS`, como la valida el DTO de la franja. */
-const HORA = /^\d{2}:\d{2}(:\d{2})?$/;
 
 /**
  * Los siete días, en el orden en que se leen.
@@ -135,21 +122,14 @@ const DIAS = [
   { numero: 0, corto: 'D', largo: 'Domingo' },
 ] as const;
 
-/** Una fila de la semana: el día y, si está activo, su horario. */
-type DiaGroup = FormGroup<{
-  activo: FormControl<boolean>;
-  desde: FormControl<string>;
-  hasta: FormControl<string>;
-  duracion: FormControl<number>;
-  respiro: FormControl<number>;
-}>;
-
 /** Lo que se muestra de un día en la semana visual. */
 interface DiaVisible {
   readonly indice: number;
   readonly corto: string;
   readonly largo: string;
   readonly activo: boolean;
+  /** La fila entera, para dibujarla (`ScheduleDayRow`). */
+  readonly value: ScheduleDayValue;
 }
 
 /**
@@ -188,6 +168,7 @@ interface DiaVisible {
   imports: [
     ReactiveFormsModule,
     AnnounceOnAppear,
+    AccordionPanel,
     Alert,
     AppButton,
     AppButtonLink,
@@ -196,8 +177,10 @@ interface DiaVisible {
     DatePicker,
     FormField,
     Input,
+    OrganizationField,
     PageHeader,
     RouterLink,
+    ScheduleDayRow,
     ScheduleGrid,
     SegmentedControl,
     Select,
@@ -212,6 +195,7 @@ export class AgendaCreate {
   private readonly scheduling = inject(SchedulingClient);
   private readonly organizacionMedica = inject(MedicalOrganizationClient);
   private readonly dialogs = inject(DialogService);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
@@ -225,35 +209,25 @@ export class AgendaCreate {
   protected readonly uuidError = UUID_ERROR;
   protected readonly dias = DIAS;
 
-  protected readonly siNo = SI_NO;
-  protected readonly duraciones = DURACIONES;
-  protected readonly respiros = RESPIROS;
+  protected readonly siNo = YES_NO;
 
   /* -- La tabla, que es la forma que pidió el propietario ------------------- */
 
-  /**
-   * El paso de los campos Desde y Hasta: de a 5 minutos.
-   *
-   * Eran un select de medias horas, y el propietario pidió horarios flexibles
-   * (18/09): quien abre a las 08:15 o cierra a las 12:40 no podía decirlo. Un
-   * campo de hora acepta cualquier minuto escrito; el paso sólo ordena las
-   * flechas del teclado y la rueda del selector nativo.
-   */
-  protected readonly pasoDeHora = 300;
+  /** El paso de los campos de hora del almuerzo: el mismo de la tabla. */
+  protected readonly pasoDeHora = TIME_STEP_SECONDS;
 
-  protected readonly opcionesDeDuracion: readonly SelectOption<number>[] = DURACIONES.map(
-    (m) => ({ value: m, label: `${m} min` }),
-  );
+  protected readonly opcionesDeDuracion = DURATION_OPTIONS;
 
-  protected readonly opcionesDeRespiro: readonly SelectOption<number>[] = RESPIROS.map((m) => ({
-    value: m,
-    label: m === 0 ? 'Sin respiro' : `${m} min`,
-  }));
+  /** Qué se atiende en cada franja (v4.2.40); la fila lo ofrece en «Atiendo». */
+  protected readonly opcionesDeModo = MODE_OPTIONS;
 
   /** Fija un valor de la fila sin que la plantilla tenga que saber de formularios. */
   protected fijarDeLaFila(indice: number, campo: string, valor: unknown): void {
     if (valor === null || valor === undefined) return;
-    this.semana.at(indice).get(campo)?.setValue(valor as never);
+    this.semana
+      .at(indice)
+      .get(campo)
+      ?.setValue(valor as never);
     this.versionDeLaSemana.update((v) => v + 1);
   }
 
@@ -262,9 +236,7 @@ export class AgendaCreate {
     ROLES_QUE_CREAN.some((rol) => this.auth.roles().includes(rol)),
   );
 
-  /**
-   * Las agendas de quien publica. Más de una = atiende en más de una sede.
-   */
+  /** Las agendas de quien publica, en la organización elegida. Más de una = más de una sede. */
   protected readonly misAgendas = signal<readonly AgendaResource[]>([]);
 
   /**
@@ -333,9 +305,10 @@ export class AgendaCreate {
     this.templateId.set(null);
     this.policyId.set(null);
     this.vigente.set(null);
+    this.attempt.reset();
   }
 
-  /** Las prácticas de la organización activa (`GET /practices`). */
+  /** Las prácticas de la organización de la sesión (`GET /practices`). */
   protected readonly practicas = signal<readonly PracticeSummary[]>([]);
 
   /** La lectura de prácticas falló: la agenda se publicaría sin práctica, y se dice. */
@@ -351,7 +324,17 @@ export class AgendaCreate {
    * agenda que ya existe conserva la suya —`practiceId` sólo viaja en el alta—.
    */
   protected readonly eligePractica = computed(
-    () => this.resourceId() === null && this.practicas().length > 1,
+    () => this.publicaEnLaPropia() && this.resourceId() === null && this.practicas().length > 1,
+  );
+
+  /** Sin práctica por un fallo de lectura, sólo cuenta en la organización de la sesión. */
+  protected readonly sinPracticaPorFallo = computed(
+    () => this.publicaEnLaPropia() && this.practicasFallaron() && this.resourceId() === null,
+  );
+
+  /** Se publica en la organización de la sesión (y no en una afiliada elegida). */
+  private readonly publicaEnLaPropia = computed(
+    () => this.place.tenantId() === this.organizacion(),
   );
 
   /** La práctica que se pone sola: la única, si hay una sola. */
@@ -364,7 +347,29 @@ export class AgendaCreate {
     this.formGeneral.controls.practiceId.setValue(id ?? '');
   }
 
-  private cargarPracticas(): void {
+  /** Si ya se pidió `GET /practices`: las de la sesión no cambian al ir y volver de otra organización. */
+  private practicasPedidas = false;
+
+  /**
+   * Lee las prácticas sólo cuando se publica en la organización de la sesión:
+   * `GET /practices` responde las de ésa, y en una organización afiliada la
+   * práctica ya la trae lo elegido en «¿En qué organización publica?»
+   * (`PublicationTarget.practiceId`), que manda sobre la del formulario. Se
+   * piden una vez: volver a «Mi consultorio» repone la de omisión sin releer.
+   */
+  private cargarPracticas(tenantId: string): void {
+    if (tenantId !== this.organizacion()) {
+      // La práctica de la sesión no es de la otra organización: no viaja.
+      this.formGeneral.controls.practiceId.setValue('');
+      return;
+    }
+    if (this.practicasPedidas) {
+      if (this.formGeneral.controls.practiceId.value === '') {
+        this.formGeneral.controls.practiceId.setValue(this.practicaPorOmision());
+      }
+      return;
+    }
+    this.practicasPedidas = true;
     this.organizacionMedica.listPractices().subscribe({
       next: (items) => {
         this.practicas.set(items);
@@ -392,15 +397,26 @@ export class AgendaCreate {
    *
    * Releer no es opcional: cada sede tiene su propio horario, y dejar en
    * pantalla el de la anterior haría que alguien publique creyendo que corrige
-   * lo que ya tenía.
+   * lo que ya tenía. Por lo mismo se suelta lo que el intento hizo sobre la
+   * anterior —su retiro, su plantilla—: no vale para ésta.
    */
   protected elegirSede(id: string | null): void {
     if (this.agendaNueva()) this.agendaNueva.set(false);
     if (id === null || id === this.resourceId()) return;
     this.resourceId.set(id);
+    this.templateId.set(null);
     this.vigente.set(null);
-    this.scheduling.listTemplates(id).subscribe({
+    this.attempt.reset();
+    this.loadCurrentTemplate(id);
+  }
+
+  /** Trae el horario vigente de una agenda; si mientras tanto se eligió otra, ya no manda. */
+  private loadCurrentTemplate(resourceId: string): void {
+    this.scheduling.listTemplates(resourceId, this.place.scope()).subscribe({
       next: (pagina) => {
+        if (resourceId !== this.resourceId()) return;
+        // La primera es la que gobierna: el servidor las devuelve de la más reciente a la
+        // más vieja, y es el mismo criterio que usa «Mi agenda» para decir qué horario tenés.
         const vigente = pagina.items[0];
         if (vigente === undefined) return;
         this.vigente.set(vigente);
@@ -445,7 +461,7 @@ export class AgendaCreate {
   protected readonly estado = signal<ViewState<null>>(ready(null));
   protected readonly cargando = computed(() => this.estado().status === 'loading');
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.estado(), 'No tenés permiso para configurar agenda.'),
+    errorMessageOf(this.estado(), 'No tiene permiso para configurar agenda.'),
   );
   protected readonly publicado = signal(false);
 
@@ -487,15 +503,48 @@ export class AgendaCreate {
   /* -- Horario flexible y almuerzo (propietario, 18/09) --------------------- */
 
   /**
-   * Horario flexible: se atiende en la franja, pero **sin turnos fijos**.
+   * Toda la semana flexible: se atiende en la franja, pero **sin turnos fijos**.
    *
-   * Con esto encendido la tabla deja de preguntar cuánto dura una consulta y
-   * cuánto descanso hay entre una y otra —son preguntas de turnos— y el
-   * paciente pide la hora que quiera dentro de la franja. Es un modo de toda
-   * la agenda, no de un día: una misma semana con lunes a turnos y martes libre
-   * no la pidió nadie y confundiría al paciente.
+   * Es el atajo de arriba de la tabla y es `flexibleHours` de la plantilla: con
+   * él encendido todos los días lo son, digan lo que digan sus filas —la misma
+   * regla que la API (`isFlexibleBand`)— y la tabla no pregunta por turnos.
+   * Para que lo sean sólo algunos días, cada fila tiene su interruptor (v4.2.64).
    */
   protected readonly flexible = signal(false);
+
+  /** Si el día se atiende sin turnos fijos: por la semana entera o por su fila. */
+  protected isFlexibleDay(index: number): boolean {
+    return this.flexible() || this.semana.at(index).controls.flexible.value;
+  }
+
+  /** Los días encendidos que se atienden sin turnos fijos. */
+  protected readonly flexibleDays = computed(() =>
+    this.diasActivos().filter((dia) => this.isFlexibleDay(dia.indice)),
+  );
+
+  /** Toda la semana encendida es flexible: lo declara la plantilla, como antes (P36). */
+  protected readonly allDaysFlexible = computed(
+    () => this.flexible() || (this.diasActivos().length > 0 && this.flexibleDays().length === this.diasActivos().length),
+  );
+
+  /** El atajo: «Sí» vuelve flexible toda la semana; «No» devuelve los turnos fijos a todos los días. */
+  protected setWeekFlexible(flexible: boolean): void {
+    this.flexible.set(flexible);
+    if (!flexible) this.semana.controls.forEach((day) => day.controls.flexible.setValue(false));
+  }
+
+  /**
+   * Cuánto se reserva por paciente en horario flexible (P36).
+   *
+   * Sin turnos fijos el paciente elige la hora, pero la consulta igual ocupa un
+   * rato: es lo que impide que dos pacientes pidan la misma hora. Se pregunta
+   * una vez para toda la agenda y viaja como `slotMinutes` de la plantilla.
+   */
+  protected readonly minutosPorPaciente = signal<number>(DURACION_POR_OMISION);
+
+  protected elegirMinutosPorPaciente(minutos: number | null): void {
+    if (minutos !== null) this.minutosPorPaciente.set(minutos);
+  }
 
   /**
    * La hora de almuerzo, una para toda la semana.
@@ -562,15 +611,22 @@ export class AgendaCreate {
   }
 
   /** Un día calculado a partir de sus franjas, sumando lo de cada una. */
-  private calcularDia(indice: number, nombre: string): DiaCalculado {
+  private calcularDia(indice: number, nombre: string): CalculatedDay {
     const v = this.semana.at(indice).getRawValue();
-    const partes = calcularTurnos(
-      this.franjasDe(indice).map((franja) => ({
+    // Una franja sólo de servicios no se corta en turnos: cada servicio dura lo que
+    // declaró su profesional y el turno nace al reservarlo. Un día flexible, tampoco.
+    if (v.modo === 'SERVICES' || this.isFlexibleDay(indice))
+      return { dia: nombre, turnos: [], resto: 0, restoDesde: null };
+    const franjas = this.franjasDe(indice);
+    const partes = calculateSlots(
+      franjas.map((franja, posicion) => ({
         dia: nombre,
         desde: franja.desde,
         hasta: franja.hasta,
         duracion: v.duracion,
         receso: v.respiro,
+        // La mañana no puede estirarse sobre la tarde.
+        ...(franjas[posicion + 1] === undefined ? {} : { tope: franjas[posicion + 1].desde }),
       })),
     ).porDia;
     const ultima = partes.at(-1);
@@ -588,16 +644,15 @@ export class AgendaCreate {
   // el formulario con su valor por omisión —o el del horario que se edita—,
   // así que lo que ya estaba publicado no se pierde al guardar.
 
-  /**
-   * La organización activa es la **única** fuente del `tenantId`: elegir otra
-   * es cambiar el contexto de la sesión, no rellenar un input.
-   */
+  /** La organización activa de la sesión: donde publica «Mi consultorio», como siempre. */
   protected readonly organizacion = this.auth.activeTenantId;
   protected readonly sinOrganizacion = computed(() => this.organizacion() === null);
+  /** Dónde se publica: la organización elegida en «¿Dónde publica?» o la de la sesión. */
+  protected readonly place = new PublicationPlace(this.organizacion, this.publicaSoloLaPropia);
 
   /* -- El formulario -------------------------------------------------------- */
 
-  protected readonly semana = new FormArray<DiaGroup>(DIAS.map((dia) => nuevoDia(dia.numero)));
+  protected readonly semana = new FormArray<ScheduleDayForm>(DIAS.map(() => createScheduleDay()));
 
   protected readonly formGeneral = new FormGroup({
     // La práctica (M14) de la organización activa a la que pertenece el
@@ -664,6 +719,7 @@ export class AgendaCreate {
       corto: dia.corto,
       largo: dia.largo,
       activo: this.semana.at(indice).controls.activo.value,
+      value: this.semana.at(indice).getRawValue(),
     }));
   });
 
@@ -675,12 +731,12 @@ export class AgendaCreate {
   /**
    * Los turnos que van a salir, calculados en el navegador.
    *
-   * Sin una sola petición: los cupos son una división —{@link calcularTurnos}—,
+   * Sin una sola petición: los cupos son una división —{@link calculateSlots}—,
    * y esperarlos del servidor para poder mostrarlos convertiría cada tecla en
    * un viaje de red. El contraste contra lo que el backend generó de verdad se
    * hace después de publicar, en {@link compararConLoGenerado}.
    */
-  protected readonly vistaPrevia = computed<Calculo>(() => {
+  protected readonly vistaPrevia = computed<Calculation>(() => {
     // El almuerzo vive en señales y la semana en el formulario: se leen las
     // dos para que cambiar cualquiera recalcule. Cada día pasa por
     // `calcularTurnos` franja por franja — el respiro (AG-4) incluido.
@@ -729,7 +785,8 @@ export class AgendaCreate {
     this.formGeneral.controls.capacidadPorTurno.valueChanges.subscribe((valor) =>
       this.capacidadDeclarada.set(valor),
     );
-    this.cargarHorarioVigente();
+    // El horario vigente se busca donde se publica, y otra vez si eso cambia.
+    this.place.watchTenant((tenantId) => this.cargarHorarioVigente(tenantId));
   }
 
   /**
@@ -752,16 +809,23 @@ export class AgendaCreate {
    * es el comportamiento de siempre. No se le arruina el alta a alguien porque
    * la lectura de plantillas haya fallado.
    */
-  private cargarHorarioVigente(): void {
+  private cargarHorarioVigente(tenantId: string | null): void {
     const perfil = this.auth.practitionerProfileId();
-    const tenantId = this.organizacion();
+    // Las agendas de otra organización no son de ésta: se sueltan antes de buscar.
+    this.misAgendas.set([]);
+    this.resourceId.set(null);
+    this.templateId.set(null);
+    this.policyId.set(null);
+    this.vigente.set(null);
+    this.attempt.reset();
     // Sin rol de agenda tampoco se pregunta: la lectura devolvería 403 y esta
     // pantalla ya le está diciendo a esa sesión que la sección no es suya.
     if (perfil === null || tenantId === null || !this.puedeCrear()) return;
 
-    this.cargarPracticas();
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    this.cargarPracticas(tenantId);
+    agendaResourcesMy(this.scheduling, tenantId, perfil, this.place.scope()).subscribe({
       next: (recursos) => {
+        if (tenantId !== this.place.tenantId()) return;
         // Todas, no la primera: quien atiende en dos sedes tiene que poder
         // decir en cuál publica. Antes esta lectura hacía `.find()` y la
         // segunda agenda no existía para el producto.
@@ -773,18 +837,7 @@ export class AgendaCreate {
         const recurso = recursos[0];
         if (recurso === undefined) return;
         this.resourceId.set(recurso.id);
-        this.scheduling.listTemplates(recurso.id).subscribe({
-          next: (pagina) => {
-            // La primera es la que gobierna: el servidor las devuelve de la más
-            // reciente a la más vieja, y es el mismo criterio que usa «Mi
-            // agenda» para decir qué horario tenés.
-            const vigente = pagina.items[0];
-            if (vigente === undefined) return;
-            this.vigente.set(vigente);
-            this.cargarSemanaDesde(vigente);
-          },
-          error: () => undefined,
-        });
+        this.loadCurrentTemplate(recurso.id);
       },
       error: () => undefined,
     });
@@ -796,7 +849,9 @@ export class AgendaCreate {
       this.semana.at(indice).patchValue({ activo: false });
     }
     this.flexible.set(plantilla.flexibleHours === true);
+    this.minutosPorPaciente.set(plantilla.slotMinutes ?? DURACION_POR_OMISION);
     this.conAlmuerzo.set(false);
+    const conTelemedicina = new Set<number>();
     for (const [indice, dia] of DIAS.entries()) {
       // Un día con almuerzo vuelve como DOS franjas: el horario es de la
       // primera apertura al último cierre, y el hueco entre ellas es el
@@ -815,13 +870,18 @@ export class AgendaCreate {
         // `?? 0` acá y no en el envío: leyendo, ausente ES cero; escribiendo,
         // ausente y cero son cosas distintas.
         respiro: primera.gapMinutes ?? 0,
+        modo: primera.bookingMode ?? 'CONSULTATIONS',
+        telemedicina: primera.telemedicineEnabled === true,
+        flexible: primera.flexibleHours === true,
       });
+      if (primera.telemedicineEnabled === true) conTelemedicina.add(indice);
       if (reglas.length > 1 && !this.conAlmuerzo()) {
         this.conAlmuerzo.set(true);
         this.almuerzoDesde.set(sinSegundos(primera.endTime));
         this.almuerzoHasta.set(sinSegundos(reglas[1].startTime));
       }
     }
+    this.diasConTelemedicinaPublicada.set(conTelemedicina);
     if (plantilla.validTo !== undefined) {
       this.formGeneral.controls.tieneFin.setValue('si');
       this.fechaDeFin.set(new Date(plantilla.validTo));
@@ -860,12 +920,7 @@ export class AgendaCreate {
     control.setValue(!control.value);
   }
 
-  /** El «Sí / No» de cada fila: atiende ese día o no. */
-  protected fijarDia(indice: number, respuesta: 'si' | 'no'): void {
-    this.semana.at(indice).controls.activo.setValue(respuesta === 'si');
-  }
-
-  protected grupoDe(indice: number): DiaGroup {
+  protected grupoDe(indice: number): ScheduleDayForm {
     return this.semana.at(indice);
   }
 
@@ -880,7 +935,7 @@ export class AgendaCreate {
   /**
    * Cuántos turnos entran en la franja de un día, con el respiro contado.
    *
-   * Delega en {@link calcularTurnos}, que es el mismo cálculo que alimenta la
+   * Delega en {@link calculateSlots}, que es el mismo cálculo que alimenta la
    * vista previa de más abajo. **No se reimplementa acá**: dos aritméticas para
    * el mismo número terminan dando dos números, y en esta pantalla los dos se
    * ven a la vez.
@@ -892,24 +947,74 @@ export class AgendaCreate {
   }
 
   /**
-   * Copia el horario del primer día encendido a todos los demás.
-   *
-   * Casi todas las agendas repiten el mismo horario, y cargarlo cinco veces es
-   * el tipo de trabajo que la pantalla tiene que hacer por vos.
+   * Los días que, en el horario que se está cambiando, ya atendían por
+   * telemedicina. Sólo ahí apagarla se escribe como `false`: en un día que
+   * nunca la tuvo, «no la activó» es lo mismo que no decir nada.
    */
-  protected repetirElPrimero(): void {
-    const primero = this.diasActivos()[0];
-    if (primero === undefined) return;
+  private readonly diasConTelemedicinaPublicada = signal<ReadonlySet<number>>(new Set());
 
-    const modelo = this.semana.at(primero.indice).getRawValue();
+  /**
+   * El campo `telemedicineEnabled` de las franjas de un día, o nada.
+   *
+   * Misma convención que `bookingMode` y `gapMinutes`: no se escribe un valor
+   * que nadie eligió. `true` cuando el médico la activó; `false` sólo cuando la
+   * apaga en un día que la tenía publicada.
+   */
+  private telemedicinaDe(
+    indice: number,
+    activa: boolean,
+  ): { readonly telemedicineEnabled?: boolean } {
+    if (activa) return { telemedicineEnabled: true };
+    return this.diasConTelemedicinaPublicada().has(indice) ? { telemedicineEnabled: false } : {};
+  }
+
+  /* -- Repetir un horario en los demás días --------------------------------
+
+     Propietario, 04/10/2026: el botón estaba al pie y copiaba el primer día
+     sobre todos SIN preguntar. Ahora va arriba de la tabla, abre un modal que
+     pregunta y deja elegir qué fila repetir, y copia también el descanso, que
+     antes se quedaba atrás. */
+
+  /** Si el modal de repetir está abierto. */
+  protected readonly repetirAbierto = signal(false);
+
+  /** La fila que se va a repetir, por índice de día. */
+  protected readonly filaARepetir = signal<number | null>(null);
+
+  /** Las filas que se pueden repetir: las de los días encendidos. */
+  protected readonly opcionesDeFilaARepetir = computed<readonly SelectOption<number>[]>(() =>
+    this.diasActivos().map((dia) => ({ value: dia.indice, label: dia.largo })),
+  );
+
+  /** Abre el modal con la primera fila encendida elegida. */
+  protected abrirRepetir(): void {
+    this.filaARepetir.set(this.diasActivos()[0]?.indice ?? null);
+    this.repetirAbierto.set(true);
+  }
+
+  protected cerrarRepetir(): void {
+    this.repetirAbierto.set(false);
+  }
+
+  /** Copia la fila elegida —horas, qué atiende, duración y descanso— en los demás días encendidos. */
+  protected repetirFila(): void {
+    const origen = this.filaARepetir();
+    this.repetirAbierto.set(false);
+    if (origen === null) return;
+    const modelo = this.semana.at(origen).getRawValue();
     for (const dia of this.diasActivos()) {
-      if (dia.indice === primero.indice) continue;
+      if (dia.indice === origen) continue;
       this.semana.at(dia.indice).patchValue({
         desde: modelo.desde,
         hasta: modelo.hasta,
         duracion: modelo.duracion,
+        respiro: modelo.respiro,
+        modo: modelo.modo,
+        telemedicina: modelo.telemedicina,
+        flexible: modelo.flexible,
       });
     }
+    this.versionDeLaSemana.update((v) => v + 1);
   }
 
   /* -- Vista previa --------------------------------------------------------- */
@@ -929,25 +1034,32 @@ export class AgendaCreate {
    */
   protected readonly reglasDeLaPrevia = computed<readonly PublishedRule[]>(() => {
     const capacidad = Number(this.capacidadDeclarada());
-    const flexible = this.flexible();
     return this.diasActivos().flatMap((dia) => {
       const v = this.semana.at(dia.indice).getRawValue();
+      const flexible = this.isFlexibleDay(dia.indice);
       return this.franjasDe(dia.indice).map((franja) => ({
         dayOfWeek: DIAS[dia.indice].numero,
         startTime: franja.desde.trim(),
         endTime: franja.hasta.trim(),
-        ...(flexible ? {} : { slotMinutes: v.duracion }),
-        ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
-        ...(Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
+        // Cada día flexible lo dice en su franja, como la devuelve la API ya resuelta.
+        ...this.turnFieldsOf(dia.indice, v),
+        ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
+        ...this.telemedicinaDe(dia.indice, v.telemedicina),
+        ...(!flexible && Number.isFinite(capacidad) && capacidad > 0 ? { capacityPerSlot: capacidad } : {}),
       }));
     });
   });
+
+  /** Lo que la franja de un día dice de sus turnos: que es flexible, o su duración y su descanso. */
+  private turnFieldsOf(index: number, day: ScheduleDayValue) {
+    return this.isFlexibleDay(index) ? FLEXIBLE_DAY_FIELDS : fixedTurnFields(day);
+  }
 
   /** Hasta cuándo va a regir, en una frase, para el globo de la grilla. */
   protected readonly vigenciaDeLaPrevia = computed(() => {
     const fin = this.fechaDeFin();
     return fin === null
-      ? 'Sin fecha de fin: rige hasta que lo cambies.'
+      ? 'Sin fecha de fin: rige hasta que lo cambie.'
       : `Rige hasta el ${formatDate(fin, "d 'de' MMMM yyyy", this.idioma)}.`;
   });
 
@@ -996,7 +1108,7 @@ export class AgendaCreate {
     const seguro = await this.dialogs.confirm({
       title: 'Limpiar el formulario',
       message:
-        'Se borra lo que escribiste acá y volvés a empezar. Tu horario ya publicado no se toca.',
+        'Se borra lo que escribió acá y vuelve a empezar. Su horario ya publicado no se toca.',
       confirmLabel: 'Limpiar',
       cancelLabel: 'Volver',
       destructive: true,
@@ -1006,7 +1118,7 @@ export class AgendaCreate {
     // Se reconstruye cada día con la fábrica en vez de listar los valores acá:
     // duplicar los valores por defecto es garantizar que un día se separen.
     for (let i = 0; i < DIAS.length; i++) {
-      this.semana.at(i).reset(nuevoDia(DIAS[i].numero).getRawValue());
+      this.semana.at(i).reset(createScheduleDay().getRawValue());
     }
     this.formGeneral.reset({
       // La práctica no es algo que la persona haya escrito: se conserva la
@@ -1018,6 +1130,7 @@ export class AgendaCreate {
     });
     this.fechaDeFin.set(null);
     this.flexible.set(false);
+    this.minutosPorPaciente.set(DURACION_POR_OMISION);
     this.conAlmuerzo.set(false);
     this.almuerzoDesde.set(ALMUERZO_POR_OMISION.desde);
     this.almuerzoHasta.set(ALMUERZO_POR_OMISION.hasta);
@@ -1042,71 +1155,70 @@ export class AgendaCreate {
     if (this.sinDias() || this.semana.invalid || this.formGeneral.invalid) return;
     if (this.almuerzoInvalido()) return;
 
-    const tenantId = this.organizacion();
-    if (tenantId === null) return;
+    const target = this.place.target();
+    if (target === null) return;
 
     this.estado.set(loading());
-    this.crearRecurso(tenantId);
+    this.attempt.begin(target);
+    this.crearRecurso(target);
   }
 
-  private crearRecurso(tenantId: string): void {
+  private crearRecurso(target: PublicationTarget): void {
     const yaEsta = this.resourceId();
     if (yaEsta !== null) {
-      this.crearPolitica(tenantId, yaEsta);
+      this.crearPolitica(target, yaEsta);
       return;
     }
 
     const general = this.formGeneral.getRawValue();
     const tecnico = this.formTecnico.getRawValue();
 
-    this.scheduling
-      .createResource({
-        tenantId,
-        resourceType: (tecnico.resourceType || 'PRACTITIONER') as ResourceType,
-        resourceRefType: tecnico.resourceRefType.trim() || TABLA_DE_PERFIL_PROFESIONAL,
-        resourceRefId: tecnico.resourceRefId.trim(),
-        name: this.nombreDelRecurso(),
-        ...opcTexto('practiceId', general.practiceId),
-        ...opcTexto('timeZone', general.timeZone),
-        // La capacidad se pregunta UNA vez: la del recurso y la de cada cupo
-        // son el mismo número, y preguntarlo dos veces sólo servía para que no
-        // coincidieran.
-        ...opcEntero('capacity', general.capacidadPorTurno),
-      })
-      .subscribe({
-        next: (recurso) => {
-          this.resourceId.set(recurso.id);
-          this.crearPolitica(tenantId, recurso.id);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const newResource = {
+      tenantId: target.tenantId,
+      resourceType: (tecnico.resourceType || 'PRACTITIONER') as ResourceType,
+      resourceRefType: tecnico.resourceRefType.trim() || TABLA_DE_PERFIL_PROFESIONAL,
+      resourceRefId: tecnico.resourceRefId.trim(),
+      name: this.nombreDelRecurso(),
+      ...opcTexto('practiceId', target.practiceId ?? general.practiceId),
+      ...opcTexto('timeZone', general.timeZone),
+      // La capacidad se pregunta UNA vez: la del recurso y la de cada cupo
+      // son el mismo número, y preguntarlo dos veces sólo servía para que no
+      // coincidieran.
+      ...opcEntero('capacity', general.capacidadPorTurno),
+    };
+    this.scheduling.createResource(newResource, target.scope).subscribe({
+      next: (recurso) => {
+        this.resourceId.set(recurso.id);
+        this.crearPolitica(target, recurso.id);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
-  private crearPolitica(tenantId: string, resourceId: string): void {
+  private crearPolitica(target: PublicationTarget, resourceId: string): void {
     if (!this.usarPolitica() || this.policyId() !== null) {
       this.retirarVigenteYCrear(resourceId, this.policyId());
       return;
     }
 
     const v = this.formPolitica.getRawValue();
-    this.scheduling
-      .createPolicy({
-        tenantId,
-        // Derivados: eran dos campos obligatorios que nadie vuelve a leer.
-        code: codigoDe(this.nombreDelRecurso()),
-        name: `Reglas de ${this.nombreDelRecurso()}`,
-        ...opcEntero('minNoticeMinutes', v.minNoticeMinutes),
-        ...opcEntero('maxAdvanceDays', v.maxAdvanceDays),
-        ...opcEntero('cancellationWindowMinutes', v.cancellationWindowMinutes),
-        ...opcEntero('maxActivePerPatient', v.maxActivePerPatient),
-      })
-      .subscribe({
-        next: (politica) => {
-          this.policyId.set(politica.id);
-          this.retirarVigenteYCrear(resourceId, politica.id);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const newPolicy = {
+      tenantId: target.tenantId,
+      // Derivados: eran dos campos obligatorios que nadie vuelve a leer.
+      code: codigoDe(this.nombreDelRecurso()),
+      name: `Reglas de ${this.nombreDelRecurso()}`,
+      ...opcEntero('minNoticeMinutes', v.minNoticeMinutes),
+      ...opcEntero('maxAdvanceDays', v.maxAdvanceDays),
+      ...opcEntero('cancellationWindowMinutes', v.cancellationWindowMinutes),
+      ...opcEntero('maxActivePerPatient', v.maxActivePerPatient),
+    };
+    this.scheduling.createPolicy(newPolicy, target.scope).subscribe({
+      next: (politica) => {
+        this.policyId.set(politica.id);
+        this.retirarVigenteYCrear(resourceId, politica.id);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
   /**
@@ -1123,43 +1235,46 @@ export class AgendaCreate {
    * seguía terminando a las 08:30. La cita no acababa a la hora que decía el
    * horario nuevo, que es exactamente lo que se reportó.
    *
-   * Retirar **no borra**: el contrato suelta los cupos libres y conserva los que
-   * tienen una cita detrás. Por eso el retiro va primero y la plantilla nueva
-   * sólo se crea si aquél salió bien; al revés quedarían dos horarios vigentes
-   * sobre la misma agenda.
+   * Retirar **no borra**: el contrato suelta los cupos libres y conserva,
+   * cerrados, los que tienen una cita detrás. Por eso el retiro va primero y la
+   * plantilla nueva sólo se crea si aquél salió bien; al revés quedarían dos
+   * horarios vigentes sobre la misma agenda.
    *
-   * El **409** —el horario tiene citas comprometidas— se muestra tal cual y no
-   * se publica nada: quien atiende tiene que resolver esas citas primero, y
-   * decidirlo por él sería mover turnos de pacientes sin avisar.
+   * Las citas vivas **no frenan** el cambio (P23): antes de retirar se le
+   * pregunta a quien atiende si cancelarlas con aviso o conservarlas, y el
+   * horario nuevo no genera turnos encima de las que se conservan. Un error del
+   * retiro se muestra tal cual y no se publica nada.
    */
   private retirarVigenteYCrear(resourceId: string, policyId: string | null): void {
     const anterior = this.vigente();
-    // `yaRetirado` y no `vigente === null`: el vigente se conserva porque
+    // `attempt.retirement` y no `vigente === null`: el vigente se conserva porque
     // `esCambio()` cuelga de él —el modal de éxito dice «quedó cambiado»—, y
     // reintentar tras un fallo posterior no debe volver a retirar lo que ya
     // está retirado.
-    if (anterior === null || this.yaRetirado() || this.templateId() !== null) {
+    if (anterior === null || this.attempt.retirement() !== null || this.templateId() !== null) {
       this.crearPlantilla(resourceId, policyId);
       return;
     }
 
-    this.scheduling.retireTemplate(anterior.id).subscribe({
+    // Con citas vivas en el horario que se reemplaza, `BlockCancellations`
+    // pregunta antes qué hacer con ellas: cancelarlas y avisar a cada
+    // paciente, o conservarlas (etapa C, 24/10/2026). Si la persona vuelve
+    // atrás, no se publica nada y el formulario queda como estaba.
+    this.cancellations.retireTemplate(anterior.id, this.attempt.scope()).subscribe({
       next: (retiro) => {
-        this.yaRetirado.set(true);
-        this.cuposSoltados.set(retiro.releasedSlots);
-        this.cuposConservados.set(retiro.keptSlots);
+        if (retiro === null) {
+          this.estado.set(ready(null));
+          return;
+        }
+        this.attempt.retirement.set(retiro);
         this.crearPlantilla(resourceId, policyId);
       },
       error: (error: unknown) => this.fallar(error),
     });
   }
 
-  /** Si el horario anterior ya se retiró en este intento de publicación. */
-  private readonly yaRetirado = signal(false);
-
-  /** Cupos que el retiro del horario anterior soltó y conservó. */
-  protected readonly cuposSoltados = signal<number | null>(null);
-  protected readonly cuposConservados = signal<number | null>(null);
+  /** Dónde publica este intento y qué ya retiró. Se suelta al cambiar de organización o agenda. */
+  private readonly attempt = new PublicationAttempt();
 
   private crearPlantilla(resourceId: string, policyId: string | null): void {
     const yaEsta = this.templateId();
@@ -1169,9 +1284,10 @@ export class AgendaCreate {
     }
 
     const capacidad = this.formGeneral.getRawValue().capacidadPorTurno;
-    const flexible = this.flexible();
+    const allFlexible = this.allDaysFlexible();
     const rules: ScheduleRule[] = this.diasActivos().flatMap((dia) => {
       const v = this.semana.at(dia.indice).getRawValue();
+      const flexible = this.isFlexibleDay(dia.indice);
       // Una regla por franja: con almuerzo, mañana y tarde.
       return this.franjasDe(dia.indice).map(
         (franja) =>
@@ -1179,37 +1295,43 @@ export class AgendaCreate {
             dayOfWeek: DIAS[dia.indice].numero,
             startTime: franja.desde.trim(),
             endTime: franja.hasta.trim(),
-            // En horario flexible no hay turnos que medir: ni duración ni
-            // respiro viajan, porque no los declaró nadie.
-            ...(flexible ? {} : { slotMinutes: v.duracion }),
-            // Sólo si eligió alguno: mandar `0` escribiría un cero que nadie
-            // declaró, y borraría la diferencia el día que el default cambie.
-            ...(!flexible && v.respiro > 0 ? { gapMinutes: v.respiro } : {}),
-            ...opcEntero('capacityPerSlot', capacidad),
+            // Un día de turnos lleva su duración y su descanso; uno flexible, sólo
+            // `flexibleHours` (v4.2.64). Con toda la semana flexible lo declara la
+            // plantilla, una vez, y la franja va como antes: sin nada de turnos.
+            ...(allFlexible ? {} : this.turnFieldsOf(dia.indice, v)),
+            // Sólo si no es lo de siempre: ausente ≡ consultas, y escribir un valor
+            // que nadie eligió borraría la diferencia entre «no lo dijo» y «dijo consultas».
+            ...(v.modo === 'CONSULTATIONS' ? {} : { bookingMode: v.modo }),
+            // Telemedicina: `true` si la activó; `false` sólo si la apaga en una
+            // franja que ya la tenía. Ausente ≡ sin telemedicina.
+            ...this.telemedicinaDe(dia.indice, v.telemedicina),
+            // Ni capacidad: en horario flexible no hay turnos que llenar, y la
+            // API rechaza la franja que la declara (P36).
+            ...(flexible ? {} : opcEntero('capacityPerSlot', capacidad)),
           }) as ScheduleRule,
       );
     });
 
-    this.scheduling
-      .createTemplate(resourceId, {
-        // Derivado: no hay `GET` de plantillas, así que este nombre no lo
-        // vuelve a leer nadie. Pedirlo era pedir una etiqueta a ciegas.
-        name: `Horario de ${this.nombreDelRecurso()}`,
-        rules,
-        // El contrato lo pide también a nivel plantilla; va el de la primera
-        // franja, que es el que gobierna cuando una regla no trae el suyo.
-        slotMinutes: rules[0]?.slotMinutes,
-        ...(flexible ? { flexibleHours: true } : {}),
-        ...(policyId === null ? {} : { bookingPolicyId: policyId }),
-        ...opcFecha('validTo', this.fechaDeFin()),
-      })
-      .subscribe({
-        next: (plantilla) => {
-          this.templateId.set(plantilla.id);
-          this.generarCupos(plantilla.id);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const template = {
+      // Derivado: no hay `GET` de plantillas, así que este nombre no lo
+      // vuelve a leer nadie. Pedirlo era pedir una etiqueta a ciegas.
+      name: `Horario de ${this.nombreDelRecurso()}`,
+      rules,
+      // El contrato lo pide también a nivel plantilla; va el de la primera
+      // franja, que es el que gobierna cuando una regla no trae el suyo. Con
+      // algún día flexible, lo que se reserva por paciente esos días (P36).
+      slotMinutes: this.flexibleDays().length > 0 ? this.minutosPorPaciente() : rules[0]?.slotMinutes,
+      ...(allFlexible ? { flexibleHours: true } : {}),
+      ...(policyId === null ? {} : { bookingPolicyId: policyId }),
+      ...opcFecha('validTo', this.fechaDeFin()),
+    };
+    this.scheduling.createTemplate(resourceId, template, this.attempt.scope()).subscribe({
+      next: (plantilla) => {
+        this.templateId.set(plantilla.id);
+        this.generarCupos(plantilla.id);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
   private generarCupos(templateId: string): void {
@@ -1223,18 +1345,17 @@ export class AgendaCreate {
     const fin = this.fechaDeFin();
     const hasta = fin !== null && fin.getTime() < horizonte.getTime() ? fin : horizonte;
 
-    this.scheduling
-      .generateSlots(templateId, { from: desde.toISOString(), to: hasta.toISOString() })
-      .subscribe({
-        next: (resultado) => {
-          this.cuposCreados.set(resultado.created);
-          this.compararConLoGenerado(resultado.created);
-          this.estado.set(ready(null));
-          this.publicado.set(true);
-          void this.avisarQueQuedoPublicado(resultado.created);
-        },
-        error: (error: unknown) => this.fallar(error),
-      });
+    const range = { from: desde.toISOString(), to: hasta.toISOString() };
+    this.scheduling.generateSlots(templateId, range, this.attempt.scope()).subscribe({
+      next: (resultado) => {
+        this.cuposCreados.set(resultado.created);
+        this.compararConLoGenerado(resultado.created);
+        this.estado.set(ready(null));
+        this.publicado.set(true);
+        void this.avisarQueQuedoPublicado(resultado.created);
+      },
+      error: (error: unknown) => this.fallar(error),
+    });
   }
 
   /**
@@ -1251,27 +1372,26 @@ export class AgendaCreate {
    * enlace.
    */
   private async avisarQueQuedoPublicado(cupos: number): Promise<void> {
+    const retiro = this.attempt.retirement();
     const irAVerla = await this.dialogs.confirm({
       title: this.esCambio()
-        ? 'Listo, tu horario quedó cambiado'
-        : 'Listo, tu agenda ya está publicada',
+        ? 'Listo, su horario quedó cambiado'
+        : 'Listo, su agenda ya está publicada',
       message: `${this.resumen()}. Los pacientes ya pueden reservar.`,
       details: [
         {
-          label: 'Turnos abiertos',
+          label: 'Horarios abiertos',
           value: `${cupos} para los próximos meses`,
         },
         // Lo que pasó con el horario anterior, dicho y no callado: los turnos
         // conservados son citas de pacientes que siguen en pie, y quien acaba
         // de cambiar el horario necesita saber que están.
-        ...(this.cuposSoltados() === null
+        ...(retiro === null
           ? []
           : [
               {
                 label: 'Del horario anterior',
-                value: `${this.cuposSoltados()} turnos libres se retiraron; ${
-                  this.cuposConservados()
-                } con cita siguen en pie`,
+                value: `${retiro.releasedSlots} horarios libres se retiraron; ${retiro.keptSlots} con cita siguen en pie`,
               },
             ]),
       ],
@@ -1302,14 +1422,14 @@ export class AgendaCreate {
     if (generados % porSemana === 0) return;
 
     console.warn(
-      `[agenda] La vista previa calculó ${porSemana} turnos por semana y el ` +
+      `[agenda] La vista previa calculó ${porSemana} horarios por semana y el ` +
         `servidor generó ${generados}, que no es múltiplo. Puede haber cambiado ` +
         'la regla del resto: ver calcularTurnos.',
     );
   }
 
   /** «08:00 – 18:00 (almuerzo 13:00 – 14:00)»: el día dicho como rango. */
-  private rangoDe(dia: DiaCalculado): string {
+  private rangoDe(dia: CalculatedDay): string {
     const indice = DIAS.findIndex((d) => d.largo.toLowerCase() === dia.dia.toLowerCase());
     if (indice === -1) return '';
     const v = this.semana.at(indice).getRawValue();
@@ -1335,7 +1455,7 @@ export class AgendaCreate {
     this.conAlmuerzo();
     this.almuerzoDesde();
     this.almuerzoHasta();
-    this.flexible();
+    this.allDaysFlexible();
     const activos = this.diasActivos();
     if (activos.length === 0) return '';
 
@@ -1365,27 +1485,17 @@ export class AgendaCreate {
       this.conAlmuerzo() && !this.almuerzoInvalido()
         ? `, almuerzo de ${enHoras(this.almuerzoDesde())} a ${enHoras(this.almuerzoHasta())}`
         : '';
-    if (this.flexible()) return `${dias}${horario}${almuerzo}, horario flexible sin turnos fijos`;
+    if (this.allDaysFlexible())
+      return `${dias}${horario}${almuerzo}, horario flexible sin citas de duración fija`;
+    if (this.flexibleDays().length > 0)
+      return `${dias}${horario}${almuerzo}, con turnos fijos y días de horario flexible`;
+    // Con franjas de servicios la frase no puede decir «consultas de 30 minutos» de
+    // todo el horario: ni todo es consulta, ni los servicios tienen un largo único.
+    const hayServicios = activos.some(
+      (dia) => this.semana.at(dia.indice).getRawValue().modo !== 'CONSULTATIONS',
+    );
+    if (hayServicios) return `${dias}${horario}${almuerzo}, con franjas de servicios`;
     return `${dias}${horario}${almuerzo}, consultas de ${primero.duracion} minutos${respiro}`;
-  });
-}
-
-/** Un día de la semana, apagado y con un horario de mañana por defecto. */
-function nuevoDia(_dayOfWeek: number): DiaGroup {
-  return new FormGroup({
-    activo: new FormControl(false, { nonNullable: true }),
-    desde: new FormControl('09:00', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(HORA)],
-    }),
-    hasta: new FormControl('13:00', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.pattern(HORA)],
-    }),
-    duracion: new FormControl(30, { nonNullable: true, validators: [Validators.required] }),
-    // Sin respiro por omisión: es lo que la agenda hacía antes de que el campo
-    // existiera, así que abrir el formulario no cambia nada de lo que ya había.
-    respiro: new FormControl(0, { nonNullable: true, validators: [Validators.required] }),
   });
 }
 

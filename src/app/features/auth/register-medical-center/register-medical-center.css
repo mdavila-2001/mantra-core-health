@@ -1,0 +1,11 @@
+/* El cascarón —la tarjeta, el membrete y el pie— es
+   `../shared-registration/registration.css`, que esta pantalla declara junto a
+   esta hoja en sus `styleUrls`. */
+
+
+/* «Atrás» (fantasma) alinea su TEXTO con el borde de los campos: el relleno
+   horizontal de un botón `md` es `--sp-5`. Sólo esta alta lo declara; el
+   organismo, por omisión, no corre nada. */
+app-paginated-form {
+  --paginated-form-atras-sangria: var(--sp-5);
+}

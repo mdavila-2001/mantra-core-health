@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Intestino delgado y grueso: segmentos principales</title>
+  <desc id="d">Esquema frontal del abdomen. El intestino delgado, con el duodeno en forma de C, el yeyuno y el íleon, ocupa el centro. El intestino grueso lo rodea como un marco: ciego con apéndice en la fosa ilíaca derecha, colon ascendente, flexura hepática, colon transverso, flexura esplénica, colon descendente, colon sigmoide y recto.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --si:#f0b38a; --si-d:#c9774a; --co:#9cc3e0; --co-d:#4f86b0; --acc:#c0392b; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --si:#c98a62; --si-d:#f0b38a; --co:#4f86b0; --co-d:#9cc3e0; --acc:#ef7467; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lab { font-size: 13px; }
+    .labb { font-size: 13px; font-weight: 700; }
+    .small { font-size: 12px; }
+    .lead { stroke: var(--muted); stroke-width: 1; fill: none; }
+    .dot { fill: var(--muted); }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <rect x="16" y="14" width="768" height="446" rx="16" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="34" y="44" class="title">Intestino delgado e intestino grueso</text>
+  <text x="34" y="64" class="small muted">Vista anterior; la derecha del paciente queda a la izquierda del dibujo</text>
+
+  <!-- colon -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M232 385 V135 Q232 108 262 108 Q400 128 535 98 Q572 92 572 128 V330 C575 380 530 395 505 380 C480 365 455 385 420 400 L405 412 V442" stroke="var(--co-d)" stroke-width="28"/>
+    <path d="M232 385 V135 Q232 108 262 108 Q400 128 535 98 Q572 92 572 128 V330 C575 380 530 395 505 380 C480 365 455 385 420 400 L405 412 V442" stroke="var(--co)" stroke-width="21"/>
+  </g>
+  <!-- haustras -->
+  <g stroke="var(--co-d)" stroke-width="1.5" opacity=".8">
+    <path d="M221 160 h22 M221 190 h22 M221 220 h22 M221 250 h22 M221 280 h22 M221 310 h22 M221 340 h22"/>
+    <path d="M561 160 h22 M561 190 h22 M561 220 h22 M561 250 h22 M561 280 h22 M561 310 h22"/>
+  </g>
+  <!-- ciego y apéndice -->
+  <ellipse cx="232" cy="386" rx="22" ry="20" fill="var(--co)" stroke="var(--co-d)" stroke-width="3"/>
+  <path d="M226 404 C218 420 212 432 200 440" fill="none" stroke="var(--co-d)" stroke-width="9" stroke-linecap="round"/>
+  <path d="M226 404 C218 420 212 432 200 440" fill="none" stroke="var(--co)" stroke-width="5" stroke-linecap="round"/>
+
+  <!-- duodeno -->
+  <path d="M372 146 H418 a18 18 0 0 1 18 18 V168 a18 18 0 0 1 -18 18 H340 L305 205" fill="none" stroke="var(--si-d)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M372 146 H418 a18 18 0 0 1 18 18 V168 a18 18 0 0 1 -18 18 H340 L305 205" fill="none" stroke="var(--si)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- yeyuno e íleon -->
+  <path d="M305 225 H460 a16.5 16.5 0 0 1 0 33 H300 a16.5 16.5 0 0 0 0 33 H460 a16.5 16.5 0 0 1 0 33 H300 a16.5 16.5 0 0 0 0 33 H380 C330 357 300 385 256 385" fill="none" stroke="var(--si-d)" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M305 225 H460 a16.5 16.5 0 0 1 0 33 H300 a16.5 16.5 0 0 0 0 33 H460 a16.5 16.5 0 0 1 0 33 H300 a16.5 16.5 0 0 0 0 33 H380 C330 357 300 385 256 385" fill="none" stroke="var(--si)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- píloro -->
+  <circle cx="372" cy="146" r="6" fill="var(--acc)"/>
+
+  <!-- rótulos izquierda -->
+  <g class="lab" text-anchor="end">
+    <text x="176" y="112" class="labb">Flexura hepática</text>
+    <path class="lead" d="M180 108 L210 108"/>
+    <text x="176" y="256" class="labb">Colon ascendente</text>
+    <path class="lead" d="M180 252 L219 252"/>
+    <text x="176" y="392" class="labb">Ciego</text>
+    <path class="lead" d="M180 388 L208 388"/>
+    <text x="176" y="440" class="labb">Apéndice vermiforme</text>
+    <path class="lead" d="M180 436 L196 438"/>
+  </g>
+  <!-- rótulos derecha -->
+  <g class="lab">
+    <text x="608" y="86" class="labb">Flexura esplénica</text>
+    <path class="lead" d="M604 90 L574 100"/>
+    <text x="608" y="236" class="labb">Colon descendente</text>
+    <path class="lead" d="M604 232 L585 232"/>
+    <text x="600" y="400" class="labb">Colon sigmoide</text>
+    <path class="lead" d="M596 396 L536 386"/>
+    <text x="440" y="436" class="labb">Recto y canal anal</text>
+    <path class="lead" d="M436 432 L418 428"/>
+  </g>
+  <!-- rótulos centro -->
+  <g class="lab" text-anchor="middle">
+    <text x="400" y="86" class="labb">Colon transverso</text>
+    <path class="lead" d="M400 92 L400 118"/>
+    <text x="480" y="148" class="labb" text-anchor="start" style="fill:var(--si-d)">Duodeno</text>
+    <text x="480" y="206" class="labb" text-anchor="start" style="fill:var(--si-d)">Yeyuno</text>
+    <text x="418" y="352" class="labb" text-anchor="start" style="fill:var(--si-d)">Íleon</text>
+    <text x="330" y="426" class="labb">Válvula ileocecal</text>
+    <path class="lead" d="M290 418 L262 392"/>
+    <text x="360" y="151" class="small muted" text-anchor="end">Píloro</text>
+  </g>
+  <!-- leyenda -->
+  <rect x="640" y="30" width="16" height="10" rx="3" fill="var(--si)" stroke="var(--si-d)"/>
+  <text x="662" y="40" class="small">Delgado</text>
+  <rect x="640" y="48" width="16" height="10" rx="3" fill="var(--co)" stroke="var(--co-d)"/>
+  <text x="662" y="58" class="small">Grueso</text>
+
+  <text x="400" y="474" text-anchor="middle" class="small muted">Esquema ilustrativo, sin escala; las asas del delgado se dibujan desplegadas. Ilustración original de AloVida.</text>
+</svg>

@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTE } from './fixtures/personas';
+import { PACIENTE } from './fixtures/people';
 import { crearRouterSimulado } from './handlers';
 import type { MockMethod, MockRequest } from './mock-router';
 import { emitirAccessToken, MOCK_USERS } from './mock-session';
@@ -209,6 +209,16 @@ describe('el aviso de la ficha médica le llega al paciente', () => {
     guardarNota(encuentro);
 
     expect(campanaDe(PACIENTE_USUARIO).length).toBe(antes + 1);
+  });
+
+  it('nota primero y diagnóstico después comparten el mismo aviso', () => {
+    const encounterId = abrirConsulta();
+    const before = campanaDe(PACIENTE_USUARIO).length;
+
+    guardarNota(encounterId);
+    guardarDiagnostico(encounterId);
+
+    expect(campanaDe(PACIENTE_USUARIO).length).toBe(before + 1);
   });
 
   it('dos consultas distintas avisan por separado', () => {

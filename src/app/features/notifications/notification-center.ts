@@ -1,4 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,7 +7,9 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { Router } from '@angular/router';
+import type { ViewState } from '../../core/view-state/view-state.types';
+import { errorToViewState } from '../../core/http/error-to-view-state';
+import { empty, loading, ready } from '../../core/view-state/view-state';
 
 import { NotificationsClient } from '../../core/data-access/notifications/notifications.client';
 import type { InAppNotification } from '../../core/data-access/notifications/notifications.types';
@@ -15,12 +18,13 @@ import { NotificationsStore } from '../../core/notifications/notifications.store
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
-import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { NotificationActions } from '../../shared/components/molecules/notification-actions/notification-actions';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
+import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import {
   agruparPorDia,
   horaRelativa,
@@ -32,6 +36,9 @@ import {
 /** Cuántas trae cada página. */
 const PAGE_SIZE = 25;
 
+/** Índice de la pestaña «Sin leer»: la única que consulta la API con `unread=true`. */
+const UNREAD_TAB = 1;
+
 /**
  * El centro de notificaciones — carril P1.
  *
@@ -41,16 +48,6 @@ const PAGE_SIZE = 25;
  * abierto en una pestaña y no tiene dónde poner un filtro. La campana es para
  * enterarse; esto es para revisar.
  *
- * ## Sólo la bandeja del módulo 35
- *
- * La campana fusiona `messaging` y `community`, pero el centro pagina, y
- * paginar dos fuentes con cursores distintos y ordenarlas por fecha sin un
- * cursor común produce huecos: la página 2 de una fuente puede traer algo más
- * nuevo que la página 1 de la otra. Se pagina lo que tiene el orden — lo
- * clínico, la agenda y los mensajes, que es lo que la gente viene a buscar — y
- * lo social se ve en su muro. Queda anotado en el reporte como el precio de no
- * unificar backends esta semana.
- *
  * ## «Ver más» y no «página 3 de 47»
  *
  * El contrato no da totales: trae `count` de esta página y `nextCursor`.
@@ -58,7 +55,20 @@ const PAGE_SIZE = 25;
  */
 @Component({
   selector: 'app-notification-center',
-  imports: [Alert, AppButton, Badge, Card, EmptyState, NavIcon, NgTemplateOutlet, PageHeader, Tab, Tabs],
+  imports: [
+    AppButton,
+    Badge,
+    Card,
+    EmptyState,
+    NavIcon,
+    NgTemplateOutlet,
+    NotificationActions,
+    PageHeader,
+    RouterLink,
+    Tab,
+    Tabs,
+    ViewStateHost,
+  ],
   templateUrl: './notification-center.html',
   styleUrl: './notification-center.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,25 +80,27 @@ export class NotificationCenter {
 
   protected readonly avisos = signal<readonly InAppNotification[]>([]);
   protected readonly cargando = signal(false);
-  protected readonly error = signal('');
+  protected readonly errorState = signal<ViewState<readonly InAppNotification[]> | null>(null);
   protected readonly cursor = signal<string | null>(null);
   protected readonly cargoAlgunaVez = signal(false);
   protected readonly sinLeer = signal(0);
 
-  /** Si se muestran sólo las no leídas. Lo gobierna la pestaña. */
-  protected readonly soloSinLeer = signal(false);
-
-  /**
-   * La pestaña abierta: 0 «Todas», 1 «Sin leer».
-   *
-   * **Dos y no seis.** La tentación era una pestaña por familia —clínico,
-   * turnos, mensajes, red—, pero la bandeja se pagina con cursor y el
-   * contrato sólo filtra por `unread`: una pestaña «Turnos» tendría que
-   * filtrar la página ya cargada, y mostraría tres de veinte turnos con un
-   * «ver más» que trae cualquier otra cosa. La familia se ve en cada fila,
-   * con su dibujo y su nombre, que es donde sirve.
-   */
+  /** Todas las pestañas conservan el cursor; sólo «Sin leer» usa el filtro API. */
   protected readonly pestana = signal(0);
+  protected readonly soloSinLeer = computed(() => this.pestana() === UNREAD_TAB);
+
+  protected readonly avisosFiltrados = computed(() => {
+    const tab = this.pestana();
+    return this.avisos().filter((aviso) => {
+      if (tab === UNREAD_TAB) return aviso.unread;
+      if (tab === 2)
+        return aviso.category === 'CLINICAL' && aviso.destination?.type !== 'PRESCRIPTION';
+      if (tab === 3) return aviso.category === 'MESSAGES';
+      if (tab === 4) return aviso.destination?.type === 'PRESCRIPTION';
+      if (tab === 5) return aviso.category === 'SOCIAL' || aviso.destination?.type === 'POST';
+      return true;
+    });
+  });
 
   /**
    * El reloj con el que se dicen los «hace 2 h».
@@ -101,7 +113,38 @@ export class NotificationCenter {
 
   /** Los avisos repartidos por día, en el orden en que llegaron. */
   protected readonly grupos = computed<readonly DiaDeAvisos[]>(() =>
-    agruparPorDia(this.avisos(), this.ahora()),
+    agruparPorDia(this.avisosFiltrados(), this.ahora()),
+  );
+
+  protected readonly estado = computed<ViewState<readonly InAppNotification[]>>(() => {
+    const fallo = this.errorState();
+    if (fallo) return fallo;
+    if (!this.cargoAlgunaVez()) return loading();
+    const visibles = this.avisosFiltrados();
+    if (visibles.length === 0 && !this.hayMas()) {
+      return empty({ label: 'Ir a preferencias', route: '/settings' }, this.descripcionVacio());
+    }
+    return ready(visibles);
+  });
+
+  /**
+   * El título del vacío conserva los textos de siempre para «Todas» y «Sin
+   * leer» (los comprueba `playwright/carril-35-notification-center.spec.ts`);
+   * las pestañas de categoría dicen que no hay avisos de esa familia.
+   */
+  protected readonly tituloVacio = computed(() => {
+    const tab = this.pestana();
+    if (tab === 0) return 'Todavía no tiene notificaciones';
+    if (tab === UNREAD_TAB) return 'No tiene notificaciones sin leer';
+    return 'No tiene avisos en esta categoría';
+  });
+  protected readonly descripcionVacio = computed(() =>
+    this.pestana() === 0 || this.pestana() === UNREAD_TAB
+      ? 'Acá van a aparecer los avisos de sus recetas, sus consultas, sus turnos y sus mensajes.'
+      : 'Cuando llegue uno de esta categoría, lo va a ver acá.',
+  );
+  protected readonly hayFiltrosSinResultados = computed(
+    () => this.avisosFiltrados().length === 0 && this.hayMas(),
   );
 
   protected readonly iconoDeCategoria = iconoDeCategoria;
@@ -111,18 +154,22 @@ export class NotificationCenter {
     return horaRelativa(aviso.availableAt, this.ahora());
   }
 
-  /** Cambia de pestaña: es el mismo filtro de antes, con otra forma. */
+  /**
+   * Cambia de pestaña: es el mismo filtro de antes, con otra forma.
+   *
+   * «Sin leer» es la única que pide otra consulta a la API (`unread=true`), así
+   * que entrar **o salir** de ella vuelve a cargar desde cero. Si sólo se
+   * recargara al entrar, al volver a «Todas» (o a una categoría) la lista
+   * seguiría siendo la de las sin leer y las leídas desaparecerían.
+   */
   protected elegirPestana(indice: number): void {
-    if (indice === this.pestana()) return;
+    const anterior = this.pestana();
+    if (indice === anterior) return;
     this.pestana.set(indice);
-    this.soloSinLeer.set(indice === 1);
-    this.recargar();
+    if (indice === UNREAD_TAB || anterior === UNREAD_TAB) this.recargar();
   }
 
   protected readonly hayMas = computed(() => this.cursor() !== null);
-  protected readonly vacio = computed(
-    () => this.cargoAlgunaVez() && this.avisos().length === 0,
-  );
 
   constructor() {
     this.cargar();
@@ -133,6 +180,7 @@ export class NotificationCenter {
     this.avisos.set([]);
     this.cursor.set(null);
     this.cargoAlgunaVez.set(false);
+    this.errorState.set(null);
     this.cargar();
   }
 
@@ -154,6 +202,21 @@ export class NotificationCenter {
    */
   protected abrir(aviso: InAppNotification): void {
     const ruta = this.rutaDe(aviso);
+    this.marcarLeida(aviso);
+    if (ruta) {
+      void this.router.navigateByUrl(ruta);
+    }
+  }
+
+  /**
+   * Marca un aviso como leído sin navegar.
+   *
+   * Es lo único que se puede hacer con un aviso **sin destino**: no es un
+   * control —un enlace que no lleva a ningún lado se lee como producto roto—,
+   * y sin este botón la única salida para sacarlo de «sin leer» era «Marcar
+   * todas», que se lleva puestas las demás.
+   */
+  protected marcarLeida(aviso: InAppNotification): void {
     if (aviso.unread) {
       this.notifications.markRead(aviso.id).subscribe({
         next: () => {
@@ -167,12 +230,27 @@ export class NotificationCenter {
           // seguiría contando una notificación que la persona ya abrió.
           this.store.refrescar();
         },
-        error: () => this.error.set('No pudimos marcar la notificación.'),
+        error: (error: unknown) =>
+          this.errorState.set(errorToViewState<readonly InAppNotification[]>(error)),
       });
     }
-    if (ruta) {
-      void this.router.navigateByUrl(ruta);
+  }
+
+  /**
+   * Una acción de la notificación terminó: se da por leída, se relee la bandeja
+   * y se avisa a la campana. Se recarga la lista entera y no la fila, porque
+   * quien decidió por una solicitud ya no debe ver sus botones.
+   */
+  protected alEjecutarAccion(aviso: InAppNotification): void {
+    const cerrar = (): void => {
+      this.store.refrescar();
+      this.recargar();
+    };
+    if (!aviso.unread) {
+      cerrar();
+      return;
     }
+    this.notifications.markRead(aviso.id).subscribe({ next: cerrar, error: cerrar });
   }
 
   protected marcarTodas(): void {
@@ -181,7 +259,8 @@ export class NotificationCenter {
         this.store.refrescar();
         this.recargar();
       },
-      error: () => this.error.set('No pudimos marcar tus notificaciones.'),
+      error: (error: unknown) =>
+        this.errorState.set(errorToViewState<readonly InAppNotification[]>(error)),
     });
   }
 
@@ -190,7 +269,7 @@ export class NotificationCenter {
       return;
     }
     this.cargando.set(true);
-    this.error.set('');
+    this.errorState.set(null);
 
     const cursor = this.cursor();
     this.notifications
@@ -207,10 +286,10 @@ export class NotificationCenter {
           this.cargoAlgunaVez.set(true);
           this.cargando.set(false);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.cargando.set(false);
           this.cargoAlgunaVez.set(true);
-          this.error.set('No pudimos cargar tus notificaciones.');
+          this.errorState.set(errorToViewState<readonly InAppNotification[]>(error));
         },
       });
   }

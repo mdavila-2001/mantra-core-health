@@ -78,18 +78,3 @@ sin que ninguna prueba se entere.
 
 Las cuatro de abajo **no se pueden cubrir con jsdom**, y no por falta de esfuerzo:
 jsdom no tiene layout, ni `<dialog>` completo, ni recarga.
-
-## Propuesta
-
-Sin herramientas nuevas, dos pruebas de integración cerrarían lo más grave:
-
-1. **`Dashboard`** — montar con `HttpTestingController` y verificar las tres
-   ramas de `toState`: vacío, atrasado, fresco. Fija dos reglas de producto que
-   hoy nada protege.
-2. **`ShellLayout`** — verificar que `user`, `tenants` y `sections` derivan de la
-   sesión, y que `changeTenant` navega al panel.
-
-Las dos son pruebas de componente en forma, y de integración en alcance. **No
-requieren instalar nada.**
-
-Ver [la estrategia](strategy.md#recomendaciones-en-orden).

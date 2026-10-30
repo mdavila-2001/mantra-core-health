@@ -1,0 +1,30 @@
+<div class="ci" role="region" [attr.aria-label]="'Cómo se calcula ' + label()" data-testid="calc-info">
+  <dl>
+    <dt>Qué es</dt>
+    <dd>{{ info().definicion }}</dd>
+    <dt>Fórmula</dt>
+    <dd class="ci__formula">{{ info().formula }}</dd>
+    @if (info().numerador; as numerator) {
+      <dt>Numerador</dt>
+      <dd>{{ numerator }}</dd>
+    }
+    @if (info().denominador; as denominator) {
+      <dt>Denominador</dt>
+      <dd>{{ denominator }}</dd>
+    }
+    <dt>Fuente</dt>
+    <dd>{{ info().fuente }}</dd>
+    <dt>Frescura</dt>
+    <dd>{{ info().frescura }}</dd>
+    @if (info().salvedades?.length) {
+      <dt>Salvedades</dt>
+      <dd>
+        <ul>
+          @for (caveat of info().salvedades; track caveat) {
+            <li>{{ caveat }}</li>
+          }
+        </ul>
+      </dd>
+    }
+  </dl>
+</div>

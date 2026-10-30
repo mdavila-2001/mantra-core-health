@@ -23,7 +23,7 @@ if ! curl -sfI "${E2E_BASE_URL:-http://localhost:4200}" >/dev/null; then
   exit 2
 fi
 
-DEST="../docs/progress/evidence/lane-${LANE}"
+DEST="${CORR_EVIDENCE_DESTINATION:-artifacts/evidencia/correcciones/lane-${LANE}}"
 mkdir -p "$DEST"
 
 # La auditoría global es el carril 34: sus rutas salen de `playwright/corr-rutas.json`,
@@ -33,3 +33,4 @@ mkdir -p "$DEST"
 if [ "$MODO" = auditoria ]; then LANE=34; fi
 CORR_LANE="$LANE" CORR_FASE="$FASE" CORR_RUTA="$RUTA" corepack yarn pw playwright/corr-evidencia.spec.ts --workers=1 --max-failures=1 --reporter=list
 echo "Evidencia en $DEST"
+echo "Veredicto de cierre: node scripts/check-correcciones.mjs --carril ${LANE}"

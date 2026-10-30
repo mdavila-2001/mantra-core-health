@@ -61,8 +61,9 @@ test.describe('la cláusula de exclusión en la pantalla (maqueta)', () => {
       'requiere autorización previa del área médica',
     );
 
-    // El badge tiene su propio nombre accesible con el texto de la cita.
-    const badge = celdaDenegada.getByRole('status', {
+    // El badge tiene su propio nombre accesible con el texto de la cita. Es
+    // `img` y no `status`: un badge no es una región viva.
+    const badge = celdaDenegada.getByRole('img', {
       name: /Cláusula de exclusión: Cláusula 12\.3/,
     });
     await expect(badge).toBeVisible();

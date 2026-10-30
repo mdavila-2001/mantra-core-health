@@ -9,16 +9,17 @@ import {
   Injector,
   input,
   model,
+  output,
   signal,
   viewChild,
 } from '@angular/core';
 
 import { AppButton } from '../../atoms/button/button';
-import { type DatePickerMode, MAX_DEFAULT_YEAR } from './date-picker.types';
-import {
-  FORM_CONTROL_CONTEXT,
-  nextControlId,
-} from '../../../forms/form-control.context';
+import { Select } from '../../atoms/select/select';
+import { type DatePickerMode, type DateTextProblem, MAX_DEFAULT_YEAR } from './date-picker.types';
+import { FORM_CONTROL_CONTEXT, nextControlId } from '../../../forms/form-control.context';
+import { NoFieldContext } from '../../../forms/no-field-context.directive';
+import { abrirModal, cerrarConSalida } from '@shared/motion/panel-motion';
 
 export interface CalendarDay {
   readonly date: Date;
@@ -34,6 +35,12 @@ export interface YearCell {
   readonly year: number;
   readonly isSelected: boolean;
   readonly isDisabled: boolean;
+  /**
+   * Los cinco años de su fila están fuera del rango: la fila no se dibuja.
+   * Siempre es una fila entera, para que las columnas —que el teclado recorre
+   * de a cinco— no se corran.
+   */
+  readonly isRowOutOfRange: boolean;
 }
 
 /** Celda de la grilla de meses del año en vista. */
@@ -236,10 +243,7 @@ function dayTime(date: Date): number {
  * Primera celda utilizable a partir de la preferida: el foco nunca queda sobre
  * una celda fuera de rango, que no se puede elegir ni enfocar.
  */
-function usableCell(
-  cells: readonly { readonly isDisabled: boolean }[],
-  preferred: number,
-): number {
+function usableCell(cells: readonly { readonly isDisabled: boolean }[], preferred: number): number {
   const clamped = Math.min(Math.max(preferred, 0), cells.length - 1);
   if (!cells[clamped].isDisabled) {
     return clamped;
@@ -258,7 +262,7 @@ function usableCell(
 @Component({
   selector: 'app-date-picker',
   standalone: true,
-  imports: [AppButton],
+  imports: [AppButton, NoFieldContext, Select],
   templateUrl: './date-picker.html',
   styleUrl: './date-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -278,6 +282,14 @@ export class DatePicker {
   readonly minDate = input<Date | string | null>(null);
   readonly maxDate = input<Date | string | null>(null);
   readonly allowKeyboard = input<boolean>(true);
+
+  /**
+   * Avisa cuando lo escrito a mano se rechaza, y con `null` cuando deja de
+   * estarlo. El modelo no alcanza: una fecha fuera de rango deja `value` en
+   * `null`, igual que un campo vacío, y el formulario terminaba diciendo
+   * «ingrese su fecha» sobre una fecha que la persona sí ingresó.
+   */
+  readonly textProblem = output<DateTextProblem | null>();
 
   private readonly injector = inject(Injector);
 
@@ -300,6 +312,12 @@ export class DatePicker {
   /** Texto mostrado en el input editable. */
   protected readonly inputText = signal<string>('');
   protected readonly parseError = signal<boolean>(false);
+
+  /** El motivo del rechazo: si el texto es una fecha real, fue por el rango. */
+  private readonly currentTextProblem = computed<DateTextProblem | null>(() => {
+    if (!this.parseError()) return null;
+    return parseDateOnly(this.inputText().trim()) ? 'out-of-range' : 'invalid';
+  });
 
   /** Fecha en edición mientras el modal está abierto; se descarta al cancelar. */
   protected readonly draft = signal<Date | null>(null);
@@ -333,10 +351,16 @@ export class DatePicker {
 
   protected readonly monthNames = buildMonthNames();
   protected readonly weekDayNames = buildWeekDayNames();
-  protected readonly hourOptions = Array.from({ length: HOURS_PER_DAY }, (_, hour) => hour);
+  protected readonly hourOptions = Array.from({ length: HOURS_PER_DAY }, (_, h) => ({
+    value: h,
+    label: `${String(h).padStart(2, '0')} h`,
+  }));
   protected readonly minuteOptions = Array.from(
     { length: MINUTES_PER_HOUR / MINUTE_STEP },
-    (_, index) => index * MINUTE_STEP,
+    (_, i) => ({
+      value: i * MINUTE_STEP,
+      label: `${String(i * MINUTE_STEP).padStart(2, '0')} min`,
+    }),
   );
 
   private readonly ownId = nextControlId('date');
@@ -392,12 +416,16 @@ export class DatePicker {
     const start = this.yearPageStart();
     const viewYear = this.viewMonth().getFullYear();
 
-    return Array.from({ length: YEARS_PER_PAGE }, (_, index) => {
+    const disabled = Array.from({ length: YEARS_PER_PAGE }, (_, index) => this.isYearOutOfRange(start + index));
+
+    return disabled.map((isDisabled, index) => {
       const year = start + index;
+      const rowStart = index - (index % YEAR_GRID_COLUMNS);
       return {
         year,
         isSelected: year === viewYear,
-        isDisabled: this.isYearOutOfRange(year),
+        isDisabled,
+        isRowOutOfRange: disabled.slice(rowStart, rowStart + YEAR_GRID_COLUMNS).every(Boolean),
       };
     });
   });
@@ -469,15 +497,13 @@ export class DatePicker {
 
     const firstWeekday = (new Date(year, month, 1).getDay() + 6) % DAYS_PER_WEEK;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const totalCells =
-      Math.ceil((firstWeekday + daysInMonth) / DAYS_PER_WEEK) * DAYS_PER_WEEK;
+    const totalCells = Math.ceil((firstWeekday + daysInMonth) / DAYS_PER_WEEK) * DAYS_PER_WEEK;
 
     return Array.from({ length: totalCells }, (_, cell) => {
       const date = new Date(year, month, cell - firstWeekday + 1);
       const cellTime = dayTime(date);
       const isDisabled =
-        (minTime !== null && cellTime < minTime) ||
-        (maxTime !== null && cellTime > maxTime);
+        (minTime !== null && cellTime < minTime) || (maxTime !== null && cellTime > maxTime);
 
       return {
         date,
@@ -491,6 +517,8 @@ export class DatePicker {
   });
 
   constructor() {
+    effect(() => this.textProblem.emit(this.currentTextProblem()));
+
     // Sincronizar el texto del input cuando el valor del modelo cambia
     effect(() => {
       const val = this.value();
@@ -508,20 +536,10 @@ export class DatePicker {
       if (!dialog) {
         return;
       }
-      this.showModal(dialog);
+      // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+      abrirModal(dialog, '.date-picker-panel', this.trigger()?.nativeElement ?? this.inputEl()?.nativeElement);
       dialog.focus();
     });
-  }
-
-  private showModal(dialog: HTMLDialogElement): void {
-    if (dialog.open) {
-      return;
-    }
-    if (typeof dialog.showModal === 'function') {
-      dialog.showModal();
-      return;
-    }
-    dialog.setAttribute('open', '');
   }
 
   protected dayLabel(day: CalendarDay): string {
@@ -562,12 +580,26 @@ export class DatePicker {
     input.setSelectionRange(seg.start, seg.end);
   }
 
+  /**
+   * El segmento donde tiene que quedar el cursor.
+   *
+   * Con el campo vacío la plantilla ocupa sólo la izquierda del input, así que
+   * un clic en cualquier otro punto deja el cursor al final: en el año. Lo que
+   * la persona teclea después —«01011990»— caía entero ahí y el campo quedaba
+   * en `DD/MM/1011`, inválido. Vacío, se empieza siempre por el día; con algo
+   * escrito se respeta dónde hizo clic, que es cómo se corrige un solo segmento.
+   */
+  private segmentForCaret(input: HTMLInputElement): SegmentDef {
+    if (input.value === MASK_TEMPLATE) {
+      return SEGMENT_DAY;
+    }
+    return getSegmentAt(input.selectionStart ?? 0);
+  }
+
   private snapToSegment(input: HTMLInputElement): void {
     this.applyNormalization(input);
     this.ensureMask(input);
-    const pos = input.selectionStart ?? 0;
-    const seg = getSegmentAt(pos);
-    this.selectSegment(input, seg);
+    this.selectSegment(input, this.segmentForCaret(input));
   }
 
   protected handleFocus(): void {
@@ -576,11 +608,10 @@ export class DatePicker {
       return;
     }
     this.ensureMask(input);
+    const valueAtFocus = input.value;
     setTimeout(() => {
-      if (document.activeElement === input) {
-        const pos = input.selectionStart ?? 0;
-        const seg = getSegmentAt(pos);
-        this.selectSegment(input, seg);
+      if (document.activeElement === input && input.value === valueAtFocus) {
+        this.selectSegment(input, this.segmentForCaret(input));
       }
     }, 0);
   }
@@ -593,8 +624,12 @@ export class DatePicker {
   protected handleInputMouseUp(event: MouseEvent): void {
     const input = event.target as HTMLInputElement;
     this.snapToSegment(input);
+    // El reajuste diferido no pisa lo que ya se tecleó: si el primer dígito
+    // entra antes de que corra este temporizador, normalizaba «0D» a «00» y
+    // mandaba el cursor al año.
+    const valueAtMouseUp = input.value;
     setTimeout(() => {
-      if (document.activeElement === input) {
+      if (document.activeElement === input && input.value === valueAtMouseUp) {
         this.snapToSegment(input);
       }
     }, 0);
@@ -1292,17 +1327,35 @@ export class DatePicker {
     this.isOpen.set(true);
   }
 
-  protected close(): void {
+  /**
+   * Cierra el diálogo. `conSalida` anima la salida del panel (140 ms) antes de
+   * cerrar; es lo que corresponde al descartar (Escape, velo, «Cancelar»).
+   *
+   * **Confirmar no usa la salida.** Mientras el panel sale el `<dialog>` sigue
+   * siendo modal: la página de atrás está inerte, un clic no entra y lo que se
+   * escribe en el campo de al lado se pierde; al acabar la salida el foco vuelve
+   * al campo de la fecha y le roba el que ya tenía el siguiente. Confirmar es el
+   * final: la página se libera en el acto (mismo criterio que `app-select`).
+   */
+  protected close(conSalida = true): void {
     if (!this.isOpen()) {
       return;
     }
     const dialog = this.dialog()?.nativeElement;
-    if (dialog?.open && typeof dialog.close === 'function') {
-      dialog.close();
+    const cerrar = (): void => {
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close();
+      }
+      this.isOpen.set(false);
+      const el = this.inputEl()?.nativeElement ?? this.trigger()?.nativeElement;
+      el?.focus();
+    };
+    if (!conSalida) {
+      cerrar();
+      return;
     }
-    this.isOpen.set(false);
-    const el = this.inputEl()?.nativeElement ?? this.trigger()?.nativeElement;
-    el?.focus();
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.date-picker-panel'), cerrar);
   }
 
   protected handleBackdropClick(event: MouseEvent): void {
@@ -1322,7 +1375,7 @@ export class DatePicker {
       this.value.set(draft);
       this.parseError.set(false);
     }
-    this.close();
+    this.close(false);
   }
 
   protected selectDay(day: CalendarDay): void {
@@ -1366,7 +1419,10 @@ export class DatePicker {
 
   /** Ídem con la página vecina de treinta años de la grilla. */
   protected canShiftYearPage(offset: number): boolean {
-    const start = this.yearPageStart() + offset * YEARS_PER_PAGE;
+    const start = this.clampYearPageStart(this.yearPageStart() + offset * YEARS_PER_PAGE);
+    if (start === this.yearPageStart()) {
+      return false;
+    }
     return !this.hasNoDayInRange(
       new Date(start, 0, 1),
       new Date(start + YEARS_PER_PAGE - 1, MONTHS_PER_YEAR, 0),
@@ -1378,8 +1434,18 @@ export class DatePicker {
     if (!this.canShiftYearPage(offset)) {
       return;
     }
-    this.yearPageStart.update((start) => start + offset * YEARS_PER_PAGE);
+    this.yearPageStart.update((start) => this.clampYearPageStart(start + offset * YEARS_PER_PAGE));
     this.activeCell.set(usableCell(this.yearCells(), this.activeCell()));
+  }
+
+  /**
+   * Ninguna página empieza antes del año de `minDate`: con el alta arrancando
+   * en 1910, la primera página es 1910–1939 entera y no 1890–1919 con veinte
+   * años que no se pueden elegir. Las demás siguen alineadas a la década.
+   */
+  private clampYearPageStart(start: number): number {
+    const min = this.normalizedMinDate();
+    return min ? Math.max(start, min.getFullYear()) : start;
   }
 
   /**
@@ -1417,7 +1483,7 @@ export class DatePicker {
 
   private showYears(): void {
     const viewYear = this.viewMonth().getFullYear();
-    const start = startOfYearPage(viewYear);
+    const start = this.clampYearPageStart(startOfYearPage(viewYear));
     this.yearPageStart.set(start);
     this.panel.set('years');
     this.activeCell.set(usableCell(this.yearCells(), viewYear - start));
@@ -1538,9 +1604,8 @@ export class DatePicker {
   }
 
   private focusActiveCell(): void {
-    const cells = this.dialog()?.nativeElement.querySelectorAll<HTMLButtonElement>(
-      '.calendar-unit-btn',
-    );
+    const cells =
+      this.dialog()?.nativeElement.querySelectorAll<HTMLButtonElement>('.calendar-unit-btn');
     const cell = cells?.[this.activeCell()];
     if (cell && !cell.disabled) {
       cell.focus();
@@ -1552,12 +1617,12 @@ export class DatePicker {
     afterNextRender(move, { injector: this.injector });
   }
 
-  protected updateHours(event: Event): void {
-    this.patchDraftTime(Number((event.target as HTMLSelectElement).value), null);
+  protected updateHours(hours: number | null): void {
+    if (hours !== null) this.patchDraftTime(hours, null);
   }
 
-  protected updateMinutes(event: Event): void {
-    this.patchDraftTime(null, Number((event.target as HTMLSelectElement).value));
+  protected updateMinutes(minutes: number | null): void {
+    if (minutes !== null) this.patchDraftTime(null, minutes);
   }
 
   protected handleDialogKeydown(event: KeyboardEvent): void {
@@ -1613,4 +1678,3 @@ export class DatePicker {
     }
   }
 }
-

@@ -1,0 +1,134 @@
+/* ============================================================================
+    Crear grupo médico. UNA tarjeta centrada y a lo ancho del área de contenido,
+    sin medida de formulario: el tope lo pone `.app-main__inner` y nadie más
+    (composition-rules.md §5). Lo que evita las casillas kilométricas es repartir
+    los campos en columnas por ancho: una en móvil, dos desde 780 px, tres desde
+    1120 px. Sólo distribución: los átomos y organismos ya traen su pinta.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.alta {
+  inline-size: 100%;
+  margin-inline: auto;
+  margin-block-start: var(--sp-6);
+}
+
+.alta__tarjeta {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.grupo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+}
+
+.grupo__panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
+.grupo__bloque {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--sp-4);
+}
+
+/* Servicio y paciente: dos buscadores con su tabla, lado a lado en pantalla ancha. */
+.grupo__dos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-6);
+  align-items: start;
+}
+
+.grupo__bloque h2 {
+  margin: 0;
+}
+
+.grupo__bajada {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.grupo__elegido {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.grupo__grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.grupo__equipo {
+  display: grid;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grupo__integrante {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.grupo__integrante-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.grupo__integrante-encabezado h3 {
+  margin: 0;
+  font-size: var(--fs-body);
+}
+
+/* El botón de «Agregar cargo» no se estira al ancho de la rejilla. */
+.grupo__bloque > button {
+  justify-self: start;
+}
+
+.grupo__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 780px) {
+  .grupo__grilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .grupo__dos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grupo__grilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Fecha, lugar y los dos textos: cuatro campos, dos columnas. */
+  .grupo__grilla--dos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -27,7 +27,8 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { AGENDA_ROUTE } from '../agenda.routes';
-import { misRecursosDeAgenda } from '../mi-recurso';
+import { BlockCancellations, cancelledBookingsText } from '../block-cancellations';
+import { agendaResourcesMy } from '../my-resource';
 import {
   BlockForm,
   type BloqueoEnEdicion,
@@ -85,6 +86,7 @@ export class Blocks {
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
+  private readonly cancellations = inject(BlockCancellations);
   private readonly toast = inject(ToastService);
   private readonly idioma = inject(LOCALE_ID);
 
@@ -173,8 +175,8 @@ export class Blocks {
           this.editando.set(null);
           this.toast.success(
             res.blockedSlots > 0
-              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'turno' : 'turnos'} que quedaron dentro.`
-              : 'Los turnos que ya estaban cerrados siguen cerrados.',
+              ? `Se cerraron ${res.blockedSlots} ${res.blockedSlots === 1 ? 'horario' : 'horarios'} que quedaron dentro.`
+              : 'Los horarios que ya estaban cerrados siguen cerrados.',
             'Bloqueo corregido',
           );
           this.cargar();
@@ -183,7 +185,7 @@ export class Blocks {
           this.guardando.set(false);
           this.toast.error(
             errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es tuya.'
+              ? 'Esa agenda no es suya.'
               : 'No se pudo guardar el cambio.',
             'No se guardó',
           );
@@ -191,30 +193,44 @@ export class Blocks {
       });
   }
 
+  /**
+   * Crea el bloqueo. Si el rato tiene citas, la API lo dice antes de cancelar
+   * nada y `BlockCancellations` muestra a quién se deja sin cita; con el sí se
+   * repite el pedido confirmado y a cada paciente le llega el aviso.
+   */
   private guardarAlta(pedido: BloqueoPedido): void {
     const resourceId = this.recursoId();
     if (resourceId === null) return;
 
     this.guardando.set(true);
-    this.scheduling
-      .createException(resourceId, {
-        exceptionType: pedido.exceptionType,
-        startAt: pedido.desde.toISOString(),
-        endAt: pedido.hasta.toISOString(),
-        ...(pedido.motivo.trim() === '' ? {} : { reason: pedido.motivo.trim() }),
-      })
+    this.cancellations
+      .withConfirmation((confirmed) =>
+        this.scheduling.createException(resourceId, {
+          exceptionType: pedido.exceptionType,
+          startAt: pedido.desde.toISOString(),
+          endAt: pedido.hasta.toISOString(),
+          ...(pedido.motivo.trim() === '' ? {} : { reason: pedido.motivo.trim() }),
+          ...(confirmed ? { cancelAffectedBookings: true } : {}),
+        }),
+      )
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.guardando.set(false);
+          // `null`: la persona vio las citas y eligió no cancelarlas. El
+          // formulario queda como estaba; no hubo error que mostrar.
+          if (res === null) return;
           this.creando.set(false);
-          this.toast.success('El rato queda cerrado.', 'Bloqueo creado');
+          this.toast.success(
+            `El rato queda cerrado.${cancelledBookingsText(res.cancelledBookings)}`,
+            'Bloqueo creado',
+          );
           this.cargar();
         },
         error: (error: unknown) => {
           this.guardando.set(false);
           this.toast.error(
             errorToViewState(error).status === 'forbidden'
-              ? 'Esa agenda no es tuya.'
+              ? 'Esa agenda no es suya.'
               : 'No se pudo crear el bloqueo.',
             'No se creó',
           );
@@ -250,14 +266,14 @@ export class Blocks {
     }
 
     this.estado.set(loading());
-    misRecursosDeAgenda(this.scheduling, tenantId, perfil).subscribe({
+    agendaResourcesMy(this.scheduling, tenantId, perfil).subscribe({
       next: (recursos) => {
         const recurso = recursos[0];
         if (recurso === undefined) {
           this.estado.set(
             empty(
               { label: 'Publicar mi agenda', route: '/schedule/new' },
-              'Todavía no publicaste tu agenda: no hay nada que bloquear.',
+              'Todavía no publicó su agenda: no hay nada que bloquear.',
             ),
           );
           return;
@@ -309,8 +325,8 @@ export class Blocks {
                 // no desde una dirección propia (ver el comentario de
                 // `creando`). `ViewStateNextAction` sin ruta se pinta como
                 // texto, así que la etiqueta queda en modo indicación.
-                { label: 'Usá «Bloquear días u horarios», arriba' },
-                'No tenés ningún bloqueo. Cuando cierres un rato, aparece acá.',
+                { label: 'Use «Bloquear días u horarios», arriba' },
+                'No tiene ningún bloqueo. Cuando cierre un rato, aparece acá.',
               )
             : ready(filas),
         );
@@ -323,8 +339,7 @@ export class Blocks {
   private aVisible(x: PublishedException): BloqueoVisible {
     const desde = new Date(x.startAt);
     const hasta = new Date(x.endAt);
-    const todoElDia =
-      desde.getHours() === 0 && desde.getMinutes() === 0 && hasta.getHours() === 0;
+    const todoElDia = desde.getHours() === 0 && desde.getMinutes() === 0 && hasta.getHours() === 0;
 
     const dia = (v: Date): string => formatDate(v, "d 'de' MMMM", this.idioma);
     const hora = (v: Date): string => formatDate(v, 'HH:mm', this.idioma);
@@ -339,9 +354,7 @@ export class Blocks {
       // El tipo se resuelve contra el catálogo: la lectura manda el concepto y
       // el formulario necesita la clave. Sin coincidencia cae en `ABSENCE`,
       // que es lo que la pantalla mandaba antes de que hubiera catálogo.
-      tipo:
-        this.motivos().find((m) => m.conceptId === x.exceptionTypeConceptId)?.type ??
-        'ABSENCE',
+      tipo: this.motivos().find((m) => m.conceptId === x.exceptionTypeConceptId)?.type ?? 'ABSENCE',
       descripcion: x.reason ?? null,
       cuando: todoElDia
         ? `${dia(desde)} — días completos`
@@ -369,7 +382,7 @@ export class Blocks {
     const seguro = await this.dialogs.confirm({
       title: 'Quitar este bloqueo',
       message:
-        'El rato deja de estar cerrado. Los turnos que se cerraron al crearlo no vuelven solos: ' +
+        'El rato deja de estar cerrado. Los horarios que se cerraron al crearlo no vuelven solos: ' +
         'hay que volver a publicar el horario para abrirlos.',
       details: [
         { label: 'Motivo', value: bloqueo.motivo },
@@ -392,7 +405,7 @@ export class Blocks {
         this.borrando.set(null);
         this.toast.error(
           errorToViewState(error).status === 'forbidden'
-            ? 'Esa agenda no es tuya.'
+            ? 'Esa agenda no es suya.'
             : 'No se pudo quitar el bloqueo.',
           'No se quitó',
         );

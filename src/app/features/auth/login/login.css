@@ -57,6 +57,15 @@
   transform-style: preserve-3d;
 }
 
+/* En claro el escenario es blanco y menta: la caída larga en negro que despega
+   la tarjeta del latido nocturno acá se lee como una mancha gris, y el canto
+   aqua y el filo blanco no tienen contra qué recortarse. Queda solo la
+   elevación del sistema, que en claro ya está teñida de petróleo: la tarjeta
+   flota con la misma sombra que el resto de las superficies elevadas. */
+:host-context(:root[data-tema='claro']) .login {
+  box-shadow: var(--shadow-lg);
+}
+
 /* Mientras se escribe, la tarjeta se queda quieta. Un campo de texto que se
    mueve cuando la mano va al teclado es exactamente el momento en que el
    efecto pasa de gracioso a molesto. */
@@ -172,28 +181,10 @@ form {
   background: linear-gradient(270deg, var(--border-strong), transparent 75%);
 }
 
-/* El color del enlace vuelve al token de marca.
-   `styles/alovida.css` trae un `a[app-link] { color: var(--petroleo) }` global
-   que, por especificidad, le gana al `:host` del átomo `app-link`. En claro da
-   el mismo petróleo y no se nota; en OSCURO `--petroleo` es #12719F —un azul
-   que no se aclaró lo suficiente— y sobre la tarjeta queda en 2,4:1, por debajo
-   de cualquier umbral. `--brand-primary` es aguamarina en oscuro y sube a ~7:1.
-
-   Esto arregla la pantalla de acceso, no el problema: el mismo enlace está
-   flojo en toda la aplicación en modo oscuro. Queda anotado para el barrido del
-   puerto ALOVIDA, que es donde corresponde tocarlo. */
-.login__footer a[app-link] {
-  color: var(--brand-primary);
-}
-
-.login__footer a[app-link]:hover {
-  color: var(--brand-primary-hover);
-}
-
-/* Los anexos NO entran acá: son filas, no enlaces de texto, y su color lo
-   pone su propia regla. Sin esta exclusión el `a[app-link]` global tampoco los
-   alcanza —no llevan el atributo—, pero conviene decirlo antes de que alguien
-   se lo agregue «por consistencia» y les pinte el título de aguamarina. */
+/* El enlace del pie no lleva regla propia: su color, subrayado y hover los da
+   el átomo `app-link`. Los anexos de más abajo son filas, no enlaces de texto,
+   y su color lo pone su propia regla: no les pongas `app-link` «por
+   consistencia» o les pintará el título del color de marca. */
 
 .login__pie {
   margin: 0;
@@ -221,27 +212,27 @@ form {
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--bg-surface-alt) 70%, transparent);
+  /* Tonal y sin borde: la tarjeta del acceso ya es la caja (nada de caja
+     dentro de caja). El tono sube al apuntar. */
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
   color: var(--text-primary);
   text-decoration: none;
   transition:
     background-color var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast) var(--ease-standard),
-    transform var(--dur-fast) var(--ease-standard);
+    transform var(--spring-rapido-dur) var(--spring-rapido);
 }
 
 .login__anexo:hover {
-  border-color: color-mix(in srgb, var(--brand-primary) 45%, var(--border-default));
-  background: color-mix(in srgb, var(--bg-surface-alt) 92%, transparent);
+  background: color-mix(in srgb, var(--brand-secondary) 12%, var(--bg-surface-alt));
 }
 
 /* El hundido al pulsar. Es el gesto que más «nativo» se siente y el más barato:
    el control acusa recibo antes de que la navegación ocurra, así que nadie
    vuelve a tocarlo pensando que no pasó nada. */
 .login__anexo:active {
-  transform: scale(0.985);
+  transform: scale(0.98);
 }
 
 .login__anexo-icono {
@@ -252,8 +243,10 @@ form {
   inline-size: 2.25rem;
   block-size: 2.25rem;
   border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--brand-primary) 12%, transparent);
-  color: var(--brand-primary);
+  /* Menta y no petróleo (27/10/2026, «está muy azul»): el petróleo queda para
+     «Entrar», la única acción primaria de la tarjeta. */
+  background: var(--st-secondary-bg);
+  color: var(--st-secondary-fg);
 }
 
 .login__anexo-icono svg {
@@ -367,4 +360,55 @@ form > *:nth-child(n + 4) {
   .login {
     transform: none;
   }
+}
+
+/* Cuenta de administración local (sólo desarrollo): un recuadro discreto bajo
+   el formulario. Va en tinta secundaria y con borde, no en un color de alerta:
+   es una ayuda, no un aviso. */
+.login__local {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-5);
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.login__local-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-weight: 500;
+}
+
+.login__local-datos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+.login__local-datos dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.login__local-datos dd {
+  margin: 0;
+}
+
+.login__local-datos code {
+  font-size: var(--fs-data);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.login__local-nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }

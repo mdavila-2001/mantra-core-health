@@ -32,9 +32,14 @@ async function entrar(pagina, correo) {
   await pagina.getByTestId('login-identifier').fill(correo);
   await pagina.getByTestId('login-password').fill('mockup');
   await pagina.getByTestId('login-submit').click();
-  await pagina.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  // El administrador con los dos accesos pasa por el selector de portal: tres destinos legítimos.
+  await pagina.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
   if (pagina.url().includes('/auth/organization')) {
     await pagina.getByTestId('tenant-opcion').first().click();
+    await pagina.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+  if (pagina.url().includes('/portal-selector')) {
+    await pagina.getByRole('link', { name: /Portal de administración/ }).click();
     await pagina.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
 }
@@ -95,7 +100,10 @@ async function escenario(pagina, clave, variante, nombre, capturar, comprobar) {
   await pagina.goto(url, { waitUntil: 'domcontentloaded', timeout: 180_000 });
   const selector = pagina.getByTestId('stock-escenario');
   await selector.waitFor({ timeout: 60_000 });
-  await selector.selectOption(`${clave}#${variante}`);
+  // `app-select`: se abre el modal y se elige la opción por su valor, no por
+  // `selectOption` (ya no es un `<select>` nativo).
+  await selector.getByRole('combobox').click();
+  await pagina.locator(`dialog.select-dialog li[role="option"]`).filter({ hasText: new RegExp(`#${variante}\\s*$`) }).click();
   await pagina.getByTestId('stock-montaje').waitFor({ timeout: 60_000 });
   await pagina.waitForTimeout(800);
   const montaje = await pagina.getByTestId('stock-montaje').textContent();

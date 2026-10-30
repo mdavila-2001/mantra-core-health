@@ -7,8 +7,9 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
+import { environment } from './environments/environment';
 import { allowedHostsFromEnv } from './server/allowed-hosts';
-import { artefactosInexistentesDan404 } from './server/build-assets';
+import { artefactosInexistentesDan404, cachePorHuella } from './server/build-assets';
 import {
   collectInlineScriptHashes,
   securityHeaders,
@@ -61,10 +62,8 @@ const telemetryHandle = startServerTelemetry(telemetry);
  * parsear HTML en cada respuesta para un valor que no cambia mientras el
  * proceso viva.
  *
- * `PUBLIC_API_BASE_URL` es lo único que cambia entre despliegues: vacío —lo
- * recomendado— deja `connect-src 'self'`; con un dominio distinto lo agrega.
- * Es la misma variable que compila el paquete, así que las dos mitades no se
- * pueden separar.
+ * Las raíces de API y AI son públicas y se configuran por despliegue. Sus
+ * orígenes se agregan a `connect-src` cuando apuntan a otro dominio.
  *
  * `sourceIndexScriptHashes` se suma al recorrido del artefacto, no lo
  * reemplaza (AG49-FT01-003): bajo `ng serve --ssr` no hay ningún
@@ -77,6 +76,7 @@ const telemetryHandle = startServerTelemetry(telemetry);
  */
 const cabecerasComunes = {
   apiBaseUrl: process.env['PUBLIC_API_BASE_URL'] ?? '',
+  aiBaseUrl: process.env['PUBLIC_AI_BASE_URL'] ?? '/ai',
   inlineScriptHashes: [
     ...new Set([
       ...collectInlineScriptHashes(browserDistFolder),
@@ -155,15 +155,21 @@ if (telemetryHandle !== null) {
  * resuelve esta ruta con el mismo archivo. Sin ella la petición caía en el
  * renderizador de Angular, que devolvía HTML con 200, y la imagen se rompía.
  */
-app.get('/public/media/:id', (_request, response) => {
-  response.redirect(302, '/mock-media.svg');
-});
+// Sólo con el simulador encendido (H1.S2.M2): contra la API real,
+// `/public/media/:id` es una ruta de verdad y este atajo la desviaría a un
+// SVG de maqueta.
+if (environment.mockBackend) {
+  app.get('/public/media/:id', (_request, response) => {
+    response.redirect(302, '/mock-media.svg');
+  });
+}
 
 app.use(
   express.static(browserDistFolder, {
     maxAge: '1y',
     index: false,
     redirect: false,
+    setHeaders: cachePorHuella,
   }),
 );
 

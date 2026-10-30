@@ -44,10 +44,10 @@ const TEMAS = ['light', 'dark'];
  * y saber si lo que se ve en una nueva ya pasaba antes.
  */
 const RUTAS = process.env.RUTAS_JSON ? JSON.parse(process.env.RUTAS_JSON) : [
-  { id: 'data-catalog', ruta: '/administration/data-catalog', detalle: 'a[href^="/administration/data-catalog/"]' },
-  { id: 'web-analytics', ruta: '/administration/web-analytics', detalle: null },
-  { id: 'qa-lab', ruta: '/administration/qa-lab', detalle: 'a[href^="/administration/qa-lab/plans/"]' },
-  { id: 'operations', ruta: '/administration/operations', detalle: null },
+  { id: 'data-catalog', ruta: '/superadmin/data-catalog', detalle: 'a[href^="/superadmin/data-catalog/"]' },
+  { id: 'web-analytics', ruta: '/superadmin/web-analytics', detalle: null },
+  { id: 'qa-lab', ruta: '/superadmin/qa-lab', detalle: 'a[href^="/superadmin/qa-lab/plans/"]' },
+  { id: 'operations', ruta: '/superadmin/operations', detalle: null },
 ];
 
 /** Un barrido por ancho escribe su propio informe para no pisar al anterior. */
@@ -74,9 +74,14 @@ async function entrar(page) {
   await page.getByTestId('login-identifier').fill(CREDENCIAL.identificador);
   await page.getByTestId('login-password').fill(CREDENCIAL.clave);
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
+  // El administrador con los dos accesos pasa por el selector de portal: tres destinos legítimos.
+  await page.waitForURL(/\/(dashboard|auth\/organization|portal-selector)/, { timeout: 60_000 });
   if (page.url().includes('/auth/organization')) {
     await page.getByTestId('tenant-opcion').first().click();
+    await page.waitForURL(/\/(dashboard|portal-selector)/, { timeout: 60_000 });
+  }
+  if (page.url().includes('/portal-selector')) {
+    await page.getByRole('link', { name: /Portal de administración/ }).click();
     await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
   }
 }

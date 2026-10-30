@@ -54,7 +54,8 @@ describe('toInsurerCard', () => {
     const { card } = toInsurerCard(aseguradora());
 
     expect(card.logo).toBeNull();
-    expect(card.portada).toBeNull();
+    // La portada es una foto ilustrativa de la carpeta del directorio (no del establecimiento).
+    expect(card.portada).toMatch(/^\/alovida\/directorio\/[a-z]+-\d{2}\.jpg$/);
     expect(card.iniciales).toBe('NS');
   });
 

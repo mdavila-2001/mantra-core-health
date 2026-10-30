@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Orientación diagnóstica del edema según su distribución</title>
+  <desc id="d">Diagrama de decisión. El edema se clasifica según su distribución: unilateral en un miembro, bilateral en las piernas o generalizado con afectación de cara y cavidades. Para cada patrón se indican las causas más probables y los estudios que suelen pedirse.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --yel:#c99a00; --yel-l:#fbefc2; --blue:#2f6fb5; --blue-l:#dbe9f7; --grn:#1f8a5b; --grn-l:#d8f0e4; --red:#c0392b; --red-l:#f8dcd8; --brn:#8a5a2b; --brn-l:#efdcc6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --yel:#e0b93a; --yel-l:#4a4224; --blue:#6aa6e6; --blue-l:#22384f; --grn:#4cc38a; --grn-l:#1f3d31; --red:#ef7467; --red-l:#4a2723; --brn:#c99a66; --brn-l:#3d3125; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 13px; text-anchor: middle; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 12.5px; }
+    .arrow { stroke: var(--muted); stroke-width: 2.2; fill: none; marker-end: url(#ah); }
+  </style>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="28" class="title">Edema: la distribución orienta la causa</text>
+
+  <rect x="230" y="42" width="340" height="50" rx="10" fill="var(--yel-l)" stroke="var(--yel)" stroke-width="2"/>
+  <text x="400" y="64" class="h">Hinchazón por acumulación de líquido</text>
+  <text x="400" y="82" class="s muted">inicio, duración, fóvea, fármacos, antecedentes</text>
+  <path class="arrow" d="M330 94 L135 126"/>
+  <path class="arrow" d="M400 94 V126"/>
+  <path class="arrow" d="M470 94 L665 126"/>
+
+  <rect x="20" y="128" width="230" height="56" rx="10" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <text x="135" y="150" class="h">Unilateral</text>
+  <text x="135" y="168" class="s">un miembro, de inicio reciente o no</text>
+  <rect x="285" y="128" width="230" height="56" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="400" y="150" class="h">Bilateral en piernas</text>
+  <text x="400" y="168" class="s">simétrico, predomina al final del día</text>
+  <rect x="550" y="128" width="230" height="56" rx="10" fill="var(--grn-l)" stroke="var(--grn)" stroke-width="2"/>
+  <text x="665" y="150" class="h">Cara o generalizado</text>
+  <text x="665" y="168" class="s">párpados, ascitis, derrames</text>
+
+  <path class="arrow" d="M135 186 V208"/>
+  <path class="arrow" d="M400 186 V208"/>
+  <path class="arrow" d="M665 186 V208"/>
+
+  <rect x="20" y="210" width="230" height="110" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="135" y="232" class="h">Causas a considerar</text>
+  <text x="135" y="252" class="s">trombosis venosa profunda,</text>
+  <text x="135" y="268" class="s">celulitis, linfedema, lesión,</text>
+  <text x="135" y="284" class="s">insuficiencia venosa asimétrica,</text>
+  <text x="135" y="300" class="s">compresión por una masa</text>
+  <rect x="285" y="210" width="230" height="110" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="400" y="232" class="h">Causas a considerar</text>
+  <text x="400" y="252" class="s">insuficiencia cardíaca o venosa,</text>
+  <text x="400" y="268" class="s">fármacos (por ejemplo algunos</text>
+  <text x="400" y="284" class="s">antagonistas del calcio), embarazo,</text>
+  <text x="400" y="300" class="s">hipotiroidismo, hepatopatía</text>
+  <rect x="550" y="210" width="230" height="110" rx="10" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="665" y="232" class="h">Causas a considerar</text>
+  <text x="665" y="252" class="s">síndrome nefrótico, insuficiencia</text>
+  <text x="665" y="268" class="s">renal o cardíaca, cirrosis,</text>
+  <text x="665" y="284" class="s">desnutrición proteica, alergia</text>
+  <text x="665" y="300" class="s">o angioedema (cara y labios)</text>
+
+  <path class="arrow" d="M135 322 V344"/>
+  <path class="arrow" d="M400 322 V344"/>
+  <path class="arrow" d="M665 322 V344"/>
+
+  <rect x="20" y="346" width="230" height="76" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="135" y="368" class="h">Estudios habituales</text>
+  <text x="135" y="388" class="s">ecografía Doppler venosa, signos</text>
+  <text x="135" y="404" class="s">de infección, imagen linfática</text>
+  <rect x="285" y="346" width="230" height="76" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="400" y="368" class="h">Estudios habituales</text>
+  <text x="400" y="388" class="s">fármacos, ecocardiograma</text>
+  <text x="400" y="404" class="s">y análisis de riñón, hígado, tiroides</text>
+  <rect x="550" y="346" width="230" height="76" rx="10" fill="var(--blue-l)" stroke="var(--blue)" stroke-width="2"/>
+  <text x="665" y="368" class="h">Estudios habituales</text>
+  <text x="665" y="388" class="s">orina (proteínas), albúmina, función</text>
+  <text x="665" y="404" class="s">renal y hepática, estudio cardíaco</text>
+
+  <text x="400" y="448" class="s muted">Edema súbito de labios o lengua, o con falta de aire o dolor torácico, es una urgencia.</text>
+  <text x="400" y="468" class="s muted">Esquema orientativo; cada caso se individualiza. Ilustración original de AloVida.</text>
+</svg>

@@ -51,10 +51,14 @@ export function ready<T>(data: T): ReadyViewState<T> {
 export function validation(
   issues: readonly ViewStateIssue[],
   retryAfterSeconds?: number,
+  requestId?: string,
 ): ValidationViewState {
-  return retryAfterSeconds === undefined
-    ? { status: 'validation', issues }
-    : { status: 'validation', issues, retryAfterSeconds };
+  return {
+    status: 'validation',
+    issues,
+    ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
+    ...(requestId === undefined ? {} : { requestId }),
+  };
 }
 
 /**
@@ -64,12 +68,14 @@ export function validation(
 export function forbidden(options?: {
   message?: string;
   nextAction?: ViewStateNextAction;
+  requestId?: string;
 }): ForbiddenViewState {
   const state: ForbiddenViewState = { status: 'forbidden' };
   return {
     ...state,
     ...(options?.message === undefined ? {} : { message: options.message }),
     ...(options?.nextAction === undefined ? {} : { nextAction: options.nextAction }),
+    ...(options?.requestId === undefined ? {} : { requestId: options.requestId }),
   };
 }
 
@@ -108,6 +114,16 @@ export function unexpectedError(requestId: string, message?: string): Unexpected
   return message === undefined
     ? { status: 'error', requestId }
     : { status: 'error', requestId, message };
+}
+
+/**
+ * El mensaje que la API ancló a `field` en un estado S4, o `''` si no hay.
+ *
+ * `''` y no `null`: `app-form-field` espera siempre un texto en `errorMessage`.
+ */
+export function fieldIssueOf<T>(state: ViewState<T>, field: string): string {
+  if (state.status !== 'validation') return '';
+  return state.issues.find((issue) => issue.field === field)?.message ?? '';
 }
 
 // ---------------------------------------------------------------------------

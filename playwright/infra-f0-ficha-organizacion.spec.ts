@@ -135,7 +135,7 @@ test('asignar sede desde la plantilla: POST y relectura confirman (UI → reques
     // `app-select` es un <select> nativo: se elige la primera sede real.
     const nativo = select.locator('select');
     const etiquetas = await nativo.locator('option:not([disabled])').allTextContents();
-    const sede = etiquetas.map((t) => t.trim()).find((t) => t !== '' && !t.startsWith('Elegí'))!;
+    const sede = etiquetas.map((t) => t.trim()).find((t) => t !== '' && !t.startsWith('Elija'))!;
     await nativo.selectOption({ label: sede });
     // La maqueta responde dentro de Angular (interceptor): no hay request de
     // red que esperar. Lo que se mira es la relectura que pinta el modal.
@@ -155,7 +155,7 @@ test('asignar sede desde la plantilla: POST y relectura confirman (UI → reques
 test('forbidden (S5)', async () => {
   await fallar('/tenants/', 'forbidden');
   await page.goto(`${BASE}${fichaOlivos}`, { waitUntil: 'domcontentloaded' });
-  await expect(page.getByText('No tenés acceso a esta sección')).toBeVisible();
+  await expect(page.getByText('No tiene acceso a esta sección')).toBeVisible();
   await expect(page.locator('app-tabs')).toHaveCount(0);
   await capturar('forbidden');
   await fallar(null);
@@ -165,7 +165,7 @@ test('not-found (S6): sin datos del recurso y con salida al listado', async () =
   await page.goto(`${BASE}/administration/organizations/${INEXISTENTE}`, {
     waitUntil: 'domcontentloaded',
   });
-  await expect(page.getByText('No encontramos lo que buscás')).toBeVisible();
+  await expect(page.getByText('No encontramos lo que busca')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Volver al listado' }).first()).toBeVisible();
   await expect(page.locator('app-tabs')).toHaveCount(0);
   await capturar('not-found');

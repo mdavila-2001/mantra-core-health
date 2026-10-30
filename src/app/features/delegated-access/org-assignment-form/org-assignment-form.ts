@@ -25,7 +25,7 @@ import type { SelectOption } from '../../../shared/components/atoms/select/selec
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT'];
@@ -142,11 +142,11 @@ export class OrgAssignmentForm {
   protected readonly errorDeNodos = computed(() => {
     const practicas = this.practicas();
     if (practicas.status !== 'ready' && practicas.status !== 'loading') {
-      return `No pudimos traer las prácticas. ${errorMessageOf(practicas, 'No tenés permiso para ver las prácticas de esta organización.') ?? ''}`.trim();
+      return `No pudimos traer las prácticas. ${errorMessageOf(practicas, 'No tiene permiso para ver las prácticas de esta organización.') ?? ''}`.trim();
     }
     const arbol = this.arbol();
     if (arbol !== null && arbol.status !== 'ready' && arbol.status !== 'loading') {
-      return `No pudimos traer las sedes de esa práctica. ${errorMessageOf(arbol, 'No tenés permiso para ver cómo está armada esa práctica.') ?? ''}`.trim();
+      return `No pudimos traer las sedes de esa práctica. ${errorMessageOf(arbol, 'No tiene permiso para ver cómo está armada esa práctica.') ?? ''}`.trim();
     }
     return null;
   });
@@ -178,7 +178,7 @@ export class OrgAssignmentForm {
     },
   );
 
-  protected readonly paginas = computed(() => paginarCampos([
+  protected readonly paginas = computed(() => paginateFields([
     {
       titulo: 'Sobre qué membresía',
       hint: 'La asignación cuelga de la membresía de la persona en la organización.',
@@ -273,7 +273,7 @@ export class OrgAssignmentForm {
   protected readonly created = signal<CreatedResource | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para asignar usuarios de organización.'),
+    errorMessageOf(this.state(), 'No tiene permiso para asignar usuarios de organización.'),
   );
 
   constructor() {

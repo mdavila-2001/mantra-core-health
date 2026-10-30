@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Los cuatro mecanismos del edema</title>
+  <desc id="d">Cuatro tarjetas con un capilar esquemático cada una. Aumento de la presión hidrostática, como en la insuficiencia cardíaca o venosa; descenso de la presión oncótica por falta de albúmina, como en el síndrome nefrótico o la cirrosis; aumento de la permeabilidad capilar, como en la inflamación y las quemaduras; y obstrucción del drenaje linfático, como en el linfedema.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --yel:#c99a00; --yel-l:#fbefc2; --blue:#2f6fb5; --blue-l:#dbe9f7; --grn:#1f8a5b; --grn-l:#d8f0e4; --red:#c0392b; --red-l:#f8dcd8; --brn:#8a5a2b; --brn-l:#efdcc6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --yel:#e0b93a; --yel-l:#4a4224; --blue:#6aa6e6; --blue-l:#22384f; --grn:#4cc38a; --grn-l:#1f3d31; --red:#ef7467; --red-l:#4a2723; --brn:#c99a66; --brn-l:#3d3125; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 13px; text-anchor: middle; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 13px; }
+    .out { stroke: var(--blue); stroke-width: 3; fill: none; stroke-linecap: round; marker-end: url(#hb); }
+  </style>
+  <defs>
+    <marker id="hb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--blue)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="28" class="title">Cuatro formas de acumular líquido</text>
+
+  <!-- tarjeta 1 -->
+  <rect x="20" y="46" width="372" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="206" y="72" class="h">1. Más presión hidrostática</text>
+  <rect x="116" y="88" width="180" height="26" rx="13" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <text x="206" y="106" class="s">presión alta</text>
+  <path class="out" d="M150 120 V150"/><path class="out" d="M206 120 V150"/><path class="out" d="M262 120 V150"/>
+  <text x="206" y="178" class="s">Insuficiencia cardíaca, insuficiencia venosa,</text>
+  <text x="206" y="196" class="s">trombosis venosa, retención renal de sal</text>
+  <text x="206" y="214" class="s">y agua, embarazo</text>
+
+  <!-- tarjeta 2 -->
+  <rect x="408" y="46" width="372" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="594" y="72" class="h">2. Menos presión oncótica</text>
+  <rect x="504" y="88" width="180" height="26" rx="13" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <circle cx="560" cy="101" r="3.5" fill="var(--yel)"/><circle cx="628" cy="101" r="3.5" fill="var(--yel)"/>
+  <path class="out" d="M538 120 V150"/><path class="out" d="M594 120 V150"/><path class="out" d="M650 120 V150"/>
+  <text x="594" y="178" class="s">Síndrome nefrótico, cirrosis, desnutrición</text>
+  <text x="594" y="196" class="s">proteica, enteropatías que pierden proteínas</text>
+  <text x="594" y="214" class="s muted">(poca albúmina: el agua no se retiene)</text>
+
+  <!-- tarjeta 3 -->
+  <rect x="20" y="258" width="372" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="206" y="284" class="h">3. Más permeabilidad capilar</text>
+  <rect x="116" y="300" width="180" height="26" rx="13" fill="var(--red-l)" stroke="var(--red)" stroke-width="2"/>
+  <g stroke="var(--panel)" stroke-width="4"><path d="M140 326 h14"/><path d="M199 326 h14"/><path d="M258 326 h14"/></g>
+  <circle cx="147" cy="318" r="3.5" fill="var(--yel)"/><circle cx="206" cy="332" r="3.5" fill="var(--yel)"/><circle cx="265" cy="334" r="3.5" fill="var(--yel)"/>
+  <path class="out" d="M147 336 V362"/><path class="out" d="M206 340 V362"/><path class="out" d="M265 340 V362"/>
+  <text x="206" y="390" class="s">Inflamación, infección, alergia y angioedema,</text>
+  <text x="206" y="408" class="s">quemaduras, sepsis, algunos fármacos</text>
+  <text x="206" y="426" class="s muted">(salen líquido y proteínas)</text>
+
+  <!-- tarjeta 4 -->
+  <rect x="408" y="258" width="372" height="196" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <text x="594" y="284" class="h">4. Drenaje linfático obstruido</text>
+  <rect x="500" y="300" width="188" height="26" rx="13" fill="var(--grn-l)" stroke="var(--grn)" stroke-width="2"/>
+  <text x="556" y="318" class="s">vaso linfático</text>
+  <circle cx="520" cy="344" r="5" fill="var(--blue)"/><circle cx="540" cy="356" r="5" fill="var(--blue)"/><circle cx="562" cy="344" r="5" fill="var(--blue)"/><circle cx="584" cy="356" r="5" fill="var(--blue)"/><circle cx="606" cy="344" r="5" fill="var(--blue)"/>
+  <path d="M644 305 l24 16 M644 321 l24 -16" stroke="var(--red)" stroke-width="4" stroke-linecap="round"/>
+  <text x="656" y="346" class="s" style="fill:var(--red)">bloqueo</text>
+  <text x="594" y="390" class="s">Linfedema primario, cirugía o radioterapia,</text>
+  <text x="594" y="408" class="s">filariasis, tumores que comprimen</text>
+  <text x="594" y="426" class="s muted">(el líquido y las proteínas se acumulan)</text>
+  <text x="400" y="472" class="s muted">Esquema orientativo; varios mecanismos suelen coexistir. Ilustración original de AloVida.</text>
+</svg>

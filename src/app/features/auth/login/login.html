@@ -1,7 +1,7 @@
 <app-auth-split
   scene="stage"
-  claim="Tu salud, conectada"
-  tagline="Entrá y encontrá tu historia clínica, tus turnos y tus estudios en un solo lugar."
+  claim="Su salud, conectada"
+  tagline="Entre y encuentre su historia clínica, sus citas y sus estudios en un solo lugar."
 >
   <!-- `appPointerScene` acá además del de la escena: la tarjeta necesita la
        posición del puntero medida contra SU rectángulo, no contra la pantalla,
@@ -14,7 +14,7 @@
          la persona vino a hacer acá es entrar. El título es el ancla. -->
     <div class="login__header">
       <h1 class="login__title">Iniciar sesión</h1>
-      <p class="login__subtitle">Ingresá con tu correo o tu documento de identidad.</p>
+      <p class="login__subtitle">Ingrese con su correo o su documento de identidad.</p>
     </div>
 
     @if (errorMessage(); as mensaje) {
@@ -27,7 +27,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.identifier.touched && form.controls.identifier.invalid
-            ? 'Ingresá tu correo o tu documento.'
+            ? 'Ingrese su correo o su documento.'
             : ''
         "
       >
@@ -52,7 +52,7 @@
         [required]="true"
         [errorMessage]="
           form.controls.password.touched && form.controls.password.invalid
-            ? 'Ingresá tu contraseña.'
+            ? 'Ingrese su contraseña.'
             : ''
         "
       >
@@ -60,7 +60,7 @@
           formControlName="password"
           type="password"
           autocomplete="current-password"
-          placeholder="Tu contraseña"
+          placeholder="Su contraseña"
           testId="login-password"
         >
           <!-- Candado y no llave: la llave es el acceso que se presta. -->
@@ -68,12 +68,24 @@
         </app-input>
       </app-form-field>
 
-      <!-- El código de segundo factor **no se pregunta acá**. Estaba siempre a
-           la vista y rotulado «opcional», que es pedirle a todo el mundo un
-           dato que casi nadie tiene: tres de cada tres personas leían un campo
-           que no les tocaba. Vuelve cuando el backend diga que hace falta —el
-           control sigue en el formulario, ver `Login.form`—, y entonces se
-           muestra pedido, no ofrecido. -->
+      <!-- El código de segundo factor se pide sólo cuando la API lo exige
+           (`MFA_REQUIRED`): tres de cada tres personas no tienen uno, y un campo
+           que no te toca es el que te hace dudar de los otros dos. -->
+      @if (mfaRequired()) {
+        <app-form-field
+          label="Código de verificación"
+          [required]="true"
+          hint="Los seis dígitos que muestra su aplicación de autenticación."
+        >
+          <app-input
+            formControlName="mfaCode"
+            type="text"
+            autocomplete="one-time-code"
+            placeholder="123456"
+            testId="login-mfa-code"
+          />
+        </app-form-field>
+      }
 
       <button
         app-button
@@ -88,9 +100,39 @@
       </button>
     </form>
 
+    <!-- Sólo en desarrollo y local (`ngDevMode`): la cuenta que siembra la API
+         local. Las credenciales se ven escritas, no solo se rellenan: quien
+         las necesita en otro lado (un cliente HTTP, otro navegador) las copia. -->
+    @if (localHint(); as cuenta) {
+      <aside class="login__local" aria-labelledby="login-local-titulo" data-testid="login-local-hint">
+        <p class="login__local-titulo" id="login-local-titulo">Cuenta de administración local</p>
+        <dl class="login__local-datos">
+          <div>
+            <dt>Correo</dt>
+            <dd><code data-testid="login-local-correo">{{ cuenta.identifier }}</code></dd>
+          </div>
+          <div>
+            <dt>Contraseña</dt>
+            <dd><code data-testid="login-local-clave">{{ cuenta.password }}</code></dd>
+          </div>
+        </dl>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="login-local-usar"
+          (clicked)="usarCuentaLocal(cuenta)"
+        >
+          Usar estas credenciales
+        </button>
+        <p class="login__local-nota">Existe sólo en el entorno local y de desarrollo.</p>
+      </aside>
+    }
+
     <div class="login__footer">
       <p class="login__pie">
-        <a app-link routerLink="/auth/forgot-password" data-testid="login-recuperar">¿Olvidaste tu contraseña?</a>
+        <a app-link routerLink="/auth/forgot-password" data-testid="login-recuperar">¿Olvidó su contraseña?</a>
       </p>
 
       <!-- Los dos accesos de alta van con su glifo: son dos caminos distintos y
@@ -98,7 +140,7 @@
       <a class="login__anexo" routerLink="/auth/register" data-testid="login-registro">
         <app-nav-icon name="patients" class="login__anexo-icono" />
         <span class="login__anexo-texto">
-          <span class="login__anexo-titulo">Creá tu cuenta</span>
+          <span class="login__anexo-titulo">Cree su cuenta</span>
           <span class="login__anexo-detalle">Paciente o profesional</span>
         </span>
         <svg
@@ -118,12 +160,12 @@
 
       <a
         class="login__anexo"
-        routerLink="/auth/register/organization"
+        routerLink="/auth/register/organization-type"
         data-testid="login-registro-organizacion"
       >
         <app-nav-icon name="umbrella" class="login__anexo-icono" />
         <span class="login__anexo-texto">
-          <span class="login__anexo-titulo">Registrá tu organización</span>
+          <span class="login__anexo-titulo">Registre su organización</span>
           <span class="login__anexo-detalle">Aseguradoras</span>
         </span>
         <svg

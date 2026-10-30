@@ -1,6 +1,6 @@
 <app-page-header
   title="Organizaciones"
-  subtitle="Dá de alta clínicas, farmacias y aseguradoras, y seguí su verificación."
+  subtitle="Dé de alta clínicas, farmacias y aseguradoras, y siga su verificación."
   [breadcrumbs]="breadcrumbs()"
 >
   <!-- Ancla con aspecto de acción: la acción principal navega, así que
@@ -54,6 +54,12 @@
   @if (organizacion.tradeName) {
     <span class="organizaciones__comercial">{{ organizacion.tradeName }}</span>
   }
+</ng-template>
+
+<!-- El código sale de la razón social: con 300 caracteres sin espacios, la
+     celda tiene que poder partirlo (ver `.organizaciones__codigo`). -->
+<ng-template #celdaCodigo let-organizacion>
+  <span class="organizaciones__codigo">{{ organizacion.code }}</span>
 </ng-template>
 
 <ng-template #celdaTipo let-organizacion>

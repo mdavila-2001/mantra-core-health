@@ -1,0 +1,49 @@
+.sandbox-verification {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.sandbox-verification-name {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.sandbox-verification-name--sm { font-size: var(--fs-body); }
+.sandbox-verification-name--md { font-size: var(--fs-body-lg); }
+.sandbox-verification-name--lg { font-size: var(--fs-h3); }
+
+/* Mismas reglas de la hoja de componentes: este bloque es un componente aparte
+   (como las galerías vecinas) y el CSS de su padre no lo alcanza. */
+:host {
+    display: block;
+}
+
+h3 {
+    margin-top: var(--sp-6);
+    color: var(--text-secondary);
+}
+
+h4 {
+    margin: var(--sp-4) 0 0;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.sandbox-grid {
+    display: flex;
+    gap: var(--sp-4);
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: var(--sp-4);
+}
+
+.sandbox-note {
+    margin: var(--sp-2) 0 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-caption);
+    color: var(--text-muted);
+}

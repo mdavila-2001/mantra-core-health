@@ -4,6 +4,14 @@ import { TestBed } from '@angular/core/testing';
 
 import { IdentityClient } from './identity.client';
 
+const EVIDENCIAS = {
+  documentFrontFileId: 'f-1',
+  documentBackFileId: 'f-2',
+  livenessCenterFileId: 'f-3',
+  livenessTurnLeftFileId: 'f-4',
+  livenessTurnRightFileId: 'f-5',
+};
+
 describe('IdentityClient', () => {
   let client: IdentityClient;
   let http: HttpTestingController;
@@ -22,19 +30,19 @@ describe('IdentityClient', () => {
   });
 
   it('la verificacion del paciente no manda a quien se verifica', () => {
-    client.requestPatientIdentityVerification({ evidenceFileId: 'file-1' }).subscribe();
+    client.requestPatientIdentityVerification(EVIDENCIAS).subscribe();
 
     const req = http.expectOne('/identity/me/identity-verification');
     expect(req.request.method).toBe('POST');
     // El backend lo resuelve del usuario autenticado: mandarlo seria una via
     // para pedir la verificacion de otra persona.
-    expect(req.request.body).toEqual({ evidenceFileId: 'file-1' });
+    expect(req.request.body).toEqual(EVIDENCIAS);
 
     req.flush({ caseId: 'c', checkId: 'ch', status: 'OPEN' });
   });
 
   it('la identidad del profesional va por su propia ruta', () => {
-    client.requestPractitionerIdentityVerification({ evidenceFileId: 'file-2' }).subscribe();
+    client.requestPractitionerIdentityVerification(EVIDENCIAS).subscribe();
 
     http
       .expectOne('/identity/me/practitioner/identity-verification')
@@ -44,31 +52,31 @@ describe('IdentityClient', () => {
   it('la matricula admite acotar la jurisdiccion y la omite si no vino', () => {
     client
       .requestPractitionerLicenseVerification({
-        evidenceFileId: 'file-3',
+        ...EVIDENCIAS,
         jurisdictionAuthorizationId: 'ja-1',
       })
       .subscribe();
 
     const conJurisdiccion = http.expectOne('/identity/me/practitioner/license-verification');
     expect(conJurisdiccion.request.body).toEqual({
-      evidenceFileId: 'file-3',
+      ...EVIDENCIAS,
       jurisdictionAuthorizationId: 'ja-1',
     });
     conJurisdiccion.flush({ caseId: 'c', checkId: 'ch', status: 'OPEN' });
 
-    client.requestPractitionerLicenseVerification({ evidenceFileId: 'file-4' }).subscribe();
+    client.requestPractitionerLicenseVerification(EVIDENCIAS).subscribe();
 
     const sinJurisdiccion = http.expectOne('/identity/me/practitioner/license-verification');
-    expect(sinJurisdiccion.request.body).toEqual({ evidenceFileId: 'file-4' });
+    expect(sinJurisdiccion.request.body).toEqual(EVIDENCIAS);
     sinJurisdiccion.flush({ caseId: 'c', checkId: 'ch', status: 'OPEN' });
   });
 
   it('la organizacion viaja en la ruta y el cuerpo solo lleva la evidencia', () => {
-    client.requestTenantVerification('t-1', { evidenceFileId: 'file-5' }).subscribe();
+    client.requestTenantVerification('t-1', EVIDENCIAS).subscribe();
 
     const req = http.expectOne('/identity/me/tenants/t-1/verification');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ evidenceFileId: 'file-5' });
+    expect(req.request.body).toEqual(EVIDENCIAS);
 
     req.flush({ caseId: 'c', checkId: 'ch', status: 'OPEN' });
   });

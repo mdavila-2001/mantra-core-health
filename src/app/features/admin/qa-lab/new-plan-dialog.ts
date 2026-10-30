@@ -134,11 +134,11 @@ export class NewPlanDialog {
   private clave = claveIdempotente('plan');
 
   protected readonly opcionesSuite = computed(() => [
-    { value: null, label: 'Elegí una suite' },
+    { value: null, label: 'Elija una suite' },
     ...this.suites().map((s) => ({ value: s.id as string | null, label: `${s.code} · ${s.name} (${s.activeCases} casos)` })),
   ]);
   protected readonly opcionesEntorno = computed(() => [
-    { value: null, label: 'Elegí un entorno' },
+    { value: null, label: 'Elija un entorno' },
     ...this.environments().map((e) => ({ value: e.id as string | null, label: `${e.code} · ${e.name}` })),
   ]);
 

@@ -88,12 +88,22 @@
   <h4>Contacto de la aseguradora</h4>
   <div class="coverage__contacts">
     @if (whatsapp(); as url) {
-      <a app-link [href]="url" [external]="true">WhatsApp</a>
+      <a
+        app-link
+        [href]="url"
+        [external]="true"
+        data-testid="btn-whatsapp-coverage"
+        (keydown.space)="onWhatsappKeydownSpace($event)"
+      >
+        WhatsApp
+      </a>
     } @else {
       <span>WhatsApp: No informado</span>
     }
     @if (telephone(); as phone) {
-      <a app-link [href]="phone">Call center: {{ coverage().carrierCallCenterPhone }}</a>
+      <a app-link [href]="phone" data-testid="btn-call-center-coverage">
+        Call center: {{ coverage().carrierCallCenterPhone }}
+      </a>
     } @else {
       <span>Call center: No informado</span>
     }

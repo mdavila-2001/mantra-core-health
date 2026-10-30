@@ -18,7 +18,6 @@ import type {
   NewMembership,
   TenantRoleCode,
 } from '../../../../core/data-access/directory/directory.types';
-import { IamClient } from '../../../../core/data-access/iam/iam.client';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -36,11 +35,12 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { FormSection } from '../../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
+import { crearBuscadorDePersonas } from '../people-search';
 import { errorMessageOf } from '../../../../shared/forms/form-support';
 
 /** S6 del envío: la organización de la ruta no está (o no se puede ver). */
 const ORGANIZACION_NO_ENCONTRADA =
-  'No encontramos esta organización: puede que ya no exista. Volvé al listado de organizaciones.';
+  'No encontramos esta organización: puede que ya no exista. Vuelva al listado de organizaciones.';
 
 /** Cuántos candidatos trae cada búsqueda del combobox de persona. */
 const CANDIDATOS_POR_BUSQUEDA = 10;
@@ -102,7 +102,6 @@ const ETIQUETAS_DE_ALCANCE: Readonly<Record<AccessScopeCode, string>> = {
 })
 export class MembershipNew {
   private readonly directory = inject(DirectoryClient);
-  private readonly iam = inject(IamClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
@@ -127,8 +126,8 @@ export class MembershipNew {
   /* ---- la persona: se elige, nunca se tipea ------------------------------ */
 
   protected readonly persona = signal<ReferenceOption | null>(null);
-  protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
-  protected readonly buscando = signal(false);
+  /** La búsqueda de persona: errores distintos del vacío y la última tecla manda. */
+  protected readonly personas = crearBuscadorDePersonas(CANDIDATOS_POR_BUSQUEDA);
 
   /** Marca que el envío ya se intentó, para mostrar los faltantes no tocados. */
   private readonly enviado = signal(false);
@@ -172,7 +171,7 @@ export class MembershipNew {
   protected readonly mensajeDeSedes = computed(() =>
     errorMessageOf(
       this.lecturaDeSedes(),
-      'No tenés permiso para ver las sedes de esta organización.',
+      'No tiene permiso para ver las sedes de esta organización.',
       ORGANIZACION_NO_ENCONTRADA,
     ),
   );
@@ -187,9 +186,6 @@ export class MembershipNew {
   protected readonly bloqueadoPorSedes = computed(
     () => this.sinSedes() || this.sedesFallaron() || (this.esPorSede() && this.lecturaDeSedes().status === 'loading'),
   );
-
-  /** La búsqueda de personas falló: se dice, en vez de «ninguna cuenta coincide». */
-  protected readonly errorDeBusqueda = signal<string | null>(null);
 
   protected readonly sedeFaltante = computed(
     () => this.enviado() && this.esPorSede() && this.sede() === null,
@@ -206,7 +202,7 @@ export class MembershipNew {
   protected readonly errorMessage = computed<string | null>(() =>
     errorMessageOf(
       this.state(),
-      'Necesitás administrar esta organización para sumar a alguien.',
+      'Necesita administrar esta organización para sumar a alguien.',
       ORGANIZACION_NO_ENCONTRADA,
     ),
   );
@@ -248,45 +244,6 @@ export class MembershipNew {
 
   protected reintentarSedes(): void {
     this.cargarSedes(this.tenantId());
-  }
-
-  /**
-   * Busca personas y las traduce a opciones. El `hint` distingue una cuenta sin
-   * verificar, igual que en el alta de organización.
-   */
-  protected buscarPersona(texto: string): void {
-    if (texto === '') {
-      this.candidatos.set([]);
-      return;
-    }
-
-    this.buscando.set(true);
-    this.errorDeBusqueda.set(null);
-    this.iam.searchUsers({ query: texto, limit: CANDIDATOS_POR_BUSQUEDA }).subscribe({
-      next: (pagina) => {
-        this.candidatos.set(
-          pagina.items.map((usuario) => ({
-            value: usuario.id,
-            label: usuario.displayName,
-            ...(usuario.emailVerified ? {} : { hint: 'Correo sin verificar' }),
-          })),
-        );
-        this.buscando.set(false);
-      },
-      // Un 403 acá es real: `GET /iam/users` exige `SECURITY_ADMIN`, y el
-      // dueño de una organización no lo tiene. Decir «ninguna cuenta coincide»
-      // sería mentirle sobre por qué no aparece nadie.
-      error: (error: unknown) => {
-        this.candidatos.set([]);
-        this.buscando.set(false);
-        this.errorDeBusqueda.set(
-          errorMessageOf(
-            errorToViewState<null>(error),
-            'Tu cuenta no puede buscar personas en la plataforma: pedíselo a un administrador de seguridad.',
-          ),
-        );
-      },
-    });
   }
 
   protected cambiarRol(rol: TenantRoleCode | null): void {
@@ -344,7 +301,7 @@ export class MembershipNew {
         this.state.set(ready(null));
         this.toast.warning(
           'La persona quedó incorporada, pero no pudimos asignarle la sede. ' +
-            'En su fila de la plantilla, usá «Asignar sede».',
+            'En su fila de la plantilla, use «Asignar sede».',
           'Falta la sede',
         );
         void this.router.navigateByUrl(`${organizationDetailRoute(this.tenantId())}?tab=plantilla`);

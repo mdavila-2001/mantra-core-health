@@ -5,6 +5,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../core/auth/session.store';
+import { selectOptionLabels } from '../../../testing/select';
 import { DirectoriesOverview } from './directories-overview';
 
 @Component({ template: '' })
@@ -53,35 +54,66 @@ describe('DirectoriesOverview', () => {
     fixture.detectChanges();
   }
 
-  it('un paciente ve los cuatro directorios, cada uno con su descripción y su enlace', () => {
+  it('un paciente ve los cinco directorios, cada uno con su descripción y su enlace', () => {
     abrirSesion(['PATIENT']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
-    expect(enlaces.length).toBe(4);
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
+    expect(enlaces.length).toBe(5);
+
+    // El mercado de seguros (28/09/2026): el quinto, con la misma tarjeta.
+    const aseguradoras = enlaces.find(
+      (enlace) => enlace.getAttribute('href') === '/insurers-directory',
+    );
+    expect(aseguradoras?.textContent).toContain('Aseguradoras');
+    expect(aseguradoras?.getAttribute('aria-label')).toContain('Directorio de aseguradoras');
 
     const medicos = enlaces.find((enlace) => enlace.getAttribute('href') === '/directory');
     expect(medicos).toBeDefined();
-    expect(medicos?.textContent).toContain('Directorio de médicos');
+    expect(medicos?.textContent).toContain('Médicos');
+    expect(medicos?.textContent).toContain('Ver médicos');
     expect(medicos?.textContent).toContain('agrupados por especialidad');
+    // El nombre accesible lleva el rótulo completo y la descripción: quien
+    // usa lector de pantalla oye a dónde lleva sin depender del diseño.
+    expect(medicos?.getAttribute('aria-label')).toBe(
+      'Directorio de médicos. Todos los médicos de la red, agrupados por especialidad.',
+    );
   });
 
-  it('quien ejerce no ve el nodo de la guía de médicos, exclusiva del paciente', () => {
+  it('quien ejerce también ve el nodo del directorio de médicos (24/09/2026)', () => {
     abrirSesion(['PRACTITIONER']);
     crear();
 
-    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.rejilla__tarjeta')];
-    expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
-    expect(enlaces.length).toBe(3);
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
+    expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(true);
+    expect(enlaces.length).toBe(5);
   });
 
-  it('el nodo central es decorativo: no es un enlace ni compite con los cuatro', () => {
+  it('quien sólo administra no ve el nodo del directorio de médicos', () => {
+    abrirSesion(['SECURITY_ADMIN']);
+    crear();
+
+    const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
+    expect(enlaces.some((enlace) => enlace.getAttribute('href') === '/directory')).toBe(false);
+    expect(enlaces.length).toBe(4);
+  });
+
+  it('la primera puerta es la tarea principal y va destacada (22/10/2026)', () => {
     abrirSesion(['PATIENT']);
     crear();
 
-    const centro = root().querySelector('.mapa__centro');
-    expect(centro?.getAttribute('aria-hidden')).toBe('true');
-    expect(centro?.querySelector('a')).toBeNull();
+    const destacadas = [...root().querySelectorAll('.directories__item--featured')];
+    expect(destacadas.length).toBe(1);
+    expect(destacadas[0].getAttribute('data-path')).toBe('directory');
+  });
+
+  it('ninguna tarjeta muestra calificaciones ni cifras que no salen de los datos (22/10/2026)', () => {
+    abrirSesion(['PATIENT']);
+    crear();
+
+    const portada = root().querySelector('.directories')?.textContent ?? '';
+    expect(portada).not.toMatch(/★|reseñas|opiniones|pólizas|Premium|\+\d+/u);
+    expect(root().querySelector('.mapa__centro')).toBeNull();
   });
 
   describe('la barra de búsqueda (19/09/2026)', () => {
@@ -91,16 +123,21 @@ describe('DirectoriesOverview', () => {
 
       const barra = root().querySelector('app-filter-bar app-search-field');
       expect(barra).not.toBeNull();
-      expect(barra?.textContent).toContain('laboratorios, clínicas y farmacias');
-      expect(root().querySelector('.mapa__nodos')).not.toBeNull();
+      expect(barra?.textContent).toContain(
+        'médicos, laboratorios, clínicas, farmacias y aseguradoras',
+      );
+      expect(root().querySelector('.directories__grid')).not.toBeNull();
     });
 
-    it('un término busca en los tres directorios y agrupa lo encontrado por directorio', async () => {
+    it('un término busca en los cinco directorios y agrupa lo encontrado por directorio', async () => {
       abrirSesion(['PRACTITIONER']);
       await TestBed.inject(Router).navigateByUrl('/directories?q=central');
       crear();
 
       const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/practitioners'))
+        .flush(PAGINA_VACIA);
       http
         .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
         .flush({ items: [], total: 0, limit: 50, offset: 0 });
@@ -135,15 +172,142 @@ describe('DirectoriesOverview', () => {
         totalHint: 1,
         generatedAt: '2026-09-19T00:00:00Z',
       });
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/public/search/insurers'))
+        .flush(PAGINA_VACIA);
+      http.verify();
       fixture.detectChanges();
 
-      expect(root().querySelector('.mapa__nodos')).toBeNull();
-      const rotulos = [...root().querySelectorAll('.directorio__rotulo')];
+      expect(root().querySelector('.directories__grid')).toBeNull();
+      // Sin bandas (marketplace): el directorio se nombra en la barra de resultados.
+      const rotulos = [...root().querySelectorAll('.directorio__ambito')];
       expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
         expect.stringContaining('Directorio de farmacias'),
       ]);
       const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
       expect(tarjeta?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-central');
     });
+
+    it('una aseguradora se encuentra desde la portada y su tarjeta abre la ficha con los planes (29/09/2026)', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl(
+        '/directories?q=vitalicia&directorio=insurers-directory',
+      );
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      const aseguradoras = http.expectOne((pedido) =>
+        pedido.url.endsWith('/public/search/insurers'),
+      );
+      expect(aseguradoras.request.params.get('q')).toBe('vitalicia');
+      aseguradoras.flush({
+        items: [
+          {
+            kind: 'INSURER',
+            slug: 'la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+            displayName: 'LA VITALICIA SEGUROS Y REASEGUROS DE VIDA S.A.',
+            headline: 'Aseguradora de personas · cubre salud',
+            city: 'Bolivia',
+            avatarUrl: null,
+            verified: false,
+            ratingAverage: null,
+            ratingCount: 0,
+            coverUrl: null,
+            address: null,
+            location: null,
+            hasPublishedAgenda: false,
+            nextAvailableDate: null,
+            category: null,
+          },
+        ],
+        nextCursor: null,
+        totalHint: 1,
+        generatedAt: '2026-09-29T00:00:00Z',
+      });
+      http.verify();
+      fixture.detectChanges();
+
+      // Sin bandas (marketplace): el directorio se nombra en la barra de resultados.
+      const rotulos = [...root().querySelectorAll('.directorio__ambito')];
+      expect(rotulos.map((rotulo) => rotulo.textContent)).toEqual([
+        expect.stringContaining('Directorio de aseguradoras'),
+      ]);
+      const tarjeta = root().querySelector<HTMLAnchorElement>('li[app-result-card] a');
+      expect(tarjeta?.getAttribute('href')).toBe(
+        '/insurers-directory/la-vitalicia-seguros-y-reaseguros-de-vida-s-a',
+      );
+      expect(root().querySelector('app-search-field')?.textContent).toContain(
+        'Buscar aseguradoras por nombre',
+      );
+    });
+  });
+
+  describe('el desplegable de directorio (24/09/2026)', () => {
+    async function opciones(): Promise<string[]> {
+      const select = root().querySelector<HTMLElement>('app-filter-bar app-select');
+      return select ? selectOptionLabels(fixture, select) : [];
+    }
+
+    it('va en la misma fila que el buscador, con «Todos» y los cinco directorios', async () => {
+      abrirSesion(['PRACTITIONER']);
+      crear();
+
+      const controles = root().querySelector('app-filter-bar .filter-bar__controls');
+      expect(controles?.querySelector('app-search-field')).not.toBeNull();
+      expect(controles?.querySelector('app-select')).not.toBeNull();
+      expect(await opciones()).toEqual([
+        'Todos los directorios',
+        'Médicos',
+        'Laboratorios',
+        'Clínicas',
+        'Farmacias',
+        'Aseguradoras',
+      ]);
+    });
+
+    it('con un directorio elegido, el término busca sólo en ése', async () => {
+      abrirSesion(['PRACTITIONER']);
+      await TestBed.inject(Router).navigateByUrl(
+        '/directories?q=central&directorio=laboratory-directory',
+      );
+      crear();
+
+      const http = TestBed.inject(HttpTestingController);
+      http
+        .expectOne((pedido) => pedido.url.endsWith('/diagnostic-units/search'))
+        .flush({ items: [], total: 0, limit: 50, offset: 0 });
+      http.expectNone((pedido) => pedido.url.includes('/public/search/'));
+      http.verify();
+
+      expect(root().querySelector('app-search-field')?.textContent).toContain(
+        'Buscar laboratorios por nombre',
+      );
+    });
+
+    it('sin término, el directorio elegido deja sólo su nodo', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl('/directories?directorio=pharmacies-directory');
+      crear();
+
+      const enlaces = [...root().querySelectorAll<HTMLAnchorElement>('.directories__card')];
+      expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toEqual([
+        '/pharmacies-directory',
+      ]);
+    });
+
+    it('un valor que no es un directorio de la sesión se lee como «todos»', async () => {
+      abrirSesion(['PATIENT']);
+      await TestBed.inject(Router).navigateByUrl('/directories?directorio=no-existe');
+      crear();
+
+      expect(root().querySelectorAll('.directories__card').length).toBe(5);
+    });
   });
 });
+
+const PAGINA_VACIA = {
+  items: [],
+  nextCursor: null,
+  totalHint: 0,
+  generatedAt: '2026-09-19T00:00:00Z',
+};

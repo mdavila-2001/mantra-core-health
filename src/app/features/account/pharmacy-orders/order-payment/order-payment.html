@@ -27,8 +27,8 @@
       <app-tabs>
         <app-tab label="En mostrador">
           <p class="pago__mostrador" data-testid="pago-mostrador">
-            Pagás al retirar, en la farmacia. Cuando el mostrador registre tu
-            pago, tu comprobante llega directo a la app.
+            Paga al retirar, en la farmacia. Cuando el mostrador registre su
+            pago, su comprobante llega directo a la app.
           </p>
         </app-tab>
         <app-tab label="QR">
@@ -46,7 +46,7 @@
               <canvas #lienzoQrPago [width]="ladoDelQr" [height]="ladoDelQr"></canvas>
             </div>
           }
-          <p>Escaneá con tu banca móvil.</p>
+          <p>Escanee con su banca móvil.</p>
           <p class="pago__espera" data-testid="pago-espera">
             <app-spinner decorative />
             <span>Esperando la confirmación del banco…</span>
@@ -66,8 +66,8 @@
       </app-tabs>
     } @else {
       <p class="pago__mostrador" data-testid="pago-mostrador">
-        Pagás al retirar, en la farmacia. Cuando el mostrador registre tu
-        pago, tu comprobante llega directo a la app.
+        Paga al retirar, en la farmacia. Cuando el mostrador registre su
+        pago, su comprobante llega directo a la app.
       </p>
     }
   }

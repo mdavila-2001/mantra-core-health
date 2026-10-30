@@ -100,6 +100,34 @@
 
       <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="cambiarPestana($event)">
         <app-tab label="Sucursales">
+          <div class="organizacion__acciones-sucursal">
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              size="sm"
+              [disabled]="!puedeSubirEnLote() || creandoLote()"
+              data-testid="organizacion-subir-sucursales"
+              (clicked)="abrirCargaEnLote()"
+            >
+              Subir sucursales en lote (CSV)
+            </button>
+          </div>
+
+          @if (rechazosDelLote().length > 0) {
+            <app-alert
+              tone="warning"
+              title="Estas sucursales no se crearon"
+              data-testid="organizacion-lote-rechazos"
+            >
+              <ul class="organizacion__rechazos">
+                @for (rechazo of rechazosDelLote(); track rechazo.nombre) {
+                  <li><strong>{{ rechazo.nombre }}:</strong> {{ rechazo.motivo }}</li>
+                }
+              </ul>
+            </app-alert>
+          }
+
           <app-data-table
             [state]="vistaDeSucursales()"
             [columns]="columnasDeSucursal()"
@@ -161,8 +189,14 @@
 
 <ng-template #celdaSucursal let-sucursal>
   <span class="organizacion__nombre">{{ sucursal.name }}</span>
+  @if (sucursal.description) {
+    <span class="organizacion__secundario">{{ sucursal.description }}</span>
+  }
   @if (sucursal.timeZone) {
     <span class="organizacion__secundario">{{ sucursal.timeZone }}</span>
+  }
+  @if (sucursal.locationUrl) {
+    <a app-link class="organizacion__mapa" [href]="sucursal.locationUrl">Ver en el mapa</a>
   }
 </ng-template>
 
@@ -185,7 +219,7 @@
 <ng-template #celdaPersona let-membresia>
   <span class="organizacion__nombre">{{ personaDe(membresia.userId) }}</span>
   @if (esLaSesion(membresia.userId)) {
-    <span class="organizacion__secundario">Tu cuenta</span>
+    <span class="organizacion__secundario">Su cuenta</span>
   }
 </ng-template>
 
@@ -248,3 +282,16 @@
     {{ etiquetaDe(hija.statusConceptId)?.display ?? '—' }}
   </app-badge>
 </ng-template>
+
+@if (cargaEnLoteAbierta()) {
+  <app-branch-bulk-import
+    testIdPrefix="organizacion-lote"
+    confirmVerb="Crear"
+    [closeOnConfirm]="false"
+    [pending]="creandoLote()"
+    [existingNames]="nombresDeSucursales()"
+    contextNote="Cada fila se crea como una sucursal activa de esta organización."
+    (imported)="crearSucursalesEnLote($event)"
+    (closed)="cargaEnLoteAbierta.set(false)"
+  />
+}

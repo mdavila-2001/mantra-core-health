@@ -8,6 +8,7 @@ import type {
   PatientDiagnosticResult,
   PatientOrder,
 } from '../../../core/data-access/diagnostics/diagnostics.types';
+import { formatDate } from '../pdf-export/pdf-format';
 import type {
   DocumentoBloque,
   DocumentoDeAtencion,
@@ -168,17 +169,20 @@ export function atencionDesdeResumen(
   };
 }
 
-/** «Desde el 1 de marzo» / «Hasta el 8 de marzo», si la indicación los declara. */
+/**
+ * «del 24/10/2026 al 26/10/2026», «desde el 01/03/2026», «hasta el
+ * 08/03/2026», si la indicación los declara. El mismo formato de fecha que el
+ * resto del papel.
+ */
 function vigenciaDe(indicacion: MedicationRequest): string | undefined {
-  const formato = new Intl.DateTimeFormat('es-BO', { dateStyle: 'medium' });
   if (indicacion.validFrom !== undefined && indicacion.validTo !== undefined) {
-    return `del ${formato.format(indicacion.validFrom)} al ${formato.format(indicacion.validTo)}`;
+    return `del ${formatDate(indicacion.validFrom)} al ${formatDate(indicacion.validTo)}`;
   }
   if (indicacion.validFrom !== undefined) {
-    return `desde el ${formato.format(indicacion.validFrom)}`;
+    return `desde el ${formatDate(indicacion.validFrom)}`;
   }
   if (indicacion.validTo !== undefined) {
-    return `hasta el ${formato.format(indicacion.validTo)}`;
+    return `hasta el ${formatDate(indicacion.validTo)}`;
   }
   return undefined;
 }
@@ -265,13 +269,23 @@ export function historiaDesdeFuentes(
   etiqueta: ResolverEtiqueta,
   edad?: string,
 ): DocumentoDeHistoria {
-  const atenciones = fuentes.resumen.encounters.map((encuentro) => {
+  // De la más reciente a la más vieja, como la pantalla de la historia; las
+  // que no declaran inicio, al final.
+  const encuentros = [...fuentes.resumen.encounters].sort((a, b) => {
+    if (a.startAt === undefined || b.startAt === undefined) {
+      return (a.startAt === undefined ? 1 : 0) - (b.startAt === undefined ? 1 : 0);
+    }
+    return b.startAt.getTime() - a.startAt.getTime();
+  });
+  const atenciones = encuentros.map((encuentro) => {
     const documento = atencionDesdeResumen(encuentro, fuentes.resumen, contexto, etiqueta);
     return {
       titulo:
         documento.inicio === undefined
           ? 'Atención sin fecha registrada'
-          : `Atención del ${documento.inicio.toLocaleDateString('es')}`,
+          : `Atención del ${formatDate(documento.inicio)}`,
+      ...(documento.inicio === undefined ? {} : { inicio: documento.inicio }),
+      ...(documento.motivo === undefined ? {} : { motivo: documento.motivo }),
       bloques: documento.bloques,
     };
   });
@@ -289,8 +303,8 @@ export function historiaDesdeFuentes(
     recetas: fuentes.resumen.medicationRequests.map((indicacion) =>
       recetaDesdeResumen(indicacion, contexto, etiqueta),
     ),
-    // Cerrado el TODO(J3/E1): el archivo del paciente ya lee `forms/me` y los
-    // aporta acá como fuente, igual que las órdenes y los resultados.
+    // El archivo del paciente lee `forms/me` y los aporta acá como fuente,
+    // igual que las órdenes y los resultados.
     formularios: fuentes.formularios,
     ordenes: fuentes.ordenes.map((orden) => ordenDesdeElPortal(orden, contexto, etiqueta)),
     resultados: fuentes.resultados.map((resultado) => bloqueDeResultado(resultado, etiqueta)),
@@ -302,7 +316,7 @@ function bloqueDeResultado(
   resultado: PatientDiagnosticResult,
   etiqueta: ResolverEtiqueta,
 ): DocumentoBloque {
-  const datos = [{ etiqueta: 'Liberado', valor: resultado.releasedAt.toLocaleDateString('es') }];
+  const datos = [{ etiqueta: 'Liberado', valor: formatDate(resultado.releasedAt) }];
   if (resultado.conclusionText !== undefined && resultado.conclusionText.trim() !== '') {
     datos.push({ etiqueta: 'Conclusión', valor: resultado.conclusionText });
   }

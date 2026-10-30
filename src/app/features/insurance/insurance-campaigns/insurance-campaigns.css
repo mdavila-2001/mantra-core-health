@@ -1,0 +1,110 @@
+/* Campañas preventivas. Una columna: alta opcional en una sola tarjeta
+   centrada, filtros y tabla en orden de lectura. Sólo distribución: ni un color
+   ni una tipografía que el sistema no tenga ya. */
+
+:host {
+  display: block;
+}
+
+.campaigns {
+  display: grid;
+  gap: var(--sp-4);
+  margin-block-start: var(--sp-6);
+}
+
+/* El formulario: una sola tarjeta, centrada y de ancho completo hasta un tope. */
+.campaigns__form {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
+}
+
+.campaigns__form-body {
+  display: grid;
+  gap: var(--sp-5);
+}
+
+.campaigns__partners {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+/* Un aliado: rol, tipo y nombre en una fila que en pantallas angostas se apila. */
+.campaigns__partner {
+  display: grid;
+  gap: var(--sp-3);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.campaigns__partner-remove {
+  justify-self: start;
+}
+
+@media (min-width: 64rem) {
+  .campaigns__partner {
+    grid-template-columns: 1fr 1fr 2fr auto;
+    align-items: end;
+  }
+}
+
+.campaigns__filters {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+@media (min-width: 40rem) {
+  .campaigns__filters {
+    grid-template-columns: repeat(2, minmax(0, 16rem));
+  }
+}
+
+.campaigns__title {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.campaigns__code,
+.campaigns__condition {
+  color: var(--text-secondary);
+}
+
+.campaigns__bonus,
+.campaigns__validity {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.campaigns__actions,
+.campaigns__confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* El bloque de aliados y su botón ocupan todo el ancho de la sección: el
+   contenedor de la sección los reparte en dos columnas y aplastaba los selectores. */
+.campaigns__partners,
+.campaigns__partners + button {
+  grid-column: 1 / -1;
+}
+
+.campaigns__until,
+.campaigns__meta {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* En pantallas anchas esos datos tienen su propia columna. */
+@media (min-width: 64rem) {
+  .campaigns__until,
+  .campaigns__meta {
+    display: none;
+  }
+}
+
+.campaigns__state {
+  justify-self: start;
+}

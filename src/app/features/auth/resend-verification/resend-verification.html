@@ -5,11 +5,11 @@
         <!-- No dice «te lo mandamos»: eso afirmaría que la cuenta existe, y el
              backend devuelve lo mismo exista o no. -->
         <h1 appAnuncio [asertivo]="false" class="reenviar__title" data-testid="reenviar-ok">
-          Revisá tu correo
+          Revise su correo
         </h1>
         <p class="reenviar__text">
           Si hay una cuenta con ese dato, el enlace de verificación va en camino. Puede tardar unos
-          minutos; mirá también la carpeta de correo no deseado.
+          minutos; mire también la carpeta de correo no deseado.
         </p>
       </div>
 
@@ -29,7 +29,7 @@
       <div class="reenviar__header">
         <h1 class="reenviar__title">Reenviar la verificación</h1>
         <p class="reenviar__text">
-          Poné el correo o el documento con el que iniciás sesión y te mandamos otra vez el enlace.
+          Ponga el correo o el documento con el que inicia sesión y le mandamos otra vez el enlace.
         </p>
       </div>
 
@@ -37,7 +37,7 @@
         <!-- Un límite de intentos no es un error: decirle «error» a quien
              simplemente fue rápido lo invita a insistir. -->
         <app-alert appAnuncio tone="warning" class="reenviar__alert" data-testid="reenviar-espera">
-          Probaste varias veces seguidas. Esperá {{ segundos }} segundos y volvé a intentarlo.
+          Probó varias veces seguidas. Espere {{ segundos }} segundos y vuelva a intentarlo.
         </app-alert>
       } @else if (errorMessage(); as mensaje) {
         <app-alert appAnuncio tone="error" class="reenviar__alert" data-testid="reenviar-error">{{
@@ -48,11 +48,11 @@
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate data-testid="reenviar-form">
         <app-form-field
           label="Correo o documento"
-          hint="El mismo con el que entrás. El enlace va al correo de tu cuenta."
+          hint="El mismo con el que entra. El enlace va al correo de su cuenta."
           [required]="true"
           [errorMessage]="
             form.controls.identifier.touched && form.controls.identifier.invalid
-              ? 'Escribí el correo o el documento con el que iniciás sesión.'
+              ? 'Escriba el correo o el documento con el que inicia sesión.'
               : ''
           "
         >
@@ -81,7 +81,7 @@
       </form>
 
       <p class="reenviar__pie">
-        ¿Ya lo verificaste? <a app-link routerLink="/auth">Iniciá sesión</a>
+        ¿Ya lo verificó? <a app-link routerLink="/auth">Inicie sesión</a>
       </p>
     }
   </div>

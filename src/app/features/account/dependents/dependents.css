@@ -48,6 +48,7 @@
   display: grid;
   gap: var(--sp-1);
   min-width: 0;
+  flex: 1 1 22rem;
 }
 
 .dependents__nombre {
@@ -66,17 +67,23 @@
   font-size: var(--fs-caption);
 }
 
+/* ------------------------------------------- solicitudes recibidas -- */
+
+.dependents__solicitudes {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.dependents__pedido {
+  margin: 0;
+  color: var(--text-primary);
+}
+
 /* ---------------------------------------------------------------- el alta -- */
 
 .dependents-form {
   display: grid;
   gap: var(--sp-4);
-}
-
-.dependents-form__columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-3);
 }
 
 .dependents-form__acciones {
@@ -86,8 +93,127 @@
   gap: var(--sp-3);
 }
 
-@media (max-width: 36rem) {
-  .dependents-form__columns {
-    grid-template-columns: 1fr;
+/* ------------------------------------------------ búsqueda por nombre -- */
+
+.dependents-form__busqueda {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.dependents-form__pista {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.dependents-form__candidatos {
+  display: grid;
+  gap: var(--sp-2);
+  max-block-size: 14rem;
+  overflow-y: auto;
+}
+
+/* Cada cuenta es una opción de un radiogroup, no un enlace: elegir una
+   deselecciona la anterior. El elegido se marca con borde y fondo, no sólo con
+   color. */
+.dependents-form__candidato {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  inline-size: 100%;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.dependents-form__candidato:hover,
+.dependents-form__candidato:focus-visible {
+  background: var(--bg-hover);
+}
+
+.dependents-form__candidato.is-elegido {
+  border-color: var(--brand-primary);
+  border-width: 2px;
+  padding: calc(var(--sp-3) - 1px);
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.dependents-form__candidato-nombre {
+  overflow-wrap: anywhere;
+}
+
+.dependents-form__candidato-doc {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 400;
+}
+
+/* ════ Rediseño del paciente, tercera vuelta (22/10/2026) ════
+   Va en la hoja del componente y no en `styles/paciente.css`: esa hoja cuenta
+   en el paquete inicial, que está al ras de su presupuesto, y estas reglas
+   sólo hacen falta al abrir esta pantalla. `:host-context` las sigue atando a
+   la sesión de paciente, igual que la capa global. */
+
+/* El vacío explica cómo funciona, en tres pasos. */
+:host-context(.app-shell--paciente) .dependents__vacio {
+  margin-block-start: var(--sp-4);
+  padding: var(--sp-8) var(--sp-6);
+  border: 1px solid var(--c-aqua-100);
+  border-radius: var(--r-2xl);
+  background:
+    radial-gradient(70% 120% at 100% 0%, var(--c-aqua-50) 0%, transparent 60%),
+    var(--bg-surface);
+}
+
+.dependents__pasos {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-4) auto 0;
+  padding: 0;
+  max-inline-size: 34rem;
+  list-style: none;
+  text-align: start;
+}
+
+.dependents__pasos li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.dependents__paso-numero {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  inline-size: 2rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+:host-context([data-theme='dark']) .dependents__vacio {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .dependents__vacio {
+    background: var(--bg-surface);
+    border-color: var(--border-default);
   }
 }
