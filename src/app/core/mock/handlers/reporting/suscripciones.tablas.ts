@@ -76,8 +76,8 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
   const mrrFilas = mrrRepartido(mrrExacto, mon);
   // Cuentas y MRR tienen que salir del MISMO corte: las cuentas por plan se calculan sin el filtro de plan,
   // pero el MRR del modelo sí lo lleva; sin este factor el ingreso por cuenta salía a una fracción del precio.
-  const sinPlan = suscriptoresAlCierre(withoutDimension(ctx, 'plan'));
-  const factor = hasPlan && sinPlan > 0 ? suscriptoresAlCierre(ctx) / sinPlan : 1;
+  const unfilteredAccounts = suscriptoresAlCierre(withoutDimension(ctx, 'plan'));
+  const factor = hasPlan && unfilteredAccounts > 0 ? suscriptoresAlCierre(ctx) / unfilteredAccounts : 1;
   const filas = visibles.map(({ p, i }, k) => {
     const n = Math.round(cuentas[i]! * factor);
     const mrr = mrrFilas[k]!;
