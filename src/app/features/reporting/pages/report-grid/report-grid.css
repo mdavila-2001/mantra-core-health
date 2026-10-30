@@ -2,6 +2,11 @@
 
 .rg { display: flex; flex-direction: column; gap: var(--sp-6); min-width: 0; }
 
+/* La barra y las secciones viven dentro de `app-view-state-host`, no directamente en `.rg`: el `gap` de
+   `.rg` no llega hasta ellas, así que su separación se declara aquí. */
+.rg__toolbar + *,
+.rg__section + * { margin-block-start: var(--sp-6); }
+
 .rg__toolbar { display: flex; flex-direction: column; gap: var(--sp-3); }
 .rg__search { max-width: 32rem; }
 .rg__chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
