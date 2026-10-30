@@ -35,6 +35,7 @@ import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
@@ -137,6 +138,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
 @Component({
   selector: 'app-inbox-order',
   imports: [
+    AppButtonLink,
     Alert,
     AppButton,
     Badge,

@@ -23,6 +23,7 @@ import {
 import { BODY_ZONES, type BodyZone } from './zones.data';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '@shared/components/atoms/chip/chip';
 import { SpecialtyIcon } from '@shared/components/atoms/specialty-icon/specialty-icon';
 import { Spinner } from '@shared/components/atoms/spinner/spinner';
@@ -135,6 +136,7 @@ const VACIO: ReadonlyMap<string, string> = new Map();
 @Component({
   selector: 'app-symptom-check',
   imports: [
+    AppButtonLink,
     Alert,
     AppButton,
     Badge,
