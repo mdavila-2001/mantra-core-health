@@ -14,8 +14,12 @@
           }
         </h1>
         <p class="selector__ayuda">
-          Su cuenta tiene acceso a los dos. Puede cambiar de portal en cualquier momento, sin
-          cerrar sesión.
+          @if (insights()) {
+            Su cuenta tiene acceso a los tres.
+          } @else {
+            Su cuenta tiene acceso a los dos.
+          }
+          Puede cambiar de portal en cualquier momento, sin cerrar sesión.
         </p>
 
         <ul class="selector__opciones" role="list">
@@ -55,6 +59,26 @@
               </span>
             </a>
           </li>
+
+          @if (insights()) {
+            <li>
+              <a class="opcion" [routerLink]="insightsRoute" data-testid="portal-insights">
+                <span class="opcion__icono" aria-hidden="true"><app-nav-icon name="megaphone" /></span>
+                <h2 class="opcion__titulo">AloVida Insights</h2>
+                <p class="opcion__texto">
+                  Inteligencia de marketing: campañas, embudo del paciente, uso de la app, redes
+                  sociales, opinión pública, informes, observatorio de salud y alertas.
+                </p>
+                <span class="opcion__pie">
+                  <span class="opcion__accion">
+                    Entrar a Insights
+                    <app-nav-icon name="arrow-right" />
+                  </span>
+                  <app-badge variant="info" size="sm">Datos de ejemplo</app-badge>
+                </span>
+              </a>
+            </li>
+          }
         </ul>
       </section>
     }
