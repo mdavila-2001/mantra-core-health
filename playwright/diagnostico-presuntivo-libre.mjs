@@ -589,8 +589,11 @@ try {
   await page.goto(expediente, { waitUntil: 'domcontentloaded' });
   await asentarse();
   const pestanaDx = page.getByRole('tab', { name: /Diagnósticos/ });
+  await pestanaDx.first().waitFor({ state: 'visible', timeout: 30_000 }).catch(() => undefined);
   if ((await pestanaDx.count()) > 0) await pestanaDx.first().click();
   const nuevo = page.getByTestId('expediente-nuevo-diagnostico');
+  // Se espera a que la pestaña dibuje su botón: contar al instante competía con la carga.
+  await nuevo.first().waitFor({ state: 'visible', timeout: 30_000 }).catch(() => undefined);
   if ((await nuevo.count()) > 0) {
     await nuevo.first().click();
     await page.locator('dialog[open]').first().waitFor({ state: 'visible', timeout: 15_000 });
