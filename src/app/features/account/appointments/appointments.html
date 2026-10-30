@@ -170,8 +170,7 @@
             />
 
             @if (turnoEnDetalle(); as turno) {
-              <!-- El mismo detalle que abre la lista: un turno elegido en el
-                   calendario ofrece exactamente las mismas acciones. -->
+              <!-- El mismo detalle que abre la lista: un turno elegido en el calendario ofrece exactamente las mismas acciones. -->
               <article class="turnos__detalle" data-testid="turnos-detalle">
                 <h3 class="turnos__detalle-titulo">
                   @if (turno.cuando !== null) {
@@ -249,6 +248,7 @@
                     </button>
                   }
                 </div>
+                <app-booking-payment-receipts [bookingId]="turno.id" [statusCode]="turno.codigo" [knownPaymentState]="turno.payment" />
               </article>
             }
           } @else {
@@ -280,11 +280,9 @@
                             <span class="turnos__fecha">Sin horario asignado</span>
                           }
                           @if (turno.agenda !== '') {
-                            <!-- Con quién es el turno. Va acá dentro y no como hermano
-                         del badge: el item es una grilla de dos columnas, y un
-                         tercer hermano correría el badge a la fila siguiente.
-                         Se omite mientras no se sepa, en vez de dejar un hueco o
-                         mostrar el identificador del recurso. -->
+                            <!-- Con quién es el turno. Acá dentro y no como hermano del badge: el item
+                         es una grilla de dos columnas, y un tercer hermano correría el badge a la
+                         fila siguiente. Se omite mientras no se sepa, sin hueco ni identificador. -->
                             <span class="turnos__agenda">{{ turno.agenda }}</span>
                           }
                           <!-- TJ-2 · quien ve su turno en un horario que no pidió
@@ -299,8 +297,8 @@
                         </div>
                         <div class="turnos__acciones">
                           <app-badge [variant]="turno.tono">{{ turno.estado }}</app-badge>
-                          <!-- C4 · el mismo sello que en el detalle: la lista es
-                               donde la mayoría mira sus turnos. -->
+                          <app-appointment-payment-badge [paymentState]="turno.payment" />
+                          <!-- C4 · el mismo sello que en el detalle: la lista es donde la mayoría mira sus turnos. -->
                           @if (turno.esReconsulta) {
                             <app-badge variant="secondary" data-testid="mis-citas-reconsulta-sello">
                               Reconsulta
@@ -369,6 +367,7 @@
                             }
                           </p>
                         }
+                        <app-appointment-receipt-upload [bookingId]="turno.id" [statusCode]="turno.codigo" [paymentState]="turno.payment" />
                       </li>
                     }
                   </ul>

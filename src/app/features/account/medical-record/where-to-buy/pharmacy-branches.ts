@@ -144,6 +144,32 @@ export interface BranchResult {
 /** Sin sucursales que mostrar: la pantalla no llegó a consultar. */
 export const NO_BRANCHES: BranchResult = { branches: [], withoutProduct: [], includedApprovedCount: 0 };
 
+/**
+ * Las filas de la receta elegida: las del mismo encuentro que la fila con ese
+ * id (FAR-03 · D-3). Una fila sin encuentro es una receta sola; un id que no
+ * está en la lista no trae nada.
+ *
+ * El pedido viaja con un único `medicationRequestId` y la API rechaza los
+ * productos que esa receta no prescribe: mezclar aquí fármacos de otras
+ * consultas sería armar un pedido que no se puede enviar.
+ */
+export function rowsOfPrescription(
+  rows: readonly MedicationRequest[],
+  requestId: string,
+): readonly MedicationRequest[] {
+  const chosen = rows.find((row) => row.id === requestId);
+  if (chosen === undefined) {
+    return [];
+  }
+  // La API manda `null` (no omite la clave) cuando la columna está vacía: dos
+  // fármacos sueltos no son la misma receta por compartir ese `null`.
+  const encounterId = chosen.encounterId;
+  if (!encounterId) {
+    return [chosen];
+  }
+  return rows.filter((row) => row.encounterId === encounterId);
+}
+
 /** Un renglón por medicamento: dos recetas del mismo remedio son una compra. */
 export function uniqueByMedication(prescriptions: readonly MedicationRequest[]): readonly MedicationRequest[] {
   const byConcept = new Map<string, MedicationRequest>();

@@ -1,3 +1,6 @@
+import { splitLastWord } from '../../../shared/text/split-last-word';
+import { verificationOf } from '../../../core/verification/verification-status';
+import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
 import { DatePipe, DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -91,6 +94,7 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
   imports: [
     AppButton,
     Badge,
+    VerificationBadge,
     DatePipe,
     AppMap,
     PublicPostCard,
@@ -139,6 +143,12 @@ export class PublicProfileCard {
    */
   protected readonly esLugar = computed(() => this.perfil().kind !== 'PRACTITIONER');
 
+  /** El nombre con la última palabra aparte: la insignia viaja con ella y no queda sola en una línea. */
+  protected readonly nombreEnDos = computed(() => splitLastWord(this.perfil().displayName));
+
+  /** La verificación del profesional: `verification` de la API, o `verified` si todavía no la envía. */
+  protected readonly verificacion = computed(() => verificationOf(this.perfil()));
+
   /**
    * La tira de datos de cabecera: lo que se mira antes de leer nada.
    *
@@ -169,7 +179,7 @@ export class PublicProfileCard {
 
     datos.push({
       rotulo: 'Identidad',
-      valor: p.verified ? 'Verificada por AloVida' : 'Declarada por el prestador',
+      valor: this.verificacion().status === 'VERIFIED' ? 'Verificada por AloVida' : 'Declarada por el prestador',
     });
 
     return datos;
@@ -368,7 +378,8 @@ export class PublicProfileCard {
   private readonly auth = inject(AuthService);
 
   /**
-   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   * Si quien mira puede calificar: una sesión con perfil de paciente, frente a
+   * la ficha de un profesional que acepta reseñas (el resto no se reseña).
    *
    * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
    * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
@@ -376,7 +387,12 @@ export class PublicProfileCard {
    * el servidor explique por qué no, cuando no corresponde, es mejor que
    * esconder el camino a quien sí puede.
    */
-  protected readonly puedeCalificar = computed(() => this.auth.patientProfileId() !== null);
+  protected readonly puedeCalificar = computed(
+    () =>
+      this.auth.patientProfileId() !== null &&
+      this.perfil().kind === 'PRACTITIONER' &&
+      this.perfil().acceptsReviews,
+  );
 
   /** Si el diálogo de calificar está abierto. */
   protected readonly calificando = signal(false);

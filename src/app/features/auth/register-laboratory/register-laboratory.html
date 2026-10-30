@@ -93,20 +93,20 @@
             }
 
             <ng-template appCampoPersonalizado="legalRepName">
-              <app-name-fields
+              <app-inline-name-fields
                 [grupo]="form.controls.legalRepName"
                 [obligatorio]="true"
                 prefijoTestId="registro-lab-representante"
               />
             </ng-template>
             <ng-template appCampoPersonalizado="generalManagerName">
-              <app-name-fields [grupo]="form.controls.generalManagerName" prefijoTestId="registro-lab-gerente-general" />
+              <app-inline-name-fields [grupo]="form.controls.generalManagerName" prefijoTestId="registro-lab-gerente-general" />
             </ng-template>
             <ng-template appCampoPersonalizado="salesManagerName">
-              <app-name-fields [grupo]="form.controls.salesManagerName" prefijoTestId="registro-lab-gerente-comercial" />
+              <app-inline-name-fields [grupo]="form.controls.salesManagerName" prefijoTestId="registro-lab-gerente-comercial" />
             </ng-template>
             <ng-template appCampoPersonalizado="marketingManagerName">
-              <app-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-lab-gerente-marketing" />
+              <app-inline-name-fields [grupo]="form.controls.marketingManagerName" prefijoTestId="registro-lab-gerente-marketing" />
             </ng-template>
 
             <!-- El punto es lo único que se marca: la calle, el departamento,
@@ -253,7 +253,7 @@
     </div>
 
     @if (!registered()) {
-      <app-registration-help class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" />
+      <app-registration-help class="registro-conjunto__ayuda" [tarjetas]="ayudaVisible()" para="empresa" />
     }
   </div>
 </app-auth-split>

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { AdmissionStatusCard } from '../../admission-status-card/admission-status-card';
 import {
   catchError,
   forkJoin,
@@ -39,6 +40,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { insuranceBillingFrequencyLabel } from '../../../../core/profession/insurance-billing-frequency';
 import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
+import { verificationWithSealFallback } from '../../../../core/verification/verification-status';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -222,7 +224,16 @@ function edadDe(nacimiento?: Date): number | null {
 
 @Component({
   selector: 'app-practitioner-profile',
-  imports: [Alert, AppButton, AppButtonLink, NavIcon, PractitionerProfileView, RouterLink, ViewStateHost],
+  imports: [
+    AdmissionStatusCard,
+    Alert,
+    AppButton,
+    AppButtonLink,
+    NavIcon,
+    PractitionerProfileView,
+    RouterLink,
+    ViewStateHost,
+  ],
   templateUrl: './practitioner-profile.html',
   styleUrl: './practitioner-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -671,6 +682,10 @@ export class PractitionerProfile {
       verificacion: {
         label: label(etiquetas, perfil.verificationStatusConceptId),
         variant: sello(etiquetas, perfil.verificationStatusConceptId),
+        insignia: verificationWithSealFallback(
+          perfil,
+          sello(etiquetas, perfil.verificationStatusConceptId),
+        ),
       },
       estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
       aceptaPacientesNuevos: perfil.acceptsNewPatients,

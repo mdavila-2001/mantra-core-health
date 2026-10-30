@@ -126,7 +126,7 @@ describe('SpecialtyBadgeGrid', () => {
     });
     const insignia = insignias()[0]!;
     expect(insignia.classList).toContain('tone--secondary');
-    expect(insignia.querySelector('app-status-seal')).not.toBeNull();
-    expect((insignia.textContent ?? '').replace(/\s+/g, ' ')).toContain('Vigente');
+    expect(insignia.querySelector('app-verification-badge')).not.toBeNull();
+    expect((insignia.textContent ?? '').replace(/\s+/g, ' ')).toContain('Verificado');
   });
 });

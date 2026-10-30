@@ -222,6 +222,12 @@
     --fs-overline: 11px;                      /* Inter 700 · +8 % · MAYÚSCULAS */
     --fs-data: 14px;                          /* Inter 600 · tabular */
 
+    /* ---- gráficos (ADR-0017): categórica validada + secuencial de un tono ---- */
+    --chart-1: #2a78d6; --chart-2: #eb6834; --chart-3: #1baf7a; --chart-4: #eda100;
+    --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
+    --chart-seq-1: #cde2fb; --chart-seq-2: #86b6ef; --chart-seq-3: #3987e5;
+    --chart-seq-4: #1c5cab; --chart-seq-5: #0d366b;
+
     /* ================= tokens semánticos — modo claro ===================== */
     --surface-white: #FFFFFF;
     --bg-base: var(--surface-white);
@@ -260,6 +266,7 @@
 
     --border-default: var(--c-sage-500);   /* divisor decorativo: no delimita controles */
     --border-strong: var(--c-sage-700);    /* 3,34 peor caso ≥ 3:1 */
+    --border-danger: var(--c-error-500);   /* borde de control en error: 4,92 sobre blanco */
 
     /* anillo de foco SÓLIDO. Era aguamarina al 45 %, que compuesta sobre
        blanco da 1,48:1 y no llega al 3:1 que WCAG pide a un indicador de foco
@@ -285,12 +292,26 @@
        llega a AA con texto chico; con el 800 sube a 6,62:1. */
     --st-primary-bg: var(--c-petrol-50);  --st-primary-fg: var(--c-petrol-700);  --st-primary-bd: var(--c-petrol-200);
     --st-secondary-bg: var(--c-mint-50);  --st-secondary-fg: var(--c-mint-800);  --st-secondary-bd: var(--c-mint-300);
+    /* tertiary: la aguamarina, tercer tono de marca. Lo usa la grilla del horario
+       para «consultas y otros servicios». NO sigue el 50/700/200: con 50 sería el
+       mismo `info` de la píldora de telemedicina, que desaparecería encima de la
+       franja. Sube a 200/800/600: texto 6,23:1 sobre su fondo. */
+    --st-tertiary-bg: var(--c-aqua-200);  --st-tertiary-fg: var(--c-aqua-800);  --st-tertiary-bd: var(--c-aqua-600);
 
     /* Escala semántica de la matriz de consultas: contraste AA en ambos temas. */
     --heat-1-bg: var(--c-petrol-100); --heat-1-fg: var(--c-petrol-900);
     --heat-2-bg: var(--c-petrol-200); --heat-2-fg: var(--c-petrol-900);
     --heat-3-bg: var(--c-petrol-400); --heat-3-fg: var(--c-ivory-50);
     --heat-4-bg: var(--c-petrol-600); --heat-4-fg: var(--c-ivory-50);
+
+    /* insignia de verificación (check azul, estilo Twitter/Instagram). Relleno
+       del sello y tinta del tilde: NO es un estado de producto sino una marca de
+       identidad comprobada, por eso no vive en la receta 50/700/200. En claro,
+       petróleo-500 con tilde blanco (8,03:1); en oscuro sube a petróleo-300 con
+       tilde petróleo-900 (5,38:1) y el sello se mide ≥3:1 contra TODA superficie
+       donde vive, incluido el fondo del chip `primary` (petróleo-600, 3,07:1). */
+    --verified-bg: var(--c-petrol-500);
+    --verified-fg: var(--surface-white);
 
     /* alias semánticos de compatibilidad para superficies y enlaces */
     --surface-raised: var(--bg-surface);
@@ -309,6 +330,10 @@
    aguamarina acciona. Oscuro por preferencia del sistema… */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
+        --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+        --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+        --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
+        --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
         --bg-base: var(--c-petrol-900);
         --bg-surface: var(--c-petrol-800);
         --bg-surface-alt: var(--c-petrol-700);
@@ -335,6 +360,9 @@
            excepción E3). Al 40 % da 3,57 tarjeta · 3,27 surface-alt · 3,51
            inset · 3,78 base: ≥3:1 (WCAG 1.4.11) en toda superficie oscura. */
         --border-strong: rgba(255, 255, 255, 0.40);
+        /* borde de control en error. La rampa fija --c-error-500 daba 2,99:1 sobre
+           la tarjeta oscura (<3:1 de WCAG 1.4.11); el 400 da 4,17. */
+        --border-danger: var(--c-error-400);
 
         --focus-ring: var(--c-mint-500);     /* sólido: ≥7,6:1 sobre toda superficie oscura */
         --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -357,17 +385,28 @@
            y el chip desaparecería sobre una tarjeta. Sube a 600/100/400. */
         --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
         --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+        /* tertiary NO sigue el 800/200/600 por la misma razón que en claro: aqua-800
+           ES el `info` de oscuro. Sube a 700/50/400: texto 5,01:1. */
+        --st-tertiary-bg: var(--c-aqua-700); --st-tertiary-fg: var(--c-aqua-50); --st-tertiary-bd: var(--c-aqua-400);
 
         --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
         --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
         --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
         --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+        /* insignia de verificación en oscuro: ver el comentario del bloque claro */
+        --verified-bg: var(--c-petrol-300);
+        --verified-fg: var(--c-petrol-900);
     }
 }
 
 /* …y el toggle manual manda sobre la preferencia del sistema
    (bajo SSR se estampa tras afterNextRender, nunca en la ruta de render) */
 :root[data-theme='dark'] {
+    --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+    --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+    --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
+    --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
     --bg-base: var(--c-petrol-900);
     --bg-surface: var(--c-petrol-800);
     --bg-surface-alt: var(--c-petrol-700);
@@ -390,6 +429,7 @@
 
     --border-default: rgba(255, 255, 255, 0.12);
     --border-strong: rgba(255, 255, 255, 0.40);  /* ≥3:1, ver el bloque de arriba */
+    --border-danger: var(--c-error-400);         /* ≥3:1, ver el bloque de arriba */
 
     --focus-ring: var(--c-mint-500);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -409,11 +449,15 @@
 
     --st-primary-bg: var(--c-petrol-600); --st-primary-fg: var(--c-petrol-100); --st-primary-bd: var(--c-petrol-400);
     --st-secondary-bg: var(--c-mint-800); --st-secondary-fg: var(--c-mint-200); --st-secondary-bd: var(--c-mint-600);
+    --st-tertiary-bg: var(--c-aqua-700); --st-tertiary-fg: var(--c-aqua-50); --st-tertiary-bd: var(--c-aqua-400);
 
     --heat-1-bg: var(--c-petrol-800); --heat-1-fg: var(--c-ivory-50);
     --heat-2-bg: var(--c-petrol-700); --heat-2-fg: var(--c-ivory-50);
     --heat-3-bg: var(--c-petrol-300); --heat-3-fg: var(--c-petrol-900);
     --heat-4-bg: var(--c-petrol-200); --heat-4-fg: var(--c-petrol-900);
+
+    --verified-bg: var(--c-petrol-300);
+    --verified-fg: var(--c-petrol-900);
 }
 
 /* ---- base ---- */
@@ -590,7 +634,14 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
    Sólo se anima el contenido (`view-transition-name: contenido`, en
    `.app-main__inner`): el menú lateral y la barra superior no se mueven. El
    resto de la página no tiene transición propia. Sin la API el router
-   navega como siempre; con `prefers-reduced-motion` ni siquiera se crea. */
+   navega como siempre.
+
+   Con `prefers-reduced-motion` la transición SÍ se crea y la regla del final
+   de este bloque apaga la animación de sus pseudo-capas. No se salta con
+   `skipTransition()`: eso rechaza `ready` con «AbortError: Transition was
+   skipped» y el router lo escribe en la consola en cada navegación (#1449).
+   Aparte, el `*` del bloque global de movimiento reducido no alcanza a los
+   `::view-transition-*`, así que esta regla no es redundante. */
 @keyframes vt-sale {
     to {
         opacity: 0;
@@ -618,6 +669,13 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 }
 .app-main__inner {
     view-transition-name: contenido;
+}
+@media (prefers-reduced-motion: reduce) {
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+        animation: none !important;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {

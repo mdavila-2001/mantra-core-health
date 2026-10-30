@@ -1,8 +1,53 @@
-/* El selector de práctica acotado: un `<select>` a todo el ancho parece un
-   campo de formulario largo y no la elección de destino que es. */
-.importar__practica {
+/* La barra de destino y acción en lote: a todo el ancho y en una sola
+   fila (se apila en pantallas angostas). El destino a la izquierda, la
+   acción primaria a la derecha. */
+.importar__barra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sp-4);
     margin-block-end: var(--sp-5);
-    max-inline-size: 24rem;
+}
+
+.importar__practica {
+    flex: 1 1 16rem;
+    min-inline-size: 0;
+}
+
+.importar__lote {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--sp-2);
+}
+
+.importar__rotulo {
+    margin: 0 0 var(--sp-1);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.importar__practica-fija {
+    margin: 0;
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.importar__ayuda {
+    margin: 0;
+    font-size: var(--fs-caption);
+    color: var(--text-secondary);
+}
+
+@media (max-width: 779px) {
+    .importar__lote {
+        align-items: stretch;
+        inline-size: 100%;
+    }
 }
 
 /* La tarjeta del procedimiento: alto flexible pero acción siempre abajo, para

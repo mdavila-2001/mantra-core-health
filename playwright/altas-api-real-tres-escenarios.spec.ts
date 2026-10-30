@@ -64,23 +64,10 @@ async function enviar(page: Page, ruta: string): Promise<Response> {
   return respuesta;
 }
 
-/**
- * Nombre desglosado. En `test`, `app-name-fields` es un mini-asistente
- * («Nombres» → «Apellidos») con su propio «Siguiente»: si el apellido no está
- * a la vista, se avanza dentro del componente, no del formulario.
- */
+/** Nombre desglosado (`app-inline-name-fields`): las dos partes obligatorias. */
 async function escribirNombre(page: Page, prefijo: string, nombre: string, apellido: string): Promise<void> {
-  const primerNombre = page.getByTestId(`${prefijo}-nombre`);
-  await primerNombre.fill(nombre);
-  const apellidoPaterno = page.getByTestId(`${prefijo}-apellido-paterno`);
-  if (!(await apellidoPaterno.isVisible())) {
-    await page
-      .locator('app-name-fields')
-      .filter({ has: primerNombre })
-      .getByRole('button', { name: 'Siguiente', exact: true })
-      .click();
-  }
-  await apellidoPaterno.fill(apellido);
+  await page.getByTestId(`${prefijo}-nombre`).fill(nombre);
+  await page.getByTestId(`${prefijo}-apellido-paterno`).fill(apellido);
 }
 
 /** Login real, fuera del navegador: prueba que la cuenta quedó en la base. */

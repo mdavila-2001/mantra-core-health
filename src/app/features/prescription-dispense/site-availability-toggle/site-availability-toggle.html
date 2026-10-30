@@ -1,0 +1,16 @@
+<div class="site-toggle">
+  <app-switch
+    [checked]="available()"
+    [disabled]="pending()"
+    [ariaLabel]="accessibleName()"
+    [attr.data-testid]="testids.siteToggle"
+    (checkedChange)="request($event)"
+  />
+  <span class="site-toggle__state" aria-hidden="true">{{ stateLabel() }}</span>
+  <span class="site-toggle__note" role="status">{{ pending() ? 'Guardando…' : '' }}</span>
+  @if (failure(); as reason) {
+    <p class="site-toggle__failure" role="alert" [attr.data-testid]="testids.siteFailure">
+      No se pudo guardar. Sigue como estaba. {{ reason }}
+    </p>
+  }
+</div>

@@ -152,6 +152,19 @@ describe('Thread', () => {
     expect(textos[1]).toContain('El segundo');
   });
 
+  it('la respuesta automática que redactó la IA se rotula; las demás no', () => {
+    abrir([
+      { ...mensaje('m-2', 'pp-2', 'Gracias por escribir. La doctora le responde apenas pueda.'), contentType: 'AUTO_REPLY_AI' },
+      mensaje('m-1', 'pp-1', '¿Mañana atienden?'),
+    ]);
+
+    const [pregunta, respuesta] = burbujas();
+    expect(pregunta.querySelector('[data-testid="hilo-etiqueta-ia"]')).toBeNull();
+    expect(respuesta.querySelector('[data-testid="hilo-etiqueta-ia"]')?.textContent?.trim()).toBe(
+      'Respuesta automática generada por IA',
+    );
+  });
+
   it('distingue el mensaje propio del ajeno', () => {
     abrir([mensaje('m-1', 'pp-1', 'Mío'), mensaje('m-2', 'pp-2', 'Suyo')]);
 
@@ -402,6 +415,40 @@ describe('Thread', () => {
     const enlace = fixture.nativeElement.querySelector('a.hilo__enlace') as HTMLAnchorElement | null;
     expect(enlace?.getAttribute('href')).toBe('https://alovida.bo/turnos');
     expect(enlace?.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('un aviso de cita trae el botón «Ir a la cita»: el paciente va a «Mis citas»', () => {
+    abrir([
+      mensaje(
+        'm-1',
+        'pp-2',
+        '✅ ¡Su cita quedó confirmada!\n\n👉 Ver la cita: https://alovida.bo/my-account/appointments?turno=b-1',
+      ),
+    ]);
+
+    const boton = consultar('hilo-ir-cita') as HTMLAnchorElement | null;
+    expect(boton?.textContent).toContain('Ir a la cita');
+    expect(boton?.getAttribute('href')).toBe('/my-account/appointments?turno=b-1');
+    // La URL cruda ya no se ve: el botón la reemplaza.
+    expect(burbujas()[0]!.querySelector('.hilo__texto')?.textContent).not.toContain('https://');
+  });
+
+  it('la confirmación propia (la mandó el profesional) lleva a su agenda', () => {
+    abrir([
+      mensaje(
+        'm-1',
+        'pp-1',
+        '✅ ¡Su cita quedó confirmada!\n\n👉 Ver la cita: https://alovida.bo/my-account/appointments?turno=b-1',
+      ),
+    ]);
+
+    expect(consultar('hilo-ir-cita')?.getAttribute('href')).toBe('/schedule?vista=citas&turno=b-1');
+  });
+
+  it('un mensaje sin cita no tiene botón', () => {
+    abrir([mensaje('m-1', 'pp-2', 'Hola doctora')]);
+
+    expect(consultar('hilo-ir-cita')).toBeNull();
   });
 
   it('reenviar manda el mismo texto a la conversación elegida', () => {

@@ -62,10 +62,8 @@ const telemetryHandle = startServerTelemetry(telemetry);
  * parsear HTML en cada respuesta para un valor que no cambia mientras el
  * proceso viva.
  *
- * `PUBLIC_API_BASE_URL` es lo único que cambia entre despliegues: vacío —lo
- * recomendado— deja `connect-src 'self'`; con un dominio distinto lo agrega.
- * Es la misma variable que compila el paquete, así que las dos mitades no se
- * pueden separar.
+ * Las raíces de API y AI son públicas y se configuran por despliegue. Sus
+ * orígenes se agregan a `connect-src` cuando apuntan a otro dominio.
  *
  * `sourceIndexScriptHashes` se suma al recorrido del artefacto, no lo
  * reemplaza (AG49-FT01-003): bajo `ng serve --ssr` no hay ningún
@@ -78,6 +76,7 @@ const telemetryHandle = startServerTelemetry(telemetry);
  */
 const cabecerasComunes = {
   apiBaseUrl: process.env['PUBLIC_API_BASE_URL'] ?? '',
+  aiBaseUrl: process.env['PUBLIC_AI_BASE_URL'] ?? '/ai',
   inlineScriptHashes: [
     ...new Set([
       ...collectInlineScriptHashes(browserDistFolder),

@@ -149,8 +149,11 @@ export function documentsFromLicenses(
   });
 }
 
-/** El cargo, en palabras, desde el rol canónico del contrato. */
-const POSITION_BY_ROLE: Readonly<Record<string, string>> = {
+/**
+ * El cargo, en palabras, desde el rol canónico del contrato. Exportado: la
+ * ficha de las demás organizaciones nombra los mismos cargos.
+ */
+export const POSITION_BY_ROLE: Readonly<Record<string, string>> = {
   LEGAL_REPRESENTATIVE: 'Representante legal',
   GENERAL_MANAGER: 'Gerente General',
   COMMERCIAL_MANAGER: 'Gerente Comercial',

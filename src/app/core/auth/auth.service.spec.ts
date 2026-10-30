@@ -1,8 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { AuthService } from './auth.service';
+import { SESSION_CLEANERS } from './session-cleanup';
 import { RefreshTokenStorage } from './refresh-token.storage';
 
 function makeToken(claims: Record<string, unknown>): string {
@@ -61,7 +63,11 @@ class AlmacenFalso {
     this.tenant = tenantId;
   }
 
-  onClearedInAnotherTab(): () => void {
+  /** El aviso que el servicio registró: la prueba lo dispara como si otra pestaña hubiera cerrado sesión. */
+  avisoOtraPestana: (() => void) | null = null;
+
+  onClearedInAnotherTab(alCerrar?: () => void): () => void {
+    this.avisoOtraPestana = alCerrar ?? null;
     return () => {
       this.bajas += 1;
     };
@@ -90,6 +96,31 @@ describe('AuthService', () => {
 
   afterEach(() => {
     http.verify();
+  });
+
+  describe('cerrar sesión desde otra pestaña', () => {
+    it('da de baja la sesión local y corre los limpiadores (lo que cada pestaña guarda en memoria)', () => {
+      const limpiador = vi.fn();
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: RefreshTokenStorage, useValue: almacen },
+          { provide: SESSION_CLEANERS, multi: true, useValue: limpiador },
+        ],
+      });
+      const otro = TestBed.inject(AuthService);
+      otro.watchSessionClosedElsewhere();
+      expect(almacen.avisoOtraPestana).not.toBeNull();
+
+      almacen.avisoOtraPestana?.();
+
+      expect(otro.isAuthenticated()).toBe(false);
+      expect(limpiador).toHaveBeenCalledTimes(1);
+      // `afterEach` verifica HTTP con el controlador del módulo anterior: se vuelve a tomar el actual.
+      http = TestBed.inject(HttpTestingController);
+    });
   });
 
   describe('login', () => {

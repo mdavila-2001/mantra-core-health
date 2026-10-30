@@ -67,6 +67,15 @@ export class PublicProfileReviews implements OnInit {
   /** Qué clase de sujeto es. Fija el prefijo de la ruta pública. */
   readonly kind = input.required<PublicProfileDetail['kind']>();
 
+  /**
+   * Si la ficha acepta reseñas (`acceptsReviews` del perfil público).
+   *
+   * Por omisión sí, para quien monte el bloque sin saberlo; la ficha pasa el
+   * valor real. Con `false`, o si la ficha no es de un profesional, no se
+   * ofrece «Calificar mi atención»: el servidor lo rechazaría.
+   */
+  readonly acceptsReviews = input<boolean>(true);
+
   /** El slug de la ficha, tal como está en la URL. */
   readonly slug = input.required<string>();
 
@@ -108,16 +117,22 @@ export class PublicProfileReviews implements OnInit {
   });
 
   /**
-   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   * Si quien mira puede calificar: una sesión con perfil de paciente, frente a
+   * la ficha de un **profesional** que **acepta reseñas**.
    *
    * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
    * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
    * pública que a propósito no publica a quién representa—. Ofrecerlo y que
    * el servidor explique por qué no, cuando no corresponde, es mejor que
-   * esconder el camino a quien sí puede.
+   * esconder el camino a quien sí puede. Lo que sí se sabe desde la ficha, se
+   * aplica: una farmacia o una clínica no se reseñan con este formulario, y un
+   * profesional que apagó las reseñas no tiene a quién recibirlas.
    */
   protected readonly puedeCalificar = computed(
-    () => this.auth.patientProfileId() !== null,
+    () =>
+      this.auth.patientProfileId() !== null &&
+      this.kind() === 'PRACTITIONER' &&
+      this.acceptsReviews(),
   );
 
   /** Si el diálogo de calificar está abierto. */

@@ -2,6 +2,10 @@
      trayectoria que dibujar, y media trayectoria no se distingue de una
      trayectoria corta. El dibujo vive en practitioner-profile-view — la misma
      vista que usa la guía de profesionales para el perfil de otro doctor. -->
+<!-- La solicitud de verificación de quien atiende: su estado, qué falta y, si
+     corresponde, «Corregir y reenviar». Sin solicitud no dibuja nada. -->
+<app-admission-status-card />
+
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (visible(); as perfil) {
     <!-- Lo que no llegó se dice, aunque la ficha siga en pie: un catálogo

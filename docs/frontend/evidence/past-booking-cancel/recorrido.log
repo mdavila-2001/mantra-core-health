@@ -1,0 +1,4 @@
+lista 1440: [{"motivo":"cita-aceptada-sin-pagar","cancelar":true},{"motivo":"solicitud-390","cancelar":true},{"motivo":"solicitud-por-confirmar","cancelar":true},{"motivo":"cita-pagada-a-mano","cancelar":false}]
+detalle past (09:00): «Cancelar» visible=0 · jueves 29 de oct a las 09:00 –09:30Consulta Dra. ArceConfirmadaMotivo de consulta: cita-pagada-a-manoComprobante de pago
+detalle upcoming (09:30): «Cancelar» visible=1 · viernes 30 de oct a las 09:30 –10:00Consulta Dra. ArceConfirmadaMotivo de consulta: cita-aceptada-sin-pagar Cancelar Com
+lista 390: [{"motivo":"cita-aceptada-sin-pagar","cancelar":true},{"motivo":"solicitud-390","cancelar":true},{"motivo":"solicitud-por-confirmar","cancelar":true},{"motivo":"cita-pagada-a-mano","cancelar":false}]

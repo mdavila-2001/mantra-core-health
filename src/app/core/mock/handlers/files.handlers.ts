@@ -58,7 +58,7 @@ function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: stri
 
 /** Un archivo subido hace menos de 5 s sigue «en análisis» (`SCAN_PENDING`). */
 function escaneoPendiente(archivo: ArchivoSimulado): boolean {
-  return archivo.bytes !== undefined && Date.now() - Date.parse(archivo.createdAt) < 5000;
+  return archivo.bytes instanceof Blob && Date.now() - Date.parse(archivo.createdAt) < 5000;
 }
 
 /**
@@ -210,7 +210,19 @@ export function fileContent(fileId: string): unknown {
   const a = archivos.get(fileId);
   if (a === undefined) return undefined;
   // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-  if (a.bytes !== undefined) return a.bytes;
+  //
+  // `instanceof` y no `!== undefined`: la colección se guarda en
+  // `sessionStorage` como JSON, y un `Blob` no sobrevive a eso — tras recargar
+  // vuelve como `{}`. Ahí queda la copia `data:` de la imagen, que sí se guarda.
+  if (a.bytes instanceof Blob) return a.bytes;
+  if (a.dataUrlReal !== undefined) {
+    return {
+      body: a.dataUrlReal,
+      headers: {
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+      },
+    };
+  }
   // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
   // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
   // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
@@ -228,6 +240,36 @@ export function fileContent(fileId: string): unknown {
     headers: {
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
     },
+  };
+}
+
+/** Lo que una ruta de contexto necesita saber para aceptar un archivo adjunto. */
+export interface AttachableFileFacts {
+  /** Quién lo subió; ausente en las semillas públicas del simulador. */
+  readonly uploaderUserId?: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly originalName: string;
+}
+
+/**
+ * De quién es, de qué tipo y cuánto pesa un archivo, como lo comprueba
+ * `assertUsableBy` de la API antes de colgarlo de algo (un comprobante de
+ * pago, por ejemplo). `undefined` si el archivo no existe.
+ *
+ * El tipo y el tamaño salen de los bytes subidos en esta pestaña; sin ellos
+ * —una semilla, o un archivo que perdió sus bytes al recargar— se deducen de
+ * la categoría, que es lo único que queda.
+ */
+export function attachableFileFacts(fileId: string): AttachableFileFacts | undefined {
+  const stored = archivos.get(fileId);
+  if (stored === undefined) return undefined;
+  const bytes = stored.bytes instanceof Blob ? stored.bytes : null;
+  return {
+    ...(stored.uploaderUserId === undefined ? {} : { uploaderUserId: stored.uploaderUserId }),
+    mimeType: bytes?.type || (stored.category === 'IMAGE' ? 'image/png' : 'application/pdf'),
+    sizeBytes: bytes?.size ?? 0,
+    originalName: stored.originalName,
   };
 }
 
@@ -253,7 +295,7 @@ export function urlDeArchivoSimulado(fileId: string): string | null {
   const archivo = archivos.get(fileId);
   if (archivo === undefined) return null;
   if (archivo.dataUrlReal !== undefined) return archivo.dataUrlReal;
-  if (archivo.bytes === undefined || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
+  if (!(archivo.bytes instanceof Blob) || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
   let url = urlsDeArchivos.get(fileId);
   if (url === undefined) {
     url = URL.createObjectURL(archivo.bytes);

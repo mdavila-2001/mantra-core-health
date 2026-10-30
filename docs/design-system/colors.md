@@ -38,7 +38,9 @@ información **es** la aguamarina. Tener dos rampas distintas para el mismo rol
 sería invitar a que se separaran.
 
 `success` y `error` sí tienen rampa propia (`#2E8B6E` y `#B5533C`): son colores
-que el sistema no usa para nada más.
+que el sistema no usa para nada más. Son rampas: **no cambian con el tema**, así
+que no se usan para pintar texto (`--c-error-500` da 2,99:1 sobre la tarjeta
+oscura); el texto de peligro va con `--text-danger` (ver `tokens.md`).
 
 ## Tokens semánticos
 

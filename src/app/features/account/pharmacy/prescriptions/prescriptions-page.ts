@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -8,16 +8,23 @@ import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.c
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import type { PrescriptionShareTarget } from '../../../../core/data-access/prescription-shares/prescription-shares.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
+import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
+import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { MI_HISTORIA_ROUTE } from '../../medical-record/medical-record.routes';
+import { PRESCRIPTION_SHARE_TESTIDS } from '../../../prescription-share/prescription-share.testids';
 import { PHARMACY_TESTIDS } from '../pharmacy.testids';
+import { ShareDialog } from './share-dialog/share-dialog';
+import { ShareLinks } from './share-links/share-links';
 
 /** Mismo tope que la historia clínica: es la misma lectura del resumen. */
 const TOPE = 50;
@@ -39,6 +46,8 @@ interface MedicamentoVisible {
 interface RecetaVisible {
   /** El `medicationRequests.id` con el que se abre «Dónde comprar». */
   readonly requestId: string;
+  /** La consulta de la receta; `null` si es un fármaco suelto (FAR-01, S-2). */
+  readonly encounterId: string | null;
   readonly cuando: Date;
   readonly emitida: boolean;
   readonly medicamentos: readonly MedicamentoVisible[];
@@ -76,10 +85,30 @@ interface RecetaVisible {
  * `TerminologyClient.readConceptLabels`, igual que `where-to-buy.ts`. Si las
  * etiquetas no llegan, el medicamento sale como «Sin registrar» y la receta se
  * lista igual: perder el nombre no justifica perder la receta.
+ *
+ * ## Compartir (FAR-01)
+ *
+ * Cada receta emitida ofrece «Compartir» (`ShareDialog`), que crea el enlace de
+ * la consulta entera o del fármaco suelto (`shareTargetOf`). La pestaña
+ * «Enlaces compartidos» (`ShareLinks`) los lista y los revoca; `?share=` la
+ * abre con el enlace marcado, que es a donde llega el dueño desde `/rx/:token`.
  */
 @Component({
   selector: 'app-prescriptions-page',
-  imports: [AppButtonLink, Badge, Card, DatePipe, PageHeader, RouterLink, ViewStateHost],
+  imports: [
+    AppButton,
+    AppButtonLink,
+    Badge,
+    Card,
+    DatePipe,
+    PageHeader,
+    RouterLink,
+    ShareDialog,
+    ShareLinks,
+    Tab,
+    Tabs,
+    ViewStateHost,
+  ],
   templateUrl: './prescriptions-page.html',
   styleUrl: './prescriptions-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -94,6 +123,17 @@ export class PrescriptionsPage {
   protected readonly sinPerfilDePaciente = this.perfil === null;
   protected readonly testids = PHARMACY_TESTIDS;
   protected readonly rutaDeHistoria = MI_HISTORIA_ROUTE;
+  protected readonly shareTestids = PRESCRIPTION_SHARE_TESTIDS;
+  protected readonly patientProfileId = this.perfil;
+
+  /** El enlace que el dueño abrió desde `/rx/:token` (`?share=`): abre su pestaña marcado. */
+  protected readonly highlightShareId = inject(ActivatedRoute).snapshot.queryParamMap.get('share');
+
+  /** 0 = recetas, 1 = enlaces compartidos. */
+  protected readonly selectedTab = signal(this.highlightShareId === null ? 0 : 1);
+
+  /** La receta con el diálogo «Compartir» abierto, o `null`. */
+  protected readonly sharing = signal<PrescriptionShareTarget | null>(null);
 
   private readonly recetas = signal<ViewState<readonly RecetaVisible[]>>(loading());
 
@@ -157,6 +197,30 @@ export class PrescriptionsPage {
   }
 
   protected readonly porId = (receta: RecetaVisible): string => receta.requestId;
+
+  /** La fecha de cada receta por el id con que la nombra un enlace (consulta o fármaco). */
+  protected readonly prescriptionDates = computed<ReadonlyMap<string, Date>>(
+    () => new Map(this.filas().map((receta) => [shareTargetId(receta), receta.cuando])),
+  );
+
+  protected openShare(receta: RecetaVisible): void {
+    this.sharing.set(shareTargetOf(receta));
+  }
+}
+
+/**
+ * Qué se comparte de una receta (FAR-01): la consulta entera si la tiene; si
+ * no, el fármaco suelto. Es la misma agrupación de `agrupar`, y la misma que
+ * la API (S-2).
+ */
+export function shareTargetOf(receta: RecetaVisible): PrescriptionShareTarget {
+  return receta.encounterId === null
+    ? { medicationRequestId: receta.requestId }
+    : { encounterId: receta.encounterId };
+}
+
+function shareTargetId(receta: RecetaVisible): string {
+  return receta.encounterId ?? receta.requestId;
 }
 
 /**
@@ -197,6 +261,7 @@ function recetaDe(
   const representante = grupo.find((fila) => fila.issuedAt !== undefined) ?? grupo[0];
   return {
     requestId: representante.id,
+    encounterId: representante.encounterId ?? null,
     cuando: representante.createdAt,
     emitida: grupo.some((fila) => fila.issuedAt !== undefined),
     medicamentos: grupo.map((fila) => ({

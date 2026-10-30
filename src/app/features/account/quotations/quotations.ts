@@ -55,6 +55,7 @@ import {
   type QuotationBooking,
   type VerticalQuotation,
 } from './quotations.logic';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * La tabla del recurso agendable que apunta a un centro de diagnóstico. La
@@ -118,6 +119,7 @@ interface Consultation {
     SearchField,
     SearchOriginPicker,
     Select,
+    LoadingState,
   ],
   templateUrl: './quotations.html',
   styleUrl: './quotations.css',

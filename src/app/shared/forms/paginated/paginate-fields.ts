@@ -48,6 +48,20 @@ export function paginateFields(
  * algo no cargó.
  */
 function paginateSection(seccion: SeccionDeFormulario): readonly PaginaDeFormulario[] {
+  if (seccion.sinPartir) {
+    if (seccion.campos.length === 0) return [];
+    return [
+      {
+        titulo: seccion.titulo,
+        ...(seccion.clave === undefined ? {} : { clave: seccion.clave }),
+        ...(seccion.hint === undefined ? {} : { hint: seccion.hint }),
+        ...(seccion.icon === undefined ? {} : { icon: seccion.icon }),
+        ...(seccion.disposicion === undefined ? {} : { disposicion: seccion.disposicion }),
+        sinPartir: true,
+        campos: seccion.campos,
+      },
+    ];
+  }
   const trozos = splitInChunks(seccion.campos, MAX_CAMPOS_POR_PAGINA, isMainQuestion);
   const total = trozos.length;
 

@@ -30,6 +30,7 @@ import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
 import { AttachmentPreview } from './attachment-preview/attachment-preview';
 import { type AttachmentDraft, createDraft, partitionFiles } from './attachment-draft';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * La barra de escribir — carril P2 y P9.
@@ -61,6 +62,7 @@ import { type AttachmentDraft, createDraft, partitionFiles } from './attachment-
     MenuTrigger,
     StickerPicker,
     Tooltip,
+    LoadingState,
   ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',

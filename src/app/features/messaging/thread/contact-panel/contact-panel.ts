@@ -19,7 +19,10 @@ import { CommunityClient } from '../../../../core/data-access/community/communit
 import { publicProfileLink } from '../../../../core/data-access/community/public-profile-url';
 import type { PublicProfileDetail } from '../../../../core/data-access/community/community.types';
 import { inertBackground, trapTabKey } from '../../../../shared/a11y/modal-focus';
+import { verificationOf } from '../../../../core/verification/verification-status';
 import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../../shared/components/atoms/verification-badge/verification-badge';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * «Ver perfil» del chat: quién es la persona del otro lado, sin salir del hilo.
@@ -46,7 +49,7 @@ import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
  */
 @Component({
   selector: 'app-contact-panel',
-  imports: [Avatar, RouterLink],
+  imports: [Avatar, RouterLink, LoadingState, VerificationBadge],
   templateUrl: './contact-panel.html',
   styleUrl: './contact-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +88,14 @@ export class ContactPanel {
    */
   protected readonly verified = computed(
     () => (this.profile()?.badges.length ?? 0) > 0,
+  );
+
+  /**
+   * La verificación para la insignia. Manda `verification.status` si la API lo
+   * envía; si no, `verified` (los sellos vigentes) como hasta ahora.
+   */
+  protected readonly verificacion = computed(() =>
+    verificationOf({ verification: this.profile()?.verification, verified: this.verified() }),
   );
 
   /** A dónde lleva «Ver ficha pública», o `null` si esta ficha no se publica. */

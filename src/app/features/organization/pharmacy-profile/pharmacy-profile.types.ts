@@ -129,6 +129,12 @@ export interface DocumentoLegal {
    */
   readonly diasParaVencer: number | null;
   readonly verificacion: EstadoDeVerificacion;
+  /**
+   * El servidor lo declaró vencido. Cuenta aunque no haya fecha de
+   * vencimiento con la que calcular el plazo: sin esto, un papel caducado y
+   * sin `venceEl` se leería «sin vencimiento declarado».
+   */
+  readonly vencido?: boolean;
 }
 
 /* ─── La gente de la empresa ─────────────────────────────────────────────── */
@@ -147,6 +153,8 @@ export interface ContactoDeLaEmpresa {
   readonly celular: string | null;
   /** `null` cuando la persona no tiene un correo vigente registrado. */
   readonly correo: string | null;
+  /** Documento de identidad, si se declaró (sólo el representante legal). */
+  readonly documento?: string | null;
 }
 
 /** La gente de la ficha: quien firma por la empresa y quienes la gestionan. */

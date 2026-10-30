@@ -608,7 +608,9 @@ describe('PatientProfileEdit', () => {
       expect(señal<string>('domicilio')()).toBe('');
 
       domicilio.confirmado.emit(localidad.punto);
-      expect(señal<string>('domicilio')()).toBe('Av. Arce 2631, Sopocachi');
+      // Sólo calle y número: el distrito va aparte, no dos veces.
+      expect(señal<string>('domicilio')()).toBe('Av. Arce 2631');
+      expect(señal<string>('distritoDomicilio')()).toBe('Sopocachi');
       expect(señal<string | null>('municipio')()).toBe('mun-quillacollo');
       // El trabajo no se entera: cada mapa llena sólo lo suyo.
       expect(señal<string>('direccionTrabajo')()).toBe('Calle Ayacucho 241');
@@ -617,7 +619,7 @@ describe('PatientProfileEdit', () => {
       const req = pedidoDeGuardado();
       expect(req.request.body).toEqual({
         residenceMunicipalityConceptId: 'mun-quillacollo',
-        homeAddressLines: 'Av. Arce 2631, Sopocachi',
+        homeAddressLines: 'Av. Arce 2631',
         // El distrito viaja aparte de la calle (ADR-0028 de la API).
         homeDistrict: 'Sopocachi',
         homeLatitude: -16.5,
@@ -626,7 +628,7 @@ describe('PatientProfileEdit', () => {
       req.flush({ ...PERFIL_BASE, ...CON_DIRECCIONES });
     });
 
-    it('sin calle en el mapa, el trabajo toma la zona y nunca una calle inventada', () => {
+    it('sin calle en el mapa, la calle del trabajo queda vacía y la zona va sólo a su campo', () => {
       montarYCargar(CON_DIRECCIONES);
       const punto = { lat: -17.8, lng: -63.2 };
       interno<(p: unknown) => void>('confirmarGpsTrabajo')(punto);
@@ -637,7 +639,9 @@ describe('PatientProfileEdit', () => {
         zona: 'Casco Viejo',
         municipioConceptId: null,
       });
-      expect(señal<string>('direccionTrabajo')()).toBe('Casco Viejo');
+      // Nunca una calle inventada, y la zona no se repite dentro de la calle.
+      expect(señal<string>('direccionTrabajo')()).toBe('');
+      expect(señal<string>('distritoTrabajo')()).toBe('Casco Viejo');
     });
 
     it('manda domicilio y trabajo en campos separados', () => {

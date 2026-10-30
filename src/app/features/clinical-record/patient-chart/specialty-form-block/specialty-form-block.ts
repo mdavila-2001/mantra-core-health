@@ -18,11 +18,9 @@ import { ClinicalClient } from '../../../../core/data-access/clinical/clinical.c
 import { DiagnosticsClient } from '../../../../core/data-access/diagnostics/diagnostics.client';
 import type { RespuestaDeFormulario } from '../../../../core/data-access/triage-ia/diagnosis-ia.types';
 import { writeFailureMessage } from '../../write-message';
-import { DiagnosisBlock } from '../diagnosis-block/diagnosis-block';
 import { AdditionalFields, entradasDelTexto } from '../additional-fields/additional-fields';
 import { ChartNotesClient } from '../../../../core/data-access/chart-notes/chart-notes.client';
 import type { MedicalNoteEntry } from '../../../../core/data-access/clinical/clinical.types';
-import { AnalysisOrderBlock } from '../analysis-order-block/analysis-order-block';
 import {
   FormConclusionBlock,
   type CierreDelFormulario,
@@ -84,39 +82,29 @@ import type { MapaDental } from '../odontogram/odontogram.types';
 export const PLANTILLA_HOJA_LIBRE = 'hoja-libre';
 
 /**
- * El formulario que arma el doctor a mano: filas «campo: valor», y en cada una
- * texto, uno o varios archivos o las dos cosas.
+ * Las dos entradas del selector que **no** son plantillas de `forms`: cirugía y
+ * odontología.
  *
- * Son los mismos campos adicionales que cierran cualquier plantilla, pero sin
- * plantilla arriba: para lo que no tiene ficha —el análisis con el que vino la
- * persona, una medición que no está en ningún formulario—. Tampoco pasa por
- * `forms`, así que no compite con la ficha ya respondida del encuentro: se
- * puede registrar antes, después o varias veces.
- */
-export const PLANTILLA_FORMULARIO_LIBRE = 'formulario-libre';
-
-/**
- * Las tres entradas del selector que **no** son plantillas de `forms`.
- *
- * Diagnosticar, registrar un procedimiento y pedir un estudio son, para quien
- * atiende, lo mismo que completar una ficha: «qué le voy a llenar a esta
- * persona». Que cada una escriba en otra tabla —`clinical.conditions`, el
- * histórico de procedimientos, las órdenes del circuito diagnóstico— es una
- * separación del backend, y no tiene por qué asomar como cuatro secciones
- * hermanas en la pantalla. Viven en esta lista por el mismo motivo por el que
- * ya vivía {@link PLANTILLA_HOJA_LIBRE}: se elige una vez, y una de las
- * respuestas posibles es «ninguna plantilla».
+ * Registrar un procedimiento es, para quien atiende, lo mismo que completar una
+ * ficha: «qué le voy a llenar a esta persona». Que escriba en otra tabla —el
+ * histórico de procedimientos— es una separación del backend, y no tiene por
+ * qué asomar como otra sección hermana en la pantalla. Viven en esta lista por
+ * el mismo motivo por el que ya vivía {@link PLANTILLA_HOJA_LIBRE}: se elige una
+ * vez, y una de las respuestas posibles es «ninguna plantilla».
  *
  * El prefijo las hace imposibles de confundir con el uuid de una plantilla.
  */
-export const BLOQUE_DIAGNOSTICO = 'bloque-diagnostico';
 export const BLOQUE_CIRUGIA = 'bloque-cirugia';
 export const BLOQUE_ODONTOLOGIA = 'bloque-odontologia';
-export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
 
 /**
- * Registros disponibles en cualquier especialidad. La alergia se carga como
- * diagnóstico (cliente, 02/10/2026).
+ * Lo que se ofrece en cualquier especialidad, antes de sus plantillas: escribir
+ * sin campos.
+ *
+ * El diagnóstico y la orden de análisis no van en esta lista: se eligen al final
+ * de la ficha, en su cierre (`app-form-conclusion-block`), y tienen sus propias
+ * casillas en la consulta. Ofrecerlos también acá era abrir dos caminos para el
+ * mismo registro. La alergia tampoco: se carga como diagnóstico.
  *
  * Cirugía y odontología van separadas —antes eran una sola opción,
  * «Procedimiento»— porque no comparten ni permiso de servidor ni datos:
@@ -125,10 +113,7 @@ export const BLOQUE_LABORATORIO = 'bloque-laboratorio';
  * formulario que no le pedía nada de eso.
  */
 const ENTRADAS_GENERALES: readonly { readonly value: string; readonly label: string }[] = [
-  { value: BLOQUE_DIAGNOSTICO, label: 'Diagnóstico — del catálogo CIE-10' },
   { value: PLANTILLA_HOJA_LIBRE, label: 'Hoja en blanco — escribir sin campos' },
-  { value: PLANTILLA_FORMULARIO_LIBRE, label: 'Formulario libre — campo y valor' },
-  { value: BLOQUE_LABORATORIO, label: 'Laboratorio e imagenología' },
 ];
 
 /**
@@ -281,8 +266,6 @@ interface PasoDelCierre {
     Alert,
     AppButton,
     Card,
-    DiagnosisBlock,
-    AnalysisOrderBlock,
     FormConclusionBlock,
     FreeNoteBlock,
     Checkbox,
@@ -479,7 +462,7 @@ export class SpecialtyFormBlock {
   /**
    * Todo lo que se puede completar en el encuentro, en una sola lista.
    *
-   * Primero los registros generales, luego cirugía y odontología cuando
+   * Primero la hoja en blanco, luego cirugía y odontología cuando
    * corresponden, y después las plantillas de la especialidad y transversales.
    */
   protected readonly opcionesDePlantilla = computed<readonly SelectOption<string>[]>(() => {
@@ -558,31 +541,21 @@ export class SpecialtyFormBlock {
   /** Está elegida la hoja en blanco, así que no se dibuja ninguna ficha. */
   protected readonly hojaLibre = computed(() => this.plantillaId() === PLANTILLA_HOJA_LIBRE);
 
-  /** Está elegido el formulario libre: sólo filas «campo: valor», sin plantilla. */
-  protected readonly formularioLibre = computed(
-    () => this.plantillaId() === PLANTILLA_FORMULARIO_LIBRE,
-  );
-
-  protected readonly esDiagnostico = computed(() => this.plantillaId() === BLOQUE_DIAGNOSTICO);
-
   protected readonly esCirugia = computed(() => this.plantillaId() === BLOQUE_CIRUGIA);
 
   protected readonly esOdontologia = computed(() => this.plantillaId() === BLOQUE_ODONTOLOGIA);
 
-  protected readonly esLaboratorio = computed(() => this.plantillaId() === BLOQUE_LABORATORIO);
-
   /**
-   * Lo elegido es uno de los tres bloques que escriben por su cuenta.
+   * Lo elegido es uno de los dos bloques que escriben por su cuenta.
    *
    * Se dibujan **antes** de la cadena de estados del motor de `forms` y no
-   * dentro: diagnosticar no depende de que el catálogo de plantillas haya
-   * cargado, ni de que este encuentro ya tenga una ficha respondida. Meterlos
-   * bajo esa cadena habría dejado el diagnóstico inalcanzable justo después de
-   * completar una ficha, que es cuando el modo lectura tapa el selector.
+   * dentro: registrar un procedimiento no depende de que el catálogo de
+   * plantillas haya cargado, ni de que este encuentro ya tenga una ficha
+   * respondida. Meterlos bajo esa cadena los habría dejado inalcanzables justo
+   * después de completar una ficha, que es cuando el modo lectura tapa el
+   * selector.
    */
-  protected readonly bloquePropio = computed(
-    () => this.esDiagnostico() || this.esCirugia() || this.esOdontologia() || this.esLaboratorio(),
-  );
+  protected readonly bloquePropio = computed(() => this.esCirugia() || this.esOdontologia());
 
   /**
    * No hay ninguna plantilla cargada en el sistema. Es un problema de datos:
@@ -658,13 +631,6 @@ export class SpecialtyFormBlock {
     this.eleccionManual.set(true);
     this.plantillaId.set(id);
     this.valores.set({});
-    this.fallosDelLibre.set([]);
-    // Lo ya registrado en el encuentro se lee al entrar: el formulario libre
-    // se puede llenar varias veces y conviene ver qué quedó de la anterior.
-    const encounterId = this.encounterId();
-    if (id === PLANTILLA_FORMULARIO_LIBRE && encounterId !== null && encounterId !== '') {
-      this.consultarAdicionales(encounterId);
-    }
   }
 
   constructor() {
@@ -929,7 +895,7 @@ export class SpecialtyFormBlock {
           // El encuentro pudo cambiar mientras la respuesta viajaba.
           if (this.encounterId() !== encounterId) return;
           this.respondido.set(ready(detalle));
-          if (detalle !== null || this.formularioLibre()) this.consultarAdicionales(encounterId);
+          if (detalle !== null) this.consultarAdicionales(encounterId);
         },
         error: (error: unknown) => {
           if (this.encounterId() !== encounterId) return;
@@ -1383,51 +1349,6 @@ export class SpecialtyFormBlock {
       });
   }
 
-  /* -- El formulario libre ------------------------------------------------ */
-
-  /** Lo que no se pudo registrar del formulario libre, en palabras. */
-  protected readonly fallosDelLibre = signal<readonly string[]>([]);
-
-  protected readonly puedeGuardarLibre = computed(
-    () =>
-      this.hayEncuentro() &&
-      (this.adicionales()?.tieneContenido() ?? false) &&
-      !(this.adicionales()?.hayProblemas() ?? false) &&
-      (this.adicionales()?.impedimento() ?? null) === null &&
-      !this.enviando(),
-  );
-
-  /**
-   * Registra el formulario libre: la nota con las filas y un documento por
-   * cada fila con archivos, contra el encuentro en curso. Mismos pasos que los
-   * campos adicionales de una ficha, sin la ficha adelante.
-   *
-   * Si falla la nota —el primer paso— no quedó nada escrito y las filas se
-   * conservan para reintentar. Si falla un documento, la nota ya está: se
-   * vacía lo escrito para no duplicarla al volver a guardar, y lo que faltó
-   * queda nombrado.
-   */
-  protected guardarLibre(): void {
-    const encounterId = this.encounterId();
-    const adicionales = this.adicionales();
-    if (encounterId === null || adicionales === undefined || !this.puedeGuardarLibre()) {
-      return;
-    }
-    const pasos = adicionales.pasos(encounterId);
-    if (pasos.length === 0) return;
-
-    this.enviando.set(true);
-    this.fallosDelLibre.set([]);
-    this.ejecutarEnOrden(pasos, 'El formulario libre no quedó completo').subscribe((fallos) => {
-      this.enviando.set(false);
-      this.fallosDelLibre.set(fallos);
-      if (fallos.length === pasos.length) return;
-      adicionales.limpiar();
-      this.cambio.emit();
-      this.consultarAdicionales(encounterId);
-    });
-  }
-
   /**
    * Las altas que el cierre pide, en el orden en que se registran: primero el
    * diagnóstico tentativo, después la orden de análisis. Ninguna es
@@ -1498,16 +1419,13 @@ export class SpecialtyFormBlock {
    * que se registre desde su casilla. Nunca falla hacia arriba: la ficha ya
    * quedó guardada y eso no se cuenta como error.
    */
-  private ejecutarEnOrden(
-    pasos: readonly PasoDelCierre[],
-    tituloDelFallo = 'La ficha quedó guardada, pero no todo el cierre',
-  ): Observable<readonly string[]> {
+  private ejecutarEnOrden(pasos: readonly PasoDelCierre[]): Observable<readonly string[]> {
     const [primero, ...resto] = pasos;
     if (primero === undefined) return of([]);
     return primero.ejecutar().pipe(
       tap(() => this.toasts.success(primero.exito, primero.titulo)),
-      switchMap(() => this.ejecutarEnOrden(resto, tituloDelFallo)),
-      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error, tituloDelFallo))),
+      switchMap(() => this.ejecutarEnOrden(resto)),
+      catchError((error: unknown) => of(this.fallosDesde(primero, resto, error))),
     );
   }
 
@@ -1516,7 +1434,6 @@ export class SpecialtyFormBlock {
     paso: PasoDelCierre,
     siguientes: readonly PasoDelCierre[],
     error: unknown,
-    tituloDelFallo: string,
   ): readonly string[] {
     const estado = errorToViewState<null>(error);
     const motivo =
@@ -1524,7 +1441,7 @@ export class SpecialtyFormBlock {
         ? estado.issues.map((issue) => issue.message).join(' ')
         : (writeFailureMessage(estado, { accion: `registrar ${paso.nombre}` }) ?? '');
     const mensaje = `No se registró ${paso.nombre}${motivo === '' ? '.' : `: ${motivo}`}`;
-    this.toasts.error(mensaje, tituloDelFallo);
+    this.toasts.error(mensaje, 'La ficha quedó guardada, pero no todo el cierre');
     return [
       mensaje,
       ...siguientes.map(

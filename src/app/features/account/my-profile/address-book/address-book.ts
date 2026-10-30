@@ -252,7 +252,9 @@ export class AddressBook {
     const localidad = confirmedLocality(this.localidad(), punto);
     if (localidad === null) return;
     const mismoQueElGuardado = samePoint(punto, this.puntoInicial());
-    this.calle.set(localidad.calle ?? (mismoQueElGuardado ? (this.base?.lines ?? '') : ''));
+    // Sólo calle y número: el distrito tiene su campo, y con la línea entera
+    // quedaba dos veces.
+    this.calle.set(localidad.calleSola ?? (mismoQueElGuardado ? (this.base?.lines ?? '') : ''));
     this.distrito.set(localidad.zona ?? (mismoQueElGuardado ? (this.base?.district ?? '') : ''));
     this.municipio.set(
       localidad.municipioConceptId ??

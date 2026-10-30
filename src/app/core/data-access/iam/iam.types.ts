@@ -736,6 +736,8 @@ export interface RegisteredOrganization {
   readonly diagnosticUnitId?: string;
   /** Sólo para `PHARMACY`: la farmacia (`pharmacy.pharmacies`) que nació con el alta (P50). */
   readonly pharmacyId?: string;
+  /** Sólo si el alta declaró `medicalFacility`: quedó persistido en la misma transacción. */
+  readonly medicalFacilityRegistered?: boolean;
 }
 
 /**

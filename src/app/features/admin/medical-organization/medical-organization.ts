@@ -47,6 +47,7 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Variante del badge por **código** de concepto, no por etiqueta.
@@ -110,7 +111,7 @@ const AVISO_DE_VENCIMIENTO_DIAS = 30;
  */
 @Component({
   selector: 'app-medical-organization',
-  imports: [AppButton, Badge, DataTable, FormField, MembershipsTab, PageHeader, Select, Tab, Tabs],
+  imports: [AppButton, Badge, DataTable, FormField, MembershipsTab, PageHeader, Select, Tab, Tabs, LoadingState],
   templateUrl: './medical-organization.html',
   styleUrl: './medical-organization.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

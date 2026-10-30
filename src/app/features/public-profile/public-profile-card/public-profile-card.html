@@ -49,11 +49,23 @@
 
         <div class="perfil__datos">
           <h1 class="perfil__nombre">
-            {{ p.displayName }}
+            {{ nombreEnDos().head }}<span class="perfil__cola">{{ nombreEnDos().tail }}
             <!-- El sello sólo si la verificación está activa. Pendiente cuenta
                  como no verificado: la jerarquía la pone el sello, y uno que
                  aparece por omisión no significa nada. -->
-            @if (p.verified) {
+            @if (!esLugar()) {
+              <!-- Un profesional: el sello de AloVida (o el reloj de «en
+                   verificación»). La API decide el estado; acá sólo se pinta. -->
+              <app-verification-badge
+                class="perfil__insignia"
+                size="lg"
+                [animated]="true"
+                [status]="verificacion().status"
+                [verifiedAt]="verificacion().verifiedAt"
+                [validUntil]="verificacion().validUntil"
+                [subject]="p.displayName"
+              />
+            } @else if (p.verified) {
               <span class="perfil__sello" title="Identidad verificada">
                 <svg
                   viewBox="0 0 24 24"
@@ -71,6 +83,7 @@
                 <span class="solo-lectores">Identidad verificada</span>
               </span>
             }
+            </span>
           </h1>
 
           @if (p.headline) {
@@ -473,6 +486,7 @@
               [kind]="p.kind"
               [slug]="p.slug"
               [professionalName]="p.displayName"
+              [acceptsReviews]="p.acceptsReviews"
             />
           </section>
         }
@@ -498,7 +512,7 @@
           <!-- Quién responde por cada cosa. La ficha la publica el prestador; lo
                único que dice AloVida es si la identidad se comprobó. -->
           <p class="perfil__pie">
-            @if (p.verified) {
+            @if (verificacion().status === 'VERIFIED') {
               AloVida comprobó la identidad de esta ficha. El resto lo declara y lo mantiene quien
               la publica.
             } @else {

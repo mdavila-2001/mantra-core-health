@@ -53,6 +53,26 @@ describe('SegmentedControl', () => {
   }
 
   /** FT-04-R01/R02 · las dos son botones, no texto ni enlaces. */
+  it('con `wrap` el marco permite pasar a otra fila; sin él, no', () => {
+    const marco = (fixture.nativeElement as HTMLElement).querySelector('.segmentado');
+    expect(marco?.classList.contains('segmentado--envuelto')).toBe(false);
+
+    const envuelto = TestBed.createComponent(SegmentedControl);
+    envuelto.componentRef.setInput('options', [
+      { value: 'a', label: 'Borradores (3)' },
+      { value: 'b', label: 'Desactivadas (1)' },
+    ]);
+    envuelto.componentRef.setInput('value', 'a');
+    envuelto.componentRef.setInput('ariaLabel', 'Filtro');
+    envuelto.componentRef.setInput('wrap', true);
+    envuelto.detectChanges();
+
+    const marcoEnvuelto = (envuelto.nativeElement as HTMLElement).querySelector('.segmentado');
+    expect(marcoEnvuelto?.classList.contains('segmentado--envuelto')).toBe(true);
+    // Los rótulos siguen enteros en el marcado: el recorte es cosa del CSS.
+    expect(marcoEnvuelto?.textContent).toContain('Desactivadas (1)');
+  });
+
   it('dibuja cada opción como un botón', () => {
     const botones = opciones();
     expect(botones.length).toBe(2);

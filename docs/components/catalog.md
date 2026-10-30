@@ -166,6 +166,67 @@ aparte y no una variante porque `search-result` no tiene CSS propio a propósito
 —su diseño vive en `alovida.css`, que se recopia entero desde la bóveda— y una
 variante escrita ahí desaparecería en la primera recopia.
 
+### `app-verification-badge` — el sello de «verificado»
+
+El único lugar donde se pinta el sello de un profesional verificado: un escudo
+azul con tilde blanco (glifo propio de AloVida), junto al nombre. Átomo, sin
+lógica de negocio: **el estado lo decide la API** y el átomo sólo lo pinta.
+Ocultarlo no es seguridad y mostrarlo no otorga nada.
+
+| Entrada | Para qué |
+|---|---|
+| `status` | `VERIFIED` · `IN_REVIEW` · `UNVERIFIED` · `EXPIRED` (el contrato del backend). Una suspensión o un rechazo llegan como `UNVERIFIED`; cualquier otro valor se trata como no verificado |
+| `size` | `sm` (16 px, junto a un nombre de tabla o tarjeta) · `md` (20 px) · `lg` (24 px, cabecera de ficha). Crece con el texto vecino |
+| `variant` | `icon` (por omisión) o `label` (pictograma + palabra) |
+| `verifiedAt`, `validUntil` | Fechas reales, ISO o `Date`; inválidas o nulas no se muestran |
+| `subject` | A quién pertenece, para el nombre accesible: «Dra. Ana Rojas, profesional verificado» |
+| `interactive` | `true` (botón con popover). `false` dentro de un enlace o botón: sin foco, el significado queda en `title` |
+| `animated` | Aparición con un leve resorte. Apagada por omisión |
+
+| Estado | Qué se ve |
+|---|---|
+| `VERIFIED` | Escudo azul (`--verified-bg`) con tilde (`--verified-fg`). Es el **único** con tilde |
+| `IN_REVIEW` | Reloj ámbar con borde (`--st-warning-*`): «Verificación en proceso» |
+| `EXPIRED` | Círculo gris con exclamación: «Verificación vencida» |
+| `UNVERIFIED` | **Ningún glifo.** En `icon` no se pinta nada; en `label`, sólo «No verificado» |
+
+Un `VERIFIED` con `validUntil` ya vencido se pinta como `EXPIRED` aunque la API
+todavía no lo haya degradado (nunca al revés: el cliente no promueve).
+
+**Accesible.** El pictograma es `role="img"` con el nombre completo; el botón se
+alcanza con teclado y abre un popover que dice qué significa y qué **no** (no es
+una recomendación clínica ni un aval del Ministerio o del Colegio), con fecha de
+verificación y vigencia si vinieron. Se descarta con `Esc`, no se cierra al mover
+el puntero hacia él y no tapa contenido (WCAG 1.4.13). Contraste del sello ≥ 3:1
+y del tilde ≥ 4,5:1 contra toda superficie en claro y oscuro
+(`check-contrast.mjs`); `forced-colors` usa colores de sistema; la aparición
+respeta `prefers-reduced-motion`.
+
+**De dónde sale el estado.** `core/verification/verification-status.ts`:
+`verificationOf(dto)` prefiere `dto.verification.status` y, si la API todavía no
+lo envía, deriva de `verified` (`true` → `VERIFIED`). Una pantalla que sólo
+conoce el concepto de estado de la ficha usa `verificationWithSealFallback`.
+
+**Un solo átomo, un solo campo.** `scripts/check-verification-badge.mjs`
+(`yarn check:verification-badge`, incluido en `gates:diseno`) falla si aparece un
+sello dibujado a mano, un ✓ junto a «verificado» o una clase propia fuera del
+átomo. Los sellos heredados —de organizaciones y credenciales, que el átomo no
+cubre— están congelados en `scripts/baselines/verification-badge.json`.
+
+**Una sola fuente visual del estado.** Donde antes había un chip («Verificado»,
+«Pendiente», con un «?» cuando el catálogo no se resolvía) hoy está el átomo: la
+ficha del profesional muestra la insignia junto al nombre y, en «Estado de
+habilitación», la variante con texto; las especialidades muestran el átomo sólo
+si el servidor trajo su estado (un estado ilegible no se inventa como
+«Verificado»); las tarjetas de la Guía y del buscador ya no repiten el sello de
+texto «Matrícula verificada». Los chips `app-status-seal` siguen siendo del
+estado de un **trámite** (cita, receta, credencial, matrícula), no de la
+verificación de la persona, y el gate lo vigila (regla R5).
+
+Dónde está montado: ficha del profesional (Guía y «Mi perfil»), tarjetas de la
+Guía y del buscador público, ficha pública, tendencias, encabezado y lista del
+chat y su panel de contacto.
+
 ## Componentes sin prueba propia
 
 Diez, y la mayoría por una razón buena:

@@ -1,0 +1,80 @@
+@if (painted()) {
+  <!-- El pictograma se dibuja UNA vez y se monta dentro de un botón (con
+       popover) o de un span (dentro de un enlace, donde no se anida un foco). -->
+  <ng-template #face>
+    <span class="vb__face" role="img" [attr.aria-label]="ariaLabel()">
+      @if (hasGlyph()) {
+        <svg class="vb__icon" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          @switch (state()) {
+            @case ('VERIFIED') {
+              <path class="vb__seal" [attr.d]="sealPath" />
+              <path class="vb__check" d="M8.1 12.3l2.6 2.6 5.3-5.6" />
+            }
+            @case ('IN_REVIEW') {
+              <circle class="vb__disc" cx="12" cy="12" r="10.2" />
+              <path class="vb__glyph" d="M12 6.9v5.3l3.4 2" />
+            }
+            @default {
+              <circle class="vb__disc" cx="12" cy="12" r="10.2" />
+              <path class="vb__glyph" d="M12 7.2v5.6" />
+              <circle class="vb__dot" cx="12" cy="16.4" r="1.25" />
+            }
+          }
+        </svg>
+      }
+      @if (variant() === 'label') {
+        <span class="vb__text">{{ copy().visible }}</span>
+      }
+    </span>
+  </ng-template>
+
+  @if (interactive()) {
+    <button
+      #trigger
+      type="button"
+      [class]="rootClasses()"
+      [attr.aria-describedby]="open() ? popoverId : null"
+      [attr.aria-expanded]="open()"
+      (pointerenter)="hoverIn()"
+      (pointerleave)="hoverOut()"
+      (focus)="focusIn()"
+      (blur)="focusOut()"
+      (click)="toggle()"
+      (keydown.escape)="close()"
+    >
+      <ng-container [ngTemplateOutlet]="face" />
+    </button>
+
+    @if (open()) {
+      <!-- `popover="manual"`: capa superior (no lo recorta ningún `overflow`)
+           sin cierre automático, porque lo cierran el foco, el puntero y Esc.
+           Tiene puntero: se puede entrar en él sin que desaparezca. -->
+      <div
+        #popover
+        popover="manual"
+        class="vb-pop"
+        role="tooltip"
+        [id]="popoverId"
+        (pointerenter)="hoverIn()"
+        (pointerleave)="hoverOut()"
+        (keydown.escape)="close()"
+      >
+        <strong class="vb-pop__title">{{ copy().name }}</strong>
+        <span class="vb-pop__body">{{ copy().meaning }}</span>
+        @if (copy().limits; as limits) {
+          <span class="vb-pop__limits">{{ limits }}</span>
+        }
+        @if (verifiedAtText(); as verified) {
+          <span class="vb-pop__date">{{ verified }}</span>
+        }
+        @if (validUntilText(); as until) {
+          <span class="vb-pop__date">{{ until }}</span>
+        }
+      </div>
+    }
+  } @else {
+    <span #trigger [class]="rootClasses()" [attr.title]="summary()">
+      <ng-container [ngTemplateOutlet]="face" />
+    </span>
+  }
+}

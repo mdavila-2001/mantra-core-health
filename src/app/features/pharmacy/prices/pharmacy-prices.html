@@ -1,7 +1,9 @@
-<app-page-header
-  title="Precios"
-  subtitle="El precio de venta de cada producto, tal como lo ven los pacientes en la plataforma. Cambie los que necesite y guarde todo junto."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Precios"
+    subtitle="El precio de venta de cada producto, tal como lo ven los pacientes en la plataforma. Cambie los que necesite y guarde todo junto."
+  />
+}
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {

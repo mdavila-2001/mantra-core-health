@@ -382,6 +382,7 @@ export class MapLocationPicker {
    * acercado, departamento, provincia, municipio y zona—, todo en sólo lectura.
    */
   readonly detallar = input(true);
+  readonly disposicion = input<'apilada' | 'dos-columnas' | 'tres-columnas'>('apilada'); // opt-in, ver el .css
 
   /** El título de la ficha de lo deducido. */
   readonly etiquetaFicha = input('Lo que sale del punto');
@@ -413,10 +414,14 @@ export class MapLocationPicker {
   /** «Bolivia», para el aviso. */
   protected readonly operatingCountriesName = joinCountryNames(this.operatingCountries);
 
-  /** Lo que muestra el campo «Calle», que no se edita. */
+  /**
+   * Lo que muestra el campo «Calle», que no se edita: calle y número, sin el
+   * barrio. El distrito tiene su propio campo justo debajo, y con la línea
+   * entera se leía dos veces —y no era lo que se guarda—.
+   */
   protected readonly streetText = computed(() => {
     const estado = this.streetState();
-    return estado === 'escrita' ? (this.street() ?? '') : STREET_TEXT[estado];
+    return estado === 'escrita' ? (this.streetOnly() ?? this.street() ?? '') : STREET_TEXT[estado];
   });
 
   /** Lo que muestra «Distrito o zona»: el del punto, o qué pasó con él. */

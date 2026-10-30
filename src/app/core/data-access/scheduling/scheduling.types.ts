@@ -1,3 +1,4 @@
+import type * as Billing from './scheduling-billing.types';
 /* ============================================================================
     Tipos de la vista para `scheduling` (M41).
 
@@ -84,12 +85,11 @@ export interface AgendaResourceQuery {
 }
 
 /**
- * Un cupo de la agenda.
- *
+ * Un cupo de la agenda, con el precio de la consulta (FAC-01).
  * `id` es el que se manda a `POST /scheduling/slots/{id}/holds` para reservar:
  * sin este listado no había forma de obtenerlo desde fuera de la base.
  */
-export interface AgendaSlot {
+export interface AgendaSlot extends Billing.SlotPricing {
   readonly id: string;
   readonly resourceId: string;
   readonly scheduleTemplateId: string | null;
@@ -149,7 +149,7 @@ export type PaymentStateCode = 'PENDING' | 'PARTIALLY_PAID' | 'PAID';
  * `markedByUserId`/`markedAt` viajan siempre porque marcar una cita como pagada
  * es una afirmación sobre el dinero de alguien y no puede quedar sin autor.
  */
-export interface PaymentStateInfo {
+export interface PaymentStateInfo extends Billing.PaymentAmounts {
   readonly state: PaymentStateCode;
   readonly label: string;
   readonly conceptId: string;
@@ -160,7 +160,7 @@ export interface PaymentStateInfo {
 }
 
 /** Cuerpo de `PUT /scheduling/bookings/:id/payment-state`. */
-export interface NewPaymentState {
+export interface NewPaymentState extends Billing.PaymentAmountReceived {
   readonly state: PaymentStateCode;
   readonly insuranceUsed?: boolean;
 }
@@ -634,6 +634,8 @@ export interface ScheduleRule {
    * cuando lo apaga en una franja que lo tenía: «no lo dijo» no se escribe.
    */
   readonly telemedicineEnabled?: boolean;
+  /** Franja sin turnos fijos (v4.2.64): no lleva `slotMinutes`, `gapMinutes` ni `capacityPerSlot`. */
+  readonly flexibleHours?: boolean;
 }
 
 /** Cuerpo de `POST /scheduling/resources/:id/templates` (UC-41-02). */
@@ -953,6 +955,8 @@ export interface PublishedRule {
    * booleano; acá es opcional para tolerar lecturas viejas. Ausente ≡ `false`.
    */
   readonly telemedicineEnabled?: boolean;
+  /** Franja sin turnos fijos; llega ya resuelta con `flexibleHours` de la plantilla. */
+  readonly flexibleHours?: boolean;
 }
 
 /** Lo que deja retirar un horario (`DELETE /scheduling/templates/:id`). */

@@ -1,0 +1,214 @@
+<section class="gp" [class.gp--grande]="grande()" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'chart-' + spec().id">
+  <!-- 1) TÍTULO -->
+  <header class="gp__cab">
+    <div class="gp__titulos">
+      <!-- En el diálogo «Ver en grande» el título ya es el encabezado del diálogo: aquí queda solo para lectores de pantalla. -->
+      <h3 class="gp__titulo" [class.gp__oculto]="grande()" [id]="ids + '-t'">{{ spec().titulo }}</h3>
+      @if (spec().subtitulo; as sub) {
+        <p class="gp__sub">{{ sub }}</p>
+      }
+    </div>
+
+    @if (!grande()) {
+      <div class="gp__acciones">
+        @if (spec().velas !== null) {
+          <app-segmented-control
+            [options]="modos"
+            [value]="modoEfectivo()"
+            ariaLabel="Forma de ver la serie"
+            wrap
+            (valueChange)="modo.set($event)"
+          />
+        }
+        <!-- 6) CÓMO SE CALCULA -->
+        @if (spec().info !== null) {
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="gp__info-btn"
+            [attr.aria-expanded]="infoAbierta()"
+            [attr.aria-controls]="ids + '-info'"
+            data-testid="chart-how-calculated"
+            (click)="infoAbierta.set(!infoAbierta())"
+          >
+            <app-nav-icon name="note" /> Cómo se calcula
+          </button>
+        }
+        <div class="gp__menu">
+          <button
+            #botonMenu
+            app-button
+            type="button"
+            variant="ghost"
+            size="sm"
+            class="gp__mas"
+            [attr.aria-label]="'Más opciones de ' + spec().titulo"
+            aria-haspopup="menu"
+            [attr.aria-expanded]="menuAbierto()"
+            [attr.aria-controls]="ids + '-menu'"
+            data-testid="chart-more"
+            (click)="alternarMenu()"
+          >
+            <span aria-hidden="true">⋯</span>
+          </button>
+          @if (menuAbierto()) {
+            <div class="gp__menu-lista" role="menu" [id]="ids + '-menu'" [attr.aria-label]="'Opciones de ' + spec().titulo" tabindex="-1" (keydown)="tecladoMenu($event)">
+              <button type="button" role="menuitem" class="gp__item" (click)="elegir('grande')">Ver en grande</button>
+              <button type="button" role="menuitem" class="gp__item" (click)="elegir('tabla')">
+                {{ tablaAbierta() ? 'Ocultar la tabla de datos' : 'Ver datos en tabla' }}
+              </button>
+              <button type="button" role="menuitem" class="gp__item" (click)="elegir('csv')">Exportar CSV</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </header>
+
+  @if (violaciones().length > 0) {
+    <div class="gp__contrato" role="alert" data-testid="chart-contract-violated">
+      <strong>Este gráfico no cumple el contrato y no se dibuja:</strong>
+      <ul>
+        @for (v of violaciones(); track v) {
+          <li>{{ v }}</li>
+        }
+      </ul>
+    </div>
+  } @else {
+    @if (infoAbierta() && spec().info; as info) {
+      <div class="gp__info" [id]="ids + '-info'" role="region" [attr.aria-label]="'Cómo se calcula ' + spec().titulo" data-testid="chart-info">
+        <dl>
+          <dt>Qué es</dt>
+          <dd>{{ info.definicion }}</dd>
+          <dt>Fórmula</dt>
+          <dd class="gp__formula">{{ info.formula }}</dd>
+          @if (info.numerador; as n) {
+            <dt>Numerador</dt>
+            <dd>{{ n }}</dd>
+          }
+          @if (info.denominador; as dn) {
+            <dt>Denominador</dt>
+            <dd>{{ dn }}</dd>
+          }
+          <dt>Fuente</dt>
+          <dd>{{ info.fuente }}</dd>
+          <dt>Frescura</dt>
+          <dd>{{ info.frescura }}</dd>
+          @if (info.salvedades?.length) {
+            <dt>Salvedades</dt>
+            <dd>
+              <ul>
+                @for (s of info.salvedades; track s) {
+                  <li>{{ s }}</li>
+                }
+              </ul>
+            </dd>
+          }
+        </dl>
+      </div>
+    }
+
+    <!-- 2) GRÁFICO · 3) LEYENDA · 4) TOOLTIP (los tres los dibuja la librería, con el contrato en el constructor de opciones) -->
+    @if (hayDatos()) {
+      @if (opciones(); as opts) {
+        <div
+          class="gp__lienzo"
+          echarts
+          [options]="opts"
+          [initOpts]="{ renderer: 'svg' }"
+          [style.height.px]="alto()"
+          role="img"
+          [attr.aria-label]="spec().resumenAccesible"
+          (chartClick)="alClic($event)"
+        ></div>
+      } @else {
+        <div class="gp__lienzo gp__lienzo--espera" [style.height.px]="alto()" aria-hidden="true"></div>
+      }
+    } @else {
+      <div class="gp__sin-dato" [style.min-height.px]="alto() / 2" role="status" data-testid="chart-no-data">
+        <strong>Sin dato</strong>
+        <span>{{ spec().sinDatoMotivo }}</span>
+      </div>
+    }
+
+    @if (modoEfectivo() === 'velas' && spec().velas; as velas) {
+      <p class="gp__nota" data-testid="chart-candles-note">
+        {{ velas.explicacion }}
+        Color: verde = mejora, rojo = empeora. Relleno: sólido = sube, hueco = baja.
+      </p>
+    }
+
+    <!-- 5) FILTRO POR CLIC -->
+    @if (etiquetaFiltro(); as et) {
+      <p class="gp__pista">
+        Haga clic en un elemento del gráfico para filtrar por {{ et }}.
+        @if (seleccion(); as sel) {
+          <strong class="gp__sel">Filtrando: {{ sel }}</strong>
+        }
+      </p>
+      @if (elementosFiltrables().length > 0 && !grande()) {
+        <details class="gp__teclado">
+          <summary>Filtrar por {{ et }} con el teclado</summary>
+          <div class="gp__chips">
+            @for (e of elementosFiltrables(); track e) {
+              <button type="button" class="gp__chip" [attr.aria-pressed]="seleccion() === e" (click)="filtrarPorTeclado(e)">{{ e }}</button>
+            }
+          </div>
+        </details>
+      }
+    }
+
+    <!-- 5) 6) y 7) Lo que el gráfico NO trae, dicho por escrito (compacto): omitirlo sin decir por qué es el defecto. -->
+    @if ((!etiquetaFiltro() && spec().filtroMotivo) || (spec().info === null && spec().infoMotivo) || (spec().velas === null && spec().velasMotivo)) {
+      <div class="gp__faltas">
+        @if (!etiquetaFiltro() && spec().filtroMotivo) {
+          <p class="gp__pista gp__pista--no" data-testid="chart-no-filter"><span>Sin filtro por clic:</span> {{ minusculaInicial(spec().filtroMotivo!) }}</p>
+        }
+        @if (spec().info === null && spec().infoMotivo) {
+          <p class="gp__pista gp__pista--no" data-testid="chart-no-info"><span>Sin explicación de cálculo:</span> {{ minusculaInicial(spec().infoMotivo!) }}</p>
+        }
+        @if (spec().velas === null && spec().velasMotivo) {
+          <p class="gp__pista gp__pista--no" data-testid="chart-no-candles"><span>Sin versión en velas:</span> {{ minusculaInicial(spec().velasMotivo!) }}</p>
+        }
+      </div>
+    }
+
+    <!-- Tabla de respaldo (obligatoria: contraste de tres tonos < 3:1) -->
+    @if (tablaAbierta() || grande()) {
+      <div class="gp__tabla-caja" tabindex="0" role="region" [attr.aria-label]="'Datos de ' + spec().titulo">
+        <table class="gp__tabla" [attr.data-testid]="'tabla-' + spec().id">
+          <caption class="gp__oculto">Datos de {{ spec().titulo }}</caption>
+          <thead>
+            <tr>
+              @for (c of tabla().columnas; track $index) {
+                <th scope="col">{{ c }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (fila of tabla().filas; track $index) {
+              <tr>
+                @for (celda of fila; track $index) {
+                  @if ($first) {
+                    <th scope="row">{{ fecha(celda) }}</th>
+                  } @else {
+                    <td>{{ celda }}</td>
+                  }
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="gp__tabla-pista">Deslice la tabla hacia los lados para ver todas las columnas.</p>
+    }
+  }
+
+  @if (enGrande()) {
+    <app-content-dialog [heading]="spec().titulo" size="xl" closeLabel="Cerrar" (closed)="enGrande.set(false)">
+      <app-chart-panel [spec]="spec()" [seleccion]="seleccion()" [grande]="true" (filtroCambia)="filtroCambia.emit($event)" />
+    </app-content-dialog>
+  }
+</section>

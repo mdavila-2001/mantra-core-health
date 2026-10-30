@@ -17,7 +17,15 @@ import { ResendVerification } from './features/auth/resend-verification/resend-v
 import { ErrorRecovery } from './features/error-recovery/error-recovery';
 import { affiliationRoutes } from './features/organization/practitioner-affiliations/affiliation.routes';
 import { NotFound } from './features/not-found/not-found';
+import {
+  ADMISSIONS_SCREENS,
+  ADMISSION_DETAIL_PATH,
+  loadAdmissionDetail,
+} from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import { INSIGHTS_RUTAS } from './features/insights/insights.routes';
+import { publicPrescriptionShareRoutes } from './features/prescription-share/prescription-share.routes';
+import { prescriptionDispenseRoutes } from './features/prescription-dispense/prescription-dispense.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -32,6 +40,10 @@ import {
   rutasHeredadasConParametro,
 } from './core/navigation/redirecciones-heredadas';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import {
+  ROLES_ADMINISTRACION,
+  ROLES_REPORTERIA,
+} from './features/reporting/reporting-access';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -80,6 +92,7 @@ const PANTALLAS: Readonly<Record<string, Type<unknown>>> = {
 /** Secciones con pantalla propia que se descargan al entrar, no antes. */
 const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>> = {
   ...MEDICAL_CENTER_SCREENS,
+  ...ADMISSIONS_SCREENS,
   // Diferida: el muro no es la primera pantalla de nadie, y arrastra la tarjeta
   // de publicación con sus reacciones.
   //
@@ -145,6 +158,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
     import('./features/clinical-record/clinical-record').then((m) => m.ClinicalRecord),
+  'my-primary-patients': () =>
+    import('./features/primary-practitioner/my-primary-patients/my-primary-patients').then(
+      (m) => m.MyPrimaryPatients,
+    ),
   'administration/users': () =>
     import('./features/admin/user-registration/user-registration').then((m) => m.UserRegistration),
   'administration/patients': () =>
@@ -225,6 +242,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
   'superadmin/portal': () =>
     import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
+  'administration/marketing-insights': () =>
+    import('./features/insights/insights-shell').then((m) => m.InsightsShell),
   'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
   'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
@@ -303,22 +322,11 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/organization/pharmacy-campaigns/pharmacy-campaigns').then(
       (m) => m.PharmacyCampaigns,
     ),
-  // Productos de la farmacia: el listado con filtros y, en un modal con
-  // pestañas, el alta y la edición. Ruta hermana por el mismo motivo que las
-  // promociones. La carga masiva y las demás pantallas del portal de la farmacia
-  // (resumen, categorías, importación, inventario) son de `features/pharmacy/`.
+  // El catálogo de la farmacia: cinco pantallas en pestañas (`features/pharmacy/catalog/`).
   'administration/pharmacy-catalog': () =>
-    import('./features/pharmacy/products/pharmacy-products').then((m) => m.PharmacyProducts),
+    import('./features/pharmacy/catalog/pharmacy-catalog-hub').then((m) => m.PharmacyCatalogHub),
   'administration/pharmacy': () =>
     import('./features/pharmacy/summary/pharmacy-summary').then((m) => m.PharmacySummaryPage),
-  'administration/pharmacy-categories': () =>
-    import('./features/pharmacy/categories/pharmacy-categories').then((m) => m.PharmacyCategories),
-  'administration/pharmacy-import': () =>
-    import('./features/pharmacy/import/pharmacy-import').then((m) => m.PharmacyImport),
-  'administration/pharmacy-inventory': () =>
-    import('./features/pharmacy/inventory/pharmacy-inventory').then((m) => m.PharmacyInventory),
-  'administration/pharmacy-prices': () =>
-    import('./features/pharmacy/prices/pharmacy-prices').then((m) => m.PharmacyPrices),
   // P34 · 24 h y turnos de guardia de cada sucursal (26/10/2026).
   'administration/pharmacy-hours': () =>
     import('./features/pharmacy/opening-hours/pharmacy-opening-hours').then(
@@ -380,8 +388,10 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     ),
   'administration/clinical-forms': () =>
     import('./features/admin/clinical-forms/clinical-forms').then((m) => m.ClinicalForms),
-  questionnaires: () =>
-    import('./features/questionnaires/questionnaires').then((m) => m.SurveysHome),
+  // «Encuestas» y «Formularios» son dos pestañas del mismo centro (28/10/2026):
+  // las dos rutas siguen vivas y dibujan `FormsHub`, que elige la pestaña por la
+  // ruta. La ficha de una encuesta (`questionnaires/:surveyId`) sigue aparte.
+  questionnaires: () => import('./features/forms-hub/forms-hub').then((m) => m.FormsHub),
   'my-account/questionnaires': () =>
     import('./features/account/questionnaires/questionnaires').then((m) => m.Questionnaires),
   glossary: () => import('./features/glossary/glossary').then((m) => m.Glossary),
@@ -389,7 +399,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // login de nadie y arrastra el motor de formularios por partes para la vista
   // previa. La ruta **no puede llamarse `forms`** — es prefijo del proxy hacia
   // la API y lo verifica `check-route-prefixes.mjs`.
-  'form-builder': () => import('./features/form-builder/form-builder').then((m) => m.FormBuilder),
+  'form-builder': () => import('./features/forms-hub/forms-hub').then((m) => m.FormsHub),
   // Carril 17. Las tres pantallas van diferidas: cada una la alcanza un rol
   // distinto —el administrador del laboratorio, el visitador y el doctor— y
   // ninguna es el destino del login de nadie.
@@ -430,6 +440,18 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
  * el guard nunca niega lo que la API permite. `app.routes.spec.ts` fija la regla.
  */
 const PANTALLAS_HIJAS: Routes = [
+  {
+    // FAC-06 · «Configuración para facturar»: ejercicio fiscal, precio de la
+    // consulta y emisor de prueba. Hereda los roles de Contabilidad; quién
+    // cambia cada cosa lo decide la API. Se llega desde la contabilidad.
+    path: 'administration/accounting/billing-setup',
+    title: `${APP_TITLE} - Configuración para facturar`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () =>
+      import('./features/billing-setup/billing-setup')
+        .then((m) => m.BillingSetup)
+        .catch(() => chunkFallido()),
+  },
   {
     // El **cockpit contable**: estado del ejercicio, bandeja de documentos por
     // estado del flujo, cartera por antigüedad y cierre del período. Abría en
@@ -528,11 +550,9 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Elegir cuál de mis recetas comprar (carril 43, H4). Hija de «Farmacia»:
-    // la tienda la enlaza con «Buscar toda una receta», y cada tarjeta lleva a
-    // `medical-record/where-to-buy/:requestId`, que ya existe. Con
-    // `seccionRolesGuard` por la misma razón que `pharmacy-orders/new`: su
-    // sección declara roles y `app.routes.spec.ts` exige cumplirlos en la hija.
+    // Mis recetas (carril 43, H4; «Compartir», FAR-01). Hija de «Farmacia», con
+    // `seccionRolesGuard` como `pharmacy-orders/new`: su sección declara roles
+    // y `app.routes.spec.ts` exige cumplirlos en la hija.
     path: 'my-account/pharmacy/prescriptions',
     title: `${APP_TITLE} - Mis recetas`,
     canActivate: [seccionRolesGuard],
@@ -615,10 +635,9 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.OrderInvoice)
         .catch(() => chunkFallido()),
   },
+  ...prescriptionDispenseRoutes(chunkFallido),
   {
-    // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
-    // «recepción por un link» del registro del cliente. Hija de la bandeja;
-    // hereda por prefijo su regla de acceso por membresía.
+    // El pedido visto desde el mostrador (FAR-I3); hereda por prefijo el acceso de la bandeja.
     path: 'administration/pharmacy-orders/:orderId',
     title: `${APP_TITLE} - Pedido en el mostrador`,
     canActivate: [seccionRolesGuard],
@@ -761,6 +780,12 @@ const PANTALLAS_HIJAS: Routes = [
     pathMatch: 'full',
     redirectTo: redireccionConQuery({ ruta: '/my-account/identity', query: { tab: 'cases' } }),
   },
+  // Las pantallas sueltas del catálogo de la farmacia son pestañas de `pharmacy-catalog`.
+  ...(['categories', 'prices', 'inventory', 'import'] as const).map((tab) => ({
+    path: `administration/pharmacy-${tab}`,
+    pathMatch: 'full' as const,
+    redirectTo: redireccionConQuery({ ruta: '/administration/pharmacy-catalog', query: { tab } }),
+  })),
   {
     // Ruta anterior a la unión de identidad. Conserva el enlace profundo y lo
     // abre como diálogo dentro de la pestaña «Mis trámites».
@@ -922,6 +947,13 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   ...affiliationRoutes({ practitionerOnly: soloDeQuienAtiende, chunkFailed: chunkFallido }),
+  {
+    // La ficha de una admisión cuelga de la bandeja: hereda los roles de su sección.
+    path: ADMISSION_DETAIL_PATH,
+    title: `${APP_TITLE} - Revisión de admisión`,
+    canActivate: [seccionRolesGuard],
+    loadComponent: () => loadAdmissionDetail().catch(() => chunkFallido()),
+  },
   {
     // La importación por archivo. No es una sección del menú: cuelga de
     // Terminología, que es donde alguien va a buscarla, y se alcanza desde ahí
@@ -1199,6 +1231,7 @@ function pantallaDeGeolocalizacion(
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
   'superadmin/portal': PORTAL_RUTAS,
+  'administration/marketing-insights': INSIGHTS_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
@@ -1724,6 +1757,39 @@ export const routes: Routes = [
   // y el cliente lo traduce al prefijo de la API, que devuelve 404 si el slug
   // es de otra clase en vez de redirigir.
   ...rutasDeFichasPublicas(),
+  // Los dos portales a los que entra quien administra y consulta reportes
+  // (30/10/2026). Van **fuera** del armazón de administración, cada uno con su
+  // propio marco, y delante del comodín: ninguno cuelga de una sección del
+  // registro, así que no hay menú que los filtre.
+  //
+  // Los dos llevan `authGuard` y `seccionRolesGuard` con los roles escritos en
+  // `data`: ocultar una tarjeta del selector no es seguridad, y quien escriba la
+  // dirección a mano se topa con este guard primero y con la API después. El
+  // guard mira `ROLES_ROUTE_DATA` antes que cualquier sección, con la misma
+  // regla del comodín `SUPERADMIN`.
+  {
+    path: 'portal-selector',
+    title: `${APP_TITLE} - Elegir portal`,
+    canActivate: [authGuard, seccionRolesGuard],
+    // La unión de los dos: el selector decide por sí mismo si hay algo que
+    // elegir, y a quien solo tiene un acceso lo redirige directo.
+    data: { [ROLES_ROUTE_DATA]: [...ROLES_ADMINISTRACION, ...ROLES_REPORTERIA] },
+    loadComponent: () =>
+      import('./features/portal-selector/portal-selector')
+        .then((m) => m.PortalSelector)
+        .catch(() => chunkFallido()),
+  },
+  {
+    path: 'reports',
+    canActivate: [authGuard, seccionRolesGuard],
+    data: { [ROLES_ROUTE_DATA]: ROLES_REPORTERIA },
+    loadChildren: () =>
+      import('./features/reporting/reporting.routes')
+        .then((m) => m.REPORTING_ROUTES)
+        // Un fragmento que ya no existe tras un despliegue: la misma pantalla de
+        // recuperación que el resto, en vez de una navegación muerta.
+        .catch((): Routes => [{ path: '**', component: chunkFallido() }]),
+  },
   // La raíz, antes del armazón guardado: sin sesión manda a la superficie
   // pública (`/search`) y no al login; con sesión, al panel. Los dos destinos
   // salen del propio `homeGuard` (un `UrlTree`, nunca `true`) porque Angular no
@@ -2203,6 +2269,7 @@ export const routes: Routes = [
       ),
     title: 'AloVida - Verificar certificado',
   },
+  ...publicPrescriptionShareRoutes(chunkFallido),
   {
     path: 'auth',
     component: Login,

@@ -1,0 +1,41 @@
+<div class="fc" role="group" [attr.aria-label]="ariaLabel()">
+  @if (head(); as h) {
+    <div class="fc__head">
+      <span class="fc__head-name">{{ h.label }}</span>
+      <strong class="fc__head-val">{{ int(h.value) }}</strong>
+      <span class="fc__head-note">Entrada del embudo: otra magnitud, por eso no se dibuja a escala.</span>
+    </div>
+  }
+  <ol class="fc__list">
+    @for (r of rows(); track r.stage.id) {
+      <li class="fc__row" [class.fc__row--worst]="r.worst" [class.fc__row--picked]="selectedId() === r.stage.id">
+        <button type="button" class="fc__btn" [attr.aria-pressed]="selectedId() === r.stage.id" [attr.aria-label]="r.stage.label + ': ' + int(r.stage.value) + '. ' + r.text" (click)="picked.emit(r.stage.id)">
+          <span class="fc__name">{{ r.stage.label }}</span>
+          <span class="fc__track">
+            <span class="fc__bar" [style.inline-size.%]="r.widthPct"></span>
+          </span>
+          <span class="fc__nums">
+            <strong>{{ int(r.stage.value) }}</strong>
+            @if (r.stepRate !== null) {
+              <span class="fc__rate" [title]="r.text">{{ pct(r.stepRate) }} de la etapa anterior</span>
+            }
+          </span>
+          <span class="fc__extra">
+            @if (r.dropped !== null && r.dropped > 0) {
+              <span class="fc__drop">−{{ int(r.dropped) }} se pierden</span>
+            }
+            @if (r.gapVsBenchmark !== null) {
+              <span class="fc__bm" [class.fc__bm--bad]="r.gapVsBenchmark < -0.05">{{ change(r.gapVsBenchmark) }} vs benchmark</span>
+            }
+            @if (r.stage.changeVsPrevious !== null && r.stage.changeVsPrevious !== undefined) {
+              <span class="fc__prev">{{ change(r.stage.changeVsPrevious) }} vs periodo anterior</span>
+            }
+            @if (r.worst) {
+              <span class="fc__flag">Mayor pérdida frente al benchmark</span>
+            }
+          </span>
+        </button>
+      </li>
+    }
+  </ol>
+</div>

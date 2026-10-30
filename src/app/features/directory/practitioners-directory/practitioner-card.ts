@@ -1,4 +1,6 @@
+import { verificationOf } from '../../../core/verification/verification-status';
 import type { PractitionerListItem } from '../../../core/data-access/profiles/profiles.types';
+import { ACTIVITY_COUNTERS } from '../../account/my-profile/activity-counters';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { initialsOf } from '../../../shared/text/initials';
@@ -45,6 +47,22 @@ function especialidadesDe(
     .map((especialidad) => etiquetas.get(especialidad.specialtyConceptId)?.display)
     .filter((nombre): nombre is string => nombre !== undefined && nombre !== '');
   return nombres.length === 0 ? undefined : [...new Set(nombres)].join(' · ');
+}
+
+/**
+ * Las cifras por las que la guía ordena, con las mismas claves que
+ * {@link ACTIVITY_COUNTERS}: el orden y la ficha hablan de lo mismo.
+ * Sin `activity` —una API que todavía no la manda— no hay cifras, y esas
+ * tarjetas van al final de cualquier orden por actividad.
+ */
+function cifrasDe(fila: PractitionerListItem): Readonly<Record<string, number>> | undefined {
+  const actividad = fila.activity;
+  if (actividad === undefined) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    ACTIVITY_COUNTERS.map((contador) => [contador.clave, actividad[contador.campo]]),
+  );
 }
 
 export function porNombre(a: SearchResultItem, b: SearchResultItem): number {
@@ -97,14 +115,26 @@ export function toResultado(
     });
   }
 
-  const sellos = [];
-  // El sello de matrícula verificada, primero: es lo que distingue a quien
-  // probó lo que declara del resto del padrón, y la guía los lista a todos.
-  // Sólo se marca al verificado: estampar «sin verificar» a quien todavía no
-  // pasó por el trámite dice de él algo que no es suyo.
-  if (fila.verified) {
-    sellos.push({ label: 'Matrícula verificada', tone: 'ok' as const });
+  // Cuántas veces atendió, cuando atendió alguna: es la cifra por la que se
+  // ordena «más encuentros atendidos», y ordenar por un número que no se ve
+  // obliga a abrir la ficha para entender el orden. En cero no se dice: «0
+  // encuentros» de un médico del padrón que nunca usó la plataforma se lee
+  // como que no atiende.
+  const encuentros = fila.activity?.encounters ?? 0;
+  if (encuentros > 0) {
+    meta.push({
+      text: `${encuentros} ${encuentros === 1 ? 'encuentro atendido' : 'encuentros atendidos'}`,
+      iconKey: 'actividad',
+    });
   }
+
+  const cifras = cifrasDe(fila);
+
+  const sellos = [];
+  // La verificación ya no es un sello de texto: la dice la insignia junto al nombre
+  // (`verification`), una sola fuente visual. Antes había acá un «Matrícula verificada»
+  // que repetía —y podía contradecir— a la insignia.
+  const verificacion = verificationOf(fila);
   // La disponibilidad para pacientes nuevos ya no se estampa: el sello salía en
   // TODA tarjeta, también en la de quien nunca tocó el ajuste, y el valor por
   // defecto anunciaba «No toma pacientes nuevos» de profesionales que sí los
@@ -137,7 +167,11 @@ export function toResultado(
     ...(fila.ratingAverage != null && (fila.ratingCount ?? 0) > 0
       ? { rating: { average: fila.ratingAverage, count: fila.ratingCount! } }
       : {}),
+    // El check azul junto al nombre: lo decide la API (`verification`, o `verified`
+    // en una API que todavía no lo envía). Acá sólo se traduce.
+    verification: verificacion,
     meta,
     seals: sellos,
+    ...(cifras === undefined ? {} : { stats: cifras }),
   };
 }

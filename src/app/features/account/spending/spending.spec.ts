@@ -129,7 +129,11 @@ describe('Spending', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no tiene gastos registrados');
+    expect(texto()).toContain(
+      'Todavía no tiene gastos registrados. Acá aparecen las consultas, compras de farmacia y análisis que le facturaron. Si pagó una cita y no la ve acá, el pago figura en «Mis citas».',
+    );
+    // H02: no promete lo que no pasa (un pago de la agenda no genera factura).
+    expect(texto()).not.toContain('lo va a ver acá');
     expect(texto()).toContain('Buscar un profesional');
     expect(raiz().querySelector('[data-testid="spending-dashboard"]')).toBeNull();
   });

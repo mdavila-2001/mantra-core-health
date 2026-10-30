@@ -1,12 +1,12 @@
 <app-content-dialog
   heading="Calificar la atención"
-  [description]="'Su opinión va a figurar en la ficha de ' + professionalName() + '.'"
+  [description]="'Su opinión va a figurar en la ficha de ' + nombreDelProfesional() + '.'"
   size="md"
   (closed)="closed.emit()"
 >
   @if (cargandoAtenciones()) {
-    <p data-testid="calificar-cargando">Buscando sus atenciones…</p>
-  } @else if (atenciones().length === 0) {
+    <app-loading-state data-testid="calificar-cargando" message="Buscando sus atenciones…" />
+  } @else if (!atencionPrefijada() && atenciones().length === 0) {
     <!-- Sin atenciones cerradas no hay formulario que mostrar: el servidor lo
          rechazaría, y ofrecerlo sería invitar a un error que sólo se descubre
          al enviar. -->
@@ -16,18 +16,27 @@
     </p>
   } @else {
     <form class="calificar" (submit)="$event.preventDefault()">
-      <app-form-field
-        label="Qué atención está calificando"
-        [hint]="'La opinión se publica solo si esta atención fue con ' + professionalName() + ' y ya terminó.'"
-        data-testid="calificar-atencion"
-      >
-        <app-select
-          [options]="opciones()"
-          [value]="encuentro()"
-          placeholder="Elija la atención"
-          (valueChange)="encuentro.set($event)"
-        />
-      </app-form-field>
+      <!-- Privacidad: la encuesta y la reseña son dos cosas distintas. La
+           reseña es pública; lo que se contestó en la encuesta no viaja con
+           ella. -->
+      <app-alert tone="info" data-testid="calificar-aviso-privacidad">
+        Su encuesta es privada y sólo la ve su médico. Una reseña es pública.
+      </app-alert>
+
+      @if (!atencionPrefijada()) {
+        <app-form-field
+          label="Qué atención está calificando"
+          [hint]="'La opinión se publica solo si esta atención fue con ' + nombreDelProfesional() + ' y ya terminó.'"
+          data-testid="calificar-atencion"
+        >
+          <app-select
+            [options]="opciones()"
+            [value]="encuentro()"
+            placeholder="Elija la atención"
+            (valueChange)="encuentro.set($event)"
+          />
+        </app-form-field>
+      }
 
       <app-form-field label="Calificación general" hint="1 es muy mala y 5 es excelente.">
         <!-- Estrellas como radios: es una elección entre cinco, y un control

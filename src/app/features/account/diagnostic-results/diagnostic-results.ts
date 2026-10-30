@@ -42,6 +42,7 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Tope de resultados que se traen. Nadie tiene cien estudios liberados a la vez. */
 const TOPE_DE_RESULTADOS = 50;
@@ -145,6 +146,7 @@ interface ArchivoVisible {
     NavIcon,
     PageHeader,
     Select,
+    LoadingState,
   ],
   templateUrl: './diagnostic-results.html',
   styleUrl: './diagnostic-results.css',

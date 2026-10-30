@@ -237,3 +237,10 @@
 .mi-salud__benefits:not(:empty) {
   margin-block-end: var(--sp-6);
 }
+
+/* El lugar de «Su médico de cabecera» mientras llega su `@defer`: reserva
+   aproximadamente su alto para que la tarjeta no empuje lo de abajo. */
+.mi-salud__cabecera-hueco {
+  min-block-size: var(--sp-20);
+  margin-block: var(--sp-6);
+}

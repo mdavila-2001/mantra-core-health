@@ -74,7 +74,7 @@ function declaradosEnTypeScript() {
   // por donde el script mira el catálogo. El resultado fue el peor de los dos
   // mundos: un guardarraíl en rojo permanente, que es un guardarraíl que nadie
   // lee. `DESIGN_TOKENS` sí los incluye, al final y aparte.
-  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES', 'MATERIAL_SHARED']) {
+  for (const objeto of ['SURFACE', 'TEXT', 'BRAND', 'BORDER', 'EFFECT', 'FONT_FAMILY', 'COMPAT_ALIASES', 'MATERIAL_SHARED', 'VERIFIED', 'CHART']) {
     for (const token of objetoDe(objeto)) tokens.add(token);
   }
 

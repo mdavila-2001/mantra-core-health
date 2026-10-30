@@ -1,0 +1,65 @@
+<app-view-state-host [state]="fiscalYear()" (retry)="reload()">
+  @if (fiscalYear(); as state) {
+    @if (state.status === 'ready') {
+      @if (state.data; as fy) {
+        <dl class="billing-setup__facts" data-testid="fiscal-year-current">
+          <div>
+            <dt>Ejercicio</dt>
+            <dd>{{ fy.name }}</dd>
+          </div>
+          <div>
+            <dt>Desde</dt>
+            <dd>{{ dayMonthYear(fy.startsOn) }}</dd>
+          </div>
+          <div>
+            <dt>Hasta</dt>
+            <dd>{{ dayMonthYear(fy.endsOn) }}</dd>
+          </div>
+          <div>
+            <dt>Mes en curso</dt>
+            <dd>{{ currentPeriodName() ?? 'Ninguno: hoy cae fuera del ejercicio' }}</dd>
+          </div>
+          <div>
+            <dt>Meses</dt>
+            <dd>{{ fy.periods.length }}</dd>
+          </div>
+        </dl>
+      } @else {
+        <div class="billing-setup__form" data-testid="fiscal-year-missing">
+          <p class="billing-setup__lead">
+            Esta práctica todavía no tiene un ejercicio fiscal. Sin él no se pueden registrar las ventas en la
+            contabilidad. Se abre del 1 de enero al 31 de diciembre, con un período por mes.
+          </p>
+          <app-form-field label="Año" [errorMessage]="yearError() ?? ''" [required]="true">
+            <app-input
+              inputMode="numeric"
+              autocomplete="off"
+              [value]="yearDraft()"
+              (valueChange)="writeYear($event)"
+              [hasError]="yearError() !== null"
+              testId="fiscal-year-input"
+            />
+          </app-form-field>
+          @if (openError(); as message) {
+            <app-alert tone="error" title="No se abrió el ejercicio" data-testid="fiscal-year-error">
+              {{ message }}
+            </app-alert>
+          }
+          <div class="billing-setup__actions">
+            <button
+              app-button
+              type="button"
+              variant="primary"
+              [isLoading]="saving()"
+              [disabled]="yearError() !== null"
+              data-testid="fiscal-year-open"
+              (clicked)="open()"
+            >
+              Abrir ejercicio
+            </button>
+          </div>
+        </div>
+      }
+    }
+  }
+</app-view-state-host>

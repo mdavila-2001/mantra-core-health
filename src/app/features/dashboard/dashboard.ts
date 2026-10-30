@@ -17,6 +17,7 @@ import { Card } from '../../shared/components/molecules/card/card';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { TutorialTarget } from '../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
+import { AdmissionStatusCard } from '../account/admission-status-card/admission-status-card';
 import { SetupNotice } from '../admin/getting-started/setup-notice/setup-notice';
 import { TodayAgenda } from './today-agenda/today-agenda';
 import { SummaryConsultations } from './consultations-summary/consultations-summary';
@@ -92,6 +93,7 @@ const ROLES_DE_TRABAJO: readonly string[] = [
     ViewStateHost,
     PatientHome,
     SetupNotice,
+    AdmissionStatusCard,
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
@@ -173,6 +175,9 @@ export class Dashboard {
   protected readonly puedeVerPacientes = computed(() =>
     rolesAlcanzan(['SECURITY_ADMIN'], this.roles()),
   );
+
+  /** Quien atiende ve el estado de su verificación; la solicitud es suya. */
+  protected readonly esProfesional = computed(() => this.roles().includes('PRACTITIONER'));
 
   /** Quien puede aprovisionar organizaciones: es de quien es la puesta en marcha. */
   protected readonly puedeCrearOrganizacion = computed(() =>

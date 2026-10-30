@@ -53,6 +53,15 @@
   border-inline-start-color: var(--menta);
 }
 
+/* Una lectura fallida no es «no tiene perfil»: lo dice y ofrece reintentar. */
+.chat-prefs__aviso.is-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2) var(--e3);
+  border-inline-start-color: var(--error-tinta);
+}
+
 /* El renglón del interruptor: el texto a la izquierda y el control a la
    derecha, encuadrado como la fila de un ajuste. Es el mismo reparto que usan
    los avisos y los permisos en esta pantalla; sin el encuadre, el interruptor
@@ -259,4 +268,263 @@
 
 .chat-prefs__nueva .chat-prefs__campo {
   flex: 1 1 16rem;
+}
+
+/* --- La decisión, el formulario y la vista previa -------------------------- */
+
+/* Formulario a la izquierda y vista previa a la derecha, a lo ancho; en una
+   pantalla angosta la vista previa baja debajo, donde se sigue viendo antes
+   de guardar. */
+.chat-prefs__disposicion {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--e5);
+}
+
+@media (min-width: 60rem) {
+  .chat-prefs__disposicion {
+    grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+    align-items: start;
+  }
+
+  .chat-prefs__previa {
+    position: sticky;
+    inset-block-start: var(--e4);
+  }
+}
+
+.chat-prefs__formulario {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  min-inline-size: 0;
+}
+
+.chat-prefs__modos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chat-prefs__modos legend {
+  padding: 0;
+  margin-block-end: var(--e2);
+}
+
+/* Cada opción es una tarjeta entera que se toca: el radio y su explicación
+   son un solo destino, de 44 px como mínimo. */
+.chat-prefs__modo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+  min-block-size: 44px;
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
+}
+
+.chat-prefs__modo:hover {
+  background: var(--sup-inset);
+}
+
+.chat-prefs__modo.is-elegido {
+  border-color: var(--petroleo);
+  background: var(--info-bg);
+}
+
+.chat-prefs__modo.is-apagado {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.chat-prefs__modo.is-apagado:hover {
+  background: var(--sup-tarjeta);
+}
+
+.chat-prefs__modo input {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--petroleo);
+}
+
+.chat-prefs__modo:has(input:focus-visible) {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.chat-prefs__modo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.chat-prefs__modo-nombre {
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+/* Lo que la IA no hace: visible, en el color de los avisos de cuidado. */
+.chat-prefs__limites {
+  margin: 0;
+  padding: var(--e3);
+  border-radius: var(--r-ctrl);
+  background: var(--aviso-bg);
+  color: var(--aviso-tinta);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.chat-prefs__error {
+  color: var(--error-tinta);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.chat-prefs__campo textarea[aria-invalid='true'] {
+  border-color: var(--error-tinta);
+}
+
+/* «Más opciones»: plegado, con su propio borde para que se lea como una caja
+   que se abre y no como un renglón más. */
+.chat-prefs__mas {
+  border: 1px solid var(--filete);
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+}
+
+.chat-prefs__mas-titulo {
+  min-block-size: 44px;
+  padding: var(--e3) var(--e4);
+  font-weight: 600;
+  color: var(--tinta-marca);
+  cursor: pointer;
+}
+
+.chat-prefs__mas-titulo:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -2px;
+  border-radius: var(--r-ctrl);
+}
+
+.chat-prefs__mas-cuerpo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--e4);
+  padding: 0 var(--e4) var(--e4);
+}
+
+.chat-prefs__mas-cuerpo > * {
+  align-self: stretch;
+}
+
+.chat-prefs__mas-cuerpo > button {
+  align-self: flex-start;
+}
+
+.chat-prefs__acciones {
+  align-items: center;
+}
+
+/* --- Vista previa ----------------------------------------------------------- */
+
+.chat-prefs__previa {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--chat-papel);
+}
+
+.chat-prefs__previa-titulo {
+  padding: var(--e2) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--tinta-2);
+}
+
+.chat-prefs__previa-hilo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e4);
+}
+
+.chat-prefs__burbuja {
+  max-inline-size: 85%;
+  margin: 0;
+  padding: var(--e2) var(--e3);
+  border-radius: var(--r-ctrl);
+  box-shadow: var(--sombra-1);
+  color: var(--tinta);
+  font-size: var(--fs-body);
+  overflow-wrap: anywhere;
+}
+
+.chat-prefs__burbuja p {
+  margin: 0;
+}
+
+/* Sólo lo que escribe la persona respeta sus saltos de línea; el ejemplo fijo
+   no, o arrastraría la sangría de la plantilla. */
+.chat-prefs__texto-libre {
+  white-space: pre-wrap;
+}
+
+/* El paciente escribe desde su lado; la respuesta sale del suyo. */
+.chat-prefs__burbuja--paciente {
+  align-self: flex-end;
+  background: var(--chat-propia);
+}
+
+.chat-prefs__burbuja--respuesta {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e1);
+  background: var(--chat-ajena);
+}
+
+.chat-prefs__etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e1);
+  color: var(--tinta-3);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  white-space: normal;
+}
+
+.chat-prefs__etiqueta--ia {
+  color: var(--tinta-marca);
+}
+
+.chat-prefs__etiqueta svg {
+  flex: none;
+  inline-size: 14px;
+  block-size: 14px;
+}
+
+.chat-prefs__previa-nota {
+  margin: 0;
+  color: var(--tinta-3);
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-prefs__modo {
+    transition: none;
+  }
 }

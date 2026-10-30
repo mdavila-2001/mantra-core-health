@@ -119,7 +119,7 @@ interface DetalleAseguradoraSimulado {
  * {@link ASEGURADORAS} o una armada para la ficha de un directorio que no
  * tiene catálogo propio (ver {@link aseguradoraDeLaFicha}).
  */
-interface AseguradoraDelCatalogo {
+export interface AseguradoraDelCatalogo {
   readonly id: string;
   readonly carrierCode: string;
   readonly legalName: string;
@@ -147,7 +147,7 @@ interface AseguradoraDelCatalogo {
   readonly primas?: Readonly<Record<string, string>>;
 }
 
-const ASEGURADORAS: readonly AseguradoraDelCatalogo[] = [
+export const ASEGURADORAS: readonly AseguradoraDelCatalogo[] = [
   {
     id: uuid('carrier-andina'),
     carrierCode: 'ANDINA',

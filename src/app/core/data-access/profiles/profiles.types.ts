@@ -1,6 +1,7 @@
 /** Tipos de la vista para `profiles`. Se mapean desde los DTOs, no son ellos. */
 
 import type { BirthSexCode } from '../iam/iam.types';
+import type { VerificationDto } from '../../verification/verification-status';
 
 /**
  * Alta de un perfil de paciente hecha por personal (no auto-registro):
@@ -426,6 +427,11 @@ export interface OwnPractitionerProfile {
 
   readonly practitionerCategoryConceptId: string;
   readonly verificationStatusConceptId: string;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
   readonly practiceStatusConceptId: string;
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
@@ -1089,6 +1095,11 @@ export interface PractitionerListItem {
    * declara una matrícula, no la prueba— y esto distingue a quien la probó.
    */
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
   readonly acceptsNewPatients: boolean;
   readonly telehealthAvailable: boolean;
   /** Sólo las vigentes, la principal primero. */
@@ -1102,12 +1113,21 @@ export interface PractitionerListItem {
    */
   readonly workplaces: readonly string[];
   /**
-   * La media de las reseñas publicadas y cuántas son. **Opcionales: la API
-   * no los manda en el listado** (P61) —sólo en la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
-   * inventada.
+   * La media de las reseñas publicadas y cuántas son (P61). Opcionales: una
+   * API anterior no los manda en el listado, y sin ellos la tarjeta dice «Sin
+   * reseñas todavía», nunca una nota inventada.
    */
   readonly ratingAverage?: number | null;
   readonly ratingCount?: number;
+  /**
+   * Lo que asentó en la plataforma: las mismas cuatro cuentas que la pestaña
+   * «Actividad» de su ficha. Es por lo que la guía ordena «más encuentros
+   * atendidos», «más recetas emitidas»… Opcional por el mismo motivo.
+   */
+  readonly activity?: Pick<
+    PractitionerActivity,
+    'encounters' | 'medicationRequests' | 'clinicalNotes' | 'documents'
+  >;
 }
 
 /**

@@ -2,10 +2,11 @@ import { HttpHeaders } from '@angular/common/http';
 
 import { MockRouter, isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
+import { uuid } from '../mock-store';
 
 describe('encuestas y formularios del backend demo', () => {
   const router = new MockRouter();
-  const storageKeys = ['mock.surveys-forms.encuestas', 'mock.surveys-forms.invitaciones'];
+  const storageKeys = ['mock.surveys-forms.encuestas', 'mock.surveys-forms.invitaciones', 'mock.surveys-forms.asignaciones'];
   const previous = new Map<string, string | null>();
   const patient = buscarUsuario('paciente')!;
 
@@ -89,6 +90,54 @@ describe('encuestas y formularios del backend demo', () => {
     expect(data<{ status: string }>(request('GET', path)).status).toBe('INACTIVE');
   });
 
+  it('cada invitación del paciente dice de qué atención salió (kind, médico o servicio, fecha)', () => {
+    interface Invitacion {
+      id: string;
+      appointmentBookingId: string;
+      kind?: 'CONSULTATION' | 'SERVICE';
+      serviceName?: string;
+      practitionerDisplayName?: string;
+      attendedAt?: string;
+    }
+    const invitaciones = data<Invitacion[]>(request('GET', '/surveys/me/invitations'));
+    expect(invitaciones.length).toBeGreaterThan(0);
+
+    const conContexto = invitaciones.filter((i) => i.kind !== undefined);
+    expect(conContexto.length).toBeGreaterThan(0);
+    for (const invitacion of conContexto) {
+      expect(['CONSULTATION', 'SERVICE']).toContain(invitacion.kind);
+      expect(Number.isNaN(Date.parse(invitacion.attendedAt ?? ''))).toBe(false);
+      // Una consulta nombra al médico; un servicio, al servicio. Nunca el otro campo.
+      if (invitacion.kind === 'SERVICE') {
+        expect(invitacion.serviceName).toBeTruthy();
+      } else {
+        expect(invitacion.serviceName).toBeUndefined();
+        expect(invitacion.practitionerDisplayName).toBeTruthy();
+      }
+    }
+    // El detalle (la pantalla de responder) trae los mismos campos que la lista.
+    const primera = invitaciones[0]!;
+    expect(
+      data<Invitacion>(request('GET', `/surveys/me/invitations/${primera.id}`)),
+    ).toMatchObject({
+      kind: primera.kind,
+      practitionerDisplayName: primera.practitionerDisplayName,
+      attendedAt: primera.attendedAt,
+    });
+  });
+
+  it('las respuestas recibidas llegan con la fecha redondeada al día y sin la reserva', () => {
+    const templates = data<{ id: string; published: boolean }[]>(request('GET', '/surveys/templates'));
+    const activa = templates.find((template) => template.published)!;
+    const respuestas = data<Record<string, unknown>[]>(request('GET', `/surveys/templates/${activa.id}/responses`));
+    expect(respuestas.length).toBeGreaterThan(0);
+    for (const respuesta of respuestas) {
+      // Medianoche UTC: ninguna hora exacta junto al comentario.
+      expect(respuesta['submittedAt']).toMatch(/^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/);
+      expect('appointmentBookingId' in respuesta).toBe(false);
+    }
+  });
+
   it('reporta recursos inexistentes y respuestas de invitaciones', () => {
     const missing = '/surveys/templates/missing';
     expect(status(request('GET', missing))).toBe(404);
@@ -114,7 +163,18 @@ describe('encuestas y formularios del backend demo', () => {
     expect(status(request('GET', '/surveys/me/invitations/missing'))).toBe(404);
     expect(status(request('POST', '/surveys/me/invitations/missing/responses'))).toBe(404);
     expect(data<{ ids: string[] }>(request('POST', '/surveys/invitations', { appointmentBookingIds: ['a', 'b'] })).ids).toHaveLength(2);
-    expect(status(request('POST', '/surveys/assignments'))).toBe(201);
+    // La asociación se valida como la API: sin cuerpo es un 400, con un servicio
+    // que el médico ofrece es un 201.
+    expect(status(request('POST', '/surveys/assignments'))).toBe(400);
+    expect(
+      status(
+        request('POST', '/surveys/assignments', {
+          surveyVersionId: uuid('survey-teleconsulta-v1'),
+          targetType: 'SERVICE',
+          targetId: uuid('service-ECG'),
+        }),
+      ),
+    ).toBe(201);
   });
 
   it('crea, lee, completa y cierra instancias de formulario', () => {

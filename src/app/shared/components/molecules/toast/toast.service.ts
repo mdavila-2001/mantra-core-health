@@ -48,6 +48,7 @@ export class ToastService {
       message: input.message,
       durationMs,
       ...(input.title === undefined ? {} : { title: input.title }),
+      ...(input.action === undefined ? {} : { action: input.action }),
     };
 
     this.items.update((current) => [...current, toast]);

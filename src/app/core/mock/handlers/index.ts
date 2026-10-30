@@ -2,9 +2,11 @@ import { MockRouter } from '../mock-router';
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
 import { registrarHorarioFlexible } from './flexible-hours.handlers';
+import { registerPaymentReceipts } from './payment-receipts.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerReferrals } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
 import { registrarComunidad } from './community.handlers';
 import { registrarConsentimientos } from './consent.handlers';
@@ -28,6 +30,7 @@ import { registrarNotificaciones } from './notifications.handlers';
 import { registerSignatureAndSeal } from './signature-and-seal.handlers';
 import { registrarPerfiles } from './profiles.handlers';
 import { registrarLibretaDeDirecciones } from './address-book.handlers';
+import { registerPrimaryPractitioner } from './primary-practitioner.handlers';
 import { registrarPracticas } from './practice.handlers';
 import { registrarProcedimientos } from './procedures.handlers';
 import { registrarPublico } from './public.handlers';
@@ -37,6 +40,7 @@ import { registerInsurancePortability } from './insurance-portability.handlers';
 import { registerInsurerReceivedClaims } from './insurer-received-claims.handlers';
 import { registrarSeguros } from './insurance.handlers';
 import { registerPractitionerInsurerRequests } from './practitioner-insurer-requests.handlers';
+import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
@@ -51,6 +55,11 @@ import { registerReceivedServices } from './received-services.handlers';
 import { registerMedicalGroups } from './medical-groups.handlers';
 import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
+import { registerRegistrationLogo } from './registration-logo.handlers';
+import { registrarAdmisiones } from './admissions.handlers';
+import { registerPrescriptionShares } from './prescription-shares.handlers';
+import { registerPharmacyPrescriptionShares } from './pharmacy-prescription-shares.handlers';
+import { registrarReporteria } from './reporting.handlers';
 
 /**
  * Arma la tabla de rutas del backend simulado. Cada dominio registra las
@@ -63,16 +72,22 @@ export function crearRouterSimulado(): MockRouter {
   registrarTerminologia(router);
   registrarPerfiles(router);
   registrarLibretaDeDirecciones(router);
+  registerPrimaryPractitioner(router);
   registerSignatureAndSeal(router);
   registrarAgenda(router);
   registrarServiciosDeAgenda(router);
   registrarHorarioFlexible(router);
+  registerPaymentReceipts(router);
   // Centros médicos · procedimientos por sede. Antes de `registrarPracticas`:
   // ante patrones equivalentes gana el registrado primero.
   registerHealthcareServices(router);
   registerRoleAssignments(router);
   registrarPracticas(router);
   registrarClinica(router);
+  // FAR-01 · el enlace para compartir una receta (`/clinical/prescription-shares`, `/public/prescription-shares`).
+  registerPrescriptionShares(router);
+  registerPharmacyPrescriptionShares(router);
+  registerReferrals(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);
   registerMedicalNotes(router);
@@ -87,6 +102,7 @@ export function crearRouterSimulado(): MockRouter {
   registerPractitionerInsurerRequests(router);
   registrarAnaliticaDeSeguros(router);
   registerInsurerReceivedClaims(router);
+  registrarPacientesDeAseguradora(router);
   registerInsurancePortability(router);
   registerInsuranceCampaigns(router);
   registrarEncuestas(router);
@@ -109,11 +125,15 @@ export function crearRouterSimulado(): MockRouter {
   registrarTrafico(router);
   registrarFlujos(router);
   registrarAltaDeMedicoAsistida(router);
+  registrarAdmisiones(router);
+  registrarReporteria(router);
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);
   registerMedicalGroups(router);
   registerMedicalCenters(router);
   registerOrganizationPracticeHandlers(router);
+  // La pre-carga del logo del consultorio en el alta del médico.
+  registerRegistrationLogo(router);
   return router;
 }

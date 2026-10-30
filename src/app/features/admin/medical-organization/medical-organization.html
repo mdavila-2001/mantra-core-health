@@ -3,7 +3,7 @@
 @let estado = consola();
 
 <app-page-header
-  [title]="ficha?.name ?? 'Organización médica'"
+  [title]="ficha?.name ?? 'Mis organizaciones'"
   subtitle="Sedes, áreas, infraestructura, servicios, plantilla, legajo e inventario de la organización."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -122,7 +122,10 @@
   }
   @default {
     <section class="organizacion-medica__ambito" aria-busy="true">
-      <p class="organizacion-medica__cargando">Cargando la organización…</p>
+      <app-loading-state
+        class="organizacion-medica__cargando"
+        message="Cargando la organización…"
+      />
     </section>
   }
 }

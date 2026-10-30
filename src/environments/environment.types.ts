@@ -39,6 +39,24 @@ export interface BuildInfo {
 }
 
 /**
+ * Qué archivos opcionales de `public/` había cuando se generó el entorno.
+ *
+ * Como {@link BuildInfo}, **no sale del `.env`**: lo mira `scripts/generate-env.mjs`
+ * en el disco. Existe para que el simulador no pida lo que ya sabe que falta: un
+ * `fetch` a una ruta inexistente termina en un 404 que el navegador imprime en la
+ * consola como error, aunque el código lo atrape, y ensucia toda pantalla que lo
+ * dispara.
+ */
+export interface MockAssets {
+  /**
+   * `public/glossary-data/manifest.json` existe: el glosario completo está
+   * descargado (`yarn mock:glossary:shards`). Con `false` el simulador lee la
+   * semilla commiteada sin probar antes la completa.
+   */
+  readonly glossaryData: boolean;
+}
+
+/**
  * Configuración pública de la telemetría del navegador.
  *
  * **Todo lo de acá es público**, igual que el resto de esta interfaz. Por eso
