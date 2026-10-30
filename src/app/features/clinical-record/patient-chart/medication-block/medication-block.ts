@@ -56,6 +56,9 @@ import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { writeFailureMessage } from '../../write-message';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
+import { consentTargetState } from '../informed-consent/consent-target';
+import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
+import { InformedConsentDialog } from '../informed-consent/informed-consent-dialog';
 
 /**
  * La columna que gobierna el medicamento.
@@ -215,6 +218,8 @@ export interface PrescriptionInChart {
   readonly estado: string;
   readonly firmada: boolean;
   readonly emitida: boolean;
+  /** La consulta en la que se prescribió, si la lectura la trae. Ata su consentimiento. */
+  readonly encounterId?: string;
   /**
    * El diagnóstico o motivo de la receta, ya en palabras (C5). Lo arma
    * {@link vinculoDeReceta} desde `indicationConditionId`/`indicationText`
@@ -314,6 +319,8 @@ export type RecetaEnFicha = PrescriptionInChart;
     DatePicker,
     FormActions,
     FormField,
+    InformedConsentBadge,
+    InformedConsentDialog,
     Menu,
     MenuItem,
     NavIcon,
@@ -728,6 +735,17 @@ export class MedicationBlock implements DraftBlock {
   protected readonly encuentroDeLaReceta = computed<string | null>(
     () => this.citaElegida() ?? this.encounterId(),
   );
+
+  /* -- Consentimiento informado dirigido a cada receta (Ley 1737: DCI + pauta) -- */
+
+  protected readonly consent = consentTargetState<PrescriptionInChart>(
+    () => this.patientProfileId(),
+    (rx) => [rx?.encounterId, this.encounterId(), this.citas()],
+  );
+
+  protected prescriptionLabel(rx: PrescriptionInChart): string {
+    return rx.indicacion === '' ? rx.medicamento : `${rx.medicamento} · ${rx.indicacion}`;
+  }
 
   /** Si el bloque puede prescribir sin encuentro abierto. */
   protected readonly sinExigirEncuentro = computed(() => !this.exigeEncuentro());
