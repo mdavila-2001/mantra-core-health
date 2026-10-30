@@ -1,4 +1,4 @@
-import { apiRouteTemplate, hostOf, sanitizeUrl, schemeOf } from './sanitize-url';
+import { apiRouteTemplate, hostOf, redactShareTokens, sanitizeUrl, schemeOf } from './sanitize-url';
 
 /**
  * Lo que estas pruebas protegen no es un formato: es que **el token del correo
@@ -110,6 +110,12 @@ describe('el token de la receta compartida', () => {
       '/clinical/prescription-shares/:id/revoke',
     );
     expect(sanitizeUrl(`/verify/rx/${id}`)).toBe(`/verify/rx/${id}`);
+  });
+
+  it('redactShareTokens sirve también en un texto que cita la ruta', () => {
+    expect(
+      redactShareTokens(`Http failure response for /public/prescription-shares/${TOKEN}: 404 Not Found`),
+    ).toBe('Http failure response for /public/prescription-shares/:token: 404 Not Found');
   });
 
   it('no cambia la lista ni el resto de las rutas', () => {

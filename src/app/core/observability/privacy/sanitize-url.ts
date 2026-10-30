@@ -45,12 +45,12 @@ export function sanitizeUrl(url: string): string {
   const [withoutQuery = ''] = withoutFragment.split('?');
 
   if (!withoutQuery.includes('://')) {
-    return withoutQuery === '' ? '/' : redactPathTokens(withoutQuery);
+    return withoutQuery === '' ? '/' : redactShareTokens(withoutQuery);
   }
 
   try {
     // `usuario:contraseña@` no sobrevive: `pathname` no lo incluye.
-    return redactPathTokens(new URL(withoutQuery).pathname);
+    return redactShareTokens(new URL(withoutQuery).pathname);
   } catch {
     // Una URL que no se puede analizar no se adivina: se descarta entera. Un
     // recorte a mano de algo con forma desconocida es cómo se filtra un token.
@@ -125,25 +125,22 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  *   `/pharmacy/prescription-shares/<token>`;
  * - front: `/rx/<token>` y `/administration/pharmacy-orders/rx/<token>`.
  *
- * Un uuid detrás de esos segmentos no es el token (que es base64url de 43
- * caracteres) sino un id —el `shareId` de revocar, la receta de
- * `/verify/rx/:id`— y sigue el camino de siempre.
+ * Es una búsqueda con lookbehind y no por segmentos para que la misma regla
+ * sirva en una ruta y en un texto libre que la cita (el `message` de un
+ * `HttpErrorResponse`: «Http failure response for /public/prescription-shares/…»).
  */
-const TOKEN_PREFIXES: ReadonlySet<string> = new Set(['prescription-shares', 'by-token', 'rx']);
+const SHARE_TOKEN = /(?<=\/(?:prescription-shares|by-token|rx)\/)[\w-]+/gi;
 
-/** Reemplaza por `:token` el segmento que sigue a un {@link TOKEN_PREFIXES}. */
-function redactPathTokens(path: string): string {
-  const segments = path.split('/');
-  return segments
-    .map((segment, index) => {
-      const previous = segments[index - 1]?.toLowerCase();
-      const isToken =
-        previous !== undefined &&
-        TOKEN_PREFIXES.has(previous) &&
-        segment !== '' &&
-        segment.toLowerCase() !== 'by-token' &&
-        !UUID.test(segment);
-      return isToken ? ':token' : segment;
-    })
-    .join('/');
+/**
+ * Reemplaza por `:token` el segmento que sigue a `prescription-shares`,
+ * `by-token` o `rx`, en una ruta o en un texto que contiene una.
+ *
+ * Quedan como están el literal `by-token` y un uuid: el uuid no es el token
+ * (que es base64url de 43 caracteres) sino un id —el `shareId` de revocar, la
+ * receta de `/verify/rx/:id`— y sigue el camino de siempre.
+ */
+export function redactShareTokens(text: string): string {
+  return text.replace(SHARE_TOKEN, (segment) =>
+    segment.toLowerCase() === 'by-token' || UUID.test(segment) ? segment : ':token',
+  );
 }
