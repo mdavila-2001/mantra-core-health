@@ -45,6 +45,8 @@ const COMPARISON_TEXT: Readonly<Record<ComparacionReporte, string | null>> = {
  * Si la pestaña trae `secciones` se respeta su orden y sus títulos; lo que
  * ninguna sección nombra no se pierde: va al final, bajo «Más detalle».
  */
+const MAX_MAIN_KPIS = 6;
+
 @Component({
   selector: 'app-tab-view',
   imports: [Alert, ChartPanel, KpiTile, ReportTable],
@@ -65,6 +67,10 @@ export class TabView {
     (this.data().avisos ?? []).filter((aviso) => !/^datos de ejemplo\.?$/i.test(aviso.trim())),
   );
   protected readonly comparison = computed(() => COMPARISON_TEXT[this.store.comparar()]);
+
+  /** Un panel que quiere decir algo muestra 6 indicadores; el resto queda a un clic, no desaparece. */
+  protected readonly mainKpis = computed(() => this.data().kpis.slice(0, MAX_MAIN_KPIS));
+  protected readonly moreKpis = computed(() => this.data().kpis.slice(MAX_MAIN_KPIS));
 
   protected readonly sections = computed<readonly TabSection[]>(() => {
     const { graficos, tablas, secciones } = this.data();

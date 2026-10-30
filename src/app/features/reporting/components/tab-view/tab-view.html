@@ -17,10 +17,20 @@
     <section class="tv__section" [attr.aria-labelledby]="ids + '-kpis'">
       <h2 class="tv__heading" [id]="ids + '-kpis'">Indicadores clave</h2>
       <div class="tv__kpis">
-        @for (kpi of data().kpis; track kpi.id) {
+        @for (kpi of mainKpis(); track kpi.id) {
           <app-kpi-tile [kpi]="kpi" [comparison]="comparison()" />
         }
       </div>
+      @if (moreKpis().length > 0) {
+        <details class="tv__more" data-testid="more-kpis">
+          <summary>Más indicadores ({{ moreKpis().length }})</summary>
+          <div class="tv__kpis">
+            @for (kpi of moreKpis(); track kpi.id) {
+              <app-kpi-tile [kpi]="kpi" [comparison]="comparison()" />
+            }
+          </div>
+        </details>
+      }
     </section>
   }
 
