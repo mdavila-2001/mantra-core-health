@@ -35,7 +35,7 @@
      lo que hay que revisar es cuál falló, no que algo falló. -->
 @if (conError() > 0 && adjuntados() > 0) {
   <app-alert tone="warning" title="Algunos archivos no se pudieron adjuntar">
-    Revisá los elementos marcados. Los que ya entraron no se vuelven a mandar.
+    Revise los elementos marcados. Los que ya entraron no se vuelven a mandar.
   </app-alert>
 }
 
@@ -44,7 +44,7 @@
      único que la zona no dice. -->
 <app-form-field
   label="Archivos"
-  hint="Se registra con tu nombre y la hora."
+  hint="Se registra con su nombre y la hora."
   [required]="true"
 >
   <!-- `showList=false`: la cola de abajo es la misma selección pero con estado,
@@ -69,7 +69,7 @@
 
   @if (cola().length === 0) {
     <p class="adjuntar__vacio" data-testid="adjuntar-vacio">
-      Todavía no seleccionaste archivos.
+      Todavía no seleccionó archivos.
     </p>
   } @else {
     <ul class="adjuntar__lista" data-testid="adjuntar-lista">

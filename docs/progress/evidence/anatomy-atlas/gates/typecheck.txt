@@ -1,0 +1,8 @@
+$ corepack yarn typecheck   # 2026-10-24T04:00:47Z · 9b3bc933
+✓ src/app/features/component-stock/component-index.generated.ts
+  631 componentes · 3 otros · 379 pantallas · 138 maquetas · 24 atomos · 48 moleculas · 39 organismos
+  209 con algo que mirar
+  relaciones: 2820 template-instantiates · 5 imports-available sin instanciar · 71 type-only · 237 dynamic-loads
+  nivel: 0 declarado · 631 por-ruta · 5 unresolvedEvidence en 5 componentes
+  acreditación: descubiertos 631/631 · con escenario 3/631 · verificados visualmente 3/631 · bloqueados 86/631 · montó e interactuó: se miden en el banco (runtime)
+EXIT=0

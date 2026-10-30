@@ -51,6 +51,16 @@
     color: inherit;
 }
 
+/* Un enlace de texto dentro del mensaje toma la tinta del tono y sigue
+   subrayado (la regla base de `styles.css`). El color de enlace del sistema
+   está calculado contra el fondo de la página: sobre el fondo tonal de la
+   alerta, en oscuro, daba 4,35:1, por debajo de AA. La tinta del tono ya trae
+   su contraste contra su propio fondo. `::ng-deep` porque el ancla es de quien
+   proyecta el contenido, no de esta plantilla. */
+:host ::ng-deep .alert__message a:where([href]:not([class])) {
+    color: inherit;
+}
+
 /* Las acciones se apagan solas si nadie proyecta botones. */
 .alert__actions:empty {
     display: none;

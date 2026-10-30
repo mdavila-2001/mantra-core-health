@@ -20,7 +20,7 @@
   title="Contabilidad · libros"
   [subtitle]="
     esMedico()
-      ? 'Lo que cobraste y todavía no pasaste a los libros, mes por mes.'
+      ? 'Lo que cobró y todavía no pasó a los libros, mes por mes.'
       : 'Balance de sumas y saldos y libro diario de la práctica'
   "
 />
@@ -55,12 +55,12 @@
 @if (esMedico()) {
   <app-alert tone="info" class="explicacion">
     <p>
-      Cada consulta que un paciente te pagó queda acá hasta que la registrás.
-      <strong>Registrarla</strong> es lo que la pasa a los libros de la práctica: elegís la
-      factura, elegís las cuentas y confirmás.
+      Cada consulta que un paciente le pagó queda acá hasta que la registra.
+      <strong>Registrarla</strong> es lo que la pasa a los libros de la práctica: elige la
+      factura, elige las cuentas y confirma.
     </p>
     <p>
-      Lo que registrás queda en <strong>borrador</strong> y lo aprueba después quien lleva la
+      Lo que registra queda en <strong>borrador</strong> y lo aprueba después quien lleva la
       contabilidad — como en cualquier práctica real, donde un profesional no se autoaprueba
       sus propios asientos.
     </p>
@@ -68,14 +68,14 @@
 } @else {
   <app-alert tone="info" class="explicacion">
     <p>
-      Acá ves el balance y el libro diario de tu práctica, y registrás vos mismo tus
+      Acá ve el balance y el libro diario de su práctica, y registra usted mismo sus
       movimientos: el ingreso de una consulta ya pagada, o un gasto.
-      <strong>Ejemplo:</strong> atendiste una consulta y el paciente ya pagó — elegí esa
-      factura abajo, elegí las cuentas (caja/banco e ingresos por consultas) y confirmá; el
+      <strong>Ejemplo:</strong> atendió una consulta y el paciente ya pagó — elija esa
+      factura abajo, elija las cuentas (caja/banco e ingresos por consultas) y confirme; el
       asiento queda en borrador y anclado a esa factura.
     </p>
     <p>
-      Lo que registrás acá queda en <strong>borrador</strong>: el flujo canónico es
+      Lo que registra acá queda en <strong>borrador</strong>: el flujo canónico es
       borrador → clasificado → en revisión → aprobado → posteado, y el posteo final lo hace
       quien tiene autoridad contable — igual que en cualquier práctica real, donde un
       profesional no se autoaprueba sus propios asientos.
@@ -88,7 +88,7 @@
   <app-select
     [options]="opcionesDePractica()"
     [(value)]="practicaElegida"
-    placeholder="Elegí una práctica"
+    placeholder="Elija una práctica"
   />
 </app-form-field>
 
@@ -111,8 +111,8 @@
 
     @if (porMes().length === 0) {
       <p class="nota">
-        No tenés consultas cobradas pendientes de registrar en esta práctica. Cuando un paciente
-        pague una consulta tuya, va a aparecer acá.
+        No tiene consultas cobradas pendientes de registrar en esta práctica. Cuando un paciente
+        pague una consulta suya, va a aparecer acá.
       </p>
     } @else {
       <ul class="facturacion__meses">
@@ -168,7 +168,7 @@
       <!-- Un balance recortado en silencio es un balance que miente. -->
       <app-alert tone="warning">
         El balance alcanzó su tope de filas y está <strong>incompleto</strong>:
-        acotá la ventana de fechas o el período fiscal para verlo entero.
+        acote la ventana de fechas o el período fiscal para verlo entero.
       </app-alert>
     }
 
@@ -197,12 +197,16 @@
 }
 
 @if (muestraLibros()) {
-  <div #trialBalancePdf class="informe-encabezado">
+  <!-- La raíz exportable envuelve el encabezado Y la tabla: el botón apuntaba
+       sólo al encabezado y el PDF salía con el título y nada más. -->
+  <div #trialBalancePdf data-pdf-root>
+  <div class="informe-encabezado">
     <h2 class="titulo-de-seccion">Balance de sumas y saldos</h2>
     <app-pdf-export-button
       [target]="trialBalancePdf"
-      filename="balance-de-sumas-y-saldos"
+      [filename]="'balance-de-sumas-y-saldos' + sufijoDelPeriodo()"
       title="Balance de sumas y saldos"
+      [subtitle]="rotuloDelPeriodo()"
       kind="Reporte contable"
     />
   </div>
@@ -213,27 +217,8 @@
     [rowLabel]="nombreDeCuenta"
     caption="Saldos por cuenta del plan contable"
   />
-
-  <div #journalPdf class="informe-encabezado">
-    <h2 class="titulo-de-seccion">Libro diario</h2>
-    <div class="informe-encabezado__acciones">
-      <app-pdf-export-button
-        [target]="journalPdf"
-        filename="libro-diario"
-        title="Libro diario"
-        kind="Reporte contable"
-      />
-      <button app-button variant="outline" type="button" (clicked)="exportarDiarioCsv()">
-        Exportar a CSV
-      </button>
-    </div>
   </div>
-  <app-data-table
-    [state]="filasDelDiario()"
-    [columns]="columnasDelDiario"
-    [trackBy]="claveDeAsiento"
-    caption="Asientos de la práctica, del más reciente al más antiguo"
-  />
+
 }
 
 @if (practicaElegida(); as practiceId) {
@@ -261,21 +246,21 @@
           <app-select
             formControlName="invoiceId"
             [options]="opcionesDeConsulta()"
-            placeholder="Elegí una factura"
+            placeholder="Elija una factura"
           />
         </app-form-field>
         <app-form-field icon="billing" label="Cuenta a debitar (caja/banco)" [required]="true">
           <app-select
             formControlName="debitAccountId"
             [options]="opcionesDeCuenta()"
-            placeholder="Elegí una cuenta"
+            placeholder="Elija una cuenta"
           />
         </app-form-field>
         <app-form-field icon="billing" label="Cuenta a acreditar (ingresos por consultas)" [required]="true">
           <app-select
             formControlName="creditAccountId"
             [options]="opcionesDeCuenta()"
-            placeholder="Elegí una cuenta"
+            placeholder="Elija una cuenta"
           />
         </app-form-field>
         <button app-button variant="primary" type="submit" [disabled]="enviandoIngreso()">
@@ -302,14 +287,14 @@
         <app-select
           formControlName="debitAccountId"
           [options]="opcionesDeCuenta()"
-          placeholder="Elegí una cuenta"
+          placeholder="Elija una cuenta"
         />
       </app-form-field>
       <app-form-field icon="billing" label="Cuenta a acreditar (caja/banco)" [required]="true">
         <app-select
           formControlName="creditAccountId"
           [options]="opcionesDeCuenta()"
-          placeholder="Elegí una cuenta"
+          placeholder="Elija una cuenta"
         />
       </app-form-field>
       <app-form-field icon="chart" label="Importe" [required]="true" hint="Decimal, hasta dos posiciones.">
@@ -325,27 +310,56 @@
   </app-card>
 }
 
-<!-- ─── TAREA-20 S3 + FT-20: cuadro de mando, libro mayor, estado de
-     resultados, balance general, flujo de caja ───────────────────────────
-     El panel inactivo no pide nada: el `@if (pestanaActiva() === N)` de
+<!-- ─── TAREA-20: cuadro de mando, libro diario, libro mayor, flujo de caja,
+     estado de resultados y balance general, en el orden del pedido. Todos
+     respetan el período aplicado, y sus exportaciones también. ─────────
+     El panel inactivo no pide nada: el `@if (pestanaActiva() === pestanas.x)` de
      adentro de cada `app-tab` es lo que evita instanciar sus lecturas de
      golpe — `app-tab` sólo oculta con `[hidden]`, no desmonta su contenido
      proyectado, así que sin este guard las pestañas pedirían sus datos
      aunque estén tapadas. -->
 @if (practicaElegida()) {
   <h2 class="titulo-de-seccion">Informes</h2>
+  <app-card>
+    <form
+      [formGroup]="formularioDePeriodo"
+      (ngSubmit)="aplicarPeriodo()"
+      novalidate
+      class="app-form-grid periodo-de-informes"
+      aria-label="Período de los informes"
+    >
+      <app-form-field icon="calendar" label="Desde" hint="AAAA-MM-DD. Vacío: desde el primer asiento">
+        <app-input formControlName="from" type="text" inputmode="numeric" testId="period-from" />
+      </app-form-field>
+      <app-form-field icon="calendar" label="Hasta" hint="AAAA-MM-DD. Vacío: hasta hoy">
+        <app-input formControlName="to" type="text" inputmode="numeric" testId="period-to" />
+      </app-form-field>
+      <div class="periodo-de-informes__acciones">
+        <button app-button variant="secondary" type="submit">Aplicar período</button>
+        <button app-button variant="ghost" type="button" (clicked)="limpiarPeriodo()">Quitar período</button>
+      </div>
+    </form>
+    @if (errorDePeriodo(); as mensaje) {
+      <app-alert appAnuncio tone="error" class="alerta-de-formulario">{{ mensaje }}</app-alert>
+    }
+    <p class="nota" appAnuncio [asertivo]="false" [enfocar]="false">
+      Período de los informes y sus exportaciones: <strong>{{ rotuloDelPeriodo() }}</strong>.
+    </p>
+  </app-card>
   <app-tabs [(selectedIndex)]="pestanaActiva">
     <app-tab label="Cuadro de mando integral">
-      @if (pestanaActiva() === 3) {
+      @if (pestanaActiva() === pestanas.scorecard) {
         <!-- Junta lo que las otras tres lecturas ya calcularon; no agrega
              ningún número propio (ver el JSDoc de `indicadores`). -->
         @if (indicadores(); as datos) {
-          <div #cuadroDeMandoPdf class="informe-encabezado">
+          <div #cuadroDeMandoPdf data-pdf-root>
+          <div class="informe-encabezado">
             <span></span>
             <app-pdf-export-button
               [target]="cuadroDeMandoPdf"
-              filename="cuadro-de-mando"
+              [filename]="'cuadro-de-mando' + sufijoDelPeriodo()"
               title="Cuadro de mando integral"
+              [subtitle]="rotuloDelPeriodo()"
             />
           </div>
           <app-card>
@@ -375,28 +389,63 @@
             </div>
             @if (!datos.balanceado) {
               <app-alert tone="warning">
-                El balance general no cuadra: revisalo en su propia pestaña antes de confiar en
+                El balance general no cuadra: revíselo en su propia pestaña antes de confiar en
                 estos totales.
               </app-alert>
             }
           </app-card>
+          </div>
         } @else {
           <p class="nota">Cargando los tres informes que arman el cuadro de mando…</p>
         }
       }
     </app-tab>
 
+    <app-tab label="Libro diario">
+      @if (pestanaActiva() === pestanas.journal) {
+        <div #journalPdf data-pdf-root>
+        <div class="informe-encabezado">
+          <p class="nota">{{ rotuloDelPeriodo() }}</p>
+          <div class="informe-encabezado__acciones">
+            <app-pdf-export-button
+              [target]="journalPdf"
+              [filename]="'libro-diario' + sufijoDelPeriodo()"
+              title="Libro diario"
+              [subtitle]="rotuloDelPeriodo()"
+              kind="Reporte contable"
+            />
+            <button app-button variant="outline" type="button" (clicked)="exportarDiarioCsv()">
+              Exportar a CSV
+            </button>
+          </div>
+        </div>
+        <app-data-table
+          [state]="filasDelDiario()"
+          [columns]="columnasDelDiario"
+          [trackBy]="claveDeAsiento"
+          caption="Asientos del período, del más reciente al más antiguo. Los borradores no afectan los saldos hasta contabilizarse."
+        />
+        </div>
+      }
+    </app-tab>
+
     <app-tab label="Libro mayor">
-      @if (pestanaActiva() === 0) {
-        <div #ledgerPdf class="informe-encabezado">
-          <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elegí cuál mirar">
+      @if (pestanaActiva() === pestanas.generalLedger) {
+        <div #ledgerPdf data-pdf-root>
+        <div class="informe-encabezado">
+          <app-form-field icon="billing" label="Cuenta" hint="El libro mayor es por cuenta: elija cuál mirar">
             <app-select
               [options]="opcionesDeCuentaParaMayor()"
               [(value)]="cuentaDelMayor"
-              placeholder="Elegí una cuenta"
+              placeholder="Elija una cuenta"
             />
           </app-form-field>
-          <app-pdf-export-button [target]="ledgerPdf" filename="libro-mayor" title="Libro mayor" />
+          <app-pdf-export-button
+            [target]="ledgerPdf"
+            [filename]="'libro-mayor' + sufijoDelPeriodo()"
+            title="Libro mayor"
+            [subtitle]="rotuloDelPeriodo()"
+          />
         </div>
         <app-data-table
           [state]="filasDelMayor()"
@@ -404,21 +453,73 @@
           [trackBy]="claveDeMovimiento"
           caption="Movimientos posteados de la cuenta elegida, con saldo corrido"
         />
+        </div>
+      }
+    </app-tab>
+
+    <app-tab label="Flujo de caja">
+      @if (pestanaActiva() === pestanas.cashFlow) {
+        <!-- No es el estado de flujos de efectivo NIIF: ver el JSDoc de
+             `flujoDeCaja` sobre por qué es el libro mayor de la cuenta que la
+             propia persona elige como su caja o su banco. -->
+        <div #cashFlowPdf data-pdf-root>
+        <div class="informe-encabezado">
+          <app-form-field icon="billing" label="Cuenta" hint="Elija la cuenta que usa como caja o banco">
+            <app-select
+              [options]="opcionesDeCuentaParaMayor()"
+              [(value)]="cuentaDeCaja"
+              placeholder="Elija una cuenta"
+            />
+          </app-form-field>
+          <app-pdf-export-button
+            [target]="cashFlowPdf"
+            [filename]="'flujo-de-caja' + sufijoDelPeriodo()"
+            title="Flujo de caja"
+            [subtitle]="rotuloDelPeriodo()"
+          />
+        </div>
+        @if (resumenDeCaja(); as resumen) {
+          <app-card>
+            <dl class="totales">
+              <div>
+                <dt>Entradas</dt>
+                <dd>{{ resumen.entradas }}</dd>
+              </div>
+              <div>
+                <dt>Salidas</dt>
+                <dd>{{ resumen.salidas }}</dd>
+              </div>
+              <div>
+                <dt>Flujo neto</dt>
+                <dd>{{ resumen.neto }}</dd>
+              </div>
+            </dl>
+          </app-card>
+        }
+        <app-data-table
+          [state]="filasDelFlujoDeCaja()"
+          [columns]="columnasDeCaja"
+          [trackBy]="claveDeMovimiento"
+          caption="Movimientos posteados de la cuenta elegida como caja/banco"
+        />
+        </div>
       }
     </app-tab>
 
     <app-tab label="Estado de resultados">
-      @if (pestanaActiva() === 1) {
+      @if (pestanaActiva() === pestanas.incomeStatement) {
         <!-- Misma tarjeta que el balance de sumas y saldos: los totales van
              separados del cuerpo de la tabla, no sueltos sobre el fondo de la
              página — si no, «Resultado del período» se lee como una fila más
              de la tabla de abajo en vez del cierre del informe. -->
-        <div #incomeStatementPdf class="informe-encabezado">
+        <div #incomeStatementPdf data-pdf-root>
+        <div class="informe-encabezado">
           <span></span>
           <app-pdf-export-button
             [target]="incomeStatementPdf"
-            filename="estado-de-resultados"
+            [filename]="'estado-de-resultados' + sufijoDelPeriodo()"
             title="Estado de resultados"
+            [subtitle]="rotuloDelPeriodo()"
           />
         </div>
         @if (estadoDeResultados(); as estado) {
@@ -455,17 +556,20 @@
           [rowLabel]="nombreDeLineaFinanciera"
           caption="Cuentas de ingreso y gasto posteadas de la práctica"
         />
+        </div>
       }
     </app-tab>
 
     <app-tab label="Balance general">
-      @if (pestanaActiva() === 2) {
-        <div #balanceSheetPdf class="informe-encabezado">
+      @if (pestanaActiva() === pestanas.balanceSheet) {
+        <div #balanceSheetPdf data-pdf-root>
+        <div class="informe-encabezado">
           <span></span>
           <app-pdf-export-button
             [target]="balanceSheetPdf"
-            filename="balance-general"
+            [filename]="'balance-general' + sufijoDelPeriodo()"
             title="Balance general"
+            [subtitle]="rotuloDelCorte()"
           />
         </div>
         <!-- Misma tarjeta que el balance de sumas y saldos: ver el comentario
@@ -511,48 +615,7 @@
           [rowLabel]="nombreDeLineaFinanciera"
           caption="Cuentas de activo, pasivo y patrimonio a la fecha de corte"
         />
-      }
-    </app-tab>
-
-    <app-tab label="Flujo de caja">
-      @if (pestanaActiva() === 4) {
-        <!-- No es el estado de flujos de efectivo NIIF: ver el JSDoc de
-             `flujoDeCaja` sobre por qué es el libro mayor de la cuenta que la
-             propia persona elige como su caja o su banco. -->
-        <div #cashFlowPdf class="informe-encabezado">
-          <app-form-field icon="billing" label="Cuenta" hint="Elegí la cuenta que usás como caja o banco">
-            <app-select
-              [options]="opcionesDeCuentaParaMayor()"
-              [(value)]="cuentaDeCaja"
-              placeholder="Elegí una cuenta"
-            />
-          </app-form-field>
-          <app-pdf-export-button [target]="cashFlowPdf" filename="flujo-de-caja" title="Flujo de caja" />
         </div>
-        @if (resumenDeCaja(); as resumen) {
-          <app-card>
-            <dl class="totales">
-              <div>
-                <dt>Entradas</dt>
-                <dd>{{ resumen.entradas }}</dd>
-              </div>
-              <div>
-                <dt>Salidas</dt>
-                <dd>{{ resumen.salidas }}</dd>
-              </div>
-              <div>
-                <dt>Flujo neto</dt>
-                <dd>{{ resumen.neto }}</dd>
-              </div>
-            </dl>
-          </app-card>
-        }
-        <app-data-table
-          [state]="filasDelFlujoDeCaja()"
-          [columns]="columnasDeCaja"
-          [trackBy]="claveDeMovimiento"
-          caption="Movimientos posteados de la cuenta elegida como caja/banco"
-        />
       }
     </app-tab>
   </app-tabs>
@@ -595,7 +658,7 @@
 
       <h3>Filas del asiento</h3>
       @if (filasDelAsiento().length === 0) {
-        <p class="nota">Todavía no agregaste ninguna fila.</p>
+        <p class="nota">Todavía no agregó ninguna fila.</p>
       } @else {
         <ul class="filas-del-asiento">
           @for (fila of filasDelAsiento(); track $index) {
@@ -611,11 +674,32 @@
                 {{ fila.direction === 'DEBIT' ? 'Debe' : 'Haber' }}
               </app-badge>
               <span class="fila-del-asiento__importe">{{ fila.amount }}</span>
+              @if (fila.related.length > 0) {
+                <span class="fila-del-asiento__relacionadas">
+                  @for (relacionada of fila.related; track relacionada.kind) {
+                    <span>{{ rotuloDeTipo(relacionada.kind) }}: {{ relacionada.label }}</span>
+                  }
+                </span>
+              }
               <span class="fila-del-asiento__acciones">
-                <button app-button variant="ghost" size="sm" type="button" (clicked)="editarFila($index)">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  [attr.aria-label]="'Modificar la fila ' + ($index + 1)"
+                  (clicked)="editarFila($index)"
+                >
                   Modificar
                 </button>
-                <button app-button variant="ghost" size="sm" type="button" (clicked)="eliminarFila($index)">
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  [attr.aria-label]="'Eliminar la fila ' + ($index + 1)"
+                  (clicked)="eliminarFila($index)"
+                >
                   Eliminar
                 </button>
               </span>
@@ -641,7 +725,7 @@
           <app-select
             formControlName="accountId"
             [options]="opcionesDeCuenta()"
-            placeholder="Elegí una cuenta"
+            placeholder="Elija una cuenta"
           />
         </app-form-field>
         <app-form-field icon="pin" label="Dirección" [required]="true">
@@ -653,6 +737,54 @@
         <app-form-field icon="note" label="Memo" hint="Opcional">
           <app-input formControlName="memo" type="text" />
         </app-form-field>
+        <fieldset class="relacionadas-de-la-fila">
+          <legend>Entidades relacionadas de la fila (opcional)</legend>
+          @if (relacionadasEnCurso().length > 0) {
+            <ul class="relacionadas-de-la-fila__lista">
+              @for (relacionada of relacionadasEnCurso(); track relacionada.kind) {
+                <li>
+                  <span>{{ rotuloDeTipo(relacionada.kind) }}: {{ relacionada.label }}</span>
+                  <button
+                    app-button
+                    variant="ghost"
+                    size="sm"
+                    type="button"
+                    [attr.aria-label]="'Quitar ' + rotuloDeTipo(relacionada.kind)"
+                    (clicked)="quitarRelacionada(relacionada.kind)"
+                  >
+                    Quitar
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+          @if (opcionesDeTipoDeRelacion().length > 0) {
+            <div class="app-form-grid">
+              <app-form-field icon="pin" label="Tipo de entidad">
+                <app-select
+                  [formControl]="tipoDeRelacion"
+                  [options]="opcionesDeTipoDeRelacion()"
+                  placeholder="Elija un tipo"
+                />
+              </app-form-field>
+              <app-form-field icon="pin" label="Entidad">
+                <app-select
+                  [formControl]="entidadDeRelacion"
+                  [options]="opcionesDeEntidadRelacionada()"
+                  placeholder="Elija primero el tipo"
+                />
+              </app-form-field>
+              <button app-button variant="outline" type="button" (clicked)="agregarRelacionada()">
+                Agregar entidad relacionada
+              </button>
+            </div>
+          } @else if (relacionadasEnCurso().length === 0) {
+            <p class="nota">
+              Esta práctica todavía no tiene centros de costo, centros de beneficio ni activos fijos
+              para relacionar.
+            </p>
+          }
+        </fieldset>
         <button app-button variant="secondary" type="submit">
           {{ filaEnEdicion() === null ? 'Agregar fila' : 'Guardar cambios en la fila' }}
         </button>

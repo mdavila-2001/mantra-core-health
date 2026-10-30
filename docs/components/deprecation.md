@@ -6,9 +6,8 @@
 inventario están activos; ninguno lleva `@deprecated` ni una nota de reemplazo.
 
 Tampoco hay componentes «legados» o «experimentales»: el proyecto es reciente y
-pasó por una reclasificación atómica documentada en
-[`docs/auditoria/02-fases-ejecutadas.md`](../auditoria/02-fases-ejecutadas.md)
-§«Fase 4 — Reclasificación atómica», que ya movió lo que estaba mal ubicado.
+pasó por una reclasificación atómica (agosto de 2026) que ya movió lo que
+estaba mal ubicado.
 
 Esta página existe para cuando haga falta, no para describir algo que no pasa.
 

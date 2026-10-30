@@ -10,35 +10,35 @@
         <p class="caption">Qué paciente de esta organización es el mismo que el de otra institución, con qué confianza se llegó a esa conclusión y quién la verificó.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/personas/vinculos-de-identidad-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo vínculo de identidad</a>
+        <a app-button="" data-variante="primario" routerLink="/people/identity-links-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo vínculo de identidad</a>
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Pacientes">
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/pacientes-listado">Pacientes</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/patients-list">Pacientes</a>
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Vínculos de identidad</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/resumen-propio-listado">Resumen propio</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/apoderados-de-portal-listado">Apoderados de portal</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/personas-relacionadas-listado">Personas relacionadas</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/own-summary-list">Resumen propio</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/portal-proxies-list">Apoderados de portal</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/related-persons-list">Personas relacionadas</a>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá en el listado</span>
+        <span class="solo-lectores">Busque en el listado</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" app-input="" type="search" placeholder="Buscá por identificador de origen o por paciente">
+        <input class="app-input" app-input="" type="search" placeholder="Busque por identificador de origen o por paciente">
       </label>
       <div class="app-filter-bar__fila">
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-1">Paciente</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-2">Organización de fuente</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-2" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
@@ -75,7 +75,7 @@
         <label class="app-form-field__label" for="f-5">Verificado por</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-5" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-5" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       </div>
@@ -121,7 +121,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6.8 9.5a5.2 5.2 0 0 1 10.4 0v1.8"></path><path d="M9.4 20c-.9-1.9-1.4-3.9-1.4-6a4 4 0 0 1 8 0c0 1.3-.2 2.6-.6 3.8"></path><path d="M12 11.8v3.4c0 1.7.3 3.3.9 4.8"></path></svg></span>
         <h2>Todavía no hay vínculos de identidad</h2>
         <p>Un vínculo de identidad dice que el paciente de acá y el paciente de otra institución son la misma persona, con qué puntuación de confianza se llegó a esa conclusión y quién la verificó. Es lo que evita que una historia clínica quede partida en dos.</p>
-        <a app-button="" data-variante="secundario" routerLink="/personas/vinculos-de-identidad-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo vínculo de identidad</a>
+        <a app-button="" data-variante="secundario" routerLink="/people/identity-links-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo vínculo de identidad</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">
@@ -141,7 +141,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar los vínculos de identidad.</strong>
-            <p>El índice maestro de pacientes no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+            <p>El índice maestro de pacientes no respondió a tiempo. Vuelva a intentarlo; si sigue igual, avise a soporte con la hora exacta.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

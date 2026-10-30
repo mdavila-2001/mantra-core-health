@@ -43,12 +43,6 @@ import {
  * buenos motivos: **esta máquina descubrió que su base no tiene el catálogo de
  * v4.0.11**, así que un criterio anclado a datos sembrados mediría qué paquete
  * tiene cargada la máquina y no qué cumple el producto.
- *
- * ## Cómo leer un `fixme`
- *
- * Los criterios que dependen de una tarea que todavía no mergeó se marcan
- * `fixme` con el motivo. No son deuda de esta suite: quedan escritos para
- * ponerse verdes solos cuando aquella tarea llegue.
  */
 
 /** Etiquetas de origen: cada criterio dice de qué prompt salió. */
@@ -56,7 +50,6 @@ const P = {
   privacidad: '[P00.4]',
   especialidad: '[P01]',
   organizaciones: '[P02]',
-  vinculo: '[P03]',
   wizard: '[P04]',
   medios: '[P05]',
   perfilPublico: '[P06]',
@@ -473,22 +466,9 @@ test(`${P.organizaciones} un paciente no puede leer el padrón de profesionales 
   ).toBe('rechazó');
 });
 
-test.fixme(`${P.vinculo} un médico sin vínculo aprobado no aparece asociado a la organización`, async () => {
-  // Depende de TP-2 (Pablo): hoy no existe la aprobación del vínculo, así que
-  // no hay estado «pendiente» que medir. La prueba queda escrita para
-  // ponerse verde sola cuando esa tarea mergee.
-  expect(true).toBe(false);
-});
-
 /* ══════════════════════════════════════════════════════════════════════════
    Grupo D · Perfil y wizard (prompts 04–05)
    ══════════════════════════════════════════════════════════════════════════ */
-
-test.fixme(`${P.wizard} completar el alta salteando pasos se rechaza con detalle`, async () => {
-  // Depende de TJ-1 (Mac): el alta por pasos todavía no existe como recorrido
-  // retomable, así que no hay «paso salteado» que medir.
-  expect(true).toBe(false);
-});
 
 test(`${P.medios} una foto de perfil con tipo no permitido se rechaza`, async () => {
   const perfil = await leer(await paciente.api.get('/profiles/patients/me/summary'));

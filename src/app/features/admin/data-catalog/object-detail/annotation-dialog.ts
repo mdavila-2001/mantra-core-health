@@ -20,7 +20,7 @@ import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { SENSITIVITY_OPTIONS, errorDeApi } from '../../platform/platform-labels';
 
 /** Campos de texto de la ficha de una tabla. */
@@ -33,6 +33,10 @@ const CAMPOS = [
   'businessOwner',
   'dataSteward',
   'technicalOwner',
+  // AG-44: el backend ya los acepta (`UpsertAnnotationDto`); la UI no los
+  // dejaba tocar y no daba 400, sencillamente no existían en el formulario.
+  'processSupported',
+  'sourceOfTruth',
 ] as const;
 type Campo = (typeof CAMPOS)[number];
 
@@ -46,6 +50,8 @@ const ETIQUETA: Readonly<Record<Campo, string>> = {
   businessOwner: 'Dueño de negocio',
   dataSteward: 'Steward',
   technicalOwner: 'Responsable técnico',
+  processSupported: 'Proceso que sostiene',
+  sourceOfTruth: 'Fuente de verdad',
 };
 
 /**
@@ -109,6 +115,12 @@ export class AnnotationDialog implements OnInit {
     businessOwner: this.fb.control(''),
     dataSteward: this.fb.control(''),
     technicalOwner: this.fb.control(''),
+    processSupported: this.fb.control(''),
+    sourceOfTruth: this.fb.control(''),
+    // AG-44: `producers` es una lista en el contrato; se edita como texto
+    // separado por comas, como el resto de la casa hace con listas cortas de
+    // nombres libres, y se parte/junta al guardar y al cargar.
+    producers: this.fb.control(''),
     sensitivity: this.fb.control('UNKNOWN'),
     changeReason: this.fb.control(''),
     submit: this.fb.control(true),
@@ -120,7 +132,7 @@ export class AnnotationDialog implements OnInit {
 
   protected readonly paginas = computed(() => {
     const e = this.errores();
-    return paginarCampos([
+    return paginateFields([
       {
         titulo: 'Por qué existe',
         hint: 'Lo que nadie sabe se deja vacío y se declara como pregunta abierta: no se inventa.',
@@ -145,12 +157,39 @@ export class AnnotationDialog implements OnInit {
           {
             key: 'sensitivity',
             label: 'Sensibilidad',
-            hint: '«Sin determinar» no es lo mismo que «No sensible».',
+            hint: '«Sin clasificar» no es un nivel: falta decidirlo. «Público» o «Anonimizado» sí lo son.',
             control: 'select' as const,
             options: SENSITIVITY_OPTIONS.map((o) => ({ value: o.value as string, label: o.label })),
           },
           { key: 'businessOwner', label: ETIQUETA.businessOwner, control: 'text' as const },
           { key: 'dataSteward', label: ETIQUETA.dataSteward, control: 'text' as const },
+        ],
+      },
+      {
+        titulo: 'Procedencia',
+        hint: 'AG-44: de dónde sale el dato y qué lo sostiene.',
+        campos: [
+          {
+            key: 'processSupported',
+            label: ETIQUETA.processSupported,
+            hint: 'Qué proceso de negocio se cae si esto falta.',
+            control: 'textarea' as const,
+            mensajeDeError: e.processSupported,
+          },
+          {
+            key: 'sourceOfTruth',
+            label: ETIQUETA.sourceOfTruth,
+            hint: 'El sistema o proceso que origina el dato, no quien lo repite.',
+            control: 'text' as const,
+            testId: 'annotation-source-of-truth',
+            mensajeDeError: e.sourceOfTruth,
+          },
+          {
+            key: 'producers',
+            label: 'Quién lo produce',
+            hint: 'Sistemas o equipos que escriben este objeto, separados por coma.',
+            control: 'text' as const,
+          },
         ],
       },
       {
@@ -177,6 +216,7 @@ export class AnnotationDialog implements OnInit {
         this.form.controls[campo].setValue((contenido[campo as keyof AnnotationContent] as string | null) ?? '');
       }
       this.form.controls.sensitivity.setValue(contenido.sensitivity);
+      this.form.controls.producers.setValue(contenido.producers.join(', '));
     }
   }
 
@@ -195,6 +235,13 @@ export class AnnotationDialog implements OnInit {
       // `null` borra en el servidor; una cadena vacía también es ausencia.
       patch[campo] = valor === '' ? null : valor;
     }
+    // AG-44: `producers` viaja como lista; una cadena vacía es "sin productores
+    // declarados", no una lista con un elemento vacío.
+    const productores = valores.producers
+      .split(',')
+      .map((p) => p.trim())
+      .filter((p) => p !== '');
+    patch['producers'] = productores;
     if (valores.changeReason.trim()) patch['changeReason'] = valores.changeReason.trim();
 
     this.catalog.saveObjectAnnotation(this.objectId(), patch as unknown as AnnotationPatch).subscribe({
@@ -208,7 +255,7 @@ export class AnnotationDialog implements OnInit {
         if (api.status === 409) {
           this.conflicto.set(true);
           this.error.set(
-            'Otra persona cambió esta ficha mientras la editabas. Tus cambios siguen acá: recargá para ver la versión vigente.',
+            'Otra persona cambió esta ficha mientras la editaba. Sus cambios siguen acá: recargue para ver la versión vigente.',
           );
           return;
         }
@@ -227,13 +274,13 @@ export class AnnotationDialog implements OnInit {
           this.errores.set(porCampo);
           this.error.set(
             [
-              api.message ?? 'Revisá los campos marcados.',
+              api.message ?? 'Revise los campos marcados.',
               ...Object.entries(porCampo).map(([campo, texto]) => `${ETIQUETA[campo as Campo]}: ${texto}`),
             ].join(' · '),
           );
           return;
         }
-        this.error.set(api.status === 403 ? 'Tu rol no permite editar fichas.' : 'No se pudo guardar la ficha.');
+        this.error.set(api.status === 403 ? 'Su rol no permite editar fichas.' : 'No se pudo guardar la ficha.');
       },
     });
   }

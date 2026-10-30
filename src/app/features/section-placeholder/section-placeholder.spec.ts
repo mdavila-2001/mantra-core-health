@@ -27,7 +27,7 @@ const SECCION: AppSection = {
   group: 'Atención',
   icon: 'calendar',
   availability: 'planificada',
-  summary: 'Gestioná disponibilidad, reservas y confirmaciones de turno.',
+  summary: 'Gestione disponibilidad, reservas y confirmaciones de turno.',
   module: 'M41 scheduling',
 };
 
@@ -65,7 +65,7 @@ describe('SectionPlaceholder', () => {
     const fixture = await montar();
 
     const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Gestioná disponibilidad, reservas y confirmaciones de turno.');
+    expect(texto).toContain('Gestione disponibilidad, reservas y confirmaciones de turno.');
     // Y es explícito sobre por qué está vacía, en vez de sugerir que no hay datos.
     expect(texto).toContain('La pantalla todavía no está construida.');
   });
@@ -88,11 +88,17 @@ describe('SectionPlaceholder', () => {
   });
 
   it('sirve a cualquier sección planificada del registro, sin conocerlas', async () => {
-    const otra = APP_SECTIONS.find((s) => s.availability === 'planificada' && s.path !== 'agenda');
-    expect(otra).toBeDefined();
+    // El registro puede quedarse sin secciones planificadas —desde FACT-SIAT-MOCK
+    // `billing` es la última que pasó a disponible—, así que la prueba no espera
+    // encontrar una: toma una sección real, distinta de la de arriba, y la marca
+    // planificada acá. Lo que se prueba es el placeholder, no el estado del menú.
+    const real = APP_SECTIONS.find((s) => s.path !== SECCION.path && s.summary !== '');
+    expect(real).toBeDefined();
+    const otra: AppSection = { ...real!, availability: 'planificada' };
 
-    const fixture = await montar(otra!);
+    const fixture = await montar(otra);
 
-    expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe(otra!.label);
+    expect(fixture.nativeElement.querySelector('h1')?.textContent?.trim()).toBe(otra.label);
+    expect(fixture.nativeElement.textContent).toContain(otra.summary);
   });
 });

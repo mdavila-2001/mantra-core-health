@@ -29,7 +29,7 @@ export const DEMO_TOASTS: Readonly<Record<ToastType, Omit<ToastMessage, 'id'>>> 
   },
   info: {
     type: 'info',
-    message: 'El turno de cardiología se reprogramó para el 12/08 a las 09:30.',
+    message: 'La cita de cardiología se reprogramó para el 12/08 a las 09:30.',
     durationMs: 5000,
   },
 };
@@ -45,6 +45,6 @@ export const DEMO_TOAST_TYPES: readonly ToastType[] = ['success', 'warning', 'er
 export const PERSISTENT_DEMO_TOAST: Omit<ToastMessage, 'id'> = {
   type: 'error',
   title: 'Sin conexión con el servidor',
-  message: 'Los cambios no se están guardando. Revisá la conexión y reintentá.',
+  message: 'Los cambios no se están guardando. Revise la conexión y reintente.',
   durationMs: null,
 };

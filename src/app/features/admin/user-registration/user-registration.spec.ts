@@ -178,4 +178,12 @@ describe('UserRegistration', () => {
     const form = interno<{ getRawValue: () => { password: string } }>('form');
     expect(form.getRawValue().password).toBe('');
   });
+  it('ofrece el alta del médico, que tiene su propia pantalla', () => {
+    // El médico no tiene contraseña inicial —la elige él con un código—: no cabe
+    // en este formulario, y quien lo busca acá tiene que poder llegar.
+    const enlace = fixture.nativeElement.querySelector(
+      '[data-testid="usuarios-registrar-medico"]',
+    ) as HTMLAnchorElement | null;
+    expect(enlace?.getAttribute('href')).toBe('/administration/users/practitioner');
+  });
 });

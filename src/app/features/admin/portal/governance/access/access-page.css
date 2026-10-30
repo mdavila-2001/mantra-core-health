@@ -1,0 +1,29 @@
+.access-page {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.access-page__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.access-page__note {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.access-page__roles {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.access-page__secondary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

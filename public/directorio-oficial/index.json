@@ -1,0 +1,35 @@
+{
+  "generadoDe": "mantra-core-health-model/salud-db/data/directorio-oficial",
+  "archivos": {
+    "PHARMACY": "farmacias.json",
+    "ORGANIZATION": "organizaciones.json",
+    "DIAGNOSTIC_UNIT": "diagnostico.json"
+  },
+  "totales": {
+    "PHARMACY": 6977,
+    "ORGANIZATION": 7945,
+    "DIAGNOSTIC_UNIT": 370
+  },
+  "fuentes": {
+    "agemed": {
+      "url": "https://www.agemed.gob.bo/archivos_vigilancia/farmacias/farmacias_nacional.xlsx",
+      "licencia": "Información pública del Estado (AGEMED, Ministerio de Salud y Deportes de Bolivia); se cita la fuente.",
+      "version": "2026-10-01"
+    },
+    "rues": {
+      "url": "https://estadisticas.minsalud.gob.bo/Reportes_Dinamicos/Estructura_2026.aspx",
+      "licencia": "Información pública del Estado (Ministerio de Salud y Deportes / SNIS, Bolivia); se cita la fuente.",
+      "version": null
+    },
+    "overture": {
+      "url": null,
+      "licencia": "CDLA-Permissive-2.0 / Apache-2.0 / CC0-1.0 según sources[].license de cada lugar",
+      "version": "2026-09-23.1"
+    },
+    "limites": {
+      "url": "https://www.geoboundaries.org (gbOpen BOL, de GeoBolivia)",
+      "licencia": "dominio público",
+      "version": null
+    }
+  }
+}

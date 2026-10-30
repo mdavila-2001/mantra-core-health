@@ -38,11 +38,28 @@ describe('NAV_SUBGROUPS', () => {
    * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
    * justifica cuando ordena varias secciones; envolver una sola es ruido.
    *
+   * También cuelga directo «Ayuda psicológica» en General: la sección es una
+   * puerta independiente solicitada para ofrecer recursos de salud mental
+   * (11/10/2026), no parte de otro subgrupo.
+   *
    * Era de dos: `consultation` salió del registro entero el 2026-09-10, cuando
    * el propietario pidió borrar la pantalla vieja que duplicaba a «Consultas
-   * médicas».
+   * médicas». Volvió a ser de dos el 2026-09-25: al retirarse «Notas médicas»
+   * del producto, «Historia clínica» quedaba envolviendo sólo al archivo
+   * clínico, y se disolvió por la misma regla.
    */
-  const SUELTAS_A_PROPOSITO = ['schedule'];
+  const SUELTAS_A_PROPOSITO = [
+    'schedule',
+    'medical-records',
+    // El médico de cabecera (28/10/2026): una sola sección, al lado del archivo
+    // clínico; un subgrupo para envolverla sería el escalón de más.
+    'my-primary-patients',
+    'psychological-help',
+    // La portada de «Superadministración» (17/10/2026): es el tablero con el que
+    // se abre el dominio, no una pantalla más de una lista; envolverla en un
+    // bloque la escondería detrás de un desplegable.
+    'superadmin/observability',
+  ];
 
   it('reparte el registro entero: ninguna sección se queda sin bloque por descuido', () => {
     const sinBloque = rutasDelRegistro.filter(

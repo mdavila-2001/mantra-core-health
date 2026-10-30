@@ -14,11 +14,13 @@ import type {
   QuietHours,
 } from '../../../core/data-access/notifications/notifications.types';
 import { NotificationsStore } from '../../../core/notifications/notifications.store';
+import { WebPushService, type WebPushOutcome } from '../../../core/notifications/web-push.service';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../shared/components/atoms/nav-icon/nav-icon.types';
 import { Switch } from '../../../shared/components/atoms/switch/switch';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Cómo se llama cada categoría **en lenguaje llano**.
@@ -33,20 +35,20 @@ const LABELS: Readonly<
   CLINICAL: {
     title: 'Recetas y consultas',
     detail:
-      'Cuando tu médico emite una receta o cierra una consulta tuya.',
+      'Cuando su médico emite una receta o cierra una consulta suya.',
   },
   SCHEDULING: {
-    title: 'Turnos',
+    title: 'Citas',
     detail:
       'Recordatorios, cambios de cita, demoras y cupos que se liberan.',
   },
   MESSAGES: {
     title: 'Chats',
-    detail: 'Cuando alguien te escribe por la mensajería.',
+    detail: 'Cuando alguien le escribe por la mensajería.',
   },
   SOCIAL: {
     title: 'Actividad social',
-    detail: 'Reacciones, comentarios y seguidores en tus publicaciones.',
+    detail: 'Reacciones, comentarios y seguidores en sus publicaciones.',
   },
 };
 
@@ -91,9 +93,18 @@ const ICONS: Readonly<Record<NotificationCategory, NavIconName>> = {
  * ventana **existe** y aparece cuando la ventana termina. Prometer «no te
  * molesto» y perder un aviso serían dos cosas distintas.
  */
+/** Qué decirle a la persona cuando no se pudo activar, sin culparla. */
+const PUSH_NOTICES: Record<Exclude<WebPushOutcome, 'enabled'>, string> = {
+  unsupported: 'Este navegador no admite avisos fuera de la página.',
+  unavailable: 'Los avisos del navegador todavía no están disponibles en este entorno.',
+  denied:
+    'El navegador tiene bloqueados los avisos. Puede permitirlos desde la configuración del sitio.',
+  failed: 'No pudimos activar los avisos. Intente de nuevo en unos minutos.',
+};
+
 @Component({
   selector: 'app-notification-preferences',
-  imports: [Alert, AppButton, FormsModule, NavIcon, Switch],
+  imports: [Alert, AppButton, FormsModule, NavIcon, Switch, LoadingState],
   templateUrl: './notification-preferences.html',
   styleUrl: './notification-preferences.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -101,6 +112,7 @@ const ICONS: Readonly<Record<NotificationCategory, NavIconName>> = {
 export class NotificationPreferences {
   private readonly notifications = inject(NotificationsClient);
   private readonly store = inject(NotificationsStore);
+  protected readonly webPush = inject(WebPushService);
 
   protected readonly categories = signal<readonly CategoryPreference[]>([]);
   protected readonly loading = signal(true);
@@ -138,8 +150,23 @@ export class NotificationPreferences {
     })),
   );
 
+  /** Mensaje cuando el navegador no pudo activar los avisos, o vacío. */
+  protected readonly pushNotice = signal('');
+
   constructor() {
     this.load();
+    void this.webPush.refresh();
+  }
+
+  /** Activa o desactiva los avisos del navegador. Es un gesto, por eso pide permiso acá. */
+  protected async togglePush(enabled: boolean): Promise<void> {
+    this.pushNotice.set('');
+    if (!enabled) {
+      await this.webPush.disable();
+      return;
+    }
+    const outcome = await this.webPush.enable();
+    if (outcome !== 'enabled') this.pushNotice.set(PUSH_NOTICES[outcome]);
   }
 
   /**
@@ -199,7 +226,7 @@ export class NotificationPreferences {
           // mentira» (AC-17-7).
           this.restoreConfirmed();
           this.saving.set(false);
-          this.error.set('No pudimos guardar tus preferencias.');
+          this.error.set('No pudimos guardar sus preferencias.');
         },
       });
   }
@@ -212,7 +239,7 @@ export class NotificationPreferences {
       },
       error: () => {
         this.loading.set(false);
-        this.error.set('No pudimos cargar tus preferencias.');
+        this.error.set('No pudimos cargar sus preferencias.');
       },
     });
   }

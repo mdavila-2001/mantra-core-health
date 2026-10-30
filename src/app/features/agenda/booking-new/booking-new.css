@@ -61,3 +61,11 @@ form,
 .reserva__campo--ancho {
   grid-column: 1 / -1;
 }
+
+/* La observación de síntomas que se usó para completar el motivo. */
+.reserva__nota {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}

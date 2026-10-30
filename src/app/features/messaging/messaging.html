@@ -1,8 +1,11 @@
 <!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la
      bandeja los pinta la bandeja (su `ViewState`) y los de un mensaje, su
-     burbuja: ninguno de los dos viene acá. -->
+     burbuja: ninguno de los dos viene acá. El motivo de un S7 se pinta junto
+     a la bandeja (`motivoDeBandejaAtrasada`), no encima de la pantalla. -->
 @if (store.error(); as mensaje) {
-  <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+  @if (mensaje !== store.motivoDeBandejaAtrasada()) {
+    <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+  }
 }
 
 <!-- Se perdió el permiso de escribir como la farmacia: se dice una vez, con
@@ -32,7 +35,7 @@
        esqueleto. Sin esto la pantalla saltaba de una línea de texto a dos
        paneles. -->
   <div class="mensajeria">
-    <section class="mensajeria__panel" aria-label="Tus conversaciones">
+    <section class="mensajeria__panel" aria-label="Sus conversaciones">
       <header class="mensajeria__cabecera">
         <h1 class="mensajeria__titulo">Chats</h1>
       </header>
@@ -49,8 +52,8 @@
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
        `community`, que es una entidad aparte del perfil de paciente del token. -->
   <app-empty-state
-    title="Te falta tu perfil público"
-    description="Los chats usan tu perfil de la red social: es lo que ve la otra persona cuando le escribís. Se crea en un paso y después podés completarlo."
+    title="Le falta su perfil público"
+    description="Los chats usan su perfil de la red social: es lo que ve la otra persona cuando le escribe. Se crea en un paso y después puede completarlo."
     variant="empty"
   >
     <button
@@ -67,7 +70,7 @@
 } @else {
   <div class="mensajeria" [class.is-hilo-abierto]="hayHiloAbierto()">
     <!-- ── Columna izquierda: la bandeja ──────────────────────────────── -->
-    <section class="mensajeria__panel" aria-label="Tus conversaciones">
+    <section class="mensajeria__panel" aria-label="Sus conversaciones">
       <header class="mensajeria__cabecera">
         <h1 class="mensajeria__titulo">Chats</h1>
         <!-- Cuenta chats, igual que el chip «No leídos»: una sola unidad. -->
@@ -104,28 +107,47 @@
         </label>
       </div>
 
-      <!-- Los filtros. `aria-pressed` y no `role="tab"`: no cambian de panel,
+      <!-- Los filtros, en un carril horizontal con flechas (propietario,
+           17/10/2026): se pasa de a una «página» de filtros con las flechas o
+           deslizando. «Archivados» y «Bloqueados» viven en el mismo carril:
+           siempre a la vista, aunque estén vacíos, y sin comerse dos filas de
+           la bandeja. `aria-pressed` y no `role="tab"`: no cambian de panel,
            recortan la misma lista. -->
-      <div class="mensajeria__chips" role="group" aria-label="Filtrar conversaciones">
-        @for (opcion of filtros; track opcion) {
-          <button
-            class="mensajeria__chip"
-            type="button"
-            [attr.data-testid]="'mensajeria-filtro-' + opcion"
-            [class.is-activo]="filtro() === opcion && !verArchivados()"
-            [attr.aria-pressed]="filtro() === opcion && !verArchivados()"
-            (click)="elegirFiltro(opcion)"
-          >
-            {{ rotulo(opcion) }}
-            @if (opcion === 'no-leidos' && noLeidas() > 0) {
-              <span class="mensajeria__chip-cuenta" aria-hidden="true">{{ noLeidas() }}</span>
-              <span class="solo-lectores">: {{ rotuloNoLeidas() }}</span>
-            }
-          </button>
-        }
-        <!-- El cajón de archivados, como un chip más: sólo cuando hay algo
-             adentro o se está mirando. -->
-        @if (archivadas().length > 0 || verArchivados()) {
+      <div class="mensajeria__filtros">
+        <button
+          class="mensajeria__flecha"
+          type="button"
+          data-testid="mensajeria-filtros-anterior"
+          aria-label="Filtros anteriores"
+          [disabled]="!puedeRetroceder()"
+          (click)="pasarFiltros(-1)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 6-6 6 6 6" /></svg>
+        </button>
+
+        <div
+          #carril
+          class="mensajeria__chips"
+          role="group"
+          aria-label="Filtrar conversaciones"
+          (scroll)="medirCarril()"
+        >
+          @for (opcion of filtros; track opcion) {
+            <button
+              class="mensajeria__chip"
+              type="button"
+              [attr.data-testid]="'mensajeria-filtro-' + opcion"
+              [class.is-activo]="filtro() === opcion && !verArchivados() && !verBloqueados()"
+              [attr.aria-pressed]="filtro() === opcion && !verArchivados() && !verBloqueados()"
+              (click)="elegirFiltro(opcion)"
+            >
+              {{ rotulo(opcion) }}
+              @if (opcion === 'no-leidos' && noLeidas() > 0) {
+                <span class="mensajeria__chip-cuenta" aria-hidden="true">{{ noLeidas() }}</span>
+                <span class="solo-lectores">: {{ rotuloNoLeidas() }}</span>
+              }
+            </button>
+          }
           <button
             class="mensajeria__chip"
             type="button"
@@ -134,11 +156,32 @@
             [attr.aria-pressed]="verArchivados()"
             (click)="alternarArchivados()"
           >
-            <svg class="mensajeria__chip-icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 12h4" /></svg>
             Archivados
-            <span class="mensajeria__chip-cuenta">{{ archivadas().length }}</span>
+            <span class="mensajeria__chip-cuenta" data-testid="mensajeria-archivados-cuenta">{{ archivadas().length }}</span>
           </button>
-        }
+          <button
+            class="mensajeria__chip"
+            type="button"
+            data-testid="mensajeria-bloqueados"
+            [class.is-activo]="verBloqueados()"
+            [attr.aria-pressed]="verBloqueados()"
+            (click)="alternarBloqueados()"
+          >
+            Bloqueados
+            <span class="mensajeria__chip-cuenta" data-testid="mensajeria-bloqueados-cuenta">{{ store.bloqueados().length }}</span>
+          </button>
+        </div>
+
+        <button
+          class="mensajeria__flecha"
+          type="button"
+          data-testid="mensajeria-filtros-siguiente"
+          aria-label="Más filtros"
+          [disabled]="!puedeAvanzar()"
+          (click)="pasarFiltros(1)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6" /></svg>
+        </button>
       </div>
 
       <div class="mensajeria__lista">
@@ -150,14 +193,14 @@
         @if (comoOrganizacion() === null && consulta().trim() !== '' && store.resultados().length > 0) {
           <p class="mensajeria__rotulo">Contactos</p>
           <ul class="mensajeria__contactos">
-            @for (resultado of store.resultados(); track resultado.slug) {
+            @for (resultado of store.resultados(); track resultado.profileId) {
               <li>
                 <button
                   class="mensajeria__contacto"
                   type="button"
                   data-testid="mensajeria-resultado"
                   [disabled]="store.abriendo()"
-                  (click)="escribirA(resultado.slug)"
+                  (click)="escribirAPerfil(resultado.profileId)"
                 >
                   <span class="mensajeria__contacto-nombre">{{ resultado.displayName }}</span>
                   @if (resultado.headline) {
@@ -174,7 +217,36 @@
              S9 los pinta la lista con su reintento; con filas (ready, o S7
              si el último tic falló) se aplican los filtros. -->
         @let bandeja = store.bandeja();
-        @if (bandeja.status !== 'ready' && bandeja.status !== 'stale') {
+        @if (verBloqueados()) {
+          <!-- A quiénes bloqueó. Desbloquear los devuelve a la conversación:
+               el chat nunca se borró. -->
+          @if (store.bloqueados().length === 0) {
+            <p class="mensajeria__sin-nada" data-testid="mensajeria-sin-bloqueados">
+              No bloqueó a nadie. Puede bloquear a alguien desde el menú de su conversación.
+            </p>
+          } @else {
+            <ul class="mensajeria__bloqueados" data-testid="mensajeria-lista-bloqueados">
+              @for (bloqueado of store.bloqueados(); track bloqueado.profileId) {
+                <li class="mensajeria__bloqueado" data-testid="mensajeria-bloqueado">
+                  <app-avatar [name]="bloqueado.displayName" size="md" />
+                  <span class="mensajeria__bloqueado-texto">
+                    <span class="mensajeria__bloqueado-nombre">{{ bloqueado.displayName }}</span>
+                    <span class="mensajeria__bloqueado-detalle">Bloqueado</span>
+                  </span>
+                  <button
+                    class="mensajeria__desbloquear"
+                    type="button"
+                    data-testid="mensajeria-desbloquear"
+                    [attr.aria-label]="'Desbloquear a ' + bloqueado.displayName"
+                    (click)="desbloquear(bloqueado.profileId)"
+                  >
+                    Desbloquear
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        } @else if (bandeja.status !== 'ready' && bandeja.status !== 'stale') {
           <app-conversation-list
             [conversaciones]="[]"
             [estado]="bandeja"
@@ -184,6 +256,9 @@
           <!-- S7 sigue siendo S7 aunque el filtro no deje filas: el aviso de
                antigüedad no se pierde por filtrar. -->
           @if (bandeja.status === 'stale') {
+            @if (store.motivoDeBandejaAtrasada(); as motivo) {
+              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
+            }
             <app-conversation-list
               [conversaciones]="[]"
               [estado]="bandeja"
@@ -200,11 +275,11 @@
               } @else if (store.resultados().length === 0) {
                 No encontramos ningún chat ni contacto con «{{ consulta() }}».
               } @else {
-                Ninguno de tus chats coincide con «{{ consulta() }}».
+                Ninguno de sus chats coincide con «{{ consulta() }}».
               }
             </p>
           } @else if (verArchivados()) {
-            <p class="mensajeria__sin-nada">No tenés conversaciones archivadas.</p>
+            <p class="mensajeria__sin-nada">No tiene conversaciones archivadas.</p>
           } @else if (filtro() !== 'todos') {
             <p class="mensajeria__sin-nada">
               Ningún chat en «{{ rotulo(filtro()) }}».
@@ -228,12 +303,18 @@
             </p>
           }
         } @else {
+          @if (bandeja.status === 'stale') {
+            @if (store.motivoDeBandejaAtrasada(); as motivo) {
+              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
+            }
+          }
           <app-conversation-list
             [conversaciones]="visibles()"
             [estado]="bandeja"
             (reintentar)="store.recargarBandeja()"
             [activaId]="store.activaId()"
             [perfilPropio]="store.perfil()"
+            [bloqueados]="idsBloqueados()"
             [resaltar]="consulta()"
             (accion)="atender($event)"
           />
@@ -247,13 +328,19 @@
 
       @if (!hayHiloAbierto()) {
         <div class="mensajeria__vacio">
-          <p class="mensajeria__vacio-icono" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
-          </p>
-          <p class="mensajeria__vacio-titulo">Tus chats con farmacias y profesionales</p>
+          <!-- El logo de AloVida en un sello, con el globo de chat como insignia.
+               Antes eran un globo suelto y un trazo de electro dibujado a mano
+               debajo; el trazo de la marca es el logo, y se usa el archivo. -->
+          <span class="mensajeria__vacio-sello" aria-hidden="true">
+            <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="72" height="53" />
+            <span class="mensajeria__vacio-insignia">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
+            </span>
+          </span>
+          <p class="mensajeria__vacio-titulo">Sus chats con farmacias y profesionales</p>
           <p class="mensajeria__vacio-texto">
-            Elegí una conversación de la lista para leerla acá. Para consultar por un
-            producto o un pedido, escribile a la farmacia desde su ficha.
+            Elija una conversación de la lista para leerla aquí. Para consultar por un
+            producto o un pedido, escríbale a la farmacia desde su ficha.
           </p>
         </div>
       }

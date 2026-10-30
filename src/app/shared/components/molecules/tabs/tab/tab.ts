@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
+import type { NavIconName } from '../../../atoms/nav-icon/nav-icon.types';
 import { TABS_PARENT } from '../tabs.types';
 
 /**
@@ -45,6 +46,11 @@ export class Tab {
   private readonly tabs = inject(TABS_PARENT, { optional: true });
 
   readonly label = input.required<string>();
+  /**
+   * Ícono opcional delante del rótulo. Acompaña al texto, nunca lo reemplaza:
+   * el nombre accesible sigue siendo el rótulo y el dibujo va oculto.
+   */
+  readonly icon = input<NavIconName | null>(null);
   readonly disabled = input(false, { transform: booleanAttribute });
 
   private readonly baseId = nextControlId('tab');

@@ -1,0 +1,102 @@
+.observabilidad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.observabilidad__ventana {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
+
+/* En teléfono el selector ocupa su propia fila: compartiéndola con «Actualizar»
+   cada opción se angosta hasta cortar su rótulo («7 d…»). */
+.observabilidad__ventana app-segmented-control {
+  flex: 1 1 20rem;
+  max-inline-size: 26rem;
+}
+
+.observabilidad__totales {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--e3);
+  margin-block-end: var(--e4);
+}
+
+.observabilidad__total {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--e3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.observabilidad__valor {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  color: var(--text-primary);
+}
+
+.observabilidad__rotulo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.observabilidad__ayuda {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.observabilidad__serie {
+  margin: 0;
+}
+
+.observabilidad__barras {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  block-size: 8rem;
+  padding: var(--e2);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.observabilidad__barra {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  block-size: 100%;
+}
+
+.observabilidad__barra-total {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  inline-size: 100%;
+  min-block-size: 2px;
+  overflow: hidden;
+  border-radius: var(--r-xs) var(--r-xs) 0 0;
+  background: var(--brand-primary);
+}
+
+/* Las fallidas no se distinguen sólo por color: llevan un rayado. */
+.observabilidad__barra-fallo {
+  display: block;
+  inline-size: 100%;
+  background: repeating-linear-gradient(
+    135deg,
+    var(--error-tinta) 0 3px,
+    var(--bg-surface-alt) 3px 6px
+  );
+}
+
+.observabilidad__no-medido {
+  margin: 0;
+  padding-inline-start: var(--e4);
+}

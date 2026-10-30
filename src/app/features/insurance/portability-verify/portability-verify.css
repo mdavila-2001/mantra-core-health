@@ -12,7 +12,7 @@
   padding: var(--sp-8) var(--sp-4);
 }
 
-.verify__datos {
+.verify__data {
   display: grid;
   grid-template-columns: auto 1fr;
   column-gap: var(--sp-3);
@@ -20,16 +20,16 @@
   margin: var(--sp-3) 0;
 }
 
-.verify__datos dt {
+.verify__data dt {
   font-weight: 600;
   color: var(--text-secondary);
 }
 
-.verify__datos dd {
+.verify__data dd {
   margin: 0;
 }
 
-.verify__rotulo {
+.verify__label {
   margin: var(--sp-3) 0 var(--sp-1);
   font-weight: 600;
 }
@@ -41,6 +41,6 @@
   user-select: all;
 }
 
-.verify__volver {
+.verify__back {
   margin-top: var(--sp-2);
 }

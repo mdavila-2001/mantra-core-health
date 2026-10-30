@@ -117,5 +117,3 @@ clínico.**
 | Acuerdos de nivel de servicio | No hay umbrales de disponibilidad |
 | Prioridad de las 81 secciones | No se sabe qué viene después |
 | Métricas de éxito del producto | Y no hay analítica para medirlas |
-
-Registradas en [el análisis de brechas](../reports/documentation-gap-analysis.md).

@@ -20,20 +20,20 @@
   <p class="canje__codigo cifras-tabulares" data-testid="canje-codigo">
     {{ comprobante().codigo }}
   </p>
-  <p class="canje__caja" data-testid="canje-caja">Mostrá este código en la caja del supermercado</p>
+  <p class="canje__caja" data-testid="canje-caja">Muestre este código en la caja del supermercado</p>
   <p class="canje__ayuda">
-    Si el escáner no lo toma, dictá este código.
+    Si el escáner no lo toma, dicte este código.
   </p>
 
   <dl class="canje__datos">
     <div class="canje__dato">
-      <dt>Canjeaste</dt>
+      <dt>Canjeó</dt>
       <dd class="cifras-tabulares" data-testid="canje-puntos">
         {{ enPuntos(comprobante().canje.puntos) }}
       </dd>
     </div>
     <div class="canje__dato">
-      <dt>Te queda</dt>
+      <dt>Le queda</dt>
       <dd class="cifras-tabulares" data-testid="canje-saldo">
         {{ enPuntos(comprobante().canje.saldoDespues) }}
       </dd>

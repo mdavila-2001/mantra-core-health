@@ -177,6 +177,28 @@ describe('PublicProfileReviews (P31)', () => {
     paciente.http.verify();
   });
 
+  it('no ofrece calificar si la ficha no es de un profesional o no acepta reseñas', async () => {
+    const vacia = { items: [], nextCursor: null, ratingAverage: null, ratingCount: 0 };
+    const botonDe = (fixture: ComponentFixture<PublicProfileReviews>) =>
+      fixture.nativeElement.querySelector('[data-testid="opiniones-calificar"]');
+
+    const apagadas = await montar('pat-1');
+    apagadas.fixture.componentRef.setInput('acceptsReviews', false);
+    apagadas.http.expectOne((r) => r.url === RESEÑAS).flush(vacia);
+    apagadas.fixture.detectChanges();
+    expect(botonDe(apagadas.fixture)).toBeNull();
+    apagadas.http.verify();
+    TestBed.resetTestingModule();
+
+    const lugar = await montar('pat-1');
+    lugar.fixture.componentRef.setInput('kind', 'PHARMACY');
+    // La carga ya salió con el `kind` de `montar`; lo que se prueba es el botón.
+    lugar.http.expectOne((r) => r.url === RESEÑAS).flush(vacia);
+    lugar.fixture.detectChanges();
+    expect(botonDe(lugar.fixture)).toBeNull();
+    lugar.http.verify();
+  });
+
   it('un fallo se dice y se puede reintentar, sin dejar la sección muda', async () => {
     const { fixture, http } = await montar();
     http

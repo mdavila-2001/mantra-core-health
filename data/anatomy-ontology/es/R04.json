@@ -1,0 +1,1318 @@
+{
+ "UBERON:0000074": {
+  "labelEs": "glomérulo renal",
+  "definitionEs": "Ovillo capilar que forma una red estrecha con el epitelio visceral (podocitos) y el mesangio para constituir la barrera de filtración y que está rodeado por la cápsula de Bowman en las nefronas del riñón de los vertebrados[GO]."
+ },
+ "UBERON:0000080": {
+  "labelEs": "mesonefros",
+  "definitionEs": "Segunda etapa del riñón. Actúa como el principal órgano excretor de los vertebrados acuáticos y como riñón embrionario temporal en los vertebrados superiores. Está compuesto por el conducto mesonéfrico (también denominado conducto de Wolff), los túbulos mesonéfricos y los ovillos capilares asociados. Un único túbulo con su ovillo capilar asociado se denomina unidad excretora mesonéfrica; estas unidades son similares en estructura y función a las nefronas del riñón adulto. El mesonefros deriva del mesodermo intermedio en el embrión de los vertebrados."
+ },
+ "UBERON:0000081": {
+  "labelEs": "metanefros",
+  "definitionEs": "En los mamíferos, el metanefros es el órgano excretor del feto, que se desarrolla hasta convertirse en el riñón maduro y se forma a partir de la porción posterior del cordón nefrógeno. El metanefros es un órgano endocrino y metabólico que filtra la sangre y excreta los productos finales del metabolismo corporal en forma de orina[GO]."
+ },
+ "UBERON:0000082": {
+  "labelEs": "riñón de mamífero adulto",
+  "definitionEs": "Riñón en la etapa de desarrollo más avanzada en un mamífero."
+ },
+ "UBERON:0000180": {
+  "labelEs": "región lumbar lateral del abdomen",
+  "definitionEs": "Región del tronco posterior (parte baja de la espalda) situada por debajo de las costillas y por encima del ilion."
+ },
+ "UBERON:0000916": {
+  "labelEs": "abdomen",
+  "definitionEs": "Subdivisión del cuerpo de los vertebrados situada entre el tórax y la pelvis. La parte ventral del abdomen contiene la cavidad abdominal y los órganos viscerales. La parte dorsal comprende la sección abdominal de la columna vertebral."
+ },
+ "UBERON:0001113": {
+  "labelEs": "lóbulo hepático",
+  "definitionEs": "La anatomía macroscópica tradicional dividía el hígado en cuatro lóbulos según sus características de superficie. El ligamento falciforme es visible en la cara frontal (anterior) del hígado. Este divide el hígado en un lóbulo anatómico izquierdo y un lóbulo anatómico derecho."
+ },
+ "UBERON:0001114": {
+  "labelEs": "lóbulo hepático derecho",
+  "definitionEs": "El lóbulo derecho es mucho mayor que el izquierdo, en una proporción de seis a uno. Ocupa el hipocondrio derecho y está separado del lóbulo izquierdo en su cara superior por el ligamento falciforme; en sus caras inferior y posterior, por la fosa sagital izquierda; y por delante, por la escotadura umbilical. Tiene una forma algo cuadrilátera, y sus caras inferior y posterior están marcadas por tres fosas: el porta y las fosas de la vesícula biliar y de la vena cava inferior, que separan su parte izquierda en dos lóbulos más pequeños: los lóbulos cuadrado y caudado. [WP,unvetted]."
+ },
+ "UBERON:0001115": {
+  "labelEs": "lóbulo hepático izquierdo",
+  "definitionEs": "El lóbulo izquierdo es más pequeño y más aplanado que el derecho. Está situado en las regiones epigástrica e hipocondríaca izquierda. Su cara superior es ligeramente convexa y se amolda al diafragma; su cara inferior presenta la impresión gástrica y la tuberosidad omental. [WP,unvetted]."
+ },
+ "UBERON:0001116": {
+  "labelEs": "lóbulo cuadrado del hígado",
+  "definitionEs": "El lóbulo cuadrado es un área del hígado situada en la cara inferior del lóbulo derecho, limitada por delante por el borde anterior del hígado; por detrás, por el porta hepático; a la derecha, por la fosa de la vesícula biliar; y a la izquierda, por la fosa de la vena umbilical. Es de forma oblonga, siendo su diámetro anteroposterior mayor que el transversal. [WP,unvetted]."
+ },
+ "UBERON:0001117": {
+  "labelEs": "lóbulo caudado del hígado",
+  "definitionEs": "El lóbulo caudado (segmento hepático posterior I, lóbulo de Spiegel) está situado sobre la cara posterosuperior del hígado, en el lóbulo derecho del hígado, frente a la décima y undécima vértebras torácicas. Está limitado en su lado izquierdo por la división fisiológica del hígado denominada ligamento venoso. Está limitado, por debajo, por el porta; a la derecha, por la fosa de la vena cava inferior; y, a la izquierda, por la fosa del conducto venoso. Mira hacia atrás, en posición casi vertical; es más largo de arriba abajo que de lado a lado y es algo cóncavo en sentido transversal. El proceso caudado es una pequeña elevación de la sustancia hepática que se extiende oblicua y lateralmente desde el extremo inferior del lóbulo caudado hasta la cara inferior del lóbulo derecho. Está situado detrás del porta y separa la fosa de la vesícula biliar del comienzo de la fosa de la vena cava inferior. El síndrome de Budd-Chiari, causado por la oclusión del drenaje venoso hepático, puede provocar hipertrofia del lóbulo caudado debido a su propia anastomosis con la cava, que permite que este lóbulo del hígado siga funcionando. [WP,unvetted]."
+ },
+ "UBERON:0001143": {
+  "labelEs": "vena hepática",
+  "definitionEs": "Vena que transporta la sangre desde el hígado[ZFA]."
+ },
+ "UBERON:0001149": {
+  "labelEs": "área desnuda del hígado",
+  "definitionEs": "Gran superficie triangular del hígado desprovista de revestimiento peritoneal."
+ },
+ "UBERON:0001170": {
+  "labelEs": "mesenterio del intestino delgado",
+  "definitionEs": "Peritoneo encargado de unir el yeyuno y el íleon (partes del intestino delgado) a la pared posterior del abdomen. Entre las dos hojas de peritoneo hay vasos sanguíneos, vasos linfáticos y nervios. Esto permite que estas partes del intestino delgado se muevan con relativa libertad dentro de la cavidad abdominopélvica. Sin embargo, el cerebro no puede localizar la sensibilidad con precisión, por lo que la sensación suele referirse a la línea media, un ejemplo de dolor referido[WP]."
+ },
+ "UBERON:0001171": {
+  "labelEs": "lobulillo portal",
+  "definitionEs": "Región triangular de la periferia de los lobulillos hepáticos que contiene un conducto biliar y una rama terminal de la arteria hepática y de la vena porta, y que también puede incluir un vaso linfático."
+ },
+ "UBERON:0001172": {
+  "labelEs": "ácino hepático",
+  "definitionEs": "Unidad funcional del hígado, formada por una masa de hepatocitos de lobulillos hepáticos adyacentes alineados alrededor de las arteriolas hepáticas y de las vénulas portales justo en el punto en que se anastomosan en sinusoides."
+ },
+ "UBERON:0001178": {
+  "labelEs": "peritoneo visceral",
+  "definitionEs": "Capa interna del peritoneo que envuelve los órganos situados dentro del espacio intraperitoneal."
+ },
+ "UBERON:0001220": {
+  "labelEs": "músculo cuadrado lumbar",
+  "definitionEs": "Músculo abdominal que se inserta en la última costilla y en las apófisis transversas de las vértebras lumbares. Es de forma irregular y cuadrilátera, y más ancho por abajo que por arriba."
+ },
+ "UBERON:0001221": {
+  "labelEs": "músculo transverso del abdomen",
+  "definitionEs": "Músculo de la pared abdominal lateral situado en profundidad respecto del oblicuo interno."
+ },
+ "UBERON:0001224": {
+  "labelEs": "pelvis renal",
+  "definitionEs": "Porción proximal del uréter, en forma de embudo, formada por la convergencia de los cálices mayores [MP]."
+ },
+ "UBERON:0001225": {
+  "labelEs": "corteza renal",
+  "definitionEs": "Porción cortical externa del riñón, situada entre la cápsula renal y la médula renal."
+ },
+ "UBERON:0001226": {
+  "labelEs": "cáliz renal mayor",
+  "definitionEs": "Porción del sistema colector urinario dentro del riñón que drena varios cálices menores."
+ },
+ "UBERON:0001227": {
+  "labelEs": "cáliz renal menor",
+  "definitionEs": "Porción del sistema colector urinario dentro del riñón que drena una papila renal."
+ },
+ "UBERON:0001228": {
+  "labelEs": "papila renal",
+  "definitionEs": "Vértice de la pirámide renal que se proyecta en un cáliz menor."
+ },
+ "UBERON:0001229": {
+  "labelEs": "corpúsculo renal",
+  "definitionEs": "Estructura que contiene la cápsula glomerular y el glomérulo y que constituye el componente inicial de filtración de la sangre de una nefrona."
+ },
+ "UBERON:0001230": {
+  "labelEs": "cápsula glomerular",
+  "definitionEs": "Saco en forma de copa situado en el comienzo ensanchado de un componente tubular de una nefrona, que contiene el glomérulo."
+ },
+ "UBERON:0001231": {
+  "labelEs": "túbulo de la nefrona",
+  "definitionEs": "Tubo epitelial que forma parte de la nefrona, la parte funcional del riñón."
+ },
+ "UBERON:0001232": {
+  "labelEs": "conducto colector del túbulo renal",
+  "definitionEs": "El conducto colector es una porción de la nefrona a través de la cual fluye el agua, desplazándose pasivamente a favor de su gradiente de concentración."
+ },
+ "UBERON:0001233": {
+  "labelEs": "glándula suprarrenal derecha",
+  "definitionEs": "Glándula suprarrenal que se encuentra en el lado derecho del abdomen."
+ },
+ "UBERON:0001234": {
+  "labelEs": "glándula suprarrenal izquierda",
+  "definitionEs": "Glándula suprarrenal que se encuentra en el lado izquierdo del abdomen."
+ },
+ "UBERON:0001235": {
+  "labelEs": "corteza suprarrenal",
+  "definitionEs": "Capa externa gruesa de la glándula suprarrenal que produce y secreta hormonas esteroideas como la corticosterona, la estrona y la aldosterona."
+ },
+ "UBERON:0001236": {
+  "labelEs": "médula suprarrenal",
+  "definitionEs": "Porción interna de la glándula suprarrenal, formada principalmente por células cromafines que producen, almacenan y secretan neurotransmisores como la adrenalina y la noradrenalina."
+ },
+ "UBERON:0001246": {
+  "labelEs": "conducto biliar interlobulillar",
+  "definitionEs": "Conductos que transportan la bilis en el hígado entre los conductos intralobulillares y los conductillos biliares; los conductos biliares interlobulillares forman parte de la tríada portal interlobulillar."
+ },
+ "UBERON:0001247": {
+  "labelEs": "ligamento falciforme",
+  "definitionEs": "Ligamento que une el hígado a la pared corporal anterior. Es un pliegue peritoneal anteroposterior ancho y delgado, de forma falciforme, cuya base se dirige hacia abajo y atrás y su vértice hacia arriba y atrás. Es un vestigio del mesenterio ventral del feto. Está situado en un plano anteroposterior, pero dispuesto oblicuamente, de modo que una cara mira hacia delante y está en contacto con el peritoneo situado detrás del recto derecho y del diafragma, mientras que la otra se dirige hacia atrás y está en contacto con el lóbulo izquierdo del hígado. Está unido por su borde izquierdo a la cara inferior del diafragma y a la cara posterior de la vaina del recto derecho hasta tan abajo como el ombligo; por su borde derecho se extiende desde la escotadura del borde anterior del hígado hasta la cara posterior. Está compuesto por dos hojas de peritoneo estrechamente unidas. Su base o borde libre contiene entre sus hojas el ligamento redondo y las venas paraumbilicales[WP]."
+ },
+ "UBERON:0001248": {
+  "labelEs": "hilio del bazo",
+  "definitionEs": "El hilio esplénico es una localización en la superficie del bazo. Es el punto de inserción del ligamento gastroesplénico y el punto de entrada de la arteria esplénica y de la vena esplénica. [WP,unvetted]."
+ },
+ "UBERON:0001250": {
+  "labelEs": "pulpa roja del bazo",
+  "definitionEs": "Red de tejido parenquimatoso del bazo formada por láminas o cordones laxos (sinusoides) infiltrados de eritrocitos, donde tiene lugar la mayor parte de la filtración de la sangre y donde los eritrocitos degenerados se eliminan de la circulación."
+ },
+ "UBERON:0001251": {
+  "labelEs": "zona marginal del bazo",
+  "definitionEs": "Zona situada entre la pulpa roja y la pulpa blanca del bazo que contiene numerosos macrófagos y linfocitos, y un rico plexo de sinusoides irrigado por arteriolas de la pulpa blanca que transportan antígenos de origen sanguíneo."
+ },
+ "UBERON:0001265": {
+  "labelEs": "trabécula del bazo",
+  "definitionEs": "Trabécula que forma parte de un bazo."
+ },
+ "UBERON:0001266": {
+  "labelEs": "cordón esplénico",
+  "definitionEs": "Estructura que se encuentra en la pulpa roja del bazo entre los sinusoides, formada por fibrillas y células de tejido conjuntivo con una gran población de monocitos y macrófagos. Estos cordones contienen la mitad de los monocitos del cuerpo humano como reserva, de modo que, tras una lesión tisular, estos monocitos pueden desplazarse y ayudar a los monocitos de origen local en la cicatrización de las heridas. Los eritrocitos atraviesan los cordones de Billroth antes de entrar en los sinusoides. El paso hacia los sinusoides puede considerarse un cuello de botella, en el que los eritrocitos deben ser flexibles para poder atravesarlo. En los trastornos de la forma o de la flexibilidad de los eritrocitos, como la esferocitosis hereditaria, los eritrocitos no logran atravesarlo y son fagocitados, lo que provoca hemólisis extravascular."
+ },
+ "UBERON:0001279": {
+  "labelEs": "tríada portal",
+  "definitionEs": "Estructura compuesta por partes de varios órganos que consta de tres vasos del lobulillo portal, entre ellos el conducto biliar y una rama terminal de la arteria hepática y de la vena porta, y que también puede incluir un vaso linfático."
+ },
+ "UBERON:0001280": {
+  "labelEs": "parénquima hepático",
+  "definitionEs": "Unidades funcionales del hígado, incluidos los lobulillos."
+ },
+ "UBERON:0001281": {
+  "labelEs": "sinusoide hepático",
+  "definitionEs": "Vasos sanguíneos anchos y de pared delgada del hígado. En los mamíferos no presentan marcadores venosos ni arteriales."
+ },
+ "UBERON:0001282": {
+  "labelEs": "conducto biliar intralobulillar",
+  "definitionEs": "Túbulos situados entre los canalículos biliares y los conductos biliares interlobulillares, cerca del borde externo de un lobulillo hepático clásico."
+ },
+ "UBERON:0001283": {
+  "labelEs": "canalículo biliar",
+  "definitionEs": "Canal intercelular que recoge la bilis de los hepatocitos y la transporta hacia los conductos biliares."
+ },
+ "UBERON:0001284": {
+  "labelEs": "columna renal",
+  "definitionEs": "Columna de tejido histológicamente idéntico al tejido de la corteza renal, situada en la región medular del riñón, entre las pirámides renales."
+ },
+ "UBERON:0001285": {
+  "labelEs": "nefrona",
+  "definitionEs": "Unidad funcional básica del riñón. Su función principal es regular la concentración de agua y de sustancias solubles como las sales de sodio, filtrando la sangre, reabsorbiendo lo necesario y excretando el resto como orina. Una nefrona elimina desechos del cuerpo, regula el volumen sanguíneo y la presión arterial, controla las concentraciones de electrolitos y metabolitos y regula el pH sanguíneo. Sus funciones son vitales y están reguladas por el sistema endocrino mediante hormonas como la hormona antidiurética, la aldosterona y la hormona paratiroidea.[WP]."
+ },
+ "UBERON:0001286": {
+  "labelEs": "espacio de Bowman",
+  "definitionEs": "Cavidad estrecha en forma de cáliz situada entre el epitelio glomerular y el epitelio capsular de la cápsula glomerular del riñón[TFD]. Entre las hojas visceral y parietal, en la que entra el filtrado tras atravesar las hendiduras de filtración de los podocitos[WP]. Región luminal entre las hojas visceral y parietal de la cápsula glomerular, en la que entra el filtrado tras atravesar la barrera de filtración desde los capilares glomerulares[MP]."
+ },
+ "UBERON:0001287": {
+  "labelEs": "túbulo contorneado proximal",
+  "definitionEs": "El túbulo contorneado proximal es la porción más proximal del túbulo proximal y se extiende desde la cápsula glomerular hasta el túbulo recto proximal."
+ },
+ "UBERON:0001288": {
+  "labelEs": "asa de Henle",
+  "definitionEs": "Sección del túbulo renal, en la médula renal, que presenta una curva en horquilla; consta de una rama descendente y una rama ascendente, y está situada entre el túbulo contorneado proximal y el túbulo contorneado distal; su función es reabsorber agua e iones de la orina."
+ },
+ "UBERON:0001289": {
+  "labelEs": "rama descendente del asa de Henle",
+  "definitionEs": "Porción del túbulo renal que constituye la parte proximal del asa de Henle, tiene baja permeabilidad a los iones y a la urea y es muy permeable al agua; consta de un segmento grueso inicial corto, revestido por epitelio cúbico simple bajo, y de un segmento delgado largo, revestido por epitelio plano simple; sin embargo, esta distinción no es tan importante desde el punto de vista fisiológico como en la rama ascendente, por lo que a menudo ambos se tratan como una sola estructura."
+ },
+ "UBERON:0001290": {
+  "labelEs": "túbulo recto proximal",
+  "definitionEs": "El túbulo recto proximal es la parte de la rama descendente que se extiende desde el túbulo contorneado proximal hasta el túbulo delgado descendente."
+ },
+ "UBERON:0001291": {
+  "labelEs": "rama ascendente gruesa del asa de Henle",
+  "definitionEs": "Subporción distal del asa de Henle ascendente, revestida por epitelio cúbico simple, que entra en la corteza renal para verter un filtrado hipotónico en el túbulo contorneado distal."
+ },
+ "UBERON:0001292": {
+  "labelEs": "túbulo contorneado distal",
+  "definitionEs": "Primer segmento de la nefrona situado inmediatamente después del asa de Henle, justo a continuación de la mácula densa."
+ },
+ "UBERON:0001293": {
+  "labelEs": "médula externa del riñón",
+  "definitionEs": "La médula externa renal es la región del riñón situada entre la corteza renal y la médula interna renal[GO]."
+ },
+ "UBERON:0001294": {
+  "labelEs": "médula interna del riñón",
+  "definitionEs": "Región más interna del riñón de los mamíferos."
+ },
+ "UBERON:0001366": {
+  "labelEs": "peritoneo parietal",
+  "definitionEs": "Capa externa del peritoneo que está unida a las paredes abdominal y pélvica."
+ },
+ "UBERON:0001416": {
+  "labelEs": "piel del abdomen",
+  "definitionEs": "Zona de piel que forma parte de un abdomen [definición generada automáticamente]."
+ },
+ "UBERON:0001552": {
+  "labelEs": "arteria arciforme del riñón",
+  "definitionEs": "Cada una de las arterias curvas del límite corticomedular del riñón que nacen de las arterias interlobulares y dan origen a las arterias interlobulillares."
+ },
+ "UBERON:0001959": {
+  "labelEs": "pulpa blanca del bazo",
+  "definitionEs": "Tejido parenquimatoso del bazo que rodea los vasos sanguíneos esplénicos, está formado por masas compactas de células linfáticas y es donde el material extraño eliminado de la sangre se utiliza para iniciar una reacción inmunitaria que da lugar a la producción de anticuerpos."
+ },
+ "UBERON:0001960": {
+  "labelEs": "vaina linfática periarterial",
+  "definitionEs": "Área del bazo en la que los linfocitos T rodean la arteriola central."
+ },
+ "UBERON:0002010": {
+  "labelEs": "plexo celíaco",
+  "definitionEs": "Red compleja de nervios situada en el abdomen, detrás del estómago. El plexo celíaco se encuentra cerca del lugar donde el tronco celíaco, la arteria mesentérica superior y las arterias renales se ramifican desde la aorta abdominal. Está detrás del estómago y de la bolsa omental y delante de los pilares del diafragma, a la altura de la primera vértebra lumbar, L1. El plexo está formado (en parte) por los nervios esplácnicos mayor y menor de ambos lados, y también por partes del nervio vago derecho. El plexo celíaco propiamente dicho consta de los ganglios celíacos con una red de fibras de interconexión. Los ganglios aorticorrenales se consideran a menudo parte de los ganglios celíacos y, por tanto, parte del plexo. [WP,unvetted]."
+ },
+ "UBERON:0002015": {
+  "labelEs": "cápsula renal",
+  "definitionEs": "Capa fibrosa resistente que rodea el riñón, cubierta por una gruesa capa de tejido adiposo perirrenal, cuya función es proporcionar cierta protección frente a los traumatismos y los daños."
+ },
+ "UBERON:0002029": {
+  "labelEs": "epitelio de la vesícula biliar",
+  "definitionEs": "Revestimiento epitelial cilíndrico simple de la vesícula biliar."
+ },
+ "UBERON:0002052": {
+  "labelEs": "cápsula de la glándula suprarrenal",
+  "definitionEs": "Cápsula gruesa de tejido conjuntivo denso irregular que rodea cada glándula suprarrenal y contiene fibras elásticas dispersas; la cápsula contiene un rico plexo de vasos sanguíneos (principalmente arterias pequeñas) y numerosas fibras nerviosas; algunos vasos sanguíneos y nervios penetran en la sustancia de la glándula por las trabéculas que se extienden hacia dentro desde la cápsula y luego abandonan las trabéculas para entrar en la corteza."
+ },
+ "UBERON:0002053": {
+  "labelEs": "zona glomerular de la glándula suprarrenal",
+  "definitionEs": "Zona externa subcapsular y estrecha de la corteza suprarrenal donde se produce la aldosterona."
+ },
+ "UBERON:0002054": {
+  "labelEs": "zona fascicular de la glándula suprarrenal",
+  "definitionEs": "Zona media y ancha de la corteza suprarrenal que produce cortisol (hidrocortisona)."
+ },
+ "UBERON:0002055": {
+  "labelEs": "zona reticular de la glándula suprarrenal",
+  "definitionEs": "Zona interna de la corteza suprarrenal que produce las enzimas que convierten la pregnenolona, un esteroide de 21 carbonos, en esteroides de 19 carbonos."
+ },
+ "UBERON:0002106": {
+  "labelEs": "bazo",
+  "definitionEs": "Órgano cuya función es filtrar la sangre y almacenar eritrocitos y plaquetas."
+ },
+ "UBERON:0002107": {
+  "labelEs": "hígado",
+  "definitionEs": "Glándula exocrina que secreta bilis y participa en el metabolismo de las proteínas, los hidratos de carbono y las grasas, sintetiza sustancias que intervienen en la coagulación de la sangre, sintetiza vitamina A, desintoxica sustancias venenosas, almacena glucógeno y degrada los eritrocitos desgastados[GO]."
+ },
+ "UBERON:0002110": {
+  "labelEs": "vesícula biliar",
+  "definitionEs": "Órgano que contribuye a la digestión y almacena la bilis producida por el hígado[WP]."
+ },
+ "UBERON:0002120": {
+  "labelEs": "pronefros",
+  "definitionEs": "En los mamíferos, el pronefros es el primero de los tres riñones embrionarios en establecerse y existe solo de forma transitoria. En los vertebrados inferiores, como los peces y los anfibios, el pronefros es el riñón embrionario plenamente funcional y es indispensable para la vida larvaria[GO]."
+ },
+ "UBERON:0002189": {
+  "labelEs": "corteza externa del riñón",
+  "definitionEs": null
+ },
+ "UBERON:0002303": {
+  "labelEs": "aparato yuxtaglomerular",
+  "definitionEs": "Estructura anatómica formada por células yuxtaglomerulares, células mesangiales extraglomerulares y la mácula densa. El aparato yuxtaglomerular se sitúa junto al glomérulo y regula la función renal manteniendo el flujo sanguíneo hacia el riñón y la tasa de filtración[GO]. Estructura microscópica del riñón que regula la función de cada nefrona. El aparato yuxtaglomerular recibe su nombre por su proximidad al glomérulo: se encuentra entre el polo vascular del corpúsculo renal y el túbulo contorneado distal de retorno de la misma nefrona. Esta localización es fundamental para su función de regular el flujo sanguíneo renal y la tasa de filtración glomerular. Los tres componentes celulares del aparato son la mácula densa, las células mesangiales extraglomerulares y las células yuxtaglomerulares (también conocidas como células granulares)[WP]."
+ },
+ "UBERON:0002319": {
+  "labelEs": "mesangio",
+  "definitionEs": "Capa interna del glomérulo, dentro de la membrana basal que rodea los capilares glomerulares."
+ },
+ "UBERON:0002320": {
+  "labelEs": "mesangio glomerular",
+  "definitionEs": "Membrana delgada que ayuda a sostener las asas capilares de un glomérulo renal. Es un tejido conjuntivo compuesto por células mesangiales (miofibroblastos relacionados fenotípicamente con las células musculares lisas vasculares [músculo, liso, vascular]), fagocitos y la matriz extracelular mesangial."
+ },
+ "UBERON:0002321": {
+  "labelEs": "mesangio extraglomerular",
+  "definitionEs": "Tejido formado por células mesangiales que ocupan el espacio triangular entre la mácula densa y las arteriolas aferente y eferente del aparato yuxtaglomerular."
+ },
+ "UBERON:0002335": {
+  "labelEs": "mácula densa",
+  "definitionEs": "La mácula densa es un área de células especializadas del túbulo distal que entra en contacto con el polo vascular del glomérulo[GO]."
+ },
+ "UBERON:0002343": {
+  "labelEs": "musculatura del abdomen",
+  "definitionEs": "Conjunto de todos los músculos del abdomen."
+ },
+ "UBERON:0002358": {
+  "labelEs": "peritoneo",
+  "definitionEs": "Membrana serosa que reviste la cavidad peritoneal[VHOG,modified]."
+ },
+ "UBERON:0002369": {
+  "labelEs": "glándula suprarrenal",
+  "definitionEs": "Cualquiera de un par de órganos endocrinos complejos situados cerca del borde medial anterior del riñón, formados por una corteza mesodérmica que produce hormonas glucocorticoides, mineralocorticoides y androgénicas y una médula ectodérmica que produce adrenalina y noradrenalina[BTO]."
+ },
+ "UBERON:0002378": {
+  "labelEs": "músculo del abdomen",
+  "definitionEs": "Músculo (órgano) que forma parte del abdomen. Ejemplos: oblicuo externo, recto del abdomen."
+ },
+ "UBERON:0002382": {
+  "labelEs": "músculo recto del abdomen",
+  "definitionEs": "El músculo recto del abdomen es un músculo par que discurre verticalmente a cada lado de la pared anterior del abdomen. Hay dos conjuntos paralelos de músculos, separados por una banda de tejido conjuntivo en la línea media denominada línea alba (línea blanca). Se extiende desde la sínfisis del pubis/cresta del pubis, inferiormente, hasta el xifoesternón/apófisis xifoides y los cartílagos costales inferiores (5-7), superiormente. Está contenido en la vaina del recto. El recto suele estar cruzado por tres bandas fibrosas denominadas intersecciones tendinosas. [WP,modified]."
+ },
+ "UBERON:0002399": {
+  "labelEs": "omento menor",
+  "definitionEs": "Doble capa de peritoneo que se extiende desde el hígado hasta la curvatura menor del estómago y el comienzo del duodeno. [WP,unvetted]."
+ },
+ "UBERON:0002461": {
+  "labelEs": "músculo de la pared abdominal anterior",
+  "definitionEs": "Cualquier órgano muscular esquelético que forma parte de una pared abdominal anterior. Ejemplos: los oblicuos, el piramidal y el transverso del abdomen."
+ },
+ "UBERON:0002507": {
+  "labelEs": "nódulo linfático abdominal",
+  "definitionEs": "Nódulo linfático que forma parte de un abdomen [definición generada automáticamente]."
+ },
+ "UBERON:0002508": {
+  "labelEs": "nódulo linfático celíaco",
+  "definitionEs": "Glándulas viscerales asociadas a las ramas de la arteria celíaca, que incluyen los nódulos linfáticos gástricos, hepáticos y pancreaticolienales (esplénicos)."
+ },
+ "UBERON:0002509": {
+  "labelEs": "nódulo linfático mesentérico",
+  "definitionEs": "Nódulos linfáticos situados en el mesenterio, de los cuales hay 3 clases: ileocólicos, mesentéricos yuxtaintestinales y grupo superior central."
+ },
+ "UBERON:0002526": {
+  "labelEs": "nódulo linfático lumbar",
+  "definitionEs": "Los nódulos linfáticos lumbares (nódulos paraaórticos) son un grupo de nódulos linfáticos situados en la región lumbar. Constan de los siguientes grupos: nódulos linfáticos aórticos laterales derechos e izquierdos, nódulos linfáticos preaórticos y nódulos linfáticos retroaórticos (o «postaórticos»)."
+ },
+ "UBERON:0002527": {
+  "labelEs": "nódulo linfático pancreático",
+  "definitionEs": "Nódulo linfático que forma parte de un páncreas [definición generada automáticamente]."
+ },
+ "UBERON:0003396": {
+  "labelEs": "mesenterio del colon",
+  "definitionEs": "Mesenterio que forma parte de un colon [definición generada automáticamente]."
+ },
+ "UBERON:0003398": {
+  "labelEs": "mesenterio del yeyuno",
+  "definitionEs": "Mesenterio que forma parte de un yeyuno [definición generada automáticamente]."
+ },
+ "UBERON:0003684": {
+  "labelEs": "cavidad abdominal",
+  "definitionEs": "Parte de la cavidad corporal ventral que se encuentra dentro del abdomen propiamente dicho (excluida la cavidad pélvica)."
+ },
+ "UBERON:0003688": {
+  "labelEs": "omento",
+  "definitionEs": "Pliegue de peritoneo que se origina en el estómago y sostiene las vísceras."
+ },
+ "UBERON:0003693": {
+  "labelEs": "espacio retroperitoneal",
+  "definitionEs": "Espacio anatómico de la cavidad abdominal situado detrás (retro) del peritoneo. No tiene estructuras anatómicas delimitadoras específicas. Los órganos son retroperitoneales si solo tienen peritoneo en su cara anterior."
+ },
+ "UBERON:0003697": {
+  "labelEs": "pared abdominal",
+  "definitionEs": "Tejidos que rodean los órganos presentes dentro de la cavidad abdominal. El tejido de la pared abdominal está compuesto por capas de grasa, peritoneo parietal, fascia y músculos."
+ },
+ "UBERON:0003702": {
+  "labelEs": "conducto inguinal",
+  "definitionEs": "Paso de la parte inferior de la pared abdominal a través del cual el cordón espermático en el varón, o el ligamento redondo en la mujer, junto con nervios y vasos, pasan desde la cavidad pélvica hacia el escroto o los labios mayores, respectivamente."
+ },
+ "UBERON:0003704": {
+  "labelEs": "conducto biliar intrahepático",
+  "definitionEs": "Pasajes dentro del hígado para la conducción de la bilis. Incluye los conductos hepáticos derecho e izquierdo, aunque estos puedan unirse fuera del hígado para formar el conducto hepático común."
+ },
+ "UBERON:0003910": {
+  "labelEs": "sinusoide esplénico",
+  "definitionEs": "Vasos anchos del bazo que drenan en las venas trabeculares[WP]."
+ },
+ "UBERON:0004041": {
+  "labelEs": "folículo B primario del bazo",
+  "definitionEs": "Nódulos de linfocitos B pequeños indiferenciados y células dendríticas foliculares situados en la pulpa blanca del bazo."
+ },
+ "UBERON:0004100": {
+  "labelEs": "sistema colector renal",
+  "definitionEs": "El sistema de conductos colectores del riñón consta de una serie de túbulos y conductos que conectan las nefronas con el uréter. Participa en el equilibrio de electrolitos y líquidos mediante la reabsorción y la excreción, procesos regulados por las hormonas aldosterona y hormona antidiurética."
+ },
+ "UBERON:0004136": {
+  "labelEs": "túbulo intermedio",
+  "definitionEs": "El túbulo intermedio es un túbulo de la nefrona situado entre los túbulos proximal y distal."
+ },
+ "UBERON:0004193": {
+  "labelEs": "segmento delgado de la rama ascendente del asa de Henle",
+  "definitionEs": "Subporción del asa de Henle de la nefrona del riñón que es permeable a los iones pero no al agua."
+ },
+ "UBERON:0004194": {
+  "labelEs": "nefrona larga",
+  "definitionEs": "Las nefronas largas están asociadas a glomérulos yuxtamedulares y se extienden hasta la médula interna."
+ },
+ "UBERON:0004195": {
+  "labelEs": "nefrona corta",
+  "definitionEs": "Las nefronas cortas están asociadas a glomérulos mesocorticales y no tienen rama ascendente corta, por lo que la rama se sitúa en la médula externa."
+ },
+ "UBERON:0004200": {
+  "labelEs": "pirámide renal",
+  "definitionEs": "Las pirámides renales son las disposiciones cónicas de túbulos que constituyen la médula renal en un riñón multilobulado de mamífero; contienen las asas de Henle y los conductos colectores medulares."
+ },
+ "UBERON:0004201": {
+  "labelEs": "banda interna de la médula externa del riñón",
+  "definitionEs": "La banda interna es una porción profunda y de situación central de la médula externa renal, atravesada por porciones gruesas y delgadas de los túbulos de la nefrona."
+ },
+ "UBERON:0004202": {
+  "labelEs": "banda externa de la médula externa del riñón",
+  "definitionEs": "La banda externa es la región del riñón situada distalmente a la línea de terminación de los túbulos renales rectos."
+ },
+ "UBERON:0004212": {
+  "labelEs": "capilar glomerular",
+  "definitionEs": "Pequeños vasos sanguíneos ramificados del glomérulo renal que reciben sangre de las arteriolas aferentes del riñón; estos capilares están sometidos a alta presión para la filtración dentro del glomérulo."
+ },
+ "UBERON:0004227": {
+  "labelEs": "músculo liso de la pelvis renal",
+  "definitionEs": "Tejido muscular liso que rodea el urotelio de la pelvis renal."
+ },
+ "UBERON:0004511": {
+  "labelEs": "tejido muscular esquelético del recto del abdomen",
+  "definitionEs": "Porción de tejido muscular esquelético que forma parte de un recto del abdomen [definición generada automáticamente]."
+ },
+ "UBERON:0004538": {
+  "labelEs": "riñón izquierdo",
+  "definitionEs": "Riñón que forma parte del lado izquierdo del organismo [definición generada automáticamente]."
+ },
+ "UBERON:0004539": {
+  "labelEs": "riñón derecho",
+  "definitionEs": "Riñón que forma parte del lado derecho del organismo [definición generada automáticamente]."
+ },
+ "UBERON:0004639": {
+  "labelEs": "arteriola aferente renal",
+  "definitionEs": "Vasos sanguíneos que se ramifican de la arteria interlobulillar del riñón, conducen la sangre a los capilares glomerulares y desempeñan un papel importante en la regulación de la presión arterial como parte del mecanismo de retroalimentación tubuloglomerular."
+ },
+ "UBERON:0004640": {
+  "labelEs": "arteriola eferente renal",
+  "definitionEs": "Vasos sanguíneos que conducen la sangre desde la red glomerulocapilar hasta el lecho capilar del túbulo contorneado proximal."
+ },
+ "UBERON:0004641": {
+  "labelEs": "cápsula del bazo",
+  "definitionEs": "Tejido conjuntivo que rodea el bazo."
+ },
+ "UBERON:0004647": {
+  "labelEs": "lobulillo hepático",
+  "definitionEs": "Estructura poligonal del hígado formada por hepatocitos que se disponen radialmente hacia fuera a partir de una vena hepática."
+ },
+ "UBERON:0004686": {
+  "labelEs": "ligamento gastroesplénico",
+  "definitionEs": "Peritoneo que une la curvatura mayor del estómago con el hilio del bazo[umich]. Forma parte del omento mayor; deriva del mesogastrio dorsal en el embrión."
+ },
+ "UBERON:0004687": {
+  "labelEs": "ligamento esplenorrenal",
+  "definitionEs": "Peritoneo que fija el bazo a la pared abdominal posterior sobre el riñón izquierdo. Se desarrolla a partir del mesogastrio dorsal del embrión[umich]."
+ },
+ "UBERON:0004719": {
+  "labelEs": "vena arciforme del riñón",
+  "definitionEs": "Cualquiera de las venas que discurren paralelas a las arterias arciformes, reciben sangre de las venas interlobulillares y de las vénulas rectas y terminan en las venas interlobulares."
+ },
+ "UBERON:0004723": {
+  "labelEs": "arteria interlobulillar",
+  "definitionEs": "Ramas de las arterias arciformes del riñón que se irradian hacia fuera a través de las columnas renales e irrigan los glomérulos[MP]. El primer conjunto de vasos sanguíneos renales, las arterias interlobulillares (o arterias radiadas corticales, o arterias radiales corticales), se desprende en ángulo recto del lado de las arterias arciformes orientado hacia la sustancia cortical y pasa directamente hacia fuera entre los radios medulares hasta alcanzar la túnica fibrosa, donde termina en la red capilar de esta parte. Estos vasos no se anastomosan entre sí, sino que forman las denominadas arterias terminales. En su trayecto hacia fuera emiten ramas laterales; estas son los vasos aferentes de los corpúsculos renales; entran en la cápsula y terminan en el glomérulo. De cada ovillo surge el vaso eferente correspondiente, que, tras salir de la cápsula cerca del punto por donde entra el vaso aferente, se divide en varias ramas que forman un plexo denso dentro de la cápsula de Bowman."
+ },
+ "UBERON:0004726": {
+  "labelEs": "vasos rectos",
+  "definitionEs": "Grupo de microvasos que forman parte del riñón. Los vasos rectos tienen forma de horquilla: entran en la médula renal como arteriolas rectas y rodean el asa de Henle, formando una red capilar. Finalmente abandonan la médula renal para ascender a la corteza como vénulas rectas. La función principal de los vasos rectos es facilitar el intercambio a contracorriente, que es esencial para la capacidad del riñón de concentrar la orina"
+ },
+ "UBERON:0004781": {
+  "labelEs": "lámina propia de la vesícula biliar",
+  "definitionEs": "Lámina propia que forma parte de una vesícula biliar [definición generada automáticamente]."
+ },
+ "UBERON:0004783": {
+  "labelEs": "serosa de la vesícula biliar",
+  "definitionEs": "Membrana serosa que forma parte de una vesícula biliar [definición generada automáticamente]."
+ },
+ "UBERON:0004788": {
+  "labelEs": "urotelio de la pelvis renal",
+  "definitionEs": "Revestimiento epitelial del espacio luminal de la pelvis renal."
+ },
+ "UBERON:0005006": {
+  "labelEs": "mucosa de la pelvis renal",
+  "definitionEs": "Mucosa que forma parte de una pelvis renal [definición generada automáticamente]."
+ },
+ "UBERON:0005007": {
+  "labelEs": "mucosa del cáliz renal mayor",
+  "definitionEs": "Mucosa que forma parte de un cáliz mayor [definición generada automáticamente]."
+ },
+ "UBERON:0005008": {
+  "labelEs": "mucosa del cáliz renal menor",
+  "definitionEs": "Mucosa que forma parte de un cáliz menor [definición generada automáticamente]."
+ },
+ "UBERON:0005033": {
+  "labelEs": "mucosa de la vesícula biliar",
+  "definitionEs": "Mucosa que forma parte de una vesícula biliar [definición generada automáticamente]."
+ },
+ "UBERON:0005050": {
+  "labelEs": "proceso papilar del hígado",
+  "definitionEs": null
+ },
+ "UBERON:0005096": {
+  "labelEs": "rama delgada descendente",
+  "definitionEs": "La rama delgada descendente es una parte del asa de Henle situada justo después del túbulo recto proximal (S3). Se extiende hasta el vértice del asa de Henle[GO]."
+ },
+ "UBERON:0005164": {
+  "labelEs": "rama ascendente del asa de Henle",
+  "definitionEs": "Parte distal del asa de Henle, impermeable al agua, que bombea activamente sodio fuera del filtrado para generar el intersticio hipertónico que impulsa el intercambio a contracorriente; consta de un segmento inicial muy delgado revestido por epitelio plano simple, seguido de un segmento distal grueso revestido por epitelio cúbico simple[MP]."
+ },
+ "UBERON:0005168": {
+  "labelEs": "vena interlobulillar renal",
+  "definitionEs": "Cualquiera de las venas que discurren paralelas a las arterias interlobulillares, reciben sangre del plexo capilar peritubular y desembocan en las venas arciformes."
+ },
+ "UBERON:0005215": {
+  "labelEs": "intersticio renal",
+  "definitionEs": "Compartimento intersticial del riñón, que comprende los espacios intertubulares extravasculares del parénquima renal, con sus elementos celulares y sustancias extracelulares correspondientes, limitado por todos lados por membranas basales epiteliales y vasculares."
+ },
+ "UBERON:0005221": {
+  "labelEs": "parénquima del lóbulo hepático derecho",
+  "definitionEs": "Parénquima que forma parte de un lóbulo hepático derecho [definición generada automáticamente]."
+ },
+ "UBERON:0005222": {
+  "labelEs": "parénquima del lóbulo hepático izquierdo",
+  "definitionEs": "Parénquima que forma parte de un lóbulo hepático izquierdo [definición generada automáticamente]."
+ },
+ "UBERON:0005271": {
+  "labelEs": "corteza yuxtamedular",
+  "definitionEs": "Parte de la corteza renal más próxima a la médula."
+ },
+ "UBERON:0005442": {
+  "labelEs": "músculo oblicuo externo del abdomen",
+  "definitionEs": "Músculo de la pared abdominal lateral que es el más superficial, situado inmediatamente por encima del oblicuo interno."
+ },
+ "UBERON:0005448": {
+  "labelEs": "omento mayor",
+  "definitionEs": "El omento mayor (también llamado gran omento, omentum majus, omento gastrocólico, epiplón o, especialmente en los animales, redaño) es un gran pliegue de peritoneo que cuelga del estómago y se extiende desde el estómago hasta la pared abdominal posterior tras asociarse con el colon transverso."
+ },
+ "UBERON:0005452": {
+  "labelEs": "cordón hepático",
+  "definitionEs": "Disposición tridimensional formada por láminas de hepatocitos, generalmente de una célula de grosor, que se irradia desde el centro del lobulillo hepático; las láminas hepáticas son estructuras irregulares muy ramificadas, delimitadas por espacios vasculares revestidos de endotelio denominados sinusoides hepáticos."
+ },
+ "UBERON:0005454": {
+  "labelEs": "músculo oblicuo interno del abdomen",
+  "definitionEs": "Músculo de la pared abdominal lateral situado en profundidad respecto del oblicuo externo y superficialmente respecto del transverso."
+ },
+ "UBERON:0005750": {
+  "labelEs": "epitelio parietal glomerular",
+  "definitionEs": "Capa única de epitelio plano simple de la cápsula glomerular. No interviene en la filtración[UBERON]. Capa externa de la cápsula glomerular compuesta por una sola capa de epitelio plano simple[MP]."
+ },
+ "UBERON:0005751": {
+  "labelEs": "epitelio visceral glomerular",
+  "definitionEs": "Capa interna (visceral) de la cápsula glomerular renal, que recubre los capilares, está compuesta por podocitos y está separada de la capa externa (parietal) por el espacio capsular (de Bowman)[BTO]. Esta capa epitelial se sitúa superficialmente junto a la membrana basal glomerular engrosada y está formada por podocitos. Por debajo de la capa visceral se encuentran los capilares glomerulares[WP]. Esta capa epitelial interna de la cápsula glomerular rodea las células endoteliales capilares y está compuesta por células epiteliales muy especializadas (podocitos) separadas por hendiduras de filtración; la capa visceral interna está separada de la capa parietal externa por el espacio urinario (también conocido como espacio de Bowman o espacio capsular)[MP]."
+ },
+ "UBERON:0005777": {
+  "labelEs": "membrana basal glomerular",
+  "definitionEs": "Capa de matriz extracelular situada entre el endotelio de los capilares glomerulares y los podocitos de la capa interna o visceral de la cápsula de Bowman; es una fusión de las láminas basales de las células endoteliales y de los podocitos y actúa como barrera física y como filtro selectivo de iones."
+ },
+ "UBERON:0005787": {
+  "labelEs": "lámina densa de la membrana basal glomerular",
+  "definitionEs": "Capa media de la membrana basal glomerular."
+ },
+ "UBERON:0005788": {
+  "labelEs": "lámina rara interna",
+  "definitionEs": "Capa de la membrana basal glomerular adyacente al capilar glomerular."
+ },
+ "UBERON:0005789": {
+  "labelEs": "lámina rara externa",
+  "definitionEs": "Capa de la membrana basal glomerular adyacente a los podocitos y al espacio capsular."
+ },
+ "UBERON:0005912": {
+  "labelEs": "epitelio de transición del cáliz renal mayor",
+  "definitionEs": "Urotelio del uréter que forma parte de una mucosa del cáliz mayor."
+ },
+ "UBERON:0006081": {
+  "labelEs": "fondo de la vesícula biliar",
+  "definitionEs": "El fondo de la vesícula biliar es la porción de la vesícula biliar que se encuentra más alejada del conducto cístico. Está cubierto de peritoneo. Una colecistectomía tradicional se realiza con mayor frecuencia desde el infundíbulo hacia el fondo. Se encuentra al mismo nivel que el plano transpilórico."
+ },
+ "UBERON:0006171": {
+  "labelEs": "seno renal",
+  "definitionEs": "Área ahuecada del borde medial del riñón. El seno renal se abre en el hilio renal; contiene las arterias y venas renales, los cálices mayores y la pelvis renal, y grasa perirrenal."
+ },
+ "UBERON:0006194": {
+  "labelEs": "seno renal del riñón derecho",
+  "definitionEs": "Seno renal que forma parte de un riñón derecho."
+ },
+ "UBERON:0006195": {
+  "labelEs": "seno renal del riñón izquierdo",
+  "definitionEs": "Seno renal que forma parte de un riñón izquierdo."
+ },
+ "UBERON:0006204": {
+  "labelEs": "ligamento inguinal",
+  "definitionEs": "Banda que va desde el tubérculo del pubis hasta la espina ilíaca anterior superior. Su anatomía es muy importante para operar a pacientes con hernia. Forma la base del conducto inguinal, a través del cual puede desarrollarse una hernia inguinal indirecta. El ligamento inguinal va desde la espina ilíaca anterior superior del ilion hasta el tubérculo del pubis del hueso púbico. Está formado por la aponeurosis del oblicuo externo del abdomen y se continúa con la fascia lata del muslo."
+ },
+ "UBERON:0006205": {
+  "labelEs": "ligamento pectíneo",
+  "definitionEs": "Prolongación del ligamento lacunar que discurre sobre la línea pectínea del hueso púbico."
+ },
+ "UBERON:0006517": {
+  "labelEs": "cáliz renal",
+  "definitionEs": "Recesos de la pelvis renal, que se divide en dos cálices renales mayores, anchos y en forma de copa, cada uno de los cuales se subdivide en 7 a 14 cálices menores. La orina pasa desde los túbulos colectores a un cáliz menor y luego atraviesa el cáliz mayor, la pelvis renal y el uréter para llegar a la vejiga urinaria. (De Moore, Clinically Oriented Anatomy, 3.ª ed., p. 211)."
+ },
+ "UBERON:0006588": {
+  "labelEs": "ligamento redondo del hígado",
+  "definitionEs": "Cordón degenerativo de tejido que existe en el borde libre del ligamento falciforme del hígado. Anatómicamente, el ligamento redondo divide la parte izquierda del hígado en secciones medial y lateral. El ligamento redondo representa el vestigio de la vena umbilical izquierda fetal. Por ello, el ligamento redondo solo existe en los mamíferos. Antes del nacimiento y durante uno o dos meses después de él, la vena umbilical izquierda está permeable y posteriormente degenera en tejido fibroso, el ligamento redondo. La vena umbilical/ligamento redondo se inserta alrededor del ombligo y es un punto de referencia importante de la cara interna de la pared abdominal anterior[WP]."
+ },
+ "UBERON:0006607": {
+  "labelEs": "ligamento umbilical medial",
+  "definitionEs": "El ligamento umbilical medial es una estructura par presente en la anatomía humana. Se encuentra en la cara profunda de la pared abdominal anterior y está cubierto por los pliegues umbilicales mediales."
+ },
+ "UBERON:0006635": {
+  "labelEs": "pared abdominal anterior",
+  "definitionEs": "La pared abdominal representa los límites de la cavidad abdominal. La pared abdominal se divide en las paredes posterior (dorso), laterales (lados) y anterior (frente). Hay un conjunto común de capas que cubren y forman todas las paredes: la más profunda es la grasa extraperitoneal, el peritoneo parietal y una capa de fascia que recibe distintos nombres según la zona que cubre (p. ej., transversal, fascia del psoas). Superficiales a estas, pero no presentes en la pared posterior, se encuentran las tres capas musculares: el transverso del abdomen (músculo transverso abdominal), el oblicuo interno (obliquus internus) y el oblicuo externo (obliquus externus)."
+ },
+ "UBERON:0006638": {
+  "labelEs": "vestigio del uraco",
+  "definitionEs": "El ligamento umbilical mediano es una estructura de la anatomía humana. Es un fragmento de tejido atrofiado que representa el vestigio del uraco embrionario. Se extiende desde el vértice de la vejiga hasta el ombligo, en la cara profunda de la pared abdominal anterior. Es impar. Está cubierto por el pliegue umbilical mediano. Laterales a esta estructura se encuentran el ligamento umbilical medial (que es una estructura diferente, que no debe confundirse) y el ligamento umbilical lateral."
+ },
+ "UBERON:0006674": {
+  "labelEs": "anillo inguinal",
+  "definitionEs": "Entrada o salida del conducto inguinal."
+ },
+ "UBERON:0006727": {
+  "labelEs": "lóbulo lateral izquierdo del hígado",
+  "definitionEs": null
+ },
+ "UBERON:0006728": {
+  "labelEs": "lóbulo medial izquierdo del hígado",
+  "definitionEs": null
+ },
+ "UBERON:0006729": {
+  "labelEs": "espacio perisinusoidal hepático",
+  "definitionEs": "Espacio extravascular del hígado situado entre las células parenquimatosas y un sinusoide, que contiene el plasma sanguíneo."
+ },
+ "UBERON:0006841": {
+  "labelEs": "vena central del hígado",
+  "definitionEs": "Vena situada en el centro de un lobulillo del hígado."
+ },
+ "UBERON:0006877": {
+  "labelEs": "vasculatura del hígado",
+  "definitionEs": "Vasculatura que forma parte de un hígado."
+ },
+ "UBERON:0007111": {
+  "labelEs": "fondo de saco de Douglas",
+  "definitionEs": "El fondo de saco rectouterino (o excavación rectouterina, rectovaginal, receso de Ehrhardt-Cole o fondo de saco de Douglas) es la extensión de la cavidad peritoneal entre el recto y la pared posterior del útero en el cuerpo humano femenino. El fondo de saco rectouterino se utiliza en el tratamiento de la insuficiencia renal terminal en pacientes tratados mediante diálisis peritoneal. La punta del catéter de diálisis se coloca en el punto más profundo del fondo de saco. En la mujer es el punto más profundo de la cavidad peritoneal, posterior al (detrás del) útero y anterior al (delante del) recto. (El fondo de saco del otro lado del útero es la excavación vesicouterina.) Se encuentra cerca del fórnix posterior de la vagina. En el varón, la región correspondiente al fondo de saco rectouterino es la excavación rectovesical, que se sitúa entre la vejiga urinaria y el recto. (No existe un equivalente a la excavación vesicouterina.)."
+ },
+ "UBERON:0007118": {
+  "labelEs": "ombligo",
+  "definitionEs": "Depresión situada en el centro de la pared abdominal que marca el punto por donde entraba el cordón umbilical en el feto."
+ },
+ "UBERON:0007136": {
+  "labelEs": "pliegue rectouterino",
+  "definitionEs": "Estos pliegues de la excavación rectouterina se denominan pliegues sacrogenitales o rectouterinos. Contienen una cantidad considerable de tejido fibroso y de fibras musculares no estriadas, que se fijan a la cara anterior del sacro y constituyen los ligamentos uterosacros."
+ },
+ "UBERON:0007684": {
+  "labelEs": "túbulo urinífero",
+  "definitionEs": "Unidad funcional del riñón que forma la orina, compuesta por dos partes: la nefrona y el túbulo colector."
+ },
+ "UBERON:0007685": {
+  "labelEs": "región del túbulo de la nefrona",
+  "definitionEs": null
+ },
+ "UBERON:0007809": {
+  "labelEs": "fascia de Camper",
+  "definitionEs": "La capa superficial (fascia de Camper) es una capa superficial gruesa de la pared abdominal anterior. Es de textura areolar y contiene en sus mallas una cantidad variable de tejido adiposo. Se encuentra superficial a la fascia de Scarpa."
+ },
+ "UBERON:0007826": {
+  "labelEs": "mesenterio peritoneal",
+  "definitionEs": "Mesenterio que se localiza en el peritoneo."
+ },
+ "UBERON:0008404": {
+  "labelEs": "epitelio tubular proximal",
+  "definitionEs": "Las células que revisten el túbulo proximal son células epiteliales cúbicas con profundas invaginaciones de la membrana basal que proporcionan una gran superficie basal. Las largas microvellosidades (el borde en cepillo) que revisten la luz del túbulo maximizan la superficie luminal y hacen que estas células sean idóneas tanto para funciones de reabsorción como de secreción."
+ },
+ "UBERON:0008716": {
+  "labelEs": "hilio renal",
+  "definitionEs": "Abertura del borde medial del riñón que conduce al seno renal. Los vasos renales entran en el riñón o salen de él por el hilio; la pelvis renal sale del riñón por el hilio."
+ },
+ "UBERON:0008843": {
+  "labelEs": "gubernáculo testicular",
+  "definitionEs": "Ligamento fetal unido al extremo inferior del epidídimo y del testículo y, por su otro extremo, al fondo del escroto; está presente durante el descenso del testículo al escroto, que se cree que guía, y después se atrofia."
+ },
+ "UBERON:0008987": {
+  "labelEs": "parénquima renal",
+  "definitionEs": "Tejido funcional del riñón, formado por las nefronas."
+ },
+ "UBERON:0009650": {
+  "labelEs": "arco cortical del riñón",
+  "definitionEs": "Porciones de sustancia renal (corteza) interpuestas entre las bases de las pirámides y la cápsula del riñón."
+ },
+ "UBERON:0009753": {
+  "labelEs": "zona de la corteza suprarrenal",
+  "definitionEs": null
+ },
+ "UBERON:0009883": {
+  "labelEs": "radio medular",
+  "definitionEs": "Lobulillo cortical renal, formado por las ramas ascendentes o descendentes del asa de Henle o por los túbulos colectores; los radios medulares son regiones donde conjuntos paralelos de túbulos rectos discurren perpendiculares a la cápsula y se extienden desde la corteza hasta la médula."
+ },
+ "UBERON:0009913": {
+  "labelEs": "lóbulo renal",
+  "definitionEs": "Porción de un riñón formada por una pirámide medular renal y la corteza renal situada sobre ella[MP]. Está compuesto por muchos lobulillos renales[WP]."
+ },
+ "UBERON:0009914": {
+  "labelEs": "lobulillo renal",
+  "definitionEs": "Porción de un lóbulo renal formada por nefronas agrupadas alrededor de un único radio medular y que drenan en un único conducto colector; los riñones humanos tienen una arquitectura multilobular y multipapilar, mientras que los ratones y las ratas tienen riñones unilobulares y unipapilares."
+ },
+ "UBERON:0009967": {
+  "labelEs": "seno venoso del bazo",
+  "definitionEs": null
+ },
+ "UBERON:0010181": {
+  "labelEs": "vénulas rectas del riñón",
+  "definitionEs": "Las vénulas rectas del riñón son ramas de los plexos situados en los vértices de las pirámides medulares, formados por las terminaciones de las arterias rectas. Discurren hacia fuera en trayecto recto entre los túbulos de la sustancia medular y, al unirse, como se ha indicado antes, a las venas interlobulillares, forman arcadas venosas; estas a su vez se unen y forman venas que discurren a lo largo de los lados de las pirámides. Contienen capilares fenestrados."
+ },
+ "UBERON:0010704": {
+  "labelEs": "parénquima del lóbulo cuadrado del hígado",
+  "definitionEs": "Parénquima hepático que forma parte de un lóbulo cuadrado del hígado."
+ },
+ "UBERON:0010706": {
+  "labelEs": "parénquima del lóbulo caudado del hígado",
+  "definitionEs": "Parénquima hepático que forma parte de un lóbulo caudado del hígado."
+ },
+ "UBERON:0011016": {
+  "labelEs": "músculo piramidal",
+  "definitionEs": "El piramidal es un músculo pequeño y triangular, anterior al recto del abdomen y contenido en la vaina del recto."
+ },
+ "UBERON:0011049": {
+  "labelEs": "excavación vesicouterina",
+  "definitionEs": "El peritoneo que cubre el recto y la vejiga se continúa sobre la cara intestinal y el fondo del útero hasta su cara vesical, que cubre hasta la unión del cuerpo y el cuello uterino, y luego hasta la vejiga, formando aquí un segundo fondo de saco, aunque menos profundo, la excavación vesicouterina (o fondo de saco uterovesical). La excavación vesicouterina está próxima al fórnix anterior de la vagina."
+ },
+ "UBERON:0011204": {
+  "labelEs": "excavación rectovesical",
+  "definitionEs": "Entre el recto y la vejiga, la cavidad peritoneal forma, en el varón, un fondo de saco, la excavación rectovesical (o fondo de saco rectovesical), cuyo fondo está ligeramente por debajo del nivel de los extremos superiores de las vesículas seminales, es decir, a unos 7,5 cm del orificio del ano. Su parte más baja es un tabique membranoso denominado fascia rectoprostática. La estructura correspondiente en la mujer es el fondo de saco rectouterino."
+ },
+ "UBERON:0011955": {
+  "labelEs": "vena hepática izquierda",
+  "definitionEs": "Vena hepática que forma parte de un lóbulo hepático izquierdo."
+ },
+ "UBERON:0011956": {
+  "labelEs": "vena hepática derecha",
+  "definitionEs": "Vena hepática que forma parte de un lóbulo hepático derecho."
+ },
+ "UBERON:0011957": {
+  "labelEs": "vena hepática intermedia",
+  "definitionEs": null
+ },
+ "UBERON:0012471": {
+  "labelEs": "ligamento hepatogástrico",
+  "definitionEs": "Ligamento que se extiende entre el hígado y el estómago."
+ },
+ "UBERON:0012472": {
+  "labelEs": "ligamento hepatoduodenal",
+  "definitionEs": "El ligamento hepatoduodenal es la porción del omento menor que se extiende entre el porta hepático del hígado y la porción superior del duodeno."
+ },
+ "UBERON:0013132": {
+  "labelEs": "arteriola peniciliar",
+  "definitionEs": "Cada una de las pequeñas arterias rectas de la pulpa roja del bazo; rama de la arteria central del bazo que irriga la pulpa roja[WP,modified]."
+ },
+ "UBERON:0013138": {
+  "labelEs": "ligamento coronario del hígado",
+  "definitionEs": "El ligamento coronario del hígado designa partes de las reflexiones peritoneales que sujetan el hígado a la cara inferior del diafragma."
+ },
+ "UBERON:0013139": {
+  "labelEs": "ligamento del hígado",
+  "definitionEs": "Ligamento no esquelético que forma parte de un hígado."
+ },
+ "UBERON:0013203": {
+  "labelEs": "hipogastrio",
+  "definitionEs": "El hipogastrio (o región hipogástrica, o región púbica) es un área del abdomen humano situada por debajo del ombligo."
+ },
+ "UBERON:0013493": {
+  "labelEs": "fascia abdominal",
+  "definitionEs": "Fascia que forma parte de un abdomen."
+ },
+ "UBERON:0013705": {
+  "labelEs": "fascia de Scarpa",
+  "definitionEs": "La capa profunda (fascia de Scarpa) es una capa de la pared abdominal anterior."
+ },
+ "UBERON:0013717": {
+  "labelEs": "anillo inguinal superficial",
+  "definitionEs": "Salida del conducto inguinal."
+ },
+ "UBERON:0013721": {
+  "labelEs": "anillo inguinal profundo",
+  "definitionEs": "Entrada del conducto inguinal."
+ },
+ "UBERON:0014400": {
+  "labelEs": "espacio sinusoidal hepático",
+  "definitionEs": "Espacio sinusoidal que forma parte de un sinusoide hepático."
+ },
+ "UBERON:0014456": {
+  "labelEs": "espacio extraperitoneal",
+  "definitionEs": "El espacio extraperitoneal es la porción del abdomen y de la pelvis que no se encuentra dentro del peritoneo. Comprende: espacio retroperitoneal, espacio retropúbico. El espacio de la pelvis se divide en los siguientes componentes: espacio prevesical, espacio perivesical, espacio perirrectal."
+ },
+ "UBERON:0015139": {
+  "labelEs": "infundíbulo de la vesícula biliar",
+  "definitionEs": "Porción ahusada de la vesícula biliar que se estrecha para formar el cuello y el conducto cístico."
+ },
+ "UBERON:0015481": {
+  "labelEs": "arteria hepática izquierda",
+  "definitionEs": "Arteria hepática que forma parte de un lóbulo hepático izquierdo."
+ },
+ "UBERON:0015482": {
+  "labelEs": "arteria hepática derecha",
+  "definitionEs": "Arteria hepática que forma parte de un lóbulo hepático derecho."
+ },
+ "UBERON:0015859": {
+  "labelEs": "nódulo linfático hepático",
+  "definitionEs": "Cualquiera de los nódulos linfáticos adyacentes al estómago y al duodeno."
+ },
+ "UBERON:0015860": {
+  "labelEs": "nódulo linfático abdominal visceral",
+  "definitionEs": null
+ },
+ "UBERON:0015863": {
+  "labelEs": "nódulo linfático gástrico",
+  "definitionEs": "Nódulo linfático situado a lo largo de la arteria gástrica izquierda o del omento mayor."
+ },
+ "UBERON:0015865": {
+  "labelEs": "nódulo linfático pancreaticoesplénico",
+  "definitionEs": "Nódulos linfáticos de la cola del páncreas y del bazo, que reciben aferentes de ambos órganos, además de la curvatura mayor del estómago; drenan en los nódulos linfáticos celíacos."
+ },
+ "UBERON:0015866": {
+  "labelEs": "nódulo linfático pilórico",
+  "definitionEs": null
+ },
+ "UBERON:0015867": {
+  "labelEs": "nódulo linfático cístico",
+  "definitionEs": null
+ },
+ "UBERON:0015868": {
+  "labelEs": "nódulo linfático del agujero omental",
+  "definitionEs": null
+ },
+ "UBERON:0016401": {
+  "labelEs": "nódulo linfático pancreatoduodenal",
+  "definitionEs": null
+ },
+ "UBERON:0016402": {
+  "labelEs": "nódulo linfático mesocólico",
+  "definitionEs": null
+ },
+ "UBERON:0016478": {
+  "labelEs": "estroma hepático",
+  "definitionEs": "Estroma que forma parte de un hígado."
+ },
+ "UBERON:0016479": {
+  "labelEs": "cápsula del hígado",
+  "definitionEs": "Cápsula colágena que cubre la superficie externa del hígado."
+ },
+ "UBERON:0016480": {
+  "labelEs": "estroma interlobulillar del hígado",
+  "definitionEs": null
+ },
+ "UBERON:0016851": {
+  "labelEs": "fascia renal",
+  "definitionEs": "Bolsa fascial derivada del tejido conjuntivo extraperitoneal que contiene los riñones, las glándulas suprarrenales, los vasos renales y la grasa perirrenal."
+ },
+ "UBERON:0016890": {
+  "labelEs": "rama intrahepática de la vena porta",
+  "definitionEs": null
+ },
+ "UBERON:0017672": {
+  "labelEs": "vísceras abdominales",
+  "definitionEs": "Víscera que forma parte de un abdomen."
+ },
+ "UBERON:0018113": {
+  "labelEs": "intersticio del riñón izquierdo",
+  "definitionEs": "Intersticio renal que forma parte de un riñón izquierdo."
+ },
+ "UBERON:0018114": {
+  "labelEs": "intersticio del riñón derecho",
+  "definitionEs": "Intersticio renal que forma parte de un riñón derecho."
+ },
+ "UBERON:0018115": {
+  "labelEs": "pelvis renal izquierda",
+  "definitionEs": "Pelvis renal que forma parte de un uréter izquierdo."
+ },
+ "UBERON:0018116": {
+  "labelEs": "pelvis renal derecha",
+  "definitionEs": "Pelvis renal que forma parte de un uréter derecho."
+ },
+ "UBERON:0022357": {
+  "labelEs": "mesenterio del íleon",
+  "definitionEs": null
+ },
+ "UBERON:0034696": {
+  "labelEs": "pliegue del peritoneo",
+  "definitionEs": null
+ },
+ "UBERON:0035201": {
+  "labelEs": "ligamento gastrocólico",
+  "definitionEs": "Porción principal del omento mayor situada entre el estómago y el colon transverso."
+ },
+ "UBERON:0035267": {
+  "labelEs": "cuello de la vesícula biliar",
+  "definitionEs": "Porción más estrecha de la vesícula biliar, distal al conducto cístico."
+ },
+ "UBERON:0035276": {
+  "labelEs": "epigastrio",
+  "definitionEs": "Región central superior del abdomen situada entre los rebordes costales y el plano subcostal."
+ },
+ "UBERON:0035368": {
+  "labelEs": "cara anterior del riñón",
+  "definitionEs": "Cara del riñón orientada hacia la cavidad abdominal."
+ },
+ "UBERON:0035410": {
+  "labelEs": "región inguinal izquierda del abdomen",
+  "definitionEs": null
+ },
+ "UBERON:0035444": {
+  "labelEs": "ligamento triangular del hígado",
+  "definitionEs": null
+ },
+ "UBERON:0035471": {
+  "labelEs": "cara posterior del riñón",
+  "definitionEs": null
+ },
+ "UBERON:0035498": {
+  "labelEs": "ligamento gastrofrénico",
+  "definitionEs": "Porción del omento mayor que se extiende desde la curvatura mayor del estómago hasta la cara inferior del diafragma."
+ },
+ "UBERON:0035505": {
+  "labelEs": "región inguinal derecha del abdomen",
+  "definitionEs": null
+ },
+ "UBERON:0035536": {
+  "labelEs": "cuerpo de la vesícula biliar",
+  "definitionEs": "Porción media de la vesícula biliar, distal al cuello de la vesícula biliar y proximal al fondo de la vesícula biliar."
+ },
+ "UBERON:0035655": {
+  "labelEs": "vena paraumbilical",
+  "definitionEs": "Pequeñas venas superficiales que se originan de las venas cutáneas y discurren desde el ombligo a lo largo del ligamento redondo del hígado; terminan como venas porta accesorias en el hígado."
+ },
+ "UBERON:0035756": {
+  "labelEs": "red capilar del hígado",
+  "definitionEs": null
+ },
+ "UBERON:0035758": {
+  "labelEs": "plexo capilar peritubular del riñón",
+  "definitionEs": null
+ },
+ "UBERON:0035762": {
+  "labelEs": "red capilar del riñón",
+  "definitionEs": null
+ },
+ "UBERON:0035825": {
+  "labelEs": "corteza de la glándula suprarrenal izquierda",
+  "definitionEs": "Capa externa gruesa de la glándula suprarrenal que se encuentra en el lado izquierdo del abdomen."
+ },
+ "UBERON:0035826": {
+  "labelEs": "médula de la glándula suprarrenal izquierda",
+  "definitionEs": "Médula de la glándula suprarrenal que se encuentra en el lado izquierdo del abdomen."
+ },
+ "UBERON:0035827": {
+  "labelEs": "corteza de la glándula suprarrenal derecha",
+  "definitionEs": "Capa externa gruesa de la glándula suprarrenal que se encuentra en el lado derecho del abdomen."
+ },
+ "UBERON:0035828": {
+  "labelEs": "médula de la glándula suprarrenal derecha",
+  "definitionEs": "Médula de la glándula suprarrenal que se encuentra en el lado derecho del abdomen."
+ },
+ "UBERON:0035829": {
+  "labelEs": "arteria gastroomental derecha",
+  "definitionEs": "Arteria que discurre de derecha a izquierda a lo largo de la curvatura mayor del estómago, entre las hojas del omento mayor, y se anastomosa con la rama gastroomental izquierda de la arteria esplénica."
+ },
+ "UBERON:0035830": {
+  "labelEs": "arteria gastroomental izquierda",
+  "definitionEs": "Arteria que discurre de izquierda a derecha a lo largo de la curvatura mayor del estómago, entre las hojas del omento mayor, y se anastomosa con la gastroomental derecha."
+ },
+ "UBERON:0036301": {
+  "labelEs": "vasculatura del bazo",
+  "definitionEs": null
+ },
+ "UBERON:0036343": {
+  "labelEs": "pared de la vesícula biliar",
+  "definitionEs": null
+ },
+ "UBERON:0037468": {
+  "labelEs": "cintura",
+  "definitionEs": "Parte del abdomen humano situada por debajo de las costillas y por encima de las caderas, a menudo más estrecha que las zonas situadas por encima y por debajo."
+ },
+ "UBERON:0037494": {
+  "labelEs": "nódulo linfático gástrico paracardial",
+  "definitionEs": "Nódulo linfático gástrico situado alrededor del cardias del estómago."
+ },
+ "UBERON:0037514": {
+  "labelEs": "nódulo linfático mesentérico intermedio",
+  "definitionEs": null
+ },
+ "UBERON:0037515": {
+  "labelEs": "nódulo linfático mesentérico yuxtaarterial",
+  "definitionEs": null
+ },
+ "UBERON:0037518": {
+  "labelEs": "nódulo linfático epicólico",
+  "definitionEs": null
+ },
+ "UBERON:0037521": {
+  "labelEs": "nódulo linfático cólico preterminal",
+  "definitionEs": null
+ },
+ "UBERON:0037522": {
+  "labelEs": "nódulo linfático ileal",
+  "definitionEs": null
+ },
+ "UBERON:0037527": {
+  "labelEs": "nódulo linfático pancreatoduodenal superior",
+  "definitionEs": null
+ },
+ "UBERON:0037528": {
+  "labelEs": "nódulo linfático pancreatoduodenal inferior",
+  "definitionEs": null
+ },
+ "UBERON:0037530": {
+  "labelEs": "nódulo linfático pancreático inferior",
+  "definitionEs": "Nódulo linfático pancreaticoesplénico situado a lo largo del borde inferior del páncreas."
+ },
+ "UBERON:0037531": {
+  "labelEs": "nódulo linfático intestinal",
+  "definitionEs": null
+ },
+ "UBERON:0037559": {
+  "labelEs": "nódulo linfático anorrectal",
+  "definitionEs": null
+ },
+ "UBERON:0037580": {
+  "labelEs": "nódulo linfático gástrico izquierdo",
+  "definitionEs": "Nódulo linfático gástrico situado a lo largo de la curvatura menor del estómago."
+ },
+ "UBERON:0037601": {
+  "labelEs": "nódulo linfático lumbar parietal izquierdo",
+  "definitionEs": null
+ },
+ "UBERON:0037614": {
+  "labelEs": "nódulo linfático apendicular",
+  "definitionEs": null
+ },
+ "UBERON:0037615": {
+  "labelEs": "nódulo linfático pararrectal",
+  "definitionEs": null
+ },
+ "UBERON:0038053": {
+  "labelEs": "nódulo linfático del ángulo cardiofrénico",
+  "definitionEs": null
+ },
+ "UBERON:0038054": {
+  "labelEs": "nódulo linfático retrocrural",
+  "definitionEs": null
+ },
+ "UBERON:0038093": {
+  "labelEs": "nódulo linfático yeyunal",
+  "definitionEs": null
+ },
+ "UBERON:0038094": {
+  "labelEs": "nódulo linfático rectal inferior",
+  "definitionEs": null
+ },
+ "UBERON:0038137": {
+  "labelEs": "nódulo linfático preaórtico parietal",
+  "definitionEs": null
+ },
+ "UBERON:0038139": {
+  "labelEs": "nódulo linfático retroaórtico",
+  "definitionEs": null
+ },
+ "UBERON:0038684": {
+  "labelEs": "nódulo linfático gástrico izquierdo superior",
+  "definitionEs": "Nódulo linfático gástrico izquierdo situado a lo largo de la arteria gástrica izquierda."
+ },
+ "UBERON:0038685": {
+  "labelEs": "nódulo linfático gástrico izquierdo inferior",
+  "definitionEs": "Nódulo linfático gástrico izquierdo situado a lo largo de la mitad cardial de la curvatura menor del estómago, en el omento menor."
+ },
+ "UBERON:0038687": {
+  "labelEs": "nódulo linfático visceral del abdomen",
+  "definitionEs": null
+ },
+ "UBERON:0038691": {
+  "labelEs": "nódulo linfático hepático común",
+  "definitionEs": "Nódulo linfático hepático situado a lo largo de la arteria hepática común."
+ },
+ "UBERON:0038694": {
+  "labelEs": "nódulo linfático hepatoportal",
+  "definitionEs": "Nódulo linfático hepático situado a lo largo de la vena porta."
+ },
+ "UBERON:0038695": {
+  "labelEs": "nódulo linfático pancreático superior proximal",
+  "definitionEs": "Nódulo linfático pancreático superior situado a lo largo del segmento proximal de la arteria esplénica."
+ },
+ "UBERON:0038696": {
+  "labelEs": "nódulo linfático pancreático superior distal",
+  "definitionEs": "Nódulo linfático pancreático superior situado a lo largo del segmento distal de la arteria esplénica."
+ },
+ "UBERON:0038697": {
+  "labelEs": "nódulo linfático pancreatoduodenal superior anterior",
+  "definitionEs": "Nódulo linfático pancreatoduodenal superior situado en la cara anterior de la región superior de la cabeza del páncreas."
+ },
+ "UBERON:0038698": {
+  "labelEs": "nódulo linfático pancreatoduodenal superior posterior",
+  "definitionEs": "Nódulo linfático pancreatoduodenal superior situado en la cara posterior de la porción superior de la cabeza del páncreas."
+ },
+ "UBERON:0038699": {
+  "labelEs": "nódulo linfático pancreatoduodenal inferior anterior",
+  "definitionEs": "Nódulo linfático pancreatoduodenal inferior situado en la cara anterior de la región inferior de la cabeza del páncreas."
+ },
+ "UBERON:0038700": {
+  "labelEs": "nódulo linfático pancreatoduodenal inferior posterior",
+  "definitionEs": "Nódulo linfático pancreatoduodenal inferior situado en la cara posterior de la región inferior de la cabeza del páncreas."
+ },
+ "UBERON:0038707": {
+  "labelEs": "nódulo linfático pancreatoduodenal anterior",
+  "definitionEs": null
+ },
+ "UBERON:0038727": {
+  "labelEs": "nódulo linfático mesentérico yuxtaintestinal",
+  "definitionEs": null
+ },
+ "UBERON:0038734": {
+  "labelEs": "nódulo linfático preaórtico visceral",
+  "definitionEs": "Nódulo linfático intestinal situado por delante de la aorta."
+ },
+ "UBERON:0038735": {
+  "labelEs": "nódulo linfático yeyunal yuxtaarterial",
+  "definitionEs": null
+ },
+ "UBERON:0038736": {
+  "labelEs": "nódulo linfático ileal yuxtaarterial",
+  "definitionEs": null
+ },
+ "UBERON:0038737": {
+  "labelEs": "nódulo linfático yeyunal intermedio",
+  "definitionEs": null
+ },
+ "UBERON:0038738": {
+  "labelEs": "nódulo linfático ileal intermedio",
+  "definitionEs": null
+ },
+ "UBERON:0038746": {
+  "labelEs": "nódulo linfático gastroomental",
+  "definitionEs": "Nódulo linfático gástrico situado a lo largo de la curvatura mayor del estómago."
+ },
+ "UBERON:0038784": {
+  "labelEs": "nódulo linfático pararrectal de la pelvis",
+  "definitionEs": null
+ },
+ "UBERON:0038796": {
+  "labelEs": "nódulo linfático a lo largo del conducto colédoco",
+  "definitionEs": null
+ },
+ "UBERON:0038818": {
+  "labelEs": "nódulo linfático pancreatoduodenal posterior",
+  "definitionEs": null
+ },
+ "UBERON:0038951": {
+  "labelEs": "nódulo linfático suprapilórico",
+  "definitionEs": "Nódulo linfático pilórico situado cerca de la bifurcación de la arteria gastroduodenal y por encima del píloro."
+ },
+ "UBERON:0038952": {
+  "labelEs": "nódulo linfático subpilórico",
+  "definitionEs": "Nódulo linfático pilórico situado en el ángulo entre las porciones superior y descendente del duodeno."
+ },
+ "UBERON:0038953": {
+  "labelEs": "nódulo linfático retropilórico",
+  "definitionEs": null
+ },
+ "UBERON:0039168": {
+  "labelEs": "nódulo linfático cólico",
+  "definitionEs": null
+ },
+ "UBERON:0039222": {
+  "labelEs": "arteria cística",
+  "definitionEs": "Arteria que aporta sangre oxigenada al conducto cístico."
+ },
+ "UBERON:1000023": {
+  "labelEs": "pulpa esplénica",
+  "definitionEs": "Parénquima del bazo, formado por linfocitos y macrófagos. Se encuentra entre las trabéculas esplénicas. La pulpa roja es la parte impregnada de sangre y la pulpa blanca está formada por áreas de tejido linfático donde hay manguitos de linfocitos y macrófagos."
+ },
+ "UBERON:1000024": {
+  "labelEs": "parénquima del bazo",
+  "definitionEs": "Parénquima que forma parte de un bazo."
+ },
+ "UBERON:1200000": {
+  "labelEs": "pliegue ileocecal",
+  "definitionEs": "Pliegue de peritoneo situado entre el íleon y el ciego. El borde superior del pliegue ileocecal está fijado al íleon, frente a su inserción mesentérica, y el borde inferior pasa sobre la unión ileocecal para unirse al mesenterio del apéndice (y a veces también al propio apéndice). Detrás del pliegue ileocecal se encuentra la fosa ileocecal inferior."
+ },
+ "UBERON:8920004": {
+  "labelEs": "arteria segmentaria renal",
+  "definitionEs": "Arteria que se ramifica de la arteria renal. La división anterior de la arteria renal suele dividirse en cuatro arterias segmentarias, mientras que la división posterior de la arteria renal aporta una arteria segmentaria."
+ },
+ "UBERON:8920005": {
+  "labelEs": "arteria segmentaria renal superior",
+  "definitionEs": "Arteria segmentaria renal que pasa por delante de la pelvis renal, en dirección superior y lateral. Irriga el lóbulo superior (apical) del riñón."
+ },
+ "UBERON:8920006": {
+  "labelEs": "arteria segmentaria renal anterior superior",
+  "definitionEs": "Arteria segmentaria renal que pasa por delante de la pelvis renal, en dirección superior y lateral hacia el polo superior del riñón. No asciende tan pronunciadamente como la arteria segmentaria superior y no se extiende hasta el polo superior. Irriga el lóbulo anterosuperior del riñón, que comprende la región anterosuperior central y se extiende hasta la cara lateral y ligeramente sobre la cara posterior del riñón."
+ },
+ "UBERON:8920007": {
+  "labelEs": "arteria segmentaria renal anterior inferior",
+  "definitionEs": "Arteria segmentaria renal que pasa por delante de la pelvis renal, en dirección lateral y ligeramente inclinada hacia abajo. Irriga el lóbulo anteroinferior del riñón, que comprende la región anteroinferior central y se extiende hasta la cara lateral y ligeramente sobre la cara posterior del riñón."
+ },
+ "UBERON:8920008": {
+  "labelEs": "arteria segmentaria renal inferior",
+  "definitionEs": "Arteria segmentaria renal que pasa por delante de la pelvis renal, en dirección inferior y lateral hacia el polo inferior del riñón. Irriga el lóbulo inferior del riñón, que abarca la totalidad del polo inferior del riñón, incluidas las caras anterior y posterior."
+ },
+ "UBERON:8920009": {
+  "labelEs": "arteria segmentaria renal posterior",
+  "definitionEs": "Arteria segmentaria renal que pasa por detrás de la pelvis renal y discurre lateralmente, de forma más o menos horizontal. Irriga el lóbulo posterior del riñón, que comprende toda la cara posterior central del riñón. Se excluyen los polos superior e inferior y una pequeña porción posterolateral."
+ },
+ "UBERON:8920011": {
+  "labelEs": "vena estrellada del riñón",
+  "definitionEs": "Vena que drena la sangre de las zonas más superficiales de la corteza renal. Los grupos de venas estrelladas se disponen en un patrón en forma de estrella y convergen centralmente para drenar en una vena interlobulillar."
+ },
+ "UBERON:8920020": {
+  "labelEs": "arteria pancreática dorsal",
+  "definitionEs": "Arteria que se ramifica de la arteria esplénica e irriga la cabeza, el proceso unciforme, el cuello, el cuerpo y la cola del páncreas. Se anastomosa con la arteria pancreatoduodenal superior."
+ },
+ "UBERON:8920021": {
+  "labelEs": "arteria pancreática mayor",
+  "definitionEs": "Arteria que se ramifica de la arteria esplénica e irriga la mitad izquierda del cuerpo y la cola del páncreas."
+ },
+ "UBERON:8920022": {
+  "labelEs": "arteria de la cola del páncreas",
+  "definitionEs": "Arteria que se ramifica de la arteria esplénica e irriga la cola del páncreas."
+ },
+ "UBERON:8920024": {
+  "labelEs": "arteria pancreatoduodenal superior anterior",
+  "definitionEs": "Arteria que se ramifica de la arteria gastroduodenal e irriga la primera y la segunda porciones (porciones superior y descendente) del duodeno y la cabeza del páncreas."
+ },
+ "UBERON:8920025": {
+  "labelEs": "arteria pancreatoduodenal superior posterior",
+  "definitionEs": "Arteria que se ramifica de la arteria gastroduodenal e irriga la primera y la segunda porciones del duodeno, el conducto colédoco distal y la cabeza del páncreas."
+ },
+ "UBERON:8920026": {
+  "labelEs": "arteria pancreatoduodenal inferior anterior",
+  "definitionEs": "Arteria que se ramifica de la arteria pancreatoduodenal inferior. Discurre por la cara anterior del proceso unciforme y continúa hacia la cabeza del páncreas. Irriga el proceso unciforme, la cabeza del páncreas y la segunda y la tercera porciones del duodeno."
+ },
+ "UBERON:8920027": {
+  "labelEs": "arteria pancreatoduodenal inferior posterior",
+  "definitionEs": "Arteria que se ramifica de la arteria pancreatoduodenal inferior. Discurre por detrás del proceso unciforme y de la cabeza del páncreas. Irriga el proceso unciforme y la cabeza del páncreas, y la segunda y la tercera porciones del duodeno."
+ },
+ "UBERON:8920032": {
+  "labelEs": "arteria cecal anterior",
+  "definitionEs": "Arteria que se ramifica de la arteria ileocólica e irriga la porción anterior del ciego."
+ },
+ "UBERON:8920033": {
+  "labelEs": "arteria cecal posterior",
+  "definitionEs": "Arteria que se ramifica de la arteria ileocólica e irriga la porción posterior del ciego."
+ },
+ "UBERON:8920035": {
+  "labelEs": "arteria marginal de Drummond",
+  "definitionEs": "Arcada arterial que conecta las arterias mesentéricas superior e inferior e irriga el colon."
+ },
+ "UBERON:8920036": {
+  "labelEs": "rama ascendente de la arteria cólica izquierda",
+  "definitionEs": "Arteria que se ramifica de la arteria cólica izquierda e irriga la porción superior del colon descendente, la flexura cólica izquierda y entre la mitad y el tercio derecho del colon transverso."
+ },
+ "UBERON:8920037": {
+  "labelEs": "rama descendente de la arteria cólica izquierda",
+  "definitionEs": "Arteria que se ramifica de la arteria cólica izquierda e irriga la porción inferior del colon descendente."
+ },
+ "UBERON:8920039": {
+  "labelEs": "arteria izquierda del lóbulo caudado",
+  "definitionEs": "Arteria que se ramifica de la arteria hepática izquierda e irriga la porción medial del lóbulo caudado del hígado."
+ },
+ "UBERON:8920040": {
+  "labelEs": "arteria derecha del lóbulo caudado",
+  "definitionEs": "Arteria que se ramifica de la arteria hepática derecha e irriga la porción lateral del lóbulo caudado del hígado."
+ },
+ "UBERON:8920042": {
+  "labelEs": "rama ileal de la arteria ileocólica",
+  "definitionEs": "Arteria que se ramifica de la arteria ileocólica e irriga la parte más distal del íleon, la unión ileocecal, el ciego y el apéndice."
+ },
+ "UBERON:8920043": {
+  "labelEs": "arteria retroduodenal",
+  "definitionEs": "Arteria que se ramifica de la arteria gastroduodenal e irriga la cara posterior del duodeno proximal."
+ },
+ "UBERON:8920044": {
+  "labelEs": "arteria supraduodenal",
+  "definitionEs": "Arteria que se ramifica de la arteria gastroduodenal e irriga las caras superior, derecha y anterior de la primera porción del duodeno, extendiéndose hasta la segunda porción."
+ },
+ "UBERON:8920045": {
+  "labelEs": "arteria gástrica derecha",
+  "definitionEs": "Arteria que se ramifica de la arteria hepática propia e irriga el lado derecho de la curvatura menor del estómago y las caras anterior y posterior adyacentes."
+ },
+ "UBERON:8920046": {
+  "labelEs": "arteria gástrica corta",
+  "definitionEs": "Arteria que se ramifica de la arteria esplénica e irriga el fondo del estómago en el lado de la curvatura mayor del estómago."
+ },
+ "UBERON:8920047": {
+  "labelEs": "vena gastroomental izquierda",
+  "definitionEs": "Vena tributaria de la vena esplénica que drena las caras anterior y posterior del cuerpo del estómago y el omento mayor."
+ },
+ "UBERON:8920048": {
+  "labelEs": "vena gastroomental derecha",
+  "definitionEs": "Vena tributaria de la vena mesentérica superior que drena el omento mayor y la parte distal del cuerpo y el antro del estómago."
+ },
+ "UBERON:8920050": {
+  "labelEs": "ramas esofágicas de la arteria gástrica izquierda",
+  "definitionEs": "Arteria que se ramifica de la arteria gástrica izquierda e irriga el esófago abdominal."
+ }
+}

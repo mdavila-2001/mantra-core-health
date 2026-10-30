@@ -1,0 +1,149 @@
+<app-page-header
+  title="Horario y turnos"
+  subtitle="Diga qué sucursales abren las 24 horas y cargue sus turnos de guardia. Los pacientes lo ven al elegir farmacia y en «Abiertas ahora». Todas las horas son de Bolivia."
+/>
+
+<app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
+  @if (scope.hasSeveral()) {
+    <div class="horario__farmacia">
+      <app-form-field label="Farmacia">
+        <app-select
+          [options]="scope.selectOptions()"
+          [value]="scope.pharmacyId()"
+          (valueChange)="scope.choose($event)"
+          placeholder="Elija su farmacia"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  @if (scope.pharmacyId() !== null) {
+    <app-card class="horario" padding="lg" data-testid="horario-card">
+      <app-view-state-host [state]="horario()" (retry)="recargar()">
+        <app-tabs [(selectedIndex)]="sedeElegida">
+          @for (sede of sedes(); track sede.siteId) {
+            <app-tab [label]="sede.siteName">
+              <div class="horario__sede" [attr.data-testid]="'horario-sede-' + sede.siteId">
+                @if (falloGeneral()[sede.siteId]; as fallo) {
+                  <app-alert tone="error" title="No se guardó" data-testid="horario-fallo">{{ fallo }}</app-alert>
+                }
+
+                <section class="horario__bloque" [attr.aria-labelledby]="'horario-24h-titulo-' + sede.siteId">
+                  <h2 [id]="'horario-24h-titulo-' + sede.siteId" class="horario__titulo">Atención las 24 horas</h2>
+                  <app-form-field
+                    label="¿Esta sucursal abre las 24 horas, todos los días?"
+                    hint="«Sin declarar» no muestra nada a los pacientes: no es lo mismo que «cierra de noche»."
+                  >
+                    <app-select
+                      data-testid="horario-24h"
+                      [options]="opciones24h"
+                      [value]="declaracion(sede)"
+                      [disabled]="guardando() === sede.siteId"
+                      (valueChange)="cambiar24h(sede, $event)"
+                    />
+                  </app-form-field>
+                </section>
+
+                <section class="horario__bloque" [attr.aria-labelledby]="'horario-turnos-titulo-' + sede.siteId">
+                  <h2 [id]="'horario-turnos-titulo-' + sede.siteId" class="horario__titulo">Turnos de guardia</h2>
+                  <p class="horario__nota">
+                    Un turno dura como mucho 72 horas y se carga con hasta 62 días de anticipación. Cuando termina,
+                    deja de mostrarse solo: no hay que borrarlo.
+                  </p>
+
+                  @if (sede.shifts.length === 0) {
+                    <p class="horario__vacio" data-testid="horario-sin-turnos">
+                      No tiene turnos vigentes ni próximos. Cargue el próximo abajo.
+                    </p>
+                  } @else {
+                    <ul class="horario__turnos" data-testid="horario-turnos">
+                      @for (turno of sede.shifts; track turno.id) {
+                        <li class="horario__turno">
+                          <div class="horario__turno-datos">
+                            <span class="horario__turno-ventana">
+                              {{ momentoDeBolivia(turno.startsAt) }} → {{ momentoDeBolivia(turno.endsAt) }}
+                            </span>
+                            @if (turno.current) {
+                              <app-badge variant="success" size="sm">De turno ahora</app-badge>
+                            } @else {
+                              <app-badge variant="info" size="sm">Próximo</app-badge>
+                            }
+                            @if (turno.source === 'PLATFORM') {
+                              <span class="horario__turno-origen">Cargado por la plataforma</span>
+                            }
+                          </div>
+                          <button
+                            app-button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            data-testid="horario-cancelar-turno"
+                            [disabled]="guardando() !== null"
+                            [attr.aria-label]="'Cancelar el turno que termina el ' + momentoDeBolivia(turno.endsAt)"
+                            (clicked)="cancelarTurno(sede, turno)"
+                          >
+                            Cancelar
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  }
+
+                  <form class="horario__alta" (submit)="$event.preventDefault(); agregarTurno(sede)">
+                    <div class="horario__par">
+                      <app-form-field label="Empieza el" [errorMessage]="errorDe(sede.siteId, 'desde')" [required]="true">
+                        <app-input
+                          type="date"
+                          testId="horario-desde-fecha"
+                          [value]="borrador(sede.siteId).desdeFecha"
+                          (valueChange)="escribir(sede.siteId, 'desdeFecha', $event)"
+                        />
+                      </app-form-field>
+                      <app-form-field label="a las (hora de Bolivia)" [required]="true">
+                        <app-input
+                          type="time"
+                          testId="horario-desde-hora"
+                          [value]="borrador(sede.siteId).desdeHora"
+                          (valueChange)="escribir(sede.siteId, 'desdeHora', $event)"
+                        />
+                      </app-form-field>
+                    </div>
+                    <div class="horario__par">
+                      <app-form-field label="Termina el" [errorMessage]="errorDe(sede.siteId, 'hasta')" [required]="true">
+                        <app-input
+                          type="date"
+                          testId="horario-hasta-fecha"
+                          [value]="borrador(sede.siteId).hastaFecha"
+                          (valueChange)="escribir(sede.siteId, 'hastaFecha', $event)"
+                        />
+                      </app-form-field>
+                      <app-form-field label="a las (hora de Bolivia)" [required]="true">
+                        <app-input
+                          type="time"
+                          testId="horario-hasta-hora"
+                          [value]="borrador(sede.siteId).hastaHora"
+                          (valueChange)="escribir(sede.siteId, 'hastaHora', $event)"
+                        />
+                      </app-form-field>
+                    </div>
+                    <div class="horario__acciones">
+                      <button
+                        app-button
+                        type="submit"
+                        data-testid="horario-agregar-turno"
+                        [isLoading]="guardando() === sede.siteId"
+                        [disabled]="guardando() !== null"
+                      >
+                        Cargar turno
+                      </button>
+                    </div>
+                  </form>
+                </section>
+              </div>
+            </app-tab>
+          }
+        </app-tabs>
+      </app-view-state-host>
+    </app-card>
+  }
+</app-view-state-host>

@@ -256,3 +256,40 @@
     grid-column: auto;
   }
 }
+
+/* A qué está asociada hoy: nombre del servicio, nunca el identificador. */
+.encuesta__asociada {
+  display: grid;
+  gap: var(--sp-2);
+  margin-block-end: var(--sp-4);
+  padding-block-end: var(--sp-4);
+  border-block-end: 1px solid var(--border-default);
+}
+
+.encuesta__asociada-titulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.encuesta__asociaciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encuesta__asociacion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.encuesta__asociacion-nombre {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

@@ -20,7 +20,8 @@
     transition:
         box-shadow var(--dur-fast) var(--ease-standard),
         border-color var(--dur-fast) var(--ease-standard),
-        background var(--dur-fast) var(--ease-standard);
+        background var(--dur-fast) var(--ease-standard),
+        transform var(--dur-base) var(--pulse-ease);
 }
 
 /* ---- variantes ----------------------------------------------------------- */
@@ -102,9 +103,27 @@
     cursor: pointer;
 }
 
-:host(.card--interactive:hover) {
-    border-color: var(--border-strong);
-    box-shadow: var(--shadow-md);
+/* Elevación Pulse (pulse.md §1): se levanta al apuntarla —sólo con puntero
+   fino, en táctil se quedaría levantada— y se hunde al pulsarla. */
+@media (hover: hover) and (pointer: fine) {
+    :host(.card--interactive:hover) {
+        border-color: var(--border-strong);
+        box-shadow: var(--pulse-lift);
+        transform: translateY(var(--pulse-lift-distance));
+    }
+}
+
+:host(.card--interactive:active) {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(0) scale(0.995);
+    transition-duration: var(--dur-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host(.card--interactive:hover),
+    :host(.card--interactive:active) {
+        transform: none;
+    }
 }
 
 /* el anillo de foco lo pone la regla global de :focus-visible */

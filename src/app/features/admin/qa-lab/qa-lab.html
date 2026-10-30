@@ -30,7 +30,7 @@
                       @if (p.counters.casesNotRun > 0) { · {{ p.counters.casesNotRun }} sin ejecutar }
                       @if (p.error; as e) { <div class="qa__nota">{{ e.code }}</div> }
                     </td>
-                    <td><a [routerLink]="['/administration/qa-lab/plans', p.id]">Ver plan</a></td>
+                    <td><a [routerLink]="['/superadmin/qa-lab/plans', p.id]">Ver plan</a></td>
                   </tr>
                 }
               </tbody>

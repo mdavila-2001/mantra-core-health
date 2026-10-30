@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
@@ -82,10 +83,11 @@ describe('comentarioDestacado', () => {
     El desplegable.
     ========================================================================== */
 
-@Component({ template: '' })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush })
 class RutaVacia {}
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [PublicPostComments],
   template: '<app-public-post-comments postId="post-1" />',
 })
@@ -305,6 +307,17 @@ describe('PublicPostComments', () => {
       await fixture.whenStable();
 
       expect(root().querySelectorAll('.comentario')).toHaveLength(1);
+    });
+
+    it('el fallo de lectura dice qué hacer y trae el código de soporte', async () => {
+      await montar({ raiz: () => throwError(() => new HttpErrorResponse({
+          status: 503,
+          error: { code: 'DEPENDENCY_UNAVAILABLE', message: '', correlationId: 'corr-pub', timestamp: '', path: '' },
+        })) });
+
+      expect(root().querySelector('[role="alert"]')?.textContent).toContain(
+        'Vuelva a intentarlo en un momento. (Código de soporte: corr-pub)',
+      );
     });
 
     it('«Ver más comentarios» concatena en vez de reemplazar', async () => {

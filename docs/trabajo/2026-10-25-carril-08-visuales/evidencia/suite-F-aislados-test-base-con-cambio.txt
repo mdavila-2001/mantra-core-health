@@ -1,0 +1,9 @@
+# Salida recortada: resumen y líneas FAIL (la salida completa pesa 8093 bytes)
+ FAIL   mantra-core-health  src/app/features/billing/billing.spec.ts > Billing · facturación contra el SIAT SIMULADO > la puerta por omisión > se abre en la maqueta y se cierra si se fuerza la API real
+AssertionError: expected true to be false // Object.is equality
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > «Aplicar» manda un único PATCH con las filas válidas y avisa que terminó
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > un archivo sólo con «disponible» manda el booleano, sin cantidades
+ FAIL   mantra-core-health  src/app/features/pharmacy/inventory/upload-dialog/inventory-upload-dialog.spec.ts > InventoryUploadDialog > si el servidor rechaza, el diálogo queda abierto con el motivo y no avisa que terminó
+ Test Files  2 failed (2)
+      Tests  4 failed | 16 passed (20)
+   Duration  8.97s (transform 3.82s, setup 1.37s, import 7.15s, tests 2.96s, environment 2.89s)

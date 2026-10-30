@@ -27,6 +27,8 @@ import type {
   PlannedChecksResult,
   PublishedAuthorityEndpoint,
   QueuedCase,
+  VerificationCaseDetail,
+  VerificationCaseEvidence,
   RaisedFraudSignal,
   RecordedAttempt,
   RecordedCheckResult,
@@ -103,6 +105,14 @@ interface CaseQueueBody {
   readonly cases: readonly QueuedCaseBody[];
 }
 
+interface CaseDetailBody extends Omit<QueuedCaseBody, 'openedAt' | 'expiresAt'> {
+  readonly openedAt?: string;
+  readonly expiresAt?: string;
+  readonly evidence: readonly (Omit<VerificationCaseEvidence, 'createdAt'> & {
+    readonly createdAt: string;
+  })[];
+}
+
 function colaDe(query: CaseQueueQuery): HttpParams {
   let params = new HttpParams();
   if (query.status !== undefined) params = params.set('status', query.status);
@@ -166,6 +176,19 @@ export class IdentityAdminClient {
         params: colaDe(query),
       })
       .pipe(map((body) => body.cases.map(toQueuedCase)));
+  }
+
+  /** `GET /identity/verification-cases/:id` — expediente con evidencias. */
+  getCaseDetail(caseId: string): Observable<VerificationCaseDetail> {
+    return this.http
+      .get<CaseDetailBody>(this.url(`/identity/verification-cases/${encodeURIComponent(caseId)}`))
+      .pipe(map((body) => ({
+        ...toQueuedCase(body),
+        evidence: body.evidence.map((evidence) => ({
+          ...evidence,
+          createdAt: new Date(evidence.createdAt),
+        })),
+      })));
   }
 
   /** `POST /identity/authorities` — registrar una autoridad de identidad. */

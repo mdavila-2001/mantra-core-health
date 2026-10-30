@@ -38,7 +38,7 @@ export class GroupComposer {
   readonly accion = input<string>('Publicar');
 
   /** Qué se sugiere escribir. */
-  readonly placeholder = input<string>('Escribí algo para el grupo…');
+  readonly placeholder = input<string>('Escriba algo para el grupo…');
 
   /** Si la escritura está en curso. */
   readonly enviando = input<boolean>(false);

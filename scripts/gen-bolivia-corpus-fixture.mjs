@@ -53,7 +53,7 @@ const DESTINO = join(
   'core',
   'mock',
   'fixtures',
-  'bolivia-eje-central.generated.ts',
+  'bolivia-central-axis.generated.ts',
 );
 
 const leer = (...partes) => JSON.parse(readFileSync(join(ORIGEN, ...partes), 'utf8'));

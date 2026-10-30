@@ -1,0 +1,81 @@
+{
+  "uberon": {
+    "release": "releases/2026-10-01",
+    "url": "https://github.com/obophenotype/uberon/releases/download/v2026-10-01/uberon.obo",
+    "sha256": "d4751a15d7551a8414caee2628c62bf68301d567caf54ccfa3eef383ae7cbb61",
+    "license": "CC-BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "citation": "Mungall CJ, Torniai C, Gkoutos GV, Lewis SE, Haendel MA. Uberon, an integrative multi-species anatomy ontology. Genome Biol. 2012;13(1):R5.",
+    "citationDoi": "10.1186/gb-2012-13-1-r5",
+    "termsInRelease": 16141,
+    "humanTermsKept": 6074,
+    "criterion": "clase UBERON no obsoleta con al menos un xref FMA"
+  },
+  "fma": {
+    "source": "FMA.csv distribuido con BodyParts3D 3.0 (copia en github.com/Kevin-Mattheus-Moerman/BodyParts3D)",
+    "sha256": "14aa88169ea1013bf64853b8fcbe88b2a11477fc8e920f6ddde7be6ac5e1d2e8",
+    "license": "CC-BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "citation": "Rosse C, Mejino JLV. A reference ontology for biomedical informatics: the Foundational Model of Anatomy. J Biomed Inform. 2003;36(6):478-500.",
+    "citationDoi": "10.1016/j.jbi.2003.11.007",
+    "classes": 104698
+  },
+  "bodyparts3d": {
+    "version": "3.0 (20110915)",
+    "repository": "https://github.com/Kevin-Mattheus-Moerman/BodyParts3D",
+    "license": "CC-BY-SA 2.1 JP",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.1/jp/",
+    "attribution": "BodyParts3D, (c) The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan",
+    "citation": "Mitsuhashi N, Fujieda K, Tamura T, Kawamoto S, Takagi T, Okubo K. BodyParts3D: 3D structure database for anatomical concepts. Nucleic Acids Res. 2009;37(Database issue):D782-5.",
+    "citationDoi": "10.1093/nar/gkn613",
+    "partsWithMesh": 934
+  },
+  "relationsPublished": {
+    "part_of": "forma parte de",
+    "has_part": "tiene como parte",
+    "innervated_by": "inervado por",
+    "innervates": "inerva",
+    "vessel_supplies_blood_to": "irriga",
+    "indirectly_supplies": "irriga indirectamente",
+    "vessel_drains_blood_from": "drena sangre de",
+    "tributary_of": "tributaria de",
+    "branching_part_of": "rama de",
+    "connecting_branch_of": "rama comunicante de",
+    "has_muscle_origin": "origen muscular en",
+    "has_muscle_insertion": "inserción muscular en",
+    "connected_to": "conectado con",
+    "attaches_to": "se fija a",
+    "adjacent_to": "adyacente a"
+  },
+  "regionRoots": {
+    "R01": [
+      "UBERON:0000033",
+      "UBERON:0000974"
+    ],
+    "R02": [
+      "UBERON:0001137",
+      "UBERON:0001130",
+      "UBERON:0002240"
+    ],
+    "R03": [
+      "UBERON:0000915",
+      "UBERON:0001443"
+    ],
+    "R04": [
+      "UBERON:0000916"
+    ],
+    "R05": [
+      "UBERON:0002355",
+      "UBERON:0001270",
+      "UBERON:0002356"
+    ],
+    "R06": [
+      "UBERON:0002102",
+      "UBERON:0001460"
+    ],
+    "R07": [
+      "UBERON:0002103",
+      "UBERON:0000978"
+    ]
+  }
+}

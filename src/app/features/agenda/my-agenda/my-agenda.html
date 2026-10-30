@@ -1,12 +1,42 @@
 <app-view-state-host [state]="estado()" (retry)="cargar()">
   @if (patron(); as p) {
+    <!-- Una lectura que falló deja su lista vacía, y vacía se ve igual que un
+         día libre. Este aviso es lo que los distingue: dice qué no se cargó,
+         con el código de soporte, y ofrece pedirlo de nuevo. -->
+    @if (avisosDeLectura().length > 0) {
+      <app-alert
+        tone="error"
+        title="Parte de su agenda no se pudo cargar"
+        class="mi-agenda__aviso"
+        data-testid="agenda-lecturas-fallidas"
+      >
+        Lo que ve puede estar incompleto: un día sin citas aquí no significa que esté libre.
+        <ul class="mi-agenda__lecturas-fallidas">
+          @for (aviso of avisosDeLectura(); track aviso) {
+            <li>{{ aviso }}</li>
+          }
+        </ul>
+        <div alert-actions>
+          <button
+            app-button
+            variant="secondary"
+            size="sm"
+            type="button"
+            data-testid="agenda-reintentar-lecturas"
+            (clicked)="reintentarLecturas()"
+          >
+            Volver a cargar
+          </button>
+        </div>
+      </app-alert>
+    }
     @if (mode() === 'calendar') {
       <!-- La agenda del día, que es lo que `/schedule` abre por defecto
            (propietario, 18/09): el día de hoy, con Semana y Mes a un toque y
            la tabla de Consultas detrás de un ícono. Es la versión cliqueable
            que salió de «Cómo viene el mes»: tocar un día en la semana o en el
            mes lo abre. -->
-      <section class="calendario" aria-label="Tu agenda" data-testid="agenda-calendario">
+      <section class="calendario" aria-label="Su agenda" data-testid="agenda-calendario">
         <div class="calendario__barra">
           <div class="calendario__vistas" role="group" aria-label="Cómo mirar la agenda">
             <button
@@ -72,7 +102,7 @@
             </a>
             <a
               app-button
-              variant="secondary"
+              variant="primary"
               size="sm"
               data-testid="calendario-agendar-cita"
               [routerLink]="rutaAgendarCita"
@@ -102,6 +132,7 @@
             @case ('week') {
               <app-week-view
                 [semana]="semanaVisible()"
+                [sede]="sede()"
                 [cupos]="cuposDelMes()"
                 [citas]="citasDeLaSemana()"
                 [etiquetas]="estadosResueltos()"
@@ -111,6 +142,49 @@
                 (diaElegido)="openDay($event)"
                 (citaElegida)="verDetalleDeLaSemana($event)"
               />
+
+              <!-- El detalle de una cita de la semana con las MISMAS acciones que
+                   su tarjeta del día (la plantilla que pasa `/schedule`), todas a
+                   la vista: el desplegable no funciona dentro de un modal. -->
+              @if (detalleDeLaSemana(); as abierto) {
+                @if (appointmentActions(); as acciones) {
+                  <app-content-dialog
+                    heading="Detalle de la cita"
+                    [description]="abierto.fecha"
+                    (closed)="cerrarDetalleDeLaSemana()"
+                  >
+                    <app-fact-list [hechos]="abierto.hechos" etiqueta="Detalle de la cita" />
+                    <div
+                      dialog-actions
+                      class="mi-agenda__detalle-acciones"
+                      data-testid="semana-detalle-acciones"
+                    >
+                      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- delegación: los botones de adentro ya son operables por teclado; esto sólo cierra el modal después -->
+                      <div
+                        class="mi-agenda__detalle-operaciones"
+                        (click)="accionDelDetalleDeLaSemana($event, abierto.cita)"
+                      >
+                        <ng-container
+                          [ngTemplateOutlet]="acciones"
+                          [ngTemplateOutletContext]="{ $implicit: abierto.cita, inline: true }"
+                        />
+                      </div>
+                      @if (abierto.cita.patientProfileId !== undefined) {
+                        <button
+                          app-button
+                          variant="primary"
+                          size="sm"
+                          type="button"
+                          data-testid="semana-detalle-expediente"
+                          (clicked)="abrirExpedienteDelDetalle(abierto.cita)"
+                        >
+                          Abrir expediente
+                        </button>
+                      }
+                    </div>
+                  </app-content-dialog>
+                }
+              }
             }
             @case ('month') {
               <app-month-view
@@ -130,6 +204,8 @@
               @if (diaAbierto(); as dia) {
                 <app-day-view
                   [dia]="dia"
+                  [sede]="sede()"
+                  [horarioFlexible]="horarioFlexibleDe(dia)"
                   [cupos]="cuposDelDia()"
                   [citas]="citasDelDia()"
                   [bloqueos]="bloqueosDelMes()"
@@ -142,6 +218,7 @@
                   [puedeIngresarPorMostrador]="puedeIngresarPorMostrador()"
                   [puedeAvisarDemora]="puedeAvisarDemora()"
                   [visitas]="visitasDelDia()"
+                  [incompleteLoad]="dayLoadFailed()"
                   (accionPedida)="ejecutar($event)"
                   (diaCambiado)="moverDia($event)"
                   (detallePedido)="verDetalleDelBloque($event)"
@@ -155,11 +232,10 @@
                   (quitarOcupado)="quitarOcupado($event)"
                 />
 
-                <!-- LA TARJETA (AG-5): tocar un rato libre del día la abre con
-                     esa franja ya puesta. -->
+                <!-- LA TARJETA (AG-5): un rato libre la abre con su franja puesta. -->
                 @if (ratoParaCrear(); as rato) {
                   @if (recurso(); as elRecurso) {
-                    <app-tarjeta-del-dia
+                    <app-day-card
                       [dia]="dia"
                       [resourceId]="elRecurso.id"
                       [desdeInicial]="rato.desde"
@@ -269,9 +345,8 @@
                     size="sm"
                     type="button"
                     class="mi-agenda__accion mi-agenda__accion--aviso"
-                    [iconOnly]="true"
                     data-testid="aviso-agotan"
-                    aria-label="Advertencia: tus turnos se están por agotar"
+                    aria-label="Horarios por agotarse — advertencia"
                     aria-controls="aviso-agotan-globo"
                     [attr.aria-expanded]="avisoAbierto()"
                     (clicked)="alternarAviso()"
@@ -293,6 +368,7 @@
                       />
                       <path d="M12 9.5v4.5M12 17.5h.01" />
                     </svg>
+                    Horarios por agotarse
                   </button>
                   <!-- Oculto y no ausente: el texto sigue en el documento para el
                      lector de pantalla que recorre la barra. -->
@@ -304,9 +380,9 @@
                     data-testid="aviso-agotan-globo"
                     [hidden]="!avisoAbierto()"
                   >
-                    <app-alert tone="warning" title="Tus turnos publicados se están por agotar">
+                    <app-alert tone="warning" title="Sus turnos publicados se están por agotar">
                       Llegan hasta el <strong>{{ cuposHastaTexto() }}</strong
-                      >. Después de esa fecha nadie va a poder reservarte, aunque tu horario siga
+                      >. Después de esa fecha nadie va a poder reservarle, aunque su horario siga
                       publicado.
                       <div alert-actions>
                         <button
@@ -322,134 +398,20 @@
                   </div>
                 </div>
               }
-              <!-- «Editar sobre la fila», del pedido original. Va acá y no en un
-                 menú: cambiar el horario es lo que uno viene a hacer a esta
-                 pantalla después de mirarlo. -->
-              <!-- «Editar y borrar deben ser iconos sobre la fila de horarios»,
-                 punto 7 del pedido. Icono con NOMBRE ACCESIBLE y tooltip: un
-                 botón que sólo es un dibujo no se puede leer ni con lector de
-                 pantalla ni por alguien que no reconoce el símbolo. -->
-              <a
-                app-button
-                variant="ghost"
-                size="sm"
-                class="mi-agenda__accion mi-agenda__accion--editar"
-                data-testid="horario-editar"
-                [routerLink]="rutaEditarHorario"
-                aria-label="Cambiar mi horario"
-                appTooltip="Cambiar mi horario"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                </svg>
-                Cambiar mi horario
-              </a>
-              <!-- El «borrar» del punto 7. No dice «Borrar»: retirar es lo que
-                 pasa de verdad (ver `retirarHorario`), y el ícono no cambia esa
-                 semántica, sólo su forma. Sigue detrás de la misma confirmación
-                 destructiva — el ícono no es menos protección que el botón de
-                 texto que reemplaza. -->
-              <button
-                app-button
-                variant="ghost"
-                size="sm"
-                type="button"
-                class="mi-agenda__accion mi-agenda__accion--retirar"
-                data-testid="horario-retirar"
-                aria-label="Retirar horario"
-                appTooltip="Retirar horario"
-                [isLoading]="retirando()"
-                (clicked)="retirarHorario()"
-              >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
-                  <path d="M10 11v6M14 11v6" />
-                </svg>
-                Retirar horario
-              </button>
-              <!-- Los bloqueos tienen pantalla propia desde que se les dio el mismo
-                 flujo que a los horarios. Desde acá se llega, que es donde uno
-                 mira su agenda y se acuerda de que cerró algo. -->
-              <a
-                app-button
-                variant="ghost"
-                size="sm"
-                class="mi-agenda__accion mi-agenda__accion--bloqueos"
-                data-testid="ver-bloqueos"
-                [routerLink]="rutaBloqueos"
-                aria-label="Ver mis bloqueos"
-                appTooltip="Ver mis bloqueos de agenda"
-              >
-                <!-- Candado sobre el calendario, no una cruz: la cruz se lee
-                   «cancelar» y la tenía a un pelo de distancia del calendario
-                   con «+» de al lado. Un candado dice cerrado. -->
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="4" width="18" height="17" rx="2" />
-                  <path d="M3 9h18M8 2v4M16 2v4" />
-                  <rect x="9" y="14" width="6" height="4.5" rx="1" />
-                  <path d="M10.4 14v-1.4a1.6 1.6 0 0 1 3.2 0V14" />
-                </svg>
-                Mis bloqueos
-              </a>
-              <!-- Agendar una cita sin ir a buscar el día: es lo que uno quiere
-                 hacer justo después de acordarla en el consultorio. -->
-              <a
-                app-button
-                variant="ghost"
-                size="sm"
-                class="mi-agenda__accion mi-agenda__accion--agendar"
-                data-testid="agendar-cita"
-                [routerLink]="rutaAgendarCita"
-                aria-label="Agendar una cita"
-                appTooltip="Agendar una cita a un paciente"
-              >
-                <!-- El «+» más grande y centrado en la caja del calendario: es
-                   lo único que distingue este ícono del de bloqueos, así que
-                   tiene que verse antes que el marco. -->
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="4" width="18" height="17" rx="2" />
-                  <path d="M3 9h18M8 2v4M16 2v4" />
-                  <path d="M12 12v6.5M8.75 15.25h6.5" />
-                </svg>
-                Agendar una cita
-              </a>
+              <!-- Las acciones del horario van en un desplegable (ADR-0012: con
+                 tres o más la barra no las aguanta): un botón con ícono y texto
+                 que abre un menú donde cada acción lleva su ícono y su texto.
+                 «Retirar» sigue detrás de la confirmación destructiva. -->
+              <app-row-actions
+                data-testid="horario-acciones-menu"
+                [actions]="accionesDelHorario()"
+                fila="su horario"
+                (actionSelected)="ejecutarAccionDelHorario($event)"
+              />
             </div>
           </div>
 
-          <h2 class="mi-agenda__titulo">Atendés estos días</h2>
+          <h2 class="mi-agenda__titulo">Atiende estos días</h2>
 
           <!-- La grilla por horas, que es lo que el pedido original pide en su
                punto 1. Las 24 horas, el tamaño de turno en cada franja y los
@@ -488,11 +450,12 @@
 
           <app-schedule-grid
             [reglas]="reglasVigentes()"
+            [sede]="sede()"
             [slotMinutes]="slotDelHorario()"
             [bloqueos]="bloqueosDeLaSemana()"
             [rango]="rangoDeGrilla()"
             [nombre]="nombreDelHorario()"
-            [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambies.'"
+            [vigencia]="p.vigencia ?? 'Sin fecha de fin: rige hasta que lo cambie.'"
           />
 
           <!-- Debajo de la grilla no va la semanita de círculos ni la vigencia
@@ -500,7 +463,7 @@
                se lee en el globo de cada franja. -->
           @if (!seAgotan() && cuposHastaTexto()) {
             <p class="mi-agenda__cupos" role="status">
-              Tenés turnos abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
+              Tiene horarios abiertos hasta el <strong>{{ cuposHastaTexto() }}</strong
               >.
             </p>
           }
@@ -513,7 +476,7 @@
           <section class="mi-agenda__historicos">
             <h2 class="mi-agenda__historicos-titulo">Horarios anteriores</h2>
             <p class="mi-agenda__historicos-nota">
-              Ya no se publican. Los turnos que tenían paciente se conservan.
+              Ya no se publican. Las citas que tenían paciente se conservan.
             </p>
             <!-- Punto 2: «tabla inferior con históricos». Antes era una lista;
                  ahora es una tabla real — con `overflow-x:auto` propio para que

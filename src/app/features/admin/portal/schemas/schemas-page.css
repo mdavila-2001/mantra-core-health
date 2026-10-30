@@ -1,0 +1,24 @@
+.schemas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.schemas__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.schemas__name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  overflow-wrap: break-word;
+}
+
+.schemas__coverage-value {
+  font-family: var(--font-mono);
+  overflow-wrap: break-word;
+}

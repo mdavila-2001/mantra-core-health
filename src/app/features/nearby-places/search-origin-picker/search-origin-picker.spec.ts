@@ -59,7 +59,7 @@ describe('SearchOriginPicker', () => {
   it('mientras los lugares no llegan, muestra el estado de carga y no emite', () => {
     fixture.detectChanges();
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('Buscando tus lugares guardados');
+    expect(texto).toContain('Buscando sus lugares guardados');
     expect(host.emitidos).toEqual([]);
   });
 
@@ -129,6 +129,6 @@ describe('SearchOriginPicker', () => {
 
     expect(host.emitidos).toEqual([]);
     const texto = (fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(texto).toContain('No pudimos usar tu ubicación actual');
+    expect(texto).toContain('No pudimos usar su ubicación actual');
   });
 });

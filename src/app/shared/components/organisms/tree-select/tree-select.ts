@@ -17,6 +17,7 @@ import {
 } from '@shared/forms/form-control.context';
 import { AppButton } from '../../atoms/button/button';
 import type { TreeSelectGroup, TreeSelectItem } from './tree-select.types';
+import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 
 /**
  * Una rama tal como se pinta: con sus hojas ya filtradas y su estado de
@@ -122,7 +123,7 @@ export class TreeSelect<T> {
   /** Lo que dice el disparador cuando no hay nada elegido. */
   readonly placeholder = input<string>('Sin especificar');
   /** Titular del diálogo. Describe la tarea, no el campo. */
-  readonly dialogTitle = input<string>('Elegí una opción');
+  readonly dialogTitle = input<string>('Elija una opción');
   /** Pista dentro del cuadro de búsqueda. */
   readonly searchPlaceholder = input<string>('Buscar…');
   /** Qué decir cuando la búsqueda no encuentra nada. */
@@ -261,6 +262,12 @@ export class TreeSelect<T> {
         return;
       }
       this.showModal(dialog);
+      // Nace del control que lo abrió (ver `.panel-muelle` en styles.css).
+      fijarOrigenDelPanel(
+        dialog.querySelector<HTMLElement>('.tree-select-panel'),
+        dialog,
+        this.trigger().nativeElement,
+      );
       this.search()?.nativeElement.focus();
     });
   }
@@ -320,7 +327,17 @@ export class TreeSelect<T> {
     this.isOpen.set(true);
   }
 
-  protected close(): void {
+  /**
+   * Cierra el diálogo. `conSalida` anima la salida del panel (140 ms) antes de
+   * cerrar; es lo que corresponde al descartar (Escape, velo, «Cancelar»).
+   *
+   * **Elegir no usa la salida.** Mientras el panel sale el `<dialog>` sigue
+   * siendo modal: la página de atrás está inerte, un clic no entra y lo que se
+   * escribe en el campo de al lado se pierde; al acabar la salida el foco vuelve
+   * al disparador y le roba el que ya tenía el siguiente campo. Elegir es el
+   * final: la página se libera en el acto (mismo criterio que `app-select`).
+   */
+  protected close(conSalida = true): void {
     if (!this.isOpen()) {
       return;
     }
@@ -328,11 +345,19 @@ export class TreeSelect<T> {
     // que se quita abierto deja su entrada en la capa superior, con el velo
     // puesto y el resto de la página bloqueado.
     const dialog = this.dialog()?.nativeElement;
-    if (dialog?.open && typeof dialog.close === 'function') {
-      dialog.close();
+    const cerrar = (): void => {
+      if (dialog?.open && typeof dialog.close === 'function') {
+        dialog.close();
+      }
+      this.isOpen.set(false);
+      this.trigger().nativeElement.focus();
+    };
+    if (!conSalida) {
+      cerrar();
+      return;
     }
-    this.isOpen.set(false);
-    this.trigger().nativeElement.focus();
+    // Salida corta hacia el control; sin animación posible cierra en el acto.
+    cerrarConSalida(dialog?.querySelector<HTMLElement>('.tree-select-panel'), cerrar);
   }
 
   /** Un clic en el velo cierra; ver la nota de `handleBackdropClick` del calendario. */
@@ -365,13 +390,13 @@ export class TreeSelect<T> {
   /** Elige una hoja y cierra: elegir ES el final de la tarea. */
   protected elegir(value: T): void {
     this.value.set(value);
-    this.close();
+    this.close(false);
   }
 
   /** Borra la elección sin cerrar, para el caso «me equivoqué de campo». */
   protected limpiar(): void {
     this.value.set(null);
-    this.close();
+    this.close(false);
   }
 
   protected handleDialogKeydown(event: KeyboardEvent): void {

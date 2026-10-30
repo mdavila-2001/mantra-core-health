@@ -24,8 +24,8 @@ $ git grep -n 'dialogs.confirm(' origin/mockup -- 'src/app/**/*.ts' ':!*.spec.ts
 ```
 
 **Ninguna de las 40 llamadas reales confirma un guardado de formulario** — todas confirman retiro,
-descarte, cierre o una decisión de flujo (inventario completo en
-`docs/trabajo/2026-09-22-pablo-disciplina-tablas/evidencia/antes/confirmaciones.md`). La pieza
+descarte, cierre o una decisión de flujo (el inventario completo de esa noche queda en el historial
+de git). La pieza
 `confirmarCambios()` que la regla 3 de abajo necesita **no existe todavía**:
 
 ```text
@@ -33,8 +33,7 @@ $ git grep -c 'confirmarCambios' origin/mockup -- 'src/app/shared/components/mol
 (0 coincidencias)
 ```
 
-Verificado en navegador (no sólo leído), contra la cuenta `medica@alovida.mock` en «Dónde atiendo»
-(`docs/trabajo/2026-09-22-pablo-disciplina-tablas/evidencia/antes/capturas/`):
+Verificado en navegador (no sólo leído), contra la cuenta `medica@alovida.mock` en «Dónde atiendo»:
 
 - «Acciones → Editar» sobre el consultorio propio **inyecta el formulario «Corregir tu consultorio»
   dentro del `tabpanel`, debajo del `<ul>` de sedes** — no en un modal. Éste es exactamente D-04.
@@ -236,7 +235,6 @@ Un cambio cumple esta decisión cuando:
 - Fuente del pedido: `docs/requisitos/CORRECCIONES-DOCTOR-Y-PACIENTE-2026-09-22.md` — D-04, D-05,
   D-06, D-08, D-09.
 - Verificación previa: `docs/verificacion/VERIFICACION-CONTRA-CODIGO-2026-09-22.md` — §1, §2, §3, §4.
-- Evidencia propia de esta noche: `docs/trabajo/2026-09-22-pablo-disciplina-tablas/evidencia/antes/`.
 - Extiende: [ADR-0012](ADR-0012-botones-con-texto-y-acciones-de-fila.md),
   [ADR-0013](ADR-0013-opciones-en-select.md).
 - Contrato del organismo: [`CONTRATO-data-table.md`](CONTRATO-data-table.md).

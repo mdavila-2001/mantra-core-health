@@ -10,8 +10,9 @@ import {
 } from '@angular/core';
 
 import { AppButton } from '@shared/components/atoms/button/button';
+import { Link } from '@shared/components/atoms/link/link';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMap, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 /** Radio de la Tierra en kilómetros, el valor medio de la esfera. */
@@ -46,6 +47,19 @@ export function straightLineKm(from: PuntoGeo, to: PuntoGeo): number {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRadians(from.lat)) * Math.cos(toRadians(to.lat)) * Math.sin(dLng / 2) ** 2;
   return EARTH_RADIUS_KM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/**
+ * El recorrido en el sitio de OpenStreetMap, que sí calcula trayectos (decisión
+ * del propietario, 2026-10-25: OSM, sin Google). Es un enlace que el navegador
+ * abre aparte: no es una petición de esta página, así que no toca la CSP.
+ *
+ * Sin origen deja el «desde» vacío y OSM lo pide; con origen lo completa.
+ * Mismo formato que `directionsUrl` de «Dónde comprar la receta».
+ */
+export function openStreetMapRouteUrl(to: PuntoGeo, from: PuntoGeo | null): string {
+  const desde = from === null ? '' : `${from.lat}%2C${from.lng}`;
+  return `https://www.openstreetmap.org/directions?route=${desde}%3B${to.lat}%2C${to.lng}`;
 }
 
 /** «1,2 km», con coma decimal. */
@@ -92,7 +106,7 @@ export function formatKm(km: number): string {
  */
 @Component({
   selector: 'app-facility-directions-dialog',
-  imports: [AppButton, AppMap, ContentDialog],
+  imports: [AppButton, AppMap, ContentDialog, Link],
   templateUrl: './facility-directions-dialog.html',
   styleUrl: './facility-directions-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -131,9 +145,9 @@ export class FacilityDirectionsDialog {
   protected readonly facilityPinCode = FACILITY_PIN;
   protected readonly originPinCode = ORIGIN_PIN;
 
-  protected readonly pins = computed<readonly PinMapa[]>(() => {
+  protected readonly pins = computed<readonly PinMap[]>(() => {
     const address = this.facilityAddress();
-    const marks: PinMapa[] = [
+    const marks: PinMap[] = [
       {
         id: FACILITY_PIN,
         codigo: FACILITY_PIN,
@@ -151,7 +165,7 @@ export class FacilityDirectionsDialog {
         codigo: ORIGIN_PIN,
         lat: from.lat,
         lng: from.lng,
-        titulo: 'Tu punto de partida',
+        titulo: 'Su punto de partida',
         subtitulo: from.label,
         estado: { etiqueta: 'Desde acá', tono: 'success' as const },
       });
@@ -189,13 +203,18 @@ export class FacilityDirectionsDialog {
     return km === null ? null : `${formatKm(km)} en línea recta`;
   });
 
+  /** El recorrido de verdad, fuera de AloVida: desde el origen elegido, si hay. */
+  protected readonly routeUrl = computed(() =>
+    openStreetMapRouteUrl(this.facilityLocation(), this.origin()),
+  );
+
   protected readonly mapLabel = computed(() => {
     const from = this.origin();
     const base = `Mapa con la ubicación de ${this.facilityName()}.`;
     if (from === null) {
-      return `${base} Podés marcar desde dónde salís tocando un punto del mapa; la dirección y la distancia también están escritas debajo.`;
+      return `${base} Puede marcar desde dónde sale tocando un punto del mapa; la dirección y la distancia también están escritas debajo.`;
     }
-    return `${base} También está marcado tu punto de partida (${from.label}). La distancia en línea recta está escrita debajo.`;
+    return `${base} También está marcado su punto de partida (${from.label}). La distancia en línea recta está escrita debajo.`;
   });
 
   /** Lo llama `content-dialog` después de `showModal()`. */
@@ -227,7 +246,7 @@ export class FacilityDirectionsDialog {
         this.locationDenied.set(false);
         this.pickingOnMap.set(false);
         this.origin.set({
-          label: 'tu ubicación',
+          label: 'su ubicación',
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
@@ -258,7 +277,7 @@ export class FacilityDirectionsDialog {
     }
     this.pickingOnMap.set(false);
     this.locationDenied.set(false);
-    this.origin.set({ label: 'el punto que marcaste', lat: point.lat, lng: point.lng });
+    this.origin.set({ label: 'el punto que marcó', lat: point.lat, lng: point.lng });
   }
 
   protected clearOrigin(): void {

@@ -10,6 +10,14 @@
 :host {
   display: block;
   inline-size: 100%;
+  /* La trama de «otros servicios»: la misma en la franja y en su muestra de la
+     leyenda. Las rayas van en sentido contrario a las de un bloqueo, para no
+     confundirse con él. */
+  --grilla-trama-servicios: repeating-linear-gradient(
+    45deg,
+    var(--st-secondary-bg) 0 var(--sp-1),
+    var(--st-secondary-bd) var(--sp-1) var(--sp-2)
+  );
 }
 
 .grilla {
@@ -138,6 +146,48 @@
   color: var(--c-ivory-500);
 }
 
+/* La fila de la cabecera y las de la capa accesible no dibujan nada: sus
+   celdas se acomodan en la cuadrícula del padre como si la fila no estuviera. */
+.grilla__fila {
+  display: contents;
+}
+
+/* ---- la capa accesible ------------------------------------------------------ */
+
+/* Encima del cuerpo, del tamaño exacto de las columnas de los días: una celda
+   por día y por hora. Transparente y sin puntero, así que el mouse sigue
+   tocando los bloques de abajo; sólo se ve el anillo de la celda enfocada.
+   Absoluta en el área de la cuadrícula y no un ítem más: como ítem, empujaría
+   a las columnas dibujadas a otra fila. */
+.grilla__tabla {
+  position: relative;
+}
+
+.grilla__foco {
+  position: absolute;
+  inset: 0;
+  grid-row: 2;
+  grid-column: 2 / -1;
+  z-index: 4;
+  display: grid;
+  grid-auto-rows: var(--alto-hora);
+  pointer-events: none;
+}
+
+.grilla__celda-foco {
+  border-radius: var(--r-sm);
+  outline: none;
+  /* Que la cabecera fija y el carril de horas no la tapen al llegar. */
+  scroll-margin-block-start: 5.5rem;
+  scroll-margin-inline-start: var(--carril);
+}
+
+.grilla__celda-foco:focus-visible {
+  outline: 2px solid var(--st-primary-bd);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--st-primary-bd) 12%, transparent);
+}
+
 /* ---- el cuerpo -------------------------------------------------------------- */
 
 /* El carril de las horas. El rótulo va montado sobre la línea, no dentro de la
@@ -196,7 +246,7 @@
   padding: var(--sp-1) var(--sp-2);
   overflow: hidden;
   border-radius: var(--r-md);
-  border-inline-start: 3px solid var(--st-primary-bd);
+  border-inline-start: 3px solid var(--st-primary-fg);
   background: var(--st-primary-bg);
   color: var(--st-primary-fg);
   z-index: 1;
@@ -215,6 +265,47 @@
   outline-offset: 1px;
 }
 
+/* Los tres tipos de franja se distinguen por color Y por forma, para no
+   depender sólo del color (WCAG 1.4.1), en la grilla y en la leyenda:
+     · consultas: relleno primario y trazo continuo;
+     · otros servicios: secundario con trama diagonal y trazo punteado;
+     · consultas y otros servicios: el tercer tono, con trazo doble.
+   El trazo es la tinta de cada tono y no su `-bd`: así pasa 3:1 contra el
+   fondo de la grilla y contra su propio relleno en los dos temas (WCAG
+   1.4.11), cosa que el `-bd` no daba. */
+.grilla__bloque--services {
+  border-inline-start-style: dashed;
+  border-inline-start-color: var(--st-secondary-fg);
+  background: var(--grilla-trama-servicios);
+  color: var(--st-secondary-fg);
+}
+
+/* El texto de una franja rayada va sobre su color liso, con la trama
+   alrededor: así su contraste es el del tono y no depende de qué raya le toca.
+   Entero y no al 85 %: con transparencia, la trama se veía por debajo. */
+.grilla__bloque--services > :is(.grilla__bloque-horas, .grilla__bloque-detalle) {
+  align-self: flex-start;
+  max-inline-size: 100%;
+  border-radius: var(--r-xs);
+  background: var(--st-secondary-bg);
+  opacity: 1;
+}
+
+.grilla__bloque--services:focus-visible {
+  outline-color: var(--st-secondary-bd);
+}
+
+.grilla__bloque--mixed {
+  border-inline-start-style: double;
+  border-inline-start-color: var(--st-tertiary-fg);
+  background: var(--st-tertiary-bg);
+  color: var(--st-tertiary-fg);
+}
+
+.grilla__bloque--mixed:focus-visible {
+  outline-color: var(--st-tertiary-bd);
+}
+
 /* El texto parte renglón en vez de cortarse: con seis o siete días una columna
    mide unos 100 px, y «09:00 – 13:00» quedaba «09:00 – 13:0» en la vista
    previa del horario retirado. */
@@ -228,6 +319,25 @@
 .grilla__bloque-detalle {
   font-size: 12px;
   opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+/* La marca de telemedicina: una píldora con ícono y palabra, en el tono
+   informativo para que no se confunda con el de consultas ni con el de otros
+   servicios. Forma (píldora con borde) además de color. */
+.grilla__bloque-tele {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--sp-1);
+  max-inline-size: 100%;
+  padding-inline: var(--sp-1);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-full);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  font-size: var(--fs-caption);
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 
@@ -356,4 +466,45 @@
   border-block-start: 1px solid var(--border-subtle);
   font-size: var(--fs-caption);
   color: var(--text-secondary);
+}
+
+/* ---- la leyenda de los dos tonos ------------------------------------------ */
+
+.grilla__leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.grilla__leyenda-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+/* Cada muestra es la franja en chico: mismo relleno, misma trama, mismo trazo. */
+.grilla__leyenda-muestra {
+  flex: none;
+  inline-size: 18px;
+  block-size: 14px;
+  border-radius: var(--r-xs);
+  border-inline-start: 3px solid var(--st-primary-fg);
+  background: var(--st-primary-bg);
+}
+
+.grilla__leyenda-muestra--services {
+  border-inline-start-style: dashed;
+  border-inline-start-color: var(--st-secondary-fg);
+  background: var(--grilla-trama-servicios);
+}
+
+.grilla__leyenda-muestra--mixed {
+  border-inline-start-style: double;
+  border-inline-start-color: var(--st-tertiary-fg);
+  background: var(--st-tertiary-bg);
 }

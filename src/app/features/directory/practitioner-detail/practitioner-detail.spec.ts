@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
 import { PractitionerDetail } from './practitioner-detail';
 import type { PerfilProfesionalVisible } from '../../account/my-profile/practitioner-profile/practitioner-profile-view/practitioner-profile-view.types';
 
@@ -177,6 +178,49 @@ describe('PractitionerDetail', () => {
     expect(visible().fotoUrl).toBeNull();
   });
 
+  it.each([
+    { code: 'CRED_REJECTED', expectedSeal: 'rejected', approved: false, expired: false },
+    { code: 'FUTURE_STATUS', expectedSeal: 'unknown', approved: false, expired: false },
+    { code: 'CRED_VERIFIED', expectedSeal: 'expired', approved: true, expired: true },
+    { code: 'CRED_PENDING', expectedSeal: 'pending', approved: false, expired: false },
+  ])(
+    'decide la aprobación pública por catálogo y no por metadatos de revisión: $code',
+    ({ code, expectedSeal, approved, expired }) => {
+      montar();
+      responder(
+        {
+          credentials: [
+            {
+              id: 'reviewed-credential',
+              credentialTypeConceptId: 'credential-degree',
+              number: 'TEST-REVIEW',
+              issuingInstitutionText: 'Universidad de prueba',
+              stateConceptId: 'st-verificado',
+              issueDate: '2020-01-01',
+              expiryDate: expired ? '2001-01-01' : '2099-01-01',
+              verifiedAt: code === 'CRED_PENDING' ? null : '2020-01-15T00:00:00.000Z',
+              verificationSourceUri:
+                code === 'CRED_PENDING' ? null : 'https://registro.test/revision',
+            },
+          ],
+        },
+        {
+          ...CONCEPTOS,
+          items: CONCEPTOS.items.map((concept) =>
+            concept.conceptId === 'st-verificado' ? { ...concept, code } : concept,
+          ),
+        },
+      );
+
+      expect(visible().formacion[0]).toMatchObject({
+        approved,
+        sello: expectedSeal,
+        vencida: expired,
+      });
+      http.verify();
+    },
+  );
+
   it('con foto registrada baja la imagen y la pinta como data: URL', async () => {
     montar();
     http
@@ -199,6 +243,18 @@ describe('PractitionerDetail', () => {
    * la ficha que abre un paciente desde la guía no puede mostrar una
    * trayectoria distinta a la que el profesional ve de sí mismo.
    */
+  it.each([
+    ['aprobado', 'approved'],
+    ['pendiente', 'pending'],
+    ['rechazado', 'rejected'],
+    ['desconocido', 'unknown'],
+  ])('conserva el estado público %s sin confundirlo con vigencia', (statusKind, sello) => {
+    montar();
+    responder({ affiliations: [{ ...PERFIL.affiliations[1], statusKind }] });
+    expect(visible().actividadActual[0]).toMatchObject({ actual: true, sello });
+    http.verify();
+  });
+
   it('separa el historial laboral en actividad actual y experiencia histórica', () => {
     montar();
     responder();
@@ -241,6 +297,126 @@ describe('PractitionerDetail', () => {
     http.verify();
 
     expect(interno<() => { status: string }>('estado')().status).toBe('not-found');
+  });
+
+  /**
+   * Con qué seguros trabaja: es la pregunta con la que el paciente abre la
+   * ficha, así que va pegada a la identidad y no debajo de la trayectoria.
+   */
+  it('muestra con qué seguros trabaja, justo después de la identidad', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) },
+        },
+        // Sin sesión la disponibilidad no pide cupos: la prueba es sobre seguros.
+        {
+          provide: AuthService,
+          useValue: { isAuthenticated: () => false, activeTenantId: () => null },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PractitionerDetail);
+    fixture.detectChanges();
+    responder();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    http.expectOne('/practitioners/per-9/insurance-networks').flush({
+      items: [
+        {
+          membershipId: 'net-1',
+          carrierId: 'car-1',
+          carrierName: 'Alianza Seguros',
+          networkName: 'AFI GOLD',
+          effectiveFrom: null,
+          effectiveTo: null,
+        },
+      ],
+      count: 1,
+    });
+    // El bloque del médico de cabecera lee la elección del paciente.
+    http.expectOne('/profiles/patients/me/primary-practitioner').flush({ current: null });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    http.verify();
+
+    const page = fixture.nativeElement as HTMLElement;
+    const insurers = page.querySelector(
+      'app-practitioner-profile-view [data-testid="practitioner-insurers"]',
+    );
+    expect(insurers?.textContent).toContain('Alianza Seguros');
+    expect(insurers?.textContent).toContain('AFI GOLD');
+
+    // Orden en el documento: portada → seguros → actividad.
+    const cover = page.querySelector('.profesional__portada')!;
+    const activity = Array.from(page.querySelectorAll('h2')).find((h) =>
+      h.textContent?.includes('Actividad en la plataforma'),
+    )!;
+    expect(
+      cover.compareDocumentPosition(insurers!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      insurers!.compareDocumentPosition(activity) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  /**
+   * 02/10/2026 — request del propietario: los horarios de otros servicios en una
+   * pestaña propia también del lado del paciente. La de consultas sigue siendo
+   * la que abre, y la de servicios no se construye hasta que se elige.
+   */
+  it('«Sedes y horarios» tiene dos pestañas: Consultas y Otros servicios', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ profileId: 'per-9' })) },
+        },
+        {
+          provide: AuthService,
+          useValue: { isAuthenticated: () => false, activeTenantId: () => null },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(PractitionerDetail);
+    fixture.detectChanges();
+    responder();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    http.expectOne('/practitioners/per-9/insurance-networks').flush({ items: [], count: 0 });
+    http.expectOne('/profiles/patients/me/primary-practitioner').flush({ current: null });
+    fixture.detectChanges();
+
+    // El botón del médico de cabecera va entre la ficha y los horarios.
+    const pagina = fixture.nativeElement as HTMLElement;
+    expect(pagina.querySelector('[data-testid="primary-doctor-elegir"]')?.textContent).toContain(
+      'Elegir como mi médico de cabecera',
+    );
+
+    const seccion = (fixture.nativeElement as HTMLElement).querySelector('#horarios')!;
+    const solapas = [...seccion.querySelectorAll<HTMLElement>('[role="tab"]')];
+    expect(solapas.map((s) => s.textContent?.trim())).toEqual(['Consultas', 'Otros servicios']);
+    expect(seccion.querySelector('app-practitioner-availability')).not.toBeNull();
+    expect(seccion.querySelector('app-practitioner-service-schedule')).toBeNull();
+
+    solapas[1]!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(seccion.querySelector('app-practitioner-availability')).toBeNull();
+    expect(seccion.querySelector('app-practitioner-service-schedule')).not.toBeNull();
+    http.verify();
   });
 
   /** Sin id en la ruta no se pide nada: no hay a quién consultar. */

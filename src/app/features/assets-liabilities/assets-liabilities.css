@@ -80,3 +80,45 @@
   font-size: var(--fs-caption);
   color: var(--tinta-2);
 }
+
+.nota--sin-margen {
+  margin: 0 0 var(--e3);
+}
+
+/* Histórico de un ítem: ocupa la fila entera debajo de sus acciones. En
+   pantallas angostas la tabla se desplaza dentro de su caja, nunca la página. */
+.historial {
+  flex: 1 1 100%;
+  min-width: 0;
+  padding-top: var(--e3);
+  border-top: 1px solid var(--filete-2);
+}
+
+.historial__tabla {
+  overflow-x: auto;
+}
+
+.historial table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-caption);
+}
+
+.historial th,
+.historial td {
+  padding: var(--e2) var(--e3);
+  border-bottom: 1px solid var(--filete-2);
+  text-align: left;
+  white-space: nowrap;
+  color: var(--tinta);
+}
+
+.historial th {
+  font-weight: 600;
+  color: var(--tinta-2);
+}
+
+.historial .numero {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

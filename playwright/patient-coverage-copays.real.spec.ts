@@ -121,7 +121,7 @@ for (const viewport of [
         nombre: 'Paciente copagos',
       });
       await irA(page, '/my-account');
-      await page.getByRole('tab', { name: 'Seguros y tutores' }).click();
+      await page.getByRole('tab', { name: 'Seguros', exact: true }).click();
       const policy = page
         .getByTestId('patient-coverage-card')
         .filter({ hasText: 'Plan Copagos Real' });
@@ -212,7 +212,7 @@ for (const viewport of [
         }
         if (state === 'denied') {
           await expect(
-            settlement.locator('dl > div').filter({ hasText: 'A tu cargo' }).locator('dd'),
+            settlement.locator('dl > div').filter({ hasText: 'A su cargo' }).locator('dd'),
           ).toHaveText(/^0(?:\.0+)? Bs$/);
         }
         if (state === 'pending') await expect(settlement.locator('dl')).toHaveCount(0);

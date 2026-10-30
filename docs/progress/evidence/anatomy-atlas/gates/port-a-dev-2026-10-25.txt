@@ -1,0 +1,24 @@
+# Puerto del atlas a dev — compuertas (2026-10-25)
+
+$ corepack yarn typecheck  -> rc=0 (sobre el árbol fusionado con origin/dev 6bb9564a8+)
+$ eslint a los archivos tocados -> rc=0
+$ corepack yarn build -> rc=0, Initial total 1.35 MB (aviso de presupuesto previo)
+
+$ ng test (13 archivos del atlas/glosario/visor)
+ Test Files  13 passed (13)
+      Tests  146 passed (146)
+   Duration  9.76s (transform 5.30s, setup 3.53s, import 8.01s, tests 15.45s, environment 20.11s)
+
+$ ng serve --configuration development,demo --no-watch --port 4317 + E2E_BASE_URL + yarn pw --workers=1 atlas-anatomico-3d
+  ✓   1 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 375-claro (17.2s)
+  ✓   2 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 375-claro (14.1s)
+  ✓   3 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 768-claro (17.1s)
+  ✓   4 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 768-claro (17.1s)
+  ✓   5 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-claro (23.4s)
+  ✓   6 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-claro (19.5s)
+  ✓   7 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — male — 1440-oscuro (33.5s)
+  ✓   8 [chromium] › playwright/atlas-anatomico-3d.spec.ts:132:9 › tocar una pieza abre su ficha — female — 1440-oscuro (39.7s)
+  ✓   9 [chromium] › playwright/atlas-anatomico-3d.spec.ts:162:5 › la vista «Mujer» lista las estructuras femeninas como fichas sin pieza y abre la del útero (20.4s)
+  ✓  10 [chromium] › playwright/atlas-anatomico-3d.spec.ts:177:5 › se elige una pieza con el teclado desde la búsqueda y se resaltan sus relacionadas (20.4s)
+  10 passed (3.7m)
+EXIT=0

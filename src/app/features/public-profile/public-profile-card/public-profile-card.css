@@ -168,6 +168,15 @@
   color: var(--ambar);
 }
 
+.profile-rating__stars {
+  display: inline-flex;
+  gap: var(--sp-1);
+}
+
+.perfil__estrella .profile-rating__star--empty {
+  color: var(--border-subtle);
+}
+
 /* Las acciones, en su propio renglón debajo de la identidad. */
 .perfil__acciones {
   display: flex;

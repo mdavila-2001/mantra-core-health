@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { defer, finalize, of, shareReplay, tap, throwError, type Observable } from 'rxjs';
 
+import { REFRESH_COOKIE_MODE } from '../data-access/api';
 import { IamClient } from '../data-access/iam/iam.client';
 import type { Session } from '../data-access/iam/iam.types';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
@@ -50,6 +51,7 @@ export class TokenRefreshService {
   private readonly storage = inject(RefreshTokenStorage);
   private readonly lock = inject(CrossTabLock);
   private readonly broadcast = inject(SessionBroadcast);
+  private readonly cookieMode = inject(REFRESH_COOKIE_MODE);
 
   /** Refresco en curso, compartido por todos los que lleguen mientras dure. */
   private inFlight: Observable<Session> | null = null;
@@ -64,8 +66,9 @@ export class TokenRefreshService {
       return current;
     }
 
-    const capturedToken = this.session.refreshToken();
-    if (capturedToken === null) {
+    // En modo cookie no hay token que capturar: lo manda el navegador.
+    const capturedToken = this.cookieMode ? null : this.session.refreshToken();
+    if (!this.cookieMode && capturedToken === null) {
       return throwError(() => new Error('No hay refresh token: la sesión no se puede renovar'));
     }
 
@@ -95,8 +98,19 @@ export class TokenRefreshService {
    * el lock viene a evitar. Serializar sin releer dentro del lock no sirve de
    * nada.
    */
-  private exchange(capturedToken: string): Observable<Session> {
+  private exchange(capturedToken: string | null): Observable<Session> {
     return defer(() => {
+      if (capturedToken === null) {
+        // Modo cookie (TX-10): sin token, sin comparación contra el
+        // almacenamiento. El lock ya serializa entre pestañas y la cookie rota
+        // en el servidor; la que venga detrás pide con la cookie vigente.
+        return this.iam.refresh(null).pipe(
+          tap((session) => {
+            this.session.renew(session);
+            this.broadcast.publicar(session);
+          }),
+        );
+      }
       const almacenado = this.storage.read();
       const publicada = this.broadcast.ultimaPublicada();
 

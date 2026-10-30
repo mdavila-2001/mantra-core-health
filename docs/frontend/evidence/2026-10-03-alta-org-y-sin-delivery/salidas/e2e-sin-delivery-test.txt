@@ -1,0 +1,4 @@
+# Recorrido «sin delivery» sobre la maqueta, rama de test (móvil 390 y escritorio 1440).
+  ✓  1 [chromium] › playwright/pedido-farmacia-sin-delivery.spec.ts:61:9 › pedido de farmacia sin delivery · movil › de la receta al resumen no hay envío a domicilio en ninguna pantalla (4.8s)
+  ✓  2 [chromium] › playwright/pedido-farmacia-sin-delivery.spec.ts:61:9 › pedido de farmacia sin delivery · escritorio › de la receta al resumen no hay envío a domicilio en ninguna pantalla (5.1s)
+  2 passed (10.5s)

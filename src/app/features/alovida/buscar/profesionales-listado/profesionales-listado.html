@@ -2,20 +2,20 @@
       <span class="app-page-header__icono" aria-hidden="true"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
       <div class="app-page-header__texto">
         <div class="app-page-header__titulo"><h1>Profesionales de salud</h1></div>
-        <p class="caption">Buscá por nombre, especialidad u organización. El sello de verificación cubre matrícula e identidad: lo que el profesional declaró sin verificar se muestra rotulado como declarado, nunca mezclado con lo verificado.</p>
+        <p class="caption">Busque por nombre, especialidad u organización. El sello de verificación cubre matrícula e identidad: lo que el profesional declaró sin verificar se muestra rotulado como declarado, nunca mezclado con lo verificado.</p>
       </div>
 
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros de la búsqueda">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá por nombre, especialidad u organización</span>
+        <span class="solo-lectores">Busque por nombre, especialidad u organización</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
         <input
           class="app-input"
           app-input=""
           type="search"
           name="q"
-          placeholder="Buscá por nombre, especialidad u organización"
+          placeholder="Busque por nombre, especialidad u organización"
           [value]="busqueda.texto()"
           (input)="alEscribir($any($event.target).value)"
         />
@@ -125,8 +125,8 @@
       <div class="app-empty-state" app-empty-state="">
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c0-3.3 3.1-5.5 7-5.5s7 2.2 7 5.5"></path></svg></span>
         <h2>Ningún profesional coincide con esos filtros</h2>
-        <p>Un profesional aparece acá cuando tiene perfil público activo y al menos una especialidad registrada. Si buscabas por obra social, probá sacando ese filtro: el convenio se acuerda por sede, y puede estar cargado en la organización y no en la ficha del médico.</p>
-        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Probá con otra búsqueda</a>
+        <p>Un profesional aparece acá cuando tiene perfil público activo y al menos una especialidad registrada. Si buscaba por obra social, pruebe sacando ese filtro: el convenio se acuerda por sede, y puede estar cargado en la organización y no en la ficha del médico.</p>
+        <a app-button="" data-variante="secundario" routerLink="/search"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-.7 4.2"></path><path d="M20 5v6h-6"></path></svg>Pruebe con otra búsqueda</a>
       </div>
       </div>
         }
@@ -149,7 +149,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos completar la búsqueda de profesionales.</strong>
-            <p>El directorio no respondió a tiempo. Volvé a intentarlo en un momento; tu búsqueda se mantiene escrita.</p>
+            <p>El directorio no respondió a tiempo. Vuelva a intentarlo en un momento; su búsqueda se mantiene escrita.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

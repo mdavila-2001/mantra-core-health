@@ -131,6 +131,7 @@ const CATALOGO = {
 const SUCURSALES = {
   items: [
     {
+      id: 'sede-centro',
       slug: SLUG,
       name: 'Farmacia Vida · Centro',
       siteName: 'Centro',
@@ -138,11 +139,14 @@ const SUCURSALES = {
       addressText: 'Av. Alemana N.º 2100',
       phone: null,
       openingHours: 'Lun a Sáb 08:00–22:00',
+      description: null,
+      locationUrl: null,
       location: { lat: -17.76, lng: -63.16 },
       locationAccuracy: 'Ubicación exacta',
       isCurrent: true,
     },
     {
+      id: 'sede-norte',
       slug: 'farmacia-vida-norte',
       name: 'Farmacia Vida · Norte',
       siteName: 'Norte',
@@ -150,12 +154,15 @@ const SUCURSALES = {
       addressText: 'Av. Banzer N.º 900',
       phone: '+591 3 3456789',
       openingHours: null,
+      description: null,
+      locationUrl: null,
       // Más lejos del origen de la prueba que la del centro.
       location: { lat: -17.71, lng: -63.16 },
       locationAccuracy: 'Ubicación aproximada · centro de la ciudad',
       isCurrent: false,
     },
     {
+      id: 'sede-sur',
       slug: 'farmacia-vida-sur',
       name: 'Farmacia Vida · Sur',
       siteName: 'Sur',
@@ -163,6 +170,8 @@ const SUCURSALES = {
       addressText: 'Av. Santos Dumont N.º 400',
       phone: null,
       openingHours: null,
+      description: null,
+      locationUrl: null,
       location: { lat: -17.8, lng: -63.16 },
       locationAccuracy: 'Ubicación exacta',
       isCurrent: false,
@@ -246,13 +255,13 @@ describe('PharmacyDetail', () => {
     fixture.detectChanges();
   }
 
-  function responder(): void {
+  function responder(sucursales: unknown = SUCURSALES): void {
     http.expectOne(`/public/profiles/f/${SLUG}`).flush(PERFIL);
     http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/products`).flush(
       CATALOGO,
     );
     http.expectOne((pedido) => pedido.url === `/public/profiles/f/${SLUG}/branches`).flush(
-      SUCURSALES,
+      sucursales as object,
     );
     fixture.detectChanges();
   }
@@ -377,13 +386,13 @@ describe('PharmacyDetail', () => {
     ]);
   });
 
-  it('dibuja la farmacia en el mapa, con el nombre de su ficha', () => {
+  // El propietario pidió sacar los mapas de todo el directorio (23/10/2026):
+  // la ficha dice la dirección escrita y nada más.
+  it('no dibuja mapa: la dirección va escrita', () => {
     montar();
     responder();
 
-    const mapa = fixture.nativeElement.querySelector('app-map .mapa') as HTMLElement | null;
-    expect(mapa).not.toBeNull();
-    expect(mapa?.getAttribute('aria-label')).toContain('Farmacia Vida');
+    expect(fixture.nativeElement.querySelector('app-map')).toBeNull();
   });
 
   it('el buscador acota por genérico, marca, presentación y grupo', () => {
@@ -449,7 +458,7 @@ describe('PharmacyDetail', () => {
 
     expect(sucursalesVisibles()).toEqual(['Centro', 'Norte', 'Sur']);
     const texto = fixture.nativeElement.textContent as string;
-    expect(texto).toContain('Estás viendo ésta');
+    expect(texto).toContain('Está viendo ésta');
     expect(texto).toContain('Av. Banzer N.º 900 · Santa Cruz de la Sierra');
     // La que se está mirando no enlaza a sí misma; las otras sí.
     const enlaces = fixture.nativeElement.querySelectorAll(
@@ -473,6 +482,25 @@ describe('PharmacyDetail', () => {
     expect(texto).toContain('Ubicación aproximada · centro de la ciudad');
   });
 
+  it('dos sedes del mismo tenant comparten slug: se ven las dos y el distintivo va a una sola', () => {
+    // Así las sirve la API (#497): la ficha es del tenant, así que sus sedes
+    // comparten slug. Con el slug como clave, el distintivo caía en las dos.
+    const [centro, norte, sur] = SUCURSALES.items;
+    montar();
+    responder({
+      ...SUCURSALES,
+      items: [centro, norte, { ...sur, id: 'sede-sur-2', slug: norte.slug }],
+    });
+
+    conUbicacion(-17.8, -63.16);
+
+    expect(sucursalesVisibles()).toEqual(['Sur', 'Centro', 'Norte']);
+    const distintivos = [
+      ...(fixture.nativeElement.querySelectorAll('app-badge') as NodeListOf<HTMLElement>),
+    ].filter((badge) => (badge.textContent ?? '').includes('La más cercana'));
+    expect(distintivos.length).toBe(1);
+  });
+
   it('dice que no pudo leer la ubicación sin llevarse puesta la sección', () => {
     montar();
     responder();
@@ -484,7 +512,7 @@ describe('PharmacyDetail', () => {
     tocarBoton('Usar mi ubicación');
 
     expect(fixture.nativeElement.textContent as string).toContain(
-      'No pudimos leer tu ubicación',
+      'No pudimos leer su ubicación',
     );
     // Las sucursales siguen ahí, con su dirección.
     expect(sucursalesVisibles()).toEqual(['Centro', 'Norte', 'Sur']);
@@ -500,7 +528,11 @@ describe('PharmacyDetail', () => {
     const pedido = http.expectOne(
       (peticion) => peticion.url === `/public/profiles/f/${SLUG}/branch-availability`,
     );
-    expect(pedido.request.params.get('items')).toBe('Paracetamol');
+    // La receta viaja en el cuerpo de un POST, nunca en la URL (P37, D-2).
+    expect(pedido.request.method).toBe('POST');
+    expect(pedido.request.params.keys()).toEqual([]);
+    expect(pedido.request.urlWithParams).not.toContain('Paracetamol');
+    expect(pedido.request.body).toEqual({ items: ['Paracetamol'] });
     pedido.flush(DISPONIBILIDAD);
     fixture.detectChanges();
 
@@ -511,7 +543,7 @@ describe('PharmacyDetail', () => {
     // La recomendada es la que el servidor puso primera, no la más barata ni
     // la que se está mirando.
     expect(recomendada?.textContent).toContain('Norte');
-    expect(recomendada?.textContent).toContain('tiene todo lo de tu receta');
+    expect(recomendada?.textContent).toContain('tiene todo lo de su receta');
 
     const filas = fixture.nativeElement.querySelectorAll(
       '[data-testid="pharmacy-availability-row"]',
@@ -538,10 +570,15 @@ describe('PharmacyDetail', () => {
     const pedido = http.expectOne(
       (peticion) => peticion.url === `/public/profiles/f/${SLUG}/branch-availability`,
     );
-    // Los renglones viajan separados por `|`: una receta trae comas adentro.
-    expect(pedido.request.params.get('items')).toBe('Paracetamol|Losartán');
-    expect(pedido.request.params.get('lat')).toBe('-17.8');
-    expect(pedido.request.params.get('lng')).toBe('-63.16');
+    // Cada renglón es un elemento del arreglo (una receta trae comas
+    // adentro), y el punto viaja en el mismo cuerpo.
+    expect(pedido.request.method).toBe('POST');
+    expect(pedido.request.body).toEqual({
+      items: ['Paracetamol', 'Losartán'],
+      lat: -17.8,
+      lng: -63.16,
+    });
+    expect(pedido.request.params.keys()).toEqual([]);
     pedido.flush(DISPONIBILIDAD);
   });
 
@@ -661,6 +698,55 @@ describe('PharmacyDetail', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent as string).toContain('Farmacia Vida');
+  });
+
+  it('con la forma de la API real (todas comparten la ficha) no enlaza a la misma página y muestra descripción y mapa', () => {
+    montar();
+    responder({
+      ...SUCURSALES,
+      items: [
+        {
+          ...SUCURSALES.items[1],
+          slug: SLUG,
+          isCurrent: false,
+          description: 'Lun a Dom 24 horas',
+          locationUrl: 'https://maps.example/norte',
+        },
+        { ...SUCURSALES.items[2], slug: SLUG, isCurrent: false },
+      ],
+    });
+
+    const lista = fixture.nativeElement.querySelector(
+      '[data-testid="pharmacy-branches"]',
+    ) as HTMLElement;
+    // Ninguna tarjeta es un enlace interno: llevarían a la ficha que ya se mira.
+    expect(lista.querySelectorAll('a[href^="/"]').length).toBe(0);
+    expect(lista.querySelectorAll('article[data-testid="pharmacy-branch"]').length).toBe(2);
+    // Y ninguna dice «Está viendo ésta»: con varias, no hay una que sea la ficha.
+    expect(lista.textContent).not.toContain('Está viendo ésta');
+    expect(
+      lista.querySelector('[data-testid="pharmacy-branch-description"]')?.textContent,
+    ).toContain('Lun a Dom 24 horas');
+    const mapa = lista.querySelector(
+      '[data-testid="pharmacy-branch-map-link"]',
+    ) as HTMLAnchorElement | null;
+    expect(mapa?.getAttribute('href')).toBe('https://maps.example/norte');
+    expect(mapa?.getAttribute('target')).toBe('_blank');
+    expect(mapa?.getAttribute('rel')).toContain('noopener');
+    expect(mapa?.getAttribute('aria-label')).toBe(
+      'Cómo llegar a Norte (abre el mapa en otra pestaña)',
+    );
+  });
+
+  it('una farmacia sin sucursales publicadas dice por qué y qué hacer, no se queda muda', () => {
+    montar();
+    responder({ items: [], nextCursor: null, totalHint: 0, generatedAt: '2026-10-26T00:00:00.000Z' });
+
+    const texto = fixture.nativeElement.textContent as string;
+    expect(texto).toContain('Esta farmacia todavía no publicó sus sucursales');
+    expect(texto).toContain('Ver otras farmacias');
+    // El catálogo sigue ahí.
+    expect(nombresVisibles()).toEqual(TODOS);
   });
 
   it('no llama a la API cuando la ruta no trae slug', () => {

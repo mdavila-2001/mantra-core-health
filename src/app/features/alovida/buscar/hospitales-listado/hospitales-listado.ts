@@ -11,11 +11,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink, type Params } from '@angular/router';
-import { debounceTime, distinctUntilChanged, map, of, Subject, switchMap, type Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map, Subject } from 'rxjs';
 
 import { PublicDirectoryClient } from '@core/data-access/public-directory/public-directory.client';
 import type {
-  PublicPage,
   PublicSearchQuery,
   PublicSearchResult,
 } from '@core/data-access/public-directory/public-directory.types';
@@ -28,24 +27,12 @@ import {
   DepartmentMap,
   type DepartamentoElegible,
 } from '@shared/components/organisms/department-map/department-map';
-import { departamentoPorCiudad, normalizarLugar } from '@shared/geo/departamento-de-ciudad';
+import * as cuts from '@shared/directory/public-directory-cuts';
+import { departmentByCity } from '@shared/geo/city-department';
 
 import { CentroCard } from '../centro-card/centro-card';
 import { toFacilityCard, type FacilityCard } from './facility-card.mapper';
 import { FacilityDirectionsDialog } from './facility-directions-dialog/facility-directions-dialog';
-
-/** Tope por página que acepta el contrato público (`limit` se recorta a 50). */
-const POR_PETICION = 50;
-
-/**
- * Cuántas páginas se recorren como máximo al traer el directorio.
- *
- * El mismo techo y por el mismo motivo que los otros directorios: se hojea
- * entero, y el tope existe para que un catálogo que crezca sin control no
- * encadene peticiones indefinidamente. Cuando se llega, la pantalla **lo dice**
- * en vez de seguir pidiendo en silencio.
- */
-const MAX_PAGINAS = 10;
 
 /**
  * Cuántas tarjetas se ven de una vez.
@@ -140,7 +127,7 @@ type EstadoDeBusqueda = 'carga' | 'datos' | 'vacio' | 'error';
   styleUrls: [
     './hospitales-listado.css',
     '../centro-card/centro-grid.css',
-    '../../../public-directories/mapa-directorio.css',
+    '../../../public-directories/directory-map.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -240,7 +227,7 @@ export class BuscarHospitalesListado {
     })),
   );
 
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   /**
    * Cuántos centros tiene cada departamento, **sin** el corte del propio mapa.
@@ -249,19 +236,12 @@ export class BuscarHospitalesListado {
    * cero, o sea el mapa diciendo que sólo hay centros donde uno acaba de
    * pulsar. La cuenta que sirve es la de «cuánto hay ahí si voy».
    */
-  private readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() => {
-    const porCiudad = this.porCiudad();
-    const cuenta = new Map<string, number>();
+  private readonly cuentaPorDepartamento = computed<ReadonlyMap<string, number>>(() =>
     // Con la categoría aplicada y sin los cortes de lugar: la cuenta que sirve
     // es «cuántas clínicas privadas hay ahí si voy», no cuántas fichas de
     // cualquier clase.
-    for (const fila of this.deLaCategoria()) {
-      const conceptId = fila.city === null ? undefined : porCiudad.get(normalizarLugar(fila.city));
-      if (conceptId === undefined) continue;
-      cuenta.set(conceptId, (cuenta.get(conceptId) ?? 0) + 1);
-    }
-    return cuenta;
-  });
+    cuts.countByDepartment(this.deLaCategoria(), this.porCiudad()),
+  );
 
   /**
    * El resumen que acompaña al mapa: cuántos hay y cómo se vuelve.
@@ -280,7 +260,7 @@ export class BuscarHospitalesListado {
     if (cuantos === 0) {
       return `Todavía no hay centros publicados en ${nombre}.`;
     }
-    return `${cuantos} ${cuantos === 1 ? 'centro' : 'centros'} en ${nombre}. Tocá otra vez el departamento para ver todo el país.`;
+    return `${cuantos} ${cuantos === 1 ? 'centro' : 'centros'} en ${nombre}. Toque otra vez el departamento para ver todo el país.`;
   });
 
   /* ---- los cortes en memoria --------------------------------------------- */
@@ -293,13 +273,9 @@ export class BuscarHospitalesListado {
    * categoría va arriba de los dos porque es la pregunta más gruesa —qué clase
    * de centro— y las otras dos acotan dentro de la respuesta.
    */
-  private readonly deLaCategoria = computed<readonly PublicSearchResult[]>(() => {
-    const categoria = this.categoriaElegida();
-    if (categoria === null) {
-      return this.todos();
-    }
-    return this.todos().filter((fila) => fila.category?.code === categoria);
-  });
+  private readonly deLaCategoria = computed<readonly PublicSearchResult[]>(() =>
+    cuts.byCategory(this.todos(), this.categoriaElegida()),
+  );
 
   /**
    * Las categorías que de verdad hay, de la que más centros tiene a la que
@@ -313,27 +289,14 @@ export class BuscarHospitalesListado {
    */
   protected readonly categorias = computed<
     readonly { readonly code: string; readonly label: string }[]
-  >(() => {
-    const departamento = this.departamentoElegido();
-    const porCiudad = this.porCiudad();
-    const ciudad = this.ciudad();
-    const buscada = ciudad === null ? null : normalizarLugar(ciudad);
-    const cuenta = new Map<string, { label: string; total: number }>();
-    for (const fila of this.todos()) {
-      const categoria = fila.category;
-      if (categoria === null) continue;
-      const lugar = fila.city === null ? null : normalizarLugar(fila.city);
-      if (departamento !== null && (lugar === null || porCiudad.get(lugar) !== departamento)) {
-        continue;
-      }
-      if (buscada !== null && lugar !== buscada) continue;
-      const anterior = cuenta.get(categoria.code);
-      cuenta.set(categoria.code, { label: categoria.label, total: (anterior?.total ?? 0) + 1 });
-    }
-    return [...cuenta.entries()]
-      .sort(([, a], [, b]) => b.total - a.total || a.label.localeCompare(b.label, 'es'))
-      .map(([code, { label }]) => ({ code, label }));
-  });
+  >(() =>
+    cuts.publishedCategories(
+      cuts.byCity(
+        cuts.byDepartment(this.todos(), this.departamentoElegido(), this.porCiudad()),
+        this.ciudad(),
+      ),
+    ),
+  );
 
   /**
    * Las filas del departamento elegido, **sin** el corte de ciudad.
@@ -343,17 +306,9 @@ export class BuscarHospitalesListado {
    * «Sucre» dejaría un solo chip y no habría cómo pasar a otra ciudad sin
    * quitar el filtro primero.
    */
-  private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() => {
-    const departamento = this.departamentoElegido();
-    const todas = this.deLaCategoria();
-    if (departamento === null) {
-      return todas;
-    }
-    const porCiudad = this.porCiudad();
-    return todas.filter(
-      (fila) => fila.city !== null && porCiudad.get(normalizarLugar(fila.city)) === departamento,
-    );
-  });
+  private readonly delDepartamento = computed<readonly PublicSearchResult[]>(() =>
+    cuts.byDepartment(this.deLaCategoria(), this.departamentoElegido(), this.porCiudad()),
+  );
 
   /**
    * Los chips: **todas** las ciudades publicadas del departamento elegido, la
@@ -361,32 +316,14 @@ export class BuscarHospitalesListado {
    *
    * Vacío sin departamento: el mapa es el corte de arriba.
    */
-  protected readonly ciudades = computed<readonly string[]>(() => {
-    if (this.departamentoElegido() === null) {
-      return [];
-    }
-    const cuenta = new Map<string, number>();
-    for (const fila of this.delDepartamento()) {
-      if (fila.city !== null && fila.city !== '') {
-        cuenta.set(fila.city, (cuenta.get(fila.city) ?? 0) + 1);
-      }
-    }
-    return [...cuenta.entries()]
-      .sort(([a, cuentaA], [b, cuentaB]) => cuentaB - cuentaA || a.localeCompare(b, 'es'))
-      .map(([ciudad]) => ciudad);
-  });
+  protected readonly ciudades = computed<readonly string[]>(() =>
+    this.departamentoElegido() === null ? [] : cuts.publishedCities(this.delDepartamento()),
+  );
 
   /** Lo que queda después de los dos cortes de lugar. */
-  private readonly filtradas = computed<readonly PublicSearchResult[]>(() => {
-    const ciudad = this.ciudad();
-    if (ciudad === null) {
-      return this.delDepartamento();
-    }
-    const buscada = normalizarLugar(ciudad);
-    return this.delDepartamento().filter(
-      (fila) => fila.city !== null && normalizarLugar(fila.city) === buscada,
-    );
-  });
+  private readonly filtradas = computed<readonly PublicSearchResult[]>(() =>
+    cuts.byCity(this.delDepartamento(), this.ciudad()),
+  );
 
   /** La página que se está viendo, ya en forma de tarjeta. */
   protected readonly centros = computed<readonly FacilityCard[]>(() => {
@@ -426,7 +363,7 @@ export class BuscarHospitalesListado {
 
   protected readonly aviso = computed(() =>
     this.recortada()
-      ? 'Se muestran los primeros resultados. Usá el buscador para encontrar un centro que no aparezca en la lista.'
+      ? 'Se muestran los primeros resultados. Use el buscador para encontrar un centro que no aparezca en la lista.'
       : null,
   );
 
@@ -592,43 +529,16 @@ export class BuscarHospitalesListado {
     const termino = this.texto().trim();
     const consulta: PublicSearchQuery = termino === '' ? {} : { q: termino };
 
-    this.leerTodo(consulta, [], undefined, 0)
+    cuts
+      .readWholeDirectory((filtros) => this.directorio.searchOrganizations(filtros), consulta)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (filas) => {
-          this.todos.set(filas);
-          this.estado.set(filas.length === 0 ? 'vacio' : 'datos');
+        next: ({ rows, truncated }) => {
+          this.todos.set(rows);
+          this.recortada.set(truncated);
+          this.estado.set(rows.length === 0 ? 'vacio' : 'datos');
         },
         error: () => this.estado.set('error'),
       });
-  }
-
-  /**
-   * Recorre el cursor hasta agotarlo, o hasta el techo de páginas.
-   *
-   * Recursivo y no un bucle porque cada página depende del cursor de la
-   * anterior: no se pueden pedir en paralelo.
-   */
-  private leerTodo(
-    consulta: PublicSearchQuery,
-    acumulado: readonly PublicSearchResult[],
-    cursor: string | undefined,
-    pagina: number,
-  ): Observable<readonly PublicSearchResult[]> {
-    return this.directorio
-      .searchOrganizations({ ...consulta, limit: POR_PETICION, ...(cursor ? { cursor } : {}) })
-      .pipe(
-        switchMap((respuesta: PublicPage<PublicSearchResult>) => {
-          const filas = [...acumulado, ...respuesta.items];
-          if (respuesta.nextCursor === null) {
-            return of(filas);
-          }
-          if (pagina + 1 >= MAX_PAGINAS) {
-            this.recortada.set(true);
-            return of(filas);
-          }
-          return this.leerTodo(consulta, filas, respuesta.nextCursor, pagina + 1);
-        }),
-      );
   }
 }

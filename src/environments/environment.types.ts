@@ -137,6 +137,20 @@ export interface Environment {
    */
   readonly apiBaseUrl: string;
 
+  /**
+   * Raíz del servicio de triage por IA (AlovidaAIService): convierte lo que el
+   * paciente escribe o dicta en síntomas, partes del cuerpo y especialistas.
+   *
+   * Relativa por defecto (`/ai`), igual que las trazas: el navegador le habla
+   * al mismo origen desde el que se sirvió, así la política de seguridad de
+   * contenido se queda en `connect-src 'self'` y no hay CORS que negociar. En
+   * el despliegue la resuelve Traefik; en `yarn start`, `proxy.conf.mjs`.
+   *
+   * Se define por entorno con `PUBLIC_AI_BASE_URL`. El servicio es público y
+   * no lleva credencial: no hay nada que filtrar desde acá.
+   */
+  readonly aiBaseUrl: string;
+
   /** Ver {@link TelemetryEnvironment}. */
   readonly telemetry: TelemetryEnvironment;
 
@@ -199,6 +213,62 @@ export interface Environment {
   readonly campaignsDemo: boolean;
 
   /**
+   * Enciende la facturación SIMULADA (FACT-SIAT-MOCK): el motor fiscal del
+   * backend simulado que imita el flujo del SIAT —CUIS, CUFD, CUF, XML del
+   * documento sector, recepción con respuestas 908/904/902— sin hablar con el
+   * SIN ni con ninguna red.
+   *
+   * Mismo carácter que `loyaltyDemo`: **no decide si la pantalla existe**,
+   * decide si hay algo simulado que mostrar. Apagada, las rutas
+   * `/billing/simulated/*` no responden y la pantalla dice la verdad: que la
+   * facturación todavía no está conectada. Nada de lo que produce tiene
+   * validez fiscal, y cada objeto lo declara (`simulated: true`).
+   */
+  readonly billingSiatDemo: boolean;
+
+  /**
+   * La API REAL publica `/billing/simulated/*` (cobro real de la consulta +
+   * factura SIAT simulada; módulo billing de la API, parche v434).
+   *
+   * No fabrica nada en el navegador —por eso no es `billingSiatDemo`—: es el
+   * contrato del backend. Encendida, la facturación y «Mis facturas» hablan con
+   * la API aunque no haya `mockBackend`. Apagada en los despliegues cuya API
+   * todavía no trae las rutas.
+   */
+  readonly billingSimulatedApi: boolean;
+
+  /**
+   * Registra las pantallas portadas de la bóveda que pintan **datos de
+   * ejemplo** (`features/alovida/`: filas escritas a mano, una identidad de
+   * mentira en el marco, botones que no llaman a nadie).
+   *
+   * Encendido, las 126 rutas del archivo generado `alovida.routes.ts` existen
+   * tal cual: es la rama `mockup`, donde la maqueta es el entregable. Apagado,
+   * **no se registran**: las que ya tienen una pantalla real equivalente
+   * redirigen a ella y el resto cae en el comodín —404, como cualquier
+   * dirección inventada—. Nadie puede llegar por enlace, historial o URL
+   * escrita a mano a una pantalla con datos falsos presentados como propios.
+   * El detalle vive en `features/alovida/design-mockup-gate.ts`.
+   *
+   * Mismo carácter que `campaignsDemo`: interruptor de despliegue
+   * (`PUBLIC_DESIGN_MOCKUPS`), fijado en `false` en las configuraciones que
+   * hablan con la API real.
+   */
+  readonly designMockups: boolean;
+
+  /**
+   * El refresh token viaja en una cookie `httpOnly` que pone y lee la API, y no
+   * en el cuerpo de las respuestas ni en `localStorage` (TX-10, decisión D-I).
+   *
+   * Es un **interruptor de despliegue que tiene que coincidir con el de la API**
+   * (`AUTH_REFRESH_COOKIE_ENABLED`): con uno solo encendido la sesión se pierde
+   * al recargar. Por eso vale `false` salvo que el despliegue lo pida con
+   * `PUBLIC_REFRESH_COOKIE=true`. No es un secreto: sólo dice cómo se pide el
+   * refresco. Exige mismo origen entre el front y la API (`apiBaseUrl` vacío).
+   */
+  readonly refreshCookie: boolean;
+
+  /**
    * Rama `mockup`: la aplicación no habla con ninguna API. Un interceptor
    * responde cada petición desde datos de prueba en memoria, con todas las
    * pantallas pobladas. Ver `src/app/core/mock/`.
@@ -216,11 +286,15 @@ export interface Environment {
  */
 export interface EnvironmentOverrides {
   readonly apiBaseUrl?: string;
+  readonly aiBaseUrl?: string;
   readonly telemetry?: Partial<TelemetryEnvironment>;
   readonly uxAnalytics?: Partial<UxAnalyticsEnvironment>;
   readonly demoPresets?: boolean;
   readonly paymentDemo?: boolean;
   readonly loyaltyDemo?: boolean;
   readonly campaignsDemo?: boolean;
+  readonly billingSiatDemo?: boolean;
+  readonly designMockups?: boolean;
+  readonly refreshCookie?: boolean;
   readonly mockBackend?: boolean;
 }

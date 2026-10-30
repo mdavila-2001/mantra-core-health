@@ -1,0 +1,444 @@
+/* La vista previa tapa el hilo entero, cabecera incluida, como la de
+   WhatsApp Web. Se posiciona contra el host del hilo (`thread.css`, `:host
+   { position: relative }`): por eso el host del composer no lleva posición
+   propia. Por encima de la cabecera (2) y del botón de bajar. */
+
+:host {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  background: var(--neutro-bg);
+  color: var(--tinta);
+  animation: vista-entra var(--dur-base) var(--ease-out);
+}
+
+@keyframes vista-entra {
+  from {
+    opacity: 0;
+    transform: translateY(var(--e3));
+  }
+}
+
+.vista__editor {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* --- Barra --------------------------------------------------------------- */
+
+.vista__barra {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  min-block-size: var(--h-header);
+  padding: var(--e2) var(--e4);
+}
+
+.vista__herramientas {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  padding: var(--e1);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+}
+
+.vista__contrapeso {
+  inline-size: var(--h-ctrl);
+}
+
+.vista__icono {
+  color: var(--tinta-2);
+}
+
+.vista__separador {
+  inline-size: 1px;
+  block-size: var(--e6);
+  margin-inline: var(--e1);
+  background: var(--filete);
+}
+
+/* --- Escenario ----------------------------------------------------------- */
+
+.vista__escenario {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--e4) var(--e6);
+  overflow: hidden;
+}
+
+.vista__imagen,
+.vista__video {
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  object-fit: contain;
+  border-radius: var(--r-ctrl);
+  box-shadow: var(--sombra-2);
+}
+
+.vista__video {
+  background: var(--c-neutral-900);
+}
+
+/* El documento: la hoja con su sigla, el nombre y lo que se sabe de él. */
+.vista__documento {
+  display: grid;
+  justify-items: center;
+  gap: var(--e2);
+  max-inline-size: 26rem;
+  padding: var(--e7) var(--e8);
+  border-radius: var(--r-card);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2);
+  text-align: center;
+}
+
+.vista__documento-icono {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  inline-size: 4.5rem;
+  margin-block-end: var(--e2);
+  color: var(--c-petrol-600);
+}
+
+.vista__documento-icono[data-tono='pdf'] { color: var(--c-error-600); }
+.vista__documento-icono[data-tono='audio'] { color: var(--c-amber-600); }
+
+.vista__documento-icono svg {
+  inline-size: 100%;
+  fill: currentColor;
+}
+
+.vista__documento-pliegue {
+  fill: var(--surface-white);
+  opacity: 0.45;
+}
+
+.vista__documento-sigla {
+  position: absolute;
+  inset-block-end: 22%;
+  color: var(--surface-white);
+  font-size: var(--fs-overline);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.vista__documento-nombre {
+  margin: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.vista__documento-detalle,
+.vista__documento-nota {
+  margin: 0;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+.vista__documento-nota {
+  color: var(--tinta-3);
+}
+
+/* --- Pie ----------------------------------------------------------------- */
+
+.vista__pie {
+  flex: none;
+  display: grid;
+  gap: var(--e3);
+  padding: var(--e3) var(--e4) var(--e4);
+}
+
+.vista__error {
+  justify-self: center;
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-pill);
+  background: var(--error-bg);
+  color: var(--error-tinta);
+  font-size: var(--fs-caption);
+}
+
+.vista__comentario {
+  justify-self: center;
+  inline-size: min(100%, 40rem);
+}
+
+.vista__comentario textarea {
+  display: block;
+  inline-size: 100%;
+  min-block-size: var(--h-ctrl-lg);
+  max-block-size: 8.5rem;
+  padding: 13px var(--e4);
+  resize: none;
+  /* Crece con el texto hasta el tope, como el campo del composer. */
+  field-sizing: content;
+  line-height: 20px;
+  border: 1px solid transparent;
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  color: var(--tinta);
+  font: inherit;
+  font-size: var(--fs-body);
+}
+
+.vista__comentario textarea::placeholder {
+  color: var(--tinta-3);
+}
+
+.vista__comentario textarea:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+}
+
+/* La fila de abajo: hueco · miniaturas · enviar. El hueco equilibra el botón
+   para que la tira quede centrada, como en WhatsApp. */
+.vista__fila {
+  display: grid;
+  grid-template-columns: var(--e10) minmax(0, 1fr) var(--e10);
+  align-items: center;
+  gap: var(--e3);
+  padding-block-start: var(--e3);
+  border-block-start: 1px solid var(--filete);
+}
+
+.vista__tira {
+  display: flex;
+  justify-content: safe center;
+  /* Lugar para el blanco de 44 × 44 de «Quitar», que sobresale 22 px de la
+     esquina: sin esto, el `overflow-x` de la tira lo recortaba a 20 × 18. */
+  gap: var(--e6);
+  margin: 0;
+  padding: var(--e6) var(--e6) var(--e1);
+  list-style: none;
+  overflow-x: auto;
+}
+
+.vista__miniatura {
+  position: relative;
+  flex: none;
+}
+
+.vista__miniatura-boton,
+.vista__sumar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: var(--e9);
+  block-size: var(--e9);
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-ctrl);
+  background: var(--sup-tarjeta);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.vista__miniatura-boton img,
+.vista__miniatura-boton video {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.vista__miniatura.is-elegida .vista__miniatura-boton {
+  border-color: var(--petroleo);
+}
+
+.vista__miniatura-boton:focus-visible,
+.vista__sumar:focus-visible,
+.vista__quitar:focus-visible,
+.vista__enviar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+.vista__miniatura-play {
+  position: absolute;
+  inline-size: var(--e5);
+  block-size: var(--e5);
+  color: var(--surface-white);
+  filter: drop-shadow(0 1px 2px var(--velo));
+}
+
+.vista__miniatura-doc {
+  font-size: var(--fs-overline);
+  font-weight: 800;
+  color: var(--c-petrol-600);
+}
+
+.vista__miniatura-doc[data-tono='pdf'] { color: var(--c-error-600); }
+.vista__miniatura-doc[data-tono='audio'] { color: var(--c-amber-600); }
+
+/* Quitar aparece al pasar o al llegar con el teclado, como en WhatsApp. */
+.vista__quitar {
+  position: absolute;
+  /* Centrada en la esquina de la miniatura: así su blanco de 44 × 44 cubre
+     sólo esa esquina y el centro de la miniatura sigue eligiéndola. */
+  inset-block-start: calc(var(--e5) / -2);
+  inset-inline-end: calc(var(--e5) / -2);
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--e5);
+  block-size: var(--e5);
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--tinta);
+  color: var(--sup-tarjeta);
+  opacity: 0;
+  /* Invisible no se toca: si no, un toque en la esquina quitaba la foto. */
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+/* El blanco táctil: 44 × 44 centrado en la cruz de 20 px, o sea, en la
+   esquina de la miniatura (ver arriba). */
+.vista__quitar::before {
+  content: '';
+  position: absolute;
+  inset: calc((var(--e5) - 44px) / 2);
+}
+
+.vista__quitar svg {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+.vista__miniatura:hover .vista__quitar,
+.vista__miniatura:focus-within .vista__quitar,
+.vista__miniatura.is-elegida .vista__quitar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (hover: none) {
+  .vista__quitar {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.vista__sumar {
+  border: 1px dashed var(--borde-ctrl);
+  background: transparent;
+  color: var(--tinta-2);
+}
+
+.vista__sumar:hover {
+  background: var(--sup-tarjeta);
+  color: var(--tinta-marca);
+}
+
+.vista__sumar svg {
+  inline-size: 22px;
+  block-size: 22px;
+}
+
+/* Enviar: el mismo botón redondo de marca que el del composer, más grande
+   porque acá es la única acción que queda. */
+.vista__enviar {
+  position: relative;
+  justify-self: end;
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--e10);
+  block-size: var(--e10);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--petroleo);
+  color: var(--surface-white);
+  box-shadow: var(--sombra-2);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard), filter var(--dur-fast) var(--ease-standard);
+}
+
+.vista__enviar:hover {
+  filter: brightness(1.08);
+}
+
+.vista__enviar:active {
+  transform: scale(0.94);
+}
+
+.vista__enviar svg {
+  inline-size: 26px;
+  block-size: 26px;
+}
+
+.vista__cuenta {
+  position: absolute;
+  inset-block-start: -2px;
+  inset-inline-end: -2px;
+  min-inline-size: 22px;
+  block-size: 22px;
+  padding-inline: var(--e1);
+  border: 2px solid var(--neutro-bg);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-marca);
+  font-size: var(--fs-overline);
+  font-weight: 800;
+  line-height: 18px;
+}
+
+/* --- Angosto ------------------------------------------------------------- */
+
+@media (max-width: 40rem) {
+  .vista__barra,
+  .vista__pie {
+    padding-inline: var(--e2);
+  }
+
+  .vista__escenario {
+    padding: var(--e2);
+  }
+
+  .vista__documento {
+    padding: var(--e6) var(--e5);
+  }
+
+  /* Sin hueco: en un teléfono cada píxel de tira vale más que el centrado. */
+  .vista__fila {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .vista__fila-hueco {
+    display: none;
+  }
+
+  .vista__tira {
+    justify-content: flex-start;
+  }
+
+  .vista__enviar {
+    inline-size: var(--e9);
+    block-size: var(--e9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    animation: none;
+  }
+
+  .vista__quitar,
+  .vista__enviar {
+    transition: none;
+  }
+
+  .vista__enviar:active {
+    transform: none;
+  }
+}

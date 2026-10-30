@@ -23,14 +23,14 @@ function bs(amount: string, display: string | null = 'Boliviano'): Money {
 
 describe('formatMoney', () => {
   it('muestra el importe con su moneda', () => {
-    expect(formatMoney(bs('1250.00'))).toBe('1250.00 Boliviano');
+    expect(formatMoney(bs('1250.00'))).toBe('1250.00 BOB');
   });
 
   it('no toca el número: ni redondea ni completa decimales', () => {
     // Lo que llega de la base es lo que se muestra. Rellenar a dos decimales
     // acá sería inventar precisión que el dato no declara.
-    expect(formatMoney(bs('1615.125'))).toBe('1615.125 Boliviano');
-    expect(formatMoney(bs('620'))).toBe('620 Boliviano');
+    expect(formatMoney(bs('1615.125'))).toBe('1615.125 BOB');
+    expect(formatMoney(bs('620'))).toBe('620 BOB');
   });
 
   it('sin moneda declarada muestra sólo el número', () => {
@@ -59,7 +59,7 @@ describe('formatAmount', () => {
 
 describe('currencySuffix', () => {
   it('arma el sufijo del encabezado', () => {
-    expect(currencySuffix(bs('1.00'))).toBe(' · Boliviano');
+    expect(currencySuffix(bs('1.00'))).toBe(' · BOB');
   });
 
   it('devuelve cadena vacía cuando no hay moneda', () => {

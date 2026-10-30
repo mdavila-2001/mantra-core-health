@@ -1,0 +1,178 @@
+/* Plan de pagos: tres cifras, la tabla de instancias y, debajo, el pago o el
+   cierre. Sólo distribución: los colores salen de los tokens. */
+
+:host {
+  display: block;
+}
+
+.plan {
+  display: grid;
+  /* `minmax(0, …)`: sin él, el control más ancho del formulario fija la
+     columna y el plan se sale del margen del modal a 390 px. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+}
+
+.plan__encabezado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plan__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+/* ── Las cifras ────────────────────────────────────────────────────────────
+   Una columna en el teléfono, tres en cuanto entran. */
+
+.plan__cifras {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+}
+
+@media (min-width: 650px) {
+  .plan__cifras {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.plan__cifra {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.plan__cifra dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.plan__cifra dd {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 700;
+  /* Dinero en columna: las cifras se alinean dígito con dígito. */
+  font-variant-numeric: tabular-nums;
+}
+
+.plan__cifra--saldo {
+  border-color: var(--st-warning-bd);
+}
+
+/* ── Celdas ──────────────────────────────────────────────────────────────── */
+
+.plan__item {
+  display: block;
+  font-weight: 500;
+}
+
+.plan__importe {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.plan__secundario {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+/* Sólo cuando la tabla pliega los importes: la misma consulta de caja que
+   `fitContainer` de `app-data-table`, que declara el container `data-table`. */
+.plan__solo-movil {
+  display: none;
+}
+
+@container data-table (width < 52rem) {
+  .plan__solo-movil {
+    display: block;
+  }
+}
+
+.plan__nota-de-venta {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.plan__nota-de-venta + .plan__nota-de-venta {
+  margin-block-start: var(--sp-1);
+}
+
+/* ── El pago y el cierre ─────────────────────────────────────────────────── */
+
+.plan__pago {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+/* Sin borde propio: el aviso de adentro ya es una caja. */
+.plan__cierre {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.plan__pago-titulo {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.plan__aviso:focus-visible,
+.plan__cierre:focus-visible,
+.plan__pago-titulo:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.plan__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+@media (min-width: 650px) {
+  .plan__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.plan__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* En el teléfono el rótulo largo parte en dos líneas en vez de empujar el
+   botón contra el borde de la tarjeta. */
+.plan__acciones > button {
+  max-inline-size: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+.plan__nota {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.plan__cierre > button {
+  justify-self: start;
+}

@@ -1,9 +1,11 @@
+import { PatientCampaignsWidget } from '../../insurance/patient-campaigns/patient-campaigns-widget';
 import { InsurancePortabilityCard } from './insurance-portability-card/insurance-portability-card';
 import { PatientCoverageCard } from '../../../shared/components/molecules/patient-coverage-card/patient-coverage-card';
 import { FileDropTarget } from '../../../shared/forms/file-drop-target';
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
@@ -22,7 +24,8 @@ import {
   errorToViewState,
   IDENTITY_VERIFICATION_ROUTE,
 } from '../../../core/http/error-to-view-state';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/verificacion-ofrecida';
+import { OFFERED_IDENTITY_VERIFICATION } from '../../../core/identity-assurance/offered-verification';
+import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -32,7 +35,6 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -46,8 +48,16 @@ import {
 } from '../../identity-verification/case-status';
 import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
-import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
+import { initialTabIndex, tabIndex, PROFILE_TABS } from './profile-tabs';
+import { AddressBook } from './address-book/address-book';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
+import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.types';
+
+/** Lo que se dice cuando la ficha completa no llegó y la API no explicó por qué. */
+const FICHA_INCOMPLETA =
+  'No pudimos traer el resto de su ficha: documento, contacto, domicilio, facturación, ' +
+  'seguros y tutores. Lo que se muestra está al día.';
 
 /**
  * Resumen propio — vista **V05-03** de `SALUD/Vistas/V05 profiles`
@@ -108,7 +118,9 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
 @Component({
   selector: 'app-my-profile',
   imports: [
+    AddressBook,
     PatientCoverageCard,
+    ResidenceReadonly,
     FileDropTarget,
     Alert,
     AppButton,
@@ -118,6 +130,7 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     Card,
     DatePipe,
     InsurancePortabilityCard,
+    PatientCampaignsWidget,
     Link,
     Loyalty,
     NavIcon,
@@ -128,7 +141,6 @@ import { PractitionerProfile } from './practitioner-profile/practitioner-profile
     StatusSeal,
     Tab,
     Tabs,
-    Tooltip,
     ViewStateHost,
   ],
   templateUrl: './my-profile.html',
@@ -146,6 +158,9 @@ export class MyProfile {
   private readonly estadosDeCaso = inject(CaseStatusCatalog);
   private readonly navigation = inject(NavigationService);
   private readonly auth = inject(AuthService);
+
+  /** Perfil de paciente en sesión (claim `pid`): lo necesita el widget de beneficios del seguro. */
+  protected readonly patientProfileId = this.auth.patientProfileId;
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
 
@@ -174,12 +189,21 @@ export class MyProfile {
    * Los datos completos de filiación, para MOSTRARLOS.
    *
    * Va aparte del resumen y no reemplaza a ninguno: el resumen compone el nombre
-   * y trae el estado; éste trae lo que la persona declaró —documento, correo,
-   * direcciones, seguros, tutores—, que hasta ahora sólo se podía ver entrando a
+   * y trae el estado; éste trae documento, correo, direcciones, seguros,
+   * contactos de emergencia y tutores activos, que antes sólo se podían ver entrando a
    * editar. Un fallo acá no rompe la tarjeta: los bloques nuevos sencillamente
    * no se dibujan.
    */
   protected readonly perfil = signal<OwnPatientProfile | null>(null);
+
+  /**
+   * Por qué no llegó la ficha completa; vacío si llegó o si no correspondía.
+   *
+   * Regla 14 del criterio humano: sin esto, una caída de
+   * `GET /profiles/patients/me` dejaba la tarjeta sin documento, contacto,
+   * domicilio ni facturación, y se leía igual que una ficha que nunca los tuvo.
+   */
+  protected readonly errorDePerfil = signal('');
 
   /* -- La foto de perfil ---------------------------------------------------
      Mismo patrón que `practitioner-profile-view` y `public-profile-preview`:
@@ -229,10 +253,13 @@ export class MyProfile {
    * son estados momentáneos de la pantalla, no lugares, y no se escriben de
    * vuelta en la URL.
    */
-  protected readonly pestanas = PESTANAS_DEL_PERFIL;
-  protected readonly pestana = signal(
-    indiceDePestana(inject(ActivatedRoute).snapshot.queryParamMap.get('pestana')) ?? 0,
-  );
+  protected readonly pestanas = PROFILE_TABS;
+  private readonly pestanaPedida = inject(ActivatedRoute).snapshot.queryParamMap.get('pestana');
+  protected readonly pestana = signal(0);
+  /** «Mis direcciones» se crea sólo abierta (pide su libreta); sin Tutores va un lugar antes. */
+  protected readonly pestanaDeDirecciones = computed(() => ((this.perfil()?.guardians.length ?? 0) > 0 ? 6 : 5));
+
+  private pestanaInicialAplicada = false;
 
   /**
    * Adónde va «Cambiar contraseña» (FT-11-R08).
@@ -245,6 +272,7 @@ export class MyProfile {
   protected readonly rutaDeCambioDeContrasena = '/auth/forgot-password';
 
   protected editar(): void {
+    if (this.pestana() > 2) this.pestana.set(0);
     this.editando.set(true);
   }
 
@@ -293,7 +321,7 @@ export class MyProfile {
    * Campo y no import suelto porque la plantilla sólo lee miembros de la clase.
    * Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
    */
-  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+  protected readonly verificacionOfrecida = OFFERED_IDENTITY_VERIFICATION;
 
   /**
    * Si el lateral tiene algo que dibujar.
@@ -446,13 +474,23 @@ export class MyProfile {
    * necesita. El enlace resuelve lo mismo —«llevame ahí»— con una etiqueta.
    */
   protected enlaceAlMapa(dir: OwnAddress): string | null {
+    const punto = this.puntoDe(dir);
+    if (punto === null) return null;
+    return `https://www.google.com/maps/search/?api=1&query=${punto.lat},${punto.lng}`;
+  }
+
+  /**
+   * Las coordenadas de una dirección, o `null` si no las tiene. Las usan el
+   * enlace «Ver en el mapa» y el punto rojo del mapa de residencia.
+   */
+  protected puntoDe(dir: OwnAddress | undefined): PuntoGeo | null {
     // `== null` cubre `null` y `undefined` de una. La API emitía además un `0`
     // por una comparación estricta contra `undefined` —ya corregida—, y el 0 se
     // sigue rechazando acá: una dirección de Santa Cruz no está en el meridiano
     // de Greenwich, y un enlace al golfo de Guinea es peor que ningún enlace.
-    if (dir.latitude == null || dir.longitude == null) return null;
+    if (dir?.latitude == null || dir.longitude == null) return null;
     if (dir.latitude === 0 && dir.longitude === 0) return null;
-    return `https://www.google.com/maps/search/?api=1&query=${dir.latitude},${dir.longitude}`;
+    return { lat: dir.latitude, lng: dir.longitude };
   }
 
   protected recargar(): void {
@@ -471,11 +509,13 @@ export class MyProfile {
   private cargarPerfil(): void {
     this.perfil.set(null);
     this.fotoUrl.set(null);
+    this.errorDePerfil.set('');
     if (!this.debeLeerResumenDePaciente()) return;
 
     this.profiles.getOwnPatientProfile().subscribe({
       next: (p) => {
         this.perfil.set(p);
+        this.aplicarPestanaInicial(p.guardians.length > 0);
         if (p.photoFileId !== undefined) {
           this.files
             .imageDataUrl(p.photoFileId)
@@ -508,8 +548,23 @@ export class MyProfile {
           });
         }
       },
-      error: () => this.perfil.set(null),
+      error: (error: unknown) => {
+        this.perfil.set(null);
+        // El 404 de una cuenta sin perfil de paciente sigue siendo silencioso:
+        // a esa persona no le falta nada. Cualquier otro fallo se dice.
+        if (error instanceof HttpErrorResponse && error.status === 404) {
+          return;
+        }
+        this.errorDePerfil.set(describeApiFailure(error, FICHA_INCOMPLETA));
+      },
     });
+  }
+
+  /** Ajusta los índices cuando Tutores no existe, sin cambiar la URL pública. */
+  private aplicarPestanaInicial(tieneTutores: boolean): void {
+    if (this.pestanaInicialAplicada) return;
+    this.pestanaInicialAplicada = true;
+    this.pestana.set(initialTabIndex(tabIndex(this.pestanaPedida) ?? 0, tieneTutores));
   }
 
   /**
@@ -628,9 +683,11 @@ export class MyProfile {
           this.subiendoFoto.set(false);
           this.fotoUrl.set(url);
         },
-        error: () => {
+        error: (error: unknown) => {
           this.subiendoFoto.set(false);
-          this.errorDeFoto.set('No pudimos subir la foto. Probá con otra imagen.');
+          this.errorDeFoto.set(
+            describeApiFailure(error, 'No pudimos subir la foto. Pruebe de nuevo o con otra imagen.'),
+          );
         },
       });
   }

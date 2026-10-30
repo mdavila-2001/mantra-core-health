@@ -1,6 +1,6 @@
 <app-page-header
   title="Encuesta"
-  subtitle="Componé el cuestionario, publicalo, asociálo a un servicio y leé lo que respondieron."
+  subtitle="Componga el cuestionario, publíquelo, asociálo a un servicio y lea lo que respondieron."
   [breadcrumbs]="breadcrumbs()"
 >
   <app-back-link page-actions [fallback]="rutaDeLasEncuestas" label="Volver a las encuestas" />
@@ -78,8 +78,8 @@
           <!-- La previa es el MISMO componente con el que responde el paciente:
                `app-survey-form`. No es una imitación — no puede desviarse. -->
           <p class="encuesta__previa-nota">
-            Así lo va a ver quien responda. Podés tocar los controles: nada de lo
-            que marques acá se guarda.
+            Así lo va a ver quien responda. Puede tocar los controles: nada de lo
+            que marque acá se guarda.
           </p>
           @if (encuesta.description) {
             <p class="encuesta__consigna">{{ encuesta.description }}</p>
@@ -91,7 +91,7 @@
           />
         } @else if (encuesta.questions.length === 0) {
           <p class="encuesta__vacio">
-            Todavía no tiene preguntas. Agregá la primera con el botón de abajo.
+            Todavía no tiene preguntas. Agregue la primera con el botón de abajo.
           </p>
         } @else {
           <ol class="encuesta__preguntas">
@@ -160,14 +160,59 @@
       @if (publicada()) {
         <app-card variant="outlined" padding="lg" class="encuesta__card encuesta__card--ancha">
           <h2 card-header>Asociar a un servicio</h2>
+
+          <!-- A qué está asociada HOY, con el nombre del servicio y nunca el
+               identificador. Si el servidor no lo informó (`null`) no se
+               afirma nada: «sin asociar» sólo se dice cuando llegó vacío. -->
+          @if (asociaciones(); as vigentes) {
+            <div class="encuesta__asociada" data-testid="asignacion-vigentes">
+              <p class="encuesta__asociada-titulo">Asociada hoy a</p>
+              @if (vigentes.length === 0) {
+                <p class="encuesta__vacio" data-testid="asignacion-ninguna">
+                  Todavía no está asociada a nada: no se le ofrece a ningún paciente.
+                </p>
+              } @else {
+                <ul class="encuesta__asociaciones">
+                  @for (a of vigentes; track a.id) {
+                    <li class="encuesta__asociacion" data-testid="asignacion-vigente">
+                      <app-badge variant="success">{{ a.tipo }}</app-badge>
+                      <span class="encuesta__asociacion-nombre">{{ a.nombre }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+
           <form [formGroup]="formularioAsignacion" (ngSubmit)="asignar()">
             <app-form-field
+              icon="stethoscope"
               label="Servicio de salud"
-              hint="Se le ofrecerá al paciente al cerrar una consulta de ese servicio."
+              hint="Se le ofrecerá al paciente al cerrar una consulta o un servicio de ese tipo. «Todas mis consultas» cubre cualquier consulta."
               [required]="true"
             >
-              <app-input formControlName="targetId" data-testid="asignacion-servicio" />
+              <app-select
+                formControlName="destino"
+                [options]="opcionesDestino()"
+                placeholder="Elija un servicio"
+                data-testid="asignacion-servicio"
+              />
             </app-form-field>
+            @if (serviciosFallaron()) {
+              <app-alert tone="warning" title="No pudimos traer sus servicios">
+                Puede asociarla a «Todas mis consultas» igual.
+                <div alert-actions>
+                  <button app-button size="sm" variant="outline" type="button" (click)="cargarServicios()">
+                    Reintentar
+                  </button>
+                </div>
+              </app-alert>
+            }
+            @if (errorAsignacion(); as motivo) {
+              <app-alert tone="error" title="No se pudo asociar" data-testid="asignacion-error">
+                {{ motivo }}
+              </app-alert>
+            }
             <div class="encuesta__acciones">
               <button
                 app-button
