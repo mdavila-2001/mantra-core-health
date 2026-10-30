@@ -21,7 +21,7 @@ const COLUMNS: readonly MetricId[] = ['impressions', 'ctr', 'cpc', 'conversions'
  * cada columna con texto, no solo con color.
  */
 @Component({
-  selector: 'ins-comparison-panel',
+  selector: 'app-ins-comparison-panel',
   imports: [Panel, MultiSelect, Select, BarChart],
   templateUrl: './comparison-panel.html',
   styleUrl: './comparison-panel.css',

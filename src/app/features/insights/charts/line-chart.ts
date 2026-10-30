@@ -36,7 +36,7 @@ interface EndLabel {
  * gráfico hace zoom; las flechas del teclado recorren los puntos.
  */
 @Component({
-  selector: 'ins-line-chart',
+  selector: 'app-ins-line-chart',
   templateUrl: './line-chart.html',
   styleUrl: './line-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

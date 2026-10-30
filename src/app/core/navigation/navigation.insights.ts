@@ -13,7 +13,7 @@ import type { AppSection } from './navigation.types';
     siendo la API.
     ========================================================================== */
 
-export const SECCIONES_DE_INSIGHTS: readonly AppSection[] = [
+export const INSIGHTS_SECTIONS: readonly AppSection[] = [
   {
     path: 'administration/marketing-insights',
     label: 'AloVida Insights',

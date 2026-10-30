@@ -1,5 +1,5 @@
 <div class="au">
-  <ins-filter-bar [controls]="['period']" />
+  <app-ins-filter-bar [controls]="['period']" />
   <div class="au__plat">
     <span class="au__plat-label">Plataforma (esta pantalla)</span>
     <app-segmented-control ariaLabel="Plataforma" [options]="platformOptions" [value]="platform()" (valueChange)="setPlatform($event)" />
@@ -10,19 +10,19 @@
       <div class="au__stack">
         <section class="au__tiles" aria-label="Indicadores de uso">
           @for (t of tiles(); track t.label) {
-            <ins-stat [label]="t.label" [value]="t.value" [delta]="t.delta" [good]="t.good" [hint]="t.hint" />
+            <app-ins-stat [label]="t.label" [value]="t.value" [delta]="t.delta" [good]="t.good" [hint]="t.hint" />
           }
         </section>
 
-        <ins-panel title="Actividad en el tiempo" question="¿Cuántas personas usan la app y con qué regularidad?">
-          <ins-line-chart [labels]="lineLabels()" [series]="lineSeries()" unit="count" [ariaLabel]="'Usuarios activos diarios, semanales y mensuales de ' + lineLabels().length + ' días'" />
-        </ins-panel>
+        <app-ins-panel title="Actividad en el tiempo" question="¿Cuántas personas usan la app y con qué regularidad?">
+          <app-ins-line-chart [labels]="lineLabels()" [series]="lineSeries()" unit="count" [ariaLabel]="'Usuarios activos diarios, semanales y mensuales de ' + lineLabels().length + ' días'" />
+        </app-ins-panel>
 
         <div class="au__two">
-          <ins-panel title="Adopción de funciones" question="¿Qué funciones generan valor y cuáles existen pero casi nadie usa?">
-            <ins-bar-chart [data]="featureBars()" unit="percent" orientation="h" [ariaLabel]="'Adopción de funciones como porcentaje de los usuarios mensuales'" />
-          </ins-panel>
-          <ins-panel title="Lo que cuesta terminar" question="¿Dónde empiezan los usuarios y no completan?">
+          <app-ins-panel title="Adopción de funciones" question="¿Qué funciones generan valor y cuáles existen pero casi nadie usa?">
+            <app-ins-bar-chart [data]="featureBars()" unit="percent" orientation="h" [ariaLabel]="'Adopción de funciones como porcentaje de los usuarios mensuales'" />
+          </app-ins-panel>
+          <app-ins-panel title="Lo que cuesta terminar" question="¿Dónde empiezan los usuarios y no completan?">
             <table class="au__table">
               <caption class="au__sr">Finalización por función</caption>
               <thead><tr><th scope="col">Función</th><th scope="col" class="au__n">Usuarios</th><th scope="col" class="au__n">Adopción</th><th scope="col" class="au__n">Completan</th><th scope="col">Lectura</th></tr></thead>
@@ -38,20 +38,20 @@
                 }
               </tbody>
             </table>
-          </ins-panel>
+          </app-ins-panel>
         </div>
 
-        <ins-panel title="Mapa de calor de la pantalla" question="¿Dónde tocan los usuarios y qué elementos se ignoran?">
+        <app-ins-panel title="Mapa de calor de la pantalla" question="¿Dónde tocan los usuarios y qué elementos se ignoran?">
           <app-segmented-control panel-tools ariaLabel="Pantalla analizada" [options]="screenOptions" [value]="screenId()" (valueChange)="setScreen($event)" />
-          <ins-screen-heat [screen]="screen()" />
+          <app-ins-screen-heat [screen]="screen()" />
           <p class="au__foot">Las zonas y los porcentajes son de demostración. En producción provienen de eventos de toque y desplazamiento de la app.</p>
-        </ins-panel>
+        </app-ins-panel>
 
         <div class="au__two">
-          <ins-panel title="Flujo principal" question="¿Cuántas personas llegan de abrir la app a confirmar una reserva?">
-            <ins-funnel-chart [stages]="flow()" ariaLabel="Flujo principal de uso, de abrir la app a confirmar una reserva" />
-          </ins-panel>
-          <ins-panel title="Pantallas" question="¿Qué pantallas se usan, cuánto tiempo y dónde se sale?">
+          <app-ins-panel title="Flujo principal" question="¿Cuántas personas llegan de abrir la app a confirmar una reserva?">
+            <app-ins-funnel-chart [stages]="flow()" ariaLabel="Flujo principal de uso, de abrir la app a confirmar una reserva" />
+          </app-ins-panel>
+          <app-ins-panel title="Pantallas" question="¿Qué pantallas se usan, cuánto tiempo y dónde se sale?">
             <table class="au__table">
               <caption class="au__sr">Pantallas más usadas</caption>
               <thead><tr><th scope="col">Pantalla</th><th scope="col" class="au__n">Vistas</th><th scope="col" class="au__n">Tiempo</th><th scope="col" class="au__n">Salida</th><th scope="col" class="au__n">Toques frustrados</th></tr></thead>
@@ -67,15 +67,15 @@
                 }
               </tbody>
             </table>
-          </ins-panel>
+          </app-ins-panel>
         </div>
 
-        <ins-panel title="Retención por cohorte" question="¿Los usuarios que llegan en una semana siguen usando la app?">
-          <ins-heatmap-chart [rows]="cohort().rows" [cols]="cohort().cols" [cells]="cohort().cells" unit="percent" [rowMeta]="cohort().meta" rowMetaLabel="Activados" valueName="Retención" [minCell]="52" ariaLabel="Retención de usuarios por cohorte semanal" />
+        <app-ins-panel title="Retención por cohorte" question="¿Los usuarios que llegan en una semana siguen usando la app?">
+          <app-ins-heatmap-chart [rows]="cohort().rows" [cols]="cohort().cols" [cells]="cohort().cells" unit="percent" [rowMeta]="cohort().meta" rowMetaLabel="Activados" valueName="Retención" [minCell]="52" ariaLabel="Retención de usuarios por cohorte semanal" />
           <p class="au__foot">Las celdas rayadas son semanas que todavía no terminan: no equivalen a 0 %.</p>
-        </ins-panel>
+        </app-ins-panel>
 
-        <ins-panel title="Eventos" question="Nivel de exploración: lo que ocurre dentro de la app, evento por evento.">
+        <app-ins-panel title="Eventos" question="Nivel de exploración: lo que ocurre dentro de la app, evento por evento.">
           <div panel-tools class="au__tools">
             <label class="au__search"><span class="au__sr">Buscar un evento</span><input type="search" placeholder="Buscar evento" [value]="query()" (input)="search($event)" /></label>
             <button type="button" class="au__btn" (click)="exportCsv()">Exportar CSV</button>
@@ -97,7 +97,7 @@
               </tbody>
             </table>
           </div>
-        </ins-panel>
+        </app-ins-panel>
       </div>
     }
   </app-view-state-host>

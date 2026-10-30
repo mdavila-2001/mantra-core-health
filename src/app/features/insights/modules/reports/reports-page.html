@@ -7,7 +7,7 @@
     </li>
     <li class="rp__step">
       <h2 class="rp__h"><span class="rp__n" aria-hidden="true">2</span> Alcance</h2>
-      <ins-filter-bar [controls]="['campaign', 'period']" />
+      <app-ins-filter-bar [controls]="['campaign', 'period']" />
     </li>
     <li class="rp__step">
       <h2 class="rp__h"><span class="rp__n" aria-hidden="true">3</span> Audiencia</h2>
@@ -26,7 +26,7 @@
     </li>
   </ol>
 
-  <ins-panel title="5 · Vista previa y exportación" question="¿Cómo quedará el informe? Revíselo antes de enviarlo.">
+  <app-ins-panel title="5 · Vista previa y exportación" question="¿Cómo quedará el informe? Revíselo antes de enviarlo.">
     <div panel-tools class="rp__export">
       <button type="button" class="rp__btn rp__btn--main" (click)="print()">Imprimir o guardar como PDF</button>
       <button type="button" class="rp__btn" (click)="exportCsv()">Descargar datos (CSV)</button>
@@ -61,5 +61,5 @@
         </section>
       }
     </article>
-  </ins-panel>
+  </app-ins-panel>
 </div>

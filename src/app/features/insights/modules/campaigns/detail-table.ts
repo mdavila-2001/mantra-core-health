@@ -30,7 +30,7 @@ const PAGE = 8;
  * exporta. Las columnas sin base suficiente dicen «—».
  */
 @Component({
-  selector: 'ins-detail-table',
+  selector: 'app-ins-detail-table',
   imports: [Panel],
   templateUrl: './detail-table.html',
   styleUrl: './detail-table.css',

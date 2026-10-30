@@ -9,7 +9,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
  * cabecera, rotulados, para no confundirlos con los globales.
  */
 @Component({
-  selector: 'ins-panel',
+  selector: 'app-ins-panel',
   imports: [Card],
   template: `
     <app-card variant="outlined" padding="md">

@@ -35,7 +35,7 @@ interface Row {
  * sino la etapa más lejos de su benchmark.
  */
 @Component({
-  selector: 'ins-funnel-chart',
+  selector: 'app-ins-funnel-chart',
   templateUrl: './funnel-chart.html',
   styleUrl: './funnel-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

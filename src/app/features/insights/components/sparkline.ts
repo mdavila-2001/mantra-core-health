@@ -4,7 +4,7 @@ import { linePath, linear } from '../charts/chart-math';
 
 /** Línea mínima de contexto (sin ejes): da forma a la tendencia dentro de una tarjeta. */
 @Component({
-  selector: 'ins-spark',
+  selector: 'app-ins-spark',
   template: `@if (path(); as d) {
     <svg class="sp" [attr.viewBox]="'0 0 ' + w + ' ' + h" preserveAspectRatio="none" aria-hidden="true">
       <path class="sp__area" [attr.d]="area()" />

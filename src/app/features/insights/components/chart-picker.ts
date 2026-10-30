@@ -13,7 +13,7 @@ import type { ChartOption } from '../domain/viz-recommender';
  * escondidas.
  */
 @Component({
-  selector: 'ins-chart-picker',
+  selector: 'app-ins-chart-picker',
   templateUrl: './chart-picker.html',
   styleUrl: './chart-picker.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

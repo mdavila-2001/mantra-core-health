@@ -19,7 +19,7 @@ export interface Group {
  * y bigotes a 1,5 × RIC; lo que cae fuera se dibuja como punto atípico.
  */
 @Component({
-  selector: 'ins-distribution-chart',
+  selector: 'app-ins-distribution-chart',
   templateUrl: './distribution-chart.html',
   styleUrl: './distribution-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

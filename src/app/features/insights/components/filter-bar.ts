@@ -20,7 +20,7 @@ export type FilterControl = 'campaign' | 'period' | 'channel' | 'metric' | 'grai
  * pide solo los controles que le sirven.
  */
 @Component({
-  selector: 'ins-filter-bar',
+  selector: 'app-ins-filter-bar',
   imports: [Select, SegmentedControl, MultiSelect],
   templateUrl: './filter-bar.html',
   styleUrl: './filter-bar.css',

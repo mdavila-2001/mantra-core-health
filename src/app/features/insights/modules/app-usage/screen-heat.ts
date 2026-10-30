@@ -10,7 +10,7 @@ import { IGNORED_SHARE, type ScreenHeat } from '../../domain/app-usage';
  * desplazamiento: cuántas sesiones llegan a cada tramo de la pantalla.
  */
 @Component({
-  selector: 'ins-screen-heat',
+  selector: 'app-ins-screen-heat',
   templateUrl: './screen-heat.html',
   styleUrl: './screen-heat.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

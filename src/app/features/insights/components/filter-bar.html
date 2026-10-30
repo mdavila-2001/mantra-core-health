@@ -2,7 +2,7 @@
   <p class="fb__scope">Filtros globales · aplican a toda la pantalla</p>
   <div class="fb__row">
     @if (has('campaign')) {
-      <ins-multi-select class="fb__c fb__c--wide" label="Campaña" allLabel="Todas las campañas" [options]="campaignOptions" [selected]="ctx.state().campaignIds" (changed)="setCampaigns($event)" />
+      <app-ins-multi-select class="fb__c fb__c--wide" label="Campaña" allLabel="Todas las campañas" [options]="campaignOptions" [selected]="ctx.state().campaignIds" (changed)="setCampaigns($event)" />
     }
     @if (has('period')) {
       <div class="fb__c">
@@ -22,7 +22,7 @@
       }
     }
     @if (has('channel')) {
-      <ins-multi-select class="fb__c" label="Canal" allLabel="Todos los canales" [options]="channelOptions()" [selected]="selectedChannels()" (changed)="setChannels($event)" />
+      <app-ins-multi-select class="fb__c" label="Canal" allLabel="Todos los canales" [options]="channelOptions()" [selected]="selectedChannels()" (changed)="setChannels($event)" />
     }
     @if (has('metric')) {
       <div class="fb__c">

@@ -14,7 +14,7 @@ import { formatInt } from '../domain/format';
  * salió esta conclusión?» abre fuentes, periodo y método.
  */
 @Component({
-  selector: 'ins-insight',
+  selector: 'app-ins-insight',
   imports: [RouterLink],
   templateUrl: './insight-card.html',
   styleUrl: './insight-card.css',

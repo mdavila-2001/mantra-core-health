@@ -2,7 +2,7 @@
   <span class="kpi__top">
     <span class="kpi__label">{{ def().label }}@if (assessment().kpi.estimated) {<abbr class="kpi__est" title="Cifra estimada con un modelo">est.</abbr>}</span>
     @if (density() !== 'compact') {
-      <ins-status [status]="assessment().status" [short]="true" />
+      <app-ins-status [status]="assessment().status" [short]="true" />
     }
   </span>
 
@@ -42,7 +42,7 @@
 
   @if (density() === 'expanded') {
     @if (series(); as s) {
-      <ins-spark [values]="s" />
+      <app-ins-spark [values]="s" />
     }
     <span class="kpi__read">
       <strong>Decisión que permite</strong> {{ def().decision }}

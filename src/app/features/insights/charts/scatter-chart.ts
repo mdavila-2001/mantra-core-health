@@ -22,7 +22,7 @@ export interface ScatterPoint {
  * línea, una correlación no es una causa: el pie del gráfico lo recuerda.
  */
 @Component({
-  selector: 'ins-scatter-chart',
+  selector: 'app-ins-scatter-chart',
   templateUrl: './scatter-chart.html',
   styleUrl: './scatter-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

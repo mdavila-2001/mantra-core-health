@@ -8,14 +8,14 @@ import type { HealthStatus } from '../domain/insights.types';
  * app, redes). Mismo contrato: `null` dice «Sin dato» y una nota explica por qué.
  */
 @Component({
-  selector: 'ins-stat',
+  selector: 'app-ins-stat',
   imports: [StatusPill],
   template: `
     <div class="st">
       <p class="st__top">
         <span class="st__label">{{ label() }}</span>
         @if (status(); as s) {
-          <ins-status [status]="s" [short]="true" />
+          <app-ins-status [status]="s" [short]="true" />
         }
       </p>
       <p class="st__value" [class.st__value--none]="value() === null">{{ value() ?? 'Sin dato' }}</p>

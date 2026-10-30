@@ -14,7 +14,7 @@ type SortKey = 'label' | 'impressions' | 'ctr' | 'conversions' | 'cpa' | 'roas';
  * insuficiente muestra «—» y no un valor engañoso.
  */
 @Component({
-  selector: 'ins-dimension-panel',
+  selector: 'app-ins-dimension-panel',
   imports: [Panel, SegmentedControl],
   templateUrl: './dimension-panel.html',
   styleUrl: './dimension-panel.css',

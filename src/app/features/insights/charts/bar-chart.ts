@@ -27,7 +27,7 @@ interface DrawnBar {
  * de cero. Con más de 6 elementos conviene la orientación horizontal ordenada.
  */
 @Component({
-  selector: 'ins-bar-chart',
+  selector: 'app-ins-bar-chart',
   templateUrl: './bar-chart.html',
   styleUrl: './bar-chart.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

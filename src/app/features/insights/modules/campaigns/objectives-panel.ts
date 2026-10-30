@@ -17,7 +17,7 @@ const ROWS: readonly MetricId[] = ['ctr', 'conversions', 'cpa', 'roas', 'retenti
  * objetivos de varias produciría un número sin dueño.
  */
 @Component({
-  selector: 'ins-objectives-panel',
+  selector: 'app-ins-objectives-panel',
   imports: [Panel, StatusPill],
   templateUrl: './objectives-panel.html',
   styleUrl: './objectives-panel.css',

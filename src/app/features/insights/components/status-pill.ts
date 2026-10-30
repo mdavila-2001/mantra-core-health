@@ -8,7 +8,7 @@ import { HEALTH_LABELS, type HealthStatus } from '../domain/insights.types';
  * la vez: nunca solo con color (WCAG 1.4.1). Colores del trío `--st-*`.
  */
 @Component({
-  selector: 'ins-status',
+  selector: 'app-ins-status',
   template: `<span class="pill" [class]="'pill pill--' + status()"
     ><span class="pill__icon" aria-hidden="true">{{ icon() }}</span>{{ label() }}</span
   >`,

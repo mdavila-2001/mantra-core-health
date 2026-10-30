@@ -1,6 +1,6 @@
-<ins-panel title="Comparar campañas" question="¿Qué campaña rindió mejor y en qué métricas? Cada una se mide en sus propias fechas.">
+<app-ins-panel title="Comparar campañas" question="¿Qué campaña rindió mejor y en qué métricas? Cada una se mide en sus propias fechas.">
   <div panel-tools class="cmp__tools">
-    <ins-multi-select class="cmp__pick" label="Campañas a comparar" allLabel="Todas" [min]="2" [options]="campaignOptions" [selected]="ids()" (changed)="setIds($event)" />
+    <app-ins-multi-select class="cmp__pick" label="Campañas a comparar" allLabel="Todas" [min]="2" [options]="campaignOptions" [selected]="ids()" (changed)="setIds($event)" />
   </div>
 
   <div class="cmp__grid">
@@ -36,7 +36,7 @@
         <span class="cmp__label">Métrica del gráfico (solo este gráfico)</span>
         <app-select ariaLabel="Métrica de la comparación" [value]="metric()" [options]="metricOptions" (valueChange)="setMetric($event)" />
       </div>
-      <ins-bar-chart [data]="bars()" [unit]="metricDef().unit" orientation="v" [higherIsBetter]="metricDef().goodWhen !== 'down'" [ariaLabel]="'Comparación de ' + metricDef().label + ' entre campañas'" />
+      <app-ins-bar-chart [data]="bars()" [unit]="metricDef().unit" orientation="v" [higherIsBetter]="metricDef().goodWhen !== 'down'" [ariaLabel]="'Comparación de ' + metricDef().label + ' entre campañas'" />
     </div>
   </div>
-</ins-panel>
+</app-ins-panel>

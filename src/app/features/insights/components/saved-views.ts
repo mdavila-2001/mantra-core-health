@@ -34,7 +34,7 @@ function write(views: readonly SavedView[]): void {
  * direcciones de AloVida Insights, para que un valor manipulado no redirija fuera.
  */
 @Component({
-  selector: 'ins-saved-views',
+  selector: 'app-ins-saved-views',
   templateUrl: './saved-views.html',
   styleUrl: './saved-views.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

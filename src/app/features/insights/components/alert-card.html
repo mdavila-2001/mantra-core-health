@@ -7,7 +7,7 @@
   <p class="al__what">{{ alert().what }}</p>
 
   @if (alert().series.length > 1) {
-    <ins-spark [values]="alert().series" />
+    <app-ins-spark [values]="alert().series" />
   }
 
   <dl class="al__facts">
