@@ -1,10 +1,12 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   computed,
   effect,
   inject,
+  input,
   linkedSignal,
   signal,
   untracked,
@@ -154,6 +156,9 @@ function rowActionsOf(product: PharmacyProduct): readonly RowAction[] {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyProducts {
+  /** Montada como pestaña de «Catálogo»: el membrete lo pone el contenedor. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
   private readonly dialogs = inject(DialogService);
