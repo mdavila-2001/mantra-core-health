@@ -98,7 +98,8 @@ export const PEOPLE_PATTERNS: readonly RegExp[] = [
   /\bpacientes?\b/,
   /\bpersonas?\b/,
   /\bhistori(?:a|as) clinicas?\b/,
-  /\bclinic[oa]s?\b/,
+  // «clínico/clínicos» (datos clínicos). «Clínica(s)» es un tipo de organización y un anunciante legítimo.
+  /\bclinicos?\b/,
   /\bdiagnostic\w*/,
   /\brecetas?\b/,
   /\bmedicament\w*/,

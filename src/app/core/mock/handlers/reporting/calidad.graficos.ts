@@ -42,7 +42,7 @@ export function sourceStatusChart(todas: readonly FilaCatalogo[]): ChartSpec {
   return {
     id: 'calidad-estado-fuente',
     titulo: 'Indicadores por estado de la fuente',
-    subtitulo: 'Haz clic en un estado para ver solo esos indicadores',
+    subtitulo: 'Haga clic en un estado para ver solo esos indicadores',
     unidad: NUMBER_UNIT,
     datos: { tipo: 'partes', forma: 'dona', partes },
     resumenAccesible: hay

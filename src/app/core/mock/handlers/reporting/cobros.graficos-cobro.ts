@@ -179,7 +179,7 @@ function successByMethod(m: ModeloCobros): ChartSpec {
   return {
     id: 'exito-por-metodo',
     titulo: 'Éxito de pago por método',
-    subtitulo: 'Haz clic en un método para filtrar el tablero',
+    subtitulo: 'Haga clic en un método para filtrar el tablero',
     unidad: PCT,
     datos: { tipo: 'cartesiano', categorias: [...METODOS], series: [{ nombre: 'Tasa de éxito', valores: tasas, forma: 'barra' }] },
     resumenAccesible: `Barras de la tasa de éxito por método de pago: ${METODOS.map((k, i) => `${k} ${formatearValor(tasas[i], PCT)}`).join(', ')}. ${withData.length > 1 ? `El método más sólido es ${mejor.k} y el más débil, ${peor.k}.` : ''}`,

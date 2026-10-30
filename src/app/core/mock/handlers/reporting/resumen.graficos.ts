@@ -166,7 +166,7 @@ function cascada(base: BaseResumen): ChartSpec {
   }
   const reason =
     ctx.comparar === 'ninguna'
-      ? 'Elige comparar con el periodo anterior para ver qué vertical movió el ingreso.'
+      ? 'Elija comparar con el periodo anterior para ver qué vertical movió el ingreso.'
       : (base.motivoTotal ?? 'Falta el comparativo de alguna vertical.');
   return {
     id: 'cascada-ingreso',

@@ -21,7 +21,7 @@ export function campaignChart(ctx: ContextoReporte, m: Modelo): ChartSpec {
       categorias: filas.map((f) => f.campana.nombre),
       series: [{ nombre: 'Gasto', forma: 'barra', valores: filas.map((f) => aMoneda(ctx, f.gasto)) }],
     },
-    resumenAccesible: 'Las campañas ordenadas por gasto: unas pocas concentran la mayor parte de lo invertido. Haz clic en una para filtrar toda la pestaña.',
+    resumenAccesible: 'Las campañas ordenadas por gasto: unas pocas concentran la mayor parte de lo invertido. Haga clic en una para filtrar toda la pestaña.',
     filtro: { dimension: 'campana' },
     info: info({
       definicion: 'Cuánto gastó cada campaña con entrega en el periodo.',
@@ -49,7 +49,7 @@ export function advertiserChart(ctx: ContextoReporte, m: Modelo): ChartSpec {
       categorias: filas.map((f) => f.nombre),
       series: [{ nombre: 'Gasto', forma: 'barra', valores: filas.map((f) => aMoneda(ctx, f.gasto)) }],
     },
-    resumenAccesible: 'Los anunciantes ordenados por gasto: las clínicas y las aseguradoras lideran. Haz clic en uno para filtrar toda la pestaña.',
+    resumenAccesible: 'Los anunciantes ordenados por gasto: las clínicas y las aseguradoras lideran. Haga clic en uno para filtrar toda la pestaña.',
     filtro: { dimension: 'anunciante' },
     info: info({
       definicion: 'Cuánto gastó cada anunciante sumando todas sus campañas.',

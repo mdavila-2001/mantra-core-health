@@ -263,7 +263,7 @@ export class ReportAssistant {
     return {
       ...base,
       estado: 'error',
-      mensaje: 'No pude buscar en sus reportes. Inténtelo de nuevo; si sigue igual, comparte el código de la petición con soporte.',
+      mensaje: 'No pude buscar en sus reportes. Inténtelo de nuevo; si sigue igual, comparta el código de la petición con soporte.',
       requestId: viewState.status === 'error' && viewState.requestId !== 'sin-id' ? viewState.requestId : null,
       reintento,
     };
