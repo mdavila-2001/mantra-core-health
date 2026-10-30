@@ -111,6 +111,17 @@ describe('ReportingShell', () => {
     });
   });
 
+  describe('el alcance sigue a los roles', () => {
+    it('si el almacén vuelve a «plataforma» (cierre de sesión) quien no es de plataforma vuelve a «Mi organización»', async () => {
+      await montar(['REPORT_VIEWER']);
+      contexto.restablecer();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(contexto.alcance()).toBe('organizacion');
+    });
+  });
+
   describe('el conmutador de alcance', () => {
     beforeEach(async () => montar(['PLATFORM_ADMIN']));
 
@@ -246,6 +257,17 @@ describe('ReportingShell', () => {
       expect(shell.asistenteAbierto()).toBe(true);
     });
 
+    it('con el asistente como columna, un Escape que viene de otro control no lo cierra', async () => {
+      await pulsar(byTestId('reporting-asistente-boton'));
+      const buscador = document.createElement('input');
+      q('main')?.appendChild(buscador);
+
+      buscador.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(shell.asistenteAbierto()).toBe(true);
+    });
+
     it('abrirlo no cambia lo que hay en el centro', async () => {
       await pulsar(byTestId('reporting-asistente-boton'));
 
@@ -269,6 +291,24 @@ describe('ReportingShell', () => {
 
       await pulsar(byTestId('reporting-asistente-cerrar'));
       expect(q('main')?.hasAttribute('inert')).toBe(false);
+    });
+
+    it('la cabecera tampoco recibe foco detrás de la hoja: menú, marca, portales, alcance, botón y «Saltar»', async () => {
+      const consulta = { matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() };
+      vi.stubGlobal('matchMedia', () => consulta);
+      await montar(['SUPERADMIN', 'REPORTING_ADMIN']);
+      await pulsar(byTestId('reporting-asistente-boton'));
+
+      for (const selector of ['.rep__saltar', '.rep__menu', '.rep__marca', 'app-segmented-control', '.rep__portales', '[data-testid="reporting-asistente-boton"]']) {
+        expect(q(selector)?.hasAttribute('inert'), selector).toBe(true);
+      }
+      // Lo único tabulable es la propia hoja.
+      expect(q('#reporting-asistente')?.hasAttribute('inert')).toBe(false);
+
+      await pulsar(byTestId('reporting-asistente-cerrar'));
+      for (const selector of ['.rep__saltar', '.rep__menu', '.rep__marca', '.rep__portales', '[data-testid="reporting-asistente-boton"]']) {
+        expect(q(selector)?.hasAttribute('inert'), selector).toBe(false);
+      }
     });
 
     it('con el asistente al lado (pantalla ancha) nada queda inerte', async () => {

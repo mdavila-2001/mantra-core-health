@@ -11,20 +11,20 @@ const TABLA: ChartTableData = {
   ],
 };
 
-const sinBom = (csv: string): string => csv.replace(/^\uFEFF/, '');
+const withoutBom = (csv: string): string => csv.replace(/^\uFEFF/, '');
 
 describe('tableToCsv', () => {
   it('sin unidad conserva el encabezado tal cual', () => {
-    expect(sinBom(tableToCsv(TABLA)).split('\r\n')[0]).toBe('Categoría,Ingreso');
+    expect(withoutBom(tableToCsv(TABLA)).split('\r\n')[0]).toBe('Categoría,Ingreso');
   });
 
   it('con unidad, cada columna de valores la lleva en el encabezado y la de rótulos no', () => {
-    const csv = sinBom(tableToCsv(TABLA, { tipo: 'moneda', moneda: 'BOB' }));
+    const csv = withoutBom(tableToCsv(TABLA, { tipo: 'moneda', moneda: 'BOB' }));
     expect(csv.split('\r\n')[0]).toBe('Categoría,Ingreso (BOB)');
   });
 
   it('un valor ausente sale vacío, no como 0', () => {
-    const filas = sinBom(tableToCsv(TABLA, { tipo: 'numero' })).split('\r\n');
+    const filas = withoutBom(tableToCsv(TABLA, { tipo: 'numero' })).split('\r\n');
     expect(filas[2]).toBe('Esencial,');
   });
 

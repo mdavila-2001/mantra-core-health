@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -130,9 +131,13 @@ export class ReportingShell {
   protected readonly fondoInerte = computed(() => this.asistenteAbierto() && this.hojaSuperpuesta());
 
   constructor() {
-    if (!this.puedeElegirAlcance()) {
-      this.contexto.alcance.set('organizacion');
-    }
+    // Reactivo y no solo al construir: `restablecer()` (al cerrar sesión) devuelve el alcance a «plataforma» y
+    // quien no es de plataforma no debe ver ni consultar ese alcance ni por un instante.
+    effect(() => {
+      if (!this.puedeElegirAlcance() && this.contexto.alcance() !== 'organizacion') {
+        this.contexto.alcance.set('organizacion');
+      }
+    });
     const consulta = this.documento.defaultView?.matchMedia?.('(max-width: 1024px)');
     if (consulta !== undefined) {
       this.hojaSuperpuesta.set(consulta.matches);
@@ -192,7 +197,14 @@ export class ReportingShell {
       return;
     }
     if (this.asistenteAbierto()) {
-      this.alternarAsistente();
+      // Como columna al lado, el asistente no es modal: un Escape que viene de otro control (limpiar el
+      // buscador, un filtro) no es para él. Solo se cierra con el foco dentro o cuando es una hoja encima.
+      const panel = this.panelAsistente()?.nativeElement;
+      const boton = this.botonAsistente()?.nativeElement;
+      const suyo = origen !== null && (panel?.contains(origen) === true || origen === boton);
+      if (suyo || this.hojaSuperpuesta()) {
+        this.alternarAsistente();
+      }
     } else if (this.menuAbierto()) {
       this.menuAbierto.set(false);
     }

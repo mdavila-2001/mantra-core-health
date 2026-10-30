@@ -145,13 +145,17 @@ describe('ChartPanel · menú Más', () => {
     expect(document.activeElement).toBe(m.item('Exportar CSV'));
   });
 
-  it('Tab saca el foco del menú y lo cierra, sin devolver el foco al botón', async () => {
+  it('Tab cierra el menú y deja el foco en el botón «Más» (no en una opción que se va a destruir)', async () => {
     const m = await mount();
     await openMenu(m);
-    m.root.querySelector('[role="menu"]')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(m.item('Ver en grande'));
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    m.item('Ver en grande')?.dispatchEvent(tab);
     await m.fixture.whenStable();
+    // Sin `preventDefault` el navegador movería el foco a la opción siguiente y el menú se destruiría con él dentro.
+    expect(tab.defaultPrevented).toBe(true);
     expect(m.root.querySelector('[role="menu"]')).toBeNull();
-    expect(m.byId('chart-more')?.getAttribute('aria-expanded')).toBe('false');
+    expect(document.activeElement).toBe(m.byId('chart-more'));
   });
 
   it('Home y End van a la primera y a la última opción; la flecha hacia arriba desde el contenedor va a la última', async () => {
@@ -207,13 +211,13 @@ describe('ChartPanel · menú Más', () => {
     it('no escribe ninguno de los dos motivos cuando el gráfico sí trae la función', async () => {
       const m = await mount();
       expect(m.byId('chart-no-info')).toBeNull();
-      const conVelas = TestBed.createComponent(ChartPanel);
-      conVelas.componentRef.setInput('spec', {
+      const withCandles = TestBed.createComponent(ChartPanel);
+      withCandles.componentRef.setInput('spec', {
         ...SPEC,
         velas: { explicacion: 'e', velas: [{ fecha: '2026-10-01', apertura: 1, cierre: 2, minimo: 1, maximo: 2 }] },
       });
-      await conVelas.whenStable();
-      expect((conVelas.nativeElement as HTMLElement).querySelector('[data-testid="chart-no-candles"]')).toBeNull();
+      await withCandles.whenStable();
+      expect((withCandles.nativeElement as HTMLElement).querySelector('[data-testid="chart-no-candles"]')).toBeNull();
     });
   });
 });

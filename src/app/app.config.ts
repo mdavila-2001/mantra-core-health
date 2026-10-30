@@ -157,9 +157,10 @@ export const appConfig: ApplicationConfig = {
       useFactory: () => {
         const injector = inject(Injector);
         return () =>
-          void import('./core/notifications/web-push.service').then((m) =>
-            injector.get(m.WebPushService).forgetBrowser(),
-          );
+          void import('./core/notifications/web-push.service')
+            .then((m) => injector.get(m.WebPushService).forgetBrowser())
+            // Mismo criterio que el limpiador de arriba: sin red el chunk puede no cargar y la sesión ya se cerró.
+            .catch(() => undefined);
       },
     },
     // Se recupera la sesión ANTES de que el router evalúe el guard. Si no se

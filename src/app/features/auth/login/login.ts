@@ -15,7 +15,7 @@ import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
 import {
-  destinoDeEntrada,
+  entryDestination,
 } from '../../reporting/reporting-access';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
@@ -214,8 +214,8 @@ export class Login {
       return requested;
     }
     // Con acceso a los dos portales hay que elegir; con uno solo se entra derecho a ese
-    // (ver `destinoDeEntrada`). Quien no tiene ninguno de los dos entra como siempre.
-    return destinoDeEntrada(this.auth.roles());
+    // (ver `entryDestination`). Quien no tiene ninguno de los dos entra como siempre.
+    return entryDestination(this.auth.roles());
   }
 
   /**

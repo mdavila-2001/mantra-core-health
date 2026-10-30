@@ -16,7 +16,7 @@ import {
 import type { ECElementEvent } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 
-import { formatearFecha } from '@core/data-access/reporting/reporting-format';
+import { formatDate } from '@core/data-access/reporting/reporting-format';
 import { ETIQUETA_DIMENSION } from '@core/data-access/reporting/reporting-labels';
 import type { ChartSpec, FiltroActivo } from '@core/data-access/reporting/reporting.types';
 import { nextControlId } from '@shared/forms/form-control.context';
@@ -173,7 +173,7 @@ export class ChartPanel {
 
   /** Las fechas ISO de la primera columna se leen «6 oct 2026»; el CSV conserva el ISO. */
   protected fecha(celda: string): string {
-    return formatearFecha(celda, true);
+    return formatDate(celda, true);
   }
 
   /** «Sin filtro por clic: Es una serie…» se lee mal con mayúscula tras los dos puntos. */
@@ -213,8 +213,10 @@ export class ChartPanel {
       return;
     }
     if (evento.key === 'Tab') {
-      // Tab saca el foco del menú: se cierra, sin devolver el foco (seguiría a donde iba la persona).
-      this.cerrarMenu(false);
+      // Si Tab siguiera su curso, el foco pasaría a la opción siguiente y luego el menú se destruiría con el
+      // foco dentro (cae al body). Se cierra y el foco vuelve al botón «Más»: de ahí la persona sigue.
+      evento.preventDefault();
+      this.cerrarMenu(true);
       return;
     }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(evento.key)) {

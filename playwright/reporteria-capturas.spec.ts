@@ -66,11 +66,19 @@ function vigilar(page: Page, pantalla: () => string): void {
     }
   });
   page.on('pageerror', (e) => {
-    hallazgos.push({ pantalla: pantalla(), tipo: 'error-de-pagina', detalle: e.message.slice(0, 300) });
+    hallazgos.push({
+      pantalla: pantalla(),
+      tipo: 'error-de-pagina',
+      detalle: e.message.slice(0, 300),
+    });
   });
   page.on('response', (r) => {
     if (r.status() >= 400) {
-      hallazgos.push({ pantalla: pantalla(), tipo: 'red', detalle: `${r.status()} ${r.url().slice(0, 200)}` });
+      hallazgos.push({
+        pantalla: pantalla(),
+        tipo: 'red',
+        detalle: `${r.status()} ${r.url().slice(0, 200)}`,
+      });
     }
   });
 }
@@ -153,7 +161,9 @@ async function esperarLayoutEstable(page: Page): Promise<void> {
         const firma = (): string =>
           [
             document.documentElement.scrollHeight,
-            ...Array.from(document.querySelectorAll('main, [data-testid="portal-reporteria"], app-chart-panel')).map((e) => {
+            ...Array.from(
+              document.querySelectorAll('main, [data-testid="portal-reporteria"], app-chart-panel'),
+            ).map((e) => {
               const r = e.getBoundingClientRect();
               return `${Math.round(r.x)},${Math.round(r.y)},${Math.round(r.width)},${Math.round(r.height)}`;
             }),
@@ -190,13 +200,13 @@ for (const vp of VIEWPORTS) {
         pantalla = 'selector';
         await expect(page.getByTestId('portal-reporteria')).toBeVisible({ timeout: 30_000 });
         await expect(page.getByTestId('portal-administracion')).toBeVisible();
-        await capturar(page, `${vp.nombre}-${tema.nombre}-01-selector-de-portal`);
+        await capturar(page, `${vp.nombre}-${tema.nombre}-01-portal-selector`);
 
         await page.getByTestId('portal-reporteria').click();
         pantalla = 'grid';
         await expect(page.getByTestId('report-grid')).toBeVisible({ timeout: 30_000 });
         await expect(page.getByTestId('report-grid-loading')).toHaveCount(0, { timeout: 30_000 });
-        await capturar(page, `${vp.nombre}-${tema.nombre}-02-grid-de-reportes`);
+        await capturar(page, `${vp.nombre}-${tema.nombre}-02-reports-grid`);
 
         let n = 3;
         for (const tab of TABS) {
@@ -245,11 +255,11 @@ for (const tema of TEMAS) {
       await primero.screenshot({ path: join(CAPTURAS, `${prefijo}-01-tooltip.png`) });
 
       // 6) Cómo se calcula.
-      pantalla = 'como-se-calcula';
+      pantalla = 'how-calculated';
       const withInfo = panelWith(page, { has: page.getByTestId('chart-how-calculated') });
       await withInfo.getByTestId('chart-how-calculated').click();
       await expect(withInfo.getByTestId('chart-info')).toBeVisible();
-      await withInfo.screenshot({ path: join(CAPTURAS, `${prefijo}-02-como-se-calcula.png`) });
+      await withInfo.screenshot({ path: join(CAPTURAS, `${prefijo}-02-how-calculated.png`) });
 
       // 7) Velas.
       pantalla = 'velas';
@@ -262,7 +272,7 @@ for (const tema of TEMAS) {
       await withCandles.getByRole('radio', { name: 'Gráfico' }).click();
 
       // 5) Clic que filtra: el KPI de MRR cambia y aparece la ficha del filtro.
-      pantalla = 'filtro-por-clic';
+      pantalla = 'click-filter';
       const kpiAntes = (await page.getByTestId('kpi-mrr').first().innerText()).trim();
       const filtrable = panelWith(page, { hasText: 'Haga clic en un elemento del gráfico' });
       await filtrable.scrollIntoViewIfNeeded();
@@ -276,24 +286,35 @@ for (const tema of TEMAS) {
           }
           const x = r.x + r.width / 2;
           const y = r.y + r.height / 2;
-          if (document.elementFromPoint(x, y) === e || e.contains(document.elementFromPoint(x, y))) {
+          if (
+            document.elementFromPoint(x, y) === e ||
+            e.contains(document.elementFromPoint(x, y))
+          ) {
             return { x, y };
           }
         }
         return null;
       });
-      expect(objetivo, 'no se encontró un elemento clicable en el gráfico filtrable').not.toBeNull();
+      expect(
+        objetivo,
+        'no se encontró un elemento clicable en el gráfico filtrable',
+      ).not.toBeNull();
       if (objetivo !== null) {
         await page.mouse.move(objetivo.x, objetivo.y);
         await page.mouse.click(objetivo.x, objetivo.y);
       }
       await expect(page.getByTestId('filter-chip').first()).toBeVisible({ timeout: 15_000 });
       // La ficha nombra un plan real, no la fecha del eje (regresión: salía «Plan: 2026-10-01»).
-      await expect(page.getByTestId('filter-chip').first()).toContainText(/Plan: (Esencial|Profesional|Clínica)/);
+      await expect(page.getByTestId('filter-chip').first()).toContainText(
+        /Plan: (Esencial|Profesional|Clínica)/,
+      );
       await page.waitForTimeout(600);
       const kpiDespues = (await page.getByTestId('kpi-mrr').first().innerText()).trim();
       expect(kpiDespues, 'el filtro no movió el MRR').not.toBe(kpiAntes);
-      await page.screenshot({ path: join(CAPTURAS, `${prefijo}-04-filtro-por-clic.png`), fullPage: false });
+      await page.screenshot({
+        path: join(CAPTURAS, `${prefijo}-04-click-filter.png`),
+        fullPage: false,
+      });
       await page.getByTestId('filters-clear').click();
 
       // Ver en grande + tabla de respaldo.
@@ -323,7 +344,9 @@ for (const tema of TEMAS) {
       await entrada.fill('dame los pacientes de la clínica');
       await entrada.press('Enter');
       await page.waitForTimeout(800);
-      await page.screenshot({ path: join(CAPTURAS, `${prefijo}-08-asistente-rechaza-personas.png`) });
+      await page.screenshot({
+        path: join(CAPTURAS, `${prefijo}-08-asistente-rechaza-personas.png`),
+      });
     } finally {
       await context.close();
     }
@@ -332,29 +355,39 @@ for (const tema of TEMAS) {
 
 const ESTADOS = ['vacio', 'error', 'sin-permiso', 'atrasado'] as const;
 for (const viewState of ESTADOS) {
-  for (const vp of [VIEWPORTS[0], VIEWPORTS[2]]) {
-    test(`estado ${viewState} · ${vp.nombre} · claro`, async ({ browser }) => {
-      const { context, page } = await newSession(browser, vp.ancho, vp.alto, 'light', viewState);
-      let pantalla = 'login';
-      vigilar(page, () => `estado-${viewState}-${vp.nombre}-${pantalla}`);
-      try {
-        await signInAsAdmin(page);
-        await page.getByTestId('portal-reporteria').click();
-        pantalla = 'grid';
-        await page.waitForTimeout(1500);
-        await capturar(page, `${vp.nombre}-claro-estado-${viewState}-grid`);
-        pantalla = 'dashboard';
-        await page.goto(`${REPORTS}/commercial/suscripciones`);
-        await page.waitForTimeout(1800);
-        await capturar(page, `${vp.nombre}-claro-estado-${viewState}-dashboard`);
-      } finally {
-        await context.close();
-      }
-    });
+  for (const vp of VIEWPORTS) {
+    for (const tema of TEMAS) {
+      test(`estado ${viewState} · ${vp.nombre} · ${tema.nombre}`, async ({ browser }) => {
+        const { context, page } = await newSession(
+          browser,
+          vp.ancho,
+          vp.alto,
+          tema.valor,
+          viewState,
+        );
+        let pantalla = 'login';
+        vigilar(page, () => `estado-${viewState}-${vp.nombre}-${tema.nombre}-${pantalla}`);
+        try {
+          await signInAsAdmin(page);
+          await page.getByTestId('portal-reporteria').click();
+          pantalla = 'grid';
+          await page.waitForTimeout(1500);
+          await capturar(page, `${vp.nombre}-${tema.nombre}-state-${viewState}-grid`);
+          pantalla = 'dashboard';
+          await page.goto(`${REPORTS}/commercial/suscripciones`);
+          await page.waitForTimeout(1800);
+          await capturar(page, `${vp.nombre}-${tema.nombre}-state-${viewState}-dashboard`);
+        } finally {
+          await context.close();
+        }
+      });
+    }
   }
 }
 
-test('teclado · foco visible y Escape que no cierra de más · escritorio · claro', async ({ browser }) => {
+test('teclado · foco visible y Escape que no cierra de más · escritorio · claro', async ({
+  browser,
+}) => {
   const { context, page } = await newSession(browser, 1440, 900, 'light');
   let pantalla = 'login';
   vigilar(page, () => `teclado-${pantalla}`);
@@ -369,7 +402,7 @@ test('teclado · foco visible y Escape que no cierra de más · escritorio · cl
     await page.getByTestId('reporting-asistente-boton').click();
     const entrada = page.getByTestId('reporting-asistente').getByRole('textbox');
     await expect(entrada).toBeFocused();
-    await capturar(page, 'escritorio-claro-teclado-01-foco-en-el-asistente');
+    await capturar(page, 'escritorio-claro-teclado-01-focus-in-assistant');
 
     // El menú «Más» se opera con teclado: Enter lo abre y el foco entra en la primera opción.
     pantalla = 'menu-mas';
@@ -380,6 +413,13 @@ test('teclado · foco visible y Escape que no cierra de más · escritorio · cl
     await expect(page.getByRole('menuitem', { name: 'Ver en grande' })).toBeFocused();
     await page.screenshot({ path: join(CAPTURAS, 'escritorio-claro-teclado-02-menu-mas.png') });
 
+    // Tab dentro del menú lo cierra y deja el foco en «Más» (no en el body).
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('menu')).toHaveCount(0);
+    await expect(panel.getByTestId('chart-more')).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('menuitem', { name: 'Ver en grande' })).toBeFocused();
+
     // «Ver en grande» y Escape: se cierra el diálogo, NO el asistente, y el foco vuelve al botón «Más».
     pantalla = 'escape';
     await page.keyboard.press('Enter');
@@ -388,13 +428,17 @@ test('teclado · foco visible y Escape que no cierra de más · escritorio · cl
     await expect(page.getByTestId('content-dialog')).toBeHidden();
     await expect(page.getByTestId('reporting-asistente')).toBeVisible();
     await expect(panel.getByTestId('chart-more')).toBeFocused();
-    await page.screenshot({ path: join(CAPTURAS, 'escritorio-claro-teclado-03-escape-conserva-el-asistente.png') });
+    await page.screenshot({
+      path: join(CAPTURAS, 'escritorio-claro-teclado-03-escape-keeps-assistant.png'),
+    });
   } finally {
     await context.close();
   }
 });
 
-test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte', async ({ browser }) => {
+test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte', async ({
+  browser,
+}) => {
   const { context, page } = await newSession(browser, 390, 844, 'light');
   let pantalla = 'login';
   vigilar(page, () => `asistente-movil-${pantalla}`);
@@ -407,13 +451,41 @@ test('asistente como hoja superpuesta · móvil · claro: el fondo queda inerte'
     await page.getByTestId('reporting-asistente-boton').click();
     await expect(page.getByTestId('reporting-asistente')).toBeVisible();
     await expect(page.locator('main')).toHaveAttribute('inert', '');
+    await expect(page.locator('nav#reporting-nav')).toHaveAttribute('inert', '');
+    await expect(page.locator('.rep__cabecera [inert]').first()).toBeAttached();
+    // Ida y vuelta con Tab y Shift+Tab: el foco solo puede estar en la hoja o fuera de la página, nunca en un
+    // control escondido detrás de ella (cabecera, navegación, contenido).
+    const enLaHojaOFuera = (): Promise<{ dentro: boolean; quien: string }> =>
+      page.evaluate(() => {
+        const activo = document.activeElement;
+        const dentro =
+          activo === null ||
+          activo === document.body ||
+          activo.closest('#reporting-asistente') !== null ||
+          // El aviso «Datos de prueba» es de la maqueta, no del portal: queda fuera de la hoja a propósito.
+          activo.closest('app-mock-banner') !== null;
+        const quien = `<${activo?.tagName.toLowerCase()}> «${(activo?.textContent ?? '').trim().slice(0, 40)}»`;
+        return { dentro, quien };
+      });
+    for (let i = 0; i < 8; i += 1) {
+      await page.keyboard.press('Shift+Tab');
+      const f = await enLaHojaOFuera();
+      expect(f.dentro, `Shift+Tab #${i + 1} → ${f.quien}`).toBe(true);
+    }
+    for (let i = 0; i < 12; i += 1) {
+      await page.keyboard.press('Tab');
+      const f = await enLaHojaOFuera();
+      expect(f.dentro, `Tab #${i + 1} → ${f.quien}`).toBe(true);
+    }
     await capturar(page, 'movil-claro-interaccion-asistente-abierto');
   } finally {
     await context.close();
   }
 });
 
-test('autorización negativa · una cuenta sin reportería no entra al portal', async ({ browser }) => {
+test('autorización negativa · una cuenta sin reportería no entra al portal', async ({
+  browser,
+}) => {
   const { context, page } = await newSession(browser, 1440, 900, 'light');
   vigilar(page, () => 'sin-permiso-ruta');
   try {

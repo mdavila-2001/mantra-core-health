@@ -21,7 +21,7 @@ const PESTANAS = {
   calidad: construirCalidad,
 } as const satisfies Record<VerticalReporte, (ctx: ContextoReporte) => unknown>;
 
-const FECHA = /^\d{4}-\d{2}(-\d{2})?$/;
+const DATE_PATTERN = /^\d{4}-\d{2}(-\d{2})?$/;
 
 describe('filtro por clic de los gráficos', () => {
   for (const [nombre, construir] of Object.entries(PESTANAS)) {
@@ -32,7 +32,7 @@ describe('filtro por clic de los gráficos', () => {
         // Regresión: «Ingreso por plan» filtraba «plan = 2026-10-01» al hacer clic en una barra.
         for (const g of graficos) {
           const d = g.datos;
-          if (g.filtro === null || d.tipo !== 'cartesiano' || !d.categorias.every((c) => FECHA.test(c))) {
+          if (g.filtro === null || d.tipo !== 'cartesiano' || !d.categorias.every((c) => DATE_PATTERN.test(c))) {
             continue;
           }
           expect(g.filtro.valorDe, `${g.id} tiene un eje de fechas y filtra por «${g.filtro.dimension}»`).toBe('serie');

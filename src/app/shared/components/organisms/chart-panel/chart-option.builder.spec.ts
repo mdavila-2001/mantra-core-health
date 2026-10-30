@@ -182,7 +182,10 @@ describe('construirOpciones', () => {
       const vacia = cells(HEAT).find((d) => d.sinDato === true);
       expect(vacia?.itemStyle?.color).toBe(TEMA.rejilla);
       expect(vacia?.label.formatter).toBe('Sin dato');
-      expect(vacia?.label.show).toBe(true);
+      // La celda no decide si su texto se ve: lo decide la serie (visible con pocas celdas, apagado en un lienzo
+      // angosto). Con `show: true` propio, «Sin dato» sobrevivía al `media` y se amontonaba en el teléfono.
+      expect(vacia?.label.show).toBeUndefined();
+      expect(at(build(HEAT), 'series.0.label.show')).toBe(true);
     });
 
     it('el tooltip de una celda sin dato dice «Sin dato» y no el número de relleno', () => {
@@ -220,7 +223,7 @@ describe('construirOpciones', () => {
 });
 
 describe('clickedValue', () => {
-  const POR_DIA: DatosGrafico = {
+  const PER_DAY: DatosGrafico = {
     tipo: 'cartesiano',
     categorias: ['2026-10-01', '2026-10-02'],
     series: [
@@ -231,16 +234,16 @@ describe('clickedValue', () => {
   const EVENTO = { name: '2026-10-02', seriesName: 'Pro' };
 
   it('por omisión el clic devuelve la categoría del eje', () => {
-    expect(clickedValue(POR_DIA, EVENTO)).toBe('2026-10-02');
-    expect(clickedValue(POR_DIA, EVENTO, { dimension: 'plan' })).toBe('2026-10-02');
+    expect(clickedValue(PER_DAY, EVENTO)).toBe('2026-10-02');
+    expect(clickedValue(PER_DAY, EVENTO, { dimension: 'plan' })).toBe('2026-10-02');
   });
 
   it('con valorDe «serie» devuelve la serie: filtrar «plan = 2026-10-02» no significaría nada', () => {
-    expect(clickedValue(POR_DIA, EVENTO, { dimension: 'plan', valorDe: 'serie' })).toBe('Pro');
+    expect(clickedValue(PER_DAY, EVENTO, { dimension: 'plan', valorDe: 'serie' })).toBe('Pro');
   });
 
   it('sin nombre de serie no inventa un valor', () => {
-    expect(clickedValue(POR_DIA, { name: 'x' }, { dimension: 'plan', valorDe: 'serie' })).toBeNull();
+    expect(clickedValue(PER_DAY, { name: 'x' }, { dimension: 'plan', valorDe: 'serie' })).toBeNull();
   });
 });
 
@@ -311,6 +314,23 @@ describe('correcciones de lectura (revisión visual)', () => {
     expect(eje('Inicio')).toBe('Inicio\n1 k');
     expect(at(o, 'series.1.barMinHeight')).toBe(3);
     expect(at(o, 'series.2.barMinHeight')).toBe(3);
+  });
+
+  it('en un lienzo angosto la cascada escribe nombre y valor en UNA línea (dos líneas inclinadas se pisan)', () => {
+    media({});
+    const raw = buildRaw({ tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 1000, total: true }, { nombre: 'Sube', valor: 5 }] });
+    const angosto = at(raw, 'media.0.option.xAxis.axisLabel.formatter') as (v: string) => string;
+    const ancho = at(raw, 'baseOption.xAxis.axisLabel.formatter') as (v: string) => string;
+    expect(angosto('Sube')).toBe('Sube +5');
+    expect(ancho('Sube')).toBe('Sube\n+5');
+  });
+
+  it('con 7 pasos la cascada reparte el ancho: cada nombre mide menos que con 3', () => {
+    media({});
+    const pasos = (n: number): DatosGrafico => ({ tipo: 'cascada', pasos: Array.from({ length: n }, (_, i) => ({ nombre: `Paso ${i}`, valor: i + 1 })) });
+    const ancho = (n: number) => at(build(pasos(n)), 'xAxis.axisLabel.width') as number;
+    expect(ancho(7)).toBeLessThan(96);
+    expect(ancho(7)).toBeLessThan(ancho(3));
   });
 
   it('el embudo en un lienzo angosto deja sitio a la leyenda y parte la etiqueta', () => {

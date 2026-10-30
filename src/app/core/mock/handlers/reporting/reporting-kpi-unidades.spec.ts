@@ -9,7 +9,7 @@ import { construirResumen } from './resumen.dataset';
 
 const CTX: ContextoReporte = { periodo: '30d', comparar: 'ninguna', moneda: 'BOB', alcance: 'plataforma', filtros: [] };
 const BOB = { tipo: 'moneda', moneda: 'BOB' };
-const NUMERO = { tipo: 'numero' };
+const NUMBER_UNIT = { tipo: 'numero' };
 
 function kpi(kpis: readonly KpiSpec[], id: string): KpiSpec {
   const k = kpis.find((x) => x.id === id);
@@ -28,11 +28,11 @@ describe('unidades del numerador y denominador de los KPI', () => {
     for (const id of ['cpm', 'cpa']) {
       const k = kpi(pub, id);
       expect(k.unidadNumerador, id).toEqual(BOB);
-      expect(k.unidadDenominador, id).toEqual(NUMERO);
+      expect(k.unidadDenominador, id).toEqual(NUMBER_UNIT);
     }
     const cac = kpi(construirAdquisicion(CTX).kpis, 'cac');
     expect(cac.unidadNumerador).toEqual(BOB);
-    expect(cac.unidadDenominador).toEqual(NUMERO);
+    expect(cac.unidadDenominador).toEqual(NUMBER_UNIT);
   });
 
   it('una tasa o razón de importes lleva moneda en los dos lados', () => {
