@@ -1,0 +1,171 @@
+<app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
+  @if (scope.hasSeveral()) {
+    <div class="entity-import__pharmacy">
+      <app-form-field label="Farmacia" hint="El archivo se carga en esta farmacia.">
+        <app-select
+          [options]="scope.selectOptions()"
+          [value]="scope.pharmacyId()"
+          (valueChange)="scope.choose($event)"
+          [disabled]="phase() === 'applying'"
+          placeholder="Elija su farmacia"
+        />
+      </app-form-field>
+    </div>
+  }
+
+  @if (scope.pharmacyId() !== null) {
+    <app-card class="entity-import" padding="lg" [attr.data-testid]="'entity-import-' + entity()">
+      <div class="entity-import__panel">
+        <div class="entity-import__upload">
+          <div class="entity-import__main">
+            <h2 class="entity-import__subtitle">{{ copy().title }}</h2>
+            <app-alert tone="info" data-testid="entity-import-note">{{ copy().note }}</app-alert>
+            <p class="entity-import__secondary">
+              Un CSV con una fila por registro, hasta 1000 por archivo. Si trabaja en Excel:
+              Archivo → Guardar como → CSV UTF-8. Al subirlo, el servidor revisa cada fila sin
+              guardar nada; recién «Aplicar» escribe.
+            </p>
+
+            <app-form-field label="¿Qué hago con las filas del archivo?" [hint]="modeHint()">
+              <app-select
+                [options]="modeOptions"
+                [value]="mode()"
+                (valueChange)="setMode($event)"
+                [disabled]="phase() === 'applying' || applied()"
+                ariaLabel="Qué hacer con las filas del archivo"
+              />
+            </app-form-field>
+
+            <app-file-input
+              label="Elegir archivo CSV"
+              accept=".csv"
+              [maxSizeBytes]="maxBytes"
+              [maxFiles]="1"
+              [disabled]="phase() === 'applying' || phase() === 'previewing'"
+              [files]="files()"
+              (filesChange)="onFilesChange($event)"
+              (rejected)="showRejection($event)"
+              testId="entity-import-file"
+            />
+
+            @if (fileError(); as error) {
+              <app-alert tone="error" title="No se puede usar este archivo" data-testid="entity-import-file-error">
+                {{ error }}
+              </app-alert>
+            }
+          </div>
+
+          <aside class="entity-import__help" aria-labelledby="entity-import-columns">
+            <h2 id="entity-import-columns" class="entity-import__subtitle">Las columnas</h2>
+            <dl class="entity-import__columns">
+              @for (column of columns(); track column.header) {
+                <div>
+                  <dt><code>{{ column.header }}</code></dt>
+                  <dd>{{ column.description }}</dd>
+                </div>
+              }
+            </dl>
+            <button
+              app-button
+              variant="outline"
+              type="button"
+              (clicked)="downloadTemplate()"
+              data-testid="entity-import-template"
+            >
+              Descargar plantilla
+            </button>
+          </aside>
+        </div>
+
+        @if (reading(); as current) {
+          <section class="entity-import__review" aria-labelledby="entity-import-review-title" data-testid="entity-import-review">
+            <h2 id="entity-import-review-title" class="entity-import__subtitle">
+              {{ applied() ? 'Resultado' : 'Vista previa del servidor' }}
+              <span class="entity-import__secondary entity-import__inline">· {{ fileName() }}</span>
+            </h2>
+
+            @switch (phase()) {
+              @case ('previewing') {
+                <p class="entity-import__secondary" role="status">
+                  Consultando al servidor qué pasaría con cada fila. Todavía no se guarda nada.
+                </p>
+              }
+              @case ('applying') {
+                <p class="entity-import__secondary" role="status">
+                  Aplicando {{ results().length }} de {{ sendableCount() }}… No cierre esta pestaña hasta que termine.
+                </p>
+              }
+            }
+
+            @if (current.ignored.length > 0) {
+              <app-alert tone="info" title="Columnas que no se cargan" data-testid="entity-import-ignored">
+                {{ current.ignored.join(', ') }}: no son de esta plantilla, así que se ignoran.
+              </app-alert>
+            }
+
+            @if (failure(); as message) {
+              <app-alert
+                tone="error"
+                [title]="applied() ? 'La carga se cortó' : 'No pudimos pedir la vista previa'"
+                data-testid="entity-import-failure"
+              >
+                {{ message }}
+                @if (applied()) {
+                  Lo que ya se aplicó se cuenta abajo; las filas «Sin enviar» no llegaron al servidor.
+                }
+              </app-alert>
+            }
+
+            <div class="entity-import__figures" role="status" data-testid="entity-import-figures">
+              <p><strong>{{ counts().created }}</strong> {{ applied() ? 'creadas' : 'se crearían' }}</p>
+              <p><strong>{{ counts().updated }}</strong> {{ applied() ? 'actualizadas' : 'se actualizarían' }}</p>
+              <p><strong>{{ counts().unchanged }}</strong> sin cambios</p>
+              <p><strong>{{ counts().rejected }}</strong> rechazadas por el servidor</p>
+              @if (blockedCount() > 0) {
+                <p><strong>{{ blockedCount() }}</strong> no enviadas por errores del archivo</p>
+              }
+            </div>
+
+            <app-data-table
+              [caption]="applied() ? 'Qué pasó con cada fila del archivo' : 'Qué pasaría con cada fila del archivo'"
+              [state]="rows()"
+              [columns]="tableColumns()"
+              [trackBy]="rowKey"
+              maxHeight="28rem"
+              data-testid="entity-import-rows"
+            />
+
+            <div class="entity-import__footer">
+              <button app-button variant="ghost" type="button" [disabled]="phase() === 'applying'" (clicked)="reset()">
+                Importar otro archivo
+              </button>
+              @if (applied()) {
+                <button app-button type="button" (clicked)="viewDone()" data-testid="entity-import-done">
+                  {{ copy().done.label }}
+                </button>
+              } @else {
+                <button
+                  app-button
+                  type="button"
+                  [disabled]="phase() !== 'preview' || failure() !== null || sendableCount() === 0"
+                  (clicked)="apply()"
+                  data-testid="entity-import-apply"
+                >
+                  Aplicar {{ sendableCount() }} {{ sendableCount() === 1 ? 'fila' : 'filas' }}
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    </app-card>
+  }
+</app-view-state-host>
+
+<ng-template #outcomeCell let-row>
+  <app-badge [variant]="badgeOf(row.outcome).variant">{{ badgeOf(row.outcome).label }}</app-badge>
+</ng-template>
+
+<ng-template #messageCell let-row>
+  <span class="entity-import__message">{{ row.message }}</span>
+</ng-template>
