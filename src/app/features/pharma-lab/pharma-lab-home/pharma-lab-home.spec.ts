@@ -138,7 +138,7 @@ describe('PharmaLabHome', () => {
     const aviso = (fixture.nativeElement as HTMLElement).querySelector(
       '[data-testid="unlink-result"]',
     );
-    expect(aviso?.textContent).toContain('Escribí el motivo');
+    expect(aviso?.textContent).toContain('Escriba el motivo');
   });
 
   it('desvincula con motivo y muestra qué se revocó', () => {

@@ -11,33 +11,70 @@ import {
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import {
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
-} from '../../../../core/mock/fixtures/pedidos-de-farmacia';
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
+} from '../../../../core/mock/fixtures/pharmacy-orders';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { InboxOrder } from './inbox-order';
+import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
+import { InboxOrder, motivoDeChatNoAbierto } from './inbox-order';
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Router } from '@angular/router';
+
+/**
+ * La sesión del mostrador. El botón del chat inyecta `ChatStore`, que mira
+ * quién es la cuenta (para no heredar la identidad de otra en la pestaña).
+ */
+const SESION_DEL_MOSTRADOR = {
+  displayName: () => 'Ana Pérez',
+  userId: () => 'u-mostrador',
+  roles: () => ['PHARMACY_STAFF'],
+  activeTenantId: () => 't-farmacia',
+};
+
+/** Donde aterriza el chat; el hilo de verdad no hace falta acá. */
+@Component({ template: '<p>hilo</p>', changeDetection: ChangeDetectionStrategy.OnPush })
+class HiloDePrueba {}
+
+/** Lo que el contrato devuelve para un pedido que sale a domicilio. */
+const DOMICILIO = { code: 'PINV_DELIVERY_DOMICILIO', display: 'Entrega a domicilio' };
 
 describe('InboxOrder with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmWithReason: ReturnType<typeof vi.fn>;
   let toastInfo: ReturnType<typeof vi.fn>;
+  /**
+   * Maqueta (`true`) o API real (`false`). Se lee recién al crear la
+   * pantalla, así que un `beforeEach` anidado puede cambiarlo.
+   */
+  let sampleData: boolean;
 
   beforeEach(() => {
+    sampleData = true;
     confirmWithReason = vi.fn().mockResolvedValue('No trabajamos con esa presentación.');
     toastInfo = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
-        { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez' } },
+        provideRouter([
+          { path: 'administration/pharmacy-orders/:orderId', component: InboxOrder },
+          { path: 'messaging/:id', component: HiloDePrueba },
+        ]),
+        // Ver el mismo comentario en `../pharmacy-inbox.spec.ts`: sin
+        // `userId`, el `effect()` de `CartStore` (construido igual por
+        // `PharmacyOrdersClient`, aunque esta pantalla no tenga carrito)
+        // revienta en un tick asíncrono y envenena al resto del worker.
+        { provide: SessionStore, useValue: SESION_DEL_MOSTRADOR },
         {
           provide: DialogService,
           useValue: { confirm: vi.fn().mockResolvedValue(true), confirmWithReason },
         },
         { provide: ToastService, useValue: { info: toastInfo } },
+        { provide: SAMPLE_DATA_ENABLED, useFactory: () => sampleData },
       ],
     });
     http = TestBed.inject(HttpTestingController);
@@ -119,16 +156,29 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         { status: 404, statusText: 'Not Found' },
       );
     harness.detectChanges();
-    expect(text()).toContain('No encontramos lo que buscás');
-    expect(text()).toContain('Verificá la dirección o volvé al listado');
+    expect(text()).toContain('No encontramos lo que busca');
+    expect(text()).toContain('Verifique la dirección o vuelva al listado');
   });
 
   it('opens a submitted order via review and never renders pickupCode to staff', async () => {
     await mount(pharmacyOrderDtoFixture({ pickupCode: 'MUST-NOT-RENDER' }));
     expect(text()).toContain('Ana Paciente');
-    expect(text()).toContain('En revisión');
+    expect(text()).toContain('Revisión de receta');
     expect(text()).not.toContain('MUST-NOT-RENDER');
     expect(element('[data-testid="mostrador-decision-0"]')).not.toBeNull();
+  });
+
+  it('con más de una unidad, el renglón dice el precio por unidad y su subtotal', async () => {
+    const base = pharmacyOrderDtoFixture();
+    await mount(
+      pharmacyOrderDtoFixture({
+        // Ya en revisión: abrirlo no pasa por `review`, que respondería otro pedido.
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        totalAmount: '136.00',
+        lines: [{ ...base.lines[0]!, requestedQuantity: 2, reservedQuantity: 2 }],
+      }),
+    );
+    expect(text()).toContain('68.00 Bs c/u · 136.00 Bs');
   });
 
   it('confirms unchanged lines and reloads the canonical API representation', async () => {
@@ -207,14 +257,14 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     });
     harness.detectChanges();
 
-    const select = element<HTMLSelectElement>('[data-testid="mostrador-sustituto-0"] select');
+    const select = element<HTMLElement>('[data-testid="mostrador-sustituto-0"]');
     expect(select).not.toBeNull();
-    expect(select?.options).toHaveLength(2);
+    // Antes eran dos `<option>`: el placeholder oculto y el único sustituto.
+    const sustitutos = await selectOptionLabels(harness.fixture, select!);
+    expect(sustitutos).toHaveLength(1);
+    expect(sustitutos.join(' ')).not.toContain('Amoxicilina original');
     expect(text()).not.toContain('Amoxicilina original');
-    if (select !== null) {
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-    }
+    await chooseSelectOption(harness.fixture, select!, 0);
     harness.detectChanges();
     click('mostrador-confirmar');
 
@@ -340,7 +390,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
     );
     harness.detectChanges();
-    expect(text()).toContain('Entregado');
+    expect(text()).toContain('Finalizada');
   });
 
   it('renders the explicit 422 PICKUP_CODE_MISMATCH without closing the order', async () => {
@@ -385,10 +435,12 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(text()).not.toContain('Datos de ejemplo');
   });
 
-  it('el pedido de ejemplo se ve como delivery y muestra la dirección de entrega', async () => {
+  it('el pedido a domicilio se ve como delivery con la dirección que trae el contrato', async () => {
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: DOMICILIO,
+        deliveryAddressText: 'Av. Cristo Redentor km 4 · Edificio Aurora, dpto. 3B',
         status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       }),
     );
@@ -397,8 +449,31 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
     expect(detalle).toContain('Sale a la dirección de domicilio');
     expect(detalle).toContain('Cristo Redentor');
-    // Y se declara maqueta, porque el medio lo puso la pantalla.
-    expect(text()).toContain('Datos de ejemplo');
+    // Es del contrato, no de la maqueta: no se rotula como ejemplo.
+    expect(detalle).not.toContain('Datos de ejemplo');
+  });
+
+  it('nombra a quien prescribió, con su especialidad, cuando el pedido lo trae', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        medicationRequestId: '9e8d7c60-5b4a-4321-9876-0000000000c1',
+        prescriber: { name: 'Dra. Mariana Suárez Rivero', specialty: 'Cardiología' },
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+
+    expect(text()).toContain('prescribió Dra. Mariana Suárez Rivero · Cardiología');
+  });
+
+  it('sin prescriptor no inventa uno', async () => {
+    await mount(
+      pharmacyOrderDtoFixture({
+        prescriber: null,
+        status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+      }),
+    );
+
+    expect(text()).not.toContain('prescribió');
   });
 
   it('lo que sale a domicilio no ofrece prepararlo para retiro en mostrador', async () => {
@@ -406,7 +481,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // las dos salen de la misma respuesta.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
       }),
     );
@@ -415,7 +491,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).toBeNull();
     expect(text()).not.toContain('Marcar listo para retirar');
     // Y el texto tampoco se lo pide: no hay botón que respalde esa frase.
-    expect(text()).not.toContain('marcalo como listo');
+    expect(text()).not.toContain('márquelo como listo');
     expect(text()).toContain('sale por reparto, no se retira en el mostrador');
   });
 
@@ -431,7 +507,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     expect(element('[data-testid="mostrador-listo"]')).not.toBeNull();
     expect(text()).toContain('Marcar listo para retirar');
     // Y sigue leyendo la frase de siempre, palabra por palabra.
-    expect(text()).toContain('Confirmado. Cuando esté armado, marcalo como listo.');
+    expect(text()).toContain('Confirmado. Cuando esté armado, márquelo como listo.');
   });
 
   it('un pedido sin cobertura no inventa un seguro', async () => {
@@ -498,7 +574,8 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // cerrado de los dos lados, no de uno.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
+        deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
         pickupCode: null,
       }),
@@ -568,7 +645,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     );
     // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
     expect(
-      factura?.closest('app-resumen-de-factura')?.nextElementSibling?.textContent?.trim(),
+      factura?.closest('app-invoice-summary')?.nextElementSibling?.textContent?.trim(),
     ).toBe('Volver a la bandeja');
   });
 
@@ -580,6 +657,63 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
 
     expect(toastInfo).toHaveBeenCalledOnce();
     expect(toastInfo.mock.calls[0]?.[0]).toContain('módulo de facturación');
+  });
+
+  /* ─── Contra la API real: nada que la API no haya devuelto ──────────── */
+
+  describe('contra la API real (sin datos de ejemplo)', () => {
+    beforeEach(() => {
+      sampleData = false;
+    });
+
+    it('el pedido con seguro no dibuja cobertura: el contrato del mostrador no la trae', async () => {
+      await mount(pedidoConSeguro());
+
+      expect(element(byTestId('mostrador-seguro'))).toBeNull();
+      expect(element('.mostrador__cobertura')).toBeNull();
+      expect(text()).not.toContain('Aprobado por el seguro');
+      expect(text()).not.toContain('Datos de ejemplo');
+    });
+
+    it('el pedido entregado no muestra una factura que nadie emitió', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
+      );
+
+      expect(element('[data-testid="mostrador-factura"]')).toBeNull();
+      expect(text()).not.toContain('Enviada al paciente');
+      expect(text()).toContain('Volver a la bandeja');
+    });
+
+    it('un pedido a domicilio sin dirección guardada dice el medio, sin dirección inventada', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({
+          id: ID_ORDER_WITH_DELIVERY,
+          deliveryMode: DOMICILIO,
+          deliveryAddressText: null,
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
+      );
+
+      expect(element('[data-testid="mostrador-entrega"]')?.textContent?.trim()).toBe('Delivery');
+      const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+      expect(detalle).toContain('Sale a la dirección de domicilio');
+      expect(detalle).not.toContain('Cristo Redentor');
+      expect(text()).not.toContain('Datos de ejemplo');
+    });
+
+    it('un pedido a domicilio con dirección guardada la muestra', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({
+          deliveryMode: DOMICILIO,
+          deliveryAddressText: 'Calle Sucre 120, piso 2, Cochabamba',
+          status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
+        }),
+      );
+
+      const detalle = element('[data-testid="mostrador-entrega-detalle"]')?.textContent ?? '';
+      expect(detalle).toContain('Calle Sucre 120, piso 2, Cochabamba');
+    });
   });
 
   /** `dd/MM/yyyy`, el formato con el que el comprobante pinta las fechas. */
@@ -594,7 +728,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const base = pharmacyOrderDtoFixture();
     return pharmacyOrderDtoFixture({
       // Lo que lo identifica como el pedido con seguro es su id, no el nombre.
-      id: ID_PEDIDO_CON_SEGURO,
+      id: ID_ORDER_WITH_INSURANCE,
       status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       patientName: 'Rosa Elena Quispe Vargas',
       lines: [
@@ -608,4 +742,232 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
       ],
     });
   }
+
+  describe('«Chatear con el paciente»', () => {
+    const ID = PHARMACY_ORDER_TEST_IDS.order;
+    const VITRINA = 'vitrina-farmacia';
+
+    afterEach(() => {
+      sessionStorage.clear();
+    });
+
+    async function abrirElChat(): Promise<void> {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      click('mostrador-chatear');
+    }
+
+    const pagina = (items: unknown[]) => ({ items, count: items.length, limit: 30, nextCursor: null });
+
+    it('abre el hilo del pedido como la farmacia, pone la tarjeta una vez y navega al chat', async () => {
+      await abrirElChat();
+      const abrir = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      abrir.flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+
+      // Antes de mandar la tarjeta se mira el hilo **como la farmacia**.
+      const lectura = http.expectOne((r) => r.url === '/community/conversations/c-9/messages');
+      expect(lectura.request.params.get('profileId')).toBe(VITRINA);
+      lectura.flush(pagina([]));
+
+      const tarjeta = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      expect(tarjeta.request.body.senderProfileId).toBe(VITRINA);
+      expect(tarjeta.request.body.bodyText).toMatch(/^Pedido: .+\n.+\n\/my-account\/pharmacy-orders\//u);
+      tarjeta.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+
+      const bandeja = http.expectOne((r) => r.url === '/community/conversations');
+      expect(bandeja.request.params.get('profileId')).toBe(VITRINA);
+      bandeja.flush({ items: [], count: 0, limit: 50, nextCursor: null });
+
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toBe('/messaging/c-9');
+      const store = TestBed.inject(ChatStore);
+      expect(store.perfil()).toBe(VITRINA);
+      expect(store.actuandoComoOrganizacion()).toBe(true);
+    });
+
+    it('tocarlo otra vez desde el mismo pedido no repite la tarjeta', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(pagina([]));
+      const primera = http.expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      const tarjeta = primera.request.body.bodyText as string;
+      primera.flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+      http
+        .expectOne((r) => r.url === '/community/conversations')
+        .flush({ items: [], count: 0, limit: 50, nextCursor: null });
+      await harness.fixture.whenStable();
+
+      // Vuelve al pedido y lo toca de nuevo: el hilo ya tiene esa tarjeta.
+      await harness.navigateByUrl(`/administration/pharmacy-orders/${ID}`, InboxOrder);
+      http
+        .expectOne(`/pharmacy/orders/${ID}`)
+        .flush(pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }));
+      harness.detectChanges();
+      click('mostrador-chatear');
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      http.expectOne((r) => r.url === '/community/conversations/c-9/messages').flush(
+        pagina([
+          {
+            id: 'm-1',
+            conversationId: 'c-9',
+            senderProfileId: VITRINA,
+            contentTypeConceptId: 'c-text',
+            bodyText: tarjeta,
+            sentAt: '2026-10-28T10:00:00.000Z',
+          },
+        ]),
+      );
+      http.expectNone({ method: 'POST', url: '/community/conversations/c-9/messages' });
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toBe('/messaging/c-9');
+    });
+
+    it('422 PATIENT_CHAT_PROFILE_MISSING: lo dice con su texto y no navega ni cambia de perfil', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'PATIENT_CHAT_PROFILE_MISSING', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        'El paciente todavía no tiene perfil de mensajería',
+      );
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+      expect(TestBed.inject(ChatStore).actuandoComoOrganizacion()).toBe(false);
+    });
+
+    it('422 ORGANIZATION_CHAT_PROFILE_UNAVAILABLE: dice que la farmacia no tiene vitrina activa', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        'La farmacia no tiene vitrina pública activa',
+      );
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    /** El botón del chat, para mirar si sigue girando. */
+    const botonDelChat = (): HTMLElement =>
+      element('[data-testid="mostrador-chatear"]') as HTMLElement;
+
+    it('store ocupado: avisa con ChatOcupadoError, el botón no queda girando y lo dice', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      // Otro chat a medio abrir: el store no pide este y avisa por `alFallar`.
+      TestBed.inject(ChatStore).abriendo.set(true);
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      http.expectNone({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(CHAT_YA_ABRIENDO);
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    it('store ocupado que sí llama a alFallar: queda su motivo, no el resguardo', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation(
+        (_resolver, _nombre, _alAbrir, _contexto, alFallar) => alFallar?.(new Error('ocupado')),
+      );
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+      expect(element('[data-testid="mostrador-chat-error"]')?.textContent).toContain(
+        motivoDeChatNoAbierto(new Error('ocupado')),
+      );
+    });
+
+    it('la respuesta termina sin traer el hilo: el botón deja de girar', async () => {
+      await mount(
+        pharmacyOrderDtoFixture({ status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' } }),
+      );
+      // Un store que se suscribe pero corta antes de la respuesta, sin avisar.
+      vi.spyOn(TestBed.inject(ChatStore), 'abrirComoOrganizacion').mockImplementation((resolver) => {
+        resolver.subscribe().unsubscribe();
+      });
+      click('mostrador-chatear');
+      harness.detectChanges();
+
+      http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('L-5 · un único texto de «ocupado»: el del store', () => {
+      expect(motivoDeChatNoAbierto(new ChatOcupadoError())).toBe(CHAT_YA_ABRIENDO);
+    });
+
+    it('si el store corta la apertura (cambio de cuenta) sin avisar, el botón deja de girar', async () => {
+      await abrirElChat();
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).toBe('true');
+      const abrir = http.expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` });
+
+      // Sale la cuenta con el POST en vuelo: el store corta la apertura.
+      (TestBed.inject(ChatStore) as unknown as { olvidarIdentidad(): void }).olvidarIdentidad();
+      harness.detectChanges();
+
+      expect(abrir.cancelled).toBe(true);
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+
+    it('L-4 · si el mostrador se fue de la pantalla mientras se abría, no lo lleva al chat', async () => {
+      await abrirElChat();
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush({ conversationId: 'c-9', pharmacyProfileId: VITRINA });
+      const lectura = http.expectOne((r) => r.url === '/community/conversations/c-9/messages');
+
+      const navegar = vi.spyOn(TestBed.inject(Router), 'navigate');
+      harness.fixture.destroy();
+
+      lectura.flush(pagina([]));
+      http
+        .expectOne({ method: 'POST', url: '/community/conversations/c-9/messages' })
+        .flush({ id: 'm-1', conversationId: 'c-9', sentAt: '2026-10-28T10:00:00.000Z' });
+      http
+        .match((r) => r.url === '/community/conversations')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 50, nextCursor: null }));
+
+      expect(navegar).not.toHaveBeenCalled();
+      expect(TestBed.inject(Router).url).toBe(`/administration/pharmacy-orders/${ID}`);
+    });
+
+    it('mientras el hilo se abre de verdad, el botón sí gira', async () => {
+      await abrirElChat();
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).toBe('true');
+      http
+        .expectOne({ method: 'POST', url: `/pharmacy/orders/${ID}/conversation` })
+        .flush(
+          { code: 'PRECONDITION_FAILED', reason: 'PATIENT_CHAT_PROFILE_MISSING', message: 'x' },
+          { status: 422, statusText: 'Unprocessable Entity' },
+        );
+      harness.detectChanges();
+      expect(botonDelChat().getAttribute('aria-busy')).not.toBe('true');
+    });
+  });
 });
+
+/** El selector de un `data-testid` ya existente en la plantilla. */
+function byTestId(id: string): string {
+  return `[data-testid="${id}"]`;
+}

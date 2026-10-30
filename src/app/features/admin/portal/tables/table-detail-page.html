@@ -1,0 +1,79 @@
+<app-back-link [fallback]="listUrl" label="Volver a las tablas" />
+
+<app-page-header
+  [title]="qualified()"
+  subtitle="Lo que el modelo, el ORM y el código dicen de esta tabla. Lo que nadie declaró se dice «sin fuente»."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="detail()" (retry)="reload()">
+  @if (detail(); as state) {
+    @if (state.status === 'ready') {
+      @let t = state.data;
+      <app-card class="table-sheet" variant="outlined" padding="md" data-testid="portal-table-detail">
+        <nav class="table-sheet__jumps" aria-label="Ver esta tabla en otras vistas">
+          <a app-link [routerLink]="lineageUrl" [queryParams]="{ tabla: t.id }">Ver su linaje</a>
+        </nav>
+
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Resumen">
+            <section class="table-sheet__section" aria-label="Para qué existe">
+              <h3 class="table-sheet__subtitle">Para qué existe</h3>
+              @if (t.proposito) {
+                <p>{{ t.proposito }}</p>
+                <p class="table-sheet__muted">
+                  <app-badge size="sm" [variant]="purpose(t.propositoEstado).tone">{{ purpose(t.propositoEstado).label }}</app-badge>
+                  @if (t.propositoFuente) {
+                    <span class="table-sheet__source">{{ t.propositoFuente }}</span>
+                  }
+                </p>
+              } @else {
+                <p class="table-sheet__muted">Nadie documentó todavía para qué existe.</p>
+              }
+              <app-fact-list [hechos]="facts()" etiqueta="Datos y gobierno de la tabla" />
+            </section>
+          </app-tab>
+
+          <app-tab label="Columnas">
+            <app-portal-table-columns [columns]="t.columnas" />
+          </app-tab>
+
+          <app-tab label="Relaciones e índices">
+            <app-portal-table-relations
+              [outgoing]="t.relaciones.salientes"
+              [incoming]="t.relaciones.entrantes"
+              [indexes]="t.indices"
+              [tableUrl]="tableUrl"
+            />
+          </app-tab>
+
+          <app-tab label="Operaciones">
+            <section class="table-sheet__section" aria-label="Operaciones que la tocan">
+              <ul class="table-sheet__operations" data-testid="portal-table-operations">
+                @for (op of t.operaciones; track $index) {
+                  <li>
+                    <app-badge size="sm" [variant]="effect(op.operacion).tone">{{ effect(op.operacion).label }}</app-badge>
+                    <app-badge size="sm" [variant]="method(op.metodo).tone">{{ method(op.metodo).label }}</app-badge>
+                    <a app-link class="table-sheet__route" [routerLink]="operationUrl(op.operacionId)">{{ op.ruta }}</a>
+                    <span class="table-sheet__muted">
+                      {{ op.detalle }} · confianza {{ confidence(op.confianza).label.toLowerCase() }}
+                    </span>
+                  </li>
+                } @empty {
+                  <li class="table-sheet__muted">Ninguna operación de la API la toca.</li>
+                }
+              </ul>
+            </section>
+          </app-tab>
+
+          <app-tab label="DDL">
+            <section class="table-sheet__section" aria-label="DDL de la tabla">
+              <pre class="table-sheet__ddl" tabindex="0"><code>{{ t.ddl }}</code></pre>
+              <p class="table-sheet__source">Diagrama: {{ t.diagrama }}</p>
+            </section>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</app-view-state-host>

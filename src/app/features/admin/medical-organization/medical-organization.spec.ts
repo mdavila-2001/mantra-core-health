@@ -89,7 +89,7 @@ describe('MedicalOrganization', () => {
   it('no ofrece selector con una sola organización', () => {
     cargar();
 
-    expect(harness.routeNativeElement?.querySelector('#practica-elegida')).toBeNull();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="practica-elegida"]')).toBeNull();
   });
 
   it('ofrece selector cuando hay más de una, y cambia de árbol al elegir', () => {
@@ -100,7 +100,7 @@ describe('MedicalOrganization', () => {
     http.expectOne('/practices/prac-1/organization').flush(consola());
     harness.detectChanges();
 
-    expect(harness.routeNativeElement?.querySelector('#practica-elegida')).not.toBeNull();
+    expect(harness.routeNativeElement?.querySelector('[data-testid="practica-elegida"]')).not.toBeNull();
 
     componente['elegirPractica']('prac-2');
     harness.detectChanges();

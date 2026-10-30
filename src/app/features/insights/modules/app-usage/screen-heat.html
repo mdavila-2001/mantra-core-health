@@ -1,0 +1,38 @@
+<div class="sh">
+  <div class="sh__phone" role="img" [attr.aria-label]="'Mapa de toques de la pantalla ' + screen().label + ': ' + ranked()[0]?.label + ' concentra ' + fmt(ranked()[0]?.taps ?? 0) + ' % de los toques.'">
+    <div class="sh__notch" aria-hidden="true"></div>
+    @for (z of zones(); track z.id) {
+      <div
+        [class]="'sh__zone sh__zone--' + z.level"
+        [class.sh__zone--ignored]="z.ignored"
+        [style.left.%]="z.x"
+        [style.top.%]="z.y"
+        [style.width.%]="z.w"
+        [style.height.%]="z.h"
+        [title]="z.label + ': ' + fmt(z.taps) + ' % de los toques'"
+      >
+        <span class="sh__zl">{{ z.label }}</span>
+        <span class="sh__zp">{{ fmt(z.taps) }} %</span>
+      </div>
+    }
+  </div>
+
+  <div class="sh__side">
+    <h3 class="sh__h">Zonas por toques</h3>
+    <ol class="sh__rank">
+      @for (z of ranked(); track z.id) {
+        <li [class.sh__rank--ignored]="z.ignored"><span>{{ z.label }}</span><strong>{{ fmt(z.taps) }} %</strong>@if (z.ignored) {<em>Ignorado</em>}</li>
+      }
+    </ol>
+    @if (ignoredList().length) {
+      <p class="sh__alert" role="note"><strong>Elementos ignorados:</strong> {{ ignoredList().length }} con menos de {{ ignoredBelow }} % de los toques ({{ ignoredList()[0]?.label }}…). Si son importantes para el negocio, probablemente no se ven o no se entienden.</p>
+    }
+
+    <h3 class="sh__h">Profundidad de desplazamiento</h3>
+    <ul class="sh__scroll" aria-label="Porcentaje de sesiones que llega a cada tramo de la pantalla">
+      @for (s of scroll(); track s.from) {
+        <li><span class="sh__sl">{{ s.from }} %</span><span class="sh__sb"><span [style.inline-size.%]="s.pct"></span></span><span class="sh__sv">{{ s.pct }} %</span></li>
+      }
+    </ul>
+  </div>
+</div>

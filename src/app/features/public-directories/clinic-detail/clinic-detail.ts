@@ -5,6 +5,8 @@ import { PublicCatalogClient } from '@core/data-access/public-catalog/public-cat
 import type { PublicOfferedService } from '@core/data-access/public-catalog/public-catalog.types';
 import type { PublicPage } from '@core/data-access/public-directory/public-directory.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
+import { AppButton } from '@shared/components/atoms/button/button';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { ServiceIcon } from '@shared/components/atoms/service-icon/service-icon';
 import { Skeleton } from '@shared/components/atoms/skeleton/skeleton';
 import { Card } from '@shared/components/molecules/card/card';
@@ -31,9 +33,11 @@ import { PublicCatalogDetail } from '../public-catalog-detail';
 @Component({
   selector: 'app-clinic-detail',
   imports: [
+    AppButton,
     Badge,
     Card,
     FactList,
+    NavIcon,
     PageHeader,
     SectionHeading,
     ServiceIcon,
@@ -41,7 +45,7 @@ import { PublicCatalogDetail } from '../public-catalog-detail';
     ViewStateHost,
   ],
   templateUrl: './clinic-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
+  styleUrls: ['../../../shared/styles/card-grid.css', '../../../shared/styles/public-sheet.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClinicDetail extends PublicCatalogDetail<PublicOfferedService> {
@@ -50,6 +54,14 @@ export class ClinicDetail extends PublicCatalogDetail<PublicOfferedService> {
   protected readonly kind = 'ORGANIZATION' as const;
   protected readonly rutaDelDirectorio = '/clinics-directory';
   protected readonly rotuloDelDirectorio = 'Directorio de clínicas';
+
+  /** «Consultar por chat» sobre un servicio: su nombre, su precio y la clínica. */
+  protected consultarServicio(servicio: PublicOfferedService): void {
+    const detalle = [this.importe(servicio.price, servicio.currency), this.ficha()?.displayName]
+      .filter((parte): parte is string => !!parte)
+      .join(' · ');
+    this.chatear({ tipo: 'servicio', titulo: servicio.name, ...(detalle ? { detalle } : {}) });
+  }
 
   protected leerCatalogo(slug: string): Observable<PublicPage<PublicOfferedService>> {
     return this.catalogo.organizationServices(slug);

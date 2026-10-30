@@ -5,7 +5,7 @@ import {
   NOTA_DE_DATOS_DE_EJEMPLO,
 } from './pharmacy-profile.fixtures';
 import { PAPELES_DEL_REGISTRO, TIPOS_DE_SOCIEDAD } from './pharmacy-profile.types';
-import { varianteDeVencimiento } from '../../../shared/utils/vencimiento/vencimiento';
+import { expiryVariant } from '../../../shared/utils/expiry/expiry';
 
 /**
  * Lo que se le exige a un dato de ejemplo: que sea coherente consigo mismo, que
@@ -85,7 +85,7 @@ describe('datos de ejemplo de la ficha de la farmacia', () => {
 
     it('cubren los tres plazos que la ficha tiene que saber decir', () => {
       const tonos = new Set(
-        DOCUMENTOS_DE_EJEMPLO.map((documento) => varianteDeVencimiento(documento.diasParaVencer)),
+        DOCUMENTOS_DE_EJEMPLO.map((documento) => expiryVariant(documento.diasParaVencer)),
       );
       expect(tonos).toEqual(new Set(['error', 'warning', 'success']));
     });

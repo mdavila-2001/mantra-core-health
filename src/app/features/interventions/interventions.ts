@@ -36,6 +36,7 @@ import { DataTable } from '../../shared/components/organisms/data-table/data-tab
 import type { ColumnDef } from '../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes';
+import { LoadingState } from '../../shared/components/molecules/loading-state/loading-state';
 
 /** Tope de filas de la agenda. Alcanza una pantalla sin paginar. */
 const TOPE = 50;
@@ -103,7 +104,7 @@ const RESPUESTAS: readonly SelectOption<TeamParticipationResponse>[] = [
  */
 @Component({
   selector: 'app-interventions',
-  imports: [Alert, AppButton, Card, DataTable, DatePipe, PageHeader, Select, Textarea],
+  imports: [Alert, AppButton, Card, DataTable, DatePipe, PageHeader, Select, Textarea, LoadingState],
   templateUrl: './interventions.html',
   styleUrl: './interventions.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -382,5 +383,5 @@ function mensajeDe(error: unknown): string {
   if (estado === 403) {
     return 'Sólo el propio integrante puede responder a su participación.';
   }
-  return 'No pudimos registrar la respuesta. Volvé a intentarlo.';
+  return 'No pudimos registrar la respuesta. Vuelva a intentarlo.';
 }

@@ -1,12 +1,15 @@
-<form [formGroup]="form()" (ngSubmit)="continuar()" novalidate>
+<ng-template #pageContent>
+<div [formGroup]="form()">
   <!-- El avance va arriba y siempre visible: es la respuesta a «¿cuánto me
        falta?», que es lo que decide si alguien sigue o abandona. -->
   <header class="paginated-form__avance">
     <!-- `showMarker`: la barra termina en un círculo en la posición del avance.
          Acá el avance es el estado de quien mira —en qué paso va—, que es
-         justamente para lo que la punta sirve. Es decoración: no cambia una
-         palabra de lo que se anuncia. -->
-    <app-progress [value]="avance()" [label]="resumen()" size="sm" showMarker />
+         justamente para lo que la punta sirve. `wave` dibuja la barra como el
+         latido de la marca, que se va trazando a medida que se avanza: cuanto
+         más cerca del final, más trazo y más ganas de terminar. Es decoración:
+         no cambia una palabra de lo que se anuncia. -->
+    <app-progress [value]="avance()" [label]="resumen()" size="sm" showMarker wave />
 
     @if (mostrarPasos()) {
       <app-stepper
@@ -14,6 +17,7 @@
         [label]="label()"
         [interactive]="interactiveSteps()"
         [compact]="pasosCompactos()"
+        currentLabelOnly
         (stepSelected)="goToStep($event)"
       />
     } @else {
@@ -26,7 +30,11 @@
   <p class="paginated-form__anuncio" role="status" aria-live="polite">{{ resumen() }}</p>
 
   @if (pagina(); as actual) {
-    <section class="paginated-form__pagina">
+    <section
+      class="paginated-form__pagina"
+      [class.paginated-form__pagina--alt]="alternateStep()"
+      [attr.data-direction]="direction()"
+    >
       <!-- `tabindex="-1"`: recibe el foco al cambiar de página sin entrar en el
            orden de tabulación. -->
       <h2 #titulo tabindex="-1" class="paginated-form__titulo">{{ actual.titulo }}</h2>
@@ -38,12 +46,19 @@
       <div
         class="paginated-form__campos"
         [class.paginated-form__campos--dos-columnas]="actual.disposicion === 'dos-columnas'"
+        [class.paginated-form__campos--tres-columnas]="actual.disposicion === 'tres-columnas'"
       >
         @for (campo of actual.campos; track campo.key) {
-          @if (campo.control === 'custom') {
+          <!-- Un campo condicional («¿cuál?») sólo existe en pantalla cuando su
+               padre tiene la respuesta que lo abre. -->
+          @if (ocultos().has(campo.key)) {
+          } @else if (campo.control === 'custom') {
             <app-form-field
               class="paginated-form__campo"
+              [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
+              [class.paginated-form__campo--completo]="campo.ancho === 'completo'"
+              [attr.data-campo]="campo.key"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
               [description]="campo.description ?? ''"
@@ -61,7 +76,13 @@
                  siendo el `aria-describedby` del control (ADR-0008). -->
             <app-form-field
               class="paginated-form__campo"
+              [class.paginated-form__campo--dependiente]="campo.showWhen !== undefined"
               [class.paginated-form__campo--mitad]="campo.ancho === 'mitad'"
+              [class.paginated-form__campo--completo]="campo.ancho === 'completo'"
+              [class.paginated-form__campo--opciones-en-rejilla]="campo.opcionesEn === 'rejilla'"
+              [style.--paginated-form-opciones-anchas]="campo.opcionesEn === 'rejilla' ? columnas(campo).ancha : null"
+              [style.--paginated-form-opciones-medias]="campo.opcionesEn === 'rejilla' ? columnas(campo).media : null"
+              [attr.data-campo]="campo.key"
               [label]="campo.label"
               [hint]="campo.hint ?? ''"
               [description]="campo.description ?? ''"
@@ -76,6 +97,8 @@
                     [options]="campo.options ?? []"
                     [placeholder]="campo.placeholder ?? campo.description ?? 'Seleccionar opción'"
                     [hasError]="errorDe(campo) !== ''"
+                    [searchable]="campo.searchable ?? true"
+                    [multilineValue]="campo.valorEnDosRenglones ?? false"
                   >
                     <!-- El desplegable dibuja su glifo igual que el campo de
                        texto, y por la misma razón: dentro del marco, para
@@ -104,7 +127,7 @@
                     }
                     <!-- «Otro», con su renglón: ver `otro` en el contrato. -->
                     @if (campo.otro) {
-                      <app-radio-otro [valores]="valoresDe(campo)" />
+                      <app-other-radio [valores]="valoresDe(campo)" />
                     }
                   </app-radio-group>
                 }
@@ -194,6 +217,7 @@
                   <app-date-picker
                     [value]="fechaDe(campo)"
                     (valueChange)="escribirFecha(campo, $event)"
+                    (textProblem)="anotarFechaRechazada(campo, $event)"
                     [placeholder]="campo.placeholder ?? 'DD/MM/AAAA'"
                     [minDate]="campo.minDate ?? null"
                     [maxDate]="campo.maxDate ?? null"
@@ -205,6 +229,7 @@
                     mode="date-time"
                     [value]="fechaDe(campo)"
                     (valueChange)="escribirFecha(campo, $event)"
+                    (textProblem)="anotarFechaRechazada(campo, $event)"
                     [placeholder]="campo.placeholder ?? 'DD/MM/AAAA HH:mm'"
                     [minDate]="campo.minDate ?? null"
                     [maxDate]="campo.maxDate ?? null"
@@ -240,7 +265,11 @@
     </section>
   }
 
-  <nav class="paginated-form__acciones" aria-label="Avance del formulario">
+  <nav
+    class="paginated-form__acciones"
+    aria-label="Avance del formulario"
+    appApilarAlEnvolver="paginated-form__acciones--apiladas"
+  >
     @if (cancelLabel()) {
       <button app-button variant="ghost" type="button" (clicked)="cancelado.emit()">
         {{ cancelLabel() }}
@@ -251,16 +280,18 @@
          `aria-label` queda en castellano y el globo lo dice también con el
          puntero y con el foco del teclado. El `data-testid` es el mismo en los
          dos modos: lo que cambia es cómo se ve, no qué botón es. -->
-    @if (mostrarAtras()) {
+    @if (!esPrimera()) {
       <!-- En modo ícono los dos botones se ven igual: dos flechas del mismo par
            con tratamientos distintos —una pelada y la otra en círculo lleno— se
            leen como dos cosas de distinta jerarquía cuando son la ida y la
            vuelta del mismo paso. Con texto se mantiene la diferencia: ahí
            «Siguiente» sí es la acción primaria y «Atrás» la de escape. -->
+      <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; sólo si la pantalla la enciende. -->
       <button
         app-button
         type="button"
         [variant]="iconOnlyNav() ? 'primary' : 'ghost'"
+        [class.paginated-form__atras-texto]="!iconOnlyNav()"
         [iconOnly]="iconOnlyNav()"
         [attr.aria-label]="iconOnlyNav() ? 'Atrás' : null"
         [appTooltip]="iconOnlyNav() ? 'Atrás' : ''"
@@ -279,16 +310,20 @@
          que viene es enviar, y eso se descubre cuando ya se envió. Por lo mismo,
          el modo ícono no llega a la última página: una flecha que en realidad
          crea la cuenta esconde aún más. -->
+    <!-- Excepción ADR-0012 §3 (D-05, 23/09): pasar de página, con aria-label y globo; nunca en la última, que dice qué envía. -->
+    @if (!embedded() || !esUltima()) {
     <button
       app-button
-      type="submit"
+      [type]="embedded() ? 'button' : 'submit'"
+      (clicked)="embedded() && continuar()"
       [variant]="esUltima() && destructive() ? 'danger' : 'primary'"
       [isLoading]="pending()"
       [disabled]="pending()"
       [iconOnly]="nextAsIcon()"
       [attr.aria-label]="nextAsIcon() ? 'Siguiente' : null"
       [appTooltip]="nextAsIcon() ? 'Siguiente' : ''"
-      data-testid="paginated-form-continuar"
+      [attr.data-testid]="esUltima() ? submitTestId() : 'paginated-form-continuar'"
+      data-accion-primaria
     >
       @if (nextAsIcon()) {
         <app-nav-icon name="arrow-right" />
@@ -296,5 +331,17 @@
         {{ esUltima() ? submitLabel() : 'Siguiente' }}
       }
     </button>
+    }
   </nav>
-</form>
+</div>
+</ng-template>
+
+@if (embedded()) {
+  <div tabindex="-1" (keydown.enter)="onEmbeddedEnter($event)">
+    <ng-container [ngTemplateOutlet]="pageContent" />
+  </div>
+} @else {
+  <form (submit)="$event.preventDefault(); continuar()" novalidate>
+    <ng-container [ngTemplateOutlet]="pageContent" />
+  </form>
+}

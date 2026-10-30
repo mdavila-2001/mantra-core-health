@@ -433,14 +433,14 @@ describe('BusquedaPublica · con corte territorial', () => {
       return municipio === null || city === municipio;
     };
     const corte: CorteTerritorial = {
-      departamentoElegido: departamento,
-      ciudad,
-      nombreDelDepartamento: computed(() => departamento()),
-      recortar: <T extends FilaConCiudad>(filas: readonly T[]): readonly T[] =>
+      chosenDepartment: departamento,
+      city: ciudad,
+      departmentName: computed(() => departamento()),
+      crop: <T extends FilaConCiudad>(filas: readonly T[]): readonly T[] =>
         filas.filter((f) => enElLugar(f.city)),
-      ciudades: () => [],
-      cuentaPorDepartamento: () => new Map<string, number>(),
-      sinUbicar: () => 0,
+      cities: () => [],
+      accountByDepartment: () => new Map<string, number>(),
+      withoutLocate: () => 0,
     };
     return { corte, departamento };
   }
@@ -625,13 +625,13 @@ describe('BusquedaPublica · con chip de categoría', () => {
 
   /** Un corte territorial que no recorta: acá se prueba la otra dimensión. */
   const TODO_EL_PAIS: CorteTerritorial = {
-    departamentoElegido: signal<string | null>(null),
-    ciudad: signal<string | null>(null),
-    nombreDelDepartamento: signal<string | null>(null),
-    recortar: <T extends FilaConCiudad>(filas: readonly T[]): readonly T[] => filas,
-    ciudades: () => [],
-    cuentaPorDepartamento: () => new Map<string, number>(),
-    sinUbicar: () => 0,
+    chosenDepartment: signal<string | null>(null),
+    city: signal<string | null>(null),
+    departmentName: signal<string | null>(null),
+    crop: <T extends FilaConCiudad>(filas: readonly T[]): readonly T[] => filas,
+    cities: () => [],
+    accountByDepartment: () => new Map<string, number>(),
+    withoutLocate: () => 0,
   };
 
   async function montar(filas: readonly PublicSearchResult[], url = '/search') {

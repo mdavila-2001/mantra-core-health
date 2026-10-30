@@ -2,20 +2,25 @@
 
 # Grafo de módulos
 
-1350 archivos TypeScript bajo `src/` y 5656 importaciones internas.
+1711 archivos TypeScript bajo `src/` y 7545 importaciones internas.
 Los alias `@shared`, `@core/*` y `@features/*` se resuelven contra `tsconfig.json`.
 
 ## Dependencias circulares
 
-**Ninguna.**
+- `src/app/core/mock/fixtures/personas.ts` → `src/app/core/mock/fixtures/insurer-network.ts`
+- `src/app/core/mock/fixtures/personas.ts` → `src/app/core/mock/fixtures/registered-people.ts`
+- `src/app/features/agenda/my-agenda/month-view/month-view.ts` → `src/app/features/agenda/my-agenda/day-view/day-view.ts`
 
 ## Archivos que nadie importa
 
 Se excluyen los puntos de entrada del framework y las pruebas.
 
+- `src/app/core/data-access/chart-notes/chart-notes.client.ts`
 - `src/app/core/data-access/common/addresses.client.ts`
+- `src/app/core/data-access/public/public.client.ts`
 - `src/app/core/observability/browser/telemetry-browser.bootstrap.ts`
 - `src/app/features/account/access-requests/access-requests.ts`
+- `src/app/features/account/loyalty/loyalty.fixtures.ts`
 - `src/app/features/account/questionnaires/questionnaires.ts`
 - `src/app/features/admin/organizations/organization-detail/organization-detail.ts`
 - `src/app/features/admin/services-catalog/procedure-import/procedure-import.ts`
@@ -50,7 +55,6 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/alovida/accesos/representaciones-legales-revocar/representaciones-legales-revocar.ts`
 - `src/app/features/alovida/accesos/roles-formulario/roles-formulario.ts`
 - `src/app/features/alovida/accesos/roles-listado/roles-listado.ts`
-- `src/app/features/alovida/buscar/aseguradoras-listado/aseguradoras-listado.ts`
 - `src/app/features/alovida/buscar/buscador-listado/buscador-listado.ts`
 - `src/app/features/alovida/buscar/calificar-la-atencion-formulario/calificar-la-atencion-formulario.ts`
 - `src/app/features/alovida/buscar/cercania-detalle/cercania-detalle.ts`
@@ -153,10 +157,9 @@ Se excluyen los puntos de entrada del framework y las pruebas.
 - `src/app/features/interventions/interventions.ts`
 - `src/app/features/practice/my-practice/my-practice.ts`
 - `src/app/features/public-profile/public-post-detail/public-post-detail.ts`
-- `src/app/features/questionnaires/questionnaires.ts`
 - `src/app/features/quotations/quotation-list/quotation-list.ts`
 - `src/app/shared/index.ts`
-- `src/environments/environment.development.ts`
+- `src/environments/environment.e2e-real.ts`
 - `src/testing/acceptance/core/contracts/ui.contract.ts`
 
 ## Mayor centralidad (fan-in)
@@ -166,44 +169,44 @@ problema: es una advertencia de que cambiarlo se paga en muchos lugares.
 
 | Archivo | Lo importan |
 |---|---:|
-| `src/app/shared/components/atoms/button/button.ts` | 207 |
-| `src/app/core/view-state/view-state.types.ts` | 196 |
-| `src/app/core/view-state/view-state.ts` | 178 |
-| `src/app/core/http/error-to-view-state.ts` | 171 |
-| `src/app/shared/components/organisms/page-header/page-header.ts` | 168 |
-| `src/app/shared/components/molecules/alert/alert.ts` | 161 |
-| `src/app/core/navigation/navigation.service.ts` | 125 |
-| `src/app/shared/components/molecules/form-field/form-field.ts` | 105 |
-| `src/app/shared/a11y/announce-on-appear.ts` | 89 |
-| `src/app/core/auth/auth.service.ts` | 80 |
-| `src/app/shared/components/atoms/input/input.ts` | 77 |
-| `src/app/shared/components/molecules/card/card.ts` | 77 |
-| `src/app/shared/components/atoms/badge/badge.ts` | 66 |
-| `src/app/shared/components/molecules/toast/toast.service.ts` | 66 |
+| `src/app/shared/components/atoms/button/button.ts` | 255 |
+| `src/app/core/view-state/view-state.types.ts` | 231 |
+| `src/app/core/view-state/view-state.ts` | 213 |
+| `src/app/shared/components/molecules/alert/alert.ts` | 198 |
+| `src/app/core/http/error-to-view-state.ts` | 197 |
+| `src/app/shared/components/organisms/page-header/page-header.ts` | 186 |
+| `src/app/core/navigation/navigation.service.ts` | 134 |
+| `src/app/shared/components/molecules/form-field/form-field.ts` | 131 |
+| `src/app/core/auth/auth.service.ts` | 109 |
+| `src/app/shared/components/molecules/card/card.ts` | 101 |
+| `src/app/shared/components/atoms/badge/badge.ts` | 98 |
+| `src/app/shared/a11y/announce-on-appear.ts` | 97 |
+| `src/app/shared/components/atoms/input/input.ts` | 88 |
+| `src/app/shared/components/molecules/toast/toast.service.ts` | 84 |
+| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 84 |
+| `src/app/core/auth/session.store.ts` | 68 |
+| `src/app/shared/components/atoms/select/select.types.ts` | 67 |
 | `src/app/shared/forms/form-support.ts` | 65 |
-| `src/app/shared/components/organisms/view-state-host/view-state-host.ts` | 58 |
-| `src/app/shared/components/atoms/select/select.types.ts` | 57 |
-| `src/app/core/auth/session.store.ts` | 56 |
-| `src/app/shared/components/organisms/paginated-form/paginated-form.ts` | 53 |
-| `src/app/shared/forms/paginated/paginar-campos.ts` | 53 |
+| `src/app/shared/components/atoms/select/select.ts` | 62 |
+| `src/app/shared/components/molecules/dialog/dialog-service.ts` | 60 |
 
 ## Paquetes externos
 
 | Paquete | Importaciones |
 |---|---:|
-| `@angular/core` | 1186 |
-| `@angular/common` | 692 |
-| `@angular/router` | 519 |
-| `rxjs` | 207 |
-| `@angular/forms` | 120 |
-| `node:fs` | 24 |
-| `@angular/platform-browser` | 14 |
+| `@angular/core` | 1437 |
+| `@angular/common` | 865 |
+| `@angular/router` | 609 |
+| `rxjs` | 267 |
+| `@angular/forms` | 136 |
+| `node:fs` | 31 |
+| `@angular/platform-browser` | 25 |
+| `vitest` | 21 |
 | `@opentelemetry/api` | 12 |
+| `node:path` | 11 |
 | `@opentelemetry/sdk-trace-web` | 9 |
+| `jspdf` | 8 |
 | `@opentelemetry/semantic-conventions` | 7 |
-| `vitest` | 7 |
-| `jspdf` | 6 |
-| `node:path` | 5 |
 | `express` | 4 |
 | `@angular/ssr` | 3 |
 | `@faker-js/faker` | 3 |

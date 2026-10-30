@@ -1,193 +1,338 @@
-<section class="ajustes__bloque">
-  <h2 class="ajustes__titulo">Respuesta automática</h2>
+<section class="ajustes__bloque" aria-labelledby="chat-prefs-titulo">
+  <h2 class="ajustes__titulo" id="chat-prefs-titulo">Respuesta automática</h2>
   <p class="ajustes__detalle">
-    Si alguien te escribe y hace un rato que no entrás a los chats, se le contesta sola con tu
-    texto. Es para avisar que no estás mirando, no para responder por vos.
+    Qué recibe {{ destinatario() === 'el paciente' ? 'un paciente que le escribe' : 'quien le escribe' }} cuando usted no
+    está mirando los chats.
   </p>
 
+  <!-- Es la de la persona, no la de la farmacia: lo dice mientras se escribe
+       como la vitrina, para que nadie crea que configuró la de la farmacia. -->
+  @if (comoOrganizacion(); as nombre) {
+    <p class="chat-prefs__aviso" data-testid="chat-prefs-personal">
+      Esta es su respuesta automática personal, no la de {{ nombre }}: no se manda cuando
+      escribe como {{ nombre }}.
+    </p>
+  }
+
   <!-- Lo que se promete cambia según dónde esté guardada, y se dice en la
-       pantalla y no sólo en el código. Guardada en el servidor contesta siempre;
-       guardada acá, sólo con la aplicación abierta. Prometer lo segundo como si
-       fuera lo primero sería mentir. -->
-  @if (enElServidor()) {
+       pantalla y no sólo en el código. -->
+  @if (errorDeLectura()) {
+    <div class="chat-prefs__aviso is-error" role="alert" data-testid="chat-prefs-limite">
+      No pudimos leer la configuración guardada en su cuenta. Lo que ve puede no ser lo último que
+      guardó.
+      <button app-button variant="ghost" size="sm" type="button" data-testid="chat-prefs-reintentar" (clicked)="reintentarLectura()">
+        Reintentar
+      </button>
+    </div>
+  } @else if (enElServidor()) {
     <p class="chat-prefs__aviso is-ok" data-testid="chat-prefs-limite">
-      Guardada en tu cuenta: contesta aunque tengas AloVida cerrado, y vale en todos tus
+      Se guarda en su cuenta: responde aunque tenga AloVida cerrado y vale en todos sus
       dispositivos.
     </p>
   } @else {
     <p class="chat-prefs__aviso" data-testid="chat-prefs-limite">
-      Guardada sólo en este navegador: funciona mientras tengas AloVida abierto, y en otro
-      dispositivo vas a tener que configurarla de nuevo. Creá tu perfil público desde los chats
-      para que conteste siempre.
+      Por ahora se guarda sólo en este navegador: responde mientras tenga AloVida abierto, y en
+      otro dispositivo tendrá que configurarla de nuevo. Cree su perfil público desde los chats
+      para que responda siempre.
     </p>
   }
 
-  <!-- Interruptor y no casilla: esto no es un dato que se declara al enviar un
-       formulario, es algo que queda encendido o apagado en el momento y se
-       guarda solo. `app-switch` es el mismo control que usan los permisos y
-       los avisos, en la misma pantalla de Ajustes. -->
-  <div class="chat-prefs__interruptor">
-    <span class="chat-prefs__interruptor-texto">
-      <span class="ajustes__nombre">Contestar sola cuando no estoy</span>
-      <span class="ajustes__detalle">
-        {{ config().activa ? 'Encendida.' : 'Apagada: nadie recibe respuestas automáticas.' }}
-      </span>
-    </span>
-    <app-switch
-      class="chat-prefs__switch"
-      data-testid="chat-prefs-activa"
-      ariaLabel="Contestar sola cuando no estoy"
-      [checked]="config().activa"
-      (checkedChange)="alternarActiva($event)"
-    />
-  </div>
+  <div class="chat-prefs__disposicion">
+    <div class="chat-prefs__formulario">
+      <!-- Una sola decisión: tres respuestas que se excluyen, cada una con lo
+           que pasa. Radios nativos: el teclado y el lector los entienden solos. -->
+      <fieldset class="chat-prefs__modos">
+        <legend class="ajustes__nombre">Cuando le escriben y usted no está</legend>
 
-  <!-- Lo de abajo sólo existe encendida: configurar una respuesta que no se
-       manda es pedirle a alguien que decida algo que no tiene efecto. -->
-  @if (config().activa) {
-    <div class="chat-prefs__campos">
-      <fieldset class="chat-prefs__grupo">
-        <legend class="ajustes__nombre">Después de cuánto tiempo sin entrar</legend>
-        <div class="chat-prefs__pastillas" role="group">
-          @for (espera of esperas; track espera) {
-            <button
-              class="chat-prefs__pastilla"
-              type="button"
-              [attr.data-testid]="'chat-prefs-espera-' + espera"
-              [class.is-activa]="config().minutosDeInactividad === espera"
-              [attr.aria-pressed]="config().minutosDeInactividad === espera"
-              (click)="elegirEspera(espera)"
-            >
-              {{ espera < 60 ? espera + ' min' : (espera / 60) + ' h' }}
-            </button>
-          }
-        </div>
-        <label class="chat-prefs__campo">
-          <span class="ajustes__detalle">O el tiempo que quieras, en minutos</span>
+        <label class="chat-prefs__modo" [class.is-elegido]="modo() === 'apagado'">
           <input
-            type="number"
-            data-testid="chat-prefs-minutos"
-            [min]="minutosMinimo"
-            [max]="minutosMaximo"
-            [value]="config().minutosDeInactividad"
-            (change)="cambiarEspera($any($event.target).value)"
+            type="radio"
+            name="chat-prefs-modo"
+            value="apagado"
+            data-testid="chat-prefs-modo-apagado"
+            [checked]="modo() === 'apagado'"
+            (change)="elegirModo('apagado')"
           />
+          <span class="chat-prefs__modo-texto">
+            <span class="chat-prefs__modo-nombre">No responder automáticamente</span>
+            <span class="ajustes__detalle">El mensaje espera a que usted lo lea.</span>
+          </span>
+        </label>
+
+        <label class="chat-prefs__modo" [class.is-elegido]="modo() === 'fijo'">
+          <input
+            type="radio"
+            name="chat-prefs-modo"
+            value="fijo"
+            data-testid="chat-prefs-modo-fijo"
+            [checked]="modo() === 'fijo'"
+            (change)="elegirModo('fijo')"
+          />
+          <span class="chat-prefs__modo-texto">
+            <span class="chat-prefs__modo-nombre">Responder con un mensaje fijo</span>
+            <span class="ajustes__detalle">Se envía siempre el mismo texto, el que usted escriba.</span>
+          </span>
+        </label>
+
+        <label
+          class="chat-prefs__modo"
+          [class.is-elegido]="modo() === 'ia'"
+          [class.is-apagado]="!iaDisponible"
+        >
+          <input
+            type="radio"
+            name="chat-prefs-modo"
+            value="ia"
+            data-testid="chat-prefs-modo-ia"
+            [checked]="modo() === 'ia'"
+            [disabled]="!iaDisponible"
+            (change)="elegirModo('ia')"
+          />
+          <span class="chat-prefs__modo-texto">
+            <span class="chat-prefs__modo-nombre">Responder con IA</span>
+            <span class="ajustes__detalle">
+              @if (iaDisponible) {
+                La IA de AloVida responde con un mensaje breve según lo que le escriban, en nombre de {{ sujeto() }}.
+              } @else {
+                Todavía no está disponible en AloVida. Mientras tanto puede usar un mensaje fijo.
+              }
+            </span>
+          </span>
         </label>
       </fieldset>
 
-      <label class="chat-prefs__campo">
-        <span class="ajustes__nombre">Qué contesta</span>
-        <textarea
-          rows="4"
-          data-testid="chat-prefs-texto"
-          [maxlength]="largoMaximo"
-          [ngModel]="texto()"
-          (ngModelChange)="texto.set($event)"
-          name="textoAutomatico"
-        ></textarea>
-        <span class="ajustes__detalle">Te quedan {{ restantes() }} caracteres.</span>
-      </label>
+      @if (modo() !== 'apagado') {
+        <div class="chat-prefs__campos">
+          @if (modo() === 'ia') {
+            <!-- Lo que la IA no hace, a la vista y no escondido. -->
+            <p class="chat-prefs__limites" data-testid="chat-prefs-ia-limites">
+              La IA no diagnostica, no indica medicamentos ni dosis, y ante signos de alarma le pide a
+              la persona que acuda a Emergencia.
+            </p>
+          }
 
-      @if (plantillasDeFabrica.length > 0) {
-        <div class="chat-prefs__sugerencias">
-          <p class="ajustes__detalle">O usá una de tus frases guardadas:</p>
-          <ul class="chat-prefs__pastillas">
-            @for (plantilla of plantillasDeFabrica; track plantilla) {
-              <li>
-                <button
-                  class="chat-prefs__pastilla"
-                  type="button"
-                  data-testid="chat-prefs-sugerencia"
-                  (click)="usarPlantilla(plantilla)"
-                >
-                  {{ plantilla }}
-                </button>
-              </li>
+          <!-- El error y el contador van fuera de la etiqueta: dentro, el lector
+               los leería como parte del nombre del campo. -->
+          <div class="chat-prefs__campo">
+            <label class="ajustes__nombre" for="chat-prefs-texto">
+              {{ modo() === 'ia' ? 'Si la IA no está disponible, se enviará este mensaje' : 'El mensaje que se envía' }}
+            </label>
+            <textarea
+              id="chat-prefs-texto"
+              rows="4"
+              data-testid="chat-prefs-texto"
+              [maxlength]="largoMaximo"
+              [attr.aria-invalid]="errorDelTexto() !== '' ? 'true' : null"
+              [attr.aria-describedby]="errorDelTexto() !== '' ? 'chat-prefs-texto-error' : 'chat-prefs-texto-cuenta'"
+              [ngModel]="borrador().texto"
+              (ngModelChange)="escribirTexto($event)"
+              name="textoAutomatico"
+            ></textarea>
+            @if (errorDelTexto(); as error) {
+              <span class="chat-prefs__error" id="chat-prefs-texto-error" role="alert">{{ error }}</span>
+            } @else {
+              <span class="ajustes__detalle" id="chat-prefs-texto-cuenta">Le quedan {{ restantes() }} caracteres.</span>
             }
-          </ul>
-        </div>
-      }
+          </div>
 
-      <div class="chat-prefs__campo">
-        <label class="chat-prefs__frase">
-          <span class="ajustes__nombre">Sin repetirle a la misma persona antes de</span>
-          <input
-            type="number"
-            data-testid="chat-prefs-descanso"
-            [min]="horasMinimo"
-            [max]="horasMaximo"
-            [value]="config().horasEntreAvisos"
-            (change)="cambiarDescanso($any($event.target).value)"
-          />
-          <span class="ajustes__nombre">horas</span>
-        </label>
-        <span class="ajustes__detalle">
-          Cinco mensajes seguidos de la misma persona reciben un solo aviso.
-        </span>
-      </div>
+          @if (modo() === 'fijo' && plantillasDeFabrica.length > 0) {
+            <div class="chat-prefs__sugerencias">
+              <p class="ajustes__detalle">O use una de sus frases guardadas:</p>
+              <ul class="chat-prefs__pastillas">
+                @for (plantilla of plantillasDeFabrica; track plantilla) {
+                  <li>
+                    <button
+                      class="chat-prefs__pastilla"
+                      type="button"
+                      data-testid="chat-prefs-sugerencia"
+                      (click)="usarPlantilla(plantilla)"
+                    >
+                      {{ plantilla }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
 
-      <div class="chat-prefs__interruptor">
-        <span class="chat-prefs__interruptor-texto">
-          <span class="ajustes__nombre">Sólo fuera de mi horario de atención</span>
-          <span class="ajustes__detalle">
-            Dentro del horario no contesta sola, aunque no estés mirando.
-          </span>
-        </span>
-        <app-switch
-          class="chat-prefs__switch"
-          data-testid="chat-prefs-horario"
-          ariaLabel="Sólo fuera de mi horario de atención"
-          [checked]="config().soloFueraDeHorario"
-          (checkedChange)="alternarHorario($event)"
-        />
-      </div>
+          <!-- Lo avanzado, plegado y con valores de fábrica que ya sirven. -->
+          <details class="chat-prefs__mas" data-testid="chat-prefs-mas">
+            <summary class="chat-prefs__mas-titulo">Más opciones</summary>
+            <div class="chat-prefs__mas-cuerpo">
+              <fieldset class="chat-prefs__grupo">
+                <legend class="ajustes__nombre">Responder después de cuánto tiempo sin entrar</legend>
+                <div class="chat-prefs__pastillas" role="group">
+                  @for (espera of esperas; track espera) {
+                    <button
+                      class="chat-prefs__pastilla"
+                      type="button"
+                      [attr.data-testid]="'chat-prefs-espera-' + espera"
+                      [class.is-activa]="borrador().minutos === espera"
+                      [attr.aria-pressed]="borrador().minutos === espera"
+                      (click)="elegirEspera(espera)"
+                    >
+                      {{ espera < 60 ? espera + ' min' : (espera / 60) + ' h' }}
+                    </button>
+                  }
+                </div>
+                <label class="chat-prefs__campo">
+                  <span class="ajustes__detalle">O el tiempo que quiera, en minutos</span>
+                  <input
+                    type="number"
+                    data-testid="chat-prefs-minutos"
+                    [min]="minutosMinimo"
+                    [max]="minutosMaximo"
+                    [value]="borrador().minutos"
+                    (change)="cambiarEspera($any($event.target).value)"
+                  />
+                </label>
+              </fieldset>
 
-      @if (config().soloFueraDeHorario) {
-        <div class="chat-prefs__franja">
-          <label class="chat-prefs__campo">
-            <span class="ajustes__detalle">Desde</span>
-            <input
-              type="time"
-              data-testid="chat-prefs-desde"
-              [value]="config().horarioDesde"
-              (change)="cambiarDesde($any($event.target).value)"
-            />
-          </label>
-          <label class="chat-prefs__campo">
-            <span class="ajustes__detalle">Hasta</span>
-            <input
-              type="time"
-              data-testid="chat-prefs-hasta"
-              [value]="config().horarioHasta"
-              (change)="cambiarHasta($any($event.target).value)"
-            />
-          </label>
+              <div class="chat-prefs__campo">
+                <label class="chat-prefs__frase">
+                  <span class="ajustes__nombre">No repetirle a la misma persona antes de</span>
+                  <input
+                    type="number"
+                    data-testid="chat-prefs-descanso"
+                    [min]="horasMinimo"
+                    [max]="horasMaximo"
+                    [value]="borrador().horas"
+                    (change)="cambiarDescanso($any($event.target).value)"
+                  />
+                  <span class="ajustes__nombre">horas</span>
+                </label>
+                <span class="ajustes__detalle">
+                  Varios mensajes seguidos de la misma persona reciben una sola respuesta.
+                </span>
+              </div>
+
+              <div class="chat-prefs__interruptor">
+                <span class="chat-prefs__interruptor-texto">
+                  <span class="ajustes__nombre">Sólo fuera del horario de atención</span>
+                  <span class="ajustes__detalle">
+                    Dentro del horario no se responde automáticamente.
+                  </span>
+                </span>
+                <app-switch
+                  class="chat-prefs__switch"
+                  data-testid="chat-prefs-horario"
+                  ariaLabel="Sólo fuera del horario de atención"
+                  [checked]="borrador().soloFueraDeHorario"
+                  (checkedChange)="alternarHorario($event)"
+                />
+              </div>
+
+              @if (borrador().soloFueraDeHorario) {
+                <div class="chat-prefs__franja">
+                  <label class="chat-prefs__campo">
+                    <span class="ajustes__detalle">Desde</span>
+                    <input
+                      type="time"
+                      data-testid="chat-prefs-desde"
+                      [value]="borrador().desde"
+                      (change)="cambiarDesde($any($event.target).value)"
+                    />
+                  </label>
+                  <label class="chat-prefs__campo">
+                    <span class="ajustes__detalle">Hasta</span>
+                    <input
+                      type="time"
+                      data-testid="chat-prefs-hasta"
+                      [value]="borrador().hasta"
+                      (change)="cambiarHasta($any($event.target).value)"
+                    />
+                  </label>
+                </div>
+              }
+
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                data-testid="chat-prefs-restablecer"
+                (clicked)="restablecer()"
+              >
+                Volver a los valores recomendados
+              </button>
+            </div>
+          </details>
         </div>
       }
 
       <div class="chat-prefs__acciones">
-        <button app-button variant="primary" data-testid="chat-prefs-guardar" (clicked)="guardarTexto()">
-          Guardar el texto
+        <button
+          app-button
+          variant="primary"
+          type="button"
+          data-testid="chat-prefs-guardar"
+          [isLoading]="guardando()"
+          [disabled]="ocupado()"
+          (clicked)="guardar()"
+        >
+          Guardar
         </button>
-        <button app-button variant="ghost" data-testid="chat-prefs-restablecer" (clicked)="restablecer()">
-          Volver a lo de fábrica
-        </button>
+        @if (sinGuardar()) {
+          <span class="ajustes__detalle" data-testid="chat-prefs-sin-guardar">Tiene cambios sin guardar.</span>
+        }
       </div>
-    </div>
-  }
 
-  @if (guardado()) {
-    <p class="chat-prefs__guardado" role="status" data-testid="chat-prefs-guardado">
-      Guardado.
-    </p>
-  }
+      <!-- La confirmación sale cuando el servidor contestó, no al tocar el botón. -->
+      @if (confirmacion(); as mensaje) {
+        <p class="chat-prefs__guardado" role="status" data-testid="chat-prefs-guardado">{{ mensaje }}</p>
+      }
+      @if (errorAlGuardar(); as mensaje) {
+        <p class="chat-prefs__error" role="alert" data-testid="chat-prefs-error-guardar">{{ mensaje }}</p>
+      }
+    </div>
+
+    <!-- La vista previa: lo que va a ver el paciente, en vivo, con la misma
+         etiqueta que lleva la burbuja en el chat. -->
+    <figure class="chat-prefs__previa" data-testid="chat-prefs-previa" aria-labelledby="chat-prefs-previa-titulo">
+      <figcaption class="chat-prefs__previa-titulo" id="chat-prefs-previa-titulo">Así lo ve {{ destinatario() }}</figcaption>
+      <div class="chat-prefs__previa-hilo">
+        <p class="chat-prefs__burbuja chat-prefs__burbuja--paciente">
+          Buenas noches. ¿Mañana atienden? Quisiera pedir una cita.
+        </p>
+        @switch (modo()) {
+          @case ('apagado') {
+            <p class="chat-prefs__previa-nota" data-testid="chat-prefs-previa-nada">
+              No se envía ninguna respuesta. El mensaje espera a que usted lo lea.
+            </p>
+          }
+          @case ('fijo') {
+            <div class="chat-prefs__burbuja chat-prefs__burbuja--respuesta">
+              <span class="chat-prefs__etiqueta">Respuesta automática</span>
+              <p class="chat-prefs__texto-libre" data-testid="chat-prefs-previa-texto">{{ borrador().texto }}</p>
+            </div>
+          }
+          @case ('ia') {
+            <div class="chat-prefs__burbuja chat-prefs__burbuja--respuesta">
+              <span class="chat-prefs__etiqueta chat-prefs__etiqueta--ia" data-testid="chat-prefs-previa-etiqueta">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
+                Respuesta automática generada por IA
+              </span>
+              <p>
+                Buenas noches, gracias por escribir. En este momento no podemos atenderle por aquí;
+                le responderemos apenas sea posible para coordinar su cita. Si tiene una urgencia,
+                acuda a Emergencia.
+              </p>
+            </div>
+            <p class="chat-prefs__previa-nota">
+              Es un ejemplo: la IA escribe cada respuesta según el mensaje que recibe.
+            </p>
+          }
+        }
+      </div>
+    </figure>
+  </div>
 </section>
 
 <section class="ajustes__bloque">
   <h2 class="ajustes__titulo">Frases guardadas</h2>
   <p class="ajustes__detalle">
     Las que aparecen en el chat con el botón de plantillas. Las del producto no se pueden borrar;
-    las tuyas, sí.
+    las suyas, sí.
   </p>
 
   <ul class="chat-prefs__plantillas">
@@ -205,7 +350,7 @@
         </button>
       </li>
     } @empty {
-      <li class="ajustes__nota">Todavía no guardaste ninguna frase propia.</li>
+      <li class="ajustes__nota">Todavía no guardó ninguna frase propia.</li>
     }
   </ul>
 
@@ -215,7 +360,7 @@
       <input
         type="text"
         data-testid="chat-prefs-plantilla-nueva"
-        placeholder="Una frase que uses seguido"
+        placeholder="Una frase que use seguido"
         [ngModel]="plantillaNueva()"
         (ngModelChange)="plantillaNueva.set($event)"
         name="plantillaNueva"

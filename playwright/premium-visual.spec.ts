@@ -1,6 +1,7 @@
 import { test, expect, type Locator, type Page } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { entrarAlSimulador, esperarAQueSeAsiente } from './support/simulador';
 
 /**
@@ -49,7 +50,11 @@ const SOLO_FAMILIA = (process.env['PREMIUM_RUTAS'] ?? '')
 const BASE = process.env['E2E_BASE_URL'] ?? 'http://localhost:4200';
 const USUARIO = process.env['PREMIUM_USUARIO'] ?? 'medica';
 
-const DESTINO = join('..', 'docs', 'progress', 'evidence', `lane-${LANE}`);
+// Misma carpeta que `corr-evidencia.spec.ts`: el gate (`scripts/check-correcciones.mjs`)
+// lee las dos desde `lane-<N>/`. Ignorada por git; `CORR_EVIDENCE_DESTINATION` la redirige.
+const DESTINO = process.env['CORR_EVIDENCE_DESTINATION']
+  ? resolve(process.env['CORR_EVIDENCE_DESTINATION'])
+  : join('artifacts', 'evidencia', 'correcciones', `lane-${LANE}`);
 const FOTOS = join(DESTINO, 'fotos', 'premium', FASE);
 
 /** Umbrales. Cada uno con su razón; ninguno es una preferencia. */
@@ -714,6 +719,39 @@ test.describe(`acabado premium · carril ${LANE} (${FASE})`, () => {
     writeFileSync(
       join(DESTINO, `premium-hallazgos${FASE === 'antes' ? '-antes' : ''}.json`),
       `${JSON.stringify(hallazgos, null, 2)}\n`,
+      'utf8',
+    );
+
+    // Con qué código se midió: sin esto, el gate no puede comparar la matriz con el árbol.
+    const git = (...args: string[]): string => {
+      try {
+        return execFileSync('git', args, { encoding: 'utf8' });
+      } catch {
+        return '';
+      }
+    };
+    writeFileSync(
+      join(DESTINO, `PREMIUM-MANIFIESTO${FASE === 'antes' ? '-antes' : ''}.json`),
+      `${JSON.stringify(
+        {
+          version: 1,
+          lane: LANE,
+          phase: FASE,
+          user: USUARIO,
+          generatedAt: new Date().toISOString(),
+          commit: git('rev-parse', 'HEAD').trim(),
+          dirty: git('status', '--porcelain', '--untracked-files=no')
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => line.slice(3).trim()),
+          baseUrl: BASE,
+          cells: filas.length,
+          red: rojos,
+          findings: hallazgos.length,
+        },
+        null,
+        2,
+      )}\n`,
       'utf8',
     );
 

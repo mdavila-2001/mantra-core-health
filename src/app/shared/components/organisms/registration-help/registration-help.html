@@ -1,0 +1,36 @@
+<!-- `aria-label` y no un `<h2>` visible: la columna es apoyo del formulario, y
+     un titular más compitiendo con el del paso es ruido para todos. Quien
+     navega con lector la encuentra igual, por su nombre de región. -->
+<aside class="ayuda" aria-label="Por qué le pedimos estos datos y cómo los cuidamos">
+  <!-- `track` sobre el propio título: al cambiar de paso el nodo se rehace y la
+       entrada vuelve a correr, así se ve que la explicación cambió con la
+       pregunta en vez de reemplazarse de golpe. -->
+  @for (tarjeta of tarjetas(); track tarjeta.titulo) {
+    <article class="ayuda__tarjeta">
+      <span class="ayuda__glifo" aria-hidden="true">
+        <app-nav-icon [name]="tarjeta.icono" />
+      </span>
+      <div class="ayuda__cuerpo">
+        <h3 class="ayuda__titulo">{{ tarjeta.titulo }}</h3>
+        <p class="ayuda__texto">{{ tarjeta.texto }}</p>
+      </div>
+    </article>
+  }
+
+  <!-- El sello no cambia con el paso: la promesa es la misma se esté
+       contestando lo que se esté contestando, y repetirla en cada tarjeta la
+       gastaría. -->
+  <article class="ayuda__tarjeta ayuda__tarjeta--sello">
+    <span class="ayuda__glifo ayuda__glifo--sello" aria-hidden="true">
+      <app-nav-icon name="shield" />
+    </span>
+    <div class="ayuda__cuerpo">
+      <h3 class="ayuda__titulo">Sus datos están a salvo</h3>
+      <ul class="ayuda__lista">
+        @for (promesa of promesas(); track promesa) {
+          <li>{{ promesa }}</li>
+        }
+      </ul>
+    </div>
+  </article>
+</aside>

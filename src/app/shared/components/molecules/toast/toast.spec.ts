@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 
 import { Toast } from './toast';
 import { ToastService } from './toast.service';
@@ -21,11 +22,41 @@ describe('Toast', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     expect(host.className).toBe('toast toast--error');
-    // `role="alert"` ya implica aria-live assertive: no hace falta declararlo.
-    expect(host.getAttribute('role')).toBe('alert');
+    // Sin rol propio: la región viva es el contenedor (ver más abajo).
+    expect(host.hasAttribute('role')).toBe(false);
     expect(host.querySelector('.toast__icon svg')).toBeTruthy();
     expect(host.querySelector('.sr-only')?.textContent?.trim()).toBe('Error:');
     expect(host.querySelector('.toast__title')?.textContent?.trim()).toBe('No se pudo firmar');
+  });
+
+  it('con acción, el botón navega a su URL y cierra el aviso', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.componentRef.setInput('toast', {
+      ...SAMPLE,
+      type: 'warning',
+      action: { label: 'Ver mi cita', url: '/my-account/appointments?turno=b-1' },
+    } satisfies ToastMessage);
+    fixture.detectChanges();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    let cerrado: string | undefined;
+    fixture.componentInstance.dismissed.subscribe((id: string) => (cerrado = id));
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="toast-accion"]',
+    );
+    expect(boton?.textContent?.trim()).toBe('Ver mi cita');
+    boton!.click();
+
+    expect(navegar).toHaveBeenCalledWith('/my-account/appointments?turno=b-1');
+    expect(cerrado).toBe('aviso-1');
+  });
+
+  it('sin acción no hay botón', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.componentRef.setInput('toast', SAMPLE);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="toast-accion"]')).toBeNull();
   });
 
   it('emite el id al pulsar la X', () => {
@@ -59,13 +90,84 @@ describe('Toast', () => {
 
     const host = fixture.nativeElement as HTMLElement;
     expect(host.querySelectorAll('app-toast').length).toBe(2);
-    // los que no son error se anuncian sin interrumpir
-    expect(host.querySelectorAll('[role="status"]').length).toBe(1);
+    // los que no son error se anuncian sin interrumpir; el error, interrumpiendo
+    expect(host.querySelectorAll('[aria-live="polite"] app-toast').length).toBe(1);
+    expect(host.querySelectorAll('[aria-live="assertive"] app-toast').length).toBe(1);
 
-    host.querySelectorAll<HTMLButtonElement>('.toast__close')[1].click();
+    // el de éxito vive en la región cortés: su X es la de ahí
+    host.querySelector<HTMLButtonElement>('[aria-live="polite"] .toast__close')?.click();
     fixture.detectChanges();
 
     expect(service.toasts().some((toast) => toast.id === segundo)).toBe(false);
     expect(host.querySelectorAll('app-toast').length).toBe(1);
+  });
+
+  /**
+   * Un lector de pantalla sólo anuncia cambios en una región que ya conocía.
+   * Si la región nace junto con el aviso, el anuncio se pierde: por eso las dos
+   * tienen que estar en el DOM desde el primer render, vacías.
+   */
+  describe('región viva del contenedor', () => {
+    function regiones(host: HTMLElement) {
+      return {
+        cortes: host.querySelector('[aria-live="polite"]'),
+        urgente: host.querySelector('[aria-live="assertive"]'),
+      };
+    }
+
+    it('existe vacía antes del primer aviso, cortés y urgente', () => {
+      const fixture = TestBed.createComponent(ToastContainer);
+      fixture.detectChanges();
+
+      const { cortes, urgente } = regiones(fixture.nativeElement as HTMLElement);
+      expect(cortes?.getAttribute('role')).toBe('status');
+      expect(urgente?.getAttribute('role')).toBe('alert');
+      expect(cortes?.children.length).toBe(0);
+      expect(urgente?.children.length).toBe(0);
+    });
+
+    it('el aviso se inserta DENTRO de la región que ya estaba, no la reemplaza', () => {
+      const fixture = TestBed.createComponent(ToastContainer);
+      const service = TestBed.inject(ToastService);
+      fixture.detectChanges();
+      const antes = regiones(fixture.nativeElement as HTMLElement);
+
+      service.show({ type: 'success', message: 'Guardado', durationMs: null });
+      service.show({ type: 'error', message: 'No se pudo firmar', durationMs: null });
+      fixture.detectChanges();
+
+      const despues = regiones(fixture.nativeElement as HTMLElement);
+      expect(despues.cortes).toBe(antes.cortes);
+      expect(despues.urgente).toBe(antes.urgente);
+      expect(despues.cortes?.textContent).toContain('Guardado');
+      expect(despues.urgente?.textContent).toContain('No se pudo firmar');
+    });
+
+    it('al vaciarse la cola las regiones se quedan: el próximo aviso también se anuncia', () => {
+      const fixture = TestBed.createComponent(ToastContainer);
+      const service = TestBed.inject(ToastService);
+      const id = service.show({ type: 'warning', message: 'a', durationMs: null });
+      fixture.detectChanges();
+
+      service.dismiss(id);
+      fixture.detectChanges();
+
+      const { cortes, urgente } = regiones(fixture.nativeElement as HTMLElement);
+      expect(cortes).not.toBeNull();
+      expect(urgente).not.toBeNull();
+      expect(cortes?.querySelector('app-toast')).toBeNull();
+    });
+
+    it('ningún aviso lleva rol propio: no hay regiones anidadas', () => {
+      const fixture = TestBed.createComponent(ToastContainer);
+      const service = TestBed.inject(ToastService);
+      service.show({ type: 'info', message: 'a', durationMs: null });
+      service.show({ type: 'error', message: 'b', durationMs: null });
+      fixture.detectChanges();
+
+      const host = fixture.nativeElement as HTMLElement;
+      expect(host.querySelectorAll('app-toast[role]').length).toBe(0);
+      expect(host.querySelectorAll('[aria-live]').length).toBe(2);
+    });
   });
 });

@@ -1,0 +1,12 @@
+.billing-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.billing-setup__practice {
+  max-inline-size: 28rem;
+  margin-block-end: var(--e4);
+}

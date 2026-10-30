@@ -66,6 +66,15 @@ export { StoredFilePreview } from './stored-file-preview/stored-file-preview';
 
 export { FormField } from './form-field/form-field';
 
+export { SignatureOrSeal as FirmaOSello } from './signature-or-seal/signature-or-seal';
+export type { SignatureOrSealType as TipoDeFirmaOSello } from './signature-or-seal/signature-or-seal';
+
+export { PracticeLogo as LogoConsultorio } from './practice-logo/practice-logo';
+
+export { LoadingState } from './loading-state/loading-state';
+export { LOADING_STATE_SIZES } from './loading-state/loading-state.types';
+export type { LoadingStateSize } from './loading-state/loading-state.types';
+
 /* `MenuItem` y `MenuTrigger` solo tienen sentido dentro de un `Menu`. */
 export { Menu } from './menu/menu';
 export { MenuItem } from './menu/menu-item/menu-item';
@@ -97,6 +106,9 @@ export { Radio } from './radio/radio';
 export { RadioGroup } from './radio-group/radio-group';
 
 export { ReferenceCombobox } from './reference-combobox/reference-combobox';
+
+/* Evidencia de una relación del glosario: barra, frecuencia y sello (TAREA-41 F5). */
+export { RelationEvidence } from './relation-evidence/relation-evidence';
 export {
   REFERENCE_COMBOBOX_DEBOUNCE_MS,
   REFERENCE_COMBOBOX_MIN_QUERY_LENGTH,
@@ -131,7 +143,7 @@ export type {
 } from './search-result/search-result.types';
 
 export { Stepper } from './stepper/stepper';
-export { STEP_STATUSES } from './stepper/stepper.types';
+export { porcentajeDelRecorrido, STEP_STATUSES } from './stepper/stepper.types';
 export type { StepperStep, StepStatus } from './stepper/stepper.types';
 
 /* `Tab` es la pestaña individual; sin `Tabs` alrededor no significa nada. */

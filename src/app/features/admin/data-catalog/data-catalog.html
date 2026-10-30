@@ -111,6 +111,51 @@
         </app-view-state-host>
       </app-tab>
 
+      <app-tab label="Esquemas">
+        <p class="catalogo__nota">
+          Cada schema es un módulo del modelo. La explicación sale de la nota del módulo en la bóveda SALUD: no es una
+          ficha revisable, y un módulo sin «Propósito de negocio» se muestra como tal. Elija una fila para leerla.
+        </p>
+        <app-data-table
+          data-testid="catalog-schemas"
+          caption="Schemas del catálogo"
+          [state]="filasEsquemas()"
+          [columns]="columnasEsquemas"
+          [trackBy]="porSchema"
+          maxHeight="26rem"
+          stackedOnMobile
+          rowNavigable
+          (rowActivated)="elegirEsquema($event)"
+          (retry)="cargarSchemas()"
+        />
+        @if (esquema(); as x) {
+          <section class="catalogo__esquema" aria-label="Explicación del esquema" data-testid="catalog-schema-detail">
+            <h3 class="catalogo__esquema-titulo"><code>{{ x.schemaName }}</code></h3>
+            @if (x.description; as d) {
+              <p class="catalogo__secundario">Módulo {{ d.moduleNumber }} · {{ d.title }} · {{ d.domain ?? 'sin dominio' }}</p>
+              <h4 class="catalogo__esquema-subtitulo">Negocio</h4>
+              @if (d.business) {
+                <p data-testid="catalog-schema-business">{{ d.business }}</p>
+              } @else {
+                <p class="catalogo__secundario" data-testid="catalog-schema-business">
+                  La bóveda no describe el propósito de negocio de este módulo.
+                </p>
+              }
+              <h4 class="catalogo__esquema-subtitulo">Sistema</h4>
+              <p data-testid="catalog-schema-system">{{ d.system ?? 'La nota del módulo no trae métricas.' }}</p>
+              <p class="catalogo__secundario">Fuente: <code>{{ d.source }}</code></p>
+            } @else {
+              <p class="catalogo__secundario" data-testid="catalog-schema-business">
+                Ningún módulo de la bóveda declara este schema.
+              </p>
+            }
+            <button app-button variant="outline" size="sm" data-testid="catalog-schema-tables" (clicked)="verTablas(x.schemaName)">
+              Ver las tablas de este schema
+            </button>
+          </section>
+        }
+      </app-tab>
+
       <app-tab label="Escaneos">
         <app-view-state-host [state]="escaneos()" (retry)="cargarEscaneos()">
           @if (escaneos(); as estado) {
@@ -143,7 +188,7 @@
 </div>
 
 <ng-template #nombreCell let-row>
-  <a class="catalogo__nombre" [routerLink]="['/administration/data-catalog', row.id]">
+  <a class="catalogo__nombre" [routerLink]="['/superadmin/data-catalog', row.id]">
     <span class="catalogo__schema">{{ row.schemaName }}.</span>{{ row.objectName }}
   </a>
   @if (row.annotation?.businessName; as negocio) {

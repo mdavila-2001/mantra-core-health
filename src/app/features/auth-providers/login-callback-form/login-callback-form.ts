@@ -15,7 +15,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   objetoJson,
@@ -73,14 +73,14 @@ export class LoginCallbackForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Qué devolvió el proveedor',
       hint: 'El «state» liga esta respuesta con el intento iniciado antes.',
       campos: [
-        { key: 'providerCode', label: 'Código del proveedor', hint: 'El código con el que se registró el proveedor, no su UUID.', control: 'text', required: true, mensajeDeError: 'Ingresá el código del proveedor.' },
-        { key: 'state', label: 'State devuelto por el proveedor', hint: 'Tal cual lo entregó «Iniciar login federado».', control: 'text', required: true, mensajeDeError: 'Ingresá el state, hasta 200 caracteres.' },
-        { key: 'externalSubject', label: 'Sujeto externo', hint: 'El identificador del sujeto en el proveedor.', control: 'text', required: true, mensajeDeError: 'Ingresá el sujeto externo, hasta 300 caracteres.' },
+        { key: 'providerCode', label: 'Código del proveedor', hint: 'El código con el que se registró el proveedor, no su UUID.', control: 'text', required: true, mensajeDeError: 'Ingrese el código del proveedor.' },
+        { key: 'state', label: 'State devuelto por el proveedor', hint: 'Tal cual lo entregó «Iniciar login federado».', control: 'text', required: true, mensajeDeError: 'Ingrese el state, hasta 200 caracteres.' },
+        { key: 'externalSubject', label: 'Sujeto externo', hint: 'El identificador del sujeto en el proveedor.', control: 'text', required: true, mensajeDeError: 'Ingrese el sujeto externo, hasta 300 caracteres.' },
         { key: 'claims', label: 'Claims recibidos (JSON)', hint: 'Un objeto JSON con los claims ya verificados por quien llama.', control: 'textarea', required: true, mensajeDeError: 'Tiene que ser un objeto JSON válido, como {&quot;sub&quot;: &quot;valor&quot;}.' },
       ],
     },
@@ -143,7 +143,7 @@ export class LoginCallbackForm {
   protected readonly processed = signal<FederatedCallbackResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para operar el login federado.'),
+    errorMessageOf(this.state(), 'No tiene permiso para operar el login federado.'),
   );
 
   protected submit(): void {

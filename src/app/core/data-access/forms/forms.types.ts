@@ -41,7 +41,7 @@ export interface FormInstanceListItem {
   /** Concept id del estado de la instancia, si lo tiene. */
   readonly stateConceptId?: string;
   /** ISO; presente cuando la instancia ya se cerró. */
-  readonly closedAt?: string;
+  readonly closedAt?: string | null;
   /** ISO. */
   readonly createdAt: string;
 }
@@ -134,6 +134,43 @@ export type TechnicalDataType =
   | 'reference'
   | 'code';
 
+/**
+ * Claves de la definición de campo que el DTO de `origin/dev` no declara
+ * (informe B, C8): las de la cuadrícula. Las opciones, la respuesta múltiple,
+ * la ayuda y «Otro» sí las declara y viajan. La maqueta guarda también la
+ * cuadrícula; contra la API real no viaja, y como sin ella la pregunta
+ * quedaría rota —una cuadrícula sin filas—, el cliente no la manda a medias.
+ */
+export const FIELD_DEFINITION_SIMULATOR_EXTENSIONS: readonly string[] = [
+  'rows',
+  'requireEachRow',
+  'oneResponsePerColumn',
+];
+
+/**
+ * Ídem para el `PATCH`. La cardinalidad ya viaja: la API la declara desde el
+ * carril 27 (REQ-27-007), con `null` para quitar el tope.
+ */
+export const FIELD_DEFINITION_UPDATE_SIMULATOR_EXTENSIONS: readonly string[] = [
+  ...FIELD_DEFINITION_SIMULATOR_EXTENSIONS,
+];
+
+const FIELD_DEFINITION_EXTENSION_LABELS: Readonly<Record<string, string>> = {
+  rows: 'las filas de la cuadrícula',
+  requireEachRow: 'la obligación de responder cada fila',
+  oneResponsePerColumn: 'el uso único de cada columna',
+  cardinalityMin: 'el mínimo de respuestas',
+  cardinalityMax: 'el máximo de respuestas',
+};
+
+/** El nombre, para la persona, de lo que la API todavía no guarda de una pregunta. */
+export function fieldDefinitionExtensionsFeature(keys: readonly string[]): string {
+  const labels = keys.map((key) => FIELD_DEFINITION_EXTENSION_LABELS[key] ?? key);
+  const lista =
+    labels.length === 1 ? labels[0]! : `${labels.slice(0, -1).join(', ')} y ${labels.at(-1)!}`;
+  return `Guardar ${lista} de una pregunta`;
+}
+
 /** Cuerpo de `POST /forms/field-definitions` (UC-09-02). */
 export interface CreateFieldDefinitionInput {
   /** Código único del campo en toda la instalación, no sólo en el formulario. */
@@ -147,8 +184,6 @@ export interface CreateFieldDefinitionInput {
    * Las respuestas ofrecidas, para un campo `code`.
    *
    * Texto libre y no un `valueSetId`: ver {@link ChartTemplateField.options}.
-   * **El backend real todavía no acepta esta clave** — ver
-   * `docs/pendientes-backend-formularios.md`.
    */
   readonly options?: readonly string[];
   /** Si el campo de elección admite varias respuestas. */

@@ -1,0 +1,138 @@
+/* ============================================================================
+    Una fila de comprobante: miniatura a la izquierda y, al lado, lo que dice.
+    En el teléfono la miniatura no se va abajo: es chica a propósito, para que
+    el monto y el estado sigan en el primer renglón que se lee.
+    ========================================================================== */
+
+:host {
+  display: grid;
+  grid-template-columns: var(--sp-16) minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: start;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.payment-receipt-row__thumbnail {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--sp-1);
+  inline-size: var(--sp-16);
+  block-size: var(--sp-16);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.payment-receipt-row__thumbnail:hover {
+  border-color: var(--border-strong);
+}
+
+.payment-receipt-row__thumbnail img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.payment-receipt-row__thumbnail svg {
+  inline-size: var(--sp-6);
+  block-size: var(--sp-6);
+}
+
+.payment-receipt-row__thumbnail[data-kind='pdf'] {
+  color: var(--st-error-fg);
+}
+
+.payment-receipt-row__extension {
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.payment-receipt-row__thumbnail-skeleton {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.payment-receipt-row__body {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.payment-receipt-row__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.payment-receipt-row__amount {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.payment-receipt-row__facts {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.payment-receipt-row__facts dt {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.payment-receipt-row__facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.payment-receipt-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+:host([data-status='REJECTED']) .payment-receipt-row__amount {
+  color: var(--text-secondary);
+}
+
+@media (min-width: 780px) {
+  :host {
+    grid-template-columns: var(--sp-20) minmax(0, 1fr);
+    gap: var(--sp-4);
+    padding: var(--sp-4);
+  }
+
+  .payment-receipt-row__thumbnail {
+    inline-size: var(--sp-20);
+    block-size: var(--sp-20);
+  }
+
+  .payment-receipt-row__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--sp-4);
+  }
+
+  .payment-receipt-row__wide {
+    grid-column: 1 / -1;
+  }
+}

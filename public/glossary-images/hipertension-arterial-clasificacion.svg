@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Categorías de presión arterial en consulta según ESC/ESH 2018</title>
+  <desc id="d">Gráfica con la presión diastólica en el eje horizontal y la sistólica en el vertical. Rectángulos anidados de colores marcan las categorías: óptima por debajo de 120 y 80, normal hasta 129 y 84, normal-alta hasta 139 y 89, hipertensión de grado 1 desde 140 o 90, grado 2 desde 160 o 100 y grado 3 desde 180 o 110. Un recuadro punteado señala la hipertensión sistólica aislada.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --z0:#bfe5cf; --z1:#dcecb9; --z2:#f6e49c; --z3:#f8c98e; --z4:#f1a08a; --z5:#df7468; --accent:#1d5fa8; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --z0:#245f45; --z1:#4b5f2c; --z2:#6e5e20; --z3:#80501f; --z4:#8f3f33; --z5:#a8322d; --accent:#7db4ec; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .sub { font-size: 14px; }
+    .tick { font-size: 13px; }
+    .axis { font-size: 14px; font-weight: 600; }
+    .leg { font-size: 14px; font-weight: 600; }
+    .legs { font-size: 13px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="30" text-anchor="middle" class="title">Categorías de presión arterial en consulta (ESC/ESH 2018)</text>
+
+  <!-- zonas anidadas ancladas abajo a la izquierda -->
+  <rect x="90" y="70" width="430" height="330" fill="var(--z5)"/>
+  <rect x="90" y="136" width="358.3" height="264" fill="var(--z4)"/>
+  <rect x="90" y="202" width="286.7" height="198" fill="var(--z3)"/>
+  <rect x="90" y="268" width="215" height="132" fill="var(--z2)"/>
+  <rect x="90" y="301" width="179.2" height="99" fill="var(--z1)"/>
+  <rect x="90" y="334" width="143.3" height="66" fill="var(--z0)"/>
+  <rect x="90" y="70" width="430" height="330" fill="none" stroke="var(--line)" stroke-width="2"/>
+
+  <!-- hipertensión sistólica aislada -->
+  <rect x="94" y="74" width="207" height="190" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="7 5"/>
+  <text x="102" y="96" class="tick" style="fill:var(--accent);font-weight:700">Sistólica aislada</text>
+  <text x="102" y="113" class="tick" style="fill:var(--accent)">≥ 140 y &lt; 90</text>
+
+  <!-- ejes -->
+  <g class="tick muted" text-anchor="middle">
+    <text x="90" y="420">60</text>
+    <text x="233.3" y="420">80</text>
+    <text x="305" y="420">90</text>
+    <text x="376.7" y="420">100</text>
+    <text x="448.3" y="420">110</text>
+    <text x="520" y="420">120</text>
+  </g>
+  <g class="tick muted" text-anchor="end">
+    <text x="82" y="404">100</text>
+    <text x="82" y="338">120</text>
+    <text x="82" y="305">130</text>
+    <text x="82" y="272">140</text>
+    <text x="82" y="206">160</text>
+    <text x="82" y="140">180</text>
+    <text x="82" y="74">200</text>
+  </g>
+  <text x="305" y="446" text-anchor="middle" class="axis">Presión diastólica (mmHg)</text>
+  <text transform="translate(26 235) rotate(-90)" text-anchor="middle" class="axis">Presión sistólica (mmHg)</text>
+
+  <!-- leyenda -->
+  <g>
+    <rect x="552" y="78" width="22" height="22" rx="4" fill="var(--z5)"/>
+    <text x="582" y="94" class="leg">Grado 3</text>
+    <text x="582" y="111" class="legs muted">≥ 180 y/o ≥ 110</text>
+
+    <rect x="552" y="132" width="22" height="22" rx="4" fill="var(--z4)"/>
+    <text x="582" y="148" class="leg">Grado 2</text>
+    <text x="582" y="165" class="legs muted">160–179 y/o 100–109</text>
+
+    <rect x="552" y="186" width="22" height="22" rx="4" fill="var(--z3)"/>
+    <text x="582" y="202" class="leg">Grado 1</text>
+    <text x="582" y="219" class="legs muted">140–159 y/o 90–99</text>
+
+    <rect x="552" y="240" width="22" height="22" rx="4" fill="var(--z2)"/>
+    <text x="582" y="256" class="leg">Normal-alta</text>
+    <text x="582" y="273" class="legs muted">130–139 y/o 85–89</text>
+
+    <rect x="552" y="294" width="22" height="22" rx="4" fill="var(--z1)"/>
+    <text x="582" y="310" class="leg">Normal</text>
+    <text x="582" y="327" class="legs muted">120–129 y/o 80–84</text>
+
+    <rect x="552" y="348" width="22" height="22" rx="4" fill="var(--z0)"/>
+    <text x="582" y="364" class="leg">Óptima</text>
+    <text x="582" y="381" class="legs muted">&lt; 120 y &lt; 80</text>
+  </g>
+  <text x="552" y="410" class="legs muted">Manda la cifra más alta de las dos.</text>
+  <text x="400" y="468" text-anchor="middle" class="legs muted">Esquema ilustrativo. Hipertensión: grado 1 o más. Ilustración original de AloVida.</text>
+</svg>

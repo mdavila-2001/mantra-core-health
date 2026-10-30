@@ -1,0 +1,25 @@
+/* ---- paginación de la ventana (ALV-024) ----------------------------------
+   Al pie de la lista, como el cursor de la tabla: el rango a la izquierda dice
+   qué página se mira y las flechas a la derecha la mueven. */
+.agenda__paginacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-4);
+}
+
+.agenda__paginacion-rango {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  /* Con «Hoy», el día de la semana llega en minúscula del formato de fecha. */
+  text-transform: capitalize;
+}
+
+.agenda__paginacion-controles {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}

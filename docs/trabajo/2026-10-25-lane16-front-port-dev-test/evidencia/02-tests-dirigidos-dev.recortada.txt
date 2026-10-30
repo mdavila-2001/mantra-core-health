@@ -1,0 +1,5 @@
+# Salida recortada: solo el resumen
+ Test Files  124 passed (124)
+      Tests  1383 passed (1383)
+   Start at  20:12:51
+   Duration  22.39s (transform 9.47s, setup 2.10s, import 18.82s, tests 48.14s, environment 180.58s)

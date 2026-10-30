@@ -1,37 +1,45 @@
+import { splitLastWord } from '../../../../../shared/text/split-last-word';
 import { FileDropTarget } from '../../../../../shared/forms/file-drop-target';
-import { DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, input, output, signal, viewChild, type OnInit, type TemplateRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { WorkHistory } from '../../work-history/work-history';
 import { PractitionerActivity } from './practitioner-activity/practitioner-activity';
 import { PracticeSitesMap } from './practice-sites-map/practice-sites-map';
+import { ResidenceReadonly } from './residence-readonly/residence-readonly';
+import { AppMap } from '../../../../../shared/components/organisms/map/map';
+import type { PinMap } from '../../../../../shared/components/organisms/map/map-pin.types';
 import { CredentialsPanel } from './credentials-panel/credentials-panel';
+import { DataTable } from '../../../../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../../../../shared/components/organisms/data-table/data-table.types';
+import { FilterBar } from '../../../../../shared/components/organisms/filter-bar/filter-bar';
+import { Pagination } from '../../../../../shared/components/molecules/pagination/pagination';
+import { ready } from '../../../../../core/view-state/view-state';
 import {
-  PESTANAS_DEL_EDITOR_MEDICO,
-  PESTANAS_DEL_PERFIL_MEDICO,
-  PESTANA_EDITOR,
-  PESTANA_MEDICO,
-} from '../../pestanas-del-perfil-medico';
+  EDITOR_DOCTOR_TABS,
+  DOCTOR_PROFILE_TABS,
+  TAB_EDITOR,
+  DOCTOR_TAB,
+} from '../../doctor-profile-tabs';
 import { Avatar } from '../../../../../shared/components/atoms/avatar/avatar';
 import { Badge } from '../../../../../shared/components/atoms/badge/badge';
+import { VerificationBadge } from '../../../../../shared/components/atoms/verification-badge/verification-badge';
 import { AppButton } from '../../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../../shared/components/atoms/button/button-link';
+import { ProfileAffiliationLinks } from '../../affiliation-invitations/profile-affiliation-links/profile-affiliation-links';
 import { Chip } from '../../../../../shared/components/atoms/chip/chip';
 import { NavIcon } from '../../../../../shared/components/atoms/nav-icon/nav-icon';
-import { Tooltip } from '../../../../../shared/components/atoms/tooltip/tooltip';
 import { Card } from '../../../../../shared/components/molecules/card/card';
+import { SignatureOrSeal } from '../../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { PracticeLogo } from '../../../../../shared/components/molecules/practice-logo/practice-logo';
 import { TabHelpBlock } from '../../../../../shared/components/molecules/tab-help-block/tab-help-block';
 import { Tabs } from '../../../../../shared/components/molecules/tabs/tabs';
 import { Tab } from '../../../../../shared/components/molecules/tabs/tab/tab';
-import { SpecialtyBadge } from '../../../../../shared/components/organisms/specialty-badge/specialty-badge';
 import { SpecialtyBadgeGrid } from '../../../../../shared/components/organisms/specialty-badge-grid/specialty-badge-grid';
 import { StatusSeal } from '../../../../../shared/components/organisms/status-seal/status-seal';
 import { TutorialTarget } from '../../../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
-import type {
-  FormacionVisible,
-  PerfilProfesionalVisible,
-} from './practitioner-profile-view.types';
+import type { AfiliacionVisible, FormacionVisible, PerfilProfesionalVisible, RespaldoCredencial } from './practitioner-profile-view.types';
 
 /** Con qué pestaña abre la ficha: la primera, sea cuál sea el dibujo. */
 const PRIMERA_PESTANA = 0;
@@ -88,18 +96,22 @@ interface FilaCredencial {
 @Component({
   selector: 'app-practitioner-profile-view',
   imports: [
+    AppMap,
+    ResidenceReadonly,
     FileDropTarget,
     Avatar,
     Badge,
+    VerificationBadge,
     AppButton,
     AppButtonLink,
     Card,
     Chip,
     DatePipe,
+    PracticeLogo,
+    SignatureOrSeal,
     NavIcon,
-    Tooltip,
+    ProfileAffiliationLinks,
     RouterLink,
-    SpecialtyBadge,
     SpecialtyBadgeGrid,
     StatusSeal,
     Tabs,
@@ -110,14 +122,84 @@ interface FilaCredencial {
     PractitionerActivity,
     PracticeSitesMap,
     CredentialsPanel,
+    DataTable,
+    FilterBar,
+    Pagination,
+    NgTemplateOutlet,
   ],
   templateUrl: './practitioner-profile-view.html',
   styleUrl: './practitioner-profile-view.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PractitionerProfileView {
+export class PractitionerProfileView implements OnInit {
   /** El perfil, ya resuelto por el contenedor. */
   readonly perfil = input.required<PerfilProfesionalVisible>();
+
+  /** El nombre con la última palabra aparte: la insignia viaja con ella y no queda sola en una línea. */
+  protected readonly nombreEnDos = computed(() => splitLastWord(this.perfil().nombre));
+
+  protected readonly trayectoriaDensa = computed(() =>
+    this.perfil().actividadActual.length + this.perfil().experienciaHistorica.length > 5);
+  protected readonly busquedaTrayectoria = signal('');
+  private readonly paginasTrayectoria = signal<Readonly<Record<string, number>>>({});
+  private readonly tamanosTrayectoria = signal<Readonly<Record<string, number>>>({});
+  protected readonly gruposTrayectoria = computed(() => {
+    const termino = normalizarBusqueda(this.busquedaTrayectoria());
+    return [
+      { id: 'actual', titulo: 'Actividad actual', filas: this.perfil().actividadActual },
+      { id: 'historica', titulo: 'Experiencia histórica', filas: this.perfil().experienciaHistorica },
+    ].map((grupo) => {
+      const filas = grupo.filas.filter((fila) =>
+        normalizarBusqueda(`${fila.organizacion} ${fila.cargo} ${fila.estado ?? ''}`).includes(termino));
+      const tamano = this.tamanosTrayectoria()[grupo.id] ?? 10;
+      const pagina = Math.min(this.paginasTrayectoria()[grupo.id] ?? 1, Math.max(1, Math.ceil(filas.length / tamano)));
+      return { ...grupo, total: filas.length, pagina, tamano,
+        estado: ready(filas.slice((pagina - 1) * tamano, pagina * tamano)) };
+    });
+  });
+  private readonly celdaInstitucionTrayectoria = viewChild.required<TemplateRef<{ $implicit: AfiliacionVisible }>>('celdaInstitucionTrayectoria');
+  private readonly celdaEstadoTrayectoria = viewChild.required<TemplateRef<{ $implicit: AfiliacionVisible }>>('celdaEstadoTrayectoria');
+  private readonly celdaPeriodoTrayectoria = viewChild.required<TemplateRef<{ $implicit: AfiliacionVisible }>>('celdaPeriodoTrayectoria');
+  protected readonly columnasTrayectoria = computed<readonly ColumnDef<AfiliacionVisible>[]>(() => [
+    { key: 'organizacion', header: 'Institución y cargo', priority: 1, cell: this.celdaInstitucionTrayectoria() },
+    { key: 'estado', header: 'Verificación', priority: 1, cell: this.celdaEstadoTrayectoria() },
+    { key: 'desde', header: 'Período', priority: 2, cell: this.celdaPeriodoTrayectoria() },
+  ]);
+  protected readonly idDeAfiliacion = (fila: AfiliacionVisible): string => fila.id;
+  protected readonly nombreDeAfiliacion = (fila: AfiliacionVisible): string => fila.organizacion;
+
+  protected filtrarTrayectoria(filtros: Readonly<Record<string, string>>): void {
+    this.busquedaTrayectoria.set(filtros['q'] ?? '');
+    this.paginasTrayectoria.set({});
+  }
+  protected paginarTrayectoria(id: string, pagina: number): void {
+    this.paginasTrayectoria.update((paginas) => ({ ...paginas, [id]: pagina }));
+  }
+  protected dimensionarTrayectoria(id: string, tamano: number): void {
+    this.tamanosTrayectoria.update((tamanos) => ({ ...tamanos, [id]: tamano }));
+    this.paginarTrayectoria(id, 1);
+  }
+
+  /**
+   * El pin del domicilio en «Contacto», o ninguno si no declaró coordenadas.
+   * Es un `computed` y no un arreglo literal en la plantilla: uno nuevo en
+   * cada detección de cambios haría redibujar el mapa.
+   */
+  protected readonly pinesDomicilio = computed<readonly PinMap[]>(() => {
+    const datos = this.perfil().datosPersonales;
+    const punto = datos?.ubicacionDomicilio;
+    if (!datos || !punto) return [];
+    return [
+      {
+        id: 'domicilio',
+        codigo: 'D',
+        titulo: 'Domicilio',
+        ...(datos.direccion ? { subtitulo: datos.direccion } : {}),
+        lat: punto.lat,
+        lng: punto.lng,
+      },
+    ];
+  });
 
   /** Si es el perfil de quien mira: habilita las acciones de dueño. */
   readonly esPropio = input(false);
@@ -129,6 +211,12 @@ export class PractitionerProfileView {
    * por error del llamador.
    */
   readonly previewMode = input(false);
+  readonly descargandoRespaldo = input<string | null>(null);
+  readonly respaldoADescargar = output<RespaldoCredencial>();
+
+  protected alPedirRespaldo(respaldo: RespaldoCredencial): void {
+    if (this.esPropio() && !this.previewMode()) this.respaldoADescargar.emit(respaldo);
+  }
 
   /* --- La foto de perfil (P17) ------------------------------------------ */
 
@@ -214,12 +302,36 @@ export class PractitionerProfileView {
   protected readonly pestanaSeleccionada = signal<number>(PRIMERA_PESTANA);
 
   /**
+   * La pestaña con la que se entra, como índice de {@link DOCTOR_PROFILE_TABS}.
+   *
+   * Es el camino de vuelta del editor (CORR-08): quien guarda o cancela en
+   * «Contacto» vuelve a leer «Contacto», no «Datos personales». Llega en el
+   * índice de la lista COMPLETA —el mismo que el editor usa para la ida— y se
+   * traduce por etiqueta, porque la ficha suprime «Facturación» cuando no la
+   * tiene y desde ahí los índices visibles se corren en uno.
+   *
+   * Se aplica una sola vez, al iniciar: después manda la persona.
+   */
+  readonly pestanaInicial = input<number | null>(null);
+
+  ngOnInit(): void {
+    const pedida = this.pestanaInicial();
+    if (pedida === null) {
+      return;
+    }
+    const indice = this.pestanasVisibles().indexOf(DOCTOR_PROFILE_TABS[pedida]);
+    if (indice >= 0) {
+      this.pestanaSeleccionada.set(indice);
+    }
+  }
+
+  /**
    * Las pestañas de la ficha PROPIA, las mismas seis del alta de médico.
    *
    * La ficha ajena —la Guía— conserva sus dos de siempre, declaradas en la
    * plantilla: son otra pregunta, la de quien mira a un colega.
    */
-  protected readonly pestanas = PESTANAS_DEL_PERFIL_MEDICO;
+  protected readonly pestanas = DOCTOR_PROFILE_TABS;
 
   /**
    * Las pestañas que de verdad se dibujan, en el orden en que se dibujan.
@@ -231,9 +343,9 @@ export class PractitionerProfileView {
    */
   protected readonly pestanasVisibles = computed<readonly string[]>(() =>
     this.perfil().facturacion
-      ? PESTANAS_DEL_PERFIL_MEDICO
-      : PESTANAS_DEL_PERFIL_MEDICO.filter(
-          (pestana) => pestana !== PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.facturacion],
+      ? DOCTOR_PROFILE_TABS
+      : DOCTOR_PROFILE_TABS.filter(
+          (pestana) => pestana !== DOCTOR_PROFILE_TABS[DOCTOR_TAB.facturacion],
         ),
   );
 
@@ -283,13 +395,20 @@ export class PractitionerProfileView {
    * Se traduce por ETIQUETA y no pasando el índice tal cual, por la misma razón
    * que existe {@link pestanasVisibles}: la ficha suprime «Facturación» cuando
    * no la tiene, así que a partir de ahí sus índices y los del editor no son
-   * los mismos. Una etiqueta que el editor no tenga cae en la primera, que es
-   * el comportamiento de siempre.
+   * los mismos.
+   *
+   * `null` es «esta pestaña no se edita» y el lápiz no se dibuja: es el caso
+   * de «Actividad», que son estadísticas (pedido del cliente del 24/09/2026).
+   * Antes una etiqueta que el editor no tuviera caía en «Datos personales», y
+   * el lápiz de «Actividad» llevaba a editar otra cosa.
    */
-  protected readonly pestanaDeEdicion = computed<number>(() => {
+  protected readonly pestanaDeEdicion = computed<number | null>(() => {
     const abierta = this.pestanaVisibleSeleccionada();
-    const indice = abierta ? PESTANAS_DEL_EDITOR_MEDICO.findIndex((p) => p === abierta) : -1;
-    return indice >= 0 ? indice : PESTANA_EDITOR.personales;
+    if (abierta === undefined) {
+      return TAB_EDITOR.personales;
+    }
+    const indice = EDITOR_DOCTOR_TABS.findIndex((p) => p === abierta);
+    return indice >= 0 ? indice : null;
   });
 
   /**
@@ -302,13 +421,13 @@ export class PractitionerProfileView {
 
   /* Las especialidades ya no se preparan aca: `app-specialty-badge-grid`
      recibe `perfil().especialidades` tal cual —`EspecialidadVisible` tiene los
-     campos que la insignia pide—, ordena la principal primero y dice en
-     palabras lo que antes iba en el `aria-label` del chip. Suben de
+     campos que la insignia pide—, las deja en el orden en que llegaron (sin
+     principal desde el 23/09/2026, D-01) y dice en palabras lo que antes iba
+     en el `aria-label` del chip. Suben de
      «Credenciales» a la primera pestania por pedido del cliente (19/09/2026);
-     en «Credenciales» siguen, con su vigencia y su sello, que es otra
-     pregunta. */
+     el detalle ya no se repite en «Credenciales». */
 
-  /** Especialidades, formación y matrículas agrupadas en declarado vs. verificado. */
+  /** Formación y matrículas agrupadas en declarado vs. verificado. */
   protected readonly credenciales = computed<{
     readonly declarados: readonly FilaCredencial[];
     readonly verificados: readonly FilaCredencial[];
@@ -325,20 +444,9 @@ export class PractitionerProfileView {
         detalle: estudio.institucion || estudio.estado,
         fuente: estudio.fuenteVerificacion,
       };
-      // La fuente de verificación es la señal más directa: el backend la exige
-      // sólo al verificar, así que su presencia ES el hecho de haber pasado de
-      // declarado a verificado — más confiable que inferirlo del sello, que
-      // también puede decir «vencida» sin hablar de si se verificó.
-      (estudio.fuenteVerificacion !== undefined ? verificados : declarados).push(fila);
-    }
-    for (const especialidad of perfil.especialidades) {
-      const fila: FilaCredencial = {
-        id: especialidad.id,
-        categoria: 'Especialidad',
-        nombre: especialidad.nombre,
-        detalle: especialidad.estado,
-      };
-      (especialidad.sello === 'approved' ? verificados : declarados).push(fila);
+      // La decisión aprobatoria se conserva aunque venza; fuente y fecha de
+      // revisión por sí solas también pueden corresponder a un rechazo.
+      ((estudio.approved ?? estudio.sello === 'approved') ? verificados : declarados).push(fila);
     }
     for (const matricula of perfil.matriculas) {
       const fila: FilaCredencial = {
@@ -392,6 +500,21 @@ export class PractitionerProfileView {
     return this.esPropio() && estudio.sello === 'in-review';
   }
 
+  /**
+   * Los títulos que el panel de «Credenciales» puede ofrecer retirar. El panel
+   * no sabe de dueños: recibe los ids ya decididos acá. La vista previa la
+   * sigue frenando {@link alPedirRetiro}, igual que cuando el botón vivía en
+   * «Trayectoria».
+   */
+  protected readonly formacionRetirable = computed<ReadonlySet<string>>(
+    () =>
+      new Set(
+        this.perfil()
+          .formacion.filter((estudio) => this.sePuedeRetirar(estudio))
+          .map((estudio) => estudio.id),
+      ),
+  );
+
   /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
   readonly credencialARetirar = output<FormacionVisible>();
 
@@ -412,4 +535,8 @@ export class PractitionerProfileView {
     }
     this.credencialARetirar.emit(estudio);
   }
+}
+
+function normalizarBusqueda(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
 }

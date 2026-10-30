@@ -103,9 +103,8 @@ recibe la persona, y un lector de pantalla puede no anunciarlo. Brecha `MEDIUM`.
 `forgot-password.spec.ts` — existe y pasa.
 
 **Sin prueba E2E.** El flujo completo (pedido → correo → nueva clave) fue
-verificado a mano contra la API viva por el equipo
-(`PENDIENTES-BACKEND.md` §«La recuperación de contraseña llegó»), pero no hay
-nada automatizado que lo cuide.
+verificado a mano contra la API viva por el equipo, pero no hay nada
+automatizado que lo cuide.
 
 ## 10 · Notas operativas
 

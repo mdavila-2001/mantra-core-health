@@ -1,6 +1,6 @@
 import type { APIRequestContext } from '@playwright/test';
 
-import { crearPaciente, type Actor } from './actores';
+import { crearPaciente, firstDepartmentConceptId, type Actor } from './actores';
 
 /**
  * Cuentas y datos clínicos creados **contra la API real**, para las
@@ -49,6 +49,12 @@ export interface MedicoSintetico {
 export async function crearMedicoSintetico(api: APIRequestContext): Promise<MedicoSintetico> {
   const s = sufijo();
   const email = `c14-real-med-${s}@example.test`;
+  // `nationalId` e `issuerAdministrativeAreaConceptId` (M1, 2026-09-26): el
+  // alta profesional los volvió obligatorios (BR-07/08) después de escrito
+  // este helper originalmente; sin ellos la API responde 400
+  // VALIDATION_FAILED. El departamento se resuelve contra el catálogo real
+  // (mismo camino que `crearPaciente`), nunca un uuid hardcodeado.
+  const issuerAdministrativeAreaConceptId = await firstDepartmentConceptId(api);
   const alta = await api.post('/iam/auth/register-practitioner', {
     data: {
       email,
@@ -57,6 +63,8 @@ export async function crearMedicoSintetico(api: APIRequestContext): Promise<Medi
       lastName: 'Ávila',
       licenseNumber: `LIC-PW-${s}`,
       credentialNumber: `CRED-PW-${s}`,
+      nationalId: `CI-PW-${s}`,
+      issuerAdministrativeAreaConceptId,
     },
   });
   if (!alta.ok()) {

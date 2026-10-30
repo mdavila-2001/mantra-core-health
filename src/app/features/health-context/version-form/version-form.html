@@ -54,12 +54,13 @@
             <h3 class="m44__titulo">Hecho {{ indiceHecho + 1 }}</h3>
 
             <app-form-field
+              icon="key"
               label="Clave del hecho"
               [required]="true"
               hint="Como poblacion.total. Máx. 200 caracteres."
               [errorMessage]="
                 hecho.controls.factKey.touched && hecho.controls.factKey.invalid
-                  ? 'Escribí la clave del hecho (máx. 200 caracteres).'
+                  ? 'Escriba la clave del hecho (máx. 200 caracteres).'
                   : ''
               "
             >
@@ -67,12 +68,13 @@
             </app-form-field>
 
             <app-form-field
+              icon="labels"
               label="Tipo del valor"
               [required]="true"
               hint="Como number, string o ratio. Máx. 50 caracteres."
               [errorMessage]="
                 hecho.controls.valueType.touched && hecho.controls.valueType.invalid
-                  ? 'Escribí el tipo del valor (máx. 50 caracteres).'
+                  ? 'Escriba el tipo del valor (máx. 50 caracteres).'
                   : ''
               "
             >
@@ -80,6 +82,7 @@
             </app-form-field>
 
             <app-form-field
+              icon="sliders"
               label="Valor (JSON)"
               [required]="true"
               hint='Un objeto, como {"total": 47000000}.'
@@ -93,12 +96,13 @@
             </app-form-field>
 
             <app-form-field
+              icon="flag"
               label="Confianza"
               hint="Opcional: un número entre 0 y 1, como 0.98."
               [errorMessage]="
                 hecho.controls.confidenceScore.touched &&
                 hecho.controls.confidenceScore.invalid
-                  ? 'Ingresá un número, como 0.98.'
+                  ? 'Ingrese un número, como 0.98.'
                   : ''
               "
             >
@@ -110,6 +114,7 @@
             @for (evidencia of evidenciasDe(hecho); track evidencia; let indiceEv = $index) {
               <div [formGroup]="evidencia">
                 <app-form-field
+                  icon="note"
                   label="Observación que lo respalda ({{ indiceEv + 1 }})"
                   [required]="true"
                   hint="Aceptada y de la misma corrida, o el backend rechaza el hecho."
@@ -124,12 +129,13 @@
                 </app-form-field>
 
                 <app-form-field
+                  icon="flag"
                   label="Relevancia"
                   hint="Opcional: cuánto pesa esta observación en el hecho."
                   [errorMessage]="
                     evidencia.controls.relevanceScore.touched &&
                     evidencia.controls.relevanceScore.invalid
-                      ? 'Ingresá un número, como 0.9.'
+                      ? 'Ingrese un número, como 0.9.'
                       : ''
                   "
                 >

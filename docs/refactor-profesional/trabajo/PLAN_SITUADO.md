@@ -26,11 +26,3 @@ Todos los incrementos son sólo de frontend; revertir no toca datos.
 | N-02c | «Mis pedidos»: sin cambios — ya ordena bien y el pedido nace desde una receta (D-14) | — | — | ✅ no aplica |
 | N-06 | Movimiento del marco `alovida.css` | `e7261cb4` | medición | ✅ |
 | N-01 | CSP en producción | — | SSR medido: 0 errores | ✅ cerrado (sólo dev) |
-
-## Siguiente
-
-| ID | Resultado | Tamaño |
-|---|---|---|
-| N-07 | Lector de pantalla (VoiceOver) + Safari/Firefox sobre el piloto | S |
-| N-08 | Consultas a 1280 px: 49 px todavía detrás del scroll (con indicio) | M — decisión sobre qué columna ceder |
-| N-09 | Las 10 pruebas rojas preexistentes (H-13, H-17), en sus carriles | — |

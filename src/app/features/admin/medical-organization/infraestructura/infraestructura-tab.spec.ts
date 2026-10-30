@@ -97,7 +97,7 @@ describe('InfraestructuraTab', () => {
     harness.detectChanges();
     http.match(() => true).forEach((r) => maqueta.responder(r));
     harness.detectChanges();
-    expect(texto()).toContain('No encontramos lo que buscás');
+    expect(texto()).toContain('No encontramos lo que busca');
   });
 
   it('S9: el error inesperado muestra el código de petición', async () => {

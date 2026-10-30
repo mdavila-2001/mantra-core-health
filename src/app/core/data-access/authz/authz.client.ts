@@ -5,10 +5,12 @@ import { map, type Observable } from 'rxjs';
 import { API_BASE_URL, apiUrl } from '../api';
 import type {
   AuthzScopeQuery,
+  BreakTheGlassInput,
   CareRelationship,
   CareRelationshipRequestInput,
   CareRelationshipRespondInput,
   LegalRepresentation,
+  MyClinicalAccess,
 } from './authz.types';
 
 /**
@@ -94,9 +96,77 @@ export class AuthzClient {
     );
   }
 
+  /**
+   * `GET /authz/me/access` — «Quién ve mi historia»: las relaciones asistenciales
+   * (con el nombre del profesional) y los accesos clínicos concedidos, los de
+   * emergencia incluidos. La persona sale de la sesión.
+   */
+  getMyClinicalAccess(): Observable<MyClinicalAccess> {
+    return this.http.get<WireMyClinicalAccess>(this.url('/authz/me/access')).pipe(
+      map((body) => ({
+        careRelationships: body.careRelationships.map(({ validFrom, validTo, ...resto }) => ({
+          ...resto,
+          validFrom: new Date(validFrom),
+          ...hasta(validTo),
+        })),
+        grants: body.grants.map(({ validFrom, validTo, ...resto }) => ({
+          ...resto,
+          validFrom: new Date(validFrom),
+          validTo: new Date(validTo),
+        })),
+      })),
+    );
+  }
+
+  /**
+   * `POST /authz/me/care-relationships/:id/revoke` — el paciente revoca un vínculo.
+   * Lo ajeno responde 404. Desde ese momento el profesional recibe 403 al abrir
+   * la historia sin un turno de hoy.
+   */
+  revokeMyCareRelationship(id: string): Observable<{ readonly ok: boolean }> {
+    return this.http.post<{ readonly ok: boolean }>(
+      this.url(`/authz/me/care-relationships/${encodeURIComponent(id)}/revoke`),
+      {},
+    );
+  }
+
+  /** `POST /authz/me/clinical-access-grants/:grantId/revoke` — revoca un acceso clínico. */
+  revokeMyClinicalGrant(grantId: string): Observable<{ readonly ok: boolean }> {
+    return this.http.post<{ readonly ok: boolean }>(
+      this.url(`/authz/me/clinical-access-grants/${encodeURIComponent(grantId)}/revoke`),
+      {},
+    );
+  }
+
+  /**
+   * `POST /authz/patients/:id/break-the-glass` — acceso de emergencia (UC-06-07).
+   * Sólo lo permite el rol de aprobación clínica (`CLINICAL_APPROVER`) o
+   * `SECURITY_ADMIN`; queda auditado y el paciente lo ve en «Quién ve mi historia».
+   */
+  breakTheGlass(
+    patientProfileId: string,
+    input: BreakTheGlassInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/authz/patients/${encodeURIComponent(patientProfileId)}/break-the-glass`),
+      input,
+    );
+  }
+
   private url(path: string): string {
     return apiUrl(this.baseUrl, path);
   }
+}
+
+interface WireMyClinicalAccess {
+  readonly careRelationships: readonly (Omit<
+    MyClinicalAccess['careRelationships'][number],
+    'validFrom' | 'validTo'
+  > & { readonly validFrom: string; readonly validTo?: string | null })[];
+  readonly grants: readonly (Omit<MyClinicalAccess['grants'][number], 'validFrom' | 'validTo'> & {
+    readonly validFrom: string;
+    readonly validTo: string;
+  })[];
 }
 
 /** Los dos parámetros obligatorios, que son los mismos en ambas lecturas. */

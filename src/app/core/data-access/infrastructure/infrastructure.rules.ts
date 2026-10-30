@@ -601,14 +601,12 @@ export const ACCIONES_POR_ESTADO: Readonly<Record<string, readonly ('activate' |
  * **Es un reflejo, no una autorización.** La API decide (§3: dueño o admin de
  * la organización, admin de sucursal o `SECURITY_ADMIN`) y responde 403 a quien
  * no corresponde; la pantalla sólo evita ofrecer una puerta que sabe cerrada.
- * Como la sesión no trae la membresía por sucursal, el reflejo es generoso: si
- * la persona es admin de sucursal sin ser dueña, ve los botones y la API
- * resuelve.
+ * Del token sólo se puede probar `SECURITY_ADMIN`: quién es dueño de qué
+ * organización lo decía el claim `ownTenantId`, que sólo firmaba el simulador y
+ * se retiró (TX-11), y la sesión tampoco trae la membresía por sucursal. Quien
+ * administra su organización sin ese rol no ve los botones hasta que la API
+ * firme esa pertenencia.
  */
-export function ofrecerEscritura(
-  roles: readonly string[],
-  tenantActivo: string | null,
-  tenantPropio: string | null,
-): boolean {
-  return roles.includes('SECURITY_ADMIN') || (tenantActivo !== null && tenantActivo === tenantPropio);
+export function ofrecerEscritura(roles: readonly string[]): boolean {
+  return roles.includes('SECURITY_ADMIN');
 }

@@ -1,8 +1,36 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  InjectionToken,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  input,
+  linkedSignal,
+  model,
+  signal,
+} from '@angular/core';
 
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
-import { VISTAS_DEL_CUERPO, type IdDeVista, type VistaDelCuerpo } from './body-zones.geometry';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+  type IdDeVista,
+  type VistaDelCuerpo,
+} from './body-zones.geometry';
+
+/**
+ * El sexo con el que se dibuja la silueta, o `undefined` para la neutra.
+ *
+ * No es un dato clínico: es sólo qué proporción de cuerpo dibujar. Quien
+ * monta el organismo decide de dónde sale —el sexo asignado al nacer del
+ * propio perfil, típicamente— y con qué hacer si no lo sabe (acá, la neutra).
+ */
+export type SexoDeLaSilueta = 'MALE' | 'FEMALE';
 
 /**
  * Una zona del cuerpo que se puede elegir, tal como la trae quien monta el
@@ -17,6 +45,7 @@ export interface ZonaElegible {
 /** Una zona ya lista para pintar: su dato y su contorno, juntos. */
 interface ZonaDibujable extends ZonaElegible {
   readonly d: string;
+  readonly centros: readonly (readonly [number, number])[];
   readonly acercaA?: IdDeVista;
 }
 
@@ -25,6 +54,22 @@ interface VistaDibujable {
   readonly vista: VistaDelCuerpo;
   readonly zonas: readonly ZonaDibujable[];
 }
+
+/**
+ * Si el cambio de vista espera a que llegue la imagen de la nueva (y se
+ * precargan las demás). Es la conducta de producción; se apaga sólo en las
+ * pruebas que no cargan imágenes y necesitan el cambio síncrono.
+ */
+export const ESPERAR_IMAGEN_DE_VISTA = new InjectionToken<boolean>('ESPERAR_IMAGEN_DE_VISTA', {
+  providedIn: 'root',
+  factory: () => true,
+});
+
+/** Cuánto se espera una imagen antes de darla por perdida y mostrar la vista igual. */
+const ESPERA_MAXIMA_DE_IMAGEN_MS = 4000;
+
+/** Para que cada silueta tenga su propio degradado aunque haya dos en la página. */
+let siguienteSilueta = 0;
 
 /** Los `id` de zona que tienen forma en alguna vista. El resto va como pastilla. */
 export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
@@ -56,6 +101,34 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * Si la zona elegida desde afuera (una pastilla, un síntoma) no está en la
  * vista puesta, la figura se da vuelta sola a la primera vista que la tenga:
  * lo elegido siempre está a la vista.
+ *
+ * ## Sexo de la silueta (P-04, 2026-09-25)
+ *
+ * Las tres vistas existen además con maniquí masculino y femenino: quien
+ * monta el organismo pasa `sexo` con el del propio perfil, y sin ese dato se
+ * ve el neutro. Ver {@link SexoDeLaSilueta}.
+ *
+ * ## El maniquí (2026-10-23)
+ *
+ * Cada vista es un render de estudio de un maniquí clínico —malla de
+ * MakeHuman (CC0), sin pezones ni genitales, piel mate neutra— y las zonas se
+ * calzan sobre su silueta (`scripts/render-body-map.py` y
+ * `scripts/gen-body-zones.py`). La imagen va debajo como `<image>` del mismo
+ * SVG; las zonas, transparentes, encima.
+ *
+ * **Imagen y zonas cambian juntas.** Al cambiar de vista, la figura que se ve
+ * sigue siendo la anterior hasta que la imagen de la nueva está descargada y
+ * decodificada; recién entonces se cambian a la vez la imagen, el `viewBox` y
+ * las zonas. Antes cambiaban las zonas al instante y la imagen cuando llegaba:
+ * con conexión lenta se veía el contorno de la espalda sobre el maniquí de
+ * frente (reporte del cliente, 24/10/2026). Cuando la vista pedida ya se
+ * pintó una vez no hay espera. Al terminar de pintar la vista puesta, las
+ * otras dos se precargan en reposo (unos 50 KB cada una), para que el segundo
+ * cambio sea inmediato.
+ *
+ * **El escenario no cambia de alto.** La cara es más baja que el cuerpo; sin
+ * reserva, cada paso entre «Frente» y «Cara» corría 90 px todo lo que hay
+ * debajo. El marco reserva el alto de la figura entera y la cara se centra.
  *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
@@ -92,13 +165,63 @@ export class BodyMap {
   readonly value = model<string | null>(null);
 
   /** Nombre accesible de la silueta entera. */
-  readonly etiqueta = input('Silueta del cuerpo: tocá dónde te pasa');
+  readonly etiqueta = input('Silueta del cuerpo: toque dónde le pasa');
 
   /** Prefijo del `data-testid` de cada zona; el sufijo es su `id`. */
   readonly testId = input('body-map');
 
+  /**
+   * Zonas que nombra lo que la persona escribió o dictó.
+   *
+   * Se iluminan **sin quedar elegidas**: elegir es tocar, y esto es la figura
+   * devolviendo «te entendí esto» mientras se habla. Quien lo monta decide qué
+   * zonas son (ver `symptom-check`); acá sólo se pintan y se nombran.
+   */
+  readonly marcadas = input<readonly string[]>([]);
+
+  /**
+   * El sexo con el que se dibuja la figura (P-04, 2026-09-25).
+   *
+   * `'MALE'` y `'FEMALE'` eligen el maniquí de ese sexo
+   * (`body-zones.geometry.ts`); sin ese dato —perfil `INTERSEX`/`UNKNOWN`,
+   * sin sesión, o todavía sin resolver— se dibuja el neutro.
+   */
+  readonly sexo = input<SexoDeLaSilueta | undefined>(undefined);
+
+  /** Las vistas de la proporción que corresponde a {@link sexo}. */
+  private readonly vistasDelSexo = computed<readonly VistaDelCuerpo[]>(() => {
+    switch (this.sexo()) {
+      case 'MALE':
+        return VISTAS_DEL_CUERPO_MASCULINA;
+      case 'FEMALE':
+        return VISTAS_DEL_CUERPO_FEMENINA;
+      default:
+        return VISTAS_DEL_CUERPO;
+    }
+  });
+
+  /**
+   * El `id` del degradado de la elegida en esta instancia: por instancia,
+   * para que dos siluetas en la misma página no se lo pisen.
+   */
+  protected readonly idDeLaElegida = `body-map-elegida-${siguienteSilueta++}`;
+
+  /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
+  private readonly apuntada = signal<string | null>(null);
+
   /** La vista que eligió la persona con el selector (o con el acercamiento). */
   private readonly vistaPedida = signal<IdDeVista>('frente');
+
+  /**
+   * La zona que estaba elegida cuando se pidió la vista.
+   *
+   * Mientras siga siendo la misma, **manda la vista pedida**: quien está en la
+   * cara con los ojos elegidos y toca «Frente» quiere ver el frente, aunque los
+   * ojos no estén ahí. Sin esto la figura volvía sola a la cara y el selector
+   * parecía roto (reporte del cliente, 24/09/2026). Si la elegida cambia
+   * después —una pastilla, un chip—, vuelve a regir «lo elegido a la vista».
+   */
+  private readonly elegidaAlPedirVista = signal<string | null | undefined>(undefined);
 
   /**
    * Las vistas que tienen algo que pulsar, cada una con sus zonas en el orden
@@ -108,32 +231,147 @@ export class BodyMap {
    */
   protected readonly vistas = computed<readonly VistaDibujable[]>(() => {
     const porId = new Map(this.zonas().map((zona) => [zona.id, zona]));
-    return VISTAS_DEL_CUERPO.flatMap((vista) => {
+    return this.vistasDelSexo().flatMap((vista) => {
       const zonas = vista.zonas.flatMap((silueta) => {
         const zona = porId.get(silueta.id);
         if (zona === undefined) return [];
-        return [{ ...zona, d: silueta.d, acercaA: silueta.acercaA }];
+        return [{ ...zona, d: silueta.d, centros: silueta.centros, acercaA: silueta.acercaA }];
       });
       return zonas.length > 0 ? [{ vista, zonas }] : [];
     });
   });
 
   /**
-   * La vista que se muestra: la pedida, salvo que lo elegido no esté en ella;
-   * entonces, la primera que lo tenga.
+   * La vista que se muestra: la pedida, salvo que lo elegido **cambie** y no
+   * esté en ella; entonces, la primera que lo tenga.
    */
   protected readonly vista = computed<VistaDibujable | null>(() => {
     const vistas = this.vistas();
     const pedida = vistas.find((v) => v.vista.id === this.vistaPedida()) ?? vistas[0] ?? null;
     const elegida = this.value();
     if (pedida === null || elegida === null) return pedida;
+    if (elegida === this.elegidaAlPedirVista()) return pedida;
     if (pedida.zonas.some((zona) => zona.id === elegida)) return pedida;
     return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
+  });
+
+  private readonly esperaLaImagen =
+    isPlatformBrowser(inject(PLATFORM_ID)) && inject(ESPERAR_IMAGEN_DE_VISTA);
+
+  /** Las imágenes ya descargadas y decodificadas (o que fallaron: no se espera para siempre). */
+  private readonly imagenesListas = signal<ReadonlySet<string>>(new Set());
+  private readonly imagenesPedidas = new Map<string, Promise<void>>();
+
+  /**
+   * La vista que se **ve**: la pedida cuando su imagen ya está lista; hasta
+   * entonces, la anterior. Imagen, `viewBox` y zonas salen de la misma vista.
+   * La primera vista no espera (no hay nada anterior que mostrar).
+   */
+  protected readonly vistaVisible = linkedSignal<
+    { objetivo: VistaDibujable | null; listas: ReadonlySet<string> },
+    VistaDibujable | null
+  >({
+    source: () => ({ objetivo: this.vista(), listas: this.imagenesListas() }),
+    computation: ({ objetivo, listas }, previo) => {
+      if (objetivo === null) return null;
+      if (!this.esperaLaImagen || listas.has(objetivo.vista.image)) return objetivo;
+      return previo?.value ?? objetivo;
+    },
+  });
+
+  /** Hay una vista pedida cuya imagen todavía viene en camino. */
+  protected readonly cambiandoDeVista = computed(() => {
+    const objetivo = this.vista();
+    return objetivo !== null && objetivo !== this.vistaVisible();
+  });
+
+  /**
+   * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
+   * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
+   * no está en esta vista.
+   */
+  protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
+    const elegida = this.value();
+    if (elegida === null) return [];
+    return this.vistaVisible()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
   });
 
   protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>
     this.vistas().map(({ vista }) => ({ value: vista.id, label: vista.nombre })),
   );
+
+  private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
+
+  /** Las marcadas, en palabras y en el orden de la tabla: «Espalda y Piel y pelo». */
+  protected readonly nombresMarcados = computed<string | null>(() => {
+    const marcadas = this.marcadasPorId();
+    const nombres = this.zonas()
+      .filter((zona) => marcadas.has(zona.id))
+      .map((zona) => zona.nombre);
+    if (nombres.length === 0) return null;
+    return nombres.length === 1
+      ? nombres[0]
+      : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
+  });
+
+  /** El nombre de la zona apuntada, salvo que ya sea la elegida (eso ya se dice abajo). */
+  protected readonly nombreApuntado = computed<string | null>(() => {
+    const apuntada = this.apuntada();
+    if (apuntada === null || apuntada === this.value()) return null;
+    return this.zonas().find((zona) => zona.id === apuntada)?.nombre ?? null;
+  });
+
+  protected estaMarcada(id: string): boolean {
+    return this.marcadasPorId().has(id);
+  }
+
+  /** El nombre que se anuncia: el de la zona y, si lo contado la nombra, eso también. */
+  protected nombreAccesible(zona: ZonaDibujable): string {
+    return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
+  }
+
+  constructor() {
+    // Pide la imagen de la vista puesta y, cuando ésa ya está, las otras.
+    effect(() => {
+      const objetivo = this.vista();
+      if (!this.esperaLaImagen || objetivo === null) return;
+      this.precargar(objetivo.vista.image).then(() => {
+        const otras = this.vistas().filter((v) => v !== objetivo);
+        const enReposo = (tarea: () => void): void =>
+          typeof requestIdleCallback === 'function'
+            ? void requestIdleCallback(tarea)
+            : void setTimeout(tarea, 200);
+        enReposo(() => otras.forEach((v) => void this.precargar(v.vista.image)));
+      });
+    });
+  }
+
+  /** Descarga y decodifica una imagen una sola vez; resuelve también si falla. */
+  private precargar(url: string): Promise<void> {
+    const enCurso = this.imagenesPedidas.get(url);
+    if (enCurso !== undefined) return enCurso;
+    const imagen = new Image();
+    imagen.src = url;
+    const marcar = (): void => this.imagenesListas.update((listas) => new Set(listas).add(url));
+    const decodificada =
+      typeof imagen.decode === 'function'
+        ? imagen.decode()
+        : new Promise<void>((resolver, rechazar) => {
+            imagen.onload = () => resolver();
+            imagen.onerror = rechazar;
+          });
+    // Una imagen que no llega no deja la figura congelada: pasado el tope se
+    // muestra la vista igual (con su imagen rota o a medio cargar, pero con las
+    // zonas que se pueden tocar).
+    const tope = new Promise<void>((resolver) => setTimeout(resolver, ESPERA_MAXIMA_DE_IMAGEN_MS));
+    const lista = Promise.race([decodificada, tope]).then(marcar, marcar);
+    this.imagenesPedidas.set(url, lista);
+    return lista;
+  }
+
+  protected apuntar(id: string | null): void {
+    this.apuntada.set(id);
+  }
 
   /** El nombre de la elegida, para decirlo con palabras además de con el dibujo. */
   protected readonly nombreElegido = computed<string | null>(() => {
@@ -143,7 +381,11 @@ export class BodyMap {
   });
 
   protected cambiarVista(id: IdDeVista): void {
+    // La zona apuntada desaparece con la vista y nunca avisa que el puntero se
+    // fue: sin esto su nombre quedaba flotando sobre la vista nueva.
+    this.apuntada.set(null);
     this.vistaPedida.set(id);
+    this.elegidaAlPedirVista.set(this.value());
   }
 
   /**
@@ -158,8 +400,10 @@ export class BodyMap {
    */
   protected elegir(zona: ZonaDibujable): void {
     if (zona.acercaA !== undefined && this.vistas().some((v) => v.vista.id === zona.acercaA)) {
+      this.apuntada.set(null);
       this.vistaPedida.set(zona.acercaA);
       this.value.set(zona.id);
+      this.elegidaAlPedirVista.set(zona.id);
       return;
     }
     this.value.set(this.value() === zona.id ? null : zona.id);

@@ -39,12 +39,12 @@ import { SymptomCheck } from '../../../symptom-check/symptom-check';
       <header class="sintomas-publico__cabecera">
         <p class="overline">Orientación</p>
         <!-- El título NO repite la pregunta del formulario: el componente ya
-             pregunta «¿Qué te pasa?» dos líneas más abajo, y dos preguntas
+             pregunta «¿Qué le pasa?» dos líneas más abajo, y dos preguntas
              seguidas se leen como un error de armado. Este encabezado dice qué
              es la página; el formulario, qué hay que hacer. -->
-        <h1 class="sintomas-publico__titulo">Consultá tus síntomas</h1>
+        <h1 class="sintomas-publico__titulo">Consulte sus síntomas</h1>
         <p class="sintomas-publico__bajada">
-          Sin cuenta y sin turno: describí lo que sentís y te orientamos sobre a qué
+          Sin cuenta y sin turno: describa lo que siente y le orientamos sobre a qué
           especialidad conviene consultar.
         </p>
       </header>
@@ -52,7 +52,7 @@ import { SymptomCheck } from '../../../symptom-check/symptom-check';
       <app-symptom-check [sinSesion]="true" rutaDeResultados="/search/practitioners" />
 
       <p class="sintomas-publico__pie">
-        ¿Ya sabés a quién buscar?
+        ¿Ya sabe a quién buscar?
         <a routerLink="/search/practitioners">Ver todos los profesionales</a>
       </p>
     </div>

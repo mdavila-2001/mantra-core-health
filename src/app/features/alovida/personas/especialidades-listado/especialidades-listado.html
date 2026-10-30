@@ -7,29 +7,29 @@
           <li><span aria-current="page">Especialidades</span></li>
       </ol>
         <div class="app-page-header__titulo"><h1>Especialidades</h1></div>
-        <p class="caption">Lo que el paciente busca cuando pide turno con «un cardiólogo»: cada especialidad respaldada por una credencial verificada, y una sola marcada como primaria.</p>
+        <p class="caption">Lo que el paciente busca cuando pide cita con «un cardiólogo»: cada especialidad respaldada por una credencial verificada, y una sola marcada como primaria.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/personas/especialidades-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva especialidad</a>
+        <a app-button="" data-variante="primario" routerLink="/people/specialties-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva especialidad</a>
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Profesionales">
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/profesionales-listado">Profesionales</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/personas/autorizaciones-de-jurisdiccion-listado">Autorizaciones de jurisdicción</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/practitioners-list">Profesionales</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/people/jurisdiction-authorizations-list">Autorizaciones de jurisdicción</a>
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Especialidades</a>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá en el listado</span>
+        <span class="solo-lectores">Busque en el listado</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" app-input="" type="search" placeholder="Buscá por especialidad o por profesional">
+        <input class="app-input" app-input="" type="search" placeholder="Busque por especialidad o por profesional">
       </label>
       <div class="app-filter-bar__fila">
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-1">Profesional</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-1" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
@@ -54,7 +54,7 @@
         <label class="app-form-field__label" for="f-3">Credencial de soporte</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-3" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-3" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
@@ -120,8 +120,8 @@
       <div class="app-empty-state" app-empty-state="">
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4L4.2 9.7l5.4-.8z"></path></svg></span>
         <h2>Todavía no hay especialidades</h2>
-        <p>La especialidad es lo que el paciente busca cuando pide un turno con «un cardiólogo». Cada una se respalda con una credencial verificada del mismo profesional, y una sola queda marcada como primaria: es la que aparece en la agenda pública.</p>
-        <a app-button="" data-variante="secundario" routerLink="/personas/especialidades-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva especialidad</a>
+        <p>La especialidad es lo que el paciente busca cuando pide una cita con «un cardiólogo». Cada una se respalda con una credencial verificada del mismo profesional, y una sola queda marcada como primaria: es la que aparece en la agenda pública.</p>
+        <a app-button="" data-variante="secundario" routerLink="/people/specialties-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nueva especialidad</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">
@@ -141,7 +141,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar las especialidades.</strong>
-            <p>El registro de personal de salud no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+            <p>El registro de personal de salud no respondió a tiempo. Vuelva a intentarlo; si sigue igual, avise a soporte con la hora exacta.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

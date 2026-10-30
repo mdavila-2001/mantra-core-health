@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { AuthzClient } from '../../../core/data-access/authz/authz.client';
+import { readApiError } from '../../../core/http/api-error';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -87,24 +88,30 @@ export class RequestAccess {
       })
       .subscribe({
         next: () => {
-          this.toasts.success('Solicitud enviada. El paciente va a decidir qué áreas te autoriza.');
+          this.toasts.success('Solicitud enviada. El paciente va a decidir qué áreas le autoriza.');
           void this.router.navigate([CLINICAL_RECORD_ROUTE]);
         },
         error: (err: unknown) => {
           this.enviando.set(false);
+          // Por `code`, no por status (H2.S1.M2 lo forzó: PRECONDITION_FAILED
+          // pasó de 412 a 422, que es lo que la API siempre devolvió). El
+          // status alcanza para 403/409 porque ahí no hay ambigüedad; acá sí
+          // la había, y es justo la que este cambio corrige.
+          const code =
+            err instanceof HttpErrorResponse ? (readApiError(err)?.code ?? null) : null;
           const http = err instanceof HttpErrorResponse ? err.status : 0;
           if (http === 403) {
-            this.error.set('No tenés permiso para pedir este vínculo.');
+            this.error.set('No tiene permiso para pedir este vínculo.');
           } else if (http === 409) {
             // El backend rechaza por duplicado: ya hay un vínculo activo o un
             // pedido sin responder con esta persona.
             this.error.set(
               'Ya existe una solicitud pendiente o un vínculo activo con este paciente.',
             );
-          } else if (http === 412) {
-            this.error.set('Tu cuenta no tiene un perfil profesional propio para pedir el vínculo.');
+          } else if (code === 'PRECONDITION_FAILED') {
+            this.error.set('Su cuenta no tiene un perfil profesional propio para pedir el vínculo.');
           } else {
-            this.error.set('No se pudo enviar la solicitud. Probá de nuevo en un momento.');
+            this.error.set('No se pudo enviar la solicitud. Pruebe de nuevo en un momento.');
           }
         },
       });

@@ -1,9 +1,9 @@
 import { Component, signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
 import { Stepper } from './stepper';
-import type { StepperStep } from './stepper.types';
+import { porcentajeDelRecorrido, type StepperStep } from './stepper.types';
 
 @Component({
   imports: [Stepper],
@@ -49,6 +49,22 @@ class HostCompacto {
   readonly pedidos: number[] = [];
 }
 
+/** El recorrido con `currentLabelOnly` y `compact` a la vista (issue #1448). */
+@Component({
+  imports: [Stepper],
+  template: `<app-stepper
+    [steps]="steps()"
+    label="Crear cuenta"
+    [currentLabelOnly]="soloActual()"
+    [compact]="compacto()"
+  />`,
+})
+class HostSoloActual {
+  readonly steps = signal<readonly StepperStep[]>([]);
+  readonly soloActual = signal(true);
+  readonly compacto = signal(false);
+}
+
 const TRES_PASOS: readonly StepperStep[] = [
   { label: 'Recurso', status: 'complete' },
   { label: 'Política', status: 'current' },
@@ -60,15 +76,15 @@ const TRES_PASOS: readonly StepperStep[] = [
  * El tercero es el actual: los dos primeros ya se contestaron.
  */
 const DIEZ_PASOS: readonly StepperStep[] = [
-  { label: '¿Cómo te llamás?', status: 'complete' },
-  { label: 'Tu documento de identidad', status: 'complete' },
-  { label: 'Contanos un poco sobre vos', status: 'current' },
-  { label: '¿Cómo te contactamos?', status: 'upcoming' },
-  { label: '¿Dónde vivís?', status: 'upcoming' },
-  { label: '¿Dónde trabajás?', status: 'upcoming' },
-  { label: 'El lugar donde trabajás', status: 'upcoming' },
-  { label: 'Tu acceso', status: 'upcoming' },
-  { label: 'Tu seguro de salud', status: 'upcoming' },
+  { label: '¿Cómo se llama?', status: 'complete' },
+  { label: 'Su documento de identidad', status: 'complete' },
+  { label: 'Cuéntenos un poco sobre usted', status: 'current' },
+  { label: '¿Cómo le contactamos?', status: 'upcoming' },
+  { label: '¿Dónde vive?', status: 'upcoming' },
+  { label: '¿Dónde trabaja?', status: 'upcoming' },
+  { label: 'El lugar donde trabaja', status: 'upcoming' },
+  { label: 'Su acceso', status: 'upcoming' },
+  { label: 'Su seguro de salud', status: 'upcoming' },
   { label: 'Datos de facturación', status: 'upcoming' },
 ];
 
@@ -198,7 +214,7 @@ describe('Stepper', () => {
           label: 'Plantilla',
           status: 'upcoming',
           disabled: true,
-          disabledReason: 'Todavía no llegaste acá: completá los pasos anteriores.',
+          disabledReason: 'Todavía no llegó acá: complete los pasos anteriores.',
         },
       ]);
 
@@ -210,7 +226,7 @@ describe('Stepper', () => {
       expect(cerrado.getAttribute('aria-disabled')).toBe('true');
       expect(cerrado.hasAttribute('disabled')).toBe(false);
       expect(cerrado.getAttribute('aria-label')).toContain(
-        'Todavía no llegaste acá',
+        'Todavía no llegó acá',
       );
 
       cerrado.click();
@@ -297,10 +313,10 @@ describe('Stepper', () => {
         .nativeElement as HTMLButtonElement;
       // El nombre accesible sigue entero: es lo que anuncia el lector.
       expect(actual.getAttribute('aria-label')).toBe(
-        'Paso 3 de 10: Contanos un poco sobre vos, paso actual',
+        'Paso 3 de 10: Cuéntenos un poco sobre usted, paso actual',
       );
       // Y el texto sigue en el DOM: `sr-only` lo esconde de la vista y de nada más.
-      expect(actual.textContent).toContain('Contanos un poco sobre vos');
+      expect(actual.textContent).toContain('Cuéntenos un poco sobre usted');
     });
 
     it('devuelve el rótulo como globo al enfocar el paso', async () => {
@@ -311,7 +327,7 @@ describe('Stepper', () => {
       paso.dispatchEvent(new FocusEvent('focus'));
       await fixture.whenStable();
 
-      expect(globo()?.textContent?.trim()).toBe('¿Dónde vivís?');
+      expect(globo()?.textContent?.trim()).toBe('¿Dónde vive?');
       expect(paso.getAttribute('aria-describedby')).toBe(globo()?.id);
 
       paso.dispatchEvent(new FocusEvent('blur'));
@@ -333,7 +349,7 @@ describe('Stepper', () => {
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
 
-        expect(globo()?.textContent?.trim()).toBe('¿Dónde vivís?');
+        expect(globo()?.textContent?.trim()).toBe('¿Dónde vive?');
       } finally {
         vi.useRealTimers();
       }
@@ -354,7 +370,7 @@ describe('Stepper', () => {
     it('sigue proponiendo el índice, y sigue sin proponer el paso cerrado', () => {
       const cerrado = DIEZ_PASOS.map((paso, i) =>
         i === 6
-          ? { ...paso, disabled: true, disabledReason: 'Todavía no llegaste acá.' }
+          ? { ...paso, disabled: true, disabledReason: 'Todavía no llegó acá.' }
           : paso,
       );
       const fixture = montar(cerrado);
@@ -424,5 +440,91 @@ describe('Stepper', () => {
       expect(atributosDe(actual(compactado))).toEqual(atributosDe(actual(sinCompactar)));
       expect(atributosDe(item(compactado))).toEqual(atributosDe(item(sinCompactar)));
     });
+  });
+});
+
+describe('porcentajeDelRecorrido', () => {
+  const paso = (status: StepperStep['status'], i = 0): StepperStep => ({
+    label: `Paso ${i + 1}`,
+    status,
+  });
+
+  /** Un recorrido de `total` pasos cuyo actual es el `actual` (base 0). */
+  function recorrido(total: number, actual: number): readonly StepperStep[] {
+    return Array.from({ length: total }, (_, i) =>
+      paso(i < actual ? 'complete' : i === actual ? 'current' : 'upcoming', i),
+    );
+  }
+
+  it('es 0 % sobre el primer marcador y 100 % sobre el último', () => {
+    expect(porcentajeDelRecorrido(recorrido(2, 0))).toBe(0);
+    expect(porcentajeDelRecorrido(recorrido(2, 1))).toBe(100);
+    expect(porcentajeDelRecorrido(recorrido(5, 0))).toBe(0);
+    expect(porcentajeDelRecorrido(recorrido(5, 4))).toBe(100);
+  });
+
+  it('en el medio es la posición entre los tramos, no entre los pasos', () => {
+    expect(porcentajeDelRecorrido(recorrido(3, 1))).toBe(50);
+    expect(porcentajeDelRecorrido(recorrido(5, 1))).toBe(25);
+    expect(porcentajeDelRecorrido(recorrido(5, 2))).toBe(50);
+    expect(porcentajeDelRecorrido(recorrido(10, 1))).toBe(11);
+  });
+
+  it('crece con cada paso y nunca se pasa de 100', () => {
+    const valores = Array.from({ length: 7 }, (_, i) => porcentajeDelRecorrido(recorrido(7, i)));
+    expect(valores).toEqual([...valores].sort((a, b) => a - b));
+    expect(new Set(valores).size).toBe(7);
+    expect(Math.max(...valores)).toBe(100);
+  });
+
+  it('un recorrido de un paso, o vacío, no tiene qué medir', () => {
+    expect(porcentajeDelRecorrido([])).toBe(0);
+    expect(porcentajeDelRecorrido([paso('current')])).toBe(0);
+  });
+
+  it('sin paso actual: todo completado es 100 %, y si no hay nada hecho, 0 %', () => {
+    expect(porcentajeDelRecorrido([paso('complete', 0), paso('complete', 1)])).toBe(100);
+    expect(porcentajeDelRecorrido([paso('upcoming', 0), paso('upcoming', 1)])).toBe(0);
+  });
+});
+
+describe('Stepper · `currentLabelOnly` (#1448)', () => {
+  function montar(): ComponentFixture<HostSoloActual> {
+    TestBed.configureTestingModule({ imports: [HostSoloActual] });
+    const fixture = TestBed.createComponent(HostSoloActual);
+    fixture.componentInstance.steps.set(TRES_PASOS);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  const lista = (fixture: ComponentFixture<HostSoloActual>): HTMLElement =>
+    fixture.debugElement.query(By.css('ol.stepper')).nativeElement as HTMLElement;
+
+  it('apagado por defecto: nadie pierde rótulos sin pedirlo', () => {
+    TestBed.configureTestingModule({ imports: [Host] });
+    const fixture = TestBed.createComponent(Host);
+    fixture.componentInstance.steps.set(TRES_PASOS);
+    fixture.detectChanges();
+
+    expect(fixture.debugElement.query(By.css('.stepper--solo-actual'))).toBeNull();
+  });
+
+  it('encendido marca la lista, y los tres rótulos siguen en el DOM para el lector', () => {
+    const fixture = montar();
+
+    expect(lista(fixture).classList.contains('stepper--solo-actual')).toBe(true);
+    const rotulos = fixture.debugElement
+      .queryAll(By.css('.stepper__label'))
+      .map((el) => (el.nativeElement as HTMLElement).textContent!.trim());
+    expect(rotulos).toEqual(['Recurso', 'Política', 'Plantilla']);
+  });
+
+  it('en `compact` no hace nada: el rótulo ya lo resolvió el compacto', () => {
+    const fixture = montar();
+    fixture.componentInstance.compacto.set(true);
+    fixture.detectChanges();
+
+    expect(lista(fixture).classList.contains('stepper--solo-actual')).toBe(false);
+    expect(lista(fixture).classList.contains('stepper--compact')).toBe(true);
   });
 });

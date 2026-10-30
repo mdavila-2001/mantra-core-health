@@ -127,7 +127,7 @@ describe('SpaceDetail', () => {
   it('S6: un espacio inexistente o de otro tenant no filtra existencia y ofrece volver', async () => {
     await harness.navigateByUrl(`${RUTA}/no-existe`, SpaceDetail);
     await esperar();
-    expect(raiz().textContent).toContain('No encontramos lo que buscás');
+    expect(raiz().textContent).toContain('No encontramos lo que busca');
     expect(Array.from(raiz().querySelectorAll('a')).some((a) => a.textContent?.includes('Volver a la infraestructura'))).toBe(true);
   });
 

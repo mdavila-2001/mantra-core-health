@@ -5,20 +5,49 @@ import {
   Injectable,
   PLATFORM_ID,
   signal,
+  untracked,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, concatMap, EMPTY, map, Subject, Subscription, type Observable } from 'rxjs';
 
 import { CommunityClient } from '../data-access/community/community.client';
+import { apiExplainedFailure, describeApiFailure } from '../http/api-failure';
 import { FilesClient } from '../data-access/files/files.client';
 import { SessionStore } from '../auth/session.store';
 import { ChatSocketService } from './chat-socket.service';
 import { ChatAutoReply } from './chat-auto-reply';
 import { stickerDe, type Sticker } from './sticker-pack.generated';
+import {
+  contextoDelTexto,
+  normalizarContexto,
+  textoDeContexto,
+  type ContextoDeChat,
+} from './chat-context';
+import { errorToViewState } from '../http/error-to-view-state';
+import {
+  empty,
+  forbidden,
+  loading,
+  offline,
+  ready,
+  stale,
+  unexpectedError,
+} from '../view-state/view-state';
+import type {
+  ForbiddenViewState,
+  OfflineViewState,
+  UnexpectedErrorViewState,
+  ViewState,
+} from '../view-state/view-state.types';
 import type {
   ConversationListItem,
+  ChatContact,
   DirectMessage,
-  PublicDirectoryResult,
+  DirectMessageContentType,
+  MessageReaction,
+  MessageReceipt,
 } from '../data-access/community/community.types';
 
 /** Cada cuánto se relee la bandeja, en milisegundos. */
@@ -27,11 +56,167 @@ const SONDEO_BANDEJA_MS = 60_000;
 /** Cada cuánto se relee el hilo abierto. */
 const SONDEO_HILO_MS = 30_000;
 
+/** Cuánto se espera, tras enviar, para releer los recibos del mensaje. */
+const ESPERA_DE_RECIBOS_MS = 2_000;
+
 /** Cuántos mensajes trae cada página del hilo. */
 export const PAGINA_DE_MENSAJES = 30;
 
 /** Cuántas conversaciones trae la bandeja. */
 const LIMITE_DE_BANDEJA = 50;
+
+/**
+ * Dónde se recuerda, **por pestaña**, con qué perfil se está escribiendo.
+ *
+ * `sessionStorage` y no `localStorage`: «estoy atendiendo como la farmacia» es
+ * de este rato y de esta pestaña. Lo que se guarda es el id público de la
+ * vitrina y su nombre —lo mismo que muestra la ficha pública—, atado al
+ * usuario que lo eligió: otra cuenta que entre en la misma pestaña no lo
+ * hereda. Y no autoriza nada: si la API ya no deja actuar con ese perfil,
+ * responde 403 y el store vuelve al propio.
+ */
+const CLAVE_DE_ACTUACION = 'alovida.chat.actuar-como';
+
+/** Rol del token que, con membresía activa, deja escribir como la farmacia. */
+export const ROL_PERSONAL_DE_FARMACIA = 'PHARMACY_STAFF';
+
+/** La vitrina de una organización con la que esta sesión puede escribir. */
+export interface VitrinaParaActuar {
+  readonly profileId: string;
+  readonly nombre: string;
+}
+
+/** Lo que se guarda en {@link CLAVE_DE_ACTUACION}. */
+interface ActuacionGuardada extends VitrinaParaActuar {
+  readonly userId: string;
+}
+
+/** Las generaciones con que se suscribió un paso de la apertura de un chat. */
+interface MarcaDeApertura {
+  readonly identidad: number;
+  readonly usuario: number;
+}
+
+/** El aviso que se da al perder el permiso de escribir como la organización. */
+export const AVISO_SIN_PERMISO_DE_ORGANIZACION =
+  'Ya no puede escribir como la farmacia: volvió a su perfil.';
+
+/**
+ * El aviso al abrir un chat nuevo mientras se escribía como la organización.
+ *
+ * Como la vitrina sólo se responde: la API no deja iniciar conversaciones ni
+ * buscar contactos con ella (403). Quien tocó «Chatear» o eligió un contacto
+ * quiere escribir **él**, así que el chat se abre con el perfil propio y se
+ * dice, para que no crea que le escribió como la farmacia.
+ */
+export const AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO =
+  'Los chats nuevos se inician con su perfil: como la farmacia sólo se responde. Volvió a «Yo».';
+
+/**
+ * El error al abrir un chat nuevo como la organización sin perfil propio al
+ * que volver.
+ */
+export const ERROR_CHAT_NUEVO_COMO_ORGANIZACION =
+  'Como la farmacia sólo se responde a quien escribe o desde un pedido. Para iniciar un chat nuevo necesita su perfil propio.';
+
+/**
+ * Lo que se le dice al botón que pidió abrir un chat mientras ya se estaba
+ * abriendo otro: sin esto volvía en silencio y el botón quedaba girando.
+ */
+export const CHAT_YA_ABRIENDO = 'Ya se está abriendo otro chat. Pruebe de nuevo en un momento.';
+
+/** El error que recibe `alFallar` cuando el store ya estaba abriendo otro chat. */
+export class ChatOcupadoError extends Error {
+  constructor() {
+    super(CHAT_YA_ABRIENDO);
+    this.name = 'ChatOcupadoError';
+  }
+}
+
+/** El aviso cuando un 403 fue de esa conversación y no de la vitrina. */
+export const ERROR_SIN_PERMISO_EN_LA_CONVERSACION =
+  'No tiene permiso para ver esta conversación con este perfil.';
+
+/**
+ * Un adjunto listo para mandar: el archivo y, si quien lo eligió ya la leyó,
+ * su miniatura `data:`. Con la miniatura puesta el store no vuelve a leer el
+ * archivo: una foto de 8 MB leída tres veces a `data:` era lo que trababa el
+ * envío en un teléfono.
+ *
+ * `leyenda` es el pie de **este** archivo (el `caption` de un
+ * `AttachmentDraft` de la vista previa). Sin ella, el adjunto toma la leyenda
+ * común de `enviarAdjuntos` si es el primero, y ninguna si no.
+ */
+export interface AdjuntoParaEnviar {
+  readonly archivo: File;
+  readonly vistaPrevia?: string | null;
+  readonly leyenda?: string;
+}
+
+/** Un adjunto esperando su turno en la fila de subidas. */
+interface SubidaEnCola {
+  readonly pendiente: MensajePendiente;
+  readonly archivo: File;
+}
+
+/** Los estados de error de la bandeja: S5, S8 y S9 del M34. */
+export type FalloDeBandeja = ForbiddenViewState | OfflineViewState | UnexpectedErrorViewState;
+
+/** La próxima acción del vacío de la bandeja (S3): ir a buscar con quién hablar. */
+export const PROXIMA_ACCION_DE_BANDEJA = {
+  label: 'Buscar medicamentos',
+  route: '/search/medications',
+} as const;
+
+/** El texto de S9 de la bandeja; el título lo pone quien lo pinta. */
+const MENSAJE_DE_FALLO_DE_BANDEJA =
+  'No pudimos leer su bandeja. Si vuelve a pasar, avísenos con este código.';
+
+/** El texto de S5 de la bandeja. */
+const MENSAJE_DE_BANDEJA_PROHIBIDA = 'Con este perfil no puede leer estos chats.';
+
+/**
+ * Traduce el fallo de la lectura de la bandeja a S5, S8 o S9.
+ *
+ * - **S8** si la petición no llegó (`status 0`) o el navegador dice que no hay
+ *   red: reintentar es la salida.
+ * - **S5** si la API dijo 403: con este perfil no se leen estos chats.
+ * - **S9** todo lo demás, con el id de la petición (`correlationId` del cuerpo
+ *   o la cabecera `X-Request-Id`, como `errorToViewState`) para soporte.
+ */
+export function falloDeBandeja(error: unknown, ahora: Date = new Date()): FalloDeBandeja {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return offline(ahora);
+  }
+  if (error instanceof HttpErrorResponse && error.status === 403) {
+    return forbidden({ message: MENSAJE_DE_BANDEJA_PROHIBIDA });
+  }
+  const traducido = errorToViewState<never>(error);
+  switch (traducido.status) {
+    case 'offline':
+      return offline(ahora);
+    case 'forbidden':
+      return forbidden({ message: MENSAJE_DE_BANDEJA_PROHIBIDA });
+    case 'error':
+      return unexpectedError(traducido.requestId, MENSAJE_DE_FALLO_DE_BANDEJA);
+    default:
+      // Un 404, un 409 o un 422 al leer una lista no tienen otra salida que la
+      // de un error inesperado: igual se conserva el id para encontrarlo.
+      return unexpectedError(requestIdDe(error), MENSAJE_DE_FALLO_DE_BANDEJA);
+  }
+}
+
+/** El id de la petición de un fallo, por las mismas vías que `errorToViewState`. */
+function requestIdDe(error: unknown): string {
+  if (!(error instanceof HttpErrorResponse)) {
+    return 'sin-id';
+  }
+  const cuerpo = error.error as { correlationId?: unknown } | null;
+  if (cuerpo !== null && typeof cuerpo === 'object' && typeof cuerpo.correlationId === 'string') {
+    return cuerpo.correlationId;
+  }
+  return error.headers?.get('x-request-id') ?? 'sin-id';
+}
 
 /**
  * Cuánto tiempo se puede editar un mensaje después de mandarlo.
@@ -86,6 +271,12 @@ export interface MensajePendiente {
   /** Identidad mientras no tenga la del servidor. Nunca sale de acá. */
   readonly claveTemporal: string;
   readonly conversationId: string;
+  /**
+   * Con qué perfil se escribió, fijado **al encolar**. Despachar con el perfil
+   * del momento de despachar mandaba como la farmacia un mensaje escrito como
+   * uno mismo, si en el medio se cambiaba de identidad.
+   */
+  readonly profileId: string;
   readonly bodyText: string;
   readonly replyToMessageId?: string;
   /** Si es un adjunto, lo que hace falta para pintarlo antes de que suba. */
@@ -98,6 +289,8 @@ export interface MensajePendiente {
   };
   readonly creadoEn: Date;
   readonly estado: 'enviando' | 'fallado';
+  /** Un sticker que subió la persona: viaja marcado (`contentType: 'STICKER'`). */
+  readonly comoSticker?: boolean;
 }
 
 /**
@@ -116,6 +309,10 @@ export interface MensajeDelHilo {
   readonly estado: 'enviando' | 'fallado' | 'enviado';
   /** Si su texto se cambió después de mandarlo — se dice en la burbuja. */
   readonly isEdited?: boolean;
+  /** `STICKER` (propio) o `AUTO_REPLY_AI` (lo redactó la IA); ver `DirectMessage`. */
+  readonly contentType?: DirectMessageContentType;
+  readonly reactions?: readonly MessageReaction[];
+  readonly receipts?: readonly MessageReceipt[];
   /** Sólo en los pendientes: con qué reintentar. */
   readonly pendiente?: MensajePendiente;
 }
@@ -172,14 +369,98 @@ export class ChatStore {
   readonly perfilResuelto = signal(false);
   readonly creandoPerfil = signal(false);
 
-  /** Lo último que salió mal, para que la pantalla lo diga. */
+  /**
+   * Lo último que salió mal, para que la pantalla lo diga.
+   *
+   * Se escribe sólo con {@link fallar}: el motivo lo pone la API cuando lo
+   * explica (el plazo de edición vencido, un bloqueo que ya existía) y el
+   * código de soporte va siempre que lo haya.
+   */
   readonly error = signal('');
+
+  /**
+   * El perfil propio de la sesión, aunque se esté escribiendo como la
+   * farmacia. `perfil` es **con quién se actúa**: todo lo que habla con la API
+   * (bandeja, hilo, envío, leído, socket) usa ése.
+   */
+  readonly perfilPropio = signal<string | null>(null);
+
+  /**
+   * Las vitrinas de organización con las que esta persona puede escribir: las
+   * devolvió `GET /community/profiles/organization-showcases/me`
+   * (`descubrirVitrina()`) o el `POST /pharmacy/orders/:id/conversation`.
+   *
+   * Que estén acá **no** es un permiso: es la puerta que se ofrece. Quien
+   * decide es la API en cada llamada, y un 403 devuelve al perfil propio.
+   */
+  readonly vitrinasDeOrganizacion = signal<readonly VitrinaParaActuar[]>([]);
+
+  /**
+   * La vitrina con la que se está escribiendo o, si se escribe como uno
+   * mismo, la primera que se ofrece. `null` si no hay ninguna.
+   */
+  readonly vitrinaDeOrganizacion = computed<VitrinaParaActuar | null>(() => {
+    const vitrinas = this.vitrinasDeOrganizacion();
+    const perfil = this.perfil();
+    return vitrinas.find((v) => v.profileId === perfil) ?? vitrinas[0] ?? null;
+  });
+
+  /** `true` si se está escribiendo como una organización. */
+  readonly actuandoComoOrganizacion = computed(() => {
+    const perfil = this.perfil();
+    return this.vitrinasDeOrganizacion().some((v) => v.profileId === perfil);
+  });
+
+  /** Lo que se le avisa a quien perdió el permiso de escribir como la farmacia. */
+  readonly avisoDePerfil = signal('');
 
   /* --- Bandeja ------------------------------------------------------------ */
 
   readonly conversaciones = signal<readonly ConversationListItem[]>([]);
   readonly cargandoBandeja = signal(false);
   readonly bandejaCargada = signal(false);
+
+  /**
+   * Por qué falló la última lectura de la bandeja, si falló. Vive aparte de
+   * `error`: la bandeja tiene su estado propio y no pinta encima de la
+   * pantalla un problema que es de la lista.
+   */
+  private readonly falloDeLaBandeja = signal<FalloDeBandeja | null>(null);
+
+  /** Cuándo se leyó bien la bandeja por última vez: la antigüedad de S7. */
+  private readonly bandejaLeidaEn = signal<Date | null>(null);
+
+  /**
+   * La bandeja como uno de los estados del M34 (ADR-0005):
+   *
+   * - S2 `loading` hasta la primera lectura.
+   * - S5 si la API dijo 403, **haya o no filas**: mostrarle las filas a
+   *   quien ya no tiene permiso de leerlas no es «datos atrasados».
+   * - S8/S9 si falló **y no hay nada que mostrar**.
+   * - S7 `stale` si falló (sin ser un 403) pero había filas: se conservan
+   *   —un tic fallido no borra lo que se estaba mirando— y se dice de cuándo
+   *   son.
+   * - S3 `empty` con próxima acción si se leyó y no hay chats.
+   * - `ready` con las filas.
+   */
+  readonly bandeja = computed<ViewState<readonly ConversationListItem[]>>(() => {
+    if (!this.bandejaCargada()) {
+      return loading();
+    }
+    const filas = this.conversaciones();
+    const fallo = this.falloDeLaBandeja();
+    if (fallo !== null) {
+      return filas.length === 0 || fallo.status === 'forbidden'
+        ? fallo
+        : stale(filas, this.bandejaLeidaEn() ?? new Date(0));
+    }
+    return filas.length === 0
+      ? empty(
+          PROXIMA_ACCION_DE_BANDEJA,
+          'Consulte a una farmacia desde un producto o desde su pedido, o escríbale a un profesional.',
+        )
+      : ready(filas);
+  });
 
   /* --- Hilo abierto ------------------------------------------------------- */
 
@@ -225,19 +506,97 @@ export class ChatStore {
    */
   readonly noLeidosAlAbrir = signal(0);
 
+  /* --- Bloqueados ---------------------------------------------------------- */
+
+  /**
+   * A quién bloqueó la persona, con su nombre.
+   *
+   * La API sólo dice el `profileId` bloqueado; el nombre se le pregunta a la
+   * ficha pública, y si no se puede leer se cae al de la conversación —o a
+   * «Perfil bloqueado»—: una lista de identificadores no le sirve a nadie.
+   */
+  readonly bloqueados = signal<readonly PerfilBloqueado[]>([]);
+  readonly bloqueadosCargados = signal(false);
+  /**
+   * La lectura de bloqueos falló: la lista vacía NO significa «no bloqueó a
+   * nadie». Distinto de `bloqueadosCargados`, que sólo dice que ya contestó.
+   */
+  readonly bloqueosFallaron = signal(false);
+
+  private readonly idsBloqueados = computed(
+    () => new Set(this.bloqueados().map((b) => b.profileId)),
+  );
+
+  /**
+   * `true` si la conversación abierta es directa con alguien bloqueado.
+   *
+   * En un grupo no hay «el otro»: bloquear a un integrante no cierra el grupo.
+   */
+  readonly hiloBloqueado = computed(() => {
+    const peers = this.conversacionActiva()?.peers ?? [];
+    return peers.length === 1 && this.idsBloqueados().has(peers[0].profileId);
+  });
+
   /* --- Buscador de gente nueva -------------------------------------------- */
 
-  readonly resultados = signal<readonly PublicDirectoryResult[]>([]);
+  readonly resultados = signal<readonly ChatContact[]>([]);
   readonly buscandoAhora = signal(false);
   readonly abriendo = signal(false);
 
+  private versionBusqueda = 0;
   private temporizadorBandeja: ReturnType<typeof setTimeout> | null = null;
   private temporizadorHilo: ReturnType<typeof setTimeout> | null = null;
   private encendido = false;
   private contadorPreparado = false;
   /** Quién espera a que se resuelva el perfil propio, pedido una sola vez. */
   private esperandoPerfil: (() => void)[] | null = null;
+  /** Para qué usuario se resolvió la identidad: otro usuario la vuelve a pedir. */
+  private usuarioDeLaIdentidad: string | null = null;
+  private actuacionRestaurada = false;
+  /** Para qué usuario se pidieron ya las vitrinas: una vez por cuenta. */
+  private vitrinaBuscada: string | null = null;
   private hiloMarcado = new Set<string>();
+
+  /**
+   * Sube con cada cambio de identidad (`actuarComo`, `olvidarIdentidad`). Una
+   * respuesta de bandeja o de hilo pedida con otra generación es de la
+   * identidad anterior y se descarta: volcarla mostraría los chats de la
+   * farmacia en «Yo», o los de la cuenta que acaba de salir.
+   */
+  private generacionDeIdentidad = 0;
+
+  /**
+   * Sube con cada `olvidarIdentidad`. El perfil propio que llega pedido con
+   * otra generación es de la cuenta anterior. Aparte de la de identidad porque
+   * cambiar a la farmacia mientras viaja `/community/profiles/me` no lo
+   * invalida: es la misma persona.
+   */
+  private generacionDeUsuario = 0;
+
+  /** La vitrina que se está revalidando tras un 403, para no preguntar dos veces. */
+  private revalidando: string | null = null;
+
+  /**
+   * Lo que se quiso abrir sin perfil propio todavía (M4): se retoma cuando
+   * `crearPerfil()` termina bien, con el destino y la tarjeta que traía.
+   */
+  private intencionPendiente: (() => void) | null = null;
+
+  /** Las subidas en cola (`concatMap`), para cortarlas al cambiar de identidad. */
+  private subidas = new Subscription();
+
+  /**
+   * Las peticiones de la apertura de un chat en curso (`escribirA`,
+   * `abrirConversacion`, `abrirComoOrganizacion` y lo que encadenan), para
+   * cortarlas al cambiar de identidad, como {@link subidas}.
+   *
+   * Sin esto, una apertura que contestaba después de `olvidarIdentidad` o de
+   * `actuarComo` ofrecía la vitrina de la cuenta anterior, la guardaba en la
+   * pestaña con el `userId` nuevo, mandaba la tarjeta con el perfil viejo y
+   * navegaba. Cada paso, además, mira {@link aperturaVigente}: lo que ya
+   * estaba emitiendo cuando se cortó no sigue.
+   */
+  private apertura = new Subscription();
 
   /**
    * Cuándo se le mandó la última respuesta automática a cada conversación.
@@ -273,19 +632,24 @@ export class ChatStore {
         sentAt: mensaje.sentAt,
         estado: 'enviado',
         isEdited: mensaje.isEdited,
+        contentType: mensaje.contentType,
+        reactions: mensaje.reactions,
+        receipts: mensaje.receipts,
       }));
 
+    const perfil = this.perfil();
     const enVuelo = this.pendientes()
-      .filter((p) => p.conversationId === activa)
+      .filter((p) => p.conversationId === activa && p.profileId === perfil)
       .map<MensajeDelHilo>((pendiente) => ({
         clave: pendiente.claveTemporal,
         id: null,
-        senderProfileId: this.perfil() ?? '',
+        senderProfileId: pendiente.profileId,
         bodyText: pendiente.bodyText,
         replyToMessageId: pendiente.replyToMessageId,
         attachmentFileId: pendiente.adjunto?.fileId,
         sentAt: pendiente.creadoEn,
         estado: pendiente.estado,
+        contentType: pendiente.comoSticker ? 'STICKER' : undefined,
         pendiente,
       }));
 
@@ -344,6 +708,43 @@ export class ChatStore {
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.recargarBandeja());
 
+    // El gateway no deja actuar con el perfil pedido: o nunca pudo (una
+    // pestaña que recordaba la farmacia de otra sesión) o dejó de poder en vivo
+    // (`membership:recheck`). Si el que falló es la vitrina con la que se está
+    // escribiendo, se vuelve al perfil propio.
+    //
+    // `membership:recheck` es la pérdida en vivo y se acepta tal cual; otro
+    // `NOT_OWN_PROFILE` (un `join` rechazado) se confirma preguntándole a la
+    // API por las vitrinas, igual que un 403 de la REST.
+    this.socket.onError.pipe(takeUntilDestroyed()).subscribe((error) => {
+      const perfil = this.perfil();
+      if (error.code !== 'NOT_OWN_PROFILE' || !this.actuandoComoOrganizacion() || perfil === null) {
+        return;
+      }
+      if (error.profileId !== undefined && error.profileId !== perfil) {
+        return;
+      }
+      if (error.event === 'membership:recheck') {
+        this.perderPermisoDeOrganizacion(perfil);
+      } else {
+        this.revalidarVitrina(perfil);
+      }
+    });
+
+    // Otra cuenta en la misma pestaña (cerrar sesión no recarga la página): la
+    // identidad de la anterior no puede quedar puesta —sería leer su bandeja,
+    // o escribir como su farmacia—.
+    // `untracked`: olvidar escribe y lee una docena de señales, y ninguna de
+    // ellas tiene que volver a disparar este efecto.
+    effect(() => {
+      const usuario = this.sesion.userId();
+      untracked(() => {
+        if (this.usuarioDeLaIdentidad !== null && usuario !== this.usuarioDeLaIdentidad) {
+          this.olvidarIdentidad();
+        }
+      });
+    });
+
     // Las fotos y documentos que aparecen en el hilo necesitan una URL
     // firmada, y pedirla desde el template sería pedirla en cada ciclo de
     // detección de cambios. Se resuelven acá, una vez por archivo.
@@ -367,6 +768,274 @@ export class ChatStore {
     }
     this.encendido = true;
     this.conPerfil(() => this.arrancarConPerfil());
+    this.descubrirVitrina();
+  }
+
+  /* --- Con qué perfil se escribe ------------------------------------------- */
+
+  /**
+   * Pide las vitrinas de organización con las que esta sesión puede atender
+   * el chat, para ofrecer «Escribiendo como: Farmacia X».
+   *
+   * Las da `GET /community/profiles/organization-showcases/me`, con la misma
+   * regla que autoriza escribir como ellas (`canAttend`: membresía activa
+   * OWNER/ADMIN/STAFF y, para una farmacia, `PHARMACY_STAFF`). Antes se
+   * adivinaba el slug `organization-<tenantId>`, que no es el de las farmacias
+   * sembradas (`farmacia-*`) ni resuelve una vitrina privada.
+   *
+   * Sólo si el token trae el rol de personal de farmacia: el selector es de
+   * ese mostrador. Fallar acá no es un error que se muestre: simplemente no
+   * hay selector.
+   */
+  descubrirVitrina(): void {
+    const usuario = this.sesion.userId();
+    if (
+      usuario === null ||
+      !this.sesion.roles().includes(ROL_PERSONAL_DE_FARMACIA) ||
+      this.vitrinaBuscada === usuario
+    ) {
+      return;
+    }
+    this.vitrinaBuscada = usuario;
+    this.community.listOwnOrganizationShowcases().subscribe({
+      next: (items) => {
+        if (this.sesion.userId() !== usuario) {
+          return;
+        }
+        // La que está en uso (restaurada de la pestaña o abierta desde un
+        // pedido) se queda aunque no venga: si la API ya no la deja, lo dirá
+        // con un 403 al usarla, y eso la revalida.
+        this.aplicarVitrinas(items);
+      },
+      error: () => undefined,
+    });
+  }
+
+  /**
+   * Pone las vitrinas que devolvió la API, sin la propia. La que está en uso
+   * se conserva aunque no venga: la decisión de quitarla es de
+   * {@link perderPermisoDeOrganizacion}, que además avisa.
+   */
+  private aplicarVitrinas(
+    items: readonly { readonly profileId: string; readonly displayName: string }[],
+  ): void {
+    const ofrecidas = items
+      .filter((item) => item.profileId !== this.perfilPropio())
+      .map((item) => ({ profileId: item.profileId, nombre: item.displayName }));
+    const enUso = this.vitrinasDeOrganizacion().find((v) => v.profileId === this.perfil());
+    this.vitrinasDeOrganizacion.set(
+      enUso === undefined || ofrecidas.some((v) => v.profileId === enUso.profileId)
+        ? ofrecidas
+        : [enUso, ...ofrecidas],
+    );
+  }
+
+  /** Suma una vitrina a las ofrecidas, o le actualiza el nombre. */
+  private ofrecerVitrina(vitrina: VitrinaParaActuar): void {
+    this.vitrinasDeOrganizacion.update((vitrinas) =>
+      vitrinas.some((v) => v.profileId === vitrina.profileId)
+        ? vitrinas.map((v) => (v.profileId === vitrina.profileId ? vitrina : v))
+        : [...vitrinas, vitrina],
+    );
+  }
+
+  /**
+   * Cambia el perfil con el que se escribe: el propio (`null`) o la vitrina de
+   * la organización.
+   *
+   * Cambiar es otra bandeja: se cierra el hilo abierto —es de la otra
+   * identidad—, se vacía la lista, se corta el socket y se vuelve a unir con
+   * el perfil nuevo, y se relee. La elección se recuerda en la pestaña.
+   */
+  actuarComo(profileId: string | null): void {
+    const destino = profileId === null ? this.perfilPropio() : profileId;
+    if (
+      profileId !== null &&
+      !this.vitrinasDeOrganizacion().some((v) => v.profileId === profileId)
+    ) {
+      return;
+    }
+    this.avisoDePerfil.set('');
+    if (destino === this.perfil()) {
+      this.guardarActuacion();
+      return;
+    }
+    this.cerrar();
+    this.generacionDeIdentidad++;
+    // Lo que todavía subía era de la otra identidad: se corta y no se manda.
+    this.cancelarSubidas();
+    // Lo mismo la apertura de un chat: era para la otra identidad.
+    this.cancelarApertura();
+    this.cargandoHilo.set(false);
+    this.perfil.set(destino);
+    this.conversaciones.set([]);
+    this.bandejaCargada.set(false);
+    this.cargandoBandeja.set(false);
+    this.falloDeLaBandeja.set(null);
+    this.bandejaLeidaEn.set(null);
+    // Los contactos buscados eran para iniciar chats con la otra identidad.
+    this.resultados.set([]);
+    this.error.set('');
+    this.guardarActuacion();
+    this.socket.reiniciar();
+    if (destino !== null && (this.encendido || this.contadorPreparado)) {
+      this.socket.joinInbox(destino);
+      this.recargarBandeja();
+    }
+  }
+
+  /**
+   * Se perdió el permiso de escribir como esa vitrina: confirmado por la API
+   * (ya no la lista) o por el socket (`membership:recheck`).
+   *
+   * Si es la que está en uso, se vuelve a «Yo» con aviso; si no —se cambió de
+   * identidad mientras se confirmaba—, sólo deja de ofrecerse.
+   */
+  private perderPermisoDeOrganizacion(perdida: string): void {
+    const enUso = this.perfil() === perdida;
+    if (enUso) {
+      this.actuarComo(null);
+    }
+    // Ya no se ofrece una puerta que la API acaba de cerrar; las otras, sí.
+    this.vitrinasDeOrganizacion.update((vitrinas) =>
+      vitrinas.filter((v) => v.profileId !== perdida),
+    );
+    if (enUso) {
+      this.avisoDePerfil.set(AVISO_SIN_PERMISO_DE_ORGANIZACION);
+    }
+  }
+
+  /**
+   * Ante un 403 escribiendo como la organización, pregunta si se sigue
+   * pudiendo: no todo 403 es perder la farmacia.
+   *
+   * Un 403 en `cargarHilo` o en un envío puede ser **de esa conversación**
+   * (un hilo en el que la vitrina no participa), y apagar el modo farmacia por
+   * eso lo dejaba apagado para siempre: las vitrinas se buscan una vez por
+   * cuenta. Así que se le pregunta a la misma API que las ofrece
+   * (`GET /community/profiles/organization-showcases/me`):
+   *
+   * - si la vitrina sigue en la lista, el 403 era de la conversación — el
+   *   error ya lo mostró quien llamó y la identidad no cambia;
+   * - si ya no está, se quita y se vuelve a «Yo» con aviso.
+   *
+   * Si la pregunta falla no se decide nada: el error ya está a la vista.
+   */
+  private siPerdioElPermiso(error: unknown, profileId: string | null): void {
+    if (
+      error instanceof HttpErrorResponse &&
+      error.status === 403 &&
+      profileId !== null &&
+      this.vitrinasDeOrganizacion().some((v) => v.profileId === profileId)
+    ) {
+      this.revalidarVitrina(profileId);
+    }
+  }
+
+  private revalidarVitrina(profileId: string): void {
+    if (this.revalidando === profileId) {
+      return;
+    }
+    this.revalidando = profileId;
+    const generacion = this.generacionDeUsuario;
+    this.community.listOwnOrganizationShowcases().subscribe({
+      next: (items) => {
+        this.revalidando = null;
+        if (generacion !== this.generacionDeUsuario) {
+          return;
+        }
+        if (!items.some((item) => item.profileId === profileId)) {
+          this.perderPermisoDeOrganizacion(profileId);
+        }
+        // De paso, la lista y los nombres quedan al día.
+        this.aplicarVitrinas(items);
+      },
+      error: () => {
+        this.revalidando = null;
+      },
+    });
+  }
+
+  private guardarActuacion(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      const perfil = this.perfil();
+      const vitrina = this.vitrinasDeOrganizacion().find((v) => v.profileId === perfil);
+      const usuario = this.sesion.userId();
+      if (vitrina !== undefined && usuario !== null) {
+        const guardada: ActuacionGuardada = { userId: usuario, ...vitrina };
+        sessionStorage.setItem(CLAVE_DE_ACTUACION, JSON.stringify(guardada));
+      } else {
+        sessionStorage.removeItem(CLAVE_DE_ACTUACION);
+      }
+    } catch {
+      // Sin almacenamiento la elección dura lo que la página: no es un error.
+    }
+  }
+
+  /** Recupera la elección de la pestaña, si es de este mismo usuario. */
+  private restaurarActuacion(): void {
+    if (this.actuacionRestaurada || !this.isBrowser) {
+      return;
+    }
+    this.actuacionRestaurada = true;
+    try {
+      const crudo = sessionStorage.getItem(CLAVE_DE_ACTUACION);
+      if (crudo === null) {
+        return;
+      }
+      const guardada = JSON.parse(crudo) as Partial<ActuacionGuardada>;
+      if (
+        typeof guardada.profileId !== 'string' ||
+        typeof guardada.nombre !== 'string' ||
+        guardada.userId !== this.sesion.userId()
+      ) {
+        sessionStorage.removeItem(CLAVE_DE_ACTUACION);
+        return;
+      }
+      this.ofrecerVitrina({ profileId: guardada.profileId, nombre: guardada.nombre });
+      this.perfil.set(guardada.profileId);
+    } catch {
+      // Ilegible o bloqueado: se arranca con el perfil propio.
+    }
+  }
+
+  /** Lo de la cuenta anterior fuera: perfil, vitrina, bandeja e hilo. */
+  private olvidarIdentidad(): void {
+    this.cerrar();
+    this.generacionDeIdentidad++;
+    this.generacionDeUsuario++;
+    this.cancelarSubidas();
+    this.cancelarApertura();
+    this.intencionPendiente = null;
+    this.revalidando = null;
+    this.cargandoHilo.set(false);
+    this.cargandoBandeja.set(false);
+    this.falloDeLaBandeja.set(null);
+    this.bandejaLeidaEn.set(null);
+    this.resultados.set([]);
+    this.perfil.set(null);
+    this.perfilPropio.set(null);
+    this.perfilResuelto.set(false);
+    this.vitrinasDeOrganizacion.set([]);
+    this.avisoDePerfil.set('');
+    this.conversaciones.set([]);
+    this.bandejaCargada.set(false);
+    this.pendientes.set([]);
+    this.error.set('');
+    this.usuarioDeLaIdentidad = null;
+    this.actuacionRestaurada = false;
+    this.vitrinaBuscada = null;
+    this.contadorPreparado = false;
+    this.esperandoPerfil = null;
+    this.urlesDeArchivo.set(new Map());
+    this.socket.reiniciar();
+    if (this.encendido) {
+      this.encendido = false;
+      this.pararTemporizadores();
+    }
   }
 
   /**
@@ -412,19 +1081,34 @@ export class ChatStore {
       return;
     }
     this.esperandoPerfil = [despues];
+    this.usuarioDeLaIdentidad = this.sesion.userId();
+    this.restaurarActuacion();
+    const generacion = this.generacionDeUsuario;
     this.community.getOwnProfile().subscribe({
       next: (propio) => {
-        this.perfil.set(propio?.id ?? null);
+        // De la cuenta anterior: llegó después de `olvidarIdentidad`.
+        if (generacion !== this.generacionDeUsuario) {
+          return;
+        }
+        this.perfilPropio.set(propio?.id ?? null);
+        // Si se está escribiendo como la farmacia, eso manda: el perfil propio
+        // queda a mano para volver.
+        if (!this.actuandoComoOrganizacion()) {
+          this.perfil.set(propio?.id ?? null);
+        }
         this.perfilResuelto.set(true);
         const esperan = this.esperandoPerfil ?? [];
         this.esperandoPerfil = null;
         // Sin perfil no hay bandeja que leer: cada espera lo comprueba.
         esperan.forEach((correr) => correr());
       },
-      error: () => {
+      error: (error: unknown) => {
+        if (generacion !== this.generacionDeUsuario) {
+          return;
+        }
         this.perfilResuelto.set(true);
         this.esperandoPerfil = null;
-        this.error.set('No pudimos saber si tenés perfil público.');
+        this.fallar(error, 'No pudimos saber si tiene perfil público.');
       },
     });
   }
@@ -442,6 +1126,7 @@ export class ChatStore {
     }
     this.socket.joinInbox(propio);
     this.recargarBandeja();
+    this.cargarBloqueos();
     this.agendarBandeja();
     // Si el hilo ya estaba elegido —se entró por `/messaging/<id>` directo— hay
     // que cargarlo ahora, que es cuando recién se sabe con qué perfil leerlo.
@@ -467,27 +1152,151 @@ export class ChatStore {
     const tenantId = this.sesion.activeTenantId();
     if (tenantId === null || this.creandoPerfil()) {
       if (tenantId === null) {
-        this.error.set('No pudimos saber en qué organización estás.');
+        this.error.set('No pudimos saber en qué organización está.');
       }
       return;
     }
 
     const nombre = this.sesion.displayName() ?? 'Mi perfil';
     this.creandoPerfil.set(true);
+    const generacion = this.generacionDeUsuario;
     this.community
       .upsertOwnProfile({ tenantId, slug: slugDe(nombre), displayName: nombre })
       .subscribe({
         next: (propio) => {
           this.creandoPerfil.set(false);
+          if (generacion !== this.generacionDeUsuario) {
+            return;
+          }
+          this.perfilPropio.set(propio.id);
           this.perfil.set(propio.id);
+          this.perfilResuelto.set(true);
           this.error.set('');
           this.arrancarConPerfil();
+          // Quien llegó con «Chatear» y tuvo que crear el perfil sigue donde
+          // iba: el hilo con esa farmacia, con su tarjeta.
+          const pendiente = this.intencionPendiente;
+          this.intencionPendiente = null;
+          pendiente?.();
         },
-        error: () => {
+        error: (error: unknown) => {
           this.creandoPerfil.set(false);
-          this.error.set('No pudimos crear tu perfil. Probá de nuevo.');
+          this.fallar(error, 'No pudimos crear su perfil. Intente de nuevo.');
         },
       });
+  }
+
+  /* --- Bloquear ------------------------------------------------------------ */
+
+  /** `true` si ese perfil está bloqueado. */
+  estaBloqueado(profileId: string): boolean {
+    return this.idsBloqueados().has(profileId);
+  }
+
+  /** Lee los bloqueos propios y les busca el nombre. */
+  cargarBloqueos(): void {
+    const propio = this.perfil();
+    if (propio === null) {
+      return;
+    }
+    this.community.listBlocks({ profileId: propio, limit: 100 }).subscribe({
+      next: (pagina) => {
+        const conocidos = new Map(this.bloqueados().map((b) => [b.profileId, b]));
+        this.bloqueados.set(
+          pagina.items.map((item) => ({
+            profileId: item.blockedProfileId,
+            displayName:
+              conocidos.get(item.blockedProfileId)?.displayName ??
+              this.nombreConocido(item.blockedProfileId),
+            desde: item.createdAt,
+          })),
+        );
+        this.bloqueadosCargados.set(true);
+        this.bloqueosFallaron.set(false);
+        // Los que aún no tienen nombre se le piden a su ficha, uno por uno: es
+        // una lista corta y cada ficha se pide una sola vez.
+        for (const bloqueado of this.bloqueados()) {
+          if (bloqueado.displayName === SIN_NOMBRE) {
+            this.resolverNombre(bloqueado.profileId);
+          }
+        }
+      },
+      error: (error: unknown) => {
+        this.bloqueadosCargados.set(true);
+        this.bloqueosFallaron.set(true);
+        this.fallar(error, 'No pudimos leer las personas que bloqueó.');
+      },
+    });
+  }
+
+  /**
+   * Bloquea a alguien. Se refleja en el acto y se revierte si el servidor dice
+   * que no: mostrar bloqueado a quien no lo está sería una promesa falsa de
+   * que no te va a poder escribir.
+   */
+  bloquear(profileId: string, nombre?: string): void {
+    const propio = this.perfil();
+    if (propio === null || this.estaBloqueado(profileId)) {
+      return;
+    }
+    const entrada: PerfilBloqueado = {
+      profileId,
+      displayName: nombre ?? this.nombreConocido(profileId),
+      desde: new Date(),
+    };
+    this.bloqueados.update((lista) => [entrada, ...lista]);
+    this.community
+      .block({ blockerProfileId: propio, blockedProfileId: profileId })
+      .subscribe({
+        next: () => undefined,
+        error: (error: unknown) => {
+          this.bloqueados.update((lista) => lista.filter((b) => b.profileId !== profileId));
+          this.fallar(error, 'No pudimos bloquear a esa persona. Intente de nuevo.');
+        },
+      });
+  }
+
+  /** Levanta un bloqueo. Mismo criterio que {@link bloquear}: primero se ve. */
+  desbloquear(profileId: string): void {
+    const propio = this.perfil();
+    const previo = this.bloqueados().find((b) => b.profileId === profileId);
+    if (propio === null || previo === undefined) {
+      return;
+    }
+    this.bloqueados.update((lista) => lista.filter((b) => b.profileId !== profileId));
+    this.community
+      .unblock({ blockerProfileId: propio, blockedProfileId: profileId })
+      .subscribe({
+        next: () => undefined,
+        error: (error: unknown) => {
+          this.bloqueados.update((lista) => [previo, ...lista]);
+          this.fallar(error, 'No pudimos desbloquear a esa persona. Intente de nuevo.');
+        },
+      });
+  }
+
+  /** El nombre que ya se sabe de un perfil, por sus conversaciones. */
+  private nombreConocido(profileId: string): string {
+    for (const conversacion of this.conversaciones()) {
+      const peer = conversacion.peers.find((p) => p.profileId === profileId);
+      if (peer?.displayName) {
+        return peer.displayName;
+      }
+    }
+    return SIN_NOMBRE;
+  }
+
+  private resolverNombre(profileId: string): void {
+    this.community.readProfile(profileId).subscribe({
+      next: (ficha) =>
+        this.bloqueados.update((lista) =>
+          lista.map((b) =>
+            b.profileId === profileId ? { ...b, displayName: ficha.displayName } : b,
+          ),
+        ),
+      // Sin ficha se queda «Perfil bloqueado»: no vale un cartel por un nombre.
+      error: () => undefined,
+    });
   }
 
   /* --- Bandeja ------------------------------------------------------------ */
@@ -498,21 +1307,42 @@ export class ChatStore {
       return;
     }
     this.cargandoBandeja.set(true);
+    const generacion = this.generacionDeIdentidad;
+    // La respuesta sirve sólo si sigue siendo la misma identidad: otra
+    // generación es la bandeja de quien se era antes de `actuarComo`.
+    const vigente = (): boolean =>
+      generacion === this.generacionDeIdentidad && this.perfil() === propio;
     this.community
       .listConversations({ profileId: propio, limit: LIMITE_DE_BANDEJA })
       .subscribe({
         next: (pagina) => {
+          if (!vigente()) {
+            return;
+          }
           this.conversaciones.set(pagina.items);
           this.bandejaCargada.set(true);
           this.cargandoBandeja.set(false);
-          this.error.set('');
+          this.falloDeLaBandeja.set(null);
+          this.bandejaLeidaEn.set(new Date());
         },
-        error: () => {
+        error: (error: unknown) => {
+          if (!vigente()) {
+            return;
+          }
           this.cargandoBandeja.set(false);
           this.bandejaCargada.set(true);
           // No se vacía lo que ya había: un tic fallido no es motivo para
-          // borrarle a alguien la bandeja que estaba mirando.
-          this.error.set('No pudimos cargar tus conversaciones.');
+          // borrarle a alguien la bandeja que estaba mirando (queda en S7).
+          // Salvo un 403: ahí la API dijo que con este perfil no se leen, y
+          // las filas —y sus no leídos en el ícono— se van con el permiso.
+          // El fallo va al estado propio de la bandeja (`bandeja`, M34) y no a
+          // `error`: la lista ya lo dice —sin red, prohibido o con su código—.
+          const fallo = falloDeBandeja(error);
+          if (fallo.status === 'forbidden') {
+            this.conversaciones.set([]);
+          }
+          this.falloDeLaBandeja.set(fallo);
+          this.siPerdioElPermiso(error, propio);
         },
       });
   }
@@ -640,6 +1470,7 @@ export class ChatStore {
     this.cargandoHilo.set(true);
 
     const cursor = primera ? null : this.cursor();
+    const generacion = this.generacionDeIdentidad;
     this.community
       .listMessages(conversationId, {
         profileId: propio,
@@ -648,6 +1479,11 @@ export class ChatStore {
       })
       .subscribe({
         next: (pagina) => {
+          // De otra identidad: `actuarComo` ya cerró ese hilo y liberó la
+          // carga; no se toca nada.
+          if (generacion !== this.generacionDeIdentidad) {
+            return;
+          }
           // Sólo si sigue siendo el hilo abierto: entre el pedido y la
           // respuesta se pudo haber cambiado de conversación, y volcar acá lo
           // que llegó tarde mostraría los mensajes de un chat en otro.
@@ -670,14 +1506,22 @@ export class ChatStore {
             this.marcarLeido();
           }
         },
-        error: () => {
+        error: (error: unknown) => {
+          if (generacion !== this.generacionDeIdentidad) {
+            return;
+          }
           if (this.activaId() !== conversationId) {
             this.descartarYPedirElActual();
             return;
           }
           this.cargandoHilo.set(false);
           this.hiloCargado.set(true);
-          this.error.set('No pudimos cargar la conversación.');
+          if (error instanceof HttpErrorResponse && error.status === 403) {
+            this.error.set(ERROR_SIN_PERMISO_EN_LA_CONVERSACION);
+          } else {
+            this.fallar(error, 'No pudimos cargar la conversación.');
+          }
+          this.siPerdioElPermiso(error, propio);
         },
       });
   }
@@ -721,11 +1565,35 @@ export class ChatStore {
    * propios que ya estaban en vuelo: el `POST` devuelve el id y el socket
    * empuja el mismo mensaje, y sin esto la burbuja aparecería dos veces.
    */
-  private absorber(items: readonly DirectMessage[]): void {
-    const conocidos = new Set(this.mensajes().map((m) => m.id));
+  private absorber(items: readonly DirectMessage[], delServidor = false): void {
+    const conocidos = new Map(this.mensajes().map((m) => [m.id, m]));
     const nuevos = items.filter((m) => !conocidos.has(m.id));
-    if (nuevos.length > 0) {
-      this.mensajes.update((lista) => [...nuevos, ...lista]);
+    // Lo que ya estaba también cambia con el tiempo —reacciones, recibos—, y el
+    // sondeo es quien se entera si el socket no llegó. Sólo una página **leída
+    // del servidor** es autoritativa: un mensaje armado del acuse de envío no
+    // trae recibos, y no por eso los tiene que borrar.
+    const cambios = new Map<string, DirectMessage>();
+    if (delServidor) {
+      for (const entrante of items) {
+        const previo = conocidos.get(entrante.id);
+        if (previo === undefined) {
+          continue;
+        }
+        const reactions = entrante.reactions ?? [];
+        const receipts = entrante.receipts ?? previo.receipts;
+        if (
+          JSON.stringify(reactions) !== JSON.stringify(previo.reactions ?? []) ||
+          JSON.stringify(receipts) !== JSON.stringify(previo.receipts)
+        ) {
+          cambios.set(entrante.id, { ...previo, reactions, receipts });
+        }
+      }
+    }
+    if (nuevos.length > 0 || cambios.size > 0) {
+      this.mensajes.update((lista) => [
+        ...nuevos,
+        ...lista.map((m) => cambios.get(m.id) ?? m),
+      ]);
     }
   }
 
@@ -838,9 +1706,11 @@ export class ChatStore {
           this.aplicarTexto(messageId, editado.bodyText ?? cuerpo, true);
           this.recargarBandeja();
         },
-        error: () => {
+        // El plazo de cinco minutos lo explica la API cuando es eso
+        // (`PRECONDITION_FAILED`); un corte de red no es un plazo vencido.
+        error: (error: unknown) => {
           this.aplicarTexto(messageId, anterior, mensaje.isEdited ?? false);
-          this.error.set('No pudimos editar el mensaje. Pasaron más de 5 minutos o ya no se puede cambiar.');
+          this.fallar(error, 'No pudimos editar el mensaje. Intente de nuevo.');
         },
       });
   }
@@ -858,6 +1728,44 @@ export class ChatStore {
     );
   }
 
+  /* --- Reaccionar ---------------------------------------------------------- */
+
+  /**
+   * Reacciona a un mensaje con un emoji; volver a tocar el mismo lo quita.
+   *
+   * Un perfil tiene **una** reacción por mensaje —elegir otra reemplaza la
+   * anterior—. Se pinta antes de que el servidor conteste y se revierte si
+   * falla.
+   */
+  reaccionar(mensaje: MensajeDelHilo, emoji: string): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    if (propio === null || conversationId === null || mensaje.id === null) {
+      return;
+    }
+    const messageId = mensaje.id;
+    const anteriores = mensaje.reactions;
+    const yaReaccioné = (anteriores ?? []).find((r) => r.profileIds.includes(propio))?.emoji;
+    const elegido = yaReaccioné === emoji ? null : emoji;
+
+    this.aplicarReacciones(messageId, reaccionesConMia(anteriores, propio, elegido));
+    this.community
+      .reactToMessage(conversationId, messageId, { profileId: propio, emoji: elegido })
+      .subscribe({
+        next: (actualizado) => this.aplicarReacciones(messageId, actualizado.reactions ?? []),
+        error: (error: unknown) => {
+          this.aplicarReacciones(messageId, anteriores ?? []);
+          this.fallar(error, 'No pudimos guardar su reacción.');
+        },
+      });
+  }
+
+  private aplicarReacciones(messageId: string, reactions: readonly MessageReaction[]): void {
+    this.mensajes.update((lista) =>
+      lista.map((m) => (m.id === messageId ? { ...m, reactions } : m)),
+    );
+  }
+
   /**
    * Manda un mensaje y lo pinta antes de que el servidor conteste.
    *
@@ -869,7 +1777,7 @@ export class ChatStore {
     const propio = this.perfil();
     const conversationId = this.activaId();
     const cuerpo = texto.trim();
-    if (propio === null || conversationId === null || cuerpo === '') {
+    if (propio === null || conversationId === null || cuerpo === '' || this.hiloBloqueado()) {
       return;
     }
     this.autoReply.marcarActividad();
@@ -878,6 +1786,7 @@ export class ChatStore {
     const pendiente: MensajePendiente = {
       claveTemporal: claveTemporal(),
       conversationId,
+      profileId: propio,
       bodyText: cuerpo,
       ...(responde?.id ? { replyToMessageId: responde.id } : {}),
       creadoEn: new Date(),
@@ -906,6 +1815,7 @@ export class ChatStore {
     const pendiente: MensajePendiente = {
       claveTemporal: claveTemporal(),
       conversationId,
+      profileId: propio,
       bodyText: mensaje.bodyText ?? '',
       ...(mensaje.attachmentFileId
         ? { adjunto: { fileId: mensaje.attachmentFileId, nombre: 'Archivo adjunto', tipo: '' } }
@@ -928,12 +1838,14 @@ export class ChatStore {
    */
   enviarSticker(sticker: Sticker): void {
     const conversationId = this.activaId();
-    if (this.perfil() === null || conversationId === null) {
+    const propio = this.perfil();
+    if (propio === null || conversationId === null || this.hiloBloqueado()) {
       return;
     }
     const pendiente: MensajePendiente = {
       claveTemporal: claveTemporal(),
       conversationId,
+      profileId: propio,
       bodyText: '',
       adjunto: {
         fileId: sticker.id,
@@ -957,21 +1869,54 @@ export class ChatStore {
           : p,
       ),
     );
+    // La persona ya está actuando sobre el fallo: el aviso anterior sobra.
+    this.error.set('');
+    // Un adjunto que falló AL SUBIR no tiene `fileId`: despacharlo así mandaba
+    // la leyenda sola —o un mensaje vacío— y la foto se perdía. Se vuelve a
+    // subir el mismo archivo, que el store guardó para esto.
+    const archivo = this.archivosSinSubir.get(pendiente.claveTemporal);
+    if (pendiente.adjunto !== undefined && !pendiente.adjunto.fileId && archivo) {
+      this.encolarSubida({ ...pendiente, estado: 'enviando' }, archivo);
+      return;
+    }
     this.despachar(pendiente);
+  }
+
+  /**
+   * Corta las subidas en curso y olvida sus archivos. Los pendientes que no
+   * llegaron a subir se quitan: sin el `File` no hay qué reintentar, y una
+   * burbuja «enviando» que nunca va a salir es peor que ninguna.
+   */
+  private cancelarSubidas(): void {
+    this.subidas.unsubscribe();
+    this.subidas = new Subscription();
+    this.colaDeSubidas = null;
+    this.filaDeEnvios = null;
+    const cortadas = new Set(this.archivosSinSubir.keys());
+    this.archivosSinSubir.clear();
+    if (cortadas.size > 0) {
+      this.pendientes.update((lista) => lista.filter((p) => !cortadas.has(p.claveTemporal)));
+    }
   }
 
   /** Descarta uno que falló y no se va a reintentar. */
   descartar(pendiente: MensajePendiente): void {
+    this.archivosSinSubir.delete(pendiente.claveTemporal);
     this.pendientes.update((lista) =>
       lista.filter((p) => p.claveTemporal !== pendiente.claveTemporal),
     );
   }
 
-  private despachar(pendiente: MensajePendiente): void {
-    const propio = this.perfil();
-    if (propio === null) {
-      return;
-    }
+  /**
+   * Manda el pendiente **con el perfil y la conversación que tenía al
+   * encolarse**, no con los del momento: entre una cosa y otra se pudo haber
+   * cambiado de identidad.
+   *
+   * @param alTerminar - Se llama una vez cuando el servidor contestó, bien o
+   *   mal: libera el turno de los adjuntos (ver {@link enTurnoDeEnvio}).
+   */
+  private despachar(pendiente: MensajePendiente, alTerminar?: () => void): void {
+    const propio = pendiente.profileId;
     this.enviando.set(true);
 
     this.community
@@ -983,7 +1928,7 @@ export class ChatStore {
           : {}),
         ...(pendiente.adjunto?.fileId
           ? {
-              contentType: 'MEDIA' as const,
+              contentType: pendiente.comoSticker ? ('STICKER' as const) : ('MEDIA' as const),
               attachmentFileId: pendiente.adjunto.fileId,
             }
           : {}),
@@ -991,9 +1936,11 @@ export class ChatStore {
       .subscribe({
         next: (acuse) => {
           this.enviando.set(false);
+          alTerminar?.();
           // El mensaje real entra en la lista y el pendiente sale en el mismo
-          // paso, así la burbuja no parpadea.
-          if (pendiente.conversationId === this.activaId()) {
+          // paso, así la burbuja no parpadea. Sólo si se sigue mirando ese
+          // hilo con esa identidad.
+          if (pendiente.conversationId === this.activaId() && propio === this.perfil()) {
             this.absorber([
               {
                 id: acuse.id,
@@ -1007,6 +1954,7 @@ export class ChatStore {
                 ...(pendiente.adjunto?.fileId
                   ? { attachmentFileId: pendiente.adjunto.fileId }
                   : {}),
+                ...(pendiente.comoSticker ? { contentType: 'STICKER' as const } : {}),
                 sentAt: acuse.sentAt ?? pendiente.creadoEn,
               },
             ]);
@@ -1015,9 +1963,15 @@ export class ChatStore {
             lista.filter((p) => p.claveTemporal !== pendiente.claveTemporal),
           );
           this.recargarBandeja();
+          // El acuse no trae recibos: se relee poco después para que el ✓ pase
+          // a ✓✓ cuando llegue, sin esperar al sondeo de treinta segundos.
+          if (this.isBrowser && pendiente.conversationId === this.activaId()) {
+            setTimeout(() => this.refrescarHilo(), ESPERA_DE_RECIBOS_MS);
+          }
         },
-        error: () => {
+        error: (error: unknown) => {
           this.enviando.set(false);
+          alTerminar?.();
           this.pendientes.update((lista) =>
             lista.map((p) =>
               p.claveTemporal === pendiente.claveTemporal
@@ -1025,6 +1979,16 @@ export class ChatStore {
                 : p,
             ),
           );
+          // El fallo vive en la burbuja, con reintentar y descartar. El aviso
+          // de arriba se suma sólo si la API dijo por qué —«esta persona no
+          // recibe mensajes suyos»—, que la burbuja no sabe contar.
+          if (apiExplainedFailure(error)) {
+            this.fallar(
+              error,
+              'No pudimos enviar el mensaje. Puede reintentarlo desde la conversación.',
+            );
+          }
+          this.siPerdioElPermiso(error, propio);
         },
       });
   }
@@ -1036,49 +2000,210 @@ export class ChatStore {
    * (`blob:`) si es una imagen: esperar a que termine la subida para recién
    * mostrar algo es lo que hace que mandar una foto se sienta lento.
    */
-  enviarAdjunto(archivo: File, leyenda: string): void {
+  enviarAdjunto(adjunto: File | AdjuntoParaEnviar, leyenda = '', comoSticker = false): void {
+    this.enviarAdjuntos([adjunto], leyenda, comoSticker);
+  }
+
+  /**
+   * Varios adjuntos de una vez: **un mensaje por archivo**, como en cualquier
+   * chat — el contrato lleva un `attachmentFileId` por mensaje y el endpoint de
+   * archivos acepta uno por petición (`upload-policy.ts`).
+   *
+   * ## El texto de cada uno
+   *
+   * Cada adjunto puede traer su propio pie (`leyenda`), que es lo que arma la
+   * vista previa de adjuntos (`AttachmentDraft.caption`, uno por archivo). Si
+   * no lo trae, la `leyenda` común viaja con el **primero** —es el que se lee
+   * primero— y los demás salen sin texto.
+   *
+   * ## Garantías
+   *
+   * - Todas las burbujas aparecen en el acto y en orden, cada una con el
+   *   `profileId` **fijado al encolar**: cambiar de identidad con fotos en
+   *   cola no las manda con la otra (las corta, ver `cancelarSubidas`).
+   * - Las subidas van **de a una** (una fila `concatMap` del store, compartida
+   *   por todas las llamadas), y los mensajes salen en el orden en que se
+   *   eligieron: cada envío espera a que el anterior conteste. Una que falla
+   *   no frena a las demás.
+   * - La miniatura ya leída (`vistaPrevia`, `data:`) no se vuelve a leer: era
+   *   la tercera lectura de la misma foto. Sólo se lee si no viene.
+   * - «Reintentar» una subida fallida vuelve a subir el mismo archivo.
+   *
+   * @param adjuntos - Archivos, o archivos con su miniatura y su pie.
+   * @param leyenda - El texto común, para el primero que no traiga el suyo.
+   * @param comoSticker - Un sticker que subió la persona: viaja marcado
+   *   (`contentType: 'STICKER'`).
+   */
+  enviarAdjuntos(
+    adjuntos: readonly (File | AdjuntoParaEnviar)[],
+    leyenda = '',
+    comoSticker = false,
+  ): void {
     const conversationId = this.activaId();
-    if (conversationId === null) {
+    const propio = this.perfil();
+    if (
+      conversationId === null ||
+      propio === null ||
+      adjuntos.length === 0 ||
+      this.hiloBloqueado()
+    ) {
       return;
     }
 
-    const esImagen = archivo.type.startsWith('image/');
-    const pendiente: MensajePendiente = {
-      claveTemporal: claveTemporal(),
-      conversationId,
-      bodyText: leyenda.trim(),
-      creadoEn: new Date(),
-      estado: 'enviando',
-      adjunto: {
-        nombre: archivo.name,
-        tipo: archivo.type,
-        ...(esImagen && this.isBrowser
-          ? { vistaPrevia: URL.createObjectURL(archivo) }
-          : {}),
-      },
-    };
-    this.pendientes.update((lista) => [...lista, pendiente]);
+    const lote = adjuntos.map((adjunto, indice) => {
+      const { archivo, vistaPrevia = null, leyenda: propia } =
+        adjunto instanceof File ? { archivo: adjunto } : adjunto;
+      const texto = propia ?? (indice === 0 ? leyenda : '');
+      const esImagen = archivo.type.startsWith('image/');
+      const yaLeida =
+        esImagen && typeof vistaPrevia === 'string' && vistaPrevia.startsWith('data:');
+      const pendiente: MensajePendiente = {
+        claveTemporal: claveTemporal(),
+        conversationId,
+        profileId: propio,
+        bodyText: texto.trim(),
+        creadoEn: new Date(),
+        estado: 'enviando',
+        ...(comoSticker ? { comoSticker: true } : {}),
+        adjunto: {
+          nombre: archivo.name,
+          tipo: archivo.type,
+          ...(yaLeida ? { vistaPrevia } : {}),
+        },
+      };
+      this.archivosSinSubir.set(pendiente.claveTemporal, archivo);
+      if (esImagen && !yaLeida) {
+        this.ponerVistaPrevia(pendiente.claveTemporal, archivo);
+      }
+      return { pendiente, archivo };
+    });
+    this.pendientes.update((lista) => [...lista, ...lote.map((l) => l.pendiente)]);
+    for (const { pendiente, archivo } of lote) {
+      this.encolarSubida(pendiente, archivo);
+    }
+  }
 
+  /**
+   * Los archivos de los adjuntos que todavía no subieron, por clave temporal.
+   *
+   * Existe para el «Reintentar» de una subida fallida: el pendiente sólo guarda
+   * nombre, tipo y vista previa, y sin el `File` no hay qué volver a subir.
+   */
+  private readonly archivosSinSubir = new Map<string, File>();
+
+  /**
+   * La fila de subidas: de a una, en el orden en que se encolaron. Vive en
+   * {@link subidas} para poder cortarla; `null` hasta la primera y después de
+   * cortarla.
+   */
+  private colaDeSubidas: Subject<SubidaEnCola> | null = null;
+
+  /**
+   * Los envíos de adjuntos que esperan turno detrás del que está saliendo;
+   * `null` si no sale ninguno. Ver {@link enTurnoDeEnvio}.
+   */
+  private filaDeEnvios: ((liberar: () => void) => void)[] | null = null;
+
+  private encolarSubida(pendiente: MensajePendiente, archivo: File): void {
+    if (this.colaDeSubidas === null) {
+      const cola = new Subject<SubidaEnCola>();
+      this.subidas.add(
+        cola
+          .pipe(concatMap((subida) => this.subirYDespachar(subida.pendiente, subida.archivo)))
+          .subscribe(),
+      );
+      this.colaDeSubidas = cola;
+    }
+    this.colaDeSubidas.next({ pendiente, archivo });
+  }
+
+  /**
+   * Corre `enviar` cuando el envío de adjunto anterior terminó (bien o mal).
+   *
+   * Sin esto, de dos fotos la segunda podía llegar al servidor antes que la
+   * primera: subir es de a una, pero el `POST` del mensaje de la primera
+   * todavía podía estar en vuelo cuando salía el de la segunda. Si no hay nadie
+   * enviando, corre en el acto, sin esperar un tic.
+   */
+  private enTurnoDeEnvio(enviar: (liberar: () => void) => void): void {
+    if (this.filaDeEnvios !== null) {
+      this.filaDeEnvios.push(enviar);
+      return;
+    }
+    const fila: ((liberar: () => void) => void)[] = [];
+    this.filaDeEnvios = fila;
+    const correr = (paso: (liberar: () => void) => void): void => {
+      let liberado = false;
+      paso(() => {
+        // Una fila cortada (`cancelarSubidas`) ya no libera a nadie.
+        if (liberado || this.filaDeEnvios !== fila) {
+          return;
+        }
+        liberado = true;
+        const siguiente = fila.shift();
+        if (siguiente === undefined) {
+          this.filaDeEnvios = null;
+        } else {
+          correr(siguiente);
+        }
+      });
+    };
+    correr(enviar);
+  }
+
+  /**
+   * La miniatura local del pendiente, como `data:` y no `blob:`.
+   *
+   * La CSP declara `img-src 'self' data:` (`src/server/security-headers.ts`):
+   * un `blob:` se bloqueaba en silencio y la burbuja «enviando» salía sin la
+   * foto. Se lee aparte porque `FileReader` es asíncrono; la burbuja aparece
+   * igual en el acto y la foto se suma un instante después.
+   */
+  private ponerVistaPrevia(clave: string, archivo: File): void {
+    if (!this.isBrowser || typeof FileReader === 'undefined') {
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const vistaPrevia = lector.result;
+      if (typeof vistaPrevia !== 'string') {
+        return;
+      }
+      const conVista = (p: MensajePendiente): MensajePendiente =>
+        p.claveTemporal === clave && p.adjunto
+          ? { ...p, adjunto: { ...p.adjunto, vistaPrevia } }
+          : p;
+      this.pendientes.update((lista) => lista.map(conVista));
+    };
+    lector.readAsDataURL(archivo);
+  }
+
+  /** Sube uno y, si sube, lo despacha en su turno. Nunca falla: el error queda en el pendiente. */
+  private subirYDespachar(pendiente: MensajePendiente, archivo: File): Observable<void> {
+    const esImagen = archivo.type.startsWith('image/');
     // `PHI` y no `NORMAL`: lo que se adjunta en un chat entre paciente y
     // profesional es, con toda probabilidad, la foto de un análisis o de una
     // receta. La sensibilidad cambia cómo se guarda y quién puede descargarlo,
     // así que el defecto tiene que ser el que protege, no el que conviene.
-    this.archivos
-      .upload(archivo, esImagen ? 'IMAGE' : 'DOCUMENT', 'PHI')
-      .subscribe({
-      next: (subido) => {
+    return this.archivos.upload(archivo, esImagen ? 'IMAGE' : 'DOCUMENT', 'PHI').pipe(
+      map((subido) => {
+        this.archivosSinSubir.delete(pendiente.claveTemporal);
+        // Se parte del pendiente **actual** de la lista y no del capturado al
+        // empezar: en el medio pudo llegar la miniatura, y volver a la copia
+        // vieja la borraría.
+        const actual =
+          this.pendientes().find((p) => p.claveTemporal === pendiente.claveTemporal) ?? pendiente;
         const conFileId: MensajePendiente = {
-          ...pendiente,
-          adjunto: { ...pendiente.adjunto!, fileId: subido.id },
+          ...actual,
+          estado: 'enviando',
+          adjunto: { ...actual.adjunto!, fileId: subido.id },
         };
         this.pendientes.update((lista) =>
-          lista.map((p) =>
-            p.claveTemporal === pendiente.claveTemporal ? conFileId : p,
-          ),
+          lista.map((p) => (p.claveTemporal === pendiente.claveTemporal ? conFileId : p)),
         );
-        this.despachar(conFileId);
-      },
-      error: () => {
+        this.enTurnoDeEnvio((liberar) => this.despachar(conFileId, liberar));
+      }),
+      catchError((error: unknown) => {
         this.pendientes.update((lista) =>
           lista.map((p) =>
             p.claveTemporal === pendiente.claveTemporal
@@ -1086,9 +2211,15 @@ export class ChatStore {
               : p,
           ),
         );
-        this.error.set('No pudimos subir el archivo.');
-      },
-    });
+        // La burbuja ya dice que no salió y ofrece reintentar y descartar. El
+        // aviso de arriba sólo si la API dijo por qué (pesa demasiado, por
+        // ejemplo): un fallo de un mensaje no empuja toda la pantalla.
+        if (apiExplainedFailure(error)) {
+          this.fallar(error, 'No pudimos subir el archivo.');
+        }
+        return EMPTY;
+      }),
+    );
   }
 
   /* --- Adjuntos ----------------------------------------------------------- */
@@ -1127,6 +2258,12 @@ export class ChatStore {
     if (conversationId === null || profileId === null) return;
     const yaResueltos = this.urlesDeArchivo();
     for (const mensaje of mensajes) {
+      // Uno en vuelo ya tiene su vista local y su archivo todavía no viaja en
+      // ningún mensaje: pedirlo daría 404 y ese «no disponible» quedaría
+      // anotado para cuando el mensaje sí exista.
+      if (mensaje.pendiente !== undefined) {
+        continue;
+      }
       const fileId = mensaje.attachmentFileId;
       const key = fileId ? `${conversationId}:${fileId}` : '';
       // Un sticker no se pide: su URL sale del pack, que viene con la
@@ -1174,10 +2311,19 @@ export class ChatStore {
    * del servidor.
    */
   private quizasResponderSolo(mensaje: DirectMessage): void {
+    // La configuración de `ChatAutoReply` es **de la persona** («estoy de
+    // vacaciones»): mandarla escribiendo como la farmacia la firmaría en
+    // nombre de la farmacia. La de la vitrina se configura aparte en la API
+    // (`/community/profiles/:profileId/auto-reply`) y la manda el servidor.
+    if (this.actuandoComoOrganizacion()) {
+      return;
+    }
     const propio = this.perfil();
     if (propio === null || mensaje.senderProfileId === propio) {
       return;
     }
+    // Con IA guardada en el servidor contesta él (dos respuestas, no); si no la tiene, sale el respaldo.
+    if (this.autoReply.configuracion().conIa && this.autoReply.enElServidor()) return;
     const ahora = Date.now();
     const ultimo = this.ultimoAvisoPorConversacion.get(mensaje.conversationId) ?? null;
     if (!this.autoReply.corresponde(ahora, ultimo)) {
@@ -1188,6 +2334,7 @@ export class ChatStore {
     const pendiente: MensajePendiente = {
       claveTemporal: claveTemporal(),
       conversationId: mensaje.conversationId,
+      profileId: propio,
       bodyText: this.autoReply.configuracion().texto,
       creadoEn: new Date(),
       estado: 'enviando',
@@ -1255,9 +2402,9 @@ export class ChatStore {
               ),
             );
           },
-          error: () => {
+          error: (error: unknown) => {
             this.exportando.set(false);
-            this.error.set('No pudimos descargar la conversación.');
+            this.fallar(error, 'No pudimos descargar la conversación.');
             alTerminar(null);
           },
         });
@@ -1268,27 +2415,140 @@ export class ChatStore {
 
   /* --- Escribirle a alguien nuevo ----------------------------------------- */
 
+  /** Las generaciones de ahora, para que un paso de la apertura sepa si sigue valiendo. */
+  private marcaDeApertura(): MarcaDeApertura {
+    return { identidad: this.generacionDeIdentidad, usuario: this.generacionDeUsuario };
+  }
+
+  /** `false` si desde `marca` se cambió de identidad o de cuenta: se descarta. */
+  private aperturaVigente(marca: MarcaDeApertura): boolean {
+    return (
+      marca.identidad === this.generacionDeIdentidad && marca.usuario === this.generacionDeUsuario
+    );
+  }
+
+  /**
+   * Suscribe un paso de la apertura: queda en {@link apertura} para poder
+   * cortarlo, y su `next` y su `error` no corren si la identidad cambió.
+   */
+  private pasoDeApertura<T>(
+    peticion: Observable<T>,
+    next: (valor: T) => void,
+    error: (fallo: unknown) => void,
+  ): void {
+    const marca = this.marcaDeApertura();
+    let emitio = false;
+    this.apertura.add(
+      peticion.subscribe({
+        next: (valor) => {
+          emitio = true;
+          if (this.aperturaVigente(marca)) {
+            next(valor);
+          }
+        },
+        error: (fallo: unknown) => {
+          if (this.aperturaVigente(marca)) {
+            error(fallo);
+          }
+        },
+        // Una petición que termina sin traer nada no puede dejar `abriendo`
+        // encendido: bloquearía toda apertura de chat de la app.
+        complete: () => {
+          if (!emitio && this.aperturaVigente(marca)) {
+            error(new Error('La apertura terminó sin respuesta.'));
+          }
+        },
+      }),
+    );
+  }
+
+  /** Corta la apertura en curso, si hay, y libera `abriendo`. */
+  private cancelarApertura(): void {
+    this.apertura.unsubscribe();
+    this.apertura = new Subscription();
+    this.abriendo.set(false);
+  }
+
+  /**
+   * Busca gente a la que todavía no se le escribió.
+   *
+   * No mientras se escribe como la organización: la API no deja buscar
+   * contactos ni iniciar chats con la vitrina (403), que sólo responde. En ese
+   * modo el buscador de la bandeja filtra los chats que ya hay y nada más.
+   */
   buscarGente(consulta: string): void {
     const q = consulta.trim();
-    if (q === '') {
+    const propio = this.perfil();
+    const version = ++this.versionBusqueda;
+    if (q.length < 2 || propio === null || this.actuandoComoOrganizacion()) {
       this.resultados.set([]);
+      this.buscandoAhora.set(false);
       return;
     }
     this.buscandoAhora.set(true);
-    this.community.searchPractitioners(q, 10).subscribe({
+    this.community.searchChatContacts(propio, q, 10).subscribe({
       next: (items) => {
+        if (version !== this.versionBusqueda) return;
         this.resultados.set(items);
         this.buscandoAhora.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
+        if (version !== this.versionBusqueda) return;
         this.buscandoAhora.set(false);
-        this.error.set('No pudimos buscar profesionales.');
+        this.fallar(error, 'No pudimos buscar personas.');
       },
     });
   }
 
   limpiarBusqueda(): void {
+    this.versionBusqueda += 1;
     this.resultados.set([]);
+    this.buscandoAhora.set(false);
+  }
+
+  /**
+   * Como la organización sólo se responde: la API no deja iniciar chats con la
+   * vitrina. Quien inicia uno —un contacto del buscador, «Chatear» desde el
+   * marketplace— quiere escribir él, así que se vuelve antes al perfil propio
+   * y se avisa; sin perfil propio, se explica por qué no y devuelve `false`.
+   */
+  private iniciarConPerfilPropio(): boolean {
+    if (!this.actuandoComoOrganizacion()) {
+      return true;
+    }
+    if (this.perfilPropio() === null) {
+      this.error.set(ERROR_CHAT_NUEVO_COMO_ORGANIZACION);
+      return false;
+    }
+    this.actuarComo(null);
+    this.avisoDePerfil.set(AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO);
+    return true;
+  }
+
+  /**
+   * Abre —o reutiliza— una conversación con el perfil elegido en el buscador
+   * del chat. Mismas reglas que {@link escribirA}: con el perfil propio, y
+   * cortable si cambia la identidad mientras viaja.
+   */
+  escribirAPerfil(profileId: string, alAbrir: (conversationId: string) => void): void {
+    this.conPerfil(() => {
+      if (this.abriendo() || !this.iniciarConPerfilPropio()) {
+        return;
+      }
+      const propio = this.perfil();
+      if (propio === null || profileId === propio) {
+        return;
+      }
+      this.abriendo.set(true);
+      this.pasoDeApertura(
+        this.community.createConversation({ participantProfileIds: [propio, profileId] }),
+        ({ id }) => this.entrarAlHilo(propio, id, alAbrir, undefined),
+        (error: unknown) => {
+          this.abriendo.set(false);
+          this.fallar(error, 'No pudimos abrir la conversación.');
+        },
+      );
+    });
   }
 
   /**
@@ -1298,44 +2558,228 @@ export class ChatStore {
    * Son dos llamadas y no una porque la superficie pública devuelve `slug` y no
    * `profileId`: no publica identificadores internos. La segunda es idempotente
    * desde este carril: si el hilo ya existe, el backend devuelve ése.
+   *
+   * Espera al perfil propio en vez de rendirse si todavía no está: quien llega
+   * desde un botón del marketplace entra a `/messaging` en frío, y el
+   * `?escribirA=` se lee antes de que `/community/profiles/me` conteste. Antes
+   * ese caso volvía sin hacer nada y el botón parecía muerto.
+   *
+   * Con `contexto`, antes de abrir el hilo manda **una** tarjeta de contexto
+   * (ver `chat-context.ts`) — salvo que la última tarjeta del hilo ya sea
+   * la misma (tipo, título y ruta): volver a tocar «Chatear» desde el mismo
+   * pedido no tiene que repetirla.
    */
-  escribirA(slug: string, alAbrir: (conversationId: string) => void): void {
-    const propio = this.perfil();
-    if (propio === null || this.abriendo()) {
-      return;
-    }
-    this.abriendo.set(true);
+  escribirA(
+    slug: string,
+    alAbrir: (conversationId: string) => void,
+    contexto?: ContextoDeChat,
+  ): void {
+    // `abriendo` se mira y se enciende ya con el perfil resuelto: si se
+    // encendiera antes y `/community/profiles/me` fallara, quedaría prendido
+    // para siempre. Dos pedidos encolados a la vez abren uno solo igual.
+    this.conPerfil(() => {
+      if (this.abriendo() || !this.iniciarConPerfilPropio()) {
+        return;
+      }
+      const propio = this.perfil();
+      // Sin perfil público no hay con qué abrir el hilo: la pantalla ya ofrece
+      // crearlo, y eso no es un error. Lo que se quería abrir se guarda y se
+      // retoma cuando `crearPerfil()` termine bien.
+      if (propio === null) {
+        this.intencionPendiente = () => this.escribirA(slug, alAbrir, contexto);
+        return;
+      }
+      this.abriendo.set(true);
+      this.abrirConFicha(propio, slug, alAbrir, contexto);
+    });
+  }
 
-    this.community.readProfileBySlug(slug).subscribe({
-      next: (ficha) => {
+  private abrirConFicha(
+    propio: string,
+    slug: string,
+    alAbrir: (conversationId: string) => void,
+    contexto: ContextoDeChat | undefined,
+  ): void {
+    this.pasoDeApertura(
+      this.community.readProfileBySlug(slug),
+      (ficha) => {
         // Uno no se escribe a sí mismo. Sin esto, «Enviar mensaje» en la propia
         // ficha pública pedía una conversación con un solo participante
         // repetido y el backend devolvía **otra** conversación cualquiera.
         if (ficha.id === propio) {
           this.abriendo.set(false);
-          this.error.set('Ese es tu propio perfil: no podés escribirte.');
+          this.error.set('Ese es su propio perfil: no puede escribirle.');
           return;
         }
 
-        this.community
-          .createConversation({ participantProfileIds: [propio, ficha.id] })
-          .subscribe({
-            next: ({ id }) => {
-              this.abriendo.set(false);
-              this.recargarBandeja();
-              alAbrir(id);
-            },
-            error: () => {
-              this.abriendo.set(false);
-              this.error.set('No pudimos abrir la conversación.');
-            },
-          });
+        this.pasoDeApertura(
+          this.community.createConversation({ participantProfileIds: [propio, ficha.id] }),
+          ({ id }) => this.entrarAlHilo(propio, id, alAbrir, contexto),
+          (error: unknown) => {
+            this.abriendo.set(false);
+            this.fallar(error, 'No pudimos abrir la conversación.');
+          },
+        );
       },
-      error: () => {
+      (error: unknown) => {
         this.abriendo.set(false);
-        this.error.set('No pudimos encontrar a esa persona.');
+        this.fallar(error, 'No pudimos encontrar a esa persona.');
       },
+    );
+  }
+
+  /**
+   * Abre un hilo que **otro** resuelve —hoy, el chat de un pedido:
+   * `POST /pharmacy/orders/:id/conversation`— con la misma tarjeta y la misma
+   * regla de no repetirla que {@link escribirA}.
+   *
+   * El store no sabe de pedidos: recibe la petición que devuelve el id de la
+   * conversación. Quién puede abrirla lo decide esa petición en la API.
+   */
+  abrirConversacion(
+    resolver: Observable<string>,
+    alAbrir: (conversationId: string) => void,
+    contexto?: ContextoDeChat,
+  ): void {
+    this.conPerfil(() => {
+      if (this.abriendo()) {
+        return;
+      }
+      const propio = this.perfil();
+      if (propio === null) {
+        // Igual que `escribirA`: se retoma al crear el perfil.
+        this.intencionPendiente = () => this.abrirConversacion(resolver, alAbrir, contexto);
+        return;
+      }
+      this.abriendo.set(true);
+      this.pasoDeApertura(
+        resolver,
+        (id) => this.entrarAlHilo(propio, id, alAbrir, contexto),
+        () => {
+          this.abriendo.set(false);
+          this.error.set('No pudimos abrir la conversación.');
+        },
+      );
     });
+  }
+
+  /**
+   * El chat de un pedido **del lado de la farmacia**: lo abre la API con el
+   * `POST` del pedido, que devuelve también la vitrina con la que se habla;
+   * desde ahí se escribe como esa vitrina, con la tarjeta del pedido y la
+   * misma regla de no repetirla.
+   *
+   * No espera al perfil propio: el personal de una farmacia puede no tener
+   * vitrina personal, y no la necesita para atender como la farmacia.
+   *
+   * @param alFallar - Recibe el error del `POST` (los 422 traen su `reason`),
+   *   para que lo diga la pantalla que tiene el botón.
+   */
+  abrirComoOrganizacion(
+    resolver: Observable<{ readonly conversationId: string; readonly profileId: string }>,
+    nombre: string,
+    alAbrir: (conversationId: string) => void,
+    contexto?: ContextoDeChat,
+    alFallar?: (error: unknown) => void,
+  ): void {
+    if (this.abriendo()) {
+      // Sin esto volvía en silencio y el botón que lo pidió quedaba girando.
+      alFallar?.(new ChatOcupadoError());
+      return;
+    }
+    this.abriendo.set(true);
+    this.pasoDeApertura(
+      resolver,
+      ({ conversationId, profileId }) => {
+        this.ofrecerVitrina({ profileId, nombre });
+        // `actuarComo` corta la apertura en curso —que es ésta— y libera
+        // `abriendo`; lo que sigue ya es de la identidad nueva y se vuelve a
+        // marcar ocupado hasta entrar al hilo.
+        this.actuarComo(profileId);
+        this.abriendo.set(true);
+        this.entrarAlHilo(profileId, conversationId, alAbrir, contexto);
+      },
+      (error: unknown) => {
+        this.abriendo.set(false);
+        alFallar?.(error);
+      },
+    );
+  }
+
+  /** Lo común a los dos caminos: la tarjeta, si hay, y después el hilo. */
+  private entrarAlHilo(
+    propio: string,
+    id: string,
+    alAbrir: (conversationId: string) => void,
+    contexto: ContextoDeChat | undefined,
+  ): void {
+    const terminar = (): void => {
+      this.abriendo.set(false);
+      this.recargarBandeja();
+      alAbrir(id);
+    };
+    // Validado **antes** de pedir nada: `textoDeContexto` lanza con un
+    // contexto inválido, y lanzar dentro del `next` de una suscripción dejaba
+    // `abriendo` prendido para siempre. Inválido es «sin tarjeta».
+    const valido = contexto === undefined ? null : normalizarContexto(contexto);
+    if (valido === null) {
+      terminar();
+    } else {
+      this.ponerContexto(propio, id, valido, terminar);
+    }
+  }
+
+  /**
+   * Manda la tarjeta de contexto si la última del hilo no es ya la misma.
+   *
+   * Se mira la primera página —la más reciente— y no el hilo entero: si la
+   * última tarjeta sobre ese pedido quedó treinta mensajes atrás, repetirla
+   * arriba es justamente lo útil. Si leer falla no se manda nada: una tarjeta
+   * duplicada es peor que una que falta, y el hilo se abre igual.
+   */
+  private ponerContexto(
+    propio: string,
+    conversationId: string,
+    contexto: ContextoDeChat,
+    despues: () => void,
+  ): void {
+    const fallar = (): void => {
+      this.error.set('Abrimos el chat, pero no pudimos agregar de qué se trata.');
+      despues();
+    };
+    this.pasoDeApertura(
+      this.community.listMessages(conversationId, {
+        profileId: propio,
+        limit: PAGINA_DE_MENSAJES,
+      }),
+      (pagina) => {
+        if (mismaTarjeta(ultimaTarjeta(pagina.items), contexto)) {
+          despues();
+          return;
+        }
+        const bodyText = textoDeContexto(contexto);
+        this.pasoDeApertura(
+          this.community.sendMessage(conversationId, { senderProfileId: propio, bodyText }),
+          () => despues(),
+          // Falló el envío de la tarjeta: queda como un mensaje fallado del
+          // hilo, con reintentar y descartar, igual que cualquier otro. No va
+          // a `error`.
+          () => {
+            const fallada: MensajePendiente = {
+              claveTemporal: claveTemporal(),
+              conversationId,
+              profileId: propio,
+              bodyText,
+              creadoEn: new Date(),
+              estado: 'fallado',
+            };
+            this.pendientes.update((lista) => [...lista, fallada]);
+            despues();
+          },
+        );
+      },
+      fallar,
+    );
   }
 
   /* --- Sondeo ------------------------------------------------------------- */
@@ -1366,27 +2810,47 @@ export class ChatStore {
     }
     this.temporizadorHilo = setTimeout(() => {
       this.temporizadorHilo = null;
-      const propio = this.perfil();
-      const conversationId = this.activaId();
-      if (!this.encendido || propio === null || conversationId === null) {
+      if (!this.encendido || this.perfil() === null || this.activaId() === null) {
         return;
       }
-      this.community
-        .listMessages(conversationId, {
-          profileId: propio,
-          limit: PAGINA_DE_MENSAJES,
-        })
-        .subscribe({
-          next: (pagina) => {
-            if (this.activaId() === conversationId) {
-              this.absorber(pagina.items);
-              this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
-            }
-          },
-          error: () => undefined,
-        });
+      this.refrescarHilo();
       this.agendarHilo();
     }, SONDEO_HILO_MS);
+  }
+
+  /**
+   * Relee la primera página del hilo abierto y aplica lo que cambió: mensajes
+   * nuevos, reacciones, recibos y hasta dónde leyó el otro lado.
+   */
+  private refrescarHilo(): void {
+    const propio = this.perfil();
+    const conversationId = this.activaId();
+    if (propio === null || conversationId === null) {
+      return;
+    }
+    this.community
+      .listMessages(conversationId, {
+        profileId: propio,
+        limit: PAGINA_DE_MENSAJES,
+      })
+      .subscribe({
+        next: (pagina) => {
+          if (this.activaId() === conversationId) {
+            this.absorber(pagina.items, true);
+            this.peerReadUpTo.set(pagina.peerReadUpTo ?? null);
+          }
+        },
+        error: () => undefined,
+      });
+  }
+
+  /**
+   * El único punto por donde un fallo de la API llega a `error`: el motivo de
+   * la API si lo explica, si no el texto de quien llama, y el código de
+   * soporte siempre que lo haya.
+   */
+  private fallar(error: unknown, queNoSePudo: string): void {
+    this.error.set(describeApiFailure(error, queNoSePudo));
   }
 
   private pararTemporizadores(): void {
@@ -1514,4 +2978,74 @@ function slugDe(nombre: string): string {
     .slice(0, 40);
   const cola = Math.random().toString(36).slice(2, 8);
   return `${base === '' ? 'perfil' : base}-${cola}`;
+}
+
+/**
+ * La tarjeta de contexto más reciente de una página de mensajes, o `null`.
+ *
+ * Por `sentAt` y no por la posición: el orden de la página es del servidor, y
+ * esta decisión —mandar o no la tarjeta— no puede depender de él.
+ */
+function ultimaTarjeta(mensajes: readonly DirectMessage[]): ContextoDeChat | null {
+  let ultima: { readonly cuando: number; readonly contexto: ContextoDeChat } | null = null;
+  for (const mensaje of mensajes) {
+    const contexto = contextoDelTexto(mensaje.bodyText);
+    if (contexto === null) {
+      continue;
+    }
+    const cuando = mensaje.sentAt?.getTime() ?? 0;
+    if (ultima === null || cuando > ultima.cuando) {
+      ultima = { cuando, contexto };
+    }
+  }
+  return ultima?.contexto ?? null;
+}
+
+/**
+ * `true` si dos tarjetas hablan de lo mismo: tipo, título y ruta.
+ *
+ * La ruta sola no alcanza: un producto apunta a la ficha de su farmacia, así
+ * que «Producto: Enalapril» y «Farmacia: Farmacia Vida» comparten ruta y son
+ * dos consultas distintas. El detalle no cuenta: que cambie el precio no hace
+ * de la misma consulta otra.
+ */
+function mismaTarjeta(a: ContextoDeChat | null, b: ContextoDeChat): boolean {
+  // Los dos lados normalizados igual: la del hilo ya pasó por `linea()` al
+  // escribirse, y comparar contra el título crudo («Farmacia  Vida», uno de
+  // 200 caracteres) la mandaba otra vez cada vez.
+  const x = a === null ? null : normalizarContexto(a);
+  const y = normalizarContexto(b);
+  return x !== null && y !== null && x.tipo === y.tipo && x.titulo === y.titulo && x.ruta === y.ruta;
+}
+
+/** Lo que dice la lista de bloqueados mientras no se sabe el nombre. */
+export const SIN_NOMBRE = 'Perfil bloqueado';
+
+/** Alguien que la persona bloqueó, con lo que la pantalla necesita. */
+export interface PerfilBloqueado {
+  readonly profileId: string;
+  readonly displayName: string;
+  readonly desde: Date;
+}
+
+/**
+ * Las reacciones de un mensaje después de que `propio` elija `emoji`.
+ *
+ * `null` quita la suya. Una persona aparece en un solo emoji, y un emoji sin
+ * nadie desaparece del listado.
+ */
+export function reaccionesConMia(
+  actuales: readonly MessageReaction[] | undefined,
+  propio: string,
+  emoji: string | null,
+): readonly MessageReaction[] {
+  const sinMia = (actuales ?? [])
+    .map((r) => ({ emoji: r.emoji, profileIds: r.profileIds.filter((p) => p !== propio) }))
+    .filter((r) => r.profileIds.length > 0);
+  if (emoji === null) {
+    return sinMia;
+  }
+  return sinMia.some((r) => r.emoji === emoji)
+    ? sinMia.map((r) => (r.emoji === emoji ? { ...r, profileIds: [...r.profileIds, propio] } : r))
+    : [...sinMia, { emoji, profileIds: [propio] }];
 }

@@ -7,8 +7,8 @@ import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { dialable, whatsappUrl } from '../../../../shared/utils/telephone/telephone';
 
 /**
- * Barra de canales de contacto directo de la aseguradora (subtarea 2.3):
- * WhatsApp, call center y correo de siniestros.
+ * Barra de canales de contacto directo de la aseguradora (subtarea 2.3,
+ * endurecida en la Tarea 2): WhatsApp, call center y correo de siniestros.
  *
  * ## El contacto es un enlace, no una acción
  *
@@ -18,6 +18,13 @@ import { dialable, whatsappUrl } from '../../../../shared/utils/telephone/teleph
  * `target="_blank"` puesto a mano —el átomo no lo gestiona solo— y el call
  * center/correo usan `a[app-link]` con `tel:`/`mailto:`, que un navegador
  * abre en la propia app de teléfono o correo, no en una pestaña.
+ *
+ * ## Espacio también activa el enlace (CA-2.1)
+ *
+ * Un `<a href>` nativo se activa con Enter, no con Espacio. El botón de
+ * WhatsApp escucha `(keydown.space)` y dispara el `click()` del propio
+ * elemento tras `preventDefault()` —si no, Espacio hace scroll de página en
+ * vez de abrir el chat.
  *
  * ## Guards por falsy, no por `=== null`
  *
@@ -59,10 +66,18 @@ export class InsuranceContactChannels {
     return whatsappUrl(h.carrierWhatsappNumber, mensaje);
   });
 
-  /** El teléfono del call center, ya limpio para `tel:`. */
+  /**
+   * El teléfono del call center, ya limpio para `tel:`.
+   *
+   * Comprueba el resultado de `dialable`, no el valor crudo (CA-2.3): un
+   * dato guardado sin ningún dígito ("N/A") dejaría `tel:` vacío, un enlace
+   * roto, si sólo se mirara que `phone` sea verdadero.
+   */
   protected readonly callCenterHref = computed(() => {
     const phone = this.header().carrierCallCenterPhone;
-    return phone ? `tel:${dialable(phone)}` : null;
+    if (!phone) return null;
+    const digits = dialable(phone);
+    return digits ? `tel:${digits}` : null;
   });
 
   /** El teléfono del call center, tal cual se muestra (sin limpiar). */
@@ -78,4 +93,14 @@ export class InsuranceContactChannels {
 
   /** El nombre de la aseguradora, para los `aria-label`/tooltips de cada botón. */
   protected readonly carrierName = computed(() => this.header().carrierName);
+
+  /**
+   * Activa el enlace de WhatsApp con la tecla Espacio (CA-2.1): un `<a>`
+   * nativo sólo responde a Enter, y Espacio sobre un elemento enfocable de
+   * por sí hace scroll de la página si no se lo frena acá.
+   */
+  protected onWhatsappKeydownSpace(event: Event): void {
+    event.preventDefault();
+    (event.currentTarget as HTMLAnchorElement).click();
+  }
 }

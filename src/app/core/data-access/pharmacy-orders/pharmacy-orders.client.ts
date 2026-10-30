@@ -4,6 +4,7 @@ import { catchError, defer, map, switchMap, tap, throwError, type Observable } f
 
 import { readApiError } from '../../http/api-error';
 import { API_BASE_URL, apiUrl } from '../api';
+import { CartStore } from '../pharmacy-cart/cart.store';
 import {
   confirmOrderRequest,
   createOrderRequest,
@@ -12,6 +13,7 @@ import {
 } from './pharmacy-orders.adapter';
 import type {
   CreatePharmacyOrderDto,
+  PharmacyOrderConversationDto,
   PharmacyOrderDto,
   PharmacyOrderListResponseDto,
 } from './pharmacy-orders.dto';
@@ -38,6 +40,7 @@ export interface PharmacyOrderTenantQuery {
 export class PharmacyOrdersClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
+  private readonly cart = inject(CartStore);
   private readonly draft = signal<BorradorDePedido | null>(null);
   private readonly createKeys = new WeakMap<BorradorDePedido, string>();
   private readonly dispenseKeys = new Map<string, string>();
@@ -59,7 +62,12 @@ export class PharmacyOrdersClient {
       const body = createOrderRequest(order, key);
       return this.http.post<PharmacyOrderDto>(this.url('/pharmacy/orders'), body).pipe(
         map((dto) => pharmacyOrderFromDto(dto)),
-        tap(() => this.draft.set(null)),
+        // H5.S2: un pedido enviado deja el carrito vacío — no tiene sentido
+        // volver a comprar lo que ya se pidió.
+        tap(() => {
+          this.draft.set(null);
+          this.cart.clear();
+        }),
       );
     });
   }
@@ -82,6 +90,17 @@ export class PharmacyOrdersClient {
     return this.http
       .get<PharmacyOrderDto>(this.orderUrl(id))
       .pipe(map((dto) => pharmacyOrderFromDto(dto, 'staff')));
+  }
+
+  /**
+   * `POST /pharmacy/orders/:id/conversation` — abre (o devuelve, es
+   * idempotente) el chat del pedido entre el paciente y su farmacia.
+   *
+   * Quién puede abrirlo —el paciente dueño o el personal de la farmacia del
+   * pedido— lo decide la API: el cliente no infiere participantes.
+   */
+  abrirConversacion(id: string): Observable<PharmacyOrderConversationDto> {
+    return this.http.post<PharmacyOrderConversationDto>(`${this.orderUrl(id)}/conversation`, {});
   }
 
   aceptarSustituciones(id: string): Observable<PedidoFarmacia> {

@@ -8,8 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, type Observable } from 'rxjs';
+
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
@@ -25,6 +29,7 @@ import type {
   PedidoFarmacia,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -43,19 +48,47 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { toBandejaStatusPresentation } from '../bandeja-status';
-import { entregaEnPantalla } from '../entrega-status';
+import { toInboxStatusPresentation } from '../inbox-status';
+import { deliveryInScreen } from '../delivery-status';
 import {
   NOTA_DE_DATOS_DE_EJEMPLO,
   coberturaDeEjemplo,
   facturaDeEjemplo,
   type RenglonCubierto,
 } from '../pharmacy-inbox.fixtures';
-import { ResumenDeFactura } from './resumen-de-factura/resumen-de-factura';
+import { InvoiceSummary } from './invoice-summary/invoice-summary';
 import { displayCurrency } from '../../../../core/money/display-currency';
+import { lineAmount } from './line-amount';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
+
+/**
+ * Lo que se le dice al mostrador cuando la API no abre el chat del pedido.
+ *
+ * Los dos 422 tienen su frase porque piden cosas distintas: uno se arregla
+ * del lado de la farmacia (publicar la vitrina), el otro no tiene arreglo
+ * desde acá (el paciente tiene que crear su perfil). Un 403 es que esta cuenta
+ * no puede escribir como la farmacia —la API lo decide por la membresía—.
+ */
+export function motivoDeChatNoAbierto(error: unknown): string {
+  if (error instanceof ChatOcupadoError) {
+    return CHAT_YA_ABRIENDO;
+  }
+  if (error instanceof HttpErrorResponse) {
+    const reason = (error.error as { reason?: unknown } | null)?.reason;
+    if (reason === 'PATIENT_CHAT_PROFILE_MISSING') {
+      return 'El paciente todavía no tiene perfil de mensajería: no podemos abrirle el chat. Use el teléfono o el código de retiro.';
+    }
+    if (reason === 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE') {
+      return 'La farmacia no tiene vitrina pública activa: publíquela para poder chatear con los pacientes.';
+    }
+    if (error.status === 403) {
+      return 'Su cuenta no puede escribir como la farmacia. Pida a quien administra la farmacia que revise su rol.';
+    }
+  }
+  return 'No pudimos abrir el chat con el paciente. Intente de nuevo en un momento.';
+}
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
 interface AjusteEnEdicion {
@@ -115,7 +148,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
     PageHeader,
     Radio,
     RadioGroup,
-    ResumenDeFactura,
+    InvoiceSummary,
     RouterLink,
     Select,
     ViewStateHost,
@@ -130,15 +163,42 @@ export class InboxOrder {
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
    */
-  protected moneda(code?: string | null): string {
-    return displayCurrency(code);
-  }
+  protected readonly moneda = displayCurrency;
+  protected readonly importeDeLinea = lineAmount;
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly pharmacyClient = inject(PharmacyClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
+  private readonly chat = inject(ChatStore);
+  private readonly router = inject(Router);
+
+  /** Se tocó «Chatear» y el store todavía no avisó cómo terminó. */
+  private readonly pidioChat = signal(false);
+
+  /**
+   * Mientras la API abre (o reutiliza) el hilo del pedido.
+   *
+   * Es lo pedido **y** lo que el store dice que sigue abriendo: si el store
+   * corta la apertura sin avisar —cambió la identidad o salió la cuenta—, o
+   * la respuesta termina sin traer el hilo, el botón deja de girar solo. El
+   * otro final, «ya estaba abriendo otro», el store lo avisa por `alFallar`
+   * con `ChatOcupadoError`.
+   */
+  protected readonly abriendoChat = computed(() => this.pidioChat() && this.chat.abriendo());
+
+  /** `true` cuando la pantalla ya se destruyó: ver `chatearConElPaciente`. */
+  private destruida = false;
+  /** Por qué no se abrió el chat, en palabras del mostrador. */
+  protected readonly errorDeChat = signal<string | null>(null);
+
+  /**
+   * Si la pantalla puede completar con ejemplos lo que el contrato no trae
+   * (cobertura, factura, dirección). Sólo sobre la maqueta: contra la API
+   * real esas secciones no se dibujan. Ver `core/mock/sample-data.ts`.
+   */
+  private readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly bandejaRoute = BANDEJA_ROUTE;
@@ -168,7 +228,7 @@ export class InboxOrder {
    */
   protected readonly entrega = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : entregaEnPantalla(abierto);
+    return abierto === null ? null : deliveryInScreen(abierto);
   });
 
   /**
@@ -185,18 +245,21 @@ export class InboxOrder {
     const abierto = this.pedido();
     return abierto === null
       ? null
-      : toBandejaStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
+      : toInboxStatusPresentation(abierto.estado, this.entrega()?.modalidad ?? null);
   });
 
   /**
    * Lo que respondió el seguro, renglón por renglón — o `null` cuando la
    * persona no tiene cobertura, que es lo normal. Sale de los datos de
    * ejemplo de la pantalla y se rotula como tal: el contrato de la API no
-   * publica cobertura todavía.
+   * publica cobertura para el mostrador todavía. Contra la API real es
+   * siempre `null` y la sección no se dibuja.
    */
   protected readonly cobertura = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : coberturaDeEjemplo(abierto, this.renglonesEnPie());
+    return abierto === null || !this.sampleData
+      ? null
+      : coberturaDeEjemplo(abierto, this.renglonesEnPie());
   });
 
   /**
@@ -214,10 +277,14 @@ export class InboxOrder {
     ),
   );
 
-  /** La factura del pedido entregado, con la misma advertencia. */
+  /**
+   * La factura del pedido entregado, con la misma advertencia. Ningún módulo
+   * de la API factura pedidos de farmacia todavía: contra la API real no hay
+   * resumen que mostrar.
+   */
   protected readonly factura = computed(() => {
     const abierto = this.pedido();
-    return abierto === null ? null : facturaDeEjemplo(abierto);
+    return abierto === null || !this.sampleData ? null : facturaDeEjemplo(abierto);
   });
 
   /** La revisión está abierta: los ajustes por renglón se pueden editar. */
@@ -274,7 +341,7 @@ export class InboxOrder {
    * diferencia con `puedeMarcarListo` no es un descuido: acá el formulario
    * existía sin mirar la modalidad, así que un pedido cuya modalidad la API
    * no declara **lo tenía**, y quitárselo sería cambiar comportamiento. La
-   * regla es la de `bandeja-status.ts`: el nulo significa «no sabemos», y no
+   * regla es la de `inbox-status.ts`: el nulo significa «no sabemos», y no
    * saber no puede quitarle una capacidad al mostrador. Unificar las dos
    * condiciones vuelve a romper esto.
    */
@@ -341,6 +408,9 @@ export class InboxOrder {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.destruida = true;
+    });
     inject(ActivatedRoute)
       .paramMap.pipe(takeUntilDestroyed())
       .subscribe((params) => this.cargar(params.get('orderId') ?? ''));
@@ -361,6 +431,49 @@ export class InboxOrder {
       },
       error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
     });
+  }
+
+  /**
+   * «Chatear con el paciente»: la API abre —o reutiliza— el hilo del pedido
+   * entre el paciente y la vitrina de esta farmacia, y se entra a escribir
+   * **como la farmacia**, con la tarjeta del pedido puesta una sola vez.
+   *
+   * Quién puede lo decide el `POST`: personal con membresía activa. Mostrar el
+   * botón no autoriza nada.
+   */
+  protected chatearConElPaciente(): void {
+    const abierto = this.pedido();
+    if (abierto === null || this.abriendoChat()) {
+      return;
+    }
+    this.pidioChat.set(true);
+    this.errorDeChat.set(null);
+    const resolver = this.ordersClient
+      .abrirConversacion(abierto.id)
+      .pipe(
+        map((respuesta) => ({
+          conversationId: respuesta.conversationId,
+          profileId: respuesta.pharmacyProfileId,
+        })),
+      );
+    this.chat.abrirComoOrganizacion(
+      resolver,
+      abierto.farmacia,
+      (conversationId) => {
+        this.pidioChat.set(false);
+        // Abrir tarda tres peticiones: si mientras tanto el mostrador se fue
+        // a otra pantalla, el chat que termina de abrirse no lo arrastra.
+        if (this.destruida) {
+          return;
+        }
+        void this.router.navigate(['/messaging', conversationId]);
+      },
+      contextoDePedido(abierto),
+      (error) => {
+        this.pidioChat.set(false);
+        this.errorDeChat.set(motivoDeChatNoAbierto(error));
+      },
+    );
   }
 
   protected cambiarDecision(indice: number, decision: unknown): void {
@@ -417,7 +530,7 @@ export class InboxOrder {
       {
         title: 'Rechazar el pedido',
         message:
-          'El paciente va a ver el motivo tal como lo escribas: contale por qué y qué puede hacer.',
+          'El paciente va a ver el motivo tal como lo escriba: cuéntele por qué y qué puede hacer.',
         confirmLabel: 'Rechazar el pedido',
         destructive: true,
       },
@@ -488,7 +601,7 @@ export class InboxOrder {
    */
   protected avisarDescargaDeFactura(): void {
     this.toasts.info(
-      'La descarga del comprobante llega con el módulo de facturación. Lo que ves acá es un ejemplo.',
+      'La descarga del comprobante llega con el módulo de facturación. Lo que ve acá es un ejemplo.',
       'Factura de ejemplo',
     );
   }

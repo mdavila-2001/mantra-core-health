@@ -44,6 +44,7 @@ import { FilesClient } from '@core/data-access/files/files.client';
 import { formatearTamano } from '@core/data-access/files/upload-policy';
 import type { StoredFileContent } from '@core/data-access/files/files.types';
 import { FilePreview } from '../file-preview/file-preview';
+import { LoadingState } from '../loading-state/loading-state';
 
 /** En qué punto está la lectura del archivo. */
 type Estado = 'carga' | 'listo' | 'error';
@@ -69,7 +70,7 @@ const NOMBRE_DEL_TIPO: Readonly<Record<string, string>> = {
 
 @Component({
   selector: 'app-stored-file-preview',
-  imports: [FilePreview],
+  imports: [FilePreview, LoadingState],
   templateUrl: './stored-file-preview.html',
   styleUrl: './stored-file-preview.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

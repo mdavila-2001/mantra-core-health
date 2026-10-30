@@ -1,0 +1,18 @@
+@if (visibles().length > 0) {
+  <div class="notificacion-acciones" role="group" aria-label="Acciones de la notificación">
+    @for (accion of visibles(); track accion.key) {
+      <button
+        app-button
+        type="button"
+        size="sm"
+        [variant]="variante(accion)"
+        [isLoading]="enCurso() === accion.key"
+        [disabled]="enCurso() !== null"
+        [attr.data-testid]="'notificacion-accion-' + accion.key.toLowerCase()"
+        (clicked)="ejecutar(accion, $event)"
+      >
+        {{ accion.label }}
+      </button>
+    }
+  </div>
+}

@@ -1,0 +1,220 @@
+<h2 id="vista-previa-titulo" class="solo-lectores">
+  {{ drafts().length === 1 ? 'Vista previa del archivo para enviar' : 'Vista previa de ' + drafts().length + ' archivos para enviar' }}
+</h2>
+
+@if (editing() !== null && selected(); as draft) {
+  <!-- Mientras se edita, el editor ocupa la vista entera: su barra, la imagen
+       y las opciones de la herramienta en el lugar del pie de foto. -->
+  <app-image-editor
+    class="vista__editor"
+    [file]="draft.file"
+    [initialTool]="editing()!"
+    (applied)="applyEdit($event)"
+    (cancelled)="cancelEdit()"
+  />
+} @else {
+  <header class="vista__barra">
+    <button
+      app-button
+      variant="ghost"
+      iconOnly
+      type="button"
+      class="vista__icono"
+      data-testid="vista-descartar"
+      aria-label="Descartar"
+      appTooltip="Descartar"
+      appTooltipPosition="bottom"
+      (clicked)="discard.emit()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+
+    @if (canEdit()) {
+      <div class="vista__herramientas" role="toolbar" aria-label="Editar la imagen">
+        <button
+          app-button
+          variant="ghost"
+          iconOnly
+          type="button"
+          class="vista__icono"
+          data-testid="vista-recortar"
+          aria-label="Recortar y girar"
+          appTooltip="Recortar y girar"
+          appTooltipPosition="bottom"
+          (clicked)="edit('crop')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 2v14a2 2 0 0 0 2 2h14" /><path d="M18 22V8a2 2 0 0 0-2-2H2" /></svg>
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          iconOnly
+          type="button"
+          class="vista__icono"
+          data-testid="vista-dibujar"
+          aria-label="Dibujar"
+          appTooltip="Dibujar"
+          appTooltipPosition="bottom"
+          (clicked)="edit('draw')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          iconOnly
+          type="button"
+          class="vista__icono"
+          data-testid="vista-texto"
+          aria-label="Agregar texto"
+          appTooltip="Agregar texto"
+          appTooltipPosition="bottom"
+          (clicked)="edit('text')"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V4h16v3M9 20h6M12 4v16" /></svg>
+        </button>
+        <span class="vista__separador" aria-hidden="true"></span>
+        <button
+          app-button
+          variant="ghost"
+          iconOnly
+          type="button"
+          class="vista__icono"
+          data-testid="vista-deshacer"
+          aria-label="Deshacer la última edición"
+          appTooltip="Deshacer la última edición"
+          appTooltipPosition="bottom"
+          [disabled]="!canUndoEdit()"
+          (clicked)="undoEdit()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+        </button>
+      </div>
+    }
+    <!-- Equilibra la ✕ para que las herramientas queden al centro de verdad. -->
+    <span class="vista__contrapeso" aria-hidden="true"></span>
+  </header>
+
+  <div class="vista__escenario" data-testid="vista-escenario">
+    @if (selected(); as draft) {
+      @switch (kind(draft.file)) {
+        @case ('image') {
+          <img class="vista__imagen" data-testid="vista-imagen" [src]="urlFor(draft.file)" [alt]="'Vista previa de ' + draft.file.name" />
+        }
+        @case ('video') {
+          <video class="vista__video" data-testid="vista-video" controls playsinline preload="metadata" [src]="urlFor(draft.file)" [attr.aria-label]="'Vista previa de ' + draft.file.name">
+            <track kind="captions" />
+          </video>
+        }
+        @default {
+          <div class="vista__documento" data-testid="vista-documento">
+            <span class="vista__documento-icono" [attr.data-tono]="documentTone(draft.file)" aria-hidden="true">
+              <svg viewBox="0 0 48 60" focusable="false"><path d="M4 4a4 4 0 0 1 4-4h24l12 12v44a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" /><path class="vista__documento-pliegue" d="M32 0v8a4 4 0 0 0 4 4h8" /></svg>
+              <span class="vista__documento-sigla">{{ documentBadge(draft.file) }}</span>
+            </span>
+            <p class="vista__documento-nombre" data-testid="vista-documento-nombre">{{ draft.file.name }}</p>
+            <p class="vista__documento-detalle" data-testid="vista-documento-detalle">{{ documentDetail(draft) }}</p>
+            <p class="vista__documento-nota">Sin vista previa disponible</p>
+          </div>
+        }
+      }
+    }
+  </div>
+
+  <footer class="vista__pie">
+    @if (error(); as mensaje) {
+      <p class="vista__error" role="alert">{{ mensaje }}</p>
+    }
+    <!-- Siempre en el documento: una región viva que aparece con su texto no se anuncia. -->
+    <p class="vista__preparando" role="status" data-testid="vista-preparando">@if (preparing() > 0) {Preparando los archivos…}</p>
+
+    <label class="vista__comentario">
+      <span class="solo-lectores">Comentario para {{ selectedName() }}</span>
+      <textarea
+        #caption
+        rows="1"
+        data-testid="vista-comentario"
+        placeholder="Añada un comentario…"
+        maxlength="1000"
+        [value]="selectedCaption()"
+        (input)="updateCaption($any($event.target).value)"
+        (keydown)="captionKey($event)"
+        (paste)="paste($event)"
+      ></textarea>
+    </label>
+
+    <div class="vista__fila">
+      <span class="vista__fila-hueco" aria-hidden="true"></span>
+
+      <ul class="vista__tira" aria-label="Archivos para enviar">
+        @for (draft of drafts(); track draft.id; let index = $index) {
+          <li class="vista__miniatura" [class.is-elegida]="index === selectedIndex()">
+            <button
+              type="button"
+              class="vista__miniatura-boton"
+              data-testid="vista-miniatura"
+              [attr.aria-current]="index === selectedIndex() ? 'true' : null"
+              [attr.aria-label]="thumbnailLabel(draft, index)"
+              (click)="select(draft)"
+            >
+              @switch (kind(draft.file)) {
+                @case ('image') {
+                  <img [src]="urlFor(draft.file)" alt="" />
+                  <!-- El peso de lo que va a subir, ya achicado. -->
+                  <span class="vista__miniatura-peso" data-testid="vista-miniatura-peso" aria-hidden="true">{{ size(draft.file) }}</span>
+                }
+                @case ('video') {
+                  <video [src]="urlFor(draft.file)" muted preload="metadata" aria-hidden="true"></video>
+                  <svg class="vista__miniatura-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M8 5v14l11-7z" /></svg>
+                }
+                @default {
+                  <span class="vista__miniatura-doc" [attr.data-tono]="documentTone(draft.file)">{{ documentBadge(draft.file) }}</span>
+                }
+              }
+            </button>
+            <button
+              type="button"
+              class="vista__quitar"
+              data-testid="vista-quitar"
+              [attr.aria-label]="'Quitar ' + draft.file.name + ' del envío'"
+              (click)="remove(draft)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M17 7 7 17M7 7l10 10" /></svg>
+            </button>
+          </li>
+        }
+        @if (drafts().length < maxDrafts) {
+          <li class="vista__miniatura vista__miniatura--sumar">
+            <button
+              type="button"
+              class="vista__sumar"
+              data-testid="vista-sumar"
+              aria-label="Agregar más archivos"
+              appTooltip="Agregar más archivos"
+              (click)="openPicker()"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+          </li>
+        }
+      </ul>
+
+      <button
+        type="button"
+        class="vista__enviar"
+        data-testid="vista-enviar"
+        [attr.aria-label]="sendLabel()"
+        [attr.aria-disabled]="preparing() > 0 ? 'true' : null"
+        [appTooltip]="sendLabel()"
+        (click)="submit()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
+        @if (drafts().length > 1) {
+          <span class="vista__cuenta" data-testid="vista-cuenta" aria-hidden="true">{{ drafts().length }}</span>
+        }
+      </button>
+    </div>
+  </footer>
+}
+
+<input #picker class="solo-lectores" type="file" multiple tabindex="-1" aria-hidden="true" (change)="picked($event)" />

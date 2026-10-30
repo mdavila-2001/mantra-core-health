@@ -168,7 +168,7 @@ test.describe('Carril J5 · la vertical P0 de punta a punta', () => {
    * Peldaños 2 y 3 — que un doctor recién registrado sea encontrable, y que se
    * le pueda pedir turno. Es el «médico invisible» mirado desde el paciente.
    */
-  test('el paciente encuentra a la doctora nueva y le pide turno', async ({ page }) => {
+  test('el paciente encuentra a la doctora nueva y le pide cita', async ({ page }) => {
     await entrar(page, paciente);
 
     await test.step('la doctora recién publicada aparece en el buscador', async () => {
@@ -229,7 +229,7 @@ test.describe('Carril J5 · la vertical P0 de punta a punta', () => {
       await estable(page);
 
       const texto = await textoDe(page);
-      expect(texto).toContain('Tus turnos, tus recetas y tu historia');
+      expect(texto).toContain('Sus turnos, sus recetas y su historia');
       expect(texto.toLowerCase()).not.toContain('secciones disponibles');
       expect(texto.toLowerCase()).not.toContain('estado del sistema');
     });
@@ -240,8 +240,8 @@ test.describe('Carril J5 · la vertical P0 de punta a punta', () => {
 
       const texto = await textoDe(page);
       // El 403 se veía como este aviso: si vuelve, el peldaño se cae acá.
-      expect(texto.toLowerCase()).not.toContain('sólo podés consultar tu propia historia');
-      expect(texto.toLowerCase()).not.toContain('no tenés permiso');
+      expect(texto.toLowerCase()).not.toContain('sólo puede consultar su propia historia');
+      expect(texto.toLowerCase()).not.toContain('no tiene permiso');
     });
   });
 

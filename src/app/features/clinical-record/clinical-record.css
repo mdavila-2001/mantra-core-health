@@ -24,8 +24,9 @@
   display: grid;
   gap: var(--sp-4);
   padding: var(--sp-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
+  /* Tonal y sin borde: los campos de adentro ya llevan el suyo. */
+  border: 0;
+  border-radius: var(--r-lg);
   background: var(--bg-surface-alt);
 }
 

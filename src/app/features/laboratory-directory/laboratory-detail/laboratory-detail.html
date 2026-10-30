@@ -38,7 +38,7 @@
 
            `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
            `<h2>` adentro y no expone su id, así que no hay a quién apuntar. -->
-      <section aria-label="Estudios y servicios">
+      <section id="estudios" aria-label="Estudios y servicios">
         <!-- El buscador va en el encabezado de la sección y no encima de la
              rejilla: ahí se leería como un filtro de la ficha entera.
 
@@ -66,8 +66,9 @@
         </div>
 
         <p class="ficha-publica__nota">
-          Precios de referencia publicados por el centro. El importe final puede cambiar según lo
-          que incluya cada estudio.
+          Cada precio dice de dónde sale: el que publica el centro, el de referencia del INLASA o, donde
+          Bolivia no tiene arancel, el de FONASA (Chile) convertido a bolivianos al tipo de cambio oficial
+          del 01/10/2026. El importe final lo fija el centro y puede cambiar según lo que incluya cada estudio.
         </p>
 
         @if (unit.studies.length === 0) {

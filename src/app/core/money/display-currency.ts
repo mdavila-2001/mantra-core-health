@@ -39,7 +39,11 @@ const COMO_BOLIVIANO: readonly string[] = ['BOB', 'Bs', 'UMA', 'Boliviano', 'Bol
  */
 export function displayCurrency(code?: string | null): string {
   if (code === null || code === undefined || code.trim() === '') return DISPLAY_CURRENCY;
-  return COMO_BOLIVIANO.includes(code) ? DISPLAY_CURRENCY : code;
+  // La API real sirve el código del concepto con su catálogo delante
+  // (`pharmacy:CURRENCY_USD`, `diagnostic_units:CURRENCY_BOB`): a la persona se
+  // le muestra la sigla, no el nombre técnico del concepto.
+  const sigla = code.replace(/^.*:CURRENCY_/, '');
+  return COMO_BOLIVIANO.includes(sigla) ? DISPLAY_CURRENCY : sigla;
 }
 
 /**

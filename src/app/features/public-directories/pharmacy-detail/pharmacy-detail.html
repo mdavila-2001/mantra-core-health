@@ -1,4 +1,20 @@
-<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()">
+  <!-- Arriba, junto al nombre: es la primera pregunta de quien no encuentra
+       lo que busca en la lista. Sólo con la ficha leída — sin ella no hay con
+       quién hablar, y un botón que no lleva a nada es peor que ninguno. -->
+  @if (ficha()) {
+    <button
+      page-actions
+      app-button
+      variant="primary"
+      data-testid="chatear-con-la-farmacia"
+      (clicked)="chatearConLaFarmacia()"
+    >
+      <app-nav-icon name="chat" />
+      Chatear con la farmacia
+    </button>
+  }
+</app-page-header>
 
 <div class="ficha-publica">
   <app-view-state-host [state]="estadoDeLaFicha()" (retry)="cargar()">
@@ -11,19 +27,6 @@
           <p class="ficha-publica__bio">{{ perfil.biography }}</p>
         }
 
-        <!-- El mapa va DENTRO de la card del resumen y no en una segunda:
-             es el mismo dato que la fila «Dirección», dibujado en vez de
-             escrito, y dos cards apiladas para decir lo mismo dos veces son
-             justo lo que prohíbe la regla §5 de `composition-rules.md`.
-
-             Sin coordenadas no se dibuja nada: un mapa centrado en la ciudad
-             no ubica una farmacia, y un hueco gris se lee como algo que no
-             cargó. La dirección de arriba sigue siendo la respuesta. -->
-        @if (pines().length > 0) {
-          <div class="ficha-publica__mapa">
-            <app-map [pines]="pines()" [etiqueta]="etiquetaDelMapa()" />
-          </div>
-        }
       </app-card>
     }
   </app-view-state-host>
@@ -36,7 +39,7 @@
        la receta dice cuál las tiene. Va antes del catálogo porque quien llega
        con una receta primero elige mostrador.
        ========================================================================== -->
-  <section aria-label="Sucursales y tu receta">
+  <section aria-label="Sucursales y su receta">
     <div class="ficha-publica__encabezado">
       <app-section-heading
         class="ficha-publica__titulo"
@@ -52,18 +55,18 @@
           Usar mi ubicación para ver la más cercana
         </button>
       } @else if (pidiendoUbicacion()) {
-        <p class="ficha-publica__cuenta" role="status">Esperando tu ubicación…</p>
+        <p class="ficha-publica__cuenta" role="status">Esperando su ubicación…</p>
       } @else {
         <p class="ficha-publica__cuenta" role="status">
-          Distancias desde donde estás, en línea recta.
+          Distancias desde donde está, en línea recta.
         </p>
       }
     </div>
 
     @if (ubicacionRechazada()) {
       <p class="ficha-publica__nota" role="status">
-        No pudimos leer tu ubicación. Las sucursales se listan igual, con su
-        dirección; podés habilitarla desde la configuración del navegador.
+        No pudimos leer su ubicación. Las sucursales se listan igual, con su
+        dirección; puede habilitarla desde la configuración del navegador.
       </p>
     }
 
@@ -75,24 +78,44 @@
       </div>
 
       <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-branches">
-        @for (sucursal of sucursalesOrdenadas(); track sucursal.slug) {
+        @for (sucursal of sucursalesOrdenadas(); track sucursal.id) {
           <li>
-            <!-- La que se está mirando NO es un enlace: llevaría a la misma
-                 página. Las otras sí, y la tarjeta entera es el control. -->
-            @if (sucursal.isCurrent) {
+            <!-- Una sucursal cuya ficha es ésta NO es un enlace: llevaría a la
+                 misma página (contra la API real, todas las de una cadena
+                 comparten ficha). Las de otra ficha sí, y la tarjeta entera es
+                 el control. -->
+            @if (!llevaAOtraFicha(sucursal)) {
               <article class="rejilla__tarjeta" data-testid="pharmacy-branch">
                 <app-nav-icon class="rejilla__icono" name="pill" />
 
                 <div class="ficha-publica__titular">
                   <h3 class="rejilla__nombre">{{ sucursal.siteName }}</h3>
-                  <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Estás viendo ésta">
-                    Estás viendo ésta
-                  </app-chip>
+                  @if (sucursal.isCurrent) {
+                    <app-chip class="ficha-publica__grupo-chip" size="sm" variant="info" label="Está viendo ésta">
+                      Está viendo ésta
+                    </app-chip>
+                  }
                 </div>
 
                 <p class="rejilla__dato">{{ dondeQueda(sucursal) }}</p>
                 @if (sucursal.openingHours) {
                   <p class="rejilla__resumen">{{ sucursal.openingHours }}</p>
+                }
+                @if (sucursal.description) {
+                  <p class="rejilla__resumen" data-testid="pharmacy-branch-description">{{ sucursal.description }}</p>
+                }
+                <!-- El enlace sólo existe en la tarjeta que no es enlace: un
+                     <a> dentro de otro no es HTML válido. La API ya exige
+                     http(s); se abre aparte porque es otro sitio. -->
+                @if (sucursal.locationUrl) {
+                  <a
+                    class="enlace-chip enlace-chip--largo"
+                    [href]="sucursal.locationUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-testid="pharmacy-branch-map-link"
+                    [attr.aria-label]="'Cómo llegar a ' + sucursal.siteName + ' (abre el mapa en otra pestaña)'"
+                  >Cómo llegar</a>
                 }
                 @if (sucursal.phone) {
                   <p class="rejilla__resumen">{{ sucursal.phone }}</p>
@@ -103,7 +126,7 @@
                 @if (distanciaDe(sucursal); as lejos) {
                   <p class="ficha-publica__sellos ficha-publica__sellos--pie">
                     <app-badge variant="info" [value]="'A ' + lejos + ' en línea recta'" />
-                    @if (sucursal.slug === slugMasCercano()) {
+                    @if (sucursal.id === closestBranchId()) {
                       <app-badge variant="success" value="La más cercana" />
                     }
                   </p>
@@ -121,6 +144,9 @@
                 @if (sucursal.openingHours) {
                   <p class="rejilla__resumen">{{ sucursal.openingHours }}</p>
                 }
+                @if (sucursal.description) {
+                  <p class="rejilla__resumen">{{ sucursal.description }}</p>
+                }
                 @if (sucursal.phone) {
                   <p class="rejilla__resumen">{{ sucursal.phone }}</p>
                 }
@@ -130,7 +156,7 @@
                 @if (distanciaDe(sucursal); as lejos) {
                   <p class="ficha-publica__sellos ficha-publica__sellos--pie">
                     <app-badge variant="info" [value]="'A ' + lejos + ' en línea recta'" />
-                    @if (sucursal.slug === slugMasCercano()) {
+                    @if (sucursal.id === closestBranchId()) {
                       <app-badge variant="success" value="La más cercana" />
                     }
                   </p>
@@ -144,17 +170,17 @@
 
     <!-- ---- la receta ---------------------------------------------------- -->
 
-    <h3 class="ficha-publica__subtitulo">¿Cuál tiene lo de tu receta?</h3>
+    <h3 class="ficha-publica__subtitulo">¿Cuál tiene lo de su receta?</h3>
     <p class="ficha-publica__nota">
-      Escribí los medicamentos de tu receta, uno por línea. Buscamos en el
-      catálogo publicado de cada sucursal y te decimos cuál los tiene; con tu
-      ubicación, además, cuál te queda más cerca.
+      Escriba los medicamentos de su receta, uno por línea. Buscamos en el
+      catálogo publicado de cada sucursal y le decimos cuál los tiene; con su
+      ubicación, además, cuál le queda más cerca.
     </p>
 
     <div class="ficha-publica__receta">
       <app-form-field
         class="ficha-publica__receta-campo"
-        label="Medicamentos de tu receta"
+        label="Medicamentos de su receta"
         hint="Uno por línea. También sirven separados por coma."
       >
         <app-textarea
@@ -182,7 +208,7 @@
 
     @if (falloLaBusqueda()) {
       <p class="ficha-publica__vacio" role="status">
-        No pudimos consultar las sucursales. Probá de nuevo en un momento.
+        No pudimos consultar las sucursales. Pruebe de nuevo en un momento.
       </p>
     }
 
@@ -191,7 +217,7 @@
         <!-- La recomendación va primero y con su motivo: una sugerencia sin
              por qué obliga a creerle o a ignorarla, y las dos son malas. -->
         <div class="ficha-publica__recomendacion" role="status" data-testid="pharmacy-recommended">
-          <p class="ficha-publica__recomendacion-rotulo">Te recomendamos</p>
+          <p class="ficha-publica__recomendacion-rotulo">Le recomendamos</p>
           <p class="ficha-publica__recomendacion-nombre">{{ elegida.branch.siteName }}</p>
           <p class="ficha-publica__recomendacion-motivo">
             {{ dondeQueda(elegida.branch) }} — {{ motivoDeLaRecomendacion() }}
@@ -208,13 +234,13 @@
         <p class="ficha-publica__cuenta" role="status">
           Las {{ resultadosVisibles().length }} mejores de {{ encontrado.length }} sucursales.
           @if (ubicacion() === null) {
-            Compartí tu ubicación para ordenarlas por cercanía.
+            Comparta su ubicación para ordenarlas por cercanía.
           }
         </p>
       }
 
       <ul class="rejilla ficha-publica__rejilla" data-testid="pharmacy-availability">
-        @for (fila of resultadosVisibles(); track fila.branch.slug) {
+        @for (fila of resultadosVisibles(); track fila.branch.id) {
           <li>
             <article class="rejilla__tarjeta" data-testid="pharmacy-availability-row">
               <div class="ficha-publica__titular">
@@ -281,7 +307,7 @@
 
   <!-- `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
        `<h2>` adentro y no expone su id, así que no hay a quién apuntar. -->
-  <section aria-label="Medicamentos y precios">
+  <section id="medicamentos" aria-label="Medicamentos y precios">
     <!-- El buscador va en el encabezado de la sección y no encima de la
          rejilla: ahí se leería como un filtro de la ficha entera. Desde siete
          medicamentos, el mismo umbral que la ficha de un laboratorio. -->
@@ -446,6 +472,22 @@
                       <app-badge variant="secondary" value="Con receta" />
                     }
                   </p>
+
+                  <!-- «¿Lo tienen en otra presentación?», «¿me lo guardan?»:
+                       lo que la tarjeta no contesta se pregunta acá, con el
+                       producto ya puesto en el chat. -->
+                  <button
+                    class="ficha-publica__chat"
+                    app-button
+                    variant="secondary"
+                    type="button"
+                    data-testid="consultar-producto-por-chat"
+                    [attr.aria-label]="'Consultar por chat sobre ' + producto.genericName"
+                    (clicked)="consultarProducto(producto)"
+                  >
+                    <app-nav-icon name="chat" />
+                    Consultar por chat
+                  </button>
                 </article>
               </li>
             }

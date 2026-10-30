@@ -1,6 +1,10 @@
-import { FilePreview } from '../../../../shared/components/molecules/file-preview/file-preview';
+import { Menu } from '../../../../shared/components/molecules/menu/menu';
+import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
+import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
 import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
@@ -8,6 +12,7 @@ import {
   effect,
   ElementRef,
   inject,
+  input,
   output,
   PLATFORM_ID,
   signal,
@@ -21,16 +26,33 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { MessageTemplates } from '../../../../core/messaging/message-templates';
-import { SelectorEmojis } from './selector-emojis';
+import { EmojiPicker } from './emoji-picker';
 import { StickerPicker } from './sticker-picker/sticker-picker';
-import { Grabador } from './grabador';
+import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
+import { AttachmentPreview } from './attachment-preview/attachment-preview';
+import { ATTACHMENT_ACCEPT, type AttachmentDraft, createDraft, DOCUMENT_ACCEPT, PHOTO_ACCEPT } from './attachment-draft';
+import { AttachmentPreparer } from './attachment-preparer';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
-/** Lo más grande que se deja adjuntar. Más que esto no sube por el móvil. */
-const TOPE_DE_ARCHIVO = 20 * 1024 * 1024;
+/**
+ * Las respuestas rápidas cuando el hilo está vacío y nadie pasó otras.
+ *
+ * Genéricas a propósito: el mismo composer sirve para hablar con una farmacia,
+ * un profesional o un proveedor. Quien abre el chat desde un contexto sabe qué
+ * preguntar y pasa las suyas (`thread-context.ts`).
+ *
+ * Son la voz de quien escribe, no la de AloVida: hablan de usted a la otra
+ * parte, como el resto de la app.
+ */
+export const SUGERENCIAS_POR_OMISION: readonly string[] = [
+  '¡Hola! Tengo una consulta',
+  '¿Tienen disponibilidad?',
+  'Le mando la foto de mi receta',
+];
 
-/** Lo que el chat acepta adjuntar. */
-const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
+/** Una sugerencia que habla de una foto abre el selector en vez de sólo escribir. */
+const PIDE_FOTO = /\b(foto|imagen)\b/i;
 
 /**
  * La barra de escribir — carril P2 y P9.
@@ -52,12 +74,17 @@ const TIPOS_ACEPTADOS = ['image/', 'audio/', 'video/', 'application/pdf'];
 @Component({
   selector: 'app-composer',
   imports: [
-    FilePreview,
+    AttachmentPreview,
     FileDropTarget,
     FormsModule,
-    Grabador,
-    SelectorEmojis,
+    Recorder,
+    EmojiPicker,
+    Menu,
+    MenuItem,
+    MenuTrigger,
     StickerPicker,
+    Tooltip,
+    LoadingState,
   ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',
@@ -69,16 +96,33 @@ export class Composer {
   private readonly route = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
+  private readonly preparador = inject(AttachmentPreparer);
+
   /** Avisa que se envió, para que el hilo baje del todo. */
   readonly enviado = output<void>();
 
+  /**
+   * Respuestas rápidas que se ofrecen como chips arriba del campo.
+   *
+   * Vacío —el valor por omisión— significa «las de siempre, y sólo con el hilo
+   * vacío» ({@link SUGERENCIAS_POR_OMISION}). Con algo, se muestran aunque el
+   * hilo ya tenga mensajes: quien las pasa viene de un contexto (un producto,
+   * un pedido) y sabe que son pertinentes. En los dos casos se retiran después
+   * del primer envío.
+   */
+  readonly sugerencias = input<readonly string[]>([]);
+
   private readonly campo = viewChild<ElementRef<HTMLTextAreaElement>>('campo');
   private readonly archivo = viewChild<ElementRef<HTMLInputElement>>('archivo');
+  private readonly camara = viewChild<ElementRef<HTMLInputElement>>('camara');
+  private readonly menuAdjuntar = viewChild<Menu>('menuAdjuntar');
+  private readonly filaChips = viewChild<ElementRef<HTMLElement>>('filaChips');
+
+  /** El `accept` de arranque del selector, que también filtra el arrastre. */
+  protected readonly aceptaPorOmision = ATTACHMENT_ACCEPT;
 
   protected readonly texto = signal('');
-  protected readonly panel = signal<'ninguno' | 'emojis' | 'adjuntar' | 'plantillas'>(
-    'ninguno',
-  );
+  protected readonly panel = signal<'ninguno' | 'emojis' | 'plantillas'>('ninguno');
 
   /**
    * Qué pestaña del panel de figuritas está abierta.
@@ -90,8 +134,67 @@ export class Composer {
   protected readonly solapa = signal<'emojis' | 'stickers'>('emojis');
   protected readonly error = signal('');
 
-  /** El archivo elegido, esperando la leyenda y el envío. */
-  protected readonly adjunto = signal<File | null>(null);
+  /**
+   * Lo elegido para mandar, con su pie de foto. Mientras no esté vacía, la
+   * vista previa tapa el hilo (ver `AttachmentPreview`).
+   */
+  protected readonly adjuntos = signal<readonly AttachmentDraft[]>([]);
+
+  /**
+   * Lo que quedó afuera de lo elegido, para decirlo **dentro** de la vista
+   * previa: el aviso del composer queda tapado por ella.
+   */
+  protected readonly avisoDeAdjuntos = signal('');
+
+  /**
+   * El borrador que heredó lo escrito en el campo. Sólo si ése sale se vacía
+   * el campo: si se lo quitó de la vista previa, la frase sigue ahí.
+   */
+  private heredoElTexto: string | null = null;
+
+  /**
+   * Cuántas tandas se están preparando (achicar, convertir, quitar metadatos)
+   * antes de abrir la vista previa. Una foto de 12 MP tarda un instante: la
+   * barra lo dice en vez de parecer que no pasó nada.
+   */
+  protected readonly preparando = signal(0);
+
+  /**
+   * Sube cada vez que lo elegido deja de valer —cambio de conversación,
+   * edición, cierre—: una tanda que termina de prepararse después no abre la
+   * vista previa en otro chat.
+   */
+  private generacion = 0;
+
+  /**
+   * Si la fila de respuestas rápidas tiene más chips de un lado o del otro:
+   * prende el degradado de ese borde.
+   */
+  protected readonly chipsDesbordan = signal({ inicio: false, final: false });
+
+  /** Si ya se mandó algo en esta conversación: los chips se retiran. */
+  private readonly sugerenciasRetiradas = signal(false);
+
+  protected readonly chips = computed<readonly string[]>(() => {
+    if (
+      this.sugerenciasRetiradas() ||
+      this.editando() !== null ||
+      this.texto().trim() !== '' ||
+      this.adjuntos().length > 0
+    ) {
+      return [];
+    }
+    const propias = this.sugerencias();
+    if (propias.length > 0) {
+      return propias;
+    }
+    const activa = this.store.activaId();
+    const hiloVacio =
+      this.store.hiloCargado() &&
+      this.store.mensajes().length === 0 &&
+      !this.store.pendientes().some((p) => p.conversationId === activa);
+    return hiloVacio ? SUGERENCIAS_POR_OMISION : [];
+  });
 
   /** Las plantillas de fábrica más las propias (carril P9). */
   protected readonly plantillasDisponibles = this.plantillas.todas;
@@ -108,17 +211,16 @@ export class Composer {
    */
   private readonly borradorEnEspera = signal<string | null>(null);
 
-  protected readonly puedeEnviar = computed(
-    () => this.texto().trim() !== '' || this.adjunto() !== null,
-  );
+  protected readonly puedeEnviar = computed(() => this.texto().trim() !== '');
 
   constructor() {
     // Al cambiar de conversación se recupera lo que se había escrito ahí:
     // cambiar de chat y volver no puede tirar media frase.
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe(() => {
       this.texto.set(this.store.borrador());
-      this.panel.set('ninguno');
-      this.limpiarAdjunto();
+      this.cerrarPanel();
+      this.sugerenciasRetiradas.set(false);
+      this.limpiarAdjuntos();
     });
 
     // El modo edición nace en el hilo (`store.editar()`), así que el campo
@@ -132,8 +234,8 @@ export class Composer {
             this.borradorEnEspera.set(this.texto());
           }
           this.texto.set(mensaje.bodyText ?? '');
-          this.panel.set('ninguno');
-          this.limpiarAdjunto();
+          this.cerrarPanel();
+          this.limpiarAdjuntos();
           this.enfocar();
           return;
         }
@@ -153,7 +255,46 @@ export class Composer {
       }
     });
 
-    inject(DestroyRef).onDestroy(() => this.limpiarAdjunto());
+    // Se mide después de pintar: con chips nuevos, o al cambiar el ancho. Un
+    // `ResizeObserver` y no `resize` de la ventana: el panel lateral del chat
+    // también cambia el ancho de la fila.
+    let observador: ResizeObserver | null = null;
+    afterRenderEffect(() => {
+      const fila = this.filaChips()?.nativeElement;
+      this.chips();
+      observador?.disconnect();
+      observador = null;
+      if (!fila) {
+        return;
+      }
+      this.medirChips();
+      if (typeof ResizeObserver !== 'undefined') {
+        observador = new ResizeObserver(() => this.medirChips());
+        observador.observe(fila);
+      }
+    });
+
+    inject(DestroyRef).onDestroy(() => {
+      observador?.disconnect();
+      this.limpiarAdjuntos();
+    });
+  }
+
+  /** Cuánto queda de la fila de chips fuera de la vista, de cada lado. */
+  protected medirChips(): void {
+    const fila = this.filaChips()?.nativeElement;
+    if (!fila) {
+      return;
+    }
+    // `scrollLeft` es negativo en RTL; con `Math.abs` sirve en los dos sentidos.
+    const recorrido = Math.abs(fila.scrollLeft);
+    const sobra = fila.scrollWidth - fila.clientWidth;
+    const inicio = recorrido > 1;
+    const final = sobra - recorrido > 1;
+    const actual = this.chipsDesbordan();
+    if (actual.inicio !== inicio || actual.final !== final) {
+      this.chipsDesbordan.set({ inicio, final });
+    }
   }
 
   protected alEscribir(valor: string): void {
@@ -195,30 +336,46 @@ export class Composer {
       return;
     }
 
-    const archivo = this.adjunto();
-    if (archivo !== null) {
-      this.store.enviarAdjunto(archivo, this.texto());
-      this.limpiarAdjunto();
-      this.texto.set('');
-      this.store.guardarBorrador('');
-      this.enviado.emit();
-      return;
-    }
     if (this.texto().trim() === '') {
       return;
     }
     this.store.enviar(this.texto());
     this.texto.set('');
+    this.sugerenciasRetiradas.set(true);
     this.enviado.emit();
     this.enfocar();
   }
 
-  protected alternar(cual: 'emojis' | 'adjuntar' | 'plantillas'): void {
+  /* --- Respuestas rápidas -------------------------------------------------- */
+
+  /**
+   * Tocar un chip **escribe** la frase y deja el foco en el campo; no la manda.
+   *
+   * Es una pregunta a una farmacia o a un profesional, no un «me gusta»: a
+   * «¿Lo tienen en stock?» casi siempre le falta la presentación o la dosis, y
+   * un mensaje mandado sin querer no se borra. Escribirla cuesta un toque más
+   * —el de enviar, que ya está a la vista— y se puede corregir antes.
+   *
+   * La que habla de una foto además abre el selector de imágenes: la frase
+   * pasa a ser el pie de la primera foto, como cualquier texto ya escrito.
+   */
+  protected usarSugerencia(sugerencia: string): void {
+    this.alEscribir(sugerencia);
+    if (PIDE_FOTO.test(sugerencia)) {
+      this.elegirArchivo(true);
+      return;
+    }
+    this.enfocar();
+  }
+
+  protected alternar(cual: 'emojis' | 'plantillas'): void {
     this.panel.set(this.panel() === cual ? 'ninguno' : cual);
   }
 
+  /** Cierra el panel abierto y, si estaba abierto, el menú de adjuntar. */
   protected cerrarPanel(): void {
     this.panel.set('ninguno');
+    this.menuAdjuntar()?.close();
   }
 
   /* --- Stickers ------------------------------------------------------------ */
@@ -227,6 +384,29 @@ export class Composer {
   protected mandarSticker(sticker: Sticker): void {
     this.store.enviarSticker(sticker);
     this.panel.set('ninguno');
+    this.enviado.emit();
+  }
+
+  /**
+   * Un sticker o GIF de la persona: sube y se manda en el acto, marcado como
+   * sticker para que el otro lado lo vea sin burbuja.
+   */
+  protected async mandarStickerPropio(archivo: File): Promise<void> {
+    this.panel.set('ninguno');
+    // También pasa por la preparación: un GIF o un WEBP guardado de la web
+    // puede traer XMP o EXIF, y un sticker no es excepción a quitarlos.
+    const generacion = this.generacion;
+    let listo: File;
+    try {
+      listo = await this.preparador.prepare(archivo);
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : `No pudimos preparar «${archivo.name}».`);
+      return;
+    }
+    if (generacion !== this.generacion) {
+      return;
+    }
+    this.store.enviarAdjunto(listo, '', true);
     this.enviado.emit();
   }
 
@@ -256,46 +436,136 @@ export class Composer {
 
   /* --- Adjuntos ------------------------------------------------------------ */
 
+  /** Abre el selector: de fotos (galería) o de documentos. */
   protected elegirArchivo(soloImagenes: boolean): void {
     const entrada = this.archivo()?.nativeElement;
     if (entrada) {
-      entrada.accept = soloImagenes ? 'image/*,video/*' : '*/*';
+      entrada.accept = soloImagenes ? PHOTO_ACCEPT : DOCUMENT_ACCEPT;
       entrada.click();
     }
     this.panel.set('ninguno');
   }
 
-  protected alElegir(evento: Event): void {
-    const entrada = evento.target as HTMLInputElement;
-    const archivo = entrada.files?.[0];
-    entrada.value = '';
-    if (archivo === undefined) {
-      return;
-    }
-    if (archivo.size > TOPE_DE_ARCHIVO) {
-      this.error.set('El archivo pesa más de 20 MB.');
-      return;
-    }
-    if (!TIPOS_ACEPTADOS.some((tipo) => archivo.type.startsWith(tipo))) {
-      this.error.set('Podés mandar imágenes, videos, audios y PDF.');
-      return;
-    }
-    this.error.set('');
-    this.ponerAdjunto(archivo);
+  /** Abre la cámara trasera (en el teléfono; en la compu, el selector). */
+  protected tomarFoto(): void {
+    this.camara()?.nativeElement.click();
+    this.panel.set('ninguno');
   }
 
-  private ponerAdjunto(archivo: File): void {
-    this.limpiarAdjunto();
-    this.adjunto.set(archivo);
+  /** El `change` de los dos selectores y del arrastre (`appFileDropTarget`). */
+  protected alElegir(evento: Event): void {
+    const entrada = evento.target as HTMLInputElement;
+    const archivos = Array.from(entrada.files ?? []);
+    entrada.value = '';
+    if (entrada === this.archivo()?.nativeElement) {
+      // Vuelve al `accept` amplio: el arrastre lo usa para filtrar, y un PDF
+      // soltado después de abrir la galería no tiene por qué rebotar.
+      entrada.accept = ATTACHMENT_ACCEPT;
+    }
+    void this.recibir(archivos);
+  }
+
+  /**
+   * Ctrl+V de una captura o de una foto copiada: entra al mismo flujo que lo
+   * elegido con el selector.
+   */
+  protected alPegar(evento: ClipboardEvent): void {
+    const datos = evento.clipboardData;
+    const archivos = Array.from(datos?.files ?? []);
+    if (archivos.length === 0 || this.editando() !== null) {
+      return;
+    }
+    // Si además viene texto (copiar de una página trae los dos), el texto se
+    // pega igual; si sólo hay imagen, se evita que el navegador pegue nada.
+    if (!Array.from(datos?.types ?? []).includes('text/plain')) {
+      evento.preventDefault();
+    }
+    void this.recibir(archivos);
+  }
+
+  /**
+   * Valida y prepara lo que llegó, y abre la vista previa con lo que entró.
+   *
+   * Devuelve la promesa para las pruebas; la pantalla no la espera.
+   */
+  async recibir(archivos: readonly File[]): Promise<void> {
+    // Editando no se adjunta, tampoco soltando ni pegando un archivo: la
+    // edición cambia un mensaje que ya salió, y el pie de foto se llevaría
+    // ese texto a un mensaje nuevo.
+    if (archivos.length === 0 || this.editando() !== null) {
+      return;
+    }
+    const generacion = this.generacion;
+    this.preparando.update((n) => n + 1);
+    try {
+      const { accepted, rejection } = await this.preparador.prepareAll(archivos);
+      if (generacion !== this.generacion) {
+        return;
+      }
+      if (accepted.length === 0) {
+        this.error.set(rejection ?? '');
+        return;
+      }
+      this.error.set('');
+      this.avisoDeAdjuntos.set(rejection ?? '');
+      this.ponerAdjuntos(accepted);
+    } finally {
+      this.preparando.update((n) => Math.max(0, n - 1));
+    }
+  }
+
+  /**
+   * Abre la vista previa con lo elegido.
+   *
+   * Lo que ya estaba escrito en el campo pasa a ser el pie de foto del primer
+   * archivo, como en WhatsApp: escribir «le mando el análisis» y después
+   * adjuntarlo es un solo mensaje, no dos.
+   */
+  private ponerAdjuntos(archivos: readonly File[]): void {
+    const leyenda = this.texto().trim();
+    this.panel.set('ninguno');
+    const borradores = archivos.map((archivo, indice) => createDraft(archivo, indice === 0 ? leyenda : ''));
+    this.heredoElTexto = leyenda === '' ? null : borradores[0].id;
+    this.adjuntos.set(borradores);
+  }
+
+  /**
+   * Manda la tanda en **una** llamada al store: cada archivo sale como su
+   * propio mensaje, con su pie de foto como texto, en el orden de la tira. El
+   * store los sube de a uno y no manda un mensaje antes que el anterior
+   * (`ChatStore.enviarAdjuntos`). Sin `vistaPrevia`: la tira usa `blob:` y el
+   * store lee la miniatura de la burbuja por su cuenta.
+   */
+  protected enviarAdjuntos(): void {
+    const borradores = this.adjuntos();
+    if (borradores.length === 0) {
+      return;
+    }
+    this.store.enviarAdjuntos(
+      borradores.map((borrador) => ({ archivo: borrador.file, leyenda: borrador.caption, vistaPrevia: null })),
+    );
+    const salioElTexto = borradores.some((borrador) => borrador.id === this.heredoElTexto);
+    this.limpiarAdjuntos();
+    if (salioElTexto) {
+      this.texto.set('');
+      this.store.guardarBorrador('');
+    }
+    this.sugerenciasRetiradas.set(true);
+    this.enviado.emit();
     this.enfocar();
   }
 
-  protected limpiarAdjunto(): void {
-    this.adjunto.set(null);
+  /** Cierra la vista previa sin mandar nada. Lo escrito en el campo queda. */
+  protected descartarAdjuntos(): void {
+    this.limpiarAdjuntos();
   }
 
-  protected nombreDelAdjunto(): string {
-    return this.adjunto()?.name ?? '';
+  protected limpiarAdjuntos(): void {
+    this.generacion += 1;
+    this.preparando.set(0);
+    this.adjuntos.set([]);
+    this.avisoDeAdjuntos.set('');
+    this.heredoElTexto = null;
   }
 
   /* --- Audio --------------------------------------------------------------- */

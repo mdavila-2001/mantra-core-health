@@ -1,6 +1,6 @@
 <app-page-header
   title="Notificaciones"
-  subtitle="Lo que pasó con tus recetas, tus consultas, tus turnos y tus mensajes."
+  subtitle="Lo que pasó con sus recetas, sus consultas, sus citas y sus mensajes."
 >
   <!-- Las acciones de la bandeja entera van en el membrete, no sueltas sobre
        la lista: son de la pantalla, no de una fila. -->
@@ -16,11 +16,10 @@
       Marcar todas como leídas ({{ sinLeer() }})
     </button>
   }
+  <a app-button page-actions variant="outline" size="sm" routerLink="/settings">
+    Preferencias
+  </a>
 </app-page-header>
-
-@if (error(); as mensaje) {
-  <app-alert tone="error" class="avisos__alerta">{{ mensaje }}</app-alert>
-}
 
 <!-- UNA tarjeta con pestañas, a lo ancho del área y centrada: la regla de la
      casa (`docs/components/composition-rules.md` §5). Antes la lista estaba
@@ -38,6 +37,18 @@
     <app-tab [label]="sinLeer() > 0 ? 'Sin leer (' + sinLeer() + ')' : 'Sin leer'">
       <ng-container [ngTemplateOutlet]="bandeja" />
     </app-tab>
+    <app-tab label="Consultas">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab label="Mensajes">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab label="Recetas">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
+    <app-tab label="Red">
+      <ng-container [ngTemplateOutlet]="bandeja" />
+    </app-tab>
   </app-tabs>
 </app-card>
 
@@ -45,17 +56,23 @@
      es el mismo, lo que cambia es qué pidió el servidor. Copiarla habría
      garantizado que el arreglo de una se aplicara a la mitad. -->
 <ng-template #bandeja>
-  @if (vacio()) {
-    <div class="avisos__vacio">
-      <app-empty-state
-        [title]="
-          soloSinLeer() ? 'No tenés notificaciones sin leer' : 'Todavía no tenés notificaciones'
-        "
-        description="Acá van a aparecer los avisos de tus recetas, tus consultas, tus turnos y tus mensajes."
-        variant="empty"
-      />
+  <app-view-state-host [state]="estado()" (retry)="recargar()">
+    <div vsh-empty class="avisos__vacio">
+      <app-empty-state [title]="tituloVacio()" [description]="descripcionVacio()" variant="empty">
+        <a app-button empty-actions variant="outline" size="sm" routerLink="/settings">
+          Ir a preferencias
+        </a>
+      </app-empty-state>
     </div>
-  } @else {
+    @if (hayFiltrosSinResultados()) {
+      <div class="avisos__vacio">
+        <app-empty-state
+          title="Todavía no aparecen avisos de esta categoría"
+          description="Cargue más notificaciones para seguir buscando."
+          variant="empty"
+        />
+      </div>
+    }
     @for (grupo of grupos(); track grupo.etiqueta) {
       <section class="avisos__dia">
         <h2 class="avisos__dia-titulo">{{ grupo.etiqueta }}</h2>
@@ -85,7 +102,33 @@
                     [ngTemplateOutletContext]="{ $implicit: aviso }"
                   />
                 </div>
+                <!-- Sin destino no hay fila que abrir: marcarla leída se ofrece
+                     aparte, de a una, y no sólo con «Marcar todas». -->
+                @if (aviso.unread) {
+                  <div class="avisos__marcar">
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      data-testid="aviso-marcar-leida"
+                      [attr.aria-label]="'Marcar como leída: ' + aviso.subject"
+                      (clicked)="marcarLeida(aviso)"
+                    >
+                      Marcar como leída
+                    </button>
+                  </div>
+                }
               }
+
+              <!-- Las acciones que la notificación ofrece, sin salir de la
+                   bandeja. Van fuera del botón de la fila para no navegar. -->
+              <app-notification-actions
+                class="avisos__acciones"
+                [actions]="aviso.actions ?? []"
+                [destination]="aviso.destination"
+                (executed)="alEjecutarAccion(aviso)"
+              />
             </li>
           }
         </ul>
@@ -101,7 +144,7 @@
         </button>
       </div>
     }
-  }
+  </app-view-state-host>
 </ng-template>
 
 <!-- El contenido de una fila: dibujo, texto, cuándo y si es nueva. -->

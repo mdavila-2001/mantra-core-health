@@ -1,9 +1,10 @@
+import { LEGAL_ENTITY_TYPES_BO_NON_CORPORATE } from './legal-entity-types-bo.dictionary';
 import type { UiLanguage } from './ui-language';
 
 /* ============================================================================
     Diccionario trilingüe de tipos societarios (subtarea 1.1).
 
-    El catálogo real —los 21 códigos, sus `conceptId` y a qué país
+    El catálogo real —los 40 códigos, sus `conceptId` y a qué país
     pertenecen— vive en la API (`legal-entity-type`, enumeración dinámica de
     `directory.tenants.legal_entity_type_concept_id`) y se lee por
     `LegalEntityTypesCatalog`. Lo que ese catálogo devuelve es el `display`
@@ -201,6 +202,9 @@ export const LEGAL_ENTITY_TYPES_DICTIONARY: Readonly<Record<string, LegalEntityT
       },
     },
   },
+  // Las 19 formas bolivianas no societarias y del sector público (26/10/2026),
+  // en su propio archivo para no pasar el tope de líneas.
+  ...LEGAL_ENTITY_TYPES_BO_NON_CORPORATE,
   // --- Brasil ---
   BR_LTDA: {
     countryIso: 'BR',

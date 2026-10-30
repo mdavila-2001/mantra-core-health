@@ -52,8 +52,18 @@ const ECG_LAYERS = ['base', 'aura', 'halo', 'comet', 'spark'] as const;
  *   ellos piezas suyas —el logotipo que late, el resplandor de la tarjeta—, y
  *   a esas no les llegaría una variable declarada acá adentro.
  *
- * No lee las variables `--pointer-*`: el fondo no sigue al puntero (ver la
- * nota de `.auth-stage__aurora`).
+ * - `--pointer-x`, `--pointer-y` y `--pointer-on` (de `appPointerScene`): las
+ *   lee UNA sola capa, `.auth-stage__glow`, y solo en modo claro. El fondo
+ *   sigue sin paralaje (ver la nota de `.auth-stage__aurora`); el resplandor
+ *   solo se desplaza hasta el puntero, por `transform`.
+ *
+ * ## Los dos temas
+ *
+ * En oscuro es el monitor nocturno de siempre. En claro el balance se
+ * invierte: escenario blanco y menta, tinta petróleo, motas grises, y el
+ * celeste aparece solo junto al puntero. Lo resuelve entero la hoja de
+ * estilos con `:host-context(:root[data-tema='claro'])`, que el script del
+ * `<head>` fija antes del primer pintado: no hay parpadeo bajo SSR.
  */
 @Component({
   selector: 'app-auth-stage',

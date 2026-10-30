@@ -8,14 +8,21 @@
  *   alta de la aseguradora.
  * - D-07: al confirmar, «Listo, guardamos…» ya no se ve, pero sigue en el
  *   documento sólo para lectores de pantalla, con su identificador de prueba.
+ * - Direcciones obligatorias (aseguradora y la central de laboratorio e
+ *   imagenología): el vaciado que hace el mapa no pone el campo en rojo; lo
+ *   marca que la persona lo toque o intente avanzar. Y el aviso va pegado al
+ *   campo: ningún otro control queda entre los dos.
  *
- * Uso: `node playwright/mapa-vacia-direccion.mjs [urlBase] [sufijo] [recorridos]`
+ * Uso: `node playwright/mapa-vacia-direccion.mjs [urlBase] [sufijo] [recorridos] [ancho] [tema]`
  * — `recorridos` es una lista separada por comas de
- * `editor,alta,aseguradora,laboratorio,imagenologia` (por defecto, todos). Si algo falla, deja una captura de diagnóstico en
- * la carpeta temporal del sistema, no junto a la evidencia.
+ * `editor,alta,aseguradora,laboratorio,imagenologia` (por defecto, todos); `ancho` en px (por
+ * defecto 1440) y `tema` `claro` u `oscuro` (por defecto claro) valen para las altas. Si algo
+ * falla, deja una captura de diagnóstico en la carpeta temporal del sistema, no junto a la
+ * evidencia.
  */
 import { mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
@@ -24,6 +31,13 @@ const SUFIJO = process.argv[3] ?? 'despues';
 const RECORRIDOS = new Set(
   (process.argv[4] ?? 'editor,alta,aseguradora,laboratorio,imagenologia').split(','),
 );
+const ANCHO = Number(process.argv[5] ?? 1440);
+const TEMA = process.argv[6] ?? 'claro';
+/** El alto de cada viewport del repo; un ancho que no está en la lista usa 1000. */
+const ALTO_POR_ANCHO = { 1920: 1080, 1440: 900, 1024: 768, 768: 1024, 390: 844, 360: 800 };
+const ALTO = ALTO_POR_ANCHO[ANCHO] ?? 1000;
+/** Una celda de captura: el ancho y el tema de la corrida. */
+const CELDA = `${ANCHO}-${TEMA}`;
 const SALIDA = fileURLToPath(
   new URL('../docs/frontend/evidence/mapa-vacia-direccion-2026-09-23', import.meta.url),
 );
@@ -85,13 +99,30 @@ async function pintada(pagina) {
   );
 }
 
-async function capturar(pagina, nombre) {
+async function capturar(pagina, nombre, { conTitulo = false } = {}) {
   // Arriba de todo: con la página desplazada, la cabecera y el menú fijos se
   // pintan a mitad de la captura de página completa.
   await pagina.evaluate(() => window.scrollTo(0, 0));
+  // En escritorio la tarjeta se desplaza por dentro y la captura es la ventana:
+  // con `conTitulo`, el título del paso queda arriba, a la vista. Cuando se
+  // desplaza la página entera, la captura ya la trae completa y no se toca.
+  if (conTitulo) {
+    await pagina.locator('.paginated-form__titulo').evaluate((titulo) => {
+      const pagina = document.scrollingElement;
+      if (pagina.scrollHeight <= window.innerHeight + 1) titulo.scrollIntoView({ block: 'start' });
+    });
+  }
   // El menú lateral se abre al pasar el cursor: lo dejamos en el borde derecho.
   const { width, height } = pagina.viewportSize();
   await pagina.mouse.move(width - 4, Math.round(height / 2));
+  // Las teselas del plano llegan de a una: sin esperarlas, la captura sale con huecos grises.
+  await pagina
+    .waitForFunction(
+      () => document.querySelectorAll('img.leaflet-tile:not(.leaflet-tile-loaded)').length === 0,
+      null,
+      { timeout: 15_000 },
+    )
+    .catch(() => {});
   await pintada(pagina);
   await pagina.screenshot({ path: `${SALIDA}/${SUFIJO}-${nombre}.png`, fullPage: true });
 }
@@ -120,11 +151,37 @@ async function fraseSoloParaLectores(pagina, frase) {
   }, frase);
 }
 
+/** El campo está marcado en error: borde (`aria-invalid`) o mensaje bajo el campo. */
+async function enRojo(campo) {
+  return campo.evaluate(
+    (el) =>
+      el.getAttribute('aria-invalid') === 'true' ||
+      el.closest('app-form-field')?.querySelector('.form-field-error') != null,
+  );
+}
+
+/**
+ * Qué hay entre el campo y su aviso: cuántos controles visibles quedan en medio,
+ * en el orden del documento, y cuántos píxeles separan el pie del campo del
+ * aviso.
+ */
+async function entreElCampoYElAviso(campo, aviso) {
+  return campo.evaluate((el, avisoEl) => {
+    const siguiendo = (a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    const enMedio = [
+      ...document.querySelectorAll('input:not([type="hidden"]):not([type="file"]), select, textarea'),
+    ].filter((otro) => otro.getClientRects().length > 0 && siguiendo(el, otro) && siguiendo(otro, avisoEl));
+    const pie = (el.closest('app-form-field') ?? el).getBoundingClientRect().bottom;
+    return { controles: enMedio.length, px: Math.round(avisoEl.getBoundingClientRect().top - pie) };
+  }, await aviso.elementHandle());
+}
+
 /**
  * El recorrido D-06/D-07 sobre un campo de dirección y su mapa.
  *
  * @param campo  - locator del `<input>` de la dirección.
- * @param ids    - { marcar, mapa, aviso, confirmar, confirmada }
+ * @param ids    - { marcar, mapa, aviso, confirmar, confirmada, obligatoria? } — `obligatoria`
+ *   es el texto de su error: suma las comprobaciones del rojo y del aviso pegado al campo.
  * @param escribir - cómo escribir en el campo (el editor y el alta difieren en el `input`).
  */
 async function recorrer(pagina, prefijo, campo, ids, escribir) {
@@ -148,7 +205,16 @@ async function recorrer(pagina, prefijo, campo, ids, escribir) {
   const aviso = pagina.getByTestId(ids.aviso);
   ok(`${prefijo}: el aviso está junto al campo`, (await aviso.count()) === 1 && (await aviso.innerText()).includes(AVISO));
   ok(`${prefijo}: el aviso es una región viva, sin robar el foco`, (await aviso.getAttribute('aria-live')) === 'polite');
-  await capturar(pagina, `${prefijo}-1-vaciada-1440-claro`);
+  if (ids.obligatoria) {
+    ok(`${prefijo}: el vaciado no pone el campo en rojo`, !(await enRojo(campo)));
+    const entre = await entreElCampoYElAviso(campo, aviso);
+    ok(
+      `${prefijo}: el aviso va pegado al campo, sin otro control en medio`,
+      entre.controles === 0,
+      `${entre.controles} controles en medio, ${entre.px} px`,
+    );
+  }
+  await capturar(pagina, `${prefijo}-1-vaciada-${CELDA}`, { conTitulo: Boolean(ids.obligatoria) });
 
   // D-07: confirmar no muestra «Listo, guardamos…», pero el lector lo recibe.
   await pagina.getByTestId(ids.confirmar).click();
@@ -164,7 +230,10 @@ async function recorrer(pagina, prefijo, campo, ids, escribir) {
     `${prefijo}: «Listo, guardamos» no se pinta en ningún lugar de la vista`,
     await fraseSoloParaLectores(pagina, 'Listo, guardamos'),
   );
-  await capturar(pagina, `${prefijo}-2-confirmada-1440-claro`);
+  if (ids.obligatoria) {
+    ok(`${prefijo}: confirmar el punto tampoco lo pone en rojo`, !(await enRojo(campo)));
+  }
+  await capturar(pagina, `${prefijo}-2-confirmada-${CELDA}`, { conTitulo: Boolean(ids.obligatoria) });
 
   // Volver a escribir se lleva el aviso.
   await escribir('Calle Sucre #88');
@@ -175,6 +244,55 @@ async function recorrer(pagina, prefijo, campo, ids, escribir) {
   await tocar(pagina, mapa, 60, 30);
   await pagina.getByTestId(ids.aviso).waitFor({ timeout: 10_000 }).catch(() => {});
   ok(`${prefijo}: mover el pin vuelve a vaciar`, (await campo.inputValue()) === '');
+  if (!ids.obligatoria) return;
+
+  // Lo escrito se había dejado (tocado); el vaciado del mapa no lo pone en rojo.
+  ok(`${prefijo}: tampoco en rojo tras escribir y volver a tocar el mapa`, !(await enRojo(campo)));
+
+  // Tocarlo sí: entrar y salir del campo vacío lo marca, con el aviso al lado.
+  await campo.focus();
+  await campo.blur();
+  const error = pagina.getByText(ids.obligatoria);
+  await error.waitFor({ timeout: 5_000 }).catch(() => {});
+  ok(`${prefijo}: entrar y salir del campo vacío lo marca`, await enRojo(campo));
+  ok(`${prefijo}: con su mensaje`, (await error.count()) === 1);
+  ok(`${prefijo}: y el aviso sigue a su lado`, (await pagina.getByTestId(ids.aviso).count()) === 1);
+  await capturar(pagina, `${prefijo}-3-tocada-${CELDA}`, { conTitulo: true });
+
+  // Intentar avanzar también: se reescribe, el mapa lo vacía sin rojo, y «Siguiente» lo marca.
+  await escribir('Calle Sucre #88');
+  await tocar(pagina, mapa, -60, 20);
+  await pagina.getByTestId(ids.aviso).waitFor({ timeout: 10_000 }).catch(() => {});
+  ok(`${prefijo}: un vaciado nuevo vuelve a dejarlo sin rojo`, !(await enRojo(campo)));
+  const titulo = await pagina.locator('.paginated-form__titulo').innerText();
+  await pagina.getByTestId('paginated-form-continuar').click();
+  await error.waitFor({ timeout: 5_000 }).catch(() => {});
+  // Lo que ve la persona justo después de pulsar «Siguiente», sin mover nada:
+  // si el campo en rojo entra en la ventana y dónde quedó el foco. Se informa,
+  // no se exige: lo decide el formulario por páginas, no esta pantalla.
+  await pintada(pagina);
+  const tras = await campo.evaluate((el) => {
+    const caja = el.getBoundingClientRect();
+    const foco = document.activeElement;
+    return {
+      aLaVista: caja.bottom > 0 && caja.top < window.innerHeight,
+      foco: foco?.getAttribute('data-testid') ?? foco?.tagName.toLowerCase() ?? 'ninguno',
+    };
+  });
+  process.stdout.write(
+    `ℹ ${prefijo}: tras «Siguiente», el campo en rojo ${tras.aLaVista ? 'queda' : 'NO queda'} a la vista; el foco queda en ${tras.foco}\n`,
+  );
+  await pagina.screenshot({ path: `${SALIDA}/${SUFIJO}-${prefijo}-4b-tras-siguiente-${CELDA}.png` });
+  ok(`${prefijo}: intentar avanzar lo marca`, await enRojo(campo));
+  ok(
+    `${prefijo}: y es el único rojo de la página`,
+    (await pagina.locator('.form-field-error').count()) === 1,
+  );
+  ok(
+    `${prefijo}: y no deja pasar de página`,
+    (await pagina.locator('.paginated-form__titulo').innerText()) === titulo,
+  );
+  await capturar(pagina, `${prefijo}-4-al-avanzar-${CELDA}`, { conTitulo: true });
 }
 
 /* ───────────────────────── el editor del paciente ───────────────────────── */
@@ -362,6 +480,8 @@ async function altaDeAseguradora(pagina) {
   await pagina.getByLabel('Tipo societario').selectOption({ label: 'S.R.L. · Sociedad de Responsabilidad Limitada' });
   await pagina.getByTestId('paginated-form-continuar').click();
   await pagina.getByTestId('registro-organizacion-direccion').waitFor({ timeout: 15_000 });
+  // El NIT va lleno: al intentar avanzar, el único rojo de la página tiene que ser el de la dirección.
+  await pagina.getByTestId('registro-organizacion-nit').fill('1023456789');
 
   const direccion = pagina.getByTestId('registro-organizacion-direccion');
   await recorrer(
@@ -374,6 +494,7 @@ async function altaDeAseguradora(pagina) {
       aviso: 'registro-organizacion-direccion-reescribir',
       confirmar: 'registro-organizacion-casa-matriz-location-confirm',
       confirmada: 'registro-organizacion-casa-matriz-location-confirmed',
+      obligatoria: 'Escribí la dirección (hasta 300 caracteres).',
     },
     (texto) => direccion.fill(texto),
   );
@@ -444,6 +565,7 @@ async function altaConSucursales(pagina, { ruta, p, pasoIntermedio }) {
       aviso: `${p}-direccion-reescribir`,
       confirmar: `${p}-central-location-confirm`,
       confirmada: `${p}-central-location-confirmed`,
+      obligatoria: 'Escribí la dirección legal de la central.',
     },
     (texto) => central.fill(texto),
   );
@@ -493,8 +615,10 @@ async function altaDeImagenologia(pagina) {
 async function main() {
   mkdirSync(SALIDA, { recursive: true });
   navegador = await chromium.launch();
+  process.stdout.write(`celda: ${ANCHO}×${ALTO} · tema ${TEMA} · recorridos ${[...RECORRIDOS].join(', ')}\n`);
   const contexto = await navegador.newContext({
-    viewport: { width: 1440, height: 1000 },
+    viewport: { width: ANCHO, height: ALTO },
+    colorScheme: TEMA === 'oscuro' ? 'dark' : 'light',
     locale: 'es-BO',
     reducedMotion: 'reduce',
   });
@@ -529,7 +653,7 @@ async function main() {
   await cerrarNavegador();
   const fallaron = veredictos.filter((v) => !v.cond);
   process.stdout.write(
-    `\n${veredictos.length - fallaron.length}/${veredictos.length} comprobaciones en verde\ncapturas en ${SALIDA}\n`,
+    `\n${veredictos.length - fallaron.length}/${veredictos.length} comprobaciones en verde\ncapturas en ${relative(process.cwd(), SALIDA)}\n`,
   );
   process.exit(fallaron.length === 0 ? 0 : 1);
 }

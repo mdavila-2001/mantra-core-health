@@ -1,0 +1,86 @@
+:host {
+  display: block;
+}
+
+.horario__farmacia {
+  margin-block-end: var(--sp-4);
+}
+
+.horario__sede {
+  display: grid;
+  gap: var(--sp-6);
+  padding-block-start: var(--sp-4);
+}
+
+.horario__bloque {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.horario__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+}
+
+.horario__nota,
+.horario__vacio,
+.horario__turno-origen {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.horario__turnos {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.horario__turno {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.horario__turno-datos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.horario__turno-ventana {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.horario__alta {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+/* Mobile-first: fecha y hora una debajo de la otra; a lo ancho desde tablet. */
+.horario__par {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.horario__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (min-width: 768px) {
+  .horario__par {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

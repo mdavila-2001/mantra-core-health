@@ -30,23 +30,26 @@ import { dataOf, loading, notFound, ready } from '../../../../core/view-state/vi
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
+import { usarIrAlChat } from '../../../../core/messaging/chat-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { Stepper } from '../../../../shared/components/molecules/stepper/stepper';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { dibujarQr } from '../../../../shared/utils/qr/dibujar-qr';
+import { drawQr } from '../../../../shared/utils/qr/draw-qr';
 import { facturaDelPedido } from '../order-invoice/order-invoice.fixtures';
-import { TuFactura } from '../order-invoice/tu-factura/tu-factura';
+import { YourInvoice } from '../order-invoice/your-invoice/your-invoice';
 import {
-  etiquetaDeMedioDePago,
-  etiquetaDeModalidad,
-  pasosDeLaLineaDeTiempo,
-  presentacionDePedido,
-} from '../pedido-status';
+  paymentMeansLabel,
+  modalityLabel,
+  timelineSteps,
+  orderPresentation,
+} from '../order-status';
 import { displayCurrency } from '../../../../core/money/display-currency';
 import { withDisplayCurrency } from '../../../../core/money/display-currency';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 /** A dónde vuelve quien llegó a un pedido que no existe. */
 const LISTA_ROUTE = '/my-account/pharmacy-orders';
@@ -123,10 +126,11 @@ interface AvisoDelPedido {
     AppButtonLink,
     Badge,
     DatePipe,
+    NavIcon,
     PageHeader,
     RouterLink,
     Stepper,
-    TuFactura,
+    YourInvoice,
     ViewStateHost,
   ],
   templateUrl: './order-detail.html',
@@ -175,21 +179,21 @@ export class OrderDetail {
   });
 
   protected readonly medioDePago = computed(() =>
-    etiquetaDeMedioDePago(this.pedido()?.pago ?? null),
+    paymentMeansLabel(this.pedido()?.pago ?? null),
   );
 
   protected readonly presentacion = computed(() => {
     const pedido = this.pedido();
     // Por pedido y no por estado: con envío, el cierre se dice «Entregado».
-    return pedido === null ? null : presentacionDePedido(pedido, this.pagado());
+    return pedido === null ? null : orderPresentation(pedido, this.pagado());
   });
   protected readonly pasos = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? [] : pasosDeLaLineaDeTiempo(pedido, this.pagado());
+    return pedido === null ? [] : timelineSteps(pedido, this.pagado());
   });
   protected readonly modalidad = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? '' : etiquetaDeModalidad(pedido.modalidad);
+    return pedido === null ? '' : modalityLabel(pedido.modalidad);
   });
 
   /** La factura del pedido, o `null`: sin factura, el bloque lo dice. */
@@ -257,6 +261,8 @@ export class OrderDetail {
   private pedidoEnVuelo: Subscription | null = null;
   private avisosEnVuelo: Subscription | null = null;
 
+  private readonly irAlChat = usarIrAlChat();
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.orderId = params.get('orderId');
@@ -271,11 +277,28 @@ export class OrderDetail {
       if (!this.esBrowser || lienzo === undefined || codigo === null) {
         return;
       }
-      dibujarQr(lienzo.nativeElement, codigo, LADO_DEL_QR).catch(() =>
+      drawQr(lienzo.nativeElement, codigo, LADO_DEL_QR).catch(() =>
         this.qrDisponible.set(false),
       );
     });
 
+  }
+
+  /**
+   * «Chatear con la farmacia»: abre el chat **del pedido** —lo abre la API con
+   * `POST /pharmacy/orders/:id/conversation`, que sabe quién es la farmacia y
+   * si quien pide puede abrirlo—, con la
+   * tarjeta del pedido puesta —«Pedido: Farmacia Vida · Sucursal Central /
+   * 2 productos · 69,00 Bs»— para que del otro lado sepan de qué se habla
+   * sin preguntar. Nada clínico: lo mismo que dice el encabezado del pedido.
+   */
+  protected chatearConLaFarmacia(): void {
+    const pedido = this.pedido();
+    if (pedido === null || pedido.slugDeFarmacia === undefined) {
+      return;
+    }
+    // La misma tarjeta que pone el mostrador: ver `contextoDePedido`.
+    this.irAlChat({ pedido: pedido.id }, contextoDePedido(pedido));
   }
 
   /**
@@ -334,7 +357,7 @@ export class OrderDetail {
   protected async cancelar(): Promise<void> {
     const confirmado = await this.dialogs.confirm({
       title: 'Cancelar el pedido',
-      message: 'La farmacia deja de prepararlo y tu receta sigue disponible en tu historia.',
+      message: 'La farmacia deja de prepararlo y su receta sigue disponible en su historia.',
       confirmLabel: 'Cancelar el pedido',
       destructive: true,
     });

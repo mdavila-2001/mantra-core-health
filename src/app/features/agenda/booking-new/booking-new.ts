@@ -10,9 +10,11 @@ import { SchedulingClient } from '../../../core/data-access/scheduling/schedulin
 import type {
   AgendaResourceSite,
   AgendaSlot,
+  ServiceOffering,
   SlotHold,
 } from '../../../core/data-access/scheduling/scheduling.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
+import { withDisplayCurrency } from '../../../core/money/display-currency';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -25,18 +27,33 @@ import type { BreadcrumbItem } from '../../../shared/components/molecules/breadc
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ReferenceCombobox } from '../../../shared/components/molecules/reference-combobox/reference-combobox';
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { WebPushService } from '../../../core/notifications/web-push.service';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { MIS_TURNOS_ROUTE } from '../../account/appointments/appointments.routes';
+import {
+  SymptomObservationsStore,
+  comoMotivoDeConsulta,
+} from '../../../core/symptom-notes/symptom-observations.store';
 import { AGENDA_ROUTE } from '../agenda.routes';
+import { FLEXIBLE_PARAM, releerHoraFlexible, retenerHoraFlexible } from './flexible-booking';
 
 /** Largo que declara `ConfirmBookingDto` para el motivo. */
 const MAX_MOTIVO = 500;
 
 /** Cuántos candidatos trae cada búsqueda del combobox de paciente. */
 const CANDIDATOS_POR_BUSQUEDA = 10;
+
+/**
+ * Cuánto se ensancha, por lado, la ventana con que se relee la disponibilidad de un
+ * servicio. El motor sólo ofrece un inicio si cabe **con su preparación y su limpieza**
+ * dentro de la ventana pedida: con la ventana justa del turno (inicio → fin máximo) un
+ * servicio con colchones nunca cabe y el horario se daría por perdido sin estarlo.
+ * Preparación y limpieza son de minutos; dos horas sobran.
+ */
+const MARGEN_DE_RELECTURA_MS = 2 * 60 * 60 * 1000;
 
 /**
  * Por dónde entró quien está reservando. Coincide con el `channel` que declara
@@ -112,8 +129,19 @@ export class BookingNew {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  private readonly webPush = inject(WebPushService);
+  private readonly observaciones = inject(SymptomObservationsStore);
 
   /* ---- por dónde entró quien reserva ------------------------------------- */
+
+  private motivoInicial(): string {
+    const porUrl = this.route.snapshot.queryParamMap.get('motivo');
+    if (porUrl !== null) {
+      return porUrl.slice(0, MAX_MOTIVO);
+    }
+    const pendiente = this.route.snapshot.data['entrada'] === 'PORTAL' ? this.observaciones.pendiente() : null;
+    return pendiente === null ? '' : comoMotivoDeConsulta(pendiente);
+  }
 
   private readonly entrada: Entrada =
     this.route.snapshot.data['entrada'] === 'PORTAL' ? 'PORTAL' : 'DESK';
@@ -132,7 +160,7 @@ export class BookingNew {
    * contar lo que a uno le pasa que anotar lo que dijo el paciente por teléfono.
    */
   protected readonly ayudaDelMotivo = this.esAutoservicio
-    ? 'Contale al profesional qué te pasa o qué querés consultar. Es opcional, y lo lee antes de atenderte.'
+    ? 'Cuéntele al profesional qué le pasa o qué quiere consultar. Es opcional, y lo lee antes de atenderle.'
     : 'Lo que cuenta el paciente sobre su consulta. Es opcional, y el profesional lo lee antes de atenderlo.';
 
   /**
@@ -163,6 +191,50 @@ export class BookingNew {
 
   private readonly slotId = this.route.snapshot.paramMap.get('slotId') ?? '';
   private readonly resourceId = this.route.snapshot.queryParamMap.get('recurso');
+
+  /**
+   * La oferta de servicio que se está reservando (v4.2.40), o `null` si es una
+   * consulta.
+   *
+   * Un servicio no tiene un cupo en la grilla que reencontrar: sus horarios se
+   * **calculan** al leer y el cupo nace al retener. Por eso, con `oferta` en la
+   * URL, esta pantalla relee la disponibilidad calculada en vez de la lista de
+   * cupos, y retiene con el endpoint del servicio. Todo lo demás —el vencimiento,
+   * el confirmar, el solicitar— es el mismo ciclo que una consulta.
+   */
+  private readonly ofertaId = this.route.snapshot.queryParamMap.get('oferta');
+
+  /** Se reserva un servicio y no una consulta. */
+  protected readonly esServicio = this.ofertaId !== null;
+
+  /** Se reserva una hora de un horario flexible, sin turnos fijos (P36). */
+  private readonly esFlexible = this.route.snapshot.queryParamMap.get(FLEXIBLE_PARAM) === '1';
+
+  /**
+   * Lo que el catálogo y el profesional dicen del servicio: nombre, precio y
+   * cuánto dura. `null` mientras se pide y para una consulta; su ausencia no
+   * impide reservar, sólo deja el resumen sin ese renglón.
+   */
+  protected readonly servicio = signal<ServiceOffering | null>(null);
+
+  /**
+   * El precio con la moneda del producto: el del servicio o, en una consulta, el
+   * del turno (FAC-01). El helper asume el boliviano cuando no hay código.
+   */
+  protected readonly precio = computed(() => {
+    const [s, consulta] = [this.servicio(), this.cupoListo()?.price];
+    if (s !== null) return withDisplayCurrency(s.price);
+    return consulta ? withDisplayCurrency(consulta.amount.toFixed(2)) : '';
+  });
+
+  /** «30–45 min», o «20 min» cuando el mínimo y el máximo coinciden. */
+  protected readonly duracion = computed(() => {
+    const s = this.servicio();
+    if (s === null) return '';
+    return s.minDurationMinutes === s.maxDurationMinutes
+      ? `${s.maxDurationMinutes} min`
+      : `${s.minDurationMinutes}–${s.maxDurationMinutes} min`;
+  });
   private readonly desde = instante(this.route.snapshot.queryParamMap.get('desde'));
   private readonly hasta = instante(this.route.snapshot.queryParamMap.get('hasta'));
 
@@ -242,7 +314,19 @@ export class BookingNew {
   protected readonly candidatos = signal<readonly ReferenceOption[]>([]);
   protected readonly buscando = signal(false);
 
-  protected readonly motivo = new FormControl('', { nonNullable: true });
+  /**
+   * El motivo, que puede llegar escrito por query string (`motivo`): desde
+   * Cotizaciones, el estudio que se eligió. Queda editable.
+   */
+  protected readonly motivo = new FormControl(this.motivoInicial(), { nonNullable: true });
+
+  /**
+   * La observación de síntomas que el paciente guardó en «¿A qué especialista consultar?» y todavía
+   * no envió (propietario, 2026-10-08). Sólo cuando reserva para sí mismo y no llegó un motivo por
+   * la URL; queda editable, y al solicitar el turno se marca como enviada.
+   */
+  protected readonly observacionPrecargada =
+    this.esAutoservicio && !this.route.snapshot.queryParamMap.has('motivo') ? this.observaciones.pendiente() : null;
 
   /**
    * El formulario que envuelve al motivo. Un solo control, pero declarado como
@@ -282,10 +366,10 @@ export class BookingNew {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'Tu rol no puede reservar turnos.';
+      return state.message ?? 'Su rol no puede reservar turnos.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -305,7 +389,7 @@ export class BookingNew {
       if (perfil !== null) {
         this.paciente.set({
           value: perfil,
-          label: this.contexto.activePatientName() ?? 'Vos',
+          label: this.contexto.activePatientName() ?? 'Usted',
         });
       }
     }
@@ -331,6 +415,9 @@ export class BookingNew {
         const recurso = pagina.items.find((item) => item.id === this.resourceId);
         this.sede.set(recurso?.site ?? null);
         this.profesional.set(recurso?.practitionerName ?? '');
+        if (this.esServicio && recurso?.resourceRefId !== undefined) {
+          this.cargarServicio(recurso.resourceRefId);
+        }
       },
       error: () => {
         this.sede.set(null);
@@ -357,6 +444,15 @@ export class BookingNew {
 
     this.cupo.set(loading());
 
+    if (this.ofertaId !== null) {
+      this.cargarHorarioDeServicio(this.ofertaId, this.resourceId, this.desde, this.hasta);
+      return;
+    }
+    if (this.esFlexible) {
+      this.cargarHoraFlexible(this.resourceId, this.desde);
+      return;
+    }
+
     this.scheduling
       .listSlots({ resourceId: this.resourceId, from: this.desde, to: this.hasta })
       .subscribe({
@@ -369,8 +465,8 @@ export class BookingNew {
                   ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
                   : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
                 this.esAutoservicio
-                  ? 'Ese horario ya no está disponible: alguien lo tomó primero. Elegí otro de la lista.'
-                  : 'Ese cupo ya no está disponible: alguien lo tomó primero o se bloqueó. Elegí otro desde la agenda.',
+                  ? 'Ese horario ya no está disponible: alguien lo tomó primero. Elija otro de la lista.'
+                  : 'Ese cupo ya no está disponible: alguien lo tomó primero o se bloqueó. Elija otro desde la agenda.',
               ),
             );
             return;
@@ -422,12 +518,148 @@ export class BookingNew {
     this.retencionVencida.set(false);
     this.state.set(loading());
 
-    this.scheduling.placeHold(this.slotId, { patientProfileId: paciente.value }).subscribe({
+    if (this.ofertaId !== null && this.resourceId !== null && this.desde !== null) {
+      this.retenerServicio(this.ofertaId, this.resourceId, this.desde, paciente.value);
+      return;
+    }
+
+    // Una hora flexible (P36) nace al retener, como un servicio; un 409 dice que
+    // otro la tomó y se relee la lista, igual que en {@link retenerServicio}.
+    const retencion$ =
+      this.esFlexible && this.resourceId !== null && this.desde !== null
+        ? retenerHoraFlexible(this.scheduling, this.resourceId, this.desde, paciente.value)
+        : this.scheduling.placeHold(this.slotId, { patientProfileId: paciente.value });
+    retencion$.subscribe({
       next: (retencion) => {
         this.state.set(ready(null));
         this.retencion.set(retencion);
       },
-      error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
+      error: (error: unknown) => {
+        this.state.set(errorToViewState<null>(error));
+        if (this.esFlexible) this.cargarCupo();
+      },
+    });
+  }
+
+  /** Reencuentra la hora flexible pedida (P36); si ya no está libre, lo dice. */
+  private cargarHoraFlexible(resourceId: string, desde: Date): void {
+    releerHoraFlexible(
+      this.scheduling,
+      this.slotId,
+      resourceId,
+      desde,
+      MARGEN_DE_RELECTURA_MS,
+    ).subscribe({
+      next: (hora) =>
+        this.cupo.set(
+          hora === null
+            ? empty(
+                this.esAutoservicio
+                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
+                'Esa hora ya no está disponible: otra cita la ocupó. Elija otra de la lista.',
+              )
+            : ready(hora),
+        ),
+      error: (error: unknown) => this.cupo.set(errorToViewState<AgendaSlot>(error)),
+    });
+  }
+
+  /**
+   * Retiene el turno de un servicio: crea su cupo con la duración máxima.
+   *
+   * Un 409 dice que el horario ya no cabe —otro paciente lo tomó entre la
+   * lectura y ahora—. Se muestra el mensaje y se relee la disponibilidad: el
+   * paso a repetir es elegir otro, no insistir con el mismo.
+   */
+  private retenerServicio(
+    ofertaId: string,
+    resourceId: string,
+    inicio: Date,
+    pacienteId: string,
+  ): void {
+    this.scheduling
+      .placeServiceHold(ofertaId, { resourceId, startAt: inicio, patientProfileId: pacienteId })
+      .subscribe({
+        next: (retencion) => {
+          this.state.set(ready(null));
+          this.retencion.set({
+            id: retencion.id,
+            holdToken: retencion.holdToken,
+            expiresAt: retencion.expiresAt,
+            // El cupo del servicio es de un solo lugar y nace ya tomado.
+            remainingCapacity: 0,
+          });
+        },
+        error: (error: unknown) => {
+          this.state.set(errorToViewState<null>(error));
+          this.cargarCupo();
+        },
+      });
+  }
+
+  /**
+   * Reencuentra el horario de un servicio en la disponibilidad calculada.
+   *
+   * Que venga en la respuesta es la única prueba de que todavía cabe: no hay un
+   * cupo que revalidar porque el cupo todavía no existe. Se sintetiza uno con la
+   * forma de {@link AgendaSlot} para que el resumen sea el mismo que el de una
+   * consulta.
+   */
+  private cargarHorarioDeServicio(
+    ofertaId: string,
+    resourceId: string,
+    desde: Date,
+    hasta: Date,
+  ): void {
+    this.scheduling
+      .getServiceAvailability({
+        offeringId: ofertaId,
+        resourceId,
+        from: new Date(desde.getTime() - MARGEN_DE_RELECTURA_MS),
+        to: new Date(hasta.getTime() + MARGEN_DE_RELECTURA_MS),
+      })
+      .subscribe({
+        next: (disponibilidad) => {
+          const horario = disponibilidad.items.find(
+            (item) => item.startAt.getTime() === desde.getTime(),
+          );
+          if (horario === undefined) {
+            this.cupo.set(
+              empty(
+                this.esAutoservicio
+                  ? { label: 'Elegir otro horario', route: MIS_TURNOS_ROUTE }
+                  : { label: 'Volver a la agenda', route: AGENDA_ROUTE },
+                'Ese horario ya no está disponible: otra cita lo ocupó. Elija otro de la lista.',
+              ),
+            );
+            return;
+          }
+          this.cupo.set(
+            ready({
+              id: this.slotId,
+              resourceId,
+              scheduleTemplateId: null,
+              startAt: horario.startAt,
+              endAt: horario.endAtMax,
+              capacity: 1,
+              remainingCapacity: 1,
+              statusConceptId: '',
+              serviceConceptId: null,
+            }),
+          );
+        },
+        error: (error: unknown) => this.cupo.set(errorToViewState<AgendaSlot>(error)),
+      });
+  }
+
+  /** El nombre, el precio y la duración del servicio, de las ofertas del profesional. */
+  private cargarServicio(practitionerProfileId: string): void {
+    this.scheduling.listServiceOfferings(practitionerProfileId).subscribe({
+      next: (lista) => this.servicio.set(lista.find((o) => o.id === this.ofertaId) ?? null),
+      // Es contexto: perder la reserva por no poder leer el precio sería cambiar
+      // una comodidad por una funcionalidad.
+      error: () => this.servicio.set(null),
     });
   }
 
@@ -462,11 +694,18 @@ export class BookingNew {
         this.state.set(ready(null));
         this.toast.success(
           this.esAutoservicio
-            ? 'Enviamos tu solicitud. El profesional la confirma o te propone otro horario.'
-            : `El turno de ${paciente.label} quedó confirmado.`,
-          this.esAutoservicio ? 'Turno solicitado' : 'Reserva confirmada',
+            ? 'Enviamos su solicitud. El profesional la confirma o le propone otro horario.'
+            : `La cita de ${paciente.label} quedó confirmada.`,
+          this.esAutoservicio ? 'Cita solicitada' : 'Reserva confirmada',
         );
         if (this.esAutoservicio) {
+          const precargada = this.observacionPrecargada;
+          if (precargada !== null && motivo !== '') {
+            this.observaciones.marcarUsada(precargada.id);
+          }
+          // Su primera cita es el momento en que los avisos dejan de ser abstractos:
+          // se le ofrece el permiso una sola vez, sin bloquear la navegación.
+          void this.webPush.offerAfterFirstBooking();
           void this.router.navigateByUrl(MIS_TURNOS_ROUTE);
           return;
         }

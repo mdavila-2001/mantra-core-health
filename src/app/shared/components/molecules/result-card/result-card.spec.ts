@@ -35,7 +35,7 @@ class Anfitrion {
   readonly dato = signal<SearchResultItem>({
     id: 'r-1',
     title: 'Dra. Marisol Quispe Ticona',
-    link: '/buscar/perfil-profesional-detalle',
+    link: '/search/practitioner-profile-detail',
   });
 
   readonly impedirDuplicado = signal(false);
@@ -65,6 +65,40 @@ describe('ResultCard', () => {
     const host = elemento('li');
     expect(host).not.toBeNull();
     expect(host!.hasAttribute('app-result-card')).toBe(true);
+  });
+
+  /*
+   * Un paciente lee «4,9 · 55 opiniones» como «otros pacientes opinaron». Sin
+   * reseñas reales la tarjeta no puede decirlo: antes un respaldo inventaba
+   * la nota con un hash del nombre.
+   */
+  it('sin reseñas reales lo dice, con las estrellas vacías y sin número', () => {
+    const resenas = elemento('.tarjeta-resultado__resenas')!;
+    expect(resenas.classList).toContain('tarjeta-resultado__resenas--vacias');
+    expect(resenas.getAttribute('aria-label')).toBe('Sin reseñas todavía');
+    expect(resenas.textContent).toContain('Sin reseñas todavía');
+    expect(fixture.nativeElement.textContent).not.toMatch(/\d,\d|Excelente|Muy recomendado/u);
+  });
+
+  it('con reseñas reales dibuja las estrellas, la nota y cuántas son', () => {
+    anfitrion.dato.update((d) => ({ ...d, rating: { average: 4.6, count: 12 } }));
+    fixture.detectChanges();
+
+    const resenas = elemento('.tarjeta-resultado__resenas')!;
+    expect(resenas.textContent).toContain('4,6');
+    expect(resenas.textContent).toContain('(12)');
+    expect(resenas.getAttribute('aria-label')).toBe('4,6 de 5 estrellas, 12 opiniones');
+    expect(elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize).toBe('92%');
+    expect(elemento('.tarjeta-resultado__distincion')!.textContent).toContain('Muy recomendado');
+  });
+
+  // Antes toda nota menor a 4,8 salía «Muy recomendado»: un 3,7 también.
+  it('una nota mediana no se lleva un elogio que las reseñas no dicen', () => {
+    anfitrion.dato.update((d) => ({ ...d, rating: { average: 3.7, count: 60 } }));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__resenas')!.textContent).toContain('3,7');
+    expect(elemento('.tarjeta-resultado__distincion')).toBeNull();
   });
 
   it('sin imagen pinta `figureText`', () => {
@@ -155,12 +189,20 @@ describe('ResultCard', () => {
     expect(link.getAttribute('aria-busy')).toBeNull();
   });
 
+  /* Clínicas, farmacias y aseguradoras no tienen agenda: su botón no puede
+     ofrecer «Revisar disponibilidad». */
+  it('sin acción propia, el botón lleva a la ficha', () => {
+    const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
+    expect(accion.textContent?.trim()).toBe('Ver ficha');
+    expect(accion.getAttribute('href')).toBe('/search/practitioner-profile-detail');
+  });
+
   it('muestra la acción distinta y tampoco la navega dos veces', () => {
     anfitrion.dato.update((dato) => ({
       ...dato,
       action: {
         label: 'Revisar disponibilidad',
-        link: '/buscar/perfil-profesional-detalle',
+        link: '/search/practitioner-profile-detail',
         fragment: 'horarios',
       },
     }));
@@ -170,12 +212,94 @@ describe('ResultCard', () => {
 
     const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
     expect(accion.textContent?.trim()).toBe('Revisar disponibilidad');
-    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle#horarios');
+    expect(accion.getAttribute('href')).toBe('/search/practitioner-profile-detail#horarios');
 
     accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
     expect(navegar).toHaveBeenCalledTimes(1);
-    expect(navegar).toHaveBeenCalledWith('/buscar/perfil-profesional-detalle#horarios');
+    expect(navegar).toHaveBeenCalledWith('/search/practitioner-profile-detail#horarios');
+  });
+
+  it('con `photoUrl` pinta la foto de cabecera en vez de la figura', () => {
+    anfitrion.dato.update((d) => ({
+      ...d,
+      figureText: 'MQ',
+      photoUrl: '/alovida/directorio/medico-01.jpg',
+    }));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__foto img')?.getAttribute('src')).toBe(
+      '/alovida/directorio/medico-01.jpg',
+    );
+    expect(elemento('.tarjeta-resultado__figura')).toBeNull();
+  });
+
+  it('si la foto falla vuelve a la figura', () => {
+    anfitrion.dato.update((d) => ({ ...d, figureText: 'MQ', photoUrl: '/rota.jpg' }));
+    fixture.detectChanges();
+    elemento('.tarjeta-resultado__foto img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(elemento('.tarjeta-resultado__foto')).toBeNull();
+    expect(elemento('.tarjeta-resultado__figura')?.textContent?.trim()).toBe('MQ');
+  });
+
+  describe('insignia de verificación', () => {
+    it('un profesional con VERIFIED lleva el sello junto al nombre y no el check del rincón de la foto', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        seals: [{ label: 'Matrícula verificada', tone: 'ok' as const }],
+        verification: { status: 'VERIFIED' as const, verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(elemento('.tarjeta-resultado__titulo app-verification-badge .vb__check')).not.toBeNull();
+      expect(elemento('.tarjeta-resultado__foto-badge')).toBeNull();
+    });
+
+    it('un profesional en verificación muestra el reloj y ningún check', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        verification: { status: 'IN_REVIEW' as const, verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(elemento('.tarjeta-resultado__titulo app-verification-badge .vb__glyph')).not.toBeNull();
+      expect(elemento('.vb__check')).toBeNull();
+    });
+
+    it('un resultado que no es un profesional conserva su marca del rincón de la foto', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        seals: [{ label: 'Verificada por AloVida', tone: 'ok' as const }],
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(elemento('.tarjeta-resultado__foto-badge')).not.toBeNull();
+      expect(elemento('app-verification-badge')).toBeNull();
+    });
+  });
+
+  it('la línea de actividad lleva el pulso; las demás, el pin de ubicación', () => {
+    anfitrion.dato.update((d) => ({
+      ...d,
+      meta: [
+        { text: 'Clínica Los Olivos' },
+        { text: '312 encuentros atendidos', iconKey: 'actividad' },
+      ],
+    }));
+    fixture.detectChanges();
+
+    const iconos = Array.from<SVGElement>(
+      fixture.nativeElement.querySelectorAll('.tarjeta-resultado__meta-icono'),
+    );
+    expect(iconos).toHaveLength(2);
+    expect(iconos[0]!.querySelector('circle')).not.toBeNull();
+    expect(iconos[1]!.querySelector('circle')).toBeNull();
+    expect(iconos[1]!.querySelector('path')?.getAttribute('d')).toBe('M22 12h-4l-3 9L9 3l-3 9H2');
   });
 });

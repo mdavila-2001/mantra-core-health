@@ -1,126 +1,282 @@
-<ul class="conversaciones">
-  @for (conversacion of conversaciones(); track conversacion.id) {
-    <li
-      class="conversaciones__fila"
-      [class.is-sin-leer]="conversacion.unreadCount > 0"
-      [class.is-activa]="conversacion.id === activaId()"
-    >
-      <a
-        class="conversaciones__item"
-        data-testid="conversacion"
-        [routerLink]="['/messaging', conversacion.id]"
-        [attr.aria-current]="conversacion.id === activaId() ? 'page' : null"
-      >
-        <app-avatar
-          class="conversaciones__avatar"
-          [src]="avatarDeConQuien(conversacion)"
-          [name]="conQuien(conversacion)"
-          size="md"
-        />
-
-        <span class="conversaciones__texto">
-          <span class="conversaciones__cabecera">
-            <span class="conversaciones__con-quien">
-              @if (trozos(conversacion.id)[1]) {
-                {{ trozos(conversacion.id)[0]
-                }}<mark class="conversaciones__marca">{{ trozos(conversacion.id)[1] }}</mark
-                >{{ trozos(conversacion.id)[2] }}
-              } @else {
-                {{ conQuien(conversacion) }}
-              }
-            </span>
-            <span class="conversaciones__cuando">{{ hora(conversacion) }}</span>
-          </span>
-
-          <span class="conversaciones__pie">
-            <span class="conversaciones__vista-previa">
-              @if (esPropio(conversacion)) {
-                <!-- Un tilde: salió. El contrato de la bandeja todavía no dice
-                     si el otro lado lo leyó —está pedido al backend—, y pintar
-                     dos sin saberlo sería mentir sobre lo único que la gente
-                     mira antes de volver a escribir. -->
-                <span class="conversaciones__tick" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 12.6 4.6 4.6L18.5 6.4" /></svg>
-                </span>
-                <span class="solo-lectores">Enviado por vos: </span>
-              } @else if (prefijo(conversacion); as autor) {
-                <span class="conversaciones__autor">{{ autor }}</span>
-              }
-
-              @if (esSticker(conversacion)) {
-                <span class="conversaciones__texto-previa" data-testid="conversacion-sticker">Sticker</span>
-              } @else if (esAdjunto(conversacion)) {
-                <span class="conversaciones__clip" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20 11.5 12.2 19a4.6 4.6 0 0 1-6.5-6.5l8-7.8a3 3 0 0 1 4.3 4.3l-8 7.8a1.5 1.5 0 0 1-2.1-2.1l7.4-7.2" /></svg>
-                </span>
-              }
-
-              @if (!esSticker(conversacion)) {
-                <span class="conversaciones__texto-previa">{{ vistaPrevia(conversacion) }}</span>
-              }
-            </span>
-
-            <span class="conversaciones__marcas">
-              @if (esFavorito(conversacion.id)) {
-                <span class="conversaciones__estrella" aria-label="Favorito" title="Favorito">
-                  <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" /></svg>
-                </span>
-              }
-              @if (conversacion.unreadCount > 0) {
-                <span
-                  class="conversaciones__sin-leer"
-                  data-testid="conversacion-sin-leer"
-                  [attr.aria-label]="conversacion.unreadCount + ' mensajes sin leer'"
-                >
-                  {{ conversacion.unreadCount > 99 ? '99+' : conversacion.unreadCount }}
-                </span>
-              }
-            </span>
-          </span>
+<!-- El estado de la bandeja es un ViewState (ADR-0005): el host decide qué
+     se pinta y la lista le da la forma de chat a cada estado. Las filas son el
+     contenido por defecto (ready y S7, que además dice de cuándo son). -->
+<app-view-state-host [state]="estado()" (retry)="reintentar.emit()" (refresh)="reintentar.emit()">
+  <!-- S2: la forma de las filas, para que nada salte cuando llegan. -->
+  <div vsh-skeleton class="conversaciones__cargando" data-testid="bandeja-cargando">
+    <p class="solo-lectores" role="status">Cargando sus conversaciones…</p>
+    @for (fantasma of fantasmas; track fantasma) {
+      <div class="conversaciones__fantasma" aria-hidden="true">
+        <app-skeleton variant="circle" width="48px" height="48px" />
+        <span class="conversaciones__fantasma-texto">
+          <app-skeleton variant="rect" width="55%" height="14px" />
+          <app-skeleton variant="rect" width="85%" height="12px" />
         </span>
-      </a>
+      </div>
+    }
+  </div>
 
-      <!-- El menú de la fila. Fuera del enlace: un botón dentro de un `<a>` no
-           es marcado válido y el lector de pantalla anuncia una sola cosa. -->
-      <button
-        class="conversaciones__mas"
-        type="button"
-        data-testid="conversacion-menu"
-        [attr.aria-label]="'Opciones de la conversación con ' + conQuien(conversacion)"
-        [attr.aria-expanded]="menuAbierto() === conversacion.id"
-        (click)="alternarMenu(conversacion.id, $event)"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6" /></svg>
-      </button>
+  <!-- S3: vacío con próxima acción. Los chats con una farmacia nacen de un
+       producto o de un pedido, así que la salida es ir a buscarlos. -->
+  <app-empty-state
+    vsh-empty
+    class="conversaciones__estado"
+    data-testid="bandeja-vacia"
+    title="Todavía no tiene chats"
+    description="Consulte a una farmacia desde un producto o desde su pedido, o escríbale a un profesional. Sus conversaciones aparecerán aquí."
+    variant="empty"
+  >
+    <a empty-actions app-button variant="primary" routerLink="/search/medications">
+      Buscar medicamentos
+    </a>
+    <a empty-actions app-button variant="secondary" routerLink="/search/practitioners">
+      Buscar profesionales
+    </a>
+  </app-empty-state>
 
-      @if (menuAbierto() === conversacion.id) {
-        <ul class="conversaciones__menu" role="menu">
-          <li role="none">
-            <button role="menuitem" type="button" (click)="ejecutar('favorito', conversacion.id, $event)">
-              {{ esFavorito(conversacion.id) ? 'Quitar de favoritos' : 'Marcar como favorito' }}
-            </button>
-          </li>
-          <li role="none">
-            <button role="menuitem" type="button" (click)="ejecutar('archivar', conversacion.id, $event)">
-              {{ estaArchivado(conversacion.id) ? 'Desarchivar' : 'Archivar' }}
-            </button>
-          </li>
-          @if (conversacion.unreadCount > 0) {
-            <li role="none">
-              <button role="menuitem" type="button" (click)="ejecutar('leer', conversacion.id, $event)">
-                Marcar como leído
-              </button>
-            </li>
+  <!-- S8: la petición no llegó. Reintentar es la salida. -->
+  <app-empty-state
+    vsh-offline
+    class="conversaciones__estado"
+    data-testid="bandeja-sin-conexion"
+    title="Sin conexión"
+    description="No pudimos comunicarnos con el servidor. Revise su conexión: sus chats siguen ahí."
+    variant="error"
+  >
+    <button empty-actions app-button variant="primary" data-testid="bandeja-reintentar" (clicked)="reintentar.emit()">
+      Reintentar
+    </button>
+  </app-empty-state>
+
+  <!-- S5: la API no deja leer esta bandeja con este perfil. S5 también
+       necesita una salida: volver a pedirla. Un permiso que se recuperó —o una
+       vitrina de la que el store ya volvió al perfil propio— se resuelve con
+       otra lectura; si sigue prohibido, la API lo vuelve a decir. -->
+  <app-empty-state
+    vsh-forbidden
+    class="conversaciones__estado"
+    data-testid="bandeja-sin-permiso"
+    title="Sin acceso a estos chats"
+    [description]="motivo()"
+    variant="error"
+  >
+    <!-- S5≠S6: un candado, no la nube tachada de «sin conexión». -->
+    <svg empty-icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10.5" width="14" height="10" rx="2" /><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" /></svg>
+    <button empty-actions app-button variant="primary" data-testid="bandeja-sin-permiso-reintentar" (clicked)="reintentar.emit()">
+      Volver a intentar
+    </button>
+  </app-empty-state>
+
+  <!-- S9: algo inesperado. El motivo una vez, y el código para soporte. -->
+  <app-empty-state
+    vsh-error
+    class="conversaciones__estado"
+    data-testid="bandeja-error"
+    title="Algo salió mal"
+    [description]="motivo()"
+    variant="error"
+  >
+    <!-- S9: una alerta; la nube tachada queda para S8. -->
+    <svg empty-icon viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z" /><path d="M12 10v4" /><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none" /></svg>
+    <p empty-actions class="conversaciones__codigo">
+      Código de soporte: <code class="tabular-nums" data-testid="bandeja-request-id">{{ requestId() }}</code>
+    </p>
+    <button empty-actions app-button variant="primary" data-testid="bandeja-reintentar" (clicked)="reintentar.emit()">
+      Reintentar
+    </button>
+  </app-empty-state>
+
+    <ul class="conversaciones">
+      @for (conversacion of conversaciones(); track conversacion.id) {
+        <li
+          class="conversaciones__fila"
+          [class.is-sin-leer]="conversacion.unreadCount > 0"
+          [class.is-activa]="conversacion.id === activaId()"
+          [class.is-menu-abierto]="menuAbierto() === conversacion.id"
+        >
+          <a
+            class="conversaciones__item"
+            data-testid="conversacion"
+            [routerLink]="['/messaging', conversacion.id]"
+            [attr.aria-current]="conversacion.id === activaId() ? 'page' : null"
+          >
+            <app-avatar
+              class="conversaciones__avatar"
+              [src]="avatarDeConQuien(conversacion)"
+              [name]="conQuien(conversacion)"
+              size="lg"
+            />
+
+            <span class="conversaciones__texto">
+              <span class="conversaciones__cabecera">
+                <span class="conversaciones__nombre-fila">
+                  <span class="conversaciones__con-quien">
+                    @if (trozos(conversacion.id)[1]) {
+                      {{ trozos(conversacion.id)[0]
+                      }}<mark class="conversaciones__marca">{{ trozos(conversacion.id)[1] }}</mark
+                      >{{ trozos(conversacion.id)[2] }}
+                    } @else {
+                      {{ conQuien(conversacion) }}
+                    }
+                  </span>
+                  <!-- Dentro de un enlace no se anida un foco: sin tabstop, y el
+                       significado queda en el nombre accesible y en `title`. -->
+                  @if (verificacionDe(conversacion); as verificacion) {
+                    <app-verification-badge
+                      size="sm"
+                      [interactive]="false"
+                      [status]="verificacion.status"
+                      [verifiedAt]="verificacion.verifiedAt"
+                      [validUntil]="verificacion.validUntil"
+                      [subject]="conQuien(conversacion)"
+                    />
+                  }
+                </span>
+                <span class="conversaciones__cuando">{{ hora(conversacion) }}</span>
+              </span>
+
+              <span class="conversaciones__pie">
+                @let vista = vistaPrevia(conversacion);
+                <span class="conversaciones__vista-previa" [attr.data-tipo]="vista.tipo">
+                  @if (esPropio(conversacion)) {
+                    <!-- Un tilde: salió. El contrato de la bandeja todavía no dice
+                         si el otro lado lo leyó —está pedido al backend—, y pintar
+                         dos sin saberlo sería mentir sobre lo único que la gente
+                         mira antes de volver a escribir. -->
+                    <span class="conversaciones__tick" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 12.6 4.6 4.6L18.5 6.4" /></svg>
+                    </span>
+                    <span class="solo-lectores">Enviado por usted: </span>
+                  } @else if (prefijo(conversacion); as autor) {
+                    <span class="conversaciones__autor">{{ autor }}</span>
+                  }
+
+                  @switch (vista.tipo) {
+                    @case ('sticker') {
+                      <span class="conversaciones__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 12.5V8a4.5 4.5 0 0 0-4.5-4.5H8A4.5 4.5 0 0 0 3.5 8v8A4.5 4.5 0 0 0 8 20.5h4.5z" /><path d="M20.5 12.5h-4a4 4 0 0 0-4 4v4" /><path d="M9 10h.01M15 10h.01" /></svg>
+                      </span>
+                      <span class="conversaciones__texto-previa" data-testid="conversacion-sticker">Sticker</span>
+                    }
+                    @case ('adjunto') {
+                      <span class="conversaciones__icono" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20 11.5 12.2 19a4.6 4.6 0 0 1-6.5-6.5l8-7.8a3 3 0 0 1 4.3 4.3l-8 7.8a1.5 1.5 0 0 1-2.1-2.1l7.4-7.2" /></svg>
+                      </span>
+                      <span class="conversaciones__texto-previa" data-testid="conversacion-adjunto">{{ vista.texto }}</span>
+                    }
+                    @case ('contexto') {
+                      <span class="conversaciones__icono conversaciones__icono--contexto" aria-hidden="true">
+                        @switch (vista.contexto) {
+                          @case ('pedido') {
+                            <!-- El recibo del pedido, con su borde dentado: la
+                                 bolsa de trazo fino, a 16 px, se leía como un
+                                 tacho de basura. -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+                          }
+                          @case ('producto') {
+                            <!-- La cápsula del producto. -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="2.8" y="8.2" width="18.4" height="7.6" rx="3.8" transform="rotate(-45 12 12)" /><path d="m8.8 8.8 6.4 6.4" /></svg>
+                          }
+                          @case ('servicio') {
+                            <!-- El estetoscopio del servicio. -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3.5v5a4 4 0 0 0 8 0v-5" /><path d="M10 12.5V15a4.5 4.5 0 0 0 9 0v-2" /><circle cx="19" cy="11" r="2" /></svg>
+                          }
+                          @default {
+                            <!-- La vidriera de la farmacia. -->
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 10v10h16V10" /><path d="M3 10 5 4h14l2 6z" /><path d="M12 13v4M10 15h4" /></svg>
+                          }
+                        }
+                      </span>
+                      <span class="conversaciones__texto-previa" data-testid="conversacion-contexto">{{ vista.texto }}</span>
+                    }
+                    @default {
+                      <span class="conversaciones__texto-previa">{{ vista.texto }}</span>
+                    }
+                  }
+                </span>
+
+                <span class="conversaciones__marcas">
+                  @if (estaBloqueada(conversacion)) {
+                    <span class="conversaciones__bloqueada" data-testid="conversacion-bloqueada" title="Bloqueado">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></svg>
+                      <span class="solo-lectores">Bloqueado</span>
+                    </span>
+                  }
+                  @if (esFavorito(conversacion.id)) {
+                    <span class="conversaciones__estrella" aria-label="Favorito" title="Favorito">
+                      <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" /></svg>
+                    </span>
+                  }
+                  @if (conversacion.unreadCount > 0) {
+                    <span
+                      class="conversaciones__sin-leer"
+                      data-testid="conversacion-sin-leer"
+                      [attr.aria-label]="conversacion.unreadCount + ' mensajes sin leer'"
+                    >
+                      {{ conversacion.unreadCount > 99 ? '99+' : conversacion.unreadCount }}
+                    </span>
+                  }
+                </span>
+              </span>
+            </span>
+          </a>
+
+          <!-- El menú de la fila. Fuera del enlace: un botón dentro de un `<a>` no
+               es marcado válido y el lector de pantalla anuncia una sola cosa. -->
+          <button
+            #mas
+            class="conversaciones__mas"
+            type="button"
+            data-testid="conversacion-menu"
+            [attr.aria-label]="'Opciones de la conversación con ' + conQuien(conversacion)"
+            [attr.aria-expanded]="menuAbierto() === conversacion.id"
+            (click)="alternarMenu(conversacion.id, $event)"
+            (keydown.escape)="cerrarMenu()"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><circle cx="12" cy="5.5" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="12" cy="18.5" r="1.7" /></svg>
+          </button>
+
+          @if (menuAbierto() === conversacion.id) {
+            <!-- Escape cierra y devuelve el foco al botón que lo abrió. -->
+            <ul class="conversaciones__menu" role="menu">
+              <li role="none">
+                <button role="menuitem" type="button" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('favorito', conversacion.id, $event)">
+                  {{ esFavorito(conversacion.id) ? 'Quitar de favoritos' : 'Marcar como favorito' }}
+                </button>
+              </li>
+              <li role="none">
+                <button role="menuitem" type="button" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('archivar', conversacion.id, $event)">
+                  {{ estaArchivado(conversacion.id) ? 'Desarchivar' : 'Archivar' }}
+                </button>
+              </li>
+              @if (conversacion.unreadCount > 0) {
+                <li role="none">
+                  <button role="menuitem" type="button" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('leer', conversacion.id, $event)">
+                    Marcar como leído
+                  </button>
+                </li>
+              }
+              @if (!esGrupo(conversacion)) {
+                <li role="none">
+                  <button role="menuitem" type="button" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('perfil', conversacion.id, $event)">
+                    Ver perfil
+                  </button>
+                </li>
+                <li role="none">
+                  @if (estaBloqueada(conversacion)) {
+                    <button role="menuitem" type="button" data-testid="conversacion-desbloquear" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('desbloquear', conversacion.id, $event)">
+                      Desbloquear
+                    </button>
+                  } @else {
+                    <button role="menuitem" type="button" data-testid="conversacion-bloquear" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('bloquear', conversacion.id, $event)">
+                      Bloquear
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
           }
-          @if (!esGrupo(conversacion)) {
-            <li role="none">
-              <button role="menuitem" type="button" (click)="ejecutar('perfil', conversacion.id, $event)">
-                Ver perfil
-              </button>
-            </li>
-          }
-        </ul>
+        </li>
       }
-    </li>
-  }
-</ul>
+    </ul>
+</app-view-state-host>

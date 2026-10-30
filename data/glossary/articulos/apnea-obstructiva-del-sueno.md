@@ -1,0 +1,74 @@
+---
+slug: apnea-obstructiva-del-sueno
+---
+
+## [definition] Introducción
+
+La apnea obstructiva del sueño (AOS) es un trastorno en el que la vía aérea superior se estrecha o se cierra de forma repetida durante el sueño, de modo que el flujo de aire se reduce (hipopnea) o se detiene (apnea) durante unos instantes. Cada episodio suele terminar con un ronquido fuerte, un resoplido o un microdespertar, y el sueño pierde calidad aunque la persona no recuerde haberse despertado. El término cubre a adultos y a niños.
+
+Conviene distinguirla de otras entidades. La apnea central del sueño no se debe a una obstrucción, sino a que el cerebro no envía bien las señales para respirar. Roncar tampoco equivale a tener apnea. El síndrome de obesidad-hipoventilación y la apnea del recién nacido se clasifican aparte.
+
+## [causes] Causas
+
+La causa inmediata es el colapso de la garganta cuando los músculos se relajan durante el sueño. Predisponen la obesidad, el cuello ancho, la mandíbula inferior corta, la lengua o el paladar que favorecen el cierre y, en niños, las amígdalas o adenoides grandes, que son la causa más frecuente. Dormir boca arriba y tomar alcohol o somníferos antes de acostarse pueden empeorarla.
+
+## [risk_factors] Factores de riesgo
+
+• Sobrepeso y obesidad.
+• Sexo masculino.
+• Antecedentes familiares.
+• Vía aérea pequeña o estrechada.
+• En la infancia, amígdalas y adenoides aumentadas.
+• Alteraciones hormonales que modifican el calibre de la vía aérea.
+
+## [symptoms] Síntomas
+
+Los más característicos son los ronquidos intensos, las pausas respiratorias que observa quien duerme al lado, los ahogos nocturnos y la somnolencia diurna. Pueden sumarse cansancio al despertar, dolor de cabeza matutino, irritabilidad, problemas de memoria o concentración y riesgo de dormirse al conducir. Muchas personas no son conscientes de sus episodios, por lo que el testimonio de la pareja es una pista valiosa. El insomnio puede coexistir, pero no es lo típico.
+
+## [diagnosis] Diagnóstico
+
+Se basa en la historia clínica, la exploración de boca, cuello y garganta, y un estudio del sueño dentro de una evaluación completa. La prueba estándar es la polisomnografía, que registra durante la noche la actividad cerebral, los movimientos, la respiración, el oxígeno y el ritmo cardíaco. En adultos sin otras enfermedades importantes y con síntomas sugestivos, la guía de la Academia Americana de Medicina del Sueño admite también un estudio domiciliario simplificado con un equipo adecuado. La polisomnografía se prefiere si hay enfermedad cardíaca o pulmonar significativa, debilidad neuromuscular, consumo crónico de opioides, ictus previo o insomnio grave. Los cuestionarios y los algoritmos de predicción no deben sustituir a un estudio del sueño.
+
+## [treatment_overview] Tratamiento (visión general)
+
+El abordaje se individualiza y combina varias opciones:
+
+• Medidas de estilo de vida: bajar de peso, evitar el alcohol y los sedantes antes de dormir y no dormir boca arriba; son más útiles en las formas leves.
+• Presión positiva en la vía aérea (CPAP, o su variante automática): un equipo que envía aire a presión por una mascarilla. La guía recomienda usarla frente a no tratar en adultos con somnolencia excesiva, y la sugiere si hay peor calidad de vida relacionada con el sueño o hipertensión. Requiere educación al inicio y seguimiento.
+• Dispositivos bucales que adelantan la mandíbula.
+• Cirugía, cuando lo anterior no funciona o hay un problema anatómico corregible; puede no curar del todo. En niños, extirpar amígdalas y adenoides es el tratamiento de primera línea, aunque la apnea puede persistir.
+• Fármacos: un ensayo de fase 3 mostró que la tirzepatida, un fármaco para la obesidad, mejoró la apnea en adultos con obesidad y AOS moderada o grave; su indicación corresponde al especialista.
+
+## [complications] Complicaciones
+
+Sin tratamiento, la AOS se asocia con hipertensión arterial, arritmias, insuficiencia cardíaca, infarto e ictus, además de depresión y mayor riesgo de accidentes de tráfico y laborales. Son asociaciones observadas en estudios poblacionales; que el CPAP prevenga los eventos cardiovasculares no está demostrado.
+
+## [when_to_seek_care] Cuándo consultar
+
+Conviene consultar si hay cansancio o somnolencia diurna sin explicación, si los familiares notan ronquidos con pausas respiratorias, o si los síntomas no mejoran con el tratamiento iniciado.
+
+## [considerations] Qué dice la evidencia
+
+El diagnóstico y el tratamiento con presión positiva en adultos se apoyan en dos guías de la Academia Americana de Medicina del Sueño con revisión sistemática y metodología GRADE (Kapur et al., 2017; Patil et al., 2019). Para la apnea persistente tras la cirugía de amígdalas en niños, la guía de la Sociedad Torácica Americana (Ehsan et al., 2024) reconoce que se basa en evidencia limitada y opinión de expertos. La prevalencia (Benjafield et al., 2019) es una estimación modelada, financiada por un fabricante de CPAP, con datos fiables de solo 16 países y muy dependiente de los criterios usados. El ensayo con tirzepatida (Malhotra et al., 2024) lo financió el fabricante y no evaluó eventos cardiovasculares.
+
+Hay consenso en confirmar el diagnóstico con un estudio del sueño y en que la presión positiva alivia la somnolencia. Es discutido si tratar la apnea reduce las complicaciones cardiovasculares: el ensayo SAVE (McEvoy et al., 2016), en personas con enfermedad coronaria o cerebrovascular previa y uso medio de CPAP limitado, no halló reducción de eventos, aunque sí menos ronquidos y somnolencia y mejor ánimo. Los síntomas y las causas descansan en fuentes institucionales (NHLBI, MedlinePlus).
+
+## [associated_conditions] Conceptos relacionados
+
+• Obesidad: factor de riesgo principal y objetivo central del tratamiento.
+• Hipertensión arterial: se asocia con la apnea no tratada.
+• Insuficiencia cardíaca, arritmias, infarto e ictus: complicaciones cardiovasculares vinculadas con la AOS.
+• Apnea central del sueño: otro tipo de apnea, de origen neurológico.
+
+## [references]
+
+- Sleep apnea | https://www.nhlbi.nih.gov/health/sleep-apnea | NHLBI (NIH)
+- Apnea del sueño | https://medlineplus.gov/spanish/sleepapnea.html | MedlinePlus
+- Apnea obstructiva del sueño en adultos, enciclopedia médica | https://medlineplus.gov/spanish/ency/article/000811.htm | MedlinePlus
+- G47.33 Obstructive sleep apnea (adult) (pediatric) | https://www.aapc.com/codes/icd-10-codes/G47.33 | ICD-10-CM
+- Kapur et al., 2017. Clinical Practice Guideline for Diagnostic Testing for Adult Obstructive Sleep Apnea: An American Academy of Sleep Medicine Clinical Practice Guideline. PMID 28162150. DOI 10.5664/jcsm.6506 | https://europepmc.org/article/MED/28162150 | Journal of Clinical Sleep Medicine
+- Patil et al., 2019. Treatment of Adult Obstructive Sleep Apnea with Positive Airway Pressure: An American Academy of Sleep Medicine Clinical Practice Guideline. PMID 30736887. DOI 10.5664/jcsm.7640 | https://europepmc.org/article/MED/30736887 | Journal of Clinical Sleep Medicine
+- Benjafield et al., 2019. Estimation of the global prevalence and burden of obstructive sleep apnoea: a literature-based analysis. PMID 31300334. DOI 10.1016/S2213-2600(19)30198-5 | https://europepmc.org/article/MED/31300334 | The Lancet Respiratory Medicine
+- McEvoy et al., 2016. CPAP for Prevention of Cardiovascular Events in Obstructive Sleep Apnea. PMID 27571048. DOI 10.1056/NEJMoa1606599 | https://europepmc.org/article/MED/27571048 | New England Journal of Medicine
+- Malhotra et al., 2024. Tirzepatide for the Treatment of Obstructive Sleep Apnea and Obesity. PMID 38912654. DOI 10.1056/NEJMoa2404881 | https://europepmc.org/article/MED/38912654 | New England Journal of Medicine
+- Ehsan et al., 2024. Management of Persistent, Post-adenotonsillectomy Obstructive Sleep Apnea in Children: An Official American Thoracic Society Clinical Practice Guideline. PMID 37890009. DOI 10.1164/rccm.202310-1857ST | https://europepmc.org/article/MED/37890009 | American Journal of Respiratory and Critical Care Medicine

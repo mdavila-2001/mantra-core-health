@@ -44,11 +44,16 @@ test.afterAll(async () => {
 /**
  * Entra y abre el importador con la grilla ya dibujada.
  *
+ * Entra con `?specialty=` vacío (= «Todas las especialidades»): sin el
+ * parámetro la pantalla aplica por omisión las especialidades del médico, y
+ * estas pruebas miden el recorte y la paginación sobre el arancel entero, no
+ * sobre lo que le toque a la cuenta de prueba.
+ *
  * @param page - La página de la prueba.
  */
 async function abrirImportador(page: Page): Promise<void> {
   await entrar(page, administrador());
-  await irA(page, IMPORTAR);
+  await irA(page, `${IMPORTAR}?specialty=`);
   await expect(page.getByTestId('procedimiento').first()).toBeVisible({
     timeout: 30_000,
   });
@@ -103,7 +108,7 @@ test('AC-22-12 · el filtro por especialidad recorta y queda en la URL', async (
   });
   await estable(page);
 
-  // «Auditoría Médica» tiene cuatro procedimientos; sin filtro se traen treinta.
+  // «Auditoría Médica» tiene cuatro procedimientos; sin filtro se traen sesenta (una página).
   const despues = await page.getByTestId('procedimiento').count();
   expect(despues).toBeLessThan(antes);
 
@@ -125,7 +130,7 @@ test('AC-22-17 · pagina por cursor: no trae las 4408 de una', async ({ page }) 
 
   const primera = await page.getByTestId('procedimiento').count();
   // Una página, no el arancel entero.
-  expect(primera).toBeLessThanOrEqual(30);
+  expect(primera).toBeLessThanOrEqual(60);
 
   const mas = page.getByTestId('specialty-browser-more');
   await expect(mas).toBeVisible();
@@ -143,7 +148,9 @@ test('AC-22-15 · la fila marcada por el arancel avisa antes de importarse', asy
   // «Riesgo quirirgico preoperatorio cardiol6gico» es una de las 228 entradas
   // que el arancel marcó como dañadas por el reconocimiento óptico.
   await entrar(page, administrador());
-  await irA(page, `${IMPORTAR}?q=${encodeURIComponent('Riesgo quirirgico')}`);
+  // `specialty=` vacío: la búsqueda va sobre todo el arancel, no sobre la
+  // especialidad por omisión de la cuenta de prueba.
+  await irA(page, `${IMPORTAR}?specialty=&q=${encodeURIComponent('Riesgo quirirgico')}`);
   await expect(page.getByTestId('procedimiento').first()).toBeVisible({
     timeout: 30_000,
   });

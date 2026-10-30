@@ -76,4 +76,75 @@ describe('ActivityChart', () => {
       ['mes 2026-09', '20'],
     ]);
   });
+  describe('con seguro y sin seguro', () => {
+    const doble = (clave: string, conSeguro: number, sinSeguro: number): PuntoDeSerie => ({
+      ...punto(clave, conSeguro + sinSeguro),
+      conSeguro,
+      sinSeguro,
+    });
+
+    const altos = (raiz: HTMLElement, serie: 'con' | 'sin'): string[] =>
+      [...raiz.querySelectorAll<HTMLElement>(`.grafico__barra--${serie}`)].map(
+        (barra) => barra.style.height,
+      );
+
+    it('dibuja dos barras por mes y una leyenda que nombra las dos series', () => {
+      const raiz = montar([doble('2026-08', 10, 20), doble('2026-09', 5, 15)]);
+
+      expect(raiz.querySelectorAll('.grafico__barra--con')).toHaveLength(2);
+      expect(raiz.querySelectorAll('.grafico__barra--sin')).toHaveLength(2);
+      const leyenda = raiz.querySelector('[data-testid="leyenda-seguro"]')?.textContent ?? '';
+      expect(leyenda).toContain('Con seguro');
+      expect(leyenda).toContain('Sin seguro');
+    });
+
+    it('las dos series comparten escala: la más alta de las dos es el 100 %', () => {
+      const raiz = montar([doble('2026-08', 10, 20), doble('2026-09', 5, 15)]);
+
+      expect(altos(raiz, 'con')).toEqual(['50%', '25%']);
+      expect(altos(raiz, 'sin')).toEqual(['100%', '75%']);
+    });
+
+    it('el mes de más consultas lleva las dos cifras encima', () => {
+      const raiz = montar([doble('2026-08', 10, 20), doble('2026-09', 5, 15)]);
+
+      const cifras = [...raiz.querySelectorAll('.grafico__cifra')].map((c) =>
+        c.textContent?.trim(),
+      );
+      expect(cifras).toEqual(['10', '20']);
+    });
+
+    it('el resumen separa el total con seguro y sin seguro', () => {
+      const raiz = montar([doble('2026-08', 10, 20), doble('2026-09', 5, 15)]);
+
+      const resumen =
+        raiz.querySelector('.grafico__resumen')?.textContent?.replace(/\s+/g, ' ') ?? '';
+      expect(resumen).toContain('50 en 2 meses');
+      expect(resumen).toContain('15 con seguro');
+      expect(resumen).toContain('35 sin seguro');
+    });
+
+    it('la tabla trae las dos series y el total de cada mes', () => {
+      const raiz = montar([doble('2026-08', 10, 20)]);
+
+      const cabecera = [...raiz.querySelectorAll('thead th')].map((c) => c.textContent?.trim());
+      expect(cabecera).toEqual(['Mes', 'Con seguro', 'Sin seguro', 'Total']);
+      const fila = [...(raiz.querySelector('tbody tr')?.children ?? [])].map((c) =>
+        c.textContent?.trim(),
+      );
+      expect(fila).toEqual(['mes 2026-08', '10', '20', '30']);
+    });
+
+    it('si un mes llega sin desglose, vuelve a una sola serie con el total', () => {
+      const raiz = montar([doble('2026-08', 10, 20), punto('2026-09', 15)]);
+
+      expect(raiz.querySelector('[data-testid="leyenda-seguro"]')).toBeNull();
+      expect(raiz.querySelectorAll('.grafico__barra--con')).toHaveLength(0);
+      expect(altos(raiz, 'con')).toEqual([]);
+      const barras = [...raiz.querySelectorAll<HTMLElement>('.grafico__barra')].map(
+        (barra) => barra.style.height,
+      );
+      expect(barras).toEqual(['100%', '50%']);
+    });
+  });
 });

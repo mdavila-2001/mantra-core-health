@@ -4,7 +4,7 @@ import {
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { FormBuilder } from './form-builder';
@@ -16,6 +16,18 @@ import {
 } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 const RUTA = '/form-builder';
+const PERFIL_PROPIO = '/profiles/practitioners/me/summary';
+
+/** El perfil propio de una cardióloga, con lo mínimo que la lectura traduce. */
+function perfilDe(specialtyConceptId: string) {
+  return {
+    createdAt: '2026-01-01T00:00:00Z',
+    specialties: [{ specialtyConceptId, isPrimary: true, validFrom: null, validTo: null }],
+    credentials: [],
+    licenses: [],
+    affiliations: [],
+  };
+}
 
 /** Un campo del formulario estándar: existe, no se toca. */
 function estandar(n: number) {
@@ -91,6 +103,12 @@ describe('FormBuilder', () => {
   afterEach(() => {
     for (const pendiente of http.match((r) => r.url === '/terminology/concepts')) {
       pendiente.flush({ items: [], count: 0, limit: 0, nextCursor: null });
+    }
+    // La pantalla pregunta la especialidad del perfil para preseleccionar el
+    // filtro. Las pruebas que no la miran responden «sin perfil»: el
+    // comportamiento de siempre, el catálogo entero.
+    for (const pendiente of http.match((r) => r.url === PERFIL_PROPIO)) {
+      pendiente.flush(null, { status: 404, statusText: 'Not Found' });
     }
     http.verify();
   });
@@ -391,9 +409,9 @@ describe('FormBuilder', () => {
     // y lo que evita que una relectura pise lo que se está escribiendo.
     abrirPlantilla({ ...PLANTILLA, fields: [ELECCION] });
 
-    guardar(ELECCION, { name: '¿Fumás?' });
+    guardar(ELECCION, { name: '¿Fuma?' });
 
-    expect(campoPropio()['name']).toBe('¿Fumás?');
+    expect(campoPropio()['name']).toBe('¿Fuma?');
     http.expectOne((r) => r.method === 'PATCH').flush({ ok: true });
   });
 
@@ -482,10 +500,10 @@ describe('FormBuilder', () => {
   it('la descripción se sirve como la ayuda bajo el campo', () => {
     abrirPlantilla({
       ...PLANTILLA,
-      fields: [{ ...ELECCION, description: 'Contá desde el último cigarrillo.' }],
+      fields: [{ ...ELECCION, description: 'Cuente desde el último cigarrillo.' }],
     });
 
-    expect(camposDeLaPrevia()[0]!['hint']).toBe('Contá desde el último cigarrillo.');
+    expect(camposDeLaPrevia()[0]!['hint']).toBe('Cuente desde el último cigarrillo.');
   });
 
   it('con «Otro» se sirve a la vista aunque tenga muchas opciones: un desplegable no tiene dónde escribir', () => {
@@ -638,7 +656,7 @@ describe('FormBuilder', () => {
     abrirPlantilla();
 
     const aviso = harness.routeNativeElement?.querySelector('[data-testid="aviso-estandar"]');
-    expect(aviso?.textContent).toContain('No podés modificar esto');
+    expect(aviso?.textContent).toContain('No puede modificar esto');
     expect(interno<() => unknown>('procedencia')()).toBeNull();
   });
 
@@ -710,6 +728,126 @@ describe('FormBuilder', () => {
     expect(interno<() => string | null>('agarrado')()).toBeNull();
   });
   /* ---- buscador y filtros del catálogo ------------------------------------ */
+
+  describe('mis formularios (REQ-27-001/002/008)', () => {
+    const PROPIO = { ...estandar(9), assignmentId: 'as-mio', fieldId: 'f-mio', own: true };
+    const EXTENDIDA: ChartTemplate = {
+      ...PLANTILLA,
+      id: 'tpl-mia',
+      code: 'CARDIO_FICHA_BASE',
+      name: 'Ficha cardiológica',
+      version: 3,
+      specialtyConceptId: 'sp-2',
+      fields: [estandar(1), PROPIO],
+    };
+
+    function listar(plantillas: readonly ChartTemplate[]): void {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush(plantillas);
+      harness.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({
+        items: [{ conceptId: 'sp-2', code: 'CARD', display: 'Cardiología', codeSystemVersionId: 'v1' }],
+        count: 1,
+        limit: 200,
+        nextCursor: null,
+      });
+      harness.detectChanges();
+    }
+
+    it('al entrar lista sólo los que su organización extendió, con versión y especialidad', () => {
+      listar([PLANTILLA, EXTENDIDA]);
+
+      const filas = harness.routeNativeElement?.querySelectorAll('[data-testid="mi-formulario"]');
+      expect(filas?.length).toBe(1);
+      const texto = filas?.[0]?.textContent ?? '';
+      expect(texto).toContain('Ficha cardiológica');
+      expect(texto).toContain('Versión 3');
+      expect(texto).toContain('Cardiología');
+      expect(texto).toContain('1 campo propio');
+      // El catálogo no se dibuja hasta que se pide.
+      expect(harness.routeNativeElement?.querySelector('app-specialty-browser')).toBeNull();
+    });
+
+    it('la ficha de la cita médica está por defecto: primera, marcada y sin campos propios', () => {
+      const CITA: ChartTemplate = {
+        ...PLANTILLA,
+        id: 'tpl-cita',
+        code: 'TRANSV_CITA_MEDICA',
+        name: 'Cita médica — registro estándar de la consulta',
+        version: 1,
+        fields: [estandar(1)],
+      };
+      listar([EXTENDIDA, PLANTILLA, CITA]);
+
+      const filas = harness.routeNativeElement?.querySelectorAll('[data-testid="mi-formulario"]');
+      expect(filas?.length).toBe(2);
+      const primera = filas?.[0]?.textContent ?? '';
+      expect(primera).toContain('Cita médica — registro estándar de la consulta');
+      expect(primera).toContain('Por defecto');
+      expect(primera).not.toContain('campos propios');
+      // Su especialidad (la transversal) no está entre las resueltas: no dice
+      // «sin nombre», que haría pensar que la ficha está rota.
+      expect(primera).toContain('Para todas las especialidades');
+      expect(primera).not.toContain('Especialidad sin nombre');
+      expect(filas?.[1]?.textContent ?? '').toContain('Ficha cardiológica');
+      expect(
+        harness.routeNativeElement?.querySelectorAll('[data-testid="mi-formulario-por-defecto"]')
+          .length,
+      ).toBe(1);
+      expect(harness.routeNativeElement?.textContent).not.toContain(
+        'Todavía no tiene formularios propios',
+      );
+    });
+
+    it('la fila entera abre la edición del formulario', () => {
+      listar([EXTENDIDA]);
+
+      const fila = harness.routeNativeElement?.querySelector<HTMLButtonElement>(
+        '[data-testid="mi-formulario"]',
+      );
+      fila?.click();
+      http.expectOne((r) => r.url === `/charts/templates/${EXTENDIDA.id}`).flush(EXTENDIDA);
+      http.expectOne((r) => r.url.startsWith('/forms/assignments/budget')).flush(PRESUPUESTO);
+      harness.detectChanges();
+
+      expect(interno<() => ChartTemplate | null>('abierta')()?.id).toBe('tpl-mia');
+      expect(harness.routeNativeElement?.textContent).toContain('versión 3');
+    });
+
+    it('sin formularios propios lo dice y ofrece cargar uno del catálogo', async () => {
+      listar([PLANTILLA]);
+
+      const html = harness.routeNativeElement?.textContent ?? '';
+      expect(html).toContain('Todavía no tiene formularios propios');
+      harness.routeNativeElement
+        ?.querySelector<HTMLButtonElement>('[data-testid="cargar-formulario"]')
+        ?.click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).toContain('view=catalog');
+      expect(harness.routeNativeElement?.querySelector('app-specialty-browser')).not.toBeNull();
+      expect(harness.routeNativeElement?.querySelectorAll('[data-testid="plantilla"]').length).toBe(1);
+    });
+
+    it('al volver de un formulario recién extendido, aparece en la lista sin releer el catálogo', () => {
+      listar([PLANTILLA]);
+      interno<(p: ChartTemplate) => void>('abrir')(PLANTILLA);
+      const extendida = { ...PLANTILLA, fields: [...PLANTILLA.fields, PROPIO] };
+      http.expectOne((r) => r.url === `/charts/templates/${PLANTILLA.id}`).flush(extendida);
+      http.expectOne((r) => r.url.startsWith('/forms/assignments/budget')).flush(PRESUPUESTO);
+      harness.detectChanges();
+
+      interno<() => void>('cerrar')();
+      harness.detectChanges();
+
+      expect(
+        interno<() => readonly ChartTemplate[] | null>('misFormularios')()?.map((p) => p.id),
+      ).toEqual(['tpl-1']);
+      // `http.verify()` del afterEach falla si cerrar hubiera vuelto a pedir la lista.
+    });
+  });
 
   describe('buscador y filtros del catálogo', () => {
     const OTRA: ChartTemplate = {
@@ -806,11 +944,108 @@ describe('FormBuilder', () => {
       expect(filtros.find((f) => f.key === 'especialidad')?.options).toEqual([]);
     });
 
+    it('arranca en la especialidad de quien entra, con las fichas generales al lado', async () => {
+      const transversal: ChartTemplate = {
+        ...PLANTILLA,
+        id: 'tpl-3',
+        specialtyConceptId: 'sp-9',
+        code: 'TRANSV_ANAMNESIS_GENERAL',
+        name: 'Anamnesis general',
+      };
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([PLANTILLA, OTRA, transversal]);
+      http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-2'));
+      harness.detectChanges();
+      responderEspecialidades();
+      await harness.fixture.whenStable();
+      // En «Mis formularios» no se filtra nada: el filtro es del catálogo.
+      expect(TestBed.inject(Router).url).not.toContain('especialidad=');
+
+      interno<() => void>('cargarFormulario')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).toContain('view=catalog');
+      expect(TestBed.inject(Router).url).toContain('especialidad=sp-2');
+      // La propia y la transversal; la de medicina general, no.
+      expect(filtrados()?.map((p) => p.code)).toEqual([
+        'CARDIO_FICHA_BASE',
+        'TRANSV_ANAMNESIS_GENERAL',
+      ]);
+      const html = harness.routeNativeElement?.textContent ?? '';
+      expect(html).toContain('Mostrando los formularios de Cardiología');
+      expect(html).toContain('Ver todas las especialidades');
+    });
+
+    it('«Ver todas las especialidades» quita el filtro y no se vuelve a poner solo', async () => {
+      listarDos();
+      http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-2'));
+      responderEspecialidades();
+      await harness.fixture.whenStable();
+      interno<() => void>('cargarFormulario')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      await harness.fixture.whenStable();
+      expect(TestBed.inject(Router).url).toContain('especialidad=sp-2');
+
+      interno<() => void>('verTodasLasEspecialidades')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      expect(TestBed.inject(Router).url).not.toContain('especialidad=');
+      expect(filtrados()?.length).toBe(2);
+    });
+
+    it('un enlace que ya trae filtro no se pisa con la especialidad propia', async () => {
+      await irA({ view: 'catalog', especialidad: 'sp-1' });
+      // `irA` creó una pantalla nueva: la primera ya no escucha.
+      for (const vieja of http.match((r) => r.url === '/charts/templates')) vieja.flush([]);
+      for (const vieja of http.match((r) => r.url === PERFIL_PROPIO)) vieja.flush(perfilDe('sp-2'));
+      await harness.fixture.whenStable();
+
+      expect(TestBed.inject(Router).url).toContain('especialidad=sp-1');
+    });
+
+    it('agrupa por especialidad: la propia primero, las generales al final y la base antes', async () => {
+      http
+        .expectOne((r) => r.url === '/charts/templates' && r.method === 'GET')
+        .flush([
+          { ...OTRA, id: 'tpl-hta', code: 'CARDIO_CTRL_HTA', name: 'Control de hipertensión arterial', kind: 'SPECIFIC' },
+          { ...OTRA, kind: 'BASE' },
+          { ...PLANTILLA, kind: 'BASE' },
+          { ...PLANTILLA, id: 'tpl-t', specialtyConceptId: 'sp-9', code: 'TRANSV_EPICRISIS', name: 'Epicrisis', kind: 'GENERAL' },
+        ]);
+      http.expectOne((r) => r.url === PERFIL_PROPIO).flush(perfilDe('sp-2'));
+      harness.detectChanges();
+      responderEspecialidades();
+      await irA({ view: 'catalog' });
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+      // La preselección deja sólo la propia y la transversal; se mira todo.
+      interno<() => void>('verTodasLasEspecialidades')();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+
+      interface Grupo { conceptId: string; label: string; items: readonly ChartTemplate[] }
+      const grupos = interno<() => readonly Grupo[]>('gruposPorEspecialidad')();
+      expect(grupos.map((g) => [g.label, g.items.map((p) => p.code)])).toEqual([
+        ['Cardiología', ['CARDIO_FICHA_BASE', 'CARDIO_CTRL_HTA']],
+        ['Medicina general', ['ANAMNESIS']],
+        ['Especialidad sin nombre en el catálogo', ['TRANSV_EPICRISIS']],
+      ]);
+      // El organismo del carril 22, no una grilla propia.
+      expect(harness.routeNativeElement?.querySelector('app-specialty-browser')).not.toBeNull();
+    });
+
     it('lo vacío del filtro no es lo vacío del catálogo', async () => {
       listarDos();
       responderEspecialidades();
 
-      await irA({ q: 'no-existe-nada-asi' });
+      await irA({ view: 'catalog', q: 'no-existe-nada-asi' });
+      harness.detectChanges();
 
       expect(filtrados()).toEqual([]);
       expect(interno<() => boolean>('hayCriterios')()).toBe(true);
@@ -865,6 +1100,66 @@ describe('FormBuilder', () => {
       interno<() => void>('descargar')();
 
       expect(bajado).toBeNull();
+    });
+  });
+
+  /* ---- vista previa de una ficha v2: secciones y «¿cuál?» ---------------- */
+
+  describe('vista previa de una ficha con condiciones', () => {
+    const FICHA: ChartTemplate = {
+      ...PLANTILLA,
+      fields: [
+        { ...estandar(1), name: '¿Tiene alergias?', dataType: 'boolean', section: 'Antecedentes' },
+        {
+          ...estandar(2),
+          name: '¿A qué?',
+          dataType: 'json',
+          options: ['Medicamentos', 'Alimentos'],
+          multiple: true,
+          section: 'Antecedentes',
+          showWhen: { fieldId: 'f-1', equals: true },
+        },
+        {
+          ...estandar(3),
+          name: 'Clasificación ASA',
+          options: ['ASA I', 'ASA II', 'ASA III'],
+          section: 'Evaluación',
+        },
+      ],
+    };
+
+    type Paginas = () => readonly { titulo: string; campos: readonly { key: string; control: string; showWhen?: unknown }[] }[];
+
+    it('pagina por sección y lleva la condición con la clave del padre', () => {
+      abrirPlantilla(FICHA);
+
+      const paginas = interno<Paginas>('paginas')();
+      expect(paginas.map((p) => p.titulo)).toEqual(['Antecedentes', 'Evaluación']);
+      const cual = paginas[0].campos.find((c) => c.key === 'f-2');
+      expect(cual?.showWhen).toEqual({ key: 'f-1', equals: true });
+      // Una lista sobre `json` es de casillas, y una sobre `string`, de opciones.
+      expect(cual?.control).toBe('checkboxes');
+      expect(paginas[1].campos[0].control).toBe('radio');
+    });
+
+    it('el «¿a qué?» aparece al contestar «sí» y se va con el «no»', () => {
+      abrirPlantilla(FICHA);
+      interno<() => void>('alternarPrevia')();
+      harness.detectChanges();
+
+      const texto = () => harness.routeNativeElement?.textContent ?? '';
+      expect(texto()).not.toContain('¿A qué?');
+
+      const form = interno<() => import('@angular/forms').FormGroup>('formularioDeMuestra')();
+      form.get('f-1')?.setValue(true);
+      harness.detectChanges();
+      expect(texto()).toContain('¿A qué?');
+
+      form.get('f-1')?.setValue(false);
+      harness.detectChanges();
+      expect(texto()).not.toContain('¿A qué?');
+      // Oculto = deshabilitado: no frena el avance ni sale en el valor.
+      expect(form.get('f-2')?.disabled).toBe(true);
     });
   });
 });

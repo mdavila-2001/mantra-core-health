@@ -31,6 +31,8 @@
     «página 3 de 47» está pidiendo algo que este contrato no da.
     ========================================================================== */
 
+import type { VerificationDto } from '../../verification/verification-status';
+
 // ─── Perfil público ──────────────────────────────────────────────────────────
 
 /** Un sello de verificación sobre un perfil público. */
@@ -74,6 +76,11 @@ export type PublicProfileKind =
 export interface PublicProfileDetail {
   readonly id: string;
   readonly tenantId: string;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: la ficha deriva entonces de sus sellos (`badges`).
+   */
+  readonly verification?: VerificationDto | null;
   /** A qué apunta el perfil: profesional, organización, farmacia… */
   readonly targetTypeConceptId: string;
   /**
@@ -97,6 +104,22 @@ export interface PublicProfileDetail {
   readonly statusConceptId: string;
   readonly badges: readonly VerifiedBadge[];
   readonly prestige?: PrestigeScore;
+}
+
+/**
+ * Una vitrina de organización con la que la sesión puede atender el chat
+ * (`GET /community/profiles/organization-showcases/me`).
+ *
+ * La lista la decide la API con la misma regla que autoriza escribir como la
+ * vitrina; tenerla no es un permiso, es la puerta que se ofrece.
+ */
+export interface OrganizationShowcase {
+  readonly profileId: string;
+  readonly slug: string;
+  readonly displayName: string;
+  readonly avatarFileId?: string;
+  readonly targetTypeConceptId: string;
+  readonly kind: 'ORGANIZATION' | 'PHARMACY';
 }
 
 // ─── Vitrina propia ──────────────────────────────────────────────────────────
@@ -274,11 +297,28 @@ export interface PostPage {
 export type PostVisibility = 'PUBLIC' | 'FOLLOWERS' | 'PRIVATE';
 
 /** Lo que se manda a `POST /community/profiles/:profileId/posts` para publicar. */
+/**
+ * Una imagen adjunta al publicar (`CreatePostDto.media[]`).
+ *
+ * El archivo ya tiene que estar subido (`FilesClient.upload`): el servidor
+ * comprueba que quien publica pueda usarlo. `ordinal` es la posición a la que
+ * apunta la referencia `imagen:N` del cuerpo de un artículo.
+ */
+export interface NewPostMedia {
+  readonly fileId: string;
+  readonly mediaRole?: 'IMAGE';
+  /** Hasta 300 caracteres (`@MaxLength(300)`). */
+  readonly altText?: string;
+  readonly ordinal?: number;
+}
+
 export interface NewPost {
   readonly bodyText: string;
   readonly visibility?: PostVisibility;
   readonly commentsEnabled?: boolean;
   readonly hashtags?: readonly string[];
+  /** Hasta 20 (`@ArrayMaxSize(20)`). */
+  readonly media?: readonly NewPostMedia[];
 }
 
 // ─── Comentarios ─────────────────────────────────────────────────────────────
@@ -732,6 +772,24 @@ export interface PublicDirectoryResult {
   readonly headline: string | null;
   readonly city: string | null;
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
+}
+
+/** Persona autenticada que puede elegirse para iniciar un chat. */
+export interface ChatContact {
+  readonly profileId: string;
+  readonly displayName: string;
+  readonly headline: string | null;
+  readonly avatarUrl: string | null;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** El otro lado de una conversación. */
@@ -740,6 +798,11 @@ export interface ConversationPeer {
   readonly displayName?: string;
   /** Su avatar público, o `null`/ausente si no subió ninguno. */
   readonly avatarUrl?: string | null;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
 }
 
 /** Una página de conversaciones. */
@@ -749,6 +812,9 @@ export interface ConversationPage {
   readonly limit: number;
   readonly nextCursor: string | null;
 }
+
+/** Cómo se muestra un mensaje. `AUTO_REPLY_AI`: la redactó la IA y la burbuja lo rotula. */
+export type DirectMessageContentType = 'TEXT' | 'MEDIA' | 'STICKER' | 'AUTO_REPLY_AI';
 
 /** Un mensaje directo. */
 export interface DirectMessage {
@@ -761,6 +827,54 @@ export interface DirectMessage {
   readonly attachmentFileId?: string;
   readonly isEdited?: boolean;
   readonly sentAt?: Date;
+  /**
+   * Cuándo se borró (F4.5/AG-20), o `undefined` si sigue vivo.
+   *
+   * La API ya lo declara (`dto/read-messaging.dto.ts`) y el gateway emite
+   * `conversation:message:deleted`; sin este campo el front no podía saber
+   * que un mensaje se borró y la burbuja quedaba vacía en vez de decir «Se
+   * eliminó este mensaje».
+   */
+  readonly deletedAt?: Date;
+  /**
+   * Cómo se muestra el mensaje: texto, adjunto o **sticker** propio.
+   *
+   * Un sticker del pack se reconoce por su `fileId` (el pack viaja con la
+   * aplicación); uno que subió la persona no tiene de dónde salir, así que
+   * viaja marcado. Ausente = el servidor todavía no lo publica: el mensaje se
+   * ve como una imagen cualquiera, que es una degradación honesta.
+   */
+  readonly contentType?: DirectMessageContentType;
+  /**
+   * Las reacciones, agrupadas por emoji. Ausente o vacío = nadie reaccionó.
+   *
+   * La API no las publica: `community.reactions` sólo admite
+   * `POST`/`COMMENT`/`REVIEW`, no `MESSAGE`. La maqueta lo simula con el mismo
+   * contrato.
+   */
+  readonly reactions?: readonly MessageReaction[];
+  /**
+   * Los recibos del mensaje, uno por cada otro participante.
+   *
+   * Sólo llegan en los mensajes **propios**. Sin ellos la pantalla usa lo único
+   * que la API publica hoy —`peerReadUpTo`— y dice «Leído» sin poder decir
+   * cuándo: `message_receipts` guarda las dos horas, pero la API no las
+   * expone.
+   */
+  readonly receipts?: readonly MessageReceipt[];
+}
+
+/** Quiénes reaccionaron con un emoji a un mensaje. */
+export interface MessageReaction {
+  readonly emoji: string;
+  readonly profileIds: readonly string[];
+}
+
+/** Cuándo llegó y cuándo leyó un mensaje una persona. */
+export interface MessageReceipt {
+  readonly profileId: string;
+  readonly deliveredAt?: Date;
+  readonly readAt?: Date;
 }
 
 /** Una página de mensajes de una conversación. */
@@ -789,8 +903,11 @@ export interface DirectMessagePage {
  */
 export interface NewConversation {
   readonly participantProfileIds: readonly string[];
-  readonly conversationType?: 'DIRECT' | 'GROUP';
-  readonly groupId?: string;
+  /**
+   * Sólo `'DIRECT'`: es lo único que declara `CreateConversationDto`. El chat
+   * de un grupo no se abre por acá, y una clave de más es un 400 de la API.
+   */
+  readonly conversationType?: 'DIRECT';
 }
 
 /** Un mensaje a enviar. */
@@ -798,6 +915,18 @@ export interface NewDirectMessage {
   readonly senderProfileId: string;
   readonly bodyText: string;
   readonly replyToMessageId?: string;
+  /** `MEDIA` con adjunto; `STICKER` si es uno propio (ver `DirectMessage`). */
+  readonly contentType?: Exclude<DirectMessageContentType, 'AUTO_REPLY_AI'>;
+  readonly attachmentFileId?: string;
+}
+
+/**
+ * Reaccionar a un mensaje. Un perfil tiene **una** reacción por mensaje:
+ * elegir otro emoji reemplaza la anterior y `emoji: null` la quita.
+ */
+export interface NewMessageReaction {
+  readonly profileId: string;
+  readonly emoji: string | null;
 }
 
 /**
@@ -826,8 +955,14 @@ export interface ChatAutoReplySettings {
    * —el turno noche—, y es válida.
    */
   readonly businessHoursTo?: string;
+  /** `FIXED` o `AI` (con `bodyText` de respaldo). Sólo maqueta: falta la columna en el modelo. */
+  readonly replyMode?: ChatAutoReplyMode;
   readonly updatedAt?: Date;
 }
+
+export type ChatAutoReplyMode = 'FIXED' | 'AI';
+/** Claves que el DTO de la API no declara (`forbidNonWhitelisted`): sólo van a la maqueta. */
+export const CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS: readonly string[] = ['replyMode'];
 
 /** Lo que se manda a `PUT /community/profiles/:id/auto-reply`. */
 export type UpsertChatAutoReply = Omit<
@@ -1139,6 +1274,32 @@ export interface ModerationDecisionPage {
   readonly nextCursor: string | null;
 }
 
+/**
+ * Una decisión propia, vista por quien la sufrió (AG-18, «Mis sanciones»).
+ *
+ * Deliberadamente más chica que {@link ModerationDecisionItem}: no trae
+ * `decidedByUserId` (el moderador) porque `GET .../decisions/mine` no lo
+ * expone — el autor tiene derecho a saber qué política se le aplicó y con qué
+ * motivo, no a leer el expediente de moderación entero.
+ */
+export interface MyModerationDecisionItem {
+  readonly decisionId: string;
+  readonly policyConceptId: string;
+  readonly decisionConceptId: string;
+  readonly rationaleText?: string;
+  readonly decidedAt?: Date;
+  /** `false` si ya hay una apelación abierta para esta decisión. */
+  readonly appealable: boolean;
+}
+
+/** Una página de decisiones propias. */
+export interface MyModerationDecisionPage {
+  readonly items: readonly MyModerationDecisionItem[];
+  readonly count: number;
+  readonly limit: number;
+  readonly nextCursor: string | null;
+}
+
 /** Una apelación, con la decisión que impugna resuelta. */
 export interface ModerationAppealItem {
   readonly id: string;
@@ -1252,6 +1413,33 @@ export interface NewReview {
     readonly dimension: 'COMMUNICATION' | 'PUNCTUALITY' | 'CLEANLINESS' | 'OUTCOME';
     readonly score: number;
   }[];
+}
+
+/**
+ * Una atención que el paciente podría reseñar públicamente
+ * (`GET /patients/me/reviewable-care?appointmentBookingId=`).
+ *
+ * Es el **puente** entre la encuesta y la reseña: la invitación de encuesta
+ * cuelga de una *reserva* y la reseña exige un *encuentro*. El servidor resuelve
+ * reserva → cita → encuentro y dice si hoy se puede reseñar.
+ *
+ * Nada de la encuesta viaja por acá ni vuelve: la encuesta es privada y la
+ * reseña es pública, y son dos escrituras en dos tablas.
+ */
+export interface ReviewableCare {
+  /** El encuentro terminado que respalda la reseña (`verifiedEncounterId`). */
+  readonly encounterId: string;
+  readonly appointmentBookingId?: string;
+  /** Con quién fue la atención, para el texto del diálogo. */
+  readonly practitionerDisplayName: string;
+  readonly startAt: Date | null;
+  /** Si ya hay una reseña de este encuentro (una por encuentro). */
+  readonly alreadyReviewed: boolean;
+  /**
+   * Si hoy se puede reseñar: encuentro terminado, vitrina del médico que acepta
+   * reseñas y sin reseña previa. `false` es una respuesta normal, no un error.
+   */
+  readonly canReview: boolean;
 }
 
 /** Lo que se manda al responder una reseña. */

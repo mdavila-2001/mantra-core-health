@@ -9,7 +9,7 @@
   align-items: center;
   gap: var(--sp-2);
   margin: var(--sp-2) 0 0;
-  font-size: 0.875rem;
+  font-size: var(--fs-body);
   color: var(--text-secondary);
 }
 
@@ -63,10 +63,14 @@
   outline-offset: 2px;
 }
 
+.dropzone-pdf__vista-previa {
+  margin-block-start: var(--sp-2);
+}
+
 .dropzone-pdf__error {
   margin: var(--sp-2) 0 0;
   color: var(--st-error-fg);
-  font-size: 0.875rem;
+  font-size: var(--fs-body);
 }
 
 .sr-only {

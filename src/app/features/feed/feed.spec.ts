@@ -103,7 +103,7 @@ describe('Feed', () => {
     montar();
     responderPerfil(null);
 
-    expect(texto()).toContain('Todavía no tenés perfil público');
+    expect(texto()).toContain('Todavía no tiene perfil público');
     http.expectNone((r) => r.url === '/community/feed');
   });
 
@@ -131,7 +131,7 @@ describe('Feed', () => {
     });
     fixture.detectChanges();
 
-    expect(texto()).toContain('Tu muro está vacío');
+    expect(texto()).toContain('Su muro está vacío');
   });
 
   /**
@@ -346,7 +346,7 @@ describe('Feed', () => {
 
       expect(fixture.nativeElement.querySelector('.muro__perfil')).toBeNull();
       // Y la puerta que sí corresponde sigue estando.
-      expect(texto()).toContain('Todavía no tenés perfil público');
+      expect(texto()).toContain('Todavía no tiene perfil público');
     });
 
     it('el muro va primero en el DOM: apilarse no lo empuja hacia abajo', () => {

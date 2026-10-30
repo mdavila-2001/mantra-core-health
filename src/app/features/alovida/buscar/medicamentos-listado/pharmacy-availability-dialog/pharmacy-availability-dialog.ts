@@ -10,9 +10,12 @@ import {
 } from '@angular/core';
 
 import type { OfertaDeFarmacia } from '@core/data-access/public-marketplace/public-marketplace.types';
+import { usarIrAlChat } from '@core/messaging/chat-link';
 import { Badge } from '@shared/components/atoms/badge/badge';
+import { AppButton } from '@shared/components/atoms/button/button';
+import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa, PuntoGeo } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMap, PuntoGeo } from '@shared/components/organisms/map/map-pin.types';
 import { ContentDialog } from '@shared/components/organisms/content-dialog/content-dialog';
 
 import { formatDistance, formatMoney } from '../medication-card.mapper';
@@ -44,10 +47,9 @@ export function hasCoordinates(offer: OfertaDeFarmacia): boolean {
 /** El renglón secundario del pin: distancia rotulada y dirección, lo que haya. */
 export function pinSubtitle(offer: OfertaDeFarmacia): string | undefined {
   const distance = formatDistance(offer.distanceKm);
-  const parts = [
-    distance === null ? null : `${distance} en línea recta`,
-    offer.addressText,
-  ].filter((part): part is string => part !== null);
+  const parts = [distance === null ? null : `${distance} en línea recta`, offer.addressText].filter(
+    (part): part is string => part !== null,
+  );
   return parts.length === 0 ? undefined : parts.join(' · ');
 }
 
@@ -85,6 +87,14 @@ export function withCodes(offers: readonly OfertaDeFarmacia[]): readonly OfertaV
  * resalta su pin, y el CTA del popup del pin lleva la vista a su fila
  * (AC-06-10). No se reescribió: se movió.
  *
+ * ## La receta y la dosis máxima van arriba de todo
+ *
+ * La receta obligatoria se resalta en un aviso, no en una insignia perdida en
+ * la fila: es la condición para poder comprarlo. La dosis máxima recomendada
+ * tiene su lugar fijo, pero **hoy dice que no hay fuente cargada**: la API no
+ * la sirve y una dosis escrita a mano es un dato clínico sin fuente (B-13).
+ * Cuando llegue la ficha técnica oficial, se muestra con su cita.
+ *
  * ## El mapa se monta después de abrir
  *
  * Leaflet mide el contenedor al montarse. Dentro de un `<dialog>` todavía
@@ -94,7 +104,7 @@ export function withCodes(offers: readonly OfertaDeFarmacia[]): readonly OfertaV
  */
 @Component({
   selector: 'app-pharmacy-availability-dialog',
-  imports: [AppMap, Badge, ContentDialog],
+  imports: [AppButton, AppMap, Badge, ContentDialog, NavIcon],
   templateUrl: './pharmacy-availability-dialog.html',
   styleUrl: './pharmacy-availability-dialog.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,6 +112,13 @@ export function withCodes(offers: readonly OfertaDeFarmacia[]): readonly OfertaV
 export class PharmacyAvailabilityDialog {
   /** El principio activo que se está consultando. Encabeza el modal. */
   readonly medicationName = input.required<string>();
+
+  /**
+   * `true` si el medicamento se vende sólo contra receta; `null` mientras no se
+   * sabe, y entonces no se afirma nada. Encabeza el modal en un aviso propio:
+   * es lo primero que hay que saber antes de ir a comprarlo.
+   */
+  readonly requiresPrescription = input.required<boolean | null>();
 
   /** Las ofertas tal como las devolvió la API, en su orden. */
   readonly offers = input.required<readonly OfertaDeFarmacia[]>();
@@ -128,11 +145,9 @@ export class PharmacyAvailabilityDialog {
   protected readonly visibleOffers = computed(() => withCodes(this.offers()));
 
   /** Las que el mapa puede ubicar. Las otras siguen en la lista, con aviso. */
-  protected readonly mappableOffers = computed(() =>
-    this.visibleOffers().filter(hasCoordinates),
-  );
+  protected readonly mappableOffers = computed(() => this.visibleOffers().filter(hasCoordinates));
 
-  protected readonly pins = computed<readonly PinMapa[]>(() =>
+  protected readonly pins = computed<readonly PinMap[]>(() =>
     this.mappableOffers().map((offer) => {
       const subtitle = pinSubtitle(offer);
       return {
@@ -156,7 +171,7 @@ export class PharmacyAvailabilityDialog {
     const marked = count === 1 ? '1 farmacia marcada' : `${count} farmacias marcadas`;
     const label = this.originLabel();
     const framing =
-      label === null ? '' : ` El mapa abre centrado en ${label}; alejá para ver el resto.`;
+      label === null ? '' : ` El mapa abre centrado en ${label}; aleje para ver el resto.`;
     return `${marked} en el mapa.${framing} La lista completa, con dirección, precio y distancia en línea recta, está debajo.`;
   });
 
@@ -164,6 +179,27 @@ export class PharmacyAvailabilityDialog {
   protected readonly unmappedCount = computed(
     () => this.visibleOffers().length - this.mappableOffers().length,
   );
+
+  private readonly irAlChat = usarIrAlChat();
+
+  /**
+   * «Consultar por chat» a una farmacia de la lista, sobre este medicamento.
+   *
+   * La tarjeta lleva lo que la fila ya dice —marca, presentación, precio y
+   * de qué farmacia— y apunta a la ficha de esa farmacia, que es donde se ve
+   * el resto de su catálogo.
+   */
+  protected consultarPorChat(offer: OfertaDeFarmacia): void {
+    const detalle = [offer.brandName, offer.presentation, this.priceOf(offer), offer.pharmacyName]
+      .filter((parte): parte is string => parte !== null && parte !== '')
+      .join(' · ');
+    this.irAlChat({ escribirA: offer.pharmacySlug }, {
+      tipo: 'producto',
+      titulo: this.medicationName(),
+      detalle,
+      ruta: `/pharmacies-directory/${offer.pharmacySlug}`,
+    });
+  }
 
   protected handleOpened(): void {
     this.mapReady.set(true);

@@ -33,7 +33,7 @@ const BASE = '/administration/identity-providers';
   selector: 'app-auth-providers-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './auth-providers-home.html',
-  styleUrl: '../../portada.css',
+  styleUrl: '../../cover.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthProvidersHome {
@@ -77,7 +77,7 @@ export class AuthProvidersHome {
       descripcion: 'El intento se inicia con state y nonce; todo desenlace queda registrado.',
       operaciones: [
         { label: 'Iniciar login federado', route: `${BASE}/login/start` },
-        { label: 'Procesar callback', route: `${BASE}/login/callback` },
+        { label: 'Completar ingreso con proveedor', route: `${BASE}/login/callback` },
       ],
     },
     {

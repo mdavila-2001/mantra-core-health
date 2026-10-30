@@ -37,6 +37,11 @@ export interface PharmacyOrderSubstitutionDto {
   readonly decidedAt: string | null;
 }
 
+export interface PharmacyOrderPrescriberDto {
+  readonly name: string | null;
+  readonly specialty: string | null;
+}
+
 export interface PharmacyOrderDto extends PatientSettlementFields {
   readonly id: string;
   readonly status: PharmacyOrderConceptDto;
@@ -46,9 +51,28 @@ export interface PharmacyOrderDto extends PatientSettlementFields {
   readonly siteName: string;
   readonly pharmacyId: string;
   readonly pharmacyName: string;
+  /**
+   * La vitrina pública de la farmacia del pedido: con quién es el chat del
+   * pedido. `null` (o ausente, en una API anterior) cuando la farmacia no
+   * tiene vitrina — entonces el detalle no ofrece «Chatear con la farmacia».
+   * Son identificadores públicos, no internos.
+   */
+  readonly pharmacyPublicProfileId?: string | null;
+  readonly pharmacyPublicSlug?: string | null;
   readonly medicationRequestId: string | null;
+  /**
+   * Quién firmó la receta del pedido: nombre y especialidad principal. `null`
+   * sin receta o sin prescriptor declarado. Opcional para tolerar un backend
+   * anterior a este campo.
+   */
+  readonly prescriber?: PharmacyOrderPrescriberDto | null;
   readonly patientName: string | null;
   readonly deliveryMode: PharmacyOrderConceptDto | null;
+  /**
+   * La dirección de entrega guardada, en una línea; `null` si el pedido no la
+   * tiene. Opcional por la misma razón que `prescriber`.
+   */
+  readonly deliveryAddressText?: string | null;
   readonly pickupCode: string | null;
   readonly totalAmount: string | null;
   readonly currency: PharmacyOrderConceptDto | null;
@@ -92,4 +116,10 @@ export interface DispensePharmacyOrderDto {
   readonly pickupCode: string;
   readonly productIds?: readonly string[];
   readonly idempotencyKey: string;
+}
+
+/** `POST /pharmacy/orders/:id/conversation` — idempotente. */
+export interface PharmacyOrderConversationDto {
+  readonly conversationId: string;
+  readonly pharmacyProfileId: string;
 }

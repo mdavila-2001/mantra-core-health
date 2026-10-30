@@ -1,19 +1,40 @@
 import {
-  ETIQUETA_DE_PRECISION,
-  ETIQUETA_DE_VIGENCIA,
-  LABORATORIOS_DEL_CORPUS,
-  NOMBRE_DE_CATEGORIA,
-  pruebaDelCorpus,
-} from '../fixtures/bolivia-eje-central';
+  PRECISION_LABEL,
+  VALIDITY_LABEL,
+  CORPUS_LABORATORIES,
+  CATEGORY_NAME,
+  corpusTest,
+} from '../fixtures/bolivia-central-axis';
+import { pdfMinimo } from './files.handlers';
+import { searchByCoverage } from './diagnostic-coverage.handlers';
+import { abrirAgendaDeCentro, ZONA_HORARIA_POR_OMISION } from '../fixtures/agenda';
 import { patientSettlementFixture } from '../fixtures/patient-settlements';
 import { PHARMACIES_AND_LABS } from '../fixtures/markdown-institutions.generated';
-import { ordenes } from '../fixtures/clinica';
-import { vitrinas } from '../fixtures/comunidad';
-import { ESTADO, ESTUDIO, PRIORIDAD, displayDe } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES } from '../fixtures/personas';
-import { forbidden, notFound, type MockRequest, type MockRouter } from '../mock-router';
-import { TENANT_CLINICA, TENANT_LABORATORIO, TENANT_NAMES, type MockUser } from '../mock-session';
+import { orderList } from '../fixtures/clinic';
+import { analisisInlasaDe, TARIFA_INLASA } from '../fixtures/inlasa';
+import { ANALISIS_INLASA } from '../fixtures/inlasa-tariffs.generated';
+import { imagePrice, testPrice, imageBenefit, type ReferencePrice } from '../fixtures/reference-prices';
+import { showcases } from '../fixtures/community';
+import {
+  ACCESSION_STATUS,
+  ORDER_CATEGORY,
+  CONTAINER_STATUS,
+  CUSTODY_EVENT_TYPE,
+  STATUS,
+  ESTUDIO,
+  PRIORITY,
+  SPECIMEN_CONTAINER_TYPE,
+  SPECIMEN_STATUS,
+  SPECIMEN_TYPE,
+  displayOf,
+} from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, patientById, professionalById } from '../fixtures/people';
+import { conflict, forbidden, notFound, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { TENANT_CLINICA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_NAMES, TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid } from '../mock-store';
+import { decodeInboxCursor, encodeInboxCursor } from './diagnostics-inbox-cursor';
+import { performerFieldsOfOrder, pickPerformerFields, seededProcedureOrdersOf } from './service-request-performer.mock';
+import { categoriaDeLaOrden, esRechazo, resolverCategoria, validarNotas, type RechazoDeOrden } from './service-request-category.mock';
 
 /* ============================================================================
     Diagnóstico: órdenes e informes del circuito clínico, la cola de trabajo
@@ -23,6 +44,30 @@ import { ahora, Coleccion, contiene, cuerpo, iso, isoDia, nuevoId, texto, uuid }
 
 function c(code: string, display: string) {
   return { code, display };
+}
+
+/** P40: el 422 o el 400 del alta, con `reason` como lo devuelve la API. */
+function rechazoDeOrden(rechazo: RechazoDeOrden) {
+  if (rechazo.status === 400) return validation(rechazo.message);
+  return reply(422, {
+    statusCode: 422,
+    code: 'PRECONDITION_FAILED',
+    message: rechazo.message,
+    error: 'Unprocessable Entity',
+    reason: rechazo.reason,
+    details: { reason: rechazo.reason },
+  });
+}
+
+/** P40: `category` sólo si la orden la declara — ausente no es `null`. */
+function categoriaPresente(categoryConceptId: string | undefined) {
+  const category = categoriaDeLaOrden(categoryConceptId);
+  return category === undefined ? {} : { category };
+}
+
+/** P40: lo que la ficha del personal lee de una orden de análisis. */
+function ordenDeAnalisis(o: { readonly categoryConceptId: string; readonly basedOnNoteIds?: readonly string[] }) {
+  return { ...categoriaPresente(o.categoryConceptId), basedOnNoteIds: [...(o.basedOnNoteIds ?? [])] };
 }
 
 const ROL_CONTENIDO = uuid('concept-result-content-role-report');
@@ -37,11 +82,22 @@ export interface InformeSimulado {
   readonly lifecycleStatusConceptId: string;
   readonly currentVersionId: string;
   readonly released: boolean;
+  /**
+   * D-E: liberar con `patientVisibility: 'HIDDEN'` marca `released` igual
+   * (el laboratorio ya validó y cerró la versión) pero el paciente no la ve.
+   * `true` por defecto para todo lo sembrado, que siempre se liberó visible.
+   */
+  readonly patientVisible: boolean;
   readonly conclusionText: string;
   readonly issuedAt: string;
   readonly releasedAt: string | null;
   readonly createdAt: string;
   readonly custodianTenantId: string;
+}
+
+/** D-E: un informe cuenta para el paciente sólo si está liberado Y visible. */
+function esVisibleParaPaciente(r: InformeSimulado): boolean {
+  return r.released && r.patientVisible;
 }
 
 const CONCLUSIONES: Readonly<Record<string, string>> = {
@@ -54,18 +110,19 @@ const CONCLUSIONES: Readonly<Record<string, string>> = {
 };
 
 export const informes = new Coleccion<InformeSimulado>(
-  ordenes
-    .filtrar((o) => o.statusConceptId === ESTADO['ST-COMPLETED'])
+  orderList
+    .filtrar((o) => o.statusConceptId === STATUS['ST-COMPLETED'])
     .map((o, i) => ({
       id: uuid(`report-${o.id}`),
       patientProfileId: o.patientProfileId,
       serviceRequestId: o.id,
       codeConceptId: o.codeConceptId,
       categoryConceptId: o.categoryConceptId,
-      lifecycleStatusConceptId: ESTADO['ST-COMPLETED']!,
+      lifecycleStatusConceptId: STATUS['ST-COMPLETED']!,
       currentVersionId: uuid(`report-version-${o.id}`),
       released: i % 4 !== 3,
-      conclusionText: CONCLUSIONES[displayDe(o.codeConceptId)] ?? 'Sin hallazgos de significación clínica.',
+      patientVisible: true,
+      conclusionText: CONCLUSIONES[displayOf(o.codeConceptId)] ?? 'Sin hallazgos de significación clínica.',
       issuedAt: iso(-3 - (i % 5), 14),
       releasedAt: i % 4 !== 3 ? iso(-2 - (i % 5), 9) : null,
       createdAt: iso(-3 - (i % 5), 13),
@@ -77,25 +134,221 @@ interface CompartidoSimulado {
   readonly id: string;
   readonly reportId: string;
   readonly practitionerUserId: string;
+  readonly practitionerName?: string;
   readonly validFrom: string;
   readonly validTo: string | null;
   readonly active: boolean;
 }
 
 const compartidos = new Coleccion<CompartidoSimulado>(
-  informes.filtrar((r) => r.patientProfileId === PACIENTE.id && r.released).slice(0, 1).map((r) => ({ id: uuid(`share-${r.id}`), reportId: r.id, practitionerUserId: MEDICA.userId, validFrom: iso(-2), validTo: iso(28), active: true })),
+  informes.filtrar((r) => r.patientProfileId === PACIENTE.id && r.released).slice(0, 1).map((r) => ({ id: uuid(`share-${r.id}`), reportId: r.id, practitionerUserId: MEDICAL.userId, practitionerName: MEDICAL.displayName, validFrom: iso(-2), validTo: iso(28), active: true })),
 );
 
+/* ---- el circuito de especímenes del laboratorio (BR-17, CL-47) ------------
+
+   Espécimen → acesión → contenedor → cadena de custodia, con las reglas de
+   `DiagnosticsSpecimensService`. Las órdenes de trabajo de la cola cuelgan de
+   estas acesiones: `laboratoryAccessionId` es el id de una acesión que existe y
+   se puede abrir con `GET /diagnostics/accessions/:id`, no un número suelto.
+
+   Sólo las órdenes de **laboratorio** llegan a la cola: una orden de trabajo
+   nace de acesionar especímenes, y un electrocardiograma o una ecografía no
+   tienen espécimen que acesionar. */
+
+export interface LabSpecimenRecord {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly custodianTenantId: string;
+  readonly specimenTypeConceptId: string;
+  readonly statusConceptId: string;
+  readonly serviceRequestId: string | null;
+  readonly collectedAt: string;
+  readonly receivedAt: string | null;
+}
+
+export interface LabContainerRecord {
+  readonly id: string;
+  readonly specimenId: string;
+  readonly containerIdentifier: string;
+  readonly containerTypeConceptId: string;
+  readonly statusConceptId: string;
+}
+
+export interface LabCustodyEventRecord {
+  readonly id: string;
+  readonly specimenId: string;
+  readonly specimenContainerId: string | null;
+  readonly custodyEventTypeConceptId: string;
+  readonly occurredAt: string;
+  readonly toPartyTypeConceptId: string | null;
+  readonly sealIdentifier: string | null;
+  readonly signedByUserId: string | null;
+}
+
+export interface LabAccessionRecord {
+  readonly id: string;
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly accessionNumber: string;
+  readonly receivedAt: string;
+  readonly priorityConceptId: string;
+  readonly statusConceptId: string;
+  readonly serviceRequestId: string | null;
+  readonly items: readonly { readonly accessionSpecimenId: string; readonly specimenId: string; readonly sequenceNumber: number; readonly statusConceptId: string }[];
+}
+
+/** Las órdenes de laboratorio que ya pasaron por la recepción: las de la cola. */
+const LAB_ORDERS = orderList.filtrar((o) => o.categoryConceptId === ORDER_CATEGORY['SRQ-LAB']).slice(0, 12);
+
+/** Qué muestra pide cada estudio, y en qué tubo viaja. El resto, suero. */
+const SPECIMEN_FOR_STUDY: Readonly<Record<string, readonly [specimenType: string, containerType: string]>> = {
+  [ESTUDIO['STUDY-HEMOGRAMA']!]: [SPECIMEN_TYPE['BLDV']!, SPECIMEN_CONTAINER_TYPE['TUBE_LAVENDER_EDTA']!],
+  [ESTUDIO['STUDY-ORINA']!]: [SPECIMEN_TYPE['UR']!, SPECIMEN_CONTAINER_TYPE['CUP_URINE_STERILE']!],
+};
+const SERUM: readonly [string, string] = [SPECIMEN_TYPE['SER']!, SPECIMEN_CONTAINER_TYPE['TUBE_GOLD_SST']!];
+
+/**
+ * El laboratorio de la clínica de la maqueta (`LAB-OLIVOS`) es el custodio de
+ * lo sembrado: es el tenant con el que inician sesión la médica y el
+ * administrador, así que sus acesiones se pueden abrir desde la cola.
+ */
+const LAB_CUSTODIAN_TENANT = TENANT_CLINICA;
+
+export const labSpecimens = new Coleccion<LabSpecimenRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`specimen-${o.id}`),
+    patientProfileId: o.patientProfileId,
+    custodianTenantId: LAB_CUSTODIAN_TENANT,
+    specimenTypeConceptId: (SPECIMEN_FOR_STUDY[o.codeConceptId] ?? SERUM)[0],
+    statusConceptId: SPECIMEN_STATUS['SPEC_RECEIVED']!,
+    serviceRequestId: o.id,
+    collectedAt: iso(-3 + (i % 3), 7, 30),
+    receivedAt: iso(-3 + (i % 3), 8, 10),
+  })),
+);
+
+export const labContainers = new Coleccion<LabContainerRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`container-${o.id}`),
+    specimenId: uuid(`specimen-${o.id}`),
+    containerIdentifier: `TUBO-${String(5000 + i)}`,
+    containerTypeConceptId: (SPECIMEN_FOR_STUDY[o.codeConceptId] ?? SERUM)[1],
+    statusConceptId: o.statusConceptId === STATUS['ST-COMPLETED'] ? CONTAINER_STATUS['CONTAINER_STORED']! : CONTAINER_STATUS['CONTAINER_ACTIVE']!,
+  })),
+);
+
+export const labCustodyEvents = new Coleccion<LabCustodyEventRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`custody-reception-${o.id}`),
+    specimenId: uuid(`specimen-${o.id}`),
+    specimenContainerId: null,
+    custodyEventTypeConceptId: CUSTODY_EVENT_TYPE['CUSTODY_RECEPTION']!,
+    occurredAt: iso(-3 + (i % 3), 8, 10),
+    toPartyTypeConceptId: null,
+    sealIdentifier: null,
+    signedByUserId: null,
+  })),
+);
+
+export const labAccessions = new Coleccion<LabAccessionRecord>(
+  LAB_ORDERS.map((o, i) => ({
+    id: uuid(`accession-${o.id}`),
+    custodianTenantId: LAB_CUSTODIAN_TENANT,
+    patientProfileId: o.patientProfileId,
+    accessionNumber: `ACC-${String(9000 + i)}`,
+    receivedAt: iso(-3 + (i % 3), 8, 10),
+    priorityConceptId: o.priorityConceptId,
+    statusConceptId: o.statusConceptId === STATUS['ST-PENDING'] ? ACCESSION_STATUS['ACC_RECEIVED']! : ACCESSION_STATUS['ACC_IN_PROCESS']!,
+    serviceRequestId: o.id,
+    items: [{ accessionSpecimenId: uuid(`accession-item-${o.id}`), specimenId: uuid(`specimen-${o.id}`), sequenceNumber: 1, statusConceptId: ACCESSION_STATUS['ACC_ITEM_RECEIVED']! }],
+  })),
+);
+
+/* ---- la bandeja de recepción del laboratorio -----------------------------
+
+   `POST /diagnostics/service-requests/inbox`: las órdenes de laboratorio que
+   otras organizaciones le dirigieron a `TENANT_LABORATORIO` (su
+   `performer_tenant_id`) y que todavía no tienen acesión. Son órdenes propias
+   de la bandeja y no filas de `ordenes`: aquéllas ya tienen su circuito
+   sembrado arriba (espécimen, acesión, orden de trabajo) y sumarles un
+   ejecutante movería lo que ven la ficha del paciente y sus pruebas.
+
+   Dos de ellas vienen avanzadas para que la maqueta muestre los tres estados
+   de la columna: una con la muestra ya recibida, otra con la muestra
+   rechazada y el resto esperando. */
+
+export interface LabInboxOrderRecord {
+  readonly id: string;
+  readonly patientProfileId: string;
+  readonly codeConceptId: string;
+  readonly categoryConceptId: string;
+  readonly priorityConceptId: string;
+  readonly statusConceptId: string;
+  readonly requesterProfileId: string;
+  readonly requestingTenantId: string;
+  readonly performerTenantId: string;
+  readonly requestedAt: string;
+}
+
+const INBOX_STUDIES = ['STUDY-HEMOGRAMA', 'STUDY-GLUCOSA', 'STUDY-PERFIL-LIPIDICO', 'STUDY-TSH', 'STUDY-ORINA'] as const;
+
+export const labInboxOrders = new Coleccion<LabInboxOrderRecord>(
+  PATIENTS.slice(0, 8).map((p, i) => ({
+    id: uuid(`inbox-order-${p.id}`),
+    patientProfileId: p.id,
+    codeConceptId: ESTUDIO[INBOX_STUDIES[i % INBOX_STUDIES.length]!]!,
+    categoryConceptId: ORDER_CATEGORY['SRQ-LAB']!,
+    priorityConceptId: i === 2 ? PRIORITY['PRI-URGENT']! : PRIORITY['PRI-ROUTINE']!,
+    statusConceptId: STATUS['ST-ACTIVE']!,
+    requesterProfileId: MEDICAL.id,
+    requestingTenantId: i % 2 === 0 ? TENANT_CLINICA : TENANT_HOSPITAL,
+    performerTenantId: TENANT_LABORATORIO,
+    requestedAt: iso(-(8 - i), 8 + (i % 4), 15),
+  })),
+);
+
+/** Las muestras sembradas de la bandeja: una recibida y una rechazada. */
+function seedInboxSpecimens(): void {
+  const [, received, , rejected] = labInboxOrders.todos();
+  const seeds = [
+    { order: received, key: 'received', status: SPECIMEN_STATUS['SPEC_COLLECTED']!, container: 'TUBO-7001' },
+    { order: rejected, key: 'rejected', status: SPECIMEN_STATUS['SPEC_REJECTED']!, container: 'TUBO-7002' },
+  ];
+  for (const { order, key, status, container } of seeds) {
+    if (order === undefined) continue;
+    const specimenId = uuid(`inbox-specimen-${key}-${order.id}`);
+    if (labSpecimens.get(specimenId) !== undefined) continue;
+    labSpecimens.agregar({
+      id: specimenId,
+      patientProfileId: order.patientProfileId,
+      custodianTenantId: TENANT_LABORATORIO,
+      specimenTypeConceptId: SPECIMEN_TYPE['BLDV']!,
+      statusConceptId: status,
+      serviceRequestId: order.id,
+      collectedAt: iso(-1, 8, 40),
+      receivedAt: null,
+    });
+    labContainers.agregar({
+      id: uuid(`inbox-container-${key}-${order.id}`),
+      specimenId,
+      containerIdentifier: container,
+      containerTypeConceptId: SPECIMEN_CONTAINER_TYPE['TUBE_LAVENDER_EDTA']!,
+      statusConceptId: CONTAINER_STATUS['CONTAINER_ACTIVE']!,
+    });
+  }
+}
+seedInboxSpecimens();
+
 const ordenesDeTrabajo = new Coleccion<{ id: string; workOrderNumber: string; laboratoryAccessionId: string; statusConceptId: string; priorityConceptId: string; assignedProfileId: string | null; scheduledAt: string; completedAt: string | null }>(
-  ordenes.todos().slice(0, 12).map((o, i) => ({
+  LAB_ORDERS.map((o, i) => ({
     id: uuid(`work-order-${o.id}`),
     workOrderNumber: `OT-2026-${String(400 + i).padStart(4, '0')}`,
-    laboratoryAccessionId: `ACC-${String(9000 + i)}`,
+    laboratoryAccessionId: uuid(`accession-${o.id}`),
     statusConceptId: o.statusConceptId,
     priorityConceptId: o.priorityConceptId,
-    assignedProfileId: i % 3 === 0 ? null : PROFESIONALES[12]!.id,
+    assignedProfileId: i % 3 === 0 ? null : PROFESSIONALS[12]!.id,
     scheduledAt: iso(-2 + (i % 4), 8 + (i % 6)),
-    completedAt: o.statusConceptId === ESTADO['ST-COMPLETED'] ? iso(-1 + (i % 3), 15) : null,
+    completedAt: o.statusConceptId === STATUS['ST-COMPLETED'] ? iso(-1 + (i % 3), 15) : null,
   })),
 );
 
@@ -160,7 +413,7 @@ const UNIDADES_DE_MAQUETA: readonly UnidadSimulada[] = [
  * publica como `rating: null`): inventarle una nota media a un laboratorio que
  * existe es una afirmación sobre un negocio real, y no se hace.
  */
-const UNIDADES_DEL_CORPUS: readonly UnidadSimulada[] = LABORATORIOS_DEL_CORPUS.map(
+const UNIDADES_DEL_CORPUS: readonly UnidadSimulada[] = CORPUS_LABORATORIES.map(
   (laboratorio) => ({
     id: laboratorio.id,
     tenantId: laboratorio.tenantId,
@@ -220,7 +473,7 @@ const UNIDADES: readonly UnidadSimulada[] = [...UNIDADES_DEL_CORPUS, ...UNIDADES
 function corpusDe(u: UnidadSimulada) {
   return u.corpusId === undefined
     ? undefined
-    : LABORATORIOS_DEL_CORPUS.find((laboratorio) => laboratorio.corpusId === u.corpusId);
+    : CORPUS_LABORATORIES.find((laboratorio) => laboratorio.corpusId === u.corpusId);
 }
 
 const ESTUDIOS_POR_TIPO: Readonly<Record<'LABORATORY' | 'IMAGING', readonly (keyof typeof ESTUDIO)[]>> = {
@@ -254,7 +507,7 @@ function construirSedes(u: UnidadSimulada) {
       id: sede.id,
       code: sede.code,
       name: sede.name,
-      role: c(i === 0 ? 'MAIN' : 'BRANCH', ETIQUETA_DE_VIGENCIA[sede.vigencia]),
+      role: c(i === 0 ? 'MAIN' : 'BRANCH', VALIDITY_LABEL[sede.vigencia]),
       sampleCollectionAvailable: true,
       imagingAvailable: false,
       addressText: sede.addressText,
@@ -263,7 +516,7 @@ function construirSedes(u: UnidadSimulada) {
       openingHours: sede.openingHours,
       latitude: sede.lat,
       longitude: sede.lng,
-      locationAccuracy: ETIQUETA_DE_PRECISION[sede.locationPrecision],
+      locationAccuracy: PRECISION_LABEL[sede.locationPrecision],
     }));
   }
   return [
@@ -319,10 +572,9 @@ function sitioDe(u: UnidadSimulada) {
 function estudiosDelCorpus(u: UnidadSimulada) {
   const laboratorio = corpusDe(u)!;
   const sitio = sitioDe(u);
-  return laboratorio.testIds.flatMap((testId, i) => {
-    const prueba = pruebaDelCorpus(testId);
+  return laboratorio.testIds.flatMap((testId) => {
+    const prueba = corpusTest(testId);
     if (prueba === undefined) return [];
-    const precio = 45 + (i % 12) * 30;
     return [
       {
         id: uuid(`offering-${u.id}-${testId}`),
@@ -330,8 +582,8 @@ function estudiosDelCorpus(u: UnidadSimulada) {
         name: prueba.name,
         description:
           prueba.synonyms.length === 0
-            ? NOMBRE_DE_CATEGORIA.get(prueba.categoryId) ?? null
-            : `${NOMBRE_DE_CATEGORIA.get(prueba.categoryId) ?? ''} · también ${prueba.synonyms.join(', ')}`,
+            ? CATEGORY_NAME.get(prueba.categoryId) ?? null
+            : `${CATEGORY_NAME.get(prueba.categoryId) ?? ''} · también ${prueba.synonyms.join(', ')}`,
         siteId: sitio.id,
         modality: null,
         preparationInstructions: prueba.patientPreparation,
@@ -340,11 +592,14 @@ function estudiosDelCorpus(u: UnidadSimulada) {
         // El corpus no declara qué exige orden médica. `null` lo dice; `false`
         // sería afirmar que cualquiera se la puede hacer sin receta.
         requiresMedicalOrder: null,
-        prices: [{ amount: precio.toFixed(2), currency: c('BOB', 'Boliviano'), scheduleCode: 'MAQUETA', siteId: sitio.id }],
+        // El corpus no publica precios: el estudio lleva el de referencia de
+        // INLASA o, si INLASA no la hace, el de FONASA convertido a Bs
+        // (`reference-prices.ts`); sin equivalente, viaja sin tarifa.
+        prices: preciosDeReferencia(testPrice(testId), sitio.id),
         conceptId: uuid(`corpus-test-${testId}`),
         specimens: prueba.specimens,
         methods: prueba.methods,
-        categoryName: NOMBRE_DE_CATEGORIA.get(prueba.categoryId) ?? prueba.categoryId,
+        categoryName: CATEGORY_NAME.get(prueba.categoryId) ?? prueba.categoryId,
         isPanel: prueba.kind === 'PANEL',
       },
     ];
@@ -369,26 +624,113 @@ function estudiosDe(u: UnidadSimulada) {
   return calculado;
 }
 
+/**
+ * Modalidad de cada estudio de imagen, por código (DICOM: CR radiografía,
+ * US ecografía, MR resonancia, CT tomografía, MG mamografía, BMD densitometría,
+ * ECG electrocardiografía). Antes salía de la POSICIÓN del estudio en la lista y
+ * la mamografía o la densitometría quedaban sin modalidad.
+ */
+const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, readonly [code: string, display: string]>> = {
+  'STUDY-RX-TORAX': ['CR', 'Radiografía'],
+  'STUDY-RX-COLUMNA': ['CR', 'Radiografía'],
+  'STUDY-ECO-ABD': ['US', 'Ecografía'],
+  'STUDY-ECO-OBSTETRICA': ['US', 'Ecografía'],
+  'STUDY-ECG': ['ECG', 'Electrocardiografía'],
+  'STUDY-RMN-RODILLA': ['MR', 'Resonancia magnética'],
+  'STUDY-RMN-CEREBRO': ['MR', 'Resonancia magnética'],
+  'STUDY-TAC-CRANEO': ['CT', 'Tomografía computarizada'],
+  'STUDY-TAC-ABDOMEN': ['CT', 'Tomografía computarizada'],
+  'STUDY-MAMOGRAFIA': ['MG', 'Mamografía'],
+  'STUDY-DENSITOMETRIA': ['BMD', 'Densitometría ósea'],
+};
+
+/**
+ * El menor precio publicado entre los estudios del centro, o `null` si ninguno
+ * tiene tarifa (los laboratorios del corpus no publican precios). Con `null` el
+ * filtro por importe máximo deja pasar al centro: no hay precio que lo excluya.
+ */
+function precioMinimoDe(u: UnidadSimulada): number | null {
+  const precios = estudiosDe(u).flatMap((e) => (e.prices[0] === undefined ? [] : [Number(e.prices[0].amount)]));
+  return precios.length === 0 ? null : Math.min(...precios);
+}
+
+/** Id del INLASA en el corpus del eje central (`bolivia-central-axis.generated.ts`). */
+const CORPUS_INLASA = 'lab_inlasa';
+
+/**
+ * El catálogo del propio INLASA: sus 287 análisis a pacientes con el precio que
+ * publica (`PUBLICO`: es su tarifa, no una referencia ajena).
+ */
+function estudiosDeInlasa(u: UnidadSimulada) {
+  const sitio = sitioDe(u);
+  return ANALISIS_INLASA.map((a) => ({
+    id: uuid(`offering-${u.id}-${a.code}`),
+    code: a.code,
+    name: a.name,
+    description: a.area,
+    siteId: sitio.id,
+    modality: null,
+    preparationInstructions: null,
+    expectedDurationMinutes: null,
+    expectedTurnaroundMinutes: null,
+    requiresMedicalOrder: null,
+    prices: a.priceBs === null ? [] : [{ amount: a.priceBs, currency: c('BOB', 'Boliviano'), scheduleCode: 'PUBLICO', siteId: sitio.id }],
+    conceptId: uuid(`inlasa-${a.code}`),
+  }));
+}
+
+/** Un precio de referencia como la lista `prices` de la oferta (vacía si no hay). */
+function preciosDeReferencia(precio: ReferencePrice | null, siteId: string) {
+  return precio === null ? [] : [{ amount: precio.amount, currency: c('BOB', 'Boliviano'), scheduleCode: precio.scheduleCode, siteId }];
+}
+
 function construirEstudios(u: UnidadSimulada) {
+  if (u.corpusId === CORPUS_INLASA) return estudiosDeInlasa(u);
   if (u.corpusId !== undefined) return estudiosDelCorpus(u);
-  return ESTUDIOS_POR_TIPO[u.kind].map((code, i) => {
+  return ESTUDIOS_POR_TIPO[u.kind].map((code) => {
     const conceptId = ESTUDIO[code]!;
-    const precio = u.kind === 'LABORATORY' ? 40 + i * 25 : 120 + i * 180;
+    const inlasa = analisisInlasaDe(code);
+    const modalidad = MODALIDAD_DE_ESTUDIO[code];
+    const referencia: ReferencePrice | null =
+      inlasa?.priceBs == null ? imagePrice(code) : { amount: inlasa.priceBs, scheduleCode: TARIFA_INLASA };
     return {
       id: uuid(`offering-${u.id}-${code}`),
-      code: code.replace('STUDY-', ''),
-      name: displayDe(conceptId),
-      description: `${displayDe(conceptId)} realizado en ${u.name}.`,
+      code: inlasa?.code ?? imageBenefit(code)?.code ?? code.replace('STUDY-', ''),
+      name: displayOf(conceptId),
+      description: `${displayOf(conceptId)} realizado en ${u.name}.`,
       siteId: sitioDe(u).id,
-      modality: u.kind === 'IMAGING' ? c(['XR', 'US', 'ECG', 'MR', 'CT'][i]!, ['Radiografía', 'Ecografía', 'Electrocardiografía', 'Resonancia', 'Tomografía'][i]!) : null,
-      preparationInstructions: i === 1 ? 'Ayuno de 8 horas.' : i === 4 && u.kind === 'IMAGING' ? 'Retirar objetos metálicos.' : null,
-      expectedDurationMinutes: u.kind === 'LABORATORY' ? 10 : 20 + i * 10,
+      modality: modalidad === undefined ? null : c(modalidad[0], modalidad[1]),
+      // Las indicaciones al paciente las publica el centro: la maqueta no las redacta.
+      preparationInstructions: null,
+      expectedDurationMinutes: u.kind === 'LABORATORY' ? 10 : null,
       expectedTurnaroundMinutes: u.kind === 'LABORATORY' ? 240 : 60 * 24,
-      requiresMedicalOrder: i > 1,
-      prices: [{ amount: precio.toFixed(2), currency: c('BOB', 'Boliviano'), scheduleCode: 'PUBLICO', siteId: sitioDe(u).id }],
+      requiresMedicalOrder: null,
+      // Laboratorio: el precio de referencia de INLASA 2026. Imagen: FONASA 2026
+      // convertido a Bs (Bolivia no publica arancel de imagen); sin equivalente
+      // (densitometría, ECG), sin precio.
+      prices: preciosDeReferencia(referencia, sitioDe(u).id),
       conceptId,
     };
   });
+}
+
+/**
+ * La preparación real que algún centro publicó para este estudio (CL-56).
+ *
+ * Antes «Mis órdenes» hardcodeaba dos casos (glucosa, perfil lipídico) con un
+ * texto propio, desconectado de lo que la ficha del centro (`estudiosDe`)
+ * publica para ese mismo estudio. Ahora busca la oferta real por concepto y
+ * usa su `preparationInstructions`; si ningún centro la publicó, no inventa
+ * una — ausencia de preparación no es lo mismo que «no hay que prepararse».
+ */
+function preparacionDelEstudio(codeConceptId: string): string | undefined {
+  for (const u of UNIDADES) {
+    const oferta = estudiosDe(u).find((e) => e.conceptId === codeConceptId);
+    if (typeof oferta?.preparationInstructions === 'string' && oferta.preparationInstructions !== '') {
+      return oferta.preparationInstructions;
+    }
+  }
+  return undefined;
 }
 
 function itemDeDirectorio(u: UnidadSimulada) {
@@ -481,7 +823,7 @@ function resultadoPropio(r: InformeSimulado) {
     conclusionText: r.conclusionText,
     issuedAt: r.issuedAt,
     releasedAt: r.releasedAt ?? r.issuedAt,
-    clinicalStatusConceptId: ESTADO['ST-COMPLETED']!,
+    clinicalStatusConceptId: STATUS['ST-COMPLETED']!,
     observationIds: [uuid(`obs-result-${r.id}-1`), uuid(`obs-result-${r.id}-2`)],
     files: [{ id: uuid(`result-file-${r.id}`), fileId: uuid(`file-lab-${r.patientProfileId}`), contentRoleConceptId: ROL_CONTENIDO, presentationFormatConceptId: FORMATO_PDF, ordinal: 1 }],
   };
@@ -541,7 +883,7 @@ export function estudioPrevio(
   return {
     reportId: informe.id,
     serviceRequestId: informe.serviceRequestId,
-    studyName: displayDe(informe.codeConceptId),
+    studyName: displayOf(informe.codeConceptId),
     providerName: TENANT_NAMES[informe.custodianTenantId] ?? 'Prestador',
     performedAt,
     daysAgo: diasDesde(performedAt),
@@ -552,7 +894,179 @@ export function estudioPrevio(
   };
 }
 
+/* ---- apoyo del circuito de especímenes ------------------------------------ */
+
+/** Los campos obligatorios que faltan, con el texto de `class-validator`. */
+function requiredFields<T extends object>(data: Partial<T>, fields: readonly (keyof T & string)[]) {
+  return fields
+    .filter((field) => {
+      const value = data[field];
+      return typeof value !== 'string' || value.trim() === '';
+    })
+    .map((field) => ({ field, message: 'should not be empty' }));
+}
+
+/**
+ * Si el recurso es del tenant del contexto. Sin `X-Tenant-Id` no hay contexto
+ * que comparar —pasa en las pruebas del simulador, no en la maqueta, donde el
+ * interceptor de autenticación siempre la manda con sesión—.
+ */
+function inTenantContext(request: MockRequest, custodianTenantId: string): boolean {
+  const context = request.headers.get('X-Tenant-Id');
+  return context === null || context === custodianTenantId;
+}
+
+/** El detalle de un espécimen como lo devuelve la API: los opcionales ausentes no viajan. */
+function specimenDetail(specimen: LabSpecimenRecord) {
+  return {
+    id: specimen.id,
+    patientProfileId: specimen.patientProfileId,
+    specimenTypeConceptId: specimen.specimenTypeConceptId,
+    statusConceptId: specimen.statusConceptId,
+    collectedAt: specimen.collectedAt,
+    ...(specimen.receivedAt === null ? {} : { receivedAt: specimen.receivedAt }),
+    containers: labContainers
+      .filtrar((c) => c.specimenId === specimen.id)
+      .map(({ id, containerIdentifier, containerTypeConceptId, statusConceptId }) => ({ id, containerIdentifier, containerTypeConceptId, statusConceptId })),
+    custodyEvents: labCustodyEvents
+      .filtrar((e) => e.specimenId === specimen.id)
+      .sort((a, b) => a.occurredAt.localeCompare(b.occurredAt))
+      .map((e) => ({
+        id: e.id,
+        ...(e.specimenContainerId === null ? {} : { specimenContainerId: e.specimenContainerId }),
+        custodyEventTypeConceptId: e.custodyEventTypeConceptId,
+        occurredAt: e.occurredAt,
+        ...(e.toPartyTypeConceptId === null ? {} : { toPartyTypeConceptId: e.toPartyTypeConceptId }),
+        ...(e.sealIdentifier === null ? {} : { sealIdentifier: e.sealIdentifier }),
+        ...(e.signedByUserId === null ? {} : { signedByUserId: e.signedByUserId }),
+      })),
+  };
+}
+
+/**
+ * Los catálogos contra los que la API valida el alta de espécimen y de
+ * contenedor (422 `PRECONDITION_FAILED` con `details.reason`).
+ */
+const SPECIMEN_TYPE_IDS: ReadonlySet<string> = new Set(Object.values(SPECIMEN_TYPE));
+const CONTAINER_TYPE_IDS: ReadonlySet<string> = new Set(Object.values(SPECIMEN_CONTAINER_TYPE));
+
+/**
+ * Si quien pide es personal del laboratorio del tenant activo: la regla de
+ * `LabStaffGuard` en la API. `SUPERADMIN`; `CLINICIAN`/`PRACTITIONER`; o
+ * miembro de un tenant `DIAGNOSTIC_CENTER`. En `mockup` las cuentas no tienen
+ * `scopedRoles`, así que el rol clínico vale en cualquier organización.
+ */
+function isLabStaff(user: MockUser | null, tenantId: string | null): boolean {
+  if (user === null || tenantId === null) return false;
+  if (user.roles.includes('SUPERADMIN')) return true;
+  if (['CLINICIAN', 'PRACTITIONER'].some((role) => user.roles.includes(role))) return true;
+  return user.tenants.includes(tenantId) && TENANT_TYPES[tenantId] === 'DIAGNOSTIC_CENTER';
+}
+
+/** Minúsculas y sin tildes: la búsqueda por paciente no distingue ni una cosa ni la otra. */
+function normalizeText(value: string): string {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 export function registrarDiagnostico(router: MockRouter): void {
+  // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
+  // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
+  for (const u of UNIDADES) {
+    if (!u.publiclyListed) continue;
+    const sede = sitioDe(u);
+    abrirAgendaDeCentro({
+      id: u.id,
+      name: u.name,
+      tenantId: u.tenantId,
+      kind: u.kind,
+      site: {
+        id: sede.id,
+        name: sede.name,
+        code: sede.code,
+        addressText: 'addressText' in sede ? (sede.addressText ?? null) : null,
+        timeZone: ZONA_HORARIA_POR_OMISION,
+      },
+    });
+  }
+
+  router.post('/clinical/service-requests', (request) => {
+    const datos = cuerpo<{
+      patientProfileId: string;
+      codeConceptId: string;
+      categoryConceptId?: string;
+      // P40 (C2): la categoría en texto y las notas que motivan la orden.
+      category?: unknown;
+      basedOnNoteIds?: unknown;
+      priorityConceptId?: string;
+      reasonText?: string;
+      encounterId?: string;
+      formInstanceId?: string;
+      // Antiduplicación de estudios (v4.2.17, T-26, subtarea 3.2).
+      previousDiagnosticReportId?: string;
+      reusePreviousReport?: boolean;
+      duplicateOverrideReason?: string;
+    }>(request);
+
+    const patientProfileId = datos.patientProfileId ?? '';
+    const codeConceptId = datos.codeConceptId ?? '';
+    const conDecision = datos.previousDiagnosticReportId !== undefined;
+
+    // P40: el mismo orden que la API — la categoría antes de abrir la
+    // transacción, las notas antes de escribir nada.
+    const categoria = resolverCategoria(datos.category, datos.categoryConceptId);
+    if (esRechazo(categoria)) return rechazoDeOrden(categoria);
+    const notas = validarNotas(datos.basedOnNoteIds, patientProfileId, datos.encounterId);
+    if (esRechazo(notas)) return rechazoDeOrden(notas);
+
+    // Sin decisión, el alta vuelve a correr el mismo detector que el
+    // chequeo: la UI no es la barrera. Con decisión, se confía en lo que el
+    // diálogo ya mostró — el mock no reproduce la carrera check→alta del
+    // servidor (`DUPLICATE_STUDY_MISMATCH`).
+    if (!conDecision) {
+      const duplicado = estudioDuplicado(patientProfileId, codeConceptId, DUPLICATE_STUDY_WINDOW_DAYS);
+      if (duplicado !== null) {
+        const previousStudy = estudioPrevio(duplicado.informe, duplicado.performedAt, request.user);
+        return preconditionFailed('Ya existe un estudio igual reciente.', {
+          reason: 'DUPLICATE_STUDY_DETECTED',
+          previousStudy,
+        });
+      }
+    }
+
+    const reutilizada = conDecision && datos.reusePreviousReport === true;
+    const nueva = orderList.agregar({
+      id: nuevoId('order'),
+      patientProfileId,
+      codeConceptId,
+      categoryConceptId: categoria.conceptId ?? '',
+      ...(notas.noteIds.length === 0 ? {} : { basedOnNoteIds: notas.noteIds }),
+      priorityConceptId: datos.priorityConceptId ?? '',
+      statusConceptId: reutilizada ? STATUS['ST-SATISFIED-BY-PRIOR']! : STATUS['ST-PENDING']!,
+      requesterProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
+      ...(datos.encounterId === undefined ? {} : { encounterId: datos.encounterId }),
+      ...(datos.formInstanceId === undefined ? {} : { formInstanceId: datos.formInstanceId }),
+      reasonText: datos.reasonText ?? '',
+      createdAt: ahora(),
+      ...pickPerformerFields(datos),
+      ...(datos.previousDiagnosticReportId === undefined
+        ? {}
+        : { previousDiagnosticReportId: datos.previousDiagnosticReportId }),
+      ...(datos.duplicateOverrideReason === undefined
+        ? {}
+        : { duplicateOverrideReason: datos.duplicateOverrideReason }),
+    });
+    return {
+      status: 201,
+      body: {
+        id: nueva.id,
+        patientProfileId: nueva.patientProfileId,
+        ...ordenDeAnalisis(nueva),
+        status: reutilizada ? 'SATISFIED_BY_PRIOR' : 'ACTIVE',
+        createdAt: nueva.createdAt,
+      },
+    };
+  });
+
   /*
    * `POST /clinical/service-requests/duplicate-check` — vive acá y no en
    * `clinical.handlers.ts` porque necesita cruzar `informes`, que es de este
@@ -599,20 +1113,41 @@ export function registrarDiagnostico(router: MockRouter): void {
     const limit = Number(query.get('limit') ?? 50) || 50;
     return {
       patientProfileId: id,
-      orders: ordenes.filtrar((o) => o.patientProfileId === id).map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id })),
-      reports: informes.filtrar((r) => r.patientProfileId === id).map((r) => ({ id: r.id, patientProfileId: r.patientProfileId, serviceRequestId: r.serviceRequestId, codeConceptId: r.codeConceptId, categoryConceptId: r.categoryConceptId, lifecycleStatusConceptId: r.lifecycleStatusConceptId, currentVersionId: r.currentVersionId, currentReleasedVersionId: r.released ? r.currentVersionId : null, resultReleaseStatusConceptId: r.released ? ESTADO['ST-PUBLISHED']! : ESTADO['ST-PENDING']!, createdAt: r.createdAt })),
+      orders: orderList
+        .filtrar((o) => o.patientProfileId === id)
+        .map(({ patientProfileId: _p, reasonText: _r, ...o }) => ({ ...o, patientProfileId: id, ...ordenDeAnalisis(o) })),
+      reports: informes.filtrar((r) => r.patientProfileId === id).map((r) => ({ id: r.id, patientProfileId: r.patientProfileId, serviceRequestId: r.serviceRequestId, codeConceptId: r.codeConceptId, categoryConceptId: r.categoryConceptId, lifecycleStatusConceptId: r.lifecycleStatusConceptId, currentVersionId: r.currentVersionId, currentReleasedVersionId: r.released ? r.currentVersionId : null, resultReleaseStatusConceptId: r.released ? STATUS['ST-PUBLISHED']! : STATUS['ST-PENDING']!, createdAt: r.createdAt })),
       limit,
       truncated: [],
     };
   });
 
+  /**
+   * CL-56: una orden pendiente no tiene ningún estudio DICOM que mostrar —el
+   * `studyInstanceUid` sólo existe una vez que el equipo produjo la imagen
+   * (STOW-RS), y una orden RX/ECO/TAC/RMN sin completar no llegó a esa etapa.
+   * Antes se fabricaba un `studyInstanceUid` para toda orden que pidiera uno
+   * de estos cuatro estudios, estuviera o no completada.
+   */
   router.get('/diagnostics/patients/:id/imaging-studies', ({ params }) =>
-    ordenes
-      .filtrar((o) => o.patientProfileId === params['id'] && [ESTUDIO['STUDY-ECO-ABD'], ESTUDIO['STUDY-RX-TORAX'], ESTUDIO['STUDY-TAC-CRANEO'], ESTUDIO['STUDY-RMN-RODILLA']].includes(o.codeConceptId))
+    orderList
+      .filtrar(
+        (o) =>
+          o.patientProfileId === params['id'] &&
+          o.statusConceptId === STATUS['ST-COMPLETED'] &&
+          [ESTUDIO['STUDY-ECO-ABD'], ESTUDIO['STUDY-RX-TORAX'], ESTUDIO['STUDY-TAC-CRANEO'], ESTUDIO['STUDY-RMN-RODILLA']].includes(o.codeConceptId),
+      )
       .map((o) => ({ id: uuid(`imaging-${o.id}`), patientProfileId: o.patientProfileId, serviceRequestId: o.id, statusConceptId: o.statusConceptId, studyInstanceUid: `1.2.826.0.1.${Math.abs(o.id.charCodeAt(0) * 7919)}` })),
   );
 
-  router.get('/diagnostics/work-orders', ({ query }) => {
+  // La cola de trabajo la autoriza `LabStaffGuard` en la API, igual que la
+  // recepción: el personal del laboratorio por su membresía, y
+  // CLINICIAN/PRACTITIONER como antes.
+  router.get('/diagnostics/work-orders', ({ query, headers, user }) => {
+    const tenantId = headers.get('X-Tenant-Id') ?? user?.tenants[0] ?? null;
+    if (!isLabStaff(user, tenantId)) {
+      return forbidden('Se requiere ser personal del laboratorio de la organización activa');
+    }
     const status = texto(query, 'statusConceptId');
     const assigned = texto(query, 'assignedProfileId');
     return ordenesDeTrabajo
@@ -622,32 +1157,336 @@ export function registrarDiagnostico(router: MockRouter): void {
       .slice(Number(query.get('offset') ?? 0), Number(query.get('offset') ?? 0) + (Number(query.get('limit') ?? 50) || 50));
   });
 
+  /* ---- especímenes, acesiones y custodia (BR-17, CL-47) ------------------
+     Las reglas de `DiagnosticsSpecimensService`, en el mismo orden. Las dos
+     lecturas se acotan al tenant del contexto (`X-Tenant-Id`): una acesión de
+     otro laboratorio responde 404, sin confirmar que existe. Sin la cabecera
+     —las pruebas unitarias del simulador— no hay contexto que comparar y se
+     lee igual. */
+
+  router.post('/diagnostics/specimens', (request) => {
+    const data = cuerpo<{ patientProfileId: string; custodianTenantId: string; specimenTypeConceptId: string; serviceRequestId?: string }>(request);
+    const missing = requiredFields(data, ['patientProfileId', 'custodianTenantId', 'specimenTypeConceptId']);
+    if (missing.length > 0) return validation('Faltan datos del espécimen', missing);
+    if (!SPECIMEN_TYPE_IDS.has(data.specimenTypeConceptId!)) {
+      return preconditionFailed('El tipo de espécimen no pertenece al catálogo de tipos de espécimen', {
+        reason: 'SPECIMEN_TYPE_NOT_IN_CATALOG',
+        field: 'specimenTypeConceptId',
+        conceptId: data.specimenTypeConceptId,
+        catalog: 'specimen-type',
+      });
+    }
+    const specimen: LabSpecimenRecord = {
+      id: nuevoId('specimen'),
+      patientProfileId: data.patientProfileId!,
+      custodianTenantId: data.custodianTenantId!,
+      specimenTypeConceptId: data.specimenTypeConceptId!,
+      statusConceptId: SPECIMEN_STATUS['SPEC_COLLECTED']!,
+      serviceRequestId: data.serviceRequestId ?? null,
+      collectedAt: ahora(),
+      receivedAt: null,
+    };
+    labSpecimens.agregar(specimen);
+    return reply(201, { id: specimen.id, status: specimen.statusConceptId });
+  });
+
+  /** UC-20-01: la recepción. Marca cada espécimen recibido y firma la recepción en la custodia. */
+  router.post('/diagnostics/accessions', (request) => {
+    const data = cuerpo<{ patientProfileId: string; custodianTenantId?: string; specimenIds: readonly string[]; accessionNumber?: string; priorityConceptId?: string; serviceRequestId?: string }>(request);
+    const missing = [
+      ...requiredFields(data, ['patientProfileId']),
+      ...(Array.isArray(data.specimenIds) && data.specimenIds.length > 0 ? [] : [{ field: 'specimenIds', message: 'must contain at least 1 elements' }]),
+    ];
+    if (missing.length > 0) return validation('Faltan datos de la acesión', missing);
+
+    const specimens: LabSpecimenRecord[] = [];
+    for (const specimenId of data.specimenIds!) {
+      const specimen = labSpecimens.get(specimenId);
+      if (specimen === undefined) return notFound('Espécimen no encontrado');
+      if (specimen.statusConceptId === SPECIMEN_STATUS['SPEC_REJECTED']) {
+        return preconditionFailed('El espécimen está rechazado y no puede acesionarse', { specimenId });
+      }
+      specimens.push(specimen);
+    }
+
+    const receivedAt = ahora();
+    const accessionId = nuevoId('accession');
+    const items = specimens.map((specimen, index) => {
+      labSpecimens.actualizar(specimen.id, { statusConceptId: SPECIMEN_STATUS['SPEC_RECEIVED']!, receivedAt });
+      labCustodyEvents.agregar({
+        id: nuevoId('custody'),
+        specimenId: specimen.id,
+        specimenContainerId: null,
+        custodyEventTypeConceptId: CUSTODY_EVENT_TYPE['CUSTODY_RECEPTION']!,
+        occurredAt: receivedAt,
+        toPartyTypeConceptId: null,
+        sealIdentifier: null,
+        signedByUserId: request.user?.id ?? null,
+      });
+      return {
+        accessionSpecimenId: nuevoId('accession-item'),
+        specimenId: specimen.id,
+        sequenceNumber: index + 1,
+        statusConceptId: ACCESSION_STATUS['ACC_ITEM_RECEIVED']!,
+      };
+    });
+    const accession: LabAccessionRecord = {
+      id: accessionId,
+      custodianTenantId: data.custodianTenantId ?? specimens[0]!.custodianTenantId,
+      patientProfileId: data.patientProfileId!,
+      accessionNumber: data.accessionNumber ?? `ACC-${Date.now()}`,
+      receivedAt,
+      priorityConceptId: data.priorityConceptId ?? PRIORITY['PRI-ROUTINE']!,
+      statusConceptId: ACCESSION_STATUS['ACC_RECEIVED']!,
+      serviceRequestId: data.serviceRequestId ?? null,
+      items,
+    };
+    labAccessions.agregar(accession);
+    return reply(201, { id: accession.id, status: accession.statusConceptId, accessionSpecimenIds: items.map((item) => item.accessionSpecimenId) });
+  });
+
+  router.get('/diagnostics/accessions/:id', (request) => {
+    const accession = labAccessions.get(request.params['id']!);
+    if (accession === undefined || !inTenantContext(request, accession.custodianTenantId)) {
+      return notFound('Acesión no encontrada');
+    }
+    return {
+      id: accession.id,
+      custodianTenantId: accession.custodianTenantId,
+      patientProfileId: accession.patientProfileId,
+      accessionNumber: accession.accessionNumber,
+      receivedAt: accession.receivedAt,
+      priorityConceptId: accession.priorityConceptId,
+      statusConceptId: accession.statusConceptId,
+      specimens: accession.items.flatMap((item) => {
+        const specimen = labSpecimens.get(item.specimenId);
+        return specimen === undefined
+          ? []
+          : [{ accessionSpecimenId: item.accessionSpecimenId, sequenceNumber: item.sequenceNumber, statusConceptId: item.statusConceptId, specimen: specimenDetail(specimen) }];
+      }),
+    };
+  });
+
+  router.get('/diagnostics/specimens/:id', (request) => {
+    const specimen = labSpecimens.get(request.params['id']!);
+    if (specimen === undefined || !inTenantContext(request, specimen.custodianTenantId)) {
+      return notFound('Espécimen no encontrado');
+    }
+    return specimenDetail(specimen);
+  });
+
+  /** UC-20-02: rechazar. Un espécimen rechazado ya no se puede acesionar ni volver a rechazar. */
+  router.post('/diagnostics/specimens/:id/rejection', (request) => {
+    const data = cuerpo<{ rejectionReasonConceptId: string; notes?: string; recollectionRequired?: boolean }>(request);
+    const missing = requiredFields(data, ['rejectionReasonConceptId']);
+    if (missing.length > 0) return validation('Falta el motivo del rechazo', missing);
+    const specimen = labSpecimens.get(request.params['id']!);
+    if (specimen === undefined) return notFound('Espécimen no encontrado');
+    if (specimen.statusConceptId === SPECIMEN_STATUS['SPEC_REJECTED']) {
+      return preconditionFailed('El espécimen ya está rechazado', { specimenId: specimen.id });
+    }
+    labSpecimens.actualizar(specimen.id, { statusConceptId: SPECIMEN_STATUS['SPEC_REJECTED']! });
+    return reply(201, { id: nuevoId('specimen-rejection'), status: SPECIMEN_STATUS['SPEC_REJECTED']! });
+  });
+
+  router.post('/diagnostics/specimens/:id/containers', (request) => {
+    const data = cuerpo<{ containerIdentifier: string; containerTypeConceptId: string }>(request);
+    const missing = requiredFields(data, ['containerIdentifier', 'containerTypeConceptId']);
+    if (missing.length > 0) return validation('Faltan datos del contenedor', missing);
+    if (!CONTAINER_TYPE_IDS.has(data.containerTypeConceptId!)) {
+      return preconditionFailed('El tipo de contenedor no pertenece al catálogo de contenedores de muestra', {
+        reason: 'CONTAINER_TYPE_NOT_IN_CATALOG',
+        field: 'containerTypeConceptId',
+        conceptId: data.containerTypeConceptId,
+        catalog: 'specimen-container-type',
+      });
+    }
+    const specimen = labSpecimens.get(request.params['id']!);
+    if (specimen === undefined) return notFound('Espécimen no encontrado');
+    const container: LabContainerRecord = {
+      id: nuevoId('container'),
+      specimenId: specimen.id,
+      containerIdentifier: data.containerIdentifier!.trim(),
+      containerTypeConceptId: data.containerTypeConceptId!,
+      statusConceptId: CONTAINER_STATUS['CONTAINER_ACTIVE']!,
+    };
+    labContainers.agregar(container);
+    return reply(201, { id: container.id, status: container.statusConceptId });
+  });
+
+  /** UC-20-03: el traslado. Queda en la custodia del espécimen y mueve el estado del contenedor. */
+  /**
+   * La bandeja de recepción (`POST` de lectura: la búsqueda por paciente va en
+   * el cuerpo). Órdenes activas dirigidas al tenant activo, sin acesión, de la
+   * más vieja a la más nueva, con las muestras que el laboratorio ya recibió.
+   */
+  router.post('/diagnostics/service-requests/inbox', (request) => {
+    const tenantId = request.headers.get('X-Tenant-Id') ?? request.user?.tenants[0] ?? null;
+    if (!isLabStaff(request.user, tenantId)) {
+      return forbidden('Se requiere ser personal del laboratorio de la organización activa');
+    }
+    const data = cuerpo<{ cursor: unknown; limit: unknown; patientQuery: unknown }>(request);
+
+    const limit = data.limit === undefined ? 25 : data.limit;
+    if (typeof limit !== 'number' || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+      return validation('El tope de la bandeja no es válido', [{ field: 'limit', message: 'must not be greater than 100' }]);
+    }
+    const query = typeof data.patientQuery === 'string' ? data.patientQuery.trim() : data.patientQuery;
+    if (query !== undefined && (typeof query !== 'string' || query.length < 2 || query.length > 80)) {
+      return validation('La búsqueda por paciente no es válida', [
+        { field: 'patientQuery', message: 'must be longer than or equal to 2 characters' },
+      ]);
+    }
+    let after: { requestedAt: string; id: string } | null = null;
+    if (data.cursor !== undefined) {
+      after = typeof data.cursor === 'string' && data.cursor.length <= 512 ? decodeInboxCursor(data.cursor) : null;
+      if (after === null) return validation('El cursor de paginación no es válido');
+    }
+    const cursorKey = after;
+
+    const accessioned = new Set(
+      labAccessions
+        .filtrar((a) => a.custodianTenantId === tenantId && a.serviceRequestId !== null)
+        .map((a) => a.serviceRequestId),
+    );
+    const needle = typeof query === 'string' ? normalizeText(query) : null;
+    const pending = labInboxOrders
+      .filtrar((o) => o.performerTenantId === tenantId && o.statusConceptId === STATUS['ST-ACTIVE'] && !accessioned.has(o.id))
+      .filter((o) => {
+        if (needle === null) return true;
+        const patient = patientById(o.patientProfileId);
+        return (
+          patient !== undefined &&
+          (normalizeText(patient.displayName).includes(needle) || normalizeText(patient.patientCode).includes(needle))
+        );
+      })
+      .sort((a, b) => a.requestedAt.localeCompare(b.requestedAt) || a.id.localeCompare(b.id))
+      .filter(
+        (o) =>
+          cursorKey === null ||
+          o.requestedAt > cursorKey.requestedAt ||
+          (o.requestedAt === cursorKey.requestedAt && o.id > cursorKey.id),
+      );
+
+    const page = pending.slice(0, limit);
+    const last = page.at(-1);
+    return {
+      items: page.map((o) => {
+        const patient = patientById(o.patientProfileId);
+        return {
+          serviceRequestId: o.id,
+          patientProfileId: o.patientProfileId,
+          patientDisplayName: patient?.displayName ?? null,
+          patientCode: patient?.patientCode ?? null,
+          codeConceptId: o.codeConceptId,
+          codeDisplay: displayOf(o.codeConceptId) || null,
+          categoryConceptId: o.categoryConceptId,
+          priorityConceptId: o.priorityConceptId,
+          statusConceptId: o.statusConceptId,
+          requesterProfileId: o.requesterProfileId,
+          requestingTenantId: o.requestingTenantId,
+          requestingTenantName: TENANT_NAMES[o.requestingTenantId] ?? null,
+          requestedAt: o.requestedAt,
+          specimens: labSpecimens
+            .filtrar((sp) => sp.serviceRequestId === o.id && sp.custodianTenantId === tenantId)
+            .sort((a, b) => a.collectedAt.localeCompare(b.collectedAt))
+            .map(specimenDetail),
+        };
+      }),
+      count: page.length,
+      limit,
+      nextCursor: pending.length > limit && last !== undefined ? encodeInboxCursor(last) : null,
+    };
+  });
+
+  router.post('/diagnostics/containers/:id/custody-events', (request) => {
+    const data = cuerpo<{ specimenId: string; toPartyTypeConceptId?: string; sealIdentifier?: string; destinationStatusConceptId?: string }>(request);
+    const missing = requiredFields(data, ['specimenId']);
+    if (missing.length > 0) return validation('Falta el espécimen del traslado', missing);
+    const container = labContainers.get(request.params['id']!);
+    if (container === undefined) return notFound('Contenedor no encontrado');
+    const event: LabCustodyEventRecord = {
+      id: nuevoId('custody'),
+      specimenId: data.specimenId!,
+      specimenContainerId: container.id,
+      custodyEventTypeConceptId: CUSTODY_EVENT_TYPE['CUSTODY_TRANSFER']!,
+      occurredAt: ahora(),
+      toPartyTypeConceptId: data.toPartyTypeConceptId ?? null,
+      sealIdentifier: data.sealIdentifier ?? null,
+      signedByUserId: request.user?.id ?? null,
+    };
+    labCustodyEvents.agregar(event);
+    const status = data.destinationStatusConceptId ?? CONTAINER_STATUS['CONTAINER_STORED']!;
+    labContainers.actualizar(container.id, { statusConceptId: status });
+    return reply(201, { id: event.id, status });
+  });
+
+  /**
+   * D-E (BR-17/CV-02): el **único** camino de liberación en el mock, igual que
+   * en el backend real. Antes no había ningún `POST .../versions` ni
+   * `.../release`: la cola se acesionaba y ahí se cortaba, así que liberar en
+   * mockup no hacía aparecer nada en «Mis resultados» — el mismo síntoma que
+   * CV-02 describe contra la API real. El mock simplifica el modelo de
+   * versiones del backend (una versión por informe, no varias) porque ningún
+   * consumidor del simulador necesita todavía enmendar una versión anterior.
+   */
+  router.post('/diagnostics/reports/:reportId/versions', (request) => {
+    const informe = informes.get(request.params['reportId']!);
+    if (informe === undefined) return notFound('Informe no encontrado');
+    const datos = cuerpo<{ conclusionText?: string }>(request);
+    const actualizado = informes.actualizar(informe.id, {
+      conclusionText: datos.conclusionText ?? informe.conclusionText,
+    })!;
+    return { status: 201, body: { id: actualizado.currentVersionId, status: STATUS['ST-PENDING']! } };
+  });
+
+  router.post('/diagnostics/reports/:reportId/versions/:versionId/release', (request) => {
+    const informe = informes.get(request.params['reportId']!);
+    if (informe === undefined || informe.currentVersionId !== request.params['versionId']) {
+      return notFound('Versión de informe no encontrada');
+    }
+    if (informe.released) {
+      return conflict('La versión ya fue liberada', { versionId: informe.currentVersionId });
+    }
+    const datos = cuerpo<{ patientVisibility?: 'VISIBLE' | 'HIDDEN' }>(request);
+    const actualizado = informes.actualizar(informe.id, {
+      released: true,
+      releasedAt: ahora(),
+      patientVisible: datos.patientVisibility !== 'HIDDEN',
+    })!;
+    return { status: 200, body: { id: actualizado.currentVersionId, status: STATUS['ST-PUBLISHED']! } };
+  });
+
   /* ---- resultados de la persona ------------------------------------------- */
 
   router.get('/diagnostic-results/me', (request) => {
     const id = pacienteDeSesion(request);
-    const items = informes.filtrar((r) => r.patientProfileId === id && r.released).map(resultadoPropio);
+    const items = informes.filtrar((r) => r.patientProfileId === id && esVisibleParaPaciente(r)).map(resultadoPropio);
     return { patientProfileId: id, items, limit: Number(request.query.get('limit') ?? 50) || 50, truncated: false };
   });
 
   router.get('/diagnostic-results/me/orders', (request) => {
     const id = pacienteDeSesion(request);
-    const items = ordenes.filtrar((o) => o.patientProfileId === id).map((o, index) => {
+    const seeded = seededProcedureOrdersOf(id);
+    const items = [...orderList.filtrar((o) => o.patientProfileId === id), ...seeded].map((o, index) => {
       const informe = informes.filtrar((r) => r.serviceRequestId === o.id)[0];
       return {
-        ...(index === 3
+        ...(index === 3 || seeded.includes(o)
           ? { insuranceSettlement: null, insuranceSettlementAvailability: 'PENDING_PUBLICATION' }
-          : patientSettlementFixture(o.id, (['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'] as const)[index % 3]!, '100.00', displayDe(o.codeConceptId))),
+          : patientSettlementFixture(o.id, (['APPROVED', 'PARTIALLY_APPROVED', 'DENIED'] as const)[index % 3]!, '100.00', displayOf(o.codeConceptId))),
         id: o.id,
         encounterId: o.encounterId,
         codeConceptId: o.codeConceptId,
         categoryConceptId: o.categoryConceptId,
+        // P40: la categoría sí viaja al portal; las notas del médico no.
+        ...categoriaPresente(o.categoryConceptId),
         statusConceptId: o.statusConceptId,
         priorityConceptId: o.priorityConceptId,
         createdAt: o.createdAt,
-        preparationInstructions: o.codeConceptId === ESTUDIO['STUDY-GLUCOSA'] || o.codeConceptId === ESTUDIO['STUDY-PERFIL-LIPIDICO'] ? 'Ayuno de 8 a 12 horas. Podés tomar agua.' : undefined,
-        hasReleasedResult: informe?.released ?? false,
-        reportId: informe?.released ? informe.id : undefined,
+        preparationInstructions: preparacionDelEstudio(o.codeConceptId),
+        hasReleasedResult: informe !== undefined && esVisibleParaPaciente(informe),
+        reportId: informe !== undefined && esVisibleParaPaciente(informe) ? informe.id : undefined,
+        ...performerFieldsOfOrder(o),
       };
     });
     return { patientProfileId: id, items, limit: 50, truncated: false };
@@ -655,16 +1494,61 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-results/me/:id', (request) => {
     const r = informes.get(request.params['id']!);
-    if (r === undefined || !r.released) return notFound('Resultado no encontrado');
+    if (r === undefined || !esVisibleParaPaciente(r)) return notFound('Resultado no encontrado');
     if (r.patientProfileId !== pacienteDeSesion(request) && request.user?.practitionerProfileId === undefined) return forbidden();
     return resultadoPropio(r);
   });
 
-  router.get('/diagnostic-results/me/:id/shares', ({ params }) => compartidos.filtrar((s) => s.reportId === params['id']));
+  /**
+   * `GET /diagnostic-results/me/:reportId/files/:fileId/content` (CL-40).
+   *
+   * Titular + versión liberada + `fileId` del informe; todo lo demás es **404**
+   * (no se revela si existe). Devuelve los bytes con `Cache-Control: private,
+   * no-store`, como la API.
+   */
+  router.get('/diagnostic-results/me/:id/files/:fileId/content', (request) => {
+    const r = informes.get(request.params['id']!);
+    if (r === undefined || !esVisibleParaPaciente(r) || r.patientProfileId !== pacienteDeSesion(request)) {
+      return notFound('Archivo no encontrado');
+    }
+    if (!resultadoPropio(r).files.some((f) => f.fileId === request.params['fileId'])) {
+      return notFound('Archivo no encontrado');
+    }
+    return {
+      body: new Blob([pdfMinimo('Laboratorio completo')], { type: 'application/pdf' }),
+      headers: {
+        'Cache-Control': 'private, no-store',
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent('laboratorio-completo.pdf')}`,
+      },
+    };
+  });
 
+  // La forma del contrato (`{ reportId, items }`): el cliente lee `body.items`
+  // y con el arreglo pelado la lista de compartidos fallaba en la maqueta.
+  router.get('/diagnostic-results/me/:id/shares', ({ params }) => ({
+    reportId: params['id'],
+    items: compartidos.filtrar((s) => s.reportId === params['id']),
+  }));
+
+  /**
+   * CL-48/CL-50: el cuerpo trae `practitionerProfileId` (el mismo id que ya
+   * expone `GET /authz/me/access`), nunca una cuenta tipeada a mano. El mock
+   * resuelve el nombre por el mismo camino que esa lectura
+   * (`profesionalPorId`), así que «Compartido con» muestra el nombre y no un
+   * uuid. `reason` se ignora si llega: el contrato real ya no lo acepta.
+   */
   router.post('/diagnostic-results/me/:id/shares', (request) => {
-    const datos = cuerpo<{ practitionerUserId: string; validUntil: string }>(request);
-    const nuevo = compartidos.agregar({ id: nuevoId('share'), reportId: request.params['id']!, practitionerUserId: datos.practitionerUserId ?? MEDICA.userId, validFrom: ahora(), validTo: datos.validUntil ?? iso(30), active: true });
+    const datos = cuerpo<{ practitionerProfileId?: string; validUntil: string }>(request);
+    const profesional = datos.practitionerProfileId === undefined ? undefined : professionalById(datos.practitionerProfileId);
+    const nuevo = compartidos.agregar({
+      id: nuevoId('share'),
+      reportId: request.params['id']!,
+      practitionerUserId: profesional?.userId ?? MEDICAL.userId,
+      practitionerName: profesional?.displayName ?? MEDICAL.displayName,
+      validFrom: ahora(),
+      validTo: datos.validUntil ?? iso(30),
+      active: true,
+    });
     return { status: 201, body: nuevo };
   });
 
@@ -688,11 +1572,10 @@ export function registrarDiagnostico(router: MockRouter): void {
 
   router.get('/diagnostic-units/search', ({ query }) => {
     const q = texto(query, 'q');
-    const kind = texto(query, 'kind');
-    const studyCode = texto(query, 'studyCode');
-    const home = query.get('homeCollection') === 'true';
-    const walkIn = query.get('walkIn') === 'true';
-    const external = query.get('acceptsExternalOrders') === 'true';
+    const [kind, studyCode] = ['kind', 'studyCode'].map((key) => texto(query, key));
+    const [home, walkIn, external] = ['homeCollection', 'walkIn', 'acceptsExternalOrders'].map((key) => query.get(key) === 'true');
+    const searchCard = (u: UnidadSimulada) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: precioMinimoDe(u), minAmountCurrency: estudiosDe(u).find((e) => e.prices[0] !== undefined)?.prices[0]?.currency.code ?? null, cities: ciudadesDe(u) });
+    if (query.has('studyConceptIds')) return searchByCoverage(query, UNIDADES.filter((u) => u.publiclyListed), { card: searchCard, studies: estudiosDe, sites: sedesDe });
     const maxAmount = Number(query.get('maxAmount') ?? Infinity);
     const minRating = Number(query.get('minRating') ?? 0);
     const offset = Number(query.get('offset') ?? 0);
@@ -703,7 +1586,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       .filter((u) => studyCode === null || estudiosDe(u).some((e) => e.code === studyCode || contiene(e.name, studyCode)))
       .filter((u) => (!home || u.home) && (!walkIn || u.walkIn) && (!external || u.external))
       .filter((u) => u.rating >= minRating)
-      .map((u) => ({ ...itemDeDirectorio(u), tenantId: u.tenantId, rating: u.ratingCount === 0 ? null : u.rating, ratingCount: u.ratingCount, minAmount: Math.min(...estudiosDe(u).map((e) => Number(e.prices[0]!.amount))), cities: ciudadesDe(u) }))
+      .map(searchCard)
       .filter((u) => u.minAmount === null || u.minAmount <= maxAmount);
     return { items: todos.slice(offset, offset + limit), total: todos.length, limit, offset };
   });
@@ -738,7 +1621,7 @@ export function registrarDiagnostico(router: MockRouter): void {
         prices: prices.map((p, k) => ({ id: uuid(`price-${e.id}-${k}`), scheduleId: uuid(`schedule-${u.id}`), scheduleCode: p.scheduleCode, schedulePublic: true, versionNumber: 1, baseAmount: p.amount, patientAmount: p.amount, insurerAmount: (Number(p.amount) * 0.8).toFixed(2), currency: p.currency, effectiveFrom: isoDia(-100), effectiveTo: null, status: c('ACTIVE', 'Vigente') })),
       })),
       accreditations: acreditacionesDe(u),
-      staff: PROFESIONALES.slice(9, 13).map((p, i) => ({ id: uuid(`unit-staff-${u.id}-${p.id}`), practitionerRoleAssignmentId: uuid(`ra-${p.id}`), practitionerProfileId: p.id, practitionerName: p.displayName, siteId: sitio.id, assignmentRole: c(i === 0 ? 'DIRECTOR' : 'ANALYST', i === 0 ? 'Director técnico' : 'Bioquímico/a'), specialty: null, mayValidateResults: i < 2, maySignReports: i === 0, validFrom: isoDia(-300), validTo: null, status: c('ACTIVE', 'Activo') })),
+      staff: PROFESSIONALS.slice(9, 13).map((p, i) => ({ id: uuid(`unit-staff-${u.id}-${p.id}`), practitionerRoleAssignmentId: uuid(`ra-${p.id}`), practitionerProfileId: p.id, practitionerName: p.displayName, siteId: sitio.id, assignmentRole: c(i === 0 ? 'DIRECTOR' : 'ANALYST', i === 0 ? 'Director técnico' : 'Bioquímico/a'), specialty: null, mayValidateResults: i < 2, maySignReports: i === 0, validFrom: isoDia(-300), validTo: null, status: c('ACTIVE', 'Activo') })),
     };
   });
 
@@ -751,7 +1634,7 @@ export function registrarDiagnostico(router: MockRouter): void {
   router.post('/diagnostic-units/:id/verify-and-publish', ({ params }) => {
     const u = UNIDADES.find((x) => x.id === params['id']);
     if (u === undefined) return notFound('Centro no encontrado');
-    return { id: u.id, code: u.code, name: u.name, verificationStatus: 'VERIFIED', status: 'ACTIVE', publicProfileId: vitrinas.filtrar((v) => v.tenantId === u.tenantId)[0]?.id, siteCount: 1, accreditationCount: 2 };
+    return { id: u.id, code: u.code, name: u.name, verificationStatus: 'VERIFIED', status: 'ACTIVE', publicProfileId: showcases.filtrar((v) => v.tenantId === u.tenantId)[0]?.id, siteCount: 1, accreditationCount: 2 };
   });
   router.post('/diagnostic-units/:id/study-offerings', (request) => {
     const datos = cuerpo<{ studyCode: string }>(request);
@@ -768,11 +1651,16 @@ export function registrarDiagnostico(router: MockRouter): void {
   router.post('/study-prices/:id/close', () => ({ ok: true }));
   router.delete('/diagnostic-study-offerings/:id', () => ({ ok: true }));
 
-  void PRIORIDAD;
-  void PACIENTES;
+  void PRIORITY;
+  void PATIENTS;
 }
 
 /* Sobreviven a F5 dentro de la pestaña: ver `Coleccion.persistirEn`. */
 informes.persistirEn('mock.diagnostics.informes');
 compartidos.persistirEn('mock.diagnostics.compartidos');
 ordenesDeTrabajo.persistirEn('mock.diagnostics.ordenesDeTrabajo');
+labSpecimens.persistirEn('mock.diagnostics.labSpecimens');
+labContainers.persistirEn('mock.diagnostics.labContainers');
+labCustodyEvents.persistirEn('mock.diagnostics.labCustodyEvents');
+labAccessions.persistirEn('mock.diagnostics.labAccessions');
+labInboxOrders.persistirEn('mock.diagnostics.labInboxOrders');

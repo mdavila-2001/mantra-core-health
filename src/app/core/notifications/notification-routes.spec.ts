@@ -11,9 +11,7 @@ describe('rutaDeNotificacion', () => {
     expect(rutaDeNotificacion({ type: 'PRESCRIPTION', id: 'rx-1' })).toBe(
       '/my-account/medical-record',
     );
-    expect(rutaDeNotificacion({ type: 'ENCOUNTER', id: 'e-1' })).toBe(
-      '/my-account/medical-record',
-    );
+    expect(rutaDeNotificacion({ type: 'ENCOUNTER', id: 'e-1' })).toBe('/my-account/medical-record');
   });
 
   it('lleva el hilo de mensajería a su conversación, listo para responder', () => {
@@ -43,6 +41,29 @@ describe('rutaDeNotificacion', () => {
     // (FAR-E1/E4), su notificación ya abre el papel.
     expect(rutaDeNotificacion({ type: 'PHARMACY_RECEIPT', id: 'ped-1' })).toBe(
       '/my-account/pharmacy-orders/ped-1/receipt',
+    );
+  });
+
+  it('AG-06/AG-07: lleva el aviso de la agenda (confirmación o cupo liberado) a mis turnos', () => {
+    // Lo que scheduling emite de verdad (`RECURSO_CITA`/`RECURSO_CUPO`), no el
+    // `APPOINTMENT` que ningún módulo manda hoy.
+    expect(rutaDeNotificacion({ type: 'scheduling.appointment_bookings', id: 'b-1' })).toBe(
+      '/my-account/appointments',
+    );
+    expect(rutaDeNotificacion({ type: 'scheduling.bookable_slots', id: 'slot-1' })).toBe(
+      '/my-account/appointments',
+    );
+  });
+
+  it('AG-06: lleva la orden de estudios a la lista de órdenes del paciente (MCH-027)', () => {
+    expect(rutaDeNotificacion({ type: 'SERVICE_REQUEST', id: 'sr-1' })).toBe(
+      '/my-account/diagnostic-orders',
+    );
+  });
+
+  it('lleva el aviso de una derivación a la ficha del profesional recomendado, donde reserva', () => {
+    expect(rutaDeNotificacion({ type: 'PRACTITIONER_PROFILE', id: 'hp-9' })).toBe(
+      '/directory/hp-9',
     );
   });
 

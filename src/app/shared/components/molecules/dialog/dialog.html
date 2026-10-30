@@ -11,7 +11,7 @@
   (cancel)="handleNativeCancel($event)"
   (click)="handleBackdropClick($event)"
 >
-  <div class="dialog__panel">
+  <div class="dialog__panel panel-muelle">
     <h2 class="dialog__title" [id]="titleId" data-testid="dialogo-titulo">{{ config().title }}</h2>
     <p class="dialog__message" [id]="messageId">{{ config().message }}</p>
 
@@ -43,6 +43,24 @@
             [maxLength]="reasonMaxLength()"
             [rows]="3"
             [hasError]="reasonError() !== ''"
+          />
+        </app-form-field>
+      </div>
+    }
+
+    @if (phraseRequired(); as exigida) {
+      <div class="dialog__reason">
+        <app-form-field
+          [label]="'Escriba «' + exigida + '» para confirmar'"
+          [errorMessage]="phraseError()"
+          [required]="true"
+        >
+          <app-input
+            testId="dialogo-frase"
+            ariaLabel="Frase de confirmación"
+            [ngModel]="phrase()"
+            (ngModelChange)="phrase.set($event)"
+            [hasError]="phraseError() !== ''"
           />
         </app-form-field>
       </div>

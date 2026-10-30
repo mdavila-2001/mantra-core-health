@@ -1,0 +1,154 @@
+@import './chart-tokens.css';
+
+:host {
+  display: block;
+  width: 100%;
+  font-family: var(--font-body);
+}
+
+.bc__svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.bc__grid {
+  stroke: var(--ins-grid);
+  stroke-width: 1;
+}
+
+.bc__tick,
+.bc__cat {
+  fill: var(--ins-axis);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.bc__cat {
+  fill: var(--text-secondary);
+}
+
+.bc__value {
+  fill: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.bc__value--gap {
+  fill: var(--text-muted);
+  font-weight: 500;
+}
+
+.bc__bar {
+  cursor: pointer;
+  outline: none;
+}
+
+.bc__bar .bc__fill {
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+.bc__bar--hover .bc__fill,
+.bc__bar:focus-visible .bc__fill {
+  opacity: 0.82;
+}
+
+.bc__bar:focus-visible .bc__fill,
+.bc__bar:focus-visible .bc__gap {
+  stroke: var(--focus-ring);
+  stroke-width: 2.5;
+}
+
+.bc__bar--picked .bc__fill {
+  stroke: var(--text-primary);
+  stroke-width: 2;
+}
+
+.bc__gap {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1.25;
+  stroke-dasharray: 4 3;
+  rx: 3;
+}
+
+.bc__ref {
+  stroke-width: 1.5;
+}
+
+.bc__ref--target {
+  stroke: var(--st-warning-fg);
+}
+
+.bc__ref--benchmark,
+.bc__ref--history {
+  stroke: var(--text-secondary);
+  stroke-dasharray: 6 4;
+}
+
+.bc__ref--alert {
+  stroke: var(--st-warning-fg);
+  stroke-dasharray: 3 3;
+}
+
+.bc__ref--critical {
+  stroke: var(--st-error-fg);
+  stroke-dasharray: 3 3;
+}
+
+.bc__reflabel {
+  fill: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.bc__table {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.bc__table summary {
+  cursor: pointer;
+  inline-size: fit-content;
+  padding-block: var(--sp-1);
+}
+
+.bc__table-wrap {
+  max-block-size: 240px;
+  overflow: auto;
+  margin-top: var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+}
+
+.bc__table table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.bc__table th,
+.bc__table td {
+  padding: var(--sp-1) var(--sp-3);
+  text-align: end;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.bc__table thead th {
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+}
+
+.bc__table th:first-child {
+  text-align: start;
+}
+
+.bc__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

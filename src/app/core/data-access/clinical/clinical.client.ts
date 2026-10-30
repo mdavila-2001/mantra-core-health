@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
+import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import { nombreDeContentDisposition } from '../files/content-disposition';
 import type {
   Allergy,
@@ -27,6 +28,7 @@ import type {
   NewAllergyIntolerance,
   NewCareEpisode,
   NewCondition,
+  NewDiagnosisVerification,
   NewDiagnosticReport,
   NewEncounter,
   NewMedicationRequest,
@@ -37,32 +39,6 @@ import type {
   OwnMedicalAspectsChanges,
   PatientChart,
 } from './clinical.types';
-
-export interface PrescriptionHistoryItem {
-  readonly id: string;
-  readonly medication: string;
-  readonly status: string;
-  readonly issuedAt: Date;
-  readonly validTo?: Date;
-  readonly doseText?: string;
-  readonly frequencyText?: string;
-  readonly prescriber?: string;
-}
-
-interface WirePrescriptionHistoryItem extends Omit<
-  PrescriptionHistoryItem,
-  'issuedAt' | 'validTo'
-> {
-  readonly issuedAt: string;
-  readonly validTo?: string;
-}
-
-export interface PrescriptionHistoryPage {
-  readonly items: readonly PrescriptionHistoryItem[];
-  readonly total: number;
-  readonly offset: number;
-  readonly limit: number;
-}
 
 /**
  * Cliente del archivo clínico: `clinical` (M08) y `chart` (M15).
@@ -120,46 +96,8 @@ export interface PrescriptionHistoryPage {
 export class ClinicalClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
-
-  listPrescriptionHistory(
-    patientProfileId: string,
-    offset = 0,
-    limit = 50,
-  ): Observable<PrescriptionHistoryPage> {
-    return this.http
-      .get<{ items: WirePrescriptionHistoryItem[]; total: number; offset: number; limit: number }>(
-        this.url(`/clinical/patients/${encodeURIComponent(patientProfileId)}/prescriptions`),
-        { params: new HttpParams().set('offset', offset).set('limit', limit) },
-      )
-      .pipe(
-        map((page) => ({
-          ...page,
-          items: page.items.map(({ issuedAt, validTo, ...item }) => ({
-            ...item,
-            issuedAt: new Date(issuedAt),
-            ...(validTo ? { validTo: new Date(validTo) } : {}),
-          })),
-        })),
-      );
-  }
-
-  downloadPrescriptionHistoryPdf(
-    patientProfileId: string,
-  ): Observable<{ readonly blob: Blob; readonly fileName?: string }> {
-    return this.http
-      .get(
-        this.url(
-          `/clinical/patients/${encodeURIComponent(patientProfileId)}/prescriptions/history.pdf`,
-        ),
-        { responseType: 'blob', observe: 'response' },
-      )
-      .pipe(
-        map((response) => ({
-          blob: response.body ?? new Blob([]),
-          fileName: nombreDeContentDisposition(response.headers.get('Content-Disposition')),
-        })),
-      );
-  }
+  /** Claves `Idempotency-Key` por intento de envío (ver `../idempotency`). */
+  private readonly submissionKeys = new SubmissionKeys();
 
   /**
    * `GET /clinical/patients/:id/summary` — condiciones, alergias, medicación,
@@ -332,20 +270,25 @@ export class ClinicalClient {
    * inmediato en el bloque «medicación» de `getSummary`, que es de donde la
    * pantalla la vuelve a leer.
    *
+   * Viaja con `Idempotency-Key`: reintentar el mismo envío no deja dos
+   * borradores de la misma receta.
+   *
    * @param receta - El medicamento y su indicación. Lo ausente no viaja.
    * @returns La receta en borrador, con `signedAt` en `null`.
    */
   createMedicationRequest(receta: NewMedicationRequest): Observable<MedicationRequestRegistration> {
-    return this.http
-      .post<WireMedicationRequestRegistration>(
+    const body = sinAusentes({
+      ...receta,
+      validFrom: instanteDe(receta.validFrom),
+      validTo: instanteDe(receta.validTo),
+    });
+    return sendIdempotent(this.submissionKeys, 'medication-request', body, (headers) =>
+      this.http.post<WireMedicationRequestRegistration>(
         this.url('/clinical/medication-requests'),
-        sinAusentes({
-          ...receta,
-          validFrom: instanteDe(receta.validFrom),
-          validTo: instanteDe(receta.validTo),
-        }),
-      )
-      .pipe(map(toMedicationRequestRegistration));
+        body,
+        { headers },
+      ),
+    ).pipe(map(toMedicationRequestRegistration));
   }
 
   /**
@@ -391,6 +334,30 @@ export class ClinicalClient {
       .post<WireMedicationRequestRegistration>(
         this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/issue`),
         {},
+      )
+      .pipe(map(toMedicationRequestRegistration));
+  }
+
+  /**
+   * `POST /clinical/medication-requests/:id/edit` (C5) — liga después una
+   * receta con motivo plano a un diagnóstico confirmado, o cambia cuál.
+   *
+   * Sólo sobre un borrador: una receta emitida es un documento cerrado y
+   * responde `409`. Igual que el alta, el diagnóstico gana sobre el texto:
+   * mandar `indicationConditionId` descarta cualquier `indicationText` previo
+   * del lado del servidor.
+   *
+   * @param medicationRequestId - Receta a editar.
+   * @param indication - El diagnóstico confirmado elegido, o el motivo escrito.
+   */
+  editMedicationRequestIndication(
+    medicationRequestId: string,
+    indication: { readonly indicationConditionId: string } | { readonly indicationText: string },
+  ): Observable<MedicationRequestRegistration> {
+    return this.http
+      .post<WireMedicationRequestRegistration>(
+        this.url(`/clinical/medication-requests/${encodeURIComponent(medicationRequestId)}/edit`),
+        indication,
       )
       .pipe(map(toMedicationRequestRegistration));
   }
@@ -476,6 +443,26 @@ export class ClinicalClient {
         cambio,
       )
       .pipe(map(toConditionRegistration));
+  }
+
+  /**
+   * `POST /clinical/conditions/:id/verification` — confirma o rechaza un
+   * diagnóstico presuntivo (C3, P41).
+   *
+   * Vuelve la condición entera, no un recibo: la decisión cambia el estado
+   * clínico, el de verificación y las fechas, y la fila de la tabla se
+   * reemplaza con lo que el servidor dice, no con lo que se mandó.
+   *
+   * @param conditionId - El presuntivo a decidir.
+   * @param decision - El resultado, con motivo y/o evidencia.
+   */
+  verifyCondition(conditionId: string, decision: NewDiagnosisVerification): Observable<Condition> {
+    return this.http
+      .post<WireCondition>(
+        this.url(`/clinical/conditions/${encodeURIComponent(conditionId)}/verification`),
+        sinAusentes(decision),
+      )
+      .pipe(map(toCondition));
   }
 
   /**
@@ -626,9 +613,15 @@ export class ClinicalClient {
    * `POST /clinical/diagnostic-reports/:id/release` — libera el resultado
    * (UC-08-07).
    *
-   * Liberar es lo que hace visible el resultado para la persona, así que es un
-   * acto aparte de emitir: un informe final puede seguir retenido a propósito
-   * mientras se lo comunica en consulta.
+   * @deprecated (D-E, BR-17/CL-46) Esta ruta **no** escribe el evento de
+   * liberación que lee «Mis resultados»: el backend la mantiene montada, sin
+   * borrarla, pero desde D-E siempre responde `422` con el endpoint canónico
+   * en el mensaje. El único camino que el paciente ve es
+   * `POST /diagnostics/reports/:reportId/versions/:versionId/release`
+   * (todavía sin cliente en el front: es del laboratorio, no de esta
+   * pantalla — ver `DiagnosticsClient`). Se conserva este método sin borrar
+   * porque nada más en este carril lo usaba (ninguna pantalla), así que
+   * borrarlo no libera a nadie de una migración que no existía.
    *
    * @param diagnosticReportId - Informe a liberar.
    * @param expectedRowVersion - Versión esperada, para el bloqueo optimista.

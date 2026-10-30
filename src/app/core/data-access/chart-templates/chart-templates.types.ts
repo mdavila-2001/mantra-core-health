@@ -42,9 +42,6 @@ export interface ChartTemplateField {
    * doctor escriba sus propias opciones —«Nunca / Ex fumador / Fumador»— sin
    * pedirle nada a nadie. Los campos del estándar sí pueden traer `valueSetId`;
    * los propios traen esto.
-   *
-   * **El backend real todavía no lo persiste.** Ver
-   * `docs/pendientes-backend-formularios.md`.
    */
   readonly options?: readonly string[];
   /**
@@ -94,8 +91,7 @@ export interface ChartTemplateField {
    * Con {@link multiple} en falso es la «Cuadrícula de opción única» —una
    * respuesta por fila—; en verdadero, la «Cuadrícula de casillas».
    *
-   * **El backend real todavía no lo persiste.** Ver
-   * `docs/pendientes-backend-formularios.md`.
+   * Sólo la guarda el simulador: el DTO de la API no declara las filas.
    */
   readonly rows?: readonly string[];
   /**
@@ -116,12 +112,36 @@ export interface ChartTemplateField {
    */
   readonly oneResponsePerColumn?: boolean;
   /**
+   * La sección de la ficha en la que va —motivo, antecedentes, examen,
+   * diagnóstico presuntivo, plan—. La vista previa pagina por sección.
+   */
+  readonly section?: string;
+  /**
+   * Cuándo se muestra: si el campo `fieldId` vale `equals`. Es `enableWhen` de
+   * HL7 FHIR con operador `=` y comportamiento `SHOW`. Con un padre de varias
+   * respuestas se cumple si las incluye; si `equals` es una lista, basta uno.
+   * Un campo con el padre oculto también se oculta, y su `required` sólo vale
+   * cuando está a la vista. Ausente = siempre visible.
+   *
+   * Es lo que hace que un «Sí» pregunte «¿cuál?» debajo.
+   */
+  readonly showWhen?: CondicionDeCampo;
+  /**
    * Si el campo lo agregó esta organización, o viene del formulario estándar.
    *
    * El generador lo necesita para dos cosas que no puede adivinar: qué campos
    * puede tocar —los del estándar no— y cuáles cuentan contra su presupuesto.
    */
   readonly own: boolean;
+}
+
+/** Clase de ficha del catálogo (ver {@link ChartTemplate.kind}). */
+export type ChartTemplateKind = 'BASE' | 'SPECIFIC' | 'GENERAL';
+
+/** La condición de visibilidad de un campo (ver {@link ChartTemplateField.showWhen}). */
+export interface CondicionDeCampo {
+  readonly fieldId: string;
+  readonly equals: string | boolean | readonly (string | boolean)[];
 }
 
 /**
@@ -161,6 +181,12 @@ export interface ChartTemplate {
   readonly code: string;
   readonly name: string;
   readonly version: number;
+  /**
+   * La clase de ficha del catálogo estándar: la consulta inicial de la
+   * especialidad (`BASE`), el control estándar de una condición (`SPECIFIC`)
+   * o una de toda consulta (`GENERAL`). Ausente en las armadas a mano.
+   */
+  readonly kind?: ChartTemplateKind;
   /** Concept id del estado de la plantilla. */
   readonly statusConceptId: string;
   /**

@@ -1,0 +1,5 @@
+$ MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 DB_NAME=mantra_p29 (recién clonada de mantra_base) ... jest --config test/jest-integration.json --testTimeout=3600000 test/integration/practitioner-license-registration-files.int-spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       2 passed, 2 total
+Time:        1534.667 s
+EXIT=0

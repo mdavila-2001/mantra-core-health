@@ -1,6 +1,6 @@
 import { isPlatformBrowser } from '@angular/common';
 import {
-  afterNextRender,
+  afterRenderEffect,
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
@@ -132,9 +132,9 @@ export class Textarea implements ControlValueAccessor {
     const max = this.maxLength();
     switch (this.limitBand()) {
       case 'reached':
-        return `Alcanzaste el límite de ${max} caracteres.`;
+        return `Alcanzó el límite de ${max} caracteres.`;
       case 'near':
-        return `Te estás acercando al límite de ${max} caracteres.`;
+        return `Se está acercando al límite de ${max} caracteres.`;
       default:
         return '';
     }
@@ -158,9 +158,15 @@ export class Textarea implements ControlValueAccessor {
   private onTouched: () => void = () => undefined;
 
   constructor() {
-    // Un valor inicial largo ya llega con su alto: medir en el navegador y
-    // nunca en la ruta de render, que bajo SSR no tiene DOM.
-    afterNextRender(() => this.growToContent());
+    // Un valor largo llega con su alto: el inicial y también el que pone quien
+    // monta el control por `[value]` (un campo de sólo lectura que se llena
+    // solo nunca recibe un `input`, y se quedaba cortado en una línea). Se
+    // mide en el navegador después de pintar, nunca en la ruta de render, que
+    // bajo SSR no tiene DOM.
+    afterRenderEffect(() => {
+      this.value();
+      this.growToContent();
+    });
   }
 
   /* ---- ControlValueAccessor ---------------------------------------------- */

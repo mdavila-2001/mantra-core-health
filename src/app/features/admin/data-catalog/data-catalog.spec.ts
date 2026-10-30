@@ -56,8 +56,8 @@ describe('DataCatalog', () => {
 
   afterEach(() => http.verify({ ignoreCancelled: true }));
 
-  function responder(objetos: object[], cobertura: object = COBERTURA_SIN_ESCANEO) {
-    http.expectOne('/admin/catalog/schemas').flush([]);
+  function responder(objetos: object[], cobertura: object = COBERTURA_SIN_ESCANEO, schemas: object[] = []) {
+    http.expectOne('/admin/catalog/schemas').flush(schemas);
     http.expectOne((r) => r.url === '/admin/catalog/coverage').flush(cobertura);
     http.expectOne((r) => r.url === '/admin/catalog/objects').flush({ items: objetos, nextCursor: null, limit: 25 });
     http.expectOne('/admin/catalog/scans').flush({ items: [], nextCursor: null, limit: 50 });
@@ -102,5 +102,108 @@ describe('DataCatalog', () => {
     for (const r of reqs.filter((x) => x !== post)) r.flush({ code: 'CONFLICT' }, { status: 409, statusText: 'Conflict' });
     fixture.detectChanges();
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Ya hay un escaneo en curso');
+  });
+
+  describe('pestaña «Esquemas»', () => {
+    const SCHEMAS = [
+      {
+        schemaName: 'iam',
+        objects: 14,
+        notObserved: 0,
+        annotated: 14,
+        approved: 0,
+        description: {
+          moduleNumber: 1,
+          moduleCode: 'iam',
+          title: 'Identity & Access — User Accounts and Security',
+          domain: 'Identidad y Seguridad',
+          business: 'Manages login accounts, credentials, MFA, devices and sessions.',
+          system: 'Módulo 01 del modelo: 14 tablas o vistas modeladas y 14 conjuntos de índices.',
+          source: 'SALUD/Módulos/M01 iam.md',
+        },
+      },
+      {
+        schemaName: 'accounting',
+        objects: 42,
+        notObserved: 0,
+        annotated: 0,
+        approved: 0,
+        description: {
+          moduleNumber: 16,
+          moduleCode: 'accounting',
+          title: 'General Ledger and Accounting Subledgers',
+          domain: 'Financiero y ERP',
+          business: null,
+          system: null,
+          source: 'SALUD/Módulos/M16 accounting.md',
+        },
+      },
+      { schemaName: 'surveys', objects: 7, notObserved: 0, annotated: 0, approved: 0, description: null },
+    ];
+    const el = () => fixture.nativeElement as HTMLElement;
+    const abrirEsquemas = () => {
+      (fixture.componentInstance as unknown as { pestana: { set(i: number): void } }).pestana.set(1);
+      fixture.detectChanges();
+    };
+    const elegir = (schema: string) => {
+      (fixture.componentInstance as unknown as { elegirEsquema(f: { schemaName: string }): void }).elegirEsquema({ schemaName: schema });
+      fixture.detectChanges();
+    };
+
+    it('lista cada schema con el módulo de la bóveda al que pertenece', () => {
+      responder([OBJETO], COBERTURA_SIN_ESCANEO, SCHEMAS);
+      abrirEsquemas();
+      const tabla = el().querySelector('[data-testid="catalog-schemas"]')!.textContent!;
+      expect(tabla).toContain('M01 · Identity & Access');
+      expect(tabla).toContain('Identidad y Seguridad');
+      // Un schema que ningún módulo declara se dice, no se deja en blanco.
+      expect(tabla).toContain('Sin módulo en la bóveda');
+    });
+
+    it('elegir un schema muestra su negocio, su sistema y la nota de origen', () => {
+      responder([OBJETO], COBERTURA_SIN_ESCANEO, SCHEMAS);
+      abrirEsquemas();
+      elegir('iam');
+      expect(el().querySelector('[data-testid="catalog-schema-business"]')!.textContent).toContain('Manages login accounts');
+      expect(el().querySelector('[data-testid="catalog-schema-system"]')!.textContent).toContain('14 tablas o vistas modeladas');
+      expect(el().querySelector('[data-testid="catalog-schema-detail"]')!.textContent).toContain('SALUD/Módulos/M01 iam.md');
+    });
+
+    it('un módulo sin propósito de negocio lo dice y no inventa uno', () => {
+      responder([OBJETO], COBERTURA_SIN_ESCANEO, SCHEMAS);
+      abrirEsquemas();
+      elegir('accounting');
+      expect(el().querySelector('[data-testid="catalog-schema-business"]')!.textContent).toContain('La bóveda no describe el propósito de negocio');
+      expect(el().querySelector('[data-testid="catalog-schema-system"]')!.textContent).toContain('La nota del módulo no trae métricas');
+    });
+
+    it('un schema que ningún módulo declara lo dice', () => {
+      responder([OBJETO], COBERTURA_SIN_ESCANEO, SCHEMAS);
+      abrirEsquemas();
+      elegir('surveys');
+      expect(el().querySelector('[data-testid="catalog-schema-business"]')!.textContent).toContain('Ningún módulo de la bóveda declara este schema');
+    });
+
+    it('«Ver las tablas de este schema» filtra el inventario y vuelve a esa pestaña', () => {
+      responder([OBJETO], COBERTURA_SIN_ESCANEO, SCHEMAS);
+      abrirEsquemas();
+      elegir('iam');
+      (fixture.componentInstance as unknown as { verTablas(s: string): void }).verTablas('iam');
+      const objetos = http.expectOne((r) => r.url === '/admin/catalog/objects');
+      expect(objetos.request.params.get('schema')).toBe('iam');
+      objetos.flush({ items: [], nextCursor: null, limit: 25 });
+      http.expectOne((r) => r.url === '/admin/catalog/coverage').flush(COBERTURA_SIN_ESCANEO);
+      fixture.detectChanges();
+      expect(el().querySelector('[data-testid="catalog-schemas"]')).toBeNull();
+    });
+
+    it('si la lectura de schemas falla, la pestaña muestra el error y no una tabla vacía', () => {
+      http.expectOne('/admin/catalog/schemas').flush({ code: 'INTERNAL' }, { status: 500, statusText: 'Server Error' });
+      http.expectOne((r) => r.url === '/admin/catalog/coverage').flush(COBERTURA_SIN_ESCANEO);
+      http.expectOne((r) => r.url === '/admin/catalog/objects').flush({ items: [], nextCursor: null, limit: 25 });
+      http.expectOne('/admin/catalog/scans').flush({ items: [], nextCursor: null, limit: 50 });
+      abrirEsquemas();
+      expect(el().querySelector('[data-testid="catalog-schemas"]')?.textContent ?? '').not.toContain('Sin módulo en la bóveda');
+    });
   });
 });

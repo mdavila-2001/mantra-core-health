@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
 import { SessionStore } from '../auth/session.store';
+import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { authInterceptor, LOGIN_ROUTE } from './auth.interceptor';
 
 /** JWT de mentira: la firma no se verifica en el cliente, así que da igual. */
@@ -37,6 +38,7 @@ describe('authInterceptor', () => {
   let http: HttpClient;
   let backend: HttpTestingController;
   let session: SessionStore;
+  let refreshStorage: RefreshTokenStorage;
   let router: RouterEspia;
 
   beforeEach(() => {
@@ -53,10 +55,13 @@ describe('authInterceptor', () => {
     http = TestBed.inject(HttpClient);
     backend = TestBed.inject(HttpTestingController);
     session = TestBed.inject(SessionStore);
+    refreshStorage = TestBed.inject(RefreshTokenStorage);
+    refreshStorage.clear();
   });
 
   afterEach(() => {
     backend.verify();
+    refreshStorage.clear();
   });
 
   describe('credenciales en la petición', () => {
@@ -166,6 +171,17 @@ describe('authInterceptor', () => {
       expect(fallo).toBe(true);
       // Si hubiera intentado refrescar, verify() encontraría la petición pendiente.
       expect(session.isAuthenticated()).toBe(true);
+    });
+
+    it('la pre-carga del logo del alta va sin credenciales: la cuenta todavía no existe', () => {
+      session.start({ accessToken: UN_TENANT, refreshToken: 'r-1' });
+
+      http.post('/iam/auth/upload-registration-logo', new FormData()).subscribe();
+
+      const req = backend.expectOne('/iam/auth/upload-registration-logo');
+      expect(req.request.headers.has('Authorization')).toBe(false);
+
+      req.flush({ fileId: 'logo-alta' });
     });
   });
 

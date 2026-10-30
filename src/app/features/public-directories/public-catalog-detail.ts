@@ -9,6 +9,8 @@ import type {
   PublicProfileDetail,
 } from '@core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '@core/http/error-to-view-state';
+import type { ContextoDeChat } from '@core/messaging/chat-context';
+import { usarIrAlChat } from '@core/messaging/chat-link';
 import { dataOf, loading, notFound, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import type { BreadcrumbItem } from '@shared/components/molecules/breadcrumb/breadcrumb.types';
@@ -41,16 +43,15 @@ const TARJETAS_DEL_ESQUELETO = 6;
  * ## Dos estados y no uno
  *
  * La ficha y su catálogo se piden por separado y cada uno tiene el suyo. Con un
- * solo estado combinado, una lectura de catálogo que falle —hoy es P30/P31 de
- * `PENDIENTES-BACKEND.md`, así que contra la API real todavía falla— se llevaría
- * puesta también la ficha, y quien mira no podría ni ver dónde queda la clínica.
+ * solo estado combinado, una lectura de catálogo que falle se llevaría puesta
+ * también la ficha, y quien mira no podría ni ver dónde queda la clínica.
  */
 @Directive()
 export abstract class PublicCatalogDetail<T> implements OnInit {
   /** Qué clase de sujeto espera esta ficha. Un slug de otra clase da 404. */
   protected abstract readonly kind: Extract<
     PublicProfileDetail['kind'],
-    'ORGANIZATION' | 'PHARMACY'
+    'ORGANIZATION' | 'PHARMACY' | 'INSURER'
   >;
 
   /** El directorio del que cuelga, para la miga de pan y la vuelta atrás. */
@@ -194,6 +195,21 @@ export abstract class PublicCatalogDetail<T> implements OnInit {
     if (perfil.ratingAverage === null || perfil.ratingCount === 0) return null;
     const media = perfil.ratingAverage.toFixed(1).replace('.', ',');
     return `${media} · ${perfil.ratingCount} ${perfil.ratingCount === 1 ? 'reseña' : 'reseñas'}`;
+  }
+
+  private readonly irAlChat = usarIrAlChat();
+
+  /**
+   * «Chatear» / «Consultar por chat»: abre el chat con el establecimiento de
+   * esta ficha, con la tarjeta de lo que se está mirando.
+   *
+   * Con el slug **de la ficha ya leída**, no el de la ruta: si la ficha no
+   * cargó no hay con quién hablar, y la plantilla no muestra el botón.
+   */
+  protected chatear(contexto: Omit<ContextoDeChat, 'ruta'>): void {
+    const ficha = this.ficha();
+    if (ficha === null) return;
+    this.irAlChat({ escribirA: ficha.slug }, { ...contexto, ruta: `${this.rutaDelDirectorio}/${ficha.slug}` });
   }
 
   /**

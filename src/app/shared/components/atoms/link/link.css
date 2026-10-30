@@ -2,9 +2,14 @@
     Link — el subrayado NO es decoración: es el segundo portador del
     significado «esto se puede seguir», imprescindible cuando el color no se
     distingue. Por eso todas las variantes subrayan, incluida `subtle`.
-    TODO(diseñador): confirmar si `subtle` puede subrayar solo al hover.
 
     El anillo de foco lo pone la regla global de `:focus-visible`.
+
+    Hay una segunda copia de este aspecto en `styles/alovida.css`
+    (`:where(a[app-link])`), para los `<a app-link>` de plantillas que no
+    montan el átomo —las maquetas ALOVIDA—. Con `:where()` tiene especificidad
+    cero, así que ESTA hoja gana siempre que el átomo está. Si cambiás un valor
+    acá, cambialo allá: `link.spec.ts` compara las dos.
     ========================================================================== */
 
 :host {
@@ -16,16 +21,20 @@
     gap: var(--sp-1);
     color: var(--_link-fg);
     font-family: var(--font-body);
-    font-weight: 600;
+    font-weight: 500;
     text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
     border-radius: var(--r-xs);
     transition: color var(--dur-fast) var(--ease-standard);
     cursor: pointer;
 }
 
+/* El hover cambia el color Y engrosa el subrayado: así tampoco depende sólo del
+   tono, que en `danger` casi no se mueve. */
 :host(:hover) {
     color: var(--_link-fg-hover);
+    text-decoration-thickness: 2px;
 }
 
 /* ---- variantes ----------------------------------------------------------- */
@@ -35,9 +44,12 @@
     --_link-fg-hover: var(--text-primary);
 }
 
+/* Sin tono propio de hover: el de error sube de oscuridad en claro pero en
+   oscuro caería bajo el contraste mínimo, y el engrosado del subrayado ya
+   marca el hover. */
 :host(.link--danger) {
     --_link-fg: var(--st-error-fg);
-    --_link-fg-hover: var(--c-error-600);
+    --_link-fg-hover: var(--_link-fg);
 }
 
 /* ---- destino externo ------------------------------------------------------ */

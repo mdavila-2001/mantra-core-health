@@ -1,74 +1,173 @@
-/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis,
-   adjuntar, plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del
-   campo se leían como el rótulo del propio campo. */
+/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis y
+   plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del campo se
+   leían como el rótulo del propio campo. El menú de adjuntar no es un panel:
+   flota sobre el hilo (`app-menu`) y no empuja nada. */
 
+/* Sin `position` propia, a propósito: la vista previa de adjuntos se apoya
+   en el host del hilo para taparlo entero, y un host posicionado acá la
+   encerraría en la barra. */
 :host {
-  position: relative;
   flex: none;
   display: block;
   background: var(--sup-tarjeta);
   border-block-start: 1px solid var(--filete);
 }
 
+/* Los hijos en flujo sí van posicionados (sin `z-index`): así se pintan por
+   encima del papel del hilo (`thread.css`, `:host::before`, que también es
+   posicionado). Sin esto el patrón quedaba encima del campo de escribir. */
+.composer,
+.composer__chips,
+.composer__panel,
+.composer__respuesta,
+.composer__error {
+  position: relative;
+}
+
 .composer {
   display: flex;
   align-items: flex-end;
+  /* El fondo va acá y no sólo en el host: el host no está posicionado y su
+     fondo se pinta debajo del papel del hilo. */
+  background: var(--sup-tarjeta);
   gap: var(--e2);
   padding: var(--e2) var(--e4);
 }
 
+/* Todo lo que se toca mide 44 px: es el mínimo cómodo para un pulgar, y la
+   barra se usa con el teléfono en una mano. */
 .composer__icono,
 .composer__enviar {
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
   color: var(--tinta-2);
   cursor: pointer;
-  transition: background var(--mov-rapido) var(--curva);
+  transition:
+    background var(--mov-rapido) var(--curva),
+    color var(--mov-rapido) var(--curva),
+    transform var(--dur-fast) var(--ease-standard);
 }
 
-.composer__icono:hover,
-.composer__icono:focus-visible {
+/* ALOVIDA Pulse · el dedo hunde el botón: respuesta en 120 ms, que es lo que se
+   percibe como inmediato. */
+.composer__icono:active,
+.composer__enviar:active {
+  transform: scale(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__icono:active,
+  .composer__enviar:active {
+    transform: none;
+  }
+}
+
+.composer__icono:hover {
   background: var(--sup-inset);
   color: var(--tinta-marca);
 }
 
-.composer__icono svg,
-.composer__enviar svg {
-  inline-size: 22px;
-  block-size: 22px;
+.composer__icono:focus-visible,
+.composer__enviar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
 }
 
-/* El botón de enviar sí es de marca: es la acción de la barra. */
+.composer__icono svg {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+/* El de adjuntar, afuera de la píldora: un círculo con borde, para que se lea
+   como «más opciones» y no como parte del campo. */
+.composer > .composer__icono {
+  border: 1px solid var(--filete);
+  color: var(--tinta-marca);
+}
+
+/* El botón de enviar sí es de marca: es la acción de la barra. Círculo lleno
+   con la flecha blanca. `--petroleo-relleno` y no `--petroleo`: de noche el
+   petróleo se aclara para leerse como tinta, y el blanco encima no llegaba;
+   el relleno da 5,4:1 con blanco en los tres temas. */
 .composer__enviar {
-  background: var(--petroleo);
-  color: #fff;
+  background: var(--petroleo-relleno);
+  color: var(--surface-white);
+  box-shadow: var(--sombra-1);
 }
 
 .composer__enviar:hover {
-  background: var(--petroleo-x, var(--petroleo));
-  filter: brightness(1.08);
+  background: var(--petroleo-h);
+}
+
+/* El avión de papel apenas corrido: centrado a ojo, no a caja. */
+.composer__enviar svg {
+  inline-size: 22px;
+  block-size: 22px;
+  margin-inline-start: 3px;
+}
+
+/* --- La píldora ---------------------------------------------------------- */
+
+/* Campo y accesos en una sola cápsula redondeada. El foco se marca en la
+   cápsula entera: el textarea es sólo una parte de ella. */
+.composer__pildora {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  min-block-size: 44px;
+  padding-inline: var(--e1);
+  border: 1px solid var(--filete);
+  border-radius: calc(var(--r-menu) * 2);
+  background: var(--sup-inset);
+  transition: border-color var(--mov-rapido) var(--curva), background var(--mov-rapido) var(--curva);
+}
+
+.composer__pildora:focus-within {
+  border-color: var(--petroleo);
+  background: var(--sup-tarjeta);
+  box-shadow: 0 0 0 3px var(--anillo-foco);
+}
+
+.composer__icono--chico {
+  color: var(--tinta-3);
+}
+
+.composer__pildora .composer__icono:hover {
+  background: none;
+  color: var(--tinta-marca);
+}
+
+/* La cámara directa sólo donde hay cámara a mano: en la compu el `capture` no
+   hace nada y sería un segundo botón de «elegir foto». */
+@media (hover: hover) and (pointer: fine) {
+  .composer__icono--camara {
+    display: none;
+  }
 }
 
 .composer__campo {
   flex: 1 1 auto;
+  align-self: center;
   min-inline-size: 0;
 }
 
 .composer__campo textarea {
+  display: block;
   inline-size: 100%;
-  min-block-size: 40px;
+  min-block-size: 42px;
   max-block-size: 8.5rem;
-  padding: 10px var(--e4);
-  border: 1px solid transparent;
-  border-radius: var(--r-menu);
-  background: var(--sup-inset);
+  padding: 11px var(--e1);
+  border: 0;
+  background: transparent;
   font: inherit;
   font-size: var(--fs-body);
   line-height: 20px;
@@ -78,17 +177,121 @@
   field-sizing: content;
 }
 
+.composer__campo textarea::placeholder {
+  color: var(--tinta-3);
+}
+
+/* El anillo lo lleva la píldora (`:focus-within`). */
 .composer__campo textarea:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: 1px;
-  border-color: var(--petroleo);
+  outline: none;
+}
+
+/* --- Respuestas rápidas -------------------------------------------------- */
+
+.composer__chips {
+  display: flex;
+  gap: var(--e2);
   background: var(--sup-tarjeta);
+  padding: var(--e3) var(--e4) var(--e1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* La fila no muestra barra de desplazamiento: cuando hay chips fuera de la
+   vista, el borde de ese lado se desvanece y avisa que se puede deslizar.
+   Máscara y no un velo de color: funciona sobre cualquier fondo y tema. Las
+   clases las pone `medirChips()`, sólo si de verdad hay más de ese lado. */
+.composer__chips.is-sigue-al-final {
+  mask-image: linear-gradient(to right, black calc(100% - var(--e8)), transparent);
+}
+
+.composer__chips.is-sigue-al-inicio {
+  mask-image: linear-gradient(to right, transparent, black var(--e8));
+}
+
+.composer__chips.is-sigue-al-inicio.is-sigue-al-final {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black var(--e8),
+    black calc(100% - var(--e8)),
+    transparent
+  );
+}
+
+.composer__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.composer__chip {
+  flex: none;
+  min-block-size: 44px;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
+  /* Al tabular, el chip enfocado no queda debajo del borde desvanecido. */
+  scroll-margin-inline: var(--e8);
+}
+
+.composer__chip:hover {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.composer__chip:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* --- Preparando lo elegido ---------------------------------------------- */
+
+.composer__preparando {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+/* Vacía no ocupa lugar, pero sigue en el árbol de accesibilidad: con
+   `display: none` la región viva saldría del árbol y su texto no se anunciaría. */
+.composer__preparando:empty {
+  padding-block: 0;
+}
+
+.composer__preparando-giro {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  border: 2px solid var(--filete);
+  border-block-start-color: var(--petroleo);
+  border-radius: var(--r-pill);
+  animation: composer-giro .8s linear infinite;
+}
+
+@keyframes composer-giro {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__preparando-giro { animation: none; }
 }
 
 /* --- La tira de respuesta ------------------------------------------------ */
 
-.composer__respuesta,
-.composer__adjunto {
+.composer__respuesta {
   display: flex;
   align-items: center;
   gap: var(--e3);
@@ -121,14 +324,14 @@
   font-size: var(--fs-caption);
 }
 
-.composer__respuesta button,
-.composer__adjunto button {
+.composer__respuesta button {
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 28px;
-  block-size: 28px;
+  /* 44 de área tocable con el glifo de 16 de siempre. */
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
@@ -136,38 +339,24 @@
   cursor: pointer;
 }
 
-.composer__respuesta button svg,
-.composer__adjunto button svg {
+/* El margen negativo deja la tira de responder con la altura que tenía. */
+.composer__respuesta button {
+  margin-block: calc(var(--e2) * -1);
+}
+
+.composer__respuesta button:hover {
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+}
+
+.composer__respuesta button:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -4px;
+}
+
+.composer__respuesta button svg {
   inline-size: 16px;
   block-size: 16px;
-}
-
-/* --- El archivo elegido -------------------------------------------------- */
-
-.composer__adjunto-imagen {
-  inline-size: 44px;
-  block-size: 44px;
-  border-radius: var(--r-ctrl);
-  object-fit: cover;
-}
-
-.composer__adjunto-icono {
-  display: inline-flex;
-  color: var(--tinta-2);
-}
-
-.composer__adjunto-icono svg {
-  inline-size: 28px;
-  block-size: 28px;
-}
-
-.composer__adjunto-nombre {
-  flex: 1 1 auto;
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-caption);
 }
 
 /* --- Los paneles --------------------------------------------------------- */
@@ -179,31 +368,58 @@
   background: var(--sup-tarjeta);
 }
 
-.composer__adjuntar {
-  margin: 0;
-  padding: var(--e2);
-  list-style: none;
+/* --- El menú de adjuntar ------------------------------------------------- */
+
+/* El «+» gira a ✕ mientras el menú está abierto, como en WhatsApp. */
+.composer__mas svg {
+  transition: transform var(--dur-base) var(--ease-standard);
 }
 
-.composer__adjuntar button {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e2) var(--e3);
-  border: 0;
-  border-radius: var(--r-ctrl);
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: var(--fs-caption);
-  text-align: start;
-  cursor: pointer;
-}
-
-.composer__adjuntar button:hover,
-.composer__adjuntar button:focus-visible {
+.composer__mas.is-abierto {
   background: var(--sup-inset);
+  color: var(--tinta-marca);
+}
+
+.composer__mas.is-abierto svg {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__mas svg {
+    transition: none;
+  }
+}
+
+/* Cada opción con su círculo de color, para reconocerla sin leer. Son
+   rampas del sistema y no tokens de tema: el color identifica la opción y
+   no tiene que cambiar de noche. */
+.composer__menu-icono {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: var(--r-pill);
+  color: var(--surface-white);
+}
+
+.composer__menu-icono svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.composer__menu-icono--documento { background: var(--c-petrol-600); }
+.composer__menu-icono--fotos { background: var(--c-info-600); }
+.composer__menu-icono--plantilla { background: var(--c-amber-600); }
+
+.composer__menu {
+  min-inline-size: 13rem;
+}
+
+/* Los ítems del menú (`app-menu-item`, que pone la superficie, el borde y la
+   sombra del sistema). Sólo se les sube el alto a 44: el menú se abre con el
+   pulgar. */
+.composer__opcion {
+  min-block-size: 44px;
 }
 
 /* --- Plantillas (carril P9) ---------------------------------------------- */
@@ -226,6 +442,7 @@
 
 .composer__plantilla-texto {
   flex: 1 1 auto;
+  min-block-size: 44px;
   padding: var(--e2);
   border: 0;
   border-radius: var(--r-ctrl);
@@ -244,6 +461,8 @@
 
 .composer__plantilla-quitar {
   flex: none;
+  min-block-size: 44px;
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: var(--tinta-2);
@@ -265,7 +484,7 @@
 
 .composer__plantilla-nueva input {
   inline-size: 100%;
-  block-size: var(--h-ctrl);
+  block-size: 44px;
   padding-inline: var(--e3);
   border: 1px solid var(--filete);
   border-radius: var(--r-ctrl);
@@ -277,7 +496,7 @@
 
 .composer__plantilla-nueva > button {
   flex: none;
-  block-size: var(--h-ctrl);
+  block-size: 44px;
   padding-inline: var(--e3);
   border: 1px solid var(--borde-ctrl, var(--filete));
   border-radius: var(--r-ctrl);
@@ -303,6 +522,10 @@
 }
 
 .composer__error button {
+  flex: none;
+  min-block-size: 44px;
+  margin-block: calc(var(--e2) * -1);
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: inherit;
@@ -313,13 +536,15 @@
 }
 
 @media (max-width: 60rem) {
-  .composer {
+  .composer,
+  .composer__chips {
     padding-inline: var(--e3);
   }
-}
 
-.composer__adjunto { flex-wrap: wrap; }
-.composer__adjunto app-file-preview { flex-basis: 100%; }
+  .composer {
+    gap: var(--e1);
+  }
+}
 
 /* La tira de edición (F4.5).
 
@@ -350,6 +575,7 @@
 }
 
 .composer__solapa {
+  min-block-size: 44px;
   padding: var(--e2) var(--e3);
   border: 0;
   border-radius: var(--r-ctrl) var(--r-ctrl) 0 0;

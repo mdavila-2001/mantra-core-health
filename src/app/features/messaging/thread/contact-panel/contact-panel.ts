@@ -18,7 +18,11 @@ import { RouterLink } from '@angular/router';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { publicProfileLink } from '../../../../core/data-access/community/public-profile-url';
 import type { PublicProfileDetail } from '../../../../core/data-access/community/community.types';
+import { inertBackground, trapTabKey } from '../../../../shared/a11y/modal-focus';
+import { verificationOf } from '../../../../core/verification/verification-status';
 import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
+import { VerificationBadge } from '../../../../shared/components/atoms/verification-badge/verification-badge';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * «Ver perfil» del chat: quién es la persona del otro lado, sin salir del hilo.
@@ -45,7 +49,7 @@ import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
  */
 @Component({
   selector: 'app-contact-panel',
-  imports: [Avatar, RouterLink],
+  imports: [Avatar, RouterLink, LoadingState, VerificationBadge],
   templateUrl: './contact-panel.html',
   styleUrl: './contact-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,6 +90,14 @@ export class ContactPanel {
     () => (this.profile()?.badges.length ?? 0) > 0,
   );
 
+  /**
+   * La verificación para la insignia. Manda `verification.status` si la API lo
+   * envía; si no, `verified` (los sellos vigentes) como hasta ahora.
+   */
+  protected readonly verificacion = computed(() =>
+    verificationOf({ verification: this.profile()?.verification, verified: this.verified() }),
+  );
+
   /** A dónde lleva «Ver ficha pública», o `null` si esta ficha no se publica. */
   protected readonly publicLink = computed(() => {
     const ficha = this.profile();
@@ -104,13 +116,42 @@ export class ContactPanel {
     // el foco seguía en el botón del menú, así que la tecla nunca llegaba acá.
     // Es lo que pide la regla de modales del proyecto —foco inicial, Escape y
     // restauración—, y se midió con el navegador, no leyendo el código.
+    //
+    // Y mientras está abierta, lo de atrás no existe (WCAG 2.4.3): el panel
+    // no puede ser un `<dialog>` con `showModal()` sin dejar de apoyarse en el
+    // hilo —la capa superior del navegador lo sacaría a toda la ventana y
+    // taparía la bandeja—, así que la inertización y la vuelta del `Tab` se
+    // hacen a mano, con las mismas piezas que el tutorial.
     const volverA = inject(DOCUMENT).activeElement;
-    afterNextRender(() => this.hoja()?.nativeElement.focus());
+    let restoreBackground: (() => void) | null = null;
+    afterNextRender(() => {
+      const sheet = this.hoja()?.nativeElement;
+      if (sheet === undefined) return;
+      restoreBackground = inertBackground(sheet);
+      sheet.focus();
+    });
     inject(DestroyRef).onDestroy(() => {
+      // Primero se devuelve el fondo: el foco no puede volver a algo inerte.
+      restoreBackground?.();
       if (volverA instanceof HTMLElement && volverA.isConnected) {
         volverA.focus();
       }
     });
+  }
+
+  /**
+   * `Escape` cierra y `Tab` da la vuelta dentro de la hoja.
+   *
+   * Un solo `keydown` y no dos: el `(keydown.escape)` de antes sigue siendo el
+   * mismo gesto, y el `Tab` necesita el mismo lugar de escucha.
+   */
+  protected handleKeydown(evento: KeyboardEvent): void {
+    if (evento.key === 'Escape') {
+      evento.preventDefault();
+      this.close();
+      return;
+    }
+    trapTabKey(evento, this.hoja()?.nativeElement.querySelector('.contacto__hoja'));
   }
 
   private read(profileId: string): void {

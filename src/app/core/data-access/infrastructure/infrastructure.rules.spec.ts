@@ -269,11 +269,10 @@ describe('reglas de infraestructura', () => {
   });
 
   describe('reflejo de permisos (la API decide)', () => {
-    it('ofrece escritura a SECURITY_ADMIN o a quien es dueña del tenant activo', () => {
-      expect(ofrecerEscritura(['SECURITY_ADMIN'], 't1', null)).toBe(true);
-      expect(ofrecerEscritura(['PRACTITIONER'], 't1', 't1')).toBe(true);
-      expect(ofrecerEscritura(['PRACTITIONER'], 't2', 't1')).toBe(false);
-      expect(ofrecerEscritura([], null, null)).toBe(false);
+    it('sólo ofrece escritura a SECURITY_ADMIN (el token ya no dice quién es dueño)', () => {
+      expect(ofrecerEscritura(['SECURITY_ADMIN'])).toBe(true);
+      expect(ofrecerEscritura(['PRACTITIONER'])).toBe(false);
+      expect(ofrecerEscritura([])).toBe(false);
     });
   });
 });

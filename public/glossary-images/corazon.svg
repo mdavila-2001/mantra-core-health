@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Esquema de las cuatro cámaras del corazón y el sentido de la sangre</title>
+  <desc id="d">Esquema conceptual del corazón en vista frontal, con la derecha del paciente a la izquierda de la imagen. Muestra la aurícula y el ventrículo derechos con sangre pobre en oxígeno en azul, la aurícula y el ventrículo izquierdos con sangre oxigenada en rojo, las cuatro válvulas, las venas cavas, las venas pulmonares, el tronco pulmonar y la aorta.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --wall:#e7a79a; --wall-d:#c9705f; --blue:#4f7fc4; --blue-l:#a9c4ea; --red:#d6453d; --red-l:#f2a29b; --valve:#f2c14e; --valve-d:#9a6b00; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --wall:#a85b50; --wall-d:#e08a7a; --blue:#5b8fd9; --blue-l:#2c4a75; --red:#e0584f; --red-l:#7a2f2a; --valve:#f2c14e; --valve-d:#f6d98c; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); font-size: 14px; }
+    .muted { fill: var(--muted); }
+    .title { font-size: 19px; font-weight: 700; }
+    .lbl { font-size: 14px; font-weight: 600; }
+    .in { font-size: 14px; font-weight: 700; fill: #fff; }
+    .ldr { stroke: var(--muted); stroke-width: 1.2; fill: none; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="30" text-anchor="middle" class="title">Las cuatro cámaras y el recorrido de la sangre</text>
+
+  <!-- masa ventricular (miocardio) -->
+  <path d="M228 262 L592 262 L592 330 Q592 408 478 424 Q408 432 335 402 Q228 360 228 262 Z" fill="var(--wall)" stroke="var(--wall-d)" stroke-width="2"/>
+  <!-- cavidad VD -->
+  <path d="M244 270 L392 270 L400 360 Q352 372 312 346 Q246 316 244 270 Z" fill="var(--blue)"/>
+  <!-- cavidad VI -->
+  <path d="M410 270 L560 270 L560 322 Q556 384 470 400 Q430 380 412 356 Z" fill="var(--red)"/>
+  <!-- septo interventricular -->
+  <path d="M392 262 L412 262 L430 400" stroke="var(--wall-d)" stroke-width="12" fill="none" stroke-linecap="round"/>
+
+  <!-- aurículas -->
+  <rect x="226" y="168" width="150" height="86" rx="22" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="2"/>
+  <rect x="426" y="168" width="168" height="86" rx="22" fill="var(--red)" stroke="var(--wall-d)" stroke-width="2"/>
+
+  <!-- grandes vasos centrales -->
+  <rect x="378" y="118" width="22" height="146" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <rect x="402" y="118" width="22" height="146" fill="var(--red)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <path d="M378 120 Q378 92 350 92 L318 92" stroke="var(--blue)" stroke-width="22" fill="none"/>
+  <path d="M424 120 Q424 82 470 82 L540 82" stroke="var(--red)" stroke-width="22" fill="none"/>
+
+  <!-- venas cavas -->
+  <rect x="262" y="104" width="26" height="68" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <rect x="172" y="206" width="56" height="26" fill="var(--blue)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <!-- venas pulmonares -->
+  <rect x="596" y="190" width="56" height="18" fill="var(--red)" stroke="var(--wall-d)" stroke-width="1.5"/>
+  <rect x="596" y="216" width="56" height="18" fill="var(--red)" stroke="var(--wall-d)" stroke-width="1.5"/>
+
+  <!-- válvulas -->
+  <g stroke="var(--valve-d)" stroke-width="2.5" fill="var(--valve)" stroke-linejoin="round">
+    <path d="M262 254 L300 280 L338 254 Z"/>
+    <path d="M462 254 L500 282 L540 254 Z"/>
+    <rect x="378" y="262" width="22" height="9" rx="2"/>
+    <rect x="402" y="262" width="22" height="9" rx="2"/>
+  </g>
+
+  <!-- flechas de flujo -->
+  <g stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".9">
+    <path d="M275 124 v32 M268 148 l7 9 l7 -9"/>
+    <path d="M186 219 h28 M206 211 l8 8 l-8 8"/>
+    <path d="M300 292 v34 M293 318 l7 9 l7 -9"/>
+    <path d="M390 250 v-100 M383 158 l7 -9 l7 9" opacity=".0"/>
+    <path d="M612 199 h-4 M600 199 l8 -8" opacity=".0"/>
+    <path d="M640 199 h-36 M612 191 l-8 8 l8 8"/>
+    <path d="M640 225 h-36 M612 217 l-8 8 l8 8"/>
+    <path d="M510 292 v34 M503 318 l7 9 l7 -9"/>
+  </g>
+
+  <!-- rótulos dentro -->
+  <text x="301" y="198" text-anchor="middle" class="in">AD</text>
+  <text x="510" y="198" text-anchor="middle" class="in">AI</text>
+  <text x="318" y="320" text-anchor="middle" class="in">VD</text>
+  <text x="496" y="344" text-anchor="middle" class="in">VI</text>
+
+  <!-- rótulos externos izquierda -->
+  <path class="ldr" d="M262 130 L190 130"/><text x="186" y="126" text-anchor="end" class="lbl">Vena cava superior</text>
+  <path class="ldr" d="M172 232 L150 262"/><text x="146" y="278" text-anchor="end" class="lbl">Vena cava inferior</text>
+  <path class="ldr" d="M300 270 L210 300"/><text x="206" y="316" text-anchor="end" class="lbl">Válvula tricúspide</text>
+  <path class="ldr" d="M244 330 L190 360"/><text x="186" y="378" text-anchor="end" class="lbl">Ventrículo derecho</text>
+  <text x="186" y="394" text-anchor="end" class="muted">pared delgada</text>
+  <path class="ldr" d="M320 92 L270 70"/><text x="266" y="66" text-anchor="end" class="lbl">Tronco pulmonar</text>
+  <text x="266" y="82" text-anchor="end" class="muted">hacia los pulmones</text>
+
+  <!-- rótulos externos derecha -->
+  <path class="ldr" d="M540 82 L600 66"/><text x="606" y="62" class="lbl">Aorta</text>
+  <text x="606" y="78" class="muted">hacia el cuerpo</text>
+  <text x="660" y="196" class="lbl">Venas</text><text x="660" y="213" class="lbl">pulmonares</text>
+  <path class="ldr" d="M500 282 L640 300"/><text x="646" y="304" class="lbl">Válvula mitral</text>
+  <path class="ldr" d="M590 360 L640 372"/><text x="646" y="376" class="lbl">Ventrículo izquierdo</text>
+  <text x="646" y="392" class="muted">pared gruesa</text>
+  <path class="ldr" d="M412 380 L400 440"/><text x="400" y="456" text-anchor="middle" class="lbl">Septo interventricular</text>
+  <path class="ldr" d="M400 266 L520 232 L540 232" opacity="0"/>
+  <text x="436" y="140" class="lbl" style="fill:var(--valve-d)">Válvulas pulmonar</text>
+  <text x="436" y="157" class="lbl" style="fill:var(--valve-d)">(izq.) y aórtica (der.)</text>
+  <path d="M432 162 L424 258" stroke="var(--valve-d)" stroke-width="1.4" fill="none" stroke-dasharray="3 3"/>
+
+  <!-- leyenda -->
+  <rect x="24" y="440" width="14" height="14" fill="var(--blue)"/><text x="44" y="452" class="muted">Sangre pobre en oxígeno</text>
+  <rect x="24" y="460" width="14" height="14" fill="var(--red)"/><text x="44" y="472" class="muted">Sangre oxigenada</text>
+  <text x="776" y="472" text-anchor="end" class="muted" style="font-size:12px">Esquema conceptual, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,5 +1,5 @@
 <app-page-header
-  title="Procesar callback del proveedor"
+  title="Completar el ingreso con el proveedor"
   subtitle="La vuelta del login federado: todo desenlace queda registrado, incluso el rechazo."
   [breadcrumbs]="breadcrumbs()"
 />
@@ -11,7 +11,7 @@
     @if (desenlace.linkToken) {
       <p class="m40__texto">
         El sujeto no tiene identidad previa: en lugar de crear nada, el backend devolvió un
-        token de vinculación. Se muestra una sola vez — usalo en «Completar vinculación».
+        token de vinculación. Se muestra una sola vez — úselo en «Completar vinculación».
       </p>
     }
 
@@ -64,8 +64,8 @@
   <app-paginated-form
   [paginas]="paginas"
   [form]="form"
-  label="Procesar callback del proveedor"
-  submitLabel="Procesar callback"
+  label="Completar el ingreso con el proveedor"
+  submitLabel="Completar ingreso"
   [pending]="isSubmitting()"
   (enviado)="submit()"
 />

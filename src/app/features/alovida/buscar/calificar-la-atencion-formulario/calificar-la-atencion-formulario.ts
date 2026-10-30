@@ -2,7 +2,7 @@
    Portada de V65-buscador/sesion-autenticada/V65-14-calificar-la-atencion-formulario.html en la bóveda. El marcado lo
    genera scripts/port-vistas-alovida.mjs; la lógica va acá, no en el generador. */
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -10,5 +10,6 @@ import { RouterLink } from '@angular/router';
   selector: 'app-alovida-buscar-calificar-la-atencion-formulario',
   imports: [RouterLink],
   templateUrl: './calificar-la-atencion-formulario.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuscarCalificarLaAtencionFormulario {}

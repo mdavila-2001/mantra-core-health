@@ -86,6 +86,31 @@
     margin-top: 2px;
 }
 
+/* ---- acción --------------------------------------------------------------- */
+
+.toast__action {
+    margin-top: var(--sp-2);
+    padding: var(--sp-1) var(--sp-3);
+    border: 1px solid currentColor;
+    border-radius: var(--r-full);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--fs-caption);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.toast__action:hover {
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.toast__action:focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
 /* ---- cierre -------------------------------------------------------------- */
 
 .toast__close {
@@ -140,7 +165,7 @@
 }
 
 :host {
-    animation: toast-in 0.18s ease-out;
+    animation: toast-in var(--dur-base) var(--pulse-ease);
 }
 
 @keyframes toast-fade-in {

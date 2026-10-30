@@ -86,7 +86,9 @@ describe('PatientMerge', () => {
   }
 
   function busquedaDe(texto: string) {
-    return http.expectOne((r) => r.url === '/profiles/patients' && r.params.get('q') === texto);
+    return http.expectOne(
+      (r) => r.url === '/profiles/patients/search' && (r.body as { q?: string } | null)?.q === texto,
+    );
   }
 
   /* ---- búsqueda de candidatos -------------------------------------------- */

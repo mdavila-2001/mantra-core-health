@@ -157,7 +157,7 @@ export class SpaceDetail {
 
   protected readonly puedeEscribir = computed(
     () =>
-      ofrecerEscritura(this.session.roles(), this.session.activeTenantId(), this.session.ownTenantId()) &&
+      ofrecerEscritura(this.session.roles()) &&
       this.espacio()?.status.code !== 'SPACE_RETIRED',
   );
 

@@ -1,0 +1,435 @@
+/* Lo que se monta *encima* del hilo: el reenvío, el menú de un mensaje, el
+   botón de bajar del todo y el visor de imágenes.
+
+   Vive aparte de `thread.css` por el presupuesto de estilos por componente
+   (`anyComponentStyle`, 9 kB de tope en `angular.json`): el hilo entero en una
+   sola hoja lo pasaba y tiraba el build. Son dos hojas del mismo componente,
+   así que la encapsulación es la misma y los selectores se siguen viendo entre
+   archivos —la media query «Angosto» de `thread.css` alcanza a `.hilo__bajar`
+   de acá sin nada especial—. */
+
+/* --- Reenviar ------------------------------------------------------------ */
+
+.hilo__aviso {
+  position: absolute;
+  inset-block-end: 5.5rem;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  border-radius: var(--r-pill);
+  background: var(--tinta);
+  color: var(--sup-tarjeta);
+  font-size: var(--fs-caption);
+  box-shadow: var(--sombra-2);
+}
+
+/* La lista va dentro de `app-content-dialog`, que ya pone el título, el
+   padding y el botón de salida: acá sólo queda la fila de cada destino. */
+.hilo__reenvio-lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hilo__reenvio-lista button {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: var(--tinta);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__reenvio-lista button:hover,
+.hilo__reenvio-lista button:focus-visible {
+  background: var(--sup-inset);
+}
+
+/* --- El menú del mensaje ------------------------------------------------- */
+
+.hilo__mas-mensaje {
+  position: absolute;
+  /* 44 × 44 de zona táctil con el glifo donde estaba: centrado a 12 px de la
+     esquina, como cuando el botón medía 20. Lo que crece es lo que se toca,
+     no la flecha. */
+  inset-block-start: -10px;
+  inset-inline-end: -10px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
+  cursor: pointer;
+  opacity: 0;
+  /* Escondido no se come el clic de un enlace que caiga debajo. */
+  pointer-events: none;
+  transition: opacity var(--mov-rapido) var(--curva);
+}
+
+.hilo__burbuja:hover .hilo__mas-mensaje,
+.hilo__burbuja:focus-within .hilo__mas-mensaje,
+.hilo__mas-mensaje[aria-expanded='true'] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Un disco del color de la burbuja, del tamaño del glifo: tapa el texto de
+   debajo sin el parche de degradado que se veía antes. */
+.hilo__mas-mensaje svg {
+  /* El glifo sí recibe el clic aunque el botón esté escondido: el área de
+     44 px que tapa el texto deja pasar los clics a un enlace de debajo, pero
+     el disco de 20 px —que es el objetivo— sigue siendo el botón. Sin esto un
+     clic directo sobre el chevron, sin pasar antes el puntero por la burbuja
+     (teclado virtual, automatización), caía en el texto. */
+  pointer-events: auto;
+  box-sizing: border-box;
+  inline-size: 20px;
+  block-size: 20px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--chat-ajena);
+}
+
+.hilo__burbuja.is-propio .hilo__mas-mensaje svg {
+  background: var(--chat-propia);
+}
+
+/* Sobre una foto o un sticker no hay color de burbuja: un velo. */
+.hilo__burbuja.is-imagen .hilo__mas-mensaje,
+.hilo__burbuja.is-sticker .hilo__mas-mensaje {
+  color: var(--tinta-nav);
+}
+
+.hilo__burbuja.is-imagen .hilo__mas-mensaje svg,
+.hilo__burbuja.is-sticker .hilo__mas-mensaje svg {
+  background: var(--velo);
+}
+
+.hilo__menu {
+  position: absolute;
+  inset-block-start: 20px;
+  inset-inline-end: 0;
+  z-index: 3;
+  margin: 0;
+  padding: var(--e1);
+  min-inline-size: 9rem;
+  max-inline-size: calc(100vw - 2rem);
+  list-style: none;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-menu);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra);
+}
+
+.hilo__burbuja:not(.is-propio) .hilo__menu {
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+}
+
+.hilo__menu button {
+  inline-size: 100%;
+  padding: var(--e2) var(--e3);
+  border: 0;
+  border-radius: var(--r-ctrl);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--fs-caption);
+  text-align: start;
+  cursor: pointer;
+}
+
+.hilo__menu button:hover,
+.hilo__menu button:focus-visible {
+  background: var(--sup-inset);
+}
+
+/* Sin ratón —o en angosto, donde dev ya lo mostraba— el chevron se ve
+   siempre, y además la pulsación larga abre el menú. Se le devuelve el
+   `pointer-events` que pierde mientras está oculto: si no, se ve pero el
+   toque lo atraviesa. Para que no tape el texto, la burbuja le guarda su
+   columna a la derecha y el disco deja de hacer falta. Las fotos no:
+   guardarle columna sería la franja vacía que se quitó. */
+@media (hover: none), (max-width: 60rem) {
+  .hilo__mas-mensaje {
+    opacity: 0.85;
+    pointer-events: auto;
+  }
+
+  .hilo__burbuja:not(.is-imagen):not(.is-sticker) > .hilo__mas-mensaje svg {
+    background: none;
+  }
+
+  .hilo__burbuja:not(.is-imagen):not(.is-sticker):has(> .hilo__mas-mensaje) {
+    padding-inline-end: var(--e6);
+  }
+}
+
+/* La cruz de la búsqueda: 28 px de disco, 44 de zona táctil. */
+.hilo__buscar-cerrar {
+  position: relative;
+}
+
+.hilo__buscar-cerrar::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+/* --- Bajar del todo ------------------------------------------------------ */
+
+.hilo__bajar {
+  position: absolute;
+  inset-block-end: 5.5rem;
+  inset-inline-end: var(--e6);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2);
+  color: var(--tinta-2);
+  cursor: pointer;
+}
+
+.hilo__bajar svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.hilo__bajar-cuenta {
+  min-inline-size: 18px;
+  padding-inline: 5px;
+  border-radius: var(--r-pill);
+  background: var(--chat-no-leido);
+  color: #fff;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+/* --- Reacciones ----------------------------------------------------------- */
+
+/* La burbuja que las lleva se hace lugar abajo: las reacciones cuelgan del
+   borde y, sin este margen, pisarían el mensaje de más abajo. */
+.hilo__burbuja.tiene-reacciones {
+  margin-block-end: 14px;
+}
+
+.hilo__reacciones {
+  position: absolute;
+  inset-block-end: -13px;
+  inset-inline-start: 8px;
+  display: flex;
+  gap: 3px;
+  z-index: 1;
+}
+
+.hilo__burbuja.is-propio .hilo__reacciones {
+  inset-inline-start: auto;
+  inset-inline-end: 8px;
+}
+
+.hilo__reaccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-block-size: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+  color: var(--tinta-2);
+  font: inherit;
+  font-size: var(--fs-caption);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hilo__reaccion.is-mia {
+  border-color: var(--chat-no-leido);
+}
+
+.hilo__reaccion:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 1px;
+}
+
+.hilo__reaccion-cuenta {
+  font-size: var(--fs-overline);
+  font-variant-numeric: tabular-nums;
+}
+
+/* La barra de reacciones dentro del menú del mensaje. */
+.hilo__menu--mensaje {
+  min-inline-size: 15.5rem;
+}
+
+/* Cerca del pie del hilo el menú se abre hacia arriba: hacia abajo lo cortaba
+   el borde de la pantalla. */
+.hilo__menu--arriba {
+  inset-block-start: auto;
+  inset-block-end: 20px;
+}
+
+.hilo__menu-reacciones {
+  display: flex;
+  gap: 2px;
+  padding: 2px 2px var(--e2);
+  margin-block-end: var(--e1);
+  border-block-end: 1px solid var(--filete);
+}
+
+.hilo__menu .hilo__menu-emoji {
+  inline-size: 2.1rem;
+  block-size: 2.1rem;
+  padding: 0;
+  border-radius: var(--r-pill);
+  font-size: 1.25rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.hilo__menu .hilo__menu-emoji.is-mia {
+  background: var(--sup-inset);
+  box-shadow: inset 0 0 0 1.5px var(--chat-no-leido);
+}
+
+.hilo__menu .hilo__menu-emoji--mas {
+  color: var(--tinta-3);
+  font-size: 1.15rem;
+}
+
+/* «Editar» apagado, con su motivo en letra chica al lado. */
+.hilo__menu button:disabled {
+  color: var(--tinta-3);
+  cursor: not-allowed;
+}
+
+.hilo__menu button:disabled:hover {
+  background: none;
+}
+
+.hilo__menu-nota {
+  display: block;
+  font-size: var(--fs-overline);
+}
+
+/* --- Info. del mensaje ---------------------------------------------------- */
+
+.hilo__info-mensaje {
+  margin: 0 0 var(--e4);
+  padding: var(--e3);
+  border-inline-start: 3px solid var(--chat-no-leido);
+  border-radius: var(--r-ctrl);
+  background: var(--chat-cita);
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+  overflow-wrap: anywhere;
+}
+
+.hilo__info {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+}
+
+.hilo__info-persona {
+  display: grid;
+  gap: var(--e2);
+  padding-block-start: var(--e3);
+  border-block-start: 1px solid var(--filete);
+}
+
+.hilo__info-nombre {
+  margin: 0;
+  font-family: var(--f-titulo);
+  font-weight: 700;
+}
+
+.hilo__info-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e3);
+}
+
+.hilo__info-fila dt {
+  color: var(--tinta-3);
+}
+
+.hilo__info-fila dd {
+  margin: 0;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.hilo__info-nota {
+  color: var(--tinta-3);
+  font-size: var(--fs-overline);
+}
+
+/* --- Persona bloqueada ---------------------------------------------------- */
+
+.hilo__bloqueado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e4);
+  flex-wrap: wrap;
+  padding: var(--e4) var(--e5);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+.hilo__bloqueado p {
+  margin: 0;
+}
+
+.hilo__bloqueado button {
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- La etiqueta de la respuesta que redactó la IA ------------------------ */
+
+.hilo__etiqueta-ia {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  margin-block-end: 2px;
+  color: var(--tinta-marca);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+}
+
+.hilo__etiqueta-ia svg {
+  flex: none;
+  inline-size: 14px;
+  block-size: 14px;
+}

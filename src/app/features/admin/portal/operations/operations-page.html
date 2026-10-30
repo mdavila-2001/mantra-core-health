@@ -1,0 +1,70 @@
+<app-page-header
+  title="Operaciones"
+  subtitle="Cada endpoint de la API con su riesgo, quién puede llamarlo, qué tablas toca y qué le falta. Elija una para ver su ficha."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="operations" data-testid="portal-operations">
+  <app-filter-bar
+    searchLabel="Buscar operaciones"
+    searchPlaceholder="Ruta, nombre o controlador"
+    wrap
+    [filters]="filterDefs()"
+    [searchLoading]="list.state().status === 'loading'"
+  />
+
+  <app-data-table
+    data-testid="portal-operations-table"
+    caption="Operaciones de la API"
+    heading="Operaciones"
+    [totalCount]="list.total()"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byId"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    stackedOnMobile
+    fitContainer
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+</div>
+
+<ng-template #operationCell let-row>
+  <span class="operations__op">
+    <app-badge size="sm" [variant]="method(row.metodo).tone">{{ method(row.metodo).label }}</app-badge>
+    <a app-link class="operations__route" [routerLink]="detailUrl(row.id)" data-testid="portal-operation-link">
+      @for (segment of segments(row.ruta); track $index) {{{ segment }}<wbr />}
+    </a>
+  </span>
+  @if (row.nombre) {
+    <span class="operations__secondary">{{ row.nombre }}</span>
+  }
+</ng-template>
+
+<ng-template #riskCell let-row>
+  <app-badge size="sm" [variant]="risk(row.riesgo).tone">{{ risk(row.riesgo).label }}</app-badge>
+</ng-template>
+
+<ng-template #accessCell let-row>
+  @if (row.publica) {
+    <app-badge size="sm" variant="warning">Pública</app-badge>
+  } @else if (row.roles.length === 0) {
+    <span class="operations__secondary">Cualquier sesión válida</span>
+  } @else {
+    <span class="operations__roles">{{ row.roles.join(' · ') }}</span>
+  }
+</ng-template>
+
+<ng-template #signalsCell let-row>
+  @let alerts = attention(row);
+  @if (alerts.length === 0) {
+    <span class="operations__secondary">Sin señales</span>
+  } @else {
+    <span class="operations__signals">
+      @for (code of alerts; track code) {
+        <app-badge size="sm" [variant]="signalLabel(code).tone">{{ signalLabel(code).label }}</app-badge>
+      }
+    </span>
+  }
+</ng-template>

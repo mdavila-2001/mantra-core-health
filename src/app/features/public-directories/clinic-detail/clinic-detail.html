@@ -17,7 +17,7 @@
   <!-- `aria-label` y no `aria-labelledby`: `app-section-heading` dibuja el
        `<h2>` adentro y no expone su id, así que no hay a quién apuntar. El
        rótulo repite el del encabezado a propósito — es el mismo. -->
-  <section aria-label="Servicios y precios">
+  <section id="servicios" aria-label="Servicios y precios">
     <app-section-heading
       icono="billing"
       titulo="Servicios y precios"
@@ -81,6 +81,22 @@
                     }
                   </dd>
                 </dl>
+
+                <!-- Lo que el precio de referencia no contesta —si incluye tal
+                     cosa, si hay turno esta semana— se pregunta con el
+                     servicio ya puesto en el chat. -->
+                <button
+                  class="ficha-publica__chat"
+                  app-button
+                  variant="secondary"
+                  type="button"
+                  data-testid="consultar-servicio-por-chat"
+                  [attr.aria-label]="'Consultar por chat sobre ' + servicio.name"
+                  (clicked)="consultarServicio(servicio)"
+                >
+                  <app-nav-icon name="chat" />
+                  Consultar por chat
+                </button>
               </article>
             </li>
           }
