@@ -1,0 +1,98 @@
+<div class="fn">
+  <ins-filter-bar [controls]="['campaign', 'period', 'channel']" />
+
+  <app-view-state-host [state]="state()">
+    @if (model(); as m) {
+      <div class="fn__stack">
+        <section class="fn__tiles" aria-label="Indicadores del embudo">
+          @for (t of tiles(); track t.label) {
+            <ins-stat [label]="t.label" [value]="t.value" [hint]="t.hint" [delta]="t.delta" />
+          }
+        </section>
+
+        <ins-panel title="A. Embudo de adquisición" question="¿Dónde estamos perdiendo usuarios entre ver un anuncio y quedarse en AloVida?">
+          <ins-funnel-chart [stages]="m.stages" [selectedId]="stageId()" ariaLabel="Embudo de adquisición, de la impresión a la retención" (picked)="setStage($event)" />
+          <p class="fn__note">Las cifras salen de los mismos hechos que el módulo <a [routerLink]="campaignsLink" [queryParams]="ctx.carry()">Resumen de campañas</a>: las conversiones de aquí son las de allí.</p>
+        </ins-panel>
+
+        @if (insight(); as i) {
+          <ins-insight [insight]="i" />
+        }
+
+        <ins-panel title="Embudo por canal y cohortes" question="¿Qué canal convierte mejor y cómo se comportan los usuarios según su semana de llegada?">
+          <app-tabs appearance="underline">
+            <app-tab label="Por canal">
+              <div class="fn__wrap">
+                <table class="fn__table">
+                  <caption class="fn__sr">Conversión por canal</caption>
+                  <thead><tr><th scope="col">Canal</th><th scope="col" class="fn__n">Visitas</th><th scope="col" class="fn__n">Registros</th><th scope="col" class="fn__n">Activación</th><th scope="col" class="fn__n">Conversiones</th><th scope="col">Visita → conversión</th></tr></thead>
+                  <tbody>
+                    @for (r of channelRows(); track r.channel) {
+                      <tr>
+                        <th scope="row">{{ r.label }}</th>
+                        <td class="fn__n">{{ int(r.visits) }}</td>
+                        <td class="fn__n">{{ int(r.registrations) }}</td>
+                        <td class="fn__n">{{ r.activation === null ? '—' : pct(r.activation) }}</td>
+                        <td class="fn__n">{{ int(r.conversions) }}</td>
+                        <td class="fn__bar-cell">
+                          <span class="fn__bar" aria-hidden="true"><span [style.inline-size.%]="((r.rate ?? 0) / maxRate()) * 100"></span></span>
+                          <span class="fn__n">{{ r.rate === null ? '—' : pct(r.rate) }}</span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </app-tab>
+            <app-tab label="Cohortes de retención">
+              <ins-heatmap-chart [rows]="cohort().rows" [cols]="cohort().cols" [cells]="cohort().cells" unit="percent" [rowMeta]="cohort().meta" rowMetaLabel="Activados" valueName="Retención" [minCell]="52" ariaLabel="Retención por cohorte semanal" />
+              <p class="fn__note">Las celdas rayadas son semanas que todavía no terminan: no se pueden medir y no equivalen a 0 %.</p>
+            </app-tab>
+          </app-tabs>
+        </ins-panel>
+      </div>
+    }
+  </app-view-state-host>
+
+  <ins-panel title="B. Recorrido del paciente" question="¿La experiencia que prometimos realmente funciona?">
+    <div panel-tools class="fn__seg">
+      <app-select ariaLabel="Segmento del recorrido" [value]="segment()" [options]="segmentOptions" (valueChange)="setSegment($event)" />
+    </div>
+    @if (journey().scopeNote) {
+      <p class="fn__scope" role="note">{{ journey().scopeNote }}</p>
+    }
+    <div class="fn__csat">
+      <ins-stat label="Satisfacción (1 a 5)" [value]="journey().csat.toFixed(1).replace('.', ',')" hint="Encuesta posterior a la consulta" />
+      <ins-stat label="Recomendación (NPS)" [value]="journey().nps.toString()" hint="De −100 a 100; es una estimación del prototipo" />
+      <ins-stat label="Personas que entran al recorrido" [value]="int(journey().registered)" hint="Registros de pacientes en el periodo" />
+    </div>
+    <ins-funnel-chart [stages]="journeyFunnel()" [selectedId]="stageId()" ariaLabel="Recorrido del paciente, del registro a la retención" (picked)="setStage($event)" />
+
+    <ol class="fn__journey" aria-label="Etapas del recorrido">
+      @for (s of journey().stages; track s.id) {
+        <li>
+          <button type="button" class="fn__stage" [class.fn__stage--on]="stageId() === s.id" [class.fn__stage--high]="s.friction === 'high'" [attr.aria-pressed]="stageId() === s.id" (click)="setStage(s.id)">
+            <span class="fn__stage-name">{{ s.label }}</span>
+            <span class="fn__stage-n">{{ int(s.users) }}</span>
+            <span class="fn__stage-meta">{{ s.rate === null ? 'Punto de partida' : pct(s.rate) + ' continúa' }}</span>
+            <span class="fn__fr" [class]="'fn__fr fn__fr--' + s.friction">{{ frictionLabel[s.friction] }}</span>
+          </button>
+        </li>
+      }
+    </ol>
+
+    @if (stageDetail(); as d) {
+      <div class="fn__detail" aria-live="polite">
+        <p><strong>{{ d.label }}</strong> · tiempo típico {{ duration(d.medianMinutes) }}</p>
+        @if (d.blockers.length) {
+          <p>Puntos de fricción reportados:</p>
+          <ul>@for (b of d.blockers; track b) {<li>{{ b }}</li>}</ul>
+        } @else {
+          <p>Es el punto de partida: no tiene fricción medible.</p>
+        }
+      </div>
+    } @else if (worstJourney(); as w) {
+      <p class="fn__note">Donde más personas se pierden: <strong>{{ w.label }}</strong> ({{ pct(w.rate ?? 0) }} continúa). Haga clic en una etapa para ver su tiempo típico y la fricción reportada.</p>
+    }
+  </ins-panel>
+</div>
