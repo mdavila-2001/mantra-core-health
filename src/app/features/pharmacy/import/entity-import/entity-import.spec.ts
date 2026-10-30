@@ -133,6 +133,20 @@ describe('EntityImport', () => {
     expect(textOf('entity-import-ignored')).toContain('nota');
   });
 
+  it('en el teléfono el motivo va en la ficha de cada fila, no detrás del detalle', async () => {
+    mount('categories');
+    await upload('nombre;nota\n;vacía\n');
+    answer(http.expectOne(bulkUrl('categories')), () => ({
+      outcome: 'REJECTED',
+      errors: [{ field: 'name', reason: 'REQUIRED', message: 'El nombre es obligatorio' }],
+    }));
+
+    const table = byId('entity-import-rows');
+    expect(table?.classList).toContain('data-table--apilada');
+    expect(table?.querySelector('.data-table__secondary')).toBeNull();
+    expect(table?.querySelector('.data-table__detail-toggle')).toBeNull();
+  });
+
   it('«Aplicar» manda lo mismo sin dryRun y muestra el resultado escrito', async () => {
     mount('prices');
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
