@@ -57,35 +57,66 @@
 
 .hilo__mas-mensaje {
   position: absolute;
-  inset-block-start: 2px;
-  inset-inline-end: 2px;
+  /* 44 × 44 de zona táctil con el glifo donde estaba: centrado a 12 px de la
+     esquina, como cuando el botón medía 20. Lo que crece es lo que se toca,
+     no la flecha. */
+  inset-block-start: -10px;
+  inset-inline-end: -10px;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 20px;
-  block-size: 20px;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
   border: 0;
-  border-radius: 4px;
-  background: linear-gradient(to left, var(--chat-ajena) 60%, transparent);
-  color: var(--tinta-3);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--tinta-2);
   cursor: pointer;
   opacity: 0;
+  /* Escondido no se come el clic de un enlace que caiga debajo. */
+  pointer-events: none;
   transition: opacity var(--mov-rapido) var(--curva);
-}
-
-.hilo__burbuja.is-propio .hilo__mas-mensaje {
-  background: linear-gradient(to left, var(--chat-propia) 60%, transparent);
 }
 
 .hilo__burbuja:hover .hilo__mas-mensaje,
 .hilo__burbuja:focus-within .hilo__mas-mensaje,
 .hilo__mas-mensaje[aria-expanded='true'] {
   opacity: 1;
+  pointer-events: auto;
 }
 
+/* Un disco del color de la burbuja, del tamaño del glifo: tapa el texto de
+   debajo sin el parche de degradado que se veía antes. */
 .hilo__mas-mensaje svg {
-  inline-size: 14px;
-  block-size: 14px;
+  /* El glifo sí recibe el clic aunque el botón esté escondido: el área de
+     44 px que tapa el texto deja pasar los clics a un enlace de debajo, pero
+     el disco de 20 px —que es el objetivo— sigue siendo el botón. Sin esto un
+     clic directo sobre el chevron, sin pasar antes el puntero por la burbuja
+     (teclado virtual, automatización), caía en el texto. */
+  pointer-events: auto;
+  box-sizing: border-box;
+  inline-size: 20px;
+  block-size: 20px;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: var(--chat-ajena);
+}
+
+.hilo__burbuja.is-propio .hilo__mas-mensaje svg {
+  background: var(--chat-propia);
+}
+
+/* Sobre una foto o un sticker no hay color de burbuja: un velo. */
+.hilo__burbuja.is-imagen .hilo__mas-mensaje,
+.hilo__burbuja.is-sticker .hilo__mas-mensaje {
+  color: var(--tinta-nav);
+}
+
+.hilo__burbuja.is-imagen .hilo__mas-mensaje svg,
+.hilo__burbuja.is-sticker .hilo__mas-mensaje svg {
+  background: var(--velo);
 }
 
 .hilo__menu {
@@ -127,10 +158,36 @@
   background: var(--sup-inset);
 }
 
+/* Sin ratón —o en angosto, donde dev ya lo mostraba— el chevron se ve
+   siempre, y además la pulsación larga abre el menú. Se le devuelve el
+   `pointer-events` que pierde mientras está oculto: si no, se ve pero el
+   toque lo atraviesa. Para que no tape el texto, la burbuja le guarda su
+   columna a la derecha y el disco deja de hacer falta. Las fotos no:
+   guardarle columna sería la franja vacía que se quitó. */
 @media (hover: none), (max-width: 60rem) {
   .hilo__mas-mensaje {
     opacity: 0.85;
+    pointer-events: auto;
   }
+
+  .hilo__burbuja:not(.is-imagen):not(.is-sticker) > .hilo__mas-mensaje svg {
+    background: none;
+  }
+
+  .hilo__burbuja:not(.is-imagen):not(.is-sticker):has(> .hilo__mas-mensaje) {
+    padding-inline-end: var(--e6);
+  }
+}
+
+/* La cruz de la búsqueda: 28 px de disco, 44 de zona táctil. */
+.hilo__buscar-cerrar {
+  position: relative;
+}
+
+.hilo__buscar-cerrar::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
 }
 
 /* --- Bajar del todo ------------------------------------------------------ */
@@ -165,19 +222,6 @@
   color: #fff;
   font-size: var(--fs-overline);
   font-weight: 700;
-}
-
-/* --- El visor de imágenes ------------------------------------------------ */
-
-/* La imagen entera dentro del modal del sistema: nunca más ancha que el panel
-   ni más alta que la pantalla, sin deformarse. */
-.hilo__visor-imagen {
-  display: block;
-  max-inline-size: 100%;
-  max-block-size: 70dvh;
-  margin-inline: auto;
-  border-radius: var(--r-menu);
-  object-fit: contain;
 }
 
 /* --- Reacciones ----------------------------------------------------------- */

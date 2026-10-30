@@ -157,7 +157,10 @@ function elegirDia(fixture: ComponentFixture<FollowUpBlock>): void {
 }
 
 describe('FollowUpBlock', () => {
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    vi.useRealTimers();
+    TestBed.resetTestingModule();
+  });
 
   /* ---- los tres estados ---------------------------------------------------- */
 
@@ -258,6 +261,12 @@ describe('FollowUpBlock', () => {
   });
 
   it('el calendario pinta de verde los días con lugar y de rojo los que no', async () => {
+    // El mes a la vista arranca en el de «mañana»: si hoy es el penúltimo día
+    // del mes, mañana es el único día en rango y no hay ninguno que pintar de
+    // rojo. Con el reloj fijo a mitad de mes la prueba no depende del día en
+    // que corra. Sólo se falsea `Date`: los temporizadores del test siguen reales.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 14, 10, 0, 0));
     const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(8, 30))] });
 
     const dias: HTMLButtonElement[] = Array.from(

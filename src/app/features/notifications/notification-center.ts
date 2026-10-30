@@ -17,6 +17,7 @@ import { rutaDeNotificacion } from '../../core/notifications/notification-routes
 import { NotificationsStore } from '../../core/notifications/notifications.store';
 import { Badge } from '../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -55,8 +56,12 @@ const UNREAD_TAB = 1;
  */
 @Component({
   selector: 'app-notification-center',
+  // `AppButtonLink` es el que hace de `<a app-button>` un botón: sin él, el
+  // ancla de «Preferencias» quedaba sin variante ni talle —texto suelto, sin
+  // el contorno de `outline`— y medía distinto que el botón de al lado.
   imports: [
     AppButton,
+    AppButtonLink,
     Badge,
     Card,
     EmptyState,
@@ -140,7 +145,7 @@ export class NotificationCenter {
   });
   protected readonly descripcionVacio = computed(() =>
     this.pestana() === 0 || this.pestana() === UNREAD_TAB
-      ? 'Acá van a aparecer los avisos de sus recetas, sus consultas, sus turnos y sus mensajes.'
+      ? 'Acá van a aparecer los avisos de sus recetas, sus consultas, sus citas y sus mensajes.'
       : 'Cuando llegue uno de esta categoría, lo va a ver acá.',
   );
   protected readonly hayFiltrosSinResultados = computed(

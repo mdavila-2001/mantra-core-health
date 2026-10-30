@@ -4,7 +4,9 @@ import { By } from '@angular/platform-browser';
 
 import { AttachmentPreview } from './attachment-preview';
 import { PDF_PAGE_COUNTER } from './pdf-page-count';
-import { type AttachmentDraft, createDraft } from '../attachment-draft';
+import { type AttachmentDraft, MAX_ATTACHMENT_BYTES, createDraft, partitionFiles } from '../attachment-draft';
+import { AttachmentPreparer } from '../attachment-preparer';
+import { ImagenRechazada } from '../prepare-image';
 import { ImageEditor } from '../image-editor/image-editor';
 
 /** El dueño de la lista, como el composer: la vista previa la edita por `model`. */
@@ -58,7 +60,23 @@ describe('AttachmentPreview', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [Host],
-      providers: [{ provide: PDF_PAGE_COUNTER, useValue: async () => 12 }],
+      providers: [
+        { provide: PDF_PAGE_COUNTER, useValue: async () => 12 },
+        // El achicado y la limpieza de EXIF se prueban en `prepare-image.spec`;
+        // acá sólo importa que lo que no entra en el tope de la API no entre.
+        {
+          provide: AttachmentPreparer,
+          useValue: {
+            prepare: async (file: File) => {
+              if (file.size > MAX_ATTACHMENT_BYTES) {
+                throw new ImagenRechazada(`«${file.name}» es demasiado grande, aun achicándola.`);
+              }
+              return file;
+            },
+            prepareAll: async (files: Iterable<File>, room?: number) => partitionFiles(files, room),
+          },
+        },
+      ],
     });
     fixture = TestBed.createComponent(Host);
     host = fixture.componentInstance;
@@ -157,6 +175,8 @@ describe('AttachmentPreview', () => {
 
     const editado = new File(['y'], 'lunar-editada.png', { type: 'image/png' });
     (editor.componentInstance as ImageEditor).applied.emit(editado);
+    // La edición también se prepara (sin EXIF) antes de reemplazar.
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(host.drafts()[0].file).toBe(editado);
@@ -169,7 +189,7 @@ describe('AttachmentPreview', () => {
     expect(consultar('vista-deshacer')!.getAttribute('aria-disabled')).toBe('true');
   });
 
-  it('una edición que pasa el tope de 20 MB no reemplaza el archivo y lo dice', async () => {
+  it('una edición que no entra en el tope no reemplaza el archivo y lo dice', async () => {
     const original = foto('lunar.png');
     await abrir([original]);
     consultar('vista-dibujar')!.click();
@@ -177,10 +197,13 @@ describe('AttachmentPreview', () => {
     const enorme = new File(['y'], 'lunar-editada.png', { type: 'image/png' });
     Object.defineProperty(enorme, 'size', { value: 21 * 1024 * 1024 });
     (fixture.debugElement.query(By.directive(ImageEditor)).componentInstance as ImageEditor).applied.emit(enorme);
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(host.drafts()[0].file).toBe(original);
-    expect(fixture.nativeElement.textContent).toContain('No se pudo usar la edición: El archivo pesa más de 20 MB.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'No se pudo usar la edición: «lunar-editada.png» es demasiado grande, aun achicándola.',
+    );
   });
 
   it('lo que quedó afuera al elegir se avisa dentro de la vista previa', async () => {
@@ -227,13 +250,16 @@ describe('AttachmentPreview', () => {
     const selector = fixture.nativeElement.querySelector('input[type="file"]') as HTMLInputElement;
     Object.defineProperty(selector, 'files', {
       configurable: true,
-      value: [foto('b.png'), new File(['x'], 'nota.txt', { type: 'text/plain' })],
+      value: [foto('b.png'), new File(['x'], 'clip.mp4', { type: 'video/mp4' })],
     });
     selector.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
     fixture.detectChanges();
 
     expect(host.drafts().map((d) => d.file.name)).toEqual(['a.png', 'b.png']);
     expect(todos('vista-miniatura')[1].getAttribute('aria-current')).toBe('true');
-    expect(fixture.nativeElement.textContent).toContain('Puede mandar imágenes, videos, audios y PDF.');
+    expect(fixture.nativeElement.textContent).toContain(
+      '«clip.mp4» no se puede mandar. Puede mandar fotos, PDF, documentos de Word o Excel y archivos de texto.',
+    );
   });
 });
