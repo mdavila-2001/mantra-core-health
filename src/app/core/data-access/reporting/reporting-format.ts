@@ -97,10 +97,10 @@ const ISO_MONTH = /^(\d{4})-(\d{2})$/;
  */
 export function formatDate(texto: string, conAnio = false): string {
   const mensual = ISO_MONTH.exec(texto);
-  const mesDelMes = mensual === null ? undefined : MESES[Number(mensual[2]) - 1];
-  if (mensual !== null && mesDelMes !== undefined) {
+  const monthName = mensual === null ? undefined : MESES[Number(mensual[2]) - 1];
+  if (mensual !== null && monthName !== undefined) {
     // Un mes de cohorte («2026-05») se lee «may 2026»: aquí el año es parte de lo que se quiere decir.
-    return `${mesDelMes} ${mensual[1]}`;
+    return `${monthName} ${mensual[1]}`;
   }
   const m = ISO_DATE.exec(texto);
   const mes = m === null ? undefined : MESES[Number(m[2]) - 1];

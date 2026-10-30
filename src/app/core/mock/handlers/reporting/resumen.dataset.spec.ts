@@ -166,9 +166,15 @@ function contratoEstandar(nombre: string, construir: (ctx: ContextoReporte) => P
       }
     });
 
-    it('declara las cuatro secciones y todo lo que referencian existe', () => {
+    it('declara las secciones como preguntas, en orden, y todo lo que referencian existe', () => {
       const p = construir(CTX);
-      expect(p.secciones?.map((s) => s.titulo)).toEqual(['Ingreso', 'Composición', 'Riesgo y concentración', 'Alertas']);
+      expect(p.secciones?.map((s) => s.titulo)).toEqual([
+        '¿Cuánto entró y cómo viene cambiando?',
+        '¿De dónde sale la plata y por qué nos la pagan?',
+        '¿Es un ingreso sano?',
+        '¿Qué miro hoy?',
+        'Glosario en palabras simples',
+      ]);
       const graficos = new Set(p.graficos.map((g) => g.id));
       const tablas = new Set(p.tablas.map((t) => t.id));
       for (const s of p.secciones ?? []) {
@@ -336,5 +342,64 @@ describe('Resumen: contra las verticales reales', () => {
         expect(total.motivoSinDato).toBeTruthy();
       }
     }
+  });
+
+  describe('la monetización explicada', () => {
+    it('el mapa dice quién paga, por qué y cómo se cobra cada fuente, y su total cuadra con las fuentes', () => {
+      const p = buildSummaryWith(CTX, COMPLETAS);
+      const mapa = p.tablas.find((t) => t.id === 'mapa-monetizacion')!;
+      const fuentes = mapa.filas.filter((f) => f['fuente'] !== 'Total');
+      expect(fuentes.map((f) => f['fuente'])).toEqual(['Suscripciones', 'Publicidad', 'Comisiones']);
+      for (const f of fuentes) {
+        expect(String(f['quienPaga']).length).toBeGreaterThan(10);
+        expect(String(f['porQue']).length).toBeGreaterThan(10);
+        expect(String(f['comoSeCobra']).length).toBeGreaterThan(10);
+      }
+      const total = mapa.filas.find((f) => f['fuente'] === 'Total')!;
+      const suma = fuentes.reduce((a, f) => a + Number(f['ingreso']), 0);
+      expect(Math.abs(Number(total['ingreso']) - suma)).toBeLessThanOrEqual(0.05);
+      const partes = fuentes.reduce((a, f) => a + Number(f['parte']), 0);
+      expect(Math.abs(partes - 100)).toBeLessThanOrEqual(0.2);
+    });
+
+    it('declara el supuesto de publicidad: el módulo no está cerrado y su cobro no es una regla', () => {
+      const mapa = buildSummaryWith(CTX, COMPLETAS).tablas.find((t) => t.id === 'mapa-monetizacion')!;
+      const pub = mapa.filas.find((f) => f['fuente'] === 'Publicidad')!;
+      expect(String(pub['comoSeCobra'])).toMatch(/supuesto/i);
+    });
+
+    it('sin una fuente no hay total ni partes: el mapa lo deja en «sin dato» y no suma a medias', () => {
+      const sinPublicidad = { ...COMPLETAS, publicidad: vacia('publicidad') };
+      const mapa = buildSummaryWith(CTX, sinPublicidad).tablas.find((t) => t.id === 'mapa-monetizacion')!;
+      const total = mapa.filas.find((f) => f['fuente'] === 'Total')!;
+      expect(total['ingreso']).toBeNull();
+      expect(total['parte']).toBeNull();
+      expect(mapa.filas.find((f) => f['fuente'] === 'Suscripciones')!['parte']).toBeNull();
+    });
+
+    it('la lectura rápida dice cuánto entró y cuál es la fuente más grande, en palabras', () => {
+      const texto = buildSummaryWith(CTX, COMPLETAS).secciones![0]!.descripcion ?? '';
+      expect(texto).toMatch(/entraron/);
+      expect(texto).toMatch(/fuente más grande/);
+    });
+
+    it('la lectura rápida no inventa un total cuando falta una fuente: dice qué falta', () => {
+      const sinComisiones = { ...COMPLETAS, comisiones: vacia('comisiones') };
+      const texto = buildSummaryWith(CTX, sinComisiones).secciones![0]!.descripcion ?? '';
+      expect(texto).not.toMatch(/entraron/);
+      expect(texto).toMatch(/Falta/);
+    });
+
+    it('el glosario cita la fórmula del propio KPI (una sola definición) y no deja términos sin explicar', () => {
+      const p = buildSummaryWith(CTX, COMPLETAS);
+      const glosario = p.tablas.find((t) => t.id === 'glosario-monetizacion')!;
+      for (const f of glosario.filas) {
+        expect(String(f['significado']).length, String(f['termino'])).toBeGreaterThan(15);
+        expect(String(f['calculo']).length, String(f['termino'])).toBeGreaterThan(5);
+      }
+      for (const t of ['MRR', 'ARR', 'ARPU', 'Churn', 'LTV', 'CAC', 'Take rate', 'ROAS']) {
+        expect(glosario.filas.map((f) => f['termino']), t).toContain(t);
+      }
+    });
   });
 });
