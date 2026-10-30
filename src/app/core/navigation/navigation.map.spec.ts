@@ -122,7 +122,7 @@ describe('APP_SECTIONS', () => {
     expect(practice?.roles).toEqual(['PRACTITIONER']);
     expect(isVisibleTo(practice!, ['PRACTITIONER'])).toBe(true);
     expect(isVisibleTo(practice!, ['PATIENT'])).toBe(false);
-    expect(practice?.summary).toBe('Creá y editá tu consultorio: dirección, mapa, teléfono y horario.');
+    expect(practice?.summary).toBe('Cree y edite su consultorio: dirección, mapa, teléfono y horario.');
   });
 
   it('el panel es la primera sección: el breadcrumb lo usa como raíz', () => {

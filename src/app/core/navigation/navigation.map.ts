@@ -1698,6 +1698,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     //
     // La sirve `GET /insurance/my-claims`, sobre la misma tabla que dictamina
     // la aseguradora en «Solicitudes recibidas» (P56).
+    //
+    // **No existe para la farmacia** (propietario, 30/10/2026: «arreglá el
+    // menú de la farmacia»). La lista del pedido no la incluye y una farmacia
+    // no presenta solicitudes de seguro: el paraguas en su barra era una
+    // sección de paciente colgada en su cuenta. Se oculta por el tipo de la
+    // organización activa, así que admin y superadmin no cambian.
+    hiddenForTenantTypes: ['PHARMACY'],
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/requests',
     label: 'Mis solicitudes',
@@ -1737,7 +1744,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // herramientas» del panel, su otra puerta, se retiró el 28/10/2026).
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
+    summary: 'Cree y edite su consultorio: dirección, mapa, teléfono y horario.',
     module: 'M14 practice',
   },
   {

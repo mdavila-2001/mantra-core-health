@@ -1,0 +1,58 @@
+.share__body {
+  display: grid;
+  gap: var(--sp-4);
+  justify-items: center;
+}
+
+/* Desde tableta el QR va a la izquierda del enlace en vez de encima. */
+@media (min-width: 780px) {
+  .share__body {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+  }
+}
+
+/* Blanco siempre, también en tema oscuro: lo lee una cámara, no la interfaz
+   (mismo criterio que `drawQr`). */
+.share__qr {
+  padding: var(--sp-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--surface-white);
+  line-height: 0;
+}
+
+.share__details {
+  display: grid;
+  gap: var(--sp-2);
+  min-inline-size: 0;
+}
+
+.share__label {
+  margin: 0;
+  font-weight: 600;
+}
+
+.share__url {
+  display: block;
+  padding: var(--sp-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  word-break: break-all;
+  user-select: all;
+}
+
+.share__meta {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.share__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  justify-content: flex-end;
+}

@@ -485,5 +485,9 @@ describe('normalizarRuta', () => {
     expect(normalizarRuta('/pacientes/:pacienteId')).toBe('/pacientes/:pacienteId');
     expect(normalizarRuta('/fila-8437/x')).toBe('/fila-:id/x');
     expect(normalizarRuta('/')).toBe('/');
+    // FAR-01: el `:token` que deja `sanitizeUrl` viaja tal cual, no el token.
+    expect(normalizarRuta('/administration/pharmacy-orders/rx/:token')).toBe(
+      '/administration/pharmacy-orders/rx/:token',
+    );
   });
 });
