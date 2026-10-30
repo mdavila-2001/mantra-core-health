@@ -17,7 +17,7 @@ export const INSIGHTS_SECTIONS: readonly AppSection[] = [
   {
     path: 'administration/marketing-insights',
     label: 'AloVida Insights',
-    group: 'Administración',
+    group: 'General',
     icon: 'chart',
     roles: ['MARKETING_MANAGER', 'PLATFORM_ADMIN', 'DATA_PLATFORM_ADMIN'],
     availability: 'disponible',
