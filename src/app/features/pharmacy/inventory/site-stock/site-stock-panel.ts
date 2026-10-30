@@ -75,7 +75,7 @@ export class SiteStockPanel {
   /** El catálogo vivo de la farmacia, tal como lo leyó la pestaña. */
   readonly products = input.required<ViewState<readonly PharmacyProduct[]>>();
 
-  /** Cada lectura del stock dice si la sede lleva su propio stock. */
+  /** Cada lectura del stock dice si la sede tiene stock propio de algún producto. */
   readonly modeRead = output<{ readonly siteId: string; readonly ledger: boolean }>();
   /** Reintentar cuando lo que falló es la lectura del catálogo. */
   readonly catalogRetry = output<void>();
@@ -92,7 +92,7 @@ export class SiteStockPanel {
   protected readonly term = signal('');
   protected readonly offset = signal(0);
 
-  /** `null` mientras no se sabe; si no, si la sede lleva su propio stock. */
+  /** `null` mientras no se sabe; si no, si la sede tiene stock propio de algún producto. */
   protected readonly ledger = computed(() => {
     const stock = dataOf(this.stock());
     return stock === null ? null : isLedgerSite(stock);

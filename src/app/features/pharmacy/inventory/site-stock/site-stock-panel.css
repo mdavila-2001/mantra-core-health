@@ -85,6 +85,13 @@
   }
 }
 
+/* En una sucursal con stock propio, cuál fila todavía sigue el catálogo. */
+.site-stock__source {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
 /* El motivo del rechazo, debajo del interruptor y a todo el ancho de la celda. */
 .site-stock__row-error {
   flex-basis: 100%;
@@ -98,8 +105,11 @@
   color: var(--text-tertiary);
 }
 
-/* Un número de unas pocas cifras no necesita toda la columna. */
+/* Un número de unas pocas cifras no necesita toda la columna. El ancho es el
+   del rótulo vacío («Del catálogo»), que a 7,5rem salía cortado: fijo, para que
+   la tabla le reserve ese lugar, y nunca más ancho que la celda. */
 app-input {
   display: block;
-  max-inline-size: 7.5rem;
+  inline-size: 9.5rem;
+  max-inline-size: 100%;
 }
