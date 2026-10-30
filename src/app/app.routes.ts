@@ -24,6 +24,7 @@ import {
 } from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
 import { publicPrescriptionShareRoutes } from './features/prescription-share/prescription-share.routes';
+import { prescriptionDispenseRoutes } from './features/prescription-dispense/prescription-dispense.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -610,10 +611,9 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.OrderInvoice)
         .catch(() => chunkFallido()),
   },
+  ...prescriptionDispenseRoutes(chunkFallido),
   {
-    // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
-    // «recepción por un link» del registro del cliente. Hija de la bandeja;
-    // hereda por prefijo su regla de acceso por membresía.
+    // El pedido visto desde el mostrador (FAR-I3); hereda por prefijo el acceso de la bandeja.
     path: 'administration/pharmacy-orders/:orderId',
     title: `${APP_TITLE} - Pedido en el mostrador`,
     canActivate: [seccionRolesGuard],
