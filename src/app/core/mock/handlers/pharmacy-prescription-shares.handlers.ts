@@ -17,6 +17,7 @@ import {
 } from '../mock-router';
 import { TENANT_TYPES, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo } from '../mock-store';
+import { productos } from './pharmacy.handlers';
 import { activeItemsOf, shareByToken, shareList, shareStatusOf, type SimulatedShare } from './prescription-shares.handlers';
 
 /* ============================================================================
@@ -72,6 +73,7 @@ export const sitePositionList = new Coleccion<SitePosition>([]).persistirEn('moc
 
 const NO_PHARMACY_REASON = 'PHARMACY_INVENTORY_RESOURCE_NOT_AVAILABLE';
 const OUT_OF_STOCK_DECLARED_REASON = 'PRODUCT_OUT_OF_STOCK_DECLARED';
+const QUANTITY_INVALID_REASON = 'SITE_AVAILABILITY_QUANTITY_INVALID';
 /** Tope de existencias, el mismo que acepta el inventario de la farmacia. */
 const MAX_QUANTITY = 1_000_000;
 /** Cuántas filas se piden a las rutas de catálogo y sedes: todas. */
@@ -149,13 +151,13 @@ function productsOf(
 }
 
 /**
- * La farmacia lo marcó «no tengo» para todas sus sedes. La ruta de gestión no
- * expone la marca: sin stock con existencias distintas de 0 (o sin conteo)
- * solo puede ser la marca. Con la marca y existencias en 0 se lee como 0, que
- * para la pantalla es lo mismo: no disponible.
+ * La farmacia lo marcó «no tengo» para todas sus sedes (`out_of_stock_declared`
+ * en la API). La ruta de gestión no expone la marca, y deducirla de las
+ * existencias no alcanza: un producto en 0 puede estar marcado o no. Se lee
+ * del almacén del simulador de farmacia.
  */
 function isOutOfStockDeclared(product: CatalogProduct): boolean {
-  return !product.inStock && product.stock !== 0;
+  return productos.get(product.id)?.sinStock === true;
 }
 
 /** Lo que pone una posición nueva: el stock declarado, 1 sin conteo, 0 si no hay. */
@@ -361,13 +363,21 @@ function setAvailability(router: MockRouter, request: MockRequest): MockReply {
     return validation('available must be a boolean value', [{ field: 'available', message: 'must be a boolean value' }]);
   }
   const quantity = body.quantity;
+  // Como `SetSiteAvailabilityDto`: de 0 a 1 000 000. El 0 sólo vale con «No lo
+  // tengo»; con «Lo tengo» es el 400 del caso de uso.
   if (
     quantity !== undefined &&
-    (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 1 || quantity > MAX_QUANTITY)
+    (typeof quantity !== 'number' || !Number.isInteger(quantity) || quantity < 0 || quantity > MAX_QUANTITY)
   ) {
-    return validation(`quantity must be an integer from 1 to ${MAX_QUANTITY}`, [
-      { field: 'quantity', message: `must be an integer from 1 to ${MAX_QUANTITY}` },
+    return validation(`quantity must be an integer from 0 to ${MAX_QUANTITY}`, [
+      { field: 'quantity', message: `must be an integer from 0 to ${MAX_QUANTITY}` },
     ]);
+  }
+  if (body.available && quantity === 0) {
+    const rejected = validation('«Lo tengo» necesita una cantidad mayor que cero', [
+      { field: 'quantity', message: 'must be greater than zero' },
+    ]);
+    return reply(400, { ...(rejected.body as object), reason: QUANTITY_INVALID_REASON });
   }
 
   const site = sitesOf(router, pharmacyId, user).find((row) => row.id === siteId);
@@ -375,8 +385,8 @@ function setAvailability(router: MockRouter, request: MockRequest): MockReply {
   const catalog = productsOf(router, pharmacyId, user);
   const product = catalog.find((row) => row.id === productId);
   if (product === undefined) return notFound('Producto no encontrado');
-  if (isOutOfStockDeclared(product)) {
-    // Una sede no apaga la marca de toda la farmacia (§4).
+  if (body.available && isOutOfStockDeclared(product)) {
+    // Una sede no apaga la marca de toda la farmacia (§4); «No lo tengo» sí vale.
     const rejected = preconditionFailed('El producto está marcado sin stock para toda la farmacia.', {
       reason: OUT_OF_STOCK_DECLARED_REASON,
     });

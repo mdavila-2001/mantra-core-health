@@ -7,6 +7,7 @@ import { isMockReply, MockRouter, type MockHandler, type MockMethod, type MockRe
 import { buscarUsuario, TENANT_FARMACIA, type MockUser } from '../mock-session';
 import { sha256Hex } from '../sha256';
 import { crearRouterSimulado } from './index';
+import { productos } from './pharmacy.handlers';
 import { registerPharmacyPrescriptionShares, sitePositionList } from './pharmacy-prescription-shares.handlers';
 import { activeItemsOf, issueShareToken, shareList, type SimulatedShare } from './prescription-shares.handlers';
 
@@ -280,6 +281,48 @@ describe('receta compartida abierta por la farmacia en el mock', () => {
     } finally {
       expect(mark(true).status).toBe(200);
     }
+  });
+
+  it('PUT: «No lo tengo» acepta cantidad 0; «Lo tengo» con 0 es 400 (como `SetSiteAvailabilityDto`)', () => {
+    const { token } = seedShare();
+    const match = open(token).items[0]!.matches[0]!;
+    const path = `/pharmacies/${TENANT_FARMACIA}/sites/${match.sites[0]!.siteId}/products/${match.pharmacyProductId}/availability`;
+
+    const off = send('PUT', path, { body: { available: false, quantity: 0 } });
+    expect(off.status).toBe(200);
+    expect(off.body).toMatchObject({ available: false, quantity: 0 });
+
+    const zero = send('PUT', path, { body: { available: true, quantity: 0 } });
+    expect(zero.status).toBe(400);
+    expect((zero.body as { reason: string }).reason).toBe('SITE_AVAILABILITY_QUANTITY_INVALID');
+    expect(send('PUT', path, { body: { available: true, quantity: -1 } }).status).toBe(400);
+    expect(send('PUT', path, { body: { available: true, quantity: 2 } }).status).toBe(200);
+  });
+
+  it('la marca «sin stock» se respeta aunque las existencias estén en 0: «Lo tengo» da 422, «No lo tengo» pasa', () => {
+    const { token } = seedShare();
+    const match = open(token).items[0]!.matches[0]!;
+    const productId = match.pharmacyProductId;
+    const path = `/pharmacies/${TENANT_FARMACIA}/sites/${match.sites[0]!.siteId}/products/${productId}/availability`;
+    const inventory = (line: Record<string, unknown>) =>
+      send('PATCH', `/pharmacies/${TENANT_FARMACIA}/inventory`, { body: { lines: [{ productId, ...line }] } });
+    const original = productos.get(productId)!.stock;
+
+    // Primero las existencias en 0 y después la marca: la marca no toca el conteo.
+    expect(inventory({ stock: 0 }).status).toBe(200);
+    expect(inventory({ inStock: false }).status).toBe(200);
+    try {
+      expect(productos.get(productId)).toMatchObject({ stock: 0, sinStock: true });
+      expect(open(token).items[0]!.matches[0]!.outOfStockDeclared).toBe(true);
+      const rejected = send('PUT', path, { body: { available: true } });
+      expect(rejected.status).toBe(422);
+      expect((rejected.body as { reason: string }).reason).toBe('PRODUCT_OUT_OF_STOCK_DECLARED');
+      expect(send('PUT', path, { body: { available: false } }).status).toBe(200);
+    } finally {
+      expect(inventory({ inStock: true }).status).toBe(200);
+      if (original !== null) expect(inventory({ stock: original }).status).toBe(200);
+    }
+    expect(open(token).items[0]!.matches[0]!.outOfStockDeclared).toBe(false);
   });
 
   it('crearRouterSimulado() resuelve las dos rutas a estos manejadores, con un único dueño', () => {
