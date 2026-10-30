@@ -396,7 +396,9 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
           // El `formatter` (una sola línea en angosto) no va aquí: una función de `media` no reemplaza a la base.
           axisLabel: { rotate: 40, width: 220, overflow: 'none', hideOverlap: false },
         },
-        grid: { left: 28, bottom: 110 },
+        // `containLabel` ya reserva el sitio de los rótulos inclinados: un margen inferior grande encima los
+        // suma y aplasta el trazado (el eje Y se amontonaba en ~55 px).
+        grid: { left: 8, right: 12, top: 16, bottom: 8 },
       });
   }
 }
