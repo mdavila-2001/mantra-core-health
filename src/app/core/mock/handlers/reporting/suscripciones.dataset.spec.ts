@@ -281,6 +281,9 @@ describe('la tabla «Resumen por plan» con un filtro de plan activo no se contr
       expect(arpuCon / arpuSin).toBeGreaterThan(0.85);
       expect(arpuCon / arpuSin).toBeLessThan(1.15);
       expect(fila(con)['cuentas'] as number).toBeLessThanOrEqual(fila(sin)['cuentas'] as number);
+      // Con un filtro de plan la tabla muestra solo ese plan: su total no es el de la tarjeta y la fila lo dice.
+      expect(con.filas.some((f) => f['plan'] === 'Total del plan filtrado')).toBe(true);
+      expect(con.filas.some((f) => f['plan'] === 'Total')).toBe(false);
     });
   }
 });

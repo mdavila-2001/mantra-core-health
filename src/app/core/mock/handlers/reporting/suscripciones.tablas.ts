@@ -105,13 +105,13 @@ export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte)
     ],
     filas: [
       ...filas,
-      { plan: 'Total', cuentas: totalCuentas, mrr: totalMrr, arpu: totalCuentas > 0 ? redondear(totalMrr / totalCuentas) : null, churn: null, cuota: null },
+      { plan: hasPlan ? 'Total del plan filtrado' : 'Total', cuentas: totalCuentas, mrr: totalMrr, arpu: totalCuentas > 0 ? redondear(totalMrr / totalCuentas) : null, churn: null, cuota: null },
     ],
     info: info({
       definicion: 'Cada plan con sus cuentas, su MRR y su churn; la fila de total suma las filas de arriba.',
       formula: 'MRR del plan = el del modelo de suscripciones al cierre (el mismo de la tarjeta «MRR»); ingreso por cuenta = MRR ÷ cuentas',
       fuente: 'payments.subscriptions · payments.plan_prices',
-      salvedades: ['El churn por plan sale sin dato si el plan tiene menos de 10 cuentas en el corte.', 'El total no tiene churn propio: el de toda la base está en el gráfico de churn.', 'El MRR de cada plan sale del mismo cálculo que la tarjeta «MRR»; el total es el de la tarjeta y los centavos de redondeo se asignan a la fila mayor.'],
+      salvedades: ['El churn por plan sale sin dato si el plan tiene menos de 10 cuentas en el corte.', 'El total no tiene churn propio: el de toda la base está en el gráfico de churn.', 'El MRR de cada plan sale del mismo cálculo que la tarjeta «MRR»; sin filtro de plan el total coincide con ella (el residuo del redondeo se asigna a la fila mayor); con un filtro de plan la tabla muestra solo ese plan y su total no es el de la tarjeta.'],
     }),
   };
 }

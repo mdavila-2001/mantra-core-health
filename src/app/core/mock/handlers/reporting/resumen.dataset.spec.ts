@@ -117,6 +117,10 @@ function conVariacion(p: PestanaReporte, pct: number): PestanaReporte {
   return { ...p, kpis: p.kpis.map((k) => (k.id === 'ingreso-periodo' ? { ...k, variacionPct: pct } : k)) };
 }
 
+function sinVariacion(p: PestanaReporte): PestanaReporte {
+  return { ...p, kpis: p.kpis.map((k) => (k.id === 'ingreso-periodo' ? { ...k, variacionPct: null } : k)) };
+}
+
 function grafico(p: PestanaReporte, id: string) {
   const g = p.graficos.find((x) => x.id === id);
   if (g === undefined) throw new Error(`falta el gráfico ${id}`);
@@ -425,6 +429,9 @@ describe('Resumen: contra las verticales reales', () => {
       expect(calculo('MRR')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'mrr').info?.formula);
       expect(calculo('Take rate')).toBe(kpi(FUENTES_REALES.comisiones(CTX), 'take-rate').info?.formula);
       expect(calculo('ROAS')).toBe(kpi(FUENTES_REALES.publicidad(CTX), 'roas').info?.formula);
+      expect(calculo('ARR')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'arr').info?.formula);
+      expect(calculo('ARPU')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'arpu').info?.formula);
+      expect(calculo('LTV')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'ltv').info?.formula);
     });
 
     it('la economía unitaria trae valor para sus cinco indicadores cuando las pestañas lo tienen', () => {
@@ -446,6 +453,17 @@ describe('Resumen: contra las verticales reales', () => {
       };
       const texto = buildSummaryWith(CTX, todasCaen).secciones![0]!.descripcion ?? '';
       expect(texto).toMatch(/Ninguna fuente crece; la que menos cae es Suscripciones/);
+    });
+
+    it('con una sola fuente que cae no se llama «la que más» y «la que menos» a la misma', () => {
+      const una: FuentesResumen = {
+        suscripciones: (c) => conVariacion(COMPLETAS.suscripciones(c), -3),
+        publicidad: (c) => sinVariacion(COMPLETAS.publicidad(c)),
+        comisiones: (c) => sinVariacion(COMPLETAS.comisiones(c)),
+      };
+      const texto = buildSummaryWith(CTX, una).secciones![0]!.descripcion ?? '';
+      expect(texto).not.toMatch(/la que menos cae/);
+      expect(texto).toMatch(/Suscripciones cae/);
     });
   });
 });
