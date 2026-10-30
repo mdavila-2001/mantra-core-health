@@ -56,6 +56,18 @@ hasta seis renglones no se parten; la firma va pegada al contenido y, si
 quedaría sola en la última hoja, se lleva el último bloque (o el último dato)
 con ella.
 
+## La ficha del glosario
+
+`GlossaryPdfService` (`src/app/features/glossary/glossary-pdf.service.ts`) arma
+el PDF de «Descargar ficha en PDF» de la ficha de un término: papel blanco
+(`plainPaper`), definición, resumen, capítulos del artículo, datos, referencias,
+procedencia de cada sección y, al final, las imágenes con su crédito. Las
+imágenes se piden con `readImageAsDataUrl`
+(`src/app/core/data-access/glossary/glossary-image.reader.ts`), sin
+credenciales; una imagen que no se puede bajar (otro origen que la política de
+seguridad de la página no deja leer, caída, formato) no tumba la descarga: el PDF
+dice que no se pudo incluir y conserva su crédito y su página de origen.
+
 ## Muestras
 
 `yarn pdf:samples` genera en `artifacts/pdf-samples/` (o en `PDF_SAMPLES_DIR`)

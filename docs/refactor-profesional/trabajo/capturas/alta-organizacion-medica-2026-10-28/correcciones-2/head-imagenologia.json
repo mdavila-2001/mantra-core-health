@@ -1,0 +1,599 @@
+[
+  {
+    "viewport": "escritorio-1920",
+    "central": {
+      "vw": 1920,
+      "bloque": {
+        "izq": 113,
+        "der": 1807,
+        "arriba": 817,
+        "ancho": 1694
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 113,
+          "der": 1807,
+          "arriba": 825,
+          "ancho": 1694
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 113,
+          "der": 1807,
+          "arriba": 926,
+          "ancho": 1694
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 113,
+          "der": 1807,
+          "arriba": 1027,
+          "ancho": 1694
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-central-geocoding-notice",
+          "izq": 126,
+          "der": 1794,
+          "arriba": 859,
+          "ancho": 1668
+        },
+        {
+          "id": "registro-imagen-central-map-distrito",
+          "izq": 126,
+          "der": 1794,
+          "arriba": 960,
+          "ancho": 1668
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    },
+    "sucursal": {
+      "vw": 1920,
+      "bloque": {
+        "izq": 130,
+        "der": 1790,
+        "arriba": 919,
+        "ancho": 1660
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 130,
+          "der": 1790,
+          "arriba": 927,
+          "ancho": 1660
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 130,
+          "der": 1790,
+          "arriba": 1028,
+          "ancho": 1660
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 130,
+          "der": 1790,
+          "arriba": 1129,
+          "ancho": 1660
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-sucursal-1-geocoding-notice",
+          "izq": 143,
+          "der": 1777,
+          "arriba": 961,
+          "ancho": 1634
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-distrito",
+          "izq": 143,
+          "der": 1777,
+          "arriba": 1062,
+          "ancho": 1634
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    }
+  },
+  {
+    "viewport": "escritorio-1440",
+    "central": {
+      "vw": 1440,
+      "bloque": {
+        "izq": 113,
+        "der": 1327,
+        "arriba": 797,
+        "ancho": 1214
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 113,
+          "der": 1327,
+          "arriba": 805,
+          "ancho": 1214
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 113,
+          "der": 1327,
+          "arriba": 906,
+          "ancho": 1214
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 113,
+          "der": 1327,
+          "arriba": 1007,
+          "ancho": 1214
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-central-geocoding-notice",
+          "izq": 126,
+          "der": 1314,
+          "arriba": 839,
+          "ancho": 1188
+        },
+        {
+          "id": "registro-imagen-central-map-distrito",
+          "izq": 126,
+          "der": 1314,
+          "arriba": 940,
+          "ancho": 1188
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    },
+    "sucursal": {
+      "vw": 1440,
+      "bloque": {
+        "izq": 130,
+        "der": 1310,
+        "arriba": 374,
+        "ancho": 1180
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 130,
+          "der": 1310,
+          "arriba": 382,
+          "ancho": 1180
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 130,
+          "der": 1310,
+          "arriba": 483,
+          "ancho": 1180
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 130,
+          "der": 1310,
+          "arriba": 584,
+          "ancho": 1180
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-sucursal-1-geocoding-notice",
+          "izq": 143,
+          "der": 1297,
+          "arriba": 416,
+          "ancho": 1154
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-distrito",
+          "izq": 143,
+          "der": 1297,
+          "arriba": 517,
+          "ancho": 1154
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    }
+  },
+  {
+    "viewport": "tablet-1024",
+    "central": {
+      "vw": 1024,
+      "bloque": {
+        "izq": 94,
+        "der": 930,
+        "arriba": 308,
+        "ancho": 835
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 94,
+          "der": 930,
+          "arriba": 316,
+          "ancho": 835
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 94,
+          "der": 930,
+          "arriba": 417,
+          "ancho": 835
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 94,
+          "der": 930,
+          "arriba": 518,
+          "ancho": 835
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-central-geocoding-notice",
+          "izq": 107,
+          "der": 917,
+          "arriba": 350,
+          "ancho": 809
+        },
+        {
+          "id": "registro-imagen-central-map-distrito",
+          "izq": 107,
+          "der": 917,
+          "arriba": 451,
+          "ancho": 809
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    },
+    "sucursal": {
+      "vw": 1024,
+      "bloque": {
+        "izq": 111,
+        "der": 913,
+        "arriba": 308,
+        "ancho": 801
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 111,
+          "der": 913,
+          "arriba": 316,
+          "ancho": 801
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 111,
+          "der": 913,
+          "arriba": 417,
+          "ancho": 801
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 111,
+          "der": 913,
+          "arriba": 518,
+          "ancho": 801
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-sucursal-1-geocoding-notice",
+          "izq": 124,
+          "der": 900,
+          "arriba": 350,
+          "ancho": 775
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-distrito",
+          "izq": 124,
+          "der": 900,
+          "arriba": 451,
+          "ancho": 775
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    }
+  },
+  {
+    "viewport": "tablet-768",
+    "central": {
+      "vw": 768,
+      "bloque": {
+        "izq": 49,
+        "der": 719,
+        "arriba": 830,
+        "ancho": 670
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 49,
+          "der": 719,
+          "arriba": 838,
+          "ancho": 670
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 49,
+          "der": 719,
+          "arriba": 947,
+          "ancho": 670
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 49,
+          "der": 719,
+          "arriba": 1056,
+          "ancho": 670
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-central-geocoding-notice",
+          "izq": 66,
+          "der": 702,
+          "arriba": 876,
+          "ancho": 636
+        },
+        {
+          "id": "registro-imagen-central-map-distrito",
+          "izq": 66,
+          "der": 702,
+          "arriba": 985,
+          "ancho": 636
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    },
+    "sucursal": {
+      "vw": 768,
+      "bloque": {
+        "izq": 66,
+        "der": 702,
+        "arriba": 932,
+        "ancho": 636
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 66,
+          "der": 702,
+          "arriba": 940,
+          "ancho": 636
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 66,
+          "der": 702,
+          "arriba": 1049,
+          "ancho": 636
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 66,
+          "der": 702,
+          "arriba": 1158,
+          "ancho": 636
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-sucursal-1-geocoding-notice",
+          "izq": 83,
+          "der": 685,
+          "arriba": 978,
+          "ancho": 602
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-distrito",
+          "izq": 83,
+          "der": 685,
+          "arriba": 1087,
+          "ancho": 602
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    }
+  },
+  {
+    "viewport": "movil-390",
+    "central": {
+      "vw": 390,
+      "bloque": {
+        "izq": 41,
+        "der": 349,
+        "arriba": 73,
+        "ancho": 308
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 41,
+          "der": 349,
+          "arriba": 81,
+          "ancho": 308
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 41,
+          "der": 349,
+          "arriba": 207,
+          "ancho": 308
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 41,
+          "der": 349,
+          "arriba": 316,
+          "ancho": 308
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-central-geocoding-notice",
+          "izq": 58,
+          "der": 332,
+          "arriba": 119,
+          "ancho": 274
+        },
+        {
+          "id": "registro-imagen-central-map-distrito",
+          "izq": 58,
+          "der": 332,
+          "arriba": 245,
+          "ancho": 274
+        },
+        {
+          "id": "registro-imagen-central-map-localidad-ficha-departamento",
+          "izq": 75,
+          "der": 315,
+          "arriba": 1006,
+          "ancho": 240
+        },
+        {
+          "id": "registro-imagen-central-map-localidad-ficha-provincia",
+          "izq": 75,
+          "der": 315,
+          "arriba": 1089,
+          "ancho": 240
+        },
+        {
+          "id": "registro-imagen-central-map-localidad-ficha-municipio",
+          "izq": 75,
+          "der": 315,
+          "arriba": 1172,
+          "ancho": 240
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    },
+    "sucursal": {
+      "vw": 390,
+      "bloque": {
+        "izq": 58,
+        "der": 332,
+        "arriba": 117,
+        "ancho": 274
+      },
+      "celdas": [
+        {
+          "tag": "app-form-field",
+          "izq": 58,
+          "der": 332,
+          "arriba": 125,
+          "ancho": 274
+        },
+        {
+          "tag": "app-form-field",
+          "izq": 58,
+          "der": 332,
+          "arriba": 251,
+          "ancho": 274
+        },
+        {
+          "tag": "app-location-picker",
+          "izq": 58,
+          "der": 332,
+          "arriba": 360,
+          "ancho": 274
+        }
+      ],
+      "casillas": [
+        {
+          "id": "registro-imagen-sucursal-1-geocoding-notice",
+          "izq": 75,
+          "der": 315,
+          "arriba": 163,
+          "ancho": 240
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-distrito",
+          "izq": 75,
+          "der": 315,
+          "arriba": 289,
+          "ancho": 240
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-localidad-ficha-departamento",
+          "izq": 92,
+          "der": 298,
+          "arriba": 1012,
+          "ancho": 206
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-localidad-ficha-provincia",
+          "izq": 92,
+          "der": 298,
+          "arriba": 1095,
+          "ancho": 206
+        },
+        {
+          "id": "registro-imagen-sucursal-1-map-localidad-ficha-municipio",
+          "izq": 92,
+          "der": 298,
+          "arriba": 1178,
+          "ancho": 206
+        }
+      ],
+      "renglones": [
+        1,
+        1,
+        1
+      ],
+      "desborde": []
+    }
+  }
+]

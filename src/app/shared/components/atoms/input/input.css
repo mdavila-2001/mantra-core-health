@@ -164,13 +164,13 @@
 
 /* Error */
 .input-wrapper.status-error {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 /* el anillo de error se deriva del token, no se reescribe su RGB a mano */
 .input-wrapper.status-error.is-focused {
-  border-color: var(--c-error-500);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--c-error-500) 35%, transparent);
+  border-color: var(--border-danger);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--border-danger) 35%, transparent);
 }
 
 /* Disabled */

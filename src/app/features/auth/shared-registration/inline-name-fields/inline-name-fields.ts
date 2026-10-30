@@ -70,6 +70,9 @@ export class InlineNameFields {
     if (grupo.touched && grupo.hasError('nombresAdicionalesLargos')) {
       return 'El segundo, tercer y demás nombres juntos no pueden pasar de 100 caracteres.';
     }
+    if (grupo.touched && grupo.hasError('nombreCompletoCorto')) {
+      return 'El nombre completo tiene que tener al menos 3 caracteres.';
+    }
     return grupo.touched && grupo.hasError('nombreCompletoLargo')
       ? 'El nombre completo no puede pasar de 200 caracteres.'
       : '';

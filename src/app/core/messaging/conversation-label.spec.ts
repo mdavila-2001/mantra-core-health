@@ -1,4 +1,4 @@
-import { conversationAvatar, conversationLabel } from './conversation-label';
+import { conversationAvatar, conversationLabel, conversationVerification } from './conversation-label';
 import type { ConversationListItem } from '../data-access/community/community.types';
 
 function conversacion(peers: ConversationListItem['peers']): ConversationListItem {
@@ -42,5 +42,40 @@ describe('avatarDeConQuien', () => {
       ]),
     );
     expect(url).toBeNull();
+  });
+});
+
+describe('conversationVerification', () => {
+  it('en una directa devuelve la verificación que la API envió en el peer', () => {
+    const info = conversationVerification(
+      conversacion([{ profileId: 'p-1', verification: { status: 'VERIFIED', validUntil: '2099-01-01' } }]),
+    );
+    expect(info?.status).toBe('VERIFIED');
+  });
+
+  it('un peer sin `verification` no se promueve: no hay insignia', () => {
+    expect(conversationVerification(conversacion([{ profileId: 'p-1' }]))).toBeNull();
+    expect(
+      conversationVerification(conversacion([{ profileId: 'p-1', verification: { status: null } }])),
+    ).toBeNull();
+  });
+
+  it('un grupo no tiene una identidad que verificar', () => {
+    const verificado = { status: 'VERIFIED' };
+    expect(
+      conversationVerification(
+        conversacion([
+          { profileId: 'p-1', verification: verificado },
+          { profileId: 'p-2', verification: verificado },
+        ]),
+      ),
+    ).toBeNull();
+  });
+
+  it('una vigencia vencida se degrada a EXPIRED', () => {
+    const info = conversationVerification(
+      conversacion([{ profileId: 'p-1', verification: { status: 'VERIFIED', validUntil: '2020-01-01' } }]),
+    );
+    expect(info?.status).toBe('EXPIRED');
   });
 });

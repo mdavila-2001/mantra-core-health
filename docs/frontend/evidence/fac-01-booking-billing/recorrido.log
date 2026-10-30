@@ -1,0 +1,40 @@
+turnos libres: 50; price del primero={"amount":150,"currencyCode":"BOB"}
+cita de prueba: hold 201, request 201, accept 200 · ecf8a8a6-4910-4144-ab3f-49e2c382abb8
+médica 1440: 200 GET http://localhost:4300/@ng/component
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 PUT http://localhost:4300/scheduling/bookings/ecf8a8a6-4910-4144-ab3f-49e2c382abb8/payment-state
+1440: marcó «Parcialmente pagada» en la cita de prueba
+captura h01-amount-typed-1440.png
+médica 1440: 200 PUT http://localhost:4300/scheduling/bookings/ecf8a8a6-4910-4144-ab3f-49e2c382abb8/payment-state
+1440: Registrar pago → 200 cuerpo={"state":"PARTIALLY_PAID","insuranceUsed":false,"amountReceived":50} respuesta.billing={"linked":true,"invoiceId":"11774801-7766-4d43-87bb-e6a4f59bba49","amountBilled":150,"amountPaid":50,"currencyCode":"BOB","reason":null}
+1440: aviso «Estado del pago actualizado Parcialmente pagada. Recibido: 50,00 Bs de 150,00 Bs.»
+captura h01-amount-saved-1440.png
+médica 1440: 422 PUT http://localhost:4300/scheduling/bookings/ecf8a8a6-4910-4144-ab3f-49e2c382abb8/payment-state
+médica 1440 consola: Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)
+médica 1440 consola: [API] PUT /scheduling/bookings/ecf8a8a6-4910-4144-ab3f-49e2c382abb8/payment-state → 422 · PRECONDITION_FAILED · «El monto pasa lo que falta pagar de la cita: 10
+1440: 200 Bs (saldo 100) → 422 PAYMENT_AMOUNT_EXCEEDS_BALANCE; el campo conserva «200»
+captura h01-amount-exceeds-1440.png
+BD tras la UI: 150.00 / 50.00 / 100.00 (total / pagado / saldo)
+médica 1440: 200 GET http://localhost:4300/@ng/component
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+médica 1440: 200 GET http://localhost:4300/scheduling/slots
+1440 tras recargar: [" Recibido: 50,00 Bs "]
+captura h01-pending-after-reload-1440.png
+médica 390: 200 GET http://localhost:4300/@ng/component
+médica 390: 200 GET http://localhost:4300/scheduling/slots
+médica 390: 200 GET http://localhost:4300/scheduling/slots
+médica 390: 200 GET http://localhost:4300/scheduling/slots
+médica 390: 200 GET http://localhost:4300/scheduling/slots
+390: [" Recibido: 50,00 Bs "]
+captura h01-pending-390.png
+paciente 1440: 200 GET http://localhost:4300/scheduling/slots
+paciente 1440: «Precio de la consulta 150.00 Bs»
+captura h02-booking-price-1440.png
+paciente 390: 200 GET http://localhost:4300/scheduling/slots
+paciente 390: «Precio de la consulta 150.00 Bs»
+captura h02-booking-price-390.png

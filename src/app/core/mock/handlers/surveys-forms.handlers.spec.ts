@@ -90,6 +90,54 @@ describe('encuestas y formularios del backend demo', () => {
     expect(data<{ status: string }>(request('GET', path)).status).toBe('INACTIVE');
   });
 
+  it('cada invitación del paciente dice de qué atención salió (kind, médico o servicio, fecha)', () => {
+    interface Invitacion {
+      id: string;
+      appointmentBookingId: string;
+      kind?: 'CONSULTATION' | 'SERVICE';
+      serviceName?: string;
+      practitionerDisplayName?: string;
+      attendedAt?: string;
+    }
+    const invitaciones = data<Invitacion[]>(request('GET', '/surveys/me/invitations'));
+    expect(invitaciones.length).toBeGreaterThan(0);
+
+    const conContexto = invitaciones.filter((i) => i.kind !== undefined);
+    expect(conContexto.length).toBeGreaterThan(0);
+    for (const invitacion of conContexto) {
+      expect(['CONSULTATION', 'SERVICE']).toContain(invitacion.kind);
+      expect(Number.isNaN(Date.parse(invitacion.attendedAt ?? ''))).toBe(false);
+      // Una consulta nombra al médico; un servicio, al servicio. Nunca el otro campo.
+      if (invitacion.kind === 'SERVICE') {
+        expect(invitacion.serviceName).toBeTruthy();
+      } else {
+        expect(invitacion.serviceName).toBeUndefined();
+        expect(invitacion.practitionerDisplayName).toBeTruthy();
+      }
+    }
+    // El detalle (la pantalla de responder) trae los mismos campos que la lista.
+    const primera = invitaciones[0]!;
+    expect(
+      data<Invitacion>(request('GET', `/surveys/me/invitations/${primera.id}`)),
+    ).toMatchObject({
+      kind: primera.kind,
+      practitionerDisplayName: primera.practitionerDisplayName,
+      attendedAt: primera.attendedAt,
+    });
+  });
+
+  it('las respuestas recibidas llegan con la fecha redondeada al día y sin la reserva', () => {
+    const templates = data<{ id: string; published: boolean }[]>(request('GET', '/surveys/templates'));
+    const activa = templates.find((template) => template.published)!;
+    const respuestas = data<Record<string, unknown>[]>(request('GET', `/surveys/templates/${activa.id}/responses`));
+    expect(respuestas.length).toBeGreaterThan(0);
+    for (const respuesta of respuestas) {
+      // Medianoche UTC: ninguna hora exacta junto al comentario.
+      expect(respuesta['submittedAt']).toMatch(/^\d{4}-\d{2}-\d{2}T00:00:00\.000Z$/);
+      expect('appointmentBookingId' in respuesta).toBe(false);
+    }
+  });
+
   it('reporta recursos inexistentes y respuestas de invitaciones', () => {
     const missing = '/surveys/templates/missing';
     expect(status(request('GET', missing))).toBe(404);

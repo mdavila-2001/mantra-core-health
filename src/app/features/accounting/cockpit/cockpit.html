@@ -86,17 +86,16 @@
           </div>
         }
       } @else {
-        <!-- S3: la práctica no rompió el tablero (las otras ocho lecturas
-             siguen abajo), sólo le falta abrir su primer ejercicio fiscal.
-             Abrirlo es de la administración de la organización (por API);
-             acá no hay pantalla que lo dé de alta, así que la acción es
-             volver a consultar, no un enlace a algo que no existe. -->
+        <!-- S3: el tablero sigue (las otras ocho lecturas, abajo); sólo falta el primer
+             ejercicio fiscal, que se abre en «Configuración para facturar» (FAC-06). -->
         <app-empty-state
           class="contexto__vacio"
           title="Esta práctica todavía no tiene un ejercicio fiscal"
-          description="Lo abre la administración de su organización; cuando exista, el tablero lo muestra acá."
+          description="Se abre en «Configuración para facturar»; cuando exista, el tablero lo muestra acá."
           data-testid="fiscal-year-empty"
         >
+          <a app-button empty-actions variant="primary" data-testid="fiscal-year-setup-link"
+            routerLink="/administration/accounting/billing-setup">Abrir el ejercicio</a>
           <button
             app-button
             empty-actions

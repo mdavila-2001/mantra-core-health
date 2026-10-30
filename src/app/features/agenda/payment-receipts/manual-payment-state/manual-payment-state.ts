@@ -1,17 +1,26 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+  untracked,
+} from '@angular/core';
 
 import type {
   NewPaymentState,
   PaymentStateCode,
   PaymentStateInfo,
 } from '../../../../core/data-access/scheduling/scheduling.types';
+import { displayCurrency } from '../../../../core/money/display-currency';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Input } from '../../../../shared/components/atoms/input/input';
 import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../../../shared/components/atoms/nav-icon/nav-icon.types';
-import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
-import { formatBolivianos, ReceivedAmountStore } from '../received-amount-store';
+import { formatMoney } from '../../../../shared/utils/pdf-export/pdf-format';
 
 /** Los tres estados, en el orden en que se muestran. La etiqueta viene del servidor al leer. */
 const PAYMENT_STATE_OPTIONS: readonly {
@@ -37,10 +46,17 @@ const PAYMENT_STATE_OPTIONS: readonly {
  * Son dos preguntas distintas y cambiar una no puede responder la otra por su
  * cuenta: pasar de «pendiente» a «pagada» no borra que la cita se cubrió con
  * seguro. Por eso cada cambio sale con las dos mitades.
+ *
+ * ## El monto viaja con la marca (FAC-01)
+ *
+ * Con la cita pagada, entera o en parte, se puede registrar lo recibido: sale
+ * en el mismo `PUT payment-state` (`amountReceived`) y la API lo asienta en la
+ * factura de la cita. Cada monto es **otro pago** que se suma, así que no hay
+ * «cambiar monto»: «Recibido» es lo que la API dice que se cobró.
  */
 @Component({
   selector: 'app-manual-payment-state',
-  imports: [Alert, AppButton, FormField, Input, NavIcon],
+  imports: [AppButton, FormField, Input, NavIcon],
   templateUrl: './manual-payment-state.html',
   styleUrl: './manual-payment-state.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,12 +68,11 @@ export class ManualPaymentState {
   /** Hay una operación en vuelo en el modal. */
   readonly disabled = input(false);
 
-  /** La cita, para anotar el monto recibido; sin ella no se ofrece el monto. */
+  /** La cita; sin ella no se ofrece el monto. */
   readonly bookingId = input('');
 
   readonly changed = output<NewPaymentState>();
 
-  private readonly amounts = inject(ReceivedAmountStore);
   private static readonly AMOUNT_PATTERN = /^\d+(\.\d{1,2})?$/;
 
   protected readonly options = PAYMENT_STATE_OPTIONS;
@@ -73,7 +88,7 @@ export class ManualPaymentState {
     this.changed.emit({ state: current.state, insuranceUsed: !current.insuranceUsed });
   }
 
-  /* -- Monto recibido (solo en este navegador; ver `ReceivedAmountStore`) --- */
+  /* -- Monto recibido: viaja al servidor con la marca ----------------------- */
 
   /** El monto se ofrece cuando el pago está hecho, entero o en parte. */
   protected readonly showsAmount = computed(() => {
@@ -81,23 +96,24 @@ export class ManualPaymentState {
     return this.bookingId() !== '' && (state === 'PAID' || state === 'PARTIALLY_PAID');
   });
 
-  protected readonly savedAmount = computed(() => this.amounts.get(this.bookingId()));
-  protected readonly savedLabel = computed(() => {
-    const saved = this.savedAmount();
-    return saved === null ? '' : `Bs ${formatBolivianos(saved.amount)}`;
+  /** Lo cobrado según la API; `''` si el pago se marcó sin monto. */
+  protected readonly receivedLabel = computed(() => {
+    const amount = this.current()?.amountPaid;
+    return amount !== undefined && amount > 0
+      ? formatMoney(amount, displayCurrency(this.current()?.currencyCode))
+      : '';
   });
-  protected readonly editing = signal(false);
+
   protected readonly draft = signal<string | number | null>('');
-  private readonly storageFailed = signal(false);
 
-  /** `true` si se ve el campo: no hay monto guardado, o se pidió cambiarlo. */
-  protected readonly showsField = computed(() => this.savedAmount() === null || this.editing());
-
-  private readonly draftText = computed(() => String(this.draft() ?? '').trim().replace(',', '.'));
+  private readonly draftText = computed(() =>
+    String(this.draft() ?? '')
+      .trim()
+      .replace(',', '.'),
+  );
 
   /** Opcional: vacío no es error. Si se escribe algo, mayor que 0 y con dos decimales. */
   protected readonly problem = computed(() => {
-    if (this.storageFailed()) return 'No se pudo guardar en este navegador.';
     const text = this.draftText();
     if (text === '') return null;
     if (!ManualPaymentState.AMOUNT_PATTERN.test(text) || Number(text) <= 0) {
@@ -110,23 +126,27 @@ export class ManualPaymentState {
     () => this.draftText() !== '' && this.problem() === null && !this.disabled(),
   );
 
+  constructor() {
+    // El monto se borra cuando la API devuelve el estado nuevo, no al pedirlo:
+    // si rechaza (por ejemplo, pasa lo que falta pagar), lo escrito sigue ahí.
+    effect(() => {
+      this.current();
+      untracked(() => this.draft.set(''));
+    });
+  }
+
   protected setDraft(value: string | number | null): void {
-    this.storageFailed.set(false);
     this.draft.set(value);
   }
 
-  protected startEditing(): void {
-    this.setDraft(String(this.savedAmount()?.amount ?? ''));
-    this.editing.set(true);
-  }
-
+  /** Registra el pago con el estado vigente; si la API lo rechaza, el modal lo dice. */
   protected saveAmount(): void {
-    if (!this.canSave()) return;
-    if (!this.amounts.set(this.bookingId(), Number(this.draftText()))) {
-      this.storageFailed.set(true);
-      return;
-    }
-    this.editing.set(false);
-    this.draft.set('');
+    const current = this.current();
+    if (!this.canSave() || current === null) return;
+    this.changed.emit({
+      state: current.state,
+      insuranceUsed: current.insuranceUsed,
+      amountReceived: Number(this.draftText()),
+    });
   }
 }

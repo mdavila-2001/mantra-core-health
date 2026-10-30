@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 
 import { Toast } from './toast';
 import { ToastService } from './toast.service';
@@ -26,6 +27,36 @@ describe('Toast', () => {
     expect(host.querySelector('.toast__icon svg')).toBeTruthy();
     expect(host.querySelector('.sr-only')?.textContent?.trim()).toBe('Error:');
     expect(host.querySelector('.toast__title')?.textContent?.trim()).toBe('No se pudo firmar');
+  });
+
+  it('con acción, el botón navega a su URL y cierra el aviso', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.componentRef.setInput('toast', {
+      ...SAMPLE,
+      type: 'warning',
+      action: { label: 'Ver mi cita', url: '/my-account/appointments?turno=b-1' },
+    } satisfies ToastMessage);
+    fixture.detectChanges();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    let cerrado: string | undefined;
+    fixture.componentInstance.dismissed.subscribe((id: string) => (cerrado = id));
+
+    const boton = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      '[data-testid="toast-accion"]',
+    );
+    expect(boton?.textContent?.trim()).toBe('Ver mi cita');
+    boton!.click();
+
+    expect(navegar).toHaveBeenCalledWith('/my-account/appointments?turno=b-1');
+    expect(cerrado).toBe('aviso-1');
+  });
+
+  it('sin acción no hay botón', () => {
+    const fixture = TestBed.createComponent(Toast);
+    fixture.componentRef.setInput('toast', SAMPLE);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="toast-accion"]')).toBeNull();
   });
 
   it('emite el id al pulsar la X', () => {

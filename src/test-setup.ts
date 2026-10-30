@@ -85,6 +85,27 @@ if (typeof sessionStorage !== 'undefined') {
 }
 
 /**
+ * Cada archivo arranca sin un `animate` fantasma en `HTMLElement.prototype`.
+ *
+ * jsdom no implementa la Web Animations API: `Element.prototype.animate` no
+ * existe. Los specs que simulan una salida animada guardan el original
+ * (`undefined`), lo reemplazan y lo «restauran» con
+ * `HTMLElement.prototype.animate = original`. Eso no deshace nada: deja una
+ * propiedad **propia** con valor `undefined` que tapa el `animate` de
+ * `Element.prototype`, y el siguiente archivo del mismo worker que lo espíe ahí
+ * ve `typeof hijo.animate !== 'function'` y la directiva no anima. El síntoma
+ * es un spec de movimiento en rojo (`expected [] to deeply equal [0, 45, 90]`)
+ * cuyo archivo pasa solo; cuál cae depende del orden en que el bundle reparte
+ * los archivos entre workers, así que un cambio ajeno al movimiento lo mueve.
+ */
+if (
+  Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'animate') &&
+  (HTMLElement.prototype as { animate?: unknown }).animate === undefined
+) {
+  delete (HTMLElement.prototype as { animate?: unknown }).animate;
+}
+
+/**
  * `decodeAccessToken` decodifica el JWT con `atob` y `TextDecoder`. Los dos
  * existen tanto en el navegador como en Node, pero **si jsdom cambiara y alguno
  * faltara**, el síntoma sería un puñado de pruebas fallando por «token

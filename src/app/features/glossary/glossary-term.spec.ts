@@ -3,7 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 
+import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryTerm } from './glossary-term';
 
 /**
@@ -540,6 +542,51 @@ describe('GlossaryTerm', () => {
     );
   });
 
+  const EDITORIAL_SOURCE = {
+    source: 'MedlinePlus',
+    recordId: 'highbloodpressure',
+    url: 'https://medlineplus.gov/spanish/highbloodpressure.html',
+    language: 'es',
+    version: '2026-09',
+    retrievedAt: '2026-09-29T10:00:00Z',
+    role: 'related_context',
+    attribution: 'Biblioteca Nacional de Medicina de EE. UU.',
+    rights: 'Dominio público.',
+  };
+
+  it('las fuentes editoriales de la API se citan con su rol, atribución y derechos', async () => {
+    peticion().flush({ ...FICHA, properties: { 'glossary-sources': [EDITORIAL_SOURCE] } });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    const lista = html().querySelector('.termino__fuentes-editoriales');
+    expect(lista?.querySelector('a')?.getAttribute('href')).toBe(EDITORIAL_SOURCE.url);
+    expect(lista?.querySelector('a')?.getAttribute('rel')).toContain('noopener');
+    expect(lista?.textContent).toContain('MedlinePlus · highbloodpressure');
+    expect(lista?.textContent).toContain('Contexto relacionado; no es una equivalencia');
+    expect(lista?.textContent).toContain('Dominio público.');
+    expect(html().textContent).not.toContain('Este término no declara su fuente');
+  });
+
+  it('descarta las fuentes editoriales mal formadas o sin https y conserva el aviso de que no declara fuente', async () => {
+    peticion().flush({
+      ...FICHA,
+      properties: {
+        'glossary-sources': [
+          { ...EDITORIAL_SOURCE, url: 'http://medlineplus.gov/spanish/x.html' },
+          { ...EDITORIAL_SOURCE, role: 'otro' },
+          { ...EDITORIAL_SOURCE, rights: undefined },
+          'texto suelto',
+        ],
+      },
+    });
+    await harness.fixture.whenStable();
+    await abrirPestana('Fuente y código');
+
+    expect(html().querySelector('.termino__fuentes-editoriales')).toBeNull();
+    expect(html().textContent).toContain('Este término no declara su fuente');
+  });
+
   const CIMA = {
     nregistro: '62935',
     name: 'Paracetamol Ejemplo 500 mg comprimidos',
@@ -676,5 +723,44 @@ describe('GlossaryTerm', () => {
     const fuente = html().querySelector('[data-testid="termino-fuente-definicion"]');
     expect(fuente?.textContent).toContain('MedlinePlus en español');
     expect(fuente?.textContent).toContain('30/09/2026');
+  });
+
+  describe('descarga de la ficha en PDF', () => {
+    const botonPdf = () =>
+      [...html().querySelectorAll<HTMLButtonElement>('button')].find((b) =>
+        (b.textContent ?? '').includes('Descargar ficha en PDF'),
+      );
+
+    it('no ofrece el botón hasta que la ficha llegó', () => {
+      peticion();
+      expect(botonPdf()).toBeUndefined();
+    });
+
+    it('con la ficha leída, el botón baja el PDF con la ficha y su artículo (aquí, sin artículo)', async () => {
+      const download = vi.spyOn(TestBed.inject(GlossaryPdfService), 'download').mockResolvedValue();
+      peticion().flush(FICHA);
+      await harness.fixture.whenStable();
+
+      expect(botonPdf()).toBeDefined();
+      botonPdf()?.click();
+      await harness.fixture.whenStable();
+
+      expect(download).toHaveBeenCalledTimes(1);
+      expect(download.mock.calls[0]?.[0].conceptId).toBe(FICHA.conceptId);
+      expect(download.mock.calls[0]?.[1]).toBeNull();
+      expect(html().querySelector('.termino__pdf-error')).toBeNull();
+    });
+
+    it('si el PDF falla, lo dice en usted y la ficha sigue a la vista', async () => {
+      vi.spyOn(TestBed.inject(GlossaryPdfService), 'download').mockRejectedValue(new Error('x'));
+      peticion().flush(FICHA);
+      await harness.fixture.whenStable();
+
+      botonPdf()?.click();
+      await harness.fixture.whenStable();
+
+      expect(html().querySelector('.termino__pdf-error')?.textContent).toContain('Vuelva a intentarlo');
+      expect(html().textContent).toContain('Hipertensión esencial');
+    });
   });
 });

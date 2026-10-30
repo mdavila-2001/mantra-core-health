@@ -487,6 +487,18 @@ function readBuildInfo() {
   return { version, commit, builtAt: new Date().toISOString() };
 }
 
+/**
+ * Qué archivos opcionales de `public/` existen ahora mismo.
+ *
+ * Tampoco pasa por el manifiesto: no es configuración, es lo que hay en el disco.
+ * Ver `MockAssets` en `environment.types.ts`.
+ */
+function readMockAssets() {
+  return {
+    glossaryData: existsSync(join(REPO_ROOT, 'public', 'glossary-data', 'manifest.json')),
+  };
+}
+
 /** `enabled: true,` precedido de su comentario, con la sangría pedida. */
 function renderField({ field, value, key, literal }, indent) {
   const rendered = literal === true ? String(value) : JSON.stringify(value);
@@ -515,6 +527,7 @@ function render(entries) {
 
   const body = lines.length === 0 ? '' : `\n${lines.join('\n')}\n`;
   const build = readBuildInfo();
+  const assets = readMockAssets();
 
   return `/**
  * ARCHIVO GENERADO — no editar a mano, no versionar.
@@ -530,7 +543,7 @@ function render(entries) {
  * Todo lo de acá viaja al navegador en texto plano: es configuración pública.
  */
 
-import type { BuildInfo, EnvironmentOverrides } from './environment.types';
+import type { BuildInfo, EnvironmentOverrides, MockAssets } from './environment.types';
 
 export const envFromProcess: EnvironmentOverrides = {${body}};
 
@@ -543,6 +556,14 @@ export const buildInfo: BuildInfo = {
   version: ${JSON.stringify(build.version)},
   commit: ${JSON.stringify(build.commit)},
   builtAt: ${JSON.stringify(build.builtAt)},
+};
+
+/**
+ * Qué archivos opcionales de \`public/\` había al generar. El simulador no pide
+ * lo que sabe que falta: un 404 esperado igual llega a la consola.
+ */
+export const mockAssets: MockAssets = {
+  glossaryData: ${assets.glossaryData},
 };
 `;
 }

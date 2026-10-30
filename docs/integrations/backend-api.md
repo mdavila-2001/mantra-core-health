@@ -1222,6 +1222,39 @@ a nadie. Se pide una vez por sesión y se comparte.
 |---|---|---|
 | `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
 
+### `AdmissionsClient` — 16 operaciones · «Admisiones» (alta de doctor)
+
+La bandeja de quien revisa y la lectura del propio médico. La autoridad es la API:
+cada ruta exige su rol (`ADMISSIONS_REVIEWER`, `ADMISSIONS_APPROVER` o
+`SECURITY_ADMIN` para leer) y toda escritura manda `expectedRowVersion`. Los
+códigos de estado son estables y en inglés (`IN_REVIEW`); el cliente acepta el
+vocabulario heredado en español y lo traduce en la frontera.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/admissions` | `AdmissionsQueue` (sin texto de búsqueda) |
+| `POST` | `/admissions/search` | `AdmissionsQueue` (con texto: la cédula no viaja en la dirección) |
+| `GET` | `/admissions/:id` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/claim` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/release` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/reassign` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/request-info` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/items/:itemId/review` | `AdmissionDetail` · lleva `evidenceSha256` |
+| `POST` | `/admissions/:id/decision` | `AdmissionDetail` · sin `items[]`: el servidor deriva el estado de las revisiones |
+| `POST` | `/admissions/:id/suspend` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/reinstate` | `AdmissionDetail` |
+| `GET` | `/admissions/:id/documents/:fileId` | `AdmissionDocumentViewer` · acceso auditado, devuelve una dirección firmada de vida corta |
+| `GET` | `/profiles/practitioners/me/admission` | `AdmissionStatusCard` (404 si no hay solicitud) |
+| `POST` | `/profiles/practitioners/me/admission/resubmit` | `AdmissionStatusCard` · con atestación |
+
+Errores propios, en `details.reason` (o como `code`): `ADMISSION_STALE` (409),
+`ADMISSION_EVIDENCE_CHANGED` (409), `ADMISSION_ITEM_REQUIRES_SOURCE`,
+`ADMISSION_REASON_REQUIRED`, `ADMISSION_REQUIREMENTS_PENDING`,
+`ADMISSION_INVALID_TRANSITION` (412), `ADMISSION_FOUR_EYES`,
+`ADMISSION_NOT_ASSIGNED`, `ADMISSION_SELF_ACCESS`, `ADMISSION_ROLE_REQUIRED` (403).
+`readAdmissionError` los lee sin pasar por `readApiError`, que descarta los
+códigos que no conoce.
+
 ### Operaciones que suman otros carriles
 
 Entradas sueltas que amplían clientes ya documentados más arriba.

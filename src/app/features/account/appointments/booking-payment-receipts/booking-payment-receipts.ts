@@ -124,6 +124,13 @@ export class BookingPaymentReceipts {
   readonly bookingId = input.required<string>();
   /** El código de catálogo del estado de la cita; `''` mientras no se resolvió. */
   readonly statusCode = input('');
+  /**
+   * El estado de pago que ya trajo la lista de citas (H03). La cita sola
+   * (`GET /scheduling/bookings/:id`) todavía no lo trae: sin esto, una cita
+   * marcada «Pagada» a mano seguía pidiendo comprobante. Si la cita sola lo
+   * trae, manda ella, que es la lectura más nueva.
+   */
+  readonly knownPaymentState = input<PaymentStateInfo | undefined>(undefined);
 
   private readonly receiptsClient = inject(PaymentReceiptsClient);
   private readonly filesClient = inject(FilesClient);
@@ -283,13 +290,15 @@ export class BookingPaymentReceipts {
   private requestPaymentState(shown: ShownBooking): void {
     this.scheduling.getBooking(shown.bookingId).subscribe({
       next: (booking) => {
-        if (this.isShown(shown)) this.paymentState.set(booking.paymentState ?? null);
+        if (this.isShown(shown)) {
+          this.paymentState.set(booking.paymentState ?? this.knownPaymentState() ?? null);
+        }
       },
       // Sin la cita no se sabe si está pagada: se ofrece subir, y si ya lo
       // estaba la API responde 409 y el bloque lo explica (`explain`). El
       // fallo de la lista, en cambio, sí se muestra: es lo que se mira acá.
       error: () => {
-        if (this.isShown(shown)) this.paymentState.set(null);
+        if (this.isShown(shown)) this.paymentState.set(this.knownPaymentState() ?? null);
       },
     });
   }

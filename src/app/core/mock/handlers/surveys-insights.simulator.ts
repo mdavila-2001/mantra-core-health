@@ -40,6 +40,14 @@ export interface PreguntaBase {
 
 const ESPERA = ['Menos de 15 minutos', 'De 15 a 30 minutos', 'De 31 a 60 minutos', 'Más de 1 hora', 'No lo recuerdo'] as const;
 
+/** Opciones de la revisión de la medicación (ítem 25 de Medicare CAHPS, traducción oficial). */
+const MEDICACION: readonly string[] = [
+  'Sí, definitivamente',
+  'Sí, hasta cierto punto',
+  'No',
+  'No estoy tomando medicinas recetadas',
+];
+
 const SEGURIDAD = [
   'No, no tuve ningún problema',
   'Sí, y deseo que ALOVIDA me contacte para dar seguimiento',
@@ -67,17 +75,23 @@ function base(
   };
 }
 
-/** Encuesta base de CONSULTA: 9 preguntas, las 8 primeras obligatorias. */
+/**
+ * Encuesta base de CONSULTA, versión 2 de la API (`SYSTEM_BASE_SURVEY_VERSION`):
+ * 12 preguntas, obligatorias salvo la medicación y el comentario libre.
+ */
 export const PREGUNTAS_BASE_CONSULTA: readonly PreguntaBase[] = [
   base('consulta', 1, 'esfuerzo_acceso', '¿Qué tan fácil le resultó tener esta consulta, desde pedir la cita hasta que comenzó la atención? (1 = Muy difícil, 5 = Muy fácil)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
   base('consulta', 2, 'tiempo_espera', 'Desde la hora acordada, ¿cuánto tiempo esperó hasta que comenzó su consulta? Incluya la espera en sala o en la videollamada.', 'SINGLE_CHOICE', true, { options: ESPERA }),
   base('consulta', 3, 'comunicacion', 'En esta consulta, ¿con qué frecuencia el profesional le escuchó con atención? (1 = Nunca, 5 = Siempre)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
   base('consulta', 4, 'claridad_explicacion', 'En esta consulta, ¿con qué frecuencia el profesional le explicó las cosas de una forma que usted pudo entender? (1 = Nunca, 5 = Siempre)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
   base('consulta', 5, 'trato_respetuoso', 'En esta consulta, ¿con qué frecuencia el profesional le trató con cortesía y respeto? (1 = Nunca, 5 = Siempre)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
-  base('consulta', 6, 'seguridad_percibida', 'Durante esta consulta, ¿tuvo algún problema de seguridad o de trato que quiera reportar? (por ejemplo: falta de respeto, falta de privacidad, un posible error o una indicación que le pareció insegura)', 'SINGLE_CHOICE', true, { options: SEGURIDAD }),
-  base('consulta', 7, 'satisfaccion_global', 'En general, ¿cómo calificaría su experiencia con esta consulta? (1 = Muy mala, 5 = Excelente)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
-  base('consulta', 8, 'recomendacion_nps', '¿Qué tan probable es que usted recomiende a este profesional a un familiar o a un amigo que necesite una atención parecida? (0 = Nada probable, 10 = Totalmente probable)', 'SCALE', true, { scaleMin: 0, scaleMax: 10 }),
-  base('consulta', 9, 'comentario_abierto', 'Si lo desea, cuéntenos qué podríamos hacer mejor.', 'TEXT', false),
+  base('consulta', 6, 'tiempo_suficiente', 'En esta consulta, ¿con qué frecuencia el profesional pasó suficiente tiempo con usted? (1 = Nunca, 5 = Siempre)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
+  base('consulta', 7, 'inquietudes_resueltas', '¿Salió de la consulta sintiendo que todas sus inquietudes o preguntas habían sido contestadas del todo? (1 = Nada, 5 = Del todo)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
+  base('consulta', 8, 'revision_medicacion', '¿Hablaron usted y el profesional sobre todas las medicinas recetadas que estaba tomando?', 'SINGLE_CHOICE', false, { options: MEDICACION }),
+  base('consulta', 9, 'seguridad_percibida', 'Durante esta consulta, ¿tuvo algún problema de seguridad o de trato que quiera reportar? (por ejemplo: falta de respeto, falta de privacidad, un posible error o una indicación que le pareció insegura)', 'SINGLE_CHOICE', true, { options: SEGURIDAD }),
+  base('consulta', 10, 'satisfaccion_global', 'En general, ¿cómo calificaría su experiencia con esta consulta? (1 = Muy mala, 5 = Excelente)', 'SCALE', true, { scaleMin: 1, scaleMax: 5 }),
+  base('consulta', 11, 'recomendacion_nps', '¿Qué tan probable es que usted recomiende a este profesional a un familiar o a un amigo que necesite una atención parecida? (0 = Nada probable, 10 = Totalmente probable)', 'SCALE', true, { scaleMin: 0, scaleMax: 10 }),
+  base('consulta', 12, 'comentario_abierto', 'Si lo desea, cuéntenos qué podríamos hacer mejor.', 'TEXT', false),
 ];
 
 /** Encuesta base de SERVICIO: 7 preguntas, todas opcionales. */
@@ -198,6 +212,10 @@ function responderBase(preguntas: readonly PreguntaBase[], indice: number, opcio
         questionId: p.id,
         valueChoices: [elegir(ESPERA, mala ? [1, 2, 4, 3, 1] : [6, 3, 1, 0.3, 0.7], r())],
       });
+    } else if (p.answerType === 'SINGLE_CHOICE' && p.dimension === 'revision_medicacion') {
+      // Opcional: uno de cada cuatro no la contesta; el resto, casi siempre «sí».
+      if (r() < 0.25) continue;
+      salida.push({ questionId: p.id, valueChoices: [elegir(MEDICACION, [6, 2, 1, 2], r())] });
     } else if (p.answerType === 'SINGLE_CHOICE') {
       // Seguridad: casi todos «sin problema»; una de cada ~17 pide seguimiento
       // y una de cada ~23 prefiere no ser contactada.
