@@ -65,7 +65,7 @@ function forcedState(): ForcedState {
 
 function forcedResponse(state: ForcedState) {
   if (state === 'error') {
-    return reply(500, { statusCode: 500, code: 'INTERNAL', message: 'Falla simulada del servidor de reportes', error: 'Internal Server Error' });
+    return reply(500, { statusCode: 500, code: 'INTERNAL', message: 'Falla simulada del servidor de reportes', error: 'Internal Server Error', correlationId: 'mock-reportes-500' });
   }
   if (state === 'sin-permiso') {
     return forbidden('Su rol no puede ver este reporte.');
@@ -94,12 +94,13 @@ export function registrarReporteria(router: MockRouter): void {
     if (forzada !== null) {
       return forzada;
     }
-    const datos = CONSTRUCTORES[pestana as VerticalReporte](ctx);
+    // El reloj del servidor simulado es el real: «generado hace 12 minutos», no una fecha fija que envejece.
+    const datos = { ...CONSTRUCTORES[pestana as VerticalReporte](ctx), generadoEn: new Date(Date.now() - 12 * 60_000).toISOString() };
     if (state === 'vacio') {
       return { ...datos, kpis: [], graficos: [], tablas: [], secciones: undefined };
     }
     if (state === 'atrasado') {
-      return { ...datos, generadoEn: '2026-10-27T09:00:00-04:00', avisos: [...(datos.avisos ?? []), 'Los datos tienen más de 3 días.'] };
+      return { ...datos, generadoEn: new Date(Date.now() - 3 * 24 * 60 * 60_000).toISOString() };
     }
     return datos;
   });

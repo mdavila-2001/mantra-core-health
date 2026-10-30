@@ -19,8 +19,6 @@
 .gp__titulo { margin: 0; font-size: var(--fs-h3); font-weight: 600; line-height: 1.25; text-wrap: balance; }
 .gp__sub { margin: var(--sp-1) 0 0; font-size: var(--fs-caption); color: var(--text-secondary); }
 .gp__acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
-/* El selector Gráfico/Velas no se encoge: truncado a «Grá…» no se entiende. */
-.gp__acciones app-segmented-control { flex: none; }
 
 .gp__menu { position: relative; }
 .gp__menu-lista {

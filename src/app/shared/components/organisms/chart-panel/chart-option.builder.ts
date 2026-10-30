@@ -520,7 +520,7 @@ function conMovil(option: EChartsCoreOption): EChartsCoreOption {
         query: { maxWidth: 520 },
         option: {
           xAxis: { axisLabel: { rotate: 35, width: 160, overflow: 'none', hideOverlap: false } },
-          grid: { bottom: 84 },
+          grid: { left: 28, bottom: 84 },
         },
       },
     ],

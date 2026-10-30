@@ -22,6 +22,7 @@
       <span class="fb__label" aria-hidden="true">Moneda</span>
       <app-segmented-control
         ariaLabel="Moneda"
+        wrap
         [options]="currencies"
         [value]="store.moneda()"
         (valueChange)="store.moneda.set($event)"
