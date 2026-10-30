@@ -1,7 +1,9 @@
-<app-page-header
-  title="Importación masiva"
-  subtitle="Cargue o actualice de a cientos los productos de su farmacia con un archivo CSV. Revisa todo antes de que se publique nada."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Importación masiva"
+    subtitle="Cargue o actualice de a cientos los productos de su farmacia con un archivo CSV. Revisa todo antes de que se publique nada."
+  />
+}
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {

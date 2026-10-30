@@ -1,7 +1,9 @@
-<app-page-header
-  title="Productos"
-  subtitle="Lo que vende su farmacia: publicados, borradores y retirados. Los pacientes encuentran lo publicado al buscar dónde comprar su receta."
-/>
+@if (!embedded()) {
+  <app-page-header
+    title="Productos"
+    subtitle="Lo que vende su farmacia: publicados, borradores y retirados. Los pacientes encuentran lo publicado al buscar dónde comprar su receta."
+  />
+}
 
 <app-view-state-host [state]="scope.options()" (retry)="scope.retry()">
   @if (scope.hasSeveral()) {
