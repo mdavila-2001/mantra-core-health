@@ -1,9 +1,14 @@
 <app-card variant="outlined" padding="lg" class="diagnostico">
   <h2 class="diagnostico__titulo">Diagnóstico</h2>
 
-  <!-- Sólo la tabla (2026-09-25): ver el comentario de la clase en
-       diagnosis-block.ts para por qué el formulario de alta que había acá se
-       sacó entero. -->
+  <!-- El alta de un presuntivo (2026-10-30): ver `presuntivo-form`. -->
+  <app-presuntivo-form
+    [patientProfileId]="patientProfileId()"
+    [encounterId]="encounterId()"
+    (diagnosticoCreado)="recargar()"
+    (terminado)="cambio.emit()"
+  />
+
   <section class="diagnostico__tabla" data-testid="diagnostico-tabla">
     <h3 class="diagnostico__subtitulo">Diagnósticos de esta persona</h3>
     <app-data-table

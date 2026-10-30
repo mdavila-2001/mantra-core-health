@@ -165,8 +165,9 @@
     <form class="receta__formulario app-form-grid" (submit)="$event.preventDefault()">
       <!-- En la cita, primero de qué respuesta del formulario médico sale. Viene
            cargada; con una sola respuesta el selector queda deshabilitado. -->
-      @if (exigeRespuesta()) {
+      @if (exigeRespuesta() || ofreceRespuesta()) {
         <app-form-response-picker
+          [opcional]="!exigeRespuesta()"
           class="app-form-grid__ancho"
           [encounterId]="encounterId()"
           [(seleccionada)]="respuestaDelFormulario"
