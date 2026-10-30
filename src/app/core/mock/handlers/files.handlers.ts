@@ -228,7 +228,7 @@ export function fileContent(fileId: string): unknown {
   // `instanceof` y no `!== undefined`: la colección se guarda en
   // `sessionStorage` como JSON, y un `Blob` no sobrevive a eso — tras recargar
   // vuelve como `{}`. Ahí queda la copia `data:` de la imagen, que sí se guarda.
-  if (a.bytes instanceof Blob) return a.bytes;
+  if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
   if (a.dataUrlReal !== undefined) {
     return {
       body: a.dataUrlReal,
