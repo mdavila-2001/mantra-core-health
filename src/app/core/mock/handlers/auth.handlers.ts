@@ -1,9 +1,13 @@
+import {
+  MAX_ASEGURADORAS_POR_ENVIO,
+  pedirAseguradoras,
+} from './practitioner-insurer-requests.handlers';
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
 import { crearAdmisionDeAltaDeDoctor } from './admissions.handlers';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
-import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
@@ -280,6 +284,9 @@ export function registrarAuth(router: MockRouter): void {
       collegeName?: string;
       collegeLicenseIssueDate?: string;
       collegeLicenseFileId?: string;
+      // Dónde dice trabajar (28/10/2026), como en la API.
+      institutionSlugs?: string[];
+      insurerCarrierIds?: string[];
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
@@ -324,6 +331,25 @@ export function registrarAuth(router: MockRouter): void {
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
+    // Las aseguradoras se validan contra el catálogo antes de dar el alta por
+    // hecha, como la API: una inexistente deshace todo con 422.
+    if ((datos.insurerCarrierIds ?? []).length > MAX_ASEGURADORAS_POR_ENVIO) {
+      return validation(`Hasta ${MAX_ASEGURADORAS_POR_ENVIO} aseguradoras`, [
+        { field: 'insurerCarrierIds', message: 'admite hasta 20' },
+      ]);
+    }
+    const seguros = pedirAseguradoras(
+      practitionerProfileId,
+      datos.insurerCarrierIds ?? [],
+      [datos.name, datos.lastName].filter(Boolean).join(' ') || undefined,
+    );
+    if (seguros === null) {
+      return preconditionFailed('Alguna de las aseguradoras indicadas no existe o no está activa', {
+        field: 'insurerCarrierIds',
+      });
+    }
+    const institutionSlugs = [...new Set(datos.institutionSlugs ?? [])];
+    const affiliationIds = institutionSlugs.map((slug) => uuid(`aff-alta-${practitionerProfileId}-${slug}`));
     if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
       signatureSaveAssets(practitionerProfileId, {
         ...(datos.signatureImageBase64 === undefined
@@ -349,6 +375,10 @@ export function registrarAuth(router: MockRouter): void {
       practitionerProfileId,
       practitionerCode: `MED-${Math.floor(Math.random() * 9000 + 1000)}`,
       ...(datos.photoFileId === undefined ? {} : { photoFileId: datos.photoFileId }),
+      ...(affiliationIds.length === 0 ? {} : { affiliationIds }),
+      ...(seguros.pedidas.length === 0
+        ? {}
+        : { insurerRequestIds: seguros.pedidas.map((s) => s.id) }),
     };
   });
 

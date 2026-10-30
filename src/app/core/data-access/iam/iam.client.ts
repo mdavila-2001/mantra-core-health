@@ -278,6 +278,14 @@ export class IamClient {
       // El consultorio propio. Va acá por lo mismo que los tres de arriba: lo
       // que el contrato declara y esta lista no repita se descarta en silencio.
       ...(registration.ownSite === undefined ? {} : { ownSite: registration.ownSite }),
+      // Dónde dice trabajar: instituciones (slugs públicos) y aseguradoras.
+      // Mismo motivo que el consultorio: sin este renglón no viajarían.
+      ...(registration.institutionSlugs === undefined
+        ? {}
+        : { institutionSlugs: registration.institutionSlugs }),
+      ...(registration.insurerCarrierIds === undefined
+        ? {}
+        : { insurerCarrierIds: registration.insurerCarrierIds }),
       licenseNumber: registration.licenseNumber,
       sedesLicenseNumber: registration.sedesLicenseNumber,
       ...(registration.regulatoryAuthority === undefined

@@ -72,14 +72,18 @@ describe('las pestañas de la ficha del médico', () => {
    * pidió sacar de «Contacto» (D-03). Siete cuando el alta sumó la dirección
    * laboral y su punto en el mapa, que la ficha todavía no lee. Y seis desde
    * el 24/09/2026, cuando el correo de trabajo volvió a «Contacto» (#645).
+   * Siete desde el 28/10/2026: las instituciones y seguros del alta no son un
+   * dato del perfil sino pedidos a un tercero, y se siguen en «Mis
+   * verificaciones».
    *
    * La lista se sigue fijando entera a propósito. Es el freno a que ausentarse
    * de la ficha sea la salida fácil: sumar un campo acá exige tocar esta
    * prueba y escribir el motivo, que es exactamente la fricción que se quiere.
    */
-  it('las seis ausencias son las declaradas, y las seis dicen por qué', () => {
+  it('las siete ausencias son las declaradas, y las siete dicen por qué', () => {
     expect(Object.keys(ENROLLMENT_WITHOUT_TAB_FIELDS).sort()).toEqual([
       'gpsTrabajo',
+      'lugaresDeTrabajo',
       'password',
       'sexAtBirth',
       'workAddressLines',
@@ -88,6 +92,7 @@ describe('las pestañas de la ficha del médico', () => {
     ]);
     expect(ENROLLMENT_WITHOUT_TAB_FIELDS['password']).toContain('Cambiar contraseña');
     expect(ENROLLMENT_WITHOUT_TAB_FIELDS['sexAtBirth']).toContain('no lo devuelve');
+    expect(ENROLLMENT_WITHOUT_TAB_FIELDS['lugaresDeTrabajo']).toContain('Mis verificaciones');
     for (const campo of ['workMobilePhone', 'workLandline']) {
       expect(ENROLLMENT_WITHOUT_TAB_FIELDS[campo], campo).toContain('(D-03)');
       expect(ENROLLMENT_WITHOUT_TAB_FIELDS[campo], campo).toContain('«Contacto»');

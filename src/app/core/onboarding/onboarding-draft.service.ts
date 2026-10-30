@@ -65,6 +65,10 @@ export class OnboardingDraftService {
         .pipe(
           debounceTime(400),
           concatMap((draft) => {
+            // Un guardado que quedó en cola cuando el borrador ya se descartó
+            // (el alta terminó en esos 400 ms) iría sin secreto sobre un id
+            // tomado: 404 y un error en la consola. Ya no hay nada que guardar.
+            if (!this.sigueVigente(draft)) return EMPTY;
             const secret = this.readSecret(draft.formType);
             return this.client.saveDraft(draft, secret).pipe(
               tap((res) => {
@@ -189,6 +193,15 @@ export class OnboardingDraftService {
     }
 
     return draft;
+  }
+
+  /** Si el borrador sigue siendo el de la sesión (no se descartó ni se reemplazó). */
+  private sigueVigente(draft: OnboardingDraft): boolean {
+    try {
+      return localStorage.getItem(`${DRAFT_ID_PREFIX}${draft.formType}`) === draft.draftId;
+    } catch {
+      return true;
+    }
   }
 
   /**

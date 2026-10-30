@@ -40,6 +40,7 @@ import { registerInsurancePortability } from './insurance-portability.handlers';
 import { registerInsurerReceivedClaims } from './insurer-received-claims.handlers';
 import { registrarSeguros } from './insurance.handlers';
 import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
+import { registerPractitionerInsurerRequests } from './practitioner-insurer-requests.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
@@ -98,6 +99,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarDirectorio(router);
   registrarIdentidad(router);
   registrarSeguros(router);
+  registerPractitionerInsurerRequests(router);
   registrarAnaliticaDeSeguros(router);
   registerInsurerReceivedClaims(router);
   registrarPacientesDeAseguradora(router);
