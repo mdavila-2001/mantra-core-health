@@ -115,7 +115,15 @@ function mrrCandles(base: BaseResumen): ChartSpec {
   const diario =
     mrr.valor === null ? null : saldoDiario(hashTexto(`resumen:mrr:${ctx.periodo}`), daysInPeriod(ctx.periodo), mrr.valor, k?.variacionPct ?? null);
   const cubos = diario === null ? null : agrupar(fechas, diario, gran, 'ultimo');
-  const etiquetas = cubos?.etiquetas ?? agrupar(fechas, fechas.map(() => 0), gran, 'ultimo').etiquetas;
+  // La trayectoria es la de la pestaña «Suscripciones» (la misma que dibuja la tarjeta de arriba): inventar
+  // otra en el Resumen mostraba dos MRR distintos en la misma pantalla. Solo si esa pestaña no la trae, o no cierra
+  // en el KPI, se cae a una trayectoria propia que termina exacta en el KPI.
+  const propia = base.lecturas.suscripciones.pestana.graficos.find((g) => g.id === 'mrr-evolucion');
+  const serieSusc = propia?.datos.tipo === 'cartesiano' ? propia.datos : null;
+  const valoresSusc = serieSusc?.series[0]?.valores ?? [];
+  const reutiliza =
+    mrr.valor !== null && propia?.velas != null && serieSusc !== null && valoresSusc[valoresSusc.length - 1] === mrr.valor;
+  const etiquetas = (reutiliza ? serieSusc?.categorias : cubos?.etiquetas) ?? agrupar(fechas, fechas.map(() => 0), gran, 'ultimo').etiquetas;
   return {
     id: 'mrr-total',
     titulo: 'MRR de suscripciones al cierre de cada tramo',
@@ -124,7 +132,7 @@ function mrrCandles(base: BaseResumen): ChartSpec {
     datos: {
       tipo: 'cartesiano',
       categorias: etiquetas,
-      series: [{ nombre: 'MRR', valores: cubos?.valores ?? etiquetas.map(() => null), forma: 'linea' }],
+      series: [{ nombre: 'MRR', valores: (reutiliza ? valoresSusc : cubos?.valores) ?? etiquetas.map(() => null), forma: 'linea' }],
     },
     resumenAccesible:
       mrr.valor === null
@@ -136,14 +144,14 @@ function mrrCandles(base: BaseResumen): ChartSpec {
       definicion: 'Ingreso mensual recurrente de las suscripciones vigentes, medido al cierre de cada tramo.',
       formula: 'Σ precio normalizado a mes de las suscripciones activas',
       fuente: 'payments.subscriptions, payments.plan_prices',
-      salvedades: ['El último punto es el MRR del KPI de arriba; la trayectoria anterior es de EJEMPLO.'],
+      salvedades: ['El último punto es el MRR del KPI de arriba; la trayectoria anterior es de EJEMPLO y es la misma de la pestaña «Suscripciones de doctores».'],
     }),
     velas:
       diario === null || mrr.valor === null
         ? null
         : {
             explicacion: 'Cada vela resume un tramo del MRR: apertura (primer día), cierre (último), mínimo y máximo.',
-            velas: candlesFromSeries(fechas, diario, gran),
+            velas: reutiliza && propia?.velas != null ? propia.velas.velas : candlesFromSeries(fechas, diario, gran),
           },
     velasMotivo: 'Sin MRR no hay serie con apertura y cierre que mostrar.',
     ancho: 'completo',
