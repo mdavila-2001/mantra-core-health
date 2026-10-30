@@ -312,7 +312,9 @@ export function registrarClinica(router: MockRouter): void {
       doseText: datos.doseText ?? '',
       frequencyText: datos.frequencyText ?? '',
       validFrom: datos.validFrom ?? ahora(),
-      validTo: datos.validTo ?? ahora(),
+      // Sin `validTo` la receta no vence, como en la API (columna nullable):
+      // inventarle un fin la daría por vencida apenas se emite.
+      validTo: datos.validTo ?? null,
       patientInstructionsText: datos.patientInstructionsText ?? '',
       // El «para qué es» de la receta. El concepto gana sobre el texto libre,
       // igual que la ocupación del alta de paciente: el texto sólo tenía
