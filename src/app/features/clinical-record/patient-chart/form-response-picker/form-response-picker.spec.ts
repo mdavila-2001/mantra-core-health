@@ -236,3 +236,100 @@ describe('FormResponsePicker con notas libres', () => {
     expect(fixture.componentInstance.notaSeleccionada()).toBeNull();
   });
 });
+
+
+/**
+ * El modo opcional (30/10/2026): el médico emite sin formulario médico.
+ *
+ * 1. Sin respuestas **no avisa que falta nada**: dice que se registra igual.
+ * 2. Con respuestas, la más reciente viene elegida, y «Sin formulario médico»
+ *    permite desvincularla.
+ * 3. Con una sola respuesta el selector **no** queda deshabilitado: hay dos
+ *    opciones reales (atarla o no).
+ */
+describe('FormResponsePicker opcional', () => {
+  let fixture: ComponentFixture<FormResponsePicker>;
+  let http: HttpTestingController;
+
+  const instancia = (id: string, closedAt?: string) => ({
+    id,
+    resourceId: 'enc-1',
+    resourceTypeConceptId: 'rt',
+    schemaVersion: 1,
+    createdAt: '2026-09-26T09:00:00Z',
+    ...(closedAt === undefined ? {} : { closedAt }),
+  });
+
+  function responder(items: readonly object[]): void {
+    http
+      .expectOne((r) => r.url === '/forms/instances' && r.params.get('encounter') === 'enc-1')
+      .flush({ encounterId: 'enc-1', items, limit: 50, truncated: false });
+    fixture.detectChanges();
+  }
+
+  const raiz = () => fixture.nativeElement as HTMLElement;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(FormResponsePicker);
+    fixture.componentRef.setInput('encounterId', 'enc-1');
+    fixture.componentRef.setInput('opcional', true);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  it('sin respuestas no dice que falta el formulario: se registra igual', () => {
+    responder([]);
+
+    expect(fixture.componentInstance.seleccionada()).toBeNull();
+    expect(raiz().querySelector('[data-testid="respuesta-falta"]')).toBeNull();
+    expect(
+      raiz().querySelector('[data-testid="respuesta-opcional-vacia"]')?.textContent,
+    ).toContain('Sin formulario médico');
+  });
+
+  it('una instancia abierta tampoco cuenta, y tampoco bloquea', () => {
+    responder([instancia('inst-abierta')]);
+
+    expect(fixture.componentInstance.seleccionada()).toBeNull();
+    expect(raiz().querySelector('[data-testid="respuesta-falta"]')).toBeNull();
+    expect(raiz().querySelector('[data-testid="respuesta-opcional-vacia"]')).not.toBeNull();
+  });
+
+  it('con una sola respuesta la deja elegida y el selector sigue habilitado', () => {
+    responder([instancia('inst-1', '2026-09-26T10:00:00Z')]);
+
+    expect(fixture.componentInstance.seleccionada()).toBe('inst-1');
+    const selector = raiz().querySelector('[data-testid="respuesta-del-formulario"]');
+    expect(selector).not.toBeNull();
+    expect(selector?.querySelector('[disabled], [aria-disabled="true"]')).toBeNull();
+  });
+
+  it('«Sin formulario médico» desvincula la respuesta elegida', () => {
+    responder([instancia('inst-1', '2026-09-26T10:00:00Z')]);
+    expect(fixture.componentInstance.seleccionada()).toBe('inst-1');
+
+    (fixture.componentInstance as unknown as { elegir(valor: string | null): void }).elegir(null);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.seleccionada()).toBeNull();
+    expect(fixture.componentInstance.notaSeleccionada()).toBeNull();
+  });
+
+  it('la lectura que falla sigue avisando, pero NO dice que no se pueda emitir', () => {
+    http
+      .expectOne((r) => r.url === '/forms/instances')
+      .flush({ message: 'boom' }, { status: 500, statusText: 'Error' });
+    fixture.detectChanges();
+
+    const aviso = raiz().querySelector('[data-testid="respuesta-error"]');
+    expect(aviso).not.toBeNull();
+    // En modo opcional emitir no está bloqueado: decir lo contrario sería mentir.
+    expect(aviso?.textContent).toContain('Puede continuar igual');
+    expect(aviso?.textContent).not.toContain('no se puede emitir');
+  });
+});

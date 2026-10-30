@@ -419,14 +419,30 @@ export function registrarClinica(router: MockRouter): void {
   });
 
   router.post('/clinical/conditions', (request) => {
-    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
+    const datos = cuerpo<{ patientProfileId: string; codeConceptId: string; encounterId?: string; categoryConceptId?: string; severityConceptId?: string; lateralityConceptId?: string; clinicalCourseConceptId?: string; verificationStatusConceptId?: string; onsetAt?: string; expectedResolutionAt?: string; noteText?: string }>(request);
+
+    // Como `ConditionsService.create`: nace presuntivo o confirmado (por omisión confirmado). Antes
+    // se fijaba siempre presuntivo y un `verificationStatus` que la API rechaza pasaba limpio.
+    const presuntivo = VERIFICATION_DX['COND_PROVISIONAL']!;
+    const confirmado = VERIFICATION_DX['COND_CONFIRMED']!;
+    if (
+      datos.verificationStatusConceptId !== undefined &&
+      datos.verificationStatusConceptId !== presuntivo &&
+      datos.verificationStatusConceptId !== confirmado
+    ) {
+      return preconditionFailed('Un diagnóstico se registra presuntivo o confirmado.', {
+        field: 'verificationStatusConceptId',
+      });
+    }
+    const nace = datos.verificationStatusConceptId ?? confirmado;
+
     const nueva: SimulatedCondition = {
       id: nuevoId('condition'),
       patientProfileId: datos.patientProfileId ?? '',
       codeConceptId: datos.codeConceptId ?? '',
       categoryConceptId: datos.categoryConceptId ?? DX_CATEGORY,
       clinicalStatusConceptId: CONDITION_STATUS['COND_ACTIVE']!,
-      verificationStatusConceptId: VERIFICATION_DX['COND_PROVISIONAL']!,
+      verificationStatusConceptId: nace,
       severityConceptId: datos.severityConceptId ?? SEVERITY['SEV-MILD']!,
       // El curso y la fecha esperada **se guardan**: el contrato los declara
       // desde el patch v4.0.8 y el simulador los descartaba, así que registrar
@@ -446,7 +462,7 @@ export function registrarClinica(router: MockRouter): void {
       encounterId: nueva.encounterId,
       autorProfileId: request.user?.practitionerProfileId ?? MEDICAL.id,
     });
-    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: 'PROVISIONAL', clinicalCourse: nueva.clinicalCourseConceptId ?? null, createdAt: nueva.createdAt } };
+    return { status: 201, body: { id: nueva.id, patientProfileId: nueva.patientProfileId, clinicalStatus: 'ACTIVE', verificationStatus: nace === presuntivo ? 'PROVISIONAL' : 'CONFIRMED', clinicalCourse: nueva.clinicalCourseConceptId ?? null, createdAt: nueva.createdAt } };
   });
 
   router.post('/clinical/conditions/:id/change-status', (request) => {
