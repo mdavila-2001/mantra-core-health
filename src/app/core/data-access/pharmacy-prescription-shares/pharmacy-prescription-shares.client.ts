@@ -189,11 +189,14 @@ export class PharmacyPrescriptionSharesClient {
    * «No lo tengo» la deja en 0 (lo decide la API).
    */
   setSiteAvailability(ref: SiteProductRef, available: boolean): Observable<SiteProductAvailability> {
-    const path =
-      `/pharmacies/${encodeURIComponent(ref.pharmacyId)}` +
-      `/sites/${encodeURIComponent(ref.siteId)}` +
-      `/products/${encodeURIComponent(ref.productId)}/availability`;
-    return this.http.put<WireAvailability>(this.url(path), { available }).pipe(map(toAvailability));
+    return this.http
+      .put<WireAvailability>(
+        this.url(
+          `/pharmacies/${encodeURIComponent(ref.pharmacyId)}/sites/${encodeURIComponent(ref.siteId)}/products/${encodeURIComponent(ref.productId)}/availability`,
+        ),
+        { available },
+      )
+      .pipe(map(toAvailability));
   }
 
   private url(path: string): string {
