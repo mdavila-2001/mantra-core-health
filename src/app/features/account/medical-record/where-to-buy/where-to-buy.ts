@@ -49,6 +49,7 @@ import {
   type PendingStudy,
 } from './imaging-centers';
 import { MedicalCentersTab } from './medical-centers-tab/medical-centers-tab';
+import { orderablePrescriptionOf } from './orderable-prescription';
 import {
   approvedCoverageLabel,
   cartLinesFromDraft,
@@ -60,6 +61,7 @@ import {
   pinSubtitleOf,
   prescriptionItemOf,
   presentationOf,
+  rowsOfPrescription,
   SORT_OPTIONS,
   sortBranches,
   uniqueByMedication,
@@ -195,6 +197,11 @@ export class WhereToBuy {
   private readonly document = inject(DOCUMENT);
 
   private readonly requestId = this.route.snapshot.paramMap.get('requestId') ?? '';
+  /**
+   * El id con que viaja el pedido: la elegida si se puede pedir, si no otra
+   * fila vigente de la misma receta (FAR-03). `null` hasta que la receta carga.
+   */
+  private orderRequestId: string | null = null;
   private readonly profileId = this.auth.patientProfileId();
 
   protected readonly noPatientProfile = this.profileId === null;
@@ -562,6 +569,7 @@ export class WhereToBuy {
 
     this.list.set(loading());
     this.results.set(loading());
+    this.orderRequestId = null;
 
     this.clinical
       .getSummary(profileId, SUMMARY_LIMIT)
@@ -571,17 +579,21 @@ export class WhereToBuy {
           if (prescribed === undefined) {
             return of(null);
           }
-          const rows = uniqueByMedication(summary.medicationRequests);
+          // Sólo la receta elegida (FAR-03 · D-3): el pedido lleva su id, y un
+          // fármaco de otra consulta no viaja bajo él.
+          const rows = rowsOfPrescription(summary.medicationRequests, this.requestId);
+          const conceptIds = [...new Set(rows.map((row) => row.medicationConceptId))];
           return forkJoin({
             rows: of(rows),
             prescribed: of(prescribed),
             // Sin etiquetas la pantalla no puede nombrar nada: acá sí son
             // parte del dato, no un adorno — pero perderlas tampoco justifica
-            // perder la consulta: el renglón sale como «Sin registrar».
+            // perder la consulta: el renglón sale como «Sin registrar». Van
+            // también los estados: su código dice qué fila se puede pedir.
             labels: this.terminology
-              .readConceptLabels(rows.map((row) => row.medicationConceptId))
+              .readConceptLabels([...conceptIds, ...rows.map((row) => row.statusConceptId)])
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
-            products: this.productsOf(rows.map((row) => row.medicationConceptId)),
+            products: this.productsOf(conceptIds),
             // Domicilio y trabajo del paciente, para ofrecerlos como puntos
             // de referencia sin pedirle el GPS (subtarea B.2). Un fallo acá
             // no puede tumbar la consulta de disponibilidad: se degrada a
@@ -600,7 +612,28 @@ export class WhereToBuy {
             this.results.set(ready(NO_BRANCHES));
             return;
           }
-          const items = loaded.rows.map((row) => prescriptionItemOf(row, loaded.labels, loaded.products));
+          const orderable = orderablePrescriptionOf(
+            loaded.rows,
+            this.requestId,
+            loaded.labels,
+            new Date(),
+          );
+          if (orderable.requestId === null) {
+            // Borrador, anulada, reemplazada, entregada o vencida: la API
+            // rechazaría el pedido, así que no se ofrece armarlo.
+            this.list.set(
+              empty(
+                { label: 'Volver a mi historia', route: MI_HISTORIA_ROUTE },
+                'Esta receta no se puede usar para comprar: todavía no se emitió, fue anulada o reemplazada, ya se entregó o venció.',
+              ),
+            );
+            this.results.set(ready(NO_BRANCHES));
+            return;
+          }
+          this.orderRequestId = orderable.requestId;
+          const items = uniqueByMedication(orderable.rows).map((row) =>
+            prescriptionItemOf(row, loaded.labels, loaded.products),
+          );
           // Entran a la consulta la receta que se tocó y las ya emitidas: son
           // las que la persona puede efectivamente ir a comprar.
           this.included.set(
@@ -799,11 +832,12 @@ export class WhereToBuy {
   protected sendOrder(branch: VisibleBranch): void {
     const lastQuery = this.lastQuery;
     const site = lastQuery?.response.items.find((item) => item.siteId === branch.siteId);
-    if (lastQuery === null || site === undefined) {
+    const requestId = this.orderRequestId;
+    if (lastQuery === null || site === undefined || requestId === null) {
       return;
     }
     this.ordersClient.prepararBorrador(
-      orderDraftOf(this.requestId, site, lastQuery.queryable, lastQuery.withoutProduct),
+      orderDraftOf(requestId, site, lastQuery.queryable, lastQuery.withoutProduct),
     );
     void this.router.navigate(['/my-account/pharmacy-orders/new']);
   }
@@ -826,12 +860,13 @@ export class WhereToBuy {
   protected async addPrescriptionToCart(branch: VisibleBranch): Promise<void> {
     const lastQuery = this.lastQuery;
     const site = lastQuery?.response.items.find((item) => item.siteId === branch.siteId);
-    if (lastQuery === null || site === undefined) {
+    const requestId = this.orderRequestId;
+    if (lastQuery === null || site === undefined || requestId === null) {
       return;
     }
 
     const { lines, omitted } = cartLinesFromDraft(
-      orderDraftOf(this.requestId, site, lastQuery.queryable, lastQuery.withoutProduct),
+      orderDraftOf(requestId, site, lastQuery.queryable, lastQuery.withoutProduct),
     );
     if (lines.length === 0) {
       this.cartNotice.set('Esta sede no puede confirmar ninguno de los medicamentos.');
@@ -852,7 +887,7 @@ export class WhereToBuy {
       }
     }
 
-    this.cart.replaceWith(cartSiteOf(site), lines, this.requestId);
+    this.cart.replaceWith(cartSiteOf(site), lines, requestId);
     this.cartNotice.set(
       omitted.length === 0
         ? null

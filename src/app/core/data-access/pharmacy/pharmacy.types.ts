@@ -99,6 +99,8 @@ export interface PharmacyProduct {
   readonly stock?: number | null;
   /** Debajo de este número el inventario avisa; `null` = el de por defecto. */
   readonly minStock?: number | null;
+  /** Marcado «no lo tengo» para toda la farmacia: gana sobre el conteo y sobre cada sucursal. */
+  readonly outOfStockDeclared?: boolean;
   /** Hasta {@link MAX_PRODUCT_IMAGES} archivos de `common.files`. */
   readonly imageFileIds?: readonly string[];
 }

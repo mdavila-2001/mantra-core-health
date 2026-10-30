@@ -6,6 +6,18 @@
   margin-block-end: var(--sp-4);
 }
 
+/* «Sucursal»: un campo de dos columnas desde 780 px, como los formularios. */
+.inventory__site {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+@media (min-width: 780px) {
+  .inventory__site {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .inventory__panel {
   display: grid;
   gap: var(--sp-4);

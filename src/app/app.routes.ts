@@ -23,6 +23,9 @@ import {
   loadAdmissionDetail,
 } from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import { INSIGHTS_RUTAS } from './features/insights/insights.routes';
+import { publicPrescriptionShareRoutes } from './features/prescription-share/prescription-share.routes';
+import { prescriptionDispenseRoutes } from './features/prescription-dispense/prescription-dispense.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -226,6 +229,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de inventario (H5). Sus pantallas cuelgan de `PORTAL_RUTAS`; el marco es el shell.
   'superadmin/portal': () =>
     import('./features/admin/portal/portal-shell').then((m) => m.PortalShell),
+  'administration/marketing-insights': () =>
+    import('./features/insights/insights-shell').then((m) => m.InsightsShell),
   'superadmin/flows': () => import('./features/admin/flows/flows').then((m) => m.Flows),
   'superadmin/web-analytics': () =>
     import('./features/admin/web-analytics/web-analytics').then((m) => m.WebAnalytics),
@@ -528,11 +533,9 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Elegir cuál de mis recetas comprar (carril 43, H4). Hija de «Farmacia»:
-    // la tienda la enlaza con «Buscar toda una receta», y cada tarjeta lleva a
-    // `medical-record/where-to-buy/:requestId`, que ya existe. Con
-    // `seccionRolesGuard` por la misma razón que `pharmacy-orders/new`: su
-    // sección declara roles y `app.routes.spec.ts` exige cumplirlos en la hija.
+    // Mis recetas (carril 43, H4; «Compartir», FAR-01). Hija de «Farmacia», con
+    // `seccionRolesGuard` como `pharmacy-orders/new`: su sección declara roles
+    // y `app.routes.spec.ts` exige cumplirlos en la hija.
     path: 'my-account/pharmacy/prescriptions',
     title: `${APP_TITLE} - Mis recetas`,
     canActivate: [seccionRolesGuard],
@@ -615,10 +618,9 @@ const PANTALLAS_HIJAS: Routes = [
         .then((m) => m.OrderInvoice)
         .catch(() => chunkFallido()),
   },
+  ...prescriptionDispenseRoutes(chunkFallido),
   {
-    // El mismo pedido, visto desde el mostrador (carril FAR-I3): la
-    // «recepción por un link» del registro del cliente. Hija de la bandeja;
-    // hereda por prefijo su regla de acceso por membresía.
+    // El pedido visto desde el mostrador (FAR-I3); hereda por prefijo el acceso de la bandeja.
     path: 'administration/pharmacy-orders/:orderId',
     title: `${APP_TITLE} - Pedido en el mostrador`,
     canActivate: [seccionRolesGuard],
@@ -1212,6 +1214,7 @@ function pantallaDeGeolocalizacion(
  */
 const RUTAS_ANIDADAS: Readonly<Record<string, Routes>> = {
   'superadmin/portal': PORTAL_RUTAS,
+  'administration/marketing-insights': INSIGHTS_RUTAS,
   messaging: [
     {
       // Sin hilo abierto. No pinta nada a propósito: el hueco de la derecha
@@ -2244,6 +2247,7 @@ export const routes: Routes = [
       ),
     title: 'AloVida - Verificar certificado',
   },
+  ...publicPrescriptionShareRoutes(chunkFallido),
   {
     path: 'auth',
     component: Login,

@@ -16,8 +16,8 @@
   list-style: none;
 }
 
-/* Mobile-first: la tarjeta apilada. Desde tableta, el CTA va a la derecha de
-   los medicamentos en vez de debajo. */
+/* Mobile-first: la tarjeta apilada. Desde tableta, las acciones van a la
+   derecha de los medicamentos en vez de debajo. */
 .receta {
   display: grid;
   gap: var(--sp-2);
@@ -40,11 +40,19 @@
     grid-column: 1 / 2;
   }
 
-  .receta__cta {
+  .receta__actions {
     grid-row: 1 / 4;
     grid-column: 2 / 3;
     align-self: center;
+    justify-items: stretch;
   }
+}
+
+/* «Buscar dónde comprarla» y, si está emitida, «Compartir» (FAR-01). */
+.receta__actions {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
 }
 
 .receta__cabecera {

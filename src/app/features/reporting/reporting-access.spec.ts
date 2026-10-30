@@ -3,9 +3,11 @@ import {
   accesoAPortales,
   entryDestination,
   puedeVerAdministracion,
+  puedeVerInsights,
   puedeVerPlataforma,
   puedeVerReporteria,
   ROLES_ADMINISTRACION,
+  ROLES_INSIGHTS,
   ROLES_REPORTERIA,
 } from './reporting-access';
 
@@ -61,6 +63,35 @@ describe('acceso a los portales (administración y reportería)', () => {
       ['sin roles', []],
     ])('NEGATIVO: %s no abre administración', (_nombre, roles) => {
       expect(puedeVerAdministracion(roles)).toBe(false);
+    });
+  });
+
+  describe('puedeVerInsights', () => {
+    it.each(ROLES_INSIGHTS.filter((rol) => rol !== 'SUPERADMIN'))('%s abre AloVida Insights', (rol) => {
+      expect(puedeVerInsights([rol])).toBe(true);
+    });
+
+    it('SUPERADMIN pasa siempre', () => {
+      expect(puedeVerInsights(['SUPERADMIN'])).toBe(true);
+    });
+
+    it.each([
+      ['paciente', ['PATIENT']],
+      ['profesional', ['PRACTITIONER']],
+      ['solo reportería', ['REPORT_VIEWER']],
+      ['administrador de negocio', ['BUSINESS_ADMIN']],
+      ['sin roles', []],
+    ])('NEGATIVO: %s no abre Insights', (_nombre, roles) => {
+      expect(puedeVerInsights(roles)).toBe(false);
+    });
+
+    it('las cuentas admin@ y superadmin@ del servidor simulado lo abren; las demás no', () => {
+      const abre = (clave: string) => puedeVerInsights(MOCK_USERS.find((u) => u.key === clave)?.roles ?? []);
+      expect(abre('admin')).toBe(true);
+      expect(abre('superadmin')).toBe(true);
+      for (const clave of ['medica', 'paciente', 'visitador', 'aprobador', 'laboratorio', 'farmacia']) {
+        expect(abre(clave), clave).toBe(false);
+      }
     });
   });
 

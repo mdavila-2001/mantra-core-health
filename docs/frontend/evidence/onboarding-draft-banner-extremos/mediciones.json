@@ -1,0 +1,1346 @@
+[
+  {
+    "route": "medical-center",
+    "w": 320,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 320,
+    "theme": "light",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 320,
+    "theme": "light",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 320,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 320,
+    "theme": "dark",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 320,
+    "theme": "dark",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 340,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 340,
+    "theme": "light",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 340,
+    "theme": "light",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 340,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 340,
+    "theme": "dark",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 340,
+    "theme": "dark",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "light",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "light",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "dark",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "dark",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 546,
+    "detailsCW": 546,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "light",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 867,
+    "detailsCW": 867,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "light",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 867,
+    "detailsCW": 867,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 546,
+    "detailsCW": 546,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "dark",
+    "titulo": "largo",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 867,
+    "detailsCW": 867,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "dark",
+    "titulo": "sinEspacios",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 867,
+    "detailsCW": 867,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0
+  },
+  {
+    "route": "patient",
+    "w": 320,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 320,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 320,
+    "docW": 320,
+    "detailsSW": 172,
+    "detailsCW": 172,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 172,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 340,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 340,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 340,
+    "docW": 340,
+    "detailsSW": 192,
+    "detailsCW": 192,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 192,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 390,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 390,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 390,
+    "docW": 390,
+    "detailsSW": 242,
+    "detailsCW": 242,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      },
+      {
+        "w": 242,
+        "h": 40,
+        "l": 49,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 13,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 9,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 1440,
+    "theme": "light",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 546,
+    "detailsCW": 546,
+    "bg": "rgb(228, 243, 242)",
+    "color": "rgb(51, 112, 108)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 5.01,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 5.01,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      }
+    ]
+  },
+  {
+    "route": "patient",
+    "w": 1440,
+    "theme": "dark",
+    "titulo": "normal",
+    "overflowDerPx": 0,
+    "overflowIzqPx": 0,
+    "vw": 1440,
+    "docW": 1440,
+    "detailsSW": 546,
+    "detailsCW": 546,
+    "bg": "rgb(37, 79, 77)",
+    "color": "rgb(178, 222, 218)",
+    "btns": [
+      {
+        "w": 129,
+        "h": 40,
+        "l": 924.5,
+        "r": 160.6
+      },
+      {
+        "w": 135.6,
+        "h": 40,
+        "l": 1061.4,
+        "r": 17
+      }
+    ],
+    "contraste": 6.23,
+    "pageScrollH": false,
+    "textoCortado": false,
+    "errores": 0,
+    "foco": [
+      {
+        "id": "onboarding-draft-resume",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      },
+      {
+        "id": "onboarding-draft-discard",
+        "alcanzadoConTab": true,
+        "focusVisible": true,
+        "outline": "solid 4px +0",
+        "contrasteAnillo": 4.26,
+        "anilloDentroAvisoPx": 11,
+        "anilloDentroViewport": true
+      }
+    ]
+  }
+]

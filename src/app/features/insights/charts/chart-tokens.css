@@ -1,0 +1,17 @@
+/* Paleta de series de AloVida Insights.
+   Todo sale de tokens del sistema ALOVIDA que ya cambian solos entre claro y
+   oscuro: no hay ningún color escrito a mano. Cada serie se distingue además por
+   trazo y por rótulo directo, nunca solo por el color. El ámbar (--st-warning-fg)
+   se reserva para objetivos y avisos (regla de marca: ámbar ≤ 10 %). */
+:host {
+  --ins-s1: var(--brand-primary);
+  --ins-s2: var(--st-info-fg);
+  --ins-s3: var(--st-warning-fg);
+  --ins-s4: color-mix(in srgb, var(--brand-primary) 62%, var(--bg-surface));
+  --ins-s5: color-mix(in srgb, var(--st-info-fg) 62%, var(--bg-surface));
+  --ins-s6: var(--text-muted);
+  --ins-grid: var(--border-default);
+  --ins-axis: var(--text-muted);
+  --ins-good: var(--st-success-fg);
+  --ins-bad: var(--st-error-fg);
+}
