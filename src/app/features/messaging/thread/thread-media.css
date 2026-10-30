@@ -1,0 +1,690 @@
+/* La piel del hilo al estilo de una app de delivery: burbujas propias en el
+   color de la marca, ajenas en superficie neutra con filo, la cola en el
+   último de cada bloque, fotos redondeadas sin marco grueso, grillas de fotos
+   y la tarjeta de pedido/producto/servicio/farmacia.
+
+   Hoja aparte por el presupuesto de estilos por componente (`anyComponentStyle`
+   en `angular.json`), igual que `thread-layers.css`. Va última en `styleUrls`:
+   lo que redefine de `thread.css` gana por orden, sin subir especificidad. */
+
+/* Los tokens del chat, re-apuntados a la marca sólo dentro del hilo. Son los
+   que ya leen las reglas de `thread.css` —la burbuja, el degradé del menú del
+   mensaje—, así que cambian todas de una vez y en los dos temas. */
+:host {
+  --chat-papel: var(--sup-inset);
+  --chat-propia: var(--petroleo);
+  --chat-ajena: var(--sup-tarjeta);
+  /* El ancho de una foto, como en WhatsApp: ni miniatura ni pantalla entera. */
+  --hilo-foto: 16.25rem;
+  --hilo-foto-alto: 20rem;
+  --hilo-foto-radio: calc(var(--r-card) - 3px);
+
+  /* El doble tilde de leído, en dos versiones según sobre qué se apoya.
+
+     Sobre la burbuja propia (petróleo) y el velo de una foto: una aguamarina
+     clara de la rampa, que no cambia con el tema porque los dos petróleos
+     —#0B557E en claro, #12719F en oscuro— la dejan por encima de 3:1
+     (5.5:1 y 3.7:1). La `--menta` de antes se oscurece de noche (#1C4A4C) y
+     sobre el petróleo nocturno daba 1.8:1.
+
+     Sobre una superficie (la tarjeta de contexto, una burbuja ajena): el
+     petróleo profundo en claro (8:1 sobre blanco; el celeste de
+     `--chat-tick-leido` daba 2.96:1) y el celeste de la rampa en oscuro
+     (11:1 sobre la tarjeta nocturna). */
+  --hilo-tick-sobre-propia: var(--c-aqua-200);
+  --hilo-tick-sobre-superficie: var(--c-petrol-500);
+}
+
+/* Los mismos dos atributos con los que `alovida.css` oscurece la tarjeta:
+   `data-theme="dark"` (tema elegido) y `data-tema="oscuro"`, que
+   `ThemeService` escribe siempre con el tema ya resuelto —también en
+   «sistema»—. Colgarse sólo del primero dejaba el tilde profundo sobre la
+   tarjeta nocturna en «sistema» (2:1). La versión sobre la burbuja propia
+   no lo necesita: es la misma en los dos temas. */
+:host-context([data-theme='dark']),
+:host-context([data-tema='oscuro']) {
+  --hilo-tick-sobre-superficie: var(--c-petrol-100);
+}
+
+/* --- Burbujas ------------------------------------------------------------ */
+
+.hilo__burbuja {
+  border: 1px solid var(--filete-2);
+}
+
+.hilo__burbuja.is-propio {
+  border-color: transparent;
+  color: var(--tinta-nav);
+}
+
+.hilo__burbuja.is-propio .hilo__texto,
+.hilo__burbuja.is-propio .hilo__enlace,
+.hilo__burbuja.is-propio .hilo__mas-mensaje,
+.hilo__burbuja.is-propio .hilo__documento,
+.hilo__burbuja.is-propio .hilo__documento-icono svg,
+.hilo__burbuja.is-propio .hilo__documento-ver,
+.hilo__burbuja.is-propio .hilo__subiendo,
+.hilo__burbuja.is-propio .hilo__reintento,
+.hilo__burbuja.is-propio .hilo__ticks.is-fallado {
+  color: inherit;
+}
+
+.hilo__burbuja.is-propio .hilo__documento-detalle,
+.hilo__burbuja.is-propio .hilo__cita-texto {
+  color: inherit;
+  opacity: .88;
+}
+
+/* La hora a opacidad plena: a 11 px, el blanco al 88 % sobre el petróleo del
+   tema oscuro daba 4.57:1, al filo. Entero da 5.4:1 (oscuro) y 8:1 (claro). */
+.hilo__burbuja.is-propio .hilo__meta {
+  color: inherit;
+}
+
+/* El doble tilde de leído sobre el petróleo: ver `--hilo-tick-sobre-propia`. */
+.hilo__burbuja.is-propio .hilo__ticks.is-leido {
+  color: var(--hilo-tick-sobre-propia);
+}
+
+/* Sobre la burbuja ajena no hay tildes hoy (sólo los mensajes propios los
+   llevan); si los hubiera, van con el de superficie. */
+.hilo__burbuja:not(.is-propio) .hilo__ticks.is-leido {
+  color: var(--hilo-tick-sobre-superficie);
+}
+
+.hilo__burbuja.is-propio .hilo__cita,
+.hilo__burbuja.is-propio .hilo__documento {
+  background: color-mix(in srgb, var(--tinta-nav) 14%, transparent);
+  border-inline-start-color: var(--menta);
+}
+
+.hilo__burbuja.is-propio .hilo__cita-autor {
+  color: var(--menta);
+}
+
+/* Las esquinas de adentro de una ráfaga se achican: tres mensajes seguidos se
+   leen como una columna, no como tres globos sueltos. */
+.hilo__burbuja:not(.is-propio):not(.is-abre) { border-start-start-radius: var(--e1); }
+.hilo__burbuja:not(.is-propio):not(.is-cierra) { border-end-start-radius: var(--e1); }
+.hilo__burbuja.is-propio:not(.is-abre) { border-start-end-radius: var(--e1); }
+.hilo__burbuja.is-propio:not(.is-cierra) { border-end-end-radius: var(--e1); }
+
+/* La cola, abajo y en el último del bloque. */
+.hilo__burbuja.is-cierra::after {
+  content: '';
+  position: absolute;
+  inset-block-end: -1px;
+  inline-size: 10px;
+  block-size: 14px;
+  background: inherit;
+}
+
+.hilo__burbuja.is-cierra:not(.is-propio) {
+  border-end-start-radius: 0;
+}
+
+.hilo__burbuja.is-cierra:not(.is-propio)::after {
+  inset-inline-start: -8px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.hilo__burbuja.is-cierra.is-propio {
+  border-end-end-radius: 0;
+}
+
+.hilo__burbuja.is-cierra.is-propio::after {
+  inset-inline-end: -8px;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+/* Fotos y stickers no llevan cola: sin texto, el triangulito queda suelto. */
+.hilo__burbuja.is-solo-imagen::after,
+.hilo__galeria::after {
+  display: none;
+}
+
+.hilo__burbuja.is-sticker {
+  border: 0;
+}
+
+/* --- Separadores --------------------------------------------------------- */
+
+.hilo__dia {
+  align-self: center;
+  margin-block: var(--e3) var(--e1);
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.hilo__dia span {
+  text-transform: none;
+  letter-spacing: 0;
+  border: 1px solid var(--filete-2);
+}
+
+/* --- Fotos --------------------------------------------------------------- */
+
+/* Una foto: casi sin marco —tres píxeles del color de la burbuja— y
+   redondeada como la burbuja. */
+.hilo__burbuja.is-imagen,
+.hilo__galeria {
+  padding: 3px;
+}
+
+.hilo__burbuja.is-imagen .hilo__texto {
+  padding: var(--e1) 6px 0;
+}
+
+.hilo__burbuja.is-imagen .hilo__meta {
+  margin-inline-end: 6px;
+  margin-block-end: 3px;
+}
+
+.hilo__foto {
+  position: relative;
+  border-radius: var(--hilo-foto-radio);
+  overflow: hidden;
+}
+
+.hilo__imagen,
+.hilo__celda,
+.hilo__adjunto-cargando {
+  display: block;
+  position: relative;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: linear-gradient(100deg, var(--sup-inset) 30%, var(--filete-2) 50%, var(--sup-inset) 70%);
+  background-size: 300% 100%;
+  animation: hilo-esqueleto 1.4s linear infinite;
+  cursor: zoom-in;
+}
+
+.hilo__imagen {
+  inline-size: var(--hilo-foto);
+  max-inline-size: 100%;
+  min-block-size: 10rem;
+  border-radius: var(--hilo-foto-radio);
+}
+
+.hilo__adjunto-cargando {
+  inline-size: var(--hilo-foto);
+  max-inline-size: 100%;
+  block-size: 10rem;
+  margin-block-end: 3px;
+  border-radius: var(--hilo-foto-radio);
+  cursor: default;
+}
+
+.hilo__imagen img,
+.hilo__celda img {
+  display: block;
+  inline-size: 100%;
+  opacity: 0;
+  transition: opacity var(--mov-medio) var(--curva);
+}
+
+.hilo__imagen img {
+  block-size: auto;
+  max-block-size: var(--hilo-foto-alto);
+  object-fit: cover;
+}
+
+/* Ya bajada, la foto manda: la burbuja toma su ancho —una vertical queda
+   angosta, como en WhatsApp— en vez de dejar una franja vacía al costado.
+   `auto` en los dos lados con máximos conserva la proporción; el mínimo evita
+   una miniatura de sello y `cover` recorta lo que sobre. */
+.hilo__imagen.is-lista {
+  inline-size: auto;
+}
+
+.hilo__imagen.is-lista img {
+  inline-size: auto;
+  max-inline-size: var(--hilo-foto);
+  min-inline-size: 7.5rem;
+}
+
+/* El texto de una foto con leyenda envuelve al ancho de la foto, no al
+   revés. */
+.hilo__burbuja.is-imagen {
+  inline-size: min-content;
+}
+
+.hilo__imagen.is-lista,
+.hilo__celda.is-lista {
+  min-block-size: 0;
+  animation: none;
+  background: var(--sup-inset);
+}
+
+.hilo__imagen.is-lista img,
+.hilo__celda.is-lista img {
+  opacity: 1;
+}
+
+/* Rota: sin brillo —no está cargando— y con el aviso en el centro. Mientras
+   sube se queda así, con la capa de «Enviando…» encima. */
+.hilo__imagen.is-rota,
+.hilo__celda.is-rota {
+  animation: none;
+  background: var(--sup-inset);
+}
+
+.hilo__imagen.is-rota img,
+.hilo__celda.is-rota img {
+  display: none;
+}
+
+.hilo__foto-rota {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  padding: var(--e3);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  text-align: center;
+}
+
+.hilo__foto-rota svg {
+  inline-size: 28px;
+  block-size: 28px;
+}
+
+.hilo__imagen:focus-visible,
+.hilo__celda:focus-visible {
+  outline: 3px solid var(--aguamarina);
+  outline-offset: -3px;
+}
+
+@keyframes hilo-esqueleto {
+  from { background-position: 100% 0; }
+  to   { background-position: 0 0; }
+}
+
+/* Subiendo / no se envió: una capa sobre la vista previa local. */
+.hilo__foto-capa {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  background: var(--velo);
+  color: var(--tinta-nav);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* La foto que no salió: sólo la marca, sin control. Reintentar y Descartar
+   van al pie de la burbuja, como en un texto que no se envió. */
+.hilo__foto-capa.is-fallado svg {
+  inline-size: 32px;
+  block-size: 32px;
+}
+
+/* La hora encima de la foto, sobre un velo: una foto sola no tiene renglón
+   donde apoyarla. */
+.hilo__burbuja.is-solo-imagen:not(.is-fallado) .hilo__meta,
+.hilo__galeria .hilo__meta {
+  position: absolute;
+  inset-block-end: var(--e2);
+  inset-inline-end: var(--e2);
+  float: none;
+  margin: 0;
+  padding: 3px var(--e2);
+  border-radius: var(--r-pill);
+  background: var(--velo);
+  color: var(--tinta-nav);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.hilo__burbuja.is-solo-imagen .hilo__ticks.is-leido,
+.hilo__galeria .hilo__ticks.is-leido {
+  color: var(--hilo-tick-sobre-propia);
+}
+
+/* La grilla: 2 lado a lado, 3 con la primera ancha, 4 o más en 2×2. */
+.hilo__grilla {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  inline-size: var(--hilo-foto);
+  max-inline-size: 100%;
+  border-radius: var(--hilo-foto-radio);
+  overflow: hidden;
+}
+
+.hilo__celda {
+  aspect-ratio: 1;
+}
+
+.hilo__celda img {
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.hilo__galeria[data-cuantas='2'] .hilo__celda {
+  aspect-ratio: 3 / 4;
+}
+
+.hilo__galeria[data-cuantas='3'] .hilo__celda:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 2 / 1;
+}
+
+.hilo__celda-mas {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  /* Un velo hondo y no `--velo`: con `--velo` el «+1» sobre una foto clara
+     quedaba gris sobre gris. Al 72 % el blanco pasa 4.5:1 aun sobre blanco. */
+  background: color-mix(in srgb, var(--petroleo-xx) 72%, transparent);
+  color: var(--tinta-nav);
+  text-shadow: 0 1px 2px var(--petroleo-xx);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+}
+
+.hilo__celda--cargando {
+  cursor: default;
+}
+
+/* --- La tarjeta de contexto ---------------------------------------------- */
+
+/* Blanca de los dos lados, como el resumen del pedido: es un objeto que se
+   comparte, no algo que alguien dijo con su color. */
+.hilo__burbuja.is-contexto {
+  inline-size: min(20rem, 100%);
+  padding: var(--e3);
+  border-color: var(--filete);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-2);
+  color: var(--tinta);
+}
+
+.hilo__burbuja.is-contexto .hilo__meta {
+  color: var(--tinta-2);
+  opacity: 1;
+}
+
+/* Propia o ajena se distingue también en la tarjeta: además de la
+   alineación, el filo toma el color de la burbuja propia. */
+.hilo__burbuja.is-contexto.is-propio {
+  border: 2px solid var(--chat-propia);
+}
+
+.hilo__burbuja.is-contexto .hilo__ticks.is-leido {
+  color: var(--hilo-tick-sobre-superficie);
+}
+
+.hilo__burbuja.is-contexto .hilo__mas-mensaje {
+  color: var(--tinta-2);
+}
+
+.hilo__burbuja.is-contexto .hilo__mas-mensaje svg {
+  background: var(--sup-tarjeta);
+}
+
+.hilo__contexto {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+}
+
+.hilo__contexto-icono,
+.hilo__fijado-icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-menu);
+  background: var(--chat-cita);
+  color: var(--tinta-marca);
+}
+
+.hilo__contexto-icono {
+  inline-size: 44px;
+  block-size: 44px;
+}
+
+.hilo__contexto-icono svg {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+[data-tipo='pedido'] > .hilo__contexto-icono,
+[data-tipo='pedido'] > .hilo__fijado-icono {
+  background: var(--aviso-bg);
+  color: var(--aviso-tinta);
+}
+
+[data-tipo='producto'] > .hilo__contexto-icono,
+[data-tipo='producto'] > .hilo__fijado-icono {
+  background: var(--info-bg);
+  color: var(--info-tinta);
+}
+
+[data-tipo='servicio'] > .hilo__contexto-icono,
+[data-tipo='servicio'] > .hilo__fijado-icono {
+  background: var(--ok-bg);
+  color: var(--ok-tinta);
+}
+
+.hilo__contexto-cuerpo {
+  min-inline-size: 0;
+}
+
+.hilo__contexto-etiqueta,
+.hilo__contexto-titulo,
+.hilo__contexto-detalle {
+  margin: 0;
+}
+
+.hilo__contexto-etiqueta {
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.hilo__contexto-titulo {
+  margin-block-start: 2px;
+  color: var(--tinta);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hilo__contexto-detalle {
+  margin-block-start: 2px;
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
+.hilo__contexto-ver {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e1);
+  /* 44 px: es el único control de la tarjeta y se toca con el pulgar. */
+  min-block-size: 44px;
+  margin-block: var(--e3) var(--e1);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  color: var(--tinta-marca);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-decoration: none;
+  transition: background var(--mov-rapido) var(--curva);
+}
+
+.hilo__contexto-ver svg {
+  inline-size: 16px;
+  block-size: 16px;
+}
+
+.hilo__contexto-ver:hover,
+.hilo__fijado-ver:hover {
+  background: var(--sup-inset);
+}
+
+.hilo__contexto-ver:focus-visible,
+.hilo__fijado-ver:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* --- «Consulta sobre: …», fijada arriba ---------------------------------- */
+
+.hilo__fijado {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e2) var(--e4);
+  border-block-end: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  box-shadow: var(--sombra-1);
+}
+
+.hilo__fijado-icono {
+  inline-size: 36px;
+  block-size: 36px;
+  border-radius: var(--r-ctrl);
+}
+
+.hilo__fijado-icono svg {
+  inline-size: 20px;
+  block-size: 20px;
+}
+
+.hilo__fijado-texto {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.hilo__fijado-rotulo {
+  overflow: hidden;
+  color: var(--tinta-2);
+  font-size: var(--fs-overline);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__fijado-titulo {
+  overflow: hidden;
+  color: var(--tinta);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__fijado-detalle {
+  color: var(--tinta-2);
+  font-weight: 400;
+}
+
+/* Recogida mientras la tarjeta original está a la vista (ver `Thread`). */
+.hilo__fijado.is-recogido {
+  display: none;
+}
+
+.hilo__fijado-ver {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 36px;
+  padding-inline: var(--e3);
+  border: 1px solid var(--filete);
+  border-radius: var(--r-pill);
+  color: var(--tinta-marca);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* El área táctil llega a 44 px de alto sin agrandar la píldora, que más alta
+   engordaba la barra en 390. El velo se mide desde la caja de relleno (la
+   píldora tiene 1 px de borde): 34 + 5 + 5. */
+.hilo__fijado-ver::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+
+/* --- «Respondiendo como …», sobre el composer ---------------------------- */
+
+.hilo__como {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin: 0;
+  padding: var(--e1) var(--e4);
+  border-block-start: 1px solid var(--filete);
+  background: var(--sup-tarjeta);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hilo__como strong {
+  color: var(--tinta);
+}
+
+/* En ancho el selector «Escribiendo como» está a la vista, en la bandeja. */
+@media (min-width: 60.0625rem) {
+  .hilo__como {
+    display: none;
+  }
+}
+
+/* En angosto, la barra fijada en una línea más baja: cada píxel de cromo es
+   un renglón menos de conversación. */
+@media (max-width: 60rem) {
+  .hilo__fijado {
+    gap: var(--e2);
+    padding-block: var(--e1);
+  }
+
+  .hilo__fijado-icono {
+    inline-size: 32px;
+    block-size: 32px;
+  }
+
+  .hilo__fijado-icono svg {
+    inline-size: 18px;
+    block-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hilo__imagen,
+  .hilo__celda,
+  .hilo__adjunto-cargando {
+    animation: none;
+  }
+
+  .hilo__imagen img,
+  .hilo__celda img {
+    transition: none;
+  }
+}
