@@ -108,9 +108,10 @@
       <router-outlet />
     </main>
 
-    @if (asistenteAbierto()) {
+    @if (asistenteMontado()) {
       <aside
         #panelAsistente
+        [hidden]="!asistenteAbierto()"
         class="rep__asistente"
         id="reporting-asistente"
         aria-labelledby="reporting-asistente-titulo"

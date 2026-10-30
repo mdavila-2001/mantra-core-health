@@ -103,6 +103,11 @@ export class ReportingShell {
 
   /** Cerrado por defecto: el centro son los reportes. */
   readonly asistenteAbierto = signal(false);
+  /**
+   * El panel se monta la primera vez que se abre y ya no se desmonta: cerrarlo lo oculta. Destruirlo
+   * al cerrar (o al pulsar Escape sin querer) borraba la pregunta a medio escribir y la conversación.
+   */
+  readonly asistenteMontado = signal(false);
 
   /** El cajón de navegación, que solo existe en pantallas angostas. */
   readonly menuAbierto = signal(false);
@@ -135,6 +140,9 @@ export class ReportingShell {
 
   protected alternarAsistente(): void {
     const abrir = !this.asistenteAbierto();
+    if (abrir) {
+      this.asistenteMontado.set(true);
+    }
     this.asistenteAbierto.set(abrir);
     // El foco acompaña al panel: al abrir entra en él, al cerrar vuelve al botón
     // que lo abrió. Sin esto, quien navega con teclado abre el panel y sigue
@@ -149,7 +157,13 @@ export class ReportingShell {
   }
 
   protected alTeclear(evento: KeyboardEvent): void {
-    if (evento.key !== 'Escape') {
+    // Un menú o un diálogo anidado (el «Más» de un gráfico, «Ver en grande») ya cerró lo suyo con este
+    // mismo Escape: si lo marcó como atendido, aquí no se cierra además el asistente ni el menú lateral.
+    if (evento.key !== 'Escape' || evento.defaultPrevented) {
+      return;
+    }
+    const origen = evento.target instanceof Element ? evento.target : null;
+    if (origen?.closest('[role="menu"], [role="dialog"], [role="listbox"]')) {
       return;
     }
     if (this.asistenteAbierto()) {
