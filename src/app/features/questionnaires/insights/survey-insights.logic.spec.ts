@@ -342,7 +342,8 @@ describe('preguntas suprimidas por el servidor', () => {
   it('toda dimensión base tiene su enunciado neutro, sin las palabras «consulta» ni «servicio»', () => {
     for (const dimension of [
       'esfuerzo_acceso', 'tiempo_espera', 'comunicacion', 'claridad_explicacion',
-      'trato_respetuoso', 'seguridad_percibida', 'satisfaccion_global', 'recomendacion_nps',
+      'trato_respetuoso', 'tiempo_suficiente', 'inquietudes_resueltas', 'revision_medicacion',
+      'seguridad_percibida', 'satisfaccion_global', 'recomendacion_nps',
     ]) {
       const texto = preguntaNeutraDeDimension(dimension);
       expect(texto).not.toBe(rotuloDeDimension(dimension));
