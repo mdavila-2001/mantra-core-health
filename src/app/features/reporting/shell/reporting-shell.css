@@ -230,6 +230,18 @@
     white-space: normal;
   }
 
+  /* La cabecera cabe en tres filas cortas: marca, alcance con el asistente, y los enlaces de portal. */
+  .rep__acciones {
+    inline-size: 100%;
+    margin-inline-start: 0;
+    justify-content: space-between;
+  }
+
+  .rep__portales {
+    order: 3;
+    inline-size: 100%;
+  }
+
   .rep__cuerpo,
   .rep--con-asistente .rep__cuerpo {
     grid-template-columns: minmax(0, 1fr);

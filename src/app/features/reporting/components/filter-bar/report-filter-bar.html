@@ -27,15 +27,6 @@
         (valueChange)="store.moneda.set($event)"
       />
     </div>
-    <div class="fb__field">
-      <span class="fb__label" aria-hidden="true">Alcance</span>
-      <app-segmented-control
-        ariaLabel="Alcance de los datos"
-        [options]="scopes"
-        [value]="store.alcance()"
-        (valueChange)="store.alcance.set($event)"
-      />
-    </div>
   </div>
 
   @if (chips().length > 0) {

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 
 import { ETIQUETA_DIMENSION } from '@core/data-access/reporting/reporting-labels';
 import type {
-  AlcanceReporte,
   ComparacionReporte,
   DimensionFiltro,
   Moneda,
@@ -30,14 +29,10 @@ const CURRENCIES: readonly SegmentedOption<Moneda>[] = [
   { value: 'BOB', label: 'Bs (BOB)' },
   { value: 'USD', label: 'US$ (USD)' },
 ];
-const SCOPES: readonly SegmentedOption<AlcanceReporte>[] = [
-  { value: 'plataforma', label: 'Plataforma', description: ETIQUETA_ALCANCE.plataforma },
-  { value: 'organizacion', label: 'Mi organización', description: ETIQUETA_ALCANCE.organizacion },
-];
 
 /**
- * Barra de filtros globales del portal de reportería: periodo, comparación,
- * moneda y alcance, más los filtros que el usuario activó haciendo clic en un
+ * Barra de filtros globales del portal de reportería: periodo, comparación
+ * y moneda (el alcance vive en el encabezado del portal, para no tenerlo dos veces), más los filtros que el usuario activó haciendo clic en un
  * gráfico. Todo vive en `ReportContextStore`: la barra solo lo muestra y lo
  * cambia, así que cualquier pestaña recalcula sin que la barra sepa de ellas.
  *
@@ -57,7 +52,6 @@ export class ReportFilterBar {
   protected readonly periods = PERIODS;
   protected readonly comparisons = COMPARISONS;
   protected readonly currencies = CURRENCIES;
-  protected readonly scopes = SCOPES;
 
   protected readonly chips = computed(() =>
     this.store.filtros().map((filter) => {
