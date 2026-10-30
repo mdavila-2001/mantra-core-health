@@ -3,7 +3,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 import { formatDate, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type { ConfigFiltro, DatosGrafico } from '@core/data-access/reporting/reporting.types';
 import { rampColorAt, readableOn } from './chart-color';
-import { construirCascada, construirVelas, etiquetaCascada } from './chart-option.cascada';
+import { construirCascada, construirVelas } from './chart-option.cascada';
 import { base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase, unitOf } from './chart-option.common';
 
 export { escapar, type ModoGrafico, type OpcionesBuild } from './chart-option.common';
@@ -393,7 +393,8 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
     case 'cascada':
       return withNarrow(construirCascada(o, d), {
         xAxis: {
-          axisLabel: { rotate: 40, width: 220, overflow: 'none', hideOverlap: false, formatter: etiquetaCascada(d, o.spec.unidad, ' ') },
+          // El `formatter` (una sola línea en angosto) no va aquí: una función de `media` no reemplaza a la base.
+          axisLabel: { rotate: 40, width: 220, overflow: 'none', hideOverlap: false },
         },
         grid: { left: 28, bottom: 110 },
       });

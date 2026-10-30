@@ -2,7 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { formatDate, formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type { DatosGrafico, UnidadValor } from '@core/data-access/reporting/reporting.types';
-import { base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, tooltipBase } from './chart-option.common';
+import { base, escapar, leyenda, LIENZO_ANGOSTO, type OpcionesBuild, type ParamEje, readValue, tooltipBase } from './chart-option.common';
 
 /* ============================================================================
     Cascada (puente) y velas: los dos gráficos de «cómo se llega de un valor a otro».
@@ -15,7 +15,7 @@ import { base, escapar, leyenda, type OpcionesBuild, type ParamEje, readValue, t
 export function etiquetaCascada(
   d: Extract<DatosGrafico, { tipo: 'cascada' }>,
   unidad: UnidadValor,
-  separador: string,
+  separador: () => string,
 ): (nombre: string) => string {
   const nombres = d.pasos.map((p) => p.nombre);
   return (nombre: string) => {
@@ -24,7 +24,7 @@ export function etiquetaCascada(
       return nombre;
     }
     const texto = formatearValor(Math.abs(paso.valor), unidad, true);
-    return `${nombre}${separador}${paso.total === true ? texto : `${paso.valor < 0 ? '−' : '+'}${texto}`}`;
+    return `${nombre}${separador()}${paso.total === true ? texto : `${paso.valor < 0 ? '−' : '+'}${texto}`}`;
   };
 }
 
@@ -97,7 +97,7 @@ export function construirCascada(
         // El nombre se parte en la casilla que le toca: con 7 pasos cada una mide ~70 px, no 96.
         width: Math.max(44, Math.min(96, Math.floor((spec.ancho === 'completo' ? 880 : 520) / Math.max(1, d.pasos.length)) - 8)),
         overflow: 'break',
-        formatter: etiquetaCascada(d, spec.unidad, '\n'),
+        formatter: etiquetaCascada(d, spec.unidad, () => ((o.anchoLienzo?.() ?? Infinity) <= LIENZO_ANGOSTO ? ' ' : '\n')),
       },
       axisLine: { lineStyle: { color: tema.linea } },
     },
