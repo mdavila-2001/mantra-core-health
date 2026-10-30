@@ -2,6 +2,7 @@ import type { EChartsCoreOption } from 'echarts/core';
 
 import { formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
 import type {
+  ConfigFiltro,
   ChartSpec,
   DatosGrafico,
   SerieCartesiana,
@@ -110,9 +111,12 @@ function construirCartesiano(
 ): EChartsCoreOption {
   const { tema, spec, seleccion } = o;
   const horizontal = d.horizontal === true;
-  const idxSel = seleccion === null ? -1 : d.categorias.indexOf(seleccion);
+  const porSerie = spec.filtro?.valorDe === 'serie';
+  const idxSel = seleccion === null || porSerie ? -1 : d.categorias.indexOf(seleccion);
 
   const series = d.series.map((s) => {
+    // Filtro por serie: las demás series se atenúan, como las demás barras cuando se filtra por categoría.
+    const atenuada = porSerie && seleccion !== null && s.nombre !== seleccion;
     const tipo = s.forma === 'barra' ? 'bar' : 'line';
     const datos = s.valores.map((v, i) =>
       v === null
@@ -131,7 +135,8 @@ function construirCartesiano(
       showSymbol: d.categorias.length <= 40,
       symbolSize: 6,
       areaStyle: s.forma === 'area' ? { opacity: 0.18 } : undefined,
-      lineStyle: tipo === 'line' ? { width: 2 } : undefined,
+      lineStyle: tipo === 'line' ? { width: 2, ...(atenuada ? { opacity: 0.35 } : {}) } : undefined,
+      ...(atenuada && tipo === 'bar' ? { itemStyle: { opacity: 0.35 } } : {}),
       barMaxWidth: 36,
       emphasis: { focus: 'series' },
       markLine:
@@ -553,9 +558,11 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
 export function clickedValue(
   datos: DatosGrafico,
   evento: { name?: string; value?: unknown; seriesName?: string },
+  filtro?: ConfigFiltro | null,
 ): string | null {
   switch (datos.tipo) {
     case 'cartesiano':
+      return (filtro?.valorDe === 'serie' ? evento.seriesName : evento.name) ?? null;
     case 'partes':
     case 'cascada':
       return evento.name ?? null;

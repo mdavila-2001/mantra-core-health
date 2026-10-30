@@ -95,7 +95,8 @@ export function graficoIngresoPlan(m: ModeloSuscripciones, ctx: ContextoReporte)
       series: PLANES.map((p, i) => ({ nombre: p.nombre, valores: series[i]!, forma: 'barra', apilar: 'ingreso' })),
     },
     resumenAccesible: `Las suscripciones reconocieron ${formatearValor(total, unidad)} en el periodo, repartidos entre los tres planes.`,
-    filtro: { dimension: 'plan' },
+    // Cada barra es un día y las series son los planes: el clic filtra el plan, no la fecha.
+    filtro: { dimension: 'plan', valorDe: 'serie' },
     info: info({
       definicion: 'Ingreso de suscripciones que corresponde al periodo, repartido por plan.',
       formula: 'Ingreso = Σ días (MRR del día ÷ 30)',

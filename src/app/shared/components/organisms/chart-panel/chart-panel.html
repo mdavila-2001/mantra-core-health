@@ -2,7 +2,8 @@
   <!-- 1) TÍTULO -->
   <header class="gp__cab">
     <div class="gp__titulos">
-      <h3 class="gp__titulo" [id]="ids + '-t'">{{ spec().titulo }}</h3>
+      <!-- En el diálogo «Ver en grande» el título ya es el encabezado del diálogo: aquí queda solo para lectores de pantalla. -->
+      <h3 class="gp__titulo" [class.gp__oculto]="grande()" [id]="ids + '-t'">{{ spec().titulo }}</h3>
       @if (spec().subtitulo; as sub) {
         <p class="gp__sub">{{ sub }}</p>
       }

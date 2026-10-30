@@ -114,7 +114,7 @@ export class ChartPanel {
     const d = spec.datos;
     switch (d.tipo) {
       case 'cartesiano':
-        return d.categorias;
+        return spec.filtro.valorDe === 'serie' ? d.series.map((s) => s.nombre) : d.categorias;
       case 'partes':
         return d.partes.map((p) => p.nombre);
       case 'cascada':
@@ -154,7 +154,7 @@ export class ChartPanel {
     if (spec.filtro === null || this.modoEfectivo() === 'velas') {
       return;
     }
-    const valor = clickedValue(spec.datos, evento as { name?: string; value?: unknown });
+    const valor = clickedValue(spec.datos, evento as { name?: string; value?: unknown; seriesName?: string }, spec.filtro);
     if (valor !== null) {
       this.filtroCambia.emit({ dimension: spec.filtro.dimension, valor });
     }

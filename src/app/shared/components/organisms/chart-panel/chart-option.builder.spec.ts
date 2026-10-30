@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChartSpec, DatosGrafico } from '@core/data-access/reporting/reporting.types';
-import { construirOpciones } from './chart-option.builder';
+import { clickedValue, construirOpciones } from './chart-option.builder';
 import type { ChartTheme } from './chart-theme';
 
 const TEMA: ChartTheme = {
@@ -193,5 +193,48 @@ describe('construirOpciones', () => {
     const baseSerie = series.find((s) => s.name === 'Base');
     expect(baseSerie?.itemStyle.color).toBe('transparent');
     expect(baseSerie?.tooltip.show).toBe(false);
+  });
+});
+
+describe('clickedValue', () => {
+  const POR_DIA: DatosGrafico = {
+    tipo: 'cartesiano',
+    categorias: ['2026-10-01', '2026-10-02'],
+    series: [
+      { nombre: 'Esencial', valores: [1, 2], forma: 'barra', apilar: 'a' },
+      { nombre: 'Pro', valores: [3, 4], forma: 'barra', apilar: 'a' },
+    ],
+  };
+  const EVENTO = { name: '2026-10-02', seriesName: 'Pro' };
+
+  it('por omisión el clic devuelve la categoría del eje', () => {
+    expect(clickedValue(POR_DIA, EVENTO)).toBe('2026-10-02');
+    expect(clickedValue(POR_DIA, EVENTO, { dimension: 'plan' })).toBe('2026-10-02');
+  });
+
+  it('con valorDe «serie» devuelve la serie: filtrar «plan = 2026-10-02» no significaría nada', () => {
+    expect(clickedValue(POR_DIA, EVENTO, { dimension: 'plan', valorDe: 'serie' })).toBe('Pro');
+  });
+
+  it('sin nombre de serie no inventa un valor', () => {
+    expect(clickedValue(POR_DIA, { name: 'x' }, { dimension: 'plan', valorDe: 'serie' })).toBeNull();
+  });
+});
+
+describe('filtro por serie en el constructor', () => {
+  it('atenúa las series que no son la elegida y deja intacta la elegida', () => {
+    media({});
+    const datos: DatosGrafico = {
+      tipo: 'cartesiano',
+      categorias: ['2026-10-01', '2026-10-02'],
+      series: [
+        { nombre: 'Esencial', valores: [1, 2], forma: 'barra', apilar: 'a' },
+        { nombre: 'Pro', valores: [3, 4], forma: 'barra', apilar: 'a' },
+      ],
+    };
+    const base: ChartSpec = { ...spec(datos), filtro: { dimension: 'plan', valorDe: 'serie' } };
+    const o = construirOpciones({ spec: base, tema: TEMA, modo: 'normal', seleccion: 'Pro' }) as { series: { name: string; itemStyle?: { opacity: number } }[] };
+    expect(o.series.find((s) => s.name === 'Esencial')?.itemStyle?.opacity).toBe(0.35);
+    expect(o.series.find((s) => s.name === 'Pro')?.itemStyle).toBeUndefined();
   });
 });
