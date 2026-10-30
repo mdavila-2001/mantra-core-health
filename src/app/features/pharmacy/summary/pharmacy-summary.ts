@@ -42,13 +42,14 @@ const SHORTCUTS: readonly Shortcut[] = [
   {
     label: 'Revisar inventario',
     hint: 'Los productos sin stock o por debajo de su umbral.',
-    route: '/administration/pharmacy-inventory',
-    queryParams: { alerts: 'true' },
+    route: '/administration/pharmacy-catalog',
+    queryParams: { tab: 'inventory', alerts: 'true' },
   },
   {
     label: 'Actualizar en lote',
     hint: 'Cargue o corrija cientos de productos con un CSV.',
-    route: '/administration/pharmacy-import',
+    route: '/administration/pharmacy-catalog',
+    queryParams: { tab: 'import' },
   },
 ];
 
