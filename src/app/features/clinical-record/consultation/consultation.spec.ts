@@ -5,7 +5,9 @@ import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block';
+import { DiagnosisBlock } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
 import { Consultation } from './consultation';
 import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
@@ -291,8 +293,12 @@ describe('Consultation', () => {
     ).not.toContain('alergias');
   });
 
-  /** El plan de cuidados se vincula a la respuesta del formulario médico. */
-  it('el plan de cuidados exige la respuesta del formulario médico, y viene cargada', async () => {
+  /**
+   * Cambio de requisito (30/10/2026, pedido del cliente): el médico puede
+   * emitir sin haber llenado el formulario médico. La respuesta se **ofrece**,
+   * viene cargada y se puede desvincular, pero ya no se exige.
+   */
+  it('el plan de cuidados ofrece la respuesta del formulario médico, sin exigirla, y viene cargada', async () => {
     await responderLectura({
       encounters: [{ id: 'e-1', statusConceptId: 'st', startAt: '2026-03-01T10:00:00Z' }],
     });
@@ -301,7 +307,8 @@ describe('Consultation', () => {
 
     const plan = harness.fixture.debugElement.query(By.directive(CarePlanBlock))
       .componentInstance as CarePlanBlock;
-    expect(plan.exigeRespuesta()).toBe(true);
+    expect(plan.exigeRespuesta()).toBe(false);
+    expect(plan.ofreceRespuesta()).toBe(true);
 
     const pedido = http.expectOne(
       (r) =>
@@ -326,13 +333,14 @@ describe('Consultation', () => {
 
     const picker = harness.fixture.debugElement.query(By.directive(FormResponsePicker))
       .componentInstance as FormResponsePicker;
-    // Una sola respuesta: elegida sola, y el selector no se puede tocar.
+    // Una sola respuesta: elegida sola. El selector queda habilitado porque ya
+    // no es obligatorio: «Sin formulario médico» es una opción real.
     expect(picker.seleccionada()).toBe('inst-1');
     const selector = harness.routeNativeElement!.querySelector(
       '[data-testid="respuesta-del-formulario"]',
     );
     expect(selector).not.toBeNull();
-    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).not.toBeNull();
+    expect(selector!.querySelector('[disabled], [aria-disabled="true"]')).toBeNull();
   });
 
   it('destruye el modal al cerrar y permite reabrir la misma casilla de inmediato', async () => {
@@ -355,6 +363,94 @@ describe('Consultation', () => {
     expect(reopened).not.toBe(previous);
     expect(reopened.open).toBe(true);
     expect(harness.routeNativeElement!.querySelectorAll('dialog')).toHaveLength(1);
+  });
+
+  /**
+   * El modal de una casilla no tiraba en silencio lo escrito sólo si nadie lo escribía: no
+   * tenía guarda de borrador (el expediente sí). Con el alta de un presuntivo, que carga
+   * filas de motivos, `Escape` o la X perdían todo sin preguntar.
+   */
+  describe('cerrar una casilla con algo escrito', () => {
+    async function abrirDiagnostico(): Promise<DiagnosisBlock> {
+      await responderLectura();
+      interno<(clave: string) => void>('abrir').call(componente, 'diagnosticos');
+      await harness.fixture.whenStable();
+      // Lo que el bloque lee al montarse: su tabla y los catálogos del selector.
+      http
+        .match((r) => r.url === '/clinical/patients/p-1/summary')
+        .forEach((r) =>
+          r.flush({ patientProfileId: 'p-1', conditions: [], allergies: [], medicationRequests: [], observations: [], encounters: [], careEpisodes: [], limit: 50, truncated: [] }),
+        );
+      http
+        .match((r) => r.url === '/system-context/dynamic-enums')
+        .forEach((r) =>
+          r.flush({ code: 'x', name: 'x', definitionId: 'd', valueSetId: 'v', allowCustomValue: false, options: [] }),
+        );
+      http
+        .match((r) => r.url === '/terminology/concepts')
+        .forEach((r) => r.flush({ items: [], count: 0, limit: 200 }));
+      await harness.fixture.whenStable();
+      return harness.fixture.debugElement.query(By.directive(DiagnosisBlock)).componentInstance as DiagnosisBlock;
+    }
+
+    it('sin nada escrito se cierra sin preguntar', async () => {
+      await abrirDiagnostico();
+
+      expect(interno<() => boolean>('casillaSinCambios')()).toBe(true);
+    });
+
+    it('con algo escrito no se cierra solo: pregunta, y si se confirma descarta', async () => {
+      const bloque = await abrirDiagnostico();
+      (bloque as unknown as { hallazgos: { set(v: string): void } }).hallazgos.set('Cuadro febril');
+      harness.fixture.detectChanges();
+      expect(interno<() => boolean>('casillaSinCambios')()).toBe(false);
+
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(true);
+      await interno<() => Promise<void>>('pedirDescarteDeLaCasilla').call(componente);
+
+      expect(confirmar).toHaveBeenCalledOnce();
+      expect(confirmar.mock.calls[0]?.[0].message).toContain('Todavía no se registró');
+    });
+
+    it('si el diagnóstico ya quedó registrado el aviso no miente y, al descartar, relee la consulta', async () => {
+      const bloque = await abrirDiagnostico();
+      (bloque as unknown as { registrado: { set(v: unknown): void } }).registrado.set({
+        id: 'c-9',
+        patientProfileId: 'p-1',
+        clinicalStatus: null,
+        verificationStatus: null,
+        clinicalCourse: null,
+        createdAt: new Date(),
+      });
+      harness.fixture.detectChanges();
+
+      const confirmar = vi
+        .spyOn(TestBed.inject(DialogService), 'confirm')
+        .mockResolvedValue(true);
+      await interno<() => Promise<void>>('pedirDescarteDeLaCasilla').call(componente);
+
+      const mensaje = confirmar.mock.calls[0]?.[0].message ?? '';
+      expect(mensaje).toContain('ya quedó registrado');
+      expect(mensaje).not.toContain('Todavía no se registró');
+      // El servidor ya tiene el diagnóstico: la consulta vuelve a leer sus dos lecturas.
+      expect(
+        http.match((r) => r.url === '/clinical/patients/p-1/summary').length,
+      ).toBeGreaterThanOrEqual(1);
+      http.match(() => true);
+    });
+
+    it('si se elige «Seguir escribiendo» no se cierra ni se relee', async () => {
+      const bloque = await abrirDiagnostico();
+      (bloque as unknown as { hallazgos: { set(v: string): void } }).hallazgos.set('Cuadro febril');
+      vi.spyOn(TestBed.inject(DialogService), 'confirm').mockResolvedValue(false);
+
+      await interno<() => Promise<void>>('pedirDescarteDeLaCasilla').call(componente);
+
+      expect(interno<() => string | null>('casillaAbierta')()).toBe('diagnosticos');
+      http.expectNone((r) => r.url === '/clinical/patients/p-1/summary');
+    });
   });
 
   it('distingue la reserva de reconsulta de la cita clínica del check-in', async () => {

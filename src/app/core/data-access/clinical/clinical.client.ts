@@ -1,10 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, type Observable } from 'rxjs';
+import { map, switchMap, type Observable } from 'rxjs';
 
 import { API_BASE_URL, apiUrl } from '../api';
 import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import { nombreDeContentDisposition } from '../files/content-disposition';
+import { ConditionVerificationConcepts } from './condition-verification-concept';
 import type {
   Allergy,
   AllergyIntoleranceRegistration,
@@ -95,6 +96,7 @@ import type {
 })
 export class ClinicalClient {
   private readonly http = inject(HttpClient);
+  private readonly verificationConcepts = inject(ConditionVerificationConcepts);
   private readonly baseUrl = inject(API_BASE_URL);
   /** Claves `Idempotency-Key` por intento de envío (ver `../idempotency`). */
   private readonly submissionKeys = new SubmissionKeys();
@@ -398,26 +400,26 @@ export class ClinicalClient {
   /* -- Los tres registros de la ficha -------------------------------------- */
 
   /**
-   * `POST /clinical/conditions` — registra un diagnóstico o problema
-   * (UC-08-08).
-   *
-   * El estado clínico y el de verificación **no se mandan**: el backend los
-   * fija y los devuelve. Ofrecerlos en el formulario sería pedir un dato que
-   * no se usa.
-   *
-   * @param condicion - El diagnóstico y su contexto.
+   * `POST /clinical/conditions` — registra un diagnóstico (UC-08-08). El estado clínico lo fija el
+   * backend; el de verificación viaja como `verificationStatusConceptId`, no como `PROVISIONAL`
+   * (la API la rechaza con 400): ver {@link ConditionVerificationConcepts}.
    */
   createCondition(condicion: NewCondition): Observable<ConditionRegistration> {
-    return this.http
-      .post<WireConditionRegistration>(
-        this.url('/clinical/conditions'),
-        sinAusentes({
-          ...condicion,
-          onsetAt: instanteDe(condicion.onsetAt),
-          expectedResolutionAt: instanteDe(condicion.expectedResolutionAt),
-        }),
-      )
-      .pipe(map(toConditionRegistration));
+    const { verificationStatus, ...resto } = condicion;
+    return this.verificationConcepts.idDe(verificationStatus).pipe(
+      switchMap((verificationStatusConceptId) =>
+        this.http.post<WireConditionRegistration>(
+          this.url('/clinical/conditions'),
+          sinAusentes({
+            ...resto,
+            verificationStatusConceptId,
+            onsetAt: instanteDe(condicion.onsetAt),
+            expectedResolutionAt: instanteDe(condicion.expectedResolutionAt),
+          }),
+        ),
+      ),
+      map(toConditionRegistration),
+    );
   }
 
   /**
