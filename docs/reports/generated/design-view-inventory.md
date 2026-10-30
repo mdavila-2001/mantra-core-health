@@ -2,7 +2,7 @@
 
 # Inventario de vistas del diseñador y cableado real
 
-Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
+Carril 01. 87 secciones del registro, 122 pantallas hijas o de operación y 126 vistas portadas desde la bóveda.
 
 ## Estados
 
@@ -31,8 +31,8 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | cualquier sesión | `/clinics-directory` | `ClinicsDirectory` | InsuranceClient, PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
 | cualquier sesión | `/pharmacies-directory` | `PharmaciesDirectory` | InsuranceClient, PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
 | cualquier sesión | `/insurers-directory` | `InsurersDirectory` | InsuranceClient, PublicCatalogClient, PublicDirectoryClient | conectada | ninguna |
-| SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule` | `Agenda` | ClinicalClient, PharmaLabClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
-| CLINICIAN · PRACTITIONER | `/medical-records` | `ClinicalRecord` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, ProceduresClient, ProfilesClient, QuotationsClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada | ninguna |
+| SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule` | `Agenda` | ClinicalClient, PharmaLabClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada | ninguna |
+| CLINICIAN · PRACTITIONER | `/medical-records` | `ClinicalRecord` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, ConsentClient, DiagnosticsClient, FilesClient, FormsClient, MedicalCentersClient, PracticeSitesClient, ProceduresClient, ProfilesClient, QuotationsClient, ReferralsClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/diagnostics` | `Diagnostics` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN | `/interventions` | `Interventions` | ProceduresClient, TerminologyClient | conectada | ninguna |
 | PRACTITIONER · CLINICIAN | `/lab-visits` | `DoctorVisits` | PharmaLabClient | conectada | ninguna |
@@ -41,8 +41,9 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | CLINICIAN · PRACTITIONER | `/form-builder` | `FormBuilder` | ChartTemplatesClient, FormsClient, ProfilesClient, TerminologyClient | conectada con deuda | resolver: datos de muestra |
 | CLINICIAN · PRACTITIONER | `/my-services` | `MyServices` | SchedulingClient, ServicesCatalogClient | conectada | ninguna |
 | CLINICIAN · PRACTITIONER | `/my-quotations` | `QuotationList` | ProfilesClient, QuotationsClient | conectada | ninguna |
+| PRACTITIONER · CLINICIAN | `/my-medical-groups` | `MedicalGroupList` | MedicalGroupsClient | conectada | ninguna |
 | PRACTITIONER · CLINICIAN | `/questionnaires` | `SurveysHome` | SurveysClient | conectada | ninguna |
-| SECURITY_ADMIN | `/administration/patients` | `PatientList` | ProfilesClient, SystemContextClient | conectada con deuda | resolver: `TODO`/`FIXME` |
+| SECURITY_ADMIN | `/administration/patients` | `PatientList` | ProfilesClient, SystemContextClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/users` | `UserRegistration` | IamClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/organizations` | `OrganizationList` | DirectoryClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/administration/insurance` | `InsuranceCatalog` | InsuranceClient, ServicesCatalogClient | conectada | ninguna |
@@ -60,48 +61,51 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/moderation` | `Moderation` | CommunityClient | conectada | ninguna |
 | CONTEXT_CURATOR · CONTEXT_CONSUMER · SOURCE_ADMIN · QUALITY_REVIEWER · PLATFORM_ADMIN | `/administration/health-context` | `HealthContextHome` | — | presentacional | verificar que no deba listar |
 | SECURITY_ADMIN | `/administration/geolocation` | `GeoHome` | — | presentacional | verificar que no deba listar |
-| SECURITY_ADMIN | `/administration/services-catalog` | `ServicesCatalog` | ServicesCatalogClient | conectada | ninguna |
+| SECURITY_ADMIN | `/administration/services-catalog` | `ServicesCatalog` | HealthcareServicesClient, ServicesCatalogClient | conectada | ninguna |
 | SECURITY_ADMIN · PERIOP_ADMIN · PRACTITIONER | `/administration/medical-organization` | `MedicalOrganization` | AccountingClient, MedicalOrganizationClient, PracticeSitesClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/administration/medical-center-setup` | `SectionPlaceholder` | — | sin pantalla | ninguna |
 | SECURITY_ADMIN | `/administration/medical-laboratory` | `MedicalLaboratory` | DiagnosticUnitsAdminClient, SystemContextClient | conectada | ninguna |
 | SECURITY_ADMIN | `/administration/clinical-forms` | `ClinicalForms` | ChartTemplatesClient, TerminologyClient | conectada | ninguna |
 | BILLING · FINANCE · CASHIER · PAYMENTS_ADMIN | `/billing` | `Billing` | BillingSimulatedClient | conectada | ninguna |
 | PHARMA_LAB_ADMIN · BUSINESS_ADMIN · PLATFORM_ADMIN | `/administration/pharma-lab` | `PharmaLabHome` | PharmaLabClient | conectada | ninguna |
-| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Resumen` | AccountingClient | conectada con deuda | resolver: `TODO`/`FIXME` |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting` | `Summary` | AccountingClient | conectada | ninguna |
 | cualquier sesión | `/my-account/dependents` | `Dependents` | ProfilesClient | conectada | ninguna |
 | cualquier sesión | `/my-account` | `MyAccount` | — | presentacional | verificar que no deba listar |
-| cualquier sesión | `/my-account/appointments` | `Appointments` | BillingSimulatedClient, SchedulingClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
-| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, SchedulingClient, TerminologyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
-| cualquier sesión | `/my-account/diagnostic-results` | `DiagnosticResults` | DiagnosticsClient, FilesClient, TerminologyClient | conectada | ninguna |
-| cualquier sesión | `/my-account/diagnostic-orders` | `DiagnosticOrders` | CenterScheduleClient, DiagnosticsClient, TerminologyClient | conectada | ninguna |
-| cualquier sesión | `/my-account/cotizaciones` | `Cotizaciones` | DiagnosticUnitsClient, PharmacyClient, ProfilesClient, ServicesCatalogClient | conectada | ninguna |
+| PATIENT | `/my-account/privacy` | `AccountPrivacy` | ConsentClient | conectada | ninguna |
+| PATIENT | `/my-account/clinical-access` | `AccountClinicalAccess` | AuthzClient | conectada | ninguna |
+| cualquier sesión | `/my-account/security` | `AccountSecurity` | AccountSecurityClient | conectada | ninguna |
+| cualquier sesión | `/my-account/appointments` | `Appointments` | SchedulingClient, TerminologyClient | conectada con deuda | resolver: promesa sin pantalla |
+| cualquier sesión | `/my-account/medical-record` | `MedicalRecord` | ClinicalClient, DiagnosticUnitsClient, DiagnosticsClient, FormsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProcedureCentersClient, ProfilesClient, ReceivedServicesClient, SchedulingClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/my-account/diagnostic-results` | `DiagnosticResults` | AuthzClient, DiagnosticsClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/my-account/diagnostic-orders` | `DiagnosticOrders` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/my-account/quotations` | `Quotations` | DiagnosticUnitsClient, PharmacyClient, ProfilesClient, ServicesCatalogClient | conectada | ninguna |
 | cualquier sesión | `/my-account/questionnaires` | `Questionnaires` | ClinicalClient, SurveysClient | conectada | ninguna |
 | cualquier sesión | `/settings` | `Settings` | — | presentacional | verificar que no deba listar |
 | cualquier sesión | `/notification-center` | `NotificationCenter` | NotificationsClient | conectada | ninguna |
 | cualquier sesión | `/my-account/identity` | `IdentityHub` | — | presentacional | verificar que no deba listar |
 | PATIENT | `/my-account/pharmacy` | `StoreFront` | PharmacyOrdersClient, ProfilesClient | conectada | ninguna |
-| PATIENT | `/my-account/pharmacy-orders` | `PharmacyOrders` | NotificationsClient, PharmacyCampaignsClient, PharmacyOrdersClient | conectada con deuda | resolver: `TODO`/`FIXME` |
+| PATIENT | `/my-account/pharmacy-orders` | `PharmacyOrders` | NotificationsClient, PharmacyCampaignsClient, PharmacyOrdersClient | conectada | ninguna |
 | PATIENT | `/my-account/loyalty` | `SectionPlaceholder` | — | sin pantalla | ninguna |
 | PATIENT | `/my-account/promotions` | `Promotions` | PromotionsClient | conectada | ninguna |
 | PATIENT | `/my-account/spending` | `Spending` | PatientSpendingClient | conectada | ninguna |
 | cualquier sesión | `/my-account/invoices` | `MyInvoices` | BillingSimulatedClient | conectada | ninguna |
 | cualquier sesión | `/my-account/requests` | `MyRequests` | InsuranceClient | conectada | ninguna |
 | PRACTITIONER | `/administration/my-practice` | `MyPractice` | — | presentacional | verificar que no deba listar |
-| cualquier sesión | `/administration/my-organization` | `OrganizationPanel` | DirectoryClient, LogoDeOrganizacionClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
+| cualquier sesión | `/administration/my-organization` | `OrganizationPanel` | DirectoryClient, OrganizationLogoClient, HealthcareServicesClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, PracticeOnboardingClient, ProfilesClient, RoleAssignmentsClient, ServicesCatalogClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy` | `PharmacySummaryPage` | PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-catalog` | `PharmacyProducts` | FilesClient, PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-categories` | `PharmacyCategories` | PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-import` | `PharmacyImport` | PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-inventory` | `PharmacyInventory` | PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-prices` | `PharmacyPrices` | PharmacyClient | conectada | ninguna |
-| cualquier sesión | `/administration/pharmacy-orders` | `PharmacyInbox` | PharmacyOrdersClient, PharmacyClient | conectada con deuda | resolver: `TODO`/`FIXME` |
+| cualquier sesión | `/administration/pharmacy-orders` | `PharmacyInbox` | PharmacyOrdersClient, PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-campaigns` | `PharmacyCampaigns` | PharmacyCampaignsClient, PharmacyClient | conectada | ninguna |
 | cualquier sesión | `/administration/pharmacy-profile` | `SectionPlaceholder` | — | sin pantalla | ninguna |
 | cualquier sesión | `/administration/laboratory` | `LaboratorySummaryPage` | LabPortalClient | conectada | ninguna |
-| cualquier sesión | `/laboratorio/recepcion` | `LabReception` | DiagnosticsLabClient, SystemContextClient, TerminologyClient | conectada | ninguna |
-| cualquier sesión | `/laboratorio/cola` | `Diagnostics` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/laboratory/reception` | `LabReception` | DiagnosticsLabClient, SystemContextClient, TerminologyClient | conectada | ninguna |
+| cualquier sesión | `/laboratory/queue` | `Diagnostics` | DiagnosticsClient, TerminologyClient | conectada | ninguna |
 | cualquier sesión | `/administration/laboratory-results` | `LaboratoryResults` | LabPortalClient | conectada | ninguna |
 | cualquier sesión | `/administration/laboratory-prices` | `LaboratoryPrices` | LabPortalClient | conectada | ninguna |
-| cualquier sesión | `/administration/center-schedule` | `CenterSchedulePage` | CenterScheduleClient | conectada | ninguna |
 | cualquier sesión | `/administration/laboratory-branches` | `OrganizationBranches` | DirectoryClient | conectada | ninguna |
 
 ## Pantallas hijas y de operación
@@ -109,8 +113,8 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | Rol | Ruta | Vista actual | API que usa | Estado |
 |---|---|---|---|---|
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/assets-liabilities` | `AssetsLiabilities` | AccountingClient, AssetsLiabilitiesClient | conectada |
+| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/books` | `Accounting` | AccountingClient, SimpleAccountingClient | conectada |
 | SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/cockpit` | `Cockpit` | AccountingClient | conectada |
-| SECURITY_ADMIN · ACCOUNTING_APPROVER · PRACTITIONER | `/administration/accounting/libros` | `Accounting` | AccountingClient, BillingSimulatedClient, SimpleAccountingClient | conectada con deuda |
 | SECURITY_ADMIN | `/administration/brokers/:brokerId` | `BrokerDetail` | InsuranceClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/assignments/edit` | `OrgAssignmentUpdate` | DelegatedAccessClient | conectada |
 | SECURITY_ADMIN | `/administration/delegated-access/assignments/new` | `OrgAssignmentForm` | DelegatedAccessClient | conectada |
@@ -151,6 +155,7 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/identity-assurance/assertions/revoke` | `AssertionRevokeForm` | IdentityAdminClient | conectada |
 | SECURITY_ADMIN | `/administration/identity-assurance/authorities/endpoint` | `AuthorityEndpointForm` | IdentityAdminClient | conectada |
 | SECURITY_ADMIN | `/administration/identity-assurance/authorities/new` | `AuthorityForm` | IdentityAdminClient | conectada |
+| SECURITY_ADMIN | `/administration/identity-assurance/cases/:caseId` | `CaseDetail` | FilesClient, IdentityAdminClient | conectada |
 | SECURITY_ADMIN | `/administration/identity-assurance/cases/checks` | `CheckPlanForm` | IdentityAdminClient | conectada |
 | SECURITY_ADMIN | `/administration/identity-assurance/cases/evidence` | `CaseEvidenceForm` | IdentityAdminClient | conectada |
 | SECURITY_ADMIN | `/administration/identity-assurance/cases/expire-sweep` | `CaseExpireSweep` | IdentityAdminClient | conectada |
@@ -187,6 +192,7 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | SECURITY_ADMIN | `/administration/patients/new` | `PatientNew` | ProfilesClient | conectada |
 | cualquier sesión | `/administration/pharmacy-orders/:orderId` | `InboxOrder` | PharmacyOrdersClient, PharmacyClient | conectada |
 | SECURITY_ADMIN | `/administration/services-catalog/import` | `ProcedureImport` | ServicesCatalogClient | conectada |
+| SECURITY_ADMIN | `/administration/services-catalog/procedure-offers` | `ProcedureOffers` | HealthcareServicesClient, ServicesCatalogClient | conectada |
 | SECURITY_ADMIN | `/administration/terminology/import` | `VersionImport` | TerminologyClient | conectada con deuda |
 | cualquier sesión | `/clinics-directory/:slug` | `ClinicDetail` | PublicCatalogClient | conectada |
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/glossary/:conceptId` | `GlossaryTerm` | AnatomyAtlasClient, TerminologyClient | conectada |
@@ -195,31 +201,33 @@ Carril 01. 83 secciones del registro, 118 pantallas hijas o de operación y 126 
 | PRACTITIONER · CLINICIAN · SCHEDULING_ADMIN · SCHEDULING_AGENT · SURGEON · ANESTHESIOLOGIST · PERIOP_NURSE · SURGERY_SCHEDULER · PERIOP_ADMIN · MEDICAL_VISITOR · SECURITY_ADMIN | `/groups/:groupId` | `GroupDetail` | CommunityClient | conectada |
 | cualquier sesión | `/insurers-directory/:slug` | `InsurerDetail` | InsuranceClient | conectada |
 | cualquier sesión | `/laboratory-directory/:unitId` | `LaboratoryDetail` | DiagnosticUnitsClient | conectada |
-| CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | AccountingClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, ProceduresClient, ProfilesClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada |
-| CLINICIAN · PRACTITIONER | `/medical-records/:profileId/consultation` | `Consultation` | ClinicalClient, ProfilesClient, QuotationsClient, TerminologyClient | conectada |
+| CLINICIAN · PRACTITIONER | `/medical-records/:profileId` | `PatientChart` | AccountingClient, AuthzClient, BillingSimulatedClient, ChartCarePlansClient, ChartDocumentsClient, ChartNotesClient, ChartTemplatesClient, ClinicalClient, DiagnosticsClient, FilesClient, FormsClient, MedicalCentersClient, PracticeSitesClient, ProceduresClient, ProfilesClient, ReferralsClient, SchedulingClient, SystemContextClient, TerminologyClient, DiagnosisIaClient | conectada |
+| CLINICIAN · PRACTITIONER | `/medical-records/:profileId/consultation` | `Consultation` | ClinicalClient, ConsentClient, ProfilesClient, QuotationsClient, TerminologyClient | conectada |
 | CLINICIAN · PRACTITIONER | `/medical-records/:profileId/request-access` | `RequestAccess` | AuthzClient, ProfilesClient | conectada |
 | cualquier sesión | `/my-account/access-requests` | `AccessRequests` | AuthzClient, ProfilesClient | conectada |
 | cualquier sesión | `/my-account/appointments/book/:slotId` | `BookingNew` | ProfilesClient, SchedulingClient | conectada |
 | cualquier sesión | `/my-account/articles` | `MedicalArticles` | CommunityClient, FilesClient | conectada |
-| cualquier sesión | `/my-account/diagnostic-orders/:orderId/book` | `OrderBooking` | CenterScheduleClient | conectada |
-| cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, LogoDelConsultorioClient, FirmaYSelloClient, ProfilesClient, TerminologyClient | conectada |
+| cualquier sesión | `/my-account/edit` | `PractitionerProfileEdit` | FilesClient, PracticeLogoClient, ProfilesClient, SignatureAndSealClient, TerminologyClient | conectada |
 | cualquier sesión | `/my-account/identity/cases/:caseId` | `PractitionerDetail` | FilesClient, ProfilesClient, TerminologyClient | conectada |
-| cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProfilesClient, TerminologyClient | conectada con deuda |
+| cualquier sesión | `/my-account/medical-record/where-to-buy/:requestId` | `WhereToBuy` | ClinicalClient, DiagnosticUnitsClient, DiagnosticsClient, PharmacyCampaignsClient, PharmacyOrdersClient, PharmacyClient, ProcedureCentersClient, ProfilesClient, TerminologyClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId` | `OrderDetail` | NotificationsClient, PharmacyOrdersClient | conectada |
-| PATIENT | `/my-account/pharmacy-orders/:orderId/invoice` | `OrderInvoice` | PharmacyOrdersClient | conectada con deuda |
+| PATIENT | `/my-account/pharmacy-orders/:orderId/invoice` | `OrderInvoice` | PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/:orderId/receipt` | `OrderReceipt` | PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy-orders/checkout` | `Checkout` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada |
-| PATIENT | `/my-account/pharmacy-orders/new` | `NewOrder` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada con deuda |
+| PATIENT | `/my-account/pharmacy-orders/new` | `NewOrder` | PharmacyCampaignsClient, PharmacyOrdersClient | conectada |
 | PATIENT | `/my-account/pharmacy/cart` | `CartPage` | PharmacyOrdersClient, PharmacyClient | conectada |
 | PATIENT | `/my-account/pharmacy/prescriptions` | `PrescriptionsPage` | ClinicalClient, TerminologyClient | conectada |
-| cualquier sesión | `/my-account/profile/edit` | `PatientProfileEdit` | ProfilesClient | conectada con deuda |
+| cualquier sesión | `/my-account/profile/edit` | `PatientProfileEdit` | ProfilesClient | conectada |
 | cualquier sesión | `/my-account/questionnaires/:invitationId` | `QuestionnaireAnswer` | SurveysClient | conectada |
+| PRACTITIONER · CLINICIAN | `/my-medical-groups/:id` | `MedicalGroupDetail` | MedicalGroupsClient | conectada |
+| PRACTITIONER · CLINICIAN | `/my-medical-groups/new` | `MedicalGroupForm` | MedicalGroupsClient, ProfilesClient, ServicesCatalogClient | conectada |
 | CLINICIAN · PRACTITIONER | `/my-quotations/new` | `QuotationForm` | ProfilesClient, QuotationsClient, SchedulingClient, ServicesCatalogClient | conectada |
+| CLINICIAN · PRACTITIONER | `/my-services/import` | `ProcedureImport` | ServicesCatalogClient | conectada |
 | cualquier sesión | `/onboarding` | `OnboardingPractitioner` | ProfilesClient | conectada |
 | cualquier sesión | `/pharmacies-directory/:slug` | `PharmacyDetail` | PublicCatalogClient | conectada |
 | PRACTITIONER · CLINICIAN | `/questionnaires/:surveyId` | `SurveyDetailScreen` | SurveysClient | conectada |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/appointment/new` | `AppointmentNew` | ProfilesClient, SchedulingClient | conectada |
-| SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/blocks` | `Blocks` | SchedulingClient | conectada con deuda |
+| SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/blocks` | `Blocks` | SchedulingClient | conectada |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/book/:slotId` | `BookingNew` | ProfilesClient, SchedulingClient | conectada |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/edit` | `AgendaCreate` | SchedulingClient | conectada |
 | SCHEDULING_ADMIN · SCHEDULING_AGENT · PRACTITIONER | `/schedule/new` | `AgendaCreate` | SchedulingClient | conectada |
@@ -233,139 +241,139 @@ Las 126 pantallas de `features/alovida/`, generadas por `scripts/port-vistas-alo
 
 | Código | Actor | Ruta | Componente | API que usa | Estado |
 |---|---|---|---|---|---|
-| V02-08 | security-admin | `/datos-compartidos/versiones-internas-escanear` | `DatosCompartidosVersionesInternasEscanear` | — | maqueta portada |
-| V02-08 | security-admin | `/datos-compartidos/versiones-internas-listado` | `DatosCompartidosVersionesInternasListado` | — | maqueta portada |
-| V02-01 | sesion-autenticada | `/datos-compartidos/archivos-eliminar` | `DatosCompartidosArchivosEliminar` | — | maqueta portada |
-| V02-01 | sesion-autenticada | `/datos-compartidos/archivos-formulario` | `DatosCompartidosArchivosFormulario` | — | maqueta portada |
-| V02-01 | sesion-autenticada | `/datos-compartidos/archivos-listado` | `DatosCompartidosArchivosListado` | — | maqueta portada |
-| V02-01 | sesion-autenticada | `/datos-compartidos/archivos-obtener-enlace` | `DatosCompartidosArchivosObtenerEnlace` | — | maqueta portada |
-| V02-01 | sesion-autenticada | `/datos-compartidos/archivos-subir` | `DatosCompartidosArchivosSubir` | — | maqueta portada |
-| V02-02 | sesion-autenticada | `/datos-compartidos/contenido-detalle` | `DatosCompartidosContenidoDetalle` | — | maqueta portada |
-| V02-03 | sesion-autenticada | `/datos-compartidos/vinculos-formulario` | `DatosCompartidosVinculosFormulario` | — | maqueta portada |
-| V02-03 | sesion-autenticada | `/datos-compartidos/vinculos-listado` | `DatosCompartidosVinculosListado` | — | maqueta portada |
-| V02-04 | sesion-autenticada | `/datos-compartidos/versiones-formulario` | `DatosCompartidosVersionesFormulario` | — | maqueta portada |
-| V02-04 | sesion-autenticada | `/datos-compartidos/versiones-listado` | `DatosCompartidosVersionesListado` | — | maqueta portada |
-| V02-05 | sesion-autenticada | `/datos-compartidos/puntos-de-contacto-formulario` | `DatosCompartidosPuntosDeContactoFormulario` | — | maqueta portada |
-| V02-05 | sesion-autenticada | `/datos-compartidos/puntos-de-contacto-listado` | `DatosCompartidosPuntosDeContactoListado` | — | maqueta portada |
-| V02-05 | sesion-autenticada | `/datos-compartidos/puntos-de-contacto-verificar` | `DatosCompartidosPuntosDeContactoVerificar` | — | maqueta portada |
-| V02-06 | sesion-autenticada | `/datos-compartidos/direcciones-formulario` | `DatosCompartidosDireccionesFormulario` | — | maqueta portada |
-| V02-06 | sesion-autenticada | `/datos-compartidos/direcciones-listado` | `DatosCompartidosDireccionesListado` | — | maqueta portada |
-| V02-07 | sesion-autenticada | `/datos-compartidos/identificadores-formulario` | `DatosCompartidosIdentificadoresFormulario` | — | maqueta portada |
-| V02-07 | sesion-autenticada | `/datos-compartidos/identificadores-listado` | `DatosCompartidosIdentificadoresListado` | — | maqueta portada |
-| V02-09 | sesion-autenticada | `/datos-compartidos/derivados-formulario` | `DatosCompartidosDerivadosFormulario` | — | maqueta portada |
-| V02-09 | sesion-autenticada | `/datos-compartidos/derivados-listado` | `DatosCompartidosDerivadosListado` | — | maqueta portada |
-| V03-01 | security-admin | `/terminologia/versiones-importar` | `TerminologiaVersionesImportar` | — | maqueta portada |
-| V03-01 | security-admin | `/terminologia/versiones-listado` | `TerminologiaVersionesListado` | — | maqueta portada |
-| V03-01 | security-admin | `/terminologia/versiones-publicar` | `TerminologiaVersionesPublicar` | — | maqueta portada |
-| V03-04 | security-admin | `/terminologia/expansion-de-conjunto-de-valores-formulario` | `TerminologiaExpansionDeConjuntoDeValoresFormulario` | — | maqueta portada |
-| V03-05 | security-admin | `/terminologia/sistemas-de-codigos-formulario` | `TerminologiaSistemasDeCodigosFormulario` | — | maqueta portada |
-| V03-05 | security-admin | `/terminologia/sistemas-de-codigos-listado` | `TerminologiaSistemasDeCodigosListado` | — | maqueta portada |
-| V03-06 | security-admin | `/terminologia/versiones-de-sistema-formulario` | `TerminologiaVersionesDeSistemaFormulario` | — | maqueta portada |
-| V03-06 | security-admin | `/terminologia/versiones-de-sistema-listado` | `TerminologiaVersionesDeSistemaListado` | — | maqueta portada |
-| V03-08 | security-admin | `/terminologia/deprecacion-de-concepto-formulario` | `TerminologiaDeprecacionDeConceptoFormulario` | — | maqueta portada |
-| V03-09 | security-admin | `/terminologia/designaciones-formulario` | `TerminologiaDesignacionesFormulario` | — | maqueta portada |
-| V03-09 | security-admin | `/terminologia/designaciones-listado` | `TerminologiaDesignacionesListado` | — | maqueta portada |
-| V03-10 | security-admin | `/terminologia/propiedades-formulario` | `TerminologiaPropiedadesFormulario` | — | maqueta portada |
-| V03-10 | security-admin | `/terminologia/propiedades-listado` | `TerminologiaPropiedadesListado` | — | maqueta portada |
-| V03-11 | security-admin | `/terminologia/relaciones-formulario` | `TerminologiaRelacionesFormulario` | — | maqueta portada |
-| V03-11 | security-admin | `/terminologia/relaciones-listado` | `TerminologiaRelacionesListado` | — | maqueta portada |
-| V03-12 | security-admin | `/terminologia/politicas-de-catalogo-formulario` | `TerminologiaPoliticasDeCatalogoFormulario` | — | maqueta portada |
-| V03-12 | security-admin | `/terminologia/politicas-de-catalogo-listado` | `TerminologiaPoliticasDeCatalogoListado` | — | maqueta portada |
-| V03-13 | security-admin | `/terminologia/conjuntos-de-valor-formulario` | `TerminologiaConjuntosDeValorFormulario` | — | maqueta portada |
-| V03-13 | security-admin | `/terminologia/conjuntos-de-valor-listado` | `TerminologiaConjuntosDeValorListado` | — | maqueta portada |
-| V03-02 | sesion-autenticada | `/terminologia/consulta-de-concepto-listado` | `TerminologiaConsultaDeConceptoListado` | — | maqueta portada |
-| V03-03 | sesion-autenticada | `/terminologia/traduccion-entre-catalogos-formulario` | `TerminologiaTraduccionEntreCatalogosFormulario` | — | maqueta portada |
-| V03-07 | sesion-autenticada | `/terminologia/conceptos-listado` | `TerminologiaConceptosListado` | — | maqueta portada |
-| V03-14 | sesion-autenticada | `/terminologia/expansion-de-conjunto-de-valores-detalle` | `TerminologiaExpansionDeConjuntoDeValoresDetalle` | — | maqueta portada |
-| V04-01 | security-admin | `/directorio/organizaciones-listado` | `DirectorioOrganizacionesListado` | — | maqueta portada |
-| V04-01 | security-admin | `/directorio/organizaciones-verificar` | `DirectorioOrganizacionesVerificar` | — | maqueta portada |
-| V04-02 | security-admin | `/directorio/membresias-dar-de-baja` | `DirectorioMembresiasDarDeBaja` | — | maqueta portada |
-| V04-02 | security-admin | `/directorio/membresias-formulario` | `DirectorioMembresiasFormulario` | — | maqueta portada |
-| V04-02 | security-admin | `/directorio/membresias-listado` | `DirectorioMembresiasListado` | — | maqueta portada |
-| V04-03 | security-admin | `/directorio/asignaciones-de-sucursal-formulario` | `DirectorioAsignacionesDeSucursalFormulario` | — | maqueta portada |
-| V04-04 | security-admin | `/directorio/roles-formulario` | `DirectorioRolesFormulario` | — | maqueta portada |
-| V04-05 | security-admin | `/directorio/transferencias-formulario` | `DirectorioTransferenciasFormulario` | — | maqueta portada |
-| V04-06 | security-admin | `/directorio/sucursales-formulario` | `DirectorioSucursalesFormulario` | — | maqueta portada |
-| V04-06 | security-admin | `/directorio/sucursales-listado` | `DirectorioSucursalesListado` | — | maqueta portada |
-| V04-07 | security-admin | `/directorio/organizaciones-hijas-formulario` | `DirectorioOrganizacionesHijasFormulario` | — | maqueta portada |
-| V04-01 | superadmin | `/directorio/organizaciones-formulario` | `DirectorioOrganizacionesFormulario` | — | maqueta portada |
-| V04-01 | superadmin | `/directorio/organizaciones-suspender` | `DirectorioOrganizacionesSuspender` | — | maqueta portada |
-| V05-01 | security-admin | `/personas/pacientes-formulario` | `PersonasPacientesFormulario` | — | maqueta portada |
-| V05-01 | security-admin | `/personas/pacientes-fusionar` | `PersonasPacientesFusionar` | — | maqueta portada |
-| V05-01 | security-admin | `/personas/pacientes-listado` | `PersonasPacientesListado` | — | maqueta portada |
-| V05-01 | security-admin | `/personas/pacientes-revertir` | `PersonasPacientesRevertir` | — | maqueta portada |
-| V05-02 | security-admin | `/personas/vinculos-de-identidad-formulario` | `PersonasVinculosDeIdentidadFormulario` | — | maqueta portada |
-| V05-02 | security-admin | `/personas/vinculos-de-identidad-listado` | `PersonasVinculosDeIdentidadListado` | — | maqueta portada |
-| V05-04 | security-admin | `/personas/apoderados-de-portal-formulario` | `PersonasApoderadosDePortalFormulario` | — | maqueta portada |
-| V05-04 | security-admin | `/personas/apoderados-de-portal-listado` | `PersonasApoderadosDePortalListado` | — | maqueta portada |
-| V05-05 | security-admin | `/personas/personas-relacionadas-formulario` | `PersonasRelacionadasFormulario` | — | maqueta portada |
-| V05-05 | security-admin | `/personas/personas-relacionadas-listado` | `PersonasRelacionadasListado` | — | maqueta portada |
-| V05-06 | security-admin | `/personas/credenciales-listado` | `PersonasCredencialesListado` | — | maqueta portada |
-| V05-06 | security-admin | `/personas/credenciales-verificar` | `PersonasCredencialesVerificar` | — | maqueta portada |
-| V05-07 | security-admin | `/personas/personas-listado` | `PersonasListado` | — | maqueta portada |
-| V05-07 | security-admin | `/personas/personas-registrar-defuncion` | `PersonasRegistrarDefuncion` | — | maqueta portada |
-| V05-08 | security-admin | `/personas/vinculos-de-cuenta-formulario` | `PersonasVinculosDeCuentaFormulario` | — | maqueta portada |
-| V05-08 | security-admin | `/personas/vinculos-de-cuenta-listado` | `PersonasVinculosDeCuentaListado` | — | maqueta portada |
-| V05-09 | security-admin | `/personas/profesionales-formulario` | `PersonasProfesionalesFormulario` | — | maqueta portada |
-| V05-09 | security-admin | `/personas/profesionales-listado` | `PersonasProfesionalesListado` | — | maqueta portada |
-| V05-10 | security-admin | `/personas/autorizaciones-de-jurisdiccion-formulario` | `PersonasAutorizacionesDeJurisdiccionFormulario` | — | maqueta portada |
-| V05-10 | security-admin | `/personas/autorizaciones-de-jurisdiccion-listado` | `PersonasAutorizacionesDeJurisdiccionListado` | — | maqueta portada |
-| V05-11 | security-admin | `/personas/especialidades-formulario` | `PersonasEspecialidadesFormulario` | — | maqueta portada |
-| V05-11 | security-admin | `/personas/especialidades-listado` | `PersonasEspecialidadesListado` | — | maqueta portada |
-| V05-03 | sesion-autenticada | `/personas/resumen-propio-listado` | `PersonasResumenPropioListado` | — | maqueta portada |
-| V06-05 | clinical-approver | `/accesos/acceso-de-emergencia-formulario` | `AccesosAccesoDeEmergenciaFormulario` | — | maqueta portada |
-| V06-06 | clinical-approver | `/accesos/accesos-clinicos-del-paciente-formulario` | `AccesosClinicosDelPacienteFormulario` | — | maqueta portada |
-| V06-06 | clinical-approver | `/accesos/accesos-clinicos-del-paciente-listado` | `AccesosClinicosDelPacienteListado` | — | maqueta portada |
-| V06-01 | clinician | `/accesos/relaciones-de-cuidado-formulario` | `AccesosRelacionesDeCuidadoFormulario` | — | maqueta portada |
-| V06-01 | clinician | `/accesos/relaciones-de-cuidado-listado` | `AccesosRelacionesDeCuidadoListado` | — | maqueta portada |
-| V06-01 | clinician | `/accesos/relaciones-de-cuidado-revocar` | `AccesosRelacionesDeCuidadoRevocar` | — | maqueta portada |
-| V06-02 | security-admin | `/accesos/representaciones-legales-formulario` | `AccesosRepresentacionesLegalesFormulario` | — | maqueta portada |
-| V06-02 | security-admin | `/accesos/representaciones-legales-listado` | `AccesosRepresentacionesLegalesListado` | — | maqueta portada |
-| V06-02 | security-admin | `/accesos/representaciones-legales-revocar` | `AccesosRepresentacionesLegalesRevocar` | — | maqueta portada |
-| V06-03 | security-admin | `/accesos/accesos-clinicos-listado` | `AccesosClinicosListado` | — | maqueta portada |
-| V06-03 | security-admin | `/accesos/accesos-clinicos-revocar` | `AccesosClinicosRevocar` | — | maqueta portada |
-| V06-04 | security-admin | `/accesos/decisiones-evaluar` | `AccesosDecisionesEvaluar` | — | maqueta portada |
-| V06-07 | security-admin | `/accesos/cache-invalidar` | `AccesosCacheInvalidar` | — | maqueta portada |
-| V06-08 | security-admin | `/accesos/categorias-de-permiso-formulario` | `AccesosCategoriasDePermisoFormulario` | — | maqueta portada |
-| V06-08 | security-admin | `/accesos/categorias-de-permiso-listado` | `AccesosCategoriasDePermisoListado` | — | maqueta portada |
-| V06-09 | security-admin | `/accesos/permisos-formulario` | `AccesosPermisosFormulario` | — | maqueta portada |
-| V06-09 | security-admin | `/accesos/permisos-listado` | `AccesosPermisosListado` | — | maqueta portada |
-| V06-10 | security-admin | `/accesos/alcance-de-recurso-formulario` | `AccesosAlcanceDeRecursoFormulario` | — | maqueta portada |
-| V06-10 | security-admin | `/accesos/alcance-de-recurso-listado` | `AccesosAlcanceDeRecursoListado` | — | maqueta portada |
-| V06-11 | security-admin | `/accesos/roles-formulario` | `AccesosRolesFormulario` | — | maqueta portada |
-| V06-11 | security-admin | `/accesos/roles-listado` | `AccesosRolesListado` | — | maqueta portada |
-| V06-12 | security-admin | `/accesos/permisos-de-campo-formulario` | `AccesosPermisosDeCampoFormulario` | — | maqueta portada |
-| V06-12 | security-admin | `/accesos/permisos-de-campo-listado` | `AccesosPermisosDeCampoListado` | — | maqueta portada |
-| V06-13 | security-admin | `/accesos/permisos-del-rol-formulario` | `AccesosPermisosDelRolFormulario` | — | maqueta portada |
-| V06-13 | security-admin | `/accesos/permisos-del-rol-listado` | `AccesosPermisosDelRolListado` | — | maqueta portada |
-| V06-14 | security-admin | `/accesos/politicas-de-acceso-formulario` | `AccesosPoliticasDeAccesoFormulario` | — | maqueta portada |
-| V06-14 | security-admin | `/accesos/politicas-de-acceso-listado` | `AccesosPoliticasDeAccesoListado` | — | maqueta portada |
-| V06-15 | security-admin | `/accesos/concesiones-de-permiso-formulario` | `AccesosConcesionesDePermisoFormulario` | — | maqueta portada |
-| V06-15 | security-admin | `/accesos/concesiones-de-permiso-listado` | `AccesosConcesionesDePermisoListado` | — | maqueta portada |
-| V06-16 | security-admin | `/accesos/asignaciones-de-rol-formulario` | `AccesosAsignacionesDeRolFormulario` | — | maqueta portada |
-| V06-16 | security-admin | `/accesos/asignaciones-de-rol-listado` | `AccesosAsignacionesDeRolListado` | — | maqueta portada |
-| V65-01 | publico | `/buscar/buscador-listado` | `BuscarBuscadorListado` | PublicDirectoryClient | conectada |
-| V65-02 | publico | `/buscar/profesionales-listado` | `BuscarProfesionalesListado` | PublicDirectoryClient | conectada con deuda |
-| V65-03 | publico | `/buscar/medicamentos-listado` | `BuscarMedicamentosListado` | PublicMarketplaceClient | conectada |
-| V65-04 | publico | `/buscar/hospitales-listado` | `BuscarHospitalesListado` | PublicDirectoryClient | conectada |
-| V65-05 | publico | `/buscar/laboratorios-listado` | `BuscarLaboratoriosListado` | PublicDirectoryClient | conectada |
-| V65-06 | publico | `/buscar/aseguradoras-listado` | `BuscarAseguradorasListado` | PublicDirectoryClient | conectada |
-| V65-07 | publico | `/buscar/perfil-profesional-detalle` | `BuscarPerfilProfesionalDetalle` | — | maqueta portada |
-| V65-08 | publico | `/buscar/perfil-organizacion-detalle` | `BuscarPerfilOrganizacionDetalle` | — | maqueta portada |
-| V65-09 | publico | `/buscar/perfil-farmacia-detalle` | `BuscarPerfilFarmaciaDetalle` | — | maqueta portada |
-| V65-10 | publico | `/buscar/perfil-laboratorio-detalle` | `BuscarPerfilLaboratorioDetalle` | — | maqueta portada |
-| V65-11 | publico | `/buscar/perfil-aseguradora-detalle` | `BuscarPerfilAseguradoraDetalle` | — | maqueta portada |
-| V65-12 | publico | `/buscar/cercania-detalle` | `BuscarCercaniaDetalle` | PublicDirectoryClient | conectada |
-| V65-13 | sesion-autenticada | `/buscar/seguidos-y-guardados-listado` | `BuscarSeguidosYGuardadosListado` | — | maqueta portada |
-| V65-14 | sesion-autenticada | `/buscar/calificar-la-atencion-formulario` | `BuscarCalificarLaAtencionFormulario` | — | maqueta portada |
-| null | — | `/inicio` | `InicioPortada` | — | maqueta portada |
+| V02-08 | security-admin | `/shared-data/internal-versions-scan` | `DatosCompartidosVersionesInternasEscanear` | — | maqueta portada |
+| V02-08 | security-admin | `/shared-data/internal-versions-list` | `DatosCompartidosVersionesInternasListado` | — | maqueta portada |
+| V02-01 | sesion-autenticada | `/shared-data/files-delete` | `DatosCompartidosArchivosEliminar` | — | maqueta portada |
+| V02-01 | sesion-autenticada | `/shared-data/files-form` | `DatosCompartidosArchivosFormulario` | — | maqueta portada |
+| V02-01 | sesion-autenticada | `/shared-data/files-list` | `DatosCompartidosArchivosListado` | — | maqueta portada |
+| V02-01 | sesion-autenticada | `/shared-data/files-get-link` | `DatosCompartidosArchivosObtenerEnlace` | — | maqueta portada |
+| V02-01 | sesion-autenticada | `/shared-data/files-upload` | `DatosCompartidosArchivosSubir` | — | maqueta portada |
+| V02-02 | sesion-autenticada | `/shared-data/content-detail` | `DatosCompartidosContenidoDetalle` | — | maqueta portada |
+| V02-03 | sesion-autenticada | `/shared-data/links-form` | `DatosCompartidosVinculosFormulario` | — | maqueta portada |
+| V02-03 | sesion-autenticada | `/shared-data/links-list` | `DatosCompartidosVinculosListado` | — | maqueta portada |
+| V02-04 | sesion-autenticada | `/shared-data/versions-form` | `DatosCompartidosVersionesFormulario` | — | maqueta portada |
+| V02-04 | sesion-autenticada | `/shared-data/versions-list` | `DatosCompartidosVersionesListado` | — | maqueta portada |
+| V02-05 | sesion-autenticada | `/shared-data/contact-points-form` | `DatosCompartidosPuntosDeContactoFormulario` | — | maqueta portada |
+| V02-05 | sesion-autenticada | `/shared-data/contact-points-list` | `DatosCompartidosPuntosDeContactoListado` | — | maqueta portada |
+| V02-05 | sesion-autenticada | `/shared-data/contact-points-verify` | `DatosCompartidosPuntosDeContactoVerificar` | — | maqueta portada |
+| V02-06 | sesion-autenticada | `/shared-data/addresses-form` | `DatosCompartidosDireccionesFormulario` | — | maqueta portada |
+| V02-06 | sesion-autenticada | `/shared-data/addresses-list` | `DatosCompartidosDireccionesListado` | — | maqueta portada |
+| V02-07 | sesion-autenticada | `/shared-data/identifiers-form` | `DatosCompartidosIdentificadoresFormulario` | — | maqueta portada |
+| V02-07 | sesion-autenticada | `/shared-data/identifiers-list` | `DatosCompartidosIdentificadoresListado` | — | maqueta portada |
+| V02-09 | sesion-autenticada | `/shared-data/derivatives-form` | `DatosCompartidosDerivadosFormulario` | — | maqueta portada |
+| V02-09 | sesion-autenticada | `/shared-data/derivatives-list` | `DatosCompartidosDerivadosListado` | — | maqueta portada |
+| V03-01 | security-admin | `/vocabulary/versions-import` | `TerminologiaVersionesImportar` | — | maqueta portada |
+| V03-01 | security-admin | `/vocabulary/versions-list` | `TerminologiaVersionesListado` | — | maqueta portada |
+| V03-01 | security-admin | `/vocabulary/versions-publish` | `TerminologiaVersionesPublicar` | — | maqueta portada |
+| V03-04 | security-admin | `/vocabulary/value-set-expansion-form` | `TerminologiaExpansionDeConjuntoDeValoresFormulario` | — | maqueta portada |
+| V03-05 | security-admin | `/vocabulary/code-systems-form` | `TerminologiaSistemasDeCodigosFormulario` | — | maqueta portada |
+| V03-05 | security-admin | `/vocabulary/code-systems-list` | `TerminologiaSistemasDeCodigosListado` | — | maqueta portada |
+| V03-06 | security-admin | `/vocabulary/system-versions-form` | `TerminologiaVersionesDeSistemaFormulario` | — | maqueta portada |
+| V03-06 | security-admin | `/vocabulary/system-versions-list` | `TerminologiaVersionesDeSistemaListado` | — | maqueta portada |
+| V03-08 | security-admin | `/vocabulary/concept-deprecation-form` | `TerminologiaDeprecacionDeConceptoFormulario` | — | maqueta portada |
+| V03-09 | security-admin | `/vocabulary/designations-form` | `TerminologiaDesignacionesFormulario` | — | maqueta portada |
+| V03-09 | security-admin | `/vocabulary/designations-list` | `TerminologiaDesignacionesListado` | — | maqueta portada |
+| V03-10 | security-admin | `/vocabulary/properties-form` | `TerminologiaPropiedadesFormulario` | — | maqueta portada |
+| V03-10 | security-admin | `/vocabulary/properties-list` | `TerminologiaPropiedadesListado` | — | maqueta portada |
+| V03-11 | security-admin | `/vocabulary/relationships-form` | `TerminologiaRelacionesFormulario` | — | maqueta portada |
+| V03-11 | security-admin | `/vocabulary/relationships-list` | `TerminologiaRelacionesListado` | — | maqueta portada |
+| V03-12 | security-admin | `/vocabulary/catalog-policies-form` | `TerminologiaPoliticasDeCatalogoFormulario` | — | maqueta portada |
+| V03-12 | security-admin | `/vocabulary/catalog-policies-list` | `TerminologiaPoliticasDeCatalogoListado` | — | maqueta portada |
+| V03-13 | security-admin | `/vocabulary/value-sets-form` | `TerminologiaConjuntosDeValorFormulario` | — | maqueta portada |
+| V03-13 | security-admin | `/vocabulary/value-sets-list` | `TerminologiaConjuntosDeValorListado` | — | maqueta portada |
+| V03-02 | sesion-autenticada | `/vocabulary/concept-lookup-list` | `TerminologiaConsultaDeConceptoListado` | — | maqueta portada |
+| V03-03 | sesion-autenticada | `/vocabulary/catalog-translation-form` | `TerminologiaTraduccionEntreCatalogosFormulario` | — | maqueta portada |
+| V03-07 | sesion-autenticada | `/vocabulary/concepts-list` | `TerminologiaConceptosListado` | — | maqueta portada |
+| V03-14 | sesion-autenticada | `/vocabulary/value-set-expansion-detail` | `TerminologiaExpansionDeConjuntoDeValoresDetalle` | — | maqueta portada |
+| V04-01 | security-admin | `/provider-directory/organizations-list` | `DirectorioOrganizacionesListado` | — | maqueta portada |
+| V04-01 | security-admin | `/provider-directory/organizations-verify` | `DirectorioOrganizacionesVerificar` | — | maqueta portada |
+| V04-02 | security-admin | `/provider-directory/memberships-deactivate` | `DirectorioMembresiasDarDeBaja` | — | maqueta portada |
+| V04-02 | security-admin | `/provider-directory/memberships-form` | `DirectorioMembresiasFormulario` | — | maqueta portada |
+| V04-02 | security-admin | `/provider-directory/memberships-list` | `DirectorioMembresiasListado` | — | maqueta portada |
+| V04-03 | security-admin | `/provider-directory/branch-assignments-form` | `DirectorioAsignacionesDeSucursalFormulario` | — | maqueta portada |
+| V04-04 | security-admin | `/provider-directory/roles-form` | `DirectorioRolesFormulario` | — | maqueta portada |
+| V04-05 | security-admin | `/provider-directory/transfers-form` | `DirectorioTransferenciasFormulario` | — | maqueta portada |
+| V04-06 | security-admin | `/provider-directory/branches-form` | `DirectorioSucursalesFormulario` | — | maqueta portada |
+| V04-06 | security-admin | `/provider-directory/branches-list` | `DirectorioSucursalesListado` | — | maqueta portada |
+| V04-07 | security-admin | `/provider-directory/child-organizations-form` | `DirectorioOrganizacionesHijasFormulario` | — | maqueta portada |
+| V04-01 | superadmin | `/provider-directory/organizations-form` | `DirectorioOrganizacionesFormulario` | — | maqueta portada |
+| V04-01 | superadmin | `/provider-directory/organizations-suspend` | `DirectorioOrganizacionesSuspender` | — | maqueta portada |
+| V05-01 | security-admin | `/people/patients-form` | `PersonasPacientesFormulario` | — | maqueta portada |
+| V05-01 | security-admin | `/people/patients-merge` | `PersonasPacientesFusionar` | — | maqueta portada |
+| V05-01 | security-admin | `/people/patients-list` | `PersonasPacientesListado` | — | maqueta portada |
+| V05-01 | security-admin | `/people/patients-revert` | `PersonasPacientesRevertir` | — | maqueta portada |
+| V05-02 | security-admin | `/people/identity-links-form` | `PersonasVinculosDeIdentidadFormulario` | — | maqueta portada |
+| V05-02 | security-admin | `/people/identity-links-list` | `PersonasVinculosDeIdentidadListado` | — | maqueta portada |
+| V05-04 | security-admin | `/people/portal-proxies-form` | `PersonasApoderadosDePortalFormulario` | — | maqueta portada |
+| V05-04 | security-admin | `/people/portal-proxies-list` | `PersonasApoderadosDePortalListado` | — | maqueta portada |
+| V05-05 | security-admin | `/people/related-persons-form` | `PersonasRelacionadasFormulario` | — | maqueta portada |
+| V05-05 | security-admin | `/people/related-persons-list` | `PersonasRelacionadasListado` | — | maqueta portada |
+| V05-06 | security-admin | `/people/credentials-list` | `PersonasCredencialesListado` | — | maqueta portada |
+| V05-06 | security-admin | `/people/credentials-verify` | `PersonasCredencialesVerificar` | — | maqueta portada |
+| V05-07 | security-admin | `/people/persons-list` | `PersonasListado` | — | maqueta portada |
+| V05-07 | security-admin | `/people/persons-record-death` | `PersonasRegistrarDefuncion` | — | maqueta portada |
+| V05-08 | security-admin | `/people/account-links-form` | `PersonasVinculosDeCuentaFormulario` | — | maqueta portada |
+| V05-08 | security-admin | `/people/account-links-list` | `PersonasVinculosDeCuentaListado` | — | maqueta portada |
+| V05-09 | security-admin | `/people/practitioners-form` | `PersonasProfesionalesFormulario` | — | maqueta portada |
+| V05-09 | security-admin | `/people/practitioners-list` | `PersonasProfesionalesListado` | — | maqueta portada |
+| V05-10 | security-admin | `/people/jurisdiction-authorizations-form` | `PersonasAutorizacionesDeJurisdiccionFormulario` | — | maqueta portada |
+| V05-10 | security-admin | `/people/jurisdiction-authorizations-list` | `PersonasAutorizacionesDeJurisdiccionListado` | — | maqueta portada |
+| V05-11 | security-admin | `/people/specialties-form` | `PersonasEspecialidadesFormulario` | — | maqueta portada |
+| V05-11 | security-admin | `/people/specialties-list` | `PersonasEspecialidadesListado` | — | maqueta portada |
+| V05-03 | sesion-autenticada | `/people/own-summary-list` | `PersonasResumenPropioListado` | — | maqueta portada |
+| V06-05 | clinical-approver | `/access-control/emergency-access-form` | `AccesosAccesoDeEmergenciaFormulario` | — | maqueta portada |
+| V06-06 | clinical-approver | `/access-control/patient-clinical-access-form` | `AccesosClinicosDelPacienteFormulario` | — | maqueta portada |
+| V06-06 | clinical-approver | `/access-control/patient-clinical-access-list` | `AccesosClinicosDelPacienteListado` | — | maqueta portada |
+| V06-01 | clinician | `/access-control/care-relationships-form` | `AccesosRelacionesDeCuidadoFormulario` | — | maqueta portada |
+| V06-01 | clinician | `/access-control/care-relationships-list` | `AccesosRelacionesDeCuidadoListado` | — | maqueta portada |
+| V06-01 | clinician | `/access-control/care-relationships-revoke` | `AccesosRelacionesDeCuidadoRevocar` | — | maqueta portada |
+| V06-02 | security-admin | `/access-control/legal-representations-form` | `AccesosRepresentacionesLegalesFormulario` | — | maqueta portada |
+| V06-02 | security-admin | `/access-control/legal-representations-list` | `AccesosRepresentacionesLegalesListado` | — | maqueta portada |
+| V06-02 | security-admin | `/access-control/legal-representations-revoke` | `AccesosRepresentacionesLegalesRevocar` | — | maqueta portada |
+| V06-03 | security-admin | `/access-control/clinical-access-list` | `AccesosClinicosListado` | — | maqueta portada |
+| V06-03 | security-admin | `/access-control/clinical-access-revoke` | `AccesosClinicosRevocar` | — | maqueta portada |
+| V06-04 | security-admin | `/access-control/decisions-evaluate` | `AccesosDecisionesEvaluar` | — | maqueta portada |
+| V06-07 | security-admin | `/access-control/cache-invalidate` | `AccesosCacheInvalidar` | — | maqueta portada |
+| V06-08 | security-admin | `/access-control/permission-categories-form` | `AccesosCategoriasDePermisoFormulario` | — | maqueta portada |
+| V06-08 | security-admin | `/access-control/permission-categories-list` | `AccesosCategoriasDePermisoListado` | — | maqueta portada |
+| V06-09 | security-admin | `/access-control/permissions-form` | `AccesosPermisosFormulario` | — | maqueta portada |
+| V06-09 | security-admin | `/access-control/permissions-list` | `AccesosPermisosListado` | — | maqueta portada |
+| V06-10 | security-admin | `/access-control/resource-scope-form` | `AccesosAlcanceDeRecursoFormulario` | — | maqueta portada |
+| V06-10 | security-admin | `/access-control/resource-scope-list` | `AccesosAlcanceDeRecursoListado` | — | maqueta portada |
+| V06-11 | security-admin | `/access-control/roles-form` | `AccesosRolesFormulario` | — | maqueta portada |
+| V06-11 | security-admin | `/access-control/roles-list` | `AccesosRolesListado` | — | maqueta portada |
+| V06-12 | security-admin | `/access-control/field-permissions-form` | `AccesosPermisosDeCampoFormulario` | — | maqueta portada |
+| V06-12 | security-admin | `/access-control/field-permissions-list` | `AccesosPermisosDeCampoListado` | — | maqueta portada |
+| V06-13 | security-admin | `/access-control/role-permissions-form` | `AccesosPermisosDelRolFormulario` | — | maqueta portada |
+| V06-13 | security-admin | `/access-control/role-permissions-list` | `AccesosPermisosDelRolListado` | — | maqueta portada |
+| V06-14 | security-admin | `/access-control/access-policies-form` | `AccesosPoliticasDeAccesoFormulario` | — | maqueta portada |
+| V06-14 | security-admin | `/access-control/access-policies-list` | `AccesosPoliticasDeAccesoListado` | — | maqueta portada |
+| V06-15 | security-admin | `/access-control/permission-grants-form` | `AccesosConcesionesDePermisoFormulario` | — | maqueta portada |
+| V06-15 | security-admin | `/access-control/permission-grants-list` | `AccesosConcesionesDePermisoListado` | — | maqueta portada |
+| V06-16 | security-admin | `/access-control/role-assignments-form` | `AccesosAsignacionesDeRolFormulario` | — | maqueta portada |
+| V06-16 | security-admin | `/access-control/role-assignments-list` | `AccesosAsignacionesDeRolListado` | — | maqueta portada |
+| V65-01 | publico | `/search/finder-list` | `BuscarBuscadorListado` | PublicDirectoryClient | conectada |
+| V65-02 | publico | `/search/practitioners-list` | `BuscarProfesionalesListado` | PublicDirectoryClient | conectada con deuda |
+| V65-03 | publico | `/search/medications-list` | `BuscarMedicamentosListado` | PublicMarketplaceClient | conectada |
+| V65-04 | publico | `/search/hospitals-list` | `BuscarHospitalesListado` | PublicDirectoryClient | conectada |
+| V65-05 | publico | `/search/laboratories-list` | `BuscarLaboratoriosListado` | PublicDirectoryClient | conectada |
+| V65-06 | publico | `/search/insurers-list` | `BuscarAseguradorasListado` | PublicDirectoryClient | conectada |
+| V65-07 | publico | `/search/practitioner-profile-detail` | `BuscarPerfilProfesionalDetalle` | — | maqueta portada |
+| V65-08 | publico | `/search/organization-profile-detail` | `BuscarPerfilOrganizacionDetalle` | — | maqueta portada |
+| V65-09 | publico | `/search/pharmacy-profile-detail` | `BuscarPerfilFarmaciaDetalle` | — | maqueta portada |
+| V65-10 | publico | `/search/laboratory-profile-detail` | `BuscarPerfilLaboratorioDetalle` | — | maqueta portada |
+| V65-11 | publico | `/search/insurer-profile-detail` | `BuscarPerfilAseguradoraDetalle` | — | maqueta portada |
+| V65-12 | publico | `/search/nearby-detail` | `BuscarCercaniaDetalle` | PublicDirectoryClient | conectada |
+| V65-13 | sesion-autenticada | `/search/followed-and-saved-list` | `BuscarSeguidosYGuardadosListado` | — | maqueta portada |
+| V65-14 | sesion-autenticada | `/search/rate-care-form` | `BuscarCalificarLaAtencionFormulario` | — | maqueta portada |
+| null | — | `/home` | `InicioPortada` | — | maqueta portada |
 
 ## Recuento
 
 | Estado | Pantallas |
 |---|---|
-| conectada | 176 |
+| conectada | 196 |
 | maqueta portada | 119 |
-| conectada con deuda | 19 |
 | presentacional | 11 |
-| sin pantalla | 2 |
+| conectada con deuda | 6 |
+| sin pantalla | 3 |

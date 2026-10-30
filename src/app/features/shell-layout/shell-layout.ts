@@ -12,12 +12,13 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
 import { PdfBrandingService } from '../../core/pdf-branding/pdf-branding.service';
-import { esPaciente, etiquetasDeRoles } from '../../core/auth/role-labels';
+import { PatientSurveyInbox } from '../../core/patient-surveys/patient-survey-inbox';
+import { esPaciente, etiquetasDeRoles, vieneAAtenderse } from '../../core/auth/role-labels';
 import { CartStore } from '../../core/data-access/pharmacy-cart/cart.store';
 import { LOGIN_ROUTE } from '../../core/http/auth.interceptor';
 import { Breakpoints } from '../../core/layout/breakpoints';
@@ -54,6 +55,7 @@ import { FirstStepsStore } from '../dashboard/patient-home/first-steps/first-ste
 const PATIENT_STYLESHEET_ID = 'alovida-paciente-css';
 const PATIENT_STYLESHEET_HREF = 'paciente.css?v=2';
 import { PHARMACY_CART_ROUTE } from '../account/pharmacy/pharmacy.routes';
+import { MIS_CUESTIONARIOS_ROUTE } from '../account/questionnaires/questionnaires.routes';
 import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 
 /**
@@ -66,6 +68,26 @@ import { PHARMACY_TESTIDS } from '../account/pharmacy/pharmacy.testids';
 function contiene(ruta: string, url: string): boolean {
   return url === ruta || url.startsWith(`${ruta}/`);
 }
+
+/**
+ * Pantallas cuyo destino es un atajo de la cabecera y no un renglón del menú.
+ *
+ * Todas cuelgan de `/my-account`, que es «Mi perfil»: por la regla del prefijo
+ * más largo, estar en «Mis gastos» encendía «Mi perfil» en la barra lateral, y
+ * la pantalla se marcaba en dos lugares a la vez (propietario, 27/10/2026). El
+ * atajo ya se marca arriba (`routerLinkActive`), así que en estas el menú no
+ * reclama nada. El carrito no está: es parte de «Farmacia», y ahí marcarla es
+ * correcto.
+ */
+const DESTINOS_DE_LA_CABECERA: readonly string[] = [
+  '/my-account/spending',
+  '/my-account/invoices',
+  '/my-account/requests',
+  '/my-account/promotions',
+  // «Mis encuestas» (28/10/2026): la pantalla es «Mis cuestionarios», que sigue
+  // fuera del menú lateral; sin esto «Mi perfil» se marcaba junto con el atajo.
+  MIS_CUESTIONARIOS_ROUTE,
+];
 
 /** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
 const PANEL = '/dashboard';
@@ -102,6 +124,7 @@ const TIPO_DE_ORGANIZACION_LEGIBLE: Readonly<Record<string, string>> = {
     NgTemplateOutlet,
     AlovidaThemeToggleDirective,
     RouterLink,
+    RouterLinkActive,
     RouterOutlet,
     TutorialOverlay,
     TutorialTarget,
@@ -222,6 +245,39 @@ export class ShellLayout {
   protected readonly esPacienteDelCarrito = computed(() => esPaciente(this.auth.roles()));
 
   /**
+   * «Mis encuestas» en la barra superior (propietario, 28/10/2026): la bandeja
+   * del paciente. Sólo la ve el paciente y sólo si alguna atención terminada le
+   * generó una encuesta —lo dice `GET /surveys/me/invitations`, no un rol
+   * escrito acá—. El número es el de pendientes dentro del plazo.
+   */
+  private readonly encuestas = inject(PatientSurveyInbox);
+  protected readonly ofreceMisEncuestas = computed(
+    () => this.esPacienteDelCarrito() && this.encuestas.hayInvitaciones(),
+  );
+  protected readonly encuestasPendientes = this.encuestas.pendientes;
+  protected readonly rutaDeEncuestas = MIS_CUESTIONARIOS_ROUTE;
+  protected readonly parametrosDeEncuestas = { seccion: 'encuestas' } as const;
+
+  /** El nombre accesible de la bandeja: el ícono solo no dice cuántas esperan. */
+  protected readonly etiquetaEncuestas = computed(() => {
+    const cuantas = this.encuestasPendientes();
+    if (cuantas === 0) return 'Mis encuestas';
+    return `Mis encuestas, ${cuantas} ${cuantas === 1 ? 'pendiente' : 'pendientes'}`;
+  });
+
+  /** «Emergencia» (27/10/2026): sólo para quien viene a atenderse, no la señal del carrito. */
+  protected readonly ofreceEmergencia = computed(() => vieneAAtenderse(this.auth.roles()));
+
+  /**
+   * Dónde marca el tutorial el botón de «Emergencia» (28/10/2026): sólo en el
+   * ícono de la cabecera y sólo donde se ve (≤ 900 px). En el escritorio no hay
+   * botón, así que no hay objetivo y el paso se saltea.
+   */
+  protected readonly objetivoEmergencia = computed(() =>
+    this.breakpoints.canCollapseNav() ? '' : 'nav-emergencia',
+  );
+
+  /**
    * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
    * cuarta vuelta, quien atiende. El resto de los roles, la de siempre.
    */
@@ -231,6 +287,28 @@ export class ShellLayout {
   protected readonly usaRediseno = computed(() => this.esPacienteDelCarrito() || this.esMedico());
   protected readonly pharmacyCartRoute = PHARMACY_CART_ROUTE;
   protected readonly pharmacyTestids = PHARMACY_TESTIDS;
+
+  /**
+   * «Mis gastos» se marca también en «Mis facturas»: para el paciente es el
+   * mismo atajo desde la fusión del 27/10/2026, y sin esto la cabecera quedaba
+   * sin nada marcado al entrar por «Ver mis facturas».
+   */
+  protected readonly gastosActivo = computed(() => {
+    const url = this.urlActual();
+    return contiene('/my-account/spending', url) || contiene('/my-account/invoices', url);
+  });
+
+  /**
+   * «Mis organizaciones» en la barra superior (propietario, 28/10/2026): sólo
+   * se ofrece a quien la sección deja entrar. Se le pregunta a
+   * `visibleSections()` —la misma lista que el guard— y no a un rol escrito
+   * acá, para que la barra no pueda ofrecer una puerta que el router cierra.
+   */
+  protected readonly ofreceMisOrganizaciones = computed(() =>
+    this.navigation
+      .visibleSections()
+      .some((seccion) => seccion.path === 'administration/medical-organization'),
+  );
 
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
   protected readonly etiquetaCarrito = computed(() => {
@@ -266,6 +344,19 @@ export class ShellLayout {
       if (this.user() !== null) {
         untracked(() => this.chats.prepararContador());
       }
+    });
+
+    /* La bandeja de encuestas se lee una vez, al tener una sesión de paciente
+       (una lectura, sin sondeo), y se olvida si la sesión deja de serlo. */
+    effect(() => {
+      const paciente = this.esPacienteDelCarrito() && this.user() !== null;
+      untracked(() => {
+        if (paciente) {
+          this.encuestas.cargarSiHaceFalta();
+        } else {
+          this.encuestas.limpiar();
+        }
+      });
     });
 
     /* «Primeros pasos» del paciente: anota qué secciones ya conoció para que el
@@ -356,18 +447,24 @@ export class ShellLayout {
     // Los fijos entran en la cuenta: se dibujan fuera de los grupos, pero son
     // destinos del menú igual que el resto, y sin esto «Mi perfil» era la única
     // entrada de la barra que nunca se marcaba al estar parado en ella.
-    return (
-      [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
-        .flatMap((item) =>
-          [item.route, ...(representadas.get(item.route) ?? [])]
-            .filter((ruta) => contiene(ruta, url))
-            .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
-        )
-        .reduce<{ renglon: string; largo: number } | null>(
-          (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
-          null,
-        )?.renglon ?? null
-    );
+    const mejor = [...this.destinosFijos(), ...this.sections().flatMap((seccion) => seccion.items)]
+      .flatMap((item) =>
+        [item.route, ...(representadas.get(item.route) ?? [])]
+          .filter((ruta) => contiene(ruta, url))
+          .map((ruta) => ({ renglon: item.route, largo: ruta.length })),
+      )
+      .reduce<{ renglon: string; largo: number } | null>(
+        (mejor, actual) => (mejor === null || actual.largo > mejor.largo ? actual : mejor),
+        null,
+      );
+
+    // Un atajo de la cabecera más específico que el renglón que ganó le saca la
+    // marca: el padre del menú no representa una pantalla que se abre desde arriba.
+    const atajo = DESTINOS_DE_LA_CABECERA.find((ruta) => contiene(ruta, url));
+    if (mejor !== null && atajo !== undefined && atajo.length > mejor.largo) {
+      return null;
+    }
+    return mejor?.renglon ?? null;
   });
 
   private rutaLimpia(): string {

@@ -12,19 +12,18 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, forkJoin, map, of } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
-// El sello de reconsulta (C4): los dos campos y su predicado viven en los
-// tipos congelados de `scheduling`.
+// El sello de reconsulta (C4): los dos campos y su predicado viven en los tipos congelados de `scheduling`.
 import { esReconsulta } from '../../../core/data-access/scheduling/scheduling.types';
 import type {
   AgendaResource,
   AgendaSlot,
   Booking,
+  PaymentStateInfo,
   ServiceOffering,
   WaitlistEntry,
 } from '../../../core/data-access/scheduling/scheduling.types';
@@ -46,20 +45,25 @@ import { ReferenceCombobox } from '../../../shared/components/molecules/referenc
 import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
+import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
-import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
-import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../shared/components/organisms/date-picker/date-picker';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { AGENDA_ROUTE } from '../../agenda/agenda.routes';
 import { AppointmentCalendar } from './appointment-calendar/appointment-calendar';
+import { BookingPaymentReceipts } from './booking-payment-receipts/booking-payment-receipts';
+import { AppointmentPaymentBadge, AppointmentReceiptUpload } from './appointment-payment/payment';
+import { changeNotice, delayNotice } from './appointment-notices';
 import type { CalendarAppointment } from './appointment-calendar/appointment-calendar.types';
 import {
   CAMPAIGN_PARAM,
   CAMPAIGN_TITLE_PARAM,
+  FLEXIBLE_BOOKING_SLOT,
   PROFESSIONAL_PARAM,
   SERVICE_BOOKING_SLOT,
   SERVICE_PARAM,
@@ -234,6 +238,8 @@ interface TurnoVisible {
   readonly avisoDeDemora: string;
   /** Cuándo la informó, para fecharla en pantalla. */
   readonly demoraCuando: Date | null;
+  /** El estado de pago que trae la lista (H03); ausente si nadie lo marcó. */
+  readonly payment: PaymentStateInfo | undefined;
   /**
    * De cuándo se movió el turno, si se reprogramó (TJ-2).
    *
@@ -273,6 +279,13 @@ interface EsperaVisible {
   readonly anotadaEl: Date;
 }
 
+/** Las horas flexibles de un mismo día (A6). */
+interface GrupoDeHorasFlexibles {
+  readonly clave: string;
+  readonly titulo: string;
+  readonly horas: readonly HorarioVisible[];
+}
+
 /** Un horario que se puede pedir. */
 interface HorarioVisible {
   readonly id: string;
@@ -296,6 +309,11 @@ interface HorarioVisible {
    * con la oferta, la sede y el inicio.
    */
   readonly ofertaId?: string;
+  /**
+   * Una hora de un horario flexible, sin turnos fijos (P36). Como la de un
+   * servicio, no es un cupo: se reserva por agenda e inicio.
+   */
+  readonly flexible?: boolean;
 }
 
 /**
@@ -369,20 +387,25 @@ const SEDE_CUALQUIERA = 'cualquiera';
 @Component({
   selector: 'app-appointments',
   imports: [
+    Accordion,
+    AccordionPanel,
     Alert,
     AppButton,
     AppButtonLink,
     AppointmentCalendar,
     SessionPayment,
+    AppointmentPaymentBadge,
+    AppointmentReceiptUpload,
     Badge,
+    BookingPaymentReceipts,
     DatePipe,
+    EmptyState,
     FormField,
     PageHeader,
     DatePicker,
     ReferenceCombobox,
     RouterLink,
     SearchField,
-    SegmentedControl,
     Select,
   ],
   templateUrl: './appointments.html',
@@ -487,17 +510,6 @@ export class Appointments {
   protected readonly seleccionado = signal<string | null>(
     this.route.snapshot.queryParamMap.get(PARAM_DE_TURNO),
   );
-
-  /** Las dos formas de mirar la misma colección (FT-04). */
-  protected readonly vistasDisponibles: readonly SegmentedOption<VistaDeTurnos>[] = [
-    { value: 'lista', label: 'Lista', icon: 'orders', description: 'Ver sus citas como lista' },
-    {
-      value: 'calendario',
-      label: 'Calendario',
-      icon: 'calendar',
-      description: 'Ver sus citas en un calendario',
-    },
-  ];
 
   protected elegirVista(vista: VistaDeTurnos): void {
     void this.router.navigate([], {
@@ -1226,6 +1238,38 @@ export class Appointments {
     return todos.filter((horario) => mismoDia(horario.desde, dia));
   });
 
+  /** Los horarios de turno fijo (o de servicio), uno por fila como siempre. */
+  protected readonly horariosFijos = computed<readonly HorarioVisible[]>(() =>
+    this.horariosListos().filter((horario) => horario.flexible !== true),
+  );
+
+  /**
+   * P36 · las horas de un horario flexible, **agrupadas por día** (A6). Un
+   * horario flexible ofrece una hora cada 15 minutos durante semanas: en filas
+   * eran ≈180 renglones seguidos. Por día, en un acordeón con el primero
+   * abierto, y cada hora como un botón chico.
+   */
+  protected readonly gruposFlexibles = computed<readonly GrupoDeHorasFlexibles[]>(() => {
+    const grupos = new Map<string, HorarioVisible[]>();
+    for (const horario of this.horariosListos()) {
+      if (horario.flexible !== true) continue;
+      const d = horario.desde;
+      const clave = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const lista = grupos.get(clave) ?? [];
+      lista.push(horario);
+      grupos.set(clave, lista);
+    }
+    return [...grupos.entries()].map(([clave, horas]) => ({
+      clave,
+      titulo: `${horas[0].desde.toLocaleDateString('es-BO', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'short',
+      })} · ${horas.length === 1 ? '1 hora libre' : `${horas.length} horas libres`}`,
+      horas,
+    }));
+  });
+
   constructor() {
     // Se recarga con cada conmutación de paciente, no sólo al montar: los
     // turnos de un hijo no son los de su madre, y dejar los anteriores en
@@ -1418,20 +1462,44 @@ export class Appointments {
     let ultimoFallo: unknown = null;
     forkJoin(
       enFoco.map((recurso) =>
-        this.scheduling
-          .listSlots({
+        forkJoin([
+          this.scheduling.listSlots({
             resourceId: recurso.id,
             from: desde,
             to: hasta,
             onlyAvailable: true,
             limit: TOPE_DE_HORARIOS,
-          })
-          .pipe(
-            map((pagina) =>
-              pagina.items
+          }),
+          // P36 · las horas del horario flexible de la misma agenda. Vacío si
+          // publicó turnos fijos. Que esta lectura falle no esconde los turnos
+          // fijos: se avisa como lista incompleta y se sigue.
+          this.scheduling.getFlexibleAvailability(recurso.id, { from: desde, to: hasta }).pipe(
+            map((disponibilidad) => disponibilidad.items),
+            catchError(() => {
+              this.horariosIncompletos.set(true);
+              return of([]);
+            }),
+          ),
+        ]).pipe(
+          map(([pagina, flexibles]) => {
+            const sede = conSede ? nombreDeSede(recurso) : '';
+            return [
+              ...pagina.items
                 .filter((cupo) => cupo.remainingCapacity > 0)
-                .map((cupo) => this.aHorarioVisible(cupo, conSede ? nombreDeSede(recurso) : '')),
-            ),
+                .map((cupo) => this.aHorarioVisible(cupo, sede)),
+              ...flexibles.map(
+                (hora): HorarioVisible => ({
+                  id: `${FLEXIBLE_BOOKING_SLOT}|${recurso.id}|${hora.startAt.toISOString()}`,
+                  desde: hora.startAt,
+                  hasta: hora.endAt,
+                  resourceId: recurso.id,
+                  lugaresLibres: 1,
+                  sede,
+                  flexible: true,
+                }),
+              ),
+            ];
+          }),
             // Que una sede no conteste no puede esconder los horarios de la
             // otra: se anota la falla y se sigue con lo que sí llegó.
             catchError((error: unknown) => {
@@ -1804,6 +1872,7 @@ export class Appointments {
   protected rutaDeReserva(horario: HorarioVisible): string {
     // Un horario de servicio no es un cupo: no hay id que mandar. La pantalla de
     // reserva lo reencuentra por la oferta, la sede y el inicio.
+    if (horario.flexible === true) return reservaDelPortalRoute(FLEXIBLE_BOOKING_SLOT);
     return reservaDelPortalRoute(
       horario.ofertaId === undefined ? horario.id : RESERVA_DE_SERVICIO,
     );
@@ -1819,6 +1888,7 @@ export class Appointments {
       desde: horario.desde.toISOString(),
       hasta: horario.hasta.toISOString(),
       ...(horario.ofertaId === undefined ? {} : { oferta: horario.ofertaId }),
+      ...(horario.flexible === true ? { flexible: '1' } : {}),
     };
   }
 
@@ -1841,10 +1911,11 @@ export class Appointments {
       motivo: cita.reasonText ?? '',
       servicio: servicioEnUnaLinea(cita),
       reprogramadoDesde: cita.rescheduledFrom ?? null,
-      avisoDelCambio: avisoDelCambio(cita),
+      avisoDelCambio: changeNotice(cita),
       cambioCuando: cita.statusReason?.changedAt ?? null,
-      avisoDeDemora: avisoDeDemora(cita),
+      avisoDeDemora: delayNotice(cita),
       demoraCuando: cita.delayNotice?.announcedAt ?? null,
+      payment: cita.paymentState,
       esReconsulta: esReconsulta(cita),
       reconsultaDe: cita.followUpOf?.startAt ?? null,
     };
@@ -1935,45 +2006,6 @@ export class Appointments {
       sede,
     };
   }
-}
-
-/**
- * Cómo se le cuenta al paciente el último cambio de su turno (corrección #14).
- *
- * Quién lo hizo cambia la frase entera, y por eso no se resuelve en la
- * plantilla: «tu profesional canceló el turno» y «cancelaste el turno» son la
- * misma transición contada desde dos lados, y mostrar la segunda cuando pasó la
- * primera es peor que no mostrar nada.
- *
- * Devuelve `''` cuando no hay motivo registrado, que es lo corriente en un
- * turno que nadie tocó y en los anteriores a esta versión.
- */
-function avisoDelCambio(cita: Booking): string {
-  const cambio = cita.statusReason;
-  if (cambio === undefined || cambio.reasonText.trim() === '') {
-    return '';
-  }
-  const quien = cambio.actorKind === 'PATIENT' ? 'Indicó' : 'El profesional indicó';
-  return `${quien}: ${cambio.reasonText}`;
-}
-
-/**
- * Cómo se le cuenta al paciente la demora de su profesional (P8).
- *
- * Los minutos van siempre —son lo único que permite decidir si salir de casa— y
- * el mensaje del profesional sólo si lo escribió: dejar «Motivo:» colgando
- * cuando no hay motivo es peor que no decir nada.
- *
- * Devuelve `''` cuando nadie informó una demora, que es el caso corriente.
- */
-function avisoDeDemora(cita: Booking): string {
-  const demora = cita.delayNotice;
-  if (demora === undefined || demora.delayMinutes <= 0) {
-    return '';
-  }
-  const base = `El profesional avisó que se demora unos ${demora.delayMinutes} minutos`;
-  const mensaje = demora.message?.trim() ?? '';
-  return mensaje === '' ? `${base}.` : `${base}: ${mensaje}`;
 }
 
 /** Si dos fechas caen el mismo día del calendario. */

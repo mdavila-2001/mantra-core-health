@@ -128,16 +128,3 @@ Dos reglas al enchufar el botón:
    contiene el encabezado **y** la tabla.
 2. **Marcá con `data-pdf-ignore` lo que es control y no dato.**
    `app-data-table` ya lo hace con sus celdas de selección y de detalle.
-
-## Deuda conocida
-
-- **La API (`mantra-core-health-api`) tiene tres PDF con pdfkit sin capa
-  común** —receta oficial, encuentro cerrado, certificado de portabilidad—,
-  cada uno con su margen, su tamaño de hoja (A4 o LETTER) y su azul
-  (`#0b3d4d`, que no es `--c-petrol-500`), sin logo del consultorio, sin firma
-  y sin numeración de páginas. Fase 2: un `src/common/pdf/` que espeje
-  `pdf-theme.ts` (membrete, pie, marca, QR) y migre los tres servicios. Mientras
-  tanto, la maqueta sirve la receta oficial por este mismo motor
-  (`clinical.handlers.ts`).
-- `features/billing/representacion-grafica.ts` dibuja la marca de agua
-  «SIMULADO» y el QR con jsPDF crudo, fuera del tema.

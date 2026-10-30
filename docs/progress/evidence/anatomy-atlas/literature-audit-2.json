@@ -1,0 +1,806 @@
+{
+  "auditor": "literature-audit-2",
+  "items": [
+    {
+      "id": "FMA:43887",
+      "sentence": 1,
+      "es": "En 54 muslos de cadáveres coreanos fue un músculo pequeño y aplanado, presente en el 94,4 % de los especímenes.",
+      "cites": [
+        "PMID:32896868"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«small and flat muscle observed in 94.4% of the specimens»; 54 muslos de 27 cadáveres coreanos. Traducción casi literal."
+    },
+    {
+      "id": "FMA:43887",
+      "sentence": 2,
+      "es": "En esa serie se originaba en la rama inferior del pubis como parte superior del aductor mayor y se insertaba desde el trocánter menor hasta la porción alta de la línea áspera.",
+      "cites": [
+        "PMID:32896868"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«originated from the inferior ramus of the pubis as the upper part of the AMa, and inserted from the lesser trochanter to the upper part of the linea aspera». Literal."
+    },
+    {
+      "id": "FMA:43887",
+      "sentence": 3,
+      "es": "Se mostró completamente independiente del aductor mayor en el 63,0 % de los casos.",
+      "cites": [
+        "PMID:32896868"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«completely separate from the AMa in 63.0%». Literal."
+    },
+    {
+      "id": "FMA:43887",
+      "sentence": 4,
+      "es": "La arteria circunfleja femoral medial se encontró siempre en su borde superior.",
+      "cites": [
+        "PMID:32896868"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«MCFA was always found at the superior border of the AMi». Sin «en esa serie», pero el pretérito lo ancla al estudio."
+    },
+    {
+      "id": "FMA:43887",
+      "sentence": 5,
+      "es": "En otra disección de 40 cadáveres apareció en alrededor de la mitad, con una longitud máxima media de 14,6 cm y una anchura de 7 cm.",
+      "cites": [
+        "PMID:21052670"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "40 cadáveres humanos, «roughly one half»; «average maximal length, width ... 14.6 cm, 7 cm». Correcto."
+    },
+    {
+      "id": "FMA:43887",
+      "sentence": 6,
+      "es": "Cuando faltaba, el cuadrado femoral era más prominente y se prolongaba más hacia abajo.",
+      "cites": [
+        "PMID:21052670"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«When absent, the quadratus femoris was always more prominent and extended more inferiorly». Pierde «always», sin consecuencia."
+    },
+    {
+      "id": "FMA:7913",
+      "sentence": 1,
+      "es": "Para exponer los vasos mamarios internos como receptores en la reconstrucción mamaria con colgajo libre se suele extirpar un segmento medial del tercer cartílago costal homolateral.",
+      "cites": [
+        "PMID:10624295",
+        "PMID:21102306"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "10624295: «a medial segment of the ipsilateral third costal cartilage is usually excised»; 21102306 coincide («traditionally entails removing a segment of the third costal cartilage»). Literal."
+    },
+    {
+      "id": "FMA:7913",
+      "sentence": 2,
+      "es": "En 25 reconstrucciones consecutivas con esa técnica no se registraron neumotórax, neuralgia intercostal, hernias torácicas ni defectos de contorno en la zona resecada.",
+      "cites": [
+        "PMID:10624295"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "25 casos consecutivos: sin neumotórax, sin dolor sugestivo de neuralgia intercostal, sin defectos de contorno ni hernias. La neuralgia se infiere de «no complaints of chest pain», matiz aceptable."
+    },
+    {
+      "id": "FMA:7913",
+      "sentence": 3,
+      "es": "Una variante con preservación parcial limita el recorte a la mitad superior del tercer cartílago costal, lo que en 137 procedimientos dio vasos receptores más largos que la preservación costal total (mediana 20.5 mm frente a 17.6 mm).",
+      "cites": [
+        "PMID:36253301"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«kept within the superior half of the third costal cartilage»; 137 vs 57 procedimientos; mediana 20.5 vs 17.6 mm. Castellano: el separador decimal debería ser coma (20,5 / 17,6), incoherente con el resto del atlas."
+    },
+    {
+      "id": "FMA:7913",
+      "sentence": 4,
+      "es": "En un caso de músculo esternal bilateral, el vientre izquierdo se insertaba en el tercer cartílago costal en su unión con el esternón.",
+      "cites": [
+        "PMID:19957564"
+      ],
+      "verdict": "infiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "El resumen dice «the left one was inserted into the third costal cartilage»: el vientre IZQUIERDO se inserta en el tercer cartílago costal IZQUIERDO (el derecho iba al cuarto). La estructura es el tercer cartílago costal DERECHO: lateralidad equivocada, habla de otra estructura."
+    },
+    {
+      "id": "UBERON:0001000",
+      "sentence": 1,
+      "es": "La ectopia del conducto deferente es una anomalía congénita rara que se asocia a malformaciones urinarias y anorrectales.",
+      "cites": [
+        "PMID:35385775"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«Vas deferens ectopia is a rare congenital anomaly associated with urinary tract and anorectal anomalies». Traducción literal."
+    },
+    {
+      "id": "UBERON:0001000",
+      "sentence": 2,
+      "es": "Se atribuye a que no se oblitera el canal que une la yema ureteral con el conducto mesonéfrico, de modo que el deferente puede desembocar en el uréter o en la vejiga.",
+      "cites": [
+        "PMID:35385775"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«a failure of the channel that connects the two to obliterate can produce an ectopic vas deferens connected to the ureter or bladder». Paráfrasis correcta."
+    },
+    {
+      "id": "UBERON:0001000",
+      "sentence": 3,
+      "es": "En 1978 se contaban 11 casos publicados de conducto deferente ectópico, con 13 inserciones anómalas, dos de ellas bilaterales.",
+      "cites": [
+        "PMID:712905"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "El resumen dice «To date 11 cases ... 13 ectopic vas insertions, 2 of which are bilateral»; el año 1978 no está en el resumen (viene de los metadatos). «Dos de ellas bilaterales» es tan ambiguo como el original."
+    },
+    {
+      "id": "UBERON:0001000",
+      "sentence": 4,
+      "es": "La ausencia congénita del conducto deferente es una enfermedad genética rara ligada a mutaciones del gen regulador de la conductancia transmembrana de la fibrosis quística, que suele descubrirse al estudiar una infertilidad masculina.",
+      "cites": [
+        "PMID:33353780"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«rare genetic condition ... related to mutations in the cystic fibrosis transmembrane regulatory genes ... typically found during work-up of male infertility». El nombre del gen CFTR está bien puesto en castellano."
+    },
+    {
+      "id": "UBERON:0001000",
+      "sentence": 5,
+      "es": "En varones infértiles estudiados con ecografía escrotal, la ausencia bilateral congénita del deferente se acompañó siempre de alteraciones del epidídimo, con una sensibilidad del 100 %.",
+      "cites": [
+        "PMID:32955739"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«Epididymal abnormalities were universal in men with congenital bilateral absence of vas deferens, with a sensitivity of 100%». Casi literal."
+    },
+    {
+      "id": "UBERON:0001160",
+      "sentence": 1,
+      "es": "En 232 pacientes con neoplasias neuroendocrinas gástricas poco diferenciadas, el 53.49 % de los tumores con localización conocida asentaba en el tercio superior del estómago, es decir, en el cardias y el fondo.",
+      "cites": [
+        "PMID:34135560"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«located in the upper third of the stomach (cardia and fundus of stomach: 115/215, 53.49%)»; «con localización conocida» sale del denominador 215, correcto. Castellano: 53,49 % con coma decimal."
+    },
+    {
+      "id": "UBERON:0001160",
+      "sentence": 2,
+      "es": "En 57 pacientes con carcinoma del cardias o del fondo gástrico, la tomografía por emisión de positrones con FDG tuvo escaso valor para el estadio T, pero resultó útil para valorar ganglios y metástasis a distancia.",
+      "cites": [
+        "PMID:16784672"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«limited value in confirming T stage ... It showed potential in N and M staging». «Resultó útil» exagera «showed potential»."
+    },
+    {
+      "id": "UBERON:0001160",
+      "sentence": 3,
+      "es": "Se ha descrito una paciente con esclerosis tuberosa y múltiples pólipos hamartomatosos en el fondo del estómago.",
+      "cites": [
+        "PMID:10983700"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Mujer de 42 años con esclerosis tuberosa y «multiple polyps in the fundus», hamartomatosos. Correcto."
+    },
+    {
+      "id": "UBERON:0001446",
+      "sentence": 1,
+      "es": "En 31 piernas de cadáver se hallaron 88 perforantes cutáneas del colgajo de peroné, con una media de 2,8 por pierna (entre 1 y 4) y un diámetro medio de 1,7 mm que disminuía de proximal a distal.",
+      "cites": [
+        "PMID:35576016"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«Thirty-one lower legs ... 88 cutaneous perforators ... 2.8 per leg (1-4). The mean diameter was 1.7 mm and decreased from proximal to distal»."
+    },
+    {
+      "id": "UBERON:0001446",
+      "sentence": 2,
+      "es": "El 81 % de esas perforantes eran septocutáneas, y las musculocutáneas (19 %) se concentraban todas en la mitad proximal de la pierna.",
+      "cites": [
+        "PMID:35576016"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«17 perforators (19%) musculocutaneous, all in the proximal half ... 71 septocutaneous (81%)»."
+    },
+    {
+      "id": "UBERON:0001446",
+      "sentence": 3,
+      "es": "Seis de las perforantes más altas nacían de la arteria fibular a menos de 10 mm de la división tibiofibular.",
+      "cites": [
+        "PMID:35576016"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«Six of the uppermost perforators originated from the fibular artery less than 10 mm from the tibiofibular division». Literal."
+    },
+    {
+      "id": "UBERON:0001446",
+      "sentence": 4,
+      "es": "El peroné se emplea como colgajo libre osteocutáneo para reconstruir la mandíbula.",
+      "cites": [
+        "PMID:35300661"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«osteo(cutaneous) free fibula (OFF) flap for mandible reconstruction»."
+    },
+    {
+      "id": "UBERON:0001446",
+      "sentence": 5,
+      "es": "En 51 pacientes con esa reconstrucción, la eficacia masticatoria y la función subjetiva de masticación volvieron a los valores previos en un plazo de 9 a 12 meses.",
+      "cites": [
+        "PMID:35300661"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "51 analizados (56 reclutados); conclusión: «both recovered to the preoperative levels within 9-12 months». Matiz: la eficacia masticatoria objetiva ya había vuelto a los 3 meses; la frase sigue la conclusión."
+    },
+    {
+      "id": "UBERON:0001446",
+      "sentence": 6,
+      "es": "En una revisión de 97 miembros con deficiencia congénita del peroné, el 76 % de los pacientes con hipoplasia mínima y el 59 % de los que tenían ausencia completa presentaban también anomalías congénitas del fémur.",
+      "cites": [
+        "PMID:438260"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "97 miembros (81 pacientes); «anomalies of the femur were present in 76 per cent of patients with Type I [minimal hypoplasia] and in 59 per cent with Type II [complete absence]»."
+    },
+    {
+      "id": "UBERON:0001681",
+      "sentence": 1,
+      "es": "En tomografías tridimensionales de 75 pacientes coreanos, el hueso nasal midió en promedio 20,95 ± 5,99 mm de longitud.",
+      "cites": [
+        "PMID:17929046"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "75 pacientes coreanos, TC 3D; «mean length of the nasal bone is 20.95+/-5.99 mm»."
+    },
+    {
+      "id": "UBERON:0001681",
+      "sentence": 2,
+      "es": "En esa serie, su espesor medio fue de 2,03 ± 0,35 mm en el punto de osteotomía lateral y de 1,75 ± 0,37 mm en el medial.",
+      "cites": [
+        "PMID:17929046"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«mean thickness of the lateral osteotomy point is 2.03+/-0.35 mm and that of the medial osteotomy point is 1.75+/-0.37 mm». Literal."
+    },
+    {
+      "id": "UBERON:0001681",
+      "sentence": 3,
+      "es": "En 203 pacientes con desviación septal, el grosor y la longitud del hueso nasal fueron significativamente mayores del lado hacia el que se desviaba el tabique.",
+      "cites": [
+        "PMID:28245851"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "203 pacientes; «Lateral and intermediate nasal bone thickness and nasal bone length were significantly greater on the ipsilateral deviation side». «El grosor» resume el lateral y el intermedio."
+    },
+    {
+      "id": "UBERON:0001681",
+      "sentence": 4,
+      "es": "El hueso nasal figura entre los huesos de la cara que más se fracturan y es el más afectado en los accidentes de tráfico.",
+      "cites": [
+        "PMID:21050587"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«among the most frequently broken facial bone ... and is the most frequently fractured facial bone due to motor vehicle collisions». Literal."
+    },
+    {
+      "id": "UBERON:0001681",
+      "sentence": 5,
+      "es": "En impactos anteroposteriores sobre cadáveres masculinos, un riesgo de fractura del 50 % se correspondió con una fuerza aproximada de 450 a 850 N.",
+      "cites": [
+        "PMID:21050587"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«anterior-posterior impacts performed on male cadavers ... a 50% risk of fracture corresponded to an applied force of approximately 450 to 850 N». Literal."
+    },
+    {
+      "id": "UBERON:0001681",
+      "sentence": 6,
+      "es": "En 26 fetos con ausencia del hueso nasal en el segundo trimestre, el 30,8 % presentaba aneuploidía, siempre acompañada de otra anomalía ecográfica o de un cribado bioquímico de alto riesgo.",
+      "cites": [
+        "PMID:32521052"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "26 fetos; «8 (30.8%) ... aneuploidy»; «All fetuses with aneuploidy had additional ultrasound abnormality and/or high risk on biochemical screening»."
+    },
+    {
+      "id": "UBERON:0001873",
+      "sentence": 1,
+      "es": "El núcleo caudado contribuye a la conducta dirigida a metas activando los esquemas de acción adecuados y eligiendo submetas según la evaluación de sus resultados.",
+      "cites": [
+        "PMID:18824075"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "Conclusión de la revisión: «contributes to behaviour through the excitation of correct action schemas and the selection of appropriate sub-goals based on an evaluation of action-outcomes». Casi literal."
+    },
+    {
+      "id": "UBERON:0001873",
+      "sentence": 2,
+      "es": "Esa función lo distingue del putamen, más ligado al aprendizaje estímulo-respuesta o de hábitos.",
+      "cites": [
+        "PMID:18824075"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«in contrast to the putamen, which appears to subserve ... stimulus-response, or habit, learning». Pierde el «appears», matiz menor."
+    },
+    {
+      "id": "UBERON:0001873",
+      "sentence": 3,
+      "es": "En voluntarios sanos estudiados con tomografía por emisión de positrones, la estimulación magnética repetitiva de la corteza prefrontal dorsolateral izquierda liberó dopamina en el caudado dorsal del mismo lado.",
+      "cites": [
+        "PMID:11459878"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": false,
+      "note": "Sanos, PET con [11C]raclopride; la rTMS de la CPFDL izquierda redujo la unión en el caudado dorsal izquierdo = liberación de dopamina ipsilateral. Contenido correcto, pero es un dato fisiológico: el aspect debería ser function, no relations."
+    },
+    {
+      "id": "UBERON:0001873",
+      "sentence": 4,
+      "es": "En 80 pacientes con enfermedad de Huntington, la atrofia de la cabeza del núcleo caudado medida por tomografía se correlacionó de forma inversa con la duración de la enfermedad.",
+      "cites": [
+        "PMID:16324236"
+      ],
+      "verdict": "infiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "El resumen dice «inverse correlation between duration of HD and HCN planimetric values»: lo que baja con la duración es el valor planimétrico (el tamaño) de la cabeza del caudado, o sea la atrofia AUMENTA con la duración. La frase dice que la atrofia se correlaciona de forma inversa con la duración: invierte el sentido del hallazgo."
+    },
+    {
+      "id": "UBERON:0001873",
+      "sentence": 5,
+      "es": "En un estudio de resonancia con 26 pacientes con trastorno obsesivo-compulsivo y 26 controles, el volumen del núcleo caudado fue significativamente menor en los pacientes.",
+      "cites": [
+        "PMID:7726720"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "26 TOC y 26 controles, RM; «significantly smaller caudate nucleus volumes than controls»."
+    },
+    {
+      "id": "UBERON:0002251",
+      "sentence": 1,
+      "es": "En la disección de 8 cadáveres, cuando el ramo posterior de un nervio espinal toracolumbar se dividía en tres ramas, la rama lateral se distribuía por el compartimento del músculo iliocostal.",
+      "cites": [
+        "PMID:31119410"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "8 cadáveres; cuando el PRSN se dividía en tres ramas (196/272 segmentos), «The lateral branch supplied the iliocostalis muscle compartment». «Ramo posterior» y «rama lateral», terminología correcta."
+    },
+    {
+      "id": "UBERON:0002251",
+      "sentence": 2,
+      "es": "En 12 lados de 6 cadáveres, los nervios clúneos superiores perforaban el iliocostal en el 58,3 % de los lados en L1 y en L2, y en el 83,3 % en L3.",
+      "cites": [
+        "PMID:29787877"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "12 lados de 6 cadáveres; «7 sides (58.3%) for L1, seven sides (58.3%) for L2, and 10 sides (83.3%) for L3, the nerves pierced the iliocostalis»."
+    },
+    {
+      "id": "UBERON:0002251",
+      "sentence": 3,
+      "es": "En un estudio en cadáveres del bloqueo ecoguiado del plano del erector de la columna a nivel torácico, el colorante llegó lateralmente al iliocostal en 5 de 7 inyecciones sobre la parte medial de la apófisis transversa y en todas las aplicadas entre apófisis transversas.",
+      "cites": [
+        "PMID:36797037"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«laterally to the iliocostalis muscle in five MED injections and all BTWN injections»; n=7 por grupo."
+    },
+    {
+      "id": "UBERON:0002806",
+      "sentence": 1,
+      "es": "En 26 hemisferios disecados, 24 (92%) mostraban surcos de trayecto transversal en la cara lateral del lóbulo occipital, y en todos se halló un surco transverso en su tercio inferior.",
+      "cites": [
+        "PMID:12244393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "26 hemisferios; «24 (92%) ... transverse trajectories in the lateral surface»; «All of the specimen presented a transverse sulcus in the inferior third». Nota: el estudio no distingue lado; vale para el lóbulo occipital en general, no específicamente el izquierdo."
+    },
+    {
+      "id": "UBERON:0002806",
+      "sentence": 2,
+      "es": "En esa serie, un surco transverso en el tercio superior apareció en el 69% de los casos y surcos longitudinales marcados en 16 hemisferios (61%).",
+      "cites": [
+        "PMID:12244393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«69% ... transverse sulcus in the superior third»; «marked longitudinal sulci in 16 (61%)»."
+    },
+    {
+      "id": "UBERON:0002806",
+      "sentence": 3,
+      "es": "El asta occipital del ventrículo lateral, presente a la altura del límite anterior del lóbulo en el 53% de los especímenes, tenía forma de media luna, con el calcar avis en su pared medial y fibras del tapetum en el resto de sus paredes.",
+      "cites": [
+        "PMID:12244393"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«occipital horn was present in 53% of the cases at level of the anterior boundary ... half moon shaped ... medial wall formed by the calcar avis and the lateral wall, roof and floor formed by fibers of the tapetum»."
+    },
+    {
+      "id": "UBERON:0002806",
+      "sentence": 4,
+      "es": "La resonancia funcional describe en el lóbulo occipital una secuencia de etapas del procesamiento de objetos, desde las áreas retinotópicas V1 a V3 hasta el complejo occipital lateral, en gran medida no retinotópico.",
+      "cites": [
+        "PMID:9704268"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«stagewise decrease in retinotopy»: V1-3 retinotópicas → «essentially nonretinotopic lateral occipital complex». Omite V4v/V3A, aceptable."
+    },
+    {
+      "id": "UBERON:0002806",
+      "sentence": 5,
+      "es": "Los límites anatómicos entre los lóbulos occipital y parietal son arbitrarios, y las crisis de origen occipital suelen dar síntomas visuales como amaurosis, alucinaciones o ilusiones.",
+      "cites": [
+        "PMID:8504783"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«The occipital and parietal lobes have arbitrary anatomical borders», bien; pero el resumen enumera la sintomatología de las epilepsias parietales Y occipitales juntas, sin atribuir los síntomas visuales a las occipitales ni decir que «suelen» darse. Atribución y frecuencia añadidas."
+    },
+    {
+      "id": "UBERON:0002806",
+      "sentence": 6,
+      "es": "En 42 pacientes operados de epilepsia parietal u occipital, la resonancia coincidió con el diagnóstico histopatológico en 36 lesiones (86%).",
+      "cites": [
+        "PMID:17560810"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "42 pacientes, cirugía parietal u occipital; «MRI was concordant with histopathology in 36 of 42 (86%) lesions». No específico del lóbulo izquierdo ni sólo del occipital."
+    },
+    {
+      "id": "UBERON:0003703",
+      "sentence": 1,
+      "es": "En el colangiocarcinoma perihiliar resecable, la técnica de elección es la hepatectomía en bloque con la vía biliar extrahepática, y en el distal, la duodenopancreatectomía.",
+      "cites": [
+        "PMID:36257799"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«method of choice for resectable perihilar cholangiocarcinoma is en-block liver resection including the extrahepatic bile duct, or pancreatoduodenectomy for distal». Literal."
+    },
+    {
+      "id": "UBERON:0003703",
+      "sentence": 2,
+      "es": "En 1475 pacientes con cáncer de la vía biliar extrahepática operados con intención curativa, la radioterapia adyuvante se asoció con una mejor supervivencia global (hazard ratio 0.74).",
+      "cites": [
+        "PMID:34474218"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "1475 pacientes con resección curativa; en el multivariado «adjuvant RT was associated with improved overall survival (hazard ratio, 0.74)». Castellano: 0,74 con coma decimal."
+    },
+    {
+      "id": "UBERON:0003703",
+      "sentence": 3,
+      "es": "Los tumores carcinoides de la vía biliar extrahepática son raros, representan entre el 0.2 y el 2% de los carcinoides gastrointestinales y, en los 30 casos revisados, asentaron sobre todo en el colédoco (58%).",
+      "cites": [
+        "PMID:10570419"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«rare and account for 0.2-2% of all gastrointestinal carcinoids»; 30 casos; «common bile duct (58%)». Castellano: 0,2 con coma decimal."
+    },
+    {
+      "id": "UBERON:0005969",
+      "sentence": 1,
+      "es": "El volumen de sus células podría ser un factor importante en la salida del humor acuoso.",
+      "cites": [
+        "PMID:16769051"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«TM cell volume may be an important determinant of aqueous humor outflow». Traducción literal; conserva el «podría»."
+    },
+    {
+      "id": "UBERON:0005969",
+      "sentence": 2,
+      "es": "En ojos de cadáver, la trabeculoplastia con láser de argón fragmentó y coaguló las trabéculas, mientras que el láser de diodo no produjo cambios histológicos visibles.",
+      "cites": [
+        "PMID:8113021"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Ojos de cadáver: «the argon caused fragmentation and coagulation of trabecular beams», «The diode laser made no observable histologic alterations». Correcto, aunque omite que la MEB sí mostró coalescencia trabecular con el diodo a ≥0,12 J."
+    },
+    {
+      "id": "UBERON:0008465",
+      "sentence": 1,
+      "es": "Actúa junto con el palmar largo y el abductor largo del pulgar para abducir el primer metacarpiano.",
+      "cites": [
+        "PMID:267472"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«acts in conjunction with the palmaris longus and the abductor pollicis longus to abduct the first metacarpal». Omite «in the sagittal plane». Casi literal."
+    },
+    {
+      "id": "UBERON:0008465",
+      "sentence": 2,
+      "es": "El fascículo tendinoso que le llega desde el palmar largo presenta un orificio por el que la rama palmar del nervio mediano se hace superficial.",
+      "cites": [
+        "PMID:267472"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«The tendinous slip to the APB from the palmaris longus presents near its origin an orifice which the palmar branch of the median nerve traverses to become superficial». Literal; omite «near its origin»."
+    },
+    {
+      "id": "UBERON:0008465",
+      "sentence": 3,
+      "es": "En 19 manos embalsamadas, el músculo era más grueso de lo descrito clásicamente y estaba formado por tres grupos de divisiones musculares que se unían al tendón común en sitios distintos.",
+      "cites": [
+        "PMID:3228211"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "19 manos embalsamadas; «rather thick APB, three groups of six muscular heterogeneous divisions»; «muscular divisions joining the common tendon at different sites»; «classical description of a thin APB ... seems incorrect»."
+    },
+    {
+      "id": "UBERON:0008465",
+      "sentence": 4,
+      "es": "En esa serie, el ramo del nervio mediano destinado al músculo discurría dentro de su espesor y no sobre su cara profunda.",
+      "cites": [
+        "PMID:3228211"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«The APB nerve is not found on the deep aspect of the muscle as stated earlier, but within the muscle»."
+    },
+    {
+      "id": "UBERON:0008465",
+      "sentence": 5,
+      "es": "Se ha descrito la ausencia congénita bilateral del músculo en un varón joven, detectada por ecografía y resonancia ante un aplanamiento de las eminencias tenares.",
+      "cites": [
+        "PMID:23273239"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Varón de 24 años; «USG and MRI revealed bilateral absence»; consultó por «flattening in the palmar region» (las eminencias tenares figuran en la conclusión). Correcto."
+    },
+    {
+      "id": "UBERON:0013165",
+      "sentence": 1,
+      "es": "Es una pequeña depresión tapizada por mucosa en la base de la lengua, a cada lado del pliegue glosoepiglótico medio.",
+      "cites": [
+        "PMID:30855811"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«small mucosa-lined depression located at the base of the tongue ... on either side of the median glossoepiglottic fold». Literal."
+    },
+    {
+      "id": "UBERON:0013165",
+      "sentence": 2,
+      "es": "Retiene saliva y, a veces, alimento, con lo que evita que el reflejo deglutorio se active de forma constante, por ejemplo durante el sueño.",
+      "cites": [
+        "PMID:30855811"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«trap for saliva and occasionally food ... At night ... the vallecula traps the saliva so that the swallowing reflex is not constantly triggered». Fiel a la fuente (StatPearls), aunque fisiológicamente discutible."
+    },
+    {
+      "id": "UBERON:0013165",
+      "sentence": 3,
+      "es": "En 32 cadáveres, el nervio glosofaríngeo se ramificaba en la raíz de la lengua y enviaba ramos posteriores hacia la vallécula.",
+      "cites": [
+        "PMID:30383337"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "32 cadáveres; «At the root of the tongue, the nerve ramified into the posterior branches to the epiglottic vallecula»."
+    },
+    {
+      "id": "UBERON:0013165",
+      "sentence": 4,
+      "es": "En un estudio de 35 personas con disfagia, un corte ecográfico transversal por encima del hioides permitió visualizarla y detectar residuo faríngeo con una sensibilidad del 86,7 %.",
+      "cites": [
+        "PMID:31662446"
+      ],
+      "verdict": "parcial",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Sensibilidad 86,7 % y corte transversal suprahioideo, correctos; pero la vallécula sólo se evaluó en 26 de los 35 sujetos («82 images of epiglottic vallecula from 26 of 35 subjects») y la técnica se estableció en 4 sanos. El alcance muestral queda inexacto."
+    },
+    {
+      "id": "UBERON:0013165",
+      "sentence": 5,
+      "es": "Se ha descrito un granuloma por cuerpo extraño en la vallécula que simuló un tumor maligno en la resonancia y en la PET/TC con FDG.",
+      "cites": [
+        "PMID:26447384"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Varón de 66 años; lesión de la vallécula con realce en RM y SUVmax 28 en PET/TC; histología de granuloma por cuerpo extraño."
+    },
+    {
+      "id": "UBERON:0035830",
+      "sentence": 1,
+      "es": "En arteriografías de 50 sujetos, la arteria gastroepiploica izquierda era mucho menor que la derecha y faltaba en 3 casos.",
+      "cites": [
+        "PMID:6721940"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "Arteriografías de 50 sujetos; «right gastroepiploic artery was much larger ... than the left (absent in 3 cases)»."
+    },
+    {
+      "id": "UBERON:0035830",
+      "sentence": 2,
+      "es": "En esa serie, la anastomosis terminoterminal directa con la arteria gastroepiploica derecha se observó sólo en el 23.5% de los casos.",
+      "cites": [
+        "PMID:6721940"
+      ],
+      "verdict": "fiel",
+      "copied": true,
+      "aspectOk": true,
+      "note": "«Direct end-to-end anastomosis of these two arteries ... was found in only 23.5% of cases». Literal. Castellano: 23,5 % con coma decimal."
+    },
+    {
+      "id": "UBERON:0035830",
+      "sentence": 3,
+      "es": "En 17 cadáveres disecados, las arterias gastroepiploicas derecha e izquierda se anastomosaban directamente en 16 (94.1%) y formaban un arco a lo largo de la curvatura mayor en 12 (70.6%).",
+      "cites": [
+        "PMID:27319299"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "17 cadáveres; «direct anastomosis (n = 16; 94.1%)»; «arterial arch along the greater curvature ... twelve cases (70.6%)». Castellano: coma decimal. Nota editorial: choca con la frase 2 (23,5 %) sin aclarar que las definiciones de anastomosis difieren."
+    },
+    {
+      "id": "UBERON:8410018",
+      "sentence": 1,
+      "es": "En 100 TC de abdomen, la vena cólica derecha se identificó en el 88 %; en la mayoría (84,1 %) recorría la cara ventral de la cabeza del páncreas y drenaba en la pared lateral derecha de la vena mesentérica superior.",
+      "cites": [
+        "PMID:29480372"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "100 TC; «RCV was identified in 88%»; tipo I (84,1 %) «running on the ventral aspect of the pancreatic head and draining into the right lateral wall of the SMV»."
+    },
+    {
+      "id": "UBERON:8410018",
+      "sentence": 2,
+      "es": "Todas las venas de ese tipo formaban un tronco común con otras venas, sobre todo con la gastroepiploica (93,2 %).",
+      "cites": [
+        "PMID:29480372"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«All of the Type-I RCVs formed a common trunk with other veins, including the gastroepiploic vein (93.2%)»."
+    },
+    {
+      "id": "UBERON:8410018",
+      "sentence": 3,
+      "es": "En 9 cadáveres disecados se definió como la vena que drena el colon ascendente, y en 4 casos terminaba en el tronco gastrocólico de Henle.",
+      "cites": [
+        "PMID:16399115"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "9 cadáveres; RCV definida como la que drena «the ascending colon»; «The RCV terminated into the GTH in 4 cases»."
+    },
+    {
+      "id": "UBERON:8410018",
+      "sentence": 4,
+      "es": "Su disposición bastante constante se propone como referencia para la escisión mesocólica completa laparoscópica del colon derecho.",
+      "cites": [
+        "PMID:29480372"
+      ],
+      "verdict": "fiel",
+      "copied": false,
+      "aspectOk": true,
+      "note": "«Anatomical consistency of the RCV ... in the majority of cases ... useful landmark for laparoscopic CME of the right colon». «Bastante constante» recoge «in the majority»."
+    }
+  ],
+  "summary": {
+    "sentences": 66,
+    "fiel": 60,
+    "parcial": 4,
+    "infiel": 2,
+    "copied": 19,
+    "aspectWrong": 1
+  }
+}

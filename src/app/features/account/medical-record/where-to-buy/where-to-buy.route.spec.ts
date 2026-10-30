@@ -80,9 +80,9 @@ describe('coverageRoute', () => {
 });
 
 describe('directionsUrl', () => {
-  it('arma el punto en el mapa con las coordenadas', () => {
+  it('arma la ruta en OpenStreetMap con el destino y sin origen', () => {
     expect(directionsUrl(-17.7833, -63.1821)).toBe(
-      'https://www.google.com/maps/search/?api=1&query=-17.7833,-63.1821',
+      'https://www.openstreetmap.org/directions?route=%3B-17.7833%2C-63.1821',
     );
   });
 

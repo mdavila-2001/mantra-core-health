@@ -1,0 +1,12 @@
+MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 DB_NAME=mantra_p44 yarn test:integration test/integration/patient-spending-http.int-spec.ts --testTimeout=2400000
+  console.log
+    P44H limpieza: facturas con la marca P44H-15f6dbe0 restantes = 0
+
+      at Object.log (test/integration/patient-spending-http.int-spec.ts:144:13)
+
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+Snapshots:   0 total
+Time:        1731.663 s
+Ran all test suites matching test/integration/patient-spending-http.int-spec.ts.
+EXIT=0

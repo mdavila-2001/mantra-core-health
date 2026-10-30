@@ -5,7 +5,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { Messaging } from './messaging';
 import { ChatStore } from '../../core/messaging/chat.store';
-import { ChatPreferencias } from '../../core/messaging/chat-preferencias';
+import { ChatPreferences } from '../../core/messaging/chat-preferences';
 
 /**
  * Lo que estas pruebas fijan.
@@ -171,50 +171,71 @@ describe('Messaging', () => {
 
     // Y al directorio todavía no le preguntó nada: la consulta espera a que
     // la persona deje de escribir.
-    http.expectNone((r) => r.url === '/public/search/practitioners');
+    http.expectNone((r) => r.url === '/community/conversations/contacts/search');
 
     vi.advanceTimersByTime(300);
-    http.expectOne((r) => r.url === '/public/search/practitioners').flush({ items: [] });
+    const buscar = http.expectOne('/community/conversations/contacts/search');
+    expect(buscar.request.method).toBe('POST');
+    expect(buscar.request.body).toEqual({ profileId: 'pp-1', q: 'rojas', limit: 10 });
+    buscar.flush({ items: [] });
   });
 
-  it('escribirle a alguien nuevo resuelve el slug y después abre el hilo', () => {
+  it('encuentra una paciente por nombre y abre el hilo con su perfil', () => {
     conBandeja([]);
 
-    escribir('marisol');
+    escribir('maría');
     vi.advanceTimersByTime(300);
-    http
-      // Sin el prefijo `/community`: lo sirve `CommunityPublicController`,
-      // pero registrado sin prefijo de módulo. Con el prefijo la API responde
-      // 404, que es el defecto que arregló este carril.
-      .expectOne((r) => r.url === '/public/search/practitioners')
-      .flush({
-        items: [
-          {
-            kind: 'PRACTITIONER',
-            slug: 'marisol-quispe',
-            displayName: 'Dra. Marisol Quispe',
-            headline: 'Cardióloga',
-            city: 'La Paz',
-            verified: true,
-          },
-        ],
-      });
+    http.expectOne('/community/conversations/contacts/search').flush({
+      items: [
+        {
+          profileId: 'pp-8',
+          displayName: 'María Pérez',
+          headline: 'Paciente',
+          avatarUrl: null,
+        },
+      ],
+    });
     fixture.detectChanges();
 
     consultar('mensajeria-resultado')?.click();
 
-    // Primero la ficha: el buscador público no publica identificadores
-    // internos, así que el `profileId` hay que resolverlo.
-    http
-      .expectOne('/community/profiles/by-slug/marisol-quispe')
-      .flush(ficha('pp-2', 'marisol-quispe'));
-
     const abierta = http.expectOne('/community/conversations');
     expect(abierta.request.method).toBe('POST');
-    expect(abierta.request.body).toEqual({
-      participantProfileIds: ['pp-1', 'pp-2'],
-    });
+    expect(abierta.request.body).toEqual({ participantProfileIds: ['pp-1', 'pp-8'] });
     abierta.flush({ id: 'c-9' });
+    http.expectNone((r) => r.url.startsWith('/community/profiles/by-slug/'));
+  });
+
+  it('una respuesta vieja no reemplaza los resultados de la búsqueda actual', () => {
+    conBandeja([]);
+
+    escribir('maría');
+    vi.advanceTimersByTime(300);
+    const vieja = http.expectOne('/community/conversations/contacts/search');
+
+    escribir('juan');
+    vieja.flush({
+      items: [
+        { profileId: 'pp-8', displayName: 'María Pérez', headline: null, avatarUrl: null },
+      ],
+    });
+    fixture.detectChanges();
+
+    // La tecla nueva invalida en el acto la solicitud anterior; no espera los
+    // 300 ms del debounce para saber que «maría» ya no es la búsqueda vigente.
+    expect(texto()).not.toContain('María Pérez');
+
+    vi.advanceTimersByTime(300);
+    const actual = http.expectOne('/community/conversations/contacts/search');
+    actual.flush({
+      items: [
+        { profileId: 'pp-9', displayName: 'Juan Pérez', headline: null, avatarUrl: null },
+      ],
+    });
+    fixture.detectChanges();
+
+    expect(texto()).toContain('Juan Pérez');
+    expect(texto()).not.toContain('María Pérez');
   });
 
   it('?escribirA= que llega antes que el perfil propio espera y abre el hilo igual', async () => {
@@ -280,7 +301,7 @@ describe('Messaging', () => {
       conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
     ]);
 
-    TestBed.inject(ChatPreferencias).alternarArchivado('c-1');
+    TestBed.inject(ChatPreferences).toggleArchived('c-1');
     fixture.detectChanges();
 
     expect(todas('conversacion').length).toBe(1);
@@ -295,6 +316,29 @@ describe('Messaging', () => {
     expect(texto()).toContain('Dra. Quispe');
   });
 
+  it('Archivados y Bloqueados son chips del mismo carril que los filtros, con sus flechas', () => {
+    conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
+
+    const carril = fixture.nativeElement.querySelector('.mensajeria__chips') as HTMLElement;
+    expect(carril.contains(consultar('mensajeria-filtro-todos'))).toBe(true);
+    expect(carril.contains(consultar('mensajeria-archivados'))).toBe(true);
+    expect(carril.contains(consultar('mensajeria-bloqueados'))).toBe(true);
+    expect(consultar('mensajeria-filtros-anterior')).not.toBeNull();
+    expect(consultar('mensajeria-filtros-siguiente')).not.toBeNull();
+
+    // Es un chip que se prende y se apaga: el mismo clic vuelve a los chats.
+    const archivados = consultar('mensajeria-archivados');
+    expect(archivados?.getAttribute('aria-pressed')).toBe('false');
+    archivados?.click();
+    fixture.detectChanges();
+    expect(archivados?.getAttribute('aria-pressed')).toBe('true');
+    expect(consultar('mensajeria-filtro-todos')?.getAttribute('aria-pressed')).toBe('false');
+    archivados?.click();
+    fixture.detectChanges();
+    expect(archivados?.getAttribute('aria-pressed')).toBe('false');
+    expect(consultar('mensajeria-filtro-todos')?.getAttribute('aria-pressed')).toBe('true');
+  });
+
   it('no borra la bandeja cuando un tic falla', () => {
     conBandeja([conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }])]);
 
@@ -303,7 +347,7 @@ describe('Messaging', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('Dra. Quispe');
-    expect(texto()).toContain('No pudimos cargar sus conversaciones.');
+    expect(texto()).toContain('No hay conexión con el servidor.');
   });
 
   function escribir(valor: string): void {

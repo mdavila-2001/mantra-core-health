@@ -44,8 +44,9 @@ const BIENVENIDA: TutorialDefinition = {
     {
       id: 'panel',
       title: 'El panel',
-      body: 'Es su punto de partida: qué secciones tiene habilitadas, en qué organización está trabajando y cómo va su verificación de identidad.',
-      target: 'panel-accesos',
+      // Apuntaba al árbol «Sus herramientas», retirado del panel el 28/10/2026.
+      body: 'Es su punto de partida: lo que toca hoy y lo último de su organización. Las secciones se abren desde el menú de la izquierda.',
+      target: 'panel-titulo',
       placement: 'top',
     },
     {
@@ -100,9 +101,12 @@ const BIENVENIDA_PACIENTE: TutorialDefinition = {
     {
       id: 'emergencia',
       title: 'Si es urgente',
-      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba, en todas las pantallas.',
-      target: 'header-emergencia',
+      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba, en la cabecera.',
+      target: 'nav-emergencia',
       placement: 'bottom',
+      // Sólo existe en la versión responsive (28/10/2026): en el escritorio no
+      // hay a quién esperar, y el paso se saltea sin la pausa de cuatro segundos.
+      waitForTargetMs: 0,
     },
     {
       id: 'sintomas',
@@ -128,15 +132,15 @@ const BIENVENIDA_PACIENTE: TutorialDefinition = {
     {
       id: 'atajos',
       title: 'Atajos con nombre',
-      body: 'Arriba tiene los chats con su médico, sus facturas, sus gastos, promociones y su carrito. Cada uno dice qué es.',
+      body: 'Arriba tiene los chats con su médico, sus solicitudes, sus gastos con sus facturas y su carrito con las promociones. Cada uno dice qué es.',
       target: 'header-atajos',
       placement: 'bottom',
     },
     {
       id: 'ayuda',
       title: 'Si se pierde',
-      body: 'Toque «Tutoriales» para repetir este recorrido o aprender algo nuevo. ¡Listo, ya conoce AloVida!',
-      target: 'header-tutoriales',
+      body: 'En «Ajustes», pestaña «Tutoriales», puede repetir este recorrido o aprender algo nuevo. ¡Listo, ya conoce AloVida!',
+      target: 'header-ajustes',
       placement: 'bottom',
     },
   ],
@@ -166,8 +170,8 @@ const NAVEGACION: TutorialDefinition = {
       id: 'roles',
       title: 'Por qué ve estas secciones',
       body: 'El menú se arma con los roles de su sesión. Si una sección no aparece, es porque su rol no la puede abrir, no porque no exista.',
-      target: 'panel-accesos',
-      placement: 'top',
+      target: 'shell-nav',
+      placement: 'right',
     },
     {
       id: 'migas',
@@ -403,7 +407,7 @@ const CONTABILIDAD: TutorialDefinition = {
   // Los pasos explican el balance, el diario y cómo registrar un movimiento:
   // eso vive en los libros, que desde el 2026-09-12 están un clic adentro de
   // Contabilidad —la dirección de la sección abre el cockpit—.
-  route: '/administration/accounting/libros',
+  route: '/administration/accounting/books',
   roles: ['BILLING_ADMIN', 'ACCOUNTANT', 'PRACTITIONER'],
   estimatedMinutes: 3,
   level: 'intermedio',

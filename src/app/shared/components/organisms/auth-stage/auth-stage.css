@@ -146,14 +146,14 @@
 /* --- Motas: suben despacio, se encienden a mitad de camino y se apagan. --- */
 .auth-stage__mote {
   position: absolute;
-  left: var(--x);
+  left: var(--x, 13%);
   bottom: -2%;
-  width: var(--s);
-  height: var(--s);
+  width: var(--s, 2px);
+  height: var(--s, 2px);
   border-radius: 50%;
   background: radial-gradient(circle, #ffffff, var(--c-aqua-200) 45%, transparent 72%);
   opacity: 0;
-  animation: auth-stage-mote-rise var(--dur) linear var(--d) infinite;
+  animation: auth-stage-mote-rise var(--dur, 17s) linear var(--d) infinite;
 }
 
 @keyframes auth-stage-mote-rise {
@@ -414,7 +414,137 @@
   .auth-stage__ecg-spark,
   .auth-stage__wave,
   .auth-stage__flash,
-  .auth-stage__mote {
+  .auth-stage__mote,
+  .auth-stage__glow {
     display: none;
   }
+}
+
+/* ==========================================================================
+    Modo claro — el balance invertido.
+
+    En claro el escenario deja de ser un monitor nocturno: predomina el blanco
+    (`--bg-surface` → menta 50), el latido es aguamarina, el papel y las motas
+    son salvia, y en reposo NO hay ningún celeste. Hasta el 27/10/2026 todo
+    esto era petróleo; el cliente pidió bajar el azul y la línea gráfica da la
+    aguamarina como «acento de vida» y la menta/salvia como apoyo. El celeste aparece solo junto al puntero, en `.auth-stage__glow`.
+    Todo lo de arriba es el modo oscuro y no se toca: estas reglas solo PISAN,
+    así que el oscuro queda exactamente igual.
+
+    Ningún override declara `stroke-width`: los grosores (y su `--ecg-k`) son
+    los de arriba, y con ellos el pulso y su sincronía con `--beat`.
+    ========================================================================== */
+:host-context(:root[data-tema='claro']) {
+  background:
+    radial-gradient(60% 50% at 34% 16%, var(--c-mint-50), transparent 70%),
+    linear-gradient(160deg, var(--bg-surface), var(--c-mint-50) 60%, var(--c-sage-50));
+}
+
+/* En `screen` sobre blanco no aportan nada, y apagarlas ahorra pintado. */
+:host-context(:root[data-tema='claro']) .auth-stage__aurora,
+:host-context(:root[data-tema='claro']) .auth-stage__rays,
+:host-context(:root[data-tema='claro']) .auth-stage__flash {
+  display: none;
+}
+
+/* Las líneas blancas del papel desaparecen sobre blanco: van en salvia. */
+:host-context(:root[data-tema='claro']) .auth-stage__monitor {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--c-sage-700) 9%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-sage-700) 9%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(color-mix(in srgb, var(--c-sage-700) 4%, transparent) 1px, transparent 1px),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--c-sage-700) 4%, transparent) 1px,
+      transparent 1px
+    );
+}
+
+/* Motas neutras en reposo: menta y salvia, sin celeste. */
+:host-context(:root[data-tema='claro']) .auth-stage__mote {
+  background: radial-gradient(
+    circle,
+    var(--c-mint-500),
+    color-mix(in srgb, var(--c-sage-700) 55%, transparent) 45%,
+    transparent 72%
+  );
+}
+
+/* La tira en aguamarina, sólida: sin el degradado `#auth-stage-ink`, que
+   está pensado para el fondo oscuro. */
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-base {
+  stroke: var(--c-aqua-400);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-comet {
+  stroke: var(--c-aqua-600);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-spark {
+  stroke: var(--c-aqua-700);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-aura {
+  stroke: var(--c-mint-100);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__ecg-halo {
+  stroke: var(--c-mint-200);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__wave {
+  stroke: var(--c-mint-300);
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__wave--echo {
+  stroke: var(--c-mint-500);
+}
+
+/* --- El resplandor del puntero: el único celeste del escenario claro. -----
+   Una caja del tamaño del escenario que se DESPLAZA hasta el puntero: el % de
+   `translate` es de su propia caja, así que `(x − 0,5) × 100 %` lleva su centro
+   a donde está la mano. Las motas que caen dentro del disco se ven celestes y
+   las de afuera siguen grises.
+
+   No repite el costo medido en la nota de `.auth-stage__orb`: es UNA capa que
+   cambia solo `transform` y `opacity`. El degradado se rasteriza una vez y
+   después solo se corre; no se reposiciona el `radial-gradient` (eso repinta
+   en cada cuadro) y no hay `mix-blend-mode` ni `filter`. Las variables
+   `--pointer-*` las publica `appPointerScene` en `app-auth-split`; en reposo
+   (`--pointer-on: 0`) no se ve. */
+.auth-stage__glow {
+  display: none;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow {
+  --glow-size: min(40vmax, 28rem);
+  display: block;
+  opacity: var(--pointer-on, 0);
+  transform: translate3d(
+    calc((var(--pointer-x, 0.5) - 0.5) * 100%),
+    calc((var(--pointer-y, 0.5) - 0.5) * 100%),
+    0
+  );
+  will-change: transform, opacity;
+}
+
+:host-context(:root[data-tema='claro']) .auth-stage__glow::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--glow-size);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--fondo-c),
+    color-mix(in srgb, var(--c-aqua-300) 30%, transparent) 50%,
+    transparent
+  );
 }

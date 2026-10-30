@@ -1,0 +1,8 @@
+(node:12565) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+Test Suites: 1 passed, 1 total
+Tests:       13 passed, 13 total
+Snapshots:   0 total
+Time:        17.557 s
+Ran all test suites matching test/integration/pharmacy-catalog-p47.int-spec.ts.
+EXIT=0

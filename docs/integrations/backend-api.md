@@ -1,6 +1,6 @@
 # API de backend
 
-Las 184 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 605 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -48,7 +48,6 @@ inyección»*.
 | `POST` | `/iam/auth/forgot-password` | `ForgotPassword` | No declarada |
 | `POST` | `/iam/auth/reset-password` | `ResetPassword` | No declarada |
 | `POST` | `/iam/auth/logout` | `ShellLayout` | No |
-| `GET` | `/iam/users` | `OrganizationNew` (buscador de owner, V04-01·F) | No |
 | `POST` | `/iam/users` | `UserRegistration` | No |
 | `POST` | `/iam/users/assisted-registration` | `AssistedRegistration` | No |
 | `POST` | `/iam/users/assisted-practitioner-registration` | `PractitionerAssistedRegistration` (vía `AssistedPractitionerClient`) | No |
@@ -148,7 +147,6 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/profiles/patients` | `PatientList` (V05-01·L) · `PatientMerge` (candidatos) |
 | `GET` | `/profiles/patients/:profileId` | `PatientDetail` (ficha F-01) |
 | `GET` | `/profiles/patients/me/summary` | `MyProfile` (V05-03) |
 | `POST` | `/profiles/patients` | `PatientNew` (V05-01·F) |
@@ -324,6 +322,22 @@ y no sólo un `SECURITY_ADMIN`.
 Reusa `GET /practices` de `AccountingClient` para elegir de qué práctica es el
 catálogo — mismo motivo: no existe «la práctica del usuario».
 
+### `HealthcareServicesClient` — 4 operaciones
+
+Procedimientos que una sede publica, con su precio propio (carril CM-06).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/practices/:practiceId/sites` | `ProcedureOffers` (elegir la sede) |
+| `GET` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (con `practiceSiteId` en la consulta) |
+| `POST` | `/practices/:practiceId/healthcare-services` | `ProcedureOffers` (publicar un procedimiento) |
+| `PATCH` | `/practices/:practiceId/healthcare-services/:id` | `ProcedureOffers` (activar, desactivar, fijar el precio) |
+
+El precio propio se crea antes con `ServicesCatalogClient.create` —un ítem de
+catálogo por sede— y su `id` viaja como `serviceCatalogId`. `serviceCatalogId`
+es opcional al publicar: sin precio el procedimiento queda publicado pero no
+aparece en las búsquedas del paciente.
+
 ### `SchedulingClient` — 33 operaciones
 
 | Método | Ruta | Consumidor |
@@ -404,6 +418,7 @@ paso previo.
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/clinical/patients/:patientProfileId/summary` | `PatientChart` (UC-39-20) |
+| `GET` | `/clinical/patients/:patientProfileId/received-services` | `ReceivedServicesClient` — pestaña «Servicios recibidos» de `MedicalRecord` y de `PatientChart` (ver `contracts/received-services.md`) |
 | `GET` | `/charts/patients/:patientProfileId/chart` | `PatientChart` (UC-40-14) |
 | `POST` | `/clinical/encounters/check-in` | `PatientChart` (UC-08-02) |
 | `POST` | `/clinical/encounters/:encounterId/close` | `PatientChart` (UC-08-14) |
@@ -703,6 +718,33 @@ contrasta con la cabecera `X-Tenant-Id` y responde **403** si difieren. En el
 sujeto conviene omitirlo y dejar que lo resuelva el interceptor; en la geocerca
 tiene que ser el tenant activo de la sesión.
 
+### `ReverseGeocodingClient` — 1 operación · sin sesión
+
+Del punto del mapa a la línea de dirección (pedido del cliente del 26/10/2026:
+«llene la línea de dirección»). La API consulta a OpenStreetMap (Nominatim) y
+el navegador no: la política de seguridad sigue con `connect-src 'self'`. El
+punto va en el **cuerpo**, no en la URL, y sólo se acepta dentro de Bolivia.
+`found: false` es «no se conoce calle ahí»; un proveedor caído es 503.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/public/geo/reverse` | `RegisterPatient` (calle desde el punto), `AddressBook` |
+
+### `PatientAddressBookClient` — 5 operaciones · 4 comandos y una lectura
+
+La libreta de direcciones del propio paciente, para los envíos (26/10/2026,
+modelo v4.2.61). La persona sale de la sesión; un `:id` ajeno responde 404.
+Toda escritura devuelve la libreta releída, la preferida primero. El domicilio
+no se quita (422); corregir cierra la vigente y abre otra.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/profiles/patients/me/addresses` | `AddressBook` («Mi perfil» › «Mis direcciones») |
+| `POST` | `/profiles/patients/me/addresses` | `AddressBook` |
+| `PATCH` | `/profiles/patients/me/addresses/:id` | `AddressBook` |
+| `DELETE` | `/profiles/patients/me/addresses/:id` | `AddressBook` |
+| `PUT` | `/profiles/patients/me/addresses/:id/preferred` | `AddressBook` |
+
 ### `ProceduresClient` — 4 operaciones · carril 3
 
 El histórico de procedimientos quirúrgicos y odontológicos (M53).
@@ -821,6 +863,26 @@ el pedido al backend está en `PENDIENTES-BACKEND.md` (P-CENTRO-HORARIOS).
 | `POST` | `/diagnostic-results/me/orders/:orderId/booking` | `OrderBooking` |
 | `DELETE` | `/diagnostic-results/me/orders/:orderId/booking` | `DiagnosticOrders` (cancelar turno) |
 
+### `DiagnosticsLabClient` — 9 operaciones
+
+BR-17 (CV-02, CL-47): el circuito del laboratorio propio — acesión, espécimen,
+versión de informe y liberación. `createReportVersion`/`releaseReportVersion`
+son D-E: el único camino que hace aparecer un resultado en «Mis resultados».
+El resto (acesionar, especímenes, contenedores, custodia y sus dos lecturas)
+todavía no tiene pantalla — ver `scripts/check-mock-vs-client.mjs` (CONOCIDAS).
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `POST` | `/diagnostics/specimens` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/accessions` | sin pantalla todavía (consola del laboratorio) |
+| `GET` | `/diagnostics/accessions/:accessionId` | sin pantalla todavía (consola del laboratorio) |
+| `GET` | `/diagnostics/specimens/:specimenId` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/specimens/:specimenId/rejection` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/specimens/:specimenId/containers` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/containers/:containerId/custody-events` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/reports/:reportId/versions` | sin pantalla todavía (consola del laboratorio) |
+| `POST` | `/diagnostics/reports/:reportId/versions/:versionId/release` | sin pantalla todavía (consola del laboratorio) |
+
 ### `FilesClient` — 6 operaciones
 
 | Método | Ruta | Consumidor |
@@ -865,14 +927,8 @@ ataría una respuesta cacheada `public, max-age=60` a una sesión.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
-| `GET` | `/public/search` | `BuscarBuscadorListado` (`/buscar`) |
 | `GET` | `/public/search/practitioners` | `BuscarProfesionalesListado` |
-| `GET` | `/public/search/medications` | — (devuelve vacío por construcción, ver abajo) |
-| `GET` | `/public/search/organizations` | `BuscarHospitalesListado` |
-| `GET` | `/public/search/diagnostic-units` | `BuscarLaboratoriosListado` |
-| `GET` | `/public/search/insurers` | `BuscarAseguradorasListado` |
-| `GET` | `/public/search/pharmacies` | — (sin pantalla propia todavía) |
-| `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/buscar/mapa`) |
+| `GET` | `/public/nearby` | `BuscarCercaniaDetalle` (`/search/map`) |
 | `GET` | `/public/profiles/:prefijo/:slug` | `perfilPublicoResolver` (`/p/:slug`…) |
 | `GET` | `/public/comments/:commentId/replies` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
 | `GET` | `/public/posts` | `BuscarAseguradorasListado` y 12 pantallas más | Sí |
@@ -907,7 +963,7 @@ Lo que sirve esa pantalla es `PublicMarketplaceClient`, abajo.
 
 ### `PublicMarketplaceClient` — 2 lecturas anónimas
 
-La **vitrina pública de medicamentos** (`/buscar/medicamentos`). Misma familia
+La **vitrina pública de medicamentos** (`/search/medications`). Misma familia
 que `PublicDirectoryClient` —anónima, sin `Authorization`, cacheable— pero
 contra otro módulo de la API: el catálogo de farmacia, no el índice de
 perfiles.
@@ -1100,6 +1156,19 @@ comercial: ni el corredor ni la aseguradora ven historial médico.
 > sí (FT-32-R02); lo consume `InsuranceClaimDetail` (badge «Posible
 > duplicado» · `BILLING_OPERATOR`/`SECURITY_ADMIN`).
 
+> **`GET /insurance-claims/:id` gana `settlement` y `eob` (Tarea 3 · H8, CA-3.1/CA-3.3).**
+> `settlement: { availability, totalBilledAmount, totalApprovedAmount,
+> totalPatientAmount, totalDeniedAmount, reconciled, exclusions }` —
+> `totalBilledAmount = totalApprovedAmount + totalPatientAmount +
+> totalDeniedAmount`; `reconciled` es `true` sólo cuando esa ecuación cuadra
+> al centavo. `eob: { id, publishedAt } | null`. Una exclusión sin
+> `policyClauseReference`, una línea sin adjudicar o un descuadre degradan
+> `availability` a `UNDER_REVIEW` en vez de publicarse como liquidación
+> firme; sin dictamen o sin EOB publicada es `PENDING_PUBLICATION`. Lo
+> consume la nueva sección «Liquidación» de `InsuranceClaimDetail` y, del
+> lado del paciente, `PatientInsuranceSettlement` (misma semántica, otro
+> endpoint).
+
 ### `InsuranceAnalyticsClient` — 1 operación · subtarea 3.1, v4.2.14
 
 El tablero de siniestralidad, gasto per cápita y morbilidad de la
@@ -1179,6 +1248,39 @@ a nadie. Se pide una vez por sesión y se comparte.
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `GET` | `/pharma-labs/reference/concepts` | `PharmaLabHome` · `VisitorVisits` · `DoctorVisits` |
+
+### `AdmissionsClient` — 16 operaciones · «Admisiones» (alta de doctor)
+
+La bandeja de quien revisa y la lectura del propio médico. La autoridad es la API:
+cada ruta exige su rol (`ADMISSIONS_REVIEWER`, `ADMISSIONS_APPROVER` o
+`SECURITY_ADMIN` para leer) y toda escritura manda `expectedRowVersion`. Los
+códigos de estado son estables y en inglés (`IN_REVIEW`); el cliente acepta el
+vocabulario heredado en español y lo traduce en la frontera.
+
+| Método | Ruta | Consumidor |
+|---|---|---|
+| `GET` | `/admissions` | `AdmissionsQueue` (sin texto de búsqueda) |
+| `POST` | `/admissions/search` | `AdmissionsQueue` (con texto: la cédula no viaja en la dirección) |
+| `GET` | `/admissions/:id` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/claim` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/release` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/reassign` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/request-info` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/items/:itemId/review` | `AdmissionDetail` · lleva `evidenceSha256` |
+| `POST` | `/admissions/:id/decision` | `AdmissionDetail` · sin `items[]`: el servidor deriva el estado de las revisiones |
+| `POST` | `/admissions/:id/suspend` | `AdmissionDetail` |
+| `POST` | `/admissions/:id/reinstate` | `AdmissionDetail` |
+| `GET` | `/admissions/:id/documents/:fileId` | `AdmissionDocumentViewer` · acceso auditado, devuelve una dirección firmada de vida corta |
+| `GET` | `/profiles/practitioners/me/admission` | `AdmissionStatusCard` (404 si no hay solicitud) |
+| `POST` | `/profiles/practitioners/me/admission/resubmit` | `AdmissionStatusCard` · con atestación |
+
+Errores propios, en `details.reason` (o como `code`): `ADMISSION_STALE` (409),
+`ADMISSION_EVIDENCE_CHANGED` (409), `ADMISSION_ITEM_REQUIRES_SOURCE`,
+`ADMISSION_REASON_REQUIRED`, `ADMISSION_REQUIREMENTS_PENDING`,
+`ADMISSION_INVALID_TRANSITION` (412), `ADMISSION_FOUR_EYES`,
+`ADMISSION_NOT_ASSIGNED`, `ADMISSION_SELF_ACCESS`, `ADMISSION_ROLE_REQUIRED` (403).
+`readAdmissionError` los lee sin pasar por `readApiError`, que descarta los
+códigos que no conoce.
 
 ### Operaciones que suman otros carriles
 
@@ -1334,9 +1436,6 @@ del backend es que alguien lo note. Los comentarios rastrean el origen
 («verificadas una por una contra `iam-auth.controller.ts`»), pero eso es
 trazabilidad, no verificación.
 
-Las dos están en [el análisis de brechas](../reports/documentation-gap-analysis.md),
-la segunda como `HIGH`.
-
 ---
 
 ## Verificación
@@ -1425,9 +1524,21 @@ alcanzable desde este repositorio.
 
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
-| `GET` | `/prescription-favorites` | `MedicationBlock` | No |
-| `POST` | `/prescription-favorites` | `MedicationBlock` | No |
-| `DELETE` | `/prescription-favorites/:id` | `MedicationBlock` | No |
+
+### `ReferralsClient` — 4 operaciones
+
+Derivar a otro profesional o a una organización médica, por un servicio
+concreto de su catálogo (`clinical_ext`). `referralType` y
+`targetServiceCatalogId` del alta todavía no están en el `openapi.json` del que
+sale el contrato de la maqueta: se aceptan por `REFERRAL_CONTRACT_PENDING_KEYS`
+y se mandan también a la API real.
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/referrals` | `ReferralBlock` | No |
+| `GET` | `/referrals` | `Consultation` (`ConsultationReferrals`) | No |
+| `GET` | `/referrals/targets` | `ReferralBlock` | No |
+| `GET` | `/referrals/target-services` | `ReferralBlock` | No |
 
 ### `QuotationsClient` — 4 operaciones
 
@@ -1436,7 +1547,24 @@ alcanzable desde este repositorio.
 | `GET` | `/quotations` | `QuotationForm` + `QuotationList` | No |
 | `POST` | `/quotations` | `QuotationForm` + `QuotationList` | No |
 | `GET` | `/quotations/:id` | `QuotationForm` + `QuotationList` | No |
-| `POST` | `/quotations/simulate` | `QuotationForm` + `QuotationList` | No |
+
+### `MedicalGroupsClient` — 9 operaciones · carril 21
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/medical-groups` | `MedicalGroupList` | No |
+| `GET` | `/medical-groups/eligible-members` | `MedicalGroupForm` | No |
+| `GET` | `/medical-groups/patients/:patientProfileId/conditions` | `MedicalGroupForm` | No |
+| `GET` | `/medical-groups/:id` | `MedicalGroupDetail` | No |
+| `POST` | `/medical-groups` | `MedicalGroupForm` | No |
+| `POST` | `/medical-groups/:groupId/members/:memberId/respond` | `MedicalGroupDetail` | No |
+| `POST` | `/medical-groups/:groupId/reschedule-requests` | `MedicalGroupDetail` | No |
+| `POST` | `/medical-groups/:groupId/reschedule-requests/respond` | `MedicalGroupDetail` | No |
+| `PATCH` | `/medical-groups/:groupId/exercise-notes` | `MedicalGroupDetail` | No |
+
+Todas exigen `PRACTITIONER` o `CLINICIAN`. Sólo se puede invitar a colegas de la misma
+organización que la práctica del servicio (`eligible-members` aplica la misma regla que el
+alta), y el nombre del paciente viaja sólo al creador y a los miembros que aceptaron.
 
 ### `SurveysClient` — 17 operaciones
 
@@ -1459,3 +1587,209 @@ alcanzable desde este repositorio.
 | `GET` | `/surveys/templates/:surveyId/responses` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `POST` | `/surveys/templates/:surveyId/versions` | `QuestionnaireAnswer` y 3 pantallas más | No |
 | `POST` | `/surveys/templates/:surveyId/versions/:versionNumber/publish` | `QuestionnaireAnswer` y 3 pantallas más | No |
+
+
+## Consumos incorporados en Hito 2
+
+Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no una API implementada ni un flujo real verificado. Contabilidad simple, portal laboratorio y las acciones de factura de received-claims son contratos que sólo sirve el simulador (`simulatorOnly()` en su cliente). Los restantes consumidores requieren validar su implementacion y runtime por separado.
+
+| Metodo | Ruta | Cliente y fuente | Evidencia |
+|---|---|---|---|
+| `GET` | `/accounting/accrual-objects` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/accruals/run` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/assets` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/clearing-documents` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/depreciation/run` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/dimensions` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/fiscal-periods/:periodId/lock` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/fiscal-years` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/journal-transactions/:transactionId/:action` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/journal-transactions/:transactionId/document-flow` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/open-items` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/accounts` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/practitioner/simple/accounts` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/accounting/practitioner/simple/accounts/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/accounting/practitioner/simple/accounts/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/records` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/practitioner/simple/records` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/accounting/practitioner/simple/records/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/accounting/practitioner/simple/records/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/summary` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/accounting/practitioner/simple/transactions` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/accounting/practitioner/simple/transactions` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/accounting/practitioner/simple/transactions/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/accounting/practitioner/simple/transactions/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/funnels` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/funnels/:funnelId/report` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/overview` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/pipeline-health` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/sessions` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/sessions/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/timeseries` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/analytics/web-vitals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/catalog/annotations/:annotationId/review` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/columns/:columnId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` |
+| `GET` | `/admin/catalog/coverage` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:id` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/admin/catalog/objects/:objectId/annotation` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/changes` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/columns` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/catalog/objects/:objectId/evidence` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/history` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/objects/:objectId/impact` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/scans` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/catalog/scans` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/catalog/schemas` | [`DataCatalogClient`](../../src/app/core/data-access/admin-portal/data-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/backups` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/deployments` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/incidents` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/readiness` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/slos` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/ops/traffic` | [`OpsTrafficClient`](../../src/app/core/data-access/admin-portal/ops-traffic.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`OpsConsoleController_trafficOverview`) |
+| `GET` | `/admin/ops/traffic/endpoints` | [`OpsTrafficClient`](../../src/app/core/data-access/admin-portal/ops-traffic.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`OpsConsoleController_trafficEndpoints`) |
+| `GET` | `/admin/qa/defects` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/environments` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/flows` | [`FlowsClient`](../../src/app/core/data-access/admin-portal/flows.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`QaLabReadController_listFlows`) |
+| `GET` | `/admin/qa/flows/:flowId` | [`FlowsClient`](../../src/app/core/data-access/admin-portal/flows.client.ts) | Fuente frontend; contrato en `mantra-core-health-api/openapi/openapi.json` (`QaLabReadController_flow`) |
+| `GET` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/plans/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans/:planId/approvals` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans/:planId/cancel` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/admin/qa/plans/preflight` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/runs` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/runs/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/suites` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/suites/:id` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/admin/qa/targets` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/authz/me/access` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/authz/me/care-relationships/:id/revoke` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/authz/me/clinical-access-grants/:grantId/revoke` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/authz/patients/:patientProfileId/break-the-glass` | [`AuthzClient`](../../src/app/core/data-access/authz/authz.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/catalogs` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/charges` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/charges/:chargeId/instances/:instanceId/payments` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/charges/:chargeId/invoices` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/charges/:chargeId/payment` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/invoices/:invoiceId` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/invoices/:invoiceId/annulment` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/invoices/:invoiceId/annulment-reversal` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/billing/simulated/invoices/:invoiceId/email` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/my-invoices` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/my-invoices/:invoiceId` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/outbox` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/billing/simulated/status` | [`BillingSimulatedClient`](../../src/app/core/data-access/billing-simulated/billing-simulated.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/charts/care-plans` | [`ChartCarePlansClient`](../../src/app/core/data-access/chart-care-plans/chart-care-plans.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/charts/documents` | [`ChartDocumentsClient`](../../src/app/core/data-access/chart-documents/chart-documents.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/charts/documents/:documentId/files/:fileId/content` | [`ChartDocumentsClient`](../../src/app/core/data-access/chart-documents/chart-documents.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/charts/notes` | [`ChartNotesClient`](../../src/app/core/data-access/chart-notes/chart-notes.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/charts/notes/:noteId/versions/:versionId/sign` | [`ChartNotesClient`](../../src/app/core/data-access/chart-notes/chart-notes.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/clinical/conditions/:conditionId/verification` | [`ClinicalClient`](../../src/app/core/data-access/clinical/clinical.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/clinical/medication-requests/:medicationRequestId/edit` | [`ClinicalClient`](../../src/app/core/data-access/clinical/clinical.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/clinical/prescriptions/:medicationRequestId/pdf` | [`ClinicalClient`](../../src/app/core/data-access/clinical/clinical.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/community/conversations/:conversationId` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/community/conversations/:conversationId/messages/:messageId` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/community/moderation/decisions/mine` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/community/profiles/:profileId/auto-reply` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/community/profiles/:profileId/auto-reply` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/encounters/:encounterId/informed-consent` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/encounters/:encounterId/informed-consent` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/consents` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/consent/me/consents/:consentId/withdraw` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/hipaa-authorizations` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/objections` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/consent/me/treatment-informed-consents` | [`ConsentClient`](../../src/app/core/data-access/consent/consent.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostic-results/me/:reportId/files/:fileId/content` | [`DiagnosticsClient`](../../src/app/core/data-access/diagnostics/diagnostics.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/categories` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/diagnostics/lab/categories/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/diagnostics/lab/categories/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/result-files` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/result-files/:id/content` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/result-files/:id/withdrawal` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/result-targets` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/result-uploads` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/diagnostics/lab/result-uploads/:uploadId` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/result-uploads/:uploadId/complete` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/diagnostics/lab/result-uploads/:uploadId/parts/:index` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/services` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/services` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/diagnostics/lab/services/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/diagnostics/lab/services/:id` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/lab/services/import` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/diagnostics/lab/summary` | [`LabPortalClient`](../../src/app/core/data-access/lab-portal/lab-portal.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/diagnostics/service-requests/inbox` | [`DiagnosticsLabClient`](../../src/app/core/data-access/diagnostics/diagnostics-lab.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/auth/change-password` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/auth/logout-all` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/auth/upload-registration-document` | [`IamClient`](../../src/app/core/data-access/iam/iam.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/iam/me/sessions` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/me/sessions/:sessionId/revoke` | [`AccountSecurityClient`](../../src/app/core/data-access/iam/account-security.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/iam/users/search` | [`IamClient`](../../src/app/core/data-access/iam/iam.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance-campaigns` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance-campaigns` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/insurance-campaigns/:id/status` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance-campaigns/patient/:patientProfileId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance-claims/:claimId/adjudications` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance-claims/:claimId/eob` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance-marketplace/insurers/:slug` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/insurance-plans/:planId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/insurance-plans/:planId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/insurance/received-claims` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/received-claims/:claimId/decision` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/received-claims/:claimId/invoice` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/insurance/received-claims/:claimId/invoice/annulment` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/loyalty/me` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/loyalty/me/points` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/loyalty/me/points/redeem` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/patient-spending/me` | [`PatientSpendingClient`](../../src/app/core/data-access/patient-spending/patient-spending.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/patients/me/reviews` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacies/:pharmacyId/inventory` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/pharmacies/:pharmacyId/products/:productId` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:id` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:id/contacts` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:id/licenses` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/pharmacies/:pharmacyId/summary` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/sites` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/pharmacy/sites/:siteId/prices` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/practitioners/:practitionerProfileId/insurance-networks` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/practitioners/me/sites/:siteId` | [`PracticeSitesClient`](../../src/app/core/data-access/practice-sites/practice-sites.client.ts) | Fuente frontend; no certifica API real |
+| `PUT` | `/practitioners/me/sites/:siteId/bank-qr` | [`PracticeSitesClient`](../../src/app/core/data-access/practice-sites/practice-sites.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/profiles/patients/me/dependent-candidates` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependent-requests` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependent-requests/:requestId/accept` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependent-requests/:requestId/reject` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/profiles/patients/me/dependent-requests/incoming` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/profiles/patients/me/dependents` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/me/dependents` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/profiles/patients/search` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/profiles/practitioners/me/affiliations/:affiliationId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/affiliations/:affiliationId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/credentials/:credentialId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/profiles/practitioners/me/jurisdiction-authorizations/:licenseId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/jurisdiction-authorizations/:licenseId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `DELETE` | `/profiles/practitioners/me/specialties/:specialtyId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `PATCH` | `/profiles/practitioners/me/specialties/:specialtyId/primary` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/promotions/me` | [`PromotionsClient`](../../src/app/core/data-access/promotions/promotions.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/public/profiles/:prefijo/:slug/reviews` | [`PublicDirectoryClient`](../../src/app/core/data-access/public-directory/public-directory.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/public/profiles/f/:slug/branch-availability` | [`PublicCatalogClient`](../../src/app/core/data-access/public-catalog/public-catalog.client.ts) | Fuente frontend; no certifica API real |
+| `POST` | `/scheduling/appointments/walk-in` | [`SchedulingClient`](../../src/app/core/data-access/scheduling/scheduling.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/terminology/import-template` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/terminology/value-sets/$glossary-facets` | [`TerminologyClient`](../../src/app/core/data-access/terminology/terminology.client.ts) | Fuente frontend; no certifica API real |
+
+Operaciones de la lista anterior que ya no consume el codigo integrado (se conserva referencia historica):
+
+- `GET /iam/users`
+- `GET /profiles/patients`
+- `GET /public/search`
+- `GET /public/search/medications`
+- `GET /public/search/organizations`
+- `GET /public/search/diagnostic-units`
+- `GET /public/search/insurers`
+- `GET /public/search/pharmacies`
+- `GET /prescription-favorites`
+- `POST /prescription-favorites`
+- `DELETE /prescription-favorites/:id`
+- `POST /quotations/simulate`

@@ -1,7 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, DeferBlockBehavior, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  DeferBlockBehavior,
+  DeferBlockState,
+  TestBed,
+} from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 
 import { of } from 'rxjs';
@@ -13,6 +19,8 @@ import type { RamaDepartamento } from '../../../../core/data-access/terminology/
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { CONFIRMAR_DESCARTE } from '../../../../shared/components/molecules/dialog/dialog.types';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { FilterBar } from '../../../../shared/components/organisms/filter-bar/filter-bar';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import { WorkHistory } from './work-history';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 
@@ -282,6 +290,10 @@ describe('WorkHistory', () => {
     const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
     expect(req.request.body).toEqual({
       organizationName: 'Clínica del Sur',
+      // El id del establecimiento elegido del padrón viaja con el nombre (ID-16):
+      // sin él la API no puede validarlo contra `VS_BO_HEALTH_FACILITY` ni
+      // protegerlo del duplicado.
+      healthFacilityConceptId: 'fac-Clínica del Sur',
       roleTitle: 'Jefe de guardia',
       startDate: '2021-03-01',
     });
@@ -773,6 +785,35 @@ const RAMAS: readonly RamaDepartamento[] = [
   },
 ];
 
+/** Un punto en Santa Cruz y lo que el mapa deduce de él. */
+const PUNTO_SEDE = { lat: -17.7833, lng: -63.1821 };
+const deducidoDe = (
+  punto: { lat: number; lng: number },
+  extra: Record<string, unknown> = {},
+) => ({
+  punto,
+  calle: 'Av. Brasil 1234, Equipetrol',
+  calleSola: 'Av. Brasil 1234',
+  zona: 'Equipetrol',
+  municipioConceptId: 'mun-scz',
+  ...extra,
+});
+
+/**
+ * Marca y confirma el punto de la sede, con lo que el mapa deduce de él: lo que
+ * hace `app-map-location-picker` (pedido del cliente del 26/10/2026).
+ */
+function marcarSede(
+  componente: Record<string, UnMiembro>,
+  punto = PUNTO_SEDE,
+  extra: Record<string, unknown> = {},
+): void {
+  (componente['aplicarLocalidadDeSede'] as unknown as (l: unknown) => void)(
+    deducidoDe(punto, extra),
+  );
+  (componente['confirmarPuntoDeSede'] as unknown as (p: unknown) => void)(punto);
+}
+
 async function montarConSedes(
   confirmar = true,
   secciones?: 'ambas' | 'consultorios' | 'historial',
@@ -843,16 +884,14 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.verify();
   });
 
-  it('registra un consultorio propio con dirección, municipio y departamento deducido', async () => {
+  it('registra un consultorio propio con dirección, ciudad, municipio y departamento sacados del punto', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('  Consultorio Dra. Pérez ');
-    componente['direccionDeSede'].set('Av. Brasil 1234');
-    componente['ciudadDeSede'].set('La Paz');
-    componente['municipioDeSede'].set('mun-scz');
+    marcarSede(componente);
     fixture.detectChanges();
 
     expect(leer(componente, 'departamentoDeSede')).toBe('dep-sc');
@@ -862,10 +901,12 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     expect(req.request.body).toEqual({
       name: 'Consultorio Dra. Pérez',
       address: {
-        lines: ['Av. Brasil 1234'],
-        city: 'La Paz',
+        lines: ['Av. Brasil 1234, Equipetrol'],
+        city: 'Santa Cruz de la Sierra',
         municipalityConceptId: 'mun-scz',
         administrativeAreaConceptId: 'dep-sc',
+        latitude: -17.7833,
+        longitude: -63.1821,
       },
     });
     req.flush(sedeEnCable());
@@ -880,58 +921,33 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     http.verify();
   });
 
-  it('manda el punto del mapa como latitud y longitud, y omite la dirección si está vacía', async () => {
+  it('sin punto confirmado no se guarda; sin calle en el mapa viaja la zona, nunca una calle inventada', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('Consultorio');
+    // Lo deducido de un punto que todavía no se confirmó no cuenta.
+    (componente['aplicarLocalidadDeSede'] as unknown as (l: unknown) => void)(
+      deducidoDe(PUNTO_SEDE),
+    );
     fixture.detectChanges();
-    componente['guardarSede']();
-
-    // Sin dirección no viaja `address`: una fila vacía en common.addresses no
-    // es «sin dirección».
-    const sinDireccion = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
-    expect(sinDireccion.request.body).toEqual({ name: 'Consultorio' });
-    sinDireccion.flush(sedeEnCable());
-    http.expectOne(SITIOS).flush({ items: [], count: 0 });
-
-    // D-06: tocar el mapa vacía la dirección — así que si nadie la vuelve a
-    // escribir después, `direccionDelFormulario()` sigue leyendo «vacía» y el
-    // punto se pierde igual que la calle. El aviso junto al campo
-    // (`sede-direccion-vaciada`) es lo que evita esto en la práctica.
-    componente['abrirAltaDeSede']();
-    componente['nombreDeSedeNueva'].set('Consultorio');
-    componente['direccionDeSede'].set('Calle 1');
-    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
-      lat: -16.5,
-      lng: -68.15,
-    });
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false);
     expect(leer<string>(componente, 'direccionDeSede')).toBe('');
-    fixture.detectChanges();
     componente['guardarSede']();
+    http.expectNone((r) => r.url === SITIO_PROPIO && r.method === 'POST');
 
-    const sinRetipear = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
-    expect(sinRetipear.request.body).toEqual({ name: 'Consultorio' });
-    sinRetipear.flush(sedeEnCable());
-    http.expectOne(SITIOS).flush({ items: [], count: 0 });
-
-    // Quien sí vuelve a escribir la dirección (lo que el aviso le pide) manda
-    // la calle y el punto juntos.
-    componente['abrirAltaDeSede']();
-    componente['nombreDeSedeNueva'].set('Consultorio');
-    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
-      lat: -16.5,
-      lng: -68.15,
-    });
-    componente['direccionDeSede'].set('Calle 1');
+    marcarSede(componente, { lat: -16.5, lng: -68.15 }, { calle: null, calleSola: null });
     fixture.detectChanges();
     componente['guardarSede']();
 
     const conPunto = http.expectOne((r) => r.url === SITIO_PROPIO && r.method === 'POST');
     expect(conPunto.request.body.address).toEqual({
-      lines: ['Calle 1'],
+      lines: ['Equipetrol, Santa Cruz de la Sierra'],
+      city: 'Santa Cruz de la Sierra',
+      municipalityConceptId: 'mun-scz',
+      administrativeAreaConceptId: 'dep-sc',
       latitude: -16.5,
       longitude: -68.15,
     });
@@ -976,6 +992,7 @@ describe('WorkHistory — dónde atiendo (ALV-005/006/010) y cargo opcional (ALV
     const req = http.expectOne((r) => r.url === AFILIACIONES && r.method === 'POST');
     expect(req.request.body).toEqual({
       organizationName: 'Mi consultorio',
+      healthFacilityConceptId: 'fac-Mi consultorio',
       startDate: '2021-03-01',
     });
     req.flush(enCable({ id: 'af-3', roleTitle: null }));
@@ -1489,29 +1506,39 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.verify();
   });
 
-  it('corrige el nombre con un PATCH y NO manda dirección si el formulario la deja en blanco', async () => {
+  it('corrige sólo el nombre: con el mismo punto guardado, la dirección es la que ya tenía', async () => {
     const { fixture, http } = await montarConSedes();
-    http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
+    const ubicada = { ...PROPIA, latitude: -17.78, longitude: -63.18 };
+    http.expectOne(SITIOS).flush({ items: [ubicada], count: 1 });
     fixture.detectChanges();
     const componente = api(fixture);
 
-    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(ubicada);
     fixture.detectChanges();
-    // El formulario arranca con el nombre que ya tenía.
+    // El formulario arranca con el nombre que ya tenía, y el punto guardado
+    // vale sin volver a confirmarlo.
     expect(leer<string>(componente, 'nombreDeSedeNueva')).toBe('Consultorio Dra. Pérez');
+    expect(leer<boolean>(componente, 'sinPuntoDeSede')).toBe(false);
+    // El mapa vuelve a deducir del mismo punto al abrir: no reescribe nada.
+    (componente['aplicarLocalidadDeSede'] as unknown as (l: unknown) => void)(
+      deducidoDe({ lat: -17.78, lng: -63.18 }),
+    );
+    (componente['confirmarPuntoDeSede'] as unknown as (p: unknown) => void)({
+      lat: -17.78,
+      lng: -63.18,
+    });
+    expect(leer<string>(componente, 'direccionDeSede')).toBe('Av. Brasil 1234, La Paz');
 
     componente['nombreDeSedeNueva'].set('Consultorio Sur');
-    // Vaciarla a propósito: el formulario ya no abre en blanco, así que «en
-    // blanco» es una decisión de quien edita y no el estado inicial.
-    componente['direccionDeSede'].set('');
     await (componente['guardarSede'] as unknown as () => Promise<void>)();
 
     const req = http.expectOne(
       (r) => r.url === `${SITIO_PROPIO}/site-propia` && r.method === 'PATCH',
     );
-    // Sin calle escrita no viaja `address`: en blanco es «no la toques», que
-    // es exactamente lo que el PATCH hace con lo que no recibe.
-    expect(req.request.body).toEqual({ name: 'Consultorio Sur' });
+    expect(req.request.body).toEqual({
+      name: 'Consultorio Sur',
+      address: { lines: ['Av. Brasil 1234, La Paz'], latitude: -17.78, longitude: -63.18 },
+    });
     req.flush(sedeEnCable({ name: 'Consultorio Sur', isOwnSite: true }));
 
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
@@ -1520,15 +1547,13 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     http.verify();
   });
 
-  it('manda la dirección entera cuando sí se escribe una calle', async () => {
+  it('un punto nuevo reescribe la dirección entera con lo que sale de él', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
     const componente = api(fixture);
 
     (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
-    componente['direccionDeSede'].set('Calle Nueva 99');
-    componente['ciudadDeSede'].set('Santa Cruz');
-    componente['municipioDeSede'].set('mun-scz');
+    marcarSede(componente, PUNTO_SEDE, { calle: 'Calle Nueva 99, Equipetrol' });
     fixture.detectChanges();
     await (componente['guardarSede'] as unknown as () => Promise<void>)();
 
@@ -1538,10 +1563,12 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
     expect(req.request.body).toEqual({
       name: 'Consultorio Dra. Pérez',
       address: {
-        lines: ['Calle Nueva 99'],
-        city: 'Santa Cruz',
+        lines: ['Calle Nueva 99, Equipetrol'],
+        city: 'Santa Cruz de la Sierra',
         municipalityConceptId: 'mun-scz',
         administrativeAreaConceptId: 'dep-sc',
+        latitude: -17.7833,
+        longitude: -63.1821,
       },
     });
     req.flush(sedeEnCable());
@@ -1595,11 +1622,15 @@ describe('WorkHistory — consultorio propio vs. ajeno y QR bancario (P32 / P33)
 describe('WorkHistory — el consultorio en modal, guardar por cambios y confirmación (ADR-0015)', () => {
   afterEach(() => TestBed.resetTestingModule());
 
+  // Con su punto guardado: el punto es obligatorio desde el 26/10/2026, y uno
+  // guardado vale sin volver a confirmarlo.
   const PROPIA = sedeEnCable({
     id: 'site-propia',
     name: 'Consultorio Dra. Pérez',
     isOwnSite: true,
     addressText: 'Av. Brasil 1234',
+    latitude: -17.78,
+    longitude: -63.18,
   });
 
   it('el formulario nace en un modal, nunca en línea debajo de la lista', async () => {
@@ -1663,6 +1694,10 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
 
     componente['nombreDeSedeNueva'].set('Consultorio nuevo');
     fixture.detectChanges();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false); // sin punto
+
+    marcarSede(componente);
+    fixture.detectChanges();
     expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(true);
     http.verify();
   });
@@ -1709,6 +1744,7 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
 
     componente['abrirAltaDeSede']();
     componente['nombreDeSedeNueva'].set('Consultorio nuevo');
+    marcarSede(componente);
     fixture.detectChanges();
     componente['guardarSede']();
 
@@ -1751,6 +1787,28 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     http.verify();
   });
 
+  it('al cerrar el modal de una edición, el foco vuelve a la acción visible de esa fila', async () => {
+    const { fixture, http } = await montarConSedes(true);
+    const sameNameSite = { ...PROPIA, id: 'site-other', isOwnSite: false };
+    http.expectOne(SITIOS).flush({ items: [sameNameSite, PROPIA], count: 2 });
+    fixture.detectChanges();
+    const componente = api(fixture);
+    const qrAction = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+      'app-row-actions[data-site-id="site-propia"] [data-action="qr"]',
+    );
+    expect(qrAction).not.toBeNull();
+
+    (componente['abrirEdicionDeSede'] as unknown as (s: unknown) => void)(PROPIA);
+    fixture.detectChanges();
+    componente['cerrarAltaDeSede']();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(document.activeElement).toBe(qrAction);
+    expect(qrAction?.getAttribute('aria-label')).toBe(`Configurar QR bancario — ${PROPIA.name}`);
+    http.verify();
+  });
+
   it('si no se confirma el descarte, el modal sigue abierto con lo escrito', async () => {
     const { fixture, http } = await montarConSedes(false);
     http.expectOne(SITIOS).flush({ items: [PROPIA], count: 1 });
@@ -1768,27 +1826,43 @@ describe('WorkHistory — el consultorio en modal, guardar por cambios y confirm
     http.verify();
   });
 
-  it('D-06: tocar el mapa anuncia que hay que volver a escribir la dirección', async () => {
+  it('el punto va primero en el formulario, es obligatorio, y la dirección no se escribe', async () => {
     const { fixture, http } = await montarConSedes();
     http.expectOne(SITIOS).flush({ items: [], count: 0 });
     const componente = api(fixture);
 
     componente['abrirAltaDeSede']();
-    componente['direccionDeSede'].set('Calle 1');
     fixture.detectChanges();
-    expect(leer<boolean>(componente, 'avisoDireccionVaciada')).toBe(false);
-
-    (componente['marcarPunto'] as unknown as (p: { lat: number; lng: number }) => void)({
-      lat: -16.5,
-      lng: -68.15,
-    });
+    const [bloque] = await fixture.getDeferBlocks();
+    await bloque!.render(DeferBlockState.Complete);
     fixture.detectChanges();
 
-    expect(leer<string>(componente, 'direccionDeSede')).toBe('');
-    expect(leer<boolean>(componente, 'avisoDireccionVaciada')).toBe(true);
+    const formulario: HTMLElement = fixture.nativeElement.querySelector(
+      '[data-testid="sede-formulario"]',
+    );
+    const primero = formulario.querySelector('app-map-location-picker, app-form-field');
+    expect(primero?.tagName.toLowerCase()).toBe('app-map-location-picker');
+    // Ni casilla de dirección ni de ciudad, ni el selector manual de municipio.
+    expect(formulario.querySelector('[data-testid="sede-direccion"]')).toBeNull();
+    expect(formulario.querySelector('app-location-picker[testid="sede-municipio"]')).toBeNull();
+    expect(formulario.textContent).not.toContain('Ciudad');
+
+    componente['nombreDeSedeNueva'].set('Consultorio');
+    fixture.detectChanges();
     expect(
-      fixture.nativeElement.querySelector('[data-testid="sede-direccion-vaciada"]'),
-    ).not.toBeNull();
+      fixture.nativeElement.querySelector('[data-testid="sede-punto-requerido"]')?.textContent,
+    ).toContain('Marque el lugar en el mapa y pulse «Confirmar dirección actual».');
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(false);
+
+    marcarSede(componente);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="sede-punto-requerido"]')).toBeNull();
+    expect(leer<boolean>(componente, 'puedeGuardarSede')).toBe(true);
+    // Acá el punto lo confirmó la prueba y no el mapa, así que el mapa lo toma
+    // como suyo y pide su calle.
+    http
+      .expectOne({ method: 'POST', url: '/public/geo/reverse' })
+      .flush({ found: false, attribution: '© OpenStreetMap' });
     http.verify();
   });
 });
@@ -1890,7 +1964,13 @@ describe('WorkHistory — el historial como tabla guarda en el servidor (H4.S3)'
     fixture.componentRef.setInput('layout', 'tabla');
     http
       .expectOne(AFILIACIONES)
-      .flush({ items: [enCable(), enCable({ id: 'af-2', organizationName: 'Clínica del Sur', roleTitle: 'Pediatra' })], count: 2 });
+      .flush({
+        items: [
+          enCable({ statusKind: 'declarado' }),
+          enCable({ id: 'af-2', organizationName: 'Clínica del Sur', roleTitle: 'Pediatra' }),
+        ],
+        count: 2,
+      });
     http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
     fixture.detectChanges();
     return { fixture, http, dialogs, componente: api(fixture) };
@@ -1900,7 +1980,7 @@ describe('WorkHistory — el historial como tabla guarda en el servidor (H4.S3)'
   function accionDeFila(componente: Record<string, UnMiembro>, code: string): void {
     (componente['ejecutarAccionDeAfiliacion'] as unknown as (c: string, a: unknown) => void)(
       code,
-      enCable(),
+      enCable({ statusKind: 'declarado' }),
     );
   }
 
@@ -2102,6 +2182,271 @@ describe('WorkHistory — el historial como tabla guarda en el servidor (H4.S3)'
     expect(filtrado[0].organizationName).toBe('Clínica del Sur');
     http.verify();
   });
+});
+
+describe('WorkHistory — densidad, estados y acciones de la trayectoria', () => {
+  const declarados = (cantidad: number) =>
+    Array.from({ length: cantidad }, (_, indice) =>
+      enCable({
+        id: `vinculo-${indice + 1}`,
+        organizationName: `Institución ${indice + 1}`,
+        statusKind: 'declarado',
+      }),
+    );
+
+  async function montarListado(
+    items: ReturnType<typeof enCable>[],
+    layout: 'timeline' | 'tabla' = 'timeline',
+  ) {
+    const resultado = await montar('prac-1');
+    resultado.fixture.componentRef.setInput('layout', layout);
+    resultado.fixture.componentRef.setInput('secciones', 'historial');
+    resultado.http.expectOne(AFILIACIONES).flush({ items, count: items.length });
+    resultado.http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+    resultado.fixture.detectChanges();
+    return resultado;
+  }
+
+  function tabla(fixture: ComponentFixture<WorkHistory>): HTMLElement | null {
+    return (fixture.nativeElement as HTMLElement).querySelector('[data-testid="historial-tabla"]');
+  }
+
+  function filas(fixture: ComponentFixture<WorkHistory>): HTMLElement[] {
+    return Array.from(
+      tabla(fixture)?.querySelectorAll<HTMLElement>('[data-testid="tabla-fila"]') ?? [],
+    );
+  }
+
+  function buscar(fixture: ComponentFixture<WorkHistory>, texto: string): void {
+    const barra = fixture.debugElement.query(By.directive(FilterBar))
+      .componentInstance as FilterBar;
+    expect(barra.searchInUrl()).toBe(false);
+    barra.searchChanged.emit(texto);
+    fixture.detectChanges();
+  }
+
+  it('cinco vínculos corregibles conservan su lista aunque existan vínculos ya decididos', async () => {
+    const { fixture, http } = await montarListado([
+      ...declarados(5),
+      enCable({ id: 'aprobado', statusKind: 'aprobado' }),
+      enCable({ id: 'rechazado', statusKind: 'rechazado' }),
+    ]);
+
+    expect(tabla(fixture)).toBeNull();
+    expect(
+      fixture.nativeElement.querySelectorAll('[data-testid="vinculos-editables"] li'),
+    ).toHaveLength(5);
+    http.verify();
+  });
+
+  it('seis vínculos corregibles pasan a tabla de dos columnas principales sin duplicar la lista', async () => {
+    const { fixture, http } = await montarListado(declarados(6));
+
+    expect(filas(fixture)).toHaveLength(6);
+    expect(fixture.nativeElement.querySelector('[data-testid="vinculos-editables"]')).toBeNull();
+    expect(tabla(fixture)?.querySelector<HTMLElement>('.data-table__scroll')?.style.maxHeight).toBe(
+      '420px',
+    );
+    const principales = Array.from(tabla(fixture)!.querySelectorAll('thead th'))
+      .filter(
+        (celda) =>
+          !celda.classList.contains('data-table__secondary') &&
+          !celda.classList.contains('data-table__detail-toggle-cell'),
+      )
+      .map((celda) => celda.textContent?.trim());
+    expect(principales).toEqual(['Institución', 'Estado']);
+    http.verify();
+  });
+
+  it('doce vínculos se paginan de diez y la búsqueda normalizada vuelve al inicio conservando la tabla', async () => {
+    const { fixture, http } = await montarListado(declarados(12));
+    const raiz = fixture.nativeElement as HTMLElement;
+    const tablaOriginal = tabla(fixture);
+    expect(filas(fixture)).toHaveLength(10);
+    expect(filas(fixture)[0].textContent).toContain('Institución 1');
+
+    raiz.querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!.click();
+    fixture.detectChanges();
+    expect(filas(fixture)).toHaveLength(2);
+    expect(filas(fixture)[0].textContent).toContain('Institución 11');
+
+    buscar(fixture, 'INSTITUCION 12');
+    expect(tabla(fixture)).toBe(tablaOriginal);
+    expect(filas(fixture)).toHaveLength(1);
+    expect(filas(fixture)[0].textContent).toContain('Institución 12');
+    expect(raiz.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe('1');
+
+    buscar(fixture, 'no existe');
+    expect(tabla(fixture)).toBe(tablaOriginal);
+    expect(filas(fixture)).toHaveLength(0);
+    expect(raiz.querySelector('[data-testid="work-history-no-results"]')).not.toBeNull();
+
+    buscar(fixture, 'medico');
+    expect(filas(fixture)).toHaveLength(10);
+    expect(filas(fixture)[0].textContent).toContain('Institución 1');
+    http.verify();
+  });
+
+  it('si la recarga reduce el total a una página no deja filas ocultas en la segunda', async () => {
+    const { fixture, http } = await montarListado(declarados(12));
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[aria-label="Página siguiente"]')!
+      .click();
+    fixture.detectChanges();
+    api(fixture)['recargar']();
+    http.expectOne(AFILIACIONES).flush({ items: declarados(10), count: 10 });
+    fixture.detectChanges();
+
+    expect(filas(fixture)).toHaveLength(10);
+    expect(filas(fixture)[0].textContent).toContain('Institución 1');
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]')?.textContent?.trim()).toBe(
+      '1',
+    );
+    http.verify();
+  });
+
+  it('separa declaración y sellos de la vigencia, y solo ofrece acciones permitidas', async () => {
+    const estados = ['declarado', 'pendiente', 'aprobado', 'rechazado', 'revocado', 'desconocido'];
+    const { fixture, http } = await montarListado(
+      estados.map((statusKind, indice) =>
+        enCable({
+          id: `estado-${indice}`,
+          organizationName: `Institución ${statusKind}`,
+          statusKind,
+          current: false,
+          endDate: '2024-03-01',
+          decisionReasonText:
+            statusKind === 'rechazado' ? 'Revisar la institución declarada' : null,
+        }),
+      ),
+      'tabla',
+    );
+    const rows = filas(fixture);
+    const acciones = rows.map((fila) =>
+      Array.from(fila.querySelectorAll<HTMLElement>('[data-action]')).map(
+        (accion) => accion.dataset['action'],
+      ),
+    );
+
+    expect(acciones).toEqual([['editar', 'retirar'], ['retirar'], [], [], [], []]);
+    expect(rows[0].textContent).toContain('Declarado por usted');
+    expect(rows[0].querySelector('app-status-seal')).toBeNull();
+    expect(rows.every((fila) => fila.textContent?.includes('Finalizado'))).toBe(true);
+    expect(rows[3].textContent).toContain('Revisar la institución declarada');
+    for (const fila of rows.slice(2)) expect(fila.querySelector('app-row-actions')).toBeNull();
+    const sellos = fixture.debugElement.queryAll(By.directive(StatusSeal)).map((sello) => ({
+      variante: (sello.componentInstance as StatusSeal).variant(),
+      texto: (sello.componentInstance as StatusSeal).label(),
+    }));
+    expect(sellos).toEqual([
+      { variante: 'pending', texto: 'Pendiente' },
+      { variante: 'approved', texto: 'Aprobado' },
+      { variante: 'rejected', texto: 'Rechazado' },
+      { variante: 'rejected', texto: 'Revocado' },
+      { variante: 'unknown', texto: 'Estado desconocido' },
+    ]);
+    http.verify();
+  });
+
+  it('el detalle responsive mantiene las acciones de los vínculos declarados', async () => {
+    const { fixture, http } = await montarListado(declarados(6));
+    filas(fixture)[0]
+      .querySelector<HTMLButtonElement>('[aria-label="Ver el detalle de Institución 1"]')!
+      .click();
+    fixture.detectChanges();
+    const detalle = tabla(fixture)!.querySelector('.data-table__detail-row')!;
+
+    expect(detalle.textContent).toContain('En curso');
+    expect(
+      Array.from(detalle.querySelectorAll<HTMLElement>('[data-action]')).map(
+        (accion) => accion.dataset['action'],
+      ),
+    ).toEqual(['editar', 'retirar']);
+    http.verify();
+  });
+
+  it.each(['aprobado', 'rechazado'])(
+    'tampoco ejecuta acciones sobre un vínculo %s ante un evento directo',
+    async (statusKind) => {
+      const { fixture, http, dialogs } = await montarListado([enCable({ statusKind })], 'tabla');
+      const ejecutar = api(fixture)['ejecutarAccionDeAfiliacion'] as unknown as (
+        code: string,
+        fila: unknown,
+      ) => void;
+      ejecutar.call(fixture.componentInstance, 'editar', enDominio({ statusKind }));
+      ejecutar.call(fixture.componentInstance, 'retirar', enDominio({ statusKind }));
+
+      expect(leer<boolean>(api(fixture), 'edicionAfiliacionAbierta')).toBe(false);
+      expect(dialogs.confirm).not.toHaveBeenCalled();
+      http.verify();
+    },
+  );
+
+  it('la fila pendiente permite retirar mediante DELETE y no ofrece editar', async () => {
+    const { fixture, http, dialogs } = await montarListado(
+      [enCable({ statusKind: 'pendiente' })],
+      'tabla',
+    );
+    expect(filas(fixture)[0].querySelector('[data-action="editar"]')).toBeNull();
+    filas(fixture)[0].querySelector<HTMLButtonElement>('[data-action="retirar"]')!.click();
+    const solicitud = await vi.waitFor(() =>
+      http.expectOne({ method: 'DELETE', url: `${AFILIACIONES}/af-1` }),
+    );
+    expect(dialogs.confirm).toHaveBeenCalled();
+    solicitud.flush(null, { status: 204, statusText: 'No Content' });
+    http.expectOne(AFILIACIONES).flush({ items: [], count: 0 });
+    fixture.detectChanges();
+
+    expect(filas(fixture)).toHaveLength(0);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]'),
+    ).not.toBeNull();
+    http.verify();
+  });
+
+  it.each(['tabla', 'timeline'])(
+    'con layout %s muestra carga y error, sin falso vacío, y permite reintentar',
+    async (layout) => {
+      const { fixture, http } = await montar('prac-1');
+      fixture.componentRef.setInput('layout', layout);
+      fixture.componentRef.setInput('secciones', 'historial');
+      http.expectOne('/practitioners/prac-1/sites').flush({ items: [], count: 0 });
+      fixture.detectChanges();
+
+      expect(tabla(fixture)?.querySelector('.view-state-host__loading')).not.toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]'),
+      ).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-pagination')).toBeNull();
+      http.expectOne(AFILIACIONES).flush(
+        {},
+        {
+          status: 500,
+          statusText: 'Server Error',
+          headers: { 'x-request-id': 'historial-test-500' },
+        },
+      );
+      fixture.detectChanges();
+
+      expect(tabla(fixture)?.textContent).toContain('Algo salió mal');
+      expect(tabla(fixture)?.textContent).toContain('historial-test-500');
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="historial-tabla-vacio"]'),
+      ).toBeNull();
+      const reintentar = Array.from(
+        tabla(fixture)!.querySelectorAll<HTMLButtonElement>('button'),
+      ).find((boton) => boton.textContent?.includes('Reintentar'))!;
+      reintentar.click();
+      fixture.detectChanges();
+      expect(tabla(fixture)?.querySelector('.view-state-host__loading')).not.toBeNull();
+      http.expectOne(AFILIACIONES).flush({ items: declarados(6), count: 6 });
+      fixture.detectChanges();
+
+      expect(filas(fixture)).toHaveLength(6);
+      expect(tabla(fixture)?.textContent).not.toContain('Algo salió mal');
+      http.verify();
+    },
+  );
 });
 
 /**

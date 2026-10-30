@@ -272,7 +272,7 @@
   </section>
 
   <!-- ═══════════ 5 · La red de salud conectada ═══════════ -->
-  <section class="landing-seccion" id="red-salud">
+  <section class="landing-seccion" id="plataforma">
     <div class="landing-ambiente" aria-hidden="true"><span></span><span></span></div>
     <div class="landing-ancho landing-red">
       <div class="landing-rotulo landing-red__intro" data-aparece="sube">
@@ -319,94 +319,9 @@
 
         <div class="landing-red__centro" role="group" aria-label="AloVida, centro de la red">
           <img src="/alovida/imagenes/alovida-logo.svg" alt="" width="36" height="36">
-          <strong>ALÓVIDA</strong>
+          <strong>ALOVIDA</strong>
           <span>un mismo centro</span>
         </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- ═══════════ 6 · La plataforma como arquitectura ═══════════ -->
-  <section class="landing-seccion" id="plataforma">
-    <div class="landing-ambiente" aria-hidden="true"><span></span><span></span></div>
-    <div class="landing-ancho landing-arquitectura">
-      <div class="landing-pegado">
-        <div class="landing-rotulo" data-aparece="izq">
-          <p class="landing-overline">La plataforma</p>
-          <h2 class="landing-h2">Seis cimientos sobre los que se apoya todo lo demás</h2>
-          <p>
-            No son seis funciones sueltas que elige por separado: son las seis capas que hacen
-            posible que el hilo exista. Saque una y el resto se cae.
-          </p>
-        </div>
-        <div data-aparece="izq">
-          <a app-button="" data-variante="secundario" routerLink="/inicio">
-            Recorrer las maquetas
-            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
-          </a>
-        </div>
-      </div>
-
-      <div class="landing-capas" data-capas="">
-        <div class="landing-rail landing-capas__rail" aria-hidden="true"><i></i></div>
-
-        <div class="landing-capa" data-capa="" data-aparece="sube">
-          <span class="landing-capa__numero" aria-hidden="true">01</span>
-          <div class="landing-capa__titulo"><h3>Identidad y acceso</h3></div>
-          <p>Una sola cuenta por persona, sesiones que se revocan en un clic y un registro de cada ingreso. Nadie comparte usuario «porque es más rápido».</p>
-          <div class="landing-capa__piezas"><span>Cuentas</span><span>Sesiones</span><span>Revocación</span></div>
-        </div>
-
-        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/directorio/organizaciones-listado">
-          <span class="landing-capa__numero" aria-hidden="true">02</span>
-          <div class="landing-capa__titulo">
-            <h3>Organizaciones y sucursales</h3>
-            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
-          </div>
-          <p>Cada institución con su estructura, sus sedes y su gente. Los datos de una nunca alcanzan a la otra, aunque compartan la misma plataforma.</p>
-          <div class="landing-capa__piezas"><span>Organización</span><span>Sedes</span><span>Membresías</span></div>
-        </a>
-
-        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/personas/pacientes-formulario">
-          <span class="landing-capa__numero" aria-hidden="true">03</span>
-          <div class="landing-capa__titulo">
-            <h3>Personas, pacientes y personal</h3>
-            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
-          </div>
-          <p>Un padrón único: la persona es una sola, y sobre ella se apoyan su ficha de paciente y su credencial profesional. Se acabó el duplicado con un dígito distinto.</p>
-          <div class="landing-capa__piezas"><span>Padrón único</span><span>Ficha de paciente</span><span>Credencial</span></div>
-        </a>
-
-        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/terminologia/versiones-importar">
-          <span class="landing-capa__numero" aria-hidden="true">04</span>
-          <div class="landing-capa__titulo">
-            <h3>Terminología clínica</h3>
-            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
-          </div>
-          <p>Un diagnóstico se escribe una vez y se entiende igual en la sala, en el laboratorio y en el reporte. Es lo que permite que dos sedes hablen del mismo cuadro.</p>
-          <div class="landing-capa__piezas"><span>Códigos</span><span>Conceptos</span><span>Conjuntos de valor</span><span>Mapeos</span></div>
-        </a>
-
-        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/accesos/acceso-de-emergencia-formulario">
-          <span class="landing-capa__numero" aria-hidden="true">05</span>
-          <div class="landing-capa__titulo">
-            <h3>Permisos y consentimiento</h3>
-            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
-          </div>
-          <p>Quien atiende ve lo que necesita para atender, y nada más. El paciente sabe quién abrió su historia y puede cortar el acceso cuando quiera.</p>
-          <div class="landing-capa__piezas"><span>Roles</span><span>Políticas</span><span>Relaciones de cuidado</span></div>
-        </a>
-
-        <a class="landing-capa" data-capa="" data-aparece="sube" routerLink="/datos-compartidos/versiones-internas-escanear">
-          <span class="landing-capa__numero" aria-hidden="true">06</span>
-          <div class="landing-capa__titulo">
-            <h3>Documentos y contactos</h3>
-            <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h13M13 7l5 5-5 5"></path></svg>
-          </div>
-          <p>Identificadores, direcciones, teléfonos y archivos con las mismas reglas en todo el sistema. Un estudio subido en urgencias se abre igual en consulta externa.</p>
-          <div class="landing-capa__piezas"><span>Identificadores</span><span>Direcciones</span><span>Archivos</span></div>
-        </a>
       </div>
     </div>
   </section>
@@ -880,7 +795,7 @@
       </p>
       <div class="landing-acciones" style="justify-content:center" data-aparece="sube">
         <a app-button="" data-variante="primario" data-tam="lg" href="#solicitar">Solicitar acceso</a>
-        <a app-button="" data-variante="secundario" data-tam="lg" routerLink="/inicio">Recorrer las maquetas</a>
+        <a app-button="" data-variante="secundario" data-tam="lg" routerLink="/home">Recorrer las maquetas</a>
       </div>
     </div>
   </section>
@@ -914,10 +829,10 @@
       <div>
         <h3>Maquetas</h3>
         <ul>
-          <li><a routerLink="/inicio">Índice general</a></li>
-          <li><a routerLink="/terminologia/versiones-importar">Terminología</a></li>
-          <li><a routerLink="/personas/pacientes-formulario">Perfiles</a></li>
-          <li><a routerLink="/accesos/acceso-de-emergencia-formulario">Permisos</a></li>
+          <li><a routerLink="/home">Índice general</a></li>
+          <li><a routerLink="/vocabulary/versions-import">Terminología</a></li>
+          <li><a routerLink="/people/patients-form">Perfiles</a></li>
+          <li><a routerLink="/access-control/emergency-access-form">Permisos</a></li>
         </ul>
       </div>
 

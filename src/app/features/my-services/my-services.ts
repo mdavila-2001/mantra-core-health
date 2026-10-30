@@ -11,7 +11,7 @@ import {
   type WritableSignal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { ServicesCatalogClient } from '../../core/data-access/services-catalog/services-catalog.client';
@@ -54,6 +54,9 @@ import {
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { withDisplayCurrency } from '../../core/money/display-currency';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
+import { ServiceTerms } from './service-terms/service-terms';
+import { ServiceAdd } from './service-add/service-add';
 
 /**
  * Servicios por página. La grilla se arma en una, dos o tres columnas según el
@@ -161,6 +164,8 @@ function entero(texto: string): number | null {
   selector: 'app-my-services',
   imports: [
     AppButton,
+    AppButtonLink,
+    RouterLink,
     Badge,
     Alert,
     ContentDialog,
@@ -169,7 +174,9 @@ function entero(texto: string): number | null {
     Input,
     PageHeader,
     Select,
+    ServiceAdd,
     ServiceIcon,
+    ServiceTerms,
     Switch,
     Skeleton,
     ViewStateHost,
@@ -180,8 +187,8 @@ function entero(texto: string): number | null {
   // Al revés, `.rejilla` pisaría a `.mis-servicios__rejilla` —misma
   // especificidad, gana la última— y el ancho de columna de acá no se aplicaría.
   styleUrls: [
-    '../../shared/styles/rejilla-de-tarjetas.css',
-    '../../shared/styles/tarjeta-de-servicio.css',
+    '../../shared/styles/card-grid.css',
+    '../../shared/styles/service-card.css',
     './my-services.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -348,6 +355,7 @@ export class MyServices {
   private readonly auth = inject(AuthService);
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
@@ -562,6 +570,42 @@ export class MyServices {
         this.errorDelPrecio.set(mensajeDelServidor(error));
       },
     });
+  }
+
+  /* ---- términos y condiciones (carril 22) --------------------------------- */
+
+  /* ---- servicio adicional (carril 23) ------------------------------------- */
+
+  /** Si el diálogo «Agregar servicio adicional» está abierto. */
+  protected readonly agregando = signal(false);
+
+  /** El servicio recién creado entra primero en la lista, sin recargar. */
+  protected servicioAgregado(servicio: ServiceCatalogItem): void {
+    this.agregando.set(false);
+    const visibles = dataOf(this.catalogo()) ?? [];
+    this.catalogo.set(ready([servicio, ...visibles]));
+    this.toasts.success('Agregamos el servicio a su lista.', servicio.name);
+  }
+
+  /**
+   * Eligió uno que ya existía: no se crea nada y la lista se filtra por ese
+   * nombre, que es la forma de encontrarlo que ya tiene la pantalla.
+   */
+  protected servicioElegido(servicio: ServiceCatalogItem): void {
+    this.agregando.set(false);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: servicio.name },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** El servicio cuyos términos se están mirando, o `null` con el diálogo cerrado. */
+  protected readonly terminosDe = signal<ServiceCatalogItem | null>(null);
+
+  protected terminosGuardados(servicio: ServiceCatalogItem): void {
+    this.reemplazar(servicio);
+    this.terminosDe.set(servicio);
   }
 
   /** Cambia una tarjeta de la lista sin recargar la página entera. */

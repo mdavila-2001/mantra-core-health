@@ -1,5 +1,5 @@
 /* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
-   `../registro-compartido/registro.css`, que esta pantalla y el alta de
+   `../shared-registration/registration.css`, que esta pantalla y el alta de
    paciente declaran las dos en su `styleUrls`. */
 
 /* Las casillas de nombre: entran como UN campo de la página para que los
@@ -140,6 +140,38 @@
   border-width: 0;
 }
 
+
+/* ---------------------------------------------------------- habilitación
+   Matrícula, SEDES y colegio: cada registro es un renglón con su número, su
+   fecha de inscripción y su respaldo. En una tarjeta ancha, las tres casillas
+   en una fila; angosta, una debajo de la otra. Se mide el renglón y no la
+   ventana: el formulario comparte pantalla con la ayuda lateral. */
+
+.registro-habilitacion {
+  container: habilitacion / inline-size;
+  width: 100%;
+}
+
+.registro-habilitacion__grilla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-surface);
+}
+
+@container habilitacion (min-width: 44rem) {
+  .registro-habilitacion__grilla {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+}
+
+.registro-habilitacion__icono {
+  color: var(--text-muted);
+}
 
 /* ---------------------------------------------------------------- respaldos
    Los adjuntos de la habilitación y de los títulos. Mismo lenguaje visual que
@@ -320,6 +352,11 @@
 .registro-titulo__estudio-campo,
 .registro__estudio-campo {
   display: grid;
+  /* `minmax(0, 1fr)` y no la pista `auto` implícita: con `auto` la pista
+     tomaba el ancho mínimo del contenido —el nombre de la universidad en una
+     sola línea— y el desplegable se salía de su columna, encima de la ciudad
+     («Alice-Salomon-Fachhochschule für Sozialarbeit…»). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-2);
   min-width: 0;
 }

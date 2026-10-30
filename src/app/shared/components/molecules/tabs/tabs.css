@@ -149,6 +149,25 @@
     font-weight: 700;
 }
 
+/* Ícono + texto: el dibujo ayuda a reconocer la sección de un vistazo y el
+   texto dice cuál es. Toma el color del rótulo, así que el estado activo lo
+   arrastra solo. */
+.tabs__icono {
+    display: inline-flex;
+    flex: none;
+    inline-size: 1.15em;
+    block-size: 1.15em;
+    margin-inline-end: var(--sp-2);
+    vertical-align: -0.2em;
+}
+
+.tabs__icono app-nav-icon,
+.tabs__icono svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+}
+
 .tabs__tab.is-selected::after {
     transform: scaleX(1);
 }
@@ -293,6 +312,57 @@
 :host(.tabs--vertical) .tabs__panels {
     flex: 1;
     min-width: 0;
+}
+
+/* ─── Teléfono: las pestañas se reparten el ancho y parten el rótulo ─────────
+   Con `min-width: max-content` la última pestaña quedaba cortada contra la
+   flecha («Im…»). Acá cada una toma una parte igual y el texto se parte entre
+   palabras; nunca baja de su palabra más larga (`min-content`), y si ni así
+   caben, la tira sigue desplazándose con sus flechas. El marco `browser` no se
+   toca: ahí un rótulo partido deforma la tira. */
+@media (max-width: 40rem) {
+    :host(:not(.tabs--browser)) .tabs__list:not(:has(.tabs__tab:nth-child(5))) .tabs__tab {
+        flex: 1 1 0;
+        min-width: min-content;
+        padding-inline: var(--sp-2);
+        text-align: center;
+    }
+}
+
+/* Cuando la tira se desplaza, su borde derecho se desvanece en vez de cortar una
+   pestaña a secas, y el desvanecido se retira al llegar al final. Con valor
+   inicial 0: sin desborde la animación no se aplica. Sólo con
+   `animation-timeline: scroll()`; sin ella, queda como estaba. */
+@property --tabs-fin {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0rem;
+}
+
+@keyframes tabs-fin {
+    from {
+        --tabs-fin: 1.75rem;
+    }
+
+    to {
+        --tabs-fin: 0rem;
+    }
+}
+
+@supports (animation-timeline: scroll()) {
+    .tabs__list {
+        -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--tabs-fin)), transparent);
+        mask-image: linear-gradient(to right, black calc(100% - var(--tabs-fin)), transparent);
+        animation: tabs-fin linear both;
+        animation-timeline: scroll(self inline);
+        animation-range: calc(100% - 3rem) 100%;
+    }
+}
+
+
+/* Palabra + contador no se parten en dos renglones ni en teléfono. */
+.tabs__rotulo--contado {
+    white-space: nowrap;
 }
 
 /* Pulsación (pulse.md §7): la pestaña se tiñe al pulsarla, antes de que el

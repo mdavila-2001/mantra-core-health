@@ -1,0 +1,105 @@
+  [laboratorio 1440px] área 1200 · tarjeta 1120 · izq 40 · der 40
+✔ laboratorio 1440: tarjeta centrada
+✔ laboratorio 1440: tarjeta a lo ancho (≥ 85 %)
+✔ laboratorio 1440: UNA tarjeta de ficha
+✔ laboratorio 1440: sin desplazamiento lateral
+✔ laboratorio 1440: pestañas — Organización · Representante y gerentes · Documentos · Logo
+✔ laboratorio 1440 · Organización: tarjeta centrada — 40/40
+✔ laboratorio 1440 · Organización: sin desplazamiento lateral
+✔ laboratorio 1440 · Organización: el menú lateral no se encoge — 240px
+✔ laboratorio 1440 · Organización: el contenido no se corre — x=240
+✔ laboratorio 1440: «Organización» muestra Razón social
+✔ laboratorio 1440: «Organización» muestra Código
+✔ laboratorio 1440: «Organización» muestra Sociedad de Responsabilidad Limitada
+✔ laboratorio 1440: «Organización» muestra Bolivia
+✔ laboratorio 1440: «Organización» muestra 1023456029
+✔ laboratorio 1440: «Organización» muestra Zona horaria
+✔ laboratorio 1440 · Representante y gerentes: tarjeta centrada — 40/40
+✔ laboratorio 1440 · Representante y gerentes: sin desplazamiento lateral
+✔ laboratorio 1440 · Representante y gerentes: el menú lateral no se encoge — 240px
+✔ laboratorio 1440 · Representante y gerentes: el contenido no se corre — x=240
+✔ laboratorio 1440: «Representante y gerentes» muestra Representante legal
+✔ laboratorio 1440: «Representante y gerentes» muestra Mariana Siles Rojas
+✔ laboratorio 1440: «Representante y gerentes» muestra 4872190 SC
+✔ laboratorio 1440: «Representante y gerentes» muestra Gerente General
+✔ laboratorio 1440: «Representante y gerentes» muestra Carlos Mendoza Paz
+✔ laboratorio 1440 · Documentos: tarjeta centrada — 40/40
+✔ laboratorio 1440 · Documentos: sin desplazamiento lateral
+✔ laboratorio 1440 · Documentos: el menú lateral no se encoge — 240px
+✔ laboratorio 1440 · Documentos: el contenido no se corre — x=240
+✔ laboratorio 1440: «Documentos» muestra NIT N.º 1023456029
+✔ laboratorio 1440: «Documentos» muestra Licencia de funcionamiento
+✔ laboratorio 1440: «Documentos» muestra SEDES
+✔ laboratorio 1440 · Logo: tarjeta centrada — 40/40
+✔ laboratorio 1440 · Logo: sin desplazamiento lateral
+✔ laboratorio 1440 · Logo: el menú lateral no se encoge — 240px
+✔ laboratorio 1440 · Logo: el contenido no se corre — x=240
+✔ laboratorio 1440: el logo vive en su pestaña
+✔ laboratorio 1440: sin errores de página
+  [laboratorio 390px] área 390 · tarjeta 366 · izq 12 · der 12
+✔ laboratorio 390: tarjeta centrada
+✔ laboratorio 390: tarjeta a lo ancho (≥ 85 %)
+✔ laboratorio 390: UNA tarjeta de ficha
+✔ laboratorio 390: sin desplazamiento lateral
+✔ laboratorio 390: pestañas — Organización · Representante y gerentes · Documentos · Logo
+✔ laboratorio 390 · Organización: tarjeta centrada — 12/12
+✔ laboratorio 390 · Organización: sin desplazamiento lateral
+✔ laboratorio 390: «Organización» muestra Razón social
+✔ laboratorio 390: «Organización» muestra Código
+✔ laboratorio 390: «Organización» muestra Sociedad de Responsabilidad Limitada
+✔ laboratorio 390: «Organización» muestra Bolivia
+✔ laboratorio 390: «Organización» muestra 1023456029
+✔ laboratorio 390: «Organización» muestra Zona horaria
+✔ laboratorio 390 · Representante y gerentes: tarjeta centrada — 12/12
+✔ laboratorio 390 · Representante y gerentes: sin desplazamiento lateral
+✔ laboratorio 390: «Representante y gerentes» muestra Representante legal
+✔ laboratorio 390: «Representante y gerentes» muestra Mariana Siles Rojas
+✔ laboratorio 390: «Representante y gerentes» muestra 4872190 SC
+✔ laboratorio 390: «Representante y gerentes» muestra Gerente General
+✔ laboratorio 390: «Representante y gerentes» muestra Carlos Mendoza Paz
+✔ laboratorio 390 · Documentos: tarjeta centrada — 12/12
+✔ laboratorio 390 · Documentos: sin desplazamiento lateral
+✔ laboratorio 390: «Documentos» muestra NIT N.º 1023456029
+✔ laboratorio 390: «Documentos» muestra Licencia de funcionamiento
+✔ laboratorio 390: «Documentos» muestra SEDES
+✔ laboratorio 390 · Logo: tarjeta centrada — 12/12
+✔ laboratorio 390 · Logo: sin desplazamiento lateral
+✔ laboratorio 390: el logo vive en su pestaña
+✔ laboratorio 390: sin errores de página
+  [aseguradora 1440px] área 1200 · tarjeta 1120 · izq 40 · der 40
+✔ aseguradora 1440: tarjeta centrada
+✔ aseguradora 1440: tarjeta a lo ancho (≥ 85 %)
+✔ aseguradora 1440: UNA tarjeta de ficha
+✔ aseguradora 1440: sin desplazamiento lateral
+✔ aseguradora 1440: pestañas — Organización · Representante y gerentes · Documentos · Aseguradora · Logo
+✔ aseguradora 1440 · Organización: tarjeta centrada — 40/40
+✔ aseguradora 1440 · Organización: sin desplazamiento lateral
+✔ aseguradora 1440 · Organización: el menú lateral no se encoge — 240px
+✔ aseguradora 1440 · Organización: el contenido no se corre — x=240
+✔ aseguradora 1440: «Organización» muestra Sigla
+✔ aseguradora 1440: «Organización» muestra APS-0042
+✔ aseguradora 1440: «Organización» muestra Av. Arce
+✔ aseguradora 1440 · Representante y gerentes: tarjeta centrada — 40/40
+✔ aseguradora 1440 · Representante y gerentes: sin desplazamiento lateral
+✔ aseguradora 1440 · Representante y gerentes: el menú lateral no se encoge — 240px
+✔ aseguradora 1440 · Representante y gerentes: el contenido no se corre — x=240
+✔ aseguradora 1440: «Representante y gerentes» muestra Jorge Andrade Quiroga
+✔ aseguradora 1440: «Representante y gerentes» muestra 3344556 LP
+✔ aseguradora 1440 · Documentos: tarjeta centrada — 40/40
+✔ aseguradora 1440 · Documentos: sin desplazamiento lateral
+✔ aseguradora 1440 · Documentos: el menú lateral no se encoge — 240px
+✔ aseguradora 1440 · Documentos: el contenido no se corre — x=240
+✔ aseguradora 1440: «Documentos» muestra N.º 1020304050
+✔ aseguradora 1440 · Aseguradora: tarjeta centrada — 40/40
+✔ aseguradora 1440 · Aseguradora: sin desplazamiento lateral
+✔ aseguradora 1440 · Aseguradora: el menú lateral no se encoge — 240px
+✔ aseguradora 1440 · Aseguradora: el contenido no se corre — x=240
+✔ aseguradora 1440: la ficha de la aseguradora vive en su pestaña
+✔ aseguradora 1440 · Logo: tarjeta centrada — 40/40
+✔ aseguradora 1440 · Logo: sin desplazamiento lateral
+✔ aseguradora 1440 · Logo: el menú lateral no se encoge — 240px
+✔ aseguradora 1440 · Logo: el contenido no se corre — x=240
+✔ aseguradora 1440: el logo vive en su pestaña
+✔ aseguradora 1440: sin errores de página
+
+TODO OK

@@ -53,7 +53,7 @@
                       <span>{{ distancia(opcion.distanceKm) }}</span>
                       <span>
                         @if (opcion.nextStartAt) {
-                          Próximo horario: {{ fechaLarga(opcion.nextStartAt) }}, {{ hora(opcion.nextStartAt) }}
+                          Próximo horario: {{ longDate(opcion.nextStartAt) }}, {{ hora(opcion.nextStartAt) }}
                         } @else {
                           Sin horarios libres en las próximas dos semanas
                         }
@@ -134,7 +134,7 @@
                   @if (c.addressText) {
                     <div class="resumen__fila"><dt>Dirección</dt><dd>{{ c.addressText }}</dd></div>
                   }
-                  <div class="resumen__fila"><dt>Cuándo</dt><dd>{{ fechaLarga(h.startAt) }}, {{ hora(h.startAt) }}</dd></div>
+                  <div class="resumen__fila"><dt>Cuándo</dt><dd>{{ longDate(h.startAt) }}, {{ hora(h.startAt) }}</dd></div>
                   <div class="resumen__fila"><dt>Precio</dt><dd>{{ dinero(c.price, c.currency) }}</dd></div>
                   @if (c.preparation) {
                     <div class="resumen__fila"><dt>Preparación</dt><dd>{{ c.preparation }}</dd></div>
@@ -163,7 +163,7 @@
             <section class="reserva__seccion reserva__listo" aria-labelledby="reserva-listo" data-testid="reserva-estudio-listo">
               <h2 id="reserva-listo" class="reserva__titulo" tabindex="-1">Cita confirmada</h2>
               <p>
-                {{ t.studyName }} en {{ t.unitName }}, el {{ fechaLarga(t.startAt) }} a las {{ hora(t.startAt) }}.
+                {{ t.studyName }} en {{ t.unitName }}, el {{ longDate(t.startAt) }} a las {{ hora(t.startAt) }}.
               </p>
               @if (t.preparation) {
                 <p class="centro__preparacion">Preparación: {{ t.preparation }}</p>

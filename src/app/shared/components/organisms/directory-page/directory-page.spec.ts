@@ -92,41 +92,54 @@ describe('DirectoryPage · tope progresivo', () => {
 
   const tarjetas = (f: ReturnType<typeof montar>) =>
     f.nativeElement.querySelectorAll('li.tarjeta-resultado').length;
-  const botonMas = (f: ReturnType<typeof montar>): HTMLButtonElement | null =>
-    f.nativeElement.querySelector('.directorio__mas button');
+  const paginador = (f: ReturnType<typeof montar>): HTMLElement | null =>
+    f.nativeElement.querySelector('app-pagination');
+  const irA = (f: ReturnType<typeof montar>, etiqueta: string) => {
+    f.nativeElement.querySelector(`button[aria-label="${etiqueta}"]`).click();
+    f.detectChanges();
+  };
+  const cuenta = (f: ReturnType<typeof montar>) =>
+    f.nativeElement.querySelector('.directorio__cuenta').textContent;
 
   /* La guía real tenía 804 y las dibujaba todas: 190 000 px de página. */
-  it('dibuja una tanda de 24 y dice cuántas hay en total', () => {
+  it('dibuja una página de 24 y dice qué tramo es del total', () => {
     const f = montar(804);
 
     expect(tarjetas(f)).toBe(24);
-    expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
-      '804 médicos',
-    );
-    expect(f.nativeElement.querySelector('.directorio__progreso').textContent).toContain(
-      'Se muestran 24 de 804 médicos.',
-    );
-    expect(botonMas(f)!.textContent!.trim()).toBe('Mostrar 24 más');
+    expect(cuenta(f)).toContain('1–24 de 804 médicos');
+    expect(paginador(f)).not.toBeNull();
   });
 
-  it('«Mostrar más» suma otra tanda y desaparece al llegar al final', () => {
+  it('«Siguiente» cambia de página: reemplaza las tarjetas, no las acumula', () => {
+    const f = montar(804);
+    irA(f, 'Página siguiente');
+
+    expect(tarjetas(f)).toBe(24);
+    expect(cuenta(f)).toContain('25–48 de 804 médicos');
+  });
+
+  it('la última página trae sólo las que faltan', () => {
     const f = montar(30);
-    botonMas(f)!.click();
-    f.detectChanges();
+    irA(f, 'Página siguiente');
 
-    expect(tarjetas(f)).toBe(30);
-    expect(botonMas(f)).toBeNull();
+    expect(tarjetas(f)).toBe(6);
+    expect(cuenta(f)).toContain('25–30 de 30 médicos');
   });
 
-  it('el último botón nombra sólo los que faltan', () => {
-    const f = montar(25);
-    expect(botonMas(f)!.textContent!.trim()).toBe('Mostrar 1 más');
-  });
-
-  it('con pocos resultados no hay botón', () => {
+  it('con una sola página no hay paginador', () => {
     const f = montar(5);
     expect(tarjetas(f)).toBe(5);
-    expect(botonMas(f)).toBeNull();
+    expect(paginador(f)).toBeNull();
+  });
+
+  it('cambiar los grupos vuelve a la primera página', () => {
+    const f = montar(60);
+    irA(f, 'Página siguiente');
+    expect(cuenta(f)).toContain('25–48');
+
+    f.componentRef.setInput('grupos', grupos(60, 60));
+    f.detectChanges();
+    expect(cuenta(f)).toContain('1–24 de 60');
   });
 
   // Marketplace (propietario, 23/10/2026): los grupos ya no cortan la grilla
@@ -173,17 +186,6 @@ describe('DirectoryPage · tope progresivo', () => {
     expect(f.nativeElement.querySelector('.directorio__cuenta').textContent).toContain(
       '1–24 de 804 médicos',
     );
-  });
-
-  it('un filtro nuevo vuelve a la primera tanda', () => {
-    const f = montar(100);
-    botonMas(f)!.click();
-    f.detectChanges();
-    expect(tarjetas(f)).toBe(48);
-
-    f.componentRef.setInput('grupos', grupos(90, 90));
-    f.detectChanges();
-    expect(tarjetas(f)).toBe(24);
   });
 
   // Con reseñas en las tarjetas, el directorio ofrece ordenar por ellas.

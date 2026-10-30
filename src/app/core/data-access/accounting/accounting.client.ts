@@ -464,7 +464,9 @@ type WireFilaDeBalance = ConNulos<TrialBalanceRow>;
 
 interface WireAsiento {
   readonly id: string;
-  /** El estado del flujo. Lo sirve el simulador; la API todavía no. */
+  /** El estado del flujo, como código (`DRAFT`, `POSTED`, `REVERSED`…). */
+  readonly status?: string | null;
+  /** El mismo estado, con el nombre que usa el simulador en memoria. */
   readonly flujo?: string | null;
   readonly transactionNumber: string | null;
   readonly transactionDate: string;
@@ -522,12 +524,13 @@ function aFilaDeBalance(body: WireFilaDeBalance): TrialBalanceRow {
 }
 
 function aAsiento(body: WireAsiento): JournalTransaction {
-  const { transactionDate, postedAt, flujo, ...resto } = body;
+  const { transactionDate, postedAt, status, flujo, ...resto } = body;
   return {
     ...sinNulos(resto),
-    // Sin estado declarado, un asiento con fecha de posteo está posteado: es lo
-    // único que se puede afirmar del listado que publica la API hoy.
-    status: ((flujo ?? undefined) ?? (postedAt === null ? 'DRAFT' : 'POSTED')) as JournalTransaction['status'],
+    // El código del estado lo publica la API desde el carril 20 (un reversado
+    // conserva su fecha de posteo y antes se leía como «posteado»). Sólo si no
+    // viene se deduce de `postedAt`, que es lo único que afirma el listado viejo.
+    status: (status ?? flujo ?? (postedAt == null ? 'DRAFT' : 'POSTED')) as JournalTransaction['status'],
     // La fecha del asiento es un día, no un instante: anclada a medianoche UTC
     // y pintada en hora local retrocedería un día al oeste de Greenwich.
     transactionDate: maybeDateOnly(transactionDate) ?? new Date(transactionDate),

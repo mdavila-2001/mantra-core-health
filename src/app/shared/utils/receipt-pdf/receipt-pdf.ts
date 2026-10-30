@@ -44,10 +44,8 @@ import { displayCurrency } from '../../../core/money/display-currency';
  *
  * Es un papel de AloVida y no de un médico: sale **sin bloque de firma**.
  *
- * Los helpers chicos (fecha, nombre de archivo) se repiten acá a propósito:
- * son privados de `clinical-pdf.ts` y ese módulo es de otro carril —
- * exportarlos sería tocarlo. TODO(equipo): unificarlos en un módulo común
- * cuando se coordine con el dueño de J3.
+ * Los helpers chicos (fecha, nombre de archivo) se repiten acá: los de
+ * `clinical-pdf.ts` son privados de ese módulo.
  */
 
 /** Lo que se imprime cuando el dato no está. Nunca un hueco en blanco. */

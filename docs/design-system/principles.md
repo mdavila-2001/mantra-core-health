@@ -111,7 +111,7 @@ Es la forma que da identidad. Repetida, deja de identificar.
 |---|---|---|
 | ~~E1~~ · `--text-muted` en claro — cerrada el 2026-09-26 (ahora 5,13:1) | `--c-ivory-800` | Sigue siendo terciario: **jamás información clínica** |
 | **E2** · `--text-muted` en oscuro (4,45:1 en la superficie más alta) | `--c-sage-600` | Ídem |
-| **E3** · `--border-strong` en oscuro (<3:1) | `rgba(255,255,255,0.24)` | Sin foco. Con foco manda el anillo |
+| ~~E3~~ · `--border-strong` en oscuro — cerrada el 2026-10-11: velo al 40 % (3,27:1 en el peor caso, surface-alt) | `rgba(255,255,255,0.40)` | Ya cumple 3:1 sin foco |
 
 `design-tokens.types.ts` repite la regla de E1 junto al token, para que quien
 autocomplete la lea:

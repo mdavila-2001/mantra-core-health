@@ -80,7 +80,7 @@ interface FilaDelResumen {
   readonly excepciones: readonly { readonly nombre: string; readonly horario: string }[];
 }
 
-const ETIQUETA_DE_ESTADO: Readonly<Record<EquipmentStatus, string>> = {
+const STATUS_LABEL: Readonly<Record<EquipmentStatus, string>> = {
   OPERATIONAL: 'Operativo',
   MAINTENANCE: 'En mantenimiento',
   OUT_OF_SERVICE: 'Fuera de servicio',
@@ -288,7 +288,7 @@ export class CenterSchedulePage implements OnInit {
       },
       error: (error: unknown) => {
         this.guardando.set(false);
-        this.problemas.set([mensajeDeError(error)]);
+        this.problemas.set([errorMessage(error)]);
       },
     });
   }
@@ -310,7 +310,7 @@ export class CenterSchedulePage implements OnInit {
   protected readonly otrosEquipos = computed(() => this.centro()?.equipment.filter((e) => e.modalityCode === null) ?? []);
 
   protected etiquetaDeEstado(status: EquipmentStatus): string {
-    return ETIQUETA_DE_ESTADO[status];
+    return STATUS_LABEL[status];
   }
 
   protected cambiarEstado(equipo: CenterEquipment, status: EquipmentStatus): void {
@@ -348,7 +348,7 @@ export class CenterSchedulePage implements OnInit {
   }
 }
 
-function mensajeDeError(error: unknown): string {
+function errorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     const cuerpo = error.error as { message?: string } | null;
     if (typeof cuerpo?.message === 'string' && cuerpo.message !== '') return cuerpo.message;

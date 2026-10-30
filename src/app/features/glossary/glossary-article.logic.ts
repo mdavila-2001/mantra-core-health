@@ -120,7 +120,7 @@ export function imagenesVisibles(
 }
 
 /** Carpeta pública de las ilustraciones originales de AloVida (`public/glossary-images/`). */
-const CARPETA_DE_IMAGENES_PROPIAS = '/glossary-images/';
+export const CARPETA_DE_IMAGENES_PROPIAS = '/glossary-images/';
 
 /** Ruta de un archivo de la carpeta propia: absoluta, sin `..` ni protocolo, y con extensión de imagen. */
 const RUTA_PROPIA = /^\/glossary-images\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:svg|webp|png)$/;
@@ -270,6 +270,33 @@ export function fuentesDeLosDatos(
     }
   }
   return [...vistas.values()];
+}
+
+/** Una fuente de datos, una sola vez aunque aporte varios (`cantidad`). */
+export interface FuenteAgrupada {
+  readonly nombre: string;
+  /** El enlace del primer dato de la fuente. */
+  readonly url: string;
+  /** Cuántos datos del artículo salen de ella. */
+  readonly cantidad: number;
+}
+
+/**
+ * Las fuentes de los datos, una por nombre.
+ *
+ * Una fuente como Mondo cita un enlace por dato: la línea «Fuente: mondo ·
+ * mondo · mondo · …» repetía el mismo nombre seis veces. Agrupadas, salen una
+ * vez con su cantidad; el enlace es el del primer dato.
+ */
+export function fuentesAgrupadas(datos: readonly GlossaryArticleFact[]): readonly FuenteAgrupada[] {
+  const grupos = new Map<string, { url: string; cantidad: number }>();
+  for (const dato of datos) {
+    const nombre = nombreDeFuente(dato.source);
+    const grupo = grupos.get(nombre);
+    if (grupo === undefined) grupos.set(nombre, { url: dato.sourceUrl, cantidad: 1 });
+    else grupo.cantidad += 1;
+  }
+  return [...grupos].map(([nombre, { url, cantidad }]) => ({ nombre, url, cantidad }));
 }
 
 /** Sólo `https://`: la URL de una fuente nunca se pinta como `javascript:` ni `data:`. */

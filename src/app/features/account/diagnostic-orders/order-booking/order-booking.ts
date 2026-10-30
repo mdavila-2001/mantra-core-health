@@ -262,7 +262,7 @@ export class OrderBooking implements OnInit {
     this.orden.set(orden);
   }
 
-  protected fechaLarga(instante: string): string {
+  protected longDate(instante: string): string {
     return new Intl.DateTimeFormat('es-BO', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(instante));
   }
 

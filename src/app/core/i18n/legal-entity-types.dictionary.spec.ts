@@ -8,9 +8,9 @@ import {
 
 /**
  * Este diccionario es la mitad del contrato que la API no puede validar por
- * su cuenta: los 21 códigos y sus tres idiomas tienen que coincidir
+ * su cuenta: los 40 códigos y sus tres idiomas tienen que coincidir
  * literalmente con lo que el backend sembró
- * (`mantra-core-health-api/src/modules/directory/legal-entity-types.ts`).
+ * (`mantra-core-health-api/src/common/constants/legal-entity-types.ts`).
  * Si algún día cambia allá, esta prueba es la que avisa acá.
  */
 const CODIGOS_ESPERADOS = [
@@ -35,6 +35,25 @@ const CODIGOS_ESPERADOS = [
   'US_BRANCH',
   'AR_SAS',
   'MX_S_RL',
+  'SAM',
+  'ASOCIACION_ACCIDENTAL',
+  'SOCIEDAD_CIVIL',
+  'PROFESIONAL_INDEPENDIENTE',
+  'COOPERATIVA',
+  'MUTUAL',
+  'EMPRESA_SOCIAL',
+  'ASOCIACION_CIVIL',
+  'FUNDACION',
+  'ONG',
+  'ENTIDAD_RELIGIOSA',
+  'IFD',
+  'ORGANIZACION_SOCIAL',
+  'ENTIDAD_PUBLICA',
+  'EMPRESA_ESTATAL',
+  'EMPRESA_ESTATAL_MIXTA',
+  'EMPRESA_MIXTA',
+  'EMPRESA_ESTATAL_INTERGUBERNAMENTAL',
+  'ORGANISMO_INTERNACIONAL',
 ];
 
 const CODIGOS_BOLIVIANOS = [
@@ -46,16 +65,35 @@ const CODIGOS_BOLIVIANOS = [
   'COMANDITA_SIMPLE',
   'COMANDITA_ACCIONES',
   'SUCURSAL_EXTRANJERA',
+  'SAM',
+  'ASOCIACION_ACCIDENTAL',
+  'SOCIEDAD_CIVIL',
+  'PROFESIONAL_INDEPENDIENTE',
+  'COOPERATIVA',
+  'MUTUAL',
+  'EMPRESA_SOCIAL',
+  'ASOCIACION_CIVIL',
+  'FUNDACION',
+  'ONG',
+  'ENTIDAD_RELIGIOSA',
+  'IFD',
+  'ORGANIZACION_SOCIAL',
+  'ENTIDAD_PUBLICA',
+  'EMPRESA_ESTATAL',
+  'EMPRESA_ESTATAL_MIXTA',
+  'EMPRESA_MIXTA',
+  'EMPRESA_ESTATAL_INTERGUBERNAMENTAL',
+  'ORGANISMO_INTERNACIONAL',
 ];
 
 describe('LEGAL_ENTITY_TYPES_DICTIONARY', () => {
-  it('declara exactamente los 21 códigos del catálogo de la API', () => {
+  it('declara exactamente los 40 códigos del catálogo de la API', () => {
     expect(Object.keys(LEGAL_ENTITY_TYPES_DICTIONARY).sort()).toEqual(
       [...CODIGOS_ESPERADOS].sort(),
     );
   });
 
-  it('los 8 códigos bolivianos coinciden literalmente con los de la API (sin prefijo BO_)', () => {
+  it('los 27 códigos bolivianos coinciden literalmente con los de la API (sin prefijo BO_)', () => {
     const bolivianos = Object.entries(LEGAL_ENTITY_TYPES_DICTIONARY)
       .filter(([, entry]) => entry.countryIso === 'BO')
       .map(([code]) => code);

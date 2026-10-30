@@ -35,12 +35,6 @@
   font-weight: 600;
 }
 
-.bandeja__nota {
-  margin: 0 0 var(--sp-4);
-  color: var(--text-secondary);
-  font-size: var(--fs-caption);
-}
-
 /* De qué fechas es la columna de cerrados: justo bajo el título. */
 .bandeja__recorte {
   margin: 0;
@@ -127,7 +121,10 @@ app-alert {
    palabra y envuelven juntos. No devolver `display: flex` sin resolver eso. */
 .bandeja__titulo {
   margin: 0;
-  font-size: var(--fs-h3);
+  /* Una sola línea en las seis colas: con `--fs-h3` «Esperando al paciente»
+     envolvía y bajaba sus tarjetas 30 px respecto de las demás columnas. */
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
 }
 
 /* La última palabra de la etiqueta y la cifra, indivisibles.
@@ -182,15 +179,26 @@ app-alert {
   flex-direction: column;
   gap: var(--sp-1);
   padding: var(--sp-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
+  /* Tonal y sin borde: seis colas de tarjetas con trazo eran una pared de
+     líneas. El borde sólo reaparece como señal (pedido nuevo, ver abajo). */
+  border: 1px solid transparent;
+  border-radius: var(--r-lg);
+  background: var(--bg-surface-alt);
   color: inherit;
   text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease-standard),
+    transform var(--spring-rapido-dur) var(--spring-rapido);
 }
 
+/* Sin sombra: la lista de cada cola se desplaza por dentro y recortaría el halo. */
 .bandeja__tarjeta:hover {
-  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--brand-primary) 9%, var(--bg-surface-alt));
+  transform: translateY(-1px);
+}
+
+.bandeja__tarjeta:active {
+  transform: scale(0.98);
 }
 
 .bandeja__tarjeta--nueva {
@@ -249,5 +257,68 @@ app-alert {
 @media (min-width: 640px) {
   .bandeja__colas {
     grid-auto-columns: minmax(16rem, 1fr);
+  }
+}
+
+/* El tablero se desplaza de costado: el borde derecho se desvanece para decir
+   «hay más colas» en vez de dejar una columna cortada a secas, y el desvanecido
+   se retira al llegar al final. Sólo donde hay `animation-timeline: scroll()`;
+   sin ella el tablero queda como estaba. */
+/* Valor inicial 0: si el tablero NO se desborda, la línea de tiempo del scroll
+   está inactiva, la animación no se aplica y no hay desvanecido. */
+@property --bandeja-fin {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0rem;
+}
+
+@keyframes bandeja-fin {
+  from {
+    --bandeja-fin: 3rem;
+  }
+
+  to {
+    --bandeja-fin: 0rem;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .bandeja__colas {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--bandeja-fin)), transparent);
+    mask-image: linear-gradient(to right, black calc(100% - var(--bandeja-fin)), transparent);
+    animation: bandeja-fin linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: calc(100% - 4rem) 100%;
+  }
+}
+
+/* Escritorio: las seis colas en una rejilla de tres columnas, sin desplazamiento
+   de costado —una columna cortada contra el borde se leía como texto cortado—.
+   Debajo de 1024 px sigue el carril con desplazamiento y desvanecido. */
+@media (min-width: 1024px) {
+  .bandeja__colas {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-columns: auto;
+    align-items: start;
+    row-gap: var(--sp-6);
+    overflow-x: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+    animation: none;
+  }
+}
+
+/* Teléfono y tablet: las colas se apilan en una columna. Una columna cortada
+   contra el borde y un desplazamiento lateral escondían las demás colas. */
+@media (max-width: 1023px) {
+  .bandeja__colas {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-columns: auto;
+    overflow-x: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+    animation: none;
   }
 }

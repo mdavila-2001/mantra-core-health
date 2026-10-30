@@ -24,7 +24,7 @@ import {
   errorToViewState,
   IDENTITY_VERIFICATION_ROUTE,
 } from '../../../core/http/error-to-view-state';
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../../../core/identity-assurance/verificacion-ofrecida';
+import { OFFERED_IDENTITY_VERIFICATION } from '../../../core/identity-assurance/offered-verification';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../../core/view-state/view-state';
@@ -48,10 +48,11 @@ import {
 } from '../../identity-verification/case-status';
 import { Loyalty } from '../loyalty/loyalty';
 import { PatientProfileEdit } from './patient-profile-edit/patient-profile-edit';
-import { indiceDePestana, PESTANAS_DEL_PERFIL } from './pestanas-del-perfil';
+import { initialTabIndex, tabIndex, PROFILE_TABS } from './profile-tabs';
+import { AddressBook } from './address-book/address-book';
 import { PractitionerProfile } from './practitioner-profile/practitioner-profile';
 import { ResidenceReadonly } from './practitioner-profile/practitioner-profile-view/residence-readonly/residence-readonly';
-import type { PuntoGeo } from '../../../shared/components/organisms/map/pin-mapa.types';
+import type { PuntoGeo } from '../../../shared/components/organisms/map/map-pin.types';
 
 /** Lo que se dice cuando la ficha completa no llegó y la API no explicó por qué. */
 const FICHA_INCOMPLETA =
@@ -117,6 +118,7 @@ const FICHA_INCOMPLETA =
 @Component({
   selector: 'app-my-profile',
   imports: [
+    AddressBook,
     PatientCoverageCard,
     ResidenceReadonly,
     FileDropTarget,
@@ -251,9 +253,12 @@ export class MyProfile {
    * son estados momentáneos de la pantalla, no lugares, y no se escriben de
    * vuelta en la URL.
    */
-  protected readonly pestanas = PESTANAS_DEL_PERFIL;
+  protected readonly pestanas = PROFILE_TABS;
   private readonly pestanaPedida = inject(ActivatedRoute).snapshot.queryParamMap.get('pestana');
   protected readonly pestana = signal(0);
+  /** «Mis direcciones» se crea sólo abierta (pide su libreta); sin Tutores va un lugar antes. */
+  protected readonly pestanaDeDirecciones = computed(() => ((this.perfil()?.guardians.length ?? 0) > 0 ? 6 : 5));
+
   private pestanaInicialAplicada = false;
 
   /**
@@ -316,7 +321,7 @@ export class MyProfile {
    * Campo y no import suelto porque la plantilla sólo lee miembros de la clase.
    * Ver `VERIFICACION_DE_IDENTIDAD_OFRECIDA`.
    */
-  protected readonly verificacionOfrecida = VERIFICACION_DE_IDENTIDAD_OFRECIDA;
+  protected readonly verificacionOfrecida = OFFERED_IDENTITY_VERIFICATION;
 
   /**
    * Si el lateral tiene algo que dibujar.
@@ -559,14 +564,7 @@ export class MyProfile {
   private aplicarPestanaInicial(tieneTutores: boolean): void {
     if (this.pestanaInicialAplicada) return;
     this.pestanaInicialAplicada = true;
-    const pedida = indiceDePestana(this.pestanaPedida) ?? 0;
-    if (pedida === 5) {
-      this.pestana.set(tieneTutores ? 5 : 4);
-    } else if (pedida === 4 && !tieneTutores) {
-      this.pestana.set(0);
-    } else {
-      this.pestana.set(pedida);
-    }
+    this.pestana.set(initialTabIndex(tabIndex(this.pestanaPedida) ?? 0, tieneTutores));
   }
 
   /**

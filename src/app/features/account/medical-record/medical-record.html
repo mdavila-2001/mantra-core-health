@@ -57,7 +57,7 @@
              pestañas, a lo ancho del área de contenido. Antes las pestañas iban
              sueltas sobre el fondo de la página y cada panel dibujaba sus
              propias cajas, que es la pila de tarjetas que la regla prohíbe. -->
-        <app-card class="historia__tarjeta" variant="outlined" padding="lg">
+        <app-card class="historia__tarjeta" variant="elevated" padding="lg">
           <app-tabs
             class="historia__tabs"
             data-testid="historia-tabs"
@@ -89,6 +89,20 @@
             <app-tab [label]="'Diagnósticos (' + cuantosDiagnosticos() + ')'">
               @if (seccion() === 4) {
                 <ng-container [ngTemplateOutlet]="panelDiagnosticos" />
+              }
+            </app-tab>
+            <!-- «Servicios recibidos» va última por lo mismo: los enlaces con `?seccion=`
+                 que ya circulan siguen apuntando a lo mismo. Las intervenciones médicas
+                 realizadas son un tipo de servicio, junto a las vacunas. La consulta
+                 vive en «Atenciones» y el análisis médico en «Resultados». Sin
+                 contador en el rótulo: se lee al abrir la pestaña, no antes. -->
+            <app-tab label="Servicios recibidos">
+              @if (seccion() === 5 && perfil !== null) {
+                <app-received-services-panel
+                  data-testid="historia-servicios"
+                  [patientProfileId]="perfil"
+                  [emptyAction]="{ label: 'Pedir una cita', route: rutaDeTurnos }"
+                />
               }
             </app-tab>
           </app-tabs>

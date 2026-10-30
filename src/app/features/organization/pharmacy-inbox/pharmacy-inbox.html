@@ -14,8 +14,8 @@
   <app-switch
     label="Sonido de alarma"
     data-testid="bandeja-sonido"
-    [ngModel]="alarma.sonidoActivo()"
-    (ngModelChange)="alarma.alternarSonido()"
+    [ngModel]="alarma.activeSound()"
+    (ngModelChange)="alarma.toggleSound()"
   />
   <!-- El interruptor ya dice su estado a quien lo escucha; esto lo dice a
        quien lo mira de reojo desde el otro lado del mostrador. -->
@@ -66,12 +66,6 @@
     />
   </div>
 </div>
-
-@if (sinMatrizMarcada()) {
-  <p class="bandeja__nota" data-testid="bandeja-sin-matriz">
-    Ninguna sede está marcada como casa matriz: se abrió con la primera. Cámbiela en «Sede».
-  </p>
-}
 
 @if (posiblementeCortado()) {
   <app-alert tone="info" title="Hay más pedidos de los que se ven" data-testid="bandeja-cortado">

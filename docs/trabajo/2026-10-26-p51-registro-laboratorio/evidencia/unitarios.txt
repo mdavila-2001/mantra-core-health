@@ -1,0 +1,3 @@
+$ yarn test src/modules/directory/services/tenant-type-profile.service.spec.ts src/modules/diagnostic_units/services/diagnostic-unit-provisioning.service.spec.ts
+Test Suites: 2 passed, 2 total
+Tests:       47 passed, 47 total

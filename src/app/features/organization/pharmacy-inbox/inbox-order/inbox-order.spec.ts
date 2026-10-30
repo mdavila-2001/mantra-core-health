@@ -11,12 +11,13 @@ import {
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.dto';
 import {
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
-} from '../../../../core/mock/fixtures/pedidos-de-farmacia';
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
+} from '../../../../core/mock/fixtures/pharmacy-orders';
 import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
+import { chooseSelectOption, selectOptionLabels } from '../../../../../testing/select';
 import { InboxOrder } from './inbox-order';
 
 /** Lo que el contrato devuelve para un pedido que sale a domicilio. */
@@ -42,6 +43,10 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'administration/pharmacy-orders/:orderId', component: InboxOrder }]),
+        // Ver el mismo comentario en `../pharmacy-inbox.spec.ts`: sin
+        // `userId`, el `effect()` de `CartStore` (construido igual por
+        // `PharmacyOrdersClient`, aunque esta pantalla no tenga carrito)
+        // revienta en un tick asíncrono y envenena al resto del worker.
         { provide: SessionStore, useValue: { displayName: () => 'Ana Pérez', userId: () => null } },
         {
           provide: DialogService,
@@ -231,14 +236,14 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     });
     harness.detectChanges();
 
-    const select = element<HTMLSelectElement>('[data-testid="mostrador-sustituto-0"] select');
+    const select = element<HTMLElement>('[data-testid="mostrador-sustituto-0"]');
     expect(select).not.toBeNull();
-    expect(select?.options).toHaveLength(2);
+    // Antes eran dos `<option>`: el placeholder oculto y el único sustituto.
+    const sustitutos = await selectOptionLabels(harness.fixture, select!);
+    expect(sustitutos).toHaveLength(1);
+    expect(sustitutos.join(' ')).not.toContain('Amoxicilina original');
     expect(text()).not.toContain('Amoxicilina original');
-    if (select !== null) {
-      select.value = '0';
-      select.dispatchEvent(new Event('change'));
-    }
+    await chooseSelectOption(harness.fixture, select!, 0);
     harness.detectChanges();
     click('mostrador-confirmar');
 
@@ -412,7 +417,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
   it('el pedido a domicilio se ve como delivery con la dirección que trae el contrato', async () => {
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: DOMICILIO,
         deliveryAddressText: 'Av. Cristo Redentor km 4 · Edificio Aurora, dpto. 3B',
         status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
@@ -455,7 +460,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // las dos salen de la misma respuesta.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_CONFIRMADO', display: 'Confirmado' },
       }),
@@ -548,7 +553,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     // cerrado de los dos lados, no de uno.
     await mount(
       pharmacyOrderDtoFixture({
-        id: ID_PEDIDO_CON_DELIVERY,
+        id: ID_ORDER_WITH_DELIVERY,
         deliveryMode: DOMICILIO,
         status: { code: 'PINV_ORDER_LISTO_PARA_RETIRO', display: 'Listo' },
         pickupCode: null,
@@ -619,7 +624,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     );
     // Va justo antes de la salida: el pie de la pantalla sigue siendo la bandeja.
     expect(
-      factura?.closest('app-resumen-de-factura')?.nextElementSibling?.textContent?.trim(),
+      factura?.closest('app-invoice-summary')?.nextElementSibling?.textContent?.trim(),
     ).toBe('Volver a la bandeja');
   });
 
@@ -662,7 +667,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     it('un pedido a domicilio sin dirección guardada dice el medio, sin dirección inventada', async () => {
       await mount(
         pharmacyOrderDtoFixture({
-          id: ID_PEDIDO_CON_DELIVERY,
+          id: ID_ORDER_WITH_DELIVERY,
           deliveryMode: DOMICILIO,
           deliveryAddressText: null,
           status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
@@ -702,7 +707,7 @@ describe('InboxOrder with the real pharmacy-orders contract', () => {
     const base = pharmacyOrderDtoFixture();
     return pharmacyOrderDtoFixture({
       // Lo que lo identifica como el pedido con seguro es su id, no el nombre.
-      id: ID_PEDIDO_CON_SEGURO,
+      id: ID_ORDER_WITH_INSURANCE,
       status: { code: 'PINV_ORDER_EN_REVISION', display: 'En revisión' },
       patientName: 'Rosa Elena Quispe Vargas',
       lines: [

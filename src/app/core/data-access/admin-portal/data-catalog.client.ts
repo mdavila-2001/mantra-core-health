@@ -18,6 +18,7 @@ import type {
   Evidence,
   EvidenceInput,
   Impact,
+  PermissionDrift,
   ReviewDecision,
   ReviewInput,
   Revision,
@@ -216,6 +217,18 @@ export class DataCatalogClient {
     return this.http.post<ScanAccepted>(this.url('/admin/catalog/scans'), null, {
       headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
     });
+  }
+
+  /**
+   * Deriva de permisos: los roles que las rutas exigen contra los que la API
+   * siembra. La calcula el servidor al arrancar; esta capa sólo convierte la fecha.
+   */
+  permissionDrift(): Observable<PermissionDrift> {
+    return this.http
+      .get<Omit<PermissionDrift, 'generatedAt'> & { readonly generatedAt: string }>(
+        this.url('/admin/catalog/permission-drift'),
+      )
+      .pipe(map((body) => ({ ...body, generatedAt: new Date(body.generatedAt) })));
   }
 
   private url(path: string): string {

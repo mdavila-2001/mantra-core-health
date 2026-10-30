@@ -115,7 +115,9 @@
   font-size: var(--fs-h1);
   line-height: var(--lh-h1);
   letter-spacing: -0.015em;
-  color: var(--c-petrol-700, var(--brand-primary));
+  /* Tinta y no petróleo (27/10/2026, «está muy azul»): el color ya lo pone la
+     cinta. La línea gráfica pide títulos en `--text-primary`. */
+  color: var(--text-primary);
 }
 
 .app-shell--redesign .app-main app-page-header .page-header__subtitle {
@@ -152,7 +154,9 @@
 /* ── Pestañas: más grandes, la elegida con fondo ────────────────────────── */
 .app-shell--redesign .app-main .tabs__tab {
   font-size: var(--fs-body-lg);
-  border-radius: var(--r-full) var(--r-full) 0 0;
+  /* `--r-lg` y no `--r-full`: en una pestaña que reparte el ancho (un tercio de
+     la ficha del glosario) el radio entero la volvía una cúpula. */
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
 
 .app-shell--redesign .app-main .tabs__tab[aria-selected='true'] {
@@ -190,7 +194,7 @@
 }
 
 :root[data-theme='dark'] .app-shell--redesign .app-main app-page-header .page-header__title {
-  color: var(--c-aqua-300);
+  color: var(--text-primary);
 }
 
 :root[data-theme='dark'] .app-shell--redesign .app-main .card.card--outlined,
@@ -227,8 +231,53 @@
    18/09/2026 porque «se leía como con zoom». Lo que se gana acá es la palabra,
    no el tamaño. */
 @media (min-width: 1280px) {
+  /* Una sola barra para todos los destinos (27/10/2026): antes eran nueve
+     rótulos sueltos de anchos distintos, y la Red social, una pastilla con
+     otro dibujo. Juntos sobre un mismo fondo se leen como lo que son —los
+     lugares a los que se va— y el de la pantalla actual se destaca. */
   .app-shell--redesign .app-header__rapidos-lista {
-    gap: var(--e1);
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--filete);
+    border-radius: var(--r-menu);
+    background: var(--sup-inset);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social {
+    flex-direction: column;
+    gap: 2px;
+    block-size: auto;
+    min-inline-size: 3.75rem;
+    padding: 3px var(--e2);
+    border: 0;
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-weight: 500;
+  }
+
+  .app-shell--redesign .app-header__red-social-texto {
+    display: block;
+    font-size: var(--fs-caption);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social:hover,
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes:hover {
+    background: var(--sup-tarjeta);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .is-activo {
+    background: var(--sup-tarjeta);
+    color: var(--petroleo);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .is-activo .app-header__rapidos-label,
+  .app-shell--redesign .app-header__rapidos-lista .is-activo .app-header__red-social-texto {
+    font-weight: 700;
   }
 
   .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes {
@@ -237,7 +286,7 @@
     inline-size: auto;
     min-inline-size: 3.75rem;
     block-size: auto;
-    padding: var(--e1) var(--e2);
+    padding: 3px var(--e2);
     border-radius: var(--r-ctrl);
   }
 
@@ -399,11 +448,12 @@
   font-size: clamp(var(--fs-h1), 4vw, var(--fs-display));
   line-height: 1.15;
   letter-spacing: -0.02em;
-  color: var(--c-petrol-700, var(--brand-primary));
+  /* Tinta (27/10/2026, «está muy azul»): el acento lo pone el nombre. */
+  color: var(--text-primary);
 }
 
 .app-shell--paciente app-patient-home .portada__nombre {
-  background: linear-gradient(90deg, var(--c-petrol-500), var(--c-aqua-600));
+  background: linear-gradient(90deg, var(--c-aqua-700), var(--c-aqua-600));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -534,7 +584,7 @@
   font-size: var(--fs-h1);
   line-height: var(--lh-h1);
   font-weight: 600;
-  color: var(--c-petrol-700, var(--text-primary));
+  color: var(--text-primary);
 }
 
 .app-shell--paciente app-patient-home .proxima-cita__hora {
@@ -760,7 +810,7 @@
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
-  color: var(--c-petrol-700, var(--brand-primary));
+  color: var(--text-primary);
 }
 
 .app-shell--paciente app-appointments .turnos__hora {
@@ -782,7 +832,7 @@
    fondo oscuro (el petróleo y el aguamarina 700 no llegan al contraste). */
 :root[data-theme='dark'] .app-shell--paciente app-patient-home .proxima-cita__hora,
 :root[data-theme='dark'] .app-shell--paciente app-appointments .turnos__hora {
-  color: var(--c-aqua-300);
+  color: var(--text-primary);
 }
 
 :root[data-theme='dark'] .app-shell--paciente app-appointments .turnos__fecha {

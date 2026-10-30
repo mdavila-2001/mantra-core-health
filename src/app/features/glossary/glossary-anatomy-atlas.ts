@@ -19,6 +19,7 @@ import { map, type Subscription } from 'rxjs';
 
 import { AnatomyAtlasClient } from '../../core/data-access/anatomy-atlas/anatomy-atlas.client';
 import type {
+  AnatomyComposites,
   AnatomyIndex,
   AnatomyIndexEntry,
   AnatomyLayer,
@@ -38,6 +39,7 @@ import { dataOf, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { Checkbox } from '../../shared/components/atoms/checkbox/checkbox';
 import { Card } from '../../shared/components/molecules/card/card';
+import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import { SearchField } from '../../shared/components/molecules/search-field/search-field';
 import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
@@ -49,19 +51,26 @@ import { ViewStateHost } from '../../shared/components/organisms/view-state-host
 import {
   DEFAULT_LAYERS,
   displayName,
+  drawnStructures,
   groupRelations,
   LAYER_LABELS,
   LAYER_ORDER,
   meshesOf,
   ontologyUrl,
-  partVisibleFor,
+  pageOf,
+  pageRelationGroups,
   relatedMeshes,
   searchIndex,
   sideLabel,
+  structureIdsOf,
+  structuresWithMesh,
 } from './glossary-anatomy-atlas.logic';
 
-/** Resultados de búsqueda visibles a la vez. */
-const SEARCH_LIMIT = 25;
+/** Tope de coincidencias que se calculan; se muestran de a `PAGE_SIZE.results`. */
+const SEARCH_LIMIT = 500;
+
+/** Filas por página en cada lista del panel: el panel no crece con el catálogo. */
+const PAGE_SIZE = { results: 8, relations: 10, references: 6, female: 12 } as const;
 
 const SEX_OPTIONS: readonly SegmentedOption<AnatomySex>[] = [
   { value: 'male', label: 'Hombre' },
@@ -100,7 +109,7 @@ const REGION_NAMES: Readonly<Record<string, string>> = {
  */
 @Component({
   selector: 'app-glossary-anatomy-atlas',
-  imports: [AnatomyViewer, Card, Checkbox, PageHeader, RouterLink, SearchField, SegmentedControl, Tab, Tabs, ViewStateHost],
+  imports: [AnatomyViewer, Card, Checkbox, PageHeader, Pagination, RouterLink, SearchField, SegmentedControl, Tab, Tabs, ViewStateHost],
   templateUrl: './glossary-anatomy-atlas.html',
   styleUrl: './glossary-anatomy-atlas.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -136,14 +145,21 @@ export class GlossaryAnatomyAtlas {
   protected readonly layers = signal<readonly AnatomyLayer[]>(DEFAULT_LAYERS);
   protected readonly tab = signal(0);
   protected readonly search = signal('');
+  protected readonly pageSize = PAGE_SIZE;
+  protected readonly resultsPage = signal(1);
+  protected readonly relationsPage = signal(1);
+  protected readonly referencesPage = signal(1);
+  protected readonly femalePage = signal(1);
 
   protected readonly partsState = signal<ViewState<readonly AnatomyPart[]>>(loading());
   private readonly indexState = signal<ViewState<AnatomyIndex>>(loading());
+  /** Sin él, las estructuras compuestas (el pulmón) se tratarían como sin pieza: es sólo un refuerzo, no bloquea. */
+  private readonly composites = signal<AnatomyComposites>({});
   protected readonly structureState = signal<ViewState<AnatomyStructure | null> | null>(null);
 
   protected readonly parts = computed(() => dataOf(this.partsState()) ?? []);
   private readonly index = computed(() => dataOf(this.indexState()));
-  private readonly withMesh = computed(() => new Set(this.parts().map((p) => p.structureId)));
+  private readonly withMesh = computed(() => structuresWithMesh(this.parts(), this.composites()));
   private readonly inCatalog = computed(() => new Set((this.index()?.entries ?? []).map((e) => e[0])));
   private readonly entryById = computed(() => new Map((this.index()?.entries ?? []).map((e) => [e[0], e])));
 
@@ -154,20 +170,22 @@ export class GlossaryAnatomyAtlas {
 
   protected readonly selectedMeshes = computed(() => {
     const id = this.structureId();
-    return id === null ? [] : meshesOf(this.parts(), id, this.sex());
+    return id === null ? [] : meshesOf(this.parts(), id, this.sex(), this.composites());
+  });
+
+  /** La estructura abierta no tiene malla propia pero se dibuja con las de sus partes (el pulmón). */
+  protected readonly esCompuesta = computed(() => {
+    const id = this.structureId();
+    return id !== null && id in this.composites();
   });
 
   protected readonly relatedMeshIds = computed(() => {
     const ficha = this.structure();
-    return ficha === null ? [] : relatedMeshes(this.parts(), ficha, this.sex());
+    return ficha === null ? [] : relatedMeshes(this.parts(), ficha, this.sex(), this.composites());
   });
 
   /** Las estructuras que se están dibujando: con pieza en una capa encendida y visibles para el sexo elegido. */
-  private readonly drawn = computed(() => {
-    const capas = new Set(this.layers());
-    const sexo = this.sex();
-    return new Set(this.parts().filter((p) => capas.has(p.layer) && partVisibleFor(p, sexo)).map((p) => p.structureId));
-  });
+  private readonly drawn = computed(() => drawnStructures(this.parts(), new Set(this.layers()), this.sex(), this.composites()));
 
   protected readonly relationGroups = computed(() => {
     const ficha = this.structure();
@@ -187,13 +205,31 @@ export class GlossaryAnatomyAtlas {
     return parte === undefined ? null : sideLabel(parte.side);
   });
 
+  /** El catálogo de búsqueda todavía está bajando. */
+  protected readonly indexLoading = computed(() => this.indexState().status === 'loading');
+  /** El catálogo de búsqueda no se pudo bajar. */
+  protected readonly indexFailed = computed(() => this.indexState().status === 'error');
+
   protected readonly results = computed<AnatomyIndexEntry[]>(() => searchIndex(this.index()?.entries ?? [], this.search(), SEARCH_LIMIT));
+
+  protected readonly resultsShown = computed(() => pageOf(this.results(), this.resultsPage(), PAGE_SIZE.results));
+
+  protected readonly relationRows = computed(() => this.relationGroups().reduce((n, g) => n + g.items.length, 0));
+  protected readonly relationGroupsShown = computed(() =>
+    pageRelationGroups(this.relationGroups(), this.relationsPage(), PAGE_SIZE.relations),
+  );
+
+  protected readonly referencesShown = computed(() =>
+    pageOf(this.structure()?.definition?.refs ?? [], this.referencesPage(), PAGE_SIZE.references),
+  );
 
   protected readonly femaleOnly = computed(() =>
     ATLAS_3D_FEMALE_ONLY_IDS.map((id) => this.entryById().get(id))
       .filter((e): e is AnatomyIndexEntry => e !== undefined)
       .sort((a, b) => displayName(a[1], a[2], a[0]).localeCompare(displayName(b[1], b[2], b[0]), 'es')),
   );
+
+  protected readonly femaleShown = computed(() => pageOf(this.femaleOnly(), this.femalePage(), PAGE_SIZE.female));
 
   protected readonly viewerLabel = computed(() => {
     const visibles = this.layers().map((c) => LAYER_LABELS[c].toLowerCase()).join(', ');
@@ -220,9 +256,24 @@ export class GlossaryAnatomyAtlas {
       next: (partes) => this.partsState.set(ready(partes)),
       error: (error: unknown) => this.partsState.set(errorToViewState(error)),
     });
-    this.atlas.index().subscribe({
-      next: (indice) => this.indexState.set(ready(indice)),
-      error: (error: unknown) => this.indexState.set(errorToViewState(error)),
+    this.atlas.composites().subscribe({
+      next: (compuestas) => this.composites.set(compuestas),
+      // Sin el archivo el atlas funciona como antes: las compuestas quedan sin pieza.
+      error: () => this.composites.set({}),
+    });
+    this.loadIndex();
+
+    // Otra búsqueda o otra ficha vuelve a la primera página de sus listas.
+    effect(() => {
+      this.search();
+      untracked(() => this.resultsPage.set(1));
+    });
+    effect(() => {
+      this.structureId();
+      untracked(() => {
+        this.relationsPage.set(1);
+        this.referencesPage.set(1);
+      });
     });
 
     // La ficha sigue a la URL: abrir un enlace compartido abre la misma ficha.
@@ -236,10 +287,27 @@ export class GlossaryAnatomyAtlas {
     effect(() => {
       const id = this.structureId();
       this.parts();
+      this.composites();
       untracked(() => {
         if (id !== null) this.showLayersOf(id);
       });
     });
+  }
+
+  /**
+   * Pide el índice de búsqueda. Pesa unos 480 KB: hasta que llega, la búsqueda
+   * no puede responder, y la pantalla lo dice en vez de mostrar «no encontramos».
+   */
+  private loadIndex(): void {
+    this.indexState.set(loading());
+    this.atlas.index().subscribe({
+      next: (indice) => this.indexState.set(ready(indice)),
+      error: (error: unknown) => this.indexState.set(errorToViewState(error)),
+    });
+  }
+
+  protected retryIndex(): void {
+    this.loadIndex();
   }
 
   private loadStructure(id: string | null): void {
@@ -304,7 +372,8 @@ export class GlossaryAnatomyAtlas {
 
   /** Enciende las capas donde está la estructura: abrirla desde la búsqueda tiene que mostrarla. */
   private showLayersOf(id: string): void {
-    const suyas = new Set(this.parts().filter((p) => p.structureId === id).map((p) => p.layer));
+    const ids = new Set(structureIdsOf(id, this.composites()));
+    const suyas = new Set(this.parts().filter((p) => ids.has(p.structureId)).map((p) => p.layer));
     if (suyas.size === 0) return;
     this.layers.update((capas) => LAYER_ORDER.filter((c) => capas.includes(c) || suyas.has(c)));
   }

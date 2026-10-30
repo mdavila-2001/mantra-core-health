@@ -38,7 +38,7 @@ const BASE = '/administration/geolocation';
   selector: 'app-geo-home',
   imports: [Alert, Card, Link, PageHeader, RouterLink],
   templateUrl: './geo-home.html',
-  styleUrl: '../../portada.css',
+  styleUrl: '../../cover.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GeoHome {

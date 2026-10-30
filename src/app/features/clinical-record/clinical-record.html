@@ -51,7 +51,9 @@
           placeholder="Número de carnet"
           [value]="documentoTecleado()"
           (valueChange)="fijarDocumento($event)"
-        />
+        >
+          <app-nav-icon slot="icon-start" name="labels" />
+        </app-input>
       </app-form-field>
     </div>
 

@@ -13,8 +13,7 @@
  *    base y en la copia completa—.
  * 2. **Los 69 términos curados** de `glossary-terms.catalog.ts` del backend.
  *
- * Quedaron afuera, por la auditoría del 2026-10-01
- * (`docs/trabajo/2026-10-01-calidad-catalogos/` en la raíz):
+ * Quedaron afuera, por la auditoría de calidad de catálogos del 2026-10-01:
  * - las 1 918 categorías ICD-10-CM con el título **en inglés** en `esName`;
  * - las capas de `data/glossary/` con definiciones y relaciones redactadas por
  *   desarrollo sin fuente (`pending-medical-review`);

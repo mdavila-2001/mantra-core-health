@@ -26,6 +26,32 @@ describe('PatientInsuranceSettlement', () => {
     expect(element.textContent).toContain('Justificación: No informada');
   });
 
+  /** Tarea 3 · H8: los data-testid que usa el Playwright de exclusiones. */
+  it('expone data-testid en los cuatro importes, la exclusión y su cláusula como badge', () => {
+    const fixture = TestBed.createComponent(PatientInsuranceSettlement);
+    fixture.componentRef.setInput('availability', 'AVAILABLE');
+    fixture.componentRef.setInput(
+      'settlement',
+      patientSettlementFixture('partial', 'PARTIALLY_APPROVED').insuranceSettlement,
+    );
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    for (const testid of [
+      'settlement-total-billed',
+      'settlement-total-approved',
+      'settlement-total-patient',
+      'settlement-total-denied',
+      'settlement-exclusion',
+      'settlement-exclusion-clause',
+      'settlement-exclusion-rationale',
+    ]) {
+      expect(element.querySelector(`[data-testid="${testid}"]`)).not.toBeNull();
+    }
+    expect(
+      element.querySelector('[data-testid="settlement-exclusion-clause"]')?.textContent,
+    ).toContain(SETTLEMENT_CLAUSE);
+  });
+
   it('degrada un AVAILABLE con importes incompletos a revisión, sin anunciar disponibilidad', () => {
     const fixture = TestBed.createComponent(PatientInsuranceSettlement);
     const incompleto = {

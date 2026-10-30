@@ -44,6 +44,8 @@ interface OrdenDeApi {
   readonly encounterId?: string;
   readonly codeConceptId: string;
   readonly categoryConceptId?: string;
+  /** P40: la categoría textual que la API deriva de `categoryConceptId`. */
+  readonly category?: 'LAB' | 'IMAGING' | 'OTHER';
   readonly statusConceptId: string;
   readonly createdAt: string;
   readonly hasReleasedResult: boolean;
@@ -51,16 +53,34 @@ interface OrdenDeApi {
   readonly preparationInstructions?: string;
   readonly insuranceSettlement?: unknown;
   readonly insuranceSettlementAvailability?: string;
-  readonly appointment?: OrderAppointment | null;
+  readonly performerSelectionConceptId?: string;
+  readonly performerPractitionerProfileId?: string;
+  readonly suggestedPracticeSiteId?: string;
+  readonly suggestedPracticeSiteName?: string | null;
+  /** El turno reservado en un centro para la orden (CM-10). */
+  readonly appointment?: unknown;
+}
+
+/**
+ * La `category` que la API sirve para cada concepto de categoría de estas
+ * pruebas (P40): laboratorio e imagen se nombran, cualquier otra es `OTHER`.
+ */
+function categoriaDeApi(categoryConceptId: string | undefined): OrdenDeApi['category'] {
+  if (categoryConceptId === undefined) return undefined;
+  if (categoryConceptId === 'cat-lab') return 'LAB';
+  if (categoryConceptId === 'cat-img') return 'IMAGING';
+  return 'OTHER';
 }
 
 function orden(overrides: Partial<OrdenDeApi> = {}): OrdenDeApi {
+  const category = categoriaDeApi(overrides.categoryConceptId);
   return {
     id: id('order'),
     codeConceptId: id('concept-code'),
     statusConceptId: id('concept-status'),
     createdAt: '2026-08-14T10:00:00.000Z',
     hasReleasedResult: false,
+    ...(category === undefined ? {} : { category }),
     ...overrides,
   };
 }
@@ -79,8 +99,8 @@ function authDoble(patientProfileId: string | null) {
  * «Mis órdenes» — C9 (ADR-0015): reescritura completa sobre el diseño
  * anterior (agrupado por atención). Lo que fijan estas pruebas:
  *
- * 1. El tipo se deriva del **código** de `categoryConceptId` cuando llega
- *    (`SRQ-LAB`/`SRQ-IMAGING`), y cae en «Otros» sin categoría (C2 no corrió).
+ * 1. El tipo es la `category` que sirve la API (P40); el código del concepto
+ *    sólo separa los procedimientos. Sin categoría, «Otros».
  * 2. Los conteos de pestaña son consistentes: Todas = suma de las tres.
  * 3. Buscador y filtros son en cliente, y la URL va y vuelve.
  * 4. Ninguna acción de fila es sólo un ícono, y ninguna aparece sin su
@@ -184,6 +204,31 @@ describe('DiagnosticOrders', () => {
 
     const badge = harness.routeNativeElement?.querySelector('app-badge');
     expect(badge?.textContent?.trim()).toBe('Laboratorio');
+  });
+
+  it('P40: la pestaña sale de la category que manda la API, no del código del concepto', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    // Un código que la heurística vieja no conocía: igual es laboratorio,
+    // porque lo dice el servidor.
+    responder(
+      [orden({ categoryConceptId: 'cat-x', category: 'LAB' })],
+      [concepto('cat-x', 'CODIGO-NUEVO', 'Análisis de laboratorio')],
+    );
+
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Laboratorio');
+  });
+
+  it('P40: un código de laboratorio sin category no se adivina: cae en Otros', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    const o = orden({ categoryConceptId: 'cat-lab' });
+    const { category: _sinCategoria, ...sinCategoria } = o;
+    responder([sinCategoria], [concepto('cat-lab', 'SRQ-LAB', 'Laboratorio')]);
+
+    const badge = harness.routeNativeElement?.querySelector('app-badge');
+    expect(badge?.textContent?.trim()).toBe('Otros');
   });
 
   it('sin categoryConceptId (C2 no corrió), la orden cae en Otros', async () => {
@@ -390,6 +435,168 @@ describe('DiagnosticOrders', () => {
     harness.detectChanges();
 
     expect(texto()).toContain('Ayuno de 8 horas');
+  });
+
+  /* ---- CM-10: «Procedimientos» y el ejecutor visto por el paciente ----------- */
+
+  const CATEGORIAS = [
+    concepto('cat-lab', 'SRQ-LAB', 'Laboratorio'),
+    concepto('cat-img', 'SRQ-IMAGING', 'Imagenología'),
+    concepto('cat-proc', 'SRQ-PROCEDURE', 'Procedimiento'),
+  ];
+
+  it('aparece la pestaña «Procedimientos» con su conteo y la orden no cae en Otros', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-proc' }),
+        orden({ categoryConceptId: 'cat-proc' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+      ],
+      CATEGORIAS,
+    );
+
+    expect(botonDePestana('Procedimientos')?.textContent).toContain('2');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
+    expect(botonDePestana('Todas')?.textContent).toContain('5');
+    expect(harness.routeNativeElement?.querySelector('[data-testid="my-orders-tab-PROCEDURE"]')).not.toBeNull();
+  });
+
+  it('Laboratorio, Imagenología y Otros dan lo mismo con o sin órdenes de procedimiento', async () => {
+    configurar(PROFILE_ID);
+    await mount();
+    responder(
+      [
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-lab' }),
+        orden({ categoryConceptId: 'cat-img' }),
+        orden(),
+        orden({ categoryConceptId: 'cat-proc' }),
+      ],
+      CATEGORIAS,
+    );
+
+    expect(botonDePestana('Laboratorio')?.textContent).toContain('2');
+    expect(botonDePestana('Imagenología')?.textContent).toContain('1');
+    expect(botonDePestana('Otros')?.textContent).toContain('1');
+  });
+
+  it('entrar por ?tab=PROCEDURE deja sólo las órdenes de procedimiento', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount(`${RUTA}?tab=PROCEDURE`);
+    responder([orden({ categoryConceptId: 'cat-proc' }), orden({ categoryConceptId: 'cat-lab' })], CATEGORIAS);
+
+    expect(api(componente).tab()).toBe('PROCEDURE');
+    expect(api(componente).filasFiltradas().map((f) => f.type)).toEqual(['PROCEDURE']);
+  });
+
+  it('un procedimiento no ofrece cotizar ni reservar en un laboratorio', async () => {
+    configurar(PROFILE_ID);
+    const componente = await mount();
+    responder([orden({ categoryConceptId: 'cat-proc' })], CATEGORIAS);
+
+    const fila = api(componente).filasFiltradas()[0];
+    const codigos = api(componente).accionesDe(fila).map((a) => a.code);
+    expect(codigos).not.toContain('reservar');
+    expect(codigos).not.toContain('cotizar');
+  });
+
+  it('ORGANIZATION: dice que su médico sugirió un centro, nombra la sede y avisa que es una recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-org',
+          suggestedPracticeSiteId: id('site'),
+          suggestedPracticeSiteName: 'Centro Médico Sur — Sede Central',
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-org', 'SR_PERF_ORGANIZATION', 'En un centro')],
+    );
+
+    expect(texto()).toContain('Su médico sugirió un centro');
+    expect(texto()).toContain('Centro Médico Sur — Sede Central');
+    expect(texto()).toContain('Es una recomendación: puede elegir otro centro.');
+  });
+
+  it('SELF: dice que su médico se ofreció a hacerlo y avisa que es una recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: id('practitioner'),
+          suggestedPracticeSiteId: id('site'),
+          suggestedPracticeSiteName: 'Centro Médico Norte — Sede Central',
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-self', 'clinical:SR_PERF_SELF', 'Lo hace él')],
+    );
+
+    expect(texto()).toContain('Su médico se ofreció a hacerlo');
+    expect(texto()).toContain('Es una recomendación: puede elegir otro centro.');
+  });
+
+  it('PATIENT_CHOICE: dice que puede elegir dónde hacérselo, sin recomendación', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [orden({ categoryConceptId: 'cat-proc', performerSelectionConceptId: 'perf-pc' })],
+      [...CATEGORIAS, concepto('perf-pc', 'SR_PERF_PATIENT_CHOICE', 'Lo elige el paciente')],
+    );
+
+    expect(texto()).toContain('Puede elegir dónde hacérselo');
+    expect(texto()).not.toContain('Es una recomendación');
+  });
+
+  it('sin performerSelectionConceptId no pinta ninguna línea de ejecutor', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder([orden({ categoryConceptId: 'cat-proc' })], CATEGORIAS);
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="order-performer-summary"]')).toBeNull();
+  });
+
+  it('un modo con un código desconocido no pinta nada: no se inventa un modo', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    responder(
+      [orden({ categoryConceptId: 'cat-proc', performerSelectionConceptId: 'perf-x' })],
+      [...CATEGORIAS, concepto('perf-x', 'SR_PERF_OTRO', 'Otro')],
+    );
+
+    expect(harness.routeNativeElement?.querySelector('[data-testid="order-performer-summary"]')).toBeNull();
+  });
+
+  it('la sede sin nombre no se pinta, y nunca se muestra el uuid de la sede ni del médico', async () => {
+    configurar(PROFILE_ID);
+    await mount(`${RUTA}?tab=PROCEDURE`);
+    const sede = id('site');
+    const practitioner = id('practitioner');
+    responder(
+      [
+        orden({
+          categoryConceptId: 'cat-proc',
+          performerSelectionConceptId: 'perf-self',
+          performerPractitionerProfileId: practitioner,
+          suggestedPracticeSiteId: sede,
+          suggestedPracticeSiteName: null,
+        }),
+      ],
+      [...CATEGORIAS, concepto('perf-self', 'SR_PERF_SELF', 'Lo hace él')],
+    );
+
+    expect(texto()).toContain('Su médico se ofreció a hacerlo');
+    expect(texto()).not.toContain('Sede sugerida');
+    expect(texto()).not.toContain(sede);
+    expect(texto()).not.toContain(practitioner);
   });
 
   /* ---- Sin uuids en pantalla -------------------------------------------------- */

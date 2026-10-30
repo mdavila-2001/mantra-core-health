@@ -14,33 +14,53 @@
   display: block;
 }
 
-.glosario__mapa-enlace {
-  width: min(100% - 2rem, 76rem);
-  margin: 0.75rem auto 0;
-  text-align: end;
-}
-
-.glosario__mapa-enlace a {
-  color: var(--st-link, #175cd3);
-  font-weight: 600;
-}
-
 .glosario {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-6);
   margin-block-start: var(--sp-6);
 }
 
 /* --- Buscador ------------------------------------------------------------- */
 
+/* Un solo renglón (pedido del cliente, 26/10/2026): buscador, «Categoría»,
+   «Etiqueta» y, a la derecha, los accesos al mapa y al atlas. Sin el tope de
+   62rem de antes: con los accesos al final, el renglón usa todo el ancho y el
+   buscador se queda con lo que sobra. */
 .glosario__buscador {
   display: block;
-  /* El renglón ya no es sólo el campo de texto: lleva además «Categoría» y
-     «Etiqueta». Con el tope viejo de 34rem los tres entraban apretados y el
-     texto de ejemplo del buscador se cortaba en «Por ejemplo «hiper». Sigue
-     habiendo tope, porque un renglón de mil píxeles tampoco ayuda a escribir
-     «hipertensión». */
-  max-inline-size: 62rem;
+  /* Se mide el renglón, no la ventana: el menú lateral abierto o cerrado
+     cambia el ancho disponible sin cambiar el viewport. */
+  container: glosario-filtros / inline-size;
+}
+
+.glosario__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* El ícono de cada acceso, con el color de marca: el mismo trato que llevan
+   los íconos de la rejilla de categorías. */
+.glosario__herramientas app-nav-icon {
+  flex: none;
+  color: var(--brand-primary);
+}
+
+/* Por debajo de ~1140 px de renglón, los rótulos cortos: «Mapa» y «Atlas 3D».
+   Con los largos, el buscador y «Categoría» se cortaban en «Anato…». */
+@container glosario-filtros (max-width: 1140px) {
+  .glosario__largo {
+    display: none;
+  }
+}
+
+@media (min-width: 780px) {
+  /* En el renglón los dos accesos no se parten en dos líneas: lo que falte
+     de ancho lo cede el buscador. */
+  .glosario__herramientas {
+    flex-wrap: nowrap;
+  }
 }
 
 /* --- Títulos -------------------------------------------------------------- */
@@ -69,6 +89,8 @@
 
 .glosario__titulo-cuerpo {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-family: var(--font-display);
   font-size: var(--fs-h2);
   line-height: var(--lh-h2);
@@ -217,7 +239,10 @@
 
 .glosario__cuerpo {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-4);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .glosario__filtro {
@@ -459,5 +484,151 @@
   .glosario__entrada,
   .glosario__entrada-leer svg {
     transition: none;
+  }
+}
+
+
+/* ─── Vista en tabla (port de mockup, #1224) ─── */
+/* --- Barra de resultados y vista de tabla ---------------------------------- */
+
+.glosario__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.glosario__barra .glosario__aviso {
+  margin: 0;
+}
+
+/* Tabla de resultados al estilo de un índice bibliográfico: filetes finos,
+   término en enlace y definición con medida de lectura. Desplazamiento sólo
+   vertical (ADR-0015): en pantallas angostas las celdas parten en renglones. */
+.glosario__tabla-caja {
+  inline-size: 100%;
+  overflow-x: hidden;
+}
+
+.glosario__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--fs-body-sm, var(--fs-body));
+  color: var(--text-primary);
+}
+
+.glosario__tabla-titulo {
+  padding-block-end: var(--sp-2);
+  text-align: start;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.glosario__tabla th,
+.glosario__tabla td {
+  padding: var(--sp-3);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.glosario__tabla thead th {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-block-end-color: var(--border-strong);
+}
+
+.glosario__tabla thead th:nth-child(1) {
+  inline-size: 24%;
+}
+
+.glosario__tabla thead th:nth-child(2) {
+  inline-size: 16%;
+}
+
+.glosario__tabla thead th:nth-child(4) {
+  inline-size: 14%;
+}
+
+.glosario__tabla-termino {
+  font-weight: 600;
+}
+
+.glosario__tabla-termino a {
+  color: var(--st-link, var(--brand-primary));
+  text-decoration: none;
+}
+
+.glosario__tabla-termino a:hover,
+.glosario__tabla-termino a:focus-visible {
+  text-decoration: underline;
+}
+
+.glosario__tabla-definicion {
+  color: var(--text-secondary);
+  line-height: var(--lh-body, 1.5);
+}
+
+.glosario__tabla-codigo {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.glosario__tabla tbody tr:hover {
+  background: var(--surface-subtle, transparent);
+}
+
+.glosario__barra app-segmented-control {
+  flex: none;
+  /* En el teléfono el selector reparte el ancho en partes iguales y, sin un
+     piso, «Tarjetas» quedaba cortado en «Tarje…». */
+  min-inline-size: 13rem;
+}
+
+/* En el teléfono la tabla no se aprieta ni se corta: cada fila pasa a ser una
+   ficha con sus datos rotulados, así que ninguna columna se pierde (regla 95.4). */
+@media (max-width: 40rem) {
+  .glosario__tabla,
+  .glosario__tabla tbody,
+  .glosario__tabla tr,
+  .glosario__tabla th,
+  .glosario__tabla td {
+    display: block;
+  }
+
+  .glosario__tabla-titulo {
+    display: block;
+    inline-size: 100%;
+  }
+
+  .glosario__tabla thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .glosario__tabla tbody tr {
+    padding-block: var(--sp-3);
+    border-block-end: 1px solid var(--border-default);
+  }
+
+  .glosario__tabla th,
+  .glosario__tabla td {
+    padding: var(--sp-1) 0;
+    border-block-end: 0;
+  }
+
+  .glosario__tabla td[data-label]::before {
+    content: attr(data-label) ': ';
+    font-weight: 600;
+    color: var(--text-secondary);
   }
 }

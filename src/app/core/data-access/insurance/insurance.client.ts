@@ -10,6 +10,7 @@ import type {
   ClaimAdjudication,
   ClaimDetail,
   ClaimDispute,
+  ClaimEob,
   ClaimLine,
   ClaimLineDuplicateStudy,
   ClaimListItem,
@@ -42,6 +43,7 @@ import type {
   CampaignQuery,
   CampaignTargetStatus,
   CreateCampaignInput,
+  CreateAdjudicationInput,
   InsuranceCampaign,
   InsurerMarketplace,
   MarketplaceBroker,
@@ -57,6 +59,14 @@ import type {
   InsurerPatientPage,
   InsurerPatientQuery,
   PatientDirectoryOptions,
+  ClaimQuoteInput,
+  ClaimQuoteResult,
+  CreateClaimInput,
+  CreatedClaim,
+  PatientCoverageOption,
+  MyClaimBreakdown,
+  MyClaimObjection,
+  PatientObjectionReason,
 } from './insurance.types';
 
 /* ---- formas de transporte -------------------------------------------------
@@ -125,25 +135,36 @@ type WireClaimListItem = Omit<ClaimListItem, 'submittedAt'> & {
   readonly submittedAt: string | null;
 };
 
-type WireReceivedClaimInvoice = Omit<ReceivedClaimInvoice, 'issuedAt' | 'annulledAt' | 'previous'> & {
+type WireReceivedClaimInvoice = Omit<
+  ReceivedClaimInvoice,
+  'issuedAt' | 'annulledAt' | 'previous'
+> & {
   readonly issuedAt: string;
   readonly annulledAt: string | null;
   readonly previous: readonly WireReceivedClaimInvoice[];
 };
 
-type WireReceivedClaim = Omit<ReceivedClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'invoice'> & {
+type WireReceivedClaim = Omit<
+  ReceivedClaim,
+  'submittedAt' | 'serviceDate' | 'decision' | 'invoice'
+> & {
   readonly submittedAt: string | null;
   /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
   readonly serviceDate: string | null;
-  readonly decision: (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  readonly decision:
+    (Omit<ReceivedClaimDecision, 'decidedAt'> & { readonly decidedAt: string }) | null;
   readonly invoice: WireReceivedClaimInvoice | null;
 };
 
-type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision'> & {
+type WireMyClaim = Omit<MyClaim, 'submittedAt' | 'serviceDate' | 'decision' | 'breakdown' | 'patientObjection'> & {
   readonly submittedAt: string | null;
   /** `format: 'date'`: se convierte con `maybeDateOnly`, no con `new Date()`. */
   readonly serviceDate: string | null;
-  readonly decision: (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  readonly decision:
+    (Omit<NonNullable<MyClaim['decision']>, 'decidedAt'> & { readonly decidedAt: string }) | null;
+  /** `null` fuera de la vista del paciente y en las solicitudes que el servidor no desglosa. */
+  readonly breakdown?: MyClaimBreakdown | null;
+  readonly patientObjection?: (Omit<MyClaimObjection, 'submittedAt'> & { readonly submittedAt: string }) | null;
 };
 
 type WireClaimAdjudication = Omit<ClaimAdjudication, 'adjudicatedAt'> & {
@@ -166,15 +187,19 @@ type WireClaimLine = Omit<ClaimLine, 'duplicateStudy'> & {
   readonly duplicateStudy: WireClaimLineDuplicateStudy | null;
 };
 
+/** `eob.publishedAt` viaja como ISO-8601; el resto del desglose ya son cadenas. */
+type WireClaimEob = Omit<ClaimEob, 'publishedAt'> & { readonly publishedAt: string };
+
 type WireClaimDetail = Omit<
   ClaimDetail,
-  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes'
+  'header' | 'lines' | 'adjudication' | 'adjudicationHistory' | 'disputes' | 'eob'
 > & {
   readonly header: WireClaimListItem;
   readonly lines: readonly WireClaimLine[];
   readonly adjudication: WireClaimAdjudication | null;
   readonly adjudicationHistory: readonly WireClaimAdjudication[];
   readonly disputes: readonly WireClaimDispute[];
+  readonly eob: WireClaimEob | null;
 };
 
 /**
@@ -229,12 +254,17 @@ export class InsuranceClient {
   }
 
   /**
-   * `GET /practitioners/:id/insurance-carriers` — las aseguradoras en cuya red
-   * atiende un profesional, con los planes de cada una.
+   * Las aseguradoras en cuya red atiende un profesional, con los planes de
+   * cada una.
    *
    * Es lo que el paciente mira en la ficha para saber si su seguro lo cubre.
    * Una lista vacía es «no hay convenios informados», no «no trabaja con
    * seguros»: la pantalla lo dice así.
+   *
+   * Se arma sobre `GET /practitioners/:id/insurance-networks`, que es la ruta
+   * que la API expone (una fila por membresía). La anterior,
+   * `/practitioners/:id/insurance-carriers`, nunca existió en la API: con ella
+   * la ficha respondía 404 y mostraba «No encontramos lo que busca».
    *
    * @param practitionerProfileId - El perfil profesional de la ficha.
    * @returns Las aseguradoras, ya ordenadas por nombre.
@@ -242,13 +272,9 @@ export class InsuranceClient {
   listPractitionerCarriers(
     practitionerProfileId: string,
   ): Observable<readonly PractitionerInsuranceCarrier[]> {
-    return this.http
-      .get<{ readonly items: readonly PractitionerInsuranceCarrier[] }>(
-        this.url(
-          `/practitioners/${encodeURIComponent(practitionerProfileId)}/insurance-carriers`,
-        ),
-      )
-      .pipe(map((body) => body.items));
+    return this.listNetworksOfPractitioner(practitionerProfileId).pipe(
+      map((page) => carriersFromNetworks(page.items)),
+    );
   }
 
   /** `GET /insurance-carriers/:id` — catálogo comercial y red. */
@@ -328,9 +354,9 @@ export class InsuranceClient {
    * producto seguro. **Sólo existe en la maqueta**: la API todavía no lo expone.
    */
   updatePlan(planId: string, body: UpdateInsurancePlanInput): Observable<{ readonly ok: true }> {
-    return this.http.put<{ readonly ok: true }>(
-      this.url(`/insurance-plans/${encodeURIComponent(planId)}`),
-      body,
+    const url = this.url(`/insurance-plans/${encodeURIComponent(planId)}`);
+    return simulatorOnly('Corregir los datos de un producto seguro', url, () =>
+      this.http.put<{ readonly ok: true }>(url, body),
     );
   }
 
@@ -339,7 +365,8 @@ export class InsuranceClient {
    * cláusulas. **Sólo existe en la maqueta**: la API todavía no lo expone.
    */
   deletePlan(planId: string): Observable<void> {
-    return this.http.delete<void>(this.url(`/insurance-plans/${encodeURIComponent(planId)}`));
+    const url = this.url(`/insurance-plans/${encodeURIComponent(planId)}`);
+    return simulatorOnly('Dar de baja un producto seguro', url, () => this.http.delete<void>(url));
   }
 
   /** Crea una cobertura dentro de un plan del carrier del tenant activo. */
@@ -532,6 +559,9 @@ export class InsuranceClient {
    * pedirla; el lado (paciente, médico, laboratorio, imagenología) lo resuelve
    * el servidor por la sesión — el cliente no manda ningún id.
    *
+   * `breakdown` y `patientObjection` solo vienen en la vista del paciente (el servidor
+   * desglosa las 50 solicitudes más recientes); en cualquier otro caso son `null`.
+   *
    * @returns Las solicitudes, de la más reciente a la más antigua.
    */
   listMyClaims(): Observable<MyClaimList> {
@@ -541,7 +571,13 @@ export class InsuranceClient {
         readonly items: readonly WireMyClaim[];
         readonly truncated: boolean;
       }>(this.url('/insurance/my-claims'))
-      .pipe(map((body) => ({ view: body.view, items: body.items.map(toMyClaim), truncated: body.truncated })));
+      .pipe(
+        map((body) => ({
+          view: body.view,
+          items: body.items.map(toMyClaim),
+          truncated: body.truncated,
+        })),
+      );
   }
 
   /**
@@ -552,7 +588,10 @@ export class InsuranceClient {
    *
    * @returns La solicitud como quedó, con su dictamen y su factura.
    */
-  decideReceivedClaim(claimId: string, body: ReceivedClaimDecisionInput): Observable<ReceivedClaim> {
+  decideReceivedClaim(
+    claimId: string,
+    body: ReceivedClaimDecisionInput,
+  ): Observable<ReceivedClaim> {
     return this.http
       .post<WireReceivedClaim>(
         this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/decision`),
@@ -571,7 +610,9 @@ export class InsuranceClient {
    * el error dice que la función no está disponible.
    */
   annulReceivedClaimInvoice(claimId: string, reason: string): Observable<ReceivedClaim> {
-    const url = this.url(`/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`);
+    const url = this.url(
+      `/insurance/received-claims/${encodeURIComponent(claimId)}/invoice/annulment`,
+    );
     return simulatorOnly('Anular la factura de una solicitud recibida', url, () =>
       this.http.post<WireReceivedClaim>(url, { reason }),
     ).pipe(map(toReceivedClaim));
@@ -622,10 +663,92 @@ export class InsuranceClient {
     body: {
       readonly claimAdjudicationVersionId?: string;
       readonly initiatedBy: 'PROVIDER' | 'PATIENT';
+      /** Motivo cerrado de la objeción del paciente (REQ-16-032). Sin texto libre: es un dato de salud. */
+      readonly objectionReason?: PatientObjectionReason;
     },
   ): Observable<{ readonly id: string }> {
     return this.http.post<{ readonly id: string }>(
       this.url(`/insurance-claims/${encodeURIComponent(claimId)}/disputes`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /insurance-claims/quote` — cotización previa del cobro (REQ-16-026).
+   *
+   * No guarda nada: el servidor calcula la parte de la persona y la de la
+   * aseguradora desde el beneficio vigente de cada servicio, y dice si el
+   * cobro se puede enviar.
+   *
+   * @param body - Cobertura, servicios y montos a cotizar.
+   * @returns El reparto por línea y si el cobro se puede enviar.
+   */
+  quoteClaim(body: ClaimQuoteInput): Observable<ClaimQuoteResult> {
+    return this.http.post<ClaimQuoteResult>(this.url('/insurance-claims/quote'), body);
+  }
+
+  /**
+   * `POST /insurance-claims` — envía el cobro a la aseguradora (REQ-16-026).
+   *
+   * El servidor vuelve a validar todo lo que la cotización mostró: el cliente
+   * no manda la parte de la persona.
+   *
+   * @param body - Reclamo con su identificador y clave de idempotencia.
+   * @returns El reclamo creado.
+   */
+  createClaim(body: CreateClaimInput): Observable<CreatedClaim> {
+    return this.http.post<CreatedClaim>(this.url('/insurance-claims'), body);
+  }
+
+  /**
+   * `GET /patient-coverages/by-patient/:patientProfileId` — los seguros de una
+   * persona, para quien cobra (BILLING/FINANCE). El servidor responde 404 si la
+   * persona no tiene relación asistencial vigente con la organización activa.
+   *
+   * @param patientProfileId - Persona cuyas coberturas se leen.
+   * @returns Las coberturas registradas, con su vigencia.
+   */
+  listCoveragesOfPatient(
+    patientProfileId: string,
+  ): Observable<readonly PatientCoverageOption[]> {
+    return this.http
+      .get<{ readonly items: readonly PatientCoverageOption[] }>(
+        this.url(`/patient-coverages/by-patient/${encodeURIComponent(patientProfileId)}`),
+      )
+      .pipe(map((cuerpo) => cuerpo.items));
+  }
+
+  /**
+   * `POST /insurance-claims/:id/adjudications` — adjudica el reclamo por línea (835).
+   * Dictamina aprobación o rechazo (con cláusula y fundamentación).
+   *
+   * @param claimId - Solicitud adjudicada.
+   * @param body - Dictamen y líneas adjudicadas.
+   * @returns El identificador del recurso creado.
+   */
+  adjudicateClaim(
+    claimId: string,
+    body: CreateAdjudicationInput,
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/adjudications`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /insurance-claims/:id/eob` — publica la Explicación de Beneficios.
+   *
+   * @param claimId - Solicitud para la que se emite la EOB.
+   * @param body - Documento asociado opcional.
+   * @returns El identificador de la EOB creada.
+   */
+  publishEob(
+    claimId: string,
+    body: { readonly documentRecordId?: string } = {},
+  ): Observable<{ readonly id: string }> {
+    return this.http.post<{ readonly id: string }>(
+      this.url(`/insurance-claims/${encodeURIComponent(claimId)}/eob`),
       body,
     );
   }
@@ -686,10 +809,7 @@ export class InsuranceClient {
    * @param status - Estado destino.
    * @returns La campaña ya en su nuevo estado.
    */
-  updateCampaignStatus(
-    id: string,
-    status: CampaignTargetStatus,
-  ): Observable<InsuranceCampaign> {
+  updateCampaignStatus(id: string, status: CampaignTargetStatus): Observable<InsuranceCampaign> {
     return this.http
       .patch<WireCampaign>(this.url(`/insurance-campaigns/${encodeURIComponent(id)}/status`), {
         status,
@@ -729,7 +849,10 @@ function toReceivedClaim(body: WireReceivedClaim): ReceivedClaim {
     ...body,
     submittedAt: maybeDate(body.submittedAt) ?? null,
     serviceDate: maybeDateOnly(body.serviceDate) ?? null,
-    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    decision:
+      body.decision === null
+        ? null
+        : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
     invoice: body.invoice === null ? null : toReceivedClaimInvoice(body.invoice),
   };
 }
@@ -739,7 +862,15 @@ function toMyClaim(body: WireMyClaim): MyClaim {
     ...body,
     submittedAt: maybeDate(body.submittedAt) ?? null,
     serviceDate: maybeDateOnly(body.serviceDate) ?? null,
-    decision: body.decision === null ? null : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    decision:
+      body.decision === null
+        ? null
+        : { ...body.decision, decidedAt: new Date(body.decision.decidedAt) },
+    breakdown: body.breakdown ?? null,
+    patientObjection:
+      body.patientObjection == null
+        ? null
+        : { ...body.patientObjection, submittedAt: new Date(body.patientObjection.submittedAt) },
   };
 }
 
@@ -774,6 +905,7 @@ function toClaimDetail(body: WireClaimDetail): ClaimDetail {
     adjudication: body.adjudication ? toClaimAdjudication(body.adjudication) : null,
     adjudicationHistory: body.adjudicationHistory.map(toClaimAdjudication),
     disputes: body.disputes.map(toClaimDispute),
+    eob: body.eob ? { ...body.eob, publishedAt: new Date(body.eob.publishedAt) } : null,
   };
 }
 
@@ -905,4 +1037,36 @@ function toPatientCampaign(body: WirePatientCampaign): PatientCampaign {
     validFrom: civilDate(body.validFrom),
     validTo: civilDate(body.validTo),
   };
+}
+
+/**
+ * Agrupa las membresías por aseguradora, para la ficha del directorio.
+ *
+ * Una misma red puede llegar dos veces —por la práctica donde atiende y como
+ * membresía individual, o por dos prácticas—, y en la ficha es un solo plan:
+ * se deja una por nombre. Aseguradoras y planes, en orden alfabético.
+ */
+export function carriersFromNetworks(
+  memberships: readonly PractitionerInsuranceNetwork[],
+): readonly PractitionerInsuranceCarrier[] {
+  const byCarrier = new Map<string, { name: string; networks: Map<string, string> }>();
+  for (const membership of memberships) {
+    const carrier = byCarrier.get(membership.carrierId) ?? {
+      name: membership.carrierName,
+      networks: new Map<string, string>(),
+    };
+    if (!carrier.networks.has(membership.networkName)) {
+      carrier.networks.set(membership.networkName, membership.membershipId);
+    }
+    byCarrier.set(membership.carrierId, carrier);
+  }
+  return [...byCarrier.entries()]
+    .map(([carrierId, carrier]) => ({
+      carrierId,
+      carrierName: carrier.name,
+      networks: [...carrier.networks.entries()]
+        .map(([name, id]) => ({ id, name }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    }))
+    .sort((a, b) => a.carrierName.localeCompare(b.carrierName, 'es'));
 }

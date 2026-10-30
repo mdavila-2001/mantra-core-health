@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { accessibleName } from '../../../../../testing/a11y';
 import { Tab } from './tab/tab';
 import { Tabs } from './tabs';
 
@@ -11,7 +12,7 @@ import { Tabs } from './tabs';
     <app-tabs [(selectedIndex)]="seccion">
       <app-tab label="Evolución">Dolor torácico de 2 horas</app-tab>
       <app-tab label="Laboratorio" [disabled]="sinLaboratorio()">Hemograma completo</app-tab>
-      <app-tab label="Órdenes">Radiografía de tórax</app-tab>
+      <app-tab label="Órdenes" icon="clipboard">Radiografía de tórax</app-tab>
     </app-tabs>
   `,
 })
@@ -51,6 +52,19 @@ describe('Tabs', () => {
     await fixture.whenStable();
   });
 
+  describe('ícono + texto', () => {
+    it('la pestaña con ícono lo dibuja delante del rótulo, oculto al lector', () => {
+      const [evolucion, , ordenes] = botones();
+      expect(evolucion!.querySelector('.tabs__icono')).toBeNull();
+      const icono = ordenes!.querySelector('.tabs__icono');
+      expect(icono).not.toBeNull();
+      expect(icono!.getAttribute('aria-hidden')).toBe('true');
+      expect(icono!.querySelector('svg')).not.toBeNull();
+      // El nombre accesible sigue siendo el texto: el dibujo no le suma nada.
+      expect(ordenes!.textContent?.trim()).toBe('Órdenes');
+    });
+  });
+
   describe('ARIA cruzada', () => {
     it('la lista y las pestañas declaran sus roles', () => {
       expect(root().querySelector('[role="tablist"]')).not.toBeNull();
@@ -66,6 +80,23 @@ describe('Tabs', () => {
         expect(boton.id).toBeTruthy();
         expect(panel.id).toBeTruthy();
       });
+    });
+
+    it('cada pestaña se nombra por su rótulo, en el mismo elemento que tiene role=tab', () => {
+      expect(botones().map((boton) => accessibleName(boton))).toEqual([
+        'Evolución',
+        'Laboratorio',
+        'Órdenes',
+      ]);
+    });
+
+    it('el panel visible toma el nombre de su pestaña', async () => {
+      expect(accessibleName(paneles()[0])).toBe('Evolución');
+
+      host.seccion.set(2);
+      await fixture.whenStable();
+
+      expect(accessibleName(paneles()[2])).toBe('Órdenes');
     });
 
     it('solo una pestaña está seleccionada', () => {

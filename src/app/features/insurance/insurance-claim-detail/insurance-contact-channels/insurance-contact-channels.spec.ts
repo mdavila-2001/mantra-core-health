@@ -132,7 +132,7 @@ describe('InsuranceContactChannels', () => {
 
     const boton = fixture.debugElement.query(By.css('[data-testid="btn-whatsapp-claim"]'));
     const anchorEl = boton.nativeElement as HTMLAnchorElement;
-    const clickSpy = vi.spyOn(anchorEl, 'click').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(anchorEl, 'click').mockImplementation(() => undefined);
 
     const event = new KeyboardEvent('keydown', { key: ' ', cancelable: true });
     anchorEl.dispatchEvent(event);

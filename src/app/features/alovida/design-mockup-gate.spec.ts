@@ -14,8 +14,8 @@ import {
 /** Las direcciones de la bóveda que, con el gate apagado, no se registran (c). */
 function gatedPaths(): readonly string[] {
   const kept = new Set([...Object.keys(CONNECTED_CANONICAL_URLS), ...Object.keys(REAL_EQUIVALENTS)]);
-  // `buscar` a secas lo redirige `app.routes.ts` a `/search` antes de llegar acá.
-  return mockupPaths().filter((path) => path !== 'buscar' && !kept.has(path));
+  // `search` a secas es la portada pública real (`app.routes.ts` la declara antes).
+  return mockupPaths().filter((path) => path !== 'search' && !kept.has(path));
 }
 
 describe('designMockupRoutes', () => {
@@ -50,7 +50,7 @@ describe('designMockupRoutes', () => {
   it('la ficha de la bóveda con slug abre la ficha pública real (en los dos modos)', () => {
     expect(profileSlugRedirects()).toContainEqual(
       expect.objectContaining({
-        path: 'buscar/perfil-farmacia-detalle/:slug',
+        path: 'search/pharmacy-profile-detail/:slug',
         pathMatch: 'full',
         redirectTo: '/f/:slug',
       }),
@@ -88,12 +88,12 @@ describe('designMockupRoutes', () => {
     });
 
     it.each([
-      ['accesos/permisos-listado'],
-      ['datos-compartidos/archivos-listado'],
-      ['directorio/organizaciones-suspender'],
-      ['personas/profesionales-listado'],
-      ['terminologia/relaciones-listado'],
-      ['buscar/seguidos-y-guardados-listado'],
+      ['access-control/permissions-list'],
+      ['shared-data/files-list'],
+      ['provider-directory/organizations-suspend'],
+      ['people/practitioners-list'],
+      ['vocabulary/relationships-list'],
+      ['search/followed-and-saved-list'],
     ])('%s (maqueta sin equivalente) no existe', (path) => {
       expect(tree.some((route) => route.path === path)).toBe(false);
     });

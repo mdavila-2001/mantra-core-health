@@ -1,0 +1,11 @@
+$ git ls-tree -r HEAD SQL (modelo) vs git ls-tree -r HEAD database/SQL (API), por blob
+IGUALES (440 archivos)
+NoSQL IGUALES
+
+$ yarn db:vendor:check (rsync -a -ni, compara mtime)
+!!! database/SQL está desincronizado con SQL/:
+    Ejecutar: bash scripts/db/vendor-ddl.sh
+=== database/NoSQL al día
+exit=1
+$ rsync -a --checksum -ni modelo/SQL/ api/database/SQL/ | grep -v cambios-solo-de-mtime | wc -l
+0

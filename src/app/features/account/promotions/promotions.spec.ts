@@ -56,6 +56,7 @@ describe('Promotions', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: SAMPLE_DATA_ENABLED, useValue: true },
         { provide: ActivatedRoute, useValue: { queryParams: params } },
         {
           provide: BoMunicipalitiesCatalog,

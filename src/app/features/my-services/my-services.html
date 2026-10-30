@@ -2,7 +2,28 @@
   title="Mis servicios"
   subtitle="Lo que ofrece su práctica y su precio de referencia. Al armar el presupuesto puede cotizar otro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <a
+    app-button
+    page-actions
+    variant="primary"
+    data-testid="my-services-import"
+    routerLink="/my-services/import"
+  >
+    Importar producto
+  </a>
+  <button
+    app-button
+    page-actions
+    type="button"
+    variant="secondary"
+    data-testid="my-services-add"
+    [disabled]="practicaElegida() === null"
+    (clicked)="agregando.set(true)"
+  >
+    Agregar servicio adicional
+  </button>
+</app-page-header>
 
 <div class="mis-servicios">
   @if (hayQueElegirPractica()) {
@@ -39,7 +60,7 @@
     <!-- Lista y no una hilera de `div`: un lector de pantalla anuncia cuántos
          servicios hay antes de leer el primero.
 
-         La rejilla y la tarjeta salen de `rejilla-de-tarjetas.css`, la misma
+         La rejilla y la tarjeta salen de `card-grid.css`, la misma
          hoja que pinta las portadas de los directorios: el ícono que encabeza,
          el nombre y el renglón de dato son la anatomía compartida, y lo único
          propio de esta pantalla es lo que va debajo —el precio y su edición—. -->
@@ -157,6 +178,17 @@
                   (clicked)="editar(servicio)"
                 >
                   Editar precio
+                </button>
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="my-services-terms"
+                  [attr.aria-label]="'Términos y condiciones: ' + servicio.name"
+                  (clicked)="terminosDe.set(servicio)"
+                >
+                  Términos
                 </button>
                 <!-- Reemplaza al «Programar horario» (C-12), que sólo bloqueaba la
                      agenda: acá se declara cuánto dura el servicio y el paciente
@@ -319,4 +351,22 @@
       Guardar
     </button>
   </app-content-dialog>
+}
+
+@if (terminosDe(); as servicio) {
+  <app-service-terms
+    [service]="servicio"
+    [priceLabel]="precio(servicio)"
+    (updated)="terminosGuardados($event)"
+    (closed)="terminosDe.set(null)"
+  />
+}
+
+@if (agregando() && practicaElegida(); as practiceId) {
+  <app-service-add
+    [practiceId]="practiceId"
+    (created)="servicioAgregado($event)"
+    (chosen)="servicioElegido($event)"
+    (closed)="agregando.set(false)"
+  />
 }

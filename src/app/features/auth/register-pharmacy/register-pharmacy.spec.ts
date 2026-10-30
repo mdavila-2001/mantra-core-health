@@ -3,8 +3,18 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { FormControl } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
+import { By } from '@angular/platform-browser';
+import { NEVER, of } from 'rxjs';
+
+import { ReverseGeocodingClient } from '../../../core/data-access/geo/reverse-geocoding.client';
+import { BoMunicipalitiesCatalog } from '../../../core/data-access/terminology/bo-municipalities.service';
+import {
+  MapLocationPicker,
+  type LocalityFromPoint,
+} from '../shared-registration/map-location-picker/map-location-picker';
 
 import { CARGADOR_DE_LEAFLET } from '../../../shared/components/organisms/map/map';
+import { DiagnosisCenterEnrollment } from '../shared-registration/diagnostic-center-enrollment';
 import { RegisterPharmacy } from './register-pharmacy';
 
 /** La forma que espera `IamClient.registerPharmacyOrganization`, según lo arma el cliente. */
@@ -23,6 +33,7 @@ interface CuerpoDelAlta {
     readonly legalDocuments?: Record<string, string>;
     readonly executives?: Record<string, { fullName: string; phone: string; email: string }>;
     readonly pharmacy?: {
+      readonly address?: string;
       readonly latitude?: number;
       readonly longitude?: number;
       readonly branches?: readonly { name: string; latitude: number; longitude: number }[];
@@ -32,6 +43,17 @@ interface CuerpoDelAlta {
 }
 
 const RUTA_ALTA = '/iam/auth/register-organization';
+
+/**
+ * Catálogo fijo para el alta: país, jurisdicción, tipo de unidad y modalidad
+ * que la API exige como conceptos. Cada id es «concepto-<código>».
+ */
+const CATALOGOS_DE_PRUEBA = {
+  pais: new Map([['BO', 'concepto-BO']]),
+  jurisdiccion: new Map([['JURISDICTION_NATIONAL', 'concepto-JURISDICTION_NATIONAL']]),
+  tipoDeUnidad: new Map([['DU_TYPE_LAB', 'concepto-DU_TYPE_LAB']]),
+  modalidad: new Map([['DU_MODALITY_LAB', 'concepto-DU_MODALITY_LAB']]),
+};
 
 const RESPUESTA_201 = {
   tenantId: 'tenant-1',
@@ -56,9 +78,14 @@ describe('RegisterPharmacy', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: DiagnosisCenterEnrollment, useValue: { catalogs: () => of(CATALOGOS_DE_PRUEBA) } },
         // El mapa (GPS de la central/sucursales) no debe cargar Leaflet de
         // verdad en jsdom: ver el mismo provider en `register-organization.spec.ts`.
         { provide: CARGADOR_DE_LEAFLET, useValue: () => new Promise<never>(() => undefined) },
+        // El selector pide la calle y el catálogo de municipios; acá no
+        // responden: lo deducido se emite a mano por `localidad`.
+        { provide: ReverseGeocodingClient, useValue: { streetAt: () => NEVER } },
+        { provide: BoMunicipalitiesCatalog, useValue: { listar: () => of([]) } },
       ],
     }).compileComponents();
 
@@ -78,15 +105,20 @@ describe('RegisterPharmacy', () => {
     http.verify();
   });
 
-  /** Sólo lo obligatorio de D2: razón social, tipo, NIT, dirección, representante, acceso. */
+  /** Sólo lo obligatorio de D2: razón social, tipo, NIT, punto y dirección, representante, acceso. */
   function completarObligatorio(): void {
     component.form.controls.legalName.setValue('Farmacia San Martín S.R.L.');
     component.form.controls.companyType.setValue('SRL');
     component.form.controls.taxId.setValue('1023456789');
     component.form.controls.addressLines.setValue('Av. Cañoto esq. Ballivián 234');
     component.form.controls.legalRepName.patchValue({ name: 'Mariana', lastName: 'Siles' });
+    component.form.controls.legalRepIdNumber.setValue('4872190');
     component.form.controls.legalRepEmail.setValue('legal@farmacia-sanmartin.test');
+    // Una S.R.L. no puede omitir el poder (BR-09): la API responde 422.
+    component.form.controls.powerOfAttorneyFileId.setValue('file-poder');
     component.form.controls.password.setValue('secreto12');
+    // El punto de la central es obligatorio (pedido del cliente del 26/10/2026).
+    component.fijarGpsCentral({ lat: -17.78, lng: -63.18 });
   }
 
   it('sólo con lo obligatorio: el cuerpo trae PHARMACY y ninguna clave opcional vacía', () => {
@@ -101,17 +133,30 @@ describe('RegisterPharmacy', () => {
     expect(cuerpo.organization.legalEntityType).toBe('SRL');
     expect(cuerpo.organization.legalRepresentative).toEqual({
       fullName: 'Mariana Siles',
+      idNumber: '4872190',
       email: 'legal@farmacia-sanmartin.test',
+      powerOfAttorneyFileId: 'file-poder',
     });
+    // País y jurisdicción: sin ellos la API responde 422 «exige país y jurisdicción».
+    expect(cuerpo.organization['countryConceptId' as keyof typeof cuerpo.organization]).toBe('concepto-BO');
+    expect(cuerpo.organization['jurisdictionConceptId' as keyof typeof cuerpo.organization]).toBe(
+      'concepto-JURISDICTION_NATIONAL',
+    );
     expect(cuerpo.owner).toEqual({
       email: 'legal@farmacia-sanmartin.test',
       password: 'secreto12',
       displayName: 'Mariana Siles',
     });
-    // Nada de lo opcional viaja si no se cargó: ni documentos, ni gerencias, ni central.
+    // Nada de lo opcional viaja si no se cargó: ni documentos ni gerencias.
+    // La dirección legal y el punto de la central sí: son de la casa central,
+    // que la API crea en toda alta de farmacia (P50), y el punto es obligatorio.
     expect('legalDocuments' in cuerpo.organization).toBe(false);
     expect('executives' in cuerpo.organization).toBe(false);
-    expect('pharmacy' in cuerpo.organization).toBe(false);
+    expect(cuerpo.organization.pharmacy).toEqual({
+      address: 'Av. Cañoto esq. Ballivián 234',
+      latitude: -17.78,
+      longitude: -63.18,
+    });
 
     req.flush(RESPUESTA_201);
   });
@@ -143,15 +188,112 @@ describe('RegisterPharmacy', () => {
 
   it('el punto de la central viaja como pharmacy.latitude/longitude', () => {
     completarObligatorio();
-    component.gpsCentral.set({ lat: -17.78, lng: -63.18 });
+    component.fijarGpsCentral({ lat: -17.7, lng: -63.1 });
     component.submit();
 
     const req = http.expectOne(RUTA_ALTA);
     expect((req.request.body as CuerpoDelAlta).organization.pharmacy).toEqual({
-      latitude: -17.78,
-      longitude: -63.18,
+      address: 'Av. Cañoto esq. Ballivián 234',
+      latitude: -17.7,
+      longitude: -63.1,
     });
     req.flush(RESPUESTA_201);
+  });
+
+  it('sin el punto de la central no sale a la red', () => {
+    completarObligatorio();
+    component.fijarGpsCentral(null);
+
+    component.submit();
+
+    http.expectNone(RUTA_ALTA);
+    expect(component.form.controls.gpsCentral.invalid).toBe(true);
+  });
+
+  describe('la ubicación de la central sale del punto (26/10/2026)', () => {
+    const PUNTO = { lat: -17.7833, lng: -63.1821 };
+
+    function localidad(calle: string | null, zona: string | null = null): LocalityFromPoint {
+      return { punto: PUNTO, calle, calleSola: calle, zona, municipioConceptId: null };
+    }
+
+    function avanzarHasta(fragmento: string): void {
+      for (let paso = 0; paso < 12; paso += 1) {
+        const titulo =
+          fixture.nativeElement.querySelector('.paginated-form__titulo')?.textContent ?? '';
+        if (titulo.includes(fragmento)) return;
+        fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]')?.click();
+        fixture.detectChanges();
+      }
+      throw new Error(`No se alcanzó una página con título que contenga «${fragmento}»`);
+    }
+
+    function irALaUbicacion(): void {
+      fixture.detectChanges();
+      completarObligatorio();
+      component.fijarGpsCentral(null);
+      fixture.detectChanges();
+      avanzarHasta('Dónde está la central');
+    }
+
+    function selector(): MapLocationPicker {
+      return fixture.debugElement.query(By.directive(MapLocationPicker))
+        .componentInstance as MapLocationPicker;
+    }
+
+    it('el mapa es el primer campo de su página, obligatorio, y la dirección ya no se escribe', () => {
+      const pagina = component.paginas().find((p) => p.clave === 'ubicacion')!;
+      expect(pagina.campos[0]).toMatchObject({ key: 'gpsCentral', control: 'custom', required: true });
+      expect(pagina.campos.map((c) => c.key)).not.toContain('addressLines');
+
+      irALaUbicacion();
+      expect(fixture.nativeElement.querySelector('[data-testid="registro-farmacia-direccion"]')).toBeNull();
+    });
+
+    it('sin el punto confirmado no deja pasar, y lo dice', () => {
+      irALaUbicacion();
+
+      fixture.nativeElement.querySelector('[data-testid="paginated-form-continuar"]').click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.paginated-form__titulo').textContent).toContain(
+        'Dónde está la central',
+      );
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+      );
+    });
+
+    it('confirmar el punto en el mapa llena el control obligatorio', () => {
+      irALaUbicacion();
+
+      selector().confirmado.emit(PUNTO);
+
+      expect(component.form.controls.gpsCentral.value).toEqual(PUNTO);
+      expect(component.gpsCentral()).toEqual(PUNTO);
+    });
+
+    it('lo deducido del punto escribe la dirección legal; sin calle, la zona o el punto', () => {
+      irALaUbicacion();
+
+      selector().localidad.emit(localidad('Calle Guapay 3861, Equipetrol', 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Calle Guapay 3861, Equipetrol');
+
+      selector().localidad.emit(localidad(null, 'Equipetrol'));
+      expect(component.form.controls.addressLines.value).toBe('Equipetrol');
+
+      selector().localidad.emit(localidad(null));
+      expect(component.form.controls.addressLines.value).toBe('Punto GPS -17.78330, -63.18210');
+    });
+
+    it('la dirección de una sucursal también sale de su punto', () => {
+      component.agregarSucursal();
+      const [sucursal] = component.sucursales();
+
+      component.escribirLocalidadDeSucursal(sucursal!.id, localidad('Av. San Martín 456, Equipetrol'));
+
+      expect(component.sucursales()[0]!.direccion).toBe('Av. San Martín 456, Equipetrol');
+    });
   });
 
   it('una sucursal con nombre y punto confirmado viaja en pharmacy.branches', () => {
@@ -169,63 +311,41 @@ describe('RegisterPharmacy', () => {
     req.flush(RESPUESTA_201);
   });
 
-  it('pegar un enlace de mapa con el punto escrito ya ubica la sucursal', () => {
-    completarObligatorio();
-    component.agregarSucursal();
-    const [sucursal] = component.sucursales();
-    component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
-    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
-    component.ubicarSucursalPorEnlace(sucursal!.id);
-    component.submit();
-
-    const req = http.expectOne(RUTA_ALTA);
-    expect((req.request.body as CuerpoDelAlta).organization.pharmacy?.branches).toEqual([
-      expect.objectContaining({ name: 'Sucursal Norte', latitude: -17.748, longitude: -63.175 }),
-    ]);
-    req.flush(RESPUESTA_201);
-  });
-
-  it('mientras se escribe el enlace no aparece ningún pin; al salir del campo, el del enlace completo', () => {
-    completarObligatorio();
-    component.agregarSucursal();
-    const [sucursal] = component.sucursales();
-    const enlace = 'https://www.google.com/maps?q=-17.7480,-63.1750';
-    for (let i = 1; i <= enlace.length; i++) {
-      component.escribirUrlDeSucursal(sucursal!.id, enlace.slice(0, i));
-    }
-    expect(component.sucursales()[0]!.gps).toBeNull();
-
-    component.ubicarSucursalPorEnlace(sucursal!.id);
-    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.748, lng: -63.175 });
-
-    // Corregir el enlace mueve el pin que vino de él.
-    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7000,-63.1000');
-    component.ubicarSucursalPorEnlace(sucursal!.id);
-    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
-  });
-
-  it('el enlace no pisa un punto que ya se marcó a mano', () => {
-    completarObligatorio();
-    component.agregarSucursal();
-    const [sucursal] = component.sucursales();
-    component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal Norte');
-    component.fijarGpsDeSucursal(sucursal!.id, { lat: -17.7, lng: -63.1 });
-    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps?q=-17.7480,-63.1750');
-    component.ubicarSucursalPorEnlace(sucursal!.id);
-
-    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.7, lng: -63.1 });
-  });
-
-  it('una sucursal sin punto confirmado no viaja: incompleta se descarta, no se manda a medias', () => {
+  it('una sucursal sin punto NO se descarta en silencio: el envío espera y la nombra', () => {
     completarObligatorio();
     component.agregarSucursal();
     const [sucursal] = component.sucursales();
     component.escribirNombreDeSucursal(sucursal!.id, 'Sucursal sin mapa');
-    component.submit();
 
+    expect(component.sucursalesIncompletas().map((s) => s.rotulo)).toEqual(['Sucursal sin mapa']);
+    expect(component.avisoDeSucursalesIncompletas()).toContain('«Sucursal sin mapa»');
+
+    component.submit();
+    http.expectNone(RUTA_ALTA);
+    expect(component.errorMessage()).toContain('«Sucursal sin mapa»');
+
+    // Completarla (aquí con el enlace con el punto escrito) desbloquea el envío.
+    component.escribirUrlDeSucursal(
+      sucursal!.id,
+      'https://www.google.com/maps/@-17.7833,-63.1821,17z',
+    );
+    expect(component.sucursalesIncompletas()).toEqual([]);
+    component.submit();
     const req = http.expectOne(RUTA_ALTA);
-    expect('pharmacy' in (req.request.body as CuerpoDelAlta).organization).toBe(false);
+    expect((req.request.body as CuerpoDelAlta).organization.pharmacy?.branches?.[0]).toMatchObject({
+      name: 'Sucursal sin mapa',
+      latitude: -17.7833,
+      longitude: -63.1821,
+    });
     req.flush(RESPUESTA_201);
+  });
+
+  it('un enlace con punto no pisa un pin ya marcado a mano', () => {
+    component.agregarSucursal();
+    const [sucursal] = component.sucursales();
+    component.fijarGpsDeSucursal(sucursal!.id, { lat: -17.75, lng: -63.15 });
+    component.escribirUrlDeSucursal(sucursal!.id, 'https://www.google.com/maps/@-10.1,-60.2,17z');
+    expect(component.sucursales()[0]!.gps).toEqual({ lat: -17.75, lng: -63.15 });
   });
 
   it('los cinco documentos legales viajan sólo si los cinco están cargados', () => {
@@ -267,7 +387,12 @@ describe('RegisterPharmacy', () => {
         .filter((p) => p.clave === clave)
         .flatMap((p) => p.campos.map((c) => c.key));
 
-    expect(camposDe('representante')).toEqual(['legalRepName', 'legalRepEmail', 'powerOfAttorneyFileId']);
+    expect(camposDe('representante')).toEqual([
+      'legalRepName',
+      'legalRepIdNumber',
+      'legalRepEmail',
+      'powerOfAttorneyFileId',
+    ]);
     expect(camposDe('documentos')).not.toContain('powerOfAttorneyFileId');
   });
 
@@ -279,9 +404,25 @@ describe('RegisterPharmacy', () => {
     const req = http.expectOne(RUTA_ALTA);
     expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).toEqual({
       fullName: 'Mariana Siles',
+      idNumber: '4872190',
       email: 'legal@farmacia-sanmartin.test',
       powerOfAttorneyFileId: 'file-poder',
     });
+    req.flush(RESPUESTA_201);
+  });
+
+  it('una S.R.L. sin poder notariado no se envía; una unipersonal sí (BR-09)', () => {
+    completarObligatorio();
+    component.form.controls.powerOfAttorneyFileId.setValue('');
+    component.submit();
+    http.expectNone(RUTA_ALTA);
+
+    component.form.controls.companyType.setValue('UNIPERSONAL');
+    component.submit();
+    const req = http.expectOne(RUTA_ALTA);
+    expect((req.request.body as CuerpoDelAlta).organization.legalRepresentative).not.toHaveProperty(
+      'powerOfAttorneyFileId',
+    );
     req.flush(RESPUESTA_201);
   });
 
@@ -398,7 +539,8 @@ describe('RegisterPharmacy', () => {
     );
     fixture.detectChanges();
 
-    expect(component.errorMessage()).toContain('legalEntityType');
+    expect(component.errorMessage()).toContain('Tipo de sociedad');
+    expect(component.errorMessage()).not.toContain('legalEntityType');
     expect(component.registered()).toBe(false);
   });
 
@@ -415,5 +557,58 @@ describe('RegisterPharmacy', () => {
 
     expect(component.errorMessage()).toContain('correo');
     expect(component.registered()).toBe(false);
+  });
+
+  describe('persistencia de borrador (onboarding draft)', () => {
+    afterEach(() => {
+      localStorage.removeItem('alovida.onboarding.draft.pharmacy');
+    });
+
+    it('guarda el avance en localStorage al cambiar de paso', () => {
+      component.form.patchValue({
+        legalName: 'Farmacia San Antonio SRL',
+        taxId: '1023456789',
+      });
+      component.guardarBorrador();
+      const raw = localStorage.getItem('alovida.onboarding.draft.pharmacy');
+      expect(raw).not.toBeNull();
+      const draft = JSON.parse(raw!);
+      expect(draft.data.legalName).toBe('Farmacia San Antonio SRL');
+      expect(draft.data.taxId).toBe('1023456789');
+    });
+
+    it('restaura el borrador guardado', () => {
+      const mockDraft = {
+        id: 'draft-pharm-1',
+        formType: 'pharmacy',
+        stepIndex: 1,
+        stepKey: 'ubicacion',
+        stepTitle: 'Ubicación de la central',
+        totalSteps: 6,
+        data: {
+          legalName: 'Farmacia Central',
+          taxId: '987654321',
+        },
+        extraData: {
+          gpsCentral: { lat: -17.8, lng: -63.15 },
+        },
+        lastSavedAt: new Date().toISOString(),
+      };
+      localStorage.setItem('alovida.onboarding.draft.pharmacy', JSON.stringify(mockDraft));
+
+      component.restaurarBorrador();
+
+      expect(component.form.controls.legalName.value).toBe('Farmacia Central');
+      expect(component.form.controls.taxId.value).toBe('987654321');
+      expect(component.gpsCentral()).toEqual({ lat: -17.8, lng: -63.15 });
+      expect(component.form.controls.gpsCentral.value).toEqual({ lat: -17.8, lng: -63.15 });
+      expect(component.pasoGuardado()).toBe(1);
+    });
+
+    it('limpia el borrador al descartarlo', () => {
+      localStorage.setItem('alovida.onboarding.draft.pharmacy', '{"id":"draft-1"}');
+      component.descartarBorrador();
+      expect(localStorage.getItem('alovida.onboarding.draft.pharmacy')).toBeNull();
+    });
   });
 });

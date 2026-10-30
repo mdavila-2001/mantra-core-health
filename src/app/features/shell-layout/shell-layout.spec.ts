@@ -9,6 +9,8 @@ import type { ConversationListItem } from '../../core/data-access/community/comm
 import { CartStore, type NuevaLineaDeCarrito } from '../../core/data-access/pharmacy-cart/cart.store';
 import type { CartSite } from '../../core/data-access/pharmacy-cart/pharmacy-cart.types';
 import { ChatStore } from '../../core/messaging/chat.store';
+import { PatientSurveyInbox } from '../../core/patient-surveys/patient-survey-inbox';
+import type { PatientInvitation } from '../../core/data-access/surveys/surveys.types';
 import { ChatSocketService } from '../../core/messaging/chat-socket.service';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { NAV_ICON_NAMES } from '../../core/navigation/navigation.types';
@@ -18,6 +20,7 @@ import {
 } from '../../shared/components/organisms/side-nav/side-nav.types';
 import { NAV_STORAGE_KEY } from '../../shared/components/organisms/shell/shell-service';
 import { Tooltip } from '../../shared/components/atoms/tooltip/tooltip';
+import { accessibleName } from '../../../testing/a11y';
 import { ShellLayout } from './shell-layout';
 
 /**
@@ -62,12 +65,23 @@ describe('ShellLayout', () => {
            comprobar. */
         provideRouter([
           { path: 'my-account', children: [] },
+          { path: 'account/profile', children: [] },
           { path: 'my-account/medical-record', children: [] },
           { path: 'my-account/appointments/book/:id', children: [] },
           { path: 'settings', children: [] },
           // N-01: los dos destinos que se mudaron a la cabecera.
           { path: 'tutorials', children: [] },
           { path: 'messaging', children: [] },
+          // Atajos de la cabecera que cuelgan de `/my-account` (27/10/2026), y
+          // el carrito, que cuelga de «Farmacia».
+          { path: 'my-account/spending', children: [] },
+          { path: 'my-account/invoices', children: [] },
+          { path: 'my-account/requests', children: [] },
+          { path: 'my-account/promotions', children: [] },
+          // «Mis encuestas» (28/10/2026): la pantalla y la de responder una.
+          { path: 'my-account/questionnaires', children: [] },
+          { path: 'my-account/questionnaires/:invitationId', children: [] },
+          { path: 'my-account/pharmacy/cart', children: [] },
           // Dos de los cuatro directorios y una ficha: no ocupan renglón desde
           // el 08/09/2026, y son con lo que se comprueba que la portada se
           // marca por ellos.
@@ -238,11 +252,10 @@ describe('ShellLayout', () => {
       '/my-account/diagnostic-orders',
       // Cotizaciones comparte el bloque de datos clínicos del paciente: se
       // consulta después de ver las órdenes y antes de los cuestionarios.
-      '/my-account/cotizaciones',
+      '/my-account/quotations',
       // «Mis cuestionarios» YA NO está (2026-09-25, dc790b01): el propietario
-      // la sacó del menú mientras decide qué hacer con la sección
-      // (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la pantalla siguen vivas
-      // y se llega por URL — ver docs/pendiente-decision-cuestionarios.md.
+      // la sacó del menú (`fueraDelMenuPara: [ANY_ROLE]`). La ruta y la
+      // pantalla siguen vivas y se llega por URL.
       // El centro de notificaciones tampoco aparece acá: es el otro destino
       // fijo. Sigue sin exigir rol —cualquiera con sesión tiene bandeja—; lo
       // que cambió es dónde se dibuja.
@@ -293,12 +306,6 @@ describe('ShellLayout', () => {
       tenants: ['t-1'],
       tenantTypes: { 't-1': 'PAYER' },
     });
-    expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
-    expect(rutasDelMenu()).not.toContain('/design-system');
-  });
-
-  it('tampoco a superadministración: su menú es el de plataforma y gobierno', () => {
-    abrirSesion({ sub: 'u-4', roles: ['SUPERADMIN'], tenants: ['t-1'] });
     expect(rotulosDelMenu()).not.toContain('Sistema de diseño');
     expect(rutasDelMenu()).not.toContain('/design-system');
   });
@@ -523,17 +530,16 @@ describe('ShellLayout', () => {
             '/my-account/pharmacy',
           ]),
         ).toBe(true);
-        // «Promociones» se mudó a la barra superior (25/09/2026).
+        // «Promociones» se mudó a la barra superior (25/09/2026) y de ahí se
+        // fusionó con el carrito (27/10/2026): se abre desde «Mi carrito».
         expect(enlaces).not.toContain('/my-account/promotions');
-        expect(
-          raiz().querySelector('[data-testid="header-promociones"]')?.getAttribute('href'),
-        ).toBe('/my-account/promotions');
+        expect(raiz().querySelector('[data-testid="header-promociones"]')).toBeNull();
         expect(
           seguidas(enlaces, [
             '/my-account/medical-record',
             '/my-account/diagnostic-results',
             '/my-account/diagnostic-orders',
-            '/my-account/cotizaciones',
+            '/my-account/quotations',
             // «Mis cuestionarios» cerraba el bloque hasta el 25/09/2026: salió
             // del menú (dc790b01) y el bloque termina en cotizaciones.
           ]),
@@ -921,6 +927,7 @@ describe('ShellLayout', () => {
         '/my-account',
         '/notification-center',
         '/administration/insurance',
+        '/administration/insurance-claims', // Adjudicacion real conservada de dev.
         '/administration/insurance-analytics',
         // 2026-09-27: «Solicitudes recibidas», pedida por la propietaria.
         '/administration/received-claims',
@@ -934,6 +941,85 @@ describe('ShellLayout', () => {
       // desplegable para esta cuenta; sus opciones van a nivel 0, sin `<details>`.
       expect(raiz().querySelectorAll('.app-side-nav__group').length).toBe(0);
       expect(raiz().querySelectorAll('[data-testid="nav-sueltos"]').length).toBe(1);
+    });
+
+    /**
+     * El nombre accesible del menú del médico, desplegado y recogido.
+     *
+     * La auditoría del 23/10/2026 reportó enlaces sin nombre con la barra
+     * recogida. No se reprodujo en el navegador, pero el riesgo es real: basta
+     * con que el rótulo pase de `solo-lectores` a `display: none` o que alguien
+     * lo quite «porque no se ve». Estas pruebas afirman el **nombre**
+     * calculado, no la clase que hoy lo sostiene.
+     */
+    describe('nombre accesible del menú del médico', () => {
+      beforeEach(() => {
+        try {
+          localStorage.removeItem(NAV_STORAGE_KEY);
+        } catch {
+          // Sin storage no hay preferencia que limpiar.
+        }
+        abrirSesion({ sub: 'u-med', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        fixture.detectChanges();
+      });
+
+      function destinos(): HTMLElement[] {
+        return [
+          ...raiz().querySelectorAll<HTMLElement>(
+            '[data-testid="nav-enlace"], .app-side-nav__item.is-disabled, .app-side-nav__group-summary',
+          ),
+        ];
+      }
+
+      function rotuloVisible(destino: HTMLElement): string {
+        const rotulo = destino.querySelector('.side-nav__label, .app-side-nav__eyebrow');
+        return rotulo?.textContent?.trim() ?? '';
+      }
+
+      function recoger(): void {
+        raiz().querySelector<HTMLButtonElement>('[data-testid="nav-recoger"]')?.click();
+        fixture.detectChanges();
+      }
+
+      it('desplegada, cada destino se nombra por su rótulo visible', () => {
+        expect(destinos().length).toBeGreaterThan(0);
+        for (const destino of destinos()) {
+          const rotulo = rotuloVisible(destino);
+          expect(rotulo, destino.outerHTML.slice(0, 120)).toBeTruthy();
+          expect(accessibleName(destino)).toContain(rotulo);
+        }
+      });
+
+      it('recogida, ningún destino queda mudo: conserva el mismo nombre', () => {
+        const antes = destinos().map((destino) => accessibleName(destino));
+
+        recoger();
+
+        expect(raiz().querySelector('.app-shell')?.classList.contains('is-nav-recogido')).toBe(true);
+        const despues = destinos().map((destino) => accessibleName(destino));
+        expect(despues).toEqual(antes);
+        expect(despues.every((nombre) => nombre.length > 0)).toBe(true);
+      });
+
+      it('recogida, el globo de ayuda repite el rótulo y se abre con el foco', () => {
+        recoger();
+
+        for (const tooltip of fixture.debugElement.queryAll(By.directive(Tooltip))) {
+          const host = tooltip.nativeElement as HTMLElement;
+          if (!host.matches('[data-testid="nav-enlace"]')) {
+            continue;
+          }
+          expect(tooltip.injector.get(Tooltip).appTooltip()).toBe(rotuloVisible(host));
+        }
+
+        const primero = raiz().querySelector<HTMLElement>('[data-testid="nav-enlace"]');
+        primero?.dispatchEvent(new FocusEvent('focus'));
+        fixture.detectChanges();
+
+        const globo = document.body.querySelector('[role="tooltip"]');
+        expect(globo?.textContent?.trim()).toBe(rotuloVisible(primero as HTMLElement));
+        primero?.dispatchEvent(new FocusEvent('blur'));
+      });
     });
 
     /**
@@ -1002,6 +1088,16 @@ describe('ShellLayout', () => {
         expect(marcadas()).toEqual(['/my-account']);
       });
 
+      it('el alias del perfil marca el único enlace de Mi perfil', async () => {
+        await ir('/account/profile?pestana=personales#datos');
+
+        expect(router.url).toBe('/account/profile?pestana=personales#datos');
+        expect(marcadas()).toEqual(['/my-account']);
+        expect(
+          raiz().querySelector('[data-testid="nav-enlace"][data-route="/account/profile"]'),
+        ).toBeNull();
+      });
+
       it('en una hija que también está en el menú, gana la hija sobre su padre', async () => {
         // Con «Mi historia» y no con «Mis cuestionarios», que era la hija de
         // antes: salió del menú el 25/09/2026 (dc790b01) y ya no tiene
@@ -1019,6 +1115,46 @@ describe('ShellLayout', () => {
         await ir('/settings');
 
         expect(marcadas()).toEqual([]);
+      });
+
+      it.each(['/my-account/spending', '/my-account/invoices', '/my-account/requests', '/my-account/promotions'])(
+        'en %s, que se abre desde la cabecera, «Mi perfil» no se marca (27/10/2026)',
+        async (url) => {
+          // Cuelgan de `/my-account` y, por el prefijo más largo, encendían
+          // «Mi perfil»: la pantalla quedaba marcada arriba y en la barra.
+          abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+          await ir(url);
+
+          expect(marcadas()).toEqual([]);
+        },
+      );
+
+      it.each(['/my-account/spending', '/my-account/invoices'])(
+        'en %s la cabecera marca «Mis gastos»: Mis facturas se fusionó con él (27/10/2026)',
+        async (url) => {
+          abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+          await ir(url);
+
+          const gastos = raiz().querySelector('[data-testid="header-gastos"]');
+          expect(gastos?.classList).toContain('is-activo');
+          expect(gastos?.getAttribute('aria-current')).toBe('page');
+        },
+      );
+
+      it('fuera de gastos y facturas, «Mis gastos» no se marca', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        await ir('/my-account/requests');
+
+        const gastos = raiz().querySelector('[data-testid="header-gastos"]');
+        expect(gastos?.classList).not.toContain('is-activo');
+        expect(gastos?.getAttribute('aria-current')).toBeNull();
+      });
+
+      it('el carrito sigue marcando «Farmacia»: es parte de ella', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        await ir('/my-account/pharmacy/cart');
+
+        expect(marcadas()).toEqual(['/my-account/pharmacy']);
       });
 
       it('en una pantalla que no está en el menú, gana el ancestro más cercano', async () => {
@@ -1064,17 +1200,15 @@ describe('ShellLayout', () => {
       expect(ajustes?.getAttribute('aria-label')).toBe('Ajustes');
     });
 
-    it('el encabezado ofrece Tutoriales y Chats como enlaces, con globo y no como botón (N-01)', () => {
-      // Calcados de «Ajustes»: `<a routerLink>`, `aria-label` y `appTooltip`
-      // (ADR-0012 §3) — nunca un `<button>`, porque los dos llevan a una
-      // pantalla. Para ambos roles porque ninguno de los dos exige rol
-      // (`roles: [ANY_ROLE]` en `navigation.map.ts`).
+    it('el encabezado ofrece Chats como enlace, y Tutoriales ya no (se fusionó con Ajustes)', () => {
+      // Chats, calcado de «Ajustes»: `<a routerLink>`, `aria-label` y
+      // `appTooltip` (ADR-0012 §3) — nunca un `<button>`, porque lleva a una
+      // pantalla. Tutoriales salió de la cabecera el 27/10/2026: es una
+      // pestaña de Ajustes (ver `settings.spec`).
       const tutoriales = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-tutoriales"]');
       const chats = raiz().querySelector<HTMLAnchorElement>('[data-testid="header-chats"]');
 
-      expect(tutoriales?.tagName).toBe('A');
-      expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
-      expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
+      expect(tutoriales).toBeNull();
 
       expect(chats?.tagName).toBe('A');
       expect(chats?.getAttribute('href')).toBe('/messaging');
@@ -1124,13 +1258,9 @@ describe('ShellLayout', () => {
             abrirSesion({ sub: 'u-1', roles, tenants: ['t-1'] });
           });
 
-          it('Tutoriales es un enlace a /tutorials con nombre accesible y globo', () => {
-            const tutoriales = enlace('header-tutoriales');
-            expect(tutoriales?.tagName).toBe('A');
-            expect(tutoriales?.getAttribute('href')).toBe('/tutorials');
-            expect(tutoriales?.getAttribute('aria-label')).toBe('Tutoriales');
-            expect(globo('header-tutoriales')).toEqual({ texto: 'Tutoriales', posicion: 'bottom' });
-            expect(tutoriales?.querySelector('app-nav-icon')).not.toBeNull();
+          it('Tutoriales ya no está en la cabecera: se llega por Ajustes (27/10/2026)', () => {
+            expect(enlace('header-tutoriales')).toBeNull();
+            expect(enlace('header-ajustes')?.getAttribute('href')).toBe('/settings');
           });
 
           it('Chats es un enlace a /messaging con nombre accesible y globo', () => {
@@ -1142,11 +1272,10 @@ describe('ShellLayout', () => {
             expect(chats?.querySelector('app-nav-icon')).not.toBeNull();
           });
 
-          it('los dos salieron de la barra pero siguen en la cabecera', () => {
+          it('ninguno de los dos vuelve a la barra lateral; Chats sigue en la cabecera', () => {
             const enBarra = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) => a.getAttribute('data-route'));
             expect(enBarra).not.toContain('/tutorials');
             expect(enBarra).not.toContain('/messaging');
-            expect(enlace('header-tutoriales')).not.toBeNull();
             expect(enlace('header-chats')).not.toBeNull();
           });
 
@@ -1297,7 +1426,8 @@ describe('ShellLayout', () => {
 
         expect(billetera()?.tagName).toBe('A');
         expect(billetera()?.getAttribute('href')).toBe('/my-account/spending');
-        expect(billetera()?.getAttribute('aria-label')).toBe('Mis gastos');
+        // Lleva también las facturas (fusión del 27/10/2026), y el nombre lo dice.
+        expect(billetera()?.getAttribute('aria-label')).toBe('Mis gastos y facturas');
         expect(billetera()?.querySelector('app-nav-icon')).not.toBeNull();
       });
 
@@ -1314,12 +1444,223 @@ describe('ShellLayout', () => {
     });
 
     /**
+     * 28/10/2026 · La bandeja de encuestas del paciente, arriba. Sólo la ve el
+     * paciente, y sólo cuando una atención terminada le generó una encuesta
+     * (`GET /surveys/me/invitations` devolvió alguna). El número son las
+     * pendientes dentro del plazo.
+     */
+    describe('Mis encuestas en la cabecera', () => {
+      const EN_UN_DIA = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      const AYER = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      function invitacion(
+        id: string,
+        status: PatientInvitation['status'],
+        expiresAt: Date | null = EN_UN_DIA,
+      ): PatientInvitation {
+        return {
+          id,
+          title: 'Cómo le fue en la consulta',
+          status,
+          issuedAt: AYER,
+          expiresAt,
+          answeredAt: status === 'ANSWERED' ? AYER : null,
+          appointmentBookingId: `bk-${id}`,
+        };
+      }
+
+      function enlace(): HTMLAnchorElement | null {
+        return raiz().querySelector<HTMLAnchorElement>('[data-testid="header-encuestas"]');
+      }
+
+      function badge(): Element | null {
+        return raiz().querySelector('[data-testid="header-encuestas-badge"]');
+      }
+
+      /** Responde la lectura de la bandeja que el armazón hace al tener sesión de paciente. */
+      function responder(invitaciones: readonly unknown[]): void {
+        raiz();
+        TestBed.inject(HttpTestingController)
+          .match((pedido) => pedido.url === '/surveys/me/invitations')
+          .forEach((pedido) => pedido.flush(invitaciones));
+        fixture.detectChanges();
+      }
+
+      /** Una invitación tal como viaja: fechas en texto y opcionales en `null`. */
+      function enElCable(id: string, status: string, expiresAt: Date | null = EN_UN_DIA) {
+        return {
+          id,
+          title: 'Cómo le fue en la consulta',
+          description: null,
+          status,
+          issuedAt: AYER.toISOString(),
+          expiresAt: expiresAt === null ? null : expiresAt.toISOString(),
+          answeredAt: status === 'ANSWERED' ? AYER.toISOString() : null,
+          appointmentBookingId: `bk-${id}`,
+        };
+      }
+
+      it('el paciente SIN ninguna encuesta no ve el ícono: no hay a dónde llevarlo', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([]);
+
+        expect(enlace()).toBeNull();
+      });
+
+      it('el paciente CON una encuesta ve el ícono, hasta si ya la respondió', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'ANSWERED')]);
+
+        expect(enlace()).not.toBeNull();
+        expect(enlace()?.tagName).toBe('A');
+        expect(enlace()?.querySelector('app-nav-icon')).not.toBeNull();
+        // Sin pendientes no hay número, y el nombre no inventa uno.
+        expect(badge()).toBeNull();
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas');
+      });
+
+      it('abre «Mis cuestionarios» en la pestaña de encuestas', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        expect(enlace()?.getAttribute('href')).toBe('/my-account/questionnaires?seccion=encuestas');
+      });
+
+      it('sólo es del paciente: la médica no lo ve aunque el store tuviera encuestas', () => {
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        TestBed.inject(PatientSurveyInbox).sincronizar([invitacion('i-1', 'PENDING')]);
+
+        expect(enlace()).toBeNull();
+        // Y el armazón ni siquiera lee la bandeja de quien no es paciente.
+        TestBed.inject(HttpTestingController).expectNone('/surveys/me/invitations');
+      });
+
+      it('el contador son las pendientes DENTRO DEL PLAZO; una vencida no cuenta', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([
+          enElCable('i-1', 'PENDING'),
+          enElCable('i-2', 'PENDING'),
+          enElCable('i-3', 'PENDING', AYER),
+          enElCable('i-4', 'ANSWERED'),
+          enElCable('i-5', 'EXPIRED', AYER),
+        ]);
+
+        expect(badge()?.textContent?.trim()).toBe('2');
+        expect(badge()?.getAttribute('aria-hidden')).toBe('true');
+      });
+
+      it('el nombre accesible dice cuántas esperan, en singular y en plural', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        const bandeja = TestBed.inject(PatientSurveyInbox);
+
+        bandeja.sincronizar([invitacion('i-1', 'PENDING')]);
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas, 1 pendiente');
+
+        bandeja.sincronizar([invitacion('i-1', 'PENDING'), invitacion('i-2', 'PENDING')]);
+        expect(enlace()?.getAttribute('aria-label')).toBe('Mis encuestas, 2 pendientes');
+      });
+
+      it('lleva globo con su nombre, igual que Chats', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        const tooltip = fixture.debugElement
+          .query(By.css('[data-testid="header-encuestas"]'))
+          .injector.get(Tooltip);
+        expect(tooltip.appTooltip()).toBe('Mis encuestas');
+        expect(tooltip.appTooltipPosition()).toBe('bottom');
+      });
+
+      it('vive dentro de «Más accesos», la lista que en el teléfono se pliega', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        expect(
+          raiz().querySelector('.app-header__rapidos-lista [data-testid="header-encuestas"]'),
+        ).not.toBeNull();
+      });
+
+      it('no vuelve a la barra lateral: «Mis cuestionarios» sigue fuera del menú', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        const rutas = [...raiz().querySelectorAll('[data-testid="nav-enlace"]')].map((a) =>
+          a.getAttribute('data-route'),
+        );
+        expect(rutas).not.toContain('/my-account/questionnaires');
+      });
+
+      it('se marca estando en la pantalla, con o sin la pestaña de encuestas, y «Mi perfil» no', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+
+        for (const url of [
+          '/my-account/questionnaires?seccion=encuestas',
+          '/my-account/questionnaires',
+          '/my-account/questionnaires/i-1',
+        ]) {
+          await router.navigateByUrl(url);
+          fixture.detectChanges();
+          // `routerLinkActive` se actualiza en una microtarea, después del cambio de ruta.
+          await fixture.whenStable();
+          fixture.detectChanges();
+          expect(enlace()?.classList, url).toContain('is-activo');
+          expect(enlace()?.getAttribute('aria-current'), url).toBe('page');
+          expect(
+            raiz().querySelectorAll('[data-testid="nav-enlace"][aria-current="page"]').length,
+            url,
+          ).toBe(0);
+        }
+
+        await router.navigateByUrl('/messaging');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(enlace()?.classList).not.toContain('is-activo');
+      });
+
+      it('lee la bandeja UNA vez por sesión, no una por pantalla (sin N+1)', async () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        const http = TestBed.inject(HttpTestingController);
+        raiz();
+        const lecturas = http.match((pedido) => pedido.url === '/surveys/me/invitations');
+        expect(lecturas.length).toBe(1);
+        lecturas[0]!.flush([enElCable('i-1', 'PENDING')]);
+
+        await router.navigateByUrl('/messaging');
+        await router.navigateByUrl('/my-account');
+        fixture.detectChanges();
+        http.expectNone('/surveys/me/invitations');
+      });
+
+      it('si la lectura falla, el ícono no aparece de más ni rompe la cabecera', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        raiz();
+        TestBed.inject(HttpTestingController)
+          .match((pedido) => pedido.url === '/surveys/me/invitations')
+          .forEach((pedido) => pedido.flush({ message: 'boom' }, { status: 500, statusText: 'x' }));
+
+        expect(enlace()).toBeNull();
+        expect(raiz().querySelector('[data-testid="header-chats"]')).not.toBeNull();
+      });
+
+      it('al cerrarse la sesión de paciente, la bandeja se olvida', () => {
+        abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+        responder([enElCable('i-1', 'PENDING')]);
+        expect(enlace()).not.toBeNull();
+
+        abrirSesion({ sub: 'u-2', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+        expect(enlace()).toBeNull();
+        expect(TestBed.inject(PatientSurveyInbox).hayInvitaciones()).toBe(false);
+      });
+    });
+
+    /**
      * «Mis facturas» (propietario, 30/09/2026): las facturas emitidas, para
      * todas las cuentas —paciente, médico y organizaciones (la farmacia y el
      * laboratorio son `USER`)—, fuera del menú lateral.
      */
     it.each([
-      ['paciente', ['PATIENT']],
       ['profesional', ['PRACTITIONER']],
       ['facturación', ['BILLING']],
       ['organización (farmacia, laboratorio)', ['USER']],
@@ -1337,6 +1678,79 @@ describe('ShellLayout', () => {
         a.getAttribute('data-route'),
       );
       expect(rutas).not.toContain('/my-account/invoices');
+    });
+
+    it('al paciente «Mis facturas» le llega dentro de «Mis gastos», no como otro atajo (27/10/2026)', () => {
+      abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+      fixture.detectChanges();
+
+      expect(raiz().querySelector('[data-testid="header-facturas"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="header-gastos"]')?.getAttribute('href')).toBe(
+        '/my-account/spending',
+      );
+    });
+
+    it('Emergencia encabeza el menú lateral y, para el teléfono, queda como ícono en la cabecera (27/10/2026)', () => {
+      abrirSesion({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'] });
+      fixture.detectChanges();
+
+      // En la cabecera sólo el ícono: la hoja lo muestra donde el menú es un
+      // cajón (≤ 900 px), para que una urgencia siga a un toque.
+      const enCabecera = raiz().querySelector('.app-header [data-testid="header-emergencia"]');
+      const botonCabecera = enCabecera?.querySelector('[data-testid="boton-emergencia"]');
+      expect(botonCabecera?.querySelector('svg')).not.toBeNull();
+      expect(botonCabecera?.textContent?.trim()).toBe('');
+      expect(botonCabecera?.getAttribute('aria-label')).toMatch(/^Emergencia/);
+      const enMenu = raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
+      expect(enMenu).not.toBeNull();
+      // Antes que cualquier destino: una urgencia no compite.
+      const primerDestino = raiz().querySelector('#app-side-nav [data-testid="nav-enlace"]');
+      expect(
+        primerDestino && enMenu!.compareDocumentPosition(primerDestino) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    describe('Emergencia es sólo de quien viene a atenderse (27/10/2026)', () => {
+      function emergencyInSideNav(): Element | null {
+        return raiz().querySelector('#app-side-nav [data-testid="boton-emergencia"]');
+      }
+
+      function emergencyInHeader(): Element | null {
+        return raiz().querySelector('.app-header [data-testid="header-emergencia"]');
+      }
+
+      it('el médico no la ve ni en el menú lateral ni en la cabecera', () => {
+        abrirSesion({ sub: 'u-med', roles: ['PRACTITIONER'], tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).toBeNull();
+        expect(emergencyInHeader()).toBeNull();
+        // Tampoco queda la franja vacía con su filete arriba del menú.
+        expect(raiz().querySelector('.app-side-nav__emergencia')).toBeNull();
+      });
+
+      it('el paciente la ve en los dos lugares', () => {
+        abrirSesion({ sub: 'u-1', roles: ['USER', 'PATIENT'], tenants: ['t-1'] });
+
+        expect(emergencyInSideNav()).not.toBeNull();
+        expect(emergencyInHeader()?.querySelector('[data-testid="boton-emergencia"]')).not.toBeNull();
+      });
+
+      // La regla es `vieneAAtenderse` (role-labels.ts), no la del carrito: quien
+      // atiende —o agenda— y además es paciente entra a trabajar.
+      it.each([
+        ['administración de plataforma', ['PLATFORM_ADMIN'], false],
+        ['seguridad', ['SECURITY_ADMIN'], false],
+        ['sin rol', [], false],
+        ['quien atiende y además es paciente', ['PRACTITIONER', 'PATIENT'], false],
+        ['agendamiento', ['SCHEDULING_AGENT'], false],
+        ['quien agenda y además es paciente', ['SCHEDULING_AGENT', 'PATIENT'], false],
+        ['el paciente sin otro rol', ['PATIENT'], true],
+      ])('%s, con %j: ¿se le ofrece? %s', (_who, roles, offered) => {
+        abrirSesion({ sub: 'u-2', roles, tenants: ['t-1'] });
+
+        expect(emergencyInSideNav() !== null).toBe(offered);
+        expect(emergencyInHeader() !== null).toBe(offered);
+      });
     });
 
     it.each([
@@ -1359,6 +1773,34 @@ describe('ShellLayout', () => {
       expect(red?.textContent?.trim()).toBe('Red social');
       expect(session.isAuthenticated()).toBe(true);
     });
+
+    it.each([
+      ['profesional', ['PRACTITIONER'], true],
+      ['seguridad', ['SECURITY_ADMIN'], true],
+      ['paciente', ['USER', 'PATIENT'], false],
+      ['sin rol', [], false],
+    ])(
+      'el encabezado ofrece «Mis organizaciones» a %s: ¿se le ofrece? %s',
+      (_quien, roles, ofrecida) => {
+        // Pedido del propietario (28/10/2026): «Organización médica» sale del
+        // menú lateral y va arriba, con otro nombre. Se ofrece a quien la
+        // sección deja entrar (`visibleSections()`), no a un rol escrito acá.
+        abrirSesion({ sub: 'u-1', name: 'Ana Salas', roles, tenants: ['t-1'] });
+
+        const enlace = raiz().querySelector<HTMLAnchorElement>(
+          '[data-testid="header-mis-organizaciones"]',
+        );
+
+        expect(enlace !== null).toBe(ofrecida);
+        if (enlace !== null) {
+          expect(enlace.tagName).toBe('A');
+          expect(enlace.getAttribute('href')).toBe('/administration/medical-organization');
+          expect(enlace.getAttribute('aria-label')).toBe('Mis organizaciones');
+        }
+        // Y ya no ocupa renglón en el menú lateral.
+        expect(rutasDelMenu()).not.toContain('/administration/medical-organization');
+      },
+    );
 
     it('el encabezado ofrece el interruptor de tema junto a Ajustes', () => {
       // Volvió a pedido del cliente (2026-09-18): claro/oscuro es un atajo;

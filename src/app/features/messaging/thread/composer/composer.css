@@ -79,7 +79,7 @@
 
 /* El botón de enviar sí es de marca: es la acción de la barra. */
 .composer__enviar {
-  background: var(--petroleo);
+  background: var(--petroleo-relleno);
   color: #fff;
 }
 

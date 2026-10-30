@@ -36,6 +36,9 @@ import {
 /** Cuántas trae cada página. */
 const PAGE_SIZE = 25;
 
+/** Índice de la pestaña «Sin leer»: la única que consulta la API con `unread=true`. */
+const UNREAD_TAB = 1;
+
 /**
  * El centro de notificaciones — carril P1.
  *
@@ -84,12 +87,12 @@ export class NotificationCenter {
 
   /** Todas las pestañas conservan el cursor; sólo «Sin leer» usa el filtro API. */
   protected readonly pestana = signal(0);
-  protected readonly soloSinLeer = computed(() => this.pestana() === 1);
+  protected readonly soloSinLeer = computed(() => this.pestana() === UNREAD_TAB);
 
   protected readonly avisosFiltrados = computed(() => {
     const tab = this.pestana();
     return this.avisos().filter((aviso) => {
-      if (tab === 1) return aviso.unread;
+      if (tab === UNREAD_TAB) return aviso.unread;
       if (tab === 2)
         return aviso.category === 'CLINICAL' && aviso.destination?.type !== 'PRESCRIPTION';
       if (tab === 3) return aviso.category === 'MESSAGES';
@@ -119,13 +122,27 @@ export class NotificationCenter {
     if (!this.cargoAlgunaVez()) return loading();
     const visibles = this.avisosFiltrados();
     if (visibles.length === 0 && !this.hayMas()) {
-      const mensaje = this.soloSinLeer()
-        ? 'No hay notificaciones sin leer.'
-        : 'No encontramos avisos en esta categoría.';
-      return empty({ label: 'Ir a preferencias', route: '/settings' }, mensaje);
+      return empty({ label: 'Ir a preferencias', route: '/settings' }, this.descripcionVacio());
     }
     return ready(visibles);
   });
+
+  /**
+   * El título del vacío conserva los textos de siempre para «Todas» y «Sin
+   * leer» (los comprueba `playwright/carril-35-notification-center.spec.ts`);
+   * las pestañas de categoría dicen que no hay avisos de esa familia.
+   */
+  protected readonly tituloVacio = computed(() => {
+    const tab = this.pestana();
+    if (tab === 0) return 'Todavía no tiene notificaciones';
+    if (tab === UNREAD_TAB) return 'No tiene notificaciones sin leer';
+    return 'No tiene avisos en esta categoría';
+  });
+  protected readonly descripcionVacio = computed(() =>
+    this.pestana() === 0 || this.pestana() === UNREAD_TAB
+      ? 'Acá van a aparecer los avisos de sus recetas, sus consultas, sus turnos y sus mensajes.'
+      : 'Cuando llegue uno de esta categoría, lo va a ver acá.',
+  );
   protected readonly hayFiltrosSinResultados = computed(
     () => this.avisosFiltrados().length === 0 && this.hayMas(),
   );
@@ -137,11 +154,19 @@ export class NotificationCenter {
     return horaRelativa(aviso.availableAt, this.ahora());
   }
 
-  /** Cambia de pestaña: es el mismo filtro de antes, con otra forma. */
+  /**
+   * Cambia de pestaña: es el mismo filtro de antes, con otra forma.
+   *
+   * «Sin leer» es la única que pide otra consulta a la API (`unread=true`), así
+   * que entrar **o salir** de ella vuelve a cargar desde cero. Si sólo se
+   * recargara al entrar, al volver a «Todas» (o a una categoría) la lista
+   * seguiría siendo la de las sin leer y las leídas desaparecerían.
+   */
   protected elegirPestana(indice: number): void {
-    if (indice === this.pestana()) return;
+    const anterior = this.pestana();
+    if (indice === anterior) return;
     this.pestana.set(indice);
-    if (indice === 1) this.recargar();
+    if (indice === UNREAD_TAB || anterior === UNREAD_TAB) this.recargar();
   }
 
   protected readonly hayMas = computed(() => this.cursor() !== null);
@@ -177,6 +202,21 @@ export class NotificationCenter {
    */
   protected abrir(aviso: InAppNotification): void {
     const ruta = this.rutaDe(aviso);
+    this.marcarLeida(aviso);
+    if (ruta) {
+      void this.router.navigateByUrl(ruta);
+    }
+  }
+
+  /**
+   * Marca un aviso como leído sin navegar.
+   *
+   * Es lo único que se puede hacer con un aviso **sin destino**: no es un
+   * control —un enlace que no lleva a ningún lado se lee como producto roto—,
+   * y sin este botón la única salida para sacarlo de «sin leer» era «Marcar
+   * todas», que se lleva puestas las demás.
+   */
+  protected marcarLeida(aviso: InAppNotification): void {
     if (aviso.unread) {
       this.notifications.markRead(aviso.id).subscribe({
         next: () => {
@@ -193,9 +233,6 @@ export class NotificationCenter {
         error: (error: unknown) =>
           this.errorState.set(errorToViewState<readonly InAppNotification[]>(error)),
       });
-    }
-    if (ruta) {
-      void this.router.navigateByUrl(ruta);
     }
   }
 

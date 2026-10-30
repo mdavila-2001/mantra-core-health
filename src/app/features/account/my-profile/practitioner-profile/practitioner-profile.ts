@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { AdmissionStatusCard } from '../../admission-status-card/admission-status-card';
 import {
   catchError,
   forkJoin,
@@ -12,10 +14,11 @@ import {
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CommunityClient } from '../../../../core/data-access/community/community.client';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
+import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { InsuranceClient } from '../../../../core/data-access/insurance/insurance.client';
 import type { PractitionerInsuranceNetwork } from '../../../../core/data-access/insurance/insurance.types';
-import { FirmaYSelloClient, type FirmaYSello } from '../../../../core/data-access/profiles/firma-y-sello.client';
-import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
+import { SignatureAndSealClient, type SignatureAndSeal } from '../../../../core/data-access/profiles/signature-and-seal.client';
+import { PracticeLogoClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
 import { PracticeSitesClient } from '../../../../core/data-access/practice-sites/practice-sites.client';
 import type { PracticeSite } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
@@ -34,7 +37,7 @@ import { TerminologyClient } from '../../../../core/data-access/terminology/term
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { insuranceBillingFrequencyLabel } from '../../../../core/profesion/insurance-billing-frequency';
+import { insuranceBillingFrequencyLabel } from '../../../../core/profession/insurance-billing-frequency';
 import { HelpBlockDismissalStore } from '../../../../core/tutorials/help-block-dismissal.store';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -44,8 +47,8 @@ import type { StatusSealVariant } from '../../../../shared/components/organisms/
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { CONTADORES_DE_ACTIVIDAD } from '../contadores-de-actividad';
-import { PESTANAS_DEL_PERFIL_MEDICO, PESTANA_MEDICO } from '../pestanas-del-perfil-medico';
+import { ACTIVITY_COUNTERS } from '../activity-counters';
+import { DOCTOR_PROFILE_TABS, DOCTOR_TAB } from '../doctor-profile-tabs';
 import { PractitionerProfileView } from './practitioner-profile-view/practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -56,6 +59,7 @@ import type {
   MatriculaVisible,
   PerfilProfesionalVisible,
   PuntoDeSerie,
+  RespaldoCredencial,
   SedeVisible,
   SeguroVisible,
 } from './practitioner-profile-view/practitioner-profile-view.types';
@@ -94,7 +98,7 @@ const AYUDA_DE_CREDENCIALES = 'perfil-credenciales-ayuda';
  * ficha sin facturación y salía en «Actividad» en una con ella. Lo destapó el
  * spec al juntar las dos correcciones del 19/09/2026.
  */
-const ETIQUETA_DE_CREDENCIALES = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.credenciales];
+const ETIQUETA_DE_CREDENCIALES = DOCTOR_PROFILE_TABS[DOCTOR_TAB.credenciales];
 
 /** Lo que dice ese aviso. Es el texto del bloque que reemplaza, sin el ejemplo. */
 const AVISO_DE_CREDENCIALES =
@@ -107,7 +111,7 @@ const AVISO_DE_CREDENCIALES =
  * línea de tiempo. No reusa la clave del bloque cerrado, porque quien lo había
  * cerrado no lo vería nunca.
  */
-const ETIQUETA_DE_TRAYECTORIA = PESTANAS_DEL_PERFIL_MEDICO[PESTANA_MEDICO.trayectoria];
+const ETIQUETA_DE_TRAYECTORIA = DOCTOR_PROFILE_TABS[DOCTOR_TAB.trayectoria];
 
 const AVISO_DE_TRAYECTORIA =
   'Dónde ejerció antes y dónde ejerce hoy. Es lo que un paciente ve en el ' +
@@ -157,13 +161,24 @@ interface PerfilResuelto {
   /** El logo de su consultorio, o `null` si no cargó ninguno o no se pudo leer. */
   readonly logoUrl: string | null;
   /** Su firma y su sello (imágenes), o `null` si la cuenta no es de un profesional. */
-  readonly firmaYSello: FirmaYSello | null;
+  readonly firmaYSello: SignatureAndSeal | null;
   /** Dónde atiende hoy (ALV-005). Vacío si no tiene sedes o si la lectura falló. */
   readonly sedes: readonly PracticeSite[];
   /** Con qué aseguradoras trabaja; `null` si la lectura falló. */
   readonly seguros: readonly PractitionerInsuranceNetwork[] | null;
   /** Las lecturas laterales que fallaron y quedaron degradadas. */
   readonly faltantes: readonly LecturaLateral[];
+}
+
+/** `?pestana=` leído como índice de {@link DOCTOR_PROFILE_TABS}, o `null`. */
+function pestanaDeLaFicha(valor: string | null): number | null {
+  if (valor === null || valor.trim() === '') {
+    return null;
+  }
+  const indice = Number(valor);
+  return Number.isInteger(indice) && indice >= 0 && indice < DOCTOR_PROFILE_TABS.length
+    ? indice
+    : null;
 }
 
 /**
@@ -212,7 +227,7 @@ function edadDe(nacimiento?: Date): number | null {
 
 @Component({
   selector: 'app-practitioner-profile',
-  imports: [Alert, AppButton, PractitionerProfileView, ViewStateHost],
+  imports: [AdmissionStatusCard, Alert, AppButton, PractitionerProfileView, ViewStateHost],
   templateUrl: './practitioner-profile.html',
   styleUrl: './practitioner-profile.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -221,15 +236,45 @@ export class PractitionerProfile {
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly files = inject(FilesClient);
+  private readonly descargas = inject(FileDownloader);
+  protected readonly descargandoRespaldo = signal<string | null>(null);
+
+  protected descargarRespaldo(respaldo: RespaldoCredencial): void {
+    if (this.descargandoRespaldo() !== null) return;
+    const propio = this.visible();
+    const archivos = [...(propio?.formacion ?? []), ...(propio?.matriculas ?? [])];
+    if (!archivos.some((fila) => fila.fileId === respaldo.fileId)) return;
+    this.descargandoRespaldo.set(respaldo.fileId);
+    this.files.contentDataUrl(respaldo.fileId).subscribe({
+      next: (contenido) => {
+        this.descargas.trigger(contenido, respaldo.nombre);
+        this.descargandoRespaldo.set(null);
+      },
+      error: () => {
+        this.descargandoRespaldo.set(null);
+        this.toasts.error('No pudimos traer el archivo. Pruebe de nuevo en un momento.', 'Credenciales');
+      },
+    });
+  }
   private readonly sites = inject(PracticeSitesClient);
-  private readonly logo = inject(LogoDelConsultorioClient);
-  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly logo = inject(PracticeLogoClient);
+  private readonly firmaYSello = inject(SignatureAndSealClient);
   private readonly insurance = inject(InsuranceClient);
   private readonly auth = inject(AuthService);
   private readonly community = inject(CommunityClient);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
   private readonly ayudas = inject(HelpBlockDismissalStore);
+
+  /**
+   * La pestaña que pide `?pestana=` al entrar: el índice de
+   * `DOCTOR_PROFILE_TABS` con el que el editor devuelve a lectura (CORR-08).
+   * Del snapshot, como en el editor: es la pestaña con la que se entra. Un
+   * valor ilegible o fuera de rango no pide nada y queda la primera.
+   */
+  protected readonly pestanaPedida = pestanaDeLaFicha(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('pestana'),
+  );
 
   protected readonly perfil = signal<ViewState<PerfilResuelto>>(loading());
 
@@ -565,16 +610,16 @@ export class PractitionerProfile {
   /* -- Del perfil crudo al contrato de la vista --------------------------- */
 
   /** Su firma y su sello, o `null` sin perfil profesional en la sesión. */
-  private firmaYSelloPropios(): Observable<FirmaYSello | null> {
+  private firmaYSelloPropios(): Observable<SignatureAndSeal | null> {
     return this.auth.practitionerProfileId() === null
-      ? of<FirmaYSello | null>(null)
-      : this.firmaYSello.obtener();
+      ? of<SignatureAndSeal | null>(null)
+      : this.firmaYSello.get();
   }
 
   /** El logo de su consultorio, o `null` sin perfil profesional en la sesión. */
   private logoPropio(): Observable<string | null> {
     const profileId = this.auth.practitionerProfileId();
-    return profileId === null ? of<string | null>(null) : this.logo.obtenerUrl(profileId);
+    return profileId === null ? of<string | null>(null) : this.logo.getUrl(profileId);
   }
 
   /**
@@ -610,7 +655,7 @@ export class PractitionerProfile {
   private convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     const { perfil, etiquetas, fotoUrl, logoUrl, firmaYSello, sedes, seguros } = resuelto;
     const especialidades = this.especialidades(perfil, etiquetas);
-    const afiliaciones = afiliacionesDe(perfil);
+    const afiliaciones = visibleAffiliations(perfil);
     return {
       sedes: sedes.map(sedeVisible),
       seguros: seguros === null ? null : segurosVisibles(seguros),
@@ -633,7 +678,7 @@ export class PractitionerProfile {
          lugar que los mostraba; con dos superficies, una lista sola se despega
          en el primer retoque. Acá se le agrega el valor; el editor no lo
          necesita. */
-      actividad: CONTADORES_DE_ACTIVIDAD.map(({ clave, rotulo, pie, campo }) => ({
+      actividad: ACTIVITY_COUNTERS.map(({ clave, rotulo, pie, campo }) => ({
         clave,
         rotulo,
         pie,
@@ -719,23 +764,20 @@ export class PractitionerProfile {
       .sort((a, b) => fecha(b.issueDate) - fecha(a.issueDate))
       .map((credencial: PractitionerCredential) => {
         const vencida = credencial.expiryDate !== undefined && credencial.expiryDate < ahora;
+        const decisionSeal = sello(etiquetas, credencial.stateConceptId);
         return {
           id: credencial.id,
+          fileId: credencial.fileId,
           tipo: label(etiquetas, credencial.credentialTypeConceptId),
           numero: credencial.number,
           institucion: credencial.issuingInstitutionText ?? '',
           desde: credencial.issueDate ?? null,
           hasta: credencial.expiryDate ?? null,
           estado: label(etiquetas, credencial.stateConceptId),
-          // El vencimiento manda sobre todo lo demás —una credencial vencida no
-          // habilita, por más verificada que esté—; después la verificación
-          // manda sobre el estado del catálogo, porque una credencial con fecha
-          // de comprobación está verificada aunque el concepto no se resuelva.
-          sello: vencida
-            ? ('expired' as StatusSealVariant)
-            : credencial.verifiedAt !== undefined
-              ? ('approved' as StatusSealVariant)
-              : sello(etiquetas, credencial.stateConceptId),
+          // La decisión viene del catálogo. Fuente y fecha de revisión también
+          // existen en rechazos; el vencimiento cambia el sello, no la decisión.
+          approved: decisionSeal === 'approved',
+          sello: vencida ? ('expired' as StatusSealVariant) : decisionSeal,
           vencida,
           fuenteVerificacion: credencial.verificationSourceUri,
         };
@@ -748,6 +790,7 @@ export class PractitionerProfile {
   ): readonly MatriculaVisible[] {
     return perfil.licenses.map((matricula: PractitionerLicense) => ({
       id: matricula.id,
+      fileId: matricula.fileId,
       jurisdiccion: label(etiquetas, matricula.jurisdictionConceptId),
       numero: matricula.licenseNumber,
       autoridad: matricula.regulatoryAuthority ?? '',
@@ -802,15 +845,18 @@ function label(etiquetas: ConceptLabels, conceptId: string | undefined): string 
  * neutro — afirmar «verificado» sobre un concepto que no se pudo leer sería
  * inventar, y acá lo que se afirma es la habilitación de alguien para ejercer.
  */
-function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusSealVariant {
+export function sello(etiquetas: ConceptLabels, conceptId: string | undefined): StatusSealVariant {
   const codigo = conceptId === undefined ? undefined : etiquetas.get(conceptId)?.code;
   if (codigo === undefined) {
     return 'unknown';
   }
-  if (CODIGOS_EN_ORDEN.some((esperado) => codigo.includes(esperado))) {
+  if (codigo === 'REJECTED' || codigo === 'REVOKED' || codigo.endsWith('_REJECTED') || codigo.endsWith('_REVOKED')) return 'rejected';
+  if (codigo === 'EXPIRED' || codigo.endsWith('_EXPIRED')) return 'expired';
+  if (codigo.endsWith('_PENDING') || codigo === 'PENDING') return 'pending';
+  if (CODIGOS_EN_ORDEN.includes(codigo)) {
     return 'approved';
   }
-  if (CODIGOS_PENDIENTES.some((esperado) => codigo.includes(esperado))) {
+  if (CODIGOS_PENDIENTES.includes(codigo)) {
     return 'in-review';
   }
   return 'unknown';
@@ -840,7 +886,16 @@ function fecha(valor: Date | undefined): number {
  * al contrato de la vista y se reparte en los dos grupos que pide la pestaña
  * Trayectoria — «actividad actual» primero, por ser lo más relevante hoy.
  */
-function afiliacionesDe(perfil: OwnPractitionerProfile): {
+const AFFILIATION_SEALS: Readonly<Record<PractitionerAffiliation['statusKind'], StatusSealVariant>> = {
+  aprobado: 'approved', pendiente: 'pending', rechazado: 'rejected',
+  revocado: 'rejected', declarado: 'unknown', desconocido: 'unknown',
+};
+const AFFILIATION_STATUS_LABELS: Readonly<Record<PractitionerAffiliation['statusKind'], string>> = {
+  aprobado: 'Verificado', pendiente: 'Pendiente', rechazado: 'Rechazado',
+  revocado: 'Revocado', declarado: 'Declarado', desconocido: 'Sin determinar',
+};
+
+export function visibleAffiliations(perfil: OwnPractitionerProfile): {
   readonly actual: readonly AfiliacionVisible[];
   readonly historica: readonly AfiliacionVisible[];
 } {
@@ -854,6 +909,8 @@ function afiliacionesDe(perfil: OwnPractitionerProfile): {
       desde: afiliacion.startDate,
       hasta: afiliacion.endDate,
       actual: afiliacion.current,
+      sello: AFFILIATION_SEALS[afiliacion.statusKind],
+      estado: AFFILIATION_STATUS_LABELS[afiliacion.statusKind],
     }));
   return {
     actual: visibles.filter((afiliacion) => afiliacion.actual),

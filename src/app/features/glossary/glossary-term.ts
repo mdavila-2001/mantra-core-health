@@ -13,8 +13,7 @@ import { map } from 'rxjs';
 
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
-  GlossaryRelation,
-  GlossaryRelationType,
+  GlossaryNeighborhood,
   GlossarySourceReference,
   GlossaryTermDetail,
 } from '../../core/data-access/terminology/terminology.types';
@@ -27,6 +26,12 @@ import { Chip } from '../../shared/components/atoms/chip/chip';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Card } from '../../shared/components/molecules/card/card';
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
+import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
+import { RelationGroups } from '../../shared/components/organisms/relation-groups/relation-groups';
+import type {
+  RelationColumnView,
+  RelationGroupsTone,
+} from '../../shared/components/organisms/relation-groups/relation-groups.types';
 import { Tab } from '../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
@@ -39,33 +44,24 @@ import {
 } from './glossary-drug-facts';
 import { GlossaryCategoryIcon } from './glossary-category-icon';
 import { GlossaryArticleView } from './glossary-article';
+import { enlaceSeguro, esImagenPropia, imagenesVisibles } from './glossary-article.logic';
 import { GlossaryDataFlow } from './glossary-data-flow';
 import { GlossaryPdfService } from './glossary-pdf.service';
+import { GlossaryTermCover, pictogramOfTags } from './glossary-term-cover';
 import { imagenAprobadaDelTermino } from './glossary-image.logic';
+import { buildClinicalRoute, ROUTE_ZONES } from './glossary-clinical-route';
 import type { GlossaryArticle } from '../../core/data-access/terminology/glossary-article.types';
+import type { GlossaryImage } from '../../core/data-access/terminology/terminology.types';
 
-/**
- * Rótulo en castellano de cada tipo de relación clínica, en el orden en que se
- * agrupan en la ficha. `RELATED_TERM` va último: es el «ver también» genérico,
- * y las relaciones con significado clínico concreto —enfermedad, procedimiento,
- * tratamiento, anatomía, prueba diagnóstica— importan más para entender el
- * término. Síntomas y especialidad van justo después de enfermedad: es lo
- * primero que busca quien llega a una ficha de enfermedad.
- */
-const RELATION_GROUPS: readonly { readonly type: GlossaryRelationType; readonly label: string }[] =
-  [
-    { type: 'DISEASE', label: 'Enfermedades relacionadas' },
-    { type: 'SYMPTOM', label: 'Síntomas y signos' },
-    { type: 'SPECIALTY', label: 'Especialidades que la atienden' },
-    { type: 'PROCEDURE', label: 'Procedimientos relacionados' },
-    { type: 'TREATMENT', label: 'Tratamientos relacionados' },
-    { type: 'ANATOMY', label: 'Anatomía relacionada' },
-    { type: 'DIAGNOSTIC_TEST', label: 'Pruebas diagnósticas relacionadas' },
-    { type: 'PERFORMS', label: 'Modalidad que realiza' },
-    { type: 'INCLUDES', label: 'Estudios que incluye' },
-    { type: 'SENDS_DATA_TO', label: 'Envía sus datos a' },
-    { type: 'RELATED_TERM', label: 'También se relaciona con' },
-  ];
+/** Vecinos por grupo en la ficha: la misma muestra que la primera lectura del mapa. */
+const RELATIONS_PER_GROUP = 8;
+
+/** Una zona de relaciones de la ficha, lista para el organismo compartido. */
+interface RelationZoneView {
+  readonly zone: RelationGroupsTone;
+  readonly title: string;
+  readonly columns: readonly RelationColumnView[];
+}
 
 /**
  * Nombre legible de cada fuente, por el prefijo del identificador corto que
@@ -155,12 +151,6 @@ function fuentesDesdePropiedad(valor: unknown): readonly GlossarySourceReference
   });
 }
 
-/** Un grupo de relaciones ya resuelto contra la ficha, listo para pintarse. */
-export interface GrupoDeRelaciones {
-  readonly label: string;
-  readonly relaciones: readonly GlossaryRelation[];
-}
-
 /**
  * La ficha de un término del glosario.
  *
@@ -202,10 +192,13 @@ export interface GrupoDeRelaciones {
     Card,
     Chip,
     ContentDialog,
+    EmptyState,
     GlossaryArticleView,
     GlossaryCategoryIcon,
     GlossaryDataFlow,
+    GlossaryTermCover,
     PageHeader,
+    RelationGroups,
     RouterLink,
     Tab,
     Tabs,
@@ -268,16 +261,38 @@ export class GlossaryTerm {
   });
 
   /**
-   * Las relaciones de la ficha, agrupadas por tipo y en el orden clínico de
-   * {@link RELATION_GROUPS}. Los grupos sin ninguna relación no se muestran:
-   * un encabezado «Anatomía relacionada» seguido de nada no informa, confunde.
+   * El vecindario del término (salientes **y entrantes**), que es lo que pinta
+   * el mapa. La ficha lo lee aparte de `relations`: así sus grupos, su orden y
+   * sus sellos de evidencia son los del mapa (TAREA-41 F5.5) y un síntoma
+   * muestra también las enfermedades que lo presentan.
    */
-  protected readonly gruposDeRelaciones = computed<readonly GrupoDeRelaciones[]>(() => {
-    const relaciones = this.ficha()?.relations ?? [];
-    return RELATION_GROUPS.map(({ type, label }) => ({
-      label,
-      relaciones: relaciones.filter((relacion) => relacion.type === type),
-    })).filter((grupo) => grupo.relaciones.length > 0);
+  protected readonly vecindario = signal<ViewState<GlossaryNeighborhood>>(loading());
+
+  /** Las zonas de la ruta clínica, sin las vacías, en el orden del mapa. */
+  protected readonly zonasDeRelaciones = computed<readonly RelationZoneView[]>(() => {
+    const estado = this.vecindario();
+    if (estado.status !== 'ready') return [];
+    const ruta = buildClinicalRoute(estado.data);
+    return ROUTE_ZONES.map(({ zone, title }) => ({
+      zone,
+      title,
+      columns: ruta[zone].map((column) => ({
+        key: column.key,
+        title: column.title,
+        items: column.items,
+        count: column.complete ? column.items.length : null,
+      })),
+    })).filter((zona) => zona.columns.length > 0);
+  });
+
+  /**
+   * Si la pestaña «Relacionados» tiene algo que decir: mientras carga o si
+   * falló, sí (con su estado); ya leída y sin vecinos, se omite — una pestaña
+   * vacía no informa.
+   */
+  protected readonly mostrarRelacionados = computed(() => {
+    const estado = this.vecindario();
+    return estado.status !== 'ready' || this.zonasDeRelaciones().length > 0;
   });
 
   /**
@@ -380,6 +395,31 @@ export class GlossaryTerm {
   protected readonly ampliada = signal(false);
 
   /**
+   * La foto de la cabecera: la del término y, si no tiene, la primera imagen
+   * visible de su artículo —con el mismo autor y licencia que ya exige—.
+   * `null` si ninguna se puede mostrar: entonces va la portada ilustrada.
+   */
+  protected readonly imagen = computed<GlossaryImage | null>(() => {
+    const propia = this.ficha()?.image;
+    if (propia) return propia;
+    const deArticulo = imagenesVisibles(this.articulo()?.images ?? [])[0];
+    if (deArticulo === undefined) return null;
+    const pagina = esImagenPropia(deArticulo) ? undefined : (enlaceSeguro(deArticulo.sourcePage) ?? undefined);
+    return {
+      source: deArticulo.url,
+      thumbnailSource: deArticulo.thumbUrl,
+      alt: deArticulo.altText,
+      attribution: deArticulo.author,
+      license: deArticulo.license,
+      status: 'article',
+      ...(pagina === undefined ? {} : { sourcePage: pagina }),
+    };
+  });
+
+  /** El pictograma del sistema del cuerpo del término (pulmones, corazón…), si tiene uno. */
+  protected readonly pictograma = computed(() => pictogramOfTags(this.ficha()?.tags ?? []));
+
+  /**
    * De dónde sale el término, dicho con los datos que el propio término trae
    * (`source`, `source_url`, `source_retrieved_at`), o `null` si no trae
    * ninguno — nunca una fuente supuesta.
@@ -402,6 +442,28 @@ export class GlossaryTerm {
       consultado: valorDeTexto(propiedades, 'source_retrieved_at')?.slice(0, 10) ?? null,
       licencia: valorDeTexto(propiedades, 'source_license') ?? null,
     };
+  });
+
+  /**
+   * La cita bibliográfica del término, al estilo de «Citar» en Google Académico.
+   *
+   * Sólo arma lo que la ficha declara: nombre, fuente, código y fecha de
+   * consulta de la fuente. Sin fuente declarada no hay cita, porque citar
+   * «Alovida» sola atribuiría a la plataforma una definición que no escribió.
+   */
+  protected readonly cita = computed<string | null>(() => {
+    const ficha = this.ficha();
+    const origen = this.fuente();
+    if (ficha === null || origen === null) return null;
+    const codigo = this.codigoPublicable();
+    const partes = [
+      `${origen.nombre}.`,
+      `«${ficha.display}»${codigo === null ? '' : ` (${codigo})`}.`,
+      'En: Alovida, Glosario médico.',
+      origen.consultado === null ? '' : `Fuente consultada el ${this.fechaLegible(origen.consultado)}.`,
+      origen.licencia === null ? '' : `Condición de uso: ${origen.licencia}.`,
+    ];
+    return partes.filter((parte) => parte !== '').join(' ');
   });
 
   /**
@@ -438,6 +500,24 @@ export class GlossaryTerm {
     this.cargar(this.conceptId());
   }
 
+  protected recargarRelaciones(): void {
+    this.cargarRelaciones(this.conceptId());
+  }
+
+  private cargarRelaciones(conceptId: string): void {
+    this.vecindario.set(loading());
+    this.terminology.readGlossaryNeighborhood(conceptId, { perGroup: RELATIONS_PER_GROUP }).subscribe({
+      next: (vecindario) => {
+        if (conceptId === this.conceptId()) this.vecindario.set(ready(vecindario));
+      },
+      error: (error: unknown) => {
+        if (conceptId === this.conceptId()) {
+          this.vecindario.set(errorToViewState<GlossaryNeighborhood>(error));
+        }
+      },
+    });
+  }
+
   private cargar(conceptId: string): void {
     if (conceptId === '') return;
 
@@ -463,6 +543,8 @@ export class GlossaryTerm {
         }
       },
     });
+
+    this.cargarRelaciones(conceptId);
 
     this.terminology.readGlossaryTerm(conceptId).subscribe({
       next: (ficha) => this.termino.set(ready(ficha)),

@@ -1,7 +1,7 @@
-import { conceptoPorId } from '../fixtures/conceptos';
-import { CONCEPTO, conversaciones, vitrinaDe } from '../fixtures/comunidad';
-import { PACIENTES, type PacienteSimulado } from '../fixtures/personas';
-import { forbidden, notFound, preconditionFailed, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conceptById } from '../fixtures/concepts';
+import { CONCEPT, conversationList, showcaseOf } from '../fixtures/community';
+import { PATIENTS, type PacienteSimulado } from '../fixtures/people';
+import { forbidden, notFound, preconditionFailed, unprocessable, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { bodyAsQuery, Coleccion, cuerpo, nuevoId, paginar, texto, uuid } from '../mock-store';
 import { perteneceALaAseguradora } from './insurance.handlers';
 
@@ -20,7 +20,7 @@ import { perteneceALaAseguradora } from './insurance.handlers';
     ========================================================================== */
 
 /** Las mismas que siembra «Solicitudes recibidas». */
-const PACIENTES_DEL_DIRECTORIO = PACIENTES.slice(0, 60);
+const PACIENTES_DEL_DIRECTORIO = PATIENTS.slice(0, 60);
 
 /** El catálogo rotula en inglés; la maqueta guarda `GEN-F`/`GEN-M`. */
 const GENERO_DEL_CONTRATO: Readonly<Record<string, string>> = {
@@ -47,7 +47,7 @@ function idDeAseguradora(nombre: string): string {
 }
 
 function fila(paciente: PacienteSimulado, indice: number): PacienteDelDirectorio {
-  const genero = paciente.generoId === undefined ? undefined : conceptoPorId(paciente.generoId);
+  const genero = paciente.generoId === undefined ? undefined : conceptById(paciente.generoId);
   return {
     id: paciente.id,
     patientProfileId: paciente.id,
@@ -57,7 +57,7 @@ function fila(paciente: PacienteSimulado, indice: number): PacienteDelDirectorio
     email: paciente.email,
     genderConceptId: paciente.generoId ?? null,
     genderCode: genero === undefined ? null : (GENERO_DEL_CONTRATO[genero.code] ?? null),
-    occupationDisplay: conceptoPorId(paciente.ocupacionId)?.display ?? null,
+    occupationDisplay: conceptById(paciente.ocupacionId)?.display ?? null,
     insurers:
       paciente.aseguradora === undefined
         ? []
@@ -86,7 +86,7 @@ function comoRenglon(p: PacienteDelDirectorio) {
     ...(p.genderCode === null ? {} : { genderCode: p.genderCode }),
     ...(p.occupationDisplay === null ? {} : { occupationDisplay: p.occupationDisplay }),
     insurers: p.insurers,
-    messaging: { channel: 'internal' as const, available: vitrinaDe(p.patientProfileId) !== undefined },
+    messaging: { channel: 'internal' as const, available: showcaseOf(p.patientProfileId) !== undefined },
   };
 }
 
@@ -122,7 +122,7 @@ export function registerInsurerPatients(router: MockRouter, { persistir = true }
     const desde = texto(query, 'birthDateFrom');
     const hasta = texto(query, 'birthDateTo');
     if (desde !== null && hasta !== null && desde > hasta) {
-      return validation('Rango de fechas inválido', [{ field: 'birthDateFrom', problem: 'Debe ser anterior o igual a birthDateTo' }]);
+      return unprocessable('Rango de fechas inválido', [{ field: 'birthDateFrom', problem: 'Debe ser anterior o igual a birthDateTo' }]);
     }
 
     const orden = ORDENES[texto(query, 'sortBy') ?? 'fullName'] ?? ORDENES['fullName']!;
@@ -162,20 +162,20 @@ export function registerInsurerPatients(router: MockRouter, { persistir = true }
     // de la aseguradora es el de su organización, no el de la cuenta.
     const usuario = request.user!;
     const tenant = request.headers.get('X-Tenant-Id') ?? usuario.tenants[0] ?? '';
-    const propia = vitrinaDe(tenant) ?? vitrinaDe(usuario.id);
-    const suya = vitrinaDe(paciente.patientProfileId);
+    const propia = showcaseOf(tenant) ?? showcaseOf(usuario.id);
+    const suya = showcaseOf(paciente.patientProfileId);
     if (propia === undefined || suya === undefined) {
       return preconditionFailed('Ambos deben tener la mensajería activa', { reason: 'MESSAGING_UNAVAILABLE' });
     }
     const participantes = [propia.id, suya.id];
-    const existente = conversaciones.filtrar(
+    const existente = conversationList.filtrar(
       (c) => c.participantes.length === 2 && participantes.every((p) => c.participantes.includes(p)),
     )[0];
     const conversacion =
       existente ??
-      conversaciones.agregar({
+      conversationList.agregar({
         id: nuevoId('conv'),
-        conversationTypeConceptId: CONCEPTO.conversationDirect,
+        conversationTypeConceptId: CONCEPT.conversationDirect,
         groupId: null,
         participantes,
         noLeidosPor: {},

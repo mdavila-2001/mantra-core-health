@@ -1,0 +1,50 @@
+<form
+  class="rejection-form"
+  data-testid="payment-receipt-rejection-form"
+  [attr.aria-label]="'Rechazar ' + receiptLabel()"
+  (submit)="submit($event)"
+>
+  <div #field>
+    <app-form-field
+      label="Motivo del rechazo"
+      hint="El paciente lo va a leer. Entre 3 y 500 caracteres."
+      [required]="true"
+      [errorMessage]="visibleProblem()"
+    >
+      <app-textarea
+        data-testid="payment-receipt-rejection-reason-input"
+        placeholder="Por ejemplo: no se lee el monto ni la fecha de la transferencia"
+        [rows]="3"
+        [maxLength]="maxLength"
+        [hasError]="visibleProblem() !== null"
+        [disabled]="submitting()"
+        [(value)]="reason"
+        (blurred)="markTouched()"
+      />
+    </app-form-field>
+  </div>
+
+  <div class="rejection-form__actions">
+    <button
+      app-button
+      type="submit"
+      variant="danger"
+      size="sm"
+      data-testid="payment-receipt-rejection-submit"
+      [isLoading]="submitting()"
+      [disabled]="!canSubmit()"
+    >
+      Rechazar comprobante
+    </button>
+    <button
+      app-button
+      variant="ghost"
+      size="sm"
+      data-testid="payment-receipt-rejection-cancel"
+      [disabled]="submitting()"
+      (clicked)="cancelled.emit()"
+    >
+      Cancelar
+    </button>
+  </div>
+</form>

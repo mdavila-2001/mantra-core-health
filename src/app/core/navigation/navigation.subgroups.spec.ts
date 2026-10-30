@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { APP_SECTIONS } from './navigation.map';
-import {
-  NAV_GROUP_ICONS,
-  NAV_SUBGROUPS,
-  SUBGROUP_BY_PATH,
-  seAplanaElGrupo,
-} from './navigation.subgroups';
+import { NAV_GROUP_ICONS, NAV_SUBGROUPS, SUBGROUP_BY_PATH } from './navigation.subgroups';
 import { NAV_GROUPS, NAV_ICON_NAMES } from './navigation.types';
 
 /* ============================================================================
@@ -40,6 +35,9 @@ describe('NAV_SUBGROUPS', () => {
    * estaba detrás de «Consultorio», un escalón que había que desplegar para
    * encontrar una sola cosa (pedido del propietario, 04/09/2026).
    *
+   * La lista es corta a propósito: es la excepción, no la regla. Un subgrupo se
+   * justifica cuando ordena varias secciones; envolver una sola es ruido.
+   *
    * También cuelga directo «Ayuda psicológica» en General: la sección es una
    * puerta independiente solicitada para ofrecer recursos de salud mental
    * (11/10/2026), no parte de otro subgrupo.
@@ -53,6 +51,9 @@ describe('NAV_SUBGROUPS', () => {
   const SUELTAS_A_PROPOSITO = [
     'schedule',
     'medical-records',
+    // El médico de cabecera (28/10/2026): una sola sección, al lado del archivo
+    // clínico; un subgrupo para envolverla sería el escalón de más.
+    'my-primary-patients',
     'psychological-help',
     // La portada de «Superadministración» (17/10/2026): es el tablero con el que
     // se abre el dominio, no una pantalla más de una lista; envolverla en un
@@ -142,25 +143,3 @@ describe('NAV_GROUP_ICONS', () => {
     }
   });
 });
-
-describe('seAplanaElGrupo', () => {
-  it('se aplana siempre para rol SUPERADMIN sin importar el grupo ni el tipo de organización', () => {
-    expect(seAplanaElGrupo('Administración', null, ['SUPERADMIN'])).toBe(true);
-    expect(seAplanaElGrupo('Superadministración', null, ['SUPERADMIN'])).toBe(true);
-    expect(seAplanaElGrupo('Administración', 'PROVIDER', ['SUPERADMIN'])).toBe(true);
-  });
-
-  it('se aplana para los grupos base (General, Atención, Facturación, Mi cuenta)', () => {
-    expect(seAplanaElGrupo('General', null)).toBe(true);
-    expect(seAplanaElGrupo('Atención', null)).toBe(true);
-    expect(seAplanaElGrupo('Facturación', null)).toBe(true);
-    expect(seAplanaElGrupo('Mi cuenta', null)).toBe(true);
-  });
-
-  it('para otros roles de administración, se pliega según tipo de organización', () => {
-    expect(seAplanaElGrupo('Administración', 'PAYER')).toBe(true);
-    expect(seAplanaElGrupo('Administración', 'PROVIDER', ['SECURITY_ADMIN'])).toBe(false);
-    expect(seAplanaElGrupo('Administración', null, ['PLATFORM_ADMIN'])).toBe(false);
-  });
-});
-

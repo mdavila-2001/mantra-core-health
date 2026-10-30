@@ -175,6 +175,26 @@ describe('Glossary', () => {
     http.expectNone((r) => r.url.endsWith('/terminology/concepts'));
   });
 
+  it('los accesos al mapa y al atlas van en el renglón de los filtros, con ícono y texto', async () => {
+    await responderLanding();
+    // Pedido del cliente (26/10/2026): un solo renglón —buscador, filtros y
+    // accesos— y cada acceso con su ícono al lado del texto. Siguen siendo
+    // enlaces: navegan, no son botones.
+    const barra = html().querySelector('[data-testid="glosario-filtros"]');
+    const mapa = barra?.querySelector<HTMLAnchorElement>('a[data-testid="glosario-mapa"]');
+    const atlas = barra?.querySelector<HTMLAnchorElement>('a[data-testid="glosario-atlas-3d"]');
+
+    expect(mapa?.getAttribute('href')).toBe('/glossary/network');
+    expect(atlas?.getAttribute('href')).toBe('/glossary/anatomy-atlas');
+    expect(mapa?.closest('.filter-bar__controls')).not.toBeNull();
+    expect(mapa?.querySelector('app-nav-icon svg')).not.toBeNull();
+    expect(atlas?.querySelector('app-nav-icon svg')).not.toBeNull();
+    expect(mapa?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Mapa de relaciones');
+    expect(atlas?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Atlas anatómico 3D');
+    expect(mapa?.getAttribute('title')).toBe('Mapa de relaciones');
+    expect(atlas?.getAttribute('title')).toBe('Atlas anatómico 3D');
+  });
+
   it('la rejilla ofrece una tarjeta por categoría con el conteo real del servidor', async () => {
     await responderLanding();
 
@@ -381,13 +401,65 @@ describe('Glossary', () => {
     ]);
   });
 
-  it('la rejilla sigue visible con un filtro puesto: es el mapa', async () => {
+  it('al buscar por texto las categorías desaparecen (pedido del propietario)', async () => {
     await responderLanding();
     await irA({ q: 'hiper' });
     responderPagina();
     await harness.fixture.whenStable();
 
+    expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(0);
+    expect(html().querySelector('.glosario__categorias')).toBeNull();
+    expect(html().textContent).toContain('Resultados de «hiper»');
+  });
+
+  it('al borrar el texto las categorías vuelven', async () => {
+    await responderLanding();
+    await irA({ q: 'hiper' });
+    responderPagina();
+    await irA({});
+    responderPagina();
+    await harness.fixture.whenStable();
+
     expect(html().querySelectorAll('.glosario__tarjeta').length).toBe(1);
+  });
+
+  it('la vista por omisión son tarjetas y el selector ofrece Tarjetas y Tabla', async () => {
+    await responderLanding();
+
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(1);
+    expect(html().querySelector('[data-testid="glosario-tabla"]')).toBeNull();
+    expect(textos('[data-testid="glosario-vista"] [role="radio"]')).toEqual(['Tarjetas', 'Tabla']);
+  });
+
+  it('?view=table muestra una tabla con término, categoría, definición y código, y sigue paginada', async () => {
+    await responderLanding([TERMINO, TERMINO_B], 40);
+    // Cambiar de vista no es otro resultado: no vuelve a pedir la página.
+    await irA({ view: 'table' });
+    http.expectNone((r) => r.url.endsWith('/terminology/concepts'));
+
+    const tabla = html().querySelector('[data-testid="glosario-tabla"]');
+    expect(tabla).not.toBeNull();
+    expect(textos('[data-testid="glosario-tabla"] thead th')).toEqual([
+      'Término',
+      'Categoría',
+      'Definición breve',
+      'Fuente / código',
+    ]);
+    expect(html().querySelectorAll('[data-testid="glosario-tabla"] tbody tr').length).toBe(2);
+    expect(tabla?.textContent).toContain('Hipertensión esencial');
+    expect(tabla?.textContent).toContain('Enfermedades');
+    expect(tabla?.textContent).toContain('Presión arterial persistentemente alta.');
+    expect(tabla?.textContent).toContain('I10');
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(0);
+    expect(html().querySelector('app-pagination')).not.toBeNull();
+  });
+
+  it('un valor de ?view desconocido cae en tarjetas', async () => {
+    await responderLanding();
+    await irA({ view: 'otra-cosa' });
+
+    expect(html().querySelector('[data-testid="glosario-tabla"]')).toBeNull();
+    expect(html().querySelectorAll('.glosario__entrada').length).toBe(1);
   });
 
   it('un enlace con una categoría que no existe lo dice, y no pide nada', async () => {

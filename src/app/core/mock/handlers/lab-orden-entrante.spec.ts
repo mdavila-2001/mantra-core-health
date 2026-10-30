@@ -1,6 +1,6 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { SPECIMEN_TYPE } from '../fixtures/conceptos';
+import { SPECIMEN_TYPE } from '../fixtures/concepts';
 import { MockRouter, isMockReply, type MockMethod } from '../mock-router';
 import { TENANT_CLINICA, TENANT_LABORATORIO, buscarUsuario, type MockUser } from '../mock-session';
 import { ID_ORDEN_ENTRANTE, registrarDiagnostico } from './diagnostics.handlers';

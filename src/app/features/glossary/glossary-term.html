@@ -2,7 +2,7 @@
 
 <div class="termino">
   <div class="termino__acciones">
-    <a routerLink="/glossary">← Volver al glosario</a>
+    <a class="termino__volver" routerLink="/glossary">← Volver al glosario</a>
     @if (ficha()) {
       <button
         app-button
@@ -33,12 +33,12 @@
           </p>
         }
 
-        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!imagenAprobada()">
+        <div class="termino__cabecera" [class.termino__cabecera--con-foto]="!!imagen()">
           <!-- Imagen médica con su atribución y licencia SIEMPRE visibles
                —nunca sin crédito—. La miniatura abre la imagen entera en un
-               modal. Sin imagen, el ícono de la categoría hace de marcador:
-               ninguna foto de stock la reemplaza. -->
-          @if (imagenAprobada(); as imagen) {
+               modal. Sin imagen —la del término o la de su artículo— va la
+               portada ilustrada: ninguna foto de stock la reemplaza. -->
+          @if (imagen(); as imagen) {
             <figure class="termino__imagen">
               <button
                 type="button"
@@ -58,7 +58,7 @@
                 {{ imagen.attribution }} — licencia {{ imagen.license }}
                 @if (imagen.sourcePage; as pagina) {
                   ·
-                  <a [href]="pagina" target="_blank" rel="noopener noreferrer">ver en la fuente</a>
+                  <a class="termino__enlace" [href]="pagina" target="_blank" rel="noopener noreferrer">ver en la fuente</a>
                 }
               </figcaption>
             </figure>
@@ -76,7 +76,7 @@
                     {{ imagen.attribution }} — licencia {{ imagen.license }}
                     @if (imagen.sourcePage; as pagina) {
                       ·
-                      <a [href]="pagina" target="_blank" rel="noopener noreferrer"
+                      <a class="termino__enlace" [href]="pagina" target="_blank" rel="noopener noreferrer"
                         >ver en la fuente</a
                       >
                     }
@@ -85,9 +85,11 @@
               </app-content-dialog>
             }
           } @else {
-            <div class="termino__imagen-marcador" aria-hidden="true">
-              <app-glossary-category-icon [category]="termino.category?.internalCode ?? ''" />
-            </div>
+            <app-glossary-term-cover
+              class="termino__portada"
+              [category]="termino.category?.internalCode ?? ''"
+              [system]="pictograma()"
+            />
           }
 
           <div class="termino__intro">
@@ -116,9 +118,9 @@
               }
             </div>
 
-            <h2 class="termino__subtitulo">Explicado simple</h2>
+            <h2 class="termino__subtitulo termino__subtitulo--rotulo">Explicado simple</h2>
             @if (resumen() !== '') {
-              <p class="termino__definicion">{{ resumen() }}</p>
+              <p class="termino__definicion termino__resumen">{{ resumen() }}</p>
               @if (termino.plainSummary?.translated === false) {
                 <p class="termino__sin-traducir-parcial">
                   Explicación en su idioma original: todavía no tiene traducción al castellano
@@ -143,68 +145,66 @@
               />
             </app-tab>
           } @else {
-            <app-tab label="Definición">
-              <h2 class="termino__subtitulo">Qué significa</h2>
-              @if (definicion() !== '') {
-                <p class="termino__definicion termino__verbatim">{{ definicion() }}</p>
-                @if (esDescripcionDeWikidata()) {
-                  <p class="termino__sin-traducir-parcial">
-                    Descripción breve de la comunidad de Wikidata (CC0): no es una definición
-                    clínica revisada.
-                  </p>
-                }
-                @if (fuenteDeDefinicion(); as origen) {
-                  <p class="termino__medicamento-fuente" data-testid="termino-fuente-definicion">
-                    Fuente de la definición:
-                    @if (origen.url; as url) {
-                      <a [href]="url" target="_blank" rel="noopener noreferrer">{{
-                        origen.nombre
-                      }}</a>
-                    } @else {
-                      {{ origen.nombre }}
-                    }
-                    @if (origen.consultado; as fecha) {
-                      · consultado el {{ fechaLegible(fecha) }}
-                    }
-                  </p>
-                }
-                @if (termino.clinicalDefinition?.translated === false) {
-                  <p class="termino__sin-traducir-parcial">
-                    Definición en su idioma original: todavía no tiene traducción al castellano
-                    cargada.
-                  </p>
-                }
-              } @else {
-                <!-- Nunca un párrafo inventado: se dice que falta y por qué. -->
-                <p
-                  class="termino__definicion termino__definicion--ausente"
-                  data-testid="termino-sin-definicion"
-                >
-                  {{ motivoSinDefinicion() }}
+          <app-tab label="Definición">
+            <h2 class="termino__subtitulo">Qué significa</h2>
+            @if (definicion() !== '') {
+              <p class="termino__definicion termino__verbatim">{{ definicion() }}</p>
+              @if (esDescripcionDeWikidata()) {
+                <p class="termino__sin-traducir-parcial">
+                  Descripción breve de la comunidad de Wikidata (CC0): no es una definición clínica
+                  revisada.
                 </p>
               }
-
-              @for (seccion of seccionesDeLaFuente(); track $index) {
-                <section class="termino__seccion">
-                  <h2 class="termino__subtitulo">{{ seccion.titulo }}</h2>
-                  <p class="termino__verbatim">{{ seccion.texto }}</p>
-                </section>
-              }
-
-              @if (termino.synonyms.length > 0) {
-                <h2 class="termino__subtitulo">También se le dice</h2>
-                <ul class="termino__sinonimos">
-                  @for (sinonimo of termino.synonyms; track sinonimo.value) {
-                    <li>
-                      {{ sinonimo.value }}
-                      @if (sinonimo.language) {
-                        <span class="termino__idioma">({{ sinonimo.language }})</span>
-                      }
-                    </li>
+              @if (fuenteDeDefinicion(); as origen) {
+                <p class="termino__medicamento-fuente" data-testid="termino-fuente-definicion">
+                  Fuente de la definición:
+                  @if (origen.url; as url) {
+                    <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">{{ origen.nombre }}</a>
+                  } @else {
+                    {{ origen.nombre }}
                   }
-                </ul>
+                  @if (origen.consultado; as fecha) {
+                    · consultado el {{ fechaLegible(fecha) }}
+                  }
+                </p>
               }
-            </app-tab>
+              @if (termino.clinicalDefinition?.translated === false) {
+                <p class="termino__sin-traducir-parcial">
+                  Definición en su idioma original: todavía no tiene traducción al castellano
+                  cargada.
+                </p>
+              }
+            } @else {
+              <!-- Nunca un párrafo inventado: se dice que falta y por qué. -->
+              <p
+                class="termino__definicion termino__definicion--ausente"
+                data-testid="termino-sin-definicion"
+              >
+                {{ motivoSinDefinicion() }}
+              </p>
+            }
+
+            @for (seccion of seccionesDeLaFuente(); track $index) {
+              <section class="termino__seccion">
+                <h2 class="termino__subtitulo">{{ seccion.titulo }}</h2>
+                <p class="termino__verbatim">{{ seccion.texto }}</p>
+              </section>
+            }
+
+            @if (termino.synonyms.length > 0) {
+              <h2 class="termino__subtitulo">También se le dice</h2>
+              <ul class="termino__sinonimos">
+                @for (sinonimo of termino.synonyms; track sinonimo.value) {
+                  <li>
+                    {{ sinonimo.value }}
+                    @if (sinonimo.language) {
+                      <span class="termino__idioma">({{ sinonimo.language }})</span>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+          </app-tab>
           }
 
           @if (cima(); as ficha) {
@@ -285,7 +285,7 @@
                     <li>
                       <p class="termino__producto">
                         @if (producto.url; as url) {
-                          <a [href]="url" target="_blank" rel="noopener noreferrer">{{
+                          <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">{{
                             producto.name
                           }}</a>
                         } @else {
@@ -332,7 +332,7 @@
               <p class="termino__medicamento-fuente" data-testid="termino-cita-cima">
                 {{ citaCima(ficha) }}
                 @if (ficha.sourceUrl; as url) {
-                  <a [href]="url" target="_blank" rel="noopener noreferrer">Ver la ficha técnica</a>
+                  <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">Ver la ficha técnica</a>
                 }
               </p>
             </app-tab>
@@ -367,19 +367,35 @@
             </app-tab>
           }
 
-          @if (gruposDeRelaciones().length > 0) {
+          @if (mostrarRelacionados()) {
             <app-tab label="Relacionados">
               <app-glossary-data-flow [termino]="termino" />
-              @for (grupo of gruposDeRelaciones(); track grupo.label) {
-                <h2 class="termino__subtitulo">{{ grupo.label }}</h2>
-                <ul class="termino__relaciones">
-                  @for (relacion of grupo.relaciones; track relacion.conceptId) {
-                    <li>
-                      <a [routerLink]="['/glossary', relacion.conceptId]">{{ relacion.display }}</a>
-                    </li>
-                  }
-                </ul>
-              }
+              <app-view-state-host [state]="vecindario()" (retry)="recargarRelaciones()">
+                @if (zonasDeRelaciones().length === 0) {
+                  <app-empty-state
+                    title="Sin relaciones publicadas"
+                    description="Este término todavía no tiene relaciones con otros términos del glosario."
+                  />
+                } @else {
+                  <div class="termino__relaciones">
+                    @for (zona of zonasDeRelaciones(); track zona.zone) {
+                      <app-relation-groups
+                        [heading]="zona.title"
+                        [headingId]="'termino-relaciones-' + zona.zone"
+                        [headingLevel]="2"
+                        [tone]="zona.zone"
+                        [columns]="zona.columns"
+                        [spread]="true"
+                      />
+                    }
+                  </div>
+                  <a
+                    class="termino__mapa-enlace"
+                    [routerLink]="['/glossary/network']"
+                    [queryParams]="{ focus: termino.conceptId }"
+                  >Ver todas sus relaciones en el mapa</a>
+                }
+              </app-view-state-host>
             </app-tab>
           }
 
@@ -393,40 +409,16 @@
                 }
                 @if (origen.url; as url) {
                   ·
-                  <a [href]="url" target="_blank" rel="noopener noreferrer">ir a la fuente</a>
+                  <a class="termino__enlace" [href]="url" target="_blank" rel="noopener noreferrer">ir a la fuente</a>
                 }
               </p>
               @if (origen.licencia; as licencia) {
                 <p class="termino__medicamento-fuente">Condición de uso: {{ licencia }}</p>
               }
-            } @else if (referenciasEditoriales().length === 0) {
+            } @else {
               <p class="termino__definicion termino__definicion--ausente">
                 Este término no declara su fuente.
               </p>
-            }
-
-            @if (referenciasEditoriales().length > 0) {
-              <h2 class="termino__subtitulo">Fuentes editoriales</h2>
-              <ul class="termino__fuentes-editoriales">
-                @for (
-                  referencia of referenciasEditoriales();
-                  track referencia.source + referencia.recordId + referencia.language
-                ) {
-                  <li>
-                    <a [href]="referencia.url" target="_blank" rel="noopener noreferrer">
-                      {{ referencia.source }} · {{ referencia.recordId }}
-                    </a>
-                    <span class="termino__idioma">
-                      {{ referencia.language === 'es' ? 'Español' : 'Inglés' }} · versión
-                      {{ referencia.version }} ·
-                      {{ rolDeFuente(referencia.role) }}
-                    </span>
-                    <p class="termino__fuente-derechos">
-                      {{ referencia.attribution }} {{ referencia.rights }}
-                    </p>
-                  </li>
-                }
-              </ul>
             }
 
             <!-- El código se muestra sólo cuando sirve afuera: `I10` identifica

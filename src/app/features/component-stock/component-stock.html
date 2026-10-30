@@ -51,15 +51,18 @@
         <span>{{ (zoom() * 100).toFixed(0) }}%</span>
       </label>
 
-      <label class="barra__interruptor" title="Entrar como una de las cuentas de prueba">
-        Cuenta
-        <select [value]="cuenta() ?? ''" (change)="cuenta.set($any($event.target).value || null)">
-          <option value="">Sin sesión</option>
-          @for (u of cuentas; track u.key) {
-            <option [value]="u.key">{{ u.key }}</option>
-          }
-        </select>
-      </label>
+      <!-- `div` y no `label`: el desplegable abre un modal dentro de este
+           bloque, y un clic en una opción activaría el rótulo y lo reabriría. -->
+      <div class="barra__interruptor" title="Entrar como una de las cuentas de prueba">
+        <span>Cuenta</span>
+        <app-select
+          class="barra__selector"
+          ariaLabel="Cuenta de prueba"
+          [options]="opcionesDeCuenta"
+          [value]="cuenta() ?? ''"
+          (valueChange)="cuenta.set($event || null)"
+        />
+      </div>
 
       <label
         class="barra__interruptor barra__interruptor--peligro"
@@ -82,16 +85,13 @@
           [value]="texto()"
           (input)="texto.set($any($event.target).value)"
         />
-        <select
+        <app-select
           class="lista__nivel"
+          ariaLabel="Nivel del componente"
+          [options]="opcionesDeNivel"
           [value]="nivel()"
-          (change)="nivel.set($any($event.target).value)"
-        >
-          <option value="todos">Todos los niveles</option>
-          @for (n of niveles; track n) {
-            <option [value]="n">{{ etiquetaDeNivel[n] }}</option>
-          }
-        </select>
+          (valueChange)="nivel.set($event ?? 'todos')"
+        />
         <label class="lista__casilla">
           <input
             type="checkbox"
@@ -168,19 +168,17 @@
                  él. «Valores generados» sigue disponible para comparar contra el
                  montaje a ciegas, que es lo único que tiene el resto. -->
             @if (escenarios().length > 0) {
-              <label class="lienzo__escenario">
-                Escenario
-                <select
+              <div class="lienzo__escenario">
+                <span>Escenario</span>
+                <app-select
+                  class="lienzo__selector"
                   data-testid="stock-escenario"
+                  ariaLabel="Escenario"
+                  [options]="opcionesDeEscenario()"
                   [value]="escenario()?.id ?? valoresGenerados"
-                  (change)="elegirEscenario($any($event.target).value)"
-                >
-                  @for (e of escenarios(); track e.id) {
-                    <option [value]="e.id">{{ e.titulo }}</option>
-                  }
-                  <option [value]="valoresGenerados">Valores generados (a ciegas)</option>
-                </select>
-              </label>
+                  (valueChange)="elegirEscenario($event ?? valoresGenerados)"
+                />
+              </div>
             }
             @if (escenario() === null) {
               <button type="button" class="lienzo__principal" (click)="otrosDatos()">Otros datos</button>

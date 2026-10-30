@@ -11,8 +11,8 @@ import { MockRouter, isMockReply, type MockMethod, type MockReply } from '../moc
 import { buscarUsuario, type MockUser } from '../mock-session';
 import { uuid } from '../mock-store';
 import { reservas } from '../fixtures/agenda';
-import { ESQUEMA_COMPRA_VENTA } from '../siat-sim/esquema-siat';
-import { facturaDesdeXml, leerXmlFactura } from '../siat-sim/factura-xml';
+import { PURCHASE_SALE_SCHEMA } from '../siat-sim/siat-schema';
+import { invoiceFromXml, readInvoiceXml } from '../siat-sim/invoice-xml';
 import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { crearRouterSimulado } from './index';
 import { registrarFarmacia } from './pharmacy.handlers';
@@ -155,7 +155,7 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
         items: { appointmentId: string | null; paidTotal: string }[];
       };
       expect(recibidos.items).toContainEqual(expect.objectContaining({ appointmentId: reserva.appointmentId, paidTotal: cobro!.total }));
-      expect(llamar('POST', `/billing/simulated/payment-reports/${cobro!.id}/confirm`, {}, medica).status).toBe(412);
+      expect(llamar('POST', `/billing/simulated/payment-reports/${cobro!.id}/confirm`, {}, medica).status).toBe(422); // PRECONDITION_FAILED es 422 en la API, no 412
     } finally {
       reservas.actualizar(reserva.id, { paymentState: estadoAnterior, paymentAmount: importeAnterior });
     }
@@ -287,9 +287,9 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(llamar('POST', `/billing/simulated/charges/${pendiente.id}/payment`, { methodCode: 2 }).status).toBe(409);
     });
 
-    it('método de pago fuera del catálogo simulado → 422', () => {
+    it('método de pago fuera del catálogo simulado → 400', () => {
       const pendiente = cobros().find((c) => c.payment === null && c.plan === null)!;
-      expect(llamar('POST', `/billing/simulated/charges/${pendiente.id}/payment`, { methodCode: 99 }).status).toBe(422);
+      expect(llamar('POST', `/billing/simulated/charges/${pendiente.id}/payment`, { methodCode: 99 }).status).toBe(400);
     });
   });
 
@@ -307,9 +307,9 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(conReconsulta.plan!.instances[1]!.scheduledAt).not.toBeNull();
     });
 
-    it('pagar una instancia → 201 con la nota de venta; facturar con saldo → 412; saldado → 201 y la factura es por el total', () => {
+    it('pagar una instancia → 201 con la nota de venta; facturar con saldo → 422; saldado → 201 y la factura es por el total', () => {
       const cobro = conPlan();
-      expect(facturar(cobro).status).toBe(412);
+      expect(facturar(cobro).status).toBe(422);
       let actual = cobro;
       for (const instancia of cobro.plan!.instances.filter((i) => i.balance !== '0.00')) {
         const r = llamar('POST', `/billing/simulated/charges/${cobro.id}/instances/${instancia.id}/payments`, {
@@ -326,22 +326,27 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect((f.body as SimulatedInvoice).cabecera['montoTotal']).toBe(actual.total);
     });
 
-    it('un pago de más → 422; pagar de una vez un servicio con plan → 409', () => {
+    it('un pago de más → 400; pagar de una vez un servicio con plan → 409', () => {
       const cobro = conPlan();
       const reconsulta = cobro.plan!.instances[2]!;
       const r = llamar('POST', `/billing/simulated/charges/${cobro.id}/instances/${reconsulta.id}/payments`, {
         methodCode: 1,
         amount: '9999.00',
       });
-      expect(r.status).toBe(422);
+      expect(r.status).toBe(400);
       expect(llamar('POST', `/billing/simulated/charges/${cobro.id}/payment`, { methodCode: 1 }).status).toBe(409);
     });
   });
 
   describe('emisión', () => {
-    it('facturar un cobro sin pago → 412', () => {
+    it('facturar un cobro sin pago → 422', () => {
       const pendiente = cobros().find((c) => c.payment === null && c.plan === null)!;
-      expect(facturar(pendiente).status).toBe(412);
+      const result = facturar(pendiente);
+      expect(result.status).toBe(422);
+      expect(result.body).toMatchObject({
+        code: 'PRECONDITION_FAILED',
+        details: { reason: 'PAYMENT_REQUIRED' },
+      });
     });
 
     it('un cobro pagado se factura: 908 VALIDADA, XML válido de sector 1, emisor ficticio', () => {
@@ -357,7 +362,7 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(f.issuer.nit.startsWith('999')).toBe(true);
       expect(f.detalle).toHaveLength(cobro.lines.length);
       expect(f.cabecera['montoTotal']).toBe(cobro.total);
-      const { problemas } = facturaDesdeXml(ESQUEMA_COMPRA_VENTA, leerXmlFactura(f.xml));
+      const { problemas } = invoiceFromXml(PURCHASE_SALE_SCHEMA, readInvoiceXml(f.xml));
       expect(problemas).toEqual([]);
       expect(f.events.map((e) => e.kind)).toEqual(['PAYMENT_REGISTERED', 'INVOICE_BUILT', 'SENT_TO_SIAT', 'SIAT_RESPONSE']);
       expect(f.simulated).toBe(true);
@@ -395,14 +400,16 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect(f.siatResponse.codigoEstado).toBe(904);
     });
 
-    it('comprador inválido → 422 con el detalle por campo', () => {
+    it('comprador inválido → 400 con el detalle por campo', () => {
       const cobro = cobroPagado();
       const r = llamar('POST', `/billing/simulated/charges/${cobro.id}/invoices`, {
         buyer: { name: '', documentTypeCode: 99, documentNumber: '' },
         additionalDiscount: '999999',
       });
-      expect(r.status).toBe(422);
-      const campos = (r.body as { issues: { field: string }[] }).issues.map((i) => i.field);
+      expect(r.status).toBe(400);
+      const violations = (r.body as { details: { violations: string[] } }).details.violations;
+      const campos = violations.map((violation) => violation.split(' ')[0]);
+      expect(r.body).toMatchObject({ code: 'VALIDATION_FAILED' });
       expect(campos).toEqual(
         expect.arrayContaining(['buyer.name', 'buyer.documentTypeCode', 'buyer.documentNumber', 'additionalDiscount']),
       );
@@ -448,7 +455,7 @@ describe('handlers de facturación simulada (FACT-SIAT-MOCK)', () => {
       expect((r.body as SimulatedOutboxEntry).status).toBe('NOT_SENT_SIMULATED');
       const bandeja = llamar('GET', '/billing/simulated/outbox').body as SimulatedOutboxPage;
       expect(bandeja.items).toHaveLength(1);
-      expect(llamar('POST', `/billing/simulated/invoices/${f.id}/email`, { to: 'no-es-correo' }).status).toBe(422);
+      expect(llamar('POST', `/billing/simulated/invoices/${f.id}/email`, { to: 'no-es-correo' }).status).toBe(400);
     });
   });
 

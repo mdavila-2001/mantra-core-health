@@ -8,7 +8,7 @@ import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-d
 import { MedicalSpecialtiesCatalog } from '../../../core/data-access/terminology/medical-specialties.service';
 import type { ValueSetOption } from '../../../core/data-access/terminology/terminology.types';
 import { esperarSinViolaciones } from '../../../../testing/a11y';
-import { controlDeNombreExtra } from '../../auth/registro-compartido/campos-de-nombre/nombre-de-persona';
+import { nameExtraControl } from '../../auth/shared-registration/name-fields/person-name';
 import { PractitionerAssistedRegistration } from './practitioner-assisted-registration';
 
 /**
@@ -120,7 +120,7 @@ describe('PractitionerAssistedRegistration', () => {
     fixture.componentInstance['especialidades'].set(['s-1', '', 's-2', 's-1']);
     const nombre = fixture.componentInstance['form'].controls.doctorName;
     nombre.controls.middleName.setValue('Andrés');
-    nombre.controls.extraNames.push(controlDeNombreExtra());
+    nombre.controls.extraNames.push(nameExtraControl());
     nombre.controls.extraNames.at(0).setValue('Pablo');
     enviar();
 

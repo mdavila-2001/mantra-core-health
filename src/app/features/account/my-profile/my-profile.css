@@ -3,11 +3,11 @@
    tipografía que el sistema no tenga ya.
 
    La TARJETA en sí —retrato, cabecera, pestañas y renglones— vive en
-   `ficha-de-perfil.css`, compartida con la ficha del médico: el cliente pidió
+   `profile-sheet.css`, compartida con la ficha del médico: el cliente pidió
    que las dos se vean igual, y dos copias del mismo CSS se separan en el primer
    retoque que se haga en una sola. */
 
-@import './ficha-de-perfil.css';
+@import './profile-sheet.css';
 
 :host {
   display: block;

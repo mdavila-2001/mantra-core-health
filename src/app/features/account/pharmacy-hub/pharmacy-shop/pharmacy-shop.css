@@ -5,6 +5,19 @@
   margin-block-end: var(--sp-4);
 }
 
+.tienda__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block-end: var(--sp-4);
+}
+
+.tienda__filtros-nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
 .tienda__cabecera {
   display: flex;
   flex-wrap: wrap;
@@ -16,7 +29,7 @@
 
 .tienda__titulo {
   margin: 0;
-  font-size: var(--fs-title);
+  font-size: var(--fs-h2);
 }
 
 .tienda__subtitulo {

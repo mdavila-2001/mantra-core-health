@@ -22,13 +22,10 @@ import { ChartTemplatesClient } from '../../../core/data-access/chart-templates/
 import type { ChartTemplate } from '../../../core/data-access/chart-templates/chart-templates.types';
 import { ClinicalClient } from '../../../core/data-access/clinical/clinical.client';
 import { DiagnosticsClient } from '../../../core/data-access/diagnostics/diagnostics.client';
-import type { DiagnosticOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
 import { ProceduresClient } from '../../../core/data-access/procedures/procedures.client';
-import type {
-  DentalCatalog,
-  DentalProcedure,
-} from '../../../core/data-access/procedures/procedures.types';
+import type { DentalCatalog } from '../../../core/data-access/procedures/procedures.types';
+import { describirDentales, describirEstudios } from './encounter-descriptions';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import type {
   CarePlan,
@@ -75,13 +72,17 @@ import { DialogService } from '../../../shared/components/molecules/dialog/dialo
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { AuthzClient } from '../../../core/data-access/authz/authz.client';
+import { ChartDocumentsClient } from '../../../core/data-access/chart-documents/chart-documents.client';
+import { isScanPending } from '../../../core/data-access/files/scan-status';
+import { FileDownloadService } from '../../../shared/utils/file-download/file-download.service';
 import {
   downloadPrescriptionPdf,
   downloadVisitPdf,
   VALOR_ENMASCARADO,
 } from '../../../shared/utils/clinical-pdf/clinical-pdf';
-import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
-import { contextoDeLaSesion } from '../../../shared/utils/clinical-pdf/firma-de-la-sesion';
+import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
+import { sessionContext } from '../../../shared/utils/clinical-pdf/session-signature';
 import {
   atencionDesdeResumen,
   recetaDesdeResumen,
@@ -90,9 +91,10 @@ import {
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../shared/components/organisms/data-table/data-table.types';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { ReceivedServicesPanel } from '../../../shared/components/organisms/received-services-panel/received-services-panel';
 import { TutorialTarget } from '../../../shared/components/organisms/tutorial-overlay/tutorial-target.directive';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
-import { mensajeDeFalloDeEscritura } from '../mensaje-de-escritura';
+import { writeFailureMessage } from '../write-message';
 import { CLINICAL_RECORD_ROUTE } from '../clinical-record.routes';
 import { CarePlanBlock } from './care-plan-block/care-plan-block';
 import type { DiagnosticoDelPlan } from './care-plan-block/care-plan-block';
@@ -105,12 +107,32 @@ import { MedicationBlock } from './medication-block/medication-block';
 import type { DiagnosticoEnFicha, RecetaEnFicha } from './medication-block/medication-block';
 import { ObservationBlock } from './observation-block/observation-block';
 import {
-  camposDe,
-  plantillaPorCobertura,
-  respuestasDe,
-  type RespuestaVisible,
-} from './specialty-form-block/lectura-de-formulario';
+  fieldsOf,
+  templateByCoverage,
+  responsesOf,
+  type ResponseVisible,
+} from './specialty-form-block/form-reading';
 import { PdfExportButton } from '../../../shared/components/molecules/pdf-export-button/pdf-export-button';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
+import { Chip } from '../../../shared/components/atoms/chip/chip';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
+import type { SortState } from '../../../shared/components/organisms/data-table/data-table.types';
+import { RecorridoClinico } from './recorrido-clinico/recorrido-clinico';
+import {
+  aristasDelHistorial,
+  atencionDeCadaRegistro,
+  compararFilas,
+  type FuenteDelHistorial,
+} from './recorrido-clinico/historial-del-expediente';
+import {
+  ASPECTO_DEL_TIPO,
+  TIPOS_DEL_RECORRIDO,
+  type AristaDelRecorrido,
+  type AspectoDelTipo,
+  type NodoDelRecorrido,
+  type TipoDelRecorrido,
+} from './recorrido-clinico/recorrido-clinico.model';
 
 /** Tope por bloque. La API aplica 50 si no se pide otro. */
 const TOPE = 50;
@@ -280,6 +302,40 @@ export interface FilaClinica {
    * nota de P24.
    */
   readonly cita?: string;
+
+  /**
+   * Los archivos del registro (hoy sólo los documentos, CL-27): uno por
+   * archivo, con el `fileId` que se baja desde
+   * `GET /charts/documents/:id/files/:fileId/content`.
+   */
+  readonly archivos?: readonly ArchivoDeFila[];
+}
+
+/** Un archivo de una fila del expediente, listo para ofrecer su descarga. */
+export interface ArchivoDeFila {
+  readonly fileId: string;
+  /** «Archivo 1 · Principal», nunca el uuid. */
+  readonly rotulo: string;
+}
+
+/**
+ * Las tres maneras de leer la misma historia.
+ *
+ * - `secciones`: una pestaña por bloque, con sus altas y acciones. La de
+ *   siempre, y la que abre la pantalla: es donde se escribe.
+ * - `tabla`: todos los registros en una sola tabla cronológica, con su tipo.
+ *   Responde «¿qué pasó últimamente?» sin abrir ocho pestañas.
+ * - `recorrido`: la línea de tiempo de atenciones, con cada registro conectado
+ *   a la atención en que se decidió y cada receta al diagnóstico que trata.
+ */
+export type VistaDelExpediente = 'secciones' | 'tabla' | 'recorrido';
+
+/** Una fila de la tabla unificada: la fila del bloque más su tipo y sus vínculos. */
+export interface FilaDelHistorial extends FilaClinica {
+  readonly tipo: TipoDelRecorrido;
+  readonly aspecto: AspectoDelTipo;
+  /** Con qué se relaciona, en palabras: la atención y, si es receta, para qué. */
+  readonly relacion: string;
 }
 
 /**
@@ -293,7 +349,7 @@ export interface FormularioDelEncuentro {
   readonly id: string;
   readonly titulo: string;
   readonly completadoEl: Date | null;
-  readonly respuestas: readonly RespuestaVisible[];
+  readonly respuestas: readonly ResponseVisible[];
 }
 
 /** Lo leído a demanda para un encuentro: lo que no viaja en el resumen. */
@@ -378,6 +434,7 @@ interface Expediente {
     Badge,
     Card,
     CarePlanBlock,
+    Chip,
     ConceptSelect,
     ContentDialog,
     DiagnosisBlock,
@@ -395,11 +452,15 @@ interface Expediente {
     ObservationBlock,
     PdfExportButton,
     PageHeader,
+    ReceivedServicesPanel,
     Progress,
+    RecorridoClinico,
+    SegmentedControl,
     Tab,
     Tabs,
     TutorialTarget,
     ViewStateHost,
+    LoadingState,
   ],
   templateUrl: './patient-chart.html',
   styleUrl: './patient-chart.css',
@@ -431,6 +492,9 @@ export class PatientChart {
   private readonly auth = inject(AuthService);
   private readonly dialogs = inject(DialogService);
   private readonly toasts = inject(ToastService);
+  private readonly documentsClient = inject(ChartDocumentsClient);
+  private readonly authz = inject(AuthzClient);
+  private readonly downloads = inject(FileDownloadService);
   private readonly route = inject(ActivatedRoute);
 
   private readonly celdaPrincipal =
@@ -450,6 +514,9 @@ export class PatientChart {
   /** El botón de adjuntos de los bloques que no tienen menú propio. */
   private readonly celdaAdjuntos =
     viewChild.required<TemplateRef<{ $implicit: FilaClinica }>>('celdaAdjuntos');
+  /** El tipo de registro, en la tabla unificada. */
+  private readonly celdaTipo =
+    viewChild.required<TemplateRef<{ $implicit: FilaDelHistorial }>>('celdaTipo');
 
   /**
    * El perfil que se está mirando, leído del segmento `:profileId`.
@@ -465,6 +532,8 @@ export class PatientChart {
 
   /** El mismo perfil, para los bloques hijos que escriben contra él. */
   protected readonly pacienteDeLaFicha = this.profileId;
+  /** La pestaña abierta de la historia: «Servicios recibidos» lee solo cuando es la activa. */
+  protected readonly activeTab = signal(0);
 
   protected readonly expediente = signal<ViewState<Expediente>>(loading());
 
@@ -784,7 +853,13 @@ export class PatientChart {
   protected readonly notas = computed<readonly FilaClinica[]>(() =>
     (this.datos()?.chart.notes ?? []).map((fila) => ({
       id: fila.noteId,
-      principal: fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId),
+      // `||` y no `??`: el motivo puede llegar como texto vacío, y una fila sin
+      // nombre en la tabla no dice qué es. Sin motivo, el tipo de nota.
+      principal:
+        fila.chiefComplaintText?.trim() ||
+        (this.label(fila.noteTypeConceptId) === SIN_DATO
+          ? 'Nota clínica'
+          : this.label(fila.noteTypeConceptId)),
       secundario: fila.assessmentText ?? fila.subjectiveText ?? '',
       estado: this.label(fila.lifecycleStatusConceptId),
       cuando: fila.signedAt ?? fila.createdAt,
@@ -822,8 +897,117 @@ export class PatientChart {
           valor: 'El documento del expediente no guarda encuentro ni diagnóstico.',
         },
       ],
+      archivos: [...(fila.files ?? [])]
+        .sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
+        .map((archivo, indice) => ({
+          fileId: archivo.fileId,
+          rotulo: `Archivo ${indice + 1}${archivo.contentRole === 'PRIMARY' ? ' · Principal' : ''}`,
+        })),
     })),
   );
+
+  /* -- Acceso de emergencia (BR-20 · CV-19) --------------------------------
+     Cuando la lectura da 403 y quien mira tiene el rol que la API deja usar
+     `break-the-glass` (`CLINICAL_APPROVER`, o `SECURITY_ADMIN`), se le ofrece la
+     acción de emergencia. No se «oculta» el 403: se ofrece una salida a quien
+     puede tomarla, con justificación obligatoria y una ventana acotada. La
+     autoridad sigue siendo la API; a quien no tiene el rol no se le ofrece. */
+
+  /** Si esta sesión puede pedir un acceso de emergencia. */
+  protected readonly puedeEmergencia = computed(() => {
+    const roles = this.auth.roles();
+    return roles.includes('CLINICAL_APPROVER') || roles.includes('SECURITY_ADMIN');
+  });
+
+  /** Mientras se pide el acceso, para no doblar el clic. */
+  protected readonly pidiendoEmergencia = signal(false);
+
+  /** El motivo escrito de una emergencia: la API exige al menos 10 caracteres. */
+  private static readonly MINIMO_DE_JUSTIFICACION = 10;
+
+  /**
+   * Pide el acceso de emergencia con la justificación, y **relee** el expediente.
+   *
+   * `POST /authz/patients/:id/break-the-glass`: la ventana es corta (60 minutos
+   * por defecto), queda auditado y el paciente lo ve en «Quién ve mi historia».
+   */
+  protected async pedirAccesoDeEmergencia(): Promise<void> {
+    const tenantId = this.auth.activeTenantId();
+    if (tenantId === null || this.pidiendoEmergencia()) {
+      this.toasts.warning('Elija una organización antes de pedir el acceso de emergencia.', 'Acceso de emergencia');
+      return;
+    }
+    const justificacion = await this.dialogs.confirmWithReason(
+      {
+        title: 'Acceso de emergencia',
+        message:
+          'Va a ver esta historia sin un vínculo ni un turno. Queda auditado, el acceso dura una hora y la persona lo ve en «Quién ve mi historia».',
+        confirmLabel: 'Pedir acceso',
+        destructive: true,
+      },
+      {
+        label: 'Justificación',
+        placeholder: 'Por qué necesita ver esta historia ahora',
+        hint: 'Obligatoria: al menos 10 caracteres.',
+        minLength: PatientChart.MINIMO_DE_JUSTIFICACION,
+        maxLength: 1000,
+      },
+    );
+    if (justificacion === null) return;
+
+    this.pidiendoEmergencia.set(true);
+    this.authz
+      .breakTheGlass(this.pacienteDeLaFicha(), { tenantId, justification: justificacion })
+      .subscribe({
+        next: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.success('Acceso de emergencia concedido por una hora. Queda auditado.', 'Acceso de emergencia');
+          this.recargar();
+        },
+        error: () => {
+          this.pidiendoEmergencia.set(false);
+          this.toasts.warning('No pudimos conceder el acceso de emergencia.', 'Acceso de emergencia');
+        },
+      });
+  }
+
+  /** Qué archivo se está bajando ahora (para el spinner y para no doblar el clic). */
+  protected readonly bajando = signal<string | null>(null);
+
+  /**
+   * Baja un archivo de un documento del expediente (CL-27).
+   *
+   * Por `GET /charts/documents/:id/files/:fileId/content`, que autoriza por
+   * lectura de la historia del paciente y no por autoría: quien abre el
+   * expediente no es quien subió el papel. Sin `window.open`: los bytes vienen
+   * con la credencial y se entregan con un enlace temporal.
+   */
+  protected descargarArchivo(fila: FilaClinica, archivo: ArchivoDeFila): void {
+    if (this.bajando() !== null) {
+      return;
+    }
+    this.bajando.set(archivo.fileId);
+    this.documentsClient.downloadFile(fila.id, archivo.fileId).subscribe({
+      next: ({ blob, fileName }) => {
+        this.bajando.set(null);
+        this.downloads.save(blob, fileName ?? `${fila.principal} - ${archivo.rotulo}.pdf`);
+      },
+      error: (error: unknown) => {
+        this.bajando.set(null);
+        if (isScanPending(error)) {
+          this.toasts.info('El archivo todavía está en análisis. Pruebe de nuevo en un momento.', 'Documento');
+          return;
+        }
+        const estado = errorToViewState<null>(error);
+        this.toasts.warning(
+          estado.status === 'forbidden'
+            ? 'No tiene permiso para abrir este archivo.'
+            : 'No pudimos bajar el archivo. Reintente en un momento.',
+          'Documento',
+        );
+      },
+    });
+  }
 
   /**
    * Los ocho bloques con su rótulo, para dibujar las pestañas de una pasada.
@@ -849,6 +1033,235 @@ export class PatientChart {
       columnas: this.columnasPara(bloque.filas, bloque.clave),
     })),
   );
+
+  /* -- Las otras dos lecturas: tabla unificada y recorrido -----------------
+     Las dos se arman de los mismos bloques —no se pide nada nuevo— y comparten
+     el filtro por tipo: ocultar las notas en la tabla y encontrarlas en el
+     recorrido sería dos pantallas con dos verdades. */
+
+  protected readonly vista = signal<VistaDelExpediente>('secciones');
+
+  /**
+   * Sin íconos: con ellos, las tres opciones no entran en 390 px y el control
+   * recorta los rótulos («Seccio…», «Recorr…»). El rótulo solo ya dice la vista.
+   */
+  protected readonly opcionesDeVista: readonly SegmentedOption<VistaDelExpediente>[] = [
+    { value: 'secciones', label: 'Secciones' },
+    { value: 'tabla', label: 'Tabla' },
+    {
+      value: 'recorrido',
+      label: 'Recorrido',
+      description: 'Recorrido: línea de tiempo de atenciones y lo que se decidió en cada una',
+    },
+  ];
+
+  protected elegirVista(vista: VistaDelExpediente): void {
+    this.vista.set(vista);
+  }
+
+  protected readonly aspectoDelTipo = ASPECTO_DEL_TIPO;
+
+  /** Los tipos que el filtro oculta. Vacío: se ve todo. */
+  protected readonly tiposOcultos = signal<ReadonlySet<TipoDelRecorrido>>(new Set());
+
+  /** Los tipos con al menos un registro, en el orden del recorrido, con su cuenta. */
+  protected readonly tiposDelFiltro = computed(() => {
+    const cuentas = new Map(this.bloques().map((b) => [b.clave, b.filas.length]));
+    return TIPOS_DEL_RECORRIDO.filter((tipo) => (cuentas.get(tipo) ?? 0) > 0).map((tipo) => ({
+      tipo,
+      cantidad: cuentas.get(tipo) ?? 0,
+      aspecto: ASPECTO_DEL_TIPO[tipo],
+    }));
+  });
+
+  protected alternarTipo(tipo: TipoDelRecorrido, visible: boolean): void {
+    this.tiposOcultos.update((actual) => {
+      const siguiente = new Set(actual);
+      if (visible) {
+        siguiente.delete(tipo);
+      } else {
+        siguiente.add(tipo);
+      }
+      return siguiente;
+    });
+  }
+
+  protected mostrarTodosLosTipos(): void {
+    this.tiposOcultos.set(new Set());
+  }
+
+  /** Las dos lecturas, en la forma que piden las funciones del historial. */
+  private readonly fuenteDelHistorial = computed<FuenteDelHistorial | null>(() => {
+    const datos = this.datos();
+    return datos === null
+      ? null
+      : {
+          encounters: datos.resumen.encounters,
+          conditions: datos.resumen.conditions,
+          medicationRequests: datos.resumen.medicationRequests,
+          observations: datos.resumen.observations,
+          notes: datos.chart.notes,
+        };
+  });
+
+  /** La atención que declara cada registro, haya llegado o no en esta lectura. */
+  private readonly atencionDeCadaRegistro = computed(() => {
+    const fuente = this.fuenteDelHistorial();
+    return fuente === null ? new Map<string, string>() : atencionDeCadaRegistro(fuente);
+  });
+
+  /** Los bloques de los tipos que el filtro deja ver. */
+  private readonly bloquesVisibles = computed(() => {
+    const ocultos = this.tiposOcultos();
+    return this.bloques().filter((bloque) => !ocultos.has(bloque.clave as TipoDelRecorrido));
+  });
+
+  /** Los registros de los tipos visibles, como nodos del recorrido. */
+  protected readonly nodosDelRecorrido = computed<readonly NodoDelRecorrido[]>(() => {
+    const atencionDe = this.atencionDeCadaRegistro();
+    return this.bloquesVisibles().flatMap((bloque) => {
+      const tipo = bloque.clave as TipoDelRecorrido;
+      return bloque.filas.map((fila) => ({
+        id: fila.id,
+        tipo,
+        // Un nodo sin título es una caja muda: si el registro no trae nombre,
+        // al menos dice qué es.
+        principal:
+          fila.principal.trim() === '' || fila.principal === SIN_DATO
+            ? ASPECTO_DEL_TIPO[tipo].singular
+            : fila.principal,
+        // Lo que se decidió sobre un diagnóstico (por qué se confirmó o se
+        // descartó) es justo lo que el recorrido viene a contar.
+        // «Sin registrar» como dato secundario es ruido en una tarjeta chica: la
+        // tabla de cada bloque tampoco lo muestra.
+        secundario: fila.decision
+          ? `Decisión: ${fila.decision}`
+          : fila.secundario === SIN_DATO
+            ? ''
+            : fila.secundario,
+        estado: fila.estado === SIN_DATO ? '' : fila.estado,
+        tonoDelEstado: fila.estadoTono ?? 'info',
+        cuando: fila.cuando,
+        encuentroId: atencionDe.get(fila.id),
+      }));
+    });
+  });
+
+  /** Las conexiones del recorrido: ver {@link aristasDelHistorial}. */
+  protected readonly aristasDelRecorrido = computed<readonly AristaDelRecorrido[]>(() => {
+    const fuente = this.fuenteDelHistorial();
+    return fuente === null ? [] : aristasDelHistorial(fuente);
+  });
+
+  /** El estado del recorrido: el vacío con su salida, o los nodos. */
+  protected readonly estadoDelRecorrido = computed(() =>
+    this.estadoDelLibro(this.nodosDelRecorrido()),
+  );
+
+  /**
+   * Hay registros pero el filtro los ocultó todos. No es el vacío del M34
+   * —la persona sí tiene historia— y su salida no es elegir a otra persona
+   * sino volver a mostrar lo que se ocultó.
+   */
+  protected readonly filtroOcultaTodo = computed(
+    () =>
+      this.tiposDelFiltro().length > 0 &&
+      this.tiposDelFiltro().every(({ tipo }) => this.tiposOcultos().has(tipo)),
+  );
+
+  /**
+   * Los tipos ocultos, en palabras, para avisarlo arriba de la tabla. Es lo
+   * que hace honesto al PDF: exportado desde «Tabla», el papel dice qué quedó
+   * afuera en vez de pasar por el expediente completo.
+   */
+  protected readonly tiposOcultosEnPalabras = computed(() =>
+    this.tiposDelFiltro()
+      .filter(({ tipo }) => this.tiposOcultos().has(tipo))
+      .map(({ aspecto }) => aspecto.plural.toLowerCase())
+      .join(', '),
+  );
+
+  /** Abre el detalle de un registro elegido en el recorrido. */
+  protected abrirDesdeElRecorrido(id: string): void {
+    const fila = this.bloques()
+      .flatMap((bloque) => bloque.filas)
+      .find((candidata) => candidata.id === id);
+    if (fila !== undefined) {
+      this.verDetalle(fila);
+    }
+  }
+
+  /** Cómo está ordenada la tabla unificada. De lo más reciente a lo más viejo. */
+  protected readonly ordenDelHistorial = signal<SortState>({ key: 'cuando', direction: 'desc' });
+
+  protected ordenarHistorial(orden: SortState): void {
+    this.ordenDelHistorial.set(orden);
+  }
+
+  /** Las filas de los tipos visibles, sin ordenar todavía. */
+  private readonly filasSinOrden = computed<readonly FilaDelHistorial[]>(() => {
+    const atencionDe = this.atencionDeCadaRegistro();
+    return this.bloquesVisibles().flatMap((bloque) => {
+      const tipo = bloque.clave as TipoDelRecorrido;
+      return bloque.filas.map((fila) => {
+        const atencion = atencionDe.get(fila.id);
+        const relacion = [
+          atencion === undefined ? '' : this.describirEncuentro(atencion),
+          fila.diagnostico ? `Para ${fila.diagnostico}` : '',
+        ]
+          .filter((parte) => parte !== '')
+          .join(' · ');
+        return { ...fila, tipo, aspecto: ASPECTO_DEL_TIPO[tipo], relacion };
+      });
+    });
+  });
+
+  /** Todas las filas de los tipos visibles, en una sola tabla y ordenadas. */
+  protected readonly filasDelHistorial = computed<readonly FilaDelHistorial[]>(() =>
+    [...this.filasSinOrden()].sort(compararFilas<FilaDelHistorial>(this.ordenDelHistorial())),
+  );
+
+  protected readonly estadoDelHistorial = computed(() =>
+    this.estadoDelLibro(this.filasDelHistorial()),
+  );
+
+  /**
+   * El vacío de las dos lecturas nuevas. Propio y no el de {@link estadoDe},
+   * que arma «Sin <bloque> registrados» y acá daría «Sin registros registrados».
+   */
+  private estadoDelLibro<Fila>(filas: readonly Fila[]): ViewState<readonly Fila[]> {
+    return filas.length > 0
+      ? ready(filas)
+      : empty(
+          { label: 'Elegir otra persona', route: CLINICAL_RECORD_ROUTE },
+          'Esta persona todavía no tiene nada asentado en su historia clínica.',
+        );
+  }
+
+  /**
+   * Las columnas de la tabla unificada, con las MISMAS plantillas de celda que
+   * las tablas de cada bloque: una fecha o un estado no se dibujan distinto
+   * según desde qué vista se mire. Dependen de las filas sin ordenar: cambiar
+   * el orden no tiene por qué rearmar las columnas.
+   */
+  protected readonly columnasDelHistorial = computed<readonly ColumnDef<FilaDelHistorial>[]>(() => [
+    { key: 'cuando', header: 'Fecha', priority: 1, sortable: true, cell: celdaDe(this.celdaCuando()) },
+    { key: 'tipo', header: 'Tipo', priority: 1, sortable: true, cell: this.celdaTipo() },
+    {
+      key: 'principal',
+      header: 'Registro',
+      priority: 1,
+      sortable: true,
+      cell: celdaDe(this.celdaPrincipal()),
+    },
+    { key: 'estado', header: 'Estado', priority: 2, cell: celdaDe(this.celdaEstado()) },
+    ...(this.filasSinOrden().some((fila) => fila.relacion !== '')
+      ? [{ key: 'relacion', header: 'Relacionado con', priority: 3 } satisfies ColumnDef<FilaDelHistorial>]
+      : []),
+    { key: 'ver', header: 'Ver', priority: 1, accion: true, cell: celdaDe(this.celdaVer()) },
+  ]);
+
+  protected readonly porFilaDelHistorial = (fila: FilaDelHistorial): string => fila.id;
 
   /* -- El alta de diagnóstico y de alergia desde el expediente -------------
      «Primero debería poder crear un diagnóstico nuevo sobre el expediente del
@@ -1149,7 +1562,7 @@ export class PatientChart {
   protected notasDelEncuentro(encounterId: string): string {
     const notas = (this.datos()?.chart.notes ?? [])
       .filter((fila) => fila.encounterId === encounterId)
-      .map((fila) => fila.chiefComplaintText ?? this.label(fila.noteTypeConceptId));
+      .map((fila) => fila.chiefComplaintText?.trim() || this.label(fila.noteTypeConceptId));
     return notas.length === 0 ? 'Sin notas en este encuentro' : notas.join(', ');
   }
 
@@ -1318,7 +1731,7 @@ export class PatientChart {
       )
       .subscribe({
         next: ({ plantillas, detalles, catalogoDental, dentales, estudios, etiquetas }) => {
-          const campos = camposDe(plantillas);
+          const campos = fieldsOf(plantillas);
           const leidos = detalles.filter(
             (detalle): detalle is FormInstanceDetail => detalle !== null,
           );
@@ -1339,9 +1752,9 @@ export class PatientChart {
                 const fecha = new Date(detalle.closedAt ?? detalle.createdAt);
                 return {
                   id: detalle.id,
-                  titulo: plantillaPorCobertura(detalle, plantillas)?.name ?? 'Formulario clínico',
+                  titulo: templateByCoverage(detalle, plantillas)?.name ?? 'Formulario clínico',
                   completadoEl: Number.isNaN(fecha.getTime()) ? null : fecha,
-                  respuestas: respuestasDe(detalle, campos),
+                  respuestas: responsesOf(detalle, campos),
                 };
               }),
             }),
@@ -1400,7 +1813,7 @@ export class PatientChart {
    * cliente), así que el aviso junta dos fuentes:
    *
    * - los diagnósticos sin resolver cuyo código CIE-10 es de alergia
-   *   ({@link esCodigoDeAlergia}) — las de ahora en adelante;
+   *   ({@link isAllergyCode}) — las de ahora en adelante;
    * - las `AllergyIntolerance` ya registradas, que no tienen pestaña ni alta
    *   pero esconderlas sería peor que repetirlas.
    *
@@ -1413,7 +1826,7 @@ export class PatientChart {
         .filter(
           (condicion) =>
             condicion.resolvedAt === undefined &&
-            esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
+            isAllergyCode(this.etiquetas().get(condicion.codeConceptId)?.code),
         )
         .map((condicion) => condicion.id),
     );
@@ -1525,9 +1938,7 @@ export class PatientChart {
 
   /** Abre `app-diagnosis-verify-dialog` sobre una fila presuntiva. */
   protected abrirVerificacion(fila: FilaClinica, outcome: DiagnosisOutcome): void {
-    if (fila.condicionOriginal === undefined) {
-      return;
-    }
+    if (fila.condicionOriginal === undefined) return;
     this.verificando.set({ condicion: fila.condicionOriginal, nombre: fila.principal, outcome });
   }
 
@@ -1738,6 +2149,7 @@ export class PatientChart {
               key: 'acciones',
               header: 'Cambiar estado',
               priority: 2,
+              accion: true,
               cell: this.celdaAcciones(),
             } satisfies ColumnDef<FilaClinica>,
           ]
@@ -1753,6 +2165,7 @@ export class PatientChart {
         key: 'ver',
         header: 'Ver',
         priority: 1,
+        accion: true,
         cell: this.celdaVer(),
       } satisfies ColumnDef<FilaClinica>,
       // «En todos los formularios debe poderse poner un adjunto… incluso en la
@@ -1777,10 +2190,7 @@ export class PatientChart {
   protected readonly porFila = (fila: FilaClinica): string => fila.id;
 
   /** El estado del bloque: hay filas, o el vacío con su explicación propia. */
-  protected estadoDe(
-    filas: readonly FilaClinica[],
-    titulo: string,
-  ): ViewState<readonly FilaClinica[]> {
+  protected estadoDe<Fila>(filas: readonly Fila[], titulo: string): ViewState<readonly Fila[]> {
     if (filas.length > 0) {
       return ready(filas);
     }
@@ -1800,6 +2210,11 @@ export class PatientChart {
     // parámetro, el segundo seguiría mostrando los datos del primero.
     effect(() => {
       this.profileId();
+      // El filtro por tipo es de ESTA persona: arrastrarlo a la siguiente le
+      // escondería, por ejemplo, la medicación desde el primer momento, y lo
+      // único que lo delataría sería un chip apagado. La vista elegida sí se
+      // conserva: es una preferencia de lectura, no un dato del paciente.
+      untracked(() => this.tiposOcultos.set(new Set()));
       untracked(() => this.cargar());
     });
 
@@ -1927,11 +2342,11 @@ export class PatientChart {
       return state.issues.map((issue) => issue.message).join(' ') || 'Esa transición no es válida.';
     }
     return (
-      mensajeDeFalloDeEscritura(state, {
+      writeFailureMessage(state, {
         accion: 'cambiar el estado clínico',
         sinPermiso: 'Su rol no permite cambiar el estado clínico.',
         yaNoExiste: 'La condición ya no existe. Recargue la pantalla.',
-      }) ?? 'No pudimos completar la acción. Intente de nuevo en unos segundos.'
+      }) ?? 'Ocurrió un error inesperado.'
     );
   }
 
@@ -1975,9 +2390,7 @@ export class PatientChart {
     const guardada = (this.datos()?.resumen.medicationRequests ?? []).find(
       (fila) => fila.id === receta.id,
     );
-    if (guardada === undefined) {
-      return;
-    }
+    if (guardada === undefined) return;
 
     downloadPrescriptionPdf(
       recetaDesdeResumen(guardada, this.contextoDelDocumento(), (id) => this.label(id)),
@@ -1991,7 +2404,7 @@ export class PatientChart {
    * y el mismo acto clínico no puede salir firmado distinto en cada papel.
    */
   private contextoDelDocumento(): ContextoDelDocumento {
-    return contextoDeLaSesion({
+    return sessionContext({
       paciente: this.nombre(),
       practitionerProfileId: this.auth.practitionerProfileId(),
       displayName: this.auth.displayName(),
@@ -2105,6 +2518,18 @@ export class PatientChart {
 }
 
 /**
+ * Una plantilla de celda de {@link FilaClinica}, ofrecida a una tabla de
+ * {@link FilaDelHistorial}. `TemplateRef` es invariante en su contexto, pero la
+ * plantilla sólo lee campos de `FilaClinica`, que `FilaDelHistorial` extiende:
+ * el ensanchamiento es seguro y queda dicho en un solo lugar.
+ */
+function celdaDe(
+  plantilla: TemplateRef<{ $implicit: FilaClinica }>,
+): TemplateRef<{ $implicit: FilaDelHistorial }> {
+  return plantilla as unknown as TemplateRef<{ $implicit: FilaDelHistorial }>;
+}
+
+/**
  * Los identificadores de concepto del expediente, sin los ausentes.
  *
  * Listados a mano —y no recorriendo las claves que terminen en `ConceptId`— por
@@ -2117,6 +2542,9 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...resumen.conditions.flatMap((fila) => [
       fila.codeConceptId,
       fila.categoryConceptId,
+      // Sin la certeza, `diagnosisStateOf` no puede distinguir confirmado de
+      // presuntivo y todo diagnóstico sale «En estudio».
+      fila.verificationStatusConceptId,
       fila.clinicalStatusConceptId,
       fila.severityConceptId,
     ]),
@@ -2143,53 +2571,4 @@ function conceptosDe({ resumen, chart }: Expediente): readonly string[] {
     ...chart.carePlans.flatMap((fila) => [fila.statusConceptId, fila.intentConceptId]),
     ...chart.documents.flatMap((fila) => [fila.categoryConceptId, fila.statusConceptId]),
   ].filter((id): id is string => id !== undefined);
-}
-
-/** Los procedimientos odontológicos de un encuentro, en palabras. */
-function describirDentales(
-  dentales: readonly DentalProcedure[] | null,
-  catalogo: DentalCatalog | null,
-): string {
-  if (dentales === null) {
-    return 'No se pudo leer el histórico odontológico';
-  }
-  if (dentales.length === 0) {
-    return 'Sin procedimientos odontológicos en este encuentro';
-  }
-  const nombres = new Map(
-    [
-      ...(catalogo?.procedureCodes ?? []),
-      ...(catalogo?.teeth ?? []),
-      ...(catalogo?.quadrants ?? []),
-    ].map((entrada) => [entrada.conceptId, entrada.display]),
-  );
-  return dentales
-    .map((d) => {
-      const nombre = nombres.get(d.procedureCodeConceptId) ?? 'Procedimiento odontológico';
-      const sitios = d.sites
-        .map((sitio) => nombres.get(sitio.bodySiteConceptId) ?? sitio.description)
-        .filter((sitio): sitio is string => sitio !== undefined && sitio !== '');
-      return sitios.length === 0 ? nombre : `${nombre} (${sitios.join(', ')})`;
-    })
-    .join(', ');
-}
-
-/** Los estudios de laboratorio e imagen pedidos en un encuentro, en palabras. */
-function describirEstudios(
-  estudios: readonly DiagnosticOrder[] | null,
-  etiquetas: ConceptLabels,
-): string {
-  if (estudios === null) {
-    return 'No se pudieron leer los estudios';
-  }
-  if (estudios.length === 0) {
-    return 'Sin estudios pedidos en este encuentro';
-  }
-  return estudios
-    .map((o) => {
-      const nombre = etiquetas.get(o.codeConceptId)?.display ?? 'Estudio';
-      const estado = etiquetas.get(o.statusConceptId)?.display;
-      return estado === undefined ? nombre : `${nombre} (${estado})`;
-    })
-    .join(', ');
 }

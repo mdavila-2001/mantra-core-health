@@ -2,18 +2,20 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   linkedSignal,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
-import { AppButton } from '../../atoms/button/button';
 import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
+import { Pagination } from '../../molecules/pagination/pagination';
 import { ResultCard } from '../../molecules/result-card/result-card';
 import { ratingOf } from '../../molecules/result-card/rating-of';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -64,12 +66,14 @@ import type {
 const CLAVE_DE_VISTA = 'alovida.directorio.vista';
 
 /**
- * Cuántas tarjetas se dibujan de entrada y cuántas suma cada «Mostrar más».
+ * Cuántas tarjetas tiene cada página del directorio.
  *
  * La guía de médicos llegaba con 804 y las dibujaba todas: 190 000 px de
  * página y varios segundos en blanco antes del primer pintado. 24 llena dos
  * pantallas de escritorio en grilla (3 o 4 por fila) y es divisible por las
- * dos.
+ * dos. Es una página de verdad, con su paginador: un «Mostrar más» que
+ * acumula —o un scroll infinito— vuelve a dibujar cientos de tarjetas y
+ * pierde el lugar al volver desde una ficha.
  */
 const TANDA_POR_DEFECTO = 24;
 
@@ -127,7 +131,7 @@ function vistaGuardada(clave: string): Vista | null {
 
 @Component({
   selector: 'app-directory-page',
-  imports: [AppButton, FilterBar, NavIcon, PageHeader, ResultCard, ViewStateHost],
+  imports: [FilterBar, NavIcon, PageHeader, Pagination, ResultCard, ViewStateHost],
   templateUrl: './directory-page.html',
   styleUrl: './directory-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -447,55 +451,49 @@ export class DirectoryPage {
 
   protected readonly total = computed(() => this.resultados().length);
 
-  /** «1–24 de 804 médicos», o «5 médicos» cuando entran todos. */
+  /** «25–48 de 804 médicos», o «5 médicos» cuando entran todos. */
   protected readonly contador = computed(() => {
     const cuantos = this.total();
     const { singular, plural } = this.sustantivo();
-    const mostrados = this.mostrados();
-    if (cuantos > mostrados) {
-      return `1–${mostrados} de ${cuantos} ${plural}`;
+    if (cuantos > this.tamanoDeTanda()) {
+      const desde = (this.paginaActual() - 1) * this.tamanoDeTanda() + 1;
+      return `${desde}–${desde + this.visibles().length - 1} de ${cuantos} ${plural}`;
     }
     return `${cuantos} ${cuantos === 1 ? singular : plural}`;
   });
 
-  /** Cuántas tarjetas suma cada «Mostrar más». */
+  /** Cuántas tarjetas tiene cada página. */
   readonly tamanoDeTanda = input(TANDA_POR_DEFECTO);
 
   /**
-   * Cuántas tarjetas se dibujan. Vuelve a una tanda cada vez que cambian los
-   * grupos —otro filtro, otra búsqueda—: lo abierto de una búsqueda no tiene
-   * por qué seguir abierto en la siguiente.
+   * La página que se ve (1-based). Vuelve a la primera cada vez que cambian
+   * los grupos —otro filtro, otra búsqueda—: la página 7 de una búsqueda no
+   * existe en la siguiente.
    */
-  protected readonly limite = linkedSignal({
+  protected readonly pagina = linkedSignal({
     source: this.resultados,
-    computation: () => this.tamanoDeTanda(),
+    computation: () => 1,
   });
 
-  /** Las tarjetas que se dibujan: la grilla plana, recortada a la tanda. */
-  protected readonly visibles = computed(() => this.resultados().slice(0, this.limite()));
-
-  protected readonly mostrados = computed(() => Math.min(this.limite(), this.total()));
-
-  protected readonly restantes = computed(() => this.total() - this.mostrados());
-
-  /**
-   * «Mostrar 24 más», o los que queden si son menos. Sin el sustantivo: el de
-   * varios directorios es «clínicas encontradas», y la línea de progreso, justo
-   * encima, ya dice de qué son.
-   */
-  protected readonly textoMostrarMas = computed(
-    () => `Mostrar ${Math.min(this.tamanoDeTanda(), this.restantes())} más`,
+  /** La página acotada al rango válido: el resultado nunca queda fuera de la última. */
+  protected readonly paginaActual = computed(() =>
+    Math.min(Math.max(1, this.pagina()), Math.max(1, Math.ceil(this.total() / this.tamanoDeTanda()))),
   );
 
-  /** «Se muestran 24 de 804 médicos». */
-  protected readonly textoProgreso = computed(() => {
-    const { plural } = this.sustantivo();
-    return `Se muestran ${this.mostrados()} de ${this.total()} ${plural}.`;
+  /** Las tarjetas de la página: la grilla plana, recortada a su tramo. */
+  protected readonly visibles = computed(() => {
+    const tamano = this.tamanoDeTanda();
+    const desde = (this.paginaActual() - 1) * tamano;
+    return this.resultados().slice(desde, desde + tamano);
   });
 
-  protected mostrarMas(): void {
-    this.limite.update((actual) => actual + this.tamanoDeTanda());
+  /** Cambiar de página sube al comienzo de los resultados: si no, el usuario queda al pie de la nueva. */
+  protected cambiarPagina(pagina: number): void {
+    this.pagina.set(pagina);
+    this.inicioDeResultados()?.nativeElement.scrollIntoView({ block: 'start', behavior: 'auto' });
   }
+
+  private readonly inicioDeResultados = viewChild<ElementRef<HTMLElement>>('inicioDeResultados');
 
   protected readonly sinCoincidencias = computed(
     () => this.total() === 0 && this.textoSinCoincidencias() !== null,

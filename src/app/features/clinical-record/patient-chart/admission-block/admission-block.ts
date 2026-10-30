@@ -21,7 +21,7 @@ import { FormField } from '../../../../shared/components/molecules/form-field/fo
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
 
 /**
  * Una internación tal como la muestra la ficha: sin uuid y con el «sigue
@@ -223,7 +223,7 @@ export class AdmissionBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, { accion: 'dar de alta internaciones', sinPermiso: 'Su rol no permite dar de alta internaciones.' });
+    return writeFailureMessage(state, { accion: 'dar de alta internaciones', sinPermiso: 'Su rol no permite dar de alta internaciones.' });
   });
 
   /**

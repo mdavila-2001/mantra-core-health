@@ -61,15 +61,19 @@ describe('GlossaryTerm con artículo enciclopédico', () => {
     http = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl(`/glossary/${ID}`, GlossaryTerm);
+    // Las relaciones (TAREA-41 F5.5) se leen del vecindario, aparte: acá no importan.
+    http
+      .expectOne((r) => r.url.endsWith(`/concepts/${ID}/glossary-neighborhood`))
+      .flush({ focus: { conceptId: ID, slug: 'x', display: 'x', category: null, shortDefinition: '' }, groups: [] });
   });
 
   afterEach(() => http.verify());
 
   const html = () => harness.fixture.nativeElement as HTMLElement;
   const rotulos = () => [...html().querySelectorAll('[role="tab"]')].map((b) => b.textContent?.trim());
-  const articulo = () => http.expectOne((r) => r.url.endsWith(`/concepts/${ID}/article`));
+  const articulo = () => http.expectOne((r) => r.url.endsWith(`/concepts/${ID}/glossary-article`));
   const ficha = () =>
-    http.expectOne((r) => r.url.endsWith(`/concepts/${ID}`) && !r.url.endsWith('/article'));
+    http.expectOne((r) => r.url.endsWith(`/concepts/${ID}`) && !r.url.endsWith('/glossary-article'));
 
   it('con artículo, la pestaña «Artículo» reemplaza a «Definición»', async () => {
     articulo().flush(ARTICULO);

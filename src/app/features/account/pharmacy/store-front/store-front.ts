@@ -15,6 +15,7 @@ import { empty, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Link } from '../../../../shared/components/atoms/link/link';
+import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { SearchField } from '../../../../shared/components/molecules/search-field/search-field';
@@ -44,7 +45,7 @@ import { StoreResults } from '../search/store-results';
 import { RecentOrders } from './recent-orders';
 
 /** La pestaña de Cotizaciones del hub viejo, que ahora es su propia pantalla. */
-const COTIZACIONES_ROUTE = '/my-account/cotizaciones';
+const COTIZACIONES_ROUTE = '/my-account/quotations';
 
 /** Lo que la búsqueda en curso le pide al servicio. */
 interface Consulta {
@@ -52,6 +53,7 @@ interface Consulta {
   readonly modo: SearchMode;
   readonly orden: SearchSort;
   readonly origen: SearchOrigin | null;
+  readonly abiertas: boolean;
   readonly intento: number;
 }
 
@@ -93,6 +95,7 @@ const NADA = { items: [], sinOrigen: false } as const;
   imports: [
     AppButtonLink,
     Card,
+    Chip,
     FormField,
     Link,
     PageHeader,
@@ -125,6 +128,12 @@ export class StoreFront {
 
   protected readonly termino = signal('');
   protected readonly modo = signal<SearchMode>('products');
+  /**
+   * P34 · en el modo Farmacias, sólo las abiertas ahora: 24 h declaradas o de
+   * turno vigente. Lo resuelve el servidor (`openNow=true`). Estaba en
+   * `PharmacyShop`, que desde la tienda nueva no tiene ruta (A4, 26/10/2026).
+   */
+  protected readonly soloAbiertas = signal(false);
   protected readonly orden = signal<SearchSort>('price');
   protected readonly origen = signal<SearchOrigin | null>(null);
   private readonly intento = signal(0);
@@ -180,6 +189,7 @@ export class StoreFront {
         modo: this.modo(),
         orden: this.orden(),
         origen: this.origen(),
+        abiertas: this.soloAbiertas(),
         intento: this.intento(),
       })),
     ).pipe(
@@ -195,7 +205,12 @@ export class StoreFront {
         const fuente: Observable<Resultado> =
           consulta.modo === 'products'
             ? this.busqueda.searchProducts(consulta.termino, consulta.origen, consulta.orden)
-            : this.busqueda.searchStores(consulta.termino, consulta.origen, consulta.orden);
+            : this.busqueda.searchStores(
+                consulta.termino,
+                consulta.origen,
+                consulta.orden,
+                consulta.abiertas,
+              );
         return fuente.pipe(
           map((resultado) => ready(resultado)),
           catchError((error: unknown) => of(errorToViewState<Resultado>(error))),
@@ -243,6 +258,12 @@ export class StoreFront {
     }
     if (this.esperandoTermino() || actual.data.items.length > 0) {
       return actual;
+    }
+    if (this.modo() === 'stores' && this.soloAbiertas()) {
+      return empty(
+        { label: 'Quite «Abiertas ahora» para ver todas' },
+        'Ninguna farmacia declaró estar abierta las 24 h o de turno en este momento.',
+      );
     }
     return empty(
       { label: 'Pruebe con otra palabra' },

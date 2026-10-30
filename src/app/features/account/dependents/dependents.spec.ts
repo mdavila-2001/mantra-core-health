@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 
 import { SessionStore } from '../../../core/auth/session.store';
 import { PatientContextService } from '../../../core/patient-context/patient-context.service';
+import { chooseSelectOption, selectOptionLabels } from '../../../../testing/select';
 import { Dependents } from './dependents';
 
 /**
@@ -149,7 +150,7 @@ describe('Dependents', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no registró a nadie');
+    expect(texto()).toContain('Todavía no registró a nadie.');
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[data-testid="dependents-nuevo"]'),
     ).not.toBeNull();
@@ -210,7 +211,7 @@ describe('Dependents', () => {
     expect(contexto.activePatientProfileId()).toBe('pp-titular');
   });
 
-  it('muestra las solicitudes recibidas y aceptar las responde', () => {
+  it('muestra las solicitudes recibidas y aceptar las responde', async () => {
     montar({
       solicitudes: [
         { id: 'sol-1', requesterDisplayName: 'Rosa Choque', createdAt: '2026-09-25T10:00:00.000Z' },
@@ -227,13 +228,12 @@ describe('Dependents', () => {
     );
     expect(aceptar!.getAttribute('aria-disabled')).toBe('true');
 
-    const relacion = raiz.querySelector<HTMLSelectElement>(
-      '[data-testid="dependents-relacion-sol-1"] select',
-    );
+    expect(aceptar!.getAttribute('aria-disabled')).toBe('true');
+
+    const relacion = raiz.querySelector<HTMLElement>('[data-testid="dependents-relacion-sol-1"]');
     // La amistad no se ofrece como relación de cuidado/dependencia.
-    expect([...relacion!.options].map((o) => o.textContent?.trim())).not.toContain('Amistad');
-    relacion!.value = '1';
-    relacion!.dispatchEvent(new Event('change'));
+    expect(await selectOptionLabels(fixture, relacion!)).not.toContain('Amistad');
+    await chooseSelectOption(fixture, relacion!, 1);
     fixture.detectChanges();
     expect(aceptar!.getAttribute('aria-disabled')).toBe('false');
     aceptar!.click();

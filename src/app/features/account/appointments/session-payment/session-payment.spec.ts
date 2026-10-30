@@ -4,7 +4,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { API_BASE_URL } from '../../../../core/data-access/api';
 import type { SimulatedCharge } from '../../../../core/data-access/billing-simulated/billing-simulated.types';
-import type { FacturacionSimulada } from '../../../../core/mock/billing-sim/facturacion-simulada';
+import type { SimulatedInvoicing } from '../../../../core/mock/billing-sim/simulated-invoicing';
 import { motorDePrueba } from '../../../billing/billing.spec-fixtures';
 import { SessionPayment } from './session-payment';
 
@@ -22,7 +22,7 @@ function archivo(nombre: string, tipo: string, bytes = 8): File {
 describe('SessionPayment', () => {
   let fixture: ComponentFixture<SessionPayment>;
   let http: HttpTestingController;
-  let motor: FacturacionSimulada;
+  let motor: SimulatedInvoicing;
   let cobro: SimulatedCharge;
 
   function el<T extends HTMLElement = HTMLElement>(testId: string): T | null {
@@ -53,7 +53,7 @@ describe('SessionPayment', () => {
 
   beforeEach(() => {
     motor = motorDePrueba();
-    cobro = motor.listarCobros().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
+    cobro = motor.listCharges().find((c) => c.source === 'CONSULTATION' && c.payment === null && c.plan === null)!;
   });
 
   afterEach(() => http.verify());

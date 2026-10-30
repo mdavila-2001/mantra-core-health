@@ -2,9 +2,9 @@ import { ShadingPattern, type jsPDF } from 'jspdf';
 
 import type { ColorRgb } from './alovida-mark';
 import type { PdfExportOptions, PdfIssuer } from './pdf-document.types';
-import { firmaDeDocumentos, type PdfFirma } from './pdf-firma';
-import { fuentesDeDocumentos, type PdfFuentes } from './pdf-fuentes';
-import { logoDeDocumentos, type PdfLogo } from './pdf-logo';
+import { documentSignature, type PdfSignature } from '../../../core/pdf-branding/pdf-signature';
+import { documentFonts, type PdfFonts } from '../../../core/pdf-branding/pdf-fonts';
+import { logoDeDocumentos, type PdfLogo } from '../../../core/pdf-branding/pdf-logo';
 import {
   PDF_ALPHA_TOKENS,
   PDF_FONTS,
@@ -43,7 +43,7 @@ export class PdfComposer {
   /** El logo del consultorio ya resuelto, o `null`. Se decide una vez por documento. */
   readonly logo: PdfLogo | null;
   /** La firma del final, ya resuelta, o `null` si el documento no lleva bloque. */
-  readonly signature: PdfFirma | null;
+  readonly signature: PdfSignature | null;
   readonly issuer: PdfIssuer;
   readonly issuedAt: Date;
   /**
@@ -85,11 +85,11 @@ export class PdfComposer {
     this.right = this.left + this.width;
     this.bottom = this.pageHeight - PDF_PAGE.footerRuleFromBottom - PDF_PAGE.footerClearance;
     this.logo = options.logo === undefined ? logoDeDocumentos() : options.logo;
-    this.signature = options.firma === undefined ? firmaDeDocumentos() : options.firma;
+    this.signature = options.firma === undefined ? documentSignature() : options.firma;
     this.issuer = options.issuer ?? { name: 'AloVida' };
     this.issuedAt = options.issuedAt ?? new Date();
     this.issuedAtDeclared = options.issuedAt !== undefined;
-    const fuentes = fuentesDeDocumentos();
+    const fuentes = documentFonts();
     this.hasBrandFonts = fuentes !== null;
     this.fonts = registerFonts(doc, fuentes);
   }
@@ -404,8 +404,8 @@ function keepTimesTogether(text: string): string {
   return text.replace(/(\d)[ \u00A0\u202F]+([ap])\.[ \u00A0\u202F]*m\./g, '$1\u00A0$2.\u00A0m.');
 }
 
-/** Qué archivo de `PdfFuentes` cubre cada pieza tipográfica del tema. */
-const FONT_FILES: Readonly<Record<PdfFontRole, keyof PdfFuentes>> = {
+/** Qué archivo de `PdfFonts` cubre cada pieza tipográfica del tema. */
+const FONT_FILES: Readonly<Record<PdfFontRole, keyof PdfFonts>> = {
   display: 'titulos',
   displayMedium: 'rotulos',
   text: 'cuerpo',
@@ -420,7 +420,7 @@ const FONT_FILES: Readonly<Record<PdfFontRole, keyof PdfFuentes>> = {
  * archivo es un solo peso y va bajo el estilo `normal` de su propia familia.
  * Sin fuentes cargadas, todo va en Helvetica (la negrita para lo destacado).
  */
-function registerFonts(doc: jsPDF, fuentes: PdfFuentes | null): Readonly<Record<PdfFontRole, string>> {
+function registerFonts(doc: jsPDF, fuentes: PdfFonts | null): Readonly<Record<PdfFontRole, string>> {
   const roles = Object.keys(FONT_FILES) as PdfFontRole[];
   if (fuentes === null) {
     return {

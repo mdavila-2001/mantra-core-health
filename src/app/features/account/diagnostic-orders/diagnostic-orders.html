@@ -9,7 +9,7 @@
   </app-alert>
 } @else {
   <!-- Regla 8: una sola tarjeta centrada a lo ancho, con las cuatro pestañas dentro. -->
-  <app-card class="ordenes" variant="outlined" padding="lg" data-testid="mis-ordenes-card">
+  <app-card class="ordenes" variant="elevated" padding="lg" data-testid="mis-ordenes-card">
     <!-- `data-testid` acá cae en el panel (`app-tab` ES el panel), no en el
          botón visible de la pestaña: ese lo dibuja `Tabs` internamente y no
          tiene forma de recibir un id desde afuera (pieza de la casa, no se
@@ -20,6 +20,7 @@
       <app-tab [label]="'Todas (' + conteos().TODAS + ')'" data-testid="mis-ordenes-tab-TODAS" />
       <app-tab [label]="'Laboratorio (' + conteos().LAB + ')'" data-testid="mis-ordenes-tab-LAB" />
       <app-tab [label]="'Imagenología (' + conteos().IMAGING + ')'" data-testid="mis-ordenes-tab-IMAGING" />
+      <app-tab [label]="'Procedimientos (' + conteos().PROCEDURE + ')'" data-testid="my-orders-tab-PROCEDURE" />
       <app-tab [label]="'Otros (' + conteos().OTHER + ')'" data-testid="mis-ordenes-tab-OTHER" />
     </app-tabs>
 
@@ -73,7 +74,8 @@
               [columns]="columnas()"
               [trackBy]="porId"
               [rowLabel]="nombreDeFila"
-              caption="Sus órdenes de laboratorio e imagen"
+              caption="Sus órdenes de laboratorio, imagen y procedimientos"
+              stackedOnMobile
               maxHeight="480px"
               data-testid="mis-ordenes-tabla"
             />
@@ -95,7 +97,10 @@
 
 <ng-template #celdaPedida let-fila>{{ fila.requestedAt | date: 'dd/MM/yyyy' }}</ng-template>
 
-<ng-template #celdaEstudio let-fila>{{ fila.studyLabel }}</ng-template>
+<ng-template #celdaEstudio let-fila>
+  <span class="ordenes__estudio">{{ fila.studyLabel }}</span>
+  <app-order-performer-summary [mode]="fila.performerMode" [siteName]="fila.suggestedSiteName" />
+</ng-template>
 
 <ng-template #celdaTipo let-fila>
   <app-badge variant="info">{{ fila.typeLabel }}</app-badge>

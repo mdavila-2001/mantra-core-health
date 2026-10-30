@@ -30,6 +30,12 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
   { key: 'obraSocial', header: 'Obra social', priority: 2, sticky: 'end' },
 ];
 
+const FILAS_CON_HUECO: readonly Paciente[] = [
+  { id: 'p-1', apellido: 'Peña', documento: '4821133', obraSocial: '' },
+];
+
+// Anfitrión de prueba: lee campos mutables a propósito, no es un componente de producto.
+ 
 @Component({
   imports: [DataTable],
   template: `
@@ -44,6 +50,10 @@ const COLUMNAS: readonly ColumnDef<Paciente>[] = [
       [cursor]="cursor()"
       [maxHeight]="maxHeight()"
       [fitContainer]="fitContainer()"
+      [stackedOnMobile]="apilada()"
+      [heading]="encabezado()"
+      [totalCount]="total()"
+      [pageSummary]="resumen()"
       (sortChanged)="ordenes.push($event)"
       (cursorChanged)="cursores.push($event)"
       (selectionChanged)="selecciones.push($event)"
@@ -63,6 +73,10 @@ class HostComponent {
   readonly cursor = signal<CursorState>({});
   readonly maxHeight = signal<string | null>(null);
   readonly fitContainer = signal(false);
+  readonly apilada = signal(false);
+  readonly encabezado = signal('');
+  readonly total = signal<number | null>(null);
+  readonly resumen = signal('');
   readonly ordenes: SortState[] = [];
   readonly cursores: string[] = [];
   readonly selecciones: (readonly Paciente[])[] = [];
@@ -390,6 +404,47 @@ describe('DataTable', () => {
     });
   });
 
+  describe('encabezado «Registros · n» y resumen de página', () => {
+    it('sin encabezado ni total no dibuja la barra: las pantallas actuales no cambian', () => {
+      expect(root().querySelector('[data-testid="tabla-encabezado"]')).toBeNull();
+    });
+
+    it('muestra el título y el total del filtro vigente', async () => {
+      host.encabezado.set('Registros');
+      host.total.set(338);
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="tabla-encabezado"]')?.textContent).toContain(
+        'Registros',
+      );
+      expect(root().querySelector('[data-testid="tabla-total"]')?.textContent?.trim()).toBe('338');
+    });
+
+    it('un total cero se dice: no es lo mismo que no conocer el total', async () => {
+      host.encabezado.set('Registros');
+      host.total.set(0);
+      await fixture.whenStable();
+      expect(root().querySelector('[data-testid="tabla-total"]')?.textContent?.trim()).toBe('0');
+    });
+
+    it('el resumen de página acompaña a los botones de cursor, no los reemplaza', async () => {
+      host.cursor.set({ nextCursor: 'cur-sig' });
+      host.resumen.set('Página 1 de 7 · 338 registros');
+      await fixture.whenStable();
+
+      expect(root().querySelector('[data-testid="tabla-resumen"]')?.textContent).toContain(
+        'Página 1 de 7',
+      );
+      expect(botonPorTexto('Siguiente')).toBeDefined();
+    });
+
+    it('con una sola página no hay paginación ni resumen', async () => {
+      host.resumen.set('Página 1 de 1 · 2 registros');
+      await fixture.whenStable();
+      expect(root().querySelector('[data-testid="tabla-resumen"]')).toBeNull();
+    });
+  });
+
   describe('selección', () => {
     beforeEach(async () => {
       host.selectable.set(true);
@@ -529,6 +584,39 @@ describe('DataTable', () => {
       expect(css).toContain('container: data-table / inline-size');
       expect(css).toContain('@container data-table (width < 52rem)');
       expect(css).toContain(':host(.data-table--fit-container) .data-table__detail-row');
+    });
+  });
+  describe('modo apilado en teléfono (stackedOnMobile)', () => {
+    it('no marca el host ni cambia nada si no se pide', () => {
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(false);
+    });
+
+    it('marca el host y rotula cada celda con el encabezado de su columna', async () => {
+      host.apilada.set(true);
+      await fixture.whenStable();
+
+      expect(root().querySelector('app-data-table')?.classList.contains('data-table--apilada')).toBe(true);
+      const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
+      expect(celdas.map((celda) => celda.dataset['label'])).toEqual(['Apellido', 'Documento', 'Obra social']);
+    });
+
+    it('marca la celda sin valor para que el apilado la oculte, y la columna de acción para quitarle la etiqueta', async () => {
+      host.state.set(ready(FILAS_CON_HUECO));
+      host.apilada.set(true);
+      await fixture.whenStable();
+
+      const celdas = [...root().querySelectorAll<HTMLTableCellElement>('tbody tr.data-table__row:first-child > td[data-label]')];
+      expect(celdas.map((celda) => celda.classList.contains('data-table__cell--vacia'))).toEqual([false, false, true]);
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('td.data-table__cell--vacia');
+      expect(css).toContain('td.data-table__cell--accion::before');
+    });
+
+    it('el CSS apila sólo por debajo de 40rem y sólo si la pantalla lo pidió', () => {
+      const css = readFileSync(DATA_TABLE_CSS, 'utf8');
+      expect(css).toContain('@media not all and (min-width: 40.0625rem)');
+      expect(css).toContain(':host(.data-table--apilada) .data-table__row > td::before');
+      expect(css).toContain('content: attr(data-label)');
     });
   });
 });

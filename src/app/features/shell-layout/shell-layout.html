@@ -98,6 +98,18 @@
       </button>
     </div>
 
+    <!-- Emergencia, arriba del menú (propietario, 27/10/2026). Vivía en la
+         cabecera; se mudó acá para despejarla. Primera cosa del menú, antes que
+         cualquier destino: una urgencia no compite. Sólo en la versión
+         responsive (propietario, 28/10/2026): en el escritorio la esconde
+         `shell-layout.css`. Sólo para quien viene a atenderse (27/10/2026): ver
+         `ofreceEmergencia`. -->
+    @if (ofreceEmergencia()) {
+      <div class="app-side-nav__emergencia">
+        <app-panic-button [compacto]="navRecogido()" />
+      </div>
+    }
+
     <!-- Los grupos y sus ítems siguen saliendo del registro de secciones: lo
          que cambia es cómo se pintan, no de dónde vienen.
 
@@ -275,11 +287,21 @@
              selector de organización y del tema— porque es la única que trae
              información nueva: las otras dos son preferencias, y una preferencia
              no compite por la atención con «tu receta está lista». -->
-        <!-- Emergencia a un toque, para todos (propietario, 2026-10-08): con
-             ambulancia de confianza llama directo; si no, abre los números
-             oficiales. Va antes que la campana: una urgencia no compite. -->
-        <app-panic-button appTutorialTarget="header-emergencia" />
-        <app-notification-bell />
+        <!-- Emergencia salió de la cabecera (propietario, 27/10/2026): vive
+             arriba del menú lateral, y sólo en la versión responsive
+             (propietario, 28/10/2026; ver `app-side-nav__emergencia`). En el
+             teléfono el menú es un cajón y quedaba a dos toques, así que ahí
+             vuelve como ícono: una urgencia tiene que estar a uno. Fuera de
+             esos anchos lo esconde `shell-layout.css`. Mismo filtro que en el
+             menú. El tutorial la señala acá, que es donde se ve. -->
+        @if (ofreceEmergencia()) {
+          <app-panic-button
+            class="app-header__emergencia"
+            data-testid="header-emergencia"
+            [appTutorialTarget]="objetivoEmergencia()"
+            compacto
+          />
+        }
 
         <!-- B.1 · por quién se está operando. Sólo aparece cuando hay a quién
              elegir: una cuenta sin dependientes no necesita conmutar nada, y un
@@ -366,28 +388,6 @@
           </div>
         }
 
-        <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
-             (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
-             Ajustes. Es el mismo `switch` sol/luna del marco público y de
-             Ajustes › Apariencia; el dueño del estado es ThemeService.
-
-             H5.S1 (2026-09-22, veredicto de D-05): el `aria-label` ya lo pone
-             la directiva `[app-theme-toggle]` (`role="switch"`, dinámico
-             según el tema — HALL-D7 lo verificó), pero el globo faltaba. La
-             excepción de ADR-0012 §3 quedaba a medias sin él. -->
-        <button
-          class="app-theme-toggle"
-          app-theme-toggle
-          data-testid="header-theme-toggle"
-          appTooltip="Tema"
-          appTooltipPosition="bottom"
-        >
-          <span class="app-theme-toggle__pista">
-            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
-            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
-            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
-          </span>
-        </button>
 
         <!-- En móvil estos destinos forman un menú legible. En escritorio se
              presentan en línea, con el mismo enlace y sin duplicar rutas. -->
@@ -418,11 +418,33 @@
             aria-label="Accesos rápidos"
             appTutorialTarget="header-atajos"
           >
+            <!-- Mis organizaciones (propietario, 28/10/2026): antes «Organización
+                 médica» en el menú lateral. Va primera porque es el contexto
+                 de las demás —dónde se trabaja— y se ofrece sólo a quien la
+                 sección deja entrar (`visibleSections()`, igual que el guard). -->
+            @if (ofreceMisOrganizaciones()) {
+              <a
+                class="app-header__ajustes"
+                routerLinkActive="is-activo"
+                ariaCurrentWhenActive="page"
+                routerLink="/administration/medical-organization"
+                data-testid="header-mis-organizaciones"
+                appTooltip="Mis organizaciones"
+                appTooltipPosition="bottom"
+                aria-label="Mis organizaciones"
+              >
+                <app-nav-icon name="hospital" />
+                <span class="app-header__rapidos-label">Mis organizaciones</span>
+              </a>
+            }
+
             <a
               app-button
               data-variante="secundario"
               data-tam="sm"
               class="app-header__red-social"
+              routerLinkActive="is-activo"
+              ariaCurrentWhenActive="page"
               routerLink="/posts"
               data-testid="header-red-social"
               appTooltip="Red social"
@@ -433,33 +455,14 @@
               <span class="app-header__red-social-texto">Red social</span>
             </a>
 
-        <!-- Tutoriales y Chats (N-01, 2026-09-22). Calcados de «Ajustes» de
-             abajo: `<a routerLink>` con `aria-label` y `appTooltip` (ADR-0012
-             §3), nunca un `<button>`, porque los dos llevan a una pantalla.
-             Van acá, junto al tema y Ajustes, y no junto a la campana: la
-             campana es la única que trae información que exige mirarla ya
-             (el comentario de arriba sigue siendo cierto para ella); Chats y
-             Tutoriales son destinos a los que se navega, como Ajustes, y el
-             badge de Chats es una invitación a entrar, no una alerta.
-             `app-nav-icon` en vez de un SVG en línea nuevo: ya está importado
-             en este componente para el menú lateral (`NavIcon`, L163/197/216)
-             y el catálogo de íconos ya tiene `teach` y `chat` — copiar el SVG
-             de Ajustes a mano habría duplicado un ícono que ya existe. -->
+        <!-- Chats (N-01, 2026-09-22). `<a routerLink>` con `aria-label` y
+             `appTooltip` (ADR-0012 §3): lleva a una pantalla. «Tutoriales»,
+             que iba al lado, se fusionó con Ajustes (propietario, 27/10/2026):
+             es una pestaña de esa pantalla. -->
         <a
           class="app-header__ajustes"
-          routerLink="/tutorials"
-          data-testid="header-tutoriales"
-          appTutorialTarget="header-tutoriales"
-          appTooltip="Tutoriales"
-          appTooltipPosition="bottom"
-          aria-label="Tutoriales"
-        >
-          <app-nav-icon name="teach" />
-          <span class="app-header__rapidos-label">Tutoriales</span>
-        </a>
-
-        <a
-          class="app-header__ajustes"
+          routerLinkActive="is-activo"
+          ariaCurrentWhenActive="page"
           routerLink="/messaging"
           data-testid="header-chats"
           appTooltip="Chats"
@@ -482,14 +485,63 @@
           }
         </a>
 
+        <!-- Mis encuestas (propietario, 28/10/2026): la bandeja del paciente.
+             Sólo se ofrece cuando una atención terminada le generó una
+             encuesta (`GET /surveys/me/invitations` devolvió alguna); el número
+             son las pendientes dentro del plazo. Se marca en toda la pantalla
+             «Mis cuestionarios», no sólo con la pestaña de encuestas abierta:
+             por eso ignora los parámetros de consulta. -->
+        @if (ofreceMisEncuestas()) {
+          <a
+            class="app-header__ajustes"
+            routerLinkActive="is-activo"
+            [routerLinkActiveOptions]="{
+              exact: false,
+              paths: 'subset',
+              queryParams: 'ignored',
+              fragment: 'ignored',
+              matrixParams: 'ignored',
+            }"
+            ariaCurrentWhenActive="page"
+            [routerLink]="rutaDeEncuestas"
+            [queryParams]="parametrosDeEncuestas"
+            data-testid="header-encuestas"
+            appTooltip="Mis encuestas"
+            appTooltipPosition="bottom"
+            [attr.aria-label]="etiquetaEncuestas()"
+          >
+            <app-nav-icon name="survey" />
+            <span class="app-header__rapidos-label">Mis encuestas</span>
+            @if (encuestasPendientes() > 0) {
+              <!-- Sin «0» permanente, igual que Chats. Fuera del árbol
+                   accesible: el número ya viaja en el nombre del enlace. -->
+              <app-badge
+                class="app-header__chats-badge"
+                variant="error"
+                size="sm"
+                [value]="encuestasPendientes()"
+                aria-hidden="true"
+                data-testid="header-encuestas-badge"
+              />
+            }
+          </a>
+        }
+
         <!-- Mis facturas (propietario, 30/09/2026): las facturas emitidas, para
              TODAS las cuentas —paciente, médico y organizaciones—, por eso va
              fuera del bloque del paciente. Qué facturas ve cada una (las que
              le emitieron o las que emitió) lo decide la pantalla con la
              sesión; el ícono es el mismo. Comprobante con borde dentado y no
-             la billetera de «Mis gastos»: una es un papel, la otra dinero. -->
+             la billetera de «Mis gastos»: una es un papel, la otra dinero.
+
+             Para el paciente se fusionó con «Mis gastos» (propietario,
+             27/10/2026): sus facturas se abren desde esa pantalla, y dos
+             atajos seguidos sobre su plata eran uno de más. -->
+        @if (!esPacienteDelCarrito()) {
         <a
           class="app-header__ajustes"
+          routerLinkActive="is-activo"
+          ariaCurrentWhenActive="page"
           routerLink="/my-account/invoices"
           data-testid="header-facturas"
           appTooltip="Mis facturas"
@@ -499,6 +551,7 @@
           <app-nav-icon name="receipt" />
           <span class="app-header__rapidos-label">Mis facturas</span>
         </a>
+        }
 
         <!-- Mis solicitudes (propietario, 01/10/2026): lo que decidió la
              aseguradora, para TODAS las cuentas —paciente, médico,
@@ -507,6 +560,8 @@
              Paraguas: el mismo ícono que dice «seguro» en el resto del menú. -->
         <a
           class="app-header__ajustes"
+          routerLinkActive="is-activo"
+          ariaCurrentWhenActive="page"
           routerLink="/my-account/requests"
           data-testid="header-solicitudes"
           appTooltip="Mis solicitudes"
@@ -525,33 +580,28 @@
           <!-- Mis gastos: la billetera abre el tablero de lo que el paciente
                gastó en su salud (propietario, 27/09/2026). Primera de las tres
                porque es la única que no es una compra. -->
+          <!-- Sin `routerLinkActive`: también se marca en «Mis facturas», que
+               se fusionó acá y se abre con «Ver mis facturas» (27/10/2026). -->
           <a
             class="app-header__ajustes"
+            [class.is-activo]="gastosActivo()"
+            [attr.aria-current]="gastosActivo() ? 'page' : null"
             routerLink="/my-account/spending"
             data-testid="header-gastos"
-            appTooltip="Mis gastos"
+            appTooltip="Mis gastos y facturas"
             appTooltipPosition="bottom"
-            aria-label="Mis gastos"
+            aria-label="Mis gastos y facturas"
           >
             <app-nav-icon name="wallet" />
             <span class="app-header__rapidos-label">Mis gastos</span>
           </a>
 
-          <!-- Promociones: arriba y no en el menú lateral (cliente, 25/09/2026). -->
+          <!-- Promociones se fusionó con el carrito (propietario, 27/10/2026):
+               son ofertas para comprar, y se abren desde «Mi carrito». -->
           <a
             class="app-header__ajustes"
-            routerLink="/my-account/promotions"
-            data-testid="header-promociones"
-            appTooltip="Promociones"
-            appTooltipPosition="bottom"
-            aria-label="Promociones"
-          >
-            <app-nav-icon name="tag" />
-            <span class="app-header__rapidos-label">Promociones</span>
-          </a>
-
-          <a
-            class="app-header__ajustes"
+            routerLinkActive="is-activo"
+            ariaCurrentWhenActive="page"
             [routerLink]="pharmacyCartRoute"
             [attr.data-testid]="pharmacyTestids.headerCart"
             appTooltip="Carrito"
@@ -584,8 +634,11 @@
              cualquiera espera de algo que navega. -->
         <a
           class="app-header__ajustes"
+          routerLinkActive="is-activo"
+          ariaCurrentWhenActive="page"
           routerLink="/settings"
           data-testid="header-ajustes"
+          appTutorialTarget="header-ajustes"
           appTooltip="Ajustes"
           appTooltipPosition="bottom"
           aria-label="Ajustes"
@@ -596,6 +649,36 @@
 
           </nav>
         </div>
+
+        <!-- Lo que no es un destino va aparte, después de un filete: la campana
+             (lo único que trae algo nuevo), el tema y la cuenta. Los destinos
+             quedan juntos en una sola barra y estas tres no compiten con ellos
+             (rediseño de la cabecera, 27/10/2026). -->
+        <span class="app-header__separador" aria-hidden="true"></span>
+        <app-notification-bell />
+
+        <!-- Interruptor de tema. Volvió al encabezado a pedido del cliente
+             (2026-09-18): claro/oscuro se cambia seguido y no debe exigir ir a
+             Ajustes. Es el mismo `switch` sol/luna del marco público y de
+             Ajustes › Apariencia; el dueño del estado es ThemeService.
+
+             H5.S1 (2026-09-22, veredicto de D-05): el `aria-label` ya lo pone
+             la directiva `[app-theme-toggle]` (`role="switch"`, dinámico
+             según el tema — HALL-D7 lo verificó), pero el globo faltaba. La
+             excepción de ADR-0012 §3 quedaba a medias sin él. -->
+        <button
+          class="app-theme-toggle"
+          app-theme-toggle
+          data-testid="header-theme-toggle"
+          appTooltip="Tema"
+          appTooltipPosition="bottom"
+        >
+          <span class="app-theme-toggle__pista">
+            <svg class="icono icono--sm app-theme-toggle__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"></path></svg>
+            <svg class="icono icono--sm app-theme-toggle__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.5 14.8A8.5 8.5 0 0 1 9.2 3.5a8.5 8.5 0 1 0 11.3 11.3z"></path></svg>
+            <span class="app-theme-toggle__perilla" aria-hidden="true"></span>
+          </span>
+        </button>
 
         @if (user(); as persona) {
           <div class="menu-anclaje">
@@ -628,6 +711,16 @@
                   <span class="caption">{{ rolesLegibles() }}</span>
                 }
               </p>
+              <!-- ID-24: cambiar la contraseña y cerrar sesiones. Es de cualquier
+                   persona con sesión; vive acá y no en el menú lateral. -->
+              <a
+                class="app-menu-item"
+                role="menuitem"
+                routerLink="/my-account/security"
+                data-testid="header-seguridad"
+              >
+                Seguridad de la cuenta
+              </a>
               <button
                 class="app-menu-item"
                 type="button"

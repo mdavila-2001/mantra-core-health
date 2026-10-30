@@ -104,7 +104,7 @@
 <div class="editor__escenario">
   @switch (status()) {
     @case ('loading') {
-      <p class="editor__estado" role="status">Preparando la imagen…</p>
+      <app-loading-state class="editor__estado" size="block" message="Preparando la imagen…" />
     }
     @case ('failed') {
       <p class="editor__estado" role="alert">No pudimos abrir la imagen para editarla. Puede enviarla tal como está.</p>

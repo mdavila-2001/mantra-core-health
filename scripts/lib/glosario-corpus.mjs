@@ -32,7 +32,7 @@ export const TABLA_DE_SINTOMAS = join(
   'app',
   'features',
   'symptom-check',
-  'sintomas.datos.ts',
+  'symptoms.data.ts',
 );
 
 /** Las capas, en el orden en que se leen. El orden importa sólo para los mensajes. */

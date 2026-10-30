@@ -1,5 +1,5 @@
 import { NOMBRE_PROGRAMA_PUNTOS } from '../../data-access/loyalty/loyalty.types';
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE } from '../fixtures/people';
 import { conflict, preconditionFailed, reply, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { Coleccion, iso, nuevoId, uuid } from '../mock-store';
 

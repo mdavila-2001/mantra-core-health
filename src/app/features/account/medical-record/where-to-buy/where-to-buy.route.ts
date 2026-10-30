@@ -16,7 +16,12 @@
  * dar tres paradas donde alcanzaban dos. Con el tope de sedes de la consulta
  * (veinte) y las paradas acotadas a la cantidad de renglones, recorrer las
  * combinaciones es barato.
+ *
+ * También viven acá las piezas geográficas que comparten las tres pestañas: el
+ * punto de referencia desde el que se mide y cómo se escribe una distancia.
  */
+
+import type { GeoPoint } from '../../../../core/data-access/pharmacy/pharmacy.types';
 
 /** Una sede, reducida a lo que el recorrido necesita saber de ella. */
 export interface RouteCandidate {
@@ -69,9 +74,11 @@ export function coverageRoute<T extends RouteCandidate>(
 }
 
 /**
- * El enlace «Cómo llegar»: el punto en el mapa, para que la persona arme el
- * viaje en su aplicación. `null` sin coordenadas utilizables — el `0,0` es el
- * valor por defecto de una carga incompleta, no una dirección.
+ * El enlace «Cómo llegar»: la ruta por calles en OpenStreetMap, con el destino
+ * cargado y el origen vacío. El origen lo pone la persona allá, si quiere: la
+ * aplicación no le pasa su ubicación a ningún tercero. `null` sin coordenadas
+ * utilizables — el `0,0` es el valor por defecto de una carga incompleta, no
+ * una dirección.
  */
 export function directionsUrl(lat: number | null, lng: number | null): string | null {
   if (lat === null || lng === null || !Number.isFinite(lat) || !Number.isFinite(lng)) {
@@ -80,7 +87,7 @@ export function directionsUrl(lat: number | null, lng: number | null): string | 
   if (lat === 0 && lng === 0) {
     return null;
   }
-  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  return `https://www.openstreetmap.org/directions?route=%3B${lat}%2C${lng}`;
 }
 
 /** El primer grupo de menor tamaño que lo cubre todo, con la menor distancia total. */
@@ -145,4 +152,20 @@ function* combinations<T>(items: readonly T[], size: number, start = 0): Generat
       yield [items[index]!, ...rest];
     }
   }
+}
+
+/** Un lugar con nombre desde donde medir distancias. */
+export interface ReferencePoint {
+  readonly label: string;
+  readonly lat: number;
+  readonly lng: number;
+}
+
+export function geoPointOf(point: ReferencePoint): GeoPoint {
+  return { lat: point.lat, lng: point.lng };
+}
+
+/** «1,2 km»: un decimal y coma, como el resto de la pantalla. */
+export function formatKm(km: number): string {
+  return `${km.toFixed(1).replace('.', ',')} km`;
 }

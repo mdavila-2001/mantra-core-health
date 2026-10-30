@@ -263,12 +263,24 @@ export const GLOSSARY_RELATION_TYPES = [
   'DIAGNOSTIC_TEST',
   'SYMPTOM',
   'SPECIALTY',
+  // Capa normativa NNAC (TAREA-41 F2): relaciones con evidencia T1 de la norma.
+  'DIAGNOSTIC_CRITERION',
+  'REQUIRED_TEST',
+  'COMPLICATION',
+  'RISK_FACTOR',
+  'REFERRAL_CRITERION',
   // Capa de equipos de la maqueta (2026-10-06), pendiente en la API: una
   // modalidad «incluye» estudios, un equipo «realiza» una modalidad y cada
   // eslabón de datos «envía datos a» el siguiente.
   'INCLUDES',
   'PERFORMS',
   'SENDS_DATA_TO',
+  // Capa normativa NNAC (TAREA-41 F2): relaciones con evidencia T1 de la norma.
+  'DIAGNOSTIC_CRITERION',
+  'REQUIRED_TEST',
+  'COMPLICATION',
+  'RISK_FACTOR',
+  'REFERRAL_CRITERION',
 ] as const;
 export type GlossaryRelationType = (typeof GLOSSARY_RELATION_TYPES)[number];
 
@@ -294,31 +306,55 @@ export interface GlossaryGraphNode {
   readonly shortDefinition: string;
 }
 
-/** Relación dirigida tal como está registrada en el catálogo. */
-export interface GlossaryGraphEdge {
-  readonly sourceConceptId: string;
-  readonly targetConceptId: string;
-  readonly type: GlossaryRelationType;
-}
-
-/** Grafo publicado y limitado para una vista interactiva. */
-export interface GlossaryGraph {
-  readonly nodes: readonly GlossaryGraphNode[];
-  readonly edges: readonly GlossaryGraphEdge[];
-  readonly count: number;
-  readonly limit: number;
-  readonly possiblyTruncated: boolean;
-}
-
 /** De qué lado de la relación está el término central. */
 export type GlossaryRelationDirection = 'outgoing' | 'incoming';
 
-/** Un término vecino en el mapa: lo justo para pintarlo y navegar a él. */
+/** Mejor nivel de evidencia de una relación, de T1 (norma nacional) a T4 (estadística). */
+export type GlossaryEvidenceTier =
+  | 'NATIONAL_STANDARD'
+  | 'CURATED_REFERENCE'
+  | 'COLLABORATIVE_KNOWLEDGE'
+  | 'STATISTICAL_LITERATURE';
+
+/**
+ * Frecuencia de un hallazgo en una enfermedad (escala HPO). `EXCLUDED` no es
+ * una relación positiva: la fuente **descarta** el hallazgo.
+ */
+export type GlossaryRelationFrequency =
+  | 'OBLIGATE'
+  | 'VERY_FREQUENT'
+  | 'FREQUENT'
+  | 'OCCASIONAL'
+  | 'VERY_RARE'
+  | 'EXCLUDED';
+
+/** A quién aplica una relación; cada campo viaja sólo si todas sus evidencias coinciden. */
+export interface GlossaryNeighborQualifiers {
+  readonly sex?: string;
+  readonly ageMinDays?: number;
+  readonly ageMaxDays?: number;
+  readonly pregnancy?: string;
+  readonly careLevel?: string;
+  readonly lineOfTherapy?: string;
+}
+
+/**
+ * Un término vecino en el mapa: lo justo para pintarlo y navegar a él.
+ *
+ * Los campos opcionales (TAREA-41 F1.5) salen de la evidencia de la relación y
+ * no llegan si la relación todavía no tiene evidencia cargada.
+ */
 export interface GlossaryNeighbor {
   readonly conceptId: string;
   readonly slug: string;
   readonly display: string;
   readonly category: GlossaryCategoryRef | null;
+  /** Fuerza de la relación, de 0 a 1. */
+  readonly strength?: number;
+  readonly frequency?: GlossaryRelationFrequency;
+  readonly evidenceTier?: GlossaryEvidenceTier;
+  readonly sourceCodes?: readonly string[];
+  readonly qualifiers?: GlossaryNeighborQualifiers;
 }
 
 /**

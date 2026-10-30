@@ -27,7 +27,7 @@ import { AppButtonLink } from '../../../../shared/components/atoms/button/button
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
-import { comprobanteDesdePedido } from '../../../../shared/utils/receipt-pdf/from-pedido';
+import { receiptFromOrder } from '../../../../shared/utils/receipt-pdf/from-order';
 import { downloadReceiptPdf } from '../../../../shared/utils/receipt-pdf/receipt-pdf';
 import { displayCurrency } from '../../../../core/money/display-currency';
 
@@ -74,7 +74,7 @@ export class OrderReceipt {
   protected readonly pedido = computed(() => dataOf(this.state()));
   protected readonly comprobante = computed(() => {
     const pedido = this.pedido();
-    return pedido === null ? null : comprobanteDesdePedido(pedido);
+    return pedido === null ? null : receiptFromOrder(pedido);
   });
 
   private orderId: string | null = null;
@@ -95,7 +95,7 @@ export class OrderReceipt {
     this.state.set(loading());
     this.ordersClient.pedido(orderId).subscribe({
       next: (pedido) => {
-        if (comprobanteDesdePedido(pedido) === null) {
+        if (receiptFromOrder(pedido) === null) {
           // Payment is not part of the pharmacy-orders API. Do not fabricate a receipt.
           this.state.set(
             empty(
@@ -118,7 +118,7 @@ export class OrderReceipt {
   /** Descarga el PDF — el mismo contenido que esta pantalla, por diseño. */
   protected descargar(): void {
     const pedido = this.pedido();
-    const comprobante = pedido === null ? null : comprobanteDesdePedido(pedido);
+    const comprobante = pedido === null ? null : receiptFromOrder(pedido);
     if (!this.esBrowser || comprobante === null) {
       return;
     }

@@ -1,0 +1,91 @@
+/* ============================================================================
+    El bloque del médico de cabecera en la ficha de un profesional.
+    Una fila: el icono, la explicación y el botón. En móvil el botón baja y
+    ocupa el ancho, que es el objetivo táctil cómodo.
+    ========================================================================== */
+
+:host {
+  display: block;
+  margin-block-start: var(--sp-6);
+}
+
+.cabecera__fila {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.cabecera__icono {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--sp-12);
+  block-size: var(--sp-12);
+  border-radius: var(--r-full);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+}
+
+.cabecera--elegido .cabecera__icono {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+}
+
+.cabecera__texto {
+  display: grid;
+  gap: var(--sp-2);
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+}
+
+.cabecera__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cabecera__explicacion,
+.cabecera__actual {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.cabecera__estado {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--st-success-fg);
+}
+
+.cabecera__accion {
+  flex: 0 1 auto;
+}
+
+.cabecera__aviso {
+  display: block;
+  margin-block-start: var(--sp-4);
+}
+
+/* Vacía la mayor parte del tiempo: sólo ocupa lugar cuando anuncia algo. */
+.cabecera__ok {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.cabecera__ok:not(:empty) {
+  margin-block-start: var(--sp-3);
+}
+
+@media (max-width: 48rem) {
+  .cabecera__accion {
+    flex-basis: 100%;
+  }
+
+  .cabecera__accion > button {
+    inline-size: 100%;
+  }
+}

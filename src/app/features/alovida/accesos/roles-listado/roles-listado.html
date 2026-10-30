@@ -10,13 +10,13 @@
         <p class="caption">Los paquetes de permisos que se le dan a una persona. Un rol puede heredar de otro, y lo que el padre deniega el hijo no lo recupera.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/accesos/roles-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo rol</a>
+        <a app-button="" data-variante="primario" routerLink="/access-control/roles-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo rol</a>
       </div>
     </div>
     <div role="tablist" class="app-tabs" app-tabs="" aria-label="Pestañas de Roles">
     <a class="app-tab" app-tab="" role="tab" aria-selected="true" aria-disabled="true" data-sin-destino="">Roles</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/accesos/permisos-del-rol-listado">Permisos del rol</a>
-    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/accesos/permisos-de-campo-listado">Permisos de campo</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/access-control/role-permissions-list">Permisos del rol</a>
+    <a class="app-tab" app-tab="" role="tab" aria-selected="false" routerLink="/access-control/field-permissions-list">Permisos de campo</a>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
       <label class="app-search-field" app-search-field="">
@@ -107,7 +107,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3.2 19 6v5c0 4.5-3 8-7 9.8-4-1.8-7-5.3-7-9.8V6z"></path></svg></span>
         <h2>Todavía no hay roles definidos</h2>
         <p>Un rol junta los permisos que una persona necesita para trabajar y se le asigna de una vez, en lugar de conceder permiso por permiso. Puede componerlos por herencia: un médico tratante es el personal clínico más lo suyo. Sin roles, cada acceso hay que darlo a mano.</p>
-        <a app-button="" data-variante="secundario" routerLink="/accesos/roles-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo rol</a>
+        <a app-button="" data-variante="secundario" routerLink="/access-control/roles-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo rol</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">

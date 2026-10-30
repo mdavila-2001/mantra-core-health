@@ -5,12 +5,12 @@ import type {
   SimulatedIssuer,
   SiatRow,
 } from '../../src/app/core/data-access/billing-simulated/billing-simulated.types';
-import { montoLiteral } from '../../src/app/features/billing/monto-literal';
+import { amountLiteral } from '../../src/app/features/billing/amount-in-words';
 import {
-  bloquesDeRepresentacionGrafica,
-  construirRepresentacionGrafica,
+  graphicRepresentationBlocks,
+  buildGraphicRepresentation,
   invoiceQrBlock,
-} from '../../src/app/features/billing/representacion-grafica';
+} from '../../src/app/features/billing/graphic-representation';
 import { loadBrandFonts, savePdf, useSampleSignature } from './sample-setup';
 
 /**
@@ -137,15 +137,15 @@ function factura(numero: number, renglones: number, descuentoAdicional: number):
 /** Las cuentas de la muestra cierran, en el XML y en lo que imprime el papel. */
 function expectCoherent(f: SimulatedInvoice): void {
   const c = f.cabecera;
-  const centavos = (valor: unknown) => Math.round(Number(valor ?? 0) * 100);
-  const suma = f.detalle.reduce((total, d) => total + centavos(d['subTotal']), 0);
+  const cents = (valor: unknown) => Math.round(Number(valor ?? 0) * 100);
+  const suma = f.detalle.reduce((total, d) => total + cents(d['subTotal']), 0);
   for (const d of f.detalle) {
-    expect(centavos(d['subTotal'])).toBe(centavos(d['precioUnitario']) * Number(d['cantidad']) - centavos(d['montoDescuento']));
+    expect(cents(d['subTotal'])).toBe(cents(d['precioUnitario']) * Number(d['cantidad']) - cents(d['montoDescuento']));
   }
-  expect(suma - centavos(c['descuentoAdicional'])).toBe(centavos(c['montoTotal']));
-  expect(centavos(c['montoTotal']) - centavos(c['montoGiftCard'])).toBe(centavos(c['montoTotalSujetoIva']));
+  expect(suma - cents(c['descuentoAdicional'])).toBe(cents(c['montoTotal']));
+  expect(cents(c['montoTotal']) - cents(c['montoGiftCard'])).toBe(cents(c['montoTotalSujetoIva']));
 
-  const bloques = bloquesDeRepresentacionGrafica(f);
+  const bloques = graphicRepresentationBlocks(f);
   const totales = new Map((bloques.find((b) => b.kind === 'totals')?.totals ?? []).map((t) => [t.label, t.value]));
   const base = bloques.flatMap((b) => b.fields ?? []).find((campo) => campo.label === 'Importe base crédito fiscal')?.value;
   const son = bloques.flatMap((b) => b.fields ?? []).find((campo) => campo.label === 'Son')?.value;
@@ -153,7 +153,7 @@ function expectCoherent(f: SimulatedInvoice): void {
   expect(leido(totales.get('Subtotal')) + leido(totales.get('Descuento'))).toBeCloseTo(leido(totales.get('Total')), 2);
   expect(leido(totales.get('Total')) + leido(totales.get('Monto gift card'))).toBeCloseTo(leido(totales.get('Monto a pagar')), 2);
   expect(leido(base)).toBeCloseTo(leido(totales.get('Monto a pagar')), 2);
-  expect(`Son: ${son}`).toBe(montoLiteral(String(c['montoTotal'])));
+  expect(`Son: ${son}`).toBe(amountLiteral(String(c['montoTotal'])));
 }
 
 beforeEach(() => {
@@ -169,7 +169,7 @@ test('factura simulada corta', async () => {
   useSampleSignature();
   const f = factura(12, 2, 0);
   expectCoherent(f);
-  console.log(savePdf(construirRepresentacionGrafica(f, await invoiceQrBlock(f)), 'simulated-invoice-short.pdf'));
+  console.log(savePdf(buildGraphicRepresentation(f, await invoiceQrBlock(f)), 'simulated-invoice-short.pdf'));
 });
 
 test('factura simulada larga, con descuento por renglón y descuento adicional', async () => {
@@ -177,5 +177,5 @@ test('factura simulada larga, con descuento por renglón y descuento adicional',
   useSampleSignature();
   const f = factura(1043, 40, 50);
   expectCoherent(f);
-  console.log(savePdf(construirRepresentacionGrafica(f, await invoiceQrBlock(f)), 'simulated-invoice-long.pdf'));
+  console.log(savePdf(buildGraphicRepresentation(f, await invoiceQrBlock(f)), 'simulated-invoice-long.pdf'));
 });

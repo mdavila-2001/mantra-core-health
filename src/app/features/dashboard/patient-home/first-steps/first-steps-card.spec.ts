@@ -66,4 +66,34 @@ describe('FirstStepsCard', () => {
     porId(raiz, 'ocultar')?.click();
     expect(TestBed.inject(FirstStepsStore).dismissed()).toBe(true);
   });
+
+  it('se pliega y se despliega con el botón de la cabecera, y lo recuerda', () => {
+    const fixture = montar();
+    const raiz: HTMLElement = fixture.nativeElement;
+    const boton = porId(raiz, 'plegar');
+    const contenido = porId(raiz, 'contenido');
+
+    expect(boton?.getAttribute('aria-expanded')).toBe('true');
+    expect(boton?.getAttribute('aria-controls')).toBe(contenido?.id);
+    expect(contenido?.hidden).toBe(false);
+
+    boton?.click();
+    fixture.detectChanges();
+
+    expect(boton?.getAttribute('aria-expanded')).toBe('false');
+    expect(boton?.getAttribute('aria-label')).toBe('Mostrar sus primeros pasos');
+    expect(contenido?.hidden).toBe(true);
+    // Plegada sigue diciendo cuánto falta: el avance queda a la vista.
+    expect(porId(raiz, 'avance')?.getAttribute('aria-valuenow')).toBe('1');
+    expect(TestBed.inject(FirstStepsStore).collapsed()).toBe(true);
+    expect(
+      JSON.parse(localStorage.getItem('alovida.primeros-pasos.anonimo') ?? '{}').collapsed,
+    ).toBe(true);
+
+    boton?.click();
+    fixture.detectChanges();
+
+    expect(boton?.getAttribute('aria-expanded')).toBe('true');
+    expect(contenido?.hidden).toBe(false);
+  });
 });

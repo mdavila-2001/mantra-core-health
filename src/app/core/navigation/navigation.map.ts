@@ -1,4 +1,6 @@
-import { VERIFICACION_DE_IDENTIDAD_OFRECIDA } from '../identity-assurance/verificacion-ofrecida';
+import { MEDICAL_ORGANIZATION_TYPES } from '../data-access/directory/directory.types';
+import { SIN_CARA_DE_ASEGURADORA } from './navigation.payer';
+import { OFFERED_IDENTITY_VERIFICATION } from '../identity-assurance/offered-verification';
 import { ANY_ROLE } from './navigation.types';
 import { SECCIONES_DE_PLATAFORMA } from './navigation.platform';
 import type { AppSection } from './navigation.types';
@@ -85,8 +87,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // lista cerrada del médico son ocho y el panel no es una de ellas, pero
     // el motivo real —la marca del armazón ya es un enlace a `/dashboard`,
     // ofrecer «Panel» abajo es la pantalla en la que ya estás— vale para
-    // cualquier rol, no sólo para el médico (mismo caso que `access-tree.ts`
-    // excluye `dashboard` de su propio panel de accesos). Se sigue llegando
+    // cualquier rol, no sólo para el médico. Se sigue llegando
     // por la marca, por el login y por el cambio de organización.
     //
     // **No se le tocan los `roles`**: el panel lo tiene que poder abrir
@@ -221,7 +222,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     group: 'General',
     icon: 'directory',
     roles: [ANY_ROLE],
-    fueraDelMenuPara: ['SUPERADMIN'],
     availability: 'disponible',
     summary:
       'Un mapa de a quién o a dónde buscar: médicos, laboratorios, clínicas, farmacias y aseguradoras.',
@@ -314,9 +314,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // cada carril. Si algún día el producto quiere grupos de pacientes, se
     // reabre con una decisión, no con una omisión.
     path: 'groups',
-    // §4.H · fuera del menú del médico: los foros son valiosos y no son trabajo
-    // diario. Los ve igual el resto de `ROLES_QUE_EJERCEN_O_ADMINISTRAN`.
-    fueraDelMenuPara: ['PRACTITIONER', 'SUPERADMIN'],
+    // Vuelve al menú del médico el 28/10/2026: desde §4.H estaba fuera y se
+    // abría desde el árbol «Sus herramientas» del panel, que se retiró. El
+    // muro, que también la enlaza, tampoco tiene renglón.
     label: 'Grupos y foros',
     group: 'General',
     icon: 'people',
@@ -442,7 +442,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // turnos—. «Cupos» NO se renombra: es disponibilidad, no consulta.
     // La ruta sigue siendo `schedule`.
     path: 'schedule',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Consultas médicas',
     group: 'Atención',
     icon: 'calendar',
@@ -460,7 +459,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
   {
     path: 'medical-records',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Archivo clínico',
     group: 'Atención',
     icon: 'folder',
@@ -473,6 +471,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     summary: 'Consulte la historia clínica de los pacientes que atiende.',
     module: 'M08 clinical · M15 chart',
   },
+  {
+    // El médico de cabecera (28/10/2026): los pacientes que eligieron a este
+    // profesional. Sólo `PRACTITIONER`: la lista sale del perfil profesional de
+    // la sesión (`GET /profiles/practitioners/me/primary-patients`) y quien no
+    // lo tiene recibe 422.
+    path: 'my-primary-patients',
+    label: 'Mis pacientes de cabecera',
+    group: 'Atención',
+    icon: 'heart',
+    roles: ['PRACTITIONER'],
+    availability: 'disponible',
+    summary: 'Vea qué pacientes lo eligieron como su médico de cabecera.',
+    module: 'M05 profiles',
+  },
   // «Notas médicas» (`progress-notes`) vivió acá como sección propia entre el
   // 19/09 y el 25/09/2026. Se retiró del menú y del producto a pedido del
   // propietario: la nota médica se escribe y se lee desde la consulta y el
@@ -483,9 +495,13 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // §4.H · fuera del menú del médico: no está en la lista de ocho. La cola
     // del laboratorio y los estudios de un paciente se miran **desde el
     // paciente**, que es donde se los pidió, y para eso está el Archivo
-    // clínico. Sigue siendo sección de primer nivel para
-    // `CLINICIAN`, que es quien la usa como bandeja.
-    fueraDelMenuPara: ['PRACTITIONER', 'SUPERADMIN'],
+    // clínico. Sigue siendo sección de primer nivel para `CLINICIAN`, que es
+    // quien la usa como bandeja.
+    //
+    // Vuelve a estar fuera el 28/10/2026: el propietario señaló como regresión
+    // el renglón que `1d312e699` le había devuelto al médico al retirar el
+    // árbol «Sus herramientas» del panel. La ruta y el guard siguen enteros.
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Laboratorio e imagen',
     group: 'Atención',
     icon: 'scan',
@@ -513,7 +529,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // aceptación **ninguna intervención podía confirmarse**: `confirm` exige que
     // cada integrante haya aceptado y no había dónde hacerlo.
     path: 'interventions',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Intervenciones',
     group: 'Atención',
     icon: 'scalpel',
@@ -538,7 +553,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // clínica, y eso se sigue cumpliendo — la sección existe, tiene su ruta y
     // su bandeja propia, y no se fusionó con Turnos. Lo único que perdió es el
     // renglón lateral, y se llega por el enlace que Turnos ofrece.
-    fueraDelMenuPara: ['PRACTITIONER', 'SUPERADMIN'],
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Visitas de laboratorio',
     group: 'Atención',
     icon: 'route',
@@ -555,7 +570,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // en el resto del registro— porque la especificación le prohíbe el acceso a
     // pacientes, recetas y diagnósticos (5316-5318).
     path: 'my-visits',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Mis visitas médicas',
     group: 'Atención',
     icon: 'route',
@@ -579,7 +593,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // una pantalla suya (feedback de la analista F-03, decidido el 18/08/2026).
     // La ruta lo hace cumplir por `seccionRolesGuard`, hija incluida.
     path: 'glossary',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Glosario',
     group: 'Atención',
     icon: 'book',
@@ -631,7 +644,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // puede depender de que alguien recuerde la ruta. La lista cerrada pasa de
     // once a doce con esa decisión, no por descuido.
     path: 'my-services',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Mis servicios',
     group: 'Atención',
     icon: 'tag',
@@ -665,7 +677,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // descuido — ver el comentario de `navigation.service.spec.ts` que fija
     // la lista completa.
     path: 'my-quotations',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Cotizaciones',
     group: 'Atención',
     icon: 'billing',
@@ -676,15 +687,39 @@ export const APP_SECTIONS: readonly AppSection[] = [
   },
 
   {
+    // FT-21 (carril 21). El equipo de un servicio de salud: cargos, pago
+    // acordado por cargo y un expediente que se cierra una semana después de
+    // realizado. Renglón propio por el mismo criterio que «Cotizaciones»: es
+    // un destino al que se vuelve —responder invitaciones, cargar las notas
+    // del ejercicio—, no un paso que se hace una vez.
+    //
+    // La ruta es `my-medical-groups` y no `medical-groups`: ese es el prefijo
+    // del módulo en la API y el proxy compara por inicio de ruta.
+    path: 'my-medical-groups',
+    label: 'Grupos médicos',
+    group: 'Atención',
+    icon: 'people',
+    // Los dos roles que exige `MedicalGroupsController`.
+    roles: ['PRACTITIONER', 'CLINICIAN'],
+    availability: 'disponible',
+    summary: 'Arme el equipo de un servicio y responda las invitaciones de sus colegas.',
+    module: 'M21 medical_groups',
+  },
+
+  {
     // Carril 10. **La ruta NO es `surveys` y eso no es decoración**: `/surveys`
     // es el prefijo del módulo en la API, y el proxy compara por inicio de ruta
     // sin límite de segmento — una sección llamada `surveys` se iría entera al
     // backend. Mismo caso que M13 en `administration/geolocation`. Lo hace
     // cumplir `scripts/check-route-prefixes.mjs`.
     path: 'questionnaires',
-    // §4.H · fuera del menú del médico: se arma una encuesta desde la consulta
-    // del paciente al que se le va a asignar, no como tarea suelta.
-    fueraDelMenuPara: ['PRACTITIONER', 'SUPERADMIN'],
+    // **Sale del menú lateral del médico y pasa a ser una pestaña de
+    // «Formularios»** (propietario, 28/10/2026): las dos son lo que se le pide
+    // al paciente y lo que se completa en la consulta. `/questionnaires` y la
+    // ficha de cada encuesta siguen abriendo; la puerta del médico es la
+    // pestaña «Encuestas» de `/form-builder` (`FormsHub`). `CLINICIAN`, que no
+    // tiene «Formularios», conserva el renglón.
+    fueraDelMenuPara: ['PRACTITIONER'],
     label: 'Encuestas',
     group: 'Atención',
     icon: 'survey',
@@ -708,6 +743,20 @@ export const APP_SECTIONS: readonly AppSection[] = [
     roles: ['SECURITY_ADMIN'],
     availability: 'disponible',
     summary: 'Registre y mantenga la filiación de las personas atendidas.',
+    module: 'M05 profiles',
+  },
+  {
+    // El alta de un médico queda como una solicitud que una persona con rol de
+    // revisión resuelve requisito por requisito. La bandeja es genérica: hoy
+    // trae `ALTA_DE_DOCTOR`. El guard de sección evita la pantalla que daría
+    // 403, pero la autoridad es la API: cada acción exige su rol allá.
+    path: 'administration/admissions',
+    label: 'Admisiones',
+    group: 'Administración',
+    icon: 'clipboard',
+    roles: ['SECURITY_ADMIN', 'ADMISSIONS_REVIEWER', 'ADMISSIONS_APPROVER'],
+    availability: 'disponible',
+    summary: 'Revise y resuelva las solicitudes de ingreso, como el alta de un médico.',
     module: 'M05 profiles',
   },
   {
@@ -755,13 +804,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // exactamente lo que destaparon `access-tree.spec.ts` y
     // `navigation.service.spec.ts`. Mismo par que «Tu organización».
     path: 'administration/insurance',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Mis productos',
     group: 'Administración',
     icon: 'umbrella',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -774,7 +822,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // dos gestiones distintas —el catálogo y la fuerza comercial— y mezclarlas
     // obligaría a una sola pantalla a pedir permisos de las dos.
     path: 'administration/brokers',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Brokers',
     group: 'Administración',
     icon: 'briefcase',
@@ -796,13 +843,21 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // ciclo del reclamo no se ofrecen acá: adjudicar o revertir son actos de
     // quien paga, y ésta es la pantalla de quien reclama.
     path: 'administration/insurance-claims',
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    // Una organización médica la ve sólo quien factura: la dueña (`USER`) la
+    // veía y la API le contestaba 403 `ROLE_INSUFFICIENT`.
+    rolesEnTipos: {
+      tipos: MEDICAL_ORGANIZATION_TYPES,
+      roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
+    },
     label: 'Solicitudes de seguro',
     group: 'Administración',
     icon: 'clipboard',
-    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN'],
+    roles: ['BILLING_OPERATOR', 'SECURITY_ADMIN', ANY_ROLE],
+    requiresTenant: true,
+    hiddenFor: ['PATIENT', 'PRACTITIONER'],
     availability: 'disponible',
-    summary: 'Lo que presentó a cada aseguradora, con lo que aprobó.',
+    summary: 'Solicitudes de cobertura: presentadas por prestadores y recibidas por la aseguradora.',
     module: 'M26 insurance',
   },
   {
@@ -817,13 +872,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // arriba) y el segundo no existe en ningún catálogo de roles del proyecto.
     // La capacidad real la resuelve la API (membresía o `INSURANCE_OPERATOR`).
     path: 'administration/insurance-analytics',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Siniestralidad y analítica',
     group: 'Administración',
     icon: 'chart',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -838,13 +892,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // quien paga, y por eso lleva el mismo acceso que «Siniestralidad»: la
     // autoridad es la membresía en la aseguradora, que resuelve la API.
     path: 'administration/received-claims',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Solicitudes recibidas',
     group: 'Administración',
     icon: 'clipboard',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -858,11 +911,10 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // que «Solicitudes recibidas»: la autoridad es la membresía en la
     // aseguradora, que resuelve la API.
     path: 'administration/insurance-patients',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Pacientes de la aseguradora',
     group: 'Administración',
     icon: 'patients',
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     platformAccessRoles: ['SUPERADMIN', 'SECURITY_ADMIN'],
@@ -879,13 +931,12 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // la autoridad es la membresía en la aseguradora, que resuelve la API, y
     // el médico y el paciente quedan fuera con `hiddenFor`.
     path: 'administration/insurance-campaigns',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Campañas preventivas',
     group: 'Administración',
     icon: 'megaphone',
     // Cuenta de farmacia: su menú es el del mostrador y nada más (D3 del
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
-    hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
+    hiddenForTenantTypes: SIN_CARA_DE_ASEGURADORA,
     roles: [ANY_ROLE],
     requiresTenant: true,
     hiddenFor: ['PATIENT', 'PRACTITIONER'],
@@ -1056,11 +1107,17 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // así a nivel raíz se iría entera a la API — el mismo motivo por el que M13
     // vive en `administration/geolocation`.
     path: 'administration/medical-organization',
-    // §4.H · fuera del menú del médico por la misma razón que «Mis
-    // organizaciones». La sigue viendo `SECURITY_ADMIN` y `PERIOP_ADMIN`, que
-    // son de quienes es la consola.
-    fueraDelMenuPara: ['PRACTITIONER'],
-    label: 'Organización médica',
+    // **Sale del menú lateral y pasa a la barra superior como «Mis
+    // organizaciones»** (propietario, 28/10/2026), junto a «Red social» y
+    // «Chats»: es un destino al que se vuelve desde cualquier pantalla, no un
+    // renglón de trabajo diario, y «Mis organizaciones» dice mejor que
+    // «Organización médica» qué se encuentra adentro (sedes, plantilla y las
+    // vinculaciones de la persona). La ruta, los `roles` y la pantalla no
+    // cambian: sólo dónde se ofrece y cómo se llama. El ícono del encabezado
+    // lo dibuja `shell-layout.html` para quien `visibleSections()` incluye
+    // esta sección, así que la puerta no se abre a nadie nuevo.
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Mis organizaciones',
     group: 'Administración',
     icon: 'hospital',
     // Los mismos roles que ya admite `GET /practices`: quien puede enumerar las
@@ -1070,6 +1127,24 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary:
       'Administre sedes, áreas, quirófanos, consultorios, plantilla, legajo y sus vinculaciones.',
+    module: 'M14 practice',
+  },
+  {
+    // CM-11 · la organización médica (los cinco tipos del alta) abre su práctica
+    // y su primera sede. Cuelga de `administration/`: una raíz propia se iría al
+    // proxy. La API decide quién puede (membresía OWNER/ADMIN de esa organización
+    // verificada); acá sólo se ofrece la puerta a quien tiene ese tipo de cuenta.
+    path: 'administration/medical-center-setup',
+    onlyForTenantTypes: MEDICAL_ORGANIZATION_TYPES,
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Configurar práctica',
+    group: 'Administración',
+    icon: 'hospital',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Abra la práctica de su organización y su primera sede, con dirección y punto en el mapa.',
     module: 'M14 practice',
   },
   {
@@ -1110,7 +1185,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
 
   {
     path: 'billing',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Facturación',
     group: 'Facturación',
     icon: 'billing',
@@ -1145,7 +1219,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
 
   {
     path: 'administration/accounting',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Contabilidad',
     group: 'Facturación',
     icon: 'chart',
@@ -1189,8 +1262,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: a quien atiende no se le ofrece.
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Dependientes',
     group: 'Mi cuenta',
     icon: 'patients',
@@ -1205,6 +1277,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     label: 'Mi perfil',
     group: 'Mi cuenta',
     icon: 'patients',
+    representaEnElMenu: ['account/profile'],
     // Suelta y arriba, fuera del desplegable. Ver `AppSection.pinnedTop`.
     pinnedTop: true,
     roles: [ANY_ROLE],
@@ -1213,6 +1286,58 @@ export const APP_SECTIONS: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Revise sus datos personales y el resumen de su cuenta.',
     module: 'M05 profiles',
+  },
+  {
+    // BR-20 · CL-78: los consentimientos, las autorizaciones de divulgación y las
+    // objeciones del titular, con el retiro. Es del paciente: sin perfil de
+    // paciente la pantalla lo dice.
+    //
+    // Desde el 27/10/2026 es también la puerta de «Quién ve mi historia»: los
+    // dos renglones contestaban la misma pregunta —quién puede ver o usar lo
+    // mío— y se leían como duplicados. La pantalla tiene dos vistas
+    // (`?ver=historia` y `?ver=consentimientos`).
+    path: 'my-account/privacy',
+    label: 'Mi privacidad',
+    group: 'Mi cuenta',
+    icon: 'shield',
+    representaEnElMenu: ['my-account/clinical-access'],
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Quién ve su historia clínica y qué permisos dio; revóquelos cuando quiera.',
+    module: 'M07 consent',
+  },
+  {
+    // BR-20 · CV-19: quién ve la historia del paciente y la revocación. Reemplaza
+    // a las maquetas estáticas de `features/alovida/accesos`, que quedan fuera de
+    // este menú (DECISIONES.md, BR-20).
+    path: 'my-account/clinical-access',
+    // Sin renglón propio desde el 27/10/2026: es la vista `?ver=historia` de
+    // «Mi privacidad». La ruta redirige (`SECCIONES_REDIRIGIDAS`) y la sección
+    // queda registrada para que los enlaces guardados sigan resolviendo.
+    fueraDelMenuPara: [ANY_ROLE],
+    label: 'Quién ve mi historia',
+    group: 'Mi cuenta',
+    icon: 'results',
+    roles: ['PATIENT'],
+    availability: 'disponible',
+    summary: 'Quién ve su historia clínica, y revóquelo.',
+    module: 'M06 authz',
+  },
+  {
+    // ID-24 / CV-22: cambiar la contraseña y ver o cerrar las sesiones. De
+    // cualquier persona con sesión (`ANY_ROLE`); la API no exige rol y resuelve
+    // todo por el `id` del token. Fuera del menú lateral —al médico le
+    // desaparece «Mi cuenta» a propósito, y una entrada más lo traería de
+    // vuelta—: se entra por el menú de la cuenta, en el encabezado.
+    fueraDelMenuPara: [ANY_ROLE],
+    path: 'my-account/security',
+    label: 'Seguridad',
+    group: 'Mi cuenta',
+    icon: 'lock',
+    roles: [ANY_ROLE],
+    availability: 'disponible',
+    summary: 'Cambie su contraseña y cierre sesiones abiertas.',
+    module: 'M01 iam',
   },
   {
     // Las vistas `PATIENT` de M41. Es la contracara de la sección «Agenda»:
@@ -1229,8 +1354,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis citas',
     group: 'Mi cuenta',
     icon: 'calendar',
@@ -1253,8 +1377,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mi historia clínica',
     group: 'Mi cuenta',
     // `results` y no `patients`: lo que esta sección muestra son resultados de
@@ -1277,8 +1400,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis resultados',
     group: 'Mi cuenta',
     icon: 'results',
@@ -1300,8 +1422,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
     // Es del paciente: al médico no se le ofrece. Mismo mecanismo que
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Mis órdenes',
     group: 'Mi cuenta',
     icon: 'orders',
@@ -1311,12 +1432,11 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
-    path: 'my-account/cotizaciones',
+    path: 'my-account/quotations',
     // Aseguradora: no es de una organización PAYER. Ver la nota completa en
     // `directories`, la primera fila que lleva esta marca.
     hiddenForTenantTypes: ['PAYER', 'PHARMACY', 'DIAGNOSTIC_CENTER'],
-    hiddenFor: ['PRACTITIONER', 'SUPERADMIN'],
-    fueraDelMenuPara: ['SUPERADMIN'],
+    hiddenFor: ['PRACTITIONER'],
     label: 'Cotizaciones',
     group: 'Mi cuenta',
     icon: 'billing',
@@ -1340,11 +1460,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // «Tu organización» para el paciente (`hiddenFor`, B-14).
     hiddenFor: ['PRACTITIONER'],
     // Pedido del propietario (2026-09-25): sacar el renglón de la vista del
-    // paciente mientras se decide qué hacer con la sección — todavía no está
-    // definido. `fueraDelMenuPara` es lo que "apaga una sección de momento
-    // sin perder el código" (mismo mecanismo que «Ajustes»/«Chats» más abajo):
-    // la ruta, el guard y la pantalla siguen enteros, sólo deja de ocupar
-    // renglón. Ver docs/pendiente-decision-cuestionarios.md.
+    // paciente. `fueraDelMenuPara` es lo que "apaga una sección sin perder el
+    // código" (mismo mecanismo que «Ajustes»/«Chats» más abajo): la ruta, el
+    // guard y la pantalla siguen enteros, sólo deja de ocupar renglón.
     fueraDelMenuPara: [ANY_ROLE],
     label: 'Mis cuestionarios',
     group: 'Mi cuenta',
@@ -1430,7 +1548,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Fuera del menú mientras el producto no ofrezca la verificación: ver
     // `VERIFICACION_DE_IDENTIDAD_OFRECIDA`. La sección sigue entera —la ruta,
     // la pantalla y la salida del 403—, lo único que pierde es el renglón.
-    ...(VERIFICACION_DE_IDENTIDAD_OFRECIDA ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
+    ...(OFFERED_IDENTITY_VERIFICATION ? {} : { fueraDelMenuPara: [ANY_ROLE] }),
     availability: 'disponible',
     summary: 'Valide su identidad o su matrícula, y siga el estado de sus trámites.',
     module: 'M27 identity_assurance',
@@ -1452,7 +1570,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // Mismos roles que «Mis pedidos», que hereda al montarla como pestaña:
     // su contenido nace de una receta propia.
     path: 'my-account/pharmacy',
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Farmacia',
     group: 'Mi cuenta',
     icon: 'bag',
@@ -1539,8 +1656,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // del menú lateral, se llega por la billetera de la barra superior.
     //
     // Módulo 17 porque lo que suma son cobros al paciente; el contrato
-    // (`GET /patient-spending/me`) todavía no existe en la API — P43 en
-    // `PENDIENTES-BACKEND.md`.
+    // (`GET /patient-spending/me`, P44) sólo lo sirve el simulador.
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/spending',
     label: 'Mis gastos',
@@ -1558,8 +1674,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // médico, la farmacia y facturación, las que emitieron. El lado lo decide
     // el backend por la sesión.
     //
-    // Hoy la lee del SIAT **simulado** (FACT-SIAT-MOCK): la API todavía no
-    // publica facturas — P53 en `PENDIENTES-BACKEND.md`.
+    // La lee del SIAT **simulado** (FACT-SIAT-MOCK,
+    // `GET /billing/simulated/my-invoices`, P53).
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/invoices',
     label: 'Mis facturas',
@@ -1578,8 +1694,8 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú, que tiene listas cerradas fijadas por specs. Qué solicitudes ve
     // cada cuenta lo decide el backend por la sesión.
     //
-    // Hoy la sirve el simulador sobre la misma tabla que dictamina la
-    // aseguradora en «Solicitudes recibidas» — P56 en `PENDIENTES-BACKEND.md`.
+    // La sirve `GET /insurance/my-claims`, sobre la misma tabla que dictamina
+    // la aseguradora en «Solicitudes recibidas» (P56).
     fueraDelMenuPara: [ANY_ROLE],
     path: 'my-account/requests',
     label: 'Mis solicitudes',
@@ -1614,10 +1730,9 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // **Fuera del menú lateral, igual que la sección que reemplaza.** El menú
     // del médico es una lista cerrada de nueve que el propio propietario fijó,
     // con un spec que falla si alguien agrega la décima; «Tu organización»
-    // tampoco estaba ahí. Ocupa su mismo lugar: la zona «Administración» de
-    // «Tus accesos», que es donde el propietario señaló las tres tarjetas
-    // parecidas. Y se llega también desde «Mi perfil», que es donde alguien va
-    // a buscar «¿dónde atiendo?».
+    // tampoco estaba ahí. Se llega desde «Mi perfil», pestaña «Dónde atiendo»,
+    // que es donde alguien va a buscar «¿dónde atiendo?» (el árbol «Sus
+    // herramientas» del panel, su otra puerta, se retiró el 28/10/2026).
     fueraDelMenuPara: ['PRACTITIONER'],
     availability: 'disponible',
     summary: 'Creá y editá tu consultorio: dirección, mapa, teléfono y horario.',
@@ -1665,7 +1780,6 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // 29/09/2026). La sección sigue existiendo para quien sí la usa.
     hiddenForTenantTypes: ['PHARMACY', 'DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
-    fueraDelMenuPara: ['SUPERADMIN'],
     label: 'Mi organización',
     group: 'Administración',
     icon: 'building',
@@ -1803,6 +1917,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M24 pharmacy',
   },
   {
+    // P34 (26/10/2026): qué sucursales abren las 24 h y sus turnos de guardia.
+    // Lo ven los pacientes al elegir farmacia y en «Abiertas ahora».
+    path: 'administration/pharmacy-hours',
+    onlyForTenantTypes: ['PHARMACY'],
+    roles: [ANY_ROLE],
+    fueraDelMenuPara: ['PRACTITIONER'],
+    hiddenFor: ['PATIENT'],
+    label: 'Horario y turnos',
+    group: 'General',
+    icon: 'clock',
+    requiresTenant: true,
+    availability: 'disponible',
+    summary: 'Qué sucursales abren las 24 horas y sus turnos de guardia.',
+    module: 'M24 pharmacy',
+  },
+  {
     // La bandeja del mostrador de farmacia (carril FAR-I3). La membresía manda
     // (claim `tenants`), no un rol del token: no existe un rol de farmacia minorista.
     path: 'administration/pharmacy-orders',
@@ -1815,14 +1945,14 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // administra.
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Pedidos',
+    label: 'Solicitudes de retiro',
     // `General` y no `Administración`: es un dominio aplanado, así que los
     // ocho renglones van sueltos, sin encabezado ni desplegable.
     group: 'General',
     icon: 'bag',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'La bandeja del mostrador: pedidos que llegan, preparación, retiros y envíos.',
+    summary: 'La bandeja del mostrador: solicitudes que llegan, preparación y retiros.',
     module: 'M24 pharmacy',
   },
   {
@@ -1922,7 +2052,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // menú sólo puede mirar el tipo de la organización activa, y es lo que
     // mira. El paciente queda afuera también por rol: su membresía en el
     // tenant por defecto no lo vuelve personal de nadie.
-    path: 'laboratorio/recepcion',
+    path: 'laboratory/reception',
     label: 'Recepción de muestras',
     // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
     // de laboratorio, como los del mostrador de la farmacia.
@@ -1946,7 +2076,7 @@ export const APP_SECTIONS: readonly AppSection[] = [
     // y no una con dos reglas: `isVisibleTo` no sabe decir «este rol **o**
     // este tipo de organización», y enseñárselo para una sola pantalla sería
     // una regla nueva en el corazón del menú.
-    path: 'laboratorio/cola',
+    path: 'laboratory/queue',
     label: 'Cola de trabajo',
     // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
     // de laboratorio, como los del mostrador de la farmacia.

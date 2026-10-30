@@ -17,6 +17,7 @@ import {
   viewChildren,
 } from '@angular/core';
 
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
 import { Tab } from './tab/tab';
 import {
   TABS_PARENT,
@@ -42,6 +43,7 @@ import {
  */
 @Component({
   selector: 'app-tabs',
+  imports: [NavIcon],
   templateUrl: './tabs.html',
   styleUrl: './tabs.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -238,6 +240,11 @@ export class Tabs implements TabsHost {
       observador.observe(tira);
       destruccion.onDestroy(() => observador.disconnect());
     });
+  }
+
+  /** «Todas (4)»: palabra + contador. Se queda en una línea (si no cabe, la tira se desplaza). */
+  protected esContado(rotulo: string): boolean {
+    return /^\S+ \(\d+\)$/.test(rotulo);
   }
 
   protected medirDesborde(): void {

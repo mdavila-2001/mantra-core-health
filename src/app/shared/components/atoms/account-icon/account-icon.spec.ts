@@ -1,7 +1,10 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AccountIcon } from './account-icon';
-import { ACCOUNT_ICON_NAMES, type AccountIconName } from './account-icon.types';
+import {
+  ACCOUNT_ICON_NAMES,
+  type AccountIconName,
+} from './account-icon.types';
 
 /**
  * El set es cerrado y cada nombre tiene su alta detrás: lo que se prueba es que
@@ -33,6 +36,7 @@ describe('AccountIcon', () => {
     laboratory: '.sample',
     imaging: '.sweep',
     pharmacy: '.pharmacy-cross',
+    clinic: '.cross',
   };
 
   it.each(Object.entries(ACCESORIO))('«%s» trae su accesorio animable (%s)', (name, selector) => {

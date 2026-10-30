@@ -2,7 +2,14 @@
   title="Mis gastos"
   subtitle="Lo que gastó en su salud: consultas, farmacia, análisis, estudios y su seguro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <!-- «Mis facturas» se fusionó con «Mis gastos» en la cabecera del paciente
+       (propietario, 27/10/2026): el comprobante de cada gasto está a un toque
+       de la cifra. -->
+  <a app-button page-actions variant="secondary" data-testid="spending-facturas" routerLink="/my-account/invoices">
+    Ver mis facturas
+  </a>
+</app-page-header>
 
 @if (withoutPatientProfile) {
   <app-alert tone="info" title="Esta sección es para pacientes">
@@ -12,6 +19,12 @@
   <app-view-state-host [state]="state()" (retry)="load()">
     @if (dashboard(); as d) {
       <div class="spending" data-testid="spending-dashboard">
+        <!-- Un recorte silencioso se leería como «gastó menos». -->
+        @if (d.truncated) {
+          <app-alert class="spending__truncated" tone="warning" title="Lista recortada" data-testid="spending-truncated">
+            Tiene más movimientos de los que se pueden mostrar juntos: las sumas cuentan sólo los más recientes.
+          </app-alert>
+        }
         <!-- ================= Este mes (la cifra que manda) ================= -->
         <app-card class="spending__hero" padding="lg" data-testid="spending-this-month">
           <p class="spending__overline">

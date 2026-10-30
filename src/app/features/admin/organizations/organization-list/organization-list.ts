@@ -95,6 +95,8 @@ export class OrganizationList {
 
   private readonly celdaOrganizacion =
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaOrganizacion');
+  private readonly celdaCodigo =
+    viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaCodigo');
   private readonly celdaTipo =
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaTipo');
   private readonly celdaEstado =
@@ -125,7 +127,7 @@ export class OrganizationList {
   /** `priority` 1 nunca se pliega; en móvil las 2 caen a la fila de detalle. */
   protected readonly columnas = computed<readonly ColumnDef<TenantListItem>[]>(() => [
     { key: 'legalName', header: 'Organización', priority: 1, cell: this.celdaOrganizacion() },
-    { key: 'code', header: 'Código', priority: 1 },
+    { key: 'code', header: 'Código', priority: 1, cell: this.celdaCodigo() },
     { key: 'tenantTypeConceptId', header: 'Tipo', priority: 1, cell: this.celdaTipo() },
     { key: 'statusConceptId', header: 'Estado', priority: 2, cell: this.celdaEstado() },
     {

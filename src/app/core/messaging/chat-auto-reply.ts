@@ -2,9 +2,21 @@ import { DOCUMENT, inject, Injectable, PLATFORM_ID, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 
 import { CommunityClient } from '../data-access/community/community.client';
+import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../data-access/community/community.types';
+import { simulatorAvailable, withSimulatorExtensions } from '../data-access/simulator-only';
 
 /** Dónde se guarda la configuración, en este navegador. */
 const CLAVE = 'alovida.chat-respuesta-automatica';
+
+/**
+ * De qué perfil es la copia local.
+ *
+ * La copia vive en el navegador, que puede compartir más de una cuenta (la PC
+ * de una recepción). Sin saber de quién es, subirla al servidor cuando el
+ * perfil que entra no tiene nada guardado le pondría a otro profesional el
+ * mensaje de su colega.
+ */
+const CLAVE_DUENO = 'alovida.chat-respuesta-automatica.perfil';
 
 /** Dónde se anota la última vez que se estuvo en la mensajería. */
 const CLAVE_ACTIVIDAD = 'alovida.chat-ultima-actividad';
@@ -35,8 +47,17 @@ export interface RespuestaAutomatica {
    * lo que demuestra que estás. Si estás, nadie tiene que contestar por vos.
    */
   readonly minutosDeInactividad: number;
-  /** Lo que contesta. */
+  /**
+   * Lo que contesta. Con IA es el **respaldo**: lo que sale si la IA no
+   * responde a tiempo, falla o devuelve algo vacío. Nunca queda sin texto.
+   */
   readonly texto: string;
+  /**
+   * Si la respuesta la redacta la IA de AloVida en vez de mandar siempre
+   * `texto`. La IA tiene instrucciones fijas: no diagnostica, no indica
+   * medicamentos ni dosis y ante signos de alarma deriva a Emergencia.
+   */
+  readonly conIa: boolean;
   /**
    * Cuántas horas espera antes de volver a contestarle a la **misma persona**.
    *
@@ -61,6 +82,7 @@ export const CONFIGURACION_POR_DEFECTO: RespuestaAutomatica = {
   activa: false,
   minutosDeInactividad: 30,
   texto: RESPUESTA_POR_DEFECTO,
+  conIa: false,
   horasEntreAvisos: 4,
   soloFueraDeHorario: false,
   horarioDesde: '08:00',
@@ -126,6 +148,32 @@ export class ChatAutoReply {
   readonly enElServidor = signal(false);
 
   /**
+   * `true` si la última lectura del servidor falló.
+   *
+   * No es lo mismo que no tener perfil: la pantalla dice «no pudimos leer lo
+   * guardado» y ofrece reintentar, en vez de pedirle un perfil que ya tiene.
+   */
+  readonly errorDeLectura = signal(false);
+
+  /**
+   * Cuántas veces se guardó. Una lectura que sale antes de un guardado y
+   * vuelve después traería lo viejo: se descarta.
+   */
+  private guardados = 0;
+
+  /**
+   * Si se puede elegir «Responder con IA».
+   *
+   * Hoy sólo en la maqueta: guardar el modo en el servidor pide una columna
+   * nueva en `community.chat_auto_replies` (cambio del modelo canónico), y la
+   * API real rechaza con 400 una clave que su DTO no declara. Contra la API
+   * real la opción se ve, apagada y con el motivo.
+   */
+  iaDisponible(): boolean {
+    return simulatorAvailable();
+  }
+
+  /**
    * Trae la configuración del servidor y la adopta.
    *
    * Lo que hay en el servidor **gana** sobre la copia local: es lo que se está
@@ -134,29 +182,44 @@ export class ChatAutoReply {
    * @param profileId - El perfil público propio, o `null` si no tiene.
    */
   cargar(profileId: string | null): void {
+    this.errorDeLectura.set(false);
     if (profileId === null) {
       this.enElServidor.set(false);
       return;
     }
+    const guardadosAlPedir = this.guardados;
     this.sincronizando.set(true);
     this.community.readAutoReply(profileId).subscribe({
       next: (remota) => {
         this.sincronizando.set(false);
         this.enElServidor.set(true);
+        if (this.guardados !== guardadosAlPedir) {
+          // Se guardó mientras la lectura viajaba: lo que trae es anterior.
+          return;
+        }
         if (remota === null) {
-          // Nunca se configuró en el servidor. Si hay algo local —de antes de
-          // que existiera la tabla— se sube, en vez de perderlo en silencio.
-          if (this.configuracion().activa) {
-            this.subir(profileId);
+          // Nunca se configuró en el servidor. Si la copia local es de este
+          // mismo perfil —un guardado anterior que no llegó—, se sube. Si es de
+          // otro o no se sabe de quién, no se sube: se arranca de fábrica.
+          if (this.leerCrudo(CLAVE_DUENO) === profileId) {
+            if (this.configuracion().activa) {
+              this.subir(profileId);
+            }
+          } else {
+            this.configuracion.set(CONFIGURACION_POR_DEFECTO);
+            this.escribir(CLAVE, JSON.stringify(CONFIGURACION_POR_DEFECTO));
+            this.escribir(CLAVE_DUENO, profileId);
           }
           return;
         }
-        this.configuracion.set(sanear(desdeElServidor(remota)));
+        this.configuracion.set(sanear(desdeElServidor(remota), this.iaDisponible()));
         this.escribir(CLAVE, JSON.stringify(this.configuracion()));
+        this.escribir(CLAVE_DUENO, profileId);
       },
       error: () => {
         this.sincronizando.set(false);
         this.enElServidor.set(false);
+        this.errorDeLectura.set(true);
       },
     });
   }
@@ -164,27 +227,37 @@ export class ChatAutoReply {
   /**
    * Guarda la configuración, con sus valores acotados a lo que se admite.
    *
-   * Se aplica en el acto y se sube después: la pantalla no tiene por qué
-   * esperar a la red para acusar un interruptor.
+   * Se aplica en el acto en este navegador y se sube después.
    *
    * @param cambios - Lo que cambió.
    * @param profileId - El perfil propio, para subirlo. Sin él queda local.
+   * @param alTerminar - Si llegó al servidor (`true`) o no (`false`). Sin
+   *   perfil se llama en el acto con `true`: lo único que hay es la copia
+   *   local, y la pantalla ya dice que vale sólo en este navegador.
    */
-  guardar(cambios: Partial<RespuestaAutomatica>, profileId: string | null = null): void {
-    const siguiente = sanear({ ...this.configuracion(), ...cambios });
+  guardar(
+    cambios: Partial<RespuestaAutomatica>,
+    profileId: string | null = null,
+    alTerminar?: (llego: boolean) => void,
+  ): void {
+    this.guardados += 1;
+    const siguiente = sanear({ ...this.configuracion(), ...cambios }, this.iaDisponible());
     this.configuracion.set(siguiente);
     this.escribir(CLAVE, JSON.stringify(siguiente));
-    if (profileId !== null) {
-      this.subir(profileId);
+    if (profileId === null) {
+      alTerminar?.(true);
+      return;
     }
+    this.escribir(CLAVE_DUENO, profileId);
+    this.subir(profileId, alTerminar);
   }
 
   /** Sube lo que hay ahora mismo. */
-  private subir(profileId: string): void {
+  private subir(profileId: string, alTerminar?: (llego: boolean) => void): void {
     const config = this.configuracion();
     this.sincronizando.set(true);
-    this.community
-      .upsertAutoReply(profileId, {
+    const cuerpo = withSimulatorExtensions(
+      {
         isActive: config.activa,
         inactivityMinutes: config.minutosDeInactividad,
         bodyText: config.texto,
@@ -196,19 +269,48 @@ export class ChatAutoReply {
               businessHoursTo: config.horarioHasta,
             }
           : {}),
-      })
+        replyMode: config.conIa ? ('AI' as const) : ('FIXED' as const),
+      },
+      CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
+    );
+    this.community
+      .upsertAutoReply(profileId, cuerpo)
       .subscribe({
         next: () => {
           this.sincronizando.set(false);
           this.enElServidor.set(true);
+          alTerminar?.(true);
         },
         error: () => {
           // Lo elegido sigue valiendo en este navegador; lo que no se puede
           // prometer es que conteste con la aplicación cerrada.
           this.sincronizando.set(false);
           this.enElServidor.set(false);
+          alTerminar?.(false);
         },
       });
+  }
+
+  /**
+   * Olvida la copia local de la configuración y la última actividad (TX-31).
+   *
+   * La fuente de verdad es la API (`GET/PUT /community/profiles/:id/auto-reply`);
+   * lo que queda en el navegador es una copia para abrir la pantalla sin
+   * esperar, y en un dispositivo compartido no debe sobrevivir a la sesión. Lo
+   * corre `AuthService.logout` vía `SESSION_CLEANERS`.
+   */
+  olvidar(): void {
+    this.configuracion.set(CONFIGURACION_POR_DEFECTO);
+    this.enElServidor.set(false);
+    if (!this.isBrowser) {
+      return;
+    }
+    try {
+      this.document.defaultView?.localStorage.removeItem(CLAVE);
+      this.document.defaultView?.localStorage.removeItem(CLAVE_ACTIVIDAD);
+    } catch {
+      // Bloqueado: no hay nada que borrar ni forma de hacerlo.
+    }
   }
 
   /** Vuelve a lo de fábrica. */
@@ -306,7 +408,7 @@ export class ChatAutoReply {
       if (typeof guardado !== 'object' || guardado === null) {
         return CONFIGURACION_POR_DEFECTO;
       }
-      return sanear({ ...CONFIGURACION_POR_DEFECTO, ...guardado });
+      return sanear({ ...CONFIGURACION_POR_DEFECTO, ...guardado }, this.iaDisponible());
     } catch {
       // Un valor corrupto no puede dejar a nadie sin chat.
       return CONFIGURACION_POR_DEFECTO;
@@ -320,8 +422,11 @@ export class ChatAutoReply {
  * Vale tanto para lo que escribe la pantalla como para lo que se lee del
  * almacenamiento: los dos pueden traer basura —el segundo, editado a mano— y
  * una espera de cero minutos convertiría la respuesta automática en un eco.
+ *
+ * @param iaDisponible - Si se puede responder con IA acá. Donde no, el modo
+ *   no se sostiene aunque venga guardado (ver `ChatAutoReply.iaDisponible`).
  */
-function sanear(config: RespuestaAutomatica): RespuestaAutomatica {
+function sanear(config: RespuestaAutomatica, iaDisponible: boolean): RespuestaAutomatica {
   const texto = config.texto.trim().slice(0, LARGO_MAXIMO);
   return {
     activa: config.activa === true && texto !== '',
@@ -332,6 +437,9 @@ function sanear(config: RespuestaAutomatica): RespuestaAutomatica {
       CONFIGURACION_POR_DEFECTO.minutosDeInactividad,
     ),
     texto: texto === '' ? RESPUESTA_POR_DEFECTO : texto,
+    // Donde la IA no está disponible el modo no se sostiene: una copia local
+    // con «IA» dejaría al navegador sin contestar y al servidor sin saberlo.
+    conIa: config.conIa === true && iaDisponible,
     horasEntreAvisos: acotar(
       config.horasEntreAvisos,
       HORAS_MINIMO,
@@ -353,11 +461,13 @@ function desdeElServidor(remota: {
   readonly onlyOutsideBusinessHours: boolean;
   readonly businessHoursFrom?: string;
   readonly businessHoursTo?: string;
+  readonly replyMode?: 'FIXED' | 'AI';
 }): RespuestaAutomatica {
   return {
     activa: remota.isActive,
     minutosDeInactividad: remota.inactivityMinutes,
     texto: remota.bodyText,
+    conIa: remota.replyMode === 'AI',
     horasEntreAvisos: remota.cooldownHours,
     soloFueraDeHorario: remota.onlyOutsideBusinessHours,
     // Postgres devuelve `time` con segundos; la pantalla usa `HH:MM`.

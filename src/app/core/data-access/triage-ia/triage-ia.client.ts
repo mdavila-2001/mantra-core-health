@@ -71,11 +71,22 @@ export function leerLectura(cuerpo: unknown): LecturaIa | null {
   if (typeof cuerpo !== 'object' || cuerpo === null) {
     return null;
   }
-  const { symptoms, urgency, source } = cuerpo as { symptoms?: unknown; urgency?: unknown; source?: unknown };
+  const { symptoms, urgency, source, response } = cuerpo as {
+    symptoms?: unknown;
+    urgency?: unknown;
+    source?: unknown;
+    response?: unknown;
+  };
   if (!Array.isArray(symptoms) || (urgency !== 'urgente' && urgency !== 'prioritaria' && urgency !== 'programada')) {
     return null;
   }
-  const lectura: LecturaIa = { symptoms: symptoms.filter(esHallazgo), urgency };
+  const lectura: LecturaIa = {
+    symptoms: symptoms.filter(esHallazgo),
+    urgency,
+    ...(typeof response === 'string' && response.trim().length > 0 && response.length <= 700
+      ? { response: response.trim() }
+      : {}),
+  };
   return source === 'model' || source === 'semantic' || source === 'catalog' ? { ...lectura, source } : lectura;
 }
 

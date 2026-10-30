@@ -16,3 +16,9 @@ form {
   display: block;
   margin-block-start: var(--sp-6);
 }
+
+/* El aviso de que la búsqueda de personas falló, debajo del buscador. Sin
+   `display`: el aviso ya es una fila flexible con su ícono (`alert.css`). */
+.busqueda-fallida {
+  margin-block-start: var(--sp-2);
+}

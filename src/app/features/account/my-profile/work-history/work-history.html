@@ -167,9 +167,8 @@
         >
           @if (sedeEnEdicion()) {
             <p class="historial__intro" data-testid="sede-edicion-aviso">
-              Los campos vienen con lo que ya tenía cargado: corrija lo que haga falta. Lo que
-              deje en blanco queda como está, y para cambiar la dirección escríbala entera de
-              nuevo.
+              Los campos vienen con lo que ya tenía cargado: corrija lo que haga falta. Para
+              cambiar la dirección, marque el nuevo punto en el mapa y confírmelo.
             </p>
           }
 
@@ -178,6 +177,37 @@
             data-testid="sede-formulario"
             (submit)="$event.preventDefault(); guardarSede()"
           >
+            <!-- Pedido del cliente del 26/10/2026: el punto va primero y es lo
+                 único que se marca, y es obligatorio. La calle, el mapa de
+                 Bolivia acercado, el departamento, la provincia, el municipio y
+                 la zona salen de él, en sólo lectura. Diferido a propósito:
+                 Leaflet es lo más pesado de esta tarjeta y sólo hace falta con
+                 el formulario abierto; montado recién con el modal ya visible,
+                 porque Leaflet sobre un nodo que todavía no tiene tamaño mide
+                 0 px. Sin Google —la CSP lo bloquea—. -->
+            @defer (when altaDeSedeAbierta()) {
+              <app-map-location-picker
+                pinId="sede"
+                etiquetaConfirmada="Su lugar de atención"
+                etiquetaQuitar="Quitar el punto del lugar de atención"
+                etiquetaMapa="Mapa para marcar dónde queda el lugar de atención"
+                etiquetaMarcar="Marcar el lugar en el mapa"
+                indicacionMarcar="Toque el mapa en la puerta del lugar de atención para poner el pin."
+                etiquetaFicha="Este lugar de atención"
+                [ids]="idsMapaDeSede"
+                [inicial]="puntoDeSede()"
+                (confirmado)="confirmarPuntoDeSede($event)"
+                (localidad)="aplicarLocalidadDeSede($event)"
+              />
+            } @placeholder {
+              <p class="historial__vacio">Cargando el mapa…</p>
+            }
+            @if (sinPuntoDeSede()) {
+              <p class="historial__aviso-mapa" data-testid="sede-punto-requerido" aria-live="polite">
+                Marque el lugar en el mapa y pulse «Confirmar dirección actual».
+              </p>
+            }
+
             <app-form-field label="Nombre" hint="Como lo va a ver el paciente." [required]="true">
               <app-input
                 [(value)]="nombreDeSedeNueva"
@@ -201,104 +231,6 @@
               }
             }
 
-            <app-form-field label="Dirección" hint="Calle, número y una referencia si hace falta.">
-              <app-input
-                [(value)]="direccionDeSede"
-                placeholder="Av. Busch 500, 2.º piso"
-                data-testid="sede-direccion"
-              />
-            </app-form-field>
-            <!-- D-06: tocar el mapa vació este campo — se anuncia acá, junto
-                 al campo, para quien no ve el mapa. -->
-            @if (avisoDireccionVaciada()) {
-              <p
-                class="historial__aviso-mapa"
-                data-testid="sede-direccion-vaciada"
-                aria-live="polite"
-              >
-                Vuelva a escribir la dirección: marcar el mapa reemplaza el texto anterior.
-              </p>
-            }
-
-            <app-form-field label="Ciudad" hint="Opcional.">
-              <app-input [(value)]="ciudadDeSede" placeholder="Santa Cruz de la Sierra" />
-            </app-form-field>
-
-            <!-- Diferido a propósito: el mapa de Bolivia y Leaflet son lo más
-                 pesado de esta tarjeta y sólo hacen falta con el formulario
-                 abierto. Montado recién con el modal ya visible: Leaflet sobre
-                 un nodo que todavía no tiene tamaño mide 0 px. -->
-            @defer (when altaDeSedeAbierta()) {
-              <!-- El municipio se elige con el mapa de Bolivia del alta; el
-                   departamento se deduce de él, sin preguntarlo dos veces. -->
-              @if (catalogoMunicipiosCaido()) {
-                <p class="historial__escape">
-                  No pudimos traer el catálogo de municipios. Puede seguir sin esto.
-                  <button
-                    app-button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    (clicked)="reintentarMunicipios()"
-                  >
-                    Reintentar
-                  </button>
-                </p>
-              } @else if (ramasMunicipios().length > 0) {
-                <app-location-picker
-                  testId="sede-municipio"
-                  [ramas]="ramasMunicipios()"
-                  [value]="municipioDeSede()"
-                  [punto]="puntoDeSede()"
-                  (valueChange)="municipioDeSede.set($event)"
-                  mapLabel="Mapa de Bolivia: elija el departamento del lugar de atención"
-                  municipalityLabel="Municipio (opcional)"
-                  municipalityHint="Sólo se ofrecen los del departamento que eligió."
-                />
-              }
-
-              <!-- El punto es opcional y el mapa se despliega a pedido: Leaflet no
-                   se paga en cada visita al perfil. Sin Google —la CSP lo bloquea—. -->
-              <div class="historial__mapa-bloque">
-                <button
-                  app-button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  data-testid="sede-marcar-mapa"
-                  (clicked)="alternarMapa()"
-                >
-                  {{ mapaAbierto() ? 'Ocultar el mapa' : 'Marcar el punto en el mapa (opcional)' }}
-                </button>
-                @if (mapaAbierto()) {
-                  <app-map
-                    class="historial__mapa"
-                    data-testid="sede-mapa"
-                    [pines]="pinesDeSede()"
-                    [centro]="puntoDeSede()"
-                    etiqueta="Mapa para marcar dónde queda el lugar de atención"
-                    (pointPicked)="marcarPunto($event)"
-                  />
-                  @if (puntoDeSede(); as punto) {
-                    <p class="historial__punto" data-testid="sede-punto">
-                      Punto marcado: {{ punto.lat | number: '1.4-4' }},
-                      {{ punto.lng | number: '1.4-4' }}
-                      <button
-                        app-button
-                        variant="ghost"
-                        size="sm"
-                        type="button"
-                        (clicked)="quitarPunto()"
-                      >
-                        Quitar
-                      </button>
-                    </p>
-                  }
-                }
-              </div>
-            } @placeholder {
-              <p class="historial__vacio">Cargando el mapa…</p>
-            }
           </form>
 
           <button
@@ -389,12 +321,12 @@
     </ng-template>
 
     <ng-template #celdaAccionesSede let-sede>
-      <!-- Las acciones de la sede, por ADR-0012: hasta dos en la fila con su
-           texto; con tres —la propia, que suma Editar— van en un desplegable
-           con un único disparador, para que la fila no crezca. -->
+      <!-- El consultorio propio sólo ofrece QR; la sede ajena también permite
+           dejar de atender. Ambas muestran las acciones en la fila. -->
       <app-row-actions
         [actions]="accionesDeSede(sede)"
         [fila]="sede.name"
+        [attr.data-site-id]="sede.id"
         data-testid="sede-acciones"
         (actionSelected)="ejecutarAccionDeSede($event, sede)"
       />
@@ -418,40 +350,113 @@
          máximo, paginación en cliente. Corregir el cargo y retirar van al
          servidor. Sin adjunto: un vínculo laboral no tiene dónde guardar un
          archivo (encabezado de la sección TS). -->
-    @if (layout() === 'tabla') {
+    @if (historialEnTabla()) {
       <app-filter-bar
         searchLabel="Buscar por institución o cargo"
         searchPlaceholder="Institución o cargo"
-        (filtersChanged)="onFiltrosHistorialChanged($event)"
+        [searchInUrl]="false"
+        [searchValue]="busquedaHistorial()"
+        (searchChanged)="onFiltrosHistorialChanged({q: $event})"
       />
 
       <app-data-table
+        data-testid="historial-tabla"
         [state]="estadoHistorialTabla()"
         [columns]="columnasHistorial()"
         [trackBy]="porIdDeAfiliacion"
         [rowLabel]="nombreAccesibleDeAfiliacion"
         caption="Su historial laboral"
         maxHeight="420px"
+        (retry)="recargar()"
+        (refresh)="recargar()"
       />
 
-      @if (afiliaciones().length === 0) {
-        <p class="historial__vacio" data-testid="historial-tabla-vacio">
-          Todavía no cargó ningún vínculo laboral. Es lo que le dice a un paciente dónde
-          ejerció antes de llegar acá.
-        </p>
-      } @else if (historialFiltrado().length === 0) {
-        <p class="historial__vacio" data-testid="historial-tabla-sin-resultados">
-          Ningún vínculo coincide con la búsqueda.
-        </p>
-      } @else {
-        <app-pagination
-          [totalItems]="historialFiltrado().length"
-          [(page)]="paginaHistorial"
-          [(pageSize)]="tamanoPaginaHistorial"
-        />
+      @if (historial().status === 'ready') {
+        @if (afiliaciones().length === 0) {
+          <p class="historial__vacio" data-testid="historial-tabla-vacio">
+            Todavía no cargó ningún vínculo laboral. Es lo que le dice a un paciente dónde
+            ejerció antes de llegar acá.
+          </p>
+        } @else if (historialFiltrado().length === 0) {
+          <p class="historial__vacio" data-testid="work-history-no-results">
+            Ningún vínculo coincide con la búsqueda.
+          </p>
+        } @else {
+          <app-pagination
+            [totalItems]="historialFiltrado().length"
+            [page]="paginaHistorialVisible()"
+            (pageChange)="paginaHistorial.set($event)"
+            [(pageSize)]="tamanoPaginaHistorial"
+          />
+        }
       }
     }
 
+    <!-- ─── Lo que se puede corregir o retirar (sólo en «Trayectoria») ─────
+           La pestaña ya pinta la historia entera arriba, así que acá no se
+           repite: se lista únicamente lo accionable —lo declarado por el
+           profesional y lo que ninguna institución contestó todavía—, y va
+           pegado al formulario que es el que corrige. Sin nada que tocar, el
+           bloque no existe. -->
+    @if (layout() === 'timeline' && !historialEnTabla() && vinculosEditables().length > 0) {
+      <h3 class="historial__subtitulo">Corregir o retirar</h3>
+      <p class="historial__intro">
+        Lo que declaró usted, y las solicitudes que todavía nadie contestó. Lo que una institución
+        ya confirmó o rechazó no se edita desde acá.
+      </p>
+      <ul class="historial__lista" data-testid="vinculos-editables">
+        @for (afiliacion of vinculosEditables(); track afiliacion.id) {
+          <li class="historial__item">
+            <div class="historial__institucion">
+              <strong>{{ afiliacion.organizationName }}</strong>
+              @if (afiliacion.roleTitle) {
+                <span class="historial__cargo">{{ afiliacion.roleTitle }}</span>
+              }
+            </div>
+
+            <div class="historial__periodo">
+              <span class="historial__fechas">
+                {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+                @if (afiliacion.endDate) {
+                  {{ afiliacion.endDate | date: 'MM/yyyy' }}
+                } @else {
+                  actualidad
+                }
+              </span>
+            </div>
+
+            <div class="historial__acciones-sede">
+              @if (puedeCorregirse(afiliacion)) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="vinculo-editar"
+                  [attr.aria-label]="'Corregir el vínculo con ' + afiliacion.organizationName"
+                  (clicked)="abrirEdicionDeVinculo(afiliacion)"
+                >
+                  Editar
+                </button>
+              }
+              @if (puedeRetirarse(afiliacion)) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  type="button"
+                  data-testid="vinculo-retirar"
+                  [attr.aria-label]="'Retirar el vínculo con ' + afiliacion.organizationName"
+                  (clicked)="retirarVinculo(afiliacion)"
+                >
+                  Retirar
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
 
     <!-- ─── La línea de tiempo ──────────────────────────────────────────────
            Mismo reparto visual que el historial de verificaciones de arriba: una
@@ -567,18 +572,6 @@
         data-testid="abrir-alta-vinculo"
         (clicked)="abrirAltaDeVinculo()"
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          focusable="false"
-        >
-          <path d="M12 5v14M5 12h14" />
-        </svg>
         Añadir elemento a su historial
       </button>
     </p>
@@ -763,19 +756,53 @@
   </div>
 </ng-template>
 
+<ng-template #celdaEstadoHistorial let-afiliacion>
+  @switch (afiliacion.statusKind) {
+    @case ('declarado') {
+      <span class="historial__estado">Declarado por usted</span>
+    }
+    @case ('pendiente') {
+      <app-status-seal variant="pending" label="Pendiente" />
+    }
+    @case ('aprobado') {
+      <app-status-seal variant="approved" label="Aprobado" />
+    }
+    @case ('rechazado') {
+      <app-status-seal variant="rejected" label="Rechazado" />
+    }
+    @case ('revocado') {
+      <app-status-seal variant="rejected" label="Revocado" />
+    }
+    @default {
+      <app-status-seal variant="unknown" label="Estado desconocido" />
+    }
+  }
+</ng-template>
+
 <ng-template #celdaPeriodoHistorial let-afiliacion>
-  {{ afiliacion.startDate | date: 'MM/yyyy' }} —
-  @if (afiliacion.endDate) {
-    {{ afiliacion.endDate | date: 'MM/yyyy' }}
-  } @else {
-    actualidad
+  <div class="historial__institucion">
+    <span class="historial__fechas">
+      {{ afiliacion.startDate | date: 'MM/yyyy' }} —
+      @if (afiliacion.endDate) {
+        {{ afiliacion.endDate | date: 'MM/yyyy' }}
+      } @else {
+        actualidad
+      }
+    </span>
+    <span class="historial__estado">{{ periodo(afiliacion) }}</span>
+  </div>
+  @if (avisoDelVinculo(afiliacion); as aviso) {
+    <p class="historial__estado">{{ aviso }}</p>
   }
 </ng-template>
 
 <ng-template #celdaAccionesHistorial let-afiliacion>
-  <app-row-actions
-    [actions]="accionesDeAfiliacion()"
-    [fila]="afiliacion.organizationName"
-    (actionSelected)="ejecutarAccionDeAfiliacion($event, afiliacion)"
-  />
+  @let acciones = accionesDeAfiliacion(afiliacion);
+  @if (acciones.length > 0) {
+    <app-row-actions
+      [actions]="acciones"
+      [fila]="afiliacion.organizationName"
+      (actionSelected)="ejecutarAccionDeAfiliacion($event, afiliacion)"
+    />
+  }
 </ng-template>

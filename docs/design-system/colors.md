@@ -84,7 +84,7 @@ marca y pasa a ser estructura.
 | Token | Uso | Nota |
 |---|---|---|
 | `--border-default` | Divisor **decorativo** | **No delimita controles** |
-| `--border-strong` | El único válido para el borde de un control | 3,34:1 en claro · **E3 en oscuro** |
+| `--border-strong` | El único válido para el borde de un control | 3,34:1 en claro · 3,27:1 en oscuro (peor caso; E3 cerrada el 2026-10-11) |
 
 Confundirlos es el error más fácil de cometer: un `<input>` con
 `--border-default` se ve bien y no cumple el mínimo de 3:1 para componentes de

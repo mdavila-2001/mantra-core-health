@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { FACTURACION_SIMULADA_DISPONIBLE } from '../../../billing/facturacion-disponible';
+import { SIMULATED_AVAILABLE_INVOICING } from '../../../billing/invoicing-availability';
 import { PaymentsBlock } from './payments-block';
 
 /**
@@ -61,7 +61,7 @@ describe('PaymentsBlock', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => false },
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => false },
       ],
     });
 
@@ -71,12 +71,17 @@ describe('PaymentsBlock', () => {
   });
 
   afterEach(() => {
+    // La cotización de cobro con seguro lee las coberturas de la persona: no es lo que
+    // estas pruebas miden, así que se responde vacía antes de verificar.
+    http.match((r) => r.url.includes('/patient-coverages/by-patient/')).forEach((r) => r.flush({ items: [] }));
     http.verify();
   });
 
   function responder(facturas: readonly Record<string, unknown>[]): void {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+    // Sin vinculaciones propias se cae a la primera práctica de la lista.
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush({ items: facturas, count: facturas.length });
@@ -104,6 +109,8 @@ describe('PaymentsBlock', () => {
   it('un 403 no se lee como «no pagó nada»', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([PRACTICA]);
+    // Sin vinculaciones propias se cae a la primera práctica de la lista.
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     http
       .expectOne((r) => r.url === '/accounting/practitioner/paid-consultations')
       .flush(
@@ -118,6 +125,7 @@ describe('PaymentsBlock', () => {
   it('sin prácticas lo dice, y no pide los pagos', () => {
     fixture.detectChanges();
     http.expectOne((r) => r.url === '/practices').flush([]);
+    http.expectOne((r) => r.url === '/practitioners/me/role-assignments').flush([]);
     fixture.detectChanges();
 
     expect(interno<() => boolean>('sinPractica')()).toBe(true);
@@ -140,7 +148,7 @@ describe('PaymentsBlock con la facturación simulada', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: FACTURACION_SIMULADA_DISPONIBLE, useValue: () => true },
+        { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => true },
       ],
     });
     const http = TestBed.inject(HttpTestingController);
@@ -148,8 +156,9 @@ describe('PaymentsBlock con la facturación simulada', () => {
     fixture.componentRef.setInput('patientProfileId', 'p-1');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('app-cobros-del-paciente')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-patient-charges')).not.toBeNull();
     http.expectNone('/practices');
+    http.expectNone('/practitioners/me/role-assignments');
     http.expectNone((r) => r.url === '/accounting/practitioner/paid-consultations');
     const cobros = http.expectOne((r) => r.url.endsWith('/billing/simulated/charges'));
     expect(cobros.request.params.get('patientProfileId')).toBe('p-1');

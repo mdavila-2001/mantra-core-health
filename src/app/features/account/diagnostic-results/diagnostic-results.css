@@ -21,12 +21,37 @@
 }
 
 .resultados__item {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-md);
+  /* Superficie tonal sin borde: una pila de bordes no jerarquiza nada. */
+  background: var(--bg-surface-alt);
+  border-radius: var(--r-lg);
   display: grid;
   gap: var(--sp-3);
-  padding: var(--sp-4);
+  padding: var(--sp-5);
+}
+
+/* Descargar y compartir comparten renglón en cuanto hay ancho: las dos acciones
+   de la tarjeta son una sola fila, no dos bloques apilados. */
+@media (min-width: 40rem) {
+  .resultados__item {
+    align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .resultados__item > * {
+    grid-column: 1 / -1;
+  }
+
+  .resultados__item > .resultados__archivos {
+    grid-column: 1;
+  }
+
+  .resultados__item > .resultados__acciones {
+    grid-column: 2;
+  }
+
+  .resultados__item:not(:has(> .resultados__archivos)) > .resultados__acciones {
+    grid-column: 1 / -1;
+  }
 }
 
 .resultados__encabezado {
@@ -70,9 +95,13 @@
 
 /* El separador es decorativo y va en `::before`: un «·» en el marcado se leería
    en voz alta entre cada dato. */
-.resultados__meta-dato + .resultados__meta-dato::before {
-  content: '·';
-  margin-inline-end: var(--sp-3);
+@media (min-width: 40rem) {
+  /* En teléfono la tira se parte en renglones y el punto quedaría huérfano al
+     inicio de línea: allí sólo manda el `gap`. */
+  .resultados__meta-dato + .resultados__meta-dato::before {
+    content: '·';
+    margin-inline-end: var(--sp-3);
+  }
 }
 
 .resultados__sellos {

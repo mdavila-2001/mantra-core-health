@@ -1,0 +1,59 @@
+<section class="relation-groups__zone" [attr.aria-labelledby]="headingId()">
+  @if (headingLevel() === 2) {
+    <h2 class="relation-groups__heading" [id]="headingId()">{{ heading() }}</h2>
+  } @else {
+    <h3 class="relation-groups__heading" [id]="headingId()">{{ heading() }}</h3>
+  }
+  <div class="relation-groups__columns">
+    @for (column of columns(); track column.key) {
+      <section
+        class="relation-groups__group"
+        [class.relation-groups__group--long]="column.items.length > longColumn"
+        [attr.aria-labelledby]="headingId() + '-' + column.key">
+        @if (headingLevel() === 2) {
+          <h3 class="relation-groups__title" [id]="headingId() + '-' + column.key">
+            {{ column.title }}
+            @if (column.count !== null) {
+              <span class="relation-groups__count">{{ column.count }}</span>
+            }
+          </h3>
+        } @else {
+          <h4 class="relation-groups__title" [id]="headingId() + '-' + column.key">
+            {{ column.title }}
+            @if (column.count !== null) {
+              <span class="relation-groups__count">{{ column.count }}</span>
+            }
+          </h4>
+        }
+        @if (column.items.length === 0) {
+          <p class="relation-groups__empty">{{ emptyColumnText() }}</p>
+        } @else {
+          <ul class="relation-groups__list">
+            @for (neighbor of column.items; track neighbor.conceptId) {
+              <li class="relation-groups__item">
+                @if (navigation() === 'select') {
+                  <button
+                    type="button"
+                    class="relation-groups__neighbor"
+                    [attr.aria-label]="selectLabelPrefix() + ' ' + neighbor.display"
+                    (click)="neighborSelected.emit(neighbor.conceptId)"
+                  >
+                    {{ neighbor.display }}
+                  </button>
+                } @else {
+                  <a class="relation-groups__neighbor" [routerLink]="[linkPrefix(), neighbor.conceptId]">
+                    {{ neighbor.display }}
+                  </a>
+                }
+                <app-relation-evidence class="relation-groups__evidence" [neighbor]="neighbor" />
+              </li>
+            }
+          </ul>
+        }
+        @if (columnFooter(); as footer) {
+          <ng-container *ngTemplateOutlet="footer; context: { $implicit: column }" />
+        }
+      </section>
+    }
+  </div>
+</section>

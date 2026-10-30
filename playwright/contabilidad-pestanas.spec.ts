@@ -14,7 +14,7 @@ import { entrar, irA } from './support/sesion';
  * Comprueba la separación en escritorio y en móvil, que el fondo es blanco y
  * que el contenido ocupa el ancho del área, y deja una foto de cada pestaña.
  */
-const SALIDA = join('docs', 'trabajo', '2026-09-30-contabilidad-en-pestanas', 'evidencia');
+const SALIDA = join('artifacts', 'evidencia', '2026-09-30-contabilidad-en-pestanas', 'evidencia');
 const DOCTORA: Actor = {
   rol: 'doctora',
   identificador: 'medica@alovida.mock',
@@ -60,23 +60,24 @@ for (const vista of VISTAS) {
 
     const pestanas = page.getByRole('tab');
     await expect(pestanas.filter({ hasText: 'Resumen' })).toBeVisible({ timeout: 30_000 });
-    await expect(pestanas.filter({ hasText: 'Registros' })).toBeVisible();
+    await expect(pestanas.filter({ hasText: /Registros|Anotar gastos, equipos y deudas/ })).toBeVisible();
 
     /* ---- Resumen: tableros, subpestañas y ninguna tabla de carga ------ */
     await expect(page.getByTestId('contabilidad-numeros')).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('heading', { name: '¿Cuánto hizo?' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Pendientes' })).toBeVisible();
-    await page.getByRole('tab', { name: 'Pendientes' }).click();
+    await expect(page.getByRole('tab', { name: 'Por cobrar y por pagar' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Por cobrar y por pagar' }).click();
     await expect(page.getByRole('heading', { name: 'Lo que está pendiente' })).toBeVisible();
     await page.getByRole('tab', { name: 'Patrimonio' }).click();
     await expect(page.getByRole('heading', { name: 'Lo que tiene y lo que debe' })).toBeVisible();
     await page.getByRole('tab', { name: 'Movimientos' }).click();
     await expect(page.getByTestId('contabilidad-registros')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Nuevo gasto' })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Lo que tiene y lo que debe' })).toBeVisible();
     await foto(page, vista, `resumen-${vista.nombre}.png`);
 
     /* ---- Registros: tablas, ningún tablero ---------------------------- */
-    await page.getByRole('tab', { name: 'Registros', exact: true }).click();
+    await page.getByRole('tab', { name: /^(Registros|Anotar gastos, equipos y deudas)$/ }).click();
     const registros = page.getByTestId('contabilidad-registros');
     await expect(registros).toBeVisible({ timeout: 30_000 });
     await expect(registros.getByTestId('tabla-EXPENSE')).toContainText('Alquiler de septiembre', {

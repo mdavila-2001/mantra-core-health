@@ -81,6 +81,16 @@ describe('CartPage', () => {
     expect(accion?.textContent).toContain('Ir a la tienda');
   });
 
+  it('ofrece las promociones, que se fusionaron con el carrito en la cabecera (27/10/2026)', () => {
+    configurar();
+    montar();
+
+    const promociones = raiz().querySelector<HTMLAnchorElement>('[data-testid="cart-promociones"]');
+    expect(promociones?.tagName).toBe('A');
+    expect(promociones?.getAttribute('href')).toBe('/my-account/promotions');
+    expect(promociones?.textContent?.trim()).toBe('Ver promociones');
+  });
+
   it('con carrito: muestra sede, líneas y total', () => {
     configurar();
     cart.add(SEDE, linea(), 2);

@@ -9,7 +9,7 @@ import {
   campoDeBloque,
   type PdfBlock,
 } from '../../../shared/utils/pdf-export/pdf-export';
-import { importeBs } from '../resumen/ventanas';
+import { amountBs } from '../summary/windows';
 
 /**
  * El comprobante contable de un movimiento, en PDF: lo que el médico guarda o
@@ -95,12 +95,12 @@ export function bloquesDelComprobante(
   for (const linea of lineas) {
     const cuenta = porId.get(linea.accountId);
     const nombre = cuenta === undefined ? 'Cuenta sin nombre' : `${cuenta.code} · ${cuenta.name}`;
-    const importe = importeBs(linea.amountBase);
+    const importe = amountBs(linea.amountBase);
     const esDebe = linea.directionConceptId === ladoDelDebe;
     bloques.push(fila([nombre, esDebe ? importe : '', esDebe ? '' : importe]));
   }
 
-  bloques.push({ kind: 'total', text: `Total: ${importeBs(comprobante.totalAmount ?? '0')}` });
+  bloques.push({ kind: 'total', text: `Total: ${amountBs(comprobante.totalAmount ?? '0')}` });
   bloques.push({
     kind: 'caption',
     text: `Descargado el ${FORMATO_FECHA_Y_HORA.format(new Date())} desde AloVida.`,

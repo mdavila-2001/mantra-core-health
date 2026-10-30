@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -22,6 +29,8 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
+import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
+import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 
 /** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
 const HOME_ROUTE = '/';
@@ -86,6 +95,15 @@ export class Login {
   private readonly route = inject(ActivatedRoute);
   private readonly formTracing = inject(FormTracing);
 
+  /**
+   * La cuenta local de desarrollo, o `null` (ver `local-login-hint.ts`).
+   *
+   * Se resuelve **después del primer render, en el navegador**: depende de dónde
+   * se sirve la página (`location`), que en el servidor no existe, y decidirlo
+   * antes dibujaría en el cliente algo que el HTML del servidor no trae.
+   */
+  protected readonly localHint = signal<LocalLoginHint | null>(null);
+
   readonly form = new FormGroup({
     identifier: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -101,21 +119,16 @@ export class Login {
   readonly isSubmitting = computed(() => this.state().status === 'loading');
 
   /**
-   * El campo de MFA **ya no se dibuja**, y el control se queda.
+   * El campo de MFA **se dibuja sólo cuando la API lo pide** (TX-29).
    *
-   * Estaba siempre a la vista, rotulado «Código de verificación (opcional)»,
-   * porque `LoginDto` acepta `mfaCode` y el backend no emite ninguna señal de
-   * cuándo hace falta: no hay código de error propio en el catálogo ni mención
-   * de MFA en el servicio de login. Mostrarlo siempre no inventaba nada, pero
-   * le pedía a todo el mundo un dato que casi nadie tiene — y en una pantalla
-   * de dos campos, un tercero que no te toca es el que te hace dudar de los
-   * otros dos.
-   *
-   * El control sigue declarado a propósito: `credentials()` lo omite mientras
-   * esté vacío, así que hoy no cambia nada de lo que viaja, y el día que el
-   * backend declare el caso vuelve el campo a la plantilla —pedido, no
-   * ofrecido— sin tocar el formulario ni el envío.
+   * Antes no había señal: `LoginDto` aceptaba `mfaCode` y nada decía cuándo hacía
+   * falta, así que se lo escondió. Ahora, con `AUTH_MFA_CHALLENGE_ENABLED` en la
+   * API, una cuenta con factor verificado responde `401 details.reason =
+   * MFA_REQUIRED` a un login sin código (y `MFA_INVALID` a uno que no valida): la
+   * pantalla pasa a pedir el código, **pedido y no ofrecido**, y reenvía el mismo
+   * formulario.
    */
+  readonly mfaRequired = signal(false);
 
   readonly errorMessage = computed<string | null>(() => {
     const state = this.state();
@@ -130,6 +143,16 @@ export class Login {
     }
     return null;
   });
+
+  constructor() {
+    afterNextRender(() => this.localHint.set(localLoginHint()));
+  }
+
+  /** Rellena el formulario con la cuenta local; no envía: entrar sigue siendo un clic. */
+  protected usarCuentaLocal(cuenta: LocalLoginHint): void {
+    this.form.patchValue({ identifier: cuenta.identifier, password: cuenta.password });
+    this.form.markAsDirty();
+  }
 
   submit(): void {
     if (this.form.invalid || this.isSubmitting()) {
@@ -249,6 +272,19 @@ export class Login {
   private toState(error: unknown): ViewState<null> {
     if (error instanceof HttpErrorResponse) {
       const body = readApiError(error);
+      const reason = body?.details?.['reason'];
+      if (body?.code === 'UNAUTHENTICATED' && (reason === 'MFA_REQUIRED' || reason === 'MFA_INVALID')) {
+        this.mfaRequired.set(true);
+        return validation([
+          {
+            message:
+              reason === 'MFA_REQUIRED'
+                ? 'Ingrese el código de verificación de su aplicación de autenticación.'
+                : 'El código de verificación no es válido. Revíselo y vuelva a intentar.',
+            code: body.code,
+          },
+        ]);
+      }
       if (body?.code === 'UNAUTHENTICATED') {
         return validation([{ message: 'Las credenciales no son válidas.', code: body.code }]);
       }

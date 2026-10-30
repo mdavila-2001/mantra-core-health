@@ -1,4 +1,7 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+
+import { AuthService } from '@core/auth/auth.service';
 
 import { PublicProfileCard } from './public-profile-card';
 import { jsonLdDePerfil } from '../public-profile.jsonld';
@@ -345,5 +348,69 @@ describe('PublicProfileCard · dónde atiende', () => {
     expect(fixture.componentInstance['pines']().map((p: { id: string }) => p.id)).toEqual([
       'ubicacion',
     ]);
+  });
+});
+
+/**
+ * «Calificar mi atención» sólo se ofrece donde puede tener efecto: una sesión
+ * con perfil de paciente frente a la ficha de un PROFESIONAL que acepta
+ * reseñas. Una farmacia, una clínica o un médico que apagó las reseñas no
+ * tienen a quién recibirlas, y el botón llevaba a un 422 seguro.
+ */
+describe('PublicProfileCard · calificar mi atención', () => {
+  const BASE: PublicProfileDetail = {
+    kind: 'PRACTITIONER',
+    slug: 'dra-lucia-salas',
+    displayName: 'Dra. Lucía Salas',
+    headline: null,
+    biography: null,
+    avatarUrl: null,
+    coverUrl: null,
+    verified: true,
+    city: null,
+    address: null,
+    location: null,
+    specialties: [],
+    trajectory: [],
+    ratingAverage: null,
+    ratingCount: 0,
+    practiceSites: [],
+    acceptsReviews: true,
+    posts: [],
+    updatedAt: new Date('2026-08-01T00:00:00Z'),
+  };
+
+  function montar(perfil: PublicProfileDetail, patientProfileId: string | null = 'pat-1') {
+    TestBed.configureTestingModule({
+      providers: [{ provide: AuthService, useValue: { patientProfileId: signal(patientProfileId) } }],
+    });
+    const fixture = TestBed.createComponent(PublicProfileCard);
+    fixture.componentRef.setInput('perfil', perfil);
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('lo ofrece a un paciente frente a un profesional que acepta reseñas', () => {
+    expect(montar(BASE).querySelector('[data-testid="perfil-calificar"]')).not.toBeNull();
+  });
+
+  it('no lo ofrece si el profesional apagó las reseñas', () => {
+    const raiz = montar({ ...BASE, acceptsReviews: false });
+    expect(raiz.querySelector('[data-testid="perfil-calificar"]')).toBeNull();
+  });
+
+  it.each(['ORGANIZATION', 'PHARMACY', 'DIAGNOSTIC_UNIT', 'INSURER'] as const)(
+    'no lo ofrece en la ficha de %s, aunque acepte reseñas',
+    (kind) => {
+      expect(
+        montar({ ...BASE, kind, acceptsReviews: true }).querySelector('[data-testid="perfil-calificar"]'),
+      ).toBeNull();
+    },
+  );
+
+  it('no lo ofrece a quien no tiene perfil de paciente', () => {
+    expect(montar(BASE, null).querySelector('[data-testid="perfil-calificar"]')).toBeNull();
   });
 });

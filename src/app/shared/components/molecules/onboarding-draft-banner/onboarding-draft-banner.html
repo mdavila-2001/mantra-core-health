@@ -1,0 +1,42 @@
+@if (draft(); as b) {
+  <div class="onboarding-draft-banner" role="region" aria-label="Borrador guardado" data-testid="onboarding-draft-banner">
+    <div class="onboarding-draft-banner__icon" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+    </div>
+
+    <div class="onboarding-draft-banner__content">
+      <div class="onboarding-draft-banner__text">
+        <span class="onboarding-draft-banner__title">Tenés un registro guardado en borrador</span>
+        <span class="onboarding-draft-banner__details">
+          Quedaste en el paso {{ b.stepIndex + 1 }}{{ b.stepTitle ? ' («' + b.stepTitle + '»)' : '' }} · {{ b.updatedAt | date: 'short' }}. ¿Querés continuar desde donde lo dejaste?
+        </span>
+      </div>
+
+      <div class="onboarding-draft-banner__actions">
+        <button
+          app-button
+          variant="primary"
+          size="sm"
+          type="button"
+          data-testid="onboarding-draft-resume"
+          (clicked)="onResumir()"
+        >
+          Reanudar avance
+        </button>
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          data-testid="onboarding-draft-discard"
+          (clicked)="onDescartar()"
+        >
+          Empezar de nuevo
+        </button>
+      </div>
+    </div>
+  </div>
+}

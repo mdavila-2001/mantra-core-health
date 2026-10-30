@@ -398,44 +398,133 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('las secciones reales son las del laboratorio y las diez de la farmacia, y nada más la usa', () => {
+  it('las secciones reales son las del laboratorio, las diez de la farmacia y la del centro médico, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
-    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». El 06/10/2026
-    // el centro sumó «Horarios y equipos» (mockup).
+    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
+    // «Configurar práctica», sólo para una organización médica: los
+    // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
+    // P34 (26/10/2026) suma «Horario y turnos» a la farmacia.
     expect(flagged.map((s) => s.path)).toEqual([
+      'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
       'administration/pharmacy-categories',
       'administration/pharmacy-import',
       'administration/pharmacy-inventory',
       'administration/pharmacy-prices',
+      'administration/pharmacy-hours',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
       'administration/pharmacy-branches',
       'administration/laboratory',
-      'laboratorio/recepcion',
-      'laboratorio/cola',
+      'laboratory/reception',
+      'laboratory/queue',
       'administration/laboratory-results',
       'administration/laboratory-prices',
       'administration/center-schedule',
       'administration/laboratory-branches',
     ]);
     for (const section of flagged) {
-      expect(section.onlyForTenantTypes, section.path).toEqual(
-        section.path.includes('pharmacy') ? ['PHARMACY'] : ['DIAGNOSTIC_CENTER'],
-      );
+      const tipos = section.path.includes('pharmacy')
+        ? ['PHARMACY']
+        : section.path.includes('medical-center')
+          ? ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']
+          : ['DIAGNOSTIC_CENTER'];
+      expect(section.onlyForTenantTypes, section.path).toEqual(tipos);
     }
   });
 
   it('la cola del laboratorio la ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
-    const queue = APP_SECTIONS.find((s) => s.path === 'laboratorio/cola')!;
+    const queue = APP_SECTIONS.find((s) => s.path === 'laboratory/queue')!;
     expect(isVisibleTo(queue, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
     expect(isVisibleTo(queue, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
     expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
+  });
+
+  it('«Configurar práctica» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {
+    const setup = APP_SECTIONS.find((s) => s.path === 'administration/medical-center-setup')!;
+    for (const tipo of ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER']) {
+      expect(isVisibleTo(setup, ['USER'], ['t-1'], tipo), tipo).toBe(true);
+    }
+    expect(isVisibleTo(setup, ['USER'], ['t-1'], 'PHARMACY')).toBe(false);
+    expect(isVisibleTo(setup, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+  });
+});
+
+/**
+ * Revisión visual del PR #1441 (M5): una clínica veía el menú de la
+ * aseguradora. Las cinco pantallas que son de quien **paga** salen para las
+ * cinco organizaciones médicas; la aseguradora y la plataforma no cambian, y
+ * «Solicitudes de seguro» —la cara del prestador— se queda.
+ */
+describe('la cara de aseguradora del menú y las organizaciones médicas', () => {
+  const MEDICAS = ['HOSPITAL', 'CLINIC', 'MEDICAL_OFFICE', 'NURSING', 'HEALTH_OTHER'] as const;
+  const DE_ASEGURADORA = [
+    'administration/insurance',
+    'administration/insurance-analytics',
+    'administration/received-claims',
+    'administration/insurance-patients',
+    'administration/insurance-campaigns',
+  ];
+  const seccion = (path: string) => APP_SECTIONS.find((s) => s.path === path)!;
+
+  it.each(DE_ASEGURADORA)('%s no se le ofrece a ninguna organización médica', (path) => {
+    for (const tipo of MEDICAS) {
+      expect(isVisibleTo(seccion(path), ['USER'], ['t-1'], tipo), tipo).toBe(false);
+    }
+  });
+
+  it.each(DE_ASEGURADORA)('%s la sigue viendo la dueña de una aseguradora (PAYER)', (path) => {
+    expect(isVisibleTo(seccion(path), ['USER'], ['t-1'], 'PAYER')).toBe(true);
+  });
+
+  it.each(DE_ASEGURADORA)('%s la sigue viendo el SUPERADMIN de la plataforma', (path) => {
+    expect(isVisibleTo(seccion(path), ['SUPERADMIN'], ['t-1'], null)).toBe(true);
+    expect(isVisibleTo(seccion(path), ['SUPERADMIN'], ['t-1'], 'PROVIDER')).toBe(true);
+  });
+
+  it('un PROVIDER genérico la sigue viendo: es intencional, no un olvido', () => {
+    // `SIN_CARA_DE_ASEGURADORA` (navigation.payer.ts) cierra la cara de
+    // aseguradora a las organizaciones médicas, a la farmacia y al laboratorio.
+    // `PROVIDER` queda afuera de esa lista a propósito: es el tipo del tenant
+    // por defecto y de cuentas de plataforma, y sacárselo cambiaría lo que ven
+    // hoy sin que ninguna revisión lo pidiera. Si eso cambia, esta prueba se
+    // invierte en el mismo PR.
+    for (const path of DE_ASEGURADORA) {
+      expect(isVisibleTo(seccion(path), ['USER'], ['t-1'], 'PROVIDER'), path).toBe(true);
+    }
+  });
+
+  it('«Solicitudes de seguro», la cara del prestador, la ve el personal de facturación de una clínica', () => {
+    // La API la sirve sólo a BILLING_OPERATOR y SECURITY_ADMIN (ROLE_INSUFFICIENT
+    // para un `USER`): el personal que factura la necesita —y la agenda abre
+    // sus solicitudes—, así que ocultarla por tipo de organización la cerraría
+    // también a ellos, porque el guard mira la misma regla.
+    const presentadas = seccion('administration/insurance-claims');
+    for (const tipo of MEDICAS) {
+      expect(isVisibleTo(presentadas, ['BILLING_OPERATOR'], ['t-1'], tipo), tipo).toBe(true);
+      expect(isVisibleTo(presentadas, ['SECURITY_ADMIN'], ['t-1'], tipo), tipo).toBe(true);
+      expect(isVisibleTo(presentadas, ['SUPERADMIN'], ['t-1'], tipo), tipo).toBe(true);
+    }
+  });
+
+  it('«Solicitudes de seguro» no se le ofrece a la dueña de una clínica (USER): la API le daría 403', () => {
+    const presentadas = seccion('administration/insurance-claims');
+    for (const tipo of MEDICAS) {
+      expect(isVisibleTo(presentadas, ['USER'], ['t-1'], tipo), tipo).toBe(false);
+    }
+  });
+
+  it('fuera de las organizaciones médicas «Solicitudes de seguro» no cambia', () => {
+    const presentadas = seccion('administration/insurance-claims');
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], 'PAYER')).toBe(true);
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], 'PROVIDER')).toBe(true);
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], null)).toBe(true);
+    expect(isVisibleTo(presentadas, ['USER'], ['t-1'], 'PHARMACY')).toBe(false);
   });
 });
 
@@ -468,7 +557,7 @@ describe('lo que `hiddenForTenantTypes` le cierra a la aseguradora', () => {
       'my-account/medical-record',
       'my-account/diagnostic-results',
       'my-account/diagnostic-orders',
-      'my-account/cotizaciones',
+      'my-account/quotations',
       'my-account/questionnaires',
     ]);
     for (const seccion of conMarca) {

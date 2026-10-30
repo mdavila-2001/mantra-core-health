@@ -24,8 +24,9 @@ function jwt(payload: Record<string, unknown>): string {
  * `IDENTITY_VERIFICATION_REQUIRED`, `errorToViewState` ofrece «Verificar
  * identidad» y esta pantalla la atiende.
  *
- * Lo que estas pruebas fijan es lo que un refactor rompería en silencio: que la
- * evidencia se sube como **PHI**, y que las dos peticiones van encadenadas.
+ * Lo que estas pruebas fijan es lo que un refactor rompería en silencio: que las
+ * cinco evidencias (frente, reverso y tres poses) se suben como **PHI**, y que
+ * las peticiones van encadenadas.
  */
 describe('IdentityVerification', () => {
   let fixture: ComponentFixture<IdentityVerification>;
@@ -79,10 +80,33 @@ describe('IdentityVerification', () => {
     return (esSenal ? valor : valor.bind(component)) as T;
   }
 
-  function elegirArchivo(nombre = 'documento.pdf') {
-    const archivo = new File(['contenido'], nombre, { type: 'application/pdf' });
-    interno<{ set: (v: readonly File[]) => void }>('evidencia').set([archivo]);
+  function elegirArchivo(nombre = 'documento.jpg') {
+    const imagen = (n: string) => new File(['contenido'], n, { type: 'image/jpeg' });
+    const archivo = imagen(nombre);
+    interno<{ set: (v: readonly File[]) => void }>('frente').set([archivo]);
+    interno<{ set: (v: readonly File[]) => void }>('reverso').set([imagen('reverso.jpg')]);
+    interno<{ set: (v: readonly File[]) => void }>('pruebaVida').set([
+      imagen('centro.jpg'),
+      imagen('izquierda.jpg'),
+      imagen('derecha.jpg'),
+    ]);
     return archivo;
+  }
+
+  /** Las cinco subidas van encadenadas: frente, reverso y las tres poses. */
+  const SUBIDAS = ['u-1', 'u-2', 'u-3', 'u-4', 'u-5'] as const;
+  const CUERPO_ESPERADO = {
+    documentFrontFileId: 'u-1',
+    documentBackFileId: 'u-2',
+    livenessCenterFileId: 'u-3',
+    livenessTurnLeftFileId: 'u-4',
+    livenessTurnRightFileId: 'u-5',
+  };
+
+  function subirTodas() {
+    for (const id of SUBIDAS) {
+      http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id });
+    }
   }
 
   function subir() {
@@ -125,10 +149,16 @@ describe('IdentityVerification', () => {
 
     expect(cuerpo.get('sensitivity')).toBe('PHI');
     expect(cuerpo.get('category')).toBe('DOCUMENT');
+    // Las poses de la prueba de vida viajan como imagen, también como PHI.
     // El campo se llama `file`: lo espera así el backend.
     expect(cuerpo.get('file')).toBeInstanceOf(File);
 
-    peticion.flush({ id: 'f-1' });
+    peticion.flush({ id: SUBIDAS[0] });
+    for (const id of SUBIDAS.slice(1)) {
+      const siguiente = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
+      expect((siguiente.request.body as FormData).get('sensitivity')).toBe('PHI');
+      siguiente.flush({ id });
+    }
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-1',
       checkId: 'ch-1',
@@ -144,7 +174,12 @@ describe('IdentityVerification', () => {
     const peticion = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
     expect(peticion.request.headers.get('Content-Type')).toBeNull();
 
-    peticion.flush({ id: 'f-1' });
+    peticion.flush({ id: SUBIDAS[0] });
+    for (const id of SUBIDAS.slice(1)) {
+      const siguiente = http.expectOne((r) => r.url.endsWith('/common/files/upload'));
+      expect((siguiente.request.body as FormData).get('sensitivity')).toBe('PHI');
+      siguiente.flush({ id });
+    }
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-1',
       checkId: 'ch-1',
@@ -157,10 +192,10 @@ describe('IdentityVerification', () => {
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-42' });
+    subirTodas();
 
     const caso = http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification'));
-    expect(caso.request.body).toEqual({ evidenceFileId: 'f-42' });
+    expect(caso.request.body).toEqual(CUERPO_ESPERADO);
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
     responderHistorial();
@@ -183,10 +218,12 @@ describe('IdentityVerification', () => {
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    subirTodas();
 
     const caso = http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification'));
-    expect(Object.keys(caso.request.body as object)).toEqual(['evidenceFileId']);
+    expect(Object.keys(caso.request.body as object).sort()).toEqual(
+      Object.keys(CUERPO_ESPERADO).sort(),
+    );
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
     responderHistorial();
@@ -237,7 +274,7 @@ describe('IdentityVerification', () => {
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    subirTodas();
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-1',
       checkId: 'ch-1',
@@ -305,30 +342,32 @@ describe('IdentityVerification', () => {
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-7' });
+    subirTodas();
 
     const caso = http.expectOne((r) =>
       r.url.endsWith('/identity/me/practitioner/identity-verification'),
     );
-    expect(caso.request.body).toEqual({ evidenceFileId: 'f-7' });
+    expect(caso.request.body).toEqual(CUERPO_ESPERADO);
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
     responderHistorial();
   });
 
-  it('la matrícula no inventa la jurisdicción: el cuerpo solo lleva la evidencia', () => {
+  it('la matrícula no inventa la jurisdicción: el cuerpo solo lleva las cinco evidencias', () => {
     // No hay endpoint para buscar matrículas: omitida, el backend usa la única
     // del profesional. Cuando exista el buscador, esta prueba cambia con él.
     elegirTramite('license');
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-8' });
+    subirTodas();
 
     const caso = http.expectOne((r) =>
       r.url.endsWith('/identity/me/practitioner/license-verification'),
     );
-    expect(Object.keys(caso.request.body as object)).toEqual(['evidenceFileId']);
+    expect(Object.keys(caso.request.body as object).sort()).toEqual(
+      Object.keys(CUERPO_ESPERADO).sort(),
+    );
 
     caso.flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
     responderHistorial();
@@ -346,7 +385,7 @@ describe('IdentityVerification', () => {
     expect(interno<() => boolean>('puedeEnviar')()).toBe(true);
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-9' });
+    subirTodas();
     http
       .expectOne((r) => r.url.endsWith('/identity/me/tenants/t-9/verification'))
       .flush({ caseId: 'c-1', checkId: 'ch-1', status: 'PENDING' });
@@ -374,7 +413,7 @@ describe('IdentityVerification', () => {
   it('«iniciar otro trámite» vuelve al formulario y descarta la evidencia', () => {
     elegirArchivo();
     subir();
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    subirTodas();
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-1',
       checkId: 'ch-1',
@@ -386,13 +425,15 @@ describe('IdentityVerification', () => {
 
     expect(interno<() => unknown>('caso')()).toBeNull();
     // Cada trámite lleva su propio documento: el anterior no se reutiliza.
-    expect(interno<() => readonly File[]>('evidencia')()).toEqual([]);
+    expect(interno<() => readonly File[]>('frente')()).toEqual([]);
+    expect(interno<() => readonly File[]>('reverso')()).toEqual([]);
+    expect(interno<() => readonly File[]>('pruebaVida')()).toEqual([]);
   });
 
   it('actualizar el caso vuelve a consultarlo', () => {
     elegirArchivo();
     subir();
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    subirTodas();
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-1',
       checkId: 'ch-1',
@@ -420,7 +461,7 @@ describe('IdentityVerification', () => {
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    subirTodas();
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-nuevo',
       checkId: 'ch-1',
@@ -447,7 +488,7 @@ describe('IdentityVerification', () => {
     elegirArchivo();
     subir();
 
-    http.expectOne((r) => r.url.endsWith('/common/files/upload')).flush({ id: 'f-1' });
+    subirTodas();
     http.expectOne((r) => r.url.endsWith('/identity/me/identity-verification')).flush({
       caseId: 'c-1',
       checkId: 'ch-1',

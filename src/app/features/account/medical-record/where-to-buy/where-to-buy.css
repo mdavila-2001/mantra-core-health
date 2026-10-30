@@ -6,19 +6,19 @@
     farmacias compara pocas cosas: cobertura, distancia y total.
     ========================================================================== */
 
-.compra {
+.purchase {
   display: flex;
   flex-direction: column;
   gap: var(--sp-6);
 }
 
-.compra__bloque {
+.purchase__block {
   display: flex;
   flex-direction: column;
   gap: var(--sp-3);
 }
 
-.compra__titulo {
+.purchase__title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-h3);
@@ -27,14 +27,14 @@
   color: var(--text-primary);
 }
 
-.compra__nota {
+.purchase__note {
   margin: 0;
   font-size: var(--fs-body);
   color: var(--text-secondary);
 }
 
-.compra__items,
-.compra__sedes {
+.purchase__items,
+.purchase__branches {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -43,8 +43,8 @@
   gap: var(--sp-2);
 }
 
-.compra__item,
-.compra__sede {
+.purchase__item,
+.purchase__branch {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
@@ -54,7 +54,7 @@
   background: var(--bg-surface);
 }
 
-.compra__item-detalle {
+.purchase__item-detail {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -63,17 +63,17 @@
   padding-inline-start: var(--sp-6);
 }
 
-.compra__secundario {
+.purchase__secondary {
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
-.compra__principal {
+.purchase__primary {
   font-weight: 600;
   color: var(--text-primary);
 }
 
-.compra__origen {
+.purchase__origin {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
@@ -82,30 +82,30 @@
   color: var(--text-primary);
 }
 
-.compra__ubicacion-acciones {
+.purchase__location-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
 }
 
-.compra__mapa {
+.purchase__map {
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
 }
 
-.compra__mapa app-map {
+.purchase__map app-map {
   min-block-size: 20rem;
 }
 
 /* La tarjeta y el pin hablan de la misma sede: el resalte es simétrico. */
-.compra__sede--elegida {
+.purchase__branch--selected {
   border-color: var(--focus-ring);
   box-shadow: 0 0 0 1px var(--focus-ring);
 }
 
-.compra__codigo {
+.purchase__code {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -122,20 +122,29 @@
   font-weight: 700;
 }
 
-.compra__sede-datos {
+.purchase__branch-details {
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
   min-inline-size: 0;
 }
 
-.compra__faltantes {
+.purchase__missing {
   margin: 0;
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
-.compra__acciones {
+/* REQ-19-011: el aviso de existencias viejas se lee antes que el resto del
+   detalle; tinta principal, no un color de estado suelto. */
+.purchase__stale-stock {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.purchase__actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -144,18 +153,18 @@
 
 /* En pantalla ancha la sucursal reparte la fila: letra, datos, acciones. */
 @media (min-width: 48rem) {
-  .compra__sede {
+  .purchase__branch {
     flex-direction: row;
     align-items: flex-start;
   }
 
-  .compra__sede-datos {
+  .purchase__branch-details {
     flex: 1;
   }
 }
 
 /* Las promociones vigentes de la farmacia de la sede (FAR-I7). */
-.compra__promos {
+.purchase__promos {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -164,40 +173,40 @@
   gap: var(--sp-1);
 }
 
-.compra__promo {
+.purchase__promo {
   font-size: var(--fs-caption);
 }
 
-.compra__promo-fila {
+.purchase__promo-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-2);
 }
 
-.compra__mas-promos {
+.purchase__more-promos {
   font-size: var(--fs-caption);
   color: var(--text-secondary);
 }
 
-.compra__mas-promos > summary {
+.purchase__more-promos > summary {
   cursor: pointer;
   padding-block: var(--sp-1);
 }
 
-.compra__mas-promos > .compra__promos {
+.purchase__more-promos > .purchase__promos {
   margin-block-start: var(--sp-1);
 }
 
 /* El orden y la variante con seguro (T-E2): una barra que se apila en móvil. */
-.compra__controles {
+.purchase__controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-3);
 }
 
-.compra__seguro {
+.purchase__insurance {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -205,7 +214,7 @@
   min-inline-size: 0;
 }
 
-.compra__cobertura {
+.purchase__coverage {
   margin: 0;
   font-size: var(--fs-caption);
   font-weight: 600;
@@ -213,7 +222,7 @@
 }
 
 /* «Aprobado / a tu cargo»: dos importes que se leen juntos. */
-.compra__desglose {
+.purchase__breakdown {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
@@ -225,14 +234,14 @@
 
 /* «Volver a…» mide su texto: como hijo de la rejilla se estiraba a los 1 100 px
    del área (refactor UX). */
-.volver-al-origen {
+.back-to-origin {
   justify-self: start;
   align-self: flex-start;
 }
 
 /* Lo que no se pudo agregar al carrito (carril 43 · H5): va arriba de la
    lista, no dentro de la tarjeta de la sede — habla del volcado entero. */
-.compra__aviso-carrito {
+.purchase__cart-notice {
   margin: 0 0 var(--sp-3);
   color: var(--text-secondary);
   font-size: var(--fs-caption);
@@ -240,7 +249,7 @@
 
 /* ─── El recorrido sugerido ─────────────────────────────────────────────── */
 
-.compra__recorrido {
+.purchase__route {
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
@@ -250,7 +259,7 @@
   background: var(--bg-surface);
 }
 
-.compra__subtitulo {
+.purchase__subtitle {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--fs-body-lg);
@@ -259,7 +268,7 @@
   color: var(--text-primary);
 }
 
-.compra__paradas {
+.purchase__stops {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -268,13 +277,13 @@
   gap: var(--sp-3);
 }
 
-.compra__parada {
+.purchase__stop {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--sp-3);
 }
 
-.compra__parada .compra__sede-datos {
+.purchase__stop .purchase__branch-details {
   flex: 1 1 12rem;
 }

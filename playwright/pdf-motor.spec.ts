@@ -17,11 +17,11 @@ import { entrar, estable, irA } from './support/sesion';
  * 2. **Receta oficial** (paciente): antes era una hoja en blanco con el id.
  * 3. **Historia completa** (paciente): un documento largo con tablas y pie.
  *
- * Deja los tres PDF en `docs/trabajo/2026-10-02-motor-pdf/evidencia/`; la
+ * Deja los tres PDF en `artifacts/evidencia/2026-10-02-motor-pdf/evidencia/`; la
  * revisión visual (regla 35, dos pasadas) se hace sobre esos archivos.
  */
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-10-02-motor-pdf', 'evidencia');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-10-02-motor-pdf', 'evidencia');
 
 const MEDICA: Actor = {
   rol: 'doctora',
@@ -90,7 +90,7 @@ test('el balance contable exportado trae la tabla y no el rótulo del botón', a
 
   await entrar(page, MEDICA);
   // Los libros viven en la pestaña «Registros»; «Resumen» no tiene el botón.
-  await irA(page, '/administration/accounting/libros');
+  await irA(page, '/administration/accounting/books');
   await estable(page);
   await page.getByRole('button', { name: 'Ver los libros contables de la práctica' }).click();
 

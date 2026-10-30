@@ -1,8 +1,8 @@
 import {
   DELIVERY_ORDER_ADDRESS,
-  ID_PEDIDO_CON_DELIVERY,
-  ID_PEDIDO_CON_SEGURO,
-} from '../../../core/mock/fixtures/pedidos-de-farmacia';
+  ID_ORDER_WITH_DELIVERY,
+  ID_ORDER_WITH_INSURANCE,
+} from '../../../core/mock/fixtures/pharmacy-orders';
 import type {
   LineaDePedido,
   PedidoFarmacia,
@@ -36,10 +36,8 @@ import type {
  *   para sumar y se vuelve a texto con dos decimales, nada más.
  * - **Lo que se pinta se rotula.** `NOTA_DE_DATOS_DE_EJEMPLO` es el cartel
  *   que acompaña a todo lo que sale de acá.
- *
- * TODO(FAR-E2/FAR-E5): cuando el backend publique cobertura y facturación,
- * estos tipos se mudan al contrato y este archivo se queda sólo con los
- * pedidos de ejemplo de las pruebas.
+ * - **Viven acá y no en el contrato** porque el pedido no publica cobertura
+ *   ni facturación.
  */
 
 /** El cartel único: quien mira la pantalla sabe qué parte es maqueta. */
@@ -88,12 +86,12 @@ interface PolizaDeEjemplo {
  * pedido**, que es lo que identifica a un pedido: el nombre de la persona
  * existe para leerse, y dos pedidos suyos compartirían cobertura sin que
  * nadie lo haya pedido. El identificador vive en un solo lugar
- * (`core/mock/fixtures/pedidos-de-farmacia.ts`), que es de donde lo toma
+ * (`core/mock/fixtures/pharmacy-orders.ts`), que es de donde lo toma
  * también el backend simulado al sembrarlo.
  */
 const POLIZAS_DE_EJEMPLO: ReadonlyMap<string, PolizaDeEjemplo> = new Map([
   [
-    ID_PEDIDO_CON_SEGURO,
+    ID_ORDER_WITH_INSURANCE,
     {
       aseguradora: 'Seguro Universal',
       plan: 'Plan Salud Integral',
@@ -233,8 +231,8 @@ function numeroDeFactura(id: string): string {
  */
 const IDS = {
   nuevo: 'c1a7f0e2-0000-4000-8000-000000000101',
-  delivery: ID_PEDIDO_CON_DELIVERY,
-  seguro: ID_PEDIDO_CON_SEGURO,
+  delivery: ID_ORDER_WITH_DELIVERY,
+  seguro: ID_ORDER_WITH_INSURANCE,
   entregado: 'c1a7f0e2-0000-4000-8000-000000000104',
   sede: 'c1a7f0e2-0000-4000-8000-000000000201',
   farmacia: 'c1a7f0e2-0000-4000-8000-000000000202',

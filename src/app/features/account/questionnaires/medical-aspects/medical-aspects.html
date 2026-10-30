@@ -3,7 +3,7 @@
     Su cuenta no tiene un perfil de paciente, así que no hay aspectos médicos propios que declarar.
   </app-alert>
 } @else if (cargando()) {
-  <p class="aspectos__estado" role="status">Buscando lo que declaró…</p>
+  <app-loading-state class="aspectos__estado" message="Buscando lo que declaró…" />
 } @else if (falloLaLectura()) {
   <app-alert tone="error" title="No pudimos traer sus aspectos médicos">
     Reintente en un momento.
@@ -30,6 +30,7 @@
 
     @for (campo of campos; track campo.clave) {
       <app-form-field
+        [icon]="campo.icono"
         class="aspectos__campo"
         [icon]="campo.icono"
         [label]="campo.rotulo"

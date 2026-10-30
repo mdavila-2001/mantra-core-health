@@ -4,6 +4,7 @@ import {
   computed,
   effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -14,12 +15,13 @@ import { concatMap, map, of } from 'rxjs';
 import { AuthService } from '@core/auth/auth.service';
 
 import { ChartTemplatesClient } from '../../core/data-access/chart-templates/chart-templates.client';
-import { especialidadVigente } from '../../core/data-access/profiles/especialidad-vigente';
+import { currentSpecialty } from '../../core/data-access/profiles/current-specialty';
 import { ProfilesClient } from '../../core/data-access/profiles/profiles.client';
 import type {
   ChartTemplate,
   ChartTemplateField,
   ChartTemplateProvenance,
+  ChartTemplateKind,
 } from '../../core/data-access/chart-templates/chart-templates.types';
 import { FormsClient } from '../../core/data-access/forms/forms.client';
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
@@ -47,22 +49,21 @@ import {
   type CambiosDelCampo,
   type TipoDeCampo,
 } from './field-editor/field-editor';
-import {
-  FilterBar,
-  type FilterDef,
-} from '../../shared/components/organisms/filter-bar/filter-bar';
+import { type FilterDef } from '../../shared/components/organisms/filter-bar/filter-bar';
+import { SpecialtyBrowser } from '../../shared/components/organisms/specialty-browser/specialty-browser';
+import type { SpecialtyGroup } from '../../shared/components/organisms/specialty-browser/specialty-browser.types';
 import { PageHeader } from '../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../shared/forms/paginated/paginate-fields';
 import type {
   CampoDeFormulario,
   PaginaDeFormulario,
   TipoDeControl,
 } from '../../shared/forms/paginated/paginated-form.types';
 import {
-  validadorDeCuadricula,
-  validadorDeSeleccion,
-} from '../../shared/forms/paginated/validadores-de-seleccion';
+  gridValidator,
+  selectionValidator,
+} from '../../shared/forms/paginated/selection-validators';
 import { FORM_TEMPLATE_PDF_DOWNLOADER } from '../../shared/utils/form-template-pdf/form-template-pdf';
 
 /**
@@ -157,11 +158,11 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
     Card,
     EmptyState,
     FieldEditor,
-    FilterBar,
     NavIcon,
     PageHeader,
     PaginatedForm,
     Progress,
+    SpecialtyBrowser,
     SpecialtyIcon,
   ],
   templateUrl: './form-builder.html',
@@ -169,10 +170,16 @@ const OPCIONES_QUE_ENTRAN_A_LA_VISTA = 4;
   // `form-builder.css` son los ajustes de esta pantalla sobre esa base. Al
   // revés, `.rejilla` le ganaría por posición a `.catalogo__rejilla` —misma
   // especificidad— y el ancho de columna de acá no se aplicaría.
-  styleUrls: ['../../shared/styles/rejilla-de-tarjetas.css', './form-builder.css'],
+  styleUrls: ['../../shared/styles/card-grid.css', './form-builder.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormBuilder {
+  /**
+   * Dentro del centro «Formularios | Encuestas» la cabecera la dibuja el
+   * centro, una sola vez; acá se omite para no repetirla (28/10/2026).
+   */
+  readonly embedded = input(false);
+
   private readonly chartTemplates = inject(ChartTemplatesClient);
   private readonly forms = inject(FormsClient);
   private readonly navigation = inject(NavigationService);
@@ -209,6 +216,7 @@ export class FormBuilder {
     effect(() => {
       const propia = this.especialidadPropia();
       const lista = this.listado();
+      if (this.vista() !== 'catalog') return;
       if (!this.preseleccionPendiente || propia === null || lista === null) return;
       this.preseleccionPendiente = false;
       if ((this.criterios()['especialidad'] ?? '') !== '') return;
@@ -233,7 +241,7 @@ export class FormBuilder {
    */
   private resolverEspecialidadPropia(): void {
     this.profiles.getOwnPractitionerProfile().subscribe({
-      next: (perfil) => this.especialidadPropia.set(especialidadVigente(perfil.specialties)),
+      next: (perfil) => this.especialidadPropia.set(currentSpecialty(perfil.specialties)),
       error: () => this.especialidadPropia.set(null),
     });
   }
@@ -264,6 +272,90 @@ export class FormBuilder {
       queryParamsHandling: 'merge',
     });
   }
+
+  /* -- Mis formularios y el catálogo para cargar uno (carril 27) -----------
+
+     Se entra a **los formularios propios** (REQ-27-001): los que su
+     organización ya extendió con campos suyos. El catálogo estándar entero es
+     el paso de «Cargar formulario» (REQ-27-008), agrupado por especialidad con
+     el mismo organismo que el catálogo de procedimientos (REQ-27-009). La
+     vista vive en la URL (`?view=catalog`), como el resto de los filtros:
+     recargar o compartir el enlace deja a la persona donde estaba. */
+
+  /** Qué se ve con ningún formulario abierto. */
+  protected readonly vista = computed<'mine' | 'catalog'>(() =>
+    this.criterios()['view'] === 'catalog' ? 'catalog' : 'mine',
+  );
+
+  /**
+   * Los formularios que su organización ya extendió, por nombre.
+   *
+   * «Mío» es lo único que la pantalla puede afirmar sin inventar una
+   * asignación nueva: que la organización le agregó al menos un campo propio.
+   * Cargar un formulario y no agregarle nada no lo vuelve suyo.
+   */
+  protected readonly misFormularios = computed<readonly ChartTemplate[] | null>(() => {
+    const lista = this.listado();
+    if (lista === null) return null;
+    return lista
+      .filter((plantilla) => this.cuantosPropios(plantilla) > 0)
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  });
+
+  /** «Cargar formulario»: abre el catálogo, ya puesto en la especialidad propia. */
+  protected cargarFormulario(): void {
+    this.preseleccionPendiente = true;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: 'catalog' },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** De vuelta a la lista propia, sin arrastrar los filtros del catálogo. */
+  protected volverAMisFormularios(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { view: null, q: null, especialidad: null, clase: null, extension: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * Lo filtrado, agrupado por especialidad para `app-specialty-browser`.
+   *
+   * La especialidad de quien entra va primero y las fichas transversales al
+   * final: son de toda consulta y no compiten con la propia. El resto, por
+   * nombre. Dentro de cada grupo, la ficha base antes que las específicas.
+   */
+  protected readonly gruposPorEspecialidad = computed<readonly SpecialtyGroup<ChartTemplate>[]>(
+    () => {
+      const rotulos = this.especialidades();
+      const propia = this.especialidadPropia();
+      const transversal = this.conceptoTransversal();
+      const porEspecialidad = new Map<string, ChartTemplate[]>();
+      for (const plantilla of this.filtrados() ?? []) {
+        const grupo = porEspecialidad.get(plantilla.specialtyConceptId) ?? [];
+        grupo.push(plantilla);
+        porEspecialidad.set(plantilla.specialtyConceptId, grupo);
+      }
+      const peso = (id: string) => (id === propia ? 0 : id === transversal ? 2 : 1);
+      return [...porEspecialidad]
+        .map(([conceptId, plantillas]) => ({
+          conceptId,
+          label: rotulos.get(conceptId) ?? SIN_NOMBRE_DE_ESPECIALIDAD,
+          items: [...plantillas].sort(
+            (a, b) =>
+              ORDEN_DE_CLASE[claseDe(a)] - ORDEN_DE_CLASE[claseDe(b)] ||
+              a.name.localeCompare(b.name, 'es'),
+          ),
+        }))
+        .sort(
+          (a, b) =>
+            peso(a.conceptId) - peso(b.conceptId) || a.label.localeCompare(b.label, 'es'),
+        );
+    },
+  );
 
   /**
    * Las plantillas ya leídas, o `null` mientras no haya lista.
@@ -326,6 +418,17 @@ export class FormBuilder {
         unavailableReason: 'No pudimos leer el catálogo de especialidades.',
       },
       {
+        key: 'clase',
+        label: 'Tipo de ficha',
+        asChips: true,
+        chipsGroup: 'Tipo de ficha',
+        options: [
+          { value: 'BASE', label: 'Consulta inicial (base)' },
+          { value: 'SPECIFIC', label: 'Específicas por condición' },
+          { value: 'GENERAL', label: 'Generales' },
+        ],
+      },
+      {
         key: 'extension',
         label: 'Mis campos',
         asChips: true,
@@ -347,6 +450,7 @@ export class FormBuilder {
     const texto = normalizar(criterios['q'] ?? '');
     const especialidad = criterios['especialidad'] ?? '';
     const extension = criterios['extension'] ?? '';
+    const clase = criterios['clase'] ?? '';
     const rotulos = this.especialidades();
     const palabras = texto === '' ? [] : texto.split(/\s+/);
 
@@ -361,6 +465,8 @@ export class FormBuilder {
       ) {
         return false;
       }
+
+      if (clase !== '' && claseDe(plantilla) !== clase) return false;
 
       const propios = this.cuantosPropios(plantilla);
       if (extension === 'con' && propios === 0) return false;
@@ -382,13 +488,34 @@ export class FormBuilder {
     });
   });
 
+  /** El rótulo corto de la clase de una ficha, para su tarjeta. */
+  protected rotuloDeClase(plantilla: ChartTemplate): string {
+    return ROTULO_DE_CLASE[claseDe(plantilla)];
+  }
+
+  /**
+   * Deja en el listado la plantilla tal como quedó al editarla.
+   *
+   * Los cambios se aplican en pantalla antes de mandarse (ver la cabecera), así
+   * que la abierta es la versión vigente: con ella «Mis formularios» muestra el
+   * formulario recién extendido sin volver a pedir el catálogo entero.
+   */
+  private actualizarEnElListado(plantilla: ChartTemplate | null): void {
+    const lista = this.listado();
+    if (plantilla === null || lista === null) return;
+    this.plantillas.set(
+      ready(lista.map((actual) => (actual.id === plantilla.id ? plantilla : actual))),
+    );
+  }
+
   /** Si hay algún criterio puesto: lo vacío del filtro no es lo vacío del catálogo. */
   protected readonly hayCriterios = computed(() => {
     const criterios = this.criterios();
     return (
       (criterios['q'] ?? '') !== '' ||
       (criterios['especialidad'] ?? '') !== '' ||
-      (criterios['extension'] ?? '') !== ''
+      (criterios['extension'] ?? '') !== '' ||
+      (criterios['clase'] ?? '') !== ''
     );
   });
 
@@ -484,6 +611,7 @@ export class FormBuilder {
   }
 
   protected cerrar(): void {
+    this.actualizarEnElListado(this.abierta());
     this.abierta.set(null);
     this.presupuesto.set(null);
     this.enviados.clear();
@@ -1087,7 +1215,7 @@ export class FormBuilder {
       else secciones.push({ titulo, campos: [aCampoDelMotor(campo)] });
     }
 
-    return paginarCampos(secciones, { tituloPorDefecto: plantilla.name });
+    return paginateFields(secciones, { tituloPorDefecto: plantilla.name });
   });
 
   /**
@@ -1124,7 +1252,7 @@ export class FormBuilder {
           tope !== undefined &&
           (tope.min !== undefined || tope.max !== undefined)
         ) {
-          validadores.push(validadorDeSeleccion(tope.min, tope.max));
+          validadores.push(selectionValidator(tope.min, tope.max));
         }
         // Las dos restricciones de una cuadrícula. Van en la previa por lo
         // mismo que los topes: es lo que la hace **responder** igual que el
@@ -1132,7 +1260,7 @@ export class FormBuilder {
         const cuadricula = campo.control === 'grid-radio' || campo.control === 'grid-checkboxes';
         if (cuadricula && tope !== undefined && (tope.requerirCadaFila || tope.unaPorColumna)) {
           validadores.push(
-            validadorDeCuadricula((campo.rows ?? []).map((fila) => fila.value), {
+            gridValidator((campo.rows ?? []).map((fila) => fila.value), {
               requerirCadaFila: tope.requerirCadaFila,
               unaPorColumna: tope.unaPorColumna,
             }),
@@ -1418,4 +1546,30 @@ function normalizar(texto: string): string {
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .trim();
+}
+
+/** El título de un grupo cuya especialidad no tiene nombre en terminología. */
+const SIN_NOMBRE_DE_ESPECIALIDAD = 'Especialidad sin nombre en el catálogo';
+
+/** Dentro de una especialidad: la consulta inicial, las de condición y las generales. */
+const ORDEN_DE_CLASE: Readonly<Record<ChartTemplateKind, number>> = {
+  BASE: 0,
+  SPECIFIC: 1,
+  GENERAL: 2,
+};
+
+const ROTULO_DE_CLASE: Readonly<Record<ChartTemplateKind, string>> = {
+  BASE: 'Ficha base',
+  SPECIFIC: 'Ficha específica',
+  GENERAL: 'General',
+};
+
+/**
+ * La clase de una ficha. Las armadas a mano no la traen: son propias de la
+ * organización y se muestran con las específicas, salvo las transversales,
+ * que se reconocen por su prefijo.
+ */
+function claseDe(plantilla: ChartTemplate): ChartTemplateKind {
+  if (plantilla.kind !== undefined) return plantilla.kind;
+  return plantilla.code.startsWith('TRANSV_') ? 'GENERAL' : 'SPECIFIC';
 }

@@ -1,5 +1,7 @@
 /* Artículo enciclopédico (F9). Mobile-first; colores = tokens del sistema. */
 
+@import '../../shared/styles/enlace-chip.css';
+
 :host {
   display: block;
   min-inline-size: 0;
@@ -91,6 +93,13 @@
   display: grid;
   gap: var(--sp-6);
   min-inline-size: 0;
+  /* El texto llena su columna: con cada párrafo acotado a 75ch quedaba una
+     franja vacía a la derecha de toda la ficha (regla del cliente §5). La
+     medida de lectura la pone el cuerpo entero, centrado en su columna, y
+     sólo pesa en pantallas muy anchas. */
+  inline-size: 100%;
+  max-inline-size: 48rem;
+  margin-inline: auto;
 }
 
 .articulo__sinonimos,
@@ -117,21 +126,23 @@
 }
 
 .articulo__parrafo,
-.articulo__lista,
-.articulo__referencias {
+.articulo__lista {
   margin: 0;
-  max-inline-size: 75ch;
   color: var(--text-secondary);
+  line-height: var(--lh-body-lg);
 }
 
-.articulo__parrafo {
-  text-align: justify;
-  hyphens: auto;
+/* Las viñetas las quita el reinicio global: sin ellas, una lista de síntomas
+   se leía como un párrafo partido en renglones. */
+.articulo__lista {
+  display: grid;
+  gap: var(--sp-1);
+  padding-inline-start: var(--sp-6);
+  list-style: disc;
 }
 
-.articulo__lista,
-.articulo__referencias {
-  padding-inline-start: var(--sp-5);
+.articulo__lista li::marker {
+  color: var(--brand-primary);
 }
 
 .articulo__tabla-marco {
@@ -158,10 +169,61 @@
   color: var(--text-primary);
 }
 
+/* La cita de una sección: «Fuente» y su origen como chips, la licencia como
+   sello y la fecha al final. Antes era una línea de texto con puntos medios y
+   un enlace azul subrayado del navegador. */
 .articulo__cita {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
   margin: 0;
+  padding-block-start: var(--sp-2);
+  border-block-start: 1px dashed var(--border-default);
   font-size: var(--fs-caption);
   color: var(--text-muted);
+}
+
+.articulo__cita-rotulo {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.articulo__sello {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+/* Enlaces sueltos dentro de un pie de imagen: el color y el subrayado del
+   sistema, no el azul y el violeta de «visitado» del navegador. */
+.articulo__enlace,
+.articulo__enlace:visited {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.articulo__enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
+.articulo__enlace:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.articulo__referencias {
+  max-inline-size: 75ch;
 }
 
 .articulo__galeria {

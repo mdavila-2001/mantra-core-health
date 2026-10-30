@@ -111,7 +111,7 @@ describe('PatientCoverageCard', () => {
     const link = element.querySelector(
       '[data-testid="btn-whatsapp-coverage"]',
     ) as HTMLAnchorElement;
-    const clickSpy = vi.spyOn(link, 'click').mockImplementation(() => {});
+    const clickSpy = vi.spyOn(link, 'click').mockImplementation(() => undefined);
 
     const event = new KeyboardEvent('keydown', { key: ' ', cancelable: true });
     link.dispatchEvent(event);

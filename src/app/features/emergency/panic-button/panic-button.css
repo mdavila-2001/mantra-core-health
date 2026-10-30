@@ -2,6 +2,21 @@
   display: inline-flex;
 }
 
+/* En la barra lateral el botón ocupa el ancho de la columna. */
+:host-context(.app-side-nav__emergencia) {
+  display: flex;
+}
+
+:host-context(.app-side-nav__emergencia) button {
+  inline-size: 100%;
+  justify-content: center;
+}
+
+.panico__icono {
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+}
+
 /* En un teléfono de 375 px la barra de arriba no entraba por 20 px y el
    avatar quedaba cortado. El botón conserva su palabra entera —es la acción
    más importante de la barra— y cede relleno lateral. */
@@ -45,4 +60,12 @@
 .panico__cierre {
   display: flex;
   justify-content: flex-end;
+}
+
+/* Ícono en la cabecera del teléfono: círculo de 40 px, como sus vecinos. */
+:host(.app-header__emergencia) button {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding-inline: 0;
+  border-radius: 50%;
 }

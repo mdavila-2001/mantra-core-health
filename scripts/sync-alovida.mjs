@@ -89,7 +89,23 @@ const CORRECCIONES = [
     porque: 'el mismo anillo en oscuro, sin transparencia',
     ambito: 'oscuro',
   },
+  {
+    token: '--borde-ctrl',
+    de: '#4A5F64', // 2,47:1 sobre la tarjeta oscura — era la excepción R2 (WCAG 1.4.11 pide 3:1)
+    a: '#627A82', //  3,68 tarjeta · 3,87 inset · 4,05 página
+    porque: 'es el borde de todo campo editable; sin él el control no se distingue',
+    ambito: 'oscuro',
+  },
 ];
+
+/* CAMBIO QUE LA BÓVEDA NO TRAE (no cabe en CORRECCIONES, que sólo cambia valores):
+   el 2026-10-11 se partió `--petroleo` en tinta y relleno para cerrar la
+   excepción R3. En la hoja generada se agregó `--petroleo-relleno` (#0B557E
+   claro, #12719F oscuro), `--petroleo` oscuro pasó a #4FA8D6 y los fondos con
+   texto blanco encima (botón primario, enlace de salto, nodos y barras de la
+   portada) usan el relleno. Regenerar sin portar ese cambio al origen lo
+   deshace — y check-contrast.mjs fallará con «token ilegible» en
+   `--petroleo-relleno`, que es el aviso buscado. */
 
 /* Los valores de origen pueden traer paréntesis y puntos (`rgba(…, .45)`): se
    escapan para que la expresión busque el texto literal. */

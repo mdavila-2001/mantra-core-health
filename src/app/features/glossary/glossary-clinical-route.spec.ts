@@ -49,6 +49,45 @@ describe('buildClinicalRoute', () => {
     expect(ruta.neighborCount).toBe(6);
   });
 
+  it('la capa normativa (NNAC) va en columnas propias, junto y aparte de los catálogos', () => {
+    const fiebre = vecino('s1', 'Fiebre alta', SINTOMA);
+    const ruta = buildClinicalRoute(
+      vecindario(ENFERMEDAD, [
+        { type: 'SYMPTOM', direction: 'outgoing', total: 1, items: [fiebre] },
+        { type: 'DIAGNOSTIC_CRITERION', direction: 'outgoing', total: 1, items: [{ ...fiebre, evidenceTier: 'NATIONAL_STANDARD' }] },
+        { type: 'REQUIRED_TEST', direction: 'outgoing', total: 1, items: [vecino('t1', 'Hemograma completo', ESTUDIO)] },
+        { type: 'DIAGNOSTIC_TEST', direction: 'outgoing', total: 1, items: [vecino('t2', 'Radiografía de tórax', ESTUDIO)] },
+        { type: 'REFERRAL_CRITERION', direction: 'outgoing', total: 1, items: [vecino('s2', 'Disnea', SINTOMA)] },
+        { type: 'COMPLICATION', direction: 'outgoing', total: 1, items: [vecino('d2', 'Empiema pleural', ENFERMEDAD)] },
+        // El factor apunta a la enfermedad: desde ella llega entrante.
+        { type: 'RISK_FACTOR', direction: 'incoming', total: 1, items: [vecino('r1', 'Tabaquismo', OTRO)] },
+      ]),
+    );
+
+    expect(ruta.findings.map((c) => c.title)).toEqual([
+      'Criterios diagnósticos de la norma',
+      'Síntomas y signos',
+      'Factores de riesgo',
+    ]);
+    expect(ruta.next.map((c) => c.title)).toEqual([
+      'Estudios que exige la norma',
+      'Estudios',
+      'Criterios de referencia',
+      'Complicaciones',
+    ]);
+    // El criterio conserva su evidencia: es la que pinta el sello «Norma nacional».
+    expect(ruta.findings[0]?.items[0]?.evidenceTier).toBe('NATIONAL_STANDARD');
+  });
+
+  it('visto desde el estudio que exige la norma, la enfermedad va a su columna', () => {
+    const ruta = buildClinicalRoute(
+      vecindario(OTRO, [
+        { type: 'REQUIRED_TEST', direction: 'incoming', total: 1, items: [vecino('d1', 'Neumonía', null)] },
+      ]),
+    );
+    expect([...ruta.findings, ...ruta.next, ...ruta.context].map((c) => c.title)).toEqual(['Enfermedades']);
+  });
+
   it('en un síntoma, las enfermedades que lo presentan van a «lo que sigue», una sola vez', () => {
     // El corpus guarda la misma relación en los dos sentidos con tipos distintos.
     const neumonia = vecino('d1', 'Neumonía', ENFERMEDAD);
@@ -111,6 +150,26 @@ describe('buildClinicalRoute', () => {
 
     expect(ruta.neighborCount).toBe(0);
     expect([...ruta.findings, ...ruta.next, ...ruta.context]).toHaveLength(0);
+  });
+
+  it('tampoco pone a un homónimo del término central, aunque venga de otra fuente', () => {
+    const neighborhood = vecindario(ENFERMEDAD, [
+      {
+        type: 'RELATED_TERM',
+        direction: 'outgoing',
+        total: 2,
+        items: [vecino('j18-otra-fuente', '  NEUMONÍA, microorganismo  no especificado ', OTRO), vecino('r1', 'Neumonía bacteriana', OTRO)],
+      },
+      { type: 'DISEASE', direction: 'outgoing', total: 1, items: [vecino('j18-tercera', 'Neumonia, microorganismo no especificado', ENFERMEDAD)] },
+    ]);
+    const ruta = buildClinicalRoute({
+      ...neighborhood,
+      focus: { ...neighborhood.focus, display: 'Neumonía, microorganismo no especificado' },
+    });
+
+    const displays = [...ruta.findings, ...ruta.next, ...ruta.context].flatMap((c) => c.items.map((i) => i.display));
+    expect(displays).toEqual(['Neumonía bacteriana']);
+    expect(ruta.neighborCount).toBe(1);
   });
 });
 

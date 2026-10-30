@@ -12,7 +12,7 @@ import {
 import { AppButton } from '@shared/components/atoms/button/button';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
+import type { PinMap } from '@shared/components/organisms/map/map-pin.types';
 import { PublicPostCard } from '../public-post-card/public-post-card';
 import { PublicProfilePager } from '../public-profile-pager/public-profile-pager';
 import {
@@ -25,7 +25,7 @@ import {
 } from '@core/data-access/public-directory/public-directory.types';
 import { AuthService } from '@core/auth/auth.service';
 import { RateEncounterDialog } from '../rate-encounter-dialog/rate-encounter-dialog';
-import { inicialesDe } from '@shared/text/iniciales';
+import { initialsOf } from '@shared/text/initials';
 
 /** Cuántas publicaciones se ven por página en la ficha. */
 export const PUBLICACIONES_POR_PAGINA = 3;
@@ -82,10 +82,9 @@ const ROTULO_POR_TIPO: Readonly<Record<PublicProfileDetail['kind'], string>> = {
  * inventado en una ficha de salud no es un detalle pendiente: es alguien que se
  * cruza la ciudad a las 14:00 porque la pantalla se lo dijo.
  *
- * Lo de «los lugares donde atiende» que el cliente pidió está a medias por eso
- * mismo: se muestra la ciudad y la dirección, que es lo que la API sirve. Las
- * sedes con sus días viven detrás de `GET /scheduling/slots`, que exige sesión,
- * y esta ficha es anónima. Queda anotado en `PENDIENTES-BACKEND.md`.
+ * Por eso mismo esta tarjeta muestra la ciudad y la dirección, y no los días
+ * de cada sede: viven detrás de `GET /scheduling/slots`, que exige sesión, y
+ * esta ficha es anónima.
  */
 @Component({
   selector: 'app-public-profile-card',
@@ -177,7 +176,7 @@ export class PublicProfileCard {
   });
 
   /** Las iniciales del cuadrado cuando no hay foto. Ver `shared/text/iniciales`. */
-  protected readonly iniciales = computed(() => inicialesDe(this.perfil().displayName));
+  protected readonly iniciales = computed(() => initialsOf(this.perfil().displayName));
 
   /** La puntuación con coma decimal, como se lee en castellano. */
   protected readonly puntuacion = computed(() => {
@@ -186,10 +185,11 @@ export class PublicProfileCard {
   });
 
   /** Cinco estrellas del promedio, redondeado al entero más cercano. */
-  protected readonly estrellasCabecera = computed(() => {
+  protected readonly headerRatingStars = computed(() => {
     const media = this.perfil().ratingAverage ?? 0;
     return Array.from({ length: 5 }, (_, indice) => media >= indice + 0.5);
   });
+  protected readonly estrellasCabecera = this.headerRatingStars;
 
   /**
    * Dónde atiende, en una línea.
@@ -215,7 +215,7 @@ export class PublicProfileCard {
    * `tile.openstreetmap.org`. Sin coordenadas no hay pin que dibujar: a
    * diferencia de un *embed* de Google, Leaflet no busca por texto.
    */
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
+  protected readonly pines = computed<readonly PinMap[]>(() => {
     const { location, displayName, practiceSites } = this.perfil();
     // Un pin por sede: son lugares distintos, y quien elige a quién consultar
     // los compara entre sí. Con una sola coordenada el mapa contestaba «dónde
@@ -280,7 +280,7 @@ export class PublicProfileCard {
       tira.push({ id: 'donde-queda', rotulo: this.esLugar() ? 'Dónde queda' : 'Dónde atiende' });
     }
     if (p.posts.length > 0 || previa) tira.push({ id: 'publicaciones', rotulo: 'Publicaciones' });
-    if (!previa) tira.push({ id: 'reviews', rotulo: 'Reseñas' });
+    tira.push({ id: 'reviews', rotulo: 'Reseñas' });
 
     // Con una sola sección la tira sobra: sería un rótulo disfrazado de
     // navegación, que es peor que no tener navegación.
@@ -349,18 +349,9 @@ export class PublicProfileCard {
   }
 
   /* ==========================================================================
-      Las opiniones.
-
-      Hasta el merge de `dev` esto abría un modal con dos pestañas —«8
-      opiniones» abría una, la estrella la otra—. Ese modal ya no existe: el
-      merge dejó la versión de `PublicProfileReviews` que se monta **en línea**,
-      sin pestañas y sin salida `cerrado`, y esta tarjeta seguía hablándole al
-      componente anterior. La rama no compilaba.
-
-      Se reconcilia con el componente que quedó, que es el que trae el contrato
-      nuevo —con anonimato de quien opina— y sus pruebas. Los dos botones ahora
-      despliegan la misma sección. Recuperar las pestañas es una función, no un
-      arreglo de compilación: va aparte y con su decisión.
+      Las reseñas se cargan al entrar a su pestaña. La calificación del
+      encabezado y su cantidad usan los totales que sirve el perfil; la lista no
+      recalcula el promedio a partir de la página visible.
       ====================================================================== */
 
   /** Si la sección de opiniones está desplegada. */
@@ -372,10 +363,6 @@ export class PublicProfileCard {
     this.seleccionar('reviews');
   }
 
-  protected cerrarOpiniones(): void {
-    this.opinionesAbiertas.set(false);
-  }
-
   /* ==========================================================================
       Calificar la atención recibida.
       ====================================================================== */
@@ -383,7 +370,8 @@ export class PublicProfileCard {
   private readonly auth = inject(AuthService);
 
   /**
-   * Si quien mira puede calificar: una sesión con perfil de paciente.
+   * Si quien mira puede calificar: una sesión con perfil de paciente, frente a
+   * la ficha de un profesional que acepta reseñas (el resto no se reseña).
    *
    * No comprueba que se haya atendido con ESTE profesional —eso lo sabe el
    * servidor, y averiguarlo acá exigiría cruzar sus atenciones con una ficha
@@ -391,7 +379,12 @@ export class PublicProfileCard {
    * el servidor explique por qué no, cuando no corresponde, es mejor que
    * esconder el camino a quien sí puede.
    */
-  protected readonly puedeCalificar = computed(() => this.auth.patientProfileId() !== null);
+  protected readonly puedeCalificar = computed(
+    () =>
+      this.auth.patientProfileId() !== null &&
+      this.perfil().kind === 'PRACTITIONER' &&
+      this.perfil().acceptsReviews,
+  );
 
   /** Si el diálogo de calificar está abierto. */
   protected readonly calificando = signal(false);

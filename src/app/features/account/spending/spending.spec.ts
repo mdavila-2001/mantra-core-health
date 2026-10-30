@@ -53,8 +53,8 @@ function movement(
   };
 }
 
-function page(items: SpendingMovementDto[]): PatientSpendingResponseDto {
-  return { currency: 'BOB', from: 'x', to: 'y', items };
+function page(items: SpendingMovementDto[], truncated?: boolean): PatientSpendingResponseDto {
+  return { currency: 'BOB', from: 'x', to: 'y', items, ...(truncated === undefined ? {} : { truncated }) };
 }
 
 describe('Spending', () => {
@@ -82,8 +82,8 @@ describe('Spending', () => {
     return (el?.textContent ?? '').replace(/\s+/g, ' ');
   }
 
-  function responder(items: SpendingMovementDto[]): void {
-    http.expectOne((r) => r.url === '/patient-spending/me').flush(page(items));
+  function responder(items: SpendingMovementDto[], truncated?: boolean): void {
+    http.expectOne((r) => r.url === '/patient-spending/me').flush(page(items, truncated));
     fixture.detectChanges();
   }
 
@@ -95,6 +95,16 @@ describe('Spending', () => {
   });
 
   afterEach(() => http.verify());
+
+  it('ofrece sus facturas, que se fusionaron con «Mis gastos» en la cabecera (27/10/2026)', () => {
+    abrirSesion({});
+    montar();
+
+    const facturas = raiz().querySelector<HTMLAnchorElement>('[data-testid="spending-facturas"]');
+    expect(facturas?.tagName).toBe('A');
+    expect(facturas?.getAttribute('href')).toBe('/my-account/invoices');
+    expect(facturas?.textContent?.trim()).toBe('Ver mis facturas');
+  });
 
   it('sin perfil de paciente lo dice, sin pedir nada', () => {
     abrirSesion({});
@@ -119,7 +129,11 @@ describe('Spending', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('Todavía no tiene gastos registrados');
+    expect(texto()).toContain(
+      'Todavía no tiene gastos registrados. Acá aparecen las consultas, compras de farmacia y análisis que le facturaron. Si pagó una cita y no la ve acá, el pago figura en «Mis citas».',
+    );
+    // H02: no promete lo que no pasa (un pago de la agenda no genera factura).
+    expect(texto()).not.toContain('lo va a ver acá');
     expect(texto()).toContain('Buscar un profesional');
     expect(raiz().querySelector('[data-testid="spending-dashboard"]')).toBeNull();
   });
@@ -170,6 +184,31 @@ describe('Spending', () => {
     expect(rotulos()).toEqual(
       TODAY.getMonth() === 0 ? ['Consultas'] : ['Consultas', 'Laboratorio'],
     );
+  });
+
+  it('si la API recortó la lista lo dice; si no, no hay aviso', () => {
+    abrirSesion({ pid: 'pp-1' });
+    montar();
+    responder([movement('a', THIS_MONTH, '300.00', 'SPEND_CONSULTATION', 'Consulta')], true);
+    expect(texto('spending-truncated')).toContain('Lista recortada');
+
+    fixture.destroy();
+    montar();
+    responder([movement('a', THIS_MONTH, '300.00', 'SPEND_CONSULTATION', 'Consulta')], false);
+    expect(raiz().querySelector('[data-testid="spending-truncated"]')).toBeNull();
+  });
+
+  it('una categoría que la pantalla no conoce no rompe: usa el rótulo del contrato', () => {
+    abrirSesion({ pid: 'pp-1' });
+    montar();
+    responder([
+      movement('a', THIS_MONTH, '300.00', 'SPEND_OTHER', 'Gasto de salud'),
+      movement('b', THIS_MONTH, '20.00', 'SPEND_NEW_THING', 'Algo nuevo'),
+    ]);
+    const rotulos = [
+      ...raiz().querySelectorAll('[data-testid="spending-category"] .spending__category-name'),
+    ].map((el) => el.textContent?.trim());
+    expect(rotulos).toEqual(['Otros gastos', 'SPEND_NEW_THING']);
   });
 
   it('un error del servidor no se disfraza de tablero vacío', () => {

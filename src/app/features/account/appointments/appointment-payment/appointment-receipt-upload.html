@@ -1,0 +1,24 @@
+@if (offered()) {
+  <div class="receipt-upload" data-testid="appointment-receipt-upload">
+    <button
+      app-button
+      type="button"
+      variant="secondary"
+      size="sm"
+      data-testid="appointment-receipt-upload-toggle"
+      [attr.aria-expanded]="open()"
+      [attr.aria-controls]="open() ? panelId : null"
+      (clicked)="toggle()"
+    >
+      {{ open() ? 'Ocultar el comprobante' : 'Subir comprobante' }}
+    </button>
+    @if (open()) {
+      <app-booking-payment-receipts
+        [attr.id]="panelId"
+        [bookingId]="bookingId()"
+        [statusCode]="statusCode()"
+        [knownPaymentState]="paymentState()"
+      />
+    }
+  </div>
+}

@@ -1,9 +1,17 @@
-import { conceptoPorId } from '../fixtures/conceptos';
-import { MEDICA, PACIENTE, PACIENTES, PROFESIONALES, type ProfesionalSimulado } from '../fixtures/personas';
+import { conceptById } from '../fixtures/concepts';
+import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from '../fixtures/people';
 import { conflict, forbidden, notFound, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import { TENANT_LABORATORIO, type MockUser } from '../mock-session';
 import { ahora, Coleccion, cuerpo, iso, isoDia, uuid } from '../mock-store';
-import { nombreDeAseguradora, perteneceALaAseguradora } from './insurance.handlers';
+import {
+  abrirDisputaDeProveedor,
+  nombreDeAseguradora,
+  perteneceALaAseguradora,
+} from './insurance.handlers';
+import type {
+  MyClaimBreakdown,
+  PatientObjectionReason,
+} from '../../data-access/insurance/insurance.types';
 
 /* ============================================================================
     Solicitudes recibidas por la aseguradora — `GET /insurance/received-claims`.
@@ -31,7 +39,7 @@ const SOLICITUDES_SEMBRADAS = 180;
 const TOPE_DE_SOLICITUDES = 500;
 
 /** Pacientes escritos + los primeros generados; los registrados quedan fuera. */
-const PACIENTES_ELEGIBLES = PACIENTES.slice(0, 60);
+const PACIENTES_ELEGIBLES = PATIENTS.slice(0, 60);
 
 const BOB = { code: 'BOB', display: 'Boliviano' };
 const money = (amount: string) => ({ amount, currency: BOB });
@@ -159,6 +167,13 @@ function nuevaFactura(semilla: string, monto: string, emitidaEn: string, previas
   };
 }
 
+function ultimoNumeroDeFactura(factura: FacturaSimulada): number {
+  return Math.max(
+    Number(factura.invoiceNumber.slice(4)) || 0,
+    ...factura.previous.map(ultimoNumeroDeFactura),
+  );
+}
+
 /** Generador congruencial: la misma semilla da siempre la misma sala. */
 function azar(semilla: number): () => number {
   let estado = semilla >>> 0;
@@ -173,12 +188,12 @@ function elegir<T>(lista: readonly T[], r: () => number): T {
 }
 
 function medicosElegibles(): readonly ProfesionalSimulado[] {
-  return PROFESIONALES.filter((p) => p.origen === undefined || p.origen === 'DEMO');
+  return PROFESSIONALS.filter((p) => p.origen === undefined || p.origen === 'DEMO');
 }
 
 function especialidadDe(medico: ProfesionalSimulado): string | null {
   const id = medico.especialidades[0];
-  return id === undefined ? null : (conceptoPorId(id)?.display ?? null);
+  return id === undefined ? null : (conceptById(id)?.display ?? null);
 }
 
 function sembrar() {
@@ -274,8 +289,8 @@ function solicitudesDeLaDemo(aseguradora: string) {
         patientCode: PACIENTE.patientCode,
         memberIdentifier: `AF-${PACIENTE.patientCode.slice(4)}`,
       },
-      practitioner: { id: MEDICA.id, displayName: MEDICA.displayName, specialty: especialidadDe(MEDICA) },
-      providerName: MEDICA.organizacion,
+      practitioner: { id: MEDICAL.id, displayName: MEDICAL.displayName, specialty: especialidadDe(MEDICAL) },
+      providerName: MEDICAL.organizacion,
       service: { code: caso.code, display: caso.display },
       additionalServiceCount: 0,
       billedTotal: money(caso.total),
@@ -309,7 +324,7 @@ function quienDictamina(request: MockRequest): string {
    misma tabla** que dictamina la aseguradora —no de una copia—, así que un
    dictamen tomado en «Solicitudes recibidas» aparece acá en la próxima
    lectura, sin sincronización aparte. Contrato:
-   `docs/contracts/my-insurance-claims.md` (P56 en `PENDIENTES-BACKEND.md`).
+   `docs/contracts/my-insurance-claims.md` (P56).
 
    Cada cuenta ve sólo lo suyo, y sólo lo que necesita para entender la
    decisión: ni la factura entre prestador y aseguradora, ni los renglones, ni
@@ -385,7 +400,80 @@ function disciplinaDelCentro(
 }
 
 /** Lo que ve cada cuenta de una solicitud: lo justo para entender la decisión. */
-function comoMiSolicitud(s: SolicitudSimulada, vista: VistaDeMisSolicitudes) {
+/** Una solicitud con la objeción del paciente, si la hay. */
+type SolicitudConObjecion = SolicitudSimulada & { patientObjection: ObjecionDelPaciente | null };
+
+/** La objeción tal como se guarda: fechas en texto ISO, como el resto de la maqueta. */
+interface ObjecionDelPaciente {
+  readonly id: string;
+  readonly reason: PatientObjectionReason;
+  readonly submittedAt: string;
+  readonly status: 'OPEN' | 'RESOLVED';
+}
+
+/** Motivos cerrados de la objeción (REQ-16-032): sin texto libre, por PHI. */
+const MOTIVOS_DE_OBJECION: readonly PatientObjectionReason[] = [
+  'AMOUNT_DIFFERS',
+  'SERVICE_NOT_RECEIVED',
+  'NOT_INFORMED',
+];
+
+/** Cobertura del plan, en porcentaje (la maqueta reparte así). */
+const COBERTURA_POR_PLAN: Readonly<Record<string, number>> = {
+  'Plan Integral': 80,
+  'Plan Familiar': 50,
+  'Plan Oro': 100,
+};
+
+/** Copago fijo de un servicio cubierto, 20.00 Bs en centavos. */
+const COPAGO_FIJO_CENTAVOS = 2000;
+
+/** Estado de la aprobación previa según el servicio (maqueta). */
+function aprobacionDe(servicio: string): 'NOT_REQUIRED' | 'APPROVED' | 'PENDING' {
+  if (/ecograf|tomograf|imagen/i.test(servicio)) return 'PENDING';
+  if (/cirug|quir|internaci/i.test(servicio)) return 'APPROVED';
+  return 'NOT_REQUIRED';
+}
+
+/**
+ * El desglose del cobro al paciente: lo que cubre el plan, el copago y lo que
+ * paga cada parte. Es el mismo reparto de la cotización (propietario,
+ * 2026-10-23): paciente = copago + (monto − copago) × (100 − %) / 100,
+ * redondeado a favor de la persona. En centavos enteros, sin `Number()` sobre dinero.
+ */
+function desgloseDe(s: SolicitudConObjecion): MyClaimBreakdown {
+  const plan = s.planName.split(' · ')[1] ?? '';
+  const cobertura = COBERTURA_POR_PLAN[plan] ?? 80;
+  let totalPaciente = 0;
+  let totalAseguradora = 0;
+  const lineas = s.lines.map((linea) => {
+    const monto = centavos(linea.billedAmount.amount);
+    const copago = cobertura === 100 ? 0 : Math.min(COPAGO_FIJO_CENTAVOS, monto);
+    const paciente = copago + Math.floor(((monto - copago) * (100 - cobertura)) / 100);
+    const aseguradora = monto - paciente;
+    totalPaciente += paciente;
+    totalAseguradora += aseguradora;
+    return {
+      key: String(linea.sequence),
+      service: linea.display,
+      billedAmount: linea.billedAmount.amount,
+      coveragePercent: String(cobertura),
+      copayAmount: importe(copago),
+      patientAmount: importe(paciente),
+      insurerAmount: importe(aseguradora),
+      chargeKind: cobertura > 0 ? ('INSURED_SHARE' as const) : ('PRIVATE_FULL' as const),
+      authorizationStatus: aprobacionDe(linea.display),
+    };
+  });
+  return {
+    currencyCode: 'BOB',
+    patientTotal: importe(totalPaciente),
+    insurerTotal: importe(totalAseguradora),
+    lines: lineas,
+  };
+}
+
+function comoMiSolicitud(s: SolicitudConObjecion, vista: VistaDeMisSolicitudes) {
   return {
     id: s.id,
     claimIdentifier: s.claimIdentifier,
@@ -406,6 +494,9 @@ function comoMiSolicitud(s: SolicitudSimulada, vista: VistaDeMisSolicitudes) {
       s.decision === null
         ? null
         : { outcome: s.decision.outcome, decidedAt: s.decision.decidedAt, reason: s.decision.reason },
+    // El desglose y la objeción son del paciente: el prestador no los ve aquí.
+    breakdown: vista === 'PATIENT' ? desgloseDe(s) : null,
+    patientObjection: vista === 'PATIENT' ? s.patientObjection : null,
   };
 }
 
@@ -420,9 +511,26 @@ export function registerInsurerReceivedClaims(
 ): void {
   // Se siembra una vez, al primer pedido; los dictámenes y las anulaciones
   // sobreviven a la recarga para que «no se puede revertir» se pueda comprobar.
-  let tabla: Coleccion<SolicitudSimulada> | null = null;
-  const solicitudes = (): Coleccion<SolicitudSimulada> =>
-    (tabla ??= new Coleccion(sembrar(), persistir ? 'mock.insurerReceivedClaims' : undefined));
+  let tabla: Coleccion<SolicitudConObjecion> | null = null;
+  const solicitudes = (): Coleccion<SolicitudConObjecion> =>
+    (tabla ??= new Coleccion(
+      sembrar().map((s): SolicitudConObjecion => ({ ...s, patientObjection: null })),
+      persistir ? 'mock.insurerReceivedClaims' : undefined,
+    ));
+
+  const emitirFactura = (
+    semilla: string,
+    monto: string,
+    emitidaEn: string,
+    previas: readonly FacturaSimulada[] = [],
+  ): FacturaSimulada => {
+    const ultimoPersistido = solicitudes().todos().reduce(
+      (maximo, solicitud) => Math.max(maximo, solicitud.invoice === null ? 0 : ultimoNumeroDeFactura(solicitud.invoice)),
+      4_100,
+    );
+    correlativoDeFactura = Math.max(correlativoDeFactura, ultimoPersistido - 4_100);
+    return nuevaFactura(semilla, monto, emitidaEn, previas);
+  };
 
   const ordenadas = () =>
     solicitudes()
@@ -451,6 +559,45 @@ export function registerInsurerReceivedClaims(
     };
   });
 
+  /**
+   * Disputa de un reclamo (REQ-16-032). Un actor que es solo paciente objeta
+   * su cobro: propiedad por el mismo alcance de «Mis solicitudes» (ajeno e
+   * inexistente, mismo 403), idempotente, con motivo cerrado. Cualquier otro
+   * actor abre la apelación del prestador.
+   */
+  router.post('/insurance-claims/:id/disputes', (request) => {
+    const usuario = request.user;
+    if (usuario === null) return unauthorized('Sin sesión');
+    const soloPaciente = usuario.roles.length > 0 && usuario.roles.every((rol) => rol === 'PATIENT');
+    if (!soloPaciente) return abrirDisputaDeProveedor(request);
+
+    const alcance = alcanceDeMisSolicitudes(usuario, request.headers.get('X-Tenant-Id'));
+    const actual = solicitudes().get(request.params['id']!);
+    if (actual === undefined || !alcance.incluye(actual)) return forbidden();
+
+    if (actual.patientObjection !== null) {
+      return {
+        status: 201,
+        body: { id: actual.patientObjection.id, status: 'OPEN', createdAt: actual.patientObjection.submittedAt },
+      };
+    }
+    const datos = cuerpo<{ objectionReason?: string }>(request);
+    const motivo = datos.objectionReason ?? 'NOT_INFORMED';
+    if (!(MOTIVOS_DE_OBJECION as readonly string[]).includes(motivo)) {
+      return validation('Motivo de objeción inválido', [
+        { field: 'objectionReason', message: 'AMOUNT_DIFFERS, SERVICE_NOT_RECEIVED o NOT_INFORMED' },
+      ]);
+    }
+    const objecion: ObjecionDelPaciente = {
+      id: uuid(`objection-${actual.id}`),
+      reason: motivo as PatientObjectionReason,
+      submittedAt: ahora(),
+      status: 'OPEN',
+    };
+    solicitudes().actualizar(actual.id, { patientObjection: objecion });
+    return { status: 201, body: { id: objecion.id, status: objecion.status, createdAt: objecion.submittedAt } };
+  });
+
   router.post('/insurance/received-claims/:id/decision', (request) => {
     if (!puedeVer(request)) return forbidden();
     const actual = solicitudes().get(request.params['id']!);
@@ -462,11 +609,11 @@ export function registerInsurerReceivedClaims(
     const datos = cuerpo<{ outcome: string; approvedAmount: string; reason: string }>(request);
     const outcome = datos.outcome as Resultado;
     if (!(outcome in DICTAMEN)) {
-      return validation('Dictamen inválido', [{ field: 'outcome', problem: 'APPROVED, PARTIAL o REJECTED' }]);
+      return validation('Dictamen inválido', [{ field: 'outcome', message: 'APPROVED, PARTIAL o REJECTED' }]);
     }
     const motivo = (datos.reason ?? '').trim();
     if (outcome !== 'APPROVED' && motivo.length < 5) {
-      return validation('Falta el motivo', [{ field: 'reason', problem: 'Al menos 5 caracteres' }]);
+      return validation('Falta el motivo', [{ field: 'reason', message: 'Al menos 5 caracteres' }]);
     }
 
     const solicitado = centavos(actual.billedTotal.amount);
@@ -475,7 +622,7 @@ export function registerInsurerReceivedClaims(
       const pedido = String(datos.approvedAmount ?? '');
       if (!DECIMAL.test(pedido) || centavos(pedido) <= 0 || centavos(pedido) >= solicitado) {
         return validation('Monto aprobado inválido', [
-          { field: 'approvedAmount', problem: 'Mayor que cero y menor que el monto solicitado' },
+          { field: 'approvedAmount', message: 'Mayor que cero y menor que el monto solicitado' },
         ]);
       }
       aprobado = centavos(pedido);
@@ -488,7 +635,7 @@ export function registerInsurerReceivedClaims(
       status: { code, display },
       approvedTotal: money(monto),
       decision: { outcome, decidedAt: decididaEn, decidedBy: quienDictamina(request), reason: motivo === '' ? null : motivo },
-      invoice: outcome === 'REJECTED' ? null : nuevaFactura(actual.id, monto, decididaEn),
+      invoice: outcome === 'REJECTED' ? null : emitirFactura(actual.id, monto, decididaEn),
     });
   });
 
@@ -504,7 +651,7 @@ export function registerInsurerReceivedClaims(
     }
     const motivo = (cuerpo<{ reason: string }>(request).reason ?? '').trim();
     if (motivo.length < 5) {
-      return validation('Falta el motivo', [{ field: 'reason', problem: 'Al menos 5 caracteres' }]);
+      return validation('Falta el motivo', [{ field: 'reason', message: 'Al menos 5 caracteres' }]);
     }
     return solicitudes().actualizar(actual.id, {
       invoice: { ...actual.invoice, status: 'ANNULLED', annulledAt: ahora(), annulmentReason: motivo },
@@ -522,7 +669,7 @@ export function registerInsurerReceivedClaims(
     }
     const { previous, ...anulada } = actual.invoice;
     return solicitudes().actualizar(actual.id, {
-      invoice: nuevaFactura(actual.id, actual.approvedTotal.amount, ahora(), [{ ...anulada, previous: [] }, ...previous]),
+      invoice: emitirFactura(actual.id, actual.approvedTotal.amount, ahora(), [{ ...anulada, previous: [] }, ...previous]),
     });
   });
 }

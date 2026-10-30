@@ -1,12 +1,15 @@
 import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 
+import { RouterLink } from '@angular/router';
+
 import { AuthService } from '@core/auth/auth.service';
 import { PatientSpendingClient } from '@core/data-access/patient-spending/patient-spending.client';
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { NavigationService } from '@core/navigation/navigation.service';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
+import { AppButtonLink } from '@shared/components/atoms/button/button-link';
 import { NavIcon } from '@shared/components/atoms/nav-icon/nav-icon';
 import { Alert } from '@shared/components/molecules/alert/alert';
 import { Card } from '@shared/components/molecules/card/card';
@@ -62,7 +65,7 @@ interface SparkLine {
  * dónde, y cuánto le ahorraron el seguro y las promociones.
  *
  * Se llega por la billetera de la barra superior. Lee una sola vez
- * `GET /patient-spending/me` (P43, hoy sólo en la maqueta) con el rango del
+ * `GET /patient-spending/me` (P44) con el rango del
  * 1 de enero del año pasado a hoy, y todo lo demás son sumas sobre esa lista
  * (`spending.model.ts`).
  */
@@ -70,10 +73,12 @@ interface SparkLine {
   selector: 'app-spending',
   imports: [
     Alert,
+    AppButtonLink,
     Card,
     DatePipe,
     NavIcon,
     PageHeader,
+    RouterLink,
     SegmentedControl,
     SpendingYearChart,
     ViewStateHost,
@@ -161,7 +166,8 @@ export class Spending {
           this.state.set(
             empty(
               EMPTY_ACTION,
-              'Todavía no tiene gastos registrados. Cuando pague una consulta, una compra de farmacia o un análisis, lo va a ver acá.',
+              // H02: no promete. Un pago de la agenda todavía no genera factura.
+              'Todavía no tiene gastos registrados. Acá aparecen las consultas, compras de farmacia y análisis que le facturaron. Si pagó una cita y no la ve acá, el pago figura en «Mis citas».',
             ),
           );
           return;

@@ -104,6 +104,7 @@ export class PharmacySearchService {
     term: string,
     origin: SearchOrigin | null,
     sort: SearchSort,
+    openNow = false,
   ): Observable<SearchResult<StoreHit>> {
     const buscable = esBuscable(term);
     return this.pharmacy
@@ -111,6 +112,9 @@ export class PharmacySearchService {
         ...(buscable ? { search: term } : {}),
         ...(origin === null ? {} : { origin: { lat: origin.lat, lng: origin.lng } }),
         limit: TOPE_DE_SEDES,
+        // P34 · sólo las abiertas ahora (24 h o de turno vigente): lo filtra el
+        // servidor con su reloj, no esta lista ya truncada.
+        ...(openNow ? { openNow: true } : {}),
       })
       .pipe(
         switchMap((pagina) => {
@@ -349,6 +353,8 @@ function tarjetaDeSede(sede: PharmacySite, desde: Desde | null): StoreHit {
     fromAmount: desde?.amount ?? null,
     currency: desde?.currency ?? null,
     productCount: sede.productCount,
+    open24h: sede.open24h ?? null,
+    onCallUntil: sede.onCallUntil ?? null,
   };
 }
 

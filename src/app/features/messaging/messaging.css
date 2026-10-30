@@ -229,48 +229,6 @@
   border-block-start: 1px solid var(--filete-2);
 }
 
-.mensajeria__archivados {
-  display: flex;
-  align-items: center;
-  gap: var(--e3);
-  inline-size: 100%;
-  padding: var(--e3) var(--e4);
-  border: 0;
-  border-block-end: 1px solid var(--filete-2);
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.mensajeria__archivados:hover,
-.mensajeria__archivados.is-activo {
-  background: var(--sup-inset);
-}
-
-.mensajeria__archivados-icono {
-  display: inline-flex;
-  color: var(--tinta-2);
-}
-
-.mensajeria__archivados-icono svg {
-  inline-size: 20px;
-  block-size: 20px;
-}
-
-.mensajeria__archivados-texto {
-  flex: 1 1 auto;
-  text-align: start;
-  font-weight: 600;
-  font-size: var(--fs-body);
-}
-
-.mensajeria__archivados-cuenta {
-  color: var(--tinta-3);
-  font-size: var(--fs-caption);
-  font-variant-numeric: tabular-nums;
-}
-
 .mensajeria__rotulo {
   margin: 0;
   padding: var(--e3) var(--e4) var(--e1);
@@ -365,7 +323,7 @@
   border-radius: 50%;
   background: var(--sup-tarjeta);
   box-shadow:
-    0 16px 36px -18px rgb(11 85 126 / 45%),
+    0 16px 36px -18px color-mix(in srgb, var(--petroleo) 45%, transparent),
     0 0 0 8px color-mix(in srgb, var(--sup-tarjeta) 55%, transparent);
   animation: mensajeria-sello var(--pulse-dur-moment, 420ms) var(--pulse-ease, ease-out) 80ms backwards;
 }
@@ -386,7 +344,7 @@
   aspect-ratio: 1;
   border-radius: 50%;
   background: var(--petroleo);
-  color: #fff;
+  color: var(--text-inverse);
   box-shadow: 0 0 0 3px var(--sup-tarjeta);
 }
 

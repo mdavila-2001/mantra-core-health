@@ -66,6 +66,7 @@ import {
     '[class.data-table--constrained]': 'effectiveMaxHeight() !== null',
     '[class.data-table--wrap-headers]': 'wrapHeaders()',
     '[class.data-table--fit-container]': 'fitContainer()',
+    '[class.data-table--apilada]': 'stackedOnMobile()',
   },
 })
 export class DataTable<Row> {
@@ -104,6 +105,13 @@ export class DataTable<Row> {
 
   /** Rótulo de la tabla. Va en `<caption>`, aunque sea solo para lectores. */
   readonly caption = input<string>('');
+
+  /** Título visible de la tarjeta («Registros»); junto a `totalCount` arma «REGISTROS · n». */
+  readonly heading = input<string>('');
+  /** Total de registros del filtro vigente; `null` si el origen no lo conoce. */
+  readonly totalCount = input<number | null>(null);
+  /** Texto de la paginación por cursor («Página 2 de 7 · 338 registros»). */
+  readonly pageSummary = input<string>('');
 
   /**
    * Alto máximo de la caja de la tabla (p. ej. `'480px'`), con scroll
@@ -147,6 +155,14 @@ export class DataTable<Row> {
    * secundarias viven en la fila de detalle.
    */
   readonly fitContainer = input(false, { transform: booleanAttribute });
+
+  /**
+   * En teléfono (≤ 40rem) cada fila pasa a ser una ficha apilada —rótulo a la
+   * izquierda, valor a la derecha— en vez de una tabla que se desplaza de costado
+   * con la última columna fija tapando datos. Opt-in: las tablas con muchas
+   * columnas de comparación siguen desplazándose.
+   */
+  readonly stackedOnMobile = input(false, { transform: booleanAttribute });
 
   /** El valor efectivo: una cadena vacía cae al por omisión, no a una caja de alto cero. */
   protected readonly effectiveMaxHeight = computed(() => this.maxHeight() || null);
@@ -215,7 +231,8 @@ export class DataTable<Row> {
   protected cellClassFor(column: ColumnDef<Row>): string {
     const secundaria = column.priority >= MOBILE_DETAIL_PRIORITY ? ' data-table__secondary' : '';
     const fija = column.sticky === 'end' ? ' data-table__cell--sticky-end' : '';
-    return `data-table__cell${secundaria}${fija} data-table__cell--${column.align ?? 'start'}`;
+    const accion = column.accion ? ' data-table__cell--accion' : '';
+    return `data-table__cell${secundaria}${fija}${accion} data-table__cell--${column.align ?? 'start'}`;
   }
 
   /** Las que en móvil se pliegan a la fila de detalle — nunca se ocultan. */

@@ -25,7 +25,11 @@ import { errorToViewState } from '../../core/http/error-to-view-state';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
+import { AppButtonLink } from '../../shared/components/atoms/button/button-link';
 import { Chip } from '../../shared/components/atoms/chip/chip';
+import { SegmentedControl } from '../../shared/components/molecules/segmented-control/segmented-control';
+import type { SegmentedOption } from '../../shared/components/molecules/segmented-control/segmented-control.types';
+import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../shared/components/molecules/card/card';
 import { Pagination } from '../../shared/components/molecules/pagination/pagination';
 import {
@@ -55,6 +59,15 @@ export const TAMANOS_DE_PAGINA: readonly number[] = Object.freeze([12, 24, 48]);
  * frecuentes y el resto se cuenta.
  */
 export const CHIPS_POR_TARJETA = 4;
+
+/** Cómo se muestran los resultados: tarjetas o tabla. Viaja en `?view=`. */
+export type VistaDelGlosario = 'grid' | 'table';
+
+/** Las dos vistas del selector, en el orden en que se ofrecen. */
+export const VISTAS_DEL_GLOSARIO: readonly SegmentedOption<VistaDelGlosario>[] = Object.freeze([
+  { value: 'grid', label: 'Tarjetas', description: 'Ver los resultados como tarjetas' },
+  { value: 'table', label: 'Tabla', description: 'Ver los resultados como tabla' },
+]);
 
 /** Tope de páginas para ofrecer el select «ir a la página»; ver `permiteSaltar`. */
 export const MAX_PAGINAS_EN_SELECT = 200;
@@ -116,10 +129,13 @@ export interface TarjetaDeCategoria {
 @Component({
   selector: 'app-glossary',
   imports: [
+    AppButtonLink,
     Card,
     Chip,
+    SegmentedControl,
     FilterBar,
     GlossaryCategoryIcon,
+    NavIcon,
     PageHeader,
     Pagination,
     RouterLink,
@@ -134,6 +150,16 @@ export class Glossary {
   private readonly navigation = inject(NavigationService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  /** La vista de los resultados; sin `?view=` válido, tarjetas. */
+  protected readonly vista = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params): VistaDelGlosario => (params.get('view') === 'table' ? 'table' : 'grid')),
+    ),
+    { initialValue: 'grid' as VistaDelGlosario },
+  );
+
+  protected readonly vistas = VISTAS_DEL_GLOSARIO;
   private readonly injector = inject(Injector);
   private readonly document = inject(DOCUMENT);
 
@@ -273,7 +299,7 @@ export class Glossary {
   );
 
   /** Los términos de la página, ya leídos. */
-  private readonly enPagina = computed<readonly GlossaryTerm[]>(() => {
+  protected readonly enPagina = computed<readonly GlossaryTerm[]>(() => {
     const estado = this.cuerpo();
     return estado.status === 'ready' ? estado.data : [];
   });
@@ -330,6 +356,11 @@ export class Glossary {
 
       untracked(() => this.cargarPagina({ texto, categoria, etiqueta, pagina, porPagina, facetas }));
     });
+  }
+
+  /** Pasa de tarjetas a tabla y vuelta; la elección viaja en la URL (`?view=`). */
+  protected elegirVista(vista: VistaDelGlosario): void {
+    this.navegar({ view: vista === 'grid' ? null : vista });
   }
 
   /** Vuelve al índice completo: limpia categoría, etiqueta **y** texto. */

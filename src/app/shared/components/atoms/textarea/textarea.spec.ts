@@ -212,6 +212,21 @@ describe('Textarea', () => {
       expect(textarea().style.height).toBe('120px');
     });
 
+    it('encendido, también crece cuando el valor llega por la entrada y no por teclado', async () => {
+      await setInputs({ autoResize: true, readonly: true });
+      fijarScrollHeight(96);
+      await setInputs({ value: 'una dirección larga que no entra en una sola línea del campo' });
+
+      expect(textarea().style.height).toBe('96px');
+    });
+
+    it('apagado, un valor por la entrada tampoco toca el alto', async () => {
+      fijarScrollHeight(96);
+      await setInputs({ value: 'una dirección larga que no entra en una sola línea del campo' });
+
+      expect(textarea().style.height).toBe('');
+    });
+
     it('el tope es declarativo: maxRows viaja al CSS como custom property', async () => {
       await setInputs({ autoResize: true, maxRows: 6 });
 

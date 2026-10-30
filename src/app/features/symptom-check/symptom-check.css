@@ -62,6 +62,32 @@
 
 /* ---- la recomendación --------------------------------------------------- */
 
+.sintomas__respuesta-ia {
+  display: block;
+  margin-block: var(--sp-4);
+  padding: var(--sp-4);
+  border: 1px solid var(--filete);
+  border-inline-start: 3px solid var(--petroleo);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  max-inline-size: 68ch;
+}
+
+.sintomas__respuesta-ia-rotulo {
+  display: block;
+  margin-block-end: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sintomas__respuesta-ia p {
+  margin: 0;
+  line-height: var(--lh-body);
+}
+
 .sintomas__subtitulo {
   margin: var(--sp-5) 0 var(--sp-3);
   font-size: var(--fs-h3);
@@ -191,13 +217,14 @@
 
 .sintomas__silueta {
   display: block;
+  --body-map-ancho: 22rem; /* antes 16: el render HD aguanta verla más grande */
 }
 
-/* 21rem: el ancho de la figura (16rem) más el acolchado del escenario, y el
-   aire para que el selector «Frente · Espalda · Cara» entre sin cortarse. */
+/* 27rem: la figura (22rem) más el acolchado del escenario y el aire para que el
+   selector de vista y la barra de zoom entren sin cortarse. */
 @media (min-width: 48rem) {
   .sintomas__elegir {
-    grid-template-columns: 21rem minmax(0, 1fr);
+    grid-template-columns: 27rem minmax(0, 1fr);
     gap: var(--e5);
     align-items: start;
   }
@@ -235,10 +262,98 @@
   margin-block-start: 0;
 }
 
-/* Al lado de la figura hay menos ancho: las tres pastillas, en una fila. */
+/* Al lado de la figura las tres pastillas llenan su columna (sin tope de
+   30 rem: pegadas a la izquierda dejaban media tarjeta en blanco). */
 .sintomas__lado .sintomas__zonas {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  max-inline-size: 30rem;
+}
+
+/* Escritorio y sin zona abierta: las tres zonas son una lista de filas anchas,
+   alineada arriba y de altura natural (icono a la izquierda, rótulo al lado), no
+   losas estiradas hasta la altura de la figura ni chips perdidos en un rincón. */
+@media (min-width: 64rem) {
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) > .sintomas__zonas {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--e2);
+  }
+
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--e4);
+    padding: var(--e4) var(--e5);
+    font-size: var(--fs-body);
+    text-align: start;
+  }
+
+  /* El chevron al final de la fila: dice «esto se abre» y llena el ancho. */
+  .sintomas__lado:has(> .sintomas__lado-otros:first-child) .sintomas__zona::after {
+    content: '';
+    margin-inline-start: auto;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-block-start: 2px solid var(--petroleo);
+    border-inline-end: 2px solid var(--petroleo);
+    transform: rotate(45deg);
+  }
+}
+
+/* ─── El «cómo funciona» (rediseño del 22/10/2026) ──────────────────────────
+   Tres pasos con número en un círculo de color, en el lugar que quedaba vacío
+   al lado de la figura. Se va apenas se toca una zona: ahí el panel muestra
+   los síntomas de esa parte. */
+.sintomas__guia {
+  display: grid;
+  gap: var(--e3);
+  margin: 0;
+  padding: var(--e4) var(--e5);
+  border-radius: var(--r-menu);
+  background: var(--sup-inset);
+  list-style: none;
+  animation: sintomas-entrar var(--mov-medio) var(--curva);
+}
+
+.sintomas__guia-paso {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--e3);
+}
+
+.sintomas__guia-numero {
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: 50%;
+  background: var(--petroleo);
+  color: var(--text-inverse);
+  font-family: var(--f-titulo);
+  font-weight: 700;
+}
+
+/* Los tres en tonos de la marca con texto blanco legible (≥ 4,5:1). */
+.sintomas__guia-paso:nth-child(2) .sintomas__guia-numero {
+  background: var(--c-aqua-700);
+}
+
+.sintomas__guia-paso:nth-child(3) .sintomas__guia-numero {
+  background: var(--c-amber-700);
+}
+
+.sintomas__guia-texto {
+  color: var(--tinta);
+  line-height: 1.4;
+}
+
+.sintomas__guia-texto strong {
+  color: var(--tinta-marca);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sintomas__guia {
+    animation: none;
+  }
 }
 
 /* ─── El «cómo funciona» (rediseño del 22/10/2026) ──────────────────────────
@@ -305,10 +420,12 @@
   align-items: center;
   gap: var(--e2);
   inline-size: 100%;
-  padding: var(--e3) var(--e2);
-  border: 1px solid var(--filete);
+  padding: var(--e4) var(--e2);
+  /* Tonal y sin trazo: la tarjeta de afuera ya es la caja. */
+  border: 1px solid transparent;
   border-radius: var(--r-menu);
-  background: var(--sup-tarjeta);
+  /* Menta y no petróleo: el tono de apoyo de la línea gráfica (27/10/2026). */
+  background: color-mix(in srgb, var(--menta) 18%, var(--sup-tarjeta));
   color: var(--tinta);
   font: inherit;
   font-size: var(--fs-caption);
@@ -323,7 +440,7 @@
 .sintomas__zona:hover,
 .sintomas__zona:focus-visible {
   border-color: var(--aguamarina);
-  background: var(--sup-inset);
+  background: color-mix(in srgb, var(--aguamarina) 12%, var(--sup-inset));
   transform: translateY(-1px);
 }
 
@@ -411,8 +528,8 @@
 /* Elegido se marca con fondo, borde y peso — nunca sólo con color, y
    `aria-pressed` lo dice para quien no lo ve. */
 .sintomas__opcion-chip.is-elegido {
-  border-color: var(--petroleo);
-  background: var(--petroleo);
+  border-color: var(--petroleo-relleno);
+  background: var(--petroleo-relleno);
   color: var(--tinta-nav);
   font-weight: 600;
 }
@@ -485,15 +602,7 @@
   box-shadow: var(--sombra-1);
 }
 
-/* ---- guardar la observación --------------------------------------------- */
-
-.sintomas__observacion {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-block-start: var(--sp-4);
-}
+/* ---- observaciones guardadas ------------------------------------------- */
 
 .sintomas__guardadas {
   margin-block-start: var(--sp-4);
@@ -503,81 +612,39 @@
   margin-block-start: var(--sp-3);
 }
 
-/* ─── Selector de opciones en la parte de arriba ────────────────────────── */
-.sintomas__orientacion-header {
-  margin-block-start: var(--sp-4);
-  margin-block-end: var(--sp-4);
+/* ─── Especialidades recomendadas ─────────────────────────────────────────
+   La rejilla y la tarjeta son las de `shared/styles/card-grid.css`, las
+   mismas del buscador de especialidades de `/directory` (pedido del cliente,
+   27/10/2026). Acá sólo lo propio del chequeo: la marca de por cuál empezar y
+   la acción escrita, porque la tarjeta suma el porqué y no un recuento. */
+.sintomas__rejilla {
+  margin-block-start: var(--sp-3);
 }
 
-.sintomas__orientacion-tabs {
-  display: inline-flex;
+.sintomas__tarjeta-cabeza {
+  display: flex;
   align-items: center;
-  gap: var(--sp-2, 8px);
-  padding: 4px;
-  background: var(--sup-inset, #EFF5F3);
-  border: 1px solid var(--filete);
-  border-radius: var(--r-menu, 12px);
-  max-inline-size: 100%;
-  overflow-x: auto;
+  justify-content: space-between;
+  gap: var(--sp-2);
 }
 
-.sintomas__tab-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sp-2, 8px);
-  padding: 8px 16px;
-  border: 0;
-  border-radius: calc(var(--r-menu, 12px) - 3px);
-  background: transparent;
-  color: var(--tinta-2);
-  font-family: inherit;
-  font-size: var(--fs-cuerpo-sm, 0.875rem);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease-in-out;
-  white-space: nowrap;
+/* La primera es la recomendada: un borde de marca, además de la insignia con
+   palabras, para que no dependa sólo del color. */
+.sintomas__tarjeta--primera {
+  border-color: var(--brand-primary);
 }
 
-.sintomas__tab-btn:hover {
-  color: var(--tinta);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.sintomas__tab-btn:focus-visible {
-  outline: 2px solid var(--anillo-foco, var(--aguamarina));
-  outline-offset: 2px;
-}
-
-.sintomas__tab-btn--activo {
-  background: var(--sup-tarjeta) !important;
-  color: var(--petroleo) !important;
+.sintomas__tarjeta-accion {
+  margin-block-start: auto;
+  padding-block-start: var(--sp-2);
+  color: var(--brand-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   font-weight: 600;
-  box-shadow: var(--sombra-1, 0 1px 3px rgba(0, 0, 0, 0.08));
 }
 
-.sintomas__tab-icono {
-  width: 1.125rem;
-  height: 1.125rem;
-  flex-shrink: 0;
-}
-
-.sintomas__tab-conteo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0 6px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 999px;
-  background: var(--filete);
-  color: var(--tinta-2);
-}
-
-.sintomas__tab-btn--activo .sintomas__tab-conteo {
-  background: rgba(79, 179, 169, 0.18);
-  color: var(--petroleo);
+.sintomas__volver {
+  margin-block-end: var(--sp-3);
 }
 
 /* ─── Callout complementario en vista de especialistas ───────────────────── */
@@ -648,7 +715,7 @@
 
 .sintomas__meds-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(21rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
   gap: var(--sp-4);
 }
 
@@ -1070,7 +1137,7 @@
 /* Teléfonos de Crisis */
 .sintomas__crisis-telefonos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--sp-3, 14px);
   margin-block-start: 4px;
 }
@@ -1186,7 +1253,7 @@
 
 .sintomas__crisis-videos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--sp-4, 16px);
   margin-block-start: 8px;
 }

@@ -146,6 +146,17 @@ describe('Settings', () => {
     expect(text()).toContain('Qué avisos recibe');
   });
 
+  it('ofrece los tutoriales como pestaña: se fusionaron con Ajustes (27/10/2026)', () => {
+    mount();
+    goTo('Tutoriales');
+
+    const abrir = fixture.nativeElement.querySelector(
+      '[data-testid="settings-abrir-tutoriales"]',
+    ) as HTMLAnchorElement | null;
+    expect(abrir?.tagName).toBe('A');
+    expect(abrir?.getAttribute('href')).toBe('/tutorials');
+  });
+
   it('el único h1 es el de Ajustes: el panel de avisos bajó a h2', () => {
     mount();
 

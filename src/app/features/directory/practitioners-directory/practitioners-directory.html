@@ -1,26 +1,85 @@
-<!-- La guía de médicos, en filas (propietario, 04/10/2026): primero los
-     médicos, no un grid de especialidades. La especialidad es un filtro de la
-     barra y viaja en la URL, así que «la guía, cardiología» sigue siendo un
-     enlace que se puede compartir y el chequeo de síntomas puede mandar directo. -->
+<!-- Carril 18 (REQ-18-002): la guía de médicos entra por una grilla de
+     especialidades y el clic despliega la lista de doctores de esa
+     especialidad, como en la red social. La grilla es la portada del MISMO
+     `app-directory-page`: el buscador queda encima y escribir un nombre salta
+     directo a la lista, sin elegir especialidad. La especialidad viaja en la
+     URL, así que «la guía, cardiología» sigue siendo un enlace que se puede
+     compartir y el chequeo de síntomas puede mandar directo a la lista. -->
 <app-directory-page
   titulo="Directorio de médicos"
   [subtitulo]="
-    'Busque por nombre o elija una especialidad. ' +
+    (showsLanding()
+      ? 'Elija una especialidad para ver quién atiende, o busque por nombre. '
+      : 'Busque por nombre o elija otra especialidad. ') +
     totalDeProfesionales() +
     ' profesionales en la red.'
   "
   etiquetaBusqueda="Buscar por nombre o especialidad"
   [filtros]="filtros()"
-  [estado]="estado()"
+  [estado]="showsLanding() ? recuento() : estado()"
   [grupos]="tramos()"
   [sustantivo]="sustantivo"
   [aviso]="aviso()"
   [textoSinCoincidencias]="sinCoincidencias()"
   [preventDuplicateNavigation]="true"
+  [portada]="showsLanding()"
   vistaPorDefecto="lista"
   [criteriosDeOrden]="criteriosDeOrden"
   [calificable]="true"
   claveDeVista="alovida.directorio.vista.medicos"
   (filtrosCambiaron)="filtrar($event)"
   (reintentar)="recargar()"
-/>
+>
+  <!-- La vuelta a la grilla es un enlace y no un botón: limpia la
+       especialidad y la búsqueda de la URL, que es exactamente lo que
+       significa «ver todas las especialidades». -->
+  @if (!showsLanding()) {
+    <a
+      slot="antes-de-filtros"
+      app-button
+      variant="ghost"
+      class="rejilla__volver"
+      data-testid="volver-a-especialidades"
+      [routerLink]="[]"
+      [queryParams]="{}"
+    >
+      ← Todas las especialidades
+    </a>
+  }
+
+  <!-- Sólo las especialidades que TIENEN gente, con su cantidad: las dos
+       cosas salen del mismo recuento del backend, y una tarjeta que promete y
+       abre vacía es peor que no estar. -->
+  <ul slot="portada" class="rejilla" data-testid="portada-especialidades">
+    @for (tarjeta of tarjetas(); track tarjeta.conceptId) {
+      <li>
+        <!-- El ícono va dentro del enlace y `aria-hidden`: la tarjeta ya se
+             llama por su especialidad y su cantidad. -->
+        <a
+          class="rejilla__tarjeta"
+          [routerLink]="[]"
+          [queryParams]="{ especialidad: tarjeta.conceptId }"
+          queryParamsHandling="merge"
+          [attr.aria-label]="
+            tarjeta.nombre +
+            ', ' +
+            tarjeta.cantidad +
+            (tarjeta.cantidad === 1 ? ' médico' : ' médicos')
+          "
+        >
+          <img class="rejilla__foto" [src]="photoOf(tarjeta.nombre)" alt="" loading="lazy" />
+          <app-specialty-icon
+            class="rejilla__icono"
+            aria-hidden="true"
+            [especialidad]="tarjeta.nombre"
+          />
+          <span class="rejilla__nombre">{{ tarjeta.nombre }}</span>
+          <span class="rejilla__dato">
+            {{ tarjeta.cantidad }}
+            {{ tarjeta.cantidad === 1 ? 'médico' : 'médicos' }}
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+</app-directory-page>

@@ -34,7 +34,7 @@ export type {
 export { DatePicker } from './date-picker/date-picker';
 export type { CalendarDay } from './date-picker/date-picker';
 export { DATE_PICKER_MODES } from './date-picker/date-picker.types';
-export type { DatePickerMode } from './date-picker/date-picker.types';
+export type { DatePickerMode, DateTextProblem } from './date-picker/date-picker.types';
 
 export { EncounterTimeline } from './encounter-timeline/encounter-timeline';
 export { TIPOS_DE_HECHO } from './encounter-timeline/encounter-timeline.types';
@@ -69,7 +69,7 @@ export type { HeaderUser } from './header/header.types';
 export { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map/map';
 export type { CargadorDeLeaflet } from './map/map';
 export { distanciaEnLineaRectaKm, ordenarPorCercania } from './map/geo';
-export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
+export type { PinStatus as EstadoDePin, PinMap as PinMapa, PuntoGeo } from './map/map-pin.types';
 
 /**
  * El rail de la superficie pública. Reemplaza las ocho copias de `app-tabs`
@@ -84,6 +84,15 @@ export type {
 
 export { PageHeader } from './page-header/page-header';
 export type { PageHeaderAction } from './page-header/page-header';
+
+/* Relaciones del glosario agrupadas: mapa, ficha y comparador (TAREA-41 F5.5). */
+export { RelationGroups } from './relation-groups/relation-groups';
+export type {
+  RelationColumnFooterContext,
+  RelationColumnView,
+  RelationGroupsTone,
+  RelationNavigation,
+} from './relation-groups/relation-groups.types';
 
 export { MAIN_CONTENT_ID, Shell } from './shell/shell';
 export { NAV_STORAGE_KEY, ShellService } from './shell/shell-service';

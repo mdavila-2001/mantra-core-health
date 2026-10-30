@@ -111,8 +111,6 @@
 }
 
 .atlas3d__resultados {
-  max-block-size: 16rem;
-  overflow-y: auto;
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
 }
@@ -247,6 +245,37 @@
   font-size: var(--fs-caption);
 }
 
+.atlas3d__estado {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__estado--error {
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+}
+
+.atlas3d__reintentar {
+  margin-inline-start: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid currentColor;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.atlas3d__reintentar:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
 .atlas3d__inicio {
   padding: var(--sp-4);
   border-radius: var(--r-md);
@@ -287,4 +316,201 @@
     inset-block-start: calc(var(--h-header) + var(--sp-4));
   }
 
+}
+
+/* Relaciones: un grupo por tipo, filas de una línea con el mismo sangrado
+   —las que no se pueden abrir quedaban pegadas al borde, sin el relleno del botón—. */
+.atlas3d__resumen {
+  margin: var(--sp-2) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__grupo {
+  margin-block-start: var(--sp-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.atlas3d__grupo-nombre {
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-block-end: 1px solid var(--border-subtle);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.atlas3d__relaciones,
+.atlas3d__referencias {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.atlas3d__relacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  padding: 0 var(--sp-3);
+  min-block-size: 2.75rem;
+}
+
+.atlas3d__relacion + .atlas3d__relacion {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.atlas3d__relacion .atlas3d__opcion {
+  flex: 1 1 auto;
+  padding-inline: 0;
+}
+
+.atlas3d__relacion .atlas3d__opcion:hover {
+  background: none;
+  text-decoration: underline;
+}
+
+.atlas3d__relacion-texto {
+  color: var(--text-primary);
+  padding-block: var(--sp-2);
+  overflow-wrap: anywhere;
+}
+
+.atlas3d__etiqueta {
+  padding: 0.1rem var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full, 999px);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+}
+
+.atlas3d__etiqueta--viva {
+  border-color: var(--c-amber-600);
+}
+
+.atlas3d__panel .atlas3d__grupo-nombre + .atlas3d__procedencia,
+.atlas3d__procedencia {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+/* La caja de procedencia lleva su rótulo suelto, sin el borde de grupo. */
+.atlas3d__panel app-tab > .atlas3d__grupo-nombre,
+.atlas3d__panel .atlas3d__procedencia + .atlas3d__grupo-nombre {
+  margin-block: var(--sp-3) var(--sp-2);
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.atlas3d__procedencia > div {
+  display: grid;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-3);
+}
+
+.atlas3d__procedencia > div + div {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.atlas3d__procedencia dt {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.atlas3d__procedencia dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.atlas3d__referencias {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.atlas3d__referencias li {
+  padding: var(--sp-2) var(--sp-3);
+  overflow-wrap: anywhere;
+}
+
+.atlas3d__referencias li + li {
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+/* El paginador del panel, compacto y alineado al borde del contenido. */
+.atlas3d__paginas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-3);
+}
+
+/* El panel es angosto: «Anterior», siete páginas y «Siguiente» no caben en una
+   línea; partidas, que queden centradas y no pegadas a la izquierda. */
+.atlas3d__paginas ::ng-deep .pagination__nav {
+  justify-content: center;
+}
+
+
+/* ─── Créditos en tabla (port de mockup, #1434) ─── */
+/* Fuentes como tabla ordenada, a la manera de una lista de referencias. */
+.atlas3d__tabla-caja {
+  inline-size: 100%;
+  overflow-x: hidden;
+}
+
+.atlas3d__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--fs-caption);
+  color: var(--text-primary);
+}
+
+.atlas3d__tabla-titulo {
+  padding-block-end: var(--sp-2);
+  text-align: start;
+  color: var(--text-secondary);
+}
+
+.atlas3d__tabla th,
+.atlas3d__tabla td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  border-block-end: 1px solid var(--border-default);
+}
+
+.atlas3d__tabla thead th {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-block-end-color: var(--border-strong);
+}
+
+.atlas3d__tabla thead th:nth-child(1) {
+  inline-size: 22%;
+}
+
+.atlas3d__tabla thead th:nth-child(2) {
+  inline-size: 14%;
+}
+
+.atlas3d__tabla thead th:nth-child(4) {
+  inline-size: 22%;
 }

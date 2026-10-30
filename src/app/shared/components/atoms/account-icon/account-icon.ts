@@ -148,6 +148,22 @@ import type { AccountIconName } from './account-icon.types';
             <path d="M12 8v8M8 12h8" />
           </g>
         }
+        @case ('clinic') {
+          <!-- Un edificio con la cruz de salud en la fachada: un centro médico
+               es un lugar al que se va, no una persona ni un frasco. No lleva
+               el marco de la farmacia ni el barrido de imagenología, para que
+               las tres altas de organización se distingan sin leer el rótulo.
+               La cruz late como la del paciente. -->
+          <rect class="mass" stroke="none" x="5" y="7.5" width="14" height="13" rx="1.5" />
+          <path
+            class="draw"
+            pathLength="1"
+            d="M3 20.75h18M5.5 20.75V9.4a2 2 0 0 1 1-1.73l4.5-2.6a2 2 0 0 1 2 0l4.5 2.6a2 2 0 0 1 1 1.73v11.35"
+          />
+          <g class="cross">
+            <path d="M12 9.5v5M9.5 12h5" />
+          </g>
+        }
       }
     </svg>
   `,

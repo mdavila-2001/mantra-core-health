@@ -6,7 +6,7 @@
     proyectos antes:
 
       1. **La semilla.** `faker` a secas arranca aleatorio y rompe el
-         determinismo del que depende todo el mock (ver `semilla.ts`). Pasando
+         determinismo del que depende todo el mock (ver `seed.ts`). Pasando
          por `fk.conSemilla(...)` no hay forma de olvidarlo.
 
       2. **El peso.** `@faker-js/faker` no es pequeño. Todo esto vive detrás del
@@ -19,10 +19,10 @@
     Se importa el locale español, no el genérico: `fakerES` trae nombres y
     apellidos que un lector boliviano reconoce. Lo que el locale no cubre
     —cédulas, NIT, celulares +591, municipios, mapas— lo pone `bolivia.ts`, y
-    lo clínico lo pone `clinico.ts` eligiendo siempre del catálogo real.
+    lo clínico lo pone `clinical.ts` eligiendo siempre del catálogo real.
     ========================================================================== */
 
-export { apellido, conSemilla, semillaDe, slugDeNombre } from './semilla';
+export { surname as apellido, withSeed as conSemilla, seedOf as semillaDe, nameSlug as slugDeNombre } from './seed';
 
 export {
   ASEGURADORAS,
@@ -57,18 +57,18 @@ export {
 } from './props';
 
 export {
-  CODIGOS_DX,
-  CODIGOS_MED,
-  biografia,
-  diagnosticoId,
-  edadDe,
-  medicamentoId,
-  motivoDeConsulta,
-  posologia,
-  severidadId,
-  signosVitales,
-  textoDeNotaMedica,
-  unidadId,
+  DX_CODES as CODIGOS_DX,
+  MED_CODES as CODIGOS_MED,
+  biography as biografia,
+  diagnosisId as diagnosticoId,
+  ageOf as edadDe,
+  medicationId as medicamentoId,
+  consultationReason as motivoDeConsulta,
+  dosage as posologia,
+  severityId as severidadId,
+  vitalSigns as signosVitales,
+  medicalNoteText as textoDeNotaMedica,
+  unitId as unidadId,
   viaId,
-  type SignoVital,
-} from './clinico';
+  type SignVital as SignoVital,
+} from './clinical';

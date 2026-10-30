@@ -4,6 +4,7 @@ import { Component, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
+import { accessibleName } from '../../../../../testing/a11y';
 import { SideNav } from './side-nav';
 import type { NavSection } from './side-nav.types';
 
@@ -111,6 +112,14 @@ describe('SideNav', () => {
       expect(enlaces()[1].getAttribute('href')).toBe('/pacientes');
     });
 
+    it('expandido, cada destino se nombra por su etiqueta visible', () => {
+      const etiquetas = SECCIONES.flatMap((s) => s.items)
+        .filter((item) => item.disabled !== true)
+        .map((item) => item.label);
+
+      expect(enlaces().map((link) => accessibleName(link).split(' ')[0])).toEqual(etiquetas);
+    });
+
     it('el badge de pendientes se nombra en palabras', () => {
       const badge = root().querySelector('app-badge');
 
@@ -139,6 +148,14 @@ describe('SideNav', () => {
         expect(link.getAttribute('aria-label')).toBeTruthy();
       }
       expect(enlaces()[1].getAttribute('aria-label')).toBe('Pacientes');
+    });
+
+    it('colapsado, ningún destino queda mudo: el nombre es su etiqueta', () => {
+      expect(enlaces().map((link) => accessibleName(link))).toEqual([
+        'Inicio',
+        'Pacientes',
+        'Agenda',
+      ]);
     });
 
     it('el texto sigue en el DOM: se oculta por CSS, no se borra', () => {

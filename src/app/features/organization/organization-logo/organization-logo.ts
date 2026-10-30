@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { map, switchMap } from 'rxjs';
 
-import { LogoDeOrganizacionClient } from '../../../core/data-access/directory/logo-de-organizacion.client';
+import { OrganizationLogoClient } from '../../../core/data-access/directory/organization-logo.client';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -18,7 +18,7 @@ import {
   FileInput,
   type RejectedFile,
 } from '../../../shared/components/molecules/file-input/file-input';
-import { LogoConsultorio } from '../../../shared/components/molecules/logo-consultorio/logo-consultorio';
+import { PracticeLogo } from '../../../shared/components/molecules/practice-logo/practice-logo';
 
 /** Formatos que acepta el logo: lo que `upload-policy` admite como imagen. */
 const FORMATOS_DEL_LOGO = 'image/png,image/jpeg,image/webp';
@@ -45,13 +45,13 @@ const MAX_BYTES_DEL_LOGO = 2 * 1024 * 1024;
  */
 @Component({
   selector: 'app-organization-logo',
-  imports: [AppButton, Card, FileInput, LogoConsultorio],
+  imports: [AppButton, Card, FileInput, PracticeLogo],
   templateUrl: './organization-logo.html',
   styleUrl: './organization-logo.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationLogo {
-  private readonly logo = inject(LogoDeOrganizacionClient);
+  private readonly logo = inject(OrganizationLogoClient);
 
   /** La organización cuyo logo se muestra. */
   readonly tenantId = input.required<string>();
@@ -59,6 +59,13 @@ export class OrganizationLogo {
   readonly nombre = input<string>('');
   /** Si quien mira administra la organización. La API vuelve a comprobarlo al guardar. */
   readonly puedeEditar = input<boolean>(false);
+
+  /**
+   * Con su propio marco (el default) o sin él, para vivir dentro de la pestaña
+   * de una ficha que ya es una tarjeta: una tarjeta adentro de otra es justo
+   * lo que la regla de «una tarjeta con pestañas» evita.
+   */
+  readonly enmarcado = input(true);
 
   /** La imagen como `data:` URL, o `null` si no hay. */
   protected readonly vista = signal<string | null>(null);
@@ -81,7 +88,7 @@ export class OrganizationLogo {
   private cargar(tenantId: string): void {
     this.error.set('');
     this.vista.set(null);
-    this.logo.obtenerUrl(tenantId).subscribe((url) => {
+    this.logo.getUrl(tenantId).subscribe((url) => {
       // Si mientras tanto se pasó a otra organización, esta respuesta ya no es de la que se ve.
       if (tenantId === this.tenantId()) {
         this.vista.set(url);
@@ -98,10 +105,10 @@ export class OrganizationLogo {
     this.error.set('');
     this.ocupado.set(true);
     this.logo
-      .subir(archivo)
+      .upload(archivo)
       .pipe(
         switchMap((fileId) =>
-          this.logo.guardar(tenantId, fileId).pipe(map(() => fileId)),
+          this.logo.save(tenantId, fileId).pipe(map(() => fileId)),
         ),
         switchMap(() => blobToDataUrl(archivo)),
       )
@@ -133,7 +140,7 @@ export class OrganizationLogo {
     }
     this.error.set('');
     this.ocupado.set(true);
-    this.logo.guardar(this.tenantId(), null).subscribe({
+    this.logo.save(this.tenantId(), null).subscribe({
       next: () => {
         this.ocupado.set(false);
         this.vista.set(null);

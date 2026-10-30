@@ -191,7 +191,7 @@
           <!-- `app-result-card` es un selector de atributo sobre el `<li>`: la
                tarjeta ES el ítem de la lista, así que un lector de pantalla
                anuncia cuántos hay antes de leer el primero. -->
-          <ul class="directorio__grilla" [class.directorio__grilla--lista]="vista() === 'lista'">
+          <ul #inicioDeResultados class="directorio__grilla" [class.directorio__grilla--lista]="vista() === 'lista'">
             @for (resultado of visibles(); track resultado.id) {
               <!-- `--i`: el orden dentro de su tanda, para que las tarjetas
                    entren escalonadas. Ver `.directorio__grilla > li`. -->
@@ -205,14 +205,17 @@
             }
           </ul>
 
-          <!-- Tope progresivo: ver `TANDA_POR_DEFECTO`. -->
-          @if (restantes() > 0) {
-            <div class="directorio__mas">
-              <p class="directorio__progreso" aria-live="polite">{{ textoProgreso() }}</p>
-              <button app-button variant="secondary" type="button" (click)="mostrarMas()">
-                {{ textoMostrarMas() }}
-              </button>
-            </div>
+          <!-- Páginas de verdad: ver `TANDA_POR_DEFECTO`. -->
+          @if (total() > tamanoDeTanda()) {
+            <app-pagination
+              class="directorio__paginas"
+              [totalItems]="total()"
+              [page]="paginaActual()"
+              (pageChange)="cambiarPagina($event)"
+              [pageSize]="tamanoDeTanda()"
+              [showPageSize]="false"
+              data-testid="directorio-paginas"
+            />
           }
         }
       </section>

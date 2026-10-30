@@ -34,8 +34,8 @@ import {
   BoMunicipalitiesCatalog,
   type RamaDepartamento,
 } from '../../core/data-access/terminology/bo-municipalities.service';
-import { departamentoPorCiudad, normalizarLugar } from '../../shared/geo/departamento-de-ciudad';
-import { fotoDeDirectorio, temaDeCentroDiagnostico } from '../../shared/utils/foto-de-directorio';
+import { departmentByCity, normalizePlace } from '../../shared/geo/city-department';
+import { directoryPhoto, diagnosisCenterTheme } from '../../shared/utils/directory-photo';
 
 /**
  * Un tramo del directorio de laboratorios.
@@ -165,7 +165,7 @@ const FILTROS: readonly FilterDef[] = [
   imports: [DirectoryPage],
   templateUrl: './laboratory-directory.html',
   // El mapa comparte la hoja de clínicas y farmacias: es el mismo filtro.
-  styleUrls: ['../public-directories/mapa-directorio.css'],
+  styleUrls: ['../public-directories/directory-map.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LaboratoryDirectory {
@@ -254,7 +254,7 @@ export class LaboratoryDirectory {
   /** El catálogo no llegó: el mapa no se dibuja y se ofrece reintentar. */
   protected readonly catalogoGeoCaido = signal(false);
 
-  private readonly porCiudad = computed(() => departamentoPorCiudad(this.ramas()));
+  private readonly porCiudad = computed(() => departmentByCity(this.ramas()));
 
   protected readonly departamentoElegido = computed(() => {
     const valor: unknown = this.parametros()[PARAM_DEPARTAMENTO];
@@ -281,7 +281,7 @@ export class LaboratoryDirectory {
     const porCiudad = this.porCiudad();
     const departamentos = new Set<string>();
     for (const ciudad of unidad.cities ?? []) {
-      const conceptId = porCiudad.get(normalizarLugar(ciudad));
+      const conceptId = porCiudad.get(normalizePlace(ciudad));
       if (conceptId !== undefined) departamentos.add(conceptId);
     }
     return departamentos;
@@ -463,6 +463,9 @@ const PARAM_DEPARTAMENTO = 'departamento';
 /** Clave de la ciudad elegida en la faceta, en la URL. */
 const PARAM_CIUDAD = 'ciudad';
 
+/** Clave de la ciudad elegida en la faceta, en la URL. */
+const PARAM_CITY = 'ciudad';
+
 /** ¿Quedó algún filtro puesto? Decide qué texto muestra el vacío. */
 function hayFiltros(activos: Readonly<Record<string, string>>): boolean {
   return Object.values(activos).some((valor) => valor !== '');
@@ -537,7 +540,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
   if (unit.acceptsExternalOrders) {
     seals.push({ label: 'Recibe órdenes externas', tone: 'neutro' as const });
   }
-  const desde = precioDesde(unit.minAmount);
+  const desde = precioDesde(unit.minAmount, unit.minAmountCurrency);
   return {
     id: unit.id,
     title: unit.name,
@@ -551,7 +554,7 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
       icon: 'flask',
     },
     figureText: initials(unit.name),
-    photoUrl: fotoDeDirectorio(temaDeCentroDiagnostico(`${unit.type.code} ${unit.type.display}`), unit.id),
+    photoUrl: directoryPhoto(diagnosisCenterTheme(`${unit.type.code} ${unit.type.display}`), unit.id),
     // La categoría como subtítulo y no como insignia: desde que la portada
     // obliga a elegirla antes de entrar, todas las tarjetas de la lista son de
     // la misma, así que la insignia repetía en cada una la categoría que se
@@ -583,22 +586,24 @@ function toSearchResult(unit: DiagnosticUnitSearchItem): SearchResultItem {
  * publicó tarifa no es un centro gratis, y rellenar el hueco con una frase
  * amable haría que dos situaciones distintas se vean iguales.
  *
- * La moneda va literal porque la búsqueda **no la devuelve** —`minAmount` viaja
- * como número suelto—, y el directorio hoy es de un solo país. El día que la
- * respuesta traiga su concepto de moneda, se lee de ahí.
+ * CL-45/CL-51: la moneda ya no va literal — la búsqueda la devuelve
+ * (`minAmountCurrency`, el código del concepto de `price_schedules`). Un
+ * centro sin tarifa publicada tampoco tiene moneda, así que ambos faltan
+ * juntos; si algún día llegara un importe sin moneda (dato incompleto del
+ * centro), se dice «Bs» como piso conocido antes que inventar un símbolo.
  */
-function precioDesde(minAmount: number | null): string | null {
+function precioDesde(minAmount: number | null, minAmountCurrency: string | null): string | null {
   if (minAmount === null) {
     return null;
   }
-  // Sin decimales cuando no los hay: «Bs 120,00» en una línea de contexto pesa
+  // Sin decimales cuando no los hay: «USD 120,00» en una línea de contexto pesa
   // más de lo que informa.
   const decimales = Number.isInteger(minAmount) ? 0 : 2;
   const cifra = minAmount.toLocaleString('es-BO', {
     minimumFractionDigits: decimales,
     maximumFractionDigits: decimales,
   });
-  return `desde Bs ${cifra}`;
+  return `desde ${minAmountCurrency ?? 'Bs'} ${cifra}`;
 }
 
 /**

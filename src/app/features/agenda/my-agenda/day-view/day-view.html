@@ -1,12 +1,12 @@
 <div class="dia">
   <header class="dia__barra">
     <div class="dia__cabecera">
-      <h3 class="dia__titulo">
+      <h2 class="dia__titulo">
         {{ titulo() }}
         @if (esHoy()) {
           <span class="dia__hoy">Hoy</span>
         }
-      </h3>
+      </h2>
       <p class="dia__resumen" role="status">{{ resumen() }}</p>
     </div>
 
@@ -105,7 +105,7 @@
         </button>
         <button
           app-button
-          variant="secondary"
+          variant="ghost"
           size="sm"
           type="button"
           data-testid="dia-agregar"
@@ -134,13 +134,13 @@
        a quién alcanza. Mismo criterio que el aviso de demora. -->
   @if (moverAbierto()) {
     <section class="dia__mover" data-testid="dia-mover-panel" aria-labelledby="mover-titulo">
-      <h4 id="mover-titulo" class="dia__mover-titulo">
+      <h3 id="mover-titulo" class="dia__mover-titulo">
         @if (moverDesde()) {
           Correr desde las {{ moverDesde() | date: 'HH:mm' }} en adelante
         } @else {
           Correr todo el día
         }
-      </h4>
+      </h3>
       <p class="dia__mover-nota">
         Las citas cambian de hora y se le avisa a cada paciente. Si alguno choca con otra cita
         suya, <strong>no se mueve ninguno</strong>.
@@ -188,6 +188,11 @@
       <!-- Con la lectura caída, vacío no quiere decir que no atiende. -->
       @if (incompleteLoad()) {
         <p>Este día no se pudo cargar. Vuelva a cargarlo desde el aviso de arriba.</p>
+      } @else if (horarioFlexible(); as flexible) {
+        <p data-testid="dia-horario-flexible">
+          Atiende con horario flexible de {{ flexible }}: los pacientes eligen la hora. Todavía no
+          hay citas pedidas.
+        </p>
       } @else {
         <p>No atiende este día.</p>
       }
@@ -202,7 +207,7 @@
       Use las flechas arriba y abajo para recorrer los ratos del día, e izquierda y derecha para
       cambiar de día.
     </p>
-    <ol class="dia__linea" [attr.aria-describedby]="ayudaId" appStaggerList>
+    <ol class="dia__linea" [attr.aria-describedby]="ayudaId">
       @for (bloque of bloques(); track bloque.clave) {
         <!-- Cliqueable sólo lo que TIENE detalle: el aire entre bloques no es
              una actividad, y un clic que no hace nada enseña a no confiar en
@@ -213,7 +218,6 @@
           [class.dia__bloque--cliqueable]="bloque.tipo === 'cita' || bloque.tipo === 'ocupado'"
           [attr.data-tipo]="bloque.tipo"
           [attr.data-sello]="bloque.tipo === 'cita' ? bloque.statusVariant : null"
-          [attr.data-en-curso]="bloque.tipo === 'cita' && bloque.statusCode.endsWith('BOOKING_IN_PROGRESS') ? '' : null"
           [style.min-height.px]="bloque.alturaPx"
         >
           @if (

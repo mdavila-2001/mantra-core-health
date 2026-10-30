@@ -1,3 +1,4 @@
+import { environment } from '../../../../environments/environment';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 
@@ -49,6 +50,13 @@ function borrador(mecanica: Mechanic, cambios: Partial<BorradorDeCampana> = {}):
 }
 
 describe('las mecánicas sobre el contrato de farmacia', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let client: PharmacyCampaignsClient;
 
   beforeEach(() => {

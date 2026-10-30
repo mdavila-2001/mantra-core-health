@@ -32,8 +32,9 @@
  * ## Salida
  *
  * - `public/anatomy-atlas-3d/catalog/`: `index.json` (búsqueda y shard de cada
- *   estructura), `parts.json` (malla → estructura) y `structures-NN.json`
- *   (las fichas, en 32 shards). Se bajan bajo demanda, como el glosario: no
+ *   estructura), `parts.json` (malla → estructura), `composites.json`
+ *   (estructura compuesta → las partes suyas que tienen malla) y
+ *   `structures-NN.json` (las fichas, en 32 shards). Se bajan bajo demanda, como el glosario: no
  *   pesan en el bundle.
  * - `src/app/core/mock/fixtures/anatomy-ontology.generated.ts`: conteos,
  *   procedencia y atribuciones, que sí viajan en el código porque la pantalla
@@ -50,6 +51,13 @@ const CATALOGO = join(RAIZ, 'public', 'anatomy-atlas-3d', 'catalog');
 const MANIFIESTO_DE_MALLAS = join(RAIZ, 'public', 'anatomy-atlas-3d', 'models', 'parts-manifest.json');
 const FIXTURE = join(RAIZ, 'src', 'app', 'core', 'mock', 'fixtures', 'anatomy-ontology.generated.ts');
 const SHARDS = 32;
+/**
+ * Una estructura compuesta resalta las mallas de todas sus partes, pero no las
+ * de una clase abstracta: «órgano», «organismo» o «entidad anatómica» llegan a
+ * 150–550 mallas, y encender medio cuerpo no le muestra nada a quien buscó una
+ * estructura. Pasado este tope la estructura sigue sin pieza 3D.
+ */
+const MAX_MALLAS_COMPUESTAS = 120;
 
 const leerJson = (ruta) => JSON.parse(readFileSync(ruta, 'utf8'));
 
@@ -269,6 +277,43 @@ function main() {
     });
   }
 
+  /* ---- estructuras compuestas -------------------------------------------
+     «Pulmón», «pulmón derecho» o «corazón» no tienen malla propia: BodyParts3D
+     dibuja sus lóbulos y cavidades. Sin esto el índice las marcaba «sin pieza
+     3D» y no se resaltaba nada, aunque el modelo las contiene enteras. Una
+     compuesta resalta las mallas de sus partes: lo que la ontología declara
+     como «es un» o «forma parte de» (en cualquiera de los dos sentidos). */
+  const hijos = new Map();
+  const agregarHijo = (padre, hijo) => {
+    if (!porId.has(padre) || !porId.has(hijo) || padre === hijo) return;
+    const lista = hijos.get(padre) ?? new Set();
+    lista.add(hijo);
+    hijos.set(padre, lista);
+  };
+  for (const t of uberon) {
+    for (const r of t.isA) agregarHijo(r.target, t.id);
+    for (const r of t.relations) {
+      if (r.type === 'part_of') agregarHijo(r.target, t.id);
+      else if (r.type === 'has_part') agregarHijo(t.id, r.target);
+    }
+  }
+  const compuestas = {};
+  for (const t of uberon) {
+    if (mallasPorEstructura.has(t.id)) continue;
+    const vistos = new Set();
+    const pila = [t.id];
+    while (pila.length > 0) {
+      for (const hijo of hijos.get(pila.pop()) ?? []) {
+        if (vistos.has(hijo)) continue;
+        vistos.add(hijo);
+        pila.push(hijo);
+      }
+    }
+    const miembros = [...vistos].filter((id) => mallasPorEstructura.has(id)).sort();
+    const nMallas = miembros.reduce((n, id) => n + mallasPorEstructura.get(id).length, 0);
+    if (nMallas > 0 && nMallas <= MAX_MALLAS_COMPUESTAS) compuestas[t.id] = miembros;
+  }
+
   /* ---- escritura --------------------------------------------------------- */
   mkdirSync(CATALOGO, { recursive: true });
   const porShard = Array.from({ length: SHARDS }, () => ({}));
@@ -277,10 +322,11 @@ function main() {
     writeFileSync(join(CATALOGO, `structures-${String(i).padStart(2, '0')}.json`), JSON.stringify(contenido) + '\n'),
   );
   const indice = fichas
-    .map((f) => [f.id, f.labelEs, f.labelEn, f.meshes.length > 0 ? 1 : 0])
+    .map((f) => [f.id, f.labelEs, f.labelEn, f.meshes.length > 0 || f.id in compuestas ? 1 : 0])
     .sort((a, b) => (a[1] ?? a[2]).localeCompare(b[1] ?? b[2], 'es'));
   writeFileSync(join(CATALOGO, 'index.json'), JSON.stringify({ shards: SHARDS, entries: indice }) + '\n');
   writeFileSync(join(CATALOGO, 'parts.json'), JSON.stringify(partes) + '\n');
+  writeFileSync(join(CATALOGO, 'composites.json'), JSON.stringify(compuestas) + '\n');
   writeFileSync(
     join(DATOS, 'netter-mapping-report.json'),
     JSON.stringify({ ...cruce, sinRevisar }, null, 1) + '\n',
@@ -321,6 +367,7 @@ function main() {
     definitionsEs: fichas.filter((f) => f.definition?.es).length,
     labelsEs: fichas.filter((f) => f.labelEs).length,
     meshes: partes.length,
+    compositeStructures: Object.keys(compuestas).length,
     meshesMappedToUberon: partes.filter((p) => p.match !== 'fma_only').length,
     netterEntries: cruce.total,
     netterMapped: cruce.aceptadas,

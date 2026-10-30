@@ -7,6 +7,9 @@
 
 :host {
   display: block;
+  /* El ancho máximo de la figura entera. Quien monta el organismo puede
+     cambiarlo; 20 rem la deja a unos 590 px de alto, un 25 % mayor que antes. */
+  --body-map-ancho: 20rem;
 }
 
 .body-map {
@@ -34,15 +37,18 @@
   display: flex;
   justify-content: center;
   inline-size: 100%;
+  /* Para medir el marco en unidades del propio escenario (`cqi`). */
+  container-type: inline-size;
   padding: var(--sp-5) var(--sp-4) var(--sp-6);
-  border: 1px solid var(--border-subtle);
+  /* Superficie tonal sin trazo ni sombra: va dentro de una tarjeta, y una caja
+     con borde dentro de otra caja con borde era «caja dentro de caja». */
+  border: 0;
   border-radius: var(--r-xl);
   background: radial-gradient(
     ellipse 70% 60% at 50% 42%,
     var(--bg-surface) 0%,
     var(--bg-surface-alt) 100%
   );
-  box-shadow: var(--shadow-sm);
 }
 
 /* La sombra de piso: una elipse difusa bajo los pies. En la cara no va (es un
@@ -87,22 +93,56 @@
   pointer-events: none;
 }
 
-/* Una figura humana es vertical: 16rem de ancho la deja en unos 35rem de alto
+/* El marco reserva el alto de la figura entera (240 × 440 de `viewBox`, a lo
+   sumo `--body-map-ancho` de ancho): la cara es más baja y se centra adentro. Así el paso
+   entre vistas no corre lo que hay debajo. */
+.body-map__marco {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: calc(min(100cqi, var(--body-map-ancho)) * 440 / 240);
+}
+
+/* Mientras llega la imagen de la vista pedida se sigue viendo la anterior,
+   apenas apagada: es la señal de que el toque se recibió. */
+.body-map__lienzo {
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.body-map__escenario--cambiando .body-map__lienzo {
+  opacity: 0.55;
+}
+
+/* Una figura humana es vertical: 20 rem de ancho la deja en unos 35rem de alto
    en escritorio. A 375 px ocupa la columna; el `viewBox` conserva la
    proporción. */
 .body-map__lienzo {
   position: relative;
   display: block;
   width: 100%;
-  max-width: 16rem;
+  max-width: var(--body-map-ancho);
   height: auto;
   overflow: visible;
+}
+
+/* Acercada, lo que sale del cuadro se recorta: sin esto el render se
+   desbordaba sobre el resto de la página. Y el dedo arrastra la figura en vez
+   de desplazar la página. */
+.body-map__lienzo--acercado {
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+
+.body-map__lienzo--acercado:active {
+  cursor: grabbing;
 }
 
 /* La cara es un busto apaisado: más ancha, para que ojos, nariz y boca sean
    objetivos cómodos para el dedo. */
 .body-map__lienzo--cara {
-  max-width: 19rem;
+  max-width: calc(var(--body-map-ancho) * 1.19);
 }
 
 /* ─── La figura ─────────────────────────────────────────────────────────── */
@@ -112,10 +152,18 @@
    oscura encandilaba y se comía las zonas. */
 .body-map__render {
   pointer-events: none;
+  /* Yeso claro sobre fondo claro pierde el volumen: un contorno finísimo y una
+     sombra de contacto separan la figura del escenario y dejan leer cintura,
+     cadera y hombros (lo que distingue una silueta de otra). Sólo el `<image>`,
+     que no recibe clics: un `filter` sobre las zonas se tragaba los toques. */
+  filter: contrast(1.07)
+    drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 55%, transparent))
+    drop-shadow(0 1.5px 2.5px color-mix(in srgb, var(--text-primary) 16%, transparent));
 }
 
 :host-context([data-theme='dark']) .body-map__render {
-  filter: brightness(0.86) saturate(0.9);
+  filter: brightness(0.86) saturate(0.9) contrast(1.05)
+    drop-shadow(0 0 0.5px color-mix(in srgb, var(--text-primary) 40%, transparent));
 }
 
 /* Las zonas son transparentes: el maniquí se ve a través. La costura entre
@@ -123,9 +171,13 @@
    figura en pedazos. */
 .body-map__forma {
   fill: transparent;
-  stroke: color-mix(in srgb, var(--text-secondary) 22%, transparent);
-  stroke-width: 0.5;
+  stroke: color-mix(in srgb, var(--text-secondary) 30%, transparent);
+  stroke-width: 0.7;
+  /* Punteada, como una marca de sastre: se lee como «división» y no como un
+     contorno duro dibujado sobre el cuerpo. */
+  stroke-dasharray: 0.1 2.6;
   stroke-linejoin: round;
+  stroke-linecap: round;
   /* Una zona con hueco (la cara sin ojos, nariz ni boca) no lo rellena: el
      clic en el hueco llega a la zona de adentro. */
   fill-rule: evenodd;
@@ -134,6 +186,14 @@
     fill var(--dur-fast) var(--ease-out),
     stroke var(--dur-fast) var(--ease-out),
     stroke-width var(--dur-fast) var(--ease-out);
+}
+
+/* La costura se insinúa en reposo y se revela cuando se mira de cerca: al pasar
+   el puntero por la figura, las divisiones suben de tono para que se vea qué
+   se puede tocar sin que el maniquí parezca un plano. */
+:where(.body-map__escenario:hover, .body-map__escenario:focus-within) .body-map__forma {
+  stroke: color-mix(in srgb, var(--text-secondary) 62%, transparent);
+  stroke-dasharray: 2.4 1.8;
 }
 
 /* ─── Estados ───────────────────────────────────────────────────────────── */
@@ -157,9 +217,10 @@
 /* El puntero sólo insinúa: el estado de verdad es `--elegida`, y sobre la
    elegida el puntero no la hace parecer suelta. */
 .body-map__zona:not(.body-map__zona--elegida):hover .body-map__forma {
-  fill: color-mix(in srgb, var(--brand-primary) 20%, transparent);
-  stroke: color-mix(in srgb, var(--brand-primary) 70%, var(--bg-surface));
+  fill: color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  stroke: color-mix(in srgb, var(--brand-primary) 75%, var(--bg-surface));
   stroke-width: 1.2;
+  stroke-dasharray: none;
 }
 
 /* El foco del teclado se ve **sobre el trazo**, no con un `outline` del
@@ -278,7 +339,8 @@
 /* Quien pidió menos movimiento no recibe transiciones ni latido. El estado
    sigue cambiando: lo que se apaga es la animación, no la información. */
 @media (prefers-reduced-motion: reduce) {
-  .body-map__forma {
+  .body-map__forma,
+  .body-map__lienzo {
     transition: none;
   }
 
@@ -286,4 +348,66 @@
   .body-map__marcador-onda {
     animation: none;
   }
+}
+
+/* ─── Herramientas ──────────────────────────────────────────────────────────
+   Acercar, ver entera, ampliar y compartir, en una fila que se parte si no cabe. */
+
+.body-map__herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  inline-size: 100%;
+}
+
+.body-map__grupo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.body-map__zoom {
+  min-inline-size: 3.5rem;
+  text-align: center;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Ampliada ──────────────────────────────────────────────────────────────
+   La figura ocupa la pantalla entera, para mirarla con el paciente al lado.
+   Por debajo del menú (z 1000): «Compartir» sigue abriéndose encima. */
+
+.body-map--ampliado {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  justify-content: flex-start;
+  padding: var(--sp-4);
+  overflow: auto;
+  background: var(--bg-surface);
+}
+
+.body-map--ampliado .body-map__escenario {
+  flex: 1;
+  align-items: center;
+}
+
+.body-map--ampliado .body-map__marco {
+  min-block-size: 0;
+  block-size: 100%;
+}
+
+.body-map--ampliado .body-map__lienzo {
+  inline-size: auto;
+  max-inline-size: 100%;
+  block-size: calc(100dvh - 12.5rem);
+  max-block-size: none;
+}
+
+.body-map--ampliado .body-map__lienzo--cara {
+  max-inline-size: 100%;
 }

@@ -1,14 +1,30 @@
-import { ChangeDetectionStrategy, Component, computed, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  input,
+  output,
+  signal,
+  type TemplateRef,
+  viewChild,
+} from '@angular/core';
 
+import { ready } from '../../../../../../core/view-state/view-state';
 import { AppButton } from '../../../../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Card } from '../../../../../../shared/components/molecules/card/card';
+import { Pagination } from '../../../../../../shared/components/molecules/pagination/pagination';
+import { DataTable } from '../../../../../../shared/components/organisms/data-table/data-table';
+import type { ColumnDef } from '../../../../../../shared/components/organisms/data-table/data-table.types';
+import { FilterBar } from '../../../../../../shared/components/organisms/filter-bar/filter-bar';
 import { StatusSeal } from '../../../../../../shared/components/organisms/status-seal/status-seal';
 import type {
   EspecialidadVisible,
   FormacionVisible,
   IdiomaVisible,
   MatriculaVisible,
+  RespaldoCredencial,
 } from '../practitioner-profile-view.types';
 import {
   CREDENTIAL_GROUP_LABELS,
@@ -50,7 +66,7 @@ import {
  */
 @Component({
   selector: 'app-credentials-panel',
-  imports: [AppButton, Card, NavIcon, StatusSeal],
+  imports: [AppButton, Card, NavIcon, StatusSeal, NgTemplateOutlet, DataTable, FilterBar, Pagination],
   templateUrl: './credentials-panel.html',
   styleUrl: './credentials-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,14 +81,20 @@ export class CredentialsPanel {
    */
   readonly especialidades = input<readonly EspecialidadVisible[]>([]);
   readonly formacion = input.required<readonly FormacionVisible[]>();
-  readonly idiomas = input.required<readonly IdiomaVisible[]>();
+  readonly idiomas = input<readonly IdiomaVisible[]>([]);
   /** Los títulos que se pueden retirar. Quién puede y cuándo lo decide la ficha. */
   readonly retirables = input<ReadonlySet<string>>(new Set());
+  readonly permiteDescarga = input(false);
+  readonly descargando = input<string | null>(null);
 
   /** «Quiero retirar este título». Confirmarlo y retirarlo es de quien escucha. */
   readonly retirar = output<FormacionVisible>();
+  readonly descargar = output<RespaldoCredencial>();
 
   protected readonly filtro = signal<CredentialFilter>('all');
+  private readonly busquedas = signal<Readonly<Partial<Record<CredentialKind, string>>>>({});
+  private readonly paginas = signal<Readonly<Partial<Record<CredentialKind, number>>>>({});
+  private readonly tamanos = signal<Readonly<Partial<Record<CredentialKind, number>>>>({});
   protected readonly ICONOS = CREDENTIAL_ICONS;
   protected readonly GRUPOS = CREDENTIAL_GROUP_LABELS;
 
@@ -90,6 +112,7 @@ export class CredentialsPanel {
       sello: { variant: matricula.sello, label: matricula.estado },
       fuente: null,
       verificada: matricula.sello === 'approved',
+      ...(matricula.fileId === undefined ? {} : { fileId: matricula.fileId }),
     })),
     ...this.especialidades().map((especialidad): CredencialEnTarjeta => ({
       id: especialidad.id,
@@ -114,9 +137,9 @@ export class CredentialsPanel {
       ].filter((linea) => linea !== ''),
       sello: { variant: estudio.sello, label: estudio.estado },
       fuente: estudio.fuenteVerificacion ?? null,
-      // La fuente es la señal más directa: el backend la exige sólo al
-      // verificar. Es el mismo criterio que usaba la agrupación anterior.
-      verificada: estudio.fuenteVerificacion !== undefined,
+      // La aprobación sobrevive al vencimiento; la fuente también existe en rechazos.
+      verificada: estudio.approved ?? estudio.sello === 'approved',
+      ...(estudio.fileId === undefined ? {} : { fileId: estudio.fileId }),
     })),
     ...this.idiomas().map((idioma): CredencialEnTarjeta => ({
       id: idioma.id,
@@ -147,15 +170,57 @@ export class CredentialsPanel {
     }
   });
 
-  /** Lo visible, en un bloque por clase y en el orden fijo de las clases. */
-  protected readonly grupos = computed<
-    readonly { readonly clase: CredentialKind; readonly tarjetas: readonly CredencialEnTarjeta[] }[]
-  >(() =>
-    CREDENTIAL_KINDS.map((clase) => ({
-      clase,
-      tarjetas: this.visibles().filter((credencial) => credencial.clase === clase),
-    })).filter((grupo) => grupo.tarjetas.length > 0),
+  /** El total original decide la tabla: buscar no hace saltar a tarjetas. */
+  protected readonly grupos = computed(() =>
+    CREDENTIAL_KINDS.map((clase) => {
+      const total = this.todas().filter((credencial) => credencial.clase === clase).length;
+      const busqueda = total > 5 ? (this.busquedas()[clase] ?? '') : '';
+      const termino = normalizarTexto(busqueda);
+      const tarjetas = this.visibles().filter(
+        (credencial) => credencial.clase === clase && normalizarTexto([
+          credencial.titulo,
+          ...credencial.detalles,
+          credencial.sello?.label ?? '',
+          credencial.fuente ?? '',
+        ].join(' ')).includes(termino),
+      );
+      const tamano = this.tamanos()[clase] ?? 10;
+      const pagina = Math.min(
+        this.paginas()[clase] ?? 1,
+        Math.max(1, Math.ceil(tarjetas.length / tamano)),
+      );
+      const inicio = (pagina - 1) * tamano;
+      return {
+        clase,
+        tarjetas,
+        usaTabla: total > 5,
+        busqueda,
+        pagina,
+        tamano,
+        estado: ready(tarjetas.slice(inicio, inicio + tamano)),
+      };
+    }).filter((grupo) => grupo.usaTabla || grupo.tarjetas.length > 0),
   );
+
+  private readonly celdaTitulo =
+    viewChild.required<TemplateRef<{ $implicit: CredencialEnTarjeta }>>('celdaTitulo');
+  private readonly celdaDetalles =
+    viewChild.required<TemplateRef<{ $implicit: CredencialEnTarjeta }>>('celdaDetalles');
+  private readonly celdaFuente =
+    viewChild.required<TemplateRef<{ $implicit: CredencialEnTarjeta }>>('celdaFuente');
+  private readonly celdaAcciones =
+    viewChild.required<TemplateRef<{ $implicit: CredencialEnTarjeta }>>('celdaAcciones');
+
+  protected readonly columnas = computed<readonly ColumnDef<CredencialEnTarjeta>[]>(() => [
+    { key: 'titulo', header: 'Credencial y estado', priority: 1, cell: this.celdaTitulo() },
+    { key: 'detalles', header: 'Detalle', priority: 2, cell: this.celdaDetalles() },
+    { key: 'fuente', header: 'Fuente de revisión', priority: 2, cell: this.celdaFuente() },
+    { key: 'acciones', header: 'Acciones', priority: 2, cell: this.celdaAcciones() },
+  ]);
+
+  protected readonly porId = (credencial: CredencialEnTarjeta): string => credencial.id;
+  protected readonly nombreDeFila = (credencial: CredencialEnTarjeta): string =>
+    [credencial.titulo, ...credencial.detalles].join(' · ');
 
   /** Qué decir cuando el corte elegido no tiene nada. */
   protected readonly vacio = computed(() => {
@@ -171,6 +236,35 @@ export class CredentialsPanel {
 
   protected elegirFiltro(filtro: CredentialFilter): void {
     this.filtro.set(filtro);
+    this.paginas.set({});
+  }
+
+  protected buscar(clase: CredentialKind, termino: string): void {
+    this.busquedas.update((actuales) => ({ ...actuales, [clase]: termino }));
+    this.cambiarPagina(clase, 1);
+  }
+
+  protected cambiarPagina(clase: CredentialKind, pagina: number): void {
+    this.paginas.update((actuales) => ({ ...actuales, [clase]: pagina }));
+  }
+
+  protected cambiarTamano(clase: CredentialKind, tamano: number): void {
+    this.tamanos.update((actuales) => ({ ...actuales, [clase]: tamano }));
+    this.cambiarPagina(clase, 1);
+  }
+
+  protected pedirDescarga(credencial: CredencialEnTarjeta): void {
+    if (!this.permiteDescarga() || !credencial.fileId || this.descargando() !== null) {
+      return;
+    }
+    const registro = credencial.clase === 'education'
+      ? this.formacion().find((fila) => fila.id === credencial.id)
+      : this.matriculas().find((fila) => fila.id === credencial.id);
+    const prefijo = credencial.clase === 'education' ? 'diploma' : 'matricula';
+    this.descargar.emit({
+      fileId: credencial.fileId,
+      nombre: `${prefijo}-${registro?.numero ?? credencial.id}`,
+    });
   }
 
   protected pedirRetiro(id: string): void {
@@ -179,6 +273,10 @@ export class CredentialsPanel {
       this.retirar.emit(estudio);
     }
   }
+}
+
+function normalizarTexto(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
 /** Una fecha corta, en el formato que ya usa el resto de la ficha. */

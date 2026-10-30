@@ -101,4 +101,18 @@
       </div>
     }
   </dl>
+
+  <!-- El trayecto lo calcula OpenStreetMap, aparte: AloVida no tiene ruteo
+       propio y no se insinúa uno (AC-06-15). -->
+  <p class="llegar__recorrido">
+    <a
+      app-link
+      [href]="routeUrl()"
+      [external]="true"
+      data-testid="directions-open-route"
+      [attr.aria-label]="'Ver el recorrido hasta ' + facilityName() + ' en OpenStreetMap (abre en una pestaña nueva)'"
+    >
+      Ver el recorrido en OpenStreetMap
+    </a>
+  </p>
 </app-content-dialog>

@@ -31,7 +31,7 @@
       </app-form-field>
     } @else {
       <!-- Enter en el buscador busca; no debe además enviar el formulario. -->
-      <div class="dependents-form__busqueda" (keydown.enter)="$event.preventDefault()">
+      <div class="dependents-form__busqueda">
         <app-search-field
           label="Buscar por nombre"
           placeholder="Nombre y apellido"
@@ -39,6 +39,7 @@
           [loading]="buscando()"
           data-testid="dependent-name-search"
           (searched)="buscar($event)"
+          (keydown.enter)="$event.preventDefault()"
         />
 
         @if (errorBusqueda(); as mensaje) {

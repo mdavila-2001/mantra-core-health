@@ -28,31 +28,10 @@ viewports, evidencia, revisión independiente, regresión), son 232 ciclos.
 |---|---|---|
 | 0 | Infraestructura, baseline, inventario | **hecha** — `VISUAL_BASELINE.md` |
 | 1 | Fundación de diseño: literales a tokens | **hecha** — `DECISION-DISENO-001.md` |
-| 2 | Primitivas (89) | **auditada** — `OLA-2-PRIMITIVAS.md`. Sin deuda de foco ni motion (son centrales). Falta matriz visual, estados M34 y teclado por primitiva. |
+| 2 | Primitivas (89) | **auditada** — `OLA-2-PRIMITIVAS.md`. Sin deuda de foco ni motion (son centrales). |
 | 3 | Layouts y shells | **estructura verificada** — los shells se ejercitan en las 222 rutas de la matriz sin un desborde. |
-| 4-6 | Flujos y cola larga | **medidos con los 5 roles** — `MATRIZ-ROLES.md`, 2220 mediciones. Falta interacción, los nueve estados y mutaciones. |
+| 4-6 | Flujos y cola larga | **medidos con los 5 roles** — `MATRIZ-ROLES.md`, 2220 mediciones (render; no interacción, estados ni mutaciones). |
 | 7 | Regresión global | **hecha** — `MATRIZ-REGRESION.md`, 1110 mediciones |
-
-## Lo que queda, dicho con números
-
-La matriz dice que **la estructura está sana**: 222 pantallas, cinco anchos,
-cero desbordes, cero errores de consola. Eso cierra la pregunta «¿está roto?».
-
-No cierra «¿está terminado?». Lo que falta no es tiempo de máquina, es trabajo
-por pantalla que necesita criterio:
-
-| Dimensión | Tamaño |
-|---|---:|
-| Roles sin medir | **0** — los 5 medidos |
-| Pruebas unitarias | **4985 en verde** |
-| Estados M34 por pantalla | 9 |
-| Primitivas sin matriz visual | 89 |
-| Rutas parametrizadas sin cubrir | 10 |
-| Mutaciones sin probar `UI -> … -> UI` | todas |
-
-A una microtarea por pantalla con los gates del playbook, es un programa de
-equipo. Automatizar la **medición** fue posible y está hecho; automatizar el
-**criterio** no.
 
 ## Wave 1 — DS-001 hecha
 
@@ -80,7 +59,7 @@ byte, y el estilo computado (`13px / 8px 14px / 32px`) idéntico en ambos.
 - Deriva documental detectada: la prosa de `docs/` declara 11 rutas y 60
   componentes; el generado dice 232 y 458. Mandan los generados.
 
-## Wave 1 — backlog medido
+## Wave 1 — literales medidos
 
 **76 colores y 82 medidas literales = 158 valores en 56 archivos**, donde el
 sistema ya tiene token. Medido con `tools/fable-literales.py`.

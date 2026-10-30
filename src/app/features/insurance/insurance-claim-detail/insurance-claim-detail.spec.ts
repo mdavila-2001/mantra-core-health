@@ -48,6 +48,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import { AuthService } from '../../../core/auth/auth.service';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { InsuranceClaimDetail } from './insurance-claim-detail';
 
 const CLAIM_ID = '11111111-1111-4111-8111-111111111111';
@@ -111,6 +113,26 @@ function detalleWire(over: Record<string, unknown> = {}) {
     adjudication: null,
     adjudicationHistory: [],
     disputes: [],
+    settlement: {
+      availability: 'AVAILABLE',
+      totalBilledAmount: '300.00',
+      totalApprovedAmount: '180.00',
+      totalPatientAmount: '0.00',
+      totalDeniedAmount: '120.00',
+      reconciled: true,
+      exclusions: [
+        {
+          claimLineId: 'l-denied',
+          itemName: 'ECG',
+          amount: '120.00',
+          policyClauseReference:
+            'Cláusula 12.3: Estudios complementarios sin autorización previa',
+          denialRationale:
+            'El estudio requiere autorización previa del área médica según la póliza.',
+        },
+      ],
+    },
+    eob: { id: 'eob-1', publishedAt: '2026-09-20T12:00:00.000Z' },
     ...over,
   };
 }
@@ -342,3 +364,204 @@ describe('InsuranceClaimDetail · antiduplicación de estudios', () => {
     ).toBeNull();
   });
 });
+
+/** Desglose conciliado de liquidación (Tarea 3 · H8, CA-3.1/CA-3.3). */
+describe('InsuranceClaimDetail · liquidación', () => {
+  let fixture: ComponentFixture<InsuranceClaimDetail>;
+  let http: HttpTestingController;
+
+  function mount(): void {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ claimId: CLAIM_ID })) },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(InsuranceClaimDetail);
+    fixture.detectChanges();
+  }
+
+  afterEach(() => http.verify());
+
+  function responder(detalle: Record<string, unknown> = detalleWire()): void {
+    http.expectOne(`/insurance-claims/${CLAIM_ID}`).flush(detalle);
+    fixture.detectChanges();
+  }
+
+  it('un reclamo conciliado muestra los cuatro importes y una fila de exclusión, sin la alerta de descuadre', () => {
+    mount();
+    responder();
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[data-testid="claim-settlement-billed"]')?.textContent).toContain('300.00');
+    expect(el.querySelector('[data-testid="claim-settlement-approved"]')?.textContent).toContain('180.00');
+    expect(el.querySelector('[data-testid="claim-settlement-patient"]')?.textContent).toContain('0.00');
+    expect(el.querySelector('[data-testid="claim-settlement-denied"]')?.textContent).toContain('120.00');
+    expect(el.querySelector('[data-testid="claim-settlement-mismatch"]')).toBeNull();
+
+    const filas = el.querySelectorAll('[data-testid="claim-exclusions-table"] tbody tr');
+    expect(filas.length).toBe(1);
+    expect(el.querySelector('[data-testid="claim-exclusion-clause"]')?.textContent).toContain(
+      'Cláusula 12.3',
+    );
+    expect(el.querySelector('[data-testid="claim-exclusion-rationale"]')?.textContent).toContain(
+      'autorización previa',
+    );
+  });
+
+  it('un descuadre entre los tres importes y el facturado muestra la alerta, aunque la API diga reconciled', () => {
+    mount();
+    responder(
+      detalleWire({
+        settlement: {
+          availability: 'AVAILABLE',
+          totalBilledAmount: '300.00',
+          totalApprovedAmount: '150.00',
+          totalPatientAmount: '150.00',
+          totalDeniedAmount: '120.00',
+          reconciled: true, // la API "miente"; el navegador lo vuelve a comprobar
+          exclusions: [],
+        },
+      }),
+    );
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="claim-settlement-mismatch"]'),
+    ).not.toBeNull();
+  });
+
+  it('UNDER_REVIEW muestra el aviso y no pinta importes de cobertura', () => {
+    mount();
+    responder(
+      detalleWire({
+        settlement: {
+          availability: 'UNDER_REVIEW',
+          totalBilledAmount: null,
+          totalApprovedAmount: null,
+          totalPatientAmount: null,
+          totalDeniedAmount: null,
+          reconciled: false,
+          exclusions: [],
+        },
+      }),
+    );
+
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[data-testid="claim-settlement-under-review"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="claim-settlement-billed"]')).toBeNull();
+  });
+
+  it('PENDING_PUBLICATION avisa que la aseguradora todavía no publicó la liquidación', () => {
+    mount();
+    responder(
+      detalleWire({
+        settlement: {
+          availability: 'PENDING_PUBLICATION',
+          totalBilledAmount: null,
+          totalApprovedAmount: null,
+          totalPatientAmount: null,
+          totalDeniedAmount: null,
+          reconciled: false,
+          exclusions: [],
+        },
+        eob: null,
+      }),
+    );
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="claim-settlement-pending"]'),
+    ).not.toBeNull();
+  });
+});
+
+describe('InsuranceClaimDetail · acciones de dictamen para la aseguradora (PAYER)', () => {
+  let fixture: ComponentFixture<InsuranceClaimDetail>;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ claimId: CLAIM_ID })) },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            activeTenantType: () => 'PAYER',
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    fixture = TestBed.createComponent(InsuranceClaimDetail);
+    fixture.detectChanges();
+    http.expectOne(`/insurance-claims/${CLAIM_ID}`).flush(detalleWire());
+    fixture.detectChanges();
+  });
+
+  afterEach(() => http.verify());
+
+  it('muestra el panel de dictamen de cobertura con botones de aprobación y rechazo', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    const panel = el.querySelector('[data-testid="carrier-adjudication-panel"]');
+    expect(panel).not.toBeNull();
+    expect(el.querySelector('[data-testid="claim-approve-button"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="claim-reject-button"]')).not.toBeNull();
+  });
+
+  it('no muestra el botón de Reclamar al representante de la aseguradora', () => {
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelector('[data-testid="claim-dispute-button"]')).toBeNull();
+  });
+
+  it('aprobar cobertura solicita confirmación y manda POST a adjudications y eob', async () => {
+    const dialogs = TestBed.inject(DialogService);
+    vi.spyOn(dialogs, 'confirm').mockResolvedValue(true);
+
+    const approveBtn: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="claim-approve-button"]',
+    );
+    approveBtn.click();
+    await fixture.whenStable();
+
+    const adjReq = http.expectOne(`/insurance-claims/${CLAIM_ID}/adjudications`);
+    expect(adjReq.request.method).toBe('POST');
+    expect(adjReq.request.body.outcome).toBe('APPROVED');
+    expect(adjReq.request.body.totalApprovedAmount).toBe('300.00');
+    adjReq.flush({ id: 'adj-1' });
+
+    const eobReq = http.expectOne(`/insurance-claims/${CLAIM_ID}/eob`);
+    expect(eobReq.request.method).toBe('POST');
+    eobReq.flush({ id: 'eob-1' });
+
+    // Se recarga el detalle tras adjudicar y publicar EOB
+    http.expectOne(`/insurance-claims/${CLAIM_ID}`).flush(detalleWire());
+  });
+
+  it('rechazar abre el modal para fundamentación y cláusula contractual', () => {
+    const rejectBtn: HTMLButtonElement = fixture.nativeElement.querySelector(
+      '[data-testid="claim-reject-button"]',
+    );
+    rejectBtn.click();
+    fixture.detectChanges();
+
+    const select = fixture.nativeElement.querySelector('[data-testid="reject-clause-select"]');
+    const textarea = fixture.nativeElement.querySelector('[data-testid="reject-rationale-input"]');
+    const confirmBtn = fixture.nativeElement.querySelector('[data-testid="confirm-reject-button"]');
+
+    expect(select).not.toBeNull();
+    expect(textarea).not.toBeNull();
+    expect(confirmBtn).not.toBeNull();
+  });
+});
+

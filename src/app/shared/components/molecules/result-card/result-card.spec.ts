@@ -35,7 +35,7 @@ class Anfitrion {
   readonly dato = signal<SearchResultItem>({
     id: 'r-1',
     title: 'Dra. Marisol Quispe Ticona',
-    link: '/buscar/perfil-profesional-detalle',
+    link: '/search/practitioner-profile-detail',
   });
 
   readonly impedirDuplicado = signal(false);
@@ -194,7 +194,7 @@ describe('ResultCard', () => {
   it('sin acción propia, el botón lleva a la ficha', () => {
     const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
     expect(accion.textContent?.trim()).toBe('Ver ficha');
-    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle');
+    expect(accion.getAttribute('href')).toBe('/search/practitioner-profile-detail');
   });
 
   it('muestra la acción distinta y tampoco la navega dos veces', () => {
@@ -202,7 +202,7 @@ describe('ResultCard', () => {
       ...dato,
       action: {
         label: 'Revisar disponibilidad',
-        link: '/buscar/perfil-profesional-detalle',
+        link: '/search/practitioner-profile-detail',
         fragment: 'horarios',
       },
     }));
@@ -212,13 +212,13 @@ describe('ResultCard', () => {
 
     const accion = elemento('.tarjeta-resultado__accion') as HTMLAnchorElement;
     expect(accion.textContent?.trim()).toBe('Revisar disponibilidad');
-    expect(accion.getAttribute('href')).toBe('/buscar/perfil-profesional-detalle#horarios');
+    expect(accion.getAttribute('href')).toBe('/search/practitioner-profile-detail#horarios');
 
     accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     accion.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
     expect(navegar).toHaveBeenCalledTimes(1);
-    expect(navegar).toHaveBeenCalledWith('/buscar/perfil-profesional-detalle#horarios');
+    expect(navegar).toHaveBeenCalledWith('/search/practitioner-profile-detail#horarios');
   });
 
   it('con `photoUrl` pinta la foto de cabecera en vez de la figura', () => {

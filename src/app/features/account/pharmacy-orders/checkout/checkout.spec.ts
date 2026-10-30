@@ -1,3 +1,4 @@
+import { environment } from '../../../../../environments/environment';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,6 +16,7 @@ import { PharmacyOrdersClient } from '../../../../core/data-access/pharmacy-orde
 import { pharmacyOrderDtoFixture } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.spec-fixtures';
 import type { BorradorDePedido } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { seccionRolesGuard } from '../../../../core/navigation/section-roles.guard';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
 import { NewOrder } from '../new-order/new-order';
 import {
   CLAVE_DEL_TRASPASO,
@@ -87,6 +89,13 @@ const TRASPASO_CON_SEGURO: TraspasoDeLaReceta = {
 };
 
 describe('Checkout', () => {
+  // Las campañas de demostración sólo existen con el interruptor encendido
+  // (`environment.campaignsDemo`, apagado fuera de `demo`): estas pruebas miden
+  // el motor de mecánicas sobre ese paquete sembrado.
+  const campanasDemoOriginal = environment.campaignsDemo;
+  beforeEach(() => Object.assign(environment, { campaignsDemo: true }));
+  afterEach(() => Object.assign(environment, { campaignsDemo: campanasDemoOriginal }));
+
   let fixture: ComponentFixture<Checkout>;
   let client: PharmacyOrdersClient;
   let http: HttpTestingController;
@@ -588,6 +597,7 @@ describe('Checkout', () => {
         providers: [
           provideHttpClient(),
           provideHttpClientTesting(),
+          { provide: SAMPLE_DATA_ENABLED, useValue: true },
           provideRouter([
             { path: 'my-account/pharmacy-orders/new', component: NewOrder },
             { path: 'my-account/pharmacy-orders/checkout', component: Checkout },

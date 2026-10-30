@@ -18,9 +18,9 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import {
   errorMessageOf,
   UUID_ERROR,
@@ -46,7 +46,7 @@ import { AttributeMappingsEditor } from '../attribute-mappings-editor/attribute-
     AnnounceOnAppear,
     AppButton,
     AttributeMappingsEditor,
-    CampoPersonalizado,
+    CustomField,
     PageHeader,
     PaginatedForm,
   ],
@@ -84,7 +84,7 @@ export class AttributeMappingsForm {
    * que sí gana la pantalla es que el proveedor y los mapeos dejan de llegar
    * juntos, y que el editor no se ve hasta haber dicho de qué proveedor es.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Qué se configura',
       hint: 'El proveedor cuyo mapeo se fija.',

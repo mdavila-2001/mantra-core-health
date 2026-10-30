@@ -63,3 +63,9 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Sin marco: vive en la pestaña de una ficha que ya es la tarjeta. */
+app-card.sin-marco {
+  background: transparent;
+  border-color: transparent;
+}

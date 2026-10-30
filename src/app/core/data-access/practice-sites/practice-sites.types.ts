@@ -65,12 +65,11 @@ export interface PracticeSite {
   /**
    * El archivo del **logo del consultorio**, o `null` si no cargó ninguno.
    *
-   * Es lo que sale en la pestaña «Facturación» del perfil y en el membrete de
-   * cada PDF que el profesional emite. Nadie lee este campo directamente: las
-   * pantallas y el PDF hablan con `LogoDelConsultorioClient`, que es el único
-   * que sabe **dónde** vive el logo. Hoy es la sede propia (maqueta); cuando el
-   * backend decida si va en `practice_sites` o en el perfil público de la
-   * organización, cambia ese cliente y nada más.
+   * Es lo que sale en «Datos personales» y «Facturación» del perfil y en el
+   * membrete de cada PDF que el profesional emite. Vive en la sede propia
+   * (`practice.practice_sites.logo_file_id`) y la API lo manda en la lista, el
+   * alta, la corrección y el cambio de logo. Nadie lee este campo directamente:
+   * las pantallas y el PDF hablan con `PracticeLogoClient`.
    *
    * Opcional por el mismo motivo que {@link PracticeSite.bankQrFileId}:
    * ausente se lee como «sin logo», nunca como error.
@@ -87,6 +86,8 @@ export interface PracticeSite {
 export interface NewOwnSiteAddress {
   /** Líneas de la dirección (calle, número, referencia). Al menos una. */
   readonly lines: readonly string[];
+  /** Distrito o zona, aparte de las líneas (ADR-0028 de la API). */
+  readonly district?: string;
   readonly city?: string;
   /** Municipio, miembro de `VS_BO_MUNICIPALITY`. */
   readonly municipalityConceptId?: string;
@@ -110,6 +111,13 @@ export interface NewOwnSite {
   /** Zona horaria IANA. Por defecto la de La Paz. */
   readonly timeZone?: string;
   readonly address?: NewOwnSiteAddress;
+  /**
+   * El logo del consultorio, ya subido. En el alta del médico es la pre-carga
+   * anónima de `PracticeLogoClient.uploadForRegistration`, que el alta reclama
+   * en su misma transacción; un archivo que no sirve como logo hace responder
+   * 422 al alta entera.
+   */
+  readonly logoFileId?: string;
 }
 
 /**
@@ -160,14 +168,31 @@ export interface MyRoleAssignment {
   readonly practiceSiteId?: string;
   readonly roleConceptId: string;
   readonly specialtyConceptId?: string;
+  /** Procedimiento de la sede por el que se afilió (una fila por procedimiento). */
+  readonly healthcareServiceId?: string;
+  readonly serviceConceptId?: string;
+  readonly serviceDisplay?: string;
   /** Concepto de estado: pendiente / activa / suspendida / rechazada / finalizada. */
   readonly status: string;
+  /** El estado como concepto (v2 del contrato); se decide por `statusCode`, nunca por el uuid. */
+  readonly statusConceptId?: string;
+  readonly statusCode?: string;
+  /** Quién inició la afiliación: el centro (invitación) o el médico (solicitud). */
+  readonly initiatedBy?: 'PRACTICE' | 'PRACTITIONER';
   readonly isPrimary: boolean;
   readonly validFrom?: Date;
   readonly validTo?: Date;
   readonly createdAt: Date;
   /** Logo de la organización (su ficha pública), o `null` si no tiene uno. */
   readonly avatarUrl: string | null;
+  /**
+   * La organización (tenant) de la práctica: la que pide `createResource` para
+   * publicar una agenda ahí. La devuelve la vinculación. Es opcional porque la
+   * API todavía no la manda (está pedida como campo nuevo de
+   * `GET /practitioners/me/role-assignments`); sin ella, esa organización no se
+   * ofrece para publicar.
+   */
+  readonly tenantId?: string | null;
 }
 
 /** Cuerpo de "pedir vincularme a esta organización". */
@@ -175,6 +200,8 @@ export interface SelfRequestAffiliationInput {
   readonly practiceSiteId?: string;
   readonly roleConceptId?: string;
   readonly specialtyConceptId?: string;
+  /** Un procedimiento de la sede por llamada; para varios, una llamada por cada uno. */
+  readonly healthcareServiceId?: string;
   /** `YYYY-MM-DD`. */
   readonly validFrom?: string;
   readonly note?: string;

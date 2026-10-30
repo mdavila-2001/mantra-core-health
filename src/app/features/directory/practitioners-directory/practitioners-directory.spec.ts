@@ -112,8 +112,12 @@ describe('PractitionersDirectory', () => {
     responderRecuento([]);
   }
 
-  /** Monta la guía entera (sin especialidad), con el recuento vacío. */
+  /**
+   * Monta la guía entera —la tarjeta «Todos los médicos» de la grilla—, con el
+   * recuento vacío.
+   */
   function montarTodos(): void {
+    parametros.next({ especialidad: 'todos' });
     montar();
     responderRecuento([]);
   }
@@ -170,26 +174,105 @@ describe('PractitionersDirectory', () => {
     http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
   }
 
-  /* -- 0 · Filas de médicos primero; la especialidad, un filtro ------------- */
+  /* -- 0 · La grilla de especialidades es la entrada (REQ-18-002) ---------- */
 
   /**
-   * Propietario, 04/10/2026: «primero ver la opción de ver como filas y solo
-   * doctores, no como un grid de especialidad», y que buscando cardiólogos no
-   * aparezcan como otra especialidad. La portada dejó de ser la entrada.
+   * Carril 18 (REQ-18-002): «grid de especialidades y click despliega lista de
+   * doctores», como en la red social. Sin nada en la URL se ve la grilla y no
+   * se pide la guía; la especialidad viaja en la URL y la lista conserva el
+   * resto: filas, especialidad como filtro y la elegida primero en cada fila.
    */
-  describe('la lista de médicos y el filtro de especialidad', () => {
-    /** Sin especialidad: el recuento (para el filtro) y la guía entera. */
+  describe('la grilla de especialidades y la lista de médicos', () => {
+    /** La guía entera: el recuento (para el filtro) y la tarjeta «Todos». */
     function montarSinEspecialidad(
       recuento: { specialtyConceptId: string; practitionerCount: number }[],
       total?: number,
       sinEspecialidad = 0,
     ): void {
+      parametros.next({ especialidad: 'todos' });
       montar();
       responderRecuento(recuento, total, sinEspecialidad);
       if (recuento.length > 0) responderConceptos();
     }
 
-    it('sin especialidad abre la lista de TODOS los médicos, en una sola tanda', () => {
+    function tarjetas(): readonly { conceptId: string; nombre: string; cantidad: number }[] {
+      return interno<() => readonly { conceptId: string; nombre: string; cantidad: number }[]>(
+        'tarjetas',
+      )();
+    }
+
+    it('sin nada en la URL abre la grilla y NO pide la guía', () => {
+      montar();
+      responderRecuento([
+        { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+        { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+      ]);
+      responderConceptos();
+
+      expect(interno<() => boolean>('showsLanding')()).toBe(true);
+      // `afterEach` verifica que no quedó ninguna lectura de la guía sin pedir:
+      // si la grilla trajera la lista, `/profiles/practitioners` quedaría abierta.
+      http.expectNone((r) => r.url === '/profiles/practitioners');
+    });
+
+    it('la grilla trae «Todos los médicos» primero y cada especialidad con su cantidad', () => {
+      montar();
+      responderRecuento(
+        [
+          { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+          { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+        ],
+        13,
+        2,
+      );
+      responderConceptos();
+
+      expect(tarjetas()).toEqual([
+        { conceptId: 'todos', nombre: 'Todos los médicos', cantidad: 13 },
+        { conceptId: 'esp-cardio', nombre: 'Cardiología', cantidad: 12 },
+        { conceptId: 'esp-pediatria', nombre: 'Pediatría', cantidad: 1 },
+        { conceptId: 'sin-especialidad', nombre: 'Sin especialidad declarada', cantidad: 2 },
+      ]);
+    });
+
+    it('sin ningún médico la grilla es un estado vacío con próxima acción', () => {
+      montar();
+      responderRecuento([], 0, 0);
+
+      const recuento = interno<() => { status: string }>('recuento')();
+      expect(recuento.status).toBe('empty');
+    });
+
+    it('elegir una especialidad en la URL deja la grilla y pide la lista de esa especialidad', () => {
+      montar();
+      responderRecuento([]);
+      http.expectNone((r) => r.url === '/profiles/practitioners');
+
+      parametros.next({ especialidad: 'esp-cardio' });
+      TestBed.tick();
+
+      expect(interno<() => boolean>('showsLanding')()).toBe(false);
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.get('specialtyConceptId')).toBe('esp-cardio');
+      peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
+      responderConceptos();
+      expect(grupos().map((g) => g.nombre)).toEqual(['Cardiología']);
+    });
+
+    it('escribir en el buscador desde la grilla salta a la lista entera', () => {
+      parametros.next({ q: 'salas' });
+      montar();
+      responderRecuento([]);
+
+      expect(interno<() => boolean>('showsLanding')()).toBe(false);
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
+      peticion.flush({ items: [FILA, OTRA], count: 2, limit: 50, nextCursor: null });
+      responderConceptos();
+      expect(total()).toBe(1);
+    });
+
+    it('«Todos los médicos» abre la lista de TODOS, en una sola tanda', () => {
       montarSinEspecialidad([
         { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
         { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
@@ -421,8 +504,10 @@ describe('PractitionersDirectory', () => {
   });
 
   it('aplica la búsqueda de la URL al abrir el directorio desde Ayuda psicológica', () => {
+    // El enlace de Ayuda trae sólo `?q=`: con texto se salta la grilla.
     parametros.next({ q: 'Psicología Clínica' });
-    montarTodos();
+    montar();
+    responderRecuento([]);
     responder([]);
 
     expect(senal<string>('filtro')()).toBe('Psicología Clínica');
@@ -766,6 +851,7 @@ describe('PractitionersDirectory', () => {
     });
 
     it('un enlace con los cortes en la URL abre la guía ya acotada', () => {
+      // Con un corte puesto lo que se pidió es una lista: no se ve la grilla.
       parametros.next({ telemedicina: 'true' });
       montar();
       responderRecuento([]);

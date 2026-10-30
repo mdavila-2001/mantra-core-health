@@ -84,21 +84,3 @@ saber que alguien visitó una sección determinada **sí** es información.
 Consecuencia práctica: si se instrumentan Web Vitals, **la ruta debe enviarse
 normalizada** (`/pacientes/:id`, no `/pacientes/4821`), y conviene un destino
 propio antes que uno de terceros.
-
-## Recomendación
-
-1. **Correr Lighthouse sobre las cuatro rutas prerenderizadas.** Sin instalar
-   nada, sin decidir nada. De ahí sale la primera línea base real.
-2. **Fijar presupuestos con esos números**, no con los de Google. Ver
-   [presupuestos](../performance/budgets.md).
-3. **Añadirlo al pipeline** cuando exista uno.
-4. **Evaluar el campo después**, junto con la decisión de telemetría en general.
-
-## Estado
-
-`MEDIUM`, dependiente del `BLOCKER` de
-[despliegue](../operations/deployment.md): medir el rendimiento de algo que no
-está desplegado no tiene destinatario.
-
-El paso 1 **sí se puede hacer hoy** y es el de mejor relación
-información/esfuerzo de toda la documentación de rendimiento.

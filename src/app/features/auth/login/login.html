@@ -64,12 +64,24 @@
         </app-input>
       </app-form-field>
 
-      <!-- El código de segundo factor **no se pregunta acá**. Estaba siempre a
-           la vista y rotulado «opcional», que es pedirle a todo el mundo un
-           dato que casi nadie tiene: tres de cada tres personas leían un campo
-           que no les tocaba. Vuelve cuando el backend diga que hace falta —el
-           control sigue en el formulario, ver `Login.form`—, y entonces se
-           muestra pedido, no ofrecido. -->
+      <!-- El código de segundo factor se pide sólo cuando la API lo exige
+           (`MFA_REQUIRED`): tres de cada tres personas no tienen uno, y un campo
+           que no te toca es el que te hace dudar de los otros dos. -->
+      @if (mfaRequired()) {
+        <app-form-field
+          label="Código de verificación"
+          [required]="true"
+          hint="Los seis dígitos que muestra su aplicación de autenticación."
+        >
+          <app-input
+            formControlName="mfaCode"
+            type="text"
+            autocomplete="one-time-code"
+            placeholder="123456"
+            testId="login-mfa-code"
+          />
+        </app-form-field>
+      }
 
       <button
         app-button
@@ -83,6 +95,36 @@
         Entrar
       </button>
     </form>
+
+    <!-- Sólo en desarrollo y local (`ngDevMode`): la cuenta que siembra la API
+         local. Las credenciales se ven escritas, no solo se rellenan: quien
+         las necesita en otro lado (un cliente HTTP, otro navegador) las copia. -->
+    @if (localHint(); as cuenta) {
+      <aside class="login__local" aria-labelledby="login-local-titulo" data-testid="login-local-hint">
+        <p class="login__local-titulo" id="login-local-titulo">Cuenta de administración local</p>
+        <dl class="login__local-datos">
+          <div>
+            <dt>Correo</dt>
+            <dd><code data-testid="login-local-correo">{{ cuenta.identifier }}</code></dd>
+          </div>
+          <div>
+            <dt>Contraseña</dt>
+            <dd><code data-testid="login-local-clave">{{ cuenta.password }}</code></dd>
+          </div>
+        </dl>
+        <button
+          app-button
+          type="button"
+          variant="outline"
+          size="sm"
+          data-testid="login-local-usar"
+          (clicked)="usarCuentaLocal(cuenta)"
+        >
+          Usar estas credenciales
+        </button>
+        <p class="login__local-nota">Existe sólo en el entorno local y de desarrollo.</p>
+      </aside>
+    }
 
     <div class="login__footer">
       <p class="login__pie">
@@ -121,7 +163,7 @@
         <span class="login__anexo-icono" aria-hidden="true"><app-account-icon name="insurer" /></span>
         <span class="login__anexo-texto">
           <span class="login__anexo-titulo">Registre su organización</span>
-          <span class="login__anexo-detalle">Aseguradoras, laboratorios y más</span>
+          <span class="login__anexo-detalle">Aseguradoras</span>
         </span>
         <svg
           class="login__anexo-flecha"

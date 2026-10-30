@@ -1,19 +1,32 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
+  ElementRef,
+  InjectionToken,
   PLATFORM_ID,
   computed,
   effect,
   inject,
   input,
+  linkedSignal,
   model,
   signal,
+  untracked,
 } from '@angular/core';
 
+import { ShareService } from '../../../utils/share/share.service';
+import { AppButton } from '../../atoms/button/button';
 import { SegmentedControl } from '../../molecules/segmented-control/segmented-control';
 import type { SegmentedOption } from '../../molecules/segmented-control/segmented-control.types';
+import { ShareMenu, type ShareFormat } from '../../molecules/share-menu/share-menu';
+import { ToastService } from '../../molecules/toast/toast.service';
+import {
+  deliverBodyMap,
+  readBodyMapColors,
+  type BodyMapSnapshot,
+} from './body-map.export';
+import { VisorDelCuerpo } from './body-map.viewer';
 import {
   VISTAS_DEL_CUERPO,
   VISTAS_DEL_CUERPO_FEMENINA,
@@ -53,6 +66,23 @@ interface VistaDibujable {
   readonly vista: VistaDelCuerpo;
   readonly zonas: readonly ZonaDibujable[];
 }
+
+/**
+ * Si el cambio de vista espera a que llegue la imagen de la nueva (y se
+ * precargan las demás). Es la conducta de producción; se apaga sólo en las
+ * pruebas que no cargan imágenes y necesitan el cambio síncrono.
+ */
+export const ESPERAR_IMAGEN_DE_VISTA = new InjectionToken<boolean>('ESPERAR_IMAGEN_DE_VISTA', {
+  providedIn: 'root',
+  factory: () => true,
+});
+
+/** Cuánto se espera una imagen antes de darla por perdida y mostrar la vista igual. */
+const ESPERA_MAXIMA_DE_IMAGEN_MS = 4000;
+
+/** Los parámetros del enlace que reabre la misma zona y vista. */
+const PARAMETRO_ZONA = 'zona';
+const PARAMETRO_VISTA = 'vista';
 
 /** Para que cada silueta tenga su propio degradado aunque haya dos en la página. */
 let siguienteSilueta = 0;
@@ -102,13 +132,19 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  * `scripts/gen-body-zones.py`). La imagen va debajo como `<image>` del mismo
  * SVG; las zonas, transparentes, encima.
  *
- * **Las tres vistas se bajan juntas, apenas se monta la figura** (reporte del
- * propietario, 24/10/2026: «tarda muchísimo en cambiar de frente a espalda y
- * cara»). Antes sólo se pedía la imagen de la vista puesta, y como el servidor
- * sirve `public/` con `no-cache` —a propósito, ver `server/build-assets.ts`—
- * cada cambio de vista era una consulta al servidor: 1,1–1,6 s medidos contra
- * la demo, con la foto vieja debajo de las zonas nuevas mientras tanto. Ahora
- * se guardan decodificadas en memoria como `blob:` y el cambio no toca la red.
+ * **Imagen y zonas cambian juntas.** Al cambiar de vista, la figura que se ve
+ * sigue siendo la anterior hasta que la imagen de la nueva está descargada y
+ * decodificada; recién entonces se cambian a la vez la imagen, el `viewBox` y
+ * las zonas. Antes cambiaban las zonas al instante y la imagen cuando llegaba:
+ * con conexión lenta se veía el contorno de la espalda sobre el maniquí de
+ * frente (reporte del cliente, 24/10/2026). Cuando la vista pedida ya se
+ * pintó una vez no hay espera. Al terminar de pintar la vista puesta, las
+ * otras dos se precargan en reposo (unos 50 KB cada una), para que el segundo
+ * cambio sea inmediato.
+ *
+ * **El escenario no cambia de alto.** La cara es más baja que el cuerpo; sin
+ * reserva, cada paso entre «Frente» y «Cara» corría 90 px todo lo que hay
+ * debajo. El marco reserva el alto de la figura entera y la cara se centra.
  *
  * ## El equivalente por teclado no es un añadido, es la mitad del control
  *
@@ -132,10 +168,14 @@ export const ZONAS_CON_SILUETA: ReadonlySet<string> = new Set(
  */
 @Component({
   selector: 'app-body-map',
-  imports: [SegmentedControl],
+  imports: [AppButton, SegmentedControl, ShareMenu],
   templateUrl: './body-map.html',
   styleUrl: './body-map.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Los atajos (+, −, 0, Escape) escuchan desde el host: los `keydown` de las
+  // zonas y de los botones suben hasta acá, y un `div` con oyente pero sin foco
+  // propio no pasa el control de accesibilidad de las plantillas.
+  host: { '(keydown)': 'alPresionar($event)' },
 })
 export class BodyMap {
   /** Las zonas que se pueden elegir. Vacío no dibuja nada: ver la plantilla. */
@@ -186,69 +226,6 @@ export class BodyMap {
    */
   protected readonly idDeLaElegida = `body-map-elegida-${siguienteSilueta++}`;
 
-  private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
-
-  /** Las imágenes ya bajadas y decodificadas: ruta pública → URL `blob:`. */
-  private readonly enMemoria = signal<ReadonlyMap<string, string>>(new Map());
-
-  /** Rutas cuya descarga ya arrancó, para no pedir dos veces la misma. */
-  private readonly pedidas = new Set<string>();
-
-  private destruida = false;
-
-  constructor() {
-    // Las tres vistas del sexo puesto; si el sexo llega después (el perfil se
-    // resuelve tarde), se bajan las de ese también.
-    effect(() => {
-      for (const vista of this.vistasDelSexo()) this.precargar(vista.image);
-    });
-    inject(DestroyRef).onDestroy(() => {
-      this.destruida = true;
-      for (const url of this.enMemoria().values()) URL.revokeObjectURL(url);
-    });
-  }
-
-  /** Lo que dibuja el `<image>`: la copia en memoria si ya está, si no la ruta. */
-  protected imagenDe(vista: VistaDelCuerpo): string {
-    return this.enMemoria().get(vista.image) ?? vista.image;
-  }
-
-  /**
-   * Baja una imagen una sola vez y la deja decodificada en memoria.
-   *
-   * Sólo en el navegador: en el servidor no hay a quién mostrársela, y sin
-   * `fetch` o `URL.createObjectURL` (jsdom) la vista sigue con su ruta, que es
-   * exactamente como funcionaba antes.
-   */
-  private precargar(ruta: string): void {
-    if (!this.esNavegador || this.pedidas.has(ruta)) return;
-    if (typeof fetch !== 'function' || typeof URL.createObjectURL !== 'function') return;
-    this.pedidas.add(ruta);
-    void this.bajar(ruta);
-  }
-
-  private async bajar(ruta: string): Promise<void> {
-    try {
-      const respuesta = await fetch(ruta);
-      if (!respuesta.ok) throw new Error(`${ruta}: HTTP ${respuesta.status}`);
-      const url = URL.createObjectURL(await respuesta.blob());
-      // Decodificada antes de usarla: si no, el primer cambio de vista igual
-      // esperaría al decodificador y se vería un cuadro vacío.
-      const imagen = new Image();
-      imagen.src = url;
-      if (typeof imagen.decode === 'function') await imagen.decode();
-      if (this.destruida) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      this.enMemoria.update((previas) => new Map(previas).set(ruta, url));
-    } catch {
-      // Sin la copia en memoria la vista pide su ruta como antes: más lento,
-      // pero se ve. Se olvida el pedido para reintentarlo si vuelve a hacer falta.
-      this.pedidas.delete(ruta);
-    }
-  }
-
   /** La zona bajo el puntero o con el foco, para nombrarla antes de tocarla. */
   private readonly apuntada = signal<string | null>(null);
 
@@ -298,6 +275,36 @@ export class BodyMap {
     return vistas.find((v) => v.zonas.some((zona) => zona.id === elegida)) ?? pedida;
   });
 
+  private readonly esperaLaImagen =
+    isPlatformBrowser(inject(PLATFORM_ID)) && inject(ESPERAR_IMAGEN_DE_VISTA);
+
+  /** Las imágenes ya descargadas y decodificadas (o que fallaron: no se espera para siempre). */
+  private readonly imagenesListas = signal<ReadonlySet<string>>(new Set());
+  private readonly imagenesPedidas = new Map<string, Promise<void>>();
+
+  /**
+   * La vista que se **ve**: la pedida cuando su imagen ya está lista; hasta
+   * entonces, la anterior. Imagen, `viewBox` y zonas salen de la misma vista.
+   * La primera vista no espera (no hay nada anterior que mostrar).
+   */
+  protected readonly vistaVisible = linkedSignal<
+    { objetivo: VistaDibujable | null; listas: ReadonlySet<string> },
+    VistaDibujable | null
+  >({
+    source: () => ({ objetivo: this.vista(), listas: this.imagenesListas() }),
+    computation: ({ objetivo, listas }, previo) => {
+      if (objetivo === null) return null;
+      if (!this.esperaLaImagen || listas.has(objetivo.vista.image)) return objetivo;
+      return previo?.value ?? objetivo;
+    },
+  });
+
+  /** Hay una vista pedida cuya imagen todavía viene en camino. */
+  protected readonly cambiandoDeVista = computed(() => {
+    const objetivo = this.vista();
+    return objetivo !== null && objetivo !== this.vistaVisible();
+  });
+
   /**
    * Dónde va el marcador de la elegida: un punto por cada parte de la zona en
    * la vista puesta (las dos manos llevan dos). Vacío si no hay elegida o si
@@ -306,12 +313,58 @@ export class BodyMap {
   protected readonly centrosDeLaElegida = computed<readonly (readonly [number, number])[]>(() => {
     const elegida = this.value();
     if (elegida === null) return [];
-    return this.vista()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
+    return this.vistaVisible()?.zonas.find((zona) => zona.id === elegida)?.centros ?? [];
   });
 
   protected readonly opcionesDeVista = computed<readonly SegmentedOption<IdDeVista>[]>(() =>
     this.vistas().map(({ vista }) => ({ value: vista.id, label: vista.nombre })),
   );
+
+  /* ---- ver de cerca: acercar muestra más píxeles reales del render, no estira nada. */
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly document = inject(DOCUMENT);
+  private readonly navegador = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly compartir = inject(ShareService);
+  private readonly avisos = inject(ToastService);
+
+  /** La figura ocupa toda la pantalla (para mirarla con el paciente al lado). */
+  protected readonly ampliado = signal(false);
+
+  /** Se está armando un archivo para compartir. */
+  protected readonly exportando = signal(false);
+
+  /** Ancho y alto del dibujo de la vista que se ve: lo que el `viewBox` base dice. */
+  protected readonly caja = computed<readonly [number, number]>(() => {
+    const [, , ancho, alto] = (this.vistaVisible()?.vista.viewBox ?? '0 0 240 440')
+      .split(' ')
+      .map(Number);
+    return [ancho, alto];
+  });
+
+  /** El acercamiento y el arrastre; ver {@link VisorDelCuerpo}. */
+  protected readonly visor = new VisorDelCuerpo({
+    caja: () => this.caja(),
+    viewBoxBase: () => this.vistaVisible()?.vista.viewBox ?? '0 0 240 440',
+    centroDeLaElegida: () => this.centrosDeLaElegida()[0],
+  });
+
+  /** El enlace que reabre esta zona y esta vista; `null` en el servidor. */
+  protected readonly enlaceParaCompartir = computed<string | null>(() => {
+    const vista = this.vista();
+    if (!this.navegador || vista === null) return null;
+    return this.compartir.linkWith({
+      [PARAMETRO_ZONA]: this.value(),
+      [PARAMETRO_VISTA]: vista.vista.id,
+    });
+  });
+
+  protected readonly tituloParaCompartir = computed(() => {
+    const vista = this.vistaVisible();
+    const zona = this.nombreElegido();
+    if (vista === null) return 'Mapa corporal';
+    return zona === null ? `Mapa corporal · ${vista.vista.nombre}` : `Mapa corporal · ${zona}`;
+  });
 
   private readonly marcadasPorId = computed(() => new Set(this.marcadas()));
 
@@ -322,7 +375,9 @@ export class BodyMap {
       .filter((zona) => marcadas.has(zona.id))
       .map((zona) => zona.nombre);
     if (nombres.length === 0) return null;
-    return nombres.length === 1 ? nombres[0] : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
+    return nombres.length === 1
+      ? nombres[0]
+      : `${nombres.slice(0, -1).join(', ')} y ${nombres.at(-1)}`;
   });
 
   /** El nombre de la zona apuntada, salvo que ya sea la elegida (eso ya se dice abajo). */
@@ -339,6 +394,155 @@ export class BodyMap {
   /** El nombre que se anuncia: el de la zona y, si lo contado la nombra, eso también. */
   protected nombreAccesible(zona: ZonaDibujable): string {
     return this.estaMarcada(zona.id) ? `${zona.nombre} (por lo que contó)` : zona.nombre;
+  }
+
+  constructor() {
+    // Pide la imagen de la vista puesta y, cuando ésa ya está, las otras.
+    effect(() => {
+      const objetivo = this.vista();
+      if (!this.esperaLaImagen || objetivo === null) return;
+      this.precargar(objetivo.vista.image).then(() => {
+        const otras = this.vistas().filter((v) => v !== objetivo);
+        const enReposo = (tarea: () => void): void =>
+          typeof requestIdleCallback === 'function'
+            ? void requestIdleCallback(tarea)
+            : void setTimeout(tarea, 200);
+        enReposo(() => otras.forEach((v) => void this.precargar(v.vista.image)));
+      });
+    });
+
+    // Cada vista se mira entera al llegar: el acercamiento de la espalda no
+    // tiene sentido sobre el frente.
+    effect(() => {
+      const vista = this.vistaVisible()?.vista.id;
+      untracked(() => {
+        if (vista !== undefined) this.visor.restablecer();
+      });
+    });
+
+    // El enlace compartido: si la dirección trae `?zona=…&vista=…`, la figura
+    // abre ahí. Se lee una sola vez, cuando ya hay zonas que pueden nombrarse.
+    let enlaceLeido = false;
+    effect(() => {
+      const zonas = this.zonas();
+      if (enlaceLeido || !this.navegador || zonas.length === 0) return;
+      enlaceLeido = true;
+      untracked(() => this.abrirDesdeElEnlace(zonas));
+    });
+
+    // Ampliada, la página de atrás no se desplaza.
+    effect((alLimpiar) => {
+      if (!this.ampliado() || !this.navegador) return;
+      const cuerpo = this.document.body;
+      const anterior = cuerpo.style.overflow;
+      cuerpo.style.overflow = 'hidden';
+      alLimpiar(() => (cuerpo.style.overflow = anterior));
+    });
+  }
+
+  private abrirDesdeElEnlace(zonas: readonly ZonaElegible[]): void {
+    const params = new URLSearchParams(this.document.location.search);
+    const zona = params.get(PARAMETRO_ZONA);
+    const vista = params.get(PARAMETRO_VISTA);
+    if (vista !== null && this.vistas().some((v) => v.vista.id === vista)) {
+      this.vistaPedida.set(vista as IdDeVista);
+    }
+    if (zona !== null && this.value() === null && zonas.some((z) => z.id === zona)) {
+      this.value.set(zona);
+      this.elegidaAlPedirVista.set(zona);
+    }
+  }
+
+  /** Un clic sobre una zona elige; el que cierra un arrastre no. */
+  protected clicEnZona(zona: ZonaDibujable): void {
+    if (this.visor.consumirArrastre()) return;
+    this.elegir(zona);
+  }
+
+  protected alternarAmpliado(): void {
+    // El mismo botón abre y cierra, así que el foco no se mueve: queda donde
+    // estaba y Escape lo devuelve a la figura de siempre.
+    this.ampliado.update((abierto) => !abierto);
+  }
+
+  /** Atajos: + y − acercan y alejan, 0 vuelve a la figura entera, Escape cierra la ampliación. */
+  protected alPresionar(evento: KeyboardEvent): void {
+    switch (evento.key) {
+      case '+':
+      case '=':
+        evento.preventDefault();
+        this.visor.acercar();
+        break;
+      case '-':
+        evento.preventDefault();
+        this.visor.alejar();
+        break;
+      case '0':
+        this.visor.restablecer();
+        break;
+      case 'Escape':
+        if (this.ampliado()) {
+          evento.preventDefault();
+          this.alternarAmpliado();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  /* ---- compartir ------------------------------------------------------------- */
+
+  private instantanea(vista: VistaDibujable): BodyMapSnapshot {
+    const zona = vista.zonas.find((candidata) => candidata.id === this.value());
+    return {
+      image: vista.vista.image,
+      box: this.caja(),
+      viewName: vista.vista.nombre,
+      zoneName: zona?.nombre ?? null,
+      zonePath: zona?.d ?? null,
+      zoneCenters: zona?.centros ?? [],
+      colors: readBodyMapColors(this.host.nativeElement),
+    };
+  }
+
+  protected async exportar(formato: ShareFormat): Promise<void> {
+    const vista = this.vistaVisible();
+    if (vista === null || this.exportando()) return;
+    this.exportando.set(true);
+    try {
+      await deliverBodyMap(formato, this.instantanea(vista), this.compartir);
+    } catch {
+      this.avisos.show({
+        type: 'error',
+        message: 'No pudimos preparar el archivo. Intente de nuevo en unos segundos.',
+      });
+    } finally {
+      this.exportando.set(false);
+    }
+  }
+
+  /** Descarga y decodifica una imagen una sola vez; resuelve también si falla. */
+  private precargar(url: string): Promise<void> {
+    const enCurso = this.imagenesPedidas.get(url);
+    if (enCurso !== undefined) return enCurso;
+    const imagen = new Image();
+    imagen.src = url;
+    const marcar = (): void => this.imagenesListas.update((listas) => new Set(listas).add(url));
+    const decodificada =
+      typeof imagen.decode === 'function'
+        ? imagen.decode()
+        : new Promise<void>((resolver, rechazar) => {
+            imagen.onload = () => resolver();
+            imagen.onerror = rechazar;
+          });
+    // Una imagen que no llega no deja la figura congelada: pasado el tope se
+    // muestra la vista igual (con su imagen rota o a medio cargar, pero con las
+    // zonas que se pueden tocar).
+    const tope = new Promise<void>((resolver) => setTimeout(resolver, ESPERA_MAXIMA_DE_IMAGEN_MS));
+    const lista = Promise.race([decodificada, tope]).then(marcar, marcar);
+    this.imagenesPedidas.set(url, lista);
+    return lista;
   }
 
   protected apuntar(id: string | null): void {

@@ -11,7 +11,7 @@
 
     Con `--workers=1`. Antes de correrlo hay que tener `ng serve` arriba y
     `E2E_BASE_URL` apuntando a él. Las capturas van a
-    `docs/trabajo/2026-10-01-tablero-farmacia/evidencia/`.
+    `artifacts/evidencia/2026-10-01-tablero-farmacia/evidencia/`.
     ========================================================================== */
 
 import { mkdirSync } from 'node:fs';
@@ -22,7 +22,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { farmacia } from './support/actores';
 import { entrar, estable, irA } from './support/sesion';
 
-const EVIDENCIA = join('docs', 'trabajo', '2026-10-01-tablero-farmacia', 'evidencia');
+const EVIDENCIA = join('artifacts', 'evidencia', '2026-10-01-tablero-farmacia', 'evidencia');
 const RUTA = '/administration/pharmacy-orders';
 
 const SEDE_MATRIZ = 'Sucursal Central (casa matriz)';

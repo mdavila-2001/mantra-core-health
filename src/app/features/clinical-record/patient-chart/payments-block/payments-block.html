@@ -1,18 +1,26 @@
 <!-- ─── Pagos de la persona ─────────────────────────────────────────────────
-     Con la facturación simulada, cobra y factura (`app-cobros-del-paciente`).
+     Con la facturación simulada, cobra y factura (`app-patient-charges`).
      Sin ella, sólo lectura: lo que ya pagó, con su comprobante. No usa
      `app-view-state-host` por lo mismo que los demás bloques de la ficha —el
      anfitrión resuelve los nueve estados de una lectura que ocupa la pantalla
      entera, y esto vive dentro de un modal—, así que cada estado se dice acá. -->
+<!-- Cobro con seguro (REQ-16-026): depende de la cobertura de la persona, no de
+     la facturación simulada, así que se muestra en ambos casos. -->
+<app-claim-quote-section [patientProfileId]="patientProfileId()" />
+
 @if (facturacionSimulada) {
-  <app-cobros-del-paciente [patientProfileId]="patientProfileId()" />
+  <app-patient-charges [patientProfileId]="patientProfileId()" />
 } @else {
   <section class="pagos" aria-labelledby="pagos-titulo">
     <h2 id="pagos-titulo" class="sr-only">Pagos de la persona</h2>
 
     @switch (estado().status) {
       @case ('loading') {
-        <p class="pagos__secundario" data-testid="pagos-cargando">Buscando los pagos…</p>
+        <app-loading-state
+          class="pagos__secundario"
+          data-testid="pagos-cargando"
+          message="Buscando los pagos…"
+        />
       }
       @case ('forbidden') {
         <!-- S5, separado de S3 a propósito: «no pagó nada» y «no podés ver lo

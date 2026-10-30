@@ -13,7 +13,7 @@ import { AppButton } from '../../shared/components/atoms/button/button';
 import { Link } from '../../shared/components/atoms/link/link';
 import { Input } from '../../shared/components/atoms/input/input';
 import { Switch } from '../../shared/components/atoms/switch/switch';
-import { VitrinaMinima } from '../communities/vitrina-minima/vitrina-minima';
+import { MinShowcase } from '../communities/minimal-showcase/minimal-showcase';
 import { Alert } from '../../shared/components/molecules/alert/alert';
 import { Card } from '../../shared/components/molecules/card/card';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -60,7 +60,7 @@ const PAGE_SIZE = 20;
     RouterLink,
     SearchField,
     Switch,
-    VitrinaMinima,
+    MinShowcase,
   ],
   templateUrl: './groups.html',
   styleUrl: './groups.css',

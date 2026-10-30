@@ -2,8 +2,7 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import type { PatientOrder } from '../../../core/data-access/diagnostics/diagnostics.types';
@@ -18,12 +17,13 @@ import type {
 import { blobToDataUrl } from '../../../core/data-access/files/blob-to-data-url';
 import { FileDownloader } from '../../../core/data-access/files/file-downloader';
 import { FormsClient } from '../../../core/data-access/forms/forms.client';
+import { ReceivedServicesClient } from '../../../core/data-access/received-services/received-services.client';
 import type { FormInstanceDetail } from '../../../core/data-access/forms/forms.types';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import type { Booking } from '../../../core/data-access/scheduling/scheduling.types';
 import { TerminologyClient } from '../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
-import { esCodigoDeAlergia } from '../../../shared/utils/alergias/alergias';
+import { isAllergyCode } from '../../../shared/utils/allergies/allergies';
 import { describeApiFailure } from '../../../core/http/api-failure';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
@@ -41,6 +41,12 @@ import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { EncounterTimeline } from '../../../shared/components/organisms/encounter-timeline/encounter-timeline';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import {
+  conceptsOf,
+  historyServices,
+  receivedServiceRows,
+} from '../../../shared/components/organisms/received-services-panel/received-services-view-model';
+import { ReceivedServicesPanel } from '../../../shared/components/organisms/received-services-panel/received-services-panel';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { downloadVisitPdf } from '../../../shared/utils/clinical-pdf/clinical-pdf';
 import type { DocumentoDeFormulario } from '../../../shared/utils/clinical-pdf/clinical-pdf.types';
@@ -49,9 +55,10 @@ import {
   type ContextoDelDocumento,
   historiaDesdeFuentes,
 } from '../../../shared/utils/clinical-pdf/from-summary';
-import { descargarHistoriaConEncuentros } from '../../../shared/utils/clinical-pdf/historia-con-encuentros';
+import { downloadHistoryWithEncounters } from '../../../shared/utils/clinical-pdf/history-with-encounters';
 import { textoDeValor } from '../../../shared/utils/form-values/form-values';
 import { MIS_TURNOS_ROUTE } from '../appointments/appointments.routes';
+import { isHistoryEmpty, summaryHasContent } from './history-emptiness';
 import {
   atencionesDeLaHistoria,
   bloquesDeDiagnosticos,
@@ -79,7 +86,7 @@ const PARAM_DE_SECCION = 'seccion';
  * al final justamente por eso: los cuatro enlaces que ya circulan siguen
  * apuntando a lo mismo.
  */
-const SECCIONES = ['atenciones', 'recetas', 'alergias', 'resultados', 'diagnosticos'] as const;
+const SECCIONES = ['atenciones', 'recetas', 'alergias', 'resultados', 'diagnosticos', 'servicios'] as const;
 
 /** Una receta del archivo. */
 interface RecetaVisible {
@@ -162,6 +169,7 @@ interface FormularioVisible {
     FactList,
     NgTemplateOutlet,
     PageHeader,
+    ReceivedServicesPanel,
     RouterLink,
     Tab,
     Tabs,
@@ -176,6 +184,7 @@ export class MedicalRecord {
   private readonly diagnostics = inject(DiagnosticsClient);
   private readonly terminology = inject(TerminologyClient);
   private readonly forms = inject(FormsClient);
+  private readonly receivedServices = inject(ReceivedServicesClient);
   private readonly scheduling = inject(SchedulingClient);
   private readonly auth = inject(AuthService);
   private readonly contexto = inject(PatientContextService);
@@ -191,7 +200,7 @@ export class MedicalRecord {
    * Computado (B.1): quien representa a un dependiente lee la suya sin cambiar
    * de cuenta, y una instantánea dejaría la pantalla clavada en el titular.
    */
-  private readonly perfil = this.contexto.activePatientProfileId();
+  protected readonly perfil = this.contexto.activePatientProfileId();
 
   /**
    * La cuenta no es de un paciente.
@@ -303,9 +312,7 @@ export class MedicalRecord {
    * una lectura.
    */
   protected desplegarAtencion(abierta: boolean): void {
-    if (!abierta || this.detalle() !== null || this.perfil === null) {
-      return;
-    }
+    if (!abierta || this.detalle() !== null || this.perfil === null) return;
     this.cargarDetalle(this.perfil);
   }
 
@@ -442,7 +449,7 @@ export class MedicalRecord {
       .filter(
         (condicion) =>
           condicion.resolvedAt === undefined &&
-          esCodigoDeAlergia(this.etiquetas().get(condicion.codeConceptId)?.code),
+          isAllergyCode(this.etiquetas().get(condicion.codeConceptId)?.code),
       )
       .map((condicion) => ({
         id: condicion.id,
@@ -543,9 +550,7 @@ export class MedicalRecord {
 
   protected cargar(): void {
     const perfil = this.perfil;
-    if (perfil === null) {
-      return;
-    }
+    if (perfil === null) return;
 
     this.historia.set(loading());
     this.etiquetas.set(new Map());
@@ -561,14 +566,24 @@ export class MedicalRecord {
             etiquetas: this.terminology
               .readConceptLabels(conceptosDe(resumen))
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
+            // Solo si lo demás está vacío se pregunta por los servicios: quien solo
+            // recibió vacunas o una intervención no tiene la historia vacía. Si la
+            // pregunta falla se asume que sí los tiene: la pestaña mostrará su
+            // propio error, y decir «vacía» sería afirmar lo que no se sabe.
+            conServicios: summaryHasContent(resumen)
+              ? of(false)
+              : this.receivedServices.list(perfil, 1).pipe(
+                  map((pagina) => pagina.items.length > 0),
+                  catchError(() => of(true)),
+                ),
           }),
         ),
       )
       .subscribe({
-        next: ({ resumen, etiquetas }) => {
+        next: ({ resumen, etiquetas, conServicios }) => {
           this.etiquetas.set(etiquetas);
           this.historia.set(
-            estaVacia(resumen)
+            isHistoryEmpty(resumen, conServicios)
               ? empty(
                   { label: 'Pedir una cita', route: MIS_TURNOS_ROUTE },
                   'Todavía no hay atenciones registradas en su historia.',
@@ -621,9 +636,7 @@ export class MedicalRecord {
    */
   protected descargarHistoriaCompleta(): void {
     const datos = this.datos();
-    if (datos === null || this.armandoHistoria()) {
-      return;
-    }
+    if (datos === null || this.armandoHistoria()) return;
     this.armandoHistoria.set(true);
 
     // Lo que no se pudo traer, para decirlo junto con la descarga: el documento
@@ -643,6 +656,12 @@ export class MedicalRecord {
           return of({ items: [] as never[] });
         }),
       ),
+      servicios: this.receivedServices.list(datos.patientProfileId, 100).pipe(
+        catchError((error: unknown) => {
+          faltantes.push({ que: 'los servicios recibidos', error });
+          return of(null);
+        }),
+      ),
     })
       .pipe(
         // C6: los estudios traen conceptos que el resumen no tenía. Sin esta
@@ -652,20 +671,20 @@ export class MedicalRecord {
           forkJoin({
             traido: of(traido),
             etiquetas: this.terminology
-              .readConceptLabels(conceptosDeLasOrdenes(traido.ordenes.items))
+              .readConceptLabels([...conceptosDeLasOrdenes(traido.ordenes.items), ...conceptsOf(traido.servicios?.items ?? [])])
               .pipe(catchError(() => of<ConceptLabels>(new Map()))),
           }),
         ),
       )
       .subscribe({
-        next: ({ traido: { ordenes, resultados }, etiquetas }) => {
+        next: ({ traido: { ordenes, resultados, servicios }, etiquetas }) => {
           this.sumarEtiquetas(etiquetas);
           this.armandoHistoria.set(false);
           // C6: las órdenes que acaba de traer el botón son las mismas que la
           // línea del encuentro necesita. Se guardan para que el documento y la
           // pantalla digan lo mismo, y para no volver a pedirlas al desplegar.
           this.adoptarOrdenes(ordenes.items);
-          descargarHistoriaConEncuentros(
+          downloadHistoryWithEncounters(
             historiaDesdeFuentes(
               {
                 resumen: datos,
@@ -679,7 +698,11 @@ export class MedicalRecord {
               this.contextoDelDocumento(),
               (id) => this.label(id),
             ),
-            seccionesNuevasDeLaHistoria(this.diagnosticos(), this.atenciones()),
+            {
+              ...seccionesNuevasDeLaHistoria(this.diagnosticos(), this.atenciones()),
+              // Sin la lectura no se imprime la sección: afirmar «sin servicios» sería falso.
+              ...(servicios === null ? {} : { servicios: historyServices(receivedServiceRows(servicios, etiquetas)) }),
+            },
           );
           const primerFaltante = faltantes[0];
           if (primerFaltante === undefined) {
@@ -923,27 +946,4 @@ function formularioLeible(detalle: FormInstanceDetail): FormularioVisible {
         masked: valor.masked,
       })),
   };
-}
-
-/**
- * La historia no tiene nada que mostrar.
- *
- * Se mira bloque por bloque y no `encounters` solo: una persona puede tener
- * alergias registradas antes de su primera consulta, y decirle que su historia
- * está vacía sería falso.
- *
- * **Las condiciones ahora sí cuentan (C6).** Antes no: no se listaban por su
- * cuenta, así que un archivo que sólo las tuviera no dibujaba ni una fila.
- * Desde que existe la pestaña «Diagnósticos», un archivo con diagnósticos y
- * nada más tiene tres bloques que leer — decirle a esa persona que su historia
- * está vacía sería falso, y es exactamente lo que la regla del vacío prohíbe.
- */
-function estaVacia(resumen: ClinicalSummary): boolean {
-  return (
-    resumen.encounters.length === 0 &&
-    resumen.conditions.length === 0 &&
-    resumen.allergies.length === 0 &&
-    resumen.medicationRequests.length === 0 &&
-    resumen.observations.length === 0
-  );
 }

@@ -23,7 +23,8 @@ import type {
  * elegida (`practiceId`), igual que el resto de la contabilidad del médico.
  * El servidor revalida la vinculación: este cliente no es la autoridad.
  *
- * **Contrato pendiente en la API**: hoy lo sirve sólo el simulador.
+ * Lo publica `accounting/controllers/accounting-practitioner-simple.controller.ts`
+ * de la API, con los cuerpos de `practitioner-simple-accounting.dto.ts`.
  */
 @Injectable({ providedIn: 'root' })
 export class SimpleAccountingClient {
@@ -53,7 +54,8 @@ export class SimpleAccountingClient {
 
   /** `POST /accounting/practitioner/simple/accounts` */
   createAccount(practiceId: string, input: SimpleAccountInput): Observable<SimpleAccount> {
-    return this.http.post<SimpleAccount>(this.url('/accounting/practitioner/simple/accounts'), {
+    const url = this.url('/accounting/practitioner/simple/accounts');
+    return this.http.post<SimpleAccount>(url, {
       practiceId,
       ...input,
     });
@@ -61,17 +63,14 @@ export class SimpleAccountingClient {
 
   /** `PUT /accounting/practitioner/simple/accounts/:id` */
   updateAccount(id: string, input: SimpleAccountInput): Observable<SimpleAccount> {
-    return this.http.put<SimpleAccount>(
-      this.url(`/accounting/practitioner/simple/accounts/${encodeURIComponent(id)}`),
-      input,
-    );
+    const url = this.url(`/accounting/practitioner/simple/accounts/${encodeURIComponent(id)}`);
+    return this.http.put<SimpleAccount>(url, input);
   }
 
   /** `DELETE /accounting/practitioner/simple/accounts/:id` — 409 si está en uso o es sembrada. */
   deleteAccount(id: string): Observable<void> {
-    return this.http.delete<void>(
-      this.url(`/accounting/practitioner/simple/accounts/${encodeURIComponent(id)}`),
-    );
+    const url = this.url(`/accounting/practitioner/simple/accounts/${encodeURIComponent(id)}`);
+    return this.http.delete<void>(url);
   }
 
   /* ---- gastos, activos y deudas ----------------------------------------- */
@@ -89,7 +88,8 @@ export class SimpleAccountingClient {
 
   /** `POST /accounting/practitioner/simple/records` */
   createRecord(practiceId: string, input: SimpleRecordInput): Observable<SimpleRecord> {
-    return this.http.post<SimpleRecord>(this.url('/accounting/practitioner/simple/records'), {
+    const url = this.url('/accounting/practitioner/simple/records');
+    return this.http.post<SimpleRecord>(url, {
       practiceId,
       ...input,
     });
@@ -97,17 +97,14 @@ export class SimpleAccountingClient {
 
   /** `PUT /accounting/practitioner/simple/records/:id` */
   updateRecord(id: string, input: SimpleRecordInput): Observable<SimpleRecord> {
-    return this.http.put<SimpleRecord>(
-      this.url(`/accounting/practitioner/simple/records/${encodeURIComponent(id)}`),
-      input,
-    );
+    const url = this.url(`/accounting/practitioner/simple/records/${encodeURIComponent(id)}`);
+    return this.http.put<SimpleRecord>(url, input);
   }
 
   /** `DELETE /accounting/practitioner/simple/records/:id` */
   deleteRecord(id: string): Observable<void> {
-    return this.http.delete<void>(
-      this.url(`/accounting/practitioner/simple/records/${encodeURIComponent(id)}`),
-    );
+    const url = this.url(`/accounting/practitioner/simple/records/${encodeURIComponent(id)}`);
+    return this.http.delete<void>(url);
   }
 
   /* ---- transacciones debe/haber ----------------------------------------- */
@@ -128,25 +125,20 @@ export class SimpleAccountingClient {
     practiceId: string,
     input: SimpleTransactionInput,
   ): Observable<SimpleTransaction> {
-    return this.http.post<SimpleTransaction>(
-      this.url('/accounting/practitioner/simple/transactions'),
-      { practiceId, ...input },
-    );
+    const url = this.url('/accounting/practitioner/simple/transactions');
+    return this.http.post<SimpleTransaction>(url, { practiceId, ...input });
   }
 
   /** `PUT /accounting/practitioner/simple/transactions/:id` */
   updateTransaction(id: string, input: SimpleTransactionInput): Observable<SimpleTransaction> {
-    return this.http.put<SimpleTransaction>(
-      this.url(`/accounting/practitioner/simple/transactions/${encodeURIComponent(id)}`),
-      input,
-    );
+    const url = this.url(`/accounting/practitioner/simple/transactions/${encodeURIComponent(id)}`);
+    return this.http.put<SimpleTransaction>(url, input);
   }
 
   /** `DELETE /accounting/practitioner/simple/transactions/:id` */
   deleteTransaction(id: string): Observable<void> {
-    return this.http.delete<void>(
-      this.url(`/accounting/practitioner/simple/transactions/${encodeURIComponent(id)}`),
-    );
+    const url = this.url(`/accounting/practitioner/simple/transactions/${encodeURIComponent(id)}`);
+    return this.http.delete<void>(url);
   }
 
   private url(path: string): string {

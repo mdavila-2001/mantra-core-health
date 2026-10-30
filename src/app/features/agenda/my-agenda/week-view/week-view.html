@@ -17,9 +17,9 @@
     </button>
 
     <div class="semana__cabecera">
-      <h3 class="semana__titulo">
+      <h2 class="semana__titulo">
         {{ rotulo().desde | date: 'd MMM' }} – {{ rotulo().hasta | date: 'd MMM' }}
-      </h3>
+      </h2>
       <p class="semana__resumen" role="status">
         @if (totalLibres() === 0) {
           Sin horarios libres esta semana.

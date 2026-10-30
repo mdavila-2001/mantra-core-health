@@ -1,0 +1,90 @@
+<app-content-dialog
+  heading="Agregar servicio adicional"
+  description="Un servicio propio, distinto de los que ya ofrece su práctica."
+  (closed)="closed.emit()"
+>
+  @if (step() === 'form') {
+    <div class="agregar__campos">
+      <app-form-field label="Nombre del servicio" [required]="true">
+        <app-input
+          testId="service-add-name"
+          placeholder="Ej.: Curación de heridas"
+          [value]="name()"
+          (valueChange)="name.set(text($event))"
+        />
+      </app-form-field>
+      <app-form-field label="Precio de referencia (Bs)" [required]="true">
+        <app-input
+          testId="service-add-price"
+          inputMode="decimal"
+          placeholder="Ej.: 150.00"
+          [value]="price()"
+          (valueChange)="price.set(text($event))"
+        />
+      </app-form-field>
+    </div>
+  } @else {
+    <!-- Criterio 4: los parecidos, para no duplicar lo que ya existe. -->
+    <section class="agregar__parecidos" aria-labelledby="agregar-parecidos-titulo">
+      <h3 id="agregar-parecidos-titulo" class="agregar__titulo">¿Quizás quiso decir…?</h3>
+      <p class="agregar__bajada">
+        Su práctica ya tiene servicios parecidos a «{{ name().trim() }}». Si es uno de estos, no
+        hace falta crearlo.
+      </p>
+      <ul class="agregar__lista" data-testid="service-add-suggestions">
+        @for (match of suggestions(); track match.service.id) {
+          <li class="agregar__opcion">
+            <span class="agregar__nombre">{{ match.service.name }}</span>
+            <span class="agregar__codigo">{{ match.service.code }}</span>
+            <button
+              app-button
+              type="button"
+              variant="secondary"
+              size="sm"
+              [attr.aria-label]="'Usar el servicio existente: ' + match.service.name"
+              (clicked)="chosen.emit(match.service)"
+            >
+              Usar este
+            </button>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (error(); as message) {
+    <app-alert tone="error" data-testid="service-add-error">{{ message }}</app-alert>
+  }
+
+  <div dialog-actions class="agregar__acciones">
+    @if (step() === 'form') {
+      <button app-button type="button" variant="secondary" (clicked)="closed.emit()">
+        Cancelar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="service-add-continue"
+        [isLoading]="working()"
+        (clicked)="continueToCreate()"
+      >
+        Agregar servicio
+      </button>
+    } @else {
+      <button app-button type="button" variant="secondary" (clicked)="backToForm()">
+        Cambiar el nombre
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="primary"
+        data-testid="service-add-create-anyway"
+        [isLoading]="working()"
+        (clicked)="createAnyway()"
+      >
+        Es un servicio distinto, crearlo
+      </button>
+    }
+  </div>
+</app-content-dialog>

@@ -16,22 +16,23 @@ import { catchError, forkJoin, map, of, switchMap, type Observable } from 'rxjs'
 import { blobToDataUrl } from '../../../../core/data-access/files/blob-to-data-url';
 import { FilesClient } from '../../../../core/data-access/files/files.client';
 import { PdfBrandingService } from '../../../../core/pdf-branding/pdf-branding.service';
-import { FirmaYSelloClient } from '../../../../core/data-access/profiles/firma-y-sello.client';
-import { LogoDelConsultorioClient } from '../../../../core/data-access/practice-sites/logo-del-consultorio.client';
+import { SignatureAndSealClient } from '../../../../core/data-access/profiles/signature-and-seal.client';
+import { PracticeLogoClient } from '../../../../core/data-access/practice-sites/practice-logo.client';
 import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { BoMunicipalitiesCatalog } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import type { RamaDepartamento } from '../../../../core/data-access/terminology/bo-municipalities.service';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import { BIRTH_SEX_OPTIONS } from '../../../../core/data-access/iam/birth-sex.options';
+import type { BirthSexCode } from '../../../../core/data-access/iam/iam.types';
+import { BoDepartmentsCatalog } from '../../../../core/data-access/terminology/bo-departments.service';
+import {
+  MAX_ATTACHMENT_BYTES,
+  SUPPORT_FILE_FORMATS,
+} from '../../../auth/shared-registration/doctor-credentials';
 import {
   practitionerField,
   validatePractitionerPersonalEmail,
   validatePractitionerPhone,
-} from '../../../auth/registro-compartido/practitioner-fields';
-import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../../../auth/registro-compartido/credenciales-del-medico';
+} from '../../../auth/shared-registration/practitioner-fields';
+import type { CampoDeFormulario } from '../../../../shared/forms/paginated/paginated-form.types';
 import { LanguagesCatalog } from '../../../../core/data-access/terminology/languages.service';
 import type { ValueSetOption } from '../../../../core/data-access/terminology/terminology.types';
 import { MedicalSpecialtiesCatalog } from '../../../../core/data-access/terminology/medical-specialties.service';
@@ -42,7 +43,7 @@ import type {
   OwnPractitionerProfile,
   PractitionerLanguage,
 } from '../../../../core/data-access/profiles/profiles.types';
-import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profesion/insurance-billing-frequency';
+import { INSURANCE_BILLING_FREQUENCY_OPTIONS } from '../../../../core/profession/insurance-billing-frequency';
 import { describeApiFailure, fieldErrorsOf } from '../../../../core/http/api-failure';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { avisarExtensionesSinGuardar } from './practitioner-profile-extensions';
@@ -64,8 +65,8 @@ import {
   FileInput,
   type RejectedFile,
 } from '../../../../shared/components/molecules/file-input/file-input';
-import { FirmaOSello } from '../../../../shared/components/molecules/firma-o-sello/firma-o-sello';
-import { LogoConsultorio } from '../../../../shared/components/molecules/logo-consultorio/logo-consultorio';
+import { SignatureOrSeal } from '../../../../shared/components/molecules/signature-or-seal/signature-or-seal';
+import { PracticeLogo } from '../../../../shared/components/molecules/practice-logo/practice-logo';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
 import { RowActions } from '../../../../shared/components/molecules/row-actions/row-actions';
@@ -74,21 +75,23 @@ import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
-import { separarNombres, unirNombres } from '../../../../core/profesion/nombres-adicionales';
-import { opcionesAutoridadReguladora } from '../../../../core/profesion/autoridades-reguladoras';
+import { splitNames, joinNames } from '../../../../core/profession/additional-names';
+import { optionsRegulatoryAuthority } from '../../../../core/profession/regulatory-authorities';
 import {
-  INSTITUCION_FUERA_DE_CATALOGO,
-  esInstitucionDelCatalogo,
-} from '../../../../core/profesion/instituciones-educativas';
+  CATALOG_OUTSIDE_INSTITUTION,
+  isCatalogInstitution,
+} from '../../../../core/profession/educational-institutions';
 import {
-  OPCIONES_TITULO_PROFESIONAL,
-  esTituloDeLaLista,
-} from '../../../../core/profesion/titulos-profesionales';
+  PROFESSIONAL_TITLE_OPTIONS,
+  isListedTitle,
+} from '../../../../core/profession/professional-degrees';
 import {
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../../../auth/registro-compartido/ubicacion-picker/ubicacion-picker';
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
+import { confirmedLocality } from '../../../auth/shared-registration/point-locality';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import {
@@ -102,11 +105,11 @@ import { FormActions } from '../../../../shared/components/organisms/form-action
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import {
-  EstadoDeImagen,
-  FORMATOS_DE_IMAGEN_DE_FIRMA,
-  MAX_BYTES_DE_IMAGEN_DE_FIRMA,
-} from './estado-de-imagen';
-import { PESTANA_EDITOR, PESTANAS_DEL_EDITOR_MEDICO } from '../pestanas-del-perfil-medico';
+  ImageStatus,
+  SIGNATURE_IMAGE_FORMATS,
+  SIGNATURE_IMAGE_MAX_BYTES,
+} from './image-status';
+import { DOCTOR_PROFILE_TABS, TAB_EDITOR, EDITOR_DOCTOR_TABS } from '../doctor-profile-tabs';
 import { WorkHistory } from '../work-history/work-history';
 import {
   OPCIONES_DE_ESTADO,
@@ -121,7 +124,7 @@ import {
   OPCIONES_DE_INSTITUCION_CON_SIGLA,
   ciudadesDeInstitucion,
 } from './practitioner-profile-edit.logic';
-import { ciudadAlElegirUniversidad } from '../../../../core/profesion/padron-de-universidades';
+import { cityToChooseUniversity } from '../../../../core/profession/university-registry';
 
 /** El tipo de título (formación), del catálogo dinámico: los cinco `CREDENTIAL_TYPE_*`. */
 const TARGET_CREDENCIAL = 'profiles.professional_credentials.credential_type_concept_id';
@@ -226,6 +229,9 @@ const BLOQUE_DE_RECURSO: Readonly<Record<RecursoEditable, string>> = {
   matricula: 'Matrículas',
 };
 
+/** Lo que se dice cuando falta el punto del domicilio, que es obligatorio. */
+const MENSAJE_SIN_PUNTO = 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».';
+
 /**
  * En qué pestaña del editor se ve cada campo del `PATCH` del perfil que la
  * plantilla ancla con `errorDelServidor`.
@@ -237,21 +243,24 @@ const BLOQUE_DE_RECURSO: Readonly<Record<RecursoEditable, string>> = {
  * pintarse, así que su mensaje va entero en el aviso.
  */
 const PESTANA_DEL_CAMPO: Readonly<Record<string, number>> = {
-  name: PESTANA_EDITOR.personales,
-  middleName: PESTANA_EDITOR.personales,
-  lastName: PESTANA_EDITOR.personales,
-  motherLastName: PESTANA_EDITOR.personales,
-  birthDate: PESTANA_EDITOR.personales,
-  professionalTitle: PESTANA_EDITOR.personales,
-  professionalBio: PESTANA_EDITOR.personales,
-  homeAddressLines: PESTANA_EDITOR.contacto,
-  workAddressLines: PESTANA_EDITOR.contacto,
-  mobilePhone: PESTANA_EDITOR.contacto,
-  personalEmail: PESTANA_EDITOR.contacto,
-  workEmail: PESTANA_EDITOR.contacto,
-  taxId: PESTANA_EDITOR.facturacion,
-  taxHolderName: PESTANA_EDITOR.facturacion,
-  languages: PESTANA_EDITOR.credenciales,
+  name: TAB_EDITOR.personales,
+  middleName: TAB_EDITOR.personales,
+  lastName: TAB_EDITOR.personales,
+  motherLastName: TAB_EDITOR.personales,
+  birthDate: TAB_EDITOR.personales,
+  nationalId: TAB_EDITOR.personales,
+  professionalTitle: TAB_EDITOR.personales,
+  professionalBio: TAB_EDITOR.personales,
+  homeAddressLines: TAB_EDITOR.contacto,
+  workAddressLines: TAB_EDITOR.contacto,
+  homeDistrict: TAB_EDITOR.contacto,
+  workDistrict: TAB_EDITOR.contacto,
+  mobilePhone: TAB_EDITOR.contacto,
+  personalEmail: TAB_EDITOR.contacto,
+  workEmail: TAB_EDITOR.contacto,
+  taxId: TAB_EDITOR.facturacion,
+  taxHolderName: TAB_EDITOR.facturacion,
+  languages: TAB_EDITOR.credenciales,
 };
 
 /**
@@ -266,12 +275,7 @@ const CAMPOS_DEL_TITULO = [
   'issueDate',
   'fileId',
 ] as const;
-const CAMPOS_DE_LA_MATRICULA = [
-  'licenseNumber',
-  'regulatoryAuthority',
-  'validFrom',
-  'fileId',
-] as const;
+const CAMPOS_DE_LA_MATRICULA = ['licenseNumber', 'regulatoryAuthority', 'validFrom', 'fileId'] as const;
 const CAMPOS_DE_LA_ESPECIALIDAD = ['specialtyConceptId'] as const;
 
 /** Qué campos del contrato tiene a la vista cada diálogo de corrección. */
@@ -283,7 +287,8 @@ const CAMPOS_DE_RECURSO: Readonly<Record<RecursoEditable, readonly string[]>> = 
 
 /** Dónde se pintan los rechazos de un envío: en las pestañas o en un diálogo. */
 type AnclajeDeRechazos =
-  { readonly en: 'pestanas' } | { readonly en: 'dialogo'; readonly campos: readonly string[] };
+  | { readonly en: 'pestanas' }
+  | { readonly en: 'dialogo'; readonly campos: readonly string[] };
 
 /** El título del aviso y qué decir si la API no explicó el motivo. */
 interface AvisoDeRechazo {
@@ -326,6 +331,9 @@ function leerRechazo(error: unknown): {
   return { porCampo, sinCampo };
 }
 
+/** El formato del documento que acepta el alta (`RegisterPractitionerDto.nationalId`). */
+const FORMATO_DOCUMENTO = /^[A-Za-z0-9.-]+$/;
+
 /** «a», «a y b», «a, b y c». */
 const enumerar = (partes: readonly string[]): string =>
   new Intl.ListFormat('es', { type: 'conjunction' }).format(partes);
@@ -365,9 +373,17 @@ function marcaDeTiempo(fecha: Date | string | undefined): number {
  */
 const PATRON_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Campos que cada una de las tres pestañas corrige con un PATCH parcial. */
+/**
+ * Qué campos del `PATCH` del perfil guarda cada pestaña (CORR-08, MT-38-02).
+ *
+ * «Guardar cambios» manda sólo lo de la pestaña abierta: lo que quedó a medio
+ * escribir en otra sigue en sus señales, pero no viaja de rebote.
+ */
+/** Marca de «el editor no muestra este campo siempre»: no se le exige. */
+const NOT_SHARED = Symbol('not-shared');
+
 const CAMPOS_POR_PESTANA: Readonly<Record<number, readonly string[]>> = {
-  [PESTANA_EDITOR.personales]: [
+  [TAB_EDITOR.personales]: [
     'professionalTitle',
     'professionalBio',
     'acceptsNewPatients',
@@ -377,20 +393,25 @@ const CAMPOS_POR_PESTANA: Readonly<Record<number, readonly string[]>> = {
     'lastName',
     'motherLastName',
     'birthDate',
+    'sexAtBirth',
+    'nationalId',
+    'issuerAdministrativeAreaConceptId',
   ],
-  [PESTANA_EDITOR.contacto]: [
+  [TAB_EDITOR.contacto]: [
     'mobilePhone',
     'personalEmail',
     'workEmail',
     'residenceMunicipalityConceptId',
     'homeAddressLines',
+    'homeDistrict',
     'homeLatitude',
     'homeLongitude',
     'workAddressLines',
+    'workDistrict',
     'workLatitude',
     'workLongitude',
   ],
-  [PESTANA_EDITOR.facturacion]: ['taxId', 'taxHolderName', 'insuranceBillingFrequency'],
+  [TAB_EDITOR.facturacion]: ['taxId', 'taxHolderName', 'insuranceBillingFrequency'],
 };
 
 /**
@@ -432,6 +453,9 @@ function correoDeTrabajoDe(perfil: OwnPractitionerProfile): string {
  * una tabla filtraría también la otra.
  */
 const CLAVE_BUSQUEDA_TITULO = 'qTitulos';
+
+/** La ficha de lectura del perfil propio, adonde vuelve el editor. */
+const MI_PERFIL_MEDICO = '/account/profile';
 
 /**
  * La clave de la búsqueda de la tabla de matrículas en la URL. Propia por lo
@@ -499,11 +523,10 @@ function soloFecha(fecha: Date): string {
     FilterBar,
     FormActions,
     FileInput,
-    LogoConsultorio,
-    FirmaOSello,
+    PracticeLogo,
+    SignatureOrSeal,
     FormField,
     Input,
-    LocationPicker,
     NavIcon,
     PageHeader,
     Pagination,
@@ -517,7 +540,7 @@ function soloFecha(fecha: Date): string {
     Tabs,
     Textarea,
     Tooltip,
-    UbicacionPicker,
+    MapLocationPicker,
     ViewStateHost,
     WorkHistory,
   ],
@@ -528,8 +551,8 @@ function soloFecha(fecha: Date): string {
 export class PractitionerProfileEdit {
   private readonly profiles = inject(ProfilesClient);
   private readonly files = inject(FilesClient);
-  private readonly logo = inject(LogoDelConsultorioClient);
-  private readonly firmaYSello = inject(FirmaYSelloClient);
+  private readonly logo = inject(PracticeLogoClient);
+  private readonly firmaYSello = inject(SignatureAndSealClient);
   private readonly membretePdf = inject(PdfBrandingService);
   private readonly descargas = inject(FileDownloader);
   private readonly dialogs = inject(DialogService);
@@ -559,9 +582,9 @@ export class PractitionerProfileEdit {
    * El valor se acota al rango: un `?pestana=99` escrito a mano no puede dejar
    * el editor sin ningún panel abierto.
    */
-  readonly pestana = model<number>(PESTANA_EDITOR.personales);
-  protected readonly pestanas = PESTANAS_DEL_EDITOR_MEDICO;
-  protected readonly pestanaEditor = PESTANA_EDITOR;
+  readonly pestana = model<number>(TAB_EDITOR.personales);
+  protected readonly pestanas = EDITOR_DOCTOR_TABS;
+  protected readonly pestanaEditor = TAB_EDITOR;
 
   /**
    * Si la pestaña abierta es de las que se corrigen.
@@ -575,22 +598,53 @@ export class PractitionerProfileEdit {
    */
   protected readonly editandoPresentacion = computed(
     () =>
-      this.pestana() === PESTANA_EDITOR.personales ||
-      this.pestana() === PESTANA_EDITOR.contacto ||
-      this.pestana() === PESTANA_EDITOR.facturacion,
+      this.pestana() === TAB_EDITOR.personales ||
+      this.pestana() === TAB_EDITOR.contacto ||
+      this.pestana() === TAB_EDITOR.facturacion,
   );
 
-  private readonly municipios = inject(BoMunicipalitiesCatalog);
+  private readonly departamentos = inject(BoDepartmentsCatalog);
+
+  /* -- P28 (ID-13): lo que del documento SÍ se corrige --------------------
+     El sexo al nacer, el departamento que emitió el documento y —mientras la
+     identidad no esté verificada— el número. Verificada, la API lo rechaza con
+     409: lo verificado es ese número, así que la pantalla lo muestra fijo y
+     dice por qué. */
+  protected readonly opcionesSexoAlNacer = BIRTH_SEX_OPTIONS;
+  protected readonly sexoAlNacer = signal<BirthSexCode | null>(null);
+  /** El número del documento, tal como se está editando. */
+  protected readonly numeroDocumento = signal('');
+  /** Con la identidad verificada el número no se corrige desde acá. */
+  protected readonly documentoBloqueado = computed(
+    () => this.datos()?.identityVerified === true,
+  );
+  /**
+   * El error local del número: el mismo formato que el alta, y no vacío
+   * (el alta del profesional lo exige).
+   */
+  protected readonly errorDocumento = computed(() => {
+    if (this.documentoBloqueado()) return '';
+    const valor = this.numeroDocumento().trim();
+    if (valor === '') {
+      return (this.datos()?.nationalId ?? '') === '' ? '' : 'El documento no puede quedar vacío.';
+    }
+    if (valor.length > 40) return 'El documento admite hasta 40 caracteres.';
+    return FORMATO_DOCUMENTO.test(valor)
+      ? ''
+      : 'El documento sólo admite letras, dígitos, punto y guion.';
+  });
+  protected readonly opcionesDepartamento = signal<readonly SelectOption<string>[]>([]);
+  protected readonly departamentoEmisor = signal<string | null>(null);
 
   /* -- ALV-003: los dos datos del contrato que no tenían control ---------- */
 
   /** Fecha de nacimiento: se ve en la ficha, ahora también se edita. */
   protected readonly fechaNacimiento = signal<Date | null>(null);
-  /** Localidad de residencia (concept id de `VS_BO_MUNICIPALITY`). */
+  /**
+   * Localidad de residencia (concept id de `VS_BO_MUNICIPALITY`). Ya no se
+   * elige: sale del punto del domicilio (26/10/2026), ver `volcarDomicilio`.
+   */
   protected readonly municipioResidencia = signal<string | null>(null);
-  /** El árbol de departamentos y municipios, para el picker de residencia. */
-  protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
-  protected readonly catalogoMunicipiosCaido = signal(false);
 
   protected readonly perfil = signal<ViewState<OwnPractitionerProfile>>(loading());
 
@@ -605,12 +659,16 @@ export class PractitionerProfileEdit {
 
   protected readonly titulo = signal('');
   protected readonly bio = signal('');
+  protected readonly cancelandoEdicion = signal(false);
+  private presentacionGuardada = '';
+  private textoNacimientoGuardado = '';
+  private textoNacimientoEditado: string | null = null;
   /* «Acepto pacientes nuevos» ya no se pregunta (propietario, 13/09/2026):
      siempre está habilitado. Ver `guardarPresentacion`. */
   protected readonly telemedicina = signal(false);
 
   /* -- Idiomas en los que atiende ------------------------------------------
-     La ficha los enseña en «Credenciales» y el editor no los ofrecía en
+     La ficha los enseña en «Datos personales» y el editor no los ofrecía en
      ninguna pestaña: el perfil los leía (`languages`) y ningún formulario los
      escribía (doctor, 02/10/2026). Se corrigen como lista entera —no se
      agregan de a uno como los títulos— porque no tramitan nada: no hay
@@ -817,6 +875,7 @@ export class PractitionerProfileEdit {
   /** El mismo texto que el alta pone bajo un teléfono incompleto. */
   protected readonly mensajeTelefonoIncompleto = 'El número está incompleto para el país elegido.';
   protected readonly correoPersonal = signal('');
+  /** Por qué no se guardó el correo personal: la misma regla del alta. */
   protected readonly personalEmailError = signal('');
   protected readonly correoTrabajo = signal('');
   /**
@@ -861,10 +920,10 @@ export class PractitionerProfileEdit {
      Dos imágenes —**no** una firma electrónica— que salen al pie de los PDF.
      Misma vida que el logo: se suben al elegir y se escriben con «Guardar
      cambios». Ver `EstadoDeImagen` y `FirmaYSelloClient`. */
-  protected readonly firma = new EstadoDeImagen('la firma');
-  protected readonly sello = new EstadoDeImagen('el sello');
-  protected readonly formatosDeFirma = FORMATOS_DE_IMAGEN_DE_FIRMA;
-  protected readonly maxBytesDeFirma = MAX_BYTES_DE_IMAGEN_DE_FIRMA;
+  protected readonly firma = new ImageStatus('la firma');
+  protected readonly sello = new ImageStatus('el sello');
+  protected readonly formatosDeFirma = SIGNATURE_IMAGE_FORMATS;
+  protected readonly maxBytesDeFirma = SIGNATURE_IMAGE_MAX_BYTES;
   /**
    * La calle, ALV-009.
    *
@@ -878,6 +937,12 @@ export class PractitionerProfileEdit {
   protected readonly direccion = signal('');
   /** Dirección laboral, separada del domicilio personal. */
   protected readonly direccionTrabajo = signal('');
+  /** El distrito o zona de cada dirección, que el mapa deduce del punto (ADR-0028). */
+  protected readonly distritoDomicilio = signal('');
+  protected readonly distritoTrabajo = signal('');
+  // Desde el 26/10/2026 las dos direcciones **no se escriben**: salen del
+  // punto de cada mapa (ver `volcarDomicilio`). Siguen siendo señales porque
+  // lo guardado se muestra y viaja igual que antes.
 
   /**
    * El punto del domicilio en el mapa — lo que el alta ya preguntaba
@@ -888,11 +953,11 @@ export class PractitionerProfileEdit {
    * estados que en el editor del paciente: sin tocar no viaja, quitado viaja
    * como par de `null`, movido viaja como par.
    */
-  protected readonly gpsDomicilio = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsDomicilioGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsDomicilio = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsDomicilioGuardado = signal<Coordinates | null>(null);
   /** El GPS laboral se guarda por separado del punto del domicilio. */
-  protected readonly gpsTrabajo = signal<Coordenadas | null | undefined>(undefined);
-  protected readonly gpsTrabajoGuardado = signal<Coordenadas | null>(null);
+  protected readonly gpsTrabajo = signal<Coordinates | null | undefined>(undefined);
+  protected readonly gpsTrabajoGuardado = signal<Coordinates | null>(null);
 
   /**
    * El punto con el que abre el mapa: lo último que la persona dejó, o lo guardado.
@@ -911,7 +976,74 @@ export class PractitionerProfileEdit {
     return elegido === undefined ? this.gpsTrabajoGuardado() : elegido;
   });
 
-  protected readonly idsGpsDomicilio: IdsDePrueba = {
+  /**
+   * El aviso de «Contacto» sin punto del domicilio: es obligatorio (pedido del
+   * cliente del 26/10/2026). Un punto ya guardado cuenta —no se pide volver a
+   * confirmarlo—; sólo frena si no hay ninguno, o si se movió sin confirmar.
+   */
+  protected readonly errorGpsDomicilio = signal('');
+
+  /**
+   * Lo último que cada mapa dedujo de su punto, confirmado o no: la calle suele
+   * llegar antes de que la persona confirme, y al confirmar se vuelca.
+   */
+  private readonly localidadDomicilio = signal<LocalityFromPoint | null>(null);
+  private readonly localidadTrabajo = signal<LocalityFromPoint | null>(null);
+
+  protected confirmarGpsDomicilio(punto: Coordinates | null): void {
+    this.gpsDomicilio.set(punto);
+    if (punto !== null) this.errorGpsDomicilio.set('');
+    this.volcarDomicilio();
+  }
+
+  protected confirmarGpsTrabajo(punto: Coordinates | null): void {
+    this.gpsTrabajo.set(punto);
+    this.volcarTrabajo();
+  }
+
+  protected aplicarLocalidadDomicilio(localidad: LocalityFromPoint | null): void {
+    this.localidadDomicilio.set(localidad);
+    this.volcarDomicilio();
+  }
+
+  protected aplicarLocalidadTrabajo(localidad: LocalityFromPoint | null): void {
+    this.localidadTrabajo.set(localidad);
+    this.volcarTrabajo();
+  }
+
+  /**
+   * La calle y el municipio del domicilio, sacados del punto confirmado.
+   *
+   * Sin tocar el mapa (`undefined`) queda lo guardado: abrir el editor no
+   * reescribe la dirección con la del geocodificador. Un punto quitado o
+   * movido sin confirmar deja la calle vacía —describía otro lugar—, y sin
+   * calle en el mapa la calle queda vacía y la zona va a su propio campo:
+   * nunca una calle inventada. El municipio no se vacía nunca: el contrato no
+   * admite borrarlo.
+   */
+  private volcarDomicilio(): void {
+    const punto = this.gpsDomicilio();
+    if (punto === undefined) return;
+    const localidad = confirmedLocality(this.localidadDomicilio(), punto);
+    if (punto !== null && localidad === null) return;
+    // Sólo calle y número: el distrito viaja aparte (`homeDistrict`), y con la
+    // línea entera quedaba dos veces —en `lines` y en `district_text`—.
+    this.direccion.set(localidad?.calleSola ?? '');
+    this.distritoDomicilio.set(localidad?.zona ?? '');
+    if (localidad?.municipioConceptId) this.municipioResidencia.set(localidad.municipioConceptId);
+  }
+
+  /** Lo mismo para el trabajo, que no guarda municipio. */
+  private volcarTrabajo(): void {
+    const punto = this.gpsTrabajo();
+    if (punto === undefined) return;
+    const localidad = confirmedLocality(this.localidadTrabajo(), punto);
+    if (punto !== null && localidad === null) return;
+    this.direccionTrabajo.set(localidad?.calleSola ?? '');
+    this.distritoTrabajo.set(localidad?.zona ?? '');
+  }
+
+  protected readonly idsGpsDomicilio: TestIds = {
     mapa: 'edicion-domicilio-mapa',
     confirmada: 'edicion-domicilio-confirmada',
     avisoGeocodificacion: 'edicion-domicilio-aviso-geo',
@@ -921,7 +1053,7 @@ export class PractitionerProfileEdit {
     marcarEnMapa: 'edicion-domicilio-marcar',
   };
 
-  protected readonly idsGpsTrabajo: IdsDePrueba = {
+  protected readonly idsGpsTrabajo: TestIds = {
     mapa: 'edicion-trabajo-mapa',
     confirmada: 'edicion-trabajo-confirmada',
     avisoGeocodificacion: 'edicion-trabajo-aviso-geo',
@@ -932,7 +1064,7 @@ export class PractitionerProfileEdit {
   };
 
   /** Las doce opciones del alta, compartidas: ver `titulos-profesionales`. */
-  protected readonly titulosProfesionales = OPCIONES_TITULO_PROFESIONAL;
+  protected readonly titulosProfesionales = PROFESSIONAL_TITLE_OPTIONS;
 
   /**
    * Si el título guardado no está en la lista cerrada.
@@ -943,7 +1075,7 @@ export class PractitionerProfileEdit {
    * pantalla sería cambiar el perfil sin que nadie lo pidiera.
    */
   protected readonly tituloFueraDeLista = computed(
-    () => this.titulo() !== '' && !esTituloDeLaLista(this.titulo()),
+    () => this.titulo() !== '' && !isListedTitle(this.titulo()),
   );
   protected readonly guardandoPresentacion = signal(false);
 
@@ -958,9 +1090,15 @@ export class PractitionerProfileEdit {
     return control.invalid && (control.dirty || control.touched);
   }
 
-  /** Regla del alta para una clave, compartida también por el editor. */
-  protected practitionerFieldRule(fieldKey: string) {
-    return practitionerField(fieldKey, {
+  /**
+   * La definición del alta para un campo que el editor también corrige.
+   *
+   * Rótulo, obligatoriedad, límites y mensaje salen de `practitionerFields`, la
+   * misma lista que arma el alta: si el alta cambia una regla, el editor la
+   * hereda en vez de quedarse con su copia (CORR-08, MT-38-01).
+   */
+  protected practitionerFieldRule(key: string): CampoDeFormulario | undefined {
+    return practitionerField(key, {
       professionalTitle: this.titulo(),
       departmentIssuerField: () => ({
         key: 'issuerAdministrativeAreaConceptId',
@@ -970,18 +1108,35 @@ export class PractitionerProfileEdit {
     });
   }
 
-  /** Usa el rótulo del alta donde existe; conserva el nombre propio de controles agrupados. */
-  protected practitionerFieldLabel(fieldKey: string, fallbackLabel: string): string {
-    return this.practitionerFieldRule(fieldKey)?.label || fallbackLabel;
+  /** El rótulo del alta, o el propio cuando el alta lo proyecta sin rótulo. */
+  protected practitionerFieldLabel(key: string, fallbackLabel: string): string {
+    return this.practitionerFieldRule(key)?.label || fallbackLabel;
   }
 
-  /** Estado actual del campo requerido, aunque todavía no haya generado PATCH. */
-  private valorActualParaValidacion(clave: string, original: OwnPractitionerProfile): unknown {
-    switch (clave) {
+  /** Si el alta exige el campo. */
+  protected practitionerFieldRequired(key: string): boolean {
+    return this.practitionerFieldRule(key)?.required ?? false;
+  }
+
+  /**
+   * El valor que hay hoy en el editor para un campo compartido con el alta,
+   * haya cambiado o no. `undefined` si el editor no lo muestra siempre: el sexo
+   * y el departamento sólo se corrigen con el documento ya cargado, y exigirlos
+   * dejaría sin salida a quien no puede verlos.
+   */
+  private currentFieldValue(key: string): { readonly value: unknown } | undefined {
+    const value = this.sharedFieldValue(key);
+    return value === NOT_SHARED ? undefined : { value };
+  }
+
+  private sharedFieldValue(key: string): unknown {
+    switch (key) {
       case 'name':
         return this.nombre();
       case 'lastName':
         return this.apellidoPaterno();
+      case 'motherLastName':
+        return this.apellidoMaterno();
       case 'professionalTitle':
         return this.titulo();
       case 'birthDate':
@@ -991,8 +1146,20 @@ export class PractitionerProfileEdit {
       case 'personalEmail':
         return this.correoPersonal();
       default:
-        return (original as unknown as Readonly<Record<string, unknown>>)[clave];
+        return NOT_SHARED;
     }
+  }
+
+  /** El primer campo que el alta exige y que la pestaña tiene vacío. */
+  private firstMissingRequiredField(pestana: number): CampoDeFormulario | undefined {
+    return (CAMPOS_POR_PESTANA[pestana] ?? [])
+      .map((key) => this.practitionerFieldRule(key))
+      .find((rule) => {
+        if (rule?.required !== true) return false;
+        const current = this.currentFieldValue(rule.key);
+        if (current === undefined) return false;
+        return current.value === null || String(current.value).trim() === '';
+      });
   }
 
   /** Suma una casilla vacía de nombre, como en el alta. */
@@ -1024,7 +1191,7 @@ export class PractitionerProfileEdit {
 
   /** Los nombres adicionales tal como los guarda el contrato: una sola cadena. */
   private nombresAdicionales(): string {
-    return unirNombres([this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]);
+    return joinNames([this.segundoNombre(), this.tercerNombre(), ...this.nombresExtra()]);
   }
 
   /* -- Nueva especialidad ---------------------------------------------------- */
@@ -1196,7 +1363,7 @@ export class PractitionerProfileEdit {
    * Las tres autoridades del alta: Ministerio de Salud, SEDES y el colegio de
    * la profesión, con el colegio resuelto por el título elegido arriba.
    */
-  protected readonly opcionesAutoridad = computed(() => opcionesAutoridadReguladora(this.titulo()));
+  protected readonly opcionesAutoridad = computed(() => optionsRegulatoryAuthority(this.titulo()));
   protected readonly nuevaFechaInscripcion = signal<Date | null>(null);
   /** El carnet del colegio. Viaja como `fileId`, igual que el diploma. */
   protected readonly archivoDeMatricula = signal<readonly File[]>([]);
@@ -1240,7 +1407,7 @@ export class PractitionerProfileEdit {
   protected readonly nuevoNumeroCredencial = signal('');
   /* -- Institución, como lista y no como texto ---------------------------
      Pedido del propietario (13/09/2026). El catálogo y el porqué de la salida
-     a mano viven en `core/profesion/instituciones-educativas.ts`; acá sólo se
+     a mano viven en `core/profession/educational-institutions.ts`; acá sólo se
      decide cuál de los dos campos responde. */
 
   /** Con la sigla adelante, para que se lea aunque el desplegable cerrado recorte el nombre. */
@@ -1254,7 +1421,7 @@ export class PractitionerProfileEdit {
 
   /** Si hay que mostrar el campo escrito a mano. */
   protected readonly institucionFueraDeCatalogo = computed(
-    () => this.institucionElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+    () => this.institucionElegida() === CATALOG_OUTSIDE_INSTITUTION,
   );
 
   /**
@@ -1269,7 +1436,7 @@ export class PractitionerProfileEdit {
     if (elegida === null) {
       return '';
     }
-    return elegida === INSTITUCION_FUERA_DE_CATALOGO ? this.institucionEscrita().trim() : elegida;
+    return elegida === CATALOG_OUTSIDE_INSTITUTION ? this.institucionEscrita().trim() : elegida;
   });
 
   /** Las ciudades de la institución elegida: sus sedes. */
@@ -1284,14 +1451,14 @@ export class PractitionerProfileEdit {
   >({
     source: this.ciudadesDeLaInstitucion,
     computation: (opciones, previa) =>
-      ciudadAlElegirUniversidad(
+      cityToChooseUniversity(
         previa?.value ?? '',
         opciones.map((o) => o.value),
       ) || null,
   });
 
   /** Si la institución se eligió del catálogo, para el aviso de la ficha vieja. */
-  protected readonly esInstitucionDelCatalogo = esInstitucionDelCatalogo;
+  protected readonly esInstitucionDelCatalogo = isCatalogInstitution;
   protected readonly nuevaFechaEmisionCredencial = signal<Date | null>(null);
   protected readonly guardandoCredencial = signal(false);
 
@@ -1707,7 +1874,7 @@ export class PractitionerProfileEdit {
    */
   private abrirEnLaPestanaPedida(): void {
     const pedida = Number(this.ruta.snapshot.queryParamMap.get('pestana'));
-    if (Number.isInteger(pedida) && pedida >= 0 && pedida < PESTANAS_DEL_EDITOR_MEDICO.length) {
+    if (Number.isInteger(pedida) && pedida >= 0 && pedida < EDITOR_DOCTOR_TABS.length) {
       this.pestana.set(pedida);
     }
   }
@@ -1766,23 +1933,23 @@ export class PractitionerProfileEdit {
 
   /** Trae la firma y el sello guardados. Sin ellos o con un error, las cajas dicen «Sin …». */
   private cargarFirmaYSello(): void {
-    this.firmaYSello.obtener().subscribe((guardados) => {
-      this.firma.cargar(guardados.firmaUrl);
-      this.sello.cargar(guardados.selloUrl);
+    this.firmaYSello.get().subscribe((guardados) => {
+      this.firma.load(guardados.firmaUrl);
+      this.sello.load(guardados.selloUrl);
     });
   }
 
   protected alElegirFirma(archivos: readonly File[]): void {
-    this.firma.elegir(archivos, (archivo) => this.firmaYSello.subir(archivo));
+    this.firma.choose(archivos, (archivo) => this.firmaYSello.upload(archivo));
   }
 
   protected alElegirSello(archivos: readonly File[]): void {
-    this.sello.elegir(archivos, (archivo) => this.firmaYSello.subir(archivo));
+    this.sello.choose(archivos, (archivo) => this.firmaYSello.upload(archivo));
   }
 
   /** Trae el logo guardado. Sin logo o con un error, la tile muestra «Sin logo». */
   private cargarLogo(profileId: string): void {
-    this.logo.obtenerUrl(profileId).subscribe((url) => {
+    this.logo.getUrl(profileId).subscribe((url) => {
       this.logoGuardado.set(url);
       // Si la persona ya eligió otro mientras cargaba, no se lo pisa.
       if (this.logoPendiente() === null) {
@@ -1806,7 +1973,7 @@ export class PractitionerProfileEdit {
     this.errorDelLogo.set('');
     this.subiendoLogo.set(true);
     this.logo
-      .subir(archivo)
+      .upload(archivo)
       .pipe(switchMap((fileId) => blobToDataUrl(archivo).pipe(map((vista) => ({ fileId, vista })))))
       .subscribe({
         next: ({ fileId, vista }) => {
@@ -1845,26 +2012,9 @@ export class PractitionerProfileEdit {
    * mientras la pantalla revalida perdería lo que la persona acaba de teclear.
    */
   private sembrarFormulario(perfil: OwnPractitionerProfile): void {
-    this.titulo.set(perfil.professionalTitle ?? '');
-    this.bio.set(perfil.professionalBio ?? '');
-    this.nombre.set(perfil.name ?? '');
-    // `middleName` trae TODOS los nombres que no son el primero, separados por
-    // espacio: se reparten en las mismas casillas que el alta ofrece.
-    const adicionales = separarNombres(perfil.middleName);
-    this.segundoNombre.set(adicionales.segundo);
-    this.tercerNombre.set(adicionales.tercero);
-    this.nombresExtra.set(adicionales.extra);
-    this.apellidoPaterno.set(perfil.lastName ?? '');
-    this.apellidoMaterno.set(perfil.motherLastName ?? '');
-    this.celularPersonal.reset(perfil.mobilePhone ?? '');
-    this.correoPersonal.set(perfil.personalEmail ?? '');
-    this.personalEmailError.set('');
-    this.correoTrabajo.set(correoDeTrabajoDe(perfil));
-    this.errorCorreoTrabajo.set('');
-    this.nit.set(perfil.taxId ?? '');
-    this.razonSocial.set(perfil.taxHolderName ?? '');
-    this.frecuenciaFacturacionSeguro.set(perfil.insuranceBillingFrequency ?? null);
-    this.telemedicina.set(perfil.telehealthAvailable);
+    this.sembrarPestana(perfil, TAB_EDITOR.personales);
+    this.sembrarPestana(perfil, TAB_EDITOR.contacto);
+    this.sembrarPestana(perfil, TAB_EDITOR.facturacion);
     // Los idiomas se siembran sólo si no hay una corrección a medias: esta
     // siembra corre tras CADA recarga del perfil —agregar una matrícula en la
     // misma pestaña, guardar «Datos personales»— y pisarlos ahí tiraría lo que
@@ -1873,62 +2023,69 @@ export class PractitionerProfileEdit {
     if (!this.idiomasCambiaron()) {
       this.sembrarIdiomas(perfil);
     }
-    // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
-    // ofrecía. Se siembran desde el perfil, igual que el resto.
-    this.fechaNacimiento.set(perfil.birthDate ?? null);
-    this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
-    // ALV-009: la calle, si la declaró.
-    this.direccion.set(perfil.homeAddress?.lines ?? '');
-    // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
-    // longitud pondría el pin en el meridiano cero.
-    const lat = perfil.homeAddress?.latitude;
-    const lng = perfil.homeAddress?.longitude;
-    this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
-    this.gpsDomicilio.set(undefined);
-    this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
-    const latTrabajo = perfil.workAddress?.latitude;
-    const lngTrabajo = perfil.workAddress?.longitude;
-    this.gpsTrabajoGuardado.set(
-      latTrabajo === undefined || lngTrabajo === undefined
-        ? null
-        : { lat: latTrabajo, lng: lngTrabajo },
-    );
-    this.gpsTrabajo.set(undefined);
-    if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
-      this.cargarMunicipios();
+    if (this.opcionesDepartamento().length === 0) {
+      this.cargarDepartamentos();
     }
+    this.presentacionGuardada = this.instantaneaPresentacion();
   }
 
-  /** Restablece sólo la pestaña que se está cancelando o que terminó de guardar. */
+  /**
+   * Vuelve a lo guardado sólo una de las tres pestañas que se corrigen.
+   *
+   * Guardar «Contacto» re-siembra «Contacto» y nada más: lo que la persona dejó
+   * a medio escribir en «Datos personales» sigue ahí (CORR-08, MT-38-02).
+   */
   private sembrarPestana(perfil: OwnPractitionerProfile, pestana: number): void {
-    if (pestana === PESTANA_EDITOR.personales) {
+    if (pestana === TAB_EDITOR.personales) {
       this.titulo.set(perfil.professionalTitle ?? '');
       this.bio.set(perfil.professionalBio ?? '');
-      this.telemedicina.set(perfil.telehealthAvailable ?? false);
+      this.telemedicina.set(perfil.telehealthAvailable);
       this.nombre.set(perfil.name ?? '');
-      const adicionales = separarNombres(perfil.middleName);
+      // `middleName` trae TODOS los nombres que no son el primero, separados por
+      // espacio: se reparten en las mismas casillas que el alta ofrece.
+      const adicionales = splitNames(perfil.middleName);
       this.segundoNombre.set(adicionales.segundo);
       this.tercerNombre.set(adicionales.tercero);
       this.nombresExtra.set(adicionales.extra);
       this.apellidoPaterno.set(perfil.lastName ?? '');
       this.apellidoMaterno.set(perfil.motherLastName ?? '');
+      // ALV-003: los dos campos que el contrato ya aceptaba y el formulario no
+      // ofrecía. Se siembran desde el perfil, igual que el resto.
       this.fechaNacimiento.set(perfil.birthDate ?? null);
+      this.sexoAlNacer.set(perfil.sexAtBirth ?? null);
+      this.numeroDocumento.set(perfil.nationalId ?? '');
+      this.departamentoEmisor.set(perfil.issuerAdministrativeAreaConceptId ?? null);
+      const nacimiento = this.fechaNacimiento();
+      this.textoNacimientoGuardado =
+        nacimiento === null
+          ? ''
+          : [
+              String(nacimiento.getDate()).padStart(2, '0'),
+              String(nacimiento.getMonth() + 1).padStart(2, '0'),
+              nacimiento.getFullYear(),
+            ].join('/');
+      this.textoNacimientoEditado = null;
       return;
     }
 
-    if (pestana === PESTANA_EDITOR.contacto) {
+    if (pestana === TAB_EDITOR.contacto) {
       this.celularPersonal.reset(perfil.mobilePhone ?? '');
       this.correoPersonal.set(perfil.personalEmail ?? '');
       this.personalEmailError.set('');
       this.correoTrabajo.set(correoDeTrabajoDe(perfil));
       this.errorCorreoTrabajo.set('');
       this.municipioResidencia.set(perfil.residenceMunicipalityConceptId ?? null);
+      // ALV-009: la calle, si la declaró.
       this.direccion.set(perfil.homeAddress?.lines ?? '');
+      this.distritoDomicilio.set(perfil.homeAddress?.district ?? '');
+      // Y su punto en el mapa. Las dos mitades tienen que estar: una latitud sin
+      // longitud pondría el pin en el meridiano cero.
       const lat = perfil.homeAddress?.latitude;
       const lng = perfil.homeAddress?.longitude;
       this.gpsDomicilioGuardado.set(lat === undefined || lng === undefined ? null : { lat, lng });
       this.gpsDomicilio.set(undefined);
       this.direccionTrabajo.set(perfil.workAddress?.lines ?? '');
+      this.distritoTrabajo.set(perfil.workAddress?.district ?? '');
       const latTrabajo = perfil.workAddress?.latitude;
       const lngTrabajo = perfil.workAddress?.longitude;
       this.gpsTrabajoGuardado.set(
@@ -1937,70 +2094,205 @@ export class PractitionerProfileEdit {
           : { lat: latTrabajo, lng: lngTrabajo },
       );
       this.gpsTrabajo.set(undefined);
-      if (this.ramasMunicipios().length === 0 && !this.catalogoMunicipiosCaido()) {
-        this.cargarMunicipios();
-      }
+      this.errorGpsDomicilio.set('');
       return;
     }
 
-    if (pestana === PESTANA_EDITOR.facturacion) {
+    if (pestana === TAB_EDITOR.facturacion) {
       this.nit.set(perfil.taxId ?? '');
       this.razonSocial.set(perfil.taxHolderName ?? '');
       this.frecuenciaFacturacionSeguro.set(perfil.insuranceBillingFrequency ?? null);
     }
   }
 
-  /**
-   * Trae el árbol de municipios para «dónde vivís». Mismo criterio que el
-   * alta ante un fallo: el campo es opcional y el resto del formulario sigue.
-   */
-  protected cargarMunicipios(): void {
-    this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.ramasMunicipios.set(ramas);
-      },
-      error: () => {
-        this.ramasMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
-      },
+  /** Trae los departamentos para «departamento que emitió tu documento». Un fallo no rompe el resto. */
+  protected cargarDepartamentos(): void {
+    this.departamentos.listar().subscribe({
+      next: (opciones) =>
+        this.opcionesDepartamento.set(
+          opciones.map((opcion) => ({ value: opcion.conceptId, label: opcion.display })),
+        ),
+      error: () => this.opcionesDepartamento.set([]),
     });
   }
 
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
+  /** DatePicker conserva texto inválido sin emitir un valor de fecha. */
+  protected recordarTextoNacimiento(evento: Event): void {
+    const control = evento.currentTarget;
+    if (!(control instanceof HTMLElement)) return;
+    const campo = control.querySelector('input');
+    if (campo) this.textoNacimientoEditado = campo.value.trim().replace(/^DD\/MM\/AAAA$/, '');
   }
 
-  /**
-   * Cancela la edición de Datos personales, Contacto y Facturación.
-   *
-   * No navega a ningún lado: es un formulario repartido en tres pestañas de
-   * la MISMA pantalla, y «cancelar» yéndose obligaría a volver a entrar para
-   * seguir mirando el resto del perfil. Vuelve a sembrar los tres paneles con
-   * lo último que el servidor confirmó —la misma función que ya usa un
-   * guardado exitoso—, así que descarta lo tipeado sin tocar la red.
-   *
-   * Nada mientras hay un guardado en curso: cancelar a mitad de un `PATCH`
-   * dejaría el formulario mostrando un valor que la respuesta, todavía en
-   * vuelo, podría pisar igual.
-   */
-  protected cancelarEdicion(): void {
+  /** Compara lo escrito, incluso inválido, sin ejecutar validadores ni armar un PATCH. */
+  private instantaneaPresentacion(): string {
+    return JSON.stringify([
+      this.titulo(),
+      this.bio(),
+      this.telemedicina(),
+      this.nombre(),
+      this.segundoNombre(),
+      this.tercerNombre(),
+      this.nombresExtra(),
+      this.apellidoPaterno(),
+      this.apellidoMaterno(),
+      this.celularPersonal.value,
+      this.correoPersonal(),
+      this.correoTrabajo(),
+      this.nit(),
+      this.razonSocial(),
+      this.frecuenciaFacturacionSeguro(),
+      this.fechaNacimiento() === null ? null : fechaIso(this.fechaNacimiento() as Date),
+      this.sexoAlNacer(),
+      this.departamentoEmisor(),
+      this.municipioResidencia(),
+      this.direccion(),
+      this.direccionTrabajo(),
+      this.distritoDomicilio(),
+      this.distritoTrabajo(),
+      this.gpsDomicilioInicial(),
+      this.gpsTrabajoInicial(),
+      this.textoNacimientoEditado ?? this.textoNacimientoGuardado,
+    ]);
+  }
+
+  /** Salir sólo después de decidir sobre el borrador de los tres paneles. */
+  protected async cancelarEdicion(): Promise<void> {
     const original = this.datos();
-    if (original === null || this.guardandoPresentacion()) {
+    if (
+      original === null ||
+      this.guardandoPresentacion() ||
+      this.guardandoIdiomas() ||
+      this.cancelandoEdicion() ||
+      this.subiendoLogo() ||
+      this.firma.uploading() ||
+      this.sello.uploading()
+    ) {
       return;
     }
-    this.erroresDelServidor.set(new Map());
-    const pestana = this.pestana();
-    this.sembrarPestana(original, pestana);
-    if (pestana === PESTANA_EDITOR.personales) {
+    this.cancelandoEdicion.set(true);
+    try {
+      const hayCambios =
+        this.instantaneaPresentacion() !== this.presentacionGuardada ||
+        this.logoPendiente() !== null ||
+        this.firma.change !== undefined ||
+        this.sello.change !== undefined ||
+        this.idiomasCambiaron() ||
+        this.idiomas().some((language) => language.idioma === null);
+      if (hayCambios && !(await this.dialogs.confirmarDescarte())) return;
+
+      this.erroresDelServidor.set(new Map());
+      this.sembrarIdiomas(original);
+      this.sembrarFormulario(original);
       this.logoPendiente.set(null);
       this.logoVisible.set(this.logoGuardado());
       this.errorDelLogo.set('');
-      this.firma.descartar();
-      this.sello.descartar();
+      this.firma.discard();
+      this.sello.discard();
+      await this.volverALaFicha(this.pestana());
+    } catch {
+      this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+    } finally {
+      this.cancelandoEdicion.set(false);
     }
-    this.toasts.success('Descartamos los cambios sin guardar.', 'Edición cancelada');
+  }
+
+  /**
+   * Vuelve a la ficha, abierta en la pestaña que se estaba editando.
+   *
+   * La ficha recibe el índice de la lista completa (`?pestana=`) y lo traduce
+   * por etiqueta: es el mismo camino del lápiz, de vuelta.
+   */
+  private async volverALaFicha(pestana: number): Promise<void> {
+    const indiceDeLaFicha = DOCTOR_PROFILE_TABS.indexOf(EDITOR_DOCTOR_TABS[pestana]);
+    try {
+      // La primera pestaña es la que abre la ficha sin pedir nada.
+      const navego =
+        indiceDeLaFicha > 0
+          ? await this.router.navigate([MI_PERFIL_MEDICO], {
+              queryParams: { pestana: indiceDeLaFicha },
+            })
+          : await this.router.navigate([MI_PERFIL_MEDICO]);
+      if (!navego) {
+        this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+      }
+    } catch {
+      this.toasts.error('No pudimos volver a su perfil. Pruebe de nuevo.', 'Perfil');
+    }
+  }
+
+  /**
+   * Las pestañas del editor donde queda algo escrito y sin guardar después de
+   * un guardado: los campos de otra pestaña que no viajaron, los idiomas, y el
+   * logo, la firma o el sello si el guardado no fue desde «Datos personales».
+   *
+   * «Acepto pacientes nuevos» no cuenta: no lo escribe la persona, el editor lo
+   * corrige solo en el próximo guardado de «Datos personales».
+   */
+  private pestanasConCambiosSinGuardar(camposQueNoViajaron: readonly string[]): number[] {
+    const pestanas = new Set<number>();
+    for (const campo of camposQueNoViajaron) {
+      if (campo === 'acceptsNewPatients') continue;
+      const indice = Object.entries(CAMPOS_POR_PESTANA).find(([, campos]) =>
+        campos.includes(campo),
+      )?.[0];
+      if (indice !== undefined) pestanas.add(Number(indice));
+    }
+    if (
+      this.idiomasCambiaron() ||
+      this.logoPendiente() !== null ||
+      this.firma.change !== undefined ||
+      this.sello.change !== undefined
+    ) {
+      pestanas.add(TAB_EDITOR.personales);
+    }
+    return [...pestanas].sort((a, b) => a - b);
+  }
+
+  /**
+   * Las reglas del alta para «Contacto»: celular y correo personal obligatorios
+   * y bien formados, y el correo de trabajo con forma de correo si cambió.
+   *
+   * @returns `false` si algo no viaja; ya marcó el campo y avisó por qué.
+   */
+  private contactoValido(correoTrabajo: string, correoTrabajoCambio: boolean): boolean {
+    if (this.celularPersonal.invalid) {
+      this.celularPersonal.markAsTouched();
+      this.toasts.error(
+        this.celularPersonal.hasError('required')
+          ? 'Ingrese su celular personal.'
+          : 'Hay un teléfono incompleto. Revíselo en «Contacto».',
+        'Perfil',
+      );
+      return false;
+    }
+
+    const correoPersonal = new FormControl(this.correoPersonal().trim());
+    this.personalEmailError.set(
+      validatePractitionerPersonalEmail(correoPersonal) === null
+        ? ''
+        : (this.practitionerFieldRule('personalEmail')?.mensajeDeError ??
+            'Ingrese un correo válido.'),
+    );
+    if (this.personalEmailError()) {
+      this.toasts.error('El correo personal no es válido. Revíselo en «Contacto».', 'Perfil');
+      return false;
+    }
+
+    this.errorCorreoTrabajo.set(
+      !correoTrabajoCambio
+        ? ''
+        : correoTrabajo === ''
+          ? 'Escriba su correo de trabajo.'
+          : PATRON_CORREO.test(correoTrabajo)
+            ? ''
+            : 'Revise el correo: le falta algo, como la @ o el dominio.',
+    );
+    if (this.errorCorreoTrabajo()) {
+      this.toasts.error('El correo de trabajo no es válido. Revíselo en «Contacto».', 'Perfil');
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -2017,6 +2309,7 @@ export class PractitionerProfileEdit {
     if (original === null || this.guardandoPresentacion()) {
       return;
     }
+    // La pestaña abierta es la que se guarda (CORR-08, MT-38-02).
     const pestana = this.pestana();
 
     // Cada intento de guardar empieza limpio. Los rechazos del anterior hablan
@@ -2026,51 +2319,18 @@ export class PractitionerProfileEdit {
     // valiendo, el próximo envío los trae de vuelta.
     this.erroresDelServidor.set(new Map());
 
-    // El teléfono personal es obligatorio en el alta: no se guarda vacío ni a
-    // medias. Se marca y se explica desde «Contacto».
-    if (pestana === PESTANA_EDITOR.contacto) {
-      const telefonos = [this.celularPersonal];
-      if (telefonos.some((telefono) => telefono.invalid)) {
-        telefonos.forEach((telefono) => telefono.markAsTouched());
-        this.toasts.error(
-          this.celularPersonal.hasError('required')
-            ? 'Ingrese su celular personal.'
-            : 'Hay un teléfono incompleto. Revíselo en «Contacto».',
-          'Perfil',
-        );
-        return;
-      }
-    }
-
-    const correoPersonalControl = new FormControl(this.correoPersonal());
-    this.personalEmailError.set('');
-    if (
-      pestana === PESTANA_EDITOR.contacto &&
-      validatePractitionerPersonalEmail(correoPersonalControl) !== null
-    ) {
-      this.personalEmailError.set('Ingrese un correo personal válido.');
-      this.toasts.error(this.personalEmailError(), 'Perfil');
-      return;
-    }
-
-    // El correo de trabajo, igual: uno vacío o mal escrito no viaja. Se valida
-    // sólo desde «Contacto» para que guardar otra pestaña no detenga el PATCH.
+    // Las reglas de «Contacto» se aplican cuando se guarda «Contacto»: guardar
+    // otra pestaña no manda estos campos, así que tampoco los frena.
     const correoTrabajo = this.correoTrabajo().trim();
     const correoTrabajoCambio = correoTrabajo !== correoDeTrabajoDe(original);
-    if (pestana === PESTANA_EDITOR.contacto) {
-      this.errorCorreoTrabajo.set(
-        !correoTrabajoCambio
-          ? ''
-          : correoTrabajo === ''
-            ? 'Escriba su correo de trabajo.'
-            : PATRON_CORREO.test(correoTrabajo)
-              ? ''
-              : 'Revise el correo: le falta algo, como la @ o el dominio.',
-      );
-      if (this.errorCorreoTrabajo()) {
-        this.toasts.error('El correo de trabajo no es válido. Revíselo en «Contacto».', 'Perfil');
-        return;
-      }
+    if (pestana === TAB_EDITOR.contacto && !this.contactoValido(correoTrabajo, correoTrabajoCambio)) {
+      return;
+    }
+    // El punto del domicilio es obligatorio (26/10/2026): uno guardado vale.
+    if (pestana === TAB_EDITOR.contacto && this.gpsDomicilioInicial() === null) {
+      this.errorGpsDomicilio.set(MENSAJE_SIN_PUNTO);
+      this.toasts.error(MENSAJE_SIN_PUNTO, 'Perfil');
+      return;
     }
 
     const cambios: Partial<{
@@ -2086,6 +2346,9 @@ export class PractitionerProfileEdit {
       personalEmail: string;
       workEmail: string;
       birthDate: string;
+      sexAtBirth: BirthSexCode;
+      nationalId: string;
+      issuerAdministrativeAreaConceptId: string;
       residenceMunicipalityConceptId: string;
       homeAddressLines: string;
       homeLatitude: number | null;
@@ -2093,6 +2356,8 @@ export class PractitionerProfileEdit {
       workAddressLines: string;
       workLatitude: number | null;
       workLongitude: number | null;
+      homeDistrict: string;
+      workDistrict: string;
       taxId: string;
       taxHolderName: string;
       insuranceBillingFrequency: InsuranceBillingFrequency;
@@ -2106,12 +2371,42 @@ export class PractitionerProfileEdit {
     if (fechaNueva !== '' && fechaNueva !== fechaOriginal) {
       cambios.birthDate = fechaNueva;
     }
+    // P28: sólo viajan si cambiaron, y nunca vacíos (la API no los acepta vacíos).
+    const sexo = this.sexoAlNacer();
+    if (sexo !== null && sexo !== original.sexAtBirth) {
+      cambios.sexAtBirth = sexo;
+    }
+    // El número viaja sólo si cambió y la identidad no está verificada. Si
+    // no es válido no se guarda nada de esta pestaña: el error queda pintado
+    // en su campo.
+    if (pestana === TAB_EDITOR.personales && this.errorDocumento() !== '') {
+      this.toasts.error(this.errorDocumento(), 'Perfil');
+      return;
+    }
+    const documento = this.numeroDocumento().trim();
+    if (
+      !this.documentoBloqueado() &&
+      documento !== '' &&
+      documento !== (original.nationalId ?? '')
+    ) {
+      cambios.nationalId = documento;
+    }
+    const departamento = this.departamentoEmisor();
+    if (
+      departamento !== null &&
+      departamento !== (original.issuerAdministrativeAreaConceptId ?? null)
+    ) {
+      cambios.issuerAdministrativeAreaConceptId = departamento;
+    }
     const municipio = this.municipioResidencia();
     if (municipio !== null && municipio !== (original.residenceMunicipalityConceptId ?? null)) {
       cambios.residenceMunicipalityConceptId = municipio;
     }
     if (this.direccion() !== (original.homeAddress?.lines ?? '')) {
       cambios.homeAddressLines = this.direccion();
+    }
+    if (this.distritoDomicilio() !== (original.homeAddress?.district ?? '')) {
+      cambios.homeDistrict = this.distritoDomicilio();
     }
     // El punto, con los mismos tres estados que en el editor del paciente:
     // `undefined` no viaja, `null` quita y un par mueve. Mandar el punto actual
@@ -2126,6 +2421,9 @@ export class PractitionerProfileEdit {
     }
     if (this.direccionTrabajo() !== (original.workAddress?.lines ?? '')) {
       cambios.workAddressLines = this.direccionTrabajo();
+    }
+    if (this.distritoTrabajo() !== (original.workAddress?.district ?? '')) {
+      cambios.workDistrict = this.distritoTrabajo();
     }
     const gpsTrabajo = this.gpsTrabajo();
     if (gpsTrabajo === null) {
@@ -2190,44 +2488,42 @@ export class PractitionerProfileEdit {
       cambios.insuranceBillingFrequency = frecuencia;
     }
 
-    // Cada pestaña guarda sólo sus campos. Los demás pueden tener cambios a
-    // medio escribir y no deben viajar de rebote en un PATCH iniciado acá.
+    // Cada pestaña guarda sólo sus campos. Lo que cambió en otra queda
+    // pendiente, a la vista, hasta que se guarde desde allí.
     const permitidos = new Set(CAMPOS_POR_PESTANA[pestana] ?? []);
-    for (const clave of Object.keys(cambios)) {
-      if (!permitidos.has(clave)) delete cambios[clave as keyof typeof cambios];
+    const pendientesEnOtrasPestanas = Object.keys(cambios).filter(
+      (clave) => !permitidos.has(clave),
+    );
+    for (const clave of pendientesEnOtrasPestanas) {
+      delete cambios[clave as keyof typeof cambios];
     }
 
-    const missingField = (CAMPOS_POR_PESTANA[pestana] ?? []).find((fieldKey) => {
-      const rule = this.practitionerFieldRule(fieldKey);
-      if (!rule?.required) return false;
-      const valor = this.valorActualParaValidacion(fieldKey, original);
-      return valor === undefined || valor === null || String(valor).trim() === '';
-    });
-    if (missingField !== undefined) {
-      const rule = this.practitionerFieldRule(missingField);
-      this.toasts.error(rule?.mensajeDeError ?? 'Complete el campo obligatorio.', 'Perfil');
+    // Lo que el alta exige no se puede dejar vacío al corregirlo: se mira el
+    // valor actual, haya cambiado o no.
+    const faltante = this.firstMissingRequiredField(pestana);
+    if (faltante !== undefined) {
+      this.toasts.error(faltante.mensajeDeError || 'Complete el campo obligatorio.', 'Perfil');
       return;
     }
 
-    const logoPendiente = pestana === PESTANA_EDITOR.personales ? this.logoPendiente() : null;
-    // La firma y el sello tampoco viajan en el PATCH del perfil: otra escritura.
+    // El logo, la firma y el sello viven en «Datos personales» y viajan por su
+    // cuenta, en otra escritura: sólo se guardan desde esa pestaña.
+    const enPersonales = pestana === TAB_EDITOR.personales;
+    const logoPendiente = enPersonales ? this.logoPendiente() : null;
     const cambiosDeFirma = {
-      ...(pestana !== PESTANA_EDITOR.personales || this.firma.cambio === undefined
+      ...(!enPersonales || this.firma.change === undefined
         ? {}
-        : { firmaFileId: this.firma.cambio }),
-      ...(pestana !== PESTANA_EDITOR.personales || this.sello.cambio === undefined
+        : { firmaFileId: this.firma.change }),
+      ...(!enPersonales || this.sello.change === undefined
         ? {}
-        : { selloFileId: this.sello.cambio }),
+        : { selloFileId: this.sello.change }),
     };
     const hayCambiosDeFirma = Object.keys(cambiosDeFirma).length > 0;
     if (Object.keys(cambios).length === 0 && logoPendiente === null && !hayCambiosDeFirma) {
       this.toasts.success('No había ningún cambio para guardar.', 'Perfil');
       return;
     }
-    if (
-      pestana === PESTANA_EDITOR.personales &&
-      (this.subiendoLogo() || this.firma.subiendo() || this.sello.subiendo())
-    ) {
+    if (enPersonales && (this.subiendoLogo() || this.firma.uploading() || this.sello.uploading())) {
       this.toasts.error('Espere a que termine de subir la imagen.', 'Perfil');
       return;
     }
@@ -2243,9 +2539,9 @@ export class PractitionerProfileEdit {
     const logo$ =
       logoPendiente === null
         ? of(undefined)
-        : this.logo.guardar(original.profileId, logoPendiente.fileId);
+        : this.logo.save(original.profileId, logoPendiente.fileId);
     const firmaYSello$ = hayCambiosDeFirma
-      ? this.firmaYSello.guardar(cambiosDeFirma)
+      ? this.firmaYSello.save(cambiosDeFirma)
       : of(undefined);
     forkJoin([perfil$, logo$, firmaYSello$])
       .pipe(map(([perfil]) => perfil))
@@ -2256,16 +2552,32 @@ export class PractitionerProfileEdit {
             this.logoGuardado.set(this.logoVisible());
             this.logoPendiente.set(null);
           }
-          this.firma.confirmar();
-          this.sello.confirmar();
+          this.firma.confirm();
+          this.sello.confirm();
           if (logoPendiente !== null || hayCambiosDeFirma) {
             // Los PDF que se emitan desde ahora llevan lo nuevo.
             this.membretePdf.recargar();
           }
           this.sembrarPestana(perfil, pestana);
+          // Si no quedó nada pendiente en otra pestaña, lo que se ve es lo
+          // guardado; si quedó, «Cancelar edición» tiene que seguir avisando.
+          if (pendientesEnOtrasPestanas.length === 0) {
+            this.presentacionGuardada = this.instantaneaPresentacion();
+          }
           this.perfil.set(ready(perfil));
           this.toasts.success('Su perfil quedó actualizado.', 'Perfil');
           avisarExtensionesSinGuardar(this.toasts, cambios);
+          // Guardar vuelve a lectura en la misma pestaña (CORR-08, §6), salvo
+          // que quede algo escrito en otra: salir ahí lo perdería sin avisar.
+          const sinGuardar = this.pestanasConCambiosSinGuardar(pendientesEnOtrasPestanas);
+          if (sinGuardar.length === 0) {
+            void this.volverALaFicha(pestana);
+            return;
+          }
+          this.toasts.info(
+            `Quedan cambios sin guardar en ${enumerar(sinGuardar.map((indice) => `«${EDITOR_DOCTOR_TABS[indice]}»`))}.`,
+            'Perfil',
+          );
         },
         error: (error: unknown) => {
           this.guardandoPresentacion.set(false);
@@ -2337,10 +2649,7 @@ export class PractitionerProfileEdit {
       this.toasts.error(sinLugar.join(' '), aviso.bloque);
       return;
     }
-    this.toasts.error(
-      describeApiFailure(error, sinCampo.join(' ') || aviso.fallback),
-      aviso.bloque,
-    );
+    this.toasts.error(describeApiFailure(error, sinCampo.join(' ') || aviso.fallback), aviso.bloque);
   }
 
   /**
@@ -2351,13 +2660,11 @@ export class PractitionerProfileEdit {
    * @returns « en «Contacto»», listo para ir dentro del aviso.
    */
   private abrirPestanaDelRechazo(campos: readonly string[]): string {
-    const pestanas = [...new Set(campos.map((campo) => PESTANA_DEL_CAMPO[campo]))].sort(
-      (a, b) => a - b,
-    );
+    const pestanas = [...new Set(campos.map((campo) => PESTANA_DEL_CAMPO[campo]))].sort((a, b) => a - b);
     if (!pestanas.includes(this.pestana())) {
       this.pestana.set(pestanas[0]);
     }
-    return ` en ${enumerar(pestanas.map((indice) => `«${PESTANAS_DEL_EDITOR_MEDICO[indice]}»`))}`;
+    return ` en ${enumerar(pestanas.map((indice) => `«${EDITOR_DOCTOR_TABS[indice]}»`))}`;
   }
 
   /**
@@ -2450,8 +2757,7 @@ export class PractitionerProfileEdit {
    * `FilesClient.upload` y su identificador viaja como `fileId`. Hasta el
    * 13/09/2026 el contrato no tenía ese campo —`NewJurisdictionAuthorization`
    * no lo declaraba— así que este formulario aceptaba el PDF, lo mostraba con
-   * su nombre y su peso, y lo **tiraba en silencio** al guardar: el defecto que
-   * el bloqueo de `docs/progress/BLOCKERS.md` describía. Ya no.
+   * su nombre y su peso, y lo **tiraba en silencio** al guardar. Ya no.
    *
    * Si la subida falla **no se crea la matrícula**: una matrícula sin el carnet
    * que la persona creyó haber adjuntado es peor que un error, porque nadie se
@@ -2527,10 +2833,7 @@ export class PractitionerProfileEdit {
           this.guardandoMatricula.set(false);
           this.anclarErroresDelServidor(
             error,
-            {
-              bloque: 'Matrículas',
-              fallback: 'No se pudo agregar la matrícula. Intente de nuevo.',
-            },
+            { bloque: 'Matrículas', fallback: 'No se pudo agregar la matrícula. Intente de nuevo.' },
             { en: 'dialogo', campos: CAMPOS_DE_LA_MATRICULA },
           );
         },
@@ -2758,12 +3061,10 @@ export class PractitionerProfileEdit {
       era una tabla de sólo lectura: para corregir el número de un título mal
       tecleado no quedaba otra que cargarlo de nuevo y convivir con los dos.
 
-      **De las cinco operaciones, sólo el retiro del título existe en la API.**
-      Las otras cuatro las atiende el simulador de la rama `mockup`, que es el
-      backend de esta rama (`mockBackend: true` fijo). El hueco del servidor
-      está anotado en `docs/progress/BLOCKERS.md`: acá no se esconde, y el
-      cliente ya pide la ruta REST que le corresponde a cada recurso, así que
-      publicarlas del otro lado no obliga a tocar esta pantalla.
+      Las cinco operaciones existen en la API (corregir y retirar títulos,
+      especialidades y matrículas propias mientras siguen pendientes de
+      verificación), con la ruta REST que le corresponde a cada recurso; el
+      simulador de `mockup` las atiende con la misma forma.
      ====================================================================== */
 
   /** Qué fila está bajando su archivo, para apagar sólo ese botón. */
@@ -2887,7 +3188,7 @@ export class PractitionerProfileEdit {
   protected readonly edicionInscripcion = signal<Date | null>(null);
 
   protected readonly edicionInstitucionFueraDeCatalogo = computed(
-    () => this.edicionInstitucionElegida() === INSTITUCION_FUERA_DE_CATALOGO,
+    () => this.edicionInstitucionElegida() === CATALOG_OUTSIDE_INSTITUTION,
   );
 
   /** La institución que viaja en el `PATCH`. Mismo criterio que en el alta. */
@@ -2896,7 +3197,7 @@ export class PractitionerProfileEdit {
     if (elegida === null) {
       return '';
     }
-    return elegida === INSTITUCION_FUERA_DE_CATALOGO
+    return elegida === CATALOG_OUTSIDE_INSTITUTION
       ? this.edicionInstitucionEscrita().trim()
       : elegida;
   });
@@ -2913,7 +3214,7 @@ export class PractitionerProfileEdit {
   >({
     source: this.edicionCiudades,
     computation: (opciones, previa) =>
-      ciudadAlElegirUniversidad(
+      cityToChooseUniversity(
         previa?.value ?? '',
         opciones.map((o) => o.value),
       ) || null,
@@ -3123,9 +3424,9 @@ export class PractitionerProfileEdit {
     this.edicionTipo.set(credencial.credentialTypeConceptId);
     this.edicionNumero.set(credencial.number);
     const institucion = credencial.issuingInstitutionText ?? '';
-    const delCatalogo = institucion !== '' && esInstitucionDelCatalogo(institucion);
+    const delCatalogo = institucion !== '' && isCatalogInstitution(institucion);
     this.edicionInstitucionElegida.set(
-      institucion === '' ? null : delCatalogo ? institucion : INSTITUCION_FUERA_DE_CATALOGO,
+      institucion === '' ? null : delCatalogo ? institucion : CATALOG_OUTSIDE_INSTITUTION,
     );
     this.edicionInstitucionEscrita.set(delCatalogo ? '' : institucion);
     // Una ciudad ya guardada se respeta; sin ella queda la sede principal de

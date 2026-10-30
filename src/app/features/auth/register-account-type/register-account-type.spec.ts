@@ -94,14 +94,20 @@ describe('RegisterAccountType · organizaciones', () => {
       .map((el) => el.nativeElement as HTMLAnchorElement);
   }
 
-  it('ofrece las cuatro organizaciones que tienen alta, y ninguna cuenta de persona', () => {
+  it('ofrece las cinco organizaciones que tienen alta, y ninguna cuenta de persona', () => {
     const titulos = tarjetas().map((card) =>
       card.querySelector('.tipos__card-title')!.textContent!.trim(),
     );
 
     // `register-organization` crea un tenant PAYER y sólo ése: por eso la
     // tarjeta dice «Aseguradora» y no «Organización».
-    expect(titulos).toEqual(['Aseguradora', 'Laboratorio', 'Imagenología', 'Farmacia']);
+    expect(titulos).toEqual([
+      'Aseguradora',
+      'Laboratorio',
+      'Imagenología',
+      'Farmacia',
+      'Organización médica',
+    ]);
   });
 
   it('cada tarjeta lleva a su alta', () => {
@@ -112,6 +118,7 @@ describe('RegisterAccountType · organizaciones', () => {
       '/auth/register/laboratory',
       '/auth/register/imaging-center',
       '/auth/register/pharmacy',
+      '/auth/register/medical-center',
     ]);
   });
 
@@ -144,10 +151,10 @@ describe('RegisterAccountType · composición de la rejilla', () => {
     expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('2');
   });
 
-  it('con cuatro tipos los reparte 2×2 y no 3+1', async () => {
+  it('con cinco tipos los reparte de a tres', async () => {
     const el = await render('organizations');
 
-    expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('2');
+    expect(el.querySelector('.tipos__grid')?.getAttribute('data-columns')).toBe('3');
   });
 
   it('cada tarjeta lleva el tono de su tipo, y ninguno es ámbar', async () => {

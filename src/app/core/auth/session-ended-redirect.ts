@@ -51,7 +51,8 @@ export class SessionEndedRedirect {
 
   constructor() {
     effect(() => {
-      const haySesion = this.session.isAuthenticated();
+      const haySesion =
+        typeof this.session.isAuthenticated === 'function' && this.session.isAuthenticated();
       const habia = this.habiaSesion;
       this.habiaSesion = haySesion;
 

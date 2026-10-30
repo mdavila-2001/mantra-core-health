@@ -4,6 +4,8 @@
    kilométricas no es acotar la tarjeta sino la medida de lectura de cada
    párrafo. Sólo distribución. */
 
+@import '../../shared/styles/enlace-chip.css';
+
 :host {
   display: block;
 }
@@ -65,27 +67,12 @@
   max-inline-size: 80ch;
 }
 
-.termino__definicion,
-.termino__verbatim {
-  text-align: justify;
-  hyphens: auto;
-}
-
 .termino__pestanas {
   display: block;
 }
 
-.termino__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-3);
-}
-
-.termino__pdf-error {
+.termino__volver {
   margin: 0;
-  color: var(--st-error-fg);
 }
 
 .termino__clasificacion {
@@ -281,29 +268,30 @@
   font-size: var(--fs-caption);
 }
 
-/* El ícono de categoría hace de marcador permanente cuando el término no tiene
-   imagen — que hoy es siempre. No es un relleno temporal: reemplaza a
-   cualquier foto de stock que este glosario no va a usar. */
-.termino__imagen-marcador {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  block-size: 8rem;
-  margin: 0;
-  border: 1px solid var(--border-default);
-  border-radius: var(--r-md);
-  background: var(--bg-inset);
-  color: var(--text-muted);
-}
-
-.termino__imagen-marcador app-glossary-category-icon {
-  inline-size: 2.5rem;
-  block-size: 2.5rem;
-}
-
-.termino__imagen-marcador app-glossary-category-icon svg {
+/* Sin foto, la portada ocupa el lugar de la imagen: la columna nunca queda
+   vacía y el dibujo no se estira más allá de la medida de una foto. */
+.termino__portada {
   inline-size: 100%;
-  block-size: 100%;
+  max-inline-size: 26rem;
+}
+
+/* Enlaces sueltos de la ficha: el color y el subrayado del sistema, no el azul
+   y el violeta de «visitado» del navegador. */
+.termino__enlace,
+.termino__enlace:visited {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.termino__enlace:hover {
+  color: var(--brand-primary-hover);
+}
+
+.termino__enlace:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
 }
 
 .termino__sin-traducir-parcial {
@@ -313,10 +301,20 @@
   font-style: italic;
 }
 
+/* Relaciones: mismas zonas, columnas y sellos que el mapa (organismo compartido). */
 .termino__relaciones {
-  margin: 0;
-  padding-inline-start: var(--sp-5);
-  color: var(--text-secondary);
+  display: grid;
+  gap: var(--sp-6);
+  min-inline-size: 0;
+}
+
+.termino__mapa-enlace {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  margin-block-start: var(--sp-4);
+  color: var(--text-link);
+  font-weight: 600;
 }
 
 .termino__subtitulo {
@@ -351,20 +349,6 @@
   color: var(--text-secondary);
 }
 
-.termino__fuentes-editoriales {
-  display: grid;
-  gap: var(--sp-3);
-  margin: 0;
-  padding-inline-start: var(--sp-5);
-  color: var(--text-secondary);
-}
-
-.termino__fuente-derechos {
-  margin: var(--sp-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--fs-caption);
-}
-
 .termino__idioma {
   color: var(--text-muted);
   font-size: var(--fs-caption);
@@ -382,4 +366,37 @@
   margin: var(--sp-2) 0 0;
   color: var(--text-muted);
   font-size: var(--fs-caption);
+}
+
+/* «Explicado simple» es el rótulo del resumen, no una sección: va como el de
+   las zonas de relaciones y el resumen, que es lo primero que se lee, en el
+   cuerpo grande y sin acotar a 80ch (son una o dos líneas). */
+.termino__subtitulo.termino__subtitulo--rotulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.termino__definicion.termino__resumen {
+  max-inline-size: none;
+  color: var(--text-primary);
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  text-align: start;
+  hyphens: manual;
+}
+
+.termino__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.termino__pdf-error {
+  margin: 0;
+  color: var(--st-error-fg);
 }

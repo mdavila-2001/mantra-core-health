@@ -11,7 +11,7 @@ import {
 import { entrar, estable, irA } from './support/sesion';
 
 /**
- * Carril 02 — «Tus accesos», la Guía de profesionales y el RBAC de rutas.
+ * Carril 02 — los accesos, la Guía de profesionales y el RBAC de rutas.
  *
  * Las pruebas unitarias ya fijan las reglas (`navigation.map.spec.ts`,
  * `section-roles.guard.spec.ts`, `dashboard.spec.ts`). Esto comprueba lo que
@@ -30,48 +30,20 @@ import { entrar, estable, irA } from './support/sesion';
  */
 
 const RUTA_GUIA = '/directory';
-
-/** Los identificadores de las zonas de la primera pantalla del árbol. */
-async function idsDeZonas(page: Page): Promise<string[]> {
-  return page
-    .getByTestId('panel-zona')
-    .evaluateAll((nodos) => nodos.map((n) => (n as HTMLElement).dataset['zona'] ?? ''));
-}
-
-/** Abre una zona y espera a que aparezca el camino de vuelta. */
-async function abrirZona(page: Page, id: string): Promise<void> {
-  await page.locator(`[data-zona="${id}"]`).click();
-  await page.getByTestId('panel-zona-volver').waitFor();
-}
-
-/** Vuelve a la primera pantalla del árbol. */
-async function volverAlArbol(page: Page): Promise<void> {
-  await page.getByTestId('panel-zona-volver').click();
-  await page.getByTestId('panel-zona').first().waitFor();
-}
+/** La portada que ocupa el renglón del menú desde el 08/09/2026. */
+const RUTA_DIRECTORIOS = '/directories';
 
 /**
- * Los accesos del panel, por la ruta a la que llevan.
+ * Si la portada de directorios ofrece la Guía de profesionales.
  *
- * Desde el 28/08/2026 «Tus accesos» es un árbol de dos escalones: la primera
- * pantalla son cinco zonas y las secciones viven adentro. Así que esto ya no
- * lee una rejilla: **recorre el árbol entero**, que además es la única forma
- * de que la comprobación de «nada de lo ofrecido rebota» siga cubriendo todo.
+ * Hasta el 28/10/2026 esto se preguntaba al árbol «Sus herramientas» del
+ * panel. El propietario lo mandó retirar, y la Guía —que no tiene renglón en
+ * el menú— se ofrece desde la portada «Directorios», que sí lo tiene.
  */
-async function rutasDeAccesos(page: Page): Promise<string[]> {
-  const rutas: string[] = [];
-
-  for (const zona of await idsDeZonas(page)) {
-    await abrirZona(page, zona);
-    rutas.push(
-      ...(await page
-        .getByTestId('panel-acceso')
-        .evaluateAll((nodos) => nodos.map((n) => (n as HTMLElement).dataset['ruta'] ?? ''))),
-    );
-    await volverAlArbol(page);
-  }
-
-  return rutas;
+async function laPortadaOfreceLaGuia(page: Page): Promise<boolean> {
+  await irA(page, RUTA_DIRECTORIOS);
+  await estable(page);
+  return (await page.locator(`main a[href="${RUTA_GUIA}"]`).count()) > 0;
 }
 
 /** Los destinos del menú lateral. */
@@ -94,34 +66,39 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     await api.dispose();
   });
 
-  test('paciente: ve la Guía y la abre desde el panel', async ({ page }) => {
+  test('paciente: ve la Guía y la abre desde la portada de directorios', async ({ page }) => {
     const api = await contextoDeApi();
     const paciente = await crearPaciente(api);
     await api.dispose();
 
     await abrirPanel(page, paciente);
 
-    expect(await rutasDelMenu(page)).toContain(RUTA_GUIA);
-    expect(await rutasDeAccesos(page)).toContain(RUTA_GUIA);
+    // En el menú lateral se entra por la portada «Directorios», no por la Guía:
+    // desde el 08/09/2026 los cuatro directorios salen del menú con
+    // `fueraDelMenuPara: [ANY_ROLE]` (motivo en `navigation.map.ts`, sección
+    // `directories`). La puerta sigue cerrada por `roles` + `exclusiveRoles`;
+    // esto sólo fija dónde se ofrece.
+    const menu = await rutasDelMenu(page);
+    expect(menu).toContain(RUTA_DIRECTORIOS);
+    expect(menu).not.toContain(RUTA_GUIA);
+    expect(await laPortadaOfreceLaGuia(page)).toBe(true);
 
-    // Se entra por el acceso, no escribiendo la dirección: lo que hay que
-    // comprobar es que el enlace del panel funciona. La Guía vive en la zona
-    // «La red», que es donde el registro de zonas la declara.
-    await abrirZona(page, 'red');
-    await page.getByTestId('panel-acceso').filter({ hasText: 'Guía de profesionales' }).click();
+    // Se entra por el enlace, no escribiendo la dirección: lo que hay que
+    // comprobar es que el enlace de la portada funciona.
+    await page.locator(`main a[href="${RUTA_GUIA}"]`).first().click();
     await page.waitForURL(/\/directory$/);
     await estable(page);
     await expect(page.locator('app-root')).not.toBeEmpty();
   });
 
-  test('doctora: la Guía se le ofrece y entra, y sus accesos no rebotan', async ({ page }) => {
+  test('doctora: la Guía se le ofrece y entra, y su menú no rebota', async ({ page }) => {
     await abrirPanel(page, doctora());
 
-    /* -- 1 · se le ofrece en el panel (24/09/2026) -------------------------- */
+    /* -- 1 · se le ofrece (24/09/2026) -------------------------------------- */
 
     // La corrección #2 se la había quitado; el cliente pidió devolvérsela:
     // «añadamos doctores al directorio en el perfil de doctores también».
-    expect(await rutasDeAccesos(page)).toContain(RUTA_GUIA);
+    expect(await laPortadaOfreceLaGuia(page)).toBe(true);
 
     /* -- 2 · el enlace directo entra ---------------------------------------- */
 
@@ -129,38 +106,14 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     await estable(page);
     expect(new URL(page.url()).pathname).toBe(RUTA_GUIA);
 
-    /* -- 3 · corrección #1: íconos con ayuda al enfocar --------------------- */
+    /* -- 3 · nada de lo ofrecido rebota ------------------------------------ */
 
+    // El menú y el guard salen del mismo registro. Si se desincronizaran, el
+    // síntoma sería justamente éste: un renglón que se ofrece y devuelve al
+    // panel. (Hasta el 28/10/2026 se recorría el árbol del panel.)
     await irA(page, '/dashboard');
     await estable(page);
-
-    // Un escalón adentro: la primera pantalla son zonas, y el globo es de los
-    // accesos que hay dentro de una.
-    await abrirZona(page, 'consulta');
-
-    const primero = page.getByTestId('panel-acceso').first();
-    await expect(primero.locator('app-nav-icon svg')).toBeVisible();
-
-    // La ayuda tiene que llegar **también por teclado**, no sólo con el
-    // puntero: es la mitad del pedido que un tooltip de sólo hover no cumple.
-    // Se busca el globo **por el id que el enlace declara** y no por etiqueta:
-    // recorrer la rejilla deja globos de otros accesos abiertos, y un locator
-    // por etiqueta encuentra varios y no dice nada de cuál es el de éste.
-    await primero.focus();
-    await expect(primero).toHaveAttribute('aria-describedby', /tooltip/);
-    const globoId = await primero.getAttribute('aria-describedby');
-    await expect(page.locator(`#${globoId}`)).toBeVisible();
-
-    /* -- 4 · nada de lo ofrecido rebota ------------------------------------ */
-
-    // Se sale de la zona antes de recorrer el árbol: `rutasDeAccesos` arranca
-    // desde la primera pantalla, y adentro de una zona no hay zonas que abrir.
-    await volverAlArbol(page);
-
-    // El panel y el guard salen del mismo registro. Si se desincronizaran, el
-    // síntoma sería justamente éste: un acceso que se ofrece y devuelve al
-    // panel.
-    for (const ruta of await rutasDeAccesos(page)) {
+    for (const ruta of await rutasDelMenu(page)) {
       await irA(page, ruta);
       await estable(page);
 
@@ -170,9 +123,9 @@ test.describe('Carril 02 · accesos, Guía de profesionales y RBAC', () => {
     }
   });
 
-  test('administrador: tampoco se le ofrece la Guía en el panel', async ({ page }) => {
+  test('administrador: tampoco se le ofrece la Guía', async ({ page }) => {
     await abrirPanel(page, administrador());
 
-    expect(await rutasDeAccesos(page)).not.toContain(RUTA_GUIA);
+    expect(await laPortadaOfreceLaGuia(page)).toBe(false);
   });
 });

@@ -1,16 +1,15 @@
-<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" scene="calm">
-  <div class="registro">
+<app-auth-split [claim]="claim" [tagline]="tagline" contentWidth="full" [plainSurface]="!registered()" [scene]="registered() ? 'stage' : 'split'">
+  <div class="registro" [class.registro--confirmacion]="registered()">
     @if (registered()) {
       <div class="registro__header">
         <app-registration-badge type="insurer" celebrate />
         <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="registro-organizacion-exito">
           ¡Bienvenido a AloVida! Su salud en un solo lugar
         </h1>
-        <p class="registro__subtitle">Concluyó el registro de manera satisfactoria. Ya puede conectarse con su correo y la contraseña que eligió.</p>
         @if (verificationSent()) {
-          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección. Puede hacerlo cuando quiera: no es necesario para empezar a usar AloVida.</p>
+          <p class="registro__subtitle">Le enviamos un correo para confirmar su dirección.</p>
         }
-        <p class="registro__subtitle">Su organización está en revisión: en cuanto la plataforma la apruebe, aparecerá en las búsquedas de pacientes. Mientras tanto, ya puede ingresar con su cuenta.</p>
+        <p class="registro__subtitle">Su organización está en revisión. Ya puede ingresar con su cuenta.</p>
       </div>
       <button
         app-button
@@ -31,6 +30,14 @@
           paso. Su representante legal es quien inicia sesión.
         </p>
       </div>
+
+      @if (borradorDetectado(); as borrador) {
+        <app-onboarding-draft-banner
+          [draft]="borrador"
+          (resume)="restaurarBorrador(borrador)"
+          (discard)="descartarBorrador()"
+        />
+      }
 
       @if (errorMessage(); as mensaje) {
         <app-alert appAnuncio tone="error" class="registro__alert" data-testid="registro-organizacion-error">{{
@@ -58,34 +65,27 @@
           label="Crear cuenta de la aseguradora"
           submitLabel="Crear cuenta de la aseguradora"
           [pending]="isSubmitting()"
+          [initialStep]="pasoGuardado()"
+          (pasoVisible)="recordarPaso($event)"
           (enviado)="submit()"
           (rechazada)="alRechazarPagina($event)"
           data-testid="registro-organizacion-form"
         >
+          <!-- El punto es lo único que se marca: la dirección, el departamento,
+               el municipio y la zona salen de él y se muestran sin editarse
+               (pedido del cliente del 26/10/2026). -->
           <ng-template appCampoPersonalizado="gpsCasaMatriz">
-            @if (direccionPorReescribir()) {
-              <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                   anuncia sin robar el foco, que sigue en el mapa. -->
-              <app-alert
-                appAnuncio
-                [asertivo]="false"
-                [enfocar]="false"
-                tone="info"
-                data-testid="registro-organizacion-direccion-reescribir"
-              >
-                {{ avisoReescribir }}
-              </app-alert>
-            }
-            <app-ubicacion-picker
+            <app-map-location-picker
               pinId="casa-matriz"
               etiquetaConfirmada="Casa matriz"
               etiquetaQuitar="Quitar la ubicación de la casa matriz"
               etiquetaMapa="La casa matriz en el mapa"
+              etiquetaFicha="La dirección de la casa matriz"
               indicacionMarcar="Toque el mapa en el lugar exacto de la casa matriz."
               [ids]="idsUbicacionCasaMatriz"
               [inicial]="gpsCasaMatriz()"
-              (confirmado)="gpsCasaMatriz.set($event)"
-              (puntoElegido)="vaciarDireccionPorElMapa()"
+              (confirmado)="fijarGpsCasaMatriz($event)"
+              (localidad)="escribirLocalidadCasaMatriz($event)"
             />
           </ng-template>
           <ng-template appCampoPersonalizado="constitutionFileId">
@@ -119,7 +119,7 @@
             />
           </ng-template>
           <ng-template appCampoPersonalizado="legalRepresentative">
-            <app-campos-de-nombre
+            <app-inline-name-fields
               [grupo]="form.controls.legalRepresentative"
               [obligatorio]="true"
               prefijoTestId="registro-organizacion-representante"
@@ -139,7 +139,7 @@
                   [(expanded)]="gerencia.expanded"
                   [attr.data-testid]="'registro-organizacion-executives-' + gerencia.testId"
                 >
-                  <app-campos-de-nombre
+                  <app-inline-name-fields
                     [grupo]="form.controls.executives.controls[gerencia.key].controls.nombre"
                     [obligatorio]="true"
                     [prefijoTestId]="'registro-organizacion-executives-' + gerencia.testId"

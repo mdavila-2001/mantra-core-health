@@ -248,8 +248,7 @@ El plan exige contrastar el grafo con seis fuentes. Resultado:
 ## 5. Derivas encontradas
 
 Se registran; **no se corrigen**. Corregir cualquiera de ellas es un cambio de
-producto. Están priorizadas en
-[el análisis de brechas](documentation-gap-analysis.md).
+producto.
 
 ### D1 · Un comentario de `login.ts` contradice al propio código
 
@@ -261,8 +260,7 @@ producto. Están priorizadas en
 Pero `login.html` **sí tiene ese enlace** (`routerLink="/auth/forgot-password"`), la
 ruta existe, el componente `ForgotPassword` existe y `IamClient.forgotPassword`
 llama a `POST /iam/auth/forgot-password`. El comentario quedó de una etapa
-anterior; `PENDIENTES-BACKEND.md` §«La recuperación de contraseña llegó» confirma
-que el endpoint se entregó después.
+anterior: el endpoint se entregó después.
 
 **Comportamiento real: el enlace funciona.** Es el comentario el que está viejo.
 
@@ -300,9 +298,9 @@ tocó**; lo describe en
 
 `design-tokens.types.ts` declara `SPACING_STEPS` con 11 escalones y
 `RADIUS_NAMES` con 8 nombres, incluido `signature`. `styles.css` los define todos.
-No hay deriva de **valores** — hay una prueba que la vigila. Lo que sí falta es la
-comprobación inversa: un token declarado en CSS y ausente en TypeScript pasaría
-sin aviso. Registrado como brecha `MEDIUM`.
+No hay deriva de **valores** — hay una prueba que la vigila. La comprobación
+inversa quedó cerrada al incorporar la escala `--heat-*` al catálogo tipado; el
+spec de tokens compara ahora CSS y TypeScript en ambos sentidos.
 
 ### D5 · El OpenAPI del backend no es alcanzable desde este repositorio
 

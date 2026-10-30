@@ -1,4 +1,5 @@
 import type {
+  AnatomyComposites,
   AnatomyIndexEntry,
   AnatomyLayer,
   AnatomyPart,
@@ -38,9 +39,46 @@ export function partVisibleFor(part: AnatomyPart, sex: AnatomySex): boolean {
   return !(sex === 'female' && part.sex === 'male');
 }
 
-/** Las mallas de una estructura (las dos caras de un hueso par, por ejemplo). */
-export function meshesOf(parts: readonly AnatomyPart[], structureId: string, sex: AnatomySex): string[] {
-  return parts.filter((p) => p.structureId === structureId && partVisibleFor(p, sex)).map((p) => p.meshId);
+/**
+ * Las estructuras cuyas mallas representan a esta: ella misma y, si es
+ * compuesta, las partes suyas que tienen malla (el pulmón, sus lóbulos).
+ */
+export function structureIdsOf(structureId: string, composites: AnatomyComposites): string[] {
+  return [structureId, ...(composites[structureId] ?? [])];
+}
+
+/** Las mallas de una estructura (las dos caras de un hueso par; los lóbulos de un pulmón). */
+export function meshesOf(
+  parts: readonly AnatomyPart[],
+  structureId: string,
+  sex: AnatomySex,
+  composites: AnatomyComposites = {},
+): string[] {
+  const ids = new Set(structureIdsOf(structureId, composites));
+  return parts.filter((p) => ids.has(p.structureId) && partVisibleFor(p, sex)).map((p) => p.meshId);
+}
+
+/** Las estructuras que tienen algo que resaltar: las de malla propia y las compuestas. */
+export function structuresWithMesh(parts: readonly AnatomyPart[], composites: AnatomyComposites): Set<string> {
+  return new Set([...parts.map((p) => p.structureId), ...Object.keys(composites)]);
+}
+
+/**
+ * Las estructuras que se están dibujando: con malla en una capa encendida y
+ * visible para el sexo elegido. Una compuesta cuenta si se dibuja alguna parte suya.
+ */
+export function drawnStructures(
+  parts: readonly AnatomyPart[],
+  layers: ReadonlySet<AnatomyLayer>,
+  sex: AnatomySex,
+  composites: AnatomyComposites,
+): Set<string> {
+  const propias = new Set(parts.filter((p) => layers.has(p.layer) && partVisibleFor(p, sex)).map((p) => p.structureId));
+  const dibujadas = new Set(propias);
+  for (const [id, partes] of Object.entries(composites)) {
+    if (partes.some((parte) => propias.has(parte))) dibujadas.add(id);
+  }
+  return dibujadas;
 }
 
 /** Las estructuras relacionadas: lo que la ficha declara, en los dos sentidos. */
@@ -53,10 +91,16 @@ export function relatedStructureIds(structure: AnatomyStructure): Set<string> {
 }
 
 /** Las mallas de las estructuras relacionadas, sin las de la propia estructura. */
-export function relatedMeshes(parts: readonly AnatomyPart[], structure: AnatomyStructure, sex: AnatomySex): string[] {
-  const relacionadas = relatedStructureIds(structure);
+export function relatedMeshes(
+  parts: readonly AnatomyPart[],
+  structure: AnatomyStructure,
+  sex: AnatomySex,
+  composites: AnatomyComposites = {},
+): string[] {
+  const propias = new Set(structureIdsOf(structure.id, composites));
+  const relacionadas = new Set([...relatedStructureIds(structure)].flatMap((id) => structureIdsOf(id, composites)));
   return parts
-    .filter((p) => relacionadas.has(p.structureId) && p.structureId !== structure.id && partVisibleFor(p, sex))
+    .filter((p) => relacionadas.has(p.structureId) && !propias.has(p.structureId) && partVisibleFor(p, sex))
     .map((p) => p.meshId);
 }
 
@@ -120,12 +164,25 @@ export function normalizeSearch(texto: string): string {
   return texto.normalize('NFD').replace(/\p{Mn}/gu, '').toLowerCase().trim();
 }
 
+/** Los nombres ya normalizados de cada entrada, calculados una vez por índice y no en cada tecla. */
+const NORMALIZED_NAMES = new WeakMap<readonly AnatomyIndexEntry[], readonly (readonly [string, string])[]>();
+
+function normalizedNames(entries: readonly AnatomyIndexEntry[]): readonly (readonly [string, string])[] {
+  let nombres = NORMALIZED_NAMES.get(entries);
+  if (nombres === undefined) {
+    nombres = entries.map(([, es, en]) => [normalizeSearch(es ?? ''), normalizeSearch(en)] as const);
+    NORMALIZED_NAMES.set(entries, nombres);
+  }
+  return nombres;
+}
+
 /** Las entradas del índice cuyo nombre (castellano o inglés) contiene el texto; primero las que tienen pieza. */
 export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string, limit: number): AnatomyIndexEntry[] {
   const q = normalizeSearch(query);
   if (q.length < 2) return [];
+  const nombres = normalizedNames(entries);
   const aciertos = entries.filter(
-    ([id, es, en]) => normalizeSearch(es ?? '').includes(q) || normalizeSearch(en).includes(q) || id.toLowerCase() === q,
+    ([id], i) => nombres[i][0].includes(q) || nombres[i][1].includes(q) || id.toLowerCase() === q,
   );
   aciertos.sort((a, b) => b[3] - a[3]);
   return aciertos.slice(0, limit);
@@ -134,4 +191,23 @@ export function searchIndex(entries: readonly AnatomyIndexEntry[], query: string
 /** El lado de una pieza par, dicho en castellano. */
 export function sideLabel(side: AnatomyPart['side']): string | null {
   return side === 'right' ? 'lado derecho' : side === 'left' ? 'lado izquierdo' : null;
+}
+
+/** Una página (1-based) de `items`; la página se acota al rango válido. */
+export function pageOf<T>(items: readonly T[], page: number, size: number): T[] {
+  const ultima = Math.max(1, Math.ceil(items.length / size));
+  const actual = Math.min(Math.max(1, page), ultima);
+  return items.slice((actual - 1) * size, actual * size);
+}
+
+/**
+ * Reparte los grupos de relaciones por páginas de `size` filas en total,
+ * sin partir el orden: un grupo que cae entre dos páginas continúa en la siguiente.
+ */
+export function pageRelationGroups(groups: readonly RelationGroup[], page: number, size: number): RelationGroup[] {
+  const filas = groups.flatMap((g) => g.items.map((item) => ({ name: g.name, item })));
+  const visibles = pageOf(filas, page, size);
+  const porGrupo = new Map<string, RelatedItem[]>();
+  for (const { name, item } of visibles) porGrupo.set(name, [...(porGrupo.get(name) ?? []), item]);
+  return [...porGrupo].map(([name, items]) => ({ name, items }));
 }

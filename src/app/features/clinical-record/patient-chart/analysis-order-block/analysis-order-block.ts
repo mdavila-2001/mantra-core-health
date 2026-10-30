@@ -39,9 +39,22 @@ import { ConceptSelect } from '../../../../shared/components/molecules/concept-s
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import { mensajeDeFalloDeEscritura } from '../../mensaje-de-escritura';
+import { writeFailureMessage } from '../../write-message';
 import { DuplicateStudyWarningDialog } from './duplicate-study-warning-dialog/duplicate-study-warning-dialog';
 import { FormResponsePicker } from '../form-response-picker/form-response-picker';
+import {
+  DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS,
+  PRIORITY_LABELS,
+  conceptosDe,
+  duplicadoDe,
+  mensajeDeAlta,
+} from './analysis-order-block.helpers';
+import { createPerformerOrderState } from './performer-selector/performer-order-state';
+import { PerformerSelector } from './performer-selector/performer-selector';
+import { createStudyCategoryState } from './study-category';
+import type { EstudioEnFicha } from './analysis-order-block.helpers';
+
+export type { EstudioEnFicha } from './analysis-order-block.helpers';
 
 /**
  * La columna que gobierna qué se pide.
@@ -54,72 +67,20 @@ import { FormResponsePicker } from '../form-response-picker/form-response-picker
 export const TARGET_ESTUDIO = 'clinical.service_requests.code_concept_id';
 
 /**
- * Laboratorio o imagenología.
- *
- * Es lo único que separa una orden de este circuito de una derivación, y es lo
- * que la lectura de `diagnostics` usa para filtrar. Opcional en el DTO, pero el
- * formulario lo pide: una orden sin categoría no vuelve a aparecer en este
- * bloque, y ofrecer un pedido que después no se ve es exactamente lo que este
- * carril vino a arreglar.
+ * La categoría de la orden. No se elige: sale del estudio (`study-category.ts`).
+ * Opcional en el DTO, pero siempre viaja: una orden sin categoría no vuelve a
+ * aparecer en este bloque.
  */
 export const TARGET_CATEGORIA = 'clinical.service_requests.category_concept_id';
 
 /** La prioridad. Opcional en el DTO: sin binding, se omite y ya. */
 export const TARGET_PRIORIDAD = 'clinical.service_requests.priority_concept_id';
 
-/**
- * Las categorías en castellano, por código estable.
- *
- * El catálogo trae su `display` en inglés técnico porque es terminología, no
- * copy de producto, y mapear por **código** —no por uuid— es lo que permite
- * traducir sin atarse a un identificador que un re-seed puede mover.
- */
-const ETIQUETAS_DE_CATEGORIA: Readonly<Record<string, string>> = {
-  SR_LAB: 'Laboratorio',
-  SR_IMAGING: 'Imagenología',
-};
-
-/** Las prioridades en castellano. Mismo criterio que {@link ETIQUETAS_DE_CATEGORIA}. */
-const ETIQUETAS_DE_PRIORIDAD: Readonly<Record<string, string>> = {
-  SR_ROUTINE: 'De rutina',
-};
-
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';
 
 /** Tope de filas del histórico. Alcanza para la ficha; el detalle vive en su sección. */
 const TOPE = 25;
-
-/**
- * Antiduplicación de estudios (v4.2.17, T-26): la ventana que aplicó el
- * detector cuando el 422 de la carrera check→alta no la informa de vuelta.
- * Es el mismo default que fija `DuplicateStudyDetector` del lado del
- * servidor — sólo se usa acá para reconstruir el diálogo, nunca para decidir.
- */
-const DEFAULT_DUPLICATE_STUDY_WINDOW_DAYS = 30;
-
-/** Una orden del histórico, ya sin uuid y con su estado resuelto. */
-export interface EstudioEnFicha {
-  readonly id: string;
-  /** Qué se pidió, en palabras. Nunca el uuid del concepto. */
-  readonly estudio: string;
-  /** Laboratorio o imagenología. */
-  readonly categoria: string;
-  readonly estado: string;
-  readonly pedidoEl: Date;
-  /** Si ya hay un informe liberado que cuelgue de esta orden. */
-  readonly conResultado: boolean;
-  /**
-   * Antiduplicación de estudios (v4.2.17): `'reused'` si la orden nació
-   * satisfecha por un informe previo (no se llegó a pedir de nuevo),
-   * `'repeated'` si se repitió con justificación clínica, o `null` en
-   * cualquier otro caso. Gobierna qué línea reemplaza a «Sin resultado
-   * todavía» / «Resultado listo» en el histórico.
-   */
-  readonly duplicado: 'reused' | 'repeated' | null;
-  /** La fecha del informe previo. Sólo presente cuando `duplicado === 'reused'`. */
-  readonly informePrevioDel: Date | null;
-}
 
 /**
  * **Laboratorio e imagenología** del expediente: pedir el estudio y ver qué
@@ -148,10 +109,11 @@ export interface EstudioEnFicha {
  * invariantes viven en `POST /clinical/service-requests`. Un endpoint de alta
  * propio en `diagnostics` habría sido una segunda puerta a la misma tabla.
  *
- * ## La categoría se pide aunque el contrato la deje opcional
+ * ## La categoría viaja aunque el contrato la deje opcional
  *
  * Porque es lo que hace que la orden vuelva a aparecer acá: la lectura de
- * `diagnostics` filtra por laboratorio o imagenología. Una orden sin categoría
+ * `diagnostics` filtra por categoría. No se pide: sale del estudio, que ya
+ * dice si es laboratorio, imagen o procedimiento. Una orden sin categoría
  * se guarda bien y desaparece de esta pantalla, y un pedido que no se puede
  * volver a encontrar es el defecto que este bloque vino a cerrar.
  *
@@ -176,6 +138,7 @@ export interface EstudioEnFicha {
     DuplicateStudyWarningDialog,
     FormActions,
     FormField,
+    PerformerSelector,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -211,15 +174,26 @@ export class AnalysisOrderBlock {
   /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
   protected readonly respuestaDelFormulario = signal<string | null>(null);
 
+  /**
+   * La nota firmada con filas «campo: valor» de la que sale, si se eligió ésa
+   * en vez de una respuesta de `forms` (A3). Desde el 28/10/2026 el «Formulario
+   * libre — campo y valor» ya no se elige en el formulario médico: quedan las
+   * notas libres registradas antes y las de los campos adicionales de la ficha.
+   * Viaja como `basedOnNoteIds` (P40): la API la ata a la nota y verifica que
+   * sea del mismo encuentro.
+   */
+  protected readonly notaDelFormularioLibre = signal<string | null>(null);
+
   protected readonly faltaRespuesta = computed(
-    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+    () =>
+      this.exigeRespuesta() &&
+      this.respuestaDelFormulario() === null &&
+      this.notaDelFormularioLibre() === null,
   );
 
   protected readonly targetEstudio = TARGET_ESTUDIO;
-  protected readonly targetCategoria = TARGET_CATEGORIA;
   protected readonly targetPrioridad = TARGET_PRIORIDAD;
-  protected readonly etiquetasDeCategoria = ETIQUETAS_DE_CATEGORIA;
-  protected readonly etiquetasDePrioridad = ETIQUETAS_DE_PRIORIDAD;
+  protected readonly etiquetasDePrioridad = PRIORITY_LABELS;
 
   /**
    * La organización bajo cuya custodia queda la orden.
@@ -232,7 +206,12 @@ export class AnalysisOrderBlock {
   /* -- El formulario ------------------------------------------------------- */
 
   protected readonly estudio = signal<string | null>(null);
-  protected readonly categoria = signal<string | null>(null);
+  /** El tipo de la orden, deducido del estudio elegido. */
+  protected readonly tipo = createStudyCategoryState({
+    study: this.estudio,
+    studyTarget: TARGET_ESTUDIO,
+    categoryTarget: TARGET_CATEGORIA,
+  });
   protected readonly prioridad = signal<string | null>(null);
 
   /**
@@ -245,6 +224,13 @@ export class AnalysisOrderBlock {
   protected readonly catalogoListo = signal<boolean | null>(null);
 
   protected readonly pidiendo = signal(false);
+
+  /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
+  protected readonly performer = createPerformerOrderState({
+    category: this.tipo.conceptId,
+    study: this.estudio,
+    categoryTarget: TARGET_CATEGORIA,
+  });
 
   /** El resultado de la última escritura. */
   protected readonly registro = signal<ViewState<null>>(ready(null));
@@ -352,9 +338,10 @@ export class AnalysisOrderBlock {
       this.hayEncuentro() &&
       !this.sinOrganizacion() &&
       this.estudio() !== null &&
-      this.categoria() !== null &&
+      this.tipo.fields() !== null &&
       !this.pidiendo() &&
-      !this.checkingDuplicate(),
+      !this.checkingDuplicate() &&
+      this.performer.canSubmit(),
   );
 
   /** El fallo de la escritura, en palabras. */
@@ -363,7 +350,7 @@ export class AnalysisOrderBlock {
     if (state.status === 'validation') {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
-    return mensajeDeFalloDeEscritura(state, { accion: 'pedir estudios', sinPermiso: 'Su rol no permite pedir estudios.' });
+    return writeFailureMessage(state, { accion: 'pedir estudios', sinPermiso: 'Su rol no permite pedir estudios.' });
   });
 
   /**
@@ -467,20 +454,20 @@ export class AnalysisOrderBlock {
    * {@link confirmRepeat}, que arman la decisión cada uno por su lado.
    */
   private submitOrder(decision?: {
-    readonly previousDiagnosticReportId: string;
+    readonly previousDiagnosticReportId?: string;
     readonly reusePreviousReport?: true;
     readonly duplicateOverrideReason?: string;
   }): void {
     const patientProfileId = this.patientProfileId();
     const custodianTenantId = this.organizacion();
     const codeConceptId = this.estudio();
-    const categoryConceptId = this.categoria();
+    const categoria = this.tipo.fields();
     const encounterId = this.encounterId();
 
     if (
       custodianTenantId === null ||
       codeConceptId === null ||
-      categoryConceptId === null ||
+      categoria === null ||
       encounterId === null ||
       encounterId === '' ||
       this.pidiendo()
@@ -489,6 +476,11 @@ export class AnalysisOrderBlock {
     }
 
     const prioridad = this.prioridad();
+    // Una recomendación a medias (sin sede) no se manda: la API la rechazaría con 422.
+    const performerFields = this.performer.fields();
+    if (performerFields === null) {
+      return;
+    }
 
     this.pidiendo.set(true);
     this.registro.set(loading());
@@ -497,14 +489,18 @@ export class AnalysisOrderBlock {
       custodianTenantId,
       patientProfileId,
       codeConceptId,
-      categoryConceptId,
+      ...categoria,
       encounterId,
       ...(this.respuestaDelFormulario() === null
         ? {}
         : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
+      ...(this.notaDelFormularioLibre() === null
+        ? {}
+        : { basedOnNoteIds: [this.notaDelFormularioLibre() ?? ''] }),
       // Los opcionales sin elegir se **omiten**: el backend valida con
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
+      ...performerFields,
       ...decision,
     };
 
@@ -565,7 +561,7 @@ export class AnalysisOrderBlock {
   /** El diálogo de antiduplicación pidió reutilizar el informe previo. */
   protected confirmReuse(): void {
     const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
-    if (previousDiagnosticReportId === undefined) {
+    if (previousDiagnosticReportId == null) {
       return;
     }
     this.submitOrder({ previousDiagnosticReportId, reusePreviousReport: true });
@@ -573,11 +569,16 @@ export class AnalysisOrderBlock {
 
   /** El diálogo de antiduplicación pidió repetir el estudio, con justificación. */
   protected confirmRepeat(duplicateOverrideReason: string): void {
-    const previousDiagnosticReportId = this.duplicateCheck()?.previousStudy?.reportId;
-    if (previousDiagnosticReportId === undefined) {
+    const previo = this.duplicateCheck()?.previousStudy;
+    if (previo === undefined) {
       return;
     }
-    this.submitOrder({ previousDiagnosticReportId, duplicateOverrideReason });
+    // Repetir sobre una orden activa sin informe: no hay informe que enlazar,
+    // sólo la justificación.
+    this.submitOrder({
+      ...(previo.reportId == null ? {} : { previousDiagnosticReportId: previo.reportId }),
+      duplicateOverrideReason,
+    });
   }
 
   /** Se cerró el diálogo de antiduplicación sin decidir: no se pide nada. */
@@ -588,8 +589,8 @@ export class AnalysisOrderBlock {
   /** Vacía el formulario tras un pedido. El siguiente arranca limpio. */
   private limpiar(): void {
     this.estudio.set(null);
-    this.categoria.set(null);
     this.prioridad.set(null);
+    this.performer.reset();
   }
 
   /**
@@ -609,12 +610,7 @@ export class AnalysisOrderBlock {
     conResultado: ReadonlySet<string>,
     informesPorId: ReadonlyMap<string, DiagnosticReport>,
   ): EstudioEnFicha {
-    const duplicado =
-      orden.previousDiagnosticReportId === undefined
-        ? null
-        : orden.duplicateOverrideReason === undefined
-          ? 'reused'
-          : 'repeated';
+    const duplicado = duplicadoDe(orden);
 
     return {
       id: orden.id,
@@ -628,6 +624,7 @@ export class AnalysisOrderBlock {
         duplicado === 'reused' && orden.previousDiagnosticReportId !== undefined
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
+      justificacion: orden.duplicateOverrideReason ?? null,
     };
   }
 
@@ -663,46 +660,4 @@ export class AnalysisOrderBlock {
           this.circuito.set(errorToViewState<PatientDiagnostics>(error)),
       });
   }
-}
-
-/**
- * Los conceptos que el histórico necesita traducir.
- *
- * Se juntan de los dos bloques en una sola lista porque `readConceptLabels` ya
- * deduplica y trocea: dos llamadas separadas pedirían dos veces los códigos que
- * la orden y su informe comparten.
- */
-function conceptosDe(circuito: PatientDiagnostics): readonly string[] {
-  const ids: string[] = [];
-  for (const orden of circuito.orders) {
-    ids.push(orden.codeConceptId, orden.statusConceptId);
-    if (orden.categoryConceptId !== undefined) {
-      ids.push(orden.categoryConceptId);
-    }
-  }
-  for (const informe of circuito.reports) {
-    ids.push(informe.codeConceptId, informe.lifecycleStatusConceptId);
-  }
-  return ids;
-}
-
-/**
- * El toast de éxito, según qué decisión de antiduplicación se mandó (o
- * ninguna). Devuelve `[mensaje, título]`, el orden que espera
- * `ToastService.success`.
- */
-function mensajeDeAlta(decision: {
-  readonly reusePreviousReport?: true;
-  readonly duplicateOverrideReason?: string;
-}): readonly [string, string] {
-  if (decision.reusePreviousReport === true) {
-    return [
-      'Quedó registrado como cubierto por el informe previo. No se pide un estudio nuevo.',
-      'Antiduplicación',
-    ];
-  }
-  if (decision.duplicateOverrideReason !== undefined) {
-    return ['Queda pedido con su justificación; la aseguradora la va a ver.', 'Estudio solicitado'];
-  }
-  return ['Queda pedido y va a verlo acá abajo con su resultado.', 'Estudio solicitado'];
 }

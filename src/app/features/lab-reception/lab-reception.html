@@ -14,8 +14,8 @@
   <app-switch
     label="Sonido de alarma"
     data-testid="recepcion-sonido"
-    [ngModel]="alarma.sonidoActivo()"
-    (ngModelChange)="alarma.alternarSonido()"
+    [ngModel]="alarma.activeSound()"
+    (ngModelChange)="alarma.toggleSound()"
   />
   <p class="recepcion__estado-sonido">{{ estadoDelSonido() }}</p>
 </div>

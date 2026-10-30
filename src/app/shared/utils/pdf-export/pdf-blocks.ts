@@ -1,6 +1,6 @@
 import type { PdfComposer } from './pdf-composer';
 import type { PdfBlock, PdfField, PdfQrMatrix, PdfTotalRow } from './pdf-document.types';
-import { contenerLogo, type PdfLogo } from './pdf-logo';
+import { contenerLogo, type PdfLogo } from '../../../core/pdf-branding/pdf-logo';
 import { drawTable, tableStartHeight } from './pdf-table';
 import {
   gridSpan,

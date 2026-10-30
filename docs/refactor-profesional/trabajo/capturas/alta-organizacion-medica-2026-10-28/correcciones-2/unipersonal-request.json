@@ -1,0 +1,46 @@
+{
+  "organization": {
+    "code": "CM-CONSULTORIO-PAZ-1793230920137",
+    "legalName": "Consultorio Paz 1793230920137",
+    "legalEntityType": "UNIPERSONAL",
+    "tenantType": "MEDICAL_OFFICE",
+    "legalDocuments": {
+      "taxIdentifierFileId": "7db4347c-9d41-4066-a613-ab6aef0a8b42",
+      "commerceRegistryFileId": "30d5561c-e513-48da-aee9-663e6728dc96",
+      "operatingLicenseFileId": "4f9f8878-898d-43a8-addf-4a30720986a0",
+      "healthAuthorityCertificateFileId": "560f2944-b49d-4732-a073-166e547db396"
+    },
+    "countryConceptId": "a19a53c5-4803-435b-a9b3-883669d3ecd0",
+    "jurisdictionConceptId": "2a609a76-f6c3-46a6-a875-daf08d562b7c",
+    "timeZone": "America/La_Paz",
+    "legalRepresentative": {
+      "fullName": "Pedro Paz",
+      "idNumber": "4872190",
+      "email": "pedro.1793230931208@consultorio-paz.test"
+    },
+    "medicalFacility": {
+      "taxIdentifierNumber": "4872190",
+      "healthFacilityRegistrationNumber": "SEDES-LP-0001",
+      "medicalDirector": {
+        "name": "Pedro",
+        "lastName": "Paz",
+        "professionalLicenseNumber": "MAT-777",
+        "email": "pedro@consultorio-paz.test"
+      },
+      "headquarters": {
+        "name": "Casa central",
+        "addressLines": [
+          "Punto GPS -17.76373, -63.34923"
+        ],
+        "latitude": -17.763727170851887,
+        "longitude": -63.349227905273445
+      }
+    }
+  },
+  "owner": {
+    "email": "pedro.1793230931208@consultorio-paz.test",
+    "password": "S3cret-passw0rd",
+    "name": "Pedro",
+    "lastName": "Paz"
+  }
+}

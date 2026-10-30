@@ -107,7 +107,7 @@ línea de cada salida dice la celda. Suma estas comprobaciones en cada direcció
 Consola y red sin errores en las seis, con 0 avisos de CSP excluidos. Entre el pie de la ayuda del
 campo y el aviso quedan el rótulo del mapa y unos 37–41 px. A 390 en la aseguradora son 58 px,
 porque ese rótulo («Ubicación de la casa matriz en el mapa (opcional)») se parte en dos renglones.
-Salidas en `docs/trabajo/2026-09-23-perfil-medico-configurar-tu-perfil/evidencia/h5/navegador-h5s2m6-*.txt`.
+Las salidas de esa corrida quedan en el historial de git.
 
 En una corrida anterior de 1440 oscuro, una captura salió en blanco: sólo el fondo, sin la tarjeta
 (`laboratorio-central-1-vaciada`), aunque sus comprobaciones pasaron. Es el mismo síntoma de la

@@ -128,16 +128,3 @@ node scripts/check-bundle-budget.mjs
 
 Mide `dist/mantra-core-health/browser` y compara con los presupuestos de
 `angular.json`. Corre después de `yarn build`.
-
-## Recomendaciones, en orden
-
-1. **Correr `source-map-explorer` una vez.** Sin compromiso: `npx`, y a partir de
-   ahí las preguntas de arriba tienen respuesta.
-2. **Diferir las pantallas de `auth/`.** La oportunidad más clara; ver
-   [presupuestos](budgets.md#la-oportunidad-más-clara).
-3. **Quitar o usar las tres tipografías de reserva.**
-4. **Añadir un presupuesto por fragmento** para que la vitrina no crezca sin
-   aviso.
-5. **Recuperar o volver a decidir `inlineCritical`.**
-
-Ninguna se ejecuta en este trabajo documental.

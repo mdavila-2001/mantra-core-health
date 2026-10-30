@@ -16,16 +16,38 @@
     min-width: 200px;
     max-width: 320px;
     padding: var(--sp-1);
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-md);
-    box-shadow: var(--shadow-lg);
+    /* Material `regular` (vidrio): el menú se lee por profundidad, no por línea. */
+    background: var(--material-regular-tinte);
+    -webkit-backdrop-filter: var(--material-regular-desenfoque);
+    backdrop-filter: var(--material-regular-desenfoque);
+    border: 1px solid var(--material-trazo);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
     /* una lista larga se desplaza en vez de salirse de la pantalla */
     max-height: 60vh;
     overflow-y: auto;
-    animation: pulse-pop var(--dur-base) var(--pulse-ease);
-    transform-origin: top center;
+    animation: menu-nace var(--spring-rapido-dur) var(--spring-rapido) both;
 }
 
-/* `pulse-pop` (styles/pulse.css): nace de su ancla, crece y se posa. */
+/* Muelle `rápido`: se abre desde el disparador (`transform-origin` lo fija
+   `place()`), sin rebote. Con prefers-reduced-motion la regla global lo anula. */
+@keyframes menu-nace {
+    from {
+        opacity: 0;
+        transform: scale(0.92);
+    }
+}
 
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    :host(.menu--open) {
+        background: var(--material-respaldo);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    :host(.menu--open) {
+        background: var(--material-respaldo);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}

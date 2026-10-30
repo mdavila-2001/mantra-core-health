@@ -16,10 +16,15 @@
  * Uso: node scripts/glossary-articulos-alovida.mjs [--check] [--min <palabras>] [--only a,b]
  *   --check  valida los archivos y sale con error si alguno no cumple; no escribe.
  *   --min    piso de palabras por artículo (por omisión 2000); uno más corto es error.
+ *   --sin-imagen  permite artículos sin ilustración (por omisión cada artículo necesita al menos una).
+ *            Es una excepción explícita y no el modo normal: se usa para los artículos de investigación
+ *            de los términos que todavía no tienen una ilustración original revisada. Con ella, una
+ *            línea `image:` cuyo .svg todavía no existe se omite con un aviso en vez de abortar.
  *   --only   procesa sólo esos slugs (para validar un lote sin tocar el resto).
  *   --api    carpeta del repo del API (por omisión `../mantra-core-health-api` si existe): se le
- *            escribe `src/common/seed/glossary-articles.generated.ts`, de donde el seed siembra la
- *            propiedad `glossary-article` de cada término. Con `--only` no se escribe (sería parcial).
+ *            escribe `src/common/seed/data/glossary/glossary-articles.json`, de donde el seed siembra
+ *            la propiedad `glossary-article` del concepto de cada slug. Con `--only` no se escribe
+ *            (sería parcial).
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -38,6 +43,7 @@ const opcion = (nombre) => {
 const PISO = Number(opcion('--min') ?? 2000);
 const API = resolve(opcion('--api') ?? join(RAIZ, '..', 'mantra-core-health-api'));
 const SOLO = opcion('--only')?.split(',').filter(Boolean);
+const SIN_IMAGEN = process.argv.includes('--sin-imagen');
 
 /** Identificador corto de la fuente; `glossary-article.logic.ts` lo traduce a un nombre legible. */
 export const FUENTE = 'alovida-curated';
@@ -164,7 +170,14 @@ export function compilar(autoria, hoy = VERSION) {
     };
   });
 
-  const imagenes = (autoria.images ?? []).map(({ file, caption, altText }) => {
+  const presentes = (autoria.images ?? []).filter(({ file }) => {
+    if (existsSync(join(IMAGENES, file)) || !SIN_IMAGEN) return true;
+    // Con --sin-imagen el artículo puede ir sin ilustración: una que todavía no se dibujó se omite
+    // (y entra sola en la corrida siguiente) en vez de abortar la compilación de todos los demás.
+    console.warn(`${slug}: se omite la imagen ${file}, que no existe en public/glossary-images (--sin-imagen)`);
+    return false;
+  });
+  const imagenes = presentes.map(({ file, caption, altText }) => {
     if (!/^[a-z0-9]+(-[a-z0-9]+)*\.svg$/.test(file)) falla(`la imagen «${file}» debe llamarse en kebab-case y ser .svg`);
     if (!existsSync(join(IMAGENES, file))) falla(`la imagen ${file} no existe en public/glossary-images`);
     if (typeof altText !== 'string' || altText.trim().length < 20) falla(`la imagen ${file} necesita un texto alternativo descriptivo`);
@@ -183,7 +196,7 @@ export function compilar(autoria, hoy = VERSION) {
       retrievedAt: hoy,
     };
   });
-  if (imagenes.length === 0) falla('el artículo necesita al menos una imagen');
+  if (imagenes.length === 0 && !SIN_IMAGEN) falla('el artículo necesita al menos una imagen (o pase --sin-imagen)');
 
   return {
     conceptRef: { system: FUENTE, code: slug, slug },
@@ -243,44 +256,41 @@ function main() {
 }
 
 /**
- * El archivo que siembra el API: un literal de texto JSON por slug.
+ * El archivo que siembra el API: un objeto JSON `{ slug: "<artículo como texto JSON>" }`.
  *
- * Es un `JSON.parse` perezoso y no un objeto literal a propósito: 80 artículos de
- * ~70 KB como literal de objeto hacen lento al compilador de TypeScript, y como texto
- * son sólo cadenas. El API los valida y los parsea en `glossary-articles.catalog.ts`.
+ * Es dato (`src/common/seed/data/glossary/glossary-articles.json`) y no código: son cientos de
+ * artículos y varios MB, que así no pasan por el linter ni por la cobertura del API y llegan a
+ * `dist/` sin mapa de fuentes. Cada artículo va como **cadena** y no como objeto para que `tsc`
+ * infiera `{ [slug]: string }` y no la forma de cada documento; el API los valida y los parsea,
+ * perezosamente, en `glossary-articles.catalog.ts`. Una línea por slug, ordenadas: un artículo
+ * cambiado es una línea cambiada en el diff.
  */
 export function textoParaLaApi(articulos) {
-  const filas = Object.keys(articulos)
-    .sort()
-    .map((slug) => `  ${JSON.stringify(slug)}: ${JSON.stringify(JSON.stringify(articulos[slug]))},`);
-  return [
-    '/* ============================================================================',
-    '   Los artículos enciclopédicos de autoría propia del glosario, serializados.',
-    '',
-    '   **GENERADO por `scripts/glossary-articulos-alovida.mjs` del front',
-    '   (`mantra-core-health`). No editar a mano**: la fuente son los archivos',
-    '   `data/glossary/articulos/*.md` de ese repositorio.',
-    '',
-    '   Todo el texto es original del equipo y está pendiente de revisión médica.',
-    '   ========================================================================== */',
-    '',
-    '/** Un artículo `GlossaryArticle` serializado como JSON, por slug del término. */',
-    'export const GLOSSARY_ARTICLES_JSON: Readonly<Record<string, string>> = {',
-    ...filas,
-    '};',
-    '',
-  ].join('\n');
+  const slugs = Object.keys(articulos).sort();
+  const filas = slugs.map(
+    (slug, i) =>
+      `  ${JSON.stringify(slug)}: ${JSON.stringify(JSON.stringify(articulos[slug]))}${i < slugs.length - 1 ? ',' : ''}`,
+  );
+  return ['{', ...filas, '}', ''].join('\n');
 }
 
 function escribirParaLaApi(articulos) {
-  const carpeta = join(API, 'src', 'common', 'seed');
-  if (!existsSync(carpeta)) {
+  const seed = join(API, 'src', 'common', 'seed');
+  if (!existsSync(seed)) {
     console.log(`glossary-articulos-alovida: no hay repo del API en ${API}; se omite el archivo del API (--api <carpeta>).`);
     return;
   }
-  const destino = join(carpeta, 'glossary-articles.generated.ts');
+  const carpeta = join(seed, 'data', 'glossary');
+  mkdirSync(carpeta, { recursive: true });
+  const destino = join(carpeta, 'glossary-articles.json');
   writeFileSync(destino, textoParaLaApi(articulos));
   console.log(`glossary-articulos-alovida: ${Object.keys(articulos).length} artículos → ${destino}`);
+  if (existsSync(join(seed, 'glossary-articles.generated.ts'))) {
+    console.warn(
+      'glossary-articulos-alovida: el API todavía tiene glossary-articles.generated.ts (formato anterior); ' +
+        'esa rama no lee el .json nuevo.',
+    );
+  }
 }
 
 if (process.argv[1] !== undefined && import.meta.url === new URL(`file://${process.argv[1]}`).href) main();

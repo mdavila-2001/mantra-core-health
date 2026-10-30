@@ -32,6 +32,10 @@ const FICHA_SIN_DEFINICION: AnatomyStructure = {
   images: [],
 };
 
+/** Las mallas que la página resalta: es estado interno, se lee para no depender del WebGL. */
+const seleccion = (pagina: GlossaryAnatomyAtlas): string[] =>
+  (pagina as unknown as { selectedMeshes: () => string[] }).selectedMeshes();
+
 describe('GlossaryAnatomyAtlas', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
@@ -52,8 +56,9 @@ describe('GlossaryAnatomyAtlas', () => {
     return harness.fixture.nativeElement as HTMLElement;
   }
 
-  function responderCatalogo(): void {
-    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+  function responderCatalogo(partes: readonly AnatomyPart[] = PARTES, compuestas: object = {}): void {
+    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(partes);
+    http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush(compuestas);
     http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [[UTERO, 'útero', 'uterus', 0]] });
   }
 
@@ -84,6 +89,21 @@ describe('GlossaryAnatomyAtlas', () => {
     expect(html().querySelector('[data-testid="atlas3d-sin-definicion"]')?.textContent).toContain('no se completa a mano');
     expect(html().textContent).toContain('traducción automática sin revisar');
     expect(html().textContent).toContain('Descripción extendida');
+  });
+
+  it('las fuentes van en una tabla con fuente, licencia, cita y DOI', async () => {
+    await harness.navigateByUrl('/glossary/anatomy-atlas');
+    responderCatalogo();
+    harness.detectChanges();
+    const tabla = html().querySelector('[data-testid="atlas3d-fuentes"]');
+    expect([...(tabla?.querySelectorAll('thead th') ?? [])].map((n) => n.textContent?.trim())).toEqual([
+      'Fuente',
+      'Licencia',
+      'Cita',
+      'DOI',
+    ]);
+    expect(tabla?.querySelectorAll('tbody tr').length).toBe(3);
+    expect(tabla?.querySelector('a[href^="https://doi.org/"]')).not.toBeNull();
   });
 
   it('muestra los créditos y las licencias de las tres fuentes', async () => {
@@ -120,5 +140,90 @@ describe('GlossaryAnatomyAtlas', () => {
     });
     harness.detectChanges();
     expect(html().querySelector('[data-testid="atlas3d-netter"]')?.textContent).toContain('Láminas 368, 372.');
+  });
+
+  it('el pulmón no tiene malla propia, pero abrirlo resalta los lóbulos que sí', async () => {
+    const PULMON_DERECHO = 'UBERON:0002167';
+    const lobulo = (meshId: string, structureId: string): AnatomyPart => ({
+      meshId, layer: 'organs', sex: 'shared', structureId, shard: 0, side: 'right', labelEn: meshId, match: 'fma_exact',
+    });
+    const pagina = await harness.navigateByUrl(
+      `/glossary/anatomy-atlas?structure=${encodeURIComponent(PULMON_DERECHO)}`,
+      GlossaryAnatomyAtlas,
+    );
+    responderCatalogo(
+      [lobulo('FMA7316', 'UBERON:0002170'), lobulo('FMA7317', 'UBERON:0002171'), lobulo('FMA9', 'UBERON:0000981')],
+      { [PULMON_DERECHO]: ['UBERON:0002170', 'UBERON:0002171'] },
+    );
+    harness.detectChanges();
+    expect(seleccion(pagina)).toEqual(['FMA7316', 'FMA7317']);
+  });
+
+  it('la ficha de una compuesta no dice «sin pieza 3D»: dice que se resaltan sus partes', async () => {
+    const PULMON_DERECHO = 'UBERON:0002167';
+    const lobulo: AnatomyPart = {
+      meshId: 'FMA7316', layer: 'organs', sex: 'shared', structureId: 'UBERON:0002170', shard: 0, side: 'right', labelEn: 'x', match: 'fma_exact',
+    };
+    await harness.navigateByUrl(`/glossary/anatomy-atlas?structure=${encodeURIComponent(PULMON_DERECHO)}`);
+    responderCatalogo([lobulo], { [PULMON_DERECHO]: ['UBERON:0002170'] });
+    const shard = String(anatomyShardOf(PULMON_DERECHO, 32)).padStart(2, '0');
+    http
+      .expectOne(`/anatomy-atlas-3d/catalog/structures-${shard}.json`)
+      .flush({ [PULMON_DERECHO]: { ...FICHA_SIN_DEFINICION, id: PULMON_DERECHO, labelEs: 'pulmón derecho' } });
+    harness.detectChanges();
+    expect(html().querySelector('[data-testid="atlas3d-sin-pieza"]')).toBeNull();
+    expect(html().querySelector('[data-testid="atlas3d-compuesta"]')?.textContent).toContain('se resaltan las piezas de sus partes (1)');
+  });
+
+  it('si composites.json falla, el atlas sigue andando: la compuesta queda sin pieza, como antes', async () => {
+    const pagina = await harness.navigateByUrl(
+      `/glossary/anatomy-atlas?structure=${encodeURIComponent('UBERON:0002167')}`,
+      GlossaryAnatomyAtlas,
+    );
+    http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+    http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush('no', { status: 404, statusText: 'Not Found' });
+    http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [] });
+    harness.detectChanges();
+    expect(seleccion(pagina)).toEqual([]);
+  });
+
+  describe('búsqueda mientras el catálogo carga', () => {
+    async function abrirYEscribir(texto: string): Promise<void> {
+      await harness.navigateByUrl('/glossary/anatomy-atlas');
+      http.expectOne('/anatomy-atlas-3d/catalog/parts.json').flush(PARTES);
+      http.expectOne('/anatomy-atlas-3d/catalog/composites.json').flush({});
+      harness.detectChanges();
+      const campo = html().querySelector<HTMLInputElement>('[data-testid="atlas3d-buscar"] input');
+      campo!.value = texto;
+      campo!.dispatchEvent(new Event('input'));
+      await new Promise((resolver) => setTimeout(resolver, 300));
+      harness.detectChanges();
+    }
+
+    it('con el índice sin llegar, dice que carga y no «no encontramos» (el falso negativo que estresaba)', async () => {
+      await abrirYEscribir('pulm');
+      expect(html().querySelector('[data-testid="atlas3d-cargando"]')?.textContent).toContain('Cargando el catálogo');
+      expect(html().textContent).not.toContain('No encontramos estructuras');
+    });
+
+    it('cuando el índice llega, los resultados reemplazan el aviso', async () => {
+      await abrirYEscribir('útero');
+      http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [[UTERO, 'útero', 'uterus', 0]] });
+      harness.detectChanges();
+      expect(html().querySelector('[data-testid="atlas3d-cargando"]')).toBeNull();
+      expect(html().querySelector('.atlas3d__resultados')?.textContent).toContain('útero');
+    });
+
+    it('si el índice falla, lo dice y deja reintentar', async () => {
+      await abrirYEscribir('pulm');
+      http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush('no', { status: 500, statusText: 'Error' });
+      harness.detectChanges();
+      expect(html().querySelector('[data-testid="atlas3d-catalogo-fallo"]')).not.toBeNull();
+      html().querySelector<HTMLButtonElement>('.atlas3d__reintentar')!.click();
+      harness.detectChanges();
+      http.expectOne('/anatomy-atlas-3d/catalog/index.json').flush({ shards: 32, entries: [] });
+      harness.detectChanges();
+      expect(html().querySelector('[data-testid="atlas3d-catalogo-fallo"]')).toBeNull();
+    });
   });
 });

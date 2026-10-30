@@ -26,12 +26,13 @@
         >
           <!-- ─── Datos personales ──────────────────────────────────────── -->
           <app-tab [label]="pestanas[0]">
+
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
               <!-- Vacío BORRA el dato opcional, que es cómo se quita un segundo
                    nombre que no se lleva. -->
               <app-form-field
                 [label]="practitionerFieldLabel('name', 'Nombre')"
-                [required]="practitionerFieldRule('name')?.required ?? false"
+                [required]="practitionerFieldRequired('name')"
                 [errorMessage]="errorDelServidor('name')"
               >
                 <app-input [(value)]="nombre" placeholder="Su nombre" />
@@ -99,14 +100,14 @@
               </p>
               <app-form-field
                 [label]="practitionerFieldLabel('lastName', 'Apellido paterno')"
-                [required]="practitionerFieldRule('lastName')?.required ?? false"
+                [required]="practitionerFieldRequired('lastName')"
                 [errorMessage]="errorDelServidor('lastName')"
               >
                 <app-input [(value)]="apellidoPaterno" />
               </app-form-field>
               <app-form-field
                 [label]="practitionerFieldLabel('motherLastName', 'Apellido materno') + ' (opcional)'"
-                [required]="practitionerFieldRule('motherLastName')?.required ?? false"
+                [required]="practitionerFieldRequired('motherLastName')"
                 [errorMessage]="errorDelServidor('motherLastName')"
               >
                 <app-input [(value)]="apellidoMaterno" />
@@ -116,7 +117,7 @@
                    ofrecía; la ficha los mostraba sin forma de corregirlos. -->
               <app-form-field
                 [label]="practitionerFieldLabel('birthDate', 'Fecha de nacimiento')"
-                [required]="practitionerFieldRule('birthDate')?.required ?? false"
+                [required]="practitionerFieldRequired('birthDate')"
                 [errorMessage]="errorDelServidor('birthDate')"
                 hint="Se usa para calcular su edad en la ficha. No se publica."
               >
@@ -125,6 +126,9 @@
                   [minDate]="practitionerFieldRule('birthDate')?.minDate ?? null"
                   [maxDate]="practitionerFieldRule('birthDate')?.maxDate ?? null"
                   data-testid="edicion-nacimiento"
+                  (input)="recordarTextoNacimiento($event)"
+                  (keyup)="recordarTextoNacimiento($event)"
+                  (focusout)="recordarTextoNacimiento($event)"
                 />
               </app-form-field>
 
@@ -134,7 +138,7 @@
                    terminaba en cuatro variantes. -->
               <app-form-field
                 [label]="practitionerFieldLabel('professionalTitle', 'Título profesional')"
-                [required]="practitionerFieldRule('professionalTitle')?.required ?? false"
+                [required]="practitionerFieldRequired('professionalTitle')"
                 [errorMessage]="errorDelServidor('professionalTitle')"
                 hint="Sale de la misma lista que el registro, para que la misma profesión no figure escrita de varias maneras."
               >
@@ -196,7 +200,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo">
-                <app-logo-consultorio data-testid="edicion-logo-vista" [src]="logoVisible()" />
+                <app-practice-logo data-testid="edicion-logo-vista" [src]="logoVisible()" />
 
                 <div class="edicion__logo-acciones">
                   <app-file-input
@@ -253,7 +257,7 @@
               </p>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-firma">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="firma"
                   data-testid="edicion-firma-vista"
                   [src]="firma.visible()"
@@ -263,13 +267,13 @@
                   <app-file-input
                     data-testid="edicion-firma-archivo"
                     testId="edicion-firma-archivo"
-                    [files]="firma.archivos()"
+                    [files]="firma.files()"
                     (filesChange)="alElegirFirma($event)"
-                    (rejected)="firma.rechazar($event)"
+                    (rejected)="firma.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="firma.subiendo()"
+                    [disabled]="firma.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="firma.visible() ? 'Cambiar firma' : 'Subir firma'"
@@ -282,12 +286,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-firma-quitar"
-                      (clicked)="firma.quitar()"
+                      (clicked)="firma.remove()"
                     >
                       Quitar firma
                     </button>
                   }
-                  @if (firma.subiendo()) {
+                  @if (firma.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo firma…</p>
                   }
                   @if (firma.error()) {
@@ -299,7 +303,7 @@
               </div>
 
               <div class="edicion__logo-cuerpo" data-testid="edicion-sello">
-                <app-firma-o-sello
+                <app-signature-or-seal
                   tipo="sello"
                   data-testid="edicion-sello-vista"
                   [src]="sello.visible()"
@@ -309,13 +313,13 @@
                   <app-file-input
                     data-testid="edicion-sello-archivo"
                     testId="edicion-sello-archivo"
-                    [files]="sello.archivos()"
+                    [files]="sello.files()"
                     (filesChange)="alElegirSello($event)"
-                    (rejected)="sello.rechazar($event)"
+                    (rejected)="sello.reject($event)"
                     [accept]="formatosDeFirma"
                     [maxSizeBytes]="maxBytesDeFirma"
                     [maxFiles]="1"
-                    [disabled]="sello.subiendo()"
+                    [disabled]="sello.uploading()"
                     [showList]="false"
                     [showFeedback]="false"
                     [label]="sello.visible() ? 'Cambiar sello' : 'Subir sello'"
@@ -328,12 +332,12 @@
                       variant="neutral"
                       size="sm"
                       data-testid="edicion-sello-quitar"
-                      (clicked)="sello.quitar()"
+                      (clicked)="sello.remove()"
                     >
                       Quitar sello
                     </button>
                   }
-                  @if (sello.subiendo()) {
+                  @if (sello.uploading()) {
                     <p class="edicion__logo-estado" role="status">Subiendo sello…</p>
                   }
                   @if (sello.error()) {
@@ -345,32 +349,74 @@
               </div>
             </section>
 
-            <!-- ─── Lo que se muestra y no se corrige acá ──────────────────
-                 «Editar muestre TODOS los campos» (C-05). El documento y el
-                 departamento que lo emitió son del alta, y el contrato de
-                 corrección del perfil no los acepta —el propio tipo de la
-                 lectura lo dice: «no editable desde el perfil: tiene su
-                 circuito propio»—. Hasta hoy el editor no los mostraba, así
-                 que quien venía a corregirlos no encontraba ni el dato ni el
-                 motivo.
-
-                 Renglones de ficha y no campos deshabilitados: un control
-                 apagado invita a buscar cómo encenderlo, y acá no hay forma. -->
+            <!-- ─── Su documento (P28) ─────────────────────────────────────
+                 «Editar muestre TODOS los campos» (C-05). El número, el
+                 departamento que lo emitió y el sexo al nacer son del alta y se
+                 corrigen acá. El número tiene una excepción: con la identidad
+                 ya verificada, lo verificado es ESE número y la API rechaza
+                 cambiarlo (409). Entonces se muestra como renglón de ficha, no
+                 como campo deshabilitado —un control apagado invita a buscar
+                 cómo encenderlo—, y se dice por qué. -->
             @if (soloLectura(); as fijos) {
               <section class="edicion__fijos" data-testid="edicion-documento">
                 <h3 class="edicion__subtitulo">Su documento</h3>
-                <p class="edicion__nota">
-                  Sale de su documento de identidad y no se corrige desde el perfil.
-                </p>
-                <dl class="edicion__fijo">
-                  <dt>Documento de identidad</dt>
-                  <dd>
-                    {{ fijos.documento || 'Sin registrar' }}
-                    @if (fijos.departamento) {
-                      <span class="edicion__fijo-sufijo">{{ fijos.departamento }}</span>
-                    }
-                  </dd>
-                </dl>
+                @if (documentoBloqueado()) {
+                  <p class="edicion__nota" data-testid="edicion-documento-bloqueado">
+                    Su identidad está verificada con este documento, así que el número ya no se
+                    corrige desde el perfil. Si tiene un error, pida una nueva verificación de
+                    identidad.
+                  </p>
+                  <dl class="edicion__fijo">
+                    <dt>Documento de identidad</dt>
+                    <dd>
+                      {{ fijos.documento || 'Sin registrar' }}
+                      @if (fijos.departamento) {
+                        <span class="edicion__fijo-sufijo">{{ fijos.departamento }}</span>
+                      }
+                    </dd>
+                  </dl>
+                } @else {
+                  <p class="edicion__nota">
+                    Corríjalo si lo escribió mal al registrarse. Una vez verificada su identidad, el
+                    número ya no se podrá cambiar desde acá.
+                  </p>
+                  <app-form-field
+                    label="Número de documento de identidad"
+                    [required]="true"
+                    [errorMessage]="errorDocumento() || errorDelServidor('nationalId')"
+                  >
+                    <app-input
+                      data-testid="edicion-numero-documento"
+                      [(value)]="numeroDocumento"
+                      [hasError]="!!(errorDocumento() || errorDelServidor('nationalId'))"
+                    />
+                  </app-form-field>
+                }
+              </section>
+            }
+
+            <!-- Lo demás del documento que se corrige (P28): el departamento
+                 que lo emitió y el sexo al nacer, también con la identidad
+                 verificada — no son lo que la verificación comprobó. -->
+            @if (soloLectura()) {
+              <section class="edicion__fijos" data-testid="edicion-datos-del-documento">
+                <h3 class="edicion__subtitulo">Datos que sí puede corregir</h3>
+                <app-form-field label="Departamento que emitió el documento">
+                  <app-select
+                    data-testid="edicion-departamento-emisor"
+                    [options]="opcionesDepartamento()"
+                    [(value)]="departamentoEmisor"
+                    placeholder="Elija un departamento"
+                  />
+                </app-form-field>
+                <app-form-field label="Sexo al nacer">
+                  <app-select
+                    data-testid="edicion-sexo-al-nacer"
+                    [options]="opcionesSexoAlNacer"
+                    [(value)]="sexoAlNacer"
+                    placeholder="Elija una opción"
+                  />
+                </app-form-field>
               </section>
             }
 
@@ -454,6 +500,133 @@
                 />
               }
             </section>
+
+            <!-- ─── Idiomas ───────────────────────────────────────────────
+                 La ficha los enseña en Datos personales y hasta el
+                 02/10/2026 no había dónde corregirlos: el perfil los leía y
+                 ningún formulario los escribía. Se corrigen —no se agregan
+                 como los títulos— porque no tramitan nada: no hay verificación
+                 que un cambio invalide. Viaja la lista entera en el mismo
+                 `PATCH` del perfil, con su propio botón, igual que los otros
+                 bloques de esta pestaña. -->
+            <section class="edicion__seccion" data-testid="edicion-idiomas">
+              <h3 class="edicion__titulo">Idiomas en los que atiende</h3>
+              <p class="edicion__nota">
+                Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice que
+                puede sostener una consulta clínica en ese idioma, no sólo hablarlo.
+              </p>
+
+              @if (catalogoIdiomasCaido()) {
+                <p class="edicion__aviso" data-testid="idiomas-caidos">
+                  No pudimos traer el catálogo de idiomas.
+                  <button app-button variant="ghost" size="sm" (clicked)="reintentarIdiomas()">
+                    Reintentar
+                  </button>
+                </p>
+              } @else {
+                <form class="edicion__formulario" (submit)="$event.preventDefault()">
+                  @if (idiomas().length === 0) {
+                    <p class="edicion__vacio edicion__campo-ancho" data-testid="idiomas-vacio">
+                      Todavía no declaró ningún idioma.
+                    </p>
+                  }
+
+                  @for (fila of idiomas(); track $index) {
+                    <div
+                      class="edicion__idioma edicion__campo-ancho"
+                      [attr.data-testid]="'idioma-' + $index"
+                    >
+                      <app-form-field [label]="'Idioma ' + ($index + 1)" [required]="true">
+                        <app-select
+                          [attr.data-testid]="'idioma-select-' + $index"
+                          [options]="opcionesDeIdioma()"
+                          placeholder="Elija un idioma"
+                          [value]="fila.idioma"
+                          (valueChange)="elegirIdioma($index, $event)"
+                        />
+                      </app-form-field>
+                      <app-form-field label="Nivel (opcional)">
+                        <app-select
+                          [attr.data-testid]="'idioma-nivel-' + $index"
+                          [options]="opcionesDeNivel()"
+                          [value]="fila.nivel ?? ''"
+                          (valueChange)="elegirNivel($index, $event)"
+                        />
+                      </app-form-field>
+                      <!-- El rótulo visible se repite en cada fila; el nombre
+                           accesible dice de qué idioma es, para que el lector
+                           de pantalla no oiga tres veces lo mismo. -->
+                      <app-switch
+                        class="edicion__idioma-interpreta"
+                        [attr.data-testid]="'idioma-interpreta-' + $index"
+                        [checked]="fila.interpreta"
+                        (checkedChange)="marcarInterpreta($index, $event)"
+                        label="Interpreta en consulta"
+                        [ariaLabel]="'Interpreta en consulta, idioma ' + ($index + 1)"
+                      />
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="md"
+                        class="edicion__idioma-quitar"
+                        [iconOnly]="true"
+                        [attr.aria-label]="'Quitar el idioma ' + ($index + 1)"
+                        [appTooltip]="'Quitar el idioma ' + ($index + 1)"
+                        [attr.data-testid]="'quitar-idioma-' + $index"
+                        (clicked)="quitarIdioma($index)"
+                      >
+                        <app-nav-icon name="remove" />
+                      </button>
+                    </div>
+                  }
+
+                  @if (idiomasRepetidos()) {
+                    <p
+                      class="edicion__aviso edicion__campo-ancho"
+                      role="alert"
+                      data-testid="idiomas-repetidos"
+                    >
+                      Hay un idioma elegido dos veces.
+                    </p>
+                  }
+
+                  <!-- El rechazo del servidor sobre la lista, acá y no sólo en
+                       el aviso general: las filas no tienen un campo del
+                       contrato cada una, así que el mensaje se ancla al bloque. -->
+                  @if (errorDelServidor('languages'); as rechazo) {
+                    <p
+                      class="edicion__aviso edicion__campo-ancho"
+                      role="alert"
+                      data-testid="idiomas-rechazados"
+                    >
+                      {{ rechazo }}
+                    </p>
+                  }
+
+                  <p class="edicion__sumar edicion__campo-ancho">
+                    <button
+                      app-button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      data-testid="agregar-idioma"
+                      (clicked)="agregarIdioma()"
+                    >
+                      + Agregar un idioma
+                    </button>
+                  </p>
+
+                  <app-form-actions
+                    class="edicion__campo-ancho"
+                    submitLabel="Guardar idiomas"
+                    [pending]="guardandoIdiomas()"
+                    [disabled]="!puedeGuardarIdiomas()"
+                    (submitted)="guardarIdiomas()"
+                  />
+                </form>
+              }
+            </section>
           </app-tab>
 
           <!-- ─── Contacto ──────────────────────────────────────────────── -->
@@ -467,56 +640,23 @@
                  no se pierde: vive en señales y controles del componente. -->
             @if (pestana() === pestanaEditor.contacto) {
               <p class="edicion__nota">
-                Dónde le ubican y por dónde le contactan. Se guarda junto con sus datos personales.
+                Dónde le ubican y por dónde le contactan. «Guardar cambios» guarda sólo esta pestaña.
               </p>
 
               <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                @if (catalogoMunicipiosCaido()) {
-                  <p class="edicion__aviso">
-                    No pudimos traer el catálogo de municipios.
-                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                      Reintentar
-                    </button>
-                  </p>
-                } @else if (ramasMunicipios().length > 0) {
-                  <!-- Sin @defer a propósito: esta pantalla ya es un chunk perezoso
-                       (`/my-account/edit`), y un bloque diferido obliga a compilar
-                       el componente de forma asíncrona en los specs (ver la nota del
-                       repo sobre @defer en CI). -->
-                  <app-location-picker
-                    class="edicion__campo-ancho"
-                    testId="edicion-residencia"
-                    [ramas]="ramasMunicipios()"
-                    [value]="municipioResidencia()"
-                    (valueChange)="municipioResidencia.set($event)"
-                    mapLabel="Mapa de Bolivia: elija el departamento donde vive"
-                    municipalityLabel="Localidad de residencia (opcional)"
-                    municipalityHint="Sólo se ofrecen las del departamento que eligió."
-                  />
-                }
-
-                <!-- ALV-009: la calle va acá, con el resto de lo que se corrige —no
-                     en un formulario aparte que sólo agregaba direcciones sueltas
-                     que nadie volvía a leer. -->
-                <app-form-field
-                  class="edicion__campo-ancho"
-                  label="Dirección"
-                  [errorMessage]="errorDelServidor('homeAddressLines')"
-                  hint="Su domicilio particular."
-                >
-                  <app-input
-                    data-testid="edicion-direccion"
-                    [(value)]="direccion"
-                    placeholder="Av. Siempre Viva 742, entre calles..."
-                  />
-                </app-form-field>
-
-                <!-- El punto en el mapa, el mismo bloque que el alta ya usaba para
-                     `gpsDomicilio`: usar la ubicación del navegador, marcar a mano,
-                     mover el pin, confirmar y quitar. Abre con lo último que la
+                <!-- Pedido del cliente del 26/10/2026: cada dirección es un
+                     punto en el mapa, y es lo único que se marca. La calle, el
+                     mapa de Bolivia acercado, el departamento, la provincia, el
+                     municipio y la zona salen del punto y se muestran en sólo
+                     lectura. El del domicilio es obligatorio; uno ya guardado
+                     vale sin volver a confirmarlo. Abre con lo último que la
                      persona dejó, no siempre con lo guardado: ver
                      `gpsDomicilioInicial`. -->
-                <app-ubicacion-picker
+                <h3 class="edicion__subtitulo edicion__campo-ancho">
+                  Su domicilio <span aria-hidden="true">*</span>
+                  <span class="sr-only">(obligatorio)</span>
+                </h3>
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-domicilio"
                   etiquetaConfirmada="Su domicilio"
@@ -524,28 +664,27 @@
                   etiquetaMapa="La ubicación de su domicilio en el mapa"
                   etiquetaMarcar="Marcar mi domicilio en el mapa"
                   indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
+                  etiquetaFicha="Su domicilio"
                   [ids]="idsGpsDomicilio"
                   [inicial]="gpsDomicilioInicial()"
-                  (confirmado)="gpsDomicilio.set($event)"
+                  (confirmado)="confirmarGpsDomicilio($event)"
+                  (localidad)="aplicarLocalidadDomicilio($event)"
                 />
+                @if (errorGpsDomicilio() || errorDelServidor('homeAddressLines'); as error) {
+                  <p
+                    class="edicion__error edicion__campo-ancho"
+                    role="alert"
+                    data-testid="edicion-domicilio-gps-error"
+                  >
+                    {{ error }}
+                  </p>
+                }
 
                 <!-- La dirección del trabajo sí se queda en «Contacto» (decisión del
                      24/09/2026): D-03 sacó de acá los teléfonos y el correo del
-                     trabajo, no la dirección donde atiende. -->
-                <app-form-field
-                  class="edicion__campo-ancho"
-                  label="Dirección del trabajo"
-                  [errorMessage]="errorDelServidor('workAddressLines')"
-                  hint="Dónde atiende en su lugar de trabajo; no es su domicilio personal."
-                >
-                  <app-input
-                    data-testid="edicion-direccion-trabajo"
-                    [(value)]="direccionTrabajo"
-                    placeholder="Calle Warnes 45, lugar de trabajo"
-                  />
-                </app-form-field>
-
-                <app-ubicacion-picker
+                     trabajo, no la dirección donde atiende. Opcional. -->
+                <h3 class="edicion__subtitulo edicion__campo-ancho">Su lugar de trabajo (opcional)</h3>
+                <app-map-location-picker
                   class="edicion__campo-ancho"
                   pinId="edicion-trabajo"
                   etiquetaConfirmada="Su lugar de trabajo"
@@ -553,10 +692,15 @@
                   etiquetaMapa="La ubicación de su trabajo en el mapa"
                   etiquetaMarcar="Marcar su lugar de trabajo en el mapa"
                   indicacionMarcar="Toque el mapa en la puerta del lugar de trabajo para poner el pin."
+                  etiquetaFicha="Su lugar de trabajo"
                   [ids]="idsGpsTrabajo"
                   [inicial]="gpsTrabajoInicial()"
-                  (confirmado)="gpsTrabajo.set($event)"
+                  (confirmado)="confirmarGpsTrabajo($event)"
+                  (localidad)="aplicarLocalidadTrabajo($event)"
                 />
+                @if (errorDelServidor('workAddressLines'); as error) {
+                  <p class="edicion__error edicion__campo-ancho" role="alert">{{ error }}</p>
+                }
 
                 <!-- Los tres teléfonos son el MISMO campo del alta: el país se
                      elige con su bandera y se escribe sólo el número nacional.
@@ -565,7 +709,7 @@
                      maneras. -->
                 <app-form-field
                   [label]="practitionerFieldLabel('mobilePhone', 'Celular personal')"
-                  [required]="practitionerFieldRule('mobilePhone')?.required ?? false"
+                  [required]="practitionerFieldRequired('mobilePhone')"
                   hint="Elija el país si su número no es de Bolivia. No se publica en su ficha."
                   [errorMessage]="
                     enRojo(celularPersonal)
@@ -583,14 +727,17 @@
                 </app-form-field>
                 <app-form-field
                   [label]="practitionerFieldLabel('personalEmail', 'Correo personal')"
-                  [required]="practitionerFieldRule('personalEmail')?.required ?? false"
+                  [required]="practitionerFieldRequired('personalEmail')"
                   [errorMessage]="personalEmailError() || errorDelServidor('personalEmail')"
                   hint="Distinto del de trabajo. No se publica en su ficha."
                 >
                   <app-input
+                    type="email"
+                    autocomplete="email"
                     [(value)]="correoPersonal"
                     [hasError]="!!(personalEmailError() || errorDelServidor('personalEmail'))"
                     placeholder="su.correo@ejemplo.com"
+                    testId="edicion-correo-personal"
                   />
                 </app-form-field>
                 <!-- El correo de trabajo es un contacto, no la cuenta: el alta lo
@@ -629,8 +776,8 @@
                su caja al montarse, que es lo único que obliga a diferir. -->
           <app-tab [label]="pestanas[2]">
             <p class="edicion__nota">
-              A nombre de quién salen los comprobantes que emite. Se guarda junto con sus datos
-              personales.
+              A nombre de quién salen los comprobantes que emite. «Guardar cambios» guarda sólo esta
+              pestaña.
             </p>
 
             <form class="edicion__formulario" (submit)="$event.preventDefault()">
@@ -851,140 +998,14 @@
                 />
               }
             </section>
-
-            <!-- ─── Idiomas ───────────────────────────────────────────────
-                 La ficha los enseña en esta misma pestaña y hasta el
-                 02/10/2026 no había dónde corregirlos: el perfil los leía y
-                 ningún formulario los escribía. Se corrigen —no se agregan
-                 como los títulos— porque no tramitan nada: no hay verificación
-                 que un cambio invalide. Viaja la lista entera en el mismo
-                 `PATCH` del perfil, con su propio botón, igual que los otros
-                 bloques de esta pestaña. -->
-            <section class="edicion__seccion" data-testid="edicion-idiomas">
-              <h3 class="edicion__titulo">Idiomas en los que atiende</h3>
-              <p class="edicion__nota">
-                Los que un paciente puede elegir para la consulta. «Interpreta en consulta» dice
-                que puede sostener una consulta clínica en ese idioma, no sólo hablarlo.
-              </p>
-
-              @if (catalogoIdiomasCaido()) {
-                <p class="edicion__aviso" data-testid="idiomas-caidos">
-                  No pudimos traer el catálogo de idiomas.
-                  <button app-button variant="ghost" size="sm" (clicked)="reintentarIdiomas()">
-                    Reintentar
-                  </button>
-                </p>
-              } @else {
-                <form class="edicion__formulario" (submit)="$event.preventDefault()">
-                  @if (idiomas().length === 0) {
-                    <p class="edicion__vacio edicion__campo-ancho" data-testid="idiomas-vacio">
-                      Todavía no declaró ningún idioma.
-                    </p>
-                  }
-
-                  @for (fila of idiomas(); track $index) {
-                    <div
-                      class="edicion__idioma edicion__campo-ancho"
-                      [attr.data-testid]="'idioma-' + $index"
-                    >
-                      <app-form-field [label]="'Idioma ' + ($index + 1)" [required]="true">
-                        <app-select
-                          [attr.data-testid]="'idioma-select-' + $index"
-                          [options]="opcionesDeIdioma()"
-                          placeholder="Elija un idioma"
-                          [value]="fila.idioma"
-                          (valueChange)="elegirIdioma($index, $event)"
-                        />
-                      </app-form-field>
-                      <app-form-field label="Nivel (opcional)">
-                        <app-select
-                          [attr.data-testid]="'idioma-nivel-' + $index"
-                          [options]="opcionesDeNivel()"
-                          [value]="fila.nivel ?? ''"
-                          (valueChange)="elegirNivel($index, $event)"
-                        />
-                      </app-form-field>
-                      <!-- El rótulo visible se repite en cada fila; el nombre
-                           accesible dice de qué idioma es, para que el lector
-                           de pantalla no oiga tres veces lo mismo. -->
-                      <app-switch
-                        class="edicion__idioma-interpreta"
-                        [attr.data-testid]="'idioma-interpreta-' + $index"
-                        [checked]="fila.interpreta"
-                        (checkedChange)="marcarInterpreta($index, $event)"
-                        label="Interpreta en consulta"
-                        [ariaLabel]="'Interpreta en consulta, idioma ' + ($index + 1)"
-                      />
-                      <button
-                        app-button
-                        type="button"
-                        variant="ghost"
-                        size="md"
-                        class="edicion__idioma-quitar"
-                        [iconOnly]="true"
-                        [attr.aria-label]="'Quitar el idioma ' + ($index + 1)"
-                        [appTooltip]="'Quitar el idioma ' + ($index + 1)"
-                        [attr.data-testid]="'quitar-idioma-' + $index"
-                        (clicked)="quitarIdioma($index)"
-                      >
-                        <app-nav-icon name="remove" />
-                      </button>
-                    </div>
-                  }
-
-                  @if (idiomasRepetidos()) {
-                    <p
-                      class="edicion__aviso edicion__campo-ancho"
-                      role="alert"
-                      data-testid="idiomas-repetidos"
-                    >
-                      Hay un idioma elegido dos veces.
-                    </p>
-                  }
-
-                  <!-- El rechazo del servidor sobre la lista, acá y no sólo en
-                       el aviso general: las filas no tienen un campo del
-                       contrato cada una, así que el mensaje se ancla al bloque. -->
-                  @if (errorDelServidor('languages'); as rechazo) {
-                    <p
-                      class="edicion__aviso edicion__campo-ancho"
-                      role="alert"
-                      data-testid="idiomas-rechazados"
-                    >
-                      {{ rechazo }}
-                    </p>
-                  }
-
-                  <p class="edicion__sumar edicion__campo-ancho">
-                    <button
-                      app-button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      data-testid="agregar-idioma"
-                      (clicked)="agregarIdioma()"
-                    >
-                      + Agregar un idioma
-                    </button>
-                  </p>
-
-                  <app-form-actions
-                    class="edicion__campo-ancho"
-                    submitLabel="Guardar idiomas"
-                    [pending]="guardandoIdiomas()"
-                    [disabled]="!puedeGuardarIdiomas()"
-                    (submitted)="guardarIdiomas()"
-                  />
-                </form>
-              }
-            </section>
           </app-tab>
         </app-tabs>
 
         <!-- ─── El guardar de lo que se corrige ──────────────────────────────
-             Datos personales, Contacto y Facturación son UN formulario
-             repartido en tres pestañas y se guardan juntos, así que el botón
-             vive fuera de las pestañas y no se duplica. En «Dónde atiendo»,
+             Datos personales, Contacto y Facturación comparten el botón, que
+             vive fuera de las pestañas y no se duplica, pero cada una guarda
+             SÓLO lo suyo (CORR-08, MT-38-02): lo que quedó a medio escribir en
+             otra pestaña no viaja de rebote. En «Dónde atiendo»,
              «Trayectoria» y «Credenciales» no hay «Guardar cambios»: ahí no se
              corrige nada, se agrega, y cada bloque tiene su propio «Agregar».
              Un «Guardar cambios» presente mientras se carga una matrícula
@@ -1000,7 +1021,14 @@
           submitLabel="Guardar cambios"
           cancelLabel="Cancelar edición"
           [showSubmit]="editandoPresentacion()"
-          [pending]="guardandoPresentacion()"
+          [pending]="
+            guardandoPresentacion() ||
+            guardandoIdiomas() ||
+            cancelandoEdicion() ||
+            subiendoLogo() ||
+            firma.uploading() ||
+            sello.uploading()
+          "
           (submitted)="guardarPresentacion()"
           (cancelled)="cancelarEdicion()"
         />
@@ -1513,7 +1541,7 @@
 
       <!-- Tres autoridades y no diez (propietario, 13/09/2026). El
            colegio sale del título profesional: ver
-           `core/profesion/autoridades-reguladoras.ts`. -->
+           `core/profession/regulatory-authorities.ts`. -->
       <app-form-field
         label="Autoridad que la emitió"
         [errorMessage]="errorDelServidor('regulatoryAuthority')"

@@ -11,8 +11,6 @@ import type {
   CreateClinicalNoteInput,
   ListChartNotesParams,
 } from './chart-notes.types';
-import { CHART_NOTE_SIMULATOR_EXTENSIONS } from './chart-notes.types';
-import { withSimulatorExtensions } from '../simulator-only';
 
 /** La nota como viaja: las fechas son texto ISO. */
 type WireChartNote = Omit<ChartNote, 'signedAt' | 'createdAt'> & {
@@ -36,6 +34,10 @@ interface WireChartNotesPage extends Omit<ChartNotesPage, 'items'> {
  * con su número y su autor. Corregir después de firmar exige decir por qué
  * (`amendmentReasonText`); sin motivo el servidor responde 409.
  *
+ * Las filas campo/valor de la nota (`entries`, P39) viajan tal cual: la API
+ * las guarda en la versión (`chart.clinical_note_versions.entries_json`) y las
+ * devuelve en el expediente y en `GET /charts/notes`.
+ *
  * La lectura de la historia entera —notas, planes y documentos— sigue en
  * `ClinicalClient.readChart`. `listNotes` existe para el bloque que escribe:
  * relee **sólo** las notas después de guardar, sin pedir de nuevo el resto.
@@ -55,16 +57,24 @@ export class ChartNotesClient {
    * @returns La página, con las fechas ya como `Date`.
    */
   listNotes(params: ListChartNotesParams): Observable<ChartNotesPage> {
+    // `encounterId` NO viaja: `ListChartNotesQueryDto` no lo declara y la
+    // lista blanca de la API responde 400 a todo el pedido (visto en navegador
+    // contra la API real, 26/10/2026, defecto A3: el formulario libre y la
+    // orden de análisis no podían leer las notas de la consulta). Cada nota
+    // trae su `encounterId`, así que el acotado por consulta se hace acá.
     let query = new HttpParams().set('patientProfileId', params.patientProfileId);
-    if (params.encounterId !== undefined) {
-      query = query.set('encounterId', params.encounterId);
-    }
     if (params.limit !== undefined) {
       query = query.set('limit', String(params.limit));
     }
-    return this.http
-      .get<WireChartNotesPage>(this.url('/charts/notes'), { params: query })
-      .pipe(map((page) => ({ ...page, items: page.items.map(toNote) })));
+    const encuentro = params.encounterId;
+    return this.http.get<WireChartNotesPage>(this.url('/charts/notes'), { params: query }).pipe(
+      map((page) => ({
+        ...page,
+        items: page.items
+          .filter((nota) => encuentro === undefined || nota.encounterId === encuentro)
+          .map(toNote),
+      })),
+    );
   }
 
   /**
@@ -74,10 +84,7 @@ export class ChartNotesClient {
    * @returns La nota y la versión recién creadas.
    */
   createNote(input: CreateClinicalNoteInput): Observable<ClinicalNoteVersionRef> {
-    return this.http.post<ClinicalNoteVersionRef>(
-      this.url('/charts/notes'),
-      withSimulatorExtensions(input, CHART_NOTE_SIMULATOR_EXTENSIONS),
-    );
+    return this.http.post<ClinicalNoteVersionRef>(this.url('/charts/notes'), input);
   }
 
   /**
@@ -93,7 +100,7 @@ export class ChartNotesClient {
   ): Observable<ClinicalNoteVersionRef> {
     return this.http.put<ClinicalNoteVersionRef>(
       this.url(`/charts/notes/${encodeURIComponent(noteId)}/versions`),
-      withSimulatorExtensions(input, CHART_NOTE_SIMULATOR_EXTENSIONS),
+      input,
     );
   }
 
@@ -103,11 +110,11 @@ export class ChartNotesClient {
    *
    * @param noteId - La nota.
    * @param versionId - La versión que se firma; tiene que ser la vigente.
-   * @param signerProfileId - El perfil profesional de quien firma. Es
-   *   obligatorio en `SignVersionDto`: sin él la API responde 400.
    * @returns La nota, ya con `signedAt`.
    */
   signVersion(noteId: string, versionId: string, signerProfileId: string): Observable<ChartNote> {
+    // `signerProfileId` es obligatorio en `SignVersionDto`: con `{}` la API
+    // respondía 400 siempre y no se podía firmar ninguna nota (informe B, C5).
     return this.http
       .post<WireChartNote>(
         this.url(

@@ -3,7 +3,7 @@
   subtitle="Busque un medicamento y compare precio y distancia entre las farmacias de la red. Si una sede no publica el precio, se lo decimos: no lo inventamos."
 />
 
-<main class="tienda" aria-label="Tienda de farmacia">
+<section class="tienda" aria-label="Tienda de farmacia">
   <app-card class="tienda__tarjeta" padding="lg">
     <section class="tienda__controles" aria-label="Qué buscar y cómo ordenar">
       <app-form-field label="Qué está buscando" class="tienda__busqueda">
@@ -35,6 +35,25 @@
           (valueChange)="cambiarOrden($event)"
         />
       </app-form-field>
+
+      <!-- P34 · sólo en el modo Farmacias: el filtro lo resuelve el servidor
+           (openNow=true) con el horario declarado por cada farmacia. -->
+      @if (modo() === 'stores') {
+        <div class="tienda__filtros" data-testid="tienda-filtros">
+          <app-chip
+            selectable
+            data-testid="tienda-solo-abiertas"
+            label="Sólo abiertas ahora: 24 h o de turno"
+            [selected]="soloAbiertas()"
+            (selectedChange)="soloAbiertas.set($event)"
+          >
+            Abiertas ahora
+          </app-chip>
+          <span class="tienda__filtros-nota"
+            >Horario declarado por cada farmacia · hora de Bolivia</span
+          >
+        </div>
+      }
 
       <!-- El origen de la distancia: el mismo selector que «Lugares cercanos»
            (casa / trabajo / ubicación actual). Cambiarlo recalcula. -->
@@ -99,4 +118,4 @@
 
     <app-recent-orders />
   </app-card>
-</main>
+</section>
