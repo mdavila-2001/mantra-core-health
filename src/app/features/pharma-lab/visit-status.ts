@@ -71,7 +71,7 @@ const ETIQUETA_POR_CODIGO: Readonly<Record<string, string>> = Object.freeze({
   PHL_VISIT_CANCELLED: 'Cancelada',
   PHL_VISIT_NO_SHOW: 'No asistió',
   PHL_VISIT_VISITOR_NO_SHOW: 'No asistió el visitador',
-  PHL_VISIT_DOCTOR_NO_SHOW: 'No asististe',
+  PHL_VISIT_DOCTOR_NO_SHOW: 'No asistió',
 });
 
 /** Los códigos sobre los que el backend admite aceptar o rechazar. */

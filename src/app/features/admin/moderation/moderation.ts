@@ -23,6 +23,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /** Cuántas entradas se piden por página. */
 const PAGE_SIZE = 25;
@@ -107,6 +108,7 @@ export const ESTADOS: readonly {
     FormField,
     PageHeader,
     Textarea,
+    LoadingState,
   ],
   templateUrl: './moderation.html',
   styleUrl: './moderation.css',
@@ -259,7 +261,7 @@ export class Moderation {
         },
         error: () => {
           this.guardando.set(false);
-          this.error.set('No pudimos registrar la decisión. Reintentá.');
+          this.error.set('No pudimos registrar la decisión. Reintente.');
         },
       });
   }
@@ -292,7 +294,7 @@ export class Moderation {
       },
       error: () => {
         this.guardando.set(false);
-        this.error.set('No pudimos resolver la apelación. Reintentá.');
+        this.error.set('No pudimos resolver la apelación. Reintente.');
       },
     });
   }

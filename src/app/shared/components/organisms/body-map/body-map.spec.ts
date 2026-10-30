@@ -1,7 +1,13 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
-import { BodyMap, ZONAS_CON_SILUETA, type ZonaElegible } from './body-map';
-import { VISTAS_DEL_CUERPO } from './body-zones.geometry';
+import { BodyMap, ESPERAR_IMAGEN_DE_VISTA, ZONAS_CON_SILUETA, type ZonaElegible } from './body-map';
+import {
+  VISTAS_DEL_CUERPO,
+  VISTAS_DEL_CUERPO_FEMENINA,
+  VISTAS_DEL_CUERPO_MASCULINA,
+} from './body-zones.geometry';
 
 /**
  * Las zonas con forma, tal como las entrega `symptom-check` a partir de su
@@ -33,21 +39,29 @@ const ZONAS: readonly ZonaElegible[] = [
   { id: 'piel', nombre: 'Piel y pelo' },
 ];
 
+// El orden sale del centro de cada zona sobre el maniquí (2026-10-23): los
+// brazos del render bajan más que los del dibujo anterior, y las piernas son
+// muslo y pantorrilla juntas, con el centro cerca de la rodilla.
 const FRENTE = [
   'cabeza',
   'garganta',
   'hombros',
   'pecho',
-  'estomago',
   'brazos',
+  'estomago',
   'abdomen',
+  'manos',
   'intima',
   'caderas',
-  'manos',
-  'piernas',
   'rodillas',
+  'piernas',
   'pies',
 ];
+
+/** Las imágenes del maniquí viven en `public/`: lo que baja el navegador. */
+const PUBLICO = join(process.cwd(), 'public');
+/** Tope por imagen: la figura se descarga en cada consulta de síntomas. */
+const PESO_MAXIMO_IMAGEN = 150 * 1024;
 
 describe('BodyMap', () => {
   let fixture: ComponentFixture<BodyMap>;
@@ -55,7 +69,10 @@ describe('BodyMap', () => {
   let html: HTMLElement;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ imports: [BodyMap] });
+    TestBed.configureTestingModule({
+      imports: [BodyMap],
+      providers: [{ provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false }],
+    });
     fixture = TestBed.createComponent(BodyMap);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('zonas', ZONAS);
@@ -104,6 +121,31 @@ describe('BodyMap', () => {
    * rellena, así que no se puede pulsar en su interior —sólo sobre la línea—,
    * y la silueta se volvería inusable con el dedo sin que nada fallara a la vista.
    */
+  it('cada vista trae el render de su maniquí, publicado y liviano', () => {
+    for (const vistas of [
+      VISTAS_DEL_CUERPO,
+      VISTAS_DEL_CUERPO_MASCULINA,
+      VISTAS_DEL_CUERPO_FEMENINA,
+    ]) {
+      for (const vista of vistas) {
+        const archivo = join(PUBLICO, vista.image);
+        expect(existsSync(archivo), `${vista.image} no está en public/`).toBe(true);
+        expect(statSync(archivo).size, `${vista.image} pesa de más`).toBeLessThan(
+          PESO_MAXIMO_IMAGEN,
+        );
+      }
+    }
+  });
+
+  it('las tres proporciones usan imágenes distintas', () => {
+    const imagenes = [
+      VISTAS_DEL_CUERPO,
+      VISTAS_DEL_CUERPO_MASCULINA,
+      VISTAS_DEL_CUERPO_FEMENINA,
+    ].flatMap((vistas) => vistas.map((vista) => vista.image));
+    expect(new Set(imagenes).size).toBe(imagenes.length);
+  });
+
   it('cada zona es un contorno cerrado con vértices', () => {
     for (const vista of VISTAS_DEL_CUERPO) {
       for (const silueta of vista.zonas) {
@@ -124,6 +166,22 @@ describe('BodyMap', () => {
   });
 
   /* ---- El control ---- */
+
+  it('dibuja el maniquí de la vista puesta, decorativo, debajo de las zonas', () => {
+    const render = html.querySelector('[data-testid="body-map-render"]');
+    expect(render?.getAttribute('href')).toBe(VISTAS_DEL_CUERPO[0].image);
+    expect(render?.getAttribute('aria-hidden')).toBe('true');
+    // Debajo: en SVG lo que va antes en el documento se pinta primero.
+    const primeraZona = formaDe('cabeza');
+    expect(render?.compareDocumentPosition(primeraZona) ?? 0).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+
+    pasarA('Espalda');
+    expect(html.querySelector('[data-testid="body-map-render"]')?.getAttribute('href')).toBe(
+      VISTAS_DEL_CUERPO[1].image,
+    );
+  });
 
   it('empieza de frente, con un control por zona y su nombre accesible completo', () => {
     expect(vistaPuesta()).toBe('frente');
@@ -176,6 +234,83 @@ describe('BodyMap', () => {
     expect(formaDe('gluteos').getAttribute('aria-pressed')).toBe('true');
   });
 
+  /**
+   * El error que reportó el cliente (24/09/2026): con una zona de la cara
+   * elegida, «Frente» y «Espalda» no hacían nada, porque la figura volvía sola
+   * a la única vista que tenía esa zona. La vista que elige la persona manda.
+   */
+  it('desde la cara se puede volver a frente y a espalda con una zona de la cara elegida', () => {
+    formaDe('cabeza').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    formaDe('ojos').dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+    expect(component.value()).toBe('ojos');
+
+    pasarA('Frente');
+    expect(vistaPuesta()).toBe('frente');
+    pasarA('Espalda');
+    expect(vistaPuesta()).toBe('espalda');
+    pasarA('Cara');
+    expect(vistaPuesta()).toBe('cara');
+    // Lo elegido no se pierde al mirar otra vista: sigue dicho en palabras.
+    expect(component.value()).toBe('ojos');
+  });
+
+  it('después de cambiar de vista a mano, elegir desde afuera vuelve a dar vuelta la figura', () => {
+    pasarA('Espalda');
+    fixture.componentRef.setInput('value', 'pecho');
+    fixture.detectChanges();
+
+    expect(vistaPuesta()).toBe('frente');
+  });
+
+  /* ---- Lo que se contó ---- */
+
+  it('las zonas marcadas por lo que se contó se ven, se anuncian y se nombran, sin quedar elegidas', () => {
+    fixture.componentRef.setInput('marcadas', ['rodillas', 'gluteos', 'piel']);
+    fixture.detectChanges();
+
+    const rodillas = formaDe('rodillas');
+    expect(rodillas.closest('g')?.classList).toContain('body-map__zona--marcada');
+    expect(rodillas.getAttribute('aria-label')).toBe('Rodillas (por lo que contó)');
+    expect(rodillas.getAttribute('aria-pressed')).toBe('false');
+    expect(component.value()).toBeNull();
+    // Nombra también la que no se ve de frente (glúteos) y la que no tiene forma (piel).
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')?.textContent).toContain(
+      'Glúteos y cola, Rodillas y Piel y pelo',
+    );
+    expect(formaDe('pecho').closest('g')?.classList).not.toContain('body-map__zona--marcada');
+  });
+
+  it('sin nada contado no hay leyenda de marcadas', () => {
+    expect(html.querySelector('[data-testid="body-map-marcadas"]')).toBeNull();
+  });
+
+  /* ---- Apuntar antes de tocar ---- */
+
+  it('apuntar una zona la nombra arriba, y cambiar de vista borra el nombre', () => {
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')?.textContent?.trim()).toBe('Pecho y respiración');
+
+    // La forma se va con la vista y no avisa que el puntero salió.
+    pasarA('Espalda');
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+  });
+
+  it('dejar la zona borra el nombre, y la elegida no se repite arriba', () => {
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    formaDe('pecho').dispatchEvent(new Event('pointerleave'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+
+    formaDe('pecho').dispatchEvent(new MouseEvent('click'));
+    formaDe('pecho').dispatchEvent(new Event('pointerenter'));
+    fixture.detectChanges();
+    expect(html.querySelector('.body-map__pista')).toBeNull();
+  });
+
   it('con zonas de una sola vista no hay selector de vista', () => {
     fixture.componentRef.setInput('zonas', [{ id: 'pecho', nombre: 'Pecho' }]);
     fixture.detectChanges();
@@ -225,7 +360,7 @@ describe('BodyMap', () => {
    */
   it('dice en palabras cuál quedó elegida', () => {
     const linea = html.querySelector('[data-testid="body-map-elegida"]');
-    expect(linea?.textContent).toContain('Tocá una parte del cuerpo');
+    expect(linea?.textContent).toContain('Toque una parte del cuerpo');
 
     formaDe('intima').dispatchEvent(new MouseEvent('click'));
     fixture.detectChanges();
@@ -249,7 +384,7 @@ describe('BodyMap', () => {
 
     expect(html.querySelectorAll('[aria-pressed="true"]')).toHaveLength(0);
     expect(html.querySelector('[data-testid="body-map-elegida"]')?.textContent).toContain(
-      'Tocá una parte del cuerpo',
+      'Toque una parte del cuerpo',
     );
   });
 
@@ -259,5 +394,186 @@ describe('BodyMap', () => {
     fixture.detectChanges();
 
     expect(html.querySelector('svg')).toBeNull();
+  });
+});
+
+/**
+ * El sexo de la silueta (P-04, 2026-09-25): `symptom-check` lo pasa según el
+ * propio perfil, y sin ese dato se dibuja la neutra de siempre. Acá sólo se
+ * prueba que `BodyMap` elige el arreglo de vistas que corresponde; el ancho
+ * de hombro/cintura/cadera de cada uno lo prueba `gen-body-zones.py` al
+ * generarlo.
+ */
+describe('BodyMap · el sexo de la silueta', () => {
+  let fixture: ComponentFixture<BodyMap>;
+  let html: HTMLElement;
+
+  function dDePecho(vistas: typeof VISTAS_DEL_CUERPO): string {
+    const frente = vistas.find((vista) => vista.id === 'frente');
+    const pecho = frente?.zonas.find((zona) => zona.id === 'pecho');
+    if (pecho === undefined) throw new Error('la vista de frente no trae «pecho»');
+    return pecho.d;
+  }
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [BodyMap],
+      providers: [{ provide: ESPERAR_IMAGEN_DE_VISTA, useValue: false }],
+    });
+    fixture = TestBed.createComponent(BodyMap);
+    fixture.componentRef.setInput('zonas', ZONAS);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  function dDibujado(id: string): string | null {
+    return html.querySelector(`[data-testid="body-map-${id}"]`)?.getAttribute('d') ?? null;
+  }
+
+  function imagenDibujada(): string | null {
+    return html.querySelector('[data-testid="body-map-render"]')?.getAttribute('href') ?? null;
+  }
+
+  it('sin `sexo`, dibuja la silueta neutra', () => {
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO));
+    expect(imagenDibujada()).toBe(VISTAS_DEL_CUERPO[0].image);
+  });
+
+  it('con `sexo` "MALE", dibuja la silueta masculina', () => {
+    fixture.componentRef.setInput('sexo', 'MALE');
+    fixture.detectChanges();
+
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_MASCULINA));
+    expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
+    expect(imagenDibujada()).toBe(VISTAS_DEL_CUERPO_MASCULINA[0].image);
+  });
+
+  it('con `sexo` "FEMALE", dibuja la silueta femenina', () => {
+    fixture.componentRef.setInput('sexo', 'FEMALE');
+    fixture.detectChanges();
+
+    expect(dDibujado('pecho')).toBe(dDePecho(VISTAS_DEL_CUERPO_FEMENINA));
+    expect(dDibujado('pecho')).not.toBe(dDePecho(VISTAS_DEL_CUERPO));
+    expect(imagenDibujada()).toBe(VISTAS_DEL_CUERPO_FEMENINA[0].image);
+  });
+});
+
+/**
+ * El cambio de vista no desfasa la imagen de las zonas (reporte del cliente,
+ * 24/10/2026): al pasar de frente a espalda, el contorno de la espalda se veía
+ * un rato sobre el maniquí de frente, hasta que llegaba la imagen nueva.
+ *
+ * Acá sí se espera la imagen (conducta de producción), con una `Image` falsa
+ * cuya descarga se resuelve a mano.
+ */
+describe('BodyMap · el cambio de vista espera la imagen', () => {
+  interface ImagenFalsa {
+    src: string;
+    resolver: () => void;
+  }
+
+  let imagenes: Map<string, ImagenFalsa>;
+  let fixture: ComponentFixture<BodyMap>;
+  let html: HTMLElement;
+
+  const FRENTE_IMG = VISTAS_DEL_CUERPO[0].image;
+  const ESPALDA_IMG = VISTAS_DEL_CUERPO[1].image;
+
+  beforeEach(() => {
+    imagenes = new Map();
+    vi.stubGlobal(
+      'Image',
+      class {
+        private _src = '';
+        get src(): string {
+          return this._src;
+        }
+        set src(valor: string) {
+          this._src = valor;
+        }
+        decode(): Promise<void> {
+          return new Promise<void>((resolver) => {
+            imagenes.set(this._src, { src: this._src, resolver });
+          });
+        }
+      },
+    );
+    TestBed.configureTestingModule({ imports: [BodyMap] });
+    fixture = TestBed.createComponent(BodyMap);
+    fixture.componentRef.setInput('zonas', ZONAS);
+    fixture.detectChanges();
+    html = fixture.nativeElement as HTMLElement;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
+  const imagenDibujada = (): string | null =>
+    html.querySelector('[data-testid="body-map-render"]')?.getAttribute('href') ?? null;
+  const dibujada = (id: string): boolean =>
+    html.querySelector(`[data-testid="body-map-${id}"]`) !== null;
+  const escenario = (): HTMLElement => html.querySelector<HTMLElement>('.body-map__escenario')!;
+
+  function pedir(vista: string): void {
+    html.querySelector<HTMLButtonElement>(`[data-testid="segmentado-${vista}"]`)!.click();
+    fixture.detectChanges();
+  }
+
+  async function llegada(url: string): Promise<void> {
+    imagenes.get(url)!.resolver();
+    // Varias vueltas de microtareas: la imagen se decodifica, compite contra el
+    // tope de espera y recién entonces se marca como lista.
+    for (let vuelta = 0; vuelta < 10; vuelta++) await Promise.resolve();
+    fixture.detectChanges();
+  }
+
+  it('hasta que llega la imagen nueva se ve la figura anterior, con sus propias zonas', async () => {
+    await llegada(FRENTE_IMG);
+
+    pedir('espalda');
+
+    expect(imagenDibujada()).toBe(FRENTE_IMG);
+    expect(dibujada('pecho')).toBe(true);
+    expect(dibujada('nuca')).toBe(false);
+    expect(escenario().getAttribute('aria-busy')).toBe('true');
+    // El selector sí responde al toque: la persona ve que se recibió.
+    expect(
+      html.querySelector('[data-testid="segmentado-espalda"]')?.getAttribute('aria-checked'),
+    ).toBe('true');
+
+    await llegada(ESPALDA_IMG);
+
+    expect(imagenDibujada()).toBe(ESPALDA_IMG);
+    expect(dibujada('nuca')).toBe(true);
+    expect(dibujada('pecho')).toBe(false);
+    expect(escenario().getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('una vista ya vista cambia al instante', async () => {
+    await llegada(FRENTE_IMG);
+    pedir('espalda');
+    await llegada(ESPALDA_IMG);
+    expect(imagenDibujada()).toBe(ESPALDA_IMG);
+
+    pedir('frente');
+
+    expect(imagenDibujada()).toBe(FRENTE_IMG);
+    expect(dibujada('pecho')).toBe(true);
+    expect(escenario().getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('una imagen que no llega no deja la figura congelada', async () => {
+    vi.useFakeTimers();
+    await llegada(FRENTE_IMG);
+    pedir('espalda');
+    expect(imagenDibujada()).toBe(FRENTE_IMG);
+
+    await vi.advanceTimersByTimeAsync(4100);
+    fixture.detectChanges();
+
+    expect(imagenDibujada()).toBe(ESPALDA_IMG);
+    expect(dibujada('nuca')).toBe(true);
   });
 });

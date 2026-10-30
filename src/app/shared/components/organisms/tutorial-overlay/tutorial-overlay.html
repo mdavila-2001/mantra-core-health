@@ -114,16 +114,19 @@
          «Siguiente» no esté. -->
     @if (activo.step.advanceOn === 'click') {
       <p class="tutorial-globo__espera" role="status">
-        Hacé clic en lo que está resaltado para continuar.
+        Haga clic en lo que está resaltado para continuar.
       </p>
     } @else if (activo.step.advanceOn === 'input') {
       <p class="tutorial-globo__espera" role="status">
-        Escribí en el campo resaltado para continuar.
+        Escriba en el campo resaltado para continuar.
       </p>
     }
 
     @if (buscando()) {
-      <p class="tutorial-globo__espera" role="status">Buscando el elemento en la pantalla…</p>
+      <app-loading-state
+        class="tutorial-globo__espera"
+        message="Buscando el elemento en la pantalla…"
+      />
     }
 
     <div class="tutorial-globo__acciones">

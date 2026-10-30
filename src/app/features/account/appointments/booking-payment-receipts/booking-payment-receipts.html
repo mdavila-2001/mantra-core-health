@@ -1,0 +1,142 @@
+<section class="payment-upload" data-testid="booking-receipts" [attr.aria-labelledby]="headingId">
+  <h4 class="payment-upload__title" [id]="headingId">Comprobante de pago</h4>
+
+  @if (notice(); as message) {
+    <app-alert data-testid="booking-receipts-notice" [tone]="message.tone" [title]="message.title">
+      {{ message.message }}
+    </app-alert>
+  }
+
+  @switch (blocker()) {
+    @case ('paid') {
+      <p class="payment-upload__blocked" data-testid="booking-receipts-blocked">
+        Esta cita ya figura como pagada: no hace falta subir otro comprobante.
+      </p>
+    }
+    @case ('without-payment') {
+      <p class="payment-upload__blocked" data-testid="booking-receipts-blocked">
+        Esta cita se canceló, así que no lleva pago ni comprobante.
+      </p>
+    }
+    @case ('unknown-status') {
+      <!-- Sin el estado de la cita, o mientras llega su pago, no se ofrece
+           subir: lo mismo que «Cancelar», que tampoco se ofrece sobre un
+           estado que no se conoce. -->
+    }
+    @default {
+      <form class="payment-upload__form" data-testid="booking-receipts-form" (submit)="submit($event)">
+        <p class="payment-upload__intro">
+          Si ya pagó por transferencia o con QR, suba la foto o el PDF del pago. Su médico lo revisa
+          y la cita queda pagada cuando lo confirma.
+        </p>
+
+        <app-form-field
+          label="Comprobante"
+          hint="Una imagen (PNG, JPG o WEBP) o un PDF, de hasta 5 MB."
+          [required]="true"
+        >
+          <app-file-input
+            testId="booking-receipt-file"
+            label="Elegir el comprobante"
+            [accept]="accept"
+            [maxSizeBytes]="maxBytes"
+            [disabled]="uploading()"
+            [(files)]="files"
+          />
+        </app-form-field>
+
+        <div class="payment-upload__fields">
+          <app-form-field
+            label="Monto pagado (Bs)"
+            hint="Opcional. Por ejemplo, 150,50."
+            [errorMessage]="visibleAmountProblem()"
+          >
+            <app-input
+              testId="booking-receipt-amount"
+              inputMode="decimal"
+              autocomplete="off"
+              placeholder="150,00"
+              [hasError]="visibleAmountProblem() !== null"
+              [disabled]="uploading()"
+              [(value)]="amount"
+              (blurred)="touchAmount()"
+            />
+          </app-form-field>
+
+          <app-form-field label="Fecha del pago" hint="Opcional.">
+            <app-date-picker
+              data-testid="booking-receipt-paid-at"
+              [maxDate]="today"
+              [disabled]="uploading()"
+              [(value)]="paidAt"
+            />
+          </app-form-field>
+        </div>
+
+        <app-form-field label="Nota para su médico" hint="Opcional. Hasta 500 caracteres.">
+          <app-textarea
+            data-testid="booking-receipt-note"
+            placeholder="Por ejemplo: pagué desde la cuenta de mi esposo"
+            [rows]="2"
+            [maxLength]="noteMaxLength"
+            [disabled]="uploading()"
+            [(value)]="note"
+          />
+        </app-form-field>
+
+        <div class="payment-upload__actions">
+          <button
+            app-button
+            type="submit"
+            variant="primary"
+            data-testid="booking-receipt-submit"
+            [isLoading]="uploading()"
+            [disabled]="!canSubmit()"
+          >
+            Subir comprobante
+          </button>
+        </div>
+      </form>
+    }
+  }
+
+  <app-view-state-host [state]="receipts()" (retry)="reload()">
+    <div vsh-skeleton>
+      <app-skeleton variant="text" [lines]="3" />
+    </div>
+    <p vsh-empty class="payment-upload__empty">Todavía no subió comprobantes para esta cita.</p>
+
+    @if (items(); as list) {
+      <h5 class="payment-upload__list-title">Lo que ya subió</h5>
+      <ul class="payment-upload__list" data-testid="booking-receipts-list">
+        @for (receipt of list; track receipt.id) {
+          <li class="payment-upload__item" data-testid="booking-receipt-item" [attr.data-status]="receipt.status">
+            <div class="payment-upload__item-head">
+              <span class="payment-upload__amount">{{ amountOf(receipt) }}</span>
+              <app-badge size="sm" data-testid="booking-receipt-status" [variant]="statusVariants[receipt.status]">
+                {{ statusLabels[receipt.status] }}
+              </app-badge>
+            </div>
+            <p class="payment-upload__meta">
+              Subido el {{ receipt.uploadedAt | date: "dd/MM/yyyy 'a las' HH:mm" }}
+              @if (receipt.paidAt; as paidAt) {
+                · pagado el {{ paidAt | date: 'dd/MM/yyyy' }}
+              }
+            </p>
+            @if (receipt.note; as note) {
+              <p class="payment-upload__note">{{ note }}</p>
+            }
+            @if (receipt.status === 'REJECTED') {
+              <p class="payment-upload__reason" data-testid="booking-receipt-rejection-reason">
+                <strong>Motivo del rechazo:</strong> {{ receipt.rejectionReason ?? 'Su médico no indicó el motivo.' }}
+                @if (blocker() === null) {
+                  Puede subir otro comprobante arriba.
+                }
+              </p>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </app-view-state-host>
+</section>

@@ -81,4 +81,290 @@
     .filter-bar__action {
         margin-inline-start: auto;
     }
+
+    /* `wrap` (opt-in): el buscador ocupa su propio renglón entero y los
+       filtros se reparten debajo, sin encogerse por debajo de su rótulo. */
+    :host(.filter-bar--wrap) .filter-bar__controls {
+        flex-wrap: wrap;
+    }
+
+    :host(.filter-bar--wrap) .filter-bar__search {
+        flex: 1 1 100%;
+    }
+
+    :host(.filter-bar--wrap) .filter-bar__filter {
+        flex: 1 1 180px;
+    }
+}
+
+/* ---- layout «facets»: la columna lateral de un catálogo ------------------
+   Rótulo arriba y una opción por renglón, con una marca redonda que dice
+   cuál está puesta. 40 px de alto por opción: es un blanco táctil. */
+
+:host(.filter-bar--facets) {
+    display: flex;
+    flex-direction: column;
+    margin-block-end: 0;
+}
+
+/* Lo puesto, arriba de la columna: es lo primero que se busca para
+   deshacerlo. */
+:host(.filter-bar--facets) .filter-bar__active {
+    order: -1;
+    padding-block-end: var(--sp-4);
+    border-block-end: 1px solid var(--border-subtle, var(--border-default));
+}
+
+:host(.filter-bar--facets) .filter-bar__controls:empty,
+:host(.filter-bar--facets) .filter-bar__controls:not(:has(> :not(.filter-bar__action))) {
+    display: none;
+}
+
+.filter-bar__faceta + .filter-bar__faceta {
+    margin-block-start: var(--sp-5);
+    padding-block-start: var(--sp-5);
+    border-block-start: 1px solid var(--border-subtle, var(--border-default));
+}
+
+.filter-bar__faceta-rotulo {
+    margin: 0 0 var(--sp-2);
+    color: var(--text-primary);
+    font-size: var(--fs-body);
+    font-weight: 700;
+}
+
+.filter-bar__faceta-lista {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.filter-bar__faceta-opcion {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    inline-size: 100%;
+    min-block-size: 40px;
+    padding: var(--sp-1) var(--sp-2);
+    border: 0;
+    border-radius: var(--r-md);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--fs-body-sm, var(--fs-body));
+    text-align: start;
+    cursor: pointer;
+}
+
+.filter-bar__faceta-opcion:hover {
+    background: var(--bg-surface-alt);
+    color: var(--text-primary);
+}
+
+.filter-bar__faceta-opcion:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.filter-bar__faceta-opcion[aria-pressed='true'] {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.filter-bar__faceta-marca {
+    flex: none;
+    inline-size: 18px;
+    block-size: 18px;
+    border: 2px solid var(--border-strong, var(--border-default));
+    border-radius: var(--r-full);
+    background: var(--bg-surface);
+}
+
+.filter-bar__faceta-opcion[aria-pressed='true'] .filter-bar__faceta-marca {
+    border-color: var(--brand-primary);
+    box-shadow: inset 0 0 0 4px var(--bg-surface);
+    background: var(--brand-primary);
+}
+
+.filter-bar__faceta-texto {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+}
+
+:host(.filter-bar--facets) .filter-bar__active {
+    margin-block: 0 var(--sp-4);
+}
+
+/* ---- detalles de la columna (propietario, 23/10/2026) ------------------- */
+
+.filter-bar__faceta-rotulo {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+}
+
+.filter-bar__faceta-icono {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: var(--r-md);
+    background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg-surface));
+    color: var(--brand-primary);
+    font-size: 1rem;
+}
+
+/* La cantidad, aparte y a la derecha: se compara de un vistazo, en columna,
+   como en el filtro de una tienda. */
+.filter-bar__faceta-cantidad {
+    flex: none;
+    margin-inline-start: auto;
+    min-inline-size: 2ch;
+    padding: 1px 8px;
+    border-radius: var(--r-full);
+    background: var(--bg-surface-alt);
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: center;
+}
+
+.filter-bar__faceta-opcion[aria-pressed='true'] .filter-bar__faceta-cantidad {
+    background: color-mix(in srgb, var(--brand-primary) 14%, var(--bg-surface));
+    color: var(--brand-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .filter-bar__faceta-opcion {
+        transition:
+            background var(--dur-fast) var(--ease-standard),
+            color var(--dur-fast) var(--ease-standard);
+    }
+
+    .filter-bar__faceta-marca {
+        transition:
+            border-color var(--dur-base) var(--ease-standard),
+            background var(--dur-base) var(--ease-standard),
+            box-shadow var(--dur-base) var(--ease-standard),
+            transform var(--dur-base) var(--ease-spring);
+    }
+
+    /* La marca «late» al elegirla: confirma el toque sin un mensaje. */
+    .filter-bar__faceta-opcion[aria-pressed='true'] .filter-bar__faceta-marca {
+        animation: faceta-elegida var(--dur-slow) var(--ease-spring);
+    }
+
+    .filter-bar__faceta-opcion:active .filter-bar__faceta-marca {
+        transform: scale(0.85);
+    }
+}
+
+/* ---- buscador y paginador de la faceta (propietario, 24/10/2026) -------- */
+
+.filter-bar__faceta-buscar {
+    display: block;
+    margin-block-end: var(--sp-2);
+}
+
+.filter-bar__faceta-sin-coincidencias {
+    padding: var(--sp-2);
+    color: var(--text-secondary);
+    font-size: var(--fs-body-sm, var(--fs-body));
+}
+
+.filter-bar__faceta-paginas {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-1);
+    margin-block-start: var(--sp-3);
+    padding-block-start: var(--sp-3);
+    border-block-start: 1px dashed var(--border-subtle, var(--border-default));
+}
+
+/* Las flechas, en un cuadrado con borde suave: el mismo botón de ícono de
+   todo el sistema, con el contorno que lo hace leer como control. */
+.filter-bar__faceta-flecha {
+    flex: none;
+    border: 1px solid var(--border-default);
+}
+
+.filter-bar__faceta-puntos {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-inline-size: 0;
+}
+
+/* El objetivo táctil es el botón entero (20 × 24 px); el punto, su dibujo. */
+.filter-bar__faceta-punto {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 20px;
+    block-size: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-full);
+    background: transparent;
+    cursor: pointer;
+}
+
+.filter-bar__faceta-punto::before {
+    content: '';
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: var(--r-full);
+    background: var(--border-strong, var(--border-default));
+}
+
+.filter-bar__faceta-punto:hover::before {
+    background: var(--text-secondary);
+}
+
+.filter-bar__faceta-punto[aria-current='page']::before {
+    inline-size: 16px;
+    background: var(--brand-primary);
+}
+
+.filter-bar__faceta-punto:focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 1px;
+}
+
+.filter-bar__faceta-pagina {
+    flex: 1;
+    color: var(--text-secondary);
+    font-size: var(--fs-caption);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Con puntos, el «2 de 5» sobra a la vista pero sigue anunciándose. */
+.filter-bar__faceta-puntos + .filter-bar__faceta-pagina {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .filter-bar__faceta-punto::before {
+        transition:
+            inline-size var(--dur-base) var(--ease-spring),
+            background var(--dur-fast) var(--ease-standard);
+    }
+}
+
+@keyframes faceta-elegida {
+    0% { transform: scale(0.6); }
+    100% { transform: scale(1); }
 }

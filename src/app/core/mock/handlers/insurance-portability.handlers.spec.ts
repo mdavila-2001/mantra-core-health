@@ -1,16 +1,22 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { PACIENTE } from '../fixtures/personas';
+import type { PacienteSimulado } from '../fixtures/people';
 import { MockRouter, type MockMethod, type MockReply } from '../mock-router';
-import { buscarUsuario, type MockUser } from '../mock-session';
-import { registrarPortabilidadDeSeguros } from './insurance-portability.handlers';
-import { registrarSeguros } from './insurance.handlers';
-import { registrarPerfiles } from './profiles.handlers';
+import type { MockUser } from '../mock-session';
+
+let PACIENTE: PacienteSimulado;
+/**
+ * `p-mamani` (índice fijo — `people.ts` preserva el orden de los pacientes
+ * escritos «para no mover los índices»): no declara `aseguradora`, es la
+ * persona sin coberturas del fixture.
+ */
+let PACIENTE_SIN_COBERTURAS: PacienteSimulado;
 
 interface ExportWire {
   readonly certificateId: string;
   readonly manifestHash: string;
   readonly recordCount: number;
+  readonly policiesCount: number;
   readonly summary: { readonly allTime: { readonly billedAmount: string; readonly coveredAmount: string } };
 }
 
@@ -21,13 +27,50 @@ interface VerifyWire {
 
 describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', () => {
   const router = new MockRouter();
-  const paciente = buscarUsuario('paciente')!;
-  const medica = buscarUsuario('medica')!;
-  const superadmin = buscarUsuario('superadmin')!;
+  const claimsStorageKey = 'mock.insurance.solicitudes';
+  let previousClaims: string | null = null;
+  let paciente: MockUser;
+  let medica: MockUser;
+  let superadmin: MockUser;
+  let pacienteSinCoberturas: MockUser;
 
-  registrarPerfiles(router);
-  registrarSeguros(router);
-  registrarPortabilidadDeSeguros(router);
+  beforeAll(async () => {
+    // El barrido de mock-backend agrega reclamos. Este certificado parte del seed,
+    // sin borrar los reclamos de los módulos que ejercitan las otras suites.
+    previousClaims = sessionStorage.getItem(claimsStorageKey);
+    sessionStorage.removeItem(claimsStorageKey);
+    vi.resetModules();
+    const { PATIENTS: PACIENTES } = await import('../fixtures/people');
+    const { buscarUsuario } = await import('../mock-session');
+    const { registrarPerfiles } = await import('./profiles.handlers');
+    const { registrarSeguros } = await import('./insurance.handlers');
+    const { registerInsurancePortability } = await import('./insurance-portability.handlers');
+    PACIENTE = PACIENTES[0]!;
+    PACIENTE_SIN_COBERTURAS = PACIENTES[1]!;
+    paciente = buscarUsuario('paciente')!;
+    medica = buscarUsuario('medica')!;
+    superadmin = buscarUsuario('superadmin')!;
+    pacienteSinCoberturas = {
+      ...paciente,
+      key: 'paciente-sin-coberturas',
+      id: PACIENTE_SIN_COBERTURAS.userId,
+      displayName: PACIENTE_SIN_COBERTURAS.displayName,
+      patientProfileId: PACIENTE_SIN_COBERTURAS.id,
+      personId: PACIENTE_SIN_COBERTURAS.personId,
+    };
+    registrarPerfiles(router);
+    registrarSeguros(router);
+    registerInsurancePortability(router);
+  });
+
+  afterAll(() => {
+    if (previousClaims === null) {
+      sessionStorage.removeItem(claimsStorageKey);
+    } else {
+      sessionStorage.setItem(claimsStorageKey, previousClaims);
+    }
+    vi.resetModules();
+  });
 
   function call<T>(
     method: MockMethod,
@@ -181,5 +224,86 @@ describe('handlers de portabilidad de póliza y siniestralidad (subtarea 3.3)', 
       null,
     ) as MockReply;
     expect(respuesta.status).toBe(404);
+  });
+
+  it('verify público acepta el mismo sello en MAYÚSCULAS', () => {
+    const exportado = call<ExportWire>(
+      'POST',
+      '/insurance/portability/export',
+      { patientProfileId: PACIENTE.id },
+      paciente,
+    ) as ExportWire;
+
+    const verificacion = call<VerifyWire>(
+      'GET',
+      `/public/portability/verify/${exportado.manifestHash.toUpperCase()}`,
+      null,
+      null,
+    ) as VerifyWire;
+
+    expect(verificacion.status).toBe('VALID');
+  });
+
+  it('un titular sin coberturas exporta igual, dejando constancia sin arrastrar el historial de PACIENTE (CA-02)', () => {
+    const respuesta = call<ExportWire>(
+      'POST',
+      '/insurance/portability/export',
+      { patientProfileId: PACIENTE_SIN_COBERTURAS.id, format: 'BUNDLE' },
+      pacienteSinCoberturas,
+    );
+    expect(esRespuestaDeError(respuesta)).toBe(false);
+    const wire = respuesta as ExportWire;
+
+    expect(wire.policiesCount).toBe(0);
+    expect(wire.recordCount).toBe(0);
+    expect(wire.summary.allTime.billedAmount).toBe('0.00');
+  });
+
+  it('el certificado del titular trae sus atenciones', async () => {
+    const exportado = call<ExportWire>(
+      'POST',
+      '/insurance/portability/export',
+      { patientProfileId: PACIENTE.id },
+      paciente,
+    ) as ExportWire;
+
+    const descarga = call<MockReply>(
+      'GET',
+      `/insurance/portability/certificates/${exportado.certificateId}/json`,
+      null,
+      paciente,
+    ) as MockReply;
+    const certificado = JSON.parse(await (descarga.body as Blob).text()) as {
+      readonly schemaVersion: string;
+      readonly encounters: readonly unknown[];
+    };
+
+    expect(certificado.schemaVersion).toBe('alovida.insurance-portability/2');
+    expect(certificado.encounters.length).toBeGreaterThan(0);
+  });
+
+  it('un titular sin coberturas no trae atenciones ni diagnósticos inventados', async () => {
+    const exportado = call<ExportWire>(
+      'POST',
+      '/insurance/portability/export',
+      { patientProfileId: PACIENTE_SIN_COBERTURAS.id },
+      pacienteSinCoberturas,
+    ) as ExportWire;
+
+    const descarga = call<MockReply>(
+      'GET',
+      `/insurance/portability/certificates/${exportado.certificateId}/json`,
+      null,
+      pacienteSinCoberturas,
+    ) as MockReply;
+    const certificado = JSON.parse(await (descarga.body as Blob).text()) as {
+      readonly encounters: readonly unknown[];
+      readonly conditions: readonly unknown[];
+      readonly policies: readonly unknown[];
+    };
+
+    expect(certificado.policies).toEqual([]);
+    expect(certificado.encounters).toEqual([]);
+    expect(certificado.conditions).toEqual([]);
   });
 });

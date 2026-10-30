@@ -1,8 +1,8 @@
-import { FilePreview } from '../../../../shared/components/molecules/file-preview/file-preview';
-import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
 import { Menu } from '../../../../shared/components/molecules/menu/menu';
 import { MenuItem } from '../../../../shared/components/molecules/menu/menu-item/menu-item';
 import { MenuTrigger } from '../../../../shared/components/molecules/menu/menu-trigger/menu-trigger';
+import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
+import { FileDropTarget } from '../../../../shared/forms/file-drop-target';
 import {
   afterRenderEffect,
   ChangeDetectionStrategy,
@@ -14,6 +14,7 @@ import {
   inject,
   input,
   output,
+  PendingTasks,
   PLATFORM_ID,
   signal,
   untracked,
@@ -26,34 +27,44 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ChatStore } from '../../../../core/messaging/chat.store';
 import { MessageTemplates } from '../../../../core/messaging/message-templates';
-import { SelectorEmojis } from './selector-emojis';
+import { EmojiPicker } from './emoji-picker';
 import { StickerPicker } from './sticker-picker/sticker-picker';
-import { Grabador } from './grabador';
+import { Recorder } from './recorder';
 import type { Sticker } from '../../../../core/messaging/sticker-pack.generated';
+import { AttachmentPreview } from './attachment-preview/attachment-preview';
 import {
-  formatearTamano,
-  UPLOAD_MAX_BYTES,
-} from '../../../../core/data-access/files/upload-policy';
-import { esImagenAceptada, ImagenRechazada, LIENZO, prepararImagen } from './preparar-imagen';
+  type AttachmentDraft,
+  createDraft,
+  MAX_DRAFTS,
+  partitionFiles,
+  rejectionReason,
+} from './attachment-draft';
+import { LoadingState } from '../../../../shared/components/molecules/loading-state/loading-state';
+import { UPLOAD_MAX_BYTES } from '../../../../core/data-access/files/upload-policy';
+import { ImagenRechazada, LIENZO, prepararImagen } from './preparar-imagen';
 
 /**
- * Cuántos archivos se juntan para mandar de una vez.
- *
- * Seis entran en una fila de miniaturas a 390 px sin que la tira se vuelva un
- * carrusel, y cubren el caso real —receta de dos hojas, frente y dorso de la
- * credencial, la caja del remedio—. Cada uno sale como su propio mensaje.
+ * Cuántos archivos se juntan para mandar de una vez: el tope de la vista
+ * previa ({@link MAX_DRAFTS}). Cada uno sale como su propio mensaje.
  */
-export const TOPE_DE_COLA = 6;
+export const TOPE_DE_COLA = MAX_DRAFTS;
 
-/** Lo que se deja elegir con el selector cuando se buscan fotos. */
+/** Lo que se deja elegir con el botón de fotos de la píldora y los chips. */
 const ACEPTA_FOTOS = 'image/*';
+
+/** «Fotos y videos» del menú «+». */
+const ACEPTA_FOTOS_Y_VIDEOS = 'image/*,video/*';
+
+/** «Documento» del menú «+»: un PDF o un audio. */
+const ACEPTA_DOCUMENTOS = 'application/pdf,audio/*';
 
 /**
  * Lo que acepta el selector por omisión y, con él, el arrastre
- * (`appFileDropTarget` mira este `accept`). `image/*` y no la lista exacta:
- * un HEIC o un BMP se convierten a JPEG antes de subir.
+ * (`appFileDropTarget` mira este `accept`): lo mismo que acepta la vista
+ * previa. `image/*` y no la lista exacta: un HEIC o un BMP se convierten a
+ * JPEG antes de subir.
  */
-const ACEPTA_POR_OMISION = 'image/*,application/pdf';
+const ACEPTA_POR_OMISION = 'image/*,video/*,audio/*,application/pdf';
 
 /**
  * Las respuestas rápidas cuando el hilo está vacío y nadie pasó otras.
@@ -78,22 +89,6 @@ export const SUGERENCIAS_MARKETPLACE: readonly string[] = [
 /** Una sugerencia que habla de una foto abre el selector en vez de sólo escribir. */
 const PIDE_FOTO = /\b(foto|imagen)\b/i;
 
-/** Un archivo esperando a salir, con lo necesario para dibujar su miniatura. */
-export interface ArchivoEnCola {
-  readonly id: number;
-  readonly nombre: string;
-  readonly tipo: string;
-  readonly tamano: number;
-  /** `null` mientras se prepara: hasta entonces no se sabe qué va a subir. */
-  readonly archivo: File | null;
-  /**
-   * Miniatura `data:` de la imagen; `null` en un PDF, en SSR o mientras se lee.
-   * `data:` y no `blob:`: la CSP (`img-src 'self' data:`) bloquea los `blob:`.
-   */
-  readonly vistaPrevia: string | null;
-  readonly estado: 'preparando' | 'lista';
-}
-
 /**
  * La barra de escribir — carril P2 y P9.
  *
@@ -105,6 +100,15 @@ export interface ArchivoEnCola {
  * el scroll —que es lo delicado del hilo— quedaba mezclado con el estado de un
  * panel de emojis.
  *
+ * ## Los adjuntos pasan por la vista previa
+ *
+ * Todo lo que se adjunta —el «+», el botón de fotos y la cámara de la píldora,
+ * pegar con Ctrl+V, soltar sobre la barra, el chip «Te mando la foto»— entra
+ * por {@link agregar}: se valida, **las fotos se preparan** (se achican si
+ * pasan el tope del servidor y se les quitan los metadatos con el GPS, ver
+ * `prepararImagen`) y recién entonces se abre la vista previa
+ * (`AttachmentPreview`) con su pie de foto, su edición y el botón de enviar.
+ *
  * ## El envío no espera al servidor
  *
  * `ChatStore.enviar()` pinta la burbuja en el acto y después la reemplaza por
@@ -114,15 +118,17 @@ export interface ArchivoEnCola {
 @Component({
   selector: 'app-composer',
   imports: [
-    FilePreview,
+    AttachmentPreview,
     FileDropTarget,
     FormsModule,
-    Grabador,
+    Recorder,
+    EmojiPicker,
     Menu,
     MenuItem,
     MenuTrigger,
-    SelectorEmojis,
     StickerPicker,
+    Tooltip,
+    LoadingState,
   ],
   templateUrl: './composer.html',
   styleUrl: './composer.css',
@@ -134,6 +140,7 @@ export class Composer {
   private readonly route = inject(ActivatedRoute);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly lienzo = inject(LIENZO);
+  private readonly tareas = inject(PendingTasks);
 
   /** Avisa que se envió, para que el hilo baje del todo. */
   readonly enviado = output<void>();
@@ -178,33 +185,34 @@ export class Composer {
   protected readonly solapa = signal<'emojis' | 'stickers'>('emojis');
   protected readonly error = signal('');
 
-  /** Los archivos elegidos, esperando la leyenda y el envío. */
-  protected readonly cola = signal<readonly ArchivoEnCola[]>([]);
-  private siguienteId = 0;
-  /** El archivo elegido de cada ítem que se está preparando, para comparar. */
-  private readonly originales = new Map<number, File>();
-
-  /** Lo que se anuncia a los lectores de pantalla al tocar la cola. */
-  protected readonly anuncio = signal('');
-
-  protected readonly tope = TOPE_DE_COLA;
-
-  /** Si alguno todavía se está achicando: hasta que termine no se envía. */
-  protected readonly preparando = computed(() =>
-    this.cola().some((item) => item.estado === 'preparando'),
-  );
+  /**
+   * Lo elegido para mandar, con su pie de foto. Mientras no esté vacía, la
+   * vista previa tapa el hilo (ver `AttachmentPreview`).
+   */
+  protected readonly adjuntos = signal<readonly AttachmentDraft[]>([]);
 
   /**
-   * Un único PDF conserva la vista previa grande de antes (`app-file-preview`
-   * lo rasteriza): de un documento importa ver qué página es. Las fotos van en
-   * la tira de miniaturas.
+   * Lo que quedó afuera de lo elegido, para decirlo **dentro** de la vista
+   * previa: el aviso del composer queda tapado por ella.
    */
-  protected readonly documentoUnico = computed(() => {
-    const lista = this.cola();
-    return lista.length === 1 && lista[0].archivo !== null && !lista[0].tipo.startsWith('image/')
-      ? lista[0].archivo
-      : null;
-  });
+  protected readonly avisoDeAdjuntos = signal('');
+
+  /**
+   * El borrador que heredó lo escrito en el campo. Sólo si ése sale se vacía
+   * el campo: si se lo quitó de la vista previa, la frase sigue ahí.
+   */
+  private heredoElTexto: string | null = null;
+
+  /**
+   * Cuántas fotos se están preparando (achicando, limpiando metadatos). Hasta
+   * que terminen no se abre la vista previa ni se envía el texto: la frase
+   * escrita va a ser el pie de la primera.
+   */
+  protected readonly preparandoCuantas = signal(0);
+  protected readonly preparando = computed(() => this.preparandoCuantas() > 0);
+
+  /** Lo que se anuncia a los lectores de pantalla al preparar adjuntos. */
+  protected readonly anuncio = signal('');
 
   /** Si ya se mandó algo en esta conversación: los chips se retiran. */
   private readonly sugerenciasRetiradas = signal(false);
@@ -214,7 +222,8 @@ export class Composer {
       this.sugerenciasRetiradas() ||
       this.editando() !== null ||
       this.texto().trim() !== '' ||
-      this.cola().length > 0
+      this.adjuntos().length > 0 ||
+      this.preparando()
     ) {
       return [];
     }
@@ -245,9 +254,7 @@ export class Composer {
    */
   private readonly borradorEnEspera = signal<string | null>(null);
 
-  protected readonly puedeEnviar = computed(
-    () => this.texto().trim() !== '' || this.cola().length > 0,
-  );
+  protected readonly puedeEnviar = computed(() => this.texto().trim() !== '');
 
   constructor() {
     // Al cambiar de conversación se recupera lo que se había escrito ahí:
@@ -256,7 +263,7 @@ export class Composer {
       this.texto.set(this.store.borrador());
       this.cerrarPanel();
       this.sugerenciasRetiradas.set(false);
-      this.limpiarAdjunto();
+      this.limpiarAdjuntos();
     });
 
     // El modo edición nace en el hilo (`store.editar()`), así que el campo
@@ -271,7 +278,7 @@ export class Composer {
           }
           this.texto.set(mensaje.bodyText ?? '');
           this.cerrarPanel();
-          this.limpiarAdjunto();
+          this.limpiarAdjuntos();
           this.enfocar();
           return;
         }
@@ -312,7 +319,7 @@ export class Composer {
 
     inject(DestroyRef).onDestroy(() => {
       observador?.disconnect();
-      this.limpiarAdjunto();
+      this.limpiarAdjuntos();
     });
   }
 
@@ -372,28 +379,8 @@ export class Composer {
       return;
     }
 
-    const cola = this.cola();
-    if (cola.length > 0) {
-      // Mientras se achica una foto no se manda nada: mandar las listas y
-      // dejar la otra atrás desordenaría la tanda.
-      if (this.preparando()) {
-        return;
-      }
-      const archivos = cola
-        .map((item) => item.archivo)
-        .filter((archivo): archivo is File => archivo !== null);
-      // Un mensaje por archivo; el texto viaja con el primero (ver
-      // `ChatStore.enviarAdjuntos`).
-      this.store.enviarAdjuntos(archivos.map((archivo) => ({ archivo, vistaPrevia: cola.find((item) => item.archivo === archivo)?.vistaPrevia ?? null })), this.texto());
-      this.limpiarAdjunto();
-      this.texto.set('');
-      this.store.guardarBorrador('');
-      this.sugerenciasRetiradas.set(true);
-      this.enviado.emit();
-      this.enfocar();
-      return;
-    }
-    if (this.texto().trim() === '') {
+    // Mientras se prepara una foto, lo escrito espera: va a ser su pie.
+    if (this.preparando() || this.texto().trim() === '') {
       return;
     }
     this.store.enviar(this.texto());
@@ -414,12 +401,12 @@ export class Composer {
    * —el de enviar, que ya está a la vista— y se puede corregir antes.
    *
    * La que habla de una foto además abre el selector de imágenes: la frase
-   * queda como leyenda de la primera foto.
+   * queda como pie de la primera foto.
    */
   protected usarSugerencia(sugerencia: string): void {
     this.alEscribir(sugerencia);
     if (PIDE_FOTO.test(sugerencia)) {
-      this.elegirArchivo(true);
+      this.elegirArchivo('fotos');
       return;
     }
     this.enfocar();
@@ -441,6 +428,18 @@ export class Composer {
   protected mandarSticker(sticker: Sticker): void {
     this.store.enviarSticker(sticker);
     this.panel.set('ninguno');
+    this.sugerenciasRetiradas.set(true);
+    this.enviado.emit();
+  }
+
+  /**
+   * Un sticker o GIF de la persona: sube y se manda en el acto, marcado como
+   * sticker para que el otro lado lo vea sin burbuja.
+   */
+  protected mandarStickerPropio(archivo: File): void {
+    this.store.enviarAdjunto(archivo, '', true);
+    this.panel.set('ninguno');
+    this.sugerenciasRetiradas.set(true);
     this.enviado.emit();
   }
 
@@ -470,11 +469,15 @@ export class Composer {
 
   /* --- Adjuntos ------------------------------------------------------------ */
 
-  /** Abre el selector: de fotos (galería) o de documentos (PDF). */
-  protected elegirArchivo(soloImagenes: boolean): void {
+  /**
+   * Abre el selector: fotos de la galería (la píldora y los chips), fotos y
+   * videos (el «+») o documentos (PDF o audio).
+   */
+  protected elegirArchivo(que: 'fotos' | 'fotos-y-videos' | 'documento'): void {
     const entrada = this.archivo()?.nativeElement;
     if (entrada) {
-      entrada.accept = soloImagenes ? ACEPTA_FOTOS : 'application/pdf';
+      entrada.accept =
+        que === 'fotos' ? ACEPTA_FOTOS : que === 'fotos-y-videos' ? ACEPTA_FOTOS_Y_VIDEOS : ACEPTA_DOCUMENTOS;
       entrada.click();
     }
     this.panel.set('ninguno');
@@ -499,7 +502,7 @@ export class Composer {
     void this.agregar(archivos);
   }
 
-  /** Ctrl+V de una captura o de una foto copiada la suma a la cola. */
+  /** Ctrl+V de una captura o de una foto copiada la suma a la vista previa. */
   protected alPegar(evento: ClipboardEvent): void {
     const datos = evento.clipboardData;
     const archivos = Array.from(datos?.files ?? []);
@@ -515,192 +518,157 @@ export class Composer {
   }
 
   /**
-   * Suma archivos a la cola: valida, achica las fotos y dice qué no entró.
+   * Suma archivos a la vista previa: valida, prepara las fotos y dice qué no
+   * entró.
    *
-   * Devuelve la promesa para las pruebas; la pantalla no la espera.
+   * Editando no se adjunta, tampoco soltando un archivo sobre la barra: la
+   * edición cambia un mensaje que ya salió, y el pie de foto se llevaría ese
+   * texto a un mensaje nuevo.
+   *
+   * Devuelve la promesa para las pruebas; la pantalla no la espera. La
+   * preparación se registra como tarea pendiente de Angular: `whenStable()`
+   * la espera.
    */
   async agregar(archivos: readonly File[]): Promise<void> {
     if (archivos.length === 0 || this.editando() !== null) {
       return;
     }
     const rechazos: string[] = [];
-    const libres = TOPE_DE_COLA - this.cola().length;
-    const entran = archivos.slice(0, Math.max(0, libres));
-    if (archivos.length > entran.length) {
-      rechazos.push(`Podés mandar hasta ${TOPE_DE_COLA} archivos por vez.`);
+    const libres = MAX_DRAFTS - this.adjuntos().length - this.preparandoCuantas();
+    const candidatos: File[] = [];
+    for (const archivo of archivos) {
+      // Mismos motivos que la vista previa (`rejectionReason`), con el nombre
+      // del archivo delante: con varios elegidos hay que saber cuál fue.
+      const motivo = rejectionReason(archivo);
+      if (motivo !== null) {
+        rechazos.push(
+          motivo.startsWith('El archivo')
+            ? `«${archivo.name}»: ${motivo}`
+            : `«${archivo.name}» no se puede mandar. ${motivo}`,
+        );
+        continue;
+      }
+      candidatos.push(archivo);
+    }
+    const { accepted, rejection } = partitionFiles(candidatos, Math.max(0, libres));
+    if (rejection !== null) {
+      rechazos.push(rejection);
     }
 
-    const tareas: Promise<void>[] = [];
-    for (const archivo of entran) {
-      const tipo = archivo.type.toLowerCase();
-      if (tipo === 'application/pdf') {
-        if (archivo.size > UPLOAD_MAX_BYTES) {
-          rechazos.push(`«${archivo.name}» pesa más de 10 MB.`);
-          continue;
-        }
-        this.encolar({ archivo, vistaPrevia: null, estado: 'lista' });
-        continue;
-      }
-      if (!tipo.startsWith('image/')) {
-        rechazos.push(`«${archivo.name}» no se puede mandar. Podés mandar fotos (JPG, PNG, WEBP o GIF) y PDF.`);
-        continue;
-      }
-      const id = this.encolar({
-        archivo: null,
-        original: archivo,
-        vistaPrevia: null,
-        estado: 'preparando',
-      });
-      // La miniatura sale del original mientras se achica, si el navegador lo
-      // dibuja y no es un monstruo: leer 40 MB a `data:` sólo para una
-      // miniatura de 72 px congelaría la pestaña.
-      if (esImagenAceptada(archivo.type) && archivo.size <= UPLOAD_MAX_BYTES) {
-        this.ponerVistaPrevia(id, archivo);
-      }
-      tareas.push(
-        prepararImagen(archivo, this.isBrowser, this.lienzo).then(
-          (lista) => this.terminarDePreparar(id, lista),
-          (error: unknown) => {
-            this.quitarDeLaCola(id);
+    const terminar = this.tareas.add();
+    this.preparandoCuantas.update((n) => n + accepted.length);
+    this.anunciar();
+    try {
+      const listos = await Promise.all(
+        accepted.map(async (archivo): Promise<File | null> => {
+          try {
+            return await this.preparar(archivo);
+          } catch (error: unknown) {
             rechazos.push(
-              error instanceof ImagenRechazada
-                ? error.message
-                : `No pudimos preparar «${archivo.name}».`,
+              error instanceof ImagenRechazada ? error.message : `No pudimos preparar «${archivo.name}».`,
             );
-          },
-        ),
+            return null;
+          } finally {
+            this.preparandoCuantas.update((n) => n - 1);
+          }
+        }),
       );
-    }
-
-    if (rechazos.length > 0) {
-      this.error.set(rechazos.join(' '));
-    } else {
+      const archivosListos = listos.filter((archivo): archivo is File => archivo !== null);
+      const aviso = rechazos.join(' ');
+      if (archivosListos.length === 0) {
+        this.error.set(aviso);
+        this.anunciar();
+        return;
+      }
       this.error.set('');
+      this.avisoDeAdjuntos.set(aviso);
+      this.ponerAdjuntos(archivosListos);
+      this.anunciar();
+    } finally {
+      terminar();
     }
-    this.anunciar();
-    this.enfocar();
-
-    await Promise.all(tareas);
-    if (rechazos.length > 0) {
-      this.error.set(rechazos.join(' '));
-    }
-    this.anunciar();
   }
 
-  private encolar(datos: {
-    archivo: File | null;
-    original?: File;
-    vistaPrevia: string | null;
-    estado: ArchivoEnCola['estado'];
-  }): number {
-    const base = datos.archivo ?? datos.original!;
-    const id = ++this.siguienteId;
-    if (datos.original) {
-      this.originales.set(id, datos.original);
+  /**
+   * Deja un archivo listo para subir: las fotos pasan por `prepararImagen`
+   * (tope del servidor, sin EXIF ni GPS); lo demás tiene que entrar en el tope
+   * tal cual, porque no hay cómo achicarlo acá.
+   */
+  private async preparar(archivo: File): Promise<File> {
+    if (archivo.type.toLowerCase().startsWith('image/')) {
+      return prepararImagen(archivo, this.isBrowser, this.lienzo);
     }
-    this.cola.update((lista) => [
-      ...lista,
-      {
-        id,
-        nombre: base.name,
-        tipo: base.type,
-        tamano: base.size,
-        archivo: datos.archivo,
-        vistaPrevia: datos.vistaPrevia,
-        estado: datos.estado,
-      },
-    ]);
-    return id;
+    if (archivo.size > UPLOAD_MAX_BYTES) {
+      throw new ImagenRechazada(`«${archivo.name}» pesa más de 10 MB.`);
+    }
+    return archivo;
   }
 
-  private terminarDePreparar(id: number, archivo: File): void {
-    const actual = this.cola().find((item) => item.id === id);
-    if (actual === undefined) {
-      // Se quitó mientras se achicaba.
+  /**
+   * Abre la vista previa con lo elegido, o le suma lo nuevo si ya estaba
+   * abierta.
+   *
+   * Lo que ya estaba escrito en el campo pasa a ser el pie de foto del primer
+   * archivo, como en WhatsApp: escribir «le mando el análisis» y después
+   * adjuntarlo es un solo mensaje, no dos.
+   */
+  private ponerAdjuntos(archivos: readonly File[]): void {
+    this.cerrarPanel();
+    if (this.adjuntos().length > 0) {
+      this.adjuntos.update((lista) => [...lista, ...archivos.map((archivo) => createDraft(archivo))]);
       return;
     }
-    // Si cambió el archivo (se achicó o se convirtió), la miniatura se rehace
-    // con lo que de verdad va a subir.
-    if (actual.vistaPrevia === null || archivo !== this.originales.get(id)) {
-      this.ponerVistaPrevia(id, archivo);
-    }
-    this.originales.delete(id);
-    this.cola.update((lista) =>
-      lista.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              archivo,
-              nombre: archivo.name,
-              tipo: archivo.type,
-              tamano: archivo.size,
-              estado: 'lista' as const,
-            }
-          : item,
-      ),
-    );
+    const leyenda = this.texto().trim();
+    const borradores = archivos.map((archivo, indice) => createDraft(archivo, indice === 0 ? leyenda : ''));
+    this.heredoElTexto = leyenda === '' ? null : borradores[0].id;
+    this.adjuntos.set(borradores);
   }
 
-  /** La × de una miniatura. */
-  protected quitar(item: ArchivoEnCola): void {
-    this.quitarDeLaCola(item.id);
-    this.anunciar(`Se quitó ${item.nombre}.`);
+  /**
+   * Manda cada archivo como un mensaje, con su pie de foto como texto: el
+   * contrato de siempre del store (`enviarAdjunto`), uno por adjunto.
+   */
+  protected enviarAdjuntos(): void {
+    const borradores = this.adjuntos();
+    if (borradores.length === 0) {
+      return;
+    }
+    for (const borrador of borradores) {
+      this.store.enviarAdjunto(borrador.file, borrador.caption);
+    }
+    const salioElTexto = borradores.some((borrador) => borrador.id === this.heredoElTexto);
+    this.limpiarAdjuntos();
+    if (salioElTexto) {
+      this.texto.set('');
+      this.store.guardarBorrador('');
+    }
+    this.sugerenciasRetiradas.set(true);
+    this.enviado.emit();
     this.enfocar();
   }
 
-  private quitarDeLaCola(id: number): void {
-    this.originales.delete(id);
-    this.cola.update((lista) => lista.filter((i) => i.id !== id));
+  /** Cierra la vista previa sin mandar nada. Lo escrito en el campo queda. */
+  protected descartarAdjuntos(): void {
+    this.limpiarAdjuntos();
+    this.enfocar();
   }
 
-  protected limpiarAdjunto(): void {
-    this.originales.clear();
-    this.cola.set([]);
+  protected limpiarAdjuntos(): void {
+    this.adjuntos.set([]);
+    this.avisoDeAdjuntos.set('');
+    this.heredoElTexto = null;
   }
 
-  /** El nombre y el peso, para la etiqueta de la miniatura. */
-  protected describir(item: ArchivoEnCola): string {
-    return item.estado === 'preparando'
-      ? `${item.nombre}, preparando`
-      : `${item.nombre}, ${formatearTamano(item.tamano)}`;
-  }
-
-  protected tamanoLegible(item: ArchivoEnCola): string {
-    return formatearTamano(item.tamano);
-  }
-
-  /** Puede la imagen dibujarse como miniatura en el navegador. */
-  protected esImagen(item: ArchivoEnCola): boolean {
-    return item.tipo.startsWith('image/') && item.vistaPrevia !== null;
-  }
-
-  private anunciar(texto?: string): void {
-    const n = this.cola().length;
-    const listos = this.cola().filter((i) => i.estado === 'lista').length;
+  private anunciar(): void {
+    const preparando = this.preparandoCuantas();
+    const n = this.adjuntos().length;
     this.anuncio.set(
-      texto ??
-        (n === 0
+      preparando > 0
+        ? `Preparando ${preparando === 1 ? '1 archivo' : `${preparando} archivos`}…`
+        : n === 0
           ? ''
-          : `${n} ${n === 1 ? 'archivo' : 'archivos'} para enviar` +
-            (listos < n ? `, ${n - listos} preparándose.` : '.')),
+          : `${n} ${n === 1 ? 'archivo' : 'archivos'} para enviar.`,
     );
-  }
-
-  /** Lee la miniatura como `data:` y la cuelga del ítem, si sigue en la cola. */
-  private ponerVistaPrevia(id: number, archivo: File): void {
-    // Sólo de lo que el navegador dibuja seguro: un HEIC no se ve en Chrome y
-    // muestra el ícono hasta que se convierte.
-    if (!this.isBrowser || typeof FileReader === 'undefined' || !esImagenAceptada(archivo.type)) {
-      return;
-    }
-    const lector = new FileReader();
-    lector.onload = () => {
-      const vistaPrevia = String(lector.result);
-      this.cola.update((lista) =>
-        lista.map((item) => (item.id === id ? { ...item, vistaPrevia } : item)),
-      );
-    };
-    lector.readAsDataURL(archivo);
   }
 
   /* --- Audio --------------------------------------------------------------- */
@@ -708,6 +676,7 @@ export class Composer {
   /** La nota de voz sale sin pasar por la previsualización: se suelta y va. */
   protected alGrabar(audio: File): void {
     this.store.enviarAdjunto(audio, '');
+    this.sugerenciasRetiradas.set(true);
     this.enviado.emit();
   }
 

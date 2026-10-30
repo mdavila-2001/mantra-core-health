@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  afterRenderEffect,
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 
@@ -35,6 +42,10 @@ import { withDisplayCurrency } from '../../../core/money/display-currency';
  * haría pasar por dato verificado.
  */
 const TARIFA_DE_MAQUETA = 'MAQUETA';
+/** Tarifa de referencia del Instituto Nacional de Laboratorios de Salud (INLASA, Bolivia). */
+const TARIFA_INLASA = 'REFERENCIA_INLASA_2026';
+/** Arancel FONASA 2026 (Chile) convertido a bolivianos: la referencia donde Bolivia no publica una. */
+const TARIFA_FONASA = 'REFERENCIA_FONASA_2026_BOB';
 
 /**
  * Desde cuántos estudios aparece el buscador.
@@ -98,8 +109,8 @@ function normalizar(texto: string): string {
   ],
   templateUrl: './laboratory-detail.html',
   styleUrls: [
-    '../../../shared/styles/rejilla-de-tarjetas.css',
-    '../../../shared/styles/ficha-publica.css',
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/public-sheet.css',
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -161,10 +172,25 @@ export class LaboratoryDetail {
 
   private unitId: string | null = null;
 
+  /** Si ya se bajó hasta el ancla de la URL: una vez por carga, no a cada pintado. */
+  private anclaAtendida = false;
+
   constructor() {
     this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
       this.unitId = params.get('unitId');
+      this.anclaAtendida = false;
       this.load();
+    });
+
+    // «Ver estudios y precios» llega con `#estudios`, pero la sección vive
+    // dentro del estado de carga: cuando el router busca el ancla todavía no
+    // existe. Se baja a mano en cuanto la ficha está pintada.
+    afterRenderEffect(() => {
+      if (this.detail() === null || this.anclaAtendida) return;
+      const ancla = this.route.snapshot.fragment;
+      if (ancla === null) return;
+      this.anclaAtendida = true;
+      globalThis.document?.getElementById(ancla)?.scrollIntoView({ block: 'start' });
     });
   }
 
@@ -222,11 +248,17 @@ export class LaboratoryDetail {
       : `${study.code} · ${modalidad}`;
   }
 
-  /** El rótulo del importe: sólo es «público» el que el centro publicó. */
+  /**
+   * El rótulo del importe: sólo es «público» el que el centro publicó. El de
+   * INLASA es el arancel del laboratorio estatal de referencia, no el del centro;
+   * FONASA, el arancel chileno convertido a Bs donde no hay uno boliviano.
+   */
   protected rotuloDelPrecio(study: DiagnosticStudy): string {
-    return study.prices[0]?.scheduleCode === TARIFA_DE_MAQUETA
-      ? 'Precio de demostración'
-      : 'Precio público';
+    const tarifa = study.prices[0]?.scheduleCode;
+    if (tarifa === TARIFA_DE_MAQUETA) return 'Precio de demostración';
+    if (tarifa === TARIFA_INLASA) return 'Precio de referencia INLASA 2026';
+    if (tarifa === TARIFA_FONASA) return 'Referencia FONASA 2026 (Chile), en Bs';
+    return 'Precio público';
   }
 
   /**

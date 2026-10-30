@@ -29,6 +29,7 @@
             [disabled]="action.disabled ?? false"
             (clicked)="select(action)"
           >
+            <app-nav-icon [name]="action.icon" />
             {{ action.label }}
           </button>
         }
@@ -48,6 +49,7 @@
           <app-menu #menuAcciones>
             @for (action of secondaryActions(); track action.code) {
               <app-menu-item [disabled]="action.disabled ?? false" (selected)="select(action)">
+                <app-nav-icon slot="icon" [name]="action.icon" />
                 {{ action.label }}
               </app-menu-item>
             }

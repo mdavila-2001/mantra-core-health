@@ -1,7 +1,11 @@
+import type { EstadoResuelto } from '../calendar-view.types';
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
+  inject,
   input,
   output,
   signal,
@@ -13,6 +17,7 @@ import { RouterLink } from '@angular/router';
 import type {
   ActivityTypeOption,
   AgendaSlot, Booking } from '../../../../core/data-access/scheduling/scheduling.types';
+import { nextControlId } from '@shared/forms/form-control.context';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Tooltip } from '../../../../shared/components/atoms/tooltip/tooltip';
@@ -21,14 +26,10 @@ import {
   UNKNOWN_STATUS_VARIANT,
   type StatusSealVariant,
 } from '../../../../shared/components/organisms/status-seal/status-seal.types';
-import { statusVariantOf } from '../../booking-status';
-import type { BloqueoDelMes } from '../month-view/month-view';
+import { statusLabelOf, statusVariantOf } from '../../booking-status';
+import type { BloqueoDelMes } from '../calendar-view.types';
 
-/** Un estado del catálogo, ya resuelto: su código y cómo se lee. */
-export interface EstadoResuelto {
-  readonly code: string;
-  readonly display: string;
-}
+export type { EstadoResuelto } from '../calendar-view.types';
 
 /** Qué se puede hacer sobre un bloque con cita. */
 export type AccionDeCita = 'llegó' | 'demora' | 'cancelar';
@@ -114,8 +115,12 @@ export interface BloqueDelDia {
    * era— y eso ofrecía reservar un rato que el servidor iba a rechazar. La
    * tabla de Consultas ya lo derivaba bien (`disponible: remainingCapacity > 0`
    * en `agenda.ts`); el día no. Ahora las dos dicen lo mismo.
+   *
+   * `sin-cargar` es ese mismo cupo cuando la lectura del día **falló**: sin la
+   * lectura de citas no se sabe si está cerrado o si hay un paciente encima, y
+   * decir «No disponible» afirmaría algo que la pantalla no sabe.
    */
-  readonly tipo: 'cita' | 'visita' | 'libre' | 'no-disponible' | 'ocupado' | 'aire';
+  readonly tipo: 'cita' | 'visita' | 'libre' | 'no-disponible' | 'sin-cargar' | 'ocupado' | 'aire';
   /** La cita, cuando la hay. */
   readonly cita: Booking | null;
   /** Cómo se llama quien viene. */
@@ -186,6 +191,32 @@ const OPERABLES: ReadonlySet<string> = new Set([
 /** Estados que ya no admiten «llegó»: la persona está o estuvo. */
 const YA_LLEGO: ReadonlySet<string> = new Set(['BOOKING_CHECKED_IN', 'BOOKING_COMPLETED']);
 
+/** Para las etiquetas del lector: fijas en castellano, no dependen del `LOCALE_ID`. */
+const WEEKDAY_NAMES = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+const MONTH_NAMES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+/** Los tipos de bloque que tienen un control principal que recorrer con las flechas. */
+const WITH_MAIN_CONTROL: ReadonlySet<BloqueDelDia['tipo']> = new Set([
+  'cita',
+  'ocupado',
+  'visita',
+  'libre',
+  'aire',
+]);
+
 /**
  * El día del profesional como línea de horas — la agenda del iPhone (AG-5).
  *
@@ -210,6 +241,16 @@ const YA_LLEGO: ReadonlySet<string> = new Set(['BOOKING_CHECKED_IN', 'BOOKING_CO
  *
  * Un bloque libre (o el aire) emite el rato tocado con su rango ya puesto; el
  * contenedor abre la tarjeta única de AG-5 prellenada. Cero menú previo.
+ *
+ * ## Con el teclado, la línea se recorre con las flechas (WCAG 2.1.1)
+ *
+ * Cada bloque tiene un control principal —«Disponible», el hueco, la tarjeta
+ * de la cita— y sólo uno lleva `tabindex="0"` (*roving tabindex*): ↑/↓ van al
+ * rato anterior o siguiente, Inicio/Fin al primero y al último, y ←/→ cambian
+ * de día y dejan el foco en el rato más cercano a la misma hora. Los demás
+ * botones de cada bloque —«Llegó», «Cerrar este rato»— siguen en el orden de
+ * `Tab`. Cada control principal dice día, hora, qué es y **dónde** (`sede`):
+ * «Disponible» solo no le decía nada a quien no ve la hora de al lado.
  */
 @Component({
   selector: 'app-day-view',
@@ -230,6 +271,85 @@ export class DayView {
 
   /** Los bloqueos y el tiempo ocupado que lo tocan. */
   readonly bloqueos = input.required<readonly BloqueoDelMes[]>();
+
+  /** Dónde se atiende, para las etiquetas del lector. `null` si no hay sede. */
+  readonly sede = input<string | null>(null);
+
+  /**
+   * P36 · si el día tiene horario flexible, sus franjas en palabras
+   * («09:00 a 13:00»). Un horario flexible no publica cupos: el paciente pide
+   * la hora que quiere dentro de la franja. Sin cupos ni citas, el día lo dice
+   * en vez de «No atiende este día».
+   */
+  readonly horarioFlexible = input<string | null>(null);
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /** El id de la ayuda de teclado que describe la línea del día. */
+  protected readonly ayudaId = nextControlId('day-view-keys');
+
+  /** La parada de `Tab` de la línea, por clave de bloque, si el teclado la movió. */
+  private readonly foco = signal<string | null>(null);
+
+  /**
+   * El minuto del día al que hay que llevar el foco cuando llegue el día
+   * pedido con ←/→. El bloque viejo desaparece con el cambio de día, y sin
+   * esto el foco caería en `<body>`.
+   */
+  private focoPendiente: {
+    readonly dia: string;
+    readonly minuto: number;
+    /** Hasta cuándo se sigue esperando que lleguen los datos del día. */
+    readonly vence: number;
+  } | null = null;
+
+  constructor() {
+    afterRenderEffect(() => this.resolverFocoPendiente());
+  }
+
+  /**
+   * Cuando llega el día pedido con ←/→, el foco va al rato más cercano a la
+   * misma hora —o, si el día no tiene nada, a «Agregar una cita»—.
+   *
+   * No se resuelve una sola vez: los cupos del día nuevo llegan por red
+   * después de que cambia la fecha, y los bloques se rehacen. Mientras no
+   * venza la espera y el foco siga en esta vista (o se haya perdido en
+   * `<body>` porque su bloque desapareció), se lo vuelve a llevar al rato
+   * que corresponde. Si la persona ya se fue a otra parte, no se lo roba.
+   */
+  private resolverFocoPendiente(): void {
+    const dia = this.dia().toDateString();
+    const claves = this.recorribles();
+    const pendiente = this.focoPendiente;
+    if (pendiente === null || pendiente.dia !== dia) return;
+    if (Date.now() > pendiente.vence) {
+      this.focoPendiente = null;
+      return;
+    }
+    const doc = this.host.nativeElement.ownerDocument;
+    const activo = doc.activeElement;
+    if (activo !== null && activo !== doc.body && !this.host.nativeElement.contains(activo)) {
+      this.focoPendiente = null;
+      return;
+    }
+    if (claves.length === 0) {
+      this.host.nativeElement.querySelector<HTMLElement>('.dia__vacio button')?.focus();
+      return;
+    }
+    let elegido = claves[0];
+    let distancia = Infinity;
+    for (const b of this.bloques()) {
+      if (!claves.includes(b.clave)) continue;
+      const minuto = b.desde.getHours() * 60 + b.desde.getMinutes();
+      const d = Math.abs(minuto - pendiente.minuto);
+      if (d < distancia) {
+        distancia = d;
+        elegido = b.clave;
+      }
+    }
+    this.foco.set(elegido);
+    this.enfocarClave(elegido);
+  }
 
   /**
    * Las tipologías, para poder pintar cada actividad.
@@ -314,6 +434,14 @@ export class DayView {
    * cómo se traduce su estado es de quien contiene la agenda.
    */
   readonly visitas = input<readonly VisitaDelDia[]>([]);
+
+  /**
+   * Si alguna lectura del día (citas o cupos) falló. Lo decide `my-agenda`,
+   * que es quien anota cada fallo: acá sólo cambia lo que el día **afirma**.
+   * Con la lectura caída, un día vacío no es «No atiende este día» y un cupo
+   * sin cita encima no es «No disponible».
+   */
+  readonly incompleteLoad = input<boolean>(false);
 
   /** Pidieron hacer algo con una cita. */
   readonly accionPedida = output<PedidoDeAccion>();
@@ -439,6 +567,116 @@ export class DayView {
     return resuelto === undefined ? UNKNOWN_STATUS_VARIANT : statusVariantOf(resuelto.code);
   }
 
+  /** Las claves de los bloques con control principal, en orden de reloj. */
+  private readonly recorribles = computed(() =>
+    this.bloques()
+      .filter((b) => WITH_MAIN_CONTROL.has(b.tipo) && (b.tipo !== 'cita' || b.cita !== null))
+      .map((b) => b.clave),
+  );
+
+  /** La clave del bloque cuyo control principal lleva `tabindex="0"`. */
+  protected readonly parada = computed(() => {
+    const claves = this.recorribles();
+    const movida = this.foco();
+    return movida !== null && claves.includes(movida) ? movida : (claves[0] ?? null);
+  });
+
+  protected tabindexDe(bloque: BloqueDelDia): 0 | -1 {
+    return this.parada() === bloque.clave ? 0 : -1;
+  }
+
+  /** Enfocar un control principal —con teclado o con clic— lo vuelve la parada. */
+  protected alEnfocar(bloque: BloqueDelDia): void {
+    this.foco.set(bloque.clave);
+  }
+
+  /** Las flechas de la línea. Ver «Con el teclado» en el componente. */
+  protected alTeclear(evento: KeyboardEvent, bloque: BloqueDelDia): void {
+    // Una tecla nueva es una intención nueva: lo que esperaba el día anterior
+    // deja de valer.
+    this.focoPendiente = null;
+    const claves = this.recorribles();
+    const actual = claves.indexOf(bloque.clave);
+    let destino: number;
+    switch (evento.key) {
+      case 'ArrowUp':
+        destino = Math.max(0, actual - 1);
+        break;
+      case 'ArrowDown':
+        destino = Math.min(claves.length - 1, actual + 1);
+        break;
+      case 'Home':
+        destino = 0;
+        break;
+      case 'End':
+        destino = claves.length - 1;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowRight': {
+        evento.preventDefault();
+        const paso = evento.key === 'ArrowLeft' ? -1 : 1;
+        const siguiente = new Date(this.dia());
+        siguiente.setDate(siguiente.getDate() + paso);
+        this.focoPendiente = {
+          dia: siguiente.toDateString(),
+          minuto: bloque.desde.getHours() * 60 + bloque.desde.getMinutes(),
+          vence: Date.now() + 5000,
+        };
+        this.diaCambiado.emit(paso);
+        return;
+      }
+      default:
+        return;
+    }
+    evento.preventDefault();
+    const clave = claves[destino];
+    if (clave === undefined) return;
+    this.foco.set(clave);
+    this.enfocarClave(clave);
+  }
+
+  private enfocarClave(clave: string): void {
+    // Por atributo y sin armar un selector: la clave es un id del servidor y no
+    // se garantiza que sea un identificador CSS válido.
+    const controles = this.host.nativeElement.querySelectorAll<HTMLElement>('[data-linea]');
+    Array.from(controles)
+      .find((el) => el.getAttribute('data-linea') === clave)
+      ?.focus();
+  }
+
+  /**
+   * «Martes 25 de agosto, 12:00 a 12:30, libre, Sede Centro»: lo que dice cada
+   * control principal además de su palabra visible, que va primero en la
+   * etiqueta (WCAG 2.5.3) — «Disponible» solo no decía ni cuándo ni dónde.
+   */
+  protected contextoDe(bloque: BloqueDelDia, estado: string | null = null): string {
+    const start = bloque.desde;
+    const partes = [
+      `${WEEKDAY_NAMES[start.getDay()]} ${start.getDate()} de ${MONTH_NAMES[start.getMonth()]}`,
+      `${reloj(bloque.desde)} a ${reloj(bloque.hasta)}`,
+    ];
+    if (estado) partes.push(estado);
+    const sede = this.sede();
+    if (sede) partes.push(sede);
+    return partes.join(', ');
+  }
+
+  /**
+   * «Ver detalle» es el control principal sólo del tiempo ocupado: en una cita
+   * lo es la tarjeta entera («Atender a …»), y el detalle es uno secundario.
+   */
+  protected detalleEsPrincipal(bloque: BloqueDelDia): boolean {
+    return bloque.tipo === 'ocupado';
+  }
+
+  protected alEnfocarDetalle(bloque: BloqueDelDia): void {
+    if (this.detalleEsPrincipal(bloque)) this.alEnfocar(bloque);
+  }
+
+  protected alTeclearDetalle(evento: KeyboardEvent, bloque: BloqueDelDia): void {
+    if (this.detalleEsPrincipal(bloque)) this.alTeclear(evento, bloque);
+  }
+
   protected readonly titulo = computed(() =>
     this.dia().toLocaleDateString('es-BO', {
       weekday: 'long',
@@ -524,11 +762,12 @@ export class DayView {
         // un 409. La regla se aplica donde se dibuja Y donde se crea
         // (`tocar()`), no sólo escondiendo el botón.
         const tomado = cupo.remainingCapacity <= 0;
+        const tipoTomado = this.incompleteLoad() ? 'sin-cargar' : 'no-disponible';
         delDia.push({
           clave: cupo.id,
           desde: cupo.startAt,
           hasta,
-          tipo: tomado ? 'no-disponible' : 'libre',
+          tipo: tomado ? tipoTomado : 'libre',
           cita: null,
           paciente: '',
           estado: '',
@@ -551,7 +790,7 @@ export class DayView {
         // Sin nombre no se inventa un relleno ni se muestra el uuid: se dice
         // que no está. Que falte es una condición del servidor, no un error.
         paciente: cita.patientName ?? 'Paciente sin nombre registrado',
-        estado: this.etiquetas().get(cita.statusConceptId)?.display ?? 'Reservado',
+        estado: statusLabelOf(this.etiquetas().get(cita.statusConceptId)?.code ?? '', 'Reservado'),
         statusCode: this.etiquetas().get(cita.statusConceptId)?.code ?? '',
         statusVariant: this.selloDe(cita),
         tipologia: this.tipologiaDe(cita),
@@ -595,17 +834,23 @@ export class DayView {
 
   /** Cuántos turnos tiene tomados, para el encabezado. */
   protected readonly resumen = computed(() => {
+    if (this.incompleteLoad()) return 'No se pudieron cargar las citas de este día.';
     const bloques = this.bloques();
     const cupos = bloques.filter((b) => b.tipo === 'cita' || b.tipo === 'libre');
     const conCita = bloques.filter((b) => b.tipo === 'cita').length;
     const ocupados = bloques.filter((b) => b.tipo === 'ocupado').length;
-    if (cupos.length === 0 && ocupados === 0) return 'No atendés este día.';
+    if (cupos.length === 0 && ocupados === 0) {
+      const flexible = this.horarioFlexible();
+      return flexible === null
+        ? 'No atiende este día.'
+        : `Horario flexible de ${flexible}: sin citas pedidas todavía.`;
+    }
     const partes: string[] = [];
     if (cupos.length > 0) {
       partes.push(
         conCita === 0
-          ? `${cupos.length} turnos publicados, ninguno reservado`
-          : `${conCita} de ${cupos.length} turnos reservados`,
+          ? `${cupos.length} horarios publicados, ninguno reservado`
+          : `${conCita} de ${cupos.length} horarios reservados`,
       );
     }
     if (ocupados > 0) {
@@ -698,7 +943,7 @@ export class DayView {
     if (minutos <= HUECO_LARGO_MIN) return null;
     const horas = Math.floor(minutos / 60);
     const resto = minutos % 60;
-    return `${horas} h${resto > 0 ? ` ${resto} min` : ''} sin turnos`;
+    return `${horas} h${resto > 0 ? ` ${resto} min` : ''} sin horarios`;
   }
 
   /** Los bloqueos que tocan el día mirado, recortados a sus límites. */
@@ -731,4 +976,9 @@ export class DayView {
       (b) => b.desde.getTime() < hasta.getTime() && b.hasta.getTime() > desde.getTime(),
     );
   }
+}
+
+/** `HH:mm` de una fecha, sin depender del idioma. */
+function reloj(fecha: Date): string {
+  return `${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`;
 }

@@ -1,0 +1,10 @@
+{
+  "apiLog": [
+    "error: [API] POST /practices/75815a7e-419c-4064-ac46-35a6d0e1a122/healthcare-services → 409 · CONFLICT · «Este procedimiento ya está publicado en esta sede» {status: 409, code: CONFLICT, message: Este procedimiento ya está publ"
+  ],
+  "requests": [],
+  "responses": [],
+  "consoleErrors": [
+    "[API] POST /practices/75815a7e-419c-4064-ac46-35a6d0e1a122/healthcare-services → 409 · CONFLICT · «Este procedimiento ya está publicado en esta sede» {status: 409, code: CONFLICT, message: Este procedimiento ya está publicado en esta sede, details: Object}"
+  ]
+}

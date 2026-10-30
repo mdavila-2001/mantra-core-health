@@ -1,0 +1,22 @@
+/* El modo del ejecutor bajo el nombre del estudio, en «Mis órdenes». */
+.performer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-block-start: var(--sp-1);
+}
+
+.performer p {
+  margin: 0;
+}
+
+.performer__mode {
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.performer__line {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

@@ -271,6 +271,20 @@ export interface QueuedCase {
   readonly expiresAt?: Date;
 }
 
+/** Evidencia del expediente, sin el binario ni datos de identificación. */
+export interface VerificationCaseEvidence {
+  readonly id: string;
+  readonly evidenceTypeConceptId: string;
+  readonly evidenceFileId?: string;
+  readonly createdAt: Date;
+  readonly sequence: number;
+}
+
+/** Expediente de verificación para revisión administrativa. */
+export interface VerificationCaseDetail extends QueuedCase {
+  readonly evidence: readonly VerificationCaseEvidence[];
+}
+
 /**
  * Filtro de la cola. Sin `status`, el backend devuelve los estados que esperan
  * revisión; pedir uno concreto acota a ése.

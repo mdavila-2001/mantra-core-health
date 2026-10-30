@@ -25,7 +25,7 @@
 
 .media-picker__estado {
   color: var(--tinta-2);
-  font-size: 12px;
+  font-size: var(--fs-caption);
 }
 
 .media-picker__lista {

@@ -1,0 +1,8 @@
+# Lo que no aporta al grafo del código: datos, documentos, evidencia y JSON.
+public/
+docs/
+data/
+evidencias/
+cypress/
+.vscode/
+*.json

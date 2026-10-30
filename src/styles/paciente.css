@@ -1,0 +1,851 @@
+/* ════════════════════════════════════════════════════════════════════════════
+   La capa del paciente — rediseño del 22/10/2026.
+
+   Pedido del cliente: una experiencia sencilla para quien le cuesta la
+   tecnología y se aburre rápido; autoexplicativa y entretenida. Esta hoja es lo
+   que hace que el cambio se note en **todas** las pantallas del paciente, no
+   sólo en el inicio, sin tocar una plantilla por pantalla:
+
+   - el encabezado de cada pantalla pasa a ser una cinta de color con el título
+     grande, para que se sepa de un vistazo dónde se está;
+   - las tarjetas, más redondas y con sombra suave, se separan del fondo blanco;
+   - los botones toman forma de píldora, que se reconoce como «se puede tocar»;
+   - el menú lateral tiene renglones más altos y letra un escalón más grande.
+
+   Todo cuelga de `.app-shell--redesign`, que el armazón pone sólo cuando la
+   sesión es de un paciente: quien atiende o administra ve la aplicación igual
+   que antes. El fondo de página sigue blanco (regla del cliente, 10/09/2026):
+   el color va en los organismos, no detrás de ellos. La escala tipográfica
+   global no cambia (propietario, 18/09/2026).
+
+   Los tokens de movimiento (`--spring-*`) existen en la rama `test` y todavía
+   no en `mockup`: se usan con respaldo, así esta hoja vale en las dos.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Encabezado de pantalla: cinta de color ─────────────────────────────── */
+.app-shell--redesign .app-main app-page-header {
+  position: relative;
+  overflow: hidden;
+  padding: var(--sp-6) var(--sp-6);
+  margin-bottom: var(--sp-6);
+  border: 1px solid var(--c-aqua-100);
+  border-radius: var(--r-2xl);
+  background:
+    radial-gradient(80% 140% at 100% 0%, var(--c-aqua-100) 0%, transparent 60%),
+    radial-gradient(60% 120% at 0% 100%, var(--c-mint-100) 0%, transparent 55%),
+    var(--c-ivory-50, var(--bg-surface));
+}
+
+@media (min-width: 780px) {
+  .app-shell--redesign .app-main app-page-header {
+    padding: var(--sp-8) var(--sp-10);
+  }
+}
+
+/* El sello de marca: el logo de AloVida —el archivo, con su color— en un
+   círculo blanco a la izquierda del título. Reemplaza al trazo de electro
+   dibujado a mano que asomaba detrás del botón de la derecha: a la izquierda
+   no hay nada con qué chocar, y el título queda «firmado» en cada pantalla. */
+.app-shell--redesign .app-main app-page-header {
+  padding-inline-start: calc(var(--sp-6) + 3.5rem + var(--sp-4));
+}
+
+.app-shell--redesign .app-main app-page-header::after {
+  content: '';
+  position: absolute;
+  inset-block-start: var(--sp-6);
+  inset-inline-start: var(--sp-6);
+  inline-size: 3.5rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--c-aqua-100);
+  background: #fff url('/alovida/imagenes/alovida-logo.svg') no-repeat 50% 56% / 62% auto;
+  box-shadow: 0 10px 22px -12px rgb(11 85 126 / 45%);
+  pointer-events: none;
+}
+
+@media (min-width: 780px) {
+  .app-shell--redesign .app-main app-page-header {
+    padding-inline-start: calc(var(--sp-10) + 4rem + var(--sp-5));
+  }
+
+  .app-shell--redesign .app-main app-page-header::after {
+    inset-block-start: var(--sp-8);
+    inset-inline-start: var(--sp-10);
+    inline-size: 4rem;
+  }
+}
+
+@media (max-width: 479px) {
+  .app-shell--redesign .app-main app-page-header {
+    padding-inline-start: calc(var(--sp-5) + 2.75rem + var(--sp-3));
+  }
+
+  .app-shell--redesign .app-main app-page-header::after {
+    inset-block-start: var(--sp-6);
+    inset-inline-start: var(--sp-5);
+    inline-size: 2.75rem;
+  }
+}
+
+/* El menú lateral traía dos trazos de electro animados que, cortados por el
+   alto de la pantalla, se veían como rayas sueltas al pie. Para el paciente,
+   en su lugar, el logo como marca de agua. */
+.app-shell--redesign .app-side-nav__textura path {
+  display: none;
+}
+
+.app-shell--redesign .app-side-nav__fondo::after {
+  content: '';
+  position: absolute;
+  inset-block-end: var(--sp-10);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  inline-size: 9rem;
+  aspect-ratio: 601 / 439;
+  background: #9fd8d0;
+  opacity: 0.1;
+  -webkit-mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+  mask: url('/alovida/imagenes/alovida-logo.svg') no-repeat center / contain;
+}
+
+.app-shell--redesign .app-main app-page-header .page-header__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: -0.015em;
+  /* Tinta y no petróleo (27/10/2026, «está muy azul»): el color ya lo pone la
+     cinta. La línea gráfica pide títulos en `--text-primary`. */
+  color: var(--text-primary);
+}
+
+.app-shell--redesign .app-main app-page-header .page-header__subtitle {
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  max-inline-size: 60ch;
+}
+
+/* ── Tarjetas: más redondas, con sombra suave y realce al pasar ─────────── */
+.app-shell--redesign .app-main .card.card--outlined,
+.app-shell--redesign .app-main .card.card--elevated {
+  border-radius: var(--r-xl);
+  border-color: var(--c-aqua-100);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out),
+    transform var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out);
+}
+
+.app-shell--redesign .app-main .card.card--outlined:hover,
+.app-shell--redesign .app-main .card.card--elevated:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.app-shell--redesign .app-main .card[role='button']:hover {
+  transform: translateY(-2px);
+}
+
+/* ── Botones en píldora ─────────────────────────────────────────────────── */
+.app-shell--redesign .app-main [app-button] {
+  border-radius: var(--r-full);
+}
+
+/* ── Pestañas: más grandes, la elegida con fondo ────────────────────────── */
+.app-shell--redesign .app-main .tabs__tab {
+  font-size: var(--fs-body-lg);
+  /* `--r-lg` y no `--r-full`: en una pestaña que reparte el ancho (un tercio de
+     la ficha del glosario) el radio entero la volvía una cúpula. */
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+
+.app-shell--redesign .app-main .tabs__tab[aria-selected='true'] {
+  background: var(--c-aqua-50);
+}
+
+/* ── Menú lateral: renglones más altos y un escalón más de letra ────────── */
+.app-shell--redesign .app-side-nav__item {
+  min-height: 2.875rem;
+  font-size: var(--fs-body-lg);
+  border-radius: var(--r-lg);
+}
+
+.app-shell--redesign .app-side-nav__item app-nav-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.app-shell--redesign .app-side-nav__item.is-activo {
+  font-weight: 600;
+  background: rgba(159, 216, 208, 0.26);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell--redesign .app-main .card { transition: none; }
+  .app-shell--redesign .app-main .card[role='button']:hover { transform: none; }
+}
+
+/* ── Tema oscuro ────────────────────────────────────────────────────────── */
+:root[data-theme='dark'] .app-shell--redesign .app-main app-page-header {
+  border-color: var(--border-default);
+  background:
+    radial-gradient(80% 140% at 100% 0%, rgba(79, 179, 169, 0.18) 0%, transparent 60%),
+    var(--bg-surface);
+}
+
+:root[data-theme='dark'] .app-shell--redesign .app-main app-page-header .page-header__title {
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell--redesign .app-main .card.card--outlined,
+:root[data-theme='dark'] .app-shell--redesign .app-main .card.card--elevated {
+  border-color: var(--border-default);
+}
+
+:root[data-theme='dark'] .app-shell--redesign .app-main .tabs__tab[aria-selected='true'] {
+  background: rgba(79, 179, 169, 0.14);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .app-shell--redesign .app-main app-page-header {
+    border-color: var(--border-default);
+    background:
+      radial-gradient(80% 140% at 100% 0%, rgba(79, 179, 169, 0.18) 0%, transparent 60%),
+      var(--bg-surface);
+  }
+
+  :root:not([data-theme='light']) .app-shell--redesign .app-main app-page-header .page-header__title {
+    color: var(--c-aqua-300);
+  }
+}
+
+/* ─── Atajos con nombre, para el paciente (rediseño 22/10/2026) ──────────────
+   Para quien le cuesta la tecnología, un ícono sin palabra es una adivinanza:
+   la cabecera del paciente tenía nueve. En pantalla ancha cada atajo lleva su
+   nombre debajo del ícono; en los anchos intermedios, donde no entran nueve
+   rótulos, se agrupan detrás de «Más» —el mismo menú con palabras que ya usa el
+   teléfono—. Vale también para el médico (cuarta vuelta): sus cinco atajos
+   eran íconos sueltos. Quien administra conserva la cabecera de siempre.
+
+   Sin agrandar la escala tipográfica: el propietario la bajó un escalón el
+   18/09/2026 porque «se leía como con zoom». Lo que se gana acá es la palabra,
+   no el tamaño. */
+@media (min-width: 1280px) {
+  /* Una sola barra para todos los destinos (27/10/2026): antes eran nueve
+     rótulos sueltos de anchos distintos, y la Red social, una pastilla con
+     otro dibujo. Juntos sobre un mismo fondo se leen como lo que son —los
+     lugares a los que se va— y el de la pantalla actual se destaca. */
+  .app-shell--redesign .app-header__rapidos-lista {
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--filete);
+    border-radius: var(--r-menu);
+    background: var(--sup-inset);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social {
+    flex-direction: column;
+    gap: 2px;
+    block-size: auto;
+    min-inline-size: 3.75rem;
+    padding: 3px var(--e2);
+    border: 0;
+    border-radius: var(--r-ctrl);
+    background: transparent;
+    box-shadow: none;
+    color: inherit;
+    font-weight: 500;
+  }
+
+  .app-shell--redesign .app-header__red-social-texto {
+    display: block;
+    font-size: var(--fs-caption);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social:hover,
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes:hover {
+    background: var(--sup-tarjeta);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .is-activo {
+    background: var(--sup-tarjeta);
+    color: var(--petroleo);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 12%);
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .is-activo .app-header__rapidos-label,
+  .app-shell--redesign .app-header__rapidos-lista .is-activo .app-header__red-social-texto {
+    font-weight: 700;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes {
+    flex-direction: column;
+    gap: 2px;
+    inline-size: auto;
+    min-inline-size: 3.75rem;
+    block-size: auto;
+    padding: 3px var(--e2);
+    border-radius: var(--r-ctrl);
+  }
+
+  .app-shell--redesign .app-header__rapidos-label {
+    display: block;
+    font-size: var(--fs-caption);
+    line-height: 1.1;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__chats-badge {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: var(--e1);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1279px) {
+  .app-shell--redesign .app-header__rapidos-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--e1);
+    block-size: 2.5rem;
+    padding-inline: var(--e3);
+    border: 1px solid var(--filete);
+    border-radius: var(--r-full);
+    background: var(--sup-tarjeta);
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .app-shell--redesign .app-header__rapidos-boton svg {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+
+  .app-shell--redesign .app-header__rapidos-boton::after {
+    content: 'Más';
+    font-weight: 600;
+  }
+
+  .app-shell--redesign .app-header__rapidos-boton:focus-visible {
+    outline: 2px solid var(--aguamarina);
+    outline-offset: 2px;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista {
+    position: absolute;
+    inset-block-start: calc(100% + var(--e2));
+    inset-inline-end: 0;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--e1);
+    inline-size: 18rem;
+    max-block-size: calc(100dvh - var(--h-header) - var(--e6));
+    overflow-y: auto;
+    padding: var(--e2);
+    border: 1px solid var(--filete);
+    border-radius: var(--r-menu);
+    background: var(--sup-tarjeta);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  }
+
+  .app-shell--redesign .app-header__rapidos.is-open .app-header__rapidos-lista {
+    display: flex;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__ajustes,
+  .app-shell--redesign .app-header__rapidos-lista .app-header__red-social {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--e3);
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    box-sizing: border-box;
+    padding-inline: var(--e3);
+    border-radius: var(--r-ctrl);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .app-shell--redesign .app-header__rapidos-label,
+  .app-shell--redesign .app-header__red-social-texto {
+    display: inline;
+    font-size: var(--fs-body);
+    font-weight: 500;
+  }
+
+  .app-shell--redesign .app-header__rapidos-lista .app-header__chats-badge {
+    margin-inline-start: auto;
+  }
+}
+
+/* ════ El inicio del paciente (`app-patient-home`) ════ */
+/* ═══ Rediseño del 22/10/2026 — más cálido, más claro, más grande donde importa ═══
+   Para quien le cuesta la tecnología y se aburre rápido: una portada que saluda,
+   bloques con color propio en vez de cajas grises iguales, íconos en círculos de
+   color que se reconocen sin leer, y las acciones principales en tamaño grande.
+   Vive en `styles/paciente.css` y no en la hoja del componente para no cargar
+   el paquete inicial, que estaba al ras de su presupuesto. La escala tipográfica global no se toca (propietario, 18/09/2026); se usan los
+   escalones grandes que ya existen donde está lo que se viene a mirar. */
+
+/* ── La portada ─────────────────────────────────────────────────────────── */
+.app-shell--paciente app-patient-home .portada {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-6);
+  margin-block-end: var(--sp-6);
+  padding: var(--sp-8) var(--sp-6);
+  overflow: hidden;
+  border-radius: var(--r-2xl);
+  background:
+    radial-gradient(90% 120% at 100% 0%, var(--c-aqua-100) 0%, transparent 60%),
+    radial-gradient(70% 90% at 0% 100%, var(--c-mint-100) 0%, transparent 55%),
+    var(--c-ivory-50, var(--bg-surface));
+  border: 1px solid var(--c-aqua-100);
+}
+
+@media (min-width: 780px) {
+  .app-shell--paciente app-patient-home .portada {
+    grid-template-columns: minmax(0, 1fr) 15rem;
+    padding: var(--sp-10) var(--sp-10);
+  }
+}
+
+.app-shell--paciente app-patient-home .portada__texto {
+  display: grid;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.app-shell--paciente app-patient-home .portada__fecha {
+  margin: 0;
+  justify-self: start;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--brand-primary);
+  font-weight: 600;
+  font-size: var(--fs-body);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-shell--paciente app-patient-home .portada__fecha::first-letter {
+  text-transform: uppercase;
+}
+
+.app-shell--paciente app-patient-home .portada__titulo {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(var(--fs-h1), 4vw, var(--fs-display));
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  /* Tinta (27/10/2026, «está muy azul»): el acento lo pone el nombre. */
+  color: var(--text-primary);
+}
+
+.app-shell--paciente app-patient-home .portada__nombre {
+  background: linear-gradient(90deg, var(--c-aqua-700), var(--c-aqua-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-shell--paciente app-patient-home .portada__bajada {
+  margin: 0;
+  max-inline-size: 52ch;
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  color: var(--text-secondary);
+}
+
+.app-shell--paciente app-patient-home .portada__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-block-start: var(--sp-2);
+}
+
+.app-shell--paciente app-patient-home .portada__recorrido {
+  box-shadow: var(--shadow-md);
+}
+
+/* El sello: el logo de AloVida sobre un círculo blanco, con dos anillos que
+   se expanden despacio, como un pulso. El logo es el archivo de la marca,
+   sin redibujar ni recolorear. */
+.app-shell--paciente app-patient-home .portada__marca {
+  position: relative;
+  display: none;
+  place-items: center;
+  inline-size: 13rem;
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+@media (min-width: 780px) {
+  .app-shell--paciente app-patient-home .portada__marca {
+    display: grid;
+  }
+}
+
+.app-shell--paciente app-patient-home .portada__marca > * {
+  grid-area: 1 / 1;
+}
+
+.app-shell--paciente app-patient-home .portada__sello {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 9.5rem;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  background: #fff;
+  border: 1px solid var(--c-aqua-100);
+  box-shadow:
+    0 18px 40px -18px rgb(11 85 126 / 45%),
+    0 0 0 10px rgb(255 255 255 / 55%);
+}
+
+.app-shell--paciente app-patient-home .portada__sello img {
+  inline-size: 6rem;
+  block-size: auto;
+  translate: 0 4%;
+}
+
+.app-shell--paciente app-patient-home .portada__anillo {
+  inline-size: 9.5rem;
+  aspect-ratio: 1;
+  border-radius: var(--r-full);
+  border: 2px solid var(--c-aqua-300);
+  opacity: 0;
+  animation: portada-pulso 3.2s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+
+.app-shell--paciente app-patient-home .portada__anillo--segundo {
+  animation-delay: 1.6s;
+}
+
+@keyframes portada-pulso {
+  0% { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(1.38); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell--paciente app-patient-home .portada__anillo { animation: none; }
+}
+
+/* ── La tarjeta de síntomas: como estaba antes ───────────────────────────
+   El cliente la prefería sin el borde de color ni el radio grande que le había
+   dado la capa del paciente. Vuelve al filete neutro y al radio de siempre. */
+.app-shell--paciente .app-main app-patient-home .mi-salud__sintomas.card.card--outlined,
+.app-shell--paciente .app-main app-patient-home .mi-salud__sintomas.card.card--outlined:hover {
+  border-color: var(--border-default, var(--filete));
+  border-radius: var(--r-md);
+  box-shadow: none;
+}
+
+/* ── La próxima cita: una banda con color propio ────────────────────────── */
+.app-shell--paciente app-patient-home .proxima-cita {
+  margin-block-start: var(--sp-6);
+  padding: var(--sp-6) var(--sp-8);
+  border: 1px solid var(--c-aqua-200);
+  border-inline-start: 6px solid var(--brand-primary);
+  border-radius: var(--r-xl);
+  background:
+    linear-gradient(100deg, var(--c-aqua-50) 0%, var(--bg-surface) 70%);
+  box-shadow: var(--shadow-md);
+}
+
+.app-shell--paciente app-patient-home .proxima-cita__titulo {
+  font-size: var(--fs-h3);
+  color: var(--brand-primary);
+}
+
+.app-shell--paciente app-patient-home .proxima-cita__titulo-icono {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  padding: var(--sp-2);
+  box-sizing: border-box;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+.app-shell--paciente app-patient-home .proxima-cita__dia {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-shell--paciente app-patient-home .proxima-cita__hora {
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--c-aqua-700, var(--text-secondary));
+}
+
+.app-shell--paciente app-patient-home .proxima-cita__dato-icono {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  color: var(--brand-primary);
+}
+
+.app-shell--paciente app-patient-home .proxima-cita__dato {
+  font-size: var(--fs-body-lg);
+}
+
+/* ── Última receta y última atención: tarjetas con ícono de color ──────── */
+@media (min-width: 780px) {
+  .app-shell--paciente app-patient-home .mi-salud__resumen {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+}
+
+.app-shell--paciente app-patient-home .mi-salud__resumen-item {
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.app-shell--paciente app-patient-home .mi-salud__resumen-icono {
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  padding: var(--sp-3);
+  box-sizing: border-box;
+  border-radius: var(--r-full);
+  background: var(--c-mint-100);
+  color: var(--c-petrol-600, var(--brand-primary));
+}
+
+.app-shell--paciente app-patient-home [data-testid='mi-salud-atencion'] .mi-salud__resumen-icono {
+  background: var(--c-amber-100);
+  color: var(--c-amber-800);
+}
+
+.app-shell--paciente app-patient-home .mi-salud__resumen-rotulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.app-shell--paciente app-patient-home .mi-salud__resumen-dato {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+}
+
+.app-shell--paciente app-patient-home .mi-salud__resumen-dato--vacio {
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+}
+
+/* ── Aprender: primeros pasos + consejo ─────────────────────────────────── */
+.app-shell--paciente app-patient-home .mi-salud__aprender {
+  display: grid;
+  gap: var(--sp-5);
+  margin-block-start: var(--sp-8);
+}
+
+@media (min-width: 1120px) {
+  .app-shell--paciente app-patient-home .mi-salud__aprender {
+    grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr);
+    align-items: start;
+  }
+}
+
+/* Sola en su fila (sin primeros pasos, ya cerrados) no se estira a lo ancho. */
+.app-shell--paciente app-patient-home .mi-salud__aprender:has(> app-patient-tip-card:only-child) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-shell--paciente app-patient-home .mi-salud__benefits {
+  display: block;
+  margin-block-start: var(--sp-8);
+}
+
+/* ── Tema oscuro: los fondos claros pasan a la superficie oscura ────────── */
+:root[data-theme='dark'] .app-shell--paciente app-patient-home .portada,
+:root[data-theme='dark'] .app-shell--paciente app-patient-home .proxima-cita {
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+}
+
+:root[data-theme='dark'] .app-shell--paciente app-patient-home .portada__titulo,
+:root[data-theme='dark'] .app-shell--paciente app-patient-home .proxima-cita__dia {
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell--paciente app-patient-home .portada__nombre {
+  background: linear-gradient(90deg, var(--c-aqua-300), var(--c-mint-300));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.app-shell--paciente app-patient-home .mi-salud__aprender-hueco {
+  min-block-size: 20rem;
+  margin-block-start: var(--sp-8);
+}
+
+/* ════ Chats del paciente (rediseño, segunda vuelta 22/10/2026) ════
+   La columna izquierda tenía tres márgenes distintos —16 px el título, 12 el
+   buscador, 8 los filtros—: nada se alineaba con nada y los filtros quedaban
+   cortados a media palabra contra la flecha. Ahora todo arranca en la misma
+   línea, el buscador y los filtros son un escalón más grandes (se tocan con el
+   dedo sin apuntar) y el carril de filtros se desvanece en los bordes en vez
+   de cortar en seco. El nombre del componente va en el selector para ganarle
+   a la hoja encapsulada, igual que en el inicio. */
+.app-shell--redesign app-messaging .mensajeria__cabecera {
+  padding-inline: var(--e5);
+  padding-block-start: var(--e2);
+}
+
+.app-shell--redesign app-messaging .mensajeria__buscador {
+  padding: 0 var(--e5) var(--e3);
+}
+
+.app-shell--redesign app-messaging .mensajeria__campo input {
+  block-size: 44px;
+  font-size: var(--fs-body);
+  border-color: var(--filete);
+}
+
+.app-shell--redesign app-messaging .mensajeria__filtros {
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  gap: var(--e2);
+  padding: 0 var(--e5) var(--e3);
+}
+
+.app-shell--redesign app-messaging .mensajeria__flecha {
+  inline-size: 32px;
+  block-size: 32px;
+}
+
+.app-shell--redesign app-messaging .mensajeria__chips {
+  padding-block: 2px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 20px), transparent);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6px, #000 calc(100% - 20px), transparent);
+  padding-inline: 6px;
+  scroll-padding-inline: 6px;
+}
+
+.app-shell--redesign app-messaging .mensajeria__chip {
+  block-size: 34px;
+  padding-inline: var(--e4);
+  font-size: var(--fs-body-sm, var(--fs-caption));
+}
+
+.app-shell--redesign app-messaging .mensajeria__chip.is-activo {
+  background: var(--petroleo);
+  color: #fff;
+}
+
+/* Las filas: el mismo margen izquierdo que el título, y aire entre filas. */
+.app-shell--redesign app-conversation-list .conversaciones__item {
+  padding: var(--e3) var(--e5);
+  block-size: 80px;
+}
+
+.app-shell--redesign app-conversation-list .conversaciones__fila + .conversaciones__fila .conversaciones__item {
+  border-block-start: 1px solid var(--filete-2);
+}
+
+/* El panel vacío: el texto un escalón más grande, que se lea sin acercarse. */
+.app-shell--redesign app-messaging .mensajeria__vacio-texto {
+  max-inline-size: 38ch;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+
+/* ════ Mis citas del paciente ════
+   Cada cita era una caja gris con la fecha en letra de párrafo: la lista se
+   leía como un listado de sistema. Ahora la fecha y la hora mandan —es lo que
+   se viene a mirar—, y cada fila lleva a la izquierda una franja con el color
+   de su estado, que se distingue sin leer el sello. */
+.app-shell--paciente app-appointments .turnos__item {
+  position: relative;
+  padding-inline-start: calc(var(--sp-5) + 4px);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--spring-rapido-dur, 260ms) var(--spring-rapido, ease-out);
+}
+
+.app-shell--paciente app-appointments .turnos__item:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.app-shell--paciente app-appointments .turnos__item::before {
+  content: '';
+  position: absolute;
+  inset-block: var(--sp-3);
+  inset-inline-start: 0;
+  inline-size: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--c-aqua-500);
+}
+
+.app-shell--paciente app-appointments .turnos__item:has(.badge--warning)::before {
+  background: var(--c-amber-500);
+}
+
+.app-shell--paciente app-appointments .turnos__item:has(.badge--error)::before {
+  background: var(--c-danger-500, #c0392b);
+}
+
+.app-shell--paciente app-appointments .turnos__item:has(.badge--neutral)::before,
+.app-shell--paciente app-appointments [data-testid='turnos-lista-past'] .turnos__item::before {
+  background: var(--c-petrol-200);
+}
+
+.app-shell--paciente app-appointments .turnos__fecha {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.app-shell--paciente app-appointments .turnos__hora {
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--c-aqua-700, var(--text-secondary));
+}
+
+.app-shell--paciente app-appointments .turnos__agenda {
+  font-size: var(--fs-body-lg);
+}
+
+.app-shell--paciente app-appointments .turnos__grupo-titulo {
+  font-size: var(--fs-h3);
+  color: var(--brand-primary);
+}
+
+/* Tema oscuro: la fecha y la hora en la rampa clara, que se lean sobre el
+   fondo oscuro (el petróleo y el aguamarina 700 no llegan al contraste). */
+:root[data-theme='dark'] .app-shell--paciente app-patient-home .proxima-cita__hora,
+:root[data-theme='dark'] .app-shell--paciente app-appointments .turnos__hora {
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell--paciente app-appointments .turnos__fecha {
+  color: var(--text-primary);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .app-shell--paciente app-patient-home .proxima-cita__hora,
+  :root:not([data-theme='light']) .app-shell--paciente app-appointments .turnos__hora {
+    color: var(--c-aqua-300);
+  }
+
+  :root:not([data-theme='light']) .app-shell--paciente app-appointments .turnos__fecha {
+    color: var(--text-primary);
+  }
+}

@@ -10,9 +10,9 @@ import {
 import { RouterLink } from '@angular/router';
 
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { avatarDeConQuien, conQuien } from '../../../core/messaging/con-quien';
-import { ChatPreferencias } from '../../../core/messaging/chat-preferencias';
-import { horaDeChat } from '../../../shared/date/hora-de-chat';
+import { conversationAvatar, conversationLabel } from '../../../core/messaging/conversation-label';
+import { ChatPreferences } from '../../../core/messaging/chat-preferences';
+import { chatTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
@@ -41,7 +41,7 @@ const FILAS_FANTASMA = 7;
 
 /** Lo que la fila le pide a la pantalla que haga. */
 export interface AccionDeFila {
-  readonly tipo: 'favorito' | 'archivar' | 'leer' | 'perfil';
+  readonly tipo: 'favorito' | 'archivar' | 'leer' | 'perfil' | 'bloquear' | 'desbloquear';
   readonly conversationId: string;
 }
 
@@ -68,7 +68,7 @@ export interface AccionDeFila {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationList {
-  private readonly preferencias = inject(ChatPreferencias);
+  private readonly preferencias = inject(ChatPreferences);
 
   /** Las conversaciones, en el orden en que las devolvió el servidor. */
   readonly conversaciones = input.required<readonly ConversationListItem[]>();
@@ -78,6 +78,9 @@ export class ConversationList {
 
   /** El perfil propio: sin él no se puede decir «Enviado por vos» ni pintar el tilde. */
   readonly perfilPropio = input<string | null>(null);
+
+  /** A quiénes bloqueó la persona: sus filas lo dicen y el menú ofrece desbloquear. */
+  readonly bloqueados = input<ReadonlySet<string>>(new Set());
 
   /** Lo que se escribió en el buscador, para resaltarlo en el nombre. */
   readonly resaltar = input('');
@@ -113,21 +116,21 @@ export class ConversationList {
   /** Qué fila tiene el menú abierto. Una sola a la vez. */
   protected readonly menuAbierto = signal<string | null>(null);
 
-  protected readonly conQuien = conQuien;
-  protected readonly avatarDeConQuien = avatarDeConQuien;
+  protected readonly conQuien = conversationLabel;
+  protected readonly avatarDeConQuien = conversationAvatar;
 
   protected esFavorito(id: string): boolean {
-    return this.preferencias.esFavorito(id);
+    return this.preferencias.isFavorite(id);
   }
 
   protected estaArchivado(id: string): boolean {
-    return this.preferencias.estaArchivado(id);
+    return this.preferencias.isArchived(id);
   }
 
   /** `8:00 p.m.`, `Ayer`, `lunes` o `07/09/2026`. */
   protected hora(conversacion: ConversationListItem): string {
     const cuando = conversacion.lastMessageAt;
-    return cuando === undefined ? '' : horaDeChat(cuando);
+    return cuando === undefined ? '' : chatTime(cuando);
   }
 
   /** `true` si el último mensaje lo escribió quien mira. */
@@ -187,6 +190,14 @@ export class ConversationList {
     this.menuAbierto.set(null);
   }
 
+  /** `true` si es una conversación directa con alguien que se bloqueó. */
+  protected estaBloqueada(conversacion: ConversationListItem): boolean {
+    return (
+      conversacion.peers.length === 1 &&
+      this.bloqueados().has(conversacion.peers[0].profileId)
+    );
+  }
+
   protected alternarMenu(id: string, evento: Event): void {
     evento.preventDefault();
     evento.stopPropagation();
@@ -211,7 +222,7 @@ export class ConversationList {
     const consulta = this.resaltar().trim().toLowerCase();
     const mapa = new Map<string, readonly [string, string, string]>();
     for (const conversacion of this.conversaciones()) {
-      const nombre = conQuien(conversacion);
+      const nombre = conversationLabel(conversacion);
       const desde =
         consulta === '' ? -1 : nombre.toLowerCase().indexOf(consulta);
       mapa.set(

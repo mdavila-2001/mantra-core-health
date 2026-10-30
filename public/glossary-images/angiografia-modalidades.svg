@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Cuatro formas de estudiar los vasos sanguíneos</title>
+  <desc id="d">Comparación de la angiografía convencional por catéter, la angiotomografía, la angiorresonancia y la ecografía Doppler según la energía empleada, la necesidad de catéter, el contraste, su principal fortaleza y su principal limitación.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --accent:#2b6cb0; --accent-l:#e3eefa; --warn:#b7791f; --on:#ffffff; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --accent:#6aa7e8; --accent-l:#27405c; --warn:#e6b45c; --on:#0f1720; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .h { font-size: 15px; font-weight: 700; }
+    .k { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; fill: var(--muted); }
+    .v { font-size: 13px; }
+    .small { font-size: 12px; }
+  </style>
+  <rect width="800" height="480" fill="var(--bg)"/>
+
+  <rect x="16" y="16" width="180" height="410" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="16" y="16" width="180" height="46" rx="14" fill="var(--accent)"/>
+  <rect x="16" y="40" width="180" height="22" fill="var(--accent)"/>
+  <text x="106" y="37" text-anchor="middle" class="h" style="fill:var(--on)">Angiografía</text>
+  <text x="106" y="54" text-anchor="middle" class="h" style="fill:var(--on)">convencional</text>
+  <text x="30" y="86" class="k">Energía</text>
+  <text x="30" y="104" class="v">Rayos X</text>
+  <text x="30" y="142" class="k">Catéter</text>
+  <text x="30" y="160" class="v">Sí, por arteria</text>
+  <text x="30" y="198" class="k">Contraste</text>
+  <text x="30" y="216" class="v">Yodado, intraarterial</text>
+  <text x="30" y="254" class="k">Fortaleza</text>
+  <text x="30" y="272" class="v">Mayor resolución;</text>
+  <text x="30" y="288" class="v">permite tratar en el</text>
+  <text x="30" y="304" class="v">mismo acto</text>
+  <text x="30" y="342" class="k">Límite</text>
+  <text x="30" y="360" class="v">Invasiva; radiación y</text>
+  <text x="30" y="376" class="v">contraste</text>
+  <rect x="212" y="16" width="180" height="410" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="212" y="16" width="180" height="46" rx="14" fill="var(--accent)"/>
+  <rect x="212" y="40" width="180" height="22" fill="var(--accent)"/>
+  <text x="302" y="45" text-anchor="middle" class="h" style="fill:var(--on)">Angiotomografía</text>
+  <text x="226" y="86" class="k">Energía</text>
+  <text x="226" y="104" class="v">Rayos X</text>
+  <text x="226" y="142" class="k">Catéter</text>
+  <text x="226" y="160" class="v">No; vena periférica</text>
+  <text x="226" y="198" class="k">Contraste</text>
+  <text x="226" y="216" class="v">Yodado, intravenoso</text>
+  <text x="226" y="254" class="k">Fortaleza</text>
+  <text x="226" y="272" class="v">Rápida; útil en</text>
+  <text x="226" y="288" class="v">urgencias; ve la pared</text>
+  <text x="226" y="342" class="k">Límite</text>
+  <text x="226" y="360" class="v">Radiación; el calcio</text>
+  <text x="226" y="376" class="v">denso estorba</text>
+  <rect x="408" y="16" width="180" height="410" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="408" y="16" width="180" height="46" rx="14" fill="var(--accent)"/>
+  <rect x="408" y="40" width="180" height="22" fill="var(--accent)"/>
+  <text x="498" y="45" text-anchor="middle" class="h" style="fill:var(--on)">Angiorresonancia</text>
+  <text x="422" y="86" class="k">Energía</text>
+  <text x="422" y="104" class="v">Campo magnético</text>
+  <text x="422" y="142" class="k">Catéter</text>
+  <text x="422" y="160" class="v">No</text>
+  <text x="422" y="198" class="k">Contraste</text>
+  <text x="422" y="216" class="v">Gadolinio o ninguno</text>
+  <text x="422" y="254" class="k">Fortaleza</text>
+  <text x="422" y="272" class="v">Sin radiación ionizante</text>
+  <text x="422" y="342" class="k">Límite</text>
+  <text x="422" y="360" class="v">Larga; ciertos</text>
+  <text x="422" y="376" class="v">implantes la impiden</text>
+  <rect x="604" y="16" width="180" height="410" rx="14" fill="var(--panel)" stroke="var(--line)"/>
+  <rect x="604" y="16" width="180" height="46" rx="14" fill="var(--accent)"/>
+  <rect x="604" y="40" width="180" height="22" fill="var(--accent)"/>
+  <text x="694" y="45" text-anchor="middle" class="h" style="fill:var(--on)">Ecografía Doppler</text>
+  <text x="618" y="86" class="k">Energía</text>
+  <text x="618" y="104" class="v">Ultrasonido</text>
+  <text x="618" y="142" class="k">Catéter</text>
+  <text x="618" y="160" class="v">No</text>
+  <text x="618" y="198" class="k">Contraste</text>
+  <text x="618" y="216" class="v">Ninguno (habitual)</text>
+  <text x="618" y="254" class="k">Fortaleza</text>
+  <text x="618" y="272" class="v">Sin radiación; junto a</text>
+  <text x="618" y="288" class="v">la cama</text>
+  <text x="618" y="342" class="k">Límite</text>
+  <text x="618" y="360" class="v">Depende del operador;</text>
+  <text x="618" y="376" class="v">hueso y aire</text>
+  <text x="400" y="462" text-anchor="middle" class="small muted">Esquema comparativo general. La elección depende de la pregunta clínica y del paciente. Ilustración original de AloVida.</text>
+</svg>

@@ -6,18 +6,26 @@
 
 @import '../../tone/tone.css';
 
+/* Ícono y nombre en la primera línea; el sello, debajo y en la suya.
+
+   Era una fila flexible con `wrap`, y el sello iba con `flex: none`: bajaba de
+   renglón, pero no se encogía. «Especialidad pendiente de verificación» es
+   más ancho que una celda de la rejilla a 768 px, y se salía de la tarjeta
+   (27/10/2026). En su propia línea el sello tiene todo el ancho de la
+   insignia y, si no le alcanza, parte el texto en vez de desbordar.
+
+   Antes de eso, la fila sin `wrap` dejaba al nombre con lo que sobraba y lo
+   apilaba letra por letra, en vertical: por eso el nombre va en
+   `minmax(0, 1fr)` y no en `auto`. */
 :host {
-    display: inline-flex;
+    display: inline-grid;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    /* `wrap` no es cosmético: sin él, el sello y «Principal» —que no se
-       encogen— se quedaban con el ancho y al nombre le tocaba lo que sobraba.
-       Con la caja angosta el texto salía apilado letra por letra, en vertical.
-       No lo vio ningún test: se vio en la captura. */
-    flex-wrap: wrap;
     gap: var(--sp-2);
-    /* `min-width: 0` para que el nombre pueda encogerse: sin esto, un item de
-       grid se niega a bajar de su contenido y empuja la fila a lo ancho. */
+    /* `min-width: 0` para que la insignia pueda encogerse: sin esto, un item
+       de grid se niega a bajar de su contenido y empuja la fila a lo ancho. */
     min-inline-size: 0;
+    max-inline-size: 100%;
     padding: var(--sp-2) var(--sp-3);
     font-family: var(--font-body);
     font-size: var(--fs-caption);
@@ -31,14 +39,11 @@
 /* El ícono acompaña al texto: se dimensiona en `em` para seguirlo si la
    tipografía cambia, igual que en el botón. */
 .specialty-badge__icono {
-    flex: none;
     inline-size: 1.25em;
     block-size: 1.25em;
 }
 
-/* El nombre es lo que manda: crece y se queda con el espacio libre, y los
-   demás elementos se acomodan alrededor. `flex: 1 1 auto` es lo que faltaba
-   — sin él se encogía hasta el ancho de una letra.
+/* El nombre es lo que manda: su columna se queda con el espacio libre.
 
    `break-word` y no `anywhere`: `anywhere` autoriza a partir por cualquier
    carácter apenas la caja aprieta, y eso es lo que producía «Cardiología» en
@@ -47,34 +52,16 @@
    puede es recortarse —«Ginecología y obst…» deja de ser el dato— ni
    deletrearse hacia abajo. */
 .specialty-badge__nombre {
-    flex: 1 1 auto;
     min-inline-size: 0;
     font-weight: 600;
     overflow-wrap: break-word;
 }
 
-.specialty-badge__certificada {
-    display: inline-flex;
-    flex: none;
-    align-items: center;
-}
-
-.specialty-badge__certificada svg {
-    inline-size: 1em;
-    block-size: 1em;
-}
-
-/* Etiqueta de apoyo: más chica y con menos peso que el nombre, porque el dato
-   es la especialidad y esto la califica. */
-.specialty-badge__principal {
-    flex: none;
-    font-size: var(--fs-overline);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    opacity: 0.85;
-}
-
+/* Cruza las dos columnas y se queda de su ancho (`start`), con el ancho de la
+   insignia como tope: el texto del sello se parte adentro de él. */
 .specialty-badge__sello {
-    flex: none;
+    grid-column: 1 / -1;
+    justify-self: start;
+    min-inline-size: 0;
+    max-inline-size: 100%;
 }

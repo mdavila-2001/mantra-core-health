@@ -4,7 +4,7 @@ import { expect, type Page } from '@playwright/test';
 /**
  * Los cinco documentos legales del autorregistro de aseguradora (subtarea 1.2),
  * en el orden del registro de procesos — el mismo de
- * `DOCUMENTOS_LEGALES_DEL_REGISTRO` en `registro-compartido/documentos-legales.ts`.
+ * `DOCUMENTOS_LEGALES_DEL_REGISTRO` en `shared-registration/legal-documents.ts`.
  */
 export const CLAVES_DE_DOCUMENTOS_LEGALES = [
   'constitutionFileId',
@@ -82,26 +82,11 @@ export async function esperarSubidaLista(
 
 /**
  * Sube los 5 documentos legales y avanza el asistente, asumiendo que la
- * página vigente es «Documentación legal obligatoria (PDF) (1 de 2)» —los
- * primeros 4 documentos— y que después de «Continuar» aparece «(2 de 2)»
- * —el certificado del SEDES—. Deja el asistente en «Representante legal
- * (1 de 2)» (subtarea 1.4: ya no en «Tu cuenta», que corría el orden de las
- * páginas hasta la 1.3).
+ * página vigente es «Documentación legal obligatoria (PDF)» —los cinco en una
+ * sola vista—. Deja el asistente en «Representante legal (1 de 2)».
  */
 export async function subirLosCincoDocumentos(page: Page): Promise<void> {
-  const [primeraTanda, segundaTanda] = [
-    CLAVES_DE_DOCUMENTOS_LEGALES.slice(0, 4),
-    CLAVES_DE_DOCUMENTOS_LEGALES.slice(4),
-  ] as const;
-
-  for (const clave of primeraTanda) {
-    await subirArchivo(page, clave, pdfDePrueba(clave));
-    await esperarSubidaLista(page, clave);
-  }
-  await page.getByTestId('paginated-form-continuar').click();
-
-  await expect(page.locator('.paginated-form__titulo')).toContainText('(2 de 2)');
-  for (const clave of segundaTanda) {
+  for (const clave of CLAVES_DE_DOCUMENTOS_LEGALES) {
     await subirArchivo(page, clave, pdfDePrueba(clave));
     await esperarSubidaLista(page, clave);
   }

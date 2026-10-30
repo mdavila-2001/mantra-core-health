@@ -6,7 +6,7 @@ import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import { AuthService } from '../../../../../core/auth/auth.service';
 import { DialogService } from '../../../../../shared/components/molecules/dialog/dialog-service';
-import { PESTANAS_DEL_PERFIL_MEDICO } from '../../pestanas-del-perfil-medico';
+import { DOCTOR_PROFILE_TABS } from '../../doctor-profile-tabs';
 import { PractitionerProfileView } from './practitioner-profile-view';
 import type {
   AfiliacionVisible,
@@ -48,6 +48,9 @@ function afiliacion(over: Partial<AfiliacionVisible> = {}): AfiliacionVisible {
   };
 }
 
+/** Facturación sin ningún dato cargado. */
+const FACTURA_VACIA = { nit: '', razonSocial: '', frecuenciaSeguro: '' };
+
 const PERFIL: PerfilProfesionalVisible = {
   nombre: 'Dra. Lucía Salas',
   titulo: 'Médica cardióloga',
@@ -67,7 +70,6 @@ const PERFIL: PerfilProfesionalVisible = {
     {
       id: 'sp-1',
       nombre: 'Cardiología',
-      principal: true,
       certificada: true,
       alcance: '',
       desde: new Date('2015-03-01'),
@@ -78,7 +80,6 @@ const PERFIL: PerfilProfesionalVisible = {
     {
       id: 'sp-2',
       nombre: 'Medicina interna',
-      principal: false,
       certificada: false,
       alcance: '',
       desde: new Date('2015-03-01'),
@@ -297,6 +298,24 @@ describe('PractitionerProfileView', () => {
     expect(portada?.textContent).not.toContain('Código profesional');
   });
 
+  it('el dueño llega desde su perfil a «Invitaciones y solicitudes» y a «Procedimientos que hago»; el visitante no', () => {
+    const propio = montar(PERFIL, true);
+
+    expect(propio.querySelector('[data-testid="profile-affiliations-link"]')?.getAttribute('href')).toBe(
+      '/my-account/affiliations',
+    );
+    expect(propio.querySelector('[data-testid="profile-my-procedures-link"]')?.getAttribute('href')).toBe(
+      '/my-account/my-procedures',
+    );
+
+    fixture.destroy();
+    TestBed.resetTestingModule();
+    const ajeno = montar(PERFIL, false);
+
+    expect(ajeno.querySelector('[data-testid="profile-affiliations-link"]')).toBeNull();
+    expect(ajeno.querySelector('[data-testid="profile-my-procedures-link"]')).toBeNull();
+  });
+
   it('el dueño sí ve su código profesional: le sirve ante quien administra', () => {
     // Desde el rediseño del 2026-09-10 la ficha propia es la MISMA tarjeta del
     // paciente, así que el código no está en una portada: es un renglón más de
@@ -362,9 +381,7 @@ describe('PractitionerProfileView', () => {
     // Las formas que la insignia reemplazó: el chip con tono propio y los dos
     // `app-badge` sueltos que decían «Principal» y «Certificada».
     const sueltos = [...host.querySelectorAll('app-chip, app-badge')].filter((e) =>
-      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test(
-        (e.textContent ?? '').trim(),
-      ),
+      /Cardiología|Medicina interna|^Principal$|^Certificada$/.test((e.textContent ?? '').trim()),
     );
     expect(sueltos).toHaveLength(0);
   });
@@ -389,6 +406,32 @@ describe('PractitionerProfileView', () => {
     expect(tonos(true)).toEqual(tonos(false));
   });
 
+  it('ninguna especialidad se distingue como principal, en ninguna pestaña ni en ninguna de las dos fichas (D-01)', () => {
+    // El modelo de vista ya no trae «principal» (el contrato sí, en
+    // `isPrimary`). Esto fija que la ficha no lo vuelva a decir por otro
+    // camino: ni la palabra, ni un tono de marca propio.
+    for (const esPropio of [true, false]) {
+      TestBed.resetTestingModule();
+      const host = montar(PERFIL, esPropio);
+      const pestanas = [...host.querySelectorAll('[role="tab"]')].map((t) =>
+        (t.textContent ?? '').trim(),
+      );
+      expect(pestanas.length).toBeGreaterThan(0);
+
+      for (const pestana of pestanas) {
+        seleccionarPestana(host, pestana);
+        const quien = `${esPropio ? 'propia' : 'ajena'} · ${pestana}`;
+        const marcas = [...host.querySelectorAll('*')].filter(
+          (e) => e.children.length === 0 && /^principal$/i.test((e.textContent ?? '').trim()),
+        );
+        expect(marcas, quien).toHaveLength(0);
+        for (const insignia of host.querySelectorAll('app-specialty-badge')) {
+          expect([...insignia.classList], quien).not.toContain('tone--primary');
+        }
+      }
+    }
+  });
+
   /* -- Las 3 pestañas superiores (carril 05) -------------------------------- */
 
   it('el dueño ve las seis pestañas del alta de médico, y ninguna vista previa', () => {
@@ -399,21 +442,24 @@ describe('PractitionerProfileView', () => {
     // Con `facturacion` declarada: es la ficha PROPIA, y esa pestaña sólo
     // existe ahí. El fixture base la deja en `null` porque casi todas estas
     // pruebas miran la ficha de un colega.
-    const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+    const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
 
     const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
       (boton) => boton.textContent?.trim() ?? '',
     );
-    expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+    expect(pestanas).toEqual([...DOCTOR_PROFILE_TABS]);
     expect(pestanas).not.toContain('Vista previa del perfil público');
   });
 
-  it('el dueño ve la misma cabecera que el paciente: «Tus datos» y el lápiz', () => {
+  it('el dueño ve la misma cabecera que el paciente: «Sus datos» y el lápiz', () => {
     const host = montar(PERFIL, true);
 
-    expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Tus datos');
+    expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain('Sus datos');
     const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
-    expect(lapiz?.getAttribute('aria-label')).toBe('Editar');
+    // «Editar perfil» con el lápiz, escrito: ya no es un botón de sólo ícono.
+    expect(lapiz?.textContent?.trim()).toBe('Editar perfil');
+    expect(lapiz?.querySelector('svg')).not.toBeNull();
+    expect(lapiz?.classList.contains('btn--icon-only')).toBe(false);
   });
 
   it('el dueño ve «Sin registrar» en lo que no cargó: es su ficha, no la de un colega', () => {
@@ -474,9 +520,11 @@ describe('PractitionerProfileView', () => {
     vencida: false,
   };
 
+  /* Desde el 24/09/2026 los títulos viven en «Credenciales» y el botón vino
+     con ellos: «Trayectoria» son los cargos. */
   it('el dueño ve «Retirar» sólo en un título pendiente, no en uno verificado', () => {
     const host = montar({ ...PERFIL, formacion: [...PERFIL.formacion, FORMACION_PENDIENTE] }, true);
-    seleccionarPestana(host, 'Trayectoria');
+    seleccionarPestana(host, 'Credenciales');
 
     expect(host.querySelector('[data-testid="formacion-retirar-cr-1"]')).toBeNull();
     expect(host.querySelector('[data-testid="formacion-retirar-cr-2"]')).not.toBeNull();
@@ -497,7 +545,7 @@ describe('PractitionerProfileView', () => {
     const host = montar({ ...PERFIL, formacion: [FORMACION_PENDIENTE] }, true, false, (vista) =>
       vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
     );
-    seleccionarPestana(host, 'Trayectoria');
+    seleccionarPestana(host, 'Credenciales');
 
     host.querySelector<HTMLButtonElement>('[data-testid="formacion-retirar-cr-2"]')?.click();
     fixture.detectChanges();
@@ -512,9 +560,9 @@ describe('PractitionerProfileView', () => {
       vista.credencialARetirar.subscribe((estudio) => pedidos.push(estudio)),
     );
 
-    (
-      fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }
-    ).alPedirRetiro(FORMACION_PENDIENTE);
+    (fixture.componentInstance as unknown as { alPedirRetiro: (e: unknown) => void }).alPedirRetiro(
+      FORMACION_PENDIENTE,
+    );
 
     expect(pedidos).toEqual([]);
   });
@@ -525,7 +573,7 @@ describe('PractitionerProfileView', () => {
 
     // Desde el 19/09/2026 el formulario vive en un modal: lo embebido es la
     // puerta, no los ocho campos.
-    expect(host.textContent).toContain('Añadir elemento a tu historial');
+    expect(host.textContent).toContain('Añadir elemento a su historial');
     // No debe repetir su propio listado plano: ya está la línea de tiempo arriba.
     expect(host.querySelectorAll('.historial__lista')).toHaveLength(0);
   });
@@ -533,16 +581,17 @@ describe('PractitionerProfileView', () => {
   it('un visitante no ve el formulario de alta', () => {
     const host = montar(PERFIL, false);
 
-    expect(host.textContent).not.toContain('Añadir elemento a tu historial');
+    expect(host.textContent).not.toContain('Añadir elemento a su historial');
   });
 
   /* -- I-D (F-31): la ayuda es de quien arma su perfil, no de quien lo mira -- */
 
-  it('el dueño ve la ayuda de cada pestaña', () => {
+  it('el dueño ya no ve la ayuda como bloque: salió a un toast', () => {
     const host = montar(PERFIL, true);
 
+    // «Trayectoria» pasó a toast el 24/09/2026 (lo lanza practitioner-profile).
     seleccionarPestana(host, 'Trayectoria');
-    expect(host.querySelector('app-tab-help-block')).not.toBeNull();
+    expect(host.querySelector('app-tab-help-block')).toBeNull();
     // En «Credenciales» la explicación dejó de ser una caja arriba de todo y
     // pasó a un toast (19/09/2026): lo que se comprueba acá es que la pestaña
     // ya no la dibuja como bloque.
@@ -599,6 +648,39 @@ describe('PractitionerProfileView', () => {
     });
   });
 
+  describe('entrar en una pestaña pedida (vuelta del editor, CORR-08)', () => {
+    function pestanaAbierta(host: HTMLElement): string | undefined {
+      return host
+        .querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+        ?.textContent?.trim();
+    }
+
+    it('abre la pestaña pedida y no la avisa como visita', () => {
+      const vistas: string[] = [];
+      const host = montar({ ...PERFIL, facturacion: FACTURA_VACIA }, true, false, (vista) => {
+        fixture.componentRef.setInput('pestanaInicial', 1);
+        vista.pestanaVisible.subscribe((pestana) => vistas.push(pestana));
+      });
+
+      expect(pestanaAbierta(host)).toBe('Contacto');
+      expect(vistas).toEqual([]);
+    });
+
+    it('traduce por etiqueta cuando la ficha no tiene «Facturación»', () => {
+      const host = montar({ ...PERFIL, facturacion: null }, true, false, () => {
+        fixture.componentRef.setInput('pestanaInicial', 5);
+      });
+
+      expect(pestanaAbierta(host)).toBe('Credenciales');
+    });
+
+    it('sin pestaña pedida abre la primera', () => {
+      const host = montar(PERFIL, true);
+
+      expect(pestanaAbierta(host)).toBe('Datos personales');
+    });
+  });
+
   it('un visitante no ve ninguna ayuda: le hablaba al dueño y a quien prueba', () => {
     // Un paciente en la ficha de la Guía leía «en desarrollo/pruebas se puede
     // usar todo el perfil sin esperar el trámite» (barrido del 18/08/2026).
@@ -618,22 +700,19 @@ describe('PractitionerProfileView', () => {
 
   /* -- Credenciales y verificaciones ----------------------------------------- */
 
-  it('agrupa especialidades, formación y matrículas en declarado vs. verificado', () => {
+  it('agrupa únicamente formación y matrículas en declarado vs. verificado', () => {
     const host = montar();
+    expect(host.textContent).toContain('Cardiología');
     seleccionarPestana(host, 'Credenciales y verificaciones');
-
-    const verificado = Array.from(host.querySelectorAll('.profesional__seguimiento-grupo'))[0];
-    const declarado = Array.from(host.querySelectorAll('.profesional__seguimiento-grupo'))[1];
-
-    // Verificado (3): la formación con fuente, la especialidad principal y la
-    // matrícula, las tres con sello "approved".
-    expect(verificado.textContent).toContain('Verificado (3)');
-    expect(verificado.textContent).toContain('Título de grado');
-    expect(verificado.textContent).toContain('Cardiología');
-    expect(verificado.textContent).toContain('Nacional');
-    // Declarado (1): la especialidad "en revisión".
-    expect(declarado.textContent).toContain('Declarado (1)');
-    expect(declarado.textContent).toContain('Medicina interna');
+    const grupos = host.querySelectorAll('.profesional__seguimiento-grupo');
+    expect(grupos[0].textContent).toContain('Verificado (2)');
+    expect(grupos[0].textContent).toContain('Título de grado');
+    expect(grupos[0].textContent).toContain('Nacional');
+    expect(grupos[1].textContent).toContain('Declarado (0)');
+    for (const grupo of grupos) {
+      expect(grupo.textContent).not.toContain('Cardiología');
+      expect(grupo.textContent).not.toContain('Medicina interna');
+    }
   });
 
   it('muestra la fuente de verificación cuando existe', () => {
@@ -641,6 +720,29 @@ describe('PractitionerProfileView', () => {
     seleccionarPestana(host, 'Credenciales y verificaciones');
 
     expect(host.textContent).toContain('https://registro-profesional.test/matriculas/LIC-3');
+  });
+
+  it('el resumen público no aprueba títulos por la fuente y conserva la aprobación de uno vencido', () => {
+    const host = montar({
+      ...PERFIL,
+      matriculas: [],
+      formacion: [
+        { ...PERFIL.formacion[0], id: 'rejected', tipo: 'Título rechazado', sello: 'rejected', estado: 'Rechazado', approved: false },
+        { ...PERFIL.formacion[0], id: 'unknown', tipo: 'Título sin decisión', sello: 'unknown', estado: 'Sin determinar' },
+        { ...PERFIL.formacion[0], id: 'expired', tipo: 'Título aprobado vencido', sello: 'expired', estado: 'Vencido', hasta: new Date('2001-01-01'), vencida: true, approved: true },
+      ],
+    });
+    seleccionarPestana(host, 'Credenciales y verificaciones');
+    const groups = host.querySelectorAll('.profesional__seguimiento-grupo');
+
+    expect(groups[0].textContent).toContain('Verificado (1)');
+    expect(groups[0].textContent).toContain('Título aprobado vencido');
+    expect(groups[0].textContent).not.toContain('Título rechazado');
+    expect(groups[0].textContent).not.toContain('Título sin decisión');
+    expect(groups[1].textContent).toContain('Declarado (2)');
+    expect(groups[1].textContent).toContain('Título rechazado');
+    expect(groups[1].textContent).toContain('Título sin decisión');
+    expect(groups[1].textContent).not.toContain('Título aprobado vencido');
   });
 
   it('sin nada verificado, el bloque lo dice', () => {
@@ -659,15 +761,14 @@ describe('PractitionerProfileView', () => {
     expect(host.textContent).toContain('Todavía no hay nada verificado');
   });
 
-  it('conserva las sub-pestañas de Especialidades y Matrículas dentro de Credenciales', () => {
+  it('presenta Matrículas sin sub-pestañas ni detalle de especialidades en Credenciales', () => {
     const host = montar();
     seleccionarPestana(host, 'Credenciales y verificaciones');
-
-    const subPestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
-      (boton) => boton.textContent?.trim() ?? '',
-    );
-    expect(subPestanas.some((texto) => texto.includes('Especialidades ('))).toBe(true);
-    expect(subPestanas.some((texto) => texto.includes('Matrículas ('))).toBe(true);
+    const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(b => b.textContent);
+    expect(pestanas.some(t => t?.includes('Especialidades ('))).toBe(false);
+    expect(pestanas.some(t => t?.includes('Matrículas ('))).toBe(false);
+    expect(host.textContent).toContain('LIC-3');
+    expect(host.querySelector('.profesional__detalle-especialidades')).toBeNull();
   });
 
   /* -- Vista previa del perfil público ---------------------------------------
@@ -680,10 +781,14 @@ describe('PractitionerProfileView', () => {
   it('la ficha propia NO ofrece «Ver cómo me ven»: el perfil público se sacó', () => {
     const host = montar(PERFIL, true);
 
+    const editar = host.querySelector<HTMLAnchorElement>('[data-testid="mi-perfil-editar"]');
+
     const enlace = Array.from(host.querySelectorAll('a[app-button]')).find((a) =>
       a.textContent?.includes('Ver cómo me ven'),
     );
 
+    expect(editar?.textContent).toContain('Editar perfil');
+    expect(host.textContent).not.toContain('Configurar mi perfil');
     expect(enlace).toBeUndefined();
     expect(host.innerHTML).not.toContain('/my-account/preview');
   });
@@ -718,22 +823,108 @@ describe('PractitionerProfileView', () => {
     seleccionarPestana(host, 'Actividad');
 
     expect(host.textContent).toContain('Encuentros atendidos');
-    expect(host.textContent).toContain('Son los registros que dejaste asentados con esta cuenta');
+    expect(host.textContent).toContain('Son los registros que dejó asentados con esta cuenta');
+  });
+
+  /**
+   * «En el perfil del doctor no debe poder editarse actividad, porque es solo
+   * estadísticas» —cliente, 24/09/2026—. Hasta ese día el lápiz de esta
+   * pestaña abría el editor en una pestaña «Actividad» sin campos.
+   */
+  it('en «Actividad» no hay lápiz: son estadísticas, no se editan', () => {
+    const host = montar(PERFIL, true);
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).not.toBeNull();
+
+    seleccionarPestana(host, 'Actividad');
+    expect(host.querySelector('[data-testid="mi-perfil-editar"]')).toBeNull();
+
+    // Y vuelve en cuanto se sale de ahí, apuntando a la pestaña que se mira.
+    seleccionarPestana(host, 'Credenciales');
+    const lapiz = host.querySelector('[data-testid="mi-perfil-editar"]');
+    expect(lapiz?.getAttribute('href')).toContain('pestana=5');
   });
 
   it('un visitante ve la actividad en tercera persona', () => {
     const host = montar(PERFIL, false);
     expect(host.textContent).toContain('Actividad en la plataforma');
-    expect(host.textContent).not.toContain('Tu actividad');
+    expect(host.textContent).not.toContain('Su actividad');
+  });
+
+  it('traslada idioma, nivel e interpretación a Datos personales propios', () => {
+    const host = montar({...PERFIL, idiomas: [{id:'es', nombre:'Español', nivel:'Avanzado', interpreta:true}]}, true);
+    expect(host.querySelector('[data-testid="profile-languages"]')?.textContent).toContain('Avanzado');
+    expect(host.querySelector('[data-testid="profile-languages"]')?.textContent).toContain('Interpreta en consulta');
+    seleccionarPestana(host, 'Credenciales');
+    expect(host.querySelector('app-credentials-panel')?.textContent).not.toContain('Español');
+  });
+
+  it.each([0, 1, 5, 6, 12])('presenta %i vínculos sin cambiar de formato al buscar', (cantidad) => {
+    const lista = Array.from({length:cantidad}, (_,i) => afiliacion({id: 'af-'+i, organizacion:'Institución '+i, actual:true, hasta:null}));
+    const host = montar({...PERFIL, actividadActual:lista, experienciaHistorica:[]});
+    seleccionarPestana(host, 'Trayectoria');
+    expect(host.querySelector('[data-testid="trayectoria-tablas"]') !== null).toBe(cantidad > 5);
+    if(cantidad > 5) {
+      const grupo = host.querySelector('[data-testid="trayectoria-actual"]');
+      expect(grupo?.querySelectorAll('tbody tr').length).toBe(Math.min(10,cantidad));
+      const interno = fixture.componentInstance as unknown as {filtrarTrayectoria: (f:{q:string})=>void};
+      interno.filtrarTrayectoria({q:'sin coincidencias'}); fixture.detectChanges();
+      expect(host.querySelector('[data-testid="trayectoria-tablas"]')).not.toBeNull();
+      expect(host.textContent).toContain('Ningún vínculo coincide');
+    }
+  });
+
+  it.each([
+    { isOwn: true, variant: 'pending', label: 'Pendiente', tone: 'warning' },
+    { isOwn: false, variant: 'pending', label: 'Pendiente', tone: 'warning' },
+    { isOwn: true, variant: 'rejected', label: 'Rechazado', tone: 'error' },
+    { isOwn: false, variant: 'rejected', label: 'Rechazado', tone: 'error' },
+  ] as const)('separa vigencia y verificación en listas pequeñas: $label, propio $isOwn', ({ isOwn, variant, label, tone }) => {
+    const host = montar({
+      ...PERFIL,
+      actividadActual: [afiliacion({
+        id: 'current-test', organizacion: 'Institución actual de prueba',
+        actual: true, hasta: null, sello: variant, estado: label,
+      })],
+      experienciaHistorica: [afiliacion({
+        id: 'historical-test', organizacion: 'Institución histórica de prueba',
+        sello: 'rejected', estado: 'Rechazado',
+      })],
+    }, isOwn);
+    seleccionarPestana(host, 'Trayectoria');
+    const currentItem = Array.from(host.querySelectorAll('li'))
+      .find((item) => item.textContent?.includes('Institución actual de prueba'));
+    const historicalItem = Array.from(host.querySelectorAll('li'))
+      .find((item) => item.textContent?.includes('Institución histórica de prueba'));
+
+    expect(currentItem).toBeDefined();
+    expect(currentItem?.textContent).toContain('En curso');
+    expect(currentItem?.querySelector('app-badge')).toBeNull();
+    expect(currentItem?.querySelector('app-status-seal')?.textContent).toContain(label);
+    expect(currentItem?.querySelector('app-status-seal')?.classList.contains(`tone--${tone}`)).toBe(true);
+    expect(historicalItem).toBeDefined();
+    expect(historicalItem?.textContent).not.toContain('En curso');
+    expect(historicalItem?.querySelector('app-status-seal')?.textContent).toContain('Rechazado');
+    expect(historicalItem?.querySelector('app-status-seal')?.classList.contains('tone--error')).toBe(true);
+  });
+
+  it.each([[true,false,true], [false,false,false], [true,true,false]])('ofrece respaldo según propiedad y preview (%s/%s)', (propio,preview,permitido) => {
+    const emitir = vi.fn();
+    const host = montar({...PERFIL, formacion:[{...PERFIL.formacion[0],fileId:'pdf-1'}]}, propio, preview,
+      vista=>vista.respaldoADescargar.subscribe(emitir));
+    seleccionarPestana(host, 'Credenciales');
+    const boton = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(b=>b.getAttribute('aria-label')?.includes('Descargar respaldo'));
+    expect(Boolean(boton)).toBe(permitido);
+    if(permitido) { boton?.click(); expect(emitir).toHaveBeenCalledWith(expect.objectContaining({fileId:'pdf-1'})); }
+    else expect(emitir).not.toHaveBeenCalled();
   });
 
   /* -- Casos vacíos ----------------------------------------------------------- */
 
-  it('sin especialidades el caso vacío habla', () => {
-    const host = montar({ ...PERFIL, especialidades: [] });
-    seleccionarPestana(host, 'Credenciales y verificaciones');
-
-    expect(host.textContent).toContain('Todavía no hay especialidades registradas');
+  it('sin especialidades la ficha propia conserva el caso vacío en Datos personales', () => {
+    const host = montar({ ...PERFIL, especialidades: [] }, true);
+    const specialtyLabel = Array.from(host.querySelectorAll('dt')).find((term) => term.textContent?.trim() === 'Especialidades');
+    expect(specialtyLabel).toBeDefined();
+    expect(specialtyLabel?.nextElementSibling?.textContent?.trim()).toBe('Sin registrar');
   });
 
   it('sin biografía no queda la presentación vacía', () => {
@@ -762,24 +953,26 @@ describe('PractitionerProfileView', () => {
       // Los cuatro contactos que el registro pregunta por separado y la calle.
       // La ficha mostraba UN teléfono y UN correo con los cinco ya disponibles.
       celularPersonal: '+591 70099999',
-      celularTrabajo: '+591 70088888',
-      fijoTrabajo: '+591 3 3000000',
       correoPersonal: 'elena.personal@example.test',
       direccion: 'Av. Banzer 3er anillo',
       mapaDomicilio: null,
     };
 
-    it('la ficha propia muestra los cinco contactos del registro, no uno de cada clase', () => {
+    it('la ficha muestra los contactos personales y el correo de trabajo, y ningún teléfono del trabajo (D-03)', () => {
       // Pedido del propietario: la ficha del médico tiene que mostrar los
-      // mismos campos que su registro. Éstos faltaban aunque el dato viniera.
+      // mismos campos que su registro. Desde el 23/09/2026, sin los teléfonos
+      // del trabajo: el médico pidió que «Contacto» no los tuviera. El correo
+      // de trabajo es un contacto y se corrige en el editor (#645, 24/09/2026).
       const host = montar({ ...PERFIL, datosPersonales: DATOS });
-      const texto = host.textContent ?? '';
+      const texto = (host.textContent ?? '').replace(/\s+/g, ' ');
 
       expect(texto).toContain('+591 70099999');
-      expect(texto).toContain('+591 70088888');
-      expect(texto).toContain('+591 3 3000000');
       expect(texto).toContain('elena.personal@example.test');
       expect(texto).toContain('Av. Banzer 3er anillo');
+      expect(texto).toContain('Correo de trabajo');
+      expect(texto).not.toContain('Correo de acceso');
+      // Los rótulos exactos: `textContent` pega los renglones sin espacio.
+      expect(texto).not.toMatch(/(Celular|Fijo|Teléfono) del trabajo/i);
     });
 
     it('un contacto no declarado no dibuja su renglón', () => {
@@ -787,12 +980,10 @@ describe('PractitionerProfileView', () => {
       // faltan.
       const host = montar({
         ...PERFIL,
-        datosPersonales: { ...DATOS, celularTrabajo: '', fijoTrabajo: '', correoPersonal: '' },
+        datosPersonales: { ...DATOS, correoPersonal: '' },
       });
       const texto = host.textContent ?? '';
 
-      expect(texto).not.toContain('Celular del trabajo');
-      expect(texto).not.toContain('Fijo del trabajo');
       expect(texto).not.toContain('Correo personal');
       expect(texto).toContain('Celular personal');
     });
@@ -812,7 +1003,7 @@ describe('PractitionerProfileView', () => {
       const host = montar({ ...PERFIL, datosPersonales: null });
       const texto = host.textContent ?? '';
 
-      expect(texto).not.toContain('Tus datos');
+      expect(texto).not.toContain('Sus datos');
       expect(texto).not.toContain('8812345');
     });
 
@@ -828,15 +1019,13 @@ describe('PractitionerProfileView', () => {
           correo: '',
           domicilio: '',
           celularPersonal: '',
-          celularTrabajo: '',
-          fijoTrabajo: '',
           correoPersonal: '',
           direccion: '',
           mapaDomicilio: null,
         },
       });
 
-      expect(host.textContent ?? '').not.toContain('Tus datos');
+      expect(host.textContent ?? '').not.toContain('Sus datos');
     });
   });
 
@@ -864,8 +1053,6 @@ describe('PractitionerProfileView', () => {
       correo: 'elena@example.test',
       domicilio: 'Santa Cruz de la Sierra',
       celularPersonal: '',
-      celularTrabajo: '',
-      fijoTrabajo: '',
       correoPersonal: '',
       direccion: '',
       mapaDomicilio: null,
@@ -874,8 +1061,22 @@ describe('PractitionerProfileView', () => {
     it('el dueño lee sus datos sin tocar una pestaña: son la primera', () => {
       const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
 
-      expect(host.textContent).toContain('Tus datos');
+      expect(host.textContent).toContain('Sus datos');
       expect(host.textContent).toContain('8812345');
+    });
+
+    it('«Contacto» lleva el correo de trabajo (#645) y ningún teléfono del trabajo (D-03)', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+
+      const personales = (host.textContent ?? '').replace(/\s+/g, ' ');
+      expect(personales).not.toContain('Correo de acceso');
+      expect(personales).not.toContain('Se cambia por su propio trámite');
+
+      seleccionarPestana(host, 'Contacto');
+      const contacto = (host.textContent ?? '').replace(/\s+/g, ' ');
+      expect(contacto).toContain('Celular personal');
+      expect(contacto).toContain('Correo de trabajo elena@example.test');
+      expect(contacto).not.toMatch(/(celular|fijo|tel[eé]fono)[^.]{0,20}\b(del|de) trabajo/i);
     });
 
     it('todo cuelga de UNA tarjeta: ni portada ni bloques sueltos alrededor', () => {
@@ -905,7 +1106,7 @@ describe('PractitionerProfileView', () => {
 
     it('y no se repite: una sola lista de matrículas, sin sub-pestañas', () => {
       const host = montar(
-        { ...PERFIL, datosPersonales: DATOS, facturacion: { nit: '', razonSocial: '' } },
+        { ...PERFIL, datosPersonales: DATOS, facturacion: { ...FACTURA_VACIA } },
         true,
       );
       // Sin abrirla no probaría nada: el panel de una pestaña inactiva no se
@@ -915,12 +1116,29 @@ describe('PractitionerProfileView', () => {
       const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
         (boton) => boton.textContent?.trim() ?? '',
       );
-      expect(pestanas).toEqual([...PESTANAS_DEL_PERFIL_MEDICO]);
+      expect(pestanas).toEqual([...DOCTOR_PROFILE_TABS]);
       // El número, con su rótulo: a secas aparecería también dentro de la URL
       // de la fuente de verificación de la formación, que es otro dato.
       // Desde el 19/09/2026 el rótulo lo pone la tarjeta: «Matrícula N.º LIC-3».
       const texto = (host.textContent ?? '').replace(/\s+/g, ' ');
       expect(texto.match(/Matrícula N\.º LIC-3/g) ?? []).toHaveLength(1);
+    });
+
+    /**
+     * Hasta el 24/09/2026 la especialidad aparecía ACÁ ADEMÁS de en «Datos
+     * personales», con su vigencia y su sello. El propietario pidió sacarla
+     * de «Credenciales»: un solo lugar, no dos con distinto detalle.
+     */
+    it('las especialidades ya no aparecen en «Credenciales»: viven sólo en «Datos personales»', () => {
+      const host = montar({ ...PERFIL, datosPersonales: DATOS }, true);
+
+      seleccionarPestana(host, 'Credenciales');
+      const rejilla = host.querySelector('[data-testid="credenciales-rejilla"]');
+      expect(rejilla?.querySelector('[data-kind="specialty"]')).toBeNull();
+
+      seleccionarPestana(host, 'Datos personales');
+      expect(host.querySelector('[data-testid="perfil-especialidades-chips"]')).not.toBeNull();
+      expect(host.textContent).toContain('Cardiología');
     });
 
     /* ---- la trayectoria como nodos (propietario, 13/09/2026) ------------- */
@@ -936,7 +1154,8 @@ describe('PractitionerProfileView', () => {
       const fases = Array.from(host.querySelectorAll('.trayecto')).map((s) =>
         s.querySelector('.trayecto__titulo')?.textContent?.trim(),
       );
-      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica', 'Formación y títulos']);
+      // Los títulos NO: son estudios y viven en «Credenciales» (24/09/2026).
+      expect(fases).toEqual(['Actividad actual', 'Experiencia histórica']);
 
       // Un nodo por hito, cada uno con su marca.
       const enCurso = host.querySelector('.trayecto--curso');
@@ -949,10 +1168,10 @@ describe('PractitionerProfileView', () => {
       expect(enCurso?.textContent).toContain('Sede Central Sopocachi');
     });
 
-    it('el nodo de un título toma el color de su sello', () => {
-      // El anillo y el sello hablan del MISMO trámite: si el anillo fuera
-      // siempre del color de la fase, un título rechazado se vería igual que
-      // uno verificado hasta leer la etiqueta.
+    it('un título se lee en «Credenciales», en su bloque y con su sello, no en «Trayectoria»', () => {
+      // «En trayectoria aparecen los cargos ... en contraposición aparecen los
+      // que deberían aparecer en credenciales, es decir registros de Estudios»
+      // — propietario, 24/09/2026.
       const host = montar(
         {
           ...PERFIL,
@@ -963,24 +1182,26 @@ describe('PractitionerProfileView', () => {
         },
         true,
       );
-      seleccionarPestana(host, 'Trayectoria');
 
-      const nodo = host.querySelector('.trayecto--formacion .trayecto__nodo');
-      expect(nodo?.classList.contains('trayecto__nodo--rejected')).toBe(true);
+      seleccionarPestana(host, 'Trayectoria');
+      expect(host.querySelector('.trayecto--formacion')).toBeNull();
+
+      seleccionarPestana(host, 'Credenciales');
+      const bloque = host.querySelector(
+        '[data-testid="credenciales-grupo"][data-kind="education"]',
+      );
+      expect(bloque?.querySelector('h3')?.textContent).toContain('Títulos y formación');
+      expect(bloque?.querySelector('app-status-seal')?.textContent).toContain('Rechazado');
     });
 
-    it('quien visita conserva su ficha de siempre, con sus sub-pestañas', () => {
-      // La Guía de profesionales no cambió: este rediseño es el de la ficha
-      // PROPIA. Sin `datosPersonales` no hay bloque de filiación, así que las
-      // dos sub-pestañas siguen siendo el único lugar donde vive el detalle.
+    it('la visita conserva las especialidades de portada y las matrículas en Credenciales', () => {
       const host = montar({ ...PERFIL, datosPersonales: null });
+      expect(host.textContent).toContain('Cardiología');
       seleccionarPestana(host, 'Credenciales y verificaciones');
-
-      const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(
-        (boton) => boton.textContent?.trim() ?? '',
-      );
-      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Matrículas'))).toBe(true);
-      expect(pestanas.some((etiqueta) => etiqueta.startsWith('Especialidades'))).toBe(true);
+      const pestanas = Array.from(host.querySelectorAll('[role="tab"]')).map(b => b.textContent ?? '');
+      expect(pestanas.some(t => t.startsWith('Especialidades'))).toBe(false);
+      expect(pestanas.some(t => t.startsWith('Matrículas'))).toBe(false);
+      expect(host.textContent).toContain('LIC-3');
     });
   });
 
@@ -1056,7 +1277,7 @@ describe('PractitionerProfileView', () => {
 
       fixture.componentRef.setInput(
         'errorDeFoto',
-        'Tu cuenta todavía no está asociada a un perfil profesional.',
+        'Su cuenta todavía no está asociada a un perfil profesional.',
       );
       fixture.detectChanges();
 
@@ -1078,7 +1299,7 @@ describe('PractitionerProfileView', () => {
    * que se copia en una factura, y se consulta junto.
    */
   describe('el recuadro de facturación', () => {
-    const FACTURA = { nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
+    const FACTURA = { ...FACTURA_VACIA, nit: '8812345011', razonSocial: 'Consultorio Dra. Rojas S.R.L.' };
 
     it('en la ficha propia muestra el NIT y a nombre de quién factura', () => {
       const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
@@ -1090,6 +1311,39 @@ describe('PractitionerProfileView', () => {
       expect(
         host.querySelector('[data-testid="perfil-factura-titular"]')?.textContent?.trim(),
       ).toBe('Consultorio Dra. Rojas S.R.L.');
+    });
+
+    it('con logo cargado, lo muestra como vista previa dentro del recuadro de facturación', () => {
+      const logoUrl = 'data:image/png;base64,iVBORw0KGgo=';
+      const host = montar(
+        {
+          ...PERFIL,
+          facturacion: FACTURA,
+          consultorio: { logoUrl, nombre: 'Consultorio Rojas' },
+        },
+        true,
+      );
+      seleccionarPestana(host, 'Facturación');
+
+      const recuadro = host.querySelector('[data-testid="perfil-factura-recuadro"]');
+      const imagen = recuadro?.querySelector('[data-testid="perfil-factura-logo"] img');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(logoUrl);
+      // Es de lectura: acá no hay cómo cambiarlo.
+      expect(recuadro?.querySelector('input[type="file"]')).toBeNull();
+    });
+
+    it('sin logo deja el mismo hueco con «Sin logo» y el NIT sigue visible', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      const logo = host.querySelector('[data-testid="perfil-factura-logo"]');
+      expect(logo).not.toBeNull();
+      expect(logo?.querySelector('img')).toBeNull();
+      expect(logo?.textContent).toContain('Sin logo');
+      expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent?.trim()).toBe(
+        '8812345011',
+      );
     });
 
     it('los dos datos van en un recuadro propio, separado de la lista de datos', () => {
@@ -1105,15 +1359,33 @@ describe('PractitionerProfileView', () => {
       expect(recuadro?.closest('dl')).toBeNull();
     });
 
+    it('muestra cada cuánto factura al seguro', () => {
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA, frecuenciaSeguro: 'Quincenal' } }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(
+        host.querySelector('[data-testid="perfil-factura-frecuencia-seguro"]')?.textContent?.trim(),
+      ).toBe('Quincenal');
+    });
+
+    it('sin frecuencia declarada dice «Sin registrar»', () => {
+      const host = montar({ ...PERFIL, facturacion: FACTURA }, true);
+      seleccionarPestana(host, 'Facturación');
+
+      expect(
+        host.querySelector('[data-testid="perfil-factura-frecuencia-seguro"]')?.textContent,
+      ).toContain('Sin registrar');
+    });
+
     it('sin NIT dice dónde cargarlo, en vez de dejar el hueco', () => {
-      const host = montar({ ...PERFIL, facturacion: { nit: '', razonSocial: '' } }, true);
+      const host = montar({ ...PERFIL, facturacion: { ...FACTURA_VACIA } }, true);
       seleccionarPestana(host, 'Facturación');
 
       expect(host.querySelector('[data-testid="perfil-factura-nit"]')?.textContent).toContain(
         'Sin registrar',
       );
       expect(host.querySelector('[data-testid="perfil-factura-falta"]')?.textContent).toContain(
-        'Editar tu info',
+        'Editar su info',
       );
     });
 
@@ -1127,17 +1399,64 @@ describe('PractitionerProfileView', () => {
     });
   });
 
+  /* -- Con qué seguros trabaja (28/09/2026) ------------------------------- */
+
+  describe('los seguros con los que trabaja', () => {
+    const SEGUROS = [
+      { id: 'c-1', aseguradora: 'Alianza Seguros', red: 'Red médica Alianza Seguros' },
+      { id: 'c-2', aseguradora: 'Seguros Andina', red: 'Red Preferente · Red Oro' },
+    ];
+
+    it('los muestra en «Datos personales», uno por aseguradora, con la red en el título', () => {
+      const host = montar({ ...PERFIL, seguros: SEGUROS }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+      const chips = [...host.querySelectorAll<HTMLElement>('[data-testid="perfil-seguro"]')];
+
+      expect(host.querySelectorAll('[data-testid="perfil-seguros"]')).toHaveLength(1);
+      expect(renglon?.querySelector('dt')?.textContent?.trim()).toBe('Seguros con los que trabaja');
+      expect(chips.map((chip) => chip.textContent?.trim())).toEqual([
+        'Alianza Seguros',
+        'Seguros Andina',
+      ]);
+      expect(chips[1]?.getAttribute('title')).toBe('Red Preferente · Red Oro');
+      expect(renglon?.querySelector('[role="list"]')).not.toBeNull();
+    });
+
+    it('sin ninguna aseguradora lo dice, en vez de dejar el renglón vacío', () => {
+      const host = montar({ ...PERFIL, seguros: [] }, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')?.textContent).toContain(
+        'Ninguna aseguradora le tiene en su red todavía',
+      );
+      expect(host.querySelector('[data-testid="perfil-seguro"]')).toBeNull();
+    });
+
+    it('con la lectura caída dice que no se pudo traer, no que no hay ninguna', () => {
+      const host = montar({ ...PERFIL, seguros: null }, true);
+      const renglon = host.querySelector('[data-testid="perfil-seguros"]');
+
+      expect(renglon?.querySelector('[data-testid="perfil-seguros-error"]')).not.toBeNull();
+      expect(renglon?.textContent).not.toContain('Ninguna aseguradora');
+    });
+
+    it('una ficha que no los pregunta no dibuja el renglón', () => {
+      const host = montar(PERFIL, true);
+
+      expect(host.querySelector('[data-testid="perfil-seguros"]')).toBeNull();
+    });
+  });
+
   /* -- «Dónde atiendo» después de C-01 y C-02 (doctor, 20/09/2026) --------- */
 
   describe('la pestaña «Dónde atiendo»', () => {
-    it('ya no muestra «Cómo atendés»', () => {
+    it('ya no muestra «Cómo atiende»', () => {
       // El kill-test del hito, en prueba: «abrí Dónde atiendo; si ves
       // Telemedicina o Pacientes nuevos, C-01 no está hecho».
       const host = montar(PERFIL, true);
       seleccionarPestana(host, 'Dónde atiendo');
       const panel = host.querySelector('[role="tabpanel"]')!;
 
-      expect(panel.textContent).not.toContain('Cómo atendés');
+      expect(panel.textContent).not.toContain('Cómo atiende');
       expect(panel.textContent).not.toContain('Pacientes nuevos');
       expect(panel.textContent).not.toContain('Telemedicina');
     });
@@ -1151,7 +1470,7 @@ describe('PractitionerProfileView', () => {
       const host = montar({ ...PERFIL, telemedicina: true }, true);
 
       expect(host.querySelector('.mi-perfil__cabecera')?.textContent).toContain(
-        'Atendés por telemedicina',
+        'Atiende por telemedicina',
       );
     });
 
@@ -1161,9 +1480,7 @@ describe('PractitionerProfileView', () => {
       // ficha diciendo lo contrario de la verdad.
       const host = montar({ ...PERFIL, telemedicina: false }, true);
 
-      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain(
-        'telemedicina',
-      );
+      expect(host.querySelector('.mi-perfil__cabecera')?.textContent).not.toContain('telemedicina');
     });
 
     it('el consultorio se administra dentro del perfil, con el mismo bloque de «Mis organizaciones»', () => {
@@ -1195,6 +1512,89 @@ describe('PractitionerProfileView', () => {
       const host = montar(PERFIL, true, true);
 
       expect(host.querySelector('[data-testid="perfil-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('PractitionerProfileView · el logo del consultorio en «Datos personales»', () => {
+    const LOGO = 'data:image/png;base64,iVBORw0KGgo=';
+
+    it('en la ficha propia lo muestra en «Datos personales», con su nombre', () => {
+      const host = montar(
+        { ...PERFIL, consultorio: { logoUrl: LOGO, nombre: 'Consultorio Rojas' } },
+        true,
+      );
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      const imagen = bloque?.querySelector('img');
+      expect(bloque?.textContent).toContain('Logo del consultorio');
+      expect(imagen?.getAttribute('alt')).toBe('Logo de Consultorio Rojas');
+      expect(imagen?.getAttribute('src')).toBe(LOGO);
+    });
+
+    it('sin logo dibuja el bloque igual, con «Sin logo»', () => {
+      const host = montar({ ...PERFIL, consultorio: { logoUrl: null, nombre: '' } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-logo-consultorio"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin logo');
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, consultorio: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-logo-consultorio"]')).toBeNull();
+    });
+  });
+
+  describe('la firma y el sello en «Datos personales»', () => {
+    const FIRMA = 'data:image/png;base64,iVBORw0KGgo=';
+    const SELLO = 'data:image/png;base64,iVBORw0KGgp=';
+
+    it('en la ficha propia muestra las dos imágenes', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque?.textContent).toContain('Firma y sello médico');
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')?.getAttribute('src')).toBe(
+        FIRMA,
+      );
+      expect(host.querySelector('[data-testid="perfil-sello-vista"] img')?.getAttribute('src')).toBe(
+        SELLO,
+      );
+    });
+
+    it('sin nada cargado dibuja el bloque igual, con «Sin firma» y «Sin sello»', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: null, selloUrl: null } }, true);
+
+      const bloque = host.querySelector('[data-testid="perfil-firma-y-sello"]');
+      expect(bloque).not.toBeNull();
+      expect(bloque?.querySelector('img')).toBeNull();
+      expect(bloque?.textContent).toContain('Sin firma');
+      expect(bloque?.textContent).toContain('Sin sello');
+    });
+
+    it('con sólo una de las dos, la otra queda con su marcador', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: null } }, true);
+
+      expect(host.querySelector('[data-testid="perfil-firma-vista"] img')).not.toBeNull();
+      expect(host.querySelector('[data-testid="perfil-sello-vista"]')?.textContent).toContain(
+        'Sin sello',
+      );
+    });
+
+    it('es de lectura: la ficha no ofrece subir nada', () => {
+      const host = montar({ ...PERFIL, firmaYSello: { firmaUrl: FIRMA, selloUrl: SELLO } }, true);
+
+      expect(
+        host.querySelector('[data-testid="perfil-firma-y-sello"] input[type="file"]'),
+      ).toBeNull();
+    });
+
+    it('la ficha de otro profesional no lo dibuja', () => {
+      const host = montar({ ...PERFIL, firmaYSello: null }, false);
+
+      expect(host.querySelector('[data-testid="perfil-firma-y-sello"]')).toBeNull();
     });
   });
 });

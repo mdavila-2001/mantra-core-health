@@ -9,11 +9,18 @@
 
 @import '../../tone/tone.css';
 
+/* `max-inline-size: 100%`: nunca más ancho que su caja. Un `inline-grid` se
+   mide por su contenido, y con un rótulo largo («Especialidad pendiente de
+   verificación») en una caja angosta se salía de la tarjeta (27/10/2026). Con
+   el tope, el rótulo baja de renglón por sus espacios. El piso no se toca: el
+   sello sigue sin encogerse por debajo de su palabra más larga dentro de una
+   fila que lo aprieta, que es lo que lo deletrearía hacia abajo. */
 :host {
     display: inline-grid;
     grid-template-columns: auto 1fr;
     align-items: center;
     column-gap: var(--sp-2);
+    max-inline-size: 100%;
     font-family: var(--font-body);
     padding: var(--sp-2) var(--sp-3);
     border-radius: var(--r-sm);

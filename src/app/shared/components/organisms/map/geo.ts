@@ -1,4 +1,4 @@
-import type { PuntoGeo } from './pin-mapa.types';
+import type { PuntoGeo } from './map-pin.types';
 
 const RADIO_TERRESTRE_KM = 6371;
 

@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.categories__pharmacy {
+  margin-block-end: var(--sp-4);
+}
+
+.categories__panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.categories__bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.categories__name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.categories__count {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-link, var(--c-petrol-700));
+}
+
+.categories__none {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}

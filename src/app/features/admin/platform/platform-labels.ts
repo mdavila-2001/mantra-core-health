@@ -1,3 +1,4 @@
+import type { Sensitivity } from '../../../core/data-access/admin-portal/data-catalog.types';
 import type { Tone } from '../../../shared/components/tone/tone.types';
 
 /* ============================================================================
@@ -21,6 +22,8 @@ function tabla(entradas: Readonly<Record<string, Rotulo>>) {
 }
 
 export const reviewStatus = tabla({
+  // Lo que detectó la clasificación automática y nadie curó; no es un borrador humano.
+  AUTO_DETECTED: { label: 'Auto-detectada', tone: 'info' },
   DRAFT: { label: 'Borrador', tone: 'secondary' },
   NEEDS_REVIEW: { label: 'En revisión', tone: 'warning' },
   APPROVED: { label: 'Aprobada', tone: 'success' },
@@ -104,17 +107,26 @@ export const conceptStatus = tabla({
   SLO_FAIL: { label: 'Incumple', tone: 'error' },
 });
 
+/**
+ * Los niveles de sensibilidad, de menos a más sensible, con los nombres de
+ * `system_ops.data_classifications` (el diccionario de niveles del modelo).
+ * `UNKNOWN` es «sin clasificar»: falta decidirlo, no es un nivel.
+ */
 export const SENSITIVITY_OPTIONS = [
-  { value: 'UNKNOWN', label: 'Sin determinar' },
-  { value: 'NONE', label: 'No sensible' },
-  { value: 'INTERNAL', label: 'Interna' },
-  { value: 'PII', label: 'Datos personales (PII)' },
-  { value: 'PHI', label: 'Datos de salud (PHI)' },
-  { value: 'SECRET', label: 'Secreto' },
-] as const;
+  { value: 'UNKNOWN', label: 'Sin clasificar' },
+  { value: 'ANONYMIZED', label: 'Anonimizado' },
+  { value: 'PUBLIC', label: 'Público' },
+  { value: 'INTERNAL', label: 'Uso interno' },
+  { value: 'PSEUDONYMIZED', label: 'Seudonimizado' },
+  { value: 'PERSONAL', label: 'Personal' },
+  { value: 'PHI_IDENTIFIER', label: 'Salud: identificador' },
+  { value: 'PHI_SENSITIVE', label: 'Salud: sensible' },
+  { value: 'PHI_SPECIAL', label: 'Salud: especial' },
+  { value: 'CREDENTIAL', label: 'Credencial' },
+] as const satisfies readonly { readonly value: Sensitivity; readonly label: string }[];
 
 export const sensitivityLabel = (code: string | null | undefined) =>
-  SENSITIVITY_OPTIONS.find((o) => o.value === code)?.label ?? 'Sin determinar';
+  SENSITIVITY_OPTIONS.find((o) => o.value === code)?.label ?? 'Sin clasificar';
 
 /**
  * Un ratio del servidor como porcentaje. `null` (0/0 o sin medición) nunca se

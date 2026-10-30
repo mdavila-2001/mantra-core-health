@@ -21,6 +21,11 @@ describe('displayCurrency', () => {
     expect(withDisplayCurrency('40.00', 'USD')).toBe('40.00 USD');
   });
 
+  it('el código con su catálogo delante, como lo sirve la API, se muestra como sigla', () => {
+    expect(displayCurrency('diagnostic_units:CURRENCY_BOB')).toBe('Bs');
+    expect(displayCurrency('pharmacy:CURRENCY_USD')).toBe('USD');
+  });
+
   it('sin código se asume la moneda del producto', () => {
     expect(displayCurrency()).toBe('Bs');
     expect(displayCurrency(null)).toBe('Bs');

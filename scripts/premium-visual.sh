@@ -27,7 +27,7 @@ if ! curl -sfI "${E2E_BASE_URL:-http://localhost:4200}" >/dev/null; then
   exit 2
 fi
 
-DEST="../docs/progress/evidence/lane-${LANE}"
+DEST="${CORR_EVIDENCE_DESTINATION:-artifacts/evidencia/correcciones/lane-${LANE}}"
 mkdir -p "$DEST"
 
 PREMIUM_LANE="$LANE" PREMIUM_FASE="$FASE" PREMIUM_RUTA="$RUTA" PREMIUM_RUTAS="$RUTAS" \

@@ -23,10 +23,14 @@
 
 /* A partir de tablet entran de a dos, y en escritorio se acomodan solas sin
    fijar un número de columnas: lo que manda es que ninguna baje de 14rem, que
-   es donde «Ginecología y obstetricia» deja de entrar en dos renglones. */
+   es donde «Ginecología y obstetricia» deja de entrar en dos renglones.
+
+   `min(14rem, 100%)`: el piso es de la celda, no de la página. Montada en una
+   columna más angosta que 14rem, la única celda se queda del ancho de la
+   columna en vez de salirse de la tarjeta. */
 @media (min-width: 40rem) {
     .specialty-badge-grid__lista {
-        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
     }
 }
 

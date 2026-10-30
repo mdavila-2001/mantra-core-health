@@ -1,0 +1,302 @@
+<app-page-header
+  title="Crear grupo médico"
+  subtitle="Elija el servicio, cuándo y dónde se hace, y arme el equipo con el cargo y el pago de cada integrante."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="alta">
+  <!-- UNA tarjeta con pestañas, centrada y a lo ancho del área de contenido
+       (composition-rules.md §5). El error y el botón de crear viven en la misma
+       tarjeta, fuera de las pestañas, para verse desde cualquiera de ellas. Los
+       valores del formulario viven en señales del componente, no en los
+       controles: `app-tab` no dibuja el panel cerrado. -->
+  <app-card class="alta__tarjeta" variant="elevated" padding="lg">
+    <form class="grupo" (submit)="$event.preventDefault(); save()" novalidate>
+      <app-tabs [(selectedIndex)]="tab" data-testid="medical-group-form-tabs">
+        <!-- ─── Servicio y paciente ──────────────────────────────────────── -->
+        <app-tab label="Servicio y paciente">
+          <div class="grupo__panel">
+            @if (mustChoosePractice()) {
+              <app-form-field
+                label="Práctica"
+                hint="El catálogo de servicios es propio de cada práctica."
+              >
+                <app-select
+                  [value]="selectedPractice()"
+                  (valueChange)="changePractice($event)"
+                  [options]="practiceOptions()"
+                  placeholder="Elija una práctica"
+                />
+              </app-form-field>
+            }
+
+            <div class="grupo__dos">
+              <section class="grupo__bloque" aria-labelledby="grupo-servicio-titulo">
+                <h2 id="grupo-servicio-titulo">Servicio de salud</h2>
+
+                @if (selectedService(); as service) {
+                  <div class="grupo__elegido" data-testid="medical-group-form-service">
+                    <span>{{ service.name }} ({{ service.code }})</span>
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      (clicked)="changeService()"
+                    >
+                      Cambiar servicio
+                    </button>
+                  </div>
+                } @else {
+                  <app-search-field
+                    label="Buscar servicio por código o nombre"
+                    placeholder="Código o nombre del servicio"
+                    [value]="serviceQuery()"
+                    (searched)="searchService($event)"
+                  />
+                  <app-data-table
+                    [state]="serviceResults()"
+                    [columns]="serviceColumns()"
+                    [trackBy]="byServiceId"
+                    [rowLabel]="serviceName"
+                    caption="Catálogo de servicios"
+                    (retry)="searchService(serviceQuery())"
+                  />
+                }
+              </section>
+
+              <section class="grupo__bloque" aria-labelledby="grupo-paciente-titulo">
+                <h2 id="grupo-paciente-titulo">Paciente y diagnóstico</h2>
+                <p class="grupo__bajada">
+                  Opcional. Si el servicio es para un paciente, elíjalo y, si corresponde, el
+                  diagnóstico observado.
+                </p>
+
+                @if (selectedPatient(); as patient) {
+                  <div class="grupo__elegido" data-testid="medical-group-form-patient">
+                    <span>{{ patient.displayName ?? patient.patientCode }}</span>
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      (clicked)="removePatient()"
+                    >
+                      Quitar paciente
+                    </button>
+                  </div>
+
+                  <app-form-field
+                    label="Diagnóstico"
+                    [hint]="
+                      conditionsUnavailable()
+                        ? 'No pudimos traer los diagnósticos de este paciente. Puede crear el grupo sin diagnóstico.'
+                        : 'Opcional. Si el último diagnóstico se puede identificar, ya viene elegido; puede cambiarlo.'
+                    "
+                  >
+                    <app-select
+                      [value]="selectedCondition()"
+                      (valueChange)="selectedCondition.set($event)"
+                      [options]="conditionOptions()"
+                      [disabled]="conditionOptions().length === 0"
+                      [placeholder]="
+                        conditionOptions().length === 0
+                          ? 'Sin diagnósticos registrados'
+                          : 'Sin diagnóstico'
+                      "
+                    />
+                  </app-form-field>
+                } @else {
+                  <app-search-field
+                    label="Buscar paciente por nombre o código"
+                    placeholder="Nombre o código de paciente"
+                    [value]="patientQuery()"
+                    (searched)="searchPatient($event)"
+                  />
+                  <app-data-table
+                    [state]="patientResults()"
+                    [columns]="patientColumns()"
+                    [trackBy]="byPatientId"
+                    [rowLabel]="patientName"
+                    caption="Pacientes"
+                    (retry)="searchPatient(patientQuery())"
+                  />
+                }
+              </section>
+            </div>
+          </div>
+        </app-tab>
+
+        <!-- ─── Fecha y lugar ────────────────────────────────────────────── -->
+        <app-tab label="Fecha y lugar">
+          <div class="grupo__panel">
+            <section class="grupo__bloque" aria-labelledby="grupo-cuando-titulo">
+              <h2 id="grupo-cuando-titulo">Cuándo y dónde</h2>
+              <div class="grupo__grilla grupo__grilla--dos">
+                <app-form-field label="Fecha y hora de realización" [required]="true">
+                  <app-date-picker
+                    mode="date-time"
+                    [minDate]="minDate"
+                    [value]="scheduledAt()"
+                    (valueChange)="scheduledAt.set($event)"
+                  />
+                </app-form-field>
+                <app-form-field
+                  label="Lugar de realización"
+                  [required]="true"
+                  hint="El establecimiento y, si hace falta, la sala."
+                >
+                  <app-input
+                    testId="medical-group-form-location"
+                    placeholder="Ej.: Clínica Foianini, quirófano 2"
+                    [value]="locationText()"
+                    (valueChange)="locationText.set(text($event))"
+                  />
+                </app-form-field>
+                <app-form-field
+                  label="Notas adicionales"
+                  hint="Opcional. Lo que el equipo tiene que saber de antemano."
+                >
+                  <app-textarea
+                    [rows]="4"
+                    [value]="notesText()"
+                    (valueChange)="notesText.set($event)"
+                  />
+                </app-form-field>
+                <app-form-field
+                  label="Términos adicionales"
+                  hint="Se suman a los términos y condiciones por defecto del servicio, que se incluyen solos."
+                >
+                  <app-textarea
+                    [rows]="4"
+                    [value]="additionalTermsText()"
+                    (valueChange)="additionalTermsText.set($event)"
+                  />
+                </app-form-field>
+              </div>
+            </section>
+          </div>
+        </app-tab>
+
+        <!-- ─── Equipo ───────────────────────────────────────────────────── -->
+        <app-tab label="Equipo">
+          <div class="grupo__panel">
+            <section class="grupo__bloque" aria-labelledby="grupo-equipo-titulo">
+              <h2 id="grupo-equipo-titulo">Equipo</h2>
+              <p class="grupo__bajada">
+                Usted ya forma parte del grupo. Sume a cada colega con su cargo o función y el pago
+                acordado.
+              </p>
+
+              @if (colleaguesFailed()) {
+                <app-alert tone="warning">
+                  No pudimos traer a los colegas de su organización. Vuelva a elegir el servicio
+                  para reintentar.
+                </app-alert>
+              }
+
+              <ol class="grupo__equipo">
+                @for (row of team(); track row.key; let i = $index) {
+                  <li
+                    class="grupo__integrante"
+                    [attr.data-testid]="'medical-group-form-member-' + i"
+                  >
+                    <div class="grupo__integrante-encabezado">
+                      <h3>Cargo {{ i + 1 }}</h3>
+                      <button
+                        app-button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        [attr.aria-label]="'Quitar el cargo ' + (i + 1)"
+                        (clicked)="removeMember(row.key)"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                    <div class="grupo__grilla">
+                      <app-form-field label="Profesional">
+                        <app-select
+                          [attr.data-testid]="'medical-group-form-practitioner-' + i"
+                          [value]="row.practitionerProfileId"
+                          (valueChange)="updateMember(row.key, { practitionerProfileId: $event })"
+                          [options]="colleagueOptions()"
+                          [placeholder]="colleaguesPlaceholder()"
+                        />
+                      </app-form-field>
+                      <app-form-field label="Cargo o función">
+                        <app-input
+                          [testId]="'medical-group-form-role-' + i"
+                          placeholder="Ej.: Anestesiólogo"
+                          [value]="row.roleTitle"
+                          (valueChange)="updateMember(row.key, { roleTitle: text($event) })"
+                        />
+                      </app-form-field>
+                      <app-form-field
+                        label="Pago acordado (Bs)"
+                        [errorMessage]="amountProblem(row)"
+                      >
+                        <app-input
+                          [testId]="'medical-group-form-amount-' + i"
+                          inputMode="decimal"
+                          placeholder="Ej.: 1500.00"
+                          [value]="row.agreedPaymentAmount"
+                          (valueChange)="
+                            updateMember(row.key, { agreedPaymentAmount: text($event) })
+                          "
+                        />
+                      </app-form-field>
+                    </div>
+                    <app-form-field label="Términos adicionales para este cargo" hint="Opcional.">
+                      <app-textarea
+                        [rows]="2"
+                        [value]="row.additionalTermsText"
+                        (valueChange)="updateMember(row.key, { additionalTermsText: $event })"
+                      />
+                    </app-form-field>
+                  </li>
+                }
+              </ol>
+
+              <button
+                app-button
+                type="button"
+                variant="secondary"
+                data-testid="medical-group-form-add-member"
+                (clicked)="addMember()"
+              >
+                Agregar cargo
+              </button>
+            </section>
+          </div>
+        </app-tab>
+      </app-tabs>
+
+      @if (saveError(); as error) {
+        <app-alert tone="error" data-testid="medical-group-form-error">{{ error }}</app-alert>
+      }
+
+      <div class="grupo__acciones">
+        <button
+          app-button
+          type="submit"
+          variant="primary"
+          data-testid="medical-group-form-save"
+          [isLoading]="saving()"
+        >
+          Crear grupo médico
+        </button>
+      </div>
+    </form>
+  </app-card>
+</div>
+
+<ng-template #serviceActionCell let-service>
+  <button app-button type="button" variant="secondary" size="sm" (clicked)="chooseService(service)">
+    Elegir
+  </button>
+</ng-template>
+
+<ng-template #patientActionCell let-patient>
+  <button app-button type="button" variant="secondary" size="sm" (clicked)="choosePatient(patient)">
+    Elegir
+  </button>
+</ng-template>

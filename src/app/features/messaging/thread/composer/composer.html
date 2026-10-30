@@ -10,7 +10,7 @@
 @if (editando(); as enEdicion) {
   <div class="composer__respuesta composer__respuesta--edicion" data-testid="composer-editando">
     <div class="composer__respuesta-texto">
-      <span class="composer__respuesta-autor">Editando tu mensaje</span>
+      <span class="composer__respuesta-autor">Editando su mensaje</span>
       <span class="composer__respuesta-cuerpo">{{ enEdicion.bodyText }}</span>
     </div>
     <button type="button" data-testid="composer-editar-cancelar" aria-label="Cancelar la edición" (click)="cancelarEdicion()">
@@ -33,66 +33,15 @@
   </div>
 }
 
-<!-- Los archivos elegidos, antes de mandarlos. Con leyenda: mandar una foto y
-     después escribir de qué es son dos mensajes que se leen al revés. Una tira
-     de miniaturas como la de PedidosYa: cada una con su ×, y el nombre y el
-     peso en la etiqueta para quien no la ve. -->
-@if (cola().length > 0) {
-  <div class="composer__adjunto" data-testid="composer-adjunto">
-    @if (documentoUnico(); as documento) {
-      <app-file-preview [file]="documento" />
-    }
-    <ul class="composer__cola" [attr.aria-label]="'Archivos para enviar: ' + cola().length + ' de ' + tope">
-      @for (item of cola(); track item.id) {
-        <li
-          class="composer__miniatura"
-          data-testid="composer-miniatura"
-          [class.is-preparando]="item.estado === 'preparando'"
-          [attr.aria-busy]="item.estado === 'preparando'"
-          [title]="describir(item)"
-        >
-          @if (esImagen(item)) {
-            <img [src]="item.vistaPrevia" alt="" />
-          } @else if (item.estado === 'preparando') {
-            <!-- Una foto enorme no tiene miniatura hasta achicarse: sólo el giro. -->
-            <span class="composer__miniatura-doc" aria-hidden="true"></span>
-          } @else {
-            <span class="composer__miniatura-doc" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg>
-              <span class="composer__miniatura-ext">{{ item.tipo === 'application/pdf' ? 'PDF' : 'IMG' }}</span>
-            </span>
-          }
-          @if (item.estado === 'preparando') {
-            <span class="composer__miniatura-giro" aria-hidden="true"></span>
-          } @else {
-            <span class="composer__miniatura-peso" aria-hidden="true">{{ tamanoLegible(item) }}</span>
-          }
-          <span class="solo-lectores">{{ describir(item) }}</span>
-          <button
-            type="button"
-            class="composer__miniatura-quitar"
-            data-testid="composer-miniatura-quitar"
-            [attr.aria-label]="'Quitar ' + item.nombre"
-            (click)="quitar(item)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M17 7 7 17M7 7l10 10" /></svg>
-          </button>
-        </li>
-      }
-      @if (cola().length < tope && editando() === null) {
-        <li class="composer__miniatura composer__miniatura--sumar">
-          <button
-            type="button"
-            data-testid="composer-sumar-foto"
-            aria-label="Sumar otra foto"
-            (click)="elegirArchivo(true)"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
-          </button>
-        </li>
-      }
-    </ul>
-  </div>
+<!-- Mientras las fotos se achican y pierden sus metadatos, antes de abrir la
+     vista previa. Suele durar menos de un segundo; con fotos de 40 MB, más. -->
+@if (preparando()) {
+  <app-loading-state
+    class="composer__preparando"
+    data-testid="composer-preparando"
+    aria-busy="true"
+    message="Preparando las fotos…"
+  />
 }
 
 <!-- Respuestas rápidas: con el hilo vacío, o las que pasa quien abrió el chat
@@ -150,12 +99,16 @@
            es lo más pesado del chat. Quien nunca abre el panel no lo descarga, y
            quien lo abre ve el marcador un cuadro antes de tenerlo. -->
       @defer (on immediate) {
-        <app-selector-emojis (elegido)="insertar($event)" />
+        <app-emoji-picker (elegido)="insertar($event)" />
       } @placeholder {
-        <p class="composer__panel-cargando" role="status">Cargando emojis…</p>
+        <app-loading-state class="composer__panel-cargando" size="block" message="Cargando emojis…" />
       }
     } @else {
-      <app-sticker-picker (elegido)="mandarSticker($event)" />
+      <app-sticker-picker
+        (elegido)="mandarSticker($event)"
+        (propio)="mandarStickerPropio($event)"
+        (rechazado)="error.set($event)"
+      />
     }
   </div>
 }
@@ -193,7 +146,7 @@
         <input
           type="text"
           data-testid="hilo-plantilla-nueva"
-          placeholder="Guardar una frase que uses seguido"
+          placeholder="Guardar una frase que use seguido"
           [ngModel]="plantillaNueva()"
           (ngModelChange)="plantillaNueva.set($event)"
           name="plantillaNueva"
@@ -210,37 +163,47 @@
   <!-- Editando no se adjunta: la edición cambia el texto de un mensaje que ya
        salió, y agregarle un archivo sería otro mensaje. -->
   @if (editando() === null) {
-    <!-- El menú es el `app-menu` del sistema: trae el patrón ARIA entero
-         (↑/↓ con vuelta, Inicio/Fin, Escape devuelve el foco al «+», Tab
-         cierra, el foco entra al primer ítem al abrir) y la superficie
-         flotante con borde y sombra. Abierto se muda al <body>: no lo recorta
-         el hilo. -->
+    <!-- El «+» abre un menú flotante, como el de WhatsApp: no empuja el hilo.
+         Es el `app-menu` del sistema: trae el patrón ARIA entero (↑/↓ con
+         vuelta, Inicio/Fin, Escape devuelve el foco al «+», Tab cierra, el foco
+         entra al primer ítem al abrir), la posición (se da vuelta hacia arriba
+         si abajo no entra) y el clic afuera. Abierto se muda al <body>: no lo
+         recorta el hilo. -->
     <button
-      #botonAdjuntar
-      class="composer__icono"
+      class="composer__icono composer__mas"
       type="button"
       data-testid="composer-adjuntar"
-      aria-label="Adjuntar un archivo"
+      aria-label="Adjuntar"
+      appTooltip="Adjuntar"
+      [class.is-abierto]="menuAdjuntar.isOpen()"
       [appMenuTrigger]="menuAdjuntar"
       (click)="panel.set('ninguno')"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
     </button>
-    <app-menu #menuAdjuntar aria-label="Adjuntar" data-testid="composer-menu-adjuntar">
-      <app-menu-item class="composer__opcion" data-testid="composer-fotos" (selected)="elegirArchivo(true)">
-        <span slot="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><circle cx="9" cy="10" r="1.6" /><path d="m20.5 15.5-4.6-4.6L7 19.5" /></svg></span>
-        Fotos de la galería
+    <app-menu #menuAdjuntar class="composer__menu" aria-label="Adjuntar" data-testid="composer-menu-adjuntar">
+      <app-menu-item data-testid="composer-fotos" (selected)="elegirArchivo('fotos-y-videos')">
+        <span slot="icon" class="composer__menu-icono composer__menu-icono--fotos" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="m21 16-5-5-9 9" /></svg>
+        </span>
+        Fotos y videos
       </app-menu-item>
-      <app-menu-item class="composer__opcion" data-testid="composer-tomar-foto" (selected)="tomarFoto()">
-        <span slot="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.4-2h6.2l1.4 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="12.5" r="3.5" /></svg></span>
+      <app-menu-item data-testid="composer-tomar-foto" (selected)="tomarFoto()">
+        <span slot="icon" class="composer__menu-icono composer__menu-icono--fotos" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.4-2h6.2l1.4 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="12.5" r="3.5" /></svg>
+        </span>
         Tomar foto
       </app-menu-item>
-      <app-menu-item class="composer__opcion" data-testid="composer-documento" (selected)="elegirArchivo(false)">
-        <span slot="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 13h6M9 17h4" /></svg></span>
-        Documento PDF
+      <app-menu-item data-testid="composer-documento" (selected)="elegirArchivo('documento')">
+        <span slot="icon" class="composer__menu-icono composer__menu-icono--documento" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /><path d="M9 13h6M9 17h4" /></svg>
+        </span>
+        Documento
       </app-menu-item>
-      <app-menu-item class="composer__opcion" data-testid="composer-plantilla" (selected)="alternar('plantillas')">
-        <span slot="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h-.5A2.5 2.5 0 0 1 5 13.5z" /><path d="M9 8.5h6M9 11.5h4" /></svg></span>
+      <app-menu-item data-testid="composer-plantilla" (selected)="alternar('plantillas')">
+        <span slot="icon" class="composer__menu-icono composer__menu-icono--plantilla" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" /></svg>
+        </span>
         Plantilla
       </app-menu-item>
     </app-menu>
@@ -261,12 +224,12 @@
     </button>
 
     <label class="composer__campo">
-      <span class="solo-lectores">Escribí tu mensaje</span>
+      <span class="solo-lectores">Escriba su mensaje</span>
       <textarea
         #campo
         data-testid="hilo-texto"
         rows="1"
-        [placeholder]="editando() === null ? (cola().length > 0 ? 'Agregá un texto' : 'Escribí un mensaje') : 'Editá tu mensaje'"
+        [placeholder]="editando() === null ? 'Escriba un mensaje' : 'Edite su mensaje'"
         title="Enter envía · Shift+Enter hace salto de línea · Ctrl+V pega una imagen"
         [ngModel]="texto()"
         (ngModelChange)="alEscribir($event)"
@@ -291,7 +254,7 @@
         type="button"
         data-testid="composer-foto"
         aria-label="Mandar fotos"
-        (click)="elegirArchivo(true)"
+        (click)="elegirArchivo('fotos')"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><circle cx="9" cy="10" r="1.6" /><path d="m20.5 15.5-4.6-4.6L7 19.5" /></svg>
       </button>
@@ -310,20 +273,18 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 12.5 5 5L20 6.5" /></svg>
     </button>
   } @else if (puedeEnviar()) {
+    <!-- Mientras se preparan fotos, lo escrito espera: va a ser su pie. -->
     <button
       class="composer__enviar"
       type="submit"
       data-testid="hilo-enviar"
-      [attr.aria-label]="cola().length > 1 ? 'Enviar ' + cola().length + ' archivos' : 'Enviar mensaje'"
+      aria-label="Enviar mensaje"
       [disabled]="preparando()"
     >
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M4.2 19.6 20.5 12.9a1 1 0 0 0 0-1.8L4.2 4.4a.8.8 0 0 0-1.1.9l1.6 5.6 8.3 1.1-8.3 1.1-1.6 5.6a.8.8 0 0 0 1.1.9z" /></svg>
-      @if (cola().length > 1) {
-        <span class="composer__enviar-cuenta" aria-hidden="true">{{ cola().length }}</span>
-      }
     </button>
   } @else {
-    <app-grabador (grabado)="alGrabar($event)" (fallo)="alFallarElMicrofono($event)" />
+    <app-recorder (grabado)="alGrabar($event)" (fallo)="alFallarElMicrofono($event)" />
   }
 </form>
 
@@ -336,7 +297,7 @@
   class="solo-lectores"
   type="file"
   multiple
-  accept="image/*,application/pdf"
+  accept="image/*,video/*,audio/*,application/pdf"
   tabindex="-1"
   aria-hidden="true"
   data-testid="composer-input-archivos"
@@ -355,3 +316,9 @@
   data-testid="composer-input-camara"
   (change)="alElegir($event)"
 />
+
+<!-- Lo elegido, antes de mandarlo: tapa el hilo entero, con pie de foto,
+     miniaturas, edición de la imagen y el botón de enviar. -->
+@if (adjuntos().length > 0) {
+  <app-attachment-preview [(drafts)]="adjuntos" [notice]="avisoDeAdjuntos()" (send)="enviarAdjuntos()" (discard)="descartarAdjuntos()" />
+}

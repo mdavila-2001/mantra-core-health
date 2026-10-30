@@ -60,13 +60,7 @@ refactor.
 
 ## Limitaciones conocidas
 
-Ver `QA_FINAL.md` § «No ejecutado» y `HALLAZGOS.md` (H-10, H-13, H-14, H-15, H-17 abiertos).
-
-## Seguimiento con usuarios (protocolo listo, no ejecutado)
-
-Tarea neutral: «Tenés una cita esta semana. ¿Cuándo es? Después, pedí una nueva con tu
-médica». Medir: tiempo hasta decir la fecha, si encuentra «Pedir una cita» sin ayuda, y si usa
-el menú o el botón. 5 participantes, teléfono y escritorio.
+Ver `QA_FINAL.md` § «No ejecutado» y `HALLAZGOS.md`.
 
 ## Integración
 

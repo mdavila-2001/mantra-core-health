@@ -1,18 +1,34 @@
-/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis,
-   adjuntar, plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del
-   campo se leían como el rótulo del propio campo. */
+/* La barra de escribir. Clavada abajo del hilo, con los paneles —emojis y
+   plantillas— abriéndose SOBRE ella: es donde se usan, y arriba del campo se
+   leían como el rótulo del propio campo. El menú de adjuntar no es un panel:
+   flota sobre el hilo (`app-menu`) y no empuja nada. */
 
+/* Sin `position` propia, a propósito: la vista previa de adjuntos se apoya
+   en el host del hilo para taparlo entero, y un host posicionado acá la
+   encerraría en la barra. */
 :host {
-  position: relative;
   flex: none;
   display: block;
   background: var(--sup-tarjeta);
   border-block-start: 1px solid var(--filete);
 }
 
+/* Los hijos en flujo sí van posicionados (sin `z-index`): así se pintan por
+   encima del papel del hilo (`thread.css`, `:host::before`, que también es
+   posicionado). Sin esto el patrón quedaba encima del campo de escribir. */
+.composer,
+.composer__panel,
+.composer__respuesta,
+.composer__error {
+  position: relative;
+}
+
 .composer {
   display: flex;
   align-items: flex-end;
+  /* El fondo va acá y no sólo en el host: el host no está posicionado y su
+     fondo se pinta debajo del papel del hilo. */
+  background: var(--sup-tarjeta);
   gap: var(--e2);
   padding: var(--e2) var(--e4);
 }
@@ -35,7 +51,21 @@
   transition:
     background var(--mov-rapido) var(--curva),
     color var(--mov-rapido) var(--curva),
-    transform var(--mov-rapido) var(--curva);
+    transform var(--dur-fast) var(--ease-standard);
+}
+
+/* ALOVIDA Pulse · el dedo hunde el botón: respuesta en 120 ms, que es lo que se
+   percibe como inmediato. */
+.composer__icono:active,
+.composer__enviar:active {
+  transform: scale(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__icono:active,
+  .composer__enviar:active {
+    transform: none;
+  }
 }
 
 .composer__icono:hover {
@@ -91,25 +121,6 @@
   inline-size: 22px;
   block-size: 22px;
   margin-inline-start: 3px;
-}
-
-.composer__enviar-cuenta {
-  position: absolute;
-  inset-block-start: -4px;
-  inset-inline-end: -4px;
-  min-inline-size: 20px;
-  block-size: 20px;
-  padding-inline: var(--e1);
-  border: 2px solid var(--sup-tarjeta);
-  border-radius: var(--r-pill);
-  background: var(--brand-secondary);
-  /* Tinta fija de la rampa: `--tinta-marca` se aclara de noche y, sobre el
-     aqua que también se aclara, el número desaparecía (1:1). */
-  color: var(--c-petrol-900);
-  font-size: var(--fs-overline);
-  font-weight: 800;
-  line-height: 16px;
-  text-align: center;
 }
 
 /* --- La píldora ---------------------------------------------------------- */
@@ -249,176 +260,22 @@
   outline-offset: 2px;
 }
 
-/* --- La cola de archivos ------------------------------------------------- */
+/* --- Fotos preparándose ------------------------------------------------ */
 
-.composer__cola {
-  display: flex;
-  gap: var(--e3);
-  /* La × de cada miniatura sobresale 16 px arriba y a la derecha (ver
-     abajo). La tira desplaza en horizontal, así que recorta lo que se sale de
-     su caja: el relleno le hace lugar, y el margen negativo devuelve la
-     altura que tenía la tira. */
-  margin: calc(var(--e2) * -1) 0 0;
-  padding: var(--e4) var(--e4) var(--e1) 0;
-  list-style: none;
-  overflow-x: auto;
-}
-
-.composer__miniatura {
+/* La línea de «Preparando las fotos…» mientras se achican y pierden sus
+   metadatos, antes de abrir la vista previa. Posicionada, como las otras
+   tiras, para pintarse encima del papel del hilo. */
+.composer__preparando {
   position: relative;
-  flex: none;
-  inline-size: 72px;
-  block-size: 72px;
-  border-radius: var(--r-menu);
+  padding: var(--e2) var(--e4);
+  border-block-start: 1px solid var(--filete-2);
   background: var(--sup-tarjeta);
-  box-shadow: var(--sombra-1);
-}
-
-.composer__miniatura img {
-  display: block;
-  inline-size: 100%;
-  block-size: 100%;
-  border-radius: var(--r-menu);
-  object-fit: cover;
-}
-
-.composer__miniatura.is-preparando img {
-  opacity: .5;
-}
-
-.composer__miniatura-doc {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  block-size: 100%;
-  border: 1px solid var(--filete);
-  border-radius: var(--r-menu);
-  color: var(--tinta-marca);
-}
-
-.composer__miniatura-doc svg {
-  inline-size: 26px;
-  block-size: 26px;
-}
-
-.composer__miniatura-ext {
-  font-size: var(--fs-overline);
-  font-weight: 800;
-  letter-spacing: .04em;
-}
-
-/* El peso, chiquito sobre la foto: decide si conviene mandarla por datos. */
-.composer__miniatura-peso {
-  position: absolute;
-  inset-inline-start: var(--e1);
-  inset-block-end: var(--e1);
-  padding: 0 var(--e1);
-  border-radius: var(--r-ctrl);
-  /* Velo y tinta fijos de la rampa, iguales en los dos temas: va sobre una
-     foto, que no cambia con el tema. `--text-inverse` se oscurece de noche y
-     quedaba oscuro sobre velo oscuro (1.2:1); así da ≥7:1 hasta sobre una
-     foto blanca. */
-  background: color-mix(in srgb, var(--c-petrol-900) 80%, transparent);
-  color: var(--c-petrol-50);
-  font-size: var(--fs-overline);
-  font-weight: 700;
-  line-height: 16px;
-}
-
-.composer__miniatura-giro {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  inline-size: 24px;
-  block-size: 24px;
-  border: 3px solid var(--filete);
-  border-block-start-color: var(--brand-primary);
-  border-radius: var(--r-pill);
-  animation: composer-giro .8s linear infinite;
-}
-
-@keyframes composer-giro {
-  to { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .composer__miniatura-giro { animation: none; }
-}
-
-/* La ×: el botón mide 44×44 —el mínimo para un pulgar— y lo que se ve es el
-   círculo de 24 px dibujado en su centro, en la misma esquina de siempre. El
-   centro cae 6 px afuera de la miniatura: 44 / 2 − 6 = 16 px de desborde. */
-.composer__adjunto .composer__miniatura-quitar {
-  position: absolute;
-  z-index: 1;
-  inset-block-start: -16px;
-  inset-inline-end: -16px;
-  inline-size: 44px;
-  block-size: 44px;
-  border: 0;
-  background: none;
-  color: var(--sup-tarjeta);
-}
-
-.composer__miniatura-quitar::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  box-sizing: border-box;
-  inline-size: 24px;
-  block-size: 24px;
-  border: 2px solid var(--sup-tarjeta);
-  border-radius: var(--r-pill);
-  background: var(--tinta);
-}
-
-.composer__adjunto .composer__miniatura-quitar svg {
-  position: relative;
-  inline-size: 14px;
-  block-size: 14px;
-}
-
-.composer__miniatura--sumar button:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: 2px;
-}
-
-/* El anillo abraza el círculo visible, no la caja de 44. */
-.composer__miniatura-quitar:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: -8px;
-}
-
-.composer__miniatura--sumar {
-  box-shadow: none;
-  background: none;
-}
-
-.composer__adjunto .composer__miniatura--sumar button {
-  inline-size: 100%;
-  block-size: 100%;
-  border: 2px dashed var(--filete);
-  border-radius: var(--r-menu);
-  color: var(--tinta-3);
-}
-
-.composer__adjunto .composer__miniatura--sumar button:hover {
-  border-color: var(--brand-primary);
-  color: var(--brand-primary);
-}
-
-.composer__adjunto .composer__miniatura--sumar svg {
-  inline-size: 24px;
-  block-size: 24px;
+  font-size: var(--fs-caption);
 }
 
 /* --- La tira de respuesta ------------------------------------------------ */
 
-.composer__respuesta,
-.composer__adjunto {
+.composer__respuesta {
   display: flex;
   align-items: center;
   gap: var(--e3);
@@ -451,8 +308,7 @@
   font-size: var(--fs-caption);
 }
 
-.composer__respuesta button,
-.composer__adjunto button {
+.composer__respuesta button {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -482,38 +338,9 @@
   outline-offset: -4px;
 }
 
-.composer__respuesta button svg,
-.composer__adjunto button svg {
+.composer__respuesta button svg {
   inline-size: 16px;
   block-size: 16px;
-}
-
-/* --- El archivo elegido -------------------------------------------------- */
-
-.composer__adjunto-imagen {
-  inline-size: 44px;
-  block-size: 44px;
-  border-radius: var(--r-ctrl);
-  object-fit: cover;
-}
-
-.composer__adjunto-icono {
-  display: inline-flex;
-  color: var(--tinta-2);
-}
-
-.composer__adjunto-icono svg {
-  inline-size: 28px;
-  block-size: 28px;
-}
-
-.composer__adjunto-nombre {
-  flex: 1 1 auto;
-  min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-caption);
 }
 
 /* --- Los paneles --------------------------------------------------------- */
@@ -525,16 +352,56 @@
   background: var(--sup-tarjeta);
 }
 
-/* Los ítems del menú de adjuntar (`app-menu-item`, que pone la superficie, el
-   borde y la sombra del sistema). Sólo se les sube el alto a 44: el menú
-   se abre con el pulgar. El ícono, en la tinta de marca como los del campo. */
-.composer__opcion {
-  min-block-size: 44px;
+/* --- El menú de adjuntar ------------------------------------------------- */
+
+/* El «+» gira a ✕ mientras el menú está abierto, como en WhatsApp. */
+.composer__mas svg {
+  transition: transform var(--dur-base) var(--ease-standard);
 }
 
-.composer__opcion [slot='icon'] {
-  display: inline-flex;
+.composer__mas.is-abierto {
+  background: var(--sup-inset);
   color: var(--tinta-marca);
+}
+
+.composer__mas.is-abierto svg {
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer__mas svg {
+    transition: none;
+  }
+}
+
+/* Cada opción con su círculo de color, para reconocerla sin leer. Son
+   rampas del sistema y no tokens de tema: el color identifica la opción y
+   no tiene que cambiar de noche. */
+.composer__menu-icono {
+  display: inline-grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: var(--r-pill);
+  color: var(--surface-white);
+}
+
+.composer__menu-icono svg {
+  inline-size: 18px;
+  block-size: 18px;
+}
+
+.composer__menu-icono--documento { background: var(--c-petrol-600); }
+.composer__menu-icono--fotos { background: var(--c-info-600); }
+.composer__menu-icono--plantilla { background: var(--c-amber-600); }
+
+.composer__menu {
+  min-inline-size: 13rem;
+}
+
+/* Las opciones a 44 px de alto: el menú se abre con el pulgar. */
+.composer__menu app-menu-item {
+  min-block-size: 44px;
 }
 
 /* --- Plantillas (carril P9) ---------------------------------------------- */
@@ -661,8 +528,6 @@
   }
 }
 
-.composer__adjunto { flex-wrap: wrap; padding-block: var(--e3) var(--e2); }
-.composer__adjunto app-file-preview { flex-basis: 100%; }
 
 /* La tira de edición (F4.5).
 

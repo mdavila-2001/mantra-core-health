@@ -74,11 +74,11 @@ describe('EmptyState', () => {
     it('la descripción es opcional', async () => {
       expect(estado().querySelector('.empty-state__description')).toBeNull();
 
-      host.description.set('Probá con otro documento o apellido.');
+      host.description.set('Pruebe con otro documento o apellido.');
       await fixture.whenStable();
 
       expect(estado().querySelector('.empty-state__description')?.textContent?.trim()).toBe(
-        'Probá con otro documento o apellido.',
+        'Pruebe con otro documento o apellido.',
       );
     });
 

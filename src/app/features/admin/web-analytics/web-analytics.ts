@@ -12,6 +12,9 @@ import type {
   SessionSummary,
   Timeseries,
   WebVitals,
+  OnboardingFunnelReport,
+  OnboardingHeatmapReport,
+  OnboardingFormType,
 } from '../../../core/data-access/admin-portal/platform.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
@@ -98,6 +101,26 @@ export class WebAnalytics {
     { value: 'MOBILE' as const, label: 'Móvil' },
   ];
 
+  protected readonly opcionesTipoAlta: readonly { value: OnboardingFormType; label: string }[] = [
+    { value: 'patient', label: 'Paciente' },
+    { value: 'practitioner', label: 'Médico' },
+    { value: 'organization', label: 'Aseguradora' },
+    { value: 'laboratory', label: 'Laboratorio' },
+    { value: 'imaging-center', label: 'Imagenología' },
+    { value: 'pharmacy', label: 'Farmacia' },
+  ];
+
+  protected readonly opcionesMetricaCalor = [
+    { value: 'errors' as const, label: 'Errores de validación' },
+    { value: 'interactions' as const, label: 'Frecuencia de interacción' },
+    { value: 'abandonment' as const, label: 'Puntos de fuga' },
+  ];
+
+  protected readonly tipoAlta = signal<OnboardingFormType>('patient');
+  protected readonly metricaCalor = signal<'errors' | 'interactions' | 'abandonment'>('errors');
+  protected readonly embudoOnboarding = signal<ViewState<OnboardingFunnelReport>>(loading());
+  protected readonly mapaCalorOnboarding = signal<ViewState<OnboardingHeatmapReport>>(loading());
+
   protected readonly resumen = signal<ViewState<AnalyticsOverview>>(loading());
   protected readonly serie = signal<ViewState<Timeseries>>(loading());
   protected readonly vitales = signal<ViewState<WebVitals>>(loading());
@@ -114,7 +137,7 @@ export class WebAnalytics {
   });
 
   protected readonly opcionesEmbudo = computed(() => [
-    { value: null, label: 'Elegí un embudo' },
+    { value: null, label: 'Elija un embudo' },
     ...this.embudos().map((f) => ({ value: f.id as string | null, label: `${f.name} (v${f.version})` })),
   ]);
 
@@ -152,7 +175,7 @@ export class WebAnalytics {
     this.analytics.webVitals(w).subscribe({
       next: (r) =>
         this.vitales.set(
-          r.metrics.length === 0 ? empty({ label: 'Ampliá la ventana de tiempo.' }, 'Sin muestras de rendimiento en esta ventana.') : ready(r),
+          r.metrics.length === 0 ? empty({ label: 'Amplíe la ventana de tiempo.' }, 'Sin muestras de rendimiento en esta ventana.') : ready(r),
         ),
       error: (e: unknown) => this.vitales.set(errorToViewState<WebVitals>(e)),
     });
@@ -162,10 +185,43 @@ export class WebAnalytics {
     });
     this.analytics.sessions(w).subscribe({
       next: (r) =>
-        this.sesiones.set(r.items.length === 0 ? empty({ label: 'Ampliá la ventana de tiempo.' }, 'Sin sesiones en esta ventana.') : ready(r.items)),
+        this.sesiones.set(r.items.length === 0 ? empty({ label: 'Amplíe la ventana de tiempo.' }, 'Sin sesiones en esta ventana.') : ready(r.items)),
       error: (e: unknown) => this.sesiones.set(errorToViewState<readonly SessionSummary[]>(e)),
     });
     this.cargarInforme();
+    this.cargarOnboarding();
+  }
+
+  protected cambiarTipoAlta(tipo: OnboardingFormType | null): void {
+    if (tipo) {
+      this.tipoAlta.set(tipo);
+      this.cargarOnboarding();
+    }
+  }
+
+  protected cambiarMetricaCalor(metrica: 'errors' | 'interactions' | 'abandonment' | null): void {
+    if (metrica) {
+      this.metricaCalor.set(metrica);
+      this.cargarOnboarding();
+    }
+  }
+
+  protected cargarOnboarding(): void {
+    const t = this.tipoAlta();
+    const r = this.rango();
+    const m = this.metricaCalor();
+    this.embudoOnboarding.set(loading());
+    this.mapaCalorOnboarding.set(loading());
+
+    this.analytics.onboardingFunnel(t, r).subscribe({
+      next: (res) => this.embudoOnboarding.set(ready(res)),
+      error: (e: unknown) => this.embudoOnboarding.set(errorToViewState<OnboardingFunnelReport>(e)),
+    });
+
+    this.analytics.onboardingHeatmap(t, m, r).subscribe({
+      next: (res) => this.mapaCalorOnboarding.set(ready(res)),
+      error: (e: unknown) => this.mapaCalorOnboarding.set(errorToViewState<OnboardingHeatmapReport>(e)),
+    });
   }
 
   protected cambiarRango(r: Rango): void {

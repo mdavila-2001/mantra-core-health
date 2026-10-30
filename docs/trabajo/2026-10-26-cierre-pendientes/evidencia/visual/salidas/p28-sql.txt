@@ -1,0 +1,6 @@
+      value       |  valid_to  
+------------------+------------
+ VIS-MVP2M4HF     | 2026-10-26
+ VIS-CORREGIDO-28 | 
+(2 rows)
+

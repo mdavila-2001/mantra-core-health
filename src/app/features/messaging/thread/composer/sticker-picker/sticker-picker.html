@@ -1,4 +1,54 @@
 <div class="stickers">
+  <!-- Lo propio, arriba: subir uno desde el equipo y los que ya se subieron. -->
+  <div class="stickers__propios">
+    <button
+      class="stickers__subir"
+      type="button"
+      data-testid="composer-sticker-subir"
+      (click)="archivoPropio.click()"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 16V4M7 9l5-5 5 5M5 20h14" /></svg>
+      Subir sticker o GIF
+    </button>
+    <input
+      #archivoPropio
+      class="solo-lectores"
+      type="file"
+      tabindex="-1"
+      aria-hidden="true"
+      data-testid="composer-sticker-archivo"
+      [accept]="aceptados"
+      (change)="alElegirArchivo($event)"
+    />
+
+    @if (misStickers().length > 0) {
+      <div class="stickers__rejilla stickers__rejilla--propios" role="list" aria-label="Mis stickers">
+        @for (mio of misStickers(); track mio.id) {
+          <div class="stickers__propio" role="listitem">
+            <button
+              class="stickers__sticker"
+              type="button"
+              data-testid="composer-sticker-propio"
+              [attr.aria-label]="'Enviar mi sticker: ' + mio.nombre"
+              (click)="mandarPropio(mio)"
+            >
+              <img [src]="mio.url" [alt]="mio.nombre" width="72" height="72" />
+            </button>
+            <button
+              class="stickers__quitar"
+              type="button"
+              [attr.aria-label]="'Quitar de mis stickers: ' + mio.nombre"
+              (click)="quitarPropio(mio)"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+  <p class="stickers__rotulo stickers__rotulo--pack">Pack AloVida</p>
+
   <div class="stickers__rejilla" role="list">
     @for (sticker of stickers; track sticker.id) {
       <button

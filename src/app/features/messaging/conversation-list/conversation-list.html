@@ -132,7 +132,7 @@
                     <span class="conversaciones__tick" aria-hidden="true">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 12.6 4.6 4.6L18.5 6.4" /></svg>
                     </span>
-                    <span class="solo-lectores">Enviado por vos: </span>
+                    <span class="solo-lectores">Enviado por usted: </span>
                   } @else if (prefijo(conversacion); as autor) {
                     <span class="conversaciones__autor">{{ autor }}</span>
                   }
@@ -182,6 +182,12 @@
                 </span>
 
                 <span class="conversaciones__marcas">
+                  @if (estaBloqueada(conversacion)) {
+                    <span class="conversaciones__bloqueada" data-testid="conversacion-bloqueada" title="Bloqueado">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></svg>
+                      <span class="solo-lectores">Bloqueado</span>
+                    </span>
+                  }
                   @if (esFavorito(conversacion.id)) {
                     <span class="conversaciones__estrella" aria-label="Favorito" title="Favorito">
                       <svg viewBox="0 0 24 24" fill="currentColor" focusable="false"><path d="m12 3.6 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8L3.5 9.8l5.9-.9z" /></svg>
@@ -241,6 +247,17 @@
                   <button role="menuitem" type="button" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('perfil', conversacion.id, $event)">
                     Ver perfil
                   </button>
+                </li>
+                <li role="none">
+                  @if (estaBloqueada(conversacion)) {
+                    <button role="menuitem" type="button" data-testid="conversacion-desbloquear" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('desbloquear', conversacion.id, $event)">
+                      Desbloquear
+                    </button>
+                  } @else {
+                    <button role="menuitem" type="button" data-testid="conversacion-bloquear" (keydown.escape)="cerrarMenu(); mas.focus()" (click)="ejecutar('bloquear', conversacion.id, $event)">
+                      Bloquear
+                    </button>
+                  }
                 </li>
               }
             </ul>

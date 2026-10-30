@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Estructura de la historia clínica</title>
+  <desc id="d">Esquema con el paciente en el centro y diez componentes de la historia clínica a su alrededor: identificación, motivo de consulta y enfermedad actual, antecedentes y medicación, examen físico, pruebas complementarias, lista de problemas y diagnóstico, plan y tratamiento, notas de evolución, consentimientos y voluntades, informes, interconsultas y alta.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#c9d3df; --ink:#1c2733; --muted:#566576; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a6b; --b-l:#d9f0e8; --c:#b86e0a; --c-l:#fbecd2; --bad:#c0392b; --bad-l:#f9dcd8; --p:#7a4bb0; --p-l:#ebe0f6; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#3a4958; --ink:#e8eef5; --muted:#a3b3c4; --a:#7db4ea; --a-l:#223a54; --b:#4cc38a; --b-l:#1d3a31; --c:#e8b04a; --c-l:#43361d; --bad:#ef7467; --bad-l:#4a2723; --p:#b794e0; --p-l:#35294a; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 12.5px; }
+    .t { font-size: 13px; }
+    .big { font-size: 28px; font-weight: 800; }
+    .w { font-weight: 700; }
+    .mid { text-anchor: middle; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" class="title mid">Estructura de la historia clínica</text>
+  <line x1="236" y1="89" x2="348" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="236" y1="165" x2="348" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="236" y1="241" x2="348" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="236" y1="317" x2="348" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="236" y1="393" x2="348" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="564" y1="89" x2="452" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="564" y1="165" x2="452" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="564" y1="241" x2="452" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="564" y1="317" x2="452" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <line x1="564" y1="393" x2="452" y2="238" stroke="var(--line)" stroke-width="1.6"/>
+  <rect x="30" y="58" width="206" height="62" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="133.0" y="86.0" class="h mid">Identificación</text>
+  <text x="133.0" y="104.0" class="s muted mid">Datos administrativos</text>
+  <rect x="30" y="134" width="206" height="62" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="133.0" y="162.0" class="h mid">Motivo y enfermedad actual</text>
+  <text x="133.0" y="180.0" class="s muted mid">Relato del problema</text>
+  <rect x="30" y="210" width="206" height="62" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="133.0" y="238.0" class="h mid">Antecedentes y medicación</text>
+  <text x="133.0" y="256.0" class="s muted mid">Alergias, hábitos, familia</text>
+  <rect x="30" y="286" width="206" height="62" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="133.0" y="314.0" class="h mid">Examen físico</text>
+  <text x="133.0" y="332.0" class="s muted mid">Constantes y hallazgos</text>
+  <rect x="30" y="362" width="206" height="62" rx="10" fill="var(--a-l)" stroke="var(--a)" stroke-width="1.6"/>
+  <text x="133.0" y="390.0" class="h mid">Pruebas complementarias</text>
+  <text x="133.0" y="408.0" class="s muted mid">Laboratorio, imagen, otras</text>
+  <rect x="564" y="58" width="206" height="62" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="667.0" y="86.0" class="h mid">Problemas y diagnóstico</text>
+  <text x="667.0" y="104.0" class="s muted mid">Impresión y diferencial</text>
+  <rect x="564" y="134" width="206" height="62" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="667.0" y="162.0" class="h mid">Plan y tratamiento</text>
+  <text x="667.0" y="180.0" class="s muted mid">Estudios, indicaciones</text>
+  <rect x="564" y="210" width="206" height="62" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="667.0" y="238.0" class="h mid">Notas de evolución</text>
+  <text x="667.0" y="256.0" class="s muted mid">Fechadas y firmadas</text>
+  <rect x="564" y="286" width="206" height="62" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="667.0" y="314.0" class="h mid">Consentimientos</text>
+  <text x="667.0" y="332.0" class="s muted mid">Y voluntades anticipadas</text>
+  <rect x="564" y="362" width="206" height="62" rx="10" fill="var(--b-l)" stroke="var(--b)" stroke-width="1.6"/>
+  <text x="667.0" y="390.0" class="h mid">Informes y alta</text>
+  <text x="667.0" y="408.0" class="s muted mid">Interconsultas, epicrisis</text>
+  <circle cx="400" cy="238" r="68" fill="var(--panel)" stroke="var(--c)" stroke-width="3"/>
+  <text x="400" y="232" class="h mid">Persona</text>
+  <text x="400" y="252" class="h mid">atendida</text>
+  <text x="400" y="346" class="s muted mid">Datos obtenidos</text>
+  <text x="400" y="366" class="s muted mid">(izquierda) y</text>
+  <text x="400" y="386" class="s muted mid">razonamiento y</text>
+  <text x="400" y="406" class="s muted mid">decisiones (derecha)</text>
+  <text x="400" y="468" class="s muted mid">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

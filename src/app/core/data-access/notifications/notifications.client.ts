@@ -12,6 +12,7 @@ import type {
   InAppReadResult,
   MarkAllReadResult,
   MyNotificationsQuery,
+  NotificationAction,
   NotificationCategory,
   NotificationDestination,
 } from './notifications.types';
@@ -147,6 +148,7 @@ type WireNotification = ConNulos<{
   bodyText: string;
   destination: NotificationDestination;
   payloadJson: unknown;
+  actions: readonly NotificationAction[];
   unread: boolean;
   availableAt: string;
   readAt: string;
@@ -182,6 +184,9 @@ function toNotification(wire: WireNotification): InAppNotification {
     ...(wire.bodyText === null ? {} : { bodyText: wire.bodyText }),
     ...(wire.destination === null ? {} : { destination: wire.destination }),
     ...(wire.payloadJson === null ? {} : { payloadJson: wire.payloadJson }),
+    ...(wire.actions === null || wire.actions === undefined || wire.actions.length === 0
+      ? {}
+      : { actions: wire.actions }),
     unread: wire.unread ?? true,
     availableAt: new Date(wire.availableAt ?? ''),
     ...(wire.readAt === null || wire.readAt === undefined

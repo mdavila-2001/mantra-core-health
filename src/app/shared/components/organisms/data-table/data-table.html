@@ -1,4 +1,13 @@
 <!-- Los 9 estados los dibuja el view-state-host: acá no se reimplementa ninguno. -->
+@if (heading() || totalCount() !== null) {
+  <header class="data-table__heading" data-testid="tabla-encabezado">
+    <span class="data-table__heading-title">{{ heading() }}</span>
+    @if (totalCount() !== null) {
+      <span class="data-table__heading-count" data-testid="tabla-total">{{ totalCount() }}</span>
+    }
+  </header>
+}
+
 <app-view-state-host [state]="state()" (retry)="retry.emit()" (refresh)="refresh.emit()">
   <div
     #scrollBox
@@ -16,7 +25,7 @@
       <thead>
         <tr>
           @if (selectable()) {
-            <th scope="col" class="data-table__select-cell">
+            <th scope="col" class="data-table__select-cell" data-pdf-ignore>
               <app-checkbox
                 [checked]="allVisibleSelected()"
                 [indeterminate]="someVisibleSelected()"
@@ -58,14 +67,14 @@
           }
 
           @if (secondaryColumns().length > 0) {
-            <th scope="col" class="data-table__detail-toggle-cell">
+            <th scope="col" class="data-table__detail-toggle-cell" data-pdf-ignore>
               <span class="sr-only">Ver el detalle de la fila</span>
             </th>
           }
         </tr>
       </thead>
 
-      <tbody>
+      <tbody [attr.data-page-turn]="pageTurn()">
         @for (row of rows(); track rowKey(row); let indice = $index) {
           <tr
             class="data-table__row"
@@ -74,7 +83,7 @@
             (click)="activateRow(row, $event)"
           >
             @if (selectable()) {
-              <td class="data-table__select-cell">
+              <td class="data-table__select-cell" data-pdf-ignore>
                 <app-checkbox
                   [checked]="isSelected(row)"
                   [label]="'Seleccionar ' + rowName(row, indice)"
@@ -85,7 +94,11 @@
             }
 
             @for (column of columns(); track column.key) {
-              <td [class]="cellClassFor(column)">
+              <td
+                [class]="cellClassFor(column)"
+                [class.data-table__cell--vacia]="!column.cell && cellValue(row, column).trim() === ''"
+                [attr.data-label]="column.header"
+              >
                 @if (column.cell) {
                   <ng-container [ngTemplateOutlet]="column.cell" [ngTemplateOutletContext]="{ $implicit: row }" />
                 } @else {
@@ -95,7 +108,7 @@
             }
 
             @if (secondaryColumns().length > 0) {
-              <td class="data-table__detail-toggle-cell">
+              <td class="data-table__detail-toggle-cell" data-pdf-ignore>
                 <button
                   type="button"
                   class="data-table__detail-toggle"
@@ -148,6 +161,9 @@
        tampoco los necesita. -->
   @if (hasPrevious() || hasNext()) {
   <nav class="data-table__cursor" aria-label="Paginación del listado">
+    @if (pageSummary()) {
+      <span class="data-table__page-summary" data-testid="tabla-resumen">{{ pageSummary() }}</span>
+    }
     <button
       app-button
       variant="outline"

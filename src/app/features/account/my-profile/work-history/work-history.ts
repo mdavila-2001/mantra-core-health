@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet, UpperCasePipe } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -21,7 +21,6 @@ import type {
   PracticeSite,
 } from '../../../../core/data-access/practice-sites/practice-sites.types';
 import { ProfilesClient } from '../../../../core/data-access/profiles/profiles.client';
-import { FilesClient } from '../../../../core/data-access/files/files.client';
 import type {
   LinkableOrganization,
   PractitionerAffiliation,
@@ -32,10 +31,19 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
-import { LocationPicker } from '../../../auth/registro-compartido/location-picker/location-picker';
+import {
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../../../auth/shared-registration/map-location-picker/map-location-picker';
+import {
+  addressLineFromPoint,
+  confirmedLocality,
+  samePoint,
+} from '../../../auth/shared-registration/point-locality';
 import { SiteBankQrDialog } from './site-bank-qr-dialog/site-bank-qr-dialog';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
-import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
@@ -47,19 +55,23 @@ import { RowActions } from '../../../../shared/components/molecules/row-actions/
 import type { RowAction } from '../../../../shared/components/molecules/row-actions/row-actions.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
-import { FileInput } from '../../../../shared/components/molecules/file-input/file-input';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
-import { AppMap } from '../../../../shared/components/organisms/map/map';
 import { ContentDialog } from '../../../../shared/components/organisms/content-dialog/content-dialog';
-import type { PinMapa, PuntoGeo } from '../../../../shared/components/organisms/map/pin-mapa.types';
 import { DataTable } from '../../../../shared/components/organisms/data-table/data-table';
 import type { ColumnDef } from '../../../../shared/components/organisms/data-table/data-table.types';
 import {
   FilterBar,
-  type FilterDef,
 } from '../../../../shared/components/organisms/filter-bar/filter-bar';
 import { Pagination } from '../../../../shared/components/molecules/pagination/pagination';
+import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
+
+const SITE_PHONE_PATTERN = /^[+]?[0-9 ()-]{6,}$/;
+
+function telefonoDeSedeValido(value: string): boolean {
+  const trimmed = value.trim();
+  return trimmed === '' || (trimmed.length <= 40 && SITE_PHONE_PATTERN.test(trimmed));
+}
 
 /**
  * **Historial laboral** del profesional — punto 9 del reclamo del cliente —
@@ -124,24 +136,21 @@ import { Pagination } from '../../../../shared/components/molecules/pagination/p
   imports: [
     Alert,
     AppButton,
-    AppMap,
-    Badge,
     Card,
     ContentDialog,
     DataTable,
     DatePicker,
     DatePipe,
-    DecimalPipe,
-    FileInput,
     FilterBar,
     FormField,
     Input,
-    LocationPicker,
+    MapLocationPicker,
     NgTemplateOutlet,
     Pagination,
     ReferenceCombobox,
     RowActions,
     Select,
+    StatusSeal,
     SiteBankQrDialog,
     UpperCasePipe,
   ],
@@ -156,7 +165,6 @@ export class WorkHistory implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly toasts = inject(ToastService);
   private readonly dialogs = inject(DialogService);
-  private readonly files = inject(FilesClient);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
@@ -264,11 +272,12 @@ export class WorkHistory implements OnInit {
   /**
    * Cómo se está nombrando la institución.
    *
-   * `'padron'` es el camino normal: se elige de los 523 establecimientos
-   * reales. `'libre'` es la salida para lo que el padrón no cubre —cualquier
-   * cosa fuera de Santa Cruz—, y hay que pedirla explícitamente: si estuviera
-   * disponible de entrada nadie usaría el catálogo, y volveríamos a tener el
-   * mismo hospital escrito de cinco formas.
+   * `'padron'` es el ÚNICO camino para dar de alta un vínculo: se elige de los
+   * 523 establecimientos reales. `'libre'` ya no tiene puerta de entrada desde
+   * el alta —permitirla dejaba inventar hospitales que no existen—; sigue
+   * existiendo sólo porque `abrirEdicionDeVinculo` la usa para mostrar el
+   * nombre de un vínculo YA guardado, que se persistió como texto plano y no
+   * como un id contra el que volver a buscar.
    */
   protected readonly modoDeInstitucion = signal<'padron' | 'libre'>('padron');
 
@@ -362,7 +371,7 @@ export class WorkHistory implements OnInit {
   protected readonly avisoDeDuplicado = computed<string | null>(() => {
     const state = this.registro();
     if (state.status === 'validation' && state.issues.some((issue) => issue.code === 'CONFLICT')) {
-      return 'Ese vínculo ya está en tu historial: misma institución, mismo cargo y misma fecha de inicio.';
+      return 'Ese vínculo ya está en su historial: misma institución, mismo cargo y misma fecha de inicio.';
     }
     return null;
   });
@@ -381,18 +390,41 @@ export class WorkHistory implements OnInit {
   protected readonly altaDeSedeAbierta = signal(false);
 
   protected readonly nombreDeSedeNueva = signal('');
+  protected readonly telefonoDeSedeNueva = signal('');
+  protected readonly telefonoDeSedeNuevaValido = computed(() =>
+    telefonoDeSedeValido(this.telefonoDeSedeNueva()),
+  );
+  /**
+   * La dirección, la ciudad y el municipio **no se escriben** (pedido del
+   * cliente del 26/10/2026): salen del punto confirmado en el mapa, que es lo
+   * único que se marca y es obligatorio. Ver `volcarSede`.
+   */
   protected readonly direccionDeSede = signal('');
   protected readonly ciudadDeSede = signal('');
-  /** Municipio elegido en el mapa de Bolivia (concept id), o `null`. */
+  /** Municipio del punto (concept id), o `null`. */
   protected readonly municipioDeSede = signal<string | null>(null);
-  /** El punto marcado en el mapa, si se marcó. */
-  protected readonly puntoDeSede = signal<PuntoGeo | null>(null);
-  /** Si el mapa para marcar el punto está desplegado. Cerrado por defecto: es opcional. */
-  protected readonly mapaAbierto = signal(false);
+  /** El punto confirmado en el mapa, o `null`. */
+  protected readonly puntoDeSede = signal<Coordinates | null>(null);
+  /** Lo último que el mapa dedujo de su punto, confirmado o no. */
+  private readonly localidadDeSede = signal<LocalityFromPoint | null>(null);
 
-  /** El árbol de departamentos y municipios, cuando el formulario lo pidió. */
+  protected readonly sinPuntoDeSede = computed(() => this.puntoDeSede() === null);
+
+  protected readonly idsMapaDeSede: TestIds = {
+    mapa: 'sede-mapa',
+    confirmada: 'sede-punto-confirmado',
+    avisoGeocodificacion: 'sede-aviso-calle',
+    quitar: 'sede-quitar-punto',
+    confirmar: 'sede-confirmar-punto',
+    usarUbicacion: 'sede-usar-ubicacion',
+    marcarEnMapa: 'sede-marcar-mapa',
+  };
+
+  /**
+   * El árbol de departamentos y municipios: con él se dice el departamento y
+   * el nombre de la ciudad del municipio que sale del punto.
+   */
   protected readonly ramasMunicipios = signal<readonly RamaDepartamento[]>([]);
-  protected readonly catalogoMunicipiosCaido = signal(false);
 
   /* ---- Atiendo en uno que ya existe --------------------------------------
 
@@ -412,6 +444,32 @@ export class WorkHistory implements OnInit {
      estado de aprobación: el vínculo queda **declarado por vos**, que es
      exactamente lo que `avisoDelVinculo` ya sabe contar. */
 
+  /**
+   * Si está abierto el panel de «Agregar lugar de atención».
+   *
+   * Una sola puerta (propietario, 04/10/2026): primero se busca el lugar en el
+   * padrón oficial —casi siempre ya existe— y, si no está, se carga uno propio.
+   * Antes eran dos puertas («Agregar mi consultorio propio» y «¿Atendés en un
+   * consultorio, clínica u hospital?») que obligaban a decidir de antemano qué
+   * clase de lugar era.
+   */
+  protected readonly agregandoLugar = signal(false);
+
+  protected abrirAgregarLugar(): void {
+    this.agregandoLugar.set(true);
+  }
+
+  protected cerrarAgregarLugar(): void {
+    this.agregandoLugar.set(false);
+    this.lugarElegido.set(null);
+  }
+
+  /** «No está en la lista»: el formulario del lugar propio, que ya existía. */
+  protected cargarLugarPropio(): void {
+    this.agregandoLugar.set(false);
+    this.abrirAltaDeSede();
+  }
+
   /** Lo que devolvió el padrón para este buscador. */
   protected readonly lugaresDelPadron = signal<readonly ReferenceOption[]>([]);
   protected readonly buscandoLugar = signal(false);
@@ -421,22 +479,6 @@ export class WorkHistory implements OnInit {
   protected readonly registrandoSede = signal(false);
   protected readonly registroDeSede = signal<ViewState<null>>(ready(null));
   protected readonly errorDeSede = computed<string | null>(() => mensajeDe(this.registroDeSede()));
-
-  /** El punto marcado, como el único pin del mapa. */
-  protected readonly pinesDeSede = computed<readonly PinMapa[]>(() => {
-    const punto = this.puntoDeSede();
-    if (punto === null) {
-      return [];
-    }
-    return [
-      {
-        id: 'sede-nueva',
-        lat: punto.lat,
-        lng: punto.lng,
-        titulo: this.nombreDeSedeNueva().trim() || 'Consultorio',
-      },
-    ];
-  });
 
   /**
    * El departamento del municipio elegido, para que la dirección lo lleve.
@@ -457,25 +499,17 @@ export class WorkHistory implements OnInit {
 
   /* -- Tabla, barra y paginación de «Dónde atiendo» (ADR-0015, H4.S1) ------ */
 
-  /** El filtro «Tipo»: sólo dos valores del value set cerrado propio, no un catálogo. */
-  protected readonly filtrosSedes: readonly FilterDef[] = [
-    {
-      key: 'tipo',
-      label: 'Tipo',
-      options: [
-        { value: 'propio', label: 'Tu consultorio' },
-        { value: 'ajeno', label: 'Trabajás acá' },
-      ],
-    },
-  ];
-
   protected readonly busquedaSedes = signal('');
-  protected readonly filtroTipoSedes = signal<string | null>(null);
   protected readonly paginaSedes = signal(1);
   protected readonly tamanoPaginaSedes = signal(10);
 
   /**
-   * Sedes filtradas por nombre/dirección (normalizado) y por tipo.
+   * Sedes filtradas por nombre/dirección (normalizado).
+   *
+   * Sin filtro por tipo desde el 04/10/2026: «Tu consultorio / Trabajás acá»
+   * obligaba a entender una distinción interna y sugería que un lugar sirve
+   * para una cosa y otro para otra. Un lugar de atención es un lugar de
+   * atención (propietario).
    *
    * Todo en cliente: con un consultorio propio y unas pocas ajenas, pedirle al
    * servidor una página a la vez sería una petición por tecla para una lista
@@ -484,14 +518,7 @@ export class WorkHistory implements OnInit {
    */
   protected readonly sedesFiltradas = computed<readonly PracticeSite[]>(() => {
     const termino = normalizarTexto(this.busquedaSedes());
-    const tipo = this.filtroTipoSedes();
     return this.sedes().filter((sede) => {
-      if (tipo === 'propio' && sede.isOwnSite !== true) {
-        return false;
-      }
-      if (tipo === 'ajeno' && sede.isOwnSite === true) {
-        return false;
-      }
       if (termino === '') {
         return true;
       }
@@ -514,8 +541,6 @@ export class WorkHistory implements OnInit {
 
   private readonly celdaNombreSede =
     viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaNombreSede');
-  private readonly celdaTipoSede =
-    viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaTipoSede');
   private readonly celdaDireccionSede =
     viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaDireccionSede');
   private readonly celdaQrSede =
@@ -523,10 +548,9 @@ export class WorkHistory implements OnInit {
   private readonly celdaAccionesSede =
     viewChild.required<TemplateRef<{ $implicit: PracticeSite }>>('celdaAccionesSede');
 
-  /** Columnas de H4.S1.M1: nombre, tipo (la insignia), dirección, QR, acciones. */
+  /** Columnas: nombre, dirección, QR y acciones. Sin «Tipo» (propietario, 04/10/2026). */
   protected readonly columnasSedes = computed<readonly ColumnDef<PracticeSite>[]>(() => [
     { key: 'name', header: 'Nombre', priority: 1, cell: this.celdaNombreSede() },
-    { key: 'isOwnSite', header: 'Tipo', priority: 1, cell: this.celdaTipoSede() },
     { key: 'addressText', header: 'Dirección', priority: 2, cell: this.celdaDireccionSede() },
     { key: 'bankQrFileId', header: 'QR bancario', priority: 2, cell: this.celdaQrSede() },
     { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesSede() },
@@ -535,10 +559,9 @@ export class WorkHistory implements OnInit {
   protected readonly porIdDeSede = (sede: PracticeSite): string => sede.id;
   protected readonly nombreAccesibleDeSede = (sede: PracticeSite): string => sede.name;
 
-  /** El único evento de `app-filter-bar`: trae el término (`q`) y el filtro `tipo` juntos. */
+  /** El único evento de `app-filter-bar`: trae el término (`q`). */
   protected onFiltrosSedesChanged(activos: Readonly<Record<string, string>>): void {
     this.busquedaSedes.set(activos['q'] ?? '');
-    this.filtroTipoSedes.set(activos['tipo'] ?? null);
     this.paginaSedes.set(1);
   }
 
@@ -550,6 +573,49 @@ export class WorkHistory implements OnInit {
    * el arreglo de uno no llegue al otro.
    */
   protected readonly sedeEnEdicion = signal<PracticeSite | null>(null);
+
+  /** Editor del contacto particular del profesional en una sede. */
+  protected readonly sedeConTelefonoAbierto = signal<PracticeSite | null>(null);
+  protected readonly telefonoEnEdicion = signal('');
+  protected readonly guardandoTelefono = signal(false);
+  protected readonly errorDelTelefono = signal<string | null>(null);
+  protected readonly telefonoEnEdicionValido = computed(() =>
+    telefonoDeSedeValido(this.telefonoEnEdicion()),
+  );
+
+  protected abrirTelefonoDeSede(sede: PracticeSite): void {
+    this.sedeConTelefonoAbierto.set(sede);
+    this.telefonoEnEdicion.set(sede.contactPhone ?? '');
+    this.errorDelTelefono.set(null);
+  }
+
+  protected cerrarTelefonoDeSede(): void {
+    if (this.guardandoTelefono()) return;
+    this.sedeConTelefonoAbierto.set(null);
+  }
+
+  protected guardarTelefonoDeSede(): void {
+    const sede = this.sedeConTelefonoAbierto();
+    if (sede === null || this.guardandoTelefono() || !this.telefonoEnEdicionValido()) return;
+    const telefono = this.telefonoEnEdicion().trim();
+    this.guardandoTelefono.set(true);
+    this.errorDelTelefono.set(null);
+    this.sites.setSiteContactPhone(sede.id, telefono === '' ? null : telefono).subscribe({
+      next: (actualizada) => {
+        this.sedes.update((sedes) =>
+          sedes.map((actual) => actual.id === sede.id ? { ...actual, contactPhone: actualizada.contactPhone ?? null } : actual),
+        );
+        this.guardandoTelefono.set(false);
+        this.sedeConTelefonoAbierto.set(null);
+        this.toasts.success('El contacto de esta sede quedó actualizado.', 'Teléfono guardado');
+        this.added.emit();
+      },
+      error: () => {
+        this.guardandoTelefono.set(false);
+        this.errorDelTelefono.set('No pudimos guardar el teléfono. Reintente.');
+      },
+    });
+  }
 
   /** La sede cuyo QR bancario está abierto, o `null` si no hay ninguno. */
   protected readonly sedeConQrAbiertoId = signal<string | null>(null);
@@ -567,7 +633,8 @@ export class WorkHistory implements OnInit {
   });
 
   protected readonly puedeRegistrarSede = computed(
-    () => this.nombreDeSedeNueva().trim() !== '' && !this.registrandoSede(),
+    () => this.nombreDeSedeNueva().trim() !== '' &&
+      this.telefonoDeSedeNuevaValido() && !this.sinPuntoDeSede() && !this.registrandoSede(),
   );
 
   /**
@@ -580,7 +647,7 @@ export class WorkHistory implements OnInit {
     readonly direccion: string;
     readonly ciudad: string;
     readonly municipio: string | null;
-    readonly punto: PuntoGeo | null;
+    readonly punto: Coordinates | null;
   } | null>(null);
 
   protected readonly hayCambiosEnSede = computed(() => {
@@ -682,12 +749,7 @@ export class WorkHistory implements OnInit {
   }
 
   private async confirmarDescarteYCerrarAltaDeVinculo(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Descartar los cambios?',
-      message: 'Lo que escribiste en este vínculo no se va a guardar.',
-      confirmLabel: 'Descartar',
-      cancelLabel: 'Seguir editando',
-    });
+    const confirmado = await this.dialogs.confirmarDescarte();
     if (confirmado) {
       this.cerrarAltaDeVinculo();
     }
@@ -706,8 +768,8 @@ export class WorkHistory implements OnInit {
     }
 
     const confirmado = await this.dialogs.confirm({
-      title: '¿Confirmás estos cambios?',
-      message: `Vas a agregar «${this.nombreDeLaInstitucion()}» a tu historial laboral.`,
+      title: '¿Confirma estos cambios?',
+      message: `Va a agregar «${this.nombreDeLaInstitucion()}» a su historial laboral.`,
       confirmLabel: 'Agregar',
       cancelLabel: 'Cancelar',
     });
@@ -720,6 +782,11 @@ export class WorkHistory implements OnInit {
     const hasta = this.hasta();
     const cargo = this.cargo().trim();
     const sede = this.sede();
+    // El id del establecimiento elegido del padrón viaja con el nombre: sin él
+    // el vínculo queda como texto y la API no puede protegerlo del duplicado
+    // ni asociarlo al padrón (ID-16). Escrito a mano, no hay concepto.
+    const establecimientoElegido =
+      this.modoDeInstitucion() === 'padron' ? this.establecimiento() : null;
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -730,6 +797,9 @@ export class WorkHistory implements OnInit {
         startDate: soloFecha(desde),
         // Los opcionales sin valor se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave vacía no es «sin especificar».
+        ...(establecimientoElegido === null
+          ? {}
+          : { healthFacilityConceptId: establecimientoElegido.value }),
         ...(cargo === '' ? {} : { roleTitle: cargo }),
         ...(hasta === null ? {} : { endDate: soloFecha(hasta) }),
         ...(sede === null || sede === '' ? {} : { practiceSiteId: sede }),
@@ -740,7 +810,7 @@ export class WorkHistory implements OnInit {
           this.registro.set(ready(null));
           this.limpiar();
           this.altaDeVinculoAbierta.set(false);
-          this.toasts.success('Quedó en tu historial laboral.', 'Vínculo registrado');
+          this.toasts.success('Quedó en su historial laboral.', 'Vínculo registrado');
           this.cargar();
           this.added.emit();
         },
@@ -871,7 +941,7 @@ export class WorkHistory implements OnInit {
           this.registrando.set(false);
           this.registro.set(ready(null));
           this.cancelarEdicionDeVinculo();
-          this.toasts.success('Los cambios ya figuran en tu historial.', 'Vínculo corregido');
+          this.toasts.success('Los cambios ya figuran en su historial.', 'Vínculo corregido');
           this.cargar();
           this.added.emit();
         },
@@ -894,8 +964,8 @@ export class WorkHistory implements OnInit {
     const confirmado = await this.dialogs.confirm({
       title: 'Retirar del historial',
       message:
-        `¿Retirar «${afiliacion.organizationName}» de tu historial laboral? ` +
-        'Deja de figurar en tu ficha y en tu perfil público.',
+        `¿Retirar «${afiliacion.organizationName}» de su historial laboral? ` +
+        'Deja de figurar en su ficha y en su perfil público.',
       confirmLabel: 'Retirar',
       cancelLabel: 'Cancelar',
     });
@@ -910,12 +980,19 @@ export class WorkHistory implements OnInit {
         if (this.vinculoEnEdicion()?.id === afiliacion.id) {
           this.cancelarEdicionDeVinculo();
         }
-        this.toasts.success('Ya no figura en tu historial.', 'Vínculo retirado');
+        this.toasts.success('Ya no figura en su historial.', 'Vínculo retirado');
         this.cargar();
         this.added.emit();
       },
       error: (error: unknown) => {
-        this.registro.set(errorToViewState<null>(error));
+        const estado = errorToViewState<null>(error);
+        this.registro.set(estado);
+        // Ese error se lee dentro del modal del alta, que al retirar está
+        // cerrado: sin el aviso, un retiro fallido no diría nada.
+        this.toasts.error(
+          mensajeDe(estado) ?? 'No pudimos retirarlo. Pruebe de nuevo.',
+          'No se retiró el vínculo',
+        );
       },
     });
   }
@@ -949,18 +1026,6 @@ export class WorkHistory implements OnInit {
     });
   }
 
-  /**
-   * Pasa a escribir el nombre a mano.
-   *
-   * Se lleva lo elegido: quedarse con un establecimiento del padrón y además un
-   * texto libre serían dos respuestas a la misma pregunta.
-   */
-  protected escribirAMano(): void {
-    this.establecimiento.set(null);
-    this.resultados.set([]);
-    this.modoDeInstitucion.set('libre');
-  }
-
   /** Vuelve a buscar en el padrón, descartando lo escrito a mano. */
   protected buscarEnElPadron(): void {
     this.institucion.set('');
@@ -992,24 +1057,18 @@ export class WorkHistory implements OnInit {
   }
 
   /**
-   * Al cerrar el modal de una edición, el foco vuelve al «Acciones» de esa fila.
+   * Al cerrar una edición, el foco vuelve a la acción visible de esa sede.
    *
-   * `app-content-dialog` restaura el foco al elemento que lo abrió, pero lo
-   * abrió el ítem «Editar» del menú, que ya no existe cuando el menú se cierra:
-   * sin esto el foco caía al `<body>` (medido en `evidencia/h4/teclado.md`).
+   * La fila propia ahora sólo ofrece el QR. Se identifica por ID para no
+   * confundir dos sedes con el mismo nombre ni depender de un menú retirado.
    */
   private devolverFocoALaFila(sedeId: string): void {
     afterNextRender(
       () => {
-        const sede = this.sedes().find((s) => s.id === sedeId);
-        if (sede === undefined) {
-          return;
-        }
-        const etiqueta = `Acciones de ${sede.name}`;
-        const boton = Array.from(this.host.nativeElement.querySelectorAll('button')).find(
-          (b) => b.getAttribute('aria-label') === etiqueta,
-        );
-        boton?.focus();
+        const rowActions = Array.from(
+          this.host.nativeElement.querySelectorAll<HTMLElement>('app-row-actions[data-site-id]'),
+        ).find((row) => row.dataset['siteId'] === sedeId);
+        rowActions?.querySelector<HTMLButtonElement>('button')?.focus();
       },
       { injector: this.injector },
     );
@@ -1030,12 +1089,7 @@ export class WorkHistory implements OnInit {
   }
 
   private async confirmarDescarteYCerrarSede(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Descartar los cambios?',
-      message: 'Lo que escribiste en este consultorio no se va a guardar.',
-      confirmLabel: 'Descartar',
-      cancelLabel: 'Seguir editando',
-    });
+    const confirmado = await this.dialogs.confirmarDescarte();
     if (confirmado) {
       this.cerrarAltaDeSede();
     }
@@ -1081,14 +1135,19 @@ export class WorkHistory implements OnInit {
     this.vinculandoLugar.set(true);
     this.registroDeSede.set(loading());
     this.profiles
-      .addAffiliation({ organizationName: lugar.label, startDate: soloFecha(new Date()) })
+      .addAffiliation({
+        organizationName: lugar.label,
+        healthFacilityConceptId: lugar.value,
+        startDate: soloFecha(new Date()),
+      })
       .subscribe({
         next: () => {
           this.vinculandoLugar.set(false);
+          this.agregandoLugar.set(false);
           this.registroDeSede.set(ready(null));
           this.lugarElegido.set(null);
           this.lugaresDelPadron.set([]);
-          this.toasts.success(`${lugar.label} ya figura entre los lugares donde atendés.`, 'Listo');
+          this.toasts.success(`${lugar.label} ya figura entre los lugares donde atiende.`, 'Listo');
           this.cargarSedes();
           this.cargar();
           this.added.emit();
@@ -1100,40 +1159,54 @@ export class WorkHistory implements OnInit {
       });
   }
 
-  protected reintentarMunicipios(): void {
-    this.municipios.olvidar();
-    this.cargarMunicipios();
-  }
-
-  /** Despliega o guarda el mapa para marcar el punto. */
-  protected alternarMapa(): void {
-    this.mapaAbierto.update((abierto) => !abierto);
-  }
-
-  /** El punto donde se hizo clic en el mapa. */
-  /**
-   * El punto donde se hizo clic en el mapa.
-   *
-   * Vacía «Dirección» (D-06): el punto y el texto de la dirección son dos
-   * formas de decir lo mismo, y tocar el mapa después de escribir la calle
-   * dejaba las dos sin coincidir entre sí — quien tocaba el mapa **corrige**
-   * la dirección, no la complementa. El campo lo anuncia
-   * (`historial__mapa-aviso`, `aria-live`) para que quien no ve el mapa
-   * también se entere de que el texto se borró.
-   */
-  protected marcarPunto(punto: PuntoGeo): void {
+  /** El punto confirmado en el mapa (o `null` al quitarlo o moverlo sin confirmar). */
+  protected confirmarPuntoDeSede(punto: Coordinates | null): void {
     this.puntoDeSede.set(punto);
-    this.direccionDeSede.set('');
+    this.volcarSede();
   }
 
-  protected quitarPunto(): void {
-    this.puntoDeSede.set(null);
+  /** Lo que el mapa dedujo de su punto; se vuelca sólo si es del confirmado. */
+  protected aplicarLocalidadDeSede(localidad: LocalityFromPoint | null): void {
+    this.localidadDeSede.set(localidad);
+    this.volcarSede();
   }
 
-  /** D-06: si el mapa tiene un punto y la dirección está vacía, se anuncia por qué. */
-  protected readonly avisoDireccionVaciada = computed(
-    () => this.puntoDeSede() !== null && this.direccionDeSede().trim() === '',
-  );
+  /**
+   * Dirección, ciudad y municipio, sacados del punto confirmado.
+   *
+   * La dirección nunca queda vacía con un punto —si no, el punto no viajaría
+   * (ver `direccionDelFormulario`)—: la calle, o la zona y la ciudad, o el
+   * punto mismo; nunca una calle inventada. Con el punto con el que se abrió
+   * la edición vuelve lo que la sede ya tenía: abrir para corregir el nombre
+   * no reescribe la dirección. Sin punto no se toca nada: no se puede guardar
+   * así, y el próximo punto confirmado la reescribe.
+   */
+  private volcarSede(): void {
+    const punto = this.puntoDeSede();
+    if (punto === null) return;
+    const original = this.borradorOriginalDeSede();
+    if (original !== null && samePoint(punto, original.punto)) {
+      this.direccionDeSede.set(original.direccion);
+      this.ciudadDeSede.set(original.ciudad);
+      this.municipioDeSede.set(original.municipio);
+      return;
+    }
+    const localidad = confirmedLocality(this.localidadDeSede(), punto);
+    if (localidad === null) return;
+    const ciudad = this.nombreDelMunicipio(localidad.municipioConceptId);
+    this.municipioDeSede.set(localidad.municipioConceptId);
+    this.ciudadDeSede.set(ciudad ?? '');
+    this.direccionDeSede.set(addressLineFromPoint(localidad, ciudad));
+  }
+
+  private nombreDelMunicipio(conceptId: string | null): string | null {
+    if (conceptId === null) return null;
+    for (const rama of this.ramasMunicipios()) {
+      const municipio = rama.municipios.find((m) => m.conceptId === conceptId);
+      if (municipio !== undefined) return municipio.nombre;
+    }
+    return null;
+  }
 
   /**
    * Registra un consultorio propio (ALV-005/006).
@@ -1148,6 +1221,9 @@ export class WorkHistory implements OnInit {
     const enEdicion = this.sedeEnEdicion();
     const cuerpo = {
       name: this.nombreDeSedeNueva().trim(),
+      ...(enEdicion !== null || this.telefonoDeSedeNueva().trim() === ''
+        ? {}
+        : { contactPhone: this.telefonoDeSedeNueva().trim() }),
       ...(address === undefined ? {} : { address }),
     };
 
@@ -1164,7 +1240,7 @@ export class WorkHistory implements OnInit {
         const corregido = enEdicion !== null;
         this.cerrarAltaDeSede();
         this.toasts.success(
-          corregido ? 'Guardamos los cambios.' : 'Ya figura entre tus consultorios.',
+          corregido ? 'Guardamos los cambios.' : 'Ya figura entre sus consultorios.',
           corregido ? 'Consultorio actualizado' : 'Consultorio registrado',
         );
         this.cargarSedes();
@@ -1180,11 +1256,12 @@ export class WorkHistory implements OnInit {
   /**
    * Abre el formulario ya cargado con la sede que se va a corregir (P32-b).
    *
-   * Prellena el nombre y el punto, y **deja la dirección en blanco a
-   * propósito**: la lista trae `addressText` ya compuesta por el backend y
-   * descomponerla en calle, ciudad y municipio sería adivinar. Vacía significa
-   * «no la toques», que es exactamente lo que el `PATCH` hace con lo que no
-   * viaja en el cuerpo — y el formulario lo dice con todas las letras.
+   * Prellena el nombre, la dirección que ya tiene y su punto. El punto
+   * guardado entra confirmado —no se pide volver a confirmarlo— y mientras
+   * siga siendo el mismo, la dirección es la de la sede; un punto nuevo la
+   * reescribe con lo que sale de él (ver `volcarSede`). Una sede guardada sin
+   * punto tiene que marcarlo para poder guardarse: es obligatorio desde el
+   * 26/10/2026.
    *
    * @param sede - El consultorio propio a corregir.
    */
@@ -1243,8 +1320,8 @@ export class WorkHistory implements OnInit {
 
   private async confirmarYCorregirSede(enEdicion: PracticeSite): Promise<void> {
     const confirmado = await this.dialogs.confirm({
-      title: '¿Confirmás estos cambios?',
-      message: `Vas a actualizar «${enEdicion.name}» con los datos del formulario.`,
+      title: '¿Confirma estos cambios?',
+      message: `Va a actualizar «${enEdicion.name}» con los datos del formulario.`,
       confirmLabel: 'Guardar',
       cancelLabel: 'Cancelar',
     });
@@ -1293,7 +1370,7 @@ export class WorkHistory implements OnInit {
           this.registrandoSede.set(false);
           this.registroDeSede.set(ready(null));
           this.cerrarAltaDeSede();
-          this.toasts.success('Los cambios ya figuran en tu ficha.', 'Consultorio corregido');
+          this.toasts.success('Los cambios ya figuran en su ficha.', 'Consultorio corregido');
           this.cargarSedes();
           this.added.emit();
         },
@@ -1341,7 +1418,7 @@ export class WorkHistory implements OnInit {
   protected async quitarSede(sede: PracticeSite): Promise<void> {
     const confirmado = await this.dialogs.confirm({
       title: 'Dejar de atender acá',
-      message: `¿Retirar «${sede.name}» de tus consultorios? La sede no se borra; deja de figurar como un lugar donde atendés.`,
+      message: `¿Retirar «${sede.name}» de sus consultorios? La sede no se borra; deja de figurar como un lugar donde atiende.`,
       confirmLabel: 'Retirar',
       cancelLabel: 'Cancelar',
     });
@@ -1350,7 +1427,7 @@ export class WorkHistory implements OnInit {
     }
     this.sites.removeOwnSite(sede.id).subscribe({
       next: () => {
-        this.toasts.success('Ya no figura entre tus consultorios.', 'Consultorio retirado');
+        this.toasts.success('Ya no figura entre sus consultorios.', 'Consultorio retirado');
         this.cargarSedes();
         this.added.emit();
       },
@@ -1370,64 +1447,66 @@ export class WorkHistory implements OnInit {
   /**
    * Qué dice la acción del QR de esa sede.
    *
-   * Dos textos y no uno porque son dos cosas distintas: mirar el que ya está y
-   * cargar el que falta. Antes el botón era sólo un ícono y se pintaba en
-   * ámbar cuando faltaba; el color solo no alcanza para decirlo (WCAG 1.4.1),
-   * así que el aviso siempre vivió en el texto. Ahora el texto está a la
-   * vista, y el aviso además sigue escrito en la fila (`sede-sin-qr`).
+   * Tres textos porque son tres cosas distintas: cargar el que falta
+   * («Configurar QR bancario»), corregir el propio («Editar QR») y mirar el de
+   * una organización ajena («Ver QR bancario»). El aviso de que falta sigue
+   * escrito en la fila (`sede-sin-qr`); el color solo no alcanza (WCAG 1.4.1).
    *
    * No lleva ícono: el set cerrado del sistema no tiene uno de QR, y `scan` es
    * imagenología clínica —su propia ficha lo aclara—, no un código de cobro.
    * Una acción sin ícono se dibuja con su texto, que es lo que pide ADR-0012.
    */
   protected etiquetaDelQr(sede: PracticeSite): string {
-    return this.tieneQrBancario(sede) ? 'Ver QR bancario' : 'Configurar QR bancario';
+    if (!this.tieneQrBancario(sede)) {
+      return 'Configurar QR bancario';
+    }
+    return sede.isOwnSite === true ? 'Editar QR' : 'Ver QR bancario';
   }
 
   /**
-   * Qué dice la acción de retirar, que no es el mismo acto en las dos sedes.
-   *
-   * En la propia se deja de ofrecer un consultorio que es suyo; en la ajena se
-   * corta un vínculo con una organización. Esa distinción es del negocio y se
-   * conserva. De qué sede se trata ya no lo repite cada etiqueta: lo pone
-   * `app-row-actions` en el nombre accesible, a partir de `fila`.
+   * Qué dice la acción de retirar. Sólo existe en la sede ajena: el consultorio
+   * propio no se puede quitar, así que no la ofrece.
    */
-  protected etiquetaDeRetiro(sede: PracticeSite): string {
-    return sede.isOwnSite === true ? 'Retirar' : 'Dejar de atender';
+  protected etiquetaDeRetiro(_sede: PracticeSite): string {
+    return 'Dejar de atender';
   }
 
   /**
    * Las acciones de una sede, como datos (ADR-0012).
    *
-   * Son dos o tres según de quién sea la sede, y de eso —no de una decisión de
-   * esta pantalla— sale la forma: en la propia son tres y se colapsan en un
-   * desplegable; en la ajena son dos y quedan en la fila con su texto.
+   * En el consultorio propio hay una sola —el QR—: no se retira ni se corrige
+   * desde esta tabla. En la ajena son dos y quedan en la fila con su texto.
+   * Ninguna colapsa en un desplegable.
    *
    * El orden no es casual: el QR va primero porque es el único que avisa de
-   * algo pendiente, y retirar va último porque es el que no se deshace.
+   * algo pendiente, y dejar de atender va último porque es el que no se deshace.
    */
   protected accionesDeSede(sede: PracticeSite): readonly RowAction[] {
-    const acciones: RowAction[] = [{ code: 'qr', label: this.etiquetaDelQr(sede) }];
-    if (sede.isOwnSite) {
-      acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    const qr: RowAction = { code: 'qr', label: this.etiquetaDelQr(sede), icon: 'qr' };
+    const telefono: RowAction = { code: 'telefono', label: 'Editar teléfono', icon: 'phone' };
+    if (sede.isOwnSite === true) {
+      return [qr, telefono];
     }
-    acciones.push({
-      code: 'retirar',
-      label: this.etiquetaDeRetiro(sede),
-      icon: 'remove',
-      destructive: true,
-    });
-    return acciones;
+    return [
+      qr,
+      telefono,
+      {
+        code: 'retirar',
+        label: this.etiquetaDeRetiro(sede),
+        icon: 'remove',
+        destructive: true,
+      },
+    ];
   }
 
   /** Despacha el `code` que emitió `app-row-actions` sobre esa sede. */
   protected ejecutarAccionDeSede(code: string, sede: PracticeSite): void {
-    if (code === 'qr') {
-      this.abrirQrDeSede(sede);
+    if (code === 'telefono') {
+      this.abrirTelefonoDeSede(sede);
       return;
     }
-    if (code === 'editar') {
-      this.abrirEdicionDeSede(sede);
+    if (code === 'qr') {
+      this.abrirQrDeSede(sede);
       return;
     }
     if (code === 'retirar') {
@@ -1457,7 +1536,7 @@ export class WorkHistory implements OnInit {
     if (afiliacion.statusKind === 'pendiente') {
       return afiliacion.practiceSiteId === null
         ? 'Esperando que la institución confirme el vínculo.'
-        : 'Esperando que la organización te acepte. Hasta entonces no vas a poder publicar agenda ahí.';
+        : 'Esperando que la organización le acepte. Hasta entonces no va a poder publicar agenda ahí.';
     }
     // El motivo, cuando la organización lo dio, va DENTRO del aviso y no como
     // una línea aparte: leer «no aceptaron tu vínculo» y tener que buscar por
@@ -1468,13 +1547,13 @@ export class WorkHistory implements OnInit {
     if (afiliacion.statusKind === 'rechazado') {
       return (
         'La organización no aceptó este vínculo.' +
-        (motivo === '' ? ' Si creés que es un error, hablá con ellos.' : motivo)
+        (motivo === '' ? ' Si cree que es un error, hable con ellos.' : motivo)
       );
     }
     if (afiliacion.statusKind === 'revocado') {
       return (
         'La organización dio de baja este vínculo. Las citas que ya ' +
-        'confirmaste siguen en pie.' +
+        'confirmó siguen en pie.' +
         motivo
       );
     }
@@ -1483,7 +1562,7 @@ export class WorkHistory implements OnInit {
       // Lo que se cuenta es que la institución no lo confirmó —porque no tiene
       // a nadie que pueda hacerlo—, para que sepa por qué su ficha no muestra
       // el sello y no lo lea como un trámite trabado.
-      return 'Declarado por vos. Esta institución no tiene quién confirme vínculos, así que no lleva su sello.';
+      return 'Declarado por usted. Esta institución no tiene quién confirme vínculos, así que no lleva su sello.';
     }
     return null;
   }
@@ -1504,85 +1583,59 @@ export class WorkHistory implements OnInit {
   /* -- Historial laboral como tabla (H4.S3, ADR-0015, D-09) ----------------
    *
    * `layout="tabla"`: mismas cinco reglas que «Dónde atiendo» — barra,
-   * paginación en cliente, modal con confirmación. Lo que NO es igual es la
-   * persistencia de editar/retirar/adjuntar: `profiles.client.ts` sólo
-   * expone `listAffiliations`/`addAffiliation` (verificado por código, no
-   * supuesto). No hay PATCH ni DELETE de afiliaciones, y el tipo
-   * `PractitionerAffiliation` no tiene `fileId` (HALL-E3, Q-9). El manejador
-   * que los agregaría puede vivir en `profiles.handlers.ts`, que es de Itzan
-   * y no está entre mis archivos reservados.
+   * paginación en cliente, modal con confirmación. Corregir el cargo y
+   * retirar un vínculo van al servidor con `updateAffiliation` y
+   * `removeAffiliation`, los mismos que usa la línea de tiempo.
    *
-   * Regla 65, obligatoria: se simula el contrato en tres niveles en vez de
-   * quedar `BLOQUEADO`. El archivo SÍ se sube de verdad —mismo
-   * `FilesClient.upload()` que ya usa el QR bancario y las credenciales del
-   * perfil (`DOCUMENT`/`PHI`, mismo criterio que `practitioner-profile-edit`
-   * para documentos profesionales)—; lo que es un doble es sólo el VÍNCULO
-   * entre esa afiliación y el archivo, y la edición de cargo: viven en un
-   * mapa en memoria de este componente, no en el servidor. Recargar la
-   * página los pierde — se declara así en el `REPORTE.md`, nunca como
-   * `VERIFIED` a secas.
+   * La tabla no ofrece adjunto: un vínculo laboral no tiene dónde guardar un
+   * archivo. No hay columna en `profiles.practitioner_affiliations`, ni
+   * campo en el DTO de la API ni en `PractitionerAffiliation` /
+   * `UpdatePractitionerAffiliation`, y `common.file_links` no acepta una
+   * afiliación como dueña. Guardado sólo en esta pantalla, el adjunto se
+   * perdía al recargar; vuelve cuando el contrato lo tenga.
    */
-
-  /** Cargo y adjunto editados localmente, por id de afiliación. */
-  private readonly edicionesLocalesDeAfiliacion = signal<
-    ReadonlyMap<string, { readonly roleTitle: string | null; readonly fileId: string | null }>
-  >(new Map());
-
-  /** Afiliaciones retiradas sólo en este componente (sin DELETE real). */
-  private readonly idsRetiradosLocalmente = signal<ReadonlySet<string>>(new Set());
-
-  /**
-   * El historial tal como se ve en la tabla: datos reales del servidor más
-   * las ediciones locales superpuestas, y sin las retiradas localmente.
-   *
-   * **Nivel inválido del doble**: si `afiliaciones()` cambia (se relee del
-   * servidor) y un id editado localmente ya no está, el mapa lo sigue
-   * teniendo pero `.get()` simplemente no encuentra fila a la que
-   * aplicarlo — no rompe, no lanza, el dato local queda huérfano y sin
-   * efecto. Es el comportamiento correcto para un doble: no inventa una fila
-   * que el servidor no mandó.
-   */
-  protected readonly afiliacionesEnTabla = computed<
-    readonly (PractitionerAffiliation & { readonly fileId: string | null })[]
-  >(() => {
-    const ediciones = this.edicionesLocalesDeAfiliacion();
-    const retirados = this.idsRetiradosLocalmente();
-    return this.afiliaciones()
-      .filter((afiliacion) => !retirados.has(afiliacion.id))
-      .map((afiliacion) => {
-        const edicion = ediciones.get(afiliacion.id);
-        return {
-          ...afiliacion,
-          roleTitle: edicion === undefined ? afiliacion.roleTitle : edicion.roleTitle,
-          fileId: edicion?.fileId ?? null,
-        };
-      });
-  });
 
   protected readonly busquedaHistorial = signal('');
+  protected readonly historialEnTabla = computed(
+    () =>
+      this.layout() === 'tabla' ||
+      (this.layout() === 'timeline' &&
+        (this.historial().status !== 'ready' || this.vinculosEditables().length > 5)),
+  );
+  private readonly filasDelHistorial = computed(() =>
+    this.layout() === 'timeline' ? this.vinculosEditables() : this.afiliaciones(),
+  );
   protected readonly paginaHistorial = signal(1);
   protected readonly tamanoPaginaHistorial = signal(10);
 
   protected readonly historialFiltrado = computed(() => {
     const termino = normalizarTexto(this.busquedaHistorial());
     if (termino === '') {
-      return this.afiliacionesEnTabla();
+      return this.filasDelHistorial();
     }
-    return this.afiliacionesEnTabla().filter((afiliacion) => {
+    return this.filasDelHistorial().filter((afiliacion) => {
       const institucion = normalizarTexto(afiliacion.organizationName);
       const cargo = normalizarTexto(afiliacion.roleTitle ?? '');
       return institucion.includes(termino) || cargo.includes(termino);
     });
   });
 
+  protected readonly paginaHistorialVisible = computed(() => {
+    const ultimaPagina = Math.ceil(this.historialFiltrado().length / this.tamanoPaginaHistorial());
+    return Math.max(1, Math.min(this.paginaHistorial(), ultimaPagina));
+  });
+
   protected readonly historialPaginado = computed(() => {
-    const inicio = (this.paginaHistorial() - 1) * this.tamanoPaginaHistorial();
+    const inicio = (this.paginaHistorialVisible() - 1) * this.tamanoPaginaHistorial();
     return this.historialFiltrado().slice(inicio, inicio + this.tamanoPaginaHistorial());
   });
 
-  protected readonly estadoHistorialTabla = computed<
-    ViewState<readonly (PractitionerAffiliation & { readonly fileId: string | null })[]>
-  >(() => ready(this.historialPaginado()));
+  protected readonly estadoHistorialTabla = computed<ViewState<readonly PractitionerAffiliation[]>>(
+    () => {
+      const state = this.historial();
+      return state.status === 'ready' ? ready(this.historialPaginado()) : state;
+    },
+  );
 
   protected onFiltrosHistorialChanged(activos: Readonly<Record<string, string>>): void {
     this.busquedaHistorial.set(activos['q'] ?? '');
@@ -1590,65 +1643,65 @@ export class WorkHistory implements OnInit {
   }
 
   private readonly celdaInstitucionHistorial = viewChild.required<
-    TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
+    TemplateRef<{ $implicit: PractitionerAffiliation }>
   >('celdaInstitucionHistorial');
+  private readonly celdaEstadoHistorial = viewChild.required<
+    TemplateRef<{ $implicit: PractitionerAffiliation }>
+  >('celdaEstadoHistorial');
   private readonly celdaPeriodoHistorial =
-    viewChild.required<
-      TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
-    >('celdaPeriodoHistorial');
-  private readonly celdaAdjuntoHistorial =
-    viewChild.required<
-      TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
-    >('celdaAdjuntoHistorial');
+    viewChild.required<TemplateRef<{ $implicit: PractitionerAffiliation }>>(
+      'celdaPeriodoHistorial',
+    );
   private readonly celdaAccionesHistorial =
-    viewChild.required<
-      TemplateRef<{ $implicit: PractitionerAffiliation & { readonly fileId: string | null } }>
-    >('celdaAccionesHistorial');
+    viewChild.required<TemplateRef<{ $implicit: PractitionerAffiliation }>>(
+      'celdaAccionesHistorial',
+    );
 
-  protected readonly columnasHistorial = computed<
-    readonly ColumnDef<PractitionerAffiliation & { readonly fileId: string | null }>[]
-  >(() => [
-    {
-      key: 'organizationName',
-      header: 'Institución',
-      priority: 1,
-      cell: this.celdaInstitucionHistorial(),
-    },
-    { key: 'startDate', header: 'Período', priority: 2, cell: this.celdaPeriodoHistorial() },
-    { key: 'fileId', header: 'Adjunto', priority: 2, cell: this.celdaAdjuntoHistorial() },
-    { key: 'acciones', header: 'Acciones', priority: 1, cell: this.celdaAccionesHistorial() },
-  ]);
+  protected readonly columnasHistorial = computed<readonly ColumnDef<PractitionerAffiliation>[]>(
+    () => [
+      {
+        key: 'organizationName',
+        header: 'Institución',
+        priority: 1,
+        cell: this.celdaInstitucionHistorial(),
+      },
+      { key: 'statusKind', header: 'Estado', priority: 1, cell: this.celdaEstadoHistorial() },
+      { key: 'startDate', header: 'Período', priority: 2, cell: this.celdaPeriodoHistorial() },
+      { key: 'acciones', header: 'Acciones', priority: 2, cell: this.celdaAccionesHistorial() },
+    ],
+  );
 
   protected readonly porIdDeAfiliacion = (afiliacion: PractitionerAffiliation): string =>
     afiliacion.id;
   protected readonly nombreAccesibleDeAfiliacion = (afiliacion: PractitionerAffiliation): string =>
     afiliacion.organizationName;
 
-  protected accionesDeAfiliacion(): readonly RowAction[] {
-    return [
-      { code: 'editar', label: 'Editar', icon: 'edit' },
-      { code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true },
-    ];
+  protected accionesDeAfiliacion(afiliacion: PractitionerAffiliation): readonly RowAction[] {
+    const acciones: RowAction[] = [];
+    if (this.puedeCorregirse(afiliacion)) acciones.push({ code: 'editar', label: 'Editar', icon: 'edit' });
+    if (this.puedeRetirarse(afiliacion)) acciones.push({ code: 'retirar', label: 'Retirar', icon: 'remove', destructive: true });
+    return acciones;
   }
 
   protected ejecutarAccionDeAfiliacion(code: string, afiliacion: PractitionerAffiliation): void {
-    if (code === 'editar') {
+    if (code === 'editar' && this.puedeCorregirse(afiliacion)) {
       this.abrirEdicionDeAfiliacion(afiliacion);
       return;
     }
-    if (code === 'retirar') {
-      void this.retirarAfiliacionLocal(afiliacion);
+    if (code === 'retirar' && this.puedeRetirarse(afiliacion)) {
+      void this.retirarVinculo(afiliacion);
     }
   }
 
-  /* -- Edición local de una afiliación (cargo + adjunto) -------------------- */
+  /* -- Corrección de una afiliación desde la tabla (el cargo) --------------- */
 
   protected readonly afiliacionEnEdicion = signal<PractitionerAffiliation | null>(null);
   protected readonly edicionAfiliacionAbierta = signal(false);
   protected readonly cargoEnEdicion = signal('');
-  protected readonly archivoAdjunto = signal<readonly File[]>([]);
-  protected readonly subiendoAdjunto = signal(false);
-  protected readonly errorDeAdjunto = signal<string | null>(null);
+  /** Mientras viaja el `PATCH` del cargo. */
+  protected readonly guardandoAfiliacion = signal(false);
+  /** Por qué no se guardó la corrección; se lee dentro del modal. */
+  protected readonly errorDeEdicionDeAfiliacion = signal<string | null>(null);
 
   private borradorOriginalDeAfiliacion: { cargo: string } | null = null;
 
@@ -1656,17 +1709,13 @@ export class WorkHistory implements OnInit {
     if (this.borradorOriginalDeAfiliacion === null) {
       return false;
     }
-    return (
-      this.cargoEnEdicion().trim() !== this.borradorOriginalDeAfiliacion.cargo ||
-      this.archivoAdjunto().length > 0
-    );
+    return this.cargoEnEdicion().trim() !== this.borradorOriginalDeAfiliacion.cargo;
   });
 
   protected abrirEdicionDeAfiliacion(afiliacion: PractitionerAffiliation): void {
     this.afiliacionEnEdicion.set(afiliacion);
     this.cargoEnEdicion.set(afiliacion.roleTitle ?? '');
-    this.archivoAdjunto.set([]);
-    this.errorDeAdjunto.set(null);
+    this.errorDeEdicionDeAfiliacion.set(null);
     this.borradorOriginalDeAfiliacion = { cargo: afiliacion.roleTitle ?? '' };
     this.edicionAfiliacionAbierta.set(true);
   }
@@ -1680,12 +1729,7 @@ export class WorkHistory implements OnInit {
   }
 
   private async confirmarDescarteYCerrarAfiliacion(): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: '¿Descartar los cambios?',
-      message: 'Lo que corregiste en este vínculo no se va a guardar.',
-      confirmLabel: 'Descartar',
-      cancelLabel: 'Seguir editando',
-    });
+    const confirmado = await this.dialogs.confirmarDescarte();
     if (confirmado) {
       this.cerrarEdicionDeAfiliacion();
     }
@@ -1696,18 +1740,22 @@ export class WorkHistory implements OnInit {
     this.afiliacionEnEdicion.set(null);
     this.borradorOriginalDeAfiliacion = null;
     this.cargoEnEdicion.set('');
-    this.archivoAdjunto.set([]);
-    this.errorDeAdjunto.set(null);
+    this.guardandoAfiliacion.set(false);
+    this.errorDeEdicionDeAfiliacion.set(null);
   }
 
+  /**
+   * Guarda la corrección de un vínculo de la tabla, con confirmación. Sólo
+   * se llega con el cargo cambiado (`hayCambiosEnAfiliacion`).
+   */
   protected async guardarEdicionDeAfiliacion(): Promise<void> {
     const afiliacion = this.afiliacionEnEdicion();
     if (afiliacion === null || !this.hayCambiosEnAfiliacion()) {
       return;
     }
     const confirmado = await this.dialogs.confirm({
-      title: '¿Confirmás estos cambios?',
-      message: `Vas a actualizar el vínculo con «${afiliacion.organizationName}».`,
+      title: '¿Confirma estos cambios?',
+      message: `Va a actualizar el vínculo con «${afiliacion.organizationName}».`,
       confirmLabel: 'Guardar',
       cancelLabel: 'Cancelar',
     });
@@ -1715,58 +1763,24 @@ export class WorkHistory implements OnInit {
       return;
     }
 
-    const archivo = this.archivoAdjunto()[0];
-    if (archivo === undefined) {
-      this.aplicarEdicionLocal(afiliacion.id, null);
-      this.cerrarEdicionDeAfiliacion();
-      return;
-    }
-
-    this.subiendoAdjunto.set(true);
-    this.errorDeAdjunto.set(null);
-    this.files.upload(archivo, 'DOCUMENT', 'PHI').subscribe({
-      next: (subido) => {
-        this.subiendoAdjunto.set(false);
-        this.aplicarEdicionLocal(afiliacion.id, subido.id);
-        this.toasts.success('Quedó guardado en este vínculo.', 'Historial actualizado');
-        this.cerrarEdicionDeAfiliacion();
-      },
-      error: () => {
-        this.subiendoAdjunto.set(false);
-        this.errorDeAdjunto.set('No pudimos subir el archivo. Probá de nuevo.');
-      },
-    });
-  }
-
-  private aplicarEdicionLocal(id: string, fileIdNuevo: string | null): void {
+    this.guardandoAfiliacion.set(true);
+    this.errorDeEdicionDeAfiliacion.set(null);
     const cargo = this.cargoEnEdicion().trim();
-    this.edicionesLocalesDeAfiliacion.update((mapa) => {
-      const actual = mapa.get(id);
-      const copia = new Map(mapa);
-      copia.set(id, {
-        roleTitle: cargo === '' ? null : cargo,
-        fileId: fileIdNuevo ?? actual?.fileId ?? null,
-      });
-      return copia;
+    this.profiles.updateAffiliation(afiliacion.id, { roleTitle: cargo }).subscribe({
+      next: () => {
+        this.toasts.success('Los cambios ya figuran en su historial.', 'Vínculo corregido');
+        this.cerrarEdicionDeAfiliacion();
+        this.cargar();
+        this.added.emit();
+      },
+      error: (error: unknown) => {
+        this.guardandoAfiliacion.set(false);
+        this.errorDeEdicionDeAfiliacion.set(
+          mensajeDe(errorToViewState<null>(error)) ??
+            'No pudimos guardar los cambios. Pruebe de nuevo.',
+        );
+      },
     });
-  }
-
-  /** Retira una afiliación del historial (doble local, con confirmación — D-04). */
-  private async retirarAfiliacionLocal(afiliacion: PractitionerAffiliation): Promise<void> {
-    const confirmado = await this.dialogs.confirm({
-      title: 'Retirar del historial',
-      message: `¿Retirar el vínculo con «${afiliacion.organizationName}» de tu historial laboral?`,
-      confirmLabel: 'Retirar',
-      cancelLabel: 'Cancelar',
-    });
-    if (!confirmado) {
-      return;
-    }
-    this.idsRetiradosLocalmente.update((ids) => new Set([...ids, afiliacion.id]));
-    this.toasts.success(
-      'Ya no figura en tu historial (guardado en este dispositivo).',
-      'Vínculo retirado',
-    );
   }
 
   private cargar(): void {
@@ -1827,14 +1841,10 @@ export class WorkHistory implements OnInit {
    */
   private cargarMunicipios(): void {
     this.municipios.listar().subscribe({
-      next: (ramas) => {
-        this.catalogoMunicipiosCaido.set(false);
-        this.ramasMunicipios.set(ramas);
-      },
-      error: () => {
-        this.ramasMunicipios.set([]);
-        this.catalogoMunicipiosCaido.set(true);
-      },
+      next: (ramas) => this.ramasMunicipios.set(ramas),
+      // Sin el árbol, la sede se guarda igual: con su punto y su calle, sin
+      // departamento ni nombre de ciudad.
+      error: () => this.ramasMunicipios.set([]),
     });
   }
 
@@ -1852,11 +1862,12 @@ export class WorkHistory implements OnInit {
 
   private limpiarSede(): void {
     this.nombreDeSedeNueva.set('');
+    this.telefonoDeSedeNueva.set('');
     this.direccionDeSede.set('');
     this.ciudadDeSede.set('');
     this.municipioDeSede.set(null);
     this.puntoDeSede.set(null);
-    this.mapaAbierto.set(false);
+    this.localidadDeSede.set(null);
     this.registroDeSede.set(ready(null));
     this.borradorOriginalDeSede.set(null);
   }
@@ -1868,10 +1879,10 @@ function mensajeDe(state: ViewState<null>): string | null {
     return state.issues.map((issue) => issue.message).join(' ') || null;
   }
   if (state.status === 'forbidden') {
-    return state.message ?? 'Tu cuenta no tiene un perfil profesional asociado.';
+    return state.message ?? 'Su cuenta no tiene un perfil profesional asociado.';
   }
   if (state.status === 'offline') {
-    return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+    return 'No pudimos conectarnos. Revise su conexión y reintente.';
   }
   if (state.status === 'error') {
     return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
@@ -1916,8 +1927,8 @@ function comoOpcion(establecimiento: LinkableOrganization): ReferenceOption {
 /**
  * Sin acentos y en minúsculas, para que el buscador de «Dónde atiendo»
  * encuentre «clinica» aunque se haya guardado «Clínica» (ADR-0015, regla 5).
- * Misma receta que ya usa el resto del proyecto (`symptom-check/texto.ts`,
- * `shared/geo/departamento-de-ciudad.ts`); se repite acá en vez de importar
+ * Misma receta que ya usa el resto del proyecto (`symptom-check/text.ts`,
+ * `shared/geo/city-department.ts`); se repite acá en vez de importar
  * de una feature ajena.
  */
 function normalizarTexto(texto: string): string {

@@ -1,0 +1,228 @@
+/* Mobile-first. Los colores de las dos series se declaran una vez acá y se
+   rehacen para el modo oscuro más abajo.
+
+   Es una forma de énfasis: dos pasos de UNA rampa, el año en curso el más
+   fuerte. Validado con el `validate_palette.js` de dataviz en modo ordinal:
+   claro petróleo-300 → petróleo-500 (3,23:1 contra la superficie); oscuro
+   aqua-600 → aqua-400, porque en oscuro la marca acciona en aqua y el
+   petróleo ES la superficie (4,00:1). */
+
+:host {
+  display: block;
+}
+
+.year-chart {
+  --year-current: var(--brand-primary);
+  --year-previous: var(--c-petrol-300);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.year-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.year-chart__legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.year-chart__swatch {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: var(--r-xs);
+  flex: none;
+}
+
+.year-chart__swatch--current {
+  background: var(--year-current);
+}
+
+.year-chart__swatch--previous {
+  background: var(--year-previous);
+}
+
+/* El área del gráfico: los rótulos del eje a la izquierda, las columnas a la
+   derecha y el nombre del mes debajo (por eso el `padding-bottom`). */
+.year-chart__plot {
+  position: relative;
+  height: 13rem;
+  padding: 0 0 1.75rem 2.75rem;
+}
+
+.year-chart__grid {
+  position: absolute;
+  inset: 0 0 1.75rem 2.75rem;
+  pointer-events: none;
+}
+
+.year-chart__gridline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.year-chart__tick {
+  position: absolute;
+  right: calc(100% + var(--sp-2));
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.year-chart__months {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.year-chart__month {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  border-radius: var(--r-sm);
+  cursor: default;
+  outline: none;
+}
+
+/* La banda del mes activo: se ve a qué mes corresponde el globo. */
+.year-chart__month--active {
+  background: var(--bg-hover);
+}
+
+.year-chart__month:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
+}
+
+.year-chart__bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Columnas finas: nunca más de 24 px, con aire en la banda. Esquina redonda
+   arriba (el dato), recta en la base. */
+.year-chart__bar {
+  width: min(42%, 1.125rem);
+  min-height: 0;
+  border-radius: 4px 4px 0 0;
+  transition: height var(--dur-base) var(--ease-out);
+}
+
+.year-chart__bar--current {
+  background: var(--year-current);
+}
+
+.year-chart__bar--previous {
+  background: var(--year-previous);
+}
+
+.year-chart__bar--pending {
+  height: 0;
+}
+
+.year-chart__label {
+  position: absolute;
+  top: calc(100% + var(--sp-2));
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.year-chart__tooltip {
+  position: absolute;
+  top: 0;
+  z-index: var(--z-tooltip);
+  min-width: 11rem;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.year-chart__tooltip p {
+  margin: 0;
+}
+
+.year-chart__tooltip-title {
+  color: var(--text-primary);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.year-chart__tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.year-chart__tooltip-row strong {
+  margin-left: auto;
+  color: var(--text-primary);
+}
+
+.year-chart__tooltip-delta {
+  margin-top: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+@media (min-width: 48rem) {
+  .year-chart__plot {
+    height: 15rem;
+  }
+
+  .year-chart__label,
+  .year-chart__tick {
+    font-size: var(--fs-caption);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .year-chart__bar {
+    transition: none;
+  }
+}
+
+/* `:host-context(html…)` y no `:root …`: el encapsulado de Angular reescribe
+   `:root` como `[_ngcontent-…]:root`, que no coincide nunca — la regla quedaba
+   muerta (medido en el navegador con `getComputedStyle`). */
+@media (prefers-color-scheme: dark) {
+  :host-context(html:not([data-theme='light'])) .year-chart {
+    --year-previous: var(--c-aqua-600);
+  }
+}
+
+:host-context(html[data-theme='dark']) .year-chart {
+  --year-previous: var(--c-aqua-600);
+}

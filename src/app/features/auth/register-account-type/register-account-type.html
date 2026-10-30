@@ -1,35 +1,63 @@
+<!-- `calm` + `full`: superficie del tema, sin columna de marca y sin nada que se
+     mueva solo. La marca queda en la píldora de arriba y la pantalla entera es
+     la elección, centrada y a lo ancho. -->
 <app-auth-split
-  scene="stage"
-  claim="Tu salud, en un solo lugar"
-  tagline="Creá tu cuenta y empezá a usar AloVida en un par de minutos."
-  contentWidth="wide"
+  scene="calm"
+  [claim]="catalogo.claim"
+  [tagline]="catalogo.tagline"
+  contentWidth="full"
 >
   <div class="tipos">
     <div class="tipos__header">
-      <h1 class="tipos__title">Crear cuenta</h1>
-      <p class="tipos__subtitle">¿Qué tipo de cuenta necesitás?</p>
+      <h1 class="tipos__title">{{ catalogo.titulo }}</h1>
+      <p class="tipos__subtitle">{{ catalogo.subtitulo }}</p>
     </div>
 
-    <!-- Una lista, y no un montón de enlaces sueltos: son tres opciones de lo
-         mismo, y el lector de pantalla anuncia «lista de 3 elementos» antes de
+    <!-- Una lista, y no un montón de enlaces sueltos: son opciones de lo
+         mismo, y el lector de pantalla anuncia «lista de N elementos» antes de
          leerlas — que es justo el dato que hace falta para decidir. -->
-    <ul class="tipos__grid">
-      @for (tipo of tipos; track tipo.ruta) {
-        <li class="tipos__item">
-          <a class="tipos__card" [routerLink]="tipo.ruta" [attr.data-testid]="tipo.testId">
+    <ul class="tipos__grid" [attr.data-columns]="columns">
+      @for (tipo of catalogo.tipos; track tipo.ruta; let i = $index) {
+        <li class="tipos__item" [style.--i]="i">
+          <!-- `data-icon-play`: el ícono responde al hover y al foco de esta
+               tarjeta (ver `AccountIcon`). -->
+          <a
+            class="tipos__card"
+            [attr.data-tone]="tipo.tone"
+            [routerLink]="tipo.ruta"
+            [attr.data-testid]="tipo.testId"
+            data-icon-play
+          >
             <span class="tipos__icon" aria-hidden="true">
               <app-account-icon [name]="tipo.icono" />
             </span>
             <span class="tipos__card-title">{{ tipo.titulo }}</span>
             <span class="tipos__card-detail">{{ tipo.detalle }}</span>
+            <!-- La invitación, al pie: dice que la tarjeta entera es el botón y
+                 el galón se corre al apuntarla. -->
+            <span class="tipos__cta" aria-hidden="true">
+              Empezar
+              <svg
+                class="tipos__cta-arrow"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                focusable="false"
+              >
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </span>
           </a>
         </li>
       }
     </ul>
 
     <p class="tipos__footer">
-      ¿Ya tenés cuenta?
-      <a app-link routerLink="/auth" data-testid="tipos-ir-login">Iniciá sesión</a>
+      ¿Ya tiene cuenta?
+      <a app-link routerLink="/auth" data-testid="tipos-ir-login">Inicie sesión</a>
     </p>
   </div>
 </app-auth-split>

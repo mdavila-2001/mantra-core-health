@@ -1,0 +1,2 @@
+Fuentes de DDL OK: `SQL/` y `NoSQL/` de la raíz son las únicas.
+exit=0

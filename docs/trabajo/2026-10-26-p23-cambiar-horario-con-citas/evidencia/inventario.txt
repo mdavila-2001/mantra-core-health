@@ -1,0 +1,4 @@
+$ node tools/inventario/flujos.mjs --verificar | grep -c scheduling   (archivos de scheduling desactualizados; el resto de la lista es deriva previa de dev, de otros módulos)
+0
+$ node tools/inventario/endpoints.mjs --verificar | grep -c scheduling
+0

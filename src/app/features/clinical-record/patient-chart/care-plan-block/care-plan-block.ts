@@ -12,29 +12,30 @@ import {
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ChartCarePlansClient } from '../../../../core/data-access/chart-care-plans/chart-care-plans.client';
 import type { NewCarePlanActivity } from '../../../../core/data-access/chart-care-plans/chart-care-plans.types';
+import { simulatorAvailable } from '../../../../core/data-access/simulator-only';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
+import { NavIcon } from '../../../../shared/components/atoms/nav-icon/nav-icon';
 import { Select } from '../../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
-import { ConceptSelect } from '../../../../shared/components/molecules/concept-select/concept-select';
 import { FormField } from '../../../../shared/components/molecules/form-field/form-field';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
-import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
+import {
+  CarePlanRoute,
+  type EstadoDelPlan,
+  type PasoDelPlan,
+} from '../care-plan-route/care-plan-route';
+import { FormResponsePicker } from '../form-response-picker/form-response-picker';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
-
-/** Qué clase de plan es: propuesta, plan u orden. */
-export const TARGET_INTENCION = 'chart.care_plans.intent_concept_id';
-
-/** Qué clase de paso es cada actividad. */
-export const TARGET_ACTIVIDAD = 'chart.care_plan_activities.activity_concept_id';
+import { writeMessage } from '../../write-message';
 
 /** Un diagnóstico del expediente, para colgar el plan de él. */
 export interface DiagnosticoDelPlan {
@@ -45,7 +46,6 @@ export interface DiagnosticoDelPlan {
 /** Una actividad a medio cargar, tal como la sostiene el formulario. */
 interface ActividadEnCurso {
   readonly clave: number;
-  tipo: string | null;
   detalle: string;
   cuando: Date | null;
 }
@@ -72,6 +72,17 @@ interface ActividadEnCurso {
  * servidor la acepte vacía. Es la misma clase de restricción que el bloque de
  * medicación pone sobre el motivo de una receta.
  *
+ * ## El motivo también se pide, y acepta dos formas
+ *
+ * Un plan tiene que decir **por qué** se abre. Si la persona ya tiene el
+ * problema registrado, el plan cuelga de ese diagnóstico; si el plan nace
+ * antes de que haya diagnóstico —que es lo normal en un control—, el motivo
+ * se escribe a mano. Uno de los dos, siempre: eso es lo que el formulario
+ * exige.
+ *
+ * El motivo escrito viaja en `reasonText`, que **todavía no existe en la API
+ * real** y por ahora sólo entiende la maqueta.
+ *
  * ## Las actividades se cargan acá, no después
  *
  * El DTO las acepta en el alta (`activities`) y el backend devuelve cuántas
@@ -84,11 +95,14 @@ interface ActividadEnCurso {
 @Component({
   selector: 'app-care-plan-block',
   imports: [
+    CarePlanRoute,
+    FormResponsePicker,
     Alert,
     AppButton,
     Card,
-    ConceptSelect,
+    AppInput,
     DatePicker,
+    NavIcon,
     FormActions,
     FormField,
     Select,
@@ -110,8 +124,18 @@ export class CarePlanBlock implements DraftBlock {
   /** El encuentro en curso, cuando el bloque vive dentro de la atención. */
   readonly encounterId = input<string | null>(null);
 
-  /** Las citas de la persona, para atar el plan a la consulta donde se acordó. */
-  readonly citas = input<readonly CitaDelPaciente[]>([]);
+  /**
+   * En la cita, lo que se emite cuelga sí o sí de una respuesta del formulario
+   * médico: sin ella el botón no se habilita. En el expediente no se exige.
+   */
+  readonly exigeRespuesta = input(false);
+
+  /** La respuesta del formulario médico elegida; por defecto, la más reciente. */
+  protected readonly respuestaDelFormulario = signal<string | null>(null);
+
+  protected readonly faltaRespuesta = computed(
+    () => this.exigeRespuesta() && this.respuestaDelFormulario() === null,
+  );
 
   /**
    * Los diagnósticos de la persona, ya traducidos por el expediente.
@@ -124,16 +148,13 @@ export class CarePlanBlock implements DraftBlock {
   /** El plan quedó abierto y el expediente tiene que releerse. */
   readonly cambio = output<void>();
 
-  protected readonly targetIntencion = TARGET_INTENCION;
-  protected readonly targetActividad = TARGET_ACTIVIDAD;
-
   /* -- El formulario ------------------------------------------------------- */
 
   protected readonly meta = signal('');
-  protected readonly intencion = signal<string | null>(null);
+  /** El motivo escrito a mano, cuando no cuelga de un diagnóstico ya registrado. */
+  protected readonly motivo = signal('');
   protected readonly desde = signal<Date | null>(null);
   protected readonly hasta = signal<Date | null>(null);
-  protected readonly citaElegida = signal<string | null>(null);
   protected readonly diagnosticoElegido = signal<string | null>(null);
 
   /**
@@ -142,21 +163,18 @@ export class CarePlanBlock implements DraftBlock {
    * antes de poder escribir nada.
    */
   protected readonly actividades = signal<readonly ActividadEnCurso[]>([
-    { clave: 0, tipo: null, detalle: '', cuando: null },
+    { clave: 0, detalle: '', cuando: null },
   ]);
 
   /** Contrato de `DraftBlock`. La fila inicial vacía no cuenta sola. */
   readonly tieneCambiosPendientes = computed(
     () =>
       this.meta().trim() !== '' ||
-      this.intencion() !== null ||
+      this.motivo().trim() !== '' ||
       this.desde() !== null ||
       this.hasta() !== null ||
-      this.citaElegida() !== null ||
       this.diagnosticoElegido() !== null ||
-      this.actividades().some(
-        (a) => a.tipo !== null || a.detalle.trim() !== '' || a.cuando !== null,
-      ),
+      this.actividades().some((a) => a.detalle.trim() !== '' || a.cuando !== null),
   );
 
   private siguienteClave = 1;
@@ -164,17 +182,12 @@ export class CarePlanBlock implements DraftBlock {
   protected readonly registrando = signal(false);
   protected readonly registro = signal<ViewState<null>>(ready(null));
 
-  protected readonly opcionesDeCita = computed<readonly SelectOption<string | null>[]>(() => [
-    { value: null, label: 'Sin cita asociada' },
-    ...this.citas().map((cita) => ({
-      value: cita.id,
-      label: cita.enCurso ? `${cita.etiqueta} · en curso` : cita.etiqueta,
-    })),
-  ]);
+  /** Si la persona tiene diagnósticos de los que el plan pueda colgar. */
+  protected readonly hayDiagnosticos = computed(() => this.diagnosticos().length > 0);
 
   protected readonly opcionesDeDiagnostico = computed<readonly SelectOption<string | null>[]>(
     () => [
-      { value: null, label: 'Sin diagnóstico asociado' },
+      { value: null, label: 'Escribir el motivo a mano' },
       ...this.diagnosticos().map((dx) => ({ value: dx.id, label: dx.etiqueta })),
     ],
   );
@@ -182,16 +195,12 @@ export class CarePlanBlock implements DraftBlock {
   protected agregarActividad(): void {
     this.actividades.update((actuales) => [
       ...actuales,
-      { clave: this.siguienteClave++, tipo: null, detalle: '', cuando: null },
+      { clave: this.siguienteClave++, detalle: '', cuando: null },
     ]);
   }
 
   protected quitarActividad(clave: number): void {
     this.actividades.update((actuales) => actuales.filter((a) => a.clave !== clave));
-  }
-
-  protected fijarTipo(clave: number, valor: string | null): void {
-    this.actualizar(clave, (a) => ({ ...a, tipo: valor }));
   }
 
   protected fijarDetalle(clave: number, valor: string): void {
@@ -221,9 +230,73 @@ export class CarePlanBlock implements DraftBlock {
     return desde !== null && hasta !== null && hasta < desde;
   });
 
-  /** La meta es lo que esta pantalla exige; el contrato sólo pide el paciente. */
+  /**
+   * Hay motivo cuando el plan cuelga de un diagnóstico ya registrado **o**
+   * cuando está escrito a mano. Uno de los dos, siempre: un plan de cuidados
+   * sin decir por qué se abre no se puede evaluar ni cerrar.
+   */
+  protected readonly hayMotivo = computed(
+    () => this.diagnosticoElegido() !== null || this.motivo().trim() !== '',
+  );
+
+  /* -- La hoja de ruta ------------------------------------------------------ */
+
+  /**
+   * Los pasos que dicen algo. Es la regla de qué viaja al servidor y de qué se
+   * dibuja en la ruta, y vive una sola vez: una fila vacía no es un paso sin
+   * fecha, es nada.
+   */
+  protected readonly actividadesEscritas = computed<readonly PasoDelPlan[]>(() =>
+    this.actividades().filter((a) => a.detalle.trim() !== ''),
+  );
+
+  /**
+   * Qué tramo de la ruta está resuelto. Los obligatorios cierran con su dato;
+   * la vigencia y los pasos, que son opcionales, cuando tienen algo.
+   */
+  protected readonly tramos = computed(() => ({
+    origen: !this.faltaRespuesta(),
+    objetivo: this.meta().trim() !== '',
+    motivo: this.hayMotivo(),
+    vigencia: (this.desde() !== null || this.hasta() !== null) && !this.vigenciaInvalida(),
+    pasos: this.actividadesEscritas().length > 0,
+  }));
+
+  /** Lo que falta para poder abrir el plan, contado: cuántos obligatorios quedan. */
+  protected readonly obligatoriosPendientes = computed(() => {
+    const t = this.tramos();
+    return [t.origen, t.objetivo, t.motivo].filter((ok) => !ok).length;
+  });
+
+  /**
+   * Lo que dice la insignia de la ruta. Sigue la misma regla que habilita el
+   * botón —sin el «registrando», que es del envío y no del plan—: una vigencia
+   * invertida también bloquea, y «Lista para abrir» con el botón apagado sería
+   * una promesa falsa.
+   */
+  protected readonly estadoDelPlan = computed<EstadoDelPlan>(() => {
+    const cuantos = this.obligatoriosPendientes();
+    if (cuantos > 0) return { tipo: 'faltan', cuantos };
+    return this.vigenciaInvalida() ? { tipo: 'vigencia' } : { tipo: 'listo' };
+  });
+
+  /** La etiqueta del diagnóstico elegido, para la vista de ruta. */
+  protected readonly motivoEnPalabras = computed<string>(() => {
+    const id = this.diagnosticoElegido();
+    if (id !== null) {
+      return this.diagnosticos().find((dx) => dx.id === id)?.etiqueta ?? '';
+    }
+    return this.motivo().trim();
+  });
+
+  /** La meta y el motivo son lo que esta pantalla exige; el contrato sólo pide el paciente. */
   protected readonly puedeRegistrar = computed(
-    () => this.meta().trim() !== '' && !this.vigenciaInvalida() && !this.registrando(),
+    () =>
+      !this.faltaRespuesta() &&
+      this.meta().trim() !== '' &&
+      this.hayMotivo() &&
+      !this.vigenciaInvalida() &&
+      !this.registrando(),
   );
 
   /**
@@ -233,31 +306,32 @@ export class CarePlanBlock implements DraftBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDelPlan = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), { accion: 'abrir el plan' }),
+    writeMessage(this.registro(), { accion: 'abrir el plan' }),
   );
 
   protected registrar(): void {
     const goalText = this.meta().trim();
-    if (goalText === '' || this.vigenciaInvalida() || this.registrando()) {
+    if (goalText === '' || !this.hayMotivo() || this.vigenciaInvalida() || this.registrando()) {
       return;
     }
 
     // Sólo los pasos que dicen algo: el detalle es lo que hace útil a una
     // actividad, y una fila vacía no es un paso sin fecha, es nada.
-    const activities: NewCarePlanActivity[] = this.actividades()
-      .filter((a) => a.detalle.trim() !== '')
-      .map((a) => ({
-        detailText: a.detalle.trim(),
-        ...(a.tipo === null ? {} : { activityConceptId: a.tipo }),
-        ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
-      }));
+    const activities: NewCarePlanActivity[] = this.actividadesEscritas().map((a) => ({
+      detailText: a.detalle.trim(),
+      ...(a.cuando === null ? {} : { scheduledAt: a.cuando }),
+    }));
 
-    const intencion = this.intencion();
     const desde = this.desde();
     const hasta = this.hasta();
-    const encuentro = this.citaElegida() ?? this.encounterId();
+    const encuentro = this.encounterId();
     const diagnostico = this.diagnosticoElegido();
+    // El motivo escrito sólo viaja cuando no hay diagnóstico elegido: el
+    // diagnóstico ya **es** el motivo, y mandar los dos duplicaría el dato.
+    const motivo = diagnostico === null ? this.motivo().trim() : '';
     const autor = this.auth.practitionerProfileId();
+    // `reasonText` es extensión de la maqueta: contra la API real no viaja.
+    const motivoSinGuardar = motivo !== '' && !simulatorAvailable();
 
     this.registrando.set(true);
     this.registro.set(loading());
@@ -268,11 +342,14 @@ export class CarePlanBlock implements DraftBlock {
         goalText,
         // Los opcionales sin elegir se **omiten**: el backend valida con
         // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
-        ...(intencion === null ? {} : { intentConceptId: intencion }),
         ...(desde === null ? {} : { startDate: desde }),
         ...(hasta === null ? {} : { endDate: hasta }),
         ...(encuentro === null ? {} : { encounterId: encuentro }),
+        ...(this.respuestaDelFormulario() === null
+          ? {}
+          : { formInstanceId: this.respuestaDelFormulario() ?? '' }),
         ...(diagnostico === null ? {} : { conditionId: diagnostico }),
+        ...(motivo === '' ? {} : { reasonText: motivo }),
         ...(autor === null ? {} : { authorProfileId: autor }),
         ...(activities.length === 0 ? {} : { activities }),
       })
@@ -287,6 +364,11 @@ export class CarePlanBlock implements DraftBlock {
               : `Queda en el expediente con ${abierto.activityCount} actividad${abierto.activityCount === 1 ? '' : 'es'}.`,
             'Plan de cuidados abierto',
           );
+          if (motivoSinGuardar) {
+            this.toasts.warning(
+              'El motivo escrito todavía no se guarda: el servidor aún no lo recibe. Elija el diagnóstico si quiere que quede registrado.',
+            );
+          }
           this.cambio.emit();
         },
         error: (error: unknown) => {
@@ -298,11 +380,10 @@ export class CarePlanBlock implements DraftBlock {
 
   private limpiar(): void {
     this.meta.set('');
-    this.intencion.set(null);
+    this.motivo.set('');
     this.desde.set(null);
     this.hasta.set(null);
-    this.citaElegida.set(null);
     this.diagnosticoElegido.set(null);
-    this.actividades.set([{ clave: this.siguienteClave++, tipo: null, detalle: '', cuando: null }]);
+    this.actividades.set([{ clave: this.siguienteClave++, detalle: '', cuando: null }]);
   }
 }

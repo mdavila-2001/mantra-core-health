@@ -67,7 +67,7 @@ describe('RedeemCode', () => {
     expect(porTestId('canje-codigo')?.textContent?.trim()).toBe('HJ4KMP73');
   });
 
-  it('dice cuánto canjeaste y cuánto te queda', () => {
+  it('dice cuánto canjeó y cuánto le queda', () => {
     montar();
 
     expect(porTestId('canje-puntos')?.textContent).toContain('150');
@@ -84,7 +84,7 @@ describe('RedeemCode', () => {
     montar();
 
     expect(porTestId('canje-caja')?.textContent?.trim()).toBe(
-      'Mostrá este código en la caja del supermercado',
+      'Muestre este código en la caja del supermercado',
     );
     expect(porTestId('canje-vence')?.textContent).toContain('14:45');
   });

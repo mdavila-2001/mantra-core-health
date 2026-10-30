@@ -1,0 +1,4134 @@
+[
+ {
+  "netterId": "ENT_02713515c4313b",
+  "name": "Arteria(s) — in situ",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_03c710fddf7f57",
+  "name": "Arteria(s) — medial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_04b296aaf6293a",
+  "name": "Escápula — arteria axilar y anastomosis",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_07b009c74d55b1",
+  "name": "Metáfisis, rama arteria nutricia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_0f6fa38c649fc4",
+  "name": "Arteria(s) — cubital — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_142222ad94d8b1",
+  "name": "Arteria(s) — mano, visión palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1439fb3649e582",
+  "name": "Tabaquera anatómica — arteria radial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_15234fe86b2936",
+  "name": "Arteria(s) — supinador",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_15372679cb1c03",
+  "name": "Arteria(s) — lateral, fascículos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_16bb9bd4bcccc2",
+  "name": "Arteria(s) — subescapular",
+  "queries": [
+   "subscapular artery",
+   "arteria subscapularis"
+  ],
+  "uberon": "UBERON:0001397",
+  "matchedText": "subscapular artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1912bb2cca587f",
+  "name": "Arteria(s) — visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_231c71a5da9a31",
+  "name": "Carpo — flexores, arterias y nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_47b4cbb8d16b94",
+  "name": "Arteria(s) — brazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_48055480b1f58d",
+  "name": "Arteria(s) — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4a7e16dd5d9e49",
+  "name": "Arteria(s) — profunda",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4c6fe9bcff6676",
+  "name": "Arteria(s) — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_56089b69d17e7c",
+  "name": "Arteria(s) — deltoidea",
+  "queries": [
+   "deltoid branch of thoracoacromial artery",
+   "deltoid branch of thoraco-acromial artery",
+   "deltoid artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_57154555fde29f",
+  "name": "Arteria(s) — mínimas dedo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_5d3ac83d97af77",
+  "name": "Arteria(s) — ramas dorsales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_6e219c3476b4e8",
+  "name": "Mano — arterias y nervios, visión palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_744054d7bcef06",
+  "name": "Arteria(s) — ramas nutricias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_7b218fbc73790e",
+  "name": "Epifisis — rama arterial nutricia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_85ac34f8d19baf",
+  "name": "Arteria(s) — palmar superficial",
+  "queries": [
+   "superficial palmar arch",
+   "superficial palmar artery",
+   "superficial palmar branch of radial artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ambiguo: puede designar el arco palmar superficial o la rama palmar superficial de la arteria radial."
+ },
+ {
+  "netterId": "ENT_87cdbe9bf72386",
+  "name": "Brazo. V. también Antebrazo — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_882bc3dd1619a9",
+  "name": "Arteria(s) — carpiana palmar",
+  "queries": [
+   "palmar carpal artery",
+   "palmar carpal branch"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_89cd96aaaafae3",
+  "name": "Arteria(s) — rama infraespinosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8dc8a85be3c545",
+  "name": "Miembro — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_93c2e11f3d24db",
+  "name": "Arteria(s) — cubital — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_959c080694cab5",
+  "name": "Arteria(s) — tabaquera anatómica",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9ed09e102f5b5c",
+  "name": "Arteria(s) — radial",
+  "queries": [
+   "radial artery"
+  ],
+  "uberon": "UBERON:0001404",
+  "matchedText": "radial artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a5f021ca40adbe",
+  "name": "Arteria(s) — carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_af3040541053cd",
+  "name": "Arteria(s) — metacarpiana — palmar",
+  "queries": [
+   "palmar metacarpal artery",
+   "arteria metacarpalis palmaris"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_b140de17acff2a",
+  "name": "Arteria(s) — miembro superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_bcf7dd18260f17",
+  "name": "Arteria(s) — rama muscular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_be113604f8acf7",
+  "name": "Espacio(s) — cuadrangular, arteria circunfleja humeral — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_be2deb0dffa99b",
+  "name": "Arteria(s) — circunfleja",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_db2cb3f6052c86",
+  "name": "Arteria(s) — acromial",
+  "queries": [
+   "acromial branch of thoracoacromial artery",
+   "acromial branch of thoraco-acromial artery",
+   "acromial artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_e12a8689705f38",
+  "name": "Arteria(s) — radial",
+  "queries": [
+   "radial artery"
+  ],
+  "uberon": "UBERON:0001404",
+  "matchedText": "radial artery",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e12bf2877a7fc0",
+  "name": "Arteria(s) — ramas",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e1c17ce4525f3c",
+  "name": "Dedos — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_e2d410423342be",
+  "name": "Carpo — arterias",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_f9b2c02bfdd755",
+  "name": "Arteria(s) — pectoral",
+  "queries": [
+   "pectoral branch of thoracoacromial artery",
+   "pectoral branch of thoraco-acromial artery",
+   "pectoral artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_fe5b387190e5df",
+  "name": "Arteria(s) — clavicular",
+  "queries": [
+   "clavicular branch of thoracoacromial artery",
+   "clavicular branch of thoraco-acromial artery",
+   "clavicular artery"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_1dada8623ab60a",
+  "name": "Articulación(es) — hombro",
+  "queries": [
+   "shoulder joint",
+   "glenohumeral joint"
+  ],
+  "uberon": "UBERON:0001470",
+  "matchedText": "glenohumeral joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2804ff0c2ebbfa",
+  "name": "Articulación(es) — interfalangica",
+  "queries": [
+   "interphalangeal joint",
+   "interphalangeal joint of manus"
+  ],
+  "uberon": "UBERON:0006658",
+  "matchedText": "interphalangeal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_29662e056e7d98",
+  "name": "Articulación(es) — proximal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_2b3888cfd9f591",
+  "name": "Articulación(es) — radiocarpiana",
+  "queries": [
+   "radiocarpal joint",
+   "radio-carpal joint"
+  ],
+  "uberon": "UBERON:0011968",
+  "matchedText": "radiocarpal joint",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_47733cdd20578e",
+  "name": "Articulación(es) — primera",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4877b65b6f9ec8",
+  "name": "Articulación(es) — distal, localización",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_6b6ae971bc7500",
+  "name": "Articulación(es) — cápsula",
+  "queries": [
+   "joint capsule",
+   "articular capsule",
+   "capsula articularis"
+  ],
+  "uberon": "UBERON:0001484",
+  "matchedText": "joint capsule",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6f324e6888f175",
+  "name": "Articulación(es) — cavidades articulares",
+  "queries": [
+   "joint cavity",
+   "synovial cavity of joint",
+   "articular cavity"
+  ],
+  "uberon": "UBERON:0007617",
+  "matchedText": "synovial cavity of joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_731d8d512e5318",
+  "name": "Articulación(es) — carpometacarpiana",
+  "queries": [
+   "carpometacarpal joint",
+   "carpometacarpal joint of manus"
+  ],
+  "uberon": "UBERON:0011119",
+  "matchedText": "carpometacarpal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_9e67a04a7f3895",
+  "name": "Articulación(es) — radiocubital distal",
+  "queries": [
+   "distal radioulnar joint",
+   "distal radio-ulnar joint"
+  ],
+  "uberon": "UBERON:0007164",
+  "matchedText": "distal radioulnar joint",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c1dadd15a1cd39",
+  "name": "Articulación(es) — metacarpofalangica (MF)",
+  "queries": [
+   "metacarpophalangeal joint",
+   "metacarpo-phalangeal joint"
+  ],
+  "uberon": "UBERON:0003695",
+  "matchedText": "metacarpophalangeal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cfd9ec1c69d53b",
+  "name": "Articulación(es) — articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d647730d31e4a1",
+  "name": "Articulación(es) — intermetacarpiana",
+  "queries": [
+   "intermetacarpal joint"
+  ],
+  "uberon": "UBERON:0011131",
+  "matchedText": "intermetacarpal joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dcb37d44045421",
+  "name": "Articulación(es) — disco articular",
+  "queries": [
+   "articular disc",
+   "discus articularis"
+  ],
+  "uberon": "UBERON:0000387",
+  "matchedText": "articular disc",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_05aa081f1eb15b",
+  "name": "Cavidad(es) — dedo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1415567b7d041c",
+  "name": "Espacio(s) — subaponeurótico",
+  "queries": [
+   "dorsal subaponeurotic space",
+   "subaponeurotic space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_14786d2ac2b867",
+  "name": "Receso — axilar",
+  "queries": [
+   "axillary recess",
+   "axillary recess of shoulder joint"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_22470aa3f043e3",
+  "name": "Espacio(s) — mediopalmar",
+  "queries": [
+   "midpalmar space",
+   "mid-palmar space"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_27e51ded30d527",
+  "name": "Mano — tabique entre espacios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4edded48fa3d42",
+  "name": "Fosa — codo",
+  "queries": [
+   "cubital fossa",
+   "antecubital fossa"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_57564a6834a913",
+  "name": "Mano — espacios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_59996786158793",
+  "name": "Fosa — clavipectoral",
+  "queries": [
+   "clavipectoral triangle",
+   "deltopectoral triangle"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_8952dbd43857ca",
+  "name": "Fosa — coronoidea",
+  "queries": [
+   "coronoid fossa",
+   "coronoid fossa of humerus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_99b46e1e841b46",
+  "name": "Dedos — espacio cerrado anterior distal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9a05c6d2483c4b",
+  "name": "Espacio(s) — subcutáneo dorsal mano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ce7bbaac54cd97",
+  "name": "Cavidad(es) — articular",
+  "queries": [
+   "joint cavity",
+   "synovial cavity of joint",
+   "articular cavity"
+  ],
+  "uberon": "UBERON:0007617",
+  "matchedText": "synovial cavity of joint",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e910265343857f",
+  "name": "Escápula — cavidad glenoidea",
+  "queries": [
+   "glenoid fossa",
+   "glenoid cavity",
+   "glenoid cavity of scapula"
+  ],
+  "uberon": "UBERON:0006657",
+  "matchedText": "glenoid cavity",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_00a85c643ff9ae",
+  "name": "Mielencéfalo",
+  "queries": [
+   "myelencephalon",
+   "medulla oblongata"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Término exacto sin coincidencia en UBERON (myelencephalon) y su ubicación en hombro y axila sugiere error de índice; se deja por duda."
+ },
+ {
+  "netterId": "ENT_0f83258761bcc1",
+  "name": "Epifisis",
+  "queries": [
+   "epiphysis",
+   "bone epiphysis"
+  ],
+  "uberon": "UBERON:0001437",
+  "matchedText": "epiphysis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1017409e292c69",
+  "name": "Húmero",
+  "queries": [
+   "humerus"
+  ],
+  "uberon": "UBERON:0000976",
+  "matchedText": "humerus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_145311056477dc",
+  "name": "Túnel carpiano",
+  "queries": [
+   "carpal tunnel",
+   "carpal canal"
+  ],
+  "uberon": "UBERON:0035038",
+  "matchedText": "carpal tunnel",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_1612ab8acc4bf9",
+  "name": "Radio",
+  "queries": [
+   "radius bone",
+   "radius"
+  ],
+  "uberon": "UBERON:0001423",
+  "matchedText": "radius",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_359f811227cabb",
+  "name": "Tabaquera anatómica",
+  "queries": [
+   "anatomical snuffbox",
+   "anatomical snuff box"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_4e1cc4f870ada0",
+  "name": "Menisco",
+  "queries": [
+   "meniscus"
+  ],
+  "uberon": "UBERON:0000387",
+  "matchedText": "meniscus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6b86af3f55a421",
+  "name": "Capitulo (cóndilo)",
+  "queries": [
+   "capitulum of humerus",
+   "capitulum humeri"
+  ],
+  "uberon": "UBERON:0010853",
+  "matchedText": "capitulum of humerus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_6ed3dbd262b6aa",
+  "name": "Eponiquio",
+  "queries": [
+   "eponychium"
+  ],
+  "uberon": "UBERON:0004882",
+  "matchedText": "eponychium",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7046066c56c35b",
+  "name": "Pisiforme",
+  "queries": [
+   "pisiform",
+   "pisiform bone"
+  ],
+  "uberon": "UBERON:0001429",
+  "matchedText": "pisiform",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7d14d9b7dc1269",
+  "name": "Conexión intertendinosa mano",
+  "queries": [
+   "intertendinous connection",
+   "juncturae tendinum",
+   "intertendinous connections of hand"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_a3a40e50a26479",
+  "name": "Ganchoso",
+  "queries": [
+   "hamate",
+   "hamate bone"
+  ],
+  "uberon": "UBERON:0001433",
+  "matchedText": "hamate",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b4a66ef4426abd",
+  "name": "Matriz ungueal",
+  "queries": [
+   "nail matrix"
+  ],
+  "uberon": "UBERON:0002283",
+  "matchedText": "nail matrix",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b8563c12c50017",
+  "name": "Olécranon",
+  "queries": [
+   "olecranon"
+  ],
+  "uberon": "UBERON:0006810",
+  "matchedText": "olecranon",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c0c2df69d8480d",
+  "name": "Cutícula",
+  "queries": [
+   "nail cuticle",
+   "cuticle of nail"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_c4e10b8449892e",
+  "name": "Trapecio",
+  "queries": [
+   "trapezium bone",
+   "trapezium"
+  ],
+  "uberon": "UBERON:0001430",
+  "matchedText": "trapezium",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cb5a1e649a227e",
+  "name": "Acromion",
+  "queries": [
+   "acromion"
+  ],
+  "uberon": "UBERON:0002497",
+  "matchedText": "acromion",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_d71c3618118531",
+  "name": "Lecho ungueal",
+  "queries": [
+   "nail bed",
+   "nail bed of finger"
+  ],
+  "uberon": "UBERON:0005278",
+  "matchedText": "nail bed of finger",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_dda1691fcc4cf3",
+  "name": "Tróclea",
+  "queries": [
+   "trochlea of humerus"
+  ],
+  "uberon": "UBERON:0000144",
+  "matchedText": "trochlea of humerus",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e03ee361fcb5d3",
+  "name": "Cúbito",
+  "queries": [
+   "ulna"
+  ],
+  "uberon": "UBERON:0001424",
+  "matchedText": "ulna",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_58c70a2bc269fb",
+  "name": "Mayor — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_60013bd8b023d7",
+  "name": "Atla — vaina fascial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_6526d8e9135523",
+  "name": "Atlas de anatomía hun — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_8a31efbe1c2a62",
+  "name": "Fascia — aductor pulgar",
+  "queries": [
+   "adductor pollicis fascia",
+   "fascia of adductor pollicis"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_9896e2fc08fa59",
+  "name": "Atla — vainas fasciales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_bdb414bea382a7",
+  "name": "Atla — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_c12934547ea76c",
+  "name": "Mano — fascia dorsal",
+  "queries": [
+   "dorsal fascia of hand",
+   "dorsal fascia of manus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_01029dd4ed8242",
+  "name": "Hueso — vision — anterior (palmar)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_02e858b6210cc8",
+  "name": "Hueso. V. también huesos específicos — abaucción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_444a1e501c926c",
+  "name": "Dedos — huesos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_46aed8cf53000b",
+  "name": "Cabeza. V. también Encéfalo; Cráneo — humerocubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_5029aba58eee7e",
+  "name": "Hueso. V. también huesos específicos — carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_776a4c740767fb",
+  "name": "Hueso. V. también huesos específicos — visión — posterior (dorsal)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_85ee4e66bfb10f",
+  "name": "Hueso — sección coronal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8852af3628cda0",
+  "name": "Hueso — tubérculo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8b7c8df35abdc4",
+  "name": "Codo — huesos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_9841513f674108",
+  "name": "Hueso. V. también huesos específicos — antebrazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_985c507dfddaee",
+  "name": "Hueso. V. también huesos específicos — visión — anterior (palmar)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9bf3d336718fc9",
+  "name": "Hueso — escafoides",
+  "queries": [
+   "scaphoid bone",
+   "scaphoid"
+  ],
+  "uberon": "UBERON:0001427",
+  "matchedText": "scaphoid",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_a2f20cc98ebb6b",
+  "name": "Hueso — grande o capitado",
+  "queries": [
+   "capitate bone",
+   "capitate"
+  ],
+  "uberon": "UBERON:0001432",
+  "matchedText": "capitate",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_abf0cc3f432481",
+  "name": "Carpo — huesos",
+  "queries": [
+   "carpal bone"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_ac6f9b76048898",
+  "name": "Hueso — área",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c17608ee498a29",
+  "name": "Mano — huesos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_c94923846e1077",
+  "name": "Hueso. V. también huesos específicos — aducción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e243574bc3ba63",
+  "name": "Antebrazo — huesos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_fa66abac44541b",
+  "name": "Hueso — vision — posterior (dorsal)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_fc8885ac1769d6",
+  "name": "Hueso. V. también huesos específicos — codo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_004ae011cf597e",
+  "name": "Ligamento(s) — hombro",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_026f07337e1cb2",
+  "name": "Ligamento(s) — capitoganchoso",
+  "queries": [
+   "capitohamate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_05206105772dad",
+  "name": "Codo — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_0733da42c70ef3",
+  "name": "Antebrazo — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_18d33b5330bf97",
+  "name": "Ligamento(s) (cont.} — radiocarpiano — palmar",
+  "queries": [
+   "palmar radiocarpal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_19cb84fc7d7ae3",
+  "name": "Axila — ligamento suspensorio",
+  "queries": [
+   "suspensory ligament of axilla"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_1b2fd6537e7d7f",
+  "name": "Ligamento(s) (cont.} — radiocubital — dorsal",
+  "queries": [
+   "dorsal radioulnar ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_2787623295a4c8",
+  "name": "Ligamento(s) (cont.} — radiocapitado",
+  "queries": [
+   "radiocapitate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_2b4725fa10ec7d",
+  "name": "Ligamento(s) (cont.} — trapeciotrapezoideo",
+  "queries": [
+   "trapeziotrapezoid ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_4a76e893528150",
+  "name": "Ligamento(s) (cont.} — radiocapitada",
+  "queries": [
+   "radiocapitate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_51e6b6d287519a",
+  "name": "Ligamento(s) — radial dorsal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_538ea2684c218b",
+  "name": "Ligamento(s) (cont.} — trapeciocapitado",
+  "queries": [
+   "trapeziocapitate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_577a439ed6d777",
+  "name": "Ligamento(s) (cont.} — radioescafolunar",
+  "queries": [
+   "radioscapholunate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_617e0c2adc5cca",
+  "name": "Carpo — ligamentos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_62596b6d3b5477",
+  "name": "Ligamento(s) — carpiano palmar",
+  "queries": [
+   "palmar carpal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_73192dc5ae4288",
+  "name": "Ligamento(s) — carpopiramidal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_77b950a5be568d",
+  "name": "Ligamento(s) — cubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_7bac7d6e5e4e7c",
+  "name": "Ligamento(s) — coracoacromial",
+  "queries": [
+   "coracoacromial ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_84de417e777ca8",
+  "name": "Ligamento(s) — coracoclavicular",
+  "queries": [
+   "coracoclavicular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_8d3f30a232e741",
+  "name": "Ligamento(s) — carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_972d95b7d1a0ce",
+  "name": "Ligamento(s) — radial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9d5099fbb9a127",
+  "name": "Ligamento(s) (cont.} — radiocubital — palmar",
+  "queries": [
+   "palmar radioulnar ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_a261d081dea56f",
+  "name": "Ligamento(s) (cont.} — radiocarpiano — dorsal",
+  "queries": [
+   "dorsal radiocarpal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_a32c96e671cd04",
+  "name": "Ligamento(s) (cont.} — radiolunar — corto",
+  "queries": [
+   "short radiolunate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_a76a02c1fbb36d",
+  "name": "Ligamento(s) (cont.} — radioescafocapitado",
+  "queries": [
+   "radioscaphocapitate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_ad8b28f23cc749",
+  "name": "Ligamento(s) — acromioclavicular",
+  "queries": [
+   "acromioclavicular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_ae1a49179c4189",
+  "name": "Ligamento(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_aeaff7e7efa238",
+  "name": "Ligamento(s) — metafisario",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b351e2880ee241",
+  "name": "Ligamento(s) — conoideo",
+  "queries": [
+   "conoid ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_b5f2869f273344",
+  "name": "Ligamento(s) — coracohumeral",
+  "queries": [
+   "coracohumeral ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_bf591e1df70920",
+  "name": "Ligamento(s) (cont.} — radiolunar — palmar",
+  "queries": [
+   "palmar radiolunate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_c25a51f4946ea2",
+  "name": "Ligamento(s) — codo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_d2e6513e1c00e4",
+  "name": "Ligamento(s) (cont.} — superior escápula",
+  "queries": [
+   "superior transverse scapular ligament",
+   "suprascapular ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_d73a2cc61a3f72",
+  "name": "Ligamento(s) — radio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_dc178e678b526e",
+  "name": "Ligamento(s) (cont.} — radiolunar — largo",
+  "queries": [
+   "long radiolunate ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_dce5f8abb2fb0e",
+  "name": "Ligamento(s) (cont.} — trapezoidal",
+  "queries": [
+   "trapezoid ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_ece89f731bd7a7",
+  "name": "Radio — ligamento anular",
+  "queries": [
+   "annular ligament of radius",
+   "radial annular ligament"
+  ],
+  "uberon": "UBERON:0007657",
+  "matchedText": "annular ligament of radius",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_ef5bea4bd0a7db",
+  "name": "Ligamento(s) — carpometacarpiano — palmar",
+  "queries": [
+   "palmar carpometacarpal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_fb0806c715b0f6",
+  "name": "Ligamento(s) — capsular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_fc9adfd7b733bd",
+  "name": "Ligamento(s) — carpometacarpiano — dorsal",
+  "queries": [
+   "dorsal carpometacarpal ligament"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_010e043e9b5bca",
+  "name": "Nódulo(s) linfático(s) — axilares",
+  "queries": [
+   "axillary lymph node"
+  ],
+  "uberon": "UBERON:0001097",
+  "matchedText": "axillary lymph node",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_04338cb1113f4b",
+  "name": "Nódulo(s) linfático(s) — laterales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_34dc664313a69b",
+  "name": "Nódulo(s) linfático(s) — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_44b3eb9b4dbd8e",
+  "name": "Mano — vía linfática",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_8b153fad11243f",
+  "name": "Miembro — nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_96210902e2c4f3",
+  "name": "Dedos — vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_b53f9160cf43b4",
+  "name": "Miembro — vasos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_cad823e3da0e2e",
+  "name": "Mano — vasos linfaticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_d60fbc5a0bee6a",
+  "name": "Nódulo(s) linfático(s) — sección parasagital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_04bee193525511",
+  "name": "Músculo(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1011e3a9c513eb",
+  "name": "Músculo(s) — cabeza — larga, origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1097346f258276",
+  "name": "Músculo(s) — área",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_11604409285266",
+  "name": "Músculo(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_13f1092407afe4",
+  "name": "Músculo(s) — vaina fascial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_14b63e14838429",
+  "name": "Músculo(s) — pulgar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_192843463f32aa",
+  "name": "Músculo(s) — cabeza — corta",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_345e7bb5490a5d",
+  "name": "Músculo(s) — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3537b9709ffeee",
+  "name": "Músculo(s) — pulgar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3bdd3b85e8168f",
+  "name": "Músculo(s) — meñique",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3d36b8332c8d5a",
+  "name": "Antebrazo — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_3db07c7a4f55a6",
+  "name": "Músculo(s) — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3fa0ef2093a9ec",
+  "name": "Músculo(s) — cabeza — corta, origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4170c95993e9ec",
+  "name": "Músculo(s) — origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_47c24140e9491b",
+  "name": "Brazo. V. también Antebrazo — musculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_4a3e29aee6051f",
+  "name": "Músculo(s) — brazo, visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4ac4ddac6ecf76",
+  "name": "Músculo(s) — braquial",
+  "queries": [
+   "brachialis muscle",
+   "brachialis"
+  ],
+  "uberon": "UBERON:0001506",
+  "matchedText": "brachialis muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_4f60ce4b798062",
+  "name": "Músculo(s) — braquiorradial",
+  "queries": [
+   "brachioradialis",
+   "brachioradialis muscle"
+  ],
+  "uberon": "UBERON:0011011",
+  "matchedText": "brachioradialis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5e68e60b813ec9",
+  "name": "Músculo(s) — segundo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_5f2b0377add6d9",
+  "name": "Músculo(s) — origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_68e27b65c9e75a",
+  "name": "Dedos — músculos extensores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_73e04ef844b33d",
+  "name": "Músculo(s) — ancóneo",
+  "queries": [
+   "anconeus muscle",
+   "anconeus"
+  ],
+  "uberon": "UBERON:0002989",
+  "matchedText": "anconeus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_7de25172e20122",
+  "name": "Músculo(s) — hipotenar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_81dca217be1b5e",
+  "name": "Músculo(s) — antebrazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_82b6179c11c5a9",
+  "name": "Músculo(s) — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_8395d3b7fcf980",
+  "name": "Músculo(s) — cabeza — larga",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_93dc652a916261",
+  "name": "Mano — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_96bc2b6470bc38",
+  "name": "Músculo(s) — palmar — largo",
+  "queries": [
+   "palmaris longus muscle",
+   "palmaris longus"
+  ],
+  "uberon": "UBERON:0016493",
+  "matchedText": "palmaris longus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_991555d622c047",
+  "name": "Músculo(s) — largo pulgar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_993cad2b8eb3de",
+  "name": "Axila — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_a535da6d61f38c",
+  "name": "Músculo(s) — inervación",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ab75317ddafe5d",
+  "name": "Hombro — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_aeba0dfb21a7eb",
+  "name": "Músculo(s) — origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_bf189857fdefc7",
+  "name": "Músculo(s) — cuarto",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c3c4e2a58614c6",
+  "name": "Músculo(s) — palmar — corto",
+  "queries": [
+   "palmaris brevis muscle",
+   "palmaris brevis"
+  ],
+  "uberon": "UBERON:0036172",
+  "matchedText": "palmaris brevis",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c689161ddc8560",
+  "name": "Músculo(s) — coracobraquial",
+  "queries": [
+   "coracobrachialis muscle",
+   "coracobrachialis"
+  ],
+  "uberon": "UBERON:0001505",
+  "matchedText": "coracobrachialis muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_c69c3e0ae1e915",
+  "name": "Músculo(s) — cabeza larga",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ca582729cb7885",
+  "name": "Músculo(s) — fascia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_cf407e0a9394f2",
+  "name": "Músculo(s) — cabeza corta",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d374c92448c6fd",
+  "name": "Codo — músculos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_e18320cef46811",
+  "name": "Musculo(s) — abductor — corto pulgar",
+  "queries": [
+   "abductor pollicis brevis muscle",
+   "abductor pollicis brevis"
+  ],
+  "uberon": "UBERON:0008465",
+  "matchedText": "abductor pollicis brevis muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e1fe82fd3ae974",
+  "name": "Músculo(s) — dorsal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e24bfe925268f8",
+  "name": "Músculo(s) — infraespinoso",
+  "queries": [
+   "infraspinatus muscle",
+   "infraspinatus"
+  ],
+  "uberon": "UBERON:0001477",
+  "matchedText": "infraspinatus muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e33f4b7d387a5a",
+  "name": "Músculo(s) — braquial",
+  "queries": [
+   "brachialis muscle",
+   "brachialis"
+  ],
+  "uberon": "UBERON:0001506",
+  "matchedText": "brachialis muscle",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_e55b7bda4f5136",
+  "name": "Músculo(s) — primero",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_eeaa133c4ea61d",
+  "name": "Músculo(s) — origen",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_f6f0c8690fd669",
+  "name": "Atla — músculos intrahicideos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_f7d595c40532e5",
+  "name": "Músculo(s) — inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_fa1a819a89b7c3",
+  "name": "Músculo(s) — hombro",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_03d0d4f207726d",
+  "name": "Dedos — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_05c5504eda3c6f",
+  "name": "Nervio(s) — nervio mediano",
+  "queries": [
+   "median nerve"
+  ],
+  "uberon": "UBERON:0001148",
+  "matchedText": "median nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_2066bcc1d44571",
+  "name": "Nervio(s) — inervación cutánea",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_24d214fb434e9d",
+  "name": "Masculo(s) — nervio mediano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con OCR corrupto («Masculo») que parece agrupar músculos inervados por el nervio mediano; no es una estructura única."
+ },
+ {
+  "netterId": "ENT_3bdf2731ed3ae5",
+  "name": "Dedos — y nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_40c14015b3dc7e",
+  "name": "Nervio(s) — articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_445ecb40525440",
+  "name": "Nervio(s) — hombro",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_449f5392ec309d",
+  "name": "Nervio(s) — comunicante",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_48365bf72282d5",
+  "name": "Nervio(s) — profundo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4a2e0b10c5165d",
+  "name": "Nervio(s) — porción interósea anterior",
+  "queries": [
+   "anterior interosseous nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_4a3f6d92a56aba",
+  "name": "Nervio(s) — ramos digitales dorsales",
+  "queries": [
+   "dorsal digital nerve of hand",
+   "dorsal digital nerves of hand"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_4dc79a057c8931",
+  "name": "Nervio(s) — digitales palmares",
+  "queries": [
+   "palmar digital nerve",
+   "common palmar digital nerve",
+   "proper palmar digital nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ambiguo entre nervios digitales palmares comunes y propios; sin clase UBERON coincidente."
+ },
+ {
+  "netterId": "ENT_544ea3e29d99ce",
+  "name": "Nervio(s) — mediano",
+  "queries": [
+   "median nerve"
+  ],
+  "uberon": "UBERON:0001148",
+  "matchedText": "median nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_5615b2be1e7f58",
+  "name": "Nervio(s) — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_566f344573bfa0",
+  "name": "Nervio(s) — antebraquial — medial",
+  "queries": [
+   "medial antebrachial cutaneous nerve",
+   "medial cutaneous nerve of forearm"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_5ac9233221731b",
+  "name": "Húmero — nervio cubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_5d3b0c25dcb19e",
+  "name": "Nervio(s) — palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_62f0feda315513",
+  "name": "Miembro — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_68078104456bf2",
+  "name": "Antebrazo — nervios cutáneos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_78d387ab42f240",
+  "name": "Nervio(s) — miembro — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_7c09ad5d20d9f8",
+  "name": "Mano — nervios, visión palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_7e3582d7c793a5",
+  "name": "Nervio(s) — músculos tenares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_807b2e8a2a7ccc",
+  "name": "Nervio(s) — visión — posterior (dorsal)",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_838ab43b986dc3",
+  "name": "Nervio(s) — articular",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_850020a140e9f1",
+  "name": "Nervio(s) — músculos inervados",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_875659ee0d0410",
+  "name": "Brazo. V. también Antebrazo — nervios cutáneos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_88aa741a252d11",
+  "name": "Nervio(s) — supraescapular",
+  "queries": [
+   "suprascapular nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_8cb633f5c5ed3f",
+  "name": "Nervio(s) — porción terminal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_96cf152509c64b",
+  "name": "Nervio(s) — antebrazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9be1529545b0cd",
+  "name": "Nervio(s) — comunicante nervio cubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9d145d3b4cc426",
+  "name": "Dedos — cuarto, nervios digitales palmares",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9d6f654ea20063",
+  "name": "Nervio(s) — contribución inconstante",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_a0351550cd1fa4",
+  "name": "Nervio(s) — visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_a390b048c2cb9a",
+  "name": "Nervio(s) — antebraquial — posterior",
+  "queries": [
+   "posterior antebrachial cutaneous nerve",
+   "posterior cutaneous nerve of forearm"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_a7b8345bebe7ac",
+  "name": "Nervio(s) — visión — palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ac543b7c82a3d8",
+  "name": "Falange — inervación nervio cubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b1bea424c6f58c",
+  "name": "Nervio(s) — digitales palmares propios",
+  "queries": [
+   "proper palmar digital nerve",
+   "proper palmar digital nerves of hand"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_b39bd1f38198e8",
+  "name": "Nervio(s) — palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b540a08133a0d9",
+  "name": "Nervio(s) — cubital",
+  "queries": [
+   "ulnar nerve"
+  ],
+  "uberon": "UBERON:0001494",
+  "matchedText": "ulnar nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_b755cddcd450c9",
+  "name": "Nervio(s) — superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b960e0b3fcb185",
+  "name": "Nervio(s) — túnel carpiano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_bae81b77533f62",
+  "name": "Nervio(s) — antebraquial — lateral",
+  "queries": [
+   "lateral antebrachial cutaneous nerve",
+   "lateral cutaneous nerve of forearm"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_c4f487ae38e3f9",
+  "name": "Hombro — nervios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_c5a2997d3f0200",
+  "name": "Brazo. V. también Antebrazo — nervio radial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c861098a784f64",
+  "name": "Nervio(s) — dorsal",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c8c8dafbb55439",
+  "name": "Nervio(s) — recurrente",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d2defecb216742",
+  "name": "Nervio(s) — y media",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d623ec685bf78b",
+  "name": "Pulgar — nervios digitales palmares propios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_dfced256c81a93",
+  "name": "Dedos — nervios digitales palmares",
+  "queries": [
+   "palmar digital nerve",
+   "common palmar digital nerve",
+   "proper palmar digital nerve"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ambiguo entre nervios digitales palmares comunes y propios; sin clase UBERON coincidente."
+ },
+ {
+  "netterId": "ENT_dfe562230adbd5",
+  "name": "Nervio(s) — propios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e3fda5fb0102a3",
+  "name": "Nervio(s) — comunes",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e537958a9fabf9",
+  "name": "Nervio(s) — comunicante nervio cubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e75a2219472208",
+  "name": "Radio — nervios cutáneo posterior y cutáneo — lateral inferior del brazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_eb453a69e38520",
+  "name": "Nervio(s) — músculos tenares y lumbricales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ee97863e209dc5",
+  "name": "Atlas de anatomía hun — nervio",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_f401a3036b013f",
+  "name": "Nervio(s) — visión — palmar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ff3881731f0887",
+  "name": "Nervio(s) — musculocutáneo",
+  "queries": [
+   "musculocutaneous nerve"
+  ],
+  "uberon": "UBERON:0003724",
+  "matchedText": "musculocutaneous nerve",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_279d287029ca73",
+  "name": "Retináculo — extensor",
+  "queries": [
+   "extensor retinaculum of wrist",
+   "extensor retinaculum of hand",
+   "extensor retinaculum"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_955f13ef301491",
+  "name": "Retináculo — extiroado",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1f3b136b32940b",
+  "name": "Plexo — ramos terminales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_23dbde301c8575",
+  "name": "Plexo — raices",
+  "queries": [
+   "root of brachial plexus",
+   "brachial plexus root"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_43386e7d879421",
+  "name": "Plexo — troncos",
+  "queries": [
+   "trunk of brachial plexus",
+   "brachial plexus trunk"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_4c34752726fdab",
+  "name": "Plexo — fascículos — medial",
+  "queries": [
+   "medial cord of brachial plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_5328cc554580b4",
+  "name": "Plexo — fascículos — lateral",
+  "queries": [
+   "lateral cord of brachial plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_597ee66858232c",
+  "name": "Plexo — acromial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_7279b89de0424c",
+  "name": "Plexo — esquema",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_96d38d5de3ab21",
+  "name": "Plexo — fascículos — medial",
+  "queries": [
+   "medial cord of brachial plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_b06904eaecabe5",
+  "name": "Plexo — fascículos — posterior",
+  "queries": [
+   "posterior cord of brachial plexus"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_e9bc148dd87eff",
+  "name": "Plexo — nervios supraclaviculares",
+  "queries": [
+   "supraclavicular nerve",
+   "supraclavicular nerves"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_f233e2d2cb07fd",
+  "name": "Plexo — divisiones anterior y posterior",
+  "queries": [
+   "division of brachial plexus",
+   "brachial plexus division"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_0933885079f391",
+  "name": "Cúbito — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_0b384b2fde12ee",
+  "name": "Escápula — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_131e414b80383d",
+  "name": "Falange — anular, radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_15ca1253703a9d",
+  "name": "Radiografía — codo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_1f8c784d652d85",
+  "name": "Falange — pulgar, radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_24631143941698",
+  "name": "Apófisis — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_2b9b6e70b97d3c",
+  "name": "Radiografía — carpo y mano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_30b8746cd0ecc1",
+  "name": "Atla — tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_3fe127a5337674",
+  "name": "Hombro — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_4b04f92bb56261",
+  "name": "Atlas de anatomia hum — base, radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_4c4cbba4877b21",
+  "name": "Pisiforme — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_5138e0f22bc2c7",
+  "name": "Falange — cuarta, radiografía base",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_52da1b7491eb27",
+  "name": "Disección hombro, visión — lateral",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_55dcb579bbaa82",
+  "name": "Ganchoso — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_637d1d484981f2",
+  "name": "Miembro — tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_72098e99a5926a",
+  "name": "Atlas de anatomía hun — tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_78677b74c3cd2a",
+  "name": "Disección hombro, visión — posterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_8ed652b7eaac84",
+  "name": "Tomografía computarizada (TC) — brazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_911d412d146df5",
+  "name": "Atlas de anatomía hun — palmar — superficial, tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_9890e7954830de",
+  "name": "Tomografía computarizada (TC) — miembro superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_9b745a0bd0d432",
+  "name": "Atlas de anatomía hun — digital — común, tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_9e394bc7b90e93",
+  "name": "Apófisis — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_aa562c7073708d",
+  "name": "Radio — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_b5091cc1106df1",
+  "name": "Hueso — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_b6ba5eb08b5cb2",
+  "name": "Atlas de anatomía hun — palmar — profunda, tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_ccf7cb83249445",
+  "name": "Húmero — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_cd305a6b04eff1",
+  "name": "Acromion — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_cd71b9094ae606",
+  "name": "Radiografía — mano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_e2f25d1f8eb230",
+  "name": "Disección hombro, visión — anterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_e79d112e01ed58",
+  "name": "Clavicula — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_f019f4a8c79350",
+  "name": "Dedos — índice, radiografía, metacarpiano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_f2c3ba76a855a5",
+  "name": "Carpo — radiografía anteroposterior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_f42d4eaa29ad86",
+  "name": "Radiografía — hombro",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_fad1d50c8deeac",
+  "name": "Falange — radiografía",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_ff71afc27e834a",
+  "name": "Arteria(s) — tomografía computarizada",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada de procedimiento o imagen, no de estructura anatómica."
+ },
+ {
+  "netterId": "ENT_0a8ef3f13c0af1",
+  "name": "Dedos — sinoviales tendones flexores",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_0fe1d756eca6f9",
+  "name": "Tendon — extensor dedo meñique",
+  "queries": [
+   "tendon of extensor digiti minimi",
+   "extensor digiti minimi tendon"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_118c3ca2700cff",
+  "name": "Tendón — profundo, vaina flexora común",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_11e65638751a2f",
+  "name": "Tendón — abductor largo pulgar",
+  "queries": [
+   "tendon of abductor pollicis longus",
+   "abductor pollicis longus tendon"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_15230c5db9a3f4",
+  "name": "Tendón — radial carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_1f1fe6231eae26",
+  "name": "Tendón — dedos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_295f4534542151",
+  "name": "Tendon — posición",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_2ac0863dc12a66",
+  "name": "Tendon — palmar largo",
+  "queries": [
+   "tendon of palmaris longus",
+   "palmaris longus tendon"
+  ],
+  "uberon": "UBERON:0016496",
+  "matchedText": "palmaris longus tendon",
+  "via": "exact_synonym",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_3664788d9972d7",
+  "name": "Tendón — mano",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_3eef9657f758a3",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_437afd04d96166",
+  "name": "Tendón — cubital carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4ff71d70b7433a",
+  "name": "Tendón — braquiorradial",
+  "queries": [
+   "tendon of brachioradialis",
+   "brachioradialis tendon"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_5d692a9020aec7",
+  "name": "Tendón — carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_6072e241822fcd",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_611dd1c89fa843",
+  "name": "Atlas de anatomía hum — tendón, inserción",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_77bbb32e5ec23a",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_7b947b0f70f76b",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_7f51868da7db73",
+  "name": "Tendón — profundo y superficial",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_82f7f8fab4572a",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_8527057346bd5a",
+  "name": "Tendón — común, antebrazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_88d8cbd23fa7e7",
+  "name": "Tendon — pectoral menor",
+  "queries": [
+   "tendon of pectoralis minor",
+   "pectoralis minor tendon"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_94945783eff197",
+  "name": "Tendón — dedos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_9d074a18f20b0a",
+  "name": "Tendón — carpo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_a14a7d4c9c3289",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_ad47d979e1b3ea",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_ae889262cd8422",
+  "name": "Tendon — orificios",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_b1f33732d21348",
+  "name": "Carpo — tendones",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_b566591073dccb",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_c77eb270ebf809",
+  "name": "Atlas de anatomía hum — tendón, vaina tendinosa",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_c8c0fe807cddfc",
+  "name": "Tendón — extensor",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_d70f1efd092784",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_e32da634b3596f",
+  "name": "Tendón — dedos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ec2f75a1494fee",
+  "name": "Tendón — infraespinoso",
+  "queries": [
+   "tendon of infraspinatus",
+   "infraspinatus tendon"
+  ],
+  "uberon": "UBERON:0012118",
+  "matchedText": "infraspinatus tendon",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_edc1d1e0ecea8d",
+  "name": "Tendón — largo pulgar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_ee44f9658caf14",
+  "name": "Tendón — comunes, antebrazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_f1027c9597a82b",
+  "name": "Tendón — vaina tendinosa común",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_f45f19610b3c29",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_f7be7c62a395bb",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_f8720c069fb15e",
+  "name": "Atlas de anatomía hum — tendón",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_fa519a652f0f68",
+  "name": "Tendón — largo pulgar",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_c2e00e5ee4bb5a",
+  "name": "Vasos — miembro — superior",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_015a33941fe13a",
+  "name": "Vena(s) — cefálica",
+  "queries": [
+   "cephalic vein"
+  ],
+  "uberon": "UBERON:0001106",
+  "matchedText": "cephalic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_02f0acff5e57a7",
+  "name": "Atlas de anatomía hun — venas satélites y nervio cubital",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+ },
+ {
+  "netterId": "ENT_11d30d1ba78574",
+  "name": "Vena(s) — brazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_14017d353fb95e",
+  "name": "Vena(s) — digital dorsal",
+  "queries": [
+   "dorsal digital vein of hand",
+   "dorsal digital vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_2cdbd1754365f4",
+  "name": "Vena(s) — intermedia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_393015090fc2a2",
+  "name": "Brazo. V. también Antebrazo — venas superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_40d898aa4b62a1",
+  "name": "Vena(s) — mediana",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4334f2f3a68808",
+  "name": "Vena(s) — accesoria",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_4bf97d61966298",
+  "name": "Vena(s) — metacarpiana dorsal",
+  "queries": [
+   "dorsal metacarpal vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_5e00abac39dc94",
+  "name": "Vena(s) — mediana",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_824b5a3fd0ee0f",
+  "name": "Vena(s) — nódulos linfáticos",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_a0e4ebd7e1ec49",
+  "name": "Vena(s) — antebrazo",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_a81bdea0182399",
+  "name": "Atla — vena axilar",
+  "queries": [
+   "axillary vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Entrada con prefijo de OCR corrupto («Atla») en sección de exploraciones regionales; no se puede asegurar que designe la estructura y no una imagen."
+ },
+ {
+  "netterId": "ENT_c02302c05af149",
+  "name": "Vena(s) — braquial",
+  "queries": [
+   "brachial vein"
+  ],
+  "uberon": "UBERON:0001413",
+  "matchedText": "brachial vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_cba4cf43102d3d",
+  "name": "Vena(s) — circunfleja humeral",
+  "queries": [
+   "circumflex humeral vein"
+  ],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+ },
+ {
+  "netterId": "ENT_ddd96482b4f00f",
+  "name": "Vena(s) — intermedia",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+ },
+ {
+  "netterId": "ENT_e8b462d0f990d4",
+  "name": "Antebrazo — venas superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ },
+ {
+  "netterId": "ENT_eaf85516d7c081",
+  "name": "Vena(s) — basílica",
+  "queries": [
+   "basilic vein"
+  ],
+  "uberon": "UBERON:0001411",
+  "matchedText": "basilic vein",
+  "via": "label",
+  "matchKind": "exact",
+  "reason": null
+ },
+ {
+  "netterId": "ENT_efd3c9c93aa7dd",
+  "name": "Hombro — venas superficiales",
+  "queries": [],
+  "uberon": null,
+  "matchedText": null,
+  "via": null,
+  "matchKind": null,
+  "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+ }
+]

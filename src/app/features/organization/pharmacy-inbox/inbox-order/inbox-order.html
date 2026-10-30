@@ -1,6 +1,6 @@
 <app-page-header
   title="Pedido en el mostrador"
-  subtitle="Revisalo, confirmalo con lo que tenés y registrá la entrega."
+  subtitle="Revíselo, confírmelo con lo que tiene y registre la entrega."
   [breadcrumbs]="breadcrumbs()"
 />
 
@@ -25,10 +25,6 @@
               >
                 {{ modo.presentacion.label }}
               </app-chip>
-              <!-- El medio lo puso la maqueta: se dice, no se disimula. -->
-              @if (modo.esEjemplo) {
-                <app-chip size="sm" variant="neutral">{{ notaDeEjemplo }}</app-chip>
-              }
             }
             <span class="mostrador__secundario">{{ estado.descripcion }}</span>
           </p>
@@ -117,7 +113,7 @@
                           }
                           @case ('error') {
                             <app-alert tone="error" title="No se pudo consultar el catálogo">
-                              Reintentá la búsqueda antes de confirmar.
+                              Reintente la búsqueda antes de confirmar.
                             </app-alert>
                             <button
                               app-button
@@ -143,7 +139,7 @@
                               <app-form-field label="Producto sustituto">
                                 <app-select
                                   [attr.data-testid]="'mostrador-sustituto-' + i"
-                                  placeholder="Elegí un producto"
+                                  placeholder="Elija un producto"
                                   [options]="search.options"
                                   [value]="ajuste.propuesta?.productId ?? null"
                                   (valueChange)="selectSubstitute(i, $event)"
@@ -271,7 +267,7 @@
       <!-- ─── Esperando la decisión del paciente ─────────────────────────── -->
       @if (abierto.estado === 'ACEPTACION_PENDIENTE') {
         <app-alert tone="info" title="La decisión es del paciente">
-          Le propusiste una alternativa: puede aceptarla, quedarse con su receta original o
+          Le propuso una alternativa: puede aceptarla, quedarse con su receta original o
           cancelar. La pantalla se actualiza cuando decida.
         </app-alert>
       }
@@ -303,7 +299,7 @@
           }
           @if (codigoInvalido()) {
             <app-alert tone="error" title="El código no coincide">
-              Pedile a la persona el código de su pedido — está en su pantalla, en letras grandes,
+              Pídale a la persona el código de su pedido — está en su pantalla, en letras grandes,
               con su QR.
             </app-alert>
           }
@@ -351,7 +347,7 @@
       }
       <!-- ─── La factura, cuando el pedido ya salió ──────────────────────── -->
       @if (factura(); as comprobante) {
-        <app-resumen-de-factura
+        <app-invoice-summary
           [factura]="comprobante"
           (descargaSolicitada)="avisarDescargaDeFactura()"
         />

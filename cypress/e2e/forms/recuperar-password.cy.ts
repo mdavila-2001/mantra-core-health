@@ -16,7 +16,7 @@ describe('Formularios · recuperar contraseña', () => {
 
     ForgotPasswordPage.pedirEnlace(paciente().identificador);
 
-    ForgotPasswordPage.esperarConfirmacion().should('match', /revisá tu correo/i);
+    ForgotPasswordPage.esperarConfirmacion().should('match', /revise su correo/i);
     ForgotPasswordPage.esperarFormularioReemplazado();
   });
 
@@ -26,7 +26,7 @@ describe('Formularios · recuperar contraseña', () => {
     ForgotPasswordPage.pedirEnlace('no-existe-en-ningun-lado@mantra.test');
 
     // Mismo texto, mismo estado: la respuesta no puede delatar la existencia.
-    ForgotPasswordPage.esperarConfirmacion().should('match', /revisá tu correo/i);
+    ForgotPasswordPage.esperarConfirmacion().should('match', /revise su correo/i);
     ForgotPasswordPage.sinError();
   });
 
@@ -46,6 +46,6 @@ describe('Formularios · recuperar contraseña', () => {
 
     // Con la API demorada, la confirmación llega igual: el estado de carga no
     // puede quedarse pegado si la respuesta tarda.
-    ForgotPasswordPage.esperarConfirmacion().should('match', /revisá tu correo/i);
+    ForgotPasswordPage.esperarConfirmacion().should('match', /revise su correo/i);
   });
 });

@@ -76,7 +76,7 @@ export class IdentityUnlinkForm {
   protected readonly unlinked = signal<IdentityUnlinkResult | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar las identidades federadas.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar las identidades federadas.'),
   );
 
   protected submit(): void {

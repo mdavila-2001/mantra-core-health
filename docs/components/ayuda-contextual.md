@@ -86,7 +86,3 @@ La vara: **¿alguien que no conoce la aplicación entiende qué hay detrás?**
 
 Campo por campo, una sola pregunta: **¿un usuario nuevo sabe qué poner acá sin
 preguntarle a nadie?** Si la respuesta es no, falta un `hint`.
-
-Prioridad de la auditoría pendiente (K2 del plan): alta y edición de
-organización, registro de profesional, formularios clínicos y políticas de
-reserva. Después el resto.

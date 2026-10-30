@@ -1,10 +1,10 @@
 import { HttpHeaders } from '@angular/common/http';
 
-import { conversaciones, VITRINA_PACIENTE, vitrinaPorSlug } from '../fixtures/comunidad';
+import { conversationList, PATIENT_SHOWCASE, showcaseBySlug } from '../fixtures/community';
 import { crearRouterSimulado } from './index';
 import { isMockReply, type MockMethod } from '../mock-router';
 import { uuid } from '../mock-store';
-import { ID_PEDIDO_CON_SEGURO } from '../fixtures/pedidos-de-farmacia';
+import { ID_ORDER_WITH_INSURANCE } from '../fixtures/pharmacy-orders';
 import { MOCK_USERS, TENANT_FARMACIA, type MockUser } from '../mock-session';
 
 /* ============================================================================
@@ -18,7 +18,7 @@ const usuario = (key: string): MockUser => MOCK_USERS.find((u) => u.key === key)
 const MOSTRADOR = usuario('farmacia');
 const PACIENTE = usuario('paciente');
 const VISITADOR = usuario('visitador');
-const FARMACIA_VIDA = vitrinaPorSlug('farmacia-vida')!;
+const FARMACIA_VIDA = showcaseBySlug('farmacia-vida')!;
 
 function llamar(
   method: MockMethod,
@@ -79,9 +79,9 @@ describe('maqueta · chat paciente ↔ farmacia', () => {
     expect(deLaFarmacia.status).toBe(200);
     const filas = (deLaFarmacia.body as { items: { id: string; peers: { profileId: string }[] }[] }).items;
     const hilo = filas.find((c) => c.id === uuid('conv-paciente-farmacia-vida'));
-    expect(hilo?.peers.map((p) => p.profileId)).toEqual([VITRINA_PACIENTE.id]);
+    expect(hilo?.peers.map((p) => p.profileId)).toEqual([PATIENT_SHOWCASE.id]);
 
-    const deLaPaciente = llamar('GET', `/community/conversations?profileId=${VITRINA_PACIENTE.id}`, PACIENTE);
+    const deLaPaciente = llamar('GET', `/community/conversations?profileId=${PATIENT_SHOWCASE.id}`, PACIENTE);
     const suyas = (deLaPaciente.body as { items: { id: string; peers: { profileId: string }[] }[] }).items;
     expect(suyas.find((c) => c.id === uuid('conv-paciente-farmacia-vida'))?.peers[0]?.profileId).toBe(FARMACIA_VIDA.id);
   });
@@ -103,7 +103,7 @@ describe('maqueta · chat paciente ↔ farmacia', () => {
     const r = llamar('POST', `/pharmacy/orders/${uuid('pharmacy-order-1')}/conversation`, MOSTRADOR);
     expect(r.status).toBe(201);
     expect(r.body).toEqual({ conversationId: uuid('conv-paciente-farmacia-vida'), pharmacyProfileId: FARMACIA_VIDA.id });
-    expect(conversaciones.get(uuid('conv-paciente-farmacia-vida'))).toBeDefined();
+    expect(conversationList.get(uuid('conv-paciente-farmacia-vida'))).toBeDefined();
   });
 
   it('sin PHARMACY_STAFF, ser del tenant no alcanza para abrir el chat del pedido', () => {
@@ -112,7 +112,7 @@ describe('maqueta · chat paciente ↔ farmacia', () => {
 
   it('un paciente sin perfil de mensajería da 422 PATIENT_CHAT_PROFILE_MISSING', () => {
     // Marta Quispe: paciente de la farmacia, sin vitrina en la red.
-    const r = llamar('POST', `/pharmacy/orders/${ID_PEDIDO_CON_SEGURO}/conversation`, MOSTRADOR);
+    const r = llamar('POST', `/pharmacy/orders/${ID_ORDER_WITH_INSURANCE}/conversation`, MOSTRADOR);
     expect(r.status).toBe(422);
     expect((r.body as { reason: string }).reason).toBe('PATIENT_CHAT_PROFILE_MISSING');
   });
@@ -120,6 +120,6 @@ describe('maqueta · chat paciente ↔ farmacia', () => {
   it('el leído que manda el cliente (recipientProfileId) apaga el contador de la farmacia', () => {
     const id = uuid('conv-paciente-farmacia-vida');
     llamar('POST', `/community/conversations/${id}/read`, MOSTRADOR, { recipientProfileId: FARMACIA_VIDA.id });
-    expect(conversaciones.get(id)?.noLeidosPor[FARMACIA_VIDA.id]).toBe(0);
+    expect(conversationList.get(id)?.noLeidosPor[FARMACIA_VIDA.id]).toBe(0);
   });
 });

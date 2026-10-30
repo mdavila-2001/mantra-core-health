@@ -5,7 +5,7 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
-import { GRUPOS_APLANADOS, NAV_GROUP_ICONS, SUBGROUP_BY_PATH } from './navigation.subgroups';
+import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
 import {
   apareceEnElMenu,
   isVisibleTo,
@@ -62,7 +62,8 @@ export class NavigationService {
   readonly visibleSections = computed<readonly AppSection[]>(() => {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
-    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants));
+    const activeTenantType = this.auth.activeTenantType();
+    return APP_SECTIONS.filter((section) => isVisibleTo(section, roles, tenants, activeTenantType));
   });
 
   /**
@@ -80,15 +81,17 @@ export class NavigationService {
     // **No sale de `visibleSections`**: aparecer en el menú y poder entrar
     // dejaron de ser la misma pregunta cuando el panel del médico tuvo que
     // quedar en ocho renglones (§4.H del plan de UX). Una sección con
-    // `fueraDelMenuPara` sigue en `visibleSections` —el guard la deja pasar,
-    // «Tus accesos» la lista— y no ocupa un renglón acá.
+    // `fueraDelMenuPara` sigue en `visibleSections` —el guard la deja pasar— y no ocupa
+    // un renglón acá.
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
+    const activeTenantType = this.auth.activeTenantType();
     // Las fijas salen **antes** de repartir, no después: si se descontaran al
     // final, `items` y la suma de los `blocks` dejarían de coincidir, que es
     // justo el invariante que fija la prueba de este servicio.
     const enElMenu = APP_SECTIONS.filter(
-      (section) => apareceEnElMenu(section, roles, tenants) && section.pinnedTop !== true,
+      (section) =>
+        apareceEnElMenu(section, roles, tenants, activeTenantType) && section.pinnedTop !== true,
     );
 
     return NAV_GROUPS.map((group) => {
@@ -101,7 +104,10 @@ export class NavigationService {
         // Un grupo aplanado igual se reparte en bloques: `blocks` es la única
         // vista que conserva el orden de dibujo, y el día que alguien lo saque
         // de la lista tiene que volver a plegarse sin recalcular nada.
-        aplanado: GRUPOS_APLANADOS.has(group),
+        // Un dominio con un solo destino también va suelto: un desplegable que
+        // al abrirse muestra un único renglón es un clic de más. Es el caso
+        // de «Administración» para el médico desde el 28/10/2026.
+        aplanado: seAplanaElGrupo(group, activeTenantType) || delGrupo.length === 1,
       };
     }).filter((section) => section.items.length > 0);
   });
@@ -117,8 +123,10 @@ export class NavigationService {
   readonly pinnedItems = computed<readonly NavMenuItem[]>(() => {
     const roles = this.auth.roles();
     const tenants = this.auth.tenants();
+    const activeTenantType = this.auth.activeTenantType();
     return APP_SECTIONS.filter(
-      (section) => section.pinnedTop === true && apareceEnElMenu(section, roles, tenants),
+      (section) =>
+        section.pinnedTop === true && apareceEnElMenu(section, roles, tenants, activeTenantType),
     ).map(menuItemOf);
   });
 
@@ -223,10 +231,13 @@ function repartirEnBloques(sections: readonly AppSection[]): readonly NavMenuBlo
  */
 function sectionForUrl(url: string): AppSection | null {
   const path = url.split('?')[0]?.split('#')[0] ?? '';
+  // El alias mantiene su URL: sólo cambia cómo se identifica la sección.
+  // La coincidencia es exacta para no inventar hijas de /account/profile.
+  const sectionPath = path === '/account/profile' ? '/my-account' : path;
 
   const matches = APP_SECTIONS.filter((section) => {
     const route = routeOf(section);
-    return path === route || path.startsWith(`${route}/`);
+    return sectionPath === route || sectionPath.startsWith(`${route}/`);
   });
 
   return [...matches].sort((a, b) => b.path.length - a.path.length)[0] ?? null;

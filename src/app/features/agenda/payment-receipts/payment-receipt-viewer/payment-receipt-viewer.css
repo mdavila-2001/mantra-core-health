@@ -1,0 +1,79 @@
+/* ============================================================================
+    El visor ocupa el cuerpo del modal: arriba volver y descargar, después el
+    comprobante tan grande como entre. Mismas medidas que el visor de
+    resultados de laboratorio, para que mirar un archivo se sienta igual en
+    toda la aplicación.
+    ========================================================================== */
+
+:host {
+  display: block;
+}
+
+.receipt-viewer {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.receipt-viewer__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.receipt-viewer__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.receipt-viewer__stage {
+  display: grid;
+  place-items: center;
+  min-block-size: 12rem;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.receipt-viewer__image {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 70vh;
+  object-fit: contain;
+}
+
+.receipt-viewer__frame {
+  inline-size: 100%;
+  block-size: 70vh;
+  border: 0;
+  background: var(--bg-surface);
+}
+
+.receipt-viewer__skeleton {
+  inline-size: 100%;
+  block-size: 50vh;
+}
+
+.receipt-viewer__failure {
+  margin: var(--sp-4);
+}
+
+.receipt-viewer__unpreviewable {
+  margin: var(--sp-4);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.receipt-viewer__hint {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

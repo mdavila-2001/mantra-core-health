@@ -12,7 +12,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 /**
@@ -51,13 +51,13 @@ export class SourceForm {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Identidad de la fuente',
       hint: 'El código es único; el nombre es el que se lee en los reportes.',
       campos: [
-        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-epidemiologico-msal. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escribí el código de la fuente (máx. 100 caracteres).' },
-        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escribí el nombre de la fuente (máx. 200 caracteres).' },
+        { key: 'code', label: 'Código', hint: 'Único y estable, como boletin-epidemiologico-msal. Máx. 100 caracteres.', control: 'text', required: true, mensajeDeError: 'Escriba el código de la fuente (máx. 100 caracteres).' },
+        { key: 'name', label: 'Nombre', control: 'text', required: true, mensajeDeError: 'Escriba el nombre de la fuente (máx. 200 caracteres).' },
         { key: 'sourceTypeConceptId', label: 'Tipo de fuente', hint: 'Identificador del concepto de tipo (UUID).', control: 'text', required: true, mensajeDeError: UUID_ERROR },
       ],
     },
@@ -116,7 +116,7 @@ export class SourceForm {
   protected readonly created = signal<SourceCreated | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para registrar fuentes.'),
+    errorMessageOf(this.state(), 'No tiene permiso para registrar fuentes.'),
   );
 
   protected submit(): void {

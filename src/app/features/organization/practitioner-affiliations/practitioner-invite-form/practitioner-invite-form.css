@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.invite {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.invite__title {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.invite__note {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.invite__procedures {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.invite__legend {
+  padding: 0;
+  margin-block-end: var(--sp-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.invite__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+}

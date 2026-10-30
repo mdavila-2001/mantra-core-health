@@ -1,0 +1,6 @@
+yarn test src/modules/billing/services/patient-spending.service.spec.ts src/modules/billing/controllers/patient-spending.controller.spec.ts
+Test Suites: 2 passed, 2 total
+Tests:       16 passed, 16 total
+Snapshots:   0 total
+Time:        9.814 s
+Ran all test suites matching src/modules/billing/services/patient-spending.service.spec.ts|src/modules/billing/controllers/patient-spending.controller.spec.ts.

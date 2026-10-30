@@ -191,26 +191,3 @@ Y el token **no se verifica**:
 
 > *«Verificarla en el cliente no aportaría nada: la clave es del servidor y quien
 > pueda alterar el token también puede alterar el código que lo comprueba.»*
-
-## Cabeceras propuestas
-
-Para `src/server.ts`, cuando se autorice:
-
-```ts
-app.use((_req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('Permissions-Policy', 'camera=(), microphone=(self), geolocation=(self)');
-  res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains');
-  res.setHeader('Content-Security-Policy', "…"); // ver content-security-policy.md
-  next();
-});
-```
-
-**No se implementa acá**: es un cambio de producto que altera respuestas HTTP y
-puede romper el prerenderizado o la carga de tipografías si la CSP queda mal.
-Requiere prueba en un entorno y verificación de las cuatro rutas
-prerenderizadas.
-
-Ver también [el modelo de amenazas](threat-model.md) y
-[el análisis de brechas](../reports/documentation-gap-analysis.md).

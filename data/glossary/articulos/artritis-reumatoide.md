@@ -1,0 +1,80 @@
+---
+slug: artritis-reumatoide
+---
+
+## [definition] Introducción
+
+La artritis reumatoide es una enfermedad autoinmune crónica y sistémica: el sistema inmunitario ataca por error el revestimiento de las articulaciones (la sinovial) y mantiene en ellas una inflamación persistente. Afecta con más frecuencia a muñecas, manos y pies, casi siempre en ambos lados del cuerpo, aunque puede comprometer cualquier articulación, y deja secuelas en el cartílago y el hueso si no se controla.
+
+No debe confundirse con la artrosis, degeneración del cartílago ligada al uso y a la edad, ni con otras artritis, como la gota, de mecanismo distinto: «artritis» designa un grupo amplio de enfermedades.
+
+## [classification] Clasificación
+
+Los criterios de clasificación de 2010, elaborados conjuntamente por el Colegio Americano de Reumatología y la Liga Europea contra el Reumatismo, se pensaron para reconocer la enfermedad en fases tempranas, entre pacientes con sinovitis (inflamación de la sinovial) de reciente comienzo que tienen alto riesgo de evolución persistente o erosiva. Exigen sinovitis confirmada, ausencia de un diagnóstico alternativo mejor y una puntuación suficiente en cuatro dominios: articulaciones afectadas, autoanticuerpos, marcadores de inflamación y duración. Uniforman los estudios; en la consulta, el diagnóstico es un juicio clínico. Se distingue la forma seropositiva (con factor reumatoideo o anti-CCP) de la seronegativa; el código de este término es la categoría sin especificar.
+
+## [causes] Causas
+
+Se desconoce la causa exacta; confluyen varios factores:
+
+• Genes: algunos aumentan la predisposición, pero muchos portadores nunca enferman.
+• Ambiente: el humo del tabaco es el factor ambiental más señalado y puede preceder a los síntomas.
+• Hormonas: se supone que influyen; los síntomas pueden variar en torno al embarazo.
+
+## [risk_factors] Factores de riesgo
+
+• Sexo femenino, edad creciente y antecedentes familiares; puede iniciarse a cualquier edad.
+• Tabaquismo, asociado a mayor riesgo de desarrollar la enfermedad, más marcado en la forma seropositiva; los exfumadores conservan un riesgo elevado.
+• Obesidad y exposición a contaminación del aire, sílice o polvo, que la Organización Mundial de la Salud cuenta entre los factores modificables.
+
+## [symptoms] Síntomas
+
+Predominan dolor, sensibilidad, hinchazón y rigidez de varias articulaciones, que empeoran por la mañana o tras el reposo. Puede haber calor local y dificultad para abotonarse o agarrar objetos. La fatiga es muy frecuente y se acompaña a veces de febrícula, malestar y pérdida de apetito y de peso. Pueden aparecer nódulos reumatoides, bultos firmes bajo la piel. El curso alterna brotes con periodos de mejoría o remisión.
+
+## [diagnosis] Diagnóstico
+
+No existe una prueba única. Se combinan historia clínica, exploración articular, análisis (autoanticuerpos y marcadores de inflamación, como la velocidad de sedimentación y la proteína C reactiva) e imagen. Los anti-CCP son más específicos que el factor reumatoideo, que también aparece en otras enfermedades y en personas sanas; ninguno basta por sí solo. Un resultado negativo no descarta la enfermedad. Las radiografías y las ecografías valoran el daño y ayudan a excluir otras causas. Un diagnóstico temprano condiciona el éxito del tratamiento, por lo que conviene derivar pronto al reumatólogo.
+
+## [treatment_overview] Tratamiento
+
+No hay cura, pero tratar pronto permite controlar los síntomas, frenar el daño articular y, en muchos casos, alcanzar la remisión o al menos una actividad baja de la enfermedad. La estrategia habitual mide la actividad con índices compuestos y ajusta el tratamiento hasta lograr ese objetivo. El plan combina:
+
+• Antiinflamatorios y analgésicos para los síntomas.
+• Fármacos modificadores de la enfermedad (sintéticos convencionales, biológicos y dirigidos); el reumatólogo elige y ajusta la pauta.
+• Fisioterapia y terapia ocupacional para conservar movilidad y autonomía.
+• Actividad física, peso saludable y abandono del tabaco.
+• Cirugía, incluida la prótesis, en casos avanzados.
+
+## [complications] Complicaciones
+
+La inflamación puede extenderse a ojos, piel, pulmones, corazón, nervios y sangre. Se describen inflamación ocular, afectación pulmonar, síndrome del túnel carpiano y mayor riesgo cardiovascular, que abarca infarto, ictus e insuficiencia cardiaca. El buen control de la enfermedad los reduce. El pronóstico es hoy favorable para la mayoría, aunque una parte no responde bien a los tratamientos.
+
+## [when_to_seek_care] Cuándo consultar
+
+Consulte ante dolor, hinchazón o rigidez persistentes en varias articulaciones: tratar pronto limita el daño.
+
+## [considerations] Qué dice la evidencia
+
+El tratamiento se apoya en guías con metodología explícita: la actualización de 2022 de la Liga Europea contra el Reumatismo (EULAR) y la guía de 2021 del Colegio Americano de Reumatología, construidas sobre revisiones sistemáticas y votación de expertos; la segunda incluye a pacientes y gradúa la certeza de la evidencia. Ambas piden decidir de forma compartida, de modo que la secuencia de fármacos se individualiza. Los criterios de 2010 y una revisión del Lancet (2016) sostienen la clasificación.
+
+El valor diagnóstico de los autoanticuerpos procede de una revisión sistemática: los anti-CCP son muy específicos y moderadamente sensibles, el factor reumatoideo es menos específico, y la combinación mejora la predicción. Tabaco y riesgo cardiovascular se apoyan en metaanálisis de estudios observacionales, que no prueban causalidad y son heterogéneos; en lo cardiovascular, las cohortes seguidas desde el inicio de la enfermedad no confirmaron un aumento claro, a diferencia de las de enfermedad establecida. Los puntos de corte de los autoanticuerpos varían entre laboratorios. Síntomas y factores de riesgo menos estudiados se apoyan en fuentes divulgativas (OMS, MedlinePlus, NHS), coherentes entre sí.
+
+## [associated_conditions] Conceptos relacionados
+
+• Artrosis: degeneración del cartílago que se confunde a menudo con la artritis reumatoide; mecanismo y tratamiento difieren.
+• Obesidad: factor de riesgo señalado por la OMS y MedlinePlus.
+• Tabaquismo: eleva el riesgo y la gravedad.
+• Factor reumatoideo y anticuerpos anti-CCP: autoanticuerpos que apoyan el diagnóstico.
+• Sinovitis: inflamación de la sinovial que define el cuadro.
+
+## [references]
+
+- Artritis reumatoide (MedlinePlus en español) | https://medlineplus.gov/spanish/rheumatoidarthritis.html | MedlinePlus
+- Rheumatoid arthritis, hoja informativa (OMS) | https://www.who.int/news-room/fact-sheets/detail/rheumatoid-arthritis | OMS
+- Rheumatoid arthritis (NHS) | https://www.nhs.uk/conditions/rheumatoid-arthritis/ | NHS
+- Aletaha et al., 2010. 2010 Rheumatoid arthritis classification criteria: an ACR/EULAR collaborative initiative. PMID 20872595, DOI 10.1002/art.27584 | https://europepmc.org/article/MED/20872595 | Arthritis & Rheumatism (Europe PMC)
+- Smolen et al., 2016. Rheumatoid arthritis. PMID 27156434, DOI 10.1016/S0140-6736(16)30173-8 | https://europepmc.org/article/MED/27156434 | The Lancet (Europe PMC)
+- Taylor et al., 2011. A systematic review of serum biomarkers anti-CCP and rheumatoid factor as tests for rheumatoid arthritis. PMID 21915375, DOI 10.4061/2011/815038 | https://pmc.ncbi.nlm.nih.gov/articles/PMC3170888/ | Autoimmune Diseases (PubMed Central)
+- Sugiyama et al., 2010. Impact of smoking as a risk factor for developing rheumatoid arthritis: a meta-analysis of observational studies. PMID 19174392, DOI 10.1136/ard.2008.096487 | https://europepmc.org/article/MED/19174392 | Annals of the Rheumatic Diseases (Europe PMC)
+- Avina-Zubieta et al., 2012. Risk of incident cardiovascular events in patients with rheumatoid arthritis: a meta-analysis of observational studies. PMID 22425941, DOI 10.1136/annrheumdis-2011-200726 | https://europepmc.org/article/MED/22425941 | Annals of the Rheumatic Diseases (Europe PMC)
+- Smolen et al., 2023. EULAR recommendations for the management of rheumatoid arthritis with synthetic and biological DMARDs: 2022 update. PMID 36357155, DOI 10.1136/ard-2022-223356 | https://europepmc.org/article/MED/36357155 | Annals of the Rheumatic Diseases (Europe PMC)
+- Fraenkel et al., 2021. 2021 American College of Rheumatology Guideline for the Treatment of Rheumatoid Arthritis. PMID 34101387, DOI 10.1002/acr.24596 | https://europepmc.org/article/MED/34101387 | Arthritis Care & Research (Europe PMC)

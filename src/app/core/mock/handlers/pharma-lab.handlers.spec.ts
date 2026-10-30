@@ -1,7 +1,7 @@
 import { HttpHeaders } from '@angular/common/http';
 
 import { crearRouterSimulado } from './index';
-import { PACIENTE } from '../fixtures/personas';
+import { PACIENTE, PATIENTS } from '../fixtures/people';
 import { isMockReply, type MockMethod, type MockRequest } from '../mock-router';
 import { buscarUsuario } from '../mock-session';
 
@@ -108,7 +108,7 @@ describe('handlers de laboratorio farmacéutico: duración de visita y límite d
       ).toBe(400);
     });
 
-    it('inválido — superar el tope de la política del doctor se rechaza con 422, no con silencio', () => {
+    it('inválido — superar el tope de la política del doctor se rechaza con 400, no con silencio', () => {
       expect(
         estado(
           pedir('POST', '/visit-requests', medica, {
@@ -119,7 +119,7 @@ describe('handlers de laboratorio farmacéutico: duración de visita y límite d
             modalityConceptId: 'x',
           }),
         ),
-      ).toBe(422);
+      ).toBe(400);
     });
   });
 
@@ -135,7 +135,7 @@ describe('handlers de laboratorio farmacéutico: duración de visita y límite d
     });
 
     it('la médica (practitioner) SÍ puede leer el resumen clínico — la restricción es del rol, no global', () => {
-      const resultado = pedir('GET', `/clinical/patients/${PACIENTE.id}/summary`, medica);
+      const resultado = pedir('GET', `/clinical/patients/${PATIENTS[1]!.id}/summary`, medica);
       expect(estado(resultado)).toBe(200);
     });
 

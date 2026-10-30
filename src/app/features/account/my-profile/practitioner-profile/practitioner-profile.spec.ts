@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { FileDownloader } from '../../../../core/data-access/files/file-downloader';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
@@ -112,6 +113,9 @@ const PERFIL = {
   activity: { encounters: 12, medicationRequests: 30, clinicalNotes: 4, documents: 2 },
   createdAt: '2014-02-01T00:00:00.000Z',
 };
+
+/** Lo que responde `GET /practitioners/:id/insurance-networks`, o su caída. */
+type RespuestaDeRedes = { readonly items: readonly object[]; readonly count: number } | 'falla';
 
 const CONCEPTOS = {
   items: [
@@ -298,23 +302,28 @@ describe('PractitionerProfile', () => {
      * que la arma. El de la guía la deja en `null` — el NIT de un colega no es
      * de quien mira su ficha.
      */
-    it('lleva el NIT y la razón social del contrato a la ficha propia', () => {
+    it('lleva el NIT, la razón social y la frecuencia al seguro del contrato a la ficha propia', () => {
       montar();
-      responder({ taxId: '5414404011', taxHolderName: 'Consultorio Dra. Rojas S.R.L.' });
+      responder({
+        taxId: '5414404011',
+        taxHolderName: 'Consultorio Dra. Rojas S.R.L.',
+        insuranceBillingFrequency: 'BIWEEKLY',
+      });
 
       expect(visible().facturacion).toEqual({
         nit: '5414404011',
         razonSocial: 'Consultorio Dra. Rojas S.R.L.',
+        frecuenciaSeguro: 'Quincenal',
       });
     });
 
-    it('sin facturación declarada los dos quedan vacíos, no ausentes', () => {
+    it('sin facturación declarada los tres quedan vacíos, no ausentes', () => {
       // Vacío y no `null`: `null` es «esta ficha no es tuya», que es otra cosa
       // que la ficha dibuja distinto (ni siquiera muestra la pestaña).
       montar();
       responder({});
 
-      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '' });
+      expect(visible().facturacion).toEqual({ nit: '', razonSocial: '', frecuenciaSeguro: '' });
     });
 
     it('un perfil sin departamento declarado no mete «undefined» en la petición', () => {
@@ -338,11 +347,28 @@ describe('PractitionerProfile', () => {
     expect(visible().idiomas[0].nombre).toBe('Español');
   });
 
-  it('presenta con la especialidad principal vigente', () => {
+  it('presenta con la primera especialidad vigente, sin mirar cuál es la principal (D-01)', () => {
     montar();
-    responder();
+    responder(
+      {
+        specialties: [
+          { ...PERFIL.specialties[0], id: 'sp-0', specialtyConceptId: 'esp-pedia', isPrimary: false },
+          { ...PERFIL.specialties[0], isPrimary: true },
+        ],
+      },
+      {
+        items: [
+          ...CONCEPTOS.items,
+          { conceptId: 'esp-pedia', code: 'PEDIATRICS', display: 'Pediatría', codeSystemVersionId: 'csv-1' },
+        ],
+      },
+    );
 
-    expect(visible().especialidadPrincipal).toBe('Cardiología');
+    expect(visible().especialidadPrincipal).toBe('Pediatría');
+    expect(visible().especialidades.map((e) => e.nombre)).toEqual(['Pediatría', 'Cardiología']);
+    for (const especialidad of visible().especialidades) {
+      expect(especialidad).not.toHaveProperty('principal');
+    }
   });
 
   /**
@@ -369,6 +395,41 @@ describe('PractitionerProfile', () => {
 
     expect(visible().formacion[0].vencida).toBe(true);
     expect(visible().formacion[0].sello).toBe('expired');
+    expect(visible().formacion[0].approved).toBe(true);
+  });
+
+  it.each([
+    ['CRED_REJECTED','rejected'], ['REJECTED','rejected'], ['REVOKED','rejected'],
+    ['CRED_PENDING','pending'], ['AUTH_EXPIRED','expired'], ['EXPIRED','expired'],
+    ['CRED_VERIFIED','approved'], ['INACTIVE','unknown'], ['UNVERIFIED','unknown'],
+    ['FUTURE_STATUS','unknown'],
+  ])('mapea el estado real %s de títulos y matrículas', (code,esperado) => {
+    montar(); responder({credentials:[{...PERFIL.credentials[0],verifiedAt:undefined}]},
+      {...CONCEPTOS,items:CONCEPTOS.items.map(c=>c.conceptId==='st-verificado'?{...c,code}:c)});
+    expect(visible().formacion[0].sello).toBe(esperado);
+    expect(visible().matriculas[0].sello).toBe(esperado);
+  });
+
+  it.each([
+    { code: 'CRED_REJECTED', expectedSeal: 'rejected', approved: false, expired: false },
+    { code: 'FUTURE_STATUS', expectedSeal: 'unknown', approved: false, expired: false },
+    { code: 'CRED_VERIFIED', expectedSeal: 'expired', approved: true, expired: true },
+    { code: 'CRED_PENDING', expectedSeal: 'pending', approved: false, expired: false },
+  ])('decide la aprobación propia por catálogo y no por metadatos de revisión: $code', ({ code, expectedSeal, approved, expired }) => {
+    montar();
+    responder({
+      credentials: [{
+        ...PERFIL.credentials[0],
+        expiryDate: expired ? AYER : MANANA,
+        verifiedAt: code === 'CRED_PENDING' ? null : '2020-01-15T00:00:00.000Z',
+        verificationSourceUri: code === 'CRED_PENDING' ? null : 'https://registro.test/revision',
+      }],
+    }, {
+      ...CONCEPTOS,
+      items: CONCEPTOS.items.map((concept) => concept.conceptId === 'st-verificado' ? { ...concept, code } : concept),
+    });
+
+    expect(visible().formacion[0]).toMatchObject({ approved, sello: expectedSeal, vencida: expired });
   });
 
   it('una credencial vigente y verificada sale aprobada', () => {
@@ -401,6 +462,15 @@ describe('PractitionerProfile', () => {
       .error(new ProgressEvent('error'), { status: 500, statusText: 'Server Error' });
 
     expect(visible().especialidades[0].nombre).toBe('Sin registrar');
+    // …pero se dice: «Sin registrar» en un dato que sí está es un dato falso.
+    expect(interno<() => string>('lecturasIncompletas')()).toContain('los nombres del catálogo');
+  });
+
+  it('con todas las lecturas al día no hay aviso de lectura incompleta', () => {
+    montar();
+    responder();
+
+    expect(interno<() => string>('lecturasIncompletas')()).toBe('');
   });
 
   /** Las cuentas de actividad son de la persona, no un ranking. */
@@ -442,6 +512,41 @@ describe('PractitionerProfile', () => {
   /* -- La foto (carril R2-4) ---------------------------------------------- */
 
   /** Sin `photoFileId` no se pide nada: el avatar de iniciales es el diseño. */
+  it('propaga los respaldos y descarga el contenido conservando el MIME real', async () => {
+    const bajar = vi.spyOn(TestBed.inject(FileDownloader), 'trigger').mockImplementation(() => undefined);
+    montar(); responder({credentials:[{...PERFIL.credentials[0],fileId:'pdf-1'}], licenses:[{...PERFIL.licenses[0],fileId:'pdf-2'}]});
+    expect(visible().formacion[0].fileId).toBe('pdf-1');
+    expect(visible().matriculas[0].fileId).toBe('pdf-2');
+    const descargar = interno<(r:{fileId:string;nombre:string})=>void>('descargarRespaldo');
+    descargar({fileId:'pdf-1',nombre:'Diploma'});
+    descargar({fileId:'pdf-2',nombre:'Matricula'});
+    http.expectNone('/common/files/pdf-2/content');
+    http.expectOne('/common/files/pdf-1/content').flush(new Blob(['%PDF-1.4'],{type:'application/pdf'}));
+    await vi.waitFor(()=>expect(bajar).toHaveBeenCalledWith(expect.stringMatching(/^data:application\/pdf;base64,/),'Diploma'));
+    expect(interno<()=>string|null>('descargandoRespaldo')()).toBeNull();
+    bajar.mockRestore();
+  });
+
+  it('rechaza archivos ajenos al perfil y permite reintentar tras un error', () => {
+    const avisar = vi.spyOn(TestBed.inject(ToastService),'error');
+    montar(); responder({credentials:[{...PERFIL.credentials[0],fileId:'pdf-1'}]});
+    const descargar = interno<(r:{fileId:string;nombre:string})=>void>('descargarRespaldo');
+    descargar({fileId:'ajeno',nombre:'Ajeno'});
+    http.expectNone('/common/files/ajeno/content');
+    descargar({fileId:'pdf-1',nombre:'Diploma'});
+    http.expectOne('/common/files/pdf-1/content').error(new ProgressEvent('error'),{status:403,statusText:'Forbidden'});
+    expect(avisar).toHaveBeenCalled();
+    expect(interno<()=>string|null>('descargandoRespaldo')()).toBeNull();
+    descargar({fileId:'pdf-1',nombre:'Diploma'});
+    http.expectOne('/common/files/pdf-1/content').error(new ProgressEvent('error'),{status:500,statusText:'Server Error'});
+    avisar.mockRestore();
+  });
+
+  it.each([['aprobado','approved'],['pendiente','pending'],['rechazado','rejected'],['desconocido','unknown']])('separa vínculo en curso de aprobación %s', (statusKind,sello) => {
+    montar(); responder({affiliations:[{...PERFIL.affiliations[1],statusKind}]});
+    expect(visible().actividadActual[0]).toMatchObject({actual:true,sello});
+  });
+
   it('sin foto registrada no pide ninguna URL de descarga', () => {
     montar();
     responder();
@@ -477,6 +582,9 @@ describe('PractitionerProfile', () => {
 
     expect(visible().fotoUrl).toBeNull();
     expect(visible().nombre).toBe('Dra. Lucía Salas');
+    expect(interno<() => string>('lecturasIncompletas')()).toBe(
+      'No pudimos cargar su foto. El resto de su perfil está al día.',
+    );
   });
 
   /**
@@ -587,7 +695,11 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
    *   que existe: una persona duplicada cuya cuenta quedó atada al registro sin
    *   perfil no lleva el claim `hpid`.
    */
-  function montar(profileId: string | null = 'prac-1'): void {
+  function montar(
+    profileId: string | null = 'prac-1',
+    redes: RespuestaDeRedes = { items: [], count: 0 },
+    sedes: readonly object[] | 'falla' = [],
+  ): void {
     // El módulo se arma DENTRO de cada prueba, porque la sesión cambia entre
     // ellas y un proveedor no se puede reemplazar una vez instanciado. El reset
     // es lo que permite configurarlo acá en vez de en el `beforeEach`.
@@ -606,17 +718,39 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     });
     http = TestBed.inject(HttpTestingController);
     componente = TestBed.createComponent(PractitionerProfile).componentInstance;
-    responderLaCarga(profileId);
+    responderLaCarga(profileId, redes, sedes);
   }
 
   /** La lectura que dispara el constructor. Acá se prueban las operaciones. */
-  function responderLaCarga(profileId: string | null): void {
+  function responderLaCarga(
+    profileId: string | null,
+    redes: RespuestaDeRedes = { items: [], count: 0 },
+    sedes: readonly object[] | 'falla' = [],
+  ): void {
     http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
     http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
     if (profileId !== null) {
+      // Dos lecturas de las sedes: la de «Dónde atiendo» y la del logo del
+      // consultorio (`LogoDelConsultorioClient`, que pregunta por su cuenta).
+      const lecturas = http.match((r) => r.url === `/practitioners/${profileId}/sites`);
+      expect(lecturas).toHaveLength(2);
+      lecturas.forEach((lectura) =>
+        sedes === 'falla'
+          ? lectura.flush('caída', { status: 503, statusText: 'Service Unavailable' })
+          : lectura.flush({ items: sedes, count: sedes.length }),
+      );
+      // Y la firma y el sello, que la ficha propia pide aparte.
       http
-        .expectOne((r) => r.url === `/practitioners/${profileId}/sites`)
-        .flush({ items: [], count: 0 });
+        .expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets')
+        .flush({ signatureFileId: null, sealFileId: null });
+      const seguros = http.expectOne(
+        (r) => r.url === `/practitioners/${profileId}/insurance-networks`,
+      );
+      if (redes === 'falla') {
+        seguros.flush('caída', { status: 503, statusText: 'Service Unavailable' });
+      } else {
+        seguros.flush(redes);
+      }
     }
   }
 
@@ -765,7 +899,161 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     // El fallo fue accesorio: no queda como mensaje de error de la subida, que
     // sí funcionó.
     expect(operacion<() => string>('errorDeFoto')()).toBe('');
+    // Pero ya no se traga (C4): la persona se entera de que la vitrina sigue
+    // con la foto vieja, en vez de leer un éxito total.
+    expect(operacion<() => string>('errorDeVitrina')()).toContain('foto anterior');
     responderLoQueDibujoLaFicha();
+  });
+
+  /** Sube una foto cuya propagación falla en el `PUT` de la vitrina. */
+  async function subirConVitrinaQueFalla(cuerpo: object | string, status: number, headers = {}) {
+    montar();
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+    http.expectOne('/common/files/upload').flush({ id: 'file-1' });
+    http.expectOne('/profiles/practitioners/prac-1/photo').flush(respuestaFoto('file-1'));
+    http.expectOne('/community/profiles/me').flush(VITRINA);
+    http
+      .expectOne((r) => r.url === '/community/profiles/me' && r.method === 'PUT')
+      .flush(cuerpo, { status, statusText: 'Error', headers });
+    http.expectOne('/common/files/file-1/content').flush(pngFalso());
+    await esperarLaFoto(() => operacion<() => string | null>('fotoRecien')() !== null);
+  }
+
+  const VITRINA = {
+    id: 'vit-1',
+    tenantId: 'ten-1',
+    targetId: 'prac-1',
+    slug: 'dra-lucia-salas',
+    displayName: 'Dra. Lucía Salas',
+    visibility: 'PUBLIC',
+    statusConceptId: 'st-1',
+  };
+
+  it('el aviso de la vitrina lleva el código de soporte que mandó la API', async () => {
+    await subirConVitrinaQueFalla(
+      { code: 'INTERNAL', message: 'boom', correlationId: 'corr-vit-1' },
+      500,
+    );
+
+    expect(operacion<() => string>('errorDeVitrina')()).toBe(
+      'Su perfil público sigue mostrando la foto anterior. Puede volver a intentarlo desde aquí. ' +
+        '(Código de soporte: corr-vit-1)',
+    );
+    responderLoQueDibujoLaFicha();
+  });
+
+  it('reintentar repite sólo la vitrina, no la subida, y al lograrlo retira el aviso', async () => {
+    await subirConVitrinaQueFalla('boom', 500);
+    responderLoQueDibujoLaFicha();
+
+    operacion<() => void>('reintentarVitrina')();
+
+    http.expectNone('/common/files/upload');
+    http.expectOne('/community/profiles/me').flush(VITRINA);
+    const puesta = http.expectOne((r) => r.url === '/community/profiles/me' && r.method === 'PUT');
+    expect(puesta.request.body).toMatchObject({ avatarFileId: 'file-1' });
+    puesta.flush({ ...VITRINA, avatarFileId: 'file-1' });
+
+    expect(operacion<() => string>('errorDeVitrina')()).toBe('');
+    expect(avisos().some((a) => a.message.includes('ya muestra la foto nueva'))).toBe(true);
+  });
+
+  it('si el reintento vuelve a fallar, el aviso sigue y el botón se libera', async () => {
+    await subirConVitrinaQueFalla('boom', 500);
+    responderLoQueDibujoLaFicha();
+
+    operacion<() => void>('reintentarVitrina')();
+    http
+      .expectOne('/community/profiles/me')
+      .flush('caída', { status: 503, statusText: 'Service Unavailable' });
+
+    expect(operacion<() => string>('errorDeVitrina')()).toContain('foto anterior');
+    expect(operacion<() => boolean>('reintentandoVitrina')()).toBe(false);
+  });
+
+  it('una subida que falla dice el motivo de la API, no «pruebe con otra imagen» a ciegas', () => {
+    montar();
+    operacion<(archivo: File) => void>('subirFoto')(archivoFoto());
+    http
+      .expectOne('/common/files/upload')
+      .flush(
+        { code: 'PAYLOAD_TOO_LARGE', message: 'La imagen supera los 5 MB.', correlationId: 'c-9' },
+        { status: 413, statusText: 'Payload Too Large' },
+      );
+
+    expect(operacion<() => string>('errorDeFoto')()).toBe(
+      'La imagen supera los 5 MB. (Código de soporte: c-9)',
+    );
+    expect(operacion<() => boolean>('fotoSubiendo')()).toBe(false);
+  });
+
+  it('sedes que no se pudieron leer se avisan, no se pintan como «no atiende en ningún lado»', () => {
+    montar('prac-1', { items: [], count: 0 }, 'falla');
+
+    expect(operacion<() => string>('lecturasIncompletas')()).toContain(
+      'los lugares donde atiende',
+    );
+  });
+
+  /* -- Con qué seguros trabaja (28/09/2026) ------------------------------- */
+
+  /** Una red tal como la sirve la API, con lo que no importa ya puesto. */
+  function red(carrierId: string, carrierName: string, networkName: string) {
+    return {
+      membershipId: `m-${carrierId}-${networkName}`,
+      carrierId,
+      carrierName,
+      networkName,
+      effectiveFrom: '2025-06-01',
+      effectiveTo: null,
+    };
+  }
+
+  function seguros() {
+    return operacion<() => PerfilProfesionalVisible | null>('visible')()?.seguros;
+  }
+
+  it('dice con qué aseguradoras trabaja: una vez cada una y en orden alfabético', () => {
+    montar('prac-1', {
+      items: [
+        red('c-2', 'Seguros Andina', 'Red Preferente'),
+        red('c-1', 'Alianza Seguros', 'Red médica Alianza Seguros'),
+        red('c-2', 'Seguros Andina', 'Red Oro'),
+      ],
+      count: 3,
+    });
+
+    expect(seguros()).toEqual([
+      { id: 'c-1', aseguradora: 'Alianza Seguros', red: 'Red médica Alianza Seguros' },
+      { id: 'c-2', aseguradora: 'Seguros Andina', red: 'Red Preferente · Red Oro' },
+    ]);
+  });
+
+  it('sin ninguna red, la lista queda vacía: es un dato, no un fallo', () => {
+    montar('prac-1', { items: [], count: 0 });
+
+    expect(seguros()).toEqual([]);
+  });
+
+  /**
+   * «Ninguna aseguradora» dicho de quien trabaja con tres es un dato falso. La
+   * lectura caída tiene que llegar a la vista distinta de la lista vacía, y
+   * sin tumbar el resto de la ficha.
+   */
+  it('si la lectura de seguros falla, llega como null y la ficha sigue', () => {
+    montar('prac-1', 'falla');
+
+    expect(seguros()).toBeNull();
+    expect(operacion<() => PerfilProfesionalVisible | null>('visible')()?.nombre).toBe(
+      'Dra. Lucía Salas',
+    );
+  });
+
+  it('sin perfil profesional en la sesión no pregunta por seguros', () => {
+    montar(null);
+
+    http.expectNone((r) => r.url.endsWith('/insurance-networks'));
+    expect(seguros()).toBeNull();
   });
 
   /* -- Retirar un título -------------------------------------------------- */
@@ -798,6 +1086,22 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     http.expectNone('/profiles/practitioners/me/credentials/cr-2');
   });
 
+  it('si retirar falla, el aviso lleva el motivo de negocio de la API', async () => {
+    montar();
+
+    await operacion<(e: FormacionVisible) => Promise<void>>('retirarCredencial')(
+      FORMACION_PENDIENTE,
+    );
+    http
+      .expectOne('/profiles/practitioners/me/credentials/cr-2')
+      .flush(
+        { code: 'PRECONDITION_FAILED', message: 'El título ya fue verificado.', correlationId: 'c-3' },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+    expect(avisos().at(-1)?.message).toBe('El título ya fue verificado. (Código de soporte: c-3)');
+  });
+
   /* -- El aviso único de «Credenciales» (19/09/2026) ---------------------- */
 
   it('el aviso sale al abrir «Credenciales», y con ninguna otra pestaña', () => {
@@ -820,5 +1124,174 @@ describe('PractitionerProfile · las operaciones que la vista pide', () => {
     operacion<(pestana: string) => void>('alVerPestana')('Credenciales');
 
     expect(avisos()).toHaveLength(1);
+  });
+
+  /* -- El aviso de «Trayectoria» (24/09/2026) ----------------------------- */
+
+  it('«Trayectoria» avisa cada vez que se abre, y dura 3 s', () => {
+    montar();
+
+    operacion<(pestana: string) => void>('alVerPestana')('Trayectoria');
+    operacion<(pestana: string) => void>('alVerPestana')('Actividad');
+    operacion<(pestana: string) => void>('alVerPestana')('Trayectoria');
+
+    expect(avisos()).toHaveLength(2);
+    expect(avisos()[0]?.title).toBe('Trayectoria');
+    expect(TestBed.inject(ToastService).toasts()[0]?.durationMs).toBe(3000);
+  });
+});
+
+/**
+ * El logo del consultorio en «Facturación».
+ *
+ * Lo resuelve `LogoDelConsultorioClient` —la única puerta—, así que estas
+ * pruebas hablan de lo que la ficha recibe y no de dónde vive el logo.
+ */
+describe('PractitionerProfile · el logo del consultorio', () => {
+  let http: HttpTestingController;
+  let componente: PractitionerProfile;
+
+  const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+  const PROPIA = { id: 'site-1', name: 'Consultorio Dra. Rojas', isOwnSite: true, latitude: null, longitude: null };
+
+  function montarConSedes(sedes: readonly object[]): void {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        { provide: DialogService, useValue: { confirm: vi.fn() } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    componente = TestBed.createComponent(PractitionerProfile).componentInstance;
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .match((r) => r.url === '/practitioners/prac-1/sites')
+      .forEach((lectura) => lectura.flush({ items: sedes, count: sedes.length }));
+    http
+      .expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets')
+      .flush({ signatureFileId: null, sealFileId: null });
+    http.expectOne((r) => r.url === '/practitioners/prac-1/insurance-networks').flush({ items: [], count: 0 });
+  }
+
+  const consultorio = () =>
+    (componente as unknown as { visible: () => PerfilProfesionalVisible | null }).visible()
+      ?.consultorio;
+
+  afterEach(() => {
+    // Mientras se espera al `FileReader` el componente alcanza a dibujarse, y
+    // sus hijos (mapa de sedes, trayectoria) hacen sus propias lecturas: no son
+    // de esta prueba, así que se dan por atendidas para que `verify()` siga
+    // vigilando lo que sí afirma.
+    http.match((r) => r.url === '/practitioners/prac-1/sites' || r.url.endsWith('/affiliations'));
+    http.verify();
+  });
+
+  it('con logo cargado en el consultorio propio, la ficha lo recibe junto al nombre del consultorio', async () => {
+    montarConSedes([{ ...PROPIA, logoFileId: 'file-logo' }]);
+    http
+      .expectOne('/common/files/file-logo/content')
+      .flush(new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' }));
+    for (let i = 0; i < 50 && !consultorio()?.logoUrl; i += 1) {
+      await new Promise((resolver) => setTimeout(resolver, 5));
+    }
+
+    expect(consultorio()?.logoUrl).toMatch(/^data:image\/png/);
+    expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
+  });
+
+  it('sin logo cargado, la ficha recibe null y el nombre del consultorio igual', () => {
+    montarConSedes([{ ...PROPIA, logoFileId: null }]);
+
+    expect(consultorio()?.logoUrl).toBeNull();
+    expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
+  });
+
+  it('un logo que no se puede leer no rompe la ficha', () => {
+    montarConSedes([{ ...PROPIA, logoFileId: 'file-logo' }]);
+    http
+      .expectOne('/common/files/file-logo/content')
+      .flush(new Blob(['prohibido']), { status: 403, statusText: 'Forbidden' });
+
+    expect(consultorio()?.logoUrl).toBeNull();
+    expect(consultorio()?.nombre).toBe('Consultorio Dra. Rojas');
+  });
+});
+
+/**
+ * La firma y el sello médicos en la ficha propia. Los resuelve `FirmaYSelloClient`
+ * —la única puerta—, así que estas pruebas hablan de lo que la ficha recibe.
+ */
+describe('PractitionerProfile · la firma y el sello', () => {
+  let http: HttpTestingController;
+  let componente: PractitionerProfile;
+  const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9HQAAAABJRU5ErkJggg==';
+  const blob = (): Blob =>
+    new Blob([Uint8Array.from(atob(PNG), (c) => c.charCodeAt(0))], { type: 'image/png' });
+
+  function montarConFirma(activos: object | 'falla'): void {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: AuthService, useValue: { practitionerProfileId: signal('prac-1'), userId: signal('u-1') } },
+        { provide: DialogService, useValue: { confirm: vi.fn() } },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    componente = TestBed.createComponent(PractitionerProfile).componentInstance;
+    http.expectOne((r) => r.url === '/profiles/practitioners/me/summary').flush(PERFIL);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    http
+      .match((r) => r.url === '/practitioners/prac-1/sites')
+      .forEach((lectura) => lectura.flush({ items: [], count: 0 }));
+    const lectura = http.expectOne((r) => r.url === '/profiles/practitioners/me/signature-assets');
+    if (activos === 'falla') {
+      lectura.flush('boom', { status: 500, statusText: 'x' });
+    } else {
+      lectura.flush(activos);
+    }
+    http.expectOne((r) => r.url === '/practitioners/prac-1/insurance-networks').flush({ items: [], count: 0 });
+  }
+
+  const visibles = () =>
+    (componente as unknown as { visible: () => PerfilProfesionalVisible | null }).visible()
+      ?.firmaYSello;
+
+  afterEach(() => {
+    http.match(
+      (r) => r.url === '/practitioners/prac-1/sites' || r.url.endsWith('/affiliations'),
+    );
+    http.verify();
+  });
+
+  it('la ficha propia recibe las dos imágenes ya listas para pintar', async () => {
+    montarConFirma({ signatureFileId: 'f1', sealFileId: 's1' });
+    http.expectOne('/common/files/f1/content').flush(blob());
+    http.expectOne('/common/files/s1/content').flush(blob());
+    for (let i = 0; i < 50 && !visibles()?.selloUrl; i += 1) {
+      await new Promise((resolver) => setTimeout(resolver, 5));
+    }
+
+    expect(visibles()?.firmaUrl).toMatch(/^data:image\/png/);
+    expect(visibles()?.selloUrl).toMatch(/^data:image\/png/);
+  });
+
+  it('sin nada cargado la ficha recibe las dos en null', () => {
+    montarConFirma({ signatureFileId: null, sealFileId: null });
+
+    expect(visibles()).toEqual({ firmaUrl: null, selloUrl: null });
+  });
+
+  it('si la lectura falla la ficha sigue entera, con las dos en null', () => {
+    montarConFirma('falla');
+
+    expect(visibles()).toEqual({ firmaUrl: null, selloUrl: null });
   });
 });

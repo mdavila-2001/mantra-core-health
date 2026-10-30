@@ -1,0 +1,91 @@
+
+── [escritorio · light] ──
+✔ [escritorio · light] el menú «+» no mueve el hilo — 157 → 157
+✔ [escritorio · light] el menú trae Documento, Fotos y videos y Plantilla
+✔ [escritorio · light] Escape cierra el menú y devuelve el foco al «+»
+✔ [escritorio · light] el tema pedido es el que se ve
+✔ [escritorio · light] la vista previa tapa el hilo, cabecera incluida
+✔ [escritorio · light] tres miniaturas y contador 3
+✔ [escritorio · light] el foco entra al pie de foto
+✔ [escritorio · light] cada foto guarda su comentario
+✔ [escritorio · light] Tab no sale de la vista previa
+✔ [escritorio · light] el foco entra al editor
+✔ [escritorio · light] Escape cierra el editor y deja la vista previa
+✔ [escritorio · light] «Deshacer» se habilita tras editar
+✔ [escritorio · light] la edición reemplaza el archivo con un nombre legible — Archivo 1 de 3: imagen-editada.png
+✔ [escritorio · light] el comentario sobrevive a la edición
+✔ [escritorio · light] salen tres mensajes
+✔ [escritorio · light] los mensajes salen en el orden elegido
+✔ [escritorio · light] el pie de foto viaja con la foto
+✔ [escritorio · light] la tarjeta dice cuántas páginas tiene el PDF
+✔ [escritorio · light] un documento no ofrece edición
+✔ [escritorio · light] Escape descarta y el foco vuelve al «+»
+
+── [escritorio · dark] ──
+✔ [escritorio · dark] el menú «+» no mueve el hilo — 157 → 157
+✔ [escritorio · dark] el menú trae Documento, Fotos y videos y Plantilla
+✔ [escritorio · dark] Escape cierra el menú y devuelve el foco al «+»
+✔ [escritorio · dark] el tema pedido es el que se ve
+✔ [escritorio · dark] la vista previa tapa el hilo, cabecera incluida
+✔ [escritorio · dark] tres miniaturas y contador 3
+✔ [escritorio · dark] el foco entra al pie de foto
+✔ [escritorio · dark] cada foto guarda su comentario
+✔ [escritorio · dark] Tab no sale de la vista previa
+✔ [escritorio · dark] el foco entra al editor
+✔ [escritorio · dark] Escape cierra el editor y deja la vista previa
+✔ [escritorio · dark] «Deshacer» se habilita tras editar
+✔ [escritorio · dark] la edición reemplaza el archivo con un nombre legible — Archivo 1 de 3: imagen-editada.png
+✔ [escritorio · dark] el comentario sobrevive a la edición
+✔ [escritorio · dark] salen tres mensajes
+✔ [escritorio · dark] los mensajes salen en el orden elegido
+✔ [escritorio · dark] el pie de foto viaja con la foto
+✔ [escritorio · dark] la tarjeta dice cuántas páginas tiene el PDF
+✔ [escritorio · dark] un documento no ofrece edición
+✔ [escritorio · dark] Escape descarta y el foco vuelve al «+»
+
+── [movil · light] ──
+✔ [movil · light] el menú «+» no mueve el hilo — -59 → -59
+✔ [movil · light] el menú trae Documento, Fotos y videos y Plantilla
+✔ [movil · light] Escape cierra el menú y devuelve el foco al «+»
+✔ [movil · light] el tema pedido es el que se ve
+✔ [movil · light] la vista previa tapa el hilo, cabecera incluida
+✔ [movil · light] tres miniaturas y contador 3
+✔ [movil · light] el foco entra al pie de foto
+✔ [movil · light] cada foto guarda su comentario
+✔ [movil · light] Tab no sale de la vista previa
+✔ [movil · light] el foco entra al editor
+✔ [movil · light] Escape cierra el editor y deja la vista previa
+✔ [movil · light] «Deshacer» se habilita tras editar
+✔ [movil · light] la edición reemplaza el archivo con un nombre legible — Archivo 1 de 3: imagen-editada.png
+✔ [movil · light] el comentario sobrevive a la edición
+✔ [movil · light] salen tres mensajes
+✔ [movil · light] los mensajes salen en el orden elegido
+✔ [movil · light] el pie de foto viaja con la foto
+✔ [movil · light] la tarjeta dice cuántas páginas tiene el PDF
+✔ [movil · light] un documento no ofrece edición
+✔ [movil · light] Escape descarta y el foco vuelve al «+»
+
+── [movil · dark] ──
+✔ [movil · dark] el menú «+» no mueve el hilo — -59 → -59
+✔ [movil · dark] el menú trae Documento, Fotos y videos y Plantilla
+✔ [movil · dark] Escape cierra el menú y devuelve el foco al «+»
+✔ [movil · dark] el tema pedido es el que se ve
+✔ [movil · dark] la vista previa tapa el hilo, cabecera incluida
+✔ [movil · dark] tres miniaturas y contador 3
+✔ [movil · dark] el foco entra al pie de foto
+✔ [movil · dark] cada foto guarda su comentario
+✔ [movil · dark] Tab no sale de la vista previa
+✔ [movil · dark] el foco entra al editor
+✔ [movil · dark] Escape cierra el editor y deja la vista previa
+✔ [movil · dark] «Deshacer» se habilita tras editar
+✔ [movil · dark] la edición reemplaza el archivo con un nombre legible — Archivo 1 de 3: imagen-editada.png
+✔ [movil · dark] el comentario sobrevive a la edición
+✔ [movil · dark] salen tres mensajes
+✔ [movil · dark] los mensajes salen en el orden elegido
+✔ [movil · dark] el pie de foto viaja con la foto
+✔ [movil · dark] la tarjeta dice cuántas páginas tiene el PDF
+✔ [movil · dark] un documento no ofrece edición
+✔ [movil · dark] Escape descarta y el foco vuelve al «+»
+✔ sin errores de consola
+
+TODO VERDE

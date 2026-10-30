@@ -201,7 +201,7 @@ describe('MedicationBlock', () => {
     responderCatalogo();
     fixture.detectChanges();
 
-    expect(texto()).toContain('Abrí el encuentro para recetar');
+    expect(texto()).toContain('Abra el encuentro para recetar');
     expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
   });
 
@@ -266,23 +266,31 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
-  it('ofrece los diagnósticos de la ficha, con la opción vacía primero', () => {
+  it('C5: ofrece sólo los diagnósticos confirmados, con la fecha, y «Otro motivo» al final — sin opción vacía', () => {
     responderCatalogo();
 
+    const CONFIRMADO_EL = '2026-03-12T15:00:00.000Z';
     fixture.componentRef.setInput('diagnosticos', [
-      { id: 'cond-1', etiqueta: 'Faringitis aguda' },
+      { id: 'cond-1', etiqueta: 'Faringitis aguda', confirmadoEl: CONFIRMADO_EL },
+      // Sin `confirmadoEl` (presuntivo/provisional, o C3 todavía no lo resolvió): se excluye.
       { id: 'cond-2', etiqueta: 'Hipertensión · Resuelto' },
+      { id: 'cond-3', etiqueta: 'Migraña', confirmadoEl: null },
     ]);
     fixture.detectChanges();
 
     const opciones = interno<() => readonly { value: string | null; label: string }[]>(
       'opcionesDeIndicacion',
     )();
-    expect(opciones[0].value).toBeNull();
-    // La vacía primero, los diagnósticos en el medio y la salida para escribir
-    // el motivo al final: es la que destraba los casos sin diagnóstico previo.
-    expect(opciones.map((o) => o.value)).toEqual([null, 'cond-1', 'cond-2', '__otro_motivo__']);
-    expect(opciones[3]?.label).toBe('Otro motivo — escribirlo');
+    // C5 (pedido literal del propietario): ya no hay opción vacía — toda
+    // receta se liga a un diagnóstico confirmado o a un motivo.
+    const fechaEsperada = new Date(CONFIRMADO_EL).toLocaleDateString('es', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    expect(opciones.map((o) => o.value)).toEqual(['cond-1', '__otro_motivo__']);
+    expect(opciones[0]?.label).toBe(`Faringitis aguda · Confirmado el ${fechaEsperada}`);
+    expect(opciones[1]?.label).toBe('Otro motivo — escribirlo');
   });
 
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
@@ -535,6 +543,91 @@ describe('MedicationBlock', () => {
     http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
   });
 
+  /**
+   * Fallar abierto no es fallar en silencio. Antes, un chequeo caído se leía
+   * igual que «sin interacciones»: el médico no tenía cómo saber que el
+   * control de seguridad no corrió. El aviso queda a la vista **después** de
+   * crear la receta —es la que hay que revisar antes de firmar— y trae el
+   * código de soporte para encontrar el fallo en el servidor.
+   */
+  it('si el chequeo falla, avisa que no se revisaron las interacciones, con código de soporte', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    señal<unknown>('medicamentoElegido').set(AMOXICILINA);
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/cds/check-interactions').flush(
+      {
+        code: 'INTERNAL',
+        message: 'Error interno',
+        timestamp: '',
+        path: '',
+        correlationId: 'corr-cds-1',
+      },
+      { status: 500, statusText: 'Internal Server Error' },
+    );
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    fixture.detectChanges();
+
+    const aviso = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="receta-interacciones-sin-revisar"]',
+    );
+    expect(aviso).not.toBeNull();
+    expect(aviso?.getAttribute('role')).toBe('status');
+    expect(aviso?.textContent).toContain('No se pudieron revisar las interacciones');
+    expect(aviso?.textContent).toContain('Amoxicilina');
+    expect(aviso?.textContent).toContain('Código de soporte: corr-cds-1');
+  });
+
+  it('el aviso de interacciones sin revisar se va cuando el próximo chequeo responde', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    let prescribiendo = interno<() => Promise<void>>('recetar')();
+    http
+      .expectOne('/cds/check-interactions')
+      .flush(null, { status: 503, statusText: 'Service Unavailable' });
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    expect(interno<() => unknown>('interaccionesSinRevisar')()).not.toBeNull();
+
+    señal<string>('medicamento').set('med-vanco');
+    prescribiendo = interno<() => Promise<void>>('recetar')();
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    fixture.detectChanges();
+
+    expect(interno<() => unknown>('interaccionesSinRevisar')()).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="receta-interacciones-sin-revisar"]',
+      ),
+    ).toBeNull();
+  });
+
+  it('con interacciones revisadas sin hallazgos, no aparece el aviso de revisión pendiente', async () => {
+    fixture.componentRef.setInput('medicacionActivaConceptIds', ['med-previo']);
+    responderCatalogo();
+
+    señal<string>('medicamento').set('med-amoxi');
+    const prescribiendo = interno<() => Promise<void>>('recetar')();
+    http.expectOne('/cds/check-interactions').flush({ alerts: [], count: 0 });
+    await prescribiendo;
+    http.expectOne('/clinical/medication-requests').flush(RESPUESTA);
+    fixture.detectChanges();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="receta-interacciones-sin-revisar"]',
+      ),
+    ).toBeNull();
+  });
+
   /* ---- firmar y emitir ---------------------------------------------------- */
 
   it('firmar pega contra `sign` sin cuerpo y pide releer', () => {
@@ -608,7 +701,7 @@ describe('MedicationBlock', () => {
     );
     fixture.detectChanges();
 
-    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita tu firma');
+    expect(interno<() => string | null>('avisoDePrecondicion')()).toContain('necesita su firma');
     // Y no se pinta además en rojo: sería decir dos veces lo mismo con dos
     // tonos que se contradicen.
     expect(interno<() => string | null>('errorDeLaReceta')()).toBeNull();
@@ -640,7 +733,7 @@ describe('MedicationBlock', () => {
     );
 
     expect(interno<() => string | null>('avisoDePrecondicion')()).toBeNull();
-    expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargá el expediente');
+    expect(interno<() => string | null>('errorDeLaReceta')()).toContain('Recargue el expediente');
   });
 
   it('una receta emitida no ofrece firmar ni emitir: es inmutable', () => {
@@ -876,7 +969,7 @@ describe('MedicationBlock', () => {
    * único obligatorio. Se cae al texto libre, que es como funcionaba la
    * pantalla entera antes de que el catálogo publicara presentaciones.
    */
-  it('si la ficha falla, el medicamento sigue siendo prescribible', () => {
+  it('si la ficha falla, el medicamento sigue siendo prescribible (con la indicación resuelta)', () => {
     responderCatalogo();
 
     señal<string>('medicamento').set(VANCOMICINA.value);
@@ -887,6 +980,10 @@ describe('MedicationBlock', () => {
         { code: 'NOT_FOUND', message: 'Concepto no encontrado', timestamp: '', path: '' },
         { status: 404, statusText: 'Not Found' },
       );
+    // C5: la indicación es obligatoria — este caso prueba que el fallo del
+    // catálogo no bloquea, no que la indicación deje de exigirse.
+    señal<string | null>('indicacion').set('__otro_motivo__');
+    señal<string>('motivoLibre').set('Control de síntomas');
 
     expect(interno<() => boolean>('hayPosologia')()).toBe(false);
     expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
@@ -909,14 +1006,14 @@ describe('MedicationBlock', () => {
   /* -- El porqué de la receta (pedido del cliente) ------------------------- */
 
   describe('el porqué de la receta', () => {
-    it('sin diagnóstico ni motivo sigue dejando prescribir: ambos son opcionales', () => {
+    it('C5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos', () => {
       responderCatalogo();
       señal<string>('medicamento').set('med-amoxi');
 
-      expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
     });
 
-    it('un diagnóstico de la historia alcanza', () => {
+    it('un diagnóstico confirmado de la historia alcanza', () => {
       responderCatalogo();
       señal<string>('medicamento').set('med-amoxi');
       señal<string | null>('indicacion').set('cond-1');
@@ -927,13 +1024,16 @@ describe('MedicationBlock', () => {
     /**
      * El caso que el cliente nombró: «sólo se fue a hacer recetar y no
      * necesitaría diagnóstico existente previo, sobre todo casos
-     * psiquiátricos».
+     * psiquiátricos». Elegir «Otro motivo» habilita el campo, pero **no**
+     * alcanza para prescribir hasta que el motivo tenga texto (C5).
      */
-    it('ofrece motivo libre aun sin diagnóstico asociado', () => {
+    it('«Otro motivo» habilita el campo, y exige texto para poder prescribir', () => {
       responderCatalogo();
       señal<string>('medicamento').set('med-amoxi');
+      señal<string | null>('indicacion').set('__otro_motivo__');
 
       expect(interno<() => boolean>('motivoEsLibre')()).toBe(true);
+      expect(interno<() => boolean>('puedeRecetar')()).toBe(false);
       señal<string>('motivoLibre').set('Trastorno de ansiedad generalizada');
       expect(interno<() => boolean>('puedeRecetar')()).toBe(true);
     });
@@ -941,6 +1041,7 @@ describe('MedicationBlock', () => {
     it('sin diagnóstico, un motivo libre viaja como texto', async () => {
       responderCatalogo();
       señal<string>('medicamento').set('med-amoxi');
+      señal<string | null>('indicacion').set('__otro_motivo__');
       señal<string>('motivoLibre').set('Control de síntomas');
 
       await interno<() => Promise<void>>('recetar')();
@@ -1019,6 +1120,83 @@ describe('MedicationBlock', () => {
       responderCatalogo();
       interno<(v: number | 'continuo' | null) => void>('elegirDuracionRapida')(7);
       expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
+
+  /* -- C5: vincular a un diagnóstico después ---------------------------------- */
+
+  describe('vincular a un diagnóstico (C5)', () => {
+    const RECETA_CON_MOTIVO = {
+      id: 'rx-2',
+      medicamento: 'Amoxicilina',
+      indicacion: '500 mg · cada 8 horas',
+      estado: 'Borrador',
+      firmada: false,
+      emitida: false,
+      vinculo: 'Control de síntomas',
+      vinculoEsDiagnostico: false,
+    };
+
+    it('abrir el diálogo limpia la selección anterior', () => {
+      responderCatalogo();
+      interno<(r: unknown) => void>('abrirVincular')(RECETA_CON_MOTIVO);
+
+      expect(interno<() => unknown>('vinculando')()).toBe(RECETA_CON_MOTIVO);
+      expect(interno<() => string | null>('indicacionDeVinculo')()).toBeNull();
+      expect(interno<() => boolean>('puedeVincular')()).toBe(false);
+    });
+
+    it('vincular a un diagnóstico confirmado manda indicationConditionId y cierra el diálogo', () => {
+      responderCatalogo();
+      fixture.componentRef.setInput('diagnosticos', [
+        { id: 'cond-9', etiqueta: 'Faringitis aguda', confirmadoEl: '2026-03-12T15:00:00.000Z' },
+      ]);
+      fixture.detectChanges();
+
+      interno<(r: unknown) => void>('abrirVincular')(RECETA_CON_MOTIVO);
+      señal<string | null>('indicacionDeVinculo').set('cond-9');
+      interno<() => void>('confirmarVincular')();
+
+      const req = http.expectOne('/clinical/medication-requests/rx-2/edit');
+      expect(req.request.body).toEqual({ indicationConditionId: 'cond-9' });
+      req.flush(RESPUESTA);
+
+      expect(interno<() => unknown>('vinculando')()).toBeNull();
+    });
+
+    it('vincular con «Otro motivo» exige texto y manda indicationText', () => {
+      responderCatalogo();
+      interno<(r: unknown) => void>('abrirVincular')(RECETA_CON_MOTIVO);
+      señal<string | null>('indicacionDeVinculo').set('__otro_motivo__');
+
+      expect(interno<() => boolean>('puedeVincular')()).toBe(false);
+
+      señal<string>('motivoDeVinculo').set('Nuevo motivo');
+      interno<() => void>('confirmarVincular')();
+
+      const req = http.expectOne('/clinical/medication-requests/rx-2/edit');
+      expect(req.request.body).toEqual({ indicationText: 'Nuevo motivo' });
+      req.flush(RESPUESTA);
+    });
+
+    it('un 422 del servidor se muestra dentro del diálogo, que sigue abierto', () => {
+      responderCatalogo();
+      fixture.componentRef.setInput('diagnosticos', [
+        { id: 'cond-9', etiqueta: 'Faringitis aguda', confirmadoEl: '2026-03-12T15:00:00.000Z' },
+      ]);
+      fixture.detectChanges();
+
+      interno<(r: unknown) => void>('abrirVincular')(RECETA_CON_MOTIVO);
+      señal<string | null>('indicacionDeVinculo').set('cond-9');
+      interno<() => void>('confirmarVincular')();
+
+      http.expectOne('/clinical/medication-requests/rx-2/edit').flush(
+        { code: 'VALIDATION_FAILED', message: 'no confirmado', issues: [] },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+
+      expect(interno<() => unknown>('vinculando')()).not.toBeNull();
+      expect(interno<() => string | null>('errorDeVincular')()).toContain('confirmado');
     });
   });
 });
