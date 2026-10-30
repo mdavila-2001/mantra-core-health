@@ -73,3 +73,31 @@
 - **A-2, A-3, A-4, A-6, A-7** del PLAN siguen abiertas; supuestos tomados: ver `PLAN.md` §7.
 - `REPORTING_ADMIN` **no** ve el alcance «Plataforma» (supuesto; confirmar con negocio).
 - Los administradores con los dos accesos aterrizan en el selector de portal en vez de `/dashboard`; hay que confirmarlo con producto.
+
+## Ronda de cierre (30/10, tarde): revisión independiente y correcciones
+
+Peldaño alcanzado: **`TESTED` + `VERIFIED_FUNCTIONAL_ONLY` sobre la maqueta** (datos de EJEMPLO, sin API real). No es `REGRESSION_VERIFIED`: la suite completa no terminó en dos intentos (ver más abajo).
+
+**Cambios de esta ronda.** Resumen explicado para entender la monetización (secciones por pregunta, mapa «quién paga, por qué y cuánto aporta», economía unitaria, glosario); seis indicadores a la vista y el resto en «Más indicadores»; tablas de pocas filas en tarjetas en móvil; mapa de calor con todas sus etiquetas; cascada angosta con la leyenda arriba; «Resumen por plan» con cuentas y MRR del mismo corte y total igual a la tarjeta (sin filtro de plan).
+
+**Revisión independiente (quien implementa no aprueba).**
+| Ronda | Revisor | Veredicto | Qué se corrigió después |
+|---|---|---|---|
+| 1 | Visual | REJECT móvil (3 altos) | Tablas con cifras fuera de pantalla, mapa de calor sin etiquetas, cascada pisando la leyenda |
+| 1 | Código | REJECT (1 alto) | «Resumen por plan» se contradecía con un filtro de plan; lectura rápida con comparación y «más cae» incorrectos; pruebas que no probaban lo que decían |
+| 1 | Regresión | NOT_VERIFIED (sin regresión hallada) | Faltó navegador y suite completa (ver No cubierto) |
+| 2 | Código | APPROVE_WITH_NOTES | Total del plan filtrado rotulado; roles de tabla y foco en el modo tarjeta; pruebas de `report-table`, de la lectura con una sola fuente y de las fórmulas del glosario |
+| 2 | Visual | Móvil APPROVE_WITH_NOTES · escritorio REJECT (1 alto) | Alto corregido: las celdas de texto ya no se parten en tablas de 8 columnas o más (la clave no queda fuera de vista) y se avisa del desplazamiento; las tablas en tarjetas no se cortan en vertical; tarjetas solo si filas ≤ 12 y filas × columnas ≤ 60; rótulos de mapas de muchas columnas |
+
+**Tras la última corrección no hubo una tercera revisión independiente.** Lo corregido se verificó con pruebas y con capturas que miré yo; eso no es aprobación de un tercero.
+
+**Evidencia de esta ronda.** `tsc` (app y spec) sin salida; ESLint de reportería sin salida; 677 pruebas dirigidas en verde (32 archivos); `check-css-tokens` y `check-english-identifiers` (base 2a7afe19) en verde; recaptura completa de las 35 pruebas de `playwright/reporteria-capturas.spec.ts` contra la maqueta en modo demo (6 recorridos incluida tableta, 2 de interacciones, 20 de estados, teclado, asistente, autorización negativa). Build de producción del pre-push en cada push anterior.
+
+**No cubierto (se suma a lo anterior).**
+- Suite completa de `ng test`: en la auditoría de regresión terminó con el servicio de esbuild muerto (ENVIRONMENT) tras ~5 min, dos intentos; los fallos que mostró antes de morir son de otros features y no se reprodujeron en aislado. `pdf-theme.spec` falla y no toca este cambio.
+- Gates rojos de otros módulos (`check-colores-sueltos`, `check-usted`, `check-max-lines`): preexistentes por inferencia (ningún archivo señalado está en el diff); no se corrieron contra la base.
+- Tablas con muchas columnas (Campañas, Anuncios con peor costo, Catálogo de indicadores) siguen necesitando desplazamiento lateral; hay aviso, pero la columna clave no siempre se ve sin deslizar.
+- Con un filtro de plan activo, la tarjeta «MRR» y la tabla «Resumen por plan» no coinciden (la tabla muestra solo ese plan; la fila se llama «Total del plan filtrado»). La causa está en el modelo de suscripciones, no en este cambio.
+- Lectores de pantalla (VoiceOver, NVDA) y el comportamiento real de `display: block` sobre tablas en el modo tarjeta: no se probaron.
+- Sin API real: nada de esto prueba persistencia ni autorización del servidor. Siguen abiertas las decisiones de negocio A-2 (publicidad), A-4 (comisiones), alcance de `REPORTING_ADMIN` y destino del administrador tras el login.
+- Los 11 KPI del Resumen están en datos; la pantalla muestra 6 y el resto en «Más indicadores». Los sparklines de las tarjetas dentro del `<details>` cerrado no se verificaron al abrirlos.
