@@ -160,7 +160,9 @@ export function medicalCenterPages(ctx: PaginasDeAlta): readonly PaginaDeFormula
       ],
     },
     {
-      titulo: 'Documentación legal obligatoria (PDF)',
+      // Sin «obligatoria»: según el tipo societario, la escritura y la
+      // matrícula pueden ser opcionales (decisión del propietario, 30/10/2026).
+      titulo: 'Documentación legal (PDF)',
       clave: 'documentos-legales',
       icon: 'folder' as const,
       hint: 'Solo PDF, hasta 10 MB por archivo. Se suben al instante y quedan pendientes de verificación.',
