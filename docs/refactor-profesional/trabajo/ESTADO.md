@@ -1,5 +1,50 @@
 # Estado
 
+## Ritmo vertical entre bloques hermanos (escritorio y teléfono) — 2026-10-30
+
+Pedido: en «Consultas médicas» la tarjeta «Pagos por registrar» y la barra Día · Semana · Mes se tocaban, y el pedido dice que es
+sistemático en el frontend y que en móvil «sigue mal». **No se auto-aprueba.**
+
+**Causa (medida, no supuesta):** `app-tab` y el slot de `app-view-state-host` son bloques de flujo normal, sin `gap`; dos bloques
+proyectados seguidos quedan pegados. `/schedule`: 0 px entre «Pagos por registrar» y la barra a 1440, 768 y 390.
+
+**Cambio (4 archivos de estilo, ninguno de plantilla ni de TS):**
+- `src/styles/alovida.css` — una regla `:where(app-tab.tab, app-view-state-host) > :where(* + *)` que fija `--e4` (16 px) entre hermanos,
+  con especificidad cero (cualquier clase de componente que decida su hueco gana) y una segunda para `p/ul/ol/h1–h3`, cuyo reset
+  global es de tipo.
+- `notification-center.css` — los días de la bandeja siguen pegados (los separa un filete): `margin-block-start: 0`.
+- `practitioner-profile.css` — `app-admission-status-card:not(:empty)` abre 16 px sobre la ficha (14 casos de tarjeta pegada en «Mi perfil»).
+- `docs/design-system/spacing.md` (regla y excepciones) y `playwright/ritmo-vertical-hermanos.mjs` (el recorrido que la mide).
+
+**Medido en navegador** (`ng serve --configuration development,demo`, Chromium, de a un proceso por vez):
+- `/schedule`, hueco «Pagos por registrar» → barra: **0 → 16 px** a 1440, 768 y 390; `scrollWidth − clientWidth = 0`; 0 errores de consola.
+- Barrido de ocho roles (medica, paciente, admin, farmacia, superadmin, aseguradora, laboratorio, visitador), escritorio, todas las
+  rutas del menú y hasta 7 pestañas por ruta: **493 vistas antes y 493 después**, 0 errores de carga. De 359 parejas de hermanos,
+  301 no cambian y 59 cambian — **todas suben** (0→16, 8→16 o 12→16), ninguna baja, ninguna es un elemento en línea.
+  `playwright/ritmo-vertical-hermanos.mjs` a 390 px con medica, paciente y admin: 193 vistas, 166 parejas, 0 defectos tras declarar
+  la excepción de «médico de cabecera / Desde el…» (título y subtítulo de una misma tarjeta).
+- Tarjetas redondeadas que se tocan (medica y admin, 1440 y 390): `app-pending-payments`/`app-my-agenda` 2→0, tarjeta de admisión/ficha
+  14→0, `app-alert`+`app-alert` 2→0. Quedan chips (4 px) y opciones segmentadas (2 px), por diseño.
+- Capturas miradas: `/schedule` a 1440 y 390 (antes y después), «Mi perfil» y «Operación» a 390 (después).
+
+**Efecto lateral declarado:** cinco resúmenes sobre una tabla pasan de 8/12 px a 16 px (`mis-solicitudes__resumen`, `mis-facturas__resumen`,
+`received__summary`, `visits__reason`; márgenes inferiores que colapsan con el nuevo). Es el mismo paso del sistema, pero es un cambio de
+8 px en esas pantallas.
+
+**Verificado:** `eslint` del script nuevo exit 0 · `check-css-tokens` exit 0 (516 tokens) · `check-tokens` exit 0 · `ng test` dirigido
+(tabs, pending-payments, notification-center, view-state-host): 72 pruebas pasan.
+
+**Rojo que no es de este cambio** (misma salida en la base sin mis cambios, `git stash`): `check-colores-sueltos` (10 archivos sobre su
+techo) y `practitioner-profile.spec.ts` (62 pruebas: `Expected no open requests, found 1: GET /profiles/practitioners/me/admission`; el spec no
+simula la petición de la tarjeta de admisión).
+
+**No se ejecutó:** `yarn build`, `yarn typecheck`, la suite completa, Playwright de `playwright/` existente, los otros anchos del barrido
+(768 solo en `/schedule`; el barrido completo de 8 roles fue a 1440), tema oscuro, y la ficha/Mi perfil de roles sin cuenta demo.
+**Repo `mantra_core_health_mobile` (Flutter): sin cambios** — sólo tiene un catálogo del sistema de diseño y un home vacío, sin la pantalla
+de Consultas, y no hay Flutter en este entorno; «mobile» se atendió como la web en ancho de teléfono (390 px).
+
+---
+
 ## Alta de organización médica: segunda pasada de correcciones — 2026-10-28
 
 Dos re-revisiones (código y visual) no hallaron HIGH; la visual dio 91/100 (umbral 92) por dos MEDIUM. Esta pasada corrige sólo

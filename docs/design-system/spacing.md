@@ -103,3 +103,44 @@ Anotado como brecha `MEDIUM`.
    inflado.
 4. **`--r-full` para lo circular**, no un porcentaje: 999 px funciona sin importar
    el tamaño y no deforma un rectángulo.
+
+## El ritmo vertical entre bloques hermanos (30/10/2026)
+
+**Síntoma:** la tarjeta «Pagos por registrar» y la barra Día · Semana · Mes de
+`/schedule` se tocaban —0 px medidos a 390, 768 y 1440—. Un barrido con
+navegador de todas las rutas y pestañas de ocho roles encontró la misma causa
+en otros cuatro sitios (dos alertas pegadas en operaciones, una tabla sin aire
+sobre su paginador, el aviso de verificación sobre la ficha del perfil, una nota
+sobre su tabla).
+
+**Causa:** `app-tab` y el slot de `app-view-state-host` son **bloques de flujo
+normal**: ni flex ni grid, así que no tienen `gap`. Quien proyecta dos bloques
+seguidos los recibe pegados, y la regla 2 de arriba («`gap` antes que `margin`»)
+no puede cumplirse donde el contenedor no es de nadie.
+
+**Regla:** el paso entre hermanos directos de un panel de pestaña o de un
+`app-view-state-host` es `--e4` (16 px) y lo fija `src/styles/alovida.css`, una
+vez:
+
+```css
+:where(app-tab.tab, app-view-state-host) > :where(* + *) { margin-block-start: var(--e4); }
+```
+
+- **Entre hermanos** (`* + *`): el primero no se mueve, no hay hueco arriba ni
+  abajo del conjunto.
+- **Especificidad cero** (`:where`): un componente que ya decide su hueco —una
+  clase con `margin`— gana sin `!important`. Los reset de `p`, `ul`, `ol` y
+  `h1`–`h3` son de tipo, así que una segunda regla los iguala y les gana por
+  orden.
+- **Sólo `margin-block-start`:** no mueve nada en línea ni toca el ancho.
+- **Si los hermanos van pegados a propósito** (los días de la bandeja de avisos
+  dentro de una tarjeta, separados por un filete), el componente lo declara con
+  `margin-block-start: 0` en su clase — ver `.avisos__dia + .avisos__dia`.
+- **Un componente cuyo `:host` es un bloque y que se pone junto a otro** (como
+  `app-admission-status-card` sobre la ficha) sigue siendo cosa de quien lo
+  consume: lleva su margen, y sólo cuando dibuja (`:not(:empty)`).
+
+**Cómo se mide:** con `playwright/ritmo-vertical-hermanos.mjs` (hueco entre
+hermanos de cada `app-tab` y `app-view-state-host`, por rol, ancho, ruta y
+pestaña; sale con código 1 si hay una pareja de bloques con menos de 8 px que no
+declare su excepción).

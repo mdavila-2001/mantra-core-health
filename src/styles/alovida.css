@@ -433,6 +433,30 @@ h3 { font-size: var(--fs-h3); line-height: var(--lh-h3); font-weight: 500; }
 p  { margin: 0; }
 ul, ol { margin: 0; padding: 0; list-style: none; }
 
+/* Ritmo vertical de lo que se apila dentro de un panel de pestaña o del slot de
+   un `app-view-state-host`.
+
+   Los dos son bloques de flujo normal —ni flex ni grid—, así que no tienen `gap`,
+   y quien proyecta dos bloques seguidos (una tarjeta y un calendario, una tabla
+   y su paginador, dos alertas) los recibe PEGADOS: medido en `/schedule`,
+   «Pagos por registrar» y la barra Día/Semana/Mes quedaban a 0 px en 390, 768 y
+   1440. Ponerle `margin-block-start` a cada pareja pantalla por pantalla es lo
+   que dejó el problema repartido por todo el frontend, así que el paso se fija
+   acá, una vez, entre HERMANOS (`* + *`: el primero no se mueve, no hay hueco
+   arriba ni abajo del conjunto).
+
+   Va con `:where()` —especificidad cero— para que cualquier regla de un
+   componente que ya decide su propio hueco (`margin`, `.a + .a`) gane sin
+   `!important` y no se sume: entre bloques los márgenes verticales colapsan, y
+   el mayor manda. Los reset de `p`, `ul`, `ol` y `h1`–`h3` de arriba son de tipo
+   (0,0,1) y le ganarían, por eso la segunda regla los iguala en especificidad y
+   les gana por orden; sigue perdiendo contra cualquier clase.
+
+   Sólo `margin-block-start`: no toca elementos en línea (un margen vertical no
+   se aplica a un `<span>`/`<a>` suelto) ni el ancho. */
+:where(app-tab.tab, app-view-state-host) > :where(* + *) { margin-block-start: var(--e4); }
+:where(app-tab.tab, app-view-state-host) > :where(* + *):is(p, ul, ol, h1, h2, h3) { margin-block-start: var(--e4); }
+
 .caption  { font-size: var(--fs-caption); line-height: var(--lh-caption); font-weight: 500; color: var(--tinta-2); }
 .muted    { color: var(--tinta-3); }
 .overline {

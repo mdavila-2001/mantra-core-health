@@ -7,6 +7,13 @@
   display: block;
 }
 
+/* La tarjeta del estado de verificación va pegada a la ficha: `:host` es un
+   bloque, no una columna con `gap`. Sólo cuando dibuja algo —sin solicitud el
+   host queda vacío y no tiene que dejar un hueco—. */
+app-admission-status-card:not(:empty) {
+  margin-block-end: var(--sp-4);
+}
+
 /* Los avisos de lectura incompleta y de vitrina sin actualizar van arriba de
    la ficha, separados de ella por el mismo paso que usa el resto de la vista. */
 .perfil__aviso {

@@ -29,6 +29,9 @@
 
 .avisos__dia + .avisos__dia {
   border-block-start: 1px solid var(--filete-2);
+  /* Los días van pegados dentro de UNA tarjeta y los separa el filete: el ritmo
+     vertical de `app-view-state-host` (alovida.css) les abriría aire encima de él. */
+  margin-block-start: 0;
 }
 
 .avisos__dia-titulo {
