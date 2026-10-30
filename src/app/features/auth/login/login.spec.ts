@@ -208,10 +208,10 @@ describe('Login', () => {
         expect(navegaciones).toEqual(['/']);
       });
 
-      it('solo reportería (sin rol de administración) tampoco pasa por el selector', () => {
+      it('solo reportería (sin rol de administración) entra derecho a su portal, sin pantalla de paso', () => {
         loginWith(sessionWithRoles(['REPORT_VIEWER']));
 
-        expect(navegaciones).toEqual(['/']);
+        expect(navegaciones).toEqual(['/reports']);
       });
 
       it('un paciente va al inicio', () => {

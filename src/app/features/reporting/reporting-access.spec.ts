@@ -1,6 +1,7 @@
 import { MOCK_USERS } from '../../core/mock/mock-session';
 import {
   accesoAPortales,
+  destinoDeEntrada,
   puedeVerAdministracion,
   puedeVerReporteria,
   ROLES_ADMINISTRACION,
@@ -124,6 +125,25 @@ describe('acceso a los portales (administración y reportería)', () => {
       for (const clave of ['aseguradora', 'aseguradora_staff', 'laboratorio', 'farmacia']) {
         expect(acceso(clave).reporteria, clave).toBe(false);
       }
+    });
+  });
+
+  describe('destinoDeEntrada', () => {
+    it('con los dos accesos hay que elegir', () => {
+      expect(destinoDeEntrada(['PLATFORM_ADMIN'])).toBe('/portal-selector');
+      expect(destinoDeEntrada(['SECURITY_ADMIN', 'REPORTING_ADMIN'])).toBe('/portal-selector');
+      expect(destinoDeEntrada(['SUPERADMIN'])).toBe('/portal-selector');
+    });
+
+    it('quien solo tiene reportería entra derecho a su portal', () => {
+      expect(destinoDeEntrada(['REPORT_VIEWER'])).toBe('/reports');
+      expect(destinoDeEntrada(['REPORT_AUTHOR'])).toBe('/reports');
+    });
+
+    it('quien solo tiene administración, o ninguno de los dos, entra como siempre', () => {
+      expect(destinoDeEntrada(['SECURITY_ADMIN'])).toBe('/');
+      expect(destinoDeEntrada(['PATIENT'])).toBe('/');
+      expect(destinoDeEntrada([])).toBe('/');
     });
   });
 });
