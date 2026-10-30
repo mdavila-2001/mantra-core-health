@@ -63,6 +63,12 @@
       </div>
       <div class="ins__actions">
         <span class="ins__asof">Datos al {{ asOf }}</span>
+        @if (canSwitchPortal()) {
+          <a class="ins__alerts" [routerLink]="selectorRoute">
+            <app-nav-icon name="grid" />
+            <span>Cambiar de portal</span>
+          </a>
+        }
         <app-ins-saved-views />
         <a class="ins__alerts" [routerLink]="[base, 'alerts']" [queryParams]="query()">
           <app-nav-icon name="bell" />

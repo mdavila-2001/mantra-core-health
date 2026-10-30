@@ -125,3 +125,46 @@ describe('PortalSelector', () => {
     expect(root(f).querySelectorAll('a.opcion').length).toBe(2);
   });
 });
+
+describe('PortalSelector · tercera tarjeta (AloVida Insights)', () => {
+  async function montarCon(roles: readonly string[]) {
+    await TestBed.configureTestingModule({
+      imports: [PortalSelector],
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: { roles: signal(roles), displayName: signal(null) } },
+      ],
+    }).compileComponents();
+    TestBed.inject(Router).navigateByUrl = (() => Promise.resolve(true)) as Router['navigateByUrl'];
+    const fixture = TestBed.createComponent(PortalSelector);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('PLATFORM_ADMIN ve tres tarjetas, y la de Insights lleva a su módulo', async () => {
+    const el = await montarCon(['PLATFORM_ADMIN']);
+
+    const insights = el.querySelector<HTMLAnchorElement>('[data-testid="portal-insights"]');
+    expect(el.querySelectorAll('a.opcion').length).toBe(3);
+    expect(insights?.getAttribute('href')).toBe('/administration/marketing-insights');
+    expect(insights?.querySelector('h2')?.textContent).toContain('AloVida Insights');
+    expect(insights?.textContent).toContain('Datos de ejemplo');
+    expect(el.querySelector('.selector__ayuda')?.textContent).toContain('a los tres');
+  });
+
+  it('SUPERADMIN también la ve', async () => {
+    const el = await montarCon(['SUPERADMIN']);
+
+    expect(el.querySelector('[data-testid="portal-insights"]')).not.toBeNull();
+  });
+
+  it('NEGATIVO: quien elige entre administración y reportería pero no tiene rol de marketing no ve la tarjeta', async () => {
+    const el = await montarCon(['SECURITY_ADMIN', 'REPORTING_ADMIN']);
+
+    expect(el.querySelector('[data-testid="portal-insights"]')).toBeNull();
+    expect(el.querySelectorAll('a.opcion').length).toBe(2);
+    expect(el.querySelector('.selector__ayuda')?.textContent).toContain('a los dos');
+  });
+});

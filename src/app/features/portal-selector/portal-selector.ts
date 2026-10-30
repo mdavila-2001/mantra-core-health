@@ -10,7 +10,9 @@ import { LoadingState } from '../../shared/components/molecules/loading-state/lo
 import {
   accesoAPortales,
   PORTAL_ADMINISTRACION_ROUTE,
+  PORTAL_INSIGHTS_ROUTE,
   PORTAL_REPORTERIA_ROUTE,
+  puedeVerInsights,
 } from '../reporting/reporting-access';
 
 /** Qué pinta la pantalla según los accesos de la sesión. */
@@ -47,8 +49,12 @@ export class PortalSelector {
 
   protected readonly administracionRoute = PORTAL_ADMINISTRACION_ROUTE;
   protected readonly reporteriaRoute = PORTAL_REPORTERIA_ROUTE;
+  protected readonly insightsRoute = PORTAL_INSIGHTS_ROUTE;
 
   protected readonly acceso = computed(() => accesoAPortales(this.auth.roles()));
+
+  /** Tercera tarjeta: AloVida Insights. Solo se ofrece a quien ya elige entre los otros dos. */
+  protected readonly insights = computed(() => puedeVerInsights(this.auth.roles()));
 
   /** Primer nombre si la sesión lo trae; sin nombre el saludo es genérico. */
   protected readonly nombre = computed(() => {
