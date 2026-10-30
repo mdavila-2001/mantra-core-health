@@ -207,11 +207,31 @@
         <p class="editor-pregunta__problema" role="status">{{ aviso }}</p>
       }
 
-      <div class="editor-pregunta__acciones">
+    </div>
+
+    <!-- Las acciones van en el pie del modal, como en todos los demás: quietas
+         mientras el cuerpo se recorre, la principal a la derecha. Borrar queda
+         a la izquierda, separada: es la única que no se deshace (30/10/2026). -->
+    <div dialog-actions class="editor-pregunta__acciones">
+      <button
+        app-button
+        variant="ghost"
+        type="button"
+        class="editor-pregunta__borrar"
+        (click)="borrar.emit()"
+        data-testid="editor-borrar"
+      >
+        Borrar pregunta
+      </button>
+      <!-- Cancelar y Listo bajan juntos cuando no entra la fila: en un
+           teléfono «Listo» quedaba solo en un renglón. -->
+      <span class="editor-pregunta__confirmar">
+        <button app-button variant="ghost" type="button" (click)="cancelar()">
+          Cancelar
+        </button>
         <button
           app-button
           variant="primary"
-          size="sm"
           type="button"
           [disabled]="problema() !== null || guardando()"
           (click)="confirmar()"
@@ -219,21 +239,7 @@
         >
           {{ guardando() ? 'Guardando…' : 'Listo' }}
         </button>
-        <button app-button variant="ghost" size="sm" type="button" (click)="cancelar()">
-          Cancelar
-        </button>
-        <button
-          app-button
-          variant="ghost"
-          size="sm"
-          type="button"
-          class="editor-pregunta__borrar"
-          (click)="borrar.emit()"
-          data-testid="editor-borrar"
-        >
-          Borrar pregunta
-        </button>
-      </div>
+      </span>
     </div>
   </app-content-dialog>
 }

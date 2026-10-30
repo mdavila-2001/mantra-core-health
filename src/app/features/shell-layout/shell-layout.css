@@ -71,6 +71,18 @@
   }
 }
 
+/*
+ * En un hilo de chat, en angosto, el hilo trae su «‹» a la bandeja justo
+ * debajo de esta flecha: dos «volver» apilados. Se esconde la del armazón, y
+ * sólo ahí. El corte es el mismo en que `messaging.css` pasa el hilo a
+ * pantalla completa (60rem); por encima el hilo no tiene «‹» y ésta se queda.
+ */
+@media (max-width: 60rem) {
+  .app-header__volver--hilo {
+    display: none;
+  }
+}
+
 .app-header__rapidos {
   position: relative;
   display: flex;

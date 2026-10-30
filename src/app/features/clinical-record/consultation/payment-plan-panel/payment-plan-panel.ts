@@ -20,6 +20,7 @@ import type {
   QuotationListItem,
 } from '../../../../core/data-access/quotations/quotations.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { QUOTATIONS_ROUTE } from '../../../quotations/quotations.routes';
@@ -151,7 +152,7 @@ function aPlan(cotizacion: Quotation, hoy: string): PlanEnConsulta {
  */
 @Component({
   selector: 'app-payment-plan-panel',
-  imports: [AppButton, Badge, Card, RouterLink],
+  imports: [AppButtonLink, AppButton, Badge, Card, RouterLink],
   templateUrl: './payment-plan-panel.html',
   styleUrl: './payment-plan-panel.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

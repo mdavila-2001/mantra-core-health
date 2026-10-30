@@ -113,7 +113,10 @@
             </app-form-field>
           }
 
+          <!-- A lo ancho: entre el medicamento y la solicitud no tiene pareja, y a
+               media columna dejaba un hueco al lado (28/10/2026). -->
           <app-form-field
+            class="product-dialog__wide"
             label="Código interno (SKU)"
             [hint]="'Su propio código. Único en su catálogo, hasta ' + codeMaxLength + ' caracteres: letras, números, punto, guion o barra.'"
             [required]="true"

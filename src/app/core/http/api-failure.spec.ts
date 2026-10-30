@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, provideHttpClient, withInte
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
-import { describeApiFailure, fieldErrorsOf, OFFLINE_MESSAGE } from './api-failure';
+import { apiExplainedFailure, describeApiFailure, fieldErrorsOf, OFFLINE_MESSAGE } from './api-failure';
 import {
   API_FAILURE_LOG_PREFIX,
   apiFailureLogInterceptor,
@@ -191,5 +191,18 @@ describe('apiFailureLogInterceptor', () => {
 
     expect(received).toBeInstanceOf(HttpErrorResponse);
     expect((received as HttpErrorResponse).status).toBe(400);
+  });
+});
+
+describe('apiExplainedFailure', () => {
+  const fallo = (status: number, body: unknown): HttpErrorResponse =>
+    new HttpErrorResponse({ status, error: body });
+
+  it('true sólo si la API dio un motivo escrito para la persona', () => {
+    expect(apiExplainedFailure(fallo(403, { code: 'FORBIDDEN', message: 'Esta persona no recibe mensajes suyos.' }))).toBe(true);
+    expect(apiExplainedFailure(fallo(403, null))).toBe(false);
+    expect(apiExplainedFailure(fallo(500, { code: 'INTERNAL', message: 'Internal server error' }))).toBe(false);
+    expect(apiExplainedFailure(fallo(0, null))).toBe(false);
+    expect(apiExplainedFailure(new Error('x'))).toBe(false);
   });
 });

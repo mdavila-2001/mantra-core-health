@@ -469,6 +469,33 @@ describe('AnalysisOrderBlock', () => {
     history?.flush({ items: [] });
   });
 
+  /**
+   * Cambio de requisito (30/10/2026): en la consulta la respuesta del formulario
+   * médico se **ofrece** y ya no se exige. Ofrecerla no bloquea el botón; exigirla
+   * (como antes) sí, mientras no haya una elegida.
+   */
+  describe('la respuesta del formulario médico, ofrecida y exigida', () => {
+    it('ofrecerla no bloquea la emisión; exigirla sí, hasta que se elige una', () => {
+      const falta = () => (componente as unknown as { faltaRespuesta(): boolean }).faltaRespuesta();
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      expect(falta()).toBe(false);
+
+      fixture.componentRef.setInput('exigeRespuesta', true);
+      expect(falta()).toBe(true);
+    });
+
+    /** Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo. */
+    it('ofrecerla NO exime del encuentro abierto: sin él no se pide', () => {
+      const falta = () => (componente as unknown as { faltaRespuesta(): boolean }).faltaRespuesta();
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      fixture.componentRef.setInput('encounterId', null);
+      expect(falta()).toBe(true);
+
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      expect(falta()).toBe(false);
+    });
+  });
+
   describe('antiduplicación de estudios', () => {
     beforeEach(() => {
       fixture.detectChanges();
