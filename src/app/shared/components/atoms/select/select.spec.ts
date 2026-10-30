@@ -5,6 +5,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { FormField } from '../../molecules/form-field/form-field';
 import type { SelectOption } from './select.types';
 import { SEARCH_FROM, Select } from './select';
+import { reemplazarAnimate } from '../../../../../testing/animate';
 
 interface Servicio {
   readonly id: number;
@@ -194,11 +195,10 @@ describe('Select', () => {
       // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
       // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
       // Una salida que nunca termina deja a la vista si elegir espera por ella.
-      const original = HTMLElement.prototype.animate;
-      HTMLElement.prototype.animate = (() => ({
+      const restaurar = reemplazarAnimate(() => ({
         finished: new Promise<void>(() => undefined),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
       try {
         const fixture = crear<string>([
           { value: 'a', label: 'A' },
@@ -214,19 +214,18 @@ describe('Select', () => {
         expect(dialogo(fixture)).toBeNull();
         expect(boton(fixture).getAttribute('aria-expanded')).toBe('false');
       } finally {
-        HTMLElement.prototype.animate = original;
+        restaurar();
       }
     });
 
     it('descartar sí anima la salida: Escape espera a que el panel se vaya', async () => {
-      const original = HTMLElement.prototype.animate;
       let terminar: () => void = () => undefined;
-      HTMLElement.prototype.animate = (() => ({
+      const restaurar = reemplazarAnimate(() => ({
         finished: new Promise<void>((resolve) => {
           terminar = resolve;
         }),
         cancel: () => undefined,
-      })) as unknown as typeof HTMLElement.prototype.animate;
+      }));
       try {
         const fixture = crear<string>([{ value: 'a', label: 'A' }]);
         await fixture.whenStable();
@@ -242,7 +241,7 @@ describe('Select', () => {
         expect(dialogo(fixture)).toBeNull();
         expect(fixture.componentInstance.value()).toBeNull();
       } finally {
-        HTMLElement.prototype.animate = original;
+        restaurar();
       }
     });
 
