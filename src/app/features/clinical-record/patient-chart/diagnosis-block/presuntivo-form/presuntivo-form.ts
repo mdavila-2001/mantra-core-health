@@ -465,7 +465,10 @@ export class PresuntivoForm {
         const motivo =
           estado.status === 'validation'
             ? estado.issues.map((issue) => issue.message).join(' ')
-            : (writeFailureMessage(estado, { accion: 'guardar los motivos' }) ?? '');
+            : estado.status === 'error'
+              ? // Un 5xx: el texto del servidor es jerga («Simulado: fallo del servidor»), no ayuda.
+                'el servidor no pudo completar la operación. Reintente en unos minutos'
+              : (writeFailureMessage(estado, { accion: 'guardar los motivos' }) ?? '');
         return of(conPunto(`No pudimos guardar los motivos${motivo === '' ? '' : `: ${motivo}`}`));
       }),
     );

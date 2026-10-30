@@ -96,13 +96,40 @@ async function fijarTema(tema) {
   await page.waitForTimeout(150);
 }
 
-/** Captura el diálogo abierto (o la página) en los tres viewports y los dos temas. */
-async function matriz(nombre) {
+/** Cuántos elementos del diálogo abierto sobresalen por la derecha: el desborde horizontal. */
+async function desbordeDelDialogo() {
+  return page.evaluate(() => {
+    const dialogo = document.querySelector('dialog[open]');
+    if (dialogo === null) return 0;
+    const borde = dialogo.getBoundingClientRect().right;
+    let fuera = 0;
+    for (const el of dialogo.querySelectorAll('*')) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && r.right > borde + 1) fuera += 1;
+    }
+    return fuera + (document.documentElement.scrollWidth > window.innerWidth + 1 ? 1 : 0);
+  });
+}
+
+/**
+ * Captura el diálogo abierto en los tres viewports y los dos temas.
+ * Con `ver` (un `data-testid`) desplaza el diálogo hasta ese elemento antes de cada captura:
+ * sin eso, en móvil lo que se quiere demostrar quedaba bajo el pliegue.
+ * En cada viewport comprueba, además, que nada del diálogo se desborde hacia la derecha.
+ */
+async function matriz(nombre, ver) {
   for (const vp of VIEWPORTS) {
     await page.setViewportSize({ width: vp.width, height: vp.height });
     for (const tema of TEMAS) {
       await fijarTema(tema);
+      if (ver !== undefined) {
+        await page.getByTestId(ver).first().scrollIntoViewIfNeeded().catch(() => undefined);
+      }
       await page.waitForTimeout(250);
+      if (tema === 'light') {
+        const fuera = await desbordeDelDialogo();
+        ok(`${nombre}: sin desborde horizontal en ${vp.nombre}`, fuera === 0, `${fuera} elementos fuera`);
+      }
       await page.screenshot({ path: `${SALIDA}/${nombre}-${vp.nombre}-${tema}.png` });
     }
   }
@@ -355,6 +382,7 @@ try {
     (await botonRegistro.getAttribute('aria-disabled')) === 'true',
   );
   await matriz('10-diagnostico-vacio');
+  await matriz('10b-diagnostico-tabla', 'diagnostico-tabla');
 
   const dx = await elegir(alta.getByRole('combobox').first(), undefined, { buscar: 'Hiperten' });
   notas.push(`Diagnóstico elegido: «${dx}»`);
@@ -424,8 +452,7 @@ try {
       .locator('app-form-actions button[type="submit"]')
       .getAttribute('aria-disabled')) === 'true',
   );
-  await una('13-tras-recarga');
-  await una('13-tras-recarga', VIEWPORTS[0], 'dark');
+  await matriz('13-tras-recarga-tabla', 'diagnostico-tabla');
   await cerrarModal();
 
   /* ════════════════ H2 · fallo parcial de la nota (INYECTADO) ════════════════ */
@@ -457,7 +484,8 @@ try {
     /quedó registrado/.test(await alta2.getByTestId('diagnostico-fallo-motivos').innerText()) &&
       (await alta2.getByTestId('adicional-fila').count()) === 1,
   );
-  await matriz('14-fallo-parcial-inyectado');
+  await matriz('14a-fallo-parcial-alerta', 'diagnostico-fallo-motivos');
+  await matriz('14b-fallo-parcial-reintento', 'diagnostico-dejar-sin-guardar');
 
   // Reintento: se apaga el fallo; sólo debe repetirse la nota, nunca el diagnóstico.
   inyectando = false;
@@ -518,8 +546,15 @@ try {
     for (let i = 0; i < n; i += 1) {
       const campo = campos.nth(i);
       const texto = campo.locator('input:not([type="number"]):not([type="checkbox"]), textarea');
-      if ((await texto.count()) > 0)
-        await texto.first().fill('fiebre alta y tos con dolor al respirar').catch(() => undefined);
+      if ((await texto.count()) > 0) {
+        // Un valor DISTINTO por campo, que nombre su pregunta: así se ve si cada respuesta
+        // llega a su fila y no a otra.
+        const nombre = ((await campo.locator('label').first().innerText().catch(() => '')) ?? '')
+          .replace(/\s+/g, ' ')
+          .replace(/\s*\*?\s*\(?obligatorio\)?\s*$/i, '')
+          .trim();
+        await texto.first().fill(`Respuesta de «${nombre || `campo ${i}`}»`).catch(() => undefined);
+      }
     }
     // Los obligatorios, uno por uno, hasta que «Completar formulario» se habilite.
     const obligatorios = bloqueForm.getByTestId('campo-especialidad').filter({ hasText: /obligatorio/i });
@@ -568,6 +603,28 @@ try {
       'H2 dice qué se trajo',
       (await alta3.getByTestId('diagnostico-aviso-importacion').count()) === 1,
       (await alta3.getByTestId('diagnostico-aviso-importacion').innerText().catch(() => '')) ?? '',
+    );
+    // Cada fila trae SU respuesta: el valor nombra la pregunta de su propio campo.
+    const mapeo = await alta3.getByTestId('adicional-fila').evaluateAll((filas) =>
+      filas.map((fila) => {
+        const leer = (id) => {
+          const el = fila.querySelector(`[data-testid="${id}"]`);
+          if (el === null) return '';
+          return el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'
+            ? el.value
+            : (el.querySelector('input, textarea')?.value ?? '');
+        };
+        return { campo: leer('adicional-rotulo'), valor: leer('adicional-valor') };
+      }),
+    );
+    const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const cruzadas = mapeo.filter(
+      (m) => m.valor.startsWith('Respuesta de') && !norm(m.valor).includes(norm(m.campo).slice(0, 12)),
+    );
+    ok(
+      'H2 cada fila traída lleva la respuesta de SU campo (valores distintos por campo)',
+      mapeo.length >= 1 && cruzadas.length === 0 && new Set(mapeo.map((m) => m.valor)).size === mapeo.length,
+      `${mapeo.length} filas · cruzadas: ${cruzadas.length} · ej.: ${JSON.stringify(mapeo[0])}`,
     );
     await matriz('16-desde-formulario-llenado');
     await elegir(alta3.getByRole('combobox').first(), undefined, { buscar: 'Infecci' });

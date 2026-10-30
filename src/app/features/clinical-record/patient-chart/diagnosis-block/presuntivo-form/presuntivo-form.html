@@ -116,7 +116,7 @@
         [rows]="3"
         [value]="hallazgos()"
         [disabled]="enviando() || registrado() !== null"
-        placeholder="Cuadro febril de dos días con tos productiva."
+        placeholder="Ej.: cuadro febril de dos días con tos productiva."
         (valueChange)="hallazgos.set($event)"
       />
     </app-form-field>
@@ -154,6 +154,12 @@
           </button>
         </div>
       </app-alert>
+    }
+
+    @if (diagnostico() === null) {
+      <p class="presuntivo__estado" data-testid="diagnostico-falta-diagnostico">
+        Elija un diagnóstico para poder registrarlo.
+      </p>
     }
 
     <app-form-actions

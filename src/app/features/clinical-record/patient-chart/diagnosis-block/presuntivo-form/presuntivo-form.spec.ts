@@ -213,6 +213,8 @@ describe('PresuntivoForm', () => {
     it('sin diagnóstico elegido el botón no se puede usar', () => {
       cargar();
       expect(registroBloqueado()).toBe(true);
+      // Y dice por qué, en vez de quedar gris y mudo.
+      expect(porTestId('diagnostico-falta-diagnostico')?.textContent).toContain('Elija un diagnóstico');
 
       elegirDiagnostico('dx-hta');
       expect(registroBloqueado()).toBe(false);
@@ -330,6 +332,12 @@ describe('PresuntivoForm', () => {
       // Dos frases bien separadas: lo que falló, terminado en punto, y qué hacer.
       expect(aviso).toContain('No pudimos guardar los motivos');
       expect(aviso).toMatch(/\.\s+Sus filas siguen acá/);
+      // Un 5xx no se muestra con el texto crudo del servidor.
+      expect(aviso).toContain('el servidor no pudo completar la operación');
+      expect(aviso).not.toContain('Se rompió');
+      // Un 5xx no se muestra con el texto crudo del servidor.
+      expect(aviso).toContain('el servidor no pudo completar la operación');
+      expect(aviso).not.toContain('Se rompió');
       // Lo escrito sigue ahí y el botón ofrece reintentar sólo los motivos.
       expect(componente.tieneCambiosPendientes()).toBe(true);
       expect(botonDeRegistro().textContent).toContain('Reintentar guardar los motivos');

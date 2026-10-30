@@ -4,6 +4,15 @@
   display: block;
 }
 
+/* Sin esto la pista `1fr` de la grilla del formulario no baja del ancho de su contenido más
+   ancho —la opción larga del selector «Formulario médico · 30 oct, 08:52 p. m. · el más
+   reciente»— y en un teléfono todo el formulario se desbordaba hacia la derecha. */
+.presuntivo,
+.presuntivo form,
+.presuntivo .app-form-grid > * {
+  min-inline-size: 0;
+}
+
 .presuntivo {
   display: grid;
   gap: var(--sp-3);
