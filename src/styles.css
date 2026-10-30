@@ -222,6 +222,12 @@
     --fs-overline: 11px;                      /* Inter 700 · +8 % · MAYÚSCULAS */
     --fs-data: 14px;                          /* Inter 600 · tabular */
 
+    /* ---- gráficos (ADR-0017): categórica validada + secuencial de un tono ---- */
+    --chart-1: #2a78d6; --chart-2: #eb6834; --chart-3: #1baf7a; --chart-4: #eda100;
+    --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
+    --chart-seq-1: #cde2fb; --chart-seq-2: #86b6ef; --chart-seq-3: #3987e5;
+    --chart-seq-4: #1c5cab; --chart-seq-5: #0d366b;
+
     /* ================= tokens semánticos — modo claro ===================== */
     --surface-white: #FFFFFF;
     --bg-base: var(--surface-white);
@@ -324,6 +330,10 @@
    aguamarina acciona. Oscuro por preferencia del sistema… */
 @media (prefers-color-scheme: dark) {
     :root:not([data-theme='light']) {
+        --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+        --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+        --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
+        --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
         --bg-base: var(--c-petrol-900);
         --bg-surface: var(--c-petrol-800);
         --bg-surface-alt: var(--c-petrol-700);
@@ -393,6 +403,10 @@
 /* …y el toggle manual manda sobre la preferencia del sistema
    (bajo SSR se estampa tras afterNextRender, nunca en la ruta de render) */
 :root[data-theme='dark'] {
+    --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500;
+    --chart-5: #d55181; --chart-6: #008300; --chart-7: #9085e9; --chart-8: #e66767;
+    --chart-seq-1: #184f95; --chart-seq-2: #1c5cab; --chart-seq-3: #3987e5;
+    --chart-seq-4: #6da7ec; --chart-seq-5: #9ec5f4;
     --bg-base: var(--c-petrol-900);
     --bg-surface: var(--c-petrol-800);
     --bg-surface-alt: var(--c-petrol-700);
