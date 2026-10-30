@@ -47,10 +47,13 @@ describe('orphanCharts', () => {
     expect([...orphanCharts([chart('a'), chart('b', BARS, 'completo')])]).toEqual(['a']);
   });
 
-  it('un embudo huérfano se estira; una dona o un medidor huérfanos se dejan como están', () => {
+  it('un embudo huérfano se estira', () => {
     expect([...orphanCharts([chart('a', FUNNEL)])]).toEqual(['a']);
-    expect([...orphanCharts([chart('a', DONUT)])]).toEqual([]);
-    expect([...orphanCharts([chart('a', GAUGE)])]).toEqual([]);
+  });
+
+  it('una dona o un medidor huérfanos también se estiran cuando no hay otro que estirar: una ficha con media fila vacía es peor', () => {
+    expect([...orphanCharts([chart('a', DONUT)])]).toEqual(['a']);
+    expect([...orphanCharts([chart('a', GAUGE)])]).toEqual(['a']);
   });
 
   it('si el último no se puede estirar, estira el anterior que sí', () => {

@@ -71,6 +71,19 @@
         </div>
       </app-empty-state>
 
+      <!-- S7: la antigüedad va siempre a la vista y se lee como advertencia, no como un aviso más. -->
+      @if (staleAsOf(); as asOf) {
+        <app-alert vsh-stale tone="warning" title="Está viendo datos atrasados" data-testid="dashboard-stale">
+          Información al {{ asOf | date: 'dd/MM/yyyy HH:mm' }}. Las cifras pueden no reflejar lo último.
+          @if (staleOtherFilters()) {
+            <strong data-testid="dashboard-stale-filters">Son de los filtros anteriores, no de los que ve arriba.</strong>
+          }
+          <div alert-actions>
+            <button app-button type="button" size="sm" variant="secondary" (click)="reload()">Actualizar</button>
+          </div>
+        </app-alert>
+      }
+
       @if (body(); as content) {
         <app-tab-view [data]="content" />
       }

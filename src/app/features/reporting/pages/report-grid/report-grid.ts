@@ -13,7 +13,6 @@ import type { Subscription } from 'rxjs';
 import { ReportingClient } from '@core/data-access/reporting/reporting.client';
 import { ETIQUETA_VERTICAL } from '@core/data-access/reporting/reporting-labels';
 import type { ReporteCatalogo } from '@core/data-access/reporting/reporting.types';
-import { errorToViewState } from '@core/http/error-to-view-state';
 import { empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -22,6 +21,7 @@ import { EmptyState } from '@shared/components/molecules/empty-state/empty-state
 import { SearchField } from '@shared/components/molecules/search-field/search-field';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
+import { reportErrorState } from '../../state/report-error-state';
 import { ReportCard } from '../../components/report-card/report-card';
 import {
   countByVertical,
@@ -115,7 +115,7 @@ export class ReportGrid {
               )
             : ready(reports),
         ),
-      error: (error: unknown) => this.state.set(errorToViewState(error)),
+      error: (error: unknown) => this.state.set(reportErrorState(error)),
     });
   }
 
