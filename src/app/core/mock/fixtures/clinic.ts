@@ -115,7 +115,7 @@ export interface SimulatedPrescription {
   readonly doseText: string;
   readonly frequencyText: string;
   readonly validFrom: string;
-  readonly validTo: string;
+  readonly validTo: string | null; // `null`: sin fin de vigencia, como en la API
   readonly patientInstructionsText: string;
   readonly signedAt: string | null;
   readonly issuedAt: string | null;

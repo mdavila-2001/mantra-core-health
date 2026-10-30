@@ -1,7 +1,13 @@
+import { HttpHeaders } from '@angular/common/http';
+
 import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { prescriptionList, type SimulatedPrescription } from '../../../../core/mock/fixtures/clinic';
 import { record } from '../../../../core/mock/fixtures/concepts';
+import { PACIENTE } from '../../../../core/mock/fixtures/people';
+import { registrarClinica } from '../../../../core/mock/handlers/clinical.handlers';
+import { MockRouter, type MockMethod, type MockReply } from '../../../../core/mock/mock-router';
+import { buscarUsuario, type MockUser } from '../../../../core/mock/mock-session';
 import { isOrderableRow, orderablePrescriptionOf } from './orderable-prescription';
 
 /** Una fila del resumen clínico de la receta `enc-a`, con lo mínimo que se mira. */
@@ -125,7 +131,7 @@ describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
       medicationConceptId: rx.medicationConceptId,
       statusConceptId: rx.statusConceptId,
       createdAt: new Date(rx.createdAt),
-      validTo: new Date(rx.validTo),
+      ...(rx.validTo === null ? {} : { validTo: new Date(rx.validTo) }),
       ...(rx.issuedAt === null ? {} : { issuedAt: new Date(rx.issuedAt) }),
       ...(rx.encounterId === undefined ? {} : { encounterId: rx.encounterId }),
     };
@@ -147,6 +153,39 @@ describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
     for (const rx of completed) {
       expect(isOrderableRow(asRequest(rx), mockLabels, now)).toBe(false);
     }
+  });
+
+  it('una receta continua creada y emitida en el simulador (sin validTo) se puede pedir', () => {
+    const router = new MockRouter();
+    registrarClinica(router);
+    const medica = buscarUsuario('medica')!;
+    const call = (method: MockMethod, path: string, body: unknown): MockReply => {
+      const match = router.match(method, path);
+      if (match === null) throw new Error(`No existe ${method} ${path}`);
+      return match.handler({
+        method,
+        path,
+        params: match.params,
+        query: new URLSearchParams(),
+        body,
+        headers: new HttpHeaders(),
+        user: medica as MockUser,
+      }) as MockReply;
+    };
+
+    const created = call('POST', '/clinical/medication-requests', {
+      patientProfileId: PACIENTE.id,
+      medicationConceptId: 'med-continua',
+      indicationText: 'Tratamiento crónico',
+    });
+    const id = (created.body as { id: string }).id;
+    call('POST', `/clinical/medication-requests/${id}/sign`, {});
+    call('POST', `/clinical/medication-requests/${id}/issue`, {});
+
+    const issued = prescriptionList.get(id)!;
+    const asRead = asRequest(issued);
+    expect(asRead.validTo).toBeUndefined();
+    expect(isOrderableRow(asRead, mockLabels, new Date())).toBe(true);
   });
 
   it('el catálogo simulado ya no tiene los códigos propios del simulador', () => {

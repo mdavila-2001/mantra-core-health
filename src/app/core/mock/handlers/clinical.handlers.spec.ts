@@ -270,6 +270,31 @@ describe('POST /clinical/medication-requests · sólo diagnóstico confirmado o 
     expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_ISSUED']);
     expect(prescriptionList.get(id)?.issuedAt).not.toBeNull();
   });
+
+  /*
+   * FAR-03: como en la API (`medications.service.ts`, el alta deja `validTo`
+   * vacío si no viene), una receta sin fin de vigencia no vence. Antes el
+   * simulador le ponía «ahora» y, ya emitida, salía vencida en «Dónde comprar».
+   */
+  it('una receta continua (sin validTo) se emite sin vencimiento; con validTo lo conserva', () => {
+    const continua = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationText: 'Tratamiento crónico',
+    });
+    const id = (continua.body as { id: string }).id;
+    call('POST', `/clinical/medication-requests/${id}/sign`, {});
+    call('POST', `/clinical/medication-requests/${id}/issue`, {});
+
+    expect(prescriptionList.get(id)?.statusConceptId).toBe(PRESCRIPTION_STATUS['MR_ISSUED']);
+    expect(prescriptionList.get(id)?.validTo).toBeNull();
+
+    const conFin = call<MockReply>('POST', '/clinical/medication-requests', {
+      ...CUERPO_BASE,
+      indicationText: 'Antibiótico por diez días',
+      validTo: '2099-01-10T00:00:00.000Z',
+    });
+    expect(prescriptionList.get((conFin.body as { id: string }).id)?.validTo).toBe('2099-01-10T00:00:00.000Z');
+  });
 });
 
 describe('/charts/notes · contrato tras mudar el handler', () => {
