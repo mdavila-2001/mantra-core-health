@@ -4,12 +4,13 @@ import {
   guardarHistorial,
   leerHistorial,
   MAX_HISTORIAL,
+  olvidarHistorialesDelNavegador,
 } from './assistant-history';
 
 describe('historial del asistente', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
-    borrarHistorialGuardado();
+    olvidarHistorialesDelNavegador();
   });
 
   it('agrega al principio y no repite (sin distinguir mayúsculas)', () => {
@@ -32,17 +33,17 @@ describe('historial del asistente', () => {
   });
 
   it('guarda y vuelve a leer', () => {
-    guardarHistorial(['uno', 'dos']);
-    expect(leerHistorial()).toEqual(['uno', 'dos']);
+    guardarHistorial('u1', ['uno', 'dos']);
+    expect(leerHistorial('u1')).toEqual(['uno', 'dos']);
   });
 
   it('un contenido corrupto o de otro tipo se lee como vacío', () => {
     globalThis.localStorage.setItem('alovida:reportes:asistente:historial', '{no es json');
-    expect(leerHistorial()).toEqual([]);
+    expect(leerHistorial('u1')).toEqual([]);
     globalThis.localStorage.setItem('alovida:reportes:asistente:historial', '{"a":1}');
-    expect(leerHistorial()).toEqual([]);
+    expect(leerHistorial('u1')).toEqual([]);
     globalThis.localStorage.setItem('alovida:reportes:asistente:historial', '["ok", 3, "", null]');
-    expect(leerHistorial()).toEqual(['ok']);
+    expect(leerHistorial('u1')).toEqual(['ok']);
   });
 
   it('si el almacenamiento falla, no lanza', () => {
@@ -50,8 +51,32 @@ describe('historial del asistente', () => {
       throw new Error('almacenamiento bloqueado');
     };
     vi.stubGlobal('localStorage', { getItem: roto, setItem: roto, removeItem: roto });
-    expect(() => guardarHistorial(['x'])).not.toThrow();
-    expect(leerHistorial()).toEqual([]);
-    expect(() => borrarHistorialGuardado()).not.toThrow();
+    expect(() => guardarHistorial('u1', ['x'])).not.toThrow();
+    expect(leerHistorial('u1')).toEqual([]);
+    expect(() => borrarHistorialGuardado('u1')).not.toThrow();
+  });
+  it('el historial es de quien lo escribió: otro usuario del mismo navegador no lo lee', () => {
+    guardarHistorial('u1', ['¿Cuál es el MRR?']);
+    expect(leerHistorial('u2')).toEqual([]);
+    expect(leerHistorial(null)).toEqual([]);
+    expect(leerHistorial('u1')).toEqual(['¿Cuál es el MRR?']);
+  });
+
+  it('cerrar sesión olvida los historiales de todos los usuarios del navegador', () => {
+    guardarHistorial('u1', ['a']);
+    guardarHistorial('u2', ['b']);
+    guardarHistorial(null, ['c']);
+    olvidarHistorialesDelNavegador();
+    expect(leerHistorial('u1')).toEqual([]);
+    expect(leerHistorial('u2')).toEqual([]);
+    expect(leerHistorial(null)).toEqual([]);
+  });
+
+  it('olvidar no toca claves ajenas del almacenamiento', () => {
+    localStorage.setItem('otra-cosa', 'x');
+    guardarHistorial('u1', ['a']);
+    olvidarHistorialesDelNavegador();
+    expect(localStorage.getItem('otra-cosa')).toBe('x');
+    localStorage.removeItem('otra-cosa');
   });
 });

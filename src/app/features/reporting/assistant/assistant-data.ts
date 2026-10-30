@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
+import { SessionStore } from '@core/auth/session.store';
 import { ReportingClient } from '@core/data-access/reporting/reporting.client';
 import { VERTICALES } from '@core/data-access/reporting/reporting-labels';
 import type {
@@ -27,10 +28,13 @@ export interface PestanasConsultadas {
 @Injectable({ providedIn: 'root' })
 export class ReportAssistantData {
   private readonly cliente = inject(ReportingClient);
+  private readonly session = inject(SessionStore);
   private readonly memoria = new Map<string, { readonly en: number; readonly promesa: Promise<PestanaReporte> }>();
 
   pestana(vertical: VerticalReporte, contexto: ContextoReporte): Promise<PestanaReporte> {
-    const clave = `${vertical}|${JSON.stringify(contexto)}`;
+    // La clave incluye QUIÉN pregunta y desde QUÉ organización: la caché no puede
+    // servirle a un usuario lo que otro (u otra organización) ya trajo.
+    const clave = `${this.session.userId() ?? 'anonymous'}|${this.session.activeTenantId() ?? '-'}|${vertical}|${JSON.stringify(contexto)}`;
     const guardada = this.memoria.get(clave);
     if (guardada !== undefined && Date.now() - guardada.en < VIGENCIA_MS) {
       return guardada.promesa;
@@ -46,6 +50,11 @@ export class ReportAssistantData {
       this.memoria.delete(masVieja);
     }
     return promesa;
+  }
+
+  /** Cerrar sesión olvida lo traído (TX-31). */
+  limpiar(): void {
+    this.memoria.clear();
   }
 
   /**
@@ -72,7 +81,4 @@ export class ReportAssistantData {
     return { pestanas, faltantes };
   }
 
-  limpiar(): void {
-    this.memoria.clear();
-  }
 }

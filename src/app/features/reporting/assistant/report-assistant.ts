@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { SessionStore } from '@core/auth/session.store';
 import { errorToViewState } from '@core/http/error-to-view-state';
 import { ETIQUETA_VERTICAL } from '@core/data-access/reporting/reporting-labels';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -65,6 +66,7 @@ import {
 export class ReportAssistant {
   private readonly store = inject(ReportContextStore);
   private readonly datos = inject(ReportAssistantData);
+  private readonly session = inject(SessionStore);
   private readonly injector = inject(Injector);
   private readonly anfitrion = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly registro = viewChild<ElementRef<HTMLElement>>('registro');
@@ -84,7 +86,7 @@ export class ReportAssistant {
   constructor() {
     // Leer el almacenamiento al montar, no al construir: en el servidor no
     // existe y en el cliente cambiaría el HTML que ya se hidrató.
-    afterNextRender(() => this.historial.set(leerHistorial()));
+    afterNextRender(() => this.historial.set(leerHistorial(this.session.userId())));
   }
 
   /** Lleva el foco a la caja de la pregunta (el portal lo usa al abrir el panel). */
@@ -148,7 +150,7 @@ export class ReportAssistant {
 
   protected borrarHistorial(): void {
     this.historial.set([]);
-    borrarHistorialGuardado();
+    borrarHistorialGuardado(this.session.userId());
   }
 
   protected nombres(verticales: readonly string[] | undefined): string {
@@ -159,8 +161,12 @@ export class ReportAssistant {
 
   private async preguntar(texto: string, medida: SugerenciaMedida | null = null): Promise<void> {
     this.agregar({ id: this.siguienteId++, rol: 'usuario', texto });
-    this.historial.update((h) => agregarAlHistorial(h, texto));
-    guardarHistorial(this.historial());
+    // Una pregunta por personas se rechaza y NO se recuerda: no hay motivo para
+    // guardar en el navegador un intento de pedir datos que el reporte no tiene.
+    if (!(medida === null && pideDatosDePersonas(normalizar(texto)))) {
+      this.historial.update((h) => agregarAlHistorial(h, texto));
+      guardarHistorial(this.session.userId(), this.historial());
+    }
     await this.responder(texto, medida);
   }
 
