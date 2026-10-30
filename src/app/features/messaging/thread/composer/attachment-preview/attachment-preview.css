@@ -215,9 +215,11 @@
 .vista__tira {
   display: flex;
   justify-content: safe center;
-  gap: var(--e2);
+  /* Lugar para el blanco de 44 × 44 de «Quitar», que sobresale 22 px de la
+     esquina: sin esto, el `overflow-x` de la tira lo recortaba a 20 × 18. */
+  gap: var(--e6);
   margin: 0;
-  padding: var(--e1);
+  padding: var(--e6) var(--e6) var(--e1);
   list-style: none;
   overflow-x: auto;
 }
@@ -281,8 +283,10 @@
 /* Quitar aparece al pasar o al llegar con el teclado, como en WhatsApp. */
 .vista__quitar {
   position: absolute;
-  inset-block-start: -6px;
-  inset-inline-end: -6px;
+  /* Centrada en la esquina de la miniatura: así su blanco de 44 × 44 cubre
+     sólo esa esquina y el centro de la miniatura sigue eligiéndola. */
+  inset-block-start: calc(var(--e5) / -2);
+  inset-inline-end: calc(var(--e5) / -2);
   display: inline-grid;
   place-items: center;
   inline-size: var(--e5);
@@ -293,8 +297,18 @@
   background: var(--tinta);
   color: var(--sup-tarjeta);
   opacity: 0;
+  /* Invisible no se toca: si no, un toque en la esquina quitaba la foto. */
+  pointer-events: none;
   cursor: pointer;
   transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+/* El blanco táctil: 44 × 44 centrado en la cruz de 20 px, o sea, en la
+   esquina de la miniatura (ver arriba). */
+.vista__quitar::before {
+  content: '';
+  position: absolute;
+  inset: calc((var(--e5) - 44px) / 2);
 }
 
 .vista__quitar svg {
@@ -306,11 +320,13 @@
 .vista__miniatura:focus-within .vista__quitar,
 .vista__miniatura.is-elegida .vista__quitar {
   opacity: 1;
+  pointer-events: auto;
 }
 
 @media (hover: none) {
   .vista__quitar {
     opacity: 1;
+    pointer-events: auto;
   }
 }
 

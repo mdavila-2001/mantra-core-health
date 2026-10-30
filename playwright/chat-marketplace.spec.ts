@@ -44,7 +44,7 @@ import { esperarAplicacionLista } from './support/sesion';
  */
 
 /** Dónde quedan las fotos. Una carpeta por tanda, como el resto del repo. */
-const EVIDENCIA = 'docs/frontend/evidence/chat-marketplace-2026-10-28';
+const EVIDENCIA = 'docs/frontend/evidence/chat-marketplace-2026-10-30';
 
 const PACIENTE = 'paciente@alovida.mock';
 const FARMACIA = 'farmacia@alovida.mock';
@@ -85,6 +85,18 @@ let hiloSinTarjeta = '';
 const erroresDeConsola: string[] = [];
 
 async function foto(nombre: string): Promise<void> {
+  // Que la foto muestre el estado quieto y no un fundido a medias (la vista
+  // previa de adjuntos entra animada). Las animaciones infinitas no cuentan.
+  await page
+    .waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every((a) => a.playState !== 'running' || a.effect?.getTiming().iterations === Infinity),
+      undefined,
+      { timeout: 5_000 },
+    )
+    .catch(() => undefined);
   await page.screenshot({ path: `${EVIDENCIA}/${nombre}.png`, fullPage: false });
 }
 
@@ -178,13 +190,14 @@ async function imagen(
   return { name: nombre, mimeType: tipo, buffer: Buffer.from(base64, 'base64') };
 }
 
-/** Espera a que la cola del composer termine de preparar las fotos. */
+/**
+ * Espera a que la vista previa de adjuntos tenga las fotos ya preparadas
+ * (achicadas y sin metadatos) y lista para mandar.
+ */
 async function colaLista(cuantas: number): Promise<void> {
-  await expect(page.getByTestId('composer-miniatura')).toHaveCount(cuantas);
-  await expect(page.locator('[data-testid="composer-miniatura"].is-preparando')).toHaveCount(0, {
-    timeout: 30_000,
-  });
-  await expect(page.getByTestId('hilo-enviar')).toBeEnabled();
+  await expect(page.getByTestId('composer-preparando')).toHaveCount(0, { timeout: 30_000 });
+  await expect(page.getByTestId('vista-miniatura')).toHaveCount(cuantas, { timeout: 30_000 });
+  await expect(page.getByTestId('vista-enviar')).toBeEnabled();
 }
 
 /**
@@ -350,11 +363,13 @@ test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, gril
   ];
   await page.getByTestId('composer-input-archivos').setInputFiles(archivos);
   await colaLista(3);
-  await expect(page.getByTestId('hilo-enviar')).toHaveAttribute('aria-label', 'Enviar 3 archivos');
+  await expect(page.getByTestId('vista-enviar')).toHaveAttribute('aria-label', 'Enviar 3 archivos');
+  // La leyenda es el comentario de la primera foto.
   const leyenda = `Estas son las recetas ${MARCA}`;
-  await page.getByTestId('hilo-texto').fill(leyenda);
+  await page.getByTestId('vista-miniatura').first().click();
+  await page.getByTestId('vista-comentario').fill(leyenda);
   await foto('04a-cola-con-tres-fotos');
-  await page.getByTestId('hilo-enviar').click();
+  await page.getByTestId('vista-enviar').click();
 
   const comprobar = async (): Promise<void> => {
     // La primera, con su leyenda, va sola: «una leyenda es de esa foto».
@@ -416,7 +431,7 @@ test('4b · pegar una imagen desde el portapapeles la suma a la cola y sale', as
 
   await colaLista(1);
   await foto('04b-imagen-pegada-en-la-cola');
-  await page.getByTestId('hilo-enviar').click();
+  await page.getByTestId('vista-enviar').click();
   await expect(page.getByTestId('hilo-imagen')).toHaveCount(antes + 1, { timeout: 30_000 });
 
   await recargar();
@@ -435,7 +450,7 @@ test('4c · un .txt se rechaza con un mensaje y no entra a la cola', async () =>
   });
   const aviso = page.locator('.composer__error[role="alert"]');
   await expect(aviso).toContainText('«notas.txt» no se puede mandar');
-  await expect(page.getByTestId('composer-miniatura')).toHaveCount(0);
+  await expect(page.getByTestId('vista-miniatura')).toHaveCount(0);
   await foto('04c-txt-rechazado');
   await aviso.getByRole('button', { name: 'Entendido' }).click();
   await expect(aviso).toHaveCount(0);
@@ -524,7 +539,7 @@ test('6 · farmacia: «Escribiendo como», responde desde el mostrador con texto
     .getByTestId('composer-input-archivos')
     .setInputFiles([await imagen('caja.jpg', 'image/jpeg', '#16a34a')]);
   await colaLista(1);
-  await page.getByTestId('hilo-enviar').click();
+  await page.getByTestId('vista-enviar').click();
   await expect(page.getByTestId('hilo-imagen')).toHaveCount(antes + 1, { timeout: 30_000 });
   await expect(page.getByTestId('hilo-imagen-subiendo')).toHaveCount(0, { timeout: 30_000 });
   expect(await guardado('mock.comunidad.mensajes')).toContain(MARCA);
@@ -567,27 +582,38 @@ test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horiz
   await esperarAplicacionLista(page);
   await hiloListo();
 
-  // «Quitar» y «enviar» sólo existen con algo en la cola.
+  const medidas: Record<string, { ancho: number; alto: number }> = {};
+  const conAviso: Record<string, { ancho: number; alto: number }> = {};
+  const medir = async (objetivos: [string, Locator][]): Promise<void> => {
+    for (const [nombre, objetivo] of objetivos) {
+      await expect(objetivo, `${nombre} visible`).toBeVisible();
+      medidas[nombre] = await zonaTocable(objetivo, true);
+      conAviso[nombre] = await zonaTocable(objetivo, false);
+    }
+  };
+
+  // La barra del hilo, sin nada elegido. «Enviar» aparece con texto escrito.
+  await page.getByTestId('hilo-texto').fill('hola');
+  await medir([
+    ['volver', page.getByRole('link', { name: 'Volver a los chats' })],
+    ['opciones', page.getByTestId('hilo-menu')],
+    ['enviar', page.getByTestId('hilo-enviar')],
+    ['foto', page.getByTestId('composer-foto')],
+  ]);
+  await page.getByTestId('hilo-texto').fill('');
+
+  // «Quitar», «descartar» y su «enviar» sólo existen con algo elegido: la
+  // vista previa ocupa la pantalla.
   await page
     .getByTestId('composer-input-archivos')
     .setInputFiles([await imagen('movil.png', 'image/png', '#0891b2')]);
   await colaLista(1);
   await foto('07-movil-390-con-cola');
-
-  const objetivos: [string, Locator][] = [
-    ['volver', page.getByRole('link', { name: 'Volver a los chats' })],
-    ['opciones', page.getByTestId('hilo-menu')],
-    ['enviar', page.getByTestId('hilo-enviar')],
-    ['foto', page.getByTestId('composer-foto')],
-    ['quitar', page.getByTestId('composer-miniatura-quitar').first()],
-  ];
-  const medidas: Record<string, { ancho: number; alto: number }> = {};
-  const conAviso: Record<string, { ancho: number; alto: number }> = {};
-  for (const [nombre, objetivo] of objetivos) {
-    await expect(objetivo, `${nombre} visible`).toBeVisible();
-    medidas[nombre] = await zonaTocable(objetivo, true);
-    conAviso[nombre] = await zonaTocable(objetivo, false);
-  }
+  await medir([
+    ['vista-enviar', page.getByTestId('vista-enviar')],
+    ['vista-quitar', page.getByTestId('vista-quitar').first()],
+    ['vista-descartar', page.getByTestId('vista-descartar')],
+  ]);
   // Lo que el producto ofrece: sin el aviso de la maqueta encima.
   const chicos = Object.entries(medidas).filter(([, m]) => m.ancho < 44 || m.alto < 44);
   expect(chicos, `táctiles por debajo de 44×44: ${JSON.stringify(medidas)}`).toEqual([]);
@@ -608,8 +634,8 @@ test('7 · móvil 390: los táctiles miden al menos 44×44 y no hay scroll horiz
   );
   expect(desbordaX, 'hay scroll horizontal a 390').toBe(false);
 
-  await page.getByTestId('composer-miniatura-quitar').first().click();
-  await expect(page.getByTestId('composer-miniatura')).toHaveCount(0);
+  await page.getByTestId('vista-descartar').click();
+  await expect(page.getByTestId('vista-miniatura')).toHaveCount(0);
   await page.setViewportSize({ width: 1440, height: 900 });
 });
 
@@ -653,8 +679,9 @@ test('8 · bandeja: S8 «Sin conexión», S9 con el código de la petición, y R
 test('9 · la consola quedó limpia en toda la corrida', () => {
   // Lo esperado, nombrado de forma estrecha (mismo criterio que
   // `chat-mejoras-evidencia.spec.ts`): el aviso de la maqueta, el socket que
-  // no conecta sin gateway, el CSP del servidor de desarrollo y los mosaicos
-  // del mapa que el proxy de la máquina no deja bajar.
+  // no conecta sin gateway, el CSP del servidor de desarrollo, los mosaicos
+  // del mapa que el proxy de la máquina no deja bajar y las transiciones de
+  // vista que una navegación rápida interrumpe (sólo en desarrollo).
   // Cada patrón nombra un mensaje exacto: un `mock` suelto taparía el
   // `[mock] el manejador falló` que es justo el que tiene que hacer fallar.
   const esperados = new RegExp(
@@ -663,6 +690,15 @@ test('9 · la consola quedó limpia en toda la corrida', () => {
       String.raw`^WebSocket connection to '[^']*socket\.io[^']*' failed`,
       String.raw`^Executing inline script violates the following Content Security Policy directive 'script-src 'self' `,
       String.raw`^Failed to load resource: net::ERR_TUNNEL_CONNECTION_FAILED$`,
+      // `withViewTransitions` (app.config.ts): si una navegación pisa a la
+      // anterior, el router de Angular registra la transición abortada con
+      // `console.error`, y sólo en modo desarrollo (`ngDevMode`).
+      String.raw`^AbortError: Transition was skipped\. New ViewTransition started$`,
+      // Los dos fallos que el test 8 provoca a propósito sobre la bandeja (sin
+      // red y un 500 simulado): `apiFailureLogInterceptor` los escribe en la
+      // consola en desarrollo. Sólo esa ruta y sólo el fallo simulado.
+      String.raw`^\[API\] GET /community/conversations → sin respuesta \(red, CORS o servidor caído\)`,
+      String.raw`^\[API\] GET /community/conversations → 500 · INTERNAL · «Simulado: fallo del servidor\.» · correlationId=mock-fallo`,
     ].join('|'),
     'u',
   );
