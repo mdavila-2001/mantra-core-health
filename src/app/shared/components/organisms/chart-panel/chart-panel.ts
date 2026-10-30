@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  Injector,
   DOCUMENT,
   ElementRef,
   inject,
@@ -59,6 +60,7 @@ const MODOS: readonly SegmentedOption<ModoGrafico>[] = [
 export class ChartPanel {
   private readonly documento = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly injector = inject(Injector);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly spec = input.required<ChartSpec>();
@@ -168,7 +170,7 @@ export class ChartPanel {
   }
 
   protected exportarCsv(): void {
-    const blob = new Blob([tableToCsv(this.tabla())], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob([tableToCsv(this.tabla(), this.spec().unidad)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = this.documento.createElement('a');
     a.href = url;
@@ -213,7 +215,10 @@ export class ChartPanel {
     const abrir = !this.menuAbierto();
     this.menuAbierto.set(abrir);
     if (abrir) {
-      queueMicrotask(() => this.host.nativeElement.querySelector<HTMLElement>('[role="menuitem"]')?.focus());
+      // Sin zone.js el menú se dibuja después de esta línea, no antes: el foco espera al render.
+      afterNextRender(() => this.host.nativeElement.querySelector<HTMLElement>('[role="menuitem"]')?.focus(), {
+        injector: this.injector,
+      });
     }
   }
 

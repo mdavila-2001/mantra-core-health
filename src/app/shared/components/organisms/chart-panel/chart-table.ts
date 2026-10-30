@@ -1,5 +1,5 @@
 import { formatearValor, NO_DATA } from '@core/data-access/reporting/reporting-format';
-import type { ChartSpec } from '@core/data-access/reporting/reporting.types';
+import type { ChartSpec, UnidadValor } from '@core/data-access/reporting/reporting.types';
 import type { ModoGrafico } from './chart-option.builder';
 
 /**
@@ -65,7 +65,27 @@ export function celdaCsv(valor: string | number | null): string {
   return /[",\n;]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
 }
 
-export function tableToCsv(tabla: ChartTableData): string {
-  const lineas = [tabla.columnas.map(celdaCsv).join(','), ...tabla.crudo.map((r) => r.map(celdaCsv).join(','))];
+/** «BOB», «%», «×»…: en qué viene cada número del CSV (un importe sin moneda no se debe exportar). */
+export function etiquetaUnidad(unidad: UnidadValor): string {
+  switch (unidad.tipo) {
+    case 'moneda':
+      return unidad.moneda;
+    case 'porcentaje':
+      return '%';
+    case 'razon':
+      return unidad.sufijo;
+    case 'numero':
+      return 'cantidad';
+  }
+}
+
+/**
+ * La primera columna es el rótulo (categoría, fecha, paso); las demás son valores y llevan su
+ * unidad en el encabezado, para que el archivo se entienda fuera de la pantalla.
+ */
+export function tableToCsv(tabla: ChartTableData, unidad?: UnidadValor): string {
+  const sufijo = unidad === undefined ? '' : ` (${etiquetaUnidad(unidad)})`;
+  const cabecera = tabla.columnas.map((c, i) => (i === 0 ? c : `${c}${sufijo}`));
+  const lineas = [cabecera.map(celdaCsv).join(','), ...tabla.crudo.map((r) => r.map(celdaCsv).join(','))];
   return `\uFEFF${lineas.join('\r\n')}\r\n`;
 }
