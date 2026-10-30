@@ -319,13 +319,13 @@ describe('correcciones de lectura (revisión visual)', () => {
   it('la cascada escribe nombre y valor en UNA línea solo si el lienzo medido es angosto (una función de media no reemplaza a la base)', () => {
     media({});
     const datos: DatosGrafico = { tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 1000, total: true }, { nombre: 'Sube', valor: 5 }] };
-    const con = (ancho: number | undefined) => {
+    const atWidth = (ancho: number | undefined) => {
       const o = construirOpciones({ spec: spec(datos), tema: TEMA, modo: 'normal', seleccion: null, anchoLienzo: ancho === undefined ? undefined : () => ancho });
       return at((o as { baseOption?: unknown }).baseOption ?? o, 'xAxis.axisLabel.formatter') as (v: string) => string;
     };
-    expect(con(320)('Sube')).toBe('Sube +5');
-    expect(con(900)('Sube')).toBe('Sube\n+5');
-    expect(con(undefined)('Sube')).toBe('Sube\n+5');
+    expect(atWidth(320)('Sube')).toBe('Sube +5');
+    expect(atWidth(900)('Sube')).toBe('Sube\n+5');
+    expect(atWidth(undefined)('Sube')).toBe('Sube\n+5');
     // Y el `media` no intenta reemplazar la función: no serviría.
     const raw = buildRaw(datos);
     expect(at(raw, 'media.0.option.xAxis.axisLabel.formatter')).toBeUndefined();
