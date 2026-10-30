@@ -1,5 +1,5 @@
-import { allFacts } from './synthetic-facts';
-import { CAMPAIGN_ECONOMICS } from './campaigns.data';
+import { allFacts } from './facts-source';
+import { revenuePerConversionCents } from './campaigns.data';
 import { addDays, daysBetween, monthStart, weekStart } from './dates';
 import type {
   AdditiveField,
@@ -302,5 +302,5 @@ export function breakdown(
 
 /** Ingresos por conversión de una campaña (para LTV). */
 export function revenuePerConversion(campaignId: string): number {
-  return CAMPAIGN_ECONOMICS[campaignId]?.revenuePerConversionCents ?? 0;
+  return revenuePerConversionCents(campaignId);
 }

@@ -374,3 +374,8 @@
     transition: none;
   }
 }
+
+.ins__loading {
+  padding: var(--sp-6);
+  color: var(--text-secondary);
+}

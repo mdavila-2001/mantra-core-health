@@ -1,8 +1,13 @@
-import { CAMPAIGNS, CAMPAIGN_CHANNELS, CAMPAIGN_ECONOMICS } from './campaigns.data';
-import { eachDay, weekdayIndex, PROTOTYPE_TODAY } from './dates';
-import type { Channel, DailyFact } from './insights.types';
-import { PAID_CHANNELS, VIDEO_CHANNELS } from './insights.types';
-import { noise } from './prng';
+import { eachDay, weekdayIndex } from '../../../data-access/insights/insights-dates';
+import { noise } from '../../../data-access/insights/insights-prng';
+import {
+  PAID_CHANNELS,
+  VIDEO_CHANNELS,
+  type Channel,
+  type DailyFact,
+} from '../../../data-access/insights/insights-base';
+import type { InsightsCampaignDto } from '../../../data-access/insights/insights.types';
+import { CAMPAIGN_SCALE, MOCK_CAMPAIGNS, MOCK_CUTOFF } from './catalog.dataset';
 
 /* ============================================================================
     Generador de hechos diarios.
@@ -90,8 +95,8 @@ function flightFactor(date: string, start: string, end: string): number {
 }
 
 function buildFact(campaignId: string, channel: Channel, date: string): DailyFact {
-  const campaign = CAMPAIGNS.find((c) => c.id === campaignId);
-  const econ = CAMPAIGN_ECONOMICS[campaignId];
+  const campaign = MOCK_CAMPAIGNS.find((c) => c.id === campaignId);
+  const econ = CAMPAIGN_SCALE[campaignId];
   if (!campaign || !econ) throw new Error(`Campaña sin economía: ${campaignId}`);
   const model = CHANNEL_MODEL[channel];
   const effect = eventEffect(campaignId, channel, date);
@@ -143,26 +148,27 @@ function buildFact(campaignId: string, channel: Channel, date: string): DailyFac
     firstUses: firstUsesInt,
     conversions: conversionsInt,
     spendCents: r(spendBs * 100),
-    revenueCents: r(conversionsInt * econ.revenuePerConversionCents * noise(`${key}|rev`, 0.05)),
+    revenueCents: r(conversionsInt * campaign.revenuePerConversionCents * noise(`${key}|rev`, 0.05)),
   };
 }
 
 let cache: readonly DailyFact[] | null = null;
 
-/** Todos los hechos diarios, ordenados por fecha, campaña y canal. Se calculan una vez. */
-export function allFacts(): readonly DailyFact[] {
+/** Todos los hechos diarios de ejemplo, ordenados por fecha, campaña y canal. Se calculan una vez. */
+export function mockCampaignFacts(): readonly DailyFact[] {
   if (cache) return cache;
   const facts: DailyFact[] = [];
-  for (const campaign of CAMPAIGNS) {
-    const last = campaign.endDate < PROTOTYPE_TODAY ? campaign.endDate : PROTOTYPE_TODAY;
-    const channels = CAMPAIGN_CHANNELS[campaign.id] ?? [];
+  for (const campaign of MOCK_CAMPAIGNS as readonly InsightsCampaignDto[]) {
+    const last = campaign.endDate < MOCK_CUTOFF ? campaign.endDate : MOCK_CUTOFF;
     for (const date of eachDay(campaign.startDate, last)) {
-      for (const channel of channels) facts.push(buildFact(campaign.id, channel, date));
+      for (const channel of campaign.channels) facts.push(buildFact(campaign.id, channel, date));
     }
   }
   facts.sort(
     (a, b) =>
-      a.date.localeCompare(b.date) || a.campaignId.localeCompare(b.campaignId) || a.channel.localeCompare(b.channel),
+      a.date.localeCompare(b.date) ||
+      a.campaignId.localeCompare(b.campaignId) ||
+      a.channel.localeCompare(b.channel),
   );
   cache = facts;
   return facts;
