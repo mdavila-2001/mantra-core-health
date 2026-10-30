@@ -146,10 +146,36 @@ describe('construirOpciones', () => {
       // Una serie diaria (muchas categorías) o un eje horizontal no se envuelven: no los necesitan.
       const dias = Array.from({ length: 30 }, (_, i) => `D${i}`);
       expect(at(buildRaw({ tipo: 'cartesiano', categorias: dias, series: [{ nombre: 'S', valores: dias.map(() => 1), forma: 'barra' }] }), 'media')).toBeUndefined();
-      // Las horizontales sí tienen media, pero distinta: truncan el nombre en vez de rotarlo.
+      // Las horizontales sí tienen media, pero distinta: no rotan el nombre. Con pocas barras lo parten en dos líneas
+      // (se lee entero); con muchas, dos líneas por barra se pisarían y lo truncan.
       const horizontal = buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: nombres, series: [{ nombre: 'S', valores: [1, 2, 3, 4, 5], forma: 'barra' }] });
-      expect(at(horizontal, 'media.0.option.yAxis.axisLabel.overflow')).toBe('truncate');
+      expect(at(horizontal, 'media.0.option.yAxis.axisLabel.overflow')).toBe('break');
       expect(at(horizontal, 'media.0.option.xAxis.axisLabel.rotate')).toBeUndefined();
+      const diez = Array.from({ length: 10 }, (_, i) => `Organización número ${i}`);
+      const muchasBarras = buildRaw({ tipo: 'cartesiano', horizontal: true, categorias: diez, series: [{ nombre: 'S', valores: diez.map(() => 1), forma: 'barra' }] });
+      expect(at(muchasBarras, 'media.0.option.yAxis.axisLabel.overflow')).toBe('truncate');
+    });
+
+    it('la dona sube y se achica en un lienzo angosto para que la leyenda no la pise', () => {
+      const raw = buildRaw({ tipo: 'partes', forma: 'dona', partes: [{ nombre: 'A', valor: 1 }, { nombre: 'B', valor: 2 }] });
+      expect(at(raw, 'media.0.query.maxWidth')).toBe(520);
+      expect(at(raw, 'media.0.option.series.0.center.1')).toBe('33%');
+      expect(at(raw, 'baseOption.series.0.center.1')).toBe('40%');
+    });
+
+    it('el mapa de calor rotula todas sus columnas y la cascada angosta sube la leyenda', () => {
+      const calor = buildRaw({ tipo: 'mapa-calor', columnas: ['a', 'b', 'c', 'd', 'e'], filas: ['f1'], celdas: [[0, 0, 1], [1, 0, 2], [2, 0, 3], [3, 0, 4], [4, 0, 5]], nombreValor: 'V' });
+      expect(at(calor, 'baseOption.xAxis.axisLabel.hideOverlap')).toBe(false);
+      expect(at(calor, 'media.0.option.xAxis.axisLabel.hideOverlap')).toBe(false);
+      const cascada = buildRaw({ tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 10, total: true }, { nombre: 'Resta', valor: -3 }, { nombre: 'Fin', valor: 7, total: true }] });
+      expect(at(cascada, 'media.0.option.legend.top')).toBe(0);
+    });
+
+    it('un mapa de calor de 24 columnas (horas) no apila todos los rótulos: deja que ECharts oculte los que se pisan', () => {
+      const horas = Array.from({ length: 24 }, (_, h) => `${h} h`);
+      const calor = buildRaw({ tipo: 'mapa-calor', columnas: horas, filas: ['L'], celdas: horas.map((_, x) => [x, 0, x]), nombreValor: 'V' });
+      expect(at(calor, 'baseOption.xAxis.axisLabel.hideOverlap')).toBe(true);
+      expect(at(calor, 'media.0.option.xAxis.axisLabel.hideOverlap')).toBe(true);
     });
 
     it('con pocas categorías se rotulan todas', () => {

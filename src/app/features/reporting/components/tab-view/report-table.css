@@ -21,7 +21,7 @@
    cortada a la derecha («Plan sugerido») parece completa. */
 .rt__scroll {
   overflow: auto;
-  max-height: 24rem;
+  max-height: 40rem;
   border: 1px solid var(--border-default);
   border-radius: var(--r-md);
   background:
@@ -35,9 +35,32 @@
 .rt__table th, .rt__table td { padding: var(--sp-2) var(--sp-3); text-align: left; border-bottom: 1px solid var(--border-default); white-space: nowrap; }
 .rt__table thead th { position: sticky; top: 0; background: var(--bg-surface-alt); font-size: var(--fs-caption); font-weight: 600; color: var(--text-secondary); }
 .rt__table tbody th { font-weight: 600; }
-/* El texto largo se parte en vez de empujar los números fuera de la pantalla: lo importante de una tabla es verla entera. */
-.rt__table tbody td:not(.rt__num) { white-space: normal; min-width: 11rem; max-width: 22rem; line-height: 1.4; vertical-align: top; }
+/* En una tabla de pocas columnas el texto largo se parte en vez de empujar los números fuera de la pantalla.
+   Con muchas columnas no: partirlas las ensancharía todas y la clave quedaría a la derecha, fuera de vista. */
+.rt--prose .rt__table tbody td:not(.rt__num) { white-space: normal; min-width: 11rem; max-width: 22rem; line-height: 1.4; vertical-align: top; }
 .rt__table tbody th { vertical-align: top; }
+.rt__table tbody td.rt__num { vertical-align: top; }
+
+/* En un teléfono una tabla con cuatro columnas de texto deja los números fuera de la pantalla: cada fila pasa a
+   una tarjeta con «etiqueta: valor». La información y el orden siguen siendo los mismos (regla 95.4.4). */
+/* Una tabla que se vuelve tarjetas en móvil no se corta en vertical a ningún ancho: son pocas filas y se leen enteras. */
+.rt--cards .rt__scroll { max-height: none; }
+
+@media (max-width: 640px) {
+  .rt--cards .rt__scroll { overflow: visible; background: none; border: 0; }
+  .rt--cards .rt__table, .rt--cards .rt__table tbody, .rt--cards .rt__table tr, .rt--cards .rt__table th, .rt--cards .rt__table td { display: block; width: 100%; }
+  .rt--cards .rt__table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  /* Quien llega a ordenar con el teclado ve la cabecera: un control con foco no puede estar invisible. */
+  .rt--cards .rt__table thead:focus-within { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+  .rt--cards .rt__table tbody tr { margin-bottom: var(--sp-3); border: 1px solid var(--border-default); border-radius: var(--r-md); overflow: hidden; }
+  .rt--cards .rt__table tbody th { padding: var(--sp-2) var(--sp-3); background: var(--bg-surface-alt); border-bottom: 1px solid var(--border-default); white-space: normal; }
+  .rt--cards .rt__table tbody td { display: flex; justify-content: space-between; gap: var(--sp-3); max-width: none; min-width: 0; text-align: right; white-space: normal; }
+  .rt--cards .rt__table tbody td::before { content: attr(data-label); flex: 0 0 40%; text-align: left; font-weight: 600; color: var(--text-secondary); }
+  .rt--cards .rt__table tbody td:not(.rt__num) { text-align: left; }
+  .rt--cards .rt__table tbody tr:last-child td, .rt--cards .rt__table tbody tr:last-child th { border-bottom: 1px solid var(--border-default); }
+  .rt--cards .rt__table tbody td.rt__blank { display: none; }
+  .rt--cards .rt__table tbody tr:last-child td:last-child { border-bottom: 0; }
+}
 .rt__table tbody tr:last-child th, .rt__table tbody tr:last-child td { border-bottom: 0; }
 .rt__table .rt__num { text-align: right; }
 .rt__missing { color: var(--text-muted); font-style: italic; }
@@ -65,3 +88,6 @@
 /* Solo en pantallas angostas, donde la tabla casi siempre se corta: la sombra avisa, la frase lo dice. */
 .rt__hint { display: none; margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
 @media (max-width: 780px) { .rt__hint { display: block; } }
+@media (max-width: 640px) { .rt--cards .rt__hint { display: none; } }
+/* Muchas columnas: el aviso va a cualquier ancho, porque la sombra del borde sola no lo dice. */
+@media (min-width: 641px) { .rt--wide .rt__hint { display: block; } }

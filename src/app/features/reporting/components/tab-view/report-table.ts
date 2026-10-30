@@ -18,6 +18,10 @@ const isMissingValue = (value: CellValue): value is null | undefined =>
 
 const COLLATOR = new Intl.Collator('es', { numeric: true, sensitivity: 'base' });
 
+const MAX_CARD_ROWS = 12;
+const MAX_CARD_CELLS = 60;
+const WIDE_COLUMNS = 8;
+
 /**
  * Tabla de detalle de una pestaña (ranking, envejecimiento…). Hereda el rigor
  * del resto del portal: `null` se escribe «Sin dato» (nunca un 0 ni un guion),
@@ -38,10 +42,19 @@ const COLLATOR = new Intl.Collator('es', { numeric: true, sensitivity: 'base' })
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportTable {
+  protected readonly WIDE_COLUMNS = WIDE_COLUMNS;
   readonly table = input.required<TablaReporte>();
 
   protected readonly ids = nextControlId('rt');
   protected readonly infoOpen = signal(false);
+  /** En un teléfono cada fila pasa a una tarjeta, pero solo si el resultado no es una columna interminable (filas × columnas). */
+  protected readonly asCards = computed(() => {
+    const { filas, columnas } = this.table();
+    return filas.length <= MAX_CARD_ROWS && filas.length * columnas.length <= MAX_CARD_CELLS;
+  });
+
+  /** Pocas columnas de texto largo: se parten en varias líneas. Con muchas columnas partirlas empuja las cifras fuera de la pantalla. */
+  protected readonly isProse = computed(() => this.table().columnas.length < WIDE_COLUMNS);
   protected readonly sort = signal<{ readonly key: string; readonly direction: SortDirection } | null>(null);
 
   /** Una columna es numérica si lo declara o si todo lo que trae son números (o ausencias). */

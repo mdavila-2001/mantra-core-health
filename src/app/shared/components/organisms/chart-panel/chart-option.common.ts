@@ -78,7 +78,7 @@ export function tooltipBase(tema: ChartTheme): Record<string, unknown> {
     borderWidth: 1,
     padding: [10, 12],
     textStyle: { color: tema.texto, fontSize: 12 },
-    extraCssText: 'box-shadow: var(--shadow-md); border-radius: 10px;',
+    extraCssText: 'box-shadow: var(--shadow-md); border-radius: var(--r-md);',
   };
 }
 

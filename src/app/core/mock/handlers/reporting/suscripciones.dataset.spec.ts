@@ -254,15 +254,36 @@ describe('dataset de suscripciones (ejemplo)', { timeout: 30_000 }, () => {
 });
 
 describe('la tabla «Resumen por plan» cuadra con las tarjetas de la misma pestaña', () => {
-  for (const ctx of contextos().slice(0, 12)) {
-    it(`${ctx.periodo} · ${ctx.comparar} · ${ctx.moneda} · ${ctx.alcance}: el total de MRR coincide con la tarjeta MRR (centavos de redondeo)`, () => {
+  for (const ctx of contextos()) {
+    it(`${ctx.periodo} · ${ctx.comparar} · ${ctx.moneda} · ${ctx.alcance}: el total de MRR es EXACTAMENTE el de la tarjeta MRR y las filas lo suman`, () => {
       const pestana = construirSuscripciones(ctx);
       const tarjeta = pestana.kpis.find((k) => k.id === 'mrr')?.valor;
       const tabla = pestana.tablas.find((t) => t.id === 'resumen-planes');
       const total = tabla?.filas.find((f) => f['plan'] === 'Total')?.['mrr'];
       expect(typeof tarjeta).toBe('number');
       expect(typeof total).toBe('number');
-      expect(Math.abs((total as number) - (tarjeta as number))).toBeLessThanOrEqual(0.05);
+      expect(total).toBe(tarjeta);
+      const filas = (tabla?.filas ?? []).filter((f) => f['plan'] !== 'Total');
+      expect(Math.round(sumaNum(filas.map((f) => f['mrr'] as number)) * 100)).toBe(Math.round((total as number) * 100));
+    });
+  }
+});
+
+describe('la tabla «Resumen por plan» con un filtro de plan activo no se contradice', () => {
+  for (const plan of ['Esencial', 'Profesional', 'Clínica']) {
+    it(`filtrado por ${plan}: el ingreso por cuenta sigue siendo del orden del precio del plan, no una fracción`, () => {
+      const unfiltered = construirSuscripciones(BASE).tablas.find((t) => t.id === 'resumen-planes')!;
+      const filtered = construirSuscripciones({ ...BASE, filtros: [{ dimension: 'plan', valor: plan }] }).tablas.find((t) => t.id === 'resumen-planes')!;
+      const fila = (t: typeof unfiltered) => t.filas.find((f) => f['plan'] === plan)!;
+      const arpuUnfiltered = fila(unfiltered)['arpu'] as number;
+      const arpuFiltered = fila(filtered)['arpu'] as number;
+      // Antes salía entre el 18 % y el 58 % del valor sin filtrar; con las cuentas del mismo corte vuelve al orden del precio.
+      expect(arpuFiltered / arpuUnfiltered).toBeGreaterThan(0.85);
+      expect(arpuFiltered / arpuUnfiltered).toBeLessThan(1.15);
+      expect(fila(filtered)['cuentas'] as number).toBeLessThanOrEqual(fila(unfiltered)['cuentas'] as number);
+      // Con un filtro de plan la tabla muestra solo ese plan: su total no es el de la tarjeta y la fila lo dice.
+      expect(filtered.filas.some((f) => f['plan'] === 'Total del plan filtrado')).toBe(true);
+      expect(filtered.filas.some((f) => f['plan'] === 'Total')).toBe(false);
     });
   }
 });

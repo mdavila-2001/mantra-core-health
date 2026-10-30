@@ -17,7 +17,8 @@ import {
   suma,
 } from './reporting-dataset.util';
 import { construirResumen, buildSummaryWith } from './resumen.dataset';
-import type { FuentesResumen } from './resumen.base';
+import { FUENTES_REALES, type FuentesResumen } from './resumen.base';
+import { construirSuscripciones } from './suscripciones.dataset';
 
 const PERIODOS: PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
 const COMPARAR: ComparacionReporte[] = ['ninguna', 'periodo-anterior', 'mismo-periodo-ano-anterior'];
@@ -112,6 +113,14 @@ function kpi(p: PestanaReporte, id: string): KpiSpec {
   return k;
 }
 
+function withVariation(p: PestanaReporte, pct: number): PestanaReporte {
+  return { ...p, kpis: p.kpis.map((k) => (k.id === 'ingreso-periodo' ? { ...k, variacionPct: pct } : k)) };
+}
+
+function withoutVariation(p: PestanaReporte): PestanaReporte {
+  return { ...p, kpis: p.kpis.map((k) => (k.id === 'ingreso-periodo' ? { ...k, variacionPct: null } : k)) };
+}
+
 function grafico(p: PestanaReporte, id: string) {
   const g = p.graficos.find((x) => x.id === id);
   if (g === undefined) throw new Error(`falta el gráfico ${id}`);
@@ -170,7 +179,7 @@ function contratoEstandar(nombre: string, construir: (ctx: ContextoReporte) => P
       const p = construir(CTX);
       expect(p.secciones?.map((s) => s.titulo)).toEqual([
         '¿Cuánto entró y cómo viene cambiando?',
-        '¿De dónde sale la plata y por qué nos la pagan?',
+        '¿De dónde sale el ingreso y por qué se paga?',
         '¿Es un ingreso sano?',
         '¿Qué miro hoy?',
         'Glosario en palabras simples',
@@ -233,6 +242,18 @@ describe('Resumen: composición de las tres verticales', () => {
       expect(valores[valores.length - 1]).toBe(mrr);
     }
     expect(g.velas?.velas.length).toBeGreaterThan(0);
+  });
+
+  it('el MRR del Resumen dibuja la MISMA trayectoria que la pestaña Suscripciones y que la tarjeta de arriba', () => {
+    for (const ctx of [CTX, { ...CTX, periodo: '12m' as const }, { ...CTX, moneda: 'USD' as const }]) {
+      // Con las verticales REALES (no con los dobles): lo que se prueba es que el Resumen lee el modelo de Suscripciones.
+      const resumen = construirResumen(ctx);
+      const susc = construirSuscripciones(ctx);
+      const fromSummary = grafico(resumen, 'mrr-total');
+      const fromSubscriptions = susc.graficos.find((g) => g.id === 'mrr-evolucion')!;
+      expect(fromSummary.datos).toEqual(fromSubscriptions.datos);
+      expect(fromSummary.velas?.velas).toEqual(fromSubscriptions.velas?.velas);
+    }
   });
 
   it('la cascada suma: anterior + variaciones = actual, y el actual es el total', () => {
@@ -400,6 +421,49 @@ describe('Resumen: contra las verticales reales', () => {
       for (const t of ['MRR', 'ARR', 'ARPU', 'Churn', 'LTV', 'CAC', 'Take rate', 'ROAS']) {
         expect(glosario.filas.map((f) => f['termino']), t).toContain(t);
       }
+    });
+
+    it('la fórmula del glosario ES la del KPI de su pestaña: una sola definición', () => {
+      const glosario = buildSummaryWith(CTX, FUENTES_REALES).tablas.find((t) => t.id === 'glosario-monetizacion')!;
+      const calculo = (termino: string): unknown => glosario.filas.find((f) => f['termino'] === termino)?.['calculo'];
+      expect(calculo('MRR')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'mrr').info?.formula);
+      expect(calculo('Take rate')).toBe(kpi(FUENTES_REALES.comisiones(CTX), 'take-rate').info?.formula);
+      expect(calculo('ROAS')).toBe(kpi(FUENTES_REALES.publicidad(CTX), 'roas').info?.formula);
+      expect(calculo('ARR')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'arr').info?.formula);
+      expect(calculo('ARPU')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'arpu').info?.formula);
+      expect(calculo('LTV')).toBe(kpi(FUENTES_REALES.suscripciones(CTX), 'ltv').info?.formula);
+    });
+
+    it('la economía unitaria trae valor para sus cinco indicadores cuando las pestañas lo tienen', () => {
+      const eco = buildSummaryWith(CTX, FUENTES_REALES).tablas.find((t) => t.id === 'economia-unitaria')!;
+      expect(eco.filas).toHaveLength(5);
+      for (const f of eco.filas) {
+        expect(f['valor'], String(f['indicador'])).not.toBeNull();
+      }
+    });
+
+    it('la lectura rápida nombra la comparación elegida y no llama «la que más cae» a la que cae menos', () => {
+      const anioPasado = buildSummaryWith({ ...CTX, comparar: 'mismo-periodo-ano-anterior' }, COMPLETAS).secciones![0]!.descripcion ?? '';
+      expect(anioPasado).toContain('mismo periodo del año pasado');
+      expect(anioPasado).not.toContain('frente al periodo anterior');
+      const allFall: FuentesResumen = {
+        suscripciones: (c) => withVariation(COMPLETAS.suscripciones(c), -1),
+        publicidad: (c) => withVariation(COMPLETAS.publicidad(c), -5),
+        comisiones: (c) => withVariation(COMPLETAS.comisiones(c), -10),
+      };
+      const texto = buildSummaryWith(CTX, allFall).secciones![0]!.descripcion ?? '';
+      expect(texto).toMatch(/Ninguna fuente crece; la que menos cae es Suscripciones/);
+    });
+
+    it('con una sola fuente que cae no se llama «la que más» y «la que menos» a la misma', () => {
+      const single: FuentesResumen = {
+        suscripciones: (c) => withVariation(COMPLETAS.suscripciones(c), -3),
+        publicidad: (c) => withoutVariation(COMPLETAS.publicidad(c)),
+        comisiones: (c) => withoutVariation(COMPLETAS.comisiones(c)),
+      };
+      const texto = buildSummaryWith(CTX, single).secciones![0]!.descripcion ?? '';
+      expect(texto).not.toMatch(/la que menos cae/);
+      expect(texto).toMatch(/Suscripciones cae/);
     });
   });
 });
