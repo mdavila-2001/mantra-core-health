@@ -15,7 +15,16 @@ export interface OpcionesBuild {
   readonly modo: ModoGrafico;
   /** Valor del elemento filtrado (nombre de categoría/parte), si lo hay. */
   readonly seleccion: string | null;
+  /**
+   * Ancho real del lienzo en px, leído en el momento de dibujar. ECharts NO reemplaza una función con la de un
+   * `media` (las fusiona), así que lo que depende del ancho y es una función —como el `formatter` de un rótulo—
+   * tiene que preguntarlo aquí. Sin él se asume un lienzo ancho.
+   */
+  readonly anchoLienzo?: () => number;
 }
+
+/** Hasta este ancho (px) un lienzo se trata como el de un teléfono. */
+export const LIENZO_ANGOSTO = 520;
 
 export function escapar(texto: string): string {
   return texto

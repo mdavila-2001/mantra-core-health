@@ -100,6 +100,7 @@ export class ChartPanel {
       tema,
       modo: this.modoEfectivo(),
       seleccion: this.seleccion(),
+      anchoLienzo: () => this.host.nativeElement.querySelector<HTMLElement>('.gp__lienzo')?.clientWidth || Number.POSITIVE_INFINITY,
     });
   });
   protected readonly tabla = computed(() => buildChartTable(this.spec(), this.modoEfectivo()));

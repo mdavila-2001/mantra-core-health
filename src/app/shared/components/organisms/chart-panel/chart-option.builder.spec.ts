@@ -316,13 +316,19 @@ describe('correcciones de lectura (revisión visual)', () => {
     expect(at(o, 'series.2.barMinHeight')).toBe(3);
   });
 
-  it('en un lienzo angosto la cascada escribe nombre y valor en UNA línea (dos líneas inclinadas se pisan)', () => {
+  it('la cascada escribe nombre y valor en UNA línea solo si el lienzo medido es angosto (una función de media no reemplaza a la base)', () => {
     media({});
-    const raw = buildRaw({ tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 1000, total: true }, { nombre: 'Sube', valor: 5 }] });
-    const angosto = at(raw, 'media.0.option.xAxis.axisLabel.formatter') as (v: string) => string;
-    const ancho = at(raw, 'baseOption.xAxis.axisLabel.formatter') as (v: string) => string;
-    expect(angosto('Sube')).toBe('Sube +5');
-    expect(ancho('Sube')).toBe('Sube\n+5');
+    const datos: DatosGrafico = { tipo: 'cascada', pasos: [{ nombre: 'Inicio', valor: 1000, total: true }, { nombre: 'Sube', valor: 5 }] };
+    const con = (ancho: number | undefined) => {
+      const o = construirOpciones({ spec: spec(datos), tema: TEMA, modo: 'normal', seleccion: null, anchoLienzo: ancho === undefined ? undefined : () => ancho });
+      return at((o as { baseOption?: unknown }).baseOption ?? o, 'xAxis.axisLabel.formatter') as (v: string) => string;
+    };
+    expect(con(320)('Sube')).toBe('Sube +5');
+    expect(con(900)('Sube')).toBe('Sube\n+5');
+    expect(con(undefined)('Sube')).toBe('Sube\n+5');
+    // Y el `media` no intenta reemplazar la función: no serviría.
+    const raw = buildRaw(datos);
+    expect(at(raw, 'media.0.option.xAxis.axisLabel.formatter')).toBeUndefined();
   });
 
   it('con 7 pasos la cascada reparte el ancho: cada nombre mide menos que con 3', () => {
