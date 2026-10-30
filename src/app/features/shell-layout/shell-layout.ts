@@ -310,6 +310,15 @@ export class ShellLayout {
       .some((seccion) => seccion.path === 'administration/medical-organization'),
   );
 
+  /**
+   * «Mis solicitudes» en la barra superior: misma regla que «Mis
+   * organizaciones», preguntándole a `visibleSections()`. La farmacia no la
+   * tiene (`hiddenForTenantTypes` de la sección, 30/10/2026).
+   */
+  protected readonly ofreceMisSolicitudes = computed(() =>
+    this.navigation.visibleSections().some((seccion) => seccion.path === 'my-account/requests'),
+  );
+
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
   protected readonly etiquetaCarrito = computed(() => {
     const unidades = this.unidadesDelCarrito();
