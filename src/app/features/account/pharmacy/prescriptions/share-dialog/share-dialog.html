@@ -1,0 +1,72 @@
+<app-content-dialog
+  heading="Compartir receta"
+  description="Cualquiera con este enlace puede comprobar que la receta es válida. Solo una farmacia con cuenta en AloVida ve los medicamentos."
+  (closed)="closed.emit()"
+>
+  <div class="share" [attr.data-testid]="testids.dialog">
+    <app-view-state-host [state]="state()" (retry)="create()">
+      @if (share(); as link) {
+        <div class="share__body">
+          @if (qrAvailable()) {
+            <!-- El QR es el mismo enlace de abajo, para escanearlo desde otro
+                 teléfono: para quien escucha la pantalla es un duplicado. -->
+            <div class="share__qr" aria-hidden="true" [attr.data-testid]="testids.dialogQr">
+              <canvas #qrCanvas [width]="qrSide" [height]="qrSide"></canvas>
+            </div>
+          }
+
+          <div class="share__details">
+            <p class="share__label">Enlace</p>
+            <code class="share__url" [attr.data-testid]="testids.dialogUrl">{{
+              link.url
+            }}</code>
+            <p class="share__meta" [attr.data-testid]="testids.dialogExpiry">
+              {{ link.itemCount }} {{ link.itemCount === 1 ? 'medicamento' : 'medicamentos' }} ·
+              vence el {{ link.expiresAt | date: "d 'de' MMMM 'de' y" }}
+            </p>
+            <p class="share__meta">
+              Puede dejar de compartirla cuando quiera desde «Enlaces compartidos».
+            </p>
+          </div>
+        </div>
+      }
+    </app-view-state-host>
+  </div>
+
+  @if (share()) {
+    <div dialog-actions class="share__actions">
+      @if (canShareNatively) {
+        <button
+          app-button
+          type="button"
+          variant="primary"
+          [attr.data-testid]="testids.dialogNativeShare"
+          (clicked)="shareNatively()"
+        >
+          Compartir…
+        </button>
+      }
+      @if (whatsappHref(); as href) {
+        <a
+          app-button
+          variant="secondary"
+          target="_blank"
+          rel="noopener noreferrer"
+          [href]="href"
+          [attr.data-testid]="testids.dialogWhatsapp"
+        >
+          Enviar por WhatsApp
+        </a>
+      }
+      <button
+        app-button
+        type="button"
+        variant="outline"
+        [attr.data-testid]="testids.dialogCopy"
+        (clicked)="copyLink()"
+      >
+        Copiar enlace
+      </button>
+    </div>
+  }
+</app-content-dialog>

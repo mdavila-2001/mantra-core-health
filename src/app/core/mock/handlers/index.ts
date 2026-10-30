@@ -56,6 +56,7 @@ import { registerMedicalCenters } from './medical-centers.handlers';
 import { registerOrganizationPracticeHandlers } from './medical-center-onboarding.handlers';
 import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
+import { registerPrescriptionShares } from './prescription-shares.handlers';
 import { registrarReporteria } from './reporting.handlers';
 
 /**
@@ -81,6 +82,8 @@ export function crearRouterSimulado(): MockRouter {
   registerRoleAssignments(router);
   registrarPracticas(router);
   registrarClinica(router);
+  // FAR-01 · el enlace para compartir una receta (`/clinical/prescription-shares`, `/public/prescription-shares`).
+  registerPrescriptionShares(router);
   registerReferrals(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);

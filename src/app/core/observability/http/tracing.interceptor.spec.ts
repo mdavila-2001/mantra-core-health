@@ -121,6 +121,23 @@ describe('tracingInterceptor', () => {
     expect(atributos).not.toContain('eyJhbGci');
   });
 
+  it('NUNCA registra el token de una receta compartida, que viaja en la ruta (FAR-01)', () => {
+    montar();
+    const token = 'Q2hhcmxpZVN5bnRoZXRpY1Rva2VuMDEyMzQ1Njc4OWFi';
+
+    http.get(`/public/prescription-shares/${token}`).subscribe();
+    httpMock.expectOne(`/public/prescription-shares/${token}`).flush({});
+    http.get(`/clinical/prescription-shares/by-token/${token}`).subscribe();
+    httpMock.expectOne(`/clinical/prescription-shares/by-token/${token}`).flush({});
+
+    const [publicSpan, ownSpan] = exporter.getFinishedSpans();
+    expect(JSON.stringify([publicSpan?.attributes, ownSpan?.attributes])).not.toContain(token);
+    expect(publicSpan?.attributes['url.path']).toBe('/public/prescription-shares/:token');
+    expect(ownSpan?.attributes['app.api.route.template']).toBe(
+      '/clinical/prescription-shares/by-token/:token',
+    );
+  });
+
   it('agrupa por plantilla de ruta, no por identificador', () => {
     montar();
 
