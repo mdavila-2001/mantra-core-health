@@ -207,3 +207,9 @@ app-insights-reports {
   overflow: hidden;
   clip-path: inset(50%);
 }
+
+.rp app-segmented-control {
+  display: block;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}

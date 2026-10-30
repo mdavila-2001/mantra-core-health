@@ -71,3 +71,10 @@
     grid-column: auto;
   }
 }
+
+/* Con muchas opciones el control no cabe en pantallas estrechas: se desplaza en vez de recortarse. */
+app-segmented-control {
+  display: block;
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
