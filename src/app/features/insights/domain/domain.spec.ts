@@ -10,7 +10,7 @@ import { chartOptionsFor, recommendVisualization } from './viz-recommender';
 import { allFacts } from './synthetic-facts';
 
 const REG: InsightsFilter = {
-  campaignIds: ['reg-oct'],
+  campaignIds: ['c1'],
   range: { from: '2026-10-01', to: '2026-10-29' },
   grain: 'day',
   channels: CHANNELS,
@@ -134,7 +134,7 @@ describe('cohortes', () => {
     const kpi = computeKpi(REG, 'retention');
     expect(kpi.value).toBeNull();
     expect(kpi.gap?.reason).toBe('insufficient-sample');
-    const september = computeKpi({ ...REG, campaignIds: ['esp-sep'], range: { from: '2026-09-01', to: '2026-09-30' } }, 'retention');
+    const september = computeKpi({ ...REG, campaignIds: ['c2'], range: { from: '2026-09-01', to: '2026-09-30' } }, 'retention');
     expect(september.value).not.toBeNull();
   });
 
@@ -246,20 +246,20 @@ describe('benchmarks y estados', () => {
 describe('detección de cambios', () => {
   const shifts = detectAllShifts();
 
-  it('encuentra el encarecimiento del costo por resultado', () => {
-    const cpa = shifts.find((s) => s.campaignId === 'reg-oct' && s.channel === null && s.metric === 'cpa');
-    expect(cpa?.harmful).toBe(true);
-    expect(cpa?.change).toBeGreaterThan(0.15);
+  it('encuentra el encarecimiento de Facebook tras el cambio de oferta de «Ahorro en medicamentos»', () => {
+    const cpm = shifts.find((s) => s.campaignId === 'c3' && s.channel === 'facebook' && s.metric === 'cpm');
+    expect(cpm?.harmful).toBe(true);
+    expect(cpm?.change).toBeGreaterThan(0.15);
   });
 
   it('encuentra el salto de CTR de TikTok como cambio no dañino', () => {
-    const tiktok = shifts.find((s) => s.channel === 'tiktok' && s.metric === 'ctr' && s.campaignId === 'reg-oct');
-    expect(tiktok?.change).toBeGreaterThan(0.5);
+    const tiktok = shifts.find((s) => s.channel === 'tiktok' && s.metric === 'ctr' && s.campaignId === 'c2');
+    expect(tiktok?.change).toBeGreaterThan(0.3);
     expect(tiktok?.harmful).toBe(false);
   });
 
   it('encuentra el aumento del abandono del onboarding', () => {
-    const onboarding = detectOnboardingShift('reg-oct', '2026-10-29');
+    const onboarding = detectOnboardingShift('c1', '2026-10-29');
     expect(onboarding?.change).toBeGreaterThan(0.1);
   });
 

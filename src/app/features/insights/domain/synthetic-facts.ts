@@ -62,19 +62,21 @@ interface EventEffect {
 const NEUTRAL: EventEffect = { cpm: 1, ctr: 1, lead: 1, activation: 1, conversion: 1 };
 
 /**
- * Hechos inyectados en «Registro Médicos — Octubre»:
- *  · desde el 20: el onboarding pierde gente (activación cae);
- *  · 25 al 29: Instagram y Facebook se encarecen y convierten peor;
- *  · 26 al 29: TikTok dispara su CTR.
+ * Hechos inyectados (los hitos visibles están en `MILESTONES`):
+ *  · c1, desde el 20: el onboarding pierde gente (la activación cae);
+ *  · c2: el video de la maqueta se viraliza el 9 (TikTok sube su CTR hasta el 14) y desde el 26 vuelve a subir;
+ *  · c3, desde el 22: el cambio de oferta en Facebook encarece y convierte peor.
  */
 function eventEffect(campaignId: string, channel: Channel, date: string): EventEffect {
-  if (campaignId !== 'reg-oct') return NEUTRAL;
   let effect = NEUTRAL;
-  if (date >= '2026-10-20') effect = { ...effect, activation: 0.905 };
-  if (date >= '2026-10-25' && (channel === 'instagram' || channel === 'facebook')) {
+  if (campaignId === 'c1' && date >= '2026-10-20') effect = { ...effect, activation: 0.905 };
+  if (campaignId === 'c2' && channel === 'tiktok') {
+    if (date >= '2026-10-09' && date <= '2026-10-14') effect = { ...effect, ctr: 1.7 };
+    if (date >= '2026-10-26') effect = { ...effect, ctr: 1.9 };
+  }
+  if (campaignId === 'c3' && date >= '2026-10-22' && channel === 'facebook') {
     effect = { ...effect, cpm: 1.4, lead: 0.42, conversion: 0.78 };
   }
-  if (date >= '2026-10-26' && channel === 'tiktok') effect = { ...effect, ctr: 1.9 };
   return effect;
 }
 
