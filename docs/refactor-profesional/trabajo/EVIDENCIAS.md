@@ -256,3 +256,24 @@ Sin cambio: L-2 (las imágenes `geometria-*.png` siguen sin atenciones ni tema o
 oscuro se comprueban en las capturas de la app).
 
 Capturas: `capturas/recorrido-clinico/`.
+
+## Formulario de receta: los diagnósticos confirmados — 2026-10-30
+
+Defecto: el formulario de receta (`medication-block`) sólo ofrece diagnósticos confirmados, y ni el
+expediente ni «Atención» le decían cuáles lo estaban (`diagnosticosParaReceta` no pasaba
+`confirmadoEl`). El selector quedaba siempre en «Otro motivo». Además la lista de recetas no recibía
+su vínculo (`vinculo`, `vinculoEsDiagnostico`): no mostraba para qué era cada una y ofrecía «Vincular»
+aunque ya estuviera atada. Arreglo: `diagnosticoParaReceta` y `vinculoDeReceta`, en
+`medication-block.ts`, usados por las dos pantallas.
+
+Entorno: base `origin/dev` (`d6f3462e3`) · `ng serve --configuration development,demo` · Chromium ·
+`medica@alovida.mock`, paciente `pid-paciente`.
+
+| Comando / prueba | Resultado |
+|---|---|
+| `tsc -p tsconfig.app.json` · `eslint` de `patient-chart/` y `consultation/` | 0 · 0 |
+| `ng test --include='…/clinical-record/**/*.spec.ts'` | 39 archivos; 1 prueba roja preexistente (`follow-up-block`, «el calendario pinta de verde…»: roja también sin este cambio). Nuevas: 9 en `indicacion-de-receta.spec.ts`, 1 en `medication-block.spec.ts`, 2 en `patient-chart.spec.ts` |
+| `yarn test` completo | **no se ejecutó** |
+| UI → alta → lista → salir y volver → tabla y Recorrido | el selector ofrece «Hipertensión arterial esencial · Confirmado»; Losartán prescrito para ese diagnóstico (con el aviso de interacción con Enalapril aceptado); la lista lo muestra con «Diagnóstico: Hipertensión arterial esencial»; tras salir y volver, la tabla de Medicación lo trae atado a Hipertensión y el Recorrido dibuja dos indicaciones; 0 errores de consola. El backend simulado vive dentro de Angular: la petición no pasa por la red |
+
+Capturas: `capturas/receta-diagnostico/`. «Atención» usa el mismo ayudante; no se probó en navegador.
