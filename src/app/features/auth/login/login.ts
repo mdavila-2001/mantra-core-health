@@ -34,8 +34,6 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 
-/** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
-
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
  *

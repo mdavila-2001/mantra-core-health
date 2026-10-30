@@ -318,7 +318,7 @@ function calorMensual(base: BaseResumen): ChartSpec {
   return {
     id: 'calor-vertical-mes',
     titulo: 'Ingreso mensual por vertical',
-    subtitulo: 'Más oscuro = más ingreso en ese mes',
+    subtitulo: 'Cuanto más intenso el color, más ingreso en ese mes (la escala de abajo da los valores)',
     unidad: moneyUnit(base),
     datos: { tipo: 'mapa-calor', filas: ORDEN.map((c) => VERTICAL_NAME[c]), columnas: MESES, celdas, nombreValor: 'Ingreso del mes' },
     resumenAccesible: hayDato
