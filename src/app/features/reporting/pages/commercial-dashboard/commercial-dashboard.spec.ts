@@ -43,7 +43,7 @@ async function mount(
   TestBed.configureTestingModule({
     providers: [
       provideZonelessChangeDetection(),
-      provideRouter([{ path: 'reporting/comercial/:pestana', component: CommercialDashboard }]),
+      provideRouter([{ path: 'reports/commercial/:pestana', component: CommercialDashboard }]),
       { provide: ReportingClient, useValue: client },
     ],
   });
@@ -57,7 +57,7 @@ async function mount(
 
 describe('CommercialDashboard', () => {
   it('abre la pestaña que dice la URL y pide los datos con el contexto actual', async () => {
-    const { root, calls, store } = await mount('/reporting/comercial/suscripciones');
+    const { root, calls, store } = await mount('/reports/commercial/suscripciones');
     expect(calls).toHaveLength(1);
     expect(calls[0]?.[0]).toBe('suscripciones');
     expect(calls[0]?.[1]).toEqual(store.contexto());
@@ -68,22 +68,22 @@ describe('CommercialDashboard', () => {
   });
 
   it('ofrece las siete verticales como enlaces con su propia URL', async () => {
-    const { root } = await mount('/reporting/comercial/resumen');
+    const { root } = await mount('/reports/commercial/resumen');
     const links = Array.from(root.querySelectorAll('nav a.cd__tab')) as HTMLAnchorElement[];
     expect(links.map((a) => a.getAttribute('href'))).toEqual([
-      '/reporting/comercial/resumen',
-      '/reporting/comercial/suscripciones',
-      '/reporting/comercial/publicidad',
-      '/reporting/comercial/comisiones',
-      '/reporting/comercial/cobros',
-      '/reporting/comercial/adquisicion',
-      '/reporting/comercial/calidad',
+      '/reports/commercial/resumen',
+      '/reports/commercial/suscripciones',
+      '/reports/commercial/publicidad',
+      '/reports/commercial/comisiones',
+      '/reports/commercial/cobros',
+      '/reports/commercial/adquisicion',
+      '/reports/commercial/calidad',
     ]);
   });
 
   it('navegar a otra pestaña cambia la URL, la pestaña activa y los datos', async () => {
-    const { harness, root, calls } = await mount('/reporting/comercial/resumen');
-    await harness.navigateByUrl('/reporting/comercial/cobros');
+    const { harness, root, calls } = await mount('/reports/commercial/resumen');
+    await harness.navigateByUrl('/reports/commercial/cobros');
     await harness.fixture.whenStable();
     expect(calls.map((c) => c[0])).toEqual(['resumen', 'cobros']);
     expect(root.querySelector('[data-testid="tab-cobros"]')?.getAttribute('aria-current')).toBe('page');
@@ -91,33 +91,33 @@ describe('CommercialDashboard', () => {
   });
 
   it('una pestaña que no existe dice «no encontrado» y no pide nada', async () => {
-    const { root, calls } = await mount('/reporting/comercial/inventada');
+    const { root, calls } = await mount('/reports/commercial/inventada');
     expect(calls).toHaveLength(0);
     expect(root.textContent).toContain('No encontramos lo que busca');
   });
 
   describe('sello de datos de ejemplo', () => {
     it('se ve cuando el origen es «ejemplo»', async () => {
-      const { root } = await mount('/reporting/comercial/resumen');
+      const { root } = await mount('/reports/commercial/resumen');
       expect(root.querySelector('[data-testid="sample-seal"]')?.textContent).toContain('DATOS DE EJEMPLO');
     });
 
     it('no se pone sobre datos que no lo son', async () => {
-      const { root } = await mount('/reporting/comercial/resumen', (tab) => of(pestana(tab, { origen: 'api' })));
+      const { root } = await mount('/reports/commercial/resumen', (tab) => of(pestana(tab, { origen: 'api' })));
       expect(root.querySelector('[data-testid="sample-seal"]')).toBeNull();
     });
   });
 
   describe('publicidad', () => {
     it('destaca «Módulo en diseño» aunque el servidor no lo avise', async () => {
-      const { root } = await mount('/reporting/comercial/publicidad');
+      const { root } = await mount('/reports/commercial/publicidad');
       const banner = root.querySelector('[data-testid="design-banner"]');
       expect(banner?.textContent).toContain('Módulo en diseño');
       expect(banner?.textContent).toContain('gestor de anuncios');
     });
 
     it('usa el aviso del servidor sin repetirlo en la lista de avisos', async () => {
-      const { root } = await mount('/reporting/comercial/publicidad', (tab) =>
+      const { root } = await mount('/reports/commercial/publicidad', (tab) =>
         of(pestana(tab, { avisos: ['Módulo en diseño: el modelo de pauteo cambiará.', 'Otro aviso.'] })),
       );
       expect(root.querySelector('[data-testid="design-banner"]')?.textContent).toContain('el modelo de pauteo cambiará');
@@ -127,14 +127,14 @@ describe('CommercialDashboard', () => {
     });
 
     it('las demás pestañas no llevan el banner', async () => {
-      const { root } = await mount('/reporting/comercial/cobros');
+      const { root } = await mount('/reports/commercial/cobros');
       expect(root.querySelector('[data-testid="design-banner"]')).toBeNull();
     });
   });
 
   describe('cambios de contexto', () => {
     it('recalcula cuando cambia el periodo, la moneda o un filtro', async () => {
-      const { harness, calls, store } = await mount('/reporting/comercial/resumen');
+      const { harness, calls, store } = await mount('/reports/commercial/resumen');
       store.periodo.set('90d');
       await harness.fixture.whenStable();
       store.moneda.set('USD');
@@ -151,7 +151,7 @@ describe('CommercialDashboard', () => {
     it('cancela la petición vieja: una respuesta lenta no pisa a la nueva', async () => {
       const first = new Subject<PestanaReporte>();
       let n = 0;
-      const { harness, root, store } = await mount('/reporting/comercial/resumen', (tab) =>
+      const { harness, root, store } = await mount('/reports/commercial/resumen', (tab) =>
         ++n === 1 ? first : of(pestana(tab, { kpis: [{ id: 'nuevo', titulo: 'Cifra nueva', valor: 1, unidad: { tipo: 'numero' }, variacionPct: null, info: null, infoMotivo: 'x' }] })),
       );
       expect(first.observed).toBe(true);
@@ -169,7 +169,7 @@ describe('CommercialDashboard', () => {
     it('conserva los datos a la vista mientras recalcula, con aviso', async () => {
       const second = new Subject<PestanaReporte>();
       let n = 0;
-      const { harness, root, store } = await mount('/reporting/comercial/resumen', (tab) => (++n === 1 ? of(pestana(tab)) : second));
+      const { harness, root, store } = await mount('/reports/commercial/resumen', (tab) => (++n === 1 ? of(pestana(tab)) : second));
       expect(root.textContent).toContain('KPI de resumen');
 
       store.periodo.set('12m');
@@ -186,13 +186,13 @@ describe('CommercialDashboard', () => {
 
   describe('estados', () => {
     it('muestra el esqueleto mientras la primera carga está en curso', async () => {
-      const { root } = await mount('/reporting/comercial/resumen', () => new Subject<PestanaReporte>());
+      const { root } = await mount('/reports/commercial/resumen', () => new Subject<PestanaReporte>());
       expect(root.querySelector('[data-testid="dashboard-loading"]')).not.toBeNull();
     });
 
     it('un error sin datos previos explica, trae código de soporte y reintenta', async () => {
       let n = 0;
-      const { harness, root } = await mount('/reporting/comercial/resumen', (tab) =>
+      const { harness, root } = await mount('/reports/commercial/resumen', (tab) =>
         ++n === 1
           ? throwError(() => new HttpErrorResponse({ status: 500, error: { code: 'INTERNAL', message: 'x', correlationId: 'req-9' } }))
           : of(pestana(tab)),
@@ -206,7 +206,7 @@ describe('CommercialDashboard', () => {
 
     it('si falla una recarga y ya había datos, los muestra como atrasados con su antigüedad', async () => {
       let n = 0;
-      const { harness, root, store } = await mount('/reporting/comercial/resumen', (tab) =>
+      const { harness, root, store } = await mount('/reports/commercial/resumen', (tab) =>
         ++n === 1 ? of(pestana(tab)) : throwError(() => new HttpErrorResponse({ status: 0 })),
       );
       store.periodo.set('7d');
@@ -217,7 +217,7 @@ describe('CommercialDashboard', () => {
     });
 
     it('sin cifras para el filtro, orienta y ofrece limpiar los filtros', async () => {
-      const { harness, root, store } = await mount('/reporting/comercial/resumen', (tab) =>
+      const { harness, root, store } = await mount('/reports/commercial/resumen', (tab) =>
         of(pestana(tab, { kpis: [], graficos: [], tablas: [] })),
       );
       store.alternarFiltro({ dimension: 'ciudad', valor: 'Sucre' });

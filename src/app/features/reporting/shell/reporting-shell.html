@@ -1,0 +1,141 @@
+<!-- El armazón propio del portal de reportería. Ver la nota de la clase: no
+     comparte marco con el de administración, porque su navegación son los
+     reportes y sus filtros globales, no el registro de secciones por rol. -->
+
+<a class="rep__saltar" href="#reporting-contenido">Saltar al contenido</a>
+
+<div class="rep" [class.rep--con-asistente]="asistenteAbierto()">
+  <header class="rep__cabecera">
+    <button
+      app-button
+      class="rep__menu"
+      variant="ghost"
+      size="sm"
+      aria-controls="reporting-nav"
+      [attr.aria-expanded]="menuAbierto()"
+      data-testid="reporting-menu"
+      (clicked)="alternarMenu()"
+    >
+      Menú
+    </button>
+
+    <a class="rep__marca" routerLink="/reports" aria-label="Portal de reportería — ir al inicio">
+      <app-brand-mark />
+      <span class="rep__titulo">Portal de reportería</span>
+    </a>
+
+    <div class="rep__acciones">
+      <app-segmented-control
+        [options]="opcionesAlcance"
+        [value]="contexto.alcance()"
+        ariaLabel="Alcance de los reportes"
+        (valueChange)="cambiarAlcance($event)"
+      />
+
+      @if (puedeCambiarDePortal()) {
+        <nav class="rep__portales" aria-label="Portales">
+          <a class="rep__enlace" [routerLink]="selectorRoute" data-testid="reporting-cambiar-portal">
+            Cambiar de portal
+          </a>
+          <a
+            class="rep__enlace"
+            [routerLink]="administracionRoute"
+            data-testid="reporting-ir-administracion"
+          >
+            Portal de administración
+          </a>
+        </nav>
+      }
+
+      <button
+        #botonAsistente
+        app-button
+        class="rep__asistente-boton"
+        variant="outline"
+        size="sm"
+        aria-controls="reporting-asistente"
+        [attr.aria-expanded]="asistenteAbierto()"
+        data-testid="reporting-asistente-boton"
+        (clicked)="alternarAsistente()"
+      >
+        Preguntar a sus reportes
+      </button>
+    </div>
+  </header>
+
+  <div class="rep__cuerpo">
+    <nav
+      class="rep__nav"
+      id="reporting-nav"
+      aria-label="Navegación de reportería"
+      [class.is-abierto]="menuAbierto()"
+    >
+      <ul class="rep__lista" role="list">
+        <li>
+          <a
+            class="rep__item"
+            routerLink="/reports"
+            routerLinkActive="is-activa"
+            ariaCurrentWhenActive="page"
+            [routerLinkActiveOptions]="{ exact: true }"
+          >
+            <app-nav-icon name="home" />
+            Inicio
+          </a>
+        </li>
+      </ul>
+
+      <p class="rep__grupo" id="reporting-grupo-comercial">Dashboard comercial</p>
+      <ul class="rep__lista" role="list" aria-labelledby="reporting-grupo-comercial">
+        @for (pestana of pestanas; track pestana.vertical) {
+          <li>
+            <a
+              class="rep__item"
+              [routerLink]="['/reports/commercial', pestana.vertical]"
+              routerLinkActive="is-activa"
+              ariaCurrentWhenActive="page"
+              [attr.data-testid]="'reporting-nav-' + pestana.vertical"
+            >
+              {{ pestana.etiqueta }}
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <main class="rep__centro" id="reporting-contenido" tabindex="-1">
+      <router-outlet />
+    </main>
+
+    @if (asistenteAbierto()) {
+      <aside
+        #panelAsistente
+        class="rep__asistente"
+        id="reporting-asistente"
+        aria-labelledby="reporting-asistente-titulo"
+        tabindex="-1"
+        data-testid="reporting-asistente"
+      >
+        <div class="rep__asistente-cabecera">
+          <h2 class="rep__asistente-titulo" id="reporting-asistente-titulo">
+            Pregunte a sus reportes
+          </h2>
+          <button
+            app-button
+            variant="ghost"
+            size="sm"
+            data-testid="reporting-asistente-cerrar"
+            (clicked)="alternarAsistente()"
+          >
+            Cerrar
+          </button>
+        </div>
+        @defer {
+          <app-report-assistant />
+        } @placeholder {
+          <p class="rep__asistente-carga" role="status">Preparando el asistente…</p>
+        }
+      </aside>
+    }
+  </div>
+</div>

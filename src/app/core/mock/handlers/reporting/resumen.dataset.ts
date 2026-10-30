@@ -1,7 +1,7 @@
 import type { ContextoReporte, PestanaReporte } from '../../../data-access/reporting/reporting.types';
-import { componerBase, FUENTES_REALES, NOMBRE_VERTICAL, ORDEN, type FuentesResumen } from './resumen.base';
+import { componerBase, FUENTES_REALES, VERTICAL_NAME, ORDEN, type FuentesResumen } from './resumen.base';
 import { construirAlertas } from './resumen.alertas';
-import { concentracionDe } from './resumen.concentracion';
+import { computeConcentration } from './resumen.concentracion';
 import { construirGraficos } from './resumen.graficos';
 import { construirKpis } from './resumen.kpis';
 
@@ -13,20 +13,20 @@ import { construirKpis } from './resumen.kpis';
  * compuesto es «sin dato» con su motivo y no una suma parcial.
  */
 export function construirResumen(ctx: ContextoReporte): PestanaReporte {
-  return construirResumenCon(ctx, FUENTES_REALES);
+  return buildSummaryWith(ctx, FUENTES_REALES);
 }
 
 /** Igual que `construirResumen`, pero con las verticales inyectadas (las pruebas simulan verticales vacías). */
-export function construirResumenCon(ctx: ContextoReporte, fuentes: FuentesResumen): PestanaReporte {
+export function buildSummaryWith(ctx: ContextoReporte, fuentes: FuentesResumen): PestanaReporte {
   const base = componerBase(ctx, fuentes);
-  const faltantes = ORDEN.filter((c) => base.lecturas[c].ingreso === null).map((c) => NOMBRE_VERTICAL[c]);
+  const faltantes = ORDEN.filter((c) => base.lecturas[c].ingreso === null).map((c) => VERTICAL_NAME[c]);
   return {
     pestana: 'resumen',
     generadoEn: '2026-10-30T09:00:00-04:00',
     origen: 'ejemplo',
     kpis: construirKpis(base),
     graficos: construirGraficos(base),
-    tablas: [construirAlertas(base, concentracionDe(base)?.pct ?? null)],
+    tablas: [construirAlertas(base, computeConcentration(base)?.pct ?? null)],
     avisos: [
       'Datos de EJEMPLO',
       ...(faltantes.length === 0

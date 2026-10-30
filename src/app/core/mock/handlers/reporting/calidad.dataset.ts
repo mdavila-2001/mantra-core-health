@@ -6,12 +6,12 @@ import type {
   TablaReporte,
 } from '../../../data-access/reporting/reporting.types';
 import {
-  ETIQUETA_ESTADO,
+  STATUS_LABEL,
   ETIQUETA_PESTANA,
   PESTANAS_CATALOGADAS,
   armarCatalogo,
   filaCompleta,
-  filtrarPorEstado,
+  filterByStatus,
   leerPestanas,
   type CatalogoLeido,
   type FilaCatalogo,
@@ -20,11 +20,11 @@ import {
 import {
   graficoCobertura,
   graficoCompletitud,
-  graficoEstadoFuente,
-  graficoEstadoPestana,
+  sourceStatusChart,
+  tabStatusChart,
   graficoFrescura,
   graficoMapaReglas,
-  graficoReglasEnElTiempo,
+  rulesOverTimeChart,
 } from './calidad.graficos';
 import { ETIQUETA_RESULTADO, UMBRAL_REGLA_PCT, evaluarReglas, type ReglaEvaluada } from './calidad.reglas';
 import { kpi, redondear, variacionContexto } from './reporting-dataset.util';
@@ -41,7 +41,7 @@ import { kpi, redondear, variacionContexto } from './reporting-dataset.util';
 const FUENTE_CATALOGO =
   'Catálogo vivo de esta maqueta, armado con los KPI y gráficos de las otras pestañas del dashboard comercial';
 const EJEMPLO = 'Datos de EJEMPLO: los estados de la fuente, los responsables y las frescuras son suposiciones, no verificaciones contra el API.';
-const SIN_INDICADORES = 'No hay indicadores en el ámbito elegido; el cálculo necesita al menos uno.';
+const NO_INDICATORS = 'No hay indicadores en el ámbito elegido; el cálculo necesita al menos uno.';
 
 const info = (i: Omit<InfoCalculo, 'fuente' | 'frescura'>): InfoCalculo => ({
   fuente: FUENTE_CATALOGO,
@@ -59,11 +59,11 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
   const completas = filas.filter(filaCompleta).length;
   const localizadas = filas.filter((f) => f.estado === 'fuente-localizada').length;
   const pendientes = filas.filter((f) => f.estado === 'decision-pendiente').length;
-  const conVista = filas.filter((f) => f.estado === 'requiere-vista').length;
+  const needsView = filas.filter((f) => f.estado === 'requiere-vista').length;
   const antiguedad = total === 0 ? null : redondear(filas.reduce((a, f) => a + f.frescuraMin, 0) / total, 1);
   const evaluadas = reglas.filter((r) => r.resultado !== 'sin-evaluar');
   const enFalla = evaluadas.filter((r) => r.resultado === 'falla').length;
-  const conVariacion = (valor: number | null, semilla: number): number | null =>
+  const withVariation = (valor: number | null, semilla: number): number | null =>
     valor === null || valor <= 0 ? null : variacionContexto(ctx, valor, semilla);
 
   return [
@@ -72,7 +72,7 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
       titulo: 'Indicadores catalogados',
       valor: total,
       unidad: { tipo: 'numero' },
-      variacionPct: conVariacion(total, 701),
+      variacionPct: withVariation(total, 701),
       info: info({
         definicion: 'Cantidad de KPI y gráficos de las pestañas comerciales que están en el catálogo con su definición.',
         formula: 'Σ (KPI + gráficos) de las pestañas catalogadas, dentro del filtro de estado activo',
@@ -84,10 +84,10 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
       titulo: 'Con definición completa',
       valor: pct(completas, total),
       unidad: { tipo: 'porcentaje' },
-      variacionPct: conVariacion(pct(completas, total), 702),
+      variacionPct: withVariation(pct(completas, total), 702),
       numerador: total === 0 ? null : completas,
       denominador: total === 0 ? null : total,
-      motivoSinDato: total === 0 ? SIN_INDICADORES : undefined,
+      motivoSinDato: total === 0 ? NO_INDICATORS : undefined,
       info: info({
         definicion: 'Porcentaje de indicadores que declaran definición, fórmula, fuente y frescura (y numerador y denominador si son tasa).',
         formula: 'Indicadores con definición completa ÷ indicadores catalogados × 100',
@@ -100,10 +100,10 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
       titulo: 'Con fuente localizada',
       valor: pct(localizadas, total),
       unidad: { tipo: 'porcentaje' },
-      variacionPct: conVariacion(pct(localizadas, total), 703),
+      variacionPct: withVariation(pct(localizadas, total), 703),
       numerador: total === 0 ? null : localizadas,
       denominador: total === 0 ? null : total,
-      motivoSinDato: total === 0 ? SIN_INDICADORES : undefined,
+      motivoSinDato: total === 0 ? NO_INDICATORS : undefined,
       info: info({
         definicion: 'Porcentaje de indicadores con una tabla candidata localizada en el API.',
         formula: 'Indicadores en estado «Fuente localizada» ÷ indicadores catalogados × 100',
@@ -117,7 +117,7 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
       titulo: 'Con decisión de negocio pendiente',
       valor: pendientes,
       unidad: { tipo: 'numero' },
-      variacionPct: conVariacion(pendientes, 704),
+      variacionPct: withVariation(pendientes, 704),
       subirEsMalo: true,
       info: info({
         definicion: 'Indicadores que no se pueden calcular hasta que negocio decida qué se mide (comisión por actor, publicidad push propia…).',
@@ -127,9 +127,9 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
     kpi({
       id: 'requiere-vista',
       titulo: 'Que requieren una vista nueva',
-      valor: conVista,
+      valor: needsView,
       unidad: { tipo: 'numero' },
-      variacionPct: conVariacion(conVista, 705),
+      variacionPct: withVariation(needsView, 705),
       subirEsMalo: true,
       info: info({
         definicion: 'Indicadores cuya fuente habría que exponer en una vista de lectura que hoy no existe.',
@@ -141,9 +141,9 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
       titulo: 'Antigüedad media de los datos',
       valor: antiguedad,
       unidad: { tipo: 'razon', sufijo: ' min' },
-      variacionPct: conVariacion(antiguedad, 706),
+      variacionPct: withVariation(antiguedad, 706),
       subirEsMalo: true,
-      motivoSinDato: antiguedad === null ? SIN_INDICADORES : undefined,
+      motivoSinDato: antiguedad === null ? NO_INDICATORS : undefined,
       info: info({
         definicion: 'Minutos promedio desde la última carga de los indicadores catalogados.',
         formula: 'Σ minutos desde la última carga ÷ indicadores catalogados',
@@ -157,7 +157,7 @@ function construirKpis(ctx: ContextoReporte, filas: readonly FilaCatalogo[], reg
       titulo: 'Reglas de calidad en falla',
       valor: evaluadas.length === 0 ? null : enFalla,
       unidad: { tipo: 'numero' },
-      variacionPct: conVariacion(evaluadas.length === 0 ? null : enFalla, 707),
+      variacionPct: withVariation(evaluadas.length === 0 ? null : enFalla, 707),
       subirEsMalo: true,
       numerador: evaluadas.length === 0 ? null : enFalla,
       denominador: evaluadas.length === 0 ? null : evaluadas.length,
@@ -202,7 +202,7 @@ function tablaCatalogo(filas: readonly FilaCatalogo[]): TablaReporte {
       fuente: f.fuente,
       responsable: f.responsable,
       frescuraMin: f.frescuraMin,
-      estado: ETIQUETA_ESTADO[f.estado],
+      estado: STATUS_LABEL[f.estado],
       definicion: filaCompleta(f) ? 'Completa' : `Falta: ${f.faltan.join(', ')}`,
     })),
     info: info({
@@ -244,24 +244,24 @@ function tablaReglas(reglas: readonly ReglaEvaluada[]): TablaReporte {
   };
 }
 
-function avisosDe(leido: CatalogoLeido): string[] {
+function buildWarnings(leido: CatalogoLeido): string[] {
   const avisos = [
     'Datos de EJEMPLO: este catálogo describe una maqueta. Los estados de la fuente son suposiciones; ninguna tabla del API se verificó.',
     'El Resumen ejecutivo y esta pestaña no se catalogan aquí: el Resumen reusa indicadores de las demás y esta no se autocataloga.',
   ];
-  for (const p of leido.sinLeer) {
+  for (const p of leido.unread) {
     avisos.push(`No se pudo leer la pestaña ${ETIQUETA_PESTANA[p]}; sus indicadores faltan en el catálogo.`);
   }
-  if (leido.filas.length === 0 && leido.sinLeer.length < PESTANAS_CATALOGADAS.length) {
+  if (leido.filas.length === 0 && leido.unread.length < PESTANAS_CATALOGADAS.length) {
     avisos.push('Las otras pestañas todavía no publican indicadores: el catálogo está vacío, y eso no es una nota perfecta de calidad.');
   }
   return avisos;
 }
 
 /** Puro: arma la pestaña a partir de lo que las otras pestañas publicaron. Lo usa la prueba con datos propios. */
-export function construirCalidadDesde(ctx: ContextoReporte, pestanas: PestanasLeidas): PestanaReporte {
+export function buildQualityFromTabs(ctx: ContextoReporte, pestanas: PestanasLeidas): PestanaReporte {
   const leido = armarCatalogo(pestanas);
-  const enAmbito = filtrarPorEstado(leido.filas, ctx);
+  const enAmbito = filterByStatus(leido.filas, ctx);
   const reglas = evaluarReglas(enAmbito);
   return {
     pestana: 'calidad',
@@ -270,15 +270,15 @@ export function construirCalidadDesde(ctx: ContextoReporte, pestanas: PestanasLe
     kpis: construirKpis(ctx, enAmbito, reglas),
     graficos: [
       graficoCobertura(enAmbito),
-      graficoEstadoFuente(leido.filas),
-      graficoEstadoPestana(leido.filas),
+      sourceStatusChart(leido.filas),
+      tabStatusChart(leido.filas),
       graficoFrescura(enAmbito),
-      graficoReglasEnElTiempo(ctx, reglas),
+      rulesOverTimeChart(ctx, reglas),
       graficoCompletitud(ctx, enAmbito),
       graficoMapaReglas(reglas),
     ],
     tablas: [tablaCatalogo(enAmbito), tablaReglas(reglas)],
-    avisos: avisosDe(leido),
+    avisos: buildWarnings(leido),
     secciones: [
       {
         titulo: 'Definiciones',
@@ -302,5 +302,5 @@ export function construirCalidadDesde(ctx: ContextoReporte, pestanas: PestanasLe
 }
 
 export function construirCalidad(ctx: ContextoReporte): PestanaReporte {
-  return construirCalidadDesde(ctx, leerPestanas());
+  return buildQualityFromTabs(ctx, leerPestanas());
 }

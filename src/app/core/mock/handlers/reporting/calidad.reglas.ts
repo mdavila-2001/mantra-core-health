@@ -164,11 +164,11 @@ export interface ReglaEvaluada {
 export function evaluarReglas(filas: readonly FilaCatalogo[]): ReglaEvaluada[] {
   return DEFINICIONES.map((def) => {
     const celdas = PESTANAS_CATALOGADAS.map((p) => {
-      const delTab = filas.filter((f) => f.pestana === p);
-      if (delTab.length === 0) {
+      const tabRows = filas.filter((f) => f.pestana === p);
+      if (tabRows.length === 0) {
         return null;
       }
-      return def.calcular !== undefined ? def.calcular(delTab, p, filas) : (def.simulado?.[p] ?? null);
+      return def.calcular !== undefined ? def.calcular(tabRows, p, filas) : (def.simulado?.[p] ?? null);
     });
     const evaluadas = celdas.filter((c): c is number => c !== null);
     const minimo = evaluadas.length === 0 ? null : Math.min(...evaluadas);

@@ -1,29 +1,29 @@
 import type { KpiSpec, PestanaReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { redondear, variacionPct } from './reporting-dataset.util';
 import {
-  NOMBRE_VERTICAL,
+  VERTICAL_NAME,
   ORDEN,
-  anteriorDe,
+  previousValue,
   buscarKpi,
   importeEnMoneda,
   infoEjemplo,
-  serieDeIngreso,
+  incomeSeries,
   type BaseResumen,
   type ClaveVertical,
 } from './resumen.base';
-import { concentracionDe } from './resumen.concentracion';
+import { computeConcentration } from './resumen.concentracion';
 
 const FUENTE_INGRESO =
   'Composición de las tres pestañas: suscripciones (payments.subscriptions), publicidad (ads.ad_accounts, ads.ad_invoices) y comisiones (broker_commission_statements, payment_splits); el total contable saldría del mayor (accounting).';
 
-const FUENTE_POR_VERTICAL: Readonly<Record<ClaveVertical, string>> = {
+const SOURCE_BY_VERTICAL: Readonly<Record<ClaveVertical, string>> = {
   suscripciones: 'payments.subscriptions, payments.plan_prices',
   publicidad: 'ads.ad_accounts, ads.ad_invoices',
   comisiones: 'broker_commission_statements, payment_splits, fee_schedules',
 };
 
 /** Una vertical que no entregó el dato: el KPI queda «sin dato» con la causa, nunca en 0. */
-function sinDato(
+function noData(
   id: string,
   titulo: string,
   unidad: UnidadValor,
@@ -43,13 +43,13 @@ function sinDato(
   };
 }
 
-function ingresoPorVertical(base: BaseResumen, c: ClaveVertical): KpiSpec {
+function incomeByVertical(base: BaseResumen, c: ClaveVertical): KpiSpec {
   const l = base.lecturas[c];
   const unidad: UnidadValor = { tipo: 'moneda', moneda: base.ctx.moneda };
   const id = `ingreso-${c}`;
   const titulo = `Ingreso de ${l.nombre.toLowerCase()}`;
   if (l.ingreso === null) {
-    return sinDato(id, titulo, unidad, l.motivo ?? `Falta el ingreso de ${l.nombre}.`);
+    return noData(id, titulo, unidad, l.motivo ?? `Falta el ingreso de ${l.nombre}.`);
   }
   return {
     id,
@@ -57,20 +57,20 @@ function ingresoPorVertical(base: BaseResumen, c: ClaveVertical): KpiSpec {
     valor: l.ingreso,
     unidad,
     variacionPct: l.variacionPct,
-    tendencia: serieDeIngreso(base).porVertical[c],
+    tendencia: incomeSeries(base).porVertical[c],
     info: infoEjemplo({
       definicion: `Ingreso reconocido de la vertical ${l.nombre.toLowerCase()} en el periodo.`,
       formula: `Es el KPI «ingreso del periodo» de la pestaña ${l.nombre}, sin recalcular.`,
-      fuente: FUENTE_POR_VERTICAL[c],
+      fuente: SOURCE_BY_VERTICAL[c],
       salvedades: ['Coincide con la pestaña de la vertical porque se lee de ella.'],
     }),
   };
 }
 
 export function construirKpis(base: BaseResumen): KpiSpec[] {
-  const { ctx, lecturas, total, anterior, motivoTotal } = base;
+  const { ctx, lecturas, total, anterior, motivoTotal: totalReason } = base;
   const dinero: UnidadValor = { tipo: 'moneda', moneda: ctx.moneda };
-  const motivoGeneral = motivoTotal ?? 'Falta el ingreso total.';
+  const generalReason = totalReason ?? 'Falta el ingreso total.';
   const susc = lecturas.suscripciones.pestana;
   const pub = lecturas.publicidad.pestana;
   const com = lecturas.comisiones.pestana;
@@ -79,14 +79,14 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
   /* Ingreso total */
   out.push(
     total === null
-      ? sinDato('ingreso-total', 'Ingreso total', dinero, motivoGeneral)
+      ? noData('ingreso-total', 'Ingreso total', dinero, generalReason)
       : {
           id: 'ingreso-total',
           titulo: 'Ingreso total',
           valor: total,
           unidad: dinero,
           variacionPct: variacionPct(total, anterior),
-          tendencia: serieDeIngreso(base).total,
+          tendencia: incomeSeries(base).total,
           info: infoEjemplo({
             definicion: 'Ingreso reconocido en el periodo por las tres verticales, en una sola moneda.',
             formula: 'Suscripciones + Publicidad + Comisiones (take rate de la plataforma)',
@@ -99,7 +99,7 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
         },
   );
   for (const c of ORDEN) {
-    out.push(ingresoPorVertical(base, c));
+    out.push(incomeByVertical(base, c));
   }
 
   /* Mix de ingreso: peso del ingreso recurrente (suscripciones) sobre el total */
@@ -109,7 +109,7 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
     anterior !== null && s.anterior !== null && anterior > 0 ? (s.anterior / anterior) * 100 : null;
   out.push(
     pesoActual === null
-      ? sinDato('mix-ingreso', 'Ingreso recurrente sobre el total', { tipo: 'porcentaje' }, motivoGeneral)
+      ? noData('mix-ingreso', 'Ingreso recurrente sobre el total', { tipo: 'porcentaje' }, generalReason)
       : {
           id: 'mix-ingreso',
           titulo: 'Ingreso recurrente sobre el total',
@@ -134,7 +134,7 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
   const mrr = importeEnMoneda(kMrr, ctx, 'el MRR de suscripciones');
   out.push(
     mrr.valor === null
-      ? sinDato('mrr', 'MRR de suscripciones', dinero, mrr.motivo ?? 'Falta el MRR.')
+      ? noData('mrr', 'MRR de suscripciones', dinero, mrr.motivo ?? 'Falta el MRR.')
       : {
           id: 'mrr',
           titulo: 'MRR de suscripciones',
@@ -145,7 +145,7 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
           info: infoEjemplo({
             definicion: 'Ingreso mensual recurrente: el precio mensual de todas las suscripciones vigentes al cierre.',
             formula: 'Σ precio normalizado a mes de las suscripciones activas',
-            fuente: FUENTE_POR_VERTICAL.suscripciones,
+            fuente: SOURCE_BY_VERTICAL.suscripciones,
             salvedades: ['Es un saldo al cierre, no un flujo: no se suma entre periodos.'],
           }),
         },
@@ -157,12 +157,12 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
   const nS = kS?.valor ?? null;
   const nA = kA?.valor ?? null;
   if (nS === null || nA === null) {
-    const motivo = nS === null ? 'Falta el número de suscriptores activos.' : 'Falta el número de anunciantes activos.';
-    out.push(sinDato('clientes-activos', 'Clientes activos pagantes', { tipo: 'numero' }, motivo));
+    const reason = nS === null ? 'Falta el número de suscriptores activos.' : 'Falta el número de anunciantes activos.';
+    out.push(noData('clientes-activos', 'Clientes activos pagantes', { tipo: 'numero' }, reason));
   } else {
     const valor = nS + nA;
-    const prevS = anteriorDe(nS, kS?.variacionPct ?? null, ctx);
-    const prevA = anteriorDe(nA, kA?.variacionPct ?? null, ctx);
+    const prevS = previousValue(nS, kS?.variacionPct ?? null, ctx);
+    const prevA = previousValue(nA, kA?.variacionPct ?? null, ctx);
     out.push({
       id: 'clientes-activos',
       titulo: 'Clientes activos pagantes',
@@ -179,10 +179,10 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
   }
 
   /* Concentración */
-  const conc = concentracionDe(base);
+  const conc = computeConcentration(base);
   out.push(
     conc === null || total === null
-      ? sinDato('concentracion-top10', 'Concentración en los 10 mayores', { tipo: 'porcentaje' }, motivoGeneral, { subirEsMalo: true })
+      ? noData('concentracion-top10', 'Concentración en los 10 mayores', { tipo: 'porcentaje' }, generalReason, { subirEsMalo: true })
       : {
           id: 'concentracion-top10',
           titulo: 'Concentración en los 10 mayores',
@@ -220,7 +220,7 @@ function pasar(
 ): KpiSpec {
   const k = buscarKpi(p, id);
   if (k === undefined) {
-    return sinDato(id, titulo, unidadPorDefecto, `Falta ${titulo.toLowerCase()} en la pestaña ${NOMBRE_VERTICAL[vertical]}.`, { subirEsMalo });
+    return noData(id, titulo, unidadPorDefecto, `Falta ${titulo.toLowerCase()} en la pestaña ${VERTICAL_NAME[vertical]}.`, { subirEsMalo });
   }
   if (k.valor === null) {
     return { ...k, titulo, subirEsMalo: subirEsMalo || k.subirEsMalo };
@@ -230,11 +230,11 @@ function pasar(
     titulo,
     subirEsMalo: subirEsMalo || k.subirEsMalo,
     info: infoEjemplo({
-      definicion: `${titulo}, tal como lo calcula la pestaña ${NOMBRE_VERTICAL[vertical]}.`,
-      formula: k.info?.formula ?? `Se lee del KPI «${id}» de ${NOMBRE_VERTICAL[vertical]}.`,
+      definicion: `${titulo}, tal como lo calcula la pestaña ${VERTICAL_NAME[vertical]}.`,
+      formula: k.info?.formula ?? `Se lee del KPI «${id}» de ${VERTICAL_NAME[vertical]}.`,
       numerador: k.info?.numerador,
       denominador: k.info?.denominador,
-      fuente: k.info?.fuente ?? FUENTE_POR_VERTICAL[vertical],
+      fuente: k.info?.fuente ?? SOURCE_BY_VERTICAL[vertical],
       salvedades: ['Se muestra aquí sin recalcular, para que no pueda diferir de su pestaña.'],
     }),
   };

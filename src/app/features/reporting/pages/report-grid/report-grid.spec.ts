@@ -20,7 +20,7 @@ function report(id: string, overrides: Partial<ReporteCatalogo> = {}): ReporteCa
     responsable: 'Finanzas',
     certificado: true,
     frescuraMin: 12,
-    ruta: `/reporting/comercial/${id}`,
+    ruta: `/reports/commercial/${id}`,
     ...overrides,
   };
 }

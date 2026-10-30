@@ -26,15 +26,15 @@ function severidad(r: Regla): Severidad {
   return peor(r.critico) ? 'Crítica' : peor(r.atencion) ? 'Atención' : 'Normal';
 }
 
-function churnDe(p: PestanaReporte): KpiSpec | undefined {
+function churnKpi(p: PestanaReporte): KpiSpec | undefined {
   return buscarKpi(p, 'churn-cuentas', 'churn', 'churn-ingresos') ?? p.kpis.find((k) => k.id.startsWith('churn'));
 }
 
-function conciliacionDe(p: PestanaReporte): KpiSpec | undefined {
+function reconciliationKpi(p: PestanaReporte): KpiSpec | undefined {
   return p.kpis.find((k) => k.id.includes('concilia'));
 }
 
-function pctDe(k: KpiSpec | undefined): number | null {
+function pctOf(k: KpiSpec | undefined): number | null {
   return k !== undefined && k.valor !== null && k.unidad.tipo === 'porcentaje' ? k.valor : null;
 }
 
@@ -49,9 +49,9 @@ export function construirAlertas(base: BaseResumen, concentracionPct: number | n
   const cambio = total !== null && anterior !== null && anterior > 0 ? redondear(((total - anterior) / anterior) * 100, 1) : null;
 
   const reglas: Regla[] = [
-    { indicador: 'Bajas de suscriptores (churn)', valor: pctDe(churnDe(base.lecturas.suscripciones.pestana)), unidad: pct, atencion: 5, critico: 8, malo: 'alto', umbral: 'Atención desde 5 %, crítica desde 8 %', sinDato: 'La pestaña de Suscripciones no entregó el churn.', accion: 'Revisar los planes con más bajas en Suscripciones.' },
+    { indicador: 'Bajas de suscriptores (churn)', valor: pctOf(churnKpi(base.lecturas.suscripciones.pestana)), unidad: pct, atencion: 5, critico: 8, malo: 'alto', umbral: 'Atención desde 5 %, crítica desde 8 %', sinDato: 'La pestaña de Suscripciones no entregó el churn.', accion: 'Revisar los planes con más bajas en Suscripciones.' },
     { indicador: 'Comisión pendiente sobre el ingreso total', valor: pesoPendiente, unidad: pct, atencion: 25, critico: 40, malo: 'alto', umbral: 'Atención desde 25 %, crítica desde 40 %', sinDato: 'Falta la comisión pendiente o el ingreso total.', accion: 'Revisar el aging de lo pendiente en Comisiones.' },
-    { indicador: 'Conciliación con el gateway', valor: pctDe(conciliacionDe(base.lecturas.comisiones.pestana)), unidad: pct, atencion: 98, critico: 95, malo: 'bajo', umbral: 'Atención bajo 98 %, crítica bajo 95 %', sinDato: 'La pestaña de Comisiones no entregó un indicador de conciliación.', accion: 'Revisar los descuadres abiertos en Comisiones.' },
+    { indicador: 'Conciliación con el gateway', valor: pctOf(reconciliationKpi(base.lecturas.comisiones.pestana)), unidad: pct, atencion: 98, critico: 95, malo: 'bajo', umbral: 'Atención bajo 98 %, crítica bajo 95 %', sinDato: 'La pestaña de Comisiones no entregó un indicador de conciliación.', accion: 'Revisar los descuadres abiertos en Comisiones.' },
     { indicador: 'Concentración en los 10 mayores', valor: concentracionPct, unidad: pct, atencion: 40, critico: 55, malo: 'alto', umbral: 'Atención desde 40 %, crítica desde 55 %', sinDato: 'Falta el ingreso total.', accion: 'Revisar la dependencia de los mayores clientes.' },
     { indicador: 'Cambio del ingreso total', valor: cambio, unidad: pct, atencion: -5, critico: -15, malo: 'bajo', umbral: 'Atención bajo −5 %, crítica bajo −15 %', sinDato: base.ctx.comparar === 'ninguna' ? 'Elige comparar con otro periodo.' : 'Falta el comparativo.', accion: 'Ver qué vertical lo explica en la cascada.' },
   ];

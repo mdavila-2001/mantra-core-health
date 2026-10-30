@@ -14,7 +14,7 @@ import { Badge } from '@shared/components/atoms/badge/badge';
  * Todo lo que importa para decidir si abrirlo está a la vista y en texto:
  * qué es, de qué vertical, quién responde por él, si está certificado o aún
  * en diseño, y qué tan fresco está. Las insignias llevan palabra —el color
- * solo refuerza—. Un reporte cuya ruta no empieza por `/reporting` es una
+ * solo refuerza—. Un reporte cuya ruta no empieza por `/reports` es una
  * pantalla que ya existía en el portal de administración: se marca como tal
  * para que quien la abra no espere el aspecto ni los filtros de este portal.
  */
@@ -35,7 +35,7 @@ export class ReportCard {
 
   protected readonly ids = nextControlId('rc');
   protected readonly verticalLabel = computed(() => ETIQUETA_VERTICAL[this.report().vertical]);
-  protected readonly existingScreen = computed(() => !this.report().ruta.startsWith('/reporting'));
+  protected readonly existingScreen = computed(() => !this.report().ruta.startsWith('/reports'));
   protected readonly freshness = computed(() => {
     const text = formatearFrescura(this.report().frescuraMin);
     return text.startsWith('actualizado') ? 'Actualizado ahora' : `Actualizado ${text}`;

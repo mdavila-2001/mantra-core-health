@@ -95,7 +95,7 @@ export const NIVELES_RIESGO = ['Bajo', 'Medio', 'Alto', 'Crítico'] as const;
 const CUENTAS_ACTIVAS_BASE = 1840;
 const PESO_PLAN = [0.38, 0.34, 0.18, 0.1];
 // Reparto por nivel de riesgo según el plan (cada fila suma 1).
-const RIESGO_POR_PLAN: readonly (readonly number[])[] = [
+const RISK_BY_PLAN: readonly (readonly number[])[] = [
   [0.56, 0.24, 0.13, 0.07],
   [0.64, 0.22, 0.1, 0.04],
   [0.72, 0.18, 0.08, 0.02],
@@ -116,7 +116,7 @@ export function calcularSalud(ctx: ContextoReporte): ModeloSalud {
   const r = rng(7401);
   const cuentas = PLANES.map((_, p) =>
     NIVELES_RIESGO.map((__, nivel) =>
-      Math.round(CUENTAS_ACTIVAS_BASE * f * PESO_PLAN[p]! * RIESGO_POR_PLAN[p]![nivel]! * (0.94 + 0.12 * r())),
+      Math.round(CUENTAS_ACTIVAS_BASE * f * PESO_PLAN[p]! * RISK_BY_PLAN[p]![nivel]! * (0.94 + 0.12 * r())),
     ),
   );
   const celdas = cuentas.flatMap((fila, p) =>

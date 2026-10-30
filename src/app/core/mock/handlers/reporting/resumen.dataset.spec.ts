@@ -16,7 +16,7 @@ import {
   redondear,
   suma,
 } from './reporting-dataset.util';
-import { construirResumen, construirResumenCon } from './resumen.dataset';
+import { construirResumen, buildSummaryWith } from './resumen.dataset';
 import type { FuentesResumen } from './resumen.base';
 
 const PERIODOS: PeriodoReporte[] = ['7d', '30d', '90d', 'ytd', '12m'];
@@ -187,16 +187,16 @@ function contratoEstandar(nombre: string, construir: (ctx: ContextoReporte) => P
   });
 }
 
-contratoEstandar('con verticales simuladas completas', (ctx) => construirResumenCon(ctx, COMPLETAS));
+contratoEstandar('con verticales simuladas completas', (ctx) => buildSummaryWith(ctx, COMPLETAS));
 contratoEstandar('con las tres verticales vacías (simuladas)', (ctx) =>
-  construirResumenCon(ctx, { suscripciones: vacia('suscripciones'), publicidad: vacia('publicidad'), comisiones: vacia('comisiones') }),
+  buildSummaryWith(ctx, { suscripciones: vacia('suscripciones'), publicidad: vacia('publicidad'), comisiones: vacia('comisiones') }),
 );
 contratoEstandar('con las verticales reales', construirResumen);
 
 describe('Resumen: composición de las tres verticales', () => {
   it('ingreso-total es la suma exacta de los ingreso-periodo de las tres verticales', () => {
     for (const ctx of contextos()) {
-      const p = construirResumenCon(ctx, COMPLETAS);
+      const p = buildSummaryWith(ctx, COMPLETAS);
       const partes = [SUSC(ctx), PUB(ctx), COM(ctx)].map((v) => kpi(v, 'ingreso-periodo').valor as number);
       expect(kpi(p, 'ingreso-total').valor, JSON.stringify(ctx)).toBe(redondear(suma(partes)));
       expect(kpi(p, 'ingreso-suscripciones').valor).toBe(partes[0]);
@@ -206,7 +206,7 @@ describe('Resumen: composición de las tres verticales', () => {
   });
 
   it('la serie apilada, la dona y el mapa de calor concuerdan con el total', () => {
-    const p = construirResumenCon(CTX, COMPLETAS);
+    const p = buildSummaryWith(CTX, COMPLETAS);
     const total = kpi(p, 'ingreso-total').valor as number;
     const serie = grafico(p, 'ingreso-vertical-tiempo').datos;
     expect(serie.tipo).toBe('cartesiano');
@@ -219,7 +219,7 @@ describe('Resumen: composición de las tres verticales', () => {
   });
 
   it('el MRR del gráfico cierra en el MRR del KPI y las velas existen', () => {
-    const p = construirResumenCon(CTX, COMPLETAS);
+    const p = buildSummaryWith(CTX, COMPLETAS);
     const g = grafico(p, 'mrr-total');
     const mrr = kpi(p, 'mrr').valor as number;
     if (g.datos.tipo === 'cartesiano') {
@@ -230,7 +230,7 @@ describe('Resumen: composición de las tres verticales', () => {
   });
 
   it('la cascada suma: anterior + variaciones = actual, y el actual es el total', () => {
-    const p = construirResumenCon(CTX, COMPLETAS);
+    const p = buildSummaryWith(CTX, COMPLETAS);
     const g = grafico(p, 'cascada-ingreso');
     expect(g.datos.tipo).toBe('cascada');
     if (g.datos.tipo === 'cascada') {
@@ -243,7 +243,7 @@ describe('Resumen: composición de las tres verticales', () => {
   });
 
   it('sin comparar no hay cascada, y lo dice', () => {
-    const p = construirResumenCon({ ...CTX, comparar: 'ninguna' }, COMPLETAS);
+    const p = buildSummaryWith({ ...CTX, comparar: 'ninguna' }, COMPLETAS);
     const g = grafico(p, 'cascada-ingreso');
     expect(g.datos.tipo === 'cascada' && g.datos.pasos.length).toBe(0);
     expect(g.sinDatoMotivo).toMatch(/comparar/i);
@@ -251,7 +251,7 @@ describe('Resumen: composición de las tres verticales', () => {
   });
 
   it('los 10 mayores no superan el total y su porcentaje sale de numerador ÷ denominador', () => {
-    const p = construirResumenCon(CTX, COMPLETAS);
+    const p = buildSummaryWith(CTX, COMPLETAS);
     const k = kpi(p, 'concentracion-top10');
     expect(k.numerador!).toBeLessThan(k.denominador!);
     expect(k.valor).toBe(redondear((k.numerador! / k.denominador!) * 100, 1));
@@ -259,15 +259,15 @@ describe('Resumen: composición de las tres verticales', () => {
   });
 
   it('un filtro mueve los números de verdad', () => {
-    const sin = construirResumenCon(CTX, COMPLETAS);
-    const con = construirResumenCon({ ...CTX, filtros: [{ dimension: 'organizacion', valor: 'Clínica Mirador' }] }, COMPLETAS);
-    expect(kpi(con, 'ingreso-total').valor).not.toBe(kpi(sin, 'ingreso-total').valor);
-    expect(kpi(con, 'concentracion-top10').numerador).not.toBe(kpi(sin, 'concentracion-top10').numerador);
+    const unfiltered = buildSummaryWith(CTX, COMPLETAS);
+    const filtered = buildSummaryWith({ ...CTX, filtros: [{ dimension: 'organizacion', valor: 'Clínica Mirador' }] }, COMPLETAS);
+    expect(kpi(filtered, 'ingreso-total').valor).not.toBe(kpi(unfiltered, 'ingreso-total').valor);
+    expect(kpi(filtered, 'concentracion-top10').numerador).not.toBe(kpi(unfiltered, 'concentracion-top10').numerador);
   });
 
   it('cambiar de moneda cambia el importe y la unidad, no mezcla BOB con USD', () => {
-    const bob = kpi(construirResumenCon(CTX, COMPLETAS), 'ingreso-total');
-    const usd = kpi(construirResumenCon({ ...CTX, moneda: 'USD' }, COMPLETAS), 'ingreso-total');
+    const bob = kpi(buildSummaryWith(CTX, COMPLETAS), 'ingreso-total');
+    const usd = kpi(buildSummaryWith({ ...CTX, moneda: 'USD' }, COMPLETAS), 'ingreso-total');
     expect(bob.unidad).toEqual({ tipo: 'moneda', moneda: 'BOB' });
     expect(usd.unidad).toEqual({ tipo: 'moneda', moneda: 'USD' });
     expect(usd.valor!).toBeLessThan(bob.valor!);
@@ -275,10 +275,10 @@ describe('Resumen: composición de las tres verticales', () => {
 });
 
 describe('Resumen: una vertical sin dato no se esconde detrás de una suma parcial', () => {
-  const sinPublicidad: FuentesResumen = { suscripciones: SUSC, publicidad: vacia('publicidad'), comisiones: COM };
+  const withoutAds: FuentesResumen = { suscripciones: SUSC, publicidad: vacia('publicidad'), comisiones: COM };
 
   it('el total y lo que depende de él son null con motivo, no una suma de dos', () => {
-    const p = construirResumenCon(CTX, sinPublicidad);
+    const p = buildSummaryWith(CTX, withoutAds);
     for (const id of ['ingreso-total', 'ingreso-publicidad', 'mix-ingreso', 'concentracion-top10']) {
       const k = kpi(p, id);
       expect(k.valor, id).toBeNull();
@@ -288,14 +288,14 @@ describe('Resumen: una vertical sin dato no se esconde detrás de una suma parci
   });
 
   it('las verticales que sí tienen dato conservan su KPI', () => {
-    const p = construirResumenCon(CTX, sinPublicidad);
+    const p = buildSummaryWith(CTX, withoutAds);
     expect(kpi(p, 'ingreso-suscripciones').valor).not.toBeNull();
     expect(kpi(p, 'ingreso-comisiones').valor).not.toBeNull();
     expect(kpi(p, 'mrr').valor).not.toBeNull();
   });
 
   it('los gráficos del total quedan sin dato con motivo y sin ceros', () => {
-    const p = construirResumenCon(CTX, sinPublicidad);
+    const p = buildSummaryWith(CTX, withoutAds);
     const cascada = grafico(p, 'cascada-ingreso');
     expect(cascada.datos.tipo === 'cascada' && cascada.datos.pasos.length).toBe(0);
     const medidor = grafico(p, 'avance-meta').datos;
@@ -306,7 +306,7 @@ describe('Resumen: una vertical sin dato no se esconde detrás de una suma parci
   });
 
   it('con las tres vacías, el MRR, los clientes y las alertas dicen «sin dato» o «sin evaluar»', () => {
-    const p = construirResumenCon(CTX, { suscripciones: vacia('suscripciones'), publicidad: vacia('publicidad'), comisiones: vacia('comisiones') });
+    const p = buildSummaryWith(CTX, { suscripciones: vacia('suscripciones'), publicidad: vacia('publicidad'), comisiones: vacia('comisiones') });
     for (const id of ['ingreso-total', 'mrr', 'clientes-activos', 'take-rate', 'comision-pendiente']) {
       expect(kpi(p, id).valor, id).toBeNull();
     }
@@ -317,7 +317,7 @@ describe('Resumen: una vertical sin dato no se esconde detrás de una suma parci
 
   it('un ingreso en otra moneda no se suma: el total es null y el motivo lo dice', () => {
     const enUsd: FuentesResumen = { suscripciones: SUSC, publicidad: vertical('publicidad', 95_000, () => [], 'USD'), comisiones: COM };
-    const p = construirResumenCon({ ...CTX, moneda: 'BOB' }, enUsd);
+    const p = buildSummaryWith({ ...CTX, moneda: 'BOB' }, enUsd);
     expect(kpi(p, 'ingreso-total').valor).toBeNull();
     expect(kpi(p, 'ingreso-total').motivoSinDato).toMatch(/no viene en BOB/);
   });

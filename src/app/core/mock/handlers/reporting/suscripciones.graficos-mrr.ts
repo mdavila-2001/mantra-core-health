@@ -2,14 +2,14 @@ import { formatearValor } from '../../../data-access/reporting/reporting-format'
 import type { ChartSpec, ContextoReporte } from '../../../data-access/reporting/reporting.types';
 import { agrupar, ANCHOR_DATE, factorContexto, redondear, rng, suma, candlesFromSeries } from './reporting-dataset.util';
 import { aMoneda, info, unidadMoneda } from './suscripciones.info';
-import { PLANES, semillaDe, type ModeloSuscripciones } from './suscripciones.modelo';
+import { PLANES, seedOf, type ModeloSuscripciones } from './suscripciones.modelo';
 
-const SIN_DATO_MOTIVO = 'No hay cuentas activas en este corte: sin cuentas no hay MRR ni movimientos que mostrar.';
+const NO_DATA_REASON = 'No hay cuentas activas en este corte: sin cuentas no hay MRR ni movimientos que mostrar.';
 const FUENTE_SUSC = 'payments.subscriptions · payments.plan_prices';
 const FUENTE_HIST = 'payments.subscriptions_history';
 
 /** Ingreso reconocido por plan y por cubo, ya en la moneda del contexto; lo comparten el gráfico y la tarjeta. */
-export function ingresoPorPlan(m: ModeloSuscripciones, ctx: ContextoReporte) {
+export function revenueByPlan(m: ModeloSuscripciones, ctx: ContextoReporte) {
   const mon = aMoneda(ctx);
   const series = m.ingresoPlan.map((dia) => agrupar(m.fechas, dia.map(mon), m.gran, 'suma'));
   return { etiquetas: series[0]!.etiquetas, series: series.map((s) => s.valores.map((v) => redondear(v))) };
@@ -40,7 +40,7 @@ export function graficoMrr(m: ModeloSuscripciones, ctx: ContextoReporte): ChartS
       explicacion: 'MRR del tramo: apertura (primer día), máximo, mínimo y cierre (último día).',
       velas: candlesFromSeries(m.fechas, diario, m.gran),
     },
-    sinDatoMotivo: SIN_DATO_MOTIVO,
+    sinDatoMotivo: NO_DATA_REASON,
   };
 }
 
@@ -57,14 +57,14 @@ export function graficoCascada(m: ModeloSuscripciones, ctx: ContextoReporte): Ch
       tipo: 'cascada',
       pasos: [
         { nombre: 'MRR inicial', valor: mon(c.inicial), total: true },
-        { nombre: 'Cuentas nuevas', valor: mon(c.nuevas) },
+        { nombre: 'Cuentas nuevas', valor: mon(c.newMrr) },
         { nombre: 'Expansión', valor: mon(c.expansion) },
         { nombre: 'Contracción', valor: -mon(c.contraccion) },
         { nombre: 'Bajas', valor: -mon(c.bajas) },
         { nombre: 'MRR final', valor: mon(c.final), total: true },
       ],
     },
-    resumenAccesible: `Las cuentas nuevas aportan ${formatearValor(mon(c.nuevas), unidad)} y las bajas restan ${formatearValor(mon(c.bajas), unidad)}; el MRR termina en ${formatearValor(mon(c.final), unidad)}.`,
+    resumenAccesible: `Las cuentas nuevas aportan ${formatearValor(mon(c.newMrr), unidad)} y las bajas restan ${formatearValor(mon(c.bajas), unidad)}; el MRR termina en ${formatearValor(mon(c.final), unidad)}.`,
     filtro: null,
     filtroMotivo: 'Cada barra es un concepto del puente, no un segmento de cuentas; no hay nada que filtrar.',
     info: info({
@@ -75,12 +75,12 @@ export function graficoCascada(m: ModeloSuscripciones, ctx: ContextoReporte): Ch
     }),
     velas: null,
     velasMotivo: 'Es un puente entre dos fechas, no una serie con apertura y cierre.',
-    sinDatoMotivo: SIN_DATO_MOTIVO,
+    sinDatoMotivo: NO_DATA_REASON,
   };
 }
 
 export function graficoIngresoPlan(m: ModeloSuscripciones, ctx: ContextoReporte): ChartSpec {
-  const { etiquetas, series } = ingresoPorPlan(m, ctx);
+  const { etiquetas, series } = revenueByPlan(m, ctx);
   const unidad = unidadMoneda(ctx);
   const total = suma(series.flat());
   return {
@@ -104,7 +104,7 @@ export function graficoIngresoPlan(m: ModeloSuscripciones, ctx: ContextoReporte)
     }),
     velas: null,
     velasMotivo: 'Es un flujo que se suma por tramo; las velas son para saldos y razones.',
-    sinDatoMotivo: SIN_DATO_MOTIVO,
+    sinDatoMotivo: NO_DATA_REASON,
   };
 }
 
@@ -137,7 +137,7 @@ export function graficoMovimiento(m: ModeloSuscripciones): ChartSpec {
     }),
     velas: null,
     velasMotivo: 'Son altas y bajas que se suman por tramo; no son un saldo con apertura y cierre.',
-    sinDatoMotivo: SIN_DATO_MOTIVO,
+    sinDatoMotivo: NO_DATA_REASON,
   };
 }
 
@@ -169,7 +169,7 @@ export function graficoChurn(m: ModeloSuscripciones): ChartSpec {
       velas: candlesFromSeries(m.fechas, m.churnDia, m.gran),
       subirEsMalo: true,
     },
-    sinDatoMotivo: SIN_DATO_MOTIVO,
+    sinDatoMotivo: NO_DATA_REASON,
   };
 }
 
@@ -187,7 +187,7 @@ export function graficoCohortes(m: ModeloSuscripciones, ctx: ContextoReporte): C
   filas.forEach((_, c) => {
     const edad = cohortes - 1 - c;
     const tamano = Math.round(62 * f * (0.85 + 0.03 * c));
-    const r = rng(semillaDe(ctx) + c * 7919);
+    const r = rng(seedOf(ctx) + c * 7919);
     let ret = 100;
     for (let k = 0; k < cohortes; k++) {
       if (k > edad || tamano < MUESTRA_MINIMA_COHORTE) {

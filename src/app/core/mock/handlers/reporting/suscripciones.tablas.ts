@@ -1,7 +1,7 @@
 import type { ContextoReporte, TablaReporte } from '../../../data-access/reporting/reporting.types';
 import { redondear, suma } from './reporting-dataset.util';
-import { cuentasDelContexto } from './suscripciones.cortes';
-import { cuentasPorPlan } from './suscripciones.graficos-cuentas';
+import { contextAccounts } from './suscripciones.cortes';
+import { accountsByPlan } from './suscripciones.graficos-cuentas';
 import { aMoneda, info } from './suscripciones.info';
 import { oscilar, PLANES, type ModeloSuscripciones } from './suscripciones.modelo';
 
@@ -14,7 +14,7 @@ function simbolo(ctx: ContextoReporte): string {
 /** Cuentas que ya consumen casi toda su cuota: son las que probablemente necesitan el plan siguiente. */
 export function tablaCandidatas(ctx: ContextoReporte): TablaReporte {
   const mon = aMoneda(ctx);
-  const filas = cuentasDelContexto(ctx)
+  const filas = contextAccounts(ctx)
     .filter((c) => c.usoPct >= UMBRAL_SUBIDA && c.plan < PLANES.length - 1)
     .sort((a, b) => b.usoPct - a.usoPct || a.nombre.localeCompare(b.nombre))
     .slice(0, 10)
@@ -52,10 +52,10 @@ export function tablaCandidatas(ctx: ContextoReporte): TablaReporte {
 /** Una fila por plan y un total; el total se compone de las filas, no de otra cuenta. */
 export function tablaResumenPlanes(m: ModeloSuscripciones, ctx: ContextoReporte): TablaReporte {
   const mon = aMoneda(ctx);
-  const cuentas = cuentasPorPlan(ctx);
-  const conPlan = ctx.filtros.some((f) => f.dimension === 'plan');
+  const cuentas = accountsByPlan(ctx);
+  const hasPlan = ctx.filtros.some((f) => f.dimension === 'plan');
   // Con un filtro de plan activo la tabla se reduce a ese plan: es el detalle del corte elegido.
-  const visibles = PLANES.map((p, i) => ({ p, i })).filter(({ p }) => !conPlan || ctx.filtros.some((f) => f.dimension === 'plan' && f.valor === p.nombre));
+  const visibles = PLANES.map((p, i) => ({ p, i })).filter(({ p }) => !hasPlan || ctx.filtros.some((f) => f.dimension === 'plan' && f.valor === p.nombre));
   const filas = visibles.map(({ p, i }) => {
     const n = cuentas[i]!;
     const mrr = n * p.precio;

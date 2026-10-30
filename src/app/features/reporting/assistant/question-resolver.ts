@@ -1,6 +1,6 @@
 import type { PestanaReporte, VerticalReporte } from '@core/data-access/reporting/reporting.types';
 
-import { CONCEPTOS_GENERICOS, PALABRAS_VACIAS, PATRONES_DE_PERSONAS, SINONIMOS } from './question-lexicon';
+import { CONCEPTOS_GENERICOS, PALABRAS_VACIAS, PEOPLE_PATTERNS, SINONIMOS } from './question-lexicon';
 
 /* ============================================================================
     Resolvedor de preguntas (MAQUETA). Función pura, sin red ni reloj.
@@ -141,7 +141,7 @@ const FRASES: readonly FraseConcepto[] = Object.entries(SINONIMOS).flatMap(([con
 );
 
 /** Conceptos presentes en un texto, con los índices de palabra que cubre cada frase hallada. */
-function conceptosDe(raices: readonly string[]): {
+function conceptsOf(raices: readonly string[]): {
   conceptos: Set<string>;
   cubiertos: Set<number>;
 } {
@@ -169,8 +169,8 @@ function indexar(medida: MedidaCatalogo): MedidaIndexada {
     tituloNormalizado,
     tokensTitulo: tokenizar(tituloNormalizado).filter(esSignificativo).map(raiz),
     tokensDefinicion: tokenizar(normalizar(medida.definicion)).filter(esSignificativo).map(raiz),
-    conceptosTitulo: conceptosDe(raicesTitulo).conceptos,
-    conceptosDefinicion: conceptosDe(raicesDefinicion).conceptos,
+    conceptosTitulo: conceptsOf(raicesTitulo).conceptos,
+    conceptosDefinicion: conceptsOf(raicesDefinicion).conceptos,
   };
 }
 
@@ -220,17 +220,17 @@ interface Pregunta {
 function analizar(normalizada: string): Pregunta {
   const tokens = tokenizar(normalizada);
   const raices = tokens.map(raiz);
-  const { conceptos, cubiertos } = conceptosDe(raices);
+  const { conceptos, cubiertos } = conceptsOf(raices);
   const sueltas = [
     ...new Set(
       tokens.flatMap((t, i) => (!cubiertos.has(i) && esSignificativo(t) ? [raices[i]] : [])),
     ),
   ];
-  const deConceptos = FRASES.filter((f) => conceptos.has(f.concepto)).flatMap((f) => f.raices);
+  const conceptRoots = FRASES.filter((f) => conceptos.has(f.concepto)).flatMap((f) => f.raices);
   return {
     conceptos,
     sueltas,
-    expandidas: [...new Set([...raices.filter((r, i) => esSignificativo(tokens[i])), ...deConceptos])],
+    expandidas: [...new Set([...raices.filter((r, i) => esSignificativo(tokens[i])), ...conceptRoots])],
   };
 }
 
@@ -289,8 +289,8 @@ function variadas(catalogo: CatalogoIndexado): MedidaIndexada[] {
 
 /* ---- API ---------------------------------------------------------------------------- */
 
-export function pideDatosDePersonas(normalizada: string): boolean {
-  return PATRONES_DE_PERSONAS.some((patron) => patron.test(normalizada));
+export function asksForPersonalData(normalizada: string): boolean {
+  return PEOPLE_PATTERNS.some((patron) => patron.test(normalizada));
 }
 
 export function resolverPregunta(pregunta: string, catalogo: CatalogoIndexado): ResolucionPregunta {
@@ -298,7 +298,7 @@ export function resolverPregunta(pregunta: string, catalogo: CatalogoIndexado): 
   if (normalizada === '') {
     return { tipo: 'vacia' };
   }
-  if (pideDatosDePersonas(normalizada)) {
+  if (asksForPersonalData(normalizada)) {
     return { tipo: 'personas' };
   }
 

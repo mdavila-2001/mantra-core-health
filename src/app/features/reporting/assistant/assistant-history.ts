@@ -58,7 +58,7 @@ export function borrarHistorialGuardado(userId: string | null): void {
  * navegador (TX-31): una pregunta sobre reportes comerciales puede revelar qué
  * le preocupa a un directivo, y el siguiente en el equipo no debe leerla.
  */
-export function olvidarHistorialesDelNavegador(): void {
+export function clearBrowserHistories(): void {
   try {
     const almacen = globalThis.localStorage;
     if (almacen == null) {

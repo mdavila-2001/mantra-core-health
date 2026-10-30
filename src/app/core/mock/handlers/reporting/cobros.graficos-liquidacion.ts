@@ -1,13 +1,13 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ChartSpec } from '../../../data-access/reporting/reporting.types';
-import { info, nombreGranularidad, SIN_VELAS_FOTO } from './cobros.comun';
+import { info, granularityName, NO_CANDLES_SNAPSHOT } from './cobros.comun';
 import {
   CAUSAS_DESCUADRE,
-  DIAS_CON_SIAT,
+  SIAT_COVERED_DAYS,
   ESTADOS_SIAT,
   METODOS,
-  razonDiaria,
-  razonPorCubo,
+  dailyRatio,
+  ratioPerBucket,
   rezagoPromedio,
   tasaEnPct,
   TRAMOS_ANTIGUEDAD,
@@ -20,14 +20,14 @@ const PCT = { tipo: 'porcentaje' } as const;
 const NUM = { tipo: 'numero' } as const;
 
 function reembolsosYDisputas(m: ModeloCobros): ChartSpec {
-  const reemb = razonPorCubo(m.fechas, m.dia.reembolsos, m.dia.volumen, m.gran);
-  const disp = razonPorCubo(m.fechas, m.dia.disputas, m.dia.volumen, m.gran);
+  const reemb = ratioPerBucket(m.fechas, m.dia.reembolsos, m.dia.volumen, m.gran);
+  const disp = ratioPerBucket(m.fechas, m.dia.disputas, m.dia.volumen, m.gran);
   const global = tasaEnPct(m.total.reembolsos, m.total.volumen);
-  const diaria = razonDiaria(m.dia.reembolsos, m.dia.volumen, global ?? 0);
+  const diaria = dailyRatio(m.dia.reembolsos, m.dia.volumen, global ?? 0);
   return {
     id: 'reembolsos-disputas',
     titulo: 'Reembolsos y disputas',
-    subtitulo: `Como % de lo cobrado, por ${nombreGranularidad(m)}`,
+    subtitulo: `Como % de lo cobrado, por ${granularityName(m)}`,
     unidad: PCT,
     datos: {
       tipo: 'cartesiano',
@@ -75,19 +75,19 @@ function rezagoLiquidacion(m: ModeloCobros): ChartSpec {
       salvedades: ['Solo cuenta cobros ya liquidados; los de los últimos días aún no aparecen.', 'Para el promedio, «6 días o más» se cuenta como 7 días.'],
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FOTO,
+    velasMotivo: NO_CANDLES_SNAPSHOT,
     alto: 300,
   };
 }
 
 function costoGateway(m: ModeloCobros): ChartSpec {
-  const costo = razonPorCubo(m.fechas, m.dia.comisiones, m.dia.volumen, m.gran);
+  const costo = ratioPerBucket(m.fechas, m.dia.comisiones, m.dia.volumen, m.gran);
   const global = tasaEnPct(m.total.comisiones, m.total.volumen);
-  const diaria = razonDiaria(m.dia.comisiones, m.dia.volumen, global ?? 0);
+  const diaria = dailyRatio(m.dia.comisiones, m.dia.volumen, global ?? 0);
   return {
     id: 'costo-gateway',
     titulo: 'Costo del gateway',
-    subtitulo: `Comisiones como % del volumen, por ${nombreGranularidad(m)}`,
+    subtitulo: `Comisiones como % del volumen, por ${granularityName(m)}`,
     unidad: PCT,
     datos: { tipo: 'cartesiano', categorias: costo.etiquetas, series: [{ nombre: 'Costo del gateway', valores: costo.valores, forma: 'linea' }] },
     resumenAccesible: `Línea del costo del gateway como porcentaje del volumen cobrado; en el periodo es ${formatearValor(global, PCT)}. Depende de la mezcla de métodos: QR y transferencia cuestan menos que la tarjeta.`,
@@ -136,11 +136,11 @@ function facturacionSiat(m: ModeloCobros): ChartSpec {
       definicion: 'Estado de los comprobantes fiscales de cada cobro capturado: emitido, pendiente, observado por el SIAT o anulado.',
       formula: 'Conteo de comprobantes por estado, apilados por método de pago del cobro.',
       fuente: 'billing.invoices · payments.provider_invoice_artifacts',
-      salvedades: [`La emisión SIAT está conectada desde el 01/07/2026: con periodos de más de ${DIAS_CON_SIAT} días este gráfico y su indicador salen «Sin dato», no en cero.`],
+      salvedades: [`La emisión SIAT está conectada desde el 01/07/2026: con periodos de más de ${SIAT_COVERED_DAYS} días este gráfico y su indicador salen «Sin dato», no en cero.`],
     }),
     velas: null,
     velasMotivo: 'Es un conteo de comprobantes por estado, no una serie de saldo ni de razón.',
-    sinDatoMotivo: `La emisión SIAT está conectada desde el 01/07/2026 y el periodo elegido empieza antes (máximo ${DIAS_CON_SIAT} días). Elige 90 días o menos.`,
+    sinDatoMotivo: `La emisión SIAT está conectada desde el 01/07/2026 y el periodo elegido empieza antes (máximo ${SIAT_COVERED_DAYS} días). Elige 90 días o menos.`,
     alto: 300,
   };
 }
@@ -166,11 +166,11 @@ function descuadres(m: ModeloCobros): ChartSpec {
       salvedades: ['Es una foto de hoy: no cambia con el periodo, solo con el alcance y los filtros.'],
     }),
     velas: null,
-    velasMotivo: SIN_VELAS_FOTO,
+    velasMotivo: NO_CANDLES_SNAPSHOT,
     alto: 300,
   };
 }
 
-export function graficosDeLiquidacion(m: ModeloCobros): ChartSpec[] {
+export function settlementCharts(m: ModeloCobros): ChartSpec[] {
   return [reembolsosYDisputas(m), rezagoLiquidacion(m), costoGateway(m), facturacionSiat(m), descuadres(m)];
 }

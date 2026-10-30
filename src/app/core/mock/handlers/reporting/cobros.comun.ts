@@ -22,13 +22,13 @@ export function enMoneda(m: ModeloCobros, valorBob: number): number {
   return redondear(convertir(valorBob, m.ctx.moneda), 2);
 }
 
-export function nombreGranularidad(m: ModeloCobros): string {
+export function granularityName(m: ModeloCobros): string {
   return m.gran === 'dia' ? 'día' : m.gran === 'semana' ? 'semana' : 'mes';
 }
 
-export const SIN_VELAS_FLUJO =
+export const NO_CANDLES_FLOW =
   'Es un flujo que se suma día a día, no un saldo ni una razón: una vela (apertura, máximo, mínimo y cierre) no tendría sentido.';
-export const SIN_VELAS_FOTO =
+export const NO_CANDLES_SNAPSHOT =
   'Es una foto de un tramo de tiempo, no una serie que cambia día a día: no hay apertura ni cierre que mostrar.';
-export const SIN_FILTRO_ETAPAS =
+export const NO_STAGE_FILTER =
   'Sus partes son etapas de un mismo recorrido; filtrar por una sola dejaría el resto del tablero sin sentido.';

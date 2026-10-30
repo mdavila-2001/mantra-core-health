@@ -28,7 +28,7 @@ export type Metodo = (typeof METODOS)[number];
 
 export const TRAMOS_REZAGO = ['0 días', '1 día', '2 días', '3 a 5 días', '6 días o más'] as const;
 /** Día que representa a cada tramo al calcular el promedio (6 o más cuenta como 7). */
-export const DIA_DEL_TRAMO = [0, 1, 2, 4, 7] as const;
+export const DAY_OF_BUCKET = [0, 1, 2, 4, 7] as const;
 /** Antigüedad mínima de un cobro para que su tramo ya pueda estar liquidado. */
 const ANTIGUEDAD_MINIMA = [0, 1, 2, 5, 7] as const;
 
@@ -42,7 +42,7 @@ export const MOTIVOS_RECHAZO = [
 
 export const ESTADOS_SIAT = ['Emitida', 'Pendiente de emisión', 'Observada por el SIAT', 'Anulada'] as const;
 /** La emisión SIAT de la maqueta está conectada desde el 01/07/2026: 122 días hasta el ancla. */
-export const DIAS_CON_SIAT = 122;
+export const SIAT_COVERED_DAYS = 122;
 
 export const CAUSAS_DESCUADRE = [
   'Monto distinto',
@@ -126,7 +126,7 @@ export interface ModeloCobros {
   readonly factor: number;
   readonly activos: readonly Metodo[];
   /** Todos los métodos, sin recortar por el filtro: el gráfico de comparación los necesita. */
-  readonly porMetodo: Readonly<Record<Metodo, SerieMetodo>>;
+  readonly byMethod: Readonly<Record<Metodo, SerieMetodo>>;
   /** Suma diaria de los métodos activos. */
   readonly dia: CamposDia;
   readonly tramos: number[];
@@ -159,9 +159,9 @@ function construirMetodo(m: Metodo, n: number, base: readonly number[], factor: 
     const volumen = capturados * ticket;
     let liquidados = 0;
     p.rezago.forEach((parte, k) => {
-      const cuenta = antiguedad >= ANTIGUEDAD_MINIMA[k]! ? Math.floor(capturados * parte) : 0;
-      s.tramos[k]! += cuenta;
-      liquidados += cuenta;
+      const counted = antiguedad >= ANTIGUEDAD_MINIMA[k]! ? Math.floor(capturados * parte) : 0;
+      s.tramos[k]! += counted;
+      liquidados += counted;
     });
     s.intentos.push(intentos);
     s.autorizados.push(autorizados);
@@ -193,44 +193,44 @@ export function construirModelo(ctx: ContextoReporte): ModeloCobros {
       ? factorContexto(ctx)
       : factorContexto({ ...ctx, filtros: ctx.filtros.filter((f) => f.dimension !== 'metodo-pago') });
   const base = serie(7001, n, 260, 18, 5);
-  const porMetodo = Object.fromEntries(METODOS.map((m) => [m, construirMetodo(m, n, base, factor)])) as Record<Metodo, SerieMetodo>;
+  const byMethod = Object.fromEntries(METODOS.map((m) => [m, construirMetodo(m, n, base, factor)])) as Record<Metodo, SerieMetodo>;
   const activos: readonly Metodo[] = seleccion === null ? METODOS : [seleccion];
 
-  const campo = (k: keyof CamposDia) => sumarSeries(activos.map((m) => porMetodo[m][k]), n);
+  const campo = (k: keyof CamposDia) => sumarSeries(activos.map((m) => byMethod[m][k]), n);
   const dia: CamposDia = {
     intentos: campo('intentos'), autorizados: campo('autorizados'), capturados: campo('capturados'),
     liquidados: campo('liquidados'), volumen: campo('volumen'), reembolsos: campo('reembolsos'),
     disputas: campo('disputas'), comisiones: campo('comisiones'),
   };
   const total = Object.fromEntries((Object.keys(dia) as (keyof CamposDia)[]).map((k) => [k, suma(dia[k])])) as Record<keyof CamposDia, number>;
-  const tramos = TRAMOS_REZAGO.map((_, k) => activos.reduce((a, m) => a + porMetodo[m].tramos[k]!, 0));
+  const tramos = TRAMOS_REZAGO.map((_, k) => activos.reduce((a, m) => a + byMethod[m].tramos[k]!, 0));
 
   // Rechazados = intentos que no llegaron a autorizarse; «Otros motivos» absorbe el redondeo.
   const rechazos: number[] = MOTIVOS_RECHAZO.map(() => 0);
   for (const m of activos) {
-    const rechazados = suma(porMetodo[m].intentos) - suma(porMetodo[m].autorizados);
+    const rechazados = suma(byMethod[m].intentos) - suma(byMethod[m].autorizados);
     const partes = PARAM[m].motivos.slice(0, 4).map((p) => Math.round(rechazados * p));
     partes.forEach((v, k) => (rechazos[k]! += v));
     rechazos[4]! += Math.max(0, rechazados - suma(partes));
   }
 
   const siat: readonly SiatMetodo[] | null =
-    n > DIAS_CON_SIAT
+    n > SIAT_COVERED_DAYS
       ? null
       : METODOS.map((m) => ({
           metodo: m,
-          porEstado: activos.includes(m) ? repartoSiat(m, suma(porMetodo[m].capturados)) : null,
+          porEstado: activos.includes(m) ? repartoSiat(m, suma(byMethod[m].capturados)) : null,
         }));
 
   // Foto de hoy: no depende del periodo, sí del alcance y de los filtros.
   const fDescuadres = factorContexto(ctx);
   const descuadres = BASE_DESCUADRES.map((fila) => fila.map((v) => Math.round(v * fDescuadres)));
 
-  return { ctx, fechas, gran: granularidad(ctx.periodo), seleccion, factor, activos, porMetodo, dia, tramos, total, rechazos, siat, descuadres };
+  return { ctx, fechas, gran: granularidad(ctx.periodo), seleccion, factor, activos, byMethod, dia, tramos, total, rechazos, siat, descuadres };
 }
 
 /** Razón por cubo (suma de numeradores ÷ suma de denominadores), en %; `null` si no hay denominador. */
-export function razonPorCubo(
+export function ratioPerBucket(
   fechas: readonly string[],
   num: readonly number[],
   den: readonly number[],
@@ -245,7 +245,7 @@ export function razonPorCubo(
 }
 
 /** Razón diaria en %; un día sin denominador toma `respaldo` para que las velas no tengan huecos. */
-export function razonDiaria(num: readonly number[], den: readonly number[], respaldo: number): number[] {
+export function dailyRatio(num: readonly number[], den: readonly number[], respaldo: number): number[] {
   return num.map((v, i) => (den[i]! > 0 ? (v / den[i]!) * 100 : respaldo));
 }
 
@@ -256,5 +256,5 @@ export function tasaEnPct(num: number, den: number): number | null {
 /** Promedio de días de rezago ponderado por cobros liquidados; `null` si no se liquidó nada. */
 export function rezagoPromedio(tramos: readonly number[]): number | null {
   const total = suma(tramos);
-  return total > 0 ? redondear(tramos.reduce((a, v, k) => a + v * DIA_DEL_TRAMO[k]!, 0) / total, 2) : null;
+  return total > 0 ? redondear(tramos.reduce((a, v, k) => a + v * DAY_OF_BUCKET[k]!, 0) / total, 2) : null;
 }

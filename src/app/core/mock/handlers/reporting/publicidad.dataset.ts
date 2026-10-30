@@ -1,6 +1,6 @@
 import type { ContextoReporte, KpiSpec, PestanaReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { AVISO_MODULO, aMoneda, aMonedaNull, info, unidadMoneda } from './publicidad.comun';
-import { graficoModeracion, graficoCitasCiudad, graficoEstadoCampanas, graficoPorAnunciante, graficoPorCampana } from './publicidad.graficos-campanas';
+import { graficoModeracion, graficoCitasCiudad, campaignStatusChart, advertiserChart, campaignChart } from './publicidad.graficos-campanas';
 import {
   graficoCpaUbicacion,
   graficoCtrHora,
@@ -12,7 +12,7 @@ import {
   graficoUbicacion,
   graficoValorAtribuido,
 } from './publicidad.graficos';
-import { anunciantesConGasto, calcularModelo, razon, type Modelo } from './publicidad.modelo';
+import { advertisersWithSpend, calcularModelo, ratio, type Modelo } from './publicidad.modelo';
 import { tablaAnunciosPeorCosto, tablaCampanas, tablaModeracion } from './publicidad.tablas';
 import { hashTexto, kpi, variacionContexto } from './reporting-dataset.util';
 
@@ -25,8 +25,8 @@ import { hashTexto, kpi, variacionContexto } from './reporting-dataset.util';
     (publicidad.modelo.ts), así que tarjetas, gráficos y tablas cuadran entre sí.
     ========================================================================== */
 
-const SIN_ENTREGA = 'La selección no tuvo entrega en el periodo: no hay impresiones sobre las que calcular.';
-const SIN_CITAS = 'La selección no incluye campañas con citas atribuidas (objetivo distinto de «Citas agendadas» o sin entrega).';
+const NO_DELIVERY = 'La selección no tuvo entrega en el periodo: no hay impresiones sobre las que calcular.';
+const NO_APPOINTMENTS = 'La selección no incluye campañas con citas atribuidas (objetivo distinto de «Citas agendadas» o sin entrega).';
 
 /** Reduce una serie a ≤ 24 puntos (media por tramo) para la línea de tendencia. */
 function muestrear(valores: readonly number[] | null): number[] | undefined {
@@ -42,20 +42,20 @@ function muestrear(valores: readonly number[] | null): number[] | undefined {
   return out;
 }
 
-function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
+function buildKpis(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
   const moneda = unidadMoneda(ctx);
-  const razonVeces: UnidadValor = { tipo: 'razon', sufijo: ' veces' };
+  const ratioTimes: UnidadValor = { tipo: 'razon', sufijo: ' veces' };
   const roasU: UnidadValor = { tipo: 'razon', sufijo: ' ×' };
   const variacion = (id: string, valor: number | null): number | null =>
     valor === null ? null : variacionContexto(ctx, valor, hashTexto(`pub:var:${id}`));
-  const frecuencia = razon(m.impresiones, m.alcance);
-  const ctr = razon(m.clics * 100, m.impresiones);
-  const cpmBob = razon(m.gasto, m.impresiones);
+  const frecuencia = ratio(m.impresiones, m.alcance);
+  const ctr = ratio(m.clics * 100, m.impresiones);
+  const cpmBob = ratio(m.gasto, m.impresiones);
   const cpm = cpmBob === null ? null : cpmBob * 1000;
-  const cpaBob = m.citas === null || m.citas <= 0 ? null : razon(m.gastoCitas, m.citas);
-  const roas = m.citas === null || m.citas <= 0 ? null : razon(m.valor, m.gastoCitas);
+  const cpaBob = m.citas === null || m.citas <= 0 ? null : ratio(m.gastoCitas, m.citas);
+  const roas = m.citas === null || m.citas <= 0 ? null : ratio(m.valor, m.gastoCitas);
   const impresionesDia = m.cpmDia === null ? null : m.gastoDia.map((g, i) => (g / m.cpmDia![i]!) * 1000);
-  const activos = anunciantesConGasto(m).length;
+  const activos = advertisersWithSpend(m).length;
 
   return [
     kpi({
@@ -103,12 +103,12 @@ function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       id: 'frecuencia',
       titulo: 'Frecuencia',
       valor: frecuencia,
-      unidad: razonVeces,
+      unidad: ratioTimes,
       variacionPct: variacion('frecuencia', frecuencia),
       subirEsMalo: true,
       numerador: m.impresiones,
       denominador: m.alcance,
-      motivoSinDato: frecuencia === null ? SIN_ENTREGA : undefined,
+      motivoSinDato: frecuencia === null ? NO_DELIVERY : undefined,
       info: info({
         definicion: 'Cuántas veces, en promedio, vio cada persona alcanzada un anuncio.',
         formula: 'Frecuencia = impresiones ÷ alcance',
@@ -126,7 +126,7 @@ function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       variacionPct: variacion('ctr', ctr),
       numerador: m.clics,
       denominador: m.impresiones,
-      motivoSinDato: ctr === null ? SIN_ENTREGA : undefined,
+      motivoSinDato: ctr === null ? NO_DELIVERY : undefined,
       tendencia: muestrear(m.ctrDia),
       info: info({
         definicion: 'De cada cien veces que se mostró un anuncio, cuántas se hizo clic en su enlace.',
@@ -145,7 +145,7 @@ function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       subirEsMalo: true,
       numerador: aMoneda(ctx, m.gasto),
       denominador: m.impresiones,
-      motivoSinDato: cpm === null ? SIN_ENTREGA : undefined,
+      motivoSinDato: cpm === null ? NO_DELIVERY : undefined,
       tendencia: muestrear(m.cpmDia?.map((v) => aMoneda(ctx, v)) ?? null),
       info: info({
         definicion: 'Lo que cuesta mostrar un anuncio mil veces.',
@@ -161,7 +161,7 @@ function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       valor: m.citas,
       unidad: { tipo: 'numero' },
       variacionPct: variacion('citas', m.citas),
-      motivoSinDato: m.citas === null ? SIN_CITAS : undefined,
+      motivoSinDato: m.citas === null ? NO_APPOINTMENTS : undefined,
       info: info({
         definicion: 'Citas que se agendaron tras ver o tocar un anuncio. Solo cantidades: nada de datos de pacientes.',
         formula: 'Σ citas atribuidas de campañas con objetivo «Citas agendadas»',
@@ -178,7 +178,7 @@ function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       subirEsMalo: true,
       numerador: aMoneda(ctx, m.gastoCitas),
       denominador: m.citas,
-      motivoSinDato: cpaBob === null ? SIN_CITAS : undefined,
+      motivoSinDato: cpaBob === null ? NO_APPOINTMENTS : undefined,
       tendencia: muestrear(m.cpaDia?.map((v) => aMoneda(ctx, v)) ?? null),
       info: info({
         definicion: 'Lo que cuesta conseguir una cita agendada desde un anuncio.',
@@ -196,7 +196,7 @@ function kpisDe(ctx: ContextoReporte, m: Modelo): KpiSpec[] {
       variacionPct: variacion('roas', roas),
       numerador: m.valor === null ? null : aMoneda(ctx, m.valor),
       denominador: aMoneda(ctx, m.gastoCitas),
-      motivoSinDato: roas === null ? SIN_CITAS : undefined,
+      motivoSinDato: roas === null ? NO_APPOINTMENTS : undefined,
       tendencia: muestrear(m.roasDia),
       info: info({
         definicion: 'Cuántos bolivianos de valor generan las citas por cada boliviano gastado en anuncios.',
@@ -236,9 +236,9 @@ export function construirPublicidad(ctx: ContextoReporte): PestanaReporte {
     graficoUbicacion(ctx, calcularModelo(ctx, 'canal')),
     graficoCpaUbicacion(ctx),
     graficoCtrHora(m),
-    graficoPorCampana(ctx, calcularModelo(ctx, 'campana')),
-    graficoPorAnunciante(ctx, calcularModelo(ctx, 'anunciante')),
-    graficoEstadoCampanas(calcularModelo(ctx, 'estado')),
+    campaignChart(ctx, calcularModelo(ctx, 'campana')),
+    advertiserChart(ctx, calcularModelo(ctx, 'anunciante')),
+    campaignStatusChart(calcularModelo(ctx, 'estado')),
     graficoModeracion(m),
   ];
   const tablas = [tablaCampanas(ctx, m), tablaAnunciosPeorCosto(ctx, m), tablaModeracion(m)];
@@ -248,7 +248,7 @@ export function construirPublicidad(ctx: ContextoReporte): PestanaReporte {
     pestana: 'publicidad',
     generadoEn: '2026-10-30T09:00:00-04:00',
     origen: 'ejemplo',
-    kpis: kpisDe(ctx, m),
+    kpis: buildKpis(ctx, m),
     graficos,
     tablas,
     avisos: [AVISO_MODULO],

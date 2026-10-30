@@ -12,32 +12,32 @@ import {
   candlesFromSeries,
 } from './reporting-dataset.util';
 import {
-  NOMBRE_VERTICAL,
+  VERTICAL_NAME,
   CRECIMIENTO,
   ORDEN,
   buscarKpi,
   importeEnMoneda,
   infoEjemplo,
   saldoDiario,
-  serieDeIngreso,
+  incomeSeries,
   type BaseResumen,
 } from './resumen.base';
-import { concentracionDe } from './resumen.concentracion';
+import { computeConcentration } from './resumen.concentracion';
 
 const FUENTE =
   'Composición de las pestañas Suscripciones, Publicidad y Comisiones (payments.subscriptions, ads.ad_invoices, broker_commission_statements, payment_splits).';
 
-function dineroDe(base: BaseResumen): UnidadValor {
+function moneyUnit(base: BaseResumen): UnidadValor {
   return { tipo: 'moneda', moneda: base.ctx.moneda };
 }
 
 function m(base: BaseResumen, v: number | null): string {
-  return formatearValor(v, dineroDe(base));
+  return formatearValor(v, moneyUnit(base));
 }
 
 /* 1 · Ingreso por vertical en el tiempo (barras apiladas) */
-function ingresoEnElTiempo(base: BaseResumen): ChartSpec {
-  const s = serieDeIngreso(base);
+function incomeOverTime(base: BaseResumen): ChartSpec {
+  const s = incomeSeries(base);
   const lectura =
     base.total === null
       ? 'No hay total: falta el ingreso de al menos una vertical.'
@@ -46,12 +46,12 @@ function ingresoEnElTiempo(base: BaseResumen): ChartSpec {
     id: 'ingreso-vertical-tiempo',
     titulo: 'Ingreso por vertical en el tiempo',
     subtitulo: 'Cada barra suma las tres verticales',
-    unidad: dineroDe(base),
+    unidad: moneyUnit(base),
     datos: {
       tipo: 'cartesiano',
       categorias: s.etiquetas,
       series: ORDEN.map((c) => ({
-        nombre: NOMBRE_VERTICAL[c],
+        nombre: VERTICAL_NAME[c],
         valores: s.porVertical[c],
         forma: 'barra' as const,
         apilar: 'ingreso',
@@ -77,14 +77,14 @@ function ingresoEnElTiempo(base: BaseResumen): ChartSpec {
 }
 
 /* 2 · Mix de ingresos (dona) */
-function mixDeIngresos(base: BaseResumen): ChartSpec {
-  const partes = ORDEN.map((c) => ({ nombre: NOMBRE_VERTICAL[c], valor: base.lecturas[c].ingreso }));
+function incomeMix(base: BaseResumen): ChartSpec {
+  const partes = ORDEN.map((c) => ({ nombre: VERTICAL_NAME[c], valor: base.lecturas[c].ingreso }));
   const mayor = base.total === null ? null : [...partes].sort((a, b) => (b.valor ?? 0) - (a.valor ?? 0))[0]!;
   return {
     id: 'mix-ingresos',
     titulo: 'Mix de ingresos',
     subtitulo: 'Qué parte del total aporta cada vertical',
-    unidad: dineroDe(base),
+    unidad: moneyUnit(base),
     datos: { tipo: 'partes', forma: 'dona', partes },
     resumenAccesible:
       mayor === null || base.total === null
@@ -106,7 +106,7 @@ function mixDeIngresos(base: BaseResumen): ChartSpec {
 }
 
 /* 3 · MRR total con velas */
-function mrrConVelas(base: BaseResumen): ChartSpec {
+function mrrCandles(base: BaseResumen): ChartSpec {
   const { ctx } = base;
   const k = buscarKpi(base.lecturas.suscripciones.pestana, 'mrr');
   const mrr = importeEnMoneda(k, ctx, 'el MRR de suscripciones');
@@ -120,7 +120,7 @@ function mrrConVelas(base: BaseResumen): ChartSpec {
     id: 'mrr-total',
     titulo: 'MRR de suscripciones al cierre de cada tramo',
     subtitulo: 'Saldo mensual recurrente; cambia a velas para ver su rango',
-    unidad: dineroDe(base),
+    unidad: moneyUnit(base),
     datos: {
       tipo: 'cartesiano',
       categorias: etiquetas,
@@ -161,10 +161,10 @@ function cascada(base: BaseResumen): ChartSpec {
     // El residuo del redondeo cae en el último paso: anterior + variaciones = actual, exacto.
     deltas[deltas.length - 1] = redondear(total - anterior - suma(deltas.slice(0, -1)));
     pasos.push({ nombre: 'Periodo anterior', valor: anterior, total: true });
-    ORDEN.forEach((c, i) => pasos.push({ nombre: NOMBRE_VERTICAL[c], valor: deltas[i]! }));
+    ORDEN.forEach((c, i) => pasos.push({ nombre: VERTICAL_NAME[c], valor: deltas[i]! }));
     pasos.push({ nombre: 'Periodo actual', valor: total, total: true });
   }
-  const motivo =
+  const reason =
     ctx.comparar === 'ninguna'
       ? 'Elige comparar con el periodo anterior para ver qué vertical movió el ingreso.'
       : (base.motivoTotal ?? 'Falta el comparativo de alguna vertical.');
@@ -172,11 +172,11 @@ function cascada(base: BaseResumen): ChartSpec {
     id: 'cascada-ingreso',
     titulo: 'De qué se compone el cambio del ingreso',
     subtitulo: 'Periodo anterior → variación de cada vertical → periodo actual',
-    unidad: dineroDe(base),
+    unidad: moneyUnit(base),
     datos: { tipo: 'cascada', pasos },
     resumenAccesible: completo
       ? `Cascada: el ingreso pasó de ${m(base, anterior)} a ${m(base, total)}; las barras intermedias son lo que sumó o restó cada vertical.`
-      : `Cascada del cambio del ingreso. Sin dato: ${motivo}`,
+      : `Cascada del cambio del ingreso. Sin dato: ${reason}`,
     filtro: null,
     filtroMotivo: 'Cada barra ya es una vertical; filtrar por ella no cambiaría ningún otro gráfico.',
     info: infoEjemplo({
@@ -187,7 +187,7 @@ function cascada(base: BaseResumen): ChartSpec {
     }),
     velas: null,
     velasMotivo: 'Compara dos cortes del periodo; no es una serie con apertura y cierre.',
-    sinDatoMotivo: motivo,
+    sinDatoMotivo: reason,
   };
 }
 
@@ -226,12 +226,12 @@ function avanceMeta(base: BaseResumen): ChartSpec {
 
 /* 6 · Concentración: top 10 clientes */
 function topClientes(base: BaseResumen): ChartSpec {
-  const c = concentracionDe(base);
+  const c = computeConcentration(base);
   return {
     id: 'top10-clientes',
     titulo: 'Los 10 clientes que más ingreso aportan',
     subtitulo: c === null ? undefined : `Concentran ${formatearValor(c.pct, { tipo: 'porcentaje' })} del ingreso total`,
-    unidad: dineroDe(base),
+    unidad: moneyUnit(base),
     datos: {
       tipo: 'cartesiano',
       categorias: c === null ? [] : c.clientes.map((x) => x.nombre),
@@ -319,8 +319,8 @@ function calorMensual(base: BaseResumen): ChartSpec {
     id: 'calor-vertical-mes',
     titulo: 'Ingreso mensual por vertical',
     subtitulo: 'Más oscuro = más ingreso en ese mes',
-    unidad: dineroDe(base),
-    datos: { tipo: 'mapa-calor', filas: ORDEN.map((c) => NOMBRE_VERTICAL[c]), columnas: MESES, celdas, nombreValor: 'Ingreso del mes' },
+    unidad: moneyUnit(base),
+    datos: { tipo: 'mapa-calor', filas: ORDEN.map((c) => VERTICAL_NAME[c]), columnas: MESES, celdas, nombreValor: 'Ingreso del mes' },
     resumenAccesible: hayDato
       ? 'Mapa de calor del ingreso mensual de cada vertical en los últimos seis meses; el mes más reciente es el de mayor ingreso en las tres.'
       : 'Mapa de calor del ingreso mensual. Sin dato: faltan los ingresos de las verticales.',
@@ -340,9 +340,9 @@ function calorMensual(base: BaseResumen): ChartSpec {
 
 export function construirGraficos(base: BaseResumen): ChartSpec[] {
   return [
-    ingresoEnElTiempo(base),
-    mixDeIngresos(base),
-    mrrConVelas(base),
+    incomeOverTime(base),
+    incomeMix(base),
+    mrrCandles(base),
     cascada(base),
     avanceMeta(base),
     topClientes(base),

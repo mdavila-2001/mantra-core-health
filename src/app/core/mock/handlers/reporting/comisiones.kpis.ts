@@ -1,7 +1,7 @@
 import type { ContextoReporte, KpiSpec, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { FUENTE_COMISIONES, FUENTE_CONCILIACION, FUENTE_FEES, FUENTE_PAYOUTS, info } from './comisiones.info';
 import type { ModeloComisiones } from './comisiones.modelo';
-import { aMonto, MOTIVO_SIN_ESQUEMA, porcentaje } from './comisiones.modelo';
+import { aMonto, NO_SCHEME_REASON, porcentaje } from './comisiones.modelo';
 import { hashTexto, kpi, variacionContexto } from './reporting-dataset.util';
 
 /** Variación contra el periodo de comparación; sin valor no hay variación (no se inventa). */
@@ -16,8 +16,8 @@ export function construirKpis(ctx: ContextoReporte, m: ModeloComisiones, tendenc
   const a = m.alcance;
   const dinero: UnidadValor = { tipo: 'moneda', moneda: ctx.moneda };
   const pct: UnidadValor = { tipo: 'porcentaje' };
-  const cuenta: UnidadValor = { tipo: 'numero' };
-  const motivoActor = a.comisionesC === null || a.devengadaC === null ? MOTIVO_SIN_ESQUEMA : undefined;
+  const countUnit: UnidadValor = { tipo: 'numero' };
+  const actorReason = a.comisionesC === null || a.devengadaC === null ? NO_SCHEME_REASON : undefined;
 
   const importe = (id: string, titulo: string, centimos: number | null, extra: Partial<KpiSpec>, def: Parameters<typeof info>[0]): KpiSpec => {
     const valor = aMonto(centimos);
@@ -27,7 +27,7 @@ export function construirKpis(ctx: ContextoReporte, m: ModeloComisiones, tendenc
       valor,
       unidad: dinero,
       variacionPct: variacion(ctx, id, valor),
-      ...(valor === null ? { motivoSinDato: MOTIVO_SIN_ESQUEMA } : {}),
+      ...(valor === null ? { motivoSinDato: NO_SCHEME_REASON } : {}),
       info: info(def),
       ...extra,
     });
@@ -68,7 +68,7 @@ export function construirKpis(ctx: ContextoReporte, m: ModeloComisiones, tendenc
       variacionPct: variacion(ctx, 'take-rate', take),
       numerador: aMonto(a.ingresoNetoC),
       denominador: aMonto(a.volumenC),
-      ...(take === null ? { motivoSinDato: motivoActor ?? 'Sin volumen transaccionado en el periodo' } : {}),
+      ...(take === null ? { motivoSinDato: actorReason ?? 'Sin volumen transaccionado en el periodo' } : {}),
       tendencia: tendencia.takeRate,
       info: info({
         definicion: 'Qué parte del dinero que mueve la plataforma se queda como ingreso neto.',
@@ -126,7 +126,7 @@ export function construirKpis(ctx: ContextoReporte, m: ModeloComisiones, tendenc
       id: 'descuadres-abiertos',
       titulo: 'Descuadres abiertos',
       valor: a.descuadres,
-      unidad: cuenta,
+      unidad: countUnit,
       subirEsMalo: true,
       variacionPct: variacion(ctx, 'descuadres-abiertos', a.descuadres),
       info: info({

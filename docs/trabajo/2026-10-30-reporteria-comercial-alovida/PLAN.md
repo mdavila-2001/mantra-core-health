@@ -226,7 +226,7 @@ Decisiones de diseño y su motivo:
 
 ### 5.1 Selector (después del login)
 
-- Aparece sólo a quien tenga rol de administración **y** acceso a reportería. Dos tarjetas: **Portal de administración** (`/administration/...`) y **Portal de reportería** (`/reporting`). Quien tiene un solo acceso entra directo, sin pantalla extra.
+- Aparece sólo a quien tenga rol de administración **y** acceso a reportería. Dos tarjetas: **Portal de administración** (`/administration/...`) y **Portal de reportería** (`/reports`). Quien tiene un solo acceso entra directo, sin pantalla extra.
 - Se inserta en `destinoDespuesDeEntrar()` (`features/auth/login/login.ts`) **después** de la selección de organización y **respetando** `returnUrl` (que ya se valida contra redirección abierta). Recordar la última elección es una conveniencia, no una autorización.
 - **Ocultar una tarjeta no es seguridad** (CLAUDE.md, punto 2): el guard de ruta y cada endpoint validan el rol por su cuenta.
 - Hay un conmutador permanente en la cabecera para cambiar de portal sin cerrar sesión.
@@ -310,7 +310,7 @@ Formato regla 20. **Ninguno está iniciado.** Cada microtarea se cierra con su D
 
 ### H3 — Frontend: selector de portal, grid y visor
 
-**CA:** Dado un admin con acceso a ambos portales, cuando inicia sesión, entonces elige portal; dado uno con un solo acceso, entra directo; y un usuario sin rol de reportería que escribe `/reporting` es redirigido por el guard.
+**CA:** Dado un admin con acceso a ambos portales, cuando inicia sesión, entonces elige portal; dado uno con un solo acceso, entra directo; y un usuario sin rol de reportería que escribe `/reports` es redirigido por el guard.
 **DoD:** `yarn typecheck` · `yarn lint` · `yarn test` dirigido · Playwright sobre las rutas nuevas · matriz de roles (`fable-matriz-roles.spec.ts`) · **capturas en móvil, tablet y escritorio, claro y oscuro, y los estados de carga/vacío/error, miradas de verdad** (regla 95.7).
 
 | ID | Microtarea | DoD |

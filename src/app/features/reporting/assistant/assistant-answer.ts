@@ -25,27 +25,27 @@ export function construirRespuesta(
   pestana: PestanaReporte,
   contexto: ContextoReporte,
 ): RespuestaMedida {
-  const sinDato = kpi.valor === null || Number.isNaN(kpi.valor);
+  const missing = kpi.valor === null || Number.isNaN(kpi.valor);
   return {
     titulo: kpi.titulo,
     ambito: contexto.alcance === 'organizacion' ? 'de su organización' : 'de toda la plataforma',
     periodo: ETIQUETA_PERIODO[contexto.periodo],
     filtros: contexto.filtros.map((f) => `${ETIQUETA_DIMENSION[f.dimension]}: ${f.valor}`),
-    valorTexto: sinDato ? NO_DATA : formatearValor(kpi.valor, kpi.unidad),
-    sinDato,
-    motivoSinDato: sinDato ? (kpi.motivoSinDato ?? 'El reporte no indica el motivo.') : null,
-    variacion: sinDato ? null : variacionDe(kpi, contexto),
+    valorTexto: missing ? NO_DATA : formatearValor(kpi.valor, kpi.unidad),
+    sinDato: missing,
+    motivoSinDato: missing ? (kpi.motivoSinDato ?? 'El reporte no indica el motivo.') : null,
+    variacion: missing ? null : buildVariation(kpi, contexto),
     definicion: kpi.info?.definicion ?? `Este reporte no publica la definición: ${kpi.infoMotivo ?? 'sin motivo registrado'}.`,
     formula: kpi.info?.formula ?? null,
     fuente: kpi.info?.fuente ?? 'No indicada',
     frescura: kpi.info?.frescura ?? 'No indicada',
-    generadoEn: fechaLegible(pestana.generadoEn),
+    generadoEn: readableDate(pestana.generadoEn),
     esEjemplo: pestana.origen === 'ejemplo',
-    ruta: `/reporting/comercial/${pestana.pestana}`,
+    ruta: `/reports/commercial/${pestana.pestana}`,
   };
 }
 
-function variacionDe(kpi: KpiSpec, contexto: ContextoReporte): VariacionRespuesta | null {
+function buildVariation(kpi: KpiSpec, contexto: ContextoReporte): VariacionRespuesta | null {
   if (contexto.comparar === 'ninguna') {
     return null;
   }
@@ -66,10 +66,10 @@ function variacionDe(kpi: KpiSpec, contexto: ContextoReporte): VariacionRespuest
   };
 }
 
-function fechaLegible(iso: string): string | null {
-  const fecha = new Date(iso);
-  if (Number.isNaN(fecha.getTime())) {
+function readableDate(iso: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
     return null;
   }
-  return new Intl.DateTimeFormat('es-BO', { dateStyle: 'medium', timeStyle: 'short' }).format(fecha);
+  return new Intl.DateTimeFormat('es-BO', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }

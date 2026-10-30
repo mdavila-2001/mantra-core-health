@@ -23,7 +23,7 @@ function ctx(parcial: Partial<ContextoReporte> = {}): ContextoReporte {
   return { periodo: '30d', comparar: 'periodo-anterior', moneda: 'BOB', alcance: 'plataforma', filtros: [], ...parcial };
 }
 
-function todosLosContextos(): ContextoReporte[] {
+function allContexts(): ContextoReporte[] {
   return PERIODOS.flatMap((periodo) =>
     COMPARAR.flatMap((comparar) =>
       MONEDAS.flatMap((moneda) => ALCANCES.map((alcance) => ctx({ periodo, comparar, moneda, alcance }))),
@@ -73,7 +73,7 @@ function cerca(a: number, b: number, tolerancia = 1e-6): void {
 
 describe('Pestaña publicidad (datos de EJEMPLO)', () => {
   it('cumple el contrato de calidad en todas las combinaciones de periodo, comparación, moneda y alcance', () => {
-    for (const c of todosLosContextos()) {
+    for (const c of allContexts()) {
       const p = construirPublicidad(c);
       const etiqueta = JSON.stringify(c);
       expect(p.pestana).toBe('publicidad');
@@ -154,9 +154,9 @@ describe('Pestaña publicidad (datos de EJEMPLO)', () => {
     const filas = filtrado.tablas.find((t) => t.id === 'pub-tabla-campanas')!.filas;
     expect(filas.map((f) => f['campana'])).toEqual(['Chequeo ejecutivo']);
     // La campaña elegida cuadra con su barra en el gráfico sin filtrar.
-    const por = grafico(base, 'pub-por-campana');
-    if (por.datos.tipo !== 'cartesiano') throw new Error('forma inesperada');
-    const barra = por.datos.series[0]!.valores[por.datos.categorias.indexOf('Chequeo ejecutivo')]!;
+    const byCampaign = grafico(base, 'pub-por-campana');
+    if (byCampaign.datos.tipo !== 'cartesiano') throw new Error('forma inesperada');
+    const barra = byCampaign.datos.series[0]!.valores[byCampaign.datos.categorias.indexOf('Chequeo ejecutivo')]!;
     cerca(kpi(filtrado, 'ingreso-periodo').valor!, barra);
   });
 
@@ -202,10 +202,10 @@ describe('Pestaña publicidad (datos de EJEMPLO)', () => {
 
   it('cuenta 12 campañas en sus estados y la tabla las lista todas', () => {
     const p = construirPublicidad(ctx());
-    const estado = grafico(p, 'pub-estado-campanas');
-    if (estado.datos.tipo !== 'cartesiano') throw new Error('forma inesperada');
-    expect(estado.datos.series[0]!.valores.reduce<number>((a, v) => a + (v ?? 0), 0)).toBe(CAMPANAS.length);
-    expect(estado.datos.categorias).toEqual(
+    const status = grafico(p, 'pub-estado-campanas');
+    if (status.datos.tipo !== 'cartesiano') throw new Error('forma inesperada');
+    expect(status.datos.series[0]!.valores.reduce<number>((a, v) => a + (v ?? 0), 0)).toBe(CAMPANAS.length);
+    expect(status.datos.categorias).toEqual(
       expect.arrayContaining(['Activa', 'En revisión', 'Rechazada', 'En fase de aprendizaje', 'Aprendizaje limitada', 'Pausada']),
     );
     expect(p.tablas.find((t) => t.id === 'pub-tabla-campanas')!.filas.length).toBe(CAMPANAS.length);
@@ -273,9 +273,9 @@ describe('Pestaña publicidad (datos de EJEMPLO)', () => {
 
   it('el alcance de organización es una fracción de la plataforma', () => {
     const plataforma = kpi(construirPublicidad(ctx()), 'ingreso-periodo').valor!;
-    const organizacion = kpi(construirPublicidad(ctx({ alcance: 'organizacion' })), 'ingreso-periodo').valor!;
-    expect(organizacion).toBeLessThan(plataforma);
-    expect(organizacion).toBeGreaterThan(0);
+    const organization = kpi(construirPublicidad(ctx({ alcance: 'organizacion' })), 'ingreso-periodo').valor!;
+    expect(organization).toBeLessThan(plataforma);
+    expect(organization).toBeGreaterThan(0);
   });
 
   it('la moderación suma lo mismo en el gráfico y en la tabla', () => {

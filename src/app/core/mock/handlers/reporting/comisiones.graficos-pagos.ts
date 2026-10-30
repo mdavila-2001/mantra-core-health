@@ -1,7 +1,7 @@
 import { formatearValor } from '../../../data-access/reporting/reporting-format';
 import type { ChartSpec, ContextoReporte, UnidadValor } from '../../../data-access/reporting/reporting.types';
 import { FUENTE_CONCILIACION, FUENTE_COMISIONES, FUENTE_FEES, FUENTE_PAYOUTS, info } from './comisiones.info';
-import { aMonto, MOTIVO_SIN_ESQUEMA, porcentaje, repartir, type ModeloComisiones } from './comisiones.modelo';
+import { aMonto, NO_SCHEME_REASON, porcentaje, repartir, type ModeloComisiones } from './comisiones.modelo';
 import {
   agrupar,
   periodDates,
@@ -65,7 +65,7 @@ export function graficoCascada(ctx: ContextoReporte, m: ModeloComisiones): Chart
     velas: null,
     velasMotivo: 'Es un desglose contable de un solo periodo, no una serie con apertura y cierre.',
     alto: 320,
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 
@@ -118,11 +118,11 @@ export function graficoTakeRate(ctx: ContextoReporte, m: ModeloComisiones): Char
           },
     velasMotivo: diaria === null ? 'Sin dato no hay velas que dibujar.' : undefined,
     alto: 300,
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 
-export function graficoSaldoPorPagar(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
+export function payableBalanceChart(ctx: ContextoReporte, m: ModeloComisiones): ChartSpec {
   const pendiente = aMonto(m.alcance.pendienteC);
   const fechas = periodDates(ctx.periodo);
   const gran = granularidad(ctx.periodo);
@@ -173,7 +173,7 @@ export function graficoSaldoPorPagar(ctx: ContextoReporte, m: ModeloComisiones):
           },
     velasMotivo: diaria === null ? 'Sin dato no hay velas que dibujar.' : undefined,
     alto: 300,
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 
@@ -243,7 +243,7 @@ export function graficoAging(ctx: ContextoReporte, m: ModeloComisiones): ChartSp
     velas: null,
     velasMotivo: 'Es una foto de la deuda de hoy repartida por antigüedad, no una serie en el tiempo.',
     alto: 300,
-    sinDatoMotivo: MOTIVO_SIN_ESQUEMA,
+    sinDatoMotivo: NO_SCHEME_REASON,
   };
 }
 

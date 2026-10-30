@@ -10,7 +10,7 @@ import {
   type ModeloSalud,
   type ModeloCohortes,
 } from './adquisicion.cuentas';
-import { infoCalculo, monedaDe, NUMERO, PORCENTAJE } from './adquisicion.graficos';
+import { infoCalculo, currencyUnit, NUMBER_UNIT, PORCENTAJE } from './adquisicion.graficos';
 import { convertir, redondear, suma } from './reporting-dataset.util';
 
 /* ============================================================================
@@ -19,20 +19,20 @@ import { convertir, redondear, suma } from './reporting-dataset.util';
 
 const FUENTE_PROMOS = 'promotions.promotions · promotions.coupons · promotions.redemptions';
 
-function porEstado(p: ModeloPromociones, campo: 'canjes' | 'descuentoBob'): number[] {
+function byStatus(p: ModeloPromociones, campo: 'canjes' | 'descuentoBob'): number[] {
   return ESTADOS_PROMOCION.map((e) => suma(p.promociones.filter((x) => x.estado === e).map((x) => x[campo])));
 }
 
-export function graficoCanjesPorEstado(p: ModeloPromociones): ChartSpec {
-  const valores = porEstado(p, 'canjes');
+export function redemptionsByStatusChart(p: ModeloPromociones): ChartSpec {
+  const valores = byStatus(p, 'canjes');
   const i = valores.indexOf(Math.max(...valores));
   return {
     id: 'adq-cupones-canjes',
     titulo: 'Canjes de cupones por estado de la promoción',
     subtitulo: 'Cuántas veces se usó un cupón',
-    unidad: NUMERO,
+    unidad: NUMBER_UNIT,
     datos: { tipo: 'cartesiano', categorias: [...ESTADOS_PROMOCION], series: [{ nombre: 'Canjes', valores, forma: 'barra' }] },
-    resumenAccesible: `Se canjearon ${formatearValor(p.canjesTotal, NUMERO)} cupones; las promociones en estado «${ESTADOS_PROMOCION[i]}» concentran ${formatearValor(valores[i]!, NUMERO)}.`,
+    resumenAccesible: `Se canjearon ${formatearValor(p.canjesTotal, NUMBER_UNIT)} cupones; las promociones en estado «${ESTADOS_PROMOCION[i]}» concentran ${formatearValor(valores[i]!, NUMBER_UNIT)}.`,
     filtro: { dimension: 'estado' },
     info: infoCalculo({
       definicion: 'Canjes de cupón en el periodo, agrupados por el estado actual de la promoción a la que pertenecen.',
@@ -45,9 +45,9 @@ export function graficoCanjesPorEstado(p: ModeloPromociones): ChartSpec {
   };
 }
 
-export function graficoDescuentoPorEstado(ctx: ContextoReporte, p: ModeloPromociones): ChartSpec {
-  const u = monedaDe(ctx);
-  const valores = porEstado(p, 'descuentoBob').map((v) => redondear(convertir(v, ctx.moneda)));
+export function discountByStatusChart(ctx: ContextoReporte, p: ModeloPromociones): ChartSpec {
+  const u = currencyUnit(ctx);
+  const valores = byStatus(p, 'descuentoBob').map((v) => redondear(convertir(v, ctx.moneda)));
   return {
     id: 'adq-cupones-descuento',
     titulo: 'Descuento otorgado por estado de la promoción',
@@ -107,7 +107,7 @@ export function graficoReferidos(r: ModeloReferidos): ChartSpec {
     id: 'adq-referidos',
     titulo: 'Programa de referidos',
     subtitulo: 'De la invitación a la recompensa pagada',
-    unidad: NUMERO,
+    unidad: NUMBER_UNIT,
     datos: {
       tipo: 'cascada',
       pasos: [
@@ -120,7 +120,7 @@ export function graficoReferidos(r: ModeloReferidos): ChartSpec {
         { nombre: 'Recompensas pagadas', valor: r.recompensas, total: true },
       ],
     },
-    resumenAccesible: `De ${formatearValor(r.invitaciones, NUMERO)} invitaciones, ${formatearValor(r.registros, NUMERO)} se registraron, ${formatearValor(r.activaciones, NUMERO)} activaron la cuenta y se pagaron ${formatearValor(r.recompensas, NUMERO)} recompensas.`,
+    resumenAccesible: `De ${formatearValor(r.invitaciones, NUMBER_UNIT)} invitaciones, ${formatearValor(r.registros, NUMBER_UNIT)} se registraron, ${formatearValor(r.activaciones, NUMBER_UNIT)} activaron la cuenta y se pagaron ${formatearValor(r.recompensas, NUMBER_UNIT)} recompensas.`,
     filtro: null,
     filtroMotivo: 'Los pasos del programa no son una dimensión de filtro.',
     info: infoCalculo(
@@ -143,9 +143,9 @@ export function graficoSaludCuentas(s: ModeloSalud): ChartSpec {
     id: 'adq-salud-cuentas',
     titulo: 'Salud de las cuentas',
     subtitulo: 'Cuentas por plan y nivel de riesgo',
-    unidad: NUMERO,
+    unidad: NUMBER_UNIT,
     datos: { tipo: 'mapa-calor', filas: [...PLANES], columnas: [...NIVELES_RIESGO], celdas: s.celdas, nombreValor: 'Cuentas' },
-    resumenAccesible: `Hay ${formatearValor(s.enRiesgo, NUMERO)} cuentas en riesgo alto o crítico sobre ${formatearValor(s.total, NUMERO)}. Las celdas con menos de ${MIN_MUESTRA_CELDA} cuentas salen «Sin dato».`,
+    resumenAccesible: `Hay ${formatearValor(s.enRiesgo, NUMBER_UNIT)} cuentas en riesgo alto o crítico sobre ${formatearValor(s.total, NUMBER_UNIT)}. Las celdas con menos de ${MIN_MUESTRA_CELDA} cuentas salen «Sin dato».`,
     filtro: { dimension: 'plan' },
     info: infoCalculo(
       {

@@ -16,7 +16,7 @@ const BOB = { tipo: 'moneda', moneda: 'BOB' } as const;
 const MRR_TEXTO = formatearValor(12345.5, BOB).replace(/\s+/g, ' ');
 
 /** El catálogo del montaje, con cifras reconocibles en los KPI que las pruebas consultan. */
-function datosDePrueba(): Map<VerticalReporte, PestanaReporte> {
+function buildTestData(): Map<VerticalReporte, PestanaReporte> {
   const mapa = new Map<VerticalReporte, PestanaReporte>(PESTANAS.map((p) => [p.pestana, p]));
   mapa.set(
     'suscripciones',
@@ -54,7 +54,7 @@ describe('ReportAssistant', () => {
   let datos: Map<VerticalReporte, PestanaReporte>;
 
   async function montar(impl?: (v: VerticalReporte) => Observable<PestanaReporte>): Promise<void> {
-    datos = datosDePrueba();
+    datos = buildTestData();
     pedir = vi.fn((v: VerticalReporte) => (impl ? impl(v) : of(datos.get(v) as PestanaReporte)));
     await TestBed.configureTestingModule({
       imports: [ReportAssistant],
@@ -127,7 +127,7 @@ describe('ReportAssistant', () => {
     it('pedir una pregunta vacía orienta en vez de enviar', async () => {
       boton('Enviar').click();
       fixture.detectChanges();
-      expect(texto()).toContain('Escribe una pregunta primero');
+      expect(texto()).toContain('Escriba una pregunta primero');
       expect(pedir).not.toHaveBeenCalled();
     });
 
@@ -158,8 +158,8 @@ describe('ReportAssistant', () => {
 
     it('«Abrir en el reporte» apunta a la pestaña dueña de la medida', async () => {
       await preguntar('cuál es el mrr');
-      await esperar(() => raiz().querySelector('a[href="/reporting/comercial/suscripciones"]') !== null);
-      const enlace = raiz().querySelector('a[href="/reporting/comercial/suscripciones"]') as HTMLAnchorElement;
+      await esperar(() => raiz().querySelector('a[href="/reports/commercial/suscripciones"]') !== null);
+      const enlace = raiz().querySelector('a[href="/reports/commercial/suscripciones"]') as HTMLAnchorElement;
       expect(enlace.textContent).toContain('Abrir en el reporte');
       expect(enlace.getAttribute('aria-label')).toContain('Abrir en el reporte');
     });
@@ -175,7 +175,7 @@ describe('ReportAssistant', () => {
     it('si el alcance es la organización, la respuesta lo dice', async () => {
       TestBed.inject(ReportContextStore).alcance.set('organizacion');
       await preguntar('cuál es el mrr');
-      await esperar(() => texto().includes('de tu organización'));
+      await esperar(() => texto().includes('de su organización'));
       expect(pedir).toHaveBeenCalledWith('suscripciones', expect.objectContaining({ alcance: 'organizacion' }));
     });
 
@@ -264,7 +264,7 @@ describe('ReportAssistant', () => {
         return s;
       });
       await preguntar('mrr');
-      await esperar(() => texto().includes('Buscando en tus reportes…'));
+      await esperar(() => texto().includes('Buscando en sus reportes…'));
 
       expect(boton('Enviar').getAttribute('aria-disabled')).toBe('true');
       expect(registro().getAttribute('aria-busy')).toBe('true');
@@ -280,7 +280,7 @@ describe('ReportAssistant', () => {
       });
       await esperar(() => texto().includes(MRR_TEXTO));
       expect(boton('Enviar').getAttribute('aria-disabled')).toBe('false');
-      expect(texto()).not.toContain('Buscando en tus reportes…');
+      expect(texto()).not.toContain('Buscando en sus reportes…');
     });
   });
 
@@ -292,7 +292,7 @@ describe('ReportAssistant', () => {
       );
       await preguntar('mrr');
       await esperar(() => texto().includes('Sin conexión'));
-      expect(texto()).toContain('Revisa tu conexión');
+      expect(texto()).toContain('Revise su conexión');
 
       caido = false;
       boton('Reintentar').click();
@@ -349,12 +349,12 @@ describe('ReportAssistant', () => {
       await preguntar('mrr');
       await esperar(() => texto().includes(MRR_TEXTO));
       expect(texto()).toContain('Preguntas recientes (1)');
-      expect(JSON.parse(globalThis.localStorage.getItem('alovida:reportes:asistente:historial') ?? '[]')).toEqual(['mrr']);
+      expect(JSON.parse(globalThis.localStorage.getItem('alovida:reportes:asistente:historial:anonymous') ?? '[]')).toEqual(['mrr']);
 
       boton('Borrar historial').click();
       fixture.detectChanges();
       expect(texto()).not.toContain('Preguntas recientes');
-      expect(globalThis.localStorage.getItem('alovida:reportes:asistente:historial')).toBeNull();
+      expect(globalThis.localStorage.getItem('alovida:reportes:asistente:historial:anonymous')).toBeNull();
     });
 
     it('pulsar una pregunta del historial la vuelve a hacer', async () => {
@@ -381,7 +381,7 @@ describe('ReportAssistant', () => {
 
   describe('historial previo', () => {
     it('al abrir recupera lo que había guardado', async () => {
-      globalThis.localStorage.setItem('alovida:reportes:asistente:historial', JSON.stringify(['cac', 'mrr']));
+      globalThis.localStorage.setItem('alovida:reportes:asistente:historial:anonymous', JSON.stringify(['cac', 'mrr']));
       await montar();
       await esperar(() => texto().includes('Preguntas recientes (2)'));
     });
