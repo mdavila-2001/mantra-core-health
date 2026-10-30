@@ -25,13 +25,17 @@
     </a>
 
     <div class="rep__acciones">
-      <app-segmented-control
-        [options]="opcionesAlcance"
-        [value]="contexto.alcance()"
-        ariaLabel="Alcance de los reportes"
-        wrap
-        (valueChange)="cambiarAlcance($event)"
-      />
+      @if (puedeElegirAlcance()) {
+        <app-segmented-control
+          [options]="opcionesAlcance"
+          [value]="contexto.alcance()"
+          ariaLabel="Alcance de los reportes"
+          wrap
+          (valueChange)="cambiarAlcance($event)"
+        />
+      } @else {
+        <span class="rep__alcance-fijo" data-testid="reporting-alcance-fijo">{{ etiquetaAlcance[contexto.alcance()] }}</span>
+      }
 
       @if (puedeCambiarDePortal()) {
         <nav class="rep__portales" aria-label="Portales">
@@ -70,6 +74,7 @@
       id="reporting-nav"
       aria-label="Navegación de reportería"
       [class.is-abierto]="menuAbierto()"
+      [attr.inert]="fondoInerte() ? '' : null"
     >
       <ul class="rep__lista" role="list">
         <li>
@@ -104,7 +109,7 @@
       </ul>
     </nav>
 
-    <main class="rep__centro" id="reporting-contenido" tabindex="-1">
+    <main class="rep__centro" id="reporting-contenido" tabindex="-1" [attr.inert]="fondoInerte() ? '' : null">
       <router-outlet />
     </main>
 

@@ -3,6 +3,7 @@ import {
   accesoAPortales,
   destinoDeEntrada,
   puedeVerAdministracion,
+  puedeVerPlataforma,
   puedeVerReporteria,
   ROLES_ADMINISTRACION,
   ROLES_REPORTERIA,
@@ -145,5 +146,16 @@ describe('acceso a los portales (administración y reportería)', () => {
       expect(destinoDeEntrada(['PATIENT'])).toBe('/');
       expect(destinoDeEntrada([])).toBe('/');
     });
+  });
+});
+
+describe('puedeVerPlataforma', () => {
+  it('solo los roles de plataforma eligen el alcance «Plataforma»', () => {
+    expect(puedeVerPlataforma(['SUPERADMIN'])).toBe(true);
+    expect(puedeVerPlataforma(['PLATFORM_ADMIN'])).toBe(true);
+    for (const rol of ['BUSINESS_ADMIN', 'REPORTING_ADMIN', 'REPORT_AUTHOR', 'REPORT_VIEWER']) {
+      expect(puedeVerPlataforma([rol])).toBe(false);
+    }
+    expect(puedeVerPlataforma([])).toBe(false);
   });
 });

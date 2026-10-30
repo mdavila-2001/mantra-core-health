@@ -13,6 +13,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { DOCUMENT } from '@angular/common';
 
 import { ETIQUETA_VERTICAL, VERTICALES } from '@core/data-access/reporting/reporting-labels';
 import type { AlcanceReporte } from '@core/data-access/reporting/reporting.types';
@@ -24,6 +25,7 @@ import { SegmentedControl } from '../../../shared/components/molecules/segmented
 import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import {
   accesoAPortales,
+  puedeVerPlataforma,
   PORTAL_ADMINISTRACION_ROUTE,
   PORTAL_SELECTOR_ROUTE,
 } from '../reporting-access';
@@ -87,7 +89,10 @@ export class ReportingShell {
   private readonly injector = inject(Injector);
   protected readonly contexto = inject(ReportContextStore);
 
+  /** Quien no es de plataforma solo ve su organización: no se le ofrece un alcance que la API le va a negar. */
+  protected readonly puedeElegirAlcance = computed(() => puedeVerPlataforma(this.auth.roles()));
   protected readonly opcionesAlcance = OPCIONES_ALCANCE;
+  protected readonly etiquetaAlcance = ETIQUETA_ALCANCE;
   protected readonly pestanas = VERTICALES.map((vertical) => ({
     vertical,
     etiqueta: ETIQUETA_VERTICAL[vertical],
@@ -119,7 +124,22 @@ export class ReportingShell {
   });
   private readonly panelAsistente = viewChild<ElementRef<HTMLElement>>('panelAsistente');
 
+  private readonly documento = inject(DOCUMENT);
+  /** A 1024 px o menos el asistente es una hoja que tapa el contenido: lo de atrás no debe poder recibir foco. */
+  private readonly hojaSuperpuesta = signal(false);
+  protected readonly fondoInerte = computed(() => this.asistenteAbierto() && this.hojaSuperpuesta());
+
   constructor() {
+    if (!this.puedeElegirAlcance()) {
+      this.contexto.alcance.set('organizacion');
+    }
+    const consulta = this.documento.defaultView?.matchMedia?.('(max-width: 1024px)');
+    if (consulta !== undefined) {
+      this.hojaSuperpuesta.set(consulta.matches);
+      const alCambiar = (e: MediaQueryListEvent): void => this.hojaSuperpuesta.set(e.matches);
+      consulta.addEventListener('change', alCambiar);
+      inject(DestroyRef).onDestroy(() => consulta.removeEventListener('change', alCambiar));
+    }
     // Elegir un destino cierra el cajón: si no, en el teléfono el menú taparía
     // justo el reporte al que se acaba de ir.
     this.router.events
@@ -149,8 +169,12 @@ export class ReportingShell {
     // parado en el botón, sin saber que apareció nada.
     afterNextRender(
       () => {
-        const destino = abrir ? this.panelAsistente() : this.botonAsistente();
-        destino?.nativeElement.focus({ preventScroll: true });
+        // Al abrir, el foco va al campo de la pregunta (si ya cargó) y si no al panel; al cerrar, al botón.
+        const panel = this.panelAsistente()?.nativeElement;
+        const destino = abrir
+          ? (panel?.querySelector<HTMLElement>('input.native-input') ?? panel)
+          : this.botonAsistente()?.nativeElement;
+        destino?.focus({ preventScroll: true });
       },
       { injector: this.injector },
     );
@@ -163,7 +187,8 @@ export class ReportingShell {
       return;
     }
     const origen = evento.target instanceof Element ? evento.target : null;
-    if (origen?.closest('[role="menu"], [role="dialog"], [role="listbox"]')) {
+    // `<dialog>` nativo («Ver en grande») no lleva `role`: `closest` no resuelve roles implícitos.
+    if (origen?.closest('dialog, [role="menu"], [role="dialog"], [role="listbox"]')) {
       return;
     }
     if (this.asistenteAbierto()) {
