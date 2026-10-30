@@ -151,6 +151,18 @@ span.import__secondary {
   gap: var(--sp-1) var(--sp-2);
 }
 
+.import__server {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block-start: var(--sp-3);
+  border-block-start: 1px solid var(--border-default);
+}
+
+.import__server .import__subtitle {
+  margin: 0;
+}
+
 .import__progress {
   display: flex;
   flex-direction: column;
