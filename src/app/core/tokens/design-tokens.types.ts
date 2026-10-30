@@ -138,6 +138,32 @@ export const HEAT_SLOTS = ['bg', 'fg'] as const;
 export type HeatSlot = (typeof HEAT_SLOTS)[number];
 export type HeatToken = `--heat-${HeatLevel}-${HeatSlot}`;
 
+
+/**
+ * Paleta de los gráficos del portal de reportería (ADR-0017). Ocho tonos
+ * categóricos en orden FIJO y cinco pasos de una rampa secuencial de un solo
+ * tono. Validados con el guion de la skill `dataviz` (`validate_palette.js`):
+ * la paleta de la marca es de croma bajo y no pasa como categórica (el verde
+ * agua y el gris leen casi igual), igual que el acento de Atlas Dashboards.
+ * Un hue no se reutiliza para un estado: éstos van aparte (`--st-*`).
+ */
+export const CHART = {
+  series1: '--chart-1',
+  series2: '--chart-2',
+  series3: '--chart-3',
+  series4: '--chart-4',
+  series5: '--chart-5',
+  series6: '--chart-6',
+  series7: '--chart-7',
+  series8: '--chart-8',
+  seq1: '--chart-seq-1',
+  seq2: '--chart-seq-2',
+  seq3: '--chart-seq-3',
+  seq4: '--chart-seq-4',
+  seq5: '--chart-seq-5',
+} as const;
+export type ChartToken = (typeof CHART)[keyof typeof CHART];
+
 export const EFFECT = {
   shadowSm: '--shadow-sm',
   shadowMd: '--shadow-md',
@@ -323,6 +349,7 @@ export type DesignToken =
   | StatusToken
   | BrandToneToken
   | HeatToken
+  | ChartToken
   | VerifiedToken
   | EffectToken
   | SpacingToken
@@ -394,6 +421,7 @@ export const DESIGN_TOKENS: readonly DesignToken[] = Object.freeze([
   ),
   ...HEAT_LEVELS.flatMap((level) => HEAT_SLOTS.map((slot) => heatToken(level, slot))),
   ...Object.values(VERIFIED),
+  ...Object.values(CHART),
   ...Object.values(EFFECT),
   ...SPACING_STEPS.map(spacingToken),
   ...RADIUS_NAMES.map(radiusToken),

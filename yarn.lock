@@ -4611,6 +4611,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"echarts@npm:6.1.0":
+  version: 6.1.0
+  resolution: "echarts@npm:6.1.0"
+  dependencies:
+    tslib: "npm:2.3.0"
+    zrender: "npm:6.1.0"
+  checksum: 10c0/a0911a9d75969ff946d0bce998e95e1924cdec7f5ca6be13ded376e2a47067c70b264ee8d04ba84345aa7895363e202f54c87d2bae114859bd154d565babc09c
+  languageName: node
+  linkType: hard
+
 "ee-first@npm:1.1.1":
   version: 1.1.1
   resolution: "ee-first@npm:1.1.1"
@@ -6464,11 +6474,13 @@ __metadata:
     angular-eslint: "npm:^21.2.0"
     axe-core: "npm:^4.12.1"
     cypress: "npm:^15.20.0"
+    echarts: "npm:6.1.0"
     eslint: "npm:^10.8.0"
     express: "npm:^5.1.0"
     jsdom: "npm:^28.0.0"
     jspdf: "npm:^4.2.1"
     leaflet: "npm:^1.9.4"
+    ngx-echarts: "npm:21.0.0"
     pdfjs-dist: "npm:^6.3.289"
     prettier: "npm:^3.8.1"
     qrcode: "npm:^1.5.4"
@@ -6758,6 +6770,18 @@ __metadata:
   version: 1.0.0
   resolution: "negotiator@npm:1.0.0"
   checksum: 10c0/4c559dd52669ea48e1914f9d634227c561221dd54734070791f999c52ed0ff36e437b2e07d5c1f6e32909fc625fe46491c16e4a8f0572567d4dd15c3a4fda04b
+  languageName: node
+  linkType: hard
+
+"ngx-echarts@npm:21.0.0":
+  version: 21.0.0
+  resolution: "ngx-echarts@npm:21.0.0"
+  dependencies:
+    tslib: "npm:^2.3.0"
+  peerDependencies:
+    "@angular/core": ">=21.0.0"
+    echarts: ">=5.0.0"
+  checksum: 10c0/f22828a55107015c60b602fa3bdb52f7287d5a70461407b314effd4fd8218d9d2ab0fcd2333acafdbab80a6944a5d0633e83061bd6d876f293625dd9e5e6f29c
   languageName: node
   linkType: hard
 
@@ -8456,6 +8480,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tslib@npm:2.3.0":
+  version: 2.3.0
+  resolution: "tslib@npm:2.3.0"
+  checksum: 10c0/a845aed84e7e7dbb4c774582da60d7030ea39d67307250442d35c4c5dd77e4b44007098c37dd079e100029c76055f2a362734b8442ba828f8cc934f15ed9be61
+  languageName: node
+  linkType: hard
+
 "tslib@npm:^2.1.0, tslib@npm:^2.3.0, tslib@npm:^2.4.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
@@ -9169,5 +9200,14 @@ __metadata:
   version: 4.4.3
   resolution: "zod@npm:4.4.3"
   checksum: 10c0/7ea31b558e88f9faf44f31dd185e2e1cbf51fed3081787fb96cc2534749b50c0acfc6da7f0922a7353ed092dd358c7d50c28ea96c94d04af64191bd33152eca3
+  languageName: node
+  linkType: hard
+
+"zrender@npm:6.1.0":
+  version: 6.1.0
+  resolution: "zrender@npm:6.1.0"
+  dependencies:
+    tslib: "npm:2.3.0"
+  checksum: 10c0/bfdb5e2ccd70893a9e2c7f33959749a6a1abc8912c2b1af301a05593d677a2f6f6087cdc4f0bf73883b99eea2f2d11d1922c71c3bf0bd4e9e5b362fd32129bce
   languageName: node
   linkType: hard

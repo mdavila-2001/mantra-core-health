@@ -1,0 +1,79 @@
+<main class="selector" id="contenido-principal" tabindex="-1">
+  <header class="selector__cabecera">
+    <app-brand-mark size="lg" />
+  </header>
+
+  @switch (view()) {
+    @case ('elegir') {
+      <section class="selector__cuerpo" aria-labelledby="selector-titulo">
+        <h1 id="selector-titulo" class="selector__titulo">
+          @if (nombre(); as primerNombre) {
+            Hola, {{ primerNombre }}. ¿A qué portal desea entrar?
+          } @else {
+            ¿A qué portal desea entrar?
+          }
+        </h1>
+        <p class="selector__ayuda">
+          Su cuenta tiene acceso a los dos. Puede cambiar de portal en cualquier momento, sin
+          cerrar sesión.
+        </p>
+
+        <ul class="selector__opciones" role="list">
+          <li>
+            <a
+              class="opcion"
+              [routerLink]="administracionRoute"
+              data-testid="portal-administracion"
+            >
+              <span class="opcion__icono" aria-hidden="true"><app-nav-icon name="settings" /></span>
+              <h2 class="opcion__titulo">Portal de administración</h2>
+              <p class="opcion__texto">
+                Pacientes, usuarios y organizaciones; contabilidad y facturación; catálogos,
+                permisos y la configuración de la plataforma.
+              </p>
+              <span class="opcion__accion">
+                Entrar a administración
+                <app-nav-icon name="arrow-right" />
+              </span>
+            </a>
+          </li>
+
+          <li>
+            <a class="opcion" [routerLink]="reporteriaRoute" data-testid="portal-reporteria">
+              <span class="opcion__icono" aria-hidden="true"><app-nav-icon name="chart" /></span>
+              <h2 class="opcion__titulo">Portal de reportería</h2>
+              <p class="opcion__texto">
+                Reportes y tableros del negocio: suscripciones de doctores, publicidad push y
+                pauteo, comisiones, cobros y calidad del dato.
+              </p>
+              <span class="opcion__pie">
+                <span class="opcion__accion">
+                  Entrar a reportería
+                  <app-nav-icon name="arrow-right" />
+                </span>
+                <app-badge variant="info" size="sm">Datos de ejemplo</app-badge>
+              </span>
+            </a>
+          </li>
+        </ul>
+      </section>
+    }
+
+    @case ('redirigiendo') {
+      <section class="selector__cuerpo selector__cuerpo--centrado">
+        <app-loading-state message="Abriendo su portal…" />
+      </section>
+    }
+
+    @case ('sin-permiso') {
+      <section class="selector__cuerpo selector__cuerpo--centrado" data-testid="portal-no-access">
+        <app-empty-state
+          title="Su cuenta no tiene acceso a ningún portal"
+          description="Para entrar al portal de administración o al de reportería necesita un rol asignado. Pídaselo a la persona que administra su organización y vuelva a iniciar sesión."
+        >
+          <a empty-actions class="selector__volver" routerLink="/dashboard">Ir a mi panel</a>
+        </app-empty-state>
+      </section>
+    }
+  }
+</main>
