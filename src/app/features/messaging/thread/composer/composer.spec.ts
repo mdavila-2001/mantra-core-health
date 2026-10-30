@@ -222,11 +222,16 @@ describe('Composer', () => {
       fixture = TestBed.createComponent(Composer);
       composer = fixture.componentInstance;
       fixture.detectChanges();
+      // `ngModel` escribe el campo en una microtarea: se espera antes de tipear.
+      await fixture.whenStable();
 
       const area = consultar('hilo-texto') as HTMLTextAreaElement;
       area.value = 'Mi receta';
       area.dispatchEvent(new Event('input'));
       fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(consultar('hilo-enviar')).not.toBeNull();
 
       const promesa = composer.agregar([foto('lenta.jpg')]);
       fixture.detectChanges();

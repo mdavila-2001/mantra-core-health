@@ -130,7 +130,7 @@ export function perfilAjeno(): MockReply {
     statusCode: 403,
     code: 'FORBIDDEN',
     reason: 'NOT_OWN_PROFILE',
-    message: 'No podés actuar con ese perfil',
+    message: 'No puede actuar con ese perfil',
     error: 'Forbidden',
   });
 }

@@ -154,7 +154,7 @@ export async function prepararImagen(
     throw new ImagenRechazada(
       aceptada
         ? `No pudimos abrir «${archivo.name}». Puede estar dañada.`
-        : `«${archivo.name}» no es una imagen que podamos mandar. Probá con JPG, PNG, WEBP o GIF.`,
+        : `«${archivo.name}» no es una imagen que podamos mandar. Pruebe con JPG, PNG, WEBP o GIF.`,
     );
   }
 

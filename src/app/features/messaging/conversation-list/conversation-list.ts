@@ -92,10 +92,10 @@ export class ConversationList {
   protected readonly motivo = computed(() => {
     const estado = this.estado();
     if (estado.status === 'forbidden') {
-      return estado.message ?? 'Con este perfil no podés leer estos chats.';
+      return estado.message ?? 'Con este perfil no puede leer estos chats.';
     }
     if (estado.status === 'error') {
-      return estado.message ?? 'No pudimos leer tu bandeja.';
+      return estado.message ?? 'No pudimos leer su bandeja.';
     }
     return '';
   });

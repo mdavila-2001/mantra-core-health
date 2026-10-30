@@ -869,9 +869,9 @@ describe('Thread', () => {
       expect(sugerenciasDelComposer()).toEqual([]);
     });
 
-    it('el fijado dice quién envió la tarjeta: vos u otra persona', () => {
+    it('el fijado dice quién envió la tarjeta: usted u otra persona', () => {
       abrir([mensaje('m-1', 'pp-1', TARJETA)]);
-      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por vos');
+      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por usted');
     });
 
     it('una tarjeta ajena en el fijado lleva el nombre de quien la mandó', () => {
@@ -1076,14 +1076,14 @@ describe('Thread', () => {
       expect(store.respondiendoA()?.id).toBe('m-3');
     });
 
-    it('una foto propia en el visor dice «Vos», en voseo como el resto de la app', async () => {
+    it('una foto propia en el visor dice «Usted», con el trato del resto de la app', async () => {
       abrir([foto(1, 'pp-1')]);
       await servirTodos(['f-1']);
 
       (consultar('hilo-imagen') as HTMLButtonElement).click();
       fixture.detectChanges();
       const pie = fixture.nativeElement.querySelector('.visor__autor') as HTMLElement | null;
-      expect(pie?.textContent?.trim()).toMatch(/^Vos · /u);
+      expect(pie?.textContent?.trim()).toMatch(/^Usted · /u);
       expect(fixture.nativeElement.textContent).not.toContain('Tú');
     });
 

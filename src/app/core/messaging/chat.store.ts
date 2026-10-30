@@ -98,7 +98,7 @@ interface MarcaDeApertura {
 
 /** El aviso que se da al perder el permiso de escribir como la organización. */
 export const AVISO_SIN_PERMISO_DE_ORGANIZACION =
-  'Ya no podés escribir como la farmacia: volviste a tu perfil.';
+  'Ya no puede escribir como la farmacia: volvió a su perfil.';
 
 /**
  * El aviso al abrir un chat nuevo mientras se escribía como la organización.
@@ -109,20 +109,20 @@ export const AVISO_SIN_PERMISO_DE_ORGANIZACION =
  * dice, para que no crea que le escribió como la farmacia.
  */
 export const AVISO_CHAT_NUEVO_CON_PERFIL_PROPIO =
-  'Los chats nuevos se inician con tu perfil: como la farmacia sólo se responde. Volviste a «Yo».';
+  'Los chats nuevos se inician con su perfil: como la farmacia sólo se responde. Volvió a «Yo».';
 
 /**
  * El error al abrir un chat nuevo como la organización sin perfil propio al
  * que volver.
  */
 export const ERROR_CHAT_NUEVO_COMO_ORGANIZACION =
-  'Como la farmacia sólo se responde a quien escribe o desde un pedido. Para iniciar un chat nuevo necesitás tu perfil propio.';
+  'Como la farmacia sólo se responde a quien escribe o desde un pedido. Para iniciar un chat nuevo necesita su perfil propio.';
 
 /**
  * Lo que se le dice al botón que pidió abrir un chat mientras ya se estaba
  * abriendo otro: sin esto volvía en silencio y el botón quedaba girando.
  */
-export const CHAT_YA_ABRIENDO = 'Ya se está abriendo otro chat. Probá de nuevo en un momento.';
+export const CHAT_YA_ABRIENDO = 'Ya se está abriendo otro chat. Pruebe de nuevo en un momento.';
 
 /** El error que recibe `alFallar` cuando el store ya estaba abriendo otro chat. */
 export class ChatOcupadoError extends Error {
@@ -134,7 +134,7 @@ export class ChatOcupadoError extends Error {
 
 /** El aviso cuando un 403 fue de esa conversación y no de la vitrina. */
 export const ERROR_SIN_PERMISO_EN_LA_CONVERSACION =
-  'No tenés permiso para ver esta conversación con este perfil.';
+  'No tiene permiso para ver esta conversación con este perfil.';
 
 /**
  * Un adjunto listo para mandar: el archivo y, si quien lo eligió ya la leyó,
@@ -158,10 +158,10 @@ export const PROXIMA_ACCION_DE_BANDEJA = {
 
 /** El texto de S9 de la bandeja; el título lo pone quien lo pinta. */
 const MENSAJE_DE_FALLO_DE_BANDEJA =
-  'No pudimos leer tu bandeja. Si vuelve a pasar, avisanos con este código.';
+  'No pudimos leer su bandeja. Si vuelve a pasar, avísenos con este código.';
 
 /** El texto de S5 de la bandeja. */
-const MENSAJE_DE_BANDEJA_PROHIBIDA = 'Con este perfil no podés leer estos chats.';
+const MENSAJE_DE_BANDEJA_PROHIBIDA = 'Con este perfil no puede leer estos chats.';
 
 /**
  * Traduce el fallo de la lectura de la bandeja a S5, S8 o S9.
@@ -420,9 +420,11 @@ export class ChatStore {
 
   /**
    * El texto que puso en `error` el último tic fallido en S7, para quitarlo
-   * —y sólo ése— cuando la bandeja se vuelve a leer bien.
+   * —y sólo ése— cuando la bandeja se vuelve a leer bien. Público porque la
+   * pantalla lo pinta junto a la bandeja (con su antigüedad) y no en el aviso
+   * global: S7 tiene su propio estado.
    */
-  private avisoDeLaBandeja: string | null = null;
+  readonly motivoDeBandejaAtrasada = signal<string | null>(null);
 
   /**
    * La bandeja como uno de los estados del M34 (ADR-0005):
@@ -451,7 +453,7 @@ export class ChatStore {
     return filas.length === 0
       ? empty(
           PROXIMA_ACCION_DE_BANDEJA,
-          'Consultá a una farmacia desde un producto o desde tu pedido, o escribile a un profesional.',
+          'Consulte a una farmacia desde un producto o desde su pedido, o escríbale a un profesional.',
         )
       : ready(filas);
   });
@@ -1348,10 +1350,11 @@ export class ChatStore {
           this.bandejaLeidaEn.set(new Date());
           // El aviso que dejó un tic fallido se va con la lectura buena; uno
           // de otra cosa (un envío, una edición) no es de la bandeja y queda.
-          if (this.avisoDeLaBandeja !== null && this.error() === this.avisoDeLaBandeja) {
+          const motivo = this.motivoDeBandejaAtrasada();
+          if (motivo !== null && this.error() === motivo) {
             this.error.set('');
           }
-          this.avisoDeLaBandeja = null;
+          this.motivoDeBandejaAtrasada.set(null);
         },
         error: (error: unknown) => {
           if (!vigente()) {
@@ -1374,7 +1377,7 @@ export class ChatStore {
           // lo dice el aviso, con el motivo de la API y el código de soporte.
           if (this.bandeja().status === 'stale') {
             this.fallar(error, 'No pudimos cargar sus conversaciones.');
-            this.avisoDeLaBandeja = this.error();
+            this.motivoDeBandejaAtrasada.set(this.error());
           }
           this.siPerdioElPermiso(error, propio);
         },

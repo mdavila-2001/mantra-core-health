@@ -736,8 +736,8 @@ export const messageList = new Coleccion<SimulatedMessage>([
   // El chat de un pedido: la tarjeta, la consulta y el aviso de que está listo.
   mensaje(C7, PATIENT_SHOWCASE.id, TARJETA_PEDIDO_1, -4, 15, 5),
   mensaje(C7, PATIENT_SHOWCASE.id, 'Hola, ¿me confirman si tienen las dos cajas? La atorvastatina la necesito para esta semana.', -4, 15, 7),
-  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Hola Ana Lucía, sí: tenemos el enalapril y la atorvastatina. Te avisamos apenas quede listo para retirar.', -4, 15, 22),
-  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Tu pedido ya está listo. Podés pasar a retirarlo con el código AV-4821, de 8:00 a 22:00.', -1, 10, 12),
+  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Hola Ana Lucía, sí: tenemos el enalapril y la atorvastatina. Le avisamos apenas quede listo para retirar.', -4, 15, 22),
+  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Su pedido ya está listo. Puede pasar a retirarlo con el código AV-4821, de 8:00 a 22:00.', -1, 10, 12),
   mensaje(C7, PATIENT_SHOWCASE.id, '¡Gracias! Paso mañana por la tarde.', -1, 10, 40),
   // El grupo: tres voces, un documento, una foto y dos citas.
   mensaje(C6, ENDO_V, 'Colegas, les comparto la guía actualizada de anticoagulación en fibrilación auricular. Cambió el umbral de CHA2DS2-VASc para iniciar.', -2, 8, 10, { contentTypeConceptId: CONCEPT.messageMedia, attachmentFileId: uuid('file-guia-anticoagulacion') }),

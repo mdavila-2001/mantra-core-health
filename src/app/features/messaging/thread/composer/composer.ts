@@ -76,14 +76,14 @@ const ACEPTA_POR_OMISION = 'image/*,video/*,audio/*,application/pdf';
 export const SUGERENCIAS_POR_OMISION: readonly string[] = [
   '¡Hola! Tengo una consulta',
   '¿Tienen disponibilidad?',
-  'Te mando la foto de mi receta',
+  'Le mando la foto de mi receta',
 ];
 
 /** Las de un producto o un servicio del marketplace. */
 export const SUGERENCIAS_MARKETPLACE: readonly string[] = [
   '¿Lo tienen en stock?',
   '¿Cuánto tarda el envío?',
-  'Te mando la foto de mi receta',
+  'Le mando la foto de mi receta',
 ];
 
 /** Una sugerencia que habla de una foto abre el selector en vez de sólo escribir. */
@@ -103,7 +103,7 @@ const PIDE_FOTO = /\b(foto|imagen)\b/i;
  * ## Los adjuntos pasan por la vista previa
  *
  * Todo lo que se adjunta —el «+», el botón de fotos y la cámara de la píldora,
- * pegar con Ctrl+V, soltar sobre la barra, el chip «Te mando la foto»— entra
+ * pegar con Ctrl+V, soltar sobre la barra, el chip «Le mando la foto»— entra
  * por {@link agregar}: se valida, **las fotos se preparan** (se achican si
  * pasan el tope del servidor y se les quitan los metadatos con el GPS, ver
  * `prepararImagen`) y recién entonces se abre la vista previa

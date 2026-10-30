@@ -1,8 +1,11 @@
 <!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la
      bandeja los pinta la bandeja (su `ViewState`) y los de un mensaje, su
-     burbuja: ninguno de los dos viene acá. -->
+     burbuja: ninguno de los dos viene acá. El motivo de un S7 se pinta junto
+     a la bandeja (`motivoDeBandejaAtrasada`), no encima de la pantalla. -->
 @if (store.error(); as mensaje) {
-  <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+  @if (mensaje !== store.motivoDeBandejaAtrasada()) {
+    <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+  }
 }
 
 <!-- Se perdió el permiso de escribir como la farmacia: se dice una vez, con
@@ -253,6 +256,9 @@
           <!-- S7 sigue siendo S7 aunque el filtro no deje filas: el aviso de
                antigüedad no se pierde por filtrar. -->
           @if (bandeja.status === 'stale') {
+            @if (store.motivoDeBandejaAtrasada(); as motivo) {
+              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
+            }
             <app-conversation-list
               [conversaciones]="[]"
               [estado]="bandeja"
@@ -269,7 +275,7 @@
               } @else if (store.resultados().length === 0) {
                 No encontramos ningún chat ni contacto con «{{ consulta() }}».
               } @else {
-                Ninguno de tus chats coincide con «{{ consulta() }}».
+                Ninguno de sus chats coincide con «{{ consulta() }}».
               }
             </p>
           } @else if (verArchivados()) {
@@ -297,6 +303,11 @@
             </p>
           }
         } @else {
+          @if (bandeja.status === 'stale') {
+            @if (store.motivoDeBandejaAtrasada(); as motivo) {
+              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
+            }
+          }
           <app-conversation-list
             [conversaciones]="visibles()"
             [estado]="bandeja"

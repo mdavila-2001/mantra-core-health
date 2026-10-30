@@ -353,9 +353,11 @@ describe('Messaging', () => {
     // aviso global encima de la pantalla.
     expect(texto()).toContain('pueden estar atrasados');
     expect(fixture.nativeElement.querySelector('.mensajeria__alerta')).toBeNull();
+    // El motivo (acá, sin conexión) va junto a la bandeja, no encima.
+    expect(consultar('bandeja-motivo-atrasada')?.textContent).toContain('No hay conexión con el servidor');
   });
 
-  it('si la primera lectura falla, ofrece reintentar y no dice «no tenés chats»', () => {
+  it('si la primera lectura falla, ofrece reintentar y no dice «no tiene chats»', () => {
     montar();
     http.expectOne('/community/profiles/me').flush(perfilPropio);
     fixture.detectChanges();
@@ -399,7 +401,7 @@ describe('Messaging', () => {
     fixture.detectChanges();
     expect(consultar('bandeja-error')).not.toBeNull();
     expect(consultar('bandeja-request-id')?.textContent).toBe('req-77');
-    expect(texto().split('No pudimos leer tu bandeja').length - 1).toBe(1);
+    expect(texto().split('No pudimos leer su bandeja').length - 1).toBe(1);
   });
 
   it('la píldora y el chip «No leídos» cuentan lo mismo: chats', () => {
@@ -437,7 +439,7 @@ describe('Messaging', () => {
       expect(texto()).toContain('pueden estar atrasados');
     });
 
-    it('con todo archivado no dice «Todavía no tenés chats»: dice cuántos hay archivados y deja verlos', () => {
+    it('con todo archivado no dice «Todavía no tiene chats»: dice cuántos hay archivados y deja verlos', () => {
       conBandeja([
         conversacion('c-1', [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }]),
         conversacion('c-2', [{ profileId: 'pp-3', displayName: 'Lic. Rojas' }]),
@@ -448,8 +450,8 @@ describe('Messaging', () => {
       fixture.detectChanges();
 
       expect(consultar('bandeja-vacia')).toBeNull();
-      expect(texto()).not.toContain('Todavía no tenés chats');
-      expect(consultar('mensajeria-todo-archivado')?.textContent).toContain('Tenés 2 chats archivados.');
+      expect(texto()).not.toContain('Todavía no tiene chats');
+      expect(consultar('mensajeria-todo-archivado')?.textContent).toContain('Tiene 2 chats archivados.');
 
       consultar('mensajeria-ver-archivados')?.click();
       fixture.detectChanges();
@@ -551,9 +553,9 @@ describe('Messaging', () => {
 
     it('el aviso de que se perdió el permiso se ve en la bandeja', () => {
       conBandeja([]);
-      TestBed.inject(ChatStore).avisoDePerfil.set('Ya no podés escribir como la farmacia: volviste a tu perfil.');
+      TestBed.inject(ChatStore).avisoDePerfil.set('Ya no puede escribir como la farmacia: volvió a su perfil.');
       fixture.detectChanges();
-      expect(consultar('mensajeria-aviso-perfil')?.textContent).toContain('volviste a tu perfil');
+      expect(consultar('mensajeria-aviso-perfil')?.textContent).toContain('volvió a su perfil');
     });
   });
 

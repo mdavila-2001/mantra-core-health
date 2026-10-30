@@ -342,6 +342,13 @@
   font-size: var(--fs-caption);
 }
 
+.mensajeria__motivo {
+  margin: 0;
+  padding: var(--e2) var(--e4);
+  color: var(--tinta-2);
+  font-size: var(--fs-caption);
+}
+
 .mensajeria__sin-nada {
   margin: 0;
   padding: var(--e8) var(--e4);

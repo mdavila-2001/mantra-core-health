@@ -646,7 +646,7 @@ export class Thread {
           const propio = mensaje.senderProfileId === this.store.perfil();
           return {
             contexto,
-            enviadaPor: propio ? 'Enviada por vos' : `Enviada por ${this.nombreDe(mensaje.senderProfileId)}`,
+            enviadaPor: propio ? 'Enviada por usted' : `Enviada por ${this.nombreDe(mensaje.senderProfileId)}`,
             clave: mensaje.clave,
           };
         }
@@ -1560,7 +1560,7 @@ export class Thread {
     const nombre = mensaje.pendiente?.adjunto?.nombre;
     if (nombre !== undefined && nombre !== '') return `Foto: ${nombre}`;
     return mensaje.senderProfileId === this.store.perfil()
-      ? 'Foto que enviaste'
+      ? 'Foto que usted envió'
       : `Foto de ${this.nombreDe(mensaje.senderProfileId)}`;
   }
 

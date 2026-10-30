@@ -269,7 +269,7 @@ export class Messaging {
    */
   protected readonly rotuloArchivadas = computed(() => {
     const n = this.archivadas().length;
-    return n === 1 ? 'Tenés 1 chat archivado.' : `Tenés ${n} chats archivados.`;
+    return n === 1 ? 'Tiene 1 chat archivado.' : `Tiene ${n} chats archivados.`;
   });
 
   protected readonly vacio = computed(() => this.visibles().length === 0);
@@ -281,15 +281,6 @@ export class Messaging {
   protected readonly sinCoincidencias = computed(
     () => this.consulta().trim() !== '' && this.visibles().length === 0,
   );
-
-  /**
-   * El `?escribirA=` o `?pedido=` —con su contexto, si lo trajo— que espera al
-   * perfil propio para abrir su hilo.
-   */
-  private readonly enlacePendiente = signal<{
-    readonly destino: DestinoDeChat;
-    readonly contexto: ContextoDeChat | undefined;
-  } | null>(null);
 
   constructor() {
     this.store.iniciar();
@@ -320,9 +311,10 @@ export class Messaging {
     // El `?escribirA=<slug>` con el que llegan el botón «Enviar mensaje» de una
     // ficha pública y «Hablar con el broker» del directorio de aseguradoras. Se
     // atiende cuando el perfil propio ya está resuelto: sin eso no hay con qué
-    // abrir el hilo. Por eso el destino queda **pendiente** y lo abre el efecto
-    // de abajo: la ruta llega antes que el perfil, y atenderlo en el acto lo
-    // descartaba en silencio —la bandeja quedaba abierta sin hilo—.
+    // abrir el hilo. La ruta llega antes que el perfil: `ChatStore.escribirA`
+    // y `abrirConversacion` encolan el pedido hasta tenerlo (`conPerfil`), y
+    // antes, atenderlo en el acto lo descartaba en silencio —la bandeja
+    // quedaba abierta sin hilo—.
     //
     // Los botones del marketplace («Chatear con la farmacia», «Consultar por
     // chat») dejan de qué se trata en `sessionStorage` y mandan sólo su nonce
@@ -340,16 +332,8 @@ export class Messaging {
         // botón lo dejó para este mismo destino.
         const contexto =
           tomarContexto(nonceDeLaQuery(query), destino, this.almacen) ?? undefined;
-        this.enlacePendiente.set({ destino, contexto });
+        this.abrirDesdeEnlace(destino, contexto);
       }
-    });
-    effect(() => {
-      const pendiente = this.enlacePendiente();
-      if (pendiente === null || this.store.perfil() === null) return;
-      untracked(() => {
-        this.enlacePendiente.set(null);
-        this.abrirDesdeEnlace(pendiente.destino, pendiente.contexto);
-      });
     });
 
     // «(3) AloVida - Chats» en la pestaña mientras haya sin leer, como

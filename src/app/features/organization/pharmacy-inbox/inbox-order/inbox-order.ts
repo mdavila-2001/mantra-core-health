@@ -77,16 +77,16 @@ export function motivoDeChatNoAbierto(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     const reason = (error.error as { reason?: unknown } | null)?.reason;
     if (reason === 'PATIENT_CHAT_PROFILE_MISSING') {
-      return 'El paciente todavía no tiene perfil de mensajería: no podemos abrirle el chat. Usá el teléfono o el código de retiro.';
+      return 'El paciente todavía no tiene perfil de mensajería: no podemos abrirle el chat. Use el teléfono o el código de retiro.';
     }
     if (reason === 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE') {
-      return 'La farmacia no tiene vitrina pública activa: publicala para poder chatear con los pacientes.';
+      return 'La farmacia no tiene vitrina pública activa: publíquela para poder chatear con los pacientes.';
     }
     if (error.status === 403) {
-      return 'Tu cuenta no puede escribir como la farmacia. Pedile a quien administra la farmacia que revise tu rol.';
+      return 'Su cuenta no puede escribir como la farmacia. Pídale a quien administra la farmacia que revise su rol.';
     }
   }
-  return 'No pudimos abrir el chat con el paciente. Probá de nuevo en un momento.';
+  return 'No pudimos abrir el chat con el paciente. Pruebe de nuevo en un momento.';
 }
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
