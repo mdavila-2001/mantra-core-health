@@ -733,7 +733,7 @@ export const messageList = new Coleccion<SimulatedMessage>([
   mensaje(C2, PEDIATRICIAN_V, 'Gracias. Es Martín Rocha Antelo.', -7, 11, 32),
   mensaje(C3, ENDO_V, 'Hola Vale, ¿viste el caso de la paciente con hipotiroidismo y arritmia? Quiero coordinar el ajuste de levotiroxina.', -1, 8, 45),
   mensaje(C3, ENDO_V, 'Le pedí un Holter, cuando lo tengas lo vemos juntas.', -1, 8, 47),
-  mensaje(C4, SUPPORT_ID, 'Tu solicitud de cita con la Dra. Valeria Rojas Mendoza fue aceptada para el jueves a las 09:30. Podés ver el detalle en «Mis citas».', -2, 10),
+  mensaje(C4, SUPPORT_ID, 'Su solicitud de cita con la Dra. Valeria Rojas Mendoza fue aceptada para el jueves a las 09:30. Puede ver el detalle en «Mis citas».', -2, 10),
   mensaje(C5, PATIENT_SHOWCASE.id, 'Doctor, le mando la foto del lunar que le comenté.', -12, 19, 0, { attachmentFileId: uuid('file-lunar') }),
   mensaje(C5, DERMA_V, 'Recibido. Por la foto no parece nada preocupante, pero quiero verlo con el dermatoscopio. Reservá un turno cuando puedas.', -12, 20, 15),
   mensaje(C5, PATIENT_SHOWCASE.id, 'Listo, reservé para el mes que viene. ¡Gracias!', -11, 8, 30),
