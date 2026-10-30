@@ -3,7 +3,7 @@
     <line class="st__grid" [attr.x1]="m.left" [attr.x2]="width() - m.right" [attr.y1]="y()(t)" [attr.y2]="y()(t)" />
     <text class="st__tick" [attr.x]="m.left - 8" [attr.y]="y()(t)" text-anchor="end" dominant-baseline="middle">{{ axis(t) }}</text>
   }
-  @for (c of cols(); track c.row.id) {
+  @for (c of cols(); track c.row.id; let i = $index) {
     @for (p of c.parts; track p.seg.id) {
       <rect
         class="st__seg"
@@ -12,7 +12,7 @@
         [attr.y]="p.y"
         [attr.width]="p.w"
         [attr.height]="p.h"
-        [style.fill]="'var(--ins-s' + p.seg.color + ')'"
+        [style.fill]="sv(p.seg.color)"
         tabindex="0"
         role="img"
         [attr.aria-label]="p.tip"
@@ -27,13 +27,15 @@
         <text class="st__num" [attr.x]="c.cx" [attr.y]="p.y + p.h / 2" text-anchor="middle" dominant-baseline="middle">{{ p.label }}</text>
       }
     }
-    <text class="st__tick" [attr.x]="c.cx" [attr.y]="height() - 14" text-anchor="middle">{{ c.row.label }}</text>
+    @if (i % labelStep() === 0) {
+      <text class="st__tick" [attr.x]="c.cx" [attr.y]="height() - 14" text-anchor="middle">{{ c.row.label }}</text>
+    }
   }
 </svg>
 
 <ul class="st__legend">
   @for (s of segments(); track s.id) {
-    <li><span class="st__key" [style.background]="'var(--ins-s' + s.color + ')'"></span>{{ s.label }}</li>
+    <li><span class="st__key" [style.background]="sv(s.color)"></span>{{ s.label }}</li>
   }
 </ul>
 

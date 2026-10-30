@@ -1,0 +1,331 @@
+:host {
+  display: block;
+}
+
+.op,
+.op__stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-5);
+}
+
+.op > *,
+.op__stack > * {
+  min-inline-size: 0;
+}
+
+.op__plat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.op__plat-label {
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.op__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--sp-3);
+}
+
+.op__two {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  gap: var(--sp-5);
+}
+
+.op__table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-body);
+  margin-top: var(--sp-3);
+}
+
+.op__table th,
+.op__table td {
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-default);
+  text-align: start;
+  vertical-align: top;
+}
+
+.op__table thead th {
+  background: var(--bg-surface-alt);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.op__table .op__n {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.op__table thead button {
+  all: unset;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.op__table thead button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.op__note {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.op__low {
+  background: var(--st-warning-bg);
+}
+
+.op__bad {
+  color: var(--st-error-fg);
+  font-weight: 700;
+}
+
+.op__code {
+  margin-inline-start: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+.op__wrap {
+  overflow-x: auto;
+}
+
+.op__foot {
+  margin: var(--sp-3) 0 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.op__tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.op__search input {
+  min-block-size: 36px;
+  min-inline-size: 200px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+}
+
+.op__btn {
+  min-block-size: 36px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+  cursor: pointer;
+}
+
+.op__search input:focus-visible,
+.op__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.op__sr {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.op__src {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.op__src app-select {
+  min-inline-size: 240px;
+}
+
+.op__label {
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.op__tiles,
+.op__signals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.op__insights {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.op__caveat {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  border: 1px solid var(--st-info-bd);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-caption);
+}
+
+.op__hot {
+  background: var(--st-warning-bg);
+}
+
+.op__own th,
+.op__own td {
+  font-weight: 700;
+}
+
+.op__chip {
+  margin-inline-start: var(--sp-2);
+  padding: 1px var(--sp-2);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.op__rep {
+  padding: 1px var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.op__rep--high {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+  border-color: var(--st-success-bd);
+}
+
+.op__rep--medium {
+  background: var(--st-info-bg);
+  color: var(--st-info-fg);
+  border-color: var(--st-info-bd);
+}
+
+.op__rep--low {
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  border-color: var(--st-warning-bd);
+}
+
+.op__muted td,
+.op__muted th {
+  color: var(--text-secondary);
+}
+
+.op__queue {
+  list-style: none;
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.op__item {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.op__item-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+}
+
+.op__sent {
+  padding: 1px var(--sp-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-full);
+  font-size: var(--fs-caption);
+  font-weight: 700;
+}
+
+.op__sent--negative {
+  background: var(--st-error-bg);
+  color: var(--st-error-fg);
+  border-color: var(--st-error-bd);
+}
+
+.op__sent--positive {
+  background: var(--st-success-bg);
+  color: var(--st-success-fg);
+  border-color: var(--st-success-bd);
+}
+
+.op__sent--neutral {
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+}
+
+.op__meta {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.op__text {
+  margin: 0;
+}
+
+.op__btn {
+  justify-self: start;
+  min-block-size: 36px;
+  padding: 0 var(--sp-3);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font: inherit;
+  cursor: pointer;
+}
+
+.op__btn:hover {
+  background: var(--bg-hover);
+}
+
+.op__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.op__empty {
+  margin: var(--sp-3) 0 0;
+  color: var(--text-secondary);
+}

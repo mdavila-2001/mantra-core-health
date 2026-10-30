@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { formatAxis, formatChange, formatValue } from '../domain/format';
 import type { MetricUnit } from '../domain/insights.types';
 import { areaPath, linePath, linear, niceTicks, type XY } from './chart-math';
-import { trackWidth, type Band, type LineSeries, type RefLine } from './chart.types';
+import { seriesVar, trackWidth, type Band, type LineSeries, type RefLine } from './chart.types';
 
 const MARGIN = { top: 14, right: 12, bottom: 30, left: 52 } as const;
 const LABEL_GAP = 13;
@@ -56,13 +56,14 @@ export class LineChart {
   readonly ariaLabel = input.required<string>();
 
   protected readonly width = trackWidth();
+  protected readonly sv = seriesVar;
   protected readonly hover = signal<number | null>(null);
   protected readonly hidden = signal<ReadonlySet<string>>(new Set());
   protected readonly zoom = signal<readonly [number, number] | null>(null);
   protected readonly dragFrom = signal<number | null>(null);
   protected readonly dragTo = signal<number | null>(null);
 
-  protected readonly margin = computed(() => ({ ...MARGIN, right: this.width() < 520 ? 12 : 96 }));
+  protected readonly margin = computed(() => ({ ...MARGIN, right: this.width() < 520 ? 12 : 120 }));
   protected readonly span = computed<readonly [number, number]>(() => this.zoom() ?? [0, Math.max(0, this.labels().length - 1)]);
   protected readonly count = computed(() => this.span()[1] - this.span()[0] + 1);
   protected readonly plotW = computed(() => this.width() - this.margin().left - this.margin().right);

@@ -88,3 +88,8 @@ export function trackWidth(fallback = 640): Signal<number> {
   });
   return width.asReadonly();
 }
+
+/** Color de una serie (1–6) como referencia a su token; las hojas no ven concatenaciones. */
+export function seriesVar(index: number): string {
+  return `var(--ins-s${index})`;
+}

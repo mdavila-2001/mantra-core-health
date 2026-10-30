@@ -38,7 +38,7 @@
         @if (b.datum.value === null) {
           <rect class="bc__gap" [attr.x]="orientation() === 'h' ? b.x : b.x" [attr.y]="orientation() === 'h' ? b.y : svgHeight() - 46 - 24" [attr.width]="orientation() === 'h' ? 80 : b.w" [attr.height]="orientation() === 'h' ? b.h : 24" />
         } @else {
-          <rect class="bc__fill" [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h" rx="3" [style.fill]="'var(--ins-s' + (b.datum.color ?? 1) + ')'" />
+          <rect class="bc__fill" [attr.x]="b.x" [attr.y]="b.y" [attr.width]="b.w" [attr.height]="b.h" rx="3" [style.fill]="sv((b.datum.color ?? 1))" />
         }
         <text class="bc__value" [class.bc__value--gap]="b.datum.value === null" [attr.x]="b.labelX" [attr.y]="b.labelY" [attr.text-anchor]="orientation() === 'h' ? 'start' : 'middle'" dominant-baseline="middle">{{ b.text }}</text>
         @if (orientation() === 'h') {

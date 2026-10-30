@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output, signal } f
 import { formatAxis, formatChange, formatValue } from '../domain/format';
 import type { MetricUnit } from '../domain/insights.types';
 import { linear, niceTicks } from './chart-math';
-import { trackWidth, type BarDatum, type RefLine } from './chart.types';
+import { seriesVar, trackWidth, type BarDatum, type RefLine } from './chart.types';
 
 const ROW_H = 34;
 
@@ -48,6 +48,7 @@ export class BarChart {
   readonly picked = output<string>();
 
   protected readonly width = trackWidth();
+  protected readonly sv = seriesVar;
   protected readonly hover = signal<string | null>(null);
 
   protected readonly ordered = computed(() => {

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { formatAxis, formatValue } from '../domain/format';
 import type { MetricUnit } from '../domain/insights.types';
 import { linear, niceTicks, regression, trendIsSound } from './chart-math';
-import { trackWidth } from './chart.types';
+import { seriesVar, trackWidth } from './chart.types';
 
 export interface ScatterPoint {
   readonly id: string;
@@ -38,9 +38,10 @@ export class ScatterChart {
   readonly ariaLabel = input.required<string>();
 
   protected readonly width = trackWidth();
+  protected readonly sv = seriesVar;
   protected readonly hover = signal<string | null>(null);
 
-  protected readonly margin = { top: 12, right: 16, bottom: 44, left: 58 } as const;
+  protected readonly margin = { top: 28, right: 16, bottom: 44, left: 58 } as const;
 
   protected readonly reg = computed(() => regression(this.points().map((p) => p.x), this.points().map((p) => p.y)));
   protected readonly sound = computed(() => trendIsSound(this.reg()));
