@@ -1,10 +1,12 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
   viewChild,
@@ -153,21 +155,15 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
  * el catálogo con `managed: true`, que lista también borradores y retirados: un
  * producto retirado sigue reservando su código.
  *
- * ## El modo
+ * ## El modo, las categorías y la farmacia
  *
- * - *Crear y actualizar*: el código nuevo se crea, el existente se actualiza.
- * - *Sólo crear*: el código existente se rechaza.
- * - *Sólo actualizar*: el código que no está en el catálogo se rechaza.
+ * Cada modo lo describe `MODE_HINTS`. Las categorías son de cada farmacia
+ * (`GET /pharmacies/:id/categories`): se cargan al elegir la farmacia y la
+ * revisión valida contra ellas; hasta que llegan no se puede subir el archivo,
+ * porque revisar contra otra lista daría errores falsos. La farmacia la elige
+ * {@link PharmacyScope}: con una sola queda elegida sola.
  *
- * ## Las categorías
- *
- * Son de cada farmacia (`GET /pharmacies/:id/categories`): se cargan al elegir
- * la farmacia y la revisión valida contra ellas. Hasta que llegan no se puede
- * subir el archivo, porque revisar contra otra lista daría errores falsos.
- *
- * ## De qué farmacia
- *
- * La elige {@link PharmacyScope}: con una sola queda elegida sola.
+ * Es la pestaña «Importación» de `PharmacyCatalogHub` (`embedded`).
  */
 @Component({
   selector: 'app-pharmacy-import',
@@ -195,6 +191,9 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
   },
 })
 export class PharmacyImport {
+  /** Montada como pestaña de «Catálogo»: el membrete lo pone el contenedor. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
   private readonly toasts = inject(ToastService);
