@@ -98,7 +98,7 @@
 
 /* Estado Error */
 .radio-container.has-error .radio-circle {
-  border-color: var(--c-error-500);
+  border-color: var(--border-danger);
 }
 
 /* Estado Deshabilitado */
