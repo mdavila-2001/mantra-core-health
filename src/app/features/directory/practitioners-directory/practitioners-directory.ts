@@ -25,7 +25,11 @@ import { AppButtonLink } from '../../../shared/components/atoms/button/button-li
 import { SpecialtyIcon } from '../../../shared/components/atoms/specialty-icon/specialty-icon';
 import type { SearchResultItem } from '../../../shared/components/molecules/search-result/search-result.types';
 import { DirectoryPage } from '../../../shared/components/organisms/directory-page/directory-page';
-import type { SustantivoDelDirectorio } from '../../../shared/components/organisms/directory-page/directory-page.types';
+import type {
+  CriterioDeOrden,
+  SustantivoDelDirectorio,
+} from '../../../shared/components/organisms/directory-page/directory-page.types';
+import { CONTADORES_DE_ACTIVIDAD } from '../../account/my-profile/contadores-de-actividad';
 import {
   SEARCH_PARAM,
   type FilterDef,
@@ -240,6 +244,15 @@ export class PractitionersDirectory {
   );
 
   protected readonly sustantivo = SUSTANTIVO;
+
+  /**
+   * Los órdenes por actividad del «Ordenar por», además de nombre y nota: los
+   * cuatro contadores de la ficha, de mayor a menor. Las claves son las de
+   * `cifrasDe` en la tarjeta.
+   */
+  protected readonly criteriosDeOrden: readonly CriterioDeOrden[] = CONTADORES_DE_ACTIVIDAD.map(
+    (contador) => ({ clave: contador.clave, etiqueta: `Más ${contador.rotulo.toLowerCase()}` }),
+  );
 
   protected readonly estado = signal<ViewState<readonly GrupoDeEspecialidad[]>>(loading());
 

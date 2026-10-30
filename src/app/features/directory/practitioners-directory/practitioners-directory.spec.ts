@@ -446,6 +446,52 @@ describe('PractitionersDirectory', () => {
     expect(texto).not.toContain('Hospital D');
   });
 
+  /* -- Ordenar por nota y por actividad ------------------------------------ */
+
+  it('cada tarjeta lleva sus cifras de actividad y dice cuántos encuentros atendió', () => {
+    montarEnEspecialidad();
+    responder([
+      {
+        ...FILA,
+        activity: { encounters: 312, medicationRequests: 208, clinicalNotes: 275, documents: 41 },
+      },
+      {
+        ...OTRA,
+        activity: { encounters: 0, medicationRequests: 0, clinicalNotes: 0, documents: 0 },
+      },
+    ]);
+    responderConceptos();
+
+    const todos = grupos().flatMap((g) => g.profesionales);
+    const activo = todos.find((p) => p.id === 'per-1');
+    const nuevo = todos.find((p) => p.id === 'per-2');
+
+    expect(activo?.stats).toEqual({ encuentros: 312, recetas: 208, notas: 275, documentos: 41 });
+    expect(activo?.meta).toContainEqual({ text: '312 encuentros atendidos', iconKey: 'actividad' });
+    // En cero no se dice: «0 encuentros» se leería como que no atiende.
+    expect(nuevo?.stats?.['encuentros']).toBe(0);
+    expect(nuevo?.meta?.map((m) => m.text).join(' ') ?? '').not.toContain('encuentro');
+  });
+
+  it('sin actividad en la respuesta no inventa cifras', () => {
+    montarEnEspecialidad();
+    responder([FILA]);
+    responderConceptos();
+
+    expect(grupos()[0].profesionales[0].stats).toBeUndefined();
+  });
+
+  it('ofrece ordenar por los cuatro contadores de la ficha', () => {
+    montarTodos();
+    expect(interno<readonly { clave: string; etiqueta: string }[]>('criteriosDeOrden')).toEqual([
+      { clave: 'encuentros', etiqueta: 'Más encuentros atendidos' },
+      { clave: 'recetas', etiqueta: 'Más recetas emitidas' },
+      { clave: 'notas', etiqueta: 'Más notas clínicas' },
+      { clave: 'documentos', etiqueta: 'Más documentos publicados' },
+    ]);
+    responder([]);
+  });
+
   /* -- 1 · Están todos, sin escribir nada ---------------------------------- */
 
   it('carga la guía al abrir, sin que nadie escriba nada', () => {

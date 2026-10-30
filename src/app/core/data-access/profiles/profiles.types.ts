@@ -1102,12 +1102,21 @@ export interface PractitionerListItem {
    */
   readonly workplaces: readonly string[];
   /**
-   * La media de las reseñas publicadas y cuántas son. **Opcionales: la API
-   * no los manda en el listado** (P61) —sólo en la ficha—; sin ellos la tarjeta dice «Sin reseñas todavía», nunca una nota
-   * inventada.
+   * La media de las reseñas publicadas y cuántas son (P61). Opcionales: una
+   * API anterior no los manda en el listado, y sin ellos la tarjeta dice «Sin
+   * reseñas todavía», nunca una nota inventada.
    */
   readonly ratingAverage?: number | null;
   readonly ratingCount?: number;
+  /**
+   * Lo que asentó en la plataforma: las mismas cuatro cuentas que la pestaña
+   * «Actividad» de su ficha. Es por lo que la guía ordena «más encuentros
+   * atendidos», «más recetas emitidas»… Opcional por el mismo motivo.
+   */
+  readonly activity?: Pick<
+    PractitionerActivity,
+    'encounters' | 'medicationRequests' | 'clinicalNotes' | 'documents'
+  >;
 }
 
 /**

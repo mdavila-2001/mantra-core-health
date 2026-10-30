@@ -22,7 +22,11 @@ import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { FilterBar, SEARCH_PARAM, type FilterDef } from '../filter-bar/filter-bar';
 import { PageHeader } from '../page-header/page-header';
 import { ViewStateHost } from '../view-state-host/view-state-host';
-import type { GrupoDeDirectorio, SustantivoDelDirectorio } from './directory-page.types';
+import type {
+  CriterioDeOrden,
+  GrupoDeDirectorio,
+  SustantivoDelDirectorio,
+} from './directory-page.types';
 
 /**
  * **El patrón único de página de directorio** (A7 del plan de UX del
@@ -75,12 +79,40 @@ const TANDA_POR_DEFECTO = 24;
 
 type Vista = 'grilla' | 'lista';
 
+/** El prefijo del valor de un orden por cifra, para que no choque con los fijos. */
+const PREFIJO_DE_CIFRA = 'cifra:';
+
 /**
  * Cómo se ordena la grilla. `original` es el orden en que el directorio
  * entrega sus grupos —por ciudad, por especialidad—: no se rotula «relevancia»
- * porque nadie lo calculó como tal.
+ * porque nadie lo calculó como tal. `cifra:<clave>` es uno de los
+ * {@link CriterioDeOrden} que declara el directorio.
  */
-type Orden = 'original' | 'calificacion' | 'nombre-asc' | 'nombre-desc';
+type Orden =
+  | 'original'
+  | 'calificacion'
+  | 'resenas'
+  | 'nombre-asc'
+  | 'nombre-desc'
+  | `${typeof PREFIJO_DE_CIFRA}${string}`;
+
+/**
+ * De mayor a menor por un número; sin número, al final. `sort` es estable, así
+ * que a igualdad —y entre los que no tienen dato— queda el orden de entrada.
+ */
+function porCifraDescendente<T>(
+  resultados: readonly T[],
+  cifra: (resultado: T) => number | null,
+): T[] {
+  return [...resultados].sort((a, b) => {
+    const de = cifra(a);
+    const otra = cifra(b);
+    if (de === null || otra === null) {
+      return (de === null ? 1 : 0) - (otra === null ? 1 : 0);
+    }
+    return otra - de;
+  });
+}
 
 /** Cuántas opciones del grupo se ven antes de «Ver todas». */
 const GRUPOS_A_LA_VISTA = 10;
@@ -295,11 +327,28 @@ export class DirectoryPage {
   readonly orden = signal<Orden>('original');
 
   /**
-   * Si algún resultado tiene reseñas. Sin ninguna, «Mejor calificadas» sería
-   * un orden que no ordena nada, y no se ofrece.
+   * Los órdenes propios del directorio, por las cifras de sus resultados.
+   * Vacío —los directorios que no los declaran— no cambia nada.
    */
-  private readonly hayCalificaciones = computed(() =>
-    this.grupos().some((grupo) => grupo.resultados.some((r) => ratingOf(r) !== null)),
+  readonly criteriosDeOrden = input<readonly CriterioDeOrden[]>([]);
+
+  /**
+   * Si sus resultados se califican aunque todavía nadie haya opinado.
+   *
+   * Sin esto, «Mejor puntuación» aparece sólo cuando ya hay alguna reseña en
+   * pantalla. La guía de médicos lo prende: que nadie haya calificado todavía
+   * no quiere decir que no se pueda pedir ese orden.
+   */
+  readonly calificable = input(false);
+
+  /**
+   * Si se ofrecen los órdenes por reseñas: cuando el directorio lo declara o
+   * cuando alguna tarjeta ya trae reseñas.
+   */
+  private readonly hayCalificaciones = computed(
+    () =>
+      this.calificable() ||
+      this.grupos().some((grupo) => grupo.resultados.some((r) => ratingOf(r) !== null)),
   );
 
   protected readonly opcionesDeOrden = computed<readonly { value: Orden; label: string }[]>(() => [
@@ -311,20 +360,23 @@ export class DirectoryPage {
           : 'Predeterminado',
     },
     ...(this.hayCalificaciones()
-      ? [{ value: 'calificacion' as const, label: 'Mejor calificadas' }]
+      ? [
+          { value: 'calificacion' as const, label: 'Mejor puntuación' },
+          { value: 'resenas' as const, label: 'Más reseñas' },
+        ]
       : []),
+    ...this.criteriosDeOrden().map((criterio) => ({
+      value: `${PREFIJO_DE_CIFRA}${criterio.clave}` as const,
+      label: criterio.etiqueta,
+    })),
     { value: 'nombre-asc', label: 'Nombre: de la A a la Z' },
     { value: 'nombre-desc', label: 'Nombre: de la Z a la A' },
   ]);
 
   protected elegirOrden(valor: string): void {
-    if (
-      valor === 'original' ||
-      valor === 'calificacion' ||
-      valor === 'nombre-asc' ||
-      valor === 'nombre-desc'
-    ) {
-      this.orden.set(valor);
+    const opcion = this.opcionesDeOrden().find((o) => o.value === valor);
+    if (opcion !== undefined) {
+      this.orden.set(opcion.value);
     }
   }
 
@@ -385,6 +437,13 @@ export class DirectoryPage {
         }
         return notaB.average - notaA.average || notaB.count - notaA.count;
       });
+    }
+    if (orden === 'resenas') {
+      return porCifraDescendente(deLosGrupos, (r) => ratingOf(r)?.count ?? null);
+    }
+    if (orden.startsWith(PREFIJO_DE_CIFRA)) {
+      const clave = orden.slice(PREFIJO_DE_CIFRA.length);
+      return porCifraDescendente(deLosGrupos, (r) => r.stats?.[clave] ?? null);
     }
     const sentido = orden === 'nombre-asc' ? 1 : -1;
     return [...deLosGrupos].sort((a, b) => sentido * a.title.localeCompare(b.title, 'es'));
