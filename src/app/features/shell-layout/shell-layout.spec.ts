@@ -72,6 +72,8 @@ describe('ShellLayout', () => {
           // N-01: los dos destinos que se mudaron a la cabecera.
           { path: 'tutorials', children: [] },
           { path: 'messaging', children: [] },
+          // Un hilo abierto: en angosto, la flecha del armazón se esconde.
+          { path: 'messaging/:conversationId', children: [] },
           // Atajos de la cabecera que cuelgan de `/my-account` (27/10/2026), y
           // el carrito, que cuelga de «Farmacia».
           { path: 'my-account/spending', children: [] },
@@ -1061,6 +1063,29 @@ describe('ShellLayout', () => {
 
         await ir('/dashboard');
         expect(flecha()).toBeNull();
+      });
+
+      /**
+       * En un hilo de chat, en angosto, el hilo trae su «‹» a la bandeja justo
+       * debajo: la del armazón lleva la marca con la que la hoja la esconde en
+       * angosto. Sólo en el hilo: la bandeja y el resto de las pantallas la
+       * siguen mostrando sin condiciones.
+       */
+      it('en un hilo de chat se marca para esconderse en angosto, y sólo ahí', async () => {
+        await ir('/messaging/c-1');
+        expect(flecha()?.classList.contains('app-header__volver--hilo')).toBe(true);
+
+        await ir('/messaging');
+        expect(flecha()?.classList.contains('app-header__volver--hilo')).toBe(false);
+
+        await ir('/my-account');
+        expect(flecha()?.classList.contains('app-header__volver--hilo')).toBe(false);
+      });
+
+      it('la hoja la esconde sólo por debajo del corte en que el hilo ocupa la pantalla', () => {
+        raiz();
+        const hoja = [...document.querySelectorAll('style')].map((estilo) => estilo.textContent ?? '').join('\n');
+        expect(hoja).toMatch(/@media[^{]*max-width:\s*60rem[^{]*\{\s*\.app-header__volver--hilo[^{]*\{\s*display:\s*none/u);
       });
     });
 

@@ -33,6 +33,39 @@
   </div>
 }
 
+<!-- Mientras las fotos se achican y pierden sus metadatos, antes de abrir la
+     vista previa. Suele durar menos de un segundo; con fotos de 40 MB, más. -->
+@if (preparando()) {
+  <app-loading-state
+    class="composer__preparando"
+    data-testid="composer-preparando"
+    aria-busy="true"
+    message="Preparando las fotos…"
+  />
+}
+
+<!-- Respuestas rápidas: con el hilo vacío, o las que pasa quien abrió el chat
+     desde un producto o un pedido. Tocarlas escribe, no manda. Si no entran a
+     lo ancho, el borde que sigue se desvanece: avisa que hay más de costado. -->
+@if (chips().length > 0) {
+  <div
+    #filaChips
+    class="composer__chips"
+    role="group"
+    aria-label="Respuestas rápidas"
+    data-testid="composer-sugerencias"
+    [class.is-sigue-al-inicio]="chipsDesbordan().inicio"
+    [class.is-sigue-al-final]="chipsDesbordan().final"
+    (scroll)="medirChips()"
+  >
+    @for (chip of chips(); track chip) {
+      <button type="button" class="composer__chip" data-testid="composer-sugerencia" (click)="usarSugerencia(chip)">
+        {{ chip }}
+      </button>
+    }
+  </div>
+}
+
 <!-- Los paneles se abren SOBRE el composer, que es donde se usan. -->
 @if (panel() === 'emojis') {
   <div class="composer__panel">
@@ -131,8 +164,11 @@
        salió, y agregarle un archivo sería otro mensaje. -->
   @if (editando() === null) {
     <!-- El «+» abre un menú flotante, como el de WhatsApp: no empuja el hilo.
-         `app-menu` trae la posición (se da vuelta hacia arriba si abajo no
-         entra), Escape, el clic afuera, las flechas y la vuelta del foco. -->
+         Es el `app-menu` del sistema: trae el patrón ARIA entero (↑/↓ con
+         vuelta, Inicio/Fin, Escape devuelve el foco al «+», Tab cierra, el foco
+         entra al primer ítem al abrir), la posición (se da vuelta hacia arriba
+         si abajo no entra) y el clic afuera. Abierto se muda al <body>: no lo
+         recorta el hilo. -->
     <button
       class="composer__icono composer__mas"
       type="button"
@@ -145,18 +181,24 @@
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14" /></svg>
     </button>
-    <app-menu #menuAdjuntar class="composer__menu" aria-label="Adjuntar">
-      <app-menu-item data-testid="composer-documento" (selected)="elegirArchivo(false)">
-        <span slot="icon" class="composer__menu-icono composer__menu-icono--documento" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /><path d="M9 13h6M9 17h4" /></svg>
-        </span>
-        Documento
-      </app-menu-item>
-      <app-menu-item data-testid="composer-fotos" (selected)="elegirArchivo(true)">
+    <app-menu #menuAdjuntar class="composer__menu" aria-label="Adjuntar" data-testid="composer-menu-adjuntar">
+      <app-menu-item data-testid="composer-fotos" (selected)="elegirArchivo('fotos-y-videos')">
         <span slot="icon" class="composer__menu-icono composer__menu-icono--fotos" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.8" /><path d="m21 16-5-5-9 9" /></svg>
         </span>
         Fotos y videos
+      </app-menu-item>
+      <app-menu-item data-testid="composer-tomar-foto" (selected)="tomarFoto()">
+        <span slot="icon" class="composer__menu-icono composer__menu-icono--fotos" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.4-2h6.2l1.4 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="12.5" r="3.5" /></svg>
+        </span>
+        Tomar foto
+      </app-menu-item>
+      <app-menu-item data-testid="composer-documento" (selected)="elegirArchivo('documento')">
+        <span slot="icon" class="composer__menu-icono composer__menu-icono--documento" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M14 3v5h5" /><path d="M19 8v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7z" /><path d="M9 13h6M9 17h4" /></svg>
+        </span>
+        Documento
       </app-menu-item>
       <app-menu-item data-testid="composer-plantilla" (selected)="alternar('plantillas')">
         <span slot="icon" class="composer__menu-icono composer__menu-icono--plantilla" aria-hidden="true">
@@ -167,31 +209,57 @@
     </app-menu>
   }
 
-  <button
-    class="composer__icono"
-    type="button"
-    data-testid="composer-emojis"
-    aria-label="Elegir un emoji o un sticker"
-    [attr.aria-expanded]="panel() === 'emojis'"
-    (click)="alternar('emojis')"
-  >
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M9 10h.01M15 10h.01M8.5 14.5a4.5 4.5 0 0 0 7 0" /></svg>
-  </button>
+  <!-- La píldora: el campo con sus accesos adentro, como en PedidosYa. La foto
+       está a la vista y no en un menú: es lo que más se manda después del texto. -->
+  <div class="composer__pildora">
+    <button
+      class="composer__icono composer__icono--chico"
+      type="button"
+      data-testid="composer-emojis"
+      aria-label="Elegir un emoji o un sticker"
+      [attr.aria-expanded]="panel() === 'emojis'"
+      (click)="alternar('emojis')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" /><path d="M9 10h.01M15 10h.01M8.5 14.5a4.5 4.5 0 0 0 7 0" /></svg>
+    </button>
 
-  <label class="composer__campo">
-    <span class="solo-lectores">Escriba su mensaje</span>
-    <textarea
-      #campo
-      data-testid="hilo-texto"
-      rows="1"
-      [placeholder]="editando() === null ? 'Escriba un mensaje' : 'Edite su mensaje'"
-      title="Enter envía · Shift+Enter hace salto de línea"
-      [ngModel]="texto()"
-      (ngModelChange)="alEscribir($event)"
-      name="borrador"
-      (keydown)="alTeclear($event)"
-    ></textarea>
-  </label>
+    <label class="composer__campo">
+      <span class="solo-lectores">Escriba su mensaje</span>
+      <textarea
+        #campo
+        data-testid="hilo-texto"
+        rows="1"
+        [placeholder]="editando() === null ? 'Escriba un mensaje' : 'Edite su mensaje'"
+        title="Enter envía · Shift+Enter hace salto de línea · Ctrl+V pega una imagen"
+        [ngModel]="texto()"
+        (ngModelChange)="alEscribir($event)"
+        name="borrador"
+        (keydown)="alTeclear($event)"
+        (paste)="alPegar($event)"
+      ></textarea>
+    </label>
+
+    @if (editando() === null) {
+      <button
+        class="composer__icono composer__icono--chico composer__icono--camara"
+        type="button"
+        data-testid="composer-camara"
+        aria-label="Tomar una foto"
+        (click)="tomarFoto()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.4-2h6.2l1.4 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" /><circle cx="12" cy="12.5" r="3.5" /></svg>
+      </button>
+      <button
+        class="composer__icono composer__icono--chico"
+        type="button"
+        data-testid="composer-foto"
+        aria-label="Mandar fotos"
+        (click)="elegirArchivo('fotos')"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" /><circle cx="9" cy="10" r="1.6" /><path d="m20.5 15.5-4.6-4.6L7 19.5" /></svg>
+      </button>
+    }
+  </div>
 
   @if (editando() !== null) {
     <!-- Guardar, no enviar: el tilde dice que esto corrige algo que ya existe.
@@ -205,28 +273,47 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m4 12.5 5 5L20 6.5" /></svg>
     </button>
   } @else if (puedeEnviar()) {
+    <!-- Mientras se preparan fotos, lo escrito espera: va a ser su pie. -->
     <button
       class="composer__enviar"
       type="submit"
       data-testid="hilo-enviar"
       aria-label="Enviar mensaje"
+      [disabled]="preparando()"
     >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.4 20.4 17.3-8.4L3.4 3.6 3.4 10l12 2-12 2z" /></svg>
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M4.2 19.6 20.5 12.9a1 1 0 0 0 0-1.8L4.2 4.4a.8.8 0 0 0-1.1.9l1.6 5.6 8.3 1.1-8.3 1.1-1.6 5.6a.8.8 0 0 0 1.1.9z" /></svg>
     </button>
   } @else {
     <app-recorder (grabado)="alGrabar($event)" (fallo)="alFallarElMicrofono($event)" />
   }
 </form>
 
-<!-- El selector de archivos vive fuera del menú: si se desmontara con él, el
-     `change` llegaría a un elemento que ya no está en el documento. -->
+<p class="solo-lectores" role="status" aria-live="polite">{{ anuncio() }}</p>
+
+<!-- Los selectores de archivos viven fuera del menú: si se desmontaran con él,
+     el `change` llegaría a un elemento que ya no está en el documento. -->
 <input
   #archivo
   class="solo-lectores"
   type="file"
   multiple
+  accept="image/*,video/*,audio/*,application/pdf"
   tabindex="-1"
   aria-hidden="true"
+  data-testid="composer-input-archivos"
+  (change)="alElegir($event)"
+/>
+<!-- `capture` abre la cámara trasera en el teléfono; en la compu se ignora y
+     es el selector de siempre. Una sola foto: la cámara saca de a una. -->
+<input
+  #camara
+  class="solo-lectores"
+  type="file"
+  accept="image/*"
+  capture="environment"
+  tabindex="-1"
+  aria-hidden="true"
+  data-testid="composer-input-camara"
   (change)="alElegir($event)"
 />
 

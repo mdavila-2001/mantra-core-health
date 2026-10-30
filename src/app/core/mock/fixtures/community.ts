@@ -6,6 +6,8 @@ import { RECURSO_CONSULTORIO_MEDICA, RECURSO_MEDICA, reservas } from './agenda';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
 import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
+import { textoDeContexto } from '../../messaging/contexto-de-chat';
+import { numeroCortoDePedido } from '../../messaging/contexto-de-pedido';
 
 /* ============================================================================
     La red social: vitrinas públicas (personas y organizaciones), publicaciones,
@@ -659,6 +661,9 @@ export interface SimulatedMessage {
 
 export const SUPPORT_ID = uuid('public-profile-support-admin');
 
+/** La vitrina de Farmacia Vida, la del mostrador de la cuenta `farmacia`. */
+const PHARMACY_VIDA_SHOWCASE = uuid('public-profile-farmacia-vida');
+
 export const conversationList = new Coleccion<SimulatedConversation>([
   { id: uuid('conv-medica-paciente'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [MEDICAL_SHOWCASE.id, PATIENT_SHOWCASE.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 0, [PATIENT_SHOWCASE.id]: 1 } },
   { id: uuid('conv-medica-pediatra'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [MEDICAL_SHOWCASE.id, showcaseOf(PROFESSIONALS[1]!.id)!.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 0 } },
@@ -667,6 +672,9 @@ export const conversationList = new Coleccion<SimulatedConversation>([
   { id: uuid('conv-paciente-dermatologo'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [PATIENT_SHOWCASE.id, showcaseOf(PROFESSIONALS[3]!.id)!.id], noLeidosPor: { [PATIENT_SHOWCASE.id]: 0 } },
   // Un grupo: es lo que hace ver el nombre de quien habla arriba de cada
   // burbuja, el subtítulo con los participantes y «Nombre:» en la bandeja.
+  // Paciente ↔ Farmacia Vida, abierto desde un pedido: la paciente lo ve con
+  // su perfil y el mostrador, escribiendo como la farmacia, desde el otro lado.
+  { id: uuid('conv-paciente-farmacia-vida'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [PATIENT_SHOWCASE.id, PHARMACY_VIDA_SHOWCASE], noLeidosPor: { [PHARMACY_VIDA_SHOWCASE]: 1 } },
   { id: uuid('conv-equipo-cardio'), conversationTypeConceptId: CONCEPT.conversationGroup, groupId: uuid('group-cardio'), participantes: [MEDICAL_SHOWCASE.id, showcaseOf(PROFESSIONALS[1]!.id)!.id, showcaseOf(PROFESSIONALS[9]!.id)!.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 2 } },
 ]);
 
@@ -691,6 +699,20 @@ const C3 = uuid('conv-medica-endocrino');
 const C4 = uuid('conv-paciente-soporte');
 const C5 = uuid('conv-paciente-dermatologo');
 const C6 = uuid('conv-equipo-cardio');
+const C7 = uuid('conv-paciente-farmacia-vida');
+/**
+ * La tarjeta del pedido 1, **tal cual** la arma `contextoDePedido` con el
+ * pedido de la maqueta (`pharmacy.handlers.ts`): número corto, farmacia, sede,
+ * productos y total. Si difiere en un carácter, abrir el chat desde el pedido
+ * o desde el mostrador pone una segunda tarjeta del mismo pedido —el store
+ * sólo deja de repetirla si la última es idéntica—.
+ */
+const TARJETA_PEDIDO_1 = textoDeContexto({
+  tipo: 'pedido',
+  titulo: `${numeroCortoDePedido(uuid('pharmacy-order-1'))} · Farmacia Vida · Sucursal Central`,
+  detalle: '2 productos · 29,50 Bs',
+  ruta: `/my-account/pharmacy-orders/${uuid('pharmacy-order-1')}`,
+});
 const PEDIATRICIAN_V = showcaseOf(PROFESSIONALS[1]!.id)!.id;
 const ENDO_V = showcaseOf(PROFESSIONALS[9]!.id)!.id;
 const DERMA_V = showcaseOf(PROFESSIONALS[3]!.id)!.id;
@@ -737,6 +759,12 @@ export const messageList = new Coleccion<SimulatedMessage>([
   mensaje(C5, PATIENT_SHOWCASE.id, 'Doctor, le mando la foto del lunar que le comenté.', -12, 19, 0, { attachmentFileId: uuid('file-lunar') }),
   mensaje(C5, DERMA_V, 'Recibido. Por la foto no parece nada preocupante, pero quiero verlo con el dermatoscopio. Reservá un turno cuando puedas.', -12, 20, 15),
   mensaje(C5, PATIENT_SHOWCASE.id, 'Listo, reservé para el mes que viene. ¡Gracias!', -11, 8, 30),
+  // El chat de un pedido: la tarjeta, la consulta y el aviso de que está listo.
+  mensaje(C7, PATIENT_SHOWCASE.id, TARJETA_PEDIDO_1, -4, 15, 5),
+  mensaje(C7, PATIENT_SHOWCASE.id, 'Hola, ¿me confirman si tienen las dos cajas? La atorvastatina la necesito para esta semana.', -4, 15, 7),
+  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Hola Ana Lucía, sí: tenemos el enalapril y la atorvastatina. Le avisamos apenas quede listo para retirar.', -4, 15, 22),
+  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Su pedido ya está listo. Puede pasar a retirarlo con el código AV-4821, de 8:00 a 22:00.', -1, 10, 12),
+  mensaje(C7, PATIENT_SHOWCASE.id, '¡Gracias! Paso mañana por la tarde.', -1, 10, 40),
   // El grupo: tres voces, un documento, una foto y dos citas.
   mensaje(C6, ENDO_V, 'Colegas, les comparto la guía actualizada de anticoagulación en fibrilación auricular. Cambió el umbral de CHA2DS2-VASc para iniciar.', -2, 8, 10, { contentTypeConceptId: CONCEPT.messageMedia, attachmentFileId: uuid('file-guia-anticoagulacion') }),
   mensaje(C6, PEDIATRICIAN_V, '¡Gracias! ¿Aplica también para adolescentes con cardiopatía congénita?', -2, 8, 40, { replyToMessageId: uuid(`msg-${C6}--2-8-10`) }),

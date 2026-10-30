@@ -1,10 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ClinicDetail } from './clinic-detail';
+import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/enlace-de-chat';
 
 const SLUG = 'clinica-los-olivos';
 
@@ -107,9 +108,33 @@ describe('ClinicDetail', () => {
     montar();
     responder();
 
-    const botones = fixture.nativeElement.querySelectorAll('button, input');
+    // «Consultar por chat» es el único botón, y no edita nada: lleva al chat.
+    const botones = fixture.nativeElement.querySelectorAll(
+      'button:not([data-testid="consultar-servicio-por-chat"]), input',
+    );
     expect(botones.length).toBe(0);
     expect(fixture.nativeElement.textContent as string).not.toContain('Editar precio');
+  });
+
+  it('«Consultar por chat» lleva al chat de la clínica con el servicio puesto', () => {
+    montar();
+    responder();
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    (fixture.nativeElement.querySelector('[data-testid="consultar-servicio-por-chat"]') as HTMLElement).click();
+
+    const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const vuelta = router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+    expect(vuelta.get('escribirA')).toBe(SLUG);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    expect(tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage)).toEqual({
+      tipo: 'servicio',
+      titulo: 'Consulta cardiológica',
+      detalle: '250,00 Bs · Clínica Los Olivos',
+      ruta: `/clinics-directory/${SLUG}`,
+    });
   });
 
   it('dice que falta el arancel en vez de pintar un cero', () => {

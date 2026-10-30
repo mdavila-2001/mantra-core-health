@@ -1,10 +1,54 @@
+<!-- Lo que falló al abrir un chat o crear el perfil. Los fallos de la
+     bandeja los pinta la bandeja (su `ViewState`) y los de un mensaje, su
+     burbuja: ninguno de los dos viene acá. El motivo de un S7 se pinta junto
+     a la bandeja (`motivoDeBandejaAtrasada`), no encima de la pantalla. -->
 @if (store.error(); as mensaje) {
-  <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+  @if (mensaje !== store.motivoDeBandejaAtrasada()) {
+    <app-alert tone="error" class="mensajeria__alerta">{{ mensaje }}</app-alert>
+  }
 }
 
+<!-- Se perdió el permiso de escribir como la farmacia: se dice una vez, con
+     la salida ya tomada (volvió al perfil propio). -->
+@if (store.avisoDePerfil(); as aviso) {
+  <app-alert tone="warning" class="mensajeria__alerta" data-testid="mensajeria-aviso-perfil">{{ aviso }}</app-alert>
+}
+
+<!-- «Escribiendo como»: sólo para quien atiende una farmacia con vitrina. Es
+     una puerta, no un permiso: cada llamada la autoriza la API. -->
+<ng-template #selectorDePerfil>
+  @if (opcionesDePerfil().length > 0) {
+    <div class="mensajeria__como" data-testid="mensajeria-escribiendo-como">
+      <span class="mensajeria__como-rotulo" aria-hidden="true">Escribiendo como</span>
+      <app-segmented-control
+        ariaLabel="Escribiendo como"
+        [options]="opcionesDePerfil()"
+        [value]="perfilElegido()"
+        (valueChange)="elegirPerfil($event)"
+      />
+    </div>
+  }
+</ng-template>
+
 @if (!store.perfilResuelto()) {
-  <app-loading-state class="mensajeria__cargando" message="Cargando sus conversaciones…" />
+  <!-- S2 mientras se resuelve el perfil: el mismo marco, con la bandeja en
+       esqueleto. Sin esto la pantalla saltaba de una línea de texto a dos
+       paneles. -->
+  <div class="mensajeria">
+    <section class="mensajeria__panel" aria-label="Sus conversaciones">
+      <header class="mensajeria__cabecera">
+        <h1 class="mensajeria__titulo">Chats</h1>
+      </header>
+      <div class="mensajeria__lista">
+        <app-conversation-list [conversaciones]="[]" [estado]="cargando" />
+      </div>
+    </section>
+    <section class="mensajeria__conversacion" aria-hidden="true"></section>
+  </div>
 } @else if (store.perfil() === null) {
+  <div class="mensajeria__como-suelto">
+    <ng-container *ngTemplateOutlet="selectorDePerfil" />
+  </div>
   <!-- Una puerta, no un error: la mensajería necesita el perfil público de
        `community`, que es una entidad aparte del perfil de paciente del token. -->
   <app-empty-state
@@ -29,18 +73,24 @@
     <section class="mensajeria__panel" aria-label="Sus conversaciones">
       <header class="mensajeria__cabecera">
         <h1 class="mensajeria__titulo">Chats</h1>
+        <!-- Cuenta chats, igual que el chip «No leídos»: una sola unidad. -->
+        @if (noLeidas() > 0) {
+          <span class="mensajeria__sin-leer" data-testid="mensajeria-sin-leer">{{ rotuloNoLeidas() }}</span>
+        }
       </header>
+
+      <ng-container *ngTemplateOutlet="selectorDePerfil" />
 
       <div class="mensajeria__buscador">
         <label class="mensajeria__campo">
-          <span class="solo-lectores">Buscar un chat o iniciar uno nuevo</span>
+          <span class="solo-lectores">{{ textoDelBuscador() }}</span>
           <span class="mensajeria__campo-icono" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
           </span>
           <input
             type="search"
             data-testid="mensajeria-consulta"
-            placeholder="Buscar un chat o iniciar uno nuevo"
+            [placeholder]="textoDelBuscador()"
             [ngModel]="consulta()"
             (ngModelChange)="alEscribir($event)"
           />
@@ -93,7 +143,8 @@
             >
               {{ rotulo(opcion) }}
               @if (opcion === 'no-leidos' && noLeidas() > 0) {
-                <span class="mensajeria__chip-cuenta">{{ noLeidas() }}</span>
+                <span class="mensajeria__chip-cuenta" aria-hidden="true">{{ noLeidas() }}</span>
+                <span class="solo-lectores">: {{ rotuloNoLeidas() }}</span>
               }
             </button>
           }
@@ -137,7 +188,9 @@
         <!-- Gente a la que todavía no le escribiste. Va arriba de las propias
              sólo cuando hay algo escrito: si no, la bandeja arrancaría con una
              lista de desconocidos. -->
-        @if (consulta().trim() !== '' && store.resultados().length > 0) {
+        <!-- Como la farmacia sólo se responde: sin contactos (la API no deja
+             buscarlos ni iniciar chats con la vitrina). -->
+        @if (comoOrganizacion() === null && consulta().trim() !== '' && store.resultados().length > 0) {
           <p class="mensajeria__rotulo">Contactos</p>
           <ul class="mensajeria__contactos">
             @for (resultado of store.resultados(); track resultado.profileId) {
@@ -160,8 +213,12 @@
           <p class="mensajeria__rotulo">Chats</p>
         }
 
+        <!-- El estado de la bandeja es un ViewState (M34): S2, S3, S5, S8 y
+             S9 los pinta la lista con su reintento; con filas (ready, o S7
+             si el último tic falló) se aplican los filtros. -->
+        @let bandeja = store.bandeja();
         @if (verBloqueados()) {
-          <!-- A quiénes bloqueaste. Desbloquear los devuelve a la conversación:
+          <!-- A quiénes bloqueó. Desbloquear los devuelve a la conversación:
                el chat nunca se borró. -->
           @if (store.bloqueados().length === 0) {
             <p class="mensajeria__sin-nada" data-testid="mensajeria-sin-bloqueados">
@@ -189,27 +246,72 @@
               }
             </ul>
           }
+        } @else if (bandeja.status !== 'ready' && bandeja.status !== 'stale') {
+          <app-conversation-list
+            [conversaciones]="[]"
+            [estado]="bandeja"
+            (reintentar)="store.recargarBandeja()"
+          />
         } @else if (vacio()) {
+          <!-- S7 sigue siendo S7 aunque el filtro no deje filas: el aviso de
+               antigüedad no se pierde por filtrar. -->
+          @if (bandeja.status === 'stale') {
+            @if (store.motivoDeBandejaAtrasada(); as motivo) {
+              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
+            }
+            <app-conversation-list
+              [conversaciones]="[]"
+              [estado]="bandeja"
+              (reintentar)="store.recargarBandeja()"
+            />
+          }
           @if (sinCoincidencias()) {
-            <p class="mensajeria__sin-nada" role="status">
-              @if (store.buscandoAhora()) {
+            <p class="mensajeria__sin-nada" role="status" data-testid="mensajeria-sin-coincidencias">
+              @if (comoOrganizacion(); as nombre) {
+                Ningún chat de {{ nombre }} coincide con «{{ consulta() }}». Como {{ nombre }}
+                sólo se responde: los chats nuevos se inician desde «Yo».
+              } @else if (store.buscandoAhora()) {
                 Buscando…
-              } @else {
+              } @else if (store.resultados().length === 0) {
                 No encontramos ningún chat ni contacto con «{{ consulta() }}».
+              } @else {
+                Ninguno de sus chats coincide con «{{ consulta() }}».
               }
             </p>
           } @else if (verArchivados()) {
             <p class="mensajeria__sin-nada">No tiene conversaciones archivadas. Archive una desde el menú de la conversación.</p>
+          } @else if (filtro() !== 'todos') {
+            <p class="mensajeria__sin-nada">
+              Ningún chat en «{{ rotulo(filtro()) }}».
+              <button class="mensajeria__enlace" type="button" (click)="elegirFiltro('todos')">
+                Ver todos
+              </button>
+            </p>
           } @else {
-            <app-empty-state
-              title="No tiene conversaciones"
-              description="Busque a una persona acá arriba y escríbale: la conversación va a aparecer en esta lista."
-              variant="empty"
-            />
+            <!-- Hay chats, pero todos archivados: no es el S3 «Todavía no
+                 tenés chats». La salida es abrir el cajón. -->
+            <p class="mensajeria__sin-nada" role="status" data-testid="mensajeria-todo-archivado">
+              {{ rotuloArchivadas() }}
+              <button
+                class="mensajeria__enlace"
+                type="button"
+                data-testid="mensajeria-ver-archivados"
+                (click)="alternarArchivados()"
+              >
+                Ver archivados
+              </button>
+            </p>
           }
         } @else {
+          @if (bandeja.status === 'stale') {
+            @if (store.motivoDeBandejaAtrasada(); as motivo) {
+              <p class="mensajeria__motivo" role="status" data-testid="bandeja-motivo-atrasada">{{ motivo }}</p>
+            }
+          }
           <app-conversation-list
             [conversaciones]="visibles()"
+            [estado]="bandeja"
+            (reintentar)="store.recargarBandeja()"
             [activaId]="store.activaId()"
             [perfilPropio]="store.perfil()"
             [bloqueados]="idsBloqueados()"
@@ -235,10 +337,10 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20.5 11.4c0 4.4-3.8 8-8.5 8a9.7 9.7 0 0 1-2.6-.4L4.5 20.5l1.4-3.9a7.7 7.7 0 0 1-2.4-5.2c0-4.4 3.8-8 8.5-8s8.5 3.6 8.5 8Z" /></svg>
             </span>
           </span>
-          <p class="mensajeria__vacio-titulo">AloVida · Chats</p>
+          <p class="mensajeria__vacio-titulo">Sus chats con farmacias y profesionales</p>
           <p class="mensajeria__vacio-texto">
-            Elija una conversación de la izquierda para leerla acá, o busque a una persona
-            para empezar una nueva.
+            Elija una conversación de la lista para leerla aquí. Para consultar por un
+            producto o un pedido, escríbale a la farmacia desde su ficha.
           </p>
         </div>
       }

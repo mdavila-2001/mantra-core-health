@@ -147,7 +147,7 @@ export class MockBanner {
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
-    rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : 'administrador',
+    rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : u.roles[0] === 'PHARMACY_STAFF' ? 'mostrador de farmacia' : 'administrador',
   }));
 }
 

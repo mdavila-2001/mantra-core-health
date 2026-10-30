@@ -1,4 +1,20 @@
-<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()" />
+<app-page-header [title]="titulo()" [subtitle]="bajada()" [breadcrumbs]="breadcrumbs()">
+  <!-- Arriba, junto al nombre: es la primera pregunta de quien no encuentra
+       lo que busca en la lista. Sólo con la ficha leída — sin ella no hay con
+       quién hablar, y un botón que no lleva a nada es peor que ninguno. -->
+  @if (ficha()) {
+    <button
+      page-actions
+      app-button
+      variant="primary"
+      data-testid="chatear-con-la-farmacia"
+      (clicked)="chatearConLaFarmacia()"
+    >
+      <app-nav-icon name="chat" />
+      Chatear con la farmacia
+    </button>
+  }
+</app-page-header>
 
 <div class="ficha-publica">
   <app-view-state-host [state]="estadoDeLaFicha()" (retry)="cargar()">
@@ -456,6 +472,22 @@
                       <app-badge variant="secondary" value="Con receta" />
                     }
                   </p>
+
+                  <!-- «¿Lo tienen en otra presentación?», «¿me lo guardan?»:
+                       lo que la tarjeta no contesta se pregunta acá, con el
+                       producto ya puesto en el chat. -->
+                  <button
+                    class="ficha-publica__chat"
+                    app-button
+                    variant="secondary"
+                    type="button"
+                    data-testid="consultar-producto-por-chat"
+                    [attr.aria-label]="'Consultar por chat sobre ' + producto.genericName"
+                    (clicked)="consultarProducto(producto)"
+                  >
+                    <app-nav-icon name="chat" />
+                    Consultar por chat
+                  </button>
                 </article>
               </li>
             }

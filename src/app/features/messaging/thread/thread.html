@@ -17,7 +17,9 @@
         />
       }
     </div>
-    <p class="hilo__estado">{{ subtitulo() }}</p>
+    @if (subtitulo(); as estado) {
+      <p class="hilo__estado">{{ estado }}</p>
+    }
   </div>
 
   <!-- El menú de la conversación, como el de la cabecera de WhatsApp: lo
@@ -95,6 +97,38 @@
   </div>
 </header>
 
+<!-- «Consulta sobre: …» — la tarjeta de la conversación, fijada arriba como el
+     resumen del pedido en el chat de una app de delivery: se sabe de qué se
+     habla sin subir hasta el primer mensaje.
+
+     Mientras la tarjeta original está a la vista en el hilo, la barra se
+     recoge: las dos juntas decían lo mismo dos veces en 390 px. Se recoge con
+     una clase y no con `@if`, para que siga siendo el mismo nodo —y lo que se
+     lee de ella no dependa de dónde quedó el scroll—. -->
+@if (contextoFijado(); as fijado) {
+  <!-- Con quién la envió: el texto de una tarjeta lo escribe un participante,
+       y sin decirlo cualquiera podía hacerla pasar por un dato de la app. -->
+  <aside
+    #barraFijada
+    class="hilo__fijado"
+    data-testid="hilo-contexto-fijado"
+    aria-label="De qué trata la conversación"
+    [attr.data-tipo]="fijado.contexto.tipo"
+    [class.is-recogido]="tarjetaALaVista()"
+  >
+    <span class="hilo__fijado-icono" aria-hidden="true">
+      <ng-container *ngTemplateOutlet="iconoDeContexto; context: { $implicit: fijado.contexto.tipo }" />
+    </span>
+    <p class="hilo__fijado-texto">
+      <span class="hilo__fijado-rotulo">Consulta sobre: {{ etiquetaDeContexto[fijado.contexto.tipo] }}<span class="hilo__fijado-autor" data-testid="hilo-contexto-fijado-autor"> · {{ fijado.enviadaPor }}</span></span>
+      <span class="hilo__fijado-titulo">{{ fijado.contexto.titulo }}@if (fijado.contexto.detalle) {<span class="hilo__fijado-detalle"> · {{ fijado.contexto.detalle }}</span>}</span>
+    </p>
+    @if (rutaDeLaTarjeta(fijado.contexto); as ruta) {
+      <a class="hilo__fijado-ver" data-testid="hilo-contexto-fijado-ver" [routerLink]="destino(ruta)">{{ verboDeContexto[fijado.contexto.tipo] }}</a>
+    }
+  </aside>
+}
+
 <!-- Buscar dentro de la conversación: deja sólo las burbujas que coinciden y
      las resalta. Debajo de la cabecera y no en un panel al costado: el panel
      derecho ya es la conversación, y un tercer panel no entra en el ancho. -->
@@ -129,14 +163,14 @@
 
   @if (vacio()) {
     <app-empty-state
-      title="Todavía no se escribieron nada"
+      title="Todavía no se escribió nada"
       description="Escriba el primer mensaje abajo."
       variant="empty"
     />
   } @else {
     <!-- `log` y no `list`: un hilo de mensajes es una región viva, y lo que
          llega en vivo tiene que anunciarse a quien no lo ve. -->
-    <ol class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
+    <ol #lista class="hilo__mensajes" role="log" aria-label="Mensajes de la conversación">
       @for (linea of lineas(); track linea.clave) {
         @switch (linea.tipo) {
           @case ('fecha') {
@@ -147,6 +181,54 @@
               <span>{{ linea.cuantos }} {{ linea.cuantos === 1 ? 'mensaje no leído' : 'mensajes no leídos' }}</span>
             </li>
           }
+          @case ('galeria') {
+            <!-- Fotos seguidas del mismo autor: una grilla 2×2 con «+N», y la
+                 hora de la última encima. Cada foto abre el visor en su lugar. -->
+            <li
+              class="hilo__burbuja hilo__galeria"
+              data-testid="hilo-galeria"
+              [class.is-propio]="linea.propio"
+              [class.is-abre]="linea.abreBloque"
+              [class.is-cierra]="linea.cierraBloque"
+              [attr.data-propio]="linea.propio"
+              [attr.data-cuantas]="fotosDeLaGrilla(linea.mensajes).length"
+            >
+              @if (esGrupo() && linea.abreBloque && !linea.propio) {
+                <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
+              }
+              <!-- Un solo aviso por grilla: una celda en carga con su propio
+                   `status` dentro del `log` eran cuatro anuncios para una cosa. -->
+              @if (fotosPendientes(linea.mensajes); as pendientes) {
+                <span class="solo-lectores" role="status">{{ pendientes === 1 ? 'Cargando una foto…' : 'Cargando ' + pendientes + ' fotos…' }}</span>
+              }
+              <div class="hilo__grilla">
+                @for (foto of fotosDeLaGrilla(linea.mensajes); track foto.clave; let i = $index, ultima = $last) {
+                  @if (urlDelAdjunto(foto); as url) {
+                    <button
+                      class="hilo__celda"
+                      type="button"
+                      data-testid="hilo-imagen"
+                      [attr.data-clave]="foto.clave"
+                      [class.is-lista]="fotosListas().has(url)"
+                      [class.is-rota]="fotosRotas().has(url)"
+                      [attr.aria-label]="ultima && linea.mensajes.length > fotosEnGrilla
+                        ? 'Ver ' + linea.mensajes.length + ' fotos, desde la ' + (i + 1)
+                        : 'Ver foto ' + (i + 1) + ' de ' + linea.mensajes.length"
+                      (click)="abrirImagen(foto)"
+                    >
+                      <img [src]="url" alt="" decoding="async" (load)="alCargarFoto(url)" (error)="alFallarFoto(url)" />
+                      @if (ultima && linea.mensajes.length > fotosEnGrilla) {
+                        <span class="hilo__celda-mas" data-testid="hilo-galeria-mas" aria-hidden="true">+{{ linea.mensajes.length - fotosEnGrilla }}</span>
+                      }
+                    </button>
+                  } @else {
+                    <span class="hilo__celda hilo__celda--cargando" aria-hidden="true"></span>
+                  }
+                }
+              </div>
+              <ng-container *ngTemplateOutlet="metaDelMensaje; context: { $implicit: ultimoDe(linea.mensajes), propio: linea.propio, autor: linea.autor }" />
+            </li>
+          }
           @default {
             <li
               class="hilo__burbuja"
@@ -154,12 +236,21 @@
               [attr.data-clave]="linea.clave"
               [class.is-propio]="linea.propio"
               [class.is-abre]="linea.abreBloque"
+              [class.is-cierra]="linea.cierraBloque"
               [class.is-destello]="destellando() === linea.clave"
               [class.pulse-arrive]="!linea.propio && llegadas().has(linea.clave)"
               [class.is-fallado]="linea.mensaje.estado === 'fallado'"
               [class.is-sticker]="esSticker(linea.mensaje)"
+              [class.is-imagen]="!esSticker(linea.mensaje) && esImagen(linea.mensaje)"
+              [class.is-solo-imagen]="!esSticker(linea.mensaje) && esImagen(linea.mensaje) && !linea.mensaje.bodyText && !linea.mensaje.replyToMessageId"
+              [class.is-contexto]="linea.contexto !== null"
               [class.tiene-reacciones]="(linea.mensaje.reactions?.length ?? 0) > 0"
               [attr.data-propio]="linea.propio"
+              (pointerdown)="alApoyar(linea.clave, linea.mensaje.estado, $event)"
+              (pointermove)="alMoverDedo($event)"
+              (pointerup)="cancelarPulsacion()"
+              (pointercancel)="cancelarPulsacion()"
+              (pointerleave)="cancelarPulsacion()"
             >
               @if (esGrupo() && linea.abreBloque && !linea.propio) {
                 <p class="hilo__autor" [attr.data-tono]="linea.tono">{{ linea.autor }}</p>
@@ -195,14 +286,45 @@
                       height="128"
                     />
                   } @else if (esImagen(linea.mensaje)) {
-                    <button
-                      class="hilo__imagen"
-                      type="button"
-                      data-testid="hilo-imagen"
-                      (click)="abrirImagen(url, nombreDelAdjunto(linea.mensaje))"
-                    >
-                      <img [src]="url" [alt]="nombreDelAdjunto(linea.mensaje)" />
-                    </button>
+                    <!-- La foto, redondeada y sin marco grueso. Mientras baja,
+                         un esqueleto del mismo tamaño; mientras sube, una capa
+                         con el giro; si falló, reintentar encima de la foto. -->
+                    <div class="hilo__foto">
+                      <button
+                        class="hilo__imagen"
+                        type="button"
+                        data-testid="hilo-imagen"
+                        [class.is-lista]="fotosListas().has(url)"
+                        [class.is-rota]="fotosRotas().has(url)"
+                        [attr.aria-label]="'Ver a pantalla completa: ' + altDeLaFoto(linea.mensaje)"
+                        (click)="abrirImagen(linea.mensaje)"
+                      >
+                        <img [src]="url" alt="" decoding="async" (load)="alCargarFoto(url)" (error)="alFallarFoto(url)" />
+                        @if (fotosRotas().has(url) && linea.mensaje.estado === 'enviado') {
+                          <span class="hilo__foto-rota" data-testid="hilo-imagen-rota">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="m3 16 5-5 4 4 3-3 6 6" /><path d="m4 4 16 16" /></svg>
+                            No se pudo mostrar la foto
+                          </span>
+                        }
+                      </button>
+                      @switch (linea.mensaje.estado) {
+                        @case ('enviando') {
+                          <span class="hilo__foto-capa" data-testid="hilo-imagen-subiendo" role="status">
+                            <app-spinner size="lg" decorative />
+                            <span class="hilo__foto-capa-texto">Enviando…</span>
+                          </span>
+                        }
+                        @case ('fallado') {
+                          <!-- Sólo la marca: «Reintentar» y «Descartar» van una
+                               vez, al pie, igual que en un texto que no salió.
+                               Dos «Reintentar» en la misma burbuja eran dos
+                               respuestas a una sola pregunta. -->
+                          <span class="hilo__foto-capa is-fallado" data-testid="hilo-imagen-fallada" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.6v5M12 16.2v.2" /></svg>
+                          </span>
+                        }
+                      }
+                    </div>
                   } @else if (esAudio(linea.mensaje)) {
                     <audio class="hilo__audio" controls [src]="url"></audio>
                   } @else {
@@ -246,88 +368,78 @@
                   }
                 } @else if (adjuntoNoDisponible(linea.mensaje)) {
                   <p class="hilo__subiendo" role="status">Archivo no disponible</p>
-                } @else {
+                } @else if (linea.mensaje.pendiente) {
                   <p class="hilo__subiendo" role="status">Subiendo el archivo…</p>
+                } @else {
+                  <!-- Ya está en el servidor y se está leyendo: esqueleto, no
+                       «subiendo», que sería mentir sobre lo que pasa. -->
+                  <span class="hilo__adjunto-cargando" data-testid="hilo-adjunto-cargando" role="status">
+                    <span class="solo-lectores">Cargando el adjunto…</span>
+                  </span>
                 }
               }
 
-              <!-- La respuesta que redactó la IA se rotula: quien la recibe tiene
-                   que saber que no la escribió una persona. -->
-              @if (esRespuestaDeIa(linea.mensaje)) {
-                <span class="hilo__etiqueta-ia" data-testid="hilo-etiqueta-ia">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
-                  Respuesta automática generada por IA
-                </span>
-              }
+              @if (linea.contexto; as contexto) {
+                <!-- La tarjeta de contexto: lo que el texto de tres líneas
+                     quería decir, dibujado como el resumen de un pedido. Un
+                     solo enlace —«Ver pedido»— para no duplicar paradas de Tab. -->
+                <div class="hilo__contexto" data-testid="hilo-contexto" [attr.data-tipo]="contexto.tipo">
+                  <span class="hilo__contexto-icono" aria-hidden="true">
+                    <ng-container *ngTemplateOutlet="iconoDeContexto; context: { $implicit: contexto.tipo }" />
+                  </span>
+                  <div class="hilo__contexto-cuerpo">
+                    <p class="hilo__contexto-etiqueta">{{ etiquetaDeContexto[contexto.tipo] }}</p>
+                    <p class="hilo__contexto-titulo">{{ contexto.titulo }}</p>
+                    @if (contexto.detalle) {
+                      <p class="hilo__contexto-detalle">{{ contexto.detalle }}</p>
+                    }
+                  </div>
+                </div>
+                <!-- Según quién mira: la farmacia abre el pedido en su bandeja.
+                     Sin ficha equivalente, no se ofrece el enlace. -->
+                @if (rutaDeLaTarjeta(contexto); as ruta) {
+                  <a class="hilo__contexto-ver" data-testid="hilo-contexto-ver" [routerLink]="destino(ruta)">
+                    {{ verboDeContexto[contexto.tipo] }}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+                  </a>
+                }
+              } @else {
+                <!-- La respuesta que redactó la IA se rotula: quien la recibe tiene
+                     que saber que no la escribió una persona. -->
+                @if (esRespuestaDeIa(linea.mensaje)) {
+                  <span class="hilo__etiqueta-ia" data-testid="hilo-etiqueta-ia">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" /><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" /></svg>
+                    Respuesta automática generada por IA
+                  </span>
+                }
 
-              <!-- Un aviso de agenda trae el enlace a su cita: se saca del
-                   texto y se ofrece como botón, a la pantalla de quien mira. -->
-              @let cita = appointmentOf(linea.mensaje.bodyText, linea.propio);
-              @if (cita?.texto ?? linea.mensaje.bodyText; as texto) {
-                <!-- En trozos: los enlaces se pueden tocar y, buscando, las
-                     coincidencias se marcan. Todo en una línea de plantilla
-                     para no meterle espacios a un `pre-wrap`. -->
-                <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
-              }
+                <!-- Un aviso de agenda trae el enlace a su cita: se saca del
+                     texto y se ofrece como botón, a la pantalla de quien mira. -->
+                @let cita = appointmentOf(linea.mensaje.bodyText, linea.propio);
+                @if (cita?.texto ?? linea.mensaje.bodyText; as texto) {
+                  <!-- En trozos: los enlaces se pueden tocar y, buscando, las
+                       coincidencias se marcan. Todo en una línea de plantilla
+                       para no meterle espacios a un `pre-wrap`. -->
+                  <p class="hilo__texto">@for (trozo of segmentos(texto); track $index) {@switch (trozo.tipo) {@case ('enlace') {<a class="hilo__enlace" [href]="trozo.valor" target="_blank" rel="noopener noreferrer">{{ trozo.valor }}</a>}@case ('marca') {<mark class="hilo__marca">{{ trozo.valor }}</mark>}@default {<ng-container>{{ trozo.valor }}</ng-container>}}}</p>
+                }
 
-              @if (cita) {
-                <a
-                  class="hilo__ir-cita"
-                  data-testid="hilo-ir-cita"
-                  [routerLink]="cita.ruta"
-                  [queryParams]="cita.parametros"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="m9 15 2 2 4-4" /></svg>
-                  <span>Ir a la cita</span>
-                </a>
+                @if (cita) {
+                  <a
+                    class="hilo__ir-cita"
+                    data-testid="hilo-ir-cita"
+                    [routerLink]="cita.ruta"
+                    [queryParams]="cita.parametros"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="m9 15 2 2 4-4" /></svg>
+                    <span>Ir a la cita</span>
+                  </a>
+                }
               }
 
               <!-- La hora flota a la derecha de la última línea: es lo que hace
-                   que un mensaje corto ocupe una línea y no dos. -->
-              <span class="hilo__meta">
-                <span class="solo-lectores">{{ linea.propio ? 'Usted' : linea.autor }}, </span>
-                @if (linea.mensaje.isEdited) {
-                  <span class="hilo__editado" data-testid="hilo-editado">editado</span>
-                }
-                @if (linea.mensaje.sentAt) {
-                  <span class="hilo__hora">{{ hora(linea.mensaje.sentAt) }}</span>
-                }
-                @if (linea.propio) {
-                  @switch (linea.mensaje.estado) {
-                    @case ('enviando') {
-                      <span class="hilo__ticks" data-testid="hilo-reloj" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 1.8" /></svg>
-                      </span>
-                      <span class="solo-lectores">Enviando</span>
-                    }
-                    @case ('fallado') {
-                      <span class="hilo__ticks is-fallado" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.6v5M12 16.2v.2" /></svg>
-                      </span>
-                      <span class="solo-lectores">No se envió</span>
-                    }
-                    @default {
-                      <span
-                        class="hilo__ticks"
-                        [class.is-leido]="estadoDeEntrega(linea.mensaje) === 'leido'"
-                        [class.is-entregado]="estadoDeEntrega(linea.mensaje) === 'entregado'"
-                        data-testid="hilo-ticks"
-                        [attr.data-estado]="estadoDeEntrega(linea.mensaje)"
-                        aria-hidden="true"
-                      >
-                        <!-- Un tilde si salió; dos si llegó o lo leyeron (azul). -->
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
-                          <path d="m2 12.5 4.2 4.2L14 8.5" />
-                          @if (estadoDeEntrega(linea.mensaje) !== 'enviado') {
-                            <path d="m10.5 16.7 7.8-8.2" />
-                          }
-                        </svg>
-                      </span>
-                      <span class="solo-lectores">{{ rotuloDeEntrega(linea.mensaje) }}</span>
-                    }
-                  }
-                }
-              </span>
+                   que un mensaje corto ocupe una línea y no dos. Sobre una
+                   foto sola, se apoya encima de la foto. -->
+              <ng-container *ngTemplateOutlet="metaDelMensaje; context: { $implicit: linea.mensaje, propio: linea.propio, autor: linea.autor }" />
 
               <!-- Las reacciones cuelgan del borde de abajo, como en WhatsApp. Cada
                    una se toca para poner o quitar la propia. -->
@@ -358,8 +470,8 @@
               @if (linea.mensaje.estado === 'fallado') {
                 <p class="hilo__reintento">
                   No se envió.
-                  <button type="button" (click)="reintentar(linea.mensaje)">Reintentar</button>
-                  <button type="button" (click)="descartar(linea.mensaje)">Descartar</button>
+                  <button type="button" data-testid="hilo-reintentar" (click)="reintentar(linea.mensaje)">Reintentar</button>
+                  <button type="button" data-testid="hilo-descartar" (click)="descartar(linea.mensaje)">Descartar</button>
                 </p>
               }
 
@@ -484,7 +596,16 @@
     <button type="button" data-testid="hilo-desbloquear-aviso" (click)="desbloquear()">Desbloquear</button>
   </div>
 } @else {
-  <app-composer (enviado)="alEnviar()" />
+  <!-- En angosto el selector «Escribiendo como» queda en la bandeja, que con el
+       hilo abierto no se ve: esta franja dice en nombre de quién sale la
+       respuesta. En ancho el selector está a la vista y la franja se esconde. -->
+  @if (respondiendoComo(); as vitrina) {
+    <p class="hilo__como" data-testid="hilo-respondiendo-como">
+      Respondiendo como <strong>{{ vitrina }}</strong>
+    </p>
+  }
+
+  <app-composer [sugerencias]="sugerencias()" (enviado)="alEnviar()" />
 }
 
 <!-- Elegir a quién reenviar: la misma lista de la bandeja, sin ésta.
@@ -591,18 +712,85 @@
   />
 }
 
-<!-- La imagen a tamaño completo, en el mismo modal del sistema que el
-     reenvío: antes era un `div` con `aria-modal` que no atrapaba el foco ni
-     dejaba inerte el fondo, y su cruz no tenía acción propia (cerraba por el
-     clic que subía al velo). Ahora `Escape`, el fondo y «Cerrar» son el mismo
-     gesto, y el foco vuelve a la miniatura que lo abrió. -->
-@if (imagenAbierta(); as imagen) {
-  <app-content-dialog
-    heading="Imagen del mensaje"
-    size="xl"
-    data-testid="thread-image-viewer"
-    (closed)="cerrarImagen()"
-  >
-    <img class="hilo__visor-imagen" [src]="imagen.url" [alt]="imagen.nombre" />
-  </app-content-dialog>
+<!-- Las fotos a pantalla completa, en un `<dialog>` modal (trampa de foco,
+     fondo inerte, `Escape`): ← y → recorren todas las del hilo, y al cerrar el
+     foco vuelve a la miniatura que se tocó. -->
+@if (visorEn() !== null) {
+  <app-visor-de-imagenes
+    [imagenes]="imagenesParaElVisor()"
+    [indice]="indiceDelVisor()"
+    (indiceChange)="alMoverVisor($event)"
+    (cerrado)="cerrarImagen()"
+    (responder)="responderDesdeVisor($event)"
+    (reenviar)="reenviarDesdeVisor($event)"
+  />
 }
+
+<!-- La hora, «editado» y los tildes: lo mismo bajo un texto, sobre una foto o
+     al pie de una grilla de fotos. -->
+<ng-template #metaDelMensaje let-mensaje let-propio="propio" let-autor="autor">
+  <span class="hilo__meta">
+    <span class="solo-lectores">{{ propio ? 'Usted' : autor }}, </span>
+    @if (mensaje.isEdited) {
+      <span class="hilo__editado" data-testid="hilo-editado">editado</span>
+    }
+    @if (mensaje.sentAt) {
+      <span class="hilo__hora">{{ hora(mensaje.sentAt) }}</span>
+    }
+    @if (propio) {
+      @switch (mensaje.estado) {
+        @case ('enviando') {
+          <span class="hilo__ticks" data-testid="hilo-reloj" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 1.8" /></svg>
+          </span>
+          <span class="solo-lectores">Enviando</span>
+        }
+        @case ('fallado') {
+          <span class="hilo__ticks is-fallado" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" focusable="false"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.6v5M12 16.2v.2" /></svg>
+          </span>
+          <span class="solo-lectores">No se envió</span>
+        }
+        @default {
+          <span
+            class="hilo__ticks"
+            [class.is-leido]="estadoDeEntrega(mensaje) === 'leido'"
+            [class.is-entregado]="estadoDeEntrega(mensaje) === 'entregado'"
+            data-testid="hilo-ticks"
+            [attr.data-estado]="estadoDeEntrega(mensaje)"
+            aria-hidden="true"
+          >
+            <!-- Un tilde si salió; dos si llegó o lo leyeron (azul). -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+              <path d="m2 12.5 4.2 4.2L14 8.5" />
+              @if (estadoDeEntrega(mensaje) !== 'enviado') {
+                <path d="m10.5 16.7 7.8-8.2" />
+              }
+            </svg>
+          </span>
+          <span class="solo-lectores">{{ rotuloDeEntrega(mensaje) }}</span>
+        }
+      }
+    }
+  </span>
+</ng-template>
+
+<!-- El ícono de cada tipo de tarjeta: recibo, frasco, estetoscopio, local.
+     El pedido es un recibo con su borde dentado: la bolsa de trazo fino, a
+     16 px, se leía como un tacho de basura. -->
+<ng-template #iconoDeContexto let-tipo>
+  @switch (tipo) {
+    @case ('pedido') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5L6 21z" /><path d="M9 8h6M9 12h6M9 16h3" /></svg>
+    }
+    @case ('producto') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="7" y="7" width="10" height="14" rx="2" /><path d="M8 3h8v4H8z" /><path d="M10 14h4M12 12v4" /></svg>
+    }
+    @case ('servicio') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M6 3v5a4 4 0 0 0 8 0V3" /><path d="M10 12v3a5 5 0 0 0 10 0v-2" /><circle cx="20" cy="11" r="2" /></svg>
+    }
+    @default {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M4 10 5.5 4h13L20 10" /><path d="M5 10v10h14V10" /><path d="M12 12.5v5M9.5 15h5" /></svg>
+    }
+  }
+</ng-template>

@@ -4,6 +4,16 @@ import { provideRouter } from '@angular/router';
 import { ConversationList } from './conversation-list';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
+import { textoDeContexto } from '../../../core/messaging/contexto-de-chat';
+import {
+  empty,
+  forbidden,
+  loading,
+  offline,
+  stale,
+  unexpectedError,
+} from '../../../core/view-state/view-state';
+import type { EstadoDeBandeja } from './conversation-list';
 
 /**
  * Lo que estas pruebas fijan de la fila de la bandeja.
@@ -78,5 +88,107 @@ describe('ConversationList', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="conversacion-sticker"]'),
     ).toBeNull();
+  });
+
+  it('una tarjeta de pedido se lee como «Pedido · Farmacia», sin la ruta', () => {
+    montar(
+      fila({
+        id: 'm-1',
+        senderProfileId: 'pp-2',
+        bodyText: textoDeContexto({
+          tipo: 'pedido',
+          titulo: 'Farmacia Chávez',
+          detalle: '2 productos · Bs 69,00',
+          ruta: '/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+        }),
+      }),
+    );
+
+    const contexto = fixture.nativeElement.querySelector(
+      '[data-testid="conversacion-contexto"]',
+    );
+    expect(contexto?.textContent?.trim()).toBe('Pedido · Farmacia Chávez');
+    expect(fixture.nativeElement.textContent).not.toContain('/my-account');
+  });
+
+  it('la conversación abierta lleva aria-current', () => {
+    fixture = TestBed.createComponent(ConversationList);
+    fixture.componentRef.setInput('conversaciones', [fila(undefined)]);
+    fixture.componentRef.setInput('activaId', 'c-1');
+    fixture.detectChanges();
+
+    const enlace = fixture.nativeElement.querySelector('[data-testid="conversacion"]');
+    expect(enlace?.getAttribute('aria-current')).toBe('page');
+  });
+
+  describe('estados que reemplazan a la lista (ViewState del M34)', () => {
+    const conEstado = (estado: EstadoDeBandeja, filas: ConversationListItem[] = []): void => {
+      fixture = TestBed.createComponent(ConversationList);
+      fixture.componentRef.setInput('conversaciones', filas);
+      fixture.componentRef.setInput('estado', estado);
+      fixture.detectChanges();
+    };
+    const buscar = (testid: string): HTMLElement | null =>
+      fixture.nativeElement.querySelector(`[data-testid="${testid}"]`);
+    const texto = (): string => fixture.nativeElement.textContent as string;
+    const pedidosDeReintento = (): (() => number) => {
+      let pedidos = 0;
+      fixture.componentInstance.reintentar.subscribe(() => pedidos++);
+      return () => pedidos;
+    };
+
+    it('cargando (S2) pinta esqueletos y lo anuncia a los lectores', () => {
+      conEstado(loading());
+      expect(buscar('bandeja-cargando')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
+        'Cargando sus conversaciones',
+      );
+      expect(buscar('conversacion')).toBeNull();
+    });
+
+    it('vacío (S3) ofrece una próxima acción que lleva a buscar', () => {
+      conEstado(empty({ label: 'Buscar medicamentos', route: '/search/medications' }));
+      expect(buscar('bandeja-vacia')?.textContent).toContain('Todavía no tiene chats');
+      const destinos = Array.from(
+        fixture.nativeElement.querySelectorAll('[data-testid="bandeja-vacia"] a'),
+      ).map((a) => (a as HTMLAnchorElement).getAttribute('href'));
+      expect(destinos).toContain('/search/medications');
+    });
+
+    it('sin conexión (S8) dice «Sin conexión» y ofrece reintentar', () => {
+      conEstado(offline());
+      const pedidos = pedidosDeReintento();
+      expect(buscar('bandeja-sin-conexion')?.textContent).toContain('Sin conexión');
+      expect(texto()).not.toContain('Todavía no tiene chats');
+      buscar('bandeja-reintentar')?.click();
+      expect(pedidos()).toBe(1);
+    });
+
+    it('sin permiso (S5) lo dice y ofrece una salida: volver a pedir la bandeja', () => {
+      conEstado(forbidden({ message: 'Con este perfil no puede leer estos chats.' }));
+      const pedidos = pedidosDeReintento();
+      expect(buscar('bandeja-sin-permiso')?.textContent).toContain('Con este perfil no puede leer estos chats.');
+      // No es el «Reintentar» de un fallo de red: es la próxima acción de S5.
+      expect(buscar('bandeja-reintentar')).toBeNull();
+      buscar('bandeja-sin-permiso-reintentar')?.click();
+      expect(pedidos()).toBe(1);
+    });
+
+    it('error inesperado (S9) muestra el código de la petición, el motivo una sola vez, y reintentar', () => {
+      conEstado(unexpectedError('req-123', 'No pudimos leer su bandeja.'));
+      const pedidos = pedidosDeReintento();
+      expect(buscar('bandeja-request-id')?.textContent).toBe('req-123');
+      const veces = texto().split('No pudimos').length - 1;
+      expect(veces).toBe(1);
+      buscar('bandeja-reintentar')?.click();
+      expect(pedidos()).toBe(1);
+    });
+
+    it('datos atrasados (S7) conservan las filas y dicen de cuándo son', () => {
+      const una = fila({ id: 'm-1', senderProfileId: 'pp-2', bodyText: 'Hola' });
+      conEstado(stale([una], new Date('2026-10-28T09:15:00')), [una]);
+      expect(buscar('conversacion')).not.toBeNull();
+      expect(texto()).toContain('28/10/2026 09:15');
+    });
   });
 });

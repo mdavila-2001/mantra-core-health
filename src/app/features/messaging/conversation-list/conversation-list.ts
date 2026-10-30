@@ -16,10 +16,33 @@ import {
   conversationVerification,
 } from '../../../core/messaging/conversation-label';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
-import { stickerDe } from '../../../core/messaging/sticker-pack.generated';
 import { chatTime } from '../../../shared/date/chat-time';
 import { Avatar } from '../../../shared/components/atoms/avatar/avatar';
 import { VerificationBadge } from '../../../shared/components/atoms/verification-badge/verification-badge';
+import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
+import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
+import { EmptyState } from '../../../shared/components/molecules/empty-state/empty-state';
+import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import { ready } from '../../../core/view-state/view-state';
+import type { ViewState } from '../../../core/view-state/view-state.types';
+import { vistaPreviaDe, type VistaPrevia } from './vista-previa';
+
+/**
+ * Qué muestra la bandeja: un `ViewState` del M34 (ADR-0005), el mismo que
+ * calcula `ChatStore.bandeja`.
+ *
+ * - `loading` (S2) — esqueletos con la forma de las filas.
+ * - `empty` (S3) — todavía no hay chats, con la próxima acción a la vista.
+ * - `offline` (S8) — no hubo respuesta: «Sin conexión» y reintentar.
+ * - `forbidden` (S5) — con este perfil no se leen estos chats.
+ * - `error` (S9) — inesperado, con el código de la petición para soporte.
+ * - `ready` y `stale` (S7) — las filas; en S7, además, de cuándo son.
+ */
+export type EstadoDeBandeja = ViewState<unknown>;
+
+/** Cuántas filas fantasma se pintan mientras carga: lo que entra en un teléfono. */
+const FILAS_FANTASMA = 7;
 
 /** Lo que la fila le pide a la pantalla que haga. */
 export interface AccionDeFila {
@@ -44,7 +67,16 @@ export interface AccionDeFila {
  */
 @Component({
   selector: 'app-conversation-list',
-  imports: [Avatar, RouterLink, VerificationBadge],
+  imports: [
+    AppButton,
+    AppButtonLink,
+    Avatar,
+    EmptyState,
+    RouterLink,
+    Skeleton,
+    VerificationBadge,
+    ViewStateHost,
+  ],
   templateUrl: './conversation-list.html',
   styleUrl: './conversation-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,7 +90,7 @@ export class ConversationList {
   /** Cuál está abierta, para marcarla. */
   readonly activaId = input<string | null>(null);
 
-  /** El perfil propio: sin él no se puede decir «Tú:» ni pintar el tilde. */
+  /** El perfil propio: sin él no se puede decir «Enviado por vos» ni pintar el tilde. */
   readonly perfilPropio = input<string | null>(null);
 
   /** A quiénes bloqueó la persona: sus filas lo dicen y el menú ofrece desbloquear. */
@@ -67,7 +99,33 @@ export class ConversationList {
   /** Lo que se escribió en el buscador, para resaltarlo en el nombre. */
   readonly resaltar = input('');
 
+  /** Qué pintar: las filas, o el estado que las reemplaza. */
+  readonly estado = input<EstadoDeBandeja>(ready(null));
+
+  /** El motivo de S5 o S9, dicho una sola vez (no en título y descripción). */
+  protected readonly motivo = computed(() => {
+    const estado = this.estado();
+    if (estado.status === 'forbidden') {
+      return estado.message ?? 'Con este perfil no puede leer estos chats.';
+    }
+    if (estado.status === 'error') {
+      return estado.message ?? 'No pudimos leer su bandeja.';
+    }
+    return '';
+  });
+
+  /** El id de la petición de S9, para que soporte la encuentre. */
+  protected readonly requestId = computed(() => {
+    const estado = this.estado();
+    return estado.status === 'error' ? estado.requestId : '';
+  });
+
   readonly accion = output<AccionDeFila>();
+
+  /** Quien mira pidió volver a leer la bandeja después de un error. */
+  readonly reintentar = output<void>();
+
+  protected readonly fantasmas = Array.from({ length: FILAS_FANTASMA }, (_, i) => i);
 
   /** Qué fila tiene el menú abierto. Una sola a la vez. */
   protected readonly menuAbierto = signal<string | null>(null);
@@ -103,7 +161,7 @@ export class ConversationList {
    * Quién escribió el último mensaje, cuando hace falta decirlo.
    *
    * Sólo en grupos: en una conversación de dos, el nombre ya está arriba y
-   * repetirlo en cada fila es ruido. `Tú:` sí aparece en las dos, porque saber
+   * repetirlo en cada fila es ruido. El tilde propio sí aparece en las dos, porque saber
    * si la pelota está en tu cancha es la mitad de para qué se mira una bandeja.
    */
   protected prefijo(conversacion: ConversationListItem): string {
@@ -120,44 +178,31 @@ export class ConversationList {
   }
 
   /**
-   * La vista previa del último mensaje.
+   * La vista previa de cada fila, resuelta una vez por lista.
    *
-   * Un adjunto no tiene texto, así que sin esto la fila queda muda justo
-   * cuando lo que pasó fue que te mandaron una foto. El contrato de la lista
-   * todavía no dice de qué tipo era —está pedido al backend—, así que un
-   * mensaje sin cuerpo se anuncia como archivo, que es lo único que puede ser.
+   * Qué tipo de mensaje fue —texto, tarjeta del pedido, sticker, archivo— lo
+   * decide {@link vistaPreviaDe}; acá sólo se indexa por conversación para no
+   * volver a leer la tarjeta en cada ciclo de detección.
    */
-  protected vistaPrevia(conversacion: ConversationListItem): string {
-    const cuerpo = conversacion.lastMessage?.bodyText;
-    if (cuerpo !== undefined && cuerpo.trim() !== '') {
-      return cuerpo;
+  private readonly vistasPrevias = computed(() => {
+    const mapa = new Map<string, VistaPrevia>();
+    for (const conversacion of this.conversaciones()) {
+      mapa.set(conversacion.id, vistaPreviaDe(conversacion.lastMessage));
     }
-    return conversacion.lastMessage === undefined ? '' : 'Archivo adjunto';
-  }
+    return mapa;
+  });
 
-  /**
-   * `true` si el último mensaje es un sticker del pack.
-   *
-   * El contrato de la bandeja todavía no manda el `attachmentFileId` del
-   * último mensaje, así que esto sólo puede saberse cuando llegue: hasta
-   * entonces un sticker se anuncia como «Archivo adjunto», que no es falso.
-   */
-  protected esSticker(conversacion: ConversationListItem): boolean {
-    return stickerDe(conversacion.lastMessage?.attachmentFileId) !== undefined;
-  }
-
-  /** `true` si el último mensaje es un adjunto sin texto. */
-  protected esAdjunto(conversacion: ConversationListItem): boolean {
-    const cuerpo = conversacion.lastMessage?.bodyText;
-    return (
-      conversacion.lastMessage !== undefined &&
-      (cuerpo === undefined || cuerpo.trim() === '')
-    );
+  protected vistaPrevia(conversacion: ConversationListItem): VistaPrevia {
+    return this.vistasPrevias().get(conversacion.id) ?? vistaPreviaDe(conversacion.lastMessage);
   }
 
   /** `true` si es una conversación de grupo. */
   protected esGrupo(conversacion: ConversationListItem): boolean {
     return conversacion.groupId !== undefined || conversacion.peers.length > 1;
+  }
+
+  protected cerrarMenu(): void {
+    this.menuAbierto.set(null);
   }
 
   /** `true` si es una conversación directa con alguien que se bloqueó. */

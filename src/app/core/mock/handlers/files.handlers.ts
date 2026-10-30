@@ -39,11 +39,36 @@ interface ArchivoSimulado {
    */
   readonly bytes?: Blob;
   /**
+   * Los mismos bytes como `data:` URL, para que **sobrevivan a F5**.
+   *
+   * `bytes` es un `Blob`, y al guardarse la colección en `sessionStorage` se
+   * serializa como `{}`: después de recargar —o de cerrar sesión y entrar con
+   * otra cuenta en la misma pestaña— la foto de un chat volvía como un
+   * documento de 2 bytes. Se llena aparte porque leer un `Blob` es asíncrono.
+   * Sólo para archivos chicos: `sessionStorage` tiene pocos megas.
+   */
+  readonly bytesComoDataUrl?: string;
+  /**
    * La imagen subida como `data:`, cuando ya terminó de leerse (ver
    * {@link urlDeArchivoSimulado}). Asíncrona: `FileReader` no tiene versión
    * síncrona, y la subida simulada responde sin esperarla.
    */
   readonly dataUrlReal?: string;
+}
+
+/** Hasta qué tamaño se copian los bytes subidos para que sobrevivan a F5. */
+const TOPE_PERSISTIBLE = 1_500_000;
+
+/** Un `data:` URL de vuelta a `Blob`, con su tipo. */
+function blobDeDataUrl(dataUrl: string): Blob | null {
+  const partes = /^data:([^;,]*)(;base64)?,(.*)$/su.exec(dataUrl);
+  if (partes === null || typeof Blob === 'undefined') return null;
+  const [, tipo, base64, datos] = partes;
+  if (base64 === undefined) return new Blob([decodeURIComponent(datos!)], { type: tipo });
+  const binario = atob(datos!);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+  return new Blob([bytes], { type: tipo });
 }
 
 /** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
@@ -210,7 +235,12 @@ export function fileContent(fileId: string): unknown {
   const a = archivos.get(fileId);
   if (a === undefined) return undefined;
   // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-  if (a.bytes !== undefined) return a.bytes;
+  // Tras una recarga `bytes` llega como `{}` (un `Blob` no se serializa):
+  // por eso se pregunta si es un `Blob` de verdad, y si no, se rearma desde
+  // la copia en `data:`.
+  if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
+  const recuperado = a.bytesComoDataUrl === undefined ? null : blobDeDataUrl(a.bytesComoDataUrl);
+  if (recuperado !== null) return recuperado;
   // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
   // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
   // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
@@ -283,7 +313,8 @@ export function urlDeArchivoSimulado(fileId: string): string | null {
   const archivo = archivos.get(fileId);
   if (archivo === undefined) return null;
   if (archivo.dataUrlReal !== undefined) return archivo.dataUrlReal;
-  if (archivo.bytes === undefined || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
+  // Tras una recarga `bytes` es `{}` (ver `bytesComoDataUrl`): no es un `Blob`.
+  if (!(archivo.bytes instanceof Blob) || typeof URL.createObjectURL !== 'function') return archivo.dataUrl;
   let url = urlsDeArchivos.get(fileId);
   if (url === undefined) {
     url = URL.createObjectURL(archivo.bytes);
@@ -346,9 +377,20 @@ export function registrarArchivos(router: MockRouter): void {
       ...(subido === null ? {} : { bytes: subido }),
       ...(request.user === null ? {} : { uploaderUserId: request.user.id }),
     });
-    if (subido !== null && categoria === 'IMAGE' && subido.size <= MAX_BYTES_EN_DATA_URL && typeof FileReader !== 'undefined') {
+    // Una sola lectura a `data:` para dos usos: la copia que sobrevive a F5
+    // (`bytesComoDataUrl`, cualquier archivo chico) y la URL que se pinta en
+    // un artículo (`dataUrlReal`, sólo imágenes y más chicas todavía).
+    const persistible = subido !== null && subido.size <= TOPE_PERSISTIBLE;
+    const paraArticulo = subido !== null && categoria === 'IMAGE' && subido.size <= MAX_BYTES_EN_DATA_URL;
+    if (subido !== null && (persistible || paraArticulo) && typeof FileReader !== 'undefined') {
       const lector = new FileReader();
-      lector.onload = () => archivos.actualizar(nuevo.id, { dataUrlReal: String(lector.result) });
+      lector.onload = () => {
+        if (typeof lector.result !== 'string' || archivos.get(nuevo.id) === undefined) return;
+        archivos.actualizar(nuevo.id, {
+          ...(persistible ? { bytesComoDataUrl: lector.result } : {}),
+          ...(paraArticulo ? { dataUrlReal: lector.result } : {}),
+        });
+      };
       lector.readAsDataURL(subido);
     }
     const tipo = subido?.type ?? (categoria === 'IMAGE' ? 'image/svg+xml' : 'application/pdf');

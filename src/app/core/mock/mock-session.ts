@@ -294,12 +294,20 @@ export const MOCK_USERS: readonly MockUser[] = [
     // La encargada de Farmacia Vida: `USER` y la membresía del tenant
     // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
     // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    //
+    // Es también el mostrador: con `PHARMACY_STAFF` atiende la bandeja de
+    // pedidos y chatea con los pacientes **como la farmacia** (la API deja
+    // escribir con la vitrina a la membresía OWNER/ADMIN/STAFF con ese rol).
+    // No tiene vitrina personal —el personal de una farmacia no la necesita
+    // para atender—, así que en Chats «Yo» le ofrece crearla y «Farmacia Vida»
+    // es con quien escribe. Una sola cuenta y no dos: las dos usaban la misma
+    // clave y el mismo correo, y `buscarUsuario` sólo encontraba la primera.
     key: 'farmacia',
     id: IDS.farmacia.userId,
     email: 'farmacia@alovida.mock',
     nationalId: '7003001',
     displayName: 'Farmacia Vida',
-    roles: ['USER'],
+    roles: ['USER', 'PHARMACY_STAFF'],
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.farmacia.personId,

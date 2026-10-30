@@ -5,13 +5,16 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 
-import { Thread, trocear } from './thread';
+import { indiceDelPrimerNoLeido, Thread, trocear } from './thread';
 import { ChatStore } from '../../../core/messaging/chat.store';
 import { ChatSocketService } from '../../../core/messaging/chat-socket.service';
 import { ChatPreferences } from '../../../core/messaging/chat-preferences';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
+import { Composer } from './composer/composer';
+import { rutaParaQuienMira, subtituloDeContexto } from './hilo-contexto';
 import { environment } from '../../../../environments/environment';
 
 /**
@@ -756,7 +759,7 @@ describe('Thread', () => {
       expect(consultar('hilo-documento-ver')).toBeNull();
     });
 
-    it('la imagen a tamaño completo se abre en el modal del sistema y devuelve el foco', async () => {
+    it('la imagen a tamaño completo se abre en un modal nativo y devuelve el foco', async () => {
       abrir([conAdjunto('m-1', 'f-img')]);
       await servir('f-img', bytes('image/png', 16));
 
@@ -766,14 +769,15 @@ describe('Thread', () => {
       fixture.detectChanges();
       await fixture.whenStable();
 
-      const visor = consultar('thread-image-viewer');
-      expect(visor?.querySelector('dialog')).not.toBeNull();
-      expect(visor?.querySelector('img')?.getAttribute('src')).toMatch(/^data:image\/png/);
+      // El visor de fotos es un `<dialog>` modal (trampa de foco, fondo inerte).
+      const visor = consultar('hilo-visor');
+      expect(visor?.tagName).toBe('DIALOG');
+      expect(consultar('hilo-visor-foto')?.getAttribute('src')).toMatch(/^data:image\/png/);
 
-      (consultar('content-dialog-close') as HTMLElement).click();
+      (consultar('hilo-visor-cerrar') as HTMLElement).click();
       fixture.detectChanges();
 
-      expect(consultar('thread-image-viewer')).toBeNull();
+      expect(consultar('hilo-visor')).toBeNull();
       expect(document.activeElement).toBe(miniatura);
     });
 
@@ -847,6 +851,301 @@ describe('Thread', () => {
         expect(html).not.toContain(interno);
       }
       expect(http.match((r) => r.url.includes('download-url') || r.url.includes('/common/files'))).toHaveLength(0);
+    });
+  });
+
+  /* --- Tarjeta de contexto (marketplace) ---------------------------------- */
+
+  describe('tarjeta de contexto', () => {
+    const TARJETA =
+      'Pedido: Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6';
+
+    const sugerenciasDelComposer = (): readonly string[] =>
+      (fixture.debugElement.query(By.directive(Composer)).componentInstance as Composer).sugerencias();
+
+    it('pinta el texto con forma de tarjeta como tarjeta, con su enlace interno', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+
+      const tarjeta = consultar('hilo-contexto');
+      expect(tarjeta).not.toBeNull();
+      expect(tarjeta?.getAttribute('data-tipo')).toBe('pedido');
+      expect(tarjeta?.textContent).toContain('Farmacia Chávez · Sucursal Miraflores');
+      expect(tarjeta?.textContent).toContain('2 productos · Bs 69,00');
+      const ver = consultar('hilo-contexto-ver') as HTMLAnchorElement;
+      expect(ver.textContent?.trim()).toBe('Ver pedido');
+      expect(ver.getAttribute('href')).toBe('/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
+      // La ruta cruda no se lee como texto en la burbuja.
+      expect(burbujas()[0]?.querySelector('.hilo__texto')).toBeNull();
+    });
+
+    it('la fija arriba del hilo como «Consulta sobre», con la última si hay dos', () => {
+      abrir([
+        mensaje('m-2', 'pp-1', 'Producto: Paracetamol 500 mg\n/pharmacies-directory/farmacia-vida'),
+        mensaje('m-1', 'pp-1', TARJETA),
+      ]);
+
+      const fijado = consultar('hilo-contexto-fijado');
+      expect(fijado?.getAttribute('data-tipo')).toBe('producto');
+      expect(fijado?.textContent).toContain('Consulta sobre: Producto');
+      expect(fijado?.textContent).toContain('Paracetamol 500 mg');
+      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe('/pharmacies-directory/farmacia-vida');
+    });
+
+    it('un texto parecido con ruta externa queda como texto, sin tarjeta ni fijado', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Pedido: algo\n//sitio-malo.example/robar')]);
+
+      expect(consultar('hilo-contexto')).toBeNull();
+      expect(consultar('hilo-contexto-fijado')).toBeNull();
+      expect(burbujas()[0]?.textContent).toContain('//sitio-malo.example/robar');
+    });
+
+    it('con sólo la tarjeta, sugiere preguntas acordes al tipo', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+
+      expect(sugerenciasDelComposer()[0]).toBe('¿Cuándo llega mi pedido?');
+    });
+
+    it('cada tipo trae su pregunta', () => {
+      abrir([mensaje('m-1', 'pp-1', 'Servicio: Toma de presión\n/clinics-directory/clinica-sur')]);
+      expect(sugerenciasDelComposer()).toContain('¿Qué días atienden?');
+    });
+
+    it('en cuanto alguien escribió algo propio, deja de sugerir', () => {
+      abrir([mensaje('m-2', 'pp-2', 'Hola, ¿en qué te ayudo?'), mensaje('m-1', 'pp-1', TARJETA)]);
+
+      expect(sugerenciasDelComposer()).toEqual([]);
+    });
+
+    it('el fijado dice quién envió la tarjeta: usted u otra persona', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por usted');
+    });
+
+    it('una tarjeta ajena en el fijado lleva el nombre de quien la mandó', () => {
+      abrir([mensaje('m-1', 'pp-2', TARJETA)]);
+      expect(consultar('hilo-contexto-fijado-autor')?.textContent).toContain('Enviada por Dra. Quispe');
+    });
+
+    it('con una tarjeta, la cabecera dice de qué se habla sin repetir la farmacia del nombre', () => {
+      abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+      const estado = fixture.nativeElement.querySelector('.hilo__estado') as HTMLElement;
+      // Tarjeta de antes del número corto: sólo «Pedido».
+      expect(estado.textContent?.trim()).toBe('Pedido');
+      expect(estado.textContent).not.toContain('Farmacia Chávez');
+    });
+
+    it('con el número corto en la tarjeta, la cabecera dice qué pedido es', () => {
+      abrir([
+        mensaje(
+          'm-1',
+          'pp-1',
+          'Pedido: #E5F6 · Farmacia Chávez · Sucursal Miraflores\n2 productos · Bs 69,00\n/my-account/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+        ),
+      ]);
+      const estado = fixture.nativeElement.querySelector('.hilo__estado') as HTMLElement;
+      expect(estado.textContent?.trim()).toBe('Pedido · #E5F6');
+    });
+
+    it('sin tarjeta ni dato de presencia, la cabecera no inventa un subtítulo', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+      expect(fixture.nativeElement.querySelector('.hilo__estado')).toBeNull();
+      expect(fixture.nativeElement.textContent).not.toContain('Conversación directa');
+    });
+
+    it('como la farmacia, sobre el composer dice en nombre de quién se responde', () => {
+      abrir([mensaje('m-1', 'pp-2', 'Hola')]);
+      expect(consultar('hilo-respondiendo-como')).toBeNull();
+
+      store.vitrinasDeOrganizacion.set([{ profileId: 'pp-1', nombre: 'Farmacia Vida' }]);
+      fixture.detectChanges();
+      expect(consultar('hilo-respondiendo-como')?.textContent?.replace(/\s+/gu, ' ').trim()).toBe(
+        'Respondiendo como Farmacia Vida',
+      );
+    });
+
+    it('la barra fijada se recoge mientras la tarjeta original está a la vista', async () => {
+      let avisar: ((entradas: readonly Partial<IntersectionObserverEntry>[]) => void) | null = null;
+      const observadas: Element[] = [];
+      class ObservadorFalso {
+        constructor(alCambiar: (entradas: IntersectionObserverEntry[]) => void) {
+          avisar = (entradas) => alCambiar(entradas as IntersectionObserverEntry[]);
+        }
+        observe(nodo: Element): void {
+          observadas.push(nodo);
+        }
+        unobserve(): void {
+          // Las pruebas sólo miran qué se observa.
+        }
+        disconnect(): void {
+          // Ídem.
+        }
+        takeRecords(): IntersectionObserverEntry[] {
+          return [];
+        }
+      }
+      vi.stubGlobal('IntersectionObserver', ObservadorFalso);
+      try {
+        fixture.destroy();
+        fixture = TestBed.createComponent(Thread);
+        fixture.detectChanges();
+        abrir([mensaje('m-1', 'pp-1', TARJETA)]);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const tarjeta = consultar('hilo-contexto')?.closest('[data-clave]') ?? null;
+        expect(tarjeta).not.toBeNull();
+        expect(observadas).toContain(tarjeta);
+        const fijado = (): HTMLElement | null => consultar('hilo-contexto-fijado');
+        expect(fijado()?.classList.contains('is-recogido')).toBe(false);
+
+        avisar!([{ target: tarjeta!, isIntersecting: true, intersectionRatio: 1 }]);
+        fixture.detectChanges();
+        expect(fijado()?.classList.contains('is-recogido')).toBe(true);
+        // Sigue siendo el mismo nodo, con lo que dice: sólo se recoge.
+        expect(fijado()?.textContent).toContain('Consulta sobre: Pedido');
+
+        avisar!([{ target: tarjeta!, isIntersecting: false, intersectionRatio: 0 }]);
+        fixture.detectChanges();
+        expect(fijado()?.classList.contains('is-recogido')).toBe(false);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('quien atiende como la farmacia abre el pedido en su bandeja, no en «mis pedidos»', () => {
+      abrir([mensaje('m-1', 'pp-2', TARJETA)]);
+      store.vitrinasDeOrganizacion.set([{ profileId: 'pp-1', nombre: 'Farmacia Chávez' }]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-contexto-ver')?.getAttribute('href')).toBe('/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6');
+      expect(consultar('hilo-contexto-fijado-ver')?.getAttribute('href')).toBe(
+        '/administration/pharmacy-orders/7f3c1e2a-5b6d-4c7e-8f90-a1b2c3d4e5f6',
+      );
+    });
+  });
+
+  /* --- Fotos: grilla, esqueleto y visor ----------------------------------- */
+
+  describe('fotos', () => {
+    const foto = (n: number, autor = 'pp-2') => ({
+      ...mensaje(`m-${n}`, autor, ''),
+      bodyText: null,
+      contentTypeConceptId: 'c-media',
+      attachmentFileId: `f-${n}`,
+      sentAt: `2026-08-18T10:0${n}:00.000Z`,
+    });
+
+    const png = (): Blob => new Blob([new Uint8Array(16).fill(7)], { type: 'image/png' });
+
+    /** Sirve todos los adjuntos pedidos y espera a que el store los tenga. */
+    const servirTodos = async (ids: readonly string[]): Promise<void> => {
+      fixture.detectChanges();
+      for (const id of ids) {
+        http.expectOne((r) => r.url.includes(`/attachments/${id}/content`)).flush(png());
+      }
+      for (let i = 0; i < 100 && ids.some((id) => !store.urlDe(id)); i += 1) {
+        await new Promise((listo) => setTimeout(listo, 5));
+      }
+      fixture.detectChanges();
+    };
+
+    it('mientras el adjunto baja hay esqueleto, no «Subiendo»', () => {
+      abrir([foto(1)]);
+      fixture.detectChanges();
+
+      expect(consultar('hilo-adjunto-cargando')).not.toBeNull();
+      expect(fixture.nativeElement.textContent).not.toContain('Subiendo el archivo');
+      http.match((r) => r.url.includes('/attachments/')).forEach((p) => p.flush(png()));
+    });
+
+    it('cinco fotos seguidas del mismo autor van en una grilla 2×2 con «+1»', async () => {
+      abrir([foto(5), foto(4), foto(3), foto(2), foto(1)]);
+      await servirTodos(['f-1', 'f-2', 'f-3', 'f-4', 'f-5']);
+
+      const galerias = fixture.nativeElement.querySelectorAll('[data-testid="hilo-galeria"]');
+      expect(galerias).toHaveLength(1);
+      expect(galerias[0].querySelectorAll('[data-testid="hilo-imagen"]')).toHaveLength(4);
+      expect(consultar('hilo-galeria-mas')?.textContent?.trim()).toBe('+1');
+      // Ninguna quedó suelta como burbuja aparte.
+      expect(burbujas()).toHaveLength(0);
+    });
+
+    it('una foto sola, o con otra persona en el medio, no se agrupa', async () => {
+      abrir([foto(3), foto(2, 'pp-1'), foto(1)]);
+      await servirTodos(['f-1', 'f-2', 'f-3']);
+
+      expect(consultar('hilo-galeria')).toBeNull();
+      expect(burbujas().every((b) => b.classList.contains('is-solo-imagen'))).toBe(true);
+    });
+
+    it('tocar una foto de la grilla abre el visor en ella y ← → recorren todas', async () => {
+      abrir([foto(5), foto(4), foto(3), foto(2), foto(1)]);
+      await servirTodos(['f-1', 'f-2', 'f-3', 'f-4', 'f-5']);
+
+      const celdas = fixture.nativeElement.querySelectorAll('[data-testid="hilo-imagen"]');
+      (celdas[1] as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('2 de 5');
+      consultar('hilo-visor')!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }),
+      );
+      fixture.detectChanges();
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('5 de 5');
+
+      (consultar('hilo-visor-cerrar') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(consultar('hilo-visor')).toBeNull();
+    });
+
+    it('el visor sigue en la misma foto cuando llega una página anterior', async () => {
+      abrir([foto(3), foto(2)], 'cursor-1');
+      await servirTodos(['f-2', 'f-3']);
+
+      // Se abre la segunda de dos: f-3, la del mensaje m-3.
+      const imagenes = fixture.nativeElement.querySelectorAll('[data-testid="hilo-imagen"]');
+      (imagenes[1] as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('2 de 2');
+
+      // Llega la historia con una foto más vieja: se corre el índice, no la foto.
+      store.cargarAnteriores();
+      http
+        .expectOne((r) => r.url === '/community/conversations/c-1/messages')
+        .flush({ items: [foto(1)], count: 1, limit: 30, nextCursor: null });
+      await servirTodos(['f-1']);
+
+      expect(consultar('hilo-visor-posicion')?.textContent?.trim()).toBe('3 de 3');
+      (consultar('hilo-visor-responder') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(store.respondiendoA()?.id).toBe('m-3');
+    });
+
+    it('una foto propia en el visor dice «Usted», con el trato del resto de la app', async () => {
+      abrir([foto(1, 'pp-1')]);
+      await servirTodos(['f-1']);
+
+      (consultar('hilo-imagen') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      const pie = fixture.nativeElement.querySelector('.visor__autor') as HTMLElement | null;
+      expect(pie?.textContent?.trim()).toMatch(/^Usted · /u);
+      expect(fixture.nativeElement.textContent).not.toContain('Tú');
+    });
+
+    it('responder desde el visor deja la cita de esa foto en el composer', async () => {
+      abrir([foto(2), foto(1)]);
+      await servirTodos(['f-1', 'f-2']);
+
+      (fixture.nativeElement.querySelector('[data-testid="hilo-imagen"]') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      (consultar('hilo-visor-responder') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(consultar('hilo-visor')).toBeNull();
+      expect(store.respondiendoA()?.id).toBe('m-1');
     });
   });
 
@@ -1027,3 +1326,153 @@ describe('Thread', () => {
     });
   });
 });
+
+describe('Thread · pulsación larga y vacío', () => {
+  let fixture: ComponentFixture<Thread>;
+  let http: HttpTestingController;
+  let store: ChatStore;
+
+  /** Un evento de puntero táctil, armado sobre `MouseEvent` por si el entorno no trae `PointerEvent`. */
+  const dedo = (tipo: string, x = 10, y = 10): Event => {
+    const evento = new MouseEvent(tipo, { bubbles: true, clientX: x, clientY: y });
+    Object.defineProperty(evento, 'pointerType', { value: 'touch' });
+    return evento;
+  };
+
+  const abrirCon = (items: unknown[]): void => {
+    http.expectOne('/community/profiles/me').flush({
+      id: 'pp-1', tenantId: 't-1', targetId: 'hp-1', slug: 'yo', displayName: 'Yo',
+      headline: null, biography: null, acceptsReviews: null,
+    });
+    fixture.detectChanges();
+    http.match((r) => r.url === '/community/conversations').forEach((p) =>
+      p.flush({
+        items: [{ id: 'c-1', conversationTypeConceptId: 'c-direct', groupId: null, lastMessageAt: null,
+          messageCount: items.length, lastMessage: null, unreadCount: 0,
+          peers: [{ profileId: 'pp-2', displayName: 'Dra. Quispe' }] }],
+        count: 1, limit: 50, nextCursor: null,
+      }),
+    );
+    http.match((r) => r.url === '/community/conversations/c-1/messages').forEach((p) =>
+      p.flush({ items, count: items.length, limit: 30, nextCursor: null }),
+    );
+    http.match((r) => r.url === '/community/conversations/c-1/read').forEach((p) =>
+      p.flush({ receiptsRecorded: 1, lastReadMessageId: null }),
+    );
+    fixture.detectChanges();
+  };
+
+  const texto = {
+    id: 'm-1', conversationId: 'c-1', senderProfileId: 'pp-2', replyToMessageId: null,
+    contentTypeConceptId: 'c-text', bodyText: 'Hola', attachmentFileId: null, isEdited: null,
+    sentAt: '2026-08-18T10:00:00.000Z',
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: '**', children: [] }]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of({ get: (clave: string) => (clave === 'conversationId' ? 'c-1' : null) }),
+            queryParamMap: of({ get: () => null }),
+          },
+        },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(ChatStore);
+    store.iniciar();
+    fixture = TestBed.createComponent(Thread);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    store.detener();
+    http.match(() => true).forEach((pedido) => pedido.flush(null));
+  });
+
+  const burbuja = (): HTMLElement =>
+    fixture.nativeElement.querySelector('[data-testid="mensaje"]') as HTMLElement;
+  const menu = (): HTMLElement | null => burbuja().querySelector('[role="menu"]');
+
+  it('mantener el dedo medio segundo abre el menú del mensaje', async () => {
+    abrirCon([texto]);
+    burbuja().dispatchEvent(dedo('pointerdown'));
+    await new Promise((listo) => setTimeout(listo, 560));
+    fixture.detectChanges();
+    expect(menu()).not.toBeNull();
+  });
+
+  it('si el dedo se mueve —se está desplazando—, no abre nada', async () => {
+    abrirCon([texto]);
+    burbuja().dispatchEvent(dedo('pointerdown'));
+    burbuja().dispatchEvent(dedo('pointermove', 10, 40));
+    await new Promise((listo) => setTimeout(listo, 560));
+    fixture.detectChanges();
+    expect(menu()).toBeNull();
+  });
+
+  it('soltar antes de tiempo es un toque, no una pulsación larga', async () => {
+    abrirCon([texto]);
+    burbuja().dispatchEvent(dedo('pointerdown'));
+    burbuja().dispatchEvent(dedo('pointerup'));
+    await new Promise((listo) => setTimeout(listo, 560));
+    fixture.detectChanges();
+    expect(menu()).toBeNull();
+  });
+
+  it('el hilo vacío lo dice en castellano correcto', () => {
+    abrirCon([]);
+    expect(fixture.nativeElement.textContent).toContain('Todavía no se escribió nada');
+  });
+});
+
+describe('rutaParaQuienMira y subtituloDeContexto', () => {
+  const pedido = { tipo: 'pedido', titulo: 'Farmacia Vida', ruta: '/my-account/pharmacy-orders/o-1' } as const;
+
+  it('el paciente va a su pedido y la farmacia a su bandeja', () => {
+    expect(rutaParaQuienMira(pedido, false)).toBe('/my-account/pharmacy-orders/o-1');
+    expect(rutaParaQuienMira(pedido, true)).toBe('/administration/pharmacy-orders/o-1');
+  });
+
+  it('las fichas públicas valen igual para los dos lados', () => {
+    const producto = { tipo: 'producto', titulo: 'Paracetamol', ruta: '/pharmacies-directory/vida' } as const;
+    expect(rutaParaQuienMira(producto, true)).toBe('/pharmacies-directory/vida');
+  });
+
+  it('sin ruta equivalente no se ofrece enlace', () => {
+    expect(rutaParaQuienMira({ ...pedido, ruta: '/my-account/pharmacy-orders/o-1/receipt' }, true)).toBeNull();
+  });
+
+  it('el subtítulo dice de qué se habla', () => {
+    expect(subtituloDeContexto(pedido)).toBe('Pedido');
+    expect(subtituloDeContexto({ ...pedido, titulo: '#22BE · Farmacia Vida · Sucursal Central' })).toBe('Pedido · #22BE');
+    expect(subtituloDeContexto({ tipo: 'producto', titulo: 'Paracetamol', ruta: '/x' })).toBe('Consulta por Paracetamol');
+    // La farmacia ya es el nombre de la cabecera: no se repite.
+    expect(subtituloDeContexto({ tipo: 'farmacia', titulo: 'Farmacia Vida', ruta: '/x' })).toBe('Consulta a la farmacia');
+  });
+});
+
+describe('indiceDelPrimerNoLeido', () => {
+  const de = (...autores: string[]) => autores.map((senderProfileId) => ({ senderProfileId }));
+
+  it('cuenta los últimos ajenos desde el final', () => {
+    expect(indiceDelPrimerNoLeido(de('yo', 'ella', 'ella'), 'yo', 2)).toBe(1);
+  });
+
+  it('lo que uno manda con el hilo abierto no corre el separador', () => {
+    // Un ajeno sin leer y, después, una respuesta propia: el separador va
+    // delante del ajeno, no delante de la respuesta.
+    expect(indiceDelPrimerNoLeido(de('ella', 'yo', 'ella', 'yo'), 'yo', 1)).toBe(2);
+  });
+
+  it('sin no leídos, o con más de los que hay, no hay separador', () => {
+    expect(indiceDelPrimerNoLeido(de('ella'), 'yo', 0)).toBe(-1);
+    expect(indiceDelPrimerNoLeido(de('ella', 'yo'), 'yo', 2)).toBe(-1);
+  });
+});
+

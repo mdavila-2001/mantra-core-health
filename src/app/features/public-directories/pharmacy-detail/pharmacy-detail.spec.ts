@@ -1,12 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router, type ParamMap } from '@angular/router';
 import { of } from 'rxjs';
 
 import { CARGADOR_DE_LEAFLET } from '@shared/components/organisms/map/map';
 
 import { PharmacyDetail } from './pharmacy-detail';
+import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/enlace-de-chat';
 
 const SLUG = 'farmacia-vida';
 
@@ -627,12 +628,62 @@ describe('PharmacyDetail', () => {
     responder();
 
     // Se mira DENTRO de las tarjetas: fuera de ellas sí hay controles —el
-    // buscador y los chips—, y ninguno toca el catálogo.
+    // buscador y los chips—, y ninguno toca el catálogo. El único botón de la
+    // tarjeta es «Consultar por chat», que no edita nada: lleva al chat.
     const controles = fixture.nativeElement.querySelectorAll(
-      '[data-testid="pharmacy-product"] button, [data-testid="pharmacy-product"] input',
+      '[data-testid="pharmacy-product"] button:not([data-testid="consultar-producto-por-chat"]), [data-testid="pharmacy-product"] input',
     );
     expect(controles.length).toBe(0);
     expect(fixture.nativeElement.textContent as string).not.toContain('Editar precio');
+  });
+
+  /** La vuelta al chat que guardó el paso por el login (la prueba no tiene sesión). */
+  function vueltaAlChat(navegar: ReturnType<typeof vi.spyOn>): ParamMap {
+    expect(navegar).toHaveBeenCalledOnce();
+    const [, extras] = navegar.mock.calls[0] as [string[], { queryParams: { returnUrl: string } }];
+    const router = TestBed.inject(Router);
+    return router.parseUrl(extras.queryParams.returnUrl).queryParamMap;
+  }
+
+  it('«Consultar por chat» sobre un medicamento manda UNA tarjeta: la del producto', () => {
+    montar();
+    responder();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    const boton = fixture.nativeElement.querySelector(
+      '[data-testid="consultar-producto-por-chat"]',
+    ) as HTMLElement;
+    boton.click();
+
+    const vuelta = vueltaAlChat(navegar);
+    expect(vuelta.get('escribirA')).toBe(SLUG);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    expect(vuelta.has('titulo')).toBe(false);
+    expect(vuelta.getAll('ctx')).toHaveLength(1);
+    // Un solo contexto guardado, y es el del producto: la farmacia va en el
+    // renglón de detalle, no como una segunda tarjeta.
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
+    expect(contexto?.tipo).toBe('producto');
+    expect(contexto?.titulo).not.toBe('Farmacia Vida');
+    expect(contexto?.detalle).toContain('Farmacia Vida');
+  });
+
+  it('«Chatear con la farmacia» manda UNA tarjeta: la de la farmacia', () => {
+    montar();
+    responder();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    (fixture.nativeElement.querySelector('[data-testid="chatear-con-la-farmacia"]') as HTMLElement).click();
+
+    const vuelta = vueltaAlChat(navegar);
+    // El contexto no viaja en la URL (H1): se deja en la pestaña bajo un
+    // nonce de un solo uso, y la URL lleva sólo `ctx=<nonce>`.
+    expect(vuelta.has('sobre')).toBe(false);
+    const contexto = tomarContexto(vuelta.get('ctx'), destinoDeLaQuery(vuelta)!, sessionStorage);
+    expect(contexto?.tipo).toBe('farmacia');
+    expect(contexto?.titulo).toBe('Farmacia Vida');
   });
 
   it('conserva la ficha cuando el catálogo falla', () => {

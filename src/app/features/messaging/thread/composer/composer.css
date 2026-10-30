@@ -33,14 +33,16 @@
   padding: var(--e2) var(--e4);
 }
 
+/* Todo lo que se toca mide 44 px: es el mínimo cómodo para un pulgar, y la
+   barra se usa con el teléfono en una mano. */
 .composer__icono,
 .composer__enviar {
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
@@ -48,6 +50,7 @@
   cursor: pointer;
   transition:
     background var(--mov-rapido) var(--curva),
+    color var(--mov-rapido) var(--curva),
     transform var(--dur-fast) var(--ease-standard);
 }
 
@@ -65,42 +68,116 @@
   }
 }
 
-.composer__icono:hover,
-.composer__icono:focus-visible {
+.composer__icono:hover {
   background: var(--sup-inset);
   color: var(--tinta-marca);
 }
 
-.composer__icono svg,
-.composer__enviar svg {
-  inline-size: 22px;
-  block-size: 22px;
+.composer__icono:focus-visible,
+.composer__enviar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
 }
 
-/* El botón de enviar sí es de marca: es la acción de la barra. */
+.composer__icono svg,
+.composer__enviar svg {
+  inline-size: 24px;
+  block-size: 24px;
+}
+
+/* El de adjuntar, afuera de la píldora: un círculo con borde, para que se lea
+   como «más opciones» y no como parte del campo. */
+.composer > .composer__icono {
+  border: 1px solid var(--filete);
+  color: var(--tinta-marca);
+}
+
+/* El botón de enviar sí es de marca: es la acción de la barra. Círculo lleno,
+   con la flecha blanca, como en PedidosYa. */
 .composer__enviar {
-  background: var(--petroleo-relleno);
-  color: #fff;
+  position: relative;
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--sombra-1);
 }
 
 .composer__enviar:hover {
-  background: var(--petroleo-x, var(--petroleo));
-  filter: brightness(1.08);
+  background: var(--brand-primary-hover);
+}
+
+.composer__enviar:active {
+  background: var(--brand-primary-active);
+  transform: scale(.94);
+}
+
+.composer__enviar:disabled {
+  opacity: .55;
+  cursor: progress;
+  transform: none;
+}
+
+/* El avión de papel apenas corrido: centrado a ojo, no a caja. */
+.composer__enviar svg {
+  inline-size: 22px;
+  block-size: 22px;
+  margin-inline-start: 3px;
+}
+
+/* --- La píldora ---------------------------------------------------------- */
+
+/* Campo y accesos en una sola cápsula redondeada. El foco se marca en la
+   cápsula entera: el textarea es sólo una parte de ella. */
+.composer__pildora {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  min-block-size: 44px;
+  padding-inline: var(--e1);
+  border: 1px solid var(--filete);
+  border-radius: calc(var(--r-menu) * 2);
+  background: var(--sup-inset);
+  transition: border-color var(--mov-rapido) var(--curva), background var(--mov-rapido) var(--curva);
+}
+
+.composer__pildora:focus-within {
+  border-color: var(--brand-primary);
+  background: var(--sup-tarjeta);
+  box-shadow: 0 0 0 3px var(--anillo-foco);
+}
+
+.composer__icono--chico {
+  color: var(--tinta-3);
+}
+
+.composer__pildora .composer__icono:hover {
+  background: none;
+  color: var(--brand-primary);
+}
+
+/* La cámara directa sólo donde hay cámara a mano: en la compu el `capture` no
+   hace nada y sería un segundo botón de «elegir foto». */
+@media (hover: hover) and (pointer: fine) {
+  .composer__icono--camara {
+    display: none;
+  }
 }
 
 .composer__campo {
   flex: 1 1 auto;
   min-inline-size: 0;
+  align-self: center;
 }
 
 .composer__campo textarea {
+  display: block;
   inline-size: 100%;
-  min-block-size: 40px;
+  min-block-size: 42px;
   max-block-size: 8.5rem;
-  padding: 10px var(--e4);
-  border: 1px solid transparent;
-  border-radius: var(--r-menu);
-  background: var(--sup-inset);
+  padding: 11px var(--e1);
+  border: 0;
+  background: transparent;
   font: inherit;
   font-size: var(--fs-body);
   line-height: 20px;
@@ -110,11 +187,90 @@
   field-sizing: content;
 }
 
+.composer__campo textarea::placeholder {
+  color: var(--tinta-3);
+}
+
+/* El anillo lo lleva la píldora (`:focus-within`). */
 .composer__campo textarea:focus-visible {
-  outline: 2px solid var(--anillo-foco);
-  outline-offset: 1px;
-  border-color: var(--petroleo);
+  outline: none;
+}
+
+/* --- Respuestas rápidas -------------------------------------------------- */
+
+.composer__chips {
+  display: flex;
+  gap: var(--e2);
+  padding: var(--e3) var(--e4) var(--e1);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* La fila no muestra barra de desplazamiento: cuando hay chips fuera de la
+   vista, el borde de ese lado se desvanece y avisa que se puede deslizar.
+   Máscara y no un velo de color: funciona sobre cualquier fondo y tema. Las
+   clases las pone `medirChips()`, sólo si de verdad hay más de ese lado. */
+.composer__chips.is-sigue-al-final {
+  mask-image: linear-gradient(to right, black calc(100% - var(--e8)), transparent);
+}
+
+.composer__chips.is-sigue-al-inicio {
+  mask-image: linear-gradient(to right, transparent, black var(--e8));
+}
+
+.composer__chips.is-sigue-al-inicio.is-sigue-al-final {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black var(--e8),
+    black calc(100% - var(--e8)),
+    transparent
+  );
+}
+
+.composer__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.composer__chip {
+  flex: none;
+  min-block-size: 44px;
+  padding: var(--e2) var(--e4);
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--r-pill);
   background: var(--sup-tarjeta);
+  color: var(--brand-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--mov-rapido) var(--curva), color var(--mov-rapido) var(--curva);
+  /* Al tabular, el chip enfocado no queda debajo del borde desvanecido. */
+  scroll-margin-inline: var(--e8);
+}
+
+.composer__chip:hover {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
+
+.composer__chip:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
+}
+
+/* --- Fotos preparándose ------------------------------------------------ */
+
+/* La línea de «Preparando las fotos…» mientras se achican y pierden sus
+   metadatos, antes de abrir la vista previa. Posicionada, como las otras
+   tiras, para pintarse encima del papel del hilo. */
+.composer__preparando {
+  position: relative;
+  padding: var(--e2) var(--e4);
+  border-block-start: 1px solid var(--filete-2);
+  background: var(--sup-tarjeta);
+  font-size: var(--fs-caption);
 }
 
 /* --- La tira de respuesta ------------------------------------------------ */
@@ -157,13 +313,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 28px;
-  block-size: 28px;
+  /* 44 de área tocable con el glifo de 16 de siempre. */
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
   color: var(--tinta-2);
   cursor: pointer;
+}
+
+/* El margen negativo deja la tira de responder con la altura que tenía. */
+.composer__respuesta button {
+  margin-block: calc(var(--e2) * -1);
+}
+
+.composer__respuesta button:hover {
+  background: var(--sup-tarjeta);
+  color: var(--tinta);
+}
+
+.composer__respuesta button:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: -4px;
 }
 
 .composer__respuesta button svg {
@@ -227,6 +399,11 @@
   min-inline-size: 13rem;
 }
 
+/* Las opciones a 44 px de alto: el menú se abre con el pulgar. */
+.composer__menu app-menu-item {
+  min-block-size: 44px;
+}
+
 /* --- Plantillas (carril P9) ---------------------------------------------- */
 
 .composer__plantillas {
@@ -247,6 +424,7 @@
 
 .composer__plantilla-texto {
   flex: 1 1 auto;
+  min-block-size: 44px;
   padding: var(--e2);
   border: 0;
   border-radius: var(--r-ctrl);
@@ -265,6 +443,8 @@
 
 .composer__plantilla-quitar {
   flex: none;
+  min-block-size: 44px;
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: var(--tinta-2);
@@ -286,7 +466,7 @@
 
 .composer__plantilla-nueva input {
   inline-size: 100%;
-  block-size: var(--h-ctrl);
+  block-size: 44px;
   padding-inline: var(--e3);
   border: 1px solid var(--filete);
   border-radius: var(--r-ctrl);
@@ -298,7 +478,7 @@
 
 .composer__plantilla-nueva > button {
   flex: none;
-  block-size: var(--h-ctrl);
+  block-size: 44px;
   padding-inline: var(--e3);
   border: 1px solid var(--borde-ctrl, var(--filete));
   border-radius: var(--r-ctrl);
@@ -324,6 +504,10 @@
 }
 
 .composer__error button {
+  flex: none;
+  min-block-size: 44px;
+  margin-block: calc(var(--e2) * -1);
+  padding-inline: var(--e2);
   border: 0;
   background: none;
   color: inherit;
@@ -334,8 +518,13 @@
 }
 
 @media (max-width: 60rem) {
-  .composer {
+  .composer,
+  .composer__chips {
     padding-inline: var(--e3);
+  }
+
+  .composer {
+    gap: var(--e1);
   }
 }
 
@@ -369,6 +558,7 @@
 }
 
 .composer__solapa {
+  min-block-size: 44px;
   padding: var(--e2) var(--e3);
   border: 0;
   border-radius: var(--r-ctrl) var(--r-ctrl) 0 0;
