@@ -40,8 +40,9 @@ describe('Badge', () => {
       expect(text()).toBe('');
     });
 
-    it('expone role=status para que un conteo que cambia se anuncie', () => {
-      expect(host().getAttribute('role')).toBe('status');
+    it('no es una región viva: un badge es una etiqueta estática', () => {
+      expect(host().hasAttribute('role')).toBe(false);
+      expect(host().hasAttribute('aria-live')).toBe(false);
     });
 
     it('sin label no fija aria-label: el nombre sale del contenido visible', () => {
@@ -143,6 +144,17 @@ describe('Badge', () => {
     it('el punto se nombra con su label', async () => {
       await setInputs({ dotOnly: true, value: 7, label: 'Requiere revisión' });
       expect(host().getAttribute('aria-label')).toBe('Requiere revisión');
+    });
+
+    it('con label es un pictograma con nombre (`img`), nunca una región viva', async () => {
+      await setInputs({ value: 3, label: 'notificaciones no leídas' });
+      expect(host().getAttribute('role')).toBe('img');
+      expect(host().hasAttribute('aria-live')).toBe(false);
+    });
+
+    it('sin label no lleva rol: el texto visible se lee en su lugar', async () => {
+      await setInputs({ value: 'Vigente' });
+      expect(host().hasAttribute('role')).toBe(false);
     });
   });
 });

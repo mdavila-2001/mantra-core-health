@@ -3,11 +3,11 @@
      páginas pegadas. Por su ruta propia sigue teniéndolo. -->
 @if (!embebido()) {
   <app-page-header
-    title="Editar tus datos"
-    subtitle="Lo que nos contaste al registrarte. Corregilo cuando quieras."
+    title="Editar sus datos"
+    subtitle="Lo que nos contó al registrarse. Corríjalo cuando quiera."
     [breadcrumbs]="breadcrumbs()"
   >
-    <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a tu perfil" />
+    <app-back-link page-actions [fallback]="rutaDeMiPerfil" label="Volver a su perfil" />
   </app-page-header>
 }
 
@@ -31,14 +31,14 @@
           <!-- Las cuatro partes del nombre por separado, como las guarda el
                modelo: el nombre que se muestra lo compone el backend con ellas. -->
           <section class="datos__seccion">
-            <h3 class="datos__titulo">Tu nombre</h3>
-            <p class="datos__nota">Como figura en tu documento de identidad.</p>
+            <h3 class="datos__titulo">Su nombre</h3>
+            <p class="datos__nota">Como figura en su documento de identidad.</p>
 
             <div class="datos__campos">
               <app-form-field
                 label="Nombre"
                 [required]="true"
-                [errorMessage]="nombreVacio() ? 'Ingresá tu nombre.' : ''"
+                [errorMessage]="nombreVacio() ? 'Ingrese su nombre.' : errorDelServidor('name')"
               >
                 <app-input
                   testId="perfil-nombre"
@@ -48,7 +48,11 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Segundo nombre" hint="Si no llevás, dejalo vacío.">
+              <app-form-field
+                label="Segundo nombre"
+                hint="Si no lleva, déjelo vacío."
+                [errorMessage]="errorDelServidor('middleName')"
+              >
                 <app-input
                   testId="perfil-segundo-nombre"
                   autocomplete="additional-name"
@@ -57,8 +61,12 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Tercer nombre" hint="Si no llevás, dejalo vacío.">
-                <app-input testId="perfil-tercer-nombre" placeholder="María" [(value)]="tercerNombre" />
+              <app-form-field label="Tercer nombre" hint="Si no lleva, déjelo vacío.">
+                <app-input
+                  testId="perfil-tercer-nombre"
+                  placeholder="María"
+                  [(value)]="tercerNombre"
+                />
               </app-form-field>
 
               <!-- Hay gente con cuatro y cinco nombres, y hasta hoy los que pasaban
@@ -78,6 +86,7 @@
                          pantalla con botones idénticos y ninguna forma de saber cuál
                          es cuál. El mismo texto va en el globo, que aparece con el
                          puntero y con el foco del teclado. -->
+                    <!-- Excepción ADR-0012 §3 (D-05, 23/09): quitar un elemento de la lista, con aria-label y globo. -->
                     <button
                       app-button
                       type="button"
@@ -95,21 +104,23 @@
                 </app-form-field>
               }
 
-              <button
-                app-button
-                type="button"
-                variant="ghost"
-                size="sm"
-                data-testid="perfil-agregar-nombre"
-                (clicked)="agregarNombre()"
-              >
-                + Agregar otro nombre
-              </button>
+              <p class="datos__sumar">
+                <button
+                  app-button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  data-testid="perfil-agregar-nombre"
+                  (clicked)="agregarNombre()"
+                >
+                  + Agregar otro nombre
+                </button>
+              </p>
 
               <app-form-field
                 label="Apellido paterno"
                 [required]="true"
-                [errorMessage]="apellidoVacio() ? 'Ingresá tu apellido paterno.' : ''"
+                [errorMessage]="apellidoVacio() ? 'Ingrese su apellido paterno.' : errorDelServidor('lastName')"
               >
                 <app-input
                   testId="perfil-apellido-paterno"
@@ -119,7 +130,11 @@
                 />
               </app-form-field>
 
-              <app-form-field label="Apellido materno" hint="Si no llevás, dejalo vacío.">
+              <app-form-field
+                label="Apellido materno"
+                hint="Si no lleva, déjelo vacío."
+                [errorMessage]="errorDelServidor('motherLastName')"
+              >
                 <app-input
                   testId="perfil-apellido-materno"
                   autocomplete="family-name"
@@ -133,13 +148,14 @@
           <!-- Datos con consecuencia clínica: cambian dosis, valores de
                referencia y tamizajes. -->
           <section class="datos__seccion">
-            <h3 class="datos__titulo">Sobre vos</h3>
-            <p class="datos__nota">Sirve para atenderte mejor. Todo esto es opcional.</p>
+            <h3 class="datos__titulo">Sobre usted</h3>
+            <p class="datos__nota">Sirve para atenderle mejor. Todo esto es opcional.</p>
 
             <div class="datos__campos">
               <app-form-field
                 label="Fecha de nacimiento"
                 hint="Sirve para calcular dosis y valores de referencia."
+                [errorMessage]="errorDelServidor('birthDate')"
               >
                 <app-date-picker
                   [(value)]="fechaNacimiento"
@@ -158,13 +174,24 @@
                 label="Sexo"
                 [required]="true"
                 hint="Dato clínico: cambia las dosis, los valores de referencia y los tamizajes."
-                [errorMessage]="sexoVacio() ? 'Elegí una opción.' : ''"
+                [errorMessage]="sexoVacio() ? 'Elija una opción.' : errorDelServidor('sexAtBirth')"
               >
                 <app-select
                   data-testid="perfil-genero"
                   [options]="opcionesSexoAlNacer"
                   [(value)]="sexoAlNacer"
-                  placeholder="Elegí una opción"
+                  placeholder="Elija una opción"
+                />
+              </app-form-field>
+
+              <!-- El departamento que emitió el documento: se corrige, el número no
+                   (ID-22). -->
+              <app-form-field label="Departamento que emitió su documento">
+                <app-select
+                  data-testid="perfil-departamento-emisor"
+                  [options]="opcionesDepartamento()"
+                  [(value)]="departamentoEmisor"
+                  placeholder="Elija un departamento"
                 />
               </app-form-field>
 
@@ -172,7 +199,12 @@
                 <app-form-field label="Ocupación (opcional)">
                   <p class="datos__aviso" data-testid="perfil-ocupaciones-caido">
                     No pudimos traer el catálogo de ocupaciones.
-                    <button app-button variant="ghost" size="sm" (clicked)="reintentarOcupaciones()">
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      (clicked)="reintentarOcupaciones()"
+                    >
                       Reintentar
                     </button>
                   </p>
@@ -181,12 +213,16 @@
                 <!-- La lupa que pide el registro del cliente (PACIENTE §1.4.2): son
                      cientos de oficios y un desplegable sin filtro no se recorre. El
                      alta ya la tenía; este editor había quedado con un `<select>`. -->
-                <app-form-field label="Ocupación (opcional)" [hint]="hintOcupacion()">
+                <app-form-field
+                  label="Ocupación (opcional)"
+                  [hint]="hintOcupacion"
+                  [errorMessage]="errorDelServidor('occupationConceptId')"
+                >
                   <app-reference-combobox
                     data-testid="perfil-ocupacion"
                     label="Ocupación"
-                    placeholder="Buscá tu profesión u oficio…"
-                    emptyMessage="Ninguna ocupación coincide. Podés dejarlo vacío."
+                    placeholder="Busque su profesión u oficio…"
+                    emptyMessage="Ninguna ocupación coincide. Puede dejarlo vacío."
                     [options]="ocupacionesFiltradas()"
                     [selected]="ocupacionElegida()"
                     [minQueryLength]="0"
@@ -194,6 +230,19 @@
                     (selectionChange)="elegirOcupacion($event)"
                   />
                 </app-form-field>
+                @if (ocupacionEsOtra()) {
+                  <app-form-field
+                    label="Especifique su ocupación"
+                    hint="Escriba su profesión u oficio como lo diría usted."
+                    [errorMessage]="errorDelServidor('occupationFreeText')"
+                  >
+                    <app-input
+                      testId="perfil-ocupacion-otra"
+                      placeholder="Apicultor"
+                      [(value)]="ocupacionTextoLibre"
+                    />
+                  </app-form-field>
+                }
               }
             </div>
           </section>
@@ -201,18 +250,77 @@
 
         <!-- ─── Contacto ────────────────────────────────────────────────── -->
         <app-tab [label]="pestanas[1]">
-          <!-- El municipio viaja SOLO: el departamento lo deriva el backend del
-               código del INE, así que el par no puede llegar incoherente. -->
           <section class="datos__seccion">
             <h3 class="datos__titulo">Contacto</h3>
-            <p class="datos__nota">Cómo ubicarte y dónde vivís.</p>
+            <p class="datos__nota">Cómo ubicarle y dónde vive.</p>
 
             <div class="datos__campos">
+              <!-- Pedido del cliente del 26/10/2026: cada dirección es un punto
+                   en el mapa, primero en la pestaña, y es lo único que se marca.
+                   La calle, el mapa de Bolivia acercado, el departamento, la
+                   provincia, el municipio y la zona salen del punto y se
+                   muestran en sólo lectura. El del domicilio es obligatorio; uno
+                   ya guardado vale sin volver a confirmarlo. Es el MISMO bloque
+                   del alta, no una copia. El municipio viaja SOLO: el
+                   departamento lo deriva el backend del código del INE. -->
+              <div class="datos__direccion" data-testid="perfil-domicilio">
+                <h4 class="datos__subtitulo">
+                  Domicilio <span aria-hidden="true">*</span>
+                  <span class="sr-only">(obligatorio)</span>
+                </h4>
+                <app-map-location-picker
+                  pinId="perfil-domicilio"
+                  etiquetaConfirmada="Su casa"
+                  etiquetaQuitar="Quitar la ubicación de su casa"
+                  etiquetaMapa="La ubicación de su casa en el mapa"
+                  etiquetaMarcar="Marcar mi casa en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta de su casa para poner el pin."
+                  etiquetaFicha="Su domicilio"
+                  [ids]="idsGpsDomicilio"
+                  [inicial]="gpsDomicilioGuardado()"
+                  (confirmado)="confirmarGpsDomicilio($event)"
+                  (localidad)="aplicarLocalidadDomicilio($event)"
+                />
+                @if (sinPuntoDeDomicilio()) {
+                  <p class="datos__error" role="alert" data-testid="perfil-domicilio-sin-punto">
+                    {{ mensajeSinPunto }}
+                  </p>
+                }
+                @if (errorDelServidor('homeAddressLines'); as error) {
+                  <p class="datos__error" role="alert">{{ error }}</p>
+                }
+                @if (errorDelServidor('residenceMunicipalityConceptId'); as error) {
+                  <p class="datos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+
+              <div class="datos__direccion" data-testid="perfil-trabajo">
+                <h4 class="datos__subtitulo">Trabajo (opcional)</h4>
+                <app-map-location-picker
+                  pinId="perfil-trabajo"
+                  etiquetaConfirmada="Su trabajo"
+                  etiquetaQuitar="Quitar la ubicación de su trabajo"
+                  etiquetaMapa="La ubicación de su trabajo en el mapa"
+                  etiquetaMarcar="Marcar mi trabajo en el mapa"
+                  indicacionMarcar="Toque el mapa en la puerta de su trabajo para poner el pin."
+                  etiquetaFicha="Su trabajo"
+                  [ids]="idsGpsTrabajo"
+                  [inicial]="gpsTrabajoGuardado()"
+                  (confirmado)="confirmarGpsTrabajo($event)"
+                  (localidad)="aplicarLocalidadTrabajo($event)"
+                />
+                @if (errorDelServidor('workAddressLines'); as error) {
+                  <p class="datos__error" role="alert">{{ error }}</p>
+                }
+              </div>
+
               <app-form-field
                 label="Teléfono"
-                hint="Con el que podamos llamarte. Vaciarlo te deja sin teléfono."
+                hint="Con el que podamos llamarle. Vaciarlo le deja sin teléfono."
                 [errorMessage]="
-                  telefonoMalEscrito() ? 'El número está incompleto para el país elegido.' : ''
+                  telefonoMalEscrito()
+                    ? 'El número está incompleto para el país elegido.'
+                    : errorDelServidor('phone')
                 "
               >
                 <!-- El mismo campo del alta: el prefijo se elige y la persona teclea
@@ -226,124 +334,6 @@
                 />
               </app-form-field>
 
-              @if (catalogoMunicipiosCaido()) {
-                <app-form-field label="¿Dónde vivís?">
-                  <p class="datos__aviso" data-testid="perfil-municipios-caidos">
-                    No pudimos traer el catálogo de municipios.
-                    <button app-button variant="ghost" size="sm" (clicked)="reintentarMunicipios()">
-                      Reintentar
-                    </button>
-                  </p>
-                </app-form-field>
-              } @else {
-                <!-- El selector de ubicación es el árbol del alta: primero el
-                     departamento y dentro sus municipios, con buscador. No es
-                     una casilla de texto: el valor es un concepto del catálogo,
-                     y así lo que se elija se lee igual en la ficha. -->
-                <app-form-field label="¿Dónde vivís?" hint="Buscá tu municipio, o abrí tu departamento.">
-                  <app-tree-select
-                    data-testid="perfil-municipio"
-                    [groups]="arbolMunicipios()"
-                    [(value)]="municipio"
-                    placeholder="Sin especificar"
-                    dialogTitle="¿Dónde vivís?"
-                    searchPlaceholder="Buscar municipio o departamento…"
-                    emptyMessage="Ningún municipio coincide con esa búsqueda."
-                  />
-                </app-form-field>
-              }
-
-              <!-- Las dos direcciones. Van acá porque responden a «cómo ubicarte»,
-                   que es de lo que trata esta pestaña. El municipio de arriba sigue
-                   viajando aparte: sale del catálogo, y estas son texto libre porque
-                   una dirección boliviana real —«Av. Prolongación Beni #5100, esq.
-                   6to anillo»— no entra en una lista. -->
-              <!-- La dirección y su mapa van juntos y a lo ancho de la rejilla.
-                   Sueltos, el mapa caía en la columna siguiente —debajo del
-                   teléfono— y quedaba asociado al campo equivocado. -->
-              <div class="datos__direccion">
-                <app-form-field
-                  label="Domicilio"
-                  hint="Calle, número y zona. Vaciarlo lo quita de tu ficha."
-                >
-                  <app-input
-                    data-testid="perfil-domicilio"
-                    [(value)]="domicilio"
-                    placeholder="Av. Prolongación Beni #5100, esq. 6to anillo"
-                  />
-                </app-form-field>
-                @if (domicilioPorReescribir()) {
-                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                       anuncia sin robar el foco, que sigue en el mapa. -->
-                  <app-alert
-                    appAnuncio
-                    [asertivo]="false"
-                    [enfocar]="false"
-                    tone="info"
-                    data-testid="perfil-domicilio-reescribir"
-                  >
-                    {{ avisoReescribir }}
-                  </app-alert>
-                }
-
-                <!-- El punto en el mapa, como en una app de pedidos: se pide la
-                     ubicación o se marca el pin a mano, y se confirma mirándolo.
-                     Es el MISMO bloque del alta, no una copia. -->
-                <app-ubicacion-picker
-                pinId="perfil-domicilio"
-                etiquetaConfirmada="Tu casa"
-                pregunta="¿Es acá donde vivís? Movete por el mapa para comprobarlo."
-                etiquetaQuitar="Quitar la ubicación de tu casa"
-                etiquetaMapa="La ubicación de tu casa en el mapa"
-                etiquetaMarcar="Marcar mi casa en el mapa"
-                indicacionMarcar="Tocá el mapa en la puerta de tu casa para poner el pin."
-                  [ids]="idsGpsDomicilio"
-                  [inicial]="gpsDomicilioGuardado()"
-                  (confirmado)="gpsDomicilio.set($event)"
-                  (puntoElegido)="vaciarDomicilioPorElMapa()"
-                />
-              </div>
-
-              <div class="datos__direccion">
-                <app-form-field
-                  label="Dirección de trabajo"
-                  hint="Dónde trabajás, si querés que figure."
-                >
-                  <app-input
-                    data-testid="perfil-trabajo"
-                    [(value)]="direccionTrabajo"
-                    placeholder="Calle Ayacucho #241, Casco Viejo"
-                  />
-                </app-form-field>
-                @if (trabajoPorReescribir()) {
-                  <!-- D-06: tocar el mapa vació lo escrito; se dice junto al campo y se
-                       anuncia sin robar el foco, que sigue en el mapa. -->
-                  <app-alert
-                    appAnuncio
-                    [asertivo]="false"
-                    [enfocar]="false"
-                    tone="info"
-                    data-testid="perfil-trabajo-reescribir"
-                  >
-                    {{ avisoReescribir }}
-                  </app-alert>
-                }
-
-                <app-ubicacion-picker
-                pinId="perfil-trabajo"
-                etiquetaConfirmada="Tu trabajo"
-                pregunta="¿Es acá donde trabajás? Movete por el mapa para comprobarlo."
-                etiquetaQuitar="Quitar la ubicación de tu trabajo"
-                etiquetaMapa="La ubicación de tu trabajo en el mapa"
-                etiquetaMarcar="Marcar mi trabajo en el mapa"
-                indicacionMarcar="Tocá el mapa en la puerta de tu trabajo para poner el pin."
-                  [ids]="idsGpsTrabajo"
-                  [inicial]="gpsTrabajoGuardado()"
-                  (confirmado)="gpsTrabajo.set($event)"
-                  (puntoElegido)="vaciarTrabajoPorElMapa()"
-                />
-              </div>
-
               <!-- El correo se MUESTRA y no se edita, y eso hay que decirlo: antes no
                    aparecía, y no verlo se lee como que la app lo perdió.
 
@@ -355,7 +345,7 @@
                    está pendiente. -->
               <app-form-field
                 label="Correo"
-                hint="Con este correo entrás. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
+                hint="Con este correo entra. Cambiarlo pide verificar el nuevo antes de soltar el viejo, así que todavía no se hace desde acá."
               >
                 <app-input
                   data-testid="perfil-correo"
@@ -372,12 +362,13 @@
         <app-tab [label]="pestanas[2]">
           <section class="datos__seccion">
             <h3 class="datos__titulo">Facturación</h3>
-            <p class="datos__nota">A nombre de quién salen tus comprobantes.</p>
+            <p class="datos__nota">A nombre de quién salen sus comprobantes.</p>
 
             <div class="datos__campos">
               <app-form-field
                 label="NIT"
-                hint="Para que las facturas salgan a tu nombre. Vaciarlo lo quita."
+                hint="Para que las facturas salgan a su nombre. Vaciarlo lo quita."
+                [errorMessage]="errorDelServidor('taxId')"
               >
                 <app-input data-testid="perfil-nit" [(value)]="nit" placeholder="1234567" />
               </app-form-field>
@@ -385,6 +376,7 @@
               <app-form-field
                 label="Razón social"
                 hint="A nombre de quién sale el comprobante. Sin NIT no se guarda."
+                [errorMessage]="errorDelServidor('taxHolderName')"
               >
                 <app-input
                   data-testid="perfil-razon-social"
@@ -396,52 +388,14 @@
           </section>
         </app-tab>
 
-        <!-- ─── Seguros y tutores ───────────────────────────────────────── -->
-        <app-tab [label]="pestanas[3]">
-          <!-- Se leen, no se escriben: el `PATCH` de datos propios no los acepta
-               —cada seguro y cada tutor tiene su propio circuito—. La pestaña
-               está igual para que el formulario tenga las mismas cuatro que la
-               ficha, y para que quien las busque no crea que se perdieron. -->
-          <section class="datos__seccion">
-            <h3 class="datos__titulo">Seguros y tutores</h3>
-            <p class="datos__nota">Lo que declaraste al registrarte. Todavía no se corrige desde acá.</p>
+        <!-- Seguros y tutores no son datos declarados en este formulario.
+             Las coberturas vienen de sus integraciones y los tutores nacen de
+             solicitudes de dependencia aceptadas. Ambos se muestran en la
+             ficha de lectura cuando corresponde. -->
 
-            @if (datos(); as p) {
-              @if (p.coverages.length > 0) {
-                <ul class="datos__lista" data-testid="perfil-seguros">
-                  @for (seguro of p.coverages; track seguro.carrierName + (seguro.planName ?? '')) {
-                    <li class="datos__item">
-                      <span class="datos__item-nombre">{{ seguro.carrierName }}</span>
-                      @if (seguro.planName) {
-                        <span class="datos__item-detalle">{{ seguro.planName }}</span>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="datos__nota">No declaraste ningún seguro.</p>
-              }
-              @if (p.guardians.length > 0) {
-                <ul class="datos__lista" data-testid="perfil-tutores">
-                  @for (tutor of p.guardians; track tutor.displayName ?? '') {
-                    <li class="datos__item">
-                      <span class="datos__item-nombre">{{ tutor.displayName ?? 'Sin nombre registrado' }}</span>
-                      @if (tutor.phone) {
-                        <span class="datos__item-detalle">{{ tutor.phone }}</span>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <p class="datos__nota">No declaraste ningún contacto de emergencia ni tutor.</p>
-              }
-            }
-          </section>
-        </app-tab>
-
-        <!-- «Mis puntos» no se edita: la pestaña está para que la tira sea la
-             misma que en lectura y el lápiz no mueva de lugar a nadie. -->
-        <app-tab [label]="pestanas[4]" disabled />
+        <!-- «Mis puntos» no se edita: es la billetera del programa de
+             fidelidad, no un dato declarado, y desde el 25/09/2026 (pedido del
+             propietario) se saca de la tira del editor en vez de apagarla. -->
       </app-tabs>
     </ng-template>
 
@@ -467,7 +421,12 @@
            no se ve: «Guardar» apagado sin decir por qué es un formulario que
            parece roto. La nota nombra la pestaña donde falta algo. -->
       @if (pendienteEnOtraPestana(); as aviso) {
-        <span form-actions-extra class="datos__pendiente" data-testid="perfil-pendiente" role="status">
+        <span
+          form-actions-extra
+          class="datos__pendiente"
+          data-testid="perfil-pendiente"
+          role="status"
+        >
           {{ aviso }}
         </span>
       }

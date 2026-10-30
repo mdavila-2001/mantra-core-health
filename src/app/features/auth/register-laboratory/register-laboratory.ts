@@ -1,43 +1,79 @@
-import { FileInput } from '../../../shared/components/molecules/file-input/file-input';
-import { NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet, isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, PLATFORM_ID } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpErrorResponse } from '@angular/common/http';
+import { map, switchMap } from 'rxjs';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { IamClient } from '../../../core/data-access/iam/iam.client';
+import type {
+  DiagnosticUnitBranchRegistration,
+  LaboratoryOrganizationRegistration,
+} from '../../../core/data-access/iam/iam.types';
+import { registrationErrorToViewState } from '../shared-registration/registration-errors';
+import { uiLanguage } from '../../../core/i18n/ui-language';
+import { loading, ready, validation } from '../../../core/view-state/view-state';
+import {
+  DIAGNOSIS_CATALOG_NOTICE,
+  DiagnosisCenterEnrollment,
+  DIAGNOSIS_CODES,
+  IncompleteCatalog,
+  type DiagnosisCatalogs,
+} from '../shared-registration/diagnostic-center-enrollment';
+import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Input as AppInput } from '../../../shared/components/atoms/input/input';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
+import { OnboardingDraftBanner } from '../../../shared/components/molecules/onboarding-draft-banner/onboarding-draft-banner';
+import { OnboardingDraftService } from '../../../core/onboarding/onboarding-draft.service';
+import type { OnboardingDraft } from '../../../core/onboarding/onboarding-draft.types';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
+import { DropzonePdf } from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf';
+import type {
+  PdfUploader,
+  UploadedDocument,
+} from '../../../shared/components/molecules/dropzone-pdf/dropzone-pdf.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { telefonoCompleto } from '../../../shared/components/molecules/phone-input/phone-input';
 import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-split';
-import { CampoPersonalizado } from '../../../shared/components/organisms/paginated-form/campo-personalizado';
+import { BranchBulkImport } from '../../../shared/components/organisms/branch-bulk-import/branch-bulk-import';
+import type { BranchDraft } from '../../../shared/utils/branch-import/branch-import';
+import { CustomField } from '../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import {
-  RegistroAyuda,
-  type TarjetaDeAyuda,
-} from '../../../shared/components/organisms/registro-ayuda/registro-ayuda';
+  RegistrationHelp,
+  type HelpCard,
+} from '../../../shared/components/organisms/registration-help/registration-help';
 import {
-  MAX_ATTACHMENT_BYTES,
-  SUPPORT_FILE_FORMATS,
-} from '../registro-compartido/credenciales-del-medico';
+  notarizedPowerField,
+  legalDocumentsFields,
+  RECORD_LEGAL_DOCUMENTS,
+  type EnrollmentDocumentKey,
+} from '../shared-registration/legal-documents';
 import {
-  MENSAJE_CONTRASENA_CORTA,
-  validadoresDeContrasena,
-} from '../registro-compartido/politica-de-contrasena';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+  MESSAGE_SHORT_PASSWORD,
+  passwordValidators,
+} from '../shared-registration/password-policy';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import type { PaginaDeFormulario } from '../../../shared/forms/paginated/paginated-form.types';
 import {
-  AVISO_REESCRIBIR_DIRECCION,
-  UbicacionPicker,
-  type Coordenadas,
-  type IdsDePrueba,
-} from '../registro-compartido/ubicacion-picker/ubicacion-picker';
+  MapLocationPicker,
+  type Coordinates,
+  type LocalityFromPoint,
+  type TestIds,
+} from '../shared-registration/map-location-picker/map-location-picker';
+import { addressFromPoint, pointLabel } from '../shared-registration/address-from-point';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { InlineNameFields } from '../shared-registration/inline-name-fields/inline-name-fields';
+import {
+  nameGroup,
+  completeName,
+} from '../shared-registration/name-fields/person-name';
+import { RegistrationBadge } from '../shared-registration/registration-badge';
 
 /* ============================================================================
     Alta del laboratorio de sangre — proceso 4.1 del registro del stakeholder.
@@ -48,7 +84,10 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
     se agregó ninguna pregunta que la fuente no haga —salvo la contraseña, ver
     el JSDoc de la clase— ni se sacó ninguna que sí haga.
 
-    Es la MAQUETA: nada sale a la red. Ver `submit()`.
+    Sale a la red igual que el alta de farmacia (carril A de la cuenta de
+    laboratorio, 30/09/2026): `POST /iam/auth/register-organization` con
+    `tenantType: 'DIAGNOSTIC_CENTER'` y el bloque `diagnosticUnit`. Ver
+    `submit()`.
     ========================================================================== */
 
 /**
@@ -73,53 +112,34 @@ export const TIPOS_DE_SOCIEDAD: readonly SelectOption<string>[] = [
   { value: 'SA', label: 'S.A.' },
   { value: 'SOCIEDAD_COLECTIVA', label: 'Sociedad colectiva' },
   { value: 'COMANDITA_SIMPLE', label: 'Sociedad en comandita simple' },
-  // Corregido a `COMANDITA_ACCIONES` (subtarea 1.1): es el código real del
-  // diccionario compartido (`legal-entity-types.dictionary.ts`); esta pantalla
-  // es una maqueta que no sale a la red, pero el código debe coincidir para
-  // el día que se conecte.
+  // `COMANDITA_ACCIONES` (subtarea 1.1): el código real del diccionario
+  // compartido (`legal-entity-types.dictionary.ts`). Viaja tal cual en
+  // `legalEntityType`, y el simulador lo contrasta con `TIPO_SOCIETARIO` (B6).
   { value: 'COMANDITA_ACCIONES', label: 'Sociedad en comandita por acciones' },
   { value: 'SUCURSAL_EXTRANJERA', label: 'Sucursal de sociedad extranjera' },
 ];
 
-/** Un papel adjunto: con qué nombre llegó y cuánto pesa. */
-export interface AdjuntoDeclarado {
-  readonly archivo: string;
-  readonly pesoBytes: number;
-}
+/** Bolivia es el único país que contempla el registro de procesos del laboratorio. */
+const PAIS = 'BO';
 
 /** Una sucursal declarada en el alta (punto 4.1.18). */
 export interface SucursalDeclarada {
   readonly id: string;
   readonly nombre: string;
   readonly direccion: string;
-  readonly gps: Coordenadas | null;
+  readonly descripcion: string;
+  /** El enlace de mapa que pegó la persona o que trajo la carga en lote. */
+  readonly urlUbicacion: string;
+  readonly gps: Coordinates | null;
 }
-
-/**
- * Los seis papeles del proceso, por la clave del control que los guarda.
- *
- * Que vivan en el formulario es lo que hace que los tres obligatorios los haga
- * cumplir el motor —una página con un control inválido no avanza, y eso ya está
- * escrito y probado— en vez de una comprobación aparte que hay que acordarse de
- * llamar.
- */
-export type ClaveDeAdjunto =
-  | 'constitucionFile'
-  | 'nitFile'
-  | 'seprecFile'
-  | 'licenciaFile'
-  | 'sedesFile'
-  | 'poderFile';
-
-/** Formatos que se aceptan. El proceso pide PDF; se acepta la foto del papel. */
-const FORMATOS_DE_RESPALDO = SUPPORT_FILE_FORMATS;
-
-/** Cinco megas, el mismo tope que el alta de profesional: la misma constante. */
-const MAX_BYTES_ADJUNTO = MAX_ATTACHMENT_BYTES;
 
 const MAX_NOMBRE = 300;
 const MAX_DIRECCION = 300;
 const MAX_NIT = 100;
+const MAX_CORREO = 320;
+
+/** El nombre de la sede primaria de la unidad: la central que declara 4.1.6. */
+const NOMBRE_DE_LA_CENTRAL = 'Casa central';
 
 /** Dígitos, con o sin guiones: el NIT boliviano es numérico. */
 const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
@@ -130,13 +150,13 @@ const NIT_VALIDO = /^[0-9][0-9-]{3,19}$/;
  * Mismo mecanismo que el alta de profesional: la columna cambia con el paso,
  * porque «¿por qué me piden ESTO?» es una pregunta distinta en cada página.
  */
-const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
+const AYUDA: Readonly<Record<string, readonly HelpCard[]>> = {
   empresa: [
     {
       icono: 'building',
       titulo: 'La empresa, no el local',
       texto:
-        'Acá va la razón social tal como figura en tu matrícula de comercio. Los locales donde atendés se cargan más adelante, cada uno con su punto en el mapa.',
+        'Acá va la razón social tal como figura en su matrícula de comercio. Los locales donde atiende se cargan más adelante, cada uno con su punto en el mapa.',
     },
     {
       icono: 'labels',
@@ -148,23 +168,23 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
   documentos: [
     {
       icono: 'folder',
-      titulo: 'Tres papeles frenan, tres no',
+      titulo: 'Ningún papel frena su alta',
       texto:
-        'Sin SEPREC, licencia de funcionamiento y certificado del SEDES no podemos publicar un laboratorio: son los que prueban que está registrado y habilitado para operar. Los otros tres los podés traer después.',
+        'Puede adjuntarlos ahora o más adelante. Sí van a hacer falta para que su laboratorio quede habilitado a atender: el SEPREC, la licencia y el certificado del SEDES prueban que está registrado y habilitado para operar.',
     },
     {
       icono: 'shield',
       titulo: 'Quién los ve',
       texto:
-        'Los mira el equipo que aprueba el alta. No se publican en tu ficha ni los ve un paciente.',
+        'Los mira el equipo que aprueba el alta. No se publican en su ficha ni los ve un paciente.',
     },
   ],
   ubicacion: [
     {
       icono: 'pin',
-      titulo: 'El punto es lo que te hace aparecer',
+      titulo: 'El punto es lo que le hace aparecer',
       texto:
-        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Sin el punto en el mapa tu laboratorio queda fuera de esa lista, aunque la dirección esté escrita.',
+        'Cuando un paciente busca dónde hacerse un estudio, la app ordena por cercanía. Por eso el punto es obligatorio: de él sale también la dirección, el municipio y la zona.',
     },
   ],
   sucursales: [
@@ -182,6 +202,12 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       texto:
         'El correo del representante legal es el usuario de la cuenta. Después se suman los usuarios que hagan falta, cada uno con el suyo.',
     },
+    {
+      icono: 'folder',
+      titulo: 'El poder va con quien lo firma',
+      texto:
+        'Adjúntelo acá, junto a los datos del representante. Es opcional: si el dueño se representa a sí mismo, no hace falta.',
+    },
   ],
   'gerencia-general': [
     {
@@ -196,7 +222,7 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
       icono: 'chart',
       titulo: 'A quién le llega la liquidación',
       texto:
-        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo dejás vacío, va al del representante legal.',
+        'El resumen semanal de ventas y comisiones se manda a este correo cuando está cargado. Si lo deja vacío, va al del representante legal.',
     },
   ],
   'gerencia-marketing': [
@@ -220,59 +246,56 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
  * **Registro del laboratorio de sangre** — los datos legales de la empresa
  * (proceso 4.1).
  *
- * ## Qué es y qué no es
+ * ## A dónde va
  *
- * Es la maqueta visual del alta: **no hay endpoint detrás y no se llama a
- * ninguno**. La API tiene tres altas públicas —paciente, profesional y
- * aseguradora— y el laboratorio no es una de ellas todavía. Mandar esto a
- * `register-organization` daría de alta una aseguradora, que es otra cosa;
- * apuntar a una ruta inventada dejaría un 404 esperando al primero que lo
- * pruebe contra la API de verdad. Así que el envío se resuelve acá y la
- * pantalla lo dice: queda una solicitud.
+ * A `POST /iam/auth/register-organization` con `tenantType: 'DIAGNOSTIC_CENTER'`
+ * —el código que la API emite para un laboratorio— y el bloque
+ * `diagnosticUnit` que su DTO ya declara para ese tipo: la central como sede
+ * primaria, con su dirección y, si se confirmó, su punto en el mapa. Mismo
+ * mecanismo que el alta de farmacia (`RegisterPharmacy`): `IamClient`,
+ * `ViewState` y los PDF subidos antes por la pre-carga pública. Las
+ * sucursales viajan en `diagnosticUnit.branches`, con descripción y enlace de
+ * mapa: la API las crea como sedes de toma de muestras de la unidad y como
+ * sucursales de la pestaña Sucursales (P51, verificado contra la API real en
+ * `laboratory-registration.int-spec.ts` del repo de la API). El tipo de
+ * unidad (`DU_TYPE_LAB`), la modalidad, el país y la jurisdicción salen del
+ * catálogo público por código (`DiagnosisCenterEnrollment`).
  *
  * ## De dónde sale cada pregunta
  *
  * De los dieciocho puntos de 4.1, en su orden. La única que la fuente **no**
  * hace es la **contraseña**: sin ella no hay cuenta con la que volver a entrar,
- * y las otras tres altas de la plataforma la piden igual. El usuario es el
- * correo del representante legal, que sí está en la fuente (4.1.8.2), así que
- * no se inventó ninguna identidad nueva.
+ * y las otras altas de la plataforma la piden igual. El usuario es el correo
+ * del representante legal, que sí está en la fuente (4.1.8.2), así que no se
+ * inventó ninguna identidad nueva.
  *
  * Lo que la fuente **no** pide y por eso no está, anotado para que no pase por
  * olvido: 4.1 no menciona departamento ni municipio. El directorio los va a
  * necesitar para ordenar por cercanía, pero eso es una pregunta al propietario,
  * no algo que esta pantalla deba inventar.
  *
- * ## Qué es obligatorio, y por qué
+ * ## Qué es obligatorio, y por qué (misma regla que la farmacia, D2)
  *
- * Frena el alta lo que sin ello no hay laboratorio publicable:
+ * Frena el alta sólo lo más básico para nacer: **razón social, tipo de
+ * sociedad (de la lista cerrada), NIT, el punto de la central en el mapa
+ * —del que sale su dirección legal—, nombre, cédula y correo del representante
+ * legal —que es el correo de acceso— y contraseña**, más el poder notariado
+ * salvo en una empresa unipersonal: la API exige la cédula (400) y el poder
+ * (422) y este formulario no puede exigir menos (P51, D-3). El punto es
+ * obligatorio por pedido del cliente (26/10/2026): la persona sólo marca el
+ * punto, y la calle, el municipio y la zona se deducen de él, sin editarse.
+ * Lo mismo cada sucursal que se declare con nombre.
  *
- * - **Razón social, tipo de sociedad y NIT**: la identidad tributaria de quien
- *   va a facturar. El tipo, además, es el conteo que pide 4.1.1.1.
- * - **SEPREC, licencia de funcionamiento y certificado del SEDES**: los tres
- *   que prueban que la empresa está registrada y **habilitada para operar**. Un
- *   laboratorio de sangre sin certificado del SEDES no puede atender.
- * - **Dirección legal de la central**: sin dirección no hay a dónde ir.
- * - **Representante legal y su correo**: es quien firma, y el correo es el
- *   usuario de la cuenta.
- *
- * No frena, y cada uno por su motivo:
- *
- * - **Constitución de la empresa y poder del representante**: una
- *   **unipersonal** no tiene ninguno de los dos —no constituye sociedad y el
- *   titular se representa a sí mismo—. Exigirlos dejaría afuera a un tipo
- *   societario que la propia lista ofrece.
- * - **NIT en PDF**: el número ya se pide escrito; el papel es respaldo.
- * - **Punto en el mapa y sucursales**: el GPS depende de un permiso del
- *   navegador que se puede negar, y hay laboratorios de un solo local. Se
- *   explica lo que se pierde sin ellos en vez de frenar el alta.
- * - **Los tres cargos** (general, comercial y marketing): nueve campos de
- *   contacto que no cambian nada de lo que la plataforma puede hacer hoy.
+ * El resto —los seis papeles en PDF, las sucursales y los tres cargos— se
+ * puede completar después. Los papeles siguen siendo lo
+ * que habilita a un laboratorio a **atender** (sin certificado del SEDES no
+ * puede), pero esa regla es de habilitación, no de alta, y hoy no la hace
+ * cumplir ninguna capa (P51).
  */
 @Component({
   selector: 'app-register-laboratory',
-  imports: [
-    FileInput,
+  imports: [RegistrationBadge, 
+    BranchBulkImport,
     NgTemplateOutlet,
     RouterLink,
     Link,
@@ -285,18 +308,27 @@ const AYUDA: Readonly<Record<string, readonly TarjetaDeAyuda[]>> = {
     AnnounceOnAppear,
     Alert,
     PaginatedForm,
-    CampoPersonalizado,
-    RegistroAyuda,
-    UbicacionPicker,
+    CustomField,
+    RegistrationHelp,
+    MapLocationPicker,
+    DropzonePdf,
+    InlineNameFields,
+    OnboardingDraftBanner,
   ],
   templateUrl: './register-laboratory.html',
-  styleUrls: ['../registro-compartido/registro.css', './register-laboratory.css'],
+  styleUrls: ['../shared-registration/registration.css', './register-laboratory.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterLaboratory {
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly draftService = inject(OnboardingDraftService);
+  private readonly iam = inject(IamClient);
+  /** Resuelve del catálogo los conceptos de país y jurisdicción que la API exige. */
+  private readonly alta = inject(DiagnosisCenterEnrollment);
   private readonly router = inject(Router);
 
-  protected readonly formatosDeRespaldo = FORMATOS_DE_RESPALDO;
+  readonly borradorDetectado = signal<OnboardingDraft | null>(null);
+  readonly pasoGuardado = signal<number>(0);
 
   readonly form = new FormGroup({
     // --- 4.1.1 · la empresa ------------------------------------------------
@@ -316,35 +348,43 @@ export class RegisterLaboratory {
         Validators.pattern(NIT_VALIDO),
       ],
     }),
-    // --- 4.1.1.2, 4.1.2.1, 4.1.3, 4.1.4, 4.1.5 · los papeles ---------------
-    constitucionFile: new FormControl<AdjuntoDeclarado | null>(null),
-    nitFile: new FormControl<AdjuntoDeclarado | null>(null),
-    seprecFile: new FormControl<AdjuntoDeclarado | null>(null, {
-      validators: [Validators.required],
-    }),
-    licenciaFile: new FormControl<AdjuntoDeclarado | null>(null, {
-      validators: [Validators.required],
-    }),
-    sedesFile: new FormControl<AdjuntoDeclarado | null>(null, {
-      validators: [Validators.required],
-    }),
+    // --- 4.1.1.2, 4.1.2.1, 4.1.3, 4.1.4, 4.1.5, 4.1.8.1 · los seis papeles,
+    // todos opcionales: cada control guarda el `fileId` de la pre-carga ------
+    constitutionFileId: new FormControl('', { nonNullable: true }),
+    taxIdentifierFileId: new FormControl('', { nonNullable: true }),
+    commerceRegistryFileId: new FormControl('', { nonNullable: true }),
+    operatingLicenseFileId: new FormControl('', { nonNullable: true }),
+    healthAuthorityCertificateFileId: new FormControl('', { nonNullable: true }),
+    powerOfAttorneyFileId: new FormControl('', { nonNullable: true }),
     // --- 4.1.6 · dirección legal de la central -----------------------------
+    // No se escribe (pedido del cliente del 26/10/2026): la deduce el punto de
+    // la central, ver `escribirLocalidadCentral`. Sigue obligatoria porque la
+    // API la exige, y nunca queda vacía con un punto puesto.
     addressLines: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.maxLength(MAX_DIRECCION)],
     }),
+    // **El punto de la central es obligatorio** (mismo pedido). Vive en el
+    // formulario porque el motor valida de a una página y sólo frena lo que
+    // está en el `FormGroup`. Lo escribe `fijarGpsCentral` con el punto
+    // CONFIRMADO, y vuelve a `null` si se quita o se mueve el pin.
+    gpsCentral: new FormControl<Coordinates | null>(null, {
+      validators: [Validators.required],
+    }),
     // --- 4.1.8 · representante legal ---------------------------------------
-    legalRepName: new FormControl('', {
+    // Un grupo con las partes del nombre (primer nombre y apellido paterno obligatorios).
+    legalRepName: nameGroup(true),
+    // La API exige el documento del representante legal (4 a 50 caracteres).
+    legalRepIdNumber: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(MAX_NOMBRE)],
+      validators: [Validators.required, Validators.minLength(4), Validators.maxLength(50)],
     }),
     legalRepEmail: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.email],
+      validators: [Validators.required, Validators.email, Validators.maxLength(MAX_CORREO)],
     }),
-    poderFile: new FormControl<AdjuntoDeclarado | null>(null),
     // --- 4.1.9 a 4.1.17 · los tres cargos, todos opcionales ----------------
-    generalManagerName: new FormControl('', { nonNullable: true }),
+    generalManagerName: nameGroup(false),
     generalManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -353,7 +393,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    salesManagerName: new FormControl('', { nonNullable: true }),
+    salesManagerName: nameGroup(false),
     salesManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -362,7 +402,7 @@ export class RegisterLaboratory {
       nonNullable: true,
       validators: [Validators.email],
     }),
-    marketingManagerName: new FormControl('', { nonNullable: true }),
+    marketingManagerName: nameGroup(false),
     marketingManagerPhone: new FormControl('', {
       nonNullable: true,
       validators: [telefonoCompleto],
@@ -374,7 +414,7 @@ export class RegisterLaboratory {
     // --- la cuenta ---------------------------------------------------------
     password: new FormControl('', {
       nonNullable: true,
-      validators: [...validadoresDeContrasena],
+      validators: [...passwordValidators],
     }),
   });
 
@@ -384,326 +424,279 @@ export class RegisterLaboratory {
    * Pasan por `paginarCampos` como todo lo que monta el motor. Ninguna supera
    * los cuatro campos, así que cada sección es una página y conserva su rótulo.
    */
-  readonly paginas = paginarCampos([
-    {
-      titulo: 'La empresa',
-      clave: 'empresa',
-      icon: 'building' as const,
-      hint: 'Los datos con los que figura en tu matrícula de comercio.',
-      campos: [
-        {
-          key: 'legalName',
-          label: 'Nombre o razón social',
-          control: 'text' as const,
-          required: true,
-          icono: 'building' as const,
-          placeholder: 'Laboratorio Clínico del Sur S.R.L.',
-          testId: 'registro-lab-razon-social',
-          mensajeDeError: 'Escribí el nombre o la razón social de la empresa.',
-        },
-        {
-          key: 'companyType',
-          label: 'Tipo de sociedad',
-          hint: 'El que figura en tu matrícula de comercio.',
-          control: 'select' as const,
-          options: TIPOS_DE_SOCIEDAD,
-          required: true,
-          icono: 'labels' as const,
-          placeholder: 'Elegí el tipo de sociedad',
-          testId: 'registro-lab-tipo-sociedad',
-          mensajeDeError: 'Elegí el tipo de sociedad.',
-        },
-        {
-          key: 'taxId',
-          label: 'Número de NIT',
-          hint: 'Sólo números. Es el que va a salir en las facturas.',
-          control: 'text' as const,
-          required: true,
-          icono: 'billing' as const,
-          placeholder: '1023456789',
-          testId: 'registro-lab-nit',
-          mensajeDeError: 'Escribí el NIT: sólo números, al menos cuatro dígitos.',
-        },
-      ],
-    },
-    {
-      titulo: 'Los papeles de la empresa',
-      clave: 'documentos',
-      icon: 'folder' as const,
-      hint: 'PDF, JPG o PNG. Hasta 5 MB por archivo.',
-      campos: [
-        {
-          key: 'seprecFile',
-          ancho: 'mitad' as const,
-          label: 'SEPREC',
-          hint: 'La matrícula de comercio vigente.',
-          control: 'custom' as const,
-          required: true,
-          mensajeDeError: 'Adjuntá el SEPREC: sin la matrícula no podemos publicar el laboratorio.',
-        },
-        {
-          key: 'licenciaFile',
-          ancho: 'mitad' as const,
-          label: 'Licencia de funcionamiento',
-          hint: 'La que emite tu municipio.',
-          control: 'custom' as const,
-          required: true,
-          mensajeDeError: 'Adjuntá la licencia de funcionamiento.',
-        },
-        {
-          key: 'sedesFile',
-          ancho: 'mitad' as const,
-          label: 'Certificado del SEDES',
-          hint: 'El que habilita al laboratorio a operar.',
-          control: 'custom' as const,
-          required: true,
-          mensajeDeError:
-            'Adjuntá el certificado del SEDES: es lo que habilita a un laboratorio a atender.',
-        },
-        {
-          key: 'nitFile',
-          ancho: 'mitad' as const,
-          label: 'NIT en PDF (opcional)',
-          hint: 'El respaldo del número que escribiste antes.',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Constitución y poder',
-      clave: 'documentos',
-      icon: 'folder' as const,
-      hint: 'Los dos son opcionales: una empresa unipersonal no tiene ninguno de los dos.',
-      campos: [
-        {
-          key: 'constitucionFile',
-          ancho: 'mitad' as const,
-          label: 'Constitución de la empresa (opcional)',
-          hint: 'La escritura con la que se constituyó la sociedad.',
-          control: 'custom' as const,
-        },
-        {
-          key: 'poderFile',
-          ancho: 'mitad' as const,
-          label: 'Poder del representante legal (opcional)',
-          hint: 'No hace falta si el titular se representa a sí mismo.',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Dónde está la central',
-      clave: 'ubicacion',
-      icon: 'pin' as const,
-      campos: [
-        {
-          key: 'addressLines',
-          label: 'Dirección legal de la central',
-          hint: 'Calle, número y zona. Es la que figura en tus papeles.',
-          control: 'text' as const,
-          required: true,
-          icono: 'pin' as const,
-          placeholder: 'Av. Cañoto esq. Ballivián 234, Zona Central',
-          testId: 'registro-lab-direccion',
-          mensajeDeError: 'Escribí la dirección legal de la central.',
-        },
-        {
-          key: 'gpsCentral',
-          label: 'Ubicación en el mapa (opcional)',
-          hint: 'Sin el punto, tu laboratorio no aparece cuando alguien busca el más cercano.',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Tus sucursales',
-      clave: 'sucursales',
-      icon: 'hospital' as const,
-      hint: 'Si sólo atendés en la central, seguí de largo.',
-      campos: [
-        {
-          key: 'sucursales',
-          label: 'Sucursales (opcional)',
-          control: 'custom' as const,
-        },
-      ],
-    },
-    {
-      titulo: 'Representante legal',
-      clave: 'representante',
-      icon: 'shield' as const,
-      campos: [
-        {
-          key: 'legalRepName',
-          label: 'Nombre del representante legal',
-          control: 'text' as const,
-          required: true,
-          icono: 'people' as const,
-          autocomplete: 'name',
-          testId: 'registro-lab-representante',
-          mensajeDeError: 'Escribí el nombre del representante legal.',
-        },
-        {
-          key: 'legalRepEmail',
-          label: 'Correo del representante legal',
-          hint: 'Con este correo vas a entrar a la plataforma.',
-          control: 'email' as const,
-          required: true,
-          icono: 'mail' as const,
-          autocomplete: 'username',
-          testId: 'registro-lab-representante-correo',
-          mensajeDeError: 'Escribí un correo válido: es el usuario de la cuenta.',
-        },
-      ],
-    },
-    {
-      titulo: 'Gerencia general',
-      clave: 'gerencia-general',
-      icon: 'briefcase' as const,
-      hint: 'Todo este paso es opcional: podés completarlo después.',
-      campos: [
-        {
-          key: 'generalManagerName',
-          label: 'Nombre del gerente general',
-          control: 'text' as const,
-          icono: 'people' as const,
-          testId: 'registro-lab-gerente-general',
-        },
-        {
-          key: 'generalManagerPhone',
-          label: 'Celular',
-          control: 'tel' as const,
-          testId: 'registro-lab-gerente-general-celular',
-          mensajeDeError: 'El número está incompleto.',
-        },
-        {
-          key: 'generalManagerEmail',
-          label: 'Correo',
-          control: 'email' as const,
-          icono: 'mail' as const,
-          testId: 'registro-lab-gerente-general-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
-        },
-      ],
-    },
-    {
-      titulo: 'Gerencia comercial',
-      clave: 'gerencia-comercial',
-      icon: 'chart' as const,
-      hint: 'Opcional. Es a quien le llega el detalle semanal de ventas y comisiones.',
-      campos: [
-        {
-          key: 'salesManagerName',
-          label: 'Nombre del gerente comercial',
-          control: 'text' as const,
-          icono: 'people' as const,
-          testId: 'registro-lab-gerente-comercial',
-        },
-        {
-          key: 'salesManagerPhone',
-          label: 'Celular',
-          control: 'tel' as const,
-          testId: 'registro-lab-gerente-comercial-celular',
-          mensajeDeError: 'El número está incompleto.',
-        },
-        {
-          key: 'salesManagerEmail',
-          label: 'Correo',
-          control: 'email' as const,
-          icono: 'mail' as const,
-          testId: 'registro-lab-gerente-comercial-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
-        },
-      ],
-    },
-    {
-      titulo: 'Gerencia de marketing',
-      clave: 'gerencia-marketing',
-      icon: 'megaphone' as const,
-      hint: 'Opcional. Es con quien se coordinan las campañas.',
-      campos: [
-        {
-          key: 'marketingManagerName',
-          label: 'Nombre del gerente de marketing',
-          control: 'text' as const,
-          icono: 'people' as const,
-          testId: 'registro-lab-gerente-marketing',
-        },
-        {
-          key: 'marketingManagerPhone',
-          label: 'Celular',
-          control: 'tel' as const,
-          testId: 'registro-lab-gerente-marketing-celular',
-          mensajeDeError: 'El número está incompleto.',
-        },
-        {
-          key: 'marketingManagerEmail',
-          label: 'Correo',
-          control: 'email' as const,
-          icono: 'mail' as const,
-          testId: 'registro-lab-gerente-marketing-correo',
-          mensajeDeError: 'Escribí un correo válido o dejalo vacío.',
-        },
-      ],
-    },
-    {
-      titulo: 'Tu acceso',
-      clave: 'acceso',
-      icon: 'lock' as const,
-      hint: 'Entrás con el correo del representante legal y esta contraseña.',
-      campos: [
-        {
-          key: 'password',
-          label: 'Contraseña',
-          hint: 'Al menos 8 caracteres.',
-          control: 'password' as const,
-          required: true,
-          icono: 'lock' as const,
-          autocomplete: 'new-password',
-          testId: 'registro-lab-password',
-          mensajeDeError: MENSAJE_CONTRASENA_CORTA,
-        },
-      ],
-    },
-  ]);
+  readonly paginas = computed(() =>
+    paginateFields([
+      {
+        titulo: 'La empresa',
+        clave: 'empresa',
+        icon: 'building' as const,
+        hint: 'Los datos con los que figura en su matrícula de comercio.',
+        campos: [
+          {
+            key: 'legalName',
+            label: 'Nombre o razón social',
+            control: 'text' as const,
+            required: true,
+            icono: 'building' as const,
+            placeholder: 'Laboratorio Clínico del Sur S.R.L.',
+            testId: 'registro-lab-razon-social',
+            mensajeDeError: 'Escriba el nombre o la razón social de la empresa.',
+          },
+          {
+            key: 'companyType',
+            label: 'Tipo de sociedad',
+            hint: 'El que figura en su matrícula de comercio.',
+            control: 'select' as const,
+            options: TIPOS_DE_SOCIEDAD,
+            required: true,
+            icono: 'labels' as const,
+            placeholder: 'Elija el tipo de sociedad',
+            testId: 'registro-lab-tipo-sociedad',
+            mensajeDeError: 'Elija el tipo de sociedad.',
+          },
+          {
+            key: 'taxId',
+            label: 'Número de NIT',
+            hint: 'Sólo números. Es el que va a salir en las facturas.',
+            control: 'text' as const,
+            required: true,
+            icono: 'billing' as const,
+            placeholder: '1023456789',
+            testId: 'registro-lab-nit',
+            mensajeDeError: 'Escriba el NIT: sólo números, al menos cuatro dígitos.',
+          },
+        ],
+      },
+      {
+        titulo: 'Los papeles de la empresa',
+        clave: 'documentos',
+        icon: 'folder' as const,
+        hint: 'Opcionales: puede adjuntarlos ahora o más adelante. PDF, hasta 10 MB por archivo.',
+        // Los papeles, en el orden del registro de procesos y en UNA sola
+        // vista: partirlos en «(1 de 2)» y «(2 de 2)» escondía la mitad.
+        sinPartir: true,
+        campos: legalDocumentsFields(PAIS, uiLanguage(), false),
+      },
+      {
+        titulo: 'Dónde está la central',
+        clave: 'ubicacion',
+        icon: 'pin' as const,
+        // Sólo el punto: la calle, el departamento, el municipio y la zona
+        // salen de él y el selector los muestra sin dejarlos editar.
+        campos: [
+          {
+            key: 'gpsCentral',
+            label: 'Ubicación de la central en el mapa',
+            hint: 'Marque el punto exacto de la central. De ahí sacamos la calle, el municipio y la zona.',
+            control: 'custom' as const,
+            required: true,
+            mensajeDeError: 'Marque el lugar en el mapa y pulse «Confirmar dirección actual».',
+          },
+        ],
+      },
+      {
+        titulo: 'Sus sucursales',
+        clave: 'sucursales',
+        icon: 'hospital' as const,
+        hint: 'Si sólo atiende en la central, siga de largo.',
+        campos: [
+          {
+            key: 'sucursales',
+            label: 'Sucursales (opcional)',
+            control: 'custom' as const,
+          },
+        ],
+      },
+      {
+        titulo: 'Representante legal',
+        clave: 'representante',
+        icon: 'shield' as const,
+        campos: [
+          {
+            // Sin rótulo ni error propios: `app-inline-name-fields` pinta cada casilla
+            // con el suyo, y un `<label for>` externo apuntaría a un control que no existe.
+            key: 'legalRepName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+          },
+          {
+            key: 'legalRepIdNumber',
+            label: 'Documento de identidad del representante',
+            hint: 'Cédula de identidad o documento equivalente.',
+            control: 'text' as const,
+            required: true,
+            icono: 'people' as const,
+            testId: 'registro-lab-representante-documento',
+            mensajeDeError: 'Escriba el documento del representante (al menos cuatro caracteres).',
+          },
+          {
+            key: 'legalRepEmail',
+            label: 'Correo del representante legal',
+            hint: 'Con este correo va a entrar a la plataforma.',
+            control: 'email' as const,
+            required: true,
+            icono: 'mail' as const,
+            autocomplete: 'username',
+            testId: 'registro-lab-representante-correo',
+            mensajeDeError: 'Escriba un correo válido: es el usuario de la cuenta.',
+          },
+          // El poder (4.1.8.1) se pide junto a quien lo firma, no con los papeles de la empresa.
+          notarizedPowerField(PAIS, uiLanguage(), this.poderObligatorio()),
+        ],
+      },
+      {
+        titulo: 'Gerencia general',
+        clave: 'gerencia-general',
+        icon: 'briefcase' as const,
+        hint: 'Todo este paso es opcional: puede completarlo después.',
+        campos: [
+          {
+            key: 'generalManagerName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+            testId: 'registro-lab-gerente-general',
+          },
+          {
+            key: 'generalManagerPhone',
+            label: 'Celular',
+            control: 'tel' as const,
+            testId: 'registro-lab-gerente-general-celular',
+            mensajeDeError: 'El número está incompleto.',
+          },
+          {
+            key: 'generalManagerEmail',
+            label: 'Correo',
+            control: 'email' as const,
+            icono: 'mail' as const,
+            testId: 'registro-lab-gerente-general-correo',
+            mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
+          },
+        ],
+      },
+      {
+        titulo: 'Gerencia comercial',
+        clave: 'gerencia-comercial',
+        icon: 'chart' as const,
+        hint: 'Opcional. Es a quien le llega el detalle semanal de ventas y comisiones.',
+        campos: [
+          {
+            key: 'salesManagerName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+            testId: 'registro-lab-gerente-comercial',
+          },
+          {
+            key: 'salesManagerPhone',
+            label: 'Celular',
+            control: 'tel' as const,
+            testId: 'registro-lab-gerente-comercial-celular',
+            mensajeDeError: 'El número está incompleto.',
+          },
+          {
+            key: 'salesManagerEmail',
+            label: 'Correo',
+            control: 'email' as const,
+            icono: 'mail' as const,
+            testId: 'registro-lab-gerente-comercial-correo',
+            mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
+          },
+        ],
+      },
+      {
+        titulo: 'Gerencia de marketing',
+        clave: 'gerencia-marketing',
+        icon: 'megaphone' as const,
+        hint: 'Opcional. Es con quien se coordinan las campañas.',
+        campos: [
+          {
+            key: 'marketingManagerName',
+            label: '',
+            control: 'custom' as const,
+            mensajeDeError: '',
+            testId: 'registro-lab-gerente-marketing',
+          },
+          {
+            key: 'marketingManagerPhone',
+            label: 'Celular',
+            control: 'tel' as const,
+            testId: 'registro-lab-gerente-marketing-celular',
+            mensajeDeError: 'El número está incompleto.',
+          },
+          {
+            key: 'marketingManagerEmail',
+            label: 'Correo',
+            control: 'email' as const,
+            icono: 'mail' as const,
+            testId: 'registro-lab-gerente-marketing-correo',
+            mensajeDeError: 'Escriba un correo válido o déjelo vacío.',
+          },
+        ],
+      },
+      {
+        titulo: 'Su acceso',
+        clave: 'acceso',
+        icon: 'lock' as const,
+        hint: 'Entra con el correo del representante legal y esta contraseña.',
+        campos: [
+          {
+            key: 'password',
+            label: 'Contraseña',
+            hint: 'Al menos 8 caracteres.',
+            control: 'password' as const,
+            required: true,
+            icono: 'lock' as const,
+            autocomplete: 'new-password',
+            testId: 'registro-lab-password',
+            mensajeDeError: MESSAGE_SHORT_PASSWORD,
+          },
+        ],
+      },
+    ]),
+  );
 
-  readonly attachmentFiles = signal<Partial<Record<ClaveDeAdjunto, readonly File[]>>>({});
-  protected readonly maxAttachmentBytes = MAX_BYTES_ADJUNTO;
+  /* --- documentos legales (dropzone real, con `fileId`) ------------------ */
 
-  attachmentLabel(key: ClaveDeAdjunto): string {
-    return this.paginas.flatMap(page => page.campos).find(field => field.key === key)?.label ?? 'Documento';
+  /** Cómo sube cada `app-dropzone-pdf`: la misma pre-carga pública que la farmacia y la aseguradora. */
+  protected readonly subirDocumento: PdfUploader = (file) =>
+    this.iam.uploadRegistrationDocument(file);
+
+  /** Lo ya subido por cada dropzone, para sobrevivir a que el asistente destruya y recree la página. */
+  protected readonly documentosSubidos = signal<
+    Partial<Record<EnrollmentDocumentKey, UploadedDocument>>
+  >({});
+
+  protected readonly clavesDeDocumento: readonly EnrollmentDocumentKey[] = [
+    ...RECORD_LEGAL_DOCUMENTS.map((d) => d.key),
+    'powerOfAttorneyFileId',
+  ];
+
+  registrarDocumento(clave: EnrollmentDocumentKey, fileId: string | null): void {
+    this.form.controls[clave].setValue(fileId ?? '');
+    if (fileId === null) {
+      this.documentosSubidos.update((actual) => {
+        const { [clave]: _omitido, ...resto } = actual;
+        return resto;
+      });
+    }
   }
 
-  isAttachmentRequired(key: ClaveDeAdjunto): boolean {
-    return this.form.controls[key].hasValidator(Validators.required);
+  protected recordarDocumento(clave: EnrollmentDocumentKey, documento: UploadedDocument): void {
+    this.documentosSubidos.update((actual) => ({ ...actual, [clave]: documento }));
   }
 
-  isAttachmentInvalid(key: ClaveDeAdjunto): boolean {
-    const control = this.form.controls[key];
-    return control.touched && control.invalid;
+  protected documentoInicialDe(clave: EnrollmentDocumentKey): UploadedDocument | null {
+    return this.documentosSubidos()[clave] ?? null;
   }
 
-  filesForAttachment(key: ClaveDeAdjunto): readonly File[] {
-    return this.attachmentFiles()[key] ?? [];
-  }
-
-  updateAttachment(key: ClaveDeAdjunto, files: readonly File[]): void {
-    this.attachmentFiles.update(current => ({ ...current, [key]: files }));
-    const file = files[0];
-    const control = this.form.controls[key];
-    control.setValue(file ? { archivo: file.name, pesoBytes: file.size } : null);
-    control.markAsTouched();
-    this.errorAdjunto.set(null);
-  }
-
-  /* --- adjuntos ---------------------------------------------------------- */
-
-  /** El motivo del último archivo rechazado, si hubo. */
-  readonly errorAdjunto = signal<string | null>(null);
-
-  /** El adjunto guardado en un control, para que la plantilla lo muestre. */
-  adjuntoDe(clave: ClaveDeAdjunto): AdjuntoDeclarado | null {
-    return this.form.controls[clave].value;
+  /** El rótulo ya resuelto del documento, sin el sufijo «(opcional)» que lleva el campo. */
+  protected etiquetaDeDocumento(clave: EnrollmentDocumentKey): string {
+    const campo = this.paginas()
+      .flatMap((pagina) => pagina.campos)
+      .find((c) => c.key === clave);
+    return campo?.label.replace(' (opcional)', '') ?? 'Documento';
   }
 
   /* --- la ubicación de la central ---------------------------------------- */
@@ -711,51 +704,156 @@ export class RegisterLaboratory {
   /**
    * El punto de la central, ya confirmado sobre el mapa.
    *
-   * Fuera del formulario, como en el alta de profesional: `app-ubicacion-picker`
-   * emite **sólo lo confirmado** y se guarda para sí el estado intermedio.
+   * `app-map-location-picker` emite **sólo lo confirmado** y se guarda para sí
+   * el estado intermedio. La señal alimenta el `[inicial]` del selector (para
+   * sobrevivir a que el asistente recree la página); el control homónimo del
+   * formulario es el que hace obligatorio el punto. Los dos los escribe
+   * {@link fijarGpsCentral}.
    */
-  readonly gpsCentral = signal<Coordenadas | null>(null);
+  readonly gpsCentral = signal<Coordinates | null>(null);
+  /** El tipo societario elegido: decide si el poder del representante es obligatorio. */
+  private readonly tipoSocietario = toSignal(this.form.controls.companyType.valueChanges, {
+    initialValue: this.form.controls.companyType.value,
+  });
 
   /**
-   * Si el mapa vació la dirección escrita y todavía nadie la reescribió (D-06).
-   *
-   * Tocar el mapa deja «Dirección» en blanco —el punto nuevo ya no es esa
-   * calle— y lo dice al lado. El aviso acompaña al campo vacío: en cuanto se
-   * vuelve a escribir, se va solo. Las sucursales llevan el suyo, por id.
+   * La API exige el poder notariado del representante salvo a una empresa
+   * unipersonal (BR-09, 422 «sólo una empresa unipersonal puede omitirlo»).
+   * Mismo criterio que imagenología: sin tipo elegido todavía, no se exige.
    */
-  private readonly direccionVaciadaPorElMapa = signal(false);
-  private readonly direccionEscrita = toSignal(this.form.controls.addressLines.valueChanges, {
-    initialValue: '',
-  });
-  readonly direccionPorReescribir = computed(
-    () => this.direccionVaciadaPorElMapa() && this.direccionEscrita().trim() === '',
-  );
-  private readonly sucursalesVaciadasPorElMapa = signal<ReadonlySet<string>>(new Set());
-  protected readonly avisoReescribir = AVISO_REESCRIBIR_DIRECCION;
-
-  /** Tocaron el mapa de la central: la dirección escrita ya no vale (D-06). */
-  vaciarDireccionPorElMapa(): void {
-    this.form.controls.addressLines.setValue('');
-    this.direccionVaciadaPorElMapa.set(true);
+  private poderObligatorio(): boolean {
+    const tipo = this.tipoSocietario();
+    return tipo !== null && tipo !== 'UNIPERSONAL';
   }
 
-  /** Lo mismo, para el mapa de una sucursal. */
-  vaciarDireccionDeSucursalPorElMapa(id: string): void {
-    this.actualizarSucursal(id, { direccion: '' });
-    this.sucursalesVaciadasPorElMapa.update((ids) => new Set([...ids, id]));
+  /** Guarda el borrador del avance del formulario en caché y backend. */
+  guardarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const paginas = this.paginas();
+      const clave = this.claveVisible();
+      const indice = Math.max(0, paginas.findIndex((p) => p.clave === clave));
+      const titulo = paginas[indice]?.titulo ?? clave;
+      const raw = this.form.getRawValue();
+      const extraData = {
+        gpsCentral: this.gpsCentral(),
+        sucursales: this.sucursales(),
+        documentosSubidos: this.documentosSubidos(),
+      };
+      this.draftService.saveProgress(
+        'laboratory',
+        indice,
+        clave,
+        titulo,
+        raw,
+        extraData,
+        paginas.length,
+      );
+      this.draftService.trackEvent('step_view', 'laboratory', indice, {
+        stepKey: clave,
+      });
+    } catch {
+      // Ignorar
+    }
   }
 
-  /** Si esa sucursal tiene la dirección en blanco porque tocaron su mapa. */
-  sucursalPorReescribir(sucursal: SucursalDeclarada): boolean {
-    return this.sucursalesVaciadasPorElMapa().has(sucursal.id) && sucursal.direccion.trim() === '';
+  /** Restaura el avance previo del formulario desde caché si existe. */
+  restaurarBorrador(draftParam?: OnboardingDraft): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      const draft = draftParam ?? this.draftService.detectDraft('laboratory');
+      if (!draft) return;
+      if (draft.data) {
+        this.form.patchValue(draft.data);
+      }
+      const extra = (draft.extraData ?? {}) as Record<string, unknown>;
+      if (extra['gpsCentral'] !== undefined) {
+        this.fijarGpsCentral(extra['gpsCentral'] as Coordinates | null);
+      }
+      if (Array.isArray(extra['sucursales'])) {
+        this.sucursales.set(extra['sucursales'] as readonly SucursalDeclarada[]);
+      }
+      if (extra['documentosSubidos'] && typeof extra['documentosSubidos'] === 'object') {
+        this.documentosSubidos.set(
+          extra['documentosSubidos'] as Partial<Record<EnrollmentDocumentKey, UploadedDocument>>,
+        );
+      }
+      if (typeof draft.stepIndex === 'number' && draft.stepIndex >= 0) {
+        this.pasoGuardado.set(draft.stepIndex);
+      }
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
   }
 
-  protected readonly idsUbicacionCentral: IdsDePrueba = {
+  /** Descarta el borrador y limpia el estado. */
+  descartarBorrador(): void {
+    this.limpiarBorrador();
+    this.draftService.trackEvent('abandon', 'laboratory', 0);
+  }
+
+  /** Elimina el borrador en caché al completar exitosamente el registro. */
+  limpiarBorrador(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.draftService.clearDraft('laboratory');
+      this.borradorDetectado.set(null);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      const detectado = this.draftService.detectDraft('laboratory');
+      if (detectado && (detectado.stepIndex > 0 || Object.keys(detectado.data).length > 2)) {
+        this.borradorDetectado.set(detectado);
+      }
+      this.draftService.trackEvent('start', 'laboratory', 0);
+    }
+
+    this.form.controls.companyType.valueChanges.pipe(takeUntilDestroyed()).subscribe((tipo) => {
+      const poder = this.form.controls.powerOfAttorneyFileId;
+      if (tipo === null || tipo === 'UNIPERSONAL') {
+        poder.removeValidators(Validators.required);
+      } else {
+        poder.addValidators(Validators.required);
+      }
+      poder.updateValueAndValidity();
+    });
+
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.guardarBorrador();
+    });
+  }
+
+  /** El punto confirmado de la central (o `null`), en la señal y en el control obligatorio. */
+  fijarGpsCentral(punto: Coordinates | null): void {
+    this.gpsCentral.set(punto);
+    const control = this.form.controls.gpsCentral;
+    if (control.value !== punto) control.setValue(punto);
+    // Con punto, la dirección nunca queda vacía: es un obligatorio que no se
+    // ve, y un borrador viejo podría traer el punto sin ella.
+    const direccion = this.form.controls.addressLines;
+    if (punto !== null && direccion.value.trim() === '') direccion.setValue(pointLabel(punto));
+  }
+
+  /**
+   * Lo deducido del punto de la central llena la dirección legal, que ya no
+   * se escribe a mano. Sin punto no se toca: el punto obligatorio, que sí se
+   * ve, es el que frena.
+   */
+  escribirLocalidadCentral(localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.form.controls.addressLines.setValue(addressFromPoint(localidad, null, MAX_DIRECCION));
+  }
+
+  protected readonly idsUbicacionCentral: TestIds = {
     mapa: 'registro-lab-central-map',
     confirmada: 'registro-lab-central-location-confirmed',
     avisoGeocodificacion: 'registro-lab-central-geocoding-notice',
     quitar: 'registro-lab-central-location-remove',
-    sinConfirmar: 'registro-lab-central-location-unconfirmed',
     confirmar: 'registro-lab-central-location-confirm',
     usarUbicacion: 'registro-lab-central-location-use',
     marcarEnMapa: 'registro-lab-central-location-pick',
@@ -778,7 +876,10 @@ export class RegisterLaboratory {
   agregarSucursal(): void {
     const id = `sucursal-${this.proximaSucursal}`;
     this.proximaSucursal += 1;
-    this.sucursales.update((lista) => [...lista, { id, nombre: '', direccion: '', gps: null }]);
+    this.sucursales.update((lista) => [
+      ...lista,
+      { id, nombre: '', direccion: '', descripcion: '', urlUbicacion: '', gps: null },
+    ]);
   }
 
   quitarSucursal(id: string): void {
@@ -797,13 +898,74 @@ export class RegisterLaboratory {
     this.actualizarSucursal(id, { nombre: nombre === null ? '' : String(nombre) });
   }
 
-  escribirDireccionDeSucursal(id: string, direccion: string | number | null): void {
-    this.actualizarSucursal(id, { direccion: direccion === null ? '' : String(direccion) });
+  /** La dirección de una sucursal sale de su punto, como la de la central. */
+  escribirLocalidadDeSucursal(id: string, localidad: LocalityFromPoint | null): void {
+    if (localidad === null) return;
+    this.actualizarSucursal(id, { direccion: addressFromPoint(localidad, null, MAX_DIRECCION) });
   }
 
-  fijarGpsDeSucursal(id: string, gps: Coordenadas | null): void {
+  escribirDescripcionDeSucursal(id: string, descripcion: string | number | null): void {
+    this.actualizarSucursal(id, { descripcion: descripcion === null ? '' : String(descripcion) });
+  }
+
+  escribirUrlDeSucursal(id: string, url: string | number | null): void {
+    this.actualizarSucursal(id, { urlUbicacion: url === null ? '' : String(url).trim() });
+  }
+
+  /* --- carga en lote ------------------------------------------------------ */
+
+  /** Si está abierto el diálogo «Subir sucursales en lote». */
+  readonly cargaEnLoteAbierta = signal(false);
+
+  /** Los nombres ya escritos: el archivo no puede repetirlos. */
+  readonly nombresDeSucursales = computed(() =>
+    this.sucursales()
+      .map((sucursal) => sucursal.nombre)
+      .filter((nombre) => nombre.trim() !== ''),
+  );
+
+  /**
+   * Suma al final las sucursales del archivo. Cada una nace con su pin si el
+   * enlace traía el punto escrito; si no, se marca a mano como cualquier otra.
+   */
+  agregarSucursalesEnLote(lote: readonly BranchDraft[]): void {
+    const nuevas = lote.map((borrador): SucursalDeclarada => {
+      const id = `sucursal-${this.proximaSucursal}`;
+      this.proximaSucursal += 1;
+      return {
+        id,
+        nombre: borrador.name,
+        direccion: borrador.address,
+        descripcion: borrador.description,
+        urlUbicacion: borrador.locationUrl,
+        gps:
+          borrador.coordinates === null
+            ? null
+            : { lat: borrador.coordinates.latitude, lng: borrador.coordinates.longitude },
+      };
+    });
+    this.sucursales.update((lista) => [...lista, ...nuevas]);
+  }
+
+  fijarGpsDeSucursal(id: string, gps: Coordinates | null): void {
     this.actualizarSucursal(id, { gps });
   }
+
+  /**
+   * Las sucursales con nombre y sin punto confirmado. El punto es obligatorio
+   * en toda ubicación (26/10/2026): una sucursal declarada sin él no se envía
+   * en silencio ni se descarta, se nombra y se espera. Una sin nombre sigue sin
+   * contar como sucursal (ver `datos`).
+   */
+  readonly avisoDeSucursalesSinPunto = computed<string | null>(() => {
+    const nombres = this.sucursales()
+      .filter((s) => s.nombre.trim() !== '' && s.gps === null)
+      .map((s) => `«${s.nombre.trim()}»`);
+    if (nombres.length === 0) return null;
+    return nombres.length === 1
+      ? `Falta ubicar la sucursal ${nombres[0]}: márquela en el mapa y pulse «Confirmar dirección actual», o quítela.`
+      : `Faltan ubicar ${nombres.length} sucursales (${nombres.join(', ')}): márquelas en el mapa y pulse «Confirmar dirección actual», o quítelas.`;
+  });
 
   private actualizarSucursal(id: string, cambio: Partial<SucursalDeclarada>): void {
     this.sucursales.update((lista) =>
@@ -812,13 +974,12 @@ export class RegisterLaboratory {
   }
 
   /** Los identificadores de prueba del mapa de una sucursal. */
-  idsDeSucursal(id: string): IdsDePrueba {
+  idsDeSucursal(id: string): TestIds {
     return {
       mapa: `registro-lab-${id}-map`,
       confirmada: `registro-lab-${id}-location-confirmed`,
       avisoGeocodificacion: `registro-lab-${id}-geocoding-notice`,
       quitar: `registro-lab-${id}-location-remove`,
-      sinConfirmar: `registro-lab-${id}-location-unconfirmed`,
       confirmar: `registro-lab-${id}-location-confirm`,
       usarUbicacion: `registro-lab-${id}-location-use`,
       marcarEnMapa: `registro-lab-${id}-location-pick`,
@@ -829,36 +990,197 @@ export class RegisterLaboratory {
 
   private readonly claveVisible = signal('empresa');
 
-  readonly ayudaVisible = computed<readonly TarjetaDeAyuda[]>(
+  readonly ayudaVisible = computed<readonly HelpCard[]>(
     () => AYUDA[this.claveVisible()] ?? [],
   );
 
   protected recordarPaso(pagina: PaginaDeFormulario): void {
     this.claveVisible.set(pagina.clave ?? '');
+    this.guardarBorrador();
   }
 
   /* --- envío ------------------------------------------------------------- */
 
-  /** Si la solicitud ya se dio por enviada. */
-  readonly enviada = signal(false);
+  readonly state = signal<ViewState<null>>(ready(null));
+  readonly isSubmitting = computed(() => this.state().status === 'loading');
+  /** Si la API ya creó la cuenta (201). */
+  readonly registered = signal(false);
+  readonly verificationSent = signal(false);
 
-  /**
-   * Cierra el alta **sin salir a la red**.
-   *
-   * No es un atajo de la maqueta que después haya que acordarse de cambiar: hoy
-   * **no existe** un endpoint de alta de laboratorio, y las alternativas eran
-   * peores. Cuando el backend tenga el alta, lo que cambia es este método — el
-   * formulario, sus reglas y sus papeles ya están.
-   */
+  readonly errorMessage = computed<string | null>(() => {
+    const state = this.state();
+    if (state.status === 'validation') return state.issues[0]?.message ?? null;
+    if (state.status === 'offline')
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
+    if (state.status === 'error')
+      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
+    return null;
+  });
+
   submit(): void {
+    if (this.isSubmitting()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    this.enviada.set(true);
+
+    const sinPunto = this.avisoDeSucursalesSinPunto();
+    if (sinPunto !== null) {
+      this.state.set(validation([{ field: 'sucursales', message: sinPunto }]));
+      return;
+    }
+
+    this.state.set(loading());
+
+    // País y jurisdicción (y, en el laboratorio, su tipo de unidad) son
+    // conceptos: se resuelven del catálogo antes de enviar. Sin ellos la API
+    // responde 422 «exige país y jurisdicción».
+    this.alta
+      .catalogs()
+      .pipe(
+        map((catalogos) => this.datos(catalogos)),
+        switchMap((datos) => this.iam.registerLaboratoryOrganization(datos)),
+      )
+      .subscribe({
+        next: (resultado) => {
+          this.limpiarBorrador();
+          this.draftService.trackEvent('complete', 'laboratory', this.paginas().length);
+          this.state.set(ready(null));
+          this.verificationSent.set(resultado.emailVerificationSent);
+          this.registered.set(true);
+        },
+        error: (error: unknown) => this.state.set(this.fallaDelEnvio(error)),
+      });
+  }
+
+  /** Un catálogo incompleto se explica; el resto, como cualquier error de la API. */
+  private fallaDelEnvio(error: unknown): ViewState<null> {
+    if (error instanceof IncompleteCatalog) {
+      return validation([{ field: 'catalogos', message: DIAGNOSIS_CATALOG_NOTICE }]);
+    }
+    if (error instanceof Error && !(error instanceof HttpErrorResponse)) {
+      return validation([{ field: 'alta', message: error.message }]);
+    }
+    return registrationErrorToViewState(error, 'organization');
   }
 
   goToLogin(): void {
     void this.router.navigateByUrl('/auth');
+  }
+
+  /** El código único de tenant: derivado del NIT, que es el dato estable que el alta ya exige. */
+  private codigoDesdeNit(nit: string): string {
+    return `LAB-${nit.trim().replace(/[^A-Za-z0-9]/g, '')}`;
+  }
+
+  /** Un cargo sólo viaja si las tres partes están completas (nombre, celular y correo). */
+  private cargoCompleto(cargo: { name: string; phone: string; email: string }): boolean {
+    return cargo.name.trim() !== '' && cargo.phone.trim() !== '' && cargo.email.trim() !== '';
+  }
+
+  private datos(catalogos: DiagnosisCatalogs): LaboratoryOrganizationRegistration {
+    const concepto = DiagnosisCenterEnrollment.concept;
+    const raw = this.form.getRawValue();
+    const central = this.gpsCentral();
+
+    // Una sucursal sin nombre no es una sucursal todavía: no viaja.
+    const sucursales: readonly DiagnosticUnitBranchRegistration[] = this.sucursales()
+      .filter((s) => s.nombre.trim() !== '')
+      .map((s) => ({
+        name: s.nombre.trim(),
+        addressLines: s.direccion.trim() === '' ? [] : [s.direccion.trim()],
+        ...(s.gps === null ? {} : { location: { latitude: s.gps.lat, longitude: s.gps.lng } }),
+        ...(s.descripcion.trim() === '' ? {} : { description: s.descripcion.trim() }),
+        ...(s.urlUbicacion === '' ? {} : { locationUrl: s.urlUbicacion }),
+      }));
+
+    const cargos = {
+      generalManager: {
+        name: completeName(raw.generalManagerName),
+        phone: raw.generalManagerPhone,
+        email: raw.generalManagerEmail,
+      },
+      commercialManager: {
+        name: completeName(raw.salesManagerName),
+        phone: raw.salesManagerPhone,
+        email: raw.salesManagerEmail,
+      },
+      marketingManager: {
+        name: completeName(raw.marketingManagerName),
+        phone: raw.marketingManagerPhone,
+        email: raw.marketingManagerEmail,
+      },
+    };
+    const contacto = (cargo: { name: string; phone: string; email: string }) => ({
+      fullName: cargo.name.trim(),
+      phone: cargo.phone.trim(),
+      email: cargo.email.trim(),
+    });
+    // Todo o nada, como el DTO: las tres gerencias o ninguna.
+    const cargosCompletos = Object.values(cargos).every((cargo) => this.cargoCompleto(cargo));
+
+    const documentos = {
+      constitutionFileId: raw.constitutionFileId,
+      taxIdentifierFileId: raw.taxIdentifierFileId,
+      commerceRegistryFileId: raw.commerceRegistryFileId,
+      operatingLicenseFileId: raw.operatingLicenseFileId,
+      healthAuthorityCertificateFileId: raw.healthAuthorityCertificateFileId,
+    };
+    // Todo o nada, como el DTO: los cinco papeles de la empresa o ninguno.
+    const documentosCompletos = Object.values(documentos).every((v) => v !== '');
+
+    const razonSocial = raw.legalName.trim();
+    const nombreDelRepresentante = completeName(raw.legalRepName);
+    return {
+      code: this.codigoDesdeNit(raw.taxId),
+      legalName: razonSocial,
+      legalEntityType: raw.companyType ?? '',
+      countryConceptId: concepto(catalogos.pais, DIAGNOSIS_CODES.pais),
+      jurisdictionConceptId: concepto(
+        catalogos.jurisdiccion,
+        DIAGNOSIS_CODES.jurisdiccionNacional,
+      ),
+      diagnosticUnit: {
+        name: razonSocial,
+        diagnosticUnitTypeConceptId: concepto(
+          catalogos.tipoDeUnidad,
+          DIAGNOSIS_CODES.laboratorio,
+        ),
+        modalityConceptIds: [
+          concepto(catalogos.modalidad, DIAGNOSIS_CODES.modalidades.laboratorio),
+        ],
+        primarySite: {
+          name: NOMBRE_DE_LA_CENTRAL,
+          address: {
+            lines: [raw.addressLines.trim()],
+            ...(central === null ? {} : { latitude: central.lat, longitude: central.lng }),
+          },
+        },
+        ...(sucursales.length === 0 ? {} : { branches: sucursales }),
+      },
+      owner: {
+        email: raw.legalRepEmail.trim(),
+        password: raw.password,
+        displayName: nombreDelRepresentante,
+      },
+      legalRepresentative: {
+        fullName: nombreDelRepresentante,
+        idNumber: raw.legalRepIdNumber.trim(),
+        email: raw.legalRepEmail.trim(),
+        ...(raw.powerOfAttorneyFileId === ''
+          ? {}
+          : { powerOfAttorneyFileId: raw.powerOfAttorneyFileId }),
+      },
+      ...(documentosCompletos ? { legalDocuments: documentos } : {}),
+      ...(cargosCompletos
+        ? {
+            executives: {
+              generalManager: contacto(cargos.generalManager),
+              commercialManager: contacto(cargos.commercialManager),
+              marketingManager: contacto(cargos.marketingManager),
+            },
+          }
+        : {}),
+    };
   }
 }

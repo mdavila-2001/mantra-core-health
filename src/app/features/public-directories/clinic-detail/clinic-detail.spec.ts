@@ -5,7 +5,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { of } from 'rxjs';
 
 import { ClinicDetail } from './clinic-detail';
-import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '../../../core/messaging/chat-link';
 
 const SLUG = 'clinica-los-olivos';
 

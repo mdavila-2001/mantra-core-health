@@ -263,7 +263,7 @@ describe('AppointmentNew', () => {
       http.expectOne('/scheduling/appointments/direct').flush(
         {
           code: 'CONFLICT',
-          message: 'Tenés una cita confirmada en ese rato en «Consultorio Norte».',
+          message: 'Tiene una cita confirmada en ese rato en «Consultorio Norte».',
         },
         { status: 409, statusText: 'Conflict' },
       );
@@ -291,6 +291,132 @@ describe('AppointmentNew', () => {
       const aviso = fixture.nativeElement.querySelector('[data-testid="cita-error"]');
       expect(aviso?.textContent).toContain('propia agenda');
     });
+
+    /* -- Telemedicina por franja (422 TELEMEDICINE_NOT_ENABLED) ------------ */
+
+    /** Jueves 10/09/2026 de 14 a 18 con telemedicina; el resto, presencial. */
+    const PLANTILLAS_CON_TELEMEDICINA = {
+      items: [
+        {
+          id: 'tpl-1',
+          retired: false,
+          name: 'Horario',
+          statusConceptId: 'c',
+          rules: [
+            { dayOfWeek: 4, startTime: '08:00:00', endTime: '12:00:00', telemedicineEnabled: false },
+            { dayOfWeek: 4, startTime: '14:00:00', endTime: '18:00:00', telemedicineEnabled: true },
+          ],
+        },
+        {
+          // Retirada: su telemedicina de la mañana ya no cuenta.
+          id: 'tpl-0',
+          retired: true,
+          name: 'Viejo',
+          statusConceptId: 'c',
+          rules: [
+            { dayOfWeek: 4, startTime: '08:00:00', endTime: '12:00:00', telemedicineEnabled: true },
+          ],
+        },
+      ],
+      count: 2,
+    };
+
+    /** Elige teleconsulta para el jueves 10/09 a la hora dada, sin guardar. */
+    function teleconsultaA(hora: string): {
+      puedeGuardar(): boolean;
+      guardar(): void;
+    } {
+      const c = fixture.componentInstance as unknown as {
+        paciente: { set(v: { value: string; label: string } | null): void };
+        dia: { set(v: Date | null): void };
+        hora: { set(v: string): void };
+        modalidad: { set(v: string): void };
+        puedeGuardar(): boolean;
+        guardar(): void;
+      };
+      c.paciente.set({ value: 'pac-1', label: 'Ana Pérez' });
+      c.dia.set(new Date(2026, 8, 10));
+      c.hora.set(hora);
+      c.modalidad.set('TELECONSULTA');
+      fixture.detectChanges();
+      return c;
+    }
+
+    it('presencial no lee franjas: la telemedicina sólo importa en teleconsulta', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      completarYEnviar();
+      http.expectNone('/scheduling/resources/res-1/templates');
+      expect(http.expectOne('/scheduling/appointments/direct').request.body.channel).toBe(
+        'PRESENCIAL',
+      );
+    });
+
+    it('teleconsulta fuera de una franja con telemedicina: avisa y no deja guardar', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      const c = teleconsultaA('09:30');
+      http.expectOne('/scheduling/resources/res-1/templates').flush(PLANTILLAS_CON_TELEMEDICINA);
+      fixture.detectChanges();
+
+      const aviso = fixture.nativeElement.querySelector('[data-testid="cita-sin-telemedicina"]');
+      expect(aviso?.textContent).toContain('habilitada para telemedicina');
+      expect(c.puedeGuardar()).toBe(false);
+      c.guardar();
+      http.expectNone('/scheduling/appointments/direct');
+    });
+
+    it('teleconsulta dentro de una franja con telemedicina: guarda con TELECONSULTA', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      const c = teleconsultaA('15:00');
+      http.expectOne('/scheduling/resources/res-1/templates').flush(PLANTILLAS_CON_TELEMEDICINA);
+      fixture.detectChanges();
+
+      expect(
+        fixture.nativeElement.querySelector('[data-testid="cita-sin-telemedicina"]'),
+      ).toBeNull();
+      expect(c.puedeGuardar()).toBe(true);
+      c.guardar();
+      const peticion = http.expectOne('/scheduling/appointments/direct');
+      expect(peticion.request.body.channel).toBe('TELECONSULTA');
+      peticion.flush({
+        bookingId: 'book-1',
+        bookableSlotId: 'slot-1',
+        statusConceptId: 'st-1',
+        retractedSlots: 0,
+      });
+    });
+
+    it('sin franjas leídas no adivina, y el 422 TELEMEDICINE_NOT_ENABLED se explica claro', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      const c = teleconsultaA('09:30');
+      // La lectura de franjas falla: no hay aviso temprano, decide el servidor.
+      http
+        .expectOne('/scheduling/resources/res-1/templates')
+        .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Error' });
+      fixture.detectChanges();
+      expect(c.puedeGuardar()).toBe(true);
+
+      c.guardar();
+      http.expectOne('/scheduling/appointments/direct').flush(
+        {
+          statusCode: 422,
+          code: 'PRECONDITION_FAILED',
+          message: 'Ese horario no atiende por telemedicina.',
+          reason: 'TELEMEDICINE_NOT_ENABLED',
+          correlationId: 'req-42',
+        },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
+      fixture.detectChanges();
+
+      const aviso = fixture.nativeElement.querySelector('[data-testid="cita-error"]');
+      expect(aviso?.textContent).toContain('no está en una franja de su horario habilitada');
+      expect(aviso?.textContent).toContain('Atiende por telemedicina');
+      expect(aviso?.textContent).toContain('req-42');
+    });
   });
   /* ==========================================================================
      El paciente que no está en el sistema — §1.1 del registro de procesos.
@@ -304,6 +430,7 @@ describe('AppointmentNew', () => {
       nuevoNombre: { set(v: string): void };
       nuevoApellidoPaterno: { set(v: string): void };
       nuevoSegundoNombre: { (): string; set(v: string): void };
+      nuevosNombresExtra: { (): readonly string[]; set(v: readonly string[]): void };
       nuevoDocumento: { set(v: string): void };
       nuevoCelular: { set(v: string): void };
       nuevoNacimiento: { set(v: Date | null): void };
@@ -373,7 +500,7 @@ describe('AppointmentNew', () => {
      * escondido igual se tabula y el buscador dejaría de ser la única respuesta
      * a «¿con quién?».
      */
-    it('al elegirlo, el buscador deja lugar al alta y vuelve si te arrepentís', () => {
+    it('al elegirlo, el buscador deja lugar al alta y vuelve si se arrepiente', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
@@ -408,7 +535,7 @@ describe('AppointmentNew', () => {
       };
       c.buscarPaciente('8123456');
       http
-        .expectOne((r) => r.url === '/profiles/patients')
+        .expectOne((r) => r.url === '/profiles/patients/search')
         .flush({ items: [], count: 0, limit: 10, nextCursor: null });
       c.registrarPacienteNuevo();
       conCatalogos();
@@ -502,6 +629,34 @@ describe('AppointmentNew', () => {
      * real. La prueba fija ahora el endpoint atómico, con la filiación entera
      * adentro de `patient`, y **que ya no se llame al alta suelta**.
      */
+    it('los nombres agregados con «+ Agregar otro nombre» viajan junto al segundo en middleName', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+
+      const c = instancia();
+      c.registrarPacienteNuevo();
+      conCatalogos();
+      c.nuevoSegundoNombre.set('Elena');
+      c.nuevosNombresExtra.set(['Beatriz', '']);
+      completarAlta();
+      c.guardar();
+
+      const turno = http.expectOne('/scheduling/appointments/walk-in');
+      expect(turno.request.body.patient.middleName).toBe('Elena Beatriz');
+
+      turno.flush({
+        patientProfileId: 'pac-nuevo',
+        personId: 'per-nuevo',
+        patientCode: 'PAC-99',
+        bookingId: 'book-1',
+        bookableSlotId: 'slot-1',
+        appointmentId: 'appt-1',
+        encounterId: 'enc-1',
+        statusConceptId: 'st-1',
+        retractedSlots: 0,
+      });
+    });
+
     it('registra y atiende en una sola petición al walk-in', () => {
       crear();
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
@@ -612,9 +767,9 @@ describe('AppointmentNew', () => {
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       buscar('8123456');
-      const peticion = http.expectOne((r) => r.url === '/profiles/patients');
-      expect(peticion.request.params.get('nationalId')).toBe('8123456');
-      expect(peticion.request.params.get('q')).toBeNull();
+      const peticion = http.expectOne((r) => r.url === '/profiles/patients/search');
+      expect(peticion.request.body.nationalId).toBe('8123456');
+      expect(peticion.request.body).not.toHaveProperty('q');
       peticion.flush({ items: [], count: 0, limit: 10, nextCursor: null });
     });
 
@@ -623,10 +778,10 @@ describe('AppointmentNew', () => {
       conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
 
       buscar('Ana');
-      const peticion = http.expectOne((r) => r.url === '/profiles/patients');
-      // El parámetro del cable se llama `q`, no `query`.
-      expect(peticion.request.params.get('q')).toBe('Ana');
-      expect(peticion.request.params.get('nationalId')).toBeNull();
+      const peticion = http.expectOne((r) => r.url === '/profiles/patients/search');
+      // La clave del cuerpo se llama `q`, no `query`.
+      expect(peticion.request.body.q).toBe('Ana');
+      expect(peticion.request.body).not.toHaveProperty('nationalId');
       peticion.flush({ items: [], count: 0, limit: 10, nextCursor: null });
     });
   });

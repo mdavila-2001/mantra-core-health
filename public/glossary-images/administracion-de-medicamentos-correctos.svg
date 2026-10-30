@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Los «correctos» de la administración de medicamentos</title>
+  <desc id="d">Diez tarjetas con las verificaciones a pie de cama: paciente, medicamento, dosis, vía, hora, documentación, indicación, educación, derecho a rechazar y respuesta. Cada una formula la pregunta que se comprueba antes de administrar.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --a:#2f6fb3; --a-l:#dbe8f6; --b:#1f8a5b; --b-l:#d9f0e5; --c:#a86a0f; --c-l:#f8ebd0; --d:#c0392b; --d-l:#f7dcd8; --skin:#f0c9b0; --fat:#f4e3a8; --mus:#d98a7c; --bone:#e9e4d6; --p:#7b3b6e; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --a:#7fb3ea; --a-l:#243a52; --b:#4cc38a; --b-l:#1f3b30; --c:#e3b04f; --c-l:#42361b; --d:#ef7467; --d-l:#47241f; --skin:#a8745e; --fat:#8a7a3a; --mus:#a65a4e; --bone:#8d8a7c; --p:#b77ab0; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .m { fill: var(--muted); }
+    .t { font-size: 20px; font-weight: 700; }
+    .h { font-size: 15px; font-weight: 700; }
+    .s { font-size: 14px; }
+    .n { font-size: 13px; }
+    .k { font-size: 24px; font-weight: 800; }
+    .ln { stroke: var(--muted); stroke-width: 2; fill: none; }
+  </style>
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="36" text-anchor="middle" class="t">Los «correctos»: lista de verificación a pie de cama</text>
+  <rect x="24" y="56" width="143" height="154" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="95" y="90" text-anchor="middle" class="k" style="fill:var(--a)">1</text>
+  <text x="95" y="118" text-anchor="middle" class="h">Paciente</text>
+  <text x="95" y="146" text-anchor="middle" class="n">¿Es la persona</text>
+  <text x="95" y="165" text-anchor="middle" class="n">a quien va dirigida</text>
+  <text x="95" y="184" text-anchor="middle" class="n">la orden?</text>
+  <rect x="177" y="56" width="143" height="154" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="248" y="90" text-anchor="middle" class="k" style="fill:var(--a)">2</text>
+  <text x="248" y="118" text-anchor="middle" class="h">Medicamento</text>
+  <text x="248" y="146" text-anchor="middle" class="n">¿Coincide con</text>
+  <text x="248" y="165" text-anchor="middle" class="n">la orden y está</text>
+  <text x="248" y="184" text-anchor="middle" class="n">en buen estado?</text>
+  <rect x="330" y="56" width="143" height="154" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="401" y="90" text-anchor="middle" class="k" style="fill:var(--a)">3</text>
+  <text x="401" y="118" text-anchor="middle" class="h">Dosis</text>
+  <text x="401" y="146" text-anchor="middle" class="n">¿Es la cantidad</text>
+  <text x="401" y="165" text-anchor="middle" class="n">que indica la orden</text>
+  <text x="401" y="184" text-anchor="middle" class="n">vigente?</text>
+  <rect x="483" y="56" width="143" height="154" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="554" y="90" text-anchor="middle" class="k" style="fill:var(--a)">4</text>
+  <text x="554" y="118" text-anchor="middle" class="h">Vía</text>
+  <text x="554" y="146" text-anchor="middle" class="n">¿Es la vía</text>
+  <text x="554" y="165" text-anchor="middle" class="n">indicada y la</text>
+  <text x="554" y="184" text-anchor="middle" class="n">presentación apta?</text>
+  <rect x="636" y="56" width="143" height="154" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="707" y="90" text-anchor="middle" class="k" style="fill:var(--a)">5</text>
+  <text x="707" y="118" text-anchor="middle" class="h">Hora</text>
+  <text x="707" y="146" text-anchor="middle" class="n">¿Es el momento</text>
+  <text x="707" y="165" text-anchor="middle" class="n">y la frecuencia</text>
+  <text x="707" y="184" text-anchor="middle" class="n">prescritos?</text>
+  <rect x="24" y="222" width="143" height="154" rx="12" fill="var(--a-l)" stroke="var(--a)" stroke-width="2"/>
+  <text x="95" y="256" text-anchor="middle" class="k" style="fill:var(--a)">6</text>
+  <text x="95" y="284" text-anchor="middle" class="h">Documentación</text>
+  <text x="95" y="312" text-anchor="middle" class="n">¿Se registra al</text>
+  <text x="95" y="331" text-anchor="middle" class="n">instante, por quien</text>
+  <text x="95" y="350" text-anchor="middle" class="n">lo administra?</text>
+  <rect x="177" y="222" width="143" height="154" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="248" y="256" text-anchor="middle" class="k" style="fill:var(--b)">7</text>
+  <text x="248" y="284" text-anchor="middle" class="h">Indicación</text>
+  <text x="248" y="312" text-anchor="middle" class="n">¿Para qué se da</text>
+  <text x="248" y="331" text-anchor="middle" class="n">y tiene sentido</text>
+  <text x="248" y="350" text-anchor="middle" class="n">con el cuadro?</text>
+  <rect x="330" y="222" width="143" height="154" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="401" y="256" text-anchor="middle" class="k" style="fill:var(--b)">8</text>
+  <text x="401" y="284" text-anchor="middle" class="h">Educación</text>
+  <text x="401" y="312" text-anchor="middle" class="n">¿Sabe el paciente</text>
+  <text x="401" y="331" text-anchor="middle" class="n">qué recibe y</text>
+  <text x="401" y="350" text-anchor="middle" class="n">qué vigilar?</text>
+  <rect x="483" y="222" width="143" height="154" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="554" y="256" text-anchor="middle" class="k" style="fill:var(--b)">9</text>
+  <text x="554" y="284" text-anchor="middle" class="h">Rechazo</text>
+  <text x="554" y="312" text-anchor="middle" class="n">¿Se respeta el</text>
+  <text x="554" y="331" text-anchor="middle" class="n">derecho a decir</text>
+  <text x="554" y="350" text-anchor="middle" class="n">que no?</text>
+  <rect x="636" y="222" width="143" height="154" rx="12" fill="var(--b-l)" stroke="var(--b)" stroke-width="2"/>
+  <text x="707" y="256" text-anchor="middle" class="k" style="fill:var(--b)">10</text>
+  <text x="707" y="284" text-anchor="middle" class="h">Respuesta</text>
+  <text x="707" y="312" text-anchor="middle" class="n">¿Hizo el efecto</text>
+  <text x="707" y="331" text-anchor="middle" class="n">esperado o hubo</text>
+  <text x="707" y="350" text-anchor="middle" class="n">efectos adversos?</text>
+  <text x="400" y="412" text-anchor="middle" class="n">Los seis primeros son la base clásica; los demás los suman distintas instituciones.</text>
+  <text x="400" y="432" text-anchor="middle" class="n m">El número de «correctos» varía entre listas, y ninguna sustituye al juicio clínico ni a los sistemas de verificación.</text>
+  <text x="400" y="464" text-anchor="middle" class="n m">Esquema ilustrativo. Ilustración original de AloVida.</text>
+</svg>

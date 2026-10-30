@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 import { SpecialtyBadge } from '../specialty-badge/specialty-badge';
 import type { SpecialtyBadgeItem } from '../specialty-badge/specialty-badge.types';
@@ -16,15 +16,13 @@ import type { SpecialtyBadgeItem } from '../specialty-badge/specialty-badge.type
  * cada pantalla se separan en el primer retoque: hoy el perfil lista las
  * especialidades en tres lugares y en ninguno están ordenadas igual.
  *
- * ## La principal va primera
+ * ## El orden es el de entrada
  *
- * El orden lo pone el componente, no quien lo monta: lo primero que alguien
- * quiere saber de un médico es qué ejerce principalmente. **Se ordena una copia**
- * — `sort` muta el arreglo, y el de arriba llega `readonly` justamente para que
- * nadie lo cambie desde acá.
- *
- * El resto conserva el orden en que llegó. Alfabetizarlo sería inventar un
- * criterio: quien manda los datos ya eligió uno.
+ * Hasta el 23/09/2026 la principal iba primera. El médico pidió que todas las
+ * especialidades se vieran iguales (D-01), y ordenar por una marca que ya no se
+ * muestra sería distinguirla igual, sin decirlo. Van en el orden en que
+ * llegaron: alfabetizarlas sería inventar un criterio, y quien manda los datos
+ * ya eligió uno.
  *
  * ## `<ul>` y no `<div>`
  *
@@ -48,10 +46,4 @@ export class SpecialtyBadgeGrid {
    * elementos» dos veces no distingue cuál es cuál.
    */
   readonly etiqueta = input('Especialidades');
-
-  protected readonly ordenadas = computed<readonly SpecialtyBadgeItem[]>(() =>
-    [...this.especialidades()].sort(
-      (a, b) => Number(b.principal) - Number(a.principal),
-    ),
-  );
 }

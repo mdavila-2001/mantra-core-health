@@ -29,7 +29,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { DRAFT_BLOCK, type DraftBlock } from '../draft-block';
-import { mensajeDeEscritura } from '../../mensaje-de-escritura';
+import { writeMessage } from '../../write-message';
 
 /** Qué se midió. Es lo único obligatorio del formulario, y lo dice el DTO. */
 export const TARGET_MEDICION = 'clinical.observations.code_concept_id';
@@ -219,7 +219,7 @@ export class ObservationBlock implements DraftBlock {
    * que no llega desbloqueaba el formulario sin decir nada.
    */
   protected readonly errorDeLaObservacion = computed<string | null>(() =>
-    mensajeDeEscritura(this.registro(), { accion: 'registrar la observación' }),
+    writeMessage(this.registro(), { accion: 'registrar la observación' }),
   );
 
   /**
@@ -308,7 +308,7 @@ export class ObservationBlock implements DraftBlock {
           this.limpiar();
           this.toasts.success(
             'Queda en la pestaña «Observaciones» del expediente.',
-            'Observación registrada',
+            'Medición registrada',
           );
           this.cambio.emit();
         },

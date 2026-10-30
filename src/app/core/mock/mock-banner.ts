@@ -34,7 +34,7 @@ import { MOCK_USERS } from './mock-session';
       </div>
       @if (!plegado()) {
         <p class="mock__texto">
-          <strong>Rama mockup:</strong> sin backend. Todo lo que ves sale de datos de prueba en memoria y
+          <strong>Modo demo:</strong> sin backend. Todo lo que ve sale de datos de prueba en memoria y
           los cambios duran mientras dure la pestaña. Cualquier contraseña sirve.
         </p>
         <p class="mock__texto">
@@ -50,77 +50,42 @@ import { MOCK_USERS } from './mock-session';
     </aside>
   `,
   styles: `
-    /* Abajo a la IZQUIERDA, pegado al borde del contenido.
-
-       Estaba abajo a la derecha, que es exactamente donde el chat clava su
-       botón de enviar: el cartel se lo comía y en la maqueta no se podía
-       mandar un mensaje. Es la única esquina que una pantalla puede reclamar
-       —una acción fija al pie va a la derecha—, así que el cartel se corre.
-
-       Se apoya después del menú para no taparle los ítems; en angosto, donde
-       el menú no está fijo, vuelve al borde. */
+    /* El aviso no flota: va al final de la página, alineado a la derecha.
+       Fijo no había rincón que no tapara algo —arriba a la derecha la
+       portada del panel (propietario, 27/10/2026), abajo a la izquierda el
+       menú lateral, abajo a la derecha el campo de síntomas, en el teléfono
+       el del chat— y cada offset calculado se rompía cuando la cabecera o la
+       portada crecían. En el flujo no tapa nada por construcción; se llega a
+       él desplazando hasta abajo, que para una herramienta de demo alcanza.
+       «fit-content» y margen automático: ocupa sólo su ancho, a la derecha,
+       lejos del menú lateral. */
+    :host {
+      display: block;
+    }
     .mock {
-      position: fixed;
-      inset-inline-start: calc(var(--w-nav, 240px) + 12px);
-      inset-block-end: 12px;
-      z-index: 9999;
-      max-inline-size: 22rem;
+      inline-size: fit-content;
+      max-inline-size: min(22rem, calc(100% - 24px));
+      margin: 8px 12px 12px auto;
       padding: 10px 12px;
       border-radius: 10px;
-      background: #1f2937;
-      color: #f9fafb;
+      background: var(--brand-primary);
+      color: var(--text-inverse);
       font: 12px/1.4 system-ui, sans-serif;
-      box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+      box-shadow: var(--shadow-lg);
     }
     .mock__corto { display: none; }
-    /* En angosto no hay esquina libre abajo: el chat clava ahí el campo de
-       escribir de borde a borde y el cartel lo tapaba. Se va arriba, bajo el
-       header de la aplicación, y a la derecha, que es la franja que las
-       cabeceras dejan vacía. Achicado: en 390 px dos pastillas grandes son un
-       cuarto del ancho. */
+    .mock--plegado .mock__boton {
+      padding: 5px 9px;
+      font-size: 11px;
+    }
+    /* En angosto: pastillas más chicas, y plegado dice «Demo». */
     @media (max-width: 60rem) {
-      /* Plegado: bajo el header, no adentro. Vivió pegado a la barra de
-         arriba —112 px de margen calculado para esquivar la hamburguesa y la
-         flecha de «Volver»— hasta que N-01 (2026-09-22) le agregó Tutoriales
-         y Chats a la cabecera: seis íconos a la derecha ya no dejan ese hueco
-         libre a 375 px, y el cartel les quedaba encima. Un offset fijo en
-         píxeles no sobrevive a que la cabecera siga creciendo, así que baja
-         del header entero —el mismo lugar donde ya vivía el panel abierto—
-         en vez de perseguir el próximo hueco.
-
-         Plegado va a la DERECHA y sin ocupar el ancho completo (doble
-         revisión, H4.S1.M5): a la izquierda tapaba el título de la pantalla
-         («Hola, Ana Lucía…» en el panel del paciente) — hallazgo real de la
-         primera versión de este arreglo. A la derecha, bajo el header, no hay
-         título de pantalla en ninguna de las rutas recorridas. */
-      .mock {
-        inset-inline-start: auto;
-        inset-inline-end: 8px;
-        inset-block-start: calc(var(--h-header, 56px) + 8px);
-        inset-block-end: auto;
-        max-inline-size: calc(100vw - 16px);
-      }
-      /* Abierto, el panel baja del header y ocupa el ancho completo: ahí sí
-         hace falta el espacio para el texto y la lista de cuentas. */
-      .mock:not(.mock--plegado) {
-        inset-inline-start: 8px;
-      }
-      .mock--plegado {
-        inset-block-start: calc(var(--h-header, 56px) + 2px);
-      }
-      .mock--plegado {
-        inset-block-start: calc(var(--h-header, 56px) + 2px);
-      }
       .mock__boton {
         padding: 5px 10px;
         font-size: 11px;
       }
-      .mock--plegado .mock__boton {
-        padding: 2px 8px;
-        font-size: 10px;
-      }
-      /* Plegado en angosto dice «Demo»: la pastilla completa (114 px) tapaba el
-         final del saludo de la pantalla («…Pérez»); la corta (≈50 px) no llega. */
+      /* Plegado dice «Demo»: es lo que basta para saber que el modo está
+         encendido. */
       .mock__largo { display: none; }
       .mock__corto { display: inline; }
       /* El stock de componentes es una herramienta de escritorio. */
@@ -150,6 +115,14 @@ import { MOCK_USERS } from './mock-session';
       text-decoration: none;
       white-space: nowrap;
     }
+    .mock__boton:hover {
+      filter: brightness(0.94);
+    }
+    .mock__boton:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 5px #111827;
+    }
     .mock__boton--stock {
       background: #38bdf8;
     }
@@ -167,9 +140,14 @@ import { MOCK_USERS } from './mock-session';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MockBanner {
+  /**
+   * En backend real el banner de datos de prueba / demo se desactiva completamente.
+   */
+  protected readonly activo = false;
   protected readonly plegado = signal(true);
   protected readonly cuentas = MOCK_USERS.map((u) => ({
     email: u.email,
-    rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : u.roles[0] === 'PHARMACY_STAFF' ? 'mostrador de farmacia' : 'administrador',
+    rol: u.roles[0] === 'PRACTITIONER' ? 'médica' : u.roles[0] === 'PATIENT' ? 'paciente' : u.roles[0] === 'SUPERADMIN' ? 'superadmin' : u.roles[0] === 'MEDICAL_VISITOR' ? 'visitador médico' : 'administrador',
   }));
 }
+

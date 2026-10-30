@@ -3,21 +3,21 @@
      bajan a `h3`. Un segundo `h1` rompería el esquema de encabezados de la
      página y le mentiría al lector de pantalla sobre dónde está parado. -->
 <h2 class="prefs__encabezado">Avisos</h2>
-<p class="prefs__intro">Elegí de qué querés que te avisemos y cuándo.</p>
+<p class="prefs__intro">Elija de qué quiere que le avisemos y cuándo.</p>
 
 @if (error(); as message) {
   <app-alert tone="error" class="prefs__alerta">{{ message }}</app-alert>
 }
 
 @if (saved()) {
-  <app-alert tone="success" class="prefs__alerta">Guardamos tus preferencias.</app-alert>
+  <app-alert tone="success" class="prefs__alerta">Guardamos sus preferencias.</app-alert>
 }
 
 @if (loading()) {
-  <p class="prefs__cargando" role="status">Cargando tus preferencias…</p>
+  <app-loading-state class="prefs__cargando" message="Cargando sus preferencias…" />
 } @else {
   <section class="prefs__bloque">
-    <h3 class="prefs__titulo">Qué avisos recibís</h3>
+    <h3 class="prefs__titulo">Qué avisos recibe</h3>
 
     <ul class="prefs__lista">
       @for (row of rows(); track row.category) {
@@ -41,6 +41,40 @@
       }
     </ul>
   </section>
+
+  @if (webPush.supported) {
+    <section class="prefs__bloque">
+      <h3 class="prefs__titulo">En este navegador</h3>
+
+      <div class="prefs__fila">
+        <span class="prefs__texto">
+          <span class="prefs__nombre">Avisarme aunque la página esté cerrada</span>
+          <!-- Se dice qué verá en pantalla: nada clínico, sólo que hay un aviso. -->
+          <span class="prefs__detalle">
+            Le mostramos un aviso breve, sin datos de su salud. El detalle lo ve al abrir la
+            aplicación.
+          </span>
+        </span>
+        <span class="prefs__derecha">
+          <app-switch
+            class="prefs__switch"
+            data-testid="pref-web-push"
+            label="Avisarme aunque la página esté cerrada"
+            [checked]="webPush.subscribed()"
+            [disabled]="webPush.busy()"
+            (checkedChange)="togglePush($event)"
+          />
+          <app-nav-icon class="prefs__icono" name="bell" />
+        </span>
+      </div>
+
+      @if (pushNotice(); as notice) {
+        <app-alert tone="warning" class="prefs__alerta" data-testid="pref-web-push-notice">{{
+          notice
+        }}</app-alert>
+      }
+    </section>
+  }
 
   <section class="prefs__bloque">
     <h3 class="prefs__titulo">Silencio nocturno</h3>
@@ -90,7 +124,7 @@
           />
         </label>
       </div>
-      <p class="prefs__nota">Se usa la hora de tu dispositivo.</p>
+      <p class="prefs__nota">Se usa la hora de su dispositivo.</p>
     }
   </section>
 

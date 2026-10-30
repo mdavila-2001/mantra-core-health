@@ -143,7 +143,18 @@ describe('Settings', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-notification-preferences')).not.toBeNull();
-    expect(text()).toContain('Qué avisos recibís');
+    expect(text()).toContain('Qué avisos recibe');
+  });
+
+  it('ofrece los tutoriales como pestaña: se fusionaron con Ajustes (27/10/2026)', () => {
+    mount();
+    goTo('Tutoriales');
+
+    const abrir = fixture.nativeElement.querySelector(
+      '[data-testid="settings-abrir-tutoriales"]',
+    ) as HTMLAnchorElement | null;
+    expect(abrir?.tagName).toBe('A');
+    expect(abrir?.getAttribute('href')).toBe('/tutorials');
   });
 
   it('el único h1 es el de Ajustes: el panel de avisos bajó a h2', () => {
@@ -182,26 +193,18 @@ describe('Settings', () => {
     expect(theme.currentTheme()).toBe('dark');
   });
 
-  it('siguiendo al dispositivo dice cuál rige y no ofrece volver a él', () => {
-    mount();
-    goTo('Apariencia');
-    theme.useSystemTheme();
-    fixture.detectChanges();
-
-    expect(text()).toContain('Sigue a tu dispositivo');
-    expect(query('theme-use-system')).toBeNull();
-  });
-
-  it('elegido a mano, se puede volver a seguir al dispositivo', () => {
+  it('muestra el estado del modo oscuro en el texto descriptivo', () => {
     mount();
     goTo('Apariencia');
     theme.setTheme('dark');
     fixture.detectChanges();
 
-    query('theme-use-system')?.click();
+    expect(text()).toContain('Activado');
+
+    theme.setTheme('light');
     fixture.detectChanges();
 
-    expect(theme.currentTheme()).toBe('system');
+    expect(text()).toContain('Desactivado');
   });
 
   /** El interruptor nativo que hay dentro del `app-switch` de ese permiso. */
@@ -245,7 +248,7 @@ describe('Settings', () => {
     mount();
     goTo('Permisos');
 
-    expect(text()).toContain('configuración de este sitio en tu navegador');
+    expect(text()).toContain('configuración de este sitio en su navegador');
   });
 
   it('encender un permiso se lo pide al navegador, no lo da por concedido', () => {
@@ -288,7 +291,7 @@ describe('Settings', () => {
     expect(query('settings-roles')?.textContent?.trim()).not.toBe('');
   });
 
-  it('no promete una lista de quién ve tus datos: la API no se la responde a la persona', () => {
+  it('no promete una lista de quién ve sus datos: la API no se la responde a la persona', () => {
     mount(['PATIENT']);
     goTo('Permisos');
 

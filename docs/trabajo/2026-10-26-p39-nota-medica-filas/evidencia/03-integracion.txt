@@ -1,0 +1,6 @@
+$ MIKRO_ORM_CLI_ALWAYS_ALLOW_TS=1 DB_NAME=mantra_p39 … yarn test:integration test/integration/p39-nota-medica-filas.int-spec.ts
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        39.601 s, estimated 60 s
+Ran all test suites matching test/integration/p39-nota-medica-filas.int-spec.ts.

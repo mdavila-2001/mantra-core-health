@@ -7,18 +7,34 @@ import {
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { AppButton } from '../../atoms/button/button';
 import { Chip } from '../../atoms/chip/chip';
+import { NavIcon } from '../../atoms/nav-icon/nav-icon';
+import type { NavIconName } from '../../atoms/nav-icon/nav-icon.types';
 import { SearchField } from '../../molecules/search-field/search-field';
 import { Select } from '../../atoms/select/select';
 import type { SelectOption } from '../../atoms/select/select.types';
 
-/** Clave del término de búsqueda en la URL. */
+/** Clave por omisión del término de búsqueda en la URL (ver `FilterBar.searchParam`). */
 export const SEARCH_PARAM = 'q';
+
+/**
+ * Cuántas opciones de una faceta se ven por página.
+ *
+ * Desde el 24/10/2026 la columna no se estira con «Ver 38 más» (propietario:
+ * «un buscador y un paginador estético para los filtros»): la faceta larga
+ * trae su propio buscador y se recorre por páginas de este tamaño, así que la
+ * columna mide lo mismo con 12 especialidades que con 50.
+ */
+export const OPCIONES_DE_FACETA_POR_PAGINA = 8;
+
+/** Desde cuántas opciones la faceta lleva buscador propio. */
+export const OPCIONES_PARA_BUSCAR_EN_FACETA = OPCIONES_DE_FACETA_POR_PAGINA;
 
 /**
  * Un filtro de value set. **Siempre selector, nunca texto libre**: todo lo que
@@ -29,6 +45,12 @@ export interface FilterDef {
   /** Clave estable; es la que viaja a la URL y al backend. */
   readonly key: string;
   readonly label: string;
+  /**
+   * Lo que dice el desplegable mientras no hay nada elegido. Por omisión, el
+   * `label`. Hace falta cuando «sin elegir» significa algo —«Todos los
+   * directorios»— y el rótulo del chip activo es otra cosa («Directorio: …»).
+   */
+  readonly placeholder?: string;
   /** Opciones del value set. Vacío ⇒ el filtro se muestra deshabilitado. */
   readonly options: readonly SelectOption<string>[];
   /** Motivo visible cuando el value set no está disponible. */
@@ -60,11 +82,19 @@ export interface FilterDef {
    * Sin él, cada filtro es su propio renglón, rotulado con su `label`.
    */
   readonly chipsGroup?: string;
+
+  /**
+   * El ícono del rótulo en la columna de facetas (`layout="facets"`). Opcional:
+   * sin él, el rótulo va solo. En un grupo de chips manda el del primer filtro
+   * que lo declara.
+   */
+  readonly icon?: NavIconName;
 }
 
 /** Un renglón de chips ya resuelto: su rótulo y los filtros que lo componen. */
 export interface ChipGroup {
   readonly label: string;
+  readonly icon?: NavIconName;
   readonly filters: readonly FilterDef[];
 }
 
@@ -89,8 +119,9 @@ export interface ActiveFilter {
  * etiquetas son presentación y cambian con el value set o el idioma.
  *
  * **Receta de buscador multicampo** (ADR-0015, regla 5): el organismo emite
- * un único término normalizado bajo `q` — filtrar por varios campos a la vez
- * es responsabilidad del consumidor, no de la barra:
+ * un único término normalizado bajo su clave de búsqueda (`q` por omisión) —
+ * filtrar por varios campos a la vez es responsabilidad del consumidor, no de
+ * la barra:
  *
  * ```ts
  * const termino = normalizar(this.filtersChanged$().q ?? '');
@@ -114,12 +145,14 @@ export interface ActiveFilter {
  */
 @Component({
   selector: 'app-filter-bar',
-  imports: [AppButton, Chip, SearchField, Select],
+  imports: [AppButton, Chip, NavIcon, SearchField, Select],
   templateUrl: './filter-bar.html',
   styleUrl: './filter-bar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'filter-bar',
+    '[class.filter-bar--wrap]': 'wrap()',
+    '[class.filter-bar--facets]': "layout() === 'facets'",
   },
 })
 export class FilterBar {
@@ -128,6 +161,41 @@ export class FilterBar {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly filters = input<readonly FilterDef[]>([]);
+
+  /**
+   * Deja que los controles bajen de renglón en vez de encogerse.
+   *
+   * Opt-in: con cinco o más filtros por encabezado («Solicitudes recibidas»)
+   * la fila única dejaba el buscador en un puñado de píxeles y cortaba los
+   * rótulos de los desplegables. Los consumidores con pocos filtros no lo
+   * necesitan y siguen exactamente igual.
+   */
+  readonly wrap = input(false, { transform: booleanAttribute });
+
+  /**
+   * `facets` dibuja los filtros de chips como la columna de un catálogo: cada
+   * grupo con su rótulo arriba y sus opciones en lista, una por renglón.
+   *
+   * Es la forma de la columna lateral del directorio (estilo marketplace): ahí
+   * no hay ancho para una fila de chips, y una lista vertical se recorre de
+   * un vistazo. El comportamiento —URL, un valor por filtro, tocar de nuevo
+   * quita— es el mismo que el de los chips.
+   */
+  readonly layout = input<'bar' | 'facets'>('bar');
+
+  /**
+   * `false` no dibuja el buscador. Para la columna de facetas, cuyo buscador
+   * está arriba, en otra barra que comparte la URL con ésta.
+   */
+  readonly showSearch = input(true, { transform: booleanAttribute });
+
+  /**
+   * `false` no dibuja la fila de filtros activos con «Limpiar todo». Para la
+   * barra de arriba cuando los filtros viven en la columna de facetas: la
+   * fila iría repetida en los dos lugares.
+   */
+  readonly showActive = input(true, { transform: booleanAttribute });
+
   readonly searchLabel = input<string>('Buscar en el listado');
 
   /**
@@ -148,7 +216,39 @@ export class FilterBar {
    */
   readonly searchLoading = input(false, { transform: booleanAttribute });
 
-  /** Los códigos activos, incluido el término de búsqueda bajo `q`. */
+  /**
+   * La clave del término de búsqueda en la URL. Por omisión, {@link SEARCH_PARAM}.
+   *
+   * Existe para que dos barras convivan en una misma pantalla: con una sola
+   * clave, lo que se escribe en el buscador de una tabla filtra también la
+   * otra, y las dos muestran el mismo texto. La barra lee, escribe, limpia y
+   * emite el término bajo esta clave; los filtros ya viajan con la suya
+   * (`FilterDef.key`).
+   */
+  readonly searchParam = input<string>(SEARCH_PARAM);
+
+  /**
+   * `false` saca el término de búsqueda de la URL: la barra lo muestra desde
+   * {@link searchValue} y lo avisa por {@link searchChanged}, sin navegar.
+   *
+   * Existe para las pantallas donde lo que se tipea es un dato de una persona
+   * —el nombre o el documento de un paciente—: en la URL queda en el
+   * historial del navegador, en los logs del servidor que la sirve y en el
+   * `Referer`. Los filtros de catálogo (`FilterDef`) siguen en la URL: un
+   * código de catálogo no identifica a nadie.
+   */
+  readonly searchInUrl = input(true, { transform: booleanAttribute });
+
+  /** El término vigente cuando {@link searchInUrl} es `false`; lo guarda quien consume. */
+  readonly searchValue = input<string>('');
+
+  /**
+   * El término nuevo cuando {@link searchInUrl} es `false` (incluido `''` al
+   * limpiar). Con la búsqueda en la URL no se emite: la URL ya es el aviso.
+   */
+  readonly searchChanged = output<string>();
+
+  /** Los códigos activos, incluido el término de búsqueda bajo {@link searchParam}. */
   readonly filtersChanged = output<Readonly<Record<string, string>>>();
 
   /**
@@ -160,7 +260,9 @@ export class FilterBar {
     { initialValue: {} as Record<string, string> },
   );
 
-  protected readonly searchTerm = computed(() => this.params()[SEARCH_PARAM] ?? '');
+  protected readonly searchTerm = computed(() =>
+    this.searchInUrl() ? (this.params()[this.searchParam()] ?? '') : this.searchValue(),
+  );
 
   /** Los filtros con opciones; sin ellas el value set no llegó. */
   protected isAvailable(filter: FilterDef): boolean {
@@ -209,7 +311,7 @@ export class FilterBar {
    * array de filtros y nada más.
    */
   protected readonly chipGroups = computed<readonly ChipGroup[]>(() => {
-    const grupos: { label: string; filters: FilterDef[] }[] = [];
+    const grupos: { label: string; icon?: NavIconName; filters: FilterDef[] }[] = [];
     for (const filtro of this.filters()) {
       if (filtro.asChips !== true) {
         continue;
@@ -217,13 +319,85 @@ export class FilterBar {
       const rotulo = filtro.chipsGroup ?? filtro.label;
       const existente = grupos.find((grupo) => grupo.label === rotulo);
       if (existente === undefined) {
-        grupos.push({ label: rotulo, filters: [filtro] });
+        grupos.push({ label: rotulo, filters: [filtro], ...(filtro.icon ? { icon: filtro.icon } : {}) });
       } else {
         existente.filters.push(filtro);
+        existente.icon ??= filtro.icon;
       }
     }
     return grupos;
   });
+
+  /** Lo escrito en el buscador de cada faceta, por clave de filtro. */
+  protected readonly busquedasDeFaceta = signal<ReadonlyMap<string, string>>(new Map());
+
+  /** La página en la que está cada faceta, por clave de filtro (desde 1). */
+  private readonly paginasDeFaceta = signal<ReadonlyMap<string, number>>(new Map());
+
+  /** Si la faceta es lo bastante larga como para llevar buscador. */
+  protected llevaBuscador(filter: FilterDef): boolean {
+    return filter.options.length > OPCIONES_PARA_BUSCAR_EN_FACETA;
+  }
+
+  /** Las opciones que pasan el buscador de la faceta, todas las páginas. */
+  protected opcionesQueCoinciden(filter: FilterDef): FilterDef['options'] {
+    const termino = normalizarTexto(this.busquedasDeFaceta().get(filter.key) ?? '');
+    if (termino === '') {
+      return filter.options;
+    }
+    return filter.options.filter((opcion) =>
+      normalizarTexto(this.partirCantidad(opcion.label).texto).includes(termino),
+    );
+  }
+
+  protected paginasDe(filter: FilterDef): number {
+    return Math.max(1, Math.ceil(this.opcionesQueCoinciden(filter).length / OPCIONES_DE_FACETA_POR_PAGINA));
+  }
+
+  protected paginaDe(filter: FilterDef): number {
+    const pedida = this.paginasDeFaceta().get(filter.key) ?? 1;
+    return Math.min(this.paginasDe(filter), Math.max(1, pedida));
+  }
+
+  /**
+   * Las opciones de una faceta que se ven: las de la página actual, más la
+   * elegida arriba de todo si quedó en otra página. Sin eso, elegir algo en la
+   * página 3 y volver a la 1 dejaba el filtro puesto sin verse en la lista.
+   */
+  protected opcionesALaVista(filter: FilterDef): FilterDef['options'] {
+    const coinciden = this.opcionesQueCoinciden(filter);
+    const desde = (this.paginaDe(filter) - 1) * OPCIONES_DE_FACETA_POR_PAGINA;
+    const vista = coinciden.slice(desde, desde + OPCIONES_DE_FACETA_POR_PAGINA);
+    const elegida = coinciden.find((opcion) => this.isChipSelected(filter, opcion.value));
+    return elegida !== undefined && !vista.includes(elegida) ? [elegida, ...vista] : vista;
+  }
+
+  /** Los números de página que se dibujan como puntos; con muchas, ninguno. */
+  protected puntosDe(filter: FilterDef): readonly number[] {
+    const paginas = this.paginasDe(filter);
+    return paginas > MAXIMO_DE_PUNTOS ? [] : Array.from({ length: paginas }, (_, i) => i + 1);
+  }
+
+  protected irAPaginaDeFaceta(filter: FilterDef, pagina: number): void {
+    const destino = Math.min(this.paginasDe(filter), Math.max(1, pagina));
+    this.paginasDeFaceta.update((paginas) => new Map(paginas).set(filter.key, destino));
+  }
+
+  /** Buscar dentro de una faceta vuelve a su primera página. */
+  protected buscarEnFaceta(filter: FilterDef, termino: string): void {
+    this.busquedasDeFaceta.update((busquedas) => new Map(busquedas).set(filter.key, termino));
+    this.paginasDeFaceta.update((paginas) => new Map(paginas).set(filter.key, 1));
+  }
+
+  /**
+   * Separa «Santa Cruz (160)» en el nombre y la cantidad, para dibujar la
+   * cantidad aparte, alineada a la derecha, como en el filtro de una tienda.
+   * Un rótulo sin cantidad al final vuelve entero.
+   */
+  protected partirCantidad(rotulo: string): { readonly texto: string; readonly cantidad: string | null } {
+    const partes = /^(.*\S)\s+\((\d[\d.\s]*)\)$/u.exec(rotulo);
+    return partes ? { texto: partes[1]!, cantidad: partes[2]! } : { texto: rotulo, cantidad: null };
+  }
 
   /** Si esa opción es la que está puesta hoy para ese filtro. */
   protected isChipSelected(filter: FilterDef, code: string): boolean {
@@ -249,12 +423,19 @@ export class FilterBar {
 
   /** Mientras se tipea se reemplaza la entrada del historial: no se ensucia. */
   protected onSearch(term: string): void {
-    this.applyParams({ [SEARCH_PARAM]: term || null }, true);
+    if (!this.searchInUrl()) {
+      this.searchChanged.emit(term);
+      this.emitCurrent(term);
+      return;
+    }
+    this.applyParams({ [this.searchParam()]: term || null }, true);
   }
 
   /** Elegir un filtro es una decisión: queda en el historial. */
   protected onFilterChange(filter: FilterDef, code: string | null): void {
-    this.applyParams({ [filter.key]: code }, false);
+    // Una opción con valor vacío es «ninguno»: se quita de la URL en vez de
+    // dejar `?clave=` colgando.
+    this.applyParams({ [filter.key]: code === '' ? null : code }, false);
   }
 
   protected removeFilter(active: ActiveFilter): void {
@@ -262,14 +443,23 @@ export class FilterBar {
   }
 
   protected clearAll(): void {
-    const vacios: Record<string, null> = { [SEARCH_PARAM]: null };
+    // La clave de búsqueda se limpia de la URL también fuera de ella: si un
+    // enlace viejo la trajo, «limpiar» tiene que sacarla.
+    const vacios: Record<string, null> = { [this.searchParam()]: null };
     for (const filter of this.filters()) {
       vacios[filter.key] = null;
     }
-    this.applyParams(vacios, false);
+    if (!this.searchInUrl()) {
+      this.searchChanged.emit('');
+    }
+    this.applyParams(vacios, false, this.searchInUrl() ? undefined : '');
   }
 
-  private applyParams(changes: Record<string, string | null>, replaceUrl: boolean): void {
+  private applyParams(
+    changes: Record<string, string | null>,
+    replaceUrl: boolean,
+    termOverride?: string,
+  ): void {
     void this.router
       .navigate([], {
         relativeTo: this.route,
@@ -277,14 +467,19 @@ export class FilterBar {
         queryParamsHandling: 'merge',
         replaceUrl,
       })
-      .then(() => this.emitCurrent());
+      .then(() => this.emitCurrent(termOverride));
   }
 
-  private emitCurrent(): void {
+  /**
+   * @param termOverride - El término recién elegido cuando no vive en la URL:
+   *   {@link searchValue} todavía trae el anterior hasta que quien consume lo
+   *   actualice.
+   */
+  private emitCurrent(termOverride?: string): void {
     const activos: Record<string, string> = {};
-    const term = this.searchTerm();
+    const term = termOverride ?? this.searchTerm();
     if (term) {
-      activos[SEARCH_PARAM] = term;
+      activos[this.searchParam()] = term;
     }
     for (const active of this.activeFilters()) {
       // El CÓDIGO, no la etiqueta: es lo único estable.
@@ -292,4 +487,12 @@ export class FilterBar {
     }
     this.filtersChanged.emit(activos);
   }
+}
+
+/** Con más páginas que esto, el paginador dice «3 de 9» en vez de puntos. */
+const MAXIMO_DE_PUNTOS = 5;
+
+/** Sin mayúsculas ni tildes: «cardiologia» encuentra «Cardiología». */
+function normalizarTexto(texto: string): string {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }

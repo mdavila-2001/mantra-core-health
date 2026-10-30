@@ -24,13 +24,16 @@
   position: relative;
 }
 
-/* La fila deja libre la columna del menú (44 px): el botón vive siempre ahí y
-   nunca tapa la hora ni el contador. */
+/* Rejilla fija: avatar y texto. El texto se corta con puntos suspensivos;
+   nunca ensancha la fila. La fila deja libre la columna del menú (44 px): el
+   botón vive siempre ahí y nunca tapa la hora ni el contador. */
 .conversaciones__item {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--e3);
   min-block-size: 76px;
+  box-sizing: border-box;
   padding: var(--e2) calc(var(--e2) + 44px) var(--e2) var(--e3);
   border-radius: var(--r-menu);
   color: inherit;
@@ -40,6 +43,10 @@
 
 .conversaciones__item:hover {
   background: var(--sup-inset);
+}
+
+.conversaciones__item:active {
+  background: var(--bg-active);
 }
 
 .conversaciones__item:focus-visible {
@@ -190,6 +197,16 @@
   font-size: var(--fs-overline);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+  /* ALOVIDA Pulse · lo que espera respuesta late dos veces al aparecer y se
+     posa. El contador no se anima: sólo el aro. */
+  animation: pulse-ring 1.6s var(--pulse-ease) 2 both;
+  --pulse-aura: color-mix(in srgb, var(--chat-no-leido) 65%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .conversaciones__sin-leer {
+    animation: none;
+  }
 }
 
 .conversaciones__fila.is-sin-leer .conversaciones__con-quien {
@@ -240,6 +257,12 @@
   outline: 2px solid var(--anillo-foco);
   outline-offset: -2px;
   color: var(--tinta);
+}
+
+@media (hover: none), (max-width: 60rem) {
+  .conversaciones__mas {
+    opacity: 0.85;
+  }
 }
 
 .conversaciones__mas svg {
@@ -343,4 +366,15 @@
   border-radius: var(--r-pill);
   background: var(--sup-tarjeta);
   user-select: all;
+}
+
+/* El ícono de «bloqueado», al lado de la hora y las marcas de la fila. */
+.conversaciones__bloqueada {
+  display: inline-flex;
+  color: var(--tinta-3);
+}
+
+.conversaciones__bloqueada svg {
+  inline-size: 15px;
+  block-size: 15px;
 }

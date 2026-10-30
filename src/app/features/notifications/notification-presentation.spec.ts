@@ -47,7 +47,7 @@ describe('iconoDeCategoria', () => {
 describe('nombreDeCategoria', () => {
   it('nombra las cuatro familias en castellano', () => {
     expect(nombreDeCategoria('CLINICAL')).toBe('Clínico');
-    expect(nombreDeCategoria('SCHEDULING')).toBe('Turnos');
+    expect(nombreDeCategoria('SCHEDULING')).toBe('Citas');
     expect(nombreDeCategoria('MESSAGES')).toBe('Mensajes');
     expect(nombreDeCategoria('SOCIAL')).toBe('Red');
   });

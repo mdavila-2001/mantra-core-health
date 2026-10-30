@@ -62,9 +62,9 @@ const RECORRIDO: Readonly<Record<string, readonly { ruta: string; nombre: string
  * justamente parte del hallazgo.
  */
 const MAQUETAS: readonly { ruta: string; nombre: string }[] = [
-  { ruta: '/buscar/profesionales-listado', nombre: '01-buscador-publico' },
-  { ruta: '/directorio/organizaciones-listado', nombre: '02-organizaciones-maqueta' },
-  { ruta: '/personas/profesionales-listado', nombre: '03-personas-maqueta' },
+  { ruta: '/search/practitioners-list', nombre: '01-buscador-publico' },
+  { ruta: '/provider-directory/organizations-list', nombre: '02-organizaciones-maqueta' },
+  { ruta: '/people/practitioners-list', nombre: '03-personas-maqueta' },
 ];
 
 async function capturar(page: Page, carpeta: string, nombre: string): Promise<void> {

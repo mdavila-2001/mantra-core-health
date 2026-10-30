@@ -1,9 +1,8 @@
-import { vitrinas } from '../fixtures/comunidad';
-import { ESTADO } from '../fixtures/conceptos';
-import { PACIENTES, PROFESIONALES } from '../fixtures/personas';
-import { noContent, type MockRouter } from '../mock-router';
-import { perfilAjeno, puedeActuarComo } from './community.handlers';
-import { ahora, avatarSvg, Coleccion, imagenSvg, iso, nuevoId, qrSvg, texto, uuid } from '../mock-store';
+import { showcases } from '../fixtures/community';
+import { STATUS } from '../fixtures/concepts';
+import { PATIENTS, PROFESSIONALS } from '../fixtures/people';
+import { forbidden, noContent, reply, type MockRouter } from '../mock-router';
+import { ahora, avatarSvg, Coleccion, firmaSvg, imagenSvg, iso, logoSvg, nuevoId, qrSvg, selloSvg, texto, uuid } from '../mock-store';
 
 /* ============================================================================
     Archivos: subida, vínculos, descarga y el contenido de las imágenes.
@@ -22,6 +21,14 @@ interface ArchivoSimulado {
   readonly ownerType?: string;
   readonly ownerId?: string;
   /**
+   * Quién **subió** el archivo (`createdByUserId` de la API). La vía genérica
+   * `GET /common/files/:id/content` es «lo tuyo o revisor»: el paciente no puede
+   * leer por acá el PDF que subió el laboratorio (CL-40) y por eso baja su
+   * resultado por la ruta del contexto. Las semillas sin uploader son públicas
+   * del simulador (fotos, logos).
+   */
+  readonly uploaderUserId?: string;
+  /**
    * Los bytes **de verdad** cuando el archivo lo subió alguien en esta sesión.
    *
    * Sin esto, `POST /common/files/upload` guardaba un dibujo con las dos
@@ -32,18 +39,25 @@ interface ArchivoSimulado {
    */
   readonly bytes?: Blob;
   /**
-   * Los mismos bytes como `data:` URL, para que **sobrevivan a F5**.
+   * Los bytes subidos como `data:`, cuando ya terminó de leerse. Asíncrona:
+   * `FileReader` no tiene versión síncrona, y la subida simulada responde sin
+   * esperarla. Sirve para dos cosas:
    *
-   * `bytes` es un `Blob`, y al guardarse la colección en `sessionStorage` se
-   * serializa como `{}`: después de recargar —o de cerrar sesión y entrar con
-   * otra cuenta en la misma pestaña— la foto de un chat volvía como un
-   * documento de 2 bytes. Se llena aparte porque leer un `Blob` es asíncrono.
-   * Sólo para archivos chicos: `sessionStorage` tiene pocos megas.
+   * - que lo subido **sobreviva a F5**: `bytes` es un `Blob`, y al guardarse la
+   *   colección en `sessionStorage` se serializa como `{}`; después de recargar
+   *   —o de cerrar sesión y entrar con otra cuenta en la misma pestaña— la foto
+   *   de un chat volvía como un documento de 2 bytes. {@link fileContent} la
+   *   rearma desde acá;
+   * - pintar una imagen chica directo en un `<img>` (ver
+   *   {@link urlDeArchivoSimulado}).
    */
-  readonly bytesComoDataUrl?: string;
+  readonly dataUrlReal?: string;
 }
 
-/** Hasta qué tamaño se copian los bytes subidos para que sobrevivan a F5. */
+/**
+ * Hasta qué tamaño se copian los bytes subidos como `data:` para que
+ * sobrevivan a F5. `sessionStorage` tiene pocos megas en total.
+ */
 const TOPE_PERSISTIBLE = 1_500_000;
 
 /** Un `data:` URL de vuelta a `Blob`, con su tipo. */
@@ -58,14 +72,39 @@ function blobDeDataUrl(dataUrl: string): Blob | null {
   return new Blob([bytes], { type: tipo });
 }
 
+/** La cuenta del laboratorio que sube los PDF de resultados del simulador. */
+const LABORATORIO_UPLOADER = uuid('user-laboratorio-central');
+
+/** `SECURITY_ADMIN` y `SUPERADMIN` revisan cualquier archivo (`FILE_REVIEWER_ROLES`). */
+function puedeLeerPorAutoria(archivo: ArchivoSimulado, user: { readonly id: string; readonly roles: readonly string[] } | null): boolean {
+  if (archivo.uploaderUserId === undefined) return true;
+  if (user === null) return false;
+  return archivo.uploaderUserId === user.id || user.roles.includes('SECURITY_ADMIN') || user.roles.includes('SUPERADMIN');
+}
+
+/** Un archivo subido hace menos de 5 s sigue «en análisis» (`SCAN_PENDING`). */
+function escaneoPendiente(archivo: ArchivoSimulado): boolean {
+  return archivo.bytes !== undefined && Date.now() - Date.parse(archivo.createdAt) < 5000;
+}
+
+/**
+ * Tope para guardar una imagen como `data:` dentro de una publicación.
+ *
+ * Las publicaciones de la maqueta sobreviven a F5 en `sessionStorage`, que
+ * ronda los 5 MB **en total**: una foto de cámara entera haría fallar el
+ * guardado de todas. Por encima de esto se usa `blob:`, que se ve en la
+ * pestaña pero no sobrevive a la recarga.
+ */
+const MAX_BYTES_EN_DATA_URL = 400 * 1024;
+
 const archivos = new Coleccion<ArchivoSimulado>([
-  ...PROFESIONALES.map((p, i) => ({
+  ...PROFESSIONALS.map((p, i) => ({
     id: p.photoFileId,
     currentVersionId: uuid(`version-${p.photoFileId}`),
     originalName: `foto-${p.slug}.svg`,
     category: 'IMAGE' as const,
     sensitivity: 'NORMAL' as const,
-    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: iso(-300),
     dataUrl: avatarSvg(p.displayName, ['#1f6f8b', '#0f766e', '#7c3aed', '#b45309', '#be123c'][i % 5]),
     ownerType: 'USER',
@@ -73,42 +112,50 @@ const archivos = new Coleccion<ArchivoSimulado>([
   })),
   // El diploma y el carnet del colegio de cada profesional: son lo que baja
   // «Descargar» en las tablas de «Configurar tu perfil». Los ids se calculan con
-  // la misma semilla que `credencialesDe`/`licenciasDe` en `personas.ts`, así que
+  // la misma semilla que `credencialesDe`/`licenciasDe` en `people.ts`, así que
   // la fila de la tabla y el archivo no pueden separarse.
   // Los médicos de la red no tienen diploma ni carnet: `credencialesDe` no los declara.
-  ...PROFESIONALES.filter((p) => p.origen === undefined).flatMap((p) => [
-    { id: uuid(`file-diploma-${p.id}`), currentVersionId: uuid(`v-file-diploma-${p.id}`), originalName: `diploma-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Diploma de médico cirujano (PDF)'), ownerType: 'USER', ownerId: p.userId },
-    { id: uuid(`file-matricula-${p.id}`), currentVersionId: uuid(`v-file-matricula-${p.id}`), originalName: `matricula-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Carnet del Colegio Médico (PDF)', '#eef2ff', '#3730a3'), ownerType: 'USER', ownerId: p.userId },
+  ...PROFESSIONALS.filter((p) => p.origen === undefined).flatMap((p) => [
+    { id: uuid(`file-diploma-${p.id}`), currentVersionId: uuid(`v-file-diploma-${p.id}`), originalName: `diploma-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Diploma de médico cirujano (PDF)'), ownerType: 'USER', ownerId: p.userId },
+    { id: uuid(`file-matricula-${p.id}`), currentVersionId: uuid(`v-file-matricula-${p.id}`), originalName: `matricula-${p.slug}.pdf`, category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-300), dataUrl: imagenSvg('Carnet del Colegio Médico (PDF)', '#eef2ff', '#3730a3'), ownerType: 'USER', ownerId: p.userId },
   ]),
-  ...PACIENTES.filter((p) => p.photoFileId !== undefined).map((p) => ({
+  ...PATIENTS.filter((p) => p.photoFileId !== undefined).map((p) => ({
     id: p.photoFileId!,
     currentVersionId: uuid(`version-${p.photoFileId}`),
     originalName: 'foto-perfil.svg',
     category: 'IMAGE' as const,
     sensitivity: 'NORMAL' as const,
-    lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+    lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
     createdAt: iso(-200),
     dataUrl: avatarSvg(p.displayName, '#db2777'),
     ownerType: 'USER',
     ownerId: p.userId,
   })),
-  ...vitrinas.todos().flatMap((v) => [
-    { id: v.avatarFileId, currentVersionId: uuid(`version-${v.avatarFileId}`), originalName: 'avatar.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.avatarUrl },
-    { id: v.coverFileId, currentVersionId: uuid(`version-${v.coverFileId}`), originalName: 'portada.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.coverUrl },
+  ...showcases.todos().flatMap((v) => [
+    { id: v.avatarFileId, currentVersionId: uuid(`version-${v.avatarFileId}`), originalName: 'avatar.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.avatarUrl },
+    { id: v.coverFileId, currentVersionId: uuid(`version-${v.coverFileId}`), originalName: 'portada.svg', category: 'IMAGE' as const, sensitivity: 'NORMAL' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-200), dataUrl: v.coverUrl },
   ]),
-  ...PACIENTES.flatMap((p) => [
-    { id: uuid(`file-lab-${p.id}`), currentVersionId: uuid(`v-file-lab-${p.id}`), originalName: 'laboratorio-completo.pdf', category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-47), dataUrl: imagenSvg('Laboratorio completo (PDF)'), ownerType: 'PATIENT', ownerId: p.id },
-    { id: uuid(`file-ecg-${p.id}`), currentVersionId: uuid(`v-file-ecg-${p.id}`), originalName: 'electrocardiograma.png', category: 'IMAGE' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('ECG de reposo', '#fff7ed', '#c2410c'), ownerType: 'PATIENT', ownerId: p.id },
+  ...PATIENTS.flatMap((p) => [
+    { id: uuid(`file-lab-${p.id}`), currentVersionId: uuid(`v-file-lab-${p.id}`), originalName: 'laboratorio-completo.pdf', category: 'DOCUMENT' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-47), dataUrl: imagenSvg('Laboratorio completo (PDF)'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
+    { id: uuid(`file-ecg-${p.id}`), currentVersionId: uuid(`v-file-ecg-${p.id}`), originalName: 'electrocardiograma.png', category: 'IMAGE' as const, sensitivity: 'PHI' as const, lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('ECG de reposo', '#fff7ed', '#c2410c'), ownerType: 'PATIENT', ownerId: p.id, uploaderUserId: LABORATORIO_UPLOADER },
   ]),
-  { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
-  { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
+  { id: uuid('file-lunar'), currentVersionId: uuid('v-file-lunar'), originalName: 'lunar.jpg', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-12), dataUrl: imagenSvg('Foto del lunar', '#fdf2f8', '#9d174d') },
+  { id: uuid('file-licencia'), currentVersionId: uuid('v-file-licencia'), originalName: 'licencia-funcionamiento.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-400), dataUrl: imagenSvg('Licencia de funcionamiento (PDF)') },
   // Los adjuntos del chat de grupo de la médica.
-  { id: uuid('file-guia-anticoagulacion'), currentVersionId: uuid('v-file-guia-anticoagulacion'), originalName: 'guia-anticoagulacion-2026.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('Guía de anticoagulación 2026 (PDF)') },
-  { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
+  { id: uuid('file-guia-anticoagulacion'), currentVersionId: uuid('v-file-guia-anticoagulacion'), originalName: 'guia-anticoagulacion-2026.pdf', category: 'DOCUMENT', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-2), dataUrl: imagenSvg('Guía de anticoagulación 2026 (PDF)') },
+  { id: uuid('file-holter'), currentVersionId: uuid('v-file-holter'), originalName: 'holter-24h.png', category: 'IMAGE', sensitivity: 'PHI', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(0), dataUrl: imagenSvg('Holter 24 h', '#f0fdf4', '#166534') },
   // El QR bancario que la médica ya configuró para su consultorio propio. Uno
   // solo y no cuatro: con todas las sedes configuradas no se vería el aviso en
   // ámbar, que es el estado que la pantalla tiene que saber contar.
-  { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
+  { id: uuid('file-qr-consultorio'), currentVersionId: uuid('v-file-qr-consultorio'), originalName: 'qr-banco-union.png', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: qrSvg('site-consultorio-rojas', 'Banco Unión · Cta. 1000-4477') },
+  /* SIMULADOR del logo del consultorio propio. Cuando exista el campo real en
+     el backend, esta fila y su gemela en `practice.handlers.ts` se borran: las
+     pantallas y el PDF sólo hablan con `LogoDelConsultorioClient`. */
+  /* SIMULADOR de la firma y el sello de la médica (imágenes, no firma
+     electrónica). Ver `signature-and-seal.handlers.ts`. */
+  { id: uuid('file-firma-medica'), currentVersionId: uuid('v-file-firma-medica'), originalName: 'firma-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: firmaSvg() },
+  { id: uuid('file-sello-medica'), currentVersionId: uuid('v-file-sello-medica'), originalName: 'sello-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: selloSvg('Dra. V. Rojas', '1000') },
+  { id: uuid('file-logo-consultorio'), currentVersionId: uuid('v-file-logo-consultorio'), originalName: 'logo-consultorio-rojas.svg', category: 'IMAGE', sensitivity: 'NORMAL', lifecycleStatusConceptId: STATUS['ST-ACTIVE']!, createdAt: iso(-30), dataUrl: logoSvg('Consultorio Rojas', 'Cardiología · Santa Cruz') },
 ]);
 
 /**
@@ -177,6 +224,135 @@ export function enlazarArchivo(datos: {
   };
 }
 
+/**
+ * Los bytes de un archivo, como los entrega `GET /common/files/:id/content`,
+ * **sin** la regla de autoría de esa ruta.
+ *
+ * Existe para las rutas de contexto que autorizan por otra cosa —la
+ * conversación en la que viaja un adjunto—: quien la llame ya decidió que el
+ * lector puede verlo. `undefined` si el archivo no existe.
+ */
+export function fileContent(fileId: string): unknown {
+  const a = archivos.get(fileId);
+  if (a === undefined) return undefined;
+  // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
+  // Tras una recarga `bytes` llega como `{}` (un `Blob` no se serializa): por
+  // eso se pregunta si es un `Blob` de verdad, y si no, se rearma desde la
+  // copia en `data:` (`dataUrlReal`).
+  if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
+  const recuperado = a.dataUrlReal === undefined ? null : blobDeDataUrl(a.dataUrlReal);
+  if (recuperado !== null) return recuperado;
+  // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
+  // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
+  // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
+  // `image/…`— y al abrirlo se veía un cartel, no un documento.
+  const body =
+    a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
+      ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
+      : a.dataUrl;
+  // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
+  // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
+  // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
+  // backend (`filename*=UTF-8''…`), acentos incluidos.
+  return {
+    body,
+    headers: {
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
+    },
+  };
+}
+
+/** Lo que una ruta de contexto necesita saber para aceptar un archivo adjunto. */
+export interface AttachableFileFacts {
+  /** Quién lo subió; ausente en las semillas públicas del simulador. */
+  readonly uploaderUserId?: string;
+  readonly mimeType: string;
+  readonly sizeBytes: number;
+  readonly originalName: string;
+}
+
+/**
+ * De quién es, de qué tipo y cuánto pesa un archivo, como lo comprueba
+ * `assertUsableBy` de la API antes de colgarlo de algo (un comprobante de
+ * pago, por ejemplo). `undefined` si el archivo no existe.
+ *
+ * El tipo y el tamaño salen de los bytes subidos en esta pestaña; sin ellos
+ * —una semilla, o un archivo que perdió sus bytes al recargar— se deducen de
+ * la categoría, que es lo único que queda.
+ */
+export function attachableFileFacts(fileId: string): AttachableFileFacts | undefined {
+  const stored = archivos.get(fileId);
+  if (stored === undefined) return undefined;
+  const bytes = stored.bytes instanceof Blob ? stored.bytes : null;
+  return {
+    ...(stored.uploaderUserId === undefined ? {} : { uploaderUserId: stored.uploaderUserId }),
+    mimeType: bytes?.type || (stored.category === 'IMAGE' ? 'image/png' : 'application/pdf'),
+    sizeBytes: bytes?.size ?? 0,
+    originalName: stored.originalName,
+  };
+}
+
+/** URLs `blob:` ya creadas, para no fabricar una nueva por cada lectura. */
+const urlsDeArchivos = new Map<string, string>();
+
+/**
+ * Una URL que el navegador puede pintar directo en un `<img>` para un archivo
+ * de la maqueta.
+ *
+ * Existe por las imágenes de un artículo: la API real las sirve por
+ * `/public/media/:id`, que en la maqueta es un dibujo fijo (`mock-media.svg`,
+ * fuera del simulador). Para que quien publica vea SU foto:
+ *
+ * - si ya se leyó y es chica, como `data:` — sobrevive a F5 junto con la
+ *   publicación que la guarda;
+ * - si no, como `blob:` de sus bytes reales (la CSP lo admite), que se ve
+ *   mientras dure la pestaña.
+ *
+ * @returns La URL, o `null` si el archivo no existe.
+ */
+export function urlDeArchivoSimulado(fileId: string): string | null {
+  const archivo = archivos.get(fileId);
+  if (archivo === undefined) return null;
+  // Como `data:` sólo una imagen chica: se guarda dentro de la publicación.
+  // La copia de lo más grande existe para sobrevivir a F5, no para esto.
+  if (
+    archivo.dataUrlReal !== undefined &&
+    archivo.category === 'IMAGE' &&
+    archivo.dataUrlReal.length * 0.75 <= MAX_BYTES_EN_DATA_URL
+  ) {
+    return archivo.dataUrlReal;
+  }
+  if (!(archivo.bytes instanceof Blob) || typeof URL.createObjectURL !== 'function') {
+    return archivo.dataUrl;
+  }
+  let url = urlsDeArchivos.get(fileId);
+  if (url === undefined) {
+    url = URL.createObjectURL(archivo.bytes);
+    urlsDeArchivos.set(fileId, url);
+  }
+  return url;
+}
+
+/**
+ * Guarda una imagen que llegó como `data:` URL —la foto, la firma o el sello de
+ * un alta, que viajan en el cuerpo y no por `upload`— y devuelve su id.
+ *
+ * Sólo simulador: es lo que hace el backend real con `profilePhotoBase64`.
+ */
+export function guardarImagenDeDataUrl(dataUrl: string, nombre: string): string {
+  const nuevo = archivos.agregar({
+    id: nuevoId('file'),
+    currentVersionId: nuevoId('file-version'),
+    originalName: nombre,
+    category: 'IMAGE',
+    sensitivity: 'NORMAL',
+    lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
+    createdAt: ahora(),
+    dataUrl,
+  });
+  return nuevo.id;
+}
+
 export function registrarArchivos(router: MockRouter): void {
   router.post('/common/files/upload', (request) => {
     const form = request.body;
@@ -202,19 +378,20 @@ export function registrarArchivos(router: MockRouter): void {
       originalName: nombre,
       category: categoria,
       sensitivity: sensibilidad,
-      lifecycleStatusConceptId: ESTADO['ST-ACTIVE']!,
+      lifecycleStatusConceptId: STATUS['ST-ACTIVE']!,
       createdAt: ahora(),
       dataUrl: categoria === 'IMAGE' ? avatarSvg(nombre.slice(0, 2).toUpperCase(), '#0ea5e9') : imagenSvg(nombre),
       // Se guardan los bytes reales: lo que el usuario subió es lo que tiene
       // que volver al pedir el contenido. El `dataUrl` dibujado queda como
       // respaldo para el navegador que no trae `File` en el `FormData`.
       ...(subido === null ? {} : { bytes: subido }),
+      ...(request.user === null ? {} : { uploaderUserId: request.user.id }),
     });
     if (subido !== null && subido.size <= TOPE_PERSISTIBLE && typeof FileReader !== 'undefined') {
       const lector = new FileReader();
       lector.onload = () => {
         if (typeof lector.result === 'string' && archivos.get(nuevo.id) !== undefined) {
-          archivos.actualizar(nuevo.id, { bytesComoDataUrl: lector.result });
+          archivos.actualizar(nuevo.id, { dataUrlReal: lector.result });
         }
       };
       lector.readAsDataURL(subido);
@@ -244,52 +421,35 @@ export function registrarArchivos(router: MockRouter): void {
     };
   });
 
-  router.post('/common/files/:id/download-url', ({ params }) => {
+  router.post('/common/files/:id/download-url', ({ params, user }) => {
     const a = archivos.get(params['id']!);
+    if (a !== undefined && !puedeLeerPorAutoria(a, user)) return forbidden('No tiene acceso a este archivo');
+    // Recién subido y sin escaneo: 422 con el motivo, como la API (TX-33).
+    if (a !== undefined && escaneoPendiente(a)) {
+      return reply(422, {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'La versión vigente no ha superado el escaneo antimalware',
+        error: 'Unprocessable Entity',
+        details: { reason: 'SCAN_PENDING' },
+      });
+    }
     return { url: a?.dataUrl ?? imagenSvg('Archivo'), expiresAt: iso(0, 23, 59) };
   });
 
-  // El adjunto de un chat se lee por la ruta contextual de community —la que
-  // usa `ChatStore`—, no por la genérica. Sin esta ruta en la maqueta, toda
-  // foto del chat volvía como 22 bytes `octet-stream` y se pintaba como
-  // documento. Los bytes son los mismos: se delega en el contenido del archivo.
-  router.get('/community/conversations/:id/attachments/:fileId/content', (request) =>
-    puedeActuarComo(request, texto(request.query, 'profileId') ?? '')
-      ? contenidoDeArchivo(request.params['fileId']!)
-      : perfilAjeno(),
-  );
-
-  router.get('/common/files/:id/content', ({ params }) => contenidoDeArchivo(params['id']!));
-
-  function contenidoDeArchivo(id: string) {
-    const a = archivos.get(id);
+  router.get('/common/files/:id/content', ({ params, user }) => {
+    const a = archivos.get(params['id']!);
     if (a === undefined) return avatarSvg('?', '#94a3b8');
-    // Lo que alguien subió vuelve tal cual, con su tipo. Ver `bytes`.
-    // Tras una recarga `bytes` llega como `{}` (un `Blob` no se serializa):
-    // por eso se pregunta si es un `Blob` de verdad, y si no, se rearma desde
-    // la copia en `data:`.
-    if (typeof Blob !== 'undefined' && a.bytes instanceof Blob) return a.bytes;
-    const recuperado = a.bytesComoDataUrl === undefined ? null : blobDeDataUrl(a.bytesComoDataUrl);
-    if (recuperado !== null) return recuperado;
-    // Un documento se entrega como un **PDF de verdad** (mínimo, con el nombre
-    // del archivo como texto) y no como el dibujo SVG de las miniaturas: con el
-    // SVG, un PDF adjunto en el chat se pintaba como foto —el tipo decía
-    // `image/…`— y al abrirlo se veía un cartel, no un documento.
-    const body =
-      a.category === 'DOCUMENT' && typeof Blob !== 'undefined'
-        ? new Blob([pdfMinimo(a.originalName)], { type: 'application/pdf' })
-        : a.dataUrl;
-    // 5.2 · el nombre viaja donde lo pone la API real. Sin esta cabecera todo
-    // adjunto se guardaba con un nombre de reserva, y la paridad mock↔real se
-    // rompía justo en lo que 5.2 tiene que demostrar. Se codifica igual que el
-    // backend (`filename*=UTF-8''…`), acentos incluidos.
-    return {
-      body,
-      headers: {
-        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(a.originalName)}`,
-      },
-    };
-  }
+    if (!puedeLeerPorAutoria(a, user)) return forbidden('No tiene acceso a este archivo');
+    const contenido = fileContent(a.id);
+    // `{ body, headers }` sin `status` no es una respuesta para el interceptor
+    // (`isMockReply` exige el estado): la trataba como el cuerpo mismo y el
+    // `Blob` que recibía el front era el JSON `{"body":"data:…"}`, no la imagen.
+    // Los bytes subidos (`Blob`) ya salen bien.
+    return contenido instanceof Blob || contenido === undefined
+      ? contenido
+      : { status: 200, ...(contenido as { body: unknown; headers: Record<string, string> }) };
+  });
 
   router.delete('/common/files/:id', ({ params }) => {
     archivos.borrar(params['id']!);

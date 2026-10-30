@@ -1,7 +1,7 @@
 @if (vista(); as estado) {
   <app-page-header
     [title]="estado.status === 'ready' ? estado.data.title : 'Cuestionario'"
-    subtitle="Tus respuestas son privadas: solo las ve el profesional que te atendió."
+    subtitle="Sus respuestas son privadas: solo las ve el profesional que le atendió."
     [breadcrumbs]="breadcrumbs()"
   >
     <app-back-link
@@ -17,46 +17,93 @@
 
   @if (vista(); as estado) {
     @if (estado.status === 'ready') {
-      @if (estado.data.description) {
-        <p class="responder__consigna">{{ estado.data.description }}</p>
+      @if (ofertaDeResena(); as oferta) {
+        <!-- La encuesta ya quedó guardada. Esto es otra cosa: una reseña PÚBLICA,
+             con su propia escritura. «Ahora no» no pierde nada: desde la lista
+             de cuestionarios respondidos se puede dejar después. -->
+        <app-card variant="outlined" padding="lg" data-testid="responder-resena">
+          <section class="responder__resena">
+            <h2 class="responder__resena-titulo">¿Quiere compartir una reseña pública?</h2>
+            <p class="responder__resena-texto">
+              Su atención con {{ oferta.practitionerDisplayName }} ya terminó. Si quiere, puede
+              contar cómo fue en su perfil público.
+            </p>
+            <p class="responder__resena-aviso">
+              Su encuesta es privada y sólo la ve su médico. Una reseña es pública.
+            </p>
+            <div class="responder__resena-acciones">
+              <button
+                app-button
+                type="button"
+                variant="ghost"
+                data-testid="responder-resena-ahora-no"
+                (clicked)="volverALaLista()"
+              >
+                Ahora no
+              </button>
+              <button
+                app-button
+                type="button"
+                variant="primary"
+                data-testid="responder-resena-dejar"
+                (clicked)="abrirResena()"
+              >
+                Dejar una reseña
+              </button>
+            </div>
+          </section>
+        </app-card>
+
+        @if (resenando()) {
+          <app-rate-encounter-dialog
+            [encounterId]="oferta.encounterId"
+            [practitionerName]="oferta.practitionerDisplayName"
+            (saved)="resenaPublicada()"
+            (closed)="cerrarResena()"
+          />
+        }
+      } @else {
+        @if (estado.data.description) {
+          <p class="responder__consigna">{{ estado.data.description }}</p>
+        }
+
+        @if (avisoFaltantes()) {
+          <app-alert tone="error" class="responder__aviso" data-testid="responder-faltantes">
+            {{ avisoFaltantes() }}
+          </app-alert>
+        }
+
+        <!-- Sin `FormGroup` no hay `NgForm`: el `submit` nativo se corta acá y el envío —click o
+             Enter— entra por el mismo camino, sin recargar la página. -->
+        <form
+          class="responder__form"
+          (submit)="$event.preventDefault(); enviar()"
+          data-testid="responder-form"
+        >
+          <!-- El render lo pone `app-survey-form`, el MISMO organismo que la vista
+               previa de quien autora la encuesta. Copiarlo acá dejaría una previa
+               que miente en cuanto una de las dos cambie. -->
+          <app-survey-form
+            [preguntas]="estado.data.questions"
+            [respuestas]="respuestas()"
+            (respuestasChange)="respuestas.set($event)"
+            [faltantes]="faltantes()"
+            (respondido)="despejar($event)"
+          />
+
+          <div class="responder__acciones">
+            <button
+              app-button
+              type="submit"
+              variant="primary"
+              [isLoading]="enviando()"
+              data-testid="responder-enviar"
+            >
+              Enviar respuestas
+            </button>
+          </div>
+        </form>
       }
-
-      @if (avisoFaltantes()) {
-        <app-alert tone="error" class="responder__aviso" data-testid="responder-faltantes">
-          {{ avisoFaltantes() }}
-        </app-alert>
-      }
-
-      <!-- Sin `FormGroup` no hay `NgForm`: el `submit` nativo se corta acá y el envío —click o
-           Enter— entra por el mismo camino, sin recargar la página. -->
-      <form
-        class="responder__form"
-        (submit)="$event.preventDefault(); enviar()"
-        data-testid="responder-form"
-      >
-        <!-- El render lo pone `app-survey-form`, el MISMO organismo que la vista
-             previa de quien autora la encuesta. Copiarlo acá dejaría una previa
-             que miente en cuanto una de las dos cambie. -->
-        <app-survey-form
-          [preguntas]="estado.data.questions"
-          [respuestas]="respuestas()"
-          (respuestasChange)="respuestas.set($event)"
-          [faltantes]="faltantes()"
-          (respondido)="despejar($event)"
-        />
-
-        <div class="responder__acciones">
-          <button
-            app-button
-            type="submit"
-            variant="primary"
-            [isLoading]="enviando()"
-            data-testid="responder-enviar"
-          >
-            Enviar respuestas
-          </button>
-        </div>
-      </form>
     }
   }
 </app-view-state-host>

@@ -28,6 +28,7 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
 import { ContentDialog } from '../../../shared/components/organisms/content-dialog/content-dialog';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
+import { LoadingState } from '../../../shared/components/molecules/loading-state/loading-state';
 
 /**
  * Cómo se escribe la fecha de cada atención en el selector.
@@ -87,6 +88,7 @@ const LEYENDA: Readonly<Record<number, string>> = {
     FormField,
     Select,
     Textarea,
+    LoadingState,
   ],
   templateUrl: './rate-encounter-dialog.html',
   styleUrl: './rate-encounter-dialog.css',
@@ -99,7 +101,24 @@ export class RateEncounterDialog implements OnInit {
   private readonly toasts = inject(ToastService);
 
   /** A quién se está calificando, sólo para el texto del diálogo. */
-  readonly professionalName = input.required<string>();
+  readonly professionalName = input<string>('');
+
+  /**
+   * La atención ya elegida, cuando el diálogo se abre desde la encuesta.
+   *
+   * Es el `encounterId` de `GET /patients/me/reviewable-care`: el servidor ya
+   * resolvió reserva → encuentro y dijo que se puede reseñar. Con él **no hay
+   * nada que elegir**: el selector no se dibuja y no se pide el resumen clínico
+   * (`getSummary`) para armarlo. Sin él, el diálogo es el de siempre.
+   */
+  readonly encounterId = input<string | null>(null);
+
+  /**
+   * El nombre del profesional que viene con la atención prefijada
+   * (`practitionerDisplayName` de reviewable-care). Si falta, se usa
+   * `professionalName`.
+   */
+  readonly practitionerName = input<string>('');
 
   /** Se cerró sin guardar. */
   readonly closed = output<void>();
@@ -128,6 +147,17 @@ export class RateEncounterDialog implements OnInit {
 
   protected readonly enviando = computed(() => this.estado().status === 'loading');
 
+  /** Si la atención ya vino elegida y no hay selector que dibujar. */
+  protected readonly atencionPrefijada = computed(() => {
+    const id = this.encounterId();
+    return id !== null && id !== '';
+  });
+
+  /** El nombre con el que el diálogo habla del profesional. */
+  protected readonly nombreDelProfesional = computed(
+    () => this.practitionerName().trim() || this.professionalName().trim() || 'este profesional',
+  );
+
   protected readonly puedeEnviar = computed(
     () => this.encuentro() !== null && !this.enviando(),
   );
@@ -146,18 +176,24 @@ export class RateEncounterDialog implements OnInit {
       return estado.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (estado.status === 'forbidden') {
-      return estado.message ?? 'Tu cuenta no puede calificar atenciones.';
+      return estado.message ?? 'Su cuenta no puede calificar atenciones.';
     }
     if (estado.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (estado.status === 'error') {
-      return estado.message || 'No pudimos publicar tu opinión.';
+      return estado.message || 'No pudimos publicar su opinión.';
     }
     return null;
   });
 
   ngOnInit(): void {
+    if (this.atencionPrefijada()) {
+      // La atención ya viene resuelta: nada que listar, nada que pedir.
+      this.encuentro.set(this.encounterId());
+      this.cargandoAtenciones.set(false);
+      return;
+    }
     const paciente = this.auth.patientProfileId();
     if (paciente === null) {
       this.cargandoAtenciones.set(false);

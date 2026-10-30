@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { SessionStore } from '../auth/session.store';
@@ -66,7 +66,10 @@ describe('ChatSocketService', () => {
     token.set('tok');
     TestBed.configureTestingModule({
       providers: [
-        { provide: SessionStore, useValue: { accessToken: token } },
+        {
+          provide: SessionStore,
+          useValue: { accessToken: token, isAuthenticated: computed(() => token() !== null) },
+        },
         {
           provide: FABRICA_DE_SOCKET,
           useValue: (auth: AuthDeSocket) => {
@@ -154,5 +157,24 @@ describe('ChatSocketService', () => {
     socket.caer();
     expect(leido()).toBe('tok-rotado');
     expect(creados).toHaveLength(1);
+  });
+
+  it('TX-17 · al cerrar sesión se cierra el socket y se olvidan las salas', () => {
+    servicio.joinInbox('pp-1');
+    const socket = creados[0]!;
+    socket.conectar();
+
+    token.set(null);
+    TestBed.tick();
+    expect(socket.desconectado).toBe(true);
+    expect(servicio.connected()).toBe(false);
+
+    // Otra sesión en la misma pestaña no hereda la bandeja anterior.
+    token.set('tok-2');
+    servicio.joinConversation('c-9', 'pp-2');
+    creados[1]!.conectar();
+    expect(creados[1]!.emitidos).toEqual([
+      ['join:conversation', { conversationId: 'c-9', profileId: 'pp-2' }],
+    ]);
   });
 });

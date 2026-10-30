@@ -1,0 +1,80 @@
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding-block: var(--sp-4);
+}
+
+.tree__note {
+  margin: 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--st-warning-bd);
+  border-radius: var(--r-md);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+}
+
+.tree__title {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-h3);
+  color: var(--text-primary);
+}
+
+.tree__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+  border-inline-start: 2px solid var(--border-subtle);
+}
+
+.tree__node {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.tree__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tree__text {
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.tree__muted,
+.tree__outcome {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.tree__outcome {
+  font-weight: 600;
+}
+
+.tree__source {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.tree__branch-label {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.tree__responses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding-inline-start: var(--sp-5);
+}

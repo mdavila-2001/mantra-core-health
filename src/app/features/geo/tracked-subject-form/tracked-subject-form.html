@@ -20,7 +20,7 @@
     </dl>
 
     <p class="m13__texto">
-      Guardá el identificador del sujeto: es el que piden la ingesta de
+      Guarde el identificador del sujeto: es el que piden la ingesta de
       posiciones, las sesiones y la
       <a app-link href="/administration/geolocation/subjects/last-position/{{ sujeto.id }}">
         consulta de última posición</a
@@ -40,6 +40,7 @@
       description="Un segundo sujeto activo con el mismo tipo e identidad es un duplicado y se rechaza."
     >
       <app-form-field
+        icon="key"
         label="Identidad del sujeto"
         [required]="true"
         [hint]="uuidHint"
@@ -58,6 +59,7 @@
       </app-form-field>
 
       <app-form-field
+        icon="monitor"
         label="Dispositivo que reporta"
         hint="Opcional: el dispositivo registrado que va a mandar las posiciones."
         [errorMessage]="

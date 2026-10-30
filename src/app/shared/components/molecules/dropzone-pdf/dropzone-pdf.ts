@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   effect,
   inject,
   input,
@@ -13,11 +14,22 @@ import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import type { Subscription } from 'rxjs';
 
 import { FileInput, type RejectedFile } from '../file-input/file-input';
+import { FilePreview } from '../file-preview/file-preview';
 import { Progress } from '../../atoms/progress/progress';
 import { UPLOAD_MAX_BYTES } from '../../../../core/data-access/files/upload-policy';
 import type { DropzonePdfState, PdfUploader, UploadedDocument } from './dropzone-pdf.types';
 
 const MENSAJE_FORMATO_O_TAMANO = 'Solo se admiten documentos PDF de hasta 10 MB.';
+
+/**
+ * El PDF local de cada `fileId` subido en esta pestaña, para la vista previa.
+ *
+ * El asistente destruye la página al irse de ella y la instancia nueva sólo
+ * recibe `documentoInicial` (nombre, tamaño, `fileId`), no el `File`: sin esto
+ * la vista previa desaparecía al volver al paso. Vive en memoria y nada más —
+ * se pierde al recargar, que es lo correcto para un papel legal—.
+ */
+const PDF_LOCAL_POR_FILE_ID = new Map<string, File>();
 
 /** Un tamaño en palabras, mismo criterio que `app-file-input`. */
 function formatearTamano(bytes: number): string {
@@ -63,7 +75,7 @@ function formatearTamano(bytes: number): string {
  */
 @Component({
   selector: 'app-dropzone-pdf',
-  imports: [FileInput, Progress],
+  imports: [FileInput, FilePreview, Progress],
   templateUrl: './dropzone-pdf.html',
   styleUrl: './dropzone-pdf.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -119,6 +131,16 @@ export class DropzonePdf {
     });
   }
 
+  /**
+   * El PDF que se muestra en la vista previa: el recién elegido o, al volver
+   * al paso, el que se subió antes desde esta pestaña.
+   */
+  protected readonly archivoParaVistaPrevia = computed<File | null>(() => {
+    const actual = this.state();
+    if (actual.kind !== 'ready') return null;
+    return this.archivos()[0] ?? PDF_LOCAL_POR_FILE_ID.get(actual.fileId) ?? null;
+  });
+
   protected readonly progresoParaBarra = (): number | null => {
     const actual = this.state();
     return actual.kind === 'uploading' ? actual.progress : null;
@@ -158,6 +180,8 @@ export class DropzonePdf {
   }
 
   protected quitar(): void {
+    const actual = this.state();
+    if (actual.kind === 'ready') PDF_LOCAL_POR_FILE_ID.delete(actual.fileId);
     this.suscripcion?.unsubscribe();
     this.archivos.set([]);
     this.fileId.set(null);
@@ -179,6 +203,7 @@ export class DropzonePdf {
         }
         if (evento.type === HttpEventType.Response && evento.body) {
           const subido = evento.body;
+          PDF_LOCAL_POR_FILE_ID.set(subido.fileId, archivo);
           this.state.set({
             kind: 'ready',
             fileName: subido.originalName,
@@ -209,9 +234,9 @@ export class DropzonePdf {
         if (mensajeDelBackend) return mensajeDelBackend;
       }
       if (error.status === 0) {
-        return 'No pudimos subir el archivo: revisá tu conexión.';
+        return 'No pudimos subir el archivo: revise su conexión.';
       }
     }
-    return 'No pudimos subir el archivo. Reintentá.';
+    return 'No pudimos subir el archivo. Reintente.';
   }
 }

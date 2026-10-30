@@ -42,7 +42,7 @@ import { entrar, estable, irA } from './support/sesion';
 // Desde el 2026-09-12 `/administration/accounting` abre el cockpit y los libros
 // —balance, diario y el registro de movimientos, que es lo que este carril
 // ejercita— viven un clic más adentro.
-const RUTA_CONTABILIDAD = '/administration/accounting/libros';
+const RUTA_CONTABILIDAD = '/administration/accounting/books';
 const ACCION_TIMEOUT = 8_000;
 
 const ANCHOS = [

@@ -44,6 +44,11 @@
   color: var(--text-primary);
 }
 
+/* Los bloques de la ficha (Negocio, Por qué existe, Quién responde) se separan entre sí. */
+.ficha-objeto__titulo:not(:first-child) {
+  margin-block-start: var(--e5);
+}
+
 .ficha-objeto__subtitulo {
   margin: var(--e4) 0 var(--e2);
   font-size: var(--fs-body);

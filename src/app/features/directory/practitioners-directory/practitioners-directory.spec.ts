@@ -1,8 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router, provideRouter } from '@angular/router';
-import { vi } from 'vitest';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
 import { PractitionersDirectory, type GrupoDeEspecialidad } from './practitioners-directory';
@@ -65,7 +64,6 @@ const CONCEPTOS = {
 describe('PractitionersDirectory', () => {
   let componente: PractitionersDirectory;
   let http: HttpTestingController;
-  let router: Router;
   /**
    * Los parámetros de la URL, empujables desde la prueba.
    *
@@ -87,7 +85,6 @@ describe('PractitionersDirectory', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
-    router = TestBed.inject(Router);
   });
 
   afterEach(() => http.verify());
@@ -110,9 +107,22 @@ describe('PractitionersDirectory', () => {
   function montarEnEspecialidad(id = 'esp-cardio'): void {
     parametros.next({ especialidad: id });
     montar();
+    // El recuento se pide siempre: alimenta el filtro de especialidad. Vacío
+    // no pide etiquetas, así que no se cruza con las de la lista.
+    responderRecuento([]);
   }
 
-  /** Responde el recuento que dibuja la portada. */
+  /**
+   * Monta la guía entera —la tarjeta «Todos los médicos» de la grilla—, con el
+   * recuento vacío.
+   */
+  function montarTodos(): void {
+    parametros.next({ especialidad: 'todos' });
+    montar();
+    responderRecuento([]);
+  }
+
+  /** Responde el recuento que alimenta el filtro de especialidad. */
   function responderRecuento(
     items: { specialtyConceptId: string; practitionerCount: number }[],
     practitionerTotal = items.reduce((s, i) => s + i.practitionerCount, 0),
@@ -164,80 +174,158 @@ describe('PractitionersDirectory', () => {
     http.expectOne((r) => r.url === '/terminology/concepts').flush(conceptos);
   }
 
-  /* -- 0 · La portada de especialidades ------------------------------------ */
+  /* -- 0 · La grilla de especialidades es la entrada (REQ-18-002) ---------- */
 
   /**
-   * El pedido de la bitácora: «un grid de especialidades que al darle click
-   * despliega la lista de doctores». Lo que estas pruebas fijan es el ahorro
-   * que lo justifica —la portada NO trae la guía— y que las tarjetas no
-   * prometan lo que no hay.
+   * Carril 18 (REQ-18-002): «grid de especialidades y click despliega lista de
+   * doctores», como en la red social. Sin nada en la URL se ve la grilla y no
+   * se pide la guía; la especialidad viaja en la URL y la lista conserva el
+   * resto: filas, especialidad como filtro y la elegida primero en cada fila.
    */
-  describe('portada de especialidades', () => {
-    it('sin especialidad elegida dibuja las tarjetas y NO pide la guía', () => {
+  describe('la grilla de especialidades y la lista de médicos', () => {
+    /** La guía entera: el recuento (para el filtro) y la tarjeta «Todos». */
+    function montarSinEspecialidad(
+      recuento: { specialtyConceptId: string; practitionerCount: number }[],
+      total?: number,
+      sinEspecialidad = 0,
+    ): void {
+      parametros.next({ especialidad: 'todos' });
       montar();
+      responderRecuento(recuento, total, sinEspecialidad);
+      if (recuento.length > 0) responderConceptos();
+    }
 
+    function tarjetas(): readonly { conceptId: string; nombre: string; cantidad: number }[] {
+      return interno<() => readonly { conceptId: string; nombre: string; cantidad: number }[]>(
+        'tarjetas',
+      )();
+    }
+
+    it('sin nada en la URL abre la grilla y NO pide la guía', () => {
+      montar();
       responderRecuento([
         { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
         { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
       ]);
       responderConceptos();
 
-      // Lo que esta pantalla vino a evitar: paginar la guía entera para contar.
+      expect(interno<() => boolean>('showsLanding')()).toBe(true);
+      // `afterEach` verifica que no quedó ninguna lectura de la guía sin pedir:
+      // si la grilla trajera la lista, `/profiles/practitioners` quedaría abierta.
       http.expectNone((r) => r.url === '/profiles/practitioners');
+    });
 
-      const tarjetas = interno<() => readonly { nombre: string; cantidad: number }[]>('tarjetas')();
-      expect(tarjetas).toEqual([
+    it('la grilla trae «Todos los médicos» primero y cada especialidad con su cantidad', () => {
+      montar();
+      responderRecuento(
+        [
+          { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+          { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+        ],
+        13,
+        2,
+      );
+      responderConceptos();
+
+      expect(tarjetas()).toEqual([
+        { conceptId: 'todos', nombre: 'Todos los médicos', cantidad: 13 },
         { conceptId: 'esp-cardio', nombre: 'Cardiología', cantidad: 12 },
         { conceptId: 'esp-pediatria', nombre: 'Pediatría', cantidad: 1 },
+        { conceptId: 'sin-especialidad', nombre: 'Sin especialidad declarada', cantidad: 2 },
       ]);
     });
 
-    it('el total no es la suma de las tarjetas: quien ejerce dos cuenta una vez', () => {
+    it('sin ningún médico la grilla es un estado vacío con próxima acción', () => {
       montar();
+      responderRecuento([], 0, 0);
 
-      // 12 + 1 = 13 tarjetas, pero hay 10 personas: tres ejercen las dos.
-      responderRecuento(
+      const recuento = interno<() => { status: string }>('recuento')();
+      expect(recuento.status).toBe('empty');
+    });
+
+    it('elegir una especialidad en la URL deja la grilla y pide la lista de esa especialidad', () => {
+      montar();
+      responderRecuento([]);
+      http.expectNone((r) => r.url === '/profiles/practitioners');
+
+      parametros.next({ especialidad: 'esp-cardio' });
+      TestBed.tick();
+
+      expect(interno<() => boolean>('showsLanding')()).toBe(false);
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.get('specialtyConceptId')).toBe('esp-cardio');
+      peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
+      responderConceptos();
+      expect(grupos().map((g) => g.nombre)).toEqual(['Cardiología']);
+    });
+
+    it('escribir en el buscador desde la grilla salta a la lista entera', () => {
+      parametros.next({ q: 'salas' });
+      montar();
+      responderRecuento([]);
+
+      expect(interno<() => boolean>('showsLanding')()).toBe(false);
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
+      peticion.flush({ items: [FILA, OTRA], count: 2, limit: 50, nextCursor: null });
+      responderConceptos();
+      expect(total()).toBe(1);
+    });
+
+    it('«Todos los médicos» abre la lista de TODOS, en una sola tanda', () => {
+      montarSinEspecialidad([
+        { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+        { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+      ]);
+      const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
+      // La guía entera: sin filtro de especialidad en la consulta.
+      expect(peticion.request.params.has('specialtyConceptId')).toBe(false);
+      peticion.flush({ items: [FILA, OTRA], count: 2, limit: 50, nextCursor: null });
+      responderConceptos();
+
+      expect(grupos().map((g) => g.nombre)).toEqual(['Todos los médicos']);
+      expect(total()).toBe(2);
+    });
+
+    it('la especialidad es un filtro de la barra, con la cantidad de cada una', () => {
+      montarSinEspecialidad([
+        { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
+        { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
+      ]);
+      responder([]);
+
+      const [filtro] =
+        interno<() => readonly { key: string; options: { label: string }[] }[]>('filtros')();
+      expect(filtro.key).toBe('especialidad');
+      expect(filtro.options.map((o) => o.label)).toEqual(['Cardiología (12)', 'Pediatría (1)']);
+    });
+
+    it('el total no es la suma del filtro: quien ejerce dos cuenta una vez', () => {
+      montarSinEspecialidad(
         [
           { specialtyConceptId: 'esp-cardio', practitionerCount: 12 },
           { specialtyConceptId: 'esp-pediatria', practitionerCount: 1 },
         ],
         10,
       );
-      responderConceptos();
+      responder([]);
 
       expect(interno<() => number>('totalDeProfesionales')()).toBe(10);
     });
 
-    /**
-     * El defecto que introdujo la portada: la guía se recorre por especialidad,
-     * y quien se registra solo nace SIN ninguna. Sin esta tarjeta, los médicos
-     * con cuenta —los que atienden por la app— quedaban inalcanzables.
-     */
-    it('ofrece una tarjeta para los que no declaran especialidad', () => {
-      montar();
-      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 20, 8);
-      responderConceptos();
+    it('el filtro ofrece a los que no declaran especialidad, sólo si los hay', () => {
+      montarSinEspecialidad([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 20, 8);
+      responder([]);
 
-      const tarjetas =
-        interno<() => readonly { conceptId: string; cantidad: number }[]>('tarjetas')();
-      const sinEspecialidad = tarjetas.at(-1);
-      expect(sinEspecialidad).toEqual({
-        conceptId: 'sin-especialidad',
-        nombre: 'Sin especialidad declarada',
-        cantidad: 8,
+      const [filtro] =
+        interno<() => readonly { options: { value: string; label: string }[] }[]>('filtros')();
+      expect(filtro.options.at(-1)).toEqual({
+        value: 'sin-especialidad',
+        label: 'Sin especialidad declarada (8)',
       });
     });
 
-    it('sin nadie sin especialidad, esa tarjeta no aparece', () => {
-      montar();
-      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }], 12, 0);
-      responderConceptos();
-
-      const tarjetas = interno<() => readonly { conceptId: string }[]>('tarjetas')();
-      expect(tarjetas.map((t) => t.conceptId)).toEqual(['esp-cardio']);
-    });
-
-    it('esa tarjeta pide el complemento al servidor, no una especialidad', () => {
+    it('«sin especialidad» pide el complemento al servidor, no una especialidad', () => {
       montarEnEspecialidad('sin-especialidad');
 
       const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
@@ -247,44 +335,47 @@ describe('PractitionersDirectory', () => {
       responderConceptos();
     });
 
-    it('abre una especialidad una sola vez ante cuatro activaciones rápidas', () => {
-      montar();
-      responderRecuento([{ specialtyConceptId: 'esp-cardio', practitionerCount: 12 }]);
-      responderConceptos();
-      const navegar = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-      const evento = new MouseEvent('click', { bubbles: true, cancelable: true });
-      const abrir = interno<(evento: MouseEvent, conceptId: string) => void>('abrirEspecialidad');
-
-      for (let indice = 0; indice < 4; indice += 1) {
-        abrir(evento, 'esp-cardio');
-      }
-
-      expect(evento.defaultPrevented).toBe(true);
-      expect(navegar).toHaveBeenCalledTimes(1);
-    });
-
-    it('con especialidad en la URL no dibuja la portada: va derecho a la lista', () => {
-      montarEnEspecialidad('esp-cardio');
-
-      // Ni una lectura del recuento: la portada no se muestra.
-      http.expectNone((r) => r.url === '/profiles/practitioners/specialty-counts');
-      responder([FILA]);
-      responderConceptos();
-
-      expect(interno<() => boolean>('enPortada')()).toBe(false);
-    });
-
-    /**
-     * La mitad del ahorro: dentro de una especialidad se piden SUS
-     * profesionales, no los de toda la red para después filtrar en memoria.
-     */
-    it('la lista de una especialidad la acota el servidor', () => {
+    it('con especialidad, la lista la acota el servidor y es UNA tanda con su nombre', () => {
       montarEnEspecialidad('esp-cardio');
 
       const peticion = http.expectOne((r) => r.url === '/profiles/practitioners');
       expect(peticion.request.params.get('specialtyConceptId')).toBe('esp-cardio');
-      peticion.flush({ items: [FILA], count: 1, limit: 50, nextCursor: null });
+      // Un cardiólogo que también es pediatra: antes aparecía además un grupo
+      // «Pediatría» dentro de la búsqueda de Cardiología.
+      peticion.flush({
+        items: [
+          {
+            ...FILA,
+            specialties: [
+              { specialtyConceptId: 'esp-pediatria', isPrimary: true },
+              { specialtyConceptId: 'esp-cardio', isPrimary: false },
+            ],
+          },
+        ],
+        count: 1,
+        limit: 50,
+        nextCursor: null,
+      });
       responderConceptos();
+
+      expect(grupos().map((g) => g.nombre)).toEqual(['Cardiología']);
+    });
+
+    it('en Cardiología cada fila dice Cardiología primero, no otra especialidad ni el título', () => {
+      montarEnEspecialidad('esp-cardio');
+      responder([
+        {
+          ...FILA,
+          professionalTitle: 'Médico especialista / Médica especialista',
+          specialties: [
+            { specialtyConceptId: 'esp-pediatria', isPrimary: true },
+            { specialtyConceptId: 'esp-cardio', isPrimary: false },
+          ],
+        },
+      ]);
+      responderConceptos();
+
+      expect(grupos()[0].profesionales[0].subtitle).toBe('Cardiología · Pediatría');
     });
   });
 
@@ -358,12 +449,22 @@ describe('PractitionersDirectory', () => {
   /* -- 1 · Están todos, sin escribir nada ---------------------------------- */
 
   it('carga la guía al abrir, sin que nadie escriba nada', () => {
-    montarEnEspecialidad();
+    montarTodos();
     responder([FILA, OTRA]);
     responderConceptos();
 
-    expect(grupos()).toHaveLength(2);
+    expect(grupos()).toHaveLength(1);
     expect(total()).toBe(2);
+  });
+
+  it('aplica la búsqueda de la URL al abrir el directorio desde Ayuda psicológica', () => {
+    // El enlace de Ayuda trae sólo `?q=`: con texto se salta la grilla.
+    parametros.next({ q: 'Psicología Clínica' });
+    montar();
+    responderRecuento([]);
+    responder([]);
+
+    expect(senal<string>('filtro')()).toBe('Psicología Clínica');
   });
 
   /**
@@ -392,14 +493,24 @@ describe('PractitionersDirectory', () => {
 
   /* -- 2 · La especialidad es el encabezado -------------------------------- */
 
-  it('agrupa por especialidad con su nombre traducido', () => {
+  it('la tanda de una especialidad lleva su nombre traducido', () => {
     montarEnEspecialidad();
+    responder([FILA]);
+    responderConceptos();
+
+    expect(grupos().map((g) => g.nombre)).toEqual(['Cardiología']);
+  });
+
+  it('la guía entera va en orden alfabético por nombre', () => {
+    montarTodos();
     responder([FILA, OTRA]);
     responderConceptos();
 
-    const nombres = grupos().map((g) => g.nombre);
-    // Alfabético: una guía se hojea, no se ordena por cuántos tiene cada una.
-    expect(nombres).toEqual(['Cardiología', 'Pediatría']);
+    // Una guía se hojea: «Dr. Andrés Peña» antes que «Dra. Lucía Salas».
+    expect(grupos()[0].profesionales.map((p) => p.title)).toEqual([
+      'Dr. Andrés Peña',
+      'Dra. Lucía Salas',
+    ]);
   });
 
   /**
@@ -432,16 +543,16 @@ describe('PractitionersDirectory', () => {
       ' | ',
     );
     expect(visible).not.toContain('Andrés Peña');
-    // Y el resto conserva el suyo, que es legítimo. Va en `subtitle` y ya no en
-    // la primera línea de `meta`: es qué es esta persona, no un dato de
-    // contexto, y la tarjeta lo pinta pegado al nombre.
+    // Desde el 04/10/2026 el subtítulo es la especialidad real, no el título
+    // escrito: la cruzada dice «Cardiología» y la sana, «Pediatría».
+    expect(cruzada?.subtitle).toBe('Cardiología');
     const sana = tarjetas.find((t) => t.title === 'Dr. Andrés Peña');
-    expect(sana?.subtitle).toBe('Pediatra');
+    expect(sana?.subtitle).toBe('Pediatría');
   });
 
   /** Quien ejerce dos especialidades figura bajo las dos. */
-  it('un profesional con dos especialidades aparece en las dos', () => {
-    montarEnEspecialidad();
+  it('un profesional con dos especialidades aparece UNA vez y su fila dice las dos', () => {
+    montarTodos();
     responder([
       {
         ...FILA,
@@ -453,21 +564,20 @@ describe('PractitionersDirectory', () => {
     ]);
     responderConceptos();
 
-    expect(grupos()).toHaveLength(2);
-    for (const grupo of grupos()) {
-      expect(grupo.profesionales.map((p) => p.id)).toContain('per-1');
-    }
+    // Antes figuraba bajo los dos encabezados: buscando cardiólogos aparecía
+    // también en «Pediatría» (propietario, 04/10/2026).
+    expect(total()).toBe(1);
+    expect(grupos()[0].profesionales[0].subtitle).toBe('Cardiología · Pediatría');
   });
 
   /** Sin especialidad declarada existe igual: va a un grupo propio, al final. */
-  it('quien no declara especialidad va a un grupo propio al final', () => {
-    montarEnEspecialidad();
+  it('quien no declara especialidad está en la guía, con su título como subtítulo', () => {
+    montarTodos();
     responder([FILA, { ...OTRA, specialties: [] }]);
     responderConceptos();
 
-    const ultimo = grupos().at(-1);
-    expect(ultimo?.conceptId).toBe('sin-especialidad');
-    expect(ultimo?.profesionales.map((p) => p.id)).toEqual(['per-2']);
+    const sinEspecialidad = grupos()[0].profesionales.find((p) => p.id === 'per-2');
+    expect(sinEspecialidad?.subtitle).toBe('Pediatra');
   });
 
   /** El catálogo caído deja los encabezados sin nombre, no la guía sin gente. */
@@ -499,21 +609,18 @@ describe('PractitionersDirectory', () => {
    * F-19/F-27: la especialidad es el encabezado de la grilla, y buscarla tiene
    * que traer a quienes la ejercen aunque su nombre no la mencione.
    */
-  it('el buscador también encuentra por especialidad, con el grupo entero', () => {
-    montarEnEspecialidad();
+  it('el buscador también encuentra por especialidad, que la fila muestra', () => {
+    montarTodos();
     responder([FILA, OTRA]);
     responderConceptos();
 
     senal<string>('filtro').set('cardio');
 
-    const encontrados = grupos();
-    expect(encontrados).toHaveLength(1);
-    expect(encontrados[0].nombre).toBe('Cardiología');
-    expect(encontrados[0].profesionales).toHaveLength(1);
+    expect(grupos()[0].profesionales.map((p) => p.id)).toEqual(['per-1']);
   });
 
-  it('el buscador también encuentra por el título profesional', () => {
-    montarEnEspecialidad();
+  it('el buscador también encuentra por el título profesional, aunque ya no se muestre', () => {
+    montarTodos();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -523,7 +630,7 @@ describe('PractitionersDirectory', () => {
   });
 
   it('el buscador encuentra por ESPECIALIDAD, que es el encabezado y no un dato de la tarjeta', () => {
-    montarEnEspecialidad();
+    montarTodos();
     responder([FILA, OTRA]);
     responderConceptos();
 
@@ -532,20 +639,17 @@ describe('PractitionersDirectory', () => {
     // que «pediatría» sólo encontraba a quien lo tuviera en el título libre.
     senal<string>('filtro').set('pediatría');
 
-    expect(grupos()).toHaveLength(1);
-    expect(grupos()[0].nombre).toBe('Pediatría');
-    expect(grupos()[0].profesionales).toHaveLength(1);
+    expect(grupos()[0].profesionales.map((p) => p.id)).toEqual(['per-2']);
   });
 
   it('el buscador ignora las tildes: nadie las escribe', () => {
-    montarEnEspecialidad();
+    montarTodos();
     responder([FILA, OTRA]);
     responderConceptos();
 
     senal<string>('filtro').set('cardiologia');
 
-    expect(grupos()).toHaveLength(1);
-    expect(grupos()[0].nombre).toBe('Cardiología');
+    expect(grupos()[0].profesionales.map((p) => p.id)).toEqual(['per-1']);
   });
 
   it('el grupo que casa entra ENTERO, aunque nadie coincida por nombre', () => {
@@ -620,5 +724,95 @@ describe('PractitionersDirectory', () => {
     responderConceptos();
 
     expect(grupos()[0].profesionales[0].link).toBe('/directory/per-1');
+  });
+
+  /* -- Filtros granulares (propietario, 24/10/2026) -------------------------- */
+
+  describe('los filtros que salen de la guía cargada', () => {
+    const REMOTA = {
+      ...OTRA,
+      profileId: 'per-3',
+      displayName: 'Dra. Ana Rojas',
+      verified: false,
+      telehealthAvailable: true,
+      // La dirección del consultorio es de una sola persona: no se ofrece.
+      workplaces: ['Clínica Foianini', 'Calle Única 123'],
+      ratingAverage: 4.6,
+      ratingCount: 3,
+    };
+
+    function claves(): string[] {
+      return interno<() => readonly { key: string }[]>('filtros')().map((f) => f.key);
+    }
+
+    function nombres(): string[] {
+      return grupos().flatMap((g) => g.profesionales.map((p) => p.title));
+    }
+
+    it('ofrece verificación, telemedicina, calificación e institución con su cantidad', () => {
+      montarTodos();
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      expect(claves()).toEqual([
+        'especialidad',
+        'verificado',
+        'telemedicina',
+        'calificacion',
+        'sede',
+      ]);
+      const sede = interno<() => readonly { key: string; options: { label: string }[] }[]>(
+        'filtros',
+      )().find((f) => f.key === 'sede')!;
+      expect(sede.options.map((o) => o.label)).toEqual([
+        'Clínica Foianini (3)',
+        'Hospital San Juan de Dios (2)',
+      ]);
+    });
+
+    it('cada corte acota la lista en memoria, sin pedir otra lectura', () => {
+      montarTodos();
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      const filtrar = interno<(a: Record<string, string>) => void>('filtrar');
+      filtrar({ telemedicina: 'true' });
+      expect(nombres()).toEqual(['Dra. Ana Rojas']);
+
+      filtrar({ verificado: 'true' });
+      expect(nombres()).toEqual(['Dr. Andrés Peña', 'Dra. Lucía Salas']);
+
+      filtrar({ sede: 'Hospital San Juan de Dios' });
+      expect(nombres()).toEqual(['Dr. Andrés Peña', 'Dra. Lucía Salas']);
+
+      filtrar({ calificacion: '4.5' });
+      expect(nombres()).toEqual(['Dra. Ana Rojas']);
+    });
+
+    it('sin nadie que cumpla todos los cortes, lo dice', () => {
+      montarTodos();
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      interno<(a: Record<string, string>) => void>('filtrar')({
+        telemedicina: 'true',
+        verificado: 'true',
+      });
+      expect(nombres()).toEqual([]);
+      expect(interno<() => string | null>('sinCoincidencias')()).toContain(
+        'Ningún médico cumple todos los filtros',
+      );
+    });
+
+    it('un enlace con los cortes en la URL abre la guía ya acotada', () => {
+      // Con un corte puesto lo que se pidió es una lista: no se ve la grilla.
+      parametros.next({ telemedicina: 'true' });
+      montar();
+      responderRecuento([]);
+      responder([FILA, OTRA, REMOTA]);
+      responderConceptos();
+
+      expect(nombres()).toEqual(['Dra. Ana Rojas']);
+    });
   });
 });

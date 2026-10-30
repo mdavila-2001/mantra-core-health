@@ -15,16 +15,30 @@
   gap: var(--sp-2);
 }
 
+/* El país y, cuando hay municipio, el acercamiento a su departamento: uno al
+   lado del otro donde entran, uno bajo el otro en el teléfono. */
+.department-map__vistas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+}
+
+.department-map__vistas > svg {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
 /* El lienzo se estira al ancho disponible y conserva su proporción por el
    `viewBox`. Sin ancho fijo en ninguna medida: a 390 px ocupa la columna, a
    1440 px lo limita el `max-width` de abajo — un mapa de país que ocupara
    700 px de alto obligaría a desplazar para llegar al siguiente campo. */
 .department-map__lienzo {
   display: block;
-  width: 100%;
-  max-width: 22rem;
+  width: 22rem;
+  max-width: 100%;
   height: auto;
-  margin-inline: auto;
   overflow: visible;
 }
 
@@ -70,6 +84,123 @@
   stroke-width: 8;
 }
 
+/* El municipio: el mismo tono que su departamento, más oscuro. Mezclado hacia
+   el petróleo más profundo en vez de un color aparte, para que se lea como
+   «un pedazo de lo elegido» y no como otra categoría. En claro el departamento
+   es petróleo 500 y el municipio queda cerca del 800; en oscuro, aguamarina
+   sobre petróleo, y el municipio baja a un verde azulado hondo. El trazo lo
+   separa del resto del departamento cuando los dos tonos se acercan. */
+.department-map__municipio {
+  fill: color-mix(in oklab, var(--brand-primary) 30%, var(--c-petrol-900));
+  stroke: var(--text-primary);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* El lugar exacto. Rojo de la rampa de error —el único rojo del sistema— con
+   aro claro, para que se lea igual sobre el relleno del departamento, sobre
+   el del municipio y sobre el fondo. */
+.department-map__marca {
+  pointer-events: none;
+}
+
+.department-map__marca-punto {
+  fill: var(--c-error-500);
+  stroke: var(--c-ivory-50);
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--c-petrol-900) 60%, transparent));
+}
+
+/* El halo late despacio para encontrar el punto cuando el municipio es chico
+   (Santa Cruz de la Sierra ocupa ~11 px a 390 px de ancho). */
+.department-map__marca-halo {
+  fill: color-mix(in srgb, var(--c-error-500) 28%, transparent);
+  stroke: var(--c-error-500);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: department-map-halo 2.4s var(--ease-out) infinite;
+}
+
+@keyframes department-map-halo {
+  0% {
+    transform: scale(0.55);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* ---- el acercamiento --------------------------------------------------- */
+
+/* Una lupa: cuadrada, con marco, y recorta lo que queda fuera del encuadre
+   —los vecinos siguen más allá del borde—. Más chica que el país: es el
+   detalle, no el protagonista. Los trazos no escalan con el `viewBox`; si no,
+   en un municipio chico serían diez veces más gruesos que en uno grande. */
+.department-map__acercamiento {
+  display: block;
+  width: 14rem;
+  height: auto;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--c-neutral-300);
+  border-radius: var(--r-lg);
+  /* Pedido del cliente (26/10/2026): el cuadrado, de fondo gris. Es fijo y no
+     sigue al tema a propósito: es un plano, y un plano se lee igual de día y
+     de noche; el negro y el petróleo de adentro contrastan con él en los dos. */
+  background: var(--c-neutral-50);
+}
+
+.department-map__acercamiento path {
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+/* Pedido del cliente (26/10/2026): el cuadrado gris, las líneas negras, el
+   municipio en azul petróleo y el punto rojo. Lo único con color es lo
+   elegido; todo lo demás es gris con trazo negro, para que el resaltado
+   resalte. Los de alrededor, un gris más claro que el elegido. */
+.department-map__acercamiento-otro {
+  fill: var(--c-neutral-50);
+  stroke: var(--c-neutral-900);
+  stroke-width: 1.5;
+}
+
+.department-map__acercamiento-departamento {
+  fill: var(--c-neutral-100);
+  stroke: var(--c-neutral-900);
+  stroke-width: 2.5;
+}
+
+/* Los municipios vecinos: líneas negras finas. */
+.department-map__acercamiento-vecino {
+  fill: none;
+  stroke: var(--c-neutral-900);
+  stroke-width: 0.75;
+}
+
+/* El resaltado: azul petróleo pleno con trazo negro grueso. No depende sólo
+   del color: el trazo lo separa aunque no se distingan los tonos, y el nombre
+   va abajo en palabras. */
+.department-map__acercamiento-municipio {
+  fill: var(--c-petrol-500);
+  stroke: var(--c-neutral-900);
+  stroke-width: 2.5;
+}
+
+/* Los límites de provincia: finos y discontinuos, para no competir con el
+   borde del departamento, que es lo que se elige. */
+.department-map__provincias {
+  fill: none;
+  stroke: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
 .department-map__sigla {
   font-family: var(--font-body);
   font-size: var(--fs-display);
@@ -81,7 +212,7 @@
   user-select: none;
 }
 
-.department-map__departamento--elegido .department-map__sigla {
+.department-map__sigla--elegida {
   fill: var(--text-inverse, #ffffff);
   font-weight: 700;
 }
@@ -99,5 +230,11 @@
 @media (prefers-reduced-motion: reduce) {
   .department-map__forma {
     transition: none;
+  }
+
+  /* El halo queda quieto, visible: sigue marcando dónde está el punto. */
+  .department-map__marca-halo {
+    animation: none;
+    opacity: 0.6;
   }
 }

@@ -1,23 +1,12 @@
 /* ============================================================================
-    Gestión del tema ALOVIDA. Tres responsabilidades, ninguna más:
-    leer la preferencia, resolverla contra el sistema, y estamparla en
-    `document.documentElement`.
-
-    Contrato con src/styles.css — el atributo se estampa SOLO cuando el usuario
-    eligió explícitamente:
-      'system' → sin atributo   → manda @media (prefers-color-scheme: dark)
-      'light'  → data-theme="light"  (neutraliza el @media)
-      'dark'   → data-theme="dark"
-    Por eso 'system' no parpadea jamás: se resuelve en CSS, sin JS.
-
-    Contrato con src/index.html — el script en línea del <head> estampa el mismo
-    atributo antes del primer paint leyendo THEME_STORAGE_KEY. Si cambia la clave
-    acá, cambia allá.
+    Gestión del tema ALOVIDA.
+    Contrato con src/styles.css y src/index.html:
+      'light'  → data-theme="light",  data-tema="claro"
+      'dark'   → data-theme="dark",   data-tema="oscuro"
     ========================================================================== */
 
 import {
   computed,
-  DestroyRef,
   DOCUMENT,
   effect,
   inject,
@@ -33,14 +22,11 @@ import { isThemeMode, type ResolvedTheme, type ThemeMode } from './design-tokens
 export const THEME_STORAGE_KEY = 'mantra-core-health.theme';
 
 const THEME_ATTRIBUTE = 'data-theme';
-const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 /**
  * Segundo atributo, para la hoja normativa de la bóveda (src/styles/alovida.css).
  * ALOVIDA resuelve el tema oscuro SOLO contra un atributo explícito: no tiene
- * respaldo en `@media (prefers-color-scheme)`. Por eso este atributo se estampa
- * siempre —incluso en 'system'— con el tema YA RESUELTO, mientras `data-theme`
- * conserva intacto su contrato de tres estados. Espejo en index.html.
+ * respaldo en `@media (prefers-color-scheme)`. Espejo en index.html.
  */
 const ALOVIDA_THEME_ATTRIBUTE = 'data-tema';
 const ALOVIDA_THEME_VALUE: Record<ResolvedTheme, string> = { light: 'claro', dark: 'oscuro' };
@@ -48,30 +34,21 @@ const ALOVIDA_THEME_VALUE: Record<ResolvedTheme, string> = { light: 'claro', dar
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-  private readonly preference = signal<ThemeMode>('system');
-  private readonly systemPrefersDark = signal(false);
+  private readonly preference = signal<ThemeMode>('light');
 
-  /** Lo que el usuario eligió: 'light' | 'dark' | 'system'. */
+  /** Lo que el usuario eligió: 'light' | 'dark'. */
   readonly currentTheme = this.preference.asReadonly();
 
-  /** Lo que efectivamente se está pintando. Es lo que mira un componente. */
-  readonly resolvedTheme = computed<ResolvedTheme>(() => {
-    const preference = this.preference();
-    if (preference !== 'system') {
-      return preference;
-    }
-    return this.systemPrefersDark() ? 'dark' : 'light';
-  });
+  /** Lo que efectivamente se está pintando: 'light' | 'dark'. */
+  readonly resolvedTheme = computed<ResolvedTheme>(() => this.preference());
 
   readonly isDark = computed(() => this.resolvedTheme() === 'dark');
 
   constructor() {
     if (this.isBrowser) {
       this.preference.set(this.readStoredPreference());
-      this.watchSystemPreference();
     }
 
     effect(() => this.applyPreference(this.preference()));
@@ -82,18 +59,9 @@ export class ThemeService {
     this.preference.set(mode);
   }
 
-  /**
-   * Alterna claro ↔ oscuro tomando como punto de partida lo que se ve.
-   * Alternar desde 'system' fija una preferencia explícita: es lo que el
-   * usuario acaba de pedir.
-   */
+  /** Alterna claro ↔ oscuro. */
   toggleTheme(): void {
     this.preference.set(this.resolvedTheme() === 'dark' ? 'light' : 'dark');
-  }
-
-  /** Devuelve el control al sistema operativo. */
-  useSystemTheme(): void {
-    this.preference.set('system');
   }
 
   private applyPreference(mode: ThemeMode): void {
@@ -101,19 +69,10 @@ export class ThemeService {
       return;
     }
     const root = this.document.documentElement;
-    if (mode === 'system') {
-      root.removeAttribute(THEME_ATTRIBUTE);
-    } else {
-      root.setAttribute(THEME_ATTRIBUTE, mode);
-    }
+    root.setAttribute(THEME_ATTRIBUTE, mode);
     this.persistPreference(mode);
   }
 
-  /**
-   * A diferencia de `data-theme`, este atributo no tiene estado 'system': se
-   * estampa el tema resuelto, porque la hoja de ALOVIDA no sabe leer la
-   * preferencia del sistema por su cuenta.
-   */
   private applyAlovidaTheme(resolved: ResolvedTheme): void {
     if (!this.isBrowser) {
       return;
@@ -124,21 +83,9 @@ export class ThemeService {
     );
   }
 
-  private watchSystemPreference(): void {
-    const query = this.document.defaultView?.matchMedia?.(DARK_SCHEME_QUERY);
-    if (!query) {
-      return;
-    }
-    this.systemPrefersDark.set(query.matches);
-
-    const onChange = (event: MediaQueryListEvent) => this.systemPrefersDark.set(event.matches);
-    query.addEventListener('change', onChange);
-    this.destroyRef.onDestroy(() => query.removeEventListener('change', onChange));
-  }
-
   private readStoredPreference(): ThemeMode {
     const stored = this.storage()?.getItem(THEME_STORAGE_KEY);
-    return isThemeMode(stored) ? stored : 'system';
+    return isThemeMode(stored) ? stored : 'light';
   }
 
   private persistPreference(mode: ThemeMode): void {
@@ -147,12 +94,7 @@ export class ThemeService {
       return;
     }
     try {
-      // 'system' se guarda como ausencia: así el script de index.html no estampa nada.
-      if (mode === 'system') {
-        storage.removeItem(THEME_STORAGE_KEY);
-      } else {
-        storage.setItem(THEME_STORAGE_KEY, mode);
-      }
+      storage.setItem(THEME_STORAGE_KEY, mode);
     } catch {
       // Escritura rechazada (cuota agotada o modo privado): degradar, no romper.
     }

@@ -201,6 +201,54 @@ describe('ContentDialog', () => {
       expect(dialogo()).toBeNull();
     });
   });
+
+  describe('salida del panel', () => {
+    // Con animación de salida posible (en jsdom no existe `animate`) el panel
+    // tarda 140 ms en irse y el `<dialog>` sigue siendo modal: la página de
+    // atrás está inerte y lo que se escribe en el campo de al lado se pierde.
+    // Una salida que nunca termina deja a la vista si el gesto espera por ella.
+    let animarOriginal: typeof HTMLElement.prototype.animate;
+    let terminarSalida: () => void;
+
+    beforeEach(() => {
+      animarOriginal = HTMLElement.prototype.animate;
+      terminarSalida = () => undefined;
+      HTMLElement.prototype.animate = (() => ({
+        finished: new Promise<void>((resolve) => {
+          terminarSalida = resolve;
+        }),
+        cancel: () => undefined,
+      })) as unknown as typeof HTMLElement.prototype.animate;
+    });
+
+    afterEach(() => {
+      HTMLElement.prototype.animate = animarOriginal;
+    });
+
+    it('`close(true)` —quien ya decidió— libera la página en el acto y devuelve el foco', async () => {
+      await abrir();
+
+      host.contentDialog()?.close(true);
+      await fixture.whenStable();
+
+      expect(dialogo()).toBeNull();
+      expect(document.activeElement).toBe(botonDeApertura());
+    });
+
+    it('descartar sí anima la salida: Escape espera a que el panel se vaya', async () => {
+      await abrir();
+
+      dialogo()?.dispatchEvent(new Event('cancel', { cancelable: true }));
+      await fixture.whenStable();
+      expect(dialogo()).not.toBeNull();
+
+      terminarSalida();
+      await Promise.resolve();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(dialogo()).toBeNull();
+    });
+  });
 });
 
 /* ═══ Lo que agregó la corrección del 10/09/2026 ══════════════════════════════

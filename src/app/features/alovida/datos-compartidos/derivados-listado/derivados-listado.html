@@ -4,36 +4,36 @@
       <ol class="app-breadcrumb" app-breadcrumb="" aria-label="Ruta de la página">
           <li><a aria-disabled="true" data-sin-destino="">Inicio</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><a aria-disabled="true" data-sin-destino="">Datos compartidos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
-          <li><a routerLink="/datos-compartidos/archivos-listado">Archivos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
-          <li><a routerLink="/datos-compartidos/versiones-listado">Versiones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/shared-data/files-list">Archivos</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
+          <li><a routerLink="/shared-data/versions-list">Versiones</a><span class="app-breadcrumb__sep" aria-hidden="true">/</span></li>
           <li><span aria-current="page">Derivados</span></li>
       </ol>
         <div class="app-page-header__titulo"><h1>Derivados</h1></div>
         <p class="caption">Lo que el sistema genera a partir de una versión: la miniatura que se ve en el listado y el texto OCR con el que se puede buscar dentro del documento.</p>
       </div>
       <div class="app-page-header__acciones">
-        <a app-button="" data-variante="primario" routerLink="/datos-compartidos/derivados-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+        <a app-button="" data-variante="primario" routerLink="/shared-data/derivatives-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
       </div>
     </div>
     <section class="app-filter-bar" app-filter-bar="" aria-label="Filtros del listado">
       <label class="app-search-field" app-search-field="">
-        <span class="solo-lectores">Buscá en el listado</span>
+        <span class="solo-lectores">Busque en el listado</span>
         <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-        <input class="app-input" app-input="" type="search" placeholder="Buscá por código o nombre">
+        <input class="app-input" app-input="" type="search" placeholder="Busque por código o nombre">
       </label>
       <div class="app-filter-bar__fila">
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-55">Versión de origen</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-55" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-55" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
         <label class="app-form-field__label" for="f-56">Versión derivada</label>
         <span class="app-search-field" app-search-field="">
           <svg class="icono icono--busqueda" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
-          <input class="app-input" app-input="" id="f-56" type="search" placeholder="Escribí al menos 3 letras">
+          <input class="app-input" app-input="" id="f-56" type="search" placeholder="Escriba al menos 3 letras">
         </span>
       </div>
       <div class="app-form-field" app-form-field="">
@@ -68,34 +68,34 @@
             </tr>
           </thead>
           <tbody>
-          <tr><td class="col-codigo">DRV-2026-002218</td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 3 · consentimiento-informado-quiroz.pdf</a></td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · miniatura</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3v14h14"></path><path d="M3 7h14v14"></path></svg>Miniatura</span></td><td>miniatura-320x320-webp</td><td class="col-acciones"><div class="menu-anclaje">
+          <tr><td class="col-codigo">DRV-2026-002218</td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 3 · consentimiento-informado-quiroz.pdf</a></td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · miniatura</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3v14h14"></path><path d="M3 7h14v14"></path></svg>Miniatura</span></td><td>miniatura-320x320-webp</td><td class="col-acciones"><div class="menu-anclaje">
           <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-40" aria-label="Acciones sobre DRV-2026-002218"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
           <div class="app-menu" app-menu="" id="fila-40" role="menu" hidden="">
-          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/shared-data/versions-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
           </div>
         </div></td></tr>
-          <tr><td class="col-codigo">DRV-2026-002214</td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 3 · consentimiento-informado-quiroz.pdf</a></td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · texto</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V5h16v2"></path><path d="M12 5v14"></path><path d="M9 19h6"></path></svg>Texto OCR</span></td><td>ocr-es-419-v5</td><td class="col-acciones"><div class="menu-anclaje">
+          <tr><td class="col-codigo">DRV-2026-002214</td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 3 · consentimiento-informado-quiroz.pdf</a></td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · texto</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V5h16v2"></path><path d="M12 5v14"></path><path d="M9 19h6"></path></svg>Texto OCR</span></td><td>ocr-es-419-v5</td><td class="col-acciones"><div class="menu-anclaje">
           <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-41" aria-label="Acciones sobre DRV-2026-002214"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
           <div class="app-menu" app-menu="" id="fila-41" role="menu" hidden="">
-          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/shared-data/versions-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
           </div>
         </div></td></tr>
-          <tr><td class="col-codigo">DRV-2026-002203</td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · rx-torax-mamani-2026-08-04.dcm</a></td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · miniatura</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3v14h14"></path><path d="M3 7h14v14"></path></svg>Miniatura</span></td><td>miniatura-512x512-png</td><td class="col-acciones"><div class="menu-anclaje">
+          <tr><td class="col-codigo">DRV-2026-002203</td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · rx-torax-mamani-2026-08-04.dcm</a></td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · miniatura</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3v14h14"></path><path d="M3 7h14v14"></path></svg>Miniatura</span></td><td>miniatura-512x512-png</td><td class="col-acciones"><div class="menu-anclaje">
           <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-42" aria-label="Acciones sobre DRV-2026-002203"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
           <div class="app-menu" app-menu="" id="fila-42" role="menu" hidden="">
-          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/shared-data/versions-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
           </div>
         </div></td></tr>
-          <tr><td class="col-codigo">DRV-2026-002190</td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · ecografia-abdominal-vargas.jpg</a></td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · miniatura</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3v14h14"></path><path d="M3 7h14v14"></path></svg>Miniatura</span></td><td>miniatura-320x320-webp</td><td class="col-acciones"><div class="menu-anclaje">
+          <tr><td class="col-codigo">DRV-2026-002190</td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · ecografia-abdominal-vargas.jpg</a></td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · miniatura</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 3v14h14"></path><path d="M3 7h14v14"></path></svg>Miniatura</span></td><td>miniatura-320x320-webp</td><td class="col-acciones"><div class="menu-anclaje">
           <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-43" aria-label="Acciones sobre DRV-2026-002190"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
           <div class="app-menu" app-menu="" id="fila-43" role="menu" hidden="">
-          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/shared-data/versions-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
           </div>
         </div></td></tr>
-          <tr><td class="col-codigo">DRV-2026-002177</td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 4 · contrato-proveedor-insumos.pdf</a></td><td><a app-link="" routerLink="/datos-compartidos/versiones-listado">Versión 1 · texto</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V5h16v2"></path><path d="M12 5v14"></path><path d="M9 19h6"></path></svg>Texto OCR</span></td><td>ocr-es-419-v5</td><td class="col-acciones"><div class="menu-anclaje">
+          <tr><td class="col-codigo">DRV-2026-002177</td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 4 · contrato-proveedor-insumos.pdf</a></td><td><a app-link="" routerLink="/shared-data/versions-list">Versión 1 · texto</a></td><td><span class="app-badge" data-tono="info"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 7V5h16v2"></path><path d="M12 5v14"></path><path d="M9 19h6"></path></svg>Texto OCR</span></td><td>ocr-es-419-v5</td><td class="col-acciones"><div class="menu-anclaje">
           <button class="boton-desborde" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="fila-44" aria-label="Acciones sobre DRV-2026-002177"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"></circle><circle cx="12" cy="19" r="1.5" fill="currentColor" stroke="none"></circle></svg></button>
           <div class="app-menu" app-menu="" id="fila-44" role="menu" hidden="">
-          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/datos-compartidos/versiones-listado"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
+          <a class="app-menu-item" app-menu-item="" role="menuitem" routerLink="/shared-data/versions-list"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="7" cy="6" r="2.5"></circle><circle cx="7" cy="18" r="2.5"></circle><circle cx="17" cy="12" r="2.5"></circle><path d="M7 8.5v7"></path><path d="M9.5 6h3a2 2 0 0 1 2 2v1.6"></path></svg>Abrir la versión de origen</a>
           </div>
         </div></td></tr>
           </tbody>
@@ -112,7 +112,7 @@
         <span class="app-empty-state__icono"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.5 9 4.8-9 4.8-9-4.8z"></path><path d="m3 13.5 9 4.8 9-4.8"></path></svg></span>
         <h2>Esta versión todavía no tiene derivados</h2>
         <p>Un derivado es lo que el sistema genera a partir del contenido: la miniatura que se ve en el listado o el texto OCR con el que se busca dentro del documento.</p>
-        <a app-button="" data-variante="secundario" routerLink="/datos-compartidos/derivados-formulario"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
+        <a app-button="" data-variante="secundario" routerLink="/shared-data/derivatives-form"><svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"></path></svg>Nuevo registro</a>
       </div>
       </div>
       <div data-estado="carga" hidden="">
@@ -132,7 +132,7 @@
           <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 4.5 21 19.5H3z"></path><path d="M12 10v4"></path><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"></circle></svg>
           <div class="app-alert__cuerpo">
             <strong>No pudimos cargar derivados.</strong>
-            <p>La organización activa no respondió a tiempo. Volvé a intentarlo; si sigue igual, avisá a soporte con la hora exacta.</p>
+            <p>La organización activa no respondió a tiempo. Vuelva a intentarlo; si sigue igual, avise a soporte con la hora exacta.</p>
           </div>
         </div>
         <div style="margin-top:var(--e5)">

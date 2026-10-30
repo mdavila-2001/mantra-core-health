@@ -92,7 +92,7 @@ describe('OnboardingPractitioner', () => {
 
     const actuales = fixture.nativeElement.querySelectorAll('.alta__etapa--actual');
     expect(actuales).toHaveLength(1);
-    expect(actuales[0].textContent).toContain('Dónde atendés');
+    expect(actuales[0].textContent).toContain('Dónde atiende');
   });
 
   it('no muestra una sola clave de la API: el texto es del front', () => {
@@ -104,7 +104,7 @@ describe('OnboardingPractitioner', () => {
     expect(texto).not.toContain('affiliation');
     expect(texto).not.toContain('professional-data');
     // Y sí muestra la frase que le corresponde.
-    expect(texto).toContain('Publicá tu agenda');
+    expect(texto).toContain('Publique su agenda');
   });
 
   it('con todo cumplido felicita y no empuja a ningún paso', () => {
@@ -121,7 +121,7 @@ describe('OnboardingPractitioner', () => {
     );
 
     const texto: string = fixture.nativeElement.textContent;
-    expect(texto).toContain('Tu perfil está completo');
+    expect(texto).toContain('Su perfil está completo');
     expect(fixture.nativeElement.querySelectorAll('.alta__etapa--actual')).toHaveLength(0);
   });
 

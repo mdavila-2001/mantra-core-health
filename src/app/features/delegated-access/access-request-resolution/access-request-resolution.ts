@@ -19,7 +19,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
 const DECISIONS: readonly AccessRequestDecision[] = ['APPROVED', 'DENIED'];
@@ -89,7 +89,7 @@ export class AccessRequestResolution {
    * deshabilitado o vacío sería ofrecer datos que no se van a usar.
    */
   protected readonly paginas = computed(() =>
-    paginarCampos([
+    paginateFields([
       {
         titulo: 'Qué solicitud',
         hint: 'La solicitud de acceso pendiente que se va a resolver.',
@@ -174,7 +174,7 @@ export class AccessRequestResolution {
   protected readonly esAprobacion = computed(() => this.decidido() === 'APPROVED');
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para resolver solicitudes de acceso.'),
+    errorMessageOf(this.state(), 'No tiene permiso para resolver solicitudes de acceso.'),
   );
 
   protected submit(): void {

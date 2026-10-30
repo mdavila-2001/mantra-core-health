@@ -1,0 +1,55 @@
+/* ============================================================================
+    Firma o sello — caja fija: firma 3:1, sello 1:1.
+
+    Las cajas son las mismas del bloque de firma del PDF: lo que se ve acá es
+    lo que sale en el papel. Ancho tope y no fijo para que en 390 px no desborde.
+    ========================================================================== */
+
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  max-inline-size: 100%;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+:host(.firma-o-sello--firma) {
+  inline-size: 240px;
+  aspect-ratio: 3 / 1;
+}
+
+:host(.firma-o-sello--sello) {
+  inline-size: 112px;
+  aspect-ratio: 1 / 1;
+}
+
+/* Blanco fijo también en oscuro: una firma se hace para papel. */
+.firma-o-sello__imagen {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  padding: var(--sp-2);
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.firma-o-sello__vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  inline-size: 100%;
+  block-size: 100%;
+  background: var(--surface-subtle, var(--surface-2, transparent));
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+
+.firma-o-sello__icono {
+  inline-size: 24px;
+  block-size: 24px;
+}

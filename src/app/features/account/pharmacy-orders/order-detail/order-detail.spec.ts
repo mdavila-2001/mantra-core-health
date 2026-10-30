@@ -4,6 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import { environment } from '../../../../../environments/environment';
+
 import {
   PHARMACY_ORDER_TEST_IDS,
   pharmacyOrderDtoFixture,
@@ -12,12 +14,13 @@ import type { PharmacyOrderDto } from '../../../../core/data-access/pharmacy-ord
 import { uuid } from '../../../../core/mock/mock-store';
 import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { OrderDetail } from './order-detail';
-import { destinoDeLaQuery, tomarContexto } from '../../../../core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '../../../../core/messaging/chat-link';
 
 describe('OrderDetail with the real pharmacy-orders contract', () => {
   let harness: RouterTestingHarness;
   let http: HttpTestingController;
   let confirmDialog: ReturnType<typeof vi.fn>;
+  const originalMockBackend = environment.mockBackend;
 
   beforeEach(() => {
     confirmDialog = vi.fn().mockResolvedValue(true);
@@ -32,7 +35,10 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    Object.assign(environment, { mockBackend: originalMockBackend });
+    http.verify();
+  });
 
   /** La lectura de avisos que el detalle hace una sola vez por pedido. */
   const AVISOS_URL = '/notifications/me?limit=50';
@@ -42,8 +48,8 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     return {
       id: 'aviso-1',
       category: 'CLINICAL',
-      subject: 'Tu pedido está en revisión',
-      bodyText: 'La farmacia está revisando tu pedido.',
+      subject: 'Su pedido está en revisión',
+      bodyText: 'La farmacia está revisando su pedido.',
       destination: { type: 'PHARMACY_ORDER', id: PHARMACY_ORDER_TEST_IDS.order },
       payloadJson: null,
       unread: true,
@@ -97,14 +103,14 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     http.expectOne(AVISOS_URL).flush(paginaDeAvisos([]));
     harness.detectChanges();
 
-    expect(text()).toContain('No encontramos lo que buscás');
-    expect(text()).toContain('Verificá la dirección o volvé al listado');
+    expect(text()).toContain('No encontramos lo que busca');
+    expect(text()).toContain('Verifique la dirección o vuelva al listado');
   });
 
   it('renders a submitted pickup order without demo controls or UUIDs', async () => {
     await mount();
     expect(text()).toContain('Enviado');
-    expect(text()).toContain('La farmacia todavía no abrió tu pedido');
+    expect(text()).toContain('La farmacia todavía no abrió su pedido');
     expect(harness.routeNativeElement?.querySelector('[data-testid="pedido-demo"]')).toBeNull();
     expect(text()).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f-]{27}/i);
   });
@@ -232,7 +238,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       expect(text()).not.toContain('Pagado');
       expect(text()).not.toContain('Datos de ejemplo');
       expect(byTestId('tu-factura-vacia')?.textContent).toContain(
-        'La farmacia emite tu factura cuando te entrega el pedido.',
+        'La farmacia emite su factura cuando le entrega el pedido.',
       );
       expect(byTestId('tu-factura-ver')).toBeNull();
       expect(byTestId('tu-factura-comprobante')?.getAttribute('href')).toBe(
@@ -274,7 +280,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       expect(byTestId('pedido-medio-de-pago')).toBeNull();
       expect(text()).not.toContain('Datos de ejemplo');
       expect(text()).not.toContain('Ya está pagado');
-      expect(text()).toContain('pagás al retirar');
+      expect(text()).toContain('paga al retirar');
       expect(text()).toContain('ABC234');
       // Sin pago, el pedido vuelve a ser cancelable: es lo que el contrato dice.
       expect(byTestId('pedido-cancelar')).not.toBeNull();
@@ -336,6 +342,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
     });
 
     it('demo order picked up: «Retirado», its invoice and the internal receipt apart', async () => {
+      Object.assign(environment, { mockBackend: true });
       const id = uuid('pharmacy-order-3');
       await mount(
         pharmacyOrderDtoFixture({ id, status: { code: 'PINV_ORDER_RETIRADO', display: 'Retirado' } }),
@@ -364,8 +371,8 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         avisoWire(),
         avisoWire({
           id: 'aviso-2',
-          subject: 'Tu pedido fue confirmado',
-          bodyText: 'La farmacia confirmó tu pedido y lo está preparando.',
+          subject: 'Su pedido fue confirmado',
+          bodyText: 'La farmacia confirmó su pedido y lo está preparando.',
           availableAt: '2026-09-03T16:30:00.000Z',
         }),
       ]);
@@ -373,8 +380,8 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       const bloque = byTestId('pedido-avisos');
       expect(bloque).not.toBeNull();
       expect(bloque?.textContent).toContain('Avisos de este pedido');
-      expect(bloque?.textContent).toContain('Tu pedido está en revisión');
-      expect(bloque?.textContent).toContain('Tu pedido fue confirmado');
+      expect(bloque?.textContent).toContain('Su pedido está en revisión');
+      expect(bloque?.textContent).toContain('Su pedido fue confirmado');
       // Nunca se presenta como historial ni como línea de eventos completa.
       expect(bloque?.textContent).toContain('Pueden no estar todos');
       expect(text()).not.toContain('Historial');
@@ -390,17 +397,17 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         }),
         avisoWire({
           id: 'aviso-de-receta',
-          subject: 'Una receta tuya fue dispensada',
+          subject: 'Una receta suya fue dispensada',
           destination: { type: 'PRESCRIPTION', id: PHARMACY_ORDER_TEST_IDS.order },
         }),
-        avisoWire({ id: 'aviso-sin-destino', subject: 'Tenés un mensaje', destination: null }),
+        avisoWire({ id: 'aviso-sin-destino', subject: 'Tiene un mensaje', destination: null }),
       ]);
 
       const bloque = byTestId('pedido-avisos');
-      expect(bloque?.textContent).toContain('Tu pedido está en revisión');
+      expect(bloque?.textContent).toContain('Su pedido está en revisión');
       expect(bloque?.textContent).not.toContain('Pedido ajeno');
-      expect(bloque?.textContent).not.toContain('Una receta tuya fue dispensada');
-      expect(bloque?.textContent).not.toContain('Tenés un mensaje');
+      expect(bloque?.textContent).not.toContain('Una receta suya fue dispensada');
+      expect(bloque?.textContent).not.toContain('Tiene un mensaje');
     });
 
     it('sin avisos no hay bloque: el vacío no se rellena', async () => {
@@ -442,7 +449,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
       const avisoDeB = (): Record<string, unknown> =>
         avisoWire({
           id: 'aviso-de-b',
-          subject: 'Tu pedido B está listo para retirar',
+          subject: 'Su pedido B está listo para retirar',
           destination: { type: 'PHARMACY_ORDER', id: PEDIDO_B },
         });
 
@@ -493,7 +500,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
       it('A → B sin avisos: los de A no sobreviven al cambio de pedido', async () => {
         const componenteA = await navegar(PHARMACY_ORDER_TEST_IDS.order, [avisoWire()]);
-        expect(byTestId('pedido-avisos')?.textContent).toContain('Tu pedido está en revisión');
+        expect(byTestId('pedido-avisos')?.textContent).toContain('Su pedido está en revisión');
 
         const componenteB = await navegar(PEDIDO_B, []);
 
@@ -524,7 +531,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         http.expectOne(`/pharmacy/orders/${PEDIDO_B}`).flush(pharmacyOrderDtoFixture({ id: PEDIDO_B }));
         http.expectOne(AVISOS_URL).flush(paginaDeAvisos([avisoDeB()]));
         harness.detectChanges();
-        expect(byTestId('pedido-avisos')?.textContent).toContain('Tu pedido B está listo');
+        expect(byTestId('pedido-avisos')?.textContent).toContain('Su pedido B está listo');
       });
 
       it('al empezar a cargar B, el pedido A deja de presentarse bajo la URL de B', async () => {
@@ -553,8 +560,8 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         expect(text()).toContain(FARMACIA.B);
         expect(text()).not.toContain(FARMACIA.A);
         const bloque = byTestId('pedido-avisos');
-        expect(bloque?.textContent).toContain('Tu pedido B está listo');
-        expect(bloque?.textContent).not.toContain('Tu pedido está en revisión');
+        expect(bloque?.textContent).toContain('Su pedido B está listo');
+        expect(bloque?.textContent).not.toContain('Su pedido está en revisión');
       });
 
       it('A → B con el pedido en error: A no sobrevive y el error es el de siempre', async () => {
@@ -593,7 +600,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         // B sigue siendo el pedido presentado, con sus propios avisos.
         expect(text()).toContain(FARMACIA.B);
         expect(text()).not.toContain(FARMACIA.A);
-        expect(byTestId('pedido-avisos')?.textContent).toContain('Tu pedido B está listo');
+        expect(byTestId('pedido-avisos')?.textContent).toContain('Su pedido B está listo');
       });
 
       it('nunca queda pedido de uno con avisos del otro, responda quien responda primero', async () => {
@@ -613,8 +620,8 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         pedidoDeB.flush(dtoDe(PEDIDO_B, FARMACIA.B));
         harness.detectChanges();
         expect(text()).toContain(FARMACIA.B);
-        expect(byTestId('pedido-avisos')?.textContent).toContain('Tu pedido B está listo');
-        expect(byTestId('pedido-avisos')?.textContent).not.toContain('Tu pedido está en revisión');
+        expect(byTestId('pedido-avisos')?.textContent).toContain('Su pedido B está listo');
+        expect(byTestId('pedido-avisos')?.textContent).not.toContain('Su pedido está en revisión');
       });
 
       it('una acción de A que responde tarde tampoco pisa el pedido de B', async () => {
@@ -675,7 +682,7 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
         harness.detectChanges();
 
         await navegar(PEDIDO_B, [avisoDeB()]);
-        expect(byTestId('pedido-avisos')?.textContent).toContain('Tu pedido B está listo');
+        expect(byTestId('pedido-avisos')?.textContent).toContain('Su pedido B está listo');
 
         // Cambiar de pedido cancela la lectura anterior: A ya no puede
         // responder ni aunque el servidor conteste tarde.
@@ -684,8 +691,8 @@ describe('OrderDetail with the real pharmacy-orders contract', () => {
 
         // La UI conserva exclusivamente lo de B.
         const bloque = byTestId('pedido-avisos');
-        expect(bloque?.textContent).toContain('Tu pedido B está listo');
-        expect(bloque?.textContent).not.toContain('Tu pedido está en revisión');
+        expect(bloque?.textContent).toContain('Su pedido B está listo');
+        expect(bloque?.textContent).not.toContain('Su pedido está en revisión');
       });
     });
 

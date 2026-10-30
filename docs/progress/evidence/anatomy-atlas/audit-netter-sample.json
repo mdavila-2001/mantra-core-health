@@ -1,0 +1,2059 @@
+{
+ "seed": 20261024,
+ "accepted_total": 805,
+ "unmapped_total": 2356,
+ "accepted_sample": [
+  {
+   "netterId": "ENT_771f958468e5b3",
+   "name": "Yeyuno — venas",
+   "queries": [
+    "jejunal vein"
+   ],
+   "uberon": "UBERON:0001216",
+   "matchedText": "jejunal vein",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "jejunal vein",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": "A tributary of the superior mesenteric vein that drains the jejunum."
+  },
+  {
+   "netterId": "ENT_b9c50e055caf77",
+   "name": "Mandibula",
+   "queries": [
+    "mandible"
+   ],
+   "uberon": "UBERON:0001684",
+   "matchedText": "mandible",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "mandible",
+   "uberonExactSynonyms": [
+    "inferior maxillary bone",
+    "mammaliam mandible",
+    "mandibulla"
+   ],
+   "uberonDefinition": "A dentary bone that is the only bone in one of the lateral halves of the lower jaw skeleton."
+  },
+  {
+   "netterId": "ENT_ec2f75a1494fee",
+   "name": "Tendón — infraespinoso",
+   "queries": [
+    "tendon of infraspinatus",
+    "infraspinatus tendon"
+   ],
+   "uberon": "UBERON:0012118",
+   "matchedText": "infraspinatus tendon",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "infraspinatus tendon",
+   "uberonExactSynonyms": [
+    "tendon of infraspinatus muscle"
+   ],
+   "uberonDefinition": "The infraspinatus muscle inserts at this tendon to the distal greater tubercle of the humerus. This tendon stretches across the shoulder joint to attach to the humerus and in doing so acts as a very strong ligament to hold the joint surface in apposition. This structure restricts the movement of the shoulder joint to flexion and extension (together with the suscapularis tendon and the supraspinatus tendon). A bursa lies under this tendon at the greater tubercle of the humerus. The bursa is lined by a synovial membrance and filled with synovial fluid and protects the infraspinatus tendon and the shoulder joint by allowing the transmissions of tension and sheer forces around an angle."
+  },
+  {
+   "netterId": "ENT_34b0978de9ffaf",
+   "name": "Clivus",
+   "queries": [
+    "clivus",
+    "clivus of occipital bone"
+   ],
+   "uberon": "UBERON:0004108",
+   "matchedText": "clivus of occipital bone",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "clivus of occipital bone",
+   "uberonExactSynonyms": [
+    "clivus",
+    "occipital bone clivus"
+   ],
+   "uberonDefinition": "Part of the cranium, the clivus is a shallow depression behind the dorsum sellC& that slopes obliquely backward. It forms a gradual sloping process at the anterior most portion of the basilar occipital bone at its junction with the sphenoid bone. On axial planes, it sits just posterior to the sphenoid sinuses. Just lateral to the clivus bilaterally is the foramen lacerum which contains the internal carotid artery, proximal to its anastamosis with the Circle of Willis. Posterior to the clivus is the basilar artery. The clivus supports the upper part of the pons."
+  },
+  {
+   "netterId": "ENT_5d6fe1272d3306",
+   "name": "Ventrículo — asta occipital",
+   "queries": [
+    "occipital horn of lateral ventricle",
+    "posterior horn of lateral ventricle"
+   ],
+   "uberon": "UBERON:0004672",
+   "matchedText": "posterior horn of lateral ventricle",
+   "via": "exact_synonym",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "posterior horn lateral ventricle",
+   "uberonExactSynonyms": [
+    "cornu occipitale (ventriculi lateralis)",
+    "cornu occipitale ventriculi lateralis",
+    "cornu posterius (ventriculi lateralis)",
+    "cornu posterius ventriculi lateralis",
+    "occipital horn",
+    "occipital horn of lateral ventricle",
+    "posterior horn lateral ventricle",
+    "posterior horn of lateral ventricle",
+    "posterior horn of the lateral ventricle",
+    "ventriculus lateralis, cornu occipitale",
+    "ventriculus lateralis, cornu posterius"
+   ],
+   "uberonDefinition": "Part of the lateral ventricle that extends posteriorly into the occipital lobe."
+  },
+  {
+   "netterId": "ENT_df107f08636be7",
+   "name": "Atlas de anatomía hur — nervio pudendo",
+   "queries": [
+    "pudendal nerve"
+   ],
+   "uberon": "UBERON:0011390",
+   "matchedText": "pudendal nerve",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "pudendal nerve",
+   "uberonExactSynonyms": [
+    "nervus pudendae",
+    "nervus pudendales"
+   ],
+   "uberonDefinition": "The pudendal nerve is a somatic nerve in the pelvic region that innervates the external genitalia of both sexes, as well as sphincters for the bladder and the rectum. It originates in Onuf's nucleus in the sacral region of the spinal cord."
+  },
+  {
+   "netterId": "ENT_792205b243868e",
+   "name": "Arteria(s) — sublingual",
+   "queries": [
+    "sublingual artery",
+    "arteria sublingualis"
+   ],
+   "uberon": "UBERON:0001611",
+   "matchedText": "sublingual artery",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "sublingual artery",
+   "uberonExactSynonyms": [
+    "sublingual branch of lingual artery"
+   ],
+   "uberonDefinition": "A branch of the lingual artery that supplies the sublingual gland."
+  },
+  {
+   "netterId": "ENT_e50119e6688ce5",
+   "name": "Nódulo(s) linfático(s) — nasolabial",
+   "queries": [
+    "nasolabial lymph node"
+   ],
+   "uberon": "UBERON:0038922",
+   "matchedText": "nasolabial lymph node",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "nasolabial lymph node",
+   "uberonExactSynonyms": [
+    "nasolabial node",
+    "nodus lymphoideus nasolabialis",
+    "nodus nasolabialis"
+   ],
+   "uberonDefinition": null
+  },
+  {
+   "netterId": "ENT_f0e5a66ed14159",
+   "name": "Nódulo(s) linfático(s) — sacros — lateral",
+   "queries": [
+    "lateral sacral lymph node"
+   ],
+   "uberon": "UBERON:0039163",
+   "matchedText": "lateral sacral lymph node",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "lateral sacral lymph node",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": null
+  },
+  {
+   "netterId": "ENT_4f208d90125d0b",
+   "name": "Músculo(s) — grácil",
+   "queries": [
+    "gracilis",
+    "gracilis muscle"
+   ],
+   "uberon": "UBERON:0000950",
+   "matchedText": "gracilis",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "gracilis",
+   "uberonExactSynonyms": [
+    "gracilis muscle",
+    "musculus gracilis"
+   ],
+   "uberonDefinition": "The most superficial muscle on the medial side of the thigh. It is thin and flattened, broad above, narrow and tapering below. It arises by a thin aponeurosis from the anterior margins of the lower half of the symphysis pubis and the upper half of the pubic arch."
+  },
+  {
+   "netterId": "ENT_0fe47a7c256c5b",
+   "name": "Cuña",
+   "queries": [
+    "cuneus",
+    "cuneus cortex"
+   ],
+   "uberon": "UBERON:0006092",
+   "matchedText": "cuneus",
+   "via": "exact_synonym",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "cuneus cortex",
+   "uberonExactSynonyms": [
+    "cuneate lobule",
+    "cuneus",
+    "cuneus cortex",
+    "cuneus gyrus",
+    "cuneus of hemisphere"
+   ],
+   "uberonDefinition": "Component of the occipital lobe. The rostral boundary was the first coronal slice above the calcarine sulcus where the cuneus cortex becomes visible whereas the caudal boundary was the last slice where the calcarine sulcus was visualized. The medial boundary was the most medial portion of the occipital and parietal cortices. The superio-lateral boundary was the parieto-occipital fissure whereas the inferolateral boundary was the pericalcarine cortex (Christine Fennema-Notestine)."
+  },
+  {
+   "netterId": "ENT_9256645a72ee23",
+   "name": "Placa epifisaria",
+   "queries": [
+    "epiphyseal plate",
+    "growth plate"
+   ],
+   "uberon": "UBERON:0002516",
+   "matchedText": "epiphyseal plate",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "epiphyseal plate",
+   "uberonExactSynonyms": [
+    "epiphyseal growth plate",
+    "epiphyseal growth plate cartilage",
+    "epiphysial plate",
+    "long bone epiphyseal plate"
+   ],
+   "uberonDefinition": "A hyaline cartilage plate in the metaphysis at each end of a long bone. The plate is found in children and adolescents; in adults, who have stopped growing, the plate is replaced by an epiphyseal line."
+  },
+  {
+   "netterId": "ENT_5058d73172755b",
+   "name": "Trigono — vejiga urinaria",
+   "queries": [
+    "trigone of urinary bladder"
+   ],
+   "uberon": "UBERON:0001257",
+   "matchedText": "trigone of urinary bladder",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "trigone of urinary bladder",
+   "uberonExactSynonyms": [
+    "Lieutaud's trigone",
+    "bladder trigone",
+    "deep trigone",
+    "musculus trigoni vesicae profundus",
+    "trigone of bladder",
+    "trigonum vesicae",
+    "urinary bladder trigone",
+    "vesical trigone"
+   ],
+   "uberonDefinition": "The smooth triangular region of the wall of the urinary bladder formed by the two ureteral orifices and the internal urethral orifice; it is an area in which the muscle fibers are closely adherent to the mucosa."
+  },
+  {
+   "netterId": "ENT_c98026248b4c35",
+   "name": "Hígado — lóbulo(s)",
+   "queries": [
+    "lobe of liver",
+    "liver lobe"
+   ],
+   "uberon": "UBERON:0001113",
+   "matchedText": "lobe of liver",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "lobe of liver",
+   "uberonExactSynonyms": [
+    "hepatic lobe",
+    "liver lobe",
+    "lobus hepatis"
+   ],
+   "uberonDefinition": "Traditional gross anatomy divided the liver into four lobes based on surface features. The falciform ligament is visible on the front (anterior side) of the liver. This divides the liver into a left anatomical lobe, and a right anatomical lobe."
+  },
+  {
+   "netterId": "ENT_761b19973ba1f4",
+   "name": "Utriculo",
+   "queries": [
+    "utricle",
+    "utricle of membranous labyrinth",
+    "utriculus"
+   ],
+   "uberon": "UBERON:0001853",
+   "matchedText": "utricle of membranous labyrinth",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "utricle of membranous labyrinth",
+   "uberonExactSynonyms": [
+    "membranous labyrinth utricle",
+    "utricle",
+    "utriculus",
+    "utriculus (labyrinthus vestibularis)"
+   ],
+   "uberonDefinition": "The larger of the two otolith organs in the vestibule."
+  },
+  {
+   "netterId": "ENT_715fa4c18b38ba",
+   "name": "Vena(s) — cerebrales — anterior",
+   "queries": [
+    "anterior cerebral vein"
+   ],
+   "uberon": "UBERON:0001672",
+   "matchedText": "anterior cerebral vein",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "anterior cerebral vein",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": null
+  },
+  {
+   "netterId": "ENT_4dfabfcf3720e7",
+   "name": "Ganglio — celíaco",
+   "queries": [
+    "celiac ganglion"
+   ],
+   "uberon": "UBERON:0002262",
+   "matchedText": "celiac ganglion",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "celiac ganglion",
+   "uberonExactSynonyms": [
+    "coeliac ganglion"
+   ],
+   "uberonDefinition": "The celiac ganglia are two large irregularly shaped masses of nerve tissue in the upper abdomen. Part of the sympathetic subdivision of the autonomic nervous system (ANS), the two celiac ganglia are the largest ganglia in the ANS, and they innervate most of the digestive tract. They have the appearance of lymph glands and are placed on either side of the midline in front of the crura of the diaphragm, close to the suprarenal glands (also called adrenal glands). The ganglion on the right side is placed behind the inferior vena cava. They are sometimes referred to as the semilunar ganglia or the solar ganglia. [WP,unvetted]."
+  },
+  {
+   "netterId": "ENT_24bf0545176d71",
+   "name": "Vejiga urinaria — orificio ureteral",
+   "queries": [
+    "ureteral orifice",
+    "ureteric orifice"
+   ],
+   "uberon": "UBERON:0012303",
+   "matchedText": "ureteral orifice",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "ureteral orifice",
+   "uberonExactSynonyms": [
+    "Mercier's bar",
+    "orifice of ureter",
+    "orificium ureteris",
+    "ostium ureteris",
+    "ureteral meatus",
+    "ureteral opening",
+    "ureteric orifice",
+    "ureteric ostium",
+    "ureterovesical orifice"
+   ],
+   "uberonDefinition": "The slit-like opening of either ureter into the bladder; normally, the two ureteral orifices are placed at the posterolateral angles of the urinary bladder trigone while the internal urethral orifice is placed at its anteroinferior angle (apex); wide gaping usually indicates vesicoureteral reflux."
+  },
+  {
+   "netterId": "ENT_b08f24a753e5dd",
+   "name": "Cáliz mayor",
+   "queries": [
+    "major calyx",
+    "major renal calyx"
+   ],
+   "uberon": "UBERON:0001226",
+   "matchedText": "major calyx",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "major calyx",
+   "uberonExactSynonyms": [
+    "calices renales majores",
+    "major calix"
+   ],
+   "uberonDefinition": "Portion of the urinary collecting system within the kidney that drains several minor calyces."
+  },
+  {
+   "netterId": "ENT_16ef433e8f3136",
+   "name": "Ano",
+   "queries": [
+    "anus"
+   ],
+   "uberon": "UBERON:0001245",
+   "matchedText": "anus",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "anus",
+   "uberonExactSynonyms": [
+    "anal opening",
+    "anal orifice",
+    "opening of terminal part of digestive tract"
+   ],
+   "uberonDefinition": "Orifice at the opposite end of an animal's digestive tract from the mouth. Its function is to expel feces, unwanted semi-solid matter produced during digestion, which, depending on the type of animal, may be one or more of: matter which the animal cannot digest, such as bones; food material after all the nutrients have been extracted, for example cellulose or lignin; ingested matter which would be toxic if it remained in the digestive tract; and dead or excess gut bacteria and other endosymbionts."
+  },
+  {
+   "netterId": "ENT_fc73f75ab074b4",
+   "name": "Vena(s) — angular",
+   "queries": [
+    "angular vein"
+   ],
+   "uberon": "UBERON:0014686",
+   "matchedText": "angular vein",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "angular vein",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": "The angular vein formed by the junction of the frontal vein and supraorbital vein, runs obliquely downward, on the side of the root of the nose, to the level of the lower margin of the orbit, where it becomes the anterior facial vein. It receives the external nasal veins of the ala nasi, and communicates with the superior ophthalmic vein through the nasofrontal vein, thus establishing an important anastomosis between the anterior facial vein and the cavernous sinus."
+  },
+  {
+   "netterId": "ENT_c4fc02cecd3763",
+   "name": "Timo",
+   "queries": [
+    "thymus"
+   ],
+   "uberon": "UBERON:0002370",
+   "matchedText": "thymus",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "thymus",
+   "uberonExactSynonyms": [
+    "thymus gland",
+    "thymus organ"
+   ],
+   "uberonDefinition": "Anatomical structure of largely lymphoid tissue that functions in cell-mediated immunity by being the site where T cells develop."
+  },
+  {
+   "netterId": "ENT_99c8fd4331893c",
+   "name": "Sinfisis pubis",
+   "queries": [
+    "pubic symphysis"
+   ],
+   "uberon": "UBERON:0003699",
+   "matchedText": "pubic symphysis",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "pubic symphysis",
+   "uberonExactSynonyms": [
+    "symphysis pubis"
+   ],
+   "uberonDefinition": "The firm fibrocartilaginous joint in the median plane between the two opposing surfaces of the pubic bones, which are united by an interpubic disc of fibrocartilage as well as the superior and arcuate pubic ligaments."
+  },
+  {
+   "netterId": "ENT_418c1f888776d0",
+   "name": "Hueso — glabela",
+   "queries": [
+    "glabella",
+    "glabella region of bone"
+   ],
+   "uberon": "UBERON:0016440",
+   "matchedText": "glabella region of bone",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "glabella region of bone",
+   "uberonExactSynonyms": [
+    "glabellar surface of frontal bone"
+   ],
+   "uberonDefinition": "A zone of the frontal bone that connects the supraorbital rirdges."
+  },
+  {
+   "netterId": "ENT_eb2cccac265f71",
+   "name": "Hueso. V. también huesos específicos — cuboides",
+   "queries": [
+    "cuboid bone",
+    "cuboid"
+   ],
+   "uberon": "UBERON:0001455",
+   "matchedText": "cuboid bone",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "cuboid bone",
+   "uberonExactSynonyms": [
+    "cuboid"
+   ],
+   "uberonDefinition": "A tarsal bone that is formed from distal tarsals 4 and 5. [WP,modified]."
+  },
+  {
+   "netterId": "ENT_b1918278df3afa",
+   "name": "Maxilar",
+   "queries": [
+    "maxilla"
+   ],
+   "uberon": "UBERON:0002397",
+   "matchedText": "maxilla",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "maxilla",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": "The bone which normally forms the lateral upper jaw in osteichthyans, including tetrapods."
+  },
+  {
+   "netterId": "ENT_8f248e3ef9cc7c",
+   "name": "Páncreas — arterias",
+   "queries": [
+    "pancreatic artery"
+   ],
+   "uberon": "UBERON:0039261",
+   "matchedText": "pancreatic artery",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "pancreatic artery",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": null
+  },
+  {
+   "netterId": "ENT_64f8937a8f4931",
+   "name": "Esófago — submucosa",
+   "queries": [
+    "submucosa of esophagus",
+    "esophagus submucosa"
+   ],
+   "uberon": "UBERON:0001972",
+   "matchedText": "submucosa of esophagus",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "submucosa of esophagus",
+   "uberonExactSynonyms": [
+    "esophageal submucosa",
+    "esophagus submucosa",
+    "gullet submucosa",
+    "oesophagus submucosa",
+    "submucosa of esophagus",
+    "submucosa of gullet",
+    "submucosa of oesophagus",
+    "tela submucosa (oesophagus)",
+    "tela submucosa esophagi",
+    "tela submucosa oesophageae",
+    "tela submucosa of esophagus"
+   ],
+   "uberonDefinition": "A submucosa that is part of a esophagus [Automatically generated definition]."
+  },
+  {
+   "netterId": "ENT_44e830fee335a9",
+   "name": "Bolsa — receso superior",
+   "queries": [
+    "superior recess of omental bursa",
+    "superior recess of lesser sac"
+   ],
+   "uberon": "UBERON:0001180",
+   "matchedText": "superior recess of omental bursa",
+   "via": "exact_synonym",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "superior recess of lesser sac",
+   "uberonExactSynonyms": [
+    "omental bursa superior recess",
+    "recessus superior bursae omentalis",
+    "recessus superior omentalis",
+    "superior omental bursa",
+    "superior recess",
+    "superior recess of omental bursa"
+   ],
+   "uberonDefinition": null
+  },
+  {
+   "netterId": "ENT_426e77018ee6fe",
+   "name": "Vena(s) — paraumbilical",
+   "queries": [
+    "paraumbilical vein"
+   ],
+   "uberon": "UBERON:0035655",
+   "matchedText": "paraumbilical vein",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "paraumbilical vein",
+   "uberonExactSynonyms": [
+    "venae paraumbilicales"
+   ],
+   "uberonDefinition": "The small superficial veins that arise from the cutaneous veins, and run from the umbilicus along the round ligament of the liver; these terminate as accessory portal veins in the liver."
+  },
+  {
+   "netterId": "ENT_e46a3f196d470e",
+   "name": "Oído",
+   "queries": [
+    "ear"
+   ],
+   "uberon": "UBERON:0001690",
+   "matchedText": "ear",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "ear",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": "Sense organ in vertebrates that is specialized for the detection of sound, and the maintenance of balance. Includes the outer ear and middle ear, which collect and transmit sound waves; and the inner ear, which contains the organs of balance and (except in fish) hearing. Also includes the pinna, the visible part of the outer ear, present in some mammals."
+  },
+  {
+   "netterId": "ENT_e09133d409e5b2",
+   "name": "Nervio(s) — troclear (IV)",
+   "queries": [
+    "trochlear nerve",
+    "fourth cranial nerve"
+   ],
+   "uberon": "UBERON:0001644",
+   "matchedText": "trochlear nerve",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "trochlear nerve",
+   "uberonExactSynonyms": [
+    "cranial nerve IV",
+    "fourth cranial nerve",
+    "nervus trochlearis [IV]",
+    "superior oblique nerve",
+    "trochlear IV nerve",
+    "trochlear nerve [IV]",
+    "trochlear nerve tree"
+   ],
+   "uberonDefinition": "A cranial nerve that runs to the eye muscles."
+  },
+  {
+   "netterId": "ENT_0f3523d40841fc",
+   "name": "Plexo — pulmonar",
+   "queries": [
+    "pulmonary plexus"
+   ],
+   "uberon": "UBERON:0002009",
+   "matchedText": "pulmonary plexus",
+   "via": "exact_synonym",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "pulmonary nerve plexus",
+   "uberonExactSynonyms": [
+    "plexus pulmonalis",
+    "pulmonary plexus"
+   ],
+   "uberonDefinition": "The pulmonary plexus is an autonomic plexus formed from pulmonary branches of vagus nerve and the sympathetic trunk that supplies the Bronchial tree. [WP,modified]."
+  },
+  {
+   "netterId": "ENT_5e8f2d647b9af7",
+   "name": "Vena(s) — basivertebral",
+   "queries": [
+    "basivertebral vein",
+    "basivertebral veins"
+   ],
+   "uberon": "UBERON:8600066",
+   "matchedText": "basivertebral vein",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "basivertebral vein",
+   "uberonExactSynonyms": [],
+   "uberonDefinition": "A vein that is tributary of the anterior internal vertebral venous plexus and drains blood from the vertebral bodies."
+  },
+  {
+   "netterId": "ENT_80018f64885dc0",
+   "name": "Ventrículo — plexo coroideo",
+   "queries": [
+    "choroid plexus"
+   ],
+   "uberon": "UBERON:0001886",
+   "matchedText": "choroid plexus",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "choroid plexus",
+   "uberonExactSynonyms": [
+    "chorioid plexus",
+    "plexus choroideus"
+   ],
+   "uberonDefinition": "A network formed by blood vessels and the tela choroidea which secretes CSF into the ventricular spaces."
+  },
+  {
+   "netterId": "ENT_41e73a5a575c4d",
+   "name": "Fornix",
+   "queries": [
+    "fornix of brain",
+    "fornix",
+    "cerebral fornix"
+   ],
+   "uberon": "UBERON:0000052",
+   "matchedText": "fornix of brain",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "fornix of brain",
+   "uberonExactSynonyms": [
+    "brain fornix",
+    "cerebral fornix",
+    "forebrain fornix",
+    "fornix of neuraxis",
+    "neuraxis fornix"
+   ],
+   "uberonDefinition": "A C-shaped bundle of fibres (axons) in the brain, and carries signals from the hippocampus to the mammillary bodies and septal nuclei. It is typically divided into the columns (crus), body, commissure and the pre-commissural and post-commissural fornix (MM)."
+  },
+  {
+   "netterId": "ENT_48cdce106b0343",
+   "name": "Cerebelo — receso lateral",
+   "queries": [
+    "lateral recess of fourth ventricle",
+    "lateral recess"
+   ],
+   "uberon": "UBERON:0007656",
+   "matchedText": "lateral recess of fourth ventricle",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "lateral recess of fourth ventricle",
+   "uberonExactSynonyms": [
+    "recessus lateralis (ventriculi quarti)"
+   ],
+   "uberonDefinition": "The lateral recess is a projection of the fourth ventricle which extends into the inferior cerebellar peduncle of the brainstem. The lateral aperture, an opening in each extremity of the lateral recess, provides a conduit for cerebrospinal fluid to flow from the brain's ventricular system into the subarachnoid space."
+  },
+  {
+   "netterId": "ENT_8d96d4572115ef",
+   "name": "Músculo(s) — porción cricofaringea",
+   "queries": [
+    "cricopharyngeal part of inferior pharyngeal constrictor",
+    "cricopharyngeus muscle",
+    "cricopharyngeal muscle"
+   ],
+   "uberon": "UBERON:0010928",
+   "matchedText": "cricopharyngeal part of inferior pharyngeal constrictor",
+   "via": "exact_synonym",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "cricopharyngeus muscle",
+   "uberonExactSynonyms": [
+    "cricopharyngeal part of inferior constrictor pharyngeus",
+    "cricopharyngeal part of inferior pharyngeal constrictor",
+    "cricopharyngeal part of inferior pharyngeal constrictor muscle",
+    "cricopharyngeus",
+    "cricopharyngeus portion of the inferior pharyngeal constrictor",
+    "musculus cricopharyngeus",
+    "pars cricopharyngea (musculus constrictor pharyngis inferior)",
+    "pars cricopharyngea musculus constrictoris pharyngis inferioris"
+   ],
+   "uberonDefinition": "The cricopharyngeus is a pharyngeal arch 4/6 muscle that participates in oral/pharyngeal behaviors and is innervated by the pharyngeal plexus and the recurrent laryngeal n. (from Vagus, CN X), and is an integral part of the pharyngeal tube, and attaches to the cricoid cartilage and the midline raphe. It acts as a sphincter between the pharynx and esophagus."
+  },
+  {
+   "netterId": "ENT_0b2b9a2a8b16e6",
+   "name": "Sáculo",
+   "queries": [
+    "saccule",
+    "saccule of membranous labyrinth",
+    "sacculus"
+   ],
+   "uberon": "UBERON:0001854",
+   "matchedText": "saccule of membranous labyrinth",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "saccule of membranous labyrinth",
+   "uberonExactSynonyms": [
+    "membranous labyrinth saccule",
+    "saccule",
+    "sacculus",
+    "sacculus (labyrinthus vestibularis)"
+   ],
+   "uberonDefinition": "The smaller of the two otolith organs in the vestibule."
+  },
+  {
+   "netterId": "ENT_a2f69422c67805",
+   "name": "Abertura lateral (agujero de Luschka) — yugular",
+   "queries": [
+    "jugular foramen"
+   ],
+   "uberon": "UBERON:0005456",
+   "matchedText": "jugular foramen",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "jugular foramen",
+   "uberonExactSynonyms": [
+    "Posterior lacerate foramen"
+   ],
+   "uberonDefinition": "The jugular foramen is a large aperture in the base of the skull. It is located behind the carotid canal and is formed in front by the petrous portion of the temporal, and behind by the occipital; it is generally larger on the right than on the left side."
+  },
+  {
+   "netterId": "ENT_7364d4f93993b7",
+   "name": "Cerebro — polo — occipital",
+   "queries": [
+    "occipital pole",
+    "occipital pole of cerebral hemisphere"
+   ],
+   "uberon": "UBERON:0002902",
+   "matchedText": "occipital pole",
+   "via": "label",
+   "matchKind": "exact",
+   "reason": null,
+   "uberonLabel": "occipital pole",
+   "uberonExactSynonyms": [
+    "polus occipitalis"
+   ],
+   "uberonDefinition": "The anterior end of the hemisphere is named the frontal pole. The posterior end is named the occipital pole. The anterior end of the temporal lobe, the temporal pole. [WP,unvetted]."
+  }
+ ],
+ "unmapped_sample": [
+  {
+   "netterId": "ENT_efd3c9c93aa7dd",
+   "name": "Hombro — venas superficiales",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+  },
+  {
+   "netterId": "ENT_0d7788ad63237e",
+   "name": "Faringe — venas",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_2673af92d1d859",
+   "name": "Plexo — comunicación",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_cf621767b947dc",
+   "name": "Arteria(s) — segmentaria — inferior",
+   "queries": [
+    "inferior segmental artery",
+    "inferior segmental artery of kidney"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_9400221703a2a4",
+   "name": "Músculo(s) — oblicua",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_81c141d95decc4",
+   "name": "Fosa — suelo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_4023d2b13c57a1",
+   "name": "Hígado — prenatal",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "hígado prenatal: estado, no estructura distinta"
+  },
+  {
+   "netterId": "ENT_96995964a8cc50",
+   "name": "Fosa — sublingual",
+   "queries": [
+    "sublingual fossa"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_9602dfa8f4fcf6",
+   "name": "Nervio(s) — flexor corto dedos",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_3a6bc34fb2490e",
+   "name": "Hígado — peritoneo visceral",
+   "queries": [
+    "serosa of liver",
+    "visceral peritoneum of liver"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_673d2ebc7b22bb",
+   "name": "Hígado — transversal",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_3db07c7a4f55a6",
+   "name": "Músculo(s) — nervio",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_0d91f03c8a1950",
+   "name": "Cabeza. V. también Encéfalo; Cráneo — huesos y ligamentos",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_8bbaf26c4b531c",
+   "name": "Fosa — temporal, hematoma",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "condición clínica indexada: no es una estructura anatómica"
+  },
+  {
+   "netterId": "ENT_852af4ab309070",
+   "name": "Testículo — esquema",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+  },
+  {
+   "netterId": "ENT_2a6ff4ec285ca4",
+   "name": "Músculo(s) — tórax",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "agrupación regional de músculos"
+  },
+  {
+   "netterId": "ENT_01b4d17c0d9932",
+   "name": "Músculo(s) — borde medial",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_fa519a652f0f68",
+   "name": "Tendón — largo pulgar",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_437afd04d96166",
+   "name": "Tendón — cubital carpo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_7f6d5a65ef1283",
+   "name": "Plexo — esquema",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_bbcd4b124ea716",
+   "name": "Nervio(s) — posterior",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_0d8598280ea0aa",
+   "name": "Músculo(s) — tendón",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_386e095f541ff3",
+   "name": "Abertura lateral (agujero de Luschka) — izquierdo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_a14a7d4c9c3289",
+   "name": "Atlas de anatomía hum — tendón",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+  },
+  {
+   "netterId": "ENT_035792affd037c",
+   "name": "Hernia — abordaje quirúrgico",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "tipo condicion_clinica_indexada: no es una estructura anatómica"
+  },
+  {
+   "netterId": "ENT_dd4775a343e101",
+   "name": "Vasos — epigastricos — superficial",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "agrupación de varias estructuras sin clase única equivalente"
+  },
+  {
+   "netterId": "ENT_bb3ea8074cd992",
+   "name": "Pulmones — tráquea",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "relación pulmones-tráquea, no estructura"
+  },
+  {
+   "netterId": "ENT_6be6d83e289ae4",
+   "name": "Arteria(s) — accesoria",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_14dfbeb196f792",
+   "name": "Anastomosis — carótida-vertebral",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_bf50c60a64dd73",
+   "name": "Fémur — áspera",
+   "queries": [
+    "linea aspera"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+  },
+  {
+   "netterId": "ENT_1b19d5f10f166f",
+   "name": "Arteria(s) — suprahioidea",
+   "queries": [
+    "suprahyoid artery",
+    "suprahyoid branch of lingual artery"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_36ba3448ebd270",
+   "name": "Plexo — venoso",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_68d35f46b18261",
+   "name": "Dientes — ligamento apical",
+   "queries": [
+    "apical ligament of dens"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_622bd3e166a795",
+   "name": "Nódulo(s) linfático(s) — mesentérico — superior",
+   "queries": [
+    "superior mesenteric lymph node"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_85b10fb54c44bc",
+   "name": "Fémur — pectinea",
+   "queries": [
+    "pectineal line of femur"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+  },
+  {
+   "netterId": "ENT_a3ab933a17cc74",
+   "name": "Vena(s) — interna",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_65c21f5bafb5f5",
+   "name": "Vena(s) — frontal",
+   "queries": [
+    "frontal vein"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_0214785978b2f3",
+   "name": "Hueso — oval",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_5615b2be1e7f58",
+   "name": "Nervio(s) — visión — anterior",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_9ad9d287495f23",
+   "name": "Cisterna — vena",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_7bd62d383f7e0d",
+   "name": "Ebner) — arterias y venas",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada contaminada por OCR (fragmento de encabezado o texto truncado)"
+  },
+  {
+   "netterId": "ENT_d64221cd730d0f",
+   "name": "Atla — vaginal",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_4413be13550dee",
+   "name": "Pierna — disección — superficial",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+  },
+  {
+   "netterId": "ENT_70978313402bba",
+   "name": "Nervio(s) — distribución",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_75c261d7000218",
+   "name": "Nervio(s) — primero",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "«primero» sin nervio identificable"
+  },
+  {
+   "netterId": "ENT_6bc1cb0004fa9b",
+   "name": "Nervio(s) — estómago y duodeno",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "agrupación de varias estructuras sin clase única equivalente"
+  },
+  {
+   "netterId": "ENT_8ceed020ce3497",
+   "name": "Espacio(s) — torácico",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "espacio torácico ambiguo sin clase identificable"
+  },
+  {
+   "netterId": "ENT_25e244bf25ab36",
+   "name": "Corazón — jana — izquierdo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "texto OCR corrupto («jana»)"
+  },
+  {
+   "netterId": "ENT_654074fe56342d",
+   "name": "Lengua — glándulas salivares",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_f70d77ca8173f0",
+   "name": "Atla — músculos",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_d47e8fc47c7a23",
+   "name": "Músculo(s) — femoral",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_3cab186b85284e",
+   "name": "Cerebelo — visión posterior",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "vista, figura o imagen indexada; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_ad8b28f23cc749",
+   "name": "Ligamento(s) — acromioclavicular",
+   "queries": [
+    "acromioclavicular ligament"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+  },
+  {
+   "netterId": "ENT_d22d7f7869f9c5",
+   "name": "Plexo — venoso",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_bb3e2bb508c93b",
+   "name": "Nervio(s) — ramo calcáneo — medial",
+   "queries": [
+    "medial calcaneal nerve",
+    "medial calcaneal branch of tibial nerve"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+  },
+  {
+   "netterId": "ENT_46ce9c0b27c276",
+   "name": "Arteria(s) — cecal",
+   "queries": [
+    "cecal artery",
+    "caecal artery"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_12d7b24fde8dfe",
+   "name": "Hiato — fascia cribiforme",
+   "queries": [
+    "cribriform fascia"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_8fdc2112c6aa29",
+   "name": "Atlas de anatomía hun — coclear, anterior y posterior",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_2c0b8869dddec6",
+   "name": "Tubos drenaje torácico, situación",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "situación de tubos de drenaje: procedimiento, no estructura"
+  },
+  {
+   "netterId": "ENT_0c8add900f5e7b",
+   "name": "C2. V. Axis (C2) — radiografía lateral",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "tipo procedimiento o imagen: no es una estructura anatómica"
+  },
+  {
+   "netterId": "ENT_53fbdbd0172970",
+   "name": "Hueso — medial",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_5a0924b8276990",
+   "name": "Músculo(s) — ramo profundo nervio tibial",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_1d4a08d8d63060",
+   "name": "Tobillo — radiografía",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada de procedimiento o imagen, no es una estructura anatómica."
+  },
+  {
+   "netterId": "ENT_60b94a18e35e1d",
+   "name": "Peroné — lateral",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_b6d4d64aa6976a",
+   "name": "Mandibula — lingula",
+   "queries": [
+    "lingula of mandible",
+    "mandibular lingula"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_b79c93b9ced72d",
+   "name": "Vena(s) — hemisférica inferior",
+   "queries": [
+    "inferior hemispheric vein"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_5aa0e4e5fdead7",
+   "name": "Articulación(es) — ligamento iliofemoral",
+   "queries": [
+    "iliofemoral ligament"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+  },
+  {
+   "netterId": "ENT_9be1529545b0cd",
+   "name": "Nervio(s) — comunicante nervio cubital",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_cb0c2114752e1a",
+   "name": "Nervio(s) — vasos sanguíneos",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "nervios de vasos sanguíneos: agrupación"
+  },
+  {
+   "netterId": "ENT_5313b236f090ea",
+   "name": "Próstata — imágenes sagitales de RM",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de vista, imagen o descripción, no de una estructura concreta."
+  },
+  {
+   "netterId": "ENT_a59ca087166ab3",
+   "name": "Hígado — sublobulillares",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_f668b11c17e16d",
+   "name": "Tibia — línea oblicua",
+   "queries": [
+    "soleal line",
+    "oblique line of tibia",
+    "soleal line of tibia"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto tiene una clase equivalente en UBERON local."
+  },
+  {
+   "netterId": "ENT_ae1a49179c4189",
+   "name": "Ligamento(s) — inserción",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_2cb96489cd8a4c",
+   "name": "Plexo — carotideo",
+   "queries": [
+    "carotid plexus",
+    "internal carotid nerve plexus"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "«plexo carotídeo» sin especificar (interno, externo o común)"
+  },
+  {
+   "netterId": "ENT_4a1002ff3912e4",
+   "name": "Muscular mucosa — recto y conducto anal",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+  },
+  {
+   "netterId": "ENT_e6aecc5b93a38b",
+   "name": "Vena(s) — valvula",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "«válvula» de vena sin especificar"
+  },
+  {
+   "netterId": "ENT_b628507daef67b",
+   "name": "Ligamento(s) (cont.} — sacrouterino",
+   "queries": [
+    "uterosacral ligament"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+  },
+  {
+   "netterId": "ENT_38b98af04b58ee",
+   "name": "Pelvis — arterias y venas",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+  },
+  {
+   "netterId": "ENT_e08833e55fa96c",
+   "name": "Fosa — pararrectal",
+   "queries": [
+    "pararectal fossa"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+  },
+  {
+   "netterId": "ENT_b325b9c12845dd",
+   "name": "Riñón",
+   "queries": [
+    "kidney"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_7d57486b7420ee",
+   "name": "Musculo(s) — meñique o dedo pequeño",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_8416c13f510ffa",
+   "name": "Plexo — rectal",
+   "queries": [
+    "rectal plexus",
+    "rectal nerve plexus"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_e353e1acb968fc",
+   "name": "Ganglio — derecho",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria o ambigua; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_3785c46cde1434",
+   "name": "Nervio(s) — parotídeos",
+   "queries": [
+    "parotid branch of auriculotemporal nerve"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_fffce195f71263",
+   "name": "Nervio(s) — visceral torácico",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada ambigua ('nervio visceral torácico'); sin clase única segura"
+  },
+  {
+   "netterId": "ENT_af82e5f35c657b",
+   "name": "Estómago — ramo vago",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ramo vagal en estómago sin especificar"
+  },
+  {
+   "netterId": "ENT_aa77a2839c02a3",
+   "name": "Masculo(s) — fascia lata",
+   "queries": [
+    "fascia lata"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ambigua: probablemente subentrada del músculo tensor de la fascia lata, no de la fascia lata; no se fuerza."
+  },
+  {
+   "netterId": "ENT_db5d5adccad558",
+   "name": "Nervio(s) — femoral — lateral",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_71013509a3ab90",
+   "name": "Fosa — pterigoidea, visión posterior",
+   "queries": [
+    "pterygoid fossa",
+    "pterygoid fossa of sphenoid bone"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "vista, figura o imagen indexada; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_d356d538d70742",
+   "name": "Mandibula — muy abierta",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "vista, figura o imagen indexada; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_bffb1ceab3d7db",
+   "name": "Atlas de anatomía hun — fascia",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "texto de cabecera/OCR sin estructura identificable"
+  },
+  {
+   "netterId": "ENT_7b947b0f70f76b",
+   "name": "Atlas de anatomía hum — tendón",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada con prefijo de OCR corrupto («Atlas de anatomía…») sin estructura identificable."
+  },
+  {
+   "netterId": "ENT_2274e5da359996",
+   "name": "Próstata — drenaje linfático",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+  },
+  {
+   "netterId": "ENT_2174c60fc273c2",
+   "name": "Arteria(s) — meninges",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_1a5f5610b6de78",
+   "name": "Arteria(s) — ramas meningeas",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_f089efe5cd9a92",
+   "name": "Arteria(s) — cadera y muslo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_73192dc5ae4288",
+   "name": "Ligamento(s) — carpopiramidal",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_010cc6a1951bd6",
+   "name": "Faringe — nervios",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_19a6d852cdf053",
+   "name": "Hígado — vías linfáticas",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "vías linfáticas del hígado: agrupación"
+  },
+  {
+   "netterId": "ENT_026f07337e1cb2",
+   "name": "Ligamento(s) — capitoganchoso",
+   "queries": [
+    "capitohamate ligament"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ninguno de los nombres propuestos coincide exactamente con una clase UBERON."
+  },
+  {
+   "netterId": "ENT_0bce0a5399f0d2",
+   "name": "Arteria(s) — faringea",
+   "queries": [
+    "pharyngeal artery",
+    "ascending pharyngeal artery"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ambiguo: «faríngea» puede ser la arteria faríngea ascendente o ramas faríngeas"
+  },
+  {
+   "netterId": "ENT_10cf0114d2a9b0",
+   "name": "Estómago — escotadura angular",
+   "queries": [
+    "angular incisure",
+    "incisura angularis",
+    "angular notch of stomach"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "sin coincidencia exacta en UBERON"
+  },
+  {
+   "netterId": "ENT_5fed92a4f3b6db",
+   "name": "Plexo — perianal — externo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada fragmentaria, ambigua u OCR defectuoso; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_600265d2bc9e77",
+   "name": "Nervio(s) — vena satélite",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_292f118c41c02c",
+   "name": "Arteria(s) — sección transversal",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "vista, sección, variante o estado descriptivo; no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_bed54b9ddd73c2",
+   "name": "Arteria(s) — amígdala cerebelosa",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_3815954e7747e0",
+   "name": "Nervio(s) — superior",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_29b3ac70a123da",
+   "name": "Músculo(s) — cabeza — corta, combinación",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "cabeza corta, combinación: músculo no identificable"
+  },
+  {
+   "netterId": "ENT_01029dd4ed8242",
+   "name": "Hueso — vision — anterior (palmar)",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_3e2895ebe70e46",
+   "name": "Nervio(s) — raíz craneal",
+   "queries": [
+    "cranial root of accessory nerve"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "ninguno de los nombres propuestos coincide por etiqueta o sinónimo exacto con una clase UBERON humana"
+  },
+  {
+   "netterId": "ENT_12b347d9e2fd31",
+   "name": "Cerebelo — posterolateral",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_f05b3dc8fa2403",
+   "name": "Cadera — músculos",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Entrada ambigua, agrupación o fragmento del índice sin una clase única equivalente."
+  },
+  {
+   "netterId": "ENT_0cacb397bcc700",
+   "name": "Glándula(s) — palpebral",
+   "queries": [
+    "tarsal gland",
+    "palpebral gland"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "«glándulas palpebrales» agrupa varias glándulas; no equivale solo a las tarsales"
+  },
+  {
+   "netterId": "ENT_1af28e90798460",
+   "name": "Maléolo",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "entrada fragmentaria, de agrupación o con encabezado dañado por OCR: no identifica una estructura única"
+  },
+  {
+   "netterId": "ENT_b33603f58911b7",
+   "name": "Vasos — superficiales",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Agrupación de varias estructuras sin clase UBERON equivalente única."
+  },
+  {
+   "netterId": "ENT_c8c0fe807cddfc",
+   "name": "Tendón — extensor",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Subentrada de índice fragmentaria o ambigua; no identifica una estructura única."
+  },
+  {
+   "netterId": "ENT_824cbf0257978f",
+   "name": "Túnica — vaginal, lámina — parietal",
+   "queries": [
+    "parietal layer of tunica vaginalis",
+    "parietal layer of tunica vaginalis testis"
+   ],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Ningún nombre propuesto coincide exactamente con una etiqueta o sinónimo exacto de UBERON."
+  },
+  {
+   "netterId": "ENT_0733da42c70ef3",
+   "name": "Antebrazo — ligamentos",
+   "queries": [],
+   "uberon": null,
+   "matchedText": null,
+   "via": null,
+   "matchKind": null,
+   "reason": "Agrupación de varias estructuras sin una clase UBERON única equivalente."
+  }
+ ]
+}

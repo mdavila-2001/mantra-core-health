@@ -1,8 +1,28 @@
 <section class="sintomas" aria-labelledby="sintomas-titulo">
-  <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo te sentís?</h2>
-  <p class="sintomas__texto">
-    Tocá en la figura dónde te pasa —de frente, de espaldas o la cara— y te decimos a qué especialidad ir.
-  </p>
+  <div class="sintomas__cabecera">
+    <div class="sintomas__cabecera-textos">
+      <h2 class="sintomas__titulo" id="sintomas-titulo">¿Cómo se siente?</h2>
+      <p class="sintomas__texto">
+        Toque en la figura dónde le pasa —de frente, de espaldas o la cara— y le decimos a qué especialidad ir.
+      </p>
+    </div>
+    <div class="sintomas__cabecera-accion">
+      <button
+        type="button"
+        class="sintomas__boton-ayuda-top"
+        [class.is-activo]="mostrarCrisis()"
+        [attr.aria-expanded]="mostrarCrisis()"
+        data-testid="sintomas-boton-ayuda-top"
+        (click)="alternarAyudaManual()"
+      >
+        <svg class="sintomas__icono-ayuda-top" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </svg>
+        <span>{{ mostrarCrisis() ? 'Ocultar líneas de contención' : '¿Líneas de contención emocional?' }}</span>
+      </button>
+    </div>
+  </div>
+
 
   <!-- ─── Elegir sin escribir ───────────────────────────────────────────────
        Un campo de texto vacío es la peor pregunta posible: quien no sabe a qué
@@ -16,6 +36,8 @@
       class="sintomas__silueta"
       [zonas]="zonasParaLaSilueta()"
       [value]="zonaAbierta()"
+      [marcadas]="zonasMarcadas()"
+      [sexo]="siluetaSexo()"
       (valueChange)="elegirZonaDesdeLaSilueta($event)"
     />
 
@@ -25,7 +47,7 @@
       <!-- Sin zona elegida no hay pista acá: la figura ya dice «Tocá una
            parte del cuerpo», y repetirlo al lado era decirlo dos veces. -->
       @if (nombreDeLaZonaAbierta(); as zona) {
-        <h3 class="sintomas__lado-titulo">{{ zona }}: ¿qué sentís?</h3>
+        <h3 class="sintomas__lado-titulo">{{ zona }}: ¿qué siente?</h3>
       }
       @if (sintomasDeLaZona().length > 0) {
         <ul class="sintomas__opciones" data-testid="zona-abierta">
@@ -45,6 +67,28 @@
         </ul>
       }
 
+      <!-- Sin zona elegida, el panel de al lado quedaba en blanco —media tarjeta
+           vacía junto a la figura—. Ahí va ahora el «cómo funciona» en tres
+           pasos con número: no repite la pista de la figura, cuenta lo que pasa
+           después de tocarla, que es lo que quien desconfía quiere saber antes
+           de empezar (rediseño del 22/10/2026). -->
+      @if (!nombreDeLaZonaAbierta()) {
+        <ol class="sintomas__guia" data-testid="sintomas-guia" aria-label="Cómo funciona">
+          <li class="sintomas__guia-paso">
+            <span class="sintomas__guia-numero" aria-hidden="true">1</span>
+            <span class="sintomas__guia-texto">Toque en la figura <strong>dónde le pasa</strong>.</span>
+          </li>
+          <li class="sintomas__guia-paso">
+            <span class="sintomas__guia-numero" aria-hidden="true">2</span>
+            <span class="sintomas__guia-texto">Elija <strong>lo que siente</strong> de la lista que aparece.</span>
+          </li>
+          <li class="sintomas__guia-paso">
+            <span class="sintomas__guia-numero" aria-hidden="true">3</span>
+            <span class="sintomas__guia-texto">Le decimos <strong>a qué especialidad ir</strong> y puede pedir la cita.</span>
+          </li>
+        </ol>
+      }
+
       <p class="sintomas__chips-rotulo sintomas__lado-otros" id="sintomas-otros">
         Lo que no está en un lugar del cuerpo
       </p>
@@ -55,6 +99,7 @@
               class="sintomas__zona"
               type="button"
               [class.is-abierta]="zonaAbierta() === zona.id"
+              [class.is-marcada]="estaMarcada(zona.id)"
               [attr.aria-expanded]="zonaAbierta() === zona.id"
               [attr.data-testid]="'zona-' + zona.id"
               (click)="alternarZona(zona)"
@@ -219,8 +264,8 @@
   <div class="sintomas__escribir" data-testid="sintomas-escribir">
     <app-form-field
       icon="note"
-      label="Contanos con tus palabras"
-      hint="Podés escribir varios síntomas; no hace falta que sea exacto."
+      label="Cuéntenos con sus palabras"
+      hint="Puede escribir varios síntomas; no hace falta que sea exacto."
     >
       <app-textarea
         data-testid="sintomas-texto"
@@ -237,11 +282,12 @@
          hay botón, porque un botón que al tocarlo dice «acá no se puede» es
          peor que ninguno. El aviso va ANTES del botón y siempre a la vista:
          quien va a hablar de su salud tiene que saber a dónde va lo que dice
-         antes de decirlo (Q-M1). No hay servidor nuestro en el medio. -->
-    @if (dictado.soportado) {
+         antes de decirlo (Q-M1). Lo transcribe el navegador; después el
+         servicio de triage lo analiza sin guardarlo, como a lo tecleado. -->
+    @if (dictado.supported) {
       <div class="sintomas__dictado" data-testid="sintomas-dictado">
         <p class="sintomas__dictado-aviso" id="sintomas-dictado-aviso">
-          Lo que dictás lo transcribe tu navegador; no lo guardamos.
+          Lo que dicta lo transcribe su navegador y lo analizamos para entenderle; no lo guardamos.
         </p>
         <button
           app-button
@@ -250,7 +296,7 @@
           type="button"
           data-testid="sintomas-dictar"
           aria-describedby="sintomas-dictado-aviso"
-          [attr.aria-pressed]="dictado.escuchando()"
+          [attr.aria-pressed]="dictado.listening()"
           (clicked)="alternarDictado()"
         >
           <svg
@@ -267,7 +313,7 @@
             <rect x="9" y="3" width="6" height="11" rx="3" />
             <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3" />
           </svg>
-          {{ dictado.escuchando() ? 'Detener' : 'Dictar' }}
+          {{ dictado.listening() ? 'Detener' : 'Dictar' }}
         </button>
         <!-- Los tres errores dicen qué hacer, no qué falló por dentro. -->
         <p
@@ -276,22 +322,22 @@
           aria-live="polite"
           data-testid="sintomas-dictado-estado"
         >
-          @switch (dictado.estado()) {
+          @switch (dictado.status()) {
             @case ('escuchando') {
               <span class="sintomas__dictado-punto" aria-hidden="true"></span>
-              Escuchando… decí qué te pasa.
-              @if (dictado.parcial(); as parcial) {
+              Escuchando… diga qué le pasa.
+              @if (dictado.partial(); as parcial) {
                 <em>{{ parcial }}</em>
               }
             }
             @case ('sin-permiso') {
-              Activá el micrófono en el navegador o escribí.
+              Active el micrófono en el navegador o escriba.
             }
             @case ('sin-resultado') {
-              No te escuchamos, probá de nuevo.
+              No le escuchamos, pruebe de nuevo.
             }
             @case ('sin-red') {
-              Sin conexión para transcribir; escribí.
+              Sin conexión para transcribir; escriba.
             }
           }
         </p>
@@ -305,17 +351,21 @@
 
   @if (sintomas().length > 0) {
     <div class="sintomas__chips">
-      <span class="sintomas__chips-rotulo">Te entendimos</span>
+      <span class="sintomas__chips-rotulo">Le entendimos</span>
       @for (sintoma of sintomas(); track sintoma.id) {
         <!-- Cada chip se puede quitar: un falso positivo no puede quedar
              atrapado dentro de la recomendación. -->
+        <!-- Con el término del glosario médico oficial; la forma llana, entre paréntesis. -->
         <app-chip
           variant="info"
           [removable]="true"
-          [label]="sintoma.nombre"
+          [label]="nombreParaMostrar(sintoma)"
+          [attr.title]="codigoDelGlosario(sintoma.id)"
+          [attr.data-glossary-code]="codigoDelGlosario(sintoma.id)"
+          data-testid="sintoma-reconocido"
           (removed)="quitar(sintoma)"
         >
-          {{ sintoma.nombre }}
+          {{ nombreParaMostrar(sintoma) }}
         </app-chip>
       }
       <button app-button variant="ghost" size="sm" type="button" (clicked)="empezarDeNuevo()">
@@ -334,44 +384,51 @@
       }
     </div>
   }
+  @if (mostrarCrisis()) {
+    <!-- ─── Soporte en crisis y líneas de contención (detección o apertura manual) ─── -->
+    <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
+      <div class="sintomas__crisis-soporte sintomas__crisis-soporte--hd" data-testid="sintomas-crisis-soporte">
+          <div class="sintomas__crisis-cabecera-hd">
+            <div class="sintomas__crisis-badge-hd">
+              <span class="sintomas__crisis-pulso-hd" aria-hidden="true"></span>
+              <span>Líneas de ayuda y contención psicológica gratuita (24 horas)</span>
+            </div>
+            <h3 class="sintomas__crisis-titulo-principal-hd">No está solo/a. Estamos aquí para acompañarle.</h3>
+            <p class="sintomas__crisis-subtitulo-hd">
+              {{ mensajeDeAlarma() ?? 'Si está pasando por un momento difícil, angustia o necesita contención, cuenta con apoyo confidencial, gratuito y profesional las 24 horas del día.' }}
+            </p>
+          </div>
 
-  <!-- ─── Derivación a urgencias (C6) ─────────────────────────────────────
-       Con un síntoma de alarma la pantalla DEJA de recomendar. Ofrecerle un
-       turno para el jueves a quien escribió «me duele el pecho y no puedo
-       respirar» sería el peor resultado posible de este flujo. -->
-  @if (alarmas().length > 0) {
-    <app-alert tone="error" title="Esto no puede esperar a un turno">
-      @if (mensajeDeAlarma(); as mensaje) {
-        <!-- Hay urgencias que no se contestan con «andá a una guardia» y nada
-             más. Cuando la fila trae su propio mensaje, ése es el que va. -->
-        <p>{{ mensaje }}</p>
-      } @else {
-        <p>
-          Lo que contás
-          @if (alarmas().length === 1) {
-            —{{ alarmas()[0].nombre }}—
-          }
-          puede ser una urgencia.
-          <strong>Andá ahora a una guardia o llamá a emergencias.</strong>
-        </p>
-      }
-
-      @if (esRiesgoSuicida()) {
-        <div class="sintomas__crisis-soporte" data-testid="sintomas-crisis-soporte">
+          <!-- Teléfonos de ayuda inmediata en tarjetas HD minimalistas -->
           <div class="sintomas__crisis-bloque">
-            <h4 class="sintomas__crisis-titulo">Líneas de ayuda y contención psicológica gratuita (24 horas)</h4>
+            <h4 class="sintomas__crisis-titulo">Líneas telefónicas de apoyo inmediato (gratuitas y confidenciales)</h4>
             <div class="sintomas__crisis-telefonos-grid">
-              <a href="tel:800113040" class="sintomas__crisis-telefono-link">
+              <a href="tel:800113040" class="sintomas__crisis-telefono-link" data-testid="crisis-telefono-800113040">
+                <div class="sintomas__crisis-tel-top">
+                  <span class="sintomas__crisis-tel-tag">Línea Nacional 24/7</span>
+                  <svg class="sintomas__crisis-tel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </div>
                 <span class="sintomas__crisis-telefono-numero">800-11-3040</span>
                 <span class="sintomas__crisis-telefono-desc">Línea de Prevención del Suicidio y Contención</span>
+                <span class="sintomas__crisis-llamar-cta">Llamar ahora</span>
               </a>
-              <a href="tel:77222123" class="sintomas__crisis-telefono-link">
+              <a href="tel:77222123" class="sintomas__crisis-telefono-link" data-testid="crisis-telefono-77222123">
+                <div class="sintomas__crisis-tel-top">
+                  <span class="sintomas__crisis-tel-tag">Apoyo Emocional 24/7</span>
+                  <svg class="sintomas__crisis-tel-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </div>
                 <span class="sintomas__crisis-telefono-numero">772-22123</span>
                 <span class="sintomas__crisis-telefono-desc">Línea de Crisis y Apoyo Emocional</span>
+                <span class="sintomas__crisis-llamar-cta">Llamar ahora</span>
               </a>
             </div>
           </div>
 
+          <!-- Red de profesionales -->
           <div class="sintomas__crisis-bloque">
             <h4 class="sintomas__crisis-titulo">Atención profesional en salud mental</h4>
             <p class="sintomas__crisis-subtexto">
@@ -385,6 +442,10 @@
                 routerLink="/directory"
                 [queryParams]="{ q: 'Psicología Clínica' }"
               >
+                <svg class="sintomas__btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
                 Ver psicólogos/as
               </a>
               <a
@@ -394,6 +455,9 @@
                 routerLink="/directory"
                 [queryParams]="{ q: 'Psiquiatría' }"
               >
+                <svg class="sintomas__btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
                 Ver psiquiatras
               </a>
               <a
@@ -402,16 +466,27 @@
                 size="sm"
                 routerLink="/psychological-help"
               >
+                <svg class="sintomas__btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                </svg>
                 Ver guía de ayuda psicológica
               </a>
             </div>
           </div>
 
+          <!-- Videos OPS / OMS -->
           <div class="sintomas__crisis-bloque">
-            <h4 class="sintomas__crisis-titulo">Videos para acompañarte (OPS / OMS)</h4>
+            <div class="sintomas__crisis-subbloque-encabezado">
+              <h4 class="sintomas__crisis-titulo">Videos para acompañarte (OPS / OMS)</h4>
+              <span class="sintomas__crisis-fuente-tag">Material oficial OPS/OMS</span>
+            </div>
             <div class="sintomas__crisis-videos-grid">
               <div class="sintomas__video-caja">
-                <h5 class="sintomas__video-titulo">Cómo cuidar la salud mental</h5>
+                <div class="sintomas__video-header">
+                  <span class="sintomas__video-tag">OPS / OMS</span>
+                  <h5 class="sintomas__video-titulo">Cómo cuidar la salud mental</h5>
+                </div>
                 <iframe
                   src="https://www.youtube-nocookie.com/embed/nY66tl39PkE?rel=0"
                   title="OPS: Cuidar la salud mental"
@@ -422,7 +497,10 @@
                 ></iframe>
               </div>
               <div class="sintomas__video-caja">
-                <h5 class="sintomas__video-titulo">Adolescentes y salud mental</h5>
+                <div class="sintomas__video-header">
+                  <span class="sintomas__video-tag">OPS / OMS</span>
+                  <h5 class="sintomas__video-titulo">Adolescentes y salud mental</h5>
+                </div>
                 <iframe
                   src="https://www.youtube-nocookie.com/embed/T1ysvMHuV-Y?rel=0"
                   title="OPS: Adolescentes y salud mental"
@@ -434,65 +512,350 @@
               </div>
             </div>
           </div>
+
+          <!-- Panel de emergencias integrado -->
+          <div class="sintomas__crisis-emergencia-footer">
+            <span class="sintomas__crisis-emergencia-aviso">Líneas de emergencias médicas y auxilio inmediato:</span>
+            <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
+          </div>
         </div>
-      }
-    </app-alert>
-  } @else if (recomendaciones().length > 0) {
-    <div class="sintomas__recomendaciones">
-      <h3 class="sintomas__subtitulo">Conviene que veas a</h3>
+      </div>
+  } @else if (alarmas().length > 0) {
+    <!-- Alarma médica general no psiquiátrica -->
+    <div class="sintomas__urgencia" data-testid="sintomas-urgencia-top">
+      <app-alert tone="error" title="Esto no puede esperar a un turno">
+        @if (respuestaDelServicio(); as respuesta) {
+          <p class="sintomas__respuesta-ia" data-testid="sintomas-respuesta-ia">{{ respuesta }}</p>
+        } @else if (mensajeDeAlarma(); as mensaje) {
+          <p>{{ mensaje }}</p>
+        } @else {
+          <p>
+            Lo que cuenta
+            @if (alarmas().length === 1) {
+              —{{ alarmas()[0].nombre }}—
+            }
+            puede ser una urgencia.
+            <strong>Vaya ahora a una guardia o llame a emergencias.</strong>
+          </p>
+        }
+        <app-emergency-panel class="sintomas__emergencia" [configurable]="false" />
+      </app-alert>
+    </div>
+  }
+
+  @if (alarmas().length === 0) {
+    @if (recomendaciones().length > 0) {
+      <div class="sintomas__recomendaciones">
+        @if (respuestaEmpatica(); as respuesta) {
+          <section class="sintomas__respuesta-ia" role="status" data-testid="sintomas-respuesta-ia">
+            <span class="sintomas__respuesta-ia-rotulo">Una respuesta para usted</span>
+            <p>{{ respuesta }}</p>
+          </section>
+        }
+        @if (sintomas().length === 0) {
+          <!-- Sin certeza no se deja a la persona sin camino: Medicina general,
+               y la pista para que pruebe de nuevo si quiere. -->
+          <p class="sintomas__sin-coincidencias" role="status" data-testid="sintomas-sin-certeza">
+            No reconocimos un síntoma concreto. Puede probar con otras palabras o tocar una zona de arriba.
+          </p>
+        }
+
+        @if (vistaRecomendacion() === 'especialidades') {
+          <h3 class="sintomas__subtitulo">Conviene que vea a</h3>
+          <!-- Pedido del cliente (27/10/2026): la MISMA tarjeta del buscador de
+               especialidades de `/directory` —foto, ícono, nombre—, de
+               `shared/styles/card-grid.css`. La tarjeta entera lleva a quién
+               atiende, como allá; acá suma el porqué, que es lo que hace que la
+               recomendación no sea una caja negra, y marca por cuál empezar. -->
+          <ul class="rejilla sintomas__rejilla" data-testid="sintomas-recomendaciones">
+            @for (recomendacion of recomendaciones(); track recomendacion.nombre; let primera = $first) {
+              <li>
+                <button
+                  type="button"
+                  class="rejilla__tarjeta sintomas__tarjeta"
+                  [class.sintomas__tarjeta--primera]="primera"
+                  [attr.data-testid]="'sintomas-especialidad-' + $index"
+                  [attr.aria-label]="
+                    'Ver quién atiende ' + recomendacion.nombre + '. ' + explicacionDe(recomendacion)
+                  "
+                  (click)="verProfesionales(recomendacion.nombre)"
+                >
+                  <img class="rejilla__foto" [src]="fotoDe(recomendacion.nombre)" alt="" loading="lazy" />
+                  <span class="sintomas__tarjeta-cabeza">
+                    <app-specialty-icon
+                      class="rejilla__icono"
+                      aria-hidden="true"
+                      [especialidad]="recomendacion.nombre"
+                    />
+                    @if (primera && recomendaciones().length > 1) {
+                      <app-badge variant="primary">Empiece por acá</app-badge>
+                    }
+                  </span>
+                  <span class="rejilla__nombre">{{ recomendacion.nombre }}</span>
+                  <span class="rejilla__resumen">{{ explicacionDe(recomendacion) }}</span>
+                  <span class="sintomas__tarjeta-accion" aria-hidden="true">Ver quién atiende →</span>
+                </button>
+              </li>
+            }
+          </ul>
+
+          <!-- Opción complementaria hacia los medicamentos sugeridos -->
+          <div class="sintomas__meds-callout">
+            <div class="sintomas__meds-callout-texto">
+              <span class="sintomas__meds-callout-titulo">¿Busca alivio sintomático mientras programa su consulta?</span>
+              <span class="sintomas__meds-callout-bajada">
+                Contamos con recomendaciones farmacológicas de venta libre y posología orientativa sugerida por el sistema.
+              </span>
+            </div>
+            <div class="sintomas__meds-callout-acciones">
+              <button
+                app-button
+                variant="outline"
+                size="sm"
+                type="button"
+                (clicked)="cambiarVistaRecomendacion('medicamentos')"
+              >
+                Ver medicamentos sugeridos
+              </button>
+            </div>
+          </div>
+        } @else {
+          <!-- ─── Vista de Medicamentos Sugeridos con Posología de la IA ─── -->
+          <div class="sintomas__medicamentos-seccion" data-testid="sintomas-medicamentos-seccion">
+            <!-- Sin las pestañas (27/10/2026), la vuelta tiene que estar a la
+                 vista: arriba, donde empieza la lectura. -->
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              class="sintomas__volver"
+              data-testid="sintomas-volver-a-especialistas"
+              (clicked)="cambiarVistaRecomendacion('especialidades')"
+            >
+              ← Volver a los especialistas
+            </button>
+            <div class="sintomas__meds-intro">
+              <div class="sintomas__meds-intro-texto">
+                <h3 class="sintomas__subtitulo sintomas__subtitulo--meds">
+                  Medicamentos sugeridos y posología de referencia
+                </h3>
+                <p class="sintomas__meds-descripcion">
+                  Orientación farmacológica basada en el conocimiento médico y posológico cargado en el sistema
+                  @if (sintomasDetectadosTexto()) {
+                    para: <strong>{{ sintomasDetectadosTexto() }}</strong>.
+                  } @else {
+                    para sus síntomas consultados.
+                  }
+                </p>
+              </div>
+              <a
+                app-button
+                variant="outline"
+                size="sm"
+                routerLink="/search/medications"
+                [queryParams]="medicamentosQueryParams()"
+                class="sintomas__meds-vitrina-btn"
+              >
+                Buscar en vitrina de farmacias
+              </a>
+            </div>
+
+            <div class="sintomas__meds-grid">
+              @for (med of medicamentosSugeridos(); track med.id) {
+                <div class="sintomas__med-card" [attr.data-testid]="'med-card-' + med.id">
+                  <div class="sintomas__med-header">
+                    <div class="sintomas__med-icon-container">
+                      <svg
+                        class="sintomas__med-svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <rect x="2" y="7" width="20" height="10" rx="5" />
+                        <line x1="12" y1="7" x2="12" y2="17" />
+                      </svg>
+                    </div>
+                    <div class="sintomas__med-main-info">
+                      <div class="sintomas__med-badges-row">
+                        <span class="sintomas__med-tag-atc">ATC: {{ med.atcCode }}</span>
+                        @if (med.requiereReceta) {
+                          <app-badge variant="warning">Bajo receta médica</app-badge>
+                        } @else {
+                          <app-badge variant="success">Venta libre (OTC)</app-badge>
+                        }
+                      </div>
+                      <h4 class="sintomas__med-titulo">{{ med.nombre }}</h4>
+                      <p class="sintomas__med-subtitulo">
+                        {{ med.generico }} · {{ med.formaFarmaceutica }} · {{ med.grupoTerapeutico }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="sintomas__med-indicacion-caja">
+                    <p class="sintomas__med-indicacion-texto">
+                      <strong>Indicación clínica:</strong> {{ med.indicacionClinica }}
+                    </p>
+                  </div>
+
+                  <!-- ─── Ficha de Posología ─── -->
+                  <div class="sintomas__posologia-bloque">
+                    <div class="sintomas__posologia-encabezado">
+                      <svg
+                        class="sintomas__posologia-icono"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      <span class="sintomas__posologia-titulo">Posología y administración recomendada</span>
+                    </div>
+
+                    <div class="sintomas__posologia-grilla">
+                      <div class="sintomas__posologia-item">
+                        <span class="sintomas__posologia-etiqueta">Dosis habitual:</span>
+                        <strong class="sintomas__posologia-valor">{{ med.posologia.dosisHabitual }}</strong>
+                      </div>
+                      <div class="sintomas__posologia-item">
+                        <span class="sintomas__posologia-etiqueta">Frecuencia / Intervalo:</span>
+                        <strong class="sintomas__posologia-valor">{{ med.posologia.frecuencia }}</strong>
+                      </div>
+                      <div class="sintomas__posologia-item">
+                        <span class="sintomas__posologia-etiqueta">Vía y modo:</span>
+                        <strong class="sintomas__posologia-valor">{{ med.posologia.via }}</strong>
+                      </div>
+                      <div class="sintomas__posologia-item">
+                        <span class="sintomas__posologia-etiqueta">Duración máx. sugerida:</span>
+                        <strong class="sintomas__posologia-valor">{{ med.posologia.duracionMaxima }}</strong>
+                      </div>
+                    </div>
+
+                    @if (med.posologia.instrucciones) {
+                      <p class="sintomas__posologia-pautas">
+                        <span class="sintomas__posologia-pautas-icono" aria-hidden="true">💡</span>
+                        <span>{{ med.posologia.instrucciones }}</span>
+                      </p>
+                    }
+                  </div>
+
+                  @if (med.advertencias.length > 0) {
+                    <div class="sintomas__med-alerta">
+                      <span class="sintomas__med-alerta-icono" aria-hidden="true">⚠️</span>
+                      <span class="sintomas__med-alerta-texto">{{ med.advertencias[0] }}</span>
+                    </div>
+                  }
+
+                  <div class="sintomas__med-footer">
+                    <div class="sintomas__med-precio-wrap">
+                      <span class="sintomas__med-precio-label">Disponibilidad en farmacias:</span>
+                      <span class="sintomas__med-precio-val">{{ med.precioReferencial }}</span>
+                    </div>
+                    <a
+                      app-button
+                      variant="primary"
+                      size="sm"
+                      routerLink="/search/medications"
+                      [queryParams]="{ q: med.generico }"
+                    >
+                      Ver farmacias con stock
+                    </a>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- ─── Aviso clínico de responsabilidad ─── -->
+            <div class="sintomas__meds-disclaimer">
+              <svg
+                class="sintomas__meds-disclaimer-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <div class="sintomas__meds-disclaimer-texto">
+                <strong>Información de seguridad farmacológica:</strong> Esta posología e indicaciones tienen carácter puramente orientativo para el alivio temporal de síntomas leves. No sustituyen la consulta médica, el diagnóstico profesional ni la receta archivada. Si los síntomas persisten o se agravan, consulte a un profesional de la salud.
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (texto().trim() !== '' && sintomas().length === 0 && leyendoConIa()) {
+      <p class="sintomas__leyendo" role="status" data-testid="sintomas-leyendo">
+        <app-spinner size="sm" decorative />
+        <span>Estamos leyendo lo que escribió… puede tardar unos segundos.</span>
+      </p>
+    } @else if (texto().trim() !== '' && sintomas().length === 0) {
+      <p class="sintomas__sin-coincidencias" role="status">
+        @if (descartados() !== '') {
+          <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
+               que «no reconocimos nada» se lea como «no te leímos». -->
+          Entendimos que <strong>no</strong> tiene {{ descartados() }}. Cuéntenos qué sí siente.
+        } @else {
+          No reconocimos ningún síntoma. Pruebe con palabras más simples, o toque una zona de arriba.
+        }
+      </p>
+    }
+  }
+
+  <!-- «Guardar observación» salió a pedido del cliente (27/10/2026). Las que ya
+       estaban guardadas en el dispositivo se siguen viendo para poder borrarlas. -->
+  <p class="sintomas__porque" role="status" data-testid="sintomas-observacion-aviso">{{ avisoDeObservacion() }}</p>
+  @if (observaciones().length > 0) {
+    <section class="sintomas__guardadas" aria-labelledby="sintomas-guardadas-titulo" data-testid="sintomas-observaciones">
+      <h3 id="sintomas-guardadas-titulo" class="sintomas__subtitulo">Sus observaciones guardadas</h3>
+      <p class="sintomas__porque">
+        Están guardadas en este dispositivo. Cuando solicite una cita, la más reciente se envía al profesional
+        como motivo de consulta; podrá editarla antes de enviarla.
+      </p>
       <ul class="sintomas__lista">
-        @for (recomendacion of recomendaciones(); track recomendacion.nombre) {
-          <li class="sintomas__opcion">
+        @for (observacion of observaciones().slice(0, 5); track observacion.id) {
+          <li class="sintomas__opcion" data-testid="sintomas-observacion">
             <div class="sintomas__opcion-texto">
-              <p class="sintomas__especialidad">{{ recomendacion.nombre }}</p>
-              <!-- El porqué es lo que hace que esto no se sienta una caja
-                   negra. Sin él, la recomendación es una adivinanza con buena
-                   tipografía. -->
-              <p class="sintomas__porque">{{ explicacionDe(recomendacion) }}</p>
+              <p class="sintomas__especialidad">
+                {{ fechaDe(observacion) }}
+                @if (observacion.usada) {
+                  <span class="sintomas__porque"> · ya enviada con una cita</span>
+                }
+              </p>
+              @if (observacion.sintomas.length > 0) {
+                <p class="sintomas__porque">{{ nombresDe(observacion) }}</p>
+              }
+              @if (observacion.texto !== '') {
+                <p class="sintomas__porque">«{{ observacion.texto }}»</p>
+              }
             </div>
             <button
               app-button
-              variant="primary"
+              variant="ghost"
               size="sm"
               type="button"
-              (clicked)="verProfesionales(recomendacion.nombre)"
+              [attr.aria-label]="'Eliminar la observación del ' + fechaDe(observacion)"
+              (clicked)="borrarObservacion(observacion.id)"
             >
-              Ver quién atiende
+              Eliminar observación
             </button>
           </li>
         }
       </ul>
-
-      <!-- Recomendación y consulta de medicamentos en la vitrina pública -->
-      <div class="sintomas__medicamentos-bloque" data-testid="sintomas-recomendar-medicamentos-bloque">
-        <div class="sintomas__medicamentos-texto">
-          <p class="sintomas__especialidad">Medicamentos y farmacias</p>
-          <p class="sintomas__porque">
-            Consulte opciones de venta libre y disponibilidad de medicamentos en farmacias cercanas para aliviar sus síntomas.
-          </p>
-        </div>
-        <a
-          app-button
-          variant="secondary"
-          size="sm"
-          data-testid="sintomas-boton-recomendar-medicamentos"
-          routerLink="/search/medications"
-          [queryParams]="medicamentosQueryParams()"
-        >
-          Recomendar medicamentos
-        </a>
-      </div>
-    </div>
-  } @else if (texto().trim() !== '' && sintomas().length === 0) {
-    <p class="sintomas__sin-coincidencias" role="status">
-      @if (descartados() !== '') {
-        <!-- Leímos el texto y entendimos que lo negaba. Decirlo es lo que evita
-             que «no reconocimos nada» se lea como «no te leímos». -->
-        Entendimos que <strong>no</strong> tenés {{ descartados() }}. Contanos qué sí sentís.
-      } @else {
-        No reconocimos ningún síntoma. Probá con palabras más simples, o tocá una zona de arriba.
-      }
-    </p>
+    </section>
   }
 
   <!-- El descargo es FIJO y no depende de que nadie se acuerde de ponerlo. -->

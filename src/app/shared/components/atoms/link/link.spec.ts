@@ -8,6 +8,17 @@ import { LINK_VARIANTS, type LinkVariant } from './link.types';
 
 const LINK_CSS = 'src/app/shared/components/atoms/link/link.css';
 
+/** El cuerpo de la primera regla cuyo selector empieza en `selector`. */
+function cuerpo(css: string, selector: string): string {
+  const desde = css.indexOf(selector);
+  expect(desde, `no está la regla ${selector}`).toBeGreaterThanOrEqual(0);
+  return css.slice(css.indexOf('{', desde) + 1, css.indexOf('}', desde));
+}
+
+function declaracion(bloque: string, propiedad: string): string | undefined {
+  return new RegExp(`(?:^|[\\s;])${propiedad}:\\s*([^;]+);`).exec(bloque)?.[1]?.trim();
+}
+
 /** Host real: el selector es de atributo, el componente vive EN un <a>. */
 @Component({
   imports: [Link],
@@ -165,6 +176,89 @@ describe('Link', () => {
       const base = css.slice(css.indexOf(':host {'), css.indexOf(':host(:hover)'));
 
       expect(base).toContain('text-decoration: underline');
+    });
+  });
+
+  /**
+   * Las plantillas que llevan `app-link` sin montar el átomo (las maquetas
+   * ALOVIDA) se estilan con `:where(a[app-link])` de `styles/alovida.css`. Esa
+   * copia tiene que decir lo mismo que `link.css` y no puede ganarle: cuando la
+   * regla global era `a[app-link]` a secas pisaba al `:host` del átomo y dejaba
+   * sin efecto el subrayado y las variantes.
+   */
+  describe('respaldo global para anclas sin el átomo', () => {
+    const global = readFileSync('src/styles/alovida.css', 'utf8');
+    const atomo = readFileSync(LINK_CSS, 'utf8');
+
+    const COMPARTIDAS = [
+      'font-weight',
+      'text-decoration',
+      'text-decoration-thickness',
+      'text-underline-offset',
+    ];
+
+    it('repite en reposo el peso y el subrayado del átomo', () => {
+      const respaldo = cuerpo(global, ':where(a[app-link]) {');
+      const base = cuerpo(atomo, ':host {');
+
+      for (const propiedad of COMPARTIDAS) {
+        expect(declaracion(respaldo, propiedad), propiedad).toBeDefined();
+        expect(declaracion(respaldo, propiedad), propiedad).toBe(declaracion(base, propiedad));
+      }
+    });
+
+    it('repite en hover el engrosado del subrayado', () => {
+      const respaldo = cuerpo(global, ':where(a[app-link]:hover) {');
+      const hover = cuerpo(atomo, ':host(:hover) {');
+
+      expect(declaracion(respaldo, 'text-decoration-thickness')).toBe(
+        declaracion(hover, 'text-decoration-thickness'),
+      );
+    });
+
+    it('ninguna regla global `a[app-link]` suelta le gana al átomo', () => {
+      // Una por línea y sin `:where(` delante: `a[app-link] {` o `a[app-link]:hover {`.
+      expect(global).not.toMatch(/^a\[app-link\][^{]*\{/m);
+    });
+  });
+
+  /**
+   * Los `<a>` de texto suelto (sin clase) se estilan con la regla base de
+   * `styles.css`. Sin ella salen con el azul y el violeta del navegador. El
+   * alcance es lo que se vigila: `[href]` para no pintar de enlace lo que no lo
+   * es, `:not([class])` para no pisar a quien se estila solo, y `:where()` para
+   * que cualquier regla de componente le gane.
+   */
+  describe('regla base para anclas sin clase', () => {
+    const base = readFileSync('src/styles.css', 'utf8');
+    const SELECTOR = ':where(a[href]:not([class], [app-button], [app-link])) {';
+    const atomo = readFileSync(LINK_CSS, 'utf8');
+
+    it('existe, con color de enlace del sistema y subrayado en reposo', () => {
+      const regla = cuerpo(base, SELECTOR);
+
+      expect(declaracion(regla, 'color')).toBe('var(--text-link)');
+      expect(declaracion(regla, 'text-decoration')).toBe('underline');
+    });
+
+    it('subraya igual que el átomo: mismo grosor, mismo desplazamiento y mismo engrosado en hover', () => {
+      const regla = cuerpo(base, SELECTOR);
+      const hover = cuerpo(base, `${SELECTOR.slice(0, -3)}:hover) {`);
+      const hoverAtomo = cuerpo(atomo, ':host(:hover) {');
+
+      for (const propiedad of ['text-decoration-thickness', 'text-underline-offset']) {
+        expect(declaracion(regla, propiedad), propiedad).toBe(
+          declaracion(cuerpo(atomo, ':host {'), propiedad),
+        );
+      }
+      expect(declaracion(hover, 'text-decoration-thickness')).toBe(
+        declaracion(hoverAtomo, 'text-decoration-thickness'),
+      );
+    });
+
+    it('no hay otra regla `a[href]:not(...)` fuera de `:where()` que gane por especificidad', () => {
+      expect(base).not.toMatch(/^a(\[href\])?:not\(/m);
+      expect(base).not.toMatch(/^a\s*[{,:]/m);
     });
   });
 });

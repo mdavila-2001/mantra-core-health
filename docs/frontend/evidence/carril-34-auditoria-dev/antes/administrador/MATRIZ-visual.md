@@ -1,0 +1,263 @@
+# MATRIZ visual — carril 34 — auditoría completa sobre dev, antes de corregir — 2026-10-26T02:03:10.962Z
+
+Celdas: 212 · en rojo: 43
+
+| Ruta | Viewport | Tema | Fondo blanco | Centrado (≤2 px) | Ancho (≥85 %) | Sin scroll H | Consola | Foto |
+|---|---|---|---|---|---|---|---|---|
+| `/dashboard` | 375 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-375-claro.png` |
+| `/tutorials` | 375 | claro | PASS | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-375-claro.png` |
+| `/messaging` | 375 | claro | PASS | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-375-claro.png` |
+| `/directories` | 375 | claro | PASS | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-375-claro.png` |
+| `/groups` | 375 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/groups-375-claro.png` |
+| `/laboratory-directory` | 375 | claro | PASS | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-375-claro.png` |
+| `/clinics-directory` | 375 | claro | PASS | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-375-claro.png` |
+| `/pharmacies-directory` | 375 | claro | PASS | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-375-claro.png` |
+| `/insurers-directory` | 375 | claro | PASS | PASS | PASS (<app-insurers-directory>) | PASS | PASS | `fotos/despues/insurers-directory-375-claro.png` |
+| `/glossary` | 375 | claro | PASS | PASS | PASS (12 app-card) | PASS | PASS | `fotos/despues/glossary-375-claro.png` |
+| `/administration/patients` | 375 | claro | PASS | PASS | PASS (<app-patient-list>) | PASS | PASS | `fotos/despues/administration_patients-375-claro.png` |
+| `/administration/users` | 375 | claro | PASS | PASS | PASS (<app-user-registration>) | PASS | PASS | `fotos/despues/administration_users-375-claro.png` |
+| `/administration/organizations` | 375 | claro | PASS | PASS | PASS (<app-organization-list>) | PASS | PASS | `fotos/despues/administration_organizations-375-claro.png` |
+| `/administration/insurance` | 375 | claro | PASS | PASS | PASS (<app-insurance-catalog>) | PASS | PASS | `fotos/despues/administration_insurance-375-claro.png` |
+| `/administration/brokers` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_brokers-375-claro.png` |
+| `/administration/insurance-claims` | 375 | claro | PASS | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-375-claro.png` |
+| `/administration/insurance-analytics` | 375 | claro | PASS | PASS | PASS (<app-insurance-analytics>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-analytics-375-claro.png` |
+| `/administration/received-claims` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | FAIL (1) | `fotos/despues/administration_received-claims-375-claro.png` |
+| `/administration/insurance-patients` | 375 | claro | PASS | PASS | PASS (<app-insurance-patients>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-patients-375-claro.png` |
+| `/administration/insurance-campaigns` | 375 | claro | PASS | PASS | PASS (<app-insurance-campaigns>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-campaigns-375-claro.png` |
+| `/administration/delegated-access` | 375 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-375-claro.png` |
+| `/administration/identity-assurance` | 375 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-375-claro.png` |
+| `/administration/terminology` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-375-claro.png` |
+| `/administration/moderation` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-375-claro.png` |
+| `/administration/geolocation` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-375-claro.png` |
+| `/administration/services-catalog` | 375 | claro | PASS | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-375-claro.png` |
+| `/administration/medical-organization` | 375 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-375-claro.png` |
+| `/administration/medical-laboratory` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-375-claro.png` |
+| `/administration/clinical-forms` | 375 | claro | PASS | PASS | PASS (375 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-375-claro.png` |
+| `/administration/accounting` | 375 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-375-claro.png` |
+| `/my-account/dependents` | 375 | claro | PASS | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-375-claro.png` |
+| `/my-account` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | FAIL (2) | `fotos/despues/my-account-375-claro.png` |
+| `/my-account/security` | 375 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/my-account_security-375-claro.png` |
+| `/my-account/appointments` | 375 | claro | PASS | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-375-claro.png` |
+| `/my-account/medical-record` | 375 | claro | PASS | PASS | PASS (<app-medical-record>) | PASS | PASS | `fotos/despues/my-account_medical-record-375-claro.png` |
+| `/my-account/diagnostic-results` | 375 | claro | PASS | PASS | PASS (<app-diagnostic-results>) | PASS | PASS | `fotos/despues/my-account_diagnostic-results-375-claro.png` |
+| `/my-account/diagnostic-orders` | 375 | claro | PASS | PASS | PASS (<app-diagnostic-orders>) | PASS | PASS | `fotos/despues/my-account_diagnostic-orders-375-claro.png` |
+| `/my-account/quotations` | 375 | claro | PASS | PASS | PASS (<app-quotations>) | PASS | PASS | `fotos/despues/my-account_quotations-375-claro.png` |
+| `/my-account/questionnaires` | 375 | claro | PASS | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-375-claro.png` |
+| `/settings` | 375 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-375-claro.png` |
+| `/notification-center` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-375-claro.png` |
+| `/my-account/identity` | 375 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-375-claro.png` |
+| `/my-account/invoices` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-375-claro.png` |
+| `/my-account/requests` | 375 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-375-claro.png` |
+| `/administration/my-organization` | 375 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_my-organization-375-claro.png` |
+| `/posts` | 375 | claro | PASS | PASS | PASS (<app-alovida-design-notice>) | PASS | PASS | `fotos/despues/home-375-claro.png` |
+| `/auth/register` | 375 | claro | PASS | PASS | PASS (.tipos) | PASS | PASS | `fotos/despues/register-account-type-375-claro.png` |
+| `/auth/register/patient` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-patient-375-claro.png` |
+| `/auth/register/practitioner` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (3) | `fotos/despues/register-practitioner-375-claro.png` |
+| `/auth/register/organization` | 375 | claro | PASS | PASS | PASS (.registro) | PASS | FAIL (1) | `fotos/despues/register-organization-375-claro.png` |
+| `/auth/register/laboratory` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-laboratory-375-claro.png` |
+| `/auth/register/imaging-center` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-imaging-center-375-claro.png` |
+| `/auth/register/pharmacy` | 375 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-pharmacy-375-claro.png` |
+| `/dashboard` | 768 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-768-claro.png` |
+| `/tutorials` | 768 | claro | PASS | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-768-claro.png` |
+| `/messaging` | 768 | claro | PASS | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-768-claro.png` |
+| `/directories` | 768 | claro | PASS | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-768-claro.png` |
+| `/groups` | 768 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/groups-768-claro.png` |
+| `/laboratory-directory` | 768 | claro | PASS | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-768-claro.png` |
+| `/clinics-directory` | 768 | claro | PASS | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-768-claro.png` |
+| `/pharmacies-directory` | 768 | claro | PASS | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-768-claro.png` |
+| `/insurers-directory` | 768 | claro | PASS | PASS | PASS (<app-insurers-directory>) | PASS | PASS | `fotos/despues/insurers-directory-768-claro.png` |
+| `/glossary` | 768 | claro | PASS | PASS | PASS (12 app-card) | PASS | PASS | `fotos/despues/glossary-768-claro.png` |
+| `/administration/patients` | 768 | claro | PASS | PASS | PASS (<app-patient-list>) | PASS | PASS | `fotos/despues/administration_patients-768-claro.png` |
+| `/administration/users` | 768 | claro | PASS | PASS | PASS (<app-user-registration>) | PASS | PASS | `fotos/despues/administration_users-768-claro.png` |
+| `/administration/organizations` | 768 | claro | PASS | PASS | PASS (<app-organization-list>) | PASS | PASS | `fotos/despues/administration_organizations-768-claro.png` |
+| `/administration/insurance` | 768 | claro | PASS | PASS | PASS (<app-insurance-catalog>) | PASS | PASS | `fotos/despues/administration_insurance-768-claro.png` |
+| `/administration/brokers` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_brokers-768-claro.png` |
+| `/administration/insurance-claims` | 768 | claro | PASS | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-768-claro.png` |
+| `/administration/insurance-analytics` | 768 | claro | PASS | PASS | PASS (<app-insurance-analytics>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-analytics-768-claro.png` |
+| `/administration/received-claims` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | FAIL (1) | `fotos/despues/administration_received-claims-768-claro.png` |
+| `/administration/insurance-patients` | 768 | claro | PASS | PASS | PASS (<app-insurance-patients>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-patients-768-claro.png` |
+| `/administration/insurance-campaigns` | 768 | claro | PASS | PASS | PASS (<app-insurance-campaigns>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-campaigns-768-claro.png` |
+| `/administration/delegated-access` | 768 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-768-claro.png` |
+| `/administration/identity-assurance` | 768 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-768-claro.png` |
+| `/administration/terminology` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-768-claro.png` |
+| `/administration/moderation` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-768-claro.png` |
+| `/administration/geolocation` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-768-claro.png` |
+| `/administration/services-catalog` | 768 | claro | PASS | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-768-claro.png` |
+| `/administration/medical-organization` | 768 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-768-claro.png` |
+| `/administration/medical-laboratory` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-768-claro.png` |
+| `/administration/clinical-forms` | 768 | claro | PASS | PASS | PASS (375 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-768-claro.png` |
+| `/administration/accounting` | 768 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-768-claro.png` |
+| `/my-account/dependents` | 768 | claro | PASS | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-768-claro.png` |
+| `/my-account` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | FAIL (2) | `fotos/despues/my-account-768-claro.png` |
+| `/my-account/security` | 768 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/my-account_security-768-claro.png` |
+| `/my-account/appointments` | 768 | claro | PASS | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-768-claro.png` |
+| `/my-account/medical-record` | 768 | claro | PASS | PASS | PASS (<app-medical-record>) | PASS | PASS | `fotos/despues/my-account_medical-record-768-claro.png` |
+| `/my-account/diagnostic-results` | 768 | claro | PASS | PASS | PASS (<app-diagnostic-results>) | PASS | PASS | `fotos/despues/my-account_diagnostic-results-768-claro.png` |
+| `/my-account/diagnostic-orders` | 768 | claro | PASS | PASS | PASS (<app-diagnostic-orders>) | PASS | PASS | `fotos/despues/my-account_diagnostic-orders-768-claro.png` |
+| `/my-account/quotations` | 768 | claro | PASS | PASS | PASS (<app-quotations>) | PASS | PASS | `fotos/despues/my-account_quotations-768-claro.png` |
+| `/my-account/questionnaires` | 768 | claro | PASS | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-768-claro.png` |
+| `/settings` | 768 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-768-claro.png` |
+| `/notification-center` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-768-claro.png` |
+| `/my-account/identity` | 768 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-768-claro.png` |
+| `/my-account/invoices` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-768-claro.png` |
+| `/my-account/requests` | 768 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-768-claro.png` |
+| `/administration/my-organization` | 768 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_my-organization-768-claro.png` |
+| `/posts` | 768 | claro | PASS | PASS | PASS (<app-alovida-design-notice>) | PASS | PASS | `fotos/despues/home-768-claro.png` |
+| `/auth/register` | 768 | claro | PASS | PASS | PASS (.tipos) | PASS | PASS | `fotos/despues/register-account-type-768-claro.png` |
+| `/auth/register/patient` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | PASS | `fotos/despues/register-patient-768-claro.png` |
+| `/auth/register/practitioner` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (3) | `fotos/despues/register-practitioner-768-claro.png` |
+| `/auth/register/organization` | 768 | claro | PASS | PASS | PASS (.registro) | PASS | FAIL (1) | `fotos/despues/register-organization-768-claro.png` |
+| `/auth/register/laboratory` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-laboratory-768-claro.png` |
+| `/auth/register/imaging-center` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-imaging-center-768-claro.png` |
+| `/auth/register/pharmacy` | 768 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-pharmacy-768-claro.png` |
+| `/dashboard` | 1440 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-1440-claro.png` |
+| `/tutorials` | 1440 | claro | PASS | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-1440-claro.png` |
+| `/messaging` | 1440 | claro | PASS | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-1440-claro.png` |
+| `/directories` | 1440 | claro | PASS | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-1440-claro.png` |
+| `/groups` | 1440 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/groups-1440-claro.png` |
+| `/laboratory-directory` | 1440 | claro | PASS | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-1440-claro.png` |
+| `/clinics-directory` | 1440 | claro | PASS | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-1440-claro.png` |
+| `/pharmacies-directory` | 1440 | claro | PASS | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-1440-claro.png` |
+| `/insurers-directory` | 1440 | claro | PASS | PASS | PASS (<app-insurers-directory>) | PASS | PASS | `fotos/despues/insurers-directory-1440-claro.png` |
+| `/glossary` | 1440 | claro | PASS | PASS | PASS (12 app-card) | PASS | PASS | `fotos/despues/glossary-1440-claro.png` |
+| `/administration/patients` | 1440 | claro | PASS | PASS | PASS (<app-patient-list>) | PASS | PASS | `fotos/despues/administration_patients-1440-claro.png` |
+| `/administration/users` | 1440 | claro | PASS | PASS | PASS (<app-user-registration>) | PASS | PASS | `fotos/despues/administration_users-1440-claro.png` |
+| `/administration/organizations` | 1440 | claro | PASS | PASS | PASS (<app-organization-list>) | PASS | PASS | `fotos/despues/administration_organizations-1440-claro.png` |
+| `/administration/insurance` | 1440 | claro | PASS | PASS | PASS (<app-insurance-catalog>) | PASS | PASS | `fotos/despues/administration_insurance-1440-claro.png` |
+| `/administration/brokers` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_brokers-1440-claro.png` |
+| `/administration/insurance-claims` | 1440 | claro | PASS | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-1440-claro.png` |
+| `/administration/insurance-analytics` | 1440 | claro | PASS | PASS | PASS (<app-insurance-analytics>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-analytics-1440-claro.png` |
+| `/administration/received-claims` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | FAIL (1) | `fotos/despues/administration_received-claims-1440-claro.png` |
+| `/administration/insurance-patients` | 1440 | claro | PASS | PASS | PASS (<app-insurance-patients>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-patients-1440-claro.png` |
+| `/administration/insurance-campaigns` | 1440 | claro | PASS | PASS | PASS (<app-insurance-campaigns>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-campaigns-1440-claro.png` |
+| `/administration/delegated-access` | 1440 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-1440-claro.png` |
+| `/administration/identity-assurance` | 1440 | claro | PASS | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-1440-claro.png` |
+| `/administration/terminology` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-1440-claro.png` |
+| `/administration/moderation` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-1440-claro.png` |
+| `/administration/geolocation` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-1440-claro.png` |
+| `/administration/services-catalog` | 1440 | claro | PASS | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-1440-claro.png` |
+| `/administration/medical-organization` | 1440 | claro | PASS | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-1440-claro.png` |
+| `/administration/medical-laboratory` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-1440-claro.png` |
+| `/administration/clinical-forms` | 1440 | claro | PASS | PASS | PASS (375 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-1440-claro.png` |
+| `/administration/accounting` | 1440 | claro | PASS | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-claro.png` |
+| `/my-account/dependents` | 1440 | claro | PASS | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-1440-claro.png` |
+| `/my-account` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | FAIL (2) | `fotos/despues/my-account-1440-claro.png` |
+| `/my-account/security` | 1440 | claro | PASS | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/my-account_security-1440-claro.png` |
+| `/my-account/appointments` | 1440 | claro | PASS | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-1440-claro.png` |
+| `/my-account/medical-record` | 1440 | claro | PASS | PASS | PASS (<app-medical-record>) | PASS | PASS | `fotos/despues/my-account_medical-record-1440-claro.png` |
+| `/my-account/diagnostic-results` | 1440 | claro | PASS | PASS | PASS (<app-diagnostic-results>) | PASS | PASS | `fotos/despues/my-account_diagnostic-results-1440-claro.png` |
+| `/my-account/diagnostic-orders` | 1440 | claro | PASS | PASS | PASS (<app-diagnostic-orders>) | PASS | PASS | `fotos/despues/my-account_diagnostic-orders-1440-claro.png` |
+| `/my-account/quotations` | 1440 | claro | PASS | PASS | PASS (<app-quotations>) | PASS | PASS | `fotos/despues/my-account_quotations-1440-claro.png` |
+| `/my-account/questionnaires` | 1440 | claro | PASS | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-1440-claro.png` |
+| `/settings` | 1440 | claro | PASS | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-1440-claro.png` |
+| `/notification-center` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-1440-claro.png` |
+| `/my-account/identity` | 1440 | claro | PASS | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-claro.png` |
+| `/my-account/invoices` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-1440-claro.png` |
+| `/my-account/requests` | 1440 | claro | PASS | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-1440-claro.png` |
+| `/administration/my-organization` | 1440 | claro | PASS | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_my-organization-1440-claro.png` |
+| `/posts` | 1440 | claro | PASS | PASS | PASS (<app-alovida-design-notice>) | PASS | PASS | `fotos/despues/home-1440-claro.png` |
+| `/auth/register` | 1440 | claro | PASS | PASS | PASS (.tipos) | PASS | PASS | `fotos/despues/register-account-type-1440-claro.png` |
+| `/auth/register/patient` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-patient-1440-claro.png` |
+| `/auth/register/practitioner` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (3) | `fotos/despues/register-practitioner-1440-claro.png` |
+| `/auth/register/organization` | 1440 | claro | PASS | PASS | PASS (.registro) | PASS | FAIL (1) | `fotos/despues/register-organization-1440-claro.png` |
+| `/auth/register/laboratory` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-laboratory-1440-claro.png` |
+| `/auth/register/imaging-center` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-imaging-center-1440-claro.png` |
+| `/auth/register/pharmacy` | 1440 | claro | PASS | PASS | PASS (.registro-conjunto) | PASS | FAIL (1) | `fotos/despues/register-pharmacy-1440-claro.png` |
+| `/dashboard` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/dashboard-1440-oscuro.png` |
+| `/tutorials` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (9 app-card) | PASS | PASS | `fotos/despues/tutorials-1440-oscuro.png` |
+| `/messaging` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-messaging>) | PASS | PASS | `fotos/despues/messaging-1440-oscuro.png` |
+| `/directories` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-directories-overview>) | PASS | PASS | `fotos/despues/directories-1440-oscuro.png` |
+| `/groups` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/groups-1440-oscuro.png` |
+| `/laboratory-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-laboratory-directory>) | PASS | PASS | `fotos/despues/laboratory-directory-1440-oscuro.png` |
+| `/clinics-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-clinics-directory>) | PASS | PASS | `fotos/despues/clinics-directory-1440-oscuro.png` |
+| `/pharmacies-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-pharmacies-directory>) | PASS | PASS | `fotos/despues/pharmacies-directory-1440-oscuro.png` |
+| `/insurers-directory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurers-directory>) | PASS | PASS | `fotos/despues/insurers-directory-1440-oscuro.png` |
+| `/glossary` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (12 app-card) | PASS | PASS | `fotos/despues/glossary-1440-oscuro.png` |
+| `/administration/patients` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-patient-list>) | PASS | PASS | `fotos/despues/administration_patients-1440-oscuro.png` |
+| `/administration/users` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-user-registration>) | PASS | PASS | `fotos/despues/administration_users-1440-oscuro.png` |
+| `/administration/organizations` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-organization-list>) | PASS | PASS | `fotos/despues/administration_organizations-1440-oscuro.png` |
+| `/administration/insurance` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-catalog>) | PASS | PASS | `fotos/despues/administration_insurance-1440-oscuro.png` |
+| `/administration/brokers` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_brokers-1440-oscuro.png` |
+| `/administration/insurance-claims` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-claims>) | PASS | PASS | `fotos/despues/administration_insurance-claims-1440-oscuro.png` |
+| `/administration/insurance-analytics` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-analytics>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-analytics-1440-oscuro.png` |
+| `/administration/received-claims` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | FAIL (1) | `fotos/despues/administration_received-claims-1440-oscuro.png` |
+| `/administration/insurance-patients` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-patients>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-patients-1440-oscuro.png` |
+| `/administration/insurance-campaigns` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-insurance-campaigns>) | PASS | FAIL (1) | `fotos/despues/administration_insurance-campaigns-1440-oscuro.png` |
+| `/administration/delegated-access` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_delegated-access-1440-oscuro.png` |
+| `/administration/identity-assurance` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (6 app-card) | PASS | PASS | `fotos/despues/administration_identity-assurance-1440-oscuro.png` |
+| `/administration/terminology` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_terminology-1440-oscuro.png` |
+| `/administration/moderation` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_moderation-1440-oscuro.png` |
+| `/administration/geolocation` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/administration_geolocation-1440-oscuro.png` |
+| `/administration/services-catalog` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-services-catalog>) | PASS | PASS | `fotos/despues/administration_services-catalog-1440-oscuro.png` |
+| `/administration/medical-organization` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-medical-organization>) | PASS | PASS | `fotos/despues/administration_medical-organization-1440-oscuro.png` |
+| `/administration/medical-laboratory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/administration_medical-laboratory-1440-oscuro.png` |
+| `/administration/clinical-forms` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (375 app-card) | PASS | PASS | `fotos/despues/administration_clinical-forms-1440-oscuro.png` |
+| `/administration/accounting` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (8 app-card) | PASS | PASS | `fotos/despues/administration_accounting-1440-oscuro.png` |
+| `/my-account/dependents` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-dependents>) | PASS | PASS | `fotos/despues/my-account_dependents-1440-oscuro.png` |
+| `/my-account` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | FAIL (2) | `fotos/despues/my-account-1440-oscuro.png` |
+| `/my-account/security` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (2 app-card) | PASS | PASS | `fotos/despues/my-account_security-1440-oscuro.png` |
+| `/my-account/appointments` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-appointments>) | PASS | PASS | `fotos/despues/my-account_appointments-1440-oscuro.png` |
+| `/my-account/medical-record` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-medical-record>) | PASS | PASS | `fotos/despues/my-account_medical-record-1440-oscuro.png` |
+| `/my-account/diagnostic-results` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-diagnostic-results>) | PASS | PASS | `fotos/despues/my-account_diagnostic-results-1440-oscuro.png` |
+| `/my-account/diagnostic-orders` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-diagnostic-orders>) | PASS | PASS | `fotos/despues/my-account_diagnostic-orders-1440-oscuro.png` |
+| `/my-account/quotations` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-quotations>) | PASS | PASS | `fotos/despues/my-account_quotations-1440-oscuro.png` |
+| `/my-account/questionnaires` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-questionnaires>) | PASS | PASS | `fotos/despues/my-account_questionnaires-1440-oscuro.png` |
+| `/settings` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (<app-settings>) | PASS | PASS | `fotos/despues/settings-1440-oscuro.png` |
+| `/notification-center` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/notification-center-1440-oscuro.png` |
+| `/my-account/identity` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (3 app-card) | PASS | PASS | `fotos/despues/my-account_identity-1440-oscuro.png` |
+| `/my-account/invoices` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_invoices-1440-oscuro.png` |
+| `/my-account/requests` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (1 app-card) | PASS | PASS | `fotos/despues/my-account_requests-1440-oscuro.png` |
+| `/administration/my-organization` | 1440 | oscuro | PASS (oscuro conservado) | PASS | PASS (5 app-card) | PASS | PASS | `fotos/despues/administration_my-organization-1440-oscuro.png` |
+| `/posts` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (<app-alovida-design-notice>; escena conservada) | PASS | PASS | `fotos/despues/home-1440-oscuro.png` |
+| `/auth/register` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.tipos; escena conservada) | PASS | PASS | `fotos/despues/register-account-type-1440-oscuro.png` |
+| `/auth/register/patient` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.registro-conjunto; escena conservada) | PASS | FAIL (2) | `fotos/despues/register-patient-1440-oscuro.png` |
+| `/auth/register/practitioner` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.registro-conjunto; escena conservada) | PASS | FAIL (3) | `fotos/despues/register-practitioner-1440-oscuro.png` |
+| `/auth/register/organization` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.registro; escena conservada) | PASS | FAIL (2) | `fotos/despues/register-organization-1440-oscuro.png` |
+| `/auth/register/laboratory` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.registro-conjunto; escena conservada) | PASS | FAIL (1) | `fotos/despues/register-laboratory-1440-oscuro.png` |
+| `/auth/register/imaging-center` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.registro-conjunto; escena conservada) | PASS | FAIL (1) | `fotos/despues/register-imaging-center-1440-oscuro.png` |
+| `/auth/register/pharmacy` | 1440 | oscuro | PASS (oscuro conservado) | PASS | — (.registro-conjunto; escena conservada) | PASS | FAIL (1) | `fotos/despues/register-pharmacy-1440-oscuro.png` |
+
+## Errores
+- /administration/insurance-analytics @ 375/claro: consola: [API] GET /insurance/analytics/loss-ratio → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/received-claims @ 375/claro: consola: [API] GET /insurance/received-claims → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/insurance-patients @ 375/claro: consola: [API] GET /insurance/patients/options → 501 · sin cuerpo de la API {status: 501}
+- /administration/insurance-campaigns @ 375/claro: consola: [API] GET /insurance-campaigns → 403 · FORBIDDEN · «La organización activa no es una aseguradora» {status: 403, code: FORBIDDEN, message: La organización activa no es una aseguradora}
+- /my-account @ 375/claro: consola: [API] GET /profiles/patients/me/summary → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente} | [API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}
+- /auth/register/patient @ 375/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/practitioner @ 375/claro: consola: [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/organization @ 375/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/laboratory @ 375/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/imaging-center @ 375/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/pharmacy @ 375/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /administration/insurance-analytics @ 768/claro: consola: [API] GET /insurance/analytics/loss-ratio → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/received-claims @ 768/claro: consola: [API] GET /insurance/received-claims → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/insurance-patients @ 768/claro: consola: [API] GET /insurance/patients/options → 501 · sin cuerpo de la API {status: 501}
+- /administration/insurance-campaigns @ 768/claro: consola: [API] GET /insurance-campaigns → 403 · FORBIDDEN · «La organización activa no es una aseguradora» {status: 403, code: FORBIDDEN, message: La organización activa no es una aseguradora}
+- /my-account @ 768/claro: consola: [API] GET /profiles/patients/me/summary → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente} | [API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}
+- /auth/register/practitioner @ 768/claro: consola: [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/organization @ 768/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/laboratory @ 768/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/imaging-center @ 768/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/pharmacy @ 768/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /administration/insurance-analytics @ 1440/claro: consola: [API] GET /insurance/analytics/loss-ratio → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/received-claims @ 1440/claro: consola: [API] GET /insurance/received-claims → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/insurance-patients @ 1440/claro: consola: [API] GET /insurance/patients/options → 501 · sin cuerpo de la API {status: 501}
+- /administration/insurance-campaigns @ 1440/claro: consola: [API] GET /insurance-campaigns → 403 · FORBIDDEN · «La organización activa no es una aseguradora» {status: 403, code: FORBIDDEN, message: La organización activa no es una aseguradora}
+- /my-account @ 1440/claro: consola: [API] GET /profiles/patients/me/summary → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente} | [API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}
+- /auth/register/patient @ 1440/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/practitioner @ 1440/claro: consola: [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/organization @ 1440/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/laboratory @ 1440/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/imaging-center @ 1440/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/pharmacy @ 1440/claro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /administration/insurance-analytics @ 1440/oscuro: consola: [API] GET /insurance/analytics/loss-ratio → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/received-claims @ 1440/oscuro: consola: [API] GET /insurance/received-claims → 403 · FORBIDDEN · «No tiene permiso para esta operación» {status: 403, code: FORBIDDEN, message: No tiene permiso para esta operación}
+- /administration/insurance-patients @ 1440/oscuro: consola: [API] GET /insurance/patients/options → 501 · sin cuerpo de la API {status: 501}
+- /administration/insurance-campaigns @ 1440/oscuro: consola: [API] GET /insurance-campaigns → 403 · FORBIDDEN · «La organización activa no es una aseguradora» {status: 403, code: FORBIDDEN, message: La organización activa no es una aseguradora}
+- /my-account @ 1440/oscuro: consola: [API] GET /profiles/patients/me/summary → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente} | [API] GET /profiles/patients/me → 404 · NOT_FOUND · «No tiene perfil de paciente» {status: 404, code: NOT_FOUND, message: No tiene perfil de paciente}
+- /auth/register/patient @ 1440/oscuro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)} | [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/practitioner @ 1440/oscuro: consola: [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [app-paginated-form] La página «Su nombre y su cédula» trae 5 campos y el tope es 4. Páselos por paginarCampos(). | [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/organization @ 1440/oscuro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)} | [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/laboratory @ 1440/oscuro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/imaging-center @ 1440/oscuro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}
+- /auth/register/pharmacy @ 1440/oscuro: consola: [API] POST /telemetry/onboarding-events → 400 · VALIDATION_FAILED · «Error de validación» {status: 400, code: VALIDATION_FAILED, message: Error de validación, fields: Array(1)}

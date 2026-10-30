@@ -33,7 +33,7 @@ tabla; no se elimina ni se presenta como regresión.
 | R-10 | `node scripts/inventario-organismos.mjs` | 0 | passed | 1045 aristas · 0 hallazgos (ningún import sin instanciar, ningún selector sin importar) |
 | R-11 | `corepack yarn ng serve --port 4377` + `corepack yarn node playwright/refactor-declarativo-evidencia.mjs` | 0 | passed | 56/56 comprobaciones · 0 errores de página · capturas en `docs/frontend/evidence/refactor-declarativo/` |
 | R-12 | `corepack yarn build` | 0 | passed | 98,7 s. Inicial 1,19 MB (aviso a 620 kB, error a 1,3 MB: preexistente). 30 avisos `anyComponentStyle`; el de `component-stock.css` (7,94 kB) ya excedía los 4 kB antes de los ≈0,5 kB de esta oleada. El fragmento del banco es diferido (`chunk … component-stock`, 455 kB): nada entra al paquete inicial |
-| R-13 | `node scripts/check-doc-links.mjs` · `node scripts/check-doc-coverage.mjs` | 1 · 1 | failed (preexistente) | 7 enlaces rotos en `docs/tareas/subtarea-2.4-…` hacia `artifacts/`; un organismo y tres servicios sin mencionar. Ninguno en los documentos de esta oleada |
+| R-13 | `node scripts/check-doc-links.mjs` · `node scripts/check-doc-coverage.mjs` | 1 · 1 | failed (preexistente) | 7 enlaces rotos de una carpeta de tareas hacia `artifacts/`; un organismo y tres servicios sin mencionar. Ninguno en los documentos de esta oleada |
 | R-14 | `node scripts/generate-component-index.mjs --check` · `node scripts/inventario-organismos.mjs --check` | 0 · 0 | passed | 536 componentes · 1045 aristas |
 
 ## Lo que no se ejecutó, y por qué

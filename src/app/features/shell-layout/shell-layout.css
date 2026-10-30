@@ -1,3 +1,21 @@
+/* Las acciones pasan a otra fila en pantallas de teléfono y tablet, sin ocultar controles
+   ni reducir sus areas tactiles cuando aparece la navegacion de retorno. */
+@media (max-width: 1024px) {
+  .app-header {
+    height: auto;
+    min-height: var(--h-header);
+    padding-block: var(--e2);
+  }
+
+  .app-header__derecha {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: var(--e1);
+  }
+}
+
 /*
  * Lo propio del armazón que la hoja global (`styles/alovida.css`) no trae.
  *
@@ -6,11 +24,15 @@
  * tema, Tutoriales, Chats, Ajustes, cuenta y, si hay, el selector de persona.
  * La hoja global ya junta las acciones entre sí (`.app-header__derecha`, gap
  * de 4 px a ≤ 400 px); con la flecha el avatar igual se salía 1 px de la
- * pantalla y la página se podía correr de costado. Se achican **sólo los
- * espacios** del encabezado —entre sus tres bloques y su margen lateral—:
- * ninguna acción se esconde y ninguna pierde su área táctil.
+ * pantalla y la página se podía correr de costado. Se agrupan los destinos
+ * secundarios en «Más accesos» en móvil y se conserva su presentación en línea
+ * en escritorio; el tema, las notificaciones y la cuenta siguen a la vista.
  */
 @media (max-width: 900px) {
+  /* Desde que la cabecera sumó Facturas y Solicitudes, la fila de acciones
+     puede medir más que el espacio que dejan la hamburguesa y Volver. Se la
+     acota como tira desplazable —igual que las pestañas— para que el documento
+     nunca se ensanche y todos los accesos sigan disponibles. */
   .app-header__derecha {
     min-width: 0;
     max-width: 100%;
@@ -22,6 +44,22 @@
   }
 
   .app-header__derecha::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Las acciones van a la derecha, como en cualquier barra de app: con la
+     tira alineada al principio, en un teléfono de 400–700 px quedaban todas
+     amontonadas a la izquierda y un hueco a la derecha (propietario,
+     23/10/2026). `margin-inline-start: auto` y no `justify-content: flex-end`:
+     el margen automático se anula cuando la tira desborda, así que su
+     comienzo nunca queda fuera de alcance del desplazamiento. */
+  .app-header__derecha > :first-child {
+    margin-inline-start: auto;
+  }
+
+  /* En modo cajón el nombre ya viaja en aria-label y en el globo. El texto
+     visible vuelve en escritorio, donde sí hay lugar para leerlo. */
+  .app-header__red-social-texto {
     display: none;
   }
 }
@@ -42,5 +80,276 @@
 @media (max-width: 60rem) {
   .app-header__volver--hilo {
     display: none;
+  }
+}
+
+.app-header__rapidos {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.app-header__rapidos-boton {
+  display: none;
+}
+
+.app-header__rapidos-lista {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.app-header__rapidos-label {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .app-header__rapidos-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 2.5rem;
+    block-size: 2.5rem;
+    padding: 0;
+    border: 1px solid var(--filete);
+    border-radius: 50%;
+    background: var(--sup-tarjeta);
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .app-header__rapidos-boton svg {
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+  }
+
+  .app-header__rapidos-boton:focus-visible {
+    outline: 2px solid var(--aguamarina);
+    outline-offset: 2px;
+  }
+
+  .app-header__rapidos-lista {
+    position: absolute;
+    inset-block-start: calc(100% + var(--e2));
+    inset-inline-end: 0;
+    z-index: 30;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--e1);
+    inline-size: min(18rem, calc(100vw - 1.5rem));
+    max-block-size: calc(100dvh - var(--h-header) - var(--e6));
+    overflow-y: auto;
+    padding: var(--e2);
+    border: 1px solid var(--filete);
+    border-radius: var(--r-menu);
+    background: var(--sup-tarjeta);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+  }
+
+  .app-header__rapidos.is-open .app-header__rapidos-lista {
+    display: flex;
+  }
+
+  .app-header__rapidos-lista .app-header__ajustes,
+  .app-header__rapidos-lista .app-header__red-social {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--e3);
+    inline-size: 100%;
+    min-block-size: 2.75rem;
+    box-sizing: border-box;
+    padding-inline: var(--e3);
+    border-radius: var(--r-ctrl);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .app-header__rapidos-label,
+  .app-header__red-social-texto {
+    display: inline;
+    font-size: var(--fs-body);
+    font-weight: 500;
+  }
+
+  .app-header__rapidos-lista .app-header__chats-badge {
+    margin-inline-start: auto;
+  }
+}
+
+/*
+ * Barra superior translúcida (Carril F · material `fino`), sólo CSS.
+ *
+ * Arriba del todo es la franja de siempre; al desplazar, el contenido pasa por
+ * debajo y la barra se vuelve vidrio: tinte + desenfoque + un solo trazo fino
+ * inferior. El cambio lo conduce el scroll de la página (`animation-timeline:
+ * scroll()`), así que es progresivo —se completa en 48 px— y no hay estado en
+ * TypeScript. Los navegadores sin esa API (Firefox) ven la barra en vidrio
+ * siempre: el mismo material, sin el fundido. Sin `backdrop-filter` o con
+ * `prefers-reduced-transparency` el tinte es el respaldo opaco: el texto nunca
+ * depende del desenfoque.
+ */
+.app-header {
+  background: var(--material-fino-tinte);
+  -webkit-backdrop-filter: var(--material-fino-desenfoque);
+  backdrop-filter: var(--material-fino-desenfoque);
+  border-bottom-color: var(--material-trazo);
+}
+
+@keyframes barra-a-vidrio {
+  from {
+    background: var(--sup-pagina);
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+    border-bottom-color: transparent;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .app-header {
+    animation: barra-a-vidrio linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 48px;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .app-header {
+    background: var(--material-respaldo);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .app-header {
+    background: var(--material-respaldo);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    animation: none;
+  }
+}
+
+/*
+ * Cabecera de teléfono en UNA fila (Carril F). Entre 360 y 640 px las acciones
+ * caben sin envolver —medido: el último botón termina a 382 px de 390, a 352 de
+ * 360 y a 396 de 412—, y envueltas dejaban al avatar solo en una segunda fila:
+ * 101 px de cabecera contra 61. Debajo de 360 sigue envolviendo, que es lo que
+ * evita el desborde en los teléfonos más angostos.
+ */
+/*
+ * «Más accesos» tiene que poder abrirse (28/10/2026).
+ *
+ * La lista desplegable (`position: absolute`) colgaba de `.app-header__rapidos`,
+ * que a su vez está dentro de la tira de acciones `.app-header__derecha`. Esa
+ * tira es desplazable (`overflow-x: auto`, ≤ 900 px) y por eso recorta también
+ * en vertical —el navegador calcula el otro eje como `auto`—: el botón se
+ * marcaba abierto y no se veía ningún acceso. Además, anclada a la derecha del
+ * botón, que ya no es el borde de la pantalla (a su derecha van la campana, el
+ * tema y la cuenta), la lista se salía por la izquierda en los teléfonos.
+ *
+ * Se ancla a la cabecera (que es `sticky`, o sea, contenedor de posición): un
+ * absoluto cuyo bloque contenedor es un ancestro de la tira no lo recorta su
+ * `overflow`, y queda pegado al borde derecho de la pantalla.
+ */
+@media (max-width: 1279px) {
+  .app-shell--redesign .app-header .app-header__rapidos {
+    position: static;
+  }
+
+  .app-shell--redesign .app-header .app-header__rapidos-lista {
+    inset-inline-end: var(--e2);
+  }
+}
+
+@media (max-width: 640px) {
+  .app-header .app-header__rapidos {
+    position: static;
+  }
+
+  .app-header .app-header__rapidos-lista {
+    inset-inline-end: var(--e2);
+  }
+}
+
+@media (min-width: 360px) and (max-width: 640px) {
+  .app-header {
+    gap: 4px;
+  }
+
+  .app-header__derecha {
+    flex-wrap: nowrap;
+    gap: 2px;
+    /* Sin `overflow: visible`: queda la tira desplazable de arriba como red de
+       seguridad si un rol suma un selector y las acciones no caben. */
+  }
+}
+
+/*
+ * Renglones del menú con rótulo largo (27/10/2026). «Mi historia clínica» parte
+ * en dos líneas con la barra a 232 px o con la letra del rediseño. Con el
+ * interlineado heredado de párrafo y sin relleno vertical, el renglón doble
+ * crecía hasta rozar al de abajo y se leía como dos destinos. Interlineado de
+ * cuerpo, relleno propio y corte equilibrado: el renglón doble se lee como uno
+ * y respira igual que los de una línea (que no cambian de alto: el mínimo
+ * sigue mandando).
+ */
+.app-side-nav__item {
+  padding-block: var(--sp-1);
+  line-height: var(--lh-body);
+}
+
+.app-side-nav__item .side-nav__label {
+  min-inline-size: 0;
+  text-wrap: balance;
+}
+
+/*
+ * Rediseño de la cabecera (propietario, 27/10/2026).
+ *
+ * Emergencia sale de la cabecera y encabeza el menú lateral; los destinos que
+ * quedan arriba forman una sola barra, y lo que no es un destino —campana,
+ * tema y cuenta— va después de un filete. El destino de la pantalla actual se
+ * marca (`routerLinkActive`): sin eso la cabecera no decía dónde se estaba.
+ */
+.app-side-nav__emergencia {
+  padding: 0 var(--e3) var(--e3);
+  margin-bottom: var(--e2);
+  border-bottom: 1px solid var(--nav-filete-suave);
+}
+
+.app-shell.is-nav-recogido .app-side-nav__emergencia {
+  padding-inline: var(--e2);
+}
+
+.app-header__separador {
+  flex: none;
+  inline-size: 1px;
+  block-size: 1.75rem;
+  margin-inline: var(--e1);
+  background: var(--filete);
+}
+
+.app-header__ajustes.is-activo {
+  background: var(--sup-hover, var(--sup-inset));
+  color: var(--petroleo);
+}
+
+@media (max-width: 640px) {
+  .app-header__separador {
+    display: none;
+  }
+}
+
+/* Emergencia como ícono en la cabecera, sólo donde el menú es un cajón
+   (≤ 900 px, el mismo corte de `.app-side-nav__recoger`). Arriba de ese ancho
+   ya está a la vista, encabezando el menú lateral. */
+.app-header__emergencia {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .app-header__emergencia {
+    display: inline-flex;
+    flex: none;
   }
 }

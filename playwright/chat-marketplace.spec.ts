@@ -144,7 +144,7 @@ async function abrirConversacion(quien: string): Promise<void> {
 
 /** Las tarjetas de contexto del hilo abierto, de un tipo. */
 function tarjetas(tipo: 'pedido' | 'producto' | 'farmacia'): Locator {
-  return page.locator(`[data-testid="hilo-contexto"][data-tipo="${tipo}"]`);
+  return page.locator(`[data-testid="thread-context"][data-tipo="${tipo}"]`);
 }
 
 /** Lo que la maqueta guardó en `sessionStorage` bajo una clave. */
@@ -244,11 +244,11 @@ test('1 · paciente, desde el pedido: una sola tarjeta de pedido, también tras 
   const hilo = page.url();
 
   await expect(tarjetas('pedido')).toHaveCount(1);
-  const fijado = page.getByTestId('hilo-contexto-fijado');
+  const fijado = page.getByTestId('thread-context-fijado');
   await expect(fijado).toContainText('Consulta sobre: Pedido');
   await expect(fijado).toContainText('Farmacias Chávez');
   // La tarjeta lleva al pedido que la originó.
-  await expect(tarjetas('pedido').locator('xpath=..').getByTestId('hilo-contexto-ver')).toHaveAttribute(
+  await expect(tarjetas('pedido').locator('xpath=..').getByTestId('thread-context-ver')).toHaveAttribute(
     'href',
     new RegExp(PEDIDO_CHAVEZ, 'u'),
   );
@@ -259,7 +259,7 @@ test('1 · paciente, desde el pedido: una sola tarjeta de pedido, también tras 
   await recargar();
   await hiloListo();
   await expect(tarjetas('pedido')).toHaveCount(1);
-  await expect(page.getByTestId('hilo-contexto-fijado')).toContainText('Consulta sobre: Pedido');
+  await expect(page.getByTestId('thread-context-fijado')).toContainText('Consulta sobre: Pedido');
 
   // Otra vez el botón: el mismo hilo, y la tarjeta no se repite.
   await page.goto(`/my-account/pharmacy-orders/${PEDIDO_CHAVEZ}`);
@@ -284,7 +284,7 @@ test('2 · paciente, desde la ficha y desde el producto: una tarjeta de cada tip
   await hiloListo();
   await expect(tarjetas('farmacia')).toHaveCount(1);
   await expect(tarjetas('farmacia').first()).toContainText('Farmacia Vida');
-  await expect(page.getByTestId('hilo-contexto-fijado')).toContainText('Consulta sobre: Farmacia');
+  await expect(page.getByTestId('thread-context-fijado')).toContainText('Consulta sobre: Farmacia');
   await foto('02-ficha-tarjeta-farmacia');
 
   await page.goto('/pharmacies-directory/farmacia-vida');
@@ -301,7 +301,7 @@ test('2 · paciente, desde la ficha y desde el producto: una tarjeta de cada tip
   await hiloListo();
   await expect(tarjetas('producto')).toHaveCount(1);
   await expect(tarjetas('producto').first()).toContainText(producto);
-  await expect(page.getByTestId('hilo-contexto-fijado')).toContainText('Consulta sobre: Producto');
+  await expect(page.getByTestId('thread-context-fijado')).toContainText('Consulta sobre: Producto');
   await foto('02b-producto-tarjeta-producto');
 
   await recargar();
@@ -322,8 +322,8 @@ test('3 · un enlace externo con contexto falso abre el hilo sin tarjeta y sin e
     await esperarAplicacionLista(page);
     await hiloListo();
     await expect(page.locator('.hilo__nombre')).toContainText('Farmacia Central');
-    await expect(page.getByTestId('hilo-contexto')).toHaveCount(0);
-    await expect(page.getByTestId('hilo-contexto-fijado')).toHaveCount(0);
+    await expect(page.getByTestId('thread-context')).toHaveCount(0);
+    await expect(page.getByTestId('thread-context-fijado')).toHaveCount(0);
     await expect(page.getByText('INYECTADO')).toHaveCount(0);
     expect(await page.locator('body').innerText()).not.toContain('INYECTADO');
     expect(await guardado('mock.comunidad.mensajes')).not.toContain('INYECTADO');
@@ -333,7 +333,7 @@ test('3 · un enlace externo con contexto falso abre el hilo sin tarjeta y sin e
 
   await recargar();
   await hiloListo();
-  await expect(page.getByTestId('hilo-contexto')).toHaveCount(0);
+  await expect(page.getByTestId('thread-context')).toHaveCount(0);
 });
 
 test('4a · tres fotos y un texto: tres mensajes, la leyenda en la primera, grilla, y siguen tras recargar', async () => {

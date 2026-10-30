@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import { IamClient } from '../../../core/data-access/iam/iam.client';
 import type { CreatedUser, InitialRole, NewUser } from '../../../core/data-access/iam/iam.types';
@@ -10,8 +11,9 @@ import type { ViewState } from '../../../core/view-state/view-state.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
-import { paginarCampos } from '../../../shared/forms/paginated/paginar-campos';
+import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 
 /** Mínimo que exige `CreateUserDto` en el backend. */
@@ -46,8 +48,10 @@ const TELEFONO_VALIDO = /^[+]?[0-9 ()-]{6,}$/;
     Alert,
     AnnounceOnAppear,
     AppButton,
+    AppButtonLink,
     PageHeader,
     PaginatedForm,
+    RouterLink,
   ],
   templateUrl: './user-registration.html',
   styleUrl: './user-registration.css',
@@ -66,19 +70,19 @@ export class UserRegistration {
    * declara qué campo va en qué sección. Las secciones que no entran en una
    * página se parten conservando su nombre.
    */
-  protected readonly paginas = paginarCampos([
+  protected readonly paginas = paginateFields([
     {
       titulo: 'Identificación',
       hint: 'Con qué entra y cómo se lo nombra.',
       campos: [
-        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escribí el nombre con el que se va a mostrar la cuenta.' },
-        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingresá un correo válido.' },
+        { key: 'displayName', testId: 'alta-usuario-nombre', label: 'Nombre visible', control: 'text', required: true, mensajeDeError: 'Escriba el nombre con el que se va a mostrar la cuenta.' },
+        { key: 'email', testId: 'alta-usuario-correo', label: 'Correo', autocomplete: 'off', hint: 'Es el identificador con el que va a iniciar sesión.', control: 'email', required: true, mensajeDeError: 'Ingrese un correo válido.' },
         { key: 'phone', testId: 'alta-usuario-telefono', label: 'Teléfono', autocomplete: 'tel', hint: 'Opcional. Queda como punto de contacto.', control: 'text', mensajeDeError: 'El teléfono sólo admite dígitos, espacios, paréntesis, + y guion.' },
       ],
     },
     {
       titulo: 'Acceso',
-      hint: 'La contraseña es provisional: entregala por un canal seguro.',
+      hint: 'La contraseña es provisional: entréguela por un canal seguro.',
       campos: [
         { key: 'password', testId: 'alta-usuario-clave', label: 'Contraseña inicial', autocomplete: 'new-password', hint: 'Mínimo 8 caracteres.', control: 'password', required: true, mensajeDeError: 'La contraseña necesita al menos 8 caracteres.' },
         { key: 'initialRole', testId: 'alta-usuario-rol', label: 'Rol inicial', hint: 'Los demás roles se conceden después.', control: 'radio', options: [{ value: 'USER', label: 'Usuario' }, { value: 'SECURITY_ADMIN', label: 'Administrador de seguridad' }] },
@@ -120,10 +124,10 @@ export class UserRegistration {
       return state.issues.map((issue) => issue.message).join(' ') || null;
     }
     if (state.status === 'forbidden') {
-      return state.message ?? 'No tenés permiso para dar de alta cuentas.';
+      return state.message ?? 'No tiene permiso para dar de alta cuentas.';
     }
     if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revisá tu conexión y reintentá.';
+      return 'No pudimos conectarnos. Revise su conexión y reintente.';
     }
     if (state.status === 'error') {
       // El identificador es lo único que conecta este fallo con los registros

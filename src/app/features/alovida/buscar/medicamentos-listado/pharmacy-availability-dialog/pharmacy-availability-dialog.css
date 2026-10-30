@@ -9,151 +9,224 @@
     resaltado.
     ========================================================================== */
 
+/* ---- la ficha: receta y dosis ------------------------------------------- */
+
+.ficha-medicamento {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-4);
+}
+
+/* La receta obligatoria pesa más que cualquier otro aviso del modal: borde de
+   acento a la izquierda, además del fondo del tono. El texto la nombra igual:
+   el estado nunca se comunica sólo por color. */
+.ficha-medicamento__receta.app-alert {
+  border: 1px solid var(--st-warning-bd);
+  border-inline-start: 6px solid var(--st-warning-fg);
+  border-start-start-radius: var(--r-sm);
+  border-end-start-radius: var(--r-sm);
+  background: var(--st-warning-bg);
+  color: var(--st-warning-fg);
+  box-shadow: none;
+}
+
+.ficha-medicamento__receta .icono {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  color: var(--st-warning-fg);
+}
+
+.ficha-medicamento__receta strong {
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+}
+
+.ficha-medicamento__libre {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.ficha-medicamento__datos {
+  margin: 0;
+}
+
+.ficha-medicamento__dato {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.ficha-medicamento__dato dt {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ficha-medicamento__dato dd {
+  margin: var(--sp-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.ficha-medicamento__sin-fuente {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .farmacias__mapa {
-    margin: 0 0 var(--sp-4);
+  margin: 0 0 var(--sp-4);
 }
 
 /* Alto fijo y no `aspect-ratio`: en el teléfono, dentro de un modal ya acotado
    en alto, una proporción 16:9 deja el mapa de 190 px y no se lee una calle. */
 .farmacias__mapa app-map {
-    display: block;
-    block-size: 15rem;
-    border-radius: var(--r-md);
-    overflow: hidden;
+  display: block;
+  block-size: 15rem;
+  border-radius: var(--r-md);
+  overflow: hidden;
 }
 
 .farmacias__pie,
 .farmacias__aviso,
 .farmacias__vacio {
-    margin: var(--sp-2) 0 var(--sp-3);
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  margin: var(--sp-2) 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 .farmacias__vacio {
-    margin: 0;
+  margin: 0;
 }
 
 /* ---- la lista ----------------------------------------------------------- */
 
 .farmacias__lista {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sp-2);
-    margin: 0;
-    padding: 0;
-    list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .farmacia {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: var(--sp-3);
-    padding: var(--sp-3);
-    border: 1px solid var(--border-default);
-    border-radius: var(--r-md);
-    background: var(--bg-surface);
-    transition:
-        border-color var(--dur-fast) var(--ease-standard),
-        background var(--dur-fast) var(--ease-standard);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  transition:
+    border-color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
 }
 
 /* El resaltado es el mismo que el del pin: es la única forma de saber, sin
    contar, cuál fila corresponde a cuál marca del mapa. */
 .farmacia--elegida {
-    border-color: var(--brand-secondary);
-    background: var(--bg-inset);
+  border-color: var(--brand-secondary);
+  background: var(--bg-inset);
 }
 
 .farmacia__codigo {
-    flex: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: 28px;
-    block-size: 28px;
-    border-radius: var(--r-full);
-    background: var(--brand-primary);
-    color: var(--c-ivory-100);
-    font-family: var(--font-display);
-    font-size: var(--fs-caption);
-    font-weight: 700;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--r-full);
+  background: var(--brand-primary);
+  color: var(--c-ivory-100);
+  font-family: var(--font-display);
+  font-size: var(--fs-caption);
+  font-weight: 700;
 }
 
 .farmacia__datos {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-inline-size: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
 }
 
 .farmacia__nombre {
-    font-weight: 600;
-    color: var(--text-primary);
-    overflow-wrap: anywhere;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 
 .farmacia__direccion,
 .farmacia__detalle,
 .farmacia__entrega {
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
-    overflow-wrap: anywhere;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  overflow-wrap: anywhere;
 }
 
 /* El aviso de la farmacia que el mapa no puede ubicar. Va en palabras y no en
    un color: el estado nunca se comunica sólo por color. */
 .farmacia__sin-mapa {
-    margin-block-start: var(--sp-1);
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
-    font-style: italic;
+  margin-block-start: var(--sp-1);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-style: italic;
 }
 
 .farmacia__cierre {
-    flex: none;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 2px;
-    text-align: end;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: end;
 }
 
 .farmacia__precio {
-    font-family: var(--font-display);
-    font-size: var(--fs-body-lg);
-    font-weight: 700;
-    color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--fs-body-lg);
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 /* «Consultar por chat» en su propio renglón, debajo de los datos y a lo
    ancho: dentro de la columna del precio estrangulaba la dirección en un
    teléfono. Arranca alineado con el nombre, no con la letra del pin. */
 .farmacia__chat {
-    flex: 1 0 100%;
-    max-inline-size: calc(100% - 28px - var(--sp-3));
-    margin-inline-start: calc(28px + var(--sp-3));
+  flex: 1 0 100%;
+  max-inline-size: calc(100% - 28px - var(--sp-3));
+  margin-inline-start: calc(28px + var(--sp-3));
 }
 
 .farmacia__km {
-    color: var(--text-secondary);
-    font-size: var(--fs-caption);
-    line-height: var(--lh-caption);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .farmacia {
-        transition: none;
-    }
+  .farmacia {
+    transition: none;
+  }
 }
 
 @media (min-width: 48rem) {
-    .farmacias__mapa app-map {
-        block-size: 20rem;
-    }
+  .farmacias__mapa app-map {
+    block-size: 20rem;
+  }
 }

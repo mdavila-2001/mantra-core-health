@@ -18,7 +18,7 @@ import type { SegmentedOption } from './segmented-control.types';
     <app-segmented-control
       [options]="opciones"
       [value]="vista()"
-      ariaLabel="Cómo ver tus citas"
+      ariaLabel="Cómo ver sus citas"
       (valueChange)="cambios.push($event); vista.set($event)"
     />
   `,
@@ -73,7 +73,7 @@ describe('SegmentedControl', () => {
 
   it('el grupo se anuncia con su rótulo', () => {
     const grupo = (fixture.nativeElement as HTMLElement).querySelector('[role="radiogroup"]');
-    expect(grupo?.getAttribute('aria-label')).toBe('Cómo ver tus citas');
+    expect(grupo?.getAttribute('aria-label')).toBe('Cómo ver sus citas');
   });
 
   /** FT-04-R05 · el clic cambia de verdad. */

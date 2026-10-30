@@ -20,7 +20,7 @@ import type {
 } from '@core/data-access/public-catalog/public-catalog.types';
 import type { PublicPage } from '@core/data-access/public-directory/public-directory.types';
 import { errorToViewState } from '@core/http/error-to-view-state';
-import { dataOf, loading, ready } from '@core/view-state/view-state';
+import { dataOf, empty, loading, ready } from '@core/view-state/view-state';
 import type { ViewState } from '@core/view-state/view-state.types';
 import { Badge } from '@shared/components/atoms/badge/badge';
 import { AppButton } from '@shared/components/atoms/button/button';
@@ -35,8 +35,6 @@ import { Textarea } from '@shared/components/atoms/textarea/textarea';
 import { FormField } from '@shared/components/molecules/form-field/form-field';
 import { SectionHeading } from '@shared/components/molecules/section-heading/section-heading';
 import { distanciaEnLineaRectaKm } from '@shared/components/organisms/map/geo';
-import { AppMap } from '@shared/components/organisms/map/map';
-import type { PinMapa } from '@shared/components/organisms/map/pin-mapa.types';
 import { PageHeader } from '@shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '@shared/components/organisms/view-state-host/view-state-host';
 
@@ -92,14 +90,11 @@ function normalizar(texto: string): string {
  * falta antes de mandar a alguien con una receta. Sin edición de precio: el
  * catálogo es de la farmacia.
  *
- * ## Por qué el mapa
+ * ## Sin mapa
  *
- * Porque «Av. 6 de Marzo N.º 220, El Alto» no contesta la pregunta que trae a
- * alguien a la ficha de una farmacia —si le queda cerca— y el punto ya viaja en
- * la ficha (`location`). Es el organismo compartido, el mismo de «Dónde comprar
- * mi receta»: Leaflet sobre mosaicos de CARTO, porque la política de seguridad
- * de contenido no abre `frame-src` para un *embed* ajeno. Sin coordenadas no se
- * dibuja nada — un mapa de la ciudad entera no ubica una farmacia.
+ * Tuvo un mapa de Leaflet con las sucursales hasta el 23/10/2026: el
+ * propietario pidió sacar los mapas de todo el directorio. La dirección va
+ * escrita en el resumen y en la lista de sucursales.
  *
  * ## Por qué el grupo terapéutico es un chip y ya no un encabezado
  *
@@ -115,7 +110,6 @@ function normalizar(texto: string): string {
   selector: 'app-pharmacy-detail',
   imports: [
     AppButton,
-    AppMap,
     Badge,
     Card,
     Chip,
@@ -132,7 +126,11 @@ function normalizar(texto: string): string {
     ViewStateHost,
   ],
   templateUrl: './pharmacy-detail.html',
-  styleUrls: ['../../../shared/styles/rejilla-de-tarjetas.css', '../../../shared/styles/ficha-publica.css'],
+  styleUrls: [
+    '../../../shared/styles/card-grid.css',
+    '../../../shared/styles/public-sheet.css',
+    '../../../shared/styles/enlace-chip.css',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
@@ -156,50 +154,6 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
 
   protected readonly soloConStock = signal(false);
   protected readonly soloSinReceta = signal(false);
-
-  /**
-   * Los pines del mapa: **una sucursal, un pin**, y la que se está mirando
-   * distinguida por su tono.
-   *
-   * Mientras las sucursales viajan —o si su lectura falla— queda el pin de la
-   * propia ficha: el mapa nunca se va en blanco por una lectura que es
-   * adicional. Sin coordenadas no hay pin, y ahí no se dibuja nada.
-   */
-  protected readonly pines = computed<readonly PinMapa[]>(() => {
-    const sucursales = this.sucursales();
-    if (sucursales.length > 0) {
-      return sucursales
-        .filter((sucursal) => sucursal.location !== null)
-        .map((sucursal) => ({
-          id: sucursal.slug,
-          lat: sucursal.location!.lat,
-          lng: sucursal.location!.lng,
-          titulo: sucursal.name,
-          ...(sucursal.addressText === null ? {} : { subtitulo: sucursal.addressText }),
-          estado: sucursal.isCurrent
-            ? { etiqueta: 'Estás viendo ésta', tono: 'info' as const }
-            : { etiqueta: 'Otra sucursal', tono: 'neutral' as const },
-        }));
-    }
-
-    const perfil = this.ficha();
-    if (perfil?.location == null) return [];
-    return [
-      {
-        id: perfil.slug,
-        lat: perfil.location.lat,
-        lng: perfil.location.lng,
-        titulo: perfil.displayName,
-        ...(perfil.address === null ? {} : { subtitulo: perfil.address }),
-      },
-    ];
-  });
-
-  protected readonly etiquetaDelMapa = computed(() =>
-    this.sucursales().length > 1
-      ? `Las ${this.sucursales().length} sucursales de ${this.titulo()}, en el mapa. La lista con sus direcciones está debajo.`
-      : `Dónde queda ${this.titulo()}, en el mapa. La dirección está arriba, en el resumen.`,
-  );
 
   /**
    * Los grupos terapéuticos del catálogo de **esta** farmacia, para los chips.
@@ -353,15 +307,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
   });
 
   /**
-   * El slug de la más cercana, o `null` si nadie entregó su ubicación.
+   * La sede más cercana, o `null` si nadie entregó su ubicación.
+   *
+   * Por `id` y no por slug: con dos sedes del mismo tenant —mismo slug— el
+   * distintivo caería en las dos.
    *
    * `null` **no es** «ninguna está cerca»: es que no hay con qué medir, y
    * ponerle el distintivo a la primera de la lista sería afirmarlo sin saberlo.
    */
-  protected readonly slugMasCercano = computed<string | null>(() => {
+  protected readonly closestBranchId = computed<string | null>(() => {
     if (this.ubicacion() === null) return null;
     const primera = this.sucursalesOrdenadas().find((sucursal) => sucursal.location !== null);
-    return primera?.slug ?? null;
+    return primera?.id ?? null;
   });
 
   /** Dónde está quien mira, si lo entregó. `null` es lo normal, no un error. */
@@ -434,9 +391,9 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
   protected readonly motivoDeLaRecomendacion = computed(() => {
     const elegida = this.recomendada();
     if (elegida === null) return '';
-    const completa = elegida.complete ? 'tiene todo lo de tu receta' : 'es la que más tiene';
+    const completa = elegida.complete ? 'tiene todo lo de su receta' : 'es la que más tiene';
     if (elegida.distanceKm === null) {
-      return `${completa}. Compartí tu ubicación para saber cuál te queda más cerca.`;
+      return `${completa}. Comparta su ubicación para saber cuál le queda más cerca.`;
     }
     return `${completa} y es la más cercana: ${this.distancia(elegida.distanceKm)} en línea recta.`;
   });
@@ -450,7 +407,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
       .pharmacyBranches(slug)
       .pipe(takeUntilDestroyed(this.destruccion))
       .subscribe({
-        next: (pagina) => this.estadoDeSucursales.set(ready(pagina.items)),
+        // Vacío no es error ni silencio: la ficha existe, pero la cadena
+        // todavía no dio de alta ninguna sede con su dirección (API real; el
+        // simulador siempre devuelve al menos una).
+        next: (pagina) =>
+          this.estadoDeSucursales.set(
+            pagina.items.length === 0
+              ? empty(
+                  { label: 'Ver otras farmacias', route: this.rutaDelDirectorio },
+                  'Esta farmacia todavía no publicó sus sucursales. Puede ver su catálogo más abajo.',
+                )
+              : ready(pagina.items),
+          ),
         error: (error: unknown) =>
           this.estadoDeSucursales.set(errorToViewState<readonly PublicPharmacyBranch[]>(error)),
       });
@@ -537,6 +505,18 @@ export class PharmacyDetail extends PublicCatalogDetail<PublicPharmacyProduct> {
     const precision = sucursal.locationAccuracy;
     if (precision === null || !precision.toLowerCase().includes('aproximada')) return null;
     return precision;
+  }
+
+  /**
+   * Si la tarjeta lleva a otra ficha.
+   *
+   * Contra la API real todas las sedes de una cadena comparten la ficha de la
+   * cadena (P37, D-6): enlazarlas llevaría a la misma página que se está
+   * mirando. Sólo es enlace la sucursal con una ficha **distinta**, que hoy es
+   * el caso del simulador.
+   */
+  protected llevaAOtraFicha(sucursal: PublicPharmacyBranch): boolean {
+    return !sucursal.isCurrent && sucursal.slug !== this.slug;
   }
 
   /** La ruta de la ficha de otra sucursal, dentro del panel. */

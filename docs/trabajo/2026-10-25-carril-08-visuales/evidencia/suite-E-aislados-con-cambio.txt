@@ -1,0 +1,4 @@
+# Salida recortada: resumen y líneas FAIL (la salida completa pesa 3612 bytes)
+ Test Files  2 passed (2)
+      Tests  62 passed (62)
+   Duration  10.07s (transform 3.42s, setup 1.38s, import 5.06s, tests 8.15s, environment 3.66s)

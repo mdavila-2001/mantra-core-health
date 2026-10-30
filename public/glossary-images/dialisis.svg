@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-labelledby="t d">
+  <title id="t">Circuito extracorpóreo de la hemodiálisis</title>
+  <desc id="d">Esquema de la hemodiálisis: la sangre sale del paciente por el acceso vascular, pasa por una bomba, atraviesa el dializador, donde intercambia sustancias con el líquido de diálisis a través de una membrana, y vuelve depurada al paciente después de un detector de aire. El líquido de diálisis circula en sentido contrario al de la sangre y sale hacia el drenaje con los desechos.</desc>
+  <style>
+    :root { --bg:#f6f8fb; --panel:#ffffff; --line:#d5dde8; --ink:#1c2733; --muted:#5a6878; --blood:#d6453d; --blood-l:#f2a9a3; --dial:#2a7fb8; --dial-l:#a9d3ee; --mem:#8a6bbf; --ok:#1f8a5b; --warn:#b7791f; }
+    @media (prefers-color-scheme: dark) { :root { --bg:#141b24; --panel:#1d2733; --line:#33414f; --ink:#e8eef5; --muted:#9fb0c1; --blood:#e0584f; --blood-l:#7d3a36; --dial:#5aaee0; --dial-l:#27465c; --mem:#b79be6; --ok:#4cc38a; --warn:#e3b04b; } }
+    text { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: var(--ink); }
+    .muted { fill: var(--muted); }
+    .title { font-size: 20px; font-weight: 700; }
+    .lab { font-size: 14px; font-weight: 600; }
+    .sm { font-size: 13px; }
+  </style>
+  <defs>
+    <marker id="ab" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--blood)"/></marker>
+    <marker id="ad" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="16" markerHeight="16" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--dial)"/></marker>
+    <marker id="am" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="var(--mem)"/></marker>
+  </defs>
+  <rect width="800" height="480" fill="var(--bg)"/>
+  <text x="400" y="34" text-anchor="middle" class="title">Circuito de la hemodiálisis</text>
+
+  <!-- Paciente -->
+  <rect x="30" y="150" width="130" height="120" rx="14" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <circle cx="95" cy="190" r="16" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+  <path d="M95 206 v34 M72 218 h46 M95 240 l-16 22 M95 240 l16 22" stroke="var(--ink)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <text x="95" y="290" text-anchor="middle" class="lab">Paciente</text>
+  <text x="95" y="308" text-anchor="middle" class="sm muted">acceso vascular</text>
+
+  <!-- Línea de salida hacia bomba -->
+  <path d="M160 205 H208" stroke="var(--blood)" stroke-width="6" fill="none" marker-end="url(#ab)"/>
+  <circle cx="232" cy="205" r="24" fill="var(--panel)" stroke="var(--blood)" stroke-width="3"/>
+  <path d="M232 205 m-10 0 a10 10 0 1 1 10 10" stroke="var(--blood)" stroke-width="3" fill="none"/>
+  <text x="232" y="250" text-anchor="middle" class="sm muted">Bomba</text>
+  <path d="M256 205 H298" stroke="var(--blood)" stroke-width="6" fill="none" marker-end="url(#ab)"/>
+  <text x="200" y="178" text-anchor="middle" class="sm" style="fill:var(--blood)">Sangre con desechos</text>
+
+  <!-- Dializador -->
+  <rect x="300" y="165" width="240" height="110" rx="18" fill="var(--panel)" stroke="var(--ink)" stroke-width="2.5"/>
+  <rect x="312" y="178" width="216" height="26" rx="8" fill="var(--blood-l)"/>
+  <rect x="312" y="236" width="216" height="26" rx="8" fill="var(--dial-l)"/>
+  <path d="M312 220 H528" stroke="var(--mem)" stroke-width="3" stroke-dasharray="7 5"/>
+  <path d="M340 191 H488" stroke="var(--blood)" stroke-width="3" marker-end="url(#ab)"/>
+  <path d="M500 249 H352" stroke="var(--dial)" stroke-width="3" marker-end="url(#ad)"/>
+  <path d="M390 207 v24" stroke="var(--mem)" stroke-width="2.5" marker-end="url(#am)" fill="none"/><path d="M430 207 v24" stroke="var(--mem)" stroke-width="2.5" marker-end="url(#am)" fill="none"/><path d="M470 207 v24" stroke="var(--mem)" stroke-width="2.5" marker-end="url(#am)" fill="none"/>
+  <text x="420" y="153" text-anchor="middle" class="lab">Dializador</text>
+  <text x="420" y="296" text-anchor="middle" class="sm muted">membrana semipermeable</text>
+
+  <!-- Retorno -->
+  <path d="M540 205 H586" stroke="var(--blood)" stroke-width="6" fill="none"/>
+  <rect x="586" y="185" width="84" height="40" rx="10" fill="var(--panel)" stroke="var(--warn)" stroke-width="2.5"/>
+  <text x="628" y="203" text-anchor="middle" class="sm">Detector</text>
+  <text x="628" y="219" text-anchor="middle" class="sm">de aire</text>
+  <path d="M670 205 H720 V100 H95 V146" stroke="var(--blood)" stroke-width="6" fill="none" marker-end="url(#ab)" stroke-linejoin="round"/>
+  <text x="400" y="90" text-anchor="middle" class="sm" style="fill:var(--blood)">Sangre depurada, de regreso al paciente</text>
+
+  <!-- Dializado -->
+  <rect x="590" y="330" width="180" height="76" rx="12" fill="var(--panel)" stroke="var(--dial)" stroke-width="2.5"/>
+  <text x="680" y="356" text-anchor="middle" class="lab" style="fill:var(--dial)">Líquido de diálisis</text>
+  <text x="680" y="376" text-anchor="middle" class="sm muted">agua tratada con solutos</text>
+  <text x="680" y="393" text-anchor="middle" class="sm muted">en proporción controlada</text>
+  <path d="M590 368 H564 V249 H542" stroke="var(--dial)" stroke-width="6" fill="none" marker-end="url(#ad)" stroke-linejoin="round"/>
+  <path d="M298 249 H262 V368 H244" stroke="var(--dial)" stroke-width="6" fill="none" marker-end="url(#ad)" stroke-linejoin="round"/>
+  <rect x="30" y="330" width="214" height="76" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+  <text x="137" y="356" text-anchor="middle" class="lab">Drenaje</text>
+  <text x="137" y="376" text-anchor="middle" class="sm muted">desechos disueltos y</text>
+  <text x="137" y="393" text-anchor="middle" class="sm muted">exceso de agua extraído</text>
+
+  <text x="420" y="438" text-anchor="middle" class="sm muted">La sangre y el líquido de diálisis circulan en sentidos opuestos (contracorriente).</text>
+  <text x="400" y="462" text-anchor="middle" class="sm muted">Esquema ilustrativo, sin escala. Ilustración original de AloVida.</text>
+</svg>

@@ -1,0 +1,155 @@
+<section class="libreta" aria-labelledby="libreta-titulo" data-testid="libreta-direcciones">
+  <div class="libreta__cabecera">
+    <div>
+      <h3 id="libreta-titulo" class="libreta__titulo">Mis direcciones</h3>
+      <p class="libreta__ayuda">
+        Los lugares donde puede recibir envíos. La preferida es la que le ofrecemos primero.
+      </p>
+    </div>
+    @if (edicion() === null && estado().status === 'ready') {
+      <button
+        app-button
+        variant="secondary"
+        size="sm"
+        data-testid="libreta-agregar"
+        [disabled]="guardadas() >= 10"
+        (clicked)="agregar()"
+      >
+        <app-nav-icon name="pin" />
+        Agregar dirección
+      </button>
+    }
+  </div>
+
+  @if (errorDeEscritura(); as mensaje) {
+    @if (edicion() === null) {
+      <app-alert tone="error" data-testid="libreta-error">{{ mensaje }}</app-alert>
+    }
+  }
+
+  <app-view-state-host [state]="estado()" (retry)="cargar()">
+    @if (estado().status === 'ready') {
+      <ul class="libreta__lista">
+        @for (direccion of direcciones(); track direccion.id) {
+          <li class="libreta__item" [attr.data-testid]="'libreta-item-' + direccion.kind">
+            <div class="libreta__item-texto">
+              <span class="libreta__item-nombre">
+                <app-nav-icon [name]="direccion.kind === 'HOME' ? 'home' : 'pin'" />
+                {{ tituloDe(direccion) }}
+                @if (direccion.isPreferred) {
+                  <!-- La preferida se dice con palabras, no sólo con color. -->
+                  <app-badge variant="info" value="Preferida" data-testid="libreta-preferida" />
+                }
+              </span>
+              <span class="libreta__item-detalle">
+                {{ lineaDe(direccion) }}
+              </span>
+              @if (direccion.latitude === undefined) {
+                <span class="libreta__item-detalle">Sin punto en el mapa.</span>
+              }
+            </div>
+            <div class="libreta__item-acciones">
+              @if (!direccion.isPreferred) {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  [isLoading]="ocupada() === direccion.id"
+                  [disabled]="ocupada() !== null || edicion() !== null"
+                  [attr.aria-label]="'Ofrecer primero ' + tituloDe(direccion)"
+                  (clicked)="preferir(direccion)"
+                >
+                  <app-nav-icon name="star" />
+                  Usar primero
+                </button>
+              }
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                [disabled]="ocupada() !== null || edicion() !== null"
+                [attr.aria-label]="'Editar ' + tituloDe(direccion)"
+                (clicked)="editar(direccion)"
+              >
+                <app-nav-icon name="edit" />
+                Editar
+              </button>
+              @if (direccion.kind !== 'HOME') {
+                <button
+                  app-button
+                  variant="ghost"
+                  size="sm"
+                  [disabled]="ocupada() !== null || edicion() !== null"
+                  [attr.aria-label]="'Quitar ' + tituloDe(direccion)"
+                  (clicked)="quitar(direccion)"
+                >
+                  <app-nav-icon name="remove" />
+                  Quitar
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+      @if (guardadas() >= 10) {
+        <p class="libreta__ayuda">Llegó al máximo de 10 direcciones guardadas. Quite una para agregar otra.</p>
+      }
+    }
+  </app-view-state-host>
+
+  @if (edicion(); as ed) {
+    <form
+      class="libreta__formulario"
+      novalidate
+      data-testid="libreta-formulario"
+      [attr.aria-label]="ed.id === null ? 'Nueva dirección' : 'Editar dirección'"
+      (submit)="$event.preventDefault(); guardar()"
+    >
+      <h4 class="libreta__subtitulo" tabindex="-1">{{ ed.id === null ? 'Nueva dirección' : 'Editar dirección' }}</h4>
+
+      <!-- Pedido del cliente del 26/10/2026: el punto va primero y es lo único
+           que se marca. La calle, el mapa de Bolivia acercado, el departamento,
+           la provincia, el municipio y la zona salen de él, en sólo lectura. -->
+      <app-map-location-picker
+        pinId="libreta-direccion"
+        etiquetaConfirmada="Esta dirección"
+        etiquetaQuitar="Quitar el punto de esta dirección"
+        etiquetaMapa="Mapa para marcar esta dirección"
+        etiquetaMarcar="Marcar esta dirección en el mapa"
+        indicacionMarcar="Toque el mapa en la puerta del lugar para poner el pin."
+        etiquetaFicha="Esta dirección"
+        [ids]="idsMapa"
+        [inicial]="puntoInicial()"
+        (confirmado)="confirmarPunto($event)"
+        (localidad)="aplicarLocalidad($event)"
+      />
+      @if (errorDePunto() || errorDeMunicipio(); as error) {
+        <p class="libreta__error" role="alert" data-testid="libreta-error-punto">{{ error }}</p>
+      }
+
+      @if (ed.kind === 'SAVED') {
+        <app-form-field label="Nombre" [required]="true" hint="Cómo la reconoce: «Oficina», «Casa de mi mamá»." [errorMessage]="errorDeNombre()">
+          <app-input testId="libreta-nombre" placeholder="Casa de mi mamá" [(value)]="nombre" [hasError]="errorDeNombre() !== ''" />
+        </app-form-field>
+      }
+
+      @if (ed.id === null) {
+        <label class="libreta__casilla">
+          <input type="checkbox" data-testid="libreta-preferida-casilla" [checked]="preferida()" (change)="alternarPreferida($event)" />
+          Ofrecerla primero en los envíos
+        </label>
+      }
+
+      @if (errorDeEscritura(); as mensaje) {
+        <app-alert tone="error" data-testid="libreta-error">{{ mensaje }}</app-alert>
+      }
+
+      <div class="libreta__acciones">
+        <button app-button variant="ghost" type="button" [disabled]="guardando()" (clicked)="cancelar()">Cancelar</button>
+        <button app-button variant="primary" type="submit" data-testid="libreta-guardar" [isLoading]="guardando()" [disabled]="guardando()">
+          Guardar dirección
+        </button>
+      </div>
+    </form>
+  }
+</section>

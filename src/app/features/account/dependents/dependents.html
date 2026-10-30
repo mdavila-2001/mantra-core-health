@@ -1,6 +1,6 @@
 <app-page-header
   title="Dependientes"
-  subtitle="Las personas a tu cargo. Podés pedirles turno y ver su historia clínica en su nombre."
+  subtitle="Las personas a su cargo. Puede pedirles turno y ver su historia clínica en su nombre."
 >
   <!-- La acción principal, en la ranura del encabezado como en el resto de la
        aplicación: suelta debajo quedaba corrida del título (refactor UX). -->
@@ -33,19 +33,121 @@
 <div class="dependents">
   @if (sinPerfilDePaciente()) {
     <app-alert tone="info">
-      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si
-      atendés en la plataforma, tus pacientes se gestionan desde
+      Esta cuenta no tiene perfil de paciente, así que no puede registrar dependientes. Si atiende
+      en la plataforma, sus pacientes se gestionan desde
       <a routerLink="/agenda">la agenda</a>.
     </app-alert>
   } @else {
+    @if (solicitudes().length > 0) {
+      <section
+        class="dependents__solicitudes"
+        aria-labelledby="dependents-solicitudes-titulo"
+        data-testid="dependents-solicitudes"
+      >
+        <h2 id="dependents-solicitudes-titulo" class="dependents__nombre">
+          Le quieren registrar como dependiente
+        </h2>
+        <ul class="dependents__lista">
+          @for (solicitud of solicitudes(); track solicitud.id) {
+            <li>
+              <app-card variant="outlined">
+                <div class="dependents__ficha">
+                  <div class="dependents__quien">
+                    <p class="dependents__pedido">
+                      <strong>{{ solicitud.requesterDisplayName }}</strong> pide registrarse como su
+                      dependiente. Si acepta, va a poder pedirle citas y ver su historia clínica.
+                    </p>
+                    <app-form-field
+                      [label]="'Relación de ' + solicitud.requesterDisplayName + ' con usted'"
+                      hint="Se mostrará en la sección Tutores de su perfil."
+                      [required]="true"
+                    >
+                      <app-select
+                        [attr.data-testid]="'dependents-relacion-' + solicitud.id"
+                        [options]="opcionesDeRelacion()"
+                        [value]="relacionDe(solicitud.id)"
+                        placeholder="Elija la relación"
+                        (valueChange)="cambiarRelacion(solicitud.id, $event)"
+                      />
+                    </app-form-field>
+                  </div>
+                  <div class="dependents__acciones">
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      [disabled]="respondiendo() !== null"
+                      [attr.aria-label]="
+                        'Rechazar la solicitud de ' + solicitud.requesterDisplayName
+                      "
+                      (click)="responder(solicitud, false)"
+                    >
+                      Rechazar
+                    </button>
+                    <button
+                      app-button
+                      type="button"
+                      variant="primary"
+                      size="sm"
+                      [isLoading]="respondiendo() === solicitud.id"
+                      [disabled]="respondiendo() !== null || relacionDe(solicitud.id) === null"
+                      [attr.aria-label]="
+                        'Aceptar la solicitud de ' + solicitud.requesterDisplayName
+                      "
+                      (click)="responder(solicitud, true)"
+                    >
+                      Aceptar
+                    </button>
+                  </div>
+                </div>
+              </app-card>
+            </li>
+          }
+        </ul>
+      </section>
+    }
 
     @if (loading() && !loaded()) {
-      <p class="dependents__estado" role="status">Buscando a quiénes representás…</p>
+      <app-loading-state class="dependents__estado" message="Buscando a quiénes representa…" />
     } @else if (dependents().length === 0) {
+      <!-- Pedido del cliente (27/10/2026): todos los textos de este vacío
+           cierran con punto final, el título incluido. -->
+      <!-- Rediseño del paciente (22/10/2026): lo mismo que decía el párrafo,
+           ahora en tres pasos numerados, que se siguen sin releer. No lleva
+           botón propio: «Registrar dependiente» ya está arriba, y dos puertas
+           para la misma intención confunden (criterio humano, regla 2). -->
       <app-empty-state
-        title="Todavía no registraste a nadie"
-        description="Registrá a un hijo o hija, a tu madre o padre, o a alguien a quien representás. Vas a poder pedirle turno y ver su historia sin cambiar de cuenta."
-      />
+        class="dependents__vacio"
+        title="Todavía no registró a nadie."
+        description="Un hijo, su mamá o su papá: alguien a quien le pide las citas usted."
+      >
+        <svg
+          empty-icon
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="9" cy="7" r="3.5" />
+          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+          <circle cx="17.5" cy="9" r="2.5" />
+          <path d="M16 14.2a5 5 0 0 1 5.5 4.8" />
+        </svg>
+        <ol empty-actions class="dependents__pasos" aria-label="Cómo funciona">
+          <li><span class="dependents__paso-numero" aria-hidden="true">1</span>Lo registra con su CI.</li>
+          <li>
+            <span class="dependents__paso-numero" aria-hidden="true">2</span>A esa persona le llega
+            una notificación y la acepta.
+          </li>
+          <li>
+            <span class="dependents__paso-numero" aria-hidden="true">3</span>Desde su cuenta le pide
+            citas y ve su historia, sin cambiar de cuenta.
+          </li>
+        </ol>
+      </app-empty-state>
     } @else {
       <ul class="dependents__lista" data-testid="dependents-lista">
         @for (dependiente of dependents(); track dependiente.id) {
@@ -89,8 +191,5 @@
 </div>
 
 @if (registrando()) {
-  <app-dependent-form-dialog
-    (saved)="registrado($event)"
-    (closed)="registrando.set(false)"
-  />
+  <app-dependent-form-dialog (sent)="enviada($event)" (closed)="registrando.set(false)" />
 }

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { Component, signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
@@ -14,6 +16,7 @@ import { BUTTON_SIZES, BUTTON_VARIANTS } from './button.types';
       [variant]="variant()"
       [size]="size()"
       [isLoading]="isLoading()"
+      [isSuccess]="isSuccess()"
       [disabled]="disabled()"
       [type]="type()"
       [iconOnly]="iconOnly()"
@@ -34,6 +37,7 @@ class Host {
   readonly variant = signal<ButtonVariant>('primary');
   readonly size = signal<ButtonSize>('md');
   readonly isLoading = signal(false);
+  readonly isSuccess = signal(false);
   readonly disabled = signal(false);
   readonly type = signal<ButtonType>('button');
   readonly iconOnly = signal(false);
@@ -177,6 +181,33 @@ describe('AppButton', () => {
     });
   });
 
+  describe('éxito (el texto se transforma en un check)', () => {
+    it('no hay check en reposo', () => {
+      expect(button().querySelector('.btn__check')).toBeNull();
+      expect(button().classList).not.toContain('btn--success');
+    });
+
+    it('muestra un check decorativo y conserva el texto (ancho y nombre accesible)', async () => {
+      host.isSuccess.set(true);
+      await fixture.whenStable();
+
+      const check = button().querySelector('.btn__check');
+      expect(check).not.toBeNull();
+      expect(check?.getAttribute('aria-hidden')).toBe('true');
+      expect(button().classList).toContain('btn--success');
+      expect(button().textContent).toContain('Agendar cita');
+    });
+
+    it('no responde a un clic mientras dura el éxito', async () => {
+      host.isSuccess.set(true);
+      await fixture.whenStable();
+
+      button().click();
+
+      expect(host.clicks).toHaveLength(0);
+    });
+  });
+
   describe('íconos', () => {
     it('proyecta el SVG junto al texto sin envolverlo', async () => {
       host.withIcon.set(true);
@@ -222,6 +253,27 @@ describe('AppButton', () => {
         expect.anything(),
       );
       warn.mockRestore();
+    });
+  });
+
+  /**
+   * Los ganchos del contenedor (`--btn-*`). jsdom no resuelve `var()` ni
+   * `max()`, así que el contrato se verifica sobre la hoja: sin contenedor que
+   * los declare, cada talle conserva su medida; con él, nadie queda por debajo
+   * del alto pedido —tampoco el modo ícono, que se mantiene cuadrado—.
+   */
+  describe('ganchos del contenedor', () => {
+    const css = readFileSync('src/app/shared/components/atoms/button/button.css', 'utf8');
+
+    it('el alto es el mayor entre el talle y --btn-min-block', () => {
+      expect(css).toMatch(/--_btn-block:\s*max\(var\(--_btn-side, 0px\), var\(--btn-min-block, 0px\)\)/);
+      expect(css).not.toMatch(/min-height:\s*var\(--_btn-side\)/);
+      expect(css).toMatch(/\.btn--icon-only\)\s*\{\s*width:\s*var\(--_btn-block\)/);
+    });
+
+    it('flex y letra del sm caen a su valor de siempre sin contenedor', () => {
+      expect(css).toContain('flex: var(--btn-flex, 0 1 auto)');
+      expect(css).toContain('font-size: var(--btn-font-size, var(--fs-caption))');
     });
   });
 });

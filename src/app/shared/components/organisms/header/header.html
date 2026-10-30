@@ -85,6 +85,7 @@
         </span>
       </app-menu-item>
       <app-menu-item data-testid="header-cerrar-sesion" [destructive]="true" (selected)="requestLogout()">
+        <app-nav-icon slot="icon" name="logout" />
         Cerrar sesión
       </app-menu-item>
     </app-menu>

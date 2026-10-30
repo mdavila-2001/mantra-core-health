@@ -1,0 +1,13 @@
+$ yarn test src/modules/pharmacy_inventory src/modules/pharmacy src/modules/public (API, tras traer la rama remota)
+Test Suites: 52 passed, 52 total
+Tests:       611 passed, 611 total
+
+$ yarn test:integration p37-public-pharmacy-branches + pharmacy-catalog-p47 + a1-existencias-por-sede (base mantra_visual)
+Test Suites: 3 passed, 3 total
+Tests:       23 passed, 23 total
+
+$ yarn typecheck (API)
+exit 0
+
+$ check-breaking --base <openapi de la rama remota> --head openapi/openapi.json
+Sin cambios incompatibles no aprobados en el contrato OpenAPI.

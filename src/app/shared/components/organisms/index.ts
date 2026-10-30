@@ -6,7 +6,12 @@
    presupuestos, procedimientos y laboratorios. No sabe de dominio. */
 export { AttachmentUploader } from './attachment-uploader/attachment-uploader';
 
+export { AnatomyViewer } from './anatomy-viewer/anatomy-viewer';
+export type { AnatomyViewerStatus } from './anatomy-viewer/anatomy-viewer';
+
 export { AuthLayout } from './auth-layout/auth-layout';
+
+export { BranchBulkImport } from './branch-bulk-import/branch-bulk-import';
 
 export { DataTable } from './data-table/data-table';
 export {
@@ -29,17 +34,27 @@ export type {
 export { DatePicker } from './date-picker/date-picker';
 export type { CalendarDay } from './date-picker/date-picker';
 export { DATE_PICKER_MODES } from './date-picker/date-picker.types';
-export type { DatePickerMode } from './date-picker/date-picker.types';
+export type { DatePickerMode, DateTextProblem } from './date-picker/date-picker.types';
+
+export { EncounterTimeline } from './encounter-timeline/encounter-timeline';
+export { TIPOS_DE_HECHO } from './encounter-timeline/encounter-timeline.types';
+export type {
+  EncounterHeader,
+  HechoDeLaLinea,
+  TimelineCondition,
+  TimelineFollowUp,
+  TimelineNote,
+  TimelineOrder,
+  TimelinePrescription,
+  TipoDeHecho,
+} from './encounter-timeline/encounter-timeline.types';
 
 export { FactSection } from './fact-section/fact-section';
 export { BLOQUES_POR_PAGINA, MINIMO_PARA_BUSCAR } from './fact-section/fact-section.types';
 export type { BloqueDeFicha } from './fact-section/fact-section.types';
 
 export { SurveyForm } from './survey-form/survey-form';
-export type {
-  RespuestasDelCuestionario,
-  ValorDeRespuesta,
-} from './survey-form/survey-form';
+export type { RespuestasDelCuestionario, ValorDeRespuesta } from './survey-form/survey-form';
 
 export { FilterBar, SEARCH_PARAM } from './filter-bar/filter-bar';
 export type { ActiveFilter, FilterDef } from './filter-bar/filter-bar';
@@ -54,7 +69,7 @@ export type { HeaderUser } from './header/header.types';
 export { AppMap, CARGADOR_DE_LEAFLET, construirPopup } from './map/map';
 export type { CargadorDeLeaflet } from './map/map';
 export { distanciaEnLineaRectaKm, ordenarPorCercania } from './map/geo';
-export type { EstadoDePin, PinMapa, PuntoGeo } from './map/pin-mapa.types';
+export type { PinStatus as EstadoDePin, PinMap as PinMapa, PuntoGeo } from './map/map-pin.types';
 
 /**
  * El rail de la superficie pública. Reemplaza las ocho copias de `app-tabs`
@@ -69,6 +84,15 @@ export type {
 
 export { PageHeader } from './page-header/page-header';
 export type { PageHeaderAction } from './page-header/page-header';
+
+/* Relaciones del glosario agrupadas: mapa, ficha y comparador (TAREA-41 F5.5). */
+export { RelationGroups } from './relation-groups/relation-groups';
+export type {
+  RelationColumnFooterContext,
+  RelationColumnView,
+  RelationGroupsTone,
+  RelationNavigation,
+} from './relation-groups/relation-groups.types';
 
 export { MAIN_CONTENT_ID, Shell } from './shell/shell';
 export { NAV_STORAGE_KEY, ShellService } from './shell/shell-service';

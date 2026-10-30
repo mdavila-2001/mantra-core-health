@@ -1,4 +1,4 @@
-import { inject, Injectable, InjectionToken, PLATFORM_ID, signal } from '@angular/core';
+import { effect, inject, Injectable, InjectionToken, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { io, type Socket } from 'socket.io-client';
 import { Subject } from 'rxjs';
@@ -23,8 +23,9 @@ export type ChatMessageEvent = DirectMessage;
  * mensaje que entraba en vivo tiraba `sentAt.getTime is not a function` en cada
  * ciclo de detección de cambios — el hilo quedaba inutilizable hasta recargar.
  */
-interface MensajeDelCable extends Omit<DirectMessage, 'sentAt'> {
+interface MensajeDelCable extends Omit<DirectMessage, 'sentAt' | 'deletedAt'> {
   readonly sentAt?: string | Date | null;
+  readonly deletedAt?: string | Date | null;
 }
 
 /** Una fecha del cable, o `undefined`. Tolera que ya venga convertida. */
@@ -38,7 +39,11 @@ function aFecha(valor: string | Date | null | undefined): Date | undefined {
 
 /** El mensaje del cable, con sus fechas ya convertidas. */
 function aMensaje(payload: MensajeDelCable): ChatMessageEvent {
-  return { ...payload, sentAt: aFecha(payload.sentAt) };
+  return {
+    ...payload,
+    sentAt: aFecha(payload.sentAt),
+    deletedAt: aFecha(payload.deletedAt),
+  };
 }
 
 /** Empujado al marcar leído (`conversation:read`). */
@@ -52,6 +57,27 @@ export interface ChatReadEvent {
 export interface ChatNewConversationEvent {
   readonly conversationId: string;
   readonly peerProfileId: string;
+}
+
+/** F4.1 · alguien está escribiendo (o dejó de hacerlo) en un hilo. */
+export interface ChatTypingEvent {
+  readonly conversationId: string;
+  readonly profileId: string;
+  readonly typing: boolean;
+}
+
+/** F4.2 · un perfil entró o salió de la mensajería. */
+export interface ChatPresenceEvent {
+  readonly profileId: string;
+  readonly online: boolean;
+  readonly lastSeenAt: Date | null;
+}
+
+/** F4.5 · un mensaje se eliminó (`conversation:message:deleted`). */
+export interface ChatMessageDeletedEvent {
+  readonly conversationId: string;
+  readonly messageId: string;
+  readonly deletedAt: Date;
 }
 
 /**
@@ -155,6 +181,9 @@ export class ChatSocketService {
   private readonly newConversations$ = new Subject<ChatNewConversationEvent>();
   private readonly updated$ = new Subject<ChatMessageEvent>();
   private readonly errors$ = new Subject<ChatSocketError>();
+  private readonly typing$ = new Subject<ChatTypingEvent>();
+  private readonly presence$ = new Subject<ChatPresenceEvent>();
+  private readonly deleted$ = new Subject<ChatMessageDeletedEvent>();
 
   /** `conversation:message`, sin filtrar — cada pantalla filtra lo suyo. */
   readonly onMessage = this.messages$.asObservable();
@@ -172,6 +201,37 @@ export class ChatSocketService {
   readonly onNewConversation = this.newConversations$.asObservable();
   /** `error` del gateway — hoy, sobre todo, `NOT_OWN_PROFILE`. */
   readonly onError = this.errors$.asObservable();
+  /** `conversation:typing` (F4.1, AG-19). */
+  readonly onTyping = this.typing$.asObservable();
+  /** `profile:presence` (F4.2, AG-19). */
+  readonly onPresence = this.presence$.asObservable();
+  /** `conversation:message:deleted` (F4.5, AG-19/AG-20). */
+  readonly onMessageDeleted = this.deleted$.asObservable();
+
+  constructor() {
+    // TX-17 (cierre de sesión): un socket que sigue vivo después de un logout
+    // no tiene a quién avisarle nada, y mantenerlo abierto es la misma clase
+    // de fuga que un `setInterval` sin `clearInterval`. `ensureConnected()` ya
+    // exige `accessToken() !== null` para abrir uno nuevo; esto cierra el que
+    // ya estaba abierto en el momento en que la sesión termina.
+    effect(() => {
+      if (!this.haySesion() && this.socket) {
+        this.disconnect();
+      }
+    });
+  }
+
+  /**
+   * `session.isAuthenticated()`, tolerando un doble de prueba incompleto
+   * (misma causa que `CartStore`/`IdleLogout` — carril M6 H2, 2026-09-26):
+   * este `effect()` corre en cualquier tick, y una prueba que reemplaza
+   * `SessionStore`/`AuthService` sin `isAuthenticated` lo revienta de forma
+   * asíncrona, envenenando al archivo que esté corriendo en ese momento en
+   * el mismo worker.
+   */
+  private haySesion(): boolean {
+    return typeof this.session.isAuthenticated === 'function' && this.session.isAuthenticated();
+  }
 
   /**
    * Devuelve el socket, abriéndolo si hace falta.
@@ -196,6 +256,8 @@ export class ChatSocketService {
       return null;
     }
 
+    // Re-unirse en cada `connect` —el primero y cada reconexión—: el servidor
+    // no recuerda las salas de un transporte que se cayó.
     socket.on('connect', () => {
       this.connected.set(true);
       this.unirseALasSalas(socket);
@@ -218,6 +280,26 @@ export class ChatSocketService {
         this.errors$.next(payload);
       }
     });
+    // F4.1/F4.2/F4.5 (AG-19, AG-20): el gateway ya los emite
+    // (`community-messaging.gateway.ts`); hasta acá nadie los escuchaba.
+    socket.on('conversation:typing', (payload: ChatTypingEvent) =>
+      this.typing$.next(payload),
+    );
+    socket.on(
+      'profile:presence',
+      (payload: Omit<ChatPresenceEvent, 'lastSeenAt'> & { lastSeenAt: string | null }) =>
+        this.presence$.next({
+          ...payload,
+          lastSeenAt: aFecha(payload.lastSeenAt) ?? null,
+        }),
+    );
+    socket.on(
+      'conversation:message:deleted',
+      (payload: Omit<ChatMessageDeletedEvent, 'deletedAt'> & { deletedAt: string }) => {
+        const deletedAt = aFecha(payload.deletedAt);
+        if (deletedAt) this.deleted$.next({ ...payload, deletedAt });
+      },
+    );
 
     this.socket = socket;
     return socket;
@@ -231,6 +313,24 @@ export class ChatSocketService {
     if (this.hilo !== null) {
       socket.emit('join:conversation', { ...this.hilo });
     }
+  }
+
+  /** F4.1 · avisa que este perfil está (o dejó de estar) escribiendo en el hilo. */
+  typing(conversationId: string, profileId: string, typing: boolean): void {
+    this.ensureConnected()?.emit('typing', { conversationId, profileId, typing });
+  }
+
+  /** F4.2 · renueva el «en línea» de este perfil ante el servidor. */
+  presencePing(profileId: string): void {
+    this.ensureConnected()?.emit('presence:ping', { profileId });
+  }
+
+  /**
+   * Cierra el socket, si había uno, y olvida las salas: son de la sesión que
+   * terminó. Se llama sola al cerrar sesión (TX-17).
+   */
+  disconnect(): void {
+    this.reiniciar();
   }
 
   /** Se une a la bandeja de un perfil: recibe `conversation:*` de todas sus conversaciones. */

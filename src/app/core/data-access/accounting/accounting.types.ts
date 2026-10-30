@@ -50,6 +50,12 @@ export interface JournalTransaction {
   readonly totalAmount?: string;
   readonly postedAt?: Date;
   /**
+   * El concepto del asiento («Consultas del día», «Alquiler del consultorio»).
+   * Lo sirve el simulador; la API todavía no lo publica en el listado, y sin él
+   * el historial de comprobantes sólo puede mostrar el número.
+   */
+  readonly description?: string;
+  /**
    * Dónde está el documento en el flujo de seis pasos.
    *
    * Es distinto de `statusConceptId`, que es el concepto de terminología: éste
@@ -70,6 +76,8 @@ export interface LedgerEntry {
   /** Importe en moneda base, decimal como texto. */
   readonly amountBase: string;
   readonly costCenterId?: string;
+  readonly profitCenterId?: string;
+  readonly assetId?: string;
   readonly currencyConceptId?: string;
 }
 
@@ -207,6 +215,10 @@ export interface JournalLineInput {
   /** Decimal como texto, positivo. */
   readonly amount: string;
   readonly memo?: string;
+  /** Entidades relacionadas por tipo (TAREA-20): una de cada tipo por línea. */
+  readonly costCenterId?: string;
+  readonly profitCenterId?: string;
+  readonly assetId?: string;
 }
 
 /** Cuerpo de `POST /accounting/journal-transactions` y `.../drafts`. */
@@ -417,11 +429,34 @@ export interface DocumentFlowNode {
   readonly status: WorkflowStatus;
 }
 
-/** Lo que devuelve compensar un grupo de partidas. */
+/**
+ * Cuerpo de `POST /accounting/clearing-documents` (`CreateClearingDto`).
+ *
+ * La compensación es un asiento: debe el banco y haber la cuenta de
+ * reconciliación de la partida. Por eso pide la cuenta de banco y la fecha,
+ * y el importe de cada partida —una compensación puede ser parcial—.
+ */
+export interface ClearingRequest {
+  /** La organización de la práctica: la de la sesión. */
+  readonly tenantId?: string;
+  readonly practiceId: string;
+  /** Cuenta del mayor donde entra (o de donde sale) el dinero. */
+  readonly bankAccountId: string;
+  /** `AAAA-MM-DD`. */
+  readonly clearingDate: string;
+  readonly items: readonly {
+    readonly openItemId: string;
+    /** Texto decimal, como todo importe. */
+    readonly clearedAmount: string;
+  }[];
+}
+
+/** Lo que devuelve compensar un grupo de partidas (`ClearingResponseDto`). */
 export interface ClearingResult {
-  readonly clearingDocumentId: string;
+  readonly id: string;
+  readonly clearingNumber: string;
+  readonly transactionId: string;
   readonly clearedItems: number;
-  readonly clearedAmount: string;
 }
 
 /** Un activo fijo con su clase, su amortización acumulada y su valor neto. */
@@ -474,12 +509,39 @@ export interface AccrualRegister {
   readonly periodCharge: string;
 }
 
-/** Lo que devuelve una corrida: su documento y cuánto movió. */
-export interface RunResult {
-  readonly amount: string;
-  readonly periodName: string;
-  readonly transactionNumber?: string;
-  readonly transactionNumbers?: readonly string[];
-  readonly assets?: number;
-  readonly objects?: number;
+/** Cuerpo de `POST /accounting/depreciation/run` (`RunDepreciationDto`). */
+export interface DepreciationRunRequest {
+  readonly practiceId: string;
+  /** Período ABIERTO donde se asienta. */
+  readonly fiscalPeriodId: string;
+  /** Debe: gasto por amortización. */
+  readonly depreciationExpenseAccountId: string;
+  /** Haber: amortización acumulada. */
+  readonly accumulatedDepreciationAccountId: string;
+  /** `AAAA-MM-DD`. */
+  readonly postingDate: string;
+}
+
+/** Lo que devuelve la corrida de amortización (`DepreciationRunResponseDto`). */
+export interface DepreciationRunResult {
+  readonly depreciatedAssets: number;
+  readonly transactionIds: readonly string[];
+}
+
+/**
+ * Cuerpo de `POST /accounting/accruals/run` (`RunAccrualsDto`): **un** objeto
+ * de devengo por vez. Las cuentas no viajan: las declara el propio objeto.
+ */
+export interface AccrualRunRequest {
+  readonly accrualObjectId: string;
+  readonly fiscalPeriodId: string;
+  readonly practiceId: string;
+  /** `AAAA-MM-DD`. */
+  readonly postingDate: string;
+}
+
+/** Lo que devuelve la corrida de un devengo (`AccrualRunResponseDto`). */
+export interface AccrualRunResult {
+  readonly postedLines: number;
+  readonly transactionIds: readonly string[];
 }

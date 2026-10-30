@@ -86,6 +86,11 @@ existe o no existe, y decirlo no filtra nada sobre el paciente.
 validación del backend lo rechaza por forma (esta pantalla nunca llega a
 mandarlo: valida antes). `Cache-Control: no-store` en la respuesta.
 
+El backend acepta el hash en mayúsculas, minúsculas o mixto y lo normaliza
+antes de consultar (el sello se persiste siempre en minúsculas); esta
+pantalla ya normalizaba de su lado desde el principio, así que el efecto es
+el mismo escaneando el QR o pegando el hash a mano en cualquier caso.
+
 `InsurancePortabilityClient.verifyCertificate(manifestHash)` convierte
 `generatedAt` a `Date`.
 

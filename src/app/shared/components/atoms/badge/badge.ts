@@ -30,8 +30,16 @@ import type { BadgeSize, BadgeValue, BadgeVariant } from './badge.types';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '[class]': 'badgeClasses()',
-    // Región viva: un conteo que cambia (mensajes, alertas) debe anunciarse.
-    role: 'status',
+    /* Sin región viva. Era `role="status"` en cada badge, y con 275 usos una
+       tabla de estados se volvía decenas de regiones vivas: cada cambio de
+       página o de filtro se anunciaba entero, fila por fila. Un badge es una
+       etiqueta estática; si un conteo tiene que anunciarse, lo anuncia el
+       contenedor que sabe por qué cambió (como la bandeja de farmacia).
+
+       Con `label`, el nombre es una frase propia y el badge pasa a `img`: un
+       elemento genérico no admite `aria-label` (ARIA 1.2), y el conteo o el
+       punto de color son exactamente eso, un pictograma con nombre. */
+    '[attr.role]': 'ariaLabel() ? "img" : null',
     '[attr.aria-label]': 'ariaLabel()',
   },
 })

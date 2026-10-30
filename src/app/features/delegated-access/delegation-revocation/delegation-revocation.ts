@@ -75,7 +75,7 @@ export class DelegationRevocation {
   protected readonly revoked = signal<string | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para revocar delegaciones.'),
+    errorMessageOf(this.state(), 'No tiene permiso para revocar delegaciones.'),
   );
 
   protected submit(): void {

@@ -1,0 +1,50 @@
+<app-page-header
+  title="Procesos"
+  subtitle="Qué hace el sistema, paso a paso y por quién: un proceso por módulo de la API y los flujos críticos que cruzan varios."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="processes" data-testid="portal-processes">
+  <app-filter-bar
+    searchLabel="Buscar procesos"
+    searchPlaceholder="Nombre, código o para qué sirve"
+    wrap
+    [filters]="filterDefs()"
+    [searchLoading]="list.state().status === 'loading'"
+  />
+
+  <app-data-table
+    data-testid="portal-processes-table"
+    caption="Procesos del sistema"
+    heading="Procesos"
+    [totalCount]="list.total()"
+    [state]="list.state()"
+    [columns]="columns()"
+    [trackBy]="byCode"
+    [rowLabel]="rowName"
+    [cursor]="list.cursor()"
+    stackedOnMobile
+    (cursorChanged)="list.move($event)"
+    (retry)="list.reload()"
+  />
+</div>
+
+<ng-template #nameCell let-row>
+  <a app-link class="processes__name" [routerLink]="detailUrl(row.codigo)" data-testid="portal-process-link">
+    {{ row.nombre }}
+  </a>
+  <span class="processes__secondary">
+    {{ grouping(row.agrupacion).label }}
+    @if (row.actores.length > 0) {
+      · {{ row.actores.length }} {{ row.actores.length === 1 ? 'actor' : 'actores' }}
+    }
+  </span>
+</ng-template>
+
+<ng-template #kindCell let-row>
+  <app-badge size="sm" [variant]="kind(row.tipo).tone">{{ kind(row.tipo).label }}</app-badge>
+</ng-template>
+
+<ng-template #reviewCell let-row>
+  <app-badge size="sm" [variant]="review(row.revision).tone">{{ review(row.revision).label }}</app-badge>
+</ng-template>

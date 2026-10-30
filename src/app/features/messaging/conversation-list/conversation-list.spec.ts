@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { ConversationList } from './conversation-list';
 import { PACK_DE_STICKERS } from '../../../core/messaging/sticker-pack.generated';
 import type { ConversationListItem } from '../../../core/data-access/community/community.types';
-import { textoDeContexto } from '../../../core/messaging/contexto-de-chat';
+import { textoDeContexto } from '../../../core/messaging/chat-context';
 import {
   empty,
   forbidden,
@@ -141,14 +141,14 @@ describe('ConversationList', () => {
       conEstado(loading());
       expect(buscar('bandeja-cargando')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
-        'Cargando tus conversaciones',
+        'Cargando sus conversaciones',
       );
       expect(buscar('conversacion')).toBeNull();
     });
 
     it('vacío (S3) ofrece una próxima acción que lleva a buscar', () => {
       conEstado(empty({ label: 'Buscar medicamentos', route: '/search/medications' }));
-      expect(buscar('bandeja-vacia')?.textContent).toContain('Todavía no tenés chats');
+      expect(buscar('bandeja-vacia')?.textContent).toContain('Todavía no tiene chats');
       const destinos = Array.from(
         fixture.nativeElement.querySelectorAll('[data-testid="bandeja-vacia"] a'),
       ).map((a) => (a as HTMLAnchorElement).getAttribute('href'));
@@ -159,15 +159,15 @@ describe('ConversationList', () => {
       conEstado(offline());
       const pedidos = pedidosDeReintento();
       expect(buscar('bandeja-sin-conexion')?.textContent).toContain('Sin conexión');
-      expect(texto()).not.toContain('Todavía no tenés chats');
+      expect(texto()).not.toContain('Todavía no tiene chats');
       buscar('bandeja-reintentar')?.click();
       expect(pedidos()).toBe(1);
     });
 
     it('sin permiso (S5) lo dice y ofrece una salida: volver a pedir la bandeja', () => {
-      conEstado(forbidden({ message: 'Con este perfil no podés leer estos chats.' }));
+      conEstado(forbidden({ message: 'Con este perfil no puede leer estos chats.' }));
       const pedidos = pedidosDeReintento();
-      expect(buscar('bandeja-sin-permiso')?.textContent).toContain('Con este perfil no podés leer estos chats.');
+      expect(buscar('bandeja-sin-permiso')?.textContent).toContain('Con este perfil no puede leer estos chats.');
       // No es el «Reintentar» de un fallo de red: es la próxima acción de S5.
       expect(buscar('bandeja-reintentar')).toBeNull();
       buscar('bandeja-sin-permiso-reintentar')?.click();
@@ -175,7 +175,7 @@ describe('ConversationList', () => {
     });
 
     it('error inesperado (S9) muestra el código de la petición, el motivo una sola vez, y reintentar', () => {
-      conEstado(unexpectedError('req-123', 'No pudimos leer tu bandeja.'));
+      conEstado(unexpectedError('req-123', 'No pudimos leer su bandeja.'));
       const pedidos = pedidosDeReintento();
       expect(buscar('bandeja-request-id')?.textContent).toBe('req-123');
       const veces = texto().split('No pudimos').length - 1;

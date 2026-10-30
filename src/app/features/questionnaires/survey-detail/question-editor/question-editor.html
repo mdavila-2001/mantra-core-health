@@ -106,7 +106,7 @@
        dejar cerrar con cambios sin guardar: `guardaDeCierre`. -->
   <app-content-dialog
     heading="Editar la pregunta"
-    description="Lo que escribas no se guarda hasta que pulses «Listo»."
+    description="Lo que escriba no se guarda hasta que pulse «Listo»."
     [closeGuard]="guardaDeCierre"
     (closed)="cerrar.emit()"
     data-testid="editor-pregunta-modal"
@@ -116,7 +116,7 @@
         <app-input
           [value]="texto()"
           (valueChange)="cambiarTexto($event)"
-          placeholder="¿Cómo calificarías la atención recibida?"
+          placeholder="¿Cómo calificaría la atención recibida?"
           data-testid="editor-texto"
         />
       </app-form-field>

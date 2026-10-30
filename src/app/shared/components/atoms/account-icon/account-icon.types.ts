@@ -21,6 +21,16 @@
  * aparte y no el mismo tubo de ensayo porque son dos altas distintas que
  * conviven en la misma rejilla: con el mismo dibujo, elegir entre las dos sería
  * leer los dos rótulos enteros.
+ *
+ * `pharmacy` entró con el alta de farmacia (Módulo Farmacia §1 del registro
+ * de procesos) — ver el JSDoc de `RegisterPharmacy`. A diferencia de
+ * `laboratory` e `imaging`, ésta **sí sale a la red** contra el simulador
+ * (`POST /iam/auth/register-organization` con `tenantType: 'PHARMACY'`).
+ *
+ * `clinic` entró con el alta del centro médico (CM-11): el edificio con la cruz
+ * de salud. Sale a la red contra `register-organization` con un tipo de salud
+ * que ya existe, y su segundo paso —abrir la práctica y la primera sede— vive
+ * en `medical-center-setup`.
  */
 export const ACCOUNT_ICON_NAMES = [
   'patient',
@@ -28,6 +38,8 @@ export const ACCOUNT_ICON_NAMES = [
   'insurer',
   'laboratory',
   'imaging',
+  'pharmacy',
+  'clinic',
 ] as const;
 
 export type AccountIconName = (typeof ACCOUNT_ICON_NAMES)[number];

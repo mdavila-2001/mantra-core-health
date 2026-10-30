@@ -12,6 +12,28 @@
   --card-body-gap: var(--sp-4);
 }
 
+app-card.procedimientos--integrado {
+  border: 0;
+  background: transparent;
+}
+
+.procedimientos__odontograma {
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+}
+
+.procedimientos__odontograma summary {
+  color: var(--brand-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.procedimientos__odontograma app-odontogram {
+  display: block;
+  margin-block-start: var(--sp-3);
+}
+
 .procedimientos__titulo {
   margin: 0;
   font-size: var(--fs-h3);

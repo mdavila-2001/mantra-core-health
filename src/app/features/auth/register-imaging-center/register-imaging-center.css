@@ -1,5 +1,5 @@
 /* El cascarón —la tarjeta, el membrete, el pie y la columna de ayuda— es
-   `../registro-compartido/registro.css`, que esta pantalla declara junto a esta
+   `../shared-registration/registration.css`, que esta pantalla declara junto a esta
    hoja en sus `styleUrls`, igual que las altas de paciente, de profesional y de
    laboratorio. */
 
@@ -18,6 +18,13 @@
   align-items: flex-start;
   gap: var(--sp-4);
   width: 100%;
+}
+
+/* «Agregar» y «Subir en lote» juntos; en pantalla chica bajan uno bajo otro. */
+.imagen-sucursales__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
 }
 
 .imagen-sucursal {

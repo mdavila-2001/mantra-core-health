@@ -75,7 +75,7 @@ export class ManualReviewForm {
   protected readonly opened = signal<OpenedManualReview | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   constructor() {

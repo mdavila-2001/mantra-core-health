@@ -1,0 +1,3 @@
+ Test Files  10 failed | 923 passed (933)
+      Tests  35 failed | 12770 passed (12805)
+Los 8 archivos que fallaron sólo dentro de la suite completa, corridos solos: con el cambio 80/80 PASS; sobre dev limpio 80/80 PASS (timeouts por carga: flow-detail 30 s, address-book «Usar primero» 5 s vs 115 ms solo).

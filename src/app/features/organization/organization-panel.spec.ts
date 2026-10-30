@@ -2,8 +2,11 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import type { ComponentFixture } from '@angular/core/testing';
 import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
 
+import { OrganizationLogoClient } from '../../core/data-access/directory/organization-logo.client';
+import { ToastService } from '../../shared/components/molecules/toast/toast.service';
 import { OrganizationPanel } from './organization-panel';
 
 /**
@@ -50,7 +53,13 @@ describe('OrganizationPanel', () => {
   function montar(): void {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        // El logo tiene su propia prueba (`organization-logo.spec.ts`): acá no es lo que se mira.
+        { provide: OrganizationLogoClient, useValue: { getUrl: () => of(null) } },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     fixture = TestBed.createComponent(OrganizationPanel);
@@ -144,15 +153,27 @@ describe('OrganizationPanel', () => {
     montar();
     responder([]);
 
-    expect(texto()).toContain('No administrás ninguna organización');
+    expect(texto()).toContain('No administra ninguna organización');
   });
 
   it('muestra los datos de la organización y su gente', () => {
     montar();
     responder([organizacion()]);
 
-    expect(texto()).toContain('Datos de tu organización');
+    expect(texto()).toContain('Datos de su organización');
     expect(texto()).toContain('Su gente');
+  });
+
+  it('ofrece ir a «Médicos del centro», donde se invita y se aprueba por procedimiento', () => {
+    montar();
+    responder([organizacion()]);
+
+    const enlace = (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>(
+      '[data-testid="organization-affiliations-link"]',
+    );
+
+    expect(enlace).not.toBeNull();
+    expect(enlace?.getAttribute('href')).toBe('/administration/my-organization/affiliations');
   });
 
   /**
@@ -234,6 +255,33 @@ describe('OrganizationPanel', () => {
     });
   }
 
+  /** La ficha que pide el bloque de aseguradora al montarse. */
+  function responderFicha(): void {
+    http.expectOne('/insurance-carriers').flush({
+      items: [
+        {
+          id: 'car-1',
+          carrierCode: 'CARRIER-AS',
+          legalName: 'Andina Salud S.A.',
+          regulatorIdentifier: 'REG-1',
+          whatsappNumber: null,
+          callCenterPhone: null,
+          supportEmail: null,
+          jurisdiction: null,
+          status: { code: 'CARRIER_ACTIVE', display: 'Aseguradora activa' },
+          verification: { code: 'VERIFICATION_PENDING', display: 'Verificación pendiente' },
+          productCount: 0,
+          planCount: 0,
+          networkCount: 0,
+          createdAt: '2026-08-09T12:00:00.000Z',
+          canAdminister: false,
+        },
+      ],
+      count: 1,
+    });
+    fixture.detectChanges();
+  }
+
   it('una organización sin bloque `payer` no muestra los campos de aseguradora', () => {
     montar();
     responder([organizacion()]);
@@ -251,6 +299,7 @@ describe('OrganizationPanel', () => {
   it('una aseguradora muestra sigla, NIT, dirección y el código de aseguradora', () => {
     montar();
     responder([aseguradora({ canAdminister: false })]);
+    responderFicha();
 
     expect(texto()).toContain('ASEG-01');
     expect(texto()).toContain('NIT-123456');
@@ -259,9 +308,24 @@ describe('OrganizationPanel', () => {
     expect(texto()).not.toContain('Guardar datos');
   });
 
+  /**
+   * La ficha de la aseguradora (regulador, canales, verificación) se mudó del
+   * catálogo de seguros al perfil: una aseguradora la ve acá.
+   */
+  it('una aseguradora ve su ficha con canales de contacto y verificación', () => {
+    montar();
+    responder([aseguradora({ canAdminister: false })]);
+    responderFicha();
+
+    expect(texto()).toContain('Ficha de la aseguradora');
+    expect(texto()).toContain('Correo de siniestros');
+    expect(texto()).toContain('Verificación pendiente');
+  });
+
   it('guardar manda el bloque payer con sigla, dirección y NIT', () => {
     montar();
     responder([aseguradora()]);
+    responderFicha();
 
     (
       fixture.componentInstance as unknown as {
@@ -320,6 +384,76 @@ describe('OrganizationPanel', () => {
     http.expectOne((r) => r.url.includes('/practitioner-requests')).flush({ items: [] });
     fixture.detectChanges();
     responderAgenda();
+  });
+
+  /* -- El rechazo del guardado, con su causa (2026-10-08) ------------------- */
+
+  function guardarYRechazar(cuerpo: object, status: number): void {
+    montar();
+    responder([organizacion()]);
+    (
+      fixture.componentInstance as unknown as { nombreComercial: { set(v: string): void } }
+    ).nombreComercial.set('Clínica Nueva');
+    (fixture.componentInstance as unknown as { guardarDatos(): void }).guardarDatos();
+    http.expectOne((r) => r.url === '/tenants/ten-1').flush(cuerpo, { status, statusText: 'Error' });
+    fixture.detectChanges();
+  }
+
+  function ultimoAviso(): string | undefined {
+    return TestBed.inject(ToastService).toasts().at(-1)?.message;
+  }
+
+  it('un campo rechazado se pinta debajo de él y lo escrito sigue ahí', () => {
+    guardarYRechazar(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación',
+        details: {
+          fields: [{ field: 'tradeName', constraints: ['maxLength'], messages: ['Máximo 120 caracteres.'] }],
+        },
+      },
+      400,
+    );
+
+    const campos = [...(fixture.nativeElement as HTMLElement).querySelectorAll('app-form-field')];
+    const comercial = campos.find((c) => (c.textContent ?? '').includes('Nombre comercial'));
+    const razon = campos.find((c) => (c.textContent ?? '').includes('Razón social'));
+    expect(comercial?.textContent).toContain('Máximo 120 caracteres.');
+    expect(razon?.textContent).not.toContain('Máximo 120');
+    expect(ultimoAviso()).toBe('Revise los campos marcados y vuelva a guardar.');
+    expect(
+      (fixture.componentInstance as unknown as { nombreComercial(): string }).nombreComercial(),
+    ).toBe('Clínica Nueva');
+  });
+
+  it('un rechazo de negocio dice el motivo de la API y el código de soporte', () => {
+    guardarYRechazar(
+      { code: 'FORBIDDEN', message: 'Sólo la administración de la organización puede editarla.', correlationId: 'c-ten' },
+      403,
+    );
+
+    expect(ultimoAviso()).toBe(
+      'Sólo la administración de la organización puede editarla. (Código de soporte: c-ten)',
+    );
+  });
+
+  it('decidir una solicitud que falla dice el motivo de la API', () => {
+    montar();
+    responder([organizacion()], [solicitud()]);
+
+    const boton = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    ).find((b) => b.textContent?.includes('Aprobar'));
+    boton?.click();
+    fixture.detectChanges();
+    http
+      .expectOne((r) => r.url === '/tenants/ten-1/practitioner-requests/af-1/approve')
+      .flush(
+        { code: 'CONFLICT', message: 'Otra persona ya decidió esta solicitud.', correlationId: 'c-dec' },
+        { status: 409, statusText: 'Conflict' },
+      );
+
+    expect(ultimoAviso()).toBe('Otra persona ya decidió esta solicitud. (Código de soporte: c-dec)');
   });
 
   /* -- Solicitudes de médicos (TP-2) ---------------------------------------- */

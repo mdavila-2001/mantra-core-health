@@ -15,7 +15,7 @@ import {
   pinSubtitle,
   withCodes,
 } from './pharmacy-availability-dialog';
-import { destinoDeLaQuery, tomarContexto } from '@core/messaging/enlace-de-chat';
+import { destinoDeLaQuery, tomarContexto } from '@core/messaging/chat-link';
 
 /* ---- el doble de Leaflet -------------------------------------------------- */
 
@@ -111,6 +111,7 @@ describe('withCodes', () => {
     @if (abierto()) {
       <app-pharmacy-availability-dialog
         medicationName="Losartán"
+        [requiresPrescription]="conReceta()"
         [offers]="ofertas()"
         (closed)="abierto.set(false)"
       />
@@ -119,6 +120,7 @@ describe('withCodes', () => {
 })
 class HostComponent {
   readonly abierto = signal(false);
+  readonly conReceta = signal<boolean | null>(true);
   readonly ofertas = signal<readonly OfertaDeFarmacia[]>([oferta(), SIN_COORDENADAS]);
 }
 
@@ -216,10 +218,7 @@ describe('PharmacyAvailabilityDialog', () => {
   it('cada fila tiene el id con el que el mapa la busca al elegir su pin', async () => {
     await abrir();
 
-    expect(filas().map((fila) => fila.id)).toEqual([
-      'pharmacy-offer-A',
-      'pharmacy-offer-B',
-    ]);
+    expect(filas().map((fila) => fila.id)).toEqual(['pharmacy-offer-A', 'pharmacy-offer-B']);
   });
 
   it('«Consultar por chat» manda UNA tarjeta, la del producto, a esa farmacia', async () => {
@@ -258,5 +257,39 @@ describe('PharmacyAvailabilityDialog', () => {
     await fixture.whenStable();
 
     expect(dialogo()).toBeNull();
+  });
+
+  it('resalta la receta médica obligatoria arriba de todo', async () => {
+    await abrir();
+
+    const aviso = dialogo()?.querySelector('[data-testid="ficha-receta-obligatoria"]');
+    expect(aviso?.textContent).toContain('Receta médica obligatoria');
+    expect(dialogo()?.querySelector('[data-testid="ficha-venta-libre"]')).toBeNull();
+  });
+
+  it('un medicamento de venta libre lo dice, sin el aviso de receta', async () => {
+    fixture.componentInstance.conReceta.set(false);
+    await abrir();
+
+    expect(dialogo()?.querySelector('[data-testid="ficha-receta-obligatoria"]')).toBeNull();
+    expect(dialogo()?.querySelector('[data-testid="ficha-venta-libre"]')?.textContent).toContain(
+      'Ninguna farmacia de la red lo publica como venta bajo receta',
+    );
+  });
+
+  it('mientras no se sabe, no afirma ni receta ni venta libre', async () => {
+    fixture.componentInstance.conReceta.set(null);
+    await abrir();
+
+    expect(dialogo()?.querySelector('[data-testid="ficha-receta-obligatoria"]')).toBeNull();
+    expect(dialogo()?.querySelector('[data-testid="ficha-venta-libre"]')).toBeNull();
+  });
+
+  it('la dosis máxima tiene su lugar y dice que no hay fuente, sin inventar un número (B-13)', async () => {
+    await abrir();
+
+    const dosis = dialogo()?.querySelector('[data-testid="ficha-dosis-maxima"]');
+    expect(dosis?.textContent).toContain('Sin fuente oficial cargada todavía');
+    expect(dosis?.textContent).not.toMatch(/\d+\s*(mg|g|ml)/i);
   });
 });

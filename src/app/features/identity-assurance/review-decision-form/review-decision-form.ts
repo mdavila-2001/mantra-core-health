@@ -93,7 +93,7 @@ export class ReviewDecisionForm {
   protected readonly decided = signal<DecidedManualReview | null>(null);
 
   protected readonly errorMessage = computed(() =>
-    errorMessageOf(this.state(), 'No tenés permiso para administrar la verificación de identidad.'),
+    errorMessageOf(this.state(), 'No tiene permiso para administrar la verificación de identidad.'),
   );
 
   protected elegirDecision(valor: unknown): void {
