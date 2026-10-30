@@ -41,11 +41,11 @@
 
     @for (s of drawn(); track s.id) {
       @if (s.area) {
-        <path class="lc__area" [attr.d]="s.area" [style.fill]="'var(--ins-s' + s.color + ')'" />
+        <path class="lc__area" [attr.d]="s.area" [style.fill]="sv(s.color)" />
       }
-      <path class="lc__line" [attr.d]="s.d" [style.stroke]="'var(--ins-s' + s.color + ')'" [attr.stroke-dasharray]="s.dash || null" />
+      <path class="lc__line" [attr.d]="s.d" [style.stroke]="sv(s.color)" [attr.stroke-dasharray]="s.dash || null" />
       @if (s.last) {
-        <circle class="lc__end" [attr.cx]="s.last.x" [attr.cy]="s.last.y" r="3.5" [style.fill]="'var(--ins-s' + s.color + ')'" />
+        <circle class="lc__end" [attr.cx]="s.last.x" [attr.cy]="s.last.y" r="3.5" [style.fill]="sv(s.color)" />
       }
     }
 
@@ -55,7 +55,7 @@
         [attr.x]="margin().left + plotW() + 8"
         [attr.y]="l.y"
         dominant-baseline="middle"
-        [style.fill]="l.kind === 'series' ? 'var(--ins-s' + l.color + ')' : null"
+        [style.fill]="l.kind === 'series' ? sv(l.color) : null"
       >{{ l.text }}</text>
     }
 
@@ -67,7 +67,7 @@
       <line class="lc__guide" [attr.x1]="h.x" [attr.x2]="h.x" [attr.y1]="14" [attr.y2]="14 + plotH()" />
       @for (s of visibleSeries(); track s.id) {
         @if (s.values[h.index] !== null && s.values[h.index] !== undefined) {
-          <circle class="lc__dot" [attr.cx]="h.x" [attr.cy]="yScale()(s.values[h.index]!)" r="4.5" [style.stroke]="'var(--ins-s' + s.color + ')'" />
+          <circle class="lc__dot" [attr.cx]="h.x" [attr.cy]="yScale()(s.values[h.index]!)" r="4.5" [style.stroke]="sv(s.color)" />
         }
       }
     }
@@ -78,7 +78,7 @@
       <p class="lc__tip-date">{{ h.label }}</p>
       @for (row of h.rows; track row.id) {
         <p class="lc__tip-row">
-          <span class="lc__swatch" [style.background]="'var(--ins-s' + row.color + ')'"></span>
+          <span class="lc__swatch" [style.background]="sv(row.color)"></span>
           <span class="lc__tip-name">{{ row.label }}</span>
           <strong class="lc__tip-val">{{ row.value }}</strong>
         </p>
@@ -120,7 +120,7 @@
       @for (s of series(); track s.id) {
         <button type="button" class="lc__chip" [attr.aria-pressed]="!hidden().has(s.id)" (click)="toggle(s.id)">
           <svg class="lc__chip-line" viewBox="0 0 22 6" aria-hidden="true">
-            <line x1="0" x2="22" y1="3" y2="3" [style.stroke]="'var(--ins-s' + s.color + ')'" [attr.stroke-dasharray]="s.dashed ? '6 3' : null" />
+            <line x1="0" x2="22" y1="3" y2="3" [style.stroke]="sv(s.color)" [attr.stroke-dasharray]="s.dashed ? '6 3' : null" />
           </svg>
           {{ s.label }}
         </button>

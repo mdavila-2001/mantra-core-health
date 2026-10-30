@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { formatAxis, formatPercent, formatValue } from '../domain/format';
 import type { MetricUnit } from '../domain/insights.types';
 import { linear, niceTicks } from './chart-math';
-import { trackWidth, type StackRow, type StackSegment } from './chart.types';
+import { seriesVar, trackWidth, type StackRow, type StackSegment } from './chart.types';
 
 /**
  * Pregunta que responde: «¿cómo está compuesto el resultado?».
@@ -28,6 +28,7 @@ export class StackedChart {
   readonly ariaLabel = input.required<string>();
 
   protected readonly width = trackWidth();
+  protected readonly sv = seriesVar;
   protected readonly hover = signal<string | null>(null);
   protected readonly m = { top: 14, right: 12, bottom: 34, left: 52 } as const;
 
@@ -35,6 +36,9 @@ export class StackedChart {
   protected readonly max = computed(() => (this.proportion() ? 1 : Math.max(...this.totals(), 1)));
   protected readonly ticks = computed(() => niceTicks(0, this.max(), 5));
   protected readonly y = computed(() => linear(0, this.ticks()[this.ticks().length - 1] ?? 1, this.height() - this.m.bottom, this.m.top));
+
+  /** Cada cuántas columnas se rotula el eje: ~64 px por etiqueta, para que no se pisen. */
+  protected readonly labelStep = computed(() => Math.max(1, Math.ceil(this.rows().length / Math.max(1, Math.floor((this.width() - this.m.left - this.m.right) / 64)))));
 
   protected readonly cols = computed(() => {
     const rows = this.rows();

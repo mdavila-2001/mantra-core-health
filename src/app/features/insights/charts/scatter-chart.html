@@ -7,7 +7,7 @@
     <text class="sc__tick" [attr.x]="px(t)" [attr.y]="height() - 24" text-anchor="middle">{{ axisX(t) }}</text>
   }
   <text class="sc__axis" [attr.x]="(margin.left + width() - margin.right) / 2" [attr.y]="height() - 6" text-anchor="middle">{{ xLabel() }}</text>
-  <text class="sc__axis" x="12" [attr.y]="margin.top + 4" text-anchor="start">{{ yLabel() }}</text>
+  <text class="sc__axis" x="12" y="12" text-anchor="start">{{ yLabel() }}</text>
 
   @if (trend(); as t) {
     <line class="sc__trend" [attr.x1]="t.x1" [attr.y1]="t.y1" [attr.x2]="t.x2" [attr.y2]="t.y2" />
@@ -20,7 +20,7 @@
       [attr.cx]="d.cx"
       [attr.cy]="d.cy"
       r="5"
-      [style.fill]="'var(--ins-s' + (d.color ?? 1) + ')'"
+      [style.fill]="sv((d.color ?? 1))"
       tabindex="0"
       role="img"
       [attr.aria-label]="d.tip"
