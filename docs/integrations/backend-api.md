@@ -1747,6 +1747,8 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/loyalty/me` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/loyalty/me/points` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/loyalty/me/points/redeem` | [`SaldoInsuficienteError`](../../src/app/core/data-access/loyalty/loyalty.client.ts) | Fuente frontend; no certifica API real |
+| `GET` | `/marketing/insights/campaign-facts` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Hechos diarios de campañas por canal (ventana ≤ 92 días). |
+| `GET` | `/marketing/insights/catalog` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Campañas, canales e hitos. |
 | `GET` | `/patient-spending/me` | [`PatientSpendingClient`](../../src/app/core/data-access/patient-spending/patient-spending.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/patients/me/reviews` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacies/:pharmacyId/inventory` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |

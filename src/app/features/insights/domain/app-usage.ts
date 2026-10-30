@@ -1,7 +1,7 @@
 import { addDays, eachDay, PROTOTYPE_TODAY, weekdayIndex } from './dates';
 import type { DateRange } from './insights.types';
 import { noise } from './prng';
-import { allFacts } from './synthetic-facts';
+import { allFacts } from './facts-source';
 
 /* ============================================================================
     Uso de la app (producto).

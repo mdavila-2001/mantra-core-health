@@ -43,6 +43,8 @@ los datos son de marketing de la plataforma, no de una organización.
 | Servicio | Qué hace |
 |---|---|
 | `InsightsContext` | Contexto de análisis (campaña, periodo, canal, métrica): viaja en la URL y se conserva al cambiar de módulo. |
+| `InsightsData` | Carga el catálogo y los hechos de campañas desde la API (`InsightsClient`), los instala en el dominio y expone el estado de la vista (`ViewState`). El marco no pinta ninguna pantalla hasta que está listo. |
+| `InsightsClient` | Cliente HTTP de `/marketing/insights/*`: catálogo y hechos diarios por campaña y canal. |
 
 ## Estado de los datos
 

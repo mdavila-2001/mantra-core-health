@@ -1,7 +1,7 @@
 import { addDays, daysBetween, eachDay, PROTOTYPE_TODAY, weekdayIndex } from './dates';
 import type { Benchmark, DateRange, HealthStatus, MetricUnit } from './insights.types';
 import { noise } from './prng';
-import { allFacts } from './synthetic-facts';
+import { allFacts } from './facts-source';
 
 /* ============================================================================
     Métricas de redes sociales — datos objetivos de las cuentas propias.

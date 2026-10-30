@@ -7,7 +7,7 @@ import { CHANNELS, METRIC_IDS } from './insights.types';
 import { breakdown, computeKpi, estimateUniqueReach, selectFacts, timeSeries } from './kpi';
 import { ALL_METRICS, isCompleteDefinition } from './metric-catalog';
 import { chartOptionsFor, recommendVisualization } from './viz-recommender';
-import { allFacts } from './synthetic-facts';
+import { allFacts } from './facts-source';
 
 const REG: InsightsFilter = {
   campaignIds: ['c1'],

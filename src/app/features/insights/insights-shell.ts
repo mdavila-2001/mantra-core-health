@@ -4,11 +4,13 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { ViewStateHost } from '../../shared/components/organisms/view-state-host/view-state-host';
 import { NavIcon } from '../../shared/components/atoms/nav-icon/nav-icon';
 import { accesoAPortales, cantidadDePortales, PORTAL_SELECTOR_ROUTE } from '../reporting/reporting-access';
 import { SYNTHETIC_NOTICE } from './domain/campaigns.data';
 import { longDate, PROTOTYPE_TODAY } from './domain/dates';
 import { InsightsContext } from './insights-context';
+import { InsightsData } from './insights-data';
 import { INSIGHTS_BASE, INSIGHTS_MODULES } from './insights-nav';
 import { openAlertCount } from './insights-summary';
 import { SavedViews } from './components/saved-views';
@@ -33,8 +35,8 @@ function readCollapsed(): boolean {
  */
 @Component({
   selector: 'app-insights-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews],
-  providers: [InsightsContext],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, NavIcon, SavedViews, ViewStateHost],
+  providers: [InsightsContext, InsightsData],
   templateUrl: './insights-shell.html',
   styleUrl: './insights-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +45,7 @@ export class InsightsShell {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   protected readonly ctx = inject(InsightsContext);
+  protected readonly data = inject(InsightsData);
 
   protected readonly selectorRoute = PORTAL_SELECTOR_ROUTE;
   /** «Cambiar de portal» solo se ofrece a quien tiene otro acceso además de Insights. */
