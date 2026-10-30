@@ -1,0 +1,622 @@
+[
+  {
+    "route": "patient",
+    "w": 390,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      },
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      }
+    ],
+    "actW": 242,
+    "bannerH": 233,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 390,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      },
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      }
+    ],
+    "actW": 242,
+    "bannerH": 233,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 700,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 260.7,
+        "h": 40
+      },
+      {
+        "l": 268.7,
+        "w": 267.3,
+        "h": 40
+      }
+    ],
+    "actW": 536,
+    "bannerH": 143,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 700,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 260.7,
+        "h": 40
+      },
+      {
+        "l": 268.7,
+        "w": 267.3,
+        "h": 40
+      }
+    ],
+    "actW": 536,
+    "bannerH": 143,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 779,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 300.2,
+        "h": 40
+      },
+      {
+        "l": 308.2,
+        "w": 306.8,
+        "h": 40
+      }
+    ],
+    "actW": 615,
+    "bannerH": 122,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 779,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 300.2,
+        "h": 40
+      },
+      {
+        "l": 308.2,
+        "w": 306.8,
+        "h": 40
+      }
+    ],
+    "actW": 615,
+    "bannerH": 122,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 780,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 343.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 480.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 91,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 780,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 343.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 480.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 91,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 1440,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 875.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 1012.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 70,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "patient",
+    "w": 1440,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 875.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 1012.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 70,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      },
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      }
+    ],
+    "actW": 242,
+    "bannerH": 233,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 390,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      },
+      {
+        "l": 0,
+        "w": 242,
+        "h": 40
+      }
+    ],
+    "actW": 242,
+    "bannerH": 233,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 700,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 260.7,
+        "h": 40
+      },
+      {
+        "l": 268.7,
+        "w": 267.3,
+        "h": 40
+      }
+    ],
+    "actW": 536,
+    "bannerH": 143,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 700,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 260.7,
+        "h": 40
+      },
+      {
+        "l": 268.7,
+        "w": 267.3,
+        "h": 40
+      }
+    ],
+    "actW": 536,
+    "bannerH": 143,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 779,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 300.2,
+        "h": 40
+      },
+      {
+        "l": 308.2,
+        "w": 306.8,
+        "h": 40
+      }
+    ],
+    "actW": 615,
+    "bannerH": 122,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 779,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 0,
+        "w": 300.2,
+        "h": 40
+      },
+      {
+        "l": 308.2,
+        "w": 306.8,
+        "h": 40
+      }
+    ],
+    "actW": 615,
+    "bannerH": 122,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 780,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 343.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 480.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 91,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 780,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 343.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 480.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 91,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "light",
+    "variante": "despues",
+    "detailsColor": "rgb(51, 112, 108)",
+    "bg": "rgb(228, 243, 242)",
+    "contrasteDetalle": 5.01,
+    "contrasteTitulo": 5.01,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 875.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 1012.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 70,
+    "shadow": "rgba(11, 85, 126, 0.08) 0px 1px 2px 0px, rgba(11, 85, 126, 0.04) 0px 1px 1px 0px"
+  },
+  {
+    "route": "medical-center",
+    "w": 1440,
+    "theme": "dark",
+    "variante": "despues",
+    "detailsColor": "rgb(178, 222, 218)",
+    "bg": "rgb(37, 79, 77)",
+    "contrasteDetalle": 6.23,
+    "contrasteTitulo": 6.23,
+    "desbordeHijosPx": 0,
+    "bannerDentroViewport": true,
+    "scrollHorizontalPagina": false,
+    "texto": "Quedó en el paso 3 («Datos de contacto») · 20/10/2026 15:15. ¿Desea continuar desde donde lo dejó?",
+    "titulo": "Tiene un registro guardado en borrador",
+    "errores": 0,
+    "btns": [
+      {
+        "l": 875.5,
+        "w": 129,
+        "h": 40
+      },
+      {
+        "l": 1012.4,
+        "w": 135.6,
+        "h": 40
+      }
+    ],
+    "actW": 272.5,
+    "bannerH": 70,
+    "shadow": "rgba(0, 0, 0, 0.35) 0px 1px 2px 0px"
+  }
+]
