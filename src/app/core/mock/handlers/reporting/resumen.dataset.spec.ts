@@ -249,10 +249,10 @@ describe('Resumen: composición de las tres verticales', () => {
       // Con las verticales REALES (no con los dobles): lo que se prueba es que el Resumen lee el modelo de Suscripciones.
       const resumen = construirResumen(ctx);
       const susc = construirSuscripciones(ctx);
-      const delResumen = grafico(resumen, 'mrr-total');
-      const deSusc = susc.graficos.find((g) => g.id === 'mrr-evolucion')!;
-      expect(delResumen.datos).toEqual(deSusc.datos);
-      expect(delResumen.velas?.velas).toEqual(deSusc.velas?.velas);
+      const fromSummary = grafico(resumen, 'mrr-total');
+      const fromSubscriptions = susc.graficos.find((g) => g.id === 'mrr-evolucion')!;
+      expect(fromSummary.datos).toEqual(fromSubscriptions.datos);
+      expect(fromSummary.velas?.velas).toEqual(fromSubscriptions.velas?.velas);
     }
   });
 
