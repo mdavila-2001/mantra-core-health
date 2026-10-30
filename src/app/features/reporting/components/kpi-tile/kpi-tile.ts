@@ -68,13 +68,13 @@ export class KpiTile {
 
   /** «12 de 340», o `null` si el servidor no mandó los dos lados. */
   protected readonly fraction = computed(() => {
-    const { numerador, denominador, unidad } = this.kpi();
+    const { numerador, denominador, unidad, unidadNumerador, unidadDenominador } = this.kpi();
     if (numerador === null || numerador === undefined || denominador === null || denominador === undefined) {
       return null;
     }
     // Una tasa (porcentaje) se compone de conteos; un importe o una razón se compone de lo que su unidad diga.
     const unit: UnidadValor = unidad.tipo === 'moneda' ? unidad : { tipo: 'numero' };
-    return `${formatearValor(numerador, unit)} de ${formatearValor(denominador, unit)}`;
+    return `${formatearValor(numerador, unidadNumerador ?? unit)} de ${formatearValor(denominador, unidadDenominador ?? unit)}`;
   });
 
   protected readonly showTrend = computed(() => !this.noData() && hasTrend(this.kpi().tendencia));

@@ -69,7 +69,7 @@ function kpis(m: ModeloCobros): KpiSpec[] {
       id: 'reembolsos-pct', titulo: 'Reembolsos', valor: reembolsos, unidad: PCT, subirEsMalo: true,
       variacionPct: variacionSuave(ctx, reembolsos, 8103),
       numerador: enMoneda(m, t.reembolsos), denominador: volumen,
-      motivoSinDato: reembolsos === null ? 'No hubo cobros en el periodo, así que no hay contra qué medir los reembolsos.' : undefined,
+      motivoSinDato: reembolsos === null ? 'No hubo cobros en el periodo, así que no hay contra qué medir los reembolsos.' : undefined, unidadNumerador: u, unidadDenominador: u,
       tendencia: cubo(m.dia.reembolsos, m.dia.volumen),
       info: info({
         definicion: 'Dinero devuelto a clientes como porcentaje de lo cobrado.',
@@ -91,7 +91,7 @@ function kpis(m: ModeloCobros): KpiSpec[] {
     },
     {
       id: 'costo-gateway-pct', titulo: 'Costo del gateway', valor: costo, unidad: PCT, subirEsMalo: true,
-      variacionPct: variacionSuave(ctx, costo, 8105), numerador: enMoneda(m, t.comisiones), denominador: volumen,
+      variacionPct: variacionSuave(ctx, costo, 8105), numerador: enMoneda(m, t.comisiones), denominador: volumen, unidadNumerador: u, unidadDenominador: u,
       motivoSinDato: costo === null ? 'No hubo cobros en el periodo, así que no hay costo que medir.' : undefined,
       tendencia: cubo(m.dia.comisiones, m.dia.volumen),
       info: info({
@@ -103,7 +103,7 @@ function kpis(m: ModeloCobros): KpiSpec[] {
     },
     {
       id: 'disputas-pct', titulo: 'Disputas', valor: disputas, unidad: PCT, subirEsMalo: true,
-      variacionPct: variacionSuave(ctx, disputas, 8106), numerador: enMoneda(m, t.disputas), denominador: volumen,
+      variacionPct: variacionSuave(ctx, disputas, 8106), numerador: enMoneda(m, t.disputas), denominador: volumen, unidadNumerador: u, unidadDenominador: u,
       motivoSinDato: disputas === null ? 'No hubo cobros en el periodo, así que no hay contra qué medir las disputas.' : undefined,
       tendencia: cubo(m.dia.disputas, m.dia.volumen),
       info: info({

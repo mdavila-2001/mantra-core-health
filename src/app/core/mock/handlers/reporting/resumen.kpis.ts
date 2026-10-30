@@ -117,6 +117,8 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
           unidad: { tipo: 'porcentaje' },
           variacionPct: variacionPct(pesoActual, pesoPrevio),
           numerador: s.ingreso,
+          unidadNumerador: dinero,
+          unidadDenominador: dinero,
           denominador: total,
           info: infoEjemplo({
             definicion: 'Qué parte del ingreso viene de suscripciones, que se repiten cada mes, y no de publicidad o comisiones.',
@@ -191,6 +193,8 @@ export function construirKpis(base: BaseResumen): KpiSpec[] {
           variacionPct: null,
           subirEsMalo: true,
           numerador: conc.top10,
+          unidadNumerador: dinero,
+          unidadDenominador: dinero,
           denominador: total,
           info: infoEjemplo({
             definicion: 'Qué parte del ingreso depende de sólo diez clientes; a más concentración, más riesgo si uno se va.',

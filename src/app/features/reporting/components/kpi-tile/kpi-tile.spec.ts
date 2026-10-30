@@ -118,6 +118,38 @@ describe('KpiTile', () => {
     expect(root.querySelector('[data-testid="kpi-fraction"]')).toBeNull();
   });
 
+  describe('«N de M»', () => {
+    it('formatea cada lado con su propia unidad: un costo por unidad no pone bolivianos al conteo', async () => {
+      const { text } = await mount(
+        kpi({
+          id: 'cac',
+          titulo: 'CAC',
+          valor: 666.07,
+          unidad: { tipo: 'moneda', moneda: 'BOB' },
+          numerador: 230460,
+          denominador: 346,
+          unidadNumerador: { tipo: 'moneda', moneda: 'BOB' },
+          unidadDenominador: { tipo: 'numero' },
+        }),
+      );
+      const fraction = text('kpi-fraction') ?? '';
+      expect(fraction).toMatch(/^Bs\s230\.460,00 de 346$/);
+    });
+
+    it('una razón de importes lleva moneda en los dos lados', async () => {
+      const bob = { tipo: 'moneda', moneda: 'BOB' } as const;
+      const { text } = await mount(
+        kpi({ id: 'roas', titulo: 'ROAS', valor: 5.8, unidad: { tipo: 'razon', sufijo: '×' }, numerador: 304199, denominador: 52423, unidadNumerador: bob, unidadDenominador: bob }),
+      );
+      expect(text('kpi-fraction')).toMatch(/Bs\s304\.199,00 de Bs\s52\.423,00/);
+    });
+
+    it('sin unidades declaradas, una tasa se lee como conteos', async () => {
+      const { text } = await mount(kpi({ id: 'x', titulo: 'X', valor: 12.5, unidad: { tipo: 'porcentaje' }, numerador: 5, denominador: 40 }));
+      expect(text('kpi-fraction')).toBe('5 de 40');
+    });
+  });
+
   describe('mini-tendencia', () => {
     it('dibuja la tendencia con una frase para el lector de pantalla', async () => {
       // jsdom no trae `ResizeObserver`, que `ngx-echarts` exige para ajustar el lienzo.

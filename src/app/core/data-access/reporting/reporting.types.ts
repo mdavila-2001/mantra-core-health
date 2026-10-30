@@ -178,6 +178,13 @@ export interface KpiSpec {
   readonly subirEsMalo?: boolean;
   readonly numerador?: number | null;
   readonly denominador?: number | null;
+  /**
+   * Unidad de cada lado del «N de M». Sin ella se asume la del KPI si es un importe y «número»
+   * si no; pero una tasa de importes (ROAS, take rate) o un costo por unidad (CPM = Bs ÷ impresiones)
+   * necesitan decir qué es cada lado, o se leen impresiones como bolivianos.
+   */
+  readonly unidadNumerador?: UnidadValor;
+  readonly unidadDenominador?: UnidadValor;
   readonly motivoSinDato?: string;
   readonly info: InfoCalculo | null;
   readonly infoMotivo?: string;
