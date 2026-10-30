@@ -673,19 +673,22 @@
             </app-form-field>
           }
 
-          <app-form-field label="Desde" hint="Cuándo empezó." [required]="true">
-            <app-date-picker [(value)]="desde" />
-          </app-form-field>
+          <!-- Desde y Hasta en la misma fila: son un solo período. -->
+          <div class="historial__periodo">
+            <app-form-field label="Desde" hint="Cuándo empezó." [required]="true">
+              <app-date-picker [(value)]="desde" />
+            </app-form-field>
 
-          <!-- El período invertido se marca en el propio campo y no como aviso
-               suelto: el error está ahí y ahí hay que corregirlo. -->
-          <app-form-field
-            label="Hasta"
-            hint="Déjelo vacío si sigue ejerciendo ahí."
-            [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
-          >
-            <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
-          </app-form-field>
+            <!-- El período invertido se marca en el propio campo y no como aviso
+                 suelto: el error está ahí y ahí hay que corregirlo. -->
+            <app-form-field
+              label="Hasta"
+              hint="Déjelo vacío si sigue ejerciendo ahí."
+              [errorMessage]="periodoInvertido() ? 'El fin no puede ser anterior al inicio.' : ''"
+            >
+              <app-date-picker [(value)]="hasta" [hasError]="periodoInvertido()" />
+            </app-form-field>
+          </div>
         </form>
 
         <button

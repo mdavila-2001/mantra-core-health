@@ -10,3 +10,12 @@
   display: grid;
   gap: var(--sp-4);
 }
+
+/* Desde y Hasta lado a lado; una sola columna cuando no entran dos de 12rem.
+   `auto-fit` colapsa la pista vacía: con curso crónico, Desde va a lo ancho. */
+.verificar__periodo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
