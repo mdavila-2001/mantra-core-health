@@ -25,6 +25,7 @@ import { errorToViewState } from '../../../../core/http/error-to-view-state';
 import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -194,6 +195,7 @@ export interface DiaDelCalendario {
 @Component({
   selector: 'app-follow-up-block',
   imports: [
+    AppButtonLink,
     FormResponsePicker,
     Alert,
     AppButton,
