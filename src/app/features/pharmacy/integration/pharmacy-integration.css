@@ -64,6 +64,13 @@
   gap: var(--sp-4);
 }
 
+/* En una columna el botón ocupa el ancho: su rótulo, largo, pasa a dos renglones en vez de salirse. */
+.integration__connect-form > [app-button] {
+  height: auto;
+  white-space: normal;
+  text-align: center;
+}
+
 @media (min-width: 780px) {
   .integration__connect-form {
     grid-template-columns: minmax(0, 1fr) auto;
