@@ -284,8 +284,6 @@ export function registrarAuth(router: MockRouter): void {
       collegeName?: string;
       collegeLicenseIssueDate?: string;
       collegeLicenseFileId?: string;
-      name?: string;
-      lastName?: string;
       // Dónde dice trabajar (28/10/2026), como en la API.
       institutionSlugs?: string[];
       insurerCarrierIds?: string[];
