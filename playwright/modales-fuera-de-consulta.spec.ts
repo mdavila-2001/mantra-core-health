@@ -308,6 +308,32 @@ async function cerrarTodo(page: Page): Promise<void> {
 
 test.beforeAll(() => mkdirSync(SALIDA, { recursive: true }));
 
+/**
+ * Las páginas que alojan modales tocados, a página entera: un estilo del modal
+ * que se filtre afuera se ve acá (`.historial__periodo`, 30/10/2026).
+ */
+const PAGINAS: readonly { readonly nombre: string; readonly ruta: string; readonly pestana?: RegExp }[] = [
+  { nombre: 'pagina-trayectoria', ruta: '/my-account/edit', pestana: /Trayectoria/ },
+  { nombre: 'pagina-mi-cuenta', ruta: '/my-account' },
+];
+
+test('páginas que alojan los modales · escritorio', async ({ page }) => {
+  test.setTimeout(300_000);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await entrarAlSimulador(page, 'medica', BASE);
+  page.setDefaultTimeout(15_000);
+  for (const pagina of PAGINAS) {
+    await irA(page, '/dashboard');
+    await irA(page, pagina.ruta);
+    await page.waitForTimeout(2500);
+    if (pagina.pestana) {
+      await pestana(page, pagina.pestana);
+      await page.waitForTimeout(1500);
+    }
+    await page.screenshot({ path: join(SALIDA, `escritorio-${pagina.nombre}.png`), fullPage: true });
+  }
+});
+
 for (const ancho of ANCHOS) {
   for (const [usuario, casos] of Object.entries(CASOS)) {
     test(`modales de ${usuario} · ${ancho.nombre}`, async ({ page }) => {
