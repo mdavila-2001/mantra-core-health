@@ -1,4 +1,4 @@
-<section class="rt" [class.rt--cards]="table().filas.length <= MAX_CARD_ROWS" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'tabla-' + table().id">
+<section class="rt" [class.rt--cards]="asCards()" [class.rt--prose]="isProse()" [class.rt--wide]="table().columnas.length >= WIDE_COLUMNS" [attr.aria-labelledby]="ids + '-t'" [attr.data-testid]="'tabla-' + table().id">
   <header class="rt__head">
     <h3 class="rt__title" [id]="ids + '-t'">{{ table().titulo }}</h3>
     @if (table().info; as info) {
@@ -29,12 +29,12 @@
     </p>
   } @else {
     <div class="rt__scroll" tabindex="0" role="region" [attr.aria-label]="'Tabla: ' + table().titulo">
-      <table class="rt__table">
+      <table class="rt__table" role="table">
         <caption class="rt__sr">{{ table().titulo }}</caption>
-        <thead>
-          <tr>
+        <thead role="rowgroup">
+          <tr role="row">
             @for (column of table().columnas; track column.clave) {
-              <th scope="col" [class.rt__num]="numericColumns().has(column.clave)" [attr.aria-sort]="ariaSort(column.clave)">
+              <th scope="col" role="columnheader" [class.rt__num]="numericColumns().has(column.clave)" [attr.aria-sort]="ariaSort(column.clave)">
                 <button type="button" class="rt__sort" [attr.data-testid]="'sort-' + column.clave" (click)="toggleSort(column.clave)">
                   {{ column.etiqueta }}<span class="rt__arrow" aria-hidden="true">{{ arrow(column.clave) }}</span>
                 </button>
@@ -42,14 +42,14 @@
             }
           </tr>
         </thead>
-        <tbody>
+        <tbody role="rowgroup">
           @for (row of rows(); track $index) {
-            <tr>
+            <tr role="row">
               @for (column of table().columnas; track column.clave) {
                 @if ($first) {
-                  <th scope="row" [class.rt__missing]="isMissing(row[column.clave])">{{ display(row[column.clave], column) }}</th>
+                  <th scope="row" role="rowheader" [class.rt__missing]="isMissing(row[column.clave])">{{ display(row[column.clave], column) }}</th>
                 } @else {
-                  <td [class.rt__num]="numericColumns().has(column.clave)" [class.rt__missing]="isMissing(row[column.clave])" [class.rt__blank]="row[column.clave] === ''" [attr.data-label]="column.etiqueta">
+                  <td role="cell" [class.rt__num]="numericColumns().has(column.clave)" [class.rt__missing]="isMissing(row[column.clave])" [class.rt__blank]="row[column.clave] === ''" [attr.data-label]="column.etiqueta">
                     {{ display(row[column.clave], column) }}
                   </td>
                 }

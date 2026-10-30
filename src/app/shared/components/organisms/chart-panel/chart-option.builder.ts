@@ -254,7 +254,7 @@ function construirMapaCalor(
       },
     },
     grid: { left: 8, right: 16, top: 12, bottom: 60, containLabel: true },
-    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: false, width: 120, overflow: 'break' } },
+    xAxis: { type: 'category', data: d.columnas, splitArea: { show: false }, axisLabel: { color: tema.textoSuave, interval: 0, hideOverlap: d.columnas.length > 8, width: 120, overflow: 'break' } },
     yAxis: { type: 'category', data: d.filas, inverse: true, axisLabel: { color: tema.textoSuave, interval: 0 } },
     series: [
       {
@@ -410,7 +410,7 @@ export function construirOpciones(o: OpcionesBuild): EChartsCoreOption {
           });
     case 'mapa-calor':
       // Con la celda de 40 px las cifras se montan unas sobre otras: en angosto se leen en el tooltip y en la tabla.
-      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: false, overflow: 'none' } } });
+      return withNarrow(construirMapaCalor(o, d), { series: [{ label: { show: false } }], xAxis: { axisLabel: { rotate: 35, hideOverlap: d.columnas.length > 8, overflow: 'none' } } });
     case 'medidor':
       return construirMedidor(o, d);
     case 'cascada':

@@ -171,6 +171,13 @@ describe('construirOpciones', () => {
       expect(at(cascada, 'media.0.option.legend.top')).toBe(0);
     });
 
+    it('un mapa de calor de 24 columnas (horas) no apila todos los rótulos: deja que ECharts oculte los que se pisan', () => {
+      const horas = Array.from({ length: 24 }, (_, h) => `${h} h`);
+      const calor = buildRaw({ tipo: 'mapa-calor', columnas: horas, filas: ['L'], celdas: horas.map((_, x) => [x, 0, x]), nombreValor: 'V' });
+      expect(at(calor, 'baseOption.xAxis.axisLabel.hideOverlap')).toBe(true);
+      expect(at(calor, 'media.0.option.xAxis.axisLabel.hideOverlap')).toBe(true);
+    });
+
     it('con pocas categorías se rotulan todas', () => {
       media({});
       const o = build({ tipo: 'cartesiano', categorias: ['A', 'B', 'C'], series: [{ nombre: 'S', valores: [1, 2, 3], forma: 'barra' }] });
