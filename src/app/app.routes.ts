@@ -23,6 +23,7 @@ import {
   loadAdmissionDetail,
 } from './features/admin/admissions/admissions.routes';
 import { PORTAL_RUTAS } from './features/admin/portal/portal.routes';
+import { publicPrescriptionShareRoutes } from './features/prescription-share/prescription-share.routes';
 import {
   designMockupRoutes,
   legacyMockupRedirects,
@@ -524,11 +525,9 @@ const PANTALLAS_HIJAS: Routes = [
         .catch(() => chunkFallido()),
   },
   {
-    // Elegir cuál de mis recetas comprar (carril 43, H4). Hija de «Farmacia»:
-    // la tienda la enlaza con «Buscar toda una receta», y cada tarjeta lleva a
-    // `medical-record/where-to-buy/:requestId`, que ya existe. Con
-    // `seccionRolesGuard` por la misma razón que `pharmacy-orders/new`: su
-    // sección declara roles y `app.routes.spec.ts` exige cumplirlos en la hija.
+    // Mis recetas (carril 43, H4; «Compartir», FAR-01). Hija de «Farmacia», con
+    // `seccionRolesGuard` como `pharmacy-orders/new`: su sección declara roles
+    // y `app.routes.spec.ts` exige cumplirlos en la hija.
     path: 'my-account/pharmacy/prescriptions',
     title: `${APP_TITLE} - Mis recetas`,
     canActivate: [seccionRolesGuard],
@@ -2207,6 +2206,7 @@ export const routes: Routes = [
       ),
     title: 'AloVida - Verificar certificado',
   },
+  ...publicPrescriptionShareRoutes(chunkFallido),
   {
     path: 'auth',
     component: Login,
