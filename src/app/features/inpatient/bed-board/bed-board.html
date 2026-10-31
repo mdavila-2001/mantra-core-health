@@ -1,0 +1,92 @@
+<app-page-header title="Tablero de camas" [subtitle]="site()?.name ?? 'Estado operativo de las camas por unidad'" [breadcrumbs]="breadcrumbs()">
+  <span page-meta class="board__freshness" data-testid="board-freshness" aria-live="polite">
+    Actualizado {{ freshness() }}
+  </span>
+  <div page-actions class="board__header-actions">
+    <button app-button size="sm" variant="outline" data-testid="board-refresh" (clicked)="refresh()">Actualizar</button>
+    @if (access.can(siteId(), 'cleaning.view')) {
+      <a app-button size="sm" variant="ghost" [routerLink]="cleaningRoute" [queryParams]="{ site: siteId() }">Cola de limpieza</a>
+    }
+    @if (access.can(siteId(), 'adt.admit')) {
+      <a app-button size="sm" [routerLink]="admissionRoute" [queryParams]="{ site: siteId() }" data-testid="board-admit">Nuevo ingreso</a>
+    }
+  </div>
+</app-page-header>
+
+<app-view-state-host [state]="gate()" (retry)="access.reload()">
+  <app-filter-bar [filters]="filters()" [showSearch]="false" data-testid="board-filters" />
+
+  <app-view-state-host [state]="boardState()" (retry)="refresh()" (refresh)="refresh()" data-testid="board-state">
+    <app-card class="board" padding="lg" data-testid="bed-board">
+      <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+        @for (u of units(); track u.unitId) {
+          <app-tab [label]="u.name + ' · ' + u.counts.total">
+            <div class="board__panel">
+              <dl class="board__counts" data-testid="board-counts" [attr.aria-label]="'Recuentos de ' + u.name">
+                @for (k of countsOf(u); track k.label) {
+                  <div class="board__count" [class.board__count--zero]="k.value === 0">
+                    <dt>{{ k.label }}</dt>
+                    <dd>{{ k.value }}</dd>
+                  </div>
+                }
+              </dl>
+
+              <div class="board__toolbar">
+                <app-segmented-control [options]="views" [value]="view()" ariaLabel="Ver como" (valueChange)="setView($event)" />
+              </div>
+
+              @if (view() === 'grid') {
+                @if (u.cells.length === 0) {
+                  <p class="board__empty" data-testid="board-unit-empty">Ninguna cama de esta unidad coincide con los filtros.</p>
+                } @else {
+                  <ul class="board__grid" data-testid="board-grid">
+                    @for (c of u.cells; track c.id) {
+                      <li [attr.data-space-id]="c.id"><app-bed-tile [bed]="tile(c)" [selected]="selectedId() === c.id" (activated)="openCell(c)" /></li>
+                    }
+                  </ul>
+                }
+              } @else {
+                <app-data-table
+                  data-testid="board-list"
+                  [state]="rows().get(u.unitId)!"
+                  [columns]="columns()"
+                  [trackBy]="byId"
+                  [caption]="'Camas de ' + u.name"
+                  stackedOnMobile
+                  rowNavigable
+                  (rowActivated)="openCell($event.cell)"
+                />
+              }
+
+              <section class="board__legend" aria-labelledby="board-legend-title">
+                <h2 id="board-legend-title" class="board__legend-title">Leyenda (HL7 v2-0116)</h2>
+                <ul>
+                  @for (l of legend; track l.code) {
+                    <li><span class="board__legend-mark board__legend-mark--{{ l.code }}" aria-hidden="true">{{ l.code }}</span> <strong>{{ l.label }}</strong> — {{ l.rule }}</li>
+                  }
+                </ul>
+              </section>
+            </div>
+          </app-tab>
+        }
+      </app-tabs>
+    </app-card>
+  </app-view-state-host>
+</app-view-state-host>
+
+<app-drawer-panel [open]="selected() !== null" [heading]="selected() ? 'Cama ' + selected()!.code : 'Cama'" [subheading]="selected()?.name ?? ''" (closed)="closePanel()">
+  @if (selected(); as c) {
+    <app-bed-panel [cellId]="c.id" (changed)="refresh()">
+      <app-bed-actions adtActions [cell]="c" [siteId]="siteId() ?? ''" [beds]="allCells()" (changed)="refresh()" />
+    </app-bed-panel>
+  }
+</app-drawer-panel>
+
+<ng-template #cellCode let-r>
+  <strong>{{ r.code }}</strong>
+  <span class="board__muted">{{ r.cell.path.at(-2)?.name }}</span>
+</ng-template>
+
+<ng-template #cellStatus let-r>
+  <app-badge size="sm" [variant]="r.v2Code === 'U' ? 'success' : r.v2Code === 'O' ? 'primary' : r.v2Code === 'K' ? 'error' : r.v2Code === 'H' ? 'warning' : r.v2Code === 'R' ? 'info' : 'secondary'">{{ r.v2Code }} · {{ r.statusLabel }}</app-badge>
+</ng-template>
