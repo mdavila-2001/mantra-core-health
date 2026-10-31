@@ -18,6 +18,11 @@ import { PaginatedForm } from '../../../shared/components/organisms/paginated-fo
 import { paginateFields } from '../../../shared/forms/paginated/paginate-fields';
 import { errorMessageOf, opcionDe, UUID_ERROR, UUID_HINT, UUID_PATTERN } from '../../../shared/forms/form-support';
 
+/*
+ * Sin `SPACE` en la actualización (M6): el `PATCH` no lleva el espacio de
+ * destino y la base rechazaría el cambio (`ck_org_user_assignments_scope_target`)
+ * con un 500 en vez de un 422 guiado. El alcance «Espacio» se da en el alta.
+ */
 const SCOPES: readonly OrgAccessScope[] = ['TENANT', 'PRACTICE', 'SITE', 'UNIT'];
 
 /**

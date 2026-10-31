@@ -43,6 +43,10 @@ import type { ColumnDef } from '../../../shared/components/organisms/data-table/
 import { FormActions } from '../../../shared/components/organisms/form-actions/form-actions';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { Card } from '../../../shared/components/molecules/card/card';
+import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
+import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
+import { SpaceTariffs } from './space-tariffs/space-tariffs';
 import { displayCurrency } from '../../../core/money/display-currency';
 
 /** Filas por página. El backend admite hasta 500 y aplica 50 por omisión. */
@@ -93,6 +97,10 @@ const MAX_NOMBRE = 200;
     RouterLink,
     SearchField,
     Select,
+    Card,
+    SpaceTariffs,
+    Tab,
+    Tabs,
   ],
   templateUrl: './services-catalog.html',
   styleUrl: './services-catalog.css',
@@ -106,6 +114,21 @@ export class ServicesCatalog {
   private readonly toast = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
+
+  /* ---- F5e · pestañas: servicios y tarifas de espacios (`?tab=`) ----------- */
+
+  private readonly queryParams = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
+  protected readonly catalogTab = linkedSignal<number>(() => (this.queryParams().get('tab') === 'space-tariffs' ? 1 : 0));
+
+  protected changeCatalogTab(index: number): void {
+    this.catalogTab.set(index);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { tab: index === 1 ? 'space-tariffs' : null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
 
   private readonly celdaPrecio =
     viewChild.required<TemplateRef<{ $implicit: ServiceCatalogItem }>>('celdaPrecio');

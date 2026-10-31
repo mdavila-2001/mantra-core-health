@@ -1292,6 +1292,58 @@ Entradas sueltas que amplían clientes ya documentados más arriba.
 
 ---
 
+### Infraestructura hospitalaria F4/F5 (`infra-f4f5-web`) — 33 operaciones
+
+Formas verificadas contra la API (`origin/claude/trusting-hawking-q3p12v`,
+`periop-or.controller.ts`, `billing-space-charges.controller.ts`,
+`accounting-space.controller.ts`, `space-assets.controller.ts`,
+`diagnostic-equipment.controller.ts`) y fijadas por las specs
+`*.contract.spec.ts` de cada cliente. Lo que la API todavía no tiene se marca
+**Pedida**: la web la trata como opcional o la deja detrás de una bandera.
+
+| Método | Ruta | Cliente | Estado en la API |
+|---|---|---|---|
+| `GET` | `/practice/infrastructure-access/me` | `SiteAccessClient` | Pedida (W-F2F3); sin ella, 404 → consola de la organización |
+| `GET` | `/sites/:siteId/operating-rooms` | `OperatingRoomsClient` | Sí |
+| `GET` | `/sites/:siteId/or-blocks` | `OperatingRoomsClient` | Sí (`owner` sin rótulo, `cases` como ids) |
+| `POST` | `/sites/:siteId/or-blocks` | `OperatingRoomsClient` | Sí (`specialtyConceptId`) |
+| `POST` | `/or-blocks/:id/release` | `OperatingRoomsClient` | Sí (`If-Match` pedido; hoy se ignora) |
+| `POST` | `/or-blocks/:id/cancel` | `OperatingRoomsClient` | Sí (ídem) |
+| `GET` | `/sites/:siteId/or-utilization` | `OperatingRoomsClient` | Sí (`rooms[]`; `asOf`/`totals` pedidos, el cliente suma) |
+| `POST` | `/procedure-cases` | `ProceduresClient` | Sí |
+| `POST` | `/procedure-cases/:caseId/safety-checklists` | `ProceduresClient` | Sí (201/200, idempotente) |
+| `GET` | `/procedure-cases/:caseId/safety-checklists/:checklistId` | `ProceduresClient` | Sí (`response.status` es concepto) |
+| `POST` | `/procedure-cases/:caseId/safety-checklists/:checklistId/responses` | `ProceduresClient` | Sí |
+| `POST` | `/procedure-cases/:caseId/room-events` | `ProceduresClient` | Sí (`cleaningOrderId` en la salida) |
+| `GET` | `/sites/:siteId/diagnostic-equipment` | `EquipmentLocationClient` | Sí |
+| `GET` | `/care-spaces/:careSpaceId/equipment` | `EquipmentLocationClient` | Sí |
+| `GET` | `/diagnostic-equipment/:id` | `EquipmentLocationClient` | Sí (F5a, `e46739aaa`) |
+| `PATCH` | `/diagnostic-equipment/:id` | `EquipmentLocationClient` | Sí (respuesta plana: la ficha relee) |
+| `POST` | `/diagnostic-equipment/:id/resource` | `EquipmentLocationClient` | Sí (`{equipmentId, resourceId}`) |
+| `GET` | `/diagnostic-equipment/:id/mwl-station` | `EquipmentLocationClient` | Sí |
+| `GET` | `/care-spaces/:careSpaceId/stock` | `InventoryLocationsClient` | Sí |
+| `POST` | `/pharmacy/:pharmacySiteId/inventory-locations` | `InventoryLocationsClient` | Sí (`{id}`) |
+| `POST` | `/pharmacy/inventory-locations/:id/relocate` | `InventoryLocationsClient` | Sí (`{id, careSpaceId, previousCareSpaceId}`) |
+| `GET` | `/sites/:siteId/sample-collection-points` | `SampleCollectionClient` | Pedida (A-F5b); detrás de `collectionPoints` |
+| `GET` | `/billing/space-tariffs` | `SpaceBillingClient` | Sí (`tariffView`) |
+| `POST` | `/billing/space-tariffs` | `SpaceBillingClient` | Sí (`tariffKind`, `currencyConceptId`) |
+| `POST` | `/billing/space-tariffs/:id/close` | `SpaceBillingClient` | Sí |
+| `GET` | `/billing/encounters/:encounterId/pending-charges` | `SpaceBillingClient` | Sí (arreglo de `chargeView`) |
+| `POST` | `/billing/encounters/:encounterId/bed-day-charges/run` | `SpaceBillingClient` | Sí (`{created[], skipped}`) |
+| `POST` | `/billing/charge-captures/:id/void` | `SpaceBillingClient` | Sí |
+| `GET` | `/sites/:siteId/inpatients` | `SpaceBillingClient` | Sí (F3; de ahí se elige el encuentro) |
+| `GET` | `/accounting/infrastructure-items` | `InfrastructureItemsClient` | Sí |
+| `PATCH` | `/accounting/infrastructure-items/:id` | `InfrastructureItemsClient` | Sí (`If-Match`) |
+| `GET` | `/accounting/cost-centers` | `InfrastructureItemsClient` | Sí |
+| `POST` | `/accounting/cost-centers/:id/unit-link` | `InfrastructureItemsClient` | Sí |
+
+Las órdenes de recambio usan `POST /cleaning-orders/:id/{start,finish,inspect}`
+de F2 (`If-Match` obligatorio). Claves pedidas y **no enviadas** mientras su
+bandera esté apagada (`INFRA_INTEGRATION_FLAGS`): `suggestedCareSpaceId` en
+`POST /clinical/service-requests`, `collectionCareSpaceId` en
+`GET /diagnostics/work-orders` y `careSpaceId` en
+`POST /scheduling/resources/:id/templates`.
+
 ## Modelo de error
 
 Copiado de `src/common/errors/error-codes.ts` del backend, que los declara parte

@@ -1,0 +1,88 @@
+@if (failure(); as f) {
+  <app-view-state-host [state]="f" data-testid="checklist-failure" />
+}
+
+<app-view-state-host [state]="state()" (retry)="create()">
+  <app-empty-state vsh-empty variant="empty" title="Sin check-list" description="Esta intervención todavía no tiene check-list de cirugía segura.">
+    <button app-button empty-actions size="sm" [isLoading]="sending()" (clicked)="create()" data-testid="checklist-create">Iniciar el check-list</button>
+  </app-empty-state>
+
+  @if (shownPhase(); as phase) {
+    <div class="case-checklist">
+      <app-stepper [steps]="steps()" label="Fases del check-list OMS" [interactive]="true" (stepSelected)="selectStep($event)" />
+
+      <div class="case-checklist__head">
+        <h3 class="case-checklist__title">{{ phaseLabels[phase.phase] }}</h3>
+        @if (phase.completedAt) {
+          <span class="case-checklist__done" data-testid="checklist-phase-done">Completada el {{ dateTimeOf(phase.completedAt) }}</span>
+        } @else if (editable()) {
+          <button app-button variant="ghost" size="sm" (clicked)="confirmAll()" data-testid="checklist-confirm-all">Marcar todo como confirmado</button>
+        }
+      </div>
+
+      @if (editable() && !hasProfile()) {
+        <app-alert tone="warning" title="Falta su perfil profesional">Para firmar una fase, su cuenta necesita un perfil profesional.</app-alert>
+      }
+
+      <ol class="case-checklist__items" [attr.data-testid]="'checklist-items-' + phase.phase">
+        @for (item of phase.items; track item.id; let i = $index) {
+          <li class="case-checklist__item">
+            <p class="case-checklist__prompt">
+              <span class="case-checklist__number">{{ i + 1 }}.</span>
+              {{ item.prompt }}
+              @if (item.mandatory) {
+                <span class="case-checklist__mandatory">Obligatorio</span>
+              }
+            </p>
+            @if (item.response; as r) {
+              <p class="case-checklist__answer" data-testid="checklist-answer">{{ answerOf(r.status) }}</p>
+            } @else if (editable()) {
+              <app-segmented-control
+                [options]="answers"
+                [value]="$any(draftOf(item.id).status ?? '')"
+                [ariaLabel]="'Respuesta al ítem ' + (i + 1)"
+                [wrap]="true"
+                (valueChange)="setStatus(item.id, $event)"
+              />
+              @if (draftOf(item.id).status === 'EXCEPTION') {
+                <app-textarea
+                  [value]="draftOf(item.id).reason"
+                  [rows]="2"
+                  [maxLength]="1000"
+                  [hasError]="!draftOf(item.id).reason.trim()"
+                  placeholder="Motivo de la excepción (obligatorio)"
+                  (valueChange)="setReason(item.id, $event)"
+                />
+              }
+            } @else {
+              <p class="case-checklist__muted">Pendiente</p>
+            }
+          </li>
+        }
+      </ol>
+
+      @if (editable()) {
+        <div class="case-checklist__footer">
+          <p class="case-checklist__muted" aria-live="polite">
+            @if (missing() > 0) {
+              Faltan {{ missing() }} ítems por responder.
+            } @else if (missingReason()) {
+              Una excepción no tiene su motivo.
+            } @else {
+              Lista para firmar.
+            }
+          </p>
+          <button
+            app-button
+            [disabled]="missing() > 0 || missingReason() || sending() || !hasProfile()"
+            [isLoading]="sending()"
+            (clicked)="submit()"
+            data-testid="checklist-submit"
+          >
+            Completar «{{ phaseLabels[phase.phase] }}»
+          </button>
+        </div>
+      }
+    </div>
+  }
+</app-view-state-host>

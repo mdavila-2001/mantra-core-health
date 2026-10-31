@@ -1,6 +1,40 @@
 # Estado
 
-**Última tarea verificada:** rama `infra-f2f3-web` · 2026-10-31 · **Infraestructura hospitalaria F2 + F3 (web)**
+**Última tarea verificada:** rama `infra-f4f5-web` · 2026-10-31 · **Infraestructura hospitalaria F4 (quirófanos) y F5
+(integración, web)**, tres pasadas. La tercera reescribe tipos, clientes y maqueta con **las formas reales de la API**
+tras la revisión `frontend-reviewer` (CAMBIOS REQUERIDOS) y suma la primera evidencia **contra la API real**
+(`EVIDENCIAS.md` § «Infraestructura F4/F5 — tercera pasada») (contrato `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md` §F4.4, §F5).
+Detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5». Revisión independiente (`visual-reviewer`,
+`frontend-reviewer`, `regression-auditor`): **pendiente** — quien implementa no aprueba.
+
+| Pantalla | Qué quedó |
+|---|---|
+| `/interventions` | columna Quirófano (código · nombre, ruta en globo), ventana reservada con +prep/+limpieza, bloque, filtro por sala (de `GET /operating-rooms`); accesos según rol; el equipo vive en `app-case-team` |
+| `/interventions/:caseId` | una tarjeta con 5 pestañas: Resumen, Equipo, Check-list OMS (3 fases con `Stepper`, excepción con motivo), Eventos de sala (orden + gates OMS explicados), Cargos (S3 con su porqué) |
+| `/interventions/new` | programar con la ventana que se reservará a la vista; 409 con «Usar la próxima ventana libre» |
+| `/interventions/operating-rooms` | `app-resource-timeline` (organismo nuevo permitido): bloques, liberados y casos con prep/limpieza sombreados; tabla a 390 px; S7 a los 5 min |
+| `/interventions/blocks` · `/utilization` | bloques de la semana y alta (serie semanal), liberar/cancelar con motivo e `If-Match`; KPI de sala y de bloque, tablas por dueño, sala y bloque |
+| Catálogo de servicios | pestaña «Tarifas de espacios» (día-cama, quirófano por tiempo, vigencias, cierre) y `bed-day-charges` (regla de medianoche, idempotente) |
+| Ficha de espacio (F1) | pestañas «Equipos» (ubicar equipo de la sede) y «Stock» (existencias, botiquín, reubicar), diferidas |
+| `medical-laboratory/equipment/:id` | ficha de equipo: General, Ubicación y DICOM (AE Title con la regla DICOM, MWL), Agenda (recurso) |
+
+Segunda pasada (detalle en `EVIDENCIAS.md` § «Infraestructura F4/F5 — segunda pasada»):
+
+| Pantalla | Qué quedó |
+|---|---|
+| Ficha clínica › pedir estudios | «Punto de toma» (sugerencia opcional, sólo espacios `SAMPLE_COLLECTION` activos de la sede) → `suggestedCareSpaceId`; la fila del estudio lo muestra |
+| `/diagnostics` (cola de laboratorio) | columna «Punto de toma» y filtro por punto (`collectionCareSpaceId`) |
+| `/schedule/edit` (alta de horario) | «Consultorio» opcional de la plantilla (`careSpaceId`, CONSULTING/PROCEDURE/IMAGING); 422 de función, sede o solape; el detalle del turno muestra el consultorio; 409 `CARE_SPACE_DOUBLE_BOOKED` en la maqueta |
+| `/administration/accounting/infrastructure` | una tarjeta con pestañas «Activos» (ubicar el activo en un espacio con el árbol físico, ruta visible) y «Centros de costo» (ligar a unidad; 409 `UNIT_ALREADY_HAS_COST_CENTER`) |
+| `/interventions/:caseId` | «Eventos de sala» suma el recambio (orden de limpieza: iniciar, terminar, sala lista con `If-Match`); «Cargos» muestra el cargo `OR_TIME` (minutos, fracciones, centro de costo) |
+
+Pendientes declarados (Desvíos W-F4F5 del contrato, segunda pasada): F5d bloqueo de agenda por origen de espacio no se
+hizo; la firma del informe que cierra el caso se emula en la maqueta; las rutas de limpieza se solapan con F2 (otro
+agente) y quedaron en el mismo prefijo `/cleaning-orders`; contra la API real no se ejecutó.
+
+## Infraestructura F2 + F3 (web) — 2026-10-31
+
+**Tarea verificada:** rama `infra-f2f3-web` · 2026-10-31 · **Infraestructura hospitalaria F2 + F3 (web)**
 (contrato `CONTRATO-F2-F5.md` §F2.4 y §F3.4). Detalle en `EVIDENCIAS.md` § «Infraestructura F2 + F3». Revisión
 independiente: **pendiente** — quien implementa no aprueba.
 
