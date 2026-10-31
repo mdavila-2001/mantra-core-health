@@ -49,6 +49,7 @@ import { FormField } from '../../../shared/components/molecules/form-field/form-
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { FormSection } from '../../../shared/components/organisms/form-section/form-section';
 import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
@@ -107,6 +108,7 @@ const PESTANAS = ['Médico', 'Documento y matrícula', 'Habilitación y motivo']
     Input,
     Link,
     NavIcon,
+    BackLink,
     PageHeader,
     ReactiveFormsModule,
     RouterLink,
@@ -123,6 +125,9 @@ const PESTANAS = ['Médico', 'Documento y matrícula', 'Habilitación y motivo']
 export class PractitionerAssistedRegistration implements OnInit {
   private readonly client = inject(AssistedPractitionerClient);
   private readonly navigation = inject(NavigationService);
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = '/administration/users';
   private readonly departamentos = inject(BoDepartmentsCatalog);
   private readonly catalogoEspecialidades = inject(MedicalSpecialtiesCatalog);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));

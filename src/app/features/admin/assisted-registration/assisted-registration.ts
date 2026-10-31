@@ -23,6 +23,7 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../shared/components/atoms/back-link/back-link';
 import { PaginatedForm } from '../../../shared/components/organisms/paginated-form/paginated-form';
 import { InlineNameFields } from '../../auth/shared-registration/inline-name-fields/inline-name-fields';
 import { nameGroup } from '../../auth/shared-registration/name-fields/person-name';
@@ -74,6 +75,7 @@ const MAX_MOTIVO = 500;
     AppButton,
     DatePipe,
     Link,
+    BackLink,
     PageHeader,
     PaginatedForm,
     CustomField,
@@ -87,6 +89,9 @@ const MAX_MOTIVO = 500;
 export class AssistedRegistration {
   private readonly iam = inject(IamClient);
   private readonly navigation = inject(NavigationService);
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = '/administration/patients';
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;

@@ -18,6 +18,7 @@ import type { BreadcrumbItem } from '../../../../shared/components/molecules/bre
 import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { ORGANIZATIONS_ROUTE, organizationDetailRoute } from '../organizations.routes';
 
@@ -65,7 +66,7 @@ const ETIQUETAS_DE_TIPO: Readonly<Record<BranchTypeCode, string>> = {
  */
 @Component({
   selector: 'app-branch-new',
-  imports: [Alert, AnnounceOnAppear, PageHeader, PaginatedForm],
+  imports: [Alert, AnnounceOnAppear, BackLink, PageHeader, PaginatedForm],
   templateUrl: './branch-new.html',
   styleUrl: './branch-new.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -281,6 +282,9 @@ export class BranchNew {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));

@@ -2,7 +2,9 @@
   title="Nueva sucursal"
   subtitle="Sin al menos una sede la organización no tiene dónde agendar ni a qué sucursal asignar a su gente."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver()" label="Volver a la organización" />
+</app-page-header>
 
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-sucursal-error">{{

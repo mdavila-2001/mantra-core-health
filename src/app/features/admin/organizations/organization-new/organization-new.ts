@@ -33,6 +33,7 @@ import { CustomField } from '../../../../shared/components/organisms/paginated-f
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { searchConceptOptions } from '../concept-search';
 import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
@@ -116,6 +117,7 @@ const CAMPOS_DE_CORREDOR = ['brokerCode', 'licenseNumber'] as const;
     Alert,
     AnnounceOnAppear,
     CustomField,
+    BackLink,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -542,6 +544,9 @@ export class OrganizationNew {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = ORGANIZATIONS_ROUTE;
 
   protected cancelar(): void {
     void this.router.navigateByUrl(ORGANIZATIONS_ROUTE);

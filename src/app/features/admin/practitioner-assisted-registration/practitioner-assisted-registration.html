@@ -2,7 +2,9 @@
   title="Registrar médico"
   subtitle="Para quien no puede registrarse por sí mismo. Usted no fija su contraseña: la elige él con un código de un solo uso."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver" label="Volver a usuarios" />
+</app-page-header>
 
 <div class="medico">
   @if (result(); as alta) {

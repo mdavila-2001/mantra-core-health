@@ -2,7 +2,9 @@
   title="Sumar a alguien"
   subtitle="Hasta que alguien más forme parte, sólo quien creó la organización puede trabajar dentro."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver()" label="Volver a la organización" />
+</app-page-header>
 
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-membresia-error">{{

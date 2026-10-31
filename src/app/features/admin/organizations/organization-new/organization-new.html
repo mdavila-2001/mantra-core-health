@@ -2,7 +2,9 @@
   title="Nueva organización"
   subtitle="Se crea la organización con su tipo y su owner en una sola operación."
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  <app-back-link page-actions [fallback]="rutaVolver" label="Volver a las organizaciones" />
+</app-page-header>
 
 @if (errorMessage(); as mensaje) {
   <app-alert appAnuncio tone="error" class="alta__alert" data-testid="alta-organizacion-error">{{

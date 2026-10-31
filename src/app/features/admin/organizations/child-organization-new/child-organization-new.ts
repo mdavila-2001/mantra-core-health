@@ -26,6 +26,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { CustomField } from '../../../../shared/components/organisms/paginated-form/custom-field';
 import { PaginatedForm } from '../../../../shared/components/organisms/paginated-form/paginated-form';
 import { PageHeader } from '../../../../shared/components/organisms/page-header/page-header';
+import { BackLink } from '../../../../shared/components/atoms/back-link/back-link';
 import { paginateFields } from '../../../../shared/forms/paginated/paginate-fields';
 import { searchConceptOptions } from '../concept-search';
 import { crearBuscadorDePersonas } from '../people-search';
@@ -60,6 +61,7 @@ const CANDIDATOS_POR_BUSQUEDA = 10;
     Alert,
     AnnounceOnAppear,
     CustomField,
+    BackLink,
     PageHeader,
     PaginatedForm,
     ReferenceCombobox,
@@ -347,6 +349,9 @@ export class ChildOrganizationNew {
       error: (error: unknown) => this.state.set(errorToViewState<null>(error)),
     });
   }
+
+  /** A dónde sale el botón «Volver». */
+  protected readonly rutaVolver = computed(() => organizationDetailRoute(this.tenantId()));
 
   protected cancelar(): void {
     void this.router.navigateByUrl(organizationDetailRoute(this.tenantId()));
