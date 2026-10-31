@@ -1,0 +1,56 @@
+@if (failure(); as f) {
+  <app-view-state-host [state]="f" data-testid="room-events-failure" />
+}
+
+@if (canRecord()) {
+  <ol class="room-events__buttons" aria-label="Tiempos del caso, en orden">
+    @for (b of buttons(); track b.code) {
+      <li class="room-events__button">
+        <button
+          app-button
+          size="sm"
+          [variant]="b.blockedReason === null ? 'primary' : 'outline'"
+          [disabled]="b.blockedReason !== null || sending() !== null"
+          [isLoading]="sending() === b.code"
+          [attr.aria-describedby]="'room-event-why-' + b.code"
+          [attr.data-testid]="'room-event-' + b.code"
+          (clicked)="record(b.code)"
+        >
+          {{ b.label }}
+        </button>
+        <span class="room-events__why" [id]="'room-event-why-' + b.code">
+          {{ b.blockedReason ?? 'Disponible: se registra con la hora actual.' }}
+        </span>
+      </li>
+    }
+  </ol>
+} @else {
+  <app-alert tone="info" title="Sólo lectura">Los tiempos de sala los registra enfermería quirúrgica o el equipo del caso.</app-alert>
+}
+
+<!-- Recambio: la orden de limpieza que abrió la salida de sala (F2). -->
+@if (turnover(); as t) {
+  <section class="room-events__turnover" data-testid="room-events-turnover" aria-label="Recambio de la sala">
+    <h3 class="room-events__subtitle">Recambio de la sala</h3>
+    <p class="room-events__muted" data-testid="room-events-turnover-status">{{ turnoverLabel() }}</p>
+    @if (canRecord() && turnoverNext(); as next) {
+      <button app-button size="sm" variant="outline" [disabled]="sending() !== null" (clicked)="advanceTurnover()" data-testid="room-events-turnover-next">{{ next.label }}</button>
+    }
+  </section>
+}
+
+@if (timeline().length === 0) {
+  <p class="room-events__muted" data-testid="room-events-empty">Todavía no se registró ningún tiempo de sala.</p>
+} @else {
+  <ol class="room-events__timeline" data-testid="room-events-timeline">
+    @for (e of timeline(); track e.id) {
+      <li class="room-events__event">
+        <time class="room-events__time" [attr.datetime]="e.occurredAt">{{ timeOf(e.occurredAt) }}</time>
+        <span class="room-events__label">{{ e.label }}</span>
+        @if (e.sincePrevious) {
+          <span class="room-events__muted">+{{ e.sincePrevious }}</span>
+        }
+      </li>
+    }
+  </ol>
+}

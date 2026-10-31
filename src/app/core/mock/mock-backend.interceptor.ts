@@ -185,6 +185,9 @@ function anotarEnElRegistro(method: MockMethod, path: string, request: HttpReque
       ifMatchOps: request.headers.get('If-Match-Ops'),
       body: request.body,
       status: respuesta.status,
+      // F4/F5: el cuerpo de la respuesta (con su `correlationId`), para que la
+      // evidencia muestre la cadena entera y no sólo el estado.
+      response: respuesta.body,
       requestId: requestIdOf(respuesta.body),
       at: new Date().toISOString(),
     });

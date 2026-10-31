@@ -989,75 +989,7 @@ export function registerInfrastructureOps(router: MockRouter): void {
     return reply(201, { order: orderView(orden, viewerActions(request, sitio)), requestId });
   });
 
-  router.post('/cleaning-orders/:id/:action', (request) => {
-    const orden = cleaningOrders.get(request.params['id']!);
-    const espacio = orden === undefined ? null : spaceVisible(request, orden.careSpaceId);
-    if (orden === undefined || espacio === null) return notFoundReply();
-    const sitio = sitiosInfra.get(espacio.siteId)!;
-    const accion = request.params['action'] as CleaningTransition;
-    if (!(accion in ACTION_OF)) return notFoundReply();
-    if (!can(request, sitio, ACTION_OF[accion])) return forbiddenAction(ACTION_OF[accion]);
-    const enviada = request.headers.get('If-Match');
-    if (enviada === null) return failure(428, 'PRECONDITION_FAILED', 'IF_MATCH_REQUIRED', 'Falta la cabecera If-Match.');
-    if (Number(enviada.replace(/"/g, '')) !== orden.rowVersion) {
-      return failure(412, 'CONCURRENCY_CONFLICT', 'ROW_VERSION_MISMATCH', 'Otra persona movió esta orden mientras la miraba. Actualice la cola.', { currentRowVersion: orden.rowVersion });
-    }
-    if (!TRANSITIONS[orden.statusCode].includes(accion)) {
-      return conflictReply('CLEANING_ORDER_INVALID_TRANSITION', 'La orden no admite ese paso en su estado actual.', { from: orden.statusCode, to: accion });
-    }
-    const datos = cuerpo<{ userId: string | null; note: string; result: 'PASS' | 'FAIL'; reasonText: string; reason: string }>(request);
-    const requestId = newRequestId();
-    const yo = request.user?.id ?? null;
-    const at = new Date().toISOString();
-    const ctx: EventContext = { request, requestId, source: 'SRC_CLEANING', sourceRefId: orden.id };
-    const sube = { rowVersion: orden.rowVersion + 1 };
-    let resultado: CleaningRow = orden;
-    switch (accion) {
-      case 'assign':
-        resultado = cleaningOrders.actualizar(orden.id, { assignedUserId: datos.userId ?? null, ...sube })!;
-        break;
-      case 'start':
-        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_IN_PROGRESS', startedAt: at, startedByUserId: yo, assignedUserId: orden.assignedUserId ?? yo, ...sube })!;
-        setHygiene(espacio, 'HYG_CLEANING', ctx);
-        break;
-      case 'finish': {
-        const withoutInspection = !inspectionRequired(orden);
-        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_DONE', finishedAt: at, finishedByUserId: yo, note: datos.note ?? orden.note, ...sube })!;
-        setHygiene(espacio, 'HYG_CLEAN', ctx);
-        if (withoutInspection) resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectionResult: 'PASS' })!;
-        break;
-      }
-      case 'inspect': {
-        if (datos.result !== 'PASS' && datos.result !== 'FAIL') {
-          return failure(422, 'VALIDATION_FAILED', 'VALIDATION_FAILED', 'Indique el resultado de la inspección.', { violations: ['result must be PASS or FAIL'] });
-        }
-        if (yo !== null && yo === orden.finishedByUserId) {
-          return precondition('INSPECTION_BY_CLEANER_NOT_ALLOWED', 'Quien terminó la limpieza no puede inspeccionarla: la inspecciona otra persona.');
-        }
-        const supervisor = rolesIn(request, sitio).some((r) => r === 'NURSE_SUPERVISOR' || r === 'HOUSEKEEPING_SUPERVISOR');
-        if (orden.typeCode === 'CLEAN_TERMINAL' && !supervisor) return forbiddenAction('cleaning.inspect', 'TERMINAL_INSPECTION_REQUIRES_SUPERVISOR');
-        if (datos.result === 'FAIL') {
-          const reasonRow = typeof datos.reasonText === 'string' ? datos.reasonText.trim() : '';
-          if (reasonRow === '') return precondition('INSPECTION_REASON_REQUIRED', 'Una inspección rechazada exige el motivo.', { field: 'reasonText' });
-          resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_REJECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'FAIL', rejectionReason: reasonRow, ...sube })!;
-          cleaningOrders.agregar(newOrder(espacio, { typeCode: orden.typeCode, triggerCode: 'CLN_TRG_INSPECTION_FAILED', previousOrderId: orden.id, priorityCode: 'CLN_PRIO_URGENT', sourceRefId: orden.id, note: reasonRow }));
-          setHygiene(espacio, 'HYG_DIRTY', { ...ctx, reasonText: reasonRow });
-        } else {
-          resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'PASS', ...sube })!;
-          const apaga = orden.typeCode === 'CLEAN_TERMINAL' ? { terminalCleaningRequired: false } : {};
-          setHygiene(espacio, 'HYG_INSPECTED', ctx, apaga);
-        }
-        break;
-      }
-      case 'cancel': {
-        const reasonRow = typeof datos.reason === 'string' ? datos.reason.trim() : '';
-        if (reasonRow === '') return precondition('CANCEL_REASON_REQUIRED', 'Indique por qué se cancela.', { field: 'reason' });
-        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_CANCELLED', cancelReason: reasonRow, ...sube })!;
-        break;
-      }
-    }
-    return { order: orderView(resultado, viewerActions(request, sitio)), requestId };
-  });
+  router.post('/cleaning-orders/:id/:action', (request) => transitionCleaningOrder(request, request.params['action']!));
 
   router.get('/care-spaces/:id/status-events', (request) => {
     const g = guardSpace(request, request.params['id'], 'history.view');
@@ -1073,6 +1005,82 @@ export function registerInfrastructureOps(router: MockRouter): void {
       .map(eventView);
     return { items, nextCursor: null };
   });
+}
+
+/**
+ * `POST /cleaning-orders/:id/{assign|start|finish|inspect|cancel}` de la cola de limpieza (F2).
+ * Exportada porque F4 registra `/cleaning-orders/:id/{start|finish|inspect}` para el recambio de
+ * quirófano y el `MockRouter` elige esas rutas (más literales): cuando la orden no es un recambio,
+ * el handler de F4 delega acá.
+ */
+export function transitionCleaningOrder(request: MockRequest, action: string) {
+  const orden = cleaningOrders.get(request.params['id']!);
+  const espacio = orden === undefined ? null : spaceVisible(request, orden.careSpaceId);
+  if (orden === undefined || espacio === null) return notFoundReply();
+  const sitio = sitiosInfra.get(espacio.siteId)!;
+  const accion = action as CleaningTransition;
+  if (!(accion in ACTION_OF)) return notFoundReply();
+  if (!can(request, sitio, ACTION_OF[accion])) return forbiddenAction(ACTION_OF[accion]);
+  const enviada = request.headers.get('If-Match');
+  if (enviada === null) return failure(428, 'PRECONDITION_FAILED', 'IF_MATCH_REQUIRED', 'Falta la cabecera If-Match.');
+  if (Number(enviada.replace(/"/g, '')) !== orden.rowVersion) {
+    return failure(412, 'CONCURRENCY_CONFLICT', 'ROW_VERSION_MISMATCH', 'Otra persona movió esta orden mientras la miraba. Actualice la cola.', { currentRowVersion: orden.rowVersion });
+  }
+  if (!TRANSITIONS[orden.statusCode].includes(accion)) {
+    return conflictReply('CLEANING_ORDER_INVALID_TRANSITION', 'La orden no admite ese paso en su estado actual.', { from: orden.statusCode, to: accion });
+  }
+  const datos = cuerpo<{ userId: string | null; note: string; result: 'PASS' | 'FAIL'; reasonText: string; reason: string }>(request);
+  const requestId = newRequestId();
+  const yo = request.user?.id ?? null;
+  const at = new Date().toISOString();
+  const ctx: EventContext = { request, requestId, source: 'SRC_CLEANING', sourceRefId: orden.id };
+  const sube = { rowVersion: orden.rowVersion + 1 };
+  let resultado: CleaningRow = orden;
+  switch (accion) {
+    case 'assign':
+      resultado = cleaningOrders.actualizar(orden.id, { assignedUserId: datos.userId ?? null, ...sube })!;
+      break;
+    case 'start':
+      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_IN_PROGRESS', startedAt: at, startedByUserId: yo, assignedUserId: orden.assignedUserId ?? yo, ...sube })!;
+      setHygiene(espacio, 'HYG_CLEANING', ctx);
+      break;
+    case 'finish': {
+      const withoutInspection = !inspectionRequired(orden);
+      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_DONE', finishedAt: at, finishedByUserId: yo, note: datos.note ?? orden.note, ...sube })!;
+      setHygiene(espacio, 'HYG_CLEAN', ctx);
+      if (withoutInspection) resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectionResult: 'PASS' })!;
+      break;
+    }
+    case 'inspect': {
+      if (datos.result !== 'PASS' && datos.result !== 'FAIL') {
+        return failure(422, 'VALIDATION_FAILED', 'VALIDATION_FAILED', 'Indique el resultado de la inspección.', { violations: ['result must be PASS or FAIL'] });
+      }
+      if (yo !== null && yo === orden.finishedByUserId) {
+        return precondition('INSPECTION_BY_CLEANER_NOT_ALLOWED', 'Quien terminó la limpieza no puede inspeccionarla: la inspecciona otra persona.');
+      }
+      const supervisor = rolesIn(request, sitio).some((r) => r === 'NURSE_SUPERVISOR' || r === 'HOUSEKEEPING_SUPERVISOR');
+      if (orden.typeCode === 'CLEAN_TERMINAL' && !supervisor) return forbiddenAction('cleaning.inspect', 'TERMINAL_INSPECTION_REQUIRES_SUPERVISOR');
+      if (datos.result === 'FAIL') {
+        const reasonRow = typeof datos.reasonText === 'string' ? datos.reasonText.trim() : '';
+        if (reasonRow === '') return precondition('INSPECTION_REASON_REQUIRED', 'Una inspección rechazada exige el motivo.', { field: 'reasonText' });
+        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_REJECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'FAIL', rejectionReason: reasonRow, ...sube })!;
+        cleaningOrders.agregar(newOrder(espacio, { typeCode: orden.typeCode, triggerCode: 'CLN_TRG_INSPECTION_FAILED', previousOrderId: orden.id, priorityCode: 'CLN_PRIO_URGENT', sourceRefId: orden.id, note: reasonRow }));
+        setHygiene(espacio, 'HYG_DIRTY', { ...ctx, reasonText: reasonRow });
+      } else {
+        resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_INSPECTED', inspectedAt: at, inspectedByUserId: yo, inspectionResult: 'PASS', ...sube })!;
+        const apaga = orden.typeCode === 'CLEAN_TERMINAL' ? { terminalCleaningRequired: false } : {};
+        setHygiene(espacio, 'HYG_INSPECTED', ctx, apaga);
+      }
+      break;
+    }
+    case 'cancel': {
+      const reasonRow = typeof datos.reason === 'string' ? datos.reason.trim() : '';
+      if (reasonRow === '') return precondition('CANCEL_REASON_REQUIRED', 'Indique por qué se cancela.', { field: 'reason' });
+      resultado = cleaningOrders.actualizar(orden.id, { statusCode: 'CLN_CANCELLED', cancelReason: reasonRow, ...sube })!;
+      break;
+    }
+  }
+  return { order: orderView(resultado, viewerActions(request, sitio)), requestId };
 }
 
 export function countsOf(cells: readonly BedBoardCell[]): BedBoardCounts {

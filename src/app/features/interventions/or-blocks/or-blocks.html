@@ -1,0 +1,67 @@
+<app-page-header title="Bloques de quirófano" subtitle="Tiempo asignado a servicios y cirujanos, con su regla de liberación." [breadcrumbs]="breadcrumbs()" />
+
+@if (failure(); as f) {
+  <app-view-state-host class="or-blocks__failure" [state]="f" data-testid="or-blocks-failure" />
+}
+
+<app-view-state-host [state]="pageState()">
+  <app-card class="or-blocks" padding="lg" data-testid="or-blocks">
+    <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
+      <app-tab label="Bloques de la semana">
+        <div class="or-blocks__panel">
+          <div class="or-blocks__toolbar" role="group" aria-label="Semana">
+            <button app-button variant="ghost" size="sm" (clicked)="moveWeek(-1)">‹ Semana anterior</button>
+            <span class="or-blocks__week" data-testid="or-blocks-week">{{ weekLabel() }}</span>
+            <button app-button variant="ghost" size="sm" (clicked)="moveWeek(1)">Semana siguiente ›</button>
+          </div>
+          <app-data-table [state]="state()" [columns]="columns()" [trackBy]="byId" caption="Bloques de la semana" data-testid="or-blocks-table" (retry)="reload()" />
+        </div>
+      </app-tab>
+      <app-tab label="Asignar bloque">
+        <div class="or-blocks__panel">
+          @if (siteId(); as site) {
+            <app-block-form [siteId]="site" [rooms]="rooms()" [staff]="staff()" (created)="created()" />
+          }
+        </div>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</app-view-state-host>
+
+<ng-template #whenCell let-b>
+  <span class="or-blocks__when">{{ shortDateOf(b.startsAt) }} · {{ timeOf(b.startsAt) }}–{{ timeOf(b.endsAt) }}</span>
+  @if (b.seriesId) {
+    <span class="or-blocks__muted">Serie semanal</span>
+  }
+</ng-template>
+
+<ng-template #roomCell let-b>{{ roomLabel(b.operatingRoomId) }}</ng-template>
+
+<ng-template #useCell let-b>
+  <span class="or-blocks__owner">{{ b.owner.label }}</span>
+  <span class="or-blocks__muted">{{ b.cases.length }} casos · {{ durationOf(b.usedMinutes) }} usados</span>
+</ng-template>
+
+<ng-template #releaseCell let-b>
+  @if (b.status === 'ORB_ACTIVE') {
+    {{ dateTimeOf(b.releaseAt) }}
+  } @else if (b.releasedAt) {
+    <span class="or-blocks__muted">{{ b.releasedByUserId ? 'Liberado a mano' : 'Liberación automática' }} · {{ dateTimeOf(b.releasedAt) }}</span>
+    @if (b.releaseReason) {
+      <span class="or-blocks__muted">«{{ b.releaseReason }}»</span>
+    }
+  }
+</ng-template>
+
+<ng-template #statusCell let-b>
+  <app-badge [variant]="statusOf(b).variant">{{ statusOf(b).label }}</app-badge>
+</ng-template>
+
+<ng-template #actionsCell let-b>
+  @if (b.status === 'ORB_ACTIVE') {
+    <div class="or-blocks__row-actions">
+      <button app-button variant="outline" size="sm" [disabled]="working() !== null" [isLoading]="working() === b.id" (clicked)="close(b, 'release')" [attr.data-testid]="'or-block-release-' + b.id">Liberar</button>
+      <button app-button variant="ghost" size="sm" [disabled]="working() !== null" (clicked)="close(b, 'cancel')">Cancelar</button>
+    </div>
+  }
+</ng-template>

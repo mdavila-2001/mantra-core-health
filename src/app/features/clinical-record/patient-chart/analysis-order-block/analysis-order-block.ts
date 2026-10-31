@@ -10,6 +10,7 @@ import {
   output,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
@@ -55,6 +56,7 @@ import {
 } from './analysis-order-block.helpers';
 import { createPerformerOrderState } from './performer-selector/performer-order-state';
 import { PerformerSelector } from './performer-selector/performer-selector';
+import { CollectionPointSelect } from './collection-point-select/collection-point-select';
 import { createStudyCategoryState } from './study-category';
 import type { EstudioEnFicha } from './analysis-order-block.helpers';
 
@@ -146,6 +148,7 @@ const TOPE = 25;
     PerformerSelector,
     InformedConsentBadge,
     InformedConsentDialog,
+    CollectionPointSelect,
   ],
   templateUrl: './analysis-order-block.html',
   styleUrl: './analysis-order-block.css',
@@ -245,6 +248,9 @@ export class AnalysisOrderBlock {
   protected readonly pidiendo = signal(false);
 
   /** Quién realiza el procedimiento: sólo en órdenes de procedimiento. */
+  /** F5b: el punto de toma sugerido (sólo en sedes que tienen puntos). */
+  private readonly collectionPoint = viewChild(CollectionPointSelect);
+
   protected readonly performer = createPerformerOrderState({
     category: this.tipo.conceptId,
     study: this.estudio,
@@ -520,6 +526,7 @@ export class AnalysisOrderBlock {
       // `forbidNonWhitelisted`, y una clave en null no es «sin especificar».
       ...(prioridad === null ? {} : { priorityConceptId: prioridad }),
       ...performerFields,
+      ...(this.collectionPoint()?.fields() ?? {}),
       ...decision,
     };
 
@@ -610,6 +617,7 @@ export class AnalysisOrderBlock {
     this.estudio.set(null);
     this.prioridad.set(null);
     this.performer.reset();
+    this.collectionPoint()?.reset();
   }
 
   /**
@@ -644,6 +652,7 @@ export class AnalysisOrderBlock {
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
+      collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
       ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     };
   }

@@ -17,6 +17,138 @@ export interface SurgicalCase {
   readonly statusConceptId: string;
   readonly scheduledStartAt?: Date;
   readonly scheduledEndAt?: Date;
+  /* ---- F4 · quirófanos (`CONTRATO-F2-F5.md` §F4.3). Opcionales: la API de
+     antes de F4 no los trae y la agenda tiene que seguir pintándose. ---- */
+  /** La sala resuelta: código, nombre y ruta del árbol. Nunca un uuid suelto. */
+  readonly operatingRoom?: CaseOperatingRoom;
+  /** Inicio de la ventana reservada (inicio − preparación). */
+  readonly reservedStartAt?: Date;
+  /** Fin de la ventana reservada (fin + limpieza). */
+  readonly reservedEndAt?: Date;
+  readonly prepMinutes?: number;
+  readonly cleanupMinutes?: number;
+  /** El bloque en el que cae el caso, o ausente si va en agenda abierta. */
+  readonly block?: CaseBlock;
+  /** Resumen del check-list OMS: cuándo se completó cada fase. */
+  readonly checklist?: CaseChecklistSummary;
+  readonly encounterId?: string;
+  readonly practiceSiteId?: string;
+  readonly caseType?: SurgicalCaseType;
+}
+
+/** La sala de un caso, como la devuelve la API desde F4. */
+export interface CaseOperatingRoom {
+  readonly id: string;
+  readonly code: string;
+  readonly name: string;
+  readonly path: string;
+}
+
+/** El bloque de un caso. */
+export interface CaseBlock {
+  readonly id: string;
+  readonly owner: string;
+}
+
+/** Fechas ISO de cierre de cada fase; `null` = pendiente. */
+export interface CaseChecklistSummary {
+  readonly id: string;
+  readonly signIn: string | null;
+  readonly timeOut: string | null;
+  readonly signOut: string | null;
+}
+
+/** Tipo de caso del DTO de programación. */
+export type SurgicalCaseType = 'ELECTIVE' | 'URGENT' | 'EMERGENCY';
+
+/** Prioridad del DTO de programación. */
+export type SurgicalCasePriority = 'ROUTINE' | 'URGENT' | 'STAT';
+
+/** `POST /procedure-cases` (`ScheduleCaseDto`). */
+export interface ScheduleCaseRequest {
+  readonly custodianTenantId: string;
+  readonly patientProfileId: string;
+  readonly caseType: SurgicalCaseType;
+  readonly priority: SurgicalCasePriority;
+  readonly primarySurgeonProfileId: string;
+  readonly practiceSiteId?: string;
+  readonly operatingRoomId: string;
+  readonly scheduledStartAt: string;
+  readonly scheduledEndAt: string;
+  readonly surgicalSpecialtyConceptId?: string;
+  readonly urgencyReasonText?: string;
+}
+
+/** Lo que devuelve programar (`CaseResponseDto` + la ventana de F4). */
+export interface ScheduledCase {
+  readonly id: string;
+  readonly caseNumber: string;
+  readonly statusConceptId: string;
+  readonly operatingRoomId: string;
+  readonly reservedStartAt?: string;
+  readonly reservedEndAt?: string;
+}
+
+/** Respuesta de un ítem del check-list. */
+export type ChecklistResponseStatus = 'CONFIRMED' | 'NOT_APPLICABLE' | 'EXCEPTION';
+
+/** Un ítem OMS con su respuesta, si ya la tiene. */
+export interface ChecklistItem {
+  readonly id: string;
+  readonly prompt: string;
+  readonly mandatory: boolean;
+  readonly response?: {
+    readonly status: ChecklistResponseStatus;
+    readonly exceptionReason?: string;
+    readonly respondedAt: string;
+  };
+}
+
+/** Una fase del check-list. */
+export interface ChecklistPhaseView {
+  readonly phase: 'SIGN_IN' | 'TIME_OUT' | 'SIGN_OUT';
+  readonly completedAt: string | null;
+  readonly items: readonly ChecklistItem[];
+}
+
+/** `GET /procedure-cases/:id/safety-checklists/:checklistId`. */
+export interface SafetyChecklist {
+  readonly id: string;
+  readonly procedureCaseId: string;
+  readonly version: string;
+  readonly phases: readonly ChecklistPhaseView[];
+}
+
+/** `POST …/safety-checklists/:checklistId/responses` (`SubmitChecklistPhaseDto`). */
+export interface ChecklistPhaseSubmission {
+  readonly phase: ChecklistPhaseView['phase'];
+  readonly respondedByProfileId: string;
+  readonly responses: readonly {
+    readonly itemId: string;
+    readonly status: ChecklistResponseStatus;
+    readonly exceptionReason?: string;
+  }[];
+}
+
+/** Lo que devuelve responder una fase. */
+export interface ChecklistPhaseResult {
+  readonly checklistId: string;
+  readonly recorded: number;
+  readonly phaseCompleted: boolean;
+}
+
+/** Un tiempo del caso ya registrado. */
+export interface RoomEvent {
+  readonly id: string;
+  readonly eventCode: string;
+  readonly occurredAt: string;
+  readonly recordedAt: string;
+}
+
+/** Lo que devuelve `POST /procedure-cases/:id/room-events`. */
+export interface RoomEventResult {
+  readonly utilizationEventId: string;
+  readonly milestoneId: string;
 }
 
 /** Un integrante del equipo del caso. */
@@ -106,6 +238,13 @@ export interface SurgicalCaseDetail {
   readonly findings: readonly OperativeFinding[];
   readonly implants: readonly ProcedureImplant[];
   readonly operativeReports: readonly OperativeReport[];
+  /**
+   * Los tiempos de sala registrados (F4). Desvío anotado: el contrato sólo
+   * declara el `POST`; la ficha necesita leerlos para pintar la línea de tiempo.
+   */
+  readonly roomEvents: readonly RoomEvent[];
+  /** La orden de recambio de la sala tras la salida (desvío anotado: lectura en el detalle). */
+  readonly turnoverCleaning: { readonly id: string; readonly status: string; readonly rowVersion: number } | null;
 }
 
 /** Una página de la agenda quirúrgica, con su total sin paginar. */

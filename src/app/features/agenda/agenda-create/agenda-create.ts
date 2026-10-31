@@ -7,6 +7,7 @@ import {
   LOCALE_ID,
   signal,
 } from '@angular/core';
+import { ConsultingRoomSelect } from './consulting-room-select/consulting-room-select';
 import { formatDate, TitleCasePipe } from '@angular/common';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -166,6 +167,7 @@ interface DiaVisible {
 @Component({
   selector: 'app-agenda-create',
   imports: [
+    ConsultingRoomSelect,
     ReactiveFormsModule,
     AnnounceOnAppear,
     AccordionPanel,
@@ -251,6 +253,9 @@ export class AgendaCreate {
    * todavía no hay dónde: primero hay que poder crear el otro lado.
    */
   protected readonly agendaNueva = signal(false);
+
+  /** F5d: el consultorio de la agenda; `null` = sin consultorio. */
+  protected readonly careSpaceId = signal<string | null>(null);
 
   /** Cómo se va a llamar la agenda nueva. «Consultorio en la Caja», «Sábados». */
   protected readonly nombreNuevo = signal('');
@@ -1324,6 +1329,7 @@ export class AgendaCreate {
       ...(allFlexible ? { flexibleHours: true } : {}),
       ...(policyId === null ? {} : { bookingPolicyId: policyId }),
       ...opcFecha('validTo', this.fechaDeFin()),
+      ...(this.careSpaceId() ? { careSpaceId: this.careSpaceId()! } : {}),
     };
     this.scheduling.createTemplate(resourceId, template, this.attempt.scope()).subscribe({
       next: (plantilla) => {

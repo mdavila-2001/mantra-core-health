@@ -13,3 +13,22 @@
 
 /** La agenda de intervenciones (M53). Coincide con la sección del menú. */
 export const INTERVENTIONS_ROUTE = '/interventions';
+
+/* ---- F4 · quirófanos (`CONTRATO-F2-F5.md` §F4.4) ---------------------------- */
+
+/** Programar una intervención con su ventana reservada. */
+export const SCHEDULE_CASE_ROUTE = '/interventions/new';
+
+/** Agenda del día por sala, con bloques y casos. */
+export const OPERATING_ROOMS_ROUTE = '/interventions/operating-rooms';
+
+/** Gestión de bloques y series. */
+export const OR_BLOCKS_ROUTE = '/interventions/blocks';
+
+/** KPI de sala y de bloque. */
+export const OR_UTILIZATION_ROUTE = '/interventions/utilization';
+
+/** La ficha de un caso. */
+export function caseRoute(caseId: string): string {
+  return `${INTERVENTIONS_ROUTE}/${encodeURIComponent(caseId)}`;
+}

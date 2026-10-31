@@ -6,6 +6,13 @@ import { API_BASE_URL, apiUrl } from '../api';
 import { maybeDate, sinNulos, type ConNulos } from '../wire';
 import type {
   CaseTeamMember,
+  ChecklistPhaseResult,
+  ChecklistPhaseSubmission,
+  RoomEvent,
+  RoomEventResult,
+  SafetyChecklist,
+  ScheduleCaseRequest,
+  ScheduledCase,
   DentalCatalog,
   DentalProcedure,
   DentalProcedurePage,
@@ -187,8 +194,60 @@ export class ProceduresClient {
               ...opcional('signedAt', signedAt),
             }),
           ),
+          roomEvents: body.roomEvents ?? [],
+          turnoverCleaning: body.turnoverCleaning ?? null,
         })),
       );
+  }
+
+  /**
+   * `POST /procedure-cases` — programa el caso y reserva la sala (F4).
+   *
+   * La API calcula la ventana reservada con la preparación y la limpieza de la
+   * sala y la compara con las de los demás casos: un 409
+   * `OPERATING_ROOM_SLOT_CONFLICT` trae la ventana en conflicto y la próxima
+   * libre en `details`, y un 409 `OR_BLOCK_OWNED_BY_OTHER` el bloque ajeno.
+   */
+  scheduleCase(body: ScheduleCaseRequest): Observable<ScheduledCase> {
+    return this.http.post<ScheduledCase>(this.url('/procedure-cases'), body);
+  }
+
+  /** `POST /procedure-cases/:id/safety-checklists` — crea el check-list OMS (idempotente). */
+  createChecklist(caseId: string): Observable<SafetyChecklist> {
+    return this.http.post<SafetyChecklist>(this.url(`/procedure-cases/${encodeURIComponent(caseId)}/safety-checklists`), {});
+  }
+
+  /** `GET /procedure-cases/:id/safety-checklists/:checklistId`. */
+  getChecklist(caseId: string, checklistId: string): Observable<SafetyChecklist> {
+    return this.http.get<SafetyChecklist>(
+      this.url(`/procedure-cases/${encodeURIComponent(caseId)}/safety-checklists/${encodeURIComponent(checklistId)}`),
+    );
+  }
+
+  /**
+   * `POST …/safety-checklists/:checklistId/responses` — responde una fase.
+   *
+   * Las respuestas son inmutables y una excepción exige motivo: la pantalla lo
+   * pide antes de enviar, y la API lo vuelve a exigir.
+   */
+  submitChecklistPhase(caseId: string, checklistId: string, body: ChecklistPhaseSubmission): Observable<ChecklistPhaseResult> {
+    return this.http.post<ChecklistPhaseResult>(
+      this.url(`/procedure-cases/${encodeURIComponent(caseId)}/safety-checklists/${encodeURIComponent(checklistId)}/responses`),
+      body,
+    );
+  }
+
+  /**
+   * `POST /procedure-cases/:id/room-events` — registra un tiempo del caso.
+   *
+   * Orden obligatorio y gates OMS: sin Entrada no hay inicio de anestesia, sin
+   * Pausa no hay incisión, sin Salida no hay salida de sala (422 con `reason`).
+   */
+  recordRoomEvent(caseId: string, eventCode: string, occurredAt: string): Observable<RoomEventResult> {
+    return this.http.post<RoomEventResult>(this.url(`/procedure-cases/${encodeURIComponent(caseId)}/room-events`), {
+      eventCode,
+      occurredAt,
+    });
   }
 
   /**
@@ -271,9 +330,13 @@ function agendaDe(query: SurgicalAgendaQuery): HttpParams {
     ficha de paciente.
     ------------------------------------------------------------------------- */
 
-type WireCase = ConNulos<Omit<SurgicalCase, 'scheduledStartAt' | 'scheduledEndAt'>> & {
+type CaseDateField = 'scheduledStartAt' | 'scheduledEndAt' | 'reservedStartAt' | 'reservedEndAt';
+
+type WireCase = ConNulos<Omit<SurgicalCase, CaseDateField>> & {
   readonly scheduledStartAt?: string | null;
   readonly scheduledEndAt?: string | null;
+  readonly reservedStartAt?: string | null;
+  readonly reservedEndAt?: string | null;
 };
 
 interface WireCasePage {
@@ -310,6 +373,8 @@ interface WireCaseDetail {
   readonly operativeSteps?: readonly WireStep[] | null;
   readonly findings?: readonly WireFinding[] | null;
   readonly implants?: readonly WireImplant[] | null;
+  readonly roomEvents?: readonly RoomEvent[] | null;
+  readonly turnoverCleaning?: SurgicalCaseDetail['turnoverCleaning'];
   readonly operativeReports?:
     | readonly {
         readonly id: string;
@@ -336,11 +401,13 @@ type WireDentalRegistration = Omit<DentalProcedureRegistration, 'createdAt'> & {
   readonly createdAt: string;
 };
 
-function toCase({ scheduledStartAt, scheduledEndAt, ...resto }: WireCase): SurgicalCase {
+function toCase({ scheduledStartAt, scheduledEndAt, reservedStartAt, reservedEndAt, ...resto }: WireCase): SurgicalCase {
   return {
-    ...sinNulos<Omit<SurgicalCase, 'scheduledStartAt' | 'scheduledEndAt'>>(resto),
+    ...sinNulos<Omit<SurgicalCase, CaseDateField>>(resto),
     ...opcional('scheduledStartAt', scheduledStartAt),
     ...opcional('scheduledEndAt', scheduledEndAt),
+    ...opcional('reservedStartAt', reservedStartAt),
+    ...opcional('reservedEndAt', reservedEndAt),
   };
 }
 

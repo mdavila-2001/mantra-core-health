@@ -50,6 +50,7 @@ import {
   liberarSobranteDeServicio,
   ofertaDelCupo,
 } from './service-offerings.handlers';
+import { bookingCareSpace, claimAppointmentSpace, rememberAppointmentSpace, rememberTemplateSpace, validateTemplateSpace } from './care-space-agenda.handlers';
 
 /** El motivo con el que la API cancela al cambiar el horario (`SCHEDULE_CHANGE_CANCELLATION_REASON`). */
 const MOTIVO_CAMBIO_DE_HORARIO = 'Cambio en el horario de atención del profesional';
@@ -632,7 +633,7 @@ export function registrarAgenda(router: MockRouter): void {
     // estado sin que la cita se entere.
     const items = todos
       .slice(0, limit)
-      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r) }));
+      .map((r) => ({ ...conReconsulta(r), insuranceClaim: solicitudDeLaCita(r), careSpace: bookingCareSpace(r.id) }));
     return { items, count: Math.min(todos.length, limit), limit, truncated: todos.length > limit };
   });
 
@@ -937,6 +938,9 @@ export function registrarAgenda(router: MockRouter): void {
     }
 
     const endAt = masMinutos(startAt, datos.durationMinutes ?? 30);
+    // F5d: la cita hereda el consultorio de la plantilla; si otra cita lo ocupa, 409.
+    const consultorio = claimAppointmentSpace(datos.resourceId ?? '', startAt, endAt);
+    if (!('careSpaceId' in consultorio)) return consultorio;
     const pisados = cupos.filtrar(
       (c) => c.resourceId === datos.resourceId && c.startAt < endAt && c.endAt > startAt,
     );
@@ -1000,6 +1004,7 @@ export function registrarAgenda(router: MockRouter): void {
       createdAt: ahora(),
     };
     reservas.agregar(nueva);
+    rememberAppointmentSpace(nueva.id, consultorio.careSpaceId);
     return {
       status: 201,
       body: {
@@ -1261,7 +1266,11 @@ export function registrarAgenda(router: MockRouter): void {
       validFrom?: string;
       validTo?: string;
       flexibleHours?: boolean;
+      careSpaceId?: string;
     }>(request);
+    // F5d: el consultorio de la plantilla (404 / 422 como la API).
+    const espacio = validateTemplateSpace(request, request.params['id']!, datos.careSpaceId, datos.rules ?? []);
+    if (espacio !== null) return espacio;
     const nueva = plantillas.agregar({
       id: nuevoId('template'),
       resourceId: request.params['id']!,
@@ -1275,6 +1284,7 @@ export function registrarAgenda(router: MockRouter): void {
       bookingPolicyId: datos.bookingPolicyId ?? POLITICA_ESTANDAR,
       statusConceptId: STATUS['ST-PUBLISHED']!,
     });
+    rememberTemplateSpace(nueva.id, nueva.resourceId, datos.careSpaceId, nueva.rules);
     return {
       status: 201,
       body: {
