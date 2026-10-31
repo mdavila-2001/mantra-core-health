@@ -1,0 +1,158 @@
+<app-view-state-host [state]="state()" (retry)="retry.emit()">
+  <div vsh-skeleton class="img__cargando" role="status">Cargando el catálogo de estudios…</div>
+
+  @if (studies().length === 0) {
+    <app-empty-state
+      title="El catálogo de estudios de imagenología está vacío"
+      description="No hay estudios disponibles para pedir en este momento."
+      data-testid="imaging-picker-catalog-empty"
+    />
+  } @else {
+    <div class="img" data-testid="imaging-picker">
+      <!-- 1 y 2. Modalidad y estudio -->
+      <div class="img__campos">
+        @if (modalityKind() === 'segmented') {
+          <div class="img__grupo img__grupo--ancho" role="group" aria-labelledby="img-modalidad-rotulo">
+            <span id="img-modalidad-rotulo" class="img__rotulo">Modalidad</span>
+            <app-segmented-control
+              [options]="segmentedModalities()"
+              [value]="activeModality() ?? ''"
+              ariaLabel="Modalidad del estudio"
+              [wrap]="true"
+              (valueChange)="pickModality($event)"
+            />
+          </div>
+        } @else {
+          <app-form-field label="Modalidad" hint="Acota la lista de estudios.">
+            <app-select
+              [value]="activeModality() ?? allModalities"
+              [options]="selectModalities()"
+              [disabled]="disabled()"
+              placeholder="Todas las modalidades"
+              (valueChange)="pickModality($event)"
+              data-testid="imaging-picker-modality"
+            />
+          </app-form-field>
+        }
+
+        <div class="img__buscador">
+          <app-search-field
+            [(value)]="rawQuery"
+            [debounceMs]="200"
+            [disabled]="disabled()"
+            label="Buscar estudio"
+            placeholder="Nombre, sinónimo o proyección (p. ej. TAC, mano, AP)"
+            (searched)="search($event)"
+          />
+        </div>
+
+        <app-form-field class="img__grupo--ancho" label="Estudio" [required]="true">
+          <app-select
+            [value]="selection()?.studyConceptId ?? null"
+            [options]="studyOptions()"
+            [disabled]="disabled()"
+            [searchable]="true"
+            placeholder="Elegir estudio"
+            (valueChange)="pickStudy($event)"
+            data-testid="imaging-picker-study"
+          />
+        </app-form-field>
+      </div>
+
+      <p class="img__resultados" role="status" aria-live="polite" data-testid="imaging-picker-results">
+        {{ resultsLabel() }}
+      </p>
+
+      @if (hits().length === 0) {
+        <app-empty-state
+          variant="no-results"
+          title="Ningún estudio coincide"
+          description="Pruebe con otra palabra o quite el filtro de modalidad."
+          data-testid="imaging-picker-no-results"
+        />
+      }
+
+      @if (study(); as s) {
+        <!-- 6. Proyecciones y preparación (informativas) -->
+        @if (s.proyecciones.length > 0 || s.preparacion) {
+          <div class="img__info" data-testid="imaging-picker-info">
+            @if (s.proyecciones.length > 0) {
+              <div class="img__grupo">
+                <span id="img-proyecciones-rotulo" class="img__rotulo">Proyecciones</span>
+                <ul class="img__chips" aria-labelledby="img-proyecciones-rotulo" data-testid="imaging-picker-projections">
+                  @for (p of s.proyecciones; track p) {
+                    <li><app-chip size="sm">{{ p }}</app-chip></li>
+                  }
+                </ul>
+              </div>
+            }
+            @if (s.preparacion) {
+              <app-alert tone="info" title="Preparación del paciente" data-testid="imaging-picker-preparation">
+                {{ s.preparacion }}
+              </app-alert>
+            }
+          </div>
+        }
+
+        <!-- 3 y 4. Región (3D + lista) y lado -->
+        <section class="img__seccion" aria-labelledby="img-region-titulo">
+          <h4 id="img-region-titulo" class="img__titulo">Parte del cuerpo</h4>
+          <app-body-region-picker
+            [regions]="regions()"
+            [allowed]="allowed()"
+            [modality]="s.modalidad"
+            [disabled]="disabled()"
+            [value]="regionValue()"
+            (valueChange)="onRegion($event)"
+          />
+          @if (ownLaterality()) {
+            <div class="img__grupo" role="group" aria-labelledby="img-lado-rotulo" data-testid="imaging-picker-own-laterality">
+              <span id="img-lado-rotulo" class="img__rotulo">Lado (este estudio lo exige)</span>
+              <app-segmented-control
+                [options]="ownLateralityOptions"
+                [value]="selection()?.laterality ?? 'UNI'"
+                ariaLabel="Lado del estudio"
+                (valueChange)="onOwnLaterality($event)"
+              />
+            </div>
+          }
+        </section>
+
+        <!-- 5. Contraste -->
+        <section class="img__seccion" aria-labelledby="img-contraste-titulo">
+          <h4 id="img-contraste-titulo" class="img__titulo">Contraste</h4>
+          <app-segmented-control
+            [options]="contrastSegments()"
+            [value]="contrastValue()"
+            ariaLabel="Contraste del estudio"
+            (valueChange)="onContrast($event)"
+            data-testid="imaging-picker-contrast"
+          />
+          <p class="img__ayuda" data-testid="imaging-picker-contrast-note">
+            @if (contrastFixed()) {
+              El contraste lo define el estudio elegido.
+            } @else {
+              Elija si el estudio lleva contraste.
+            }
+            @if (s.viaContraste) {
+              Vía: {{ s.viaContraste }}.
+            }
+          </p>
+        </section>
+
+        @if (issueMessages().length > 0) {
+          <ul class="img__avisos" role="status" aria-live="polite" data-testid="imaging-picker-issues">
+            @for (m of issueMessages(); track m) {
+              <li>{{ m }}</li>
+            }
+          </ul>
+        }
+      }
+
+      <section class="img__resumen" aria-labelledby="img-resumen-titulo" data-testid="imaging-picker-summary">
+        <h4 id="img-resumen-titulo" class="img__titulo">Lo que va a pedir</h4>
+        <p class="img__contador" role="status" aria-live="polite" data-testid="imaging-picker-counter">{{ summary() }}</p>
+      </section>
+    </div>
+  }
+</app-view-state-host>

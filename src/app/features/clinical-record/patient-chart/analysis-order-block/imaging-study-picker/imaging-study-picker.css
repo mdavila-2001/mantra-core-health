@@ -1,0 +1,126 @@
+/* Selector de estudio de imagenología. Ancho completo del contenedor; los campos
+   se reparten por el ANCHO DEL PROPIO SELECTOR (container query), no por el de
+   la ventana: dentro de un modal la ventana miente. 1 columna, 2 desde 780 px
+   (composition-rules §5). Sin columna vacía: lo que no se dibuja no reserva. */
+
+:host {
+  display: block;
+  inline-size: 100%;
+  container-type: inline-size;
+}
+
+.img {
+  display: grid;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+  min-inline-size: 0;
+}
+
+.img__cargando {
+  padding: var(--sp-4);
+  color: var(--text-secondary);
+}
+
+.img__campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  align-items: end;
+}
+
+@container (min-width: 780px) {
+  .img__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .img__grupo--ancho {
+    grid-column: 1 / -1;
+  }
+}
+
+.img__buscador,
+.img__grupo {
+  min-inline-size: 0;
+}
+
+.img__grupo {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.img__rotulo {
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+}
+
+.img__resultados,
+.img__ayuda,
+.img__contador {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.img__info {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+}
+
+@container (min-width: 780px) {
+  /* Dos columnas sólo si hay las dos cosas; con una sola ocupa todo el ancho. */
+  .img__info:has(.img__grupo):has(app-alert) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
+.img__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.img__seccion {
+  display: grid;
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+.img__titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+}
+
+.img__avisos {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: var(--sp-2) var(--sp-3);
+  list-style: none;
+  border: 1px solid var(--border-danger);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface);
+  color: var(--text-danger);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.img__resumen {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-ctrl);
+  background: var(--bg-surface-alt);
+}
