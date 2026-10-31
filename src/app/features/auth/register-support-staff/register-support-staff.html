@@ -1,0 +1,82 @@
+<app-auth-split
+  claim="Trabaje con sus doctores, en un solo lugar"
+  tagline="Lleve la agenda, reciba a los pacientes y responda en nombre de los doctores que la suman."
+  contentWidth="full"
+  [plainSurface]="!creada()"
+  [scene]="creada() ? 'stage' : 'split'"
+>
+  <div class="registro-conjunto" [class.registro-conjunto--solo]="creada()">
+    <div class="registro">
+      @if (creada()) {
+        <div class="registro__header">
+          <app-registration-badge type="support" celebrate />
+          <h1 appAnuncio [asertivo]="false" class="registro__title" data-testid="alta-apoyo-exito">
+            Su cuenta de personal de apoyo quedó creada
+          </h1>
+          <p class="registro__subtitle" data-testid="alta-apoyo-siguiente">
+            Inicie sesión con su documento. Cuando su hospital o su doctor la invite, acepte la invitación en «Mi
+            trabajo de apoyo»: recién ahí va a ver sus doctores y sus pisos.
+          </p>
+        </div>
+        <button
+          app-button
+          variant="primary"
+          size="lg"
+          class="registro__submit"
+          data-testid="alta-apoyo-ir-login"
+          (clicked)="irALogin()"
+        >
+          Ir a iniciar sesión
+        </button>
+      } @else {
+        <div class="registro__header">
+          <app-registration-badge type="support" />
+          <h1 class="registro__title">Crear cuenta de secretaria o personal de apoyo</h1>
+          <p class="registro__subtitle">
+            Su hospital o su doctor la invitan después con su documento: hasta que usted acepta, la cuenta no ve pacientes ni agendas.
+          </p>
+        </div>
+
+        @if (errorMessage(); as mensaje) {
+          <app-alert appAnuncio tone="error" class="registro__alert" data-testid="alta-apoyo-error">{{
+            mensaje
+          }}</app-alert>
+        }
+
+        <div class="registro__body">
+          <app-paginated-form
+            data-testid="alta-apoyo-form"
+            [paginas]="paginas()"
+            [form]="form"
+            label="Crear cuenta de personal de apoyo"
+            submitLabel="Crear cuenta"
+            [iconOnlyNav]="true"
+            [compactSteps]="false"
+            [pending]="isSubmitting()"
+            (enviado)="submit()"
+          >
+            <ng-template appCampoPersonalizado="personName">
+              <app-inline-name-fields
+                [grupo]="form.controls.personName"
+                [obligatorio]="true"
+                prefijoTestId="alta-apoyo"
+              />
+            </ng-template>
+            <ng-template appCampoPersonalizado="issuerAdministrativeAreaConceptId">
+              <p class="registro__catalogo-caido">
+                No pudimos traer el catálogo de departamentos.
+                <button app-button variant="ghost" size="sm" (clicked)="cargarDepartamentos()">
+                  Reintentar
+                </button>
+              </p>
+            </ng-template>
+          </app-paginated-form>
+        </div>
+
+        <p class="registro__pie">
+          ¿Ya tiene cuenta? <a app-link routerLink="/auth/login">Inicie sesión</a>
+        </p>
+      }
+    </div>
+  </div>
+</app-auth-split>

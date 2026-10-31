@@ -2457,6 +2457,17 @@ export const routes: Routes = [
     title: 'AloVida - Crear cuenta de profesional',
   },
   {
+    // El alta de la secretaria (personal de apoyo), armada con las piezas del
+    // alta de paciente. Diferida por lo mismo: arrastra el catálogo de
+    // departamentos y el motor de páginas.
+    path: 'auth/register/support-staff',
+    loadComponent: () =>
+      import('./features/auth/register-support-staff/register-support-staff').then(
+        (m) => m.RegisterSupportStaff,
+      ),
+    title: 'AloVida - Crear cuenta de personal de apoyo',
+  },
+  {
     // Signup público de una organización aseguradora: crea el tenant `PAYER`
     // y su usuario owner en la misma operación.
     // Diferida desde la subtarea 1.2: la documentación legal en PDF arrastra

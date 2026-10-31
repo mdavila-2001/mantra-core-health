@@ -625,6 +625,18 @@ export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
 }
 
 /**
+ * Las cuentas de personal de apoyo dadas de alta en la maqueta
+ * (`/iam/auth/register-support-staff`). Las resuelve
+ * `support-staff.handlers`, igual que las de pacientes: este archivo no puede
+ * importar sus tablas sin armar un ciclo.
+ */
+let cuentaDeApoyo: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasDeApoyo(resolver: ResolverDeCuentas): void {
+  cuentaDeApoyo = resolver;
+}
+
+/**
  * Correos con los que se conoce, fuera del simulador, a una cuenta de
  * demostración. `admin@alovidasalud.com` es el superadministrador local con el
  * que se probó la Superadministración contra la API real (sólo local y dev):
@@ -646,12 +658,13 @@ export function buscarUsuario(identificador: string): MockUser | undefined {
     MOCK_USERS.find((u) => u.email === limpio || u.nationalId === limpio || u.key === limpio) ??
     cuentaDePaciente({ identificador: limpio }) ??
     cuentaRegistrada({ identificador: limpio }) ??
+    cuentaDeApoyo({ identificador: limpio }) ??
     MOCK_USERS.find((u) => u.key === limpio.replace(/@.*$/, ''))
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId });
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId }) ?? cuentaDeApoyo({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -704,7 +717,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key });
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key }) ?? cuentaDeApoyo({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {

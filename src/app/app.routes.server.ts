@@ -63,6 +63,11 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    // Consulta el catálogo de departamentos al montarse: mismo motivo que 'patient'.
+    path: 'auth/register/support-staff',
+    renderMode: RenderMode.Client,
+  },
+  {
     // Consulta el catálogo de tipos de entidad legal por HTTP al montarse: mismo
     // motivo que 'patient'.
     path: 'auth/register/organization',
