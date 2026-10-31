@@ -15,7 +15,6 @@ import type { GlossarySourceReference } from '../../core/data-access/terminology
 import { TerminologyClient } from '../../core/data-access/terminology/terminology.client';
 import type {
   GlossaryNeighborhood,
-  GlossarySourceReference,
   GlossaryTermDetail,
 } from '../../core/data-access/terminology/terminology.types';
 import { valorDeTexto } from '../../core/data-access/terminology/terminology.types';
@@ -25,7 +24,6 @@ import { loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';
 import { AppButton } from '../../shared/components/atoms/button/button';
 import { Chip } from '../../shared/components/atoms/chip/chip';
-import { AppButton } from '../../shared/components/atoms/button/button';
 import { Card } from '../../shared/components/molecules/card/card';
 import { ContentDialog } from '../../shared/components/organisms/content-dialog/content-dialog';
 import { EmptyState } from '../../shared/components/molecules/empty-state/empty-state';
@@ -49,7 +47,6 @@ import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryArticleView } from './glossary-article';
 import { enlaceSeguro, esImagenPropia, imagenesVisibles } from './glossary-article.logic';
 import { GlossaryDataFlow } from './glossary-data-flow';
-import { GlossaryPdfService } from './glossary-pdf.service';
 import { GlossaryTermCover, pictogramOfTags } from './glossary-term-cover';
 import { imagenAprobadaDelTermino } from './glossary-image.logic';
 import { buildClinicalRoute, ROUTE_ZONES } from './glossary-clinical-route';
