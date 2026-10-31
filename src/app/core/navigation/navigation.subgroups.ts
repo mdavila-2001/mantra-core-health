@@ -327,9 +327,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     icon: 'flask',
     paths: [
       'administration/laboratory',
-      'laboratory/reception',
-      'laboratory/queue',
-      'administration/laboratory-results',
+      'administration/laboratory-orders',
       'administration/laboratory-prices',
       'administration/laboratory-branches',
     ],

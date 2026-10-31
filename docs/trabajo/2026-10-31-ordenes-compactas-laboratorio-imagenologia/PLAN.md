@@ -11,6 +11,11 @@
 - Marketplace de servicios: «el mismo estándar que en lo demás» (ficha/formulario centrado, a lo ancho, UNA tarjeta con pestañas — CLAUDE.md §6).
 - Igual en la app móvil.
 
+## Decisiones confirmadas por el usuario (31/10/2026)
+- Alcance: laboratorio + imagenología (cuenta DIAGNOSTIC_CENTER).
+- Ciclo: BORRADOR → RECIBIDA → PROCESADA → SUBIDOS; CANCELADA y RECHAZADA son salidas de RECIBIDA; descarga en SUBIDOS.
+- Prioridad: H1 primero, luego H2.
+
 ## Hechos (descubrimiento, con ruta)
 - Menú del laboratorio: `src/app/core/navigation/navigation.map.ts` ~1941-2060 (reception, queue, results, prices, branches).
 - Recepción: `src/app/features/lab-reception/` (797 líneas; recibir muestra + acesión + cadena de custodia).
@@ -22,7 +27,8 @@
 
 ## Alcance
 - IN: menú del laboratorio/imagenología; pantalla «Órdenes»; estados y acciones; redirects de las rutas viejas; pruebas; capturas 3 viewports.
-- OUT: farmacia (su flujo de pedidos no se toca hasta confirmar); cambios de esquema en la API.
+- OUT: farmacia (su flujo de pedidos no se toca; confirmado 31/10); cambios de esquema en la API.
+- Base: la rama se rebasó sobre `origin/dev` (salió de `master`, 413 commits atrás).
 - Ambigüedades registradas:
   1. ¿Aplica también a farmacia («aceptar pedido»)? Supuesto: NO. Confirmar con el usuario.
   2. «Marketplace de servicios … ya sabes cómo lo quiero»: el estándar no está escrito en esta sesión. Supuesto: composición-rules §5 (una tarjeta con pestañas, centrada, ancho completo). Confirmar con el usuario qué pantalla exacta.
@@ -30,22 +36,29 @@
   4. «Descargar» corre sobre el archivo subido; hoy el visor está en Resultados.
 
 ## H1 — Menú compacto y pantalla «Órdenes»
-**CA:** Dado un usuario de un `DIAGNOSTIC_CENTER`, cuando abre el menú, entonces ve Resumen, Órdenes, Precios, Horarios y equipos, Sucursales; y las rutas viejas redirigen a Órdenes.
-**DoD:** `yarn lint` · `yarn typecheck` · `yarn test` dirigido (navigation + órdenes) · capturas 390/768/1440 con doble revisión.
-**Estado:** TODO
+**CA:** Dado un usuario de un `DIAGNOSTIC_CENTER`, cuando abre el menú, entonces ve Resumen, Órdenes, Precios y Sucursales; y las rutas viejas redirigen a Órdenes.
+**DoD:** `yarn tsc -p tsconfig.app.json --noEmit` · `yarn eslint` de lo tocado · `yarn ng test` dirigido · E2E Playwright del laboratorio · capturas 390/768/1440 con doble revisión.
+**Estado:** A MEDIAS (M4)
 
-| ID | Microtarea | CA (binario) | DoD | Estado |
+### H1.S1 — Órdenes
+| ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
-| H1.S1.M1 | Quitar reception/queue/results del menú y redirigir | el menú tiene 5 ítems de laboratorio | `yarn test navigation.laboratory` | TODO |
-| H1.S1.M2 | Pantalla «Órdenes» con 4 estados y filtro por estado | lista las órdenes con su insignia | spec del componente | TODO |
-| H1.S1.M3 | Acciones recibir / procesada / subir / descargar | cada acción cambia el estado y persiste al recargar (mock) | spec + Playwright | TODO |
-| H1.S1.M4 | Evidencia visual 3 viewports + doble revisión | notas por pantalla sin RECHAZADA | `evidencia/doble-revision.md` | TODO |
+| H1.S1.M1 | Quitar recepción, cola y resultados del menú y redirigir sus rutas a Órdenes | el menú del laboratorio tiene 4 ítems; las rutas viejas redirigen | `ng test navigation` → PASS | HECHO |
+| H1.S1.M2 | Pantalla «Órdenes»: una tarjeta con pestañas por estado, conteos, búsqueda y estados vacío/error | cada pestaña filtra y cuenta | `ng test laboratory-orders` → PASS | HECHO |
+| H1.S1.M3 | Cuatro acciones por fila (recibir, procesada, subir, descargar) con 409 ante un paso fuera de orden | cada acción cambia el estado y persiste tras recargar | `ng test lab-portal.handlers` + Playwright `hito2 · laboratorio` | HECHO |
+| H1.S1.M4 | Evidencia visual en 3 viewports con doble revisión independiente | sin pantalla RECHAZADA sobre el juego final | `evidencia/doble-revision.md` | A MEDIAS |
 
 ## H2 — Marketplace de servicios con el estándar de composición
-Pendiente de confirmar la pantalla (ambigüedad 2). **Estado:** BLOQUEADO por decisión de producto.
+Confirmado 31/10: máximo alcance — `/my-services`, directorio de laboratorios (`/laboratory-directory` y su ficha) y catálogo de farmacia, con el estándar de composición-rules §5.
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H2.S1.M1 | Alinear `/my-services`, directorio de laboratorios y catálogo de farmacia | Sin empezar | — | TODO |
 
 ## H3 — Paridad en la app móvil Flutter
-Pendiente: la app no tiene los flujos base (signup/login). **Estado:** TODO, fuera de este turno.
+La app no tiene signup/login ni los flujos de los tres roles; es un proyecto aparte.
+| ID | Microtarea | CA | DoD | Estado |
+|---|---|---|---|---|
+| H3.S1.M1 | Signup, login y flujos de laboratorio, imagenología y farmacia en Flutter | Sin empezar | — | TODO |
 
 ## Riesgos
 | Riesgo | Impacto | Mitigación |
