@@ -1,3 +1,5 @@
+import type { ReferralTransfer, ReferralTransferInput } from './referral-transfer.types';
+
 /* ============================================================================
     Derivaciones (`/referrals`, módulo `clinical_ext`).
 
@@ -98,6 +100,8 @@ export const REFERRAL_CONTRACT_PENDING_KEYS: readonly string[] = [
   'diagnosisText',
   'clinicalSummary',
   'treatmentGivenText',
+  // v4274: los datos de traslado (`referral-transfer.types.ts`).
+  'transfer',
 ];
 
 /**
@@ -150,6 +154,8 @@ export interface NewReferral {
   /** Hasta cuándo vale. Viaja como `YYYY-MM-DD` del día local. */
   readonly validUntil?: Date;
   readonly priorityConceptId?: string;
+  /** Datos de traslado (v4274). Se omite si no se cargó nada. */
+  readonly transfer?: ReferralTransferInput;
 }
 
 /** Lo que responde `POST /referrals`. */
@@ -229,6 +235,9 @@ export interface Referral {
   readonly targetDisplayName?: string;
   /** El nombre del servicio elegido, resuelto por el servidor. */
   readonly targetServiceName?: string;
+  readonly priorityConceptId?: string;
+  /** El traslado y la llegada (v4274); ausente si nunca se registró. */
+  readonly transfer?: ReferralTransfer;
 }
 
 /** Un problema de validación, atado al campo que lo corrige. */
