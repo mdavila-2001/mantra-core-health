@@ -428,6 +428,7 @@ tenant «Hospital San Lucas». Rama `infra-f4f5-web` (desde `origin/dev` con F0 
 |---|---|
 | `yarn lint` | exit 0 |
 | `yarn typecheck` (app + cypress + playwright) | exit 0 |
+| `yarn build` (bajo `flock`) | exit 0 · avisos de presupuesto previos; ningún CSS de esta rama pasa los 4 kB · `dist/` borrado |
 | `ng test` de lo tocado: reglas y clientes de quirófano y facturación, maqueta F4, pantallas F4 (`interventions.f4.spec`), pantallas F5 (`bed-day-charges.spec`), `resource-timeline`, catálogo de servicios, ficha de espacio, `mock-backend`, acceso delegado | 24 archivos · **201/201** (+ 4 archivos · 51/51 de reglas, clientes y maqueta F4) |
 | `check-client-prefixes` | los 13 endpoints nuevos ruteados en los tres proxies; quedan 14 rojos **previos ajenos** (`AdmissionsClient`, `InsightsClient`) |
 | `check-route-prefixes`, `check-css-tokens`, `check-english-identifiers`, `check-tokens` | exit 0 |
