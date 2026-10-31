@@ -213,6 +213,38 @@ export class MockRouter {
     return this.on('DELETE', pattern, handler);
   }
 
+  /**
+   * Envuelve el manejador **ya registrado** para ese método y patrón exacto.
+   *
+   * El envoltorio recibe la petición y `siguiente`, que es el manejador
+   * original: lo llama cuando la petición no es suya. Existe para que un
+   * dominio nuevo (el hospital piloto) pueda atender **sus** identificadores en
+   * una ruta que ya tiene dueño sin duplicar la ruta ni romper a los demás.
+   * Si el patrón no estaba registrado, se registra con un `siguiente` que
+   * responde 404.
+   */
+  wrap(
+    method: MockMethod,
+    pattern: string,
+    envoltorio: (request: MockRequest, siguiente: MockHandler) => MockReply | unknown,
+  ): this {
+    const segments = split(pattern);
+    const igual = (route: Route): boolean =>
+      route.method === method &&
+      route.segments.length === segments.length &&
+      route.segments.every((segment, i) => (segment.startsWith(':') && segments[i]!.startsWith(':')) || segment === segments[i]);
+    const indice = this.routes.findIndex(igual);
+    if (indice === -1) {
+      return this.on(method, pattern, (request) => envoltorio(request, () => notFound()));
+    }
+    const original = this.routes[indice]!;
+    this.routes[indice] = {
+      ...original,
+      handler: (request) => envoltorio(request, original.handler),
+    };
+    return this;
+  }
+
   /** Todo lo registrado, para los barridos de prueba: método y patrón. */
   rutas(): readonly { method: MockMethod; pattern: string }[] {
     return this.routes.map((r) => ({ method: r.method, pattern: `/${r.segments.join('/')}` }));

@@ -16,6 +16,8 @@ import { catchError, forkJoin, map, of, type Observable } from 'rxjs';
 
 import { SessionStore } from '../../../../core/auth/session.store';
 import { DirectoryClient } from '../../../../core/data-access/directory/directory.client';
+import { MembershipInvitationsClient } from '../../../../core/data-access/directory/membership-invitations.client';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import type {
   BranchListItem,
   MembershipListItem,
@@ -89,6 +91,7 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
   DIR_BRANCH_ACTIVE: 'success',
   DIR_BRANCH_CLOSED: 'secondary',
   DIR_MEMBERSHIP_ACTIVE: 'success',
+  DIR_MEMBERSHIP_PENDING_ACCEPTANCE: 'warning',
   DIR_MEMBERSHIP_ENDED: 'secondary',
   DIR_MEMBERSHIP_SUSPENDED: 'error',
 };
@@ -153,6 +156,8 @@ const VARIANTE_POR_CODIGO: Readonly<Record<string, BadgeVariant>> = {
 })
 export class OrganizationDetail {
   private readonly directory = inject(DirectoryClient);
+  private readonly invitaciones = inject(MembershipInvitationsClient);
+  private readonly dialogs = inject(DialogService);
   private readonly iam = inject(IamClient);
   private readonly toasts = inject(ToastService);
   private readonly terminology = inject(TerminologyClient);
@@ -198,10 +203,10 @@ export class OrganizationDetail {
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaEstadoMembresia');
   private readonly celdaSede =
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaSede');
-  private readonly celdaVigencia =
-    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaVigencia');
   private readonly celdaAccionesMembresia =
     viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaAccionesMembresia');
+  private readonly celdaVigencia =
+    viewChild.required<TemplateRef<{ $implicit: MembershipListItem }>>('celdaVigencia');
 
   private readonly celdaHija =
     viewChild.required<TemplateRef<{ $implicit: TenantListItem }>>('celdaHija');
@@ -309,18 +314,14 @@ export class OrganizationDetail {
       },
       { key: 'primaryBranchId', header: 'Sucursal principal', priority: 2, cell: this.celdaSede() },
       { key: 'startDate', header: 'Vigencia', priority: 2, cell: this.celdaVigencia() },
-      ...(this.puedeAdministrar() && this.sucursalesCargadas().length > 0
-        ? [
-            {
-              key: 'acciones',
-              header: 'Acciones',
-              priority: 1,
-              align: 'end' as const,
-              sticky: 'end' as const,
-              cell: this.celdaAccionesMembresia(),
-            },
-          ]
-        : []),
+      {
+        key: 'acciones',
+        header: 'Acciones',
+        priority: 1,
+        align: 'end' as const,
+        sticky: 'end' as const,
+        cell: this.celdaAccionesMembresia(),
+      },
     ],
   );
 
@@ -467,6 +468,40 @@ export class OrganizationDetail {
   protected varianteDe(conceptId: string): BadgeVariant {
     const opcion = this.etiquetaDe(conceptId);
     return (opcion && VARIANTE_POR_CODIGO[opcion.code]) ?? 'info';
+  }
+
+  /**
+   * Una membresía que la persona todavía no aceptó. Desde que `POST /tenants/:id/memberships` deja la membresía **pendiente
+   * de aceptación**, «sumar a alguien» es **invitar**: hasta que acepte no cuenta para su token ni sus políticas.
+   */
+  protected esInvitacionPendiente(membresia: MembershipListItem): boolean {
+    return this.etiquetaDe(membresia.statusConceptId)?.code === 'DIR_MEMBERSHIP_PENDING_ACCEPTANCE';
+  }
+
+  protected readonly retirando = signal<string | null>(null);
+
+  /** `POST …/offboard` sobre una invitación pendiente: la retira antes de que la acepten. */
+  protected async retirarInvitacion(membresia: MembershipListItem): Promise<void> {
+    if (this.retirando() !== null) return;
+    const confirmado = await this.dialogs.confirm({
+      title: 'Retirar la invitación',
+      message: 'La persona dejará de ver esta invitación y no podrá aceptarla. Podrá invitarla de nuevo cuando quiera.',
+      confirmLabel: 'Retirar invitación',
+      destructive: true,
+    });
+    if (!confirmado) return;
+    this.retirando.set(membresia.id);
+    this.invitaciones.withdraw(this.tenantId(), membresia.id).subscribe({
+      next: () => {
+        this.retirando.set(null);
+        this.toasts.success('La invitación quedó retirada.');
+        this.cargar();
+      },
+      error: () => {
+        this.retirando.set(null);
+        this.toasts.error('No pudimos retirar la invitación. Es posible que la persona ya la haya respondido: actualice la lista.');
+      },
+    });
   }
 
   protected sucursalDe(branchId: string | undefined): string | undefined {

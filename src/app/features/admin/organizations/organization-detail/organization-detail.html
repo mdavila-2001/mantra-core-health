@@ -233,8 +233,12 @@
 </ng-template>
 
 <ng-template #celdaEstadoMembresia let-membresia>
-  <app-badge [variant]="varianteDe(membresia.statusConceptId)">
-    {{ etiquetaDe(membresia.statusConceptId)?.display ?? '—' }}
+  <app-badge [variant]="varianteDe(membresia.statusConceptId)" [attr.data-testid]="'membresia-estado-' + membresia.id">
+    @if (esInvitacionPendiente(membresia)) {
+      Invitación enviada, pendiente de aceptación
+    } @else {
+      {{ etiquetaDe(membresia.statusConceptId)?.display ?? '—' }}
+    }
   </app-badge>
 </ng-template>
 
@@ -258,16 +262,39 @@
 </ng-template>
 
 <!-- Una acción que pide elegir algo va en modal (composition-rules §6). -->
+<!-- Una sola columna para lo que se le puede hacer a una persona de la
+     plantilla: asignarle una sede (quien administra, si hay sedes) y retirar
+     la invitación mientras esté pendiente. -->
 <ng-template #celdaAccionesMembresia let-membresia>
-  <button
-    app-button
-    variant="outline"
-    size="sm"
-    data-testid="ficha-asignar-sede"
-    (clicked)="abrirAsignacion(membresia)"
-  >
-    Asignar sede
-  </button>
+  @let asignable = puedeAdministrar() && sucursalesCargadas().length > 0;
+  @let pendiente = esInvitacionPendiente(membresia);
+  @if (asignable) {
+    <button
+      app-button
+      variant="outline"
+      size="sm"
+      data-testid="ficha-asignar-sede"
+      (clicked)="abrirAsignacion(membresia)"
+    >
+      Asignar sede
+    </button>
+  }
+  @if (pendiente) {
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      [disabled]="retirando() !== null"
+      (clicked)="retirarInvitacion(membresia)"
+      [attr.data-testid]="'membresia-retirar-' + membresia.id"
+    >
+      Retirar invitación
+    </button>
+  }
+  @if (!asignable && !pendiente) {
+    —
+  }
 </ng-template>
 
 <ng-template #celdaHija let-hija>

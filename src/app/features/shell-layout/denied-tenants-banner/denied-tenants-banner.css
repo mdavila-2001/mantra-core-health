@@ -1,0 +1,28 @@
+:host {
+  display: block;
+}
+
+.avisos {
+  margin-block-end: var(--sp-4);
+}
+
+.avisos__lista {
+  display: grid;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+  color: var(--text-primary);
+}
+
+.avisos__nota {
+  margin: 0 0 var(--sp-3);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.avisos__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}

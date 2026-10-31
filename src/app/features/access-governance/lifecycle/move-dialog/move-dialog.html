@@ -1,0 +1,247 @@
+<app-page-header
+  [title]="title()"
+  subtitle="Arme el conjunto nuevo de permisos, vea qué cambia antes de guardar y confirme. Lo anterior vence ahora."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-move-dialog">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as d) {
+      @if (result(); as outcome) {
+        <div aria-live="polite" role="status" data-testid="move-result">
+          @if (outcome.status === 'EXECUTED') {
+            <app-alert tone="success" title="El cambio ya está aplicado">
+              El puntaje de privilegios pasó de {{ outcome.scoreBefore }} a
+              {{ outcome.scoreAfter }}. Lo anterior venció ahora.
+              @if (outcome.campaignId) {
+                Se abrió una revisión posterior de los permisos nuevos:
+                <a
+                  [routerLink]="['/administration/access-governance/campaigns', outcome.campaignId]"
+                  data-testid="move-campaign-link"
+                  >ver la revisión</a
+                >.
+              }
+              @if (outcome.caseId) {
+                <a
+                  [routerLink]="['/administration/access-governance/lifecycle', outcome.caseId]"
+                  data-testid="move-case-link"
+                  >Ver el caso</a
+                >.
+              }
+            </app-alert>
+          } @else {
+            <app-alert tone="info" title="Queda pendiente de aprobación">
+              El cambio sube mucho el privilegio, así que lo debe aprobar otra persona. Hasta
+              entonces <strong>nada cambió</strong>.
+              <a
+                [routerLink]="['/administration/access-governance/approvals']"
+                data-testid="move-approvals-link"
+                >Ver las aprobaciones pendientes</a
+              >.
+            </app-alert>
+          }
+        </div>
+      }
+
+      <ol class="pasos" aria-label="Pasos del cambio">
+        <li>1. Rol y permisos nuevos</li>
+        <li>2. Vista previa</li>
+        <li>3. Confirmar</li>
+      </ol>
+
+      <section class="seccion" aria-labelledby="move-step-1">
+        <h2 id="move-step-1" class="seccion__titulo">1. Rol y permisos nuevos</h2>
+        <p class="seccion__ayuda">
+          Hoy {{ d.engagement.personName }} tiene
+          {{ editable().length + preserved().length }} permisos. Cambie lo que necesite: el conjunto
+          que deje acá es el que regirá.
+        </p>
+        @if (dropsConditions()) {
+          <app-alert
+            tone="warning"
+            title="Algunas condiciones propias de cada permiso no se conservan"
+            data-testid="move-conditions-warning"
+          >
+            En un cambio de rol se conserva la condición de todo el permiso (horario, red…), pero no
+            las de cada permiso suelto (por ejemplo, la anticipación mínima para cancelar). Vuelva a
+            ponerlas desde el editor de permisos después del cambio.
+          </app-alert>
+        }
+        <app-form-field label="Rol de la persona">
+          <app-select
+            [value]="template()"
+            (valueChange)="setTemplate($event)"
+            [options]="templateOptions"
+            ariaLabel="Rol de la persona"
+            data-testid="move-template"
+          />
+        </app-form-field>
+
+        @for (draft of editable(); track draft.id) {
+          <app-grant-composer
+            [draft]="draft"
+            [options]="d.options"
+            [removable]="true"
+            [idPrefix]="'move-grant-' + draft.id"
+            (draftChange)="updateDraft($event)"
+            (removed)="removeDraft(draft.id)"
+          />
+        }
+        @for (draft of preserved(); track draft.id) {
+          <div class="conservada" [attr.data-testid]="'move-denied-' + draft.id">
+            <p class="conservada__texto">
+              <strong>Prohibición expresa:</strong> {{ targetLabel(draft) }} ({{
+                atomsText(draft)
+              }}). Se conserva tal cual.
+            </p>
+            <button
+              app-button
+              variant="ghost"
+              size="sm"
+              type="button"
+              (clicked)="removeDraft(draft.id)"
+              [attr.aria-label]="'Quitar la prohibición de ' + targetLabel(draft)"
+            >
+              Quitar
+            </button>
+          </div>
+        }
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          (clicked)="addDraft()"
+          data-testid="move-add-grant"
+        >
+          Agregar un permiso
+        </button>
+      </section>
+
+      <section class="seccion" aria-labelledby="move-step-2">
+        <h2 id="move-step-2" class="seccion__titulo">2. Vista previa</h2>
+        <p class="seccion__ayuda">
+          Nada se guarda todavía. Vea a cuántos casos reales de su organización afecta antes de
+          decidir.
+        </p>
+        <div>
+          <button
+            app-button
+            type="button"
+            [isLoading]="simulating()"
+            [disabled]="simulating()"
+            (clicked)="simulate()"
+            data-testid="move-simulate"
+          >
+            Ver qué cambia
+          </button>
+        </div>
+
+        @if (simulationFailure() !== '') {
+          <app-alert
+            tone="error"
+            role="alert"
+            title="No se pudo calcular la vista previa"
+            data-testid="move-simulate-error"
+            >{{ simulationFailure() }}</app-alert
+          >
+        }
+
+        <div aria-live="polite" data-testid="move-preview-region">
+          @if (previewOutdated()) {
+            <app-alert
+              tone="warning"
+              title="La vista previa quedó atrasada"
+              data-testid="move-preview-outdated"
+              >Cambió el borrador después de calcularla. Vuelva a pulsar «Ver qué
+              cambia».</app-alert
+            >
+          }
+          @if (preview(); as p) {
+            <app-simulation-preview [preview]="p" idPrefix="move-preview" />
+          }
+        </div>
+      </section>
+
+      <section class="seccion" aria-labelledby="move-step-3">
+        <h2 id="move-step-3" class="seccion__titulo">3. Confirmar</h2>
+        <ul class="lista" data-testid="move-promises">
+          <li>
+            <strong>Lo anterior vence ahora.</strong> Los permisos que no estén en el conjunto nuevo
+            terminan en el momento de aplicar.
+          </li>
+          <li>
+            Después se abre una <strong>revisión</strong> de cada permiso nuevo, a cargo del dueño
+            de la cuenta (14 días).
+          </li>
+        </ul>
+        <app-form-field
+          label="Motivo del cambio"
+          [required]="true"
+          [errorMessage]="reasonError()"
+          hint="Queda en el registro. Al menos 10 caracteres."
+        >
+          <app-textarea
+            [value]="reason()"
+            (valueChange)="reason.set($event)"
+            [rows]="3"
+            [maxLength]="500"
+            [hasError]="reasonError() !== ''"
+            data-testid="move-reason"
+          />
+        </app-form-field>
+
+        @if (failure(); as problem) {
+          <app-alert
+            tone="error"
+            title="No se pudo aplicar el cambio"
+            role="alert"
+            data-testid="move-failure"
+          >
+            {{ problem.message }}
+            @if (problem.reason === 'SOD_EXCEPTION_REQUIRED') {
+              <a
+                [routerLink]="['/administration/access-governance/sod']"
+                data-testid="move-sod-link"
+                >Pedir una excepción de separación de funciones</a
+              >
+            }
+          </app-alert>
+        }
+
+        <div class="acciones">
+          <button
+            app-button
+            type="button"
+            [isLoading]="confirming()"
+            [disabled]="confirming() || !canConfirm()"
+            (clicked)="confirm()"
+            data-testid="move-confirm"
+          >
+            {{ needsApproval() ? 'Enviar para aprobación' : 'Aplicar el cambio' }}
+          </button>
+          <a
+            app-button
+            variant="outline"
+            routerLink="/administration/support-team"
+            data-testid="move-cancel"
+            >Volver al equipo de apoyo</a
+          >
+        </div>
+        @if (preview() === null) {
+          <p class="seccion__ayuda" data-testid="move-needs-preview">
+            Primero vea la vista previa: no se puede confirmar sin ella.
+          </p>
+        } @else if (previewOutdated()) {
+          <p class="seccion__ayuda" data-testid="move-needs-preview">
+            La vista previa quedó atrasada: vuelva a verla para poder confirmar.
+          </p>
+        } @else if (!preview()?.valid) {
+          <p class="seccion__ayuda" data-testid="move-needs-preview">
+            Corrija lo que marca la vista previa para poder confirmar.
+          </p>
+        }
+      </section>
+    }
+  </app-view-state-host>
+</app-card>

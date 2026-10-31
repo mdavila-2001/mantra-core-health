@@ -28,6 +28,28 @@ export function apiUrl(baseUrl: string, path: string): string {
 }
 
 /**
+ * ¿Es esta URL de **la API configurada**? (F9, defensa en profundidad.)
+ *
+ * Solo a la API se le adjuntan la credencial de la sesión y la organización activa. Se compara el **origen** completo
+ * (esquema + anfitrión + puerto), no un prefijo de texto: `https://api.x.com.evil.net` o `https://api.x.com@evil.net` no son
+ * `https://api.x.com`. Una ruta relativa se resuelve contra la página, igual que lo hará el navegador; con `apiBaseUrl`
+ * vacío la API es el propio origen. Una URL ilegible no es de la API (cierra, no abre).
+ *
+ * @param url La URL tal como la pidió `HttpClient`.
+ * @param apiBaseUrl La raíz configurada (`API_BASE_URL`); vacía significa rutas relativas.
+ */
+export function isApiUrl(url: string, apiBaseUrl: string): boolean {
+  // Sin navegador (SSR, pruebas sin DOM) no hay origen de página: se usa un anfitrión de reserva que nunca coincide con un tercero real.
+  const pagina = typeof location !== 'undefined' && /^https?:/.test(location.href) ? location.href : 'http://mismo-origen.invalid/';
+  try {
+    const raiz = new URL(apiBaseUrl === '' ? '/' : apiBaseUrl, pagina);
+    return new URL(url, pagina).origin === raiz.origin;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Si el refresh token viaja en una cookie `httpOnly` (TX-10, D-I).
  *
  * Token y no lectura directa de `environment` por la misma razón que
