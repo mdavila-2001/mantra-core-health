@@ -128,7 +128,7 @@ index 7f704fe3..36dbd5b6 100644
      RouterLink,
      RowActions,
 diff --git a/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts b/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts
-index 5d736af1..c443e92a 100644
+index 5d736af1..736b6625 100644
 --- a/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts
 +++ b/src/app/features/pharmacy/import/entity-import/entity-csv.spec.ts
 @@ -1,5 +1,6 @@
@@ -172,7 +172,7 @@ index 5d736af1..c443e92a 100644
 +
 +    it('categorías: dos nombres vacíos o de más de 60 caracteres no son «repetidos»: los rechaza el servidor', () => {
 +      const long = 'x'.repeat(61);
-+      const reading = readEntityCsv('categories', `nombre\n\n\n${long}\n${long}\n`);
++      const reading = readEntityCsv('categories', `nombre;nota\n;a\n;b\n${long};\n${long};\n`);
 +
 +      expect(reading.rows.every((row) => row.payload !== null && row.duplicateOfLine === undefined)).toBe(true);
 +    });
