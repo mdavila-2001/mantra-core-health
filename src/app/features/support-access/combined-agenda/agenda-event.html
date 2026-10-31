@@ -1,0 +1,13 @@
+<span class="celda__linea">
+  <span class="celda__hora">{{ hora() }}</span>
+  <span class="celda__texto">{{ texto() }}</span>
+</span>
+@if (!compact()) {
+  <span class="celda__sub">{{ sub() }}</span>
+}
+@if (marca(); as texto) {
+  <span class="celda__marca">{{ texto }}</span>
+}
+@if (multiOrg()) {
+  <span class="celda__org" [style.background]="orgColors().bg" [style.color]="orgColors().fg" aria-hidden="true">{{ event().orgShort }}</span>
+}

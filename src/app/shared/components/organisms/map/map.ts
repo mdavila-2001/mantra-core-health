@@ -247,7 +247,10 @@ export class AppMap implements OnDestroy {
     this.destruido = true;
     this.observadorDeTamano?.disconnect();
     this.observadorDeTamano = null;
-    this.mapa?.remove();
+    if (this.mapa !== null) {
+      cortarAnimacionDeZoom(this.mapa);
+      this.mapa.remove();
+    }
     this.mapa = null;
     this.leaflet = null;
     this.capaDePines = null;
@@ -586,5 +589,27 @@ export class AppMap implements OnDestroy {
       const cara = marcador.getElement()?.querySelector('.mapa__pin');
       cara?.classList.toggle('mapa__pin--activo', id === elegido);
     }
+  }
+}
+
+/**
+ * Corta la animación de zoom que Leaflet deje pendiente.
+ *
+ * Un encuadre (`fitBounds`, `setView`) o un zoom con el botón anima, y Leaflet
+ * cierra esa animación con un `setTimeout` de 250 ms (`_onZoomTransitionEnd`)
+ * que `remove()` no cancela. Si se sale de la pantalla en esa ventana —la ficha
+ * de una farmacia y en seguida «Consultar por chat»—, el timeout corre sobre un
+ * mapa ya desmontado y lee la posición de un panel que no existe:
+ * «Cannot read properties of undefined (reading '_leaflet_pos')».
+ *
+ * `_onZoomTransitionEnd` no hace nada si `_animatingZoom` es falso: apagarlo
+ * antes de `remove()` deja ese timeout sin trabajo. Es un campo interno de
+ * Leaflet 1.9 (no hay API pública para abortar la animación); si una versión
+ * futura lo quita, esto no hace nada y no rompe.
+ */
+function cortarAnimacionDeZoom(mapa: Leaflet.Map): void {
+  const interno = mapa as unknown as { _animatingZoom?: boolean };
+  if (interno._animatingZoom === true) {
+    interno._animatingZoom = false;
   }
 }

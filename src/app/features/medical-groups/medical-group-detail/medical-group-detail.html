@@ -2,7 +2,31 @@
   title="Grupo médico"
   [subtitle]="group()?.serviceName ?? 'Consulta del grupo'"
   [breadcrumbs]="breadcrumbs()"
-/>
+>
+  @if (canManage()) {
+    <div page-actions class="consulta__acciones">
+      <button
+        app-button
+        type="button"
+        variant="secondary"
+        data-testid="medical-group-edit"
+        (clicked)="openEditGroup()"
+      >
+        Editar grupo
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="secondary"
+        data-testid="medical-group-delete"
+        [disabled]="working()"
+        (clicked)="deleteGroup()"
+      >
+        Eliminar grupo
+      </button>
+    </div>
+  }
+</app-page-header>
 
 <app-view-state-host [state]="state()" (retry)="retry()">
   @if (group(); as group) {
@@ -115,72 +139,95 @@
             </div>
           </app-tab>
 
-          <!-- ─── Equipo y pago acordado ───────────────────────────────────── -->
+          <!-- ─── Equipo y pago acordado: una tabla ────────────────────────── -->
           <app-tab [label]="'Equipo (' + group.members.length + ')'">
             <div class="consulta__panel" data-testid="medical-group-tab-equipo">
-              <ul class="consulta__equipo" aria-label="Equipo y pago acordado">
-                @for (member of group.members; track member.id) {
-                  <li class="consulta__integrante" data-testid="medical-group-member">
-                    <div class="consulta__integrante-fila">
-                      <strong>{{ member.roleTitle }}</strong>
-                      <app-badge
-                        [variant]="invitationLabel[member.invitationStatus].variant"
-                        [value]="
-                          member.isCreator
-                            ? 'Creó el grupo'
-                            : invitationLabel[member.invitationStatus].label
-                        "
-                      />
-                    </div>
-                    <span>{{ member.practitionerName ?? 'Profesional sin nombre cargado' }}</span>
-                    <span>Pago acordado: Bs {{ formatAmount(member.agreedPaymentAmount) }}</span>
-                    @if (member.additionalTermsText) {
-                      <span class="consulta__nota"
-                        >Términos del cargo: {{ member.additionalTermsText }}</span
-                      >
-                    }
-                  </li>
-                }
-              </ul>
-            </div>
-          </app-tab>
-
-          <!-- ─── Horario: dónde y cuándo, y el cambio de horario ──────────── -->
-          <app-tab label="Horario">
-            <div class="consulta__panel" data-testid="medical-group-tab-horario">
-              <p class="consulta__texto">
-                Programado para el <strong>{{ format(group.scheduledAt) }}</strong> en
-                {{ group.locationText }}.
-              </p>
-              @if (
-                group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt;
-                as proposed
-              ) {
+              <div class="consulta__barra">
                 <p class="consulta__texto">
-                  Hay un cambio propuesto para el <strong>{{ format(proposed) }}</strong
-                  >.
+                  Total acordado:
+                  <strong data-testid="medical-group-total">Bs {{ totalPayment() }}</strong>
                 </p>
-                @if (!canAnswerReschedule()) {
-                  <p class="consulta__nota">Lo resuelve quien creó el grupo.</p>
-                }
-              }
-              @if (canRequestReschedule()) {
-                <div class="consulta__acciones">
+                @if (canManage()) {
                   <button
                     app-button
                     type="button"
-                    variant="secondary"
-                    data-testid="medical-group-request-reschedule"
-                    (clicked)="openReschedule()"
+                    variant="primary"
+                    data-testid="medical-group-add-member"
+                    (clicked)="openAddMember()"
                   >
-                    Solicitar cambio de horario
+                    Agregar integrante
                   </button>
-                </div>
-              } @else if (group.status !== 'RESCHEDULE_PENDING') {
+                }
+              </div>
+              <app-data-table
+                data-testid="medical-group-team"
+                [state]="teamState()"
+                [columns]="teamColumns()"
+                [trackBy]="memberId"
+                [rowLabel]="memberLabel"
+                stackedOnMobile
+                caption="Equipo y pago acordado"
+              />
+              @if (!canManage() && isCreator()) {
                 <p class="consulta__nota">
-                  El horario sólo se puede cambiar en un grupo programado y todavía no realizado.
+                  El equipo ya no se puede modificar: el grupo se realizó o su expediente se cerró.
                 </p>
               }
+            </div>
+          </app-tab>
+
+          <!-- ─── Horario: dónde y cuándo, y qué se puede hacer con él ─────── -->
+          <app-tab label="Horario">
+            <div class="consulta__panel" data-testid="medical-group-tab-horario">
+              <section class="consulta__bloque" aria-labelledby="consulta-horario-titulo">
+                <h3 id="consulta-horario-titulo" class="consulta__subtitulo">Cuándo y dónde</h3>
+                <app-fact-list [hechos]="schedule()" etiqueta="Horario del grupo" />
+              </section>
+
+              <section class="consulta__bloque" aria-labelledby="consulta-cambio-titulo">
+                <h3 id="consulta-cambio-titulo" class="consulta__subtitulo">Cambios</h3>
+                @if (
+                  group.status === 'RESCHEDULE_PENDING' && group.proposedRescheduleAt;
+                  as proposed
+                ) {
+                  <p class="consulta__texto" data-testid="medical-group-proposed">
+                    Hay un cambio propuesto para el <strong>{{ format(proposed) }}</strong
+                    >{{ proposerName() === null ? '' : ', propuesto por ' + proposerName() }}.
+                  </p>
+                  @if (!canAnswerReschedule()) {
+                    <p class="consulta__nota">Lo resuelve quien creó el grupo.</p>
+                  }
+                }
+                <div class="consulta__acciones">
+                  @if (canRequestReschedule()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      data-testid="medical-group-request-reschedule"
+                      (clicked)="openReschedule()"
+                    >
+                      Solicitar cambio de horario
+                    </button>
+                  }
+                  @if (canManage()) {
+                    <button
+                      app-button
+                      type="button"
+                      variant="secondary"
+                      data-testid="medical-group-edit-place"
+                      (clicked)="openEditGroup()"
+                    >
+                      Corregir el lugar
+                    </button>
+                  }
+                </div>
+                @if (rescheduleBlocked(); as reason) {
+                  <p class="consulta__nota" data-testid="medical-group-reschedule-blocked">
+                    {{ reason }}
+                  </p>
+                }
+              </section>
             </div>
           </app-tab>
 
@@ -272,5 +319,184 @@
         </div>
       </app-content-dialog>
     }
+
+    @if (memberDialogOpen()) {
+      <app-content-dialog
+        [heading]="editingMember() === null ? 'Agregar integrante' : 'Modificar el cargo'"
+        [description]="
+          editingMember() === null
+            ? 'La persona recibe una invitación con el cargo y el pago acordado.'
+            : 'Si cambia el cargo, el pago o los términos, la persona tiene que volver a responder.'
+        "
+        (closed)="memberDialogOpen.set(false)"
+      >
+        <div class="consulta__formulario" data-testid="medical-group-member-dialog">
+          @if (editingMember(); as member) {
+            <p class="consulta__texto">
+              <strong>{{ member.practitionerName ?? 'Profesional sin nombre cargado' }}</strong>
+            </p>
+          } @else {
+            <app-form-field label="Profesional" [required]="true">
+              <app-select
+                data-testid="medical-group-member-practitioner"
+                [value]="memberPractitioner()"
+                (valueChange)="memberPractitioner.set($event)"
+                [options]="colleagueOptions()"
+                [placeholder]="colleaguesPlaceholder()"
+              />
+            </app-form-field>
+          }
+          <app-form-field label="Cargo o función" [required]="true">
+            <app-input
+              testId="medical-group-member-role"
+              placeholder="Ej.: Anestesiólogo"
+              [value]="memberRole()"
+              (valueChange)="memberRole.set(text($event))"
+            />
+          </app-form-field>
+          <app-form-field
+            label="Pago acordado (Bs)"
+            [required]="true"
+            [errorMessage]="amountProblem()"
+          >
+            <app-input
+              testId="medical-group-member-amount"
+              inputMode="decimal"
+              placeholder="Ej.: 1500.00"
+              [value]="memberAmount()"
+              (valueChange)="memberAmount.set(text($event))"
+            />
+          </app-form-field>
+          <app-form-field label="Términos adicionales para este cargo" hint="Opcional.">
+            <app-textarea
+              [rows]="3"
+              [value]="memberTerms()"
+              (valueChange)="memberTerms.set($event)"
+            />
+          </app-form-field>
+        </div>
+        <div dialog-actions class="consulta__acciones">
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            (clicked)="memberDialogOpen.set(false)"
+          >
+            Cancelar
+          </button>
+          <button
+            app-button
+            type="button"
+            variant="primary"
+            data-testid="medical-group-member-save"
+            [disabled]="!canSaveMember()"
+            (clicked)="saveMember()"
+          >
+            {{ editingMember() === null ? 'Agregar al equipo' : 'Guardar cargo' }}
+          </button>
+        </div>
+      </app-content-dialog>
+    }
+
+    @if (groupDialogOpen()) {
+      <app-content-dialog
+        heading="Editar el grupo"
+        description="El servicio, la fecha y el paciente no se cambian acá: la fecha se cambia desde Horario."
+        (closed)="groupDialogOpen.set(false)"
+      >
+        <div class="consulta__formulario" data-testid="medical-group-edit-dialog">
+          <app-form-field label="Lugar de realización" [required]="true">
+            <app-input
+              testId="medical-group-edit-location"
+              [value]="locationDraft()"
+              (valueChange)="locationDraft.set(text($event))"
+            />
+          </app-form-field>
+          <app-form-field label="Notas adicionales" hint="Opcional. Vacío las borra.">
+            <app-textarea
+              [rows]="4"
+              [value]="notesDraftText()"
+              (valueChange)="notesDraftText.set($event)"
+            />
+          </app-form-field>
+        </div>
+        <div dialog-actions class="consulta__acciones">
+          <button
+            app-button
+            type="button"
+            variant="secondary"
+            (clicked)="groupDialogOpen.set(false)"
+          >
+            Cancelar
+          </button>
+          <button
+            app-button
+            type="button"
+            variant="primary"
+            data-testid="medical-group-edit-save"
+            [disabled]="!canSaveGroup()"
+            (clicked)="saveGroup()"
+          >
+            Guardar cambios
+          </button>
+        </div>
+      </app-content-dialog>
+    }
   }
 </app-view-state-host>
+
+<!-- Plantillas de celda del equipo: la tabla las recibe por `ColumnDef.cell`. -->
+<ng-template #roleCell let-member>
+  <strong>{{ member.roleTitle }}</strong>
+  @if (member.additionalTermsText) {
+    <span class="consulta__nota consulta__nota--celda">
+      Términos del cargo: {{ member.additionalTermsText }}
+    </span>
+  }
+</ng-template>
+
+<ng-template #personCell let-member>
+  {{ member.practitionerName ?? 'Profesional sin nombre cargado' }}
+</ng-template>
+
+<ng-template #paymentCell let-member>Bs {{ formatAmount(member.agreedPaymentAmount) }}</ng-template>
+
+<ng-template #invitationCell let-member>
+  <app-badge
+    [variant]="invitationOf(member).variant"
+    [value]="member.isCreator ? 'Creó el grupo' : invitationOf(member).label"
+  />
+</ng-template>
+
+<ng-template #memberActionsCell let-member>
+  @if (member.isCreator) {
+    <span class="consulta__nota">—</span>
+  } @else {
+    <div class="consulta__acciones consulta__acciones--fila">
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-testid="medical-group-member-edit"
+        [attr.aria-label]="'Modificar el cargo ' + member.roleTitle"
+        [disabled]="working()"
+        (clicked)="openEditMember(member)"
+      >
+        Modificar
+      </button>
+      <button
+        app-button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-testid="medical-group-member-remove"
+        [attr.aria-label]="'Quitar el cargo ' + member.roleTitle"
+        [disabled]="working()"
+        (clicked)="removeMember(member)"
+      >
+        Quitar
+      </button>
+    </div>
+  }
+</ng-template>

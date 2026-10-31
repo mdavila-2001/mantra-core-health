@@ -1,0 +1,88 @@
+@if (notice(); as aviso) {
+  <div class="aviso-dispositivo" data-testid="aviso-dispositivo">
+    @if (closedOthers() === null) {
+      <app-alert tone="warning" title="Entró desde un dispositivo nuevo" role="alert">
+        <p class="aviso-dispositivo__detalle" data-testid="aviso-dispositivo-detalle">
+          {{ aviso.label }}@if (aviso.ip) { · IP {{ aviso.ip }}} · {{ when() }} · ¿Fue usted?
+        </p>
+        @if (failure(); as fallo) {
+          <p class="aviso-dispositivo__fallo" data-testid="aviso-dispositivo-fallo">{{ fallo }}</p>
+        }
+        @if (askingCode()) {
+          <div class="aviso-dispositivo__codigo" data-testid="aviso-dispositivo-codigo-paso">
+            <p class="aviso-dispositivo__detalle">
+              Para confirmar que es usted le mandamos un código de 8 dígitos al correo verificado de su cuenta. Escríbalo aquí.
+            </p>
+            @if (sentTo(); as destino) {
+              <p class="aviso-dispositivo__enviado" role="status" data-testid="aviso-dispositivo-enviado">Enviamos el código a {{ destino }}.</p>
+            }
+            <div class="aviso-dispositivo__acciones">
+              <button app-button variant="outline" size="sm" type="button" [isLoading]="requestingCode()" [disabled]="requestingCode() || busy()" (clicked)="sendCode()" data-testid="aviso-dispositivo-pedir-codigo">
+                {{ sentTo() === null ? 'Enviarme el código' : 'Enviar otro código' }}
+              </button>
+            </div>
+            <app-form-field label="Código del correo" [errorMessage]="codeMissing() ? 'Escriba los 8 dígitos del código.' : ''">
+              <app-input
+                [value]="code()"
+                (valueChange)="code.set('' + ($event ?? ''))"
+                inputMode="numeric"
+                autocomplete="one-time-code"
+                placeholder="00000000"
+                ariaLabel="Código del correo"
+                [hasError]="codeMissing()"
+                testId="aviso-dispositivo-codigo"
+              />
+            </app-form-field>
+            <div class="aviso-dispositivo__acciones">
+              <button app-button variant="primary" size="sm" type="button" [isLoading]="busy()" [disabled]="busy()" (clicked)="confirmWithCode()" data-testid="aviso-dispositivo-confirmar-codigo">Confirmar este dispositivo</button>
+              <button app-button variant="ghost" size="sm" type="button" [disabled]="busy()" (clicked)="cancelCode()" data-testid="aviso-dispositivo-volver">Volver</button>
+            </div>
+          </div>
+        } @else {
+        <div class="aviso-dispositivo__acciones">
+          <button
+            app-button
+            variant="primary"
+            size="sm"
+            type="button"
+            [disabled]="busy()"
+            (clicked)="itWasMe()"
+            data-testid="aviso-dispositivo-fui-yo"
+          >
+            Fui yo
+          </button>
+          <button
+            app-button
+            variant="outline"
+            size="sm"
+            type="button"
+            [disabled]="busy()"
+            (clicked)="itWasNotMe()"
+            data-testid="aviso-dispositivo-no-fui-yo"
+          >
+            No fui yo, cerrar otras sesiones
+          </button>
+          <button app-button variant="ghost" size="sm" type="button" [disabled]="busy()" (clicked)="later()" data-testid="aviso-dispositivo-despues">
+            Más tarde
+          </button>
+        </div>
+        }
+      </app-alert>
+    } @else {
+      <app-alert tone="success" title="Cerramos las otras sesiones" role="status">
+        <p class="aviso-dispositivo__detalle" data-testid="aviso-dispositivo-resultado">
+          {{ closedOthers() === 0 ? 'No había otras sesiones abiertas.' : closedOthers() === 1 ? 'Se cerró 1 sesión.' : 'Se cerraron ' + closedOthers() + ' sesiones.' }}
+          Para estar tranquilo, cambie su contraseña ahora.
+        </p>
+        <div class="aviso-dispositivo__acciones">
+          <a app-button variant="primary" size="sm" routerLink="/my-account/security" (click)="later()" data-testid="aviso-dispositivo-cambiar-clave">
+            Cambiar mi contraseña
+          </a>
+          <button app-button variant="ghost" size="sm" type="button" (clicked)="later()" data-testid="aviso-dispositivo-entendido">
+            Entendido
+          </button>
+        </div>
+      </app-alert>
+    }
+  </div>
+}

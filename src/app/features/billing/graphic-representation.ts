@@ -40,6 +40,7 @@ import {
   type PdfIssuer,
 } from '../../shared/utils/pdf-export/pdf-export';
 import { qrBlock } from '../../shared/utils/pdf-export/pdf-qr';
+import { releaseObjectUrlLater } from '../../shared/utils/file-download/release-object-url';
 import { amountLiteral } from './amount-in-words';
 
 export const SIMULATED_QR_HOST = 'https://simulado.invalid/consulta/QR';
@@ -319,5 +320,5 @@ export function downloadXml(factura: SimulatedInvoice): void {
   enlace.href = url;
   enlace.download = fileName(factura, 'xml');
   enlace.click();
-  URL.revokeObjectURL(url);
+  releaseObjectUrlLater(url);
 }

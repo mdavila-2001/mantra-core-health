@@ -112,6 +112,7 @@ function vitrinaDeSesion(request: MockRequest): SimulatedShowcase | undefined {
 export function puedeActuarComo(request: MockRequest, profileId: string): boolean {
   const user = request.user;
   if (user === null || profileId === '') return true;
+  if (enNombreDe.get(request) === profileId) return true;
   if (vitrinaDeSesion(request)?.id === profileId) return true;
   const v = showcases.get(profileId);
   return (
@@ -120,6 +121,21 @@ export function puedeActuarComo(request: MockRequest, profileId: string): boolea
     user.tenants.includes(v.tenantId) &&
     user.roles.includes('PHARMACY_STAFF')
   );
+}
+
+/**
+ * Las peticiones que ya pasaron la regla de **responder en nombre de un doctor**
+ * (personal de apoyo con `messages.reply_on_behalf` y la aceptación del doctor):
+ * la API no le pide a quien escribe que el perfil sea suyo, porque lo autorizó
+ * la delegación. Solo la marca quien validó eso (`support-access.chat.handlers`),
+ * y solo vale para esa petición y ese perfil.
+ */
+const enNombreDe = new WeakMap<MockRequest, string>();
+
+/** Marca una petición ya autorizada por la delegación para actuar con `profileId`. */
+export function autorizadaEnNombreDe(request: MockRequest, profileId: string): MockRequest {
+  enNombreDe.set(request, profileId);
+  return request;
 }
 
 /** El 403 de la API cuando no se puede actuar con el perfil pedido. */
