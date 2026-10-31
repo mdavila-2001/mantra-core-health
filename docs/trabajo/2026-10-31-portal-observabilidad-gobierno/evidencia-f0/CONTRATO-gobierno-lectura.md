@@ -8,15 +8,16 @@
 - Fechas ISO 8601 UTC con microsegundos. Los códigos de concepto salen sin el prefijo del módulo (`EXEC_SUCCEEDED`, no `system_ops:EXEC_SUCCEEDED`).
 - `notMeasured: [{ field, reason }]` = «no hay fuente»; en el front es S3/S7 con el motivo, nunca un 0 ni un verde.
 - Alcance: ninguna ruta pide `X-Tenant-Id`. Los roles de plataforma (`SUPERADMIN`, `PLATFORM_ADMIN`, `DATA_PLATFORM_ADMIN`, `GOVERNANCE_ADMIN`) deben ir **sin** cabecera (con una cabecera de otra organización → 403 `TENANT_MEMBERSHIP_REQUIRED`); `DPO`, `AUDITOR`, `DATA_STEWARD`, `SECURITY_ADMIN` se asignan sin tenant y pasan sin cabecera.
-- `DATA_GOVERNANCE_ADMIN` = `GOVERNANCE_ADMIN` (alias, decisión X-6).
+- **Alias X-6, sólo de lectura y explícito** (corregido tras la revisión independiente): `GOVERNANCE_ADMIN` y `DATA_GOVERNANCE_ADMIN` figuran los dos en el `@Roles` de cada `GET` de gobierno (`GOVERNANCE_VIEW_ROLES`, `LEGAL_HOLD_VIEW_ROLES`, `PORTAL_VIEW_ROLES`, `AUDIT_SUMMARY_ROLES`). **No hay alias en `RolesGuard`**: en las rutas de escritura cada nombre conserva sólo lo que ya autorizaba.
+- Cursor forjado (`t` que no es fecha ISO válida, `i` que no es uuid, tipo de trabajo inexistente) → **400 `INVALID_CURSOR`**, en todas las rutas de este contrato y en `/audit/log` y `/audit/data-access`.
 
 ## Roles
 | Conjunto | Roles (SUPERADMIN siempre pasa) | Rutas |
 |---|---|---|
-| `GOVERNANCE_VIEW_ROLES` | SECURITY_ADMIN, PLATFORM_ADMIN, GOVERNANCE_ADMIN, DATA_PLATFORM_ADMIN, DPO, AUDITOR, DATA_STEWARD | `admin/governance/*` (salvo legal-holds), `admin/catalog/pii/*` |
-| `LEGAL_HOLD_VIEW_ROLES` | SECURITY_ADMIN, PLATFORM_ADMIN, GOVERNANCE_ADMIN, DPO, AUDITOR | `admin/governance/legal-holds` |
+| `GOVERNANCE_VIEW_ROLES` | SECURITY_ADMIN, PLATFORM_ADMIN, GOVERNANCE_ADMIN, DATA_GOVERNANCE_ADMIN, DATA_PLATFORM_ADMIN, DPO, AUDITOR, DATA_STEWARD | `admin/governance/*` (salvo legal-holds), `admin/catalog/pii/*` |
+| `LEGAL_HOLD_VIEW_ROLES` | SECURITY_ADMIN, PLATFORM_ADMIN, GOVERNANCE_ADMIN, DATA_GOVERNANCE_ADMIN, DPO, AUDITOR | `admin/governance/legal-holds` |
 | `AUDIT_READ_ROLES` | AUDITOR, DPO, SECURITY_ADMIN | `audit/log`, `audit/log/filter-catalog`, `audit/data-access`, `privacy/dsar[/:id]` |
-| `AUDIT_SUMMARY_ROLES` | AUDIT_READ_ROLES + GOVERNANCE_ADMIN (D-2) | `audit/data-access/summary` |
+| `AUDIT_SUMMARY_ROLES` | AUDIT_READ_ROLES + GOVERNANCE_ADMIN + DATA_GOVERNANCE_ADMIN (D-2) | `audit/data-access/summary` |
 
 PLATFORM_ADMIN / DATA_PLATFORM_ADMIN / DATA_STEWARD **no** leen la bitácora ni el DSAR (403). Las lecturas de `audit/*` y `privacy/dsar` quedan selladas en `audit.data_access_log` (`SECURITY_OVERSIGHT`).
 
@@ -89,17 +90,17 @@ Un hold levantado tiene `status: "REVOKED"`.
 ```
 Concilia sólo columnas personales (≥ `PERSONAL`) con ficha **aprobada y vigente**. `ORPHAN_IN_REGISTRY` trae `objectId/columnId/sensitivity/reviewStatus = null`. `notMeasured` suma `catalog` (sin escaneo: no hay conciliación ni huérfanos) y `declaredRegistry.fields` (registro vacío: toda personal aprobada figura como faltante).
 
-### `GET /audit/data-access/summary` — from?, to? (def. 30 días), minSample? (1..1000, def. 5)
+### `GET /audit/data-access/summary` — from?, to? (def. 30 días; **ventana mínima 24 h**, si no 400 `INVALID_DATE`), minSample? (**5..1000**, def. 5; menos de 5 → 400)
 ```json
-{ "window": { "from": "…", "to": "…" }, "totals": { "events": 30, "distinctActors": 1, "patientScopedEvents": 0 },
-  "byPurpose": [{ "key": "SECURITY_OVERSIGHT", "events": 18, "distinctActors": 1 }],
-  "byResourceType": [{ "key": "DSAR_REQUEST", "events": 13, "distinctActors": 1 }],
-  "byOperation": [{ "key": "READ", "events": 30, "distinctActors": 1 }],
-  "daily": [{ "day": "2026-10-31", "events": 30 }],
-  "minSample": 5, "suppressed": { "buckets": 0, "events": 0 },
-  "notMeasured": [{ "field": "byRole", "reason": "audit.data_access_log no guarda el rol con que actuó quien leyó…" }, { "field": "phiOnly", "reason": "…" }] }
+{ "window": { "from": "…", "to": "…" }, "totals": { "events": 38, "distinctActors": 1, "patientScopedEvents": 0 },
+  "byPurpose": [{ "key": "SECURITY_OVERSIGHT", "events": 38, "distinctActors": 1 }],
+  "byResourceType": [{ "key": "DATA_ACCESS_SUMMARY", "events": 14, "distinctActors": 1 }, { "key": "DSAR_REQUEST", "events": 14, "distinctActors": 1 }],
+  "byOperation": [{ "key": "READ", "events": 38, "distinctActors": 1 }],
+  "daily": [{ "day": "2026-10-31", "events": 38 }],
+  "minSample": 5, "suppressed": { "byPurpose": 0, "byResourceType": 10, "byOperation": 0, "daily": 0 },
+  "notMeasured": [{ "field": "byRole", "reason": "…" }, { "field": "phiOnly", "reason": "…" }] }
 ```
-Un grupo con menos de `minSample` eventos no se muestra: va a `suppressed`. `key` puede ser `null` (propósito sin declarar). Sin ids de paciente ni de recurso.
+k-anonimato **impuesto por el servidor**: el piso es 5 y el cliente sólo puede subirlo. Un grupo (o día) con menos de `minSample` eventos no se muestra; si lo oculto suma menos que `minSample` (restarlo del total lo revelaría) se ocultan también los grupos visibles más chicos (supresión complementaria), así que cada cifra de `suppressed` es **0 o ≥ minSample**. `totals.events/distinctActors` son `null` (con `notMeasured: totals`) si hay menos de `minSample` eventos; `totals.patientScopedEvents` es `null` si está entre 1 y `minSample−1`. El front debe pintar `null` como «sin dato (muestra insuficiente)», nunca como 0.
 
 ### `GET /privacy/dsar` — status? (`RECEIVED|IN_PROGRESS|COMPLETED|REJECTED`), type? (`ACCESS|ERASURE|RECTIFICATION|PORTABILITY|OBJECTION`), from?, to?  · orden `requested_at desc, id desc`  — y `GET /privacy/dsar/:id` (mismo ítem)
 ```json
