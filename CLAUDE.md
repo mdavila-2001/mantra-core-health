@@ -76,7 +76,8 @@ El merge a `dev` exige revisión humana: `gh pr merge` y el auto-merge están
 bloqueados. El flujo termina en **abrir el PR**. El CI propio está caído; los
 `check-*.mjs` se corren a mano.
 
-**Dos PRs por cambio terminado: uno hacia `dev` y otro hacia `test`** (pedido
-del usuario, 28/10/2026; ejemplo: #1526 y #1543). El de `test` sale de una rama
-propia creada desde `test` con solo los commits del cambio (cherry-pick); nunca
-desde la rama de `dev`, que arrastraría lo que `test` todavía no tiene.
+**Un PR por cambio terminado, hacia `dev`.** La rama `test` está dada de baja
+desde el 30/10/2026: no despliega nada y `test.alovidasalud.com` redirige a
+`dev`, así que no se le abren PR. Si el cambio también va a `mockup`, lleva su
+propio PR desde una rama creada sobre `mockup`, con solo los commits del cambio
+(cherry-pick).
