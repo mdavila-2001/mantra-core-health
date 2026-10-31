@@ -12,7 +12,8 @@
 .filtros-boton {
   display: none;
   inline-size: 100%;
-  min-block-size: 2.75rem;
+  /* 44 px literales: `rem` vale 14 px en este sistema (html { font-size: var(--fs-body) }), así que 2.75rem eran 38,5 px. */
+  min-block-size: 44px;
   margin-block-end: var(--sp-3);
   padding: var(--sp-2) var(--sp-4);
   border: 1px solid var(--border-strong);
@@ -90,6 +91,8 @@
     inset-inline: 0;
     inset-block-end: 0;
     max-block-size: 82vh;
+    /* `dvh` descuenta la barra de direcciones del navegador móvil; `vh` queda de respaldo. */
+    max-block-size: 82dvh;
     overflow: auto;
     z-index: var(--z-drawer, 40);
     border-radius: var(--r-lg) var(--r-lg) 0 0;
@@ -302,7 +305,7 @@ kbd {
 
 .pestana {
   flex: none;
-  min-block-size: 2.75rem;
+  min-block-size: 44px;
   padding: var(--sp-1) var(--sp-3);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-full);
@@ -429,4 +432,56 @@ app-agenda-grid.semana {
 .vacio .vacio__motivo {
   color: var(--text-secondary);
   font-size: var(--fs-caption);
+}
+
+/* Celular: objetivos táctiles de 44 px.
+   `size="sm"` mide 32 px y un pulgar no acierta. Los botones leen el gancho
+   `--btn-min-block`; declarado en el anfitrión llega a la barra, al panel, al
+   buscador y al registro de pacientes, que cuelgan de este árbol. Desde 780 px
+   cada cosa vuelve a su talle de siempre. */
+@media (max-width: 779px) {
+  :host {
+    --btn-min-block: 44px;
+  }
+
+  .barra__nav > button {
+    min-inline-size: 44px;
+  }
+
+  .fecha input,
+  .buscar__org select {
+    min-block-size: 44px;
+  }
+
+  .atajos summary {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+    box-sizing: border-box;
+  }
+
+  .enlace {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
+  }
+
+  /* Las teclas de atajo no se pueden pulsar en un teléfono: sobran en el botón y en su nombre accesible.
+     La lista de «Atajos» las conserva: ahí son el contenido. */
+  .barra__acciones > button kbd {
+    display: none;
+  }
+
+  /* Cada opción mide 38 px y un velo transparente que cubre el relleno y el borde del marco lleva el blanco táctil a 44
+     (misma solución que `messaging.css`). `::ng-deep` acotado a esta barra: el átomo compartido no cambia. */
+  .barra--vista app-segmented-control ::ng-deep .segmentado__opcion {
+    position: relative;
+    min-block-size: 38px;
+  }
+
+  .barra--vista app-segmented-control ::ng-deep .segmentado__opcion::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
 }

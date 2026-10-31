@@ -12,6 +12,7 @@
 
 .seccion__texto {
   margin: 0;
+  overflow-wrap: anywhere;
   font-size: var(--fs-body);
   color: var(--text-secondary);
 }
@@ -23,8 +24,10 @@
 }
 
 @media (min-width: 780px) {
+  /* El campo toma el ancho que sobra y el botón su ancho natural. Con `minmax(16rem, 28rem) auto` la pista `auto` se
+     estiraba y el botón «Unirme» quedaba de media tarjeta, con el campo acotado a la izquierda (CLAUDE.md regla 6). */
   .canje__form {
-    grid-template-columns: minmax(16rem, 28rem) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: end;
   }
 }
@@ -50,6 +53,7 @@
 
 .vinculo__org {
   margin: 0;
+  overflow-wrap: anywhere;
   font-size: var(--fs-h3);
   font-weight: 600;
   color: var(--text-primary);
@@ -63,6 +67,7 @@
 }
 
 .resumen li {
+  overflow-wrap: anywhere;
   color: var(--text-primary);
   line-height: var(--lh-body);
 }
@@ -108,4 +113,24 @@
   display: flex;
   justify-content: flex-end;
   margin-block-end: var(--sp-3);
+}
+
+/* Celular: los botones `size="sm"` (Ver mi actividad, Pedir más permisos, Confirmar, Retirar, Quitar, el diálogo de
+   pedido) y el selector del pedido miden 44 px. El gancho `--btn-min-block` lo leen los botones de este árbol, incluidos
+   «¿Por qué no puedo?» y «Mis pedidos de aprobación», que cuelgan de esta pantalla. */
+@media (max-width: 779px) {
+  :host {
+    --btn-min-block: 44px;
+  }
+
+  .pedido app-segmented-control ::ng-deep .segmentado__opcion {
+    position: relative;
+    min-block-size: 38px;
+  }
+
+  .pedido app-segmented-control ::ng-deep .segmentado__opcion::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
 }

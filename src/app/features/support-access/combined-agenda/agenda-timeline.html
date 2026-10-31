@@ -65,7 +65,7 @@
             [style.left.px]="barra.left"
             [style.top.px]="barTop(barra)"
             [style.width.px]="barra.width"
-            [style.height.px]="34"
+            [style.height.px]="barHeight()"
             (click)="pick.emit(barra.event)"
             (pointerdown)="eventPointerDown.emit({ event: $event, item: barra.event })"
           ></button>
