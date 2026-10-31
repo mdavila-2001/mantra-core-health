@@ -22,6 +22,9 @@ const ROOM_FUNCTIONS = new Set(['SPACE_FN_CONSULTING_ROOM', 'SPACE_FN_PROCEDURE_
  * consultorio, sala de procedimientos o de imagen (`GET /sites/:siteId/structure`
  * de F1), nunca un id escrito. La API valida función, sede y que otra agenda
  * no ocupe el mismo consultorio a la misma hora (422).
+ *
+ * Detrás de la bandera `consultingRoomTemplates` (apagada): la API todavía no
+ * acepta `careSpaceId` en la plantilla y mandarlo haría fallar el alta entera.
  */
 @Component({
   selector: 'app-consulting-room-select',
@@ -75,9 +78,10 @@ export class ConsultingRoomSelect {
       .pipe(
         filter((s) => s.status !== 'loading'),
         take(1),
-        switchMap((s) => {
-          const site = s.status === 'ready' || s.status === 'stale' ? s.data.sites[0] : undefined;
-          return site === undefined ? of(null) : this.infrastructure.getStructure(site.id).pipe(catchError(() => of(null)));
+        switchMap(() => {
+          // La sede elegida en el contexto (no la primera de la lista).
+          const siteId = this.siteContext.siteId();
+          return siteId === null ? of(null) : this.infrastructure.getStructure(siteId).pipe(catchError(() => of(null)));
         }),
       )
       .subscribe((structure) => {

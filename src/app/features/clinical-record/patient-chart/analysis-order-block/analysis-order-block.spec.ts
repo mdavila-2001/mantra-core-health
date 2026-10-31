@@ -201,11 +201,6 @@ describe('AnalysisOrderBlock', () => {
     for (const consent of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
       consent.flush({ items: [] });
     }
-    // F5b: el selector de punto de toma lee la organización activa; sin
-    // práctica no hay sede ni puntos, y la orden viaja como siempre.
-    for (const practices of http.match((r) => r.url === '/practices')) {
-      practices.flush([]);
-    }
     http.verify();
   });
 

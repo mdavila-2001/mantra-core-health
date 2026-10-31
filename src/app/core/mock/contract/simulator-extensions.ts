@@ -57,6 +57,9 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // y botiquín por unidad. El cliente SÍ las manda; se borran al regenerar.
   'PATCH /diagnostic-equipment/:id': EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS,
   'POST /pharmacy/:siteId/inventory-locations': INVENTORY_LOCATION_CONTRACT_PENDING_KEYS,
+  // F5b/F5d: la web **no** las manda mientras `INFRA_INTEGRATION_FLAGS` esté
+  // apagada (la API las rechaza con 400); la maqueta las acepta para poder
+  // probar la pantalla con la bandera encendida.
   // F5b: el punto de toma sugerido de la orden.
   'POST /clinical/service-requests': SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
   // F5d: el consultorio de la plantilla de horario.
