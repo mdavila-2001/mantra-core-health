@@ -11,6 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { ProfilesClient } from '../../../core/data-access/profiles/profiles.client';
+import { listFreeStarts } from '../../../core/data-access/scheduling/free-starts';
 import { SchedulingClient } from '../../../core/data-access/scheduling/scheduling.client';
 import {
   MODALIDADES,
@@ -433,11 +434,13 @@ export class AppointmentNew {
     if (elegido === null) return null;
     let fin = elegido.endAt.getTime();
     const siguientes = this.cupos()
-      .filter((cupo) => cupo.startAt.getTime() >= fin)
+      .filter((cupo) => cupo.startAt.getTime() > elegido.startAt.getTime())
       .sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+    // `<=` y no `===`: las horas de un horario flexible (P36) arrancan cada
+    // 15 min y se pisan entre sí; una seguida de otra sigue siendo tiempo libre.
     for (const cupo of siguientes) {
-      if (cupo.startAt.getTime() !== fin) break;
-      fin = cupo.endAt.getTime();
+      if (cupo.startAt.getTime() > fin) break;
+      fin = Math.max(fin, cupo.endAt.getTime());
     }
     return (fin - elegido.startAt.getTime()) / MS_POR_MINUTO;
   });
@@ -482,9 +485,9 @@ export class AppointmentNew {
       }
       this.cargandoCupos.set(true);
       const lectura = this.leerCupos(agenda, dia).subscribe({
-        next: (pagina) => {
+        next: (libres) => {
           this.cargandoCupos.set(false);
-          this.cupos.set(pagina.items);
+          this.cupos.set(libres);
         },
         error: () => {
           this.cargandoCupos.set(false);
@@ -500,12 +503,13 @@ export class AppointmentNew {
     inicio.setHours(0, 0, 0, 0);
     const fin = new Date(inicio);
     fin.setDate(fin.getDate() + 1);
-    return this.scheduling.listSlots({
+    // Cupos fijos y horas del horario flexible: un día «Horario flexible» no
+    // tiene cupos y antes salía «Sin horarios libres» aunque atendiera.
+    return listFreeStarts(this.scheduling, {
       resourceId,
       // Nunca antes de ahora: un cupo de esta mañana ya pasó.
       from: new Date(Math.max(inicio.getTime(), Date.now())),
       to: fin,
-      onlyAvailable: true,
       limit: CUPOS_POR_DIA,
     });
   }

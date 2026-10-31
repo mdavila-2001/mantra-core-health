@@ -79,9 +79,33 @@ describe('AppointmentNew', () => {
     fixture.detectChanges();
   }
 
-  /** Responde la lectura de cupos del día con los horarios dados, de 30 minutos. */
-  function conCupos(horas: readonly string[] = ['09:30']): void {
+  /**
+   * Responde la lectura de cupos del día con los horarios dados, de 30 minutos,
+   * y la de horas del horario flexible (P36) con las dadas, de `minutosFlexibles`.
+   */
+  function conCupos(
+    horas: readonly string[] = ['09:30'],
+    flexibles: readonly string[] = [],
+    minutosFlexibles = 30,
+  ): void {
     fixture.detectChanges();
+    for (const lectura of http.match((r) => r.url.endsWith('/flexible-availability'))) {
+      // La de un intento anterior que falló queda cancelada: no se responde.
+      if (lectura.cancelled) continue;
+      lectura.flush({
+        resourceId: 'res-1',
+        stepMinutes: 15,
+        items: flexibles.map((hora) => {
+          const [hh, mm] = hora.split(':').map(Number);
+          const inicio = new Date(2099, 0, 5, hh, mm);
+          return {
+            templateId: 'tpl-flex',
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + minutosFlexibles * 60_000).toISOString(),
+          };
+        }),
+      });
+    }
     for (const lectura of http.match((r) => r.url === '/scheduling/slots')) {
       lectura.flush({
         items: horas.map((hora, i) => {
@@ -344,6 +368,64 @@ describe('AppointmentNew', () => {
       expect(instancia().opcionesDeDuracion().map((o) => o.value)).toEqual([
         '15', '20', '30', '45', '60',
       ]);
+    });
+
+    /*
+     * Un día «Horario flexible» no tiene cupos fijos: sus horas las calcula la
+     * API al leer. Antes la hora salía «Sin horarios libres» ese día.
+     */
+    it('un día de horario flexible ofrece sus horas aunque no tenga cupos fijos', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      fixture.detectChanges();
+
+      const [flexible] = http.match(
+        (r) => r.url === '/scheduling/resources/res-1/flexible-availability',
+      );
+      expect(flexible!.request.params.get('from')).toBe(new Date(2099, 0, 5).toISOString());
+      expect(flexible!.request.params.get('to')).toBe(new Date(2099, 0, 6).toISOString());
+      // Cada 15 min con 30 por paciente; 10:00 y 10:15 ocupados por otra cita.
+      flexible!.flush({
+        resourceId: 'res-1',
+        stepMinutes: 15,
+        items: ['09:00', '09:15', '09:30', '10:30'].map((hora) => {
+          const [hh, mm] = hora.split(':').map(Number);
+          const inicio = new Date(2099, 0, 5, hh, mm);
+          return {
+            templateId: 'tpl-flex',
+            startAt: inicio.toISOString(),
+            endAt: new Date(inicio.getTime() + 30 * 60_000).toISOString(),
+          };
+        }),
+      });
+      conCupos([]);
+
+      expect(instancia().opcionesDeHora().map((o) => o.value)).toEqual([
+        '09:00', '09:15', '09:30', '10:30',
+      ]);
+      expect(fixture.nativeElement.textContent).not.toContain('No tiene horarios libres ese día');
+
+      // 09:00 → 10:00 libre de corrido (la última hora, 09:30, termina a las 10:00).
+      instancia().elegirHora('09:00');
+      expect(instancia().duracion()).toBe('30');
+      expect(instancia().opcionesDeDuracion().map((o) => o.value)).toEqual([
+        '15', '20', '30', '45', '60',
+      ]);
+    });
+
+    it('si falla la lectura de horas flexibles igual ofrece los cupos fijos', () => {
+      crear();
+      conAgendas([{ id: 'res-1', name: 'Consultorio Centro' }]);
+      instancia().elegirDia(new Date(2099, 0, 5));
+      fixture.detectChanges();
+      http
+        .expectOne((r) => r.url.endsWith('/flexible-availability'))
+        .flush({}, { status: 500, statusText: 'Server Error' });
+      conCupos(['09:00']);
+
+      expect(instancia().opcionesDeHora().map((o) => o.value)).toEqual(['09:00']);
+      expect(fixture.nativeElement.querySelector('[data-testid="cita-hora-caida"]')).toBeNull();
     });
 
     it('cambiar el día suelta la hora elegida', () => {

@@ -32,7 +32,12 @@ import {
   templateUrl: './schedule-day-row.html',
   styleUrl: './schedule-day-row.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { '[class.schedule-day-row--active]': 'value().activo' },
+  host: {
+    '[class.schedule-day-row--active]': 'value().activo',
+    // Con la semana entera flexible la fila tiene cuatro columnas menos y la
+    // tabla entra en menos ancho: se reparte en renglones más tarde.
+    '[class.schedule-day-row--week-flexible]': 'weekFlexible()',
+  },
 })
 export class ScheduleDayRow {
   /** La posición del día en la semana, para los identificadores de prueba. */
