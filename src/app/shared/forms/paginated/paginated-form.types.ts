@@ -192,6 +192,12 @@ export interface CampoDeFormulario {
   /** Sólo para `text` y familia: el `autocomplete` del navegador. */
   readonly autocomplete?: string;
 
+  /** Sólo para `text`: nombre de persona, no admite dígitos ni símbolos. */
+  readonly soloLetras?: boolean;
+
+  /** Sólo para `text`: documento, sólo letras y números, sin espacios ni símbolos. */
+  readonly soloAlfanumerico?: boolean;
+
   /**
    * El glifo que va **dentro** del campo, del set cerrado del nav.
    *
