@@ -20,6 +20,7 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { conceptStatus, entero, type Rotulo } from '../../platform/platform-labels';
 import { BRANCH_KIND, CONTRACT, veredicto } from '../flows-labels';
+import { FlowData } from '../flow-data/flow-data';
 import { FlowTree } from '../flow-tree/flow-tree';
 
 interface FilaEndpoint {
@@ -58,7 +59,7 @@ interface FilaSinCaso {
  */
 @Component({
   selector: 'app-flow-detail',
-  imports: [DatePipe, Badge, Alert, Card, Tabs, Tab, DataTable, PageHeader, ViewStateHost, FlowTree],
+  imports: [DatePipe, Badge, Alert, Card, Tabs, Tab, DataTable, PageHeader, ViewStateHost, FlowData, FlowTree],
   templateUrl: './flow-detail.html',
   styleUrl: './flow-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
