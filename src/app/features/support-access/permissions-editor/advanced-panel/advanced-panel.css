@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+.av {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block: var(--sp-4);
+}
+
+.av__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+}
+
+.av__sub {
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.av__cuenta {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.av__bloque {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.av__filas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.av__fila {
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.av__fila[aria-pressed='true'] {
+  border-color: var(--text-primary);
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.av__fila:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.av__marca {
+  color: var(--st-error-fg);
+}
+
+.av__ayuda,
+.av__nota {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.av__ayuda {
+  font-size: var(--fs-body);
+}
+
+.av__error {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-danger);
+}
+
+.av__vigencia,
+.av__alcance {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.av__vigencia app-input {
+  inline-size: 11rem;
+}
+
+.av__alcance app-select {
+  min-inline-size: 16rem;
+}

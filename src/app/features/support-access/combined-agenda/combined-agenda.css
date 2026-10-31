@@ -1,0 +1,432 @@
+:host {
+  display: block;
+}
+
+.agenda {
+  display: grid;
+  gap: var(--sp-4);
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.filtros-boton {
+  display: none;
+  inline-size: 100%;
+  min-block-size: 2.75rem;
+  margin-block-end: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.filtros-boton:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.agenda__lateral {
+  display: none;
+}
+
+.agenda__lateral--abierto {
+  display: block;
+}
+
+.agenda__principal {
+  display: grid;
+  /* Sin el minmax(0, …) la grilla se estira al ancho de su contenido y la página entera se desborda. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-3);
+  min-inline-size: 0;
+}
+
+/* En pantallas anchas: el costado a la vista y el panel como cajón a la derecha. */
+@media (min-width: 780px) {
+  .agenda {
+    grid-template-columns: minmax(0, 16.5rem) minmax(0, 1fr);
+  }
+  .agenda__lateral {
+    display: block;
+  }
+  .filtros-boton {
+    display: none;
+  }
+  .agenda__panel {
+    position: fixed;
+    inset-block: 5rem 1rem;
+    inset-inline-end: 1rem;
+    inline-size: min(27rem, calc(100vw - 2rem));
+    overflow: auto;
+    z-index: var(--z-drawer, 40);
+  }
+}
+
+@media (min-width: 1500px) {
+  .agenda--con-panel {
+    grid-template-columns: minmax(0, 16.5rem) minmax(0, 1fr) 24rem;
+  }
+  .agenda--con-panel .agenda__panel {
+    position: sticky;
+    inset-block-start: 4.5rem;
+    inset-inline-end: auto;
+    inline-size: auto;
+    max-block-size: calc(100vh - 6rem);
+  }
+}
+
+/* Celular: filtros plegados y el panel como hoja desde abajo. */
+@media (max-width: 779px) {
+  .filtros-boton {
+    display: block;
+  }
+  .agenda__panel {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    max-block-size: 82vh;
+    overflow: auto;
+    z-index: var(--z-drawer, 40);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+  }
+}
+
+/* Barras */
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.barra--vista {
+  justify-content: flex-start;
+}
+
+.barra__nav,
+.barra__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.barra__titulo {
+  margin: 0 var(--sp-2);
+  font-size: var(--fs-body-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.fecha input {
+  min-block-size: 2rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+}
+
+.fecha input:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+kbd {
+  display: inline-block;
+  min-inline-size: 1.25rem;
+  padding: 0 var(--sp-1);
+  border: 1px solid currentColor;
+  border-radius: var(--r-xs);
+  font: inherit;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+}
+
+.atajos {
+  position: relative;
+}
+
+.atajos summary {
+  min-block-size: 2rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  line-height: 1.5rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.atajos summary:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.atajos__lista {
+  position: absolute;
+  inset-inline-end: 0;
+  z-index: 20;
+  inline-size: 22rem;
+  max-inline-size: 90vw;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-2) var(--sp-3);
+  margin: var(--sp-1) 0 0;
+  padding: var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+}
+
+.atajos__lista dd {
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.enlace {
+  padding: var(--sp-1) 0;
+  border: 0;
+  background: none;
+  color: var(--text-link);
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.enlace:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+/* Buscar paciente / nueva cita */
+.buscar {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.buscar__cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.buscar__titulo {
+  margin: 0;
+  font-size: var(--fs-body-lg);
+  color: var(--text-primary);
+}
+
+.buscar__org {
+  display: grid;
+  gap: var(--sp-1);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+}
+
+.buscar__org select {
+  min-block-size: 2.5rem;
+  padding: 0 var(--sp-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.encontrado {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  color: var(--text-primary);
+}
+
+.encontrado p {
+  margin: 0;
+}
+
+.encontrado__citas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nota {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+/* Celular: pestañas de doctores */
+.pestanas {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding-block-end: var(--sp-2);
+}
+
+.pestana {
+  flex: none;
+  min-block-size: 2.75rem;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.pestana--activa {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--text-inverse);
+  font-weight: 600;
+}
+
+.pestana:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.vacio {
+  display: grid;
+  gap: var(--sp-3);
+  justify-items: start;
+  padding: var(--sp-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  color: var(--text-primary);
+}
+
+.vacio p {
+  margin: 0;
+}
+
+/* Leyenda: cómo leer los bordes, sin depender del color */
+.leyenda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-4);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}
+
+.leyenda li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.muestra {
+  inline-size: 1.5rem;
+  block-size: 1rem;
+  border: 2px solid var(--c-petrol-600);
+  border-radius: var(--r-xs);
+  background: var(--c-petrol-100);
+}
+
+.muestra--libre {
+  border-style: dashed;
+  background: var(--bg-surface);
+}
+
+.muestra--reservada {
+  border-style: dotted;
+}
+
+.muestra--llego {
+  border-style: double;
+  border-width: 4px;
+}
+
+.muestra--sin-permiso {
+  border-color: var(--border-strong);
+  border-style: dashed;
+  opacity: 0.6;
+  background: repeating-linear-gradient(135deg, var(--bg-inset) 0 4px, var(--bg-surface) 4px 8px);
+}
+
+/* El fantasma de la cita que se arrastra */
+.fantasma {
+  position: fixed;
+  z-index: 100;
+  display: grid;
+  gap: 2px;
+  max-inline-size: 18rem;
+  padding: var(--sp-2) var(--sp-3);
+  border: 2px solid var(--brand-primary);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  font-size: var(--fs-caption);
+  pointer-events: none;
+}
+
+.fantasma__ok {
+  color: var(--st-success-fg);
+  font-weight: 600;
+}
+
+.fantasma__no {
+  color: var(--st-error-fg);
+  font-weight: 600;
+}
+
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+app-agenda-grid.semana {
+  --col-min: 7rem;
+}
+
+.vacio .vacio__motivo {
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+}

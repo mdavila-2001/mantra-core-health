@@ -1,0 +1,29 @@
+:host {
+  display: block;
+}
+
+.panel {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.panel__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.panel__resultado {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.panel__ayuda {
+  margin: 0;
+  padding: var(--sp-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-md);
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+}

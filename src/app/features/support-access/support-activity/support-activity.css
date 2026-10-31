@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+
+.actividad {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.actividad__fechas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+.actividad__fecha {
+  display: grid;
+  gap: var(--sp-1);
+  min-inline-size: 11rem;
+}
+
+.actividad__rotulo {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.actividad__resumen {
+  margin: 0;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.actividad__nombre {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.actividad__sub {
+  display: block;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.actividad__mas {
+  display: flex;
+  justify-content: center;
+}

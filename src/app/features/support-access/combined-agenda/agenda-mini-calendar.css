@@ -1,0 +1,104 @@
+:host {
+  display: block;
+}
+
+.mini__cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: var(--sp-2);
+}
+
+.mini__titulo {
+  display: inline-block;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mini__titulo::first-letter {
+  text-transform: uppercase;
+}
+
+.mini__flecha {
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 0;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-body-lg);
+  cursor: pointer;
+}
+
+.mini__flecha:hover {
+  background: var(--bg-hover);
+}
+
+.mini__flecha:focus-visible,
+.mini__dia:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.mini__tabla {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.mini__tabla th {
+  padding: 0 0 var(--sp-1);
+  font-size: var(--fs-overline);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.mini__tabla td {
+  padding: 1px;
+  text-align: center;
+}
+
+.mini__semana--marcada td {
+  background: var(--bg-hover);
+}
+
+.mini__dia {
+  inline-size: 100%;
+  min-block-size: 1.9rem;
+  border: 2px solid transparent;
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-caption);
+  cursor: pointer;
+}
+
+.mini__dia:hover {
+  background: var(--bg-active);
+}
+
+.mini__dia--fuera {
+  color: var(--text-muted);
+}
+
+.mini__dia--hoy {
+  border-color: var(--brand-primary);
+  font-weight: 700;
+}
+
+.mini__dia--elegido {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+  font-weight: 700;
+}
+
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

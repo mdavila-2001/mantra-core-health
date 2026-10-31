@@ -1,0 +1,238 @@
+<section
+  class="simulacion"
+  aria-label="Resultado de la simulación"
+  data-testid="simulacion-resultado"
+>
+  <div
+    class="veredicto"
+    [class]="'veredicto veredicto--' + (result().valid ? 'success' : 'error')"
+    role="status"
+    aria-live="polite"
+    data-testid="simulacion-veredicto"
+    [attr.data-valido]="result().valid"
+  >
+    <span class="veredicto__icono" aria-hidden="true">{{ result().valid ? '✔' : '✖' }}</span>
+    <div>
+      <p class="veredicto__titulo">
+        {{ result().valid ? 'Este cambio se puede guardar' : 'Este cambio tiene errores' }}
+      </p>
+      <p class="veredicto__sub">
+        @if (result().valid) {
+          Revise lo que cambia antes de guardarlo. Esto es solo una prueba: todavía no se guardó
+          nada.
+        } @else {
+          Corrija lo que se indica abajo. Mientras tanto no se puede guardar.
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (result().validation.errors.length > 0) {
+    <section class="bloque" aria-labelledby="sim-errores">
+      <h3 id="sim-errores" class="bloque__titulo">Qué corregir</h3>
+      <ul class="lista" role="list" data-testid="simulacion-errores">
+        @for (e of result().validation.errors; track $index) {
+          <li class="lista__fila lista__fila--error">
+            <span aria-hidden="true">✖</span
+            ><span
+              >{{ e.message }} <span class="tenue">({{ e.path }})</span></span
+            >
+          </li>
+        }
+      </ul>
+    </section>
+  }
+  @if (result().validation.warnings.length > 0) {
+    <section class="bloque" aria-labelledby="sim-avisos">
+      <h3 id="sim-avisos" class="bloque__titulo">Avisos</h3>
+      <ul class="lista" role="list" data-testid="simulacion-avisos">
+        @for (w of result().validation.warnings; track $index) {
+          <li class="lista__fila">
+            <span aria-hidden="true">⚠</span><span>{{ w.message }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <section class="bloque" aria-labelledby="sim-resumen">
+    <h3 id="sim-resumen" class="bloque__titulo">En pocas palabras</h3>
+    <ul class="lista" role="list" data-testid="simulacion-resumen">
+      @for (linea of result().summary.plain; track $index) {
+        <li class="lista__fila">
+          <span>{{ linea }}</span>
+        </li>
+      }
+    </ul>
+    @if (result().summary.changes.length > 0) {
+      <ul class="lista" role="list" data-testid="simulacion-cambios">
+        @for (linea of result().summary.changes; track $index) {
+          <li class="lista__fila">
+            <span aria-hidden="true">•</span><span>{{ linea }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="sim-impacto">
+    <h3 id="sim-impacto" class="bloque__titulo">Qué tanto cambia</h3>
+    <dl class="cifras" data-testid="simulacion-impacto">
+      <div class="cifra">
+        <dt>Casos donde ahora sí podría</dt>
+        <dd data-testid="impacto-ahora-puede">{{ result().impact.newlyAllowed }}</dd>
+      </div>
+      <div class="cifra">
+        <dt>Casos donde ya no podría</dt>
+        <dd data-testid="impacto-ya-no-puede">{{ result().impact.newlyDenied }}</dd>
+      </div>
+      <div class="cifra">
+        <dt>Casos que pedirían un requisito nuevo</dt>
+        <dd data-testid="impacto-requisito">{{ result().impact.challengesNew }}</dd>
+      </div>
+      <div class="cifra">
+        <dt>Casos sin cambio</dt>
+        <dd data-testid="impacto-igual">{{ result().impact.unchanged }}</dd>
+      </div>
+    </dl>
+    <p class="texto">
+      Doctores que cubre: {{ result().impact.doctorsCovered.before }} →
+      {{ result().impact.doctorsCovered.after }} · servicios:
+      {{ result().impact.servicesCovered.before }} → {{ result().impact.servicesCovered.after }} ·
+      espacios: {{ result().impact.spacesCovered.before }} →
+      {{ result().impact.spacesCovered.after }}.
+    </p>
+    @if (added().length > 0) {
+      <p class="texto" data-testid="impacto-agregados">
+        <strong>Permisos que suma:</strong> {{ added().join(', ') }}.
+      </p>
+    }
+    @if (removed().length > 0) {
+      <p class="texto" data-testid="impacto-quitados">
+        <strong>Permisos que quita:</strong> {{ removed().join(', ') }}.
+      </p>
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="sim-gobierno">
+    <h3 id="sim-gobierno" class="bloque__titulo">Gobierno</h3>
+    <p class="texto" data-testid="simulacion-puntaje">
+      Puntaje de privilegios: <strong>{{ score().before }} → {{ score().after }}</strong> ({{
+        deltaText(score().delta)
+      }}). Pesa más lo que toca dinero o datos de pacientes.
+    </p>
+    @if (result().governance.needsFourEyes.required) {
+      <div class="aviso" role="note" data-testid="simulacion-cuatro-ojos">
+        <strong>Necesita la aprobación de otra persona.</strong>
+        <ul class="lista" role="list">
+          @for (r of result().governance.needsFourEyes.reasons; track $index) {
+            <li class="lista__fila">
+              <span>{{ r }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @if (result().governance.sodFindings.length > 0) {
+      <ul class="lista" role="list" data-testid="simulacion-sod">
+        @for (f of result().governance.sodFindings; track f.ruleCode) {
+          <li class="lista__fila">
+            <app-badge
+              [variant]="f.action === 'BLOCK' ? 'error' : f.action === 'WARN' ? 'warning' : 'info'"
+              size="sm"
+              >{{ sodLabels[f.action] }}</app-badge
+            ><span>{{ f.message }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="sim-casos">
+    <h3 id="sim-casos" class="bloque__titulo">Caso por caso: antes y después</h3>
+    <app-segmented-control
+      [options]="filters"
+      [value]="filter()"
+      (valueChange)="setFilter($event)"
+      ariaLabel="Qué casos mostrar"
+    />
+    @if (rows().length === 0) {
+      <p class="texto" data-testid="simulacion-sin-casos">
+        No hay casos que cambien con este borrador.
+      </p>
+    } @else {
+      <div class="tabla-envoltura">
+        <table class="tabla" data-testid="simulacion-casos">
+          <caption class="visualmente-oculto">
+            Comparación de cada caso de prueba antes y después del cambio
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Caso</th>
+              <th scope="col">Antes</th>
+              <th scope="col">Después</th>
+              <th scope="col">Qué cambia</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of visibleRows(); track r.index) {
+              <tr [attr.data-testid]="'caso-' + r.index">
+                <th scope="row">{{ r.label }}</th>
+                <td>{{ r.before }}</td>
+                <td>{{ r.after }}</td>
+                <td>
+                  <app-badge [variant]="r.change.tone" size="sm"
+                    ><span aria-hidden="true">{{ r.change.icon }} </span
+                    >{{ r.change.label }}</app-badge
+                  >
+                  @if (r.index < ownScenarios()) {
+                    <button
+                      app-button
+                      variant="ghost"
+                      size="sm"
+                      type="button"
+                      (clicked)="explainScenario.emit(r.index)"
+                      [attr.aria-label]="'¿Por qué? ' + r.label"
+                      [attr.data-testid]="'caso-por-que-' + r.index"
+                    >
+                      ¿Por qué?
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (rows().length > visibleRows().length) {
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          (clicked)="more()"
+          data-testid="simulacion-ver-mas"
+        >
+          Ver más casos ({{ rows().length - visibleRows().length }} restantes)
+        </button>
+      }
+    }
+    @if (result().limits; as limites) {
+      <p class="tenue" data-testid="simulacion-limites">
+        Se probaron {{ limites.scenarioCount }} casos
+        @if (limites.truncated) {
+          ; hubo más y no se incluyeron todos. Acote el borrador para ver el resto
+        }
+        .
+      </p>
+    }
+  </section>
+
+  <p class="tenue">
+    Calculado el
+    <time [attr.datetime]="result().evaluatedAt">{{
+      result().evaluatedAt | date: 'dd/MM/yyyy HH:mm'
+    }}</time
+    >.
+  </p>
+</section>

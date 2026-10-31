@@ -14,9 +14,12 @@ import type {
   NewBranch,
 } from '../../../../core/data-access/directory/directory.types';
 import { IamClient } from '../../../../core/data-access/iam/iam.client';
+import { MembershipInvitationsClient } from '../../../../core/data-access/directory/membership-invitations.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import type { BranchDraft } from '../../../../shared/utils/branch-import/branch-import';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../../shared/components/molecules/toast/toast.service';
 import { OrganizationDetail } from './organization-detail';
 
 /**
@@ -500,5 +503,108 @@ describe('OrganizationDetail · sucursales en lote', () => {
     expect(rechazos).toHaveLength(1);
     expect(rechazos[0]!.nombre).toBe('Repetida');
     expect(rechazos[0]!.motivo).toBe('Ya existe una branch con ese código en el tenant');
+  });
+});
+
+/**
+ * Las invitaciones pendientes: `POST /tenants/:id/memberships` deja la membresía **pendiente de aceptación** y la
+ * organización la ve como «Invitación enviada, pendiente de aceptación», con «Retirar invitación» (offboard) hasta que se
+ * acepte.
+ */
+describe('OrganizationDetail · invitaciones pendientes', () => {
+  let fixture: ComponentFixture<OrganizationDetail>;
+  let withdraw: ReturnType<typeof vi.fn>;
+  let confirm: ReturnType<typeof vi.fn>;
+  let toastSuccess: ReturnType<typeof vi.fn>;
+  let toastError: ReturnType<typeof vi.fn>;
+  let listMemberships: ReturnType<typeof vi.fn>;
+
+  interface Internal {
+    esInvitacionPendiente: (m: unknown) => boolean;
+    retirarInvitacion: (m: unknown) => Promise<void>;
+    retirando: () => string | null;
+  }
+  const internal = (): Internal => fixture.componentInstance as unknown as Internal;
+  const etiqueta = (conceptId: string, code: string, display: string) => ({ conceptId, code, display, codeSystemVersionId: 'v' });
+  const PENDIENTE = { id: 'm-1', userId: 'u-1', statusConceptId: 'st-pend', tenantRoleConceptId: 'r', accessScopeConceptId: 'a', createdAt: new Date('2026-10-01') };
+  const ACTIVA = { ...PENDIENTE, id: 'm-2', statusConceptId: 'st-act' };
+
+  async function abrir(): Promise<void> {
+    withdraw = vi.fn(() => of({ ok: true }));
+    confirm = vi.fn(() => Promise.resolve(true));
+    toastSuccess = vi.fn();
+    toastError = vi.fn();
+    listMemberships = vi.fn(() => of({ items: [PENDIENTE, ACTIVA], count: 2, limit: 25, nextCursor: null }));
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([]),
+        {
+          provide: DirectoryClient,
+          useValue: {
+            getTenant: () => of({ id: TENANT, code: 'CLI', legalName: 'Clínica', tenantTypeConceptId: 't', statusConceptId: 's', verificationStatusConceptId: 'v', createdAt: new Date('2026-01-01') }),
+            listBranches: () => of({ items: [], count: 0 }),
+            listMemberships,
+            listChildTenants: () => of({ items: [], count: 0, limit: 25, nextCursor: null }),
+            // La ficha pregunta `canAdminister` a quien no es de la plataforma.
+            listMyOrganizations: () => of([]),
+          },
+        },
+        {
+          provide: TerminologyClient,
+          useValue: {
+            readConceptLabels: () => of(new Map([['st-pend', etiqueta('st-pend', 'DIR_MEMBERSHIP_PENDING_ACCEPTANCE', 'Pendiente de aceptación')], ['st-act', etiqueta('st-act', 'ST-ACTIVE', 'Activa')]])),
+          },
+        },
+        { provide: MembershipInvitationsClient, useValue: { withdraw } },
+        { provide: DialogService, useValue: { confirm } },
+        { provide: ToastService, useValue: { success: toastSuccess, error: toastError } },
+        { provide: NavigationService, useValue: { breadcrumbs: signal([]) } },
+        { provide: IamClient, useValue: { getUser: vi.fn() } },
+        { provide: SessionStore, useValue: { roles: signal([]), userId: signal(null), displayName: signal(null) } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of(convertToParamMap({ tenantId: TENANT })),
+            queryParamMap: of(convertToParamMap({})),
+          },
+        },
+      ],
+    });
+    fixture = TestBed.createComponent(OrganizationDetail);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('solo la membresía pendiente de aceptación es una invitación', async () => {
+    await abrir();
+    expect(internal().esInvitacionPendiente(PENDIENTE)).toBe(true);
+    expect(internal().esInvitacionPendiente(ACTIVA)).toBe(false);
+  });
+
+  it('retirar pide confirmación, llama a offboard con la membresía y vuelve a leer la lista', async () => {
+    await abrir();
+    const lecturas = listMemberships.mock.calls.length;
+    await internal().retirarInvitacion(PENDIENTE);
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ destructive: true, confirmLabel: 'Retirar invitación' }));
+    expect(withdraw).toHaveBeenCalledWith(TENANT, 'm-1');
+    expect(toastSuccess).toHaveBeenCalledWith('La invitación quedó retirada.');
+    expect(listMemberships.mock.calls.length).toBeGreaterThan(lecturas);
+    expect(internal().retirando()).toBeNull();
+  });
+
+  it('si cancela la confirmación no se retira nada', async () => {
+    await abrir();
+    confirm.mockResolvedValueOnce(false);
+    await internal().retirarInvitacion(PENDIENTE);
+    expect(withdraw).not.toHaveBeenCalled();
+  });
+
+  it('si la persona ya la respondió (la API falla), lo dice y deja actualizar la lista', async () => {
+    await abrir();
+    withdraw.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+    await internal().retirarInvitacion(PENDIENTE);
+    expect(toastError).toHaveBeenCalledWith(expect.stringContaining('ya la haya respondido'));
+    expect(internal().retirando()).toBeNull();
   });
 });

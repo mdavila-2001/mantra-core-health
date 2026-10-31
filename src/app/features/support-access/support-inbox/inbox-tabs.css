@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.pestana {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.pestana:hover {
+  background: var(--bg-hover);
+}
+
+.pestana:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.pestana--activa {
+  border-color: var(--st-primary-bd);
+  background: var(--st-primary-bg);
+  color: var(--st-primary-fg);
+  font-weight: 600;
+}
+
+.pestana__cuenta {
+  min-inline-size: 1.5rem;
+  padding: 0 var(--sp-1);
+  border-radius: var(--r-pill);
+  background: var(--bg-surface-alt);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-align: center;
+}
+
+.pestana--activa .pestana__cuenta {
+  background: var(--brand-primary);
+  color: var(--text-inverse);
+}
