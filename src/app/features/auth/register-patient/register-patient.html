@@ -67,6 +67,7 @@
            navegador. -->
         <div class="registro__body">
           <!-- `iconOnlyNav`: excepción ADR-0012 §3 (D-05, 23/09), pasar de página; el motor pone aria-label y globo, y la última página dice «Crear cuenta». -->
+          <app-account-exists-dialog />
           <app-paginated-form
             data-testid="registro-form-paciente"
             [paginas]="paginasPaciente()"

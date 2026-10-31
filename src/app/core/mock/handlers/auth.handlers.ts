@@ -266,6 +266,25 @@ export function registrarAuth(router: MockRouter): void {
 
   router.post('/iam/auth/logout', () => ({ ok: true }));
 
+  // Contrato nuevo (31/10/2026): ¿ya existe una cuenta con este dato? Público y
+  // sin detalle de quién es. Compara sin distinguir mayúsculas ni espacios.
+  router.get('/iam/auth/identifier-exists', ({ query }) => {
+    const kind = query.get('kind') ?? '';
+    const value = (query.get('value') ?? '').trim().toLowerCase();
+    if (value === '' || !['NATIONAL_ID', 'EMAIL', 'ORG_NAME'].includes(kind)) {
+      return validation('Falta el tipo o el valor a verificar');
+    }
+    const igual = (otro: string | undefined): boolean =>
+      otro !== undefined && otro.trim().toLowerCase() === value;
+    const exists =
+      kind === 'NATIONAL_ID'
+        ? MOCK_USERS.some((u) => igual(u.nationalId))
+        : kind === 'EMAIL'
+          ? MOCK_USERS.some((u) => igual(u.email))
+          : MOCK_USERS.some((u) => igual(u.displayName));
+    return { exists };
+  });
+
   router.post('/iam/auth/register-patient', ({ body }) => {
     const datos = cuerpo<{ email?: string; name?: string; lastName?: string }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
