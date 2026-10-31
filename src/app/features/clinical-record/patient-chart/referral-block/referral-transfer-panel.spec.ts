@@ -70,7 +70,7 @@ describe('referral-transfer.model', () => {
 
 describe('ReferralTransferForm', () => {
   let fixture: ComponentFixture<ReferralTransferForm>;
-  const el = (id: string): HTMLElement | null =>
+  const byTestId = (id: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
 
   function create(draft: TransferDraft, showAll = false): void {
@@ -85,13 +85,13 @@ describe('ReferralTransferForm', () => {
 
   it('sin traslado no pide medio ni signos, y lo dice', () => {
     create(emptyTransferDraft());
-    expect(el('transfer-not-required')).not.toBeNull();
-    expect(el('transfer-mode')).toBeNull();
+    expect(byTestId('transfer-not-required')).not.toBeNull();
+    expect(byTestId('transfer-mode')).toBeNull();
   });
 
   it('con crítico explica por qué se exige ambulancia y personal de salud, y los marca al intentar', () => {
     create({ ...emptyTransferDraft(), required: true, departureCondition: 'CRITICAL', transportMode: 'PRIVATE_VEHICLE' }, true);
-    const why = el('transfer-unstable-why')?.textContent ?? '';
+    const why = byTestId('transfer-unstable-why')?.textContent ?? '';
     expect(why).toContain('crítico');
     expect(why).toContain('ambulancia');
     const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
@@ -102,7 +102,7 @@ describe('ReferralTransferForm', () => {
 
   it('los signos van en una grilla con unidad y rango, con teclado numérico', () => {
     create({ ...emptyTransferDraft(), required: true });
-    const grid = el('transfer-vitals');
+    const grid = byTestId('transfer-vitals');
     expect(grid?.textContent).toContain('PA sistólica (mmHg)');
     expect(grid?.textContent).toContain('40–300');
     const temp = grid?.querySelector('[data-testid="transfer-vital-temperatureC"]') as HTMLInputElement | null;
@@ -116,10 +116,10 @@ describe('ReferralTransferPanel', () => {
   let fixture: ComponentFixture<ReferralTransferPanel>;
   let http: HttpTestingController;
   let changed: Referral[];
-  const el = (id: string): HTMLElement | null =>
+  const byTestId = (id: string): HTMLElement | null =>
     (fixture.nativeElement as HTMLElement).querySelector(`[data-testid="${id}"]`);
   const click = (id: string): void => {
-    (el(id) as HTMLElement).click();
+    (byTestId(id) as HTMLElement).click();
     fixture.detectChanges();
   };
 
@@ -145,7 +145,7 @@ describe('ReferralTransferPanel', () => {
 
   it('muestra lo registrado: estado, medio, personal, signos y aviso', () => {
     create(BASE);
-    const text = el('referral-transfer-data')?.textContent ?? '';
+    const text = byTestId('referral-transfer-data')?.textContent ?? '';
     expect(text).toContain('Crítico');
     expect(text).toContain('Ambulancia avanzada');
     expect(text).toContain('Unidad 12');
@@ -156,21 +156,21 @@ describe('ReferralTransferPanel', () => {
 
   it('sin traslado: S3 con la próxima acción para quien la emitió', () => {
     create({ ...BASE, transfer: undefined }, { issuedByMe: true });
-    expect(el('referral-transfer-empty')?.textContent).toContain('Completar traslado');
+    expect(byTestId('referral-transfer-empty')?.textContent).toContain('Completar traslado');
   });
 
   it('a quien la emitió le ofrece completar el traslado, no la llegada', () => {
     create(BASE, { issuedByMe: true });
-    expect(el('referral-transfer-complete')).not.toBeNull();
-    expect(el('referral-arrival-start')).toBeNull();
+    expect(byTestId('referral-transfer-complete')).not.toBeNull();
+    expect(byTestId('referral-arrival-start')).toBeNull();
   });
 
   it('al destino le ofrece la llegada, no completar la salida; con llegada ya registrada, nada', () => {
     create(BASE);
-    expect(el('referral-arrival-start')).not.toBeNull();
-    expect(el('referral-transfer-complete')).toBeNull();
+    expect(byTestId('referral-arrival-start')).not.toBeNull();
+    expect(byTestId('referral-transfer-complete')).toBeNull();
     create({ ...BASE, transfer: { ...BASE.transfer, arrivedAt: new Date() } });
-    expect(el('referral-arrival-start')).toBeNull();
+    expect(byTestId('referral-arrival-start')).toBeNull();
   });
 
   it('completar el traslado valida antes de mandar y manda PATCH …/transfer', () => {
@@ -178,7 +178,7 @@ describe('ReferralTransferPanel', () => {
     click('referral-transfer-complete');
     click('referral-transfer-save');
     http.expectNone('/referrals/r-1/transfer');
-    expect(el('referral-transfer-issues')?.textContent).toContain('personal de salud');
+    expect(byTestId('referral-transfer-issues')?.textContent).toContain('personal de salud');
 
     const draft = (fixture.componentInstance as unknown as { draft: { update(fn: (d: TransferDraft) => TransferDraft): void } })
       .draft;
@@ -197,7 +197,7 @@ describe('ReferralTransferPanel', () => {
     click('referral-arrival-start');
     click('referral-arrival-save');
     http.expectNone('/referrals/r-1/arrival');
-    expect(el('referral-arrival-form')?.textContent).toContain('Indique en qué estado llegó');
+    expect(byTestId('referral-arrival-form')?.textContent).toContain('Indique en qué estado llegó');
 
     (fixture.componentInstance as unknown as { arrivalCondition: { set(v: string): void } }).arrivalCondition.set(
       'STABLE',
@@ -211,7 +211,7 @@ describe('ReferralTransferPanel', () => {
       { status: 404, statusText: 'Not Found' },
     );
     fixture.detectChanges();
-    expect(el('referral-transfer-error')?.textContent).toContain('No encontramos esta derivación');
+    expect(byTestId('referral-transfer-error')?.textContent).toContain('No encontramos esta derivación');
     expect(changed).toHaveLength(0);
   });
 });
