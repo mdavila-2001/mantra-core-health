@@ -101,7 +101,8 @@ describe('lab-analysis-picker.logic', () => {
       expect(idsDe('hemoglobina', null)).toEqual([]);
       expect(idsDe('hemoglobina', new Set(['a-cbc']))).toEqual(['a-cbc']);
       // lo local no se pierde y el orden del catálogo se conserva
-      expect(idsDe('glucosa', new Set(['a-lip']))).toEqual(['a-glu']);
+      expect(idsDe('glucosa', new Set(['a-lip']))).toEqual(['a-glu', 'a-lip']);
+      expect(idsDe('glucosa', new Set())).toEqual(['a-glu']);
       expect(idsDe('hemoglobina', new Set(['a-lip', 'a-cbc']))).toEqual(['a-cbc', 'a-lip']);
     });
 
