@@ -1,0 +1,66 @@
+# Rampa ORDINAL propuesta (etapas de embudo, cubos de latencia, niveles de fricción): subconjunto de --chart-seq-* que arranca en el paso que clarea 2:1 (palette.md: claro no más claro que el 250; oscuro no más oscuro que el 600)
+# fecha: 2026-10-31T06:54:57Z
+
+## claro: seq-2..5 sobre #FFFFFF
+
+Palette (light, surface #FFFFFF, ordinal ramp): 4 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [PASS] Light-end contrast     #86b6ef at 2.11:1 vs surface
+  [PASS] Single hue             hue spread 4°
+
+  → ALL CHECKS PASS  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 0
+
+## oscuro: seq-2..5 sobre #0A2B3D
+
+Palette (dark, surface #0A2B3D, ordinal ramp): 4 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [PASS] Light-end contrast     #1c5cab at 2.22:1 vs surface
+  [PASS] Single hue             hue spread 3°
+
+  → ALL CHECKS PASS  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 0
+
+## oscuro, alternativa sin el 1c5cab (2,22:1, justo): 3 pasos
+
+Palette (dark, surface #0A2B3D, ordinal ramp): 3 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [PASS] Light-end contrast     #3987e5 at 4.05:1 vs surface
+  [PASS] Single hue             hue spread 2°
+
+  → ALL CHECKS PASS  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 0
+
+## 5 pasos claro con la referencia 250/350/450/550/700 de palette.md
+
+Palette (light, surface #FFFFFF, ordinal ramp): 5 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [PASS] Light-end contrast     #86b6ef at 2.11:1 vs surface
+  [PASS] Single hue             hue spread 4°
+
+  → ALL CHECKS PASS  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 0
+
+## 5 pasos oscuro 600/500/400/300/200
+
+Palette (dark, surface #0A2B3D, ordinal ramp): 5 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [PASS] Adjacent ΔL            all gaps >= 0.06
+  [FAIL] Light-end contrast     #184f95 at 1.82:1 vs surface — below 2:1 floor
+  [PASS] Single hue             hue spread 3°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1
+
+Palette (dark, surface #0A2B3D, ordinal ramp): 5 slots
+  [PASS] Lightness monotone     steps read light→dark
+  [FAIL] Adjacent ΔL            steps too close: [["#1c5cab","#256abf",0.048]]
+  [PASS] Light-end contrast     #1c5cab at 2.22:1 vs surface
+  [PASS] Single hue             hue spread 3°
+
+  → FAILED — fix the marked checks  (ordinal: one hue, monotone L, visible step gaps, light end clears surface)
+# exit code: 1
