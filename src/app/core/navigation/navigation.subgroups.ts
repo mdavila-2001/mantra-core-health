@@ -295,6 +295,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'superadmin/qa-lab',
       'superadmin/web-analytics',
       'superadmin/operations',
+      'superadmin/instances',
     ],
   },
   {
