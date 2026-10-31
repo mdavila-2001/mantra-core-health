@@ -248,6 +248,110 @@ describe('grupos médicos del simulador (/medical-groups)', () => {
     });
   });
 
+  describe('edición y baja', () => {
+    const FORBIDDEN = 403;
+
+    it('el creador corrige el lugar y borra las notas', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ notesText: 'Traer insumos' }) }).body;
+
+      const r = call('PATCH', `/medical-groups/${g.id}`, { body: { locationText: '  Quirófano 3 ', notesText: ' ' } });
+
+      expect(r.status).toBe(200);
+      expect(r.body.locationText).toBe('Quirófano 3');
+      expect(r.body).not.toHaveProperty('notesText');
+      expect(call('GET', `/medical-groups/${g.id}`).body.locationText).toBe('Quirófano 3');
+    });
+
+    it('un lugar vacío es una precondición fallida', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo() }).body;
+
+      expect(call('PATCH', `/medical-groups/${g.id}`, { body: { locationText: '  ' } }).status).toBe(PRECONDITION);
+    });
+
+    it('un integrante que no creó el grupo recibe 403 (nunca 401) y un tercero 404', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
+      const ajeno: MockUser = { ...medica, practitionerProfileId: 'otro-perfil' };
+
+      expect(call('DELETE', `/medical-groups/${g.id}`, { user: comoColega }).status).toBe(FORBIDDEN);
+      expect(call('PATCH', `/medical-groups/${g.id}`, { user: comoColega, body: { locationText: 'x' } }).status).toBe(FORBIDDEN);
+      expect(call('DELETE', `/medical-groups/${g.id}`, { user: ajeno }).status).toBe(404);
+    });
+
+    it('eliminar borra el grupo, lo saca del listado y lo guarda', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
+
+      expect(call('DELETE', `/medical-groups/${g.id}`).status).toBe(204);
+
+      expect(call('GET', `/medical-groups/${g.id}`).status).toBe(404);
+      expect(lista('historico').map((x) => x.id)).not.toContain(g.id);
+      const guardado = JSON.parse(sessionStorage.getItem('mock.medical-groups')!) as { groups: { id: string }[] };
+      expect(guardado.groups.map((x) => x.id)).not.toContain(g.id);
+    });
+
+    it('un grupo realizado o cerrado no se edita ni se elimina', () => {
+      const realizado = lista('historico').find((x) => x.status === 'SCHEDULED' && new Date(x.scheduledAt) < new Date())!;
+      const cerrado = lista('historico').find((x) => x.status === 'CLOSED' && x.isCreator);
+
+      expect(call('DELETE', `/medical-groups/${realizado.id}`).status).toBe(PRECONDITION);
+      expect(call('PATCH', `/medical-groups/${realizado.id}`, { body: { locationText: 'x' } }).status).toBe(PRECONDITION);
+      if (cerrado !== undefined) expect(call('DELETE', `/medical-groups/${cerrado.id}`).status).toBe(PRECONDITION);
+    });
+
+    it('agregar un cargo lo deja pendiente y el grupo vuelve a esperar al equipo', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo() }).body;
+      expect(g.status).toBe('SCHEDULED');
+
+      const r = call('POST', `/medical-groups/${g.id}/members`, { body: { ...miembro, agreedPaymentAmount: '250.00' } });
+
+      expect(r.status).toBe(201);
+      expect(r.body.status).toBe('PENDING_TEAM');
+      expect(r.body.members[1]).toMatchObject({ practitionerProfileId: COLEGA, invitationStatus: 'PENDING', agreedPaymentAmount: '250.00' });
+    });
+
+    it('no repite a un profesional ni acepta un pago inválido o a alguien fuera de la organización', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
+
+      expect(call('POST', `/medical-groups/${g.id}/members`, { body: miembro }).status).toBe(409);
+      expect(call('POST', `/medical-groups/${g.id}/members`, { body: { ...miembro, practitionerProfileId: 'nadie' } }).status).toBe(404);
+      const otro = PROFESSIONALS[2]!.id;
+      expect(call('POST', `/medical-groups/${g.id}/members`, { body: { ...miembro, practitionerProfileId: otro, agreedPaymentAmount: '1.234' } }).status).toBe(INVALID);
+    });
+
+    it('cambiar el pago de quien ya aceptó le vuelve a pedir respuesta', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
+      const memberId = g.members[1]!.id;
+      call('POST', `/medical-groups/${g.id}/members/${memberId}/respond`, { user: comoColega, body: { decision: 'ACCEPTED' } });
+      expect(call('GET', `/medical-groups/${g.id}`).body.status).toBe('SCHEDULED');
+
+      const r = call('PATCH', `/medical-groups/${g.id}/members/${memberId}`, { body: { agreedPaymentAmount: '900.00' } });
+
+      expect(r.status).toBe(200);
+      expect(r.body.status).toBe('PENDING_TEAM');
+      expect(r.body.members[1]).toMatchObject({ agreedPaymentAmount: '900.00', invitationStatus: 'PENDING', roleTitle: 'Anestesiólogo' });
+      expect(r.body.members[1]).not.toHaveProperty('respondedAt');
+    });
+
+    it('el cargo del creador no se modifica ni se quita', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
+      const creador = g.members[0]!.id;
+
+      expect(call('PATCH', `/medical-groups/${g.id}/members/${creador}`, { body: { roleTitle: 'Jefe' } }).status).toBe(PRECONDITION);
+      expect(call('DELETE', `/medical-groups/${g.id}/members/${creador}`).status).toBe(PRECONDITION);
+    });
+
+    it('quitar al último pendiente deja el grupo programado', () => {
+      const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
+      expect(g.status).toBe('PENDING_TEAM');
+
+      const r = call('DELETE', `/medical-groups/${g.id}/members/${g.members[1]!.id}`);
+
+      expect(r.status).toBe(200);
+      expect(r.body.members).toHaveLength(1);
+      expect(r.body.status).toBe('SCHEDULED');
+      expect(call('DELETE', `/medical-groups/${g.id}/members/${g.members[1]!.id}`).status).toBe(404);
+    });
+  });
+
   describe('notas del ejercicio', () => {
     it('antes de la cita no se cargan', () => {
       const g = call('POST', '/medical-groups', { body: nuevo() }).body;
