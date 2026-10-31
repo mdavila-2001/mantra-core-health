@@ -25,6 +25,13 @@
       <rect class="lc__band" [attr.x]="margin().left" [attr.y]="b.y" [attr.width]="plotW()" [attr.height]="b.h" />
     }
 
+    @for (m of milestoneMarks(); track m.index + m.label) {
+      <g class="lc__ms">
+        <line class="lc__ms-line" [attr.x1]="m.x" [attr.x2]="m.x" [attr.y1]="14" [attr.y2]="14 + plotH()" />
+        <path class="lc__ms-mark" [attr.d]="'M' + (m.x - 5) + ' 14 L' + (m.x + 5) + ' 14 L' + m.x + ' 23 Z'" />
+      </g>
+    }
+
     @for (r of refDrawn(); track r.id) {
       <line
         [class]="'lc__ref lc__ref--' + r.kind"
@@ -76,6 +83,9 @@
   @if (hoverInfo(); as h) {
     <div class="lc__tip" role="presentation" [style.left.px]="tipLeft()">
       <p class="lc__tip-date">{{ h.label }}</p>
+      @if (h.milestone) {
+        <p class="lc__tip-ms"><span aria-hidden="true">▼</span> {{ h.milestone }}</p>
+      }
       @for (row of h.rows; track row.id) {
         <p class="lc__tip-row">
           <span class="lc__swatch" [style.background]="sv(row.color)"></span>
@@ -107,6 +117,9 @@
   <p class="lc__sr" aria-live="polite">
     @if (hoverInfo(); as h) {
       {{ h.label }}.
+      @if (h.milestone) {
+        <span>Hito: {{ h.milestone }}.</span>
+      }
       @for (row of h.rows; track row.id) {
         <span>{{ row.label }} {{ row.value }}.</span>
       }
@@ -144,6 +157,9 @@
           <th scope="col">Periodo</th>
           @for (s of series(); track s.id) {
             <th scope="col">{{ s.label }}</th>
+          }
+          @if (milestones().length > 0) {
+            <th scope="col">Hito</th>
           }
         </tr>
       </thead>

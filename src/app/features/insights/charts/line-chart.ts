@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, signal } from '@an
 import { formatAxis, formatChange, formatValue } from '../domain/format';
 import type { MetricUnit } from '../domain/insights.types';
 import { areaPath, linePath, linear, niceTicks, type XY } from './chart-math';
-import { seriesVar, trackWidth, type Band, type LineSeries, type RefLine } from './chart.types';
+import { seriesVar, trackWidth, type Band, type ChartMilestone, type LineSeries, type RefLine } from './chart.types';
 
 const MARGIN = { top: 14, right: 12, bottom: 30, left: 52 } as const;
 const LABEL_GAP = 13;
@@ -48,6 +48,8 @@ export class LineChart {
   readonly unit = input.required<MetricUnit>();
   readonly refs = input<readonly RefLine[]>([]);
   readonly band = input<Band | null>(null);
+  /** Hitos que explican la curva: línea vertical, triángulo arriba y su nombre en el tooltip y en la tabla. */
+  readonly milestones = input<readonly ChartMilestone[]>([]);
   /** Valores del periodo anterior, alineados por posición, como fantasma punteado. */
   readonly compare = input<readonly (number | null)[] | null>(null);
   readonly compareLabel = input('Periodo anterior');
@@ -129,6 +131,19 @@ export class LineChart {
     }),
   );
 
+  /** Los hitos que caen dentro del tramo visible, con su posición en pantalla. */
+  protected readonly milestoneMarks = computed(() => {
+    const [a, b] = this.span();
+    return this.milestones()
+      .filter((m) => m.index >= a && m.index <= b)
+      .map((m) => ({ ...m, x: this.xAt(m.index) }));
+  });
+
+  private milestoneAt(index: number): string | null {
+    const names = this.milestones().filter((m) => m.index === index).map((m) => m.label);
+    return names.length === 0 ? null : names.join(' · ');
+  }
+
   protected readonly ghost = computed(() => {
     const c = this.compare();
     return c ? linePath(this.pointsOf(c)) : '';
@@ -180,6 +195,7 @@ export class LineChart {
       rows,
       refs,
       previous: this.compare() ? { label: this.compareLabel(), value: formatValue(prev, unit), delta: prev !== null && prev !== 0 && first !== null ? formatChange((first - prev) / prev) : null } : null,
+      milestone: this.milestoneAt(i),
       x: this.xAt(i),
     };
   });
@@ -193,7 +209,12 @@ export class LineChart {
 
   protected readonly tableRows = computed(() => {
     const [a, b] = this.span();
-    return this.labels().slice(a, b + 1).map((label, i) => [label, ...this.series().map((s) => formatValue(s.values[a + i] ?? null, this.unit()))]);
+    const withMilestones = this.milestones().length > 0;
+    return this.labels().slice(a, b + 1).map((label, i) => [
+      label,
+      ...this.series().map((s) => formatValue(s.values[a + i] ?? null, this.unit())),
+      ...(withMilestones ? [this.milestoneAt(a + i) ?? ''] : []),
+    ]);
   });
 
   protected axis(value: number): string {

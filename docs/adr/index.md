@@ -37,6 +37,7 @@ Registro de las decisiones que gobiernan el frontend.
 | [0015](ADR-0015-tabla-con-acciones.md) | **Toda tabla con acciones de edición sigue la misma disciplina**: modal (nunca formulario en línea), guardar habilitado por cambios, confirmación al guardar y al eliminar, barra con buscador multicampo y filtros arriba, sin scroll lateral, paginación local con `app-pagination` o por cursor con `data-table` según el caso | Aceptado — extiende ADR-0012 y ADR-0013 | D-04/D-05/D-06/D-08/D-09, 2026-09-22 |
 | [0016](ADR-0016-encuentro-eje-clinico.md) | Encuentro como eje del contrato clínico: notas, órdenes, verificación y reconsulta; compatibilidad C6 y límites del simulador | Aceptado | C0, 2026-09-25 |
 | [0017](ADR-0017-echarts-chart-library.md) | **Apache ECharts como librería oficial de gráficos del portal de reportería** (matiza ADR-0004: es la primera librería de terceros de UI) | Propuesto | Pedido del solicitante, 2026-10-30 |
+| [0018](ADR-0018-insights-contrato-hibrido-y-portal.md) | **AloVida Insights como portal propio con contrato híbrido y gráficos SVG propios** | Propuesto | Pedido del solicitante, 2026-10-30; paleta medida con el validador de dataviz |
 
 ## Plantilla
 

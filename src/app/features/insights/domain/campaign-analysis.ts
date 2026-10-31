@@ -1,7 +1,7 @@
-import type { Band, BarDatum, LineSeries, RefLine, StackRow, StackSegment } from '../charts/chart.types';
+import type { Band, BarDatum, ChartMilestone, LineSeries, RefLine, StackRow, StackSegment } from '../charts/chart.types';
 import type { ScatterPoint } from '../charts/scatter-chart';
 import { resolveBenchmarks } from './benchmarks';
-import { CAMPAIGN_BY_ID } from './campaigns.data';
+import { CAMPAIGN_BY_ID, MILESTONES } from './campaigns.data';
 import { addDays, daysBetween, shortDate } from './dates';
 import type { Channel, InsightsFilter, KpiValue, MetricId, TimeGrain } from './insights.types';
 import { CHANNEL_LABELS, CHANNELS, PAID_CHANNELS } from './insights.types';
@@ -26,6 +26,8 @@ export interface MainChartModel {
   readonly refs: RefLine[];
   readonly band: Band | null;
   readonly compare: (number | null)[] | null;
+  /** Hitos de las campañas elegidas que caen dentro del periodo, ubicados en su cubeta. */
+  readonly milestones: ChartMilestone[];
   readonly points: number;
 }
 
@@ -48,6 +50,25 @@ export function referenceLines(filter: InsightsFilter, metric: MetricId): RefLin
     }
   }
   return refs;
+}
+
+/**
+ * Ubica cada hito de las campañas elegidas en la cubeta del gráfico que lo contiene
+ * (la última cubeta que empieza en o antes de su fecha). Los hitos fuera del periodo no se marcan.
+ */
+export function milestonesOn(buckets: readonly string[], filter: InsightsFilter): ChartMilestone[] {
+  if (buckets.length === 0) return [];
+  const out: ChartMilestone[] = [];
+  for (const m of MILESTONES) {
+    if (!filter.campaignIds.includes(m.campaignId)) continue;
+    if (m.date < filter.range.from || m.date > filter.range.to) continue;
+    let index = -1;
+    buckets.forEach((b, i) => {
+      if (b <= m.date) index = i;
+    });
+    if (index >= 0) out.push({ index, label: m.label });
+  }
+  return out;
 }
 
 export function mainChartModel(
@@ -93,7 +114,15 @@ export function mainChartModel(
     const stat = resolveBenchmarks(filter, metric).statistical;
     if (stat) band = { low: stat.low, high: stat.high, label: 'Rango normal' };
   }
-  return { labels, series, refs: referenceLines(filter, metric), band, compare, points: base.length };
+  return {
+    labels,
+    series,
+    refs: referenceLines(filter, metric),
+    band,
+    compare,
+    milestones: milestonesOn(base.map((p) => p.bucket), filter),
+    points: base.length,
+  };
 }
 
 /** Una métrica por canal, lista para barras. */
