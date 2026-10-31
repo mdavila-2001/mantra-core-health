@@ -1,0 +1,6 @@
+                  id                  |           order_status           |               line_status                | req | res |  product_code   
+--------------------------------------+----------------------------------+------------------------------------------+-----+-----+-----------------
+ 3ea3e966-c260-4259-9b48-a800543b2743 | pharmacy_inventory:ORDER_ENVIADO | pharmacy_inventory:RES_LINE_CONFIRMED    |   3 |   3 | far3-PARA-LIBRE
+ a46eba41-0179-4df2-ae2c-269462e4cde5 | pharmacy_inventory:ORDER_ENVIADO | pharmacy_inventory:RES_LINE_OUT_OF_STOCK |   1 |   0 | far3-PARA-LIBRE
+(2 rows)
+

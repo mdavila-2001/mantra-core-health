@@ -1,0 +1,48 @@
+{
+ "tag": "b13-farmaciaA-revocado",
+ "state": "farmaciaA",
+ "requested": "/rx/9ME4ZT4Njb15oevpYdybvSIZ6RJnQzaMosRj6hTVY_A",
+ "finalUrl": "http://localhost:4000/administration/pharmacy-orders/rx/<tok43>",
+ "httpStatus": 200,
+ "title": "AloVida - Abrir receta",
+ "robots": [],
+ "h": [
+  "Abrir receta"
+ ],
+ "apiCalls": [
+  "POST /iam/auth/token/refresh → 200",
+  "GET /notifications/me?unread=true&limit=20 → 200",
+  "GET /community/profiles/me → 200",
+  "GET /notifications/me?limit=8 → 200",
+  "GET /community/profiles/me → 200",
+  "GET /pharmacy/prescription-shares/<tok43> → 410"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Saltar al contenido
+Solicitudes de retiro cargada
+AloVida
+Mi perfil
+Notificaciones
+Resumen
+Catálogo
+Horario y turnos
+Solicitudes de retiro
+Promociones
+Sucursales
+Red social
+FC
+Sesión de Farmacia Chavez S.A.
+Panel
+/
+General
+/
+Solicitudes de retiro
+Abrir receta
+La receta que le compartió el paciente, cruzada con su catálogo y sus sedes.
+Advertencia:
+El paciente dejó de compartir esta receta
+Si la necesita, pídale al paciente que la comparta de nuevo.
+Código de soporte: 0eb6f8b7-3ad3-4884-9d45-f0597af71377
+Ir a la bandeja

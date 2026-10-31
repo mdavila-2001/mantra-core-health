@@ -1,0 +1,24 @@
+{
+ "tag": "b51-verify-rx-inexistente",
+ "state": "none",
+ "requested": "/verify/rx/11111111-2222-4333-8444-555555555555",
+ "finalUrl": "http://localhost:4000/verify/rx/11111111-2222-4333-8444-555555555555",
+ "httpStatus": 200,
+ "title": "AloVida - Verificar receta",
+ "robots": [
+  "noindex, nofollow"
+ ],
+ "h": [
+  "Verificar receta"
+ ],
+ "apiCalls": [
+  "GET /public/prescriptions/11111111-2222-4333-8444-555555555555/verify → 404"
+ ],
+ "externalLinks": []
+}
+---- texto visible ----
+Verificar receta
+Advertencia:
+No encontramos esta receta
+Revise que la dirección esté completa. Si escaneó un código, vuelva a escanearlo: puede que la receta no haya sido emitida en AloVida.
+Ir a AloVida
