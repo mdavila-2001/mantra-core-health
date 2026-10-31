@@ -81,7 +81,7 @@ describe('MedicalOrganization — vista del médico', () => {
     expect(texto()).toContain('No tiene solicitudes ni invitaciones de ingreso');
   });
 
-  it('un médico que además administra una organización ve su consola en una pestaña aparte', async () => {
+  it('un médico que además tiene un consultorio sigue viendo sólo las dos pestañas', async () => {
     await montar('hp-1');
     resolver([{ id: 'prac-1', code: 'HC', name: 'Hospital Central', status: 'activa' }]);
     for (const pedido of http.match('/practices/prac-1/organization')) {
@@ -98,8 +98,7 @@ describe('MedicalOrganization — vista del médico', () => {
     }
     harness.detectChanges();
 
-    expect(rotulos()).toEqual(['Mis organizaciones', 'Solicitudes de ingreso', 'Administrar mi organización']);
-    expect(rotulos()).not.toContain('Sedes');
+    expect(rotulos()).toEqual(['Mis organizaciones', 'Solicitudes de ingreso']);
     expect(texto()).not.toContain('Qué administra esta pantalla y qué no');
   });
 
