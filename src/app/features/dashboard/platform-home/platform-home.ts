@@ -4,6 +4,10 @@ import type { WritableSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { Observable } from 'rxjs';
 
+import { OpsLivenessClient } from '../../../core/data-access/admin-portal/ops-liveness.client';
+import type { InstanceLiveness } from '../../../core/data-access/admin-portal/ops-liveness.types';
+import { OpsToolsClient } from '../../../core/data-access/admin-portal/ops-tools.client';
+import type { OpsTools } from '../../../core/data-access/admin-portal/ops-tools.types';
 import { OpsTrafficClient } from '../../../core/data-access/admin-portal/ops-traffic.client';
 import type { TrafficOverview } from '../../../core/data-access/admin-portal/ops-traffic.types';
 import { OpsConsoleClient, QaLabClient } from '../../../core/data-access/admin-portal/platform.client';
@@ -25,6 +29,7 @@ import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { entero, porcentaje } from '../../admin/platform/platform-labels';
+import { ESTADO_GENERAL } from '../../admin/instances/instances-labels';
 
 /** Un destino de las dos puertas de entrada. */
 interface Destino {
@@ -109,6 +114,7 @@ const PORTALES: readonly Portal[] = [
         descripcion: 'Tráfico, errores, latencia y comportamiento en pantalla.',
         destinos: [
           { label: 'Observabilidad', route: '/superadmin/observability' },
+          { label: 'Instancias y herramientas', route: '/superadmin/instances' },
           { label: 'Analítica web', route: '/superadmin/web-analytics' },
           { label: 'Operación', route: '/superadmin/operations' },
         ],
@@ -152,6 +158,8 @@ const PORTALES: readonly Portal[] = [
 })
 export class PlatformHome {
   private readonly trafficClient = inject(OpsTrafficClient);
+  private readonly livenessClient = inject(OpsLivenessClient);
+  private readonly toolsClient = inject(OpsToolsClient);
   private readonly ops = inject(OpsConsoleClient);
   private readonly qa = inject(QaLabClient);
   private readonly navigation = inject(NavigationService);
@@ -160,6 +168,8 @@ export class PlatformHome {
   protected readonly porcentaje = porcentaje;
 
   protected readonly trafico = signal<ViewState<TrafficOverview>>(loading());
+  protected readonly sonda = signal<ViewState<InstanceLiveness>>(loading());
+  protected readonly herramientas = signal<ViewState<OpsTools>>(loading());
   protected readonly preparacion = signal<ViewState<Readiness>>(loading());
   protected readonly incidentes = signal<ViewState<readonly Incident[]>>(loading());
   protected readonly despliegues = signal<ViewState<readonly Deployment[]>>(loading());
@@ -184,6 +194,8 @@ export class PlatformHome {
   protected cargar(): void {
     const ahora = new Date();
     this.cargarEn(this.trafico, this.trafficClient.traffic({ to: ahora.toISOString(), interval: 'hour' }));
+    this.cargarEn(this.sonda, this.livenessClient.liveness());
+    this.cargarEn(this.herramientas, this.toolsClient.tools());
     this.cargarEn(this.preparacion, this.ops.readiness());
     this.cargarEn(this.incidentes, this.ops.incidents(true));
     this.cargarEn(this.despliegues, this.ops.deployments());
@@ -218,6 +230,11 @@ export class PlatformHome {
 
   protected defectosAbiertos(defectos: readonly QaDefect[]): number {
     return defectos.filter((d) => d.status !== 'CLOSED' && d.status !== 'RESOLVED').length;
+  }
+
+  /** El veredicto de la sonda en palabras y con su tono; nunca sólo el color. */
+  protected etiquetaSonda(overall: InstanceLiveness['overall']): string {
+    return ESTADO_GENERAL[overall].texto;
   }
 
   protected etiquetaPreparacion(estado: Readiness['status']): string {
