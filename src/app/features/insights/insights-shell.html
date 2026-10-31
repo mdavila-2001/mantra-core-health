@@ -83,7 +83,12 @@
     <p class="ins__notice" role="note">{{ notice }}</p>
 
     <main class="ins__content" id="insights-content" tabindex="-1">
-      <router-outlet />
+      <app-view-state-host [state]="data.state()" (retry)="data.load()">
+        <div vsh-skeleton class="ins__loading" aria-busy="true">Cargando AloVida Insights…</div>
+        @if (data.ready()) {
+          <router-outlet />
+        }
+      </app-view-state-host>
     </main>
   </div>
 </div>

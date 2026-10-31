@@ -315,3 +315,19 @@
     transition: opacity var(--dur-base) var(--ease-standard);
   }
 }
+
+.lc__ms-line {
+  stroke: var(--text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+}
+
+.lc__ms-mark {
+  fill: var(--text-secondary);
+}
+
+.lc__tip-ms {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

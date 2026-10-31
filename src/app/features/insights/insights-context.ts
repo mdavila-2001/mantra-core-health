@@ -29,7 +29,7 @@ export interface InsightsState {
   readonly compare: readonly string[];
 }
 
-const DEFAULT_CAMPAIGN = 'reg-oct';
+const DEFAULT_CAMPAIGN = 'c1';
 
 function list(value: unknown): string[] {
   return typeof value === 'string' && value ? value.split(',').filter(Boolean) : [];

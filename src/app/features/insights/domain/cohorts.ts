@@ -13,10 +13,10 @@ import { noise } from './prng';
 
 /** Curva base de retención semanal por campaña (semana 0 = 100 %). */
 const BASE_CURVE: Readonly<Record<string, readonly number[]>> = {
-  'reg-oct': [1, 0.78, 0.7, 0.64, 0.61, 0.59, 0.57, 0.56, 0.55],
-  'esp-sep': [1, 0.62, 0.5, 0.43, 0.38, 0.35, 0.33, 0.31, 0.3],
-  'tel-oct': [1, 0.66, 0.54, 0.47, 0.43, 0.4, 0.38, 0.36, 0.35],
-  'far-ago': [1, 0.8, 0.74, 0.7, 0.68, 0.66, 0.65, 0.64, 0.63],
+  c1: [1, 0.78, 0.7, 0.64, 0.61, 0.59, 0.57, 0.56, 0.55],
+  c2: [1, 0.62, 0.5, 0.43, 0.38, 0.35, 0.33, 0.31, 0.3],
+  c3: [1, 0.66, 0.54, 0.47, 0.43, 0.4, 0.38, 0.36, 0.35],
+  c4: [1, 0.8, 0.74, 0.7, 0.68, 0.66, 0.65, 0.64, 0.63],
 };
 
 export const COHORT_WEEKS = 9;
@@ -44,7 +44,7 @@ export function buildCohorts(facts: readonly DailyFact[]): Cohort[] {
   const byWeek = new Map<string, { size: number; sums: number[]; weights: number[] }>();
   for (const [key, size] of sizes) {
     const [campaignId = '', week = ''] = key.split('|');
-    const curve = BASE_CURVE[campaignId] ?? BASE_CURVE['reg-oct']!;
+    const curve = BASE_CURVE[campaignId] ?? BASE_CURVE['c1']!;
     const entry = byWeek.get(week) ?? {
       size: 0,
       sums: Array.from({ length: COHORT_WEEKS }, () => 0),
@@ -54,7 +54,7 @@ export function buildCohorts(facts: readonly DailyFact[]): Cohort[] {
     for (let k = 0; k < COHORT_WEEKS; k += 1) {
       if (!isObserved(week, k)) continue;
       // Las cohortes que llegan con el onboarding degradado retienen un poco menos.
-      const degraded = campaignId === 'reg-oct' && week >= '2026-10-12' ? 0.94 : 1;
+      const degraded = campaignId === 'c1' && week >= '2026-10-12' ? 0.94 : 1;
       const value = Math.min(1, (curve[k] ?? 0) * (k === 0 ? 1 : degraded) * noise(`${key}|${k}`, 0.025));
       entry.sums[k] = (entry.sums[k] ?? 0) + value * size;
       entry.weights[k] = (entry.weights[k] ?? 0) + size;
