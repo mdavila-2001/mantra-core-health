@@ -82,7 +82,7 @@ export interface SegmentRow {
 const div = (a: number | null, b: number | null): number | null => (a === null || b === null || b <= 0 ? null : a / b);
 
 export function segmentConversion(filter: InsightsFilter, dimension: SegmentDimension): SegmentRow[] {
-  let raw: { id: string; label: string; impressions: number; clicks: number; visits: number | null; registrations: number | null; activations: number | null; conversions: number }[] = [];
+  let raw: { id: string; label: string; impressions: number; clicks: number; visits: number | null; registrations: number | null; activations: number | null; conversions: number }[];
   if (dimension === 'channel' || dimension === 'campaign') {
     const facts = selectFacts(filter);
     const keys = [...new Set(facts.map((f) => (dimension === 'channel' ? f.channel : f.campaignId)))];
