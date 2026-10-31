@@ -227,10 +227,10 @@ export class Login {
     if (this.auth.needsTenantSelection()) {
       // El enlace pedido viaja a la elección de organización y se usa después
       // de elegir: la farmacia que escaneó una receta vuelve a ella.
-      const pedido = this.retornoPedido();
-      return pedido === null
+      const requested = this.retornoPedido();
+      return requested === null
         ? TENANT_SELECTION_ROUTE
-        : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(pedido)}`;
+        : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(requested)}`;
     }
     if (this.auth.tenants().length === 0) {
       return rolesAlcanzan(['SUPERADMIN'], this.auth.roles())
