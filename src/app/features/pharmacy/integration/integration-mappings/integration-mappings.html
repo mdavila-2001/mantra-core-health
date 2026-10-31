@@ -85,7 +85,7 @@
       @if (dialogError(); as message) {
         <app-alert tone="error" data-testid="integration-link-error">
           {{ message }}
-          @if (takenMappingId() !== null) {
+          @if (takenMapping() !== null) {
             <button
               app-button
               type="button"

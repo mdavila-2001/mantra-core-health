@@ -125,6 +125,11 @@ export class IntegrationMappings {
   protected readonly removing = signal<string | null>(null);
   protected readonly rowActions = ROW_ACTIONS;
 
+  /** El vínculo del 409, cuando la tabla releída ya lo trae. */
+  protected readonly takenMapping = computed(
+    () => (dataOf(this.mappings()) ?? []).find((item) => item.id === this.takenMappingId()) ?? null,
+  );
+
   /** El nombre de cada código del sistema de la farmacia, para la tabla. */
   private readonly externalNames = computed(
     () => new Map((dataOf(this.externals()) ?? []).map((item) => [item.code, item.name])),
@@ -292,8 +297,8 @@ export class IntegrationMappings {
 
   /** En un 409, pasa a corregir el vínculo que ya tiene el producto. */
   protected editTaken(): void {
-    const mapping = (dataOf(this.mappings()) ?? []).find((item) => item.id === this.takenMappingId());
-    if (mapping !== undefined) {
+    const mapping = this.takenMapping();
+    if (mapping !== null) {
       this.startEdit(mapping);
     }
   }
@@ -409,10 +414,10 @@ export class IntegrationMappings {
     this.saving.set(false);
     this.dialogError.set(integrationErrorMessage(error, fallback));
     const taken = takenMappingIdOf(error);
-    this.takenMappingId.set(
-      taken !== null && (dataOf(this.mappings()) ?? []).some((item) => item.id === taken) ? taken : null,
-    );
-    if (integrationReasonOf(error) === 'EXTERNAL_MAPPING_NOT_AVAILABLE') {
+    this.takenMappingId.set(taken);
+    // El vínculo que ya tiene el producto puede ser de hace un instante, y el
+    // que se corregía puede ya no existir: en los dos casos se relee la tabla.
+    if (taken !== null || integrationReasonOf(error) === 'EXTERNAL_MAPPING_NOT_AVAILABLE') {
       this.loadMappings();
     }
   }

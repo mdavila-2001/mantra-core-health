@@ -84,7 +84,7 @@
           @for (line of skipped(); track line.siteId + line.externalCode) {
             <li data-testid="integration-sync-skipped-line">
               <code class="sync__code">{{ line.externalCode }}</code>
-              <span class="sync__site">{{ siteLabel(line) }} · {{ line.quantity }} informadas</span>
+              <span class="sync__site">{{ siteLabel(line) }} · cantidad informada: {{ line.quantity }}</span>
               <span class="sync__reason">{{ skipMessage(line) }}</span>
             </li>
           }

@@ -95,5 +95,12 @@
 }
 
 .mappings__taken {
+  display: flex;
+  inline-size: fit-content;
   margin-block-start: var(--sp-2);
+}
+
+/* La celda apila en columna: el badge no se estira a lo ancho. */
+.mappings__cell app-badge {
+  align-self: flex-start;
 }

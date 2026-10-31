@@ -249,7 +249,7 @@ describe('IntegrationMappings · corregir y deshacer', () => {
     answerReload();
   });
 
-  it('un 409 dice que el producto ya está vinculado y ofrece corregir ese vínculo', () => {
+  it('un 409 dice que el producto ya está vinculado, relee y ofrece corregir ese vínculo', () => {
     rowAction(0, 'edit').click();
     fixture.detectChanges();
     answerDialog();
@@ -261,6 +261,9 @@ describe('IntegrationMappings · corregir y deshacer', () => {
       apiError(409, 'EXTERNAL_MAPPING_PRODUCT_TAKEN', { productId: 'p-b', mappingId: 'm-2' }),
       { status: 409, statusText: 'Conflict' },
     );
+    fixture.detectChanges();
+    // El vínculo que ya tiene el producto puede ser nuevo: la tabla se relee.
+    expectOne('GET', `${CONN}/product-mappings`).flush({ items: MAPPINGS });
     fixture.detectChanges();
 
     expect(text('integration-link-error')).toContain('ya está vinculado con otro código');
