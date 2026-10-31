@@ -343,12 +343,14 @@ describe('grupos médicos del simulador (/medical-groups)', () => {
       const g = call('POST', '/medical-groups', { body: nuevo({ members: [miembro] }) }).body;
       expect(g.status).toBe('PENDING_TEAM');
 
-      const r = call('DELETE', `/medical-groups/${g.id}/members/${g.members[1]!.id}`);
+      const pendiente = g.members[1]!.id;
+
+      const r = call('DELETE', `/medical-groups/${g.id}/members/${pendiente}`);
 
       expect(r.status).toBe(200);
       expect(r.body.members).toHaveLength(1);
       expect(r.body.status).toBe('SCHEDULED');
-      expect(call('DELETE', `/medical-groups/${g.id}/members/${g.members[1]!.id}`).status).toBe(404);
+      expect(call('DELETE', `/medical-groups/${g.id}/members/${pendiente}`).status).toBe(404);
     });
   });
 
