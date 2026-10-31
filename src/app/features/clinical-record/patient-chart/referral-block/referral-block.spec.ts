@@ -12,6 +12,7 @@ import { empty, loading, ready, stale } from '../../../../core/view-state/view-s
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ReferralBlock } from './referral-block';
+import { inFormOrder } from './referral-block.model';
 import { emptyTransferDraft, type TransferDraft } from './referral-transfer.model';
 
 const LUCIA = {
@@ -96,6 +97,7 @@ describe('ReferralBlock', () => {
           useValue: {
             practitionerProfileId: signal<string | null>('hp-yo'),
             tenants: signal<readonly string[]>(['t-hospital']),
+            roles: signal<readonly string[]>(['PRACTITIONER']),
           },
         },
       ],
@@ -428,8 +430,9 @@ describe('ReferralBlock', () => {
     expect(member<() => { name: string } | null>('issued')()?.name).toContain('Lucía Mendoza');
     // La API no dice si el aviso salió: el texto no lo promete.
     const success = host().querySelector('[data-testid="referral-success"]')?.textContent ?? '';
-    expect(success).toContain('Derivación registrada a Dra. Lucía Mendoza.');
-    expect(success).toContain('Si la persona tiene cuenta en el portal, le llega un aviso para ver la ficha');
+    expect(success).toContain('Derivación registrada');
+    expect(success).toContain('Quedó registrada la derivación a Dra. Lucía Mendoza.');
+    expect(success).toContain('Si la persona tiene cuenta en el portal, puede recibir un aviso para ver la ficha');
     expect(success).not.toContain('Le avisamos');
     // El formulario queda limpio para derivar a otro, con Tratamiento otra vez.
     expect(member<() => boolean>('canSubmit')()).toBe(false);
@@ -463,8 +466,8 @@ describe('ReferralBlock', () => {
     fixture.detectChanges();
     // Organización: registrada, y el aviso condicionado a la cuenta de portal.
     const success = host().querySelector('[data-testid="referral-success"]')?.textContent ?? '';
-    expect(success).toContain('Derivación registrada a Hospital San Lucas.');
-    expect(success).toContain('le llega un aviso y la ve en su lista de derivaciones');
+    expect(success).toContain('Quedó registrada la derivación a Hospital San Lucas.');
+    expect(success).toContain('puede recibir un aviso; la ve en su lista de derivaciones');
     expect(success).not.toContain('la derivó');
   });
 
@@ -493,6 +496,51 @@ describe('ReferralBlock', () => {
     member<(k: string) => void>('chooseKind')('EXTERNAL');
     fixture.detectChanges();
     expect(label()).toBe('Registrar la derivación');
+  });
+
+  it('el botón apagado dice qué falta, y lo anuncia con aria-describedby', () => {
+    create();
+    const button = () => host().querySelector<HTMLButtonElement>('[data-testid="referral-submit"]')!;
+    const hint = () => host().querySelector('[data-testid="referral-submit-hint"]');
+    expect(hint()?.textContent).toContain('Para derivar, elija el destino.');
+    expect(button().getAttribute('aria-describedby')).toBe('referral-submit-hint');
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    fixture.detectChanges();
+    expect(hint()?.textContent).toContain('escriba el nombre del destino');
+    writable<string>('externalName').set('Centro Norte');
+    fixture.detectChanges();
+    expect(hint()).toBeNull();
+    expect(button().getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('el aviso de «Servicio pedido» depende del contexto: externo, sin catálogo o con catálogo', () => {
+    create();
+    pickTarget([LUCIA]);
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toBe(
+      'Elija un servicio de la lista del destino o escriba qué se le pide.',
+    );
+
+    create();
+    pickTarget([LUCIA], []);
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('Este destino no publica servicios');
+
+    create();
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    writable<string>('externalName').set('Centro Norte');
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('destino externo');
+  });
+
+  it('el resumen del traslado sigue el orden del formulario', () => {
+    const ordered = inFormOrder([
+      { field: 'receiverContactName', message: 'c' },
+      { field: 'transportMode', message: 'b' },
+      { field: 'departureCondition', message: 'a' },
+      { field: 'glasgow', message: 'v' },
+    ]);
+    expect(ordered.map((i) => i.field)).toEqual(['departureCondition', 'transportMode', 'glasgow', 'receiverContactName']);
   });
 
   it('a una organización a la que no pertenece no le pide las sedes (la API respondería 403)', () => {
@@ -982,6 +1030,33 @@ describe('ReferralBlock', () => {
       expect(alert.textContent).toContain('Se muestra la de las 09:05');
       alert.querySelector<HTMLElement>('button')!.click();
       expect(retries).toBe(1);
+    });
+
+    it('una relectura fallida sin filas no se disfraza de «todavía no tiene derivaciones»', () => {
+      create();
+      fixture.componentRef.setInput('referrals', stale([], new Date(2026, 9, 31, 9, 5)));
+      fixture.componentRef.setInput('refreshError', 'No pudimos conectarnos.');
+      fixture.detectChanges();
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('stale');
+      expect(host().textContent).not.toContain('todavía no tiene derivaciones');
+      expect(host().querySelector('[data-testid="referral-list-refresh-error"]')).not.toBeNull();
+    });
+
+    it('«Reintentar» deja el foco en el título de la lista, no en <body>', async () => {
+      create();
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+      fixture.componentRef.setInput('referrals', stale([REFERRAL], new Date(2026, 9, 31, 9, 5)));
+      fixture.componentRef.setInput('refreshError', 'No pudimos conectarnos.');
+      fixture.detectChanges();
+      // Lo que hace quien monta el bloque: relee y el fallo desaparece con el botón.
+      fixture.componentInstance.retry.subscribe(() => fixture.componentRef.setInput('refreshError', null));
+      host().querySelector<HTMLElement>('[data-testid="referral-list-refresh-error"] button')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(host().querySelector('[data-testid="referral-list-refresh-error"]')).toBeNull();
+      expect(document.activeElement).toBe(host().querySelector('#referral-list-title'));
     });
 
     it('al releer (S7) la lista sigue a la vista y la antigüedad va junto al título', () => {

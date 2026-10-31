@@ -66,8 +66,10 @@ import {
   referralTabLabels,
   REFERRAL_TYPE_OPTIONS,
   SERVICE_EXAMPLE,
-  splitSupportCode,
+  inFormOrder,
+  requestedServiceMessage,
   submissionMessage,
+  submitBlocker,
   TARGET_KIND_OPTIONS,
   toReferralRow,
   type IssuedReferral,
@@ -294,7 +296,10 @@ export class ReferralBlock {
 
   protected readonly tab = signal(0);
   protected readonly transferDraft = signal<TransferDraft>(emptyTransferDraft());
-  protected readonly transferProblems = computed(() => transferIssues(transferFromDraft(this.transferDraft())));
+  /** En el orden de la pestaña, para que el resumen se lea como el formulario. */
+  protected readonly transferProblems = computed(() =>
+    inFormOrder(transferIssues(transferFromDraft(this.transferDraft()))),
+  );
 
   /** El rótulo de cada pestaña, con «falta algo» después de intentar derivar. */
   protected readonly tabLabels = computed(() =>
@@ -303,7 +308,14 @@ export class ReferralBlock {
 
   /** Se intentó enviar: desde ahí los errores se muestran junto a cada campo. */
   protected readonly attempted = signal(false);
-  protected readonly issues = computed<readonly ReferralIssue[]>(() => referralIssues(this.body() ?? {}));
+  protected readonly issues = computed<readonly ReferralIssue[]>(() =>
+    // Falta el servicio pedido: el texto depende de si hay catálogo que elegir.
+    referralIssues(this.body() ?? {}).map((issue) =>
+      issue.field === 'requestedServiceText' && this.requestedService().trim() === ''
+        ? { ...issue, message: requestedServiceMessage(this.kind(), this.noServices()) }
+        : issue,
+    ),
+  );
   protected issueFor(field: ReferralIssue['field']): string {
     if (!this.attempted()) return '';
     return this.issues().find((issue) => issue.field === field)?.message ?? '';
@@ -320,6 +332,11 @@ export class ReferralBlock {
   /** Hay destino: uno de la plataforma elegido, o el nombre del externo escrito. */
   protected readonly hasTarget = computed(() =>
     this.kind() === 'EXTERNAL' ? String(this.externalName() ?? '').trim() !== '' : this.target() !== null,
+  );
+
+  /** Por qué el botón está apagado, junto a él; `null` si no lo está. */
+  protected readonly submitHint = computed(() =>
+    this.sending() ? null : submitBlocker(this.kind(), this.hasTarget(), this.reason().length > REASON_MAX_LENGTH),
   );
 
   protected readonly canSubmit = computed(
@@ -359,10 +376,7 @@ export class ReferralBlock {
         });
   });
 
-  protected readonly submissionError = computed(() => {
-    const message = submissionMessage(this.submission(), this.serverReason());
-    return message === null ? null : splitSupportCode(message);
-  });
+  protected readonly submissionError = computed(() => submissionMessage(this.submission(), this.serverReason()));
 
   /** El `reason` del último 400/404/422 de la API, ya en palabras. */
   private readonly serverReason = signal<string | null>(null);
@@ -380,7 +394,8 @@ export class ReferralBlock {
     if (state === null || (state.status !== 'ready' && state.status !== 'stale')) {
       return state;
     }
-    if (state.data.length === 0) {
+    // Una relectura fallida no se disfraza de «no tiene derivaciones».
+    if (state.data.length === 0 && !(state.status === 'stale' && this.refreshError() !== null)) {
       return empty(
         {
           label: this.noEncounter()
@@ -460,6 +475,15 @@ export class ReferralBlock {
     this.targetSearch.reset();
   }
 
+  /**
+   * Reintentar la lista. El botón que se tocó desaparece al releer: el foco va
+   * al título de la lista, dentro del diálogo, y no cae en `<body>`.
+   */
+  protected retryList(): void {
+    this.retry.emit();
+    this.focusInside('#referral-list-title');
+  }
+
   protected choose(option: ReferenceOption | null): void {
     this.issued.set(null);
     this.duplicate.set(false);
@@ -535,7 +559,7 @@ export class ReferralBlock {
 
   /** «Derivar sin un servicio»: al campo que lo describe a mano. */
   protected deriveWithoutService(): void {
-    this.focusInside('[data-testid="referral-requested-service"]', 'textarea');
+    this.focusInside('[data-testid="referral-requested-service"] textarea');
   }
 
   /** «Buscar otro destino»: se olvida el elegido y se vuelve al buscador. */
@@ -543,8 +567,7 @@ export class ReferralBlock {
     this.forgetTarget();
     this.remountToggle.update((value) => !value);
     this.focusInside(
-      `[data-testid="${this.kind() === 'ORGANIZATION' ? 'referral-organization' : 'referral-practitioner'}"]`,
-      'input',
+      `[data-testid="${this.kind() === 'ORGANIZATION' ? 'referral-organization' : 'referral-practitioner'}"] input`,
     );
   }
 
@@ -556,11 +579,8 @@ export class ReferralBlock {
     });
   }
 
-  private focusInside(hostSelector: string, controlSelector: string): void {
-    revealAfterRender(
-      this.injector,
-      () => this.host.nativeElement.querySelector(hostSelector)?.querySelector<HTMLElement>(controlSelector) ?? null,
-    );
+  private focusInside(selector: string): void {
+    revealAfterRender(this.injector, () => this.host.nativeElement.querySelector<HTMLElement>(selector));
   }
 
   private forgetTarget(): void {

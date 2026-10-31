@@ -93,7 +93,8 @@ describe('ConsultationReferrals', () => {
     const state = referrals.state();
     expect(state.status).toBe('stale');
     expect(referrals.count()).toBe(1);
-    expect(referrals.missingCount()).toBeNull();
+    // La cifra es la de antes: la casilla lo dice («al menos»).
+    expect(referrals.missingCount()).toBe('stale');
     expect(referrals.refreshError()).toContain('req-9');
 
     // Reintentar: mientras viaja, sin el fallo anterior; al volver bien, limpio.
@@ -102,6 +103,29 @@ describe('ConsultationReferrals', () => {
     http.expectOne(forPatient('p-1')).flush([ROW]);
     expect(referrals.state().status).toBe('ready');
     expect(referrals.refreshError()).toBeNull();
+  });
+
+  it('lista vacía y la relectura falla: se ve el fallo, no «no tiene derivaciones», y la casilla no dice 0', () => {
+    http.expectOne(forPatient('p-1')).flush([]);
+    referrals.reload();
+    http
+      .expectOne(forPatient('p-1'))
+      .flush({ code: 'INTERNAL', message: 'Falló.', correlationId: 'req-1' }, { status: 500, statusText: 'Server Error' });
+    expect(referrals.state().status).toBe('error');
+    expect(referrals.count()).toBeNull();
+    expect(referrals.missingCount()).toBe('failed');
+    expect(referrals.refreshError()).toBeNull();
+  });
+
+  it('la primera derivación de la persona: el POST sale bien y la relectura falla → fallo, no un cero', () => {
+    http.expectOne(forPatient('p-1')).flush([]);
+    TestBed.inject(ReferralsClient)
+      .create({ patientProfileId: 'p-1', sourceEncounterId: 'enc-1', targetProfileId: 'hp-1' })
+      .subscribe();
+    http.expectOne((r) => r.url === '/referrals' && r.method === 'POST').flush(ROW);
+    http.expectOne(forPatient('p-1')).flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+    expect(referrals.state().status).toBe('error');
+    expect(referrals.missingCount()).toBe('failed');
   });
 
   it('un fallo de la lectura es su estado, sin inventar un cero', () => {

@@ -138,7 +138,7 @@ export interface CasillaVisible {
   /** Lo que sigue a la cifra: «en la historia», o el nombre de lo contado. */
   readonly rotuloDeCantidad: string;
   /** Sin cifra, por qué (`ConsultationReferrals.missingCount`); `null` si no cuenta o ya está. */
-  readonly lecturaDeCantidad: 'loading' | 'failed' | null;
+  readonly lecturaDeCantidad: 'loading' | 'failed' | 'stale' | null;
   /** El trazo del icono, en un `viewBox` de 24. */
   readonly icono: string;
   /** El `data-testid` de la casilla. Estable: las pruebas de navegador lo usan. */
@@ -647,7 +647,7 @@ export class Consultation {
         : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
     }
     if (this.casillaAbierta() === 'derivacion') {
-      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Si tiene cuenta en el portal, puede recibir un aviso.`;
+      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. La derivación queda registrada en su historia.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`

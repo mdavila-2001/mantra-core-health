@@ -28,9 +28,10 @@ interface TargetQueryResult {
  * error— con una regla que no es del formulario: **una respuesta vieja nunca
  * repuebla las opciones**. `switchMap` cancela la búsqueda anterior; un
  * `reset()` la cancela sin empezar otra: al cambiar de clase de destino, al
- * olvidar el elegido y al borrar lo escrito (`queryCleared` del combobox).
- * Como toda vía que cambia la clase pasa por `reset()`, no hace falta mirar
- * la clase de la respuesta.
+ * olvidar el elegido, y cuando el combobox avisa `queryCleared` (lo escrito
+ * bajó del mínimo, o se descartó al cerrar con Escape, Tab o al salir del
+ * campo). Como toda vía que cambia la clase pasa por `reset()`, no hace
+ * falta mirar la clase de la respuesta.
  *
  * Se crea en el contexto de inyección del bloque (un campo).
  */
