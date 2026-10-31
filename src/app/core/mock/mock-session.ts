@@ -188,7 +188,10 @@ export const IDS = {
   orManager: {
     userId: uuid('user-jefe-quirofano'),
     personId: uuid('person-jefe-quirofano'),
-    practitionerProfileId: uuid('hpid-jefe-quirofano'),
+    // Un perfil profesional real del padrón de San Lucas (el demo 02, de
+    // `PROFESSIONALS_REGISTERED_DEMO`): firma las fases del check-list y el
+    // armazón encuentra su resumen, en vez de un 404 en cada pantalla.
+    practitionerProfileId: uuid('hpid-demo-registered-practitioner-02'),
   },
   billingClerk: {
     userId: uuid('user-facturacion-hospital'),

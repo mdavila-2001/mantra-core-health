@@ -455,3 +455,62 @@ Las cifras de arriba son del árbol `4a7ad084`. Después, `origin/infra-f1-web` 
 
 Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
 textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.
+
+## Infraestructura F4/F5 (web) — 2026-10-31
+
+Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · backend simulado (`ng build --configuration
+development,demo` servido estático en `127.0.0.1:4373`, ver nota) · Chromium 1243 del sistema (`PW_CHROMIUM_PATH`) ·
+cuentas `quirofano@alovida.mock` (jefatura de quirófano), `facturacion@alovida.mock` y `superadmin@alovida.mock`,
+tenant «Hospital San Lucas». Rama `infra-f4f5-web` (desde `origin/dev` con F0 y F1).
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` (app + cypress + playwright) | exit 0 |
+| `ng test` de lo tocado: reglas y clientes de quirófano y facturación, maqueta F4, pantallas F4 (`interventions.f4.spec`), pantallas F5 (`bed-day-charges.spec`), `resource-timeline`, catálogo de servicios, ficha de espacio, `mock-backend`, acceso delegado | 24 archivos · **201/201** (+ 4 archivos · 51/51 de reglas, clientes y maqueta F4) |
+| `check-client-prefixes` | los 13 endpoints nuevos ruteados en los tres proxies; quedan 14 rojos **previos ajenos** (`AdmissionsClient`, `InsightsClient`) |
+| `check-route-prefixes`, `check-css-tokens`, `check-english-identifiers`, `check-tokens` | exit 0 |
+| `check-architecture`, `check-usted`, `check-max-lines`, `check-colores-sueltos`, `check-mock-vs-client`, `check-api-prefixes` | exit 1 **previo**: ningún hallazgo en archivos de esta rama |
+| `playwright test playwright/infra-f4f5.spec.ts --workers=1` | **12/12** (4,1 min) · 1440 / 768 / 390 + cadenas a 1440 |
+
+Nota de entorno: `ng serve` fue matado por el OOM del cgroup compartido cuatro veces (dmesg: `Memory cgroup out of
+memory: Killed process … (ng serve --conf)`) mientras otro agente tenía su propio `ng serve` y la API en memoria. Se
+usó el mismo build de desarrollo con la maqueta (`development,demo`) servido como estático, bajo
+`flock /tmp/claude-0/heavy.lock`. La spec no espera `networkidle` y vale igual contra `ng serve`.
+
+Mediciones (`evidencias/infra-f4f5/resultados.json`):
+
+| Qué | 1440 | 768 | 390 |
+|---|---|---|---|
+| Desborde horizontal: lista, agenda, bloques, utilización, ficha, programar, tarifas, equipo | 0 | 0 | 0 |
+| Regla 6 (holgura izq./der. y ancho vs. `.app-main__inner`): agenda, bloques, ficha del caso, programar, ficha de equipo | 0 / 0 · 100 % | 0 / 0 · 100 % | 0 / 0 · 100 % |
+| La lista muestra «QX-0n · Quirófano n», nunca un uuid | sí | sí | sí |
+| Errores de consola | sólo los 10 provocados (S6 ×3, S9 ×3, S8 ×3, el 409 de la cadena) | | |
+
+Cadenas UI → petición → respuesta → persistencia → recarga → UI (registro de escrituras de la maqueta, ahora con el
+cuerpo de la respuesta):
+
+| Mutación | Petición | Respuesta | Persistencia | Tras recarga |
+|---|---|---|---|---|
+| Programar caso (QX-02, sábado 08:00–10:00) | `POST /procedure-cases` | 201 · `reservedStartAt/EndAt` 07:40–10:30 | `mock.procedures.casos` | la ficha muestra «07:40–10:30» |
+| Programar en la limpieza del anterior (10:30) | `POST /procedure-cases` | 409 `OPERATING_ROOM_SLOT_CONFLICT` · `correlationId req-periop-…` · `nextAvailableStartAt` 10:50 | — | S4 con «Usar la próxima ventana libre (10:50)» |
+| Check-list OMS: crear + Entrada + Pausa + Salida | `POST …/safety-checklists`, 3 × `POST …/responses` | 201 cada una | `mock.periop.checklists` (`completedAt` de las 3 fases) | fases completas |
+| Tiempos de sala en orden (5) con gates | 5 × `POST …/room-events` | 201; antes de la Pausa la incisión queda deshabilitada con su porqué | `mock.periop.roomEvents` | línea de tiempo con 5 eventos |
+| Ubicar el ecógrafo en la sala de rayos X | `PATCH /diagnostic-equipment/:id {careSpaceId}` | 200 | `mock.infra.equipment` | la pestaña «Equipos» de IMG-RX lo lista |
+| AE Title (17 caracteres → rechazo en la UI; `SLUS01`) | `PATCH /diagnostic-equipment/:id {aeTitle, stationName}` | 200 | `mock.infra.equipment` | MWL: `SLUS01` · `ECO-PB` · `IMG-RX` |
+| Devengar día-cama (ingreso −4 d 15:00, traslado −3 d 10:00, egreso −1 d 09:00) | `POST /billing/encounters/:id/bed-day-charges/run` | 201 · 3 cargos (compartida, privada, privada) | `mock.billing.chargeCaptures` | 3 claves `BEDDAY:<enc>:<fecha>`; re-ejecutar: 0 nuevos, 3 omitidos |
+
+Estados M34 capturados: S3 (bloques de una semana vacía → «Crear bloque»; ficha sin check-list; día sin cargos), S4
+(conflicto de ventana; AE Title), S5 (facturación en Bloques; facturación en Programar, en Vitest), S6 (caso
+inexistente u otro tenant), S7 (hora del dato visible en agenda y utilización; el paso a «atrasado» a los 5 min se
+probó en código, no se capturó), S8 (agenda sin conexión), S9 (utilización con `mock-fallo`). S1/S2 son transitorios:
+no se capturaron.
+
+Capturas (`evidencias/infra-f4f5/`, 69): 01–13 F4 (lista, agenda, bloques y alta, utilización, ficha en Resumen /
+Check-list / Eventos, programar, S6, S9, S8, S3) y 20–32 F5 (tarifas, día-cama, S5, espacio con Equipos y Stock,
+ficha de equipo) en los tres anchos; 40–62 las cadenas a 1440.
+
+Hallazgo previo, no de esta rama: en las capturas de página completa a 1440/768 el riel de navegación se dibuja encima
+del borde izquierdo del contenido (igual que en `evidencias/infra-f1/`).
+
+**Contra la API real no se ejecutó** (A-F4/A-F5 en otra ola). Revisión independiente: **pendiente**.
