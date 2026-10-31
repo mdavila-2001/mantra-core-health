@@ -285,7 +285,7 @@ export interface CampoDeFormulario {
    *
    * Ese reemplazo es sólo de los controles que caen en el `@default`, el
    * `textarea` y el `select`. En `tel`, `date` y `datetime` el placeholder es
-   * **el formato del dato** —«7001 2345», «DD/MM/AAAA»— y se conserva: es lo
+   * **el formato del dato** —«70012345», «DD/MM/AAAA»— y se conserva: es lo
    * que dice cómo escribirlo, que no es lo mismo que explicar para qué se pide.
    */
   readonly description?: string;
