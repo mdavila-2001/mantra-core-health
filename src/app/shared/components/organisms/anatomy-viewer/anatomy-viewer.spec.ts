@@ -45,4 +45,21 @@ describe('AnatomyViewer', () => {
     expect(lienzo?.getAttribute('aria-roledescription')).toBe('modelo 3D');
     expect(lienzo?.getAttribute('aria-label')).toContain('Use las flechas para girar');
   });
+
+  it('las entradas nuevas son opcionales: sin ellas el visor se comporta como siempre', () => {
+    expect(fixture.componentInstance.focus()).toBeNull();
+    expect(fixture.componentInstance.hoverLabel()).toBeNull();
+  });
+
+  it('acepta focus y hoverLabel sin motor (sin WebGL) y no emite nada', () => {
+    const toques: unknown[] = [];
+    fixture.componentInstance.pickedAt.subscribe((t) => toques.push(t));
+    fixture.componentRef.setInput('focus', { mode: 'intersection', groups: [['A'], ['B']] });
+    fixture.componentRef.setInput('hoverLabel', (id: string) => `Rótulo ${id}`);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.focus()?.mode).toBe('intersection');
+    expect(fixture.componentInstance.hoverLabel()?.('X')).toBe('Rótulo X');
+    expect(toques).toEqual([]);
+    expect(estados).toEqual(['unsupported']);
+  });
 });

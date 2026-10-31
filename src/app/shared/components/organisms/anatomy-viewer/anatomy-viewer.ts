@@ -14,6 +14,9 @@ import {
 } from '@angular/core';
 
 import type { AnatomyLayer, AnatomyPart, AnatomySex } from '../../../../core/data-access/anatomy-atlas/anatomy-atlas.types';
+import { focusBox, type AnatomyFocus, type AnatomyPick, type FocusBox } from './anatomy-focus.logic';
+
+export type { AnatomyFocus, AnatomyPick } from './anatomy-focus.logic';
 
 type Three = typeof import('three');
 type Mesh = import('three').Mesh<import('three').BufferGeometry, import('three').MeshStandardMaterial>;
@@ -70,6 +73,12 @@ const TOLERANCIA_DE_CLIC = 5;
  * vuelve a la vista inicial). Elegir una pieza con teclado se hace desde la
  * lista que acompaña al visor en la página: un lienzo no puede anunciar sus
  * piezas, y la lista sí. Con `prefers-reduced-motion` no hay inercia.
+ *
+ * ## Entradas opcionales (retrocompatibles)
+ *
+ * `focus` encuadra un subconjunto (unión o intersección, con tamaño mínimo) y
+ * se aplica aunque la cámara se haya movido; Inicio vuelve a él. `pickedAt`
+ * trae el punto 3D tocado. `hoverLabel` pone el rótulo propio (castellano).
  */
 @Component({
   selector: 'app-anatomy-viewer',
@@ -87,8 +96,11 @@ export class AnatomyViewer {
   readonly related = input<readonly string[]>([]);
   /** Qué se ve, dicho para quien no ve el lienzo. */
   readonly label = input.required<string>();
+  readonly focus = input<AnatomyFocus | null>(null);
+  readonly hoverLabel = input<((meshId: string) => string | null) | null>(null);
 
   readonly picked = output<string | null>();
+  readonly pickedAt = output<AnatomyPick | null>();
   readonly statusChange = output<AnatomyViewerStatus>();
 
   protected readonly status = signal<AnatomyViewerStatus>('idle');
@@ -124,6 +136,11 @@ export class AnatomyViewer {
       const relacionadas = this.related();
       untracked(() => this.motor?.aplicar(capas, sexo, elegidas, relacionadas));
     });
+
+    effect(() => {
+      const foco = this.focus();
+      untracked(() => this.motor?.enfocar(foco));
+    });
   }
 
   /** Vuelve a la vista inicial. */
@@ -153,11 +170,15 @@ export class AnatomyViewer {
       this.motor = new Motor(THREE, OrbitControls, new GLTFLoader(), lienzo, this.host.nativeElement, {
         partes: this.parts(),
         urls: this.modelUrls(),
-        alElegir: (id) => this.picked.emit(id),
+        alElegir: (toque) => {
+          this.picked.emit(toque?.meshId ?? null);
+          this.pickedAt.emit(toque);
+        },
         alPasar: (id) => this.hovered.set(id),
         alCargar: (estado) => this.ponerEstado(estado),
       });
       this.motor.aplicar(this.layers(), this.sex(), this.selected(), this.related());
+      this.motor.enfocar(this.focus());
     } catch {
       this.ponerEstado('error');
     }
@@ -167,6 +188,8 @@ export class AnatomyViewer {
   protected hoveredLabel(): string | null {
     const id = this.hovered();
     if (id === null) return null;
+    const propio = this.hoverLabel();
+    if (propio !== null) return propio(id);
     return this.parts().find((p) => p.meshId === id)?.labelEn ?? null;
   }
 
@@ -186,7 +209,7 @@ function soportaWebGl(lienzo: HTMLCanvasElement): boolean {
 interface OpcionesDelMotor {
   readonly partes: readonly AnatomyPart[];
   readonly urls: Readonly<Record<AnatomyLayer, string>>;
-  readonly alElegir: (id: string | null) => void;
+  readonly alElegir: (toque: AnatomyPick | null) => void;
   readonly alPasar: (id: string | null) => void;
   readonly alCargar: (estado: AnatomyViewerStatus) => void;
 }
@@ -226,6 +249,7 @@ class Motor {
     relacionadas: new Set(),
   };
   private inicio: { x: number; y: number } | null = null;
+  private foco: AnatomyFocus | null = null;
 
   constructor(
     private readonly THREE: Three,
@@ -400,7 +424,9 @@ class Motor {
    */
   encuadrar(): void {
     const caja = new this.THREE.Box3();
-    for (const malla of this.mallas.values()) caja.expandByObject(malla);
+    const f = this.cajaDelFoco();
+    if (f !== null) caja.set(new this.THREE.Vector3(f[0], f[1], f[2]), new this.THREE.Vector3(f[3], f[4], f[5]));
+    else for (const malla of this.mallas.values()) caja.expandByObject(malla);
     if (caja.isEmpty()) return;
     this.camaraMovida = false;
     const centro = caja.getCenter(new this.THREE.Vector3());
@@ -416,6 +442,27 @@ class Motor {
     this.camara.updateProjectionMatrix();
     this.controles.update();
     this.pedirDibujo();
+  }
+
+  /** Fija (o quita) el encuadre y lo aplica ya. */
+  enfocar(foco: AnatomyFocus | null): void {
+    if (this.liberado) return;
+    this.foco = foco;
+    this.encuadrar();
+  }
+
+  /** La caja del foco con lo cargado, o `null`: cuerpo entero. */
+  private cajaDelFoco(): FocusBox | null {
+    if (this.foco === null) return null;
+    const porGrupo = this.foco.groups.map((grupo) =>
+      grupo.flatMap((id) => {
+        const malla = this.mallas.get(id);
+        if (malla === undefined) return [];
+        const c = new this.THREE.Box3().expandByObject(malla);
+        return c.isEmpty() ? [] : [[c.min.x, c.min.y, c.min.z, c.max.x, c.max.y, c.max.z] as const];
+      }),
+    );
+    return focusBox(this.foco, porGrupo);
   }
 
   /** Flechas giran, +/− acercan, Inicio encuadra. Devuelve si usó la tecla. */
@@ -455,7 +502,7 @@ class Motor {
     return true;
   }
 
-  private mallaEn(evento: PointerEvent): string | null {
+  private mallaEn(evento: PointerEvent): AnatomyPick | null {
     const caja = this.lienzo.getBoundingClientRect();
     const punto = new this.THREE.Vector2(
       ((evento.clientX - caja.left) / caja.width) * 2 - 1,
@@ -467,7 +514,8 @@ class Motor {
     // Con una pieza elegida, lo atenuado no tapa: se elige lo que se ve entero.
     const enFoco = hayFoco ? visibles.filter((m) => !m.material.transparent) : visibles;
     const impacto = this.rayo.intersectObjects(enFoco, false)[0] ?? this.rayo.intersectObjects(visibles, false)[0];
-    return (impacto?.object.userData['meshId'] as string | undefined) ?? null;
+    if (impacto === undefined) return null;
+    return { meshId: impacto.object.userData['meshId'] as string, point: impacto.point.toArray() };
   }
 
   private readonly alBajar = (evento: PointerEvent) => {
@@ -491,7 +539,7 @@ class Motor {
     if (evento.pointerType !== 'mouse' || this.cuadroDePaso !== 0) return;
     this.cuadroDePaso = requestAnimationFrame(() => {
       this.cuadroDePaso = 0;
-      this.opciones.alPasar(this.mallaEn(evento));
+      this.opciones.alPasar(this.mallaEn(evento)?.meshId ?? null);
     });
   };
 
