@@ -1,3 +1,7 @@
+import { registrarCargasClinicas } from './clinical-imports.handlers';
+import { registrarCalidadYPrivacidad } from './governance-data.handlers';
+import { registrarEditorDeCatalogos } from './catalog-editor.handlers';
+import { registrarPoliticasGobierno } from './governance-policies.handlers';
 import { MockRouter } from '../mock-router';
 import { registrarAgenda } from './scheduling.handlers';
 import { registrarServiciosDeAgenda } from './service-offerings.handlers';
@@ -64,6 +68,7 @@ import { registrarPacientesDeAseguradora } from './insurer-patients.handlers';
 import { registrarTerminologia } from './terminology.handlers';
 import { registrarVarios } from './misc.handlers';
 import { registrarPortalAdministrativo } from './admin-portal.handlers';
+import { registerPermissionsAdmin } from './permissions-admin.handlers';
 import { registerGovernance } from './governance.handlers';
 import { registrarAltaDeMedicoAsistida } from './assisted-practitioner.handlers';
 import { registrarFlujos } from './flows.handlers';
@@ -178,6 +183,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarConsentimientos(router);
   registrarPortalAdministrativo(router);
   registerGovernance(router);
+  registerPermissionsAdmin(router);
   registrarTrafico(router);
   registrarSondaDeVida(router);
   registrarHerramientas(router);
@@ -190,6 +196,10 @@ export function crearRouterSimulado(): MockRouter {
   registrarInsights(router);
   registrarInsightsWorkspace(router);
   registrarCargasMasivas(router);
+  registrarCargasClinicas(router);
+  registrarPoliticasGobierno(router);
+  registrarCalidadYPrivacidad(router);
+  registrarEditorDeCatalogos(router);
   registerPromotions(router);
   registerPatientSpending(router);
   registerPortalInventory(router);

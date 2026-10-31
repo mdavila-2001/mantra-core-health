@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+.policies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.policies__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+  gap: var(--sp-3);
+}
+
+.policies__card {
+  display: block;
+  inline-size: 100%;
+}
+
+.policies__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-block: var(--sp-2);
+}
+
+.policies__cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-inline-size: 0;
+}
+
+.policies__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-data);
+  overflow-wrap: anywhere;
+}
+
+.policies__name {
+  overflow-wrap: break-word;
+}
+
+.policies__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+.policies__control {
+  overflow-wrap: break-word;
+}
+
+.policies__secondary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}

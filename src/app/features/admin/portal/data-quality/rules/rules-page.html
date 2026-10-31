@@ -1,0 +1,57 @@
+<app-page-header
+  title="Calidad de datos · Reglas"
+  subtitle="Qué comprueba el análisis de calidad, con qué severidad y cuántas incidencias abiertas tiene cada regla."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="rules" variant="outlined" padding="md" data-testid="portal-quality-rules">
+  <div class="rules__section">
+    <app-governance-filter-form [fields]="fields()" [values]="values()" (applied)="apply($event)" (cleared)="clear()" />
+    @if (list.total(); as total) {
+      <p class="rules__total" data-testid="portal-quality-rules-total">
+        {{ total }} {{ total === 1 ? 'regla' : 'reglas' }} con estos filtros
+      </p>
+    }
+    <app-data-table
+      data-testid="portal-quality-rules-table"
+      caption="Reglas de calidad de datos"
+      [state]="list.state()"
+      [columns]="columns()"
+      [trackBy]="byId"
+      [rowLabel]="rowName"
+      [cursor]="list.cursor()"
+      stackedOnMobile
+      fitContainer
+      (cursorChanged)="list.move($event)"
+      (retry)="list.reload()"
+    />
+  </div>
+</app-card>
+
+<ng-template #ruleCell let-row>
+  <div class="rules__cell">
+    <a app-link [routerLink]="ruleUrl(row.id)" data-testid="portal-quality-rule-link">{{ row.ruleCode }}</a>
+    <span>{{ row.name }}</span>
+    <span class="rules__secondary">Conjunto {{ row.ruleSet.name }} · versión {{ row.ruleSet.version }}</span>
+  </div>
+</ng-template>
+
+<ng-template #kindCell let-row>
+  <div class="rules__cell">
+    <span class="rules__badges">
+      <app-badge size="sm" [variant]="severity(row.severity).tone">{{ severity(row.severity).label }}</app-badge>
+      <app-badge size="sm" variant="secondary">{{ concept(row.state) }}</app-badge>
+    </span>
+    <span class="rules__secondary">Dimensión: {{ concept(row.dimension) }}</span>
+    <span class="rules__secondary">Actualizada el {{ day(row.updatedAt) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #issuesCell let-row>
+  <div class="rules__cell">
+    <span>{{ row.openIssues }} {{ row.openIssues === 1 ? 'abierta' : 'abiertas' }} de {{ row.totalIssues }}</span>
+    @if (row.totalIssues > 0) {
+      <a app-link [routerLink]="issuesUrl" [queryParams]="{ ruleId: row.id, status: 'ALL' }">Ver sus incidencias</a>
+    }
+  </div>
+</ng-template>

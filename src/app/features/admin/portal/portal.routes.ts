@@ -2,7 +2,10 @@ import { inject } from '@angular/core';
 import { Router, type Route, type Routes } from '@angular/router';
 
 import { APP_TITLE } from '../../../core/navigation/navigation.types';
+import { PORTAL_DATA_QUALITY_ROUTES } from './data-quality/data-quality.routes';
 import { PORTAL_GOVERNANCE_ROUTES } from './governance/governance.routes';
+import { PORTAL_PERMISSIONS_ROUTES } from './permissions/permissions.routes';
+import { PORTAL_POLICIES_ROUTES } from './governance/policies/policies.routes';
 import { portalUrl } from './portal-nav';
 
 /**
@@ -130,5 +133,8 @@ export const PORTAL_RUTAS: Routes = [
     loadComponent: () => import('./schemas/schemas-page').then((m) => m.SchemasPage),
   },
   ...PORTAL_GOVERNANCE_ROUTES,
+  ...PORTAL_POLICIES_ROUTES,
+  ...PORTAL_PERMISSIONS_ROUTES,
+  ...PORTAL_DATA_QUALITY_ROUTES,
   ...Object.entries(LEGACY_PORTAL_PATHS).map(legacyPortalRedirect),
 ];

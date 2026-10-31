@@ -1,0 +1,67 @@
+<app-back-link [fallback]="listUrl" label="Volver a las solicitudes" />
+
+<app-page-header
+  [title]="title()"
+  subtitle="Qué pidió la persona, desde cuándo espera y a qué estados puede pasar la solicitud."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-view-state-host [state]="detail()" (retry)="reload()">
+  @if (detail(); as state) {
+    @if (state.status === 'ready') {
+      @let request = state.data;
+      <app-card class="request" variant="outlined" padding="md" data-testid="portal-privacy-request-detail">
+        <p class="request__headline">
+          <app-badge [variant]="status(request.status).tone" data-testid="portal-privacy-request-status">{{
+            status(request.status).label
+          }}</app-badge>
+        </p>
+
+        @if (notice(); as n) {
+          <app-alert [tone]="n.tone" data-testid="portal-privacy-notice">{{ n.text }}</app-alert>
+        }
+
+        <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+          <app-tab label="Resumen">
+            <section class="request__section" aria-label="Resumen de la solicitud">
+              <app-fact-list [hechos]="facts(request)" etiqueta="Datos de la solicitud" />
+              <p class="request__muted">
+                Por privacidad sólo se muestra el identificador del titular, no su nombre ni su documento. El plazo legal
+                de respuesta de cada jurisdicción no está modelado en la API: esta pantalla no lo calcula.
+              </p>
+            </section>
+          </app-tab>
+
+          <app-tab label="Tramitar">
+            <section class="request__section" aria-label="Tramitar la solicitud">
+              @if (transitions(request).length > 0) {
+                <p>La API admite estos cambios de estado desde «{{ status(request.status).label }}»:</p>
+                <ul class="request__actions" data-testid="portal-privacy-actions">
+                  @for (to of transitions(request); track to) {
+                    <li class="request__action">
+                      <button
+                        app-button
+                        [variant]="to === 'REJECTED' ? 'outline' : 'primary'"
+                        [attr.data-testid]="'portal-privacy-move-' + to"
+                        [disabled]="saving()"
+                        [isLoading]="saving()"
+                        (clicked)="move(request, to)"
+                      >
+                        {{ actions[to].label }}
+                      </button>
+                      <span class="request__muted">{{ actions[to].effect }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p data-testid="portal-privacy-closed">
+                  Esta solicitud está cerrada ({{ status(request.status).label.toLowerCase() }}) y no admite más cambios.
+                </p>
+              }
+            </section>
+          </app-tab>
+        </app-tabs>
+      </app-card>
+    }
+  }
+</app-view-state-host>

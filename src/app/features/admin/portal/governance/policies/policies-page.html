@@ -1,0 +1,79 @@
+<app-page-header
+  title="Políticas de gobierno"
+  subtitle="Escritura, retención, anonimización, clasificación y residencia de los datos, en una sola lista. Cada código abre su ficha con lo que controla, a qué se aplica y cómo cambió."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="policies">
+  @if (countsKnown()) {
+    <section
+      class="policies__metrics"
+      aria-label="Políticas por tipo"
+      data-testid="portal-policies-metrics"
+    >
+      <app-metric-card
+        label="Políticas"
+        [value]="totalOfSearch()"
+        hint="Las que coinciden con la búsqueda"
+      />
+      @for (m of metrics(); track m.type) {
+        <app-metric-card [label]="m.label" [value]="m.total" [hint]="m.hint" />
+      }
+    </section>
+  }
+
+  <app-card class="policies__card" variant="outlined" padding="md" data-testid="portal-policies">
+    <div class="policies__section">
+      <app-governance-filter-form
+        [fields]="fields"
+        [values]="values()"
+        (applied)="apply($event)"
+        (cleared)="clear()"
+      />
+      <app-data-table
+        data-testid="portal-policies-table"
+        caption="Políticas de gobierno de datos"
+        [state]="list.state()"
+        [columns]="columns()"
+        [trackBy]="byId"
+        [rowLabel]="rowName"
+        [cursor]="list.cursor()"
+        stackedOnMobile
+        fitContainer
+        (cursorChanged)="list.move($event)"
+        (retry)="list.reload()"
+      />
+    </div>
+  </app-card>
+</div>
+
+<ng-template #codeCell let-row>
+  <div class="policies__cell">
+    <a
+      app-link
+      class="policies__code"
+      [routerLink]="detailUrl(row)"
+      data-testid="portal-policy-link"
+      >{{ row.code }}</a
+    >
+    @if (row.name) {
+      <span class="policies__name">{{ row.name }}</span>
+    }
+    <span class="policies__badges">
+      <app-badge size="sm" [variant]="type(row.type).tone">{{ type(row.type).label }}</app-badge>
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #controlCell let-row>
+  <span class="policies__control">{{ control(row) }}</span>
+</ng-template>
+
+<ng-template #stateCell let-row>
+  <div class="policies__cell">
+    <app-badge size="sm" [variant]="state(row).tone">{{ state(row).label }}</app-badge>
+    <span class="policies__secondary">
+      {{ row.updatedAt ? 'Cambió ' + when(row.updatedAt) : 'Sin fecha de cambio' }}
+    </span>
+  </div>
+</ng-template>

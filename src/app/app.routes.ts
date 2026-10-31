@@ -1,3 +1,5 @@
+import { CLINICAL_IMPORTS_PATH, loadClinicalImports } from './features/admin/clinical-imports/clinical-imports.routes';
+import { CATALOG_EDITOR_LOADER, CATALOG_EDITOR_PATH } from './features/admin/catalog-editor/catalog-editor.routes';
 import { inject, type Type } from '@angular/core';
 import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { Dashboard } from './features/dashboard/dashboard';
@@ -247,6 +249,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   'superadmin/instances': () =>
     import('./features/admin/instances/instances').then((m) => m.Instances),
+  [CATALOG_EDITOR_PATH]: CATALOG_EDITOR_LOADER,
+  [CLINICAL_IMPORTS_PATH]: loadClinicalImports,
   'superadmin/bulk-imports': () =>
     import('./features/admin/bulk-imports/bulk-imports').then((m) => m.BulkImports),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),

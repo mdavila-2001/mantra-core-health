@@ -218,4 +218,28 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     summary: 'Altas masivas de usuarios y carga especial de historias clínicas, con plantilla CSV y JSON, vista previa, confirmación e informe.',
     module: 'bulk_import',
   },
+  {
+    // Editor de catálogos globales (H3): Servicios, Glosarios y Reporte contable.
+    // La API exige `SECURITY_ADMIN` (SUPERADMIN por comodín); la autoridad es ella.
+    path: 'superadmin/catalog-editor',
+    label: 'Catálogos globales',
+    group: 'Superadministración',
+    icon: 'book',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Servicios, glosarios y reporte contable por tipo de usuario, con auditoría y versión.',
+    module: 'admin_catalogs',
+  },
+  {
+    // Carga masiva de historias clínicas (H7): plantilla CSV y JSON, vista previa,
+    // confirmación e informe. Sólo agrega, nunca sobrescribe. La autoridad es la API.
+    path: 'superadmin/clinical-imports',
+    label: 'Historias clínicas masivas',
+    group: 'Superadministración',
+    icon: 'package',
+    roles: ['SECURITY_ADMIN'],
+    availability: 'disponible',
+    summary: 'Carga de historias clínicas a pacientes existentes, con base legal declarada y auditoría.',
+    module: 'clinical_import',
+  },
 ];

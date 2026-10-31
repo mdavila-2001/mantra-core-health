@@ -1,0 +1,89 @@
+<app-page-header
+  title="Datos personales"
+  subtitle="Los campos que guardan datos personales, de salud o credenciales: los que clasificó el escaneo del catálogo de datos y los que el registro de gobierno marca. Aquí sólo se ven nombres de columnas, nunca valores."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="pii">
+  @if (summary(); as s) {
+    <section
+      class="pii__metrics"
+      aria-label="Resumen del inventario"
+      data-testid="portal-pii-metrics"
+    >
+      <app-metric-card label="Campos" [value]="s.fields" hint="Los que cumplen los filtros" />
+      <app-metric-card label="Tablas" [value]="s.tables" hint="Que guardan alguno de esos campos" />
+      <app-metric-card
+        label="Con ficha aprobada"
+        [value]="s.approved"
+        hint="Revisados por una persona en el catálogo"
+      />
+      <app-metric-card
+        label="Sin protección declarada"
+        [value]="s.withoutProtection"
+        hint="Sin enmascarado ni anonimización en el registro de gobierno"
+        [tone]="unprotectedTone()"
+      />
+    </section>
+  }
+
+  <app-card class="pii__card" variant="outlined" padding="md" data-testid="portal-pii">
+    <div class="pii__section">
+      <app-governance-filter-form
+        [fields]="fields"
+        [values]="values()"
+        (applied)="apply($event)"
+        (cleared)="clear()"
+      />
+      <app-data-table
+        data-testid="portal-pii-table"
+        caption="Campos con datos personales"
+        [state]="list.state()"
+        [columns]="columns()"
+        [trackBy]="byKey"
+        [rowLabel]="rowName"
+        [cursor]="list.cursor()"
+        stackedOnMobile
+        fitContainer
+        (cursorChanged)="list.move($event)"
+        (retry)="list.reload()"
+      />
+    </div>
+  </app-card>
+</div>
+
+<ng-template #fieldCell let-row>
+  <div class="pii__cell">
+    <span class="pii__column">{{ row.columnName }}</span>
+    <span class="pii__secondary pii__table">{{ row.schemaName }}.{{ row.tableName }}</span>
+    <span class="pii__secondary">{{ source(row.source) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #levelCell let-row>
+  <div class="pii__cell">
+    <span class="pii__badges">
+      <app-badge size="sm" [variant]="level(row.sensitivity).tone">{{
+        level(row.sensitivity).label
+      }}</app-badge>
+      @if (row.reviewStatus) {
+        <app-badge size="sm" [variant]="review(row.reviewStatus).tone">{{
+          review(row.reviewStatus).label
+        }}</app-badge>
+      }
+    </span>
+    @if (registryMark(row); as mark) {
+      <span class="pii__secondary">{{ mark }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #protectionCell let-row>
+  <div class="pii__cell">
+    @for (line of protection(row); track line) {
+      <span>{{ line }}</span>
+    } @empty {
+      <span class="pii__secondary">Ninguna declarada en el registro de gobierno</span>
+    }
+  </div>
+</ng-template>
