@@ -21,6 +21,13 @@ export interface RefLine {
   readonly kind: RefKind;
 }
 
+/** Un hecho que explica la curva (lanzamiento, nota de prensa…): se marca en el eje X. */
+export interface ChartMilestone {
+  /** Posición en `labels` del gráfico. */
+  readonly index: number;
+  readonly label: string;
+}
+
 export interface Band {
   readonly low: number;
   readonly high: number;

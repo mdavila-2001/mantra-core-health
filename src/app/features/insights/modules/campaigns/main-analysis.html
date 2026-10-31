@@ -28,10 +28,10 @@
   <div class="ma__body">
     @switch (chart()) {
       @case ('line') {
-        <app-ins-line-chart [labels]="lineModel().labels" [series]="lineModel().series" [refs]="lineModel().refs" [band]="lineModel().band" [compare]="lineModel().compare" [unit]="def().unit" [ariaLabel]="lineAria()" />
+        <app-ins-line-chart [labels]="lineModel().labels" [series]="lineModel().series" [refs]="lineModel().refs" [band]="lineModel().band" [compare]="lineModel().compare" [milestones]="lineModel().milestones" [unit]="def().unit" [ariaLabel]="lineAria()" />
       }
       @case ('area') {
-        <app-ins-line-chart [labels]="lineModel().labels" [series]="lineModel().series" [refs]="lineModel().refs" [band]="lineModel().band" [compare]="lineModel().compare" [unit]="def().unit" [area]="true" [ariaLabel]="lineAria()" />
+        <app-ins-line-chart [labels]="lineModel().labels" [series]="lineModel().series" [refs]="lineModel().refs" [band]="lineModel().band" [compare]="lineModel().compare" [milestones]="lineModel().milestones" [unit]="def().unit" [area]="true" [ariaLabel]="lineAria()" />
       }
       @case ('bar') {
         <app-ins-bar-chart [data]="bars().data" [unit]="def().unit" [ref]="bars().ref" orientation="v" [higherIsBetter]="def().goodWhen !== 'down'" [ariaLabel]="def().label + ' por canal'" (picked)="channelPicked.emit($event)" />
