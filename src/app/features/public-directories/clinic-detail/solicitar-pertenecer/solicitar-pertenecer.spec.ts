@@ -66,6 +66,20 @@ describe('SolicitarPertenecer', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="solicitar-enviada"]')).not.toBeNull();
   });
 
+  it('si la ficha trae practiceId lo usa aunque el nombre no coincida', () => {
+    montar(true, 'Nombre que no figura en la lista');
+    fixture.componentRef.setInput('practiceId', 'prac-2');
+    fixture.detectChanges();
+    responder();
+    expect(boton()).not.toBeNull();
+
+    boton()!.click();
+    const pedido = http.expectOne((r) => r.method === 'POST' && r.url.includes('/practices/prac-2/'));
+    pedido.flush({});
+    http.expectOne((r) => r.url.endsWith('/practices') && r.method === 'GET').flush(PRACTICAS);
+    http.expectOne((r) => r.url.includes('role-assignments') && r.method === 'GET').flush([]);
+  });
+
   it('con una solicitud pendiente no ofrece pedir otra y lo dice', () => {
     montar(true);
     responder([
