@@ -1,10 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { forbidden, notFound, unexpectedError } from '../../../core/view-state/view-state';
+import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { requestAccessRoute } from '../clinical-record.routes';
 import {
+  CHART_FORBIDDEN_MESSAGE,
   CONSULTATION_FORBIDDEN_MESSAGE,
   REQUEST_ACCESS_LABEL,
+  chartError,
   consultationError,
   consultationForbidden,
 } from './consultation-forbidden';
@@ -68,5 +71,22 @@ describe('consultationForbidden (H07)', () => {
 
     expect(consultationForbidden(missing, 'p-1')).toBe(missing);
     expect(consultationForbidden(failure, 'p-1')).toBe(failure);
+  });
+});
+
+describe('chartError (expediente)', () => {
+  it('el mismo 403, dicho para quien abre el expediente, con la misma salida', () => {
+    expect(chartError(apiForbidden('req-8'), 'p-1')).toEqual(
+      forbidden({
+        message: CHART_FORBIDDEN_MESSAGE,
+        nextAction: { label: REQUEST_ACCESS_LABEL, route: requestAccessRoute('p-1') },
+        requestId: 'req-8',
+      }),
+    );
+  });
+
+  it('lo que no es un 403 pasa como llegó', () => {
+    const error = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+    expect(chartError(error, 'p-1')).toEqual(errorToViewState(error));
   });
 });
