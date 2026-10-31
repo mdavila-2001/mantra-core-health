@@ -64,8 +64,8 @@ describe('artículos importados de Wikipedia en español (semilla commiteada)', 
     for (const articulo of articulos) {
       const { text } = articulo.sections[0];
       expect(text.length).toBeGreaterThanOrEqual(120);
+      expect(text).not.toMatch(/\{\{|\[\[|<ref|&nbsp;|^==/m);
       expect(CARACTERES_INVISIBLES.test(text)).toBe(false);
-      expect(text).not.toMatch(/​|‌|‍|﻿/);
     }
   });
 
