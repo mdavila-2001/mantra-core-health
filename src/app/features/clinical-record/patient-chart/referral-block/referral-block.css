@@ -6,17 +6,45 @@
   --card-body-gap: var(--sp-4);
 }
 
-/* Los avisos van encima del formulario y no pegados a él. */
-.referral__notice {
-  margin-block-end: var(--sp-4);
+/* El resultado del envío, junto al botón. Vacío no ocupa una fila de la rejilla. */
+.referral__outcome {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.referral__outcome:empty {
+  display: none;
 }
 
 .referral__form {
   margin-block-end: var(--sp-2);
 }
 
+/* Las salidas del aviso «sin servicios», en una fila mientras quepan. */
+.referral__inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+/* El título de la lista y, en la misma línea, el aviso de S7 al releer. */
+.referral__list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-3);
+  margin-block-end: var(--sp-3);
+}
+
+.referral__refreshing {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
 .referral__title {
-  margin: 0 0 var(--sp-3);
+  margin: 0;
   font-size: var(--fs-h3);
   line-height: var(--lh-h3);
   font-weight: 600;
