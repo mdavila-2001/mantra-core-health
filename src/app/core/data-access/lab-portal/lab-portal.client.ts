@@ -10,6 +10,9 @@ import type {
   LabImportMode,
   LabImportResult,
   LabImportRow,
+  LabOrder,
+  LabOrderAction,
+  LabOrderPage,
   LabResultFile,
   LabResultFilePage,
   LabResultFileQuery,
@@ -116,6 +119,28 @@ export class LabPortalClient {
   getSummary(): Observable<LabSummary> {
     return this.simulated('Ver el resumen del laboratorio', () =>
       this.http.get<LabSummary>(this.url('/diagnostics/lab/summary')),
+    );
+  }
+
+  /* ---- órdenes ---------------------------------------------------------- */
+
+  /** Todas las órdenes del laboratorio con su estado; las pestañas filtran en pantalla. */
+  listOrders(): Observable<LabOrderPage> {
+    return this.simulated('Ver las órdenes del laboratorio', () =>
+      this.http.get<LabOrderPage>(this.url('/diagnostics/lab/orders')),
+    );
+  }
+
+  /**
+   * Un paso del camino de la orden. Un paso que el estado actual no admite
+   * responde 409: la pantalla no decide, sólo pregunta.
+   */
+  transitionOrder(orderId: string, action: LabOrderAction, reason?: string): Observable<LabOrder> {
+    return this.simulated('Cambiar el estado de una orden', () =>
+      this.http.post<LabOrder>(
+        this.url(`/diagnostics/lab/orders/${encodeURIComponent(orderId)}/transitions`),
+        reason === undefined ? { action } : { action, reason },
+      ),
     );
   }
 

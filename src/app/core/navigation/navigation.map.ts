@@ -2010,73 +2010,22 @@ export const APP_SECTIONS: readonly AppSection[] = [
     module: 'M20 diagnostics',
   },
   {
-    // La recepción de muestras del laboratorio: la bandeja de órdenes que
-    // otras organizaciones le dirigieron (`POST /diagnostics/service-requests/inbox`)
-    // y los dos actos que la vacían —recibir la muestra y acesionarla—. Es el
-    // paso que falta **antes** de «Laboratorio e imagen», cuya cola arranca
-    // cuando la acesión ya existe.
-    //
-    // Quien la opera es el personal de un centro de diagnóstico, que no tiene
-    // rol propio en el token: el dueño entra con `USER` y su autoridad es la
-    // membresía. La API decide con `LabStaffGuard` (miembro activo de un tenant
-    // `DIAGNOSTIC_CENTER`, o `CLINICIAN`/`PRACTITIONER` del tenant activo); el
-    // menú sólo puede mirar el tipo de la organización activa, y es lo que
-    // mira. El paciente queda afuera también por rol: su membresía en el
-    // tenant por defecto no lo vuelve personal de nadie.
-    path: 'laboratory/reception',
-    label: 'Recepción de muestras',
-    // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
-    // de laboratorio, como los del mostrador de la farmacia.
-    group: 'General',
-    icon: 'flask',
-    roles: [ANY_ROLE],
-    requiresTenant: true,
-    hiddenFor: ['PATIENT'],
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    availability: 'disponible',
-    summary: 'Reciba las muestras de las órdenes que le derivaron y registre su acesión.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // La cola de trabajo del laboratorio, para su propio personal. Es la misma
-    // pantalla que «Laboratorio e imagen» (`GET /diagnostics/work-orders`),
-    // pero aquélla exige `CLINICIAN`/`PRACTITIONER` y el personal de un centro
-    // de diagnóstico no tiene rol en el token: la API la abre con
-    // `LabStaffGuard` (membresía en un `DIAGNOSTIC_CENTER`), y el menú, igual
-    // que la recepción, mira el tipo de la organización activa. Dos secciones
-    // y no una con dos reglas: `isVisibleTo` no sabe decir «este rol **o**
-    // este tipo de organización», y enseñárselo para una sola pantalla sería
-    // una regla nueva en el corazón del menú.
-    path: 'laboratory/queue',
-    label: 'Cola de trabajo',
-    // `General` desde el 30/09/2026: es un renglón del menú plano de la cuenta
-    // de laboratorio, como los del mostrador de la farmacia.
-    group: 'General',
-    icon: 'scan',
-    roles: [ANY_ROLE],
-    requiresTenant: true,
-    hiddenFor: ['PATIENT'],
-    onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
-    availability: 'disponible',
-    summary: 'Siga las órdenes de trabajo de las muestras que acesionaste.',
-    module: 'M20 diagnostics',
-  },
-  {
-    // Los resultados: el laboratorio sube archivos de cualquier formato y sin
-    // tope de tamaño (por partes), y ve todo lo subido con su visor.
-    path: 'administration/laboratory-results',
-    // Sólo la cuenta de laboratorio (30/09/2026): su menú es plano y cerrado,
-    // como el del mostrador de la farmacia. La autoridad sigue siendo la API.
+    // Las órdenes del laboratorio y del centro de imagenología (31/10/2026): UNA
+    // pantalla en lugar de «Recepción de muestras», «Cola de trabajo» y
+    // «Resultados». El camino es Borrador → Recibida → Procesada → Subidos, con
+    // Cancelada y Rechazada como salidas, y cada paso es una acción del menú de
+    // tres puntos de la fila. La autoridad de cada paso sigue siendo la API.
+    path: 'administration/laboratory-orders',
     onlyForTenantTypes: ['DIAGNOSTIC_CENTER'],
     roles: [ANY_ROLE],
     fueraDelMenuPara: ['PRACTITIONER'],
     hiddenFor: ['PATIENT'],
-    label: 'Resultados',
+    label: 'Órdenes',
     group: 'General',
-    icon: 'results',
+    icon: 'orders',
     requiresTenant: true,
     availability: 'disponible',
-    summary: 'Suba los resultados en cualquier formato y mire todo lo que ya subió.',
+    summary: 'Reciba cada orden, márquela como procesada, suba sus resultados y descárguelos.',
     module: 'M20 diagnostics',
   },
   {

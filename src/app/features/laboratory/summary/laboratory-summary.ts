@@ -24,19 +24,16 @@ interface Shortcut {
 
 const SHORTCUTS: readonly Shortcut[] = [
   {
+    label: 'Recibir y procesar órdenes',
+    hint: 'Las órdenes que le derivaron: recíbalas y márquelas como procesadas.',
+    route: '/administration/laboratory-orders',
+    queryParams: { estado: 'draft' },
+  },
+  {
     label: 'Subir resultados',
-    hint: 'Cualquier formato y sin límite de tamaño, atados a su orden.',
-    route: '/administration/laboratory-results',
-  },
-  {
-    label: 'Recibir muestras',
-    hint: 'Las órdenes que le derivaron y todavía esperan su muestra.',
-    route: '/laboratory/reception',
-  },
-  {
-    label: 'Seguir la cola de trabajo',
-    hint: 'Las muestras acesionadas y en qué paso está cada una.',
-    route: '/laboratory/queue',
+    hint: 'Cualquier formato y sin límite de tamaño, desde la orden procesada.',
+    route: '/administration/laboratory-orders',
+    queryParams: { estado: 'processed' },
   },
 ];
 

@@ -33,8 +33,8 @@ import { CLINICAL_RECORD_ROUTE } from '../clinical-record/clinical-record.routes
 /** Tope de filas de la cola. La API acota a 200; acá alcanza una pantalla. */
 const TOPE = 50;
 
-/** La recepción de muestras del laboratorio (`navigation.map.ts`). */
-const LAB_RECEPTION_ROUTE = '/laboratory/reception';
+/** Las órdenes del laboratorio (`navigation.map.ts`). */
+const LAB_ORDERS_ROUTE = '/administration/laboratory-orders';
 
 /** Lo que se muestra cuando un concepto no tiene etiqueta en el catálogo. */
 const SIN_DATO = '—';
@@ -164,7 +164,7 @@ export class Diagnostics {
             this.cola.set(
               empty(
                 this.isLabSession()
-                  ? { label: 'Ir a la recepción de muestras', route: LAB_RECEPTION_ROUTE }
+                  ? { label: 'Ir a las órdenes', route: LAB_ORDERS_ROUTE }
                   : { label: 'Ir al archivo clínico', route: CLINICAL_RECORD_ROUTE },
                 'No hay órdenes de trabajo en la cola del laboratorio. Aparecen acá ' +
                   'cuando se acesionan los especímenes recibidos.',

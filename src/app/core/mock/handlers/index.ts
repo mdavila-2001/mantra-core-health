@@ -25,7 +25,13 @@ import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
 import { registrarInfraestructura } from './infrastructure.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
-import { registrarPortalDeLaboratorio } from './lab-portal.handlers';
+import { registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
+import {
+  destinoDeOrden,
+  laboratorioDe,
+  registrarPortalDeLaboratorio,
+  resultadosDeLaboratorio,
+} from './lab-portal.handlers';
 import { registerLoyalty } from './loyalty.handlers';
 import { registrarModulosAdministrativos } from './admin-modules.handlers';
 import { registrarNotificaciones } from './notifications.handlers';
@@ -122,6 +128,11 @@ export function crearRouterSimulado(): MockRouter {
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
   registrarDiagnostico(router);
+  registrarOrdenesDeLaboratorio(router, {
+    laboratorioDe,
+    destinoDeOrden,
+    archivos: resultadosDeLaboratorio,
+  });
   registrarPortalDeLaboratorio(router);
   registrarProcedimientos(router);
   registerTreatmentInformedConsents(router);

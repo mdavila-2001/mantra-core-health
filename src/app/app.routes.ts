@@ -147,14 +147,6 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // y le costaba la descarga a todo el mundo, paciente incluido—.
   schedule: () => import('./features/agenda/agenda').then((m) => m.Agenda),
   diagnostics: () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
-  // La recepción de muestras del laboratorio. Diferida: sólo la alcanza el
-  // personal de un centro de diagnóstico.
-  'laboratory/reception': () =>
-    import('./features/lab-reception/lab-reception').then((m) => m.LabReception),
-  // La cola de trabajo del laboratorio para su propio personal: la misma
-  // pantalla que «Laboratorio e imagen», bajo la sección que ve un centro de
-  // diagnóstico (ver `navigation.map.ts`).
-  'laboratory/queue': () => import('./features/diagnostics/diagnostics').then((m) => m.Diagnostics),
   interventions: () =>
     import('./features/interventions/interventions').then((m) => m.Interventions),
   'medical-records': () =>
@@ -343,8 +335,9 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // farmacia, para quien vende servicios. Todo en `features/laboratory/`.
   'administration/laboratory': () =>
     import('./features/laboratory/summary/laboratory-summary').then((m) => m.LaboratorySummaryPage),
-  'administration/laboratory-results': () =>
-    import('./features/laboratory/results/laboratory-results').then((m) => m.LaboratoryResults),
+  // Recepción, cola y resultados son UNA pantalla desde el 31/10/2026: «Órdenes».
+  'administration/laboratory-orders': () =>
+    import('./features/laboratory/orders/laboratory-orders').then((m) => m.LaboratoryOrders),
   'administration/laboratory-prices': () =>
     import('./features/laboratory/prices/laboratory-prices').then((m) => m.LaboratoryPrices),
   'administration/laboratory-branches': () =>
@@ -781,6 +774,15 @@ const PANTALLAS_HIJAS: Routes = [
     pathMatch: 'full',
     redirectTo: redireccionConQuery({ ruta: '/my-account/identity', query: { tab: 'cases' } }),
   },
+  // Recepción de muestras, cola de trabajo y resultados del laboratorio son una sola pantalla,
+  // «Órdenes» (31/10/2026). Estuvieron en el menú, así que están en favoritos.
+  ...(['laboratory/reception', 'laboratory/queue', 'administration/laboratory-results'] as const).map(
+    (vieja) => ({
+      path: vieja,
+      pathMatch: 'full' as const,
+      redirectTo: redireccionConQuery({ ruta: '/administration/laboratory-orders' }),
+    }),
+  ),
   // Las pantallas sueltas del catálogo de la farmacia son pestañas de `pharmacy-catalog`.
   ...(['categories', 'prices', 'inventory', 'import'] as const).map((tab) => ({
     path: `administration/pharmacy-${tab}`,
@@ -1450,8 +1452,8 @@ const RUTAS_HEREDADAS: Readonly<Record<string, string>> = {
   'administration/accounting/libros': '/administration/accounting/books',
   // TAREA-29: las dos pantallas del personal de laboratorio y las cotizaciones
   // del paciente, que salían en el menú, así que están en favoritos.
-  'laboratorio/recepcion': '/laboratory/reception',
-  'laboratorio/cola': '/laboratory/queue',
+  'laboratorio/recepcion': '/administration/laboratory-orders',
+  'laboratorio/cola': '/administration/laboratory-orders',
   'my-account/cotizaciones': '/my-account/quotations',
   'mi-cuenta': '/my-account',
   'mi-cuenta/turnos': '/my-account/appointments',
