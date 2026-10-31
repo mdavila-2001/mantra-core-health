@@ -150,6 +150,8 @@ export class ReferralDetail {
   });
 
   protected readonly working = signal(false);
+  /** El panel de traslado tiene abierto su formulario: las demás acciones se esconden. */
+  protected readonly transferEditing = signal(false);
   protected readonly write = signal<ViewState<null>>(ready(null));
   private readonly reason = signal<ReferralErrorDetail | null>(null);
   protected readonly actionError = computed(

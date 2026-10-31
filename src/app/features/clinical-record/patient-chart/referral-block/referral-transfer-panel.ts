@@ -74,6 +74,8 @@ export class ReferralTransferPanel {
 
   /** La API devolvió la derivación actualizada: hay que releer. */
   readonly changed = output<Referral>();
+  /** Se abrió (true) o se cerró (false) el formulario de salida o de llegada. */
+  readonly editing = output<boolean>();
 
   protected readonly modeLabels = TRANSPORT_MODE_LABELS;
   protected readonly conditionLabels = CONDITION_LABELS;
@@ -174,7 +176,7 @@ export class ReferralTransferPanel {
   }
 
   protected back(): void {
-    this.mode.set('view');
+    this.setMode('view');
     this.clearErrors();
   }
 
@@ -207,7 +209,12 @@ export class ReferralTransferPanel {
   private begin(mode: Mode): void {
     this.clearErrors();
     this.attempted.set(false);
+    this.setMode(mode);
+  }
+
+  private setMode(mode: Mode): void {
     this.mode.set(mode);
+    this.editing.emit(mode !== 'view');
   }
 
   private clearErrors(): void {
@@ -221,7 +228,7 @@ export class ReferralTransferPanel {
     request.subscribe({
       next: (updated) => {
         this.working.set(false);
-        this.mode.set('view');
+        this.setMode('view');
         this.toasts.success(nextStep, title);
         this.changed.emit(updated);
       },
