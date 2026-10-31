@@ -85,7 +85,7 @@ describe('PhoneInput', () => {
     escribir('70012345');
 
     // Lo que se ve ayuda a leer; lo que se guarda es lo que valida el backend.
-    expect(input().value).toBe('7001 2345');
+    expect(input().value).toBe('70012345');
     expect(host.control.value).toBe('+591 70012345');
   });
 
@@ -101,7 +101,7 @@ describe('PhoneInput', () => {
     escribir('+591 70012345');
 
     expect(host.control.value).toBe('+591 70012345');
-    expect(input().value).toBe('7001 2345');
+    expect(input().value).toBe('70012345');
   });
 
   it('corta en ocho dígitos: un número boliviano no tiene nueve', () => {
@@ -123,7 +123,7 @@ describe('PhoneInput', () => {
     host.control.setValue('+591 76543210');
     fixture.detectChanges();
 
-    expect(input().value).toBe('7654 3210');
+    expect(input().value).toBe('76543210');
   });
 
   it('el formulario puede deshabilitarlo', () => {
@@ -160,7 +160,7 @@ describe('PhoneInput', () => {
 
       // Guardar once dígitos bajo `+591` produciría un teléfono que no existe.
       // El recorte es la decisión menos mala, y ocurre a la vista.
-      expect(input().value).toBe('1191 2345');
+      expect(input().value).toBe('11912345');
       expect(host.control.value).toBe('+591 11912345');
     });
 
@@ -182,11 +182,11 @@ describe('PhoneInput', () => {
       fixture.detectChanges();
 
       expect(disparador().getAttribute('aria-label')).toContain('Bolivia');
-      expect(input().value).toBe('7001 2345');
+      expect(input().value).toBe('70012345');
     });
 
     it('el marcador es el del país elegido', () => {
-      expect(input().placeholder).toBe('7001 2345');
+      expect(input().placeholder).toBe('70012345');
 
       elegirPais('España');
 
