@@ -73,3 +73,8 @@
   background: repeating-linear-gradient(135deg, var(--st-warning-bg) 0 3px, var(--bg-surface) 3px 6px);
   border-color: var(--st-warning-bd);
 }
+
+/* El día no necesita todo el ancho: las flechas quedan al lado. */
+.or-agenda__toolbar app-input {
+  inline-size: 11rem;
+}

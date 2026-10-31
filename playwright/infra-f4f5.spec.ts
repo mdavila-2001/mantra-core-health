@@ -66,11 +66,23 @@ async function login(page: Page, email: string): Promise<void> {
   await page.getByTestId('login-identifier').fill(email);
   await page.getByTestId('login-password').fill('mockup');
   await page.getByTestId('login-submit').click();
-  await page.waitForURL(/\/(dashboard|auth\/organization)/, { timeout: 60_000 });
-  if (page.url().includes('/auth/organization')) {
-    await page.getByTestId('tenant-opcion').filter({ hasText: 'Hospital San Lucas' }).first().click();
-    await page.waitForURL(/\/dashboard/, { timeout: 60_000 });
+  await page.waitForURL((u) => !/\/auth\/?$/.test(u.pathname), { timeout: 60_000 });
+  // Superadmin pasa por la elección de portal y la de organización.
+  for (let i = 0; i < 3; i++) {
+    const portal = page.getByRole('link', { name: /Entrar a administración/ });
+    const tenant = page.getByTestId('tenant-opcion').filter({ hasText: 'Hospital San Lucas' }).first();
+    await Promise.race([
+      page.waitForURL(/\/dashboard/, { timeout: 30_000 }).catch(() => undefined),
+      portal.waitFor({ timeout: 30_000 }).catch(() => undefined),
+      tenant.waitFor({ timeout: 30_000 }).catch(() => undefined),
+    ]);
+    const choosing = (await portal.isVisible().catch(() => false)) || (await tenant.isVisible().catch(() => false));
+    if (!choosing && !page.url().includes('/auth')) break;
+    if (await tenant.isVisible().catch(() => false)) await tenant.click();
+    else if (await portal.isVisible().catch(() => false)) await portal.click();
+    await page.waitForTimeout(1000);
   }
+  await expect(page).not.toHaveURL(/\/auth/, { timeout: 60_000 });
   await page.evaluate(() => sessionStorage.setItem('mock:registrar', '1'));
 }
 
