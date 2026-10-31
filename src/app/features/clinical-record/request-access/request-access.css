@@ -1,13 +1,23 @@
-/* Solicitar vinculación — un formulario corto: aviso y motivo. */
+/* Solicitar vinculación — un formulario corto: aviso y motivo, en una tarjeta. */
 
 :host {
   display: block;
 }
 
+/* Sin tope propio (composition-rules §5): el ancho lo pone `.app-main__inner`. */
 .solicitar-acceso {
-  display: grid;
-  gap: var(--sp-4);
+  display: block;
+  inline-size: 100%;
   margin-block-start: var(--sp-6);
-  max-inline-size: 48rem;
+  margin-inline: auto;
 }
 
+.solicitar-acceso__cuerpo {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.solicitar-acceso__acciones {
+  display: flex;
+  justify-content: flex-end;
+}
