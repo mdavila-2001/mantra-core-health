@@ -17,6 +17,7 @@ import { TerminologyClient } from '../../../core/data-access/terminology/termino
 import type { ConceptLabels } from '../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, loading, notFound, ready } from '../../../core/view-state/view-state';
+import { verificationWithSealFallback } from '../../../core/verification/verification-status';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import type { StatusSealVariant } from '../../../shared/components/organisms/status-seal/status-seal.types';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
@@ -201,6 +202,10 @@ function convertir(resuelto: PerfilResuelto): PerfilProfesionalVisible {
     verificacion: {
       label: label(etiquetas, perfil.verificationStatusConceptId),
       variant: sello(etiquetas, perfil.verificationStatusConceptId),
+      insignia: verificationWithSealFallback(
+        perfil,
+        sello(etiquetas, perfil.verificationStatusConceptId),
+      ),
     },
     estadoDePractica: label(etiquetas, perfil.practiceStatusConceptId),
     aceptaPacientesNuevos: perfil.acceptsNewPatients,

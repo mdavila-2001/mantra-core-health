@@ -1,0 +1,64 @@
+<article class="rx-item" [attr.data-testid]="testids.item">
+  <header class="rx-item__head">
+    <h3 class="rx-item__title">{{ item().display ?? 'Medicamento sin nombre en el vademécum' }}</h3>
+    @if (item().dosageText; as dosage) {
+      <p class="rx-item__secondary">{{ dosage }}</p>
+    }
+    <p class="rx-item__quantities">
+      <span>{{ prescribed() }}</span>
+      <span aria-hidden="true">·</span>
+      <span class="tabular-nums" [attr.data-testid]="testids.itemBalance">{{ balance() }}</span>
+    </p>
+  </header>
+
+  @if (item().matches.length === 0) {
+    <p class="rx-item__secondary" [attr.data-testid]="testids.itemNoMatches">
+      No tiene este medicamento en su catálogo.
+    </p>
+  } @else {
+    <ul class="rx-item__products">
+      @for (match of item().matches; track match.pharmacyProductId) {
+        <li class="rx-product" [attr.data-testid]="testids.product">
+          <div class="rx-product__head">
+            <span class="rx-product__name">{{ match.name }}</span>
+            <span class="rx-product__price tabular-nums">{{ priceOf(match) }}</span>
+            @if (match.requiresPrescription) {
+              <app-badge variant="info" size="sm">Venta bajo receta</app-badge>
+            }
+          </div>
+
+          @if (match.outOfStockDeclared) {
+            <p class="rx-item__secondary" [attr.data-testid]="testids.productOutOfStock">
+              Marcado sin stock en el catálogo
+            </p>
+          } @else if (match.sites.length === 0) {
+            <p class="rx-item__secondary">La farmacia no tiene sedes activas.</p>
+          } @else {
+            <ul class="rx-product__sites" [attr.aria-label]="'Sedes para ' + match.name">
+              @for (site of match.sites; track site.siteId) {
+                <li class="rx-site" [attr.data-testid]="testids.site">
+                  <div class="rx-site__data">
+                    <span class="rx-site__name">{{ site.siteName }}</span>
+                    <span class="rx-item__secondary tabular-nums">
+                      {{ quantityOf(site) }}
+                      @if (site.stockUpdatedAt) {
+                        · actualizado el {{ site.stockUpdatedAt | date: 'dd/MM/yyyy HH:mm' }}
+                      }
+                    </span>
+                  </div>
+                  <app-site-availability-toggle
+                    [siteName]="site.siteName"
+                    [available]="site.available"
+                    [pending]="isPending(match, site)"
+                    [failure]="failureOf(match, site)"
+                    (toggled)="request(match, site, $event)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+  }
+</article>

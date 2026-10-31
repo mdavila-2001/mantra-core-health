@@ -1,10 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 import { SessionStore } from '../../../../core/auth/session.store';
-import { PrescriptionsPage } from './prescriptions-page';
+import type { MedicationRequest } from '../../../../core/data-access/clinical/clinical.types';
+import { SHARE_QR_DRAWER } from './share-dialog/share-dialog';
+import { agrupar, PrescriptionsPage, shareTargetOf } from './prescriptions-page';
 
 /** base64url sobre UTF-8, como el token real (mismo helper que `where-to-buy.spec`). */
 function jwt(payload: Record<string, unknown>): string {
@@ -215,5 +217,135 @@ describe('PrescriptionsPage', () => {
     expect(
       raiz().querySelector('[data-testid="pharmacy-prescriptions-sin-perfil"]'),
     ).not.toBeNull();
+  });
+});
+
+/**
+ * «Compartir» y «Enlaces compartidos» en Mis recetas (FAR-01, REQ-017 y
+ * REQ-018).
+ *
+ * Lo que fijan estas pruebas: la agrupación conserva la consulta, que es lo
+ * que se comparte; una receta sin emitir no ofrece «Compartir»; el botón abre
+ * el diálogo, que crea el enlace de la consulta; la segunda pestaña lista los
+ * enlaces; y el dueño que llega desde `/rx/:token` (`?share=`) cae directo en
+ * esa pestaña.
+ */
+describe('PrescriptionsPage · compartir', () => {
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: SHARE_QR_DRAWER, useValue: () => Promise.resolve() },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    TestBed.inject(SessionStore).start({
+      accessToken: jwt({ sub: 'u-1', roles: ['PATIENT'], tenants: ['t-1'], pid: 'pp-1' }),
+      refreshToken: 'r-1',
+    });
+  });
+
+  afterEach(() => http.verify());
+
+  function mount(): ComponentFixture<PrescriptionsPage> {
+    const fixture = TestBed.createComponent(PrescriptionsPage);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function answer(fixture: ComponentFixture<PrescriptionsPage>): void {
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    fixture.detectChanges();
+  }
+
+  function shareButtons(fixture: ComponentFixture<PrescriptionsPage>): HTMLButtonElement[] {
+    return [
+      ...(fixture.nativeElement as HTMLElement).querySelectorAll<HTMLButtonElement>(
+        '[data-testid="prescription-share-button"]',
+      ),
+    ];
+  }
+
+  it('la agrupación conserva la consulta; la receta suelta queda sin ella', () => {
+    const rows: MedicationRequest[] = RESUMEN.medicationRequests.map(
+      ({ issuedAt, createdAt, ...rest }) => ({
+        ...rest,
+        ...(issuedAt === undefined ? {} : { issuedAt: new Date(issuedAt) }),
+        createdAt: new Date(createdAt),
+      }),
+    );
+    const prescriptions = agrupar(rows, new Map());
+
+    const fromEncounter = prescriptions.find((item) => item.requestId === 'm-1');
+    const standalone = prescriptions.find((item) => item.requestId === 'm-3');
+    expect(fromEncounter?.encounterId).toBe('e-1');
+    expect(standalone?.encounterId).toBeNull();
+    expect(fromEncounter && shareTargetOf(fromEncounter)).toEqual({ encounterId: 'e-1' });
+    expect(standalone && shareTargetOf(standalone)).toEqual({ medicationRequestId: 'm-3' });
+  });
+
+  it('solo la receta emitida ofrece «Compartir»', () => {
+    const fixture = mount();
+    answer(fixture);
+
+    // Dos recetas: la de la consulta (emitida) y la standalone (sin emitir).
+    expect(fixture.nativeElement.querySelectorAll('.receta')).toHaveLength(2);
+    expect(shareButtons(fixture)).toHaveLength(1);
+  });
+
+  it('«Compartir» abre el diálogo y crea el enlace de esa consulta', () => {
+    const fixture = mount();
+    answer(fixture);
+
+    shareButtons(fixture)[0].click();
+    fixture.detectChanges();
+
+    const req = http.expectOne('/clinical/prescription-shares');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ encounterId: 'e-1' });
+    req.flush({
+      shareId: 'sh-1',
+      url: 'https://app.example.test/rx/tk',
+      token: 'tk',
+      expiresAt: '2026-11-29T12:00:00.000Z',
+      itemCount: 2,
+    });
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="prescription-share-dialog-url"]')
+        ?.textContent,
+    ).toContain('https://app.example.test/rx/tk');
+  });
+
+  it('la pestaña «Enlaces compartidos» pide los enlaces del paciente', () => {
+    const fixture = mount();
+    answer(fixture);
+
+    const tab = [...(fixture.nativeElement as HTMLElement).querySelectorAll('[role="tab"]')].find(
+      (element) => element.textContent?.includes('Enlaces compartidos'),
+    ) as HTMLButtonElement;
+    tab.click();
+    fixture.detectChanges();
+
+    const req = http.expectOne((r) => r.url === '/clinical/prescription-shares');
+    expect(req.request.params.get('patientProfileId')).toBe('pp-1');
+    req.flush([]);
+  });
+
+  it('con ?share= abre directo en «Enlaces compartidos»', async () => {
+    await TestBed.inject(Router).navigateByUrl('/?share=sh-1');
+    const fixture = mount();
+
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    http.expectOne((r) => r.url === '/terminology/concepts').flush(CONCEPTOS);
+    fixture.detectChanges();
+
+    http.expectOne((r) => r.url === '/clinical/prescription-shares').flush([]);
   });
 });

@@ -57,7 +57,16 @@
     </app-form-field>
 
     @if (esPorSede()) {
-      @if (sinSedes()) {
+      @if (sedesFallaron()) {
+        <app-alert tone="error" data-testid="alta-membresia-sedes-error">
+          No pudimos traer las sedes de la organización. {{ mensajeDeSedes() }}
+          <div alert-actions>
+            <button app-button variant="outline" size="sm" (clicked)="reintentarSedes()">
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      } @else if (sinSedes()) {
         <app-alert tone="warning" data-testid="alta-membresia-sin-sedes">
           La organización todavía no tiene sedes, así que no hay ninguna a la que acotar. Abra una
           primero, o deje el alcance en toda la organización.
@@ -88,7 +97,7 @@
     submitLabel="Sumar a la organización"
     cancelLabel="Cancelar"
     [pending]="enviando()"
-    [disabled]="sinSedes()"
+    [disabled]="bloqueadoPorSedes()"
     (submitted)="submit()"
     (cancelled)="cancelar()"
   />

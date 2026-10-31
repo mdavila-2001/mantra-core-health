@@ -46,6 +46,19 @@
 .cuestionarios__consigna {
   color: var(--text-secondary);
   margin-block: 0 var(--sp-2);
+  /* Es la misma frase en cada tarjeta: dos líneas bastan, el resto se lee al abrir. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* Qué atención es la encuesta: lo que distingue una tarjeta de otra. */
+.cuestionarios__contexto {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-block: 0 var(--sp-2);
 }
 
 .cuestionarios__plazo {

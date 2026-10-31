@@ -88,9 +88,7 @@ describe('ResultCard', () => {
     expect(resenas.textContent).toContain('4,6');
     expect(resenas.textContent).toContain('(12)');
     expect(resenas.getAttribute('aria-label')).toBe('4,6 de 5 estrellas, 12 opiniones');
-    expect(
-      elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize,
-    ).toBe('92%');
+    expect(elemento('.tarjeta-resultado__estrellas-relleno')!.style.inlineSize).toBe('92%');
     expect(elemento('.tarjeta-resultado__distincion')!.textContent).toContain('Muy recomendado');
   });
 
@@ -245,5 +243,63 @@ describe('ResultCard', () => {
 
     expect(elemento('.tarjeta-resultado__foto')).toBeNull();
     expect(elemento('.tarjeta-resultado__figura')?.textContent?.trim()).toBe('MQ');
+  });
+
+  describe('insignia de verificación', () => {
+    it('un profesional con VERIFIED lleva el sello junto al nombre y no el check del rincón de la foto', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        seals: [{ label: 'Matrícula verificada', tone: 'ok' as const }],
+        verification: { status: 'VERIFIED' as const, verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(elemento('.tarjeta-resultado__titulo app-verification-badge .vb__check')).not.toBeNull();
+      expect(elemento('.tarjeta-resultado__foto-badge')).toBeNull();
+    });
+
+    it('un profesional en verificación muestra el reloj y ningún check', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        verification: { status: 'IN_REVIEW' as const, verifiedAt: null, validUntil: null },
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(elemento('.tarjeta-resultado__titulo app-verification-badge .vb__glyph')).not.toBeNull();
+      expect(elemento('.vb__check')).toBeNull();
+    });
+
+    it('un resultado que no es un profesional conserva su marca del rincón de la foto', async () => {
+      anfitrion.dato.update((d) => ({
+        ...d,
+        seals: [{ label: 'Verificada por AloVida', tone: 'ok' as const }],
+      }));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(elemento('.tarjeta-resultado__foto-badge')).not.toBeNull();
+      expect(elemento('app-verification-badge')).toBeNull();
+    });
+  });
+
+  it('la línea de actividad lleva el pulso; las demás, el pin de ubicación', () => {
+    anfitrion.dato.update((d) => ({
+      ...d,
+      meta: [
+        { text: 'Clínica Los Olivos' },
+        { text: '312 encuentros atendidos', iconKey: 'actividad' },
+      ],
+    }));
+    fixture.detectChanges();
+
+    const iconos = Array.from<SVGElement>(
+      fixture.nativeElement.querySelectorAll('.tarjeta-resultado__meta-icono'),
+    );
+    expect(iconos).toHaveLength(2);
+    expect(iconos[0]!.querySelector('circle')).not.toBeNull();
+    expect(iconos[1]!.querySelector('circle')).toBeNull();
+    expect(iconos[1]!.querySelector('path')?.getAttribute('d')).toBe('M22 12h-4l-3 9L9 3l-3 9H2');
   });
 });

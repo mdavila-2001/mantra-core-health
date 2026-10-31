@@ -1,10 +1,12 @@
 import {
+  booleanAttribute,
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
   computed,
   effect,
   inject,
+  input,
   signal,
   untracked,
   viewChild,
@@ -12,10 +14,9 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { EMPTY, catchError, concatMap, from, map, of, type Subscription } from 'rxjs';
+import { catchError, map, of, type Subscription } from 'rxjs';
 
 import { Badge } from '../../../shared/components/atoms/badge/badge';
-import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Progress } from '../../../shared/components/atoms/progress/progress';
 import { Select } from '../../../shared/components/atoms/select/select';
@@ -36,8 +37,8 @@ import { PageHeader } from '../../../shared/components/organisms/page-header/pag
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { CsvExportService, type CsvColumn } from '../../../shared/utils/csv-export/csv-export';
 
+import { PharmacyBulkClient } from '../../../core/data-access/pharmacy/pharmacy-bulk.client';
 import { PharmacyClient } from '../../../core/data-access/pharmacy/pharmacy.client';
-import type { PharmacyProductDraft } from '../../../core/data-access/pharmacy/pharmacy.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -50,7 +51,6 @@ import {
   FIELD_LABELS,
   EXAMPLE_ROWS,
   MAX_ROWS_BY_LOAD,
-  draftChanges,
   decodificarCsv,
   readCsv,
   reviewLoad,
@@ -62,7 +62,17 @@ import {
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
 import { PharmacyScope } from '../pharmacy-scope';
-import { pharmacyErrorMessage } from '../pharmacy-error-message';
+import {
+  OUTCOME_BADGE,
+  bulkFailureMessage,
+  countOutcomes,
+  nameOfFields,
+  productResultRows,
+  sendProducts,
+  type FileRowResult,
+  type ResultRow,
+  type RowOutcome,
+} from './bulk-publish';
 
 /** Tope del catálogo que se relee para comparar códigos: el máximo de `GET /pharmacy/products`. */
 const CATALOG_READ_LIMIT = 500;
@@ -85,17 +95,6 @@ const VISIBLE_STEPS: readonly { readonly label: string; readonly steps: readonly
   { label: 'Resultado', steps: ['publishing', 'result'] },
 ];
 
-/** Cómo terminó el pedido de una fila. */
-interface RowResult {
-  readonly number: number;
-  readonly code: string;
-  readonly name: string;
-  readonly published: boolean;
-  /** Si fue un alta o la actualización de un producto que ya estaba. */
-  readonly action: 'CREAR' | 'ACTUALIZAR';
-  readonly message: string;
-}
-
 /** Una fila que no se mandó, con lo que la tabla de revisión muestra. */
 interface RowWithProblem {
   readonly number: number;
@@ -104,24 +103,11 @@ interface RowWithProblem {
   readonly problem: string;
 }
 
-/** Qué pasó con una fila del archivo, para la tabla del resultado. */
-type RowOutcome = 'CREATED' | 'UPDATED' | 'REJECTED' | 'NOT_SENT' | 'PENDING';
-
-interface ResultRow {
-  readonly number: number;
-  readonly code: string;
-  readonly name: string;
-  readonly outcome: RowOutcome;
-  readonly message: string;
-}
-
-const OUTCOME_BADGE: Readonly<Record<RowOutcome, { variant: BadgeVariant; label: string }>> = {
-  CREATED: { variant: 'success', label: 'Creado' },
-  UPDATED: { variant: 'info', label: 'Actualizado' },
-  REJECTED: { variant: 'error', label: 'Rechazado' },
-  NOT_SENT: { variant: 'warning', label: 'No enviada' },
-  PENDING: { variant: 'secondary', label: 'Sin enviar' },
-};
+/** La vista previa del servidor (`dryRun`) de las filas listas. */
+type ServerPreview =
+  | { readonly status: 'idle' | 'loading' }
+  | { readonly status: 'ready'; readonly results: readonly FileRowResult[] }
+  | { readonly status: 'failed'; readonly message: string };
 
 const MODE_OPTIONS: readonly SelectOption<LoadMode>[] = [
   { value: 'CREAR_Y_ACTUALIZAR', label: 'Crear y actualizar' },
@@ -145,29 +131,21 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
  *
  * ## Contra qué habla
  *
- * No hay endpoint de importación: cada fila es el alta
- * (`POST /pharmacies/:id/products`) o la actualización
- * (`PATCH /pharmacies/:id/products/:productId`) del producto, **en serie** —una
- * farmacia con 300 productos no debe abrir 300 conexiones a la vez— con el
- * resultado de cada una a la vista. Para saber si un código ya existe se relee
- * el catálogo con `managed: true`, que lista también borradores y retirados: un
- * producto retirado sigue reservando su código.
+ Con la carga masiva, `POST /pharmacies/:id/products/bulk` ({@link sendProducts}),
+ * en lotes de 250 y en serie: «Revisar datos» pide la vista previa (`dryRun`) y
+ * «Cargar» manda lo mismo sin ella. Ninguna llamada por fila. La revisión local
+ * relee el catálogo con `managed: true` (con borradores y retirados, que también
+ * reservan el código) para saber qué fila es un alta y cuál un cambio.
  *
- * ## El modo
+ * ## El modo, las categorías y la farmacia
  *
- * - *Crear y actualizar*: el código nuevo se crea, el existente se actualiza.
- * - *Sólo crear*: el código existente se rechaza.
- * - *Sólo actualizar*: el código que no está en el catálogo se rechaza.
+ * Cada modo lo describe `MODE_HINTS`. Las categorías son de cada farmacia
+ * (`GET /pharmacies/:id/categories`): se cargan al elegir la farmacia y la
+ * revisión valida contra ellas; hasta que llegan no se puede subir el archivo,
+ * porque revisar contra otra lista daría errores falsos. La farmacia la elige
+ * {@link PharmacyScope}: con una sola queda elegida sola.
  *
- * ## Las categorías
- *
- * Son de cada farmacia (`GET /pharmacies/:id/categories`): se cargan al elegir
- * la farmacia y la revisión valida contra ellas. Hasta que llegan no se puede
- * subir el archivo, porque revisar contra otra lista daría errores falsos.
- *
- * ## De qué farmacia
- *
- * La elige {@link PharmacyScope}: con una sola queda elegida sola.
+ * Es la pestaña «Importación» de `PharmacyCatalogHub` (`embedded`).
  */
 @Component({
   selector: 'app-pharmacy-import',
@@ -195,8 +173,12 @@ const MODE_HINTS: Readonly<Record<LoadMode, string>> = {
   },
 })
 export class PharmacyImport {
+  /** Montada como pestaña de «Catálogo»: el membrete lo pone el contenedor. */
+  readonly embedded = input(false, { transform: booleanAttribute });
+
   protected readonly scope = inject(PharmacyScope);
   private readonly pharmacy = inject(PharmacyClient);
+  private readonly bulk = inject(PharmacyBulkClient);
   private readonly toasts = inject(ToastService);
   private readonly csv = inject(CsvExportService);
   private readonly router = inject(Router);
@@ -328,30 +310,23 @@ export class PharmacyImport {
 
   /* ─── Publicación ─────────────────────────────────────────────────────── */
 
-  protected readonly results = signal<readonly RowResult[]>([]);
+  protected readonly results = signal<readonly FileRowResult[]>([]);
   protected readonly stopped = signal(false);
   protected readonly stopping = signal(false);
   protected readonly publishing = signal(false);
-  /** Un error que no es de la fila (permiso, red, servidor) y cortó la carga. */
+  /** Un error que no es de la fila (permiso, red, servidor, tamaño) y cortó la carga. */
   protected readonly generalFailure = signal<string | null>(null);
   private publication: Subscription | null = null;
   /**
-   * Pedido de detenerse. Se mira **entre** filas: la que está en vuelo termina
-   * y se cuenta, porque cortarla a mitad deja una fila que quizá el servidor
+   * Pedido de detenerse. Se mira **entre** lotes: el que está en vuelo termina
+   * y se cuenta, porque cortarlo a mitad deja filas que quizá el servidor
    * guardó y que la pantalla no mostraría en ningún lado.
    */
   private stopRequested = false;
   private stoppedByPerson = false;
   private destroyed = false;
 
-  protected readonly published = computed(() => this.results().filter((result) => result.published));
-  protected readonly created = computed(
-    () => this.published().filter((result) => result.action === 'CREAR').length,
-  );
-  protected readonly updated = computed(
-    () => this.published().filter((result) => result.action === 'ACTUALIZAR').length,
-  );
-  protected readonly rejectedByApi = computed(() => this.results().length - this.published().length);
+  protected readonly counts = computed(() => countOutcomes(this.results()));
 
   protected readonly progress = computed(() => {
     const total = this.readyRows().length;
@@ -360,29 +335,28 @@ export class PharmacyImport {
 
   /** Una fila por cada fila del archivo, con lo que pasó con ella. */
   protected readonly resultRows = computed<ViewState<readonly ResultRow[]>>(() => {
-    const byNumber = new Map(this.results().map((result) => [result.number, result] as const));
-    const rows = this.reviewed().map((row): ResultRow => {
-      if (!row.lista) {
-        return {
-          number: row.numero,
-          code: row.campos.codigo.trim(),
-          name: nameOfFields(row.campos),
-          outcome: 'NOT_SENT',
-          message: row.errores.join(' '),
-        };
-      }
-      const result = byNumber.get(row.numero);
-      const base = { number: row.numero, code: row.borrador.productCode, name: draftName(row.borrador) };
-      if (result === undefined) {
-        return { ...base, outcome: 'PENDING', message: 'No se envió: la carga se detuvo antes.' };
-      }
-      return {
-        ...base,
-        outcome: result.published ? (result.action === 'CREAR' ? 'CREATED' : 'UPDATED') : 'REJECTED',
-        message: result.message,
-      };
-    });
+    const rows = productResultRows(this.reviewed(), this.results());
     return rows.length === 0 ? empty({ label: 'Importar otro archivo' }) : ready(rows);
+  });
+
+  /* ─── Vista previa del servidor ───────────────────────────────────────── */
+
+  protected readonly serverPreview = signal<ServerPreview>({ status: 'idle' });
+  private previewRequest: Subscription | null = null;
+  protected readonly previewFailure = computed(() => {
+    const preview = this.serverPreview();
+    return preview.status === 'failed' ? preview.message : '';
+  });
+  protected readonly previewCounts = computed(() => {
+    const preview = this.serverPreview();
+    return countOutcomes(preview.status === 'ready' ? preview.results : []);
+  });
+  /** Las filas listas que el servidor rechazaría, con su motivo. */
+  protected readonly previewRejected = computed<ViewState<readonly ResultRow[]>>(() => {
+    const preview = this.serverPreview();
+    const rejected = preview.status === 'ready' ? preview.results.filter((r) => r.outcome === 'REJECTED') : [];
+    const rows = productResultRows(this.reviewed(), rejected).filter((row) => row.outcome === 'REJECTED');
+    return rows.length === 0 ? empty({ label: 'Cargar' }) : ready(rows);
   });
 
   protected readonly steps = computed<readonly StepperStep[]>(() => {
@@ -476,8 +450,9 @@ export class PharmacyImport {
     this.destroyRef.onDestroy(() => {
       this.destroyed = true;
       this.categoriesRequest?.unsubscribe();
-      // Salir de la pantalla no corta una fila a mitad: la carga se detiene
-      // entre filas y, al terminar, un aviso dice cuántas se publicaron.
+      this.previewRequest?.unsubscribe();
+      // Salir de la pantalla no corta un lote a mitad: la carga se detiene
+      // entre lotes y, al terminar, un aviso dice cuántas se publicaron.
       this.stopRequested = true;
     });
   }
@@ -541,6 +516,9 @@ export class PharmacyImport {
 
   protected setMode(mode: LoadMode | null): void {
     this.mode.set(mode ?? 'CREAR_Y_ACTUALIZAR');
+    if (this.step() === 'review') {
+      this.requestPreview();
+    }
   }
 
   protected async onFilesChange(files: readonly File[]): Promise<void> {
@@ -632,7 +610,31 @@ export class PharmacyImport {
   protected goTo(step: 'file' | 'columns' | 'review'): void {
     if (!this.publishing()) {
       this.step.set(step);
+      if (step === 'review') {
+        this.requestPreview();
+      }
     }
+  }
+
+  /**
+   * Pide al servidor qué pasaría con cada fila lista (`dryRun`: no escribe
+   * nada). Se repite al cambiar el modo; una vista previa vieja se descarta.
+   */
+  protected requestPreview(): void {
+    const pharmacyId = this.scope.pharmacyId();
+    const rows = this.readyRows();
+    this.previewRequest?.unsubscribe();
+    if (pharmacyId === null || rows.length === 0) {
+      this.serverPreview.set({ status: 'idle' });
+      return;
+    }
+    this.serverPreview.set({ status: 'loading' });
+    this.previewRequest = sendProducts(this.bulk, pharmacyId, this.mode(), rows, { dryRun: true })
+      .subscribe({
+        next: (results) => this.serverPreview.set({ status: 'ready', results }),
+        error: (error: unknown) =>
+          this.serverPreview.set({ status: 'failed', message: bulkFailureMessage(error) }),
+      });
   }
 
   /* ─── Paso 4: publicar ────────────────────────────────────────────────── */
@@ -652,71 +654,16 @@ export class PharmacyImport {
     this.publishing.set(true);
     this.step.set('publishing');
 
-    this.publication = from(rows)
-      .pipe(
-        // En serie: una fila por vez, y la siguiente sale cuando vuelve la
-        // anterior. El pedido de detenerse se mira acá, antes de cada fila.
-        concatMap((row) =>
-          this.stopRequested
-            ? EMPTY
-            : (row.accion === 'ACTUALIZAR' && row.productId !== null
-                ? this.pharmacy
-                    .updateProduct(pharmacyId, row.productId, draftChanges(row.borrador, false))
-                    .pipe(map(() => 'Actualizado'))
-                : this.pharmacy
-                    .publishProduct(pharmacyId, row.borrador)
-                    .pipe(map(() => 'Publicado'))
-              ).pipe(
-                map(
-                  (message): RowResult => ({
-                    number: row.numero,
-                    code: row.borrador.productCode,
-                    name: draftName(row.borrador),
-                    published: true,
-                    action: row.accion,
-                    message,
-                  }),
-                ),
-                catchError((error: unknown) =>
-                  of<RowResult>({
-                    number: row.numero,
-                    code: row.borrador.productCode,
-                    name: draftName(row.borrador),
-                    published: false,
-                    action: row.accion,
-                    message: this.rowRejection(error),
-                  }),
-                ),
-              ),
-        ),
-      )
-      .subscribe({
-        next: (result) => this.results.update((list) => [...list, result]),
-        complete: () => this.finish(),
-      });
-  }
-
-  /**
-   * El mensaje de una fila rechazada y, si el error no es de la fila, el corte.
-   *
-   * Un 409 o un 422 son de **esa** fila: la siguiente puede andar. Un 403, un
-   * 412 de farmacia inactiva, la falta de red o un 5xx van a fallar igual en
-   * todas: seguir sería mandar 500 peticiones para leer 500 veces lo mismo.
-   */
-  private rowRejection(error: unknown): string {
-    const state = errorToViewState<never>(error);
-    const message = pharmacyErrorMessage(error, 'La API rechazó la fila.');
-    const belongsToRow =
-      state.status === 'validation' &&
-      !state.issues.some((issue) => issue.code === 'PRECONDITION_FAILED');
-    if (!belongsToRow) {
-      this.stopRequested = true;
-      this.generalFailure.set(message);
-      return message;
-    }
-    return state.issues.some((issue) => issue.code === 'CONFLICT')
-      ? `${message} Un código retirado también sigue reservado: use otro.`
-      : message;
+    this.publication = sendProducts(this.bulk, pharmacyId, this.mode(), rows, {
+      proceed: () => !this.stopRequested,
+    }).subscribe({
+      next: (results) => this.results.set(results),
+      error: (error: unknown) => {
+        this.generalFailure.set(bulkFailureMessage(error));
+        this.finish();
+      },
+      complete: () => this.finish(),
+    });
   }
 
   protected stop(): void {
@@ -729,7 +676,7 @@ export class PharmacyImport {
     this.publication = null;
     this.publishing.set(false);
     this.stopping.set(false);
-    const published = this.published().length;
+    const published = this.counts().created + this.counts().updated;
     if (this.destroyed) {
       // La persona se fue de la pantalla: lo que se alcanzó a publicar se dice
       // igual, porque nadie va a ver el paso «Resultado».
@@ -752,7 +699,7 @@ export class PharmacyImport {
         row.lista ? [] : [{ campos: row.campos, problema: row.errores.join(' ') }],
       ),
       ...this.results().flatMap((result) => {
-        if (result.published) {
+        if (result.outcome !== 'REJECTED') {
           return [];
         }
         const row = this.reviewed().find((reviewed) => reviewed.numero === result.number);
@@ -777,13 +724,13 @@ export class PharmacyImport {
     this.reset();
   }
 
-  protected badgeOf(outcome: RowOutcome): { variant: BadgeVariant; label: string } {
+  protected badgeOf(outcome: RowOutcome): (typeof OUTCOME_BADGE)[RowOutcome] {
     return OUTCOME_BADGE[outcome];
   }
 
   private reset(): void {
     // Con una carga en curso no se ofrece reiniciar; si igual llega acá, se
-    // detiene entre filas y el resultado queda a la vista.
+    // detiene entre lotes y el resultado queda a la vista.
     if (this.publication !== null) {
       this.stopRequested = true;
       return;
@@ -796,15 +743,9 @@ export class PharmacyImport {
     this.results.set([]);
     this.stopped.set(false);
     this.generalFailure.set(null);
+    this.previewRequest?.unsubscribe();
+    this.serverPreview.set({ status: 'idle' });
   }
-}
-
-function draftName(draft: PharmacyProductDraft): string {
-  return draft.brandName ?? draft.genericName ?? draft.productCode;
-}
-
-function nameOfFields(fields: ProductFields): string {
-  return fields.marca.trim() || fields.generico.trim() || '—';
 }
 
 /** Las columnas de la plantilla: el encabezado canónico de cada una. */

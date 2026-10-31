@@ -36,6 +36,11 @@ import { PageHeader } from '../../../../shared/components/organisms/page-header/
 import { searchConceptOptions } from '../concept-search';
 import { crearBuscadorDePersonas } from '../people-search';
 import { ORGANIZATIONS_ROUTE } from '../organizations.routes';
+import { errorMessageOf } from '../../../../shared/forms/form-support';
+
+/** S6 del alta: lo único referenciado por id es la cuenta del owner. */
+const OWNER_NO_ENCONTRADO =
+  'No encontramos la cuenta que eligió como owner: puede que ya no exista. Elíjala de nuevo y reintente.';
 
 /** Largos que declara `CreateTenantDto`. */
 const MAX_CODIGO = 100;
@@ -488,22 +493,18 @@ export class OrganizationNew {
   protected readonly state = signal<ViewState<null>>(ready(null));
   protected readonly enviando = computed(() => this.state().status === 'loading');
 
-  protected readonly errorMessage = computed<string | null>(() => {
-    const state = this.state();
-    if (state.status === 'validation') {
-      return state.issues.map((issue) => issue.message).join(' ') || null;
-    }
-    if (state.status === 'forbidden') {
-      return state.message ?? 'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.';
-    }
-    if (state.status === 'offline') {
-      return 'No pudimos conectarnos. Revise su conexión y reintente.';
-    }
-    if (state.status === 'error') {
-      return `${state.message || 'Ocurrió un error inesperado.'} (${state.requestId})`;
-    }
-    return null;
-  });
+  /**
+   * El mensaje del fallo del envío, con el criterio común (`errorMessageOf`).
+   * Antes cada alta repetía su propia copia, y las cinco olvidaban el `404`:
+   * el formulario quedaba mudo cuando la organización ya no existía.
+   */
+  protected readonly errorMessage = computed<string | null>(() =>
+    errorMessageOf(
+      this.state(),
+      'Sólo una cuenta SUPERADMIN puede dar de alta organizaciones.',
+      OWNER_NO_ENCONTRADO,
+    ),
+  );
 
   /**
    * Si el fallo apunta al código: es el único campo con clave única global,

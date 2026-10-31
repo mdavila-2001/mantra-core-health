@@ -8,6 +8,7 @@ import {
   signal,
   type WritableSignal,
 } from '@angular/core';
+import { soloLetrasDeNombre } from '../../../shared/forms/input-filters';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, catchError, map, of, switchMap, timeout } from 'rxjs';
 import {
@@ -22,6 +23,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { CORREO_CON_DOMINIO } from '../../../core/data-access/iam/strict-email';
 import { BoDepartmentsCatalog } from '../../../core/data-access/terminology/bo-departments.service';
 import {
   BoEmployersCatalog,
@@ -62,7 +64,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { NavIcon } from '../../../shared/components/atoms/nav-icon/nav-icon';
 import { Tooltip } from '../../../shared/components/atoms/tooltip/tooltip';
 import {
-  INVALID_IDENTITY_DOCUMENT_MESSAGE,
   identityDocumentValidators,
 } from '../shared-registration/national-id';
 import {
@@ -159,13 +160,6 @@ function nuevoContactoExtra(
     relationshipConceptId: new FormControl<string | null>(valor.relationshipConceptId ?? null),
   });
 }
-
-/**
- * El correo necesita un dominio con su terminación (`.com`, `.bo`…), como lo
- * exige el `@IsEmail` del backend. `Validators.email` deja pasar `ana@gmail`, que la
- * API rechaza recién al enviar; este patrón lo frena en el paso.
- */
-const CORREO_CON_DOMINIO = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[^\s@.]{2,}$/;
 
 /** Un punto en el mapa, tal como lo entrega el navegador. */
 export interface Coordenadas {
@@ -611,6 +605,9 @@ interface BorradorLocal {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPatient {
+  /** Nombres y apellidos no admiten dígitos. Ver `Input.inputFilter`. */
+  protected readonly soloLetras = soloLetrasDeNombre;
+
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
@@ -1440,6 +1437,7 @@ export class RegisterPatient {
           label: 'Apellido paterno',
           description: 'El apellido de su papá, como figura en su documento.',
           control: 'text',
+          soloLetras: true,
           required: true,
           autocomplete: 'family-name',
           placeholder: 'Mamani',
@@ -1454,6 +1452,7 @@ export class RegisterPatient {
           hint: 'Si no lleva, déjelo vacío.',
           description: 'El apellido de su mamá, tal como aparece en su documento.',
           control: 'text',
+          soloLetras: true,
           autocomplete: 'family-name',
           placeholder: 'Quispe',
           testId: 'registro-apellido-materno',
@@ -1471,9 +1470,10 @@ export class RegisterPatient {
           autocomplete: 'username',
           placeholder: '1234567',
           testId: 'registro-documento',
+          soloAlfanumerico: true,
           icono: 'patients',
           ancho: 'mitad',
-          mensajeDeError: INVALID_IDENTITY_DOCUMENT_MESSAGE,
+          mensajeDeError: 'Ingrese su documento: solo letras y números, sin espacios.',
         },
         this.campoDepartamentoEmisor('registro-departamento-ci'),
         {
@@ -1569,6 +1569,7 @@ export class RegisterPatient {
           hint: 'A quién llamamos si pasa algo, o quién le acompaña si es menor.',
           description: 'A quién llamamos si le pasa algo y no puede responder usted.',
           control: 'text',
+          soloLetras: true,
           placeholder: 'Rosa Quispe',
           testId: 'registro-tutor-nombre',
           icono: 'people',

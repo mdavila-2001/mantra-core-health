@@ -1,0 +1,17 @@
+médica: sesión
+precio · 200 GET /scheduling/slots → 5 turnos, price={"amount":150,"currencyCode":"BOB"}
+antes · 200 GET payment-state → {"state":"PAID"}
+antes · BD invoice_id=(null)
+422 · 422 PUT {PENDING, 10} {"code":"PRECONDITION_FAILED","reason":"PAYMENT_AMOUNT_WITHOUT_PAYMENT","message":"Un monto recibido solo va con «pagada» o «pago parcial»: «pendiente» dice que todavía no se cobró."}
+422 · 422 PUT {PAID, 10.555} {"code":"PRECONDITION_FAILED","reason":"PAYMENT_AMOUNT_INVALID","message":"El monto recibido tiene que ser mayor que 0, en bolivianos y con hasta dos decimales"}
+pago 1 · 200 PUT {PARTIALLY_PAID, 50} → amountPaid=50 billing={"linked":true,"invoiceId":"b9ea6fee-534c-449a-b6d7-5fc45c7f4e96","amountBilled":150,"amountPaid":50,"currencyCode":"BOB","reason":null}
+422 · 422 PUT {PAID, 200} (saldo 100) {"code":"PRECONDITION_FAILED","reason":"PAYMENT_AMOUNT_EXCEEDS_BALANCE","message":"El monto pasa lo que falta pagar de la cita: 100,00 Bs"}
+tras el 422 · sigue PARTIALLY_PAID con amountPaid=50
+pago 2 · 200 PUT {PAID, 100} → amountPaid=150 misma factura=true
+sin monto · 200 PUT {PAID} → billing={"linked":true,"invoiceId":"b9ea6fee-534c-449a-b6d7-5fc45c7f4e96","amountBilled":150,"amountPaid":150,"currencyCode":"BOB","reason":null}
+recarga · 200 GET payment-state → {"state":"PAID","amountPaid":150,"currencyCode":"BOB"}
+lista · 200 GET /scheduling/bookings → paymentState={"state":"PAID","amountPaid":150,"currencyCode":"BOB"}
+factura · 403 GET /billing/invoices/:id → {}
+BD · facturas de la cita=1, pagos=2 / 150.00, factura=150.00 / 150.00 / 0.00
+sin monto · 200 PUT {PENDING} (otra cita) → billing={"linked":false,"invoiceId":null,"amountBilled":null,"amountPaid":null,"currencyCode":null,"reason":"NO_AMOUNT"} 
+BD · factura CITA-0B78C7AD estado billing:INVOICE_PAID, 1 línea, 2 asignaciones, 150.00

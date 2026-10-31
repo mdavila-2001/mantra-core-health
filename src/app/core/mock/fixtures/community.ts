@@ -1,10 +1,13 @@
 import { showcaseImages, SHOWCASE_SEEDS } from './bolivia-central-axis';
 import { INSTITUTIONS_SEEDS } from './institutions';
 import { CATEGORY, chainCategory, type SimulatedCategory } from './public-categories';
-import { SPECIALTY, STATUS } from './concepts';
+import { BOOKING_STATUS, SPECIALTY, STATUS } from './concepts';
+import { RECURSO_CONSULTORIO_MEDICA, RECURSO_MEDICA, reservas } from './agenda';
 import { MEDICAL, PACIENTE, PATIENTS, PROFESSIONALS, type ProfesionalSimulado } from './people';
 import { TENANT_CLINICA, TENANT_FARMACIA, TENANT_HOSPITAL, TENANT_LABORATORIO, TENANT_PLATAFORMA } from '../mock-session';
 import { avatarSvg, Coleccion, imagenSvg, iso, portadaSvg, uuid } from '../mock-store';
+import { textoDeContexto } from '../../messaging/chat-context';
+import { numeroCortoDePedido } from '../../messaging/order-chat-context';
 
 /* ============================================================================
     La red social: vitrinas públicas (personas y organizaciones), publicaciones,
@@ -658,12 +661,18 @@ export interface SimulatedMessage {
 
 export const SUPPORT_ID = uuid('public-profile-support-admin');
 
+/** La vitrina de Farmacia Vida, la del mostrador de la cuenta `farmacia`. */
+const PHARMACY_VIDA_SHOWCASE = uuid('public-profile-farmacia-vida');
+
 export const conversationList = new Coleccion<SimulatedConversation>([
   { id: uuid('conv-medica-paciente'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [MEDICAL_SHOWCASE.id, PATIENT_SHOWCASE.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 0, [PATIENT_SHOWCASE.id]: 1 } },
   { id: uuid('conv-medica-pediatra'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [MEDICAL_SHOWCASE.id, showcaseOf(PROFESSIONALS[1]!.id)!.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 0 } },
   { id: uuid('conv-medica-endocrino'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [MEDICAL_SHOWCASE.id, showcaseOf(PROFESSIONALS[9]!.id)!.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 2 } },
   { id: uuid('conv-paciente-soporte'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [PATIENT_SHOWCASE.id, SUPPORT_ID], noLeidosPor: { [PATIENT_SHOWCASE.id]: 1 } },
   { id: uuid('conv-paciente-dermatologo'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [PATIENT_SHOWCASE.id, showcaseOf(PROFESSIONALS[3]!.id)!.id], noLeidosPor: { [PATIENT_SHOWCASE.id]: 0 } },
+  // Paciente ↔ Farmacia Vida, abierto desde un pedido: la paciente lo ve con
+  // su perfil y el mostrador, escribiendo como la farmacia, desde el otro lado.
+  { id: uuid('conv-paciente-farmacia-vida'), conversationTypeConceptId: CONCEPT.conversationDirect, groupId: null, participantes: [PATIENT_SHOWCASE.id, PHARMACY_VIDA_SHOWCASE], noLeidosPor: { [PHARMACY_VIDA_SHOWCASE]: 1 } },
   // Un grupo: es lo que hace ver el nombre de quien habla arriba de cada
   // burbuja, el subtítulo con los participantes y «Nombre:» en la bandeja.
   { id: uuid('conv-equipo-cardio'), conversationTypeConceptId: CONCEPT.conversationGroup, groupId: uuid('group-cardio'), participantes: [MEDICAL_SHOWCASE.id, showcaseOf(PROFESSIONALS[1]!.id)!.id, showcaseOf(PROFESSIONALS[9]!.id)!.id], noLeidosPor: { [MEDICAL_SHOWCASE.id]: 2 } },
@@ -690,9 +699,44 @@ const C3 = uuid('conv-medica-endocrino');
 const C4 = uuid('conv-paciente-soporte');
 const C5 = uuid('conv-paciente-dermatologo');
 const C6 = uuid('conv-equipo-cardio');
+const C7 = uuid('conv-paciente-farmacia-vida');
+/**
+ * La tarjeta del pedido 1, **tal cual** la arma `contextoDePedido` con el
+ * pedido de la maqueta (`pharmacy.handlers.ts`): número corto, farmacia, sede,
+ * productos y total. Si difiere en un carácter, abrir el chat desde el pedido
+ * o desde el mostrador pone una segunda tarjeta del mismo pedido —el store
+ * sólo deja de repetirla si la última es idéntica—. Lo vigila
+ * `pharmacy-chat.handlers.spec.ts`.
+ */
+const ORDER_1_CARD = textoDeContexto({
+  tipo: 'pedido',
+  titulo: `${numeroCortoDePedido(uuid('pharmacy-order-1'))} · Farmacia Vida · Sucursal Central`,
+  detalle: '2 productos · 29,50 Bs',
+  ruta: `/my-account/pharmacy-orders/${uuid('pharmacy-order-1')}`,
+});
 const PEDIATRICIAN_V = showcaseOf(PROFESSIONALS[1]!.id)!.id;
 const ENDO_V = showcaseOf(PROFESSIONALS[9]!.id)!.id;
 const DERMA_V = showcaseOf(PROFESSIONALS[3]!.id)!.id;
+
+/** La confirmación sembrada en el hilo médica ↔ paciente, si la paciente tiene un turno confirmado. */
+function appointmentConfirmation(): SimulatedMessage[] {
+  // El próximo turno confirmado de la paciente con la médica (en cualquiera
+  // de sus dos agendas); si no tiene, el más próximo de cualquier profesional.
+  const confirmados = reservas
+    .todos()
+    .filter((r) => r.patientProfileId === PACIENTE.id && r.statusConceptId === BOOKING_STATUS['BK-CONFIRMED'] && new Date(r.startAt).getTime() > Date.now())
+    .sort((a, b) => a.startAt.localeCompare(b.startAt));
+  const turno = confirmados.find((r) => r.resourceId === RECURSO_MEDICA || r.resourceId === RECURSO_CONSULTORIO_MEDICA) ?? confirmados[0];
+  if (turno === undefined) return [];
+  const cuando = new Date(turno.startAt).toLocaleString('es-BO', { dateStyle: 'full', timeStyle: 'short' });
+  const texto = [
+    '✅ ¡Su cita quedó confirmada!',
+    `🗓️ ${cuando}\n👩‍⚕️ ${MEDICAL.displayName}`,
+    '⏰ Le recomendamos llegar 10 minutos antes. ¡Lo esperamos! 💙',
+    `👉 Ver la cita: https://alovida.bo/my-account/appointments?turno=${turno.id}`,
+  ].join('\n\n');
+  return [mensaje(C1, MEDICAL_SHOWCASE.id, texto, 0, 9, 45)];
+}
 
 export const messageList = new Coleccion<SimulatedMessage>([
   mensaje(C1, PATIENT_SHOWCASE.id, 'Hola doctora, buenas tardes. Quería consultarle si puedo tomar el enalapril junto con el ibuprofeno que me dieron para la espalda.', -3, 16, 5),
@@ -702,15 +746,27 @@ export const messageList = new Coleccion<SimulatedMessage>([
   mensaje(C1, PATIENT_SHOWCASE.id, 'Doctora, ya me llegaron los resultados del laboratorio. ¿Se los mando por acá o los llevo a la consulta del jueves?', 0, 9, 12),
   // Una respuesta con cita, para que la burbuja con el bloque citado se vea sin tener que provocarla.
   mensaje(C1, MEDICAL_SHOWCASE.id, 'Mandámelos por acá así los miro antes del jueves. Si preferís, subilos a tu historia clínica desde https://alovida.bo/mi-historia y los veo ahí.', 0, 9, 30, { replyToMessageId: uuid(`msg-${C1}-0-9-12`) }),
+  // La confirmación que la API deja en el hilo profesional ↔ paciente al
+  // aceptar (`bookingConfirmationChatText`): con emojis y el enlace que el hilo
+  // pinta como «Ir a la cita» — a «Mis citas» para la paciente, a la agenda
+  // para la médica, que es quien la firmó.
+  ...appointmentConfirmation(),
   mensaje(C2, PEDIATRICIAN_V, 'Vale, te derivo a la mamá de un paciente de 14 años con soplo. ¿Tenés turno esta semana?', -7, 11),
   mensaje(C2, MEDICAL_SHOWCASE.id, 'Sí, decile que reserve el jueves a la tarde. Pasame el nombre y lo priorizo.', -7, 11, 30),
   mensaje(C2, PEDIATRICIAN_V, 'Gracias. Es Martín Rocha Antelo.', -7, 11, 32),
   mensaje(C3, ENDO_V, 'Hola Vale, ¿viste el caso de la paciente con hipotiroidismo y arritmia? Quiero coordinar el ajuste de levotiroxina.', -1, 8, 45),
   mensaje(C3, ENDO_V, 'Le pedí un Holter, cuando lo tengas lo vemos juntas.', -1, 8, 47),
-  mensaje(C4, SUPPORT_ID, 'Tu solicitud de cita con la Dra. Valeria Rojas Mendoza fue aceptada para el jueves a las 09:30. Podés ver el detalle en «Mis citas».', -2, 10),
+  mensaje(C4, SUPPORT_ID, 'Su solicitud de cita con la Dra. Valeria Rojas Mendoza fue aceptada para el jueves a las 09:30. Puede ver el detalle en «Mis citas».', -2, 10),
   mensaje(C5, PATIENT_SHOWCASE.id, 'Doctor, le mando la foto del lunar que le comenté.', -12, 19, 0, { attachmentFileId: uuid('file-lunar') }),
   mensaje(C5, DERMA_V, 'Recibido. Por la foto no parece nada preocupante, pero quiero verlo con el dermatoscopio. Reservá un turno cuando puedas.', -12, 20, 15),
   mensaje(C5, PATIENT_SHOWCASE.id, 'Listo, reservé para el mes que viene. ¡Gracias!', -11, 8, 30),
+  // El chat de un pedido: la tarjeta, la consulta y el aviso de que está listo.
+  // La farmacia le habla de usted a la paciente.
+  mensaje(C7, PATIENT_SHOWCASE.id, ORDER_1_CARD, -4, 15, 5),
+  mensaje(C7, PATIENT_SHOWCASE.id, 'Hola, ¿me confirman si tienen las dos cajas? La atorvastatina la necesito para esta semana.', -4, 15, 7),
+  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Hola, Ana Lucía. Sí, tenemos el enalapril y la atorvastatina. Le avisamos apenas quede listo para retirar.', -4, 15, 22),
+  mensaje(C7, PHARMACY_VIDA_SHOWCASE, 'Su pedido ya está listo. Puede pasar a retirarlo con el código AV-4821, de 8:00 a 22:00.', -1, 10, 12),
+  mensaje(C7, PATIENT_SHOWCASE.id, '¡Gracias! Paso mañana por la tarde.', -1, 10, 40),
   // El grupo: tres voces, un documento, una foto y dos citas.
   mensaje(C6, ENDO_V, 'Colegas, les comparto la guía actualizada de anticoagulación en fibrilación auricular. Cambió el umbral de CHA2DS2-VASc para iniciar.', -2, 8, 10, { contentTypeConceptId: CONCEPT.messageMedia, attachmentFileId: uuid('file-guia-anticoagulacion') }),
   mensaje(C6, PEDIATRICIAN_V, '¡Gracias! ¿Aplica también para adolescentes con cardiopatía congénita?', -2, 8, 40, { replyToMessageId: uuid(`msg-${C6}--2-8-10`) }),

@@ -1,0 +1,57 @@
+@let op = operation();
+
+<section class="responses" aria-label="Respuestas de la operación" data-testid="portal-operation-responses">
+  <h3 class="responses__title">Con qué puede responder</h3>
+  <p class="responses__muted">
+    Código declarado de éxito: <strong>{{ op.respuesta.httpCode ?? 'sin dato' }}</strong>
+    @if (op.respuestasPosibles.length > 0) {
+      · {{ success() === 1 ? '1 respuesta de éxito' : success() + ' respuestas de éxito' }}
+      · {{ failures() === 1 ? '1 respuesta de error' : failures() + ' respuestas de error' }}
+    }
+  </p>
+  @if (op.respuestasPosibles.length > 0) {
+    <app-data-table
+      caption="Respuestas posibles de la operación"
+      [state]="responses()"
+      [columns]="columns"
+      [trackBy]="byKey"
+      stackedOnMobile
+    />
+  } @else {
+    <p class="responses__muted">El inventario no enumeró respuestas para esta operación.</p>
+  }
+
+  <h3 class="responses__title">Quién la llama</h3>
+  @switch (mapRow().status) {
+    @case ('loading') {
+      <p class="responses__muted" role="status">Consultando el mapa de rutas…</p>
+    }
+    @case ('ready') {
+      @let row = mapRow();
+      @if (row.status === 'ready' && row.data) {
+        @if (row.data.llamadaPor && row.data.llamadaPor.length > 0) {
+          <ul class="responses__chips" data-testid="portal-operation-callers">
+            @for (caller of row.data.llamadaPor; track caller) {
+              <li><app-badge variant="info">{{ caller }}</app-badge></li>
+            }
+          </ul>
+          <p class="responses__muted">Clientes del front que la invocan, según el mapa de rutas del inventario.</p>
+        } @else {
+          <p class="responses__muted" data-testid="portal-operation-callers">
+            Ningún cliente del front la llama, según el mapa de rutas del inventario.
+          </p>
+        }
+        <p class="responses__muted">Autorización que anota el mapa: {{ row.data.autorizacion }}</p>
+      } @else {
+        <p class="responses__muted" data-testid="portal-operation-callers">
+          Sin dato: el mapa de rutas no trae una fila para esta operación.
+        </p>
+      }
+    }
+    @default {
+      <p class="responses__muted" data-testid="portal-operation-callers">
+        Sin dato: no se pudo consultar el mapa de rutas.
+      </p>
+    }
+  }
+</section>

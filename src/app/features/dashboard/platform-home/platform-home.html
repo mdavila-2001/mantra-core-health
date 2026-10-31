@@ -1,0 +1,199 @@
+<app-page-header
+  title="Centro de la plataforma"
+  subtitle="Por dónde entrar y cómo está todo ahora: la API, las herramientas, los despliegues y las pruebas."
+>
+  <button app-button page-actions variant="secondary" size="sm" (clicked)="cargar()" data-testid="platform-home-refresh">
+    Actualizar
+  </button>
+</app-page-header>
+
+<!-- Las dos puertas. Primero se elige a qué portal se entra; el estado va debajo. -->
+<div class="portada__areas" data-testid="platform-home-portales">
+  @for (portal of portales(); track portal.id) {
+    <app-card variant="outlined" padding="lg">
+      <h2 class="portada__titulo">{{ portal.titulo }}</h2>
+      <p class="portada__texto">{{ portal.descripcion }}</p>
+      @for (area of portal.areas; track area.titulo) {
+        <section class="centro__area" [attr.aria-label]="area.titulo">
+          <h3 class="centro__area-titulo">{{ area.titulo }}</h3>
+          <p class="centro__area-texto">{{ area.descripcion }}</p>
+          <ul class="portada__operaciones">
+            @for (destino of area.destinos; track destino.route) {
+              <li>
+                <a app-link [routerLink]="destino.route">{{ destino.label }}</a>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </app-card>
+  }
+</div>
+
+<h2 class="centro__seccion">Estado de la plataforma</h2>
+
+<div class="centro__estado" data-testid="platform-home-estado">
+  <!-- API: lo que recibió hoy, cuánto falló y qué tan rápido respondió. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">API hoy</h3>
+    <app-view-state-host [state]="trafico()" (retry)="cargar()">
+      @if (trafico(); as t) {
+        @if (t.status === 'ready') {
+          @let m = t.data.measured;
+          <dl class="centro__cifras">
+            <div><dt>Solicitudes</dt><dd data-testid="centro-requests">{{ entero(m.requests) }}</dd></div>
+            <div><dt>Fallidas</dt><dd data-testid="centro-failed">{{ entero(m.failed.client4xx + m.failed.server5xx) }}</dd></div>
+            <div><dt>Latencia p95</dt><dd>{{ milis(m.latencyMs.p95) }}</dd></div>
+            <div><dt>Éxito</dt><dd>{{ porcentaje(m.successRatio) }}</dd></div>
+            <div><dt>Usuarios activos</dt><dd>{{ entero(m.activeUsers.usersActiveNow) }}</dd></div>
+            <div><dt>Sesiones vigentes</dt><dd>{{ entero(m.activeUsers.sessionsActiveNow) }}</dd></div>
+          </dl>
+          <p class="centro__nota">
+            Ver <a app-link routerLink="/superadmin/observability">Observabilidad</a>.
+          </p>
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <!-- Instancias y herramientas: si cada proceso tiene vida y qué herramientas cayeron. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">Instancias y herramientas</h3>
+    <app-view-state-host [state]="sonda()" (retry)="cargar()">
+      @if (sonda(); as s) {
+        @if (s.status === 'ready') {
+          <p class="centro__estado-global" [attr.data-estado]="s.data.overall" data-testid="centro-instancias-overall">
+            {{ etiquetaSonda(s.data.overall) }}
+          </p>
+          <dl class="centro__cifras">
+            <div><dt>Vivas</dt><dd data-testid="centro-instancias-vivas">{{ entero(s.data.summary.VIVA) }}</dd></div>
+            <div><dt>Degradadas</dt><dd>{{ entero(s.data.summary.DEGRADADA) }}</dd></div>
+            <div><dt>Caídas</dt><dd data-testid="centro-instancias-caidas">{{ entero(s.data.summary.CAIDA) }}</dd></div>
+            <div><dt>Sin dato</dt><dd>{{ entero(s.data.summary.SIN_DATO) }}</dd></div>
+          </dl>
+          @if (s.data.heartbeatStore.status === 'down') {
+            <p class="centro__nota">No se pudo leer el almacén de latidos: «sin dato» no es «caída».</p>
+          }
+        }
+      }
+    </app-view-state-host>
+    <app-view-state-host [state]="herramientas()" (retry)="cargar()">
+      @if (herramientas(); as h) {
+        @if (h.status === 'ready') {
+          <dl class="centro__cifras">
+            <div><dt>Herramientas caídas</dt><dd data-testid="centro-herramientas-caidas">{{ entero(h.data.summary.down) }}</dd></div>
+            <div><dt>Críticas</dt><dd>{{ entero(h.data.summary.critical) }} de {{ entero(h.data.summary.total) }}</dd></div>
+            <div><dt>Sin chequeo en vivo</dt><dd>{{ entero(h.data.summary.noProbe) }}</dd></div>
+          </dl>
+        }
+      }
+    </app-view-state-host>
+    <p class="centro__nota">Ver <a app-link routerLink="/superadmin/instances">Instancias y herramientas</a>.</p>
+  </app-card>
+
+  <!-- Preparación para producción: lo que bloquea la salida. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">Preparación para producción</h3>
+    <app-view-state-host [state]="preparacion()" (retry)="cargar()">
+      @if (preparacion(); as p) {
+        @if (p.status === 'ready') {
+          <p class="centro__estado-global" [attr.data-estado]="p.data.status" data-testid="centro-readiness">
+            {{ etiquetaPreparacion(p.data.status) }}
+          </p>
+          <dl class="centro__cifras">
+            <div><dt>Controles</dt><dd>{{ entero(p.data.controls.length) }}</dd></div>
+            <div><dt>Fallas bloqueantes</dt><dd>{{ entero(p.data.blockingFailures.length) }}</dd></div>
+            <div><dt>Bloqueantes sin medir</dt><dd>{{ entero(p.data.blockingUnknown.length) }}</dd></div>
+          </dl>
+          <p class="centro__nota">Evaluada el {{ p.data.evaluatedAt | date: 'dd/MM/yyyy HH:mm' }}. Ver <a app-link routerLink="/superadmin/operations">Operación</a>.</p>
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <!-- Incidentes abiertos. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">Incidentes abiertos</h3>
+    <app-view-state-host [state]="incidentes()" (retry)="cargar()">
+      @if (incidentes(); as i) {
+        @if (i.status === 'ready') {
+          @if (i.data.length === 0) {
+            <p class="centro__vacio" data-testid="centro-incidentes-vacio">Sin incidentes abiertos.</p>
+          } @else {
+            <ul class="centro__lista" data-testid="centro-incidentes">
+              @for (inc of i.data; track inc.id) {
+                <li>
+                  <strong>{{ inc.number }}</strong> · {{ inc.title ?? 'Sin título' }}
+                  <span class="centro__nota">{{ inc.severity ?? 'sin severidad' }} · {{ inc.component?.name ?? inc.component?.code ?? 'sin componente' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <!-- Artefactos: lo que está desplegado ahora, por componente. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">Despliegues vigentes</h3>
+    <app-view-state-host [state]="despliegues()" (retry)="cargar()">
+      @if (despliegues(); as d) {
+        @if (d.status === 'ready') {
+          @let actuales = vigentes(d.data);
+          @if (actuales.length === 0) {
+            <p class="centro__vacio">Ningún despliegue figura como vigente.</p>
+          } @else {
+            <ul class="centro__lista" data-testid="centro-despliegues">
+              @for (dep of actuales; track dep.id) {
+                <li>
+                  <strong>{{ dep.component ?? 'componente' }}</strong> · {{ dep.environment ?? '—' }}
+                  <span class="centro__nota">{{ dep.gitRef ?? 'sin referencia' }} · {{ dep.status ?? '—' }}@if (dep.finishedAt) { · {{ dep.finishedAt | date: 'dd/MM HH:mm' }} }</span>
+                </li>
+              }
+            </ul>
+          }
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <!-- Pruebas: la última corrida y los defectos abiertos. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">Pruebas</h3>
+    <app-view-state-host [state]="pruebas()" (retry)="cargar()">
+      @if (pruebas(); as p) {
+        @if (p.status === 'ready') {
+          <dl class="centro__cifras">
+            <div><dt>Corridas</dt><dd>{{ entero(p.data.corridas.length) }}</dd></div>
+            <div><dt>Defectos abiertos</dt><dd data-testid="centro-defectos">{{ entero(defectosAbiertos(p.data.defectos)) }}</dd></div>
+          </dl>
+          @if (p.data.corridas[0]; as ultima) {
+            <p class="centro__nota">
+              Última corrida {{ ultima.runNumber }}: {{ ultima.totals.passed }} de {{ ultima.totals.cases }} pasan, {{ ultima.totals.failed }} fallan.
+            </p>
+          } @else {
+            <p class="centro__vacio">Todavía no hay corridas registradas.</p>
+          }
+          <p class="centro__nota">Ver <a app-link routerLink="/superadmin/qa-lab">Orquestación de pruebas</a>.</p>
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+
+  <!-- Respaldos: si se probó restaurar, no sólo si se hizo el respaldo. -->
+  <app-card variant="outlined" padding="md">
+    <h3 class="centro__titulo">Respaldos</h3>
+    <app-view-state-host [state]="respaldos()" (retry)="cargar()">
+      @if (respaldos(); as r) {
+        @if (r.status === 'ready') {
+          <dl class="centro__cifras">
+            <div><dt>Políticas</dt><dd>{{ entero(r.data.length) }}</dd></div>
+            <div><dt>Restauración fallida</dt><dd>{{ entero(restauracionesFallidas(r.data)) }}</dd></div>
+            <div><dt>Sin probar</dt><dd>{{ entero(sinRestauracion(r.data)) }}</dd></div>
+          </dl>
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+</div>

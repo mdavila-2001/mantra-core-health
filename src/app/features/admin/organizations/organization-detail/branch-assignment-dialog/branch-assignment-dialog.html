@@ -1,0 +1,72 @@
+<app-content-dialog
+  size="md"
+  [heading]="titulo()"
+  description="Las sedes donde trabaja esta persona. Con alcance «sólo una sede», es lo que tiene a la vista."
+  [dismissible]="!guardando()"
+  (closed)="closed.emit()"
+>
+  <section class="asignacion__vigentes" aria-labelledby="asignacion-vigentes-titulo">
+    <h3 id="asignacion-vigentes-titulo" class="asignacion__titulo">Sedes asignadas</h3>
+    <app-view-state-host [state]="asignaciones()" (retry)="recargar()">
+      @if (asignaciones().status === 'ready') {
+        @if (yaAsignadas().size === 0) {
+          <p class="asignacion__vacio" data-testid="asignacion-sin-sedes">
+            Todavía no tiene ninguna sede asignada.
+          </p>
+        } @else {
+          <ul class="asignacion__lista" data-testid="asignacion-vigentes">
+            @for (sede of yaAsignadas(); track sede) {
+              <li>{{ nombreDe(sede) }}</li>
+            }
+          </ul>
+        }
+      }
+    </app-view-state-host>
+  </section>
+
+  @if (confirmada(); as sede) {
+    <app-alert appAnuncio [asertivo]="false" tone="success" data-testid="asignacion-confirmada">
+      Listo: {{ sede }} ya figura entre sus sedes.
+    </app-alert>
+  }
+
+  @if (errorDelEnvio(); as mensaje) {
+    <app-alert appAnuncio tone="error" data-testid="asignacion-error">{{ mensaje }}</app-alert>
+  }
+
+  @if (opciones().length === 0 && asignaciones().status === 'ready') {
+    <p class="asignacion__vacio">Ya tiene asignadas todas las sedes de la organización.</p>
+  } @else {
+    <app-form-field
+      label="Sede"
+      hint="Se suma a las que ya tiene; no reemplaza ninguna."
+      [required]="true"
+      [errorMessage]="faltaElegir() ? 'Elegí la sede que le vas a asignar.' : ''"
+    >
+      <app-select
+        data-testid="asignacion-sede"
+        [value]="elegida()"
+        (valueChange)="elegir($event)"
+        [options]="opciones()"
+        placeholder="Elija una sede"
+      />
+    </app-form-field>
+  }
+
+  <div dialog-actions class="asignacion__acciones">
+    <button app-button variant="secondary" [disabled]="guardando()" (clicked)="closed.emit()">
+      Cerrar
+    </button>
+    @if (opciones().length > 0) {
+      <button
+        app-button
+        variant="primary"
+        data-testid="asignacion-guardar"
+        [isLoading]="guardando()"
+        (clicked)="asignar()"
+      >
+        Asignar sede
+      </button>
+    }
+  </div>
+</app-content-dialog>

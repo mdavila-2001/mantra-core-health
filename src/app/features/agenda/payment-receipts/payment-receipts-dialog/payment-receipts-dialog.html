@@ -48,23 +48,24 @@
           }
         </div>
 
-        <!-- S3 con su próxima acción: sin comprobante, el pago se marca a mano. -->
+        <!-- S3 con su próxima acción: sin comprobante, el pago se marca a mano
+             con «Marcar sin comprobante…» del pie, el único control que lo abre
+             (H04: el vacío repetía el botón). Si ya figura pagada, el pago se
+             marcó a mano y no hay nada que pedirle al paciente. -->
         <div vsh-empty>
-          <app-empty-state
-            title="El paciente todavía no subió comprobantes"
-            description="Cuando suba uno va a aparecer acá para que lo revise. Si le pagó en efectivo, márquelo sin comprobante."
-          >
-            <button
-              empty-actions
-              app-button
-              variant="secondary"
-              size="sm"
-              data-testid="payment-receipts-empty-manual"
-              (clicked)="openManual()"
-            >
-              Marcar sin comprobante…
-            </button>
-          </app-empty-state>
+          @if (paidWithoutReceipt()) {
+            <app-empty-state
+              data-testid="payment-receipts-empty-paid"
+              title="El pago se registró sin comprobante"
+              description="Se marcó a mano. Si el paciente sube un comprobante, va a aparecer acá."
+            />
+          } @else {
+            <app-empty-state
+              data-testid="payment-receipts-empty-unpaid"
+              title="El paciente todavía no subió comprobantes"
+              description="Cuando suba uno va a aparecer acá para que lo revise. Si le pagó en efectivo, márquelo sin comprobante."
+            />
+          }
         </div>
 
         @if (receipts(); as list) {

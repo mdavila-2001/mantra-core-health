@@ -1,0 +1,193 @@
+{
+  "fecha": "2026-10-30T18:23:20.836Z",
+  "registro": [
+    {
+      "que": "aria-level de la cama a 1440",
+      "datos": "6"
+    },
+    {
+      "que": "regla 6 · ficha a 1440",
+      "datos": {
+        "izquierda": 0,
+        "derecha": 0,
+        "proporcion": 100
+      }
+    },
+    {
+      "que": "sala de referencia",
+      "datos": "06dfa4f1-d521-4115-aa36-aa442e1c6756"
+    },
+    {
+      "que": "cadena alta a 1440",
+      "datos": {
+        "request": {
+          "metodo": "POST",
+          "ruta": "/sites/c8a31663-66c1-4ae1-a281-60de9b7f6f54/care-spaces",
+          "cuerpo": {
+            "description": null,
+            "clinicalUnitId": null,
+            "capacity": null,
+            "gln": null,
+            "code": "E2E-1440",
+            "name": "Sala de espera 1440",
+            "formCode": "LOC_FORM_ROOM",
+            "functionCode": "SPACE_FN_WAITING",
+            "parentSpaceId": "96f889fd-e100-4a31-a919-2fd48800a73e",
+            "activate": false
+          }
+        },
+        "respuesta": 201,
+        "persistidoEnSesion": true,
+        "trasRecarga": "la ficha muestra el código"
+      }
+    },
+    {
+      "que": "cadena edición a 1440",
+      "datos": {
+        "ruta": "/care-spaces/f9c88b20-85a1-4408-a4ea-ace8d9879fa8",
+        "ifMatch": "1",
+        "cuerpo": {
+          "description": null,
+          "clinicalUnitId": null,
+          "capacity": null,
+          "gln": null,
+          "name": "Sala de espera editada 1440",
+          "functionCode": "SPACE_FN_WAITING",
+          "code": "E2E-1440",
+          "formCode": "LOC_FORM_ROOM"
+        },
+        "respuesta": 200
+      }
+    },
+    {
+      "que": "aria-level de la cama a 768",
+      "datos": "6"
+    },
+    {
+      "que": "regla 6 · ficha a 768",
+      "datos": {
+        "izquierda": 0,
+        "derecha": 0,
+        "proporcion": 100
+      }
+    },
+    {
+      "que": "sala de referencia",
+      "datos": "06dfa4f1-d521-4115-aa36-aa442e1c6756"
+    },
+    {
+      "que": "cadena alta a 768",
+      "datos": {
+        "request": {
+          "metodo": "POST",
+          "ruta": "/sites/c8a31663-66c1-4ae1-a281-60de9b7f6f54/care-spaces",
+          "cuerpo": {
+            "description": null,
+            "clinicalUnitId": null,
+            "capacity": null,
+            "gln": null,
+            "code": "E2E-768",
+            "name": "Sala de espera 768",
+            "formCode": "LOC_FORM_ROOM",
+            "functionCode": "SPACE_FN_WAITING",
+            "parentSpaceId": "96f889fd-e100-4a31-a919-2fd48800a73e",
+            "activate": false
+          }
+        },
+        "respuesta": 201,
+        "persistidoEnSesion": true,
+        "trasRecarga": "la ficha muestra el código"
+      }
+    },
+    {
+      "que": "cadena edición a 768",
+      "datos": {
+        "ruta": "/care-spaces/dca39564-4b53-4ffa-a322-d716dd3354fe",
+        "ifMatch": "1",
+        "cuerpo": {
+          "description": null,
+          "clinicalUnitId": null,
+          "capacity": null,
+          "gln": null,
+          "name": "Sala de espera editada 768",
+          "functionCode": "SPACE_FN_WAITING",
+          "code": "E2E-768",
+          "formCode": "LOC_FORM_ROOM"
+        },
+        "respuesta": 200
+      }
+    },
+    {
+      "que": "aria-level de la cama a 390",
+      "datos": "6"
+    },
+    {
+      "que": "regla 6 · ficha a 390",
+      "datos": {
+        "izquierda": 0,
+        "derecha": 0,
+        "proporcion": 100
+      }
+    },
+    {
+      "que": "sala de referencia",
+      "datos": "06dfa4f1-d521-4115-aa36-aa442e1c6756"
+    },
+    {
+      "que": "cadena alta a 390",
+      "datos": {
+        "request": {
+          "metodo": "POST",
+          "ruta": "/sites/c8a31663-66c1-4ae1-a281-60de9b7f6f54/care-spaces",
+          "cuerpo": {
+            "description": null,
+            "clinicalUnitId": null,
+            "capacity": null,
+            "gln": null,
+            "code": "E2E-390",
+            "name": "Sala de espera 390",
+            "formCode": "LOC_FORM_ROOM",
+            "functionCode": "SPACE_FN_WAITING",
+            "parentSpaceId": "96f889fd-e100-4a31-a919-2fd48800a73e",
+            "activate": false
+          }
+        },
+        "respuesta": 201,
+        "persistidoEnSesion": true,
+        "trasRecarga": "la ficha muestra el código"
+      }
+    },
+    {
+      "que": "cadena edición a 390",
+      "datos": {
+        "ruta": "/care-spaces/a8584039-a710-47e3-a9bf-cecac068c64c",
+        "ifMatch": "1",
+        "cuerpo": {
+          "description": null,
+          "clinicalUnitId": null,
+          "capacity": null,
+          "gln": null,
+          "name": "Sala de espera editada 390",
+          "functionCode": "SPACE_FN_WAITING",
+          "code": "E2E-390",
+          "formCode": "LOC_FORM_ROOM"
+        },
+        "respuesta": 200
+      }
+    }
+  ],
+  "erroresDeConsola": [
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-VM2mZqyEQZoLzoTrp5EigFvzQ0+f1wSeBuoOn95WHCg='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked.",
+    "http://127.0.0.1:4371/auth :: Executing inline script violates the following Content Security Policy directive 'script-src 'self' 'sha256-HasAYtZ13nA92vtyhOH9KYrQLVFmnxB9+lraZXpGRQc=''. Either the 'unsafe-inline' keyword, a hash ('sha256-kSSVmtxCwx5BcVxBHL/eBew1IVRG78eha+qAq9Y8B38='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked."
+  ]
+}

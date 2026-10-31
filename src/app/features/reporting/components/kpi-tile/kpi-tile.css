@@ -1,0 +1,87 @@
+:host { display: block; min-width: 0; }
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  height: 100%;
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-primary);
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.kpi__title {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-wrap: balance;
+}
+/* El título y la cifra son una unidad: pegados entre sí y separados de lo que explica la cifra. */
+.kpi { gap: var(--sp-1); }
+.kpi__title + .kpi__value { margin-top: var(--sp-1); }
+
+.kpi__value {
+  margin: 0;
+  font-family: var(--font-display);
+  /* Un importe nunca se parte en dos líneas («Bs 658.520,8 / 5» se leía como otra cifra):
+     el tamaño sigue al ancho de la ficha, con el techo del sistema. */
+  font-size: min(var(--fs-h1), 11cqi);
+  line-height: var(--lh-h1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* «Sin dato» es una ausencia, no un resultado: más chico y en gris para que no compita con un número real. */
+.kpi__value--empty {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  color: var(--text-muted);
+}
+.kpi__reason { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); }
+
+.kpi__delta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+.kpi__delta { align-items: center; margin-top: var(--sp-1); }
+/* La variación es una etiqueta: se lee de lejos, y el sentido va escrito («mejora»/«empeora»), no solo en el color. */
+.kpi__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 2px var(--sp-2);
+  border-radius: var(--r-full);
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface-alt);
+  line-height: 1.4;
+}
+.kpi__delta-num { font-weight: 700; font-variant-numeric: tabular-nums; }
+.kpi__delta-word { font-weight: 600; }
+.kpi__delta-vs { flex-basis: 100%; color: var(--text-muted); }
+.kpi__delta[data-verdict='better'] .kpi__pill { background: var(--st-success-bg); border-color: var(--st-success-bd); color: var(--st-success-fg); }
+.kpi__delta[data-verdict='worse'] .kpi__pill { background: var(--st-error-bg); border-color: var(--st-error-bd); color: var(--st-error-fg); }
+.kpi__delta[data-verdict='better'] .kpi__delta-word { color: var(--st-success-fg); }
+.kpi__delta[data-verdict='worse'] .kpi__delta-word { color: var(--st-error-fg); }
+.kpi__arrow { font-size: var(--fs-overline); }
+
+.kpi__fraction { margin: 0; font-size: var(--fs-caption); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+.kpi__spark { width: 100%; height: 48px; margin-top: var(--sp-2); min-width: 0; }
+.kpi__spark--wait { background: var(--bg-surface-alt); border-radius: var(--r-sm); }
+
+.kpi__foot { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); margin-top: auto; padding-top: var(--sp-1); }
+.kpi__info { align-self: stretch; }
+.kpi__note { margin: 0; font-size: var(--fs-caption); color: var(--text-muted); }

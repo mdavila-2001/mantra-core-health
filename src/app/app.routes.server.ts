@@ -87,6 +87,22 @@ export const serverRoutes: ServerRoute[] = [
     renderMode: RenderMode.Client,
   },
   {
+    // Los dos portales de reportería. Tienen sesión, así que no se
+    // prerenderizan (ver la nota de arriba), y además sus gráficos (Apache
+    // ECharts) necesitan el DOM: el servidor solo manda el cascarón.
+    path: 'portal-selector',
+    renderMode: RenderMode.Client,
+  },
+  {
+    path: 'reports/**',
+    renderMode: RenderMode.Client,
+  },
+  {
+    // AloVida Insights: portal de marketing con sesión y gráficos en el cliente.
+    path: 'insights/**',
+    renderMode: RenderMode.Client,
+  },
+  {
     path: 'design-system',
     renderMode: RenderMode.Prerender,
   },

@@ -124,6 +124,10 @@ export const IDS = {
     userId: uuid('user-visitador'),
     personId: uuid('person-visitador'),
   },
+  marketing: {
+    userId: uuid('user-marketing'),
+    personId: uuid('person-marketing'),
+  },
   aseguradora: {
     userId: uuid('user-aseguradora-owner'),
     personId: uuid('person-aseguradora-owner'),
@@ -139,6 +143,15 @@ export const IDS = {
   farmacia: {
     userId: uuid('user-farmacia-vida'),
     personId: uuid('person-farmacia-vida'),
+  },
+  aprobador: {
+    userId: uuid('user-aprobador'),
+    personId: uuid('person-aprobador'),
+  },
+  medicoNuevo: {
+    userId: uuid('user-sinespecialidad'),
+    personId: uuid('person-sinespecialidad'),
+    practitionerProfileId: uuid('hpid-sinespecialidad'),
   },
   // Hospital Piloto Mantra (personal de apoyo): la cuenta de la organización,
   // las cuatro personas de apoyo y dos doctores del hospital.
@@ -219,6 +232,12 @@ export const MOCK_USERS: readonly MockUser[] = [
       'CASHIER',
       'PERIOP_ADMIN',
       'CLINICAL_INFORMATICIAN',
+      // Revisa las admisiones; la decisión final la toma otra persona
+      // (`aprobador@alovida.mock`): cuatro ojos.
+      'ADMISSIONS_REVIEWER',
+      // Portal de reportería (30/10/2026): administra los reportes. Además de
+      // éste, `BUSINESS_ADMIN` y `PLATFORM_ADMIN` ya lo abren por sí solos.
+      'REPORTING_ADMIN',
     ],
     tenants: [TENANT_CLINICA],
     tenantNames: TENANT_NAMES,
@@ -230,10 +249,37 @@ export const MOCK_USERS: readonly MockUser[] = [
     email: 'superadmin@alovida.mock',
     nationalId: '9998887',
     displayName: 'Soporte AloVida',
-    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN'],
+    roles: ['SUPERADMIN', 'SECURITY_ADMIN', 'PLATFORM_ADMIN', 'REPORTING_ADMIN'],
     tenants: [TENANT_PLATAFORMA, TENANT_CLINICA, TENANT_HOSPITAL],
     tenantNames: TENANT_NAMES,
     personId: IDS.superadmin.personId,
+  },
+  {
+    // Quien decide las admisiones que otro revisó. Sin `SECURITY_ADMIN`: ve la
+    // bandeja por su rol de aprobador y no puede tomar revisiones.
+    key: 'aprobador',
+    id: IDS.aprobador.userId,
+    email: 'aprobador@alovida.mock',
+    nationalId: '6667778',
+    displayName: 'Sandra Mamani Quispe',
+    roles: ['ADMISSIONS_APPROVER'],
+    tenants: [TENANT_CLINICA],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.aprobador.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Un médico recién registrado: su admisión espera que corrija y reenvíe.
+    key: 'medico_nuevo',
+    id: IDS.medicoNuevo.userId,
+    email: 'medico.nuevo@alovida.mock',
+    nationalId: '3172830',
+    displayName: 'Ramiro Céspedes Villca',
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_CLINICA],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.medicoNuevo.practitionerProfileId,
+    personId: IDS.medicoNuevo.personId,
   },
   {
     key: 'visitador',
@@ -245,6 +291,22 @@ export const MOCK_USERS: readonly MockUser[] = [
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.visitador.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Gerencia de marketing de la plataforma: entra directo a AloVida Insights. En la API
+    // `MARKETING_MANAGER` es un rol con ámbito de tenant (`scopedRoles`), así que el
+    // simulador lo firma igual: el dato de Insights es de plataforma, el rol vale en su tenant.
+    key: 'marketing',
+    id: IDS.marketing.userId,
+    email: 'marketing@alovida.mock',
+    nationalId: '5557778',
+    displayName: 'Mateo Rojas Arce',
+    roles: ['MARKETING_MANAGER'],
+    tenants: [TENANT_PLATAFORMA],
+    tenantNames: TENANT_NAMES,
+    scopedRoles: { [TENANT_PLATAFORMA]: ['MARKETING_MANAGER'] },
+    personId: IDS.marketing.personId,
     accountKind: 'PERSON',
   },
   {
@@ -291,12 +353,15 @@ export const MOCK_USERS: readonly MockUser[] = [
     // La encargada de Farmacia Vida: `USER` y la membresía del tenant
     // `PHARMACY`, igual que la API. Es la cuenta con la que la maqueta recorre
     // lo que hace una farmacia: su catálogo, sus pedidos y sus promociones.
+    // Con `PHARMACY_STAFF` atiende además el chat de los pedidos **como la
+    // farmacia**: no tiene vitrina personal —el personal de una farmacia no la
+    // necesita para atender—, así que en Chats escribe como «Farmacia Vida».
     key: 'farmacia',
     id: IDS.farmacia.userId,
     email: 'farmacia@alovida.mock',
     nationalId: '7003001',
     displayName: 'Farmacia Vida',
-    roles: ['USER'],
+    roles: ['USER', 'PHARMACY_STAFF'],
     tenants: [TENANT_FARMACIA],
     tenantNames: TENANT_NAMES,
     personId: IDS.farmacia.personId,

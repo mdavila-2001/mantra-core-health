@@ -25,8 +25,10 @@
   gap: var(--sp-1);
 }
 
+/* `--text-danger` y no la rampa `--c-error-500`: la rampa no cambia con el tema
+   y en oscuro daba 2,99:1 sobre la tarjeta (AA pide 4,5:1). */
 .required-asterisk {
-  color: var(--c-error-500);
+  color: var(--text-danger);
   font-weight: bold;
 }
 
@@ -173,7 +175,7 @@
   font-family: var(--font-body);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
-  color: var(--c-error-500);
+  color: var(--text-danger);
   margin: var(--sp-1) 0 0 0;
   /* El error ENTRA, no salta: crece desde alto 0 con el muelle `suave` (con
      `interpolate-size` el alto automático es animable) y el formulario de abajo

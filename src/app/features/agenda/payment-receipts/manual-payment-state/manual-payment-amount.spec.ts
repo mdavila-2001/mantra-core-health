@@ -1,7 +1,7 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 
 import type { PaymentStateInfo } from '../../../../core/data-access/scheduling/scheduling.types';
-import { ReceivedAmountStore } from '../received-amount-store';
+import type { NewPaymentState } from '../../../../core/data-access/scheduling/scheduling.types';
 import { ManualPaymentState } from './manual-payment-state';
 
 const PAID: PaymentStateInfo = {
@@ -12,7 +12,11 @@ const PAID: PaymentStateInfo = {
   markedByUserId: 'u-1',
   markedAt: new Date('2026-10-27T10:00:00.000Z'),
 };
-const PARTIAL: PaymentStateInfo = { ...PAID, state: 'PARTIALLY_PAID', label: 'Parcialmente pagada' };
+const PARTIAL: PaymentStateInfo = {
+  ...PAID,
+  state: 'PARTIALLY_PAID',
+  label: 'Parcialmente pagada',
+};
 const PENDING: PaymentStateInfo = { ...PAID, state: 'PENDING', label: 'Pendiente de pago' };
 
 describe('ManualPaymentState · monto recibido', () => {
@@ -49,12 +53,11 @@ describe('ManualPaymentState · monto recibido', () => {
     expect(q(render(PAID, '').root, 'payment-amount')).toBeNull();
   });
 
-  it('el aviso de «solo en este equipo» está junto al campo', () => {
+  it('ya no avisa «solo en este equipo»: el monto viaja al servidor (FAC-01)', () => {
     const { root } = render(PAID);
 
-    expect(q(root, 'payment-amount-notice')?.textContent).toContain(
-      'Guardado solo en este equipo: todavía no se envía al servidor.',
-    );
+    expect(q(root, 'payment-amount-notice')).toBeNull();
+    expect(root.textContent).not.toContain('Guardado solo en este equipo');
   });
 
   it('vacío es válido pero no guarda; lo inválido muestra el error en el campo', () => {
@@ -71,32 +74,38 @@ describe('ManualPaymentState · monto recibido', () => {
     }
   });
 
-  it('guarda con coma o punto, muestra «Recibido» y permite cambiarlo', () => {
-    const { fixture, root } = render(PAID);
+  it('registra el pago con coma o punto: sale con el estado vigente y el seguro', () => {
+    const { fixture, root } = render({ ...PARTIAL, insuranceUsed: true });
+    const emitted: NewPaymentState[] = [];
+    fixture.componentInstance.changed.subscribe((change) => emitted.push(change));
 
     type(fixture, root, '150,5');
     saveButton(root).click();
     fixture.detectChanges();
 
-    expect(TestBed.inject(ReceivedAmountStore).get('b-1')?.amount).toBe(150.5);
-    expect(q(root, 'payment-amount-saved')?.textContent).toContain('Recibido: Bs 150,50');
-    expect(q(root, 'payment-amount-notice')).not.toBeNull();
-
-    (q(root, 'payment-amount-edit') as HTMLButtonElement).click();
-    fixture.detectChanges();
-    expect((q(root, 'payment-amount-input') as HTMLInputElement).value).toBe('150.5');
+    expect(emitted).toEqual([
+      { state: 'PARTIALLY_PAID', insuranceUsed: true, amountReceived: 150.5 },
+    ]);
+    expect(localStorage.length).toBe(0);
   });
 
-  it('si el navegador no deja guardar, lo dice en el campo', () => {
-    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('lleno');
-    });
-    const { fixture, root } = render(PAID);
-
+  it('lo escrito queda si la API rechaza, y se borra cuando llega el estado nuevo', () => {
+    const { fixture, root } = render(PARTIAL);
     type(fixture, root, '20');
     saveButton(root).click();
     fixture.detectChanges();
+    expect((q(root, 'payment-amount-input') as HTMLInputElement).value).toBe('20');
 
-    expect(root.textContent).toContain('No se pudo guardar en este navegador.');
+    fixture.componentRef.setInput('current', { ...PARTIAL, amountPaid: 20, currencyCode: 'BOB' });
+    fixture.detectChanges();
+    expect((q(root, 'payment-amount-input') as HTMLInputElement).value).toBe('');
+  });
+
+  it('«Recibido» es lo que dice la API; sin monto facturado no aparece', () => {
+    expect(q(render(PAID).root, 'payment-amount-saved')).toBeNull();
+
+    const { root } = render({ ...PAID, amountPaid: 150.5, currencyCode: 'BOB' });
+    expect(q(root, 'payment-amount-saved')?.textContent).toContain('Recibido: 150,50 Bs');
+    expect(root.textContent).toContain('Registrar otro pago (Bs)');
   });
 });

@@ -96,6 +96,24 @@ export class Stepper {
   readonly compact = input(false, { transform: booleanAttribute });
 
   /**
+   * En teléfono (< 780 px) deja visible sólo el rótulo del paso **actual**; los
+   * demás quedan en sus marcadores —y en el nombre accesible, como siempre—.
+   *
+   * Sin esto, en una pantalla estrecha los pasos con rótulo no caben en una
+   * fila y se parten en renglones sueltos: «2 Su cuenta» solo en el segundo,
+   * con un tramo de riel colgando (issue #1448). Con esto el recorrido es una
+   * sola fila —marcadores unidos por el riel— y el rótulo que queda dice dónde
+   * está la persona, que es lo que un indicador de avance tiene que decir.
+   *
+   * Apagado por defecto: en el pedido de farmacia o la puesta en marcha, los
+   * rótulos de los demás pasos SON la información, y quitarlos de la vista sería
+   * cambiar palabras por dibujos. Lo enciende quien tiene el título de la
+   * página actual a la vista (el formulario por partes). No hace nada en modo
+   * `compact`, que ya resolvió el rótulo a su manera.
+   */
+  readonly currentLabelOnly = input(false, { transform: booleanAttribute });
+
+  /**
    * El índice del paso que se pidió abrir. **Base 0**, como el arreglo.
    *
    * No se emite por un paso con `disabled`: el control sigue enfocable para

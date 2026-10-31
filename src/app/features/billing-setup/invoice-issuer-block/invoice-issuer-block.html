@@ -1,0 +1,37 @@
+<app-view-state-host [state]="issuers()" (retry)="reload()">
+  @if (issuers(); as state) {
+    @if (state.status === 'ready') {
+      <div class="billing-setup__form" data-testid="invoice-issuer">
+        <p class="billing-setup__lead">
+          <app-badge variant="info" data-testid="invoice-issuer-test-label">Emisor de prueba</app-badge>
+          Las facturas salen de un emisor simulado: tienen todos los datos de una factura, pero no se envían al
+          SIN.
+        </p>
+        @for (issuer of state.data; track issuer.id) {
+          <dl class="billing-setup__facts" data-testid="invoice-issuer-item">
+            <div>
+              <dt>Razón social</dt>
+              <dd>{{ issuer.legalName }}</dd>
+            </div>
+            <div>
+              <dt>NIT</dt>
+              <dd>{{ issuer.nit }}</dd>
+            </div>
+            <div>
+              <dt>Municipio</dt>
+              <dd>{{ issuer.municipality }}</dd>
+            </div>
+            <div>
+              <dt>Dirección</dt>
+              <dd>{{ issuer.address }}</dd>
+            </div>
+          </dl>
+        } @empty {
+          <p class="billing-setup__warning" data-testid="invoice-issuer-none">
+            Su práctica todavía no tiene emisor. Aparece cuando la práctica registra su primera consulta.
+          </p>
+        }
+      </div>
+    }
+  }
+</app-view-state-host>

@@ -43,7 +43,7 @@
 }
 
 .date-picker-trigger-wrapper.has-error .date-picker-input-group {
-  border-color: var(--c-danger-600, var(--c-error-500));
+  border-color: var(--border-danger);
 }
 
 .date-picker-input {

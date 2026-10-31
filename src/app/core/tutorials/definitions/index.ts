@@ -101,9 +101,12 @@ const BIENVENIDA_PACIENTE: TutorialDefinition = {
     {
       id: 'emergencia',
       title: 'Si es urgente',
-      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba del menú, en todas las pantallas.',
+      body: 'El botón rojo «Emergencia» le muestra los números de ambulancia, bomberos y policía. Está siempre arriba, en la cabecera.',
       target: 'nav-emergencia',
-      placement: 'right',
+      placement: 'bottom',
+      // Sólo existe en la versión responsive (28/10/2026): en el escritorio no
+      // hay a quién esperar, y el paso se saltea sin la pausa de cuatro segundos.
+      waitForTargetMs: 0,
     },
     {
       id: 'sintomas',
@@ -434,7 +437,9 @@ const ORGANIZACIONES: TutorialDefinition = {
   title: 'Vincularse a una organización',
   description: 'Pedir una vinculación y entender qué implica (y qué no).',
   category: 'Administración',
-  route: '/administration/medical-organization',
+  // Directo a la pestaña: el tutorial habla de «Mis vinculaciones», y sin el
+  // parámetro abría el panel en «Resumen», donde nada de lo que dice está.
+  route: '/administration/medical-organization?tab=memberships',
   roles: ['PRACTITIONER'],
   estimatedMinutes: 2,
   level: 'inicial',

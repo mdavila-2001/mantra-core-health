@@ -143,7 +143,7 @@ export type {
 } from './search-result/search-result.types';
 
 export { Stepper } from './stepper/stepper';
-export { STEP_STATUSES } from './stepper/stepper.types';
+export { porcentajeDelRecorrido, STEP_STATUSES } from './stepper/stepper.types';
 export type { StepperStep, StepStatus } from './stepper/stepper.types';
 
 /* `Tab` es la pestaña individual; sin `Tabs` alrededor no significa nada. */

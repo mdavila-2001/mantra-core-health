@@ -116,7 +116,8 @@ describe('las fichas clínicas estándar del simulador', () => {
    */
   it('las transversales comparten un concepto propio, distinto de toda especialidad', () => {
     const transversales = PLANTILLAS_DE_EXPEDIENTE.filter((p) => p.code.startsWith('TRANSV_'));
-    expect(transversales.length).toBe(4);
+    // Anamnesis, examen físico, consentimiento, epicrisis y la cita médica (2026-10-29).
+    expect(transversales.length).toBe(5);
     const conceptos = new Set(transversales.map((p) => p.specialtyConceptId));
     expect(conceptos.size).toBe(1);
 

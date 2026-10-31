@@ -10,6 +10,7 @@ import { tenantDenialHint, tenantDenialText } from '../../../core/data-access/ia
 
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { Link } from '../../../shared/components/atoms/link/link';
+import { entryDestination } from '../../reporting/reporting-access';
 
 /**
  * Selector de organización.
@@ -77,6 +78,7 @@ export class TenantSelection implements OnInit {
 
   choose(tenantId: string): void {
     this.auth.selectTenant(tenantId);
-    void this.router.navigateByUrl('/');
+    // Tras elegir organización, el mismo destino que el login (`login.ts`).
+    void this.router.navigateByUrl(entryDestination(this.auth.roles()));
   }
 }

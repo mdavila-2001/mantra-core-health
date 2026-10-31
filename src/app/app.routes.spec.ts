@@ -8,17 +8,14 @@ import { LOGIN_ROUTE } from './core/http/auth.interceptor';
 import { PublicDirectoryClient } from './core/data-access/public-directory/public-directory.client';
 import { APP_SECTIONS } from './core/navigation/navigation.map';
 import { seccionRolesGuard } from './core/navigation/section-roles.guard';
+import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
 import {
   ROLES_ROUTE_DATA,
   SECTION_ROUTE_DATA,
   restringePorRol,
   titleOf,
 } from './core/navigation/navigation.types';
-import {
-  tabIndex,
-  TAB,
-  PROFILE_TABS,
-} from './features/account/my-profile/profile-tabs';
+import { tabIndex, TAB, PROFILE_TABS } from './features/account/my-profile/profile-tabs';
 import { SectionPlaceholder } from './features/section-placeholder/section-placeholder';
 import { routes, SECCIONES_REDIRIGIDAS } from './app.routes';
 
@@ -197,12 +194,34 @@ describe('rutas del armazón', () => {
       return section !== undefined && restringePorRol(section);
     });
 
+    /**
+     * Pantallas que la sección cerraría de más y llevan un guard propio, más
+     * angosto que «nada» y más ancho que el de la sección: la API las abre al
+     * OWNER/ADMIN de la organización (`assertCanAdminister`) y no sólo a
+     * `SECURITY_ADMIN`. Siguen guardadas: cambian de guard, no lo pierden.
+     */
+    const CON_GUARD_PROPIO: Readonly<Record<string, unknown>> = {
+      'administration/organizations/:tenantId/branches/new': organizacionAdministrableGuard,
+      'administration/organizations/:tenantId/memberships/new': organizacionAdministrableGuard,
+    };
+
     it('lo lleva toda pantalla hija cuya sección declara roles', () => {
       const destapadas = hijasDeSeccionConRoles
         .filter((r) => !SIN_GUARD_A_PROPOSITO.includes(r.path ?? ''))
+        .filter((r) => CON_GUARD_PROPIO[r.path ?? ''] === undefined)
         .filter((r) => !(r.canActivate ?? []).includes(seccionRolesGuard));
 
       expect(destapadas.map((r) => r.path)).toEqual([]);
+    });
+
+    it('las altas de sucursal y membresía llevan el guard de la organización, no el de sección', () => {
+      for (const [path, guard] of Object.entries(CON_GUARD_PROPIO)) {
+        const ruta = hijas.find((r) => r.path === path);
+
+        expect(ruta, path).toBeDefined();
+        expect(ruta?.canActivate ?? [], path).toContain(guard);
+        expect(ruta?.canActivate ?? [], path).not.toContain(seccionRolesGuard);
+      }
     });
 
     it('las excepciones existen, cuelgan de una sección con roles y siguen sin guard', () => {
@@ -247,8 +266,13 @@ describe('rutas del armazón', () => {
   });
 
   /** Las dos pantallas del médico de CM-07 cuelgan de «Mi perfil»: sólo las abre quien atiende. */
-  it('«Invitaciones y solicitudes» y «Procedimientos que hago» son de quien atiende y llevan el guard', () => {
-    for (const path of ['my-account/affiliations', 'my-account/my-procedures']) {
+  it('«Invitaciones y solicitudes», «Procedimientos que hago» y «Mis verificaciones» son de quien atiende y llevan el guard', () => {
+    // «Mis verificaciones» es sección (ANY_ROLE en el registro): la ruta la cierra igual.
+    for (const path of [
+      'my-account/affiliations',
+      'my-account/my-procedures',
+      'my-account/verifications',
+    ]) {
       const route = hijas.find((r) => r.path === path);
 
       expect(route, path).toBeDefined();
@@ -439,16 +463,18 @@ describe('rutas del armazón', () => {
     const sections = APP_SECTIONS.filter(
       (s) => s.availability === 'disponible' && SECCIONES_REDIRIGIDAS[s.path] === undefined,
     );
-    await Promise.all(sections.map(async (section) => {
-      const ruta = hijas.find((route) => route.path === section.path);
-      const componente = ruta?.component ?? (await ruta?.loadComponent?.());
+    await Promise.all(
+      sections.map(async (section) => {
+        const ruta = hijas.find((route) => route.path === section.path);
+        const componente = ruta?.component ?? (await ruta?.loadComponent?.());
 
-      expect(componente, section.path).toBeDefined();
-      // Se compara por identidad y no por `name`: el compilador de Angular
-      // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
-      // rompería sin que nada esté mal.
-      expect(componente, section.path).not.toBe(SectionPlaceholder);
-    }));
+        expect(componente, section.path).toBeDefined();
+        // Se compara por identidad y no por `name`: el compilador de Angular
+        // renombra la clase (`_SectionPlaceholder`) y una prueba por texto se
+        // rompería sin que nada esté mal.
+        expect(componente, section.path).not.toBe(SectionPlaceholder);
+      }),
+    );
   }, 30_000);
 
   it('una sección planificada cae en el placeholder, y diferido', async () => {
@@ -758,7 +784,9 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   }
 
   it('la clave de la redirección es la pestaña «Mis puntos» de la ficha', () => {
-    const indice = tabIndex(SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null);
+    const indice = tabIndex(
+      SECCIONES_REDIRIGIDAS['my-account/loyalty']?.query?.['pestana'] ?? null,
+    );
 
     expect(indice).toBe(TAB.puntos);
     expect(PROFILE_TABS[indice ?? -1]).toBe('Mis puntos');
@@ -795,6 +823,57 @@ describe('la ruta vieja de «Mis puntos» (H4.S2.M2)', () => {
   it('Cotizaciones sigue resolviendo en su propia ruta', async () => {
     expect(await terminaEn('/my-account/quotations')).toEqual({
       ruta: '/my-account/quotations',
+      query: {},
+    });
+  });
+});
+
+/**
+ * Dos direcciones viejas que abren una pestaña concreta de la pantalla que las
+ * absorbió: «Mis organizaciones» (ahora «Mis vinculaciones») y el seguimiento de
+ * trámites de identidad (ahora «Mis trámites»). Un `redirectTo` de texto no
+ * conserva el query, así que son funciones; acá se fija adónde terminan.
+ */
+describe('las direcciones viejas que abren una pestaña', () => {
+  let router: Router;
+  let location: Location;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({ providers: [provideRouter(withoutGuards(routes))] });
+    router = TestBed.inject(Router);
+    location = TestBed.inject(Location);
+  });
+
+  async function terminaEn(url: string): Promise<{ ruta: string; query: Record<string, unknown> }> {
+    const ok = await router.navigateByUrl(url);
+    expect(ok, url).not.toBe(false);
+    return {
+      ruta: location.path().split('?')[0] ?? '',
+      query: { ...router.parseUrl(location.path()).queryParams },
+    };
+  }
+
+  it('`/my-organizations` termina en la pestaña «Mis vinculaciones»', async () => {
+    expect(await terminaEn('/my-organizations')).toEqual({
+      ruta: '/administration/medical-organization',
+      query: { tab: 'memberships' },
+    });
+  });
+
+  it('`/my-account/identity/cases` termina en la pestaña «Mis trámites» y conserva el query', async () => {
+    expect(await terminaEn('/my-account/identity/cases')).toEqual({
+      ruta: '/my-account/identity',
+      query: { tab: 'cases' },
+    });
+    expect(await terminaEn('/my-account/identity/cases?foo=bar')).toEqual({
+      ruta: '/my-account/identity',
+      query: { tab: 'cases', foo: 'bar' },
+    });
+  });
+
+  it('`/my-account/identity/verify` sigue abriendo la pestaña de verificar', async () => {
+    expect(await terminaEn('/my-account/identity/verify')).toEqual({
+      ruta: '/my-account/identity',
       query: {},
     });
   });
@@ -921,7 +1000,10 @@ describe('la mudanza del portal de plataforma a «Superadministración»', () =>
       expect(ruta, path).toBeDefined();
       expect((ruta?.canActivate ?? []).includes(seccionRolesGuard), path).toBe(true);
     }
-    for (const path of ['administration/data-catalog/:objectId', 'administration/qa-lab/plans/:planId']) {
+    for (const path of [
+      'administration/data-catalog/:objectId',
+      'administration/qa-lab/plans/:planId',
+    ]) {
       const ruta = hijas.find((r) => r.path === path);
 
       expect(ruta?.redirectTo, path).toBeDefined();

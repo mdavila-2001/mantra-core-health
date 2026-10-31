@@ -122,7 +122,7 @@ describe('APP_SECTIONS', () => {
     expect(practice?.roles).toEqual(['PRACTITIONER']);
     expect(isVisibleTo(practice!, ['PRACTITIONER'])).toBe(true);
     expect(isVisibleTo(practice!, ['PATIENT'])).toBe(false);
-    expect(practice?.summary).toBe('Creá y editá tu consultorio: dirección, mapa, teléfono y horario.');
+    expect(practice?.summary).toBe('Cree y edite su consultorio: dirección, mapa, teléfono y horario.');
   });
 
   it('el panel es la primera sección: el breadcrumb lo usa como raíz', () => {
@@ -413,15 +413,17 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     expect(isVisibleTo(labSection, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
   });
 
-  it('las secciones reales son las del laboratorio, las diez de la farmacia y la del centro médico, y nada más la usa', () => {
+  it('las secciones reales son las del laboratorio, las siete de la farmacia y la del centro médico, y nada más la usa', () => {
     const flagged = APP_SECTIONS.filter((s) => s.onlyForTenantTypes !== undefined);
     // Desde el 29/09/2026 el menú de la cuenta de farmacia es plano y cerrado:
     // sus ocho pantallas sólo existen para una organización `PHARMACY`. Desde
     // el 30/09/2026 el de laboratorio también, y va después de la farmacia.
-    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». CM-11 suma
+    // El 01/10/2026 los dos sumaron «Precios» y «Sucursales». El 31/10/2026 el laboratorio juntó recepción, cola y resultados en «Órdenes». CM-11 suma
     // «Configurar práctica», sólo para una organización médica: los
     // cinco tipos del alta pública (`MEDICAL_ORGANIZATION_TYPES`).
-    // P34 (26/10/2026) suma «Horario y turnos» a la farmacia.
+    // P34 (26/10/2026) suma «Horario y turnos» a la farmacia. Productos,
+    // categorías, precios, inventario e importación son desde el 30/10/2026
+    // una sola sección: «Catálogo», con pestañas.
     // Personal de apoyo (2026-10): las cuatro del hospital como cuenta de
     // organización y las dos de la persona de apoyo, que existen solo en las
     // organizaciones médicas (`onlyForAccountKind` las separa por clase de cuenta).
@@ -441,19 +443,13 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
       'administration/medical-center-setup',
       'administration/pharmacy',
       'administration/pharmacy-catalog',
-      'administration/pharmacy-categories',
-      'administration/pharmacy-import',
-      'administration/pharmacy-inventory',
-      'administration/pharmacy-prices',
       'administration/pharmacy-hours',
       'administration/pharmacy-orders',
       'administration/pharmacy-campaigns',
       'administration/pharmacy-profile',
       'administration/pharmacy-branches',
       'administration/laboratory',
-      'laboratory/reception',
-      'laboratory/queue',
-      'administration/laboratory-results',
+      'administration/laboratory-orders',
       'administration/laboratory-prices',
       'administration/laboratory-branches',
     ]);
@@ -471,11 +467,11 @@ describe('isVisibleTo con `onlyForTenantTypes`', () => {
     }
   });
 
-  it('la cola del laboratorio la ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
-    const queue = APP_SECTIONS.find((s) => s.path === 'laboratory/queue')!;
-    expect(isVisibleTo(queue, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
-    expect(isVisibleTo(queue, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
-    expect(isVisibleTo(queue, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
+  it('las órdenes del laboratorio las ve su personal con sólo `USER`, y no el paciente ni otra organización', () => {
+    const orders = APP_SECTIONS.find((s) => s.path === 'administration/laboratory-orders')!;
+    expect(isVisibleTo(orders, ['USER'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(true);
+    expect(isVisibleTo(orders, ['PATIENT'], ['t-1'], 'DIAGNOSTIC_CENTER')).toBe(false);
+    expect(isVisibleTo(orders, ['PRACTITIONER'], ['t-1'], 'PROVIDER')).toBe(false);
   });
 
   it('«Configurar práctica» la ve toda organización médica, y no una farmacia ni un laboratorio', () => {

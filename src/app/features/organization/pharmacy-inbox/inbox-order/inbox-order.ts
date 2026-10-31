@@ -8,8 +8,12 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import type { Observable } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map, type Observable } from 'rxjs';
+
+import { CHAT_YA_ABRIENDO, ChatOcupadoError, ChatStore } from '../../../../core/messaging/chat.store';
+import { contextoDePedido } from '../../../../core/messaging/order-chat-context';
 
 import { PharmacyClient } from '../../../../core/data-access/pharmacy/pharmacy.client';
 import type { PharmacyProduct } from '../../../../core/data-access/pharmacy/pharmacy.types';
@@ -31,6 +35,7 @@ import { dataOf, loading, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { Badge } from '../../../../shared/components/atoms/badge/badge';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
+import { AppButtonLink } from '../../../../shared/components/atoms/button/button-link';
 import { Checkbox } from '../../../../shared/components/atoms/checkbox/checkbox';
 import { Chip } from '../../../../shared/components/atoms/chip/chip';
 import { Input } from '../../../../shared/components/atoms/input/input';
@@ -54,9 +59,37 @@ import {
 } from '../pharmacy-inbox.fixtures';
 import { InvoiceSummary } from './invoice-summary/invoice-summary';
 import { displayCurrency } from '../../../../core/money/display-currency';
+import { lineAmount } from './line-amount';
 
 /** A dónde vuelve quien llegó a un pedido que ya no está. */
 const BANDEJA_ROUTE = '/administration/pharmacy-orders';
+
+/**
+ * Lo que se le dice al mostrador cuando la API no abre el chat del pedido.
+ *
+ * Los dos 422 tienen su frase porque piden cosas distintas: uno se arregla
+ * del lado de la farmacia (publicar la vitrina), el otro no tiene arreglo
+ * desde acá (el paciente tiene que crear su perfil). Un 403 es que esta cuenta
+ * no puede escribir como la farmacia —la API lo decide por la membresía—.
+ */
+export function motivoDeChatNoAbierto(error: unknown): string {
+  if (error instanceof ChatOcupadoError) {
+    return CHAT_YA_ABRIENDO;
+  }
+  if (error instanceof HttpErrorResponse) {
+    const reason = (error.error as { reason?: unknown } | null)?.reason;
+    if (reason === 'PATIENT_CHAT_PROFILE_MISSING') {
+      return 'El paciente todavía no tiene perfil de mensajería: no podemos abrirle el chat. Use el teléfono o el código de retiro.';
+    }
+    if (reason === 'ORGANIZATION_CHAT_PROFILE_UNAVAILABLE') {
+      return 'La farmacia no tiene vitrina pública activa: publíquela para poder chatear con los pacientes.';
+    }
+    if (error.status === 403) {
+      return 'Su cuenta no puede escribir como la farmacia. Pida a quien administra la farmacia que revise su rol.';
+    }
+  }
+  return 'No pudimos abrir el chat con el paciente. Intente de nuevo en un momento.';
+}
 
 /** Lo que el mostrador edita de un renglón antes de confirmar. */
 interface AjusteEnEdicion {
@@ -105,6 +138,7 @@ const EMPTY_SUBSTITUTE_SEARCH: SubstituteSearch = {
 @Component({
   selector: 'app-inbox-order',
   imports: [
+    AppButtonLink,
     Alert,
     AppButton,
     Badge,
@@ -131,15 +165,35 @@ export class InboxOrder {
    * La moneda visible de un importe: «Bs» para el boliviano y la UMA del
    * arancel, el código tal cual para cualquier otra. Ver `display-currency.ts`.
    */
-  protected moneda(code?: string | null): string {
-    return displayCurrency(code);
-  }
+  protected readonly moneda = displayCurrency;
+  protected readonly importeDeLinea = lineAmount;
   private readonly ordersClient = inject(PharmacyOrdersClient);
   private readonly pharmacyClient = inject(PharmacyClient);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialog = inject(DialogService);
   private readonly navigation = inject(NavigationService);
   private readonly toasts = inject(ToastService);
+  private readonly chat = inject(ChatStore);
+  private readonly router = inject(Router);
+
+  /** Se tocó «Chatear» y el store todavía no avisó cómo terminó. */
+  private readonly pidioChat = signal(false);
+
+  /**
+   * Mientras la API abre (o reutiliza) el hilo del pedido.
+   *
+   * Es lo pedido **y** lo que el store dice que sigue abriendo: si el store
+   * corta la apertura sin avisar —cambió la identidad o salió la cuenta—, o
+   * la respuesta termina sin traer el hilo, el botón deja de girar solo. El
+   * otro final, «ya estaba abriendo otro», el store lo avisa por `alFallar`
+   * con `ChatOcupadoError`.
+   */
+  protected readonly abriendoChat = computed(() => this.pidioChat() && this.chat.abriendo());
+
+  /** `true` cuando la pantalla ya se destruyó: ver `chatearConElPaciente`. */
+  private destruida = false;
+  /** Por qué no se abrió el chat, en palabras del mostrador. */
+  protected readonly errorDeChat = signal<string | null>(null);
 
   /**
    * Si la pantalla puede completar con ejemplos lo que el contrato no trae
@@ -356,6 +410,9 @@ export class InboxOrder {
   });
 
   constructor() {
+    this.destroyRef.onDestroy(() => {
+      this.destruida = true;
+    });
     inject(ActivatedRoute)
       .paramMap.pipe(takeUntilDestroyed())
       .subscribe((params) => this.cargar(params.get('orderId') ?? ''));
@@ -376,6 +433,49 @@ export class InboxOrder {
       },
       error: (error: unknown) => this.state.set(errorToViewState<PedidoFarmacia>(error)),
     });
+  }
+
+  /**
+   * «Chatear con el paciente»: la API abre —o reutiliza— el hilo del pedido
+   * entre el paciente y la vitrina de esta farmacia, y se entra a escribir
+   * **como la farmacia**, con la tarjeta del pedido puesta una sola vez.
+   *
+   * Quién puede lo decide el `POST`: personal con membresía activa. Mostrar el
+   * botón no autoriza nada.
+   */
+  protected chatearConElPaciente(): void {
+    const abierto = this.pedido();
+    if (abierto === null || this.abriendoChat()) {
+      return;
+    }
+    this.pidioChat.set(true);
+    this.errorDeChat.set(null);
+    const resolver = this.ordersClient
+      .abrirConversacion(abierto.id)
+      .pipe(
+        map((respuesta) => ({
+          conversationId: respuesta.conversationId,
+          profileId: respuesta.pharmacyProfileId,
+        })),
+      );
+    this.chat.abrirComoOrganizacion(
+      resolver,
+      abierto.farmacia,
+      (conversationId) => {
+        this.pidioChat.set(false);
+        // Abrir tarda tres peticiones: si mientras tanto el mostrador se fue
+        // a otra pantalla, el chat que termina de abrirse no lo arrastra.
+        if (this.destruida) {
+          return;
+        }
+        void this.router.navigate(['/messaging', conversationId]);
+      },
+      contextoDePedido(abierto),
+      (error) => {
+        this.pidioChat.set(false);
+        this.errorDeChat.set(motivoDeChatNoAbierto(error));
+      },
+    );
   }
 
   protected cambiarDecision(indice: number, decision: unknown): void {

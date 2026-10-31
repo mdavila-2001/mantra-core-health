@@ -85,6 +85,27 @@ if (typeof sessionStorage !== 'undefined') {
 }
 
 /**
+ * Cada archivo arranca sin un `animate` fantasma en `HTMLElement.prototype`.
+ *
+ * jsdom no implementa la Web Animations API: `Element.prototype.animate` no
+ * existe. Los specs que simulan una salida animada guardan el original
+ * (`undefined`), lo reemplazan y lo «restauran» con
+ * `HTMLElement.prototype.animate = original`. Eso no deshace nada: deja una
+ * propiedad **propia** con valor `undefined` que tapa el `animate` de
+ * `Element.prototype`, y el siguiente archivo del mismo worker que lo espíe ahí
+ * ve `typeof hijo.animate !== 'function'` y la directiva no anima. El síntoma
+ * es un spec de movimiento en rojo (`expected [] to deeply equal [0, 45, 90]`)
+ * cuyo archivo pasa solo; cuál cae depende del orden en que el bundle reparte
+ * los archivos entre workers, así que un cambio ajeno al movimiento lo mueve.
+ */
+if (
+  Object.prototype.hasOwnProperty.call(HTMLElement.prototype, 'animate') &&
+  (HTMLElement.prototype as { animate?: unknown }).animate === undefined
+) {
+  delete (HTMLElement.prototype as { animate?: unknown }).animate;
+}
+
+/**
  * `decodeAccessToken` decodifica el JWT con `atob` y `TextDecoder`. Los dos
  * existen tanto en el navegador como en Node, pero **si jsdom cambiara y alguno
  * faltara**, el síntoma sería un puñado de pruebas fallando por «token
@@ -98,3 +119,16 @@ if (typeof atob !== 'function' || typeof TextDecoder !== 'function') {
     'El entorno de pruebas no expone `atob` o `TextDecoder`, que la lectura del JWT necesita.',
   );
 }
+
+/**
+ * AloVida Insights: el dominio no inventa datos, los recibe ya cargados (`InsightsData`).
+ * Las pruebas de dominio instalan el mismo conjunto de ejemplo que sirve el simulador, para
+ * medir contra los datos que ve la pantalla y no contra un doble.
+ */
+import { MOCK_CATALOG } from './app/core/mock/handlers/insights/catalog.dataset';
+import { mockCampaignFacts } from './app/core/mock/handlers/insights/facts.dataset';
+import { installCatalog } from './app/features/insights/domain/campaigns.data';
+import { installFacts } from './app/features/insights/domain/facts-source';
+
+installCatalog(MOCK_CATALOG);
+installFacts(mockCampaignFacts());

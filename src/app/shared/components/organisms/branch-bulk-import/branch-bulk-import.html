@@ -10,7 +10,11 @@
     <div class="bulk__template">
       <p class="bulk__note">
         Baje la plantilla, llénela en Excel o Google Sheets y guárdela como <strong>CSV</strong>.
-        Hasta {{ maxRows }} sucursales por archivo.
+        @if (maxSucursales() === null) {
+          Hasta {{ maxRows }} sucursales por archivo.
+        } @else {
+          Hasta {{ tope() }} sucursales en total; las que sobren no se agregan.
+        }
       </p>
       <button
         app-button

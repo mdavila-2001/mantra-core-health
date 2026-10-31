@@ -118,6 +118,11 @@ describe('MedicationBlock', () => {
     for (const opcional of http.match((r) => r.url === '/system-context/dynamic-enums')) {
       opcional.flush(CATALOGO_OPCIONAL);
     }
+    // El estado del consentimiento dirigido de cada ítem se lee aparte: se
+    // responde vacío para que `verify()` siga hablando de lo que esta prueba mira.
+    for (const consentimiento of http.match((r) => r.url === '/consent/treatment-informed-consents')) {
+      consentimiento.flush({ items: [] });
+    }
     http.verify();
   });
 
@@ -254,6 +259,41 @@ describe('MedicationBlock', () => {
     req.flush(RESPUESTA);
   });
 
+  it('ancla el 422 estructurado de la API al campo Medicamento', async () => {
+    responderCatalogo();
+    señal<string>('medicamento').set('med-amoxi');
+    await interno<() => Promise<void>>('recetar')();
+
+    http.expectOne('/clinical/medication-requests').flush(
+      {
+        code: 'VALIDATION_FAILED',
+        message: 'Error de validación.',
+        timestamp: '',
+        path: '/clinical/medication-requests',
+        correlationId: 'corr-receta-validation',
+        details: {
+          fields: [
+            {
+              field: 'medicationConceptId',
+              constraints: ['isNotEmpty'],
+              messages: ['Elija un medicamento del catálogo.'],
+            },
+          ],
+        },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    fixture.detectChanges();
+
+    const campo = [...fixture.nativeElement.querySelectorAll('app-form-field')].find((element) =>
+      element.textContent?.includes('Medicamento'),
+    );
+    expect(campo?.querySelector('.form-field-error')?.textContent).toContain(
+      'Elija un medicamento del catálogo.',
+    );
+    expect(campo?.querySelector('input')?.getAttribute('aria-invalid')).toBe('true');
+  });
+
   it('sin diagnóstico elegido la clave no viaja: la receta sintomática es legítima', async () => {
     responderCatalogo();
 
@@ -291,6 +331,22 @@ describe('MedicationBlock', () => {
     expect(opciones.map((o) => o.value)).toEqual(['cond-1', '__otro_motivo__']);
     expect(opciones[0]?.label).toBe(`Faringitis aguda · Confirmado el ${fechaEsperada}`);
     expect(opciones[1]?.label).toBe('Otro motivo — escribirlo');
+  });
+
+  it('C5: ofrece también el confirmado sin fecha de decisión, sin inventarle una', () => {
+    responderCatalogo();
+    fixture.componentRef.setInput('diagnosticos', [
+      // Confirmado en la semilla o cargado ya confirmado: no hay registro de la decisión.
+      { id: 'cond-1', etiqueta: 'Hipertensión arterial esencial', confirmado: true, confirmadoEl: null },
+      { id: 'cond-2', etiqueta: 'Dislipidemia', confirmado: false, confirmadoEl: null },
+    ]);
+    fixture.detectChanges();
+
+    const opciones = interno<() => readonly { value: string | null; label: string }[]>(
+      'opcionesDeIndicacion',
+    )();
+    expect(opciones.map((o) => o.value)).toEqual(['cond-1', '__otro_motivo__']);
+    expect(opciones[0]?.label).toBe('Hipertensión arterial esencial · Confirmado');
   });
 
   it('manda dosis, frecuencia y cantidad cuando se cargaron', async () => {
@@ -1005,6 +1061,32 @@ describe('MedicationBlock', () => {
   });
   /* -- El porqué de la receta (pedido del cliente) ------------------------- */
 
+  /**
+   * Cambio de requisito (30/10/2026): en la consulta la respuesta del formulario
+   * médico se **ofrece** y ya no se exige. Ofrecerla no bloquea el botón; exigirla
+   * (como antes) sí, mientras no haya una elegida.
+   */
+  describe('la respuesta del formulario médico, ofrecida y exigida', () => {
+    it('ofrecerla no bloquea la emisión; exigirla sí, hasta que se elige una', () => {
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(false);
+
+      fixture.componentRef.setInput('exigeRespuesta', true);
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(true);
+    });
+
+    /** Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo. */
+    it('ofrecerla NO exime del encuentro abierto: sin él no se emite', () => {
+      fixture.componentRef.setInput('ofreceRespuesta', true);
+      fixture.componentRef.setInput('encounterId', null);
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(true);
+
+      fixture.componentRef.setInput('encounterId', 'enc-1');
+      expect(interno<() => boolean>('faltaRespuesta')()).toBe(false);
+    });
+  });
+
   describe('el porqué de la receta', () => {
     it('C5: sin diagnóstico ni motivo NO se puede prescribir — la receta siempre se liga a uno de los dos', () => {
       responderCatalogo();
@@ -1120,6 +1202,77 @@ describe('MedicationBlock', () => {
       responderCatalogo();
       interno<(v: number | 'continuo' | null) => void>('elegirDuracionRapida')(7);
       expect(componente.tieneCambiosPendientes()).toBe(true);
+    });
+  });
+
+  describe('consentimiento informado dirigido a la receta', () => {
+    const CONSENTIDO = {
+      id: 'c-1', patientProfileId: 'p-1', encounterId: 'enc-1',
+      targetType: 'MEDICATION_REQUEST', targetId: 'rx-1', targetLabel: 'Amoxicilina 500 mg',
+      decision: 'ACCEPTED', status: 'ACTIVE', diagnosisText: null, purposeText: 'x', benefitsText: 'y',
+      risksText: 'z', personalizedRisksText: null, alternativesText: null, refusalConsequencesText: null,
+      patientQuestionsText: null, grantedBy: 'PATIENT', representativeName: null, representativeDocument: null,
+      representativeRelationship: null, incapacityReason: null, informedByProfileId: null, channel: 'IN_PERSON',
+      exceptionType: null, exceptionJustification: null, withdrawalReason: null,
+      signedAt: '2026-10-01T10:00:00.000Z', withdrawnAt: null, createdAt: '2026-10-01T10:00:00.000Z',
+      evidence: [{ id: 'ev-1', evidenceTypeConceptId: null, capturedChannelConceptId: null, recordedAt: '2026-10-01T10:00:00.000Z' }],
+    };
+
+    it('cada receta muestra el estado de SU consentimiento, leído una vez por paciente', () => {
+      fixture.componentRef.setInput('recetas', [BORRADOR, FIRMADA]);
+      responderCatalogo();
+      const lectura = http.expectOne((r) => r.url === '/consent/treatment-informed-consents');
+      expect(lectura.request.params.get('patientProfileId')).toBe('p-1');
+      lectura.flush({ items: [CONSENTIDO] });
+      fixture.detectChanges();
+
+      const estados = [
+        ...(fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="consent-state"]'),
+      ].map((e) => e.getAttribute('data-estado'));
+      expect(estados).toEqual(['ACCEPTED', 'NONE']);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain('Firmado');
+    });
+
+    it('una receta emitida sigue ofreciendo su consentimiento, y sólo eso', () => {
+      fixture.componentRef.setInput('recetas', [{ ...BORRADOR, firmada: true, emitida: true, estado: 'Emitida' }]);
+      responderCatalogo();
+      const pantalla = fixture.nativeElement as HTMLElement;
+      const disparador = pantalla.querySelector<HTMLElement>('[aria-label="Acciones de la receta"]');
+      expect(disparador).not.toBeNull();
+      // El menú dibuja sus ítems al abrirse.
+      disparador!.click();
+      fixture.detectChanges();
+      expect(document.querySelector('[data-testid="prescription-consent"]')).not.toBeNull();
+      expect(pantalla.textContent).not.toContain('Firmar');
+      expect(pantalla.textContent).not.toContain('Emitir');
+    });
+
+    it('la acción abre el consentimiento dirigido a esa receta, con su nombre', () => {
+      fixture.componentRef.setInput('recetas', [BORRADOR]);
+      responderCatalogo();
+      interno<{ target: WritableSignal<RecetaEnFicha | null> }>('consent').target.set(BORRADOR);
+      fixture.detectChanges();
+      expect(interno<(r: RecetaEnFicha) => string>('prescriptionLabel')(BORRADOR)).toBe(
+        'Amoxicilina 500 mg · 500 mg · cada 8 horas',
+      );
+      const panel = document.querySelector('app-informed-consent-panel');
+      expect(panel).not.toBeNull();
+      // El panel lee el historial de ESTA receta.
+      const historial = http
+        .match((r) => r.url === '/consent/treatment-informed-consents')
+        .find((r) => r.request.params.get('targetId') === 'rx-1');
+      expect(historial?.request.params.get('targetType')).toBe('MEDICATION_REQUEST');
+      historial?.flush({ items: [] });
+    });
+
+    it('la receta sin consulta propia se ata a la abierta del contexto', () => {
+      fixture.componentRef.setInput('encounterId', 'enc-abierto');
+      fixture.componentRef.setInput('recetas', [BORRADOR]);
+      responderCatalogo();
+      interno<{ target: WritableSignal<RecetaEnFicha | null> }>('consent').target.set(BORRADOR);
+      expect(interno<{ encounterId: () => string | null }>('consent').encounterId()).toBe('enc-abierto');
+      interno<{ target: WritableSignal<RecetaEnFicha | null> }>('consent').target.set({ ...BORRADOR, encounterId: 'enc-propio' });
+      expect(interno<{ encounterId: () => string | null }>('consent').encounterId()).toBe('enc-propio');
     });
   });
 

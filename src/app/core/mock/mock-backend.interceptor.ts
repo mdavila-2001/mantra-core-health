@@ -152,11 +152,43 @@ function atender(
     };
   }
 
+  anotarEnElRegistro(method, path, request, respuesta);
   return timer(latencia(path)).pipe(mergeMap(() => emitir(request, respuesta)));
 }
 
 function comoRespuesta(resultado: unknown): MockReply {
   return isMockReply(resultado) ? resultado : { status: 200, body: resultado };
+}
+
+/**
+ * Registro de peticiones de la maqueta, **sólo si la sesión lo pide**
+ * (`sessionStorage['mock:registrar'] = '1'`).
+ *
+ * La maqueta responde dentro de Angular, así que Playwright no ve ninguna
+ * petición de red: sin esto, la cadena «UI → petición → respuesta» de una
+ * prueba de mutación sólo se podía afirmar, no mostrar. Escrituras nada más
+ * (las lecturas son ruido), con método, ruta, `If-Match`, cuerpo y estado.
+ * Apagado por defecto y muere con la pestaña, igual que `mock:fallos`.
+ */
+function anotarEnElRegistro(method: MockMethod, path: string, request: HttpRequest<unknown>, respuesta: MockReply): void {
+  if (method === 'GET' || typeof sessionStorage === 'undefined') return;
+  try {
+    if (sessionStorage.getItem('mock:registrar') !== '1') return;
+    const previo: unknown = JSON.parse(sessionStorage.getItem('mock:registro') ?? '[]');
+    const lista = Array.isArray(previo) ? previo.slice(-49) : [];
+    lista.push({
+      method,
+      path,
+      query: request.params.toString(),
+      ifMatch: request.headers.get('If-Match'),
+      body: request.body,
+      status: respuesta.status,
+      at: new Date().toISOString(),
+    });
+    sessionStorage.setItem('mock:registro', JSON.stringify(lista));
+  } catch {
+    // Almacenamiento lleno o bloqueado: el registro es una ayuda, no un requisito.
+  }
 }
 
 /**
@@ -205,6 +237,8 @@ export interface PeticionAtendida {
    * El resto no se guarda: serían trescientas copias de fixtures grandes.
    */
   readonly response?: unknown;
+  /** Lo que respondió, resumido: estado de la admisión, no el cuerpo entero. Solo JSON. */
+  readonly respuesta?: unknown;
 }
 
 /** Las rutas de las que `window.__mockRequests` guarda también lo que contestó el simulador. */
@@ -232,15 +266,26 @@ function cuerpoComoJson(cuerpo: unknown): unknown {
   }
 }
 
-function anotarPeticion(request: HttpRequest<unknown>, status: number, respuesta?: unknown): void {
+function anotarPeticion(request: HttpRequest<unknown>, status: number, cuerpoRespuesta?: unknown): void {
   if (typeof window === 'undefined') return;
   const global = window as unknown as { __mockRequests?: PeticionAtendida[] };
   const registro = (global.__mockRequests ??= []);
   const body = cuerpoComoJson(request.body);
   const base = environment.apiBaseUrl.replace(/\/$/, '');
   const url = base !== '' && request.urlWithParams.startsWith(base) ? request.urlWithParams.slice(base.length) : request.urlWithParams;
-  const conRespuesta = RESPUESTAS_RECORDADAS.test(url) && status < 400 ? { response: cuerpoComoJson(respuesta) } : {};
-  registro.push({ method: request.method.toUpperCase(), url, status, body, ...conRespuesta });
+  const conRespuesta =
+    RESPUESTAS_RECORDADAS.test(url) && status < 400 ? { response: cuerpoComoJson(cuerpoRespuesta) } : {};
+  // Solo lo chico: guardar cada catálogo entero haría de esta lista un problema de memoria.
+  const completa = cuerpoRespuesta instanceof Blob ? null : cuerpoComoJson(cuerpoRespuesta);
+  const respuesta = completa !== null && JSON.stringify(completa).length <= 400_000 ? completa : null;
+  registro.push({
+    method: request.method.toUpperCase(),
+    url,
+    status,
+    body,
+    ...conRespuesta,
+    ...(respuesta === null ? {} : { respuesta }),
+  });
   if (registro.length > PETICIONES_RECORDADAS) registro.shift();
 }
 

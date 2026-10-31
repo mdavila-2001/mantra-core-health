@@ -361,15 +361,27 @@
                 <span class="mis-formularios__texto">
                   <span class="mis-formularios__nombre">{{ plantilla.name }}</span>
                   <span class="mis-formularios__dato">
-                    {{ especialidadDe(plantilla) ?? 'Especialidad sin nombre en el catálogo' }}
+                    {{
+                      especialidadDe(plantilla) ??
+                        (esPorDefecto(plantilla)
+                          ? 'Para todas las especialidades'
+                          : 'Especialidad sin nombre en el catálogo')
+                    }}
                   </span>
                 </span>
                 <span class="mis-formularios__version" data-testid="mi-formulario-version">
                   Versión {{ plantilla.version }}
                 </span>
                 <span class="mis-formularios__propios">
-                  {{ cuantosPropios(plantilla) }}
-                  {{ cuantosPropios(plantilla) === 1 ? 'campo propio' : 'campos propios' }}
+                  @if (esPorDefecto(plantilla)) {
+                    <app-badge variant="info" size="sm" data-testid="mi-formulario-por-defecto">
+                      Por defecto
+                    </app-badge>
+                  }
+                  @if (!esPorDefecto(plantilla) || cuantosPropios(plantilla) > 0) {
+                    {{ cuantosPropios(plantilla) }}
+                    {{ cuantosPropios(plantilla) === 1 ? 'campo propio' : 'campos propios' }}
+                  }
                 </span>
                 <span class="mis-formularios__flecha" aria-hidden="true">
                   <app-nav-icon name="arrow-right" />

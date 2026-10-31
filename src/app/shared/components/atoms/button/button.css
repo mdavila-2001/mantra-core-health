@@ -15,6 +15,19 @@
   --_btn-fg: currentColor;
   --_btn-bg-hover: var(--_btn-bg);
   --_btn-fg-hover: var(--_btn-fg);
+  /* El suelo de alto que fija el talle, o el que pida el contenedor. */
+  --_btn-block: max(var(--_btn-side, 0px), var(--btn-min-block, 0px));
+
+  /* Ganchos del contenedor (no del llamador). Un organismo que alinea
+     botones —el membrete de página— necesita que todos midan lo mismo y, en
+     teléfono, que se repartan la fila. No puede tocarlos desde su hoja (son
+     contenido proyectado: la encapsulación los deja fuera de su alcance), así
+     que los declara como variables y el botón las lee:
+       --btn-min-block   alto mínimo (p. ej. 44 px táctil);
+       --btn-flex        el `flex` del botón dentro de la fila del contenedor;
+       --btn-font-size   la letra del talle `sm`, que a 44 px de alto se pierde.
+     Sin contenedor que las declare, todo queda como antes. */
+  flex: var(--btn-flex, 0 1 auto);
 
   font-family: var(--font-body);
   font-weight: 600;
@@ -122,9 +135,9 @@
 
 :host(.btn--sm) {
   --_btn-side: 32px;
-  font-size: var(--fs-caption);
+  font-size: var(--btn-font-size, var(--fs-caption));
   padding: var(--sp-2) 14px;
-  min-height: var(--_btn-side);
+  min-height: var(--_btn-block);
 }
 
 /* Base = móvil: md y lg comparten el área táctil mínima de 44 px. min-height y el
@@ -135,7 +148,7 @@
   --_btn-side: 44px;
   padding: var(--sp-3) var(--sp-5);
   font-size: 14.5px;
-  min-height: var(--_btn-side);
+  min-height: var(--_btn-block);
 }
 
 /* Desde 780px (tablet/escritorio) cada talle recupera su geometría del spec. */
@@ -156,7 +169,7 @@
 /* ---- modo ícono: solo geometría; el color lo sigue poniendo la variante -- */
 
 :host(.btn--icon-only) {
-  width: var(--_btn-side);
+  width: var(--_btn-block);
   padding: 0;
   border-radius: var(--r-full);
 }

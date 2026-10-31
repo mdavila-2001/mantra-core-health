@@ -127,6 +127,17 @@ describe('PharmacyProducts', () => {
 
   afterEach(() => http.verify());
 
+  it('montada como pestaña de «Catálogo» (`embedded`) no dibuja su membrete', () => {
+    mount();
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('app-page-header')).not.toBeNull();
+
+    fixture.componentRef.setInput('embedded', true);
+    fixture.detectChanges();
+
+    expect(host.querySelector('app-page-header')).toBeNull();
+  });
+
   it('con una sola farmacia no pregunta cuál y lista todo su catálogo, borradores y retirados incluidos', () => {
     mount([
       product({}),

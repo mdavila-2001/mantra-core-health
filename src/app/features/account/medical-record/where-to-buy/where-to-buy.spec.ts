@@ -74,6 +74,10 @@ function jwt(payload: Record<string, unknown>): string {
   return `${b64({ alg: 'HS256' })}.${b64(payload)}.firma`;
 }
 
+/**
+ * Una receta de dos renglones: los dos nacieron en la misma consulta
+ * (`enc-1`), así que «Dónde comprar» los toma juntos (FAR-03 · D-3).
+ */
 const SUMMARY = {
   patientProfileId: 'pp-1',
   conditions: [],
@@ -83,6 +87,7 @@ const SUMMARY = {
       id: 'm-1',
       medicationConceptId: FIXTURE_IDS.conceptoAmoxicilina,
       statusConceptId: 'st-activa',
+      encounterId: 'enc-1',
       doseText: '500 mg',
       frequencyText: 'cada 8 horas',
       issuedAt: '2026-03-01T11:00:00.000Z',
@@ -92,6 +97,7 @@ const SUMMARY = {
       id: 'm-2',
       medicationConceptId: FIXTURE_IDS.conceptoIbuprofeno,
       statusConceptId: 'st-activa',
+      encounterId: 'enc-1',
       doseText: '400 mg',
       issuedAt: '2026-03-02T09:00:00.000Z',
       createdAt: '2026-03-02T08:30:00.000Z',
@@ -118,8 +124,13 @@ const CONCEPTS = {
       display: 'Ibuprofeno',
       codeSystemVersionId: 'v1',
     },
+    // Los estados de un ítem de receta, con los códigos del catálogo de la API
+    // (`clinical.concepts.ts`): sólo `MR_ISSUED` se puede pedir (FAR-03).
+    { conceptId: 'st-activa', code: 'MR_ISSUED', display: 'Emitida', codeSystemVersionId: 'v1' },
+    { conceptId: 'st-borrador', code: 'MR_DRAFT', display: 'Borrador', codeSystemVersionId: 'v1' },
+    { conceptId: 'st-anulada', code: 'MR_INVALIDATED', display: 'Anulada', codeSystemVersionId: 'v1' },
   ],
-  count: 2,
+  count: 5,
   limit: 200,
 };
 
@@ -1149,6 +1160,210 @@ describe('WhereToBuy', () => {
 
     expect(harness.routeNativeElement?.querySelector('[data-testid="where-to-buy-items"]')).toBeNull();
     // `http.verify()` del afterEach confirma que no salió nada más.
+  });
+
+  /**
+   * FAR-03 · D-3: el pedido viaja bajo un único `medicationRequestId`, y la API
+   * rechaza el producto que esa receta no prescribe. Con dos recetas de
+   * consultas distintas en la historia, la lista, la consulta, el borrador y el
+   * carrito llevan sólo los fármacos de la elegida.
+   */
+  describe('sólo la receta elegida (FAR-03 · D-3)', () => {
+    const TWO_PRESCRIPTIONS = {
+      ...SUMMARY,
+      medicationRequests: [
+        { ...SUMMARY.medicationRequests[0], encounterId: 'enc-a' },
+        { ...SUMMARY.medicationRequests[1], encounterId: 'enc-b' },
+      ],
+    };
+
+    /** Resumen con dos recetas → etiquetas y producto sólo de la amoxicilina. */
+    function respondWithTwoPrescriptions(): void {
+      http
+        .expectOne((r) => r.url === '/clinical/patients/pp-1/summary')
+        .flush(TWO_PRESCRIPTIONS);
+      const labels = http.expectOne((r) => r.url === '/terminology/concepts');
+      // El medicamento y el estado de la fila: el código del estado dice si se puede pedir.
+      expect(labels.request.params.get('ids')).toBe(`${FIXTURE_IDS.conceptoAmoxicilina},st-activa`);
+      labels.flush(CONCEPTS);
+      http
+        .expectOne(
+          (r) =>
+            r.url === '/pharmacy/products' &&
+            r.params.get('conceptId') === FIXTURE_IDS.conceptoAmoxicilina,
+        )
+        .flush(productosDelConcepto(FIXTURE_IDS.conceptoAmoxicilina));
+      // El ibuprofeno es de otra consulta: ni se busca su producto.
+      http.expectNone(
+        (r) =>
+          r.url === '/pharmacy/products' &&
+          r.params.get('conceptId') === FIXTURE_IDS.conceptoIbuprofeno,
+      );
+      http.expectOne('/profiles/patients/me').flush(PROFILE_WITHOUT_PLACES);
+      harness.detectChanges();
+
+      const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+      expect(query.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
+      query.flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+    }
+
+    it('la lista y el borrador del pedido llevan sólo los fármacos de la receta elegida', async () => {
+      await mount('m-1');
+      respondWithTwoPrescriptions();
+
+      const list = harness.routeNativeElement?.querySelector(byTestId('where-to-buy-items'));
+      expect(list?.querySelectorAll('input[type="checkbox"]')).toHaveLength(1);
+      expect(list?.textContent).toContain('Amoxicilina');
+      expect(list?.textContent).not.toContain('Ibuprofeno');
+
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      harness.routeNativeElement
+        ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-send-order'))
+        ?.click();
+      harness.detectChanges();
+
+      const draft = TestBed.inject(PharmacyOrdersClient).borradorPreparado();
+      expect(draft?.requestId).toBe('m-1');
+      expect(draft?.lineas.map((line) => line.medicamento)).toEqual(['Amoxicilina']);
+    });
+
+    it('el carrito de la receta lleva sólo los fármacos de la elegida', async () => {
+      await mount('m-1');
+      respondWithTwoPrescriptions();
+
+      vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+      cartButtons()[0]?.click();
+      harness.detectChanges();
+
+      const currentCart = TestBed.inject(CartStore).cart();
+      expect(currentCart?.requestId).toBe('m-1');
+      expect(currentCart?.lines.map((line) => line.name)).toEqual(['Amoxicilina']);
+    });
+
+    /*
+     * Ronda 2 (auditoría H1): el resumen trae las filas en cualquier estado.
+     * Mismo encuentro, con la forma real del cable (`issuedAt: null` en el
+     * borrador, la anulada conserva su `issuedAt`):
+     *
+     * | Fila | Fármaco     | Estado          |
+     * |------|-------------|-----------------|
+     * | m-3  | Amoxicilina | borrador (renovación, la más nueva) |
+     * | m-2  | Ibuprofeno  | anulada         |
+     * | m-1  | Amoxicilina | emitida         |
+     */
+    const DRAFT_RENEWAL = {
+      id: 'm-3',
+      medicationConceptId: FIXTURE_IDS.conceptoAmoxicilina,
+      statusConceptId: 'st-borrador',
+      encounterId: 'enc-1',
+      doseText: '500 mg',
+      issuedAt: null,
+      validTo: null,
+      createdAt: '2026-03-05T10:00:00.000Z',
+    };
+    const WITH_RENEWAL_AND_INVALIDATED = {
+      ...SUMMARY,
+      medicationRequests: [
+        DRAFT_RENEWAL,
+        { ...SUMMARY.medicationRequests[1], statusConceptId: 'st-anulada' },
+        SUMMARY.medicationRequests[0],
+      ],
+    };
+
+    /** Hasta la disponibilidad; las etiquetas, con estados o con el error que se pida. */
+    function respondWithStates(summary: object, labelsFail = false): void {
+      http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(summary);
+      const labels = http.expectOne((r) => r.url === '/terminology/concepts');
+      if (labelsFail) {
+        labels.flush(
+          { code: 'DEPENDENCY_UNAVAILABLE', message: 'Catalogue unavailable', correlationId: 'labels-1' },
+          { status: 503, statusText: 'Service Unavailable' },
+        );
+      } else {
+        labels.flush(CONCEPTS);
+      }
+      // Los productos se buscan en paralelo con las etiquetas, para toda la
+      // receta: lo que no se puede pedir se descarta después.
+      for (const conceptId of new Set(
+        (summary as typeof SUMMARY).medicationRequests.map((row) => row.medicationConceptId),
+      )) {
+        http
+          .expectOne((r) => r.url === '/pharmacy/products' && r.params.get('conceptId') === conceptId)
+          .flush(productosDelConcepto(conceptId));
+      }
+      http.expectOne('/profiles/patients/me').flush(PROFILE_WITHOUT_PLACES);
+      harness.detectChanges();
+    }
+
+    it.each(['m-3', 'm-2', 'm-1'])(
+      'abierta desde %s, deja afuera el borrador y la anulada, y el pedido viaja con la emitida',
+      async (chosen) => {
+        await mount(chosen);
+        respondWithStates(WITH_RENEWAL_AND_INVALIDATED);
+
+        const query = http.expectOne((r) => r.url === '/pharmacy-inventory/availability');
+        expect(query.request.params.get('products')).toBe(FIXTURE_IDS.productoAmoxicilina);
+        query.flush(DISPONIBILIDAD_FIXTURE);
+        harness.detectChanges();
+
+        const list = harness.routeNativeElement?.querySelector(byTestId('where-to-buy-items'));
+        expect(list?.querySelectorAll('input[type="checkbox"]')).toHaveLength(1);
+        expect(list?.textContent).toContain('Amoxicilina');
+        expect(list?.textContent).not.toContain('Ibuprofeno');
+        expect(list?.textContent).not.toContain('Aún no emitida');
+
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        harness.routeNativeElement
+          ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-send-order'))
+          ?.click();
+        harness.detectChanges();
+        const draft = TestBed.inject(PharmacyOrdersClient).borradorPreparado();
+        expect(draft?.requestId).toBe('m-1');
+        expect(draft?.lineas.map((line) => line.medicamento)).toEqual(['Amoxicilina']);
+
+        vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+        cartButtons()[0]?.click();
+        harness.detectChanges();
+        expect(TestBed.inject(CartStore).cart()?.requestId).toBe('m-1');
+      },
+    );
+
+    it('sin ninguna fila que se pueda pedir (vencida y anulada), lo dice y no consulta farmacias', async () => {
+      await mount('m-1');
+      respondWithStates({
+        ...SUMMARY,
+        medicationRequests: [
+          { ...SUMMARY.medicationRequests[0], validTo: '2020-01-01T00:00:00.000Z' },
+          { ...SUMMARY.medicationRequests[1], statusConceptId: 'st-anulada' },
+        ],
+      });
+
+      expect(harness.routeNativeElement?.querySelector(byTestId('where-to-buy-items'))).toBeNull();
+      expect(textOf()).toContain('Esta receta no se puede usar para comprar');
+      expect(textOf()).toContain('Volver a mi historia');
+      expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()).toBeNull();
+      // `http.verify()` del afterEach confirma que no salió la disponibilidad.
+    });
+
+    it('sin el catálogo de estados, el borrador (`issuedAt: null`) igual queda afuera', async () => {
+      await mount('m-3');
+      respondWithStates(
+        { ...SUMMARY, medicationRequests: [DRAFT_RENEWAL, SUMMARY.medicationRequests[0]] },
+        true,
+      );
+      http
+        .expectOne((r) => r.url === '/pharmacy-inventory/availability')
+        .flush(DISPONIBILIDAD_FIXTURE);
+      harness.detectChanges();
+
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+      harness.routeNativeElement
+        ?.querySelector<HTMLButtonElement>(byTestId('where-to-buy-send-order'))
+        ?.click();
+      harness.detectChanges();
+      expect(TestBed.inject(PharmacyOrdersClient).borradorPreparado()?.requestId).toBe('m-1');
+    });
   });
 
   /**

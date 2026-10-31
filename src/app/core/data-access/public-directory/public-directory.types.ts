@@ -20,6 +20,8 @@
     existe con sesión, y a descubrirlo recién en producción con un `undefined`.
     ========================================================================== */
 
+import type { VerificationDto } from '../../verification/verification-status';
+
 /** Los seis verticales del directorio. */
 export const PUBLIC_RESULT_KINDS = [
   'PRACTITIONER',
@@ -78,6 +80,11 @@ export interface PublicSearchResult {
   readonly avatarUrl: string | null;
   /** Sólo la verificación **activa** cuenta. Pendiente es `false`. */
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
   /** 1..5 con una decimal, o `null` cuando todavía no hay reseñas. */
   readonly ratingAverage: number | null;
   /** `0` con `ratingAverage: null` es el estado normal, no un error. */
@@ -273,6 +280,11 @@ export interface PublicProfileDetail {
   readonly avatarUrl: string | null;
   readonly coverUrl: string | null;
   readonly verified: boolean;
+  /**
+   * La verificación como la declara la API (campo ADITIVO). Ausente en una API
+   * que todavía no lo envía: `verificationOf` deriva entonces de `verified`.
+   */
+  readonly verification?: VerificationDto | null;
   readonly city: string | null;
   readonly address: string | null;
   readonly location: PublicLocation | null;

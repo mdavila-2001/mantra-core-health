@@ -2,6 +2,10 @@
      trayectoria que dibujar, y media trayectoria no se distingue de una
      trayectoria corta. El dibujo vive en practitioner-profile-view — la misma
      vista que usa la guía de profesionales para el perfil de otro doctor. -->
+<!-- La solicitud de verificación de quien atiende: su estado, qué falta y, si
+     corresponde, «Corregir y reenviar». Sin solicitud no dibuja nada. -->
+<app-admission-status-card />
+
 <app-view-state-host [state]="perfil()" (retry)="recargar()">
   @if (visible(); as perfil) {
     <!-- Lo que no llegó se dice, aunque la ficha siga en pie: un catálogo
@@ -40,6 +44,23 @@
           </button>
         </div>
       </app-alert>
+    }
+    <!-- «Mis verificaciones» (28/10/2026): está fuera del menú cerrado del médico,
+         y acá es donde uno viene a ver cómo lo ven y qué le falta. Un enlace,
+         no un botón: se puede abrir en otra pestaña y se anuncia como tal. -->
+    @if (veMisVerificaciones()) {
+      <p class="perfil__verificaciones">
+        <a
+          app-button
+          variant="secondary"
+          size="sm"
+          routerLink="/my-account/verifications"
+          data-testid="perfil-mis-verificaciones"
+        >
+          <app-nav-icon name="shield" aria-hidden="true" />
+          Mis verificaciones: el avance de su sello y sus solicitudes
+        </a>
+      </p>
     }
     <!-- Las tres entradas de abajo son el estado de operaciones que ocurren
          ACÁ —subir la foto, y por eso su curso y su fallo—; las tres salidas

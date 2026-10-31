@@ -157,7 +157,10 @@ function elegirDia(fixture: ComponentFixture<FollowUpBlock>): void {
 }
 
 describe('FollowUpBlock', () => {
-  afterEach(() => TestBed.resetTestingModule());
+  afterEach(() => {
+    vi.useRealTimers();
+    TestBed.resetTestingModule();
+  });
 
   /* ---- los tres estados ---------------------------------------------------- */
 
@@ -258,6 +261,12 @@ describe('FollowUpBlock', () => {
   });
 
   it('el calendario pinta de verde los días con lugar y de rojo los que no', async () => {
+    // El mes a la vista arranca en el de «mañana»: si hoy es el penúltimo día
+    // del mes, mañana es el único día en rango y no hay ninguno que pintar de
+    // rojo. Con el reloj fijo a mitad de mes la prueba no depende del día en
+    // que corra. Sólo se falsea `Date`: los temporizadores del test siguen reales.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 14, 10, 0, 0));
     const { fixture, http } = await montar({ cupos: [cupo('s-manana', manana(8, 30))] });
 
     const dias: HTMLButtonElement[] = Array.from(
@@ -461,6 +470,38 @@ describe('FollowUpBlock', () => {
 });
 
 /* ---- la partición de la jornada, como función pura ------------------------ */
+
+/**
+ * Cambio de requisito (30/10/2026): la reconsulta se agenda sin formulario médico.
+ * La respuesta se ofrece; sólo con `exigeRespuesta` bloquea, como antes.
+ */
+describe('FollowUpBlock · la respuesta del formulario médico', () => {
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('ofrecerla no bloquea el agendado; exigirla sí, hasta que se elige una', async () => {
+    const { fixture, http } = await montar({});
+    const bloque = fixture.componentInstance as unknown as Record<string, () => boolean>;
+
+    fixture.componentRef.setInput('ofreceRespuesta', true);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(false);
+
+    fixture.componentRef.setInput('exigeRespuesta', true);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(true);
+
+    // Decisión del cliente: sólo el formulario deja de ser obligatorio; el encuentro sigue siéndolo.
+    fixture.componentRef.setInput('exigeRespuesta', false);
+    fixture.componentRef.setInput('encounterId', null);
+    fixture.detectChanges();
+    expect(bloque['faltaRespuesta']()).toBe(true);
+    // El selector de la respuesta lee las del encuentro al dibujarse.
+    for (const lectura of http.match((r) => r.url === '/forms/instances')) {
+      lectura.flush({ encounterId: 'enc-1', items: [], limit: 50, truncated: false });
+    }
+    http.verify();
+  });
+});
 
 describe('enFranjas', () => {
   const recurso = RECURSO as never;

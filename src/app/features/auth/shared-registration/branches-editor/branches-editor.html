@@ -1,0 +1,106 @@
+<div class="sucursales">
+  @for (sucursal of sucursales(); track sucursal.id; let i = $index) {
+    <section class="sucursal" [attr.data-testid]="prefijoTestId() + '-' + sucursal.id">
+      <header class="sucursal__cabecera">
+        <h3 class="sucursal__titulo">Sucursal {{ i + 1 }}</h3>
+        <button
+          app-button
+          type="button"
+          variant="ghost"
+          size="sm"
+          [iconOnly]="true"
+          [attr.aria-label]="'Quitar la sucursal ' + (i + 1)"
+          [appTooltip]="'Quitar la sucursal ' + (i + 1)"
+          [attr.data-testid]="prefijoTestId() + '-quitar-' + sucursal.id"
+          (clicked)="quitar(sucursal.id)"
+        >
+          <app-nav-icon name="remove" />
+        </button>
+      </header>
+
+      <!-- La dirección sale del punto: la persona sólo lo marca. El campo sin
+           rótulo sólo existe para dar al mapa el mismo error accesible que a
+           los demás controles. El nombre va DENTRO del selector, como primer
+           campo de su rejilla (`disposicion`): junto a la calle y el distrito,
+           de a dos desde 672 px y de a tres desde 1120 px, en vez de una casilla
+           suelta a todo el ancho. -->
+      <app-form-field [errorMessage]="errorDePunto(sucursal)">
+        <app-map-location-picker
+          [pinId]="sucursal.id"
+          [inicial]="sucursal.gps"
+          disposicion="tres-columnas"
+          etiquetaConfirmada="Esta sucursal"
+          etiquetaQuitar="Quitar la ubicación de esta sucursal"
+          etiquetaMapa="La ubicación de esta sucursal en el mapa"
+          etiquetaFicha="La dirección de esta sucursal"
+          [ids]="idsDe(sucursal.id)"
+          (confirmado)="fijarGps(sucursal.id, $event)"
+          (localidad)="escribirLocalidad(sucursal.id, $event)"
+        >
+          <app-form-field
+            campo-previo
+            icon="building"
+            [label]="'Nombre de la sucursal ' + (i + 1)"
+            [errorMessage]="errorDeNombre(sucursal)"
+          >
+            <app-input
+              [testId]="prefijoTestId() + '-' + sucursal.id + '-nombre'"
+              placeholder="Sucursal Equipetrol"
+              [value]="sucursal.nombre"
+              [hasError]="errorDeNombre(sucursal) !== ''"
+              (valueChange)="escribirNombre(sucursal.id, $event)"
+            />
+          </app-form-field>
+        </app-map-location-picker>
+      </app-form-field>
+    </section>
+  } @empty {
+    <p class="sucursales__vacio">
+      Todavía no agregó ninguna. Si atiende en un solo local, no hace falta.
+    </p>
+  }
+
+  <div class="sucursales__acciones">
+    <button
+      app-button
+      type="button"
+      variant="secondary"
+      size="sm"
+      [disabled]="lleno()"
+      [attr.data-testid]="prefijoTestId() + '-agregar-sucursal'"
+      (clicked)="agregar()"
+    >
+      + Agregar sucursal
+    </button>
+    <button
+      app-button
+      type="button"
+      variant="ghost"
+      size="sm"
+      [disabled]="lleno()"
+      [attr.data-testid]="prefijoTestId() + '-subir-sucursales'"
+      (clicked)="cargaEnLoteAbierta.set(true)"
+    >
+      Subir sucursales en lote (CSV)
+    </button>
+  </div>
+
+  @if (lleno()) {
+    <p class="sucursales__vacio" [attr.data-testid]="prefijoTestId() + '-tope'">
+      Llegó al máximo de {{ maximo() }} sucursales.
+    </p>
+  }
+  @if (avisoDeLote(); as aviso) {
+    <p class="sucursales__vacio" role="status" [attr.data-testid]="prefijoTestId() + '-aviso-lote'">{{ aviso }}</p>
+  }
+
+  @if (cargaEnLoteAbierta()) {
+    <app-branch-bulk-import
+      [testIdPrefix]="prefijoTestId() + '-lote'"
+      [maxSucursales]="maximo()"
+      [existingNames]="nombresEscritos()"
+      (imported)="agregarEnLote($event)"
+      (closed)="cargaEnLoteAbierta.set(false)"
+    />
+  }
+</div>

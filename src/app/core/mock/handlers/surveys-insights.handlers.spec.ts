@@ -76,10 +76,13 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
     llamar<SurveyInsights>('GET', '/surveys/insights', medica, {}, new URLSearchParams({ from, to }));
 
   describe('encuesta base', () => {
-    it('consulta: nueve preguntas, las ocho primeras obligatorias y el comentario no', () => {
-      expect(PREGUNTAS_BASE_CONSULTA).toHaveLength(9);
-      expect(PREGUNTAS_BASE_CONSULTA.slice(0, 8).every((p) => p.required)).toBe(true);
-      expect(PREGUNTAS_BASE_CONSULTA[8]).toMatchObject({ answerType: 'TEXT', required: false });
+    it('consulta (v2): doce preguntas, obligatorias salvo la medicación y el comentario', () => {
+      expect(PREGUNTAS_BASE_CONSULTA).toHaveLength(12);
+      expect(PREGUNTAS_BASE_CONSULTA.filter((p) => !p.required).map((p) => p.dimension)).toEqual([
+        'revision_medicacion',
+        'comentario_abierto',
+      ]);
+      expect(PREGUNTAS_BASE_CONSULTA[11]).toMatchObject({ answerType: 'TEXT', required: false });
     });
 
     it('servicio: siete preguntas, todas opcionales', () => {
@@ -98,8 +101,8 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
         'Más de 1 hora',
         'No lo recuerdo',
       ]);
-      expect(PREGUNTAS_BASE_CONSULTA[7]).toMatchObject({ scaleMin: 0, scaleMax: 10, dimension: 'recomendacion_nps' });
-      expect(PREGUNTAS_BASE_CONSULTA[5]!.options![1]).toBe('Sí, y deseo que ALOVIDA me contacte para dar seguimiento');
+      expect(PREGUNTAS_BASE_CONSULTA[10]).toMatchObject({ scaleMin: 0, scaleMax: 10, dimension: 'recomendacion_nps' });
+      expect(PREGUNTAS_BASE_CONSULTA[8]!.options![1]).toBe('Sí, y deseo que ALOVIDA me contacte para dar seguimiento');
       expect(PREGUNTAS_BASE_SERVICIO[0]!.questionText).toBe(
         'Desde la hora acordada (o desde que llegó, si no tenía hora), ¿cuánto esperó hasta que le atendieron?',
       );
@@ -359,7 +362,7 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
       return match.handler({ method: 'GET', path: '/surveys/me/invitations', params: match.params, query: new URLSearchParams(), body: {}, headers: new HttpHeaders(), user: paciente }) as never;
     };
 
-    it('la consulta completada emite la encuesta base de CONSULTA, con sus 9 preguntas y source SYSTEM', async () => {
+    it('la consulta completada emite la encuesta base de CONSULTA, con todas sus preguntas y source SYSTEM', async () => {
       const { emitirInvitacionDeAtencion } = await import('./surveys-forms.handlers');
       const { reservas } = await import('../fixtures/agenda');
       // Una consulta de la paciente que todavía no tenga invitación (las sembradas ya la tienen).
@@ -375,9 +378,9 @@ describe('simulador de encuestas: resumen del médico y asociación', () => {
 
       const match = registro.match('GET', `/surveys/me/invitations/${nuevas[0]!.id}`)!;
       const detalle = match.handler({ method: 'GET', path: '', params: match.params, query: new URLSearchParams(), body: {}, headers: new HttpHeaders(), user: paciente }) as { questions: { source?: string; required: boolean }[] };
-      expect(detalle.questions).toHaveLength(9);
+      expect(detalle.questions).toHaveLength(PREGUNTAS_BASE_CONSULTA.length);
       expect(detalle.questions.every((q) => q.source === 'SYSTEM')).toBe(true);
-      expect(detalle.questions.filter((q) => q.required)).toHaveLength(8);
+      expect(detalle.questions.filter((q) => q.required)).toHaveLength(PREGUNTAS_BASE_CONSULTA.filter((q) => q.required).length);
     });
 
     it('es idempotente por reserva: completar dos veces no emite dos veces', async () => {

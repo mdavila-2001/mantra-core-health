@@ -7,8 +7,15 @@ import {
   PATIENT_SEARCH_SIMULATOR_EXTENSIONS,
   PRACTITIONER_PROFILE_SIMULATOR_EXTENSIONS,
 } from '../../data-access/profiles/profiles.types';
-import { DIRECT_MESSAGE_CONTRACT_PENDING_KEYS } from '../../data-access/community/community.types';
-import { REFERRAL_CONTRACT_PENDING_KEYS } from '../../data-access/referrals/referrals.types';
+import { INFORMED_CONSENT_CONTRACT_PENDING_KEYS } from '../../data-access/informed-consents/informed-consents.types';
+import {
+  REFERRAL_CONTRACT_PENDING_KEYS,
+  REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
+} from '../../data-access/referrals/referrals.types';
+import {
+  CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
+  DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
+} from '../../data-access/community/community.types';
 
 /* ============================================================================
     Claves que la maqueta acepta aunque el DTO de la API no las declare.
@@ -40,6 +47,11 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   // A diferencia del resto, el cliente SÍ las manda a la API real — ver
   // `REFERRAL_CONTRACT_PENDING_KEYS` —; se borra al regenerar el contrato.
   'POST /referrals': REFERRAL_CONTRACT_PENDING_KEYS,
+  'PATCH /referrals/:id/respond': REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
+  // Consentimiento informado DIRIGIDO (v4266): mismo caso que el de arriba.
+  'POST /consent/treatment-informed-consents': INFORMED_CONSENT_CONTRACT_PENDING_KEYS,
+  // Respuesta automática redactada por la IA: falta la columna del modo en el modelo.
+  'PUT /community/profiles/:profileId/auto-reply': CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
   // Personal de apoyo que responde en nombre del doctor (ronda «personal de
   // apoyo»): la API lo acepta, el `openapi.json` aún no lo trae. El cliente SÍ
   // lo manda a la API real; se borra al regenerar el contrato.

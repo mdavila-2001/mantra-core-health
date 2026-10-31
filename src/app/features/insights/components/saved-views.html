@@ -1,0 +1,29 @@
+<button type="button" class="sv__btn" aria-haspopup="true" [attr.aria-expanded]="open()" (click)="open.set(!open())">
+  Vistas guardadas
+  @if (views().length) {
+    <span class="sv__n">{{ views().length }}</span>
+  }
+</button>
+@if (open()) {
+  <div class="sv__panel" role="dialog" aria-label="Vistas guardadas">
+    <form class="sv__form" (submit)="$event.preventDefault(); save()">
+      <label class="sv__label" for="sv-name">Guardar la vista actual</label>
+      <div class="sv__row">
+        <input id="sv-name" class="sv__input" type="text" maxlength="60" placeholder="Ej.: Campañas octubre — rendimiento" [value]="draft()" (input)="type($event)" />
+        <button type="submit" class="sv__save" [disabled]="!draft().trim()">Guardar</button>
+      </div>
+    </form>
+    @if (views().length) {
+      <ul class="sv__list">
+        @for (v of views(); track v.name) {
+          <li class="sv__item">
+            <button type="button" class="sv__go" (click)="go(v)">{{ v.name }}</button>
+            <button type="button" class="sv__del" [attr.aria-label]="'Eliminar la vista ' + v.name" (click)="remove(v.name)">×</button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="sv__empty">Aún no hay vistas guardadas. Elija filtros, escriba un nombre y guárdelos para volver a este análisis con un clic.</p>
+    }
+  </div>
+}

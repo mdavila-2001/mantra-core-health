@@ -1,0 +1,21 @@
+/* Paleta de series de AloVida Insights.
+   Las series son alias de `--chart-1..6`, los tokens categóricos del sistema, que
+   cambian solos entre claro y oscuro. Medidos con el validador de dataviz
+   (`validate_palette.js`, orden fijo, vecinas adyacentes): PASS en claro sobre
+   `#FFFFFF` y en oscuro sobre `--bg-surface`. La paleta anterior, derivada de la marca
+   con `color-mix`, FALLABA (diferencia de color entre vecinas 6–8, bajo el mínimo de 15).
+   El validador avisa de contraste < 3:1 en `--chart-3`, `--chart-4` y `--chart-5` en claro:
+   por eso cada serie lleva rótulo directo y una tabla equivalente, y el color nunca va
+   solo. El ámbar (`--chart-4`) se reserva para una sola serie de acento. */
+:host {
+  --ins-s1: var(--chart-1);
+  --ins-s2: var(--chart-2);
+  --ins-s3: var(--chart-3);
+  --ins-s4: var(--chart-4);
+  --ins-s5: var(--chart-5);
+  --ins-s6: var(--chart-6);
+  --ins-grid: var(--border-default);
+  --ins-axis: var(--text-muted);
+  --ins-good: var(--st-success-fg);
+  --ins-bad: var(--st-error-fg);
+}

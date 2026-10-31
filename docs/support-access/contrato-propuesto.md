@@ -65,7 +65,7 @@ Coincide con `SessionPolicyDto` y con `domain/session-policy.ts`:
 organizaciones) que solo llega a `/iam/me/mfa*`, al cierre de sesión, al refresco y a `GET /iam/me`; lo demás es `403
 MFA_ENROLLMENT_REQUIRED`. El refresco lo conserva y lo **reemite completo** al confirmar el factor: la pantalla de alta pide ese
 refresco. `mfaEnrollmentGuard` se conserva como cortesía (lleva a la pantalla de alta; ya no pregunta `GET /iam/me/mfa`: el claim lo dice).
-Ver [ADR-0018](../adr/ADR-0018-segundo-paso-lo-hace-cumplir-el-cliente.md).
+Ver [ADR-0020](../adr/ADR-0020-segundo-paso-lo-hace-cumplir-el-cliente.md).
 
 ### Organizaciones que niegan ahora (`deniedTenants`)
 

@@ -94,6 +94,9 @@ const DESTINOS_DE_LA_CABECERA: readonly string[] = [
 /** El panel. Constante y no literal suelto: lo miran dos cosas distintas acá. */
 const PANEL = '/dashboard';
 
+/** Un hilo de chat abierto: `/messaging/:conversationId`. */
+const HILO_DE_CHAT = /^\/messaging\/[^/]+$/u;
+
 /**
  * Armazón de todas las pantallas con sesión.
  *
@@ -277,6 +280,15 @@ export class ShellLayout {
   protected readonly ofreceEmergencia = computed(() => vieneAAtenderse(this.auth.roles()));
 
   /**
+   * Dónde marca el tutorial el botón de «Emergencia» (28/10/2026): sólo en el
+   * ícono de la cabecera y sólo donde se ve (≤ 900 px). En el escritorio no hay
+   * botón, así que no hay objetivo y el paso se saltea.
+   */
+  protected readonly objetivoEmergencia = computed(() =>
+    this.breakpoints.canCollapseNav() ? '' : 'nav-emergencia',
+  );
+
+  /**
    * Quién ve la capa visual del rediseño (22/10/2026): el paciente y, desde la
    * cuarta vuelta, quien atiende. El resto de los roles, la de siempre.
    */
@@ -307,6 +319,15 @@ export class ShellLayout {
     this.navigation
       .visibleSections()
       .some((seccion) => seccion.path === 'administration/medical-organization'),
+  );
+
+  /**
+   * «Mis solicitudes» en la barra superior: misma regla que «Mis
+   * organizaciones», preguntándole a `visibleSections()`. La farmacia no la
+   * tiene (`hiddenForTenantTypes` de la sección, 30/10/2026).
+   */
+  protected readonly ofreceMisSolicitudes = computed(() =>
+    this.navigation.visibleSections().some((seccion) => seccion.path === 'my-account/requests'),
   );
 
   /** El nombre accesible del carrito: el número y la farmacia, no sólo «Carrito». */
@@ -585,6 +606,17 @@ export class ShellLayout {
    * En todas las demás pantallas la flecha se queda: ahí sí deshace un paso.
    */
   protected readonly enElPanel = computed(() => this.urlActual() === PANEL);
+
+  /**
+   * Si hay un hilo de chat abierto (`/messaging/:id`).
+   *
+   * En angosto el hilo ocupa la pantalla y trae su propia «‹» de vuelta a la
+   * bandeja, justo debajo de esta flecha: dos «volver» apilados que llevan a
+   * lugares distintos. Ahí, y sólo en angosto, la del armazón se esconde (por
+   * CSS, con el mismo corte en que el hilo pasa a pantalla completa). En ancho
+   * el hilo no tiene «‹» y la flecha del armazón se queda.
+   */
+  protected readonly enUnHilo = computed(() => HILO_DE_CHAT.test(this.urlActual()));
 
   /**
    * Clic sobre el rótulo de un dominio.

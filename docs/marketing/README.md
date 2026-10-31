@@ -4,12 +4,18 @@ Las 52 skills de [coreyhaines31/marketingskills](https://github.com/coreyhaines3
 (licencia MIT, copia en [LICENSE-marketingskills.txt](LICENSE-marketingskills.txt)) están
 instaladas en `.claude/skills/`, junto a las skills de ingeniería del repo.
 
-- **Versión copiada:** commit `e85f3cb` del repositorio de origen (2026-10-26). Copia sin
+- **Versión copiada:** commit `820ad2c` del repositorio de origen (2026-10-29; actualizada el 2026-10-30, antes `e85f3cb`). Copia sin
   modificar; para actualizar, volver a copiar `skills/*` desde el origen.
 - **Contexto común:** [`.agents/product-marketing.md`](../../.agents/product-marketing.md).
   Todas las skills lo leen antes de preguntar. Contiene la plataforma y los cuatro módulos
   (Farmacia, Imagenología, Laboratorio, Organización médica). Lo no verificable en el repo
   está marcado **POR CONFIRMAR**: completarlo con el negocio antes de publicar nada.
+
+## Oportunidades detectadas en el recorrido de la app
+
+[oportunidades-alovida.md](oportunidades-alovida.md) junta lo que ya existe en el front, la API, la
+app móvil y el servicio de IA con valor de marketing y comunicación, y lo prioriza. Sale del
+recorrido completo de la app del 2026-10-31, que está en [../recorrido-app/](../recorrido-app/).
 
 ## Qué skill usar para cada módulo
 

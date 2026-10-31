@@ -49,17 +49,7 @@
       stackedOnMobile
     />
   }
-
-  <h3 class="contract__title">Respuestas posibles</h3>
-  @if (op.respuestasPosibles.length > 0) {
-    <app-data-table
-      caption="Respuestas posibles de la operación"
-      [state]="responses()"
-      [columns]="responseColumns"
-      [trackBy]="byResponse"
-      stackedOnMobile
-    />
-  } @else {
-    <p class="contract__muted">El inventario no enumeró respuestas.</p>
-  }
+  <p class="contract__muted">
+    Las respuestas posibles (estado, código y causas) están en la pestaña «Respuestas».
+  </p>
 </section>

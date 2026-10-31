@@ -116,6 +116,22 @@
   max-inline-size: 68ch;
 }
 
+/* En el modal el ancho ya lo pone el diálogo: con el tope de 68ch los campos
+   terminaban 16 px antes del borde del cuerpo (28/10/2026). */
+app-content-dialog .historial__formulario {
+  max-inline-size: none;
+}
+
+/* Desde y Hasta lado a lado; una sola columna cuando no entran dos de 12rem.
+   No es `.historial__periodo`: ese nombre ya es el de la fecha de cada fila de
+   la lista, alineada a la derecha. */
+.historial__rango {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+
 /* La salida hacia el texto libre. Discreta a propósito: es la excepción, no el
    camino, y competir visualmente con el buscador invitaría a saltearlo. */
 .historial__escape {

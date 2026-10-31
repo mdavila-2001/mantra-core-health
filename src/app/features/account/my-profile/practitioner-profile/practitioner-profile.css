@@ -12,3 +12,9 @@
 .perfil__aviso {
   margin-block-end: var(--sp-4);
 }
+
+.perfil__verificaciones {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 var(--e3);
+}

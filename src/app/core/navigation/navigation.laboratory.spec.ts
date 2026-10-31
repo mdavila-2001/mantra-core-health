@@ -29,9 +29,7 @@ function jwt(payload: Record<string, unknown>): string {
 
 const MENU_DEL_LABORATORIO = [
   '/administration/laboratory',
-  '/laboratory/reception',
-  '/laboratory/queue',
-  '/administration/laboratory-results',
+  '/administration/laboratory-orders',
   '/administration/laboratory-prices',
   '/administration/laboratory-branches',
 ];
@@ -98,12 +96,20 @@ describe('Menú de la cuenta de laboratorio', () => {
     expect(grupos[0].aplanado).toBe(true);
     expect(grupos[0].items.map((item) => item.label)).toEqual([
       'Resumen',
-      'Recepción de muestras',
-      'Cola de trabajo',
-      'Resultados',
+      'Órdenes',
       'Precios',
       'Sucursales',
     ]);
+  });
+
+  it('ya no ofrece recepción de muestras, cola de trabajo ni resultados', () => {
+    abrirSesion(['USER'], ['t-l'], { 't-l': 'DIAGNOSTIC_CENTER' });
+
+    const rutas = rutasDelMenu();
+
+    expect(rutas).not.toContain('/laboratory/reception');
+    expect(rutas).not.toContain('/laboratory/queue');
+    expect(rutas).not.toContain('/administration/laboratory-results');
   });
 
   it('no ve nada de aseguradora, de paciente ni los directorios', () => {
@@ -131,8 +137,8 @@ describe('Menú de la cuenta de laboratorio', () => {
     }
   });
 
-  it('la farmacia conserva sus diez renglones (P34 sumó «Horario y turnos»)', () => {
+  it('la farmacia conserva sus seis renglones («Catálogo» junta cinco pantallas en pestañas)', () => {
     abrirSesion(['USER'], ['t-f'], { 't-f': 'PHARMACY' });
-    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(10);
+    expect(rutasDelMenu().filter((r) => r.includes('administration/pharmacy'))).toHaveLength(6);
   });
 });

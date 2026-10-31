@@ -25,6 +25,7 @@ import {
 import { encounterList, type SimulatedEncounter } from '../fixtures/clinic';
 import type { FollowUpOrigin } from '../../data-access/scheduling/scheduling.types';
 import { emitirNotificacion } from './notifications.handlers';
+import { writeFromSupport } from './community.handlers';
 import { solicitudDeLaCita } from './insurance.handlers';
 import { patientById, patientList } from '../fixtures/people';
 import { representaA } from './profiles.handlers';
@@ -233,6 +234,8 @@ function avisarDemoraAlPaciente(
   const hora = new Date(reserva.startAt).toLocaleTimeString('es-BO', {
     hour: '2-digit',
     minute: '2-digit',
+    // 24 h, como la API (`timeText`): «05:30 p. m.» terminaba en «p. m..».
+    hour12: false,
   });
   // El mensaje del profesional va DESPUÉS del dato duro y entre comillas: es su
   // voz, no la del sistema, y quien lee necesita primero cuánto y de qué cita.
@@ -249,8 +252,26 @@ function avisarDemoraAlPaciente(
     // (`scheduling/notices/agenda-notices.ts`): el mock honesto no inventa
     // vocabulario (AG-06).
     destination: { type: 'scheduling.appointment_bookings', id: reserva.id },
-    payloadJson: { bookingId: reserva.id, delayMinutes: minutos },
+    // Igual que la API (`delayNoticeFor`): el `kind` es lo que levanta el push
+    // (`DelayNotice`) y `route` a dónde lleva su botón.
+    payloadJson: {
+      kind: 'PRACTITIONER_DELAY',
+      route: `/my-account/appointments?turno=${reserva.id}`,
+      bookingId: reserva.id,
+      delayMinutes: minutos,
+    },
   });
+  // Y al chat, con el mismo formato que la API (`chatTextForNotice`).
+  const quien = recursos.get(reserva.resourceId)?.practitionerName ?? 'Su profesional';
+  writeFromSupport(
+    [paciente.id, paciente.userId, paciente.personId],
+    textoDeChat(
+      '⏳ Aviso de demora',
+      `Su cita de las ${hora} con ${quien} se atrasa unos ${minutos} minutos.${explicacion}`,
+      'Gracias por su paciencia. 🙏',
+      reserva.id,
+    ),
+  );
   return true;
 }
 
@@ -360,6 +381,16 @@ function teleconsultaEnFranja(resourceId: string, instante: Date): boolean {
     );
 }
 
+/**
+ * El aviso de agenda tal como la API lo deja en el chat
+ * (`scheduling/domain/notices/chat-messages.ts`): encabezado con emoji, cuerpo,
+ * cierre y la línea con el enlace que el hilo convierte en «Ir a la cita».
+ */
+function textoDeChat(encabezado: string, cuerpoDelAviso: string, cierre: string, bookingId: string): string {
+  const base = globalThis.location?.origin ?? 'https://alovida.bo';
+  return [encabezado, cuerpoDelAviso, cierre, `👉 Ver la cita: ${base}/my-account/appointments?turno=${bookingId}`].join('\n\n');
+}
+
 export function registrarAgenda(router: MockRouter): void {
   router.get('/scheduling/resources', ({ query }) => {
     const tenantId = texto(query, 'tenantId');
@@ -367,7 +398,11 @@ export function registrarAgenda(router: MockRouter): void {
     const includeInactive = query.get('includeInactive') === 'true';
     const items = recursos
       .todos()
-      .filter((r) => tenantId === null || r.tenantId === tenantId || true)
+      // Aislado por organización, como la API (`findResources` filtra
+      // `where.tenantId` siempre): el `|| true` que había acá le mostraba a
+      // cualquier sesión las agendas de todas las organizaciones, y tapaba en
+      // la maqueta las pantallas que piden con el tenant equivocado.
+      .filter((r) => tenantId === null || r.tenantId === tenantId)
       .filter((r) => practiceId === null || r.practiceId === practiceId)
       .filter((r) => includeInactive || r.stateConceptId === STATUS['ST-ACTIVE'])
       .map(({ tenantId: _t, ...r }) => r);
@@ -682,13 +717,20 @@ export function registrarAgenda(router: MockRouter): void {
       cambiarEstado(r.id, estado, extra(r));
       return { bookingId: r.id, statusConceptId: BOOKING_STATUS[estado]!, occurredAt: ahora() };
     };
-  router.post(
-    '/scheduling/bookings/:id/accept',
-    decision('BK-CONFIRMED', () => ({
-      confirmedAt: ahora(),
-      appointmentId: nuevoId('appointment'),
-    })),
-  );
+  router.post('/scheduling/bookings/:id/accept', (request) => {
+    const respuesta = decision('BK-CONFIRMED', () => ({ confirmedAt: ahora(), appointmentId: nuevoId('appointment') }))(request);
+    const r = reservas.get(request.params['id']!);
+    const paciente = r === undefined ? undefined : patientById(r.patientProfileId);
+    if (r !== undefined && paciente !== undefined) {
+      const cuando = new Date(r.startAt).toLocaleString('es-BO', { dateStyle: 'full', timeStyle: 'short' });
+      const quien = recursos.get(r.resourceId)?.practitionerName ?? 'su profesional';
+      writeFromSupport(
+        [paciente.id, paciente.userId, paciente.personId],
+        textoDeChat('✅ ¡Cita confirmada!', `Su cita con ${quien} del ${cuando} quedó confirmada.`, '¡Lo esperamos! 💙', r.id),
+      );
+    }
+    return respuesta;
+  });
   router.post('/scheduling/bookings/:id/start', decision('BK-IN-PROGRESS'));
   router.post('/scheduling/bookings/:id/complete', (request) => {
     const respuesta = decision('BK-COMPLETED')(request);

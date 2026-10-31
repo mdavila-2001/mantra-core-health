@@ -1,8 +1,13 @@
+import {
+  MAX_ASEGURADORAS_POR_ENVIO,
+  pedirAseguradoras,
+} from './practitioner-insurer-requests.handlers';
 import { STATUS, CORPORATE_TYPE, conceptById } from '../fixtures/concepts';
 import { patientList, type PacienteSimulado } from '../fixtures/people';
+import { crearAdmisionDeAltaDeDoctor } from './admissions.handlers';
 import { guardarImagenDeDataUrl } from './files.handlers';
 import { signatureSaveAssets } from './signature-and-seal.handlers';
-import { conflict, notFound, preconditionFailed, reply, unauthorized, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, notFound, preconditionFailed, reply, unauthorized, validation, type MockRequest, type MockRouter } from '../mock-router';
 import type { MockUser as CuentaSimulada } from '../mock-session';
 import {
   buscarUsuario,
@@ -16,6 +21,7 @@ import {
   usuarioDeRefreshToken,
   type MockUser,
 } from '../mock-session';
+import { medicalFacilityRejection } from './medical-facility.validation';
 import { ahora, bodyAsQuery, contiene, cuerpo, iso, nuevoId, paginar, texto, uuid } from '../mock-store';
 
 /* ============================================================================
@@ -279,6 +285,11 @@ export function registrarAuth(router: MockRouter): void {
   router.post('/iam/auth/register-practitioner', ({ body }) => {
     const datos = cuerpo<{
       email?: string;
+      name?: string;
+      lastName?: string;
+      motherLastName?: string;
+      nationalId?: string;
+      licenseNumber?: string;
       photoFileId?: string;
       // Sólo simulador (el DTO real no los declara): la firma y el sello del alta,
       // como imágenes en base64 igual que `profilePhotoBase64`.
@@ -294,6 +305,9 @@ export function registrarAuth(router: MockRouter): void {
       collegeName?: string;
       collegeLicenseIssueDate?: string;
       collegeLicenseFileId?: string;
+      // Dónde dice trabajar (28/10/2026), como en la API.
+      institutionSlugs?: string[];
+      insurerCarrierIds?: string[];
     }>({ body });
     if (datos.email !== undefined && MOCK_USERS.some((u) => u.email === datos.email)) {
       return conflict('Ya existe una cuenta con ese correo', { email: datos.email });
@@ -338,6 +352,25 @@ export function registrarAuth(router: MockRouter): void {
     }
     const id = nuevoId('profesional-nuevo');
     const practitionerProfileId = uuid(`hpid-${id}`);
+    // Las aseguradoras se validan contra el catálogo antes de dar el alta por
+    // hecha, como la API: una inexistente deshace todo con 422.
+    if ((datos.insurerCarrierIds ?? []).length > MAX_ASEGURADORAS_POR_ENVIO) {
+      return validation(`Hasta ${MAX_ASEGURADORAS_POR_ENVIO} aseguradoras`, [
+        { field: 'insurerCarrierIds', message: 'admite hasta 20' },
+      ]);
+    }
+    const seguros = pedirAseguradoras(
+      practitionerProfileId,
+      datos.insurerCarrierIds ?? [],
+      [datos.name, datos.lastName].filter(Boolean).join(' ') || undefined,
+    );
+    if (seguros === null) {
+      return preconditionFailed('Alguna de las aseguradoras indicadas no existe o no está activa', {
+        field: 'insurerCarrierIds',
+      });
+    }
+    const institutionSlugs = [...new Set(datos.institutionSlugs ?? [])];
+    const affiliationIds = institutionSlugs.map((slug) => uuid(`aff-alta-${practitionerProfileId}-${slug}`));
     if (datos.signatureImageBase64 !== undefined || datos.sealImageBase64 !== undefined) {
       signatureSaveAssets(practitionerProfileId, {
         ...(datos.signatureImageBase64 === undefined
@@ -348,12 +381,25 @@ export function registrarAuth(router: MockRouter): void {
           : { sealFileId: guardarImagenDeDataUrl(datos.sealImageBase64, 'sello.png') }),
       });
     }
+    // Cada alta de médico nace como solicitud de admisión pendiente de revisión.
+    crearAdmisionDeAltaDeDoctor({
+      userId: id,
+      profileId: practitionerProfileId,
+      displayName: [datos.name, datos.lastName, datos.motherLastName].filter(Boolean).join(' ') || 'Médico recién registrado',
+      ...(datos.nationalId === undefined ? {} : { nationalId: datos.nationalId }),
+      ...(datos.email === undefined ? {} : { email: datos.email }),
+      ...(datos.licenseNumber === undefined ? {} : { matricula: datos.licenseNumber }),
+    });
     return {
       userId: id,
       personId: uuid(`person-${id}`),
       practitionerProfileId,
       practitionerCode: `MED-${Math.floor(Math.random() * 9000 + 1000)}`,
       ...(datos.photoFileId === undefined ? {} : { photoFileId: datos.photoFileId }),
+      ...(affiliationIds.length === 0 ? {} : { affiliationIds }),
+      ...(seguros.pedidas.length === 0
+        ? {}
+        : { insurerRequestIds: seguros.pedidas.map((s) => s.id) }),
     };
   });
 
@@ -418,6 +464,9 @@ export function registrarAuth(router: MockRouter): void {
           'generalManager' | 'commercialManager' | 'marketingManager',
           { fullName?: string; phone?: string; email?: string } | undefined
         >;
+        // Bloque propio de una organización médica (contrato del 28/10/2026):
+        // se valida en `medicalFacilityRejection`.
+        medicalFacility?: unknown;
       };
       owner?: { email?: string };
     }>({ body });
@@ -522,6 +571,9 @@ export function registrarAuth(router: MockRouter): void {
       });
     }
 
+    const rechazoMedico = medicalFacilityRejection(datos.organization ?? {});
+    if (rechazoMedico !== null) return rechazoMedico;
+
     const diagnosticUnit = datos.organization?.diagnosticUnit;
     if (diagnosticUnit !== undefined) {
       // Mismo contrato que la API real: `diagnosticUnit` sólo corresponde a
@@ -616,7 +668,13 @@ export function registrarAuth(router: MockRouter): void {
       }
     }
     if (legalDocuments !== undefined && !demoPortalRegistration) {
-      const obligatorios = LEGAL_DOCUMENT_FIELDS.filter((campo) => campo !== 'constitutionFileId');
+      // Como `assertLegalDocumentsForEntityType`: la matrícula de comercio sólo
+      // la omite un profesional independiente (decisión del 28/10/2026).
+      const obligatorios = LEGAL_DOCUMENT_FIELDS.filter(
+        (campo) =>
+          campo !== 'constitutionFileId' &&
+          !(campo === 'commerceRegistryFileId' && legalEntityType === 'PROFESIONAL_INDEPENDIENTE'),
+      );
       const faltantes = obligatorios.filter((campo) => !legalDocuments[campo]);
       if (faltantes.length > 0) {
         // Mismo contrato que el `ValidationPipe` real: el bloque es todo o
@@ -655,7 +713,11 @@ export function registrarAuth(router: MockRouter): void {
     }
     const executives = datos.organization?.executives;
     if (!esUnipersonal && !demoPortalRegistration) {
-      if (legalDocuments !== undefined && !legalDocuments.constitutionFileId) {
+      if (
+        legalDocuments !== undefined &&
+        !legalDocuments.constitutionFileId &&
+        legalEntityType !== 'PROFESIONAL_INDEPENDIENTE'
+      ) {
         return preconditionFailed(
           'Falta la escritura de constitución: sólo una empresa unipersonal puede omitirla',
           { document: 'constitutionFileId' },
@@ -721,6 +783,8 @@ export function registrarAuth(router: MockRouter): void {
       ...(diagnosticUnit === undefined ? {} : { diagnosticUnitId: nuevoId('unidad-diagnostica') }),
       // Como la API (P50): toda farmacia nace con su fila y su casa central.
       ...(tipoDeOrganizacion === 'PHARMACY' ? { pharmacyId: nuevoId('farmacia') } : {}),
+      // Como la API: el bloque se persiste en la misma transacción del alta.
+      ...(datos.organization?.medicalFacility === undefined ? {} : { medicalFacilityRegistered: true }),
     };
   });
 
@@ -848,6 +912,31 @@ export function registrarAuth(router: MockRouter): void {
 
   router.get('/iam/users', ({ query }) => searchUsers(query));
   router.post('/iam/users/search', (request) => searchUsers(bodyAsQuery(request)));
+
+  // Ficha de una cuenta. Igual que la API (`@Roles('SECURITY_ADMIN')`): sin
+  // ese rol, 403 —así la plantilla de una organización tiene que saber
+  // degradar a «nombre no disponible» también en la maqueta—.
+  router.get('/iam/users/:id', ({ params, user }) => {
+    const roles = user?.roles ?? [];
+    if (!roles.includes('SECURITY_ADMIN') && !roles.includes('SUPERADMIN')) {
+      return forbidden('Se requiere SECURITY_ADMIN para leer la ficha de una cuenta');
+    }
+    const i = MOCK_USERS.findIndex((u) => u.id === params['id']);
+    const base = MOCK_USERS[i];
+    if (base !== undefined) {
+      return {
+        id: base.id,
+        displayName: base.displayName,
+        statusConceptId: STATUS['ST-ACTIVE']!,
+        emailVerified: true,
+        lastLoginAt: iso(-i, 9),
+        createdAt: iso(-400 + i * 7, 8),
+      };
+    }
+    return (
+      usuariosAdicionales.find((u) => u.id === params['id']) ?? notFound('Usuario no encontrado')
+    );
+  });
 
   router.post('/iam/users', ({ body }) => {
     const datos = cuerpo<{ displayName?: string; email?: string }>({ body });

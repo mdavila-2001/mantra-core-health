@@ -1,0 +1,68 @@
+<!-- Un solo `keydown` para todo el árbol: las filas no escuchan teclas por su
+     cuenta, así el tabindex itinerante y el type-ahead viven en un lugar. -->
+<!-- El foco lo llevan los `treeitem` (tabindex itinerante); el `ul` sólo escucha
+     las teclas que burbujean desde ellos. -->
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+<ul class="tree" role="tree" [attr.aria-label]="label()" (keydown)="alPresionar($event)">
+  <ng-container *ngTemplateOutlet="nivel; context: { $implicit: items(), level: 1 }" />
+</ul>
+
+<ng-template #nivel let-nodos let-level="level">
+  @for (nodo of nodos; track nodo.id; let i = $index) {
+    @let tieneHijos = (nodo.children?.length ?? 0) > 0;
+    @let abierta = estaAbierta(nodo.id);
+    <li
+      class="tree__item"
+      role="treeitem"
+      [attr.data-tree-id]="nodo.id"
+      [attr.aria-level]="level"
+      [attr.aria-setsize]="nodos.length"
+      [attr.aria-posinset]="i + 1"
+      [attr.aria-expanded]="tieneHijos ? abierta : null"
+      [attr.aria-selected]="selectedId() === nodo.id"
+      [attr.tabindex]="tabulable() === nodo.id ? 0 : -1"
+      (focus)="alEnfocar(nodo.id)"
+    >
+      <!-- La fila es lo que se pulsa; el `li` lleva el foco y la semántica, y
+           Enter/Espacio sobre él eligen (los maneja el `keydown` del árbol). -->
+      <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
+      <div
+        class="tree__fila"
+        [class.tree__fila--elegida]="selectedId() === nodo.id"
+        [style.--tree-nivel]="level - 1"
+        (click)="elegir(nodo.id)"
+      >
+        @if (tieneHijos) {
+          <!-- El chevrón no es un botón con foco propio: el patrón de árbol
+               abre y cierra con las flechas. Es un atajo de puntero. -->
+          <span
+            class="tree__chevron"
+            [class.tree__chevron--abierto]="abierta"
+            aria-hidden="true"
+            (click)="alternar(nodo.id, $event)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="9 6 15 12 9 18" />
+            </svg>
+          </span>
+        } @else {
+          <span class="tree__chevron tree__chevron--hoja" aria-hidden="true"></span>
+        }
+        <span class="tree__texto">
+          <span class="tree__rotulo">{{ nodo.label }}</span>
+          @if (nodo.description) {
+            <span class="tree__descripcion">{{ nodo.description }}</span>
+          }
+        </span>
+        @if (nodo.badge; as marca) {
+          <app-badge class="tree__marca" size="sm" [variant]="marca.variant">{{ marca.label }}</app-badge>
+        }
+      </div>
+      @if (tieneHijos && abierta) {
+        <ul class="tree__grupo" role="group">
+          <ng-container *ngTemplateOutlet="nivel; context: { $implicit: nodo.children, level: level + 1 }" />
+        </ul>
+      }
+    </li>
+  }
+</ng-template>

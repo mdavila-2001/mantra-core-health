@@ -17,6 +17,7 @@
         [label]="label()"
         [interactive]="interactiveSteps()"
         [compact]="pasosCompactos()"
+        currentLabelOnly
         (stepSelected)="goToStep($event)"
       />
     } @else {
@@ -240,6 +241,7 @@
                     [formControlName]="campo.key"
                     [type]="tipoDeInput(campo)"
                     [autocomplete]="campo.autocomplete ?? null"
+                    [inputFilter]="filtroDe(campo)"
                     [placeholder]="campo.placeholder ?? campo.description ?? ''"
                     [hasError]="errorDe(campo) !== ''"
                     [testId]="campo.testId ?? 'campo-' + campo.key"

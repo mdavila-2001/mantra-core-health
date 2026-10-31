@@ -10,12 +10,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 40px;
-  block-size: 40px;
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
-  color: var(--tinta-2);
+  color: var(--tinta-marca);
   cursor: pointer;
   transition: background var(--mov-rapido) var(--curva);
 }
@@ -42,8 +42,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 36px;
-  block-size: 36px;
+  inline-size: 44px;
+  block-size: 44px;
   border: 0;
   border-radius: var(--r-pill);
   background: none;
@@ -52,8 +52,16 @@
 }
 
 .grabador__enviar {
+  /* El mismo relleno que el enviar del composer: 5,4:1 con blanco en los tres temas. */
   background: var(--petroleo-relleno);
-  color: #fff;
+  color: var(--surface-white);
+}
+
+.grabador__micro:focus-visible,
+.grabador__cancelar:focus-visible,
+.grabador__enviar:focus-visible {
+  outline: 2px solid var(--anillo-foco);
+  outline-offset: 2px;
 }
 
 .grabador__cancelar svg,

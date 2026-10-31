@@ -15,6 +15,9 @@ import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
 import { MFA_ENROLLMENT_ROUTE } from '../../../core/auth/mfa-enrollment-route';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
+import {
+  entryDestination,
+} from '../../reporting/reporting-access';
 import type { LoginCredentials } from '../../../core/data-access/iam/iam.types';
 import { loading, ready, validation } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -32,9 +35,6 @@ import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 import { loginPolicyOutcome } from './login-policy-reasons';
-
-/** A dónde se entra tras iniciar sesión con la organización ya resuelta. */
-const HOME_ROUTE = '/';
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -211,7 +211,7 @@ export class Login {
     // Con el token de alcance limitado no hay organizaciones que mirar (el token no las trae): se vuelve al destino pedido o al
     // inicio, y el destino real lo decide el token completo que se emite al confirmar el factor.
     if (this.auth.mfaEnrollmentRequired()) {
-      return `${MFA_ENROLLMENT_ROUTE}?returnUrl=${encodeURIComponent(this.retornoPedido() ?? HOME_ROUTE)}`;
+      return `${MFA_ENROLLMENT_ROUTE}?returnUrl=${encodeURIComponent(this.retornoPedido() ?? '/')}`;
     }
     return this.destinoNormal();
   }
@@ -225,7 +225,15 @@ export class Login {
         ? GETTING_STARTED_ROUTE
         : MY_ORGANIZATIONS_ROUTE;
     }
-    return this.retornoPedido() ?? HOME_ROUTE;
+    // Un enlace pedido a mano manda sobre la pantalla de elección: quien venía
+    // a una página concreta no tiene que elegir portal para llegar a ella.
+    const requested = this.retornoPedido();
+    if (requested !== null) {
+      return requested;
+    }
+    // Con acceso a los dos portales hay que elegir; con uno solo se entra derecho a ese
+    // (ver `entryDestination`). Quien no tiene ninguno de los dos entra como siempre.
+    return entryDestination(this.auth.roles());
   }
 
   /**

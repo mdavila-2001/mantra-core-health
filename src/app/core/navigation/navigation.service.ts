@@ -5,6 +5,7 @@ import { filter, map } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
 import { APP_SECTIONS } from './navigation.map';
+import { esPerfilDeGestion, seccionDeGestion } from './navigation.management';
 import { NAV_GROUP_ICONS, SUBGROUP_BY_PATH, seAplanaElGrupo } from './navigation.subgroups';
 import {
   apareceEnElMenu,
@@ -103,10 +104,14 @@ export class NavigationService {
     // Las fijas salen **antes** de repartir, no después: si se descontaran al
     // final, `items` y la suma de los `blocks` dejarían de coincidir, que es
     // justo el invariante que fija la prueba de este servicio.
+    // El perfil de gestión de la plataforma ve sólo gestión y medición (30/10/2026):
+    // presentación, no permiso; ver `navigation.management.ts`.
+    const deGestion = esPerfilDeGestion(roles);
     const enElMenu = APP_SECTIONS.filter(
       (section) =>
         apareceEnElMenu(section, roles, tenants, activeTenantType, accountKind) &&
-        section.pinnedTop !== true,
+        section.pinnedTop !== true &&
+        (!deGestion || seccionDeGestion(section)),
     );
 
     return NAV_GROUPS.map((group) => {

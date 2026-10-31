@@ -193,6 +193,24 @@ describe('security-headers', () => {
       expect(csp).not.toContain('/v1');
     });
 
+    it('con el servicio de IA en otro dominio permite su origen en connect-src', () => {
+      const csp = contentSecurityPolicy({ aiBaseUrl: 'https://demo.alovidasalud.arauzsoftware.com/ai' });
+
+      expect(csp).toContain("connect-src 'self' https://demo.alovidasalud.arauzsoftware.com");
+      expect(csp).not.toContain('/ai');
+    });
+
+    it('deduplica el origen cuando API y AI comparten dominio', () => {
+      const csp = contentSecurityPolicy({
+        apiBaseUrl: 'https://gateway.ejemplo.com/api',
+        aiBaseUrl: 'https://gateway.ejemplo.com/ai',
+      });
+
+      expect(csp).toContain(
+        "connect-src 'self' https://gateway.ejemplo.com https://nominatim.openstreetmap.org;",
+      );
+    });
+
     it('una raíz de API ilegible no rompe la política', () => {
       expect(contentSecurityPolicy({ apiBaseUrl: 'no-es-una-url' })).toContain(
         "connect-src 'self' https://nominatim.openstreetmap.org;",

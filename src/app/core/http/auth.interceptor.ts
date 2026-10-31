@@ -3,16 +3,17 @@ import {
   type HttpInterceptorFn,
   type HttpRequest,
 } from '@angular/common/http';
+import { DOCUMENT } from '@angular/common';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 
 import { isAccessTokenExpired } from '../auth/access-token';
-import { API_BASE_URL, isApiUrl } from '../data-access/api';
 import { RefreshTokenStorage } from '../auth/refresh-token.storage';
 import { SessionStore } from '../auth/session.store';
 import { TENANT_SELECTION_ROUTE } from '../auth/tenant-selection-route';
 import { readApiError } from './api-error';
+import { API_BASE_URL } from '../data-access/api';
 import { TokenRefreshService } from './token-refresh.service';
 import { isTransientFailure } from './transient-failure';
 
@@ -96,9 +97,11 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  // Defensa en profundidad (F9): ni la credencial ni la organización activa salen hacia una URL que no sea de la API
-  // configurada (una URL prefirmada de S3, un CDN…), y el 401 de un tercero no dice nada de la sesión.
-  if (!isApiUrl(request.url, inject(API_BASE_URL))) {
+  // La credencial es de esta API: a una dirección de otro origen (una URL
+  // firmada de un almacenamiento de objetos, un servicio de terceros) no viaja
+  // ni el `Authorization` ni el tenant. Además, una cabecera de más suele
+  // invalidar una URL firmada.
+  if (!isOwnOrigin(request.url, inject(API_BASE_URL), inject(DOCUMENT).location?.origin ?? null)) {
     return next(request);
   }
 
@@ -265,6 +268,28 @@ function isPublic(url: string): boolean {
 function isOptionalAuth(url: string): boolean {
   const path = pathOf(url);
   return OPTIONAL_AUTH_PREFIXES.some((prefijo) => path.startsWith(prefijo));
+}
+
+/**
+ * Si la dirección es de esta aplicación o de su API: una ruta relativa, la raíz
+ * configurada (`API_BASE_URL`) o el mismo origen de la página. El mismo origen
+ * importa en el servidor, que antes de los interceptores vuelve absolutas las
+ * rutas relativas.
+ */
+export function isOwnOrigin(url: string, apiBaseUrl: string, pageOrigin: string | null): boolean {
+  if (!url.includes('://') && !url.startsWith('//')) {
+    return true;
+  }
+  const raiz = apiBaseUrl.replace(/\/+$/, '');
+  // Con el límite de segmento: `https://api.x.evil.com` no es `https://api.x`.
+  if (raiz !== '' && url.startsWith(raiz) && (url.length === raiz.length || '/?#'.includes(url[raiz.length]!))) {
+    return true;
+  }
+  try {
+    return pageOrigin !== null && new URL(url).origin === pageOrigin;
+  } catch {
+    return false;
+  }
 }
 
 function pathOf(url: string): string {

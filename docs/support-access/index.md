@@ -7,7 +7,7 @@ de la organización. Esta página es el mapa; el detalle está en:
 - [Rutas](rutas.md) — qué pantalla vive en qué dirección y quién la ve.
 - [Contrato propuesto](contrato-propuesto.md) — lo que el front pide a la API y lo que ya alinea con sus DTO.
 - [Cuentas demo](cuentas-demo.md) — con quién entrar al simulador para probar cada cosa.
-- [ADR-0017](../adr/ADR-0017-mi-equipo-y-personal-de-apoyo.md) — por qué «Mi equipo» es el renglón doce del doctor y por qué el
+- [ADR-0019](../adr/ADR-0019-mi-equipo-y-personal-de-apoyo.md) — por qué «Mi equipo» es el renglón doce del doctor y por qué el
   personal de apoyo no es un rol global.
 
 ## Qué hay

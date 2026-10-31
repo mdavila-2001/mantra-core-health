@@ -1,0 +1,94 @@
+<div class="ins" [class.ins--collapsed]="collapsed()">
+  <aside class="ins__side" [class.ins__side--open]="drawer()" aria-label="Módulos de AloVida Insights">
+    <div class="ins__brand">
+      <span class="ins__mark" aria-hidden="true">
+        <app-nav-icon name="chart" />
+      </span>
+      <span class="ins__brand-text">
+        <strong>AloVida Insights</strong>
+        <small>Inteligencia de marketing</small>
+      </span>
+    </div>
+
+    <nav class="ins__nav" aria-label="Módulos">
+      <ul>
+        @for (m of modules; track m.id) {
+          <li>
+            <a
+              class="ins__link"
+              [routerLink]="[base, m.path]"
+              [queryParams]="query()"
+              routerLinkActive="ins__link--active"
+              #rla="routerLinkActive"
+              [attr.aria-current]="rla.isActive ? 'page' : null"
+              [attr.title]="collapsed() ? m.label : null"
+              (click)="drawer.set(false)"
+            >
+              <app-nav-icon class="ins__icon" [name]="m.icon" />
+              <span class="ins__link-text">
+                <span class="ins__num">{{ m.number }}</span>
+                {{ m.label }}
+              </span>
+              @if (m.id === 'alerts' && alertCount > 0) {
+                <span class="ins__badge" [attr.aria-label]="alertCount + ' alertas abiertas'">{{ alertCount }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <button type="button" class="ins__collapse" [attr.aria-pressed]="collapsed()" (click)="toggleCollapsed()">
+      <span aria-hidden="true">{{ collapsed() ? '»' : '«' }}</span>
+      <span class="ins__collapse-text">{{ collapsed() ? 'Expandir menú' : 'Contraer menú' }}</span>
+    </button>
+  </aside>
+
+  @if (drawer()) {
+    <button type="button" class="ins__scrim" aria-label="Cerrar el menú de módulos" (click)="drawer.set(false)"></button>
+  }
+
+  <div class="ins__main">
+    <header class="ins__top">
+      <button type="button" class="ins__burger" [attr.aria-expanded]="drawer()" aria-label="Abrir el menú de módulos" (click)="drawer.set(true)">
+        <span aria-hidden="true">☰</span>
+      </button>
+      <div class="ins__title">
+        <nav class="ins__crumbs" aria-label="Ruta">
+          <span>Marketing</span><span aria-hidden="true">›</span><span>AloVida Insights</span><span aria-hidden="true">›</span>
+          <span aria-current="page">{{ current().number }} · {{ current().short }}</span>
+        </nav>
+        <h1 class="ins__h1">{{ current().label }}</h1>
+        <p class="ins__q">{{ current().question }}</p>
+      </div>
+      <div class="ins__actions">
+        <span class="ins__asof">Datos al {{ asOf }}</span>
+        @if (canSwitchPortal()) {
+          <a class="ins__alerts" [routerLink]="selectorRoute">
+            <app-nav-icon name="grid" />
+            <span>Cambiar de portal</span>
+          </a>
+        }
+        <app-ins-saved-views />
+        <a class="ins__alerts" [routerLink]="[base, 'alerts']" [queryParams]="query()">
+          <app-nav-icon name="bell" />
+          <span>Alertas</span>
+          @if (alertCount > 0) {
+            <span class="ins__badge">{{ alertCount }}</span>
+          }
+        </a>
+      </div>
+    </header>
+
+    <p class="ins__notice" role="note">{{ notice }}</p>
+
+    <main class="ins__content" id="insights-content" tabindex="-1">
+      <app-view-state-host [state]="data.state()" (retry)="data.load()">
+        <div vsh-skeleton class="ins__loading" aria-busy="true">Cargando AloVida Insights…</div>
+        @if (data.ready()) {
+          <router-outlet />
+        }
+      </app-view-state-host>
+    </main>
+  </div>
+</div>
