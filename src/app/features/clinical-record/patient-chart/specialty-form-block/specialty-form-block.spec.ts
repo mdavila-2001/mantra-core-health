@@ -67,7 +67,7 @@ const PLANTILLA = {
  * `ChartTemplateFieldDto`; no es el `dataType` el que decide si el campo es
  * de catálogo.
  */
-const PLANTILLA_CATALOGO = {
+const _PLANTILLA_CATALOGO = {
   id: 'tpl-cat',
   specialtyConceptId: 'sp-1',
   code: 'CATALOGO_INTAKE',
@@ -226,7 +226,7 @@ describe('SpecialtyFormBlock', () => {
   }
 
   /** `GET /terminology/value-sets/:id/$expand` — las opciones de un campo de catálogo. */
-  function peticionDeExpansion(valueSetId: string) {
+  function _peticionDeExpansion(valueSetId: string) {
     return http.expectOne((r) => r.url === `/terminology/value-sets/${valueSetId}/$expand`);
   }
 

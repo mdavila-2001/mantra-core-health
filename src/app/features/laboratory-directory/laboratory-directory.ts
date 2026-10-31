@@ -464,7 +464,7 @@ const PARAM_DEPARTAMENTO = 'departamento';
 const PARAM_CIUDAD = 'ciudad';
 
 /** Clave de la ciudad elegida en la faceta, en la URL. */
-const PARAM_CITY = 'ciudad';
+const _PARAM_CITY = 'ciudad';
 
 /** ¿Quedó algún filtro puesto? Decide qué texto muestra el vacío. */
 function hayFiltros(activos: Readonly<Record<string, string>>): boolean {

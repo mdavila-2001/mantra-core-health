@@ -668,8 +668,8 @@ const MINUTOS_DE_GRACIA = 10;
  * corte, abrir la maqueta de madrugada ofrecía «un turno de las 05:38» con la
  * cardióloga, que nadie atiende a esa hora.
  */
-const ATIENDE_DESDE_LA_HORA = 8;
-const ATIENDE_HASTA_LA_HORA = 18;
+const _ATIENDE_DESDE_LA_HORA = 8;
+const _ATIENDE_HASTA_LA_HORA = 18;
 
 function sembrarCupoPorLiberarse(): void {
   const inicio = masMinutos(ahora(), -(MINUTOS_DE_GRACIA - 1));

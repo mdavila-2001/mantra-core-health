@@ -14,7 +14,6 @@ import {
 } from '@angular/core';
 
 import { nextControlId } from '@shared/forms/form-control.context';
-import { playExitAnimation } from '@shared/motion/exit-animation';
 import { cerrarConSalida, fijarOrigenDelPanel } from '@shared/motion/panel-motion';
 import { AppButton } from '../../atoms/button/button';
 

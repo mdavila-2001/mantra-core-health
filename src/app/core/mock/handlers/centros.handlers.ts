@@ -35,7 +35,7 @@ import {
 import { orderList } from '../fixtures/clinic';
 import { ACTIVITY, CANAL, BOOKING_STATUS, ESTUDIO, APPOINTMENT_TYPE } from '../fixtures/concepts';
 import { patientById } from '../fixtures/people';
-import { conflict, forbidden, noContent, notFound, unprocessable, validation, type MockRequest, type MockRouter } from '../mock-router';
+import { conflict, forbidden, noContent, notFound, unprocessable, type MockRequest, type MockRouter } from '../mock-router';
 import { ahora, cuerpo, nuevoId, uuid } from '../mock-store';
 import { avisarPorChatDeSoporte, fechaDelAviso } from './aviso-por-chat';
 import { equipoDe, estudiosDe, informes, pacienteDeSesion, sitioDe, UNIDADES, type UnidadSimulada } from './diagnostics.handlers';

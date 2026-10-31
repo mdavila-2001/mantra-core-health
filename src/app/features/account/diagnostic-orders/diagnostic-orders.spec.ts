@@ -6,7 +6,6 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { signal } from '@angular/core';
 
 import { AuthService } from '../../../core/auth/auth.service';
-import type { OrderAppointment } from '../../../core/data-access/diagnostic-units/center-schedule.types';
 import { DiagnosticOrders } from './diagnostic-orders';
 import type { AnalysisCategory, PatientOrderRow } from './diagnostic-orders.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';

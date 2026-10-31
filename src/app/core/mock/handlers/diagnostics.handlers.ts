@@ -690,7 +690,7 @@ const MODALIDAD_DE_ESTUDIO: Readonly<Record<string, readonly [code: string, disp
 };
 
 /** Haversine redondeado a 100 m, como el resto de los dobles. */
-function kmEnLineaRecta(aLat: number, aLng: number, bLat: number, bLng: number): number {
+function _kmEnLineaRecta(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const rad = (g: number): number => (g * Math.PI) / 180;
   const h = Math.sin(rad(bLat - aLat) / 2) ** 2 + Math.cos(rad(aLat)) * Math.cos(rad(bLat)) * Math.sin(rad(bLng - aLng) / 2) ** 2;
   return Math.round(6371 * 2 * Math.asin(Math.sqrt(h)) * 10) / 10;

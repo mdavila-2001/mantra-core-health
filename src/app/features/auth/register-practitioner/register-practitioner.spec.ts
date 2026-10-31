@@ -505,7 +505,6 @@ describe('RegisterPractitioner', () => {
     const paginas = component.paginasProfesional();
     expect(paginas.length).toBe(10);
     for (const pagina of paginas) {
-      const tope = pagina.clave === 'name' ? 5 : 4;
       expect(
         pagina.campos.length,
         `«${pagina.titulo}» pide ${pagina.campos.length}`,

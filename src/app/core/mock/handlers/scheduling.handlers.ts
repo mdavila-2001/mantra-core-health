@@ -217,7 +217,7 @@ function cambiarEstado(
  * maqueta hace sola con las solicitudes del portal (ver
  * {@link activarAceptacionDeDemostracion}).
  */
-function aceptarYAvisar(id: string): void {
+function _aceptarYAvisar(id: string): void {
   const r = reservas.get(id);
   if (r === undefined || r.statusConceptId !== BOOKING_STATUS['BK-REQUESTED']) return;
   cambiarEstado(id, 'BK-CONFIRMED', { confirmedAt: ahora(), appointmentId: nuevoId('appointment') });
@@ -235,10 +235,10 @@ function aceptarYAvisar(id: string): void {
  * Lo enciende `crearRouterSimulado()`, o sea la app; las pruebas que arman su
  * propio router no lo encienden y siguen viendo la solicitud pendiente.
  */
-let aceptacionDeDemostracionMs: number | null = null;
+let _aceptacionDeDemostracionMs: number | null = null;
 
 export function activarAceptacionDeDemostracion(ms = 6000): void {
-  aceptacionDeDemostracionMs = ms;
+  _aceptacionDeDemostracionMs = ms;
 }
 
 /**
