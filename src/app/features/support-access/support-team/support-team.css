@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.equipo__nombre {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.equipo__sub,
+.equipo__alcance {
+  display: block;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.equipo__aviso {
+  display: block;
+  margin-block-start: var(--sp-1);
+  font-size: var(--fs-caption);
+  color: var(--st-warning-fg);
+}
+
+.equipo__acciones {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.equipo__enlaces {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 var(--sp-3);
+}
+
+.equipo__insignias {
+  display: block;
+}
+
+.equipo__indicadores {
+  list-style: none;
+  margin: var(--sp-1) 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}

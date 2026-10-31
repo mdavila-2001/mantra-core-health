@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { map, type Observable } from 'rxjs';
 
+import type { ChallengeRequestOptions } from '../../access-challenge/access-challenge';
 import { API_BASE_URL, apiUrl } from '../api';
 import { sendIdempotent, SubmissionKeys } from '../idempotency';
 import type {
@@ -574,6 +575,7 @@ export class SchedulingClient {
   createDirectAppointment(
     cita: NewDirectAppointment,
     scope?: TenantScope,
+    options?: ChallengeRequestOptions,
   ): Observable<DirectAppointmentCreated> {
     const body = {
       patientProfileId: cita.patientProfileId,
@@ -588,6 +590,10 @@ export class SchedulingClient {
       // en silencio** — la petición sale sin él y nada falla. Es el mismo
       // patrón que dejó la modalidad sin escribir del lado de la API.
       ...(cita.channel === undefined ? {} : { channel: cita.channel }),
+      ...(cita.walkIn === true ? { walkIn: true } : {}),
+      // Lo que declara el personal de apoyo: la API lo contrasta con los lugares y servicios del doctor.
+      ...(cita.careSpaceId === undefined ? {} : { careSpaceId: cita.careSpaceId }),
+      ...(cita.healthcareServiceId === undefined ? {} : { healthcareServiceId: cita.healthcareServiceId }),
       // La reconsulta (C4). Se manda **sólo si viene**, por la misma razón que
       // el resto: una clave declarada en `undefined` vuelve 400.
       ...(cita.followUpOf === undefined
@@ -603,7 +609,7 @@ export class SchedulingClient {
           }),
     };
     const url = this.url('/scheduling/appointments/direct');
-    return this.http.post<DirectAppointmentCreated>(url, body, tenantOptions(scope));
+    return this.http.post<DirectAppointmentCreated>(url, body, { ...tenantOptions(scope), ...options });
   }
 
   /**
@@ -657,6 +663,7 @@ export class SchedulingClient {
       ...(turno.reasonText === undefined ? {} : { reasonText: turno.reasonText }),
       // Ausente = presencial: no se manda un valor que nadie eligió.
       ...(turno.channel === undefined ? {} : { channel: turno.channel }),
+      ...(turno.startAttention === undefined ? {} : { startAttention: turno.startAttention }),
     };
     return sendIdempotent(this.submissionKeys, 'walk-in', body, (headers) =>
       this.http.post<WalkInAppointmentCreated>(this.url('/scheduling/appointments/walk-in'), body, {
@@ -717,7 +724,7 @@ export class SchedulingClient {
    * (UC-41-06). Si la retención venció, el backend rechaza: se vuelve a
    * retener, no se reintenta el confirm.
    */
-  confirmHold(holdToken: string, confirmation: BookingConfirmation): Observable<BookingConfirmed> {
+  confirmHold(holdToken: string, confirmation: BookingConfirmation, options?: ChallengeRequestOptions): Observable<BookingConfirmed> {
     return this.http.post<BookingConfirmed>(
       this.url(`/scheduling/holds/${encodeURIComponent(holdToken)}/confirm`),
       {
@@ -726,6 +733,7 @@ export class SchedulingClient {
         channel: confirmation.channel,
         ...(confirmation.reasonText === undefined ? {} : { reasonText: confirmation.reasonText }),
       },
+      options,
     );
   }
 
@@ -760,6 +768,7 @@ export class SchedulingClient {
   cancelBooking(
     bookingId: string,
     cancellation: BookingCancellation,
+    options?: ChallengeRequestOptions,
   ): Observable<BookingCancelled> {
     return this.http.post<BookingCancelled>(
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/cancel`),
@@ -768,6 +777,7 @@ export class SchedulingClient {
         reasonText: cancellation.reasonText,
         ...(cancellation.isNoShow === undefined ? {} : { isNoShow: cancellation.isNoShow }),
       },
+      options,
     );
   }
 
@@ -780,6 +790,7 @@ export class SchedulingClient {
   rescheduleBooking(
     bookingId: string,
     reschedule: BookingReschedule,
+    options?: ChallengeRequestOptions,
   ): Observable<BookingRescheduled> {
     return this.http.post<BookingRescheduled>(
       this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/reschedule`),
@@ -789,6 +800,7 @@ export class SchedulingClient {
         // 422 y la otra parte se quedaría sin saber por qué le movieron el día.
         reasonText: reschedule.reasonText,
       },
+      options,
     );
   }
 
@@ -807,10 +819,16 @@ export class SchedulingClient {
   acceptBooking(
     bookingId: string,
     offsetsMinutes?: readonly number[],
+    options?: ChallengeRequestOptions,
   ): Observable<BookingDecision> {
-    return this.decidir(bookingId, 'accept', {
-      ...(offsetsMinutes === undefined ? {} : { reminderOffsetsMinutes: [...offsetsMinutes] }),
-    });
+    return this.decidir(
+      bookingId,
+      'accept',
+      {
+        ...(offsetsMinutes === undefined ? {} : { reminderOffsetsMinutes: [...offsetsMinutes] }),
+      },
+      options,
+    );
   }
 
   /**
@@ -846,21 +864,24 @@ export class SchedulingClient {
     bookingId: string,
     accion: 'accept' | 'start' | 'complete',
     cuerpo: Record<string, unknown>,
+    options?: ChallengeRequestOptions,
   ): Observable<BookingDecision> {
     return this.http
       .post<WireDecision>(
         this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/${accion}`),
         cuerpo,
+        options,
       )
       .pipe(map((body) => ({ ...body, occurredAt: new Date(body.occurredAt) })));
   }
 
   /** `POST /scheduling/bookings/:id/check-in` — registra la llegada (UC-41-10). */
-  checkInBooking(bookingId: string): Observable<BookingCheckedIn> {
+  checkInBooking(bookingId: string, options?: ChallengeRequestOptions): Observable<BookingCheckedIn> {
     return this.http
       .post<WireCheckedIn>(
         this.url(`/scheduling/bookings/${encodeURIComponent(bookingId)}/check-in`),
         {},
+        options,
       )
       .pipe(map((body) => ({ ...body, checkedInAt: new Date(body.checkedInAt) })));
   }
@@ -875,15 +896,20 @@ export class SchedulingClient {
    * completo es un callejón sin salida. Anotarse no reserva nada; cuando se
    * libera un cupo el paciente recibe el aviso y confirma por el flujo normal.
    */
-  enrollWaitlist(entry: NewWaitlistEntry): Observable<WaitlistEntryCreated> {
-    return this.http.post<WaitlistEntryCreated>(this.url('/scheduling/waitlist'), {
-      tenantId: entry.tenantId,
-      patientProfileId: entry.patientProfileId,
-      ...(entry.resourceId === undefined ? {} : { resourceId: entry.resourceId }),
-      ...(entry.desiredFrom === undefined ? {} : { desiredFrom: entry.desiredFrom.toISOString() }),
-      ...(entry.desiredTo === undefined ? {} : { desiredTo: entry.desiredTo.toISOString() }),
-      ...(entry.priority === undefined ? {} : { priority: entry.priority }),
-    });
+  enrollWaitlist(entry: NewWaitlistEntry, options?: ChallengeRequestOptions): Observable<WaitlistEntryCreated> {
+    return this.http.post<WaitlistEntryCreated>(
+      this.url('/scheduling/waitlist'),
+      {
+        tenantId: entry.tenantId,
+        patientProfileId: entry.patientProfileId,
+        ...(entry.resourceId === undefined ? {} : { resourceId: entry.resourceId }),
+        ...(entry.desiredFrom === undefined ? {} : { desiredFrom: entry.desiredFrom.toISOString() }),
+        ...(entry.desiredTo === undefined ? {} : { desiredTo: entry.desiredTo.toISOString() }),
+        ...(entry.priority === undefined ? {} : { priority: entry.priority }),
+        ...(entry.bookableSlotId === undefined ? {} : { bookableSlotId: entry.bookableSlotId }),
+      },
+      options,
+    );
   }
 
   /**

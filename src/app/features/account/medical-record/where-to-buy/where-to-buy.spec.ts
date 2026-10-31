@@ -125,10 +125,10 @@ const CONCEPTS = {
       codeSystemVersionId: 'v1',
     },
     // Los estados de un ítem de receta, con los códigos del catálogo de la API
-    // (`clinical.concepts.ts`): sólo `MR_ISSUED` se puede pedir (FAR-03).
-    { conceptId: 'st-activa', code: 'MR_ISSUED', display: 'Emitida', codeSystemVersionId: 'v1' },
-    { conceptId: 'st-borrador', code: 'MR_DRAFT', display: 'Borrador', codeSystemVersionId: 'v1' },
-    { conceptId: 'st-anulada', code: 'MR_INVALIDATED', display: 'Anulada', codeSystemVersionId: 'v1' },
+    // (`clinical.concepts.ts`): sólo `clinical:MEDICATION_REQUEST_ISSUED` se puede pedir (FAR-03).
+    { conceptId: 'st-activa', code: 'clinical:MEDICATION_REQUEST_ISSUED', display: 'Emitida', codeSystemVersionId: 'v1' },
+    { conceptId: 'st-borrador', code: 'clinical:MEDICATION_REQUEST_DRAFT', display: 'Borrador', codeSystemVersionId: 'v1' },
+    { conceptId: 'st-anulada', code: 'clinical:MEDICATION_REQUEST_INVALIDATED', display: 'Anulada', codeSystemVersionId: 'v1' },
   ],
   count: 5,
   limit: 200,

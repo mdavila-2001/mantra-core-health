@@ -1,6 +1,6 @@
 # API de backend
 
-Las 605 operaciones que el frontend consume, su contrato y su modelo de error.
+Las 784 operaciones que el frontend consume, su contrato y su modelo de error.
 
 > **Esta página es el contrato declarado.** `scripts/check-api-contract-drift.mjs`
 > compara la lista de abajo con lo que el código realmente llama, y falla si
@@ -157,7 +157,6 @@ el segmento escapado (`checks\:plan`), al revés que el `rotate` del M40.
 | `POST` | `/profiles/practitioners` | — |
 | `POST` | `/profiles/persons/:personId/account-links` | — |
 | `GET` | `/profiles/practitioners/me/summary` | `MyProfile` · `PractitionerProfile` |
-| `PATCH` | `/profiles/practitioners/me` | `PractitionerProfileEdit` |
 | `POST` | `/profiles/practitioners/:profileId/specialties` | — (UC-05-06) |
 | `POST` | `/profiles/practitioners/:profileId/jurisdiction-authorizations` | — |
 | `GET` | `/profiles/practitioners` | `PractitionersDirectory` (guía, carril R2-1) |
@@ -346,8 +345,6 @@ aparece en las búsquedas del paciente.
 | `GET` | `/scheduling/slots` | `Agenda` · `BookingNew` (revalida el cupo) |
 | `GET` | `/scheduling/bookings` | `Agenda` |
 | `GET` | `/scheduling/bookings/:bookingId` | — |
-| `POST` | `/scheduling/resources` | `AgendaCreate` (fase 1, UC-41-01) |
-| `POST` | `/scheduling/booking-policies` | `AgendaCreate` (fase 2, UC-41-01) |
 | `POST` | `/scheduling/resources/:resourceId/templates` | `AgendaCreate` (fase 3, UC-41-02) |
 | `POST` | `/scheduling/templates/:templateId/generate-slots` | `AgendaCreate` (fase 4, UC-41-03) |
 | `POST` | `/scheduling/resources/:resourceId/exceptions` | `AgendaCreate` (fase 5, UC-41-04) |
@@ -360,7 +357,6 @@ aparece en las búsquedas del paciente.
 | `POST` | `/scheduling/bookings/:bookingId/reject` | `Agenda` (el doctor rechaza una solicitud) |
 | `POST` | `/scheduling/bookings/:bookingId/:accion` | `Agenda` (acepta/atiende: la acción va en la ruta) |
 | `GET` | `/scheduling/activity-types` | `Agenda` y 11 pantallas más | No |
-| `POST` | `/scheduling/appointments/direct` | `Agenda` y 11 pantallas más | No |
 | `POST` | `/scheduling/bookings/:bookingId/delay` | `Agenda` y 11 pantallas más | No |
 | `PUT` | `/scheduling/bookings/:bookingId/payment-state` | `Agenda` y 11 pantallas más | No |
 | `GET` | `/scheduling/exception-types` | `Agenda` y 11 pantallas más | No |
@@ -497,13 +493,11 @@ el esquema de una plantilla por especialidad, no sólo asignarla.
 | `POST` | `/forms/instances` | `SpecialtyFormBlock` (abre una instancia) |
 | `POST` | `/forms/instances/:instanceId/values` | `SpecialtyFormBlock` (captura valores) |
 | `POST` | `/forms/instances/:instanceId/close` | `SpecialtyFormBlock` (cierra la instancia) |
-| `POST` | `/forms/field-definitions` | `FormBuilder` (declara el campo, UC-09-02) |
 | `POST` | `/forms/assignments` | `FormBuilder` (lo cuelga del formulario, UC-09-06) |
 | `GET` | `/forms/assignments/budget` | `FormBuilder` (cuánto queda por extender) |
 | `DELETE` | `/forms/assignments/:assignmentId` | `FormBuilder` y 2 pantallas más | No |
 | `PATCH` | `/forms/assignments/:assignmentId` | `FormBuilder` y 2 pantallas más | No |
 | `PUT` | `/forms/assignments/order` | `FormBuilder` y 2 pantallas más | No |
-| `PATCH` | `/forms/field-definitions/:fieldId` | `FormBuilder` y 2 pantallas más | No |
 | `GET` | `/forms/instances` | `FormBuilder` y 2 pantallas más | No |
 | `GET` | `/forms/instances/:instanceId` | `FormBuilder` y 2 pantallas más | No |
 | `GET` | `/forms/me/instances` | `FormBuilder` y 2 pantallas más | No |
@@ -567,39 +561,16 @@ las pantallas son paneles de operación con identificadores pegados.
 del actor efectivo es el PDP, y el backend lo publica junto al resto de la
 autorización.
 
-### `SupportStaffClient` — 22 operaciones · personal de apoyo (la secretaria)
+### `SupportStaffClient` — 1 operación · alta de la secretaria
 
-El alta de la secretaria y la solicitud y aceptación con el hospital y con el
-doctor (31/10/2026), contra el contrato de la rama `claude/secretaria-alta-dev`
-de la API. `SUPPORT_STAFF` es un rol global desde el alta; lo que ve la
-secretaria lo deciden sus **vínculos** (uno por doctor o piso), y cada vínculo
-nace `PENDING` y lo acepta la otra parte (`awaiting`). Tras aceptar se refresca
-el token para que el hospital entre a `tenants`. Lo que **ve** sale sólo de
-`/me/support-access`: donde sólo un doctor la aceptó (`organizationAccess:
-false`) ve a ese doctor y su agenda, nada del hospital.
+El alta de la secretaria (31/10/2026), contra el contrato de la rama
+`claude/secretaria-alta-dev` de la API. `SUPPORT_STAFF` es un rol global desde el
+alta; lo que ve la secretaria lo deciden sus **vínculos** con hospitales y
+doctores, que se piden y aceptan con `SupportAccessClient`.
 
 | Método | Ruta | Consumidor |
 |---|---|---|
 | `POST` | `/iam/auth/register-support-staff` | `RegisterSupportStaff` |
-| `GET` | `/me/support-engagements` | `MySupport` (lo que espera una decisión) |
-| `GET` | `/me/support-access` | `MySupport` (lo que ve: hospitales, doctores, pisos) |
-| `GET` | `/me/support-agenda` | `SupportStaffClient.getAgenda` (agenda del doctor que asiste) |
-| `GET` | `/me/support-catalog` | `MySupport` (pedir más doctores o pisos) |
-| `POST` | `/support-engagement-requests` | `MySupport` |
-| `POST` | `/me/support-engagements/:linkId/confirm` | `MySupport` (aceptar la invitación) |
-| `POST` | `/me/support-engagements/:linkId/decline` | `MySupport` |
-| `POST` | `/me/support-engagements/:linkId/leave` | `MySupport` (retirar un pedido) |
-| `GET` | `/org/support-catalog` | `SupportStaffAdmin` |
-| `GET` | `/org/support-engagement-requests` | `SupportStaffAdmin` |
-| `POST` | `/org/support-engagement-requests/:linkId/decision` | `SupportStaffAdmin` (aceptar o rechazar) |
-| `GET` | `/org/support-engagements` | `SupportStaffAdmin` |
-| `POST` | `/org/support-engagements/:linkId/end` | `SupportStaffAdmin` |
-| `POST` | `/org/team/invitations` | `SupportInvitePanel` (el hospital invita por documento) |
-| `GET` | `/me/practitioner/support-team` | `MySupportTeam` |
-| `POST` | `/practitioner-delegates/:linkId/accept` | `MySupportTeam` (el doctor acepta) |
-| `POST` | `/practitioner-delegates/:linkId/reject` | `MySupportTeam` |
-| `POST` | `/me/practitioner/support-team/:linkId/end` | `MySupportTeam` |
-| `POST` | `/me/practitioner/support-invitations` | `MySupportTeam` (el doctor invita por documento) |
 
 ### `AuthProvidersClient` — 12 operaciones · sólo comando
 
@@ -1582,7 +1553,7 @@ Stock por sucursal en la pestaña Inventario: «Lo tengo / No lo tengo» por sed
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
 
-### `ReferralsClient` — 4 operaciones
+### `ReferralsClient` — 10 operaciones
 
 Derivar a otro profesional o a una organización médica, por un servicio
 concreto de su catálogo (`clinical_ext`). `referralType` y
@@ -1596,6 +1567,17 @@ y se mandan también a la API real.
 | `GET` | `/referrals` | `Consultation` (`ConsultationReferrals`) | No |
 | `GET` | `/referrals/targets` | `ReferralBlock` | No |
 | `GET` | `/referrals/target-services` | `ReferralBlock` | No |
+| `GET` | `/referrals/:id` | `ReferralBlock` (detalle) | No |
+| `PATCH` | `/referrals/:id/respond` | `ReferralDetail` | No |
+| `PATCH` | `/referrals/:id/counter-referral` | `ReferralDetail` | No |
+| `PATCH` | `/referrals/:id/cancel` | `ReferralDetail` | No |
+| `PATCH` | `/referrals/:id/transfer` | `ReferralTransferPanel` | No |
+| `PATCH` | `/referrals/:id/arrival` | `ReferralTransferPanel` | No |
+
+Traslado (v4274): `transfer` viaja en el alta y vuelve en toda lectura
+(`null` si no hay datos). `PATCH …/transfer` combina con lo guardado —omitido
+conserva, `null` borra— y lo usa quien emitió; `PATCH …/arrival` sólo el
+destino (quien no lo es, o sin `X-Tenant-Id`, recibe 404 `REFERRAL_NOT_FOUND`).
 
 ### `QuotationsClient` — 4 operaciones
 
@@ -1664,18 +1646,9 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/accounting/journal-transactions/:transactionId/document-flow` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/accounting/open-items` | [`AccountingClient`](../../src/app/core/data-access/accounting/accounting.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/accounting/practitioner/simple/accounts` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `POST` | `/accounting/practitioner/simple/accounts` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `DELETE` | `/accounting/practitioner/simple/accounts/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `PUT` | `/accounting/practitioner/simple/accounts/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/accounting/practitioner/simple/records` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `POST` | `/accounting/practitioner/simple/records` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `DELETE` | `/accounting/practitioner/simple/records/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `PUT` | `/accounting/practitioner/simple/records/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/accounting/practitioner/simple/summary` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/accounting/practitioner/simple/transactions` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `POST` | `/accounting/practitioner/simple/transactions` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `DELETE` | `/accounting/practitioner/simple/transactions/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
-| `PUT` | `/accounting/practitioner/simple/transactions/:id` | [`SimpleAccountingClient`](../../src/app/core/data-access/simple-accounting/simple-accounting.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/analytics/funnels` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/analytics/funnels/:funnelId/report` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/admin/analytics/overview` | [`WebAnalyticsClient`](../../src/app/core/data-access/admin-portal/platform.client.ts) | Fuente frontend; no certifica API real |
@@ -1791,8 +1764,6 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `POST` | `/insurance-claims/:claimId/adjudications` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance-claims/:claimId/eob` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/insurance-marketplace/insurers/:slug` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
-| `DELETE` | `/insurance-plans/:planId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
-| `PUT` | `/insurance-plans/:planId` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/insurance/received-claims` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance/received-claims/:claimId/decision` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/insurance/received-claims/:claimId/invoice` | [`InsuranceClient`](../../src/app/core/data-access/insurance/insurance.client.ts) | Fuente frontend; no certifica API real |
@@ -1807,8 +1778,6 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/marketing/insights/catalog` | [`InsightsClient`](../../src/app/core/data-access/insights/insights.client.ts) | Fuente frontend; no certifica API real. Campañas, canales e hitos. |
 | `GET` | `/patient-spending/me` | [`PatientSpendingClient`](../../src/app/core/data-access/patient-spending/patient-spending.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/patients/me/reviews` | [`CommunityClient`](../../src/app/core/data-access/community/community.client.ts) | Fuente frontend; no certifica API real |
-| `GET` | `/pharmacies/:pharmacyId/inventory` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
-| `PATCH` | `/pharmacies/:pharmacyId/products/:productId` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacy/pharmacies/:id` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacy/pharmacies/:id/contacts` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/pharmacy/pharmacies/:id/licenses` | [`PharmacyClient`](../../src/app/core/data-access/pharmacy/pharmacy.client.ts) | Fuente frontend; no certifica API real |
@@ -1825,7 +1794,6 @@ Inventario extraido del codigo integrado. Cada fila acredita un consumidor, no u
 | `GET` | `/profiles/patients/me/dependent-requests/incoming` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `GET` | `/profiles/patients/me/dependents` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `POST` | `/profiles/patients/me/dependents` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
-| `POST` | `/profiles/patients/search` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `DELETE` | `/profiles/practitioners/me/affiliations/:affiliationId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `PATCH` | `/profiles/practitioners/me/affiliations/:affiliationId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
 | `PATCH` | `/profiles/practitioners/me/credentials/:credentialId` | [`ProfilesClient`](../../src/app/core/data-access/profiles/profiles.client.ts) | Fuente frontend; no certifica API real |
@@ -1855,3 +1823,364 @@ Operaciones de la lista anterior que ya no consume el codigo integrado (se conse
 - `POST /prescription-favorites`
 - `DELETE /prescription-favorites/:id`
 - `POST /quotations/simulate`
+
+## Gobierno de accesos (fase 5, bloque B6-base)
+
+Operaciones de `core/data-access/access-governance/`. Las fijan las pruebas de `access-governance.clients.spec.ts` y vienen de los controladores de `delegated_access` y de `iam-step-up.controller.ts` de la API; **ya están en el `openapi.json`** regenerado por B7b y contrastado por B7c. El contrato es `CONTRATO-GOBIERNO.md` §8.3.
+
+### `AccessApprovalsClient` — 5 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/approvals/:approvalId/decision` | Gobierno de accesos | No |
+| `GET` | `/approvals/pending` | Gobierno de accesos | No |
+| `GET` | `/me/support-approvals` | Gobierno de accesos | No |
+| `POST` | `/me/support-approvals` | Gobierno de accesos | No |
+| `POST` | `/me/support-approvals/:approvalId/cancel` | Gobierno de accesos | No |
+
+### `AccessExplainClient` — 7 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/me/practitioner/support-team/explain` | Gobierno de accesos | No |
+| `POST` | `/me/support-access/explain` | Gobierno de accesos | No |
+| `POST` | `/org/access/explain` | Gobierno de accesos | No |
+| `POST` | `/org/access/simulate` | Gobierno de accesos | No |
+| `GET` | `/org/permission-catalog` | Gobierno de accesos | No |
+| `GET` | `/org/support-engagements/:engagementId/effective` | Gobierno de accesos | No |
+| `GET` | `/org/support-engagements/:engagementId/summary` | Gobierno de accesos | No |
+
+### `AccessGovernanceClient` — 27 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/me/practitioner/governance-panel` | Gobierno de accesos | No |
+| `GET` | `/org/governance/access-matrix` | Gobierno de accesos | No |
+| `GET` | `/org/governance/anomalies` | Gobierno de accesos | No |
+| `POST` | `/org/governance/anomalies/:anomalyId/ack` | Gobierno de accesos | No |
+| `GET` | `/org/governance/exceptions` | Gobierno de accesos | No |
+| `POST` | `/org/governance/normalize-legacy` | Gobierno de accesos | No |
+| `POST` | `/org/governance/normalize-legacy/revert` | Gobierno de accesos | No |
+| `GET` | `/org/governance/ownerless` | Gobierno de accesos | No |
+| `GET` | `/org/governance/privilege-creep` | Gobierno de accesos | No |
+| `POST` | `/org/governance/reports/:kind/export` | Gobierno de accesos | No |
+| `GET` | `/org/governance/rules` | Gobierno de accesos | No |
+| `POST` | `/org/governance/rules` | Gobierno de accesos | No |
+| `PATCH` | `/org/governance/rules/:ruleId` | Gobierno de accesos | No |
+| `POST` | `/org/governance/rules/:ruleId/retire` | Gobierno de accesos | No |
+| `GET` | `/org/governance/settings` | Gobierno de accesos | No |
+| `PUT` | `/org/governance/settings` | Gobierno de accesos | No |
+| `GET` | `/org/governance/sod-exceptions` | Gobierno de accesos | No |
+| `POST` | `/org/governance/sod-exceptions` | Gobierno de accesos | No |
+| `POST` | `/org/governance/sod-exceptions/:exceptionId/revoke` | Gobierno de accesos | No |
+| `GET` | `/org/governance/sod-findings` | Gobierno de accesos | No |
+| `GET` | `/org/governance/sod-rules` | Gobierno de accesos | No |
+| `POST` | `/org/governance/sod-rules` | Gobierno de accesos | No |
+| `PATCH` | `/org/governance/sod-rules/:ruleId` | Gobierno de accesos | No |
+| `GET` | `/org/governance/summary` | Gobierno de accesos | No |
+| `GET` | `/org/governance/unused-access` | Gobierno de accesos | No |
+| `GET` | `/org/patients/:patientProfileId/restriction-flags` | Gobierno de accesos | No |
+| `PUT` | `/org/patients/:patientProfileId/restriction-flags` | Gobierno de accesos | No |
+
+### `AccessLifecycleClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/me/support-engagements/:engagementId/confidentiality-ack` | Gobierno de accesos | No |
+| `GET` | `/org/lifecycle/cases` | Gobierno de accesos | No |
+
+### `AccessReviewsClient` — 7 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/me/access-reviews/items` | Gobierno de accesos | No |
+| `GET` | `/me/access-reviews/items/:itemId` | Gobierno de accesos | No |
+| `POST` | `/me/access-reviews/items/:itemId/decision` | Gobierno de accesos | No |
+| `POST` | `/me/access-reviews/items/bulk-decision` | Gobierno de accesos | No |
+| `GET` | `/org/access-reviews/campaigns` | Gobierno de accesos | No |
+| `POST` | `/org/access-reviews/campaigns` | Gobierno de accesos | No |
+| `POST` | `/org/access-reviews/campaigns/preview` | Gobierno de accesos | No |
+
+### `StepUpClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/iam/me/step-up` | Gobierno de accesos | No |
+| `POST` | `/iam/me/step-up` | Gobierno de accesos | No |
+
+### `TeamAdminClient` — 5 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/org/team/capabilities` | Gobierno de accesos | No |
+| `POST` | `/org/team/invitations` | Gobierno de accesos | No |
+| `GET` | `/org/team/members` | Gobierno de accesos | No |
+| `GET` | `/org/team/requests` | Gobierno de accesos | No |
+| `POST` | `/org/team/requests/:requestId/decision` | Gobierno de accesos | No |
+
+
+## Operaciones inventariadas en B7c
+
+Las que el código llama y el catálogo de arriba aún no listaba; las leyó `scripts/check-api-contract-drift.mjs` de los clientes de `core/data-access/**` (cierre B7c, contra el `openapi.json` regenerado de la API).
+
+### `AssetsLiabilitiesClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/accounting/practitioner/assets/:assetId/depreciations` | `AssetsLiabilitiesClient` | No |
+| `GET` | `/accounting/practitioner/liabilities/:liabilityId/schedule` | `AssetsLiabilitiesClient` | No |
+
+### `WebAnalyticsClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/analytics/onboarding/funnel` | `WebAnalyticsClient` | No |
+| `GET` | `/admin/analytics/onboarding/heatmap` | `WebAnalyticsClient` | No |
+
+### `DataCatalogClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/admin/catalog/permission-drift` | `DataCatalogClient` | No |
+
+### `SupportAccessClient` — 35 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/affiliation-invitations/redeem` | `SupportAccessClient` | No |
+| `POST` | `/community/conversations/:conversationId/assignment` | `SupportAccessClient` | No |
+| `POST` | `/community/conversations/:conversationId/internal-notes` | `SupportAccessClient` | No |
+| `GET` | `/me/practitioner/support-activity` | `SupportAccessClient` | No |
+| `GET` | `/me/practitioner/support-team` | `SupportAccessClient` | No |
+| `POST` | `/me/support-access-requests` | `SupportAccessClient` | No |
+| `GET` | `/me/support-activity` | `SupportAccessClient` | No |
+| `GET` | `/me/support-agenda/free-slots` | `SupportAccessClient` | No |
+| `GET` | `/me/support-agenda` | `SupportAccessClient` | No |
+| `GET` | `/me/support-catalog` | `SupportAccessClient` | No |
+| `POST` | `/me/support-engagements/:engagementId/confirm` | `SupportAccessClient` | No |
+| `GET` | `/me/support-engagements` | `SupportAccessClient` | No |
+| `GET` | `/me/support-inbox/:conversationId` | `SupportAccessClient` | No |
+| `GET` | `/me/support-inbox` | `SupportAccessClient` | No |
+| `GET` | `/me/support-reply-templates` | `SupportAccessClient` | No |
+| `GET` | `/org/access-lookup` | `SupportAccessClient` | No |
+| `GET` | `/org/affiliation-invitations` | `SupportAccessClient` | No |
+| `POST` | `/org/affiliation-invitations` | `SupportAccessClient` | No |
+| `GET` | `/org/ip-access-rules` | `SupportAccessClient` | No |
+| `PUT` | `/org/ip-access-rules` | `SupportAccessClient` | No |
+| `PATCH` | `/org/reply-templates/:templateId` | `SupportAccessClient` | No |
+| `GET` | `/org/reply-templates` | `SupportAccessClient` | No |
+| `POST` | `/org/reply-templates` | `SupportAccessClient` | No |
+| `GET` | `/org/session-policies` | `SupportAccessClient` | No |
+| `PUT` | `/org/session-policies` | `SupportAccessClient` | No |
+| `GET` | `/org/support-activity` | `SupportAccessClient` | No |
+| `GET` | `/org/support-catalog` | `SupportAccessClient` | No |
+| `POST` | `/org/support-engagement-requests/:requestId/decision` | `SupportAccessClient` | No |
+| `GET` | `/org/support-engagement-requests` | `SupportAccessClient` | No |
+| `POST` | `/org/support-engagements/:engagementId/end` | `SupportAccessClient` | No |
+| `POST` | `/org/support-engagements/:engagementId/recertify` | `SupportAccessClient` | No |
+| `GET` | `/org/support-engagements` | `SupportAccessClient` | No |
+| `POST` | `/practitioner-delegates/:delegateId/accept` | `SupportAccessClient` | No |
+| `PATCH` | `/practitioner-delegates/:delegateId/reply-settings` | `SupportAccessClient` | No |
+| `POST` | `/support-engagement-requests` | `SupportAccessClient` | No |
+
+### `AuditClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/audit/data-access` | `AuditClient` | No |
+| `GET` | `/audit/log` | `AuditClient` | No |
+
+### `AuthzAdminClient` — 8 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/authz/internal-users` | `AuthzAdminClient` | No |
+| `GET` | `/authz/permissions` | `AuthzAdminClient` | No |
+| `GET` | `/authz/roles/:roleId/permissions` | `AuthzAdminClient` | No |
+| `GET` | `/authz/roles` | `AuthzAdminClient` | No |
+| `DELETE` | `/authz/users/:userId/role-assignments/:assignmentId` | `AuthzAdminClient` | No |
+| `GET` | `/authz/users/:userId/role-assignments` | `AuthzAdminClient` | No |
+| `POST` | `/authz/users/:userId/role-assignments` | `AuthzAdminClient` | No |
+| `GET` | `/iam/users/:userId` | `AuthzAdminClient` | No |
+
+### `ServicesCatalogClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/billing/service-catalog/import-procedures` | `ServicesCatalogClient` | No |
+| `GET` | `/billing/service-catalog/procedure-specialties/mine` | `ServicesCatalogClient` | No |
+
+### `ProcedureCentersClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/clinical/me/procedure-centers` | `ProcedureCentersClient` | No |
+
+### `CommunityClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/community/conversations/contacts/search` | `CommunityClient` | No |
+| `GET` | `/patients/me/reviewable-care` | `CommunityClient` | No |
+
+### `PracticeLogoClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/iam/auth/upload-registration-logo` | `PracticeLogoClient` | No |
+
+### `IamClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/iam/auth/upload-registration-signature-image` | `IamClient` | No |
+
+### `AccountSecurityClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/iam/me/devices/:deviceId/confirm-code` | `AccountSecurityClient` | No |
+| `POST` | `/iam/me/devices/:deviceId/confirm` | `AccountSecurityClient` | No |
+| `POST` | `/iam/me/devices/:deviceId/not-me` | `AccountSecurityClient` | No |
+| `GET` | `/iam/me/network` | `AccountSecurityClient` | No |
+
+### `MfaClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/iam/me/mfa/:factorId/revoke` | `MfaClient` | No |
+| `POST` | `/iam/me/mfa/totp/:factorId/confirm` | `MfaClient` | No |
+| `POST` | `/iam/me/mfa/totp` | `MfaClient` | No |
+| `GET` | `/iam/me/mfa` | `MfaClient` | No |
+
+### `IdentityAdminClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/identity/verification-cases/:caseId` | `IdentityAdminClient` | No |
+
+### `InsuranceClient` — 7 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/insurance-claims/quote` | `InsuranceClient` | No |
+| `POST` | `/insurance-claims` | `InsuranceClient` | No |
+| `GET` | `/insurance/my-claims` | `InsuranceClient` | No |
+| `POST` | `/insurance/patients/conversation` | `InsuranceClient` | No |
+| `GET` | `/insurance/patients/options` | `InsuranceClient` | No |
+| `POST` | `/insurance/patients/search` | `InsuranceClient` | No |
+| `GET` | `/patient-coverages/by-patient/:patientProfileId` | `InsuranceClient` | No |
+
+### `SupportPatientsClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/me/support-patient-search` | `SupportPatientsClient` | No |
+| `POST` | `/me/support-patients` | `SupportPatientsClient` | No |
+
+### `MedicalCentersClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/medical-centers/search/for-my-orders` | `MedicalCentersClient` | No |
+| `GET` | `/medical-centers/search` | `MedicalCentersClient` | No |
+
+### `WebPushClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/notifications/web-push/config` | `WebPushClient` | No |
+| `DELETE` | `/notifications/web-push/subscription` | `WebPushClient` | No |
+| `PUT` | `/notifications/web-push/subscription` | `WebPushClient` | No |
+
+### `PharmacyClient` — 7 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `PATCH` | `/pharmacies/:pharmacyId/inventory` | `PharmacyClient` | No |
+| `POST` | `/pharmacies/:pharmacyId/on-call-shifts/:shiftId/cancel` | `PharmacyClient` | No |
+| `GET` | `/pharmacies/:pharmacyId/opening-hours` | `PharmacyClient` | No |
+| `POST` | `/pharmacies/:pharmacyId/sites/:siteId/on-call-shifts` | `PharmacyClient` | No |
+| `PUT` | `/pharmacies/:pharmacyId/sites/:siteId/open-24h` | `PharmacyClient` | No |
+| `GET` | `/pharmacy/catalog-products` | `PharmacyClient` | No |
+| `GET` | `/public/pharmacies/open-now` | `PharmacyClient` | No |
+
+### `RoleAssignmentsClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/practices/:practiceId/role-assignments/invitations` | `RoleAssignmentsClient` | No |
+| `GET` | `/practices/:practiceId/role-assignments` | `RoleAssignmentsClient` | No |
+| `POST` | `/practitioners/me/role-assignments/:roleId/:action` | `RoleAssignmentsClient` | No |
+| `POST` | `/role-assignments/:roleId/:action` | `RoleAssignmentsClient` | No |
+
+### `PracticeSitesClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `PUT` | `/practitioners/me/sites/:siteId/contact-phone` | `PracticeSitesClient` | No |
+| `PUT` | `/practitioners/me/sites/:siteId/logo` | `PracticeSitesClient` | No |
+
+### `PrimaryPractitionerClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `DELETE` | `/profiles/patients/me/primary-practitioner` | `PrimaryPractitionerClient` | No |
+| `GET` | `/profiles/patients/me/primary-practitioner` | `PrimaryPractitionerClient` | No |
+| `PUT` | `/profiles/patients/me/primary-practitioner` | `PrimaryPractitionerClient` | No |
+| `GET` | `/profiles/practitioners/me/primary-patients` | `PrimaryPractitionerClient` | No |
+
+### `SchedulingClient` — 8 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/scheduling/resources/:resourceId/flexible-availability` | `SchedulingClient` | No |
+| `POST` | `/scheduling/resources/:resourceId/flexible-holds` | `SchedulingClient` | No |
+| `GET` | `/scheduling/service-availability` | `SchedulingClient` | No |
+| `PATCH` | `/scheduling/service-offerings/:id` | `SchedulingClient` | No |
+| `POST` | `/scheduling/service-offerings/:offeringId/holds` | `SchedulingClient` | No |
+| `GET` | `/scheduling/service-offerings` | `SchedulingClient` | No |
+| `POST` | `/scheduling/service-offerings` | `SchedulingClient` | No |
+| `GET` | `/scheduling/templates/:templateId/live-bookings` | `SchedulingClient` | No |
+
+### `SurveysClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/surveys/insights` | `SurveysClient` | No |
+
+### `TelemetryClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/telemetry/activity-events` | `TelemetryClient` | No |
+
+### `DirectoryClient` — 3 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/tenants/:tenantId/logo/content` | `DirectoryClient` | No |
+| `GET` | `/tenants/:tenantId/logo` | `DirectoryClient` | No |
+| `PUT` | `/tenants/:tenantId/logo` | `DirectoryClient` | No |
+
+### `MembershipInvitationsClient` — 4 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/tenants/:tenantId/memberships/:membershipId/offboard` | `MembershipInvitationsClient` | No |
+| `POST` | `/tenants/me/membership-invitations/:membershipId/accept` | `MembershipInvitationsClient` | No |
+| `POST` | `/tenants/me/membership-invitations/:membershipId/decline` | `MembershipInvitationsClient` | No |
+| `GET` | `/tenants/me/membership-invitations` | `MembershipInvitationsClient` | No |
+
+### `PracticeOnboardingClient` — 1 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `POST` | `/tenants/:tenantId/practices` | `PracticeOnboardingClient` | No |
+
+### `TerminologyClient` — 2 operaciones
+
+| Método | Ruta | Consumidor | Pública |
+|---|---|---|---|
+| `GET` | `/terminology/concepts/:conceptId/glossary-article` | `TerminologyClient` | No |
+| `GET` | `/terminology/concepts/:conceptId/glossary-neighborhood` | `TerminologyClient` | No |

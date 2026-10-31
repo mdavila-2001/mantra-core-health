@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { REFRESH_COOKIE_MODE } from '../data-access/api';
+import type { DeniedTenant } from '../data-access/iam/tenant-denial';
 import { decodeAccessToken, type AccessTokenClaims } from './access-token';
 
 /**
@@ -16,6 +17,9 @@ const ORGANIZATION_ACCOUNT_TENANT_TYPES: readonly string[] = [
   'DIAGNOSTIC_CENTER',
   'PAYER',
 ];
+
+/** Qué se sabe de la obligación de dar de alta el segundo paso. */
+export type MfaEnrollmentState = 'unknown' | 'required' | 'done';
 
 /** Sesión abierta, tal como la necesita el interceptor. */
 export interface SessionTokens {
@@ -45,6 +49,18 @@ export class SessionStore {
 
   /** Tenant elegido cuando el token trae más de uno. */
   private readonly selectedTenantId = signal<string | null>(null);
+
+  /**
+   * Si la persona tiene que dar de alta su verificación en dos pasos antes de
+   * usar la aplicación.
+   *
+   * **La API también lo impone**: a quien debe dar de alta el segundo factor le emite un token de alcance
+   * limitado (claim `mfaEnrollment: true`) que solo llega a `/iam/me/mfa*`, al cierre de sesión y al refresco;
+   * el resto es 403 `MFA_ENROLLMENT_REQUIRED`. El cliente conserva su guarda (`mfaEnrollmentGuard`) para no
+   * mostrar pantallas que van a fallar. El claim lo decide al abrir la sesión y al renovarla; con un token
+   * completo y `unknown` se pregunta `GET /iam/me/mfa` la primera vez que importa.
+   */
+  readonly mfaEnrollment = signal<MfaEnrollmentState>('unknown');
 
   readonly accessToken = computed(() => emptyToNull(this.tokens()?.accessToken));
 
@@ -80,6 +96,20 @@ export class SessionStore {
     effectiveRoles(this.claims(), this.activeTenantId()),
   );
   readonly tenants = computed<readonly string[]>(() => this.claims()?.tenants ?? []);
+
+  /**
+   * Las organizaciones que **no dejan actuar ahora** a esta persona, con su motivo (claim `deniedTenants`). No están en
+   * `tenants`: entró a las demás. Es para avisar y para marcarlas deshabilitadas en el selector; la que niega es la API.
+   */
+  readonly deniedTenants = computed<readonly DeniedTenant[]>(() =>
+    Object.entries(this.claims()?.deniedTenants ?? {}).map(([tenantId, reason]) => ({ tenantId, reason })),
+  );
+
+  /**
+   * Si el token es el de **alcance limitado** (`mfaEnrollment`): la API solo deja dar de alta el segundo factor, salir y
+   * refrescar. La API lo impone; el cliente conserva su guarda para no mostrar una aplicación que va a responder 403.
+   */
+  readonly limitedToEnrollment = computed(() => this.claims()?.mfaEnrollment === true);
 
   /** Nombre para mostrar, si el token lo trae. */
   readonly displayName = computed<string | null>(() => this.claims()?.name ?? null);
@@ -173,7 +203,10 @@ export class SessionStore {
       return false;
     }
     if (claims.accountKind !== undefined) {
-      return claims.accountKind === 'ORGANIZATION';
+      // El claim dice la clase de cuenta **de la organización** (`org_account_mode`): el hospital en modo organización firma
+      // `ORGANIZATION` para todos los que entran por él, también para su secretaria o un doctor. Quien trabaja ahí con un rol
+      // propio —personal de apoyo, doctor, paciente— es una persona; la cuenta de la organización es la que no tiene ninguno.
+      return claims.accountKind === 'ORGANIZATION' && !this.holdsPersonalRole(claims);
     }
     const type = this.activeTenantType();
     return (
@@ -183,6 +216,12 @@ export class SessionStore {
       claims.hpid === undefined
     );
   });
+
+  /** ¿Entra con un rol propio de una persona que trabaja ahí (personal de apoyo o doctor)? */
+  private holdsPersonalRole(claims: NonNullable<ReturnType<typeof this.claims>>): boolean {
+    const personal = (codes: readonly string[]): boolean => codes.includes('SUPPORT_STAFF') || codes.includes('PRACTITIONER');
+    return personal(claims.roles) || Object.values(claims.scopedRoles ?? {}).some(personal);
+  }
 
   /** Si hay que pedirle a la persona que elija organización. */
   readonly needsTenantSelection = computed(
@@ -202,6 +241,7 @@ export class SessionStore {
   start(tokens: SessionTokens): void {
     this.tokens.set(tokens);
     this.selectedTenantId.set(null);
+    this.mfaEnrollment.set(this.limitedToEnrollment() ? 'required' : 'unknown');
   }
 
   /**
@@ -211,6 +251,9 @@ export class SessionStore {
    */
   renew(tokens: SessionTokens): void {
     this.tokens.set(tokens);
+    // El refresco conserva el alcance limitado y lo reemite completo al confirmar el factor: el claim manda.
+    if (this.limitedToEnrollment()) this.mfaEnrollment.set('required');
+    else if (this.mfaEnrollment() === 'required') this.mfaEnrollment.set('done');
   }
 
   /** Fija la organización activa. Debe ser una de las del token. */
@@ -223,6 +266,7 @@ export class SessionStore {
   clear(): void {
     this.tokens.set(null);
     this.selectedTenantId.set(null);
+    this.mfaEnrollment.set('unknown');
   }
 }
 

@@ -313,6 +313,10 @@ export interface MensajeDelHilo {
   readonly contentType?: DirectMessageContentType;
   readonly reactions?: readonly MessageReaction[];
   readonly receipts?: readonly MessageReceipt[];
+  /** El doctor lo respondió a través de su equipo y decidió que el paciente lo sepa. */
+  readonly repliedByTeam?: boolean;
+  /** Solo para el doctor: quién de su equipo lo escribió de verdad. */
+  readonly teamAuthorName?: string;
   /** Sólo en los pendientes: con qué reintentar. */
   readonly pendiente?: MensajePendiente;
 }
@@ -635,6 +639,8 @@ export class ChatStore {
         contentType: mensaje.contentType,
         reactions: mensaje.reactions,
         receipts: mensaje.receipts,
+        repliedByTeam: mensaje.repliedByTeam,
+        teamAuthorName: mensaje.teamAuthorName,
       }));
 
     const perfil = this.perfil();

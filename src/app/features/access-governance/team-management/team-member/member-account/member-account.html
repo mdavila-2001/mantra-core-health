@@ -1,0 +1,240 @@
+<div class="cuenta" data-testid="member-account">
+  <div aria-live="polite" role="status" data-testid="account-notice">
+    @if (notice() !== '') {
+      <app-alert tone="success">{{ notice() }}</app-alert>
+    }
+    @if (reactivated(); as done) {
+      <app-alert
+        tone="info"
+        title="La reactivación espera aprobación"
+        data-testid="reactivate-result"
+      >
+        Otra persona debe aprobarla; hasta entonces sigue suspendida.
+        @if (done.approvalId) {
+          <a [routerLink]="['/administration/access-governance/approvals']"
+            >Ver las aprobaciones pendientes</a
+          >
+        }
+      </app-alert>
+    }
+    @if (offboarded(); as done) {
+      <app-alert tone="success" title="La baja está hecha" data-testid="offboard-result">
+        El acceso terminó el {{ dateTime(done.revokedAt) }}.
+        @if (done.handover.pending > 0) {
+          Quedan {{ done.handover.pending }} elementos por traspasar.
+        } @else {
+          No quedó nada pendiente.
+        }
+        <a [routerLink]="['/administration/team-management']" data-testid="offboard-back-link"
+          >Volver a mi equipo</a
+        >
+      </app-alert>
+    }
+  </div>
+
+  @if (failure(); as problem) {
+    <app-alert tone="error" [title]="problem.title" role="alert" data-testid="account-failure">
+      {{ problem.message }}
+      @if (problem.help !== '') {
+        <span class="ayuda"> {{ problem.help }}</span>
+      }
+    </app-alert>
+  }
+
+  @if (isEnded() || offboarded() !== null) {
+    <p class="ayuda" data-testid="account-ended">
+      Esta persona ya está dada de baja: no hay nada más que hacer con su vínculo.
+    </p>
+  } @else {
+    @if (otherFunctions() > 0) {
+      <app-alert
+        tone="info"
+        title="Esta persona también trabaja fuera de lo que usted administra"
+        data-testid="account-scope-warning"
+      >
+        Tiene {{ otherFunctions() }} {{ otherFunctions() === 1 ? 'función' : 'funciones' }} en otros
+        lugares. Suspenderla o darla de baja afecta a toda la persona, así que le toca al
+        administrador de seguridad. Usted puede quitarle lo que da en su servicio desde la pestaña
+        «Permisos».
+      </app-alert>
+    }
+
+    @if (can('team.engagement.recertify')) {
+      <section class="seccion" aria-labelledby="acc-recertify">
+        <h2 id="acc-recertify" class="seccion__titulo">Confirmar el vínculo</h2>
+        <p class="ayuda">
+          Confirme que {{ memberName() }} sigue trabajando con usted. Se programa la próxima
+          revisión.
+        </p>
+        <div>
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [isLoading]="busy() === 'recertify'"
+            [disabled]="busy() !== null"
+            (clicked)="recertify()"
+            data-testid="recertify-submit"
+          >
+            Confirmar que sigue trabajando aquí
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (isActive() && can('team.engagement.suspend')) {
+      <section class="seccion" aria-labelledby="acc-suspend" data-testid="suspend-form">
+        <h2 id="acc-suspend" class="seccion__titulo">Suspender</h2>
+        <p class="ayuda">
+          La suspensión es inmediata y no necesita aprobación. Corta el acceso por ahora y deja los
+          permisos guardados.
+        </p>
+        <app-form-field label="Por qué se suspende" [required]="true">
+          <app-select
+            [value]="suspendCode()"
+            (valueChange)="suspendCode.set($event)"
+            [options]="suspensionOptions"
+            ariaLabel="Por qué se suspende"
+            data-testid="suspend-reason-code"
+          />
+        </app-form-field>
+        <app-form-field label="Nota (opcional)">
+          <app-textarea
+            [value]="suspendNote()"
+            (valueChange)="suspendNote.set($event)"
+            [rows]="2"
+            [maxLength]="500"
+            data-testid="suspend-note"
+          />
+        </app-form-field>
+        <div>
+          <button
+            app-button
+            variant="danger"
+            type="button"
+            [isLoading]="busy() === 'suspend'"
+            [disabled]="busy() !== null"
+            (clicked)="suspend()"
+            data-testid="suspend-submit"
+          >
+            Suspender ahora
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (isSuspended() && can('team.engagement.reactivate')) {
+      <section class="seccion" aria-labelledby="acc-reactivate" data-testid="reactivate-form">
+        <h2 id="acc-reactivate" class="seccion__titulo">Reactivar</h2>
+        <p class="ayuda">
+          Reactivar siempre necesita la aprobación de otra persona. Si la suspensión fue por una
+          investigación, solo el administrador de seguridad puede aprobarla.
+        </p>
+        <app-form-field
+          label="Motivo de la reactivación"
+          [required]="true"
+          [errorMessage]="reactivateError()"
+        >
+          <app-textarea
+            [value]="reactivateReason()"
+            (valueChange)="reactivateReason.set($event)"
+            [rows]="3"
+            [maxLength]="500"
+            [hasError]="reactivateError() !== ''"
+            data-testid="reactivate-reason"
+          />
+        </app-form-field>
+        <div>
+          <button
+            app-button
+            type="button"
+            [isLoading]="busy() === 'reactivate'"
+            [disabled]="busy() !== null"
+            (clicked)="reactivate()"
+            data-testid="reactivate-submit"
+          >
+            Pedir la reactivación
+          </button>
+        </div>
+      </section>
+    }
+
+    @if (can('team.engagement.end')) {
+      <section class="seccion" aria-labelledby="acc-offboard" data-testid="offboard-form">
+        <h2 id="acc-offboard" class="seccion__titulo">Dar de baja con traspaso</h2>
+        @if (previewFailed()) {
+          <app-alert
+            tone="warning"
+            title="No pudimos ver su trabajo pendiente"
+            data-testid="offboard-preview-failed"
+            >Puede dar de baja y traspasar después, pero conviene volver a intentarlo.</app-alert
+          >
+        }
+        @if (preview(); as p) {
+          <app-handover-form
+            [preview]="p"
+            [people]="options()"
+            [draft]="draft()"
+            [showIssues]="offboardAttempted()"
+            (draftChange)="draft.set($event)"
+          />
+        }
+        @if (offboardAttempted() && issues().length > 0) {
+          <app-alert
+            tone="warning"
+            role="alert"
+            title="Falta un dato"
+            data-testid="offboard-issues"
+            >{{ issues()[0] }}</app-alert
+          >
+        }
+        <app-alert
+          tone="warning"
+          title="Esto no se puede deshacer"
+          data-testid="offboard-fixed-text"
+        >
+          El acceso termina <strong>ahora</strong>. Las citas se mantienen y su gestión pasa a la
+          recepción.
+        </app-alert>
+        <app-form-field
+          label="Motivo de la baja"
+          [required]="true"
+          [errorMessage]="offboardError()"
+          hint="Queda en el registro de transferencia."
+        >
+          <app-textarea
+            [value]="offboardReason()"
+            (valueChange)="offboardReason.set($event)"
+            [rows]="3"
+            [maxLength]="500"
+            [hasError]="offboardError() !== ''"
+            data-testid="offboard-reason"
+          />
+        </app-form-field>
+        <div class="acciones">
+          <button
+            app-button
+            variant="danger"
+            type="button"
+            [isLoading]="busy() === 'offboard'"
+            [disabled]="busy() !== null"
+            (clicked)="offboard(true)"
+            data-testid="offboard-confirm"
+          >
+            Dar de baja y traspasar
+          </button>
+          <button
+            app-button
+            variant="outline"
+            type="button"
+            [disabled]="busy() !== null"
+            (clicked)="offboard(false)"
+            data-testid="offboard-only"
+          >
+            Solo dar de baja ahora
+          </button>
+        </div>
+      </section>
+    }
+  }
+</div>

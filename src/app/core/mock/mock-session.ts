@@ -45,6 +45,14 @@ export const TENANT_LABORATORIO = uuid('tenant-laboratorio-central');
 export const TENANT_ASEGURADORA = uuid('tenant-seguros-andina');
 /** El consultorio propio de la médica: su organización por defecto. */
 export const TENANT_CONSULTORIO = uuid('tenant-consultorio-rojas');
+/**
+ * **Hospital Piloto Mantra** (ficticio): la cuenta de organización del diseño de
+ * «personal de apoyo». Es el hospital como **cuenta** (`accountKind:
+ * 'ORGANIZATION'`), no una persona que lo administra.
+ */
+export const TENANT_HOSPITAL_PILOTO = uuid('tenant-hospital-piloto-mantra');
+/** El consultorio privado de la Dra. Paola Céspedes, donde trabaja Rosa. Organización aparte. */
+export const TENANT_CESPEDES = uuid('tenant-consultorio-cespedes');
 
 export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_CONSULTORIO]: 'Consultorio Dra. Rojas',
@@ -54,6 +62,8 @@ export const TENANT_NAMES: Readonly<Record<string, string>> = {
   [TENANT_FARMACIA]: 'Farmacia Vida',
   [TENANT_LABORATORIO]: 'Laboratorio Central',
   [TENANT_ASEGURADORA]: 'Seguros Andina',
+  [TENANT_HOSPITAL_PILOTO]: 'Hospital Piloto Mantra',
+  [TENANT_CESPEDES]: 'Consultorio Dra. Paola Céspedes',
 };
 
 /**
@@ -85,6 +95,8 @@ export const TENANT_TYPES: Readonly<Record<string, TenantTypeCode | 'DIAGNOSTIC_
   // claim, y es lo que abre «Recepción de muestras» en el menú.
   [TENANT_LABORATORIO]: 'DIAGNOSTIC_CENTER',
   [TENANT_ASEGURADORA]: 'PAYER',
+  [TENANT_HOSPITAL_PILOTO]: 'HOSPITAL',
+  [TENANT_CESPEDES]: 'MEDICAL_OFFICE',
 };
 
 /** Perfiles que aparecen en toda la aplicación (agenda, expediente, red). */
@@ -140,6 +152,30 @@ export const IDS = {
     userId: uuid('user-sinespecialidad'),
     personId: uuid('person-sinespecialidad'),
     practitionerProfileId: uuid('hpid-sinespecialidad'),
+  },
+  // Hospital Piloto Mantra (personal de apoyo): la cuenta de la organización,
+  // las cuatro personas de apoyo y dos doctores del hospital.
+  hospitalPiloto: {
+    userId: uuid('user-hospital-piloto'),
+    personId: uuid('person-hospital-piloto'),
+  },
+  ana: { userId: uuid('user-ana-gutierrez'), personId: uuid('person-ana-gutierrez') },
+  lucia: { userId: uuid('user-lucia-paz'), personId: uuid('person-lucia-paz') },
+  marcos: { userId: uuid('user-marcos-ribera'), personId: uuid('person-marcos-ribera') },
+  rosa: { userId: uuid('user-rosa-quiroga'), personId: uuid('person-rosa-quiroga') },
+  // La otra secretaria del hospital: comparte con Ana al Dr. Pérez, y por eso
+  // sirve para ver que una conversación tomada por una no la toma la otra.
+  mariela: { userId: uuid('user-mariela-soliz'), personId: uuid('person-mariela-soliz') },
+  elena: { userId: uuid('user-elena-camacho'), personId: uuid('person-elena-camacho') },
+  perez: {
+    userId: uuid('user-andres-perez'),
+    personId: uuid('person-andres-perez'),
+    practitionerProfileId: uuid('hpid-andres-perez'),
+  },
+  suarez: {
+    userId: uuid('user-martin-suarez'),
+    personId: uuid('person-martin-suarez'),
+    practitionerProfileId: uuid('hpid-martin-suarez'),
   },
 } as const;
 
@@ -331,6 +367,177 @@ export const MOCK_USERS: readonly MockUser[] = [
     personId: IDS.farmacia.personId,
     accountKind: 'ORGANIZATION',
   },
+  {
+    // Hospital Piloto Mantra como **cuenta de organización**: quien entra es el
+    // hospital, no una persona que lo administra. Su rol de token es `USER` más
+    // `SECURITY_ADMIN`
+    // —igual que farmacia, laboratorio y aseguradora—; lo que lo habilita en
+    // «Equipo de apoyo» es la cuenta, y la autoridad la tiene la API.
+    key: 'hospital_piloto',
+    id: IDS.hospitalPiloto.userId,
+    email: 'hospital.piloto@alovida.mock',
+    nationalId: '7004001',
+    displayName: 'Hospital Piloto Mantra',
+    // `SECURITY_ADMIN` porque la API lo exige en todas las rutas `/org/*` del personal
+    // de apoyo (`@Roles('SECURITY_ADMIN')`); `USER` solo no alcanza.
+    roles: ['USER', 'SECURITY_ADMIN'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.hospitalPiloto.personId,
+    accountKind: 'ORGANIZATION',
+  },
+  {
+    // Ana Gutiérrez, secretaria del hospital. Persona, rol `USER`: su acceso
+    // no es un rol global sino un **vínculo de apoyo** con permisos por objetivo.
+    key: 'ana',
+    id: IDS.ana.userId,
+    email: 'ana.gutierrez@alovida.mock',
+    nationalId: '7005001',
+    displayName: 'Ana Gutiérrez',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.ana.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    key: 'lucia',
+    id: IDS.lucia.userId,
+    email: 'lucia.paz@alovida.mock',
+    nationalId: '7005002',
+    displayName: 'Lucía Paz',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.lucia.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    key: 'marcos',
+    id: IDS.marcos.userId,
+    email: 'marcos.ribera@alovida.mock',
+    nationalId: '7005003',
+    displayName: 'Marcos Ribera',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.marcos.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Silvia Soria: cajera del hospital piloto con el vínculo **suspendido** por no
+    // recertificarse a tiempo (ver `support-hospital-review.ts`). Es la cuenta con la
+    // que se ve «Suspendido: pida a su organización que lo renueve».
+    key: 'silvia',
+    id: uuid('user-silvia-soria'),
+    email: 'silvia-soria@alovida.mock',
+    nationalId: '7005008',
+    displayName: 'Silvia Soria',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: uuid('person-silvia-soria'),
+    accountKind: 'PERSON',
+  },
+  {
+    // Sofía Camacho, jefa de Ecografía del hospital piloto (gobierno de accesos, §10.1): persona de apoyo con la plantilla
+    // `ORG_MANAGEMENT` y una concesión `SERVICE` con átomos `team.*` y techo de delegación. Administra a **su** gente por
+    // `/org/team/*`; no es `SECURITY_ADMIN`. Con ella se ve «Mi equipo (administración)».
+    key: 'sofia',
+    id: uuid('user-sofia-camacho'),
+    email: 'sofia.camacho@alovida.mock',
+    nationalId: '7005011',
+    displayName: 'Sofía Camacho',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: uuid('person-sofia-camacho'),
+    accountKind: 'PERSON',
+  },
+  {
+    // Mario Salvatierra, caja del hospital piloto (gobierno de accesos, §10.1): persona de apoyo con el cobro (`billing.payment.collect`)
+    // y un tope de monto. Es la cuenta con la que se ve la caja y sus desafíos (monto, descuento y anulación con paso extra).
+    key: 'mario',
+    id: uuid('user-mario-salvatierra'),
+    email: 'mario.salvatierra@alovida.mock',
+    nationalId: '7005012',
+    displayName: 'Mario Salvatierra',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: uuid('person-mario-salvatierra'),
+    accountKind: 'PERSON',
+  },
+  {
+    key: 'mariela',
+    id: IDS.mariela.userId,
+    email: 'mariela.soliz@alovida.mock',
+    nationalId: '7005005',
+    displayName: 'Mariela Soliz',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.mariela.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Rosa trabaja para una **organización aparte**: el consultorio privado de
+    // la Dra. Céspedes. No pertenece al hospital: su token no lo trae.
+    key: 'rosa',
+    id: IDS.rosa.userId,
+    email: 'rosa.quiroga@alovida.mock',
+    nationalId: '7005004',
+    displayName: 'Rosa Quiroga',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_CESPEDES],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.rosa.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // Elena trabaja en **dos organizaciones** (el hospital y el consultorio de
+    // la Dra. Céspedes): con ella se ve la agenda combinada de varias.
+    key: 'elena',
+    id: IDS.elena.userId,
+    email: 'elena.camacho@alovida.mock',
+    nationalId: '7005005',
+    displayName: 'Elena Camacho',
+    roles: ['USER', 'SUPPORT_STAFF'],
+    tenants: [TENANT_HOSPITAL_PILOTO, TENANT_CESPEDES],
+    tenantNames: TENANT_NAMES,
+    personId: IDS.elena.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // El Dr. Andrés Pérez, cardiólogo del hospital piloto.
+    key: 'perez',
+    id: IDS.perez.userId,
+    email: 'andres.perez@alovida.mock',
+    nationalId: '7006001',
+    displayName: 'Dr. Andrés Pérez',
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.perez.practitionerProfileId,
+    personId: IDS.perez.personId,
+    accountKind: 'PERSON',
+  },
+  {
+    // El Dr. Martín Suárez, pediatra del hospital piloto: es quien recibe la
+    // solicitud de ampliación de Ana en el recorrido de la demostración.
+    key: 'suarez',
+    id: IDS.suarez.userId,
+    email: 'martin.suarez@alovida.mock',
+    nationalId: '7006002',
+    displayName: 'Dr. Martín Suárez',
+    // Solo `PRACTITIONER`, como todo doctor: canjea el QR de doctores en «Mis accesos», que se abre también a su rol.
+    roles: ['PRACTITIONER'],
+    tenants: [TENANT_HOSPITAL_PILOTO],
+    tenantNames: TENANT_NAMES,
+    practitionerProfileId: IDS.suarez.practitionerProfileId,
+    personId: IDS.suarez.personId,
+    accountKind: 'PERSON',
+  },
 ];
 
 /**
@@ -354,7 +561,7 @@ export function resolverCuentasDePacientes(resolver: ResolverDeCuentas): void {
 
 /**
  * Las cuentas de personal de apoyo dadas de alta en la maqueta
- * (`/iam/auth/register-support-staff`) y la sembrada. Las resuelve
+ * (`/iam/auth/register-support-staff`). Las resuelve
  * `support-staff.handlers`, igual que las de pacientes: este archivo no puede
  * importar sus tablas sin armar un ciclo.
  */
@@ -362,17 +569,6 @@ let cuentaDeApoyo: ResolverDeCuentas = () => undefined;
 
 export function resolverCuentasDeApoyo(resolver: ResolverDeCuentas): void {
   cuentaDeApoyo = resolver;
-}
-
-/**
- * Lo que la API agrega al token en cada login y refresco según el estado de la
- * cuenta: para la secretaria, los hospitales donde tiene un vínculo de apoyo
- * activo entran a `tenants`. Lo instala `support-staff.store`.
- */
-let decorarCuenta: (user: MockUser) => MockUser = (user) => user;
-
-export function decorarCuentasCon(decorador: (user: MockUser) => MockUser): void {
-  decorarCuenta = decorador;
 }
 
 export function buscarUsuario(identificador: string): MockUser | undefined {
@@ -398,8 +594,7 @@ export function usuarioPorId(userId: string): MockUser | undefined {
 
 const VIDA_TOKEN_SEGUNDOS = 60 * 60 * 8;
 
-export function emitirAccessToken(cuenta: MockUser, ahora = Date.now()): string {
-  const user = decorarCuenta(cuenta);
+export function emitirAccessToken(user: MockUser, ahora = Date.now()): string {
   const header = base64url(JSON.stringify({ alg: 'none', typ: 'JWT' }));
   // Sólo los tenants de la cuenta, y sólo los que tienen tipo conocido: mismo
   // criterio que usaría la API real (`TENANT_TYPE_CODE_BY_CONCEPT_ID`), donde
@@ -420,7 +615,15 @@ export function emitirAccessToken(cuenta: MockUser, ahora = Date.now()): string 
       tenantNames: user.tenantNames,
       ...(Object.keys(tenantTypes).length === 0 ? {} : { tenantTypes }),
       ...(user.scopedRoles === undefined ? {} : { scopedRoles: user.scopedRoles }),
-      ...(user.accountKind === undefined ? {} : { accountKind: user.accountKind }),
+      // Como la API real: `accountKind` es la clase de cuenta de las ORGANIZACIONES de la persona (el hospital en modo organización
+      // firma `ORGANIZATION` para todos los que entran por él, también su secretaria), y `tenantAccountKinds` la de cada una.
+      ...(user.accountKind === undefined
+        ? {}
+        : {
+            accountKind: user.tenants.includes(TENANT_HOSPITAL_PILOTO)
+              ? 'ORGANIZATION'
+              : user.accountKind,
+          }),
       ...(user.patientProfileId === undefined ? {} : { pid: user.patientProfileId }),
       ...(user.practitionerProfileId === undefined ? {} : { hpid: user.practitionerProfileId }),
       iat: Math.floor(ahora / 1000),

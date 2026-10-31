@@ -4,270 +4,276 @@
 
 <app-page-header
   [title]="ficha?.name ?? 'Mis organizaciones'"
-  subtitle="Sedes, áreas, infraestructura, establecimiento, servicios, plantilla, legajo e inventario de la organización."
+  [subtitle]="subtitulo()"
   [breadcrumbs]="breadcrumbs()"
 />
 
-<!-- El selector sólo aparece con más de una organización: ofrecer una lista de
-     un elemento es ruido, y el caso mayoritario es tener una sola. -->
-@if (listado.status === 'ready' && listado.data.length > 1) {
-  <!-- El MISMO campo que «Unidad» en el laboratorio: `app-form-field` +
-       `app-select`, que elige en el modal de la casa. Era un `<select>` del
-       navegador, con su propio alto y su lista del sistema operativo. -->
-  <app-form-field label="Organización">
-    <app-select
-      [value]="practicaElegida()"
-      (valueChange)="elegirPractica($event ?? '')"
-      [options]="opcionesDePractica()"
-      placeholder="Elija una organización"
-      data-testid="practica-elegida"
-    />
-  </app-form-field>
-}
-
-<!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
-     arriba una sola vez y no se repite como columna en ninguna tabla.
-
-     **Los nueve estados se dibujan acá, una sola vez**, con `app-view-state-host`:
-     S9 lleva su código de petición, S7 su antigüedad, S3 su salida, y S1/S4
-     dejaron de caer en «Cargando…». Las pestañas de datos no repiten el estado:
-     sin consola, dicen que el detalle está arriba. -->
-<app-view-state-host
-  class="organizacion-medica__estado"
-  data-testid="organizacion-estado"
-  [state]="estado"
-  (retry)="recargar()"
-  (refresh)="recargar()"
->
-  @if (ficha) {
-    <section class="organizacion-medica__ambito" aria-label="Organización">
-      <dl class="organizacion-medica__datos">
-        <div>
-          <dt>Código</dt>
-          <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
-        </div>
-        <div>
-          <dt>Tipo</dt>
-          <dd>{{ etiquetaDe(ficha.type) }}</dd>
-        </div>
-        <div>
-          <dt>Estado</dt>
-          <dd>
-            <app-badge [variant]="varianteDe(ficha.status)">
-              {{ etiquetaDe(ficha.status) }}
-            </app-badge>
-          </dd>
-        </div>
-        @if (ficha.timeZone) {
-          <div>
-            <dt>Zona horaria</dt>
-            <dd>{{ ficha.timeZone }}</dd>
-          </div>
-        }
-        @if (ficha.currency) {
-          <div>
-            <dt>Moneda</dt>
-            <dd>{{ etiquetaDe(ficha.currency) }}</dd>
-          </div>
-        }
-      </dl>
-    </section>
+@if (esMedico()) {
+  <!-- Quien no administra ninguna organización no ve las pestañas administrativas
+       de una que no tiene: ve a cuáles pertenece y su buzón de solicitudes. -->
+  <app-vista-medico />
+} @else {
+  <!-- El selector sólo aparece con más de una organización: ofrecer una lista de
+       un elemento es ruido, y el caso mayoritario es tener una sola. -->
+  @if (listado.status === 'ready' && listado.data.length > 1) {
+    <!-- El MISMO campo que «Unidad» en el laboratorio: `app-form-field` +
+         `app-select`, que elige en el modal de la casa. Era un `<select>` del
+         navegador, con su propio alto y su lista del sistema operativo. -->
+    <app-form-field label="Organización">
+      <app-select
+        [value]="practicaElegida()"
+        (valueChange)="elegirPractica($event ?? '')"
+        [options]="opcionesDePractica()"
+        placeholder="Elija una organización"
+        data-testid="practica-elegida"
+      />
+    </app-form-field>
   }
 
-  <!-- Avisos que la especificación pide explícitos: documentación por vencer
-       e insumos en el punto de reposición. Salen de datos ya calculados por
-       el servidor, no de una cuenta hecha acá. -->
-  @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
-    <section class="organizacion-medica__avisos" role="status">
-      @if (documentosPorVencer().length > 0) {
-        <p>
-          <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
-          vencidos o por vencer dentro del mes.
-        </p>
-      }
-      @if (insumosEnFalta().length > 0) {
-        <p>
-          <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
-          reposición o por debajo.
-        </p>
-      }
-    </section>
-  }
-</app-view-state-host>
+  <!-- Ficha de ámbito: la práctica es el asunto de la pantalla, no un filtro. Va
+       arriba una sola vez y no se repite como columna en ninguna tabla.
 
-<ng-template #sinConsola>
-  <p class="organizacion-medica__sin-consola">
-    Esta pestaña depende de la organización, que no se pudo mostrar: el detalle está arriba.
-  </p>
-</ng-template>
-
-<app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="cambiarPestana($event)">
-  <app-tab label="Sedes">
-    @if (hayDatos()) {
-      <app-data-table
-        [state]="sedes()"
-        [columns]="columnasDeSede()"
-        [trackBy]="porId"
-        caption="Sedes de la organización"
-        (retry)="recargar()"
-      />
-    } @else {
-      <ng-container *ngTemplateOutlet="sinConsola" />
+       **Los nueve estados se dibujan acá, una sola vez**, con `app-view-state-host`:
+       S9 lleva su código de petición, S7 su antigüedad, S3 su salida, y S1/S4
+       dejaron de caer en «Cargando…». Las pestañas de datos no repiten el estado:
+       sin consola, dicen que el detalle está arriba. -->
+  <app-view-state-host
+    class="organizacion-medica__estado"
+    data-testid="organizacion-estado"
+    [state]="estado"
+    (retry)="recargar()"
+    (refresh)="recargar()"
+  >
+    @if (ficha) {
+      <section class="organizacion-medica__ambito" aria-label="Organización">
+        <dl class="organizacion-medica__datos">
+          <div>
+            <dt>Código</dt>
+            <dd class="organizacion-medica__codigo">{{ ficha.code }}</dd>
+          </div>
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ etiquetaDe(ficha.type) }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>
+              <app-badge [variant]="varianteDe(ficha.status)">
+                {{ etiquetaDe(ficha.status) }}
+              </app-badge>
+            </dd>
+          </div>
+          @if (ficha.timeZone) {
+            <div>
+              <dt>Zona horaria</dt>
+              <dd>{{ ficha.timeZone }}</dd>
+            </div>
+          }
+          @if (ficha.currency) {
+            <div>
+              <dt>Moneda</dt>
+              <dd>{{ etiquetaDe(ficha.currency) }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
     }
-  </app-tab>
 
-  <app-tab label="Áreas">
-    @if (hayDatos()) {
-      <app-data-table
-        [state]="areas()"
-        [columns]="columnasDeArea()"
-        [trackBy]="porId"
-        caption="Áreas y departamentos de la organización"
-        (retry)="recargar()"
-      />
-    } @else {
-      <ng-container *ngTemplateOutlet="sinConsola" />
+    <!-- Avisos que la especificación pide explícitos: documentación por vencer
+         e insumos en el punto de reposición. Salen de datos ya calculados por
+         el servidor, no de una cuenta hecha acá. -->
+    @if (documentosPorVencer().length > 0 || insumosEnFalta().length > 0) {
+      <section class="organizacion-medica__avisos" role="status">
+        @if (documentosPorVencer().length > 0) {
+          <p>
+            <strong>{{ documentosPorVencer().length }}</strong> documento(s) del legajo
+            vencidos o por vencer dentro del mes.
+          </p>
+        }
+        @if (insumosEnFalta().length > 0) {
+          <p>
+            <strong>{{ insumosEnFalta().length }}</strong> insumo(s) en el punto de
+            reposición o por debajo.
+          </p>
+        }
+      </section>
     }
-  </app-tab>
+  </app-view-state-host>
 
-  <!-- F1: el árbol de N niveles reemplaza a la tabla plana de espacios. Sólo
-       se instancia con la pestaña abierta: si no, pediría la estructura del
-       establecimiento aunque nadie la mire. -->
-  <app-tab label="Infraestructura">
-    @if (pestana() === pestanaDeInfraestructura) {
+  <ng-template #sinConsola>
+    <p class="organizacion-medica__sin-consola">
+      Esta pestaña depende de la organización, que no se pudo mostrar: el detalle está arriba.
+    </p>
+  </ng-template>
+
+  <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="cambiarPestana($event)">
+    <app-tab label="Sedes">
       @if (hayDatos()) {
-        <app-infraestructura-tab [sitios]="sitiosElegibles()" [puedeEscribir]="puedeEscribir()" />
-      } @else {
-        <ng-container *ngTemplateOutlet="sinConsola" />
-      }
-    }
-  </app-tab>
-
-  <app-tab label="Establecimiento">
-    @if (pestana() === pestanaDeEstablecimiento) {
-      @if (hayDatos()) {
-        <app-establecimiento-tab
-          [sitios]="sitiosElegibles()"
-          [sitioId]="sitioDeLaUrl()"
-          [puedeEscribir]="puedeEscribir()"
+        <app-data-table
+          [state]="sedes()"
+          [columns]="columnasDeSede()"
+          [trackBy]="porId"
+          caption="Sedes de la organización"
+          (retry)="recargar()"
         />
       } @else {
         <ng-container *ngTemplateOutlet="sinConsola" />
       }
-    }
-  </app-tab>
+    </app-tab>
 
-  <app-tab label="Servicios">
-    @if (hayDatos()) {
-      <app-data-table
-        [state]="servicios()"
-        [columns]="columnasDeServicio()"
-        [trackBy]="porId"
-        caption="Servicios de salud de la organización"
-        (retry)="recargar()"
-      />
-    } @else {
-      <ng-container *ngTemplateOutlet="sinConsola" />
-    }
-  </app-tab>
+    <app-tab label="Áreas">
+      @if (hayDatos()) {
+        <app-data-table
+          [state]="areas()"
+          [columns]="columnasDeArea()"
+          [trackBy]="porId"
+          caption="Áreas y departamentos de la organización"
+          (retry)="recargar()"
+        />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    </app-tab>
 
-  <app-tab label="Plantilla">
-    @if (hayDatos()) {
-      <app-data-table
-        [state]="plantilla()"
-        [columns]="columnasDePlantilla()"
-        [trackBy]="porId"
-        caption="Profesionales vinculados a la organización"
-        (retry)="recargar()"
-      />
-    } @else {
-      <ng-container *ngTemplateOutlet="sinConsola" />
-    }
-  </app-tab>
+    <!-- F1: el árbol de N niveles reemplaza a la tabla plana de espacios. Sólo
+         se instancia con la pestaña abierta: si no, pediría la estructura del
+         establecimiento aunque nadie la mire. -->
+    <app-tab label="Infraestructura">
+      @if (pestana() === pestanaDeInfraestructura) {
+        @if (hayDatos()) {
+          <app-infraestructura-tab [sitios]="sitiosElegibles()" [puedeEscribir]="puedeEscribir()" />
+        } @else {
+          <ng-container *ngTemplateOutlet="sinConsola" />
+        }
+      }
+    </app-tab>
 
-  <app-tab label="Legajo">
-    @if (hayDatos()) {
-      <app-data-table
-        [state]="legajo()"
-        [columns]="columnasDeLegajo()"
-        [trackBy]="porId"
-        caption="Documentación legal y acreditaciones"
-        (retry)="recargar()"
-      />
-    } @else {
-      <ng-container *ngTemplateOutlet="sinConsola" />
-    }
-  </app-tab>
+    <app-tab label="Establecimiento">
+      @if (pestana() === pestanaDeEstablecimiento) {
+        @if (hayDatos()) {
+          <app-establecimiento-tab
+            [sitios]="sitiosElegibles()"
+            [sitioId]="sitioDeLaUrl()"
+            [puedeEscribir]="puedeEscribir()"
+          />
+        } @else {
+          <ng-container *ngTemplateOutlet="sinConsola" />
+        }
+      }
+    </app-tab>
 
-  <app-tab label="Inventario">
-    @if (hayDatos()) {
-      <app-data-table
-        [state]="inventario()"
-        [columns]="columnasDeInventario()"
-        [trackBy]="porId"
-        caption="Insumos y equipamiento"
-        (retry)="recargar()"
-      />
-    } @else {
-      <ng-container *ngTemplateOutlet="sinConsola" />
-    }
-  </app-tab>
-  <!-- **«Mis vinculaciones» absorbió a «Mis organizaciones»** (propietario,
-       2026-09-10). Era una pantalla propia que preguntaba y respondía lo mismo
-       que este panel —en qué organizaciones ejerce esta persona— con otro
-       aspecto. Se monta el componente entero con `embedded`, así conserva su
-       lógica, su cliente de datos y sus pruebas; lo único que cambia es que no
-       dibuja su membrete ni la explicación larga. -->
-  <app-tab label="Mis vinculaciones">
-    <!-- Sólo cuando la pestaña está abierta. `app-tab` proyecta su contenido
-         aunque el panel no se vea, así que sin esto `MembershipsTab` se
-         instanciaba siempre y pedía `/practices` **por segunda vez** —una el
-         panel para su selector de organización y otra la pestaña para el
-         suyo—. Lo detectó su propia prueba: «found 2 requests». -->
-    @if (pestana() === pestanaDeVinculaciones) {
-      <app-memberships-tab />
-    }
-  </app-tab>
-</app-tabs>
+    <app-tab label="Servicios">
+      @if (hayDatos()) {
+        <app-data-table
+          [state]="servicios()"
+          [columns]="columnasDeServicio()"
+          [trackBy]="porId"
+          caption="Servicios de salud de la organización"
+          (retry)="recargar()"
+        />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    </app-tab>
 
-<!-- Cobertura declarada, no simulada. El carril 13 abarca además contabilidad,
-     red social, foros, encuestas y notificaciones de la organización. Esos
-     dominios tienen módulo y carril propios; construir una segunda versión acá
-     sería la duplicación que el carril prohíbe, y dibujar pestañas que no
-     persisten sería peor. Se dice dónde vive cada cosa. -->
-<section class="organizacion-medica__cobertura" aria-labelledby="cobertura-titulo">
-  <h2 id="cobertura-titulo">Qué administra esta pantalla y qué no</h2>
-  <dl>
-    <div>
-      <dt>Acá</dt>
-      <dd>
-        Sedes, áreas, infraestructura, servicios, plantilla profesional,
-        documentación legal e inventario — módulo 14 (<code>practice</code>).
-      </dd>
-    </div>
-    <div>
-      <dt>Contabilidad de la organización</dt>
-      <dd>
-        Vive en <strong>Contabilidad</strong> (módulo 16). Esta pantalla no
-        duplica sus libros.
-      </dd>
-    </div>
-    <div>
-      <dt>Publicaciones, foros y encuestas</dt>
-      <dd>
-        Dependen de los módulos de comunidad (19) y formularios (9), con sus
-        propios carriles. Todavía no tienen consola de organización.
-      </dd>
-    </div>
-    <div>
-      <dt>Notificaciones programadas</dt>
-      <dd>
-        Dependen del módulo de mensajería (25). No se declaran acá para no
-        prometer envíos que nadie despacha.
-      </dd>
-    </div>
-  </dl>
-</section>
+    <app-tab label="Plantilla">
+      @if (hayDatos()) {
+        <app-data-table
+          [state]="plantilla()"
+          [columns]="columnasDePlantilla()"
+          [trackBy]="porId"
+          caption="Profesionales vinculados a la organización"
+          (retry)="recargar()"
+        />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    </app-tab>
+
+    <app-tab label="Legajo">
+      @if (hayDatos()) {
+        <app-data-table
+          [state]="legajo()"
+          [columns]="columnasDeLegajo()"
+          [trackBy]="porId"
+          caption="Documentación legal y acreditaciones"
+          (retry)="recargar()"
+        />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    </app-tab>
+
+    <app-tab label="Inventario">
+      @if (hayDatos()) {
+        <app-data-table
+          [state]="inventario()"
+          [columns]="columnasDeInventario()"
+          [trackBy]="porId"
+          caption="Insumos y equipamiento"
+          (retry)="recargar()"
+        />
+      } @else {
+        <ng-container *ngTemplateOutlet="sinConsola" />
+      }
+    </app-tab>
+    <!-- **«Mis vinculaciones» absorbió a «Mis organizaciones»** (propietario,
+         2026-09-10). Era una pantalla propia que preguntaba y respondía lo mismo
+         que este panel —en qué organizaciones ejerce esta persona— con otro
+         aspecto. Se monta el componente entero con `embedded`, así conserva su
+         lógica, su cliente de datos y sus pruebas; lo único que cambia es que no
+         dibuja su membrete ni la explicación larga. -->
+    <app-tab label="Mis vinculaciones">
+      <!-- Sólo cuando la pestaña está abierta. `app-tab` proyecta su contenido
+           aunque el panel no se vea, así que sin esto `MembershipsTab` se
+           instanciaba siempre y pedía `/practices` **por segunda vez** —una el
+           panel para su selector de organización y otra la pestaña para el
+           suyo—. Lo detectó su propia prueba: «found 2 requests». -->
+      @if (pestana() === pestanaDeVinculaciones) {
+        <app-memberships-tab />
+      }
+    </app-tab>
+  </app-tabs>
+
+  <!-- Cobertura declarada, no simulada. El carril 13 abarca además contabilidad,
+       red social, foros, encuestas y notificaciones de la organización. Esos
+       dominios tienen módulo y carril propios; construir una segunda versión acá
+       sería la duplicación que el carril prohíbe, y dibujar pestañas que no
+       persisten sería peor. Se dice dónde vive cada cosa. -->
+  <section class="organizacion-medica__cobertura" aria-labelledby="cobertura-titulo">
+    <h2 id="cobertura-titulo">Qué administra esta pantalla y qué no</h2>
+    <dl>
+      <div>
+        <dt>Acá</dt>
+        <dd>
+          Sedes, áreas, infraestructura, servicios, plantilla profesional,
+          documentación legal e inventario — módulo 14 (<code>practice</code>).
+        </dd>
+      </div>
+      <div>
+        <dt>Contabilidad de la organización</dt>
+        <dd>
+          Vive en <strong>Contabilidad</strong> (módulo 16). Esta pantalla no
+          duplica sus libros.
+        </dd>
+      </div>
+      <div>
+        <dt>Publicaciones, foros y encuestas</dt>
+        <dd>
+          Dependen de los módulos de comunidad (19) y formularios (9), con sus
+          propios carriles. Todavía no tienen consola de organización.
+        </dd>
+      </div>
+      <div>
+        <dt>Notificaciones programadas</dt>
+        <dd>
+          Dependen del módulo de mensajería (25). No se declaran acá para no
+          prometer envíos que nadie despacha.
+        </dd>
+      </div>
+    </dl>
+  </section>
+}
 
 <!-- Plantillas de celda: el organismo las recibe por `ColumnDef.cell`. -->
 

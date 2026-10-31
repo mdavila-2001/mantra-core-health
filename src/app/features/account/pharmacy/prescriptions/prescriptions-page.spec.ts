@@ -54,7 +54,7 @@ const RESUMEN = {
     {
       id: 'm-3',
       medicationConceptId: CONCEPTO_PARA,
-      statusConceptId: 'st-activa',
+      statusConceptId: 'st-borrador',
       createdAt: '2026-05-10T08:00:00.000Z',
     },
   ],
@@ -62,9 +62,34 @@ const RESUMEN = {
 
 const CONCEPTOS = {
   items: [
-    { conceptId: CONCEPTO_AMOXI, code: 'J01CA04', display: 'Amoxicilina', codeSystemVersionId: 'v1' },
+    {
+      conceptId: CONCEPTO_AMOXI,
+      code: 'J01CA04',
+      display: 'Amoxicilina',
+      codeSystemVersionId: 'v1',
+    },
     { conceptId: CONCEPTO_IBU, code: 'M01AE01', display: 'Ibuprofeno', codeSystemVersionId: 'v1' },
-    { conceptId: CONCEPTO_PARA, code: 'N02BE01', display: 'Paracetamol', codeSystemVersionId: 'v1' },
+    {
+      conceptId: CONCEPTO_PARA,
+      code: 'N02BE01',
+      display: 'Paracetamol',
+      codeSystemVersionId: 'v1',
+    },
+    // Los estados, con el código que sirve la API (`<módulo>:<clave>`).
+    ...(
+      [
+        ['st-activa', 'clinical:MEDICATION_REQUEST_ISSUED'],
+        ['st-borrador', 'clinical:MEDICATION_REQUEST_DRAFT'],
+        ['st-anulada', 'clinical:MEDICATION_REQUEST_INVALIDATED'],
+        ['st-reemplazada', 'clinical:MEDICATION_REQUEST_REPLACED'],
+        ['st-completada', 'clinical:MEDICATION_REQUEST_COMPLETED'],
+      ] as const
+    ).map(([conceptId, code]) => ({
+      conceptId,
+      code,
+      display: code,
+      codeSystemVersionId: 'v1',
+    })),
   ],
 };
 
@@ -156,7 +181,7 @@ describe('PrescriptionsPage', () => {
     expect(raiz().textContent).toContain('Sin registrar');
   });
 
-  it('«Buscar dónde comprarla» lleva a la receta correcta', () => {
+  it('«Buscar dónde comprarla» lleva a la receta correcta, y sólo en la vigente', () => {
     entrarComoPaciente();
     montar();
     responder();
@@ -164,14 +189,72 @@ describe('PrescriptionsPage', () => {
     const enlaces = [
       ...raiz().querySelectorAll<HTMLAnchorElement>('[data-testid="pharmacy-prescription-search"]'),
     ];
-    expect(enlaces).toHaveLength(2);
-    // La más reciente arriba: la receta suelta del 10/05.
-    expect(enlaces[0].getAttribute('href')).toBe(
-      '/my-account/medical-record/where-to-buy/m-3',
-    );
-    expect(enlaces[1].getAttribute('href')).toBe(
-      '/my-account/medical-record/where-to-buy/m-1',
-    );
+    // La suelta del 10/05 es un borrador: no se ofrece comprarla.
+    expect(enlaces).toHaveLength(1);
+    expect(enlaces[0].getAttribute('href')).toBe('/my-account/medical-record/where-to-buy/m-1');
+  });
+
+  it('pide al catálogo también el estado de cada fila', () => {
+    entrarComoPaciente();
+    montar();
+    http.expectOne((r) => r.url === '/clinical/patients/pp-1/summary').flush(RESUMEN);
+    const req = http.expectOne((r) => r.url === '/terminology/concepts');
+    const ids = req.request.params.getAll('ids')?.join(',') ?? '';
+    expect(ids).toContain('st-activa');
+    expect(ids).toContain('st-borrador');
+    req.flush(CONCEPTOS);
+  });
+
+  it.each([
+    ['st-borrador', undefined, 'Sin emitir', 'todavía no la emitió'],
+    ['st-anulada', undefined, 'Anulada', 'anuló'],
+    ['st-reemplazada', undefined, 'Reemplazada', 'reemplazó'],
+    ['st-completada', undefined, 'Completada', 'ya se completó'],
+    ['st-activa', '2026-01-01T00:00:00.000Z', 'Vencida', 'venció'],
+  ] as const)(
+    'una receta %s (vence %s) dice «%s», y no ofrece comprar ni compartir',
+    (status, validTo, label, reason) => {
+      entrarComoPaciente();
+      montar();
+      responder(
+        {
+          ...RESUMEN,
+          medicationRequests: [
+            {
+              id: 'm-9',
+              medicationConceptId: CONCEPTO_AMOXI,
+              statusConceptId: status,
+              encounterId: 'e-9',
+              issuedAt: '2025-12-01T11:00:00.000Z',
+              createdAt: '2025-12-01T10:30:00.000Z',
+              ...(validTo === undefined ? {} : { validTo }),
+            },
+          ],
+        },
+        CONCEPTOS,
+      );
+
+      expect(
+        raiz().querySelector('[data-testid="pharmacy-prescription-status"]')?.textContent?.trim(),
+      ).toBe(label);
+      expect(
+        raiz().querySelector('[data-testid="pharmacy-prescription-not-orderable"]')?.textContent,
+      ).toContain(reason);
+      expect(raiz().querySelector('[data-testid="pharmacy-prescription-search"]')).toBeNull();
+      expect(raiz().querySelector('[data-testid="prescription-share-button"]')).toBeNull();
+    },
+  );
+
+  it('una receta emitida y vigente dice «Vigente» con el código real del catálogo', () => {
+    entrarComoPaciente();
+    montar();
+    responder();
+
+    expect(
+      [...raiz().querySelectorAll('[data-testid="pharmacy-prescription-status"]')].map((badge) =>
+        badge.textContent?.trim(),
+      ),
+    ).toEqual(['Sin emitir', 'Vigente']);
   });
 
   it('la lista lleva el id de prueba congelado', () => {
@@ -279,7 +362,7 @@ describe('PrescriptionsPage · compartir', () => {
         createdAt: new Date(createdAt),
       }),
     );
-    const prescriptions = agrupar(rows, new Map());
+    const prescriptions = agrupar(rows, new Map(), new Date('2026-06-01T00:00:00.000Z'));
 
     const fromEncounter = prescriptions.find((item) => item.requestId === 'm-1');
     const standalone = prescriptions.find((item) => item.requestId === 'm-3');
@@ -289,7 +372,7 @@ describe('PrescriptionsPage · compartir', () => {
     expect(standalone && shareTargetOf(standalone)).toEqual({ medicationRequestId: 'm-3' });
   });
 
-  it('solo la receta emitida ofrece «Compartir»', () => {
+  it('solo la receta vigente ofrece «Compartir»', () => {
     const fixture = mount();
     answer(fixture);
 
@@ -303,6 +386,14 @@ describe('PrescriptionsPage · compartir', () => {
     answer(fixture);
 
     shareButtons(fixture)[0].click();
+    fixture.detectChanges();
+    // Abrir el diálogo no crea nada: el enlace se crea con su botón.
+    http.expectNone('/clinical/prescription-shares');
+    (
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="prescription-share-dialog-create"]',
+      ) as HTMLButtonElement
+    ).click();
     fixture.detectChanges();
 
     const req = http.expectOne('/clinical/prescription-shares');

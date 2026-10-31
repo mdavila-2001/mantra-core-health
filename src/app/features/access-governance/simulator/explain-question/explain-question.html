@@ -1,0 +1,142 @@
+<form
+  class="pregunta"
+  (submit)="$event.preventDefault(); submit()"
+  novalidate
+  [attr.data-testid]="prefix() + '-formulario'"
+>
+  <app-form-field label="¿Qué quiso hacer?" [required]="true" [errorMessage]="actionError()">
+    <app-select
+      [options]="actions()"
+      [value]="action()"
+      (valueChange)="set(action, $event)"
+      placeholder="Elija una acción"
+      ariaLabel="¿Qué quiso hacer?"
+      [searchable]="true"
+      [hasError]="actionError() !== ''"
+      [attr.data-testid]="prefix() + '-accion'"
+    />
+  </app-form-field>
+
+  <div class="pregunta__fila">
+    @if (doctors().length > 0) {
+      <app-form-field [label]="doctorLabel()">
+        <app-select
+          [options]="doctorOptions()"
+          [value]="doctor()"
+          (valueChange)="set(doctor, $event)"
+          placeholder="Cualquiera"
+          [ariaLabel]="doctorLabel()"
+          [attr.data-testid]="prefix() + '-doctor'"
+        />
+      </app-form-field>
+    }
+    @if (services().length > 0) {
+      <app-form-field label="¿De qué servicio?">
+        <app-select
+          [options]="serviceOptions()"
+          [value]="service()"
+          (valueChange)="set(service, $event)"
+          placeholder="Cualquiera"
+          ariaLabel="¿De qué servicio?"
+          [attr.data-testid]="prefix() + '-servicio'"
+        />
+      </app-form-field>
+    }
+    @if (spaces().length > 0) {
+      <app-form-field label="¿En qué espacio?">
+        <app-select
+          [options]="spaceOptions()"
+          [value]="space()"
+          (valueChange)="set(space, $event)"
+          placeholder="Cualquiera"
+          ariaLabel="¿En qué espacio?"
+          [searchable]="true"
+          [attr.data-testid]="prefix() + '-espacio'"
+        />
+      </app-form-field>
+    }
+  </div>
+
+  @if (showPatient()) {
+    <app-form-field
+      label="Paciente de ejemplo (opcional)"
+      hint="Pegue el identificador del paciente. Sin él se prueba con un paciente cualquiera."
+      [errorMessage]="patientError()"
+    >
+      <app-input
+        [value]="patient()"
+        (valueChange)="set(patient, '' + ($event ?? ''))"
+        ariaLabel="Identificador del paciente de ejemplo"
+        [hasError]="patientError() !== ''"
+        [testId]="prefix() + '-paciente'"
+      />
+    </app-form-field>
+  }
+
+  <fieldset class="pregunta__cuando">
+    <legend class="pregunta__leyenda">{{ whenLabel() }}</legend>
+    <div class="pregunta__fila">
+      <app-form-field label="Fecha" [errorMessage]="whenError()">
+        <app-input
+          type="date"
+          [value]="date()"
+          (valueChange)="set(date, '' + ($event ?? ''))"
+          ariaLabel="Fecha de la consulta"
+          [hasError]="whenError() !== ''"
+          [testId]="prefix() + '-fecha'"
+        />
+      </app-form-field>
+      <app-form-field label="Hora">
+        <app-input
+          type="time"
+          [value]="time()"
+          (valueChange)="set(time, '' + ($event ?? ''))"
+          ariaLabel="Hora de la consulta"
+          [hasError]="whenError() !== ''"
+          [testId]="prefix() + '-hora'"
+        />
+      </app-form-field>
+    </div>
+    <p class="pregunta__ayuda">Si no elige fecha y hora, se usa el momento actual.</p>
+  </fieldset>
+
+  @if (showAppointment()) {
+    <fieldset class="pregunta__cuando">
+      <legend class="pregunta__leyenda">Si es sobre una cita: ¿cuándo empieza?</legend>
+      <div class="pregunta__fila">
+        <app-form-field label="Fecha de la cita" [errorMessage]="appointmentError()">
+          <app-input
+            type="date"
+            [value]="appointmentDate()"
+            (valueChange)="set(appointmentDate, '' + ($event ?? ''))"
+            ariaLabel="Fecha de la cita"
+            [hasError]="appointmentError() !== ''"
+            [testId]="prefix() + '-cita-fecha'"
+          />
+        </app-form-field>
+        <app-form-field label="Hora de la cita">
+          <app-input
+            type="time"
+            [value]="appointmentTime()"
+            (valueChange)="set(appointmentTime, '' + ($event ?? ''))"
+            ariaLabel="Hora de la cita"
+            [hasError]="appointmentError() !== ''"
+            [testId]="prefix() + '-cita-hora'"
+          />
+        </app-form-field>
+      </div>
+    </fieldset>
+  }
+
+  <div class="pregunta__acciones">
+    <button
+      app-button
+      type="submit"
+      [isLoading]="busy()"
+      [disabled]="busy()"
+      [attr.data-testid]="prefix() + '-enviar'"
+    >
+      {{ submitLabel() }}
+    </button>
+  </div>
+</form>

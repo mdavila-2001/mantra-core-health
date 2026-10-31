@@ -38,6 +38,8 @@ Registro de las decisiones que gobiernan el frontend.
 | [0016](ADR-0016-encuentro-eje-clinico.md) | Encuentro como eje del contrato clínico: notas, órdenes, verificación y reconsulta; compatibilidad C6 y límites del simulador | Aceptado | C0, 2026-09-25 |
 | [0017](ADR-0017-echarts-chart-library.md) | **Apache ECharts como librería oficial de gráficos del portal de reportería** (matiza ADR-0004: es la primera librería de terceros de UI) | Propuesto | Pedido del solicitante, 2026-10-30 |
 | [0018](ADR-0018-insights-contrato-hibrido-y-portal.md) | **AloVida Insights como portal propio con contrato híbrido y gráficos SVG propios** | Propuesto | Pedido del solicitante, 2026-10-30; paleta medida con el validador de dataviz |
+| [0019](ADR-0019-mi-equipo-y-personal-de-apoyo.md) | **«Mi equipo» es el duodécimo renglón del doctor** (once → doce, a confirmar por el propietario), y **el personal de apoyo se distingue por clase de cuenta y vínculo, no por un rol global**: `accountKind` + `SECURITY_ADMIN` para la organización, el vínculo y sus permisos para la persona | Aceptado — a confirmar por el propietario | `navigation.support.ts`, `navigation.service.spec.ts`, 2026-10-30 |
+| [0020](ADR-0020-segundo-paso-lo-hace-cumplir-el-cliente.md) | **Quien entra sin el segundo paso que su organización exige entra con un token de alcance limitado** (`mfaEnrollment`): **la API lo impone** (403 `MFA_ENROLLMENT_REQUIRED` fuera del alta) y el cliente lo refleja con su guarda; el refresco reemite el token completo al confirmar el factor | Aceptado (revisado: la API ya lo impone) | `mfa-enrollment.guard.ts`, `session.store.ts`, `mfa-enrollment/`, 2026-10-30 |
 
 ## Plantilla
 

@@ -1,0 +1,232 @@
+<app-page-header
+  [title]="title()"
+  subtitle="Lo que puede hacer esta persona dentro de lo que usted administra."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="pantalla" padding="lg" data-testid="pantalla-team-member">
+  <app-view-state-host [state]="state()" (retry)="load()" (refresh)="load()">
+    @if (data(); as d) {
+      <div class="resumen">
+        <app-badge [variant]="statusTone(d.member.status)" data-testid="member-status">{{
+          statusText(d.member.status)
+        }}</app-badge>
+        <span class="resumen__texto"
+          >Rol: <strong>{{ templateText(d.member.roleTemplateCode) }}</strong></span
+        >
+        @if (d.member.otherFunctions > 0) {
+          <span class="resumen__texto" data-testid="member-other"
+            >Otras funciones de esta persona: {{ d.member.otherFunctions }} (no las ve ni las puede
+            cambiar)</span
+          >
+        }
+      </div>
+
+      <div aria-live="polite" role="status" data-testid="member-notice">
+        @if (notice() !== '') {
+          <app-alert tone="success">{{ notice() }}</app-alert>
+        }
+      </div>
+
+      <app-tabs [(selectedIndex)]="tab">
+        <app-tab label="Permisos">
+          @if (failure(); as problem) {
+            <app-alert
+              tone="error"
+              [title]="problem.title"
+              role="alert"
+              data-testid="member-failure"
+              [attr.data-reason]="problem.reason ?? null"
+            >
+              {{ problem.message }}
+              @if (problem.help !== '') {
+                <span class="ayuda"> {{ problem.help }}</span>
+              }
+            </app-alert>
+          }
+
+          @if (rows().length === 0) {
+            <p class="vacio" data-testid="grants-empty">
+              No tiene permisos dentro de lo que usted administra.
+              @if (canAssign()) {
+                Use «Dar un permiso nuevo» para empezar.
+              }
+            </p>
+          } @else {
+            <ul class="permisos" role="list" data-testid="grants-list">
+              @for (row of rows(); track row.grant.id) {
+                <li class="permiso" [attr.data-testid]="'grant-' + row.grant.id">
+                  <div class="permiso__texto">
+                    <p class="permiso__nombre">{{ row.label }}</p>
+                    <p class="permiso__detalle" [attr.data-testid]="'grant-atoms-' + row.grant.id">
+                      {{ row.atoms }}
+                    </p>
+                    <p class="permiso__detalle">{{ row.until }}</p>
+                  </div>
+                  <div class="permiso__acciones">
+                    @if (canAssign()) {
+                      <button
+                        app-button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        (clicked)="startEdit(row)"
+                        [attr.aria-label]="'Cambiar el permiso: ' + row.label"
+                        [attr.data-testid]="'grant-edit-' + row.grant.id"
+                      >
+                        Cambiar
+                      </button>
+                    }
+                    @if (canRevoke()) {
+                      @if (confirmRemove() === row.grant.id) {
+                        <button
+                          app-button
+                          variant="danger"
+                          size="sm"
+                          type="button"
+                          [isLoading]="removing() === row.grant.id"
+                          [disabled]="removing() !== null"
+                          (clicked)="remove(row)"
+                          [attr.aria-label]="'Confirmar: quitar ' + row.label"
+                          [attr.data-testid]="'grant-remove-confirm-' + row.grant.id"
+                        >
+                          Sí, quitar
+                        </button>
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          (clicked)="cancelRemove()"
+                          [attr.data-testid]="'grant-remove-cancel-' + row.grant.id"
+                        >
+                          No
+                        </button>
+                      } @else {
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          (clicked)="askRemove(row)"
+                          [attr.aria-label]="'Quitar el permiso: ' + row.label"
+                          [attr.data-testid]="'grant-remove-' + row.grant.id"
+                        >
+                          Quitar
+                        </button>
+                      }
+                    }
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (editing(); as e) {
+            <section
+              class="editor"
+              aria-labelledby="member-editor-title"
+              data-testid="grant-editor"
+            >
+              <h2 id="member-editor-title" class="editor__titulo">
+                {{ e.mode === 'new' ? 'Dar un permiso nuevo' : 'Cambiar el permiso' }}
+              </h2>
+              <app-grant-composer
+                [draft]="e.draft"
+                [options]="d.options"
+                [lockTarget]="e.mode === 'edit'"
+                [blocked]="blocked()"
+                [maxValidTo]="maxValidTo()"
+                idPrefix="member-grant"
+                (draftChange)="updateDraft($event)"
+              />
+              @if (previewFailure() !== '') {
+                <app-alert
+                  tone="error"
+                  role="alert"
+                  title="No se pudo calcular la vista previa"
+                  data-testid="member-preview-error"
+                  >{{ previewFailure() }}</app-alert
+                >
+              }
+              <div aria-live="polite" data-testid="member-preview-region">
+                @if (previewOutdated()) {
+                  <app-alert
+                    tone="warning"
+                    title="La vista previa quedó atrasada"
+                    data-testid="member-preview-outdated"
+                    >Cambió lo que marcó. Vuelva a pulsar «Ver qué cambia».</app-alert
+                  >
+                }
+                @if (preview(); as p) {
+                  <app-simulation-preview [preview]="p" idPrefix="member-preview" />
+                }
+              </div>
+              <div class="acciones">
+                <button
+                  app-button
+                  variant="outline"
+                  type="button"
+                  [isLoading]="simulating()"
+                  [disabled]="simulating() || !canPreview()"
+                  (clicked)="simulate()"
+                  data-testid="member-simulate"
+                >
+                  Ver qué cambia
+                </button>
+                <button
+                  app-button
+                  type="button"
+                  [isLoading]="saving()"
+                  [disabled]="
+                    saving() || preview() === null || previewOutdated() || preview()?.valid !== true
+                  "
+                  (clicked)="save()"
+                  data-testid="member-save"
+                >
+                  {{ e.mode === 'new' ? 'Dar el permiso' : 'Guardar el cambio' }}
+                </button>
+                <button
+                  app-button
+                  variant="ghost"
+                  type="button"
+                  (clicked)="closeEditor()"
+                  data-testid="member-editor-cancel"
+                >
+                  Cancelar
+                </button>
+              </div>
+              <p class="ayuda">
+                Dar o cambiar un permiso pide confirmar su identidad con el código de su aplicación.
+              </p>
+            </section>
+          } @else if (canAssign() && d.member.status !== 'ENDED') {
+            <div>
+              <button
+                app-button
+                type="button"
+                (clicked)="startNew()"
+                data-testid="member-add-grant"
+              >
+                Dar un permiso nuevo
+              </button>
+            </div>
+          }
+        </app-tab>
+
+        <app-tab label="Vínculo y baja">
+          <app-member-account
+            [engagementId]="d.member.engagementId"
+            [memberName]="title()"
+            [status]="d.member.status"
+            [otherFunctions]="d.member.otherFunctions"
+            [abilities]="d.abilities"
+            [people]="d.people"
+            [userId]="d.member.userId"
+            (changed)="afterAccountChange($event)"
+          />
+        </app-tab>
+      </app-tabs>
+    }
+  </app-view-state-host>
+</app-card>
