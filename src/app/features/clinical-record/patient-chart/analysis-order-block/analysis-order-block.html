@@ -140,8 +140,8 @@
             </div>
             <div class="estudios__meta">
               <span class="estudios__estado">{{ estudio.estado }}</span>
-              @if (estudio.puntoDeToma) {
-                <span class="estudios__resultado" data-testid="estudios-punto-de-toma">Toma en {{ estudio.puntoDeToma }}</span>
+              @if (estudio.collectionPoint) {
+                <span class="estudios__resultado" data-testid="study-collection-point">Toma en {{ estudio.collectionPoint }}</span>
               }
               <!-- Antiduplicación (v4.2.17, T-26): estas dos líneas priman
                    sobre «con resultado» — una orden reutilizada o repetida ya

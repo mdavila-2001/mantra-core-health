@@ -493,10 +493,10 @@ estático en `127.0.0.1:4373` bajo `flock`, Chromium 1243 del sistema). Cuentas:
 | `ng test` de lo tocado, en 4 tandas (el lote único murió con `ERR_WORKER_OUT_OF_MEMORY` del cgroup compartido) | 19 archivos · **480/480** (maqueta y reglas 98 · clientes y reglas de data-access + `resource-timeline` 151 · diagnóstico, contabilidad de infraestructura, pedido de estudios, quirófanos, día-cama 65 · alta de horario y mi agenda 166). La primera corrida de la tanda de maqueta dio 1 rojo en la prueba de cierre del caso mientras se le agregaban las aserciones de 404/403/412; vuelta a correr con el archivo final: 98/98, y 4 archivos · 36/36 con el S3 nuevo de contabilidad |
 | `check-client-prefixes` | `/sample-collection-points` (bajo `/sites`), `/accounting/*` y `/cleaning-orders` ruteados en los tres proxies; quedan 14 rojos **previos ajenos** (`AdmissionsClient`, `InsightsClient`) |
 | `check-route-prefixes`, `check-css-tokens` | exit 0 |
-| `check-english-identifiers` (contra `origin/test`) | exit 1: los hallazgos son de la primera pasada ya commiteada (`or-agenda` —«agenda» también es inglés—, el texto de prueba «Bloque quirúrgico») y tres identificadores (`FechasDelCaso`, `conSala`, `el`) que esta pasada renombró (`CaseDateField`, `withRoom`, `host`); ninguno de los archivos nuevos |
+| `check-english-identifiers` (contra `origin/test`) | exit 1: los hallazgos son de la primera pasada ya commiteada (`or-agenda` —«agenda» también es inglés—, el texto de prueba «Bloque quirúrgico») y los `data-testid` `agenda-create-room*` (prefijo del componente existente `agenda-create`). Esta pasada renombró `FechasDelCaso`, `conSala`, `el`, `puntoDeToma` y `estudios-punto-de-toma` (`CaseDateField`, `withRoom`, `host`, `collectionPoint`, `study-collection-point`) |
 | `check-max-lines` | exit 1 **previo**: los siete archivos que ya pasaban su techo congelado siguen pasándolo (`scheduling.handlers` +10, `diagnostics.handlers` +12, `scheduling.types` +10, `agenda-create.ts` +6, `analysis-order-block.ts` +9, `app.routes` +4, `scheduling.client` +2 líneas); no se subió ningún techo y los archivos nuevos están por debajo de 600 |
 | `check-architecture`, `check-usted`, `check-colores-sueltos` | exit 1 **previo**: ningún hallazgo en archivos de esta pasada |
-| `playwright test playwright/infra-f5-integracion.spec.ts --workers=1` | **12/12** (2,9 min) · 1440 / 768 / 390 + 3 cadenas a 1440 |
+| `playwright test playwright/infra-f5-integracion.spec.ts --workers=1` | **12/12** (2,5 min, corrida final tras renombrar `puntoDeToma`/`estudios-punto-de-toma` a inglés; la anterior, 12/12 en 2,9 min) · 1440 / 768 / 390 + 3 cadenas a 1440 |
 
 Mediciones (`evidencias/infra-f5-integracion/resultados.json`):
 
@@ -505,7 +505,7 @@ Mediciones (`evidencias/infra-f5-integracion/resultados.json`):
 | Desborde horizontal: cola del laboratorio, activos/centros de costo, alta de horario | 0 | 0 | 0 |
 | Regla 6 en `/administration/accounting/infrastructure` (holgura izq./der. · ancho) | 0 / 0 · 100 % | 0 / 0 · 100 % | 0 / 0 · 100 % |
 | La cola muestra «LAB-TM1 · Toma de muestras 1» / «LAB-TM2 …», nunca un uuid | sí | sí | sí |
-| Errores de consola | sólo los provocados: S9 ×3 (`mock-fallo` en activos), el 409 de la cadena F5f y el 403 de «Cargos» para la jefatura (sólo facturación los lee → S5) | | |
+| Errores de consola | 6, todos provocados: S9 ×3 (`mock-fallo` en activos), el 409 de la cadena F5f y 2 × 403 de «Cargos» para la jefatura (sólo facturación los lee → S5) | | |
 
 Cadenas UI → petición → respuesta → persistencia → recarga → UI (registro de escrituras de la maqueta):
 

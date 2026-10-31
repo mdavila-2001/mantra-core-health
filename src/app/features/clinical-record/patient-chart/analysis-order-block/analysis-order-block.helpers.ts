@@ -46,7 +46,7 @@ export interface EstudioEnFicha {
   /** La justificación clínica guardada al repetir el estudio (v4.2.47); `null` si no hubo. */
   readonly justificacion: string | null;
   /** F5b: el punto de toma sugerido, «LAB-TM1 · Toma de muestras 1»; `null` sin sugerencia. */
-  readonly puntoDeToma: string | null;
+  readonly collectionPoint: string | null;
   /** La consulta en la que se pidió, si la orden la trae. Ata su consentimiento informado. */
   readonly encounterId?: string;
 }
