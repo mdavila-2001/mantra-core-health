@@ -315,6 +315,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
     // se prueba, cómo la usan y si está lista para producción. «Observabilidad»
     // —la portada del dominio— va suelta arriba (ver `SUELTAS_A_PROPOSITO`).
     paths: [
+      'superadmin/measurement',
       'superadmin/data-catalog',
       'superadmin/portal',
       'superadmin/flows',
@@ -322,6 +323,7 @@ export const NAV_SUBGROUPS: readonly NavSubgroup[] = [
       'superadmin/web-analytics',
       'superadmin/operations',
       'superadmin/instances',
+      'superadmin/bulk-imports',
     ],
   },
   {
