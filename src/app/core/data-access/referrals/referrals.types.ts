@@ -184,10 +184,11 @@ export interface ReferralTargetService {
   readonly name: string;
   readonly description: string | null;
   /**
-   * El arancel **tal como llega**. Un `numeric` de Postgres viaja como texto y
-   * no se convierte: se muestra, no se calcula con él.
+   * El arancel de lista. La API lo manda siempre como número
+   * (`Number(defaultPrice)`, columna NOT NULL): un `0` es «nadie declaró el
+   * arancel», no «es gratis».
    */
-  readonly price: string | number | null;
+  readonly price: number;
   readonly currency: string | null;
   readonly tenantId: string | null;
   readonly practiceName: string | null;

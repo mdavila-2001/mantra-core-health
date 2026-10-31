@@ -30,6 +30,7 @@
       class="consulta__encuentro"
       aria-label="Encuentro"
       appTutorialTarget="consulta-encuentro"
+      tabindex="-1"
       data-testid="consulta-encuentro"
     >
       @if (errorDelRegistro(); as mensaje) {
@@ -154,7 +155,23 @@
               @if (casilla.cantidad !== null) {
                 <span class="consulta__casilla-cantidad">
                   {{ casilla.cantidad }}
-                  <span class="consulta__casilla-cantidad-rotulo"> en la historia </span>
+                  <span class="consulta__casilla-cantidad-rotulo"> {{ casilla.rotuloDeCantidad }} </span>
+                </span>
+              } @else if (casilla.lecturaDeCantidad === 'loading') {
+                <!-- La cifra se está leyendo: se dice, en el mismo lugar. -->
+                <span
+                  class="consulta__casilla-cantidad consulta__casilla-cantidad--pendiente"
+                  [attr.data-testid]="casilla.testId + '-contando'"
+                >
+                  Contando…
+                </span>
+              } @else if (casilla.lecturaDeCantidad === 'failed') {
+                <!-- Sin lectura no hay cifra; un cero sería falso. -->
+                <span
+                  class="consulta__casilla-cantidad consulta__casilla-cantidad--pendiente"
+                  [attr.data-testid]="casilla.testId + '-sin-cifra'"
+                >
+                  No se pudo contar
                 </span>
               }
             </button>
@@ -258,15 +275,19 @@
              o a una organización médica, por un servicio concreto (pedido del
              cliente, 28/10/2026). Atado al encuentro en curso: sin él el
              bloque lo dice y no ofrece el formulario, porque sin encuentro no
-             hay aviso a la persona. El modal queda abierto tras derivar: la
-             lista de abajo muestra la recién emitida cuando la relectura la
-             devuelve, y el contador de la casilla sale de esa misma lectura. -->
+             hay aviso a la persona, y el aviso ofrece ir a abrirlo. El modal
+             queda abierto tras derivar: la lista de abajo muestra la recién
+             emitida cuando la relectura la devuelve (la dispara el cliente al
+             emitir, aunque el modal ya se haya cerrado), y el contador de la
+             casilla sale de esa misma lectura. -->
         <app-referral-block
           [patientProfileId]="pacienteDeLaFicha()"
           [encounterId]="encuentroActual()"
           [referrals]="referrals.state()"
+          [offersOpenEncounter]="true"
           (cambio)="referrals.reload()"
           (retry)="referrals.reload()"
+          (openEncounter)="irAAbrirElEncuentro()"
         />
       }
       @case ('planes') {

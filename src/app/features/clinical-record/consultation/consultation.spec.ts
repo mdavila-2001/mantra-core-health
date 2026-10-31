@@ -10,6 +10,8 @@ import { CarePlanBlock } from '../patient-chart/care-plan-block/care-plan-block'
 import { DiagnosisBlock } from '../patient-chart/diagnosis-block/diagnosis-block';
 import { PresuntivoForm } from '../patient-chart/diagnosis-block/presuntivo-form/presuntivo-form';
 import { FormResponsePicker } from '../patient-chart/form-response-picker/form-response-picker';
+import type { ReferenceOption } from '../../../shared/components/molecules/reference-combobox/reference-combobox.types';
+import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
 import { Consultation } from './consultation';
 import { CONSULTATION_FORBIDDEN_MESSAGE } from './consultation-forbidden';
 
@@ -188,7 +190,11 @@ describe('Consultation', () => {
     expect(interno<() => string>('tituloDelModal')()).toBe(
       'Derivar a otro profesional u organización',
     );
-    expect(interno<() => string>('descripcionDelModal')()).toContain('Le avisamos en su campana');
+    // El aviso vale para profesionales y organizaciones de la plataforma; a un
+    // destino externo no se le avisa, y la bajada no lo promete.
+    expect(interno<() => string>('descripcionDelModal')()).toContain(
+      'Si el destino está en la plataforma, le avisamos en su campana',
+    );
     expect(interno<() => string>('descripcionDelModal')()).toContain('organización médica');
     expect(harness.routeNativeElement!.querySelector('app-referral-block')).not.toBeNull();
     // El bloque recibe la misma lectura que cuenta la casilla.
@@ -679,6 +685,98 @@ describe('Consultation', () => {
     );
     expect(seccion?.innerHTML ?? '').not.toMatch(
       /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+    );
+  });
+
+  /* ---- Derivar: casilla, cierre con el envío en vuelo y salida al encuentro */
+
+  interface CasillaDePrueba {
+    clave: string;
+    cantidad: number | null;
+    rotuloDeCantidad: string;
+    lecturaDeCantidad: string | null;
+  }
+  const casillaDeDerivar = (): CasillaDePrueba =>
+    interno<() => readonly CasillaDePrueba[]>('casillas')().find((c) => c.clave === 'derivacion')!;
+
+  it('la casilla «Derivar» nombra lo que cuenta: derivaciones, no «en la historia»', async () => {
+    await responderLectura({}, {}, [], [REFERRAL, { ...REFERRAL, id: 'ref-2' }]);
+    harness.detectChanges();
+    expect(casillaDeDerivar().rotuloDeCantidad).toBe('derivaciones');
+    expect(
+      interno<() => readonly CasillaDePrueba[]>('casillas')().find((c) => c.clave === 'diagnosticos')
+        ?.rotuloDeCantidad,
+    ).toBe('en la historia');
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-derivacion"]')?.textContent,
+    ).toMatch(/2\s+derivaciones/);
+  });
+
+  it('la casilla «Derivar» distingue «leyendo» de «no se pudo leer»', async () => {
+    // Antes de responder: se está leyendo.
+    expect(casillaDeDerivar().lecturaDeCantidad).toBe('loading');
+    http
+      .expectOne((r) => r.url === '/referrals')
+      .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+    await flushChartReadsOnly();
+    harness.detectChanges();
+    expect(casillaDeDerivar().lecturaDeCantidad).toBe('failed');
+    expect(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-casilla-derivacion-sin-cifra"]'),
+    ).not.toBeNull();
+  });
+
+  it('cerrar el modal con la derivación en vuelo igual relee la lista y la cifra', async () => {
+    await responderLectura({ encounters: [ENCUENTRO_ABIERTO] }, {}, [], []);
+    (componente as unknown as { abrir(clave: string): void }).abrir('derivacion');
+    harness.detectChanges();
+    const block = harness.fixture.debugElement.query(By.directive(ReferralBlock))
+      .componentInstance as unknown as Record<string, unknown>;
+    const call = <T>(name: string) => (block[name] as (...a: unknown[]) => T).bind(block);
+
+    call('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({
+      items: [{ kind: 'PRACTITIONER', id: 'hp-1', displayName: 'Dra. Lucía', tenantId: 't', subtitle: null }],
+    });
+    call('choose')((call<readonly ReferenceOption[]>('targetOptions'))()[0]);
+    http.expectOne((r) => r.url === '/referrals/target-services').flush({
+      items: [{ id: 's-1', code: 'S', name: 'Servicio', description: null, price: 100, currency: 'BOB', tenantId: 't', practiceName: null }],
+    });
+    (block['selectedService'] as { set(v: string): void }).set('s-1');
+    (block['referralType'] as { set(v: string): void }).set('CONSULTATION');
+    call('submit')();
+    const post = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
+
+    // El médico cierra el modal antes de que vuelva la respuesta.
+    interno<() => void>('cerrarCasilla').call(componente);
+    expect(harness.routeNativeElement!.querySelector('app-referral-block')).toBeNull();
+
+    post.flush({ id: 'ref-9', patientProfileId: 'p-1', statusConceptId: 'st', createdAt: '2026-10-31T10:00:00Z' });
+    http.expectOne((r) => r.url === '/referrals' && r.method === 'GET').flush([REFERRAL]);
+    expect(casillaDeDerivar().cantidad).toBe(1);
+  });
+
+  it('sin encuentro, «Ir a abrir el encuentro» cierra el modal y deja el foco en el encuentro', async () => {
+    await responderLectura();
+    (componente as unknown as { abrir(clave: string): void }).abrir('derivacion');
+    harness.detectChanges();
+    http
+      .match((r) => r.url === '/terminology/concepts')
+      .forEach((req) => req.flush({ items: [], count: 0, limit: 200 }));
+    harness.detectChanges();
+
+    const ir = harness.routeNativeElement!.querySelector<HTMLElement>('[data-testid="referral-open-encounter"]');
+    expect(ir).not.toBeNull();
+    ir!.click();
+    await harness.fixture.whenStable();
+    harness.detectChanges();
+
+    expect(interno<() => string | null>('casillaAbierta')()).toBeNull();
+    // En esta prueba no hay organización activa: «Abrir encuentro» no se puede
+    // usar y la sección dice qué falta, así que el foco va a la sección. Con
+    // organización, va al botón (`enfocarAperturaDelEncuentro`).
+    expect(document.activeElement).toBe(
+      harness.routeNativeElement!.querySelector('[data-testid="consulta-encuentro"]'),
     );
   });
 });
