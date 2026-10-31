@@ -4,6 +4,12 @@ import type { WritableSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import type { Observable } from 'rxjs';
 
+import { AnalyticsDevicesClient } from '../../../core/data-access/admin-portal/analytics-devices.client';
+import type { DeviceBreakdownItem, DevicesBreakdown } from '../../../core/data-access/admin-portal/analytics-devices.types';
+import { OpsLivenessClient } from '../../../core/data-access/admin-portal/ops-liveness.client';
+import type { InstancesLiveness, LivenessState } from '../../../core/data-access/admin-portal/ops-liveness.types';
+import { OpsToolsClient } from '../../../core/data-access/admin-portal/ops-tools.client';
+import type { OpsToolsOverview } from '../../../core/data-access/admin-portal/ops-tools.types';
 import { OpsTrafficClient } from '../../../core/data-access/admin-portal/ops-traffic.client';
 import type { TrafficOverview } from '../../../core/data-access/admin-portal/ops-traffic.types';
 import { OpsConsoleClient, QaLabClient } from '../../../core/data-access/admin-portal/platform.client';
@@ -20,10 +26,19 @@ import { NavigationService } from '../../../core/navigation/navigation.service';
 import { loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
+import { Badge } from '../../../shared/components/atoms/badge/badge';
 import { Link } from '../../../shared/components/atoms/link/link';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
+import {
+  CONTEO_DE_VIDA,
+  ESTADOS_DE_VIDA,
+  estadoDeVida,
+  etiquetaDeDispositivo,
+  resumirCriticas,
+  type ResumenCriticas,
+} from '../../admin/instances/instances-labels';
 import { entero, porcentaje } from '../../admin/platform/platform-labels';
 
 /** Un destino de las dos puertas de entrada. */
@@ -111,6 +126,7 @@ const PORTALES: readonly Portal[] = [
           { label: 'Observabilidad', route: '/superadmin/observability' },
           { label: 'Analítica web', route: '/superadmin/web-analytics' },
           { label: 'Operación', route: '/superadmin/operations' },
+          { label: 'Instancias y herramientas', route: '/superadmin/instances' },
         ],
       },
       {
@@ -145,7 +161,7 @@ const PORTALES: readonly Portal[] = [
  */
 @Component({
   selector: 'app-platform-home',
-  imports: [DatePipe, RouterLink, AppButton, Link, Card, PageHeader, ViewStateHost],
+  imports: [DatePipe, RouterLink, AppButton, Badge, Link, Card, PageHeader, ViewStateHost],
   templateUrl: './platform-home.html',
   styleUrls: ['../../cover.css', './platform-home.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -153,13 +169,22 @@ const PORTALES: readonly Portal[] = [
 export class PlatformHome {
   private readonly trafficClient = inject(OpsTrafficClient);
   private readonly ops = inject(OpsConsoleClient);
+  private readonly liveness = inject(OpsLivenessClient);
+  private readonly toolsClient = inject(OpsToolsClient);
+  private readonly devicesClient = inject(AnalyticsDevicesClient);
   private readonly qa = inject(QaLabClient);
   private readonly navigation = inject(NavigationService);
 
   protected readonly entero = entero;
   protected readonly porcentaje = porcentaje;
+  protected readonly estadoDeVida = estadoDeVida;
+  protected readonly etiquetaDeDispositivo = etiquetaDeDispositivo;
+  protected readonly conteoDeVida = CONTEO_DE_VIDA;
 
   protected readonly trafico = signal<ViewState<TrafficOverview>>(loading());
+  protected readonly instancias = signal<ViewState<InstancesLiveness>>(loading());
+  protected readonly herramientas = signal<ViewState<OpsToolsOverview>>(loading());
+  protected readonly dispositivos = signal<ViewState<DevicesBreakdown>>(loading());
   protected readonly preparacion = signal<ViewState<Readiness>>(loading());
   protected readonly incidentes = signal<ViewState<readonly Incident[]>>(loading());
   protected readonly despliegues = signal<ViewState<readonly Deployment[]>>(loading());
@@ -184,6 +209,10 @@ export class PlatformHome {
   protected cargar(): void {
     const ahora = new Date();
     this.cargarEn(this.trafico, this.trafficClient.traffic({ to: ahora.toISOString(), interval: 'hour' }));
+    this.cargarEn(this.instancias, this.liveness.liveness());
+    this.cargarEn(this.herramientas, this.toolsClient.tools());
+    const desde = new Date(ahora.getTime() - 7 * 24 * 3_600_000);
+    this.cargarEn(this.dispositivos, this.devicesClient.devices({ from: desde.toISOString(), to: ahora.toISOString() }));
     this.cargarEn(this.preparacion, this.ops.readiness());
     this.cargarEn(this.incidentes, this.ops.incidents(true));
     this.cargarEn(this.despliegues, this.ops.deployments());
@@ -197,6 +226,41 @@ export class PlatformHome {
         }),
       error: (e: unknown) => this.pruebas.set(errorToViewState<Pruebas>(e)),
     });
+  }
+
+  /** Cuántas instancias hay en cada estado, de lo más grave a lo menos grave. */
+  protected conteoDeInstancias(vida: InstancesLiveness): readonly { readonly estado: LivenessState; readonly cantidad: number }[] {
+    return ESTADOS_DE_VIDA.map((estado) => ({ estado, cantidad: vida.instances.filter((i) => i.state === estado).length }));
+  }
+
+  /** Lo que dice la tarjeta de instancias según el estado general: nunca «todo bien» sin evidencia. */
+  protected lecturaDeInstancias(vida: InstancesLiveness): string {
+    switch (vida.overall) {
+      case 'VIVA':
+        return 'Todas las instancias requeridas tienen evidencia fresca.';
+      case 'DEGRADADA':
+        return 'Hay instancias requeridas degradadas o sin evidencia.';
+      case 'CAIDA':
+        return 'Hay instancias requeridas caídas: no llegó su latido.';
+      default:
+        return 'Sin dato: no se sabe si las instancias viven. No es una buena noticia ni una mala: no se midió.';
+    }
+  }
+
+  protected criticas(herramientas: OpsToolsOverview): ResumenCriticas {
+    return resumirCriticas(herramientas.items);
+  }
+
+  /** Los tres tipos de dispositivo más frecuentes, con su parte del total. */
+  protected principalesDispositivos(d: DevicesBreakdown): readonly { readonly clave: string; readonly etiqueta: string; readonly parte: string }[] {
+    return [...d.byDeviceType]
+      .sort((a: DeviceBreakdownItem, b: DeviceBreakdownItem) => b.contexts - a.contexts)
+      .slice(0, 3)
+      .map((i) => ({
+        clave: i.code,
+        etiqueta: etiquetaDeDispositivo(i),
+        parte: d.totals.contexts === 0 ? '—' : porcentaje(i.contexts / d.totals.contexts),
+      }));
   }
 
   /** Despliegues vigentes, uno por componente: lo que está corriendo ahora. */

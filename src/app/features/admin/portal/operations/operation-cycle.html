@@ -1,0 +1,43 @@
+<section class="cycle" aria-label="Ciclo de la petición" data-testid="portal-operation-cycle">
+  <app-alert tone="info" title="Ciclo común de la API, no de esta operación">
+    Estas {{ total }} etapas son las mismas para todas las operaciones: están leídas del código de la API y no cambian de una ficha a otra.
+    Lo propio de cada operación son las etapas 16 a 19 (controlador, servicio, repositorio y evento), que se ven en las pestañas «Datos»
+    y «Árbol de decisión». Es lectura del código, no una traza de una petición real.
+  </app-alert>
+
+  @for (phase of phases; track phase.codigo) {
+    <section class="cycle__phase" [attr.aria-labelledby]="'cycle-phase-' + phase.codigo">
+      <h3 class="cycle__phase-title" [id]="'cycle-phase-' + phase.codigo">{{ phase.nombre }}</h3>
+      <p class="cycle__muted">{{ phase.explicacion }}</p>
+      <ol class="cycle__stages" [attr.data-testid]="'portal-cycle-' + phase.codigo">
+        @for (stage of phase.stages; track stage.n) {
+          <li class="cycle__stage">
+            <span class="cycle__number" aria-hidden="true">{{ stage.n }}</span>
+            <div class="cycle__body">
+              <p class="cycle__name">
+                <span class="sr-only">Etapa {{ stage.n }}: </span>{{ stage.nombre }}
+              </p>
+              <p class="cycle__muted">{{ stage.queHace }}</p>
+              <ul class="cycle__sources" aria-label="Archivos de origen de la etapa {{ stage.n }}">
+                @for (source of stage.fuentes; track source) {
+                  <li><code>{{ source }}</code></li>
+                }
+              </ul>
+            </div>
+          </li>
+        }
+      </ol>
+    </section>
+  }
+
+  <section aria-labelledby="cycle-unverified">
+    <h3 class="cycle__phase-title" id="cycle-unverified">
+      Lo que no se comprobó <app-badge size="sm" variant="warning">Sin verificar</app-badge>
+    </h3>
+    <ul class="cycle__unverified" data-testid="portal-cycle-unverified">
+      @for (item of unverified; track $index) {
+        <li>{{ item }}</li>
+      }
+    </ul>
+  </section>
+</section>

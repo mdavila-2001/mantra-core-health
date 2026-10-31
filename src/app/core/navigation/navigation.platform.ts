@@ -4,11 +4,12 @@ import type { AppSection } from './navigation.types';
 /* ============================================================================
     El portal de la plataforma misma, en el dominio «Superadministración».
 
-    Diez secciones: las cuatro que vivían bajo `administration/*` —retiradas del
-    menú, con su ruta redirigiendo— y las seis de `superadmin/*` que las
-    reemplazan. Viven en su propio archivo y no en `navigation.map.ts` porque ese
-    registro está congelado por `scripts/check-max-lines.mjs` (un ratchet: no
-    puede crecer) y porque estas diez son una unidad: se mudan juntas.
+    Once secciones: las cuatro que vivían bajo `administration/*` —retiradas del
+    menú, con su ruta redirigiendo— y las siete de `superadmin/*` que las
+    reemplazan y completan. Viven en su propio archivo y no en
+    `navigation.map.ts` porque ese registro está congelado por
+    `scripts/check-max-lines.mjs` (un ratchet: no puede crecer) y porque estas
+    once son una unidad: se mudan juntas.
 
     `navigation.map.ts` las esparce en `APP_SECTIONS` en el mismo lugar donde
     estaban, así que el orden del registro —que es el orden del menú— no cambia.
@@ -168,5 +169,21 @@ export const SECCIONES_DE_PLATAFORMA: readonly AppSection[] = [
     availability: 'disponible',
     summary: 'Preparación para producción con evidencia, incidentes, SLO y backups.',
     module: 'M11 system_ops · M46 platform_ops',
+  },
+  {
+    // Sonda de vida de las instancias (`GET /admin/ops/instances/liveness`) y
+    // catálogo de herramientas (`GET /admin/ops/tools`): los dos de `ops_console`,
+    // y por eso los roles son los de `OPS_READ_ROLES`, igual que
+    // `superadmin/observability`. La pestaña «Dispositivos» lee
+    // `GET /admin/analytics/devices`, que tiene sus propios roles: si la sesión
+    // no los tiene, esa pestaña dice que no tiene permiso y las otras siguen.
+    path: 'superadmin/instances',
+    label: 'Instancias y herramientas',
+    group: 'Superadministración',
+    icon: 'monitor',
+    roles: ['PLATFORM_ADMIN', 'SRE', 'SECURITY_ADMIN', 'RELEASE_MANAGER', 'GOVERNANCE_ADMIN'],
+    availability: 'disponible',
+    summary: 'Qué procesos y servicios están vivos, qué herramientas usa la plataforma y desde qué dispositivos se usa.',
+    module: 'M46 platform_ops · M28 telemetry',
   },
 ];

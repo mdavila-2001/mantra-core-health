@@ -95,6 +95,11 @@
                 <p class="operation__muted">El inventario no anotó requisitos.</p>
               }
             </section>
+            <!-- Se crea sólo con la pestaña abierta: un panel inactivo no se dibuja, pero su contenido
+                 proyectado sí se instancia, y esto pide el mapa de rutas. -->
+            @if (tabIndex() === 3) {
+              <app-portal-operation-callers [operation]="op" />
+            }
           </app-tab>
 
           <app-tab label="Pruebas">
@@ -126,6 +131,10 @@
                 }
               }
             </app-view-state-host>
+          </app-tab>
+
+          <app-tab label="Ciclo de la petición">
+            <app-portal-operation-cycle />
           </app-tab>
         </app-tabs>
       </app-card>

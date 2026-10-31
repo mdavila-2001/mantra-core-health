@@ -228,6 +228,8 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   'superadmin/qa-lab': () => import('./features/admin/qa-lab/qa-lab').then((m) => m.QaLab),
   'superadmin/operations': () =>
     import('./features/admin/operations/operations').then((m) => m.Operations),
+  'superadmin/instances': () =>
+    import('./features/admin/instances/instances').then((m) => m.Instances),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
   'my-account': () => import('./features/account/my-account/my-account').then((m) => m.MyAccount),
   'my-account/dependents': () =>

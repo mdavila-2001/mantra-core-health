@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import { operationDetail, tree } from '../portal.fixture';
+import { billingTables, mapRow, operationDetail, page, tree } from '../portal.fixture';
 import { nodeOutcome, nodeText } from './decision-tree';
 import { OperationDetailPage } from './operation-detail-page';
 
@@ -28,8 +28,8 @@ describe('OperationDetailPage', () => {
     await harness.navigateByUrl(`${BASE}/${ID}${query}`, OperationDetailPage);
   }
 
-  function responder(arbol: 'ok' | 'sin-arbol' = 'ok'): void {
-    http.expectOne(`/admin/portal/operaciones/${ID}`).flush(operationDetail());
+  function responder(arbol: 'ok' | 'sin-arbol' = 'ok', detalle = operationDetail()): void {
+    http.expectOne(`/admin/portal/operaciones/${ID}`).flush(detalle);
     const req = http.expectOne(`/admin/portal/operaciones/${ID}/arbol`);
     if (arbol === 'ok') req.flush(tree());
     else req.flush({ code: 'NOT_FOUND', message: 'La operación no tiene árbol de decisión' }, { status: 404, statusText: 'Not Found' });
@@ -71,6 +71,69 @@ describe('OperationDetailPage', () => {
     expect(arbol.textContent).toContain('Si se cumple');
     expect(arbol.textContent).toContain('Si no se cumple');
     expect(arbol.textContent).toContain('Si no se cumple: 401 UNAUTHENTICATED');
+  });
+
+  it('en Resumen dice cuántas tablas escribe y cuántas lee', async () => {
+    await abrir();
+    responder('ok', operationDetail({ datos: billingTables() }));
+    expect(texto()).toContain('Tablas afectadas');
+    expect(texto()).toContain('Escribe 2 tablas y lee 3 tablas (4 distintas)');
+  });
+
+  it('en Datos separa lo que escribe de lo que lee y pinta fuente, confianza y cadena de llamadas', async () => {
+    await abrir('?vista=datos');
+    responder('ok', operationDetail({ datos: billingTables() }));
+    const datos = harness.routeNativeElement!.querySelector('[data-testid="portal-operation-data"]')!;
+    expect(datos.querySelector('[data-testid="portal-tables-writes"]')!.textContent!.trim()).toBe('2');
+    expect(datos.querySelector('[data-testid="portal-tables-reads"]')!.textContent!.trim()).toBe('3');
+    expect(datos.textContent).toContain('Acceso en src/modules/billing/repositories/bills.repository.ts:177');
+    expect(datos.textContent).toContain('BillsService.register');
+    expect(datos.textContent).toContain('Confianza: Por SQL');
+  });
+
+  it('en Acceso pide quién la llama sólo al abrir esa pestaña y muestra los clientes', async () => {
+    await abrir('?vista=acceso');
+    responder();
+    const req = http.expectOne((r) => r.url === '/admin/portal/flujos/mapa');
+    expect(req.request.params.get('q')).toBe('/scheduling/slots');
+    req.flush(page([mapRow({ id: ID, llamadaPor: ['SchedulingClient'] })]));
+    harness.detectChanges();
+    expect(texto()).toContain('Quién la llama desde el frontend');
+    expect(texto()).toContain('SchedulingClient');
+  });
+
+  it('la pestaña «Ciclo de la petición» muestra las 21 etapas y avisa que es común a la API', async () => {
+    await abrir('?vista=ciclo');
+    responder();
+    const ciclo = harness.routeNativeElement!.querySelector('[data-testid="portal-operation-cycle"]')!;
+    expect(ciclo.querySelectorAll('.cycle__stage')).toHaveLength(21);
+    expect(ciclo.textContent).toContain('Ciclo común de la API, no de esta operación');
+    expect(ciclo.textContent).toContain('src/common/auth/roles.guard.ts:59');
+  });
+
+  it('sin pedir la pestaña del ciclo no se dibuja (los paneles inactivos no existen)', async () => {
+    await abrir();
+    responder();
+    expect(harness.routeNativeElement!.querySelector('[data-testid="portal-operation-cycle"]')).toBeNull();
+  });
+
+  it('si la ficha no existe lo dice como no encontrado y no pinta pestañas', async () => {
+    await abrir();
+    http
+      .expectOne(`/admin/portal/operaciones/${ID}`)
+      .flush({ code: 'NOT_FOUND', message: 'Operación no encontrada en el inventario' }, { status: 404, statusText: 'Not Found' });
+    http.expectOne(`/admin/portal/operaciones/${ID}/arbol`).flush({ code: 'NOT_FOUND', message: 'x' }, { status: 404, statusText: 'Not Found' });
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('[data-testid="portal-operation-detail"]')).toBeNull();
+  });
+
+  it('sin permiso (403) en la ficha no pinta datos', async () => {
+    await abrir();
+    http.expectOne(`/admin/portal/operaciones/${ID}`).flush({ code: 'ROLE_INSUFFICIENT', message: 'No' }, { status: 403, statusText: 'Forbidden' });
+    http.expectOne(`/admin/portal/operaciones/${ID}/arbol`).flush({ code: 'ROLE_INSUFFICIENT', message: 'No' }, { status: 403, statusText: 'Forbidden' });
+    harness.detectChanges();
+    expect(harness.routeNativeElement!.querySelector('[data-testid="portal-operation-detail"]')).toBeNull();
+    expect(harness.routeNativeElement!.querySelector('[data-testid="portal-operation-data"]')).toBeNull();
   });
 });
 

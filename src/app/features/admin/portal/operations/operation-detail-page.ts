@@ -41,17 +41,20 @@ import {
 import { portalUrl } from '../portal-nav';
 import { pathParamsSignal, patchQuery, paramValue, queryParamsSignal } from '../support/route-query';
 import { DecisionTree } from './decision-tree';
+import { OperationCallers } from './operation-callers';
 import { OperationContract } from './operation-contract';
+import { OperationCycle } from './operation-cycle';
 import { OperationData } from './operation-data';
+import { groupTables, tablesPhrase } from './operation-tables';
 
 const LIST_ROUTE = portalUrl('systems/operations');
 /** Las pestañas de la ficha, por su código en `?vista=`. */
-const VIEWS = ['resumen', 'contrato', 'datos', 'acceso', 'pruebas', 'arbol'] as const;
+const VIEWS = ['resumen', 'contrato', 'datos', 'acceso', 'pruebas', 'arbol', 'ciclo'] as const;
 
 /**
  * La ficha de una operación: qué hace, su contrato, qué datos toca, quién puede
- * llamarla, qué la prueba y su árbol de decisión. Es una sola tarjeta con
- * pestañas; la pestaña vigente queda en la URL para poder compartirla.
+ * llamarla, qué la prueba, su árbol de decisión y el ciclo común de la petición.
+ * Es una sola tarjeta con pestañas; la pestaña vigente queda en la URL para poder compartirla.
  */
 @Component({
   selector: 'app-portal-operation-detail-page',
@@ -67,7 +70,9 @@ const VIEWS = ['resumen', 'contrato', 'datos', 'acceso', 'pruebas', 'arbol'] as 
     PageHeader,
     ViewStateHost,
     DecisionTree,
+    OperationCallers,
     OperationContract,
+    OperationCycle,
     OperationData,
   ],
   templateUrl: './operation-detail-page.html',
@@ -165,7 +170,15 @@ function summaryFacts(op: OperacionDetalle): readonly Hecho[] {
     { etiqueta: 'Bloque', valor: op.bloque },
     { etiqueta: 'Contrato', valor: operationOrigin(op.origen).label },
     { etiqueta: 'Revisión', valor: revisionInventario(op.revision).label },
+    { etiqueta: 'Tablas afectadas', valor: tablesSummary(op) },
     { etiqueta: 'Datos personales', valor: datosPersonales(op.datosPersonales).label },
     { etiqueta: 'Código', valor: op.codigo },
   ];
+}
+
+/** «Escribe 3 tablas y lee 4 (5 distintas)»: los conteos del resumen de la pestaña Datos. */
+function tablesSummary(op: OperacionDetalle): string {
+  if (op.datos.length === 0) return op.sinTablas ? `Ninguna: ${op.sinTablas}` : 'Ninguna detectada';
+  const { resumen } = groupTables(op.datos);
+  return `Escribe ${tablesPhrase(resumen.escribe)} y lee ${tablesPhrase(resumen.lee)} (${resumen.distintas} distintas)`;
 }

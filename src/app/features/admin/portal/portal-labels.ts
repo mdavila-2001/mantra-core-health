@@ -83,6 +83,15 @@ export const operacionSobreTabla = tabla({
   BORRA: { label: 'Borra', tone: 'error' },
 });
 
+/** Cómo toca la tabla un acceso concreto (`detalle` de la API); `LEE` repite el verbo de `operacionSobreTabla`. */
+export const accionSobreTabla = tabla({
+  LEE: { label: 'Lee', tone: 'info' },
+  CREA: { label: 'Crea', tone: 'warning' },
+  ACTUALIZA: { label: 'Actualiza', tone: 'warning' },
+  GUARDA: { label: 'Guarda', tone: 'warning' },
+  BORRA: { label: 'Borra', tone: 'error' },
+});
+
 export const estadoOrm = tabla({
   COINCIDE: { label: 'Coincide', tone: 'success' },
   DIVERGE: { label: 'Diverge', tone: 'warning' },

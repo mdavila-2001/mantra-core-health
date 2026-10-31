@@ -1,0 +1,136 @@
+.instancias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.instancias__general {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-block-end: var(--e3);
+}
+
+.instancias__general-rotulo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.instancias__ayuda {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.instancias__conteos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--e3);
+  margin-block: var(--e3) var(--e4);
+}
+
+.instancias__filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-block: var(--e3);
+}
+
+/* En teléfono el selector ocupa su propia fila: compartiéndola con otro control
+   cada opción se angosta hasta cortar su rótulo. */
+.instancias__filtros app-segmented-control {
+  flex: 1 1 20rem;
+  max-inline-size: 26rem;
+}
+
+.instancias__celda {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+}
+
+.instancias__codigo {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.instancias__variables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.instancias__lista {
+  margin: 0;
+  padding-inline-start: var(--e4);
+}
+
+.instancias__grupos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--e4);
+  margin-block: var(--e4);
+}
+
+.instancias__grupo {
+  padding: var(--e3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.instancias__grupo-titulo {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.instancias__barras {
+  display: grid;
+  gap: var(--sp-3);
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.instancias__barra {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.instancias__barra-texto {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  color: var(--text-primary);
+}
+
+/* La cifra va siempre escrita: la barra es una ayuda, no la información. */
+.instancias__barra-valor {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.instancias__barra-pista {
+  display: block;
+  block-size: var(--sp-2);
+  overflow: hidden;
+  border-radius: var(--r-xs);
+  background: var(--border-subtle);
+}
+
+.instancias__barra-relleno {
+  display: block;
+  block-size: 100%;
+  min-inline-size: 2px;
+  background: var(--brand-primary);
+}
