@@ -1,0 +1,22 @@
+[
+  {
+    "k": "console.warning",
+    "t": "NG0955: The provided track expression resulted in duplicated keys for a given collection. Adjust the tracking expression such that it uniquely identifies all the items in the collection. Duplicated keys were: \nkey \"Consulta\" at index \"0\" and \"1\". Find more at https://v21.angular.dev/errors/NG0955"
+  },
+  {
+    "k": "console.warning",
+    "t": "[.WebGL-0x354009c6800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+    "k": "console.warning",
+    "t": "[.WebGL-0x354009c6800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+    "k": "console.warning",
+    "t": "[.WebGL-0x354009c6800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+  },
+  {
+    "k": "console.warning",
+    "t": "[.WebGL-0x354009c6800]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+  }
+]

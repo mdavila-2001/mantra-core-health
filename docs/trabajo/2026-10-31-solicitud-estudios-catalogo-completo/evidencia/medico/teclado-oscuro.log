@@ -1,0 +1,33 @@
+== Picker de laboratorio: orden de Tab desde la búsqueda
+foco inicial: {"tag":"input","type":"text","role":null,"aria":null,"tid":"lab-picker","txt":"","focusVisible":true,"outline":"none 3px rgb(246, 243, 237)","boxShadow":"none","ringOnBox":null}
+ Tab -> button[radio] Ver los análisis en tarjetas con sus componentes | tid=segmentado-grid | focus-visible=true | outline=solid 2px rgb(79, 168, 214) | shadow=rgba(0, 0, 0, 0.4) 0px 1px 2px 0px, rgba(0, 0, 0, 0.45) 0px 4px 14px -6px | ringBox=null
+ Tab -> app-chip[button] LAB (52) | tid=lab-picker-sections | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox=null
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+ Tab -> input  | tid=lab-picker-parent | focus-visible=true | outline=solid 4px rgb(87, 194, 183) | shadow=none | ringBox={"outline":"none 3px","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px"}
+foco en «Tabla»: {"tag":"button","type":"button","role":"radio","aria":"Ver los análisis en tarjetas con sus componentes","tid":"segmentado-grid","txt":"Tabla","focusVisible":true,"outline":"solid 2px rgb(79, 168, 214)","boxShadow":"rgba(0, 0, 0, 0.4) 0px 1px 2px 0px, rgba(0, 0, 0, 0.45) 0px 4px 14px -6px","ringOnBox":null}
+ArrowRight -> vista Lista activa = true | foco: segmentado-list
+ArrowLeft -> vista Tabla activa = true
+foco en casilla del padre: {"tag":"input","type":"checkbox","role":null,"aria":null,"tid":"lab-picker-parent","txt":"","focusVisible":true,"outline":"solid 4px rgb(87, 194, 183)","boxShadow":"none","ringOnBox":{"outline":"none 3px","boxShadow":"rgba(159, 216, 208, 0.008) 0px 0px 0px 0.0241807px"}}
+Espacio -> padre {"checked":true,"indeterminate":true,"disabled":false} | 1 análisis · 11 componentes
+Tab siguiente: lab-picker-component
+Espacio sobre el 1.er componente -> contador: 1 análisis · 10 componentes
+Espacio sobre el padre (tri-estado) -> {"checked":true,"indeterminate":false,"disabled":false} | 1 análisis · 13 componentes
+== Imagenología: select de región por teclado
+foco en el select de estudio: {"tag":"button","type":"button","role":"combobox","aria":null,"tid":"imaging-picker-study","txt":"Elegir estudio","focusVisible":false,"outline":"none 3px rgb(246, 243, 237)","boxShadow":"none","ringOnBox":null}
+estudio elegido por teclado -> Radiografía de mano PA y oblicua: RX · Mano · sin contraste
+foco en el select de región: {"tag":"button","type":"button","role":null,"aria":null,"tid":"imaging-picker","txt":"Mano · Miembro superior","focusVisible":true,"outline":"none 3px rgb(246, 243, 237)","boxShadow":"rgba(0, 0, 0, 0) 0px 0px 0px 0px","ringOnBox":null}
+Enter abre el diálogo = true | foco: INPUT:Buscar región…
+opciones tras escribir «dedos»: []
+(con el filtro «dedos» hay un encabezado de grupo y una fila: hacen falta dos ArrowDown) Enter elige -> Región del cuerpo Dedos de la mano · Miembro superior | viva: Región: Dedos de la mano. | diálogo cerrado = true | foco devuelto al disparador = true
+Escape cierra el select sin cambiar = true | el modal principal sigue abierto = true | región = Región del cuerpo Dedos de la mano · Miembro superior
+lado: opciones ["Izquierda:false","Derecha:false","Bilateral:false"]
+ArrowRight en «Lado del paciente» -> ["Izquierda:false","Derecha:true","Bilateral:false"] | resumen: Radiografía de mano PA y oblicua: RX · Dedos de la mano · Derecha · sin contraste
+canvas 3D:  {"tabindex":"0","role":"application","label":"Modelo 3D para elegir la región del cuerpo; resaltada: Dedos de la mano. Use las flechas para girar el modelo, más y menos para acercar o alejar, e Inicio para volver a la vista inicial."}
