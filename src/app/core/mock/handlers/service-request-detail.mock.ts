@@ -141,8 +141,13 @@ export function validarItemDeOrden(
   const familia = familiaDeEstudio(codeConceptId);
   const estudio = estudioDelCatalogo(codeConceptId);
 
-  // V1: el estudio pertenece al catálogo (nuevo o heredado).
-  if (familia === null && !esEstudioHeredado(codeConceptId)) {
+  // V1: el estudio pertenece al catálogo (nuevo o heredado). El alta suelta
+  // sin detalle nuevo conserva su comportamiento de siempre (pide procedimientos y
+  // códigos que el simulador no cataloga); la requisición y cualquier alta con
+  // muestra, componentes o imagen sí lo exigen.
+  const trajoDetalle =
+    item.specimenTypeConceptId !== undefined || item.componentConceptIds !== undefined || item.imaging !== undefined;
+  if (familia === null && !esEstudioHeredado(codeConceptId) && (itemIndex !== undefined || trajoDetalle)) {
     return falla('STUDY_NOT_IN_CATALOG', 'codeConceptId', 'El estudio no pertenece al catálogo de estudios pedibles');
   }
 
