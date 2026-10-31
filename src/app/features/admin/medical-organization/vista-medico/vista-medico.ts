@@ -1,12 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  TemplateRef,
-  computed,
-  input,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 
 import { Tab } from '../../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../../shared/components/molecules/tabs/tabs';
@@ -22,19 +14,15 @@ import { SolicitudesDeIngreso } from '../solicitudes-de-ingreso/solicitudes-de-i
  * acciones (retirarse, salir de la fila), y el buzón de solicitudes de ingreso
  * es la pestaña de al lado.
  *
- * Si además administra una organización, su consola completa va en una tercera
- * pestaña; ya no tapa la lista de vinculaciones.
+ * Son sólo esas dos pestañas, también para quien además tiene un consultorio.
  */
 @Component({
   selector: 'app-vista-medico',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MembershipsTab, NgTemplateOutlet, SolicitudesDeIngreso, Tab, Tabs],
+  imports: [MembershipsTab, SolicitudesDeIngreso, Tab, Tabs],
   templateUrl: './vista-medico.html',
 })
 export class VistaMedico {
-  /** La consola de administración, sólo si el médico además administra una organización. */
-  readonly consola = input<TemplateRef<unknown> | null>(null);
-
   protected readonly pestana = signal(0);
   protected readonly invitaciones = signal(0);
 

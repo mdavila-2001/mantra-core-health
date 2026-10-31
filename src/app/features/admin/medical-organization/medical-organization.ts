@@ -365,12 +365,6 @@ export class MedicalOrganization {
    */
   protected readonly esMedico = computed(() => this.session.practitionerProfileId() !== null);
 
-  /** Administra al menos una organización: la consola completa va en una pestaña de la vista del médico. */
-  protected readonly tieneConsola = computed(() => {
-    const estado = this.practicas();
-    return estado.status === 'ready' && estado.data.length > 0;
-  });
-
   protected readonly subtitulo = computed(() =>
     this.esMedico()
       ? 'Las organizaciones a las que pertenece y sus solicitudes de ingreso.'

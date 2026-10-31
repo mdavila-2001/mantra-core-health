@@ -234,8 +234,8 @@
 
 @if (esMedico()) {
   <!-- El médico ve a cuáles organizaciones pertenece y su buzón de solicitudes.
-       Si además administra una, la consola completa va en una pestaña aparte. -->
-  <app-vista-medico [consola]="tieneConsola() ? consolaAdmin : null" />
+       Nada más: sin consola de administración ni recuadros de cobertura. -->
+  <app-vista-medico />
 } @else {
   <ng-container *ngTemplateOutlet="consolaAdmin" />
 }
