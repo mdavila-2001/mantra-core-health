@@ -296,7 +296,7 @@ test.describe('Cadenas de integración a 1440', () => {
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('consulta-rejilla')).toBeVisible({ timeout: 60_000 });
     modal = await openOrders(page);
-    await expect(modal.getByTestId('estudios-punto-de-toma').first()).toContainText('LAB-TM2', { timeout: 60_000 });
+    await expect(modal.getByTestId('study-collection-point').first()).toContainText('LAB-TM2', { timeout: 60_000 });
     await shot(page, '31-orden-punto-tras-recarga', '1440');
   });
 

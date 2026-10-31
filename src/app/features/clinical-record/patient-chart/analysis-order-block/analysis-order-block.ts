@@ -652,7 +652,7 @@ export class AnalysisOrderBlock {
           ? (informesPorId.get(orden.previousDiagnosticReportId)?.createdAt ?? null)
           : null,
       justificacion: orden.duplicateOverrideReason ?? null,
-      puntoDeToma: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
+      collectionPoint: orden.suggestedCareSpace ? `${orden.suggestedCareSpace.code} · ${orden.suggestedCareSpace.name}` : null,
       ...(orden.encounterId === undefined ? {} : { encounterId: orden.encounterId }),
     };
   }

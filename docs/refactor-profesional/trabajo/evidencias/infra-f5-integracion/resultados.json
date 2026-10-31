@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-31T09:23:49.483Z",
+  "date": "2026-10-31T10:16:00.029Z",
   "log": [
     {
       "what": "cola 1440",
@@ -115,20 +115,20 @@
             "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
             "codeConceptId": "9c46c426-3b75-47ec-a806-f8868f0f7ad2",
             "category": "OTHER",
-            "encounterId": "b2a1bd80-e1bb-468a-a351-690ab0149caa",
-            "formInstanceId": "575dc4bf-b981-47e7-addc-cb08a8ff3b16",
+            "encounterId": "3363e7f1-27b4-412d-a0cd-d75cd664bbee",
+            "formInstanceId": "4ed566c1-ddca-4229-a9a1-a3880942bb7a",
             "suggestedCareSpaceId": "e212d5d2-598e-4b0e-a9d6-cf7cd49071c0"
           }
         },
         "response": {
           "status": 201,
           "body": {
-            "id": "945e53e3-da74-4ed5-a1e0-c752161ce008",
+            "id": "b4d01309-8570-4a13-aaa2-882a9143ee4c",
             "patientProfileId": "c2aa6dda-67d6-46a6-aa79-a40ca7e62ee0",
             "category": "OTHER",
             "basedOnNoteIds": [],
             "status": "ACTIVE",
-            "createdAt": "2026-10-31T09:22:41.064Z"
+            "createdAt": "2026-10-31T10:15:06.526Z"
           }
         }
       }
@@ -187,8 +187,8 @@
               "costCenterId": "26e70cc0-31e6-4354-a7e0-8e94772d4554",
               "reason": "UNIT_ALREADY_HAS_COST_CENTER"
             },
-            "correlationId": "req-periop-mvw70ylb-1",
-            "timestamp": "2026-10-31T09:23:02.303Z",
+            "correlationId": "req-periop-mvw8w896-1",
+            "timestamp": "2026-10-31T10:15:20.778Z",
             "path": ""
           }
         }
@@ -229,18 +229,18 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "path": "/procedure-cases/b2f5de90-6ba5-4892-a76a-fc02d8eb7042/room-events",
           "ifMatch": null,
           "body": {
             "eventCode": "PATIENT_IN_ROOM",
-            "occurredAt": "2026-10-31T09:23:22.192Z"
+            "occurredAt": "2026-10-31T10:15:36.676Z"
           }
         },
         "response": {
           "status": 201,
           "body": {
-            "utilizationEventId": "5bd8449d-5830-42ef-a761-31f23717567c",
-            "milestoneId": "04f2c34a-f58d-4b0c-aef3-7102535d3f16"
+            "utilizationEventId": "48978477-dd5d-410d-a7b6-eb76fbd37654",
+            "milestoneId": "a6790091-9e0c-4f3d-a6b3-80cc254c639e"
           }
         }
       }
@@ -250,18 +250,18 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "path": "/procedure-cases/b2f5de90-6ba5-4892-a76a-fc02d8eb7042/room-events",
           "ifMatch": null,
           "body": {
             "eventCode": "ANESTHESIA_START",
-            "occurredAt": "2026-10-31T09:23:24.417Z"
+            "occurredAt": "2026-10-31T10:15:38.457Z"
           }
         },
         "response": {
           "status": 201,
           "body": {
-            "utilizationEventId": "1ec24448-27bc-4dd4-a142-b28cc2458f5c",
-            "milestoneId": "4dee182b-416e-4f37-a143-8c6ca646aad2"
+            "utilizationEventId": "55614974-0aae-4ed0-a176-53dc0af6a544",
+            "milestoneId": "651347d0-6ade-464e-a834-387e7dda32fe"
           }
         }
       }
@@ -271,18 +271,18 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "path": "/procedure-cases/b2f5de90-6ba5-4892-a76a-fc02d8eb7042/room-events",
           "ifMatch": null,
           "body": {
             "eventCode": "INCISION",
-            "occurredAt": "2026-10-31T09:23:29.066Z"
+            "occurredAt": "2026-10-31T10:15:42.147Z"
           }
         },
         "response": {
           "status": 201,
           "body": {
-            "utilizationEventId": "4968c4cc-0343-465c-a6f2-db1080dc30e8",
-            "milestoneId": "5fbc6658-32b0-47b2-aa81-1c5abd78992a"
+            "utilizationEventId": "7d1353ed-53ff-4511-a956-2ec41102aa0e",
+            "milestoneId": "7fb6159d-96ae-47ef-adbb-15f2814c0c7c"
           }
         }
       }
@@ -292,18 +292,18 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "path": "/procedure-cases/b2f5de90-6ba5-4892-a76a-fc02d8eb7042/room-events",
           "ifMatch": null,
           "body": {
             "eventCode": "CLOSURE",
-            "occurredAt": "2026-10-31T09:23:31.239Z"
+            "occurredAt": "2026-10-31T10:15:43.876Z"
           }
         },
         "response": {
           "status": 201,
           "body": {
-            "utilizationEventId": "df186569-6579-4c57-a96d-e40e9c2bc730",
-            "milestoneId": "cfb15afe-f67b-4f14-acf5-e3d62deb2b52"
+            "utilizationEventId": "a26fb325-3955-4ab5-a4db-bc307115692a",
+            "milestoneId": "9144a0df-6246-45ad-a995-d0ae17f0515c"
           }
         }
       }
@@ -313,18 +313,18 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/procedure-cases/231528f1-b81d-4033-a7ad-25625d055c54/room-events",
+          "path": "/procedure-cases/b2f5de90-6ba5-4892-a76a-fc02d8eb7042/room-events",
           "ifMatch": null,
           "body": {
             "eventCode": "PATIENT_OUT_OF_ROOM",
-            "occurredAt": "2026-10-31T09:23:35.698Z"
+            "occurredAt": "2026-10-31T10:15:47.561Z"
           }
         },
         "response": {
           "status": 201,
           "body": {
-            "utilizationEventId": "09a6c56f-6675-45a7-a1a7-5e18d7739586",
-            "milestoneId": "bdf32930-289c-41de-a90e-deae705e28ee"
+            "utilizationEventId": "2c0f7f28-57ae-4950-ad8e-6f28fe9e1d78",
+            "milestoneId": "9ce1a63e-56ab-4840-a5fe-39c25e3e427e"
           }
         }
       }
@@ -334,14 +334,14 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/cleaning-orders/0caa2c13-57b4-48c9-a04f-5f16df9ec16c/start",
+          "path": "/cleaning-orders/6c4808f1-2f39-40bf-abf2-65ee8f1665a0/start",
           "ifMatch": "\"1\"",
           "body": {}
         },
         "response": {
           "status": 200,
           "body": {
-            "id": "0caa2c13-57b4-48c9-a04f-5f16df9ec16c",
+            "id": "6c4808f1-2f39-40bf-abf2-65ee8f1665a0",
             "status": "CLN_IN_PROGRESS",
             "rowVersion": 2
           }
@@ -353,14 +353,14 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/cleaning-orders/0caa2c13-57b4-48c9-a04f-5f16df9ec16c/finish",
+          "path": "/cleaning-orders/6c4808f1-2f39-40bf-abf2-65ee8f1665a0/finish",
           "ifMatch": "\"2\"",
           "body": {}
         },
         "response": {
           "status": 200,
           "body": {
-            "id": "0caa2c13-57b4-48c9-a04f-5f16df9ec16c",
+            "id": "6c4808f1-2f39-40bf-abf2-65ee8f1665a0",
             "status": "CLN_DONE",
             "rowVersion": 3
           }
@@ -372,7 +372,7 @@
       "data": {
         "request": {
           "method": "POST",
-          "path": "/cleaning-orders/0caa2c13-57b4-48c9-a04f-5f16df9ec16c/inspect",
+          "path": "/cleaning-orders/6c4808f1-2f39-40bf-abf2-65ee8f1665a0/inspect",
           "ifMatch": "\"3\"",
           "body": {
             "result": "PASS"
@@ -381,7 +381,7 @@
         "response": {
           "status": 200,
           "body": {
-            "id": "0caa2c13-57b4-48c9-a04f-5f16df9ec16c",
+            "id": "6c4808f1-2f39-40bf-abf2-65ee8f1665a0",
             "status": "CLN_INSPECTED",
             "rowVersion": 4
           }
@@ -391,7 +391,7 @@
     {
       "what": "cargo de quirófano",
       "data": {
-        "text": "Pendiente de revisiónQuirófano QX-02 · Quirófano 2 Tiempo en sala 1 min Fracciones facturadas 2 Precio por fracción 600.00 BOB Importe 1200.00 BOB Centro de costo Sin centro de costo (la unidad no tiene uno) Clave ORTIME:231528f1-b81d-4033-a7ad-25625d055c54"
+        "text": "Pendiente de revisiónQuirófano QX-02 · Quirófano 2 Tiempo en sala 1 min Fracciones facturadas 2 Precio por fracción 600.00 BOB Importe 1200.00 BOB Centro de costo Sin centro de costo (la unidad no tiene uno) Clave ORTIME:b2f5de90-6ba5-4892-a76a-fc02d8eb7042"
       }
     }
   ],
@@ -399,8 +399,8 @@
     "http://127.0.0.1:4373/administration/accounting/infrastructure :: [API] GET /accounting/infrastructure-items → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
     "http://127.0.0.1:4373/administration/accounting/infrastructure :: [API] GET /accounting/infrastructure-items → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
     "http://127.0.0.1:4373/administration/accounting/infrastructure :: [API] GET /accounting/infrastructure-items → 500 · INTERNAL · «Simulado: fallo del servidor.» · correlationId=mock-fallo {status: 500, code: INTERNAL, message: Simulado: fallo del servidor., correlationId: mock-fallo}",
-    "http://127.0.0.1:4373/administration/accounting/infrastructure?tab=cost-centers :: [API] POST /accounting/cost-centers/da9549ad-79f3-456f-a207-3162f3bce60c/unit-link → 409 · CONFLICT · ««Internación de medicina interna» ya tiene el centro de costo CC-110.» · correlationId=req-periop-mvw70ylb-1 {status: 409, code: CONFLICT, message: «Internación de medicina interna» ya tiene el centro de costo CC-110., correlationId: req-periop-mvw70ylb-1, details: Object}",
-    "http://127.0.0.1:4373/interventions/231528f1-b81d-4033-a7ad-25625d055c54?tab=room :: [API] GET /billing/encounters/941e5516-66ab-48f8-a657-96a2657e2d8e/pending-charges → 403 · FORBIDDEN · «Su rol no consulta cargos.» · correlationId=req-periop-mvw71pjp-1 {status: 403, code: FORBIDDEN, message: Su rol no consulta cargos., correlationId: req-periop-mvw71pjp-1, details: Object}",
-    "http://127.0.0.1:4373/interventions/231528f1-b81d-4033-a7ad-25625d055c54?tab=room :: [API] GET /billing/encounters/941e5516-66ab-48f8-a657-96a2657e2d8e/pending-charges → 403 · FORBIDDEN · «Su rol no consulta cargos.» · correlationId=req-periop-mvw71swk-1 {status: 403, code: FORBIDDEN, message: Su rol no consulta cargos., correlationId: req-periop-mvw71swk-1, details: Object}"
+    "http://127.0.0.1:4373/administration/accounting/infrastructure?tab=cost-centers :: [API] POST /accounting/cost-centers/da9549ad-79f3-456f-a207-3162f3bce60c/unit-link → 409 · CONFLICT · ««Internación de medicina interna» ya tiene el centro de costo CC-110.» · correlationId=req-periop-mvw8w896-1 {status: 409, code: CONFLICT, message: «Internación de medicina interna» ya tiene el centro de costo CC-110., correlationId: req-periop-mvw8w896-1, details: Object}",
+    "http://127.0.0.1:4373/interventions/b2f5de90-6ba5-4892-a76a-fc02d8eb7042?tab=room :: [API] GET /billing/encounters/7396563c-b372-455c-a2a7-56a05e379158/pending-charges → 403 · FORBIDDEN · «Su rol no consulta cargos.» · correlationId=req-periop-mvw8wtyw-1 {status: 403, code: FORBIDDEN, message: Su rol no consulta cargos., correlationId: req-periop-mvw8wtyw-1, details: Object}",
+    "http://127.0.0.1:4373/interventions/b2f5de90-6ba5-4892-a76a-fc02d8eb7042?tab=room :: [API] GET /billing/encounters/7396563c-b372-455c-a2a7-56a05e379158/pending-charges → 403 · FORBIDDEN · «Su rol no consulta cargos.» · correlationId=req-periop-mvw8wx76-1 {status: 403, code: FORBIDDEN, message: Su rol no consulta cargos., correlationId: req-periop-mvw8wx76-1, details: Object}"
   ]
 }
