@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { signal } from '@angular/core';
@@ -504,6 +504,133 @@ describe('MyServices', () => {
       // tiene— y mandaría a pedirle un alta a una cuenta administradora.
       expect(estado().status).toBe('empty');
       expect(texto()).toContain('coincide');
+    });
+  });
+
+  /* ---- una tarjeta con pestañas (composition-rules §5) --------------------- */
+
+  /**
+   * Las pestañas son el filtro «Estado» de siempre dicho como pestañas: siguen
+   * en `?estado=` y el servidor las resuelve con `isActive`. No hay sección que
+   * el catálogo no tenga.
+   */
+  describe('una tarjeta con pestañas', () => {
+    const raiz = (): HTMLElement => harness.routeNativeElement as HTMLElement;
+    const pestanas = (): HTMLButtonElement[] => [
+      ...raiz().querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ];
+    const abierta = (): string =>
+      pestanas()
+        .find((b) => b.getAttribute('aria-selected') === 'true')
+        ?.textContent?.trim() ?? '';
+
+    async function irA(url: string): Promise<void> {
+      componente = await harness.navigateByUrl(url, MyServices);
+      await harness.fixture.whenStable();
+    }
+
+    async function tocar(indice: number): Promise<void> {
+      pestanas()[indice].click();
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    }
+
+    function conCatalogo(respuesta: RespuestaDePracticas = UNA_PRACTICA): void {
+      responderPracticas(respuesta);
+      peticionDelCatalogo().flush(pagina([servicio()]));
+      harness.detectChanges();
+    }
+
+    it('es UNA tarjeta, de marco de ventana, con «Todos», «Activos» e «Inactivos» y «Todos» abierta', () => {
+      conCatalogo();
+
+      const tarjeta = boton('my-services-card');
+      expect(tarjeta).not.toBeNull();
+      expect(tarjeta?.querySelector('app-tabs.tabs--browser')).not.toBeNull();
+      expect(pestanas().map((b) => b.textContent?.trim())).toEqual(['Todos', 'Activos', 'Inactivos']);
+      expect(abierta()).toBe('Todos');
+      // El catálogo está adentro de la tarjeta y se dibuja una sola vez.
+      expect(tarjeta?.querySelectorAll('[data-testid="my-services-grid"]')).toHaveLength(1);
+      expect(raiz().querySelectorAll('[data-testid="my-services-grid"]')).toHaveLength(1);
+    });
+
+    it('tocar «Inactivos» escribe ?estado=, conserva lo buscado y vuelve a la primera página', async () => {
+      conCatalogo();
+      await irA(`${RUTA}?q=holter`);
+      peticionDelCatalogo().flush(pagina([servicio()]));
+      harness.detectChanges();
+
+      await tocar(2);
+
+      const req = peticionDelCatalogo();
+      expect(req.request.params.get('isActive')).toBe('false');
+      expect(req.request.params.get('q')).toBe('holter');
+      expect(req.request.params.get('cursor')).toBeNull();
+      const url = TestBed.inject(Router).url;
+      expect(url).toContain('estado=inactivos');
+      expect(url).toContain('q=holter');
+      req.flush(pagina([servicio({ isActive: false })]));
+      harness.detectChanges();
+
+      expect(abierta()).toBe('Inactivos');
+      expect(raiz().querySelectorAll('[data-testid="my-services-grid"]')).toHaveLength(1);
+    });
+
+    it('«Todos» quita ?estado= y no manda `isActive`', async () => {
+      conCatalogo();
+      await irA(`${RUTA}?estado=inactivos`);
+      peticionDelCatalogo().flush(pagina([]));
+      harness.detectChanges();
+      expect(abierta()).toBe('Inactivos');
+
+      await tocar(0);
+
+      const req = peticionDelCatalogo();
+      expect(req.request.params.keys().sort()).toEqual(['limit', 'practiceId']);
+      expect(TestBed.inject(Router).url).not.toContain('estado');
+      req.flush(pagina([servicio()]));
+      harness.detectChanges();
+      expect(abierta()).toBe('Todos');
+    });
+
+    it('un enlace con ?estado=activos abre «Activos» y pide `isActive=true`', async () => {
+      conCatalogo();
+      await irA(`${RUTA}?estado=activos`);
+
+      const req = peticionDelCatalogo();
+      expect(req.request.params.get('isActive')).toBe('true');
+      req.flush(pagina([servicio()]));
+      harness.detectChanges();
+      expect(abierta()).toBe('Activos');
+    });
+
+    it('una pestaña sin servicios dice cuál y manda a «Todos», sin ofrecer un alta', async () => {
+      conCatalogo();
+      await irA(`${RUTA}?estado=inactivos`);
+      peticionDelCatalogo().flush(pagina([]));
+      harness.detectChanges();
+
+      const vacio = estado() as {
+        status: string;
+        message?: string;
+        nextAction: { label: string; route?: string };
+      };
+      expect(vacio.status).toBe('empty');
+      expect(vacio.message).toBe('Esta práctica no tiene servicios inactivos.');
+      expect(vacio.nextAction.label).toContain('Todos');
+      expect(vacio.nextAction.route).toBeUndefined();
+    });
+
+    it('cambiar de pestaña no deja un segundo panel: la práctica y el buscador salen una vez', async () => {
+      conCatalogo(DOS_PRACTICAS);
+
+      await tocar(1);
+      peticionDelCatalogo().flush(pagina([servicio()]));
+      harness.detectChanges();
+
+      expect(raiz().querySelectorAll('[data-testid="my-services-practice"]')).toHaveLength(1);
+      expect(raiz().querySelectorAll('[data-testid="my-services-filters"]')).toHaveLength(1);
+      expect(raiz().querySelectorAll('[data-testid="my-services-grid"]')).toHaveLength(1);
     });
   });
 });

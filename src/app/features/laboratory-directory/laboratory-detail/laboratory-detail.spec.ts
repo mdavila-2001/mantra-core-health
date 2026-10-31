@@ -1,8 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
+import { vi } from 'vitest';
 
 import { LaboratoryDetail } from './laboratory-detail';
 
@@ -79,8 +80,11 @@ const DETAIL = {
 describe('LaboratoryDetail', () => {
   let fixture: ComponentFixture<LaboratoryDetail>;
   let http: HttpTestingController;
+  /** El `?tab=` de la URL, que el spec puede mover como lo haría el router. */
+  let query: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 
-  function mount(unitId: string | null = UNIT_ID): void {
+  function mount(unitId: string | null = UNIT_ID, tab: string | null = null): void {
+    query = new BehaviorSubject(convertToParamMap(tab === null ? {} : { tab }));
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -88,7 +92,11 @@ describe('LaboratoryDetail', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: of(convertToParamMap({ unitId: unitId ?? '' })) },
+          useValue: {
+            paramMap: of(convertToParamMap({ unitId: unitId ?? '' })),
+            queryParamMap: query,
+            snapshot: { fragment: null },
+          },
         },
       ],
     });
@@ -97,14 +105,59 @@ describe('LaboratoryDetail', () => {
     fixture.detectChanges();
   }
 
+  /** Monta la ficha con el centro de la prueba (o una variante) ya cargado. */
+  function mountLoaded(detail: object = DETAIL, tab: string | null = null): void {
+    mount(UNIT_ID, tab);
+    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush(detail);
+    fixture.detectChanges();
+  }
+
+  const host = (): HTMLElement => fixture.nativeElement as HTMLElement;
+  const tabButtons = (): HTMLButtonElement[] => [
+    ...host().querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+  ];
+  const rotulosDePestanas = (): string[] => tabButtons().map((b) => b.textContent?.trim() ?? '');
+  const pestanaAbierta = (): string =>
+    tabButtons()
+      .find((b) => b.getAttribute('aria-selected') === 'true')
+      ?.textContent?.trim() ?? '';
+
+  /** Abre una pestaña con un clic, como lo haría quien mira la ficha. */
+  function abrir(rotulo: RegExp): void {
+    const boton = tabButtons().find((b) => rotulo.test(b.textContent ?? ''));
+    expect(boton, String(rotulo)).toBeDefined();
+    boton!.click();
+    fixture.detectChanges();
+  }
+
+  /** El texto de la ficha entera: lo que hay en cada pestaña, una tras otra. */
+  function textoDeTodasLasPestanas(): string {
+    let texto = '';
+    for (const boton of tabButtons()) {
+      boton.click();
+      fixture.detectChanges();
+      texto += ` ${host().textContent ?? ''}`;
+    }
+    return texto;
+  }
+
+  beforeEach(() => {
+    // La navegación real no importa acá: lo que se prueba es lo que la ficha
+    // le pide al router, y la pestaña abierta la gobierna `?tab=` que mueve
+    // cada prueba.
+    vi.spyOn(Router.prototype, 'navigate').mockResolvedValue(true);
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
   afterEach(() => http?.verify());
 
   it('renders sites, equipment, studies, public prices and accreditation', () => {
-    mount();
-    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush(DETAIL);
-    fixture.detectChanges();
+    mountLoaded();
 
-    const text = fixture.nativeElement.textContent as string;
+    // Cada colección vive en su pestaña: se recorren todas, y lo que se
+    // afirma es lo mismo de antes.
+    const text = textoDeTodasLasPestanas();
     expect(text).toContain('Sede Centro');
     expect(text).toContain('Analyzer 500');
     expect(text).toContain('Hemograma completo');
@@ -116,19 +169,22 @@ describe('LaboratoryDetail', () => {
   });
 
   it('draws the four collections as the card grid, not as stacked fact tables', () => {
-    mount();
-    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush(DETAIL);
-    fixture.detectChanges();
-
-    const host = fixture.nativeElement as HTMLElement;
+    mountLoaded();
 
     // La anatomía de `clinic-detail` y `pharmacy-detail`: una rejilla por
     // colección, cada ficha una `.rejilla__tarjeta`. Es lo que el cliente pidió
     // el 17/09/2026 —«lo mismo que en los directorios de farmacia y de
     // clínicas»— y lo que la regla §5 de composición exige en vez de las cuatro
     // cards apiladas que había antes.
-    for (const testId of ['unit-studies', 'unit-equipment', 'unit-sites', 'unit-accreditations']) {
-      const rejilla = host.querySelector(`[data-testid="${testId}"]`);
+    const pestanaDe = {
+      'unit-studies': /^Estudios/,
+      'unit-equipment': /^Equipos/,
+      'unit-sites': /^Sedes/,
+      'unit-accreditations': /^Acreditaciones/,
+    } as const;
+    for (const testId of ['unit-studies', 'unit-equipment', 'unit-sites', 'unit-accreditations'] as const) {
+      abrir(pestanaDe[testId]);
+      const rejilla = host().querySelector(`[data-testid="${testId}"]`);
       expect(rejilla, testId).not.toBeNull();
       expect(rejilla?.classList.contains('rejilla'), testId).toBe(true);
       expect(rejilla?.querySelectorAll('.rejilla__tarjeta').length, testId).toBe(1);
@@ -136,9 +192,10 @@ describe('LaboratoryDetail', () => {
 
     // El precio vive en el pie de la tarjeta, con su rótulo — no en una fila de
     // tabla. `PUBLIC-LAB` no es la tarifa de maqueta, así que es público.
-    const precio = host.querySelector('[data-testid="unit-study-price"]');
+    abrir(/^Estudios/);
+    const precio = host().querySelector('[data-testid="unit-study-price"]');
     expect(precio?.textContent?.trim()).toBe('85,00 Bs');
-    expect(host.textContent).toContain('Precio público');
+    expect(host().textContent).toContain('Precio público');
   });
 
   it('keeps the price label honest when the schedule is the mock one', () => {
@@ -242,13 +299,147 @@ describe('LaboratoryDetail', () => {
   });
 
   it('does not expose any technical UUID in visible profile text', () => {
-    mount();
-    http.expectOne(`/diagnostic-units/${UNIT_ID}`).flush(DETAIL);
-    fixture.detectChanges();
+    mountLoaded();
 
-    const text = fixture.nativeElement.textContent as string;
+    const text = textoDeTodasLasPestanas();
     expect(text).not.toContain(UNIT_ID);
     expect(text).not.toContain(SITE_ID);
+  });
+
+  /**
+   * UNA tarjeta con pestañas, centrada y a lo ancho (`composition-rules.md` §5),
+   * con la pestaña abierta en `?tab=` como en el catálogo de la farmacia.
+   */
+  describe('la ficha en una tarjeta con pestañas', () => {
+    /** Las pantallas montadas: una rejilla por colección, sólo la de la pestaña abierta. */
+    const rejillasMontadas = (): string[] =>
+      ['unit-studies', 'unit-equipment', 'unit-sites', 'unit-accreditations'].filter(
+        (testId) => host().querySelector(`[data-testid="${testId}"]`) !== null,
+      );
+
+    it('es UNA app-card con las pestañas de marco de ventana, y ninguna otra card apilada', () => {
+      mountLoaded();
+
+      expect(host().querySelectorAll('app-card')).toHaveLength(1);
+      expect(host().querySelectorAll('[data-testid="unit-card"]')).toHaveLength(1);
+      const tabs = host().querySelector('[data-testid="unit-tabs"]');
+      expect(tabs?.classList).toContain('tabs--browser');
+      expect(tabs?.closest('app-card')).not.toBeNull();
+      expect(host().querySelector('app-fact-section')).toBeNull();
+    });
+
+    it('dibuja una pestaña por colección, con su cuenta, en orden', () => {
+      mountLoaded();
+
+      expect(rotulosDePestanas()).toEqual([
+        'Estudios (1)',
+        'Equipos (1)',
+        'Sedes (1)',
+        'Acreditaciones (1)',
+      ]);
+    });
+
+    it('el resumen del centro y sus modalidades quedan a la vista en cualquier pestaña', () => {
+      mountLoaded();
+
+      for (const rotulo of [/^Estudios/, /^Sedes/]) {
+        abrir(rotulo);
+        expect(host().textContent).toContain('LAB-CENTRAL');
+        expect(host().textContent).toContain('Atención sin cita');
+        expect(host().textContent).toContain('Toma de muestras a domicilio');
+        expect(host().textContent).toContain('Recibe órdenes externas');
+      }
+    });
+
+    it('sin `?tab=` abre Estudios, monta sólo esa colección y conserva el ancla #estudios', () => {
+      mountLoaded();
+
+      expect(pestanaAbierta()).toBe('Estudios (1)');
+      expect(rejillasMontadas()).toEqual(['unit-studies']);
+      // «Ver estudios y precios» llega con `#estudios`: tiene que existir.
+      expect(host().querySelector('section#estudios')).not.toBeNull();
+    });
+
+    it.each([
+      ['equipos', 'Equipos (1)', 'unit-equipment'],
+      ['sedes', 'Sedes (1)', 'unit-sites'],
+      ['acreditaciones', 'Acreditaciones (1)', 'unit-accreditations'],
+    ])('con `?tab=%s` abre esa pestaña y sólo esa colección está en el DOM', (tab, rotulo, testId) => {
+      mountLoaded(DETAIL, tab);
+
+      expect(pestanaAbierta()).toBe(rotulo);
+      expect(rejillasMontadas()).toEqual([testId]);
+    });
+
+    it('con `?tab=` desconocido cae en Estudios', () => {
+      mountLoaded(DETAIL, 'foo');
+
+      expect(pestanaAbierta()).toBe('Estudios (1)');
+      expect(rejillasMontadas()).toEqual(['unit-studies']);
+    });
+
+    it('no ofrece una pestaña vacía, y `?tab=equipos` de un centro sin equipos cae en Estudios', () => {
+      mountLoaded({ ...DETAIL, equipment: [], accreditations: [] }, 'equipos');
+
+      expect(rotulosDePestanas()).toEqual(['Estudios (1)', 'Sedes (1)']);
+      expect(pestanaAbierta()).toBe('Estudios (1)');
+      expect(rejillasMontadas()).toEqual(['unit-studies']);
+    });
+
+    it('un clic en «Sedes» escribe sólo `?tab=sedes`, con replaceUrl, y muestra las sedes', () => {
+      mountLoaded();
+      const navigate = vi.mocked(TestBed.inject(Router).navigate);
+
+      abrir(/^Sedes/);
+
+      expect(navigate).toHaveBeenCalledWith(
+        [],
+        expect.objectContaining({ queryParams: { tab: 'sedes' }, replaceUrl: true }),
+      );
+      expect(navigate.mock.calls[0]![1]).not.toHaveProperty('queryParamsHandling');
+      expect(pestanaAbierta()).toBe('Sedes (1)');
+      expect(rejillasMontadas()).toEqual(['unit-sites']);
+    });
+
+    it('un cambio de `?tab=` en la misma ficha cambia de pestaña sin recargarla', () => {
+      mountLoaded();
+      const ficha = host().querySelector('[data-testid="unit-card"]');
+
+      query.next(convertToParamMap({ tab: 'acreditaciones' }));
+      fixture.detectChanges();
+      expect(pestanaAbierta()).toBe('Acreditaciones (1)');
+      expect(rejillasMontadas()).toEqual(['unit-accreditations']);
+
+      query.next(convertToParamMap({}));
+      fixture.detectChanges();
+      expect(pestanaAbierta()).toBe('Estudios (1)');
+      expect(host().querySelector('[data-testid="unit-card"]')).toBe(ficha);
+    });
+
+    it('el buscador de estudios sigue en la pestaña Estudios y no aparece en las otras', () => {
+      const base = DETAIL.studies[0]!;
+      mountLoaded({
+        ...DETAIL,
+        studies: Array.from({ length: 7 }, (_, i) => ({
+          ...base,
+          id: `4444444${i}-4444-4444-8444-44444444444${i}`,
+          code: `EST-${i}`,
+          name: `Estudio ${i}`,
+        })),
+      });
+
+      expect(host().querySelector('app-search-field')).not.toBeNull();
+      abrir(/^Sedes/);
+      expect(host().querySelector('app-search-field')).toBeNull();
+    });
+
+    it('el vacío de Estudios orienta: dice por qué y adónde ir', () => {
+      mountLoaded({ ...DETAIL, studies: [] });
+
+      expect(pestanaAbierta()).toBe('Estudios (0)');
+      expect(host().textContent).toContain('todavía no publicó su lista de estudios');
+      expect(host().textContent).toContain('Vuelva al directorio');
+    });
   });
 
   it('maps a cross-tenant/not-found response to the neutral not-found state', () => {

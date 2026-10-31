@@ -38,7 +38,7 @@
 ## H1 — Menú compacto y pantalla «Órdenes»
 **CA:** Dado un usuario de un `DIAGNOSTIC_CENTER`, cuando abre el menú, entonces ve Resumen, Órdenes, Precios y Sucursales; y las rutas viejas redirigen a Órdenes.
 **DoD:** `yarn tsc -p tsconfig.app.json --noEmit` · `yarn eslint` de lo tocado · `yarn ng test` dirigido · E2E Playwright del laboratorio · capturas 390/768/1440 con doble revisión.
-**Estado:** A MEDIAS (M4)
+**Estado:** HECHO (con reservas declaradas en `evidencia/doble-revision.md`)
 
 ### H1.S1 — Órdenes
 | ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
@@ -46,19 +46,22 @@
 | H1.S1.M1 | Quitar recepción, cola y resultados del menú y redirigir sus rutas a Órdenes | el menú del laboratorio tiene 4 ítems; las rutas viejas redirigen | `ng test navigation` → PASS | HECHO |
 | H1.S1.M2 | Pantalla «Órdenes»: una tarjeta con pestañas por estado, conteos, búsqueda y estados vacío/error | cada pestaña filtra y cuenta | `ng test laboratory-orders` → PASS | HECHO |
 | H1.S1.M3 | Cuatro acciones por fila (recibir, procesada, subir, descargar) con 409 ante un paso fuera de orden | cada acción cambia el estado y persiste tras recargar | `ng test lab-portal.handlers` + Playwright `hito2 · laboratorio` | HECHO |
-| H1.S1.M4 | Evidencia visual en 3 viewports con doble revisión independiente | sin pantalla RECHAZADA sobre el juego final | `evidencia/doble-revision.md` | A MEDIAS |
+| H1.S1.M4 | Evidencia visual en 3 viewports con doble revisión independiente | sin pantalla RECHAZADA sobre el juego final | `evidencia/doble-revision.md` (3.ª pasada independiente: entregable con reservas) | HECHO |
 
 ## H2 — Marketplace de servicios con el estándar de composición
-Confirmado 31/10: máximo alcance — `/my-services`, directorio de laboratorios (`/laboratory-directory` y su ficha) y catálogo de farmacia, con el estándar de composición-rules §5.
-| ID | Microtarea | CA | DoD | Estado |
+Confirmado 31/10: máximo alcance — `/my-services`, directorio de laboratorios (`/laboratory-directory` y su ficha) y catálogo de farmacia, con el estándar de composición-rules §5 (UNA tarjeta con pestañas, centrada, a lo ancho).
+**Estado:** A MEDIAS — código escrito por agentes en paralelo (archivos disjuntos); falta ejecutar specs, capturas en 390/768/1440 y doble revisión.
+| ID | Microtarea | CA (binario) | DoD (comando de verificación) | Estado |
 |---|---|---|---|---|
-| H2.S1.M1 | Alinear `/my-services`, directorio de laboratorios y catálogo de farmacia | Sin empezar | — | TODO |
+| H2.S1.M1 | `/my-services`: una tarjeta con pestañas Todos/Activos/Inactivos (`?estado=`), misma lógica y `data-testid` | una `app-card` + `app-tabs`; el filtro de estado vive en las pestañas | `ng test my-services` + Playwright `carril-22-mis-servicios` + capturas | A MEDIAS |
+| H2.S1.M2 | Ficha del laboratorio: una tarjeta con pestañas Estudios/Equipos/Sedes/Acreditaciones (`?tab=`); el listado no se tocó (lo dibuja `DirectoryPage`, compartido) | una `app-card` + `app-tabs`; ancla `#estudios` intacta | `ng test laboratory-directory` + capturas | A MEDIAS |
+| H2.S1.M3 | Ficha pública de farmacia: una tarjeta con pestañas Medicamentos/Sucursales y receta (`?tab=`); vacíos orientadores | una `app-card` + `app-tabs`; `consultar-producto-por-chat` sigue en la pestaña por defecto | `ng test public-directories` + Playwright `chat-marketplace` + capturas | A MEDIAS |
 
 ## H3 — Paridad en la app móvil Flutter
-La app no tiene signup/login ni los flujos de los tres roles; es un proyecto aparte.
+Repo `mantra_core_health_mobile`, misma rama. Hecha la pantalla «Órdenes» contra un doble en memoria (regla 65); faltan signup/login y los flujos de farmacia, y el repositorio HTTP.
 | ID | Microtarea | CA | DoD | Estado |
 |---|---|---|---|---|
-| H3.S1.M1 | Signup, login y flujos de laboratorio, imagenología y farmacia en Flutter | Sin empezar | — | TODO |
+| H3.S1.M1 | «Órdenes» en Flutter + signup, login y flujos de laboratorio, imagenología y farmacia | paridad con la web | `flutter analyze` + `flutter test` (215 PASS) | A MEDIAS (solo «Órdenes», contra doble) |
 
 ## Riesgos
 | Riesgo | Impacto | Mitigación |
