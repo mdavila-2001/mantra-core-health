@@ -8,17 +8,9 @@
  * texto exacto (el `numeric` de la base no cabe sin pérdida en un `number`).
  */
 
-/** Un concepto ya resuelto a su forma legible. */
-export interface PharmacyConcept {
-  readonly code: string;
-  readonly display: string;
-}
+import type { GeoPoint, PharmacyConcept } from './pharmacy-base.types';
 
-/** Un punto WGS84 desde donde medir distancias. */
-export interface GeoPoint {
-  readonly lat: number;
-  readonly lng: number;
-}
+export type { GeoPoint, PharmacyConcept } from './pharmacy-base.types';
 
 /**
  * Una farmacia del directorio publicado, tal como la lista `GET

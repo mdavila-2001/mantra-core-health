@@ -48,7 +48,6 @@ import {
   CATEGORIES,
   CSV_COLUMNS,
   FIELD_LABELS,
-  EXAMPLE_ROWS,
   MAX_ROWS_BY_LOAD,
   decodificarCsv,
   readCsv,
@@ -60,6 +59,7 @@ import {
   type CsvReading,
   type LoadMode,
 } from '../catalog-rules/catalog.rules';
+import { EXAMPLE_ROWS } from '../catalog-rules/catalog-example-rows';
 import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import {
   OUTCOME_BADGE,
