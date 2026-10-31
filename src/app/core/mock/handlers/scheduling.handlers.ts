@@ -1018,8 +1018,10 @@ export function registrarAgenda(router: MockRouter): void {
         durationMinutes: number;
         reasonText?: string;
         channel?: string;
+        startAttention?: boolean;
       }>(request);
       const patientData = data.patient ?? {};
+      const startsAttention = data.startAttention !== false;
 
       const missing = [
         ...(['name', 'lastName', 'nationalId', 'phone'] as const)
@@ -1141,7 +1143,7 @@ export function registrarAgenda(router: MockRouter): void {
         typeConceptId: APPOINTMENT_TYPE['APT-PRIMERA']!,
         startAt,
         endAt,
-        statusConceptId: BOOKING_STATUS['BK-IN-PROGRESS']!,
+        statusConceptId: BOOKING_STATUS[startsAttention ? 'BK-IN-PROGRESS' : 'BK-CONFIRMED']!,
         serviceConceptId: ACTIVITY['ACT-CONSULTA']!,
         bookingChannelConceptId:
           data.channel === 'TELECONSULTA'
@@ -1150,7 +1152,7 @@ export function registrarAgenda(router: MockRouter): void {
               ? CANAL['CH-DOMICILIO']!
               : CANAL['CH-PRESENCIAL']!,
         confirmedAt: ahora(),
-        checkedInAt: ahora(),
+        checkedInAt: startsAttention ? ahora() : null,
         reasonText: data.reasonText ?? 'Turno de mostrador',
         patientName: displayName,
         insuranceCarrierName: null,
@@ -1162,6 +1164,20 @@ export function registrarAgenda(router: MockRouter): void {
         createdAt: ahora(),
       };
       reservas.agregar(booking);
+
+      // Agendado para su hora: sin encuentro hasta que se inicie la atención.
+      if (!startsAttention) {
+        return reply(201, {
+          patientProfileId,
+          personId: newPatient.personId,
+          patientCode: newPatient.patientCode,
+          bookingId: booking.id,
+          bookableSlotId: slot.id,
+          appointmentId: booking.appointmentId,
+          statusConceptId: booking.statusConceptId,
+          retractedSlots: overlapped.length,
+        });
+      }
 
       // El encuentro abierto, que es a donde el médico entra a registrar la
       // atención apenas se cierra el alta.
