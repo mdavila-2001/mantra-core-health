@@ -1542,7 +1542,7 @@ Stock por sucursal en la pestaña Inventario: «Lo tengo / No lo tengo» por sed
 | Método | Ruta | Consumidor | Pública |
 |---|---|---|---|
 
-### `ReferralsClient` — 4 operaciones
+### `ReferralsClient` — 10 operaciones
 
 Derivar a otro profesional o a una organización médica, por un servicio
 concreto de su catálogo (`clinical_ext`). `referralType` y
@@ -1556,6 +1556,17 @@ y se mandan también a la API real.
 | `GET` | `/referrals` | `Consultation` (`ConsultationReferrals`) | No |
 | `GET` | `/referrals/targets` | `ReferralBlock` | No |
 | `GET` | `/referrals/target-services` | `ReferralBlock` | No |
+| `GET` | `/referrals/:id` | `ReferralBlock` (detalle) | No |
+| `PATCH` | `/referrals/:id/respond` | `ReferralDetail` | No |
+| `PATCH` | `/referrals/:id/counter-referral` | `ReferralDetail` | No |
+| `PATCH` | `/referrals/:id/cancel` | `ReferralDetail` | No |
+| `PATCH` | `/referrals/:id/transfer` | `ReferralTransferPanel` | No |
+| `PATCH` | `/referrals/:id/arrival` | `ReferralTransferPanel` | No |
+
+Traslado (v4274): `transfer` viaja en el alta y vuelve en toda lectura
+(`null` si no hay datos). `PATCH …/transfer` combina con lo guardado —omitido
+conserva, `null` borra— y lo usa quien emitió; `PATCH …/arrival` sólo el
+destino (quien no lo es, o sin `X-Tenant-Id`, recibe 404 `REFERRAL_NOT_FOUND`).
 
 ### `QuotationsClient` — 4 operaciones
 

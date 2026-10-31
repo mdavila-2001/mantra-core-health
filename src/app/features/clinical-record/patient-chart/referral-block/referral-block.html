@@ -38,7 +38,7 @@
       <app-alert class="referral__notice" tone="error" data-testid="referral-error">{{ message }}</app-alert>
     }
 
-    @if (attempted() && issues().length > 0) {
+    @if (attempted() && (issues().length > 0 || transferProblems().length > 0)) {
       <!-- El resumen arriba; cada error, además, junto a su campo. Se anuncia. -->
       <app-alert
         class="referral__notice"
@@ -51,237 +51,257 @@
           @for (issue of issues(); track issue.field) {
             <li>{{ issue.message }}</li>
           }
+          @for (problem of transferProblems(); track $index) {
+            <li>Traslado: {{ problem.message }}</li>
+          }
         </ul>
       </app-alert>
     }
 
-    <form class="referral__form app-form-grid" (submit)="$event.preventDefault()">
-      <app-form-field class="app-form-grid__ancho" label="¿A quién deriva?">
-        <app-segmented-control
-          data-testid="referral-kind"
-          ariaLabel="A quién deriva"
-          size="md"
-          [options]="targetKindOptions"
-          [value]="kind()"
-          (valueChange)="chooseKind($event)"
-        />
-      </app-form-field>
-
-      <!-- El buscador se vuelve a montar al derivar: el combobox guarda su
-           texto, y el de un destino que ya no está elegido no puede quedar
-           escrito. La clase de destino ya monta uno por rama. -->
-      @if (remountToggle()) {
-        <ng-container [ngTemplateOutlet]="targetSearch" />
-      } @else {
-        <ng-container [ngTemplateOutlet]="targetSearch" />
-      }
-      <ng-template #targetSearch>
-        @if (kind() === 'EXTERNAL') {
-          <!-- Fuera de la plataforma: no se busca, se escribe. No recibe aviso. -->
-          <app-form-field
-            label="Doctor u organización destino"
-            hint="Fuera de la plataforma: no recibe aviso. Entréguele la derivación a la persona."
-            [required]="true"
-            [errorMessage]="issueFor('target') || issueFor('targetExternalName')"
-          >
-            <app-input
-              testId="referral-external-name"
-              autocomplete="organization"
-              placeholder="Ej.: Centro de Hemodiálisis Norte"
-              [(value)]="externalName"
-            />
-          </app-form-field>
-          <app-form-field
-            label="Contacto del destino"
-            hint="Opcional. Teléfono, correo o dirección."
-            [errorMessage]="issueFor('targetExternalContact')"
-          >
-            <app-input
-              testId="referral-external-contact"
-              autocomplete="off"
-              placeholder="Ej.: 3 333 4444 · Av. Banzer 123"
-              [(value)]="externalContact"
-            />
-          </app-form-field>
-        } @else if (kind() === 'PRACTITIONER') {
-          <app-form-field
-            class="app-form-grid__ancho"
-            icon="stethoscope"
-            label="Profesional recomendado"
-            hint="Escriba al menos dos letras del nombre. No aparece usted."
-            [required]="true"
-            [errorMessage]="searchError() ?? issueFor('target')"
-          >
-            <app-reference-combobox
-              data-testid="referral-practitioner"
-              [options]="targetOptions()"
-              [loading]="searching()"
-              [minQueryLength]="minQueryLength"
-              label="Profesional recomendado"
-              placeholder="Ej. Dra. Mendoza"
-              emptyMessage="No encontramos a nadie con ese nombre"
-              (searched)="search($event)"
-              (selectionChange)="choose($event)"
-            />
-          </app-form-field>
-        } @else {
-          <app-form-field
-            class="app-form-grid__ancho"
-            icon="hospital"
-            label="Organización médica"
-            hint="Escriba al menos dos letras del nombre de la clínica, el hospital o el laboratorio."
-            [required]="true"
-            [errorMessage]="searchError() ?? issueFor('target')"
-          >
-            <app-reference-combobox
-              data-testid="referral-organization"
-              [options]="targetOptions()"
-              [loading]="searching()"
-              [minQueryLength]="minQueryLength"
-              label="Organización médica"
-              placeholder="Ej. Hospital San Lucas"
-              emptyMessage="No encontramos una organización con ese nombre"
-              (searched)="search($event)"
-              (selectionChange)="choose($event)"
-            />
-          </app-form-field>
-          @if (hasBranches()) {
-            <app-form-field label="Sede" hint="Opcional. Si no elige una, la organización asigna la sede.">
-              <app-select
-                data-testid="referral-branch"
-                [options]="branchOptions()"
-                [value]="selectedBranch()"
-                (valueChange)="selectedBranch.set($event)"
+    <!-- UNA tarjeta con pestañas (composition-rules §5): lo que se deriva y,
+         aparte, el traslado. Lo escrito vive en señales: cambiar de pestaña no
+         lo pierde. -->
+    <form class="referral__form" (submit)="$event.preventDefault()">
+      <app-tabs [(selectedIndex)]="tab" data-testid="referral-tabs">
+        <app-tab [label]="tabLabels()[0]">
+          <div class="referral__grid app-form-grid">
+            <app-form-field class="app-form-grid__ancho" label="¿A quién deriva?">
+              <app-segmented-control
+                data-testid="referral-kind"
+                ariaLabel="A quién deriva"
+                size="md"
+                [options]="targetKindOptions"
+                [value]="kind()"
+                (valueChange)="chooseKind($event)"
               />
             </app-form-field>
-          }
-        }
-      </ng-template>
 
-      <!-- Los servicios del destino: recién con un destino elegido. -->
-      @if (kind() !== 'EXTERNAL') {
-      <div class="referral__services" data-testid="referral-services">
-        @if (target(); as chosen) {
-          <app-view-state-host [state]="services()" (retry)="loadServices()">
-            <p vsh-skeleton class="referral__secondary">
-              Buscando los servicios de {{ chosen.displayName }}…
-            </p>
-            <app-form-field label="Servicio" [hint]="serviceHint()">
+            <!-- El buscador se vuelve a montar al derivar: el combobox guarda su
+                 texto, y el de un destino que ya no está elegido no puede quedar
+                 escrito. La clase de destino ya monta uno por rama. -->
+            @if (remountToggle()) {
+              <ng-container [ngTemplateOutlet]="targetSearch" />
+            } @else {
+              <ng-container [ngTemplateOutlet]="targetSearch" />
+            }
+            <ng-template #targetSearch>
+              @if (kind() === 'EXTERNAL') {
+                <!-- Fuera de la plataforma: no se busca, se escribe. No recibe aviso. -->
+                <app-form-field
+                  label="Doctor u organización destino"
+                  hint="Fuera de la plataforma: no recibe aviso. Entréguele la derivación a la persona."
+                  [required]="true"
+                  [errorMessage]="issueFor('target') || issueFor('targetExternalName')"
+                >
+                  <app-input
+                    testId="referral-external-name"
+                    autocomplete="organization"
+                    placeholder="Ej.: Centro de Hemodiálisis Norte"
+                    [(value)]="externalName"
+                  />
+                </app-form-field>
+                <app-form-field
+                  label="Contacto del destino"
+                  hint="Opcional. Teléfono, correo o dirección."
+                  [errorMessage]="issueFor('targetExternalContact')"
+                >
+                  <app-input
+                    testId="referral-external-contact"
+                    autocomplete="off"
+                    placeholder="Ej.: 3 333 4444 · Av. Banzer 123"
+                    [(value)]="externalContact"
+                  />
+                </app-form-field>
+              } @else if (kind() === 'PRACTITIONER') {
+                <app-form-field
+                  class="app-form-grid__ancho"
+                  icon="stethoscope"
+                  label="Profesional recomendado"
+                  hint="Escriba al menos dos letras del nombre. No aparece usted."
+                  [required]="true"
+                  [errorMessage]="searchError() ?? issueFor('target')"
+                >
+                  <app-reference-combobox
+                    data-testid="referral-practitioner"
+                    [options]="targetOptions()"
+                    [loading]="searching()"
+                    [minQueryLength]="minQueryLength"
+                    label="Profesional recomendado"
+                    placeholder="Ej. Dra. Mendoza"
+                    emptyMessage="No encontramos a nadie con ese nombre"
+                    (searched)="search($event)"
+                    (selectionChange)="choose($event)"
+                  />
+                </app-form-field>
+              } @else {
+                <app-form-field
+                  class="app-form-grid__ancho"
+                  icon="hospital"
+                  label="Organización médica"
+                  hint="Escriba al menos dos letras del nombre de la clínica, el hospital o el laboratorio."
+                  [required]="true"
+                  [errorMessage]="searchError() ?? issueFor('target')"
+                >
+                  <app-reference-combobox
+                    data-testid="referral-organization"
+                    [options]="targetOptions()"
+                    [loading]="searching()"
+                    [minQueryLength]="minQueryLength"
+                    label="Organización médica"
+                    placeholder="Ej. Hospital San Lucas"
+                    emptyMessage="No encontramos una organización con ese nombre"
+                    (searched)="search($event)"
+                    (selectionChange)="choose($event)"
+                  />
+                </app-form-field>
+                @if (hasBranches()) {
+                  <app-form-field label="Sede" hint="Opcional. Si no elige una, la organización asigna la sede.">
+                    <app-select
+                      data-testid="referral-branch"
+                      [options]="branchOptions()"
+                      [value]="selectedBranch()"
+                      (valueChange)="selectedBranch.set($event)"
+                    />
+                  </app-form-field>
+                }
+              }
+            </ng-template>
+
+            <!-- Los servicios del destino: recién con un destino elegido. -->
+            @if (kind() !== 'EXTERNAL') {
+            <div class="referral__services" data-testid="referral-services">
+              @if (target(); as chosen) {
+                <app-view-state-host [state]="services()" (retry)="loadServices()">
+                  <p vsh-skeleton class="referral__secondary">
+                    Buscando los servicios de {{ chosen.displayName }}…
+                  </p>
+                  <app-form-field label="Servicio" [hint]="serviceHint()">
+                    <app-select
+                      data-testid="referral-service"
+                      [options]="serviceOptions()"
+                      [value]="selectedService()"
+                      (valueChange)="selectedService.set($event)"
+                    />
+                  </app-form-field>
+                </app-view-state-host>
+              } @else {
+                <p class="referral__secondary">
+                  Elija el destino y acá va a ver los servicios que ofrece, con su arancel.
+                </p>
+              }
+            </div>
+            }
+
+            <app-form-field label="Tipo de derivación" hint="Qué se le pide al destino.">
               <app-select
-                data-testid="referral-service"
-                [options]="serviceOptions()"
-                [value]="selectedService()"
-                (valueChange)="selectedService.set($event)"
+                data-testid="referral-type"
+                [options]="typeOptions"
+                [value]="referralType()"
+                (valueChange)="referralType.set($event)"
               />
             </app-form-field>
-          </app-view-state-host>
-        } @else {
-          <p class="referral__secondary">
-            Elija el destino y acá va a ver los servicios que ofrece, con su arancel.
-          </p>
-        }
-      </div>
-      }
 
-      <app-form-field label="Tipo de derivación" hint="Qué se le pide al destino.">
-        <app-select
-          data-testid="referral-type"
-          [options]="typeOptions"
-          [value]="referralType()"
-          (valueChange)="referralType.set($event)"
-        />
-      </app-form-field>
+            <app-form-field
+              icon="calendar"
+              label="Vigencia"
+              hint="Opcional. Hasta cuándo vale."
+              [errorMessage]="issueFor('validUntil')"
+            >
+              <app-date-picker
+                data-testid="referral-valid-until"
+                mode="date-only"
+                [minDate]="today"
+                [(value)]="validUntil"
+              />
+            </app-form-field>
 
-      <app-form-field
-        icon="calendar"
-        label="Vigencia"
-        hint="Opcional. Hasta cuándo vale."
-        [errorMessage]="issueFor('validUntil')"
-      >
-        <app-date-picker
-          data-testid="referral-valid-until"
-          mode="date-only"
-          [minDate]="today"
-          [(value)]="validUntil"
-        />
-      </app-form-field>
+            <!-- Lo clínico: la norma de referencia pide que la referencia viaje con
+                 resumen clínico, diagnóstico y tratamiento realizado. Con un
+                 servicio del catálogo del destino la API no exige el texto. -->
+            <app-form-field
+              class="app-form-grid__ancho"
+              label="Servicio pedido"
+              [hint]="describedByHand() ? 'Qué se le pide al destino, con la cantidad si aplica.' : 'Opcional: detalle del servicio elegido.'"
+              [required]="describedByHand()"
+              [errorMessage]="issueFor('requestedServiceText')"
+            >
+              <app-textarea
+                data-testid="referral-requested-service"
+                [rows]="2"
+                [autoResize]="true"
+                [maxLength]="limits.requestedServiceText"
+                [placeholder]="serviceExample()"
+                [(value)]="requestedService"
+              />
+            </app-form-field>
 
-      <!-- Lo clínico: la norma de referencia pide que la referencia viaje con
-           resumen clínico, diagnóstico y tratamiento realizado. Con un
-           servicio del catálogo del destino la API no exige el texto. -->
-      <app-form-field
-        class="app-form-grid__ancho"
-        label="Servicio pedido"
-        [hint]="describedByHand() ? 'Qué se le pide al destino, con la cantidad si aplica.' : 'Opcional: detalle del servicio elegido.'"
-        [required]="describedByHand()"
-        [errorMessage]="issueFor('requestedServiceText')"
-      >
-        <app-textarea
-          data-testid="referral-requested-service"
-          [rows]="2"
-          [autoResize]="true"
-          [maxLength]="limits.requestedServiceText"
-          [placeholder]="serviceExample()"
-          [(value)]="requestedService"
-        />
-      </app-form-field>
+            <app-form-field
+              class="app-form-grid__ancho"
+              label="Resumen clínico"
+              [hint]="describedByHand() ? 'Para que el destino sepa a quién recibe: cuadro, hallazgos y evolución.' : 'Opcional con un servicio del destino; recomendado.'"
+              [required]="describedByHand()"
+              [errorMessage]="issueFor('clinicalSummary')"
+            >
+              <app-textarea
+                data-testid="referral-clinical-summary"
+                [rows]="3"
+                [autoResize]="true"
+                [maxLength]="limits.clinicalSummary"
+                [(value)]="clinicalSummary"
+              />
+            </app-form-field>
 
-      <app-form-field
-        class="app-form-grid__ancho"
-        label="Resumen clínico"
-        [hint]="describedByHand() ? 'Para que el destino sepa a quién recibe: cuadro, hallazgos y evolución.' : 'Opcional con un servicio del destino; recomendado.'"
-        [required]="describedByHand()"
-        [errorMessage]="issueFor('clinicalSummary')"
-      >
-        <app-textarea
-          data-testid="referral-clinical-summary"
-          [rows]="3"
-          [autoResize]="true"
-          [maxLength]="limits.clinicalSummary"
-          [(value)]="clinicalSummary"
-        />
-      </app-form-field>
+            <app-form-field
+              label="Diagnóstico"
+              hint="Opcional. Presuntivo o definitivo, con su código si lo tiene."
+              [errorMessage]="issueFor('diagnosisText')"
+            >
+              <app-textarea
+                data-testid="referral-diagnosis"
+                [rows]="2"
+                [autoResize]="true"
+                [maxLength]="limits.diagnosisText"
+                [(value)]="diagnosis"
+              />
+            </app-form-field>
 
-      <app-form-field
-        label="Diagnóstico"
-        hint="Opcional. Presuntivo o definitivo, con su código si lo tiene."
-        [errorMessage]="issueFor('diagnosisText')"
-      >
-        <app-textarea
-          data-testid="referral-diagnosis"
-          [rows]="2"
-          [autoResize]="true"
-          [maxLength]="limits.diagnosisText"
-          [(value)]="diagnosis"
-        />
-      </app-form-field>
+            <app-form-field
+              label="Tratamiento realizado"
+              hint="Opcional. Lo que se hizo antes de derivar."
+              [errorMessage]="issueFor('treatmentGivenText')"
+            >
+              <app-textarea
+                data-testid="referral-treatment-given"
+                [rows]="2"
+                [autoResize]="true"
+                [maxLength]="limits.treatmentGivenText"
+                [(value)]="treatmentGiven"
+              />
+            </app-form-field>
 
-      <app-form-field
-        label="Tratamiento realizado"
-        hint="Opcional. Lo que se hizo antes de derivar."
-        [errorMessage]="issueFor('treatmentGivenText')"
-      >
-        <app-textarea
-          data-testid="referral-treatment-given"
-          [rows]="2"
-          [autoResize]="true"
-          [maxLength]="limits.treatmentGivenText"
-          [(value)]="treatmentGiven"
-        />
-      </app-form-field>
+            <app-form-field
+              class="app-form-grid__ancho"
+              label="Motivo"
+              hint="Opcional. Se lo mostramos a la persona en su aviso."
+            >
+              <app-textarea
+                data-testid="referral-reason"
+                [rows]="3"
+                [maxLength]="reasonMaxLength"
+                [(value)]="reason"
+              />
+            </app-form-field>
+          </div>
+        </app-tab>
 
-      <app-form-field
-        class="app-form-grid__ancho"
-        label="Motivo"
-        hint="Opcional. Se lo mostramos a la persona en su aviso."
-      >
-        <app-textarea
-          data-testid="referral-reason"
-          [rows]="3"
-          [maxLength]="reasonMaxLength"
-          [(value)]="reason"
-        />
-      </app-form-field>
+        <app-tab [label]="tabLabels()[1]">
+          <app-referral-transfer-form
+            [(draft)]="transferDraft"
+            [issues]="transferProblems()"
+            [showAll]="attempted()"
+          />
+        </app-tab>
+      </app-tabs>
 
       <button
         app-button

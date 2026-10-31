@@ -1,3 +1,4 @@
+import type { ReferralTransferInput } from '../../../../core/data-access/referrals/referral-transfer.types';
 import type {
   NewReferral,
   Referral,
@@ -217,6 +218,8 @@ export interface ReferralFormValues {
   readonly treatmentGiven: string;
   readonly reason: string;
   readonly validUntil: Date | null;
+  /** El traslado, si el paciente se traslada; `null` lo omite. */
+  readonly transfer?: ReferralTransferInput | null;
 }
 
 /**
@@ -251,5 +254,22 @@ export function buildNewReferral(v: ReferralFormValues): NewReferral {
     ...optional('treatmentGivenText', text(v.treatmentGiven)),
     ...optional('reasonText', v.reason.trim()),
     ...(v.validUntil === null ? {} : { validUntil: v.validUntil }),
+    ...(v.transfer === null || v.transfer === undefined ? {} : { transfer: v.transfer }),
   };
+}
+
+/** Un 409: la misma derivación ya existe. */
+export function isConflict(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status: unknown }).status === 409
+  );
+}
+
+/** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */
+export function referralTabLabels(attempted: boolean, referralOk: boolean, transferOk: boolean): readonly string[] {
+  const mark = (ok: boolean): string => (attempted ? (ok ? ' · lista' : ' · falta') : '');
+  return [`1 · Derivación${mark(referralOk)}`, `2 · Traslado${mark(transferOk)}`];
 }
