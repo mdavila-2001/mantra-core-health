@@ -443,4 +443,31 @@ describe('PharmacyIntegration', () => {
       expect(disabled('integration-link-save')).toBe(true);
     });
   });
+
+  it('«Vincular» sobre un código sin vínculo del resultado abre el alta con ese código y su unidad', () => {
+    mount([CONNECTION]);
+    answerConnection();
+
+    button('integration-sync-button').click();
+    expectOne('POST', `${CONN}/sync`).flush({
+      ...RESULT,
+      unmapped: [{ externalCode: 'ERP-0003', name: 'Amoxicilina 500 mg', reason: 'NO_MAPPING', productIds: [] }],
+    });
+    fixture.detectChanges();
+    expectOne('GET', `${CONN}/sync-batches`).flush({ items: [BATCH] });
+    fixture.detectChanges();
+
+    button('integration-sync-link').click();
+    fixture.detectChanges();
+    http.expectOne((r) => r.url.endsWith('/pharmacy/products')).flush({ items: [], limit: 500, truncated: false });
+    expectOne('GET', `${CONN}/external-products`).flush({ items: EXTERNALS });
+    fixture.detectChanges();
+
+    expect(byTestId('integration-link-dialog')).not.toBeNull();
+    const mappings = fixture.debugElement.query(By.directive(IntegrationMappings)).componentInstance as unknown as {
+      externalCode: () => string | null;
+    };
+    expect(mappings.externalCode()).toBe('ERP-0003');
+    expect((root().querySelector('input[data-testid="integration-link-unit"]') as HTMLInputElement).value).toBe('BOX');
+  });
 });

@@ -79,9 +79,14 @@
               }
             </section>
 
-            <app-integration-sync [pharmacyId]="pharmacyId" [connection]="current" />
+            <!-- «Vincular» sobre un código sin vínculo del resultado abre el alta de abajo con ese código. -->
+            <app-integration-sync
+              [pharmacyId]="pharmacyId"
+              [connection]="current"
+              (linkRequested)="links.startLink($event)"
+            />
 
-            <app-integration-mappings [pharmacyId]="pharmacyId" [connection]="current" />
+            <app-integration-mappings #links [pharmacyId]="pharmacyId" [connection]="current" />
           </div>
         }
       </app-view-state-host>
