@@ -1,0 +1,106 @@
+<app-view-state-host [state]="state()" (retry)="reload()">
+  @if (cell(); as c) {
+    <div class="bed-panel" data-testid="bed-panel">
+      @if (failure(); as f) {
+        <app-view-state-host class="bed-panel__failure" data-testid="bed-panel-failure" [state]="f" (retry)="reload()" />
+      }
+
+      <section class="bed-panel__section" aria-labelledby="bed-panel-axes">
+        <h3 id="bed-panel-axes" class="bed-panel__title">Estado por eje</h3>
+        <app-fact-list [hechos]="facts()" etiqueta="Estado de la cama" />
+      </section>
+
+      <!-- Acciones de internación (F3): el slot del contrato. -->
+      <ng-content select="[adtActions]" />
+
+      <section class="bed-panel__section" aria-labelledby="bed-panel-ops">
+        <h3 id="bed-panel-ops" class="bed-panel__title">Operación</h3>
+        <div class="bed-panel__actions" data-testid="bed-panel-actions">
+          @if (can('block.clinical') && c.availability.code === 'SPACE_OP_AVAILABLE') {
+            <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="bed-block-clinical" (clicked)="openBlock('BLOCK_CLINICAL')">Bloquear (clínico)</button>
+          }
+          @if (can('block.admin') && c.availability.code === 'SPACE_OP_AVAILABLE') {
+            <button app-button size="sm" variant="outline" [disabled]="working()" (clicked)="openBlock('BLOCK_ADMIN')">Bloqueo administrativo</button>
+            <button app-button size="sm" variant="outline" [disabled]="working()" (clicked)="openBlock('BLOCK_CLOSURE')">Cerrar</button>
+          }
+          @if (can('maintenance') && c.availability.code === 'SPACE_OP_AVAILABLE') {
+            <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="bed-maintenance" (clicked)="openBlock('BLOCK_MAINTENANCE')">Poner en mantenimiento</button>
+          }
+          @if ((can('block.clinical') && c.availability.code === 'SPACE_OP_BLOCKED_CLINICAL') || (can('block.admin') && c.availability.code === 'SPACE_OP_BLOCKED_ADMIN')) {
+            <button app-button size="sm" variant="secondary" [disabled]="working()" data-testid="bed-unblock" (clicked)="unblock('Desbloquear')">Desbloquear</button>
+          }
+          @if (can('block.admin') && c.availability.code === 'SPACE_OP_CLOSED') {
+            <button app-button size="sm" variant="secondary" [disabled]="working()" (clicked)="unblock('Reabrir')">Reabrir</button>
+          }
+          @if (can('maintenance') && c.availability.code === 'SPACE_OP_MAINTENANCE') {
+            <button app-button size="sm" variant="secondary" [disabled]="working()" data-testid="bed-end-maintenance" (clicked)="unblock('Terminar mantenimiento')">Terminar mantenimiento</button>
+          }
+          @if (can('hygiene.mark-dirty')) {
+            <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="bed-mark-dirty" (clicked)="markHygiene('mark-dirty')">Marcar sucia</button>
+          }
+          @if (can('hygiene.mark-contaminated')) {
+            <button app-button size="sm" variant="danger" [disabled]="working()" (clicked)="markHygiene('mark-contaminated')">Marcar contaminada</button>
+          }
+          @if (can('isolation')) {
+            <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="bed-isolation" (clicked)="openIsolation()">Aislamiento</button>
+          }
+        </div>
+        @if (!c.actions.includes('block.clinical') && !c.actions.includes('hygiene.mark-dirty') && !c.actions.includes('maintenance') && !c.actions.includes('block.admin')) {
+          <p class="bed-panel__note" data-testid="bed-panel-readonly">Su rol en este establecimiento ve el estado de la cama, pero no la opera.</p>
+        }
+      </section>
+
+      @if (data(); as d) {
+        @if (d.openBlocks.length > 0) {
+          <section class="bed-panel__section" aria-labelledby="bed-panel-blocks">
+            <h3 id="bed-panel-blocks" class="bed-panel__title">Bloqueos vigentes</h3>
+            <ul class="bed-panel__list">
+              @for (b of d.openBlocks; track b.id) {
+                <li>
+                  <app-badge variant="warning" size="sm">{{ b.kind.display }}</app-badge>
+                  {{ b.reason.display }}@if (b.reasonText) { · {{ b.reasonText }} }
+                  <span class="bed-panel__muted">desde {{ when(b.startsAt) }}@if (b.expectedEndAt) { · hasta {{ when(b.expectedEndAt) }} }@if (b.createdByName) { · {{ b.createdByName }} }</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+        @if (d.openCleaningOrder; as o) {
+          <section class="bed-panel__section" aria-labelledby="bed-panel-cleaning">
+            <h3 id="bed-panel-cleaning" class="bed-panel__title">Orden de limpieza abierta</h3>
+            <p class="bed-panel__line" data-testid="bed-panel-cleaning">
+              <app-badge [variant]="o.type.code === 'CLEAN_TERMINAL' ? 'error' : 'info'" size="sm">{{ o.type.display }}</app-badge>
+              {{ o.status.display }} · {{ o.trigger.display }} · pedida {{ ago(o.requestedAt) }}@if (o.assignedName) { · {{ o.assignedName }} }
+            </p>
+          </section>
+        }
+      }
+
+      <section class="bed-panel__section" aria-labelledby="bed-panel-history">
+        <h3 id="bed-panel-history" class="bed-panel__title">Historial (A20)</h3>
+        <app-view-state-host [state]="historyState()" (retry)="reload()">
+          @if (history().status === 'ready') {
+            <ol class="bed-panel__history" data-testid="bed-panel-history">
+              @for (e of $any(history()).data; track e.id) {
+                <li>
+                  <time [attr.datetime]="e.occurredAt">{{ when(e.occurredAt) }}</time>
+                  <span><strong>{{ e.axis.display }}</strong>: {{ e.from?.display ?? '—' }} → {{ e.to.display }} <app-badge size="sm" variant="secondary">{{ e.v2Code }}</app-badge></span>
+                  <span class="bed-panel__muted">{{ e.source.display }}@if (e.recordedByName) { · {{ e.recordedByName }} }@if (e.reasonText) { · «{{ e.reasonText }}» } · {{ e.requestId }}</span>
+                </li>
+              }
+            </ol>
+          }
+        </app-view-state-host>
+      </section>
+    </div>
+
+    @switch (dialog()?.kind) {
+      @case ('block') {
+        <app-block-dialog [cell]="c" [kind]="$any(dialog()).block" (saved)="afterDialog()" (closed)="dialog.set(null)" />
+      }
+      @case ('isolation') {
+        <app-isolation-dialog [cell]="c" (saved)="afterDialog()" (closed)="dialog.set(null)" />
+      }
+    }
+  }
+</app-view-state-host>

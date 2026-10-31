@@ -13,51 +13,28 @@
          demuestra que usted atendió a esta persona. Se dice qué falta en vez
          de ofrecer un formulario que guardaría y no avisaría a nadie. -->
     <app-alert tone="info" title="Abra el encuentro para derivar" data-testid="referral-no-encounter">
-      Abra el encuentro de esta consulta y acá va a poder derivar. Así la persona recibe su aviso.
+      @if (offersOpenEncounter()) {
+        Abra el encuentro de esta consulta y acá va a poder derivar: la derivación queda atada a
+        esa atención.
+        <div alert-actions>
+          <button
+            app-button
+            size="sm"
+            variant="secondary"
+            type="button"
+            data-testid="referral-open-encounter"
+            (clicked)="openEncounter.emit()"
+          >
+            Ir a abrir el encuentro
+          </button>
+        </div>
+      } @else {
+        <!-- En el expediente no hay «esta consulta»: se dice dónde se abre. -->
+        Para derivar hace falta un encuentro abierto con esta persona. Ábralo desde su consulta y
+        derive desde ahí o desde esta pestaña.
+      }
     </app-alert>
   } @else {
-    @if (referredTo(); as name) {
-      <app-alert class="referral__notice" tone="success" title="Derivación enviada" data-testid="referral-success">
-        Le avisamos a la persona que la derivó a {{ name }}. Ya puede ver la ficha y reservar desde
-        su portal.
-      </app-alert>
-    }
-
-    @if (duplicate()) {
-      <app-alert
-        class="referral__notice"
-        tone="warning"
-        title="Ya la derivó a este destino"
-        data-testid="referral-duplicate"
-      >
-        En este encuentro ya hay una derivación equivalente. No hace falta otra.
-      </app-alert>
-    }
-
-    @if (submissionError(); as message) {
-      <app-alert class="referral__notice" tone="error" data-testid="referral-error">{{ message }}</app-alert>
-    }
-
-    @if (attempted() && (issues().length > 0 || transferProblems().length > 0)) {
-      <!-- El resumen arriba; cada error, además, junto a su campo. Se anuncia. -->
-      <app-alert
-        class="referral__notice"
-        tone="error"
-        title="Revise antes de derivar"
-        role="alert"
-        data-testid="referral-issues"
-      >
-        <ul class="referral__issues">
-          @for (issue of issues(); track issue.field) {
-            <li>{{ issue.message }}</li>
-          }
-          @for (problem of transferProblems(); track $index) {
-            <li>Traslado: {{ problem.message }}</li>
-          }
-        </ul>
-      </app-alert>
-    }
-
     <!-- UNA tarjeta con pestañas (composition-rules §5): lo que se deriva y,
          aparte, el traslado. Lo escrito vive en señales: cambiar de pestaña no
          lo pierde. -->
@@ -70,6 +47,7 @@
                 data-testid="referral-kind"
                 ariaLabel="A quién deriva"
                 size="md"
+                wrap
                 [options]="targetKindOptions"
                 [value]="kind()"
                 (valueChange)="chooseKind($event)"
@@ -130,6 +108,7 @@
                     placeholder="Ej. Dra. Mendoza"
                     emptyMessage="No encontramos a nadie con ese nombre"
                     (searched)="search($event)"
+                          (queryCleared)="clearSearch()"
                     (selectionChange)="choose($event)"
                   />
                 </app-form-field>
@@ -151,6 +130,7 @@
                     placeholder="Ej. Hospital San Lucas"
                     emptyMessage="No encontramos una organización con ese nombre"
                     (searched)="search($event)"
+                          (queryCleared)="clearSearch()"
                     (selectionChange)="choose($event)"
                   />
                 </app-form-field>
@@ -167,29 +147,87 @@
               }
             </ng-template>
 
-            <!-- Los servicios del destino: recién con un destino elegido. -->
+            <!-- Los servicios del destino. Sin destino el campo ya está, apagado y
+                 diciendo qué falta: un texto suelto sin campo no se entendía. -->
             @if (kind() !== 'EXTERNAL') {
-            <div class="referral__services" data-testid="referral-services">
-              @if (target(); as chosen) {
-                <app-view-state-host [state]="services()" (retry)="loadServices()">
-                  <p vsh-skeleton class="referral__secondary">
-                    Buscando los servicios de {{ chosen.displayName }}…
-                  </p>
-                  <app-form-field label="Servicio" [hint]="serviceHint()">
+              <div class="referral__services" data-testid="referral-services">
+                @if (target(); as chosen) {
+                  @if (noServices()) {
+                    <!-- S3 en línea: qué pasa y las dos salidas, sin un vacío de página. -->
+                    <app-alert
+                      tone="info"
+                      title="Este destino no tiene servicios publicados"
+                      data-testid="referral-no-services"
+                    >
+                      {{ chosen.displayName }} no publicó servicios. Puede derivar igual.
+                      <div alert-actions class="referral__inline-actions">
+                        <button
+                          app-button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          data-testid="referral-without-service"
+                          (clicked)="deriveWithoutService()"
+                        >
+                          Derivar sin un servicio
+                        </button>
+                        <button
+                          app-button
+                          size="sm"
+                          variant="ghost"
+                          type="button"
+                          data-testid="referral-search-another"
+                          (clicked)="searchAnotherTarget()"
+                        >
+                          Buscar otro destino
+                        </button>
+                      </div>
+                    </app-alert>
+                  } @else if (serviceFailure(); as failure) {
+                    <!-- El sub-código de la API dice qué pasó (el destino ya no está). -->
+                    <app-alert tone="warning" data-testid="referral-services-failure">
+                      {{ failure }}
+                      <div alert-actions class="referral__inline-actions">
+                        <button
+                          app-button
+                          size="sm"
+                          variant="secondary"
+                          type="button"
+                          (clicked)="searchAnotherTarget()"
+                        >
+                          Buscar otro destino
+                        </button>
+                      </div>
+                    </app-alert>
+                  } @else {
+                    <app-view-state-host [state]="services()" (retry)="loadServices()">
+                      <p vsh-skeleton class="referral__secondary">
+                        Buscando los servicios de {{ chosen.displayName }}…
+                      </p>
+                      <app-form-field label="Servicio" [hint]="serviceHint()">
+                        <app-select
+                          data-testid="referral-service"
+                          [options]="serviceOptions()"
+                          [value]="selectedService()"
+                          (valueChange)="selectedService.set($event)"
+                        />
+                      </app-form-field>
+                    </app-view-state-host>
+                  }
+                } @else {
+                  <app-form-field
+                    label="Servicio"
+                    hint="Elija el destino y acá va a ver los servicios que ofrece, con su arancel."
+                  >
                     <app-select
-                      data-testid="referral-service"
-                      [options]="serviceOptions()"
-                      [value]="selectedService()"
-                      (valueChange)="selectedService.set($event)"
+                      data-testid="referral-service-pending"
+                      placeholder="Primero elija el destino"
+                      [options]="[]"
+                      [disabled]="true"
                     />
                   </app-form-field>
-                </app-view-state-host>
-              } @else {
-                <p class="referral__secondary">
-                  Elija el destino y acá va a ver los servicios que ofrece, con su arancel.
-                </p>
-              }
-            </div>
+                }
+              </div>
             }
 
             <app-form-field label="Tipo de derivación" hint="Qué se le pide al destino.">
@@ -201,8 +239,9 @@
               />
             </app-form-field>
 
+            <!-- Sin `icon`: el selector de fecha ya trae su calendario, y dos íconos
+                 desalineaban el campo respecto de «Tipo de derivación». -->
             <app-form-field
-              icon="calendar"
               label="Vigencia"
               hint="Opcional. Hasta cuándo vale."
               [errorMessage]="issueFor('validUntil')"
@@ -282,11 +321,12 @@
             <app-form-field
               class="app-form-grid__ancho"
               label="Motivo"
-              hint="Opcional. Se lo mostramos a la persona en su aviso."
+              [hint]="reasonHint()"
             >
               <app-textarea
                 data-testid="referral-reason"
                 [rows]="3"
+                [autoResize]="true"
                 [maxLength]="reasonMaxLength"
                 [(value)]="reason"
               />
@@ -303,16 +343,92 @@
         </app-tab>
       </app-tabs>
 
+      <!-- El resultado del envío, junto al botón y no arriba del formulario: a
+           390 px quedaba fuera de la pantalla. Recibe el foco al llegar. -->
+      <div
+        #outcome
+        class="referral__outcome"
+        tabindex="-1"
+        data-testid="referral-outcome"
+      >
+        @if (attempted() && (issues().length > 0 || transferProblems().length > 0)) {
+          <!-- El resumen; cada error, además, junto a su campo. Se anuncia. -->
+          <app-alert
+            tone="error"
+            [title]="kind() === 'EXTERNAL' ? 'Revise antes de registrar' : 'Revise antes de derivar'"
+            role="alert"
+            data-testid="referral-issues"
+          >
+            <ul class="referral__issues">
+              @for (issue of issues(); track issue.field) {
+                <li>{{ issue.message }}</li>
+              }
+              @for (problem of transferProblems(); track $index) {
+                <li>Traslado: {{ problem.message }}</li>
+              }
+            </ul>
+          </app-alert>
+        }
+
+        @if (issued(); as done) {
+          @switch (done.kind) {
+            @case ('EXTERNAL') {
+              <app-alert tone="success" title="Derivación registrada" data-testid="referral-success">
+                Quedó registrada la derivación a {{ done.name }}. Es un destino fuera de la
+                plataforma y no recibe aviso: entréguele la derivación a la persona.
+              </app-alert>
+            }
+            <!-- La API no dice si el aviso salió (cuenta de portal, destino
+                 activo, avisos agrupados): el texto no lo promete. -->
+            @case ('ORGANIZATION') {
+              <app-alert tone="success" title="Derivación registrada" data-testid="referral-success">
+                Quedó registrada la derivación a {{ done.name }}. Si la persona tiene cuenta en el
+                portal, puede recibir un aviso; la ve en su lista de derivaciones.
+              </app-alert>
+            }
+            @default {
+              <app-alert tone="success" title="Derivación registrada" data-testid="referral-success">
+                Quedó registrada la derivación a {{ done.name }}. Si la persona tiene cuenta en el
+                portal, puede recibir un aviso para ver la ficha y reservar.
+              </app-alert>
+            }
+          }
+        }
+
+        @if (duplicate()) {
+          <app-alert tone="warning" title="Ya la derivó a este destino" data-testid="referral-duplicate">
+            En este encuentro ya hay una derivación equivalente. No hace falta otra.
+          </app-alert>
+        }
+
+        @if (submissionError(); as failure) {
+          <!-- El código de soporte no se corta: se dicta o se copia entero. -->
+          <app-alert tone="error" title="No se pudo derivar" data-testid="referral-error">
+            {{ failure.text }}
+            @if (failure.code; as code) {
+              <app-support-code [code]="code" />
+            }
+          </app-alert>
+        }
+      </div>
+
       <button
         app-button
         variant="primary"
         data-testid="referral-submit"
         [isLoading]="sending()"
         [disabled]="!canSubmit()"
+        [attr.aria-describedby]="submitHint() ? 'referral-submit-hint' : null"
         (clicked)="submit()"
       >
-        Derivar y avisar a la persona
+        {{ kind() === 'EXTERNAL' ? 'Registrar la derivación' : 'Derivar' }}
       </button>
+      @if (submitHint(); as hint) {
+        <!-- Un botón apagado sin explicación es un muro: se dice qué falta. -->
+        <p id="referral-submit-hint" class="referral__secondary referral__submit-hint" data-testid="referral-submit-hint">
+          {{ hint }}
+        </p>
+      }
     </form>
   }
 
@@ -320,15 +436,64 @@
     <app-divider />
 
     <section class="referral__list" aria-labelledby="referral-list-title">
-      <h3 id="referral-list-title" class="referral__title">Derivaciones de esta persona</h3>
+      <div class="referral__list-head">
+        <h3 id="referral-list-title" class="referral__title" tabindex="-1">Derivaciones de esta persona</h3>
+        @if (state.status === 'stale' && !refreshError()) {
+          <!-- S7 al releer: la lista sigue a la vista y la antigüedad se dice en
+               la misma línea del título, para que el modal no salte. -->
+          <span class="referral__refreshing" role="status" data-testid="referral-list-refreshing">
+            Actualizando · lista de las {{ state.asOf | date: 'HH:mm' }}
+          </span>
+        }
+      </div>
 
-      <app-view-state-host [state]="state" (retry)="retry.emit()">
+      @if (state.status === 'stale' && refreshError(); as failure) {
+        <!-- Falló la relectura con la lista ya a la vista: no se borra; se dice
+             de cuándo es lo que se ve y se ofrece reintentar. -->
+        <app-alert
+          class="referral__refresh-error"
+          tone="warning"
+          title="No pudimos actualizar la lista"
+          data-testid="referral-list-refresh-error"
+        >
+          Se muestra la de las {{ state.asOf | date: 'HH:mm' }}. {{ failure.text }}
+          @if (failure.code; as code) {
+            <app-support-code [code]="code" />
+          }
+          <div alert-actions>
+            <button app-button size="sm" variant="secondary" type="button" (clicked)="retryList()">
+              Reintentar
+            </button>
+          </div>
+        </app-alert>
+      }
+
+      <app-view-state-host [state]="state" (retry)="retryList()">
+        <!-- El aviso de S7 va junto al título, no como banner encima de la lista. -->
+        <ng-container ngProjectAs="[vsh-stale]" />
+        @if (state.status === 'error') {
+          <!-- S9 de la LISTA: dice que falló la lista y no el envío, para que
+               nadie vuelva a derivar lo que ya quedó registrado. -->
+          <app-alert vsh-error tone="error" title="No pudimos cargar la lista" data-testid="referral-list-error">
+            {{
+              issued()
+                ? 'La derivación se registró, pero no pudimos cargar la lista.'
+                : 'No pudimos cargar las derivaciones de esta persona.'
+            }}
+            <app-support-code [code]="state.requestId" />
+            <div alert-actions>
+              <button app-button size="sm" variant="secondary" type="button" (clicked)="retryList()">
+                Reintentar
+              </button>
+            </div>
+          </app-alert>
+        }
         <p vsh-skeleton class="referral__secondary">Buscando las derivaciones…</p>
         <ol class="referral__rows" data-testid="referral-list">
           @for (row of rows(); track row.id) {
             <li class="referral__row" data-testid="referral-row">
               <div class="referral__heading">
-                <span class="referral__main">{{ row.type }} · {{ row.target }}</span>
+                <span class="referral__main">{{ row.heading }}</span>
                 <app-status-seal [variant]="row.variant" [label]="row.status" />
               </div>
               <span class="referral__secondary">
@@ -358,7 +523,7 @@
                   size="sm"
                   type="button"
                   data-testid="referral-open"
-                  [attr.aria-label]="'Ver la derivación: ' + row.type + ' a ' + row.target"
+                  [attr.aria-label]="'Ver la derivación: ' + row.heading"
                   (clicked)="detail.open(row.id)"
                 >
                   Ver detalle

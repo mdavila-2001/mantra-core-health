@@ -456,6 +456,53 @@ Las cifras de arriba son del árbol `4a7ad084`. Después, `origin/infra-f1-web` 
 Navegador: **no se re-ejecutó** `infra-f1-infraestructura.spec.ts` tras el merge (se actualizaron dos
 textos al «usted» de `dev`). Los textos propios de F1 siguen en voseo: pendiente pasarlos.
 
+## Infraestructura F2 + F3 (web): camas, limpieza, internación/ADT, censo e indicadores — 2026-10-31
+
+Entorno: contenedor Linux · Node 22 · Yarn 4.18 · `ng serve --configuration development,demo --port 4380
+--watch=false` (maqueta) · Chromium 1243 del sistema (`PW_CHROMIUM_PATH`) · rama local `infra-f2f3-web`
+desde `origin/dev` (`7159f4dd4`). Contrato: `SALUD/Arquitectura/infraestructura-hospitalaria/CONTRATO-F2-F5.md`
+§F2.4/F2.5 y §F3.4/F3.5; desvíos anotados allí bajo «W-F2F3».
+
+| Comando / prueba | Resultado |
+|---|---|
+| `yarn lint` | exit 0 |
+| `yarn typecheck` | exit 0 |
+| `ng test` de lo tocado, en 4 tramos (el `ng test` de un solo golpe muere con el *deadlock* de esbuild de este contenedor) | maqueta (82 + 28 archivos), navegación/rutas/armazón (16), F1 + expediente (46): **172 archivos · 2 635 pruebas verdes**. Antes, 4 rojos propios (secciones nuevas sin subgrupo ni lista de tipos, rutas hijas sin sección, pestaña nueva en la ficha) corregidos actualizando el registro, no la regla. No se corrió la suite completa |
+| `yarn build` | exit 0 · avisos de presupuesto previos, ninguno de archivos de F2/F3 |
+| `E2E_BASE_URL=… yarn pw infra-f2f3-camas-adt --workers=1` | **10/10** (5,4 min, sobre el código final) · cadena a 1440 + estados a 1440 / 768 / 390 |
+| `check-client-prefixes` | los 4 prefijos nuevos ruteados en las tres declaraciones; los 14 rojos restantes son previos (`AdmissionsClient`, `InsightsClient`) |
+| `check-api-prefixes` | rojo previo ajeno (`/practice/infrastructure-catalog` sin espacio en nginx), igual en `origin/dev` |
+| `check-route-prefixes` · `check-english-identifiers` · `check-usted` (archivos tocados) | verdes |
+
+**Cadena de mutaciones** (`evidencias/infra-f2f3/resultados.json`, corrida final): la maqueta anota cada escritura
+(método, ruta, `If-Match`, `If-Match-Ops`, cuerpo, estado, `requestId`) y la prueba lee las filas persistidas
+(`sessionStorage`, lo que en la API sería el `SELECT`) antes de recargar.
+
+| Paso (cuenta) | Petición → respuesta | Persistencia leída | Tras recarga |
+|---|---|---|---|
+| Ingreso con cama (admisión) | `POST /clinical/admissions` → 201 `req-ops-…` | `encounter_locations` ACTIVE en 301-B + evento A20 `AXIS_OCCUPANCY → OCC_OCCUPIED` con el mismo `requestId` | ficha «Cama 301-B»; tablero 301-B = **O** con iniciales |
+| Traslado 301-B → 303-A (enfermería) | `POST …/transfer` `If-Match: 1` → 200 | origen COMPLETED/`TRANSFER_OUT`, destino ACTIVE con `previous_encounter_location_id` | 301-B = **H**, 303-A = **O** |
+| Limpieza (limpieza) | `start` `If-Match: 1` → 200 · `finish` `If-Match: 2` → 200 | orden `CLN_DONE` | cola «Terminada · falta inspección»; sin datos de paciente |
+| Inspección (otra persona) | `inspect` `If-Match: 3` → 200 | orden INSPECTED, `inspected_by ≠ finished_by` | 301-B = **U** (asignable) |
+| Egreso (enfermería) | `POST …/discharge` `If-Match: 2` → 200 | encuentro FINISHED, orden `CLN_TRG_DISCHARGE` | ficha «Egresada», movimientos A01/A02·A03; 303-A = **H** |
+| Cierre del censo de ayer (supervisión) | `POST …/census/<ayer>/close` → 200 · ajuste → 201 | día CLOSED; ajuste aparte | «Cerrado», ajuste «0 → 2»; el número original se conserva |
+
+Mediciones: regla 6 (tablero, ingreso, ficha de internación) holgura 0/0 y 100 % en los tres anchos; desborde
+horizontal 0 en cada pantalla capturada. S1 y S2 se congelaron con el reloj de Playwright a 1440 (tablero y cola);
+a 768/390 el menú es un cajón animado y no se congelaron (anotado en `resultados.json`).
+
+Capturas (`evidencias/infra-f2f3/`, 114, nombres en inglés): cadena 10–52 (1440); tablero grilla/lista/panel y S1, S2, S3 («Crear
+camas» en el anexo sin camas), S4 (bloqueo rechazado), S5 (médica sin rol operativo), S6, S7 (sondeo fallido con
+datos previos), S8, S9 con código; cola y sus estados (S1, S2 a 1440; S3 «mías» vacía, S4, S5 mantenimiento, S6–S9);
+ingreso con cama incompatible forzable y forzado con justificación, ficha en sus 4 pestañas, S6 de ficha, S5 del
+ingreso para limpieza, censo abierto, indicadores con días faltantes (S7) y sin días cerrados (S3), y la pestaña
+«Operación» de la ficha de espacio de F1. 1440/768/390.
+
+No ejecutado / pendiente: **contra la API real** (otra franja); captura del `admission-block` en pantalla — el
+bloque no está montado en ninguna ruta de `dev` (sólo en la vitrina), su integración se prueba en
+`admission-block.spec.ts`. Revisión independiente (`visual-reviewer`, `frontend-reviewer`,
+`regression-auditor`): **pendiente** — quien implementa no aprueba.
+
 ## Infraestructura F4/F5 (web) — 2026-10-31
 
 Entorno: contenedor Linux · Node 22 · Yarn 4.18 (corepack) · backend simulado (`ng build --configuration

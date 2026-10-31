@@ -304,7 +304,7 @@ function deMessaging(aviso: InAppNotification): AvisoUnificado {
     categoria: aviso.category ?? 'CLINICAL',
     titulo: aviso.subject ?? 'Novedad',
     ...(aviso.bodyText === undefined ? {} : { detalle: aviso.bodyText }),
-    ruta: rutaDeNotificacion(aviso.destination),
+    ruta: rutaDeNotificacion(aviso.destination, aviso.payloadJson),
     ...(aviso.destination === undefined ? {} : { destino: aviso.destination }),
     acciones: aviso.actions ?? [],
     sinLeer: aviso.unread,

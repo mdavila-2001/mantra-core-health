@@ -5,7 +5,9 @@ import { registrarHorarioFlexible } from './flexible-hours.handlers';
 import { registerPaymentReceipts } from './payment-receipts.handlers';
 import { registrarArchivos } from './files.handlers';
 import { registrarAuth } from './auth.handlers';
+import { registrarPersonalDeApoyo } from './support-staff.handlers';
 import { registrarClinica } from './clinical.handlers';
+import { registerReferralIssue } from './referral-issue.handlers';
 import { registerReferralLifecycle } from './referral-lifecycle.handlers';
 import { registerReferrals } from './referrals.handlers';
 import { registerProcedureCenters } from './procedure-centers.handlers';
@@ -26,6 +28,8 @@ import { registrarFacturacionSimulada } from './billing-simulated.handlers';
 import { registrarContabilidadSimple } from './simple-accounting.handlers';
 import { registrarIdentidad } from './identity.handlers';
 import { registrarInfraestructura } from './infrastructure.handlers';
+import { registerInfrastructureOps } from './infrastructure-ops.handlers';
+import { registerAdt } from './adt.handlers';
 import { registrarLaboratorioFarmaceutico } from './pharma-lab.handlers';
 import { registrarOrdenesDeLaboratorio } from './lab-orders.handlers';
 import {
@@ -92,6 +96,8 @@ import { registrarApoyo } from './support-access.handlers';
 export function crearRouterSimulado(): MockRouter {
   const router = new MockRouter();
   registrarAuth(router);
+  // El alta de la secretaria (`/iam/auth/register-support-staff`).
+  registrarPersonalDeApoyo(router);
   registrarTerminologia(router);
   registrarPerfiles(router);
   registrarLibretaDeDirecciones(router);
@@ -113,11 +119,14 @@ export function crearRouterSimulado(): MockRouter {
   registerRoleAssignments(router);
   registrarPracticas(router);
   registrarInfraestructura(router);
+  registerInfrastructureOps(router);
+  registerAdt(router);
   registrarClinica(router);
   // FAR-01 · el enlace para compartir una receta (`/clinical/prescription-shares`, `/public/prescription-shares`).
   registerPrescriptionShares(router);
   registerPharmacyPrescriptionShares(router);
   registerReferrals(router);
+  registerReferralIssue(router);
   registerReferralLifecycle(router);
   registerReceivedServices(router);
   registerProcedureCenters(router);

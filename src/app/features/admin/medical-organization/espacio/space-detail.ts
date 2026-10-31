@@ -71,6 +71,7 @@ import { SpaceStockTab } from './space-stock-tab/space-stock-tab';
 /** Las pestañas que agrega F5, con su clave de `?tab=`. */
 type F5Tab = 'equipment' | 'stock';
 import { VincularUnidadDialog } from './vincular-unidad-dialog';
+import { SpaceOpsTab } from '../../../inpatient/space-ops-tab/space-ops-tab';
 
 /**
  * **Ficha de un espacio** — `administration/medical-organization/spaces/:id`.
@@ -117,6 +118,7 @@ import { VincularUnidadDialog } from './vincular-unidad-dialog';
     Tabs,
     VincularUnidadDialog,
     ViewStateHost,
+    SpaceOpsTab,
   ],
   templateUrl: './space-detail.html',
   styleUrl: './space-detail.css',
@@ -138,6 +140,8 @@ export class SpaceDetail {
   protected readonly rutaDeAltaMasiva = RUTA_DE_ALTA_MASIVA;
   protected readonly textoDeAccion = TEXTO_DE_ACCION;
   protected readonly etiquetaDeBloqueo = ETIQUETA_DE_BLOQUEO;
+  /** Pestañas fijas de la ficha (F1 + «Operación» de F2); las de F5 van detrás. */
+  protected readonly fixedTabCount = PESTANAS_DE_LA_FICHA.length;
 
   private readonly parametros = toSignal(this.route.paramMap, { initialValue: this.route.snapshot.paramMap });
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });

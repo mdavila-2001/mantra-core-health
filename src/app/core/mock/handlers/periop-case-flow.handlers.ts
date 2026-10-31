@@ -17,6 +17,7 @@ import type { ChecklistPhaseSubmission, ScheduleCaseRequest } from '../../data-a
 import { SPECIALTY } from '../fixtures/concepts';
 import type { MockRequest, MockRouter } from '../mock-router';
 import { cuerpo, nuevoId, uuid } from '../mock-store';
+import { transitionCleaningOrder } from './infrastructure-ops.handlers';
 import {
   blocks,
   CHECKLIST_ITEMS,
@@ -307,6 +308,8 @@ const TURNOVER_STEPS = {
 /** `POST /cleaning-orders/:id/{start|finish|inspect}` para las órdenes de recambio de quirófano. */
 function turnoverStep(request: MockRequest, step: keyof typeof TURNOVER_STEPS) {
   const t = turnovers.get(request.params['id']!);
+  // No es un recambio de quirófano: es una orden de la cola de limpieza de F2.
+  if (t === undefined) return transitionCleaningOrder(request, step);
   const room = roomOf(t?.operatingRoomId);
   const tenant = tenantOf(request);
   if (t === undefined || room === undefined || (tenant !== null && tenant !== room.tenantId)) return notFoundReply();

@@ -580,7 +580,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     key: 'quirofano',
     id: IDS.orManager.userId,
     email: 'quirofano@alovida.mock',
-    nationalId: '7004001',
+    nationalId: '7007001',
     displayName: 'Lic. Patricia Vargas · Jefatura de quirófano',
     roles: ['PERIOP_ADMIN', 'SURGERY_SCHEDULER', 'PERIOP_NURSE'],
     tenants: [TENANT_HOSPITAL],
@@ -595,7 +595,7 @@ export const MOCK_USERS: readonly MockUser[] = [
     key: 'facturacion',
     id: IDS.billingClerk.userId,
     email: 'facturacion@alovida.mock',
-    nationalId: '7004002',
+    nationalId: '7007002',
     displayName: 'Rodrigo Suárez · Facturación',
     roles: ['BILLING'],
     tenants: [TENANT_HOSPITAL],
@@ -603,7 +603,36 @@ export const MOCK_USERS: readonly MockUser[] = [
     personId: IDS.billingClerk.personId,
     accountKind: 'PERSON',
   },
+  // Infraestructura F2/F3 (31/10/2026): el personal del Hospital San Lucas, una
+  // cuenta por rol operativo. El token no trae el rol —es una fila de
+  // `organization_user_assignments` que resuelve la API (`fixtures/inpatient.ts`)—.
+  ...inpatientAccounts(),
 ];
+
+/** Las seis cuentas operativas del hospital (enfermería, supervisión, admisión, limpieza…). */
+function inpatientAccounts(): MockUser[] {
+  const filas: readonly [key: string, nombre: string, ci: string, semilla: string][] = [
+    ['enfermeria', 'Lic. Rosa Vargas Terrazas', '8100101', 'user-enfermeria-sanlucas'],
+    ['supervision', 'Lic. Carmen Justiniano Paz', '8100102', 'user-supervision-enfermeria-sanlucas'],
+    ['admision', 'Luis Fernández Rivero', '8100103', 'user-admision-sanlucas'],
+    ['limpieza', 'Juana Choque Mamani', '8100104', 'user-limpieza-sanlucas'],
+    // Sin punto en la clave: el refresh token simulado es `mock-refresh.<clave>.<marca>`.
+    ['supervisora-limpieza', 'Teresa Aguilera Saucedo', '8100105', 'user-supervisora-limpieza-sanlucas'],
+    ['mantenimiento', 'Óscar Suárez Montaño', '8100106', 'user-mantenimiento-sanlucas'],
+  ];
+  return filas.map(([key, displayName, nationalId, semilla]) => ({
+    key,
+    id: uuid(semilla),
+    email: `${key.replace('-', '.')}@alovida.mock`,
+    nationalId,
+    displayName,
+    roles: ['USER'],
+    tenants: [TENANT_HOSPITAL],
+    tenantNames: TENANT_NAMES,
+    personId: uuid(`person-${semilla}`),
+    accountKind: 'PERSON',
+  }));
+}
 
 /**
  * Las cuentas de los pacientes del padrón, que no están en {@link MOCK_USERS}.
@@ -637,6 +666,18 @@ export function resolverCuentasRegistradas(resolver: ResolverDeCuentas): void {
 }
 
 /**
+ * Las cuentas de personal de apoyo dadas de alta en la maqueta
+ * (`/iam/auth/register-support-staff`). Las resuelve
+ * `support-staff.handlers`, igual que las de pacientes: este archivo no puede
+ * importar sus tablas sin armar un ciclo.
+ */
+let cuentaDeApoyo: ResolverDeCuentas = () => undefined;
+
+export function resolverCuentasDeApoyo(resolver: ResolverDeCuentas): void {
+  cuentaDeApoyo = resolver;
+}
+
+/**
  * Correos con los que se conoce, fuera del simulador, a una cuenta de
  * demostración. `admin@alovidasalud.com` es el superadministrador local con el
  * que se probó la Superadministración contra la API real (sólo local y dev):
@@ -658,12 +699,13 @@ export function buscarUsuario(identificador: string): MockUser | undefined {
     MOCK_USERS.find((u) => u.email === limpio || u.nationalId === limpio || u.key === limpio) ??
     cuentaDePaciente({ identificador: limpio }) ??
     cuentaRegistrada({ identificador: limpio }) ??
+    cuentaDeApoyo({ identificador: limpio }) ??
     MOCK_USERS.find((u) => u.key === limpio.replace(/@.*$/, ''))
   );
 }
 
 export function usuarioPorId(userId: string): MockUser | undefined {
-  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId });
+  return MOCK_USERS.find((u) => u.id === userId) ?? cuentaDePaciente({ id: userId }) ?? cuentaRegistrada({ id: userId }) ?? cuentaDeApoyo({ id: userId });
 }
 
 /* ---- tokens ---------------------------------------------------------------- */
@@ -716,7 +758,7 @@ export function emitirRefreshToken(user: MockUser): string {
 export function usuarioDeRefreshToken(refreshToken: string): MockUser | undefined {
   const [prefijo, key] = refreshToken.split('.');
   if (prefijo !== 'mock-refresh' || key === undefined) return undefined;
-  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key });
+  return MOCK_USERS.find((u) => u.key === key) ?? cuentaDePaciente({ key }) ?? cuentaRegistrada({ key }) ?? cuentaDeApoyo({ key });
 }
 
 export function usuarioDeAccessToken(token: string): MockUser | undefined {
