@@ -36,6 +36,9 @@ const DELIVERY_MODE_BY_API_CODE: Readonly<Record<string, ModalidadDeEntrega>> = 
 
 const UNAVAILABLE_LINE_CODES = new Set(['PINV_RES_LINE_OUT_OF_STOCK', 'PINV_RES_LINE_RELEASED']);
 
+/** Una línea que la sede ofrecía sin existencias cargadas: no reserva hasta que la farmacia confirma. */
+const PENDING_CONFIRMATION_LINE_CODE = 'PINV_RES_LINE_PENDING_CONFIRMATION';
+
 /** The unresolved product policy is deliberately isolated here. */
 export class UnsupportedPharmacyOrderLineError extends Error {
   constructor() {
@@ -86,6 +89,7 @@ export function pharmacyOrderFromDto(
       precio: line.unitPriceAmount,
       moneda: line.currency?.code ?? null,
       disponible: !UNAVAILABLE_LINE_CODES.has(line.status.code),
+      porConfirmar: line.status.code === PENDING_CONFIRMATION_LINE_CODE,
     })),
     totalEstimado: dto.totalAmount,
     moneda: dto.currency?.code ?? null,

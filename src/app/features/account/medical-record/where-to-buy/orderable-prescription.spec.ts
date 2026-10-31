@@ -16,6 +16,7 @@ import {
   orderablePrescriptionOf,
   prescriptionStandingOf,
   prescriptionStateOf,
+  standingWithOrders,
 } from './orderable-prescription';
 
 /** Una fila del resumen clínico de la receta `enc-a`, con lo mínimo que se mira. */
@@ -321,5 +322,38 @@ describe('el simulador usa los códigos de estado de la API (FAR-03)', () => {
       expect(record.has(code)).toBe(false);
     }
     expect(record.get('clinical:MEDICATION_REQUEST_ISSUED')?.display).toBe('Vigente');
+  });
+});
+
+describe('standingWithOrders (una receta no se repite)', () => {
+  const rows = [rowIn('a', 'st-emitida'), rowIn('b', 'st-emitida')];
+
+  it('un pedido vivo de cualquier ítem de la receta la deja «con pedido»', () => {
+    expect(standingWithOrders('orderable', rows, [{ requestId: 'b', estado: 'ACEPTADO' }])).toBe(
+      'ordered',
+    );
+  });
+
+  it('retirada, sin pedido vivo', () => {
+    expect(standingWithOrders('orderable', rows, [{ requestId: 'a', estado: 'RETIRADO' }])).toBe(
+      'collected',
+    );
+  });
+
+  it('cancelar, rechazar o vencer el pedido la libera; otro ítem u otra receta no cuentan', () => {
+    expect(
+      standingWithOrders('orderable', rows, [
+        { requestId: 'a', estado: 'CANCELADO' },
+        { requestId: 'b', estado: 'RECHAZADO' },
+        { requestId: 'otra', estado: 'ENVIADO' },
+        { requestId: null, estado: 'ENVIADO' },
+      ]),
+    ).toBe('orderable');
+  });
+
+  it('una receta que ya no está vigente conserva su estado', () => {
+    expect(standingWithOrders('expired', rows, [{ requestId: 'a', estado: 'ENVIADO' }])).toBe(
+      'expired',
+    );
   });
 });

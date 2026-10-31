@@ -1732,6 +1732,19 @@ describe('WhereToBuy', () => {
   });
 });
 
+describe('orderDraftOf · cantidad declarada (B3)', () => {
+  it('lleva lo que declara la receta aparte de la cantidad del pedido', () => {
+    const [first, ...rest] = QUERYABLE;
+    const draft = orderDraftOf('m-1', NORTH_SITE, [{ ...first, declaredQuantity: 4 }, ...rest], []);
+    expect(draft.lineas[0].cantidadDeclarada).toBe(4);
+    expect(draft.lineas[0].cantidad).toBe(1);
+  });
+
+  it('sin cantidad declarada, la línea no la inventa', () => {
+    expect(orderDraftOf('m-1', NORTH_SITE, QUERYABLE, []).lineas[0].cantidadDeclarada).toBeUndefined();
+  });
+});
+
 describe('sortBranches (T-E2)', () => {
   interface Row {
     readonly id: string;

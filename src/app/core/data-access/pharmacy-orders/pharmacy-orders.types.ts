@@ -58,11 +58,23 @@ export interface LineaDePedido {
   /** «500 mg · caja x 20», o `null` si el directorio no lo publica. */
   readonly presentacion: string | null;
   readonly cantidad: number;
+  /**
+   * Lo que declara la receta para ese medicamento («4»), en la unidad que
+   * recetó el médico, que no tiene por qué ser la del envase. Ausente si la
+   * receta no declara cantidad.
+   */
+  readonly cantidadDeclarada?: number;
   /** Precio unitario como texto exacto, o `null` sin precio publicado. */
   readonly precio: string | null;
   readonly moneda: string | null;
   /** `false` = la sede no puede confirmar este renglón; se dice claro. */
   readonly disponible: boolean;
+  /**
+   * `true` si la sede ofrecía el producto por su catálogo, sin existencias
+   * cargadas: entra al pedido sin reservar, y la farmacia dice al confirmar
+   * si lo tiene y cuántos.
+   */
+  readonly porConfirmar?: boolean;
   /** Cantidad acumulada que la API ya registró como entregada. */
   readonly fulfilledQuantity?: number;
   /** Cantidad realmente reservada; el saldo es reservada menos entregada. */
