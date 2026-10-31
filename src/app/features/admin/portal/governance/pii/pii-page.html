@@ -1,0 +1,232 @@
+<app-page-header
+  title="Datos personales"
+  subtitle="Las columnas que guardan datos personales, de salud o credenciales según el escaneo del catálogo de datos, y cómo coinciden con lo que declara el registro de gobierno. Aquí sólo se ven nombres de columnas, nunca valores."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="pii">
+  <app-card class="pii__card" variant="outlined" padding="md" data-testid="portal-pii">
+    <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+      <app-tab label="Resumen">
+        <section class="pii__section" aria-label="Resumen de datos personales">
+          <app-view-state-host [state]="summary()" (retry)="reloadSummary()">
+            @if (summary(); as s) {
+              @if (s.status === 'ready') {
+                @let d = s.data;
+                <div class="pii__metrics" data-testid="portal-pii-metrics">
+                  <app-metric-card
+                    label="Columnas observadas"
+                    [value]="d.observedColumns"
+                    hint="Las que encontró el último escaneo del catálogo"
+                  />
+                  <app-metric-card
+                    label="Clasificadas"
+                    [value]="d.classifiedColumns"
+                    hint="Con un nivel de sensibilidad distinto de «sin clasificar»"
+                  />
+                  <app-metric-card
+                    label="Personales"
+                    [value]="d.personalColumns"
+                    hint="De nivel personal o superior"
+                  />
+                  <app-metric-card
+                    label="Tablas con columnas personales"
+                    [value]="d.objectsWithPersonalColumns"
+                  />
+                </div>
+
+                <h3 class="pii__subtitle">Por nivel de sensibilidad</h3>
+                @if (d.bySensitivity.length === 0) {
+                  <p class="pii__secondary">Ninguna columna está clasificada todavía.</p>
+                } @else {
+                  <table class="pii__levels" data-testid="portal-pii-levels">
+                    <caption class="pii__caption">
+                      Columnas por nivel y estado de revisión de su ficha
+                    </caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Nivel</th>
+                        <th scope="col">Columnas</th>
+                        <th scope="col">Aprobadas</th>
+                        <th scope="col">En revisión</th>
+                        <th scope="col">Auto-detectadas</th>
+                        <th scope="col">Otras</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (l of d.bySensitivity; track l.sensitivity) {
+                        <tr>
+                          <th scope="row">
+                            <app-badge size="sm" [variant]="level(l.sensitivity).tone">{{
+                              level(l.sensitivity).label
+                            }}</app-badge>
+                          </th>
+                          <td>{{ l.columns }}</td>
+                          <td>{{ l.approved }}</td>
+                          <td>{{ l.needsReview }}</td>
+                          <td>{{ l.autoDetected }}</td>
+                          <td>{{ l.other }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+
+                <h3 class="pii__subtitle">Lo que declara el registro de gobierno</h3>
+                <div class="pii__metrics" data-testid="portal-pii-registry">
+                  <app-metric-card
+                    label="Entidades declaradas"
+                    [value]="d.declaredRegistry.entities"
+                    [hint]="d.declaredRegistry.entitiesPersonal + ' marcadas como personales'"
+                  />
+                  <app-metric-card
+                    label="Campos declarados"
+                    [value]="d.declaredRegistry.fields"
+                    [hint]="d.declaredRegistry.fieldsPersonal + ' marcados como personales'"
+                  />
+                </div>
+
+                @for (n of d.notMeasured; track n.field) {
+                  <app-alert tone="warning" data-testid="portal-pii-not-measured">
+                    <strong>No medido ({{ n.field }}).</strong> {{ n.reason }}
+                  </app-alert>
+                }
+                <p class="pii__secondary">Fuente de las cifras: {{ d.source }}.</p>
+              }
+            }
+          </app-view-state-host>
+        </section>
+      </app-tab>
+
+      <app-tab label="Columnas">
+        <section class="pii__section" aria-label="Columnas con datos personales">
+          <app-governance-filter-form
+            [fields]="columnFields"
+            [values]="values()"
+            (applied)="apply($event)"
+            (cleared)="clear(columnKeys)"
+          />
+          <app-data-table
+            data-testid="portal-pii-table"
+            caption="Columnas clasificadas como datos personales"
+            [state]="columns.state()"
+            [columns]="columnDefs()"
+            [trackBy]="byColumn"
+            [rowLabel]="name"
+            [cursor]="columns.cursor()"
+            stackedOnMobile
+            fitContainer
+            (cursorChanged)="columns.move($event)"
+            (retry)="columns.reload()"
+          />
+        </section>
+      </app-tab>
+
+      <app-tab label="Conciliación">
+        <section class="pii__section" aria-label="Conciliación con el registro de gobierno">
+          @if (reconciliationSummary(); as r) {
+            <div class="pii__metrics" data-testid="portal-pii-reconciliation-summary">
+              <app-metric-card
+                label="Personales aprobadas"
+                [value]="r.approvedPersonalColumns"
+                hint="Columnas con ficha aprobada y nivel personal o superior"
+              />
+              <app-metric-card label="Campos declarados" [value]="r.declaredFields" />
+              <app-metric-card
+                label="Discrepancias"
+                [value]="r.total"
+                [tone]="r.total > 0 ? 'warning' : 'neutral'"
+                hint="Sobre el esquema elegido, sin el filtro de clase"
+              />
+            </div>
+          }
+          <app-governance-filter-form
+            [fields]="reconciliationFields"
+            [values]="values()"
+            (applied)="apply($event)"
+            (cleared)="clear(reconciliationKeys)"
+          />
+          <app-data-table
+            data-testid="portal-pii-reconciliation-table"
+            caption="Discrepancias entre el catálogo y el registro de gobierno"
+            [state]="discrepancies.state()"
+            [columns]="discrepancyDefs()"
+            [trackBy]="byDiscrepancy"
+            [rowLabel]="name"
+            [cursor]="discrepancies.cursor()"
+            stackedOnMobile
+            fitContainer
+            (cursorChanged)="discrepancies.move($event)"
+            (retry)="discrepancies.reload()"
+          />
+          @for (n of reconciliationNotMeasured(); track n.field) {
+            <app-alert tone="info">
+              <strong>No medido ({{ n.field }}).</strong> {{ n.reason }}
+            </app-alert>
+          }
+        </section>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+<ng-template #columnCell let-row>
+  <div class="pii__cell">
+    <span class="pii__column">{{ row.columnName }}</span>
+    <span class="pii__secondary pii__table">{{ row.schemaName }}.{{ row.objectName }}</span>
+    <span class="pii__secondary">Tipo: {{ row.nativeType }}</span>
+  </div>
+</ng-template>
+
+<ng-template #levelCell let-row>
+  <div class="pii__cell">
+    <span class="pii__badges">
+      <app-badge size="sm" [variant]="level(row.sensitivity).tone">{{
+        level(row.sensitivity).label
+      }}</app-badge>
+      <app-badge size="sm" [variant]="review(row.reviewStatus).tone">{{
+        review(row.reviewStatus).label
+      }}</app-badge>
+    </span>
+    <span class="pii__secondary">
+      {{ row.origin === 'MANUAL' ? 'Clasificada por una persona' : 'Clasificada automáticamente' }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #registryCell let-row>
+  <span class="pii__secondary">{{ mark(row) }}</span>
+</ng-template>
+
+<ng-template #discrepancyCell let-row>
+  <div class="pii__cell">
+    <span class="pii__column">{{ row.columnName }}</span>
+    <span class="pii__secondary pii__table">{{ row.schemaName }}.{{ row.objectName }}</span>
+    @if (row.columnId === null) {
+      <span class="pii__secondary">El último escaneo no la observa</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #kindCell let-row>
+  <app-badge size="sm" [variant]="kind(row.kind).tone">{{ kind(row.kind).label }}</app-badge>
+</ng-template>
+
+<ng-template #discrepancyLevelCell let-row>
+  <div class="pii__cell">
+    @if (row.sensitivity) {
+      <span class="pii__badges">
+        <app-badge size="sm" [variant]="level(row.sensitivity).tone">{{
+          level(row.sensitivity).label
+        }}</app-badge>
+        @if (row.reviewStatus) {
+          <app-badge size="sm" [variant]="review(row.reviewStatus).tone">{{
+            review(row.reviewStatus).label
+          }}</app-badge>
+        }
+      </span>
+    } @else {
+      <span class="pii__secondary">Sin ficha en el catálogo</span>
+    }
+  </div>
+</ng-template>

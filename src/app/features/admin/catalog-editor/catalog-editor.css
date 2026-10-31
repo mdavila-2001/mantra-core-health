@@ -1,0 +1,6 @@
+/* Una tarjeta, centrada y a lo ancho del área de contenido: el tope de ancho lo
+   pone `.app-main__inner` y nadie más (composition-rules §5). */
+.editor-catalogos {
+  inline-size: 100%;
+  margin-inline: auto;
+}

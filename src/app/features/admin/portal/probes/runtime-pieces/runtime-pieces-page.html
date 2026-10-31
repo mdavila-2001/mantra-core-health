@@ -1,0 +1,324 @@
+<app-page-header
+  title="Piezas en ejecución"
+  subtitle="Todo lo que el código puede tener corriendo: procesos, tareas programadas, consumidores de cola, endpoints internos, comprobaciones de salud y conectores. El servidor las descubre leyendo el código y las contrasta con el registro de herramientas y con los latidos; acá se muestra con su antigüedad."
+  [breadcrumbs]="breadcrumbs()"
+>
+  <button
+    app-button
+    page-actions
+    variant="secondary"
+    size="sm"
+    (clicked)="cargar()"
+    data-testid="rp-refresh"
+  >
+    Actualizar
+  </button>
+  <button
+    app-button
+    page-actions
+    variant="secondary"
+    size="sm"
+    [disabled]="descubriendo()"
+    [isLoading]="descubriendo()"
+    (clicked)="simular()"
+    data-testid="rp-simulate"
+  >
+    Simular descubrimiento
+  </button>
+  <button
+    app-button
+    page-actions
+    variant="primary"
+    size="sm"
+    [disabled]="descubriendo()"
+    (clicked)="descubrir()"
+    data-testid="rp-discover"
+  >
+    Descubrir y registrar
+  </button>
+</app-page-header>
+
+<div class="piezas">
+  <app-card variant="outlined" padding="md" data-testid="rp-card" [attr.aria-busy]="refrescando()">
+    @if (aviso(); as a) {
+      <app-alert [tone]="a.tono" data-testid="rp-notice">{{ a.texto }}</app-alert>
+    }
+
+    <app-view-state-host [state]="vista()" (retry)="cargar()" (refresh)="cargar()">
+      @if (vista(); as v) {
+        @if (v.status === 'ready' || v.status === 'stale') {
+          @let r = v.data;
+
+          @if (!r.scan.available) {
+            <app-alert
+              tone="warning"
+              title="Este despliegue no trae el código fuente"
+              data-testid="rp-scan-unavailable"
+            >
+              {{ r.scan.reason }} Sin el código no se puede detectar lo que falta en el registro ni
+              lo que quedó huérfano; sólo se ve lo ya registrado.
+            </app-alert>
+          }
+          @if (r.heartbeatStore.status === 'down') {
+            <app-alert
+              tone="warning"
+              title="No se pudo leer el almacén de latidos"
+              data-testid="rp-store-down"
+            >
+              La API respondió, pero Redis —donde los workers dejan su latido— no contestó. Las
+              piezas que dependen del latido figuran «Sin latido» con esa causa: no se sabe si
+              viven, y eso no es lo mismo que estar caídas. Razón del servidor:
+              {{ r.heartbeatStore.reason ?? 'no indicada' }}.
+            </app-alert>
+          }
+
+          <div class="piezas__cabecera" data-testid="rp-summary">
+            <ul class="piezas__estados" aria-label="Piezas por estado">
+              @for (e of estados; track e) {
+                <li>
+                  <app-badge [variant]="estadoDePieza[e].tono" [attr.data-testid]="'rp-count-' + e">
+                    {{ estadoDePieza[e].texto }}: {{ r.summary.byState[e] }}
+                  </app-badge>
+                </li>
+              }
+            </ul>
+            <p class="piezas__ayuda" data-testid="rp-evaluated">
+              {{ r.summary.total }} {{ r.summary.total === 1 ? 'pieza' : 'piezas' }} en total.
+              Evaluado por la API el {{ r.evaluatedAt | date: 'dd/MM/yyyy HH:mm:ss' }} ({{
+                antiguedadDe(r.evaluatedAt)
+              }}). Un latido es fresco hasta {{ r.thresholds.degradedAfterSeconds }} s; pasados
+              {{ r.thresholds.downAfterSeconds }} s el proceso se da por caído. Se vuelve a pedir
+              cada 30 s.
+            </p>
+            @if (r.scan.available) {
+              <p class="piezas__ayuda" data-testid="rp-source">
+                Piezas descubiertas a partir del
+                @if (r.scan.source === 'manifest' && r.scan.generatedAt) {
+                  manifiesto generado al compilar el
+                  {{ r.scan.generatedAt | date: 'dd/MM/yyyy HH:mm' }}: es el código que se desplegó,
+                  no una lectura de hoy.
+                } @else {
+                  código fuente leído en el momento.
+                }
+              </p>
+            }
+          </div>
+
+          <app-tabs
+            [selectedIndex]="indicePestana()"
+            (selectedIndexChange)="elegirPestana($event)"
+            data-testid="rp-tabs"
+          >
+            <!-- ============================ Piezas ============================ -->
+            <app-tab label="Piezas">
+              @if (indicePestana() === 0) {
+                <div class="piezas__seccion">
+                  <app-governance-filter-form
+                    [fields]="campos()"
+                    [values]="valores()"
+                    (applied)="aplicar($event)"
+                    (cleared)="quitarFiltros()"
+                  />
+                  <app-data-table
+                    data-testid="rp-pieces-table"
+                    caption="Piezas ejecutables descubiertas en el código y su estado"
+                    [state]="filasDePiezas()"
+                    [columns]="columnasDePiezas()"
+                    [trackBy]="porId"
+                    [rowLabel]="nombreDePieza"
+                    [cursor]="cursor()"
+                    [totalCount]="r.meta.total"
+                    stackedOnMobile
+                    fitContainer
+                    (cursorChanged)="irAPagina($event)"
+                    (retry)="cargar()"
+                  />
+                </div>
+              }
+            </app-tab>
+
+            <!-- ============================ Instancias ============================ -->
+            <app-tab label="Instancias">
+              @if (indicePestana() === 1) {
+                <div class="piezas__seccion">
+                  <p class="piezas__ayuda">
+                    Las instancias que tienen latido (la API y cada worker), con las piezas que el
+                    código dice que corren dentro. El estado es el de la sonda de vida: acá no se
+                    calcula otro.
+                  </p>
+                  <app-data-table
+                    data-testid="rp-instances-table"
+                    caption="Instancias en ejecución y las piezas que aloja cada una"
+                    [state]="filasDeInstancias()"
+                    [columns]="columnasDeInstancias()"
+                    [trackBy]="porId"
+                    [rowLabel]="nombreDeInstancia"
+                    stackedOnMobile
+                    fitContainer
+                    (retry)="cargar()"
+                  />
+                </div>
+              }
+            </app-tab>
+
+            <!-- ============================ Hallazgos ============================ -->
+            <app-tab label="Hallazgos">
+              @if (indicePestana() === 2) {
+                <div class="piezas__seccion">
+                  <app-data-table
+                    data-testid="rp-findings-table"
+                    caption="Hallazgos del contraste entre el código, el registro y los latidos"
+                    [state]="filasDeHallazgos()"
+                    [columns]="columnasDeHallazgos()"
+                    [trackBy]="porId"
+                    [rowLabel]="nombreDeHallazgo"
+                    stackedOnMobile
+                    fitContainer
+                    (retry)="cargar()"
+                  />
+                </div>
+              }
+            </app-tab>
+          </app-tabs>
+
+          @if (r.notMeasured.length > 0) {
+            <app-alert
+              tone="info"
+              title="No se mide (no es que esté bien)"
+              data-testid="rp-not-measured"
+            >
+              <ul class="piezas__lista">
+                @for (n of r.notMeasured; track n) {
+                  <li>{{ noMedido(n) }}</li>
+                }
+              </ul>
+            </app-alert>
+          }
+          @if (r.scan.warnings.length > 0) {
+            <app-alert
+              tone="warning"
+              title="El escáner no pudo resolver algunos argumentos"
+              data-testid="rp-scan-warnings"
+            >
+              <ul class="piezas__lista">
+                @for (w of r.scan.warnings; track w) {
+                  <li>{{ w }}</li>
+                }
+              </ul>
+            </app-alert>
+          }
+        }
+      }
+    </app-view-state-host>
+  </app-card>
+</div>
+
+<!-- Celdas de la tabla de piezas. -->
+<ng-template #piezaCell let-fila>
+  <div class="piezas__celda">
+    <span class="piezas__nombre">{{ fila.name }}</span>
+    <span class="piezas__codigo">{{ fila.id }}</span>
+    <span class="piezas__codigo">{{ tipoDe(fila.kind) }} · módulo {{ fila.module }}</span>
+    <span class="piezas__codigo">
+      Evidencia: <code>{{ fila.evidence.file }}:{{ fila.evidence.line }}</code>
+    </span>
+  </div>
+</ng-template>
+<ng-template #estadoCell let-fila>
+  <div class="piezas__celda">
+    <app-badge [variant]="chipDe(fila.state).tono">{{ chipDe(fila.state).texto }}</app-badge>
+    <span class="piezas__causa">{{ causa(fila.cause) }}</span>
+    @if (fila.causeDetail) {
+      <span class="piezas__codigo">{{ fila.causeDetail }}</span>
+    }
+    <span class="piezas__codigo">Prueba de vida: {{ nivelDe(fila.evidenceLevel) }}</span>
+  </div>
+</ng-template>
+<ng-template #comoCell let-fila>
+  <div class="piezas__celda">
+    <span>{{ cadencia(fila.schedule) }}</span>
+    <span class="piezas__codigo">
+      {{
+        fila.hosts.length > 0
+          ? 'Corre en ' + fila.hosts.join(', ')
+          : 'Sin proceso anfitrión resuelto'
+      }}
+    </span>
+    <span class="piezas__codigo">{{ fila.enable.how }}</span>
+    @if (fila.enable.envVars.length > 0) {
+      <span class="piezas__codigo">Variables: {{ fila.enable.envVars.join(', ') }}</span>
+    }
+    <span class="piezas__codigo">{{ latido(fila.heartbeat.mode, fila.heartbeat.instanceId) }}</span>
+    <span class="piezas__codigo">
+      {{
+        fila.registry.present
+          ? 'Registrada' + (fila.registry.stale ? ' (el registro quedó atrás del código)' : '')
+          : 'Fuera del registro'
+      }}
+      @if (fila.registry.provenance; as p) {
+        · descubierta el {{ p.discoveredAt }}
+      }
+    </span>
+    @if (fila.wired === false) {
+      <span class="piezas__codigo">Ningún módulo la registra como proveedor.</span>
+    }
+  </div>
+</ng-template>
+
+<!-- Celdas de la tabla de instancias. -->
+<ng-template #instanciaCell let-fila>
+  <div class="piezas__celda">
+    <span class="piezas__nombre">{{ fila.label }}</span>
+    <span class="piezas__codigo"
+      >{{ fila.id }} · {{ fila.required ? 'obligatoria' : 'opcional' }}</span
+    >
+  </div>
+</ng-template>
+<ng-template #estadoInstanciaCell let-fila>
+  <div class="piezas__celda">
+    <app-badge [variant]="chipInstancia(fila.state).tono">{{
+      chipInstancia(fila.state).texto
+    }}</app-badge>
+    <span class="piezas__codigo">{{ fila.causeDetail }}</span>
+    @if (fila.lastHeartbeatAt) {
+      <span class="piezas__codigo"
+        >Último latido {{ fila.lastHeartbeatAt | date: 'dd/MM HH:mm:ss' }}</span
+      >
+    } @else {
+      <span class="piezas__codigo">Sin latido</span>
+    }
+  </div>
+</ng-template>
+<ng-template #alojaCell let-fila>
+  <div class="piezas__celda">
+    <span>{{ fila.pieceCount }} {{ fila.pieceCount === 1 ? 'pieza' : 'piezas' }}</span>
+    @for (par of alojadas(fila); track par.tipo) {
+      <span class="piezas__codigo">{{ par.tipo }}: {{ par.cantidad }}</span>
+    }
+  </div>
+</ng-template>
+
+<!-- Celdas de la tabla de hallazgos. -->
+<ng-template #gravedadCell let-fila>
+  <app-badge [variant]="chipGravedad(fila.severity).tono">{{
+    chipGravedad(fila.severity).texto
+  }}</app-badge>
+</ng-template>
+<ng-template #hallazgoCell let-fila>
+  <div class="piezas__celda">
+    <span class="piezas__nombre">{{ reglaDe(fila.rule) }}</span>
+    <span>{{ fila.message }}</span>
+    @if (fila.pieceId) {
+      <span class="piezas__codigo">{{ fila.pieceId }}</span>
+      <button
+        app-button
+        variant="ghost"
+        size="sm"
+        (clicked)="verPieza(fila.pieceId)"
+        [attr.data-testid]="'rp-see-' + fila.pieceId"
+      >
+        Ver la pieza
+      </button>
+    }
+  </div>
+</ng-template>

@@ -1,3 +1,4 @@
+import { CATALOG_EDITOR_LOADER, CATALOG_EDITOR_PATH } from './features/admin/catalog-editor/catalog-editor.routes';
 import { inject, type Type } from '@angular/core';
 import { Router, type RedirectFunction, type Routes } from '@angular/router';
 import { Dashboard } from './features/dashboard/dashboard';
@@ -37,6 +38,10 @@ import { environment } from '../environments/environment';
 import { simulatorRoutes } from './simulator-routes';
 import { authGuard, homeGuard } from './core/auth/auth.guard';
 import { mfaEnrollmentGuard } from './core/auth/mfa-enrollment.guard';
+import {
+  PANTALLA_NO_DISPONIBLE_ROUTE,
+  visibilityChildGuard,
+} from './core/visibility/visibility.guard';
 import { APP_SECTIONS, ROLES_DE_QUIEN_ATIENDE } from './core/navigation/navigation.map';
 import {
   RUTAS_HEREDADAS_CON_PARAMETRO,
@@ -248,6 +253,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
     import('./features/admin/operations/operations').then((m) => m.Operations),
   'superadmin/instances': () =>
     import('./features/admin/instances/instances').then((m) => m.Instances),
+  [CATALOG_EDITOR_PATH]: CATALOG_EDITOR_LOADER,
   'superadmin/bulk-imports': () =>
     import('./features/admin/bulk-imports/bulk-imports').then((m) => m.BulkImports),
   tutorials: () => import('./features/tutorials/tutorials-center').then((m) => m.TutorialsCenter),
@@ -1834,10 +1840,19 @@ export const routes: Routes = [
     canActivate: [authGuard],
     // Quien entró sin el segundo paso que su organización exige no usa el resto de
     // la aplicación hasta darlo de alta: la API lo deja entrar y lo cumple el cliente.
-    canActivateChild: [mfaEnrollmentGuard],
+    // Después, las reglas de visibilidad: lo que el menú ya no ofrece tampoco se abre por enlace. Presentación, no
+    // seguridad —la API sigue autorizando— y falla abierto si las reglas no se pudieron leer.
+    canActivateChild: [mfaEnrollmentGuard, visibilityChildGuard],
     children: [
       ...rutasDeSecciones(),
       ...PANTALLAS_HIJAS,
+      {
+        // A donde la guarda de visibilidad manda a quien abre una pantalla que se le oculta (S3 con próxima acción).
+        path: PANTALLA_NO_DISPONIBLE_ROUTE.slice(1),
+        title: `${APP_TITLE} - No disponible para su perfil`,
+        loadComponent: () =>
+          import('./features/visibility-unavailable/visibility-unavailable').then((m) => m.VisibilityUnavailable),
+      },
       {
         // El muro profesional, **sin entrada de menú**.
         //

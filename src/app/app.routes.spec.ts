@@ -121,6 +121,9 @@ describe('rutas del armazón', () => {
       // llega desde el tablero, el expediente o la cola; quién puede lo dice la API.
       'inpatient/admissions/new',
       'inpatient/stays/:encounterId',
+      // «No disponible para su perfil»: adonde la guarda de visibilidad manda a quien abre una pantalla que una regla
+      // le oculta. No es una sección porque no es un lugar al que se vaya: se llega rebotando, nunca por el menú.
+      'unavailable',
     ];
 
     const huerfanas = hijas.filter((r) => {

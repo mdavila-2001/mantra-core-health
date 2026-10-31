@@ -44,6 +44,14 @@
   {
    "call": "GET /admin/bulk-imports/{id}/report",
    "reason": "Misma razón que GET /admin/bulk-imports/templates: parte del motor de cargas masivas (bulk_import), aún sin openapi en dev."
+  },
+  {
+   "call": "GET /admin/catalog/fit",
+   "reason": "Sonda de ajuste de la catalogación (franja 2026-10-31): la API la implementa en paralelo (mantra-core-health-api/src/modules/data_catalog/application/fit) y el OpenAPI de dev todavía no la publica. El front la consume con un simulador declarado (SIMULADO) alineado al DTO catalog-fit.dto.ts; se borra de acá al ejecutar yarn contract:refresh con la API publicada."
+  },
+  {
+   "call": "POST /admin/catalog/fit/run",
+   "reason": "Misma razón que GET /admin/catalog/fit: pedir una corrida de la sonda de ajuste (202, Idempotency-Key obligatoria), aún sin openapi en dev."
   }
  ]
 }

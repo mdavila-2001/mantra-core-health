@@ -1,0 +1,139 @@
+<app-page-header
+  title="Catálogo de visibilidad"
+  subtitle="Cada elemento de la interfaz que puede mostrarse u ocultarse, por módulo y con su jerarquía. Primero se cataloga, después se regla: un elemento que no está acá no puede tener reglas."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<div class="vis">
+  <app-visibility-notice />
+
+  <app-card class="vis__card" variant="outlined" padding="md" data-testid="portal-ui-catalog">
+    <app-tabs [selectedIndex]="tabIndex()" (selectedIndexChange)="selectTab($event)">
+      <app-tab label="Elementos">
+        <div class="vis__panel">
+          @if (notice(); as message) {
+            <app-alert tone="success" data-testid="ui-catalog-notice">{{ message }}</app-alert>
+          }
+
+          <div class="vis__toolbar">
+            <p class="vis__note">
+              Padre oculto, hijos ocultos: ocultar una pantalla oculta todo lo que contiene, aunque un hijo tenga una regla
+              que lo muestre.
+            </p>
+            <button
+              app-button
+              variant="secondary"
+              data-testid="ui-catalog-sync"
+              [isLoading]="syncing()"
+              [disabled]="syncing()"
+              (clicked)="sync()"
+            >
+              Sincronizar con el código
+            </button>
+          </div>
+
+          @if (syncResult(); as r) {
+            <app-alert tone="success" title="Sincronización terminada" data-testid="ui-catalog-sync-result">
+              {{ r.created }} nuevos · {{ r.updated }} actualizados · {{ r.retired }} retirados · {{ r.unchanged }} sin cambios.
+            </app-alert>
+          }
+          @if (syncError(); as message) {
+            <app-alert tone="error" data-testid="ui-catalog-sync-error">{{ message }}</app-alert>
+          }
+
+          @if (index.modules().length > 0) {
+            <ul class="vis__chips" aria-label="Módulos del catálogo" data-testid="ui-catalog-modules">
+              @for (m of index.modules(); track m.code) {
+                <li>
+                  <button
+                    app-button
+                    size="sm"
+                    [variant]="values().module === m.code ? 'primary' : 'ghost'"
+                    [attr.aria-pressed]="values().module === m.code"
+                    (clicked)="pickModule(m.code)"
+                  >
+                    {{ m.label }} · {{ m.total }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+
+          <app-governance-filter-form
+            [fields]="fields()"
+            [values]="values()"
+            (applied)="apply($event)"
+            (cleared)="clear()"
+          />
+
+          <app-data-table
+            data-testid="ui-catalog-table"
+            caption="Elementos de la interfaz del catálogo de visibilidad"
+            [state]="list.state()"
+            [columns]="columns()"
+            [trackBy]="byId"
+            [rowLabel]="rowName"
+            [cursor]="list.cursor()"
+            stackedOnMobile
+            fitContainer
+            (cursorChanged)="list.move($event)"
+            (retry)="list.reload()"
+          />
+        </div>
+      </app-tab>
+
+      <app-tab label="Agregar elemento">
+        <div class="vis__panel">
+          <p class="vis__note">
+            El alta manual es para lo que el código todavía no declara. Queda como «Alta manual» y la sincronización no lo
+            retira.
+          </p>
+          @if (tabIndex() === 1) {
+            <app-visibility-element-form (created)="created($event)" />
+          }
+        </div>
+      </app-tab>
+    </app-tabs>
+  </app-card>
+</div>
+
+<ng-template #elementCell let-row>
+  <div class="vis__cell">
+    <span class="vis__name">{{ row.label }}</span>
+    <span class="vis__code" data-testid="ui-catalog-key">{{ row.key }}</span>
+    <span class="vis__path">{{ pathOfParent(row) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #kindCell let-row>
+  <div class="vis__cell">
+    <span class="vis__badges">
+      <app-badge size="sm" [variant]="kind(row.kind).tone">{{ kind(row.kind).label }}</app-badge>
+      <app-badge size="sm" [variant]="source(row.source).tone">{{ source(row.source).label }}</app-badge>
+    </span>
+    <span class="vis__secondary">Módulo {{ row.moduleCode }}</span>
+  </div>
+</ng-template>
+
+<ng-template #stateCell let-row>
+  <div class="vis__cell">
+    <span class="vis__badges">
+      <app-badge size="sm" [variant]="status(row.status).tone">{{ status(row.status).label }}</app-badge>
+    </span>
+    <span class="vis__secondary">
+      {{ row.defaultVisible ? 'Visible por omisión' : 'Oculto por omisión' }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #rulesCell let-row>
+  <div class="vis__cell">
+    <a
+      class="catalog__rules"
+      [routerLink]="rulesUrl"
+      [queryParams]="rulesQuery(row)"
+      [attr.aria-label]="'Ver las ' + row.activeRuleCount + ' reglas de ' + row.label"
+      >{{ row.activeRuleCount }}</a
+    >
+  </div>
+</ng-template>

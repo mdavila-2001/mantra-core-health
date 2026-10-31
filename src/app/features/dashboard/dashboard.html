@@ -68,7 +68,11 @@
        del saludo para no romper la jerarquía: «Mis verificaciones» para quien
        atiende y los profesionales que piden sumarse para la aseguradora. -->
   @if (veMisVerificaciones()) {
-    <div class="panel__verificaciones" data-testid="panel-mis-verificaciones">
+    <div
+      *appVisible="ui.myVerificationsShortcut"
+      class="panel__verificaciones"
+      data-testid="panel-mis-verificaciones"
+    >
       <p class="panel__verificaciones-texto">
         Siga el sello de su perfil y las respuestas de las instituciones y aseguradoras a las que
         les pidió trabajar.
@@ -79,7 +83,11 @@
     </div>
   }
   @if (veProfesionalesQuePidenSumarse()) {
-    <div class="panel__verificaciones" data-testid="panel-profesionales-que-piden">
+    <div
+      *appVisible="ui.practitionerRequestsShortcut"
+      class="panel__verificaciones"
+      data-testid="panel-profesionales-que-piden"
+    >
       <p class="panel__verificaciones-texto">
         Revise a los profesionales que piden trabajar con su aseguradora: aprobar les da su sello.
       </p>
@@ -109,9 +117,11 @@
        Va diferida por el mismo motivo que el aviso de puesta en marcha — este
        panel viaja en el paquete inicial. -->
   @if (atiendePacientes()) {
-    @defer (on immediate) {
-      <app-today-agenda class="panel__hoy" />
-    }
+    <ng-container *appVisible="ui.todayAgenda">
+      @defer (on immediate) {
+        <app-today-agenda class="panel__hoy" />
+      }
+    </ng-container>
   }
 
   <div class="panel__grid" appStaggerList>
@@ -125,9 +135,11 @@
          quien atiende: sin perfil profesional no hay ninguna cifra propia
          que reportar (mismo criterio que la franja de arriba). -->
     @if (atiendePacientes()) {
-      @defer (on immediate) {
-        <app-consultations-summary class="panel__bloque--ancho" />
-      }
+      <ng-container *appVisible="ui.consultationsSummary">
+        @defer (on immediate) {
+          <app-consultations-summary class="panel__bloque--ancho" />
+        }
+      </ng-container>
     }
 
     <!-- ─── Últimos pacientes ─────────────────────────────────────────────────
@@ -142,6 +154,7 @@
       <app-card
         variant="outlined"
         padding="lg"
+        *appVisible="ui.latestPatients"
         class="panel__bloque--ancho"
         data-testid="panel-ultimos-pacientes"
       >

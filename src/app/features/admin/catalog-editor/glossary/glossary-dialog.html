@@ -1,0 +1,47 @@
+<app-content-dialog
+  size="lg"
+  [heading]="titulo()"
+  [description]="editando() ? 'Se edita el texto de esta audiencia; el otro texto del término no cambia. Llega a todas las organizaciones.' : 'El identificador no se cambia después. El término llega a todas las organizaciones.'"
+  [dismissible]="!guardando()"
+  (closed)="closed.emit()"
+>
+  @if (aviso(); as mensaje) {
+    <app-alert [tone]="conflicto() ? 'warning' : 'error'" data-testid="glossary-dialog-error">
+      {{ mensaje }}
+      @if (conflicto()) {
+        <div alert-actions>
+          <button app-button variant="outline" size="sm" (clicked)="reloadRequested.emit()" data-testid="glossary-dialog-reload">Recargar la lista</button>
+        </div>
+      }
+    </app-alert>
+  }
+
+  <div class="servicio-form" data-testid="glossary-dialog-form">
+    <app-form-field label="Identificador" [required]="!editando()" [errorMessage]="errores()['slug']" hint="Minúsculas y guiones, por ejemplo «presion-arterial».">
+      <app-input data-testid="glossary-field-slug" [(value)]="slug" [readonly]="editando()" [disabled]="guardando()" [hasError]="!!errores()['slug']" />
+    </app-form-field>
+
+    <app-form-field label="Término" [required]="!editando()" [errorMessage]="errores()['display']">
+      <app-input data-testid="glossary-field-display" [(value)]="display" [readonly]="editando()" [disabled]="guardando()" [hasError]="!!errores()['display']" />
+    </app-form-field>
+
+    <app-form-field class="servicio-form__ancho" label="Nombre en español" [required]="true" [errorMessage]="errores()['nameEs']">
+      <app-input data-testid="glossary-field-name" [(value)]="nameEs" [disabled]="guardando()" [hasError]="!!errores()['nameEs']" />
+    </app-form-field>
+
+    <app-form-field class="servicio-form__ancho" [label]="etiquetaTexto().rotulo" [required]="true" [errorMessage]="errores()['text']" [hint]="etiquetaTexto().ayuda">
+      <app-textarea data-testid="glossary-field-text" [rows]="5" [(value)]="textEs" [disabled]="guardando()" [hasError]="!!errores()['text']" />
+    </app-form-field>
+
+    <app-form-field class="servicio-form__ancho" label="Texto en inglés (opcional)" hint="Vacío si no hay traducción: no se completa solo.">
+      <app-textarea data-testid="glossary-field-text-en" [rows]="3" [(value)]="textEn" [disabled]="guardando()" />
+    </app-form-field>
+  </div>
+
+  <div dialog-actions class="servicio-form__acciones">
+    <button app-button variant="secondary" [disabled]="guardando()" (clicked)="closed.emit()">Cancelar</button>
+    <button app-button [isLoading]="guardando()" [disabled]="guardando()" (clicked)="guardar()" data-testid="glossary-dialog-save">
+      {{ editando() ? 'Guardar cambios' : 'Crear término' }}
+    </button>
+  </div>
+</app-content-dialog>
