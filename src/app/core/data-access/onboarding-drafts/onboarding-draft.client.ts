@@ -2,14 +2,14 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { API_BASE_URL, apiUrl } from '../data-access/api';
+import { API_BASE_URL, apiUrl } from '../api';
 import type {
   OnboardingDraft,
   OnboardingFormType,
   OnboardingFunnelReport,
   OnboardingHeatmapReport,
   OnboardingTelemetryEvent,
-} from './onboarding-draft.types';
+} from '../../onboarding/onboarding-draft.types';
 
 /** Cabecera con la que la API reconoce al dueño del borrador. */
 export const ONBOARDING_DRAFT_SECRET_HEADER = 'x-onboarding-draft-secret';

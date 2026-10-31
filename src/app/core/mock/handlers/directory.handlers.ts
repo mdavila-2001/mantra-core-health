@@ -1,3 +1,4 @@
+import type { TenantSimulado } from '../fixtures/directory.types';
 import { reservas, recursos } from '../fixtures/agenda';
 import { CARGO, STATUS, ORGANIZATION_TYPE } from '../fixtures/concepts';
 import { ALCANCE_ACCESO, INVITACIONES_PENDIENTES, MEMBRESIAS_DEL_APOYO, ROL_TENANT, TENANTS_DEL_APOYO } from '../fixtures/directory-apoyo';
@@ -44,18 +45,7 @@ import {
 
 export { ALCANCE_ACCESO, ROL_TENANT };
 
-export interface TenantSimulado {
-  readonly id: string;
-  readonly code: string;
-  readonly legalName: string;
-  readonly tradeName: string;
-  readonly tenantTypeConceptId: string;
-  readonly statusConceptId: string;
-  readonly verificationStatusConceptId: string;
-  readonly parentTenantId: string | null;
-  readonly createdAt: string;
-  readonly timeZone: string;
-}
+export type { TenantSimulado } from '../fixtures/directory.types';
 
 const TIPO_SUCURSAL = {
   CLINIC: uuid('concept-branch-clinic'),

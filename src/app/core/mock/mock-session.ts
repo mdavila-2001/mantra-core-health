@@ -1,5 +1,6 @@
 import { uuid } from './mock-store';
 import type { TenantTypeCode } from '../data-access/directory/directory.types';
+import type { MockUser } from '../simulator/simulator.types';
 
 /* ============================================================================
     Las cuentas del backend simulado y sus tokens.
@@ -10,32 +11,8 @@ import type { TenantTypeCode } from '../data-access/directory/directory.types';
     decorativa: nadie la verifica en esta rama.
     ========================================================================== */
 
-export interface MockUser {
-  /** La clave con la que se identifica en el login (correo) y dentro del token. */
-  readonly key: string;
-  readonly id: string;
-  readonly email: string;
-  readonly nationalId: string;
-  readonly displayName: string;
-  readonly roles: readonly string[];
-  readonly tenants: readonly string[];
-  readonly tenantNames: Readonly<Record<string, string>>;
-  /**
-   * Roles con ámbito de organización, por tenant: el claim `scopedRoles` que firma
-   * la API (un código que figura acá sólo vale en esos tenants; uno que no, es
-   * global). El simulador firma exactamente las claves de la API: no hay
-   * `ownTenantId`.
-   */
-  readonly scopedRoles?: Readonly<Record<string, readonly string[]>>;
-  readonly patientProfileId?: string;
-  readonly practitionerProfileId?: string;
-  readonly personId: string;
-  /**
-   * Clase de cuenta que firmaría la API. Sin valor, el token no trae el claim y
-   * la sesión lo deduce (cuentas de paciente, que no pasan por esta lista).
-   */
-  readonly accountKind?: 'PERSON' | 'ORGANIZATION';
-}
+/** La forma de una cuenta de prueba vive fuera del simulador (O3-4). */
+export type { MockUser };
 
 export const TENANT_CLINICA = uuid('tenant-clinica-los-olivos');
 export const TENANT_HOSPITAL = uuid('tenant-hospital-san-lucas');

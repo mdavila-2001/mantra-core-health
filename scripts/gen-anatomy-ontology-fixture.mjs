@@ -36,7 +36,7 @@
  *   (estructura compuesta → las partes suyas que tienen malla) y
  *   `structures-NN.json` (las fichas, en 32 shards). Se bajan bajo demanda, como el glosario: no
  *   pesan en el bundle.
- * - `src/app/core/mock/fixtures/anatomy-ontology.generated.ts`: conteos,
+ * - `src/app/core/data-access/anatomy-atlas/anatomy-ontology.generated.ts`: conteos,
  *   procedencia y atribuciones, que sí viajan en el código porque la pantalla
  *   las muestra antes de bajar nada.
  *
@@ -49,7 +49,7 @@ const RAIZ = process.cwd();
 const DATOS = join(RAIZ, 'data', 'anatomy-ontology');
 const CATALOGO = join(RAIZ, 'public', 'anatomy-atlas-3d', 'catalog');
 const MANIFIESTO_DE_MALLAS = join(RAIZ, 'public', 'anatomy-atlas-3d', 'models', 'parts-manifest.json');
-const FIXTURE = join(RAIZ, 'src', 'app', 'core', 'mock', 'fixtures', 'anatomy-ontology.generated.ts');
+const FIXTURE = join(RAIZ, 'src', 'app', 'core', 'data-access', 'anatomy-atlas', 'anatomy-ontology.generated.ts');
 const SHARDS = 32;
 /**
  * Una estructura compuesta resalta las mallas de todas sus partes, pero no las

@@ -1,4 +1,4 @@
-import { MOCK_USERS } from '../../core/mock/mock-session';
+import { MOCK_USERS } from '../../core/simulator/simulator';
 import type { SelectOption } from '../../shared/components/atoms/select/select.types';
 import { ETIQUETA_DE_NIVEL, type NivelDeComponente } from './component-stock.types';
 import type { ComponentScenario } from './scenarios/scenario.types';
