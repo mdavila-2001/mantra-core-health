@@ -76,6 +76,23 @@
     .cita--alta.cita--sin-sede .cita__motivo { grid-column: 1 / -1; }
 }
 
+.cita__location {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-1) var(--sp-2);
+    margin-block: 0 var(--sp-5);
+    overflow-wrap: anywhere;
+    color: var(--text-secondary);
+}
+
+.cita__location strong {
+    color: var(--text-primary);
+}
+
+.cita__location-address {
+    flex-basis: 100%;
+}
+
 /* La frase de «qué va a pasar» se lee como una nota del sistema, no como un
    error ni como una etiqueta más del formulario. */
 .cita__aviso {

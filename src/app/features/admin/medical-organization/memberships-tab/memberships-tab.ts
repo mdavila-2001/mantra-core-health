@@ -17,6 +17,8 @@ import {
   roleAssignmentStatusLabel,
 } from '../../../../core/data-access/practice-sites/role-assignment-concepts';
 import type { MyRoleAssignment } from '../../../../core/data-access/practice-sites/practice-sites.types';
+import { roleAssignmentState } from '../../../../core/data-access/role-assignments/role-assignment-status';
+import { RoleAssignmentsClient } from '../../../../core/data-access/role-assignments/role-assignments.client';
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { describeApiFailure } from '../../../../core/http/api-failure';
@@ -28,6 +30,7 @@ import type { SelectOption } from '../../../../shared/components/atoms/select/se
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Avatar } from '../../../../shared/components/atoms/avatar/avatar';
 import { Select } from '../../../../shared/components/atoms/select/select';
+import { DialogService } from '../../../../shared/components/molecules/dialog/dialog-service';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
 import { EmptyState } from '../../../../shared/components/molecules/empty-state/empty-state';
@@ -64,8 +67,22 @@ interface AssignmentRow extends MyRoleAssignment {
    * suspendida, rechazada o finalizada cuentan como no verificado.
    */
   readonly verified: boolean;
+  /** Vinculación vigente: se puede **retirar**. */
+  readonly canWithdraw: boolean;
+  /** Solicitud que la organización todavía no resolvió: se puede **salir de la fila**. */
+  readonly canLeaveQueue: boolean;
   /** El tono del sello de estado. Presentación, no dominio. */
   readonly statusVariant: BadgeVariant;
+}
+
+/** El estado de una fila: por código si vino, y si no por el concepto de siempre. */
+function estadoDe(v: MyRoleAssignment): 'ACTIVE' | 'PENDING' | 'OTRO' {
+  const porCodigo = roleAssignmentState(v.statusCode ?? '');
+  if (porCodigo === 'ACTIVE' || porCodigo === 'PENDING') return porCodigo;
+  if (porCodigo !== null) return 'OTRO';
+  if (v.status === ROLE_ASSIGNMENT_STATUS.ACTIVE) return 'ACTIVE';
+  if (v.status === ROLE_ASSIGNMENT_STATUS.PENDING) return 'PENDING';
+  return 'OTRO';
 }
 
 const FORMATO_DIA = new Intl.DateTimeFormat('es-BO', {
@@ -118,6 +135,8 @@ export class MembershipsTab {
   private readonly practiceSites = inject(PracticeSitesClient);
   private readonly accounting = inject(AccountingClient);
   private readonly terminology = inject(TerminologyClient);
+  private readonly assignments = inject(RoleAssignmentsClient);
+  private readonly dialogs = inject(DialogService);
 
   /**
    * Escrito a mano (no `toSignal` puro): tras enviar una solicitud hay que
@@ -147,6 +166,8 @@ export class MembershipsTab {
         v.status === ROLE_ASSIGNMENT_STATUS.REJECTED ||
         v.status === ROLE_ASSIGNMENT_STATUS.ENDED,
       verified: v.status === ROLE_ASSIGNMENT_STATUS.ACTIVE,
+      canWithdraw: estadoDe(v) === 'ACTIVE',
+      canLeaveQueue: estadoDe(v) === 'PENDING',
       statusVariant: varianteDeEstado(v.status),
     })),
   );
@@ -222,6 +243,11 @@ export class MembershipsTab {
   );
   protected readonly solicitudEnviada = signal(false);
 
+  /** La fila sobre la que corre un retiro o una salida de fila; bloquea sus botones. */
+  protected readonly filaEnCurso = signal<string | null>(null);
+  protected readonly errorDeAccion = signal('');
+  protected readonly avisoDeAccion = signal('');
+
   constructor() {
     this.recargarVinculaciones();
     this.cargarOrganizaciones();
@@ -265,6 +291,66 @@ export class MembershipsTab {
         this.recargarVinculaciones();
       },
       error: (error: unknown) => this.estadoDeSolicitud.set(errorToViewState<null>(error)),
+    });
+  }
+
+  /** «Retirarse»: termina una vinculación vigente, tras confirmar. */
+  protected async retirarse(fila: AssignmentRow): Promise<void> {
+    if (!fila.canWithdraw || this.filaEnCurso() !== null) return;
+    const confirmado = await this.dialogs.confirm({
+      title: `Retirarse de ${fila.practiceName}`,
+      message:
+        'Deja de figurar como profesional de esta organización. Si quiere volver, tendrá que pedir una nueva vinculación y la organización deberá aprobarla.',
+      confirmLabel: 'Retirarme',
+      destructive: true,
+    });
+    if (!confirmado) return;
+    this.resolverAccion(
+      fila,
+      this.assignments.withdraw(fila.id),
+      `Se retiró de ${fila.practiceName}.`,
+      'No pudimos procesar su retiro.',
+    );
+  }
+
+  /** «Salir de la fila»: retira una solicitud todavía sin resolver, tras confirmar. */
+  protected async salirDeLaFila(fila: AssignmentRow): Promise<void> {
+    if (!fila.canLeaveQueue || this.filaEnCurso() !== null) return;
+    const confirmado = await this.dialogs.confirm({
+      title: `Salir de la fila de ${fila.practiceName}`,
+      message:
+        'Su solicitud se retira y la organización deja de verla. Puede volver a pedir la vinculación cuando quiera.',
+      confirmLabel: 'Salir de la fila',
+      destructive: true,
+    });
+    if (!confirmado) return;
+    this.resolverAccion(
+      fila,
+      this.assignments.leaveQueue(fila.id),
+      `Salió de la fila de ${fila.practiceName}.`,
+      'No pudimos retirar su solicitud.',
+    );
+  }
+
+  private resolverAccion(
+    fila: AssignmentRow,
+    peticion: ReturnType<RoleAssignmentsClient['withdraw']>,
+    exito: string,
+    fallo: string,
+  ): void {
+    this.filaEnCurso.set(fila.id);
+    this.errorDeAccion.set('');
+    this.avisoDeAccion.set('');
+    peticion.subscribe({
+      next: () => {
+        this.filaEnCurso.set(null);
+        this.avisoDeAccion.set(exito);
+        this.recargarVinculaciones();
+      },
+      error: (error: unknown) => {
+        this.filaEnCurso.set(null);
+        this.errorDeAccion.set(describeApiFailure(error, fallo));
+      },
     });
   }
 

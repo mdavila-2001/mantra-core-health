@@ -19,6 +19,23 @@
     <a [routerLink]="[rutaDeMiAgenda]">Mi agenda</a> y vuelva.
   </app-alert>
 } @else {
+  <!-- Va fuera de la grilla del formulario: sus filas están fijadas por campo y
+       una fila más al principio las descuadraría. -->
+  @if (appointmentLocation(); as location) {
+    <p class="cita__location" data-testid="cita-location" aria-live="polite">
+      <span>Esta cita queda en</span>
+      <strong>
+        @if (location.organization; as organization) {
+          {{ organization }} ·
+        }
+        {{ location.site }}
+      </strong>
+      @if (location.address; as address) {
+        <span class="cita__location-address">{{ address }}</span>
+      }
+    </p>
+  }
+
   <form
     class="cita"
     [class.cita--alta]="modo() === 'nuevo'"
