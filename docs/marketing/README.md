@@ -11,6 +11,12 @@ instaladas en `.claude/skills/`, junto a las skills de ingeniería del repo.
   (Farmacia, Imagenología, Laboratorio, Organización médica). Lo no verificable en el repo
   está marcado **POR CONFIRMAR**: completarlo con el negocio antes de publicar nada.
 
+## Oportunidades detectadas en el recorrido de la app
+
+[oportunidades-alovida.md](oportunidades-alovida.md) junta lo que ya existe en el front, la API, la
+app móvil y el servicio de IA con valor de marketing y comunicación, y lo prioriza. Sale del
+recorrido completo de la app del 2026-10-31, que está en [../recorrido-app/](../recorrido-app/).
+
 ## Qué skill usar para cada módulo
 
 | Necesidad | Skill | Aplica a |
