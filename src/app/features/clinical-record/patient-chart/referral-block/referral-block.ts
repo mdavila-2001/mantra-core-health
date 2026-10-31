@@ -36,12 +36,13 @@ import {
 import { TerminologyClient } from '../../../../core/data-access/terminology/terminology.client';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { dataOf, empty, loading, ready, stale } from '../../../../core/view-state/view-state';
+import { dataOf, loading, ready, stale } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import { AppButton } from '../../../../shared/components/atoms/button/button';
 import { Divider } from '../../../../shared/components/atoms/divider/divider';
 import { Input as AppInput } from '../../../../shared/components/atoms/input/input';
 import { Select } from '../../../../shared/components/atoms/select/select';
+import { SupportCode } from '../../../../shared/components/molecules/support-code/support-code';
 import { Textarea } from '../../../../shared/components/atoms/textarea/textarea';
 import { Alert } from '../../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../../shared/components/molecules/card/card';
@@ -56,6 +57,7 @@ import { DatePicker } from '../../../../shared/components/organisms/date-picker/
 import { StatusSeal } from '../../../../shared/components/organisms/status-seal/status-seal';
 import { ViewStateHost } from '../../../../shared/components/organisms/view-state-host/view-state-host';
 import { revealAfterRender } from '../../reveal';
+import type { FailureParts } from '../../write-message';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { InformedConsentBadge } from '../informed-consent/informed-consent-badge';
 import { patientConsents } from '../informed-consent/patient-consents';
@@ -68,6 +70,8 @@ import {
   SERVICE_EXAMPLE,
   inFormOrder,
   withServiceContext,
+  catalogStateOf,
+  emptyReferralList,
   submissionMessage,
   submitBlocker,
   TARGET_KIND_OPTIONS,
@@ -163,6 +167,7 @@ const REASON_MAX_LENGTH = 500;
     Select,
     ReferralTransferForm,
     StatusSeal,
+    SupportCode,
     Tab,
     Tabs,
     Textarea,
@@ -202,7 +207,7 @@ export class ReferralBlock {
   readonly openEncounter = output<void>();
 
   /** Falló una relectura con la lista ya a la vista (`ConsultationReferrals.refreshError`). */
-  readonly refreshError = input<string | null>(null);
+  readonly refreshError = input<FailureParts | null>(null);
 
   /** La lista falló y la persona pidió reintentar. */
   readonly retry = output<void>();
@@ -308,8 +313,9 @@ export class ReferralBlock {
   /** Se intentó enviar: desde ahí los errores se muestran junto a cada campo. */
   protected readonly attempted = signal(false);
   /** Con el aviso de «Servicio pedido» según haya o no catálogo que elegir. */
+  private readonly catalog = computed(() => catalogStateOf(this.kind(), this.target() !== null, this.services()));
   protected readonly issues = computed<readonly ReferralIssue[]>(() =>
-    withServiceContext(referralIssues(this.body() ?? {}), this.requestedService(), this.kind(), this.noServices()),
+    withServiceContext(referralIssues(this.body() ?? {}), this.requestedService(), this.catalog()),
   );
   protected issueFor(field: ReferralIssue['field']): string {
     if (!this.attempted()) return '';
@@ -386,16 +392,9 @@ export class ReferralBlock {
     if (state === null || (state.status !== 'ready' && state.status !== 'stale')) {
       return state;
     }
-    // Una relectura fallida no se disfraza de «no tiene derivaciones».
+    // Defensivo: ningún productor da hoy un S7 vacío con fallo; si llega, no se lee «no tiene».
     if (state.data.length === 0 && !(state.status === 'stale' && this.refreshError() !== null)) {
-      return empty(
-        {
-          label: this.noEncounter()
-            ? 'Abra el encuentro y derive desde el formulario'
-            : 'Derive desde el formulario de arriba',
-        },
-        'Esta persona todavía no tiene derivaciones.',
-      );
+      return emptyReferralList(this.noEncounter());
     }
     // S2 hasta saber cómo se llama cada estado: un «Sin registrar» que al
     // instante pasa a «Solicitada» es un dato falso, aunque dure poco.

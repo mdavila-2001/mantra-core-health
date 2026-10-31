@@ -95,7 +95,7 @@ describe('ConsultationReferrals', () => {
     expect(referrals.count()).toBe(1);
     // La cifra es la de antes: la casilla lo dice («al menos»).
     expect(referrals.missingCount()).toBe('stale');
-    expect(referrals.refreshError()).toContain('req-9');
+    expect(referrals.refreshError()?.code).toBe('req-9');
 
     // Reintentar: mientras viaja, sin el fallo anterior; al volver bien, limpio.
     referrals.reload();
@@ -123,6 +123,10 @@ describe('ConsultationReferrals', () => {
       .create({ patientProfileId: 'p-1', sourceEncounterId: 'enc-1', targetProfileId: 'hp-1' })
       .subscribe();
     http.expectOne((r) => r.url === '/referrals' && r.method === 'POST').flush(ROW);
+    // Mientras viaja la relectura: S2 y «Contando…», nunca «no tiene derivaciones» ni «0».
+    expect(referrals.state().status).toBe('loading');
+    expect(referrals.missingCount()).toBe('loading');
+    expect(referrals.count()).toBeNull();
     http.expectOne(forPatient('p-1')).flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
     expect(referrals.state().status).toBe('error');
     expect(referrals.missingCount()).toBe('failed');

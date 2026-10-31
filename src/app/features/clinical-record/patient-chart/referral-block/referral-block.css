@@ -124,8 +124,12 @@
   list-style: disc;
 }
 
-.referral__code {
-  white-space: nowrap;
+/* El título de la lista recibe el foco tras «Reintentar»: con teclado, el
+   mismo anillo que el título del formulario paginado. */
+.referral__title:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: var(--sp-1);
+  border-radius: var(--r-sm);
 }
 
 /* Bajo cada derivación: el consentimiento a la izquierda y el detalle a la derecha. */

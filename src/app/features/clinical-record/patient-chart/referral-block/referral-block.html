@@ -353,7 +353,12 @@
       >
         @if (attempted() && (issues().length > 0 || transferProblems().length > 0)) {
           <!-- El resumen; cada error, además, junto a su campo. Se anuncia. -->
-          <app-alert tone="error" title="Revise antes de derivar" role="alert" data-testid="referral-issues">
+          <app-alert
+            tone="error"
+            [title]="kind() === 'EXTERNAL' ? 'Revise antes de registrar' : 'Revise antes de derivar'"
+            role="alert"
+            data-testid="referral-issues"
+          >
             <ul class="referral__issues">
               @for (issue of issues(); track issue.field) {
                 <li>{{ issue.message }}</li>
@@ -400,8 +405,8 @@
           <!-- El código de soporte no se corta: se dicta o se copia entero. -->
           <app-alert tone="error" title="No se pudo derivar" data-testid="referral-error">
             {{ failure.text }}
-            @if (failure.code) {
-              <span class="referral__code">({{ failure.code }})</span>
+            @if (failure.code; as code) {
+              <app-support-code [code]="code" />
             }
           </app-alert>
         }
@@ -451,7 +456,10 @@
           title="No pudimos actualizar la lista"
           data-testid="referral-list-refresh-error"
         >
-          Se muestra la de las {{ state.asOf | date: 'HH:mm' }}. {{ failure }}
+          Se muestra la de las {{ state.asOf | date: 'HH:mm' }}. {{ failure.text }}
+          @if (failure.code; as code) {
+            <app-support-code [code]="code" />
+          }
           <div alert-actions>
             <button app-button size="sm" variant="secondary" type="button" (clicked)="retryList()">
               Reintentar
@@ -463,6 +471,23 @@
       <app-view-state-host [state]="state" (retry)="retryList()">
         <!-- El aviso de S7 va junto al título, no como banner encima de la lista. -->
         <ng-container ngProjectAs="[vsh-stale]" />
+        @if (state.status === 'error') {
+          <!-- S9 de la LISTA: dice que falló la lista y no el envío, para que
+               nadie vuelva a derivar lo que ya quedó registrado. -->
+          <app-alert vsh-error tone="error" title="No pudimos cargar la lista" data-testid="referral-list-error">
+            {{
+              issued()
+                ? 'La derivación se registró, pero no pudimos cargar la lista.'
+                : 'No pudimos cargar las derivaciones de esta persona.'
+            }}
+            <app-support-code [code]="state.requestId" />
+            <div alert-actions>
+              <button app-button size="sm" variant="secondary" type="button" (clicked)="retryList()">
+                Reintentar
+              </button>
+            </div>
+          </app-alert>
+        }
         <p vsh-skeleton class="referral__secondary">Buscando las derivaciones…</p>
         <ol class="referral__rows" data-testid="referral-list">
           @for (row of rows(); track row.id) {
