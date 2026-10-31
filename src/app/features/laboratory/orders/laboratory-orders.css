@@ -16,6 +16,12 @@
   padding-block-start: var(--sp-4);
 }
 
+.orders__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
 .orders__search {
   max-inline-size: 40rem;
 }
@@ -103,4 +109,9 @@
   grid-column: 1;
   inline-size: 100%;
   block-size: 0.5rem;
+}
+
+.orders__study {
+  display: block;
+  color: var(--text-primary);
 }

@@ -267,4 +267,134 @@ describe('LaboratoryOrders', () => {
     expect(panel.textContent).toContain('Resultados subidos · 1 de 1');
     expect(panel.querySelector('progress')).toBeNull();
   });
+
+  describe('detalle, tipo y búsqueda ampliada', () => {
+    const DETAILED: readonly LabOrder[] = [
+      order('lab', 'RECEIVED', {
+        scope: 'LAB',
+        studyName: 'Hemograma completo',
+        summary: 'Hemograma completo · 2 componentes',
+        detail: {
+          requisitionId: null,
+          specimenTypeDisplay: 'Sangre venosa',
+          components: [
+            { conceptId: 'c1', display: 'Hemoglobina', ordinal: 1 },
+            { conceptId: 'c2', display: 'Plaquetas', ordinal: 2 },
+          ],
+          componentsSpecified: true,
+          imaging: null,
+        },
+      }),
+      order('img', 'RECEIVED', {
+        scope: 'IMAGING',
+        studyName: 'Radiografía',
+        summary: 'Radiografía · Mano · Izquierda · Sin contraste',
+        detail: {
+          requisitionId: null,
+          specimenTypeDisplay: null,
+          components: [],
+          componentsSpecified: false,
+          imaging: {
+            modalityConceptId: 'm',
+            modalityDisplay: 'Rayos X',
+            bodySiteConceptId: 'b',
+            bodySiteDisplay: 'Mano',
+            lateralityConceptId: 'l',
+            lateralityDisplay: 'Izquierda',
+            contrastConceptId: 'c',
+            contrastDisplay: 'Sin contraste',
+          },
+        },
+      }),
+      order('full', 'RECEIVED', {
+        scope: 'LAB',
+        studyName: 'Glucosa',
+        summary: 'Glucosa',
+        detail: {
+          requisitionId: null,
+          specimenTypeDisplay: null,
+          components: [],
+          componentsSpecified: false,
+          imaging: null,
+        },
+      }),
+    ];
+
+    const rowsText = (): string[] =>
+      Array.from(host().querySelectorAll('tbody tr')).map((r) => r.textContent ?? '');
+
+    /** El campo espera al tipear (debounce): se fija la señal que él alimenta. */
+    function search(text: string): void {
+      (fixture.componentInstance as unknown as { search: { set: (v: string) => void } }).search.set(
+        text,
+      );
+      fixture.detectChanges();
+    }
+
+    beforeEach(() => {
+      listOrders.mockReturnValue(of({ items: DETAILED, count: DETAILED.length }));
+    });
+
+    it('la celda «Estudio» muestra el resumen sin repetir el nombre, y el panel el detalle', () => {
+      create();
+
+      const lines = Array.from(host().querySelectorAll('[data-testid="study-summary-line"]')).map(
+        (l) => l.textContent?.trim(),
+      );
+      expect(lines).toEqual(['2 componentes', 'Mano · Izquierda · Sin contraste']);
+      const panels = Array.from(host().querySelectorAll('[data-testid="card-detail-panel"]')).map(
+        (p) => p.textContent ?? '',
+      );
+      expect(panels).toHaveLength(3);
+      expect(panels[0]).toContain('Sangre venosa');
+      expect(panels[0]).toContain('Hemoglobina, Plaquetas');
+      expect(panels[1]).toContain('Rayos X');
+      expect(panels[1]).toContain('Mano');
+      expect(panels[1]).toContain('Izquierda');
+      expect(panels[1]).toContain('Sin contraste');
+      expect(panels[2]).toContain('Estudio completo, sin detalle');
+    });
+
+    it('el control de tipo cuenta y filtra por Laboratorio / Imagenología', () => {
+      create();
+
+      const labels = Array.from(host().querySelectorAll('[role="radio"]')).map((r) =>
+        r.textContent?.trim(),
+      );
+      expect(labels).toEqual(['Todos (3)', 'Laboratorio (2)', 'Imagenología (1)']);
+
+      host().querySelector<HTMLElement>('[data-testid="segmentado-IMAGING"]')!.click();
+      fixture.detectChanges();
+      expect(rowsText()).toHaveLength(1);
+      expect(rowsText()[0]).toContain('Radiografía');
+      expect(internal().counts()[0]).toBe(1);
+    });
+
+    it('la búsqueda encuentra por componente, región y modalidad, sin tildes', () => {
+      create();
+
+      search('plaquetas');
+      expect(rowsText()).toHaveLength(1);
+      expect(rowsText()[0]).toContain('Hemograma');
+
+      search('MANO');
+      expect(rowsText()).toHaveLength(1);
+      expect(rowsText()[0]).toContain('Radiografía');
+
+      search('rayos x');
+      expect(rowsText()).toHaveLength(1);
+
+      search('nada de esto');
+      expect(internal().table().message).toBe('Ninguna orden coincide con la búsqueda.');
+    });
+
+    it('un tipo sin órdenes lo dice con su nombre', () => {
+      listOrders.mockReturnValue(of({ items: [DETAILED[0]!], count: 1 }));
+      create();
+
+      host().querySelector<HTMLElement>('[data-testid="segmentado-IMAGING"]')!.click();
+      fixture.detectChanges();
+      expect(internal().table().message).toBe('No hay órdenes de Imagenología.');
+    });
+  });
 });

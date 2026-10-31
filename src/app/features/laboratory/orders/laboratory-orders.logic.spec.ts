@@ -11,7 +11,12 @@ import {
   ORDER_TABS,
   orderTabIndexOf,
   orderTabKeyOf,
+  fold,
+  matchesQuery,
+  ordersOfScope,
   ordersOfTab,
+  scopeOf,
+  summaryLineOf,
 } from './laboratory-orders.logic';
 
 function order(status: LabOrderStatus, files = 0): LabOrder {
@@ -113,5 +118,37 @@ describe('órdenes del laboratorio: pestañas', () => {
     ] as const) {
       expect(ORDER_STATUS_BADGE[status].label).not.toBe('');
     }
+  });
+});
+
+describe('tipo, búsqueda y resumen', () => {
+  it('una orden sin scope es de laboratorio y el filtro por tipo la respeta', () => {
+    const lab = order('DRAFT');
+    const img = { ...order('DRAFT'), orderId: 'img', scope: 'IMAGING' as const };
+    expect(scopeOf(lab)).toBe('LAB');
+    expect(ordersOfScope([lab, img], 'IMAGING')).toEqual([img]);
+    expect(ordersOfScope([lab, img], 'all')).toHaveLength(2);
+  });
+
+  it('fold quita tildes y mayúsculas', () => {
+    expect(fold('Radiografía DE Tórax')).toBe('radiografia de torax');
+  });
+
+  it('matchesQuery mira paciente, estudio y resumen', () => {
+    const o = { ...order('DRAFT'), summary: 'Hemograma completo · 3 componentes' };
+    expect(matchesQuery(o, 'ana perez')).toBe(true);
+    expect(matchesQuery(o, 'COMPONENTES')).toBe(true);
+    expect(matchesQuery(o, '  ')).toBe(true);
+    expect(matchesQuery(o, 'tomografia')).toBe(false);
+  });
+
+  it('summaryLineOf no repite el nombre del estudio', () => {
+    const base = order('DRAFT');
+    expect(summaryLineOf(base)).toBeNull();
+    expect(summaryLineOf({ ...base, summary: 'Hemograma completo' })).toBeNull();
+    expect(summaryLineOf({ ...base, summary: 'Hemograma completo · 3 componentes' })).toBe(
+      '3 componentes',
+    );
+    expect(summaryLineOf({ ...base, summary: 'RX · Mano' })).toBe('RX · Mano');
   });
 });

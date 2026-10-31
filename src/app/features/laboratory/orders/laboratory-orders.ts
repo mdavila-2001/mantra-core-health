@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { concat, map, type Observable, toArray } from 'rxjs';
 
@@ -20,7 +19,6 @@ import type {
   LabOrder,
   LabOrderAction,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
-import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
@@ -30,6 +28,8 @@ import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { RowActions } from '../../../shared/components/molecules/row-actions/row-actions';
 import { SearchField } from '../../../shared/components/molecules/search-field/search-field';
+import { SegmentedControl } from '../../../shared/components/molecules/segmented-control/segmented-control';
+import { StudyDetailSummary } from '../../../shared/components/molecules/study-detail-summary/study-detail-summary';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
@@ -49,7 +49,14 @@ import {
   orderTabIndexOf,
   orderTabKeyOf,
   ordersOfTab,
+  emptyMessageOf,
+  matchesQuery,
+  messageOf,
+  ordersOfScope,
+  scopeOptions,
+  summaryLineOf,
   type OrderActionCode,
+  type ScopeFilter,
 } from './laboratory-orders.logic';
 
 /**
@@ -93,6 +100,8 @@ import {
     PageHeader,
     RowActions,
     SearchField,
+    SegmentedControl,
+    StudyDetailSummary,
     Tab,
     Tabs,
   ],
@@ -130,6 +139,9 @@ export class LaboratoryOrders {
     orderTabIndexOf(this.route.snapshot.queryParamMap.get('estado')),
   );
   protected readonly search = signal('');
+  /** Laboratorio · Imagenología; filtra antes que las pestañas de estado. */
+  protected readonly scope = signal<ScopeFilter>('all');
+  protected readonly summaryLineOf = summaryLineOf;
 
   /** Todas las órdenes, tal como las tiene el servidor. */
   private readonly orders = signal<ViewState<readonly LabOrder[]>>(loading());
@@ -139,34 +151,30 @@ export class LaboratoryOrders {
   protected readonly actionError = signal<string | null>(null);
   private uploadOrderId: string | null = null;
 
-  /** Cuántas órdenes tiene cada pestaña, para el rótulo. */
+  /** Las opciones del control de tipo, con sus conteos sobre todas las órdenes. */
+  protected readonly scopeChoices = computed(() => {
+    const state = this.orders();
+    return scopeOptions(state.status === 'ready' ? state.data : []);
+  });
+
+  /** Cuántas órdenes tiene cada pestaña (dentro del tipo elegido), para el rótulo. */
   protected readonly counts = computed(() => {
     const state = this.orders();
-    const all = state.status === 'ready' ? state.data : [];
+    const all = state.status === 'ready' ? ordersOfScope(state.data, this.scope()) : [];
     return ORDER_TABS.map((tab) => ordersOfTab(all, tab).length);
   });
 
-  /** Lo que ve la tabla de la pestaña elegida, ya con la búsqueda aplicada. */
+  /** Lo que ve la tabla de la pestaña elegida, ya con tipo y búsqueda aplicados. */
   protected readonly table = computed<ViewState<readonly LabOrder[]>>(() => {
     const state = this.orders();
     if (state.status !== 'ready') return state;
     const tab = orderTabKeyOf(this.selected());
-    const query = this.search().trim().toLocaleLowerCase('es');
-    const rows = ordersOfTab(state.data, tab).filter(
-      (order) =>
-        query === '' ||
-        order.patientName.toLocaleLowerCase('es').includes(query) ||
-        order.studyName.toLocaleLowerCase('es').includes(query),
-    );
-    if (rows.length > 0) return ready(rows);
-    return query !== ''
-      ? empty({ label: 'Ver todas las órdenes' }, 'Ninguna orden coincide con la búsqueda.')
-      : empty(
-          { label: 'Ver todas las órdenes' },
-          tab === 'all'
-            ? 'Todavía no le derivaron ninguna orden.'
-            : `No hay órdenes en «${ORDER_TAB_LABELS[tab]}».`,
-        );
+    const query = this.search();
+    const scoped = ordersOfScope(state.data, this.scope());
+    const rows = ordersOfTab(scoped, tab).filter((order) => matchesQuery(order, query));
+    return rows.length > 0
+      ? ready(rows)
+      : empty({ label: 'Ver todas las órdenes' }, emptyMessageOf(tab, this.scope(), query));
   });
 
   protected readonly columns = computed<readonly ColumnDef<LabOrder>[]>(() => [
@@ -312,12 +320,4 @@ export class LaboratoryOrders {
       }),
     );
   }
-}
-
-function messageOf(error: unknown, fallback: string): string {
-  if (error instanceof HttpErrorResponse) {
-    const message = readApiError(error)?.message;
-    if (message !== undefined && message !== '') return message;
-  }
-  return fallback;
 }

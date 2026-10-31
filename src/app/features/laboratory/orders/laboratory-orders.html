@@ -24,10 +24,21 @@
 
 <ng-template #board>
   <div class="orders">
+    <div class="orders__filters">
+      <app-segmented-control
+        ariaLabel="Tipo de estudio"
+        size="md"
+        wrap
+        [options]="scopeChoices()"
+        [value]="scope()"
+        data-testid="lab-orders-scope"
+        (valueChange)="scope.set($event)"
+      />
+    </div>
     <div class="orders__search">
       <app-search-field
-        label="Buscar por paciente o estudio"
-        placeholder="Paciente o estudio"
+        label="Buscar por paciente, estudio, componente, región o modalidad"
+        placeholder="Paciente, estudio, componente, región o modalidad"
         data-testid="lab-orders-search"
         (searched)="search.set($event)"
       />
@@ -150,7 +161,17 @@
   <span class="orders__secondary">Pidió {{ order.requesterName }}</span>
 </ng-template>
 
-<ng-template #studyCell let-order>{{ order.studyName }}</ng-template>
+<ng-template #studyCell let-order>
+  <span class="orders__study">{{ order.studyName }}</span>
+  <app-study-detail-summary
+    [heading]="order.studyName"
+    [summary]="summaryLineOf(order)"
+    [specimen]="order.detail?.specimenTypeDisplay"
+    [components]="order.detail?.components"
+    [componentsSpecified]="order.detail?.componentsSpecified"
+    [imaging]="order.detail?.imaging"
+  />
+</ng-template>
 
 <ng-template #requestedCell let-order>
   <time [attr.datetime]="order.requestedAt">{{

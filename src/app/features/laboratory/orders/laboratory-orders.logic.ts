@@ -1,7 +1,12 @@
+import { HttpErrorResponse } from '@angular/common/http';
+
+import { readApiError } from '../../../core/http/api-error';
 import type { BadgeVariant } from '../../../shared/components/atoms/badge/badge.types';
 import type { RowAction } from '../../../shared/components/molecules/row-actions/row-actions.types';
+import type { SegmentedOption } from '../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type {
   LabOrder,
+  LabOrderScope,
   LabOrderStatus,
 } from '../../../core/data-access/lab-portal/lab-portal.types';
 
@@ -93,4 +98,97 @@ export function actionsOf(order: LabOrder): readonly RowAction[] {
 /** Las mismas acciones sin poder usarse: mientras una está en vuelo no se manda otra. */
 export function disabledAll(actions: readonly RowAction[]): readonly RowAction[] {
   return actions.map((action) => ({ ...action, disabled: true }));
+}
+
+/* ---- tipo de bandeja: Laboratorio · Imagenología ------------------------- */
+
+export type ScopeFilter = 'all' | LabOrderScope;
+
+export const SCOPE_LABELS: Readonly<Record<ScopeFilter, string>> = {
+  all: 'Todos',
+  LAB: 'Laboratorio',
+  IMAGING: 'Imagenología',
+};
+
+const SCOPE_KEYS: readonly ScopeFilter[] = ['all', 'LAB', 'IMAGING'];
+
+/** Una orden sin `scope` (armada a mano) es de laboratorio, que es lo que siempre fue. */
+export function scopeOf(order: LabOrder): LabOrderScope {
+  return order.scope ?? 'LAB';
+}
+
+export function ordersOfScope(
+  orders: readonly LabOrder[],
+  scope: ScopeFilter,
+): readonly LabOrder[] {
+  return scope === 'all' ? orders : orders.filter((order) => scopeOf(order) === scope);
+}
+
+/** Las opciones del control de tipo, cada una con cuántas órdenes tiene. */
+export function scopeOptions(orders: readonly LabOrder[]): readonly SegmentedOption<ScopeFilter>[] {
+  return SCOPE_KEYS.map((value) => ({
+    value,
+    label: `${SCOPE_LABELS[value]} (${ordersOfScope(orders, value).length})`,
+  }));
+}
+
+/* ---- búsqueda ------------------------------------------------------------ */
+
+/** Minúsculas y sin tildes: «radiografia» encuentra «Radiografía». */
+export function fold(text: string): string {
+  return text.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('es');
+}
+
+/** Todo lo que la búsqueda mira de una orden: paciente, estudio, componentes, región, modalidad. */
+export function searchTextOf(order: LabOrder): string {
+  const imaging = order.detail?.imaging;
+  return fold(
+    [
+      order.patientName,
+      order.studyName,
+      order.summary,
+      order.detail?.specimenTypeDisplay,
+      ...(order.detail?.components.map((component) => component.display) ?? []),
+      imaging?.modalityDisplay,
+      imaging?.bodySiteDisplay,
+      imaging?.lateralityDisplay,
+    ]
+      .filter((part): part is string => typeof part === 'string')
+      .join(' '),
+  );
+}
+
+export function matchesQuery(order: LabOrder, query: string): boolean {
+  const q = fold(query.trim());
+  return q === '' || searchTextOf(order).includes(q);
+}
+
+/**
+ * La línea secundaria de la celda «Estudio»: el resumen sin repetir el nombre
+ * que ya está arriba («Hemograma completo · 3 componentes» → «3 componentes»).
+ */
+export function summaryLineOf(order: LabOrder): string | null {
+  const summary = order.summary?.trim() ?? '';
+  if (summary === '') return null;
+  const prefix = `${order.studyName} · `;
+  if (summary === order.studyName) return null;
+  return summary.startsWith(prefix) ? summary.slice(prefix.length) : summary;
+}
+
+/** Qué decir cuando la tabla queda sin filas: por la búsqueda, por el tipo o por la pestaña. */
+export function emptyMessageOf(tab: OrderTab, scope: ScopeFilter, query: string): string {
+  if (query.trim() !== '') return 'Ninguna orden coincide con la búsqueda.';
+  if (tab === 'all' && scope === 'all') return 'Todavía no le derivaron ninguna orden.';
+  if (tab === 'all') return `No hay órdenes de ${SCOPE_LABELS[scope]}.`;
+  const suffix = scope === 'all' ? '' : ` de ${SCOPE_LABELS[scope]}`;
+  return `No hay órdenes en «${ORDER_TAB_LABELS[tab]}»${suffix}.`;
+}
+
+/** El mensaje que dio la API, o el de respaldo. */
+export function messageOf(error: unknown, fallback: string): string {
+  if (error instanceof HttpErrorResponse) {
+    const message = readApiError(error)?.message;
+    if (message !== undefined && message !== '') return message;
+  }
+  return fallback;
 }
