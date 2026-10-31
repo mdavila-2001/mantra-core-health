@@ -44,6 +44,7 @@ import { seccionRolesGuard } from './core/navigation/section-roles.guard';
 import { organizacionAdministrableGuard } from './features/admin/organizations/organization-admin.guard';
 import { mockRoutes } from './features/reporting/reporting-mock.routes';
 import { RUTAS_DE_GOBIERNO } from './app.routes.governance';
+import { cargarSistema } from './features/observability/observability.routes';
 import { PRACTITIONER_ASSISTED_ROUTE } from './features/admin/practitioner-assisted-registration/practitioner-assisted-registration.route';
 import {
   APP_TITLE,
@@ -227,8 +228,7 @@ const PANTALLAS_DIFERIDAS: Readonly<Record<string, () => Promise<Type<unknown>>>
   // Portal de plataforma · dominio «Superadministración» (17/10/2026). Antes
   // vivían bajo `administration/*`; esas direcciones redirigen (ver
   // `SECCIONES_REDIRIGIDAS`).
-  'superadmin/observability': () =>
-    import('./features/admin/observability/observability').then((m) => m.Observability),
+  'superadmin/observability': cargarSistema,
   'superadmin/measurement': () =>
     import('./features/admin/measurement/measurement').then((m) => m.Measurement),
   'superadmin/data-catalog': () =>
