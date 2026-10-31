@@ -345,6 +345,19 @@ export function requestedServiceMessage(kind: ReferralDestinationKind, withoutCa
   return 'Elija un servicio de la lista del destino o escriba qué se le pide.';
 }
 
+/** Reemplaza el aviso de «Servicio pedido» vacío por el de su contexto (ver arriba). */
+export function withServiceContext<T extends { readonly field: string; readonly message: string }>(
+  issues: readonly T[],
+  requestedService: string,
+  kind: ReferralDestinationKind,
+  withoutCatalog: boolean,
+): readonly T[] {
+  if (requestedService.trim() !== '') return issues;
+  return issues.map((issue) =>
+    issue.field === 'requestedServiceText' ? { ...issue, message: requestedServiceMessage(kind, withoutCatalog) } : issue,
+  );
+}
+
 /** El orden de los campos en la pestaña «Traslado», para que el resumen lo siga. */
 const TRANSFER_FIELD_ORDER: readonly string[] = [
   'departureCondition',
@@ -377,15 +390,13 @@ export function inFormOrder<T extends { readonly field: string }>(issues: readon
 
 /**
  * Por qué «Derivar» está apagado, para decirlo junto al botón (y anunciarlo
- * con `aria-describedby`), o `null` si se puede enviar o si envía ahora.
+ * con `aria-describedby`), o `null` si se puede enviar. Lo único que lo
+ * apaga dentro del formulario es la falta de destino: el motivo no puede
+ * pasar del tope (el campo lo corta).
  */
-export function submitBlocker(kind: ReferralDestinationKind, hasTarget: boolean, reasonTooLong: boolean): string | null {
-  if (!hasTarget) {
-    return kind === 'EXTERNAL'
-      ? 'Para registrarla, escriba el nombre del destino.'
-      : 'Para derivar, elija el destino.';
-  }
-  return reasonTooLong ? 'El motivo es demasiado largo: acórtelo para derivar.' : null;
+export function submitBlocker(kind: ReferralDestinationKind, hasTarget: boolean): string | null {
+  if (hasTarget) return null;
+  return kind === 'EXTERNAL' ? 'Para registrarla, escriba el nombre del destino.' : 'Para derivar, elija el destino.';
 }
 
 /** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */
