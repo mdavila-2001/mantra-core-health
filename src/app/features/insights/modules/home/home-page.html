@@ -53,11 +53,11 @@
 
       <div class="hm__two">
         <app-ins-panel title="Registros por día · últimos 30 días" question="¿Qué hechos movieron la curva?">
-          <app-ins-line-chart [labels]="m.chart.labels" [series]="m.chart.series" [milestones]="m.chart.milestones" unit="count" [height]="400" [ariaLabel]="'Registros diarios de los últimos 30 días, con los hitos que movieron la curva'" />
+          <app-ins-line-chart [labels]="m.chart.labels" [series]="m.chart.series" [milestones]="m.chart.milestones" unit="count" [height]="360" [ariaLabel]="'Registros diarios de los últimos 30 días, con los hitos que movieron la curva'" />
         </app-ins-panel>
         <app-ins-panel title="Lo más importante hoy" question="Ordenado por nivel y fecha">
           <div class="hm__stack">
-            @for (a of m.alerts; track a.id) {
+            @for (a of m.alerts.slice(0, 3); track a.id) {
               <app-ins-alert-card [alert]="a" [compact]="true" />
             } @empty {
               <p class="hm__none">No hay alertas abiertas. Lo atendido se ve en el módulo de alertas.</p>

@@ -133,7 +133,7 @@
 
 .hm__two {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
 }
 
@@ -145,6 +145,8 @@
 
 .hm__stack {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
   gap: var(--sp-3);
 }
 
