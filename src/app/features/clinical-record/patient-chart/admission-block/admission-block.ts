@@ -22,6 +22,7 @@ import { ToastService } from '../../../../shared/components/molecules/toast/toas
 import { DatePicker } from '../../../../shared/components/organisms/date-picker/date-picker';
 import { FormActions } from '../../../../shared/components/organisms/form-actions/form-actions';
 import { writeFailureMessage } from '../../write-message';
+import { InpatientStaySummary } from './inpatient-stay-summary';
 
 /**
  * Una internación tal como la muestra la ficha: sin uuid y con el «sigue
@@ -92,7 +93,7 @@ export interface InternacionEnFicha {
  */
 @Component({
   selector: 'app-admission-block',
-  imports: [Alert, Card, DatePicker, DatePipe, FormActions, FormField],
+  imports: [Alert, Card, DatePicker, DatePipe, FormActions, FormField, InpatientStaySummary],
   templateUrl: './admission-block.html',
   styleUrl: './admission-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

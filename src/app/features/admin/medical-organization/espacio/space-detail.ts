@@ -66,6 +66,7 @@ import {
 import { PESTANAS_DE_LA_FICHA, TEXTO_DE_ACCION, type PestanaDeLaFicha } from './ciclo-de-vida';
 import { MoverDialog } from './mover-dialog';
 import { VincularUnidadDialog } from './vincular-unidad-dialog';
+import { SpaceOpsTab } from '../../../inpatient/space-ops-tab/space-ops-tab';
 
 /**
  * **Ficha de un espacio** — `administration/medical-organization/spaces/:id`.
@@ -110,6 +111,7 @@ import { VincularUnidadDialog } from './vincular-unidad-dialog';
     Tabs,
     VincularUnidadDialog,
     ViewStateHost,
+    SpaceOpsTab,
   ],
   templateUrl: './space-detail.html',
   styleUrl: './space-detail.css',

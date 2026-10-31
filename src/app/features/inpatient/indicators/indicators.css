@@ -1,0 +1,9 @@
+:host { display: block; }
+.indicators { display: block; inline-size: 100%; margin-inline: auto; margin-block-start: var(--sp-4); }
+.indicators__range { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); margin-block-end: var(--sp-4); }
+.indicators__kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-3); margin: var(--sp-4) 0; padding: 0; list-style: none; }
+.indicators__check { display: grid; gap: var(--sp-2); margin-block-end: var(--sp-4); padding: var(--sp-4); border: 1px solid var(--border-default); border-radius: var(--r-md); background: var(--bg-surface-alt); }
+.indicators__check p { margin: 0; }
+.indicators__title { margin: 0; font-size: var(--fs-h3); }
+.indicators__muted { display: block; color: var(--text-muted); font-size: var(--fs-caption); }
+.indicators__missing { display: flex; flex-wrap: wrap; gap: var(--sp-3); }

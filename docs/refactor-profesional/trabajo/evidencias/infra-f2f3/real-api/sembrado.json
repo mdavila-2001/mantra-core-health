@@ -1,0 +1,275 @@
+{
+  "tag": "WMVWBE6G9",
+  "api": "http://localhost:3000",
+  "hospital": "6a5d02c2-40c5-4da9-9b81-a03fb985e143",
+  "duena": {
+    "email": "wmvwbe6g9-duena@example.test",
+    "userId": "24830955-86d5-416b-b4fa-9bb41da0de1d"
+  },
+  "practica": "1cb923af-1dff-4b7a-9e44-834025e037b6",
+  "sede": "7a8bd818-0a6a-45a3-99df-6ac60b5b5a5a",
+  "unidad": "4565da47-f25a-49a0-8f9c-0937b81cacbb",
+  "edificio": "bf1dadba-cf4e-445f-be32-0aadb18b1f6b",
+  "habitacion": "f44eb871-3317-4476-95d5-1150af701371",
+  "camas": [
+    {
+      "id": "0d25aed4-57e7-4110-a075-eb6d3573795f",
+      "code": "CE6G9-A"
+    },
+    {
+      "id": "b10f1225-5518-43d9-9084-3540ef380774",
+      "code": "CE6G9-B"
+    },
+    {
+      "id": "a4fb85c0-bb1a-47ad-ae78-dfb38234a507",
+      "code": "CE6G9-C"
+    }
+  ],
+  "personal": {
+    "enfermeria": {
+      "email": "wmvwbe6g9-enfermeria@example.test",
+      "userId": "94dc26e4-1e94-42ef-ba3b-77d9f3fce40e",
+      "membershipId": "d49b3f77-1883-4213-ac0d-e37b27bbc1b4",
+      "roles": [
+        "NURSE"
+      ]
+    },
+    "supervision": {
+      "email": "wmvwbe6g9-supervision@example.test",
+      "userId": "d8c8a1fb-a345-4e91-8a0b-2c7d9458464f",
+      "membershipId": "e7713028-f1b8-4736-a9d0-e05c2c50836e",
+      "roles": [
+        "NURSE",
+        "NURSE_SUPERVISOR"
+      ]
+    },
+    "admision": {
+      "email": "wmvwbe6g9-admision@example.test",
+      "userId": "9d83626e-2103-48f9-87af-1756481719af",
+      "membershipId": "30a25466-5137-4c6e-a5e1-a426992ff62c",
+      "roles": [
+        "ADMISSION"
+      ]
+    },
+    "limpieza": {
+      "email": "wmvwbe6g9-limpieza@example.test",
+      "userId": "5f7f0490-05b9-46fb-b4c1-0afaa1405583",
+      "membershipId": "9df60e80-a8ab-4f78-9b75-0cda1a565e74",
+      "roles": [
+        "HOUSEKEEPING"
+      ]
+    },
+    "suplimpieza": {
+      "email": "wmvwbe6g9-suplimpieza@example.test",
+      "userId": "edd7957f-80b9-446f-8cc3-c7e5f16568d4",
+      "membershipId": "21f0d1ee-b2f2-4566-8d4a-3f3e279c6323",
+      "roles": [
+        "HOUSEKEEPING",
+        "HOUSEKEEPING_SUPERVISOR"
+      ]
+    },
+    "mantenimiento": {
+      "email": "wmvwbe6g9-mantenimiento@example.test",
+      "userId": "c90b22aa-7ac8-4f4d-a1f1-54d25d58acb3",
+      "membershipId": "bb3930a3-97c9-45a7-8d74-f9b1169d6e56",
+      "roles": [
+        "MAINTENANCE"
+      ]
+    }
+  },
+  "log": [
+    {
+      "method": "POST",
+      "path": "/iam/auth/login",
+      "status": 200,
+      "requestId": "30538dff-254b-45e7-a511-df072b0e3731"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "4aecf9eb-6259-45ff-83a1-d033f224f67b"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/login",
+      "status": 200,
+      "requestId": "fa6d40fd-064e-4fa5-8423-d999e4ee04ca"
+    },
+    {
+      "method": "POST",
+      "path": "/practices",
+      "status": 201,
+      "requestId": "bb571af7-a1c0-4e6b-883d-d1d7e83e7fac"
+    },
+    {
+      "method": "POST",
+      "path": "/practices/1cb923af-1dff-4b7a-9e44-834025e037b6/sites",
+      "status": 201,
+      "requestId": "6c387734-c280-4c1b-9d04-92f5c3e07be4"
+    },
+    {
+      "method": "POST",
+      "path": "/sites/7a8bd818-0a6a-45a3-99df-6ac60b5b5a5a/care-spaces",
+      "status": 201,
+      "requestId": "48b560e8-4051-49ef-b3cc-e7fb3c57ac55"
+    },
+    {
+      "method": "POST",
+      "path": "/sites/7a8bd818-0a6a-45a3-99df-6ac60b5b5a5a/care-spaces",
+      "status": 201,
+      "requestId": "aa9b38b5-2b21-43a5-96c4-3f2c3f515764"
+    },
+    {
+      "method": "POST",
+      "path": "/sites/7a8bd818-0a6a-45a3-99df-6ac60b5b5a5a/care-spaces/bulk",
+      "status": 201,
+      "requestId": "33d2fbba-d510-44f1-a922-dde1eda9eda7"
+    },
+    {
+      "method": "POST",
+      "path": "/sites/7a8bd818-0a6a-45a3-99df-6ac60b5b5a5a/clinical-units",
+      "status": 201,
+      "requestId": "a7026bc6-710d-4a0c-b402-62567874cc48"
+    },
+    {
+      "method": "POST",
+      "path": "/care-spaces/0d25aed4-57e7-4110-a075-eb6d3573795f/unit-assignments",
+      "status": 201,
+      "requestId": "a57d94af-96f9-4140-9472-a75c1117173a"
+    },
+    {
+      "method": "POST",
+      "path": "/care-spaces/b10f1225-5518-43d9-9084-3540ef380774/unit-assignments",
+      "status": 201,
+      "requestId": "186b6dc6-c203-4a58-b738-4133e8198047"
+    },
+    {
+      "method": "POST",
+      "path": "/care-spaces/a4fb85c0-bb1a-47ad-ae78-dfb38234a507/unit-assignments",
+      "status": 201,
+      "requestId": "6ec401f2-03cd-43ff-b889-2a33b10d4684"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "23f815f8-5ffe-4d2a-845c-7756d53dcdd3"
+    },
+    {
+      "method": "POST",
+      "path": "/tenants/6a5d02c2-40c5-4da9-9b81-a03fb985e143/memberships",
+      "status": 201,
+      "requestId": "185e3f58-a280-4234-afdc-e545d2a45360"
+    },
+    {
+      "method": "POST",
+      "path": "/org/d49b3f77-1883-4213-ac0d-e37b27bbc1b4/user-assignments",
+      "status": 201,
+      "requestId": "17e76c4d-11d0-4a20-94cc-c531ee03ea4c"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "3a04f067-43c9-4a78-afd0-af5e8e447796"
+    },
+    {
+      "method": "POST",
+      "path": "/tenants/6a5d02c2-40c5-4da9-9b81-a03fb985e143/memberships",
+      "status": 201,
+      "requestId": "6abdc315-39dd-454b-9d8b-2f828ff9d089"
+    },
+    {
+      "method": "POST",
+      "path": "/org/e7713028-f1b8-4736-a9d0-e05c2c50836e/user-assignments",
+      "status": 201,
+      "requestId": "ba37126f-be6f-42f4-a1b3-48f5d60ff9e1"
+    },
+    {
+      "method": "POST",
+      "path": "/org/e7713028-f1b8-4736-a9d0-e05c2c50836e/user-assignments",
+      "status": 201,
+      "requestId": "8f290d75-da0d-4b13-a1bf-b62230913ca2"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "504508e6-bef4-4364-b708-2a96565a828d"
+    },
+    {
+      "method": "POST",
+      "path": "/tenants/6a5d02c2-40c5-4da9-9b81-a03fb985e143/memberships",
+      "status": 201,
+      "requestId": "b8da6c9b-2bd7-4223-9334-23d97325cbd1"
+    },
+    {
+      "method": "POST",
+      "path": "/org/30a25466-5137-4c6e-a5e1-a426992ff62c/user-assignments",
+      "status": 201,
+      "requestId": "dac04285-5dfe-496b-9a4f-8ba2a7327750"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "988090a4-5ff1-4e22-8b8d-9d2027849469"
+    },
+    {
+      "method": "POST",
+      "path": "/tenants/6a5d02c2-40c5-4da9-9b81-a03fb985e143/memberships",
+      "status": 201,
+      "requestId": "7d82d442-71e2-4e5e-8b0c-3bf2f0ef7294"
+    },
+    {
+      "method": "POST",
+      "path": "/org/9df60e80-a8ab-4f78-9b75-0cda1a565e74/user-assignments",
+      "status": 201,
+      "requestId": "0f71c734-417c-4018-b823-f7f1fd14d6ef"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "4b3890dc-2e34-4fb4-9a7b-a38c5264ab71"
+    },
+    {
+      "method": "POST",
+      "path": "/tenants/6a5d02c2-40c5-4da9-9b81-a03fb985e143/memberships",
+      "status": 201,
+      "requestId": "315d7baf-88f6-46a0-b986-d5c6f5f32f9b"
+    },
+    {
+      "method": "POST",
+      "path": "/org/21f0d1ee-b2f2-4566-8d4a-3f3e279c6323/user-assignments",
+      "status": 201,
+      "requestId": "79f65ae1-2b7f-4b8a-be84-3cf247d357c4"
+    },
+    {
+      "method": "POST",
+      "path": "/org/21f0d1ee-b2f2-4566-8d4a-3f3e279c6323/user-assignments",
+      "status": 201,
+      "requestId": "924bb32f-c6ef-4193-8ec6-372e3cd5c075"
+    },
+    {
+      "method": "POST",
+      "path": "/iam/auth/register-organization",
+      "status": 201,
+      "requestId": "ebf2e26e-e841-40db-a93b-9a50222b7e50"
+    },
+    {
+      "method": "POST",
+      "path": "/tenants/6a5d02c2-40c5-4da9-9b81-a03fb985e143/memberships",
+      "status": 201,
+      "requestId": "9859779e-0a58-48e6-9911-8387afda943e"
+    },
+    {
+      "method": "POST",
+      "path": "/org/bb3930a3-97c9-45a7-8d74-f9b1169d6e56/user-assignments",
+      "status": 201,
+      "requestId": "16c54cd6-1d2a-4d58-ac6e-72ce4555d537"
+    }
+  ],
+  "consultorio": "046ece5c-945e-4b85-804d-2cfd4e512872"
+}

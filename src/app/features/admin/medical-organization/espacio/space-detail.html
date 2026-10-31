@@ -147,6 +147,13 @@
             </app-view-state-host>
           </div>
         </app-tab>
+
+        <!-- F2: ejes operativos, bloqueos e historial A20 (componente de internación). -->
+        <app-tab label="Operación">
+          @if (pestana() === 5) {
+            <app-space-ops-tab [careSpaceId]="e.id" />
+          }
+        </app-tab>
       </app-tabs>
     </app-card>
 
