@@ -25,12 +25,12 @@ describe('ResourceTimeline', () => {
   }
 
   it('ubica cada segmento en % del día visible y sombrea la ventana reservada', () => {
-    const el = render();
-    const band = el.querySelector<HTMLElement>('[data-testid=timeline-band]')!;
+    const host = render();
+    const band = host.querySelector<HTMLElement>('[data-testid=timeline-band]')!;
     // 08:00 sobre 07–19 = 1/12 ≈ 8,33 %, 6 h = 50 %.
     expect(parseFloat(band.style.left)).toBeCloseTo(8.333, 2);
     expect(parseFloat(band.style.width)).toBeCloseTo(50, 2);
-    const item = el.querySelector<HTMLElement>('[data-testid=timeline-item]')!;
+    const item = host.querySelector<HTMLElement>('[data-testid=timeline-item]')!;
     const core = item.querySelector<HTMLElement>('.resource-timeline__core')!;
     // Ventana 08:40–10:30 (110 min); el caso empieza 20 min adentro y dura 60.
     expect(parseFloat(core.style.left)).toBeCloseTo((20 / 110) * 100, 2);
@@ -38,15 +38,15 @@ describe('ResourceTimeline', () => {
   });
 
   it('cada segmento tiene texto accesible y el que tiene ruta es un enlace', () => {
-    const el = render();
-    const link = el.querySelector<HTMLAnchorElement>('[data-testid=timeline-item] a')!;
+    const host = render();
+    const link = host.querySelector<HTMLAnchorElement>('[data-testid=timeline-item] a')!;
     expect(link.getAttribute('aria-label')).toBe('CX-1 con preparación y limpieza');
-    expect(el.querySelector('[data-testid=timeline-band]')!.textContent).toContain('Bloque de Traumatología');
+    expect(host.querySelector('[data-testid=timeline-band]')!.textContent).toContain('Bloque de Traumatología');
   });
 
   it('la lista alternativa trae lo mismo, en orden', () => {
-    const el = render();
-    const text = el.querySelector('.resource-timeline__list')!.textContent ?? '';
+    const host = render();
+    const text = host.querySelector('.resource-timeline__list')!.textContent ?? '';
     expect(text).toContain('08:00–14:00');
     expect(text).toContain('09:00–10:00');
     expect(text.indexOf('08:00–14:00')).toBeLessThan(text.indexOf('09:00–10:00'));
