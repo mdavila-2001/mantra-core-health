@@ -161,7 +161,7 @@
                 <!-- La cifra se está leyendo: se dice, en el mismo lugar. -->
                 <span
                   class="consulta__casilla-cantidad consulta__casilla-cantidad--pendiente"
-                  [attr.data-testid]="casilla.testId + '-contando'"
+                  [attr.data-testid]="casilla.testId + '-counting'"
                 >
                   Contando…
                 </span>
@@ -169,7 +169,7 @@
                 <!-- Sin lectura no hay cifra; un cero sería falso. -->
                 <span
                   class="consulta__casilla-cantidad consulta__casilla-cantidad--fallida"
-                  [attr.data-testid]="casilla.testId + '-sin-cifra'"
+                  [attr.data-testid]="casilla.testId + '-uncounted'"
                 >
                   No se pudo contar
                 </span>
