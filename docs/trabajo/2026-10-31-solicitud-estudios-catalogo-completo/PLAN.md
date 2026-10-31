@@ -33,7 +33,7 @@ Cada una tiene un responsable de confirmación; mientras no se desdiga, **se imp
 | D6 | **El visor 3D gana `focus`, `pickedAt` y `hoverLabel`** (retrocompatibles; el glosario no cambia). Sin `focus` el select no puede enfocar el 3D | Lo exige el pedido | — |
 | D7 | **Tipo con `app-segmented-control`: Laboratorio · Imagenología · Otros** (cardiología, patología, procedimientos). El tipo **filtra** el catálogo; la categoría que viaja a la API sigue saliendo del estudio (no vuelve «hemograma como imagen») | Invariante vigente `study-category.ts:304-311` | — |
 | D8 | **El receptor pasa a una bandeja real** (`POST /diagnostics/service-requests/worklist`, `scope LAB\|IMAGING`, estados derivados de datos reales) que reemplaza `/diagnostics/lab/orders` del simulador. Mapeo de estados: `PENDING→Borrador`, `RECEIVED→Recibida`, `IN_PROCESS→Procesada`, `REPORTED→Subidos`, `CANCELLED/REJECTED` | La API real no tiene el ciclo del simulador y hay que verlo «al recibir» | Front + API |
-| D9 | **Ejecutor obligatorio para LAB e IMAGING**: el `app-performer-selector` (hoy sólo procedimientos) se ofrece también para laboratorio e imagen; sin `performer_tenant_id` la orden no llega a nadie. `SR_PERF_PATIENT_CHOICE` queda permitido y se declara que esa orden no aparece en bandeja hasta que el paciente elija (fuera de alcance) | Hecho F de `hallazgos-api-modelo.md` §2.3 | Producto |
+| D9 | **CORREGIDA (31/10, tras leer el código).** La recomendación del médico sobre dónde hacerse el estudio **no** concede acceso al centro, por diseño (`performer-selector.rules.ts:128`, `diagram_08_clinical.puml`: `performer_tenant_id` es la única columna que da acceso y la API no la asigna después). El front ofrece el selector de ejecutor también para laboratorio e imagen como *recomendación*, pero NO manda `performerTenantId`. Que la orden llegue a la bandeja de un centro exige que **el paciente** (o un flujo con consentimiento) lo dirija: eso no existe hoy y es una decisión de producto/seguridad, no de este plan | Mantener el control de acceso; no saltarlo | **Usuario (decisión abierta, ver §8)** |
 | D10 | **Antiduplicación** con clave `(código, región, lateralidad)` en imagen y `(código) + conjunto de componentes` en laboratorio: pedir componentes **no cubiertos** por el informe previo no es duplicado | Evita falso positivo mano izq/der | API |
 | D11 | **Tipo de hueso** se deriva en lectura del `is_a` de UBERON cuando existe; no se persiste ni se escribe a mano | Regla 97.5.2 | — |
 | D12 | **Sin backfill.** Expand-only: columnas nulas y tabla nueva. Contracción (obligatoriedad) en una franja posterior | Regla 97 | — |
@@ -150,7 +150,7 @@ Integración (serie, después de A–E): A monta B, C, D y E; luego Playwright y
 | Visor 3D pesado dentro del modal de consulta | Carga lenta | `@defer (on viewport)`, sólo en Imagenología; GLB por capa bajo demanda |
 | Bucle 3D ⇄ select | Parpadeo / cuelgue | única fuente de verdad (`value`), derivadas con `computed`, spec que cuenta emisiones |
 | Techos de líneas ya en rojo | `check-max-lines` empeora | extracción del histórico primero; archivos nuevos; `*.data.ts` |
-| Órdenes sin ejecutor | Nunca llegan a bandeja | D9; mensaje en pantalla cuando se elige «el paciente elige» |
+| Órdenes sin `performer_tenant_id` | No llegan a ninguna bandeja de receptor, **por diseño de acceso** | D9 corregida; falta el flujo con consentimiento que dirige la orden (decisión del usuario); aviso `estudios-sin-ejecutor` en pantalla |
 | Copia de parches desfasada | Parche en `dev` y no en Coolify | H1.M1 antes de v4.2.80 |
 | Antiduplicación vieja | 422 falsos | V10 antes de habilitar región |
 | Simulador ≠ API | Verdes falsos | Playwright final contra API real en `dev` además de maqueta; declarar lo que no se probó |
@@ -159,6 +159,6 @@ Integración (serie, después de A–E): A monta B, C, D y E; luego Playwright y
 ## 8. Lo único que requiere al usuario
 Se adoptaron valores por defecto (sección 3); confirmar o corregir **sin bloquear el inicio de H0–H1**:
 1. D1 (adoptar el catálogo verificado con enlace LOINC/RadLex y superar la nota «no LOINC»).
-2. D9 (el médico elige el laboratorio/centro al pedir, también para laboratorio e imagen).
+2. **D9 corregida — decisión de producto/seguridad:** ¿cómo llega una orden de laboratorio o imagen al centro que la va a ejecutar? Hoy sólo si `performer_tenant_id` está puesto, y nada lo pone después del alta. Opciones: (a) el paciente elige el centro desde el marketplace y se asigna con su consentimiento; (b) el médico asigna el centro al pedir, con consentimiento del paciente registrado; (c) el centro la reclama por código/QR que el paciente le muestra. Mientras no se decida, el receptor sólo ve las órdenes que ya traen ejecutor (las del simulador).
 3. D3 (componentes vienen todos marcados y el médico desmarca; sin componentes no se pide).
 4. Quién revisa clínicamente `PENDIENTES-CLINICOS.md` (nombre/rol) antes de que esos ítems se siembren como válidos.
