@@ -21,7 +21,7 @@
   }
 
   @if (scope.pharmacyId() !== null) {
-    <app-card class="import" padding="lg" data-testid="import-card">
+    <div class="import" data-testid="import-card">
       <div class="import__panel">
         <app-stepper [steps]="steps()" label="Pasos de la importación" />
 
@@ -299,6 +299,13 @@
                     <p><strong>{{ previewCounts().unchanged }}</strong> sin cambios</p>
                     <p><strong>{{ previewCounts().rejected }}</strong> rechazadas por el servidor</p>
                   </div>
+                  @if (previewWarned() > 0) {
+                    <app-alert tone="warning" data-testid="import-preview-warned">
+                      {{ previewWarned() }} {{ previewWarned() === 1 ? 'fila se cargaría' : 'filas se cargarían' }}
+                      con un aviso: un producto que pide receta sin medicamento vinculado no aparece en
+                      ninguna receta. Agregue la columna «medicamento» o vincúlelo después desde su ficha.
+                    </app-alert>
+                  }
                   @if (previewCounts().rejected > 0) {
                     <app-data-table
                       caption="Filas que el servidor rechazaría, con el motivo"
@@ -356,7 +363,11 @@
               <button
                 app-button
                 type="button"
-                [disabled]="readyRows().length === 0 || serverPreview().status === 'loading'"
+                [disabled]="
+                  readyRows().length === 0 ||
+                  serverPreview().status === 'loading' ||
+                  serverPreview().status === 'failed'
+                "
                 (clicked)="publish()"
                 data-testid="import-publish"
               >
@@ -461,7 +472,7 @@
           }
         }
       </div>
-    </app-card>
+    </div>
   }
 </app-view-state-host>
 

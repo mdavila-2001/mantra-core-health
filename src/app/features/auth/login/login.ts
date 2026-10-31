@@ -12,6 +12,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../core/auth/auth.service';
 import { TENANT_SELECTION_ROUTE } from '../../../core/auth/auth.guard';
+import { MFA_ENROLLMENT_ROUTE } from '../../../core/auth/mfa-enrollment-route';
 import { rolesAlcanzan } from '../../../core/navigation/navigation.types';
 import { GETTING_STARTED_ROUTE } from '../../admin/getting-started/getting-started.routes';
 import {
@@ -33,6 +34,9 @@ import { AuthSplit } from '../../../shared/components/organisms/auth-split/auth-
 import { AnnounceOnAppear } from '../../../shared/a11y/announce-on-appear';
 import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
+import { loginPolicyOutcome } from './login-policy-reasons';
+import { markPageAsNoIndex } from '../../prescription-share/no-index';
+import { isShareTokenRoute } from '../../prescription-share/share-return-url';
 
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
@@ -136,6 +140,11 @@ export class Login {
 
   constructor() {
     afterNextRender(() => this.localHint.set(localLoginHint()));
+    // Desde «Soy farmacia» el `returnUrl` lleva el token de la receta: con la
+    // política general, cada petición de esta pantalla lo mandaría en su `Referer`.
+    if (isShareTokenRoute(this.retornoPedido())) {
+      markPageAsNoIndex();
+    }
   }
 
   /** Rellena el formulario con la cuenta local; no envía: entrar sigue siendo un clic. */
@@ -197,10 +206,31 @@ export class Login {
     void this.router.navigateByUrl(this.destinoDespuesDeEntrar());
   }
 
-  /** El destino que corresponde a esta sesión. */
+  /**
+   * El destino que corresponde a esta sesión.
+   *
+   * Si una política de la organización exige el segundo paso y la cuenta no lo
+   * tiene, la API **deja entrar** (`mfaEnrollmentRequired`): lo primero es darlo de
+   * alta, y la aplicación queda restringida hasta entonces. Al terminar se vuelve
+   * al destino que habría correspondido.
+   */
   private destinoDespuesDeEntrar(): string {
+    // Con el token de alcance limitado no hay organizaciones que mirar (el token no las trae): se vuelve al destino pedido o al
+    // inicio, y el destino real lo decide el token completo que se emite al confirmar el factor.
+    if (this.auth.mfaEnrollmentRequired()) {
+      return `${MFA_ENROLLMENT_ROUTE}?returnUrl=${encodeURIComponent(this.retornoPedido() ?? '/')}`;
+    }
+    return this.destinoNormal();
+  }
+
+  private destinoNormal(): string {
     if (this.auth.needsTenantSelection()) {
-      return TENANT_SELECTION_ROUTE;
+      // El enlace pedido viaja a la elección de organización y se usa después
+      // de elegir: la farmacia que escaneó una receta vuelve a ella.
+      const requested = this.retornoPedido();
+      return requested === null
+        ? TENANT_SELECTION_ROUTE
+        : `${TENANT_SELECTION_ROUTE}?returnUrl=${encodeURIComponent(requested)}`;
     }
     if (this.auth.tenants().length === 0) {
       return rolesAlcanzan(['SUPERADMIN'], this.auth.roles())
@@ -237,8 +267,9 @@ export class Login {
    * como host externo aunque parezca una ruta—. Tampoco se acepta `/\`, que
    * varios navegadores normalizan igual que `//`.
    *
-   * Se ignora cuando hay que elegir organización o cuando no hay ninguna: en
-   * los dos casos el destino no es negociable.
+   * Cuando hay que elegir organización pasa a esa pantalla, que lo usa después
+   * de la elección. Se ignora cuando no hay ninguna: ahí el destino no es
+   * negociable.
    */
   private retornoPedido(): string | null {
     const pedido = this.route.snapshot.queryParamMap.get('returnUrl');
@@ -261,18 +292,13 @@ export class Login {
   private toState(error: unknown): ViewState<null> {
     if (error instanceof HttpErrorResponse) {
       const body = readApiError(error);
-      const reason = body?.details?.['reason'];
-      if (body?.code === 'UNAUTHENTICATED' && (reason === 'MFA_REQUIRED' || reason === 'MFA_INVALID')) {
-        this.mfaRequired.set(true);
-        return validation([
-          {
-            message:
-              reason === 'MFA_REQUIRED'
-                ? 'Ingrese el código de verificación de su aplicación de autenticación.'
-                : 'El código de verificación no es válido. Revíselo y vuelva a intentar.',
-            code: body.code,
-          },
-        ]);
+      // La política de sesión de la organización: pide el código o bloquea la
+      // entrada con una razón que se le explica a la persona. Ver
+      // `login-policy-reasons.ts`.
+      const politica = loginPolicyOutcome(body?.details?.['reason']);
+      if (body !== null && politica !== null) {
+        this.mfaRequired.set(politica.kind === 'ask-code');
+        return validation([{ message: politica.message, code: body.code }]);
       }
       if (body?.code === 'UNAUTHENTICATED') {
         return validation([{ message: 'Las credenciales no son válidas.', code: body.code }]);

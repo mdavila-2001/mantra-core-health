@@ -74,6 +74,8 @@ export interface ProductFields {
   readonly presentacion: string;
   /** `''` = no se declara; si no, sí/no en cualquiera de sus grafías. */
   readonly receta: string;
+  /** El medicamento como figura en la receta; lo resuelve el servidor. Opcional. */
+  readonly medicamento?: string;
   readonly cadenaDeFrio: string;
   /** El GTIN impreso bajo el código de barras. Opcional. */
   readonly codigoDeBarras: string;
@@ -92,13 +94,14 @@ export interface ProductFields {
   readonly disponible: string;
 }
 
-export const EMPTY_FIELDS: ProductFields = {
+export const EMPTY_FIELDS: Required<ProductFields> = {
   codigo: '',
   marca: '',
   generico: '',
   concentracion: '',
   presentacion: '',
   receta: '',
+  medicamento: '',
   cadenaDeFrio: '',
   codigoDeBarras: '',
   precio: '',
@@ -235,6 +238,7 @@ export function reviewProduct(
           ...(concentracion === '' ? {} : { strengthText: concentracion }),
           ...(presentacion === '' ? {} : { packageSizeText: presentacion }),
           ...(receta === null || receta === 'invalido' ? {} : { requiresPrescription: receta }),
+          ...(campos.medicamento?.trim() ? { medicationName: campos.medicamento.trim() } : {}),
         };
 
   return {
@@ -417,6 +421,12 @@ export const CSV_COLUMNS: readonly CsvColumn[] = [
     campo: 'receta',
     alias: ['requiere_receta', 'venta_bajo_receta'],
     descripcion: 'sí / no.',
+  },
+  {
+    encabezado: 'medicamento',
+    campo: 'medicamento',
+    alias: ['medicamento_de_la_receta', 'farmaco', 'medication'],
+    descripcion: 'Como figura en la receta. Si no coincide, la fila se rechaza en la vista previa.',
   },
   {
     encabezado: 'cadena_frio',
@@ -715,6 +725,7 @@ export const FIELD_LABELS: Readonly<Record<keyof ProductFields, string>> = {
   concentracion: 'Concentración',
   presentacion: 'Presentación',
   receta: 'Venta bajo receta',
+  medicamento: 'Medicamento de la receta',
   cadenaDeFrio: 'Cadena de frío',
   codigoDeBarras: 'Código de barras (GTIN)',
   precio: 'Precio de venta (Bs)',
@@ -723,48 +734,4 @@ export const FIELD_LABELS: Readonly<Record<keyof ProductFields, string>> = {
   disponible: 'Disponibilidad',
 };
 
-/** Tres filas de ejemplo para la plantilla: una con cada caso típico. */
-export const EXAMPLE_ROWS: readonly ProductFields[] = [
-  {
-    codigo: 'PAR-500-20',
-    marca: 'Paracetamol Ejemplo',
-    generico: 'Paracetamol',
-    concentracion: '500 mg',
-    presentacion: 'Caja x 20 comprimidos',
-    receta: 'no',
-    cadenaDeFrio: 'no',
-    codigoDeBarras: '',
-    precio: '18,50',
-    categoria: 'Medicamentos',
-    descripcion: 'Analgésico y antifebril de venta libre.',
-    disponible: 'sí',
-  },
-  {
-    codigo: 'AMX-500-21',
-    marca: '',
-    generico: 'Amoxicilina',
-    concentracion: '500 mg',
-    presentacion: 'Caja x 21 cápsulas',
-    receta: 'sí',
-    cadenaDeFrio: 'no',
-    codigoDeBarras: '',
-    precio: '42',
-    categoria: 'Medicamentos',
-    descripcion: '',
-    disponible: 'agotado',
-  },
-  {
-    codigo: 'INS-NPH-10',
-    marca: 'Insulina Ejemplo NPH',
-    generico: 'Insulina humana isofánica',
-    concentracion: '100 UI/ml',
-    presentacion: 'Frasco de 10 ml',
-    receta: 'sí',
-    cadenaDeFrio: 'sí',
-    codigoDeBarras: '',
-    precio: '185',
-    categoria: 'Medicamentos',
-    descripcion: 'Mantener refrigerado entre 2 y 8 °C.',
-    disponible: '12',
-  },
-];
+export { EXAMPLE_ROWS } from './catalog-example-rows';

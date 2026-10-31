@@ -111,6 +111,8 @@ export interface MedicationRequest {
   readonly prescriberProfileId?: string;
   readonly doseText?: string;
   readonly frequencyText?: string;
+  /** La cantidad que declara la receta, en la unidad que recetó el médico; ausente si no la declara. */
+  readonly quantityDecimal?: number;
   readonly validFrom?: Date;
   readonly validTo?: Date;
   /** Indicaciones al paciente impresas en la receta (Patch v4.1.3). */

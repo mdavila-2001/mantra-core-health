@@ -67,3 +67,40 @@
   color: var(--text-primary);
   overflow-wrap: anywhere;
 }
+
+.mappings__ambiguous,
+.mappings__ambiguous-products {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mappings__ambiguous {
+  margin-block-start: var(--sp-2);
+}
+
+.mappings__ambiguous-code,
+.mappings__ambiguous-products li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.mappings__ambiguous-products {
+  padding-inline-start: var(--sp-4);
+}
+
+.mappings__taken {
+  display: flex;
+  inline-size: fit-content;
+  margin-block-start: var(--sp-2);
+}
+
+/* La celda apila en columna: el badge no se estira a lo ancho. */
+.mappings__cell app-badge {
+  align-self: flex-start;
+}

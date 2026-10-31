@@ -1,0 +1,171 @@
+<app-card padding="lg" class="invitar" data-testid="invitar-secretaria">
+  <header class="invitar__cabeza">
+    <div class="invitar__texto">
+      <h2 class="invitar__titulo" id="invitar-titulo">Invitar a una secretaria</h2>
+      <p class="invitar__nota">
+        Escriba el documento de una secretaria registrada y elija dónde la va a necesitar. La invitación queda
+        pendiente: ella decide si acepta. Mientras tanto no puede actuar sobre su agenda.
+      </p>
+    </div>
+    @if (!abierto()) {
+      <button
+        app-button
+        type="button"
+        class="invitar__abrir"
+        (clicked)="abrir()"
+        data-testid="invitar-abrir"
+      >
+        Invitar a una secretaria
+      </button>
+    }
+  </header>
+
+  @if (exito(); as creada) {
+    <app-alert tone="success" title="Invitación enviada" tabindex="-1" data-testid="invitar-exito">
+      Se la enviamos a {{ invitada() }}. Queda pendiente hasta que ella responda; la verá en su lista de invitaciones
+      enviadas.
+      <div alert-actions class="invitar__acciones-alerta">
+        <button app-button size="sm" variant="outline" type="button" (clicked)="otra()" data-testid="invitar-otra">
+          Invitar a otra secretaria
+        </button>
+        <button app-button size="sm" variant="ghost" type="button" (clicked)="cerrar()" data-testid="invitar-cerrar">
+          Cerrar
+        </button>
+      </div>
+    </app-alert>
+  } @else if (abierto()) {
+    <form
+      class="invitar__form"
+      (submit)="$event.preventDefault(); enviar()"
+      novalidate
+      aria-labelledby="invitar-titulo"
+      data-testid="invitar-form"
+    >
+      <app-view-state-host
+        [state]="vinculaciones()"
+        (retry)="cargarVinculaciones()"
+        (refresh)="cargarVinculaciones()"
+      >
+        <div class="invitar__campos">
+          <app-form-field
+            label="Documento de identidad de la secretaria"
+            [required]="true"
+            hint="Con el que ella inicia sesión. Letras, dígitos, punto y guion."
+            [errorMessage]="errorDocumento()"
+          >
+            <app-input
+              [value]="documento()"
+              (valueChange)="cambiarDocumento($event)"
+              (blurred)="documentoTocado.set(true)"
+              [disabled]="enviando()"
+              [hasError]="errorDocumento() !== ''"
+              inputMode="text"
+              autocomplete="off"
+              testId="invitar-documento"
+            />
+          </app-form-field>
+
+          <app-form-field
+            label="Vinculación donde la va a necesitar"
+            [required]="true"
+            hint="El hospital donde ella lo asistirá."
+            [errorMessage]="errorVinculacion()"
+          >
+            <app-select
+              [options]="opciones()"
+              [value]="vinculacionId()"
+              (valueChange)="cambiarVinculacion($event)"
+              [disabled]="enviando()"
+              [hasError]="errorVinculacion() !== ''"
+              placeholder="Elija la vinculación"
+              data-testid="invitar-vinculacion"
+            />
+          </app-form-field>
+        </div>
+
+        @if (rechazoGeneral(); as fallo) {
+          <app-alert tone="error" title="No se envió la invitación" data-testid="invitar-error">
+            {{ fallo.mensaje }}
+            @if (fallo.requestId) {
+              <p class="invitar__codigo">
+                Código de soporte: <code class="tabular-nums">{{ fallo.requestId }}</code>
+              </p>
+            }
+            @if (fallo.reintentable) {
+              <div alert-actions>
+                <button
+                  app-button
+                  size="sm"
+                  variant="secondary"
+                  type="button"
+                  [disabled]="enviando() || esperando()"
+                  (clicked)="enviar()"
+                  data-testid="invitar-reintentar"
+                >
+                  Reintentar
+                </button>
+                @if (esperando()) {
+                  <p class="invitar__codigo" data-testid="invitar-espera">
+                    Podrá reintentar en unos segundos.
+                  </p>
+                }
+              </div>
+            }
+          </app-alert>
+        }
+
+        <div class="invitar__acciones">
+          <button
+            app-button
+            type="button"
+            variant="ghost"
+            [disabled]="enviando()"
+            (clicked)="cerrar()"
+            data-testid="invitar-cancelar"
+          >
+            Cancelar
+          </button>
+          <button
+            app-button
+            type="submit"
+            [isLoading]="enviando()"
+            [disabled]="enviando()"
+            data-testid="invitar-enviar"
+          >
+            Enviar invitación
+          </button>
+        </div>
+      </app-view-state-host>
+
+      @if (vinculaciones().status !== 'ready') {
+        <div class="invitar__acciones">
+          <button app-button type="button" variant="ghost" (clicked)="cerrar()" data-testid="invitar-cancelar-sin-datos">
+            Cerrar
+          </button>
+        </div>
+      }
+    </form>
+  }
+
+  @if (sent().length > 0) {
+    <section class="enviadas" aria-labelledby="enviadas-titulo" data-testid="invitaciones-enviadas">
+      <h3 class="enviadas__titulo" id="enviadas-titulo">Invitaciones enviadas</h3>
+      <p class="invitar__nota">Esperan la respuesta de la secretaria. Usted no tiene que hacer nada.</p>
+      <ul class="enviadas__lista" role="list">
+        @for (m of sent(); track clave(m)) {
+          <li class="enviadas__fila" [attr.data-testid]="'invitacion-enviada-' + clave(m)">
+            <div class="enviadas__quien">
+              <span class="enviadas__nombre">{{ m.personName || 'Una secretaria' }}</span>
+              <span class="invitar__nota">
+                {{ m.organizationName || 'Hospital' }} · enviada el {{ fecha(enviadaEl(m)) }}
+              </span>
+            </div>
+            <app-badge variant="warning" [attr.data-testid]="'invitacion-estado-' + clave(m)">
+              Espera su respuesta
+            </app-badge>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</app-card>

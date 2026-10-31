@@ -107,6 +107,25 @@ describe('ReferralDetail', () => {
     expect(byTestId('referral-cancel')).not.toBeNull();
   });
 
+  it('mientras se registra la llegada, el formulario es la única acción a la vista', () => {
+    create({
+      ...INCOMING,
+      transfer: { required: true, transportMode: 'PRIVATE_VEHICLE', departureCondition: 'STABLE' },
+    } as Referral);
+    expect(byTestId('referral-accept')).not.toBeNull();
+
+    byTestId('referral-arrival-start')!.click();
+    fixture.detectChanges();
+    expect(byTestId('referral-arrival-form')).not.toBeNull();
+    expect(byTestId('referral-accept')).toBeNull();
+    expect(byTestId('referral-cancel')).toBeNull();
+
+    byTestId('referral-arrival-back')!.click();
+    fixture.detectChanges();
+    expect(byTestId('referral-accept')).not.toBeNull();
+    expect(byTestId('referral-cancel')).not.toBeNull();
+  });
+
   it('aceptar manda ACCEPT y avisa con la derivación del servidor', async () => {
     create(INCOMING);
     let changed: Referral | null = null;

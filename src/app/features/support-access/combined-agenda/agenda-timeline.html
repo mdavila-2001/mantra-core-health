@@ -1,0 +1,79 @@
+<div #scroller class="linea" role="region" tabindex="0" [attr.aria-label]="ariaLabel()" data-scroll data-testid="agenda-linea">
+  <div class="linea__cabeza">
+    <div class="linea__esquina">
+      <span class="linea__esquina-titulo">{{ rowKind() }}</span>
+      <span class="linea__esquina-sub">Ocupación general: {{ allOccupancy().percent }} %</span>
+    </div>
+    <div class="linea__eje" [style.inline-size.px]="totalWidth()">
+      @if (days().length > 1) {
+        @for (dia of dayHeads(); track dia.key) {
+          <span class="linea__dia" [class.linea__dia--hoy]="dia.today" [style.left.px]="dia.left" [style.inline-size.px]="dayWidth()">{{ dia.label }}</span>
+        }
+      }
+      @for (hora of hours(); track hora.left) {
+        <span class="linea__hora" [style.left.px]="hora.left" [class.linea__hora--abajo]="days().length > 1">{{ hora.label }}</span>
+      }
+      <div class="linea__calor" role="img" [attr.aria-label]="'Ocupación por hora. ' + allOccupancy().percent + ' % en total.'">
+        @for (celda of heat(); track celda.dayIndex + '-' + celda.hour) {
+          <span
+            class="calor"
+            [attr.data-nivel]="celda.level"
+            [style.left.px]="heatLeft(celda)"
+            [style.inline-size.px]="60 * pxPerMinute()"
+            [attr.title]="heatLabel(celda)"
+          >{{ celda.level === 0 || tiny() ? '' : celda.percent + '%' }}</span>
+        }
+      </div>
+    </div>
+  </div>
+
+  @for (fila of rows(); track fila.key) {
+    <div class="linea__fila" role="group" [attr.aria-label]="fila.label + ', ' + fila.occupancy.percent + ' % ocupado'" [attr.data-testid]="'fila-' + fila.key">
+      <div class="linea__rotulo">
+        <span class="linea__nombre">{{ fila.label }}</span>
+        @if (fila.sub) {
+          <span class="linea__detalle">{{ fila.sub }}</span>
+        }
+        <span class="linea__ocupacion">
+          <span
+            class="medidor"
+            role="meter"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="fila.occupancy.percent"
+            [attr.aria-label]="'Ocupación de ' + fila.label"
+          >
+            <span class="medidor__relleno" [style.inline-size.%]="fila.occupancy.percent"></span>
+          </span>
+          <span class="medidor__texto">{{ fila.occupancy.percent }} % · {{ fila.occupancy.bookedCount }} de {{ fila.occupancy.totalCount }}</span>
+        </span>
+      </div>
+      <div class="linea__pista" [style.inline-size.px]="totalWidth()" [style.block-size.px]="fila.height" [style.--dia-ancho.px]="dayWidth()" [style.--hora-ancho.px]="60 * pxPerMinute()">
+        @for (barra of fila.bars; track barra.event.id) {
+          <!-- El contenido y el nombre accesible los pone `app-agenda-event` en su propia plantilla. -->
+          <!-- eslint-disable-next-line @angular-eslint/template/elements-content -->
+          <button
+            app-agenda-event
+            [event]="barra.event"
+            [color]="color(barra.event)"
+            [multiOrg]="multiOrg() && !tiny()"
+            [compact]="true"
+            [tiny]="tiny()"
+            [selected]="selectedId() === barra.event.id"
+            [dragRole]="role(barra.event)"
+            [tooltip]="tip(barra.event)"
+            [style.left.px]="barra.left"
+            [style.top.px]="barTop(barra)"
+            [style.width.px]="barra.width"
+            [style.height.px]="barHeight()"
+            (click)="pick.emit(barra.event)"
+            (pointerdown)="eventPointerDown.emit({ event: $event, item: barra.event })"
+          ></button>
+        }
+        @if (nowLeft() !== null) {
+          <div class="linea__ahora" [style.left.px]="nowLeft()" aria-hidden="true"></div>
+        }
+      </div>
+    </div>
+  }
+</div>

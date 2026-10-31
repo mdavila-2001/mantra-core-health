@@ -1,3 +1,4 @@
+import type { ReferralTransferInput, TransferIssue } from '../../../../core/data-access/referrals/referral-transfer.types';
 import type {
   NewReferral,
   Referral,
@@ -9,9 +10,12 @@ import type {
 } from '../../../../core/data-access/referrals/referrals.types';
 import { REFERRAL_TYPES_WITH_CONSENT } from '../../../../core/data-access/referrals/referrals.types';
 import type { ConceptLabels } from '../../../../core/data-access/terminology/terminology.types';
+import { empty } from '../../../../core/view-state/view-state';
+import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { SelectOption } from '../../../../shared/components/atoms/select/select.types';
 import type { SegmentedOption } from '../../../../shared/components/molecules/segmented-control/segmented-control.types';
 import type { StatusSealVariant } from '../../../../shared/components/organisms/status-seal/status-seal.types';
+import { writeFailureParts, type FailureParts } from '../../write-message';
 
 /* ============================================================================
     Lo que el bloque de derivación dice en palabras. Separado del componente
@@ -39,6 +43,14 @@ const REFERRAL_TYPE_LABELS: Readonly<Record<ReferralType, string>> = {
 /** El rótulo del tipo, o «Sin tipo» en las filas anteriores al campo. */
 export function referralTypeLabel(type: ReferralType | undefined): string {
   return type === undefined ? 'Sin tipo' : REFERRAL_TYPE_LABELS[type];
+}
+
+/**
+ * El título de una fila: «Tipo · destino». Una fila anterior al tipo dice sólo
+ * el destino: «Sin tipo» como título se leía como un dato que falta cargar.
+ */
+export function referralHeading(type: ReferralType | undefined, target: string): string {
+  return type === undefined ? target : `${REFERRAL_TYPE_LABELS[type]} · ${target}`;
 }
 
 /** Ejemplo del servicio pedido según el tipo: es el placeholder del campo. */
@@ -132,7 +144,8 @@ export function isExpired(referral: Referral, today: Date = new Date()): boolean
 /** Una derivación ya resuelta para la lista. */
 export interface ReferralRow {
   readonly id: string;
-  readonly type: string;
+  /** «Tipo · destino», o sólo el destino en una fila anterior al tipo. */
+  readonly heading: string;
   readonly target: string;
   readonly service: string | null;
   readonly status: string;
@@ -154,10 +167,11 @@ export function toReferralRow(referral: Referral, labels: ConceptLabels): Referr
         ? undefined
         : STATUS_BY_CODE[concept.code]
       : STATUS_BY_API[referral.status];
+  const target = destinationOf(referral);
   return {
     id: referral.id,
-    type: referralTypeLabel(referral.referralType),
-    target: destinationOf(referral),
+    heading: referralHeading(referral.referralType, target),
+    target,
     service: referral.targetServiceName ?? referral.requestedServiceText ?? null,
     // Un estado que esta versión no conoce no se inventa ni se oculta: se
     // dice con el rótulo del catálogo, en neutro.
@@ -181,13 +195,18 @@ export function offersConsent(referral: Referral): boolean {
   );
 }
 
-/** «Bs 250.00» o «USD 40», tal como llegó; sin arancel, se dice. */
+/**
+ * «Bs 250.00» o «USD 40.00». La API manda el arancel siempre como número y un
+ * `0` cuando nadie lo declaró (`Number(defaultPrice ?? 0)`): eso se dice con
+ * palabras, no como «gratis».
+ */
 export function formatPrice(service: ReferralTargetService): string {
-  if (service.price === null || service.price === '') {
+  if (service.price === 0) {
     return 'Sin arancel declarado';
   }
+  const amount = service.price.toFixed(2);
   const currency = service.currency === 'BOB' ? 'Bs' : service.currency;
-  return currency === null ? String(service.price) : `${currency} ${service.price}`;
+  return currency === null ? amount : `${currency} ${amount}`;
 }
 
 /** El servicio es opcional: la primera opción dice que se deriva sin uno. */
@@ -217,6 +236,8 @@ export interface ReferralFormValues {
   readonly treatmentGiven: string;
   readonly reason: string;
   readonly validUntil: Date | null;
+  /** El traslado, si el paciente se traslada; `null` lo omite. */
+  readonly transfer?: ReferralTransferInput | null;
 }
 
 /**
@@ -251,5 +272,164 @@ export function buildNewReferral(v: ReferralFormValues): NewReferral {
     ...optional('treatmentGivenText', text(v.treatmentGiven)),
     ...optional('reasonText', v.reason.trim()),
     ...(v.validUntil === null ? {} : { validUntil: v.validUntil }),
+    ...(v.transfer === null || v.transfer === undefined ? {} : { transfer: v.transfer }),
   };
+}
+
+/**
+ * Un 404 sin sub-código conocido: no se culpa a una sola pieza, porque la API
+ * responde igual por el encuentro, el destino o el servicio.
+ */
+export const GENERIC_NOT_FOUND =
+  'El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.';
+
+/** Lo que se dice tras un envío fallido y, aparte, el código de soporte. */
+export type SubmissionFailure = FailureParts;
+
+/**
+ * Lo que se dice tras un envío fallido, o `null` si no falló. Manda el
+ * sub-código de la API ya en palabras (400, 404, 422); sin él, la validación
+ * tal cual, y para el resto los textos de `write-message.ts`. El código de
+ * soporte sale del **estado** (`requestId` de S4, S5 o S9), no del texto.
+ */
+export function submissionMessage(state: ViewState<null>, serverReason: string | null): SubmissionFailure | null {
+  if (state.status === 'ready' || state.status === 'loading') return null;
+  const code = 'requestId' in state ? (state.requestId ?? null) : null;
+  if (serverReason !== null) return { text: serverReason, code };
+  if (state.status === 'validation') {
+    const text = state.issues.map((issue) => issue.message).join(' ');
+    return text === '' ? null : { text, code };
+  }
+  return writeFailureParts(state, {
+    accion: 'derivar',
+    sinPermiso: 'Sólo puede derivar a quien atiende desde su propia organización.',
+    yaNoExiste: GENERIC_NOT_FOUND,
+  });
+}
+
+/**
+ * Dónde ve la persona el motivo. El aviso a un profesional lo lleva (si sale:
+ * la API no lo garantiza); el de una organización no, y a un externo no hay
+ * aviso.
+ */
+export function reasonHintFor(kind: ReferralDestinationKind): string {
+  switch (kind) {
+    case 'PRACTITIONER':
+      return 'Opcional. Puede aparecer en el aviso a la persona.';
+    case 'ORGANIZATION':
+      return 'Opcional. La persona lo ve en su lista de derivaciones.';
+    default:
+      return 'Opcional. Queda en el registro; entréguele la derivación a la persona.';
+  }
+}
+
+/** Cómo está la lista de servicios del destino, para el aviso de «Servicio pedido». */
+export type ServiceCatalogState = 'listed' | 'none' | 'loading' | 'failed' | 'external' | 'no-target';
+
+/** El estado de la lista de servicios, a partir de lo que tiene el bloque. */
+export function catalogStateOf(
+  kind: ReferralDestinationKind,
+  hasTarget: boolean,
+  services: ViewState<readonly ReferralTargetService[]>,
+): ServiceCatalogState {
+  if (kind === 'EXTERNAL') return 'external';
+  if (!hasTarget) return 'no-target';
+  if (services.status === 'ready') return services.data.length === 0 ? 'none' : 'listed';
+  return services.status === 'loading' ? 'loading' : 'failed';
+}
+
+/**
+ * Qué decir cuando falta el servicio pedido, según el contexto: un externo no
+ * tiene catálogo; un destino sin servicios publicados, tampoco; con la lista
+ * a la vista, se elige de ella o se escribe; mientras carga o si falló, sólo
+ * se puede escribir (no se ofrece una lista que no está).
+ */
+export function requestedServiceMessage(catalog: ServiceCatalogState): string {
+  switch (catalog) {
+    case 'external':
+      return 'Escriba qué se le pide al destino externo, por ejemplo «Hemodiálisis tres veces por semana».';
+    case 'none':
+      return 'Este destino no publica servicios: escriba qué se le pide, por ejemplo «Fisioterapia de rodilla, 10 sesiones».';
+    case 'listed':
+      return 'Elija un servicio de la lista del destino o escriba qué se le pide.';
+    case 'loading':
+      return 'Escriba qué se le pide al destino (sus servicios todavía se están cargando).';
+    case 'failed':
+      return 'Escriba qué se le pide al destino: no pudimos leer sus servicios.';
+    default:
+      return 'Escriba qué se le pide al destino.';
+  }
+}
+
+/** Reemplaza el aviso de «Servicio pedido» vacío por el de su contexto (ver arriba). */
+export function withServiceContext<T extends { readonly field: string; readonly message: string }>(
+  issues: readonly T[],
+  requestedService: string,
+  catalog: ServiceCatalogState,
+): readonly T[] {
+  if (requestedService.trim() !== '') return issues;
+  return issues.map((issue) =>
+    issue.field === 'requestedServiceText' ? { ...issue, message: requestedServiceMessage(catalog) } : issue,
+  );
+}
+
+/** El orden de los campos en la pestaña «Traslado», para que el resumen lo siga. */
+const TRANSFER_FIELD_ORDER: readonly TransferIssue['field'][] = [
+  'departureCondition',
+  'transportMode',
+  'transportDetail',
+  'escortProfessionalName',
+  'escortProfessionalRole',
+  'companionName',
+  'companionRelationship',
+  'companionPhone',
+  'systolicBp',
+  'diastolicBp',
+  'heartRate',
+  'respiratoryRate',
+  'temperatureC',
+  'oxygenSaturation',
+  'glasgow',
+  'receiverContacted',
+  'receiverContactName',
+];
+
+/** Los problemas del traslado en el orden del formulario (estable para el mismo campo). */
+export function inFormOrder<T extends { readonly field: TransferIssue['field'] }>(issues: readonly T[]): readonly T[] {
+  const rank = (field: TransferIssue['field']): number => {
+    const i = TRANSFER_FIELD_ORDER.indexOf(field);
+    return i === -1 ? TRANSFER_FIELD_ORDER.length : i;
+  };
+  return [...issues].sort((a, b) => rank(a.field) - rank(b.field));
+}
+
+/**
+ * Por qué «Derivar» está apagado, para decirlo junto al botón (y anunciarlo
+ * con `aria-describedby`), o `null` si se puede enviar. Lo único que lo
+ * apaga dentro del formulario es la falta de destino: el motivo no puede
+ * pasar del tope (el campo lo corta).
+ */
+export function submitBlocker(kind: ReferralDestinationKind, hasTarget: boolean): string | null {
+  if (hasTarget) return null;
+  return kind === 'EXTERNAL' ? 'Para registrarla, escriba el nombre del destino.' : 'Para derivar, elija el destino.';
+}
+
+/** Los rótulos de las dos pestañas; tras intentar derivar, cuál está lista y a cuál le falta algo. */
+export function referralTabLabels(attempted: boolean, referralOk: boolean, transferOk: boolean): readonly string[] {
+  const mark = (ok: boolean): string => (attempted ? (ok ? ' · lista' : ' · falta') : '');
+  return [`1 · Derivación${mark(referralOk)}`, `2 · Traslado${mark(transferOk)}`];
+}
+
+/** Una derivación recién emitida, para el aviso de éxito: a quién y de qué clase. */
+export interface IssuedReferral {
+  readonly name: string;
+  readonly kind: ReferralDestinationKind;
+}
+
+/** S3 de la lista, con su próxima acción: derivar (abriendo antes el encuentro si falta). */
+export function emptyReferralList(noEncounter: boolean): ViewState<never> {
+  return empty(
+    { label: noEncounter ? 'Abra el encuentro y derive desde el formulario' : 'Derive desde el formulario de arriba' },
+    'Esta persona todavía no tiene derivaciones.',
+  );
 }

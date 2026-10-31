@@ -22,6 +22,7 @@ import { writeMessage } from '../../write-message';
 import type { CitaDelPaciente } from '../diagnosis-block/diagnosis-block';
 import { consentEncounter } from '../informed-consent/consent-encounter';
 import { InformedConsentPanel } from '../informed-consent/informed-consent-panel';
+import { ReferralTransferPanel } from './referral-transfer-panel';
 import {
   destinationOf,
   isExpired,
@@ -50,7 +51,7 @@ import {
  */
 @Component({
   selector: 'app-referral-detail',
-  imports: [Alert, AppButton, DatePipe, InformedConsentPanel, StatusSeal],
+  imports: [Alert, AppButton, DatePipe, InformedConsentPanel, ReferralTransferPanel, StatusSeal],
   templateUrl: './referral-detail.html',
   styleUrl: './referral-detail.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,7 +71,7 @@ export class ReferralDetail {
   /** Recién emitida: el detalle se abre para ofrecer el consentimiento. */
   readonly justIssued = input(false);
 
-  /** Hubo una respuesta, una contrarreferencia o una anulación: hay que releer. */
+  /** Hubo una respuesta, una contrarreferencia, una anulación o un cambio del traslado: hay que releer. */
   readonly changed = output<Referral>();
   readonly consentChanged = output<InformedConsent | null>();
 
@@ -109,13 +110,13 @@ export class ReferralDetail {
    * Quien emitió la derivación no la responde ni la contrarrefiere: eso es
    * del destino. Es sólo no ofrecer una puerta de más; la API vuelve a decidir.
    */
-  private readonly issuedByMe = computed(() => {
+  protected readonly issuedByMe = computed(() => {
     const own = this.auth.practitionerProfileId();
     return own !== null && this.referral().referringProfileId === own;
   });
 
   /** Destino sólo externo: nadie en la plataforma la responde. */
-  private readonly externalOnly = computed(() => {
+  protected readonly externalOnly = computed(() => {
     const r = this.referral();
     return (
       r.targetExternalName !== undefined &&
@@ -149,6 +150,8 @@ export class ReferralDetail {
   });
 
   protected readonly working = signal(false);
+  /** El panel de traslado tiene abierto su formulario: las demás acciones se esconden. */
+  protected readonly transferEditing = signal(false);
   protected readonly write = signal<ViewState<null>>(ready(null));
   private readonly reason = signal<ReferralErrorDetail | null>(null);
   protected readonly actionError = computed(

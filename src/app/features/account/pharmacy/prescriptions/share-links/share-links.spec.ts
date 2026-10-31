@@ -100,6 +100,27 @@ describe('ShareLinks', () => {
     expect(rows[1].textContent).toContain('Receta compartida');
   });
 
+  it('dos enlaces del mismo día se distinguen por la hora, y uno vencido no dice «vence el»', () => {
+    const fixture = mount();
+    list(fixture);
+
+    const meta = rowsOf(fixture).map(
+      (row) => row.querySelector('[data-testid="prescription-share-link-meta"]')?.textContent ?? '',
+    );
+    expect(meta[0]).toMatch(/a las \d{2}:\d{2}/);
+    expect(meta[0]).toContain('vence el');
+    expect(meta[1]).toContain('ya no abre');
+    expect(meta[1]).not.toContain('vence el');
+  });
+
+  it('una receta anulada no se informa como «Vencido» (H12-09)', () => {
+    const fixture = mount();
+    list(fixture, [{ ...ROWS[1], status: 'EXPIRED', endedReason: 'PRESCRIPTION_NOT_ACTIVE' }]);
+
+    const status = rowsOf(fixture)[0].querySelector('[data-testid="prescription-share-link-status"]');
+    expect(status?.textContent?.trim()).toBe('Receta sin vigencia');
+  });
+
   it('marca el enlace que llegó por ?share=', () => {
     const fixture = mount('sh-new');
     list(fixture);

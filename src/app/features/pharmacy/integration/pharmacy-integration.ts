@@ -14,7 +14,6 @@ import { AppButton } from '../../../shared/components/atoms/button/button';
 import { Select } from '../../../shared/components/atoms/select/select';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
-import { Card } from '../../../shared/components/molecules/card/card';
 import { FactList } from '../../../shared/components/molecules/fact-list/fact-list';
 import type { Hecho } from '../../../shared/components/molecules/fact-list/fact-list.types';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
@@ -31,7 +30,7 @@ import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { dataOf, empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 
-import { PharmacyScope } from '../pharmacy-scope';
+import { PharmacyScope, providePharmacyScope } from '../pharmacy-scope';
 import { INTEGRATION_ERROR_TEXT, integrationErrorMessage } from './integration-error-message';
 import { IntegrationMappings } from './integration-mappings/integration-mappings';
 import { IntegrationSync } from './integration-sync/integration-sync';
@@ -61,7 +60,6 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
   imports: [
     Alert,
     AppButton,
-    Card,
     FactList,
     FormField,
     IntegrationMappings,
@@ -69,7 +67,7 @@ export const CONNECT_LABEL = 'Conectar el sistema de la farmacia';
     Select,
     ViewStateHost,
   ],
-  providers: [PharmacyScope],
+  providers: [providePharmacyScope()],
   templateUrl: './pharmacy-integration.html',
   styleUrl: './pharmacy-integration.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

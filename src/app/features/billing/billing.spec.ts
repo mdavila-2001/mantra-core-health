@@ -1,15 +1,19 @@
 import { environment } from '../../../environments/environment';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
+import { AuthService } from '../../core/auth/auth.service';
+import { ACCESS_CHALLENGE } from '../../core/access-challenge/access-challenge';
+import { SessionStore } from '../../core/auth/session.store';
 import { API_BASE_URL } from '../../core/data-access/api';
 import type { SimulatedCharge } from '../../core/data-access/billing-simulated/billing-simulated.types';
 import type { SimulatedInvoicing } from '../../core/mock/billing-sim/simulated-invoicing';
 import { forcedRealApi } from '../../core/mock/api-mode';
 import { ToastService } from '../../shared/components/molecules/toast/toast.service';
-import { Billing } from './billing';
+import { Billing, esAlcanceDeMedico } from './billing';
 import { motorDePrueba } from './billing.spec-fixtures';
 import { resumenDeCobros } from './billing-summary';
 import { SIMULATED_AVAILABLE_INVOICING } from './invoicing-availability';
@@ -23,14 +27,17 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
   let http: HttpTestingController;
   let motor: SimulatedInvoicing;
 
-  function montar(disponible: boolean): void {
+  function montar(disponible: boolean, roles: readonly string[] = []): void {
     TestBed.configureTestingModule({
       imports: [Billing],
       providers: [
+        { provide: AuthService, useValue: { roles: signal(roles) } },
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: API_BASE_URL, useValue: '' },
+        // La organización en la que se actúa: la pregunta «¿Por qué no puedo?» la lleva.
+        { provide: SessionStore, useValue: { activeTenantId: () => 't-hp' } },
         { provide: SIMULATED_AVAILABLE_INVOICING, useValue: () => disponible },
       ],
     });
@@ -242,6 +249,65 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
     expect(fixture.nativeElement.textContent).toContain('Revertir anulación (SIMULADO)');
   });
 
+  describe('desafíos de acceso (motivo, segundo paso, aprobación)', () => {
+    function facturaEmitida() {
+      responderLectura();
+      const componente = fixture.componentInstance;
+      const pagado = cobroDe((c) => c.payment !== null && c.latestInvoice === null);
+      componente.seleccionar(pagado);
+      componente.formularioDeFactura.patchValue({ documentNumber: '1234567' });
+      componente.confirmarFacturacion(pagado);
+      const emitir = http.expectOne(`/billing/simulated/charges/${pagado.id}/invoices`);
+      const emitida = motor.issueInvoice(pagado.id, emitir.request.body, 'prueba');
+      emitir.flush(emitida.ok ? emitida.value : null);
+      responderRefresco();
+      return { componente, factura: componente.factura()!, emision: emitir.request };
+    }
+
+    it('pagar, facturar y anular piden la aprobación de **esa** acción: cada petición lleva su marca de desafío', () => {
+      montar(true);
+      const { componente, factura, emision } = facturaEmitida();
+      expect(emision.context.get(ACCESS_CHALLENGE)).toMatchObject({ reasonField: 'reasonText', approval: { atom: 'billing.receipt.issue', tenantId: 't-hp' } });
+
+      componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
+      componente.anular(factura);
+      const anular = http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`);
+      expect(anular.request.context.get(ACCESS_CHALLENGE)).toMatchObject({ reasonField: 'reasonText', approval: { atom: 'billing.receipt.void', tenantId: 't-hp' } });
+      expect(anular.request.context.get(ACCESS_CHALLENGE)!.actionLabel).toContain('Anular la factura');
+      const anulada = motor.void(factura.id, 1);
+      anular.flush(anulada.ok ? anulada.value : null);
+      responderRefresco();
+    });
+
+    it('un 403 al anular lo dice en la pantalla y ofrece «¿Por qué no puedo?» sobre esa misma acción', () => {
+      montar(true);
+      const { componente, factura } = facturaEmitida();
+      expect(el('caja-rechazo')).toBeNull();
+      componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
+
+      componente.anular(factura);
+      http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`).flush(
+        { statusCode: 403, code: 'FORBIDDEN', message: 'Su vínculo de apoyo no le permite esta acción.', timestamp: '', path: '/' },
+        { status: 403, statusText: 'Forbidden' },
+      );
+      fixture.detectChanges();
+
+      expect(el('caja-rechazo')!.textContent).toContain('Su vínculo de apoyo no le permite esta acción.');
+      expect(el('caja-por-que-boton')!.textContent).toContain('¿Por qué no puedo?');
+      expect(componente.factura()!.status).not.toBe('ANNULLED');
+    });
+
+    it('un error que no es de permiso no ofrece «¿Por qué no puedo?»', () => {
+      montar(true);
+      const { componente, factura } = facturaEmitida();
+      componente.formularioDeAnulacion.setValue({ reasonCode: 1 });
+      componente.anular(factura);
+      http.expectOne(`/billing/simulated/invoices/${factura.id}/annulment`).flush({ statusCode: 500, code: 'INTERNAL', message: 'Falló', timestamp: '', path: '/' }, { status: 500, statusText: 'Server Error' });
+      fixture.detectChanges();
+      expect(el('caja-rechazo')).toBeNull();
+    });
+  });
+
   describe('abrir y cerrar el detalle (QA manual: «Ver» no mostraba nada a la vista)', () => {
     let desplazar: ReturnType<typeof vi.fn>;
     const original = Element.prototype.scrollIntoView;
@@ -335,4 +401,27 @@ describe('Billing · facturación contra el SIAT SIMULADO', () => {
       .flush({ statusCode: 409, code: 'CONFLICT', message: 'El cobro ya está pagado' }, { status: 409, statusText: 'Conflict' });
     expect(error).toHaveBeenCalledWith('El cobro ya está pagado', 'Facturación (SIMULADO)');
   });
+
+  describe('el médico, que sólo opera SUS consultas', () => {
+    it('lo distingue con el mismo criterio que la API: la administración gana', () => {
+      expect(esAlcanceDeMedico(['PRACTITIONER'])).toBe(true);
+      expect(esAlcanceDeMedico(['CLINICIAN', 'PATIENT'])).toBe(true);
+      expect(esAlcanceDeMedico(['PRACTITIONER', 'BILLING'])).toBe(false);
+      expect(esAlcanceDeMedico(['SUPERADMIN'])).toBe(false);
+      expect(esAlcanceDeMedico([])).toBe(false);
+    });
+
+    it('ve sus cobros sin pedir la bandeja, que la API le niega', () => {
+      montar(true, ['PRACTITIONER']);
+      const cobros = motor.listCharges();
+      http.expectOne('/billing/simulated/charges').flush({ items: cobros, count: cobros.length, simulated: true });
+      http.expectOne('/billing/simulated/catalogs').flush(motor.catalogs());
+      http.expectOne('/billing/simulated/status').flush(motor.statusFiscal());
+      http.expectNone('/billing/simulated/outbox');
+      fixture.detectChanges();
+      expect(fixture.componentInstance.datos()?.cobros.length).toBe(cobros.length);
+      expect(fixture.nativeElement.querySelector('#titulo-bandeja')).toBeNull();
+    });
+  });
 });
+

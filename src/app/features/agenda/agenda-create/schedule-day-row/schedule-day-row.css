@@ -8,8 +8,14 @@
 }
 
 /* El día encendido se distingue por peso, no sólo por color: quien no
-   distingue tonos tiene que poder leer qué filas cuentan. */
-:host(.schedule-day-row--active) .schedule-day-row__day {
+   distingue tonos tiene que poder leer qué filas cuentan. El peso base va
+   explícito: un `<th>` sale en negrita por el navegador, y los días apagados
+   quedaban MÁS marcados que los encendidos (propietario, 31/10/2026). */
+:host > .schedule-day-row__day {
+  font-weight: 400;
+}
+
+:host(.schedule-day-row--active) > .schedule-day-row__day {
   font-weight: 600;
 }
 
@@ -42,4 +48,154 @@
 :host > .schedule-day-row__slots {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---- Cuando la tabla no entra en su tarjeta (propietario, 31/10/2026) ------
+
+   Con nueve columnas la tabla pide ~1 040 px; con la barra lateral abierta en
+   una laptop de 1 280 la tarjeta da 944 y la tabla scrolleaba de costado:
+   «Descanso» y «Horarios» quedaban cortados a la derecha. Ahora, si la caja
+   (`horario`, en `agenda-create.css`) no alcanza, cada día se reparte en
+   renglones: el día y su «Sí / No» arriba, los campos debajo, cada uno con su
+   rótulo —el encabezado de la tabla deja de verse—. Nada queda fuera de vista
+   y la página no se va de lado, del teléfono a la laptop. */
+@container horario (max-width: 1060px) {
+  :host(:not(.schedule-day-row--week-flexible)) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: var(--sp-2) var(--sp-3);
+    align-items: end;
+    padding-block: var(--sp-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  :host(:not(.schedule-day-row--week-flexible)) > th,
+  :host(:not(.schedule-day-row--week-flexible)) > td {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  /* El día ocupa su renglón; «No atiende» y «Sin citas…», el resto del suyo. */
+  :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__day,
+  :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__off {
+    grid-column: 1 / -1;
+  }
+
+  :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__free {
+    grid-column: span 2;
+    align-self: center;
+  }
+
+  :host(:not(.schedule-day-row--week-flexible)) .schedule-day-row__check {
+    justify-content: flex-start;
+    gap: var(--sp-4);
+  }
+
+  :host(:not(.schedule-day-row--week-flexible)) .schedule-day-row__check > span {
+    min-inline-size: 6rem;
+  }
+
+  /* «Sí / No» con ancho propio: en el teléfono el control se reparte el ancho
+     de su caja y, dentro de la fila, se encogía a «Sí N.». */
+  :host(:not(.schedule-day-row--week-flexible)) .schedule-day-row__check > app-segmented-control {
+    flex: 0 0 8rem;
+  }
+
+  /* El rótulo que en la tabla daba el encabezado de la columna. */
+  :host(:not(.schedule-day-row--week-flexible)) > td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__switch,
+  :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__slots {
+    text-align: left;
+  }
+
+  :host(:not(.schedule-day-row--week-flexible)) .schedule-day-row__choice {
+    min-width: 0;
+  }
+
+  /* La cuenta de horarios, arriba a la derecha del día, y no sola en un
+     renglón más: es el resumen de la fila. */
+  @container horario (min-width: 600px) {
+    :host(.schedule-day-row--active:not(.schedule-day-row--week-flexible)) > .schedule-day-row__day {
+      grid-column: 1 / -2;
+    }
+
+    :host(:not(.schedule-day-row--week-flexible)) > .schedule-day-row__slots {
+      grid-row: 1;
+      grid-column: -2 / -1;
+      text-align: right;
+    }
+  }
+}
+
+/* Semana flexible: cinco columnas, entran hasta los ~700 px. */
+@container horario (max-width: 700px) {
+  :host(.schedule-day-row--week-flexible) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: var(--sp-2) var(--sp-3);
+    align-items: end;
+    padding-block: var(--sp-3);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  :host(.schedule-day-row--week-flexible) > th,
+  :host(.schedule-day-row--week-flexible) > td {
+    display: block;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  /* El día ocupa su renglón; «No atiende» y «Sin citas…», el resto del suyo. */
+  :host(.schedule-day-row--week-flexible) > .schedule-day-row__day,
+  :host(.schedule-day-row--week-flexible) > .schedule-day-row__off {
+    grid-column: 1 / -1;
+  }
+
+  :host(.schedule-day-row--week-flexible) > .schedule-day-row__free {
+    grid-column: span 2;
+    align-self: center;
+  }
+
+  :host(.schedule-day-row--week-flexible) .schedule-day-row__check {
+    justify-content: flex-start;
+    gap: var(--sp-4);
+  }
+
+  :host(.schedule-day-row--week-flexible) .schedule-day-row__check > span {
+    min-inline-size: 6rem;
+  }
+
+  /* «Sí / No» con ancho propio: en el teléfono el control se reparte el ancho
+     de su caja y, dentro de la fila, se encogía a «Sí N.». */
+  :host(.schedule-day-row--week-flexible) .schedule-day-row__check > app-segmented-control {
+    flex: 0 0 8rem;
+  }
+
+  /* El rótulo que en la tabla daba el encabezado de la columna. */
+  :host(.schedule-day-row--week-flexible) > td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-block-end: var(--sp-1);
+    font-size: var(--fs-caption);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  :host(.schedule-day-row--week-flexible) > .schedule-day-row__switch,
+  :host(.schedule-day-row--week-flexible) > .schedule-day-row__slots {
+    text-align: left;
+  }
+
+  :host(.schedule-day-row--week-flexible) .schedule-day-row__choice {
+    min-width: 0;
+  }
 }

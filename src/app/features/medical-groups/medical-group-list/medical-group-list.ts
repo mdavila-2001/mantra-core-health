@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,12 +18,17 @@ import {
   type MedicalGroupListItem,
   type MedicalGroupTab,
 } from '../../../core/data-access/medical-groups/medical-groups.types';
+import { readApiError } from '../../../core/http/api-error';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { empty, loading, ready } from '../../../core/view-state/view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
+import { AppButton } from '../../../shared/components/atoms/button/button';
 import { AppButtonLink } from '../../../shared/components/atoms/button/button-link';
 import { Badge } from '../../../shared/components/atoms/badge/badge';
+import { Alert } from '../../../shared/components/molecules/alert/alert';
+import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
+import { ToastService } from '../../../shared/components/molecules/toast/toast.service';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
 import { DataTable } from '../../../shared/components/organisms/data-table/data-table';
@@ -60,7 +66,7 @@ const EMPTY_TEXT: Readonly<Record<MedicalGroupTab, string>> = {
  */
 @Component({
   selector: 'app-medical-group-list',
-  imports: [AppButtonLink, Badge, DataTable, PageHeader, RouterLink, Tab, Tabs],
+  imports: [Alert, AppButton, AppButtonLink, Badge, DataTable, PageHeader, RouterLink, Tab, Tabs],
   templateUrl: './medical-group-list.html',
   styleUrl: './medical-group-list.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +76,8 @@ export class MedicalGroupList {
   private readonly navigation = inject(NavigationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly dialogs = inject(DialogService);
+  private readonly toasts = inject(ToastService);
 
   protected readonly breadcrumbs = this.navigation.breadcrumbs;
   protected readonly newGroupRoute = MEDICAL_GROUP_NEW_ROUTE;
@@ -81,6 +89,8 @@ export class MedicalGroupList {
     viewChild.required<TemplateRef<{ $implicit: MedicalGroupListItem }>>('dateCell');
   private readonly serviceCell =
     viewChild.required<TemplateRef<{ $implicit: MedicalGroupListItem }>>('serviceCell');
+  private readonly actionsCell =
+    viewChild.required<TemplateRef<{ $implicit: MedicalGroupListItem }>>('actionsCell');
 
   /** La pestaña abierta: la de la URL, o el histórico. */
   protected readonly selectedIndex = signal(this.indexFromUrl());
@@ -112,6 +122,7 @@ export class MedicalGroupList {
     { key: 'scheduledAt', header: 'Fecha y hora', priority: 1, cell: this.dateCell() },
     { key: 'locationText', header: 'Lugar', priority: 2 },
     { key: 'status', header: 'Estado', priority: 1, cell: this.statusCell() },
+    { key: 'acciones', header: 'Acciones', priority: 1, align: 'end', cell: this.actionsCell() },
   ]);
 
   protected readonly byId = (row: MedicalGroupListItem): string => row.id;
@@ -161,6 +172,48 @@ export class MedicalGroupList {
 
   protected retry(tab: MedicalGroupTab): void {
     this.load(tab, this.trails()[tab].trail);
+  }
+
+  /**
+   * Eliminar se ofrece al creador mientras el grupo no se realizó ni se cerró.
+   * La API vuelve a validarlo: acá sólo se decide qué mostrar.
+   */
+  protected canDelete(group: MedicalGroupListItem): boolean {
+    return group.isCreator && group.status !== 'CLOSED' && group.scheduledAt.getTime() > Date.now();
+  }
+
+  protected readonly deleting = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
+
+  protected async remove(group: MedicalGroupListItem): Promise<void> {
+    if (this.deleting()) return;
+    const confirmed = await this.dialogs.confirm({
+      title: '¿Eliminar el grupo médico?',
+      message: `Se elimina «${group.serviceName ?? 'Grupo médico'}» del ${DATE_TIME_FORMAT.format(group.scheduledAt)} y todo su equipo. No se puede deshacer.`,
+      confirmLabel: 'Eliminar grupo',
+      destructive: true,
+    });
+    if (!confirmed) return;
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    this.groups.remove(group.id).subscribe({
+      next: () => {
+        this.deleting.set(false);
+        this.toasts.success('El grupo médico quedó eliminado.');
+        // El grupo pudo estar en las tres pestañas: se vuelven a leer al abrirlas.
+        const current = this.tabs[this.selectedIndex()] ?? 'historico';
+        this.pages.set({ historico: null, enviadas: null, recibidas: null });
+        this.load(current);
+      },
+      error: (error: unknown) => {
+        this.deleting.set(false);
+        this.deleteError.set(
+          error instanceof HttpErrorResponse && (readApiError(error)?.message ?? '') !== ''
+            ? readApiError(error)!.message
+            : 'No pudimos eliminar el grupo. Pruebe de nuevo.',
+        );
+      },
+    });
   }
 
   protected open(row: MedicalGroupListItem): void {

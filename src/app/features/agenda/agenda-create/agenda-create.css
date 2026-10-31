@@ -386,11 +386,60 @@ fieldset.agenda-create__bloque {
 
 /* -- La tabla de horarios (forma pedida en la bitácora) -------------------- */
 
-/* Seis columnas no entran en un teléfono: la tabla scrollea sola dentro de su
-   caja y la página nunca se va de lado. */
+/* La caja de la tabla es un contenedor (`horario`): cuando no alcanza para las
+   columnas, `ScheduleDayRow` reparte cada día en renglones en vez de cortar
+   columnas a la derecha. `overflow-x` queda como red, no como diseño. */
 .agenda-create__tabla-scroll {
   overflow-x: auto;
   margin-block: var(--sp-3);
+  container: horario / inline-size;
+}
+
+@container horario (max-width: 1060px) {
+  .agenda-create__tabla:not(.agenda-create__tabla--semana-flexible),
+  .agenda-create__tabla:not(.agenda-create__tabla--semana-flexible) tbody {
+    display: block;
+    min-width: 0;
+  }
+
+  .agenda-create__tabla:not(.agenda-create__tabla--semana-flexible) .agenda-create__tabla-caption {
+    display: block;
+  }
+
+  /* El encabezado sigue para el lector de pantalla; a la vista lo reemplazan
+     los rótulos de cada campo. */
+  .agenda-create__tabla:not(.agenda-create__tabla--semana-flexible) thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* Semana flexible: cinco columnas, entran hasta los ~700 px. */
+@container horario (max-width: 700px) {
+  .agenda-create__tabla.agenda-create__tabla--semana-flexible,
+  .agenda-create__tabla.agenda-create__tabla--semana-flexible tbody {
+    display: block;
+    min-width: 0;
+  }
+
+  .agenda-create__tabla.agenda-create__tabla--semana-flexible .agenda-create__tabla-caption {
+    display: block;
+  }
+
+  /* El encabezado sigue para el lector de pantalla; a la vista lo reemplazan
+     los rótulos de cada campo. */
+  .agenda-create__tabla.agenda-create__tabla--semana-flexible thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 .agenda-create__tabla {

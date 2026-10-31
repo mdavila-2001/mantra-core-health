@@ -12,7 +12,10 @@ import {
   REFERRAL_CONTRACT_PENDING_KEYS,
   REFERRAL_RESPOND_CONTRACT_PENDING_KEYS,
 } from '../../data-access/referrals/referrals.types';
-import { CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS } from '../../data-access/community/community.types';
+import {
+  CHAT_AUTO_REPLY_SIMULATOR_EXTENSIONS,
+  DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
+} from '../../data-access/community/community.types';
 import { EQUIPMENT_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/diagnostic-units/equipment-location.types';
 import { INVENTORY_LOCATION_CONTRACT_PENDING_KEYS } from '../../data-access/pharmacy/inventory-locations.types';
 import { SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS } from '../../data-access/diagnostics/sample-collection.types';
@@ -61,4 +64,8 @@ export const SIMULATOR_EXTENSIONS: Readonly<Record<string, readonly string[]>> =
   'POST /clinical/service-requests': SERVICE_REQUEST_COLLECTION_POINT_PENDING_KEYS,
   // F5d: el consultorio de la plantilla de horario.
   'POST /scheduling/resources/:id/templates': TEMPLATE_CARE_SPACE_PENDING_KEYS,
+  // Personal de apoyo que responde en nombre del doctor (ronda «personal de
+  // apoyo»): la API lo acepta, el `openapi.json` aún no lo trae. El cliente SÍ
+  // lo manda a la API real; se borra al regenerar el contrato.
+  'POST /community/conversations/:conversationId/messages': DIRECT_MESSAGE_CONTRACT_PENDING_KEYS,
 };

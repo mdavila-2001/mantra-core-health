@@ -1,0 +1,154 @@
+<app-page-header
+  title="Controles de sesión"
+  subtitle="Cómo se protege el ingreso a su organización: cuándo se cierra la sesión, en qué horario y desde dónde se puede entrar, y si se pide verificación en dos pasos."
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+  <app-card class="controles" padding="lg" data-testid="controles-card">
+    <app-tabs [selectedIndex]="pestana()" (selectedIndexChange)="pestana.set($event)">
+      <app-tab label="Todas las cuentas"><ng-container [ngTemplateOutlet]="formulario" /></app-tab>
+      <app-tab label="Personal de la organización"><ng-container [ngTemplateOutlet]="formulario" /></app-tab>
+      <app-tab label="Por rol"><ng-container [ngTemplateOutlet]="formulario" /></app-tab>
+      <app-tab label="Redes de la organización"><app-ip-rules-editor [exigidaEn]="alcancesConRed()" /></app-tab>
+    </app-tabs>
+
+    @if (!enRedes() && problemas().length > 0) {
+      <app-alert tone="warning" title="Revise antes de guardar" data-testid="controles-problemas">
+        <ul class="controles__problemas">
+          @for (problema of problemas(); track problema) {
+            <li>{{ problema }}</li>
+          }
+        </ul>
+      </app-alert>
+    }
+    @if (!enRedes() && falloDeGuardado(); as fallo) {
+      <app-alert tone="error" role="alert" data-testid="controles-error">{{ fallo }}</app-alert>
+    }
+
+    <div class="controles__barra" [hidden]="enRedes()">
+      <button app-button variant="ghost" type="button" [disabled]="!hayCambios() || guardando()" (clicked)="descartar()" data-testid="controles-descartar">
+        Descartar cambios
+      </button>
+      <button
+        app-button
+        type="button"
+        [isLoading]="guardando()"
+        [disabled]="!hayCambios() || problemas().length > 0 || guardando()"
+        (clicked)="guardar()"
+        data-testid="controles-guardar"
+      >
+        Guardar controles
+      </button>
+    </div>
+  </app-card>
+</app-view-state-host>
+
+<ng-template #formulario>
+  <div class="alcance">
+    <div class="alcance__cabeza">
+      <h2 class="alcance__titulo">{{ textoDelAlcance().titulo }}</h2>
+      <p class="alcance__texto">{{ textoDelAlcance().texto }}</p>
+    </div>
+
+    @if (alcance() === 'ROLE') {
+      <div class="alcance__rol">
+        <span class="alcance__rotulo">Rol al que se aplica</span>
+        <app-select [options]="opcionesDeRol" [value]="rolElegido()" (valueChange)="elegirRol($event)" ariaLabel="Rol al que se aplica la regla" data-testid="controles-rol" />
+      </div>
+    }
+
+    <div class="alcance__cuerpo">
+      <div class="alcance__controles">
+        @if (regla(); as r) {
+          <section class="control" data-testid="control-inactividad">
+            <div class="control__cabeza">
+              <h3 class="control__titulo">Cierre por inactividad</h3>
+              <app-select [options]="opcionesDeInactividad" [value]="r.idleTimeoutMinutes" (valueChange)="cambiarInactividad($event)" ariaLabel="Minutos de inactividad antes de cerrar la sesión" data-testid="control-idle" />
+            </div>
+            <p class="control__significa">{{ explicaciones()['idle']?.meaning }}</p>
+            <p class="control__efecto" data-testid="efecto-idle">{{ explicaciones()['idle']?.effect }}</p>
+          </section>
+
+          <section class="control" data-testid="control-dispositivo">
+            <div class="control__cabeza">
+              <h3 class="control__titulo">Aviso de dispositivo nuevo</h3>
+              <app-switch [checked]="r.newDeviceAlert" (checkedChange)="cambiarAviso($event)" ariaLabel="Avisar al entrar desde un dispositivo nuevo" data-testid="control-device" />
+            </div>
+            <p class="control__significa">{{ explicaciones()['device']?.meaning }}</p>
+            <p class="control__efecto" data-testid="efecto-device">{{ explicaciones()['device']?.effect }}</p>
+          </section>
+
+          <section class="control" data-testid="control-horario">
+            <div class="control__cabeza"><h3 class="control__titulo">Horario laboral</h3></div>
+            <p class="control__significa">{{ explicaciones()['hours']?.meaning }}</p>
+            <app-weekly-hours-editor [value]="r.allowedHours" (valueChange)="cambiarHorario($event)" idPrefix="horario" />
+          </section>
+
+          <section class="control" data-testid="control-red">
+            <div class="control__cabeza">
+              <h3 class="control__titulo">Red de la organización</h3>
+              <app-switch [checked]="r.enforceIpRules" (checkedChange)="cambiarRed($event)" ariaLabel="Permitir entrar solo desde la red de la organización" data-testid="control-network" />
+            </div>
+            <p class="control__significa">{{ explicaciones()['network']?.meaning }}</p>
+            <p class="control__efecto" data-testid="efecto-network">{{ explicaciones()['network']?.effect }}</p>
+            <p class="control__significa">
+              Qué redes son esas se define en
+              <button app-button variant="ghost" size="sm" type="button" (clicked)="irARedes()" data-testid="control-ir-a-redes">Redes de la organización</button>.
+            </p>
+          </section>
+
+          <section class="control" data-testid="control-dos-pasos">
+            <div class="control__cabeza">
+              <h3 class="control__titulo">Verificación en dos pasos</h3>
+              <app-switch [checked]="r.requireMfa" (checkedChange)="cambiarDosPasos($event)" ariaLabel="Exigir verificación en dos pasos" data-testid="control-mfa" />
+            </div>
+            <p class="control__significa">{{ explicaciones()['mfa']?.meaning }}</p>
+            <p class="control__efecto" data-testid="efecto-mfa">{{ explicaciones()['mfa']?.effect }}</p>
+          </section>
+
+          <div class="alcance__quitar">
+            <button app-button variant="ghost" size="sm" type="button" (clicked)="quitarRegla()" data-testid="controles-quitar-regla">
+              Quitar esta regla
+            </button>
+          </div>
+        } @else {
+          <div class="alcance__vacio" data-testid="controles-sin-regla">
+            <p class="alcance__texto">
+              Este alcance todavía no tiene una regla propia: rigen solo las de los alcances anteriores.
+            </p>
+            <button app-button variant="outline" type="button" (clicked)="crearRegla()" data-testid="controles-crear-regla">
+              Crear una regla para {{ alcance() === 'ROLE' ? 'este rol' : 'este alcance' }}
+            </button>
+          </div>
+        }
+      </div>
+
+      <aside class="vista" aria-labelledby="vista-titulo" data-testid="controles-vista-previa">
+        <h3 class="vista__titulo" id="vista-titulo">Vista previa del efecto</h3>
+        <p class="vista__sub">Para: <strong>{{ tituloDeVistaPrevia() }}</strong>. Rige lo más estricto de las reglas que la alcanzan.</p>
+
+        <dl class="vista__reglas" data-testid="vista-reglas">
+          <div><dt>Cierre por inactividad</dt><dd>{{ reglasQueRigen().idleTimeoutMinutes === undefined ? 'Sin regla' : reglasQueRigen().idleTimeoutMinutes + ' minutos' }}</dd></div>
+          <div><dt>Dispositivo nuevo</dt><dd>{{ reglasQueRigen().newDeviceAlert ? 'Se avisa' : 'No se avisa' }}</dd></div>
+          <div><dt>Horario</dt><dd>{{ reglasQueRigen().allowedHours.length === 0 ? 'Cualquier hora' : reglasQueRigen().allowedHours.length === 1 ? 'Con horario' : reglasQueRigen().allowedHours.length + ' horarios a la vez' }}</dd></div>
+          <div><dt>Red de la organización</dt><dd>{{ reglasQueRigen().enforceIpRules ? 'Obligatoria' : 'No se exige' }}</dd></div>
+          <div><dt>Dos pasos</dt><dd>{{ reglasQueRigen().requireMfa ? 'Obligatoria' : 'Opcional' }}</dd></div>
+        </dl>
+
+        <h4 class="vista__prueba-titulo">Probar un ingreso</h4>
+        <div class="vista__prueba">
+          <app-select [options]="opcionesDeDia" [value]="diaDePrueba()" (valueChange)="cambiarDiaDePrueba($event)" ariaLabel="Día de la prueba" data-testid="controles-prueba-dia" />
+          <app-select [options]="opcionesDeHora" [value]="horaDePrueba()" (valueChange)="cambiarHoraDePrueba($event)" ariaLabel="Hora de la prueba" data-testid="controles-prueba-hora" />
+        </div>
+        <div class="vista__resultado" [class.vista__resultado--no]="!prueba().allowed" role="status" data-testid="vista-prueba">
+          <strong>{{ prueba().allowed ? 'Puede entrar' : 'No puede entrar' }}</strong>
+          <ul>
+            @for (linea of prueba().lines; track linea) {
+              <li>{{ linea }}</li>
+            }
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</ng-template>

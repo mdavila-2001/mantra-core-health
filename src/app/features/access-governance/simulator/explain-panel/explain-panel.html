@@ -1,0 +1,59 @@
+<div class="panel" data-testid="explicar-panel">
+  <h2 class="panel__titulo">Pregunte por una acción</h2>
+  <app-form-field label="¿De quién se trata?" [required]="true" [errorMessage]="personError()">
+    <app-select
+      [options]="personOptions()"
+      [value]="engagementId()"
+      (valueChange)="pickPerson($event)"
+      placeholder="Elija a una persona del equipo"
+      ariaLabel="¿De quién se trata?"
+      [searchable]="true"
+      [hasError]="personError() !== ''"
+      data-testid="explicar-persona"
+    />
+  </app-form-field>
+
+  @if (initial() !== null && session.state() === null) {
+    <p class="panel__ayuda" data-testid="explicar-lista">
+      Dejamos la pregunta lista. Pulse «Explicar» para consultarla: no se envía sola.
+    </p>
+  }
+
+  <app-explain-question
+    prefix="explicar"
+    submitLabel="Explicar"
+    [actions]="actions()"
+    [doctors]="doctors()"
+    [services]="services()"
+    [spaces]="spaces()"
+    [showPatient]="true"
+    [showAppointment]="true"
+    [initial]="initial()"
+    [busy]="session.busy()"
+    (asked)="askFresh($event)"
+    (attempted)="tried.set(true)"
+    (edited)="session.markStale()"
+  />
+
+  <div class="panel__resultado" data-testid="explicar-resultado">
+    @if (session.state(); as s) {
+      <app-view-state-host [state]="s" (retry)="session.repeat()" (refresh)="session.repeat()">
+        @if (session.current(); as respuesta) {
+          <app-explain-result
+            [result]="respuesta"
+            audience="admin"
+            [busy]="session.busy()"
+            [assumed]="session.assumed()"
+            [(choices)]="session.choices"
+            [(forceFull)]="session.forceFull"
+            (assumeChanged)="session.reask($event)"
+          />
+        }
+      </app-view-state-host>
+    } @else {
+      <p class="panel__ayuda" data-testid="explicar-ayuda">
+        Elija a la persona y lo que quiso hacer: le diremos si puede, paso a paso, y qué faltaría.
+      </p>
+    }
+  </div>
+</div>

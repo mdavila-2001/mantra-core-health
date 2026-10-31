@@ -1,0 +1,590 @@
+<app-page-header
+  [title]="vinculo() ? 'Permisos de ' + vinculo()!.personName : 'Permisos'"
+  subtitle="Elija sobre qué puede actuar esta persona y qué puede hacer en cada caso. A la derecha se explica en lenguaje simple y se ve qué queda cubierto."
+/>
+
+<app-view-state-host [state]="state()" (retry)="cargar()">
+  @if (vinculo(); as persona) {
+    @if (catalogo(); as cat) {
+      <div class="editor" data-testid="editor-permisos">
+        <app-card class="editor__principal" padding="lg">
+          <div class="editor__persona">
+            <p class="editor__rol">
+              <strong>{{ persona.personName }}</strong> · {{ rol(persona) }} · vínculo desde el
+              {{ dia(persona.validFrom) }}
+            </p>
+            <a app-button variant="ghost" size="sm" routerLink="/administration/support-team"
+              >Volver al equipo</a
+            >
+          </div>
+
+          <app-tabs [(selectedIndex)]="pestana">
+            <!-- Por doctor -->
+            <app-tab label="Por doctor">
+              <div class="editor__panel" data-testid="pestana-doctor">
+                <p class="editor__ayuda">
+                  Todo lo que atiende cada doctor marcado, en cualquier lugar.
+                </p>
+                <div class="editor__atajos">
+                  <app-switch
+                    [checked]="todosLosDoctores()"
+                    (checkedChange)="alternarTodosLosDoctores()"
+                    label="Todos los doctores, incluso los que se sumen después"
+                    data-testid="doctores-todos"
+                  />
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    (clicked)="seleccionarTodosLosDoctores()"
+                    [disabled]="todosLosDoctores()"
+                    data-testid="doctores-seleccionar-todo"
+                  >
+                    Seleccionar todo (los de hoy)
+                  </button>
+                </div>
+                <ul class="editor__lista" role="list">
+                  @for (doctor of cat.doctors; track doctor.id) {
+                    <li>
+                      <app-checkbox
+                        [label]="doctor.name + ' · ' + doctor.specialty"
+                        [checked]="eligeDoctor(doctor.id) || todosLosDoctores()"
+                        [disabled]="todosLosDoctores()"
+                        (checkedChange)="alternarDoctor(doctor.id)"
+                        [attr.data-testid]="'doctor-' + doctor.id"
+                      />
+                    </li>
+                  }
+                </ul>
+              </div>
+            </app-tab>
+
+            <!-- Por servicio -->
+            <app-tab label="Por servicio">
+              <div class="editor__panel" data-testid="pestana-servicio">
+                <p class="editor__ayuda">
+                  Un servicio en toda la organización, sin importar el doctor ni el lugar.
+                </p>
+                <div class="editor__atajos">
+                  <app-switch
+                    [checked]="todosLosServicios()"
+                    (checkedChange)="alternarTodosLosServicios()"
+                    label="Todos los servicios, incluso los que se sumen después"
+                    data-testid="servicios-todos"
+                  />
+                  <button
+                    app-button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    (clicked)="seleccionarTodosLosServicios()"
+                    [disabled]="todosLosServicios()"
+                    data-testid="servicios-seleccionar-todo"
+                  >
+                    Seleccionar todo (los de hoy)
+                  </button>
+                </div>
+                <ul class="editor__lista" role="list">
+                  @for (servicio of cat.services; track servicio.id) {
+                    <li>
+                      <app-checkbox
+                        [label]="servicio.name"
+                        [checked]="eligeServicio(servicio.id) || todosLosServicios()"
+                        [disabled]="todosLosServicios()"
+                        (checkedChange)="alternarServicio(servicio.id)"
+                        [attr.data-testid]="'servicio-' + servicio.id"
+                      />
+                    </li>
+                  }
+                </ul>
+              </div>
+            </app-tab>
+
+            <!-- Por ubicación -->
+            <app-tab label="Por ubicación">
+              <div class="editor__panel" data-testid="pestana-ubicacion">
+                <p class="editor__ayuda">
+                  Un piso, un edificio o una sede. Cubre una cita solo si el
+                  <strong>espacio</strong> de la cita está dentro.
+                </p>
+                <div class="editor__atajos">
+                  <app-switch
+                    [checked]="automatico()"
+                    (checkedChange)="automatico.set($event)"
+                    label="Incluir automáticamente lo nuevo"
+                    data-testid="ubicaciones-automatico"
+                  />
+                  <app-switch
+                    [checked]="todasLasUbicaciones()"
+                    (checkedChange)="alternarTodasLasUbicaciones()"
+                    label="Todas las ubicaciones"
+                    data-testid="ubicaciones-todas"
+                  />
+                </div>
+                <p class="editor__nota">
+                  @if (automatico()) {
+                    Al elegir un lugar queda cubierto también lo que se agregue adentro más
+                    adelante.
+                  } @else {
+                    Solo se cubre lo que existe hoy: lo que se agregue después no entra.
+                  }
+                </p>
+                <ul class="arbol" role="list" [class.arbol--apagado]="todasLasUbicaciones()">
+                  @for (raiz of arbol(); track raiz.node.id) {
+                    <ng-container *ngTemplateOutlet="nodoTpl; context: { $implicit: raiz }" />
+                  }
+                </ul>
+              </div>
+            </app-tab>
+
+            <!-- Combinaciones -->
+            <app-tab label="Combinaciones">
+              <div class="editor__panel" data-testid="pestana-combinaciones">
+                <p class="editor__ayuda">
+                  Una combinación <strong>restringe</strong>: da acceso solo donde se cumplen las
+                  dos cosas a la vez. Por ejemplo, a un doctor, pero solo en una sede.
+                </p>
+                <app-segmented-control
+                  [options]="combinaciones"
+                  [value]="tipoDeCombinacion()"
+                  (valueChange)="tipoDeCombinacion.set($event)"
+                  ariaLabel="Tipo de combinación"
+                  data-testid="combo-tipo"
+                />
+                <div class="editor__combo">
+                  @if (tipoDeCombinacion() !== 'SERVICE_LOCATION') {
+                    <app-form-field label="Doctor">
+                      <app-select
+                        [options]="opcionesDeDoctor()"
+                        [value]="comboDoctor()"
+                        (valueChange)="comboDoctor.set($event)"
+                        placeholder="Elija un doctor"
+                        ariaLabel="Doctor"
+                        data-testid="combo-doctor"
+                      />
+                    </app-form-field>
+                  }
+                  @if (tipoDeCombinacion() !== 'PRACTITIONER_LOCATION') {
+                    <app-form-field label="Servicio">
+                      <app-select
+                        [options]="opcionesDeServicio()"
+                        [value]="comboServicio()"
+                        (valueChange)="comboServicio.set($event)"
+                        placeholder="Elija un servicio"
+                        ariaLabel="Servicio"
+                        data-testid="combo-servicio"
+                      />
+                    </app-form-field>
+                  }
+                  @if (tipoDeCombinacion() !== 'PRACTITIONER_SERVICE') {
+                    <app-form-field label="Ubicación">
+                      <app-select
+                        [options]="opcionesDeUbicacion()"
+                        [value]="comboUbicacion()"
+                        (valueChange)="comboUbicacion.set($event)"
+                        placeholder="Elija una ubicación"
+                        ariaLabel="Ubicación"
+                        data-testid="combo-ubicacion"
+                      />
+                    </app-form-field>
+                  }
+                  <button
+                    app-button
+                    type="button"
+                    size="sm"
+                    [disabled]="!comboCompleto()"
+                    (clicked)="agregarCombinacion()"
+                    data-testid="combo-agregar"
+                  >
+                    Agregar combinación
+                  </button>
+                </div>
+                @if (cruces().length > 0) {
+                  <ul class="editor__lista" role="list" aria-label="Combinaciones agregadas">
+                    @for (fila of cruces(); track fila.key) {
+                      <li class="editor__cruce">
+                        <span>{{ etiquetaDeFila(fila) }}</span>
+                        <button
+                          app-button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          (clicked)="quitarFila(fila)"
+                          [attr.aria-label]="'Quitar la combinación ' + etiquetaDeFila(fila)"
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                } @else {
+                  <p class="editor__nota">Todavía no agregó ninguna combinación.</p>
+                }
+              </div>
+            </app-tab>
+          </app-tabs>
+
+          <!-- La matriz: filas = acciones, columnas = permisos. -->
+          <section class="matriz" aria-labelledby="matriz-titulo">
+            <div class="matriz__cabeza">
+              <h2 id="matriz-titulo" class="matriz__titulo">Qué puede hacer en cada permiso</h2>
+              <app-segmented-control
+                [options]="views"
+                [value]="view()"
+                (valueChange)="view.set($event)"
+                ariaLabel="Nivel de detalle de los permisos"
+                data-testid="mode-switch"
+              />
+              @if (view() === 'basic') {
+                <button
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  (clicked)="restablecerPaquete()"
+                  [disabled]="borrador().length === 0"
+                  data-testid="matriz-paquete"
+                >
+                  Volver al paquete de {{ rol(persona).toLocaleLowerCase('es') }}
+                </button>
+              }
+            </div>
+            <p class="editor__nota">
+              @if (view() === 'basic') {
+                «Básico» muestra los paquetes de siempre. Para ver los permisos uno por uno, poner
+                condiciones o denegar, use «Avanzado».
+              } @else {
+                «Avanzado» muestra cada permiso por separado, con su sensibilidad y lo que pide al
+                usarse.
+              }
+            </p>
+
+            @if (partialNotice(); as aviso) {
+              <app-alert tone="warning" role="alert" data-testid="partial-notice">{{
+                aviso
+              }}</app-alert>
+            }
+
+            @if (vigenciaNotice(); as aviso) {
+              <app-alert tone="warning" role="alert" data-testid="vigencia-aviso">{{ aviso }}</app-alert>
+            }
+
+            @if (view() === 'advanced') {
+              <app-advanced-panel
+                [rows]="borrador()"
+                [catalog]="permissionCatalog()!"
+                [rowLabel]="rowLabel"
+                [issues]="flow.issues()"
+                [writeKeys]="writeKeys()"
+                (rowsChange)="cambiar($event)"
+              />
+            } @else if (borrador().length === 0) {
+              <p class="editor__nota" data-testid="matriz-vacia">
+                Elija un doctor, un servicio o una ubicación para empezar.
+              </p>
+            } @else {
+              <div
+                class="matriz__marco"
+                role="region"
+                tabindex="0"
+                aria-label="Matriz de acciones por permiso. Se desplaza hacia los lados."
+              >
+                <table class="matriz__tabla" data-testid="matriz-tabla">
+                  <caption class="sr-only">
+                    Acciones permitidas, por cada permiso de
+                    {{
+                      persona.personName
+                    }}
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col" class="matriz__accion-col">Acción</th>
+                      @for (fila of borrador(); track fila.key) {
+                        <th scope="col" class="matriz__permiso">
+                          <span class="matriz__nombre">{{ etiquetaDeFila(fila) }}</span>
+                          @if (admiteModo(fila)) {
+                            <app-switch
+                              [checked]="fila.expansionMode === 'DYNAMIC'"
+                              (checkedChange)="cambiarModo(fila, $event)"
+                              label="Incluye lo nuevo"
+                              [attr.data-testid]="'modo-' + fila.key"
+                            />
+                          }
+                          <app-switch
+                            [checked]="fila.effect === 'DENY'"
+                            (checkedChange)="alternarEfecto(fila, $event)"
+                            label="Denegar"
+                            [attr.data-testid]="'matriz-denegar-' + fila.key"
+                          />
+                          @if (personalizados(fila) > 0) {
+                            <span class="matriz__nota"
+                              >+{{ personalizados(fila) }} permisos precisos: se editan en
+                              «Avanzado»</span
+                            >
+                          }
+                          <button
+                            app-button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            (clicked)="quitarFila(fila)"
+                            [attr.aria-label]="'Quitar el permiso ' + etiquetaDeFila(fila)"
+                            [attr.data-testid]="'quitar-' + fila.key"
+                          >
+                            Quitar
+                          </button>
+                        </th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (grupo of grupos; track grupo.title) {
+                      <tr class="matriz__grupo">
+                        <th scope="colgroup" [attr.colspan]="borrador().length + 1">
+                          {{ grupo.title }}
+                        </th>
+                      </tr>
+                      @for (accion of grupo.actions; track accion) {
+                        <tr>
+                          <th scope="row" class="matriz__accion">{{ etiquetaDeAccion(accion) }}</th>
+                          @for (fila of borrador(); track fila.key) {
+                            <td class="matriz__celda">
+                              <app-checkbox
+                                [label]="etiquetaDeAccion(accion) + ' — ' + etiquetaDeFila(fila)"
+                                [hideLabel]="true"
+                                [checked]="tieneAccion(fila, accion)"
+                                (checkedChange)="alternarAccion(fila, accion, $event)"
+                                [attr.data-testid]="'celda-' + fila.key + '-' + accion"
+                              />
+                            </td>
+                          }
+                        </tr>
+                      }
+                    }
+                    <tr class="matriz__grupo">
+                      <th scope="colgroup" [attr.colspan]="borrador().length + 1">
+                        Más permisos que se piden seguido
+                      </th>
+                    </tr>
+                    @for (extra of basicExtras; track extra.atom) {
+                      <tr>
+                        <th scope="row" class="matriz__accion">{{ extra.label }}</th>
+                        @for (fila of borrador(); track fila.key) {
+                          <td class="matriz__celda">
+                            <app-checkbox
+                              [label]="extra.label + ' — ' + etiquetaDeFila(fila)"
+                              [hideLabel]="true"
+                              [checked]="tieneAtomo(fila, extra.atom)"
+                              (checkedChange)="alternarAtomo(fila, extra.atom, $event)"
+                              [attr.data-testid]="'celda-' + fila.key + '-' + extra.atom"
+                            />
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              @if (basicIssues().length > 0) {
+                <ul class="matriz__errores" role="alert" data-testid="matrix-issues">
+                  @for (item of basicIssues(); track item.issue.path + item.issue.code) {
+                    <li>
+                      <strong>{{ item.label }}:</strong> {{ item.issue.message }}
+                    </li>
+                  }
+                </ul>
+              }
+            }
+          </section>
+        </app-card>
+
+        <aside class="editor__lateral" aria-label="Resumen y vista previa">
+          <app-card padding="lg">
+            <h2 class="lateral__titulo">Resumen en lenguaje simple</h2>
+            <ul class="lateral__resumen" role="list" data-testid="resumen">
+              @for (linea of resumen(); track $index) {
+                <li>{{ linea }}</li>
+              }
+            </ul>
+          </app-card>
+
+          <app-card padding="lg">
+            <h2 class="lateral__titulo">Vista previa: qué queda cubierto</h2>
+            <h3 class="lateral__sub">Doctores ({{ vistaPrevia().doctors.length }})</h3>
+            @if (vistaPrevia().doctors.length === 0) {
+              <p class="editor__nota" data-testid="vista-previa-sin-doctores">Ninguno todavía.</p>
+            } @else {
+              <ul class="lateral__lista" role="list" data-testid="vista-previa-doctores">
+                @for (cubierto of vistaPrevia().doctors; track cubierto.doctor.id) {
+                  <li>
+                    <strong>{{ cubierto.doctor.name }}</strong>
+                    <span class="lateral__detalle">
+                      @if (cubierto.extent === 'all') {
+                        Toda su agenda
+                      } @else {
+                        Solo: {{ cubierto.coveredSpaceNames.join(', ') }}
+                      }
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+            <h3 class="lateral__sub">Servicios ({{ vistaPrevia().services.length }})</h3>
+            @if (vistaPrevia().services.length === 0) {
+              <p class="editor__nota">Ninguno todavía.</p>
+            } @else {
+              <ul class="lateral__lista" role="list" data-testid="vista-previa-servicios">
+                @for (cubierto of vistaPrevia().services; track cubierto.service.id) {
+                  <li>
+                    <strong>{{ cubierto.service.name }}</strong>
+                    <span class="lateral__detalle">{{
+                      cubierto.extent === 'all'
+                        ? 'Con todos los doctores que lo prestan'
+                        : 'Con algunos doctores o lugares'
+                    }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </app-card>
+
+          <app-card padding="lg">
+            <h2 class="lateral__titulo">Qué cambia al guardar</h2>
+            <app-change-preview
+              [view]="previewView()"
+              [issues]="flow.issues()"
+              [atomNames]="atomNames()"
+              (retry)="recalcular()"
+              (goTo)="irAlError($event)"
+            />
+          </app-card>
+
+          <app-card padding="lg">
+            @if (intentoDeGuardar() && filasSinAcciones().length > 0) {
+              <app-alert
+                tone="warning"
+                title="Falta marcar acciones"
+                data-testid="editor-sin-acciones"
+              >
+                Cada permiso necesita al menos una acción: márquela en la matriz o quite el permiso.
+              </app-alert>
+            }
+            @if (flow.staleNotice()) {
+              <app-alert
+                tone="warning"
+                role="alert"
+                title="Revise la vista previa"
+                data-testid="stale-notice"
+              >
+                Algo cambió mientras editaba; revise la vista previa y vuelva a guardar. Sus cambios
+                siguen en la pantalla.
+              </app-alert>
+            }
+            @if (flow.failure(); as fallo) {
+              <app-alert tone="error" role="alert" data-testid="editor-error">
+                {{ fallo.message }}
+                @if (fallo.requestId) {
+                  <span class="editor__nota"> (ID de petición: {{ fallo.requestId }})</span>
+                }
+              </app-alert>
+            }
+            <div class="lateral__botones">
+              <button
+                app-button
+                type="button"
+                [disabled]="!sucio() || !flow.canSave() || flow.saving()"
+                [isLoading]="flow.saving()"
+                (clicked)="guardar()"
+                data-testid="editor-guardar"
+              >
+                {{ criticosNuevos().length > 0 ? 'Enviar para aprobación' : 'Guardar permisos' }}
+              </button>
+              <button
+                app-button
+                variant="outline"
+                type="button"
+                [disabled]="!sucio() || flow.saving()"
+                (clicked)="descartar()"
+                data-testid="editor-descartar"
+              >
+                Descartar cambios
+              </button>
+            </div>
+            @if (sucio()) {
+              <p class="editor__nota" role="status" data-testid="save-status">
+                Hay cambios sin guardar.
+                @if (flow.isLoading()) {
+                  Calculando la vista previa: se guarda cuando esté lista.
+                } @else if (!flow.canSave()) {
+                  Corrija lo marcado en la vista previa para poder guardar.
+                } @else if (criticosNuevos().length > 0) {
+                  Este cambio suma accesos críticos: se envía y queda pendiente de la aprobación de
+                  otra persona; no rige hasta entonces.
+                } @else if (flow.needsFourEyes().required) {
+                  La política pide que otra persona revise este cambio, pero guardar un permiso aquí
+                  no lo envía a aprobar: se aplica de inmediato y queda en el registro. Si no debe
+                  aplicarse solo, no lo guarde y avise a un segundo administrador.
+                }
+              </p>
+            }
+          </app-card>
+        </aside>
+      </div>
+    }
+  }
+</app-view-state-host>
+
+<!-- Un nodo del árbol de ubicaciones, que se llama a sí mismo con sus hijos. -->
+<ng-template #nodoTpl let-rama>
+  @let nodo = rama.node;
+  @let sel = seleccion(nodo);
+  <li class="arbol__nodo" [attr.data-testid]="'ubicacion-' + nodo.id">
+    <div class="arbol__fila">
+      @if (rama.children.length > 0) {
+        <button
+          type="button"
+          class="arbol__abrir"
+          [attr.aria-expanded]="estaAbierto(nodo)"
+          [attr.aria-label]="(estaAbierto(nodo) ? 'Cerrar ' : 'Abrir ') + nodo.name"
+          (click)="alternarApertura(nodo)"
+        >
+          <span aria-hidden="true">{{ estaAbierto(nodo) ? '▾' : '▸' }}</span>
+        </button>
+      } @else {
+        <span class="arbol__espacio" aria-hidden="true"></span>
+      }
+      <app-checkbox
+        [label]="nodo.name"
+        [checked]="sel.state === 'selected' || sel.state === 'inherited' || todasLasUbicaciones()"
+        [indeterminate]="sel.state === 'partial'"
+        [disabled]="sel.state === 'inherited' || todasLasUbicaciones()"
+        (checkedChange)="alternarUbicacion(nodo)"
+        [attr.data-testid]="'ubicacion-casilla-' + nodo.id"
+      />
+      @if (sel.state === 'inherited') {
+        <span class="arbol__heredado">{{ motivoHeredado(sel) }}</span>
+      }
+      @if (rama.children.length > 0 && sel.state !== 'inherited' && !todasLasUbicaciones()) {
+        <button
+          app-button
+          variant="ghost"
+          size="sm"
+          type="button"
+          class="arbol__nivel"
+          (clicked)="seleccionarNivel(rama)"
+          [attr.data-testid]="'nivel-' + nodo.id"
+        >
+          {{ textoDeNivel(rama) }}
+        </button>
+      }
+    </div>
+    @if (rama.children.length > 0 && estaAbierto(nodo)) {
+      <ul class="arbol__hijos" role="list">
+        @for (hijo of rama.children; track hijo.node.id) {
+          <ng-container *ngTemplateOutlet="nodoTpl; context: { $implicit: hijo }" />
+        }
+      </ul>
+    }
+  </li>
+</ng-template>

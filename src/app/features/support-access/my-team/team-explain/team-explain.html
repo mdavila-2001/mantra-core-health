@@ -1,0 +1,39 @@
+<app-content-dialog
+  [heading]="heading()"
+  [description]="roleLabel() + ' · ' + member().organizationName"
+  size="lg"
+  closeLabel="Cerrar"
+  (closed)="closed.emit()"
+>
+  <div class="explicar" data-testid="explicar-equipo">
+    <p class="explicar__texto">
+      Pregunte sobre una acción de {{ member().personName }}. Solo puede preguntar por
+      <strong>su</strong> agenda y solo por personas de su equipo.
+    </p>
+    <app-explain-question
+      prefix="explicar-equipo"
+      submitLabel="Explicar"
+      whenLabel="¿Cuándo ocurrió?"
+      [actions]="actions"
+      [busy]="session.busy()"
+      (asked)="session.askFresh($event)"
+      (edited)="session.markStale()"
+    />
+    <div data-testid="explicar-equipo-resultado">
+      @if (session.state(); as s) {
+        <app-view-state-host [state]="s" (retry)="session.repeat()" (refresh)="session.repeat()">
+          @if (session.current(); as respuesta) {
+            <app-explain-result
+              [result]="respuesta"
+              audience="doctor"
+              [busy]="session.busy()"
+              [assumed]="session.assumed()"
+              [(choices)]="session.choices"
+              (assumeChanged)="session.reask($event)"
+            />
+          }
+        </app-view-state-host>
+      }
+    </div>
+  </div>
+</app-content-dialog>

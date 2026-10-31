@@ -44,12 +44,11 @@ import { ServiceIcon } from '../../../shared/components/atoms/service-icon/servi
 import { Skeleton } from '../../../shared/components/atoms/skeleton/skeleton';
 import type { SelectOption } from '../../../shared/components/atoms/select/select.types';
 import { Textarea } from '../../../shared/components/atoms/textarea/textarea';
-import { Accordion } from '../../../shared/components/molecules/accordion/accordion';
-import { AccordionPanel } from '../../../shared/components/molecules/accordion/accordion-panel/accordion-panel';
 import { Alert } from '../../../shared/components/molecules/alert/alert';
 import { Card } from '../../../shared/components/molecules/card/card';
 import { DialogService } from '../../../shared/components/molecules/dialog/dialog-service';
 import { FormField } from '../../../shared/components/molecules/form-field/form-field';
+import { Pagination } from '../../../shared/components/molecules/pagination/pagination';
 import { SectionHeading } from '../../../shared/components/molecules/section-heading/section-heading';
 import { Tab } from '../../../shared/components/molecules/tabs/tab/tab';
 import { Tabs } from '../../../shared/components/molecules/tabs/tabs';
@@ -181,8 +180,6 @@ const LARGO_MAXIMO_DE_NOMBRE = 200;
 @Component({
   selector: 'app-medical-laboratory',
   imports: [
-    Accordion,
-    AccordionPanel,
     Alert,
     AppButton,
     Badge,
@@ -194,6 +191,7 @@ const LARGO_MAXIMO_DE_NOMBRE = 200;
     FormField,
     Input,
     PageHeader,
+    Pagination,
     SectionHeading,
     Select,
     ServiceIcon,
@@ -231,6 +229,8 @@ export class MedicalLaboratory {
     viewChild.required<
       TemplateRef<{ $implicit: DiagnosticUnitAdminSite }>
     >('celdaCapacidadesSede');
+  private readonly celdaAccionesDeSede =
+    viewChild.required<TemplateRef<{ $implicit: DiagnosticUnitAdminSite }>>('celdaAccionesDeSede');
   private readonly celdaEstadoSede =
     viewChild.required<TemplateRef<{ $implicit: DiagnosticUnitAdminSite }>>('celdaEstadoSede');
 
@@ -412,6 +412,7 @@ export class MedicalLaboratory {
         cell: this.celdaCapacidadesSede(),
       },
       { key: 'status', header: 'Estado', priority: 1, cell: this.celdaEstadoSede() },
+      { key: 'id', header: 'Acciones', priority: 1, cell: this.celdaAccionesDeSede() },
     ],
   );
 
@@ -473,6 +474,119 @@ export class MedicalLaboratory {
   protected readonly pestanaActiva = signal(0);
 
   /* -- Publicar la unidad --------------------------------------------------- */
+
+  /* -- Paginado ---------------------------------------------------------------
+     Las listas de la ficha llegan enteras en una sola lectura, así que se
+     pagina acá: la misma pieza (`app-pagination`) y los mismos tamaños que el
+     resto de las consolas. Cada pestaña recuerda su página; el tamaño es uno. */
+
+  protected readonly tamanoDePagina = signal(10);
+  private readonly paginas = signal<Record<PestanaPaginada, number>>({
+    sedes: 1,
+    equipamiento: 1,
+    estudios: 1,
+    tarifarios: 1,
+    personal: 1,
+    acreditaciones: 1,
+  });
+
+  protected paginaDe(clave: PestanaPaginada, total: number): number {
+    const ultima = Math.max(1, Math.ceil(total / this.tamanoDePagina()));
+    return Math.min(this.paginas()[clave], ultima);
+  }
+
+  protected irAPagina(clave: PestanaPaginada, pagina: number): void {
+    this.paginas.update((actuales) => ({ ...actuales, [clave]: pagina }));
+  }
+
+  protected cambiarTamanoDePagina(tamano: number): void {
+    this.tamanoDePagina.set(tamano);
+    this.paginas.set({ sedes: 1, equipamiento: 1, estudios: 1, tarifarios: 1, personal: 1, acreditaciones: 1 });
+  }
+
+  /** Cuántas filas tiene una lista, esté en el estado que esté. */
+  protected totalDe(estado: ViewState<readonly unknown[]>): number {
+    return dataOf(estado)?.length ?? 0;
+  }
+
+  private rebanar<T>(estado: ViewState<readonly T[]>, clave: PestanaPaginada): ViewState<readonly T[]> {
+    if (estado.status !== 'ready' && estado.status !== 'stale') return estado;
+    const tamano = this.tamanoDePagina();
+    const desde = (this.paginaDe(clave, estado.data.length) - 1) * tamano;
+    const pagina = estado.data.slice(desde, desde + tamano);
+    return estado.status === 'stale' ? stale(pagina, estado.asOf) : ready(pagina);
+  }
+
+  protected readonly sedesDePagina = computed(() => this.rebanar(this.sedes(), 'sedes'));
+  protected readonly equipamientoDePagina = computed(() =>
+    this.rebanar(this.equipamiento(), 'equipamiento'),
+  );
+  protected readonly personalDePagina = computed(() => this.rebanar(this.personal(), 'personal'));
+  protected readonly acreditacionesDePagina = computed(() =>
+    this.rebanar(this.acreditaciones(), 'acreditaciones'),
+  );
+  protected readonly tarifariosDePagina = computed(() =>
+    this.rebanar(this.listaDeTarifarios(), 'tarifarios'),
+  );
+  protected readonly estudiosDePagina = computed<readonly DiagnosticUnitAdminStudy[]>(() => {
+    const lista = this.listaDeEstudios();
+    const tamano = this.tamanoDePagina();
+    const desde = (this.paginaDe('estudios', lista.length) - 1) * tamano;
+    return lista.slice(desde, desde + tamano);
+  });
+
+  /* -- Edición de una sucursal ------------------------------------------------ */
+
+  /** La sucursal que se está editando, o `null` si el formulario está cerrado. */
+  protected readonly sedeEnEdicion = signal<DiagnosticUnitAdminSite | null>(null);
+  protected readonly prefijoDeAccesion = signal<string | number | null>('');
+  protected readonly sedeTomaMuestras = signal(false);
+  protected readonly sedeImagenologia = signal(false);
+  protected readonly guardandoSede = signal(false);
+  protected readonly errorAlGuardarSede = signal('');
+
+  protected readonly sedeEsValida = computed(
+    () => textoDe(this.prefijoDeAccesion()).length <= 20,
+  );
+
+  protected editarSede(sede: DiagnosticUnitAdminSite): void {
+    this.sedeEnEdicion.set(sede);
+    this.prefijoDeAccesion.set(sede.accessionPrefix ?? '');
+    this.sedeTomaMuestras.set(sede.sampleCollectionAvailable === true);
+    this.sedeImagenologia.set(sede.imagingAvailable === true);
+    this.errorAlGuardarSede.set('');
+  }
+
+  protected cancelarEdicionDeSede(): void {
+    this.sedeEnEdicion.set(null);
+    this.errorAlGuardarSede.set('');
+  }
+
+  protected guardarSede(): void {
+    const sede = this.sedeEnEdicion();
+    const unidad = this.laboratorio();
+    if (sede === null || unidad === null || this.guardandoSede() || !this.sedeEsValida()) return;
+    this.guardandoSede.set(true);
+    this.errorAlGuardarSede.set('');
+    this.client
+      .updateSite(sede.id, {
+        accessionPrefix: textoDe(this.prefijoDeAccesion()),
+        sampleCollectionAvailable: this.sedeTomaMuestras(),
+        imagingAvailable: this.sedeImagenologia(),
+      })
+      .subscribe({
+        next: () => {
+          this.guardandoSede.set(false);
+          this.sedeEnEdicion.set(null);
+          this.toasts.success('Guardamos los cambios de la sucursal.');
+          this.cargarFicha(unidad.id);
+        },
+        error: (error: unknown) => {
+          this.guardandoSede.set(false);
+          this.errorAlGuardarSede.set(mensajeDeError(error, 'No pudimos guardar la sucursal.'));
+        },
+      });
+  }
 
   protected readonly publicando = signal(false);
   protected readonly errorAlPublicar = signal('');
@@ -931,6 +1045,7 @@ export class MedicalLaboratory {
     this.tarifariosCreados.set([]);
     this.formularioDeOfertaAbierto.set(false);
     this.formularioDeTarifarioAbierto.set(false);
+    this.sedeEnEdicion.set(null);
     this.errorAlPublicar.set('');
     this.limpiarFormularioDeOferta();
     this.limpiarFormularioDeTarifario();
@@ -1027,6 +1142,15 @@ export class MedicalLaboratory {
     return estado.status === 'stale' ? stale(filas, estado.asOf) : ready(filas);
   }
 }
+
+/** Las pestañas con lista paginada. */
+type PestanaPaginada =
+  | 'sedes'
+  | 'equipamiento'
+  | 'estudios'
+  | 'tarifarios'
+  | 'personal'
+  | 'acreditaciones';
 
 /** Una rama que se resolvió con fallo en vez de con datos. */
 interface Fallo {

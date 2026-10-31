@@ -92,7 +92,13 @@
                 }
               ],
               "outputHashing": "all",
-              "prerender": false
+              "prerender": false,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -116,6 +122,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.e2e-real.ts"
+                },
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
                 }
               ]
             },
@@ -130,6 +140,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.real-api.ts"
+                },
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
                 }
               ]
             },
@@ -160,6 +174,10 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.production-api.ts"
+                },
+                {
+                  "replace": "src/app/core/mock/mock-backend.interceptor.ts",
+                  "with": "src/app/core/mock/mock-backend.interceptor.disabled.ts"
                 }
               ],
               "security": {

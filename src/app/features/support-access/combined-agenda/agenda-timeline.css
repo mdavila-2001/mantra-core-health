@@ -1,0 +1,234 @@
+:host {
+  display: block;
+  min-inline-size: 0;
+  --rotulo: 13rem;
+}
+
+.linea {
+  position: relative;
+  overflow: auto;
+  max-block-size: min(72vh, 52rem);
+  max-block-size: min(72dvh, 52rem);
+  min-block-size: 14rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+}
+
+.linea:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.linea__cabeza,
+.linea__fila {
+  display: flex;
+  inline-size: max-content;
+  min-inline-size: 100%;
+}
+
+.linea__cabeza {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 6;
+  background: var(--bg-surface-alt);
+  border-block-end: 1px solid var(--border-strong);
+}
+
+.linea__esquina,
+.linea__rotulo {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 5;
+  flex: none;
+  inline-size: var(--rotulo);
+  box-sizing: border-box;
+  padding: var(--sp-2) var(--sp-3);
+  border-inline-end: 1px solid var(--border-strong);
+  background: var(--bg-surface-alt);
+}
+
+.linea__rotulo {
+  background: var(--bg-surface);
+  display: grid;
+  align-content: center;
+  gap: 2px;
+}
+
+.linea__esquina {
+  display: grid;
+  align-content: center;
+}
+
+.linea__esquina-titulo {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.linea__esquina-sub {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.linea__eje {
+  position: relative;
+  flex: none;
+  block-size: 4.25rem;
+}
+
+.linea__dia {
+  position: absolute;
+  inset-block-start: 2px;
+  box-sizing: border-box;
+  padding: 0 var(--sp-2);
+  border-inline-start: 1px solid var(--border-strong);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--text-primary);
+}
+
+.linea__dia--hoy {
+  color: var(--brand-primary);
+}
+
+.linea__hora {
+  position: absolute;
+  inset-block-start: 0.4rem;
+  padding-inline-start: var(--sp-1);
+  border-inline-start: 1px solid var(--border-default);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.linea__hora--abajo {
+  inset-block-start: 1.45rem;
+}
+
+.linea__calor {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 1.3rem;
+}
+
+.calor {
+  position: absolute;
+  inset-block: 0;
+  box-sizing: border-box;
+  border-inline-start: 1px solid var(--bg-surface);
+  text-align: center;
+  font-size: var(--fs-overline);
+  font-weight: 700;
+  line-height: 1.3rem;
+  background: var(--bg-inset);
+  color: var(--text-primary);
+}
+
+.calor[data-nivel='1'] {
+  background: var(--heat-1-bg);
+  color: var(--heat-1-fg);
+}
+.calor[data-nivel='2'] {
+  background: var(--heat-2-bg);
+  color: var(--heat-2-fg);
+}
+.calor[data-nivel='3'] {
+  background: var(--heat-3-bg);
+  color: var(--heat-3-fg);
+}
+.calor[data-nivel='4'] {
+  background: var(--heat-4-bg);
+  color: var(--heat-4-fg);
+}
+
+.linea__fila {
+  border-block-end: 1px solid var(--border-default);
+}
+
+.linea__nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linea__detalle {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linea__ocupacion {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.medidor {
+  position: relative;
+  flex: 1;
+  block-size: 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.medidor__relleno {
+  display: block;
+  block-size: 100%;
+  background: var(--brand-primary);
+}
+
+.medidor__texto {
+  flex: none;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.linea__pista {
+  position: relative;
+  flex: none;
+  /* Una raya por hora y una por día, para leer el eje sin mirar el encabezado. */
+  background-image: linear-gradient(to right, var(--border-default) 1px, transparent 1px);
+  background-size: var(--hora-ancho, 130px) 100%;
+}
+
+.linea__pista > :where(button) {
+  position: absolute;
+}
+
+.linea__ahora {
+  position: absolute;
+  inset-block: 0;
+  inline-size: 0;
+  border-inline-start: 2px solid var(--st-error-fg);
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Celular: la columna de rótulos es pegajosa y a 13 rem se comía casi la mitad de los 390 px, con las barras de cita
+   escondidas detrás. Se angosta, y el nombre y la ocupación se parten en renglones en vez de cortarse. */
+@media (max-width: 779px) {
+  :host {
+    --rotulo: 8.5rem;
+  }
+
+  .linea__nombre,
+  .linea__detalle {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .linea__ocupacion {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-1);
+  }
+}

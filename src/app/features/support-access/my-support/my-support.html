@@ -1,0 +1,313 @@
+<app-page-header
+  title="Mis accesos"
+  subtitle="En qué organizaciones ayuda y qué puede hacer en cada una. Si necesita más, pídalo desde acá: lo decide la organización."
+/>
+
+<div class="mi-actividad">
+  <a
+    app-button
+    variant="outline"
+    size="sm"
+    routerLink="/my-support/activity"
+    data-testid="mi-actividad-enlace"
+    >Ver mi actividad</a
+  >
+</div>
+
+<app-card class="canje" padding="lg" data-testid="canje-card">
+  <h2 class="seccion__titulo">Unirme con un código o QR</h2>
+  <p class="seccion__texto">
+    Escriba el código que le dio la organización, o pegue la dirección que lleva el QR.
+  </p>
+  <form class="canje__form" (submit)="$event.preventDefault(); canjear()" novalidate>
+    <app-form-field label="Código de invitación">
+      <app-input
+        [value]="codigo()"
+        (valueChange)="codigo.set('' + ($event ?? ''))"
+        placeholder="Pegue aquí el código completo"
+        ariaLabel="Código de invitación"
+        data-testid="canje-codigo"
+      />
+    </app-form-field>
+    <button
+      app-button
+      type="submit"
+      [isLoading]="canjeando()"
+      [disabled]="canjeando() || codigo().trim() === ''"
+      data-testid="canje-enviar"
+    >
+      Unirme
+    </button>
+  </form>
+  @if (resultadoDelCanje(); as r) {
+    <app-alert
+      [tone]="r.tono"
+      [attr.role]="r.tono === 'error' ? 'alert' : 'status'"
+      data-testid="canje-resultado"
+      >{{ r.texto }}
+      @if (r.enlace; as enlace) {
+        <a
+          app-button
+          variant="outline"
+          size="sm"
+          [routerLink]="enlace.ruta"
+          data-testid="canje-enlace"
+          >{{ enlace.texto }}</a
+        >
+      }
+    </app-alert>
+  }
+</app-card>
+
+<app-view-state-host [state]="state()" (retry)="cargar()" (refresh)="cargar()">
+  <ul class="vinculos" role="list" data-testid="mis-vinculos">
+    @for (v of vinculos(); track v.id) {
+      <li [attr.data-testid]="'vinculo-' + v.id">
+        <app-card padding="lg">
+          <header class="vinculo__cabeza">
+            <div>
+              <h2 class="vinculo__org">{{ v.organizationName }}</h2>
+              <p class="seccion__texto">
+                {{ rol(v) }} · {{ origen(v) }} · desde el {{ dia(v.validFrom) }}
+                @if (v.ownerKind === 'PRIVATE_PRACTICE') {
+                  · consultorio privado
+                }
+              </p>
+            </div>
+            <app-badge [variant]="estadoTono(v)">{{ estadoTexto(v) }}</app-badge>
+          </header>
+
+          @if (aviso(v); as recert) {
+            <app-alert
+              [tone]="recert.tone"
+              [title]="recert.title"
+              [attr.role]="recert.tone === 'info' ? 'status' : 'alert'"
+              [attr.data-testid]="
+                (recert.declared ? 'recertificacion-declarado-' : 'recertificacion-aviso-') + v.id
+              "
+              [attr.data-estado]="v.status"
+            >
+              <p class="seccion__texto">{{ recert.text }}</p>
+              @if (recert.canConfirm) {
+                <button
+                  app-button
+                  variant="primary"
+                  size="sm"
+                  type="button"
+                  [isLoading]="confirmando() === v.id"
+                  [disabled]="confirmando() !== null"
+                  (clicked)="confirmarVinculo(v)"
+                  [attr.data-testid]="'recertificacion-confirmar-' + v.id"
+                  [attr.aria-label]="'Confirmar que sigo trabajando en ' + v.organizationName"
+                >
+                  Confirmar que sigo trabajando aquí
+                </button>
+              }
+            </app-alert>
+          }
+
+          @if (v.status === 'ENDED') {
+            <p class="seccion__texto">
+              Este vínculo terminó
+              @if (v.endedReason) {
+                : {{ v.endedReason }}
+              }
+              . Ya no tiene acceso.
+            </p>
+          } @else {
+            <h3 class="vinculo__sub">Lo que puede hacer</h3>
+            <ul class="resumen" role="list" [attr.data-testid]="'resumen-' + v.id">
+              @for (linea of resumen(v); track $index) {
+                <li>{{ linea }}</li>
+              }
+            </ul>
+            @if (condiciones(v); as notas) {
+              @if (notas.length > 0) {
+                <h3 class="vinculo__sub">Condiciones y prohibiciones</h3>
+                <ul class="resumen" role="list" [attr.data-testid]="'condiciones-' + v.id">
+                  @for (nota of notas; track $index) {
+                    <li>{{ nota }}</li>
+                  }
+                </ul>
+              }
+            }
+            @if (obligaciones(v); as pedidos) {
+              @if (pedidos.length > 0) {
+                <h3 class="vinculo__sub">Lo que se le pedirá al actuar</h3>
+                <ul class="resumen" role="list" [attr.data-testid]="'obligaciones-' + v.id">
+                  @for (pedido of pedidos; track $index) {
+                    <li>{{ pedido }}</li>
+                  }
+                </ul>
+              }
+            }
+            @if (ordenDeEstado(v)) {
+              <div class="vinculo__acciones">
+                <button
+                  app-button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  (clicked)="abrirPedido(v)"
+                  [attr.data-testid]="'pedir-mas-' + v.id"
+                  [attr.aria-label]="'Pedir más permisos en ' + v.organizationName"
+                >
+                  Pedir más permisos
+                </button>
+              </div>
+            }
+          }
+        </app-card>
+      </li>
+    }
+  </ul>
+
+  @if (solicitudes().length > 0) {
+    <app-card padding="lg" class="historial" data-testid="mi-historial">
+      <h2 class="seccion__titulo">Mi historial de solicitudes</h2>
+      <ul class="vinculos" role="list">
+        @for (s of solicitudes(); track s.id) {
+          <li class="solicitud" [attr.data-testid]="'mi-solicitud-' + s.id">
+            <div class="vinculo__cabeza">
+              <p class="solicitud__titulo">
+                {{ s.organizationName }} · enviada el {{ dia(s.createdAt) }}
+                @if (s.status === 'PENDING') {
+                  · {{ vence(s) }}
+                }
+              </p>
+              <app-badge [variant]="solicitudTono(s.status)">{{
+                solicitudTexto(s.status)
+              }}</app-badge>
+            </div>
+            <ul class="solicitud__items" role="list">
+              @for (i of s.items; track i.id) {
+                <li class="solicitud__item">
+                  <span>{{ nombreDelItem(i) }}</span>
+                  <app-badge [variant]="decisionTono(i.decision)" size="sm">{{
+                    decisionTexto(i.decision)
+                  }}</app-badge>
+                  @if (i.decisionComment) {
+                    <span class="seccion__texto">Motivo: {{ i.decisionComment }}</span>
+                  }
+                </li>
+              }
+            </ul>
+            @if (s.decisionReason) {
+              <p class="seccion__texto">Nota de la organización: {{ s.decisionReason }}</p>
+            }
+          </li>
+        }
+      </ul>
+    </app-card>
+  }
+</app-view-state-host>
+
+@if (vinculos().length > 0) {
+  <app-my-explain [engagements]="vinculos()" [prefill]="preguntaLista()" />
+  <app-my-approvals />
+}
+
+@if (pidiendoEn(); as vinculo) {
+  <app-content-dialog
+    heading="Pedir más permisos"
+    [description]="vinculo.organizationName"
+    size="lg"
+    closeLabel="Cerrar"
+    (closed)="cerrarPedido()"
+  >
+    <div class="pedido" data-testid="pedido-dialogo">
+      @if (errorDeCatalogo(); as e) {
+        <app-alert tone="error" role="alert">{{ e }}</app-alert>
+      }
+      <app-segmented-control
+        [options]="tiposDePedido"
+        [value]="tipoDePedido()"
+        (valueChange)="cambiarTipoDePedido($event)"
+        ariaLabel="Qué quiere pedir"
+      />
+      <app-form-field label="Qué quiere cubrir">
+        <app-select
+          [options]="opcionesDeObjetivo()"
+          [value]="objetivoElegido()"
+          (valueChange)="objetivoElegido.set($event)"
+          placeholder="Elija una opción"
+          ariaLabel="Qué quiere cubrir"
+          data-testid="pedido-objetivo"
+        />
+      </app-form-field>
+      <fieldset class="pedido__acciones">
+        <legend class="seccion__titulo">Qué quiere poder hacer ahí</legend>
+        <app-support-action-picker
+          [actions]="accionesDelPedido()"
+          (actionsChange)="accionesDelPedido.set($event)"
+          idPrefix="pedido"
+        />
+      </fieldset>
+      <button
+        app-button
+        variant="outline"
+        size="sm"
+        type="button"
+        [disabled]="objetivoElegido() === null || accionesDelPedido().length === 0"
+        (clicked)="agregarItem()"
+        data-testid="pedido-agregar"
+      >
+        Agregar a la solicitud
+      </button>
+
+      @if (items().length > 0) {
+        <ul
+          class="pedido__items"
+          role="list"
+          aria-label="Lo que va a pedir"
+          data-testid="pedido-items"
+        >
+          @for (item of items(); track $index) {
+            <li class="solicitud__item">
+              <span
+                ><strong>{{ item.nombre }}</strong> · {{ item.acciones.length }} acciones</span
+              >
+              <button
+                app-button
+                variant="ghost"
+                size="sm"
+                type="button"
+                (clicked)="quitarItem($index)"
+                [attr.aria-label]="'Quitar ' + item.nombre"
+              >
+                Quitar
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <app-form-field label="Mensaje para la organización (opcional)">
+        <app-textarea
+          [value]="mensaje()"
+          (valueChange)="mensaje.set($event)"
+          [rows]="2"
+          data-testid="pedido-mensaje"
+        />
+      </app-form-field>
+
+      @if (intentoDeEnvio() && items().length === 0) {
+        <app-alert tone="warning">Agregue al menos un permiso a la solicitud.</app-alert>
+      }
+      @if (falloDeEnvio(); as f) {
+        <app-alert tone="error" role="alert" data-testid="pedido-error">{{ f }}</app-alert>
+      }
+    </div>
+    <button
+      dialog-actions
+      app-button
+      type="button"
+      [isLoading]="enviando()"
+      [disabled]="enviando()"
+      (clicked)="enviarPedido()"
+      data-testid="pedido-enviar"
+    >
+      Enviar solicitud
+    </button>
+  </app-content-dialog>
+}

@@ -969,6 +969,9 @@ function normalizeText(value: string): string {
   return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 }
 
+/** Lo que se cambió de cada sucursal en esta sesión: las sedes se derivan de los datos base. */
+const ajustesDeSedes = new Map<string, { accessionPrefix?: string; sampleCollectionAvailable?: boolean; imagingAvailable?: boolean }>();
+
 export function registrarDiagnostico(router: MockRouter): void {
   // Cada centro publicado tiene agenda: desde Cotizaciones un análisis se
   // reserva como una cita, eligiendo un cupo del centro (25/09/2026).
@@ -1622,7 +1625,7 @@ export function registrarDiagnostico(router: MockRouter): void {
       status: c(u.verified ? 'ACTIVE' : 'PENDING', u.verified ? 'Activa' : 'En habilitación'),
       verificationStatus: c(u.verified ? 'VERIFIED' : 'PENDING', u.verified ? 'Verificada' : 'Pendiente'),
       publiclyListed: u.publiclyListed,
-      sites: sedesDe(u).map((sede) => ({ ...sede, practiceSiteId: uuid(`practice-site-${sede.id}`), accessionPrefix: u.code.slice(0, 3), status: c('ACTIVE', 'Activa') })),
+      sites: sedesDe(u).map((sede) => ({ ...sede, practiceSiteId: uuid(`practice-site-${sede.id}`), accessionPrefix: u.code.slice(0, 3), status: c('ACTIVE', 'Activa'), ...ajustesDeSedes.get(sede.id) })),
       equipment: equipoDe(u),
       studies: estudiosDe(u).map(({ conceptId: _c, prices, ...e }, i) => ({
         ...e,
@@ -1662,6 +1665,12 @@ export function registrarDiagnostico(router: MockRouter): void {
   });
   router.post('/study-prices/:id/close', () => ({ ok: true }));
   router.delete('/diagnostic-study-offerings/:id', () => ({ ok: true }));
+  router.patch('/diagnostic-unit-sites/:id', (request) => {
+    const id = request.params['id']!;
+    const cambios = cuerpo<{ accessionPrefix?: string; sampleCollectionAvailable?: boolean; imagingAvailable?: boolean }>(request);
+    ajustesDeSedes.set(id, { ...ajustesDeSedes.get(id), ...cambios });
+    return { id };
+  });
 
   void PRIORITY;
   void PATIENTS;

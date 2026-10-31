@@ -15,6 +15,11 @@
  * 5. Responder la entrante: aceptar → F5 → «Aceptada».
  * 6. Anular la emitida con confirmación → F5 → «Anulada».
  * 7. 390 px sin desborde horizontal (lista, formulario y detalle).
+ * 8. Traslado (v4274): emitir con Crítico en vehículo particular → la
+ *    pestaña explica y exige ambulancia, personal de salud y aviso, sin POST;
+ *    corregido → POST con `transfer` → «Completar traslado» (PATCH) → F5 →
+ *    sigue; como destino, «Registrar llegada» en la entrante → F5 → sigue;
+ *    390 px con la pestaña Traslado y el detalle sin desborde.
  *
  * Uso: `node playwright/derivaciones-expediente.mjs [urlBase] [carpeta]`.
  * Nunca espera `networkidle` (HMR): espera selectores concretos.
@@ -231,6 +236,113 @@ if ((await entrante.innerText()).includes('Solicitada')) {
 ok('tras F5: la entrante dice «Aceptada»', (await entrante.innerText()).includes('Aceptada'));
 await captura('10-tras-f5-aceptada', { fullPage: true });
 
+/* 8 · Traslado (v4274) ---------------------------------------------------- */
+const traslado = `Internación en terapia intensiva (${Date.now() % 100000})`;
+await pg.getByTestId('referral-kind').getByText('Externo', { exact: true }).click();
+await pg.getByTestId('referral-external-name').fill('Hospital de Clínicas Universitario');
+await pg.getByTestId('referral-type').locator('button.select-trigger').click();
+await pg.getByRole('option', { name: 'Internación', exact: true }).click();
+await pg.getByTestId('referral-requested-service').locator('textarea').fill(traslado);
+await pg
+  .getByTestId('referral-clinical-summary')
+  .locator('textarea')
+  .fill('Neumonía grave con insuficiencia respiratoria; requiere ventilación.');
+await pg.getByRole('tab', { name: /Traslado/ }).click();
+await pg.getByTestId('transfer-required').getByText(/se traslada físicamente/).click();
+await pg.getByTestId('transfer-condition').getByText('Crítico', { exact: true }).click();
+await pg.getByTestId('transfer-mode').getByText('Vehículo particular', { exact: true }).click();
+const porque = await pg.getByTestId('transfer-unstable-why').innerText({ timeout: 10_000 });
+ok('Crítico: la pantalla explica por qué exige ambulancia y personal de salud', /ambulancia/.test(porque) && /personal de salud/.test(porque), porque.slice(0, 80));
+const antesTraslado = (await stored(REFERRALS)).length;
+await pg.getByTestId('referral-submit').click();
+await pg.getByTestId('referral-issues').waitFor({ timeout: 10_000 });
+const resumen = await pg.getByTestId('referral-issues').innerText();
+ok(
+  'Crítico en vehículo particular: exige ambulancia, personal de salud y aviso al receptor, sin POST',
+  /ambulancia/.test(resumen) && /personal de salud/.test(resumen) && /receptor/.test(resumen) &&
+    (await stored(REFERRALS)).length === antesTraslado,
+  resumen.replace(/\s+/g, ' ').slice(0, 160),
+);
+await captura('13-traslado-critico-exige', { fullPage: true });
+
+await pg.getByTestId('transfer-mode').getByText(/Ambulancia avanzada/).click();
+await pg.getByTestId('transfer-escort-name').fill('Dr. Marcelo Vaca');
+await pg.getByTestId('transfer-escort-role').fill('Médico emergenciólogo');
+await pg.getByTestId('transfer-vital-systolicBp').fill('88');
+await pg.getByTestId('transfer-vital-diastolicBp').fill('52');
+await pg.getByTestId('transfer-vital-heartRate').fill('124');
+await pg.getByTestId('transfer-vital-oxygenSaturation').fill('89');
+await pg.getByTestId('transfer-vital-temperatureC').fill('38,9');
+await pg.getByTestId('transfer-vital-glasgow').fill('13');
+await pg.getByTestId('transfer-receiver-contacted').getByText(/Se avisó al receptor/).click();
+await pg.getByTestId('transfer-receiver-name').fill('Dra. Paz, terapia intensiva');
+await captura('14-traslado-completo', { fullPage: true });
+await pg.getByTestId('referral-submit').click();
+await pg.getByTestId('referral-detail').waitFor({ timeout: 20_000 });
+const conTraslado = await storedReferral(traslado);
+ok(
+  'POST /referrals persistido con transfer (crítico, ambulancia avanzada, personal, aviso y signos)',
+  conTraslado?.transfer?.departureCondition === 'CRITICAL' &&
+    conTraslado?.transfer?.transportMode === 'AMBULANCE_ADVANCED' &&
+    conTraslado?.transfer?.escortProfessionalName === 'Dr. Marcelo Vaca' &&
+    conTraslado?.transfer?.receiverContacted === true &&
+    conTraslado?.transfer?.vitals?.temperatureC === 38.9,
+  JSON.stringify(conTraslado?.transfer ?? null).slice(0, 160),
+);
+const bloqueTraslado = await pg.getByTestId('referral-transfer-data').innerText({ timeout: 10_000 });
+ok('el detalle muestra el traslado', /Crítico/.test(bloqueTraslado) && /PA 88\/52 mmHg/.test(bloqueTraslado), bloqueTraslado.replace(/\s+/g, ' ').slice(0, 120));
+await captura('15-detalle-traslado');
+
+// Completar: quien la emitió agrega acompañante y unidad.
+await pg.getByTestId('referral-transfer-complete').click();
+await pg.getByTestId('transfer-companion-name').fill('María Quispe');
+await pg.getByTestId('transfer-companion-relationship').fill('Hija');
+await pg.getByTestId('transfer-detail').fill('Unidad 7 · placa 4521-LPZ');
+await pg.getByTestId('referral-transfer-save').click();
+await pg.getByTestId('referral-transfer-complete').waitFor({ timeout: 15_000 });
+const completada = await storedReferral(traslado);
+ok(
+  'PATCH /referrals/:id/transfer persistido (acompañante y unidad, sin perder lo anterior)',
+  completada?.transfer?.companionName === 'María Quispe' &&
+    completada?.transfer?.transportDetail === 'Unidad 7 · placa 4521-LPZ' &&
+    completada?.transfer?.escortProfessionalName === 'Dr. Marcelo Vaca',
+);
+await captura('16-traslado-completado');
+await abrirDerivaciones(); // F5
+await fila(traslado).getByTestId('referral-open').click();
+const trasF5 = await pg.getByTestId('referral-transfer-data').innerText({ timeout: 15_000 });
+ok(
+  'tras F5: el traslado sigue (crítico, ambulancia, acompañante, unidad)',
+  /Crítico/.test(trasF5) && /Ambulancia avanzada/.test(trasF5) && /María Quispe \(Hija\)/.test(trasF5) && /4521-LPZ/.test(trasF5),
+  trasF5.replace(/\s+/g, ' ').slice(0, 160),
+);
+await captura('17-tras-f5-traslado');
+await pg.keyboard.press('Escape');
+
+// Como destino: la entrante (la Dra. Rojas es el destino) llega.
+await fila('Interconsulta con cardiología').getByTestId('referral-open').click();
+await pg.getByTestId('referral-arrival-start').click({ timeout: 15_000 });
+await pg.getByTestId('referral-arrival-form').waitFor({ timeout: 15_000 });
+const otrasAcciones = await pg.locator('[data-testid="referral-cancel"], [data-testid="referral-counter"], [data-testid="referral-accept"]').count();
+ok('con el formulario de llegada abierto, no hay otras acciones de la derivación a la vista', otrasAcciones === 0, `otras acciones: ${otrasAcciones}`);
+await pg.getByTestId('referral-arrival-condition').getByText('Inestable', { exact: true }).click();
+await pg.getByTestId('referral-arrival-notes').locator('textarea').fill('Llegó con SatO₂ 91 % con oxígeno por cánula.');
+await captura('18-registrar-llegada');
+await pg.getByTestId('referral-arrival-save').click();
+await pg.getByTestId('referral-transfer-arrived').waitFor({ timeout: 15_000 });
+const llegada = (await stored(REFERRALS)).find((f) => f.requestedServiceText?.startsWith('Interconsulta con cardiología'));
+ok(
+  'PATCH /referrals/:id/arrival persistido (fecha, Inestable, notas)',
+  typeof llegada?.transfer?.arrivedAt === 'string' && llegada?.transfer?.arrivalCondition === 'UNSTABLE',
+  llegada?.transfer?.arrivedAt,
+);
+await abrirDerivaciones(); // F5
+await fila('Interconsulta con cardiología').getByTestId('referral-open').click();
+const llegadaF5 = await pg.getByTestId('referral-transfer-arrived').innerText({ timeout: 15_000 });
+ok('tras F5: la llegada sigue («Inestable»), y ya no se ofrece registrarla otra vez', /Inestable/.test(llegadaF5) && (await pg.getByTestId('referral-arrival-start').count()) === 0, llegadaF5);
+await captura('19-tras-f5-llegada');
+await pg.keyboard.press('Escape');
+
 /* 7 · 390 px sin desborde horizontal ----------------------------------- */
 await pg.setViewportSize({ width: 390, height: 844 });
 await abrirDerivaciones();
@@ -247,6 +359,19 @@ await pg.getByTestId('referral-detail').waitFor({ timeout: 15_000 });
 d = await desborde();
 ok('390 px: detalle sin desborde', d <= 0, `${d}px`);
 await captura('12-390-detalle');
+await pg.keyboard.press('Escape');
+await fila(traslado).getByTestId('referral-open').click();
+await pg.getByTestId('referral-transfer-data').waitFor({ timeout: 15_000 });
+d = await desborde();
+ok('390 px: detalle con traslado sin desborde', d <= 0, `${d}px`);
+await captura('20-390-detalle-traslado', { fullPage: true });
+await pg.keyboard.press('Escape');
+await pg.getByRole('tab', { name: /Traslado/ }).click();
+await pg.getByTestId('transfer-required').getByText(/se traslada físicamente/).click();
+await pg.getByTestId('transfer-condition').getByText('Crítico', { exact: true }).click();
+d = await desborde();
+ok('390 px: pestaña Traslado (crítico, signos vitales) sin desborde', d <= 0, `${d}px`);
+await captura('21-390-pestana-traslado', { fullPage: true });
 
 const relevantes = errores.filter((e) => !/favicon|ERR_|Failed to load resource|Content Security Policy/.test(e));
 ok('sin errores de página/consola', relevantes.length === 0, relevantes.slice(0, 3).join(' | '));

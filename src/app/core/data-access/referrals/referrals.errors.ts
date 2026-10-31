@@ -1,18 +1,30 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import { readApiError } from '../../http/api-error';
+
 /**
  * Los sub-códigos estables de `ClinicalExtErrorReason` que la API devuelve en
  * `/referrals` (v4266, mergeada en `dev` y `test`).
  *
- * Viajan en `reason`, al lado de `code`. `readApiError` no los conserva —es
- * genérico—, así que se leen acá del cuerpo crudo: son lo único que distingue
- * «ya está cerrada» de «ya no está pendiente», que comparten el mismo código.
+ * Viajan en `reason` al lado de `code` (los `DomainException` de
+ * `clinical_ext`: 400, 404, 409) o en `details.reason` (los
+ * `PreconditionFailedException`: 422). Se leen **de los dos lugares**, así
+ * que la pantalla no cambia el día que la API los unifique. Son lo único que
+ * distingue «ya está cerrada» de «ya no está pendiente», o el encuentro del
+ * servicio en un 404, que comparten el mismo código.
  *
  * No hay un «prohibido» por ser otro: quien no es destino recibe 404
  * `REFERRAL_NOT_FOUND`, igual que si no existiera (S6 no filtra existencia).
  */
 export const REFERRAL_ERROR_REASONS = [
   'REFERRAL_TARGET_REQUIRED',
+  'REFERRAL_TARGET_NOT_FOUND',
+  'REFERRAL_TARGET_QUERY_TOO_SHORT',
+  'REFERRAL_SERVICE_NOT_FOUND',
+  'REFERRAL_SERVICE_INACTIVE',
+  'REFERRAL_SERVICE_TARGET_MISMATCH',
+  'REFERRAL_ENCOUNTER_NOT_FOUND',
+  'REFERRAL_ALREADY_EXISTS',
   'REFERRAL_SERVICE_INFORMATION_INCOMPLETE',
   'REFERRAL_TARGET_BRANCH_NOT_FOUND',
   'REFERRAL_CONSENT_LINK_NOT_ALLOWED',
@@ -22,6 +34,14 @@ export const REFERRAL_ERROR_REASONS = [
   'REFERRAL_COUNTER_REFERRAL_NOT_ALLOWED',
   'REFERRAL_ALREADY_CLOSED',
   'TENANT_REQUIRED',
+  // v4274: traslado y llegada.
+  'TRANSFER_INCOMPLETE',
+  'TRANSFER_UNSAFE_TRANSPORT',
+  'TRANSFER_RECEIVER_NOT_CONTACTED',
+  'TRANSFER_VITALS_OUT_OF_RANGE',
+  'TRANSFER_DETAIL_REQUIRED',
+  'TRANSFER_ARRIVAL_BEFORE_DEPARTURE',
+  'REFERRAL_ARRIVAL_ALREADY_RECORDED',
 ] as const;
 
 export type ReferralErrorReason = (typeof REFERRAL_ERROR_REASONS)[number];
@@ -30,6 +50,18 @@ export type ReferralErrorReason = (typeof REFERRAL_ERROR_REASONS)[number];
 export const REFERRAL_REASON_MESSAGE: Readonly<Record<ReferralErrorReason, string>> = {
   REFERRAL_TARGET_REQUIRED:
     'Falta el destino: elija un profesional o una organización, o escriba el destino externo.',
+  REFERRAL_TARGET_NOT_FOUND:
+    'El destino elegido ya no está disponible en la plataforma. Vuelva a buscarlo o elija otro.',
+  REFERRAL_TARGET_QUERY_TOO_SHORT: 'Escriba al menos dos letras del nombre para buscar.',
+  REFERRAL_SERVICE_NOT_FOUND:
+    'El servicio elegido ya no está en el catálogo del destino. Elija otro o derive sin un servicio en particular.',
+  REFERRAL_SERVICE_INACTIVE:
+    'El destino dio de baja ese servicio. Elija otro o derive sin un servicio en particular.',
+  REFERRAL_SERVICE_TARGET_MISMATCH:
+    'Ese servicio no lo ofrece el destino elegido. Vuelva a elegirlo de la lista de servicios del destino.',
+  REFERRAL_ENCOUNTER_NOT_FOUND:
+    'No encontramos este encuentro entre los de esta persona. Vuelva a abrirlo y pruebe de nuevo.',
+  REFERRAL_ALREADY_EXISTS: 'En este encuentro ya hay una derivación equivalente. No hace falta otra.',
   REFERRAL_SERVICE_INFORMATION_INCOMPLETE:
     'Faltan el servicio pedido o el resumen clínico: sin un servicio del destino, los dos son obligatorios.',
   REFERRAL_TARGET_BRANCH_NOT_FOUND:
@@ -42,9 +74,22 @@ export const REFERRAL_REASON_MESSAGE: Readonly<Record<ReferralErrorReason, strin
   REFERRAL_REJECT_REASON_REQUIRED: 'Para rechazar, escriba el motivo.',
   REFERRAL_COUNTER_REFERRAL_NOT_ALLOWED:
     'En su estado actual la derivación no admite contrarreferencia: primero tiene que ser aceptada.',
-  REFERRAL_ALREADY_CLOSED: 'La derivación ya está cerrada: no se puede anular.',
+  REFERRAL_ALREADY_CLOSED:
+    'La derivación ya está cerrada: no admite este cambio. Recargue para ver su estado actual.',
   TENANT_REQUIRED:
     'Para responder una derivación elija primero la organización desde la que atiende.',
+  TRANSFER_INCOMPLETE:
+    'Faltan datos del traslado: si el paciente se traslada, indique el medio de transporte y su estado al salir.',
+  TRANSFER_UNSAFE_TRANSPORT:
+    'Un paciente inestable o crítico viaja en ambulancia y acompañado por personal de salud. Corrija el medio o el acompañante.',
+  TRANSFER_RECEIVER_NOT_CONTACTED:
+    'Con el paciente inestable o crítico, avise antes al establecimiento receptor y anote quién recibió el aviso.',
+  TRANSFER_VITALS_OUT_OF_RANGE:
+    'Hay signos vitales fuera de rango o la diastólica no es menor que la sistólica. Revíselos en la pestaña Traslado.',
+  TRANSFER_DETAIL_REQUIRED: 'Con «Otro» medio de transporte, describa cuál es.',
+  TRANSFER_ARRIVAL_BEFORE_DEPARTURE: 'La llegada no puede ser anterior a la salida registrada.',
+  REFERRAL_ARRIVAL_ALREADY_RECORDED:
+    'La llegada ya está registrada: el traslado no admite más cambios. Recargue para ver los datos actuales.',
 };
 
 /** Lo que el error de una derivación trae además del `code`. */
@@ -63,18 +108,29 @@ export function referralErrorDetail(error: unknown): ReferralErrorDetail | null 
   if (!(error instanceof HttpErrorResponse)) return null;
   const body: unknown = error.error;
   if (typeof body !== 'object' || body === null) return null;
-  const details = (body as Record<string, unknown>)['details'];
-  const detailsRecord =
-    typeof details === 'object' && details !== null ? (details as Record<string, unknown>) : undefined;
-  // Los de `clinical_ext` viajan arriba; el de tenant (`TENANT_REQUIRED`), en `details`.
-  const reason = (body as Record<string, unknown>)['reason'] ?? detailsRecord?.['reason'];
-  if (typeof reason !== 'string' || !(REFERRAL_ERROR_REASONS as readonly string[]).includes(reason)) {
+  // `readApiError` da el contrato (`code`, `details`); el `reason` de arriba
+  // no es parte de él, así que se toma del cuerpo. Sin `code` conocido
+  // (otra forma de cuerpo) se lee igual: el sub-código es lo que manda.
+  const raw = body as Record<string, unknown>;
+  const details = readApiError(error)?.details ?? recordOf(raw['details']);
+  const reason = raw['reason'] ?? details?.['reason'];
+  if (!isReferralErrorReason(reason)) {
     return null;
   }
-  const fields = detailsRecord?.['fields'];
+  const fields = details?.['fields'];
   return {
-    reason: reason as ReferralErrorReason,
-    message: REFERRAL_REASON_MESSAGE[reason as ReferralErrorReason],
+    reason,
+    message: REFERRAL_REASON_MESSAGE[reason],
     fields: Array.isArray(fields) ? fields.filter((f): f is string => typeof f === 'string') : [],
   };
+}
+
+function isReferralErrorReason(value: unknown): value is ReferralErrorReason {
+  return typeof value === 'string' && (REFERRAL_ERROR_REASONS as readonly string[]).includes(value);
+}
+
+function recordOf(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }

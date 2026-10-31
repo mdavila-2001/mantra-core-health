@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
   signal,
   untracked,
@@ -57,6 +58,7 @@ import {
   patientChartRoute,
 } from '../clinical-record.routes';
 import { writeFailureMessage } from '../write-message';
+import { reveal } from '../reveal';
 import { recordedInEncounter, type RecordedItems } from './recorded-items';
 import {
   CarePlanBlock,
@@ -70,7 +72,7 @@ import { AnalysisOrderBlock } from '../patient-chart/analysis-order-block/analys
 import { DRAFT_BLOCK } from '../patient-chart/draft-block';
 import { FollowUpBlock } from '../patient-chart/follow-up-block/follow-up-block';
 import { ReferralBlock } from '../patient-chart/referral-block/referral-block';
-import { ConsultationReferrals } from './consultation-referrals';
+import { ConsultationReferrals, referralCountLabel } from './consultation-referrals';
 import {
   MedicationBlock,
   type DiagnosticoEnFicha,
@@ -133,6 +135,14 @@ export interface CasillaVisible {
   readonly tituloDelModal: string;
   /** Cuántos registros de ese tipo ya tiene la persona, o `null` si no se cuenta. */
   readonly cantidad: number | null;
+  /** Lo que sigue a la cifra: «en la historia», o el nombre de lo contado. */
+  readonly rotuloDeCantidad: string;
+  /**
+   * Qué tan confiable es la cifra (`ConsultationReferrals.missingCount`):
+   * `loading` o `failed` sin cifra; `stale` con cifra vieja («al menos N»,
+   * falló la última relectura); `null` si la casilla no cuenta o la cifra está al día.
+   */
+  readonly lecturaDeCantidad: 'loading' | 'failed' | 'stale' | null;
   /** El trazo del icono, en un `viewBox` de 24. */
   readonly icono: string;
   /** El `data-testid` de la casilla. Estable: las pruebas de navegador lo usan. */
@@ -300,6 +310,7 @@ const ORDEN_DE_CASILLAS: readonly CasillaDeConsulta[] = [
 })
 export class Consultation {
   private readonly changeDetector = inject(ChangeDetectorRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly clinical = inject(ClinicalClient);
   private readonly profiles = inject(ProfilesClient);
   private readonly terminology = inject(TerminologyClient);
@@ -389,7 +400,9 @@ export class Consultation {
     return [
       ...base.slice(0, -1),
       { label: ultimo.label, routerLink: CLINICAL_RECORD_ROUTE },
-      { label: this.titulo(), routerLink: this.rutaDelExpediente() },
+      // Sin nombre todavía (al releer) el título es «Consulta», y dos migas
+      // iguales repetían la clave del `@for` del breadcrumb (NG0955).
+      { label: this.nombre() === '' ? 'Expediente' : this.titulo(), routerLink: this.rutaDelExpediente() },
       { label: 'Consulta' },
     ];
   });
@@ -516,8 +529,12 @@ export class Consultation {
         ? { descripcion: DESCRIPCION_DE_PAGOS_CON_FACTURACION }
         : {}),
       cantidad: cantidades[clave],
+      // Las derivaciones no son de la historia clínica: se nombran a sí mismas.
+      rotuloDeCantidad: clave === 'derivacion' ? referralCountLabel(cantidades[clave]) : 'en la historia',
+      lecturaDeCantidad: clave === 'derivacion' ? this.referrals.missingCount() : null,
     }));
   });
+
 
   /**
    * La casilla cuyo modal está abierto, o `null`. Una señal para las siete:
@@ -583,6 +600,35 @@ export class Consultation {
     this.casillaAbierta.set(null);
     // Retirar el dialog cerrado antes de que otro clic pueda reutilizarlo.
     this.changeDetector.detectChanges();
+    if (this.irAlEncuentroAlCerrar) {
+      this.irAlEncuentroAlCerrar = false;
+      this.enfocarAperturaDelEncuentro();
+    }
+  }
+
+  /** Se pidió ir a abrir el encuentro desde un modal: al cerrarse, el foco va ahí. */
+  private irAlEncuentroAlCerrar = false;
+
+  /** Desde la derivación sin encuentro: cierra el modal y enfoca «Abrir encuentro» (no lo abre: falta el motivo). */
+  protected irAAbrirElEncuentro(): void {
+    this.irAlEncuentroAlCerrar = true;
+    const dialogo = this.dialogoDeLaCasilla();
+    if (dialogo === undefined) {
+      this.cerrarCasilla();
+      return;
+    }
+    dialogo.close();
+  }
+
+  /** Tras `closed`, que ya devolvió el foco a la casilla. Sin organización, la sección que lo explica. */
+  private enfocarAperturaDelEncuentro(): void {
+    const raiz = this.host.nativeElement;
+    const boton = raiz.querySelector<HTMLButtonElement>('button[data-testid="consulta-abrir-encuentro"]');
+    const destino =
+      boton !== null && !boton.disabled
+        ? boton
+        : raiz.querySelector<HTMLElement>('[data-testid="consulta-encuentro"]');
+    if (destino !== null) reveal(destino);
   }
 
   protected readonly tituloDelModal = computed(() => {
@@ -605,7 +651,7 @@ export class Consultation {
         : `Lo que ${quien} ya pagó, tal como quedó asentado en la caja de la práctica.`;
     }
     if (this.casillaAbierta() === 'derivacion') {
-      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. Le avisamos en su campana, con un enlace para reservar.`;
+      return `Deriva a ${quien} a otro profesional o a una organización médica, por un servicio concreto si lo elige. La derivación queda registrada en su historia.`;
     }
     return this.encuentroActual() === null
       ? `Se registra en la historia de ${quien}.`

@@ -4,11 +4,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal, type WritableSignal } from '@angular/core';
 
 import { AuthService } from '../../../../core/auth/auth.service';
-import type { Referral } from '../../../../core/data-access/referrals/referrals.types';
-import { empty, loading, ready } from '../../../../core/view-state/view-state';
+import { Subject } from 'rxjs';
+
+import { ReferralsClient } from '../../../../core/data-access/referrals/referrals.client';
+import type { Referral, ReferralCreated } from '../../../../core/data-access/referrals/referrals.types';
+import { empty, loading, ready, stale, unexpectedError } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
 import type { ReferenceOption } from '../../../../shared/components/molecules/reference-combobox/reference-combobox.types';
 import { ReferralBlock } from './referral-block';
+import { inFormOrder } from './referral-block.model';
+import { emptyTransferDraft, type TransferDraft } from './referral-transfer.model';
 
 const LUCIA = {
   kind: 'PRACTITIONER',
@@ -34,11 +39,14 @@ const FISIO = {
   code: 'FISIO',
   name: 'Fisioterapia',
   description: 'Diez sesiones.',
-  price: '120.00',
+  price: 120,
   currency: 'BOB',
   tenantId: 't-hospital',
   practiceName: 'Hospital San Lucas',
 };
+
+/** Otra profesional: para cambiar de destino con una lectura en vuelo. */
+const ANA = { ...LUCIA, id: 'hp-2', displayName: 'Dra. Ana Suárez', subtitle: 'Cardiología' };
 
 const ALTA = {
   id: 'ref-1',
@@ -68,6 +76,11 @@ describe('ReferralBlock', () => {
     return (fixture.componentInstance as unknown as Record<string, WritableSignal<T>>)[name];
   }
 
+  /** El texto del error del envío, sin el código de soporte, o `null`. */
+  function errorText(): string | null {
+    return member<() => { text: string } | null>('submissionError')()?.text ?? null;
+  }
+
   function host(): HTMLElement {
     return fixture.nativeElement as HTMLElement;
   }
@@ -80,7 +93,12 @@ describe('ReferralBlock', () => {
         provideHttpClientTesting(),
         {
           provide: AuthService,
-          useValue: { practitionerProfileId: signal<string | null>('hp-yo') },
+          // Pertenece al hospital: sus sedes se pueden leer (ver la prueba de sedes).
+          useValue: {
+            practitionerProfileId: signal<string | null>('hp-yo'),
+            tenants: signal<readonly string[]>(['t-hospital']),
+            roles: signal<readonly string[]>(['PRACTITIONER']),
+          },
         },
       ],
     });
@@ -88,6 +106,15 @@ describe('ReferralBlock', () => {
     fixture.componentRef.setInput('patientProfileId', 'pat-1');
     fixture.componentRef.setInput('encounterId', encounterId);
     http = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+  }
+
+  /** Envía con un servicio elegido y responde el POST con ese error. */
+  function submitFailing(body: object, status: number, statusText: string): void {
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    member<() => void>('submit')();
+    http.expectOne((r) => r.url === '/referrals' && r.method === 'POST').flush(body, { status, statusText });
     fixture.detectChanges();
   }
 
@@ -180,6 +207,17 @@ describe('ReferralBlock', () => {
     ]);
   });
 
+  it('el motivo dice dónde lo ve la persona: en el aviso de un profesional, en su lista si no', () => {
+    create();
+    expect(member<() => string>('reasonHint')()).toBe('Opcional. Puede aparecer en el aviso a la persona.');
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+    expect(member<() => string>('reasonHint')()).toBe('Opcional. La persona lo ve en su lista de derivaciones.');
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    expect(member<() => string>('reasonHint')()).toBe(
+      'Opcional. Queda en el registro; entréguele la derivación a la persona.',
+    );
+  });
+
   it('cambiar de clase olvida el destino elegido', () => {
     create();
     pickTarget([LUCIA]);
@@ -188,17 +226,139 @@ describe('ReferralBlock', () => {
     expect(writable<string | null>('selectedService')()).toBeNull();
   });
 
+  it('cambiar de clase vacía las opciones y apaga «buscando»', () => {
+    create();
+    member<(q: string) => void>('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [LUCIA] });
+    member<(q: string) => void>('search')('luc');
+    expect(writable<boolean>('searching')()).toBe(true);
+    const inFlight = http.expectOne((r) => r.url === '/referrals/targets');
+
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+
+    expect(member<() => readonly ReferenceOption[]>('targetOptions')()).toEqual([]);
+    expect(writable<boolean>('searching')()).toBe(false);
+    // La búsqueda en vuelo se canceló: no queda nada que responder.
+    expect(inFlight.cancelled).toBe(true);
+  });
+
+  it('una respuesta tardía de la clase anterior no repuebla las opciones, aunque el servidor conteste', () => {
+    create();
+    // Un servidor que contesta cuando quiere: el Subject no se cancela solo,
+    // así que lo único que impide la respuesta es el reinicio de la búsqueda.
+    const late = new Subject<readonly object[]>();
+    const searchTargets = vi
+      .spyOn(TestBed.inject(ReferralsClient), 'searchTargets')
+      .mockReturnValue(late as unknown as Subject<never>);
+    member<(q: string) => void>('search')('lu');
+    expect(searchTargets).toHaveBeenCalledWith('lu', 'PRACTITIONER');
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+
+    late.next([LUCIA]);
+
+    expect(late.observed).toBe(false);
+    expect(member<() => readonly ReferenceOption[]>('targetOptions')()).toEqual([]);
+    expect(writable<boolean>('searching')()).toBe(false);
+  });
+
+  it('borrar lo escrito por debajo del mínimo descarta la búsqueda en vuelo (en el <input> real)', async () => {
+    create();
+    const late = new Subject<readonly object[]>();
+    vi.spyOn(TestBed.inject(ReferralsClient), 'searchTargets').mockReturnValue(late as unknown as Subject<never>);
+    const input = host().querySelector<HTMLInputElement>('[data-testid="referral-practitioner"] input')!;
+
+    input.value = 'luc';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 400));
+    expect(writable<boolean>('searching')()).toBe(true);
+    expect(late.observed).toBe(true);
+
+    input.value = 'l';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 400));
+
+    // El servidor contesta tarde: ya nadie escucha.
+    expect(late.observed).toBe(false);
+    late.next([LUCIA]);
+    fixture.detectChanges();
+    expect(member<() => readonly ReferenceOption[]>('targetOptions')()).toEqual([]);
+    expect(writable<boolean>('searching')()).toBe(false);
+    expect(host().querySelectorAll('[role="option"]')).toHaveLength(0);
+  });
+
+  it('olvidar el destino descarta la búsqueda en vuelo', () => {
+    create();
+    member<(q: string) => void>('search')('lu');
+    const inFlight = http.expectOne((r) => r.url === '/referrals/targets');
+    member<(o: ReferenceOption | null) => void>('choose')(null);
+    expect(inFlight.cancelled).toBe(true);
+    expect(writable<boolean>('searching')()).toBe(false);
+    expect(member<() => readonly ReferenceOption[]>('targetOptions')()).toEqual([]);
+  });
+
   /* -- Servicios ------------------------------------------------------------- */
 
-  it('un destino sin servicios es S3 con su próxima acción, y aun así se puede derivar', () => {
+  it('un destino sin servicios lo dice en línea, con sus dos salidas, y aun así se puede derivar', () => {
     create();
     pickTarget([LUCIA], []);
 
-    const state = member<() => ViewState<unknown>>('services')();
-    expect(state.status).toBe('empty');
-    expect(state.status === 'empty' && state.nextAction.label).toContain('busque otro destino');
-    expect(host().textContent).toContain('no tiene servicios publicados');
+    expect(member<() => boolean>('noServices')()).toBe(true);
+    const notice = host().querySelector('[data-testid="referral-no-services"]');
+    expect(notice?.textContent).toContain('Este destino no tiene servicios publicados');
+    expect(notice?.querySelector('[data-testid="referral-without-service"]')).not.toBeNull();
+    expect(notice?.querySelector('[data-testid="referral-search-another"]')).not.toBeNull();
+    // No es el S3 de página («Todavía no hay nada acá»).
+    expect(host().textContent).not.toContain('Todavía no hay nada');
     expect(member<() => boolean>('canSubmit')()).toBe(true);
+  });
+
+  it('«Buscar otro destino» olvida el elegido y vuelve al buscador', async () => {
+    create();
+    pickTarget([LUCIA], []);
+    host().querySelector<HTMLElement>('[data-testid="referral-search-another"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(member<() => unknown>('target')()).toBeNull();
+    expect(host().querySelector('[data-testid="referral-no-services"]')).toBeNull();
+    expect(document.activeElement).toBe(
+      host().querySelector('[data-testid="referral-practitioner"] input'),
+    );
+  });
+
+  it('«Derivar sin un servicio» lleva al campo que lo describe', async () => {
+    create();
+    pickTarget([LUCIA], []);
+    host().querySelector<HTMLElement>('[data-testid="referral-without-service"]')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.activeElement).toBe(
+      host().querySelector('[data-testid="referral-requested-service"] textarea'),
+    );
+  });
+
+  it('sin destino, el campo «Servicio» ya está, apagado y diciendo qué falta', () => {
+    create();
+    const pending = host().querySelector('[data-testid="referral-service-pending"]');
+    expect(pending).not.toBeNull();
+    expect(pending?.closest('app-form-field')?.textContent).toContain('Elija el destino');
+  });
+
+  it('una respuesta tardía de los servicios de otro destino no pisa a la del elegido', () => {
+    create();
+    member<(q: string) => void>('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [LUCIA, ANA] });
+    const [lucia, ana] = member<() => readonly ReferenceOption[]>('targetOptions')();
+    member<(o: ReferenceOption) => void>('choose')(lucia!);
+    member<(o: ReferenceOption) => void>('choose')(ana!);
+    const [first, second] = http.match((r) => r.url === '/referrals/target-services');
+    expect(first!.request.params.get('targetProfileId')).toBe('hp-1');
+
+    first!.flush({ items: [FISIO] });
+    expect(member<() => ViewState<unknown>>('services')().status).toBe('loading');
+    second!.flush({ items: [] });
+    expect(member<() => boolean>('noServices')()).toBe(true);
   });
 
   it('el detalle del servicio elegido se muestra para no elegir a ciegas', () => {
@@ -236,6 +396,8 @@ describe('ReferralBlock', () => {
     create();
     let changes = 0;
     fixture.componentInstance.cambio.subscribe(() => (changes += 1));
+    const issued: ReferralCreated[] = [];
+    TestBed.inject(ReferralsClient).issued.subscribe((c) => issued.push(c));
     pickTarget([LUCIA]);
     writable<string | null>('selectedService').set('s-fisio');
     writable<string>('reason').set('  Control de la tiroides  ');
@@ -261,9 +423,17 @@ describe('ReferralBlock', () => {
     expect(member<{ opened: () => Referral | null }>('detail').opened()?.id).toBe('ref-1');
     expect(member<{ justIssued: () => boolean }>('detail').justIssued()).toBe(true);
 
-    expect(changes).toBe(1);
-    expect(member<() => string | null>('referredTo')()).toContain('Lucía Mendoza');
-    expect(host().querySelector('[data-testid="referral-success"]')).not.toBeNull();
+    // La relectura la dispara el cliente (`issued`), no el bloque: así llega
+    // aunque el modal se cierre con el envío en vuelo.
+    expect(issued).toEqual([ALTA]);
+    expect(changes).toBe(0);
+    expect(member<() => { name: string } | null>('issued')()?.name).toContain('Lucía Mendoza');
+    // La API no dice si el aviso salió: el texto no lo promete.
+    const success = host().querySelector('[data-testid="referral-success"]')?.textContent ?? '';
+    expect(success).toContain('Derivación registrada');
+    expect(success).toContain('Quedó registrada la derivación a Dra. Lucía Mendoza.');
+    expect(success).toContain('Si la persona tiene cuenta en el portal, puede recibir un aviso para ver la ficha');
+    expect(success).not.toContain('Le avisamos');
     // El formulario queda limpio para derivar a otro, con Tratamiento otra vez.
     expect(member<() => boolean>('canSubmit')()).toBe(false);
     expect(writable<string | null>('referralType')()).toBe('TREATMENT');
@@ -293,6 +463,12 @@ describe('ReferralBlock', () => {
       validUntil: '2026-12-31',
     });
     req.flush(ALTA);
+    fixture.detectChanges();
+    // Organización: registrada, y el aviso condicionado a la cuenta de portal.
+    const success = host().querySelector('[data-testid="referral-success"]')?.textContent ?? '';
+    expect(success).toContain('Quedó registrada la derivación a Hospital San Lucas.');
+    expect(success).toContain('puede recibir un aviso; la ve en su lista de derivaciones');
+    expect(success).not.toContain('la derivó');
   });
 
   it('sin encuentro abierto lo dice y no ofrece enviar', () => {
@@ -302,48 +478,256 @@ describe('ReferralBlock', () => {
     expect(member<() => boolean>('canSubmit')()).toBe(false);
     expect(host().querySelector('[data-testid="referral-no-encounter"]')).not.toBeNull();
     expect(host().querySelector('[data-testid="referral-submit"]')).toBeNull();
+    // Sin anfitrión que sepa abrirlo, no se ofrece una salida que no lleva a nada.
+    expect(host().querySelector('[data-testid="referral-open-encounter"]')).toBeNull();
+    // En el expediente no hay «esta consulta»: se dice dónde se abre.
+    const notice = host().querySelector('[data-testid="referral-no-encounter"]')?.textContent ?? '';
+    expect(notice).toContain('Ábralo desde su consulta');
+    expect(notice).not.toContain('de esta consulta');
+  });
+
+  it('el botón no promete un aviso: «Derivar», y «Registrar la derivación» para un externo', () => {
+    create();
+    const label = () => host().querySelector('[data-testid="referral-submit"]')?.textContent?.trim();
+    expect(label()).toBe('Derivar');
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+    fixture.detectChanges();
+    expect(label()).toBe('Derivar');
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    fixture.detectChanges();
+    expect(label()).toBe('Registrar la derivación');
+  });
+
+  it('el botón apagado dice qué falta, y lo anuncia con aria-describedby', () => {
+    create();
+    const button = () => host().querySelector<HTMLButtonElement>('[data-testid="referral-submit"]')!;
+    const hint = () => host().querySelector('[data-testid="referral-submit-hint"]');
+    expect(hint()?.textContent).toContain('Para derivar, elija el destino.');
+    expect(button().getAttribute('aria-describedby')).toBe('referral-submit-hint');
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    fixture.detectChanges();
+    expect(hint()?.textContent).toContain('escriba el nombre del destino');
+    writable<string>('externalName').set('Centro Norte');
+    fixture.detectChanges();
+    expect(hint()).toBeNull();
+    expect(button().getAttribute('aria-describedby')).toBeNull();
+  });
+
+  it('el aviso de «Servicio pedido» depende del contexto: externo, sin catálogo o con catálogo', () => {
+    create();
+    pickTarget([LUCIA]);
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toBe(
+      'Elija un servicio de la lista del destino o escriba qué se le pide.',
+    );
+
+    create();
+    pickTarget([LUCIA], []);
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('Este destino no publica servicios');
+
+    create();
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    writable<string>('externalName').set('Centro Norte');
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('destino externo');
+  });
+
+  it('el aviso de «Servicio pedido» no ofrece una lista que no está (cargando o fallida)', () => {
+    create();
+    member<(q: string) => void>('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [LUCIA] });
+    member<(o: ReferenceOption) => void>('choose')(member<() => readonly ReferenceOption[]>('targetOptions')()[0]!);
+    member<() => void>('submit')();
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('todavía se están cargando');
+    http
+      .expectOne((r) => r.url === '/referrals/target-services')
+      .flush({ code: 'INTERNAL', message: 'x' }, { status: 500, statusText: 'Server Error' });
+    expect(member<(f: string) => string>('issueFor')('requestedServiceText')).toContain('no pudimos leer sus servicios');
+  });
+
+  it('con un destino externo el resumen se titula «Revise antes de registrar»', () => {
+    create();
+    member<(k: string) => void>('chooseKind')('EXTERNAL');
+    writable<string>('externalName').set('Centro Norte');
+    member<() => void>('submit')();
+    fixture.detectChanges();
+    expect(host().querySelector('[data-testid="referral-issues"]')?.textContent).toContain('Revise antes de registrar');
+  });
+
+  it('administración de plataforma (SUPERADMIN o SECURITY_ADMIN) sí lee las sedes de una ajena, como la API', () => {
+    for (const role of ['SUPERADMIN', 'SECURITY_ADMIN']) {
+      create();
+      const auth = TestBed.inject(AuthService) as unknown as {
+        tenants: WritableSignal<readonly string[]>;
+        roles: WritableSignal<readonly string[]>;
+      };
+      auth.tenants.set([]);
+      auth.roles.set([role]);
+      member<(k: string) => void>('chooseKind')('ORGANIZATION');
+      pickTarget([HOSPITAL]);
+      http.expectOne((r) => r.url === '/tenants/t-hospital/branches').flush({ items: [], count: 0 });
+    }
+  });
+
+  it('el resumen del traslado sigue el orden del formulario', () => {
+    const ordered = inFormOrder([
+      { field: 'receiverContactName', message: 'c' },
+      { field: 'transportMode', message: 'b' },
+      { field: 'departureCondition', message: 'a' },
+      { field: 'glasgow', message: 'v' },
+    ]);
+    expect(ordered.map((i) => i.field)).toEqual(['departureCondition', 'transportMode', 'glasgow', 'receiverContactName']);
+  });
+
+  it('a una organización a la que no pertenece no le pide las sedes (la API respondería 403)', () => {
+    create();
+    (TestBed.inject(AuthService) as unknown as { tenants: WritableSignal<readonly string[]> }).tenants.set([]);
+    member<(k: string) => void>('chooseKind')('ORGANIZATION');
+    pickTarget([HOSPITAL]);
+    http.expectNone((r) => r.url === '/tenants/t-hospital/branches');
+    expect(host().querySelector('[data-testid="referral-branch"]')).toBeNull();
+  });
+
+  it('un 404 REFERRAL_TARGET_NOT_FOUND al leer los servicios se dice con su texto y ofrece buscar otro', () => {
+    create();
+    member<(q: string) => void>('search')('lu');
+    http.expectOne((r) => r.url === '/referrals/targets').flush({ items: [LUCIA] });
+    member<(o: ReferenceOption) => void>('choose')(member<() => readonly ReferenceOption[]>('targetOptions')()[0]!);
+    http
+      .expectOne((r) => r.url === '/referrals/target-services')
+      .flush({ code: 'NOT_FOUND', reason: 'REFERRAL_TARGET_NOT_FOUND', message: 'x' }, { status: 404, statusText: 'Not Found' });
+    fixture.detectChanges();
+    const failure = host().querySelector('[data-testid="referral-services-failure"]');
+    expect(failure?.textContent).toContain('El destino elegido ya no está disponible');
+    expect(failure?.textContent).toContain('Buscar otro destino');
+  });
+
+  it('un 500 lleva título y el código de soporte entero, sin cortes', () => {
+    create();
+    submitFailing({ code: 'INTERNAL', message: 'Falló el servidor.', correlationId: 'req-777' }, 500, 'Server Error');
+    const error = host().querySelector('[data-testid="referral-error"]')!;
+    expect(error.textContent).toContain('No se pudo derivar');
+    const code = error.querySelector('app-support-code code');
+    expect(code?.textContent?.trim()).toBe('req-777');
+    expect(error.querySelector('app-support-code button')?.textContent).toContain('Copiar código');
+    expect(errorText()).toBe('Falló el servidor.');
+  });
+
+  it('sin encuentro, si el anfitrión sabe abrirlo, ofrece ir a hacerlo', () => {
+    create(null);
+    fixture.componentRef.setInput('offersOpenEncounter', true);
+    fixture.detectChanges();
+    let asked = 0;
+    fixture.componentInstance.openEncounter.subscribe(() => (asked += 1));
+    host().querySelector<HTMLElement>('[data-testid="referral-open-encounter"]')!.click();
+    expect(asked).toBe(1);
   });
 
   /* -- Errores --------------------------------------------------------------- */
 
-  it('un 409 es un aviso («ya la derivó»), no un error', () => {
+  it('un 409 REFERRAL_ALREADY_EXISTS es un aviso («ya la derivó»), no un error', () => {
     create();
-    pickTarget([LUCIA]);
-    writable<string | null>('selectedService').set('s-fisio');
-    member<() => void>('submit')();
-    http
-      .expectOne((r) => r.url === '/referrals' && r.method === 'POST')
-      .flush(
-        { code: 'CONFLICT', message: 'Ya existe una referencia equivalente' },
-        { status: 409, statusText: 'Conflict' },
-      );
-    fixture.detectChanges();
+    submitFailing(
+      { code: 'CONFLICT', reason: 'REFERRAL_ALREADY_EXISTS', message: 'Ya existe una referencia equivalente' },
+      409,
+      'Conflict',
+    );
 
     expect(member<() => boolean>('duplicate')()).toBe(true);
-    expect(member<() => string | null>('submissionError')()).toBeNull();
+    expect(errorText()).toBeNull();
     expect(host().querySelector('[data-testid="referral-duplicate"]')).not.toBeNull();
   });
 
-  it('un 404 del encuentro se dice con palabras, no con «error», y no emite cambio', () => {
+  it('un 409 sin ese sub-código no se disfraza de «ya la derivó»', () => {
+    create();
+    submitFailing({ code: 'CONFLICT', message: 'Otro conflicto' }, 409, 'Conflict');
+
+    expect(member<() => boolean>('duplicate')()).toBe(false);
+    expect(host().querySelector('[data-testid="referral-error"]')?.textContent).toContain('Otro conflicto');
+  });
+
+  it('el resultado se dibuja junto al botón y recibe el foco', async () => {
+    create();
+    submitFailing(
+      { code: 'CONFLICT', reason: 'REFERRAL_ALREADY_EXISTS', message: 'x' },
+      409,
+      'Conflict',
+    );
+    await fixture.whenStable();
+    const outcome = host().querySelector<HTMLElement>('[data-testid="referral-outcome"]')!;
+    expect(outcome.querySelector('[data-testid="referral-duplicate"]')).not.toBeNull();
+    // Inmediatamente antes del botón, no arriba del formulario.
+    expect(outcome.nextElementSibling?.getAttribute('data-testid')).toBe('referral-submit');
+    expect(document.activeElement).toBe(outcome);
+  });
+
+  it('un 404 del encuentro lo nombra, no emite cambio y deja lo elegido', () => {
     create();
     let changes = 0;
     fixture.componentInstance.cambio.subscribe(() => (changes += 1));
-    pickTarget([LUCIA]);
-    writable<string | null>('selectedService').set('s-fisio');
-    member<() => void>('submit')();
-    http
-      .expectOne((r) => r.url === '/referrals' && r.method === 'POST')
-      .flush(
-        { code: 'NOT_FOUND', message: 'Encuentro no encontrado' },
-        { status: 404, statusText: 'Not Found' },
-      );
-    fixture.detectChanges();
+    submitFailing(
+      { code: 'NOT_FOUND', reason: 'REFERRAL_ENCOUNTER_NOT_FOUND', message: 'Encuentro no encontrado' },
+      404,
+      'Not Found',
+    );
 
     expect(changes).toBe(0);
-    expect(member<() => string | null>('submissionError')()).toContain('No encontramos este encuentro');
+    expect(errorText()).toContain('No encontramos este encuentro');
     expect(host().querySelector('[data-testid="referral-error"]')).not.toBeNull();
     // Lo elegido sigue ahí: reintentar no obliga a empezar de cero.
     expect(member<() => unknown>('target')()).not.toBeNull();
+  });
+
+  it('un 404 del servicio o del destino culpa a quien corresponde', () => {
+    create();
+    submitFailing({ code: 'NOT_FOUND', reason: 'REFERRAL_SERVICE_NOT_FOUND', message: 'x' }, 404, 'Not Found');
+    expect(errorText()).toContain('El servicio elegido ya no está');
+
+    create();
+    submitFailing({ code: 'NOT_FOUND', reason: 'REFERRAL_TARGET_NOT_FOUND', message: 'x' }, 404, 'Not Found');
+    expect(errorText()).toContain('El destino elegido ya no está');
+  });
+
+  it('un 404 sin sub-código no culpa al encuentro', () => {
+    create();
+    submitFailing({ code: 'NOT_FOUND', message: 'No encontrado' }, 404, 'Not Found');
+    expect(errorText()).toBe(
+      'El encuentro, el destino o el servicio ya no están disponibles. Vuelva a buscar el destino.',
+    );
+  });
+
+  it('un 422 PRECONDITION_FAILED con details.reason se dice con su texto', () => {
+    create();
+    submitFailing(
+      {
+        statusCode: 422,
+        code: 'PRECONDITION_FAILED',
+        message: 'El servicio no pertenece a la organización destino.',
+        details: { targetServiceCatalogId: 's-fisio', reason: 'REFERRAL_SERVICE_TARGET_MISMATCH' },
+      },
+      422,
+      'Unprocessable Entity',
+    );
+    expect(host().querySelector('[data-testid="referral-error"]')?.textContent).toContain(
+      'Ese servicio no lo ofrece el destino elegido',
+    );
+
+    create();
+    submitFailing(
+      { code: 'PRECONDITION_FAILED', message: 'x', details: { reason: 'REFERRAL_SERVICE_INACTIVE' } },
+      422,
+      'Unprocessable Entity',
+    );
+    expect(errorText()).toContain('dio de baja ese servicio');
+
+    create();
+    submitFailing(
+      { code: 'PRECONDITION_FAILED', message: 'x', details: { reason: 'REFERRAL_TARGET_REQUIRED' } },
+      422,
+      'Unprocessable Entity',
+    );
+    expect(errorText()).toContain('Falta el destino');
   });
 
   it('una validación del servidor se muestra con su mensaje', () => {
@@ -423,6 +807,11 @@ describe('ReferralBlock', () => {
     });
     req.flush(ALTA);
     http.expectOne((r) => r.url === '/referrals/ref-1').flush({ ...ALTA, status: 'PENDING', referralType: 'THERAPY' });
+    fixture.detectChanges();
+    // Fuera de la plataforma no hay aviso: el texto no lo promete.
+    const success = host().querySelector('[data-testid="referral-success"]')?.textContent ?? '';
+    expect(success).toContain('no recibe aviso');
+    expect(success).not.toContain('Le avisamos');
   });
 
   it('a una organización ofrece sus sedes y manda la elegida', () => {
@@ -456,6 +845,67 @@ describe('ReferralBlock', () => {
   });
 
   /* -- La lista -------------------------------------------------------------- */
+
+  /* -- Traslado (v4274) ----------------------------------------------------- */
+
+  it('UNA tarjeta con dos pestañas: Derivación y Traslado', () => {
+    create();
+    const tabs = [...host().querySelectorAll('[role="tab"]')].map((t) => t.textContent?.trim());
+    expect(tabs).toEqual(['1 · Derivación', '2 · Traslado']);
+  });
+
+  it('crítico sin ambulancia ni personal no envía: abre la pestaña Traslado con los errores', () => {
+    create();
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    writable<TransferDraft>('transferDraft').set({
+      ...emptyTransferDraft(),
+      required: true,
+      transportMode: 'PRIVATE_VEHICLE',
+      departureCondition: 'CRITICAL',
+    });
+    member<() => void>('submit')();
+    http.expectNone((r) => r.url === '/referrals' && r.method === 'POST');
+    fixture.detectChanges();
+    expect(writable<number>('tab')()).toBe(1);
+    const summary = host().querySelector('[data-testid="referral-issues"]')?.textContent ?? '';
+    expect(summary).toContain('Traslado: Un paciente inestable o crítico viaja en ambulancia');
+    expect(summary).toContain('personal de salud');
+    expect(summary).toContain('avise al establecimiento receptor');
+    expect(host().querySelector('[data-testid="transfer-unstable-why"]')).not.toBeNull();
+    expect(host().querySelectorAll('[role="tab"]')[1]?.textContent).toContain('falta');
+  });
+
+  it('con el traslado completo lo manda en transfer, y lo que no se trasladó no viaja', () => {
+    create();
+    pickTarget([LUCIA]);
+    writable<string | null>('selectedService').set('s-fisio');
+    writable<TransferDraft>('transferDraft').set({
+      ...emptyTransferDraft(),
+      required: true,
+      transportMode: 'AMBULANCE_ADVANCED',
+      departureCondition: 'CRITICAL',
+      escortProfessionalName: 'Dr. Vaca',
+      receiverContacted: true,
+      receiverContactName: 'Guardia',
+      vitals: { ...emptyTransferDraft().vitals, systolicBp: '90', diastolicBp: '50', temperatureC: '38,5' },
+    });
+    member<() => void>('submit')();
+    const req = http.expectOne((r) => r.url === '/referrals' && r.method === 'POST');
+    expect(req.request.body.transfer).toEqual({
+      required: true,
+      transportMode: 'AMBULANCE_ADVANCED',
+      departureCondition: 'CRITICAL',
+      escortProfessionalName: 'Dr. Vaca',
+      vitals: { systolicBp: 90, diastolicBp: 50, temperatureC: 38.5 },
+      receiverContacted: true,
+      receiverContactName: 'Guardia',
+    });
+    req.flush(ALTA, { status: 201, statusText: 'Created' });
+    http.expectOne((r) => r.url === '/referrals/ref-1').flush({ ...ALTA, status: 'PENDING' });
+    // Emitida, el borrador del traslado vuelve a vacío.
+    expect(writable<TransferDraft>('transferDraft')().required).toBe(false);
+  });
 
   describe('la lista', () => {
     const REFERRAL: Referral = {
@@ -588,6 +1038,92 @@ describe('ReferralBlock', () => {
       fixture.detectChanges();
       http.expectNone((r) => r.url === '/terminology/concepts');
       expect(member<() => ViewState<unknown>>('list')().status).toBe('ready');
+    });
+
+    it('una fila anterior al tipo se titula con el destino, sin «Sin tipo»', () => {
+      create();
+      const { referralType: _type, ...legacy } = REFERRAL;
+      fixture.componentRef.setInput('referrals', ready([legacy]));
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+      fixture.detectChanges();
+      const heading = host().querySelector('[data-testid="referral-row"] .referral__main')?.textContent?.trim();
+      expect(heading).toBe('Hospital San Lucas');
+    });
+
+    it('si la relectura falla, la lista sigue (S7) y el fallo se dice en línea con reintentar', () => {
+      create();
+      let retries = 0;
+      fixture.componentInstance.retry.subscribe(() => (retries += 1));
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+      fixture.componentRef.setInput('referrals', stale([REFERRAL], new Date(2026, 9, 31, 9, 5)));
+      fixture.componentRef.setInput('refreshError', { text: 'Falló el servidor.', code: 'req-55' });
+      fixture.detectChanges();
+
+      expect(host().querySelectorAll('[data-testid="referral-row"]')).toHaveLength(1);
+      expect(host().querySelector('[data-testid="referral-list-refreshing"]')).toBeNull();
+      const alert = host().querySelector('[data-testid="referral-list-refresh-error"]')!;
+      expect(alert.textContent).toContain('Se muestra la de las 09:05');
+      // El mismo «Código de soporte» con copiar que en todo el sistema.
+      expect(alert.querySelector('app-support-code code')?.textContent).toBe('req-55');
+      alert.querySelector<HTMLElement>('[alert-actions] button')!.click();
+      expect(retries).toBe(1);
+    });
+
+    it('una relectura fallida sin filas no se disfraza de «todavía no tiene derivaciones»', () => {
+      create();
+      fixture.componentRef.setInput('referrals', stale([], new Date(2026, 9, 31, 9, 5)));
+      fixture.componentRef.setInput('refreshError', { text: 'No pudimos conectarnos.', code: null });
+      fixture.detectChanges();
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('stale');
+      expect(host().textContent).not.toContain('todavía no tiene derivaciones');
+      expect(host().querySelector('[data-testid="referral-list-refresh-error"]')).not.toBeNull();
+    });
+
+    it('si falla la primera lectura tras derivar, dice que falló la lista y no el envío', () => {
+      create();
+      writable<{ name: string; kind: string } | null>('issued').set({ name: 'Dra. Lucía Mendoza', kind: 'PRACTITIONER' });
+      fixture.componentRef.setInput('referrals', unexpectedError('req-31', 'x'));
+      fixture.detectChanges();
+      const error = host().querySelector('[data-testid="referral-list-error"]')!;
+      expect(error.textContent).toContain('No pudimos cargar la lista');
+      expect(error.textContent).toContain('La derivación se registró, pero no pudimos cargar la lista.');
+      expect(error.querySelector('app-support-code code')?.textContent).toBe('req-31');
+      expect(host().textContent).not.toContain('todavía no tiene derivaciones');
+    });
+
+    it('«Reintentar» deja el foco en el título de la lista, no en <body>', async () => {
+      create();
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+      fixture.componentRef.setInput('referrals', stale([REFERRAL], new Date(2026, 9, 31, 9, 5)));
+      fixture.componentRef.setInput('refreshError', { text: 'No pudimos conectarnos.', code: null });
+      fixture.detectChanges();
+      // Lo que hace quien monta el bloque: relee y el fallo desaparece con el botón.
+      fixture.componentInstance.retry.subscribe(() => fixture.componentRef.setInput('refreshError', null));
+      host().querySelector<HTMLElement>('[data-testid="referral-list-refresh-error"] button')!.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(host().querySelector('[data-testid="referral-list-refresh-error"]')).toBeNull();
+      expect(document.activeElement).toBe(host().querySelector('#referral-list-title'));
+    });
+
+    it('al releer (S7) la lista sigue a la vista y la antigüedad va junto al título', () => {
+      create();
+      fixture.componentRef.setInput('referrals', ready([REFERRAL]));
+      fixture.detectChanges();
+      http.expectOne((r) => r.url === '/terminology/concepts').flush({ items: [], count: 0, limit: 200 });
+      fixture.componentRef.setInput('referrals', stale([REFERRAL], new Date(2026, 9, 31, 14, 32)));
+      fixture.detectChanges();
+
+      expect(member<() => ViewState<unknown>>('list')().status).toBe('stale');
+      expect(host().querySelectorAll('[data-testid="referral-row"]')).toHaveLength(1);
+      expect(host().querySelector('[data-testid="referral-list-refreshing"]')?.textContent).toContain('14:32');
+      // Sin el banner de S7 por omisión, que empujaba la lista.
+      expect(host().textContent).not.toContain('pueden estar atrasados');
     });
 
     it('los estados que no son datos pasan tal cual al anfitrión', () => {

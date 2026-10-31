@@ -1,5 +1,8 @@
-import { DISPONIBILIDAD_FIXTURE } from '../../../../core/data-access/pharmacy/pharmacy.fixtures';
-import type { AvailabilityResult } from '../../../../core/data-access/pharmacy/pharmacy.types';
+import {
+  availabilityByMedication,
+  DISPONIBILIDAD_FIXTURE,
+  FIXTURE_IDS,
+} from '../../../../core/data-access/pharmacy/pharmacy.fixtures';
 import { evaluateBranches, pinStatusOf, type PrescriptionItem } from './pharmacy-branches';
 import { STALE_STOCK_AFTER_HOURS, staleStockNoticeOf } from './stock-freshness';
 
@@ -38,14 +41,15 @@ describe('staleStockNoticeOf (REQ-19-011)', () => {
 });
 
 describe('evaluateBranches y pinStatusOf con la antigüedad de las existencias', () => {
-  const queryable: readonly (PrescriptionItem & { productId: string })[] = DISPONIBILIDAD_FIXTURE
-    .requestedProductIds.map((productId, index) => ({
-      conceptId: `concept-${index}`,
-      medication: `Medicamento ${index}`,
-      instructions: '',
-      issued: true,
-      productId,
-    }));
+  const queryable: readonly PrescriptionItem[] = [
+    FIXTURE_IDS.conceptoAmoxicilina,
+    FIXTURE_IDS.conceptoIbuprofeno,
+  ].map((conceptId, index) => ({
+    conceptId,
+    medication: `Medicamento ${index}`,
+    instructions: '',
+    issued: true,
+  }));
 
   /** La sede completa del fixture, con la fecha dada; la parcial, sin fecha. */
   /** Con el seguro aprobándolo todo, para mirar también esa variante. */
@@ -53,11 +57,11 @@ describe('evaluateBranches y pinStatusOf con la antigüedad de las existencias',
 
   function evaluateWith(stockUpdatedAt: string | null | undefined) {
     const [complete, partial] = DISPONIBILIDAD_FIXTURE.items;
-    const response: AvailabilityResult = {
+    const response = availabilityByMedication({
       ...DISPONIBILIDAD_FIXTURE,
       items: [{ ...complete!, stockUpdatedAt }, partial!],
-    };
-    return evaluateBranches(response, queryable, [], [], allApproved, NOW).branches;
+    });
+    return evaluateBranches(response, queryable, allApproved, NOW).branches;
   }
 
   it('desactualizado: la sede completa deja de afirmar «Tiene todo», con y sin seguro', () => {
