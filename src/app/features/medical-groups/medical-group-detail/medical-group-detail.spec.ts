@@ -343,9 +343,7 @@ describe('MedicalGroupDetail', () => {
       fixture.detectChanges();
       escribir(host, 'medical-group-member-amount', '10.999');
 
-      expect(
-        (testId(host, 'medical-group-member-save') as HTMLButtonElement).disabled,
-      ).toBe(true);
+      expect(testId(host, 'medical-group-member-save')?.getAttribute('aria-disabled')).toBe('true');
       expect(host.textContent).toContain('hasta dos decimales');
     });
 
@@ -361,9 +359,7 @@ describe('MedicalGroupDetail', () => {
       ]);
       fixture.detectChanges();
 
-      expect(
-        (testId(host, 'medical-group-member-save') as HTMLButtonElement).disabled,
-      ).toBe(true);
+      expect(testId(host, 'medical-group-member-save')?.getAttribute('aria-disabled')).toBe('true');
       expect(host.querySelector('app-content-dialog')).not.toBeNull();
     });
 
