@@ -21,6 +21,10 @@
   <app-account-clinical-access [incrustada]="true" />
 } @else {
   <div class="privacidad">
+    <!-- Permiso de medición de uso del portal: vale para cualquier cuenta, no
+         solo para pacientes, así que va antes del estado de la lista. -->
+    <app-ux-consent-panel />
+
     @switch (estado().status) {
       @case ('cargando') {
         <app-loading-state

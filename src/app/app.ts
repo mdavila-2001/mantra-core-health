@@ -7,12 +7,13 @@ import { AlovidaRuntimeService } from '@core/alovida/alovida-runtime.service';
 import { ToastContainer } from '@shared/components/organisms/toast-container/toast-container';
 import { environment } from '../environments/environment';
 import { MockBanner } from './core/mock/mock-banner';
+import { UxConsentNotice } from './features/ux-consent/ux-consent-notice';
 import { FreeGapNotice } from './features/notifications/free-slot-notice';
 import { DelayNotice } from './features/notifications/delay-notice';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ToastContainer, MockBanner],
+  imports: [RouterOutlet, ToastContainer, MockBanner, UxConsentNotice],
   templateUrl: './app.html',
   styleUrl: './app.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

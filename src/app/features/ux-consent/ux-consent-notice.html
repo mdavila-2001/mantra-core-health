@@ -1,0 +1,37 @@
+@if (consent.avisoVisible()) {
+  <aside class="ux-aviso" data-testid="ux-consent-aviso" aria-label="Aviso sobre la medición de uso del portal">
+    <app-alert tone="info" title="Ayúdenos a mejorar el portal">
+      Para saber qué pantallas se entienden y cuáles no, medimos por dónde navega y dónde hace clic. No
+      guardamos lo que usted escribe ni datos de pacientes. Si acepta, esos clics quedan asociados a su
+      cuenta; si no, solo contamos las pantallas visitadas, sin su identidad. Puede cambiar de opinión cuando
+      quiera en
+      <a routerLink="/my-account/privacy" [queryParams]="{ ver: 'consentimientos' }">Mi cuenta › Mi privacidad</a>.
+      @if (consent.error(); as mensaje) {
+        <span class="ux-aviso__error" data-testid="ux-consent-aviso-error" role="alert">{{ mensaje }}</span>
+      }
+      <div alert-actions class="ux-aviso__acciones">
+        <button
+          app-button
+          size="sm"
+          type="button"
+          data-testid="ux-consent-aceptar"
+          [isLoading]="consent.ocupado()"
+          (click)="consent.otorgar()"
+        >
+          Aceptar
+        </button>
+        <button
+          app-button
+          variant="outline"
+          size="sm"
+          type="button"
+          data-testid="ux-consent-ahora-no"
+          [disabled]="consent.ocupado()"
+          (click)="consent.descartarAviso()"
+        >
+          Ahora no
+        </button>
+      </div>
+    </app-alert>
+  </aside>
+}

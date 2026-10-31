@@ -1,0 +1,28 @@
+:host {
+  display: contents;
+}
+
+/* Fijo abajo y centrado, bajo los diálogos y por encima del contenido; no tapa
+   el avisador de toasts (más alto en la pila de capas). */
+.ux-aviso {
+  position: fixed;
+  inset-inline: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: var(--z-overlay);
+  max-width: 44rem;
+  margin-inline: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.ux-aviso__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-block-start: var(--sp-3);
+}
+
+.ux-aviso__error {
+  display: block;
+  margin-block-start: var(--sp-2);
+  color: var(--st-error-fg);
+}
