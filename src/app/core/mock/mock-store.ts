@@ -125,7 +125,11 @@ export class Coleccion<T extends { readonly id: string }> {
   /** Dónde se guarda, o `null` si esta tabla no sobrevive a la recarga. */
   private clave: string | null;
 
+  /** Las filas con que nació la tabla: a lo que vuelve `reiniciar()`. */
+  private readonly semilla: readonly T[];
+
   constructor(iniciales: readonly T[] = [], clave?: string) {
+    this.semilla = [...iniciales];
     this.clave = clave ?? null;
     const guardadas = this.leerGuardadas();
     // Lo guardado gana sobre los valores iniciales: si no, recargar volvería a
@@ -203,6 +207,22 @@ export class Coleccion<T extends { readonly id: string }> {
 
   todos(): T[] {
     return [...this.filas.values()];
+  }
+
+  /**
+   * Vuelve a las filas con que nació la tabla, ignorando lo que se haya escrito después.
+   *
+   * Es para las **pruebas**: el corredor no aísla los módulos entre archivos de un mismo worker (`isolate: false`), así que
+   * una tabla que un archivo cambió llega cambiada al siguiente, y cuál llegaba cambiada dependía del orden. Un archivo que
+   * parte de «los datos de arranque» lo pide aquí en lugar de suponerlo.
+   */
+  reiniciar(): this {
+    this.filas.clear();
+    for (const fila of this.semilla) {
+      this.filas.set(fila.id, fila);
+    }
+    this.guardar();
+    return this;
   }
 
   get(id: string): T | undefined {

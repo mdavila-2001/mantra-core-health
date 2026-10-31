@@ -163,6 +163,16 @@ const contrasenaVigente = new Map<string, string>();
 
 const sesionesPorUsuario = new Map<string, SesionSimulada[]>();
 
+/**
+ * Olvida las sesiones abiertas y las contraseñas vigentes: cada cuenta vuelve a tener la actual y otra desde otro equipo. Solo lo
+ * usan las pruebas (`reiniciarLaSesionDelSimulador`): es memoria del módulo, y con `isolate: false` lo que un archivo cerró
+ * («No fui yo», «cerrar todas», cambiar la contraseña) lo veía el siguiente archivo del mismo worker.
+ */
+export function olvidarLasSesionesDeCuenta(): void {
+  sesionesPorUsuario.clear();
+  contrasenaVigente.clear();
+}
+
 /** Las sesiones abiertas de una cuenta: la actual y otra desde otro equipo. */
 function sesionesDe(user: CuentaSimulada): SesionSimulada[] {
   const existentes = sesionesPorUsuario.get(user.id);
@@ -173,6 +183,17 @@ function sesionesDe(user: CuentaSimulada): SesionSimulada[] {
   ];
   sesionesPorUsuario.set(user.id, nuevas);
   return nuevas;
+}
+
+/**
+ * «No fui yo»: cierra todas las sesiones de la cuenta menos la actual. Es lo que hace
+ * `POST /iam/me/devices/:id/not-me` en una sola operación; devuelve cuántas cerró.
+ */
+export function cerrarOtrasSesiones(user: CuentaSimulada): number {
+  const sesiones = sesionesDe(user);
+  const otras = sesiones.filter((s) => !s.current);
+  sesionesPorUsuario.set(user.id, sesiones.filter((s) => s.current));
+  return otras.length;
 }
 
 function unprocessable(message: string, reason: string) {

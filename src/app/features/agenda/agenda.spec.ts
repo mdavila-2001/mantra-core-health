@@ -315,8 +315,10 @@ describe('Agenda', () => {
     extra: Record<string, unknown> = {},
   ): Promise<void> {
     await responderRecursos();
-    // Con PRACTITIONER también lee «Pagos por registrar» (`pending-payments`),
-    // que pide la misma ruta por su cuenta: las dos reciben la misma cita.
+    // Las lecturas de `/scheduling/bookings` son varias y todas legítimas: la de
+    // la pantalla, la de «Pagos por registrar» (`pending-payments`, con
+    // PRACTITIONER) y la del calendario abierto. Las dos primeras reciben la
+    // misma cita; la del calendario la vacía después `drenarCalendario()`.
     for (const lectura of http.match((r) => r.url === '/scheduling/bookings')) {
       lectura.flush({
         items: [{ ...CITA, statusConceptId: 'c-estado', ...extra }],
@@ -325,16 +327,14 @@ describe('Agenda', () => {
         truncated: false,
       });
     }
-    http
-      .expectOne((r) => r.url === '/scheduling/slots')
-      .flush({ items: [], count: 0, limit: 100, truncated: false });
-    http
-      .expectOne((r) => r.url === '/terminology/concepts')
-      .flush({
-        items: [{ conceptId: 'c-estado', code, display, codeSystemVersionId: 'csv-1' }],
-        count: 1,
-        limit: 200,
-      });
+    // `primeraPeticion` y no `expectOne`: con el calendario abierto hay dos
+    // lecturas vivas de cada uno; la del calendario la vacía `drenarCalendario()`.
+    primeraPeticion('/scheduling/slots').flush({ items: [], count: 0, limit: 100, truncated: false });
+    primeraPeticion('/terminology/concepts').flush({
+      items: [{ conceptId: 'c-estado', code, display, codeSystemVersionId: 'csv-1' }],
+      count: 1,
+      limit: 200,
+    });
     harness.detectChanges();
   }
 
@@ -978,6 +978,8 @@ describe('Agenda', () => {
 
     const texto = resumen(fila);
     expect(texto).toContain('Última consulta');
+    // Una cuenta de profesional solo ve su propia agenda (G1): es la última consulta CON USTED.
+    expect(texto).toContain('Última consulta con usted');
     expect(texto).toContain('Dolor de cabeza');
     expect(texto).not.toContain('no cuenta');
 

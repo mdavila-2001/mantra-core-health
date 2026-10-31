@@ -21,6 +21,12 @@ const OPS: readonly Row[] = [
   op('SchedulingController_book', 'POST', '/scheduling/bookings', 'Reservar un cupo', 'ALTO', ['PATIENT'], ['scheduling.bookings', 'scheduling.slots'], 'ESCRIBE', ['ESCRIBE', 'MAQUINA_DE_ESTADOS']),
   op('SchedulingController_cancel', 'DELETE', '/scheduling/bookings/{id}', 'Cancelar una reserva', 'ALTO', [], ['scheduling.bookings'], 'BORRA', ['ESCRIBE_SIN_ROLES', 'SIN_PRUEBAS']),
   op('IamAuthController_login', 'POST', '/iam/auth/login', 'Iniciar sesión', 'ALTO', [], ['iam.users'], 'LEE', ['PUBLICA'], true),
+  // Los dos primeros nodos «declarados» del catálogo de flujos del simulador viven acá para que
+  // el cruce flujo → operación se vea completo en la maqueta (el resto queda sin ficha a propósito).
+  op('BillingSimulatedController_registerPayment', 'POST', '/billing/simulated/charges/{chargeId}/payment', 'Registrar un pago simulado', 'ALTO', ['BILLING'], ['scheduling.bookings', 'iam.users'], 'ESCRIBE', ['ESCRIBE']),
+  op('BillingSimulatedController_issueInvoice', 'POST', '/billing/simulated/charges/{chargeId}/invoices', 'Emitir una factura simulada', 'ALTO', ['BILLING'], ['scheduling.bookings'], 'ESCRIBE', ['ESCRIBE']),
+  op('InsuranceClaimsController_create', 'POST', '/insurance-claims', 'Crear un reclamo al seguro', 'ALTO', ['BILLING'], ['iam.users', 'scheduling.bookings'], 'ESCRIBE', ['ESCRIBE']),
+  op('DirectoryController_search', 'GET', '/public/search/practitioners', 'Buscar profesionales', 'BAJO', [], ['iam.users'], 'LEE', ['PUBLICA'], true),
   op('IamUsersController_me', 'GET', '/iam/users/me', null, 'BAJO', [], ['iam.users'], 'LEE', ['CONTRATO_AUSENTE'], false, 'CONTRATO_AUSENTE'),
 ];
 

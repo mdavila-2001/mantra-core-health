@@ -1,0 +1,221 @@
+<section
+  class="explicacion"
+  aria-label="Explicación de la decisión"
+  data-testid="explicacion"
+  [attr.aria-busy]="busy()"
+>
+  <div
+    class="veredicto"
+    [class]="'veredicto veredicto--' + verdict().tone"
+    role="status"
+    aria-live="polite"
+    data-testid="veredicto"
+    [attr.data-efecto]="result().decision.effect"
+  >
+    <span class="veredicto__icono" aria-hidden="true">{{ verdict().icon }}</span>
+    <div class="veredicto__texto">
+      <p class="veredicto__titulo">{{ verdict().label }}</p>
+      <p class="veredicto__resumen" data-testid="explicacion-resumen">{{ result().summary }}</p>
+      @if (atomName(); as nombre) {
+        <p class="veredicto__sub">Permiso evaluado: {{ nombre }}</p>
+      }
+      @if (assumedText(); as supuestos) {
+        <p class="veredicto__sub" data-testid="explicacion-supuestos">
+          Calculado suponiendo que: {{ supuestos }}.
+        </p>
+      }
+    </div>
+  </div>
+
+  @if (result().missing.length > 0) {
+    <section class="bloque" aria-labelledby="exp-falta">
+      <h3 id="exp-falta" class="bloque__titulo">
+        @if (audience() === 'admin') {
+          Lo que le falta a la persona
+        } @else {
+          Lo que usted puede hacer
+        }
+      </h3>
+      <ul class="lista" role="list" data-testid="explicacion-falta">
+        @for (m of result().missing; track $index) {
+          <li class="lista__fila">
+            <app-badge variant="info" size="sm">{{ missingKind(m) }}</app-badge>
+            <span>{{ m.message }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (audience() === 'admin') {
+    @if ((result().adminFixes ?? []).length > 0) {
+      <section class="bloque" aria-labelledby="exp-admin">
+        <h3 id="exp-admin" class="bloque__titulo">Lo que un administrador puede cambiar</h3>
+        <ul class="lista" role="list" data-testid="explicacion-arreglos">
+          @for (fix of result().adminFixes; track $index) {
+            <li class="lista__fila">
+              <span>{{ fix.message }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  } @else if (result().askAdmin) {
+    <section class="bloque" aria-labelledby="exp-pedir">
+      <h3 id="exp-pedir" class="bloque__titulo">Si necesita más</h3>
+      <p class="bloque__texto" data-testid="explicacion-pedir">{{ result().askAdmin }}</p>
+    </section>
+  } @else if ((result().adminFixes ?? []).length > 0) {
+    <section class="bloque" aria-labelledby="exp-pedir">
+      <h3 id="exp-pedir" class="bloque__titulo">Lo que puede pedir al administrador</h3>
+      <ul class="lista" role="list" data-testid="explicacion-arreglos">
+        @for (fix of result().adminFixes; track $index) {
+          <li class="lista__fila">
+            <span>{{ fix.message }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (obligations().length > 0) {
+    <section class="bloque" aria-labelledby="exp-oblig">
+      <h3 id="exp-oblig" class="bloque__titulo">Al hacerlo se le pide</h3>
+      <ul class="lista" role="list" data-testid="explicacion-obligaciones">
+        @for (linea of obligations(); track linea) {
+          <li class="lista__fila">
+            <span>{{ linea }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (canAssume()) {
+    <section class="bloque" aria-labelledby="exp-ysi">
+      <h3 id="exp-ysi" class="bloque__titulo">¿Y si…?</h3>
+      <p class="bloque__texto">
+        Pruebe qué cambia si algo fuera distinto. Es solo una prueba: no cambia nada de verdad.
+      </p>
+      <div class="ysi" data-testid="explicacion-ysi">
+        @for (flag of flags; track flag.key) {
+          <div class="ysi__fila">
+            <span class="ysi__leyenda" [id]="'ysi-' + flag.key">{{ flag.legend }}</span>
+            <app-segmented-control
+              [options]="options"
+              [value]="choiceOf(flag.key)"
+              (valueChange)="choose(flag.key, $event)"
+              [ariaLabel]="flag.legend"
+            />
+          </div>
+        }
+        @if (audience() === 'admin') {
+          <app-switch
+            [checked]="forceFull()"
+            (checkedChange)="toggleForceFull($event)"
+            label="Mostrar todos los pasos aunque una negación temprana corte la lista"
+            data-testid="explicacion-forzar"
+          />
+        }
+        <button
+          type="button"
+          class="enlace"
+          (click)="reset()"
+          data-testid="explicacion-ysi-limpiar"
+        >
+          Volver a como está hoy
+        </button>
+      </div>
+    </section>
+  }
+
+  <section class="bloque" aria-labelledby="exp-pasos">
+    <h3 id="exp-pasos" class="bloque__titulo">Cómo se llegó a esta respuesta</h3>
+    <ol class="pasos" data-testid="explicacion-pasos">
+      @for (paso of steps(); track paso.order) {
+        <li
+          class="paso"
+          [class.paso--decisivo]="paso.decisive"
+          [class.paso--fallo]="!paso.passed"
+          [attr.data-pasado]="paso.passed"
+          [attr.data-testid]="'paso-' + paso.order"
+          [attr.aria-current]="paso.decisive ? 'step' : null"
+        >
+          <span class="paso__icono" aria-hidden="true">{{ paso.icon }}</span>
+          <div class="paso__cuerpo">
+            <p class="paso__linea">
+              <span class="paso__estado">{{ paso.outcome }}</span>
+              <span class="paso__capa">{{ paso.layerLabel }}</span>
+              @if (paso.decisive) {
+                <app-badge variant="error" size="sm">Decidió aquí</app-badge>
+              }
+            </p>
+            <p class="paso__mensaje">{{ paso.message }}</p>
+            <details class="paso__detalle">
+              <summary>Ver el detalle</summary>
+              <dl class="tecnico">
+                @for (t of paso.technical; track $index) {
+                  <dt>{{ t.label }}</dt>
+                  <dd>{{ t.value }}</dd>
+                }
+              </dl>
+            </details>
+          </div>
+        </li>
+      }
+    </ol>
+    @if (!hasUnmetStep() && result().decision.effect !== 'PERMIT') {
+      <p class="bloque__texto">
+        Ningún paso de la lista falló por sí solo: el motivo está en el resumen de arriba.
+      </p>
+    }
+  </section>
+
+  @if ((result().usage ?? []).length > 0) {
+    <section class="bloque" aria-labelledby="exp-uso">
+      <h3 id="exp-uso" class="bloque__titulo">Cuánto se usó</h3>
+      <ul class="lista" role="list" data-testid="explicacion-uso">
+        @for (u of result().usage; track u.key) {
+          <li class="lista__fila">
+            <span>{{ u.used }} de {{ u.max }}</span>
+            @if (u.resetsAt) {
+              <span class="texto-tenue"
+                >· se renueva el
+                <time [attr.datetime]="u.resetsAt">{{
+                  u.resetsAt | date: 'dd/MM/yyyy HH:mm'
+                }}</time></span
+              >
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (fields().length > 0) {
+    <section class="bloque" aria-labelledby="exp-campos">
+      <h3 id="exp-campos" class="bloque__titulo">Qué datos verá</h3>
+      <ul class="lista" role="list" data-testid="explicacion-campos">
+        @for (c of fields(); track c.code) {
+          <li class="lista__fila">
+            <span>{{ c.label }}:</span>
+            <app-badge variant="secondary" size="sm">{{ c.mask }}</app-badge>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <p class="pie texto-tenue" data-testid="explicacion-pie">
+    Calculado el
+    <time [attr.datetime]="result().evaluatedAt">{{
+      result().evaluatedAt | date: 'dd/MM/yyyy HH:mm'
+    }}</time
+    >.
+    @if (result().correlationId) {
+      Código de seguimiento: {{ result().correlationId }}.
+    }
+  </p>
+
+  <ng-content select="[explain-actions]" />
+</section>

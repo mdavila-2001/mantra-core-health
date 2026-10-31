@@ -1,0 +1,96 @@
+<section class="compositor" aria-label="Responder" data-testid="compositor">
+  <!-- Permanente: no se cierra ni se esconde. Dice a nombre de quién sale lo que se escriba. -->
+  <p class="aviso" role="note" data-testid="aviso-en-nombre">{{ aviso() }}</p>
+
+  <app-segmented-control [options]="modos" [value]="modo()" (valueChange)="modo.set($event)" ariaLabel="Qué quiere hacer" data-testid="compositor-modo" />
+
+  @if (enNota()) {
+    <p class="compositor__ayuda" data-testid="aviso-nota">Una nota interna la ve solo el equipo. El paciente nunca la ve y no sale en su chat.</p>
+  } @else if (regla().reason; as razon) {
+    <app-alert [tone]="regla().block === 'CLINICAL' ? 'error' : 'warning'" [title]="regla().block === 'CLINICAL' ? 'Mensaje clínico' : 'No se puede responder ahora'" data-testid="aviso-bloqueo">
+      {{ razon }}
+    </app-alert>
+  }
+
+  @if (!enNota() && grupos().length > 0) {
+    <div class="plantillas">
+      <button
+        type="button"
+        class="plantillas__abrir"
+        [attr.aria-expanded]="abiertas()"
+        aria-controls="plantillas-lista"
+        [disabled]="campoBloqueado()"
+        data-testid="plantillas-abrir"
+        (click)="abiertas.set(!abiertas())"
+      >
+        Plantillas de respuesta
+      </button>
+      @if (abiertas()) {
+        <div class="plantillas__lista" id="plantillas-lista" data-testid="plantillas-lista">
+          @for (grupo of grupos(); track grupo.category) {
+            <section class="grupo" [attr.aria-label]="'Plantillas de ' + grupo.label">
+              <h3 class="grupo__titulo">{{ grupo.label }}</h3>
+              <ul class="grupo__items" role="list">
+                @for (plantilla of grupo.items; track plantilla.id) {
+                  <li>
+                    <button type="button" class="plantilla" [attr.data-testid]="'plantilla-' + plantilla.id" (click)="usarPlantilla(plantilla)">
+                      <span class="plantilla__titulo">{{ plantilla.title }}</span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </section>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <app-form-field [label]="enNota() ? 'Nota interna' : 'Respuesta al paciente'">
+    <app-textarea
+      [value]="borrador()"
+      (valueChange)="borrador.set($event)"
+      [rows]="4"
+      [autoResize]="true"
+      [disabled]="campoBloqueado() || busy()"
+      [placeholder]="enNota() ? 'Escriba la nota para el equipo…' : 'Escriba la respuesta al paciente…'"
+      data-testid="compositor-texto"
+    />
+  </app-form-field>
+
+  @if (!enNota() && !campoBloqueado()) {
+    <div class="correo" data-testid="compositor-correo">
+      <app-switch [checked]="porCorreo()" (checkedChange)="porCorreo.set($event)" [disabled]="busy()" label="Mandar también por correo al paciente" data-testid="correo-interruptor" />
+      @if (porCorreo()) {
+        <p class="compositor__ayuda" role="note" data-testid="correo-aviso">
+          El paciente recibirá este mensaje en su correo a nombre de {{ conversation().practitionerName }}. Si no tiene un correo registrado, solo sale por el chat y se lo avisamos.
+        </p>
+      }
+    </div>
+  }
+
+  @if (failure(); as fallo) {
+    <app-alert tone="error" role="alert" data-testid="compositor-error">{{ fallo }}</app-alert>
+  }
+
+  <div class="acciones">
+    @if (enNota()) {
+      <button app-button type="button" [isLoading]="busy()" [disabled]="busy() || vacio()" data-testid="guardar-nota" (clicked)="enviar()">
+        Guardar nota interna
+      </button>
+    } @else {
+      @if (principalEsDerivar()) {
+        <button app-button type="button" [isLoading]="busy()" [disabled]="busy() || !puedeDerivar()" data-testid="derivar-principal" (clicked)="derivar()">
+          Derivar al doctor
+        </button>
+        <button app-button variant="outline" type="button" [disabled]="true" data-testid="enviar-respuesta">
+          Enviar como {{ conversation().practitionerName }}
+        </button>
+      } @else {
+        <button app-button type="button" [isLoading]="busy()" [disabled]="busy() || vacio() || !regla().canSend" data-testid="enviar-respuesta" (clicked)="enviar()">
+          Enviar como {{ conversation().practitionerName }}
+        </button>
+      }
+    }
+  </div>
+</section>

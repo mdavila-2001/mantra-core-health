@@ -1,6 +1,8 @@
 import { DOCUMENT } from '@angular/common';
 import { inject, Injectable } from '@angular/core';
 
+import { releaseObjectUrlLater } from './release-object-url';
+
 /**
  * Entrega al navegador un archivo que ya se tiene en memoria (un `Blob`).
  *
@@ -9,7 +11,8 @@ import { inject, Injectable } from '@angular/core';
  * `Authorization` sale **sin** token y responde 401 (`window.open` no manda
  * cabeceras). Se baja el `Blob` con el interceptor de sesión, se crea un enlace
  * temporal y se lo entrega con `<a download>`; la URL del objeto se revoca en
- * cuanto se hizo clic, así que no queda ninguna dirección viva al contenido.
+ * un minuto después del clic (no en el mismo tick: eso cancela la descarga en Safari y Firefox), así que no queda una
+ * dirección viva al contenido.
  *
  * Es un servicio y no una función suelta por la misma razón que
  * `CsvExportService`: el runner de pruebas no deja espiar una función exportada
@@ -32,7 +35,8 @@ export class FileDownloadService {
       enlace.rel = 'noopener';
       enlace.click();
     } finally {
-      URL.revokeObjectURL(url);
+      // Después, no en este tick: Safari y Firefox cancelarían una descarga que aún no empezó (F8).
+      releaseObjectUrlLater(url);
     }
   }
 }

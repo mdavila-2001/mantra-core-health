@@ -1,0 +1,68 @@
+<app-page-header
+  title="Invitaciones de organizaciones"
+  subtitle="Las organizaciones que quieren sumarlo a su equipo. Hasta que acepte, no tienen acceso a su cuenta ni usted a la de ellas."
+  [breadcrumbs]="breadcrumbs()"
+/>
+
+<app-card class="invitaciones" padding="lg" data-testid="invitaciones-card">
+  @if (resultado(); as dicho) {
+    <app-alert tone="success" role="status" data-testid="invitaciones-resultado">{{ dicho }}</app-alert>
+  }
+  @if (fallo(); as dicho) {
+    <app-alert tone="error" role="alert" data-testid="invitaciones-error">{{ dicho }}</app-alert>
+  }
+
+  @switch (estado()) {
+    @case ('cargando') {
+      <app-loading-state message="Buscando sus invitaciones…" />
+    }
+
+    @case ('error') {
+      <app-alert tone="error" role="alert" data-testid="invitaciones-no-cargo">
+        No pudimos leer sus invitaciones.
+        <button app-button variant="secondary" size="sm" type="button" (clicked)="cargar()" data-testid="invitaciones-reintentar">Reintentar</button>
+      </app-alert>
+    }
+
+    @case ('listo') {
+      @if (invitaciones().length === 0) {
+        <app-empty-state
+          title="No tiene invitaciones pendientes"
+          description="Cuando una organización quiera sumarlo a su equipo, la invitación aparecerá aquí para que la acepte o la rechace."
+          data-testid="invitaciones-vacio"
+        />
+      } @else {
+        <ul class="invitaciones__lista" role="list" aria-label="Invitaciones pendientes" data-testid="invitaciones-lista">
+          @for (invitacion of invitaciones(); track invitacion.id) {
+            <li class="invitacion" [attr.data-testid]="'invitacion-' + invitacion.id">
+              <div class="invitacion__datos">
+                <h2 class="invitacion__organizacion" data-testid="invitacion-organizacion">{{ invitacion.tenantName }}</h2>
+                <p class="invitacion__detalle">Lo invita a sumarse a su {{ rol(invitacion.role) }}. Recibida el {{ invitacion.invitedAt | date: 'd MMM y' }}.</p>
+              </div>
+              <div class="invitacion__acciones">
+                <button
+                  app-button
+                  type="button"
+                  [isLoading]="enCurso() === invitacion.id"
+                  [disabled]="enCurso() !== null"
+                  (clicked)="aceptar(invitacion)"
+                  [attr.aria-label]="'Aceptar la invitación de ' + invitacion.tenantName"
+                  data-testid="invitacion-aceptar"
+                >Aceptar</button>
+                <button
+                  app-button
+                  variant="outline"
+                  type="button"
+                  [disabled]="enCurso() !== null"
+                  (clicked)="rechazar(invitacion)"
+                  [attr.aria-label]="'Rechazar la invitación de ' + invitacion.tenantName"
+                  data-testid="invitacion-rechazar"
+                >Rechazar</button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+</app-card>

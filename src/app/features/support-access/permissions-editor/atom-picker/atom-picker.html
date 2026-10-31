@@ -1,0 +1,85 @@
+<div class="picker" data-testid="atom-picker">
+  <div class="picker__tools">
+    <app-input
+      type="search"
+      class="picker__search"
+      placeholder="Buscar un permiso por nombre"
+      ariaLabel="Buscar un permiso por nombre"
+      [value]="query()"
+      (valueChange)="onSearch($event)"
+      testId="atom-search"
+    />
+    <button
+      app-button
+      type="button"
+      variant="outline"
+      size="sm"
+      (clicked)="expandAll(!allOpen())"
+      data-testid="atoms-expand-all"
+    >
+      {{ allOpen() ? 'Plegar todo' : 'Desplegar todo' }}
+    </button>
+  </div>
+
+  <app-accordion [multi]="true">
+    @for (group of groups(); track group.code) {
+      <app-accordion-panel
+        [heading]="group.name + ' · ' + group.selected + ' de ' + group.total + ' marcados'"
+        [expanded]="isOpen(group)"
+        (expandedChange)="setOpen(group, $event)"
+        [attr.data-testid]="'atom-category-' + group.code"
+      >
+        <ul class="picker__list" role="list">
+          @for (row of group.rows; track row.atom.code) {
+            <li
+              class="atom"
+              [class.atom--blocked]="row.blockedReason !== null"
+              [attr.data-testid]="'atom-' + row.atom.code"
+            >
+              <div class="atom__main">
+                <app-checkbox
+                  [label]="row.atom.name"
+                  [checked]="row.checked"
+                  [disabled]="disabled() || row.blockedReason !== null"
+                  [hasError]="row.issues.length > 0"
+                  (checkedChange)="onToggle(row, $event)"
+                  [attr.data-testid]="'atom-check-' + row.atom.code"
+                />
+                <app-badge
+                  [variant]="tone(row.atom.sensitivity)"
+                  size="sm"
+                  [attr.data-testid]="'atom-badge-' + row.atom.code"
+                >
+                  <span aria-hidden="true">{{ glyph(row.atom.sensitivity) }}</span> Sensibilidad:
+                  {{ label(row.atom.sensitivity) }}
+                </app-badge>
+              </div>
+              <p class="atom__code">{{ row.atom.code }}</p>
+              @if (row.tags.length > 0) {
+                <ul
+                  class="atom__tags"
+                  role="list"
+                  [attr.data-testid]="'atom-tags-' + row.atom.code"
+                >
+                  @for (tag of row.tags; track tag) {
+                    <li class="atom__tag">{{ tag }}</li>
+                  }
+                </ul>
+              }
+              @if (row.blockedReason; as why) {
+                <p class="atom__reason" [attr.data-testid]="'atom-reason-' + row.atom.code">
+                  {{ why }}
+                </p>
+              }
+              @for (issue of row.issues; track issue) {
+                <p class="atom__issue" role="alert">{{ issue }}</p>
+              }
+            </li>
+          } @empty {
+            <li class="atom__none">Ningún permiso de esta categoría coincide con la búsqueda.</li>
+          }
+        </ul>
+      </app-accordion-panel>
+    }
+  </app-accordion>
+</div>

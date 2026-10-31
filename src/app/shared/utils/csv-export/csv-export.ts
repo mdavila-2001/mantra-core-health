@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 
+import { releaseObjectUrlLater } from '../file-download/release-object-url';
+
 /**
  * Exporta filas a un CSV descargable.
  *
@@ -72,7 +74,8 @@ export class CsvExportService {
       enlace.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
       enlace.click();
     } finally {
-      URL.revokeObjectURL(url);
+      // Después, no en este tick: Safari y Firefox cancelarían una descarga que aún no empezó (F8).
+      releaseObjectUrlLater(url);
     }
   }
 }

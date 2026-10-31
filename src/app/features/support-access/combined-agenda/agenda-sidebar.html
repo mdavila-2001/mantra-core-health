@@ -1,0 +1,121 @@
+<div class="lateral" data-testid="agenda-lateral">
+  <section class="bloque" aria-label="Calendario">
+    <app-agenda-mini-calendar [date]="date()" [today]="today()" [markWeek]="true" (dateChange)="dateChange.emit($event)" />
+  </section>
+
+  <section class="bloque" aria-labelledby="lat-org">
+    <h2 class="bloque__titulo" id="lat-org">Organización</h2>
+    <app-select
+      [options]="orgOptions()"
+      [value]="orgValue()"
+      (valueChange)="orgChange.emit($event)"
+      [searchable]="false"
+      [disabled]="orgOptions().length < 2"
+      placeholder="Elija una organización"
+      ariaLabel="Organización"
+      data-testid="agenda-organizacion"
+    />
+    @if (multiOrg()) {
+      <p class="bloque__nota">Cada cita lleva la sigla de su organización. Al actuar sobre una, se le dice en cuál.</p>
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="mis-doctores">
+    <div class="bloque__cabeza">
+      <h2 class="bloque__titulo" id="mis-doctores">Mis doctores</h2>
+      <span class="bloque__cuenta" aria-live="polite">{{ onCount() }} de {{ doctors().length }}</span>
+    </div>
+    @if (doctors().length === 0) {
+      <p class="bloque__nota">Ninguno todavía.</p>
+    } @else {
+      <div class="acciones-rapidas">
+        <button type="button" class="enlace" [disabled]="allOn()" (click)="allDoctors.emit(true)" data-testid="doctores-todos">Todos</button>
+        <button type="button" class="enlace" [disabled]="noneOn()" (click)="allDoctors.emit(false)" data-testid="doctores-ninguno">Ninguno</button>
+      </div>
+      <div data-testid="agenda-mis-doctores">
+        @for (grupo of doctorGroups(); track grupo.org?.id ?? 'unico') {
+          @if (grupo.org; as org) {
+            <p class="grupo-org"><span class="sigla" [style.background]="orgColors(org).bg" [style.color]="orgColors(org).fg">{{ org.short }}</span> {{ org.name }}</p>
+          }
+          <ul class="doctores" role="list" [attr.aria-label]="grupo.org ? 'Doctores de ' + grupo.org.name : 'Doctores'">
+            @for (doctor of grupo.doctors; track doctor.id) {
+              <li>
+                <label class="doctor" [style.--doctor-color]="color(doctor.id).border" [style.--doctor-fondo]="color(doctor.id).bg">
+                  <input
+                    type="checkbox"
+                    class="doctor__casilla"
+                    [checked]="!hidden().has(doctor.id)"
+                    (change)="doctorToggle.emit(doctor.id)"
+                    [attr.data-testid]="'doctor-visible-' + doctor.id"
+                  />
+                  <span class="doctor__muestra" aria-hidden="true"></span>
+                  <span class="doctor__texto">
+                    <span class="doctor__nombre">{{ doctor.name }}</span>
+                    <span class="doctor__esp">{{ doctor.specialty }}</span>
+                  </span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="lat-ubic">
+    <h2 class="bloque__titulo" id="lat-ubic">Ubicación</h2>
+    @if (locations().length === 0) {
+      <p class="bloque__nota">No hay ubicaciones para filtrar.</p>
+    } @else {
+      <ul class="arbol" role="list" aria-labelledby="lat-ubic" data-testid="agenda-arbol">
+        <li>
+          <button type="button" class="nodo" [attr.aria-pressed]="locationId() === null" [class.nodo--elegido]="locationId() === null" (click)="locationChange.emit(null)" data-testid="ubicacion-todas">
+            Todas las ubicaciones
+          </button>
+        </li>
+        @for (fila of treeRows(); track fila.node.id) {
+          <li class="arbol__fila" [style.padding-inline-start.rem]="fila.depth * 0.9">
+            @if (fila.hasChildren) {
+              <button type="button" class="abrir" [attr.aria-expanded]="fila.open" [attr.aria-label]="(fila.open ? 'Cerrar ' : 'Abrir ') + fila.node.name" (click)="toggleNode(fila.node.id, fila.open)">{{ fila.open ? '▾' : '▸' }}</button>
+            } @else {
+              <span class="abrir abrir--vacio" aria-hidden="true"></span>
+            }
+            <button
+              type="button"
+              class="nodo"
+              [attr.aria-pressed]="locationId() === fila.node.id"
+              [class.nodo--elegido]="locationId() === fila.node.id"
+              (click)="locationChange.emit(fila.node.id)"
+              [attr.data-testid]="'ubicacion-' + fila.node.id"
+            >
+              <span class="nodo__tipo">{{ kindLabel(fila.node) }}</span> {{ fila.node.name }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section class="bloque" aria-labelledby="lat-serv">
+    <h2 class="bloque__titulo" id="lat-serv">Servicio</h2>
+    <app-select
+      [options]="serviceOptions()"
+      [value]="serviceId() ?? ''"
+      (valueChange)="serviceChange.emit($event === '' ? null : $event)"
+      ariaLabel="Servicio"
+      data-testid="agenda-filtro-servicio"
+    />
+  </section>
+
+  <section class="bloque" aria-labelledby="lat-ver">
+    <h2 class="bloque__titulo" id="lat-ver">Qué mostrar</h2>
+    <label class="interruptor">
+      <input type="checkbox" [checked]="showFree()" (change)="showFreeChange.emit(value($event))" data-testid="agenda-ver-libres" />
+      <span>Horarios libres</span>
+    </label>
+    <label class="interruptor">
+      <input type="checkbox" [checked]="showDenied()" (change)="showDeniedChange.emit(value($event))" data-testid="agenda-ver-sin-permiso" />
+      <span>Horarios sin permiso <small>(atenuados, con el motivo)</small></span>
+    </label>
+  </section>
+</div>

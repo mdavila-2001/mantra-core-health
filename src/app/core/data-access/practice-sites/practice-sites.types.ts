@@ -187,12 +187,10 @@ export interface MyRoleAssignment {
   readonly avatarUrl: string | null;
   /**
    * La organización (tenant) de la práctica: la que pide `createResource` para
-   * publicar una agenda ahí. La devuelve la vinculación. Es opcional porque la
-   * API todavía no la manda (está pedida como campo nuevo de
-   * `GET /practitioners/me/role-assignments`); sin ella, esa organización no se
-   * ofrece para publicar.
+   * publicar una agenda ahí. La devuelve la vinculación (`MyRoleAssignmentResponseDto.tenantId`, siempre presente; `null` si la
+   * práctica no tiene organización).
    */
-  readonly tenantId?: string | null;
+  readonly tenantId: string | null;
 }
 
 /** Cuerpo de "pedir vincularme a esta organización". */

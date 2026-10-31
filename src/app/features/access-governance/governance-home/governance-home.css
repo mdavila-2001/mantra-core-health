@@ -1,0 +1,173 @@
+:host {
+  display: block;
+}
+
+.pantalla {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.tablero {
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.tablero__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.tablero__fecha {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.seccion {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.seccion__titulo {
+  margin: 0;
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ---- lo que necesita su atención --------------------------------------------------------------------------- */
+
+.atencion {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.atencion__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+  background: var(--bg-surface-alt);
+}
+
+.atencion__texto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+}
+
+.atencion__orden {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-xs);
+  background: var(--st-success-bg);
+  color: var(--text-primary);
+}
+
+/* ---- mosaicos ------------------------------------------------------------------------------------------------ */
+
+.mosaicos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.mosaico {
+  display: grid;
+  gap: var(--sp-1);
+  height: 100%;
+  padding: var(--sp-4);
+  border: 1px solid var(--border-default);
+  border-inline-start-width: 4px;
+  border-radius: var(--r-xs);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.mosaico:hover {
+  background: var(--bg-hover);
+}
+
+.mosaico--ok {
+  border-inline-start-color: var(--c-success-600);
+}
+
+.mosaico--info {
+  border-inline-start-color: var(--c-info-600);
+}
+
+.mosaico--warn {
+  border-inline-start-color: var(--c-warning-600);
+}
+
+.mosaico--risk {
+  border-inline-start-color: var(--c-error-600);
+}
+
+.mosaico__valor {
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.mosaico__rotulo {
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.mosaico__estado {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.mosaico__detalle {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+/* ---- herramientas -------------------------------------------------------------------------------------------- */
+
+.herramientas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.herramientas__item {
+  display: grid;
+  gap: var(--sp-1);
+  align-content: start;
+}
+
+.herramientas__pista {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}

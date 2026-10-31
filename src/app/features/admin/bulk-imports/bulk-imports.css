@@ -1,0 +1,148 @@
+/* Cargas masivas. Una tarjeta con pestañas, centrada y a lo ancho del área
+   (composition-rules §5): el tope lo pone `.app-main__inner`, no esta hoja. */
+.cargas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e4);
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.cargas__paso {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding-block: var(--e3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.cargas__titulo {
+  margin: 0;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cargas__subtitulo {
+  margin: var(--e3) 0 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cargas__ayuda {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-secondary);
+}
+
+.cargas__resumen {
+  margin: 0 0 var(--e3);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cargas__codigo {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.cargas__lista {
+  margin: 0;
+  padding-inline-start: var(--e4);
+}
+
+/* Campos repartidos en columnas según el ancho, no un formulario acotado:
+   una en móvil, dos desde 780 px, tres desde 1120 px. */
+.cargas__rejilla {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--e3) var(--e4);
+}
+
+@media (min-width: 780px) {
+  .cargas__rejilla {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1120px) {
+  .cargas__rejilla {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* El motivo y la base legal piden espacio para escribir: ocupan la fila entera. */
+.cargas__ancho {
+  grid-column: 1 / -1;
+}
+
+.cargas__plantilla {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding: var(--e3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.cargas__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+}
+
+.cargas__acciones--fin {
+  justify-content: flex-end;
+  margin-block-end: var(--e3);
+}
+
+.cargas__lote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-block-start: var(--e4);
+  padding-block-start: var(--e4);
+}
+
+.cargas__estado {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+}
+
+.cargas__declaracion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--e2) var(--e4);
+  margin: 0;
+}
+
+.cargas__declaracion dt {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+}
+
+.cargas__declaracion dd {
+  margin: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.cargas__conteos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--e3);
+}
+
+.cargas__avance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+}
