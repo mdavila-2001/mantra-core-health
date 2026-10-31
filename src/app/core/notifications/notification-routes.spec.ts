@@ -75,4 +75,41 @@ describe('rutaDeNotificacion', () => {
     expect(rutaDeNotificacion({ type: 'ALGO_NUEVO', id: 'x' })).toBeNull();
     expect(rutaDeNotificacion(undefined)).toBeNull();
   });
+
+  describe('la derivación a una organización (ORGANIZATION_PROFILE)', () => {
+    const destino = { type: 'ORGANIZATION_PROFILE', id: 't-hospital' };
+
+    it('abre la ficha pública que manda la API en payloadJson.route', () => {
+      expect(rutaDeNotificacion(destino, { route: '/o/hospital-san-lucas' })).toBe('/o/hospital-san-lucas');
+    });
+
+    it('sin ruta en el payload (organización sin ficha pública) no abre nada', () => {
+      expect(rutaDeNotificacion(destino)).toBeNull();
+      expect(rutaDeNotificacion(destino, null)).toBeNull();
+      expect(rutaDeNotificacion(destino, {})).toBeNull();
+      expect(rutaDeNotificacion(destino, { route: 42 })).toBeNull();
+    });
+
+    it('nunca navega a una ruta arbitraria del payload', () => {
+      for (const route of [
+        'https://evil.example/o/x',
+        '//evil.example',
+        '/o/../admin',
+        '/o/Hospital',
+        '/o/hospital/extra',
+        '/o/',
+        '/superadmin',
+        'javascript:alert(1)',
+        '/o/hospital?next=/x',
+      ]) {
+        expect(rutaDeNotificacion(destino, { route })).toBeNull();
+      }
+    });
+
+    it('el payload no cambia la ruta de otros destinos', () => {
+      expect(rutaDeNotificacion({ type: 'PRESCRIPTION', id: 'rx-1' }, { route: '/o/x' })).toBe(
+        '/my-account/medical-record',
+      );
+    });
+  });
 });
