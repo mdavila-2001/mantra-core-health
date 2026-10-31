@@ -94,6 +94,23 @@ describe('UxConsent', () => {
       expect(consent.avisoVisible()).toBe(true);
     });
 
+    it('con varias organizaciones: la consulta previa a elegir falla (403) y al elegir organización se repite', () => {
+      const consent = preparar();
+      session.start({ accessToken: jwt({ sub: USER_ID, roles: ['USER'], tenants: ['t-1', 't-2'] }), refreshToken: 'r' });
+      TestBed.tick();
+      http
+        .expectOne((r) => r.url === URL_ME)
+        .flush({ code: 'FORBIDDEN', reason: 'TENANT_AMBIGUOUS' }, { status: 403, statusText: 'Forbidden' });
+      expect(consent.avisoVisible()).toBe(false);
+
+      session.selectTenant('t-1');
+      TestBed.tick();
+      apiState('NONE');
+
+      expect(consent.decision()).toBe('ninguna');
+      expect(consent.avisoVisible()).toBe(true);
+    });
+
     it('GRANTED → completo y sin aviso', () => {
       const consent = preparar();
       entrar();

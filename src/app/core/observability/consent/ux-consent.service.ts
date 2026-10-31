@@ -96,19 +96,28 @@ export class UxConsent {
   );
 
   private loadedUser: string | null = null;
+  private loadedTenant: string | null = null;
 
   constructor() {
     effect(() => {
       const userId = this.session.userId();
+      const tenantId = this.session.activeTenantId();
       const disponible = this.disponible();
-      if (userId === this.loadedUser) {
+      const userChanged = userId !== this.loadedUser;
+      // La API pide organización para consultar el consentimiento (403 TENANT_AMBIGUOUS sin ella): quien elige
+      // organización DESPUÉS de iniciar sesión tiene que volver a consultar al elegirla, o el aviso nunca llega.
+      const tenantChanged = tenantId !== this.loadedTenant;
+      if (!userChanged && !tenantChanged) {
         return;
       }
       this.loadedUser = userId;
-      this.decision.set('desconocida');
-      this.consentId.set(null);
-      this.error.set(null);
-      this.avisoDescartado.set(userId !== null && this.leerAviso(userId));
+      this.loadedTenant = tenantId;
+      if (userChanged) {
+        this.decision.set('desconocida');
+        this.consentId.set(null);
+        this.error.set(null);
+        this.avisoDescartado.set(userId !== null && this.leerAviso(userId));
+      }
       if (userId !== null && disponible) {
         this.refrescar();
       }
