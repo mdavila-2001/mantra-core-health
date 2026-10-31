@@ -1,37 +1,33 @@
-<app-page-header title="Utilización de quirófanos" subtitle="Cuánto de la sesión se usa y cuánto aprovecha cada dueño su bloque." [breadcrumbs]="breadcrumbs()" />
+<app-page-header title="Utilización de quirófanos" subtitle="Cuánto de la sesión se usa y cuánto se aprovechan los bloques, por sala." [breadcrumbs]="breadcrumbs()" />
 
 <app-card class="or-utilization" padding="lg" data-testid="or-utilization">
   <div class="or-utilization__toolbar">
+    <app-site-switch />
     <app-segmented-control [options]="ranges" [value]="range()" ariaLabel="Período" (valueChange)="range.set($event)" />
     @if (data(); as d) {
-      <span class="or-utilization__muted" data-testid="or-utilization-as-of">Del {{ shortDateOf(d.from + 'T12:00:00') }} al {{ shortDateOf(d.to + 'T12:00:00') }} · calculado a las {{ timeOf(d.asOf) }} ({{ ageOf(d.asOf) }})</span>
+      <span class="or-utilization__muted" data-testid="or-utilization-as-of">Del {{ shortDateOf(d.data.from + 'T12:00:00') }} al {{ shortDateOf(d.data.to + 'T12:00:00') }} · dato de las {{ timeOf(d.asOf) }} ({{ ageOf(d.asOf) }})</span>
     }
   </div>
 
   <app-view-state-host [state]="state()" (retry)="reload()" (refresh)="reload()">
     @if (data(); as d) {
-      <div class="or-utilization__kpis">
-        <app-metric-card label="Utilización de sala" [value]="percentOf(d.totals.roomUtilizationPct)" [hint]="'Tiempo útil ' + durationOf(d.totals.touchMinutes) + ' de ' + durationOf(d.totals.sessionMinutes) + ' de sesión'" />
-        <app-metric-card label="Utilización de bloque" [value]="percentOf(d.totals.blockUtilizationPct)" hint="(usado + recambio) ÷ (asignado − liberado)" />
-        <app-metric-card label="Recambio (mediana)" [value]="durationOf(d.totals.turnoverMinutes)" hint="Salida de un paciente → entrada del siguiente" />
-        <app-metric-card label="Primer caso a tiempo" [value]="percentOf(d.totals.firstCaseOnTimePct)" hint="Días en que el primer caso entró a sala a horario" />
-      </div>
+      @if (d.data.totals; as t) {
+        <div class="or-utilization__kpis">
+          <app-metric-card label="Utilización de sala" [value]="percentOf(t.roomUtilizationPct)" [hint]="'Tiempo útil ' + durationOf(t.touchMinutes) + ' de ' + durationOf(t.sessionMinutes) + ' de sesión'" data-testid="or-utilization-room-pct" />
+          <app-metric-card label="Utilización de bloque" [value]="percentOf(t.blockUtilizationPct)" [hint]="'Tiempo útil ÷ (asignado ' + durationOf(t.blockAllocated) + ' − liberado ' + durationOf(t.blockReleased) + ')'" />
+          <app-metric-card label="Recambio (mediana)" [value]="durationOf(t.turnoverMinutesP50)" hint="Salida de un paciente → entrada del siguiente" />
+        </div>
+      }
 
-      <h2 class="or-utilization__heading">Por dueño de bloque</h2>
-      <app-data-table [state]="ownersState()" [columns]="ownerColumns()" [trackBy]="byOwner" caption="Utilización por dueño" data-testid="or-utilization-owners" />
-
-      <h2 class="or-utilization__heading">Por sala y día</h2>
-      <app-data-table [state]="roomsState()" [columns]="roomColumns()" [trackBy]="byRoomDay" caption="Utilización por sala y día" />
-
-      <h2 class="or-utilization__heading">Por bloque</h2>
-      <app-data-table [state]="blocksState()" [columns]="blockColumns()" [trackBy]="byBlock" caption="Utilización por bloque" />
+      <h2 class="or-utilization__heading">Por sala</h2>
+      <app-data-table [state]="roomsState()" [columns]="roomColumns()" [trackBy]="byRoom" caption="Utilización por sala" data-testid="or-utilization-rooms" />
     }
   </app-view-state-host>
 </app-card>
 
-<ng-template #roomDayCell let-r>
-  <span class="or-utilization__strong">{{ r.roomLabel }}</span>
-  <span class="or-utilization__muted">{{ shortDateOf(r.date + 'T12:00:00') }} · recambio {{ durationOf(r.turnoverMinutes) }}</span>
+<ng-template #roomCell let-r>
+  <span class="or-utilization__strong">{{ r.code }}</span>
+  <span class="or-utilization__muted">recambio {{ durationOf(r.turnoverMinutesP50) }}</span>
 </ng-template>
 
 <ng-template #pctRoomCell let-r>
@@ -39,17 +35,7 @@
   {{ percentOf(r.roomUtilizationPct) }}
 </ng-template>
 
-<ng-template #ownerPctCell let-r>
-  <span class="or-utilization__bar"><span [style.width.%]="barOf(r.blockUtilizationPct)"></span></span>
-  {{ percentOf(r.blockUtilizationPct) }}
-</ng-template>
-
-<ng-template #blockCell let-b>
-  <span class="or-utilization__strong">{{ b.owner }}</span>
-  <span class="or-utilization__muted">{{ shortDateOf(b.startsAt) }} · {{ timeOf(b.startsAt) }}</span>
-</ng-template>
-
-<ng-template #blockPctCell let-b>
-  <span class="or-utilization__bar"><span [style.width.%]="barOf(b.blockUtilizationPct)"></span></span>
-  {{ percentOf(b.blockUtilizationPct) }}
+<ng-template #pctBlockCell let-r>
+  <span class="or-utilization__bar"><span [style.width.%]="barOf(r.blocks.blockUtilizationPct)"></span></span>
+  {{ percentOf(r.blocks.blockUtilizationPct) }}
 </ng-template>

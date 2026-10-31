@@ -51,4 +51,12 @@ describe('ResourceTimeline', () => {
     expect(text).toContain('09:00–10:00');
     expect(text.indexOf('08:00–14:00')).toBeLessThan(text.indexOf('09:00–10:00'));
   });
+
+  it('la lista de cada sala sólo tiene los segmentos: las líneas de la grilla quedan fuera', () => {
+    const host = render();
+    const lane = host.querySelector<HTMLUListElement>('ul[aria-label="QX-01"]')!;
+    expect(lane.querySelectorAll(':scope > li')).toHaveLength(2);
+    expect(lane.querySelector('.resource-timeline__gridline')).toBeNull();
+    expect(host.querySelectorAll('.resource-timeline__gridline').length).toBeGreaterThan(0);
+  });
 });

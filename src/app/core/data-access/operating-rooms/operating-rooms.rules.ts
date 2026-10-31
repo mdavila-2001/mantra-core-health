@@ -5,6 +5,8 @@
     calcular la utilización con las fórmulas de `CONTRATO-F2-F5.md` §F4.3.
     ========================================================================== */
 
+import type { OrBlockOwner, OrUtilization, RoomUtilization, UtilizationTotals } from './operating-rooms.types';
+
 const MINUTE_MS = 60_000;
 
 /** Un intervalo semiabierto `[start, end)` en milisegundos. */
@@ -196,32 +198,58 @@ export function roomEventBlockedReason(
   return null;
 }
 
-/* ---- permisos reflejados (la API decide) ------------------------------------ */
+/* ---- utilización y rótulos que la API no manda ------------------------------- */
 
-const hasAny = (roles: readonly string[], wanted: readonly string[]): boolean =>
-  wanted.some((r) => roles.includes(r));
-
-/*
- * Sin el comodín `SUPERADMIN` a propósito en las escrituras: la matriz de §F4.3
- * deja al soporte en lectura (bloques, programación, sala). Sólo lee.
+/**
+ * Los totales del período: los de la API, completados desde `rooms[]` con
+ * sus mismas fórmulas cuando falta alguno
+ * (`or-read.use-cases.ts`): sesión y tiempo útil se suman; la utilización es
+ * útil ÷ sesión; la de bloque, útil ÷ (asignado − liberado). La mediana del
+ * recambio no se puede rehacer sin los pares: se toma la de las salas.
  */
-
-/** Bloques: crear, liberar, cancelar. Sólo jefe de quirófano. */
-export function canManageBlocks(roles: readonly string[]): boolean {
-  return hasAny(roles, ['PERIOP_ADMIN']);
+export function withTotals(u: Omit<OrUtilization, 'totals'> & { readonly totals?: Partial<UtilizationTotals> }): OrUtilization {
+  const sum = (pick: (r: RoomUtilization) => number) => u.rooms.reduce((a, r) => a + pick(r), 0);
+  const session = sum((r) => r.sessionMinutes);
+  const touch = sum((r) => r.touchMinutes);
+  const allocated = sum((r) => r.blocks.allocated);
+  const released = sum((r) => r.blocks.released);
+  const turnovers = u.rooms.map((r) => r.turnoverMinutesP50).filter((m): m is number => m !== null);
+  return {
+    ...u,
+    // Lo que manda la API gana; el cliente sólo completa lo que falta.
+    totals: {
+      sessionMinutes: session,
+      touchMinutes: touch,
+      roomUtilizationPct: percentage(touch, session),
+      turnoverMinutesP50: median(turnovers),
+      blockAllocated: allocated,
+      blockReleased: released,
+      blockUtilizationPct: percentage(touch, allocated - released),
+      ...u.totals,
+    },
+  };
 }
 
-/** Programar un caso (roles existentes del módulo). */
-export function canScheduleCases(roles: readonly string[]): boolean {
-  return hasAny(roles, ['SURGERY_SCHEDULER', 'SURGEON', 'PERIOP_ADMIN']);
+/** Lo que hace falta para nombrar al dueño de un bloque. */
+export interface OwnerDirectory {
+  readonly specialties: ReadonlyMap<string, string>;
+  readonly units: ReadonlyMap<string, string>;
+  readonly surgeons: ReadonlyMap<string, string>;
 }
 
-/** Check-list y eventos de sala. */
-export function canRecordInRoom(roles: readonly string[]): boolean {
-  return hasAny(roles, ['PERIOP_NURSE', 'SURGEON', 'ANESTHESIOLOGIST', 'PERIOP_ADMIN']);
-}
-
-/** Utilización: jefe de quirófano, facturación y quien administra. */
-export function canSeeUtilization(roles: readonly string[]): boolean {
-  return hasAny(roles, ['SUPERADMIN', 'PERIOP_ADMIN', 'BILLING', 'SECURITY_ADMIN', 'PLATFORM_ADMIN']);
+/**
+ * El rótulo del dueño: el de la API si lo manda; si no, el del catálogo de
+ * especialidades, la unidad o el personal; si no se encuentra, el tipo de
+ * dueño. Nunca «undefined» ni un uuid.
+ */
+export function blockOwnerLabel(owner: OrBlockOwner, directory: OwnerDirectory): string {
+  if (owner.label) return owner.label;
+  if (owner.kind === 'SURGEON') {
+    return (owner.surgeonProfileId && directory.surgeons.get(owner.surgeonProfileId)) || 'Cirujano';
+  }
+  return (
+    (owner.specialtyConceptId && directory.specialties.get(owner.specialtyConceptId)) ||
+    (owner.clinicalUnitId && directory.units.get(owner.clinicalUnitId)) ||
+    'Servicio'
+  );
 }

@@ -8,7 +8,7 @@
     </app-form-field>
     @if (ownerKind() === 'SERVICE') {
       <app-form-field label="Servicio (especialidad)" [required]="true">
-        <app-select [options]="specialties()" [value]="specialtyCode()" placeholder="Elija la especialidad" ariaLabel="Especialidad" [searchable]="true" data-testid="block-specialty" (valueChange)="specialtyCode.set($event)" />
+        <app-select [options]="specialties()" [value]="specialtyConceptId()" placeholder="Elija la especialidad" ariaLabel="Especialidad" [searchable]="true" data-testid="block-specialty" (valueChange)="specialtyConceptId.set($event)" />
       </app-form-field>
     } @else {
       <app-form-field label="Cirujano" [required]="true">

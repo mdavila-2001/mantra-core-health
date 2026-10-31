@@ -53,12 +53,17 @@
   line-height: var(--lh-caption);
 }
 
-.resource-timeline__lane {
-  position: relative;
-  min-block-size: var(--timeline-row-height);
+.resource-timeline__segments {
+  position: absolute;
+  inset: 0;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+.resource-timeline__lane {
+  position: relative;
+  min-block-size: var(--timeline-row-height);
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-md);
   background: var(--bg-surface-alt);
