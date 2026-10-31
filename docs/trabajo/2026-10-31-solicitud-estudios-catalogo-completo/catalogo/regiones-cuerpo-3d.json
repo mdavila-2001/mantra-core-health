@@ -1,0 +1,2981 @@
+{
+ "generado_por": "gen_regiones_cuerpo_3d.py (ver hallazgos-cuerpo-3d.md)",
+ "fuentes": [
+  "public/anatomy-atlas-3d/catalog/parts.json",
+  "public/anatomy-atlas-3d/catalog/index.json",
+  "public/anatomy-atlas-3d/models/*.glb"
+ ],
+ "estado": "BORRADOR: lista de regiones tentativa hasta que exista catalogo/imagenologia.json",
+ "convenio_lado": {
+  "x_media_left_m": 0.0912,
+  "x_media_right_m": -0.0912,
+  "nota": "side del atlas = lado del paciente; left está en +x del modelo"
+ },
+ "regiones": [
+  {
+   "region": "CRANEO",
+   "nombre": "Cráneo",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0003129",
+   "mallas": {
+    "izquierda": [
+     "FMA52739",
+     "FMA52789"
+    ],
+    "derecha": [
+     "FMA52738",
+     "FMA52788"
+    ],
+    "centro": [
+     "FMA52734",
+     "FMA52735",
+     "FMA52736",
+     "FMA52740"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000209",
+    "UBERON:0000210",
+    "UBERON:0001676",
+    "UBERON:0001677",
+    "UBERON:0001678",
+    "UBERON:0001679"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(frontal bone|parietal bone|occipital bone|temporal bone|sphenoid bone|ethmoid)$/"
+  },
+  {
+   "region": "SENOS_PARANASALES",
+   "nombre": "Senos paranasales",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "contenedora",
+   "al_tocar": "solo_select",
+   "sin_malla": true,
+   "uberon_region": "UBERON:0001825",
+   "mallas": {
+    "izquierda": [
+     "FMA53650"
+    ],
+    "derecha": [
+     "FMA53649"
+    ],
+    "centro": [
+     "FMA52734",
+     "FMA52736",
+     "FMA52740"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000209",
+    "UBERON:0001677",
+    "UBERON:0001679",
+    "UBERON:0002397"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^(frontal bone|ethmoid|sphenoid bone|(left|right) maxilla)$/"
+  },
+  {
+   "region": "ORBITA",
+   "nombre": "Órbita",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "contenedora",
+   "al_tocar": "solo_select",
+   "sin_malla": true,
+   "uberon_region": "UBERON:0004088",
+   "mallas": {
+    "izquierda": [
+     "FMA52893",
+     "FMA53646"
+    ],
+    "derecha": [
+     "FMA52892",
+     "FMA53645"
+    ],
+    "centro": [
+     "FMA12513"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001680",
+    "UBERON:0001683",
+    "UBERON:0010230"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^(eyeball|(left|right) (lacrimal bone|zygomatic bone))$/"
+  },
+  {
+   "region": "MACIZO_FACIAL",
+   "nombre": "Macizo facial",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001456",
+   "mallas": {
+    "izquierda": [
+     "FMA52893",
+     "FMA53646",
+     "FMA53648",
+     "FMA53650",
+     "FMA53656",
+     "FMA54738"
+    ],
+    "derecha": [
+     "FMA52892",
+     "FMA53645",
+     "FMA53647",
+     "FMA53649",
+     "FMA53655",
+     "FMA54737"
+    ],
+    "centro": [
+     "FMA9710"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001680",
+    "UBERON:0001681",
+    "UBERON:0001682",
+    "UBERON:0001683",
+    "UBERON:0002396",
+    "UBERON:0002397",
+    "UBERON:0005922"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(maxilla|zygomatic bone|nasal bone|lacrimal bone|palatine bone|vomer|inferior nasal concha|mandible)$/ excepto /^mandible$/"
+  },
+  {
+   "region": "HUESOS_PROPIOS_NARIZ",
+   "nombre": "Huesos propios de la nariz",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001681",
+   "mallas": {
+    "izquierda": [
+     "FMA53648"
+    ],
+    "derecha": [
+     "FMA53647"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001681"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/nasal bone$/"
+  },
+  {
+   "region": "MANDIBULA",
+   "nombre": "Mandíbula",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001684",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA52748"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001684"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^mandible$/"
+  },
+  {
+   "region": "PIEZAS_DENTARIAS",
+   "nombre": "Piezas dentarias (panorámica)",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs",
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0003672",
+   "mallas": {
+    "izquierda": [
+     "FMA55682",
+     "FMA55683",
+     "FMA55687",
+     "FMA55690",
+     "FMA55691",
+     "FMA55692",
+     "FMA55693",
+     "FMA55699",
+     "FMA55700",
+     "FMA55703",
+     "FMA55704",
+     "FMA55799",
+     "FMA57141",
+     "FMA57143"
+    ],
+    "derecha": [
+     "FMA55680",
+     "FMA55681",
+     "FMA55686",
+     "FMA55688",
+     "FMA55689",
+     "FMA55694",
+     "FMA55695",
+     "FMA55697",
+     "FMA55698",
+     "FMA55705",
+     "FMA55706",
+     "FMA55798",
+     "FMA57140",
+     "FMA57142"
+    ],
+    "centro": [
+     "FMA59763",
+     "FMA59764"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:55680",
+    "FMA:55681",
+    "FMA:55682",
+    "FMA:55683",
+    "FMA:55686",
+    "FMA:55687",
+    "FMA:55688",
+    "FMA:55689",
+    "FMA:55690",
+    "FMA:55691",
+    "FMA:55692",
+    "FMA:55693",
+    "FMA:55694",
+    "FMA:55695",
+    "FMA:55697",
+    "FMA:55698",
+    "FMA:55699",
+    "FMA:55700",
+    "FMA:55703",
+    "FMA:55704",
+    "FMA:55705",
+    "FMA:55706",
+    "FMA:55798",
+    "FMA:55799",
+    "FMA:57140",
+    "FMA:57141",
+    "FMA:57142",
+    "FMA:57143",
+    "UBERON:0011601",
+    "UBERON:0011602"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/secondary \\w+ tooth$|secondary (\\w+ )?(incisor|canine|premolar|molar) tooth$/; capa=skeleton labelEn~/^gingiva of (upper|lower) jaw$/"
+  },
+  {
+   "region": "ATM",
+   "nombre": "Articulación temporomandibular",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0003700",
+   "mallas": {
+    "izquierda": [
+     "FMA52739"
+    ],
+    "derecha": [
+     "FMA52738"
+    ],
+    "centro": [
+     "FMA52748"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001678",
+    "UBERON:0001684"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA52739"
+      ],
+      [
+       "FMA52748"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA52738"
+      ],
+      [
+       "FMA52748"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      3.9,
+      2.9,
+      4.1
+     ],
+     "derecha": [
+      3.9,
+      2.9,
+      4.2
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/temporal bone$|^mandible$/"
+  },
+  {
+   "region": "OIDO_PENASCO",
+   "nombre": "Oído / peñasco del temporal",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "organs",
+    "skeleton"
+   ],
+   "tipo_malla": "contenedora",
+   "al_tocar": "solo_select",
+   "sin_malla": true,
+   "uberon_region": "UBERON:0001690",
+   "mallas": {
+    "izquierda": [
+     "FMA52739"
+    ],
+    "derecha": [
+     "FMA52738"
+    ],
+    "centro": [
+     "FMA52780"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001678",
+    "UBERON:0001690"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/temporal bone$/; capa=organs labelEn~/^ear$/"
+  },
+  {
+   "region": "SILLA_TURCA_HIPOFISIS",
+   "nombre": "Silla turca / hipófisis",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs",
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000007",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA13889",
+     "FMA52736"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000007",
+    "UBERON:0001677"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^pituitary gland$/; capa=skeleton labelEn~/^sphenoid bone$/"
+  },
+  {
+   "region": "ENCEFALO",
+   "nombre": "Encéfalo",
+   "lateral": false,
+   "capa_preferida": "nervous",
+   "capas_con_mallas": [
+    "nervous"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000955",
+   "mallas": {
+    "izquierda": [
+     "BP49",
+     "FMA258716",
+     "FMA274029",
+     "FMA67936",
+     "FMA72654",
+     "FMA72656",
+     "FMA72662",
+     "FMA72666",
+     "FMA72668",
+     "FMA72670",
+     "FMA72686",
+     "FMA72688",
+     "FMA72690",
+     "FMA72702",
+     "FMA72706",
+     "FMA72714",
+     "FMA72718",
+     "FMA72801",
+     "FMA72805",
+     "FMA72827",
+     "FMA72829",
+     "FMA72831",
+     "FMA72833",
+     "FMA72909",
+     "FMA72925",
+     "FMA72940",
+     "FMA72976",
+     "FMA72978",
+     "FMA73304",
+     "FMA73310",
+     "FMA73414",
+     "FMA73423",
+     "FMA73435",
+     "FMA73462",
+     "FMA73464",
+     "FMA78450"
+    ],
+    "derecha": [
+     "BP50",
+     "FMA258714",
+     "FMA274027",
+     "FMA62382",
+     "FMA72653",
+     "FMA72655",
+     "FMA72661",
+     "FMA72665",
+     "FMA72667",
+     "FMA72669",
+     "FMA72685",
+     "FMA72687",
+     "FMA72689",
+     "FMA72701",
+     "FMA72705",
+     "FMA72713",
+     "FMA72717",
+     "FMA72800",
+     "FMA72804",
+     "FMA72826",
+     "FMA72828",
+     "FMA72830",
+     "FMA72832",
+     "FMA72908",
+     "FMA72924",
+     "FMA72939",
+     "FMA72975",
+     "FMA72977",
+     "FMA73303",
+     "FMA73309",
+     "FMA73413",
+     "FMA73422",
+     "FMA73434",
+     "FMA73461",
+     "FMA73463",
+     "FMA78449"
+    ],
+    "centro": [
+     "BP51",
+     "FMA61822",
+     "FMA61844",
+     "FMA61961",
+     "FMA61970",
+     "FMA61975",
+     "FMA61993nsn",
+     "FMA62004",
+     "FMA62008nsn",
+     "FMA62032",
+     "FMA62033",
+     "FMA62045",
+     "FMA62072",
+     "FMA62327",
+     "FMA62394",
+     "FMA67943",
+     "FMA67944",
+     "FMA74877",
+     "FMA75351",
+     "FMA78454",
+     "FMA78467",
+     "FMA78469",
+     "FMA83740",
+     "FMA86464"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "BP3D:BP49",
+    "BP3D:BP50",
+    "BP3D:BP51",
+    "FMA:72701",
+    "FMA:72702",
+    "FMA:72800",
+    "FMA:72801",
+    "FMA:72804",
+    "FMA:72805",
+    "FMA:83740",
+    "UBERON:0000052",
+    "UBERON:0000908",
+    "UBERON:0000935",
+    "UBERON:0000936",
+    "UBERON:0000959",
+    "UBERON:0000988",
+    "UBERON:0001873",
+    "UBERON:0001875",
+    "UBERON:0001876",
+    "UBERON:0001886",
+    "UBERON:0001891",
+    "UBERON:0001896",
+    "UBERON:0001898",
+    "UBERON:0001904",
+    "UBERON:0001905",
+    "UBERON:0001908",
+    "UBERON:0001926",
+    "UBERON:0001927",
+    "UBERON:0001945",
+    "UBERON:0001946",
+    "UBERON:0001954",
+    "UBERON:0002022",
+    "UBERON:0002037",
+    "UBERON:0002206",
+    "UBERON:0002286",
+    "UBERON:0002289",
+    "UBERON:0002336",
+    "UBERON:0002422",
+    "UBERON:0002437",
+    "UBERON:0002580",
+    "UBERON:0002581",
+    "UBERON:0002620",
+    "UBERON:0002623",
+    "UBERON:0002661",
+    "UBERON:0002686",
+    "UBERON:0002688",
+    "UBERON:0002702",
+    "UBERON:0002703",
+    "UBERON:0002751",
+    "UBERON:0002766",
+    "UBERON:0002771",
+    "UBERON:0002806",
+    "UBERON:0002807",
+    "UBERON:0002967",
+    "UBERON:0002973",
+    "UBERON:0003025",
+    "UBERON:0003029",
+    "UBERON:0003993",
+    "UBERON:0004714",
+    "UBERON:0006086",
+    "UBERON:0008884",
+    "UBERON:0008885",
+    "UBERON:0013161",
+    "UBERON:0013162",
+    "UBERON:0013683",
+    "UBERON:0013684",
+    "UBERON:0014526",
+    "UBERON:0015117"
+   ],
+   "encuadre": null,
+   "criterio": "capa=nervous labelEn~/./ excepto /spinal cord|optic nerve/"
+  },
+  {
+   "region": "CUELLO",
+   "nombre": "Cuello (partes blandas)",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs",
+    "vessels"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000974",
+   "mallas": {
+    "izquierda": [
+     "FMA4058",
+     "FMA4762"
+    ],
+    "derecha": [
+     "FMA3941",
+     "FMA4754"
+    ],
+    "centro": [
+     "FMA55099",
+     "FMA7131",
+     "FMA7394"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001043",
+    "UBERON:0001531",
+    "UBERON:0001536",
+    "UBERON:0001586",
+    "UBERON:0001738",
+    "UBERON:0003126"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^(thyroid cartilage|trachea|esophagus)$/; capa=vessels labelEn~/(common carotid artery|internal jugular vein)$/"
+  },
+  {
+   "region": "TIROIDES",
+   "nombre": "Tiroides",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "referencia",
+   "al_tocar": "solo_select",
+   "sin_malla": true,
+   "uberon_region": "UBERON:0002046",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA55099",
+     "FMA7394"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001738",
+    "UBERON:0003126"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^(thyroid cartilage|trachea)$/"
+  },
+  {
+   "region": "COLUMNA_CERVICAL",
+   "nombre": "Columna cervical",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0006072",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA12519",
+     "FMA12520",
+     "FMA12521",
+     "FMA12522",
+     "FMA12523",
+     "FMA12524",
+     "FMA12525",
+     "FMA13896",
+     "FMA13897",
+     "FMA13898",
+     "FMA13899",
+     "FMA13900",
+     "FMA25058"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001092",
+    "UBERON:0001093",
+    "UBERON:0004612",
+    "UBERON:0004613",
+    "UBERON:0004614",
+    "UBERON:0004615",
+    "UBERON:0004616",
+    "UBERON:0007260",
+    "UBERON:0007261",
+    "UBERON:0007262",
+    "UBERON:0007263",
+    "UBERON:0007264",
+    "UBERON:0007265"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^(atlas|axis|(third|fourth|fifth|sixth|seventh) cervical vertebra)$/; capa=skeleton labelEn~/^intervertebral disk of (axis|\\w+ cervical vertebra)$/"
+  },
+  {
+   "region": "COLUMNA_DORSAL",
+   "nombre": "Columna dorsal",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0006073",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA10014",
+     "FMA10037",
+     "FMA10059",
+     "FMA10081",
+     "FMA10458",
+     "FMA13495",
+     "FMA13500",
+     "FMA13501",
+     "FMA13502",
+     "FMA13503",
+     "FMA13504",
+     "FMA13505",
+     "FMA13506",
+     "FMA13507",
+     "FMA13508",
+     "FMA13509",
+     "FMA9165",
+     "FMA9187",
+     "FMA9209",
+     "FMA9248",
+     "FMA9922",
+     "FMA9945",
+     "FMA9968",
+     "FMA9991"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:10458",
+    "FMA:13495",
+    "FMA:13500",
+    "FMA:13501",
+    "FMA:13502",
+    "FMA:13503",
+    "FMA:13504",
+    "FMA:13505",
+    "FMA:13506",
+    "FMA:13507",
+    "FMA:13508",
+    "FMA:13509",
+    "UBERON:0004626",
+    "UBERON:0004627",
+    "UBERON:0004628",
+    "UBERON:0004629",
+    "UBERON:0004630",
+    "UBERON:0004631",
+    "UBERON:0004632",
+    "UBERON:0004633",
+    "UBERON:0004634",
+    "UBERON:0004635",
+    "UBERON:0004636",
+    "UBERON:0011050"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^\\w+ thoracic vertebra$/; capa=skeleton labelEn~/^intervertebral disk of \\w+ thoracic vertebra$/"
+  },
+  {
+   "region": "COLUMNA_LUMBAR",
+   "nombre": "Columna lumbar",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0006074",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA13072",
+     "FMA13073",
+     "FMA13074",
+     "FMA13075",
+     "FMA13076",
+     "FMA16033",
+     "FMA16034",
+     "FMA16035",
+     "FMA16036",
+     "FMA16037"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:16033",
+    "FMA:16034",
+    "FMA:16035",
+    "FMA:16036",
+    "FMA:16037",
+    "UBERON:0004617",
+    "UBERON:0004618",
+    "UBERON:0004619",
+    "UBERON:0004620",
+    "UBERON:0004621"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^\\w+ lumbar vertebra$/; capa=skeleton labelEn~/^intervertebral disk of \\w+ lumbar vertebra$/"
+  },
+  {
+   "region": "COLUMNA_LUMBOSACRA",
+   "nombre": "Columna lumbosacra",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "solo_select",
+   "sin_malla": false,
+   "uberon_region": null,
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA13072",
+     "FMA13073",
+     "FMA13074",
+     "FMA13075",
+     "FMA13076",
+     "FMA16033",
+     "FMA16034",
+     "FMA16035",
+     "FMA16036",
+     "FMA16037",
+     "FMA16202"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:16033",
+    "FMA:16034",
+    "FMA:16035",
+    "FMA:16036",
+    "FMA:16037",
+    "UBERON:0003690",
+    "UBERON:0004617",
+    "UBERON:0004618",
+    "UBERON:0004619",
+    "UBERON:0004620",
+    "UBERON:0004621"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^\\w+ lumbar vertebra$/; capa=skeleton labelEn~/^intervertebral disk of \\w+ lumbar vertebra$/; capa=skeleton labelEn~/^sacrum$/"
+  },
+  {
+   "region": "SACRO_COXIS",
+   "nombre": "Sacro y cóccix",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0003690",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA16202"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0003690"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^sacrum$/"
+  },
+  {
+   "region": "COLUMNA_TOTAL",
+   "nombre": "Columna total",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "solo_select",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001130",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA10014",
+     "FMA10037",
+     "FMA10059",
+     "FMA10081",
+     "FMA10458",
+     "FMA12519",
+     "FMA12520",
+     "FMA12521",
+     "FMA12522",
+     "FMA12523",
+     "FMA12524",
+     "FMA12525",
+     "FMA13072",
+     "FMA13073",
+     "FMA13074",
+     "FMA13075",
+     "FMA13076",
+     "FMA13495",
+     "FMA13500",
+     "FMA13501",
+     "FMA13502",
+     "FMA13503",
+     "FMA13504",
+     "FMA13505",
+     "FMA13506",
+     "FMA13507",
+     "FMA13508",
+     "FMA13509",
+     "FMA13896",
+     "FMA13897",
+     "FMA13898",
+     "FMA13899",
+     "FMA13900",
+     "FMA16033",
+     "FMA16034",
+     "FMA16035",
+     "FMA16036",
+     "FMA16037",
+     "FMA16202",
+     "FMA25058",
+     "FMA9165",
+     "FMA9187",
+     "FMA9209",
+     "FMA9248",
+     "FMA9922",
+     "FMA9945",
+     "FMA9968",
+     "FMA9991"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:10458",
+    "FMA:13495",
+    "FMA:13500",
+    "FMA:13501",
+    "FMA:13502",
+    "FMA:13503",
+    "FMA:13504",
+    "FMA:13505",
+    "FMA:13506",
+    "FMA:13507",
+    "FMA:13508",
+    "FMA:13509",
+    "FMA:16033",
+    "FMA:16034",
+    "FMA:16035",
+    "FMA:16036",
+    "FMA:16037",
+    "UBERON:0001092",
+    "UBERON:0001093",
+    "UBERON:0003690",
+    "UBERON:0004612",
+    "UBERON:0004613",
+    "UBERON:0004614",
+    "UBERON:0004615",
+    "UBERON:0004616",
+    "UBERON:0004617",
+    "UBERON:0004618",
+    "UBERON:0004619",
+    "UBERON:0004620",
+    "UBERON:0004621",
+    "UBERON:0004626",
+    "UBERON:0004627",
+    "UBERON:0004628",
+    "UBERON:0004629",
+    "UBERON:0004630",
+    "UBERON:0004631",
+    "UBERON:0004632",
+    "UBERON:0004633",
+    "UBERON:0004634",
+    "UBERON:0004635",
+    "UBERON:0004636",
+    "UBERON:0007260",
+    "UBERON:0007261",
+    "UBERON:0007262",
+    "UBERON:0007263",
+    "UBERON:0007264",
+    "UBERON:0007265",
+    "UBERON:0011050"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^(atlas|axis|(third|fourth|fifth|sixth|seventh) cervical vertebra)$/; capa=skeleton labelEn~/^intervertebral disk of (axis|\\w+ cervical vertebra)$/; capa=skeleton labelEn~/^\\w+ thoracic vertebra$/; capa=skeleton labelEn~/^intervertebral disk of \\w+ thoracic vertebra$/; capa=skeleton labelEn~/^\\w+ lumbar vertebra$/; capa=skeleton labelEn~/^intervertebral disk of \\w+ lumbar vertebra$/; capa=skeleton labelEn~/^sacrum$/"
+  },
+  {
+   "region": "TORAX",
+   "nombre": "Tórax",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "organs",
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001443",
+   "mallas": {
+    "izquierda": [
+     "BP24",
+     "FMA7370",
+     "FMA7371",
+     "FMA7987",
+     "FMA8005",
+     "FMA8012",
+     "FMA8031",
+     "FMA8039",
+     "FMA8058",
+     "FMA8093",
+     "FMA8112",
+     "FMA8148",
+     "FMA8167",
+     "FMA8202",
+     "FMA8221",
+     "FMA8256",
+     "FMA8275",
+     "FMA8310",
+     "FMA8391",
+     "FMA8472",
+     "FMA8532",
+     "FMA8534"
+    ],
+    "derecha": [
+     "BP28",
+     "FMA7333",
+     "FMA7337",
+     "FMA7857",
+     "FMA7875",
+     "FMA7882",
+     "FMA7886",
+     "FMA7909",
+     "FMA7913",
+     "FMA7957",
+     "FMA7976",
+     "FMA8066",
+     "FMA8070",
+     "FMA8175",
+     "FMA8194",
+     "FMA8229",
+     "FMA8248",
+     "FMA8283",
+     "FMA8364",
+     "FMA8445",
+     "FMA8531",
+     "FMA8533"
+    ],
+    "centro": [
+     "FMA7383",
+     "FMA7394",
+     "FMA7409",
+     "FMA7486",
+     "FMA7487",
+     "FMA7488"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "BP3D:BP24",
+    "BP3D:BP28",
+    "FMA:7875",
+    "FMA:7886",
+    "FMA:7913",
+    "FMA:7976",
+    "FMA:8005",
+    "FMA:8031",
+    "FMA:8058",
+    "FMA:8070",
+    "FMA:8112",
+    "FMA:8167",
+    "FMA:8194",
+    "FMA:8221",
+    "FMA:8248",
+    "FMA:8275",
+    "UBERON:0002170",
+    "UBERON:0002171",
+    "UBERON:0002174",
+    "UBERON:0002185",
+    "UBERON:0002205",
+    "UBERON:0002207",
+    "UBERON:0003126",
+    "UBERON:0004601",
+    "UBERON:0004602",
+    "UBERON:0004603",
+    "UBERON:0004604",
+    "UBERON:0004605",
+    "UBERON:0004606",
+    "UBERON:0004607",
+    "UBERON:0004608",
+    "UBERON:0004609",
+    "UBERON:0004610",
+    "UBERON:0004611",
+    "UBERON:0006820",
+    "UBERON:0008952",
+    "UBERON:0008953",
+    "UBERON:0010757"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(\\w+ rib|costal cartilage)$/; capa=skeleton labelEn~/^(manubrium|body of sternum|xiphoid process)$/; capa=organs labelEn~/lobe of (left |right )?lung$|^(trachea|bronchus)$/"
+  },
+  {
+   "region": "PARRILLA_COSTAL",
+   "nombre": "Parrilla costal",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0003252",
+   "mallas": {
+    "izquierda": [
+     "BP24",
+     "FMA7987",
+     "FMA8005",
+     "FMA8012",
+     "FMA8031",
+     "FMA8039",
+     "FMA8058",
+     "FMA8093",
+     "FMA8112",
+     "FMA8148",
+     "FMA8167",
+     "FMA8202",
+     "FMA8221",
+     "FMA8256",
+     "FMA8275",
+     "FMA8310",
+     "FMA8391",
+     "FMA8472",
+     "FMA8532",
+     "FMA8534"
+    ],
+    "derecha": [
+     "BP28",
+     "FMA7857",
+     "FMA7875",
+     "FMA7882",
+     "FMA7886",
+     "FMA7909",
+     "FMA7913",
+     "FMA7957",
+     "FMA7976",
+     "FMA8066",
+     "FMA8070",
+     "FMA8175",
+     "FMA8194",
+     "FMA8229",
+     "FMA8248",
+     "FMA8283",
+     "FMA8364",
+     "FMA8445",
+     "FMA8531",
+     "FMA8533"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "BP3D:BP24",
+    "BP3D:BP28",
+    "FMA:7875",
+    "FMA:7886",
+    "FMA:7913",
+    "FMA:7976",
+    "FMA:8005",
+    "FMA:8031",
+    "FMA:8058",
+    "FMA:8070",
+    "FMA:8112",
+    "FMA:8167",
+    "FMA:8194",
+    "FMA:8221",
+    "FMA:8248",
+    "FMA:8275",
+    "UBERON:0004601",
+    "UBERON:0004602",
+    "UBERON:0004603",
+    "UBERON:0004604",
+    "UBERON:0004605",
+    "UBERON:0004606",
+    "UBERON:0004607",
+    "UBERON:0004608",
+    "UBERON:0004609",
+    "UBERON:0004610",
+    "UBERON:0004611",
+    "UBERON:0010757"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(\\w+ rib|costal cartilage)$/"
+  },
+  {
+   "region": "ESTERNON",
+   "nombre": "Esternón",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000975",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA7486",
+     "FMA7487",
+     "FMA7488"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0002205",
+    "UBERON:0002207",
+    "UBERON:0006820"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/^(manubrium|body of sternum|xiphoid process)$/"
+  },
+  {
+   "region": "CLAVICULA",
+   "nombre": "Clavícula",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001105",
+   "mallas": {
+    "izquierda": [
+     "FMA13323"
+    ],
+    "derecha": [
+     "FMA13322"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0008255",
+    "UBERON:0008256"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/clavicle$/"
+  },
+  {
+   "region": "MAMA",
+   "nombre": "Mama",
+   "lateral": true,
+   "capa_preferida": "muscles",
+   "capas_con_mallas": [
+    "muscles"
+   ],
+   "tipo_malla": "referencia",
+   "al_tocar": "solo_select",
+   "sin_malla": true,
+   "uberon_region": "UBERON:0000310",
+   "mallas": {
+    "izquierda": [
+     "FMA34691",
+     "FMA45875",
+     "FMA79980"
+    ],
+    "derecha": [
+     "FMA34690",
+     "FMA45874",
+     "FMA79979"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:34690",
+    "FMA:34691",
+    "FMA:45874",
+    "FMA:45875",
+    "FMA:79979",
+    "FMA:79980"
+   ],
+   "encuadre": null,
+   "criterio": "capa=muscles labelEn~/part of (left|right) pectoralis major$/"
+  },
+  {
+   "region": "CORAZON",
+   "nombre": "Corazón",
+   "lateral": false,
+   "capa_preferida": "vessels",
+   "capas_con_mallas": [
+    "vessels"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000948",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA7234",
+     "FMA7235",
+     "FMA7246",
+     "FMA7274"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0002134",
+    "UBERON:0002135",
+    "UBERON:0002146",
+    "UBERON:0037144"
+   ],
+   "encuadre": null,
+   "criterio": "capa=vessels labelEn~/^(wall of heart|mitral valve|tricuspid valve|pulmonary valve)$/"
+  },
+  {
+   "region": "ABDOMEN",
+   "nombre": "Abdomen",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000916",
+   "mallas": {
+    "izquierda": [
+     "FMA15630",
+     "FMA7205"
+    ],
+    "derecha": [
+     "FMA15629",
+     "FMA7204"
+    ],
+    "centro": [
+     "FMA10419",
+     "FMA14542",
+     "FMA14543nsn",
+     "FMA14544",
+     "FMA7148",
+     "FMA7196",
+     "FMA7197",
+     "FMA7198nsn",
+     "FMA7202",
+     "FMA7206",
+     "FMA7207",
+     "FMA7208",
+     "FMA76891",
+     "FMA76892",
+     "FMA76893"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:76891",
+    "FMA:76892",
+    "FMA:76893",
+    "UBERON:0000945",
+    "UBERON:0001052",
+    "UBERON:0001154",
+    "UBERON:0001155",
+    "UBERON:0001233",
+    "UBERON:0001234",
+    "UBERON:0001264",
+    "UBERON:0002106",
+    "UBERON:0002107",
+    "UBERON:0002110",
+    "UBERON:0002114",
+    "UBERON:0002115",
+    "UBERON:0002116",
+    "UBERON:0004538",
+    "UBERON:0004539",
+    "UBERON:0007329"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^(liver|gallbladder|spleen|stomach|duodenum|jejunum|ileum|appendix|colon, nsn|pancreas, nsn|pancreatic duct|rectum|(free|mesocolic|omental) taenia)$/; capa=organs labelEn~/(kidney|adrenal gland)$/"
+  },
+  {
+   "region": "ABDOMEN_SUPERIOR",
+   "nombre": "Abdomen superior (hígado, vía biliar, páncreas, bazo)",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "solo_select",
+   "sin_malla": false,
+   "uberon_region": null,
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA10419",
+     "FMA7196",
+     "FMA7197",
+     "FMA7198nsn",
+     "FMA7202"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001264",
+    "UBERON:0002106",
+    "UBERON:0002107",
+    "UBERON:0002110",
+    "UBERON:0007329"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^(liver|gallbladder|spleen|pancreas, nsn|pancreatic duct)$/"
+  },
+  {
+   "region": "RENAL",
+   "nombre": "Riñón",
+   "lateral": true,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": null,
+   "mallas": {
+    "izquierda": [
+     "FMA7205"
+    ],
+    "derecha": [
+     "FMA7204"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0004538",
+    "UBERON:0004539"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/kidney$/"
+  },
+  {
+   "region": "VIAS_URINARIAS",
+   "nombre": "Vías urinarias (riñones, uréteres, vejiga)",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "solo_select",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001008",
+   "mallas": {
+    "izquierda": [
+     "FMA15572",
+     "FMA7205"
+    ],
+    "derecha": [
+     "FMA15571",
+     "FMA7204"
+    ],
+    "centro": [
+     "FMA15900",
+     "FMA19667"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000057",
+    "UBERON:0001222",
+    "UBERON:0001223",
+    "UBERON:0001255",
+    "UBERON:0004538",
+    "UBERON:0004539"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/(kidney|ureter)$|^urinary bladder$|^urethra$/"
+  },
+  {
+   "region": "VESICAL",
+   "nombre": "Vejiga",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001255",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA15900"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001255"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^urinary bladder$/"
+  },
+  {
+   "region": "PROSTATA",
+   "nombre": "Próstata",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0002367",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": [
+     "FMA9600"
+    ]
+   },
+   "solo_cuerpo_masculino": [
+    "FMA9600"
+   ],
+   "structureIds": [
+    "UBERON:0002367"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/^prostate$/"
+  },
+  {
+   "region": "TESTICULAR",
+   "nombre": "Testículo / escroto",
+   "lateral": true,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [
+    "organs"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000473",
+   "mallas": {
+    "izquierda": [
+     "FMA18257",
+     "FMA7212"
+    ],
+    "derecha": [
+     "FMA18256",
+     "FMA7211"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [
+    "FMA18256",
+    "FMA18257",
+    "FMA7211",
+    "FMA7212"
+   ],
+   "structureIds": [
+    "UBERON:0001301",
+    "UBERON:0004533",
+    "UBERON:0004534"
+   ],
+   "encuadre": null,
+   "criterio": "capa=organs labelEn~/(testis|epididymis)$/"
+  },
+  {
+   "region": "UTERO_ANEXOS",
+   "nombre": "Útero y anexos",
+   "lateral": false,
+   "capa_preferida": "organs",
+   "capas_con_mallas": [],
+   "tipo_malla": "ninguna",
+   "al_tocar": "solo_select",
+   "sin_malla": true,
+   "uberon_region": "UBERON:0000995",
+   "mallas": {
+    "izquierda": [],
+    "derecha": [],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [],
+   "encuadre": null,
+   "criterio": "sin regla: el atlas no tiene ninguna malla de esta región"
+  },
+  {
+   "region": "PELVIS",
+   "nombre": "Pelvis",
+   "lateral": false,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "organs",
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0002355",
+   "mallas": {
+    "izquierda": [
+     "FMA16587"
+    ],
+    "derecha": [
+     "FMA16586"
+    ],
+    "centro": [
+     "FMA14544",
+     "FMA15900",
+     "FMA16202"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001052",
+    "UBERON:0001255",
+    "UBERON:0001272",
+    "UBERON:0003690"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/hip bone$|^sacrum$/; capa=organs labelEn~/^(urinary bladder|rectum)$/"
+  },
+  {
+   "region": "SACROILIACA",
+   "nombre": "Articulación sacroilíaca",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": null,
+   "mallas": {
+    "izquierda": [
+     "FMA16587"
+    ],
+    "derecha": [
+     "FMA16586"
+    ],
+    "centro": [
+     "FMA16202"
+    ]
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001272",
+    "UBERON:0003690"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA16587"
+      ],
+      [
+       "FMA16202"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA16586"
+      ],
+      [
+       "FMA16202"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      5.8,
+      14.5,
+      8.1
+     ],
+     "derecha": [
+      5.6,
+      14.5,
+      8.2
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/hip bone$|^sacrum$/"
+  },
+  {
+   "region": "HOMBRO",
+   "nombre": "Hombro",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001467",
+   "mallas": {
+    "izquierda": [
+     "FMA13323",
+     "FMA13396",
+     "FMA23131"
+    ],
+    "derecha": [
+     "FMA13322",
+     "FMA13395",
+     "FMA23130"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000976",
+    "UBERON:0006849",
+    "UBERON:0008255",
+    "UBERON:0008256"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA13396"
+      ],
+      [
+       "FMA23131"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA13395"
+      ],
+      [
+       "FMA23130"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      2.8,
+      14.5,
+      5.0
+     ],
+     "derecha": [
+      2.9,
+      14.6,
+      5.0
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/(scapula|clavicle|humerus)$/"
+  },
+  {
+   "region": "HUMERO",
+   "nombre": "Húmero / brazo",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000976",
+   "mallas": {
+    "izquierda": [
+     "FMA23131"
+    ],
+    "derecha": [
+     "FMA23130"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000976"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/humerus$/"
+  },
+  {
+   "region": "CODO",
+   "nombre": "Codo",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001461",
+   "mallas": {
+    "izquierda": [
+     "FMA23131",
+     "FMA23465",
+     "FMA23468"
+    ],
+    "derecha": [
+     "FMA23130",
+     "FMA23464",
+     "FMA23467"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000976",
+    "UBERON:0001423",
+    "UBERON:0001424"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA23131"
+      ],
+      [
+       "FMA23468"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA23130"
+      ],
+      [
+       "FMA23467"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      4.4,
+      2.4,
+      5.0
+     ],
+     "derecha": [
+      4.4,
+      2.3,
+      5.0
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/(humerus|radius|ulna)$/"
+  },
+  {
+   "region": "ANTEBRAZO",
+   "nombre": "Antebrazo",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0002386",
+   "mallas": {
+    "izquierda": [
+     "FMA23465",
+     "FMA23468",
+     "FMA23708"
+    ],
+    "derecha": [
+     "FMA23464",
+     "FMA23467",
+     "FMA23707"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:23707",
+    "FMA:23708",
+    "UBERON:0001423",
+    "UBERON:0001424"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(radius|ulna)$|interosseous membrane of (left|right) forearm$/"
+  },
+  {
+   "region": "MUNECA",
+   "nombre": "Muñeca",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0004452",
+   "mallas": {
+    "izquierda": [
+     "FMA23465",
+     "FMA23468",
+     "FMA24436",
+     "FMA24438",
+     "FMA24440",
+     "FMA24442",
+     "FMA24444",
+     "FMA24445",
+     "FMA24447",
+     "FMA24449"
+    ],
+    "derecha": [
+     "FMA23464",
+     "FMA23467",
+     "FMA23725",
+     "FMA24435",
+     "FMA24437",
+     "FMA24439",
+     "FMA24441",
+     "FMA24443",
+     "FMA24446",
+     "FMA24448"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001423",
+    "UBERON:0001424",
+    "UBERON:0001427",
+    "UBERON:0001428",
+    "UBERON:0001429",
+    "UBERON:0001430",
+    "UBERON:0001431",
+    "UBERON:0001432",
+    "UBERON:0001433",
+    "UBERON:0002445"
+   ],
+   "encuadre": {
+    "modo": "union",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA24436",
+       "FMA24438",
+       "FMA24440",
+       "FMA24442",
+       "FMA24444",
+       "FMA24445",
+       "FMA24447",
+       "FMA24449"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA23725",
+       "FMA24435",
+       "FMA24437",
+       "FMA24439",
+       "FMA24441",
+       "FMA24443",
+       "FMA24446",
+       "FMA24448"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      5.0,
+      3.1,
+      2.8
+     ],
+     "derecha": [
+      5.0,
+      3.1,
+      2.7
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/(scaphoid|lunate|triquetral|pisiform|trapezium|trapezoid|capitate|hamate)$/; capa=skeleton labelEn~/(radius|ulna)$/"
+  },
+  {
+   "region": "MANO",
+   "nombre": "Mano",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0002398",
+   "mallas": {
+    "izquierda": [
+     "FMA23938",
+     "FMA23940",
+     "FMA23942",
+     "FMA23944",
+     "FMA23951",
+     "FMA23953",
+     "FMA23955",
+     "FMA23957",
+     "FMA23959",
+     "FMA24436",
+     "FMA24438",
+     "FMA24440",
+     "FMA24442",
+     "FMA24444",
+     "FMA24445",
+     "FMA24447",
+     "FMA24449",
+     "FMA24465",
+     "FMA24467",
+     "FMA24469",
+     "FMA24471",
+     "FMA24473",
+     "FMA65470",
+     "FMA66791",
+     "FMA71908",
+     "FMA71915",
+     "FMA71916"
+    ],
+    "derecha": [
+     "FMA23725",
+     "FMA24435",
+     "FMA24437",
+     "FMA24439",
+     "FMA24441",
+     "FMA24443",
+     "FMA24446",
+     "FMA24448",
+     "FMA24450",
+     "FMA24451",
+     "FMA24452",
+     "FMA24453",
+     "FMA24454",
+     "FMA24455",
+     "FMA24456",
+     "FMA24457",
+     "FMA24458",
+     "FMA24459",
+     "FMA24460",
+     "FMA24461",
+     "FMA24462",
+     "FMA24463",
+     "FMA24464",
+     "FMA24466",
+     "FMA24468",
+     "FMA24470",
+     "FMA24472"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001427",
+    "UBERON:0001428",
+    "UBERON:0001429",
+    "UBERON:0001430",
+    "UBERON:0001431",
+    "UBERON:0001432",
+    "UBERON:0001433",
+    "UBERON:0002445",
+    "UBERON:0003645",
+    "UBERON:0003646",
+    "UBERON:0003647",
+    "UBERON:0003648",
+    "UBERON:0003649",
+    "UBERON:0004311",
+    "UBERON:0004312",
+    "UBERON:0004313",
+    "UBERON:0004314",
+    "UBERON:0004320",
+    "UBERON:0004321",
+    "UBERON:0004322",
+    "UBERON:0004323",
+    "UBERON:0004328",
+    "UBERON:0004329",
+    "UBERON:0004330",
+    "UBERON:0004331",
+    "UBERON:0004337",
+    "UBERON:0004338"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(scaphoid|lunate|triquetral|pisiform|trapezium|trapezoid|capitate|hamate)$/; capa=skeleton labelEn~/(metacarpal bone|phalanx of (left|right) (thumb|index finger|middle finger|ring finger|little finger))$/"
+  },
+  {
+   "region": "CADERA",
+   "nombre": "Cadera",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001464",
+   "mallas": {
+    "izquierda": [
+     "FMA16587",
+     "FMA24475"
+    ],
+    "derecha": [
+     "FMA16586",
+     "FMA24474"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000981",
+    "UBERON:0001272"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA16587"
+      ],
+      [
+       "FMA24475"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA16586"
+      ],
+      [
+       "FMA24474"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      10.0,
+      8.3,
+      7.4
+     ],
+     "derecha": [
+      9.8,
+      8.3,
+      7.6
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/(hip bone|femur)$/"
+  },
+  {
+   "region": "FEMUR",
+   "nombre": "Fémur / muslo",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0000981",
+   "mallas": {
+    "izquierda": [
+     "FMA24475"
+    ],
+    "derecha": [
+     "FMA24474"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000981"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/femur$/"
+  },
+  {
+   "region": "RODILLA",
+   "nombre": "Rodilla",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001465",
+   "mallas": {
+    "izquierda": [
+     "FMA24475",
+     "FMA24478",
+     "FMA24481",
+     "FMA24487"
+    ],
+    "derecha": [
+     "FMA24474",
+     "FMA24477",
+     "FMA24480",
+     "FMA24486"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000979",
+    "UBERON:0000981",
+    "UBERON:0001446",
+    "UBERON:0002446"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA24475"
+      ],
+      [
+       "FMA24478"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA24474"
+      ],
+      [
+       "FMA24477"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      7.6,
+      0.4,
+      6.2
+     ],
+     "derecha": [
+      7.6,
+      0.4,
+      6.2
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/(femur|tibia|fibula|patella)$/"
+  },
+  {
+   "region": "PIERNA",
+   "nombre": "Pierna",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0003823",
+   "mallas": {
+    "izquierda": [
+     "FMA24478",
+     "FMA24481",
+     "FMA35193"
+    ],
+    "derecha": [
+     "FMA24477",
+     "FMA24480",
+     "FMA35192"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:35192",
+    "FMA:35193",
+    "UBERON:0000979",
+    "UBERON:0001446"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(tibia|fibula)$|interosseous membrane of (left|right) leg$/"
+  },
+  {
+   "region": "TOBILLO",
+   "nombre": "Tobillo",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "punto",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001488",
+   "mallas": {
+    "izquierda": [
+     "FMA24478",
+     "FMA24481",
+     "FMA24483"
+    ],
+    "derecha": [
+     "FMA24477",
+     "FMA24480",
+     "FMA24482"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0000979",
+    "UBERON:0001446",
+    "UBERON:0002395"
+   ],
+   "encuadre": {
+    "modo": "interseccion",
+    "grupos": {
+     "izquierda": [
+      [
+       "FMA24478"
+      ],
+      [
+       "FMA24483"
+      ]
+     ],
+     "derecha": [
+      [
+       "FMA24477"
+      ],
+      [
+       "FMA24482"
+      ]
+     ]
+    },
+    "caja_cm_verificada": {
+     "izquierda": [
+      4.1,
+      1.0,
+      5.3
+     ],
+     "derecha": [
+      4.1,
+      1.0,
+      5.4
+     ]
+    }
+   },
+   "criterio": "capa=skeleton labelEn~/(tibia|fibula|talus)$/"
+  },
+  {
+   "region": "PIE",
+   "nombre": "Pie",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0002387",
+   "mallas": {
+    "izquierda": [
+     "FMA230988",
+     "FMA24483",
+     "FMA24498",
+     "FMA24501",
+     "FMA24508",
+     "FMA24510",
+     "FMA24512",
+     "FMA24514",
+     "FMA24516",
+     "FMA24522",
+     "FMA24524",
+     "FMA24526",
+     "FMA24529",
+     "FMA32635",
+     "FMA32637",
+     "FMA32639",
+     "FMA32641",
+     "FMA32643",
+     "FMA32645",
+     "FMA32647",
+     "FMA32651",
+     "FMA32653",
+     "FMA32655",
+     "FMA32657",
+     "FMA32659",
+     "FMA43254",
+     "FMA44250",
+     "FMA45098"
+    ],
+    "derecha": [
+     "FMA230986",
+     "FMA24482",
+     "FMA24497",
+     "FMA24500",
+     "FMA24507",
+     "FMA24509",
+     "FMA24511",
+     "FMA24513",
+     "FMA24515",
+     "FMA24521",
+     "FMA24523",
+     "FMA24525",
+     "FMA24528",
+     "FMA32634",
+     "FMA32636",
+     "FMA32638",
+     "FMA32640",
+     "FMA32642",
+     "FMA32644",
+     "FMA32646",
+     "FMA32650",
+     "FMA32652",
+     "FMA32654",
+     "FMA32656",
+     "FMA32658",
+     "FMA43253",
+     "FMA44249",
+     "FMA45097"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "FMA:44249",
+    "FMA:44250",
+    "UBERON:0001450",
+    "UBERON:0001451",
+    "UBERON:0001452",
+    "UBERON:0001453",
+    "UBERON:0001454",
+    "UBERON:0001455",
+    "UBERON:0002395",
+    "UBERON:0003650",
+    "UBERON:0003651",
+    "UBERON:0003652",
+    "UBERON:0003653",
+    "UBERON:0003654",
+    "UBERON:0004315",
+    "UBERON:0004316",
+    "UBERON:0004317",
+    "UBERON:0004318",
+    "UBERON:0004319",
+    "UBERON:0004324",
+    "UBERON:0004325",
+    "UBERON:0004326",
+    "UBERON:0004327",
+    "UBERON:0004332",
+    "UBERON:0004333",
+    "UBERON:0004334",
+    "UBERON:0004335",
+    "UBERON:0004336",
+    "UBERON:0008000"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/(talus|calcaneus|cuboid bone|cuneiform bone|navicular bone of (left|right) foot)$/; capa=skeleton labelEn~/(metatarsal bone|phalanx of (left|right) (big|second|third|fourth|little) toe|sesamoid bone of (left|right) foot|long plantar ligament)$/"
+  },
+  {
+   "region": "CALCANEO",
+   "nombre": "Calcáneo",
+   "lateral": true,
+   "capa_preferida": "skeleton",
+   "capas_con_mallas": [
+    "skeleton"
+   ],
+   "tipo_malla": "propia",
+   "al_tocar": "malla",
+   "sin_malla": false,
+   "uberon_region": "UBERON:0001450",
+   "mallas": {
+    "izquierda": [
+     "FMA24498"
+    ],
+    "derecha": [
+     "FMA24497"
+    ],
+    "centro": []
+   },
+   "solo_cuerpo_masculino": [],
+   "structureIds": [
+    "UBERON:0001450"
+   ],
+   "encuadre": null,
+   "criterio": "capa=skeleton labelEn~/calcaneus$/"
+  }
+ ],
+ "toque_malla_a_region": {
+  "BP24": "PARRILLA_COSTAL",
+  "BP28": "PARRILLA_COSTAL",
+  "BP49": "ENCEFALO",
+  "BP50": "ENCEFALO",
+  "BP51": "ENCEFALO",
+  "FMA10014": "COLUMNA_DORSAL",
+  "FMA10037": "COLUMNA_DORSAL",
+  "FMA10059": "COLUMNA_DORSAL",
+  "FMA10081": "COLUMNA_DORSAL",
+  "FMA10419": "ABDOMEN",
+  "FMA10458": "COLUMNA_DORSAL",
+  "FMA12519": "COLUMNA_CERVICAL",
+  "FMA12520": "COLUMNA_CERVICAL",
+  "FMA12521": "COLUMNA_CERVICAL",
+  "FMA12522": "COLUMNA_CERVICAL",
+  "FMA12523": "COLUMNA_CERVICAL",
+  "FMA12524": "COLUMNA_CERVICAL",
+  "FMA12525": "COLUMNA_CERVICAL",
+  "FMA13072": "COLUMNA_LUMBAR",
+  "FMA13073": "COLUMNA_LUMBAR",
+  "FMA13074": "COLUMNA_LUMBAR",
+  "FMA13075": "COLUMNA_LUMBAR",
+  "FMA13076": "COLUMNA_LUMBAR",
+  "FMA13322": "CLAVICULA",
+  "FMA13323": "CLAVICULA",
+  "FMA13395": "HOMBRO",
+  "FMA13396": "HOMBRO",
+  "FMA13495": "COLUMNA_DORSAL",
+  "FMA13500": "COLUMNA_DORSAL",
+  "FMA13501": "COLUMNA_DORSAL",
+  "FMA13502": "COLUMNA_DORSAL",
+  "FMA13503": "COLUMNA_DORSAL",
+  "FMA13504": "COLUMNA_DORSAL",
+  "FMA13505": "COLUMNA_DORSAL",
+  "FMA13506": "COLUMNA_DORSAL",
+  "FMA13507": "COLUMNA_DORSAL",
+  "FMA13508": "COLUMNA_DORSAL",
+  "FMA13509": "COLUMNA_DORSAL",
+  "FMA13889": "SILLA_TURCA_HIPOFISIS",
+  "FMA13896": "COLUMNA_CERVICAL",
+  "FMA13897": "COLUMNA_CERVICAL",
+  "FMA13898": "COLUMNA_CERVICAL",
+  "FMA13899": "COLUMNA_CERVICAL",
+  "FMA13900": "COLUMNA_CERVICAL",
+  "FMA14542": "ABDOMEN",
+  "FMA14543nsn": "ABDOMEN",
+  "FMA14544": "PELVIS",
+  "FMA15571": "VIAS_URINARIAS",
+  "FMA15572": "VIAS_URINARIAS",
+  "FMA15629": "ABDOMEN",
+  "FMA15630": "ABDOMEN",
+  "FMA15900": "VESICAL",
+  "FMA16033": "COLUMNA_LUMBAR",
+  "FMA16034": "COLUMNA_LUMBAR",
+  "FMA16035": "COLUMNA_LUMBAR",
+  "FMA16036": "COLUMNA_LUMBAR",
+  "FMA16037": "COLUMNA_LUMBAR",
+  "FMA16202": "SACRO_COXIS",
+  "FMA16586": "PELVIS",
+  "FMA16587": "PELVIS",
+  "FMA18256": "TESTICULAR",
+  "FMA18257": "TESTICULAR",
+  "FMA19667": "VIAS_URINARIAS",
+  "FMA230986": "PIE",
+  "FMA230988": "PIE",
+  "FMA23130": "HUMERO",
+  "FMA23131": "HUMERO",
+  "FMA23464": "ANTEBRAZO",
+  "FMA23465": "ANTEBRAZO",
+  "FMA23467": "ANTEBRAZO",
+  "FMA23468": "ANTEBRAZO",
+  "FMA23707": "ANTEBRAZO",
+  "FMA23708": "ANTEBRAZO",
+  "FMA23725": "MUNECA",
+  "FMA23938": "MANO",
+  "FMA23940": "MANO",
+  "FMA23942": "MANO",
+  "FMA23944": "MANO",
+  "FMA23951": "MANO",
+  "FMA23953": "MANO",
+  "FMA23955": "MANO",
+  "FMA23957": "MANO",
+  "FMA23959": "MANO",
+  "FMA24435": "MUNECA",
+  "FMA24436": "MUNECA",
+  "FMA24437": "MUNECA",
+  "FMA24438": "MUNECA",
+  "FMA24439": "MUNECA",
+  "FMA24440": "MUNECA",
+  "FMA24441": "MUNECA",
+  "FMA24442": "MUNECA",
+  "FMA24443": "MUNECA",
+  "FMA24444": "MUNECA",
+  "FMA24445": "MUNECA",
+  "FMA24446": "MUNECA",
+  "FMA24447": "MUNECA",
+  "FMA24448": "MUNECA",
+  "FMA24449": "MUNECA",
+  "FMA24450": "MANO",
+  "FMA24451": "MANO",
+  "FMA24452": "MANO",
+  "FMA24453": "MANO",
+  "FMA24454": "MANO",
+  "FMA24455": "MANO",
+  "FMA24456": "MANO",
+  "FMA24457": "MANO",
+  "FMA24458": "MANO",
+  "FMA24459": "MANO",
+  "FMA24460": "MANO",
+  "FMA24461": "MANO",
+  "FMA24462": "MANO",
+  "FMA24463": "MANO",
+  "FMA24464": "MANO",
+  "FMA24465": "MANO",
+  "FMA24466": "MANO",
+  "FMA24467": "MANO",
+  "FMA24468": "MANO",
+  "FMA24469": "MANO",
+  "FMA24470": "MANO",
+  "FMA24471": "MANO",
+  "FMA24472": "MANO",
+  "FMA24473": "MANO",
+  "FMA24474": "FEMUR",
+  "FMA24475": "FEMUR",
+  "FMA24477": "PIERNA",
+  "FMA24478": "PIERNA",
+  "FMA24480": "PIERNA",
+  "FMA24481": "PIERNA",
+  "FMA24482": "PIE",
+  "FMA24483": "PIE",
+  "FMA24486": "RODILLA",
+  "FMA24487": "RODILLA",
+  "FMA24497": "CALCANEO",
+  "FMA24498": "CALCANEO",
+  "FMA24500": "PIE",
+  "FMA24501": "PIE",
+  "FMA24507": "PIE",
+  "FMA24508": "PIE",
+  "FMA24509": "PIE",
+  "FMA24510": "PIE",
+  "FMA24511": "PIE",
+  "FMA24512": "PIE",
+  "FMA24513": "PIE",
+  "FMA24514": "PIE",
+  "FMA24515": "PIE",
+  "FMA24516": "PIE",
+  "FMA24521": "PIE",
+  "FMA24522": "PIE",
+  "FMA24523": "PIE",
+  "FMA24524": "PIE",
+  "FMA24525": "PIE",
+  "FMA24526": "PIE",
+  "FMA24528": "PIE",
+  "FMA24529": "PIE",
+  "FMA25058": "COLUMNA_CERVICAL",
+  "FMA258714": "ENCEFALO",
+  "FMA258716": "ENCEFALO",
+  "FMA274027": "ENCEFALO",
+  "FMA274029": "ENCEFALO",
+  "FMA32634": "PIE",
+  "FMA32635": "PIE",
+  "FMA32636": "PIE",
+  "FMA32637": "PIE",
+  "FMA32638": "PIE",
+  "FMA32639": "PIE",
+  "FMA32640": "PIE",
+  "FMA32641": "PIE",
+  "FMA32642": "PIE",
+  "FMA32643": "PIE",
+  "FMA32644": "PIE",
+  "FMA32645": "PIE",
+  "FMA32646": "PIE",
+  "FMA32647": "PIE",
+  "FMA32650": "PIE",
+  "FMA32651": "PIE",
+  "FMA32652": "PIE",
+  "FMA32653": "PIE",
+  "FMA32654": "PIE",
+  "FMA32655": "PIE",
+  "FMA32656": "PIE",
+  "FMA32657": "PIE",
+  "FMA32658": "PIE",
+  "FMA32659": "PIE",
+  "FMA35192": "PIERNA",
+  "FMA35193": "PIERNA",
+  "FMA3941": "CUELLO",
+  "FMA4058": "CUELLO",
+  "FMA43253": "PIE",
+  "FMA43254": "PIE",
+  "FMA44249": "PIE",
+  "FMA44250": "PIE",
+  "FMA45097": "PIE",
+  "FMA45098": "PIE",
+  "FMA4754": "CUELLO",
+  "FMA4762": "CUELLO",
+  "FMA52734": "CRANEO",
+  "FMA52735": "CRANEO",
+  "FMA52736": "SILLA_TURCA_HIPOFISIS",
+  "FMA52738": "CRANEO",
+  "FMA52739": "CRANEO",
+  "FMA52740": "CRANEO",
+  "FMA52748": "MANDIBULA",
+  "FMA52788": "CRANEO",
+  "FMA52789": "CRANEO",
+  "FMA52892": "MACIZO_FACIAL",
+  "FMA52893": "MACIZO_FACIAL",
+  "FMA53645": "MACIZO_FACIAL",
+  "FMA53646": "MACIZO_FACIAL",
+  "FMA53647": "HUESOS_PROPIOS_NARIZ",
+  "FMA53648": "HUESOS_PROPIOS_NARIZ",
+  "FMA53649": "MACIZO_FACIAL",
+  "FMA53650": "MACIZO_FACIAL",
+  "FMA53655": "MACIZO_FACIAL",
+  "FMA53656": "MACIZO_FACIAL",
+  "FMA54737": "MACIZO_FACIAL",
+  "FMA54738": "MACIZO_FACIAL",
+  "FMA55099": "CUELLO",
+  "FMA55680": "PIEZAS_DENTARIAS",
+  "FMA55681": "PIEZAS_DENTARIAS",
+  "FMA55682": "PIEZAS_DENTARIAS",
+  "FMA55683": "PIEZAS_DENTARIAS",
+  "FMA55686": "PIEZAS_DENTARIAS",
+  "FMA55687": "PIEZAS_DENTARIAS",
+  "FMA55688": "PIEZAS_DENTARIAS",
+  "FMA55689": "PIEZAS_DENTARIAS",
+  "FMA55690": "PIEZAS_DENTARIAS",
+  "FMA55691": "PIEZAS_DENTARIAS",
+  "FMA55692": "PIEZAS_DENTARIAS",
+  "FMA55693": "PIEZAS_DENTARIAS",
+  "FMA55694": "PIEZAS_DENTARIAS",
+  "FMA55695": "PIEZAS_DENTARIAS",
+  "FMA55697": "PIEZAS_DENTARIAS",
+  "FMA55698": "PIEZAS_DENTARIAS",
+  "FMA55699": "PIEZAS_DENTARIAS",
+  "FMA55700": "PIEZAS_DENTARIAS",
+  "FMA55703": "PIEZAS_DENTARIAS",
+  "FMA55704": "PIEZAS_DENTARIAS",
+  "FMA55705": "PIEZAS_DENTARIAS",
+  "FMA55706": "PIEZAS_DENTARIAS",
+  "FMA55798": "PIEZAS_DENTARIAS",
+  "FMA55799": "PIEZAS_DENTARIAS",
+  "FMA57140": "PIEZAS_DENTARIAS",
+  "FMA57141": "PIEZAS_DENTARIAS",
+  "FMA57142": "PIEZAS_DENTARIAS",
+  "FMA57143": "PIEZAS_DENTARIAS",
+  "FMA59763": "PIEZAS_DENTARIAS",
+  "FMA59764": "PIEZAS_DENTARIAS",
+  "FMA61822": "ENCEFALO",
+  "FMA61844": "ENCEFALO",
+  "FMA61961": "ENCEFALO",
+  "FMA61970": "ENCEFALO",
+  "FMA61975": "ENCEFALO",
+  "FMA61993nsn": "ENCEFALO",
+  "FMA62004": "ENCEFALO",
+  "FMA62008nsn": "ENCEFALO",
+  "FMA62032": "ENCEFALO",
+  "FMA62033": "ENCEFALO",
+  "FMA62045": "ENCEFALO",
+  "FMA62072": "ENCEFALO",
+  "FMA62327": "ENCEFALO",
+  "FMA62382": "ENCEFALO",
+  "FMA62394": "ENCEFALO",
+  "FMA65470": "MANO",
+  "FMA66791": "MANO",
+  "FMA67936": "ENCEFALO",
+  "FMA67943": "ENCEFALO",
+  "FMA67944": "ENCEFALO",
+  "FMA7131": "CUELLO",
+  "FMA7148": "ABDOMEN",
+  "FMA71908": "MANO",
+  "FMA71915": "MANO",
+  "FMA71916": "MANO",
+  "FMA7196": "ABDOMEN",
+  "FMA7197": "ABDOMEN",
+  "FMA7198nsn": "ABDOMEN",
+  "FMA7202": "ABDOMEN",
+  "FMA7204": "RENAL",
+  "FMA7205": "RENAL",
+  "FMA7206": "ABDOMEN",
+  "FMA7207": "ABDOMEN",
+  "FMA7208": "ABDOMEN",
+  "FMA7211": "TESTICULAR",
+  "FMA7212": "TESTICULAR",
+  "FMA7234": "CORAZON",
+  "FMA7235": "CORAZON",
+  "FMA7246": "CORAZON",
+  "FMA72653": "ENCEFALO",
+  "FMA72654": "ENCEFALO",
+  "FMA72655": "ENCEFALO",
+  "FMA72656": "ENCEFALO",
+  "FMA72661": "ENCEFALO",
+  "FMA72662": "ENCEFALO",
+  "FMA72665": "ENCEFALO",
+  "FMA72666": "ENCEFALO",
+  "FMA72667": "ENCEFALO",
+  "FMA72668": "ENCEFALO",
+  "FMA72669": "ENCEFALO",
+  "FMA72670": "ENCEFALO",
+  "FMA72685": "ENCEFALO",
+  "FMA72686": "ENCEFALO",
+  "FMA72687": "ENCEFALO",
+  "FMA72688": "ENCEFALO",
+  "FMA72689": "ENCEFALO",
+  "FMA72690": "ENCEFALO",
+  "FMA72701": "ENCEFALO",
+  "FMA72702": "ENCEFALO",
+  "FMA72705": "ENCEFALO",
+  "FMA72706": "ENCEFALO",
+  "FMA72713": "ENCEFALO",
+  "FMA72714": "ENCEFALO",
+  "FMA72717": "ENCEFALO",
+  "FMA72718": "ENCEFALO",
+  "FMA7274": "CORAZON",
+  "FMA72800": "ENCEFALO",
+  "FMA72801": "ENCEFALO",
+  "FMA72804": "ENCEFALO",
+  "FMA72805": "ENCEFALO",
+  "FMA72826": "ENCEFALO",
+  "FMA72827": "ENCEFALO",
+  "FMA72828": "ENCEFALO",
+  "FMA72829": "ENCEFALO",
+  "FMA72830": "ENCEFALO",
+  "FMA72831": "ENCEFALO",
+  "FMA72832": "ENCEFALO",
+  "FMA72833": "ENCEFALO",
+  "FMA72908": "ENCEFALO",
+  "FMA72909": "ENCEFALO",
+  "FMA72924": "ENCEFALO",
+  "FMA72925": "ENCEFALO",
+  "FMA72939": "ENCEFALO",
+  "FMA72940": "ENCEFALO",
+  "FMA72975": "ENCEFALO",
+  "FMA72976": "ENCEFALO",
+  "FMA72977": "ENCEFALO",
+  "FMA72978": "ENCEFALO",
+  "FMA73303": "ENCEFALO",
+  "FMA73304": "ENCEFALO",
+  "FMA73309": "ENCEFALO",
+  "FMA73310": "ENCEFALO",
+  "FMA7333": "TORAX",
+  "FMA7337": "TORAX",
+  "FMA73413": "ENCEFALO",
+  "FMA73414": "ENCEFALO",
+  "FMA73422": "ENCEFALO",
+  "FMA73423": "ENCEFALO",
+  "FMA73434": "ENCEFALO",
+  "FMA73435": "ENCEFALO",
+  "FMA73461": "ENCEFALO",
+  "FMA73462": "ENCEFALO",
+  "FMA73463": "ENCEFALO",
+  "FMA73464": "ENCEFALO",
+  "FMA7370": "TORAX",
+  "FMA7371": "TORAX",
+  "FMA7383": "TORAX",
+  "FMA7394": "CUELLO",
+  "FMA7409": "TORAX",
+  "FMA7486": "ESTERNON",
+  "FMA7487": "ESTERNON",
+  "FMA74877": "ENCEFALO",
+  "FMA7488": "ESTERNON",
+  "FMA75351": "ENCEFALO",
+  "FMA76891": "ABDOMEN",
+  "FMA76892": "ABDOMEN",
+  "FMA76893": "ABDOMEN",
+  "FMA78449": "ENCEFALO",
+  "FMA78450": "ENCEFALO",
+  "FMA78454": "ENCEFALO",
+  "FMA78467": "ENCEFALO",
+  "FMA78469": "ENCEFALO",
+  "FMA7857": "PARRILLA_COSTAL",
+  "FMA7875": "PARRILLA_COSTAL",
+  "FMA7882": "PARRILLA_COSTAL",
+  "FMA7886": "PARRILLA_COSTAL",
+  "FMA7909": "PARRILLA_COSTAL",
+  "FMA7913": "PARRILLA_COSTAL",
+  "FMA7957": "PARRILLA_COSTAL",
+  "FMA7976": "PARRILLA_COSTAL",
+  "FMA7987": "PARRILLA_COSTAL",
+  "FMA8005": "PARRILLA_COSTAL",
+  "FMA8012": "PARRILLA_COSTAL",
+  "FMA8031": "PARRILLA_COSTAL",
+  "FMA8039": "PARRILLA_COSTAL",
+  "FMA8058": "PARRILLA_COSTAL",
+  "FMA8066": "PARRILLA_COSTAL",
+  "FMA8070": "PARRILLA_COSTAL",
+  "FMA8093": "PARRILLA_COSTAL",
+  "FMA8112": "PARRILLA_COSTAL",
+  "FMA8148": "PARRILLA_COSTAL",
+  "FMA8167": "PARRILLA_COSTAL",
+  "FMA8175": "PARRILLA_COSTAL",
+  "FMA8194": "PARRILLA_COSTAL",
+  "FMA8202": "PARRILLA_COSTAL",
+  "FMA8221": "PARRILLA_COSTAL",
+  "FMA8229": "PARRILLA_COSTAL",
+  "FMA8248": "PARRILLA_COSTAL",
+  "FMA8256": "PARRILLA_COSTAL",
+  "FMA8275": "PARRILLA_COSTAL",
+  "FMA8283": "PARRILLA_COSTAL",
+  "FMA8310": "PARRILLA_COSTAL",
+  "FMA8364": "PARRILLA_COSTAL",
+  "FMA83740": "ENCEFALO",
+  "FMA8391": "PARRILLA_COSTAL",
+  "FMA8445": "PARRILLA_COSTAL",
+  "FMA8472": "PARRILLA_COSTAL",
+  "FMA8531": "PARRILLA_COSTAL",
+  "FMA8532": "PARRILLA_COSTAL",
+  "FMA8533": "PARRILLA_COSTAL",
+  "FMA8534": "PARRILLA_COSTAL",
+  "FMA86464": "ENCEFALO",
+  "FMA9165": "COLUMNA_DORSAL",
+  "FMA9187": "COLUMNA_DORSAL",
+  "FMA9209": "COLUMNA_DORSAL",
+  "FMA9248": "COLUMNA_DORSAL",
+  "FMA9600": "PROSTATA",
+  "FMA9710": "MACIZO_FACIAL",
+  "FMA9922": "COLUMNA_DORSAL",
+  "FMA9945": "COLUMNA_DORSAL",
+  "FMA9968": "COLUMNA_DORSAL",
+  "FMA9991": "COLUMNA_DORSAL"
+ },
+ "avisos": []
+}
