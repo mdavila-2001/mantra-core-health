@@ -47,5 +47,5 @@ export const TEXTO_DE_ACCION: Readonly<Record<LifecycleAction, TextoDeAccion>> =
 };
 
 /** Las pestañas de la ficha, por clave (`?tab=`), en el orden del contrato §4. */
-export const PESTANAS_DE_LA_FICHA = ['general', 'technical', 'units', 'children', 'history'] as const;
+export const PESTANAS_DE_LA_FICHA = ['general', 'technical', 'units', 'children', 'history', 'operations'] as const;
 export type PestanaDeLaFicha = (typeof PESTANAS_DE_LA_FICHA)[number];

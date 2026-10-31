@@ -1,0 +1,53 @@
+<app-page-header title="Nuevo ingreso" [subtitle]="site()?.name ?? 'Internación con asignación de cama'" [breadcrumbs]="breadcrumbs()" />
+
+<app-view-state-host [state]="gate()" (retry)="access.reload()">
+  @if (failure(); as f) {
+    <app-view-state-host class="admission__failure" data-testid="admission-failure" [state]="f" />
+  }
+  <app-card class="admission" padding="lg" data-testid="admission-new">
+    <app-paginated-form
+      [paginas]="pages()"
+      [form]="form"
+      label="Ingreso de internación"
+      submitLabel="Internar"
+      submitTestId="admission-submit"
+      cancelLabel="Cancelar"
+      [pending]="sending()"
+      (enviado)="submit()"
+      (cancelado)="cancel()"
+    >
+      <ng-template appCampoPersonalizado="patient">
+        <app-reference-combobox
+          data-testid="admission-patient"
+          [selected]="form.controls.patient.value"
+          [options]="candidates()"
+          [loading]="searching()"
+          placeholder="Nombre, código o documento"
+          emptyMessage="Ninguna persona coincide"
+          (searched)="search($event)"
+          (selectionChange)="form.controls.patient.setValue($event)"
+        />
+      </ng-template>
+      <ng-template appCampoPersonalizado="bed">
+        @if (siteId(); as sid) {
+          <app-bed-picker
+            [siteId]="sid"
+            [patientProfileId]="patientId()"
+            [levelOfCareCode]="level()"
+            [isolationCode]="isolation()"
+            [organism]="organism()"
+            [canOverride]="access.can(sid, 'adt.override')"
+            [(mode)]="bedMode"
+            [(bedId)]="bedId"
+            [(override)]="override"
+            [(bedCode)]="bedCode"
+            (validity)="setBedValidity($event)"
+          />
+        }
+      </ng-template>
+      <ng-template appCampoPersonalizado="summary">
+        <app-fact-list [hechos]="summary()" etiqueta="Resumen del ingreso" data-testid="admission-summary" />
+      </ng-template>
+    </app-paginated-form>
+  </app-card>
+</app-view-state-host>
