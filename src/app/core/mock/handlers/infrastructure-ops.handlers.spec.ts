@@ -72,7 +72,12 @@ describe('handlers de operación de camas (F2)', () => {
     expect(celda('301-A').v2Code).toBe('O');
     expect(celda('301-B').v2Code).toBe('U');
     expect(celda('302-B').v2Code).toBe('C');
-    expect(celda('302-B').availability.reasonText).toContain('Cabecera');
+    // La API manda el motivo como código en la celda; el texto vive en el bloqueo.
+    expect(celda('302-B').availability.reasonText).toBeNull();
+    expect((call('GET', `/care-spaces/${celda('302-B').id}/operational-state`).body as OperationalState).openBlocks[0]!.reasonText).toContain('Cabecera');
+    expect(t.siteId).toBe(SITIO);
+    expect(celda('301-A').form).toBe('LOC_FORM_BED');
+    expect(celda('301-A').lifecycle).toBe('ACTIVE');
     expect(celda('REC-1').v2Code).toBe('H');
     expect(t.generatedAt).toBeTypeOf('string');
   });
@@ -80,7 +85,10 @@ describe('handlers de operación de camas (F2)', () => {
   it('enfermería ve iniciales del paciente; limpieza y soporte no (§F2.3 y F2.5 #6)', () => {
     expect(celda('301-A').occupancy.patient?.initials).toMatch(/^[A-Z]{2,3}$/);
     expect(celda('301-A', limpieza).occupancy.patient).toBeUndefined();
-    expect(celda('301-A', limpieza).occupancy.encounterId).toBeUndefined();
+    expect(celda('301-A', limpieza).occupancy.encounterId).toBeNull();
+    expect(Object.keys(celda('301-A', limpieza).occupancy)).not.toContain('encounterLocationId');
+    expect(Object.keys(celda('301-A', limpieza).occupancy)).not.toContain('patient');
+    expect(celda('301-A').occupancy.encounterLocationId).toBeTypeOf('string');
     expect(celda('301-A', superadmin).occupancy.patient).toBeUndefined();
     expect(tablero(limpieza).units.flatMap((x) => x.cells).every((c) => c.occupancy.patient === undefined)).toBe(true);
   });
@@ -89,9 +97,10 @@ describe('handlers de operación de camas (F2)', () => {
     const acceso = call('GET', '/practice/infrastructure-access/me', { usuario: limpieza }).body as InfrastructureAccess;
     expect(acceso.sites).toHaveLength(1);
     expect(acceso.sites[0]!.roles).toEqual(['HOUSEKEEPING']);
-    expect(acceso.sites[0]!.actions).toContain('cleaning.work');
-    expect(acceso.sites[0]!.actions).not.toContain('adt.admit');
-    expect(acceso.sites[0]!.actions).not.toContain('board.view-patient');
+    expect(acceso.sites[0]!.actions).toContain('f2.cleaning.work');
+    expect(acceso.sites[0]!.actions).not.toContain('f3.adt.place');
+    expect(acceso.sites[0]!.actions).not.toContain('f3.adt.read');
+    expect(acceso.sites[0]).toMatchObject({ practiceId: expect.any(String), globalRoles: [], grants: [] });
     const medica = call('GET', '/practice/infrastructure-access/me', { usuario: u('medica') }).body as InfrastructureAccess;
     expect(medica.sites).toEqual([]);
   });
@@ -140,12 +149,12 @@ describe('handlers de operación de camas (F2)', () => {
     expect(cell.v2Code).toBe('C');
     expect(cell.availability).toMatchObject({ code: 'SPACE_OP_MAINTENANCE', expectedUntil: until, reasonCode: 'BLOCK_RSN_PREVENTIVE_MAINTENANCE' });
     const a20 = eventos(libre.id)[0]!;
-    expect(a20).toMatchObject({ v2Code: 'C', requestId, axis: { code: 'AXIS_AVAILABILITY' }, source: { code: 'SRC_BLOCK' } });
+    expect(a20).toMatchObject({ v2Code: 'C', requestId, axis: 'AVAILABILITY', source: 'BLOCK', to: 'SPACE_OP_MAINTENANCE' });
     expect(call('POST', `/care-space-blocks/${blockId}/end`, { usuario: mantenimiento, body: { note: 'Revisado' } }).status).toBe(200);
     const despues = call('GET', `/care-spaces/${libre.id}/operational-state`).body as OperationalState;
-    expect(despues.cell.availability.code).toBe('SPACE_OP_AVAILABLE');
-    expect(despues.cell.hygiene.code).toBe('HYG_DIRTY');
-    expect(despues.openCleaningOrder?.trigger.code).toBe('CLN_TRG_MAINTENANCE_END');
+    expect(despues.availability.code).toBe('SPACE_OP_AVAILABLE');
+    expect(despues.hygiene.code).toBe('HYG_DIRTY');
+    expect(despues.openCleaningOrder?.triggerCode).toBe('CLN_TRG_MAINTENANCE_END');
     expect(call('POST', `/care-space-blocks/${blockId}/end`, { usuario: mantenimiento, body: {} }).status).toBe(409);
   });
 
@@ -158,13 +167,14 @@ describe('handlers de operación de camas (F2)', () => {
       call('POST', `/cleaning-orders/${o.id}/${accion}`, { usuario, ifMatch: o.rowVersion, body });
     const viejo = call('POST', `/cleaning-orders/${orden.id}/start`, { usuario: limpieza, ifMatch: orden.rowVersion + 5 });
     expect(viejo.status).toBe(412);
-    const iniciada = (paso('start', orden, limpieza).body as { order: CleaningOrder }).order;
-    expect(iniciada.status.code).toBe('CLN_IN_PROGRESS');
+    const iniciada = paso('start', orden, limpieza).body as CleaningOrder;
+    expect(iniciada.statusCode).toBe('CLN_IN_PROGRESS');
     const mal = paso('inspect', iniciada, supervisoraLimpieza, { result: 'PASS' });
     expect(mal.status).toBe(409);
     expect(reasonOf(mal)).toBe('CLEANING_ORDER_INVALID_TRANSITION');
-    const terminada = (paso('finish', iniciada, limpieza).body as { order: CleaningOrder }).order;
-    expect(terminada.status.code).toBe('CLN_DONE');
+    const terminada = paso('finish', iniciada, limpieza).body as CleaningOrder;
+    expect(terminada.statusCode).toBe('CLN_DONE');
+    expect(terminada.inspectionRequired).toBe(true);
     expect(celda('303-A').assignable).toBe(false);
     // La limpiadora no tiene la acción de inspeccionar (403); la supervisora que
     // además limpió, tampoco puede inspeccionar lo suyo (422).
@@ -173,7 +183,7 @@ describe('handlers de operación de camas (F2)', () => {
     const ok = paso('inspect', terminada, supervisoraLimpieza, { result: 'PASS' });
     expect(ok.status).toBe(200);
     expect(celda('303-A')).toMatchObject({ assignable: true, v2Code: 'U' });
-    const higiene = eventos(cama.id).filter((x) => x.axis.code === 'AXIS_HYGIENE').map((x) => x.to.code).reverse();
+    const higiene = eventos(cama.id).filter((x) => x.axis === 'HYGIENE').map((x) => x.to).reverse();
     expect(higiene.slice(-4)).toEqual(['HYG_DIRTY', 'HYG_CLEANING', 'HYG_CLEAN', 'HYG_INSPECTED']);
   });
 
@@ -181,16 +191,16 @@ describe('handlers de operación de camas (F2)', () => {
     const r1 = celda('REC-1');
     const orden = cola(supervisoraLimpieza).find((o) => o.careSpaceId === r1.id)!;
     const paso = (accion: string, o: CleaningOrder, body: object = {}) =>
-      (call('POST', `/cleaning-orders/${o.id}/${accion}`, { usuario: supervisoraLimpieza, ifMatch: o.rowVersion, body }).body as { order: CleaningOrder }).order;
+      call('POST', `/cleaning-orders/${o.id}/${accion}`, { usuario: supervisoraLimpieza, ifMatch: o.rowVersion, body }).body as CleaningOrder;
     const terminada = paso('finish', paso('start', orden));
     const r = call('POST', `/cleaning-orders/${terminada.id}/inspect`, { usuario: supervisoraLimpieza, ifMatch: terminada.rowVersion, body: { result: 'PASS' } });
     expect(r.status).toBe(422);
     expect(reasonOf(r)).toBe('INSPECTION_BY_CLEANER_NOT_ALLOWED');
     // Inspección rechazada por otra supervisora: orden REJECTED y una next PENDING.
     const fail = call('POST', `/cleaning-orders/${terminada.id}/inspect`, { usuario: supervision, ifMatch: terminada.rowVersion, body: { result: 'FAIL', reasonText: 'Quedó material en el carro' } });
-    expect((fail.body as { order: CleaningOrder }).order.status.code).toBe('CLN_REJECTED');
+    expect((fail.body as CleaningOrder).statusCode).toBe('CLN_REJECTED');
     const next = cola().find((o) => o.careSpaceId === r1.id)!;
-    expect(next).toMatchObject({ trigger: { code: 'CLN_TRG_INSPECTION_FAILED' }, previousOrderId: terminada.id, status: { code: 'CLN_PENDING' } });
+    expect(next).toMatchObject({ triggerCode: 'CLN_TRG_INSPECTION_FAILED', previousOrderId: terminada.id, statusCode: 'CLN_PENDING' });
     expect(celda('REC-1').hygiene.code).toBe('HYG_DIRTY');
   });
 
@@ -200,7 +210,7 @@ describe('handlers de operación de camas (F2)', () => {
     expect(call('POST', `/care-spaces/${r1.id}/hygiene`, { usuario: limpieza, ifMatchOps: r1.opsVersion, body: { action: 'mark-contaminated' } }).status).toBe(403);
     const r = call('POST', `/care-spaces/${r1.id}/hygiene`, { ifMatchOps: r1.opsVersion, body: { action: 'mark-contaminated', reasonText: 'Derrame de fluidos' } });
     expect((r.body as { cell: BedBoardCell }).cell).toMatchObject({ v2Code: 'K', hygiene: { terminalRequired: true } });
-    expect(cola().find((o) => o.careSpaceId === r1.id)?.type.code).toBe('CLEAN_TERMINAL');
+    expect(cola().find((o) => o.careSpaceId === r1.id)?.typeCode).toBe('CLEAN_TERMINAL');
   });
 
   it('aislamiento aéreo fuera de AIIR → 422 con lo que falta; en habitación compartida bloquea la hermana libre (F2.5 #5)', () => {
@@ -219,7 +229,7 @@ describe('handlers de operación de camas (F2)', () => {
     call('POST', `/care-spaces/${vigente.id}/isolation`, { ifMatchOps: vigente.opsVersion, body: { isolationCode: 'ISO_NONE', reasonText: 'Cultivos negativos' } });
     expect(celda('301-A').hygiene.terminalRequired).toBe(true);
     expect(celda('301-B').availability.code).toBe('SPACE_OP_AVAILABLE');
-    expect(cola().find((o) => o.careSpaceId === vigente.id)).toMatchObject({ type: { code: 'CLEAN_TERMINAL' }, trigger: { code: 'CLN_TRG_ISOLATION_END' } });
+    expect(cola().find((o) => o.careSpaceId === vigente.id)).toMatchObject({ typeCode: 'CLEAN_TERMINAL', triggerCode: 'CLN_TRG_ISOLATION_END' });
   });
 
   it('el aval de cohorte exige control de infecciones (403)', () => {
@@ -237,7 +247,8 @@ describe('handlers de operación de camas (F2)', () => {
     expect(reasonOf(r)).toBe('TERMINAL_CLEANING_REQUIRED');
     expect(call('POST', `/sites/${SITIO}/cleaning-orders`, { body: { careSpaceId: cama.id, typeCode: 'CLEAN_TERMINAL', priorityCode: 'CLN_PRIO_STAT' } }).status).toBe(201);
     const mias = (call('GET', `/sites/${SITIO}/cleaning-orders`, { usuario: limpieza, query: 'assignedTo=me' }).body as CleaningOrderPage).items;
-    expect(mias.every((o) => o.assignedName === 'Juana Choque Mamani')).toBe(true);
-    expect(cola()[0]!.priority.code).toBe('CLN_PRIO_STAT');
+    expect(mias.length).toBeGreaterThan(0);
+    expect(mias.every((o) => o.assignedUserId === limpieza.id)).toBe(true);
+    expect(cola()[0]!.priorityCode).toBe('CLN_PRIO_STAT');
   });
 });

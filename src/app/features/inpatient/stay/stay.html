@@ -1,7 +1,7 @@
 <app-page-header [title]="title()" [subtitle]="subtitle()" [breadcrumbs]="breadcrumbs()">
   <span page-meta>
     @if (data(); as s) {
-      <app-badge [variant]="s.status === 'IN_PROGRESS' ? 'success' : 'secondary'" data-testid="stay-status">{{ s.status === 'IN_PROGRESS' ? 'En curso' : 'Egresada' }}</app-badge>
+      <app-badge [variant]="inProgress() ? 'success' : 'secondary'" data-testid="stay-status">{{ label(s.stay.encounter.status) }}</app-badge>
     }
   </span>
   <div page-actions>
@@ -13,7 +13,7 @@
   <app-view-state-host class="stay__failure" data-testid="stay-failure" [state]="f" (retry)="reload()" />
 }
 
-<app-view-state-host [state]="stay()" (retry)="reload()">
+<app-view-state-host [state]="view()" (retry)="reload()">
   @if (data(); as s) {
     <app-card class="stay" padding="lg" data-testid="stay">
       <app-tabs [selectedIndex]="tab()" (selectedIndexChange)="changeTab($event)">
@@ -32,28 +32,16 @@
         </app-tab>
         <app-tab label="Egreso">
           <div class="stay__panel">
-            @if (s.status === 'FINISHED') {
+            @if (!inProgress()) {
               <app-fact-list
                 data-testid="stay-discharged"
                 etiqueta="Egreso"
-                [hechos]="[{ etiqueta: 'Fecha', valor: when(s.endedAt) }, { etiqueta: 'Tipo de egreso', valor: s.disposition?.display ?? null }]"
+                [hechos]="[{ etiqueta: 'Fecha', valor: when(s.stay.encounter.endAt) }, { etiqueta: 'Tipo de egreso', valor: label(s.stay.encounter.dischargeDisposition) }]"
               />
             } @else if (!canDischarge()) {
               <p class="stay__note">Dar de alta es tarea de enfermería o admisión.</p>
             } @else {
-              <form class="stay__form" (submit)="$event.preventDefault()">
-                <app-form-field label="Tipo de egreso" [required]="true" [errorMessage]="triedDischarge() && !disposition() ? 'Elija el tipo de egreso.' : ''">
-                  <app-select [(value)]="disposition" [options]="dispositions" placeholder="Elija" data-testid="stay-disposition" [hasError]="triedDischarge() && !disposition()" />
-                </app-form-field>
-                <app-form-field label="Hora real del egreso" hint="Si no la cambia, queda la de este momento.">
-                  <app-date-picker [(value)]="occurredAt" mode="date-time" />
-                </app-form-field>
-                <app-form-field label="Observación" hint="Opcional.">
-                  <app-textarea [(value)]="dischargeNote" [rows]="2" />
-                </app-form-field>
-                <app-form-actions submitLabel="Dar de alta" [pending]="working()" (submitted)="discharge()" />
-              </form>
-              <p class="stay__note">La cama queda sucia y entra a la cola de limpieza{{ s.isolation.code !== 'ISO_NONE' ? ' con limpieza terminal' : '' }}.</p>
+              <app-discharge-form [encounterId]="s.stay.encounter.id" [rowVersion]="s.stay.encounter.rowVersion" (saved)="afterDischarge()" />
             }
           </div>
         </app-tab>
@@ -63,30 +51,29 @@
 </app-view-state-host>
 
 <ng-template #cellEvent let-m>
-  <app-badge size="sm" variant="primary">{{ m.hl7Event }}</app-badge> {{ m.movementType.display }}
-  <span class="stay__muted">{{ m.status.display }}@if (m.endReason) { · {{ m.endReason.display }} }</span>
+  <app-badge size="sm" variant="primary">{{ m.hl7 }}</app-badge> {{ label(m.movement) }}
+  <span class="stay__muted">{{ label(m.status) }}@if (m.endReason) { · {{ label(m.endReason) }} }</span>
 </ng-template>
-<ng-template #cellBed let-m><strong>{{ m.bed.code }}</strong><span class="stay__muted">{{ m.bed.unitName }}</span></ng-template>
+<ng-template #cellBed let-m><strong>{{ m.bedCode }}</strong><span class="stay__muted">{{ m.bedName }}</span></ng-template>
 <ng-template #cellPeriod let-m>{{ when(m.periodStart) }} → {{ m.periodEnd ? when(m.periodEnd) : 'en curso' }}</ng-template>
 <ng-template #cellMoveActions let-m>
-  @if (m.cancellable && access.can(data()?.siteId ?? null, 'adt.cancel')) {
+  @if (m.cancellable && canPlace()) {
     <button app-button size="sm" variant="ghost" [disabled]="working()" data-testid="stay-cancel-movement" (clicked)="cancelMovement(m)">Cancelar</button>
   } @else {
     <span class="stay__muted">—</span>
   }
 </ng-template>
 <ng-template #cellRules let-i>
-  @for (v of i.violations; track v.rule) {
+  @for (v of i.violations ?? []; track v.rule) {
     <app-badge size="sm" variant="warning">{{ ruleName(v.rule) }}</app-badge>
   }
-  <span class="stay__muted">Autorizó: {{ i.authorizedByName ?? '—' }}</span>
 </ng-template>
 <ng-template #cellIncStatus let-i>
-  <app-badge size="sm" [variant]="i.status.code === 'PLC_INC_OPEN' ? 'warning' : 'success'">{{ i.status.display }}</app-badge>
-  @if (i.reviewNote) { <span class="stay__muted">«{{ i.reviewNote }}»</span> }
+  <app-badge size="sm" [variant]="i.status === 'PLC_INC_OPEN' ? 'warning' : 'success'">{{ label(i.status) }}</app-badge>
+  @if (i.reviewedAt) { <span class="stay__muted">{{ when(i.reviewedAt) }}</span> }
 </ng-template>
 <ng-template #cellIncActions let-i>
-  @if (canReview() && i.status.code === 'PLC_INC_OPEN') {
+  @if (canReview() && i.status === 'PLC_INC_OPEN') {
     <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="stay-review" (clicked)="review(i)">Revisar</button>
   } @else {
     <span class="stay__muted">—</span>

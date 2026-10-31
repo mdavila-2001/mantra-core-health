@@ -3,7 +3,7 @@
   <div page-actions class="queue__header-actions">
     <button app-button size="sm" variant="outline" (clicked)="refresh()">Actualizar</button>
     <a app-button size="sm" variant="ghost" [routerLink]="boardRoute" [queryParams]="{ site: siteId() }">Tablero de camas</a>
-    @if (access.can(siteId(), 'cleaning.create')) {
+    @if (access.can(siteId(), 'f2.cleaning.create')) {
       <button app-button size="sm" data-testid="queue-new" (clicked)="creating.set(true)">Pedir una limpieza</button>
     }
   </div>
@@ -37,33 +37,30 @@
 
 <ng-template #cellSpace let-o>
   <strong class="queue__code">{{ o.careSpaceCode }}</strong>
-  <span class="queue__muted">{{ o.careSpaceName }}@if (o.unitName) { · {{ o.unitName }} }</span>
+  <span class="queue__muted">{{ o.careSpaceName }}</span>
 </ng-template>
 
 <ng-template #cellType let-o>
-  <app-badge size="sm" [variant]="o.type.code === 'CLEAN_TERMINAL' ? 'error' : 'secondary'" [attr.data-terminal]="o.type.code === 'CLEAN_TERMINAL'">{{ o.type.display }}</app-badge>
-  <span class="queue__muted">{{ o.trigger.display }}</span>
+  <app-badge size="sm" [variant]="o.typeCode === 'CLEAN_TERMINAL' ? 'error' : 'secondary'" [attr.data-terminal]="o.typeCode === 'CLEAN_TERMINAL'">{{ label(o.typeCode) }}</app-badge>
+  <span class="queue__muted">{{ label(o.triggerCode) }}</span>
 </ng-template>
 
 <ng-template #cellPriority let-o>
-  <app-badge size="sm" [variant]="o.priority.code === 'CLN_PRIO_STAT' ? 'error' : o.priority.code === 'CLN_PRIO_URGENT' ? 'warning' : 'secondary'">{{ o.priority.display }}</app-badge>
+  <app-badge size="sm" [variant]="o.priorityCode === 'CLN_PRIO_STAT' ? 'error' : o.priorityCode === 'CLN_PRIO_URGENT' ? 'warning' : 'secondary'">{{ label(o.priorityCode) }}</app-badge>
 </ng-template>
 
 <ng-template #cellStatus let-o>
-  <span data-testid="queue-status">{{ o.status.display }}</span>
-  @if (o.finishedByName && o.status.code === 'CLN_DONE') {
-    <span class="queue__muted">Terminó: {{ o.finishedByName }}</span>
-  }
+  <span data-testid="queue-status">{{ label(o.statusCode) }}{{ o.statusCode === 'CLN_DONE' && o.inspectionRequired ? ' · falta inspección' : '' }}</span>
 </ng-template>
 
 <ng-template #cellAge let-o>
   <span class="queue__age">{{ ago(o.requestedAt) }}</span>
 </ng-template>
 
-<ng-template #cellAssigned let-o>{{ o.assignedName ?? 'Sin asignar' }}</ng-template>
+<ng-template #cellAssigned let-o>{{ assignee(o) }}</ng-template>
 
 <ng-template #cellActions let-o>
-  @if (o.allowedTransitions.length > 0) {
+  @if ((o.allowedTransitions ?? []).length > 0) {
     <app-row-actions [actions]="actionsOf(o)" [fila]="o.careSpaceCode" (actionSelected)="act(o, $event)" />
   } @else {
     <span class="queue__muted">—</span>

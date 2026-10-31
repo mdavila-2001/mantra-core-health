@@ -1,7 +1,7 @@
 <app-page-header title="Censo diario" [subtitle]="(site()?.name ?? 'Establecimiento') + ' · ' + dateLabel()" [breadcrumbs]="breadcrumbs()">
   <div page-actions class="census__actions">
     <button app-button size="sm" variant="outline" (clicked)="reload()">Actualizar</button>
-    @if (access.can(siteId(), 'census.close') && closable()) {
+    @if (access.can(siteId(), 'f3.census.close') && closable()) {
       <button app-button size="sm" [disabled]="working()" data-testid="census-close" (clicked)="close()">Cerrar censo</button>
     }
   </div>
@@ -16,14 +16,14 @@
       <app-form-field label="Día del censo" hint="Corte a las 00:00 del día siguiente, hora de la sede.">
         <app-date-picker [value]="pickerDate()" (valueChange)="pickDate($event)" data-testid="census-date" />
       </app-form-field>
-      @if (data(); as v) {
+      @if (data()) {
         <p class="census__meta" data-testid="census-meta">
           @if (allClosed()) {
             Cerrado. Las correcciones son ajustes con motivo.
           } @else if (closable()) {
             Abierto: es una vista previa calculada, todavía no se guardó.
           } @else {
-            El día no terminó: se puede cerrar desde el {{ when(v.closableFrom) }}.
+            El día no terminó: se puede cerrar desde el {{ when(closableFrom()) }}.
           }
         </p>
       }
@@ -44,13 +44,11 @@
 
 <ng-template #cellUnit let-r><strong>{{ r.unitName }}</strong></ng-template>
 <ng-template #cellStatus let-r>
-  <app-status-seal [variant]="r.day.status === 'CENSUS_CLOSED' ? 'approved' : 'pending'" [label]="r.day.status === 'CENSUS_CLOSED' ? 'Cerrado' : 'Abierto · vista previa'" />
-  @if (r.day.closedAt) {
-    <span class="census__muted">{{ when(r.day.closedAt) }} · {{ r.day.closedByName ?? '—' }}</span>
-  }
+  <app-status-seal [variant]="r.day.status === 'CLOSED' ? 'approved' : 'pending'" [label]="r.day.status === 'CLOSED' ? 'Cerrado' : 'Abierto · vista previa'" />
+  <span class="census__muted">Corte {{ when(r.day.cutoffAt) }}</span>
 </ng-template>
 <ng-template #cellActions let-r>
-  @if (r.day.status === 'CENSUS_CLOSED' && access.can(siteId(), 'census.adjust')) {
+  @if (r.day.status === 'CLOSED' && access.can(siteId(), 'f3.census.adjust')) {
     <button app-button size="sm" variant="outline" data-testid="census-adjust" (clicked)="adjusting.set(r.day)">Ajustar</button>
   } @else {
     <span class="census__muted">—</span>

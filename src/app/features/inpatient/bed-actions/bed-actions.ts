@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { switchMap } from 'rxjs';
 
 import { AdtClient } from '../../../core/data-access/adt/adt.client';
 import type { BedBoardCell } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.types';
@@ -18,10 +19,11 @@ type Open = { kind: 'transfer' | 'swap' | 'discharge'; encounterId: string; rowV
 /**
  * **Acciones de internación de una cama** (F3, slot `adtActions` del panel de F2).
  *
- * Qué se ofrece sale de `cell.actions`, que arma la API según la celda y el rol:
- * una cama asignable ofrece ingresar o reservar; una ocupada, trasladar,
- * intercambiar o dar de alta; una reservada, confirmar o cancelar la reserva.
- * Antes de mover a alguien se relee la internación para mandar su `If-Match`.
+ * Se ofrece una acción cuando la API le da a la persona `f3.adt.place` sobre
+ * esta cama (`cell.actions`) **y** el estado de la cama la admite: asignable →
+ * ingresar o reservar; ocupada → trasladar, intercambiar o dar de alta;
+ * reservada → confirmar o cancelar la reserva. Antes de mover a alguien se
+ * relee la internación para mandar su `If-Match`.
  */
 @Component({
   selector: 'app-bed-actions',
@@ -31,21 +33,19 @@ type Open = { kind: 'transfer' | 'swap' | 'discharge'; encounterId: string; rowV
       <section class="bed-actions" aria-labelledby="bed-actions-title" data-testid="bed-actions">
         <h3 id="bed-actions-title" class="bed-actions__title">Internación</h3>
         @if (failure(); as f) {
-          <app-view-state-host [state]="f" />
+          <app-view-state-host [state]="f" data-testid="bed-actions-failure" />
         }
         <div class="bed-actions__row">
-          @if (has('adt.admit')) {
+          @if (place() && cell().assignable) {
             <a app-button size="sm" [routerLink]="admissionRoute" [queryParams]="{ site: siteId(), bed: cell().id }" data-testid="bed-admit">Ingresar aquí</a>
             <a app-button size="sm" variant="outline" [routerLink]="admissionRoute" [queryParams]="{ site: siteId(), bed: cell().id, mode: 'RESERVE' }">Reservar</a>
           }
-          @if (has('adt.transfer') && encounterId()) {
+          @if (place() && occupied() && encounterId()) {
             <button app-button size="sm" variant="secondary" [disabled]="working()" data-testid="bed-transfer" (clicked)="open('transfer')">Trasladar</button>
             <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="bed-swap" (clicked)="open('swap')">Intercambiar</button>
-          }
-          @if (has('adt.discharge') && encounterId()) {
             <button app-button size="sm" variant="outline" [disabled]="working()" data-testid="bed-discharge" (clicked)="open('discharge')">Dar de alta</button>
           }
-          @if (has('adt.cancel') && cell().occupancy.encounterLocationId) {
+          @if (place() && reserved() && cell().occupancy.encounterLocationId) {
             <button app-button size="sm" variant="secondary" [disabled]="working()" data-testid="bed-confirm-reservation" (clicked)="confirmReservation()">Confirmar ocupación</button>
             <button app-button size="sm" variant="danger" [disabled]="working()" data-testid="bed-cancel-reservation" (clicked)="cancelReservation()">Cancelar reserva</button>
           }
@@ -57,15 +57,15 @@ type Open = { kind: 'transfer' | 'swap' | 'discharge'; encounterId: string; rowV
     }
     @if (dialog(); as d) {
       @if (d.kind === 'discharge') {
-        <app-discharge-dialog [encounterId]="d.encounterId" [rowVersion]="d.rowVersion" [bedCode]="cell().code" (saved)="done()" (closed)="dialog.set(null)" />
+        <app-discharge-dialog [encounterId]="d.encounterId" [rowVersion]="d.rowVersion" [bedCode]="cell().code" [isolated]="cell().isolation.code !== 'ISO_NONE'" (saved)="done()" (closed)="dialog.set(null)" />
       } @else {
         <app-move-dialog
           [mode]="d.kind"
           [cell]="cell()"
-          [beds]="beds()"
+          [siteId]="siteId()"
           [encounterId]="d.encounterId"
           [rowVersion]="d.rowVersion"
-          [canOverride]="has('adt.override')"
+          [canOverride]="has('f3.adt.override')"
           (saved)="done()"
           (closed)="dialog.set(null)"
         />
@@ -85,8 +85,6 @@ export class BedActions {
 
   readonly cell = input.required<BedBoardCell>();
   readonly siteId = input.required<string>();
-  /** Todas las camas del tablero: de ahí salen los destinos posibles. */
-  readonly beds = input.required<readonly BedBoardCell[]>();
   readonly changed = output<void>();
 
   protected readonly admissionRoute = ADMISSION_NEW_ROUTE;
@@ -97,7 +95,10 @@ export class BedActions {
 
   protected readonly encounterId = computed(() => this.cell().occupancy.encounterId ?? null);
   protected readonly has = (a: string): boolean => (this.cell().actions as readonly string[]).includes(a);
-  protected readonly offers = computed(() => ['adt.admit', 'adt.transfer', 'adt.discharge', 'adt.cancel'].some((a) => this.has(a)) || this.encounterId() !== null);
+  protected readonly place = computed(() => this.has('f3.adt.place'));
+  protected readonly occupied = computed(() => this.cell().occupancy.code === 'OCC_OCCUPIED');
+  protected readonly reserved = computed(() => this.cell().occupancy.code === 'OCC_RESERVED');
+  protected readonly offers = computed(() => this.place() || this.encounterId() !== null);
 
   /** Relee la internación para tener su `rowVersion` vigente y abre el diálogo. */
   protected open(kind: 'transfer' | 'swap' | 'discharge'): void {
@@ -108,12 +109,9 @@ export class BedActions {
     this.adt.getStay(id).subscribe({
       next: (s) => {
         this.working.set(false);
-        this.dialog.set({ kind, encounterId: id, rowVersion: s.rowVersion });
+        this.dialog.set({ kind, encounterId: id, rowVersion: s.encounter.rowVersion });
       },
-      error: (e: unknown) => {
-        this.working.set(false);
-        this.failure.set(errorToViewState<never>(e));
-      },
+      error: (e: unknown) => this.fail(e),
     });
   }
 
@@ -122,31 +120,31 @@ export class BedActions {
     this.changed.emit();
   }
 
+  /** Reserva → ocupación: `bed-assignment` con la versión vigente, en una sola cadena (sin suscripciones anidadas). */
   protected async confirmReservation(): Promise<void> {
     const id = this.encounterId();
-    if (id === null) return;
+    if (id === null || !this.place()) return;
     const ok = await this.dialogs.confirm({ title: 'Confirmar la ocupación', message: `El paciente ocupa la cama ${this.cell().code} desde ahora.`, confirmLabel: 'Confirmar' });
     if (!ok) return;
+    const cama = this.cell().id;
     this.working.set(true);
-    this.adt.getStay(id).subscribe({
-      next: (s) =>
-        this.adt.assignBed(id, s.rowVersion, { careSpaceId: this.cell().id, mode: 'ASSIGN' }).subscribe({
-          next: () => this.finish(),
-          error: (e: unknown) => this.fail(e),
-        }),
-      error: (e: unknown) => this.fail(e),
-    });
+    this.failure.set(null);
+    this.adt
+      .getStay(id)
+      .pipe(switchMap((s) => this.adt.assignBed(id, s.encounter.rowVersion, { careSpaceId: cama, mode: 'ASSIGN' })))
+      .subscribe({ next: () => this.finish(), error: (e: unknown) => this.fail(e) });
   }
 
   protected async cancelReservation(): Promise<void> {
     const loc = this.cell().occupancy.encounterLocationId;
-    if (loc === undefined) return;
+    if (loc === undefined || loc === null) return;
     const reason = await this.dialogs.confirmWithReason(
       { title: 'Cancelar la reserva', message: `La cama ${this.cell().code} vuelve a quedar libre.`, confirmLabel: 'Cancelar la reserva', destructive: true },
       { label: 'Motivo', minLength: 3, maxLength: 300 },
     );
     if (reason === null) return;
     this.working.set(true);
+    this.failure.set(null);
     this.adt.cancelLocation(loc, reason).subscribe({ next: () => this.finish(), error: (e: unknown) => this.fail(e) });
   }
 

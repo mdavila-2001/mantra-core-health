@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, map, of } from 'rxjs';
+import { catchError, forkJoin, map, of, startWith, switchMap } from 'rxjs';
 
 import { AdtClient } from '../../../core/data-access/adt/adt.client';
-import type { IndicatorTotals, InpatientIndicators } from '../../../core/data-access/adt/adt.types';
+import type { InpatientIndicators } from '../../../core/data-access/adt/adt.types';
 import { INDICATOR_FORMULAS } from '../../../core/data-access/adt/inpatient-indicators';
+import { InfrastructureClient } from '../../../core/data-access/infrastructure/infrastructure.client';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import { NavigationService } from '../../../core/navigation/navigation.service';
 import { dataOf, empty, forbidden, loading, mapData, ready, stale } from '../../../core/view-state/view-state';
@@ -21,17 +22,47 @@ import { DatePicker } from '../../../shared/components/organisms/date-picker/dat
 import { PageHeader } from '../../../shared/components/organisms/page-header/page-header';
 import { ViewStateHost } from '../../../shared/components/organisms/view-state-host/view-state-host';
 import { InpatientAccessStore } from '../inpatient-access.store';
-import { CENSUS_ROUTE, dateKey, keyToDate, shortDate, siteToday } from '../inpatient-presentation';
+import { CENSUS_ROUTE, DEFAULT_TIME_ZONE, dateKey, keyToDate, shiftDateKey, shortDate, siteMidnight, siteToday, validDateKey } from '../inpatient-presentation';
 
-const n = (v: number | null, suffix = '') => (v === null ? null : `${v.toLocaleString('es-BO', { maximumFractionDigits: 2 })}${suffix}`);
+const n = (v: number | null | undefined, suffix = '') =>
+  v === null || v === undefined || !Number.isFinite(v) ? null : `${v.toLocaleString('es-BO', { maximumFractionDigits: 2 })}${suffix}`;
+
+/** Una fila por unidad: los indicadores de la API pedidos con `unitId`. */
+interface UnitIndicators {
+  readonly unitId: string;
+  readonly unitName: string;
+  readonly data: InpatientIndicators;
+}
+
+interface Loaded {
+  readonly site: InpatientIndicators;
+  readonly units: readonly UnitIndicators[];
+}
+
+/**
+ * Hasta qué instante describen los números (S7): el corte del **último día
+ * cerrado** del período, en la zona de la sede. Con días sin cerrar, el dato
+ * tiene esa antigüedad, no la del pedido.
+ */
+export function coverageAsOf(d: InpatientIndicators, timeZone: string): Date | null {
+  const faltan = new Set(d.coverage.daysMissing);
+  let dia = d.period.to;
+  for (let i = 0; i < 400 && dia >= d.period.from; i += 1) {
+    if (!faltan.has(dia)) return siteMidnight(shiftDateKey(dia, 1), timeZone);
+    dia = shiftDateKey(dia, -1);
+  }
+  return null;
+}
 
 /**
  * **Indicadores hospitalarios** — `/inpatient/indicators` (F3.4).
  *
- * Sólo con días de censo **cerrados** (y sus ajustes). Si faltan días en el
- * período se dice cuáles y se ofrece cerrarlos (S7 con la antigüedad de la
- * cobertura); sin ningún día cerrado es S3 con próxima acción. Cada tarjeta
- * dice su fórmula.
+ * Los números vienen **tal cual** de `GET /sites/:siteId/inpatient-indicators`
+ * (sin redondear: la pantalla formatea). La tabla por unidad pide el mismo
+ * endpoint con `unitId` por cada unidad de la sede. Sólo con días de censo
+ * cerrados: si faltan días se dice cuáles y se ofrece cerrarlos (S7 con la
+ * antigüedad real del dato: el corte del último día cerrado); sin ningún día
+ * cerrado es S3 con próxima acción.
  */
 @Component({
   selector: 'app-indicators',
@@ -42,6 +73,7 @@ const n = (v: number | null, suffix = '') => (v === null ? null : `${v.toLocaleS
 })
 export class Indicators {
   private readonly adt = inject(AdtClient);
+  private readonly infra = inject(InfrastructureClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly access = inject(InpatientAccessStore);
@@ -49,12 +81,14 @@ export class Indicators {
   protected readonly formula = INDICATOR_FORMULAS;
   protected readonly censusRoute = CENSUS_ROUTE;
   protected readonly short = shortDate;
+  protected readonly fmt = n;
 
   private readonly query = toSignal(this.route.queryParamMap, { initialValue: this.route.snapshot.queryParamMap });
-  protected readonly site = computed(() => this.access.pickSite(this.query().get('site'), 'indicators.view'));
+  protected readonly site = computed(() => this.access.pickSite(this.query().get('site'), 'f3.indicators.read'));
   protected readonly siteId = computed(() => this.site()?.siteId ?? null);
-  protected readonly to = computed(() => this.query().get('to') ?? siteToday(-1));
-  protected readonly from = computed(() => this.query().get('from') ?? siteToday(-7));
+  protected readonly timeZone = computed(() => this.site()?.timeZone ?? DEFAULT_TIME_ZONE);
+  protected readonly to = computed(() => validDateKey(this.query().get('to')) ?? siteToday(-1, Date.now(), this.timeZone()));
+  protected readonly from = computed(() => validDateKey(this.query().get('from')) ?? siteToday(-7, Date.now(), this.timeZone()));
 
   protected readonly gate = computed<ViewState<string>>(() => {
     const a = this.access.state();
@@ -63,43 +97,42 @@ export class Indicators {
     return s === null ? forbidden({ message: 'Su rol no incluye los indicadores de internación.' }) : ready(s.siteId);
   });
 
-  private readonly raw = signal<ViewState<InpatientIndicators>>(loading());
-  protected readonly data = computed(() => dataOf(this.state()));
+  private readonly reloads = signal(0);
+  private readonly raw = signal<ViewState<Loaded>>(loading());
+  protected readonly data = computed(() => dataOf(this.state())?.site ?? null);
 
-  protected readonly state = computed<ViewState<InpatientIndicators>>(() => {
+  protected readonly state = computed<ViewState<Loaded>>(() => {
     const s = this.raw();
     if (s.status !== 'ready') return s;
-    if (s.data.coverage.daysClosed === 0) {
-      return empty({ label: `Cerrar el censo del ${shortDate(s.data.period.to)}`, route: CENSUS_ROUTE, queryParams: { date: s.data.period.to } }, 'No hay ningún día de censo cerrado en el período: los indicadores sólo se calculan con días cerrados.');
+    const d = s.data.site;
+    if (d.coverage.daysClosed === 0) {
+      return empty({ label: `Cerrar el censo del ${shortDate(d.period.to)}`, route: CENSUS_ROUTE, queryParams: { date: d.period.to } }, 'No hay ningún día de censo cerrado en el período: los indicadores sólo se calculan con días cerrados.');
     }
-    // S7: con días sin cerrar, el número describe hasta el último cerrado.
-    const faltan = s.data.coverage.daysMissing;
-    if (faltan.length > 0) return stale(s.data, keyToDate(faltan[0]!));
+    if (d.coverage.daysMissing.length > 0) {
+      const asOf = coverageAsOf(d, this.timeZone());
+      if (asOf !== null) return stale(s.data, asOf);
+    }
     return s;
   });
 
-  protected readonly units = computed<ViewState<readonly (IndicatorTotals & { readonly unitId: string; readonly unitName: string; readonly id: string })[]>>(() =>
-    mapData(this.state(), (d) => d.byUnit.map((u) => ({ ...u, id: u.unitId }))),
-  );
-
-  /** Las filas con los números ya escritos en castellano (coma decimal). */
+  /** Las filas por unidad con los números ya escritos en castellano (coma decimal). */
   protected readonly unitRows = computed<ViewState<readonly Readonly<Record<string, string>>[]>>(() =>
-    mapData(this.units(), (lista) =>
-      lista.map((u) => ({
-        id: u.unitId,
-        unitName: u.unitName,
-        days: String(u.days),
-        bedDaysAvailable: String(u.bedDaysAvailable),
-        patientDays: String(u.patientDays),
-        occupancyPct: n(u.occupancyPct, ' %') ?? '—',
-        alos: n(u.alos) ?? '—',
-        bedTurnover: n(u.bedTurnover) ?? '—',
-        turnoverInterval: n(u.turnoverInterval) ?? '—',
-      })),
+    mapData(this.state(), (d) =>
+      d.units
+        .filter((u) => u.data.coverage.daysClosed > 0)
+        .map((u) => ({
+          id: u.unitId,
+          unitName: u.unitName,
+          days: String(u.data.coverage.daysClosed),
+          bedDaysAvailable: String(u.data.bedDaysAvailable),
+          patientDays: String(u.data.patientDays),
+          occupancyPct: n(u.data.occupancyPct, ' %') ?? '—',
+          alos: n(u.data.alos) ?? '—',
+          bedTurnover: n(u.data.bedTurnover) ?? '—',
+          turnoverInterval: n(u.data.turnoverInterval) ?? '—',
+        })),
     ),
   );
-
-  protected readonly fmt = n;
 
   protected readonly columns: readonly ColumnDef<Readonly<Record<string, string>>>[] = [
     { key: 'unitName', header: 'Unidad', priority: 1 },
@@ -115,6 +148,7 @@ export class Indicators {
   protected readonly kpis = computed(() => {
     const d = this.data();
     if (d === null) return [];
+    const t = d.bedTurnaroundMinutes;
     return [
       { label: '% de ocupación', value: n(d.occupancyPct, ' %'), hint: INDICATOR_FORMULAS.occupancyPct, tone: 'primary' as const, testId: 'kpi-occupancy' },
       { label: 'Promedio de estancia', value: n(d.alos, ' días'), hint: INDICATOR_FORMULAS.alos, tone: 'neutral' as const, testId: 'kpi-alos' },
@@ -123,7 +157,7 @@ export class Indicators {
       { label: 'Días-cama disponibles', value: n(d.bedDaysAvailable), hint: INDICATOR_FORMULAS.bedDaysAvailable, tone: 'neutral' as const, testId: 'kpi-bed-days' },
       { label: 'Días-paciente', value: n(d.patientDays), hint: INDICATOR_FORMULAS.patientDays, tone: 'neutral' as const, testId: 'kpi-patient-days' },
       { label: 'Camas promedio', value: n(d.avgBeds), hint: INDICATOR_FORMULAS.avgBeds, tone: 'neutral' as const, testId: 'kpi-avg-beds' },
-      { label: 'Rotación de cama (p50 / p90)', value: d.bedTurnaroundMinutes.p50 === null ? null : `${d.bedTurnaroundMinutes.p50} / ${d.bedTurnaroundMinutes.p90} min`, hint: INDICATOR_FORMULAS.bedTurnaround, tone: 'neutral' as const, testId: 'kpi-turnaround' },
+      { label: 'Rotación de cama (p50 / p90)', value: t.p50 === null ? null : `${n(t.p50)} / ${n(t.p90) ?? '—'} min`, hint: INDICATOR_FORMULAS.bedTurnaround, tone: 'neutral' as const, testId: 'kpi-turnaround' },
     ];
   });
 
@@ -131,13 +165,33 @@ export class Indicators {
 
   constructor() {
     this.access.ensure();
-    effect(() => {
-      const id = this.siteId();
-      const f = this.from();
-      const t = this.to();
-      if (id === null) return;
-      untracked(() => this.load(id, f, t));
-    });
+    toObservable(computed(() => ({ site: this.siteId(), from: this.from(), to: this.to(), n: this.reloads() })))
+      .pipe(
+        switchMap(({ site, from, to }) => {
+          if (site === null) return of(loading() as ViewState<Loaded>);
+          return forkJoin({
+            site: this.adt.getIndicators(site, from, to),
+            units: this.infra.listClinicalUnits(site).pipe(catchError(() => of([]))),
+          }).pipe(
+            switchMap(({ site: totals, units }) => {
+              const lista = units.slice(0, 30);
+              if (lista.length === 0) return of(ready({ site: totals, units: [] }) as ViewState<Loaded>);
+              return forkJoin(
+                lista.map((u) =>
+                  this.adt.getIndicators(site, from, to, u.id).pipe(
+                    map((data): UnitIndicators | null => ({ unitId: u.id, unitName: u.name, data })),
+                    catchError(() => of(null)),
+                  ),
+                ),
+              ).pipe(map((filas) => ready({ site: totals, units: filas.filter((f): f is UnitIndicators => f !== null) }) as ViewState<Loaded>));
+            }),
+            catchError((e: unknown) => of(errorToViewState<Loaded>(e))),
+            startWith(loading() as ViewState<Loaded>),
+          );
+        }),
+        takeUntilDestroyed(),
+      )
+      .subscribe((s) => this.raw.set(s));
   }
 
   protected setRange(which: 'from' | 'to', d: Date | null): void {
@@ -150,18 +204,6 @@ export class Indicators {
   }
 
   protected reload(): void {
-    const id = this.siteId();
-    if (id !== null) this.load(id, this.from(), this.to());
-  }
-
-  private load(siteId: string, from: string, to: string): void {
-    this.raw.set(loading());
-    this.adt
-      .getIndicators(siteId, from, to)
-      .pipe(
-        map((d) => ready(d) as ViewState<InpatientIndicators>),
-        catchError((e: unknown) => of(errorToViewState<InpatientIndicators>(e))),
-      )
-      .subscribe((s) => this.raw.set(s));
+    this.reloads.update((x) => x + 1);
   }
 }

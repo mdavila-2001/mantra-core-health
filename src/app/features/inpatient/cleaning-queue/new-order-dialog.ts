@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, ou
 
 import { InfrastructureOpsClient } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.client';
 import type { BedBoardCell, CleaningPriorityCode, CleaningTypeCode } from '../../../core/data-access/infrastructure-ops/infrastructure-ops.types';
+import { opsLabel } from '../../../core/data-access/infrastructure-ops/ops-labels';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -71,7 +72,7 @@ export class NewOrderDialog {
   private readonly cells = signal<readonly BedBoardCell[]>([]);
 
   protected readonly spaces = computed<SelectOption<string>[]>(() =>
-    this.cells().filter((c) => c.openCleaningOrderId === null).map((c) => ({ value: c.id, label: `${c.code} · ${c.hygiene.display}` })),
+    this.cells().filter((c) => c.openCleaningOrderId === null).map((c) => ({ value: c.id, label: `${c.code} · ${opsLabel(c.hygiene.code)}` })),
   );
 
   constructor() {

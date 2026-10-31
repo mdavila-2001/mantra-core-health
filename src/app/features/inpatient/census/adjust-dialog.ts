@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 
 import { AdtClient } from '../../../core/data-access/adt/adt.client';
-import { CENSUS_FIELDS, type CensusDay, type CensusField } from '../../../core/data-access/adt/adt.types';
+import { CENSUS_FIELDS, type CensusDayView, type CensusField } from '../../../core/data-access/adt/adt.types';
 import { errorToViewState } from '../../../core/http/error-to-view-state';
 import type { ViewState } from '../../../core/view-state/view-state.types';
 import { AppButton } from '../../../shared/components/atoms/button/button';
@@ -49,7 +49,7 @@ import { CENSUS_LABEL } from './census-fields';
 export class AdjustDialog {
   private readonly adt = inject(AdtClient);
 
-  readonly day = input.required<CensusDay>();
+  readonly day = input.required<CensusDayView & { readonly unitName: string }>();
   readonly saved = output<void>();
   readonly closed = output<void>();
 
@@ -63,7 +63,7 @@ export class AdjustDialog {
 
   protected readonly current = computed(() => {
     const f = this.field();
-    return f === null ? '—' : String(this.day().adjustedCounts[f]);
+    return f === null ? '—' : String(this.day().adjustedTotals[f]);
   });
   protected readonly validValue = computed(() => {
     const n = Number(this.value());

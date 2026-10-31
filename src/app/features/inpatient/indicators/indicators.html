@@ -35,8 +35,8 @@
             <span class="indicators__muted">{{ formula.crossCheck }}. Sin ajustes y con estancias que no cruzan el borde del período queda por debajo de 5 puntos; si es mayor, revise los egresos y los días cerrados del período.</span>
           </p>
           <p class="indicators__muted">
-            Rotación de cama: {{ d.bedTurnaroundMinutes.samples }} egreso(s); espera {{ d.bedTurnaroundMinutes.waitToStart ?? '—' }} min,
-            limpieza {{ d.bedTurnaroundMinutes.cleaning ?? '—' }} min, inspección {{ d.bedTurnaroundMinutes.inspection ?? '—' }} min (medianas).
+            Rotación de cama (medianas): espera {{ fmt(d.bedTurnaroundMinutes.waitToStart) ?? '—' }} min,
+            limpieza {{ fmt(d.bedTurnaroundMinutes.cleaning) ?? '—' }} min, inspección {{ fmt(d.bedTurnaroundMinutes.inspection) ?? '—' }} min.
           </p>
         </section>
 
