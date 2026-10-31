@@ -827,7 +827,9 @@ export function registrarDirectorio(router: MockRouter): void {
 
   router.get('/tenants/:id/practitioner-requests', ({ params }) => {
     const nombre = TENANT_NAMES[params['id']!] ?? '';
-    return affiliationList
+    // `{ items }`, como lo lee `listPractitionerRequests`: con el arreglo pelado la
+    // bandeja caía entera en «Algo salió mal».
+    const items = affiliationList
       .filtrar((a) => a.organizationName === nombre && a.statusKind === 'pendiente')
       .concat(
         params['id'] === TENANT_CLINICA
@@ -880,6 +882,7 @@ export function registrarDirectorio(router: MockRouter): void {
           createdAt: a.createdAt,
         };
       });
+    return { items };
   });
 
   router.post('/tenants/:id/practitioner-requests/:affiliationId/approve', ({ params }) => {
