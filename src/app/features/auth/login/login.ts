@@ -36,6 +36,9 @@ import { PointerScene } from '../../../shared/motion/pointer-scene.directive';
 import { localLoginHint, type LocalLoginHint } from './local-login-hint';
 import { loginPolicyOutcome } from './login-policy-reasons';
 
+/** Adonde se vuelve tras entrar cuando nadie pidió un destino. */
+const HOME_ROUTE = '/';
+
 /**
  * Dónde aterriza quien entra sin pertenecer a ninguna organización.
  *
