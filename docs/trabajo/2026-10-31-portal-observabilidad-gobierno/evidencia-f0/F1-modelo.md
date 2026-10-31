@@ -298,21 +298,95 @@ CHECK observability=6
 triggers trg_forbid_update=8
 ```
 
-## 3. RLS: el esquema nuevo no entra (decisión D-F1-1)
+## 3. RLS: aislamiento por tenant del actor (revisión de seguridad posterior al primer cierre)
 
-`2026-08-05_tenant_rls.sql` pone `tenant_isolation` en **toda** tabla con columna `tenant_id uuid`, nula o no. Por eso ninguna tabla nueva tiene
-columna `tenant_id` (el tenant del actor es `actor_tenant_id`, sin FK). Tras aplicar el RLS **antes y después** del v4280:
+`2026-08-05_tenant_rls.sql` pone `tenant_isolation` en **toda** tabla con columna `tenant_id uuid`; sus GUC son `app.current_tenant_id` (organización) y
+`app.system_context = 'true'` (contexto de sistema, el que usa `runSystemSweep`); el coordinador escribió `app.tenant_id`, pero el nombre real es el primero.
+Ese parche **no cubre** `actor_tenant_id` (por eso la columna no se llama `tenant_id`: ver D-F1-1), así que se decidió la opción explícita y
+conservadora: **seis políticas en el parche fechado (sección 6b del v4280)**, mismo patrón, para las dos tablas que llevan el tenant del actor
+(`observability.error_events`, `telemetry.client_error_events`), con `ENABLE` + `FORCE ROW LEVEL SECURITY`:
+
+| Política | Comando | Regla |
+|---|---|---|
+| `actor_tenant_select` | SELECT | `actor_tenant_id = app.current_tenant_id` **o** `app.system_context = 'true'`. Fila sin tenant: solo sistema. Sin contexto: 0 filas (fail-closed) |
+| `public_ingest_insert` | INSERT | `WITH CHECK (true)`: la ingesta pública no conoce el tenant, no puede exigirlo (el servicio lo rellena desde el actor, nunca del cuerpo) |
+| `system_retention_delete` | DELETE | solo `app.system_context = 'true'` (retención). No hay política de UPDATE (además lo frena el trigger) |
+
+El resto de las tablas de `observability` no llevan tenant y no tienen RLS (sin columna `tenant_id`, sin políticas). La sección 9 del parche aborta si no hay
+exactamente esas 6 políticas, si la RLS no está forzada en las dos tablas, o si aparece cualquier otra política/columna `tenant_id`. Construcción desde cero
+(`apply_all` + `apply_deferred` + tenant_rls + v4275 + v4278 + v4279 + **v4280 dos veces** + tenant_rls otra vez) -> todos exit 0; el tenant_rls posterior no toca ni
+duplica las políticas. Prueba como `mantra_app` (rol sujeto a RLS), en transacciones que se revierten, con dos organizaciones A y B y una fila sin tenant:
 
 ```
- policies_observability = 0          (pg_policies, schema observability)
- tenant_id_cols         = 0          (information_schema.columns, schema observability)
- politicas en telemetry.client_error_events = 0
- control: politicas en telemetry.user_activity_events = 1   (la tabla con tenant_id sí la recibe)
+=== politicas
+  schemaname   |      tablename      |       policyname        |  cmd   
+---------------+---------------------+-------------------------+--------
+ observability | error_events        | actor_tenant_select     | SELECT
+ observability | error_events        | public_ingest_insert    | INSERT
+ observability | error_events        | system_retention_delete | DELETE
+ telemetry     | client_error_events | actor_tenant_select     | SELECT
+ telemetry     | client_error_events | public_ingest_insert    | INSERT
+ telemetry     | client_error_events | system_retention_delete | DELETE
+(6 rows)
+
+       relname       | relrowsecurity | relforcerowsecurity 
+---------------------+----------------+---------------------
+ error_events        | t              | t
+ client_error_events | t              | t
+(2 rows)
+
+=== (c) ingesta publica SIN contexto: INSERT con tenant A, con tenant B y sin tenant (no debe exigirlo)
+=== sin ningun contexto (fail-closed): lectura
+ error_events_visibles | client_error_events_visibles 
+-----------------------+------------------------------
+                     0 |                            0
+(1 row)
+
+=== (a) contexto de organizacion A (app.current_tenant_id=A): solo filas de A
+                  id                  |           actor_tenant_id            
+--------------------------------------+--------------------------------------
+ a0000000-0000-4000-8000-000000000001 | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+(1 row)
+
+                  id                  |           actor_tenant_id            
+--------------------------------------+--------------------------------------
+ a1000000-0000-4000-8000-000000000001 | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+(1 row)
+
+ filas_de_b_visibles 
+---------------------
+                   0
+(1 row)
+
+--- A no puede borrar (retencion es solo sistema): DELETE 0
+DELETE 0
+RESET
+=== (b) contexto de sistema (app.system_context=true, como runSystemSweep): lee todas, incluida la de tenant nulo
+                  id                  |           actor_tenant_id            
+--------------------------------------+--------------------------------------
+ a0000000-0000-4000-8000-000000000001 | aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa
+ b0000000-0000-4000-8000-000000000001 | bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
+ c0000000-0000-4000-8000-000000000001 | 
+(3 rows)
+
+ client_error_events_en_sistema 
+--------------------------------
+                              3
+(1 row)
+
+--- sistema borra por retencion
+DELETE 1
+=== INSERT ... RETURNING sin contexto (aviso para la ingesta)
+psql:/tmp/claude-0/-home-user/e193d5cf-24a3-5ae3-aa33-d49093c0d1e4/scratchpad/rls_test.sql:44: ERROR:  new row violates row-level security policy for table "error_events"
 ```
 
-Prueba de escritura **como `mantra_app`** (rol sujeto a RLS, sin `app.current_tenant_id` ni `app.system_context`), dentro de transacciones que se
-revierten: inserta en `instances`, `error_groups`, `error_events` (con `actor_tenant_id` nulo) y en `telemetry.client_error_events` sin tenant ni
-sesión -> `INSERT 0 1` en todos. Si la columna se llamara `tenant_id`, el `WITH CHECK` de la política lo rechazaría.
+Lectura de la salida: (c) la ingesta sin contexto inserta filas de A, de B y sin tenant; sin contexto no se lee nada; (a) con `app.current_tenant_id`=A solo se ven las
+filas de A (0 de B) y A no borra nada; (b) con `app.system_context=true` se leen las 3 (incluida la de tenant nulo) y se puede borrar por retención.
+
+**Aviso para la ingesta (F2):** `INSERT ... RETURNING` sin contexto falla (la fila nueva debe pasar también la política SELECT, y la pública no tiene tenant). La ingesta
+de errores debe insertar **sin `RETURNING`** (el id lo genera el cliente: no hace falta), o hacerlo dentro de un contexto de sistema. Las lecturas del panel de plataforma
+pasan por el contexto de sistema; las de una organización ven solo su tenant. `error_groups` y las series no llevan tenant (agregados de plataforma): quien lea
+esas tablas con rol de aplicación ve todo, así que sus endpoints siguen siendo de plataforma (guard `@PlatformTenantOptional`), no de organización.
 
 ## 4. Comportamiento de las tablas (humo como `mantra_app`)
 
@@ -402,7 +476,7 @@ telemetry (2 tablas): desde cero == parcheada (salvo GRANTs)
 
 Las únicas diferencias entre «desde cero» y «parcheada» son los `GRANT`: el parche quita `UPDATE/TRUNCATE` a `mantra_app` sobre las 8 tablas de
 historia; el RLS re-ejecutado vuelve a concederlos (los dispara el `trg_forbid_update`, que sí frena el UPDATE sea cual sea el privilegio: probado en §4).
-La sección 9 del parche aborta (y revierte todo) si no hay 12 tablas, 8 disparadores, 12 conceptos, o si aparece una columna `tenant_id`/política RLS.
+La sección 9 del parche aborta (y revierte todo) si no hay 12 tablas, 8 disparadores, 12 conceptos, 6 políticas RLS con RLS forzada, o si aparece una columna `tenant_id`.
 
 ### EXPLAIN antes / después de los dos índices de `user_activity_events` (H1.S1.M4)
 
