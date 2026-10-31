@@ -27,7 +27,7 @@ import {
   type LineaDePedido,
 } from '../../../../core/data-access/pharmacy-orders/pharmacy-orders.types';
 import { errorToViewState } from '../../../../core/http/error-to-view-state';
-import { SAMPLE_DATA_ENABLED } from '../../../../core/mock/sample-data';
+import { SAMPLE_DATA_ENABLED } from '../../../../core/simulator/sample-data';
 import { NavigationService } from '../../../../core/navigation/navigation.service';
 import { empty, loading, notFound, ready } from '../../../../core/view-state/view-state';
 import type { ViewState } from '../../../../core/view-state/view-state.types';
@@ -179,7 +179,7 @@ export class NewOrder {
    * Maqueta (`true`) o API real (`false`). Contra la API real no se ofrece la
    * variante con seguro ni se rotula nada como ejemplo: la fuente de arriba
    * ya no inventa cabecera, alternativas ni aprobación. Ver
-   * `core/mock/sample-data.ts`.
+   * `core/simulator/sample-data.ts`.
    */
   protected readonly sampleData = inject(SAMPLE_DATA_ENABLED);
 

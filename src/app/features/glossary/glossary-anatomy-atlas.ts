@@ -33,7 +33,7 @@ import {
   ATLAS_3D_FEMALE_ONLY_IDS,
   ATLAS_3D_META,
   ATLAS_3D_SOURCES,
-} from '../../core/mock/fixtures/anatomy-ontology.generated';
+} from '../../core/data-access/anatomy-atlas/anatomy-ontology.generated';
 import { NavigationService } from '../../core/navigation/navigation.service';
 import { dataOf, loading, ready } from '../../core/view-state/view-state';
 import type { ViewState } from '../../core/view-state/view-state.types';

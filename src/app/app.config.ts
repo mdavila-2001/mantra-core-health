@@ -31,7 +31,7 @@ import { provideObservability } from './core/observability/observability.provide
 import { AccessChallengeService } from './features/access-governance/access-challenge/access-challenge.service';
 import { provideDependentLinkNotificationActions } from './features/account/dependents/dependent-link-notification-actions';
 import { provideUxAnalytics } from './core/observability/ux/ux-analytics.providers';
-import { mockBackendInterceptor } from './core/mock/mock-backend.interceptor';
+import { simulatorInterceptors } from './core/simulator/simulator';
 import { environment } from '../environments/environment';
 import { ROUTE_VIEW_TRANSITION_OPTIONS } from './shared/motion/route-transition';
 
@@ -111,9 +111,12 @@ export const appConfig: ApplicationConfig = {
       withFetch(),
       // El simulado va último: la petición ya lleva trazas, tiempo de espera y
       // credenciales cuando llega a él, igual que si fuera la red. Con la
-      // configuración real (`production-api`, `real-api`, `e2e-real`) no se
-      // registra: la petición sale a la red desde el interceptor anterior, sin
-      // pasar por un interceptor que existe sólo para la maqueta (H1.S2.M2).
+      // configuración real (`production`, `production-api`, `real-api`,
+      // `e2e-real`) no se registra: la petición sale a la red desde el
+      // interceptor anterior, sin pasar por un interceptor que existe sólo para
+      // la maqueta (H1.S2.M2). En esas compilaciones `simulatorInterceptors`
+      // viene vacío de la versión neutra de `core/simulator/simulator.ts`, así
+      // que el simulador ni siquiera entra al paquete (O3-4).
       withInterceptors([
         apiFailureLogInterceptor,
         tracingInterceptor,
@@ -123,7 +126,7 @@ export const appConfig: ApplicationConfig = {
         // `withAccessChallenge()`. Va **dentro** de `authInterceptor` (el reintento ya lleva la sesión) y **fuera** del
         // simulado, para que vea también los 403/422 del mock.
         accessChallengeInterceptor,
-        ...(environment.mockBackend ? [mockBackendInterceptor] : []),
+        ...(environment.mockBackend ? simulatorInterceptors : []),
       ]),
     ),
     // Trazas del Router y de la estabilidad de la aplicación. No bloquea el
