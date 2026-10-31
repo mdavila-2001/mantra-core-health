@@ -1,0 +1,58 @@
+:host {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.infra-accounting {
+  display: block;
+  inline-size: 100%;
+  margin-inline: auto;
+}
+
+.infra-accounting__panel {
+  display: grid;
+  gap: var(--sp-4);
+  padding-block-start: var(--sp-4);
+}
+
+.infra-accounting__picker {
+  display: grid;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  background: var(--bg-surface-alt);
+}
+
+.infra-accounting__tree {
+  max-block-size: 22rem;
+  overflow: auto;
+}
+
+.infra-accounting__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.infra-accounting__text {
+  margin: 0;
+}
+
+.infra-accounting__strong {
+  display: block;
+  font-weight: 600;
+}
+
+.infra-accounting__muted {
+  display: block;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.infra-accounting__warn {
+  display: block;
+  color: var(--st-warning-fg);
+  font-weight: 600;
+}
