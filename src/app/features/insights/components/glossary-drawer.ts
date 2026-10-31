@@ -26,9 +26,9 @@ export class GlossaryDrawer {
   protected readonly groups = GROUPS.map((g) => ({ ...g, items: this.metrics.filter((m) => m.kind === g.kind) })).filter((g) => g.items.length > 0);
   protected readonly others = this.metrics.filter((m) => !GROUPS.some((g) => g.kind === m.kind));
   private readonly sync = effect(() => {
-    const el = this.dialog()?.nativeElement;
-    if (!el) return;
-    if (this.open() && !el.open) el.showModal();
-    if (!this.open() && el.open) el.close();
+    const dialogEl = this.dialog()?.nativeElement;
+    if (!dialogEl) return;
+    if (this.open() && !dialogEl.open) dialogEl.showModal();
+    if (!this.open() && dialogEl.open) dialogEl.close();
   });
 }

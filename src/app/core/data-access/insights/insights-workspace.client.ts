@@ -34,73 +34,69 @@ export class InsightsWorkspaceClient {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = inject(API_BASE_URL);
 
-  private url(path: string): string {
-    return apiUrl(this.baseUrl, `/marketing/insights${path}`);
-  }
-
   private ifMatch(version: number | null): { headers?: HttpHeaders } {
     return version === null ? {} : { headers: new HttpHeaders({ 'If-Match': String(version) }) };
   }
 
   /** `GET /alert-workflow` — el estado de todas las alertas que alguien tocó. */
   listAlertWorkflow(): Observable<InsightsResponse<InsightsAlertWorkflow[]>> {
-    return this.http.get<InsightsResponse<InsightsAlertWorkflow[]>>(this.url('/alert-workflow'));
+    return this.http.get<InsightsResponse<InsightsAlertWorkflow[]>>(apiUrl(this.baseUrl, '/marketing/insights/alert-workflow'));
   }
 
   /** `PUT /alert-workflow/:fingerprint` — cambia estado y/o responsable; deja una transición. */
   putAlertWorkflow(fingerprint: string, body: PutAlertWorkflowBody, version: number | null): Observable<InsightsResponse<InsightsAlertWorkflow>> {
-    return this.http.put<InsightsResponse<InsightsAlertWorkflow>>(this.url(`/alert-workflow/${encodeURIComponent(fingerprint)}`), body, this.ifMatch(version));
+    return this.http.put<InsightsResponse<InsightsAlertWorkflow>>(apiUrl(this.baseUrl, `/marketing/insights/alert-workflow/${encodeURIComponent(fingerprint)}`), body, this.ifMatch(version));
   }
 
   /** `GET /alert-rules` — las siete reglas con su umbral y si están activas. */
   listAlertRules(): Observable<InsightsResponse<InsightsAlertRule[]>> {
-    return this.http.get<InsightsResponse<InsightsAlertRule[]>>(this.url('/alert-rules'));
+    return this.http.get<InsightsResponse<InsightsAlertRule[]>>(apiUrl(this.baseUrl, '/marketing/insights/alert-rules'));
   }
 
   /** `PATCH /alert-rules/:code` — enciende o apaga una regla, o cambia su umbral (1 a 500). */
   patchAlertRule(code: InsightsRuleCode, body: PatchAlertRuleBody, version: number): Observable<InsightsResponse<InsightsAlertRule>> {
-    return this.http.patch<InsightsResponse<InsightsAlertRule>>(this.url(`/alert-rules/${code}`), body, this.ifMatch(version));
+    return this.http.patch<InsightsResponse<InsightsAlertRule>>(apiUrl(this.baseUrl, `/marketing/insights/alert-rules/${code}`), body, this.ifMatch(version));
   }
 
   getNotificationPreferences(): Observable<InsightsResponse<InsightsNotificationPreferences>> {
-    return this.http.get<InsightsResponse<InsightsNotificationPreferences>>(this.url('/notification-preferences'));
+    return this.http.get<InsightsResponse<InsightsNotificationPreferences>>(apiUrl(this.baseUrl, '/marketing/insights/notification-preferences'));
   }
 
   putNotificationPreferences(body: PutNotificationPreferencesBody, version: number | null): Observable<InsightsResponse<InsightsNotificationPreferences>> {
-    return this.http.put<InsightsResponse<InsightsNotificationPreferences>>(this.url('/notification-preferences'), body, this.ifMatch(version));
+    return this.http.put<InsightsResponse<InsightsNotificationPreferences>>(apiUrl(this.baseUrl, '/marketing/insights/notification-preferences'), body, this.ifMatch(version));
   }
 
   getUserPreferences(): Observable<InsightsResponse<InsightsUserPreferences>> {
-    return this.http.get<InsightsResponse<InsightsUserPreferences>>(this.url('/user-preferences'));
+    return this.http.get<InsightsResponse<InsightsUserPreferences>>(apiUrl(this.baseUrl, '/marketing/insights/user-preferences'));
   }
 
   putUserPreferences(body: PutUserPreferencesBody, version: number | null): Observable<InsightsResponse<InsightsUserPreferences>> {
-    return this.http.put<InsightsResponse<InsightsUserPreferences>>(this.url('/user-preferences'), body, this.ifMatch(version));
+    return this.http.put<InsightsResponse<InsightsUserPreferences>>(apiUrl(this.baseUrl, '/marketing/insights/user-preferences'), body, this.ifMatch(version));
   }
 
   listSavedViews(): Observable<InsightsResponse<InsightsSavedView[]>> {
-    return this.http.get<InsightsResponse<InsightsSavedView[]>>(this.url('/saved-views'));
+    return this.http.get<InsightsResponse<InsightsSavedView[]>>(apiUrl(this.baseUrl, '/marketing/insights/saved-views'));
   }
 
   /** `PUT /saved-views/:id` — el `id` lo genera el cliente: reintentar no duplica. */
   putSavedView(id: string, body: PutSavedViewBody): Observable<InsightsResponse<InsightsSavedView>> {
-    return this.http.put<InsightsResponse<InsightsSavedView>>(this.url(`/saved-views/${id}`), body);
+    return this.http.put<InsightsResponse<InsightsSavedView>>(apiUrl(this.baseUrl, `/marketing/insights/saved-views/${id}`), body);
   }
 
   deleteSavedView(id: string): Observable<void> {
-    return this.http.delete<void>(this.url(`/saved-views/${id}`));
+    return this.http.delete<void>(apiUrl(this.baseUrl, `/marketing/insights/saved-views/${id}`));
   }
 
   listReports(): Observable<InsightsResponse<InsightsReportRecord[]>> {
-    return this.http.get<InsightsResponse<InsightsReportRecord[]>>(this.url('/reports'));
+    return this.http.get<InsightsResponse<InsightsReportRecord[]>>(apiUrl(this.baseUrl, '/marketing/insights/reports'));
   }
 
   /** `PUT /reports/:id` — guarda un informe en el historial (máximo 12; el 13.º expulsa el más viejo). */
   putReport(id: string, body: PutReportBody): Observable<InsightsResponse<InsightsReportRecord>> {
-    return this.http.put<InsightsResponse<InsightsReportRecord>>(this.url(`/reports/${id}`), body);
+    return this.http.put<InsightsResponse<InsightsReportRecord>>(apiUrl(this.baseUrl, `/marketing/insights/reports/${id}`), body);
   }
 
   deleteReport(id: string): Observable<void> {
-    return this.http.delete<void>(this.url(`/reports/${id}`));
+    return this.http.delete<void>(apiUrl(this.baseUrl, `/marketing/insights/reports/${id}`));
   }
 }

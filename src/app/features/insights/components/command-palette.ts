@@ -52,16 +52,16 @@ export class CommandPalette {
   });
 
   private readonly sync = effect(() => {
-    const el = this.dialog()?.nativeElement;
-    if (!el) return;
-    if (this.open() && !el.open) {
+    const dialogEl = this.dialog()?.nativeElement;
+    if (!dialogEl) return;
+    if (this.open() && !dialogEl.open) {
       this.query.set('');
       this.active.set(0);
       this.stamp.update((n) => n + 1);
-      el.showModal();
+      dialogEl.showModal();
       queueMicrotask(() => this.field()?.nativeElement.focus());
     }
-    if (!this.open() && el.open) el.close();
+    if (!this.open() && dialogEl.open) dialogEl.close();
   });
 
   protected type(e: Event): void { this.query.set((e.target as HTMLInputElement).value); this.active.set(0); }
