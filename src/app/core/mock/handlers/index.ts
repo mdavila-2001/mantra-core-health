@@ -73,6 +73,7 @@ import { registerRegistrationLogo } from './registration-logo.handlers';
 import { registrarAdmisiones } from './admissions.handlers';
 import { registrarCargasMasivas } from './bulk-imports.handlers';
 import { registerPrescriptionShares } from './prescription-shares.handlers';
+import { registerPharmacyMedicationAvailability } from './pharmacy-medication-availability.handlers';
 import { registerPharmacyPrescriptionShares } from './pharmacy-prescription-shares.handlers';
 import { registrarInsights } from './insights.handlers';
 import { registrarReporteria } from './reporting.handlers';
@@ -133,6 +134,7 @@ export function crearRouterSimulado(): MockRouter {
   registrarContabilidadSimple(router);
   registrarModulosAdministrativos(router);
   registrarFarmacia(router);
+  registerPharmacyMedicationAvailability(router);
   registrarDiagnostico(router);
   registrarOrdenesDeLaboratorio(router, {
     laboratorioDe,

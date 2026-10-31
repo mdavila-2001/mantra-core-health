@@ -70,6 +70,12 @@ export interface LineaDePedido {
   /** `false` = la sede no puede confirmar este renglón; se dice claro. */
   readonly disponible: boolean;
   /**
+   * `true` si la sede elegida no tiene este medicamento: el renglón se
+   * muestra por su nombre, pero no viaja en el pedido — no hay un producto de
+   * esa sede que mandar, y uno de otra farmacia la API lo rechaza.
+   */
+  readonly missingAtSite?: boolean;
+  /**
    * `true` si la sede ofrecía el producto por su catálogo, sin existencias
    * cargadas: entra al pedido sin reservar, y la farmacia dice al confirmar
    * si lo tiene y cuántos.

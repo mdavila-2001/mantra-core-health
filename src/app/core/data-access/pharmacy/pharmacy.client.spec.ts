@@ -6,6 +6,7 @@ import { PharmacyClient } from './pharmacy.client';
 import {
   DISPONIBILIDAD_FIXTURE,
   FIXTURE_IDS,
+  MEDICATION_AVAILABILITY_FIXTURE,
   PHARMACY_CONTACTS_FIXTURE,
   PHARMACY_LICENSES_FIXTURE,
   productosDelConcepto,
@@ -78,6 +79,30 @@ describe('PharmacyClient', () => {
     expect(req.request.params.get('lng')).toBe('-63.1821');
     expect(req.request.params.get('limit')).toBe('10');
     req.flush(DISPONIBILIDAD_FIXTURE);
+  });
+
+  it('consulta la disponibilidad por medicamento en una sola petición, con el origen entero', () => {
+    let count = -1;
+    client
+      .availabilityByMedication({
+        medicationConceptIds: [FIXTURE_IDS.conceptoAmoxicilina, FIXTURE_IDS.conceptoIbuprofeno],
+        origin: { lat: -17.7833, lng: -63.1821 },
+        limit: 10,
+      })
+      .subscribe((result) => (count = result.count));
+
+    const req = http.expectOne((r) => r.url === '/pharmacy-inventory/availability/medications');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('medications')).toBe(
+      `${FIXTURE_IDS.conceptoAmoxicilina},${FIXTURE_IDS.conceptoIbuprofeno}`,
+    );
+    expect(req.request.params.has('products')).toBe(false);
+    expect(req.request.params.get('lat')).toBe('-17.7833');
+    expect(req.request.params.get('lng')).toBe('-63.1821');
+    expect(req.request.params.get('limit')).toBe('10');
+    req.flush(MEDICATION_AVAILABILITY_FIXTURE);
+
+    expect(count).toBe(2);
   });
 
   it('busca productos filtrados por farmacia', () => {
